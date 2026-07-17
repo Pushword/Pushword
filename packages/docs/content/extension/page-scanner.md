@@ -171,11 +171,30 @@ Enumerating pager pages would mean nodes that are URLs rather than pages
 ## What it checks
 
 - **Internal links**: page exists, is published, is not a redirect
+- **Relative links**: an internal link must start with `/` (see below)
 - **External links**: HTTP status codes (parallel checking with caching)
 - **Anchor links**: target element exists in the page
 - **Media files**: referenced images and files exist
 - **Parent pages**: parent-child host consistency
 - **TODO comments**: deferred actions tied to page publication (see below)
+
+URLs written inside a `<code>` or `<pre>` block are illustrations, not links, and
+are never checked.
+
+## Relative links
+
+Pushword serves every page from the root, so `[Quiz](extension/quiz)` resolves
+against the current path instead of `/extension/quiz` — usually a 404, sometimes a
+silent detour. Nothing else catches it: [the link graph](/extension/page-scanner#link-graph),
+`excludeAlreadyLinked` and the checks above all key on a leading slash, so a
+relative link is invisible to every internal tool. The scanner reports it as:
+
+```
+`extension/quiz` relative link, an internal link must start with /
+```
+
+Fix it by writing the target absolute (`/extension/quiz`). Genuinely relative
+targets can be silenced per page with `pageScanLinksToIgnore`.
 
 ## TODO comments
 

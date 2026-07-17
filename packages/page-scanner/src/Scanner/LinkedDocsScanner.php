@@ -266,7 +266,7 @@ final class LinkedDocsScanner extends AbstractScanner
     {
         $urlInAttributes = ' '.$this->prepareForRegex(['href', 'data-rot', 'src', 'data-img', 'data-bg']);
         $regex = '/'.$urlInAttributes.'=((["\'])([^\3]+)\3|([^\s>]+)[\s>])/iU';
-        preg_match_all($regex, $this->pageHtml, $matches);
+        preg_match_all($regex, $this->stripCodeSamples(), $matches);
 
         if (null === $matches) {
             throw new Exception();
@@ -289,6 +289,16 @@ final class LinkedDocsScanner extends AbstractScanner
         }
 
         return array_unique($linkedDocs);
+    }
+
+    /**
+     * A URL inside a code sample illustrates markup, it does not link anywhere.
+     * Markdown escapes `<` and `>` there but leaves the quotes intact, so an
+     * `href="…"` written in a `<code>` block otherwise reads as a real attribute.
+     */
+    private function stripCodeSamples(): string
+    {
+        return preg_replace('#<(code|pre)\b[^>]*>.*?</\1>#is', '', $this->pageHtml) ?? $this->pageHtml;
     }
 
     private function isMailtoOrTelLink(string $uri): bool
@@ -467,7 +477,11 @@ final class LinkedDocsScanner extends AbstractScanner
             return;
         }
 
-        // TODO: log unchecked link dump($uri);
+        // Anything left is relative to the current page. Pushword serves every page
+        // from the root, so a relative link resolves against a path owning no page,
+        // and no internal tool sees it: LinkCollector, the link graph and the checks
+        // above all key on a leading slash.
+        $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanRelativeLink'));
     }
 
     private function patchUnreachableDomain(string $url): bool

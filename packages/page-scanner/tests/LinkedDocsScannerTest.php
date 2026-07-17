@@ -257,6 +257,93 @@ final class LinkedDocsScannerTest extends KernelTestCase
         self::assertContains('<code>mailto:hello@example.tld</code> '.$translator->trans('page_scanObfuscateMail'), $errors);
     }
 
+    #[DataProvider('relativeLinkProvider')]
+    public function testRelativeLinkIsReported(string $href): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        $translator = self::getContainer()->get(TranslatorInterface::class);
+        $errors = $scanner->scan($this->getPage(), '<a href="'.$href.'">link</a>');
+
+        self::assertContains('<code>'.$href.'</code> '.$translator->trans('page_scanRelativeLink'), $errors);
+    }
+
+    /**
+     * @return Iterator<string, array{string}>
+     */
+    public static function relativeLinkProvider(): Iterator
+    {
+        yield 'slug missing its leading slash' => ['pushword'];
+        yield 'existing slug missing its leading slash' => ['homepage'];
+        yield 'nested relative path' => ['../pushword'];
+        yield 'relative slug with anchor' => ['pushword#install'];
+    }
+
+    #[DataProvider('codeSampleProvider')]
+    public function testLinksInsideCodeSamplesAreNotScanned(string $html): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        self::assertSame([], $scanner->scan($this->getPage(), $html));
+    }
+
+    /**
+     * @return Iterator<string, array{string}>
+     */
+    public static function codeSampleProvider(): Iterator
+    {
+        // Markdown escapes < and > inside code, but not the quotes
+        yield 'relative href in inline code' => ['<code>&lt;a href="..."&gt;text&lt;/a&gt;</code>'];
+        yield 'absolute href in inline code' => ['<code>&lt;a href="/not-a-page"&gt;text&lt;/a&gt;</code>'];
+        yield 'href in a fenced block' => ['<pre><code>&lt;a href="/not-a-page"&gt;x&lt;/a&gt;</code></pre>'];
+        yield 'src in inline code' => ['<code>&lt;img src="/nope.png"&gt;</code>'];
+
+        // The shape Markdown really emits: a language class, and a trailing
+        // newline before </code>.
+        yield 'fenced block with a language class spanning lines' => [
+            '<pre><code class="language-html">&lt;a href="/not-a-page"&gt;x&lt;/a&gt;'."\n".'</code></pre>',
+        ];
+
+        // An attribute on the outer tag must not defeat the strip.
+        yield 'attribute on the wrapping tag' => [
+            '<pre class="highlight">&lt;a href="/not-a-page"&gt;x&lt;/a&gt;</pre>',
+        ];
+        yield 'attribute on an unwrapped code tag' => [
+            '<code class="language-html">&lt;a href="/not-a-page"&gt;x&lt;/a&gt;</code>',
+        ];
+    }
+
+    public function testCodeSamplesDoNotSwallowTheLinksBetweenThem(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        $translator = self::getContainer()->get(TranslatorInterface::class);
+        $html = '<code>&lt;a href="/first"&gt;x&lt;/a&gt;</code>'
+            .'<a href="/not-a-page">real</a>'
+            .'<pre><code class="language-html">&lt;a href="/second"&gt;x&lt;/a&gt;</code></pre>';
+
+        self::assertSame(
+            ['<code>/not-a-page</code> '.$translator->trans('page_scanNotFound')],
+            $scanner->scan($this->getPage(), $html),
+        );
+    }
+
+    public function testRelativeLinkCanBeIgnored(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        // pageScanLinksToIgnore is set on the page fixture below
+        self::assertSame([], $scanner->scan($this->getPage(), '<a href="ignored-relative">link</a>'));
+    }
+
     private function getPage(string $slug = 'homepage', string $host = ''): Page
     {
         $page = new Page();
@@ -266,7 +353,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');
         $page->setMainContent('...');
-        $page->setCustomProperty('pageScanLinksToIgnore', ['https://example2.tld/*']);
+        $page->setCustomProperty('pageScanLinksToIgnore', ['https://example2.tld/*', 'ignored-relative']);
 
         return $page;
     }
