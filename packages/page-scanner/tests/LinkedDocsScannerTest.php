@@ -8,6 +8,7 @@ use Iterator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\PageScanner\Scanner\LinkedDocsScanner;
 
@@ -206,6 +207,54 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner->scan($this->getPage(), $html);
 
         self::assertContains('https://unknown-host.com/page', $scanner->getCollectedExternalUrls());
+    }
+
+    public function testUnquotedHrefIsScanned(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+        $scanner->enableCollectMode();
+
+        $scanner->scan($this->getPage(), '<a href=https://unknown-host.com/unquoted>link</a>');
+
+        self::assertContains('https://unknown-host.com/unquoted', $scanner->getCollectedExternalUrls());
+    }
+
+    public function testObfuscatedLinkIsDecryptedAndScanned(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+        $scanner->enableCollectMode();
+
+        $html = '<span data-rot="'.LinkProvider::obfuscate('https://unknown-host.com/obfuscated').'">link</span>';
+        $scanner->scan($this->getPage(), $html);
+
+        self::assertContains('https://unknown-host.com/obfuscated', $scanner->getCollectedExternalUrls());
+    }
+
+    public function testObfuscatedMailLinkRaisesNoError(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        $html = '<span data-rot="'.LinkProvider::obfuscate('mailto:hello@example.tld').'">mail</span>';
+
+        self::assertSame([], $scanner->scan($this->getPage(), $html));
+    }
+
+    public function testPlainMailLinkRaisesObfuscateError(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        $translator = self::getContainer()->get(TranslatorInterface::class);
+        $errors = $scanner->scan($this->getPage(), '<a href="mailto:hello@example.tld">mail</a>');
+
+        self::assertContains('<code>mailto:hello@example.tld</code> '.$translator->trans('page_scanObfuscateMail'), $errors);
     }
 
     private function getPage(string $slug = 'homepage', string $host = ''): Page

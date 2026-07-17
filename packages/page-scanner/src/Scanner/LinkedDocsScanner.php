@@ -275,12 +275,12 @@ final class LinkedDocsScanner extends AbstractScanner
         $linkedDocs = [];
         $matchesCount = is_countable($matches[0]) ? \count($matches[0]) : 0;
         for ($k = 0; $k < $matchesCount; ++$k) {
+            // an unmatched group is an empty string, never unset: the quoted
+            // value (4) is empty when the attribute value came unquoted (5).
             /** @var string */
-            $uri = $matches[4][$k] ?? $matches[5][$k]; // @phpstan-ignore-line
+            $uri = '' !== $matches[4][$k] ? $matches[4][$k] : $matches[5][$k]; // @phpstan-ignore-line
             $isDataRotAttribute = 'data-rot' === $matches[1][$k]; // @phpstan-ignore-line
             $uri = $isDataRotAttribute ? LinkProvider::decrypt($uri) : $uri;
-            // @phpstan-ignore-next-line
-            $uri .= $matches[4][$k] ? '' : '#(obfuscate)'; // not elegant but permit to remember it's an obfuscate link
             if ($this->isMailtoOrTelLink($uri) && ! $isDataRotAttribute) {
                 $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scanObfuscateMail'));
             } elseif ('' !== $uri && $this->isWebLink($uri)) {
