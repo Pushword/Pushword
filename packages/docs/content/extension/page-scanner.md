@@ -47,6 +47,7 @@ The scanner is accessible via the admin menu. Results are cached and refreshed a
 With the [API extension](/extension/api) installed, the same scan is available over REST at
 `POST/GET /api/page-scan` (background dispatch + polling) for scripted and agent workflows.
 
+{id=link-graph}
 ## Link graph
 
 While it renders every page, the scan also records which pages link to which. That

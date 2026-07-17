@@ -1,6 +1,6 @@
 # Pushword Page Scanner
 
-Find **dead links, 404s, 301s**, broken anchors/media and **TODO reminders** across your content — from the command line or the admin.
+Find **dead links, 404s, 301s**, broken anchors/media and **TODO reminders** across your content — and audit your **internal link graph** — from the command line or the admin.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -14,6 +14,7 @@ Find **dead links, 404s, 301s**, broken anchors/media and **TODO reminders** acr
 
 - Checks **internal links, external HTTP status, anchors, media and parent pages**.
 - **`pw:page-scan` CLI** + admin UI with cached results.
+- **`pw:link:graph` CLI** — inbound/outbound links, depth from the homepage, orphans; exits non-zero to gate CI.
 - **TODO comments** (`linkWhenPublished`, action-when-published).
 - **Parallel** external checks with caching.
 

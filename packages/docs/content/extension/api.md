@@ -265,6 +265,56 @@ curl -H "Authorization: Bearer $TOKEN" \
 - `errors[].message` is plain text (admin HTML stripped), grouped per page in the admin but
   flattened to a list here.
 
+{id=link-graph}
+## Link graph (inbound links, depth, orphans)
+
+The scan also records which pages link to which. This endpoint reports that graph — see
+[Page scanner](/extension/page-scanner#link-graph) for what counts as a link and why.
+
+| Method | Route             | Action                                                   |
+|--------|-------------------|----------------------------------------------------------|
+| `GET`  | `/api/link-graph` | Inbound/outbound links, inbound sources, depth, orphans   |
+
+Read-only: the graph comes from the page scan, so there is nothing separate to start. When a
+scope was never scanned the endpoint answers `404` with a `triggerUrl` pointing at
+`POST /api/page-scan`. Takes an optional `?host=` and `?page=` (a slug, on every host it
+exists on unless `host` is set).
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+     "https://example.com/api/link-graph?host=example.com&page=about"
+```
+
+```json
+{
+  "host": "example.com",
+  "status": "completed",
+  "generatedAt": "2026-06-02T09:14:00+00:00",
+  "pageCount": 251,
+  "edgeCount": 1203,
+  "orphanCount": 3,
+  "hostsWithoutHomepage": [],
+  "pages": [
+    {
+      "host": "example.com",
+      "slug": "about",
+      "inboundCount": 2,
+      "outboundCount": 11,
+      "inbound": ["example.com/homepage", "example.com/team"],
+      "depth": 1
+    }
+  ]
+}
+```
+
+- `generatedAt` — when the scan behind this graph ran. A page's `inboundCount` changes when
+  **other** pages are edited, so a stale graph misleads without anything on the page itself
+  having moved. `POST /api/page-scan` refreshes it.
+- `depth` — clicks from the homepage; `null` when unreachable without a pager.
+- `hostsWithoutHomepage` — hosts with no scanned homepage: `depth` is unknown there rather
+  than infinite.
+- `orphanCount` counts pages with at most one inbound link. A homepage is never an orphan.
+
 {id=errors}
 ## Error reference
 
