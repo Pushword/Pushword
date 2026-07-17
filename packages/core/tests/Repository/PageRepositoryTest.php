@@ -335,19 +335,17 @@ final class PageRepositoryTest extends KernelTestCase
         $em->clear();
 
         $pages = $pageRepo->getPublishedPages('');
-        $homepage = null;
-        foreach ($pages as $page) {
-            if ('homepage' === $page->getSlug()) {
-                $homepage = $page;
-            }
-        }
+        $homepage = array_find($pages, static fn (Page $page): bool => 'homepage' === $page->getSlug());
 
         self::assertInstanceOf(Page::class, $homepage);
         $fresh = $homepage->getTranslations();
         self::assertInstanceOf(PersistentCollection::class, $fresh);
         self::assertFalse($fresh->isInitialized(), 'A fresh load must not have initialized the collection yet.');
 
+        $pageRepo->preloadTranslations([]); // no pages, no query, no error
+
         $pageRepo->preloadTranslations($pages);
+        $pageRepo->preloadTranslations($pages); // idempotent on initialized collections
 
         foreach ($pages as $page) {
             $collection = $page->getTranslations();

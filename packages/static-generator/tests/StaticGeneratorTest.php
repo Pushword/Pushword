@@ -1273,17 +1273,17 @@ final class StaticGeneratorTest extends KernelTestCase
             return; // The flags are inert without the extension; only the dir wiring is observable.
         }
 
-        $cachedScripts = 0;
+        $hasCachedScript = false;
         /** @var SplFileInfo $file */
         foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($opcacheDir, FilesystemIterator::SKIP_DOTS)) as $file) {
             if ($file->isFile()) {
-                ++$cachedScripts;
+                $hasCachedScript = true;
 
                 break;
             }
         }
 
-        self::assertGreaterThan(0, $cachedScripts, 'Workers should write compiled scripts into the shared opcache file cache.');
+        self::assertTrue($hasCachedScript, 'Workers should write compiled scripts into the shared opcache file cache.');
     }
 
     public function testStateMergeFromFile(): void
