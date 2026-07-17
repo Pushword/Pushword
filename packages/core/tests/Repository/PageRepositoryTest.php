@@ -299,4 +299,29 @@ final class PageRepositoryTest extends KernelTestCase
             $pageRepo->getPublishedPageQueryBuilder('', $where)->getDQL(),
         );
     }
+
+    /**
+     * Several conditions — including a param-less IS NOT NULL between two valued
+     * ones — must each bind their own value: a parameter-name collision would
+     * silently overwrite the first value with the second.
+     */
+    public function testWhereFilterBindsEachConditionSeparately(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        $pages = $pageRepo->getPublishedPages('', [
+            ['key' => 'slug', 'operator' => 'LIKE', 'value' => 'home%'],
+            ['key' => 'parentPage', 'operator' => 'IS', 'value' => null],
+            ['key' => 'slug', 'operator' => '!=', 'value' => 'homepage-draft'],
+        ]);
+
+        self::assertNotSame([], $pages);
+        foreach ($pages as $page) {
+            self::assertStringStartsWith('home', $page->getSlug());
+            self::assertNotSame('homepage-draft', $page->getSlug());
+        }
+    }
 }

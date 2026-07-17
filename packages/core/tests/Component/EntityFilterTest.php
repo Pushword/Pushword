@@ -14,6 +14,7 @@ use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\ContentExtension;
+use ReflectionProperty;
 
 use function Safe\file_get_contents;
 
@@ -69,6 +70,19 @@ final class EntityFilterTest extends KernelTestCase
         self::bootKernel();
 
         return self::getContainer()->get(ContentExtension::class);
+    }
+
+    /**
+     * The TOC fix cache only exists if the container really injects the pool: a
+     * silently-null autowire would keep every test green while every page pays
+     * the full HTML5 parse + serialize again.
+     */
+    public function testTocCachePoolIsWired(): void
+    {
+        $tocCache = new ReflectionProperty(ContentExtension::class, 'tocCache')
+            ->getValue($this->getContentExtension());
+
+        self::assertNotNull($tocCache);
     }
 
     public function testToc(): void

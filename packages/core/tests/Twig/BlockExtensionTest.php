@@ -3,7 +3,12 @@
 namespace Pushword\Core\Tests\Twig;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\BlockExtension;
+
+use function Safe\preg_match;
+
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
@@ -59,6 +64,38 @@ final class BlockExtensionTest extends KernelTestCase
         self::assertStringContainsString('My GPX', $html);
         self::assertStringContainsString('/media/track.gpx', $html);
         self::assertStringNotContainsString('bytes', $html);
+    }
+
+    /**
+     * Gallery ids must come from the current page's counter, not `random()`:
+     * re-rendering an unchanged page has to produce identical bytes (static
+     * builds skip rewrites on that, content-hash caches key on it).
+     */
+    public function testRenderGalleryUsesDeterministicPageScopedIds(): void
+    {
+        $ext = $this->getBlockExtension();
+        $apps = self::getContainer()->get(SiteRegistry::class);
+
+        $apps->setCurrentPage(new Page());
+
+        $first = $ext->renderGallery(['2.jpg' => 'A valid photo']);
+        $second = $ext->renderGallery(['2.jpg' => 'A valid photo']);
+
+        // Ids come from the page counter (Twig's `??` may consume more than one
+        // increment per gallery — harmless, as long as they stay unique)…
+        self::assertMatchesRegularExpression('/data-gallery="\d+"/', $first);
+        self::assertNotSame($this->galleryId($first), $this->galleryId($second), 'two galleries on one page must not share an id');
+
+        // …and the same page freshly loaded (= next build) restarts the sequence.
+        $apps->setCurrentPage(new Page());
+        self::assertSame($first, $ext->renderGallery(['2.jpg' => 'A valid photo']));
+    }
+
+    private function galleryId(string $html): string
+    {
+        preg_match('/data-gallery="(\d+)"/', $html, $matches);
+
+        return $matches[1] ?? '';
     }
 
     public function testRenderGalleryDegradesBrokenImageAndKeepsValidOnes(): void
