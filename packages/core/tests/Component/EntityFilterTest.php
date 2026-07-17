@@ -3,7 +3,9 @@
 namespace Pushword\Core\Tests\Component;
 
 use DateTime;
+use Knp\Menu\ItemInterface;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\TestWith;
 use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
@@ -78,6 +80,58 @@ final class EntityFilterTest extends KernelTestCase
         self::assertSame('<p>my intro...</p>', trim($splitContent->getIntro()));
         $toCheck = '<h2 id="first-title">First Title</h2>';
         self::assertSame($toCheck, substr(trim($splitContent->getContent()), 0, \strlen($toCheck)));
+    }
+
+    /**
+     * Headings sitting after the cutoff comment stay in the body but must not
+     * reach the menu.
+     */
+    #[TestWith(['<!--end-toc-->'])]
+    #[TestWith(['<!--stop-toc-->'])]
+    public function testTocStopsAtCutoffMarker(string $marker): void
+    {
+        $content = "my intro...\n\n## Listed Title\n\nfirst paragraph\n\n".$marker."\n\n## Hidden Title\n\nsecond paragraph";
+
+        $page = $this->getPage($content);
+        $splitContent = $this->getContentExtension()->mainContentSplit($page);
+
+        $toc = $splitContent->getToc();
+        self::assertIsString($toc);
+        self::assertStringContainsString('#listed-title', $toc);
+        self::assertStringNotContainsString('#hidden-title', $toc);
+
+        // the cut only applies to the menu, never to the rendered content
+        self::assertStringContainsString('id="hidden-title"', $splitContent->getBody());
+    }
+
+    /**
+     * The menu tree is rebuilt from the headings in document order, so nesting
+     * and depth must survive.
+     */
+    public function testTocKeepsHeadingHierarchy(): void
+    {
+        $content = "my intro...\n\n## Parent\n\nfirst\n\n### Child\n\nsecond\n\n## Second Parent\n\nthird";
+
+        $page = $this->getPage($content);
+        $splitContent = $this->getContentExtension()->mainContentSplit($page);
+
+        $menu = $splitContent->getToc(false);
+        self::assertInstanceOf(ItemInterface::class, $menu);
+        self::assertSame(['parent', 'second-parent'], array_keys($menu->getChildren()));
+
+        $parent = $menu->getChild('parent');
+        self::assertInstanceOf(ItemInterface::class, $parent);
+        self::assertSame(['child'], array_keys($parent->getChildren()));
+    }
+
+    public function testTocWithoutHeadingStaysEmpty(): void
+    {
+        $page = $this->getPage('just a paragraph, without any heading.');
+        $splitContent = $this->getContentExtension()->mainContentSplit($page);
+
+        $toc = $splitContent->getToc();
+        self::assertIsString($toc);
+        self::assertSame('', trim($toc));
     }
 
     public function testTocWithBlockId(): void

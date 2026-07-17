@@ -2,14 +2,24 @@
 
 namespace Pushword\Core\Component\EntityFilter\ValueObject;
 
+use DOMComment;
+use DOMXPath;
 use Knp\Menu\ItemInterface;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\Toc\DomCapturingHtml5;
 use Stringable;
 use TOC\MarkupFixer;
 use TOC\TocGenerator;
 
 final readonly class SplitContent implements Stringable
 {
+    /** Comments after which headings are left out of the TOC. */
+    private const array TOC_CUTOFF_MARKERS = ['stop-toc', 'end-toc'];
+
+    /** Every heading, plus the comments a cutoff marker could hide in, in document order. */
+    private const string TOC_NODES_XPATH = '//*[local-name() = "h1" or local-name() = "h2" or local-name() = "h3"'
+        .' or local-name() = "h4" or local-name() = "h5" or local-name() = "h6"] | //comment()';
+
     private string $chapeau;
 
     private string $intro;
@@ -17,6 +27,9 @@ final readonly class SplitContent implements Stringable
     private string $content;
 
     private string $originalContent;
+
+    /** Heading tags alone, enough for TocGenerator to build the menu from. */
+    private string $tocHeadings;
 
     /** @var string[] */
     private array $contentParts;
@@ -31,23 +44,31 @@ final readonly class SplitContent implements Stringable
         $content = $parsedContent[1] ?? $parsedContent[0];
 
         if (null !== $page->getCustomProperty('toc') || null !== $page->getCustomProperty('tocTitle')) {
-            [$content, $intro, $originalContent] = $this->parseToc($content);
+            [$content, $intro, $originalContent, $tocHeadings] = $this->parseToc($content);
             $this->intro = $intro;
             $this->originalContent = $originalContent;
+            $this->tocHeadings = $tocHeadings;
         } else {
             $this->intro = '';
             $this->originalContent = '';
+            $this->tocHeadings = '';
         }
 
         [$this->content, $this->contentParts] = $this->splitContentToParts($content);
     }
 
     /**
-     * @return array{string, string, string}
+     * @return array{string, string, string, string}
      */
     private function parseToc(string $content): array
     {
-        $content = new MarkupFixer()->fix($content); // this work only on good html
+        $html5 = new DomCapturingHtml5();
+        $content = new MarkupFixer($html5)->fix($content); // this work only on good html
+
+        // MarkupFixer just parsed the whole document to inject the heading ids;
+        // harvest the headings from that same DOM so getToc() does not have to
+        // parse it all over again.
+        $tocHeadings = $this->extractTocHeadings($html5);
 
         // this is a bit crazy
         // Because if there is a wrapper, it will make shit ?!
@@ -62,7 +83,38 @@ final readonly class SplitContent implements Stringable
             $content = '<!--break-->'.$content;
         }
 
-        return [$content, $intro, $originalContent];
+        return [$content, $intro, $originalContent, $tocHeadings];
+    }
+
+    /**
+     * Serialize every heading, in document order, up to the first cutoff comment.
+     */
+    private function extractTocHeadings(DomCapturingHtml5 $html5): string
+    {
+        if (null === $html5->lastDocument) {
+            return '';
+        }
+
+        $nodes = new DOMXPath($html5->lastDocument)->query(self::TOC_NODES_XPATH);
+
+        if (false === $nodes) {
+            return '';
+        }
+
+        $headings = '';
+        foreach ($nodes as $node) {
+            if ($node instanceof DOMComment) {
+                if (\in_array(trim($node->textContent), self::TOC_CUTOFF_MARKERS, true)) {
+                    break;
+                }
+
+                continue;
+            }
+
+            $headings .= $html5->saveHTML($node);
+        }
+
+        return $headings;
     }
 
     /**
@@ -115,12 +167,8 @@ final readonly class SplitContent implements Stringable
             return '';
         }
 
-        $content = str_replace('<!--stop-toc-->', '<!--end-toc-->', $this->originalContent);
-        $content = explode('<!--end-toc-->', $content, 2);
-        $content = $content[0];
-
-        return $html ? new TocGenerator()->getHtmlMenu($content, 2)
-            : new TocGenerator()->getMenu($content, 2);
+        return $html ? new TocGenerator()->getHtmlMenu($this->tocHeadings, 2)
+            : new TocGenerator()->getMenu($this->tocHeadings, 2);
     }
 
     public function __toString(): string
