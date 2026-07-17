@@ -10,9 +10,9 @@ use Pushword\Core\Site\SiteRegistry;
  * in the block editor bundle (no runtime tool registration exists); this only
  * activates it. Registered only when the block editor is installed (services.php).
  */
-final class QuizEditorToolProvider implements EditorJsToolProviderInterface
+final readonly class QuizEditorToolProvider implements EditorJsToolProviderInterface
 {
-    public function __construct(private readonly SiteRegistry $apps)
+    public function __construct(private SiteRegistry $apps)
     {
     }
 
@@ -52,6 +52,6 @@ final class QuizEditorToolProvider implements EditorJsToolProviderInterface
         $types = array_keys($app->getArray('conversation_form'));
         sort($types);
 
-        return array_values(array_filter($types, static fn (mixed $type): bool => \is_string($type)));
+        return array_values(array_filter($types, \is_string(...)));
     }
 }
