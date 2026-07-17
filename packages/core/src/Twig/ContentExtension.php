@@ -2,9 +2,11 @@
 
 namespace Pushword\Core\Twig;
 
+use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Component\EntityFilter\ValueObject\SplitContent;
 use Pushword\Core\Content\ContentPipelineFactory;
 use Pushword\Core\Entity\Page;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Twig\Attribute\AsTwigFunction;
 
 final class ContentExtension
@@ -14,6 +16,8 @@ final class ContentExtension
 
     public function __construct(
         private readonly ContentPipelineFactory $pipelineFactory,
+        #[Autowire(service: 'cache.pushword_markdown')]
+        private readonly ?CacheItemPoolInterface $tocCache = null,
     ) {
     }
 
@@ -28,7 +32,7 @@ final class ContentExtension
 
         $processedContent = $this->pipelineFactory->get($page)->getMainContent();
 
-        $this->cache[$id] = new SplitContent($processedContent, $page);
+        $this->cache[$id] = new SplitContent($processedContent, $page, $this->tocCache);
 
         return $this->cache[$id];
     }

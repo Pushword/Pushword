@@ -5,9 +5,11 @@ namespace Pushword\Core\Component\EntityFilter\ValueObject;
 use DOMComment;
 use DOMXPath;
 use Knp\Menu\ItemInterface;
+use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\Toc\DomCapturingHtml5;
 use Stringable;
+use Throwable;
 use TOC\MarkupFixer;
 use TOC\TocGenerator;
 
@@ -15,6 +17,9 @@ final readonly class SplitContent implements Stringable
 {
     /** Comments after which headings are left out of the TOC. */
     private const array TOC_CUTOFF_MARKERS = ['stop-toc', 'end-toc'];
+
+    /** Bump when fixHeadings()'s output changes (MarkupFixer behaviour, heading extraction). */
+    private const int TOC_CACHE_VERSION = 1;
 
     /** Every heading, plus the comments a cutoff marker could hide in, in document order. */
     private const string TOC_NODES_XPATH = '//*[local-name() = "h1" or local-name() = "h2" or local-name() = "h3"'
@@ -34,7 +39,7 @@ final readonly class SplitContent implements Stringable
     /** @var string[] */
     private array $contentParts;
 
-    public function __construct(string $mainContent, Page $page)
+    public function __construct(string $mainContent, Page $page, private ?CacheItemPoolInterface $cache = null)
     {
         $content = $mainContent;
 
@@ -62,13 +67,7 @@ final readonly class SplitContent implements Stringable
      */
     private function parseToc(string $content): array
     {
-        $html5 = new DomCapturingHtml5();
-        $content = new MarkupFixer($html5)->fix($content); // this work only on good html
-
-        // MarkupFixer just parsed the whole document to inject the heading ids;
-        // harvest the headings from that same DOM so getToc() does not have to
-        // parse it all over again.
-        $tocHeadings = $this->extractTocHeadings($html5);
+        [$content, $tocHeadings] = $this->fixHeadings($content);
 
         // this is a bit crazy
         // Because if there is a wrapper, it will make shit ?!
@@ -84,6 +83,53 @@ final readonly class SplitContent implements Stringable
         }
 
         return [$content, $intro, $originalContent, $tocHeadings];
+    }
+
+    /**
+     * Inject the missing heading ids and serialize the headings the TOC is built
+     * from. A pure function of the input string — and by far the most expensive
+     * step of a page render (a full HTML5 parse + serialize round-trip) — so the
+     * result is cached by content hash. No invalidation needed: a content change
+     * changes the key.
+     *
+     * @return array{string, string} [fixed content, serialized headings]
+     */
+    private function fixHeadings(string $content): array
+    {
+        if (null === $this->cache) {
+            return $this->doFixHeadings($content);
+        }
+
+        try {
+            $item = $this->cache->getItem('pw_toc.'.hash('xxh3', self::TOC_CACHE_VERSION.'|'.$content));
+            if ($item->isHit()) {
+                /** @var array{string, string} */
+                return $item->get();
+            }
+
+            $result = $this->doFixHeadings($content);
+            $item->set($result);
+            $this->cache->save($item);
+
+            return $result;
+        } catch (Throwable) {
+            // A cache backend hiccup must never break rendering.
+            return $this->doFixHeadings($content);
+        }
+    }
+
+    /**
+     * @return array{string, string}
+     */
+    private function doFixHeadings(string $content): array
+    {
+        $html5 = new DomCapturingHtml5();
+        $content = new MarkupFixer($html5)->fix($content); // this work only on good html
+
+        // MarkupFixer just parsed the whole document to inject the heading ids;
+        // harvest the headings from that same DOM so getToc() does not have to
+        // parse it all over again.
+        return [$content, $this->extractTocHeadings($html5)];
     }
 
     /**
