@@ -1,0 +1,137 @@
+<?php
+
+namespace Pushword\PageScanner\Controller\Api;
+
+use DateTimeInterface;
+use Pushword\Api\Controller\AbstractApiController;
+use Pushword\Core\Site\SiteRegistry;
+use Pushword\PageScanner\Service\LinkGraphBuilder;
+use Pushword\PageScanner\Service\LinkGraphStorage;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+/**
+ * JSON mirror of `pw:link:graph`.
+ *
+ * Read-only on purpose: the graph is collected by the page scan, so there is
+ * nothing separate to trigger here. When no snapshot exists this points at
+ * `POST /api/page-scan` rather than growing a second way to start the same scan
+ * — with its own locking to keep in step with the first.
+ */
+#[IsGranted('ROLE_EDITOR')]
+final class LinkGraphApiController extends AbstractApiController
+{
+    public function __construct(
+        private readonly LinkGraphStorage $storage,
+        private readonly LinkGraphBuilder $builder,
+        private readonly SiteRegistry $siteRegistry,
+    ) {
+    }
+
+    #[Route('/api/link-graph', name: 'pushword_api_link_graph', methods: ['GET'])]
+    public function graph(Request $request): JsonResponse
+    {
+        $host = $request->query->getString('host', '') ?: null;
+        if (null !== $host && ! $this->siteRegistry->isKnownHost($host)) {
+            return $this->badRequest('Unknown host');
+        }
+
+        $snapshot = $this->storage->read($host);
+        if (null === $snapshot) {
+            return $this->respond([
+                'host' => $host,
+                'status' => 'idle',
+                'message' => 'No link graph yet: run a page scan first.',
+                'triggerUrl' => $this->generateUrl('pushword_api_page_scan_trigger', null !== $host ? ['host' => $host] : []),
+            ], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $graph = $this->builder->build($snapshot['nodes'], $snapshot['edges']);
+        $slug = $request->query->getString('page', '');
+        $pages = '' === $slug
+            ? $graph['pages']
+            : array_values(array_filter(
+                $graph['pages'],
+                static fn (array $page): bool => $page['slug'] === trim($slug, '/'),
+            ));
+
+        if ('' !== $slug && [] === $pages) {
+            return $this->notFound('Page not in the graph (never scanned, or unpublished).');
+        }
+
+        return $this->respond([
+            'host' => $host,
+            'status' => 'completed',
+            'generatedAt' => date(DateTimeInterface::ATOM, $snapshot['generatedAt']),
+            'pageCount' => $graph['pageCount'],
+            'edgeCount' => $graph['edgeCount'],
+            'orphanCount' => $graph['orphanCount'],
+            'hostsWithoutHomepage' => $graph['hostsWithoutHomepage'],
+            'pages' => $pages,
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function describe(): array
+    {
+        return [
+            'paths' => [
+                '/api/link-graph' => [
+                    'get' => [
+                        'summary' => 'Internal link graph of the last page scan',
+                        'description' => 'Per page: inbound/outbound link counts, the inbound sources, and depth from the homepage. '
+                            .'Only crawlable <a href> links count — link() obfuscates to a <span data-rot> and unpublished links render as a <span>, so neither is in the graph. '
+                            .'The graph is what a crawler reaches WITHOUT paginating: rendered offline, pages_list() only emits its first pager page, '
+                            .'so inboundCount is a lower bound and depth an upper bound for pages listed only on pager 2+. Orphans are exact under that rule.',
+                        'parameters' => [[
+                            'name' => 'host',
+                            'in' => 'query',
+                            'required' => false,
+                            'schema' => ['type' => 'string'],
+                            'description' => 'A configured host; omit for every site at once.',
+                        ], [
+                            'name' => 'page',
+                            'in' => 'query',
+                            'required' => false,
+                            'schema' => ['type' => 'string'],
+                            'description' => 'Restrict to one slug (every host it exists on unless host is set).',
+                        ]],
+                        'responses' => [
+                            '200' => ['description' => 'OK', 'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/LinkGraph']]]],
+                            '400' => ['description' => 'Unknown host'],
+                            '401' => ['description' => 'Missing or invalid Bearer token'],
+                            '404' => ['description' => 'No graph yet (body carries triggerUrl), or unknown page'],
+                        ],
+                    ],
+                ],
+            ],
+            'components' => ['schemas' => ['LinkGraph' => [
+                'type' => 'object',
+                'properties' => [
+                    'host' => ['type' => ['string', 'null']],
+                    'status' => ['type' => 'string', 'enum' => ['idle', 'completed']],
+                    'generatedAt' => ['type' => 'string', 'format' => 'date-time', 'description' => 'When the scan behind this graph ran. A page inbound count changes when OTHER pages are edited, so mind the age.'],
+                    'pageCount' => ['type' => 'integer'],
+                    'edgeCount' => ['type' => 'integer'],
+                    'orphanCount' => ['type' => 'integer', 'description' => 'Pages with at most 1 inbound link.'],
+                    'hostsWithoutHomepage' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Hosts with no scanned homepage: depth is unknown there, not infinite.'],
+                    'pages' => ['type' => 'array', 'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'host' => ['type' => 'string'],
+                            'slug' => ['type' => 'string'],
+                            'inboundCount' => ['type' => 'integer'],
+                            'outboundCount' => ['type' => 'integer'],
+                            'inbound' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Source pages, as host/slug.'],
+                            'depth' => ['type' => ['integer', 'null'], 'description' => 'Clicks from the homepage; null when unreachable without a pager.'],
+                        ],
+                    ]],
+                ],
+            ]]],
+        ];
+    }
+}

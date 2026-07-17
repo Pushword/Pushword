@@ -35,12 +35,13 @@ Pushword uses the `host` field for multi-site/multi-locale. Each locale is a sep
 - `pw:static` — generate static HTML
 - `pw:media:normalize-filenames` — normalize media filenames
 - `pw:page-scan` — scan for dead links and issues
+- `pw:link:graph` — internal link graph: inbound/outbound links, depth, orphans
 - `pw:user:token {email}` — get API bearer token
 
 #### Agent-optimized output
 
-`pw:page-scan`, `pw:flat:sync`, `pw:flat:lint`, `pw:static`, `pw:image:cache` and
-`pw:quiz:validate` auto-detect when an AI agent runs them (via the same env vars as
+`pw:page-scan`, `pw:link:graph`, `pw:flat:sync`, `pw:flat:lint`, `pw:static`,
+`pw:image:cache` and `pw:quiz:validate` auto-detect when an AI agent runs them (via the same env vars as
 laravel/agent-detector) and emit a single compact JSON line instead of progress
 bars, colors, PID/timing/memory chatter — far cheaper to parse. Each starts with
 `{"tool": "...", "result": "passed|failed|done|running", ...}`. Force it with

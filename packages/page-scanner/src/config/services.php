@@ -2,6 +2,7 @@
 
 use Pushword\Api\Controller\ApiControllerInterface;
 use Pushword\Core\PushwordCoreBundle;
+use Pushword\PageScanner\Controller\Api\LinkGraphApiController;
 use Pushword\PageScanner\Controller\Api\PageScanApiController;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -35,9 +36,11 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ]);
 
     if ($apiAvailable) {
-        $services->set(PageScanApiController::class)
-            ->autowire()
-            ->tag('controller.service_arguments')
-            ->tag('pushword.api.controller');
+        foreach ([PageScanApiController::class, LinkGraphApiController::class] as $apiController) {
+            $services->set($apiController)
+                ->autowire()
+                ->tag('controller.service_arguments')
+                ->tag('pushword.api.controller');
+        }
     }
 };

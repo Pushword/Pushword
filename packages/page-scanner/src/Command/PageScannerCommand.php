@@ -11,6 +11,7 @@ use Pushword\Core\Service\TeeOutput;
 use Pushword\PageScanner\Controller\PageScannerController;
 use Pushword\PageScanner\Scanner\PageScannerService;
 use Pushword\PageScanner\Scanner\ParallelUrlChecker;
+use Pushword\PageScanner\Service\LinkGraphStorage;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -44,6 +45,7 @@ final class PageScannerCommand
         private readonly ParallelUrlChecker $parallelUrlChecker,
         private readonly BackgroundProcessManager $processManager,
         private readonly ProcessOutputStorage $outputStorage,
+        private readonly LinkGraphStorage $linkGraphStorage,
         private readonly array $errorsToIgnore,
         string $varDir,
     ) {
@@ -58,6 +60,11 @@ final class PageScannerCommand
         $this->stopwatch?->start('preload.caches');
         $this->scanner->preloadCaches();
         $this->stopwatch?->stop('preload.caches');
+
+        // Edges accumulate across the loop below, so start from a clean slate.
+        $this->scanner->linkGraphScanner->reset();
+        $this->scannedNodes = [];
+        $this->scanCompleted = true;
 
         $pages = $this->pageRepo->getPublishedPages($host);
         $pagesCount = \count($pages);
@@ -87,6 +94,12 @@ final class PageScannerCommand
             }
 
             $lastLineWasError = false;
+
+            // A redirection is a 301, not a page: it renders no HTML, so it would
+            // enter the graph as a node with no outbound link and read as an orphan.
+            if (! $page->hasRedirection()) {
+                $this->scannedNodes[] = $pageHost.'/'.$page->getSlug();
+            }
 
             $this->stopwatch?->start('scanPage');
             $this->stopwatch?->start('scan:'.$page->getSlug());
@@ -127,6 +140,7 @@ final class PageScannerCommand
 
             if ($errorNbr > $maxErrors) {
                 $this->human("\n".\sprintf('Too many errors (>%d), stopping scan...', $maxErrors));
+                $this->scanCompleted = false;
 
                 break;
             }
@@ -178,6 +192,12 @@ final class PageScannerCommand
     private bool $agentMode = false;
 
     private int $pagesScanned = 0;
+
+    /** @var list<string> `host/slug` of every page actually rendered, the link graph's nodes. */
+    private array $scannedNodes = [];
+
+    /** False when the error limit aborted the loop: the graph would then be missing edges. */
+    private bool $scanCompleted = true;
 
     private ?Stopwatch $stopwatch = null;
 
@@ -349,6 +369,16 @@ final class PageScannerCommand
                 ? PageScannerController::fileCache()
                 : PageScannerController::fileCache().'--'.$host;
             $this->filesystem->dumpFile($cacheFile, serialize($errors));
+
+            // An aborted loop leaves the graph missing every edge of the pages it
+            // never rendered, which would read as orphans. Keep the last good one.
+            if ($this->scanCompleted) {
+                $this->linkGraphStorage->write(
+                    $host,
+                    $this->scannedNodes,
+                    $this->scanner->linkGraphScanner->getEdges(),
+                );
+            }
 
             $event = $this->stopwatch->stop('scan');
 

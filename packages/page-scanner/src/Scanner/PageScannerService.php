@@ -43,6 +43,9 @@ final class PageScannerService
     #[Required]
     public TwigErrorScanner $twigErrorScanner;
 
+    #[Required]
+    public LinkGraphScanner $linkGraphScanner;
+
     /** @var DataCollectorTranslator|Translator */
     private readonly TranslatorInterface $translator;
 
@@ -91,6 +94,10 @@ final class PageScannerService
         $this->addErrors($page, $this->todoScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->brokenImageScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->twigErrorScanner->scan($page, $pageHtml));
+
+        // Reports nothing: it only rides the loop to collect the link graph from
+        // the HTML we just rendered. Call reset() before scanning a page set.
+        $this->linkGraphScanner->scan($page, $pageHtml);
 
         return [] === $this->errors ? true : $this->errors;
     }

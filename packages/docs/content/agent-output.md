@@ -33,8 +33,8 @@ when the command short-circuits.
 
 ### Supported commands
 
-`pw:page-scan`, `pw:flat:sync`, `pw:flat:lint`, `pw:static`, `pw:image:cache`,
-`pw:quiz:validate`. (`pw:media:debug --json` and `pw:quiz:schema` already emit JSON.)
+`pw:page-scan`, `pw:link:graph`, `pw:flat:sync`, `pw:flat:lint`, `pw:static`,
+`pw:image:cache`, `pw:quiz:validate`. (`pw:media:debug --json` and `pw:quiz:schema` already emit JSON.)
 
 ## Adding it to a command
 
