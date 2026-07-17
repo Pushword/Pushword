@@ -279,9 +279,14 @@ final class PageExtension
             : ['key' => $order[0], 'direction' => $order[1]];
 
         $host = $this->getHost($host, $currentPage);
+
+        // When paginating, "max" counts the cards of one pager page: the query has to cover
+        // every page the pager may show, or pages 2+ have nothing left to slice.
+        $limit = $maxPages > 1 ? $max * $maxPages : $max;
+
         $queryBuilder = $published
-            ? $this->pageRepo->getPublishedPageQueryBuilder($host, $search, $order, $max)
-            : $this->pageRepo->getUnpublishedPageQueryBuilder($host, $search, $order, $max);
+            ? $this->pageRepo->getPublishedPageQueryBuilder($host, $search, $order, $limit)
+            : $this->pageRepo->getUnpublishedPageQueryBuilder($host, $search, $order, $limit);
 
         if (! $hasSlugFilter) {
             $locale = $currentPage->locale ?? '';
@@ -302,30 +307,28 @@ final class PageExtension
             $queryBuilder->andWhere('p.id <> '.($currentPage->id ?? 0));
         }
 
+        if ($excludeAlreadyLinked) {
+            // Excluding in the query, not on the result, so that "max" still counts the pages
+            // that survived the exclusion instead of being spent on pages we then drop.
+            $this->pageRepo->andNotSlug($queryBuilder, array_keys($this->linkCollector->getRegisteredSlugs()));
+        }
+
+        /** @var Page[] */
+        $pages = $queryBuilder->getQuery()->getResult();
+
         if ($maxPages > 1) {
-            /** @var Page[] */
-            $pages = $queryBuilder->getQuery()->getResult();
-            $limit = $this->getLimit($max);
-            if (0 !== $limit) {
-                $pages = \array_slice($pages, 0, $limit);
-            }
-
-            if ($excludeAlreadyLinked) {
-                $pages = $this->linkCollector->excludeRegistered($pages);
-            }
-
             $pagerfanta = new Pagerfanta(new ArrayAdapter($pages))
                 ->setMaxNbPages($maxPages)
                 ->setMaxPerPage($max)
                 ->setCurrentPage($this->getCurrentPagerNumber());
-            $pages = $pagerfanta->getCurrentPageResults();
-        } else {
-            /** @var Page[] */
-            $pages = $queryBuilder->getQuery()->getResult();
+            $pages = [...$pagerfanta->getCurrentPageResults()];
+        }
 
-            if ($excludeAlreadyLinked) {
-                $pages = $this->linkCollector->excludeRegistered($pages);
-            }
+        if ($excludeAlreadyLinked) {
+            // A rendered card is a link too: the LinkCollector filter only registers what the
+            // raw prose links, never what a previous list displayed. Paginated lists register
+            // their current page results only — the other pager pages are not rendered.
+            $this->linkCollector->registerAll($pages);
         }
 
         $template = $this->apps->get()->getView($view);

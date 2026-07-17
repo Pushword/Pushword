@@ -56,6 +56,20 @@ The simplest way to use this feature is with the `excludeAlreadyLinked` paramete
 
 This automatically excludes any pages that are already linked in your content.
 
+A list using the parameter also **registers the cards it renders**, so several lists on the same page never show the same page twice:
+
+```twig
+{{ pages_list('taxonomy:destination', 4, excludeAlreadyLinked: true) }}
+{# a card rendered above will not come back below #}
+{{ pages_list('children', 6, excludeAlreadyLinked: true) }}
+```
+
+Registering is opt-in, like filtering: a `pages_list()` **without** the parameter renders normally and leaves the collector untouched — a full listing followed by an excluding carousel keeps working.
+
+An excluding list still renders its full `max`: the exclusion is done by the query, so `max` counts the pages that survived it — the list backfills with the next matching pages instead of coming up short.
+
+A paginated list only registers the cards of the pager page it renders; the other pager pages are not linked, so they stay listable.
+
 ### Full Example
 
 ```twig
@@ -199,7 +213,7 @@ This pairs well with our [Premium Case](/accessories/premium-case).
 
 ## Performance Notes
 
-- The LinkCollector filter runs **once** per page render, before Twig processing
+- The LinkCollector filter runs **once** per page render, before Twig processing; excluding lists then add their own rendered cards as Twig executes
 - Link detection uses optimized regex patterns with minimal overhead
 - The collector is automatically reset on each HTTP request
 - No database queries are made for link collection

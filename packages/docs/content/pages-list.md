@@ -44,6 +44,8 @@ When your page content contains links to other pages, you can exclude those page
 {{ pages_list('taxonomy:travel', 6, excludeAlreadyLinked: true) }}
 ```
 
+Lists using the parameter also skip what an earlier list on the same page already rendered, so a hub carrying several listings shows each page only once. See [Link Collector](/link-collector).
+
 Or use the `exclude_linked()` function with `pages()`:
 
 ```twig
