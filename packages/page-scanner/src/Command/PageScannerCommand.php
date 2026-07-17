@@ -3,6 +3,7 @@
 namespace Pushword\PageScanner\Command;
 
 use Pushword\Core\Command\AgentOutputTrait;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
@@ -21,6 +22,8 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
+ * @phpstan-import-type CorpusState from PageRepository
+ *
  * @phpstan-type ScanError array{message: string, page: array{id: int, slug: string, h1: string, metaRobots: string, host: string}}
  */
 #[AsCommand(
@@ -66,8 +69,18 @@ final class PageScannerCommand
         $this->scannedNodes = [];
         $this->scanCompleted = true;
 
+        /** @var Page[] $pages */
         $pages = $this->pageRepo->getPublishedPages($host);
         $pagesCount = \count($pages);
+
+        // Fingerprint each corpus BEFORE rendering it, so that a page edited while
+        // the scan runs reads as stale afterwards rather than as scanned. The hosts
+        // come from the corpus itself: an all-hosts scan writes one snapshot per
+        // host, and every node it can produce belongs to a page in this list.
+        $this->corpusAtScanStart = [];
+        foreach ($pages as $page) {
+            $this->corpusAtScanStart[$page->host ?? ''] ??= $this->pageRepo->getPublishedCorpusState($page->host ?? '');
+        }
 
         // Single pass: scan all pages, collect internal errors AND external URLs
         $this->human(\sprintf('Scanning %d pages...', $pagesCount));
@@ -95,9 +108,13 @@ final class PageScannerCommand
 
             $lastLineWasError = false;
 
-            // A redirection is a 301, not a page: it renders no HTML, so it would
-            // enter the graph as a node with no outbound link and read as an orphan.
-            if (! $page->hasRedirection()) {
+            // The graph is the indexable graph, the corpus pages_list() builds by
+            // default. A noindex page is scanned like any other — it still has links
+            // to check — but it is not a node: as a target it is an orphan by design
+            // (search, checkout, guest post), and as a source it hands out inbound
+            // links no editor chose. A redirection is not a node either: a 301 is not
+            // a page, and it renders no HTML to take links from.
+            if ($page->isIndexable()) {
                 $this->scannedNodes[] = $pageHost.'/'.$page->getSlug();
             }
 
@@ -195,6 +212,9 @@ final class PageScannerCommand
 
     /** @var list<string> `host/slug` of every page actually rendered, the link graph's nodes. */
     private array $scannedNodes = [];
+
+    /** @var array<string, CorpusState> what each scanned host's corpus looked like when the loop started. */
+    private array $corpusAtScanStart = [];
 
     /** False when the error limit aborted the loop: the graph would then be missing edges. */
     private bool $scanCompleted = true;
@@ -411,6 +431,7 @@ final class PageScannerCommand
                 $this->linkGraphStorage->writeAll(
                     $this->scannedNodes,
                     $this->scanner->linkGraphScanner->getEdges(),
+                    $this->corpusAtScanStart,
                 );
             }
 

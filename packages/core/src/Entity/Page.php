@@ -356,6 +356,21 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
         return null !== $this->publishedAt && $this->publishedAt <= new DateTime('now');
     }
 
+    /**
+     * Whether a robot may list this page: the notion `pages_list()` filters on by
+     * default, the search index keys off, and the link graph counts.
+     *
+     * Its counterpart, for when the rule has to be applied by the query rather than
+     * to a loaded page, is {@see PageRepository::getIndexablePagesQuery()} — which
+     * adds on top the variant rule the sitemap and the feed need.
+     */
+    public function isIndexable(): bool
+    {
+        return $this->isPublished()
+            && ! $this->hasRedirection()
+            && ! str_contains($this->metaRobots, 'noindex');
+    }
+
     // --- Template ---
 
     public function getTemplate(): ?string

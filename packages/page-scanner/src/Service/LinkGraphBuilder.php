@@ -6,6 +6,10 @@ namespace Pushword\PageScanner\Service;
  * Turns the raw edges collected during a scan into the link-graph report:
  * inbound/outbound counts, inbound sources, depth from the homepage, orphans.
  *
+ * The node list it is given is the indexable corpus (noindex and redirections are
+ * left out upstream, in the scan), and everything else follows from membership:
+ * an edge from a non-node is not a source, an edge to a non-node is not a link.
+ *
  * Known limit, intentional. Rendered offline, pages_list() only ever renders its
  * first pager page (RequestContext::$currentPager defaults to 1 and nothing sets
  * it outside a request), so the graph is the graph reachable *without

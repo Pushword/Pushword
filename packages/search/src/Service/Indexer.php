@@ -89,7 +89,7 @@ final readonly class Indexer
         // $page->host) without mutating the global current-site state.
         $loupe = $this->indexManager->getLoupe($page->host);
 
-        if (! $this->isIndexable($page)) {
+        if (! $page->isIndexable()) {
             if (null !== $page->id) {
                 $loupe->deleteDocument($page->id);
             }
@@ -121,13 +121,6 @@ final readonly class Indexer
         }
 
         $this->indexManager->getLoupe($host)->deleteDocument($pageId);
-    }
-
-    private function isIndexable(Page $page): bool
-    {
-        return $page->isPublished()
-            && ! $page->hasRedirection()
-            && ! str_contains($page->getMetaRobots(), 'noindex');
     }
 
     /**

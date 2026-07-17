@@ -54,6 +54,42 @@ final class PageTest extends TestCase
         self::assertFalse((clone $page)->isHoldPublication());
     }
 
+    public function testAPublishedPageIsIndexable(): void
+    {
+        self::assertTrue(new Page()->isIndexable());
+    }
+
+    public function testAnUnpublishedPageIsNotIndexable(): void
+    {
+        $page = new Page();
+        $page->publishedAt = new DateTime('tomorrow');
+
+        self::assertFalse($page->isIndexable());
+    }
+
+    public function testARedirectionIsNotIndexable(): void
+    {
+        $page = new Page();
+        $page->setMainContent('Location: https://example.tld');
+
+        self::assertFalse($page->isIndexable());
+    }
+
+    public function testANoindexPageIsNotIndexable(): void
+    {
+        $page = new Page();
+        $page->setMetaRobots('noindex');
+        self::assertFalse($page->isIndexable());
+
+        // The rule matches the SQL twin's `NOT LIKE '%noindex%'`: noindex never
+        // travels alone, it comes paired with a follow directive.
+        $page->setMetaRobots('noindex, follow');
+        self::assertFalse($page->isIndexable());
+
+        $page->setMetaRobots('index, follow');
+        self::assertTrue($page->isIndexable());
+    }
+
     public function testRedirectFromNormalizesMapListAndRows(): void
     {
         $page = new Page();

@@ -16,16 +16,23 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Reports the internal link graph `pw:page-scan` collected while rendering.
  *
+ * The graph is the indexable graph, like pages_list()'s default: noindex pages are
+ * neither nodes nor sources, so `--orphans` gates on the pages that are supposed to
+ * be linked, and an inbound count is one an editor chose.
+ *
  * A graph is always scoped to one host: a page earns its links from its own site,
  * and mixing sites in one report answers a question nobody asks. The host argument
  * is therefore optional rather than multi-valued — omitted, it means the first
  * configured site, not all of them.
  *
- * It never renders anything itself: it reads the snapshot the scan left behind,
- * and runs the scan synchronously when there is none (the API mirror polls a
- * background scan instead — a CI gate cannot). The snapshot's age is always
- * reported, because a page's inbound count changes when *other* pages are
- * edited, so a stale graph misleads without anything on the page having moved.
+ * It never renders anything itself: it reads the snapshot the scan left behind, and
+ * runs the scan synchronously when there is none — or when the one it finds no
+ * longer describes the current corpus (the API mirror reports staleness instead: it
+ * polls a background scan, and a CI gate cannot). A stale snapshot is not a
+ * snapshot: a page's inbound count changes when *other* pages are edited, so a graph
+ * can go wrong with nothing on the page itself having moved, and nobody can eyeball
+ * that. The snapshot's age is still reported — it is the one number that says how
+ * long ago the corpus was last read.
  *
  * @phpstan-import-type LinkGraph from LinkGraphBuilder
  */
@@ -65,16 +72,16 @@ final readonly class LinkGraphCommand
         $host ??= $this->siteRegistry->getDefault()->getMainHost();
 
         $snapshot = $this->storage->read($host);
-        if (null === $snapshot) {
-            if (Command::SUCCESS !== ($exitCode = $this->runScan($output, $host, $agentMode, $skipExternal))) {
+        if (null === $snapshot || $snapshot['stale']) {
+            if (Command::SUCCESS !== ($exitCode = $this->runScan($output, $host, $agentMode, $skipExternal, null !== $snapshot))) {
                 return $exitCode;
             }
 
             $snapshot = $this->storage->read($host);
         }
 
-        if (null === $snapshot) {
-            return $this->fail($output, $agentMode, 'No link graph available: pw:page-scan did not complete.');
+        if (null === $snapshot || $snapshot['stale']) {
+            return $this->fail($output, $agentMode, 'No up-to-date link graph available: pw:page-scan did not complete, or the content changed while it ran.');
         }
 
         $graph = $this->builder->build($snapshot['nodes'], $snapshot['edges']);
@@ -90,18 +97,21 @@ final readonly class LinkGraphCommand
     }
 
     /**
-     * No snapshot yet: render the corpus through the real scan, in-process, so a
+     * No usable snapshot: render the corpus through the real scan, in-process, so a
      * CI gate blocks on it. Its own PID lock may decline (another scan running),
-     * leaving no snapshot — the caller reports that rather than looping.
+     * leaving the snapshot missing or stale — the caller reports that rather than
+     * looping.
      *
      * The full scan runs by default: it also refreshes the error cache the admin
      * reads, and skipping external checks silently would leave that cache
      * claiming a clean bill of health it never verified.
      */
-    private function runScan(OutputInterface $output, string $host, bool $agentMode, bool $skipExternal): int
+    private function runScan(OutputInterface $output, string $host, bool $agentMode, bool $skipExternal, bool $stale): int
     {
         if (! $agentMode) {
-            $output->writeln('<comment>No link graph found, running pw:page-scan first...</comment>');
+            $output->writeln($stale
+                ? '<comment>The link graph no longer matches the content, running pw:page-scan first...</comment>'
+                : '<comment>No link graph found, running pw:page-scan first...</comment>');
         }
 
         return ($this->pageScannerCommand)(
@@ -207,7 +217,10 @@ final readonly class LinkGraphCommand
         ));
 
         if ([] === $matches) {
-            return $this->fail($output, $agentMode, \sprintf('Page "%s" is not in the graph (never scanned, or unpublished).', $slug));
+            return $this->fail($output, $agentMode, \sprintf(
+                'Page "%s" is not in the graph (never scanned, or not indexable: unpublished, noindex, or a redirection).',
+                $slug,
+            ));
         }
 
         if ($agentMode) {

@@ -70,9 +70,26 @@ The command never renders anything itself: it reads the snapshot the last scan l
 in `var/page-scan-graph--<host>`, and runs `pw:page-scan` synchronously when there is
 none. An all-hosts `pw:page-scan` writes one snapshot per host, so scanning
 everything then reporting one site never re-renders.
-Every output carries a `generatedAt` — mind it, because a page's inbound count
-changes when **other** pages are edited, so a stale graph misleads without anything
-on the page itself having moved. Re-run `pw:page-scan` to refresh it.
+
+### Staleness
+
+A stale graph is not a graph, so the command rebuilds one rather than report it. Each
+snapshot records the corpus it was taken from — how many pages were published, and
+when the last one was edited — and reading it compares that against the database. Add,
+edit or delete a page and the next `pw:link:graph` re-runs the scan; leave the content
+alone and it reports instantly, however old the snapshot is.
+
+It has to work that way round: a page's inbound count changes when **other** pages are
+edited, so nothing you can read on a page tells you its own numbers still hold, and
+`generatedAt` alone only ever told you the age — never whether it mattered.
+
+Two changes move no timestamp and no count, so they slip through: editing an
+unpublished draft (correctly — it is not in the graph), and swapping one page for
+another within the same second. `pw:page-scan` refreshes everything either way.
+
+Over the API the rule is inverted, because `GET /api/link-graph` cannot render: it
+returns the graph with `stale: true` and a `triggerUrl` to `POST /api/page-scan`,
+and leaves the decision to the caller.
 
 Like the scan, it emits compact JSON to AI agents and honours `--format`
 (see [agent output](/agent-output)). With the [API extension](/extension/api),
@@ -90,11 +107,28 @@ Nothing is filtered out on purpose — it falls out of how pages render:
 | a link to an unpublished page → `<span data-status="unpublished">` | no — hidden at render time |
 | `src`, `data-img`, `data-bg` | no — those are assets, not links |
 | links to media, static files or dead slugs | no — the target is not a page |
+| a link from or to a `noindex` page | no — see below |
 
 Navigation and footer links **are** counted. They inflate the inbound count of the
 few pages every template links to (home, contact, legal), never the ones you are
 trying to strengthen, and removing them spreads the distribution without reordering
-it. Redirections are not nodes: a 301 is not a page.
+it.
+
+### What counts as a page
+
+The graph is the **indexable** graph — the corpus `pages_list()` builds by default.
+A `noindex` page is scanned like any other (its links still get checked), but it is
+kept out of the graph on both sides:
+
+- **As a target**, because it is an orphan by design. A search page, a checkout, a
+  guest-post form is not meant to be linked, and a `--orphans` gate that lists them
+  is red forever, which makes it useless in CI.
+- **As a source**, because its links are not editorial. A single `noindex` search
+  page listing 243 of your 263 pages adds +1 to nearly every inbound count — and the
+  pages nothing really links to then hide at `in:1` instead of standing out at `in:0`.
+
+Redirections are not nodes either: a 301 is not a page. So `pageCount` is the number
+of pages **in the graph**, which is smaller than the number of pages scanned.
 
 ### Depth
 
@@ -111,7 +145,9 @@ by structure — `homepageScanned` says so, to keep the two from being confused.
 ### Orphans
 
 An orphan is a page with at most one inbound link. A homepage is never an orphan:
-it is where visitors land, however few links point back to it.
+it is where visitors land, however few links point back to it. Neither is a `noindex`
+page, which is not in the graph at all — the gate only ever asks about pages that are
+supposed to be linked.
 
 `--orphans` exits non-zero when any remain, so it gates a CI pipeline: every page
 should be reachable **without a pager**, as a spare wheel.

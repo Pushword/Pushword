@@ -25,6 +25,8 @@ use RuntimeException;
  * @implements ObjectRepository<Page>
  *
  * @method Page[] findAll()
+ *
+ * @phpstan-type CorpusState array{pages: int, lastEditAt: int|null}
  */
 #[AsDoctrineListener(event: Events::onClear)]
 class PageRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
@@ -389,6 +391,39 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     }
 
     /**
+     * A cheap fingerprint of what {@see getPublishedPages()} would return for a host,
+     * for callers that cache a whole-corpus derivative (the link graph) and need to
+     * know whether it still describes the site.
+     *
+     * Count *and* last edit, because neither alone is enough: an edit moves the
+     * timestamp without moving the count, while a deletion — or a page whose
+     * scheduled publishedAt has since passed — moves the count without touching any
+     * timestamp. Cheap enough to call on every read: two aggregates, no hydration.
+     *
+     * Compare states for equality, never for order. A timestamp is only a proxy for
+     * "the corpus changed", and one that runs backwards (a restored page, a flat
+     * sync writing its own updatedAt) still means exactly that.
+     *
+     * @return array{pages: int, lastEditAt: int|null} lastEditAt is null on an empty corpus
+     */
+    public function getPublishedCorpusState(string $host): array
+    {
+        $queryBuilder = $this->buildPublishedPageQuery('p');
+        $this->andHost($queryBuilder, $host);
+
+        /** @var array{pages: int|string, lastEditAt: string|null} $state */
+        $state = $queryBuilder
+            ->select('COUNT(p.id) AS pages', 'MAX(p.updatedAt) AS lastEditAt')
+            ->getQuery()
+            ->getSingleResult();
+
+        return [
+            'pages' => (int) $state['pages'],
+            'lastEditAt' => null === $state['lastEditAt'] ? null : (int) new DateTime($state['lastEditAt'])->format('U'),
+        ];
+    }
+
+    /**
      * Can be used via a twig function.
      *
      * @param string|array<string>         $host
@@ -733,6 +768,24 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
         return $queryBuilder->andWhere($alias.'.mainContent NOT LIKE :noi')
             ->setParameter('noi', 'Location:%');
+    }
+
+    /**
+     * Exclude slugs already linked on the page being rendered (see LinkCollectorService).
+     * Filtering here rather than on the hydrated result keeps the limit meaningful: the
+     * query returns `max` pages that survived the exclusion, instead of `max` pages minus
+     * the excluded ones.
+     *
+     * @param string[] $slugs
+     */
+    public function andNotSlug(QueryBuilder $queryBuilder, array $slugs): QueryBuilder
+    {
+        if ([] === $slugs) {
+            return $queryBuilder;
+        }
+
+        return $queryBuilder->andWhere($this->getRootAlias($queryBuilder).'.slug NOT IN (:excludedSlugs)')
+            ->setParameter('excludedSlugs', $slugs);
     }
 
     /**

@@ -4,11 +4,15 @@ namespace Pushword\PageScanner\Tests\Service;
 
 use Override;
 use PHPUnit\Framework\TestCase;
+use Pushword\Core\Repository\PageRepository;
 use Pushword\PageScanner\Service\LinkGraphStorage;
 use Symfony\Component\Filesystem\Filesystem;
 
 final class LinkGraphStorageTest extends TestCase
 {
+    /** @var array{pages: int, lastEditAt: int|null} */
+    private const array CORPUS = ['pages' => 2, 'lastEditAt' => 1750000000];
+
     private string $varDir;
 
     #[Override]
@@ -24,9 +28,15 @@ final class LinkGraphStorageTest extends TestCase
         new Filesystem()->remove($this->varDir);
     }
 
-    private function storage(): LinkGraphStorage
+    /**
+     * @param array{pages: int, lastEditAt: int|null} $currentCorpus what the database looks like right now
+     */
+    private function storage(array $currentCorpus = self::CORPUS): LinkGraphStorage
     {
-        return new LinkGraphStorage(new Filesystem(), $this->varDir);
+        $pageRepo = $this->createMock(PageRepository::class);
+        $pageRepo->method('getPublishedCorpusState')->willReturn($currentCorpus);
+
+        return new LinkGraphStorage(new Filesystem(), $pageRepo, $this->varDir);
     }
 
     public function testReadReturnsNullWhenTheHostWasNeverScanned(): void
@@ -39,7 +49,7 @@ final class LinkGraphStorageTest extends TestCase
         $nodes = ['a.tld/homepage', 'a.tld/one'];
         $edges = ['a.tld/homepage' => ['a.tld/one']];
 
-        $this->storage()->write('a.tld', $nodes, $edges);
+        $this->storage()->write('a.tld', $nodes, $edges, self::CORPUS);
         $snapshot = $this->storage()->read('a.tld');
 
         self::assertNotNull($snapshot);
@@ -49,17 +59,66 @@ final class LinkGraphStorageTest extends TestCase
 
     public function testGeneratedAtIsTheSnapshotMtime(): void
     {
-        $this->storage()->write('a.tld', [], []);
+        $this->storage()->write('a.tld', [], [], self::CORPUS);
         $snapshot = $this->storage()->read('a.tld');
 
         self::assertNotNull($snapshot);
         self::assertSame(filemtime($this->varDir.'/page-scan-graph--a.tld'), $snapshot['generatedAt']);
     }
 
+    public function testASnapshotOfTheCurrentCorpusIsFresh(): void
+    {
+        $this->storage()->write('a.tld', ['a.tld/homepage'], [], self::CORPUS);
+
+        $snapshot = $this->storage()->read('a.tld');
+
+        self::assertNotNull($snapshot);
+        self::assertFalse($snapshot['stale']);
+    }
+
+    public function testAnEditedPageMakesTheSnapshotStale(): void
+    {
+        $this->storage()->write('a.tld', ['a.tld/homepage'], [], self::CORPUS);
+
+        // Same pages, one of them edited since: every inbound count is now suspect,
+        // because a page's links change when OTHER pages are edited.
+        $snapshot = $this->storage(['pages' => 2, 'lastEditAt' => 1750000001])->read('a.tld');
+
+        self::assertNotNull($snapshot);
+        self::assertTrue($snapshot['stale']);
+    }
+
+    public function testADeletedPageMakesTheSnapshotStale(): void
+    {
+        $this->storage()->write('a.tld', ['a.tld/homepage'], [], self::CORPUS);
+
+        // Nothing was edited — a removal moves no timestamp — which is exactly why
+        // the count is half of the state.
+        $snapshot = $this->storage(['pages' => 1, 'lastEditAt' => 1750000000])->read('a.tld');
+
+        self::assertNotNull($snapshot);
+        self::assertTrue($snapshot['stale']);
+    }
+
+    public function testASnapshotFromBeforeTheCorpusWasRecordedIsStale(): void
+    {
+        // Written by an older Pushword: it describes a corpus it cannot name, and
+        // rescanning once is the only honest reading.
+        new Filesystem()->dumpFile(
+            $this->varDir.'/page-scan-graph--a.tld',
+            (string) json_encode(['nodes' => ['a.tld/homepage'], 'edges' => []]),
+        );
+
+        $snapshot = $this->storage()->read('a.tld');
+
+        self::assertNotNull($snapshot);
+        self::assertTrue($snapshot['stale']);
+    }
+
     public function testWriteOverwritesThePreviousSnapshot(): void
     {
-        $this->storage()->write('a.tld', ['a.tld/old'], []);
-        $this->storage()->write('a.tld', ['a.tld/new'], []);
+        $this->storage()->write('a.tld', ['a.tld/old'], [], self::CORPUS);
+        $this->storage()->write('a.tld', ['a.tld/new'], [], self::CORPUS);
 
         $snapshot = $this->storage()->read('a.tld');
 
@@ -77,6 +136,7 @@ final class LinkGraphStorageTest extends TestCase
                 'a.tld/homepage' => ['a.tld/one'],
                 'b.tld/homepage' => ['b.tld/two'],
             ],
+            ['a.tld' => self::CORPUS, 'b.tld' => self::CORPUS],
         );
 
         $a = $this->storage()->read('a.tld');
@@ -90,16 +150,35 @@ final class LinkGraphStorageTest extends TestCase
         self::assertSame(['b.tld/homepage' => ['b.tld/two']], $b['edges']);
     }
 
+    public function testWriteAllGivesEachHostItsOwnCorpusState(): void
+    {
+        // A host is scanned against its own corpus: b.tld going stale must not drag
+        // a.tld's graph down with it.
+        $this->storage()->writeAll(
+            ['a.tld/homepage', 'b.tld/homepage'],
+            [],
+            ['a.tld' => self::CORPUS, 'b.tld' => ['pages' => 9, 'lastEditAt' => 1750000009]],
+        );
+
+        $a = $this->storage()->read('a.tld');
+        $b = $this->storage()->read('b.tld');
+
+        self::assertNotNull($a);
+        self::assertNotNull($b);
+        self::assertFalse($a['stale']);
+        self::assertTrue($b['stale'], 'b.tld was written against a corpus that is not the one the mock reports');
+    }
+
     public function testWriteAllOfNothingWritesNothing(): void
     {
-        $this->storage()->writeAll([], []);
+        $this->storage()->writeAll([], [], []);
 
         self::assertSame([], glob($this->varDir.'/page-scan-graph*'));
     }
 
     public function testTheSnapshotIsInspectableJson(): void
     {
-        $this->storage()->write('a.tld', ['a.tld/homepage'], ['a.tld/homepage' => ['a.tld/one']]);
+        $this->storage()->write('a.tld', ['a.tld/homepage'], ['a.tld/homepage' => ['a.tld/one']], self::CORPUS);
 
         $raw = file_get_contents($this->varDir.'/page-scan-graph--a.tld');
 

@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Repository\PageRepository;
 use Pushword\PageScanner\Service\LinkGraphStorage;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -76,12 +77,19 @@ final class LinkGraphApiControllerTest extends WebTestCase
     }
 
     /**
+     * Stamped with the corpus as it is right now, so the graph reads as fresh.
+     *
      * @param list<string>                $nodes
      * @param array<string, list<string>> $edges
      */
     private function seed(array $nodes, array $edges): void
     {
-        self::getContainer()->get(LinkGraphStorage::class)->write(self::HOST, $nodes, $edges);
+        self::getContainer()->get(LinkGraphStorage::class)->write(
+            self::HOST,
+            $nodes,
+            $edges,
+            self::getContainer()->get(PageRepository::class)->getPublishedCorpusState(self::HOST),
+        );
     }
 
     public function testGraphRequiresAuthentication(): void
@@ -132,9 +140,29 @@ final class LinkGraphApiControllerTest extends WebTestCase
         self::assertSame(1, $body['edgeCount']);
         self::assertSame(1, $body['orphanCount'], 'a single inbound link is not enough to stop being an orphan');
         self::assertNotNull($body['generatedAt']);
+        self::assertFalse($body['stale']);
+        self::assertArrayNotHasKey('triggerUrl', $body, 'nothing to refresh: the graph matches the content');
 
         self::assertIsArray($body['pages']);
         self::assertCount(2, $body['pages']);
+    }
+
+    public function testAStaleGraphIsFlaggedRatherThanRebuilt(): void
+    {
+        // The CLI rescans here; this endpoint cannot render, so it says so and points
+        // at the scan. Reporting the numbers as if they held would be the bug.
+        self::getContainer()->get(LinkGraphStorage::class)->write(
+            self::HOST,
+            [self::HOST.'/homepage'],
+            [],
+            ['pages' => 999, 'lastEditAt' => 1750000000],
+        );
+
+        $body = $this->request('/api/link-graph?host='.self::HOST);
+
+        self::assertResponseIsSuccessful();
+        self::assertTrue($body['stale']);
+        self::assertSame('/api/page-scan?host='.self::HOST, $body['triggerUrl']);
     }
 
     public function testPageParamNarrowsToOneSlugWithItsSources(): void

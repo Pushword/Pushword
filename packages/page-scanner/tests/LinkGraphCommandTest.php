@@ -2,8 +2,12 @@
 
 namespace Pushword\PageScanner\Tests;
 
+use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\PageRepository;
 use Pushword\PageScanner\Service\LinkGraphStorage;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -45,13 +49,20 @@ final class LinkGraphCommandTest extends KernelTestCase
 
     /**
      * Seed a snapshot so the report paths are tested without paying for a render.
+     * Stamped with the corpus as it is right now, so the command reads it rather
+     * than deciding it is stale and rescanning over it.
      *
      * @param list<string>                $nodes
      * @param array<string, list<string>> $edges
      */
     private function seed(array $nodes, array $edges): void
     {
-        self::getContainer()->get(LinkGraphStorage::class)->write(self::HOST, $nodes, $edges);
+        self::getContainer()->get(LinkGraphStorage::class)->write(
+            self::HOST,
+            $nodes,
+            $edges,
+            self::getContainer()->get(PageRepository::class)->getPublishedCorpusState(self::HOST),
+        );
     }
 
     /**
@@ -211,6 +222,57 @@ final class LinkGraphCommandTest extends KernelTestCase
         self::assertNotNull(self::getContainer()->get(LinkGraphStorage::class)->read(self::HOST));
     }
 
+    public function testAGraphThatNoLongerMatchesTheContentIsRebuiltRatherThanReported(): void
+    {
+        // A graph nobody invalidates is a graph that lies: a page's inbound count
+        // moves when OTHER pages are edited, so no amount of reading this page tells
+        // you the number is stale. Seed a snapshot taken from a corpus that never
+        // existed and the command must go and render, not report it.
+        self::getContainer()->get(LinkGraphStorage::class)->write(
+            self::HOST,
+            [self::HOST.'/homepage', self::HOST.'/ghost-of-a-page'],
+            [],
+            ['pages' => 999, 'lastEditAt' => 1750000000],
+        );
+
+        $commandTester = $this->graph(['--skip-external' => true]);
+        $output = $commandTester->getDisplay();
+
+        self::assertSame(Command::SUCCESS, $commandTester->getStatusCode());
+        self::assertStringContainsString('no longer matches the content, running pw:page-scan first', $output);
+        self::assertStringNotContainsString('ghost-of-a-page', $output, 'the stale graph must not reach the report');
+    }
+
+    public function testAFreshGraphIsReportedWithoutRescanning(): void
+    {
+        // The other half of the rule: staleness is measured against the corpus, not
+        // the clock, so an untouched site never pays for a render it does not need.
+        $this->seed([self::HOST.'/homepage', self::HOST.'/one'], [self::HOST.'/homepage' => [self::HOST.'/one']]);
+
+        $output = $this->graph()->getDisplay();
+
+        self::assertStringNotContainsString('running pw:page-scan first', $output);
+        self::assertStringContainsString('2 pages, 1 internal links', $output);
+    }
+
+    public function testEditingAPageStalesTheGraph(): void
+    {
+        $this->seed([self::HOST.'/homepage'], []);
+
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $page = self::getContainer()->get(PageRepository::class)->findOneBy(['host' => self::HOST, 'slug' => 'kitchen-sink']);
+        self::assertInstanceOf(Page::class, $page);
+
+        // preUpdate stamps updatedAt: the very thing the corpus state watches.
+        $page->setH1($page->getH1().' (edited)');
+        $entityManager->flush();
+
+        $snapshot = self::getContainer()->get(LinkGraphStorage::class)->read(self::HOST);
+
+        self::assertNotNull($snapshot);
+        self::assertTrue($snapshot['stale'], 'a content edit must invalidate the graph');
+    }
+
     public function testAnAllHostsScanLeavesEveryHostReadableOnItsOwn(): void
     {
         // The point of writeAll(): scanning everything then reporting one site
@@ -245,5 +307,42 @@ final class LinkGraphCommandTest extends KernelTestCase
         self::assertNotNull($snapshot);
         self::assertNotContains(self::HOST.'/pushword', $snapshot['nodes'], 'a 301 is not a page');
         self::assertContains(self::HOST.'/homepage', $snapshot['nodes']);
+    }
+
+    public function testANoindexPageIsNeitherANodeNorASource(): void
+    {
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+
+        $noindex = new Page();
+        $noindex->setH1('Search results');
+        $noindex->setSlug('noindex-lists-everything');
+        $noindex->locale = 'en';
+        $noindex->host = self::HOST;
+        $noindex->createdAt = new DateTime();
+        $noindex->updatedAt = new DateTime();
+        $noindex->setMetaRobots('noindex');
+        $noindex->setMainContent('A list of [everything](/kitchen-sink).');
+
+        $entityManager->persist($noindex);
+        $entityManager->flush();
+
+        try {
+            new CommandTester(new Application($this->bootedKernel)->find('pw:page-scan'))
+                ->execute(['host' => self::HOST, '--format' => 'text', '--skip-external' => true]);
+
+            $snapshot = self::getContainer()->get(LinkGraphStorage::class)->read(self::HOST);
+            self::assertNotNull($snapshot);
+
+            // As a target: it is an orphan by design, and would fail the CI gate forever.
+            self::assertNotContains(self::HOST.'/noindex-lists-everything', $snapshot['nodes']);
+
+            // As a source: this is the one that skews the report. A noindex page
+            // listing the whole corpus adds +1 to every inbound count, and hides the
+            // pages with no editorial link at all at in:1 instead of in:0.
+            self::assertArrayNotHasKey(self::HOST.'/noindex-lists-everything', $snapshot['edges']);
+        } finally {
+            $entityManager->remove($noindex);
+            $entityManager->flush();
+        }
     }
 }
