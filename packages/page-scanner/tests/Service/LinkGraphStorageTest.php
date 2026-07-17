@@ -29,9 +29,8 @@ final class LinkGraphStorageTest extends TestCase
         return new LinkGraphStorage(new Filesystem(), $this->varDir);
     }
 
-    public function testReadReturnsNullWhenNeverScanned(): void
+    public function testReadReturnsNullWhenTheHostWasNeverScanned(): void
     {
-        self::assertNull($this->storage()->read(null));
         self::assertNull($this->storage()->read('a.tld'));
     }
 
@@ -40,8 +39,8 @@ final class LinkGraphStorageTest extends TestCase
         $nodes = ['a.tld/homepage', 'a.tld/one'];
         $edges = ['a.tld/homepage' => ['a.tld/one']];
 
-        $this->storage()->write(null, $nodes, $edges);
-        $snapshot = $this->storage()->read(null);
+        $this->storage()->write('a.tld', $nodes, $edges);
+        $snapshot = $this->storage()->read('a.tld');
 
         self::assertNotNull($snapshot);
         self::assertSame($nodes, $snapshot['nodes']);
@@ -50,36 +49,11 @@ final class LinkGraphStorageTest extends TestCase
 
     public function testGeneratedAtIsTheSnapshotMtime(): void
     {
-        $this->storage()->write(null, [], []);
-        $snapshot = $this->storage()->read(null);
+        $this->storage()->write('a.tld', [], []);
+        $snapshot = $this->storage()->read('a.tld');
 
         self::assertNotNull($snapshot);
-        self::assertSame(filemtime($this->varDir.'/page-scan-graph'), $snapshot['generatedAt']);
-    }
-
-    public function testEachHostKeepsItsOwnSnapshot(): void
-    {
-        $this->storage()->write(null, ['a.tld/homepage', 'b.tld/homepage'], []);
-        $this->storage()->write('a.tld', ['a.tld/homepage'], []);
-
-        $all = $this->storage()->read(null);
-        $scoped = $this->storage()->read('a.tld');
-
-        self::assertNotNull($all);
-        self::assertNotNull($scoped);
-        self::assertSame(['a.tld/homepage', 'b.tld/homepage'], $all['nodes'], 'a per-host scan must not overwrite the all-hosts snapshot');
-        self::assertSame(['a.tld/homepage'], $scoped['nodes']);
-        self::assertNull($this->storage()->read('b.tld'), 'a host never scanned on its own has no snapshot');
-    }
-
-    public function testAnEmptyHostIsTheAllHostsScope(): void
-    {
-        $this->storage()->write(null, ['a.tld/homepage'], []);
-
-        $snapshot = $this->storage()->read('');
-
-        self::assertNotNull($snapshot);
-        self::assertSame(['a.tld/homepage'], $snapshot['nodes']);
+        self::assertSame(filemtime($this->varDir.'/page-scan-graph--a.tld'), $snapshot['generatedAt']);
     }
 
     public function testWriteOverwritesThePreviousSnapshot(): void
@@ -91,6 +65,36 @@ final class LinkGraphStorageTest extends TestCase
 
         self::assertNotNull($snapshot);
         self::assertSame(['a.tld/new'], $snapshot['nodes']);
+    }
+
+    public function testWriteAllSplitsAnAllHostsScanIntoOneSnapshotPerHost(): void
+    {
+        // An all-hosts `pw:page-scan` must leave every host readable on its own,
+        // otherwise `pw:link:graph <host>` would rescan what was just rendered.
+        $this->storage()->writeAll(
+            ['a.tld/homepage', 'a.tld/one', 'b.tld/homepage'],
+            [
+                'a.tld/homepage' => ['a.tld/one'],
+                'b.tld/homepage' => ['b.tld/two'],
+            ],
+        );
+
+        $a = $this->storage()->read('a.tld');
+        $b = $this->storage()->read('b.tld');
+
+        self::assertNotNull($a);
+        self::assertNotNull($b);
+        self::assertSame(['a.tld/homepage', 'a.tld/one'], $a['nodes']);
+        self::assertSame(['b.tld/homepage'], $b['nodes']);
+        self::assertSame(['a.tld/homepage' => ['a.tld/one']], $a['edges'], "a host's snapshot carries only the edges leaving it");
+        self::assertSame(['b.tld/homepage' => ['b.tld/two']], $b['edges']);
+    }
+
+    public function testWriteAllOfNothingWritesNothing(): void
+    {
+        $this->storage()->writeAll([], []);
+
+        self::assertSame([], glob($this->varDir.'/page-scan-graph*'));
     }
 
     public function testTheSnapshotIsInspectableJson(): void

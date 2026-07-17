@@ -33,8 +33,13 @@ final class LinkGraphApiController extends AbstractApiController
     #[Route('/api/link-graph', name: 'pushword_api_link_graph', methods: ['GET'])]
     public function graph(Request $request): JsonResponse
     {
-        $host = $request->query->getString('host', '') ?: null;
-        if (null !== $host && ! $this->siteRegistry->isKnownHost($host)) {
+        // Required: a link graph is scoped to one site, never to a mix of them.
+        $host = $request->query->getString('host', '');
+        if ('' === $host) {
+            return $this->badRequest('A host is required');
+        }
+
+        if (! $this->siteRegistry->isKnownHost($host)) {
             return $this->badRequest('Unknown host');
         }
 
@@ -44,7 +49,7 @@ final class LinkGraphApiController extends AbstractApiController
                 'host' => $host,
                 'status' => 'idle',
                 'message' => 'No link graph yet: run a page scan first.',
-                'triggerUrl' => $this->generateUrl('pushword_api_page_scan_trigger', null !== $host ? ['host' => $host] : []),
+                'triggerUrl' => $this->generateUrl('pushword_api_page_scan_trigger', ['host' => $host]),
             ], JsonResponse::HTTP_NOT_FOUND);
         }
 
@@ -68,7 +73,7 @@ final class LinkGraphApiController extends AbstractApiController
             'pageCount' => $graph['pageCount'],
             'edgeCount' => $graph['edgeCount'],
             'orphanCount' => $graph['orphanCount'],
-            'hostsWithoutHomepage' => $graph['hostsWithoutHomepage'],
+            'homepageScanned' => $graph['homepageScanned'],
             'pages' => $pages,
         ]);
     }
@@ -90,19 +95,19 @@ final class LinkGraphApiController extends AbstractApiController
                         'parameters' => [[
                             'name' => 'host',
                             'in' => 'query',
-                            'required' => false,
+                            'required' => true,
                             'schema' => ['type' => 'string'],
-                            'description' => 'A configured host; omit for every site at once.',
+                            'description' => 'A configured host. Required: a link graph is scoped to one site.',
                         ], [
                             'name' => 'page',
                             'in' => 'query',
                             'required' => false,
                             'schema' => ['type' => 'string'],
-                            'description' => 'Restrict to one slug (every host it exists on unless host is set).',
+                            'description' => 'Restrict to one slug.',
                         ]],
                         'responses' => [
                             '200' => ['description' => 'OK', 'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/LinkGraph']]]],
-                            '400' => ['description' => 'Unknown host'],
+                            '400' => ['description' => 'Missing or unknown host'],
                             '401' => ['description' => 'Missing or invalid Bearer token'],
                             '404' => ['description' => 'No graph yet (body carries triggerUrl), or unknown page'],
                         ],
@@ -112,13 +117,13 @@ final class LinkGraphApiController extends AbstractApiController
             'components' => ['schemas' => ['LinkGraph' => [
                 'type' => 'object',
                 'properties' => [
-                    'host' => ['type' => ['string', 'null']],
+                    'host' => ['type' => 'string'],
                     'status' => ['type' => 'string', 'enum' => ['idle', 'completed']],
                     'generatedAt' => ['type' => 'string', 'format' => 'date-time', 'description' => 'When the scan behind this graph ran. A page inbound count changes when OTHER pages are edited, so mind the age.'],
                     'pageCount' => ['type' => 'integer'],
                     'edgeCount' => ['type' => 'integer'],
                     'orphanCount' => ['type' => 'integer', 'description' => 'Pages with at most 1 inbound link.'],
-                    'hostsWithoutHomepage' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Hosts with no scanned homepage: depth is unknown there, not infinite.'],
+                    'homepageScanned' => ['type' => 'boolean', 'description' => 'False when the host has no scanned homepage: depth is then unknown, not infinite.'],
                     'pages' => ['type' => 'array', 'items' => [
                         'type' => 'object',
                         'properties' => [

@@ -4,6 +4,7 @@ namespace Pushword\PageScanner\Command;
 
 use DateTimeInterface;
 use Pushword\Core\Command\AgentOutputTrait;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\PageScanner\Service\LinkGraphBuilder;
 use Pushword\PageScanner\Service\LinkGraphStorage;
 use Symfony\Component\Console\Attribute\Argument;
@@ -14,6 +15,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Reports the internal link graph `pw:page-scan` collected while rendering.
+ *
+ * A graph is always scoped to one host: a page earns its links from its own site,
+ * and mixing sites in one report answers a question nobody asks. The host argument
+ * is therefore optional rather than multi-valued — omitted, it means the first
+ * configured site, not all of them.
  *
  * It never renders anything itself: it reads the snapshot the scan left behind,
  * and runs the scan synchronously when there is none (the API mirror polls a
@@ -34,13 +40,14 @@ final readonly class LinkGraphCommand
     public function __construct(
         private LinkGraphStorage $storage,
         private LinkGraphBuilder $builder,
+        private SiteRegistry $siteRegistry,
         private PageScannerCommand $pageScannerCommand,
     ) {
     }
 
     public function __invoke(
         OutputInterface $output,
-        #[Argument(name: 'host')]
+        #[Argument(description: 'The host to report on; defaults to the first configured one', name: 'host')]
         ?string $host = null,
         #[Option(description: 'Restrict the report to one page (slug), with its inbound sources', name: 'page')]
         ?string $page = null,
@@ -52,6 +59,10 @@ final readonly class LinkGraphCommand
         string $format = 'auto',
     ): int {
         $agentMode = $this->isAgentFormat($format);
+
+        // A link graph is scoped to one site, so a missing host is not a request
+        // for all of them — it is the usual single-site case, left implicit.
+        $host ??= $this->siteRegistry->getDefault()->getMainHost();
 
         $snapshot = $this->storage->read($host);
         if (null === $snapshot) {
@@ -87,7 +98,7 @@ final readonly class LinkGraphCommand
      * reads, and skipping external checks silently would leave that cache
      * claiming a clean bill of health it never verified.
      */
-    private function runScan(OutputInterface $output, ?string $host, bool $agentMode, bool $skipExternal): int
+    private function runScan(OutputInterface $output, string $host, bool $agentMode, bool $skipExternal): int
     {
         if (! $agentMode) {
             $output->writeln('<comment>No link graph found, running pw:page-scan first...</comment>');
@@ -104,7 +115,7 @@ final readonly class LinkGraphCommand
     /**
      * @param LinkGraph $graph
      */
-    private function reportGraph(OutputInterface $output, bool $agentMode, array $graph, string $generatedAt, ?string $host): int
+    private function reportGraph(OutputInterface $output, bool $agentMode, array $graph, string $generatedAt, string $host): int
     {
         if ($agentMode) {
             $this->agentJson($output, 'done', [
@@ -113,7 +124,7 @@ final readonly class LinkGraphCommand
                 'pageCount' => $graph['pageCount'],
                 'edgeCount' => $graph['edgeCount'],
                 'orphanCount' => $graph['orphanCount'],
-                'hostsWithoutHomepage' => $graph['hostsWithoutHomepage'],
+                'homepageScanned' => $graph['homepageScanned'],
                 'pages' => $graph['pages'],
             ]);
 
@@ -127,7 +138,7 @@ final readonly class LinkGraphCommand
             $graph['orphanCount'],
             $generatedAt,
         ));
-        $this->warnHostsWithoutHomepage($output, $graph['hostsWithoutHomepage']);
+        $this->warnMissingHomepage($output, $graph['homepageScanned'], $host);
         $output->writeln('');
 
         foreach ($graph['pages'] as $page) {
@@ -146,7 +157,7 @@ final readonly class LinkGraphCommand
     /**
      * @param LinkGraph $graph
      */
-    private function reportOrphans(OutputInterface $output, bool $agentMode, array $graph, string $generatedAt, ?string $host): int
+    private function reportOrphans(OutputInterface $output, bool $agentMode, array $graph, string $generatedAt, string $host): int
     {
         $orphans = array_values(array_filter($graph['pages'], LinkGraphBuilder::isOrphan(...)));
         $passed = [] === $orphans;
@@ -157,7 +168,7 @@ final readonly class LinkGraphCommand
                 'host' => $host,
                 'pageCount' => $graph['pageCount'],
                 'orphanCount' => \count($orphans),
-                'hostsWithoutHomepage' => $graph['hostsWithoutHomepage'],
+                'homepageScanned' => $graph['homepageScanned'],
                 'orphans' => $orphans,
             ]);
 
@@ -186,7 +197,7 @@ final readonly class LinkGraphCommand
     /**
      * @param LinkGraph $graph
      */
-    private function reportPage(OutputInterface $output, bool $agentMode, array $graph, string $generatedAt, ?string $host, string $slug): int
+    private function reportPage(OutputInterface $output, bool $agentMode, array $graph, string $generatedAt, string $host, string $slug): int
     {
         $slug = trim($slug, '/') ?: 'homepage';
 
@@ -226,18 +237,15 @@ final readonly class LinkGraphCommand
         return Command::SUCCESS;
     }
 
-    /**
-     * @param list<string> $hosts
-     */
-    private function warnHostsWithoutHomepage(OutputInterface $output, array $hosts): void
+    private function warnMissingHomepage(OutputInterface $output, bool $homepageScanned, string $host): void
     {
-        if ([] === $hosts) {
+        if ($homepageScanned) {
             return;
         }
 
         $output->writeln(\sprintf(
-            '<comment>No homepage scanned on %s: depth is unknown there, not infinite.</comment>',
-            implode(', ', $hosts),
+            '<comment>No homepage scanned on %s: depth is unknown, not infinite.</comment>',
+            $host,
         ));
     }
 

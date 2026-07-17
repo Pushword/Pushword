@@ -23,6 +23,21 @@ final class LinkGraphBuilderTest extends TestCase
         self::fail($node.' is not in the graph');
     }
 
+    /**
+     * The orphan set, named the way callers derive it: by filtering the pages.
+     *
+     * @param array{pages: list<array{host: string, slug: string, inboundCount: int, outboundCount: int, inbound: list<string>, depth: int|null}>, ...} $graph
+     *
+     * @return list<string>
+     */
+    private function orphans(array $graph): array
+    {
+        return array_values(array_map(
+            static fn (array $page): string => $page['host'].'/'.$page['slug'],
+            array_filter($graph['pages'], LinkGraphBuilder::isOrphan(...)),
+        ));
+    }
+
     public function testCountsInboundAndOutbound(): void
     {
         $graph = new LinkGraphBuilder()->build(
@@ -128,7 +143,7 @@ final class LinkGraphBuilderTest extends TestCase
             ],
         );
 
-        self::assertSame(['a.tld/never', 'a.tld/once'], $graph['orphans']);
+        self::assertSame(['a.tld/never', 'a.tld/once'], $this->orphans($graph));
         self::assertSame(2, $graph['orphanCount']);
     }
 
@@ -137,14 +152,14 @@ final class LinkGraphBuilderTest extends TestCase
         // Nothing links back to the home: it is still where visitors land.
         $graph = new LinkGraphBuilder()->build(['a.tld/homepage', 'a.tld/one'], ['a.tld/homepage' => ['a.tld/one']]);
 
-        self::assertSame(['a.tld/one'], $graph['orphans']);
+        self::assertSame(['a.tld/one'], $this->orphans($graph));
     }
 
     public function testALocaleHomeCanBeAnOrphan(): void
     {
         $graph = new LinkGraphBuilder()->build(['a.tld/homepage', 'a.tld/fr/homepage'], []);
 
-        self::assertSame(['a.tld/fr/homepage'], $graph['orphans']);
+        self::assertSame(['a.tld/fr/homepage'], $this->orphans($graph));
     }
 
     public function testLeastLinkedPagesComeFirst(): void
@@ -163,11 +178,23 @@ final class LinkGraphBuilderTest extends TestCase
         );
     }
 
-    public function testNamesHostsWhoseHomepageWasNeverScanned(): void
+    public function testFlagsAGraphWhoseHomepageWasNeverScanned(): void
     {
-        $graph = new LinkGraphBuilder()->build(['a.tld/homepage', 'a.tld/one', 'b.tld/one'], []);
+        $graph = new LinkGraphBuilder()->build(['a.tld/one', 'a.tld/two'], []);
 
-        self::assertSame(['b.tld'], $graph['hostsWithoutHomepage']);
-        self::assertNull($this->page($graph['pages'], 'b.tld/one')['depth']);
+        // Depth is null there by absence of a root, not by a linking problem.
+        self::assertFalse($graph['homepageScanned']);
+        self::assertNull($this->page($graph['pages'], 'a.tld/one')['depth']);
+    }
+
+    public function testAScannedHomepageIsFlagged(): void
+    {
+        self::assertTrue(new LinkGraphBuilder()->build(['a.tld/homepage'], [])['homepageScanned']);
+    }
+
+    public function testALocaleHomeDoesNotCountAsTheHomepage(): void
+    {
+        // Same slug-exactness rule the walk roots on: `fr/homepage` is not a root.
+        self::assertFalse(new LinkGraphBuilder()->build(['a.tld/fr/homepage'], [])['homepageScanned']);
     }
 }

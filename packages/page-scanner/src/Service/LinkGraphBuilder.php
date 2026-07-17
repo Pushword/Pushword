@@ -18,8 +18,7 @@ namespace Pushword\PageScanner\Service;
  *     pageCount: int,
  *     edgeCount: int,
  *     orphanCount: int,
- *     orphans: list<string>,
- *     hostsWithoutHomepage: list<string>,
+ *     homepageScanned: bool,
  *     pages: list<LinkGraphPage>,
  * }
  */
@@ -78,17 +77,11 @@ final class LinkGraphBuilder
         usort($pages, static fn (array $a, array $b): int => [$a['inboundCount'], $a['host'], $a['slug']]
             <=> [$b['inboundCount'], $b['host'], $b['slug']]);
 
-        $orphans = array_map(
-            static fn (array $page): string => $page['host'].'/'.$page['slug'],
-            array_filter($pages, self::isOrphan(...)),
-        );
-
         return [
             'pageCount' => \count($nodes),
             'edgeCount' => $edgeCount,
-            'orphanCount' => \count($orphans),
-            'orphans' => array_values($orphans),
-            'hostsWithoutHomepage' => $this->hostsWithoutHomepage($nodes),
+            'orphanCount' => \count(array_filter($pages, self::isOrphan(...))),
+            'homepageScanned' => $this->hasHomepage($nodes),
             'pages' => $pages,
         ];
     }
@@ -107,27 +100,15 @@ final class LinkGraphBuilder
     }
 
     /**
-     * A host whose homepage was never scanned has no root to walk from, so every
-     * depth it reports is null by absence, not by structure. Naming it keeps that
-     * from reading as a corpus-wide linking problem.
+     * Without a homepage there is no root to walk from, so every depth the report
+     * carries is null by absence rather than by structure. Saying so keeps that
+     * from reading as a site-wide linking problem.
      *
      * @param list<string> $nodes
-     *
-     * @return list<string>
      */
-    private function hostsWithoutHomepage(array $nodes): array
+    private function hasHomepage(array $nodes): bool
     {
-        $hosts = [];
-        $withHomepage = [];
-        foreach ($nodes as $node) {
-            [$host, $slug] = explode('/', $node, 2);
-            $hosts[$host] = true;
-            if ('homepage' === $slug) {
-                $withHomepage[$host] = true;
-            }
-        }
-
-        return array_keys(array_diff_key($hosts, $withHomepage));
+        return array_any($nodes, static fn (string $node): bool => 'homepage' === explode('/', $node, 2)[1]);
     }
 
     /**

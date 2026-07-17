@@ -40,10 +40,7 @@ final class LinkGraphCommandTest extends KernelTestCase
 
     private function removeSnapshots(): void
     {
-        new Filesystem()->remove([
-            $this->varDir().'/page-scan-graph',
-            $this->varDir().'/page-scan-graph--'.self::HOST,
-        ]);
+        new Filesystem()->remove(glob($this->varDir().'/page-scan-graph--*') ?: []);
     }
 
     /**
@@ -158,6 +155,21 @@ final class LinkGraphCommandTest extends KernelTestCase
         self::assertStringContainsString('No homepage scanned on '.self::HOST, $this->graph()->getDisplay());
     }
 
+    public function testTheHostDefaultsToTheFirstConfiguredSite(): void
+    {
+        // localhost.dev is the skeleton's first app: omitting the argument must
+        // report it, not every site at once.
+        $this->seed([self::HOST.'/homepage', self::HOST.'/one'], [self::HOST.'/homepage' => [self::HOST.'/one']]);
+
+        $commandTester = new CommandTester(new Application($this->bootedKernel)->find('pw:link:graph'));
+        $commandTester->execute(['--format' => 'agent']);
+
+        $decoded = json_decode(trim($commandTester->getDisplay()), true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame(self::HOST, $decoded['host']);
+        self::assertSame(2, $decoded['pageCount']);
+    }
+
     public function testAgentOutputIsASingleJsonLine(): void
     {
         $this->seed([self::HOST.'/homepage', self::HOST.'/one'], [self::HOST.'/homepage' => [self::HOST.'/one']]);
@@ -197,6 +209,28 @@ final class LinkGraphCommandTest extends KernelTestCase
         self::assertSame(Command::SUCCESS, $commandTester->getStatusCode());
         self::assertStringContainsString('No link graph found, running pw:page-scan first', $commandTester->getDisplay());
         self::assertNotNull(self::getContainer()->get(LinkGraphStorage::class)->read(self::HOST));
+    }
+
+    public function testAnAllHostsScanLeavesEveryHostReadableOnItsOwn(): void
+    {
+        // The point of writeAll(): scanning everything then reporting one site
+        // must not re-render. A single combined snapshot would force a rescan.
+        new CommandTester(new Application($this->bootedKernel)->find('pw:page-scan'))
+            ->execute(['--format' => 'text', '--skip-external' => true]);
+
+        $storage = self::getContainer()->get(LinkGraphStorage::class);
+        $scanned = $storage->read(self::HOST);
+        $other = $storage->read('admin-block-editor.test');
+
+        self::assertNotNull($scanned);
+        self::assertNotNull($other, 'an all-hosts scan must leave a snapshot for every host it rendered');
+
+        foreach ($scanned['nodes'] as $node) {
+            self::assertStringStartsWith(self::HOST.'/', $node, 'a snapshot holds only its own host');
+        }
+
+        // And reporting one of them reads that snapshot rather than rescanning.
+        self::assertStringNotContainsString('running pw:page-scan first', $this->graph()->getDisplay());
     }
 
     public function testARedirectionIsNotAGraphNode(): void

@@ -55,13 +55,21 @@ costs nothing extra — the HTML is already in memory — and `pw:link:graph` re
 
 ```shell
 php bin/console pw:link:graph                    # every page: inbound, outbound, depth
-php bin/console pw:link:graph localhost.dev      # one host
+php bin/console pw:link:graph example.com        # another host
 php bin/console pw:link:graph --page=about       # one page, with its inbound sources
 php bin/console pw:link:graph --orphans          # only orphans, exit code 1 if any
 ```
 
+A link graph is always scoped to **one host**: a page earns its links from its own
+site, and mixing sites in one report answers a question nobody asks. Omitting the
+argument therefore means the first configured site, not all of them. The flip side:
+an inbound link coming from *another* host is not counted, so a page linked only
+from another locale reads as an orphan.
+
 The command never renders anything itself: it reads the snapshot the last scan left
-in `var/page-scan-graph`, and runs `pw:page-scan` synchronously when there is none.
+in `var/page-scan-graph--<host>`, and runs `pw:page-scan` synchronously when there is
+none. An all-hosts `pw:page-scan` writes one snapshot per host, so scanning
+everything then reporting one site never re-renders.
 Every output carries a `generatedAt` — mind it, because a page's inbound count
 changes when **other** pages are edited, so a stale graph misleads without anything
 on the page itself having moved. Re-run `pw:page-scan` to refresh it.
@@ -96,10 +104,9 @@ which is why it is computed rather than tallied. `depth: 0` is the homepage,
 `null` means unreachable.
 
 Only a page whose slug is exactly `homepage` roots the walk. A locale home
-(`fr/homepage`) is a page like any other: it is reached *from* the home. When a host
-has no scanned homepage at all, every depth it reports is `null` by absence rather
-than by structure — the report names those hosts in `hostsWithoutHomepage` so the
-two do not get confused.
+(`fr/homepage`) is a page like any other: it is reached *from* the home. When the host
+has no scanned homepage at all, every depth is `null` by absence of a root rather than
+by structure — `homepageScanned` says so, to keep the two from being confused.
 
 ### Orphans
 

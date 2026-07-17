@@ -276,9 +276,9 @@ The scan also records which pages link to which. This endpoint reports that grap
 | `GET`  | `/api/link-graph` | Inbound/outbound links, inbound sources, depth, orphans   |
 
 Read-only: the graph comes from the page scan, so there is nothing separate to start. When a
-scope was never scanned the endpoint answers `404` with a `triggerUrl` pointing at
-`POST /api/page-scan`. Takes an optional `?host=` and `?page=` (a slug, on every host it
-exists on unless `host` is set).
+host was never scanned the endpoint answers `404` with a `triggerUrl` pointing at
+`POST /api/page-scan`. `?host=` is **required** — a graph is scoped to one site — and
+`?page=` optionally narrows it to one slug.
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
@@ -293,7 +293,7 @@ curl -H "Authorization: Bearer $TOKEN" \
   "pageCount": 251,
   "edgeCount": 1203,
   "orphanCount": 3,
-  "hostsWithoutHomepage": [],
+  "homepageScanned": true,
   "pages": [
     {
       "host": "example.com",
@@ -311,8 +311,8 @@ curl -H "Authorization: Bearer $TOKEN" \
   **other** pages are edited, so a stale graph misleads without anything on the page itself
   having moved. `POST /api/page-scan` refreshes it.
 - `depth` — clicks from the homepage; `null` when unreachable without a pager.
-- `hostsWithoutHomepage` — hosts with no scanned homepage: `depth` is unknown there rather
-  than infinite.
+- `homepageScanned` — false when the host has no scanned homepage: `depth` is then unknown
+  rather than infinite.
 - `orphanCount` counts pages with at most one inbound link. A homepage is never an orphan.
 
 {id=errors}

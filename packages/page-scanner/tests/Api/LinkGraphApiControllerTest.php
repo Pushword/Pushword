@@ -72,10 +72,7 @@ final class LinkGraphApiControllerTest extends WebTestCase
 
     private function removeSnapshots(): void
     {
-        new Filesystem()->remove([
-            $this->varDir().'/page-scan-graph',
-            $this->varDir().'/page-scan-graph--'.self::HOST,
-        ]);
+        new Filesystem()->remove(glob($this->varDir().'/page-scan-graph--*') ?: []);
     }
 
     /**
@@ -97,6 +94,14 @@ final class LinkGraphApiControllerTest extends WebTestCase
     public function testUnknownHostIsRejected(): void
     {
         $this->request('/api/link-graph?host=does-not-exist.invalid');
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testAMissingHostIsRejected(): void
+    {
+        // A graph is scoped to one site: over HTTP, say so rather than guess.
+        $this->request('/api/link-graph');
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
     }
@@ -162,7 +167,7 @@ final class LinkGraphApiControllerTest extends WebTestCase
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
     }
 
-    public function testOrphanCountAndHostsWithoutHomepageAreReported(): void
+    public function testOrphanCountAndMissingHomepageAreReported(): void
     {
         $this->seed([self::HOST.'/lonely'], []);
 
@@ -170,7 +175,7 @@ final class LinkGraphApiControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame(1, $body['orphanCount']);
-        self::assertSame([self::HOST], $body['hostsWithoutHomepage']);
+        self::assertFalse($body['homepageScanned']);
     }
 
     /**

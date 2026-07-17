@@ -373,8 +373,7 @@ final class PageScannerCommand
             // An aborted loop leaves the graph missing every edge of the pages it
             // never rendered, which would read as orphans. Keep the last good one.
             if ($this->scanCompleted) {
-                $this->linkGraphStorage->write(
-                    $host,
+                $this->linkGraphStorage->writeAll(
                     $this->scannedNodes,
                     $this->scanner->linkGraphScanner->getEdges(),
                 );
