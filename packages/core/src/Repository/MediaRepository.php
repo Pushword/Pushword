@@ -48,6 +48,9 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      */
     private ?array $fileNameIndexLight = null;
 
+    /** Version the in-memory index was built for, to tell a stale memo from a reusable one. */
+    private ?int $indexVersion = null;
+
     private bool $warmedLight = false;
 
     public function __construct(
@@ -73,21 +76,31 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             return;
         }
 
+        $version = $this->readVersion();
+
+        // Scalar rows only, so EntityManager::clear() cannot make them stale.
+        // Reuse what this instance already built unless a write — here or in
+        // another process — bumped the version, instead of querying all media
+        // again on every clear (twice a page during pw:static).
+        if (null !== $this->fileNameIndexLight && $this->indexVersion === $version) {
+            $this->warmedLight = true;
+
+            return;
+        }
+
         $cache = $this->debug ? null : $this->cache;
 
         if (null !== $cache) {
-            $indexItem = $cache->getItem(self::INDEX_CACHE_KEY_PREFIX.$this->readVersion());
+            $indexItem = $cache->getItem(self::INDEX_CACHE_KEY_PREFIX.$version);
             if ($indexItem->isHit()) {
                 /** @var array<string, array{id: int, fileName: string, fileNameHistory: list<string>}> $index */
                 $index = $indexItem->get();
-                $this->fileNameIndexLight = $index;
-                $this->warmedLight = true;
+                $this->rememberIndex($index, $version);
 
                 return;
             }
 
-            $this->fileNameIndexLight = $this->buildFileNameIndex();
-            $this->warmedLight = true;
+            $this->rememberIndex($this->buildFileNameIndex(), $version);
 
             // Never persist an empty index: a warmup against a media table that
             // is empty only transiently (mid-fixtures, mid-import — e.g. the
@@ -105,7 +118,16 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             return;
         }
 
-        $this->fileNameIndexLight = $this->buildFileNameIndex();
+        $this->rememberIndex($this->buildFileNameIndex(), $version);
+    }
+
+    /**
+     * @param array<string, array{id: int, fileName: string, fileNameHistory: list<string>}> $index
+     */
+    private function rememberIndex(array $index, int $version): void
+    {
+        $this->fileNameIndexLight = $index;
+        $this->indexVersion = $version;
         $this->warmedLight = true;
     }
 
@@ -177,6 +199,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     public function resetFileNameIndexLight(): void
     {
         $this->fileNameIndexLight = null;
+        $this->indexVersion = null;
         $this->warmedLight = false;
     }
 
@@ -186,12 +209,15 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     }
 
     /**
-     * Called automatically by the Doctrine onClear event so CLI batch paths
-     * that call EntityManager::clear() see a fresh rebuild on next lookup.
+     * Called automatically by the Doctrine onClear event. The index holds
+     * scalars, which a clear() cannot detach, so it is kept — dropping it would
+     * requery every media on the next lookup, and CLI batch paths clear often
+     * (every other page in pw:static). Only the version is re-checked, so a
+     * long-lived worker still picks up writes made by another process.
      */
     public function onClear(): void
     {
-        $this->resetFileNameIndexLight();
+        $this->warmedLight = false;
     }
 
     public function loadMedias(): void
@@ -253,7 +279,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             return $media;
         }
 
-        $this->fileNameIndexLight = $this->buildFileNameIndex();
+        $this->rememberIndex($this->buildFileNameIndex(), $this->readVersion());
         $entry = $this->fileNameIndexLight[$fileName] ?? null;
 
         return null !== $entry ? $this->find($entry['id']) : null;

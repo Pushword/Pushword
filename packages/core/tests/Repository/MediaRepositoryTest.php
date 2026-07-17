@@ -129,7 +129,7 @@ final class MediaRepositoryTest extends KernelTestCase
         }
     }
 
-    public function testOnClearResetsLightIndex(): void
+    public function testLookupStillResolvesAfterOnClear(): void
     {
         self::bootKernel();
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
@@ -138,7 +138,8 @@ final class MediaRepositoryTest extends KernelTestCase
         self::assertNotNull($repo->findOneByFileName('1.jpg'));
 
         $em->clear();
-        // After onClear, light index is rebuilt on next lookup and still works.
+        // The index survives a clear (it holds scalars), and the ids it carries
+        // still resolve against a cleared entity manager.
         self::assertNotNull($repo->findOneByFileName('1.jpg'));
     }
 
@@ -164,6 +165,41 @@ final class MediaRepositoryTest extends KernelTestCase
         $media = $repoB->findOneByFileName('1.jpg');
         self::assertNotNull($media);
         self::assertSame('1.jpg', $media->getFileName());
+    }
+
+    /**
+     * The index survives a clear, so the version counter is what keeps a
+     * long-lived worker honest about writes made by another process.
+     */
+    public function testOnClearRechecksVersion(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $registry = self::getContainer()->get(ManagerRegistry::class);
+        $cache = new ArrayAdapter();
+
+        $repo = new MediaRepository($registry, $cache, debug: false);
+        $media = $repo->findOneByFileName('1.jpg'); // warms the index at version 0
+        self::assertNotNull($media);
+
+        // Another process writes a media: it publishes an index at the next
+        // version and bumps the shared counter. Nothing resets us in-process.
+        $indexItem = $cache->getItem(MediaRepository::INDEX_CACHE_KEY_PREFIX.'1');
+        $indexItem->set(['written-elsewhere.jpg' => ['id' => $media->id, 'fileName' => 'written-elsewhere.jpg', 'fileNameHistory' => []]]);
+
+        $cache->save($indexItem);
+
+        $versionItem = $cache->getItem(MediaRepository::VERSION_CACHE_KEY);
+        $versionItem->set(1);
+
+        $cache->save($versionItem);
+
+        $repo->onClear();
+
+        self::assertNotNull(
+            $repo->findOneByFileName('written-elsewhere.jpg'),
+            'onClear must re-check the version, so a write from another process is picked up',
+        );
     }
 
     public function testSelfHealsStaleIndexId(): void

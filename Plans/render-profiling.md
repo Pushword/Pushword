@@ -88,10 +88,8 @@ which **re-parses the same HTML** just to read the headings back out.
 
 2. **`MediaRepository::warmupFileNameIndexLight` — 8.4% of render.**
    Rebuilds the full **12 133-row** filename index **~once per page** (45 rebuilds
-   / 48 pages). Root cause: `cache.app` is an **`ApcuAdapter`** and
-   `apc.enable_cli = Off`, so the cache **never hits in CLI** — exactly where
-   `pw:static` runs. Fix: a filesystem pool (like `cache.pushword_markdown`) or a
-   per-process memo.
+   / 48 pages). **DONE — see "Fix, applied — keep the media index across a
+   clear" below.**
 
 3. **`HtmlMinifier` — 5.3 ms/page.** For each `pre|code|script|textarea` node it
    does `str_replace($node->outerHtml(), …)` over the **whole document** →
@@ -142,6 +140,59 @@ errored before the change. TOC menu links verified byte-identical (md5) on
 
 Regression guard: `EntityFilterTest::testTocStopsAtCutoffMarker` (both marker
 spellings) — verified to fail if the cutoff is broken.
+
+## Fix, applied — keep the media index across a clear
+
+**The first diagnosis blamed the wrong thing.** `cache.app` being an
+`ApcuAdapter` with `apc.enable_cli = Off` is real, but it is only the *missing
+airbag*, not the crash. The actual chain:
+
+1. `MediaRepository` is `#[AsDoctrineListener(event: Events::onClear)]`.
+2. `onClear()` called `resetFileNameIndexLight()`, dropping the in-memory index.
+3. `PagesGenerator.php:110` calls `EntityManager::clear()` **every 2 pages**.
+4. → a full 12 133-row DQL rebuild every other page.
+5. APCu would normally absorb that, but it never hits in CLI.
+
+The index holds **scalar rows only** (its own docblock says so; it is built with
+`getArrayResult()`). `EntityManager::clear()` detaches *entities* — it cannot
+stale a scalar array. The reset was throwing away valid data.
+
+**Why not move the pool to the filesystem** (the first idea): it would *penalise*
+APCu users — in-memory beats filesystem on the web path, which is why they picked
+APCu — and it would not fix the cause anyway: you would still read and unserialize
+a 12k-row array every 2 pages.
+
+**What `onClear` is actually for:** it is the freshness trigger for long-lived
+processes. In worker mode the clear between requests is what makes the next
+lookup re-read the version counter and notice another process's writes. So it
+cannot simply be deleted.
+
+**The fix:** split the two resets.
+
+- `resetFileNameIndexLight()` stays the **hard** reset (drops the index) and is
+  still what real writes use — `bumpVersion()`, `MediaCacheInvalidationListener`,
+  `MediaImporter`.
+- `onClear()` becomes a **soft** reset: it only clears `warmedLight`, so the next
+  lookup re-checks the version (one cheap cache read) and reuses the index it
+  already has when the version is unchanged. `indexVersion` records what the memo
+  was built for.
+
+Works for **every** backend (APCu, filesystem, Redis, none), no config change, no
+new pool, and it fixes CLI, web and worker alike.
+
+**Result (48 pages, profiler-free, measured on its own):** warm render
+**25.3 ms → 21.6 ms (−15%)**.
+
+**Output equivalence:** 473 real pages, released vendor vs patched, identical —
+the only diffs are PHP object ids inside 4 pages that already threw *before* any
+change (pre-existing altimood data issues).
+
+Guards: `MediaRepositoryTest::testOnClearRechecksVersion` (verified to fail if the
+memo ignores the version) and `testLookupStillResolvesAfterOnClear`.
+
+> Measuring trap: an `old/` HTML dump taken before any `cache:clear` is **not** a
+> valid baseline — unrelated cached state (internal link hrefs) drifts and shows
+> up as ~50 false diffs. Always dump control and candidate in the *same* state.
 
 ## Markdown: verdict on tempest/markdown
 
