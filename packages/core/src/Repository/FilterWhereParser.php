@@ -79,7 +79,10 @@ class FilterWhereParser
      */
     private function retrieveExpressionFrom(array $whereRow): string
     {
-        $paramKey = 'm'.md5('a'.random_int(0, mt_getrandmax()));
+        // Deterministic name: the parameter name is part of the DQL string, and a
+        // random one would make every generated DQL unique — defeating Doctrine's
+        // query cache on every run and growing the cache pool without bound.
+        $paramKey = 'w'.\count($this->queryBuilder->getParameters());
 
         $prefix = $whereRow['key_prefix'] ?? $whereRow[4] ?? 'p.';
         $key = $whereRow['key'] ?? $whereRow[0] ?? throw new Exception('key was forgotten');

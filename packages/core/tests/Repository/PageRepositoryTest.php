@@ -281,4 +281,22 @@ final class PageRepositoryTest extends KernelTestCase
         $allPublished = $pageRepo->findNewlyPublishedSince(new DateTime('2000-01-01'));
         self::assertGreaterThan(0, \count($allPublished));
     }
+
+    public function testWhereFilterProducesDeterministicDql(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        $where = [['key' => 'slug', 'operator' => 'LIKE', 'value' => 'home%'], 'OR', ['key' => 'title', 'operator' => '=', 'value' => 'x']];
+
+        // The parameter names are part of the DQL string: if they are not
+        // deterministic, no generated query can ever hit Doctrine's query cache
+        // across processes, and the cache pool grows on every run.
+        self::assertSame(
+            $pageRepo->getPublishedPageQueryBuilder('', $where)->getDQL(),
+            $pageRepo->getPublishedPageQueryBuilder('', $where)->getDQL(),
+        );
+    }
 }
