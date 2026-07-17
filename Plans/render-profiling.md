@@ -287,3 +287,105 @@ resolved.
   including a second in-process kernel (`KernelTrait.php:17-25`).
 - Already parallelised across subprocesses (`WorkerCountResolver`), so the
   per-page CPU cost above is what multiplies.
+
+---
+
+# Pass 2 (2026-07-17): 16.4 → 11.2 ms/page warm
+
+Baseline reproduced on the same harness/corpus: **16.4 warm / 22.9 cold**.
+
+## Method upgrade: Excimer, and what "ms/page" is made of
+
+Sampling profiler this time (no xdebug bias): `php85-php-pecl-excimer` RPM
+extracted as a plain user (no root), `.so` loaded via `-d extension=…` into
+Fedora PHP 8.5.8. Two profiles: single-pass (loop 1 of a fresh process — what
+`pw:static` pays) and steady-state (loops 2+, same process).
+
+**Key structural finding:** the in-process marginal cost of a warm render is only
+**~4.3 ms/page**. The other ~12 ms of the single-pass number is per-process,
+first-touch cost — PHP file compiles (no CLI opcache), Twig template class
+loads, Doctrine metadata — amortized over only 48 pages. Real `pw:static`
+workers each pay it once per process. Steady state is dominated by
+`LinkProvider::renderLink`/`UrlGenerator` (~16%) and lazy `translations`
+ManyToMany hydration (~22%).
+
+## Fix, applied — deterministic where-parameter names
+
+`FilterWhereParser` named each DQL parameter `'m'.md5('a'.random_int(…))`. The
+name is part of the DQL string, so **every process generated never-seen DQL**:
+Doctrine's query cache could never hit across processes (~6% of a single-pass
+render re-parsing DQL + ~3% writing useless cache entries), and the `system`
+pool **grew by ~35 files per 48-page run, forever** (production disk leak, one
+build at a time). Now `'w'.count($qb->getParameters())` — deterministic, unique.
+Guard: `PageRepositoryTest::testWhereFilterProducesDeterministicDql`.
+
+## Fix, applied — Twig filter gate matches real Twig tokens
+
+`Filter\Twig::render()` bailed only when the block contained no `{` at all; a
+block with markdown attributes (`{id=…}`, `{.class}`) paid the full
+`createTemplate()` round-trip to render itself verbatim. Only `{{`, `{%`, `{#`
+open a Twig token, so the gate now checks those three. Byte-identical by
+construction (a token-less template renders as its source).
+Guard: `TwigGateTest` (asserts createTemplate is never called for such blocks).
+
+## Fix, applied — deterministic gallery ids (`page.uniqueGalleryId`)
+
+The gallery template's id chain `gallery_id ?? page.uniqueGalleryId ??
+random(10, 1000)` **always fell through to `random()`**: `uniqueGalleryId`
+existed nowhere, and `renderGallery()` did not even pass `page` to the
+template. So every render of a gallery page produced different bytes, which:
+
+- invalidated the **markdown cache** for those fragments on every render
+  (random id is inside the cached text) and grew the pool per run;
+- made every rebuilt gallery page **rewrite + re-gzip/brotli** in `pw:static`
+  (the `content === file_get_contents` skip never fired);
+- would have defeated any downstream content-hash cache (see next fix).
+
+`Page::uniqueGalleryId()` now exists (runtime counter, not persisted, restarts
+per loaded entity) and `renderGallery()` passes `page`. Renders of an unchanged
+page are now **byte-identical** — the only remaining nondeterminism on altimood
+is its own `reviewList.html.twig` `random()` (app-level, not ours).
+Guard: `PageTest::testUniqueGalleryIdIsSequentialAndRestartsPerEntity`.
+
+## Fix, applied — cache the TOC heading fix by content hash
+
+The remaining TOC cost (one Masterminds parse + serialize, ~24% of a warm
+render, ~3.9 ms/page) is a **pure function of the content string**.
+`SplitContent::fixHeadings()` now caches `[fixed html, toc headings]` in
+`cache.pushword_markdown` keyed on `xxh3(content)` — no invalidation needed, a
+content change changes the key. Worthless until the gallery-id fix above made
+content deterministic (the first attempt missed on every render — measured,
+then fixed the source of entropy rather than normalizing the key).
+Guard: `SplitContentTocCacheTest` (hit must equal fresh computation).
+
+## Results (48 pages, profiler-free, interleaved A/B for the small deltas)
+
+| | Before | After | |
+|---|---|---|---|
+| Warm render | 16.4 ms | **11.2 ms** | **−32%** |
+| Cold render (markdown+toc pool cleared) | 22.9 ms | 21.9 ms | −4% |
+| `system` pool growth per run | +35 files | **0** | leak fixed |
+| Re-render of unchanged page | differs | **byte-identical** | |
+
+**Output equivalence:** 473 real pages (`us.` + `altimood.com`, redirects
+included), normalized diff (`data-gallery`, `sh-`, `{#objectid}`) — identical.
+All new guards verified-to-fail against the unfixed code.
+
+## Open leads for a pass 3 (unmeasured unless noted)
+
+- **`PagesGenerator::preloadMediaCache()` calls `bumpVersion()` on every build**,
+  invalidating every image-bearing markdown fragment even when no media changed
+  — every real build pays partial-cold markdown. It papers over a stale-empty-
+  index bug (see the code comment); fixing the root cause would let incremental
+  builds keep the fragment cache.
+- **Lazy `translations` hydration**: ~22% of steady-state (~1 ms/page absolute,
+  warm and cold) loading the ManyToMany per page (16 locales). A batched
+  preload in `PagesGenerator` (before the EM-clear cadence) would kill ~48
+  queries per host.
+- **Per-process fixed costs** (~12 ms/page on a 48-page host): Twig block
+  template class loads (~8% single-pass), no CLI opcache. Fewer, longer-lived
+  worker processes or `opcache.enable_cli=1` for `pw:static` workers would cut
+  most of it; measure before touching `WorkerCountResolver`.
+- `LinkProvider::renderLink` + route generation ~16% of steady state; a
+  per-request URL memo for repeated targets (footer/nav links) is the obvious
+  candidate.
