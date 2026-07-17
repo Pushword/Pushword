@@ -420,15 +420,57 @@ Their opcache tuning covers FrankenPHP web only; CLI builds (run per host over
 SSH) get the full benefit, and the shared cache carries across their
 sequential per-host `pw:static` runs.
 
+## Pass 3, third fix — markdown pool survives cache:clear (DONE)
+
+`cache.pushword_markdown` lived in `kernel.cache_dir/pools`, so `cache:clear`
+— hence every deploy — wiped every markdown/TOC fragment; on a
+dynamically-served host (GA-microsites: 1371 + 750 pages) they all re-render
+cold on live traffic after each deploy. The pool now uses a bundle-registered
+abstract filesystem adapter at `<kernel.cache_dir>/../pushword-pools`
+(`PushwordCoreExtension::registerMarkdownCachePool`), keeping full pool
+integration (`cache:pool:clear`, clearer, worker reset). Safe only because
+pass 2 made fragments deterministic and content-keyed; renderer changes
+invalidate via `MarkdownParser::CACHE_VERSION` / `SplitContent::TOC_CACHE_VERSION`
+— bump them when converter output changes, `cache:clear` no longer covers it.
+Guard: `MarkdownCachePoolTest` (verified-to-fail against the stock adapter).
+Not a hot-path change — no ms/page claim.
+
+## Pass 3, fourth fix — batched `translations` preload (DONE)
+
+Every render iterates `page.translations` for hreflang (template
+`block alternate_language`), lazy-loading the ManyToMany one query per page:
+**24.6% of steady-state samples** (204/829) on `us.altimood.com` with the
+pass-2 vendor. `PageRepository::preloadTranslations()` initializes all
+collections in one fetch-join; `PagesGenerator::generate()`/`generateSlugs()`
+call it right after `getPublishedPages()`. Hydration attaches rows to the
+already-managed instances, so collections stay initialized across the
+every-2-pages `EntityManager::clear()` (guarded in `PageRepositoryTest`,
+verified-to-fail without the `addSelect`).
+
+Measured (altimood vendor now carries the pass-2 release — warm single-pass
+baseline is ~10.5 ms/page, steady state ~4.8):
+
+| | control | preload | Δ |
+|---|---|---|---|
+| Warm steady state (4-loop, interleaved ×3) | 4.74/4.83/4.74 | 4.21/4.23/4.20 | **−12%** |
+| Cold (pool cleared, interleaved ×3) | 21.51 mean | 21.11 mean | −0.4 ms/page |
+| `loadCollection` profile share | 24.6% | 3.8% | |
+
+473 pages (both hosts), normalized diff: byte-identical.
+
+**Method lesson:** the first A/B ran single-pass (1 loop) and showed *nothing*
+— a 0.6 ms/page marginal signal drowns in ±0.5 ms per-process noise. For
+sub-millisecond marginal claims, A/B on multi-loop steady state (`--loops=4`,
+timing loops 2+aggregate), and only then sanity-check cold/single-pass.
+
 ## Open leads for a pass 4 (unmeasured unless noted)
 
-- **Lazy `translations` hydration**: ~22% of steady-state (~1 ms/page absolute,
-  warm and cold) loading the ManyToMany per page (16 locales). A batched
-  preload in `PagesGenerator` (before the EM-clear cadence) would kill ~48
-  queries per host.
-- `LinkProvider::renderLink` + route generation ~16% of steady state; a
-  per-request URL memo for repeated targets (footer/nav links) is the obvious
-  candidate.
+- `UrlGenerator::doGenerate` (8.1% self) + `LinkProvider::renderLink` (7.6%
+  self) ≈ 16% of steady state; a per-request URL memo for repeated targets
+  (footer/nav links) is the obvious candidate.
+- DBAL `Connection::prepare` 8.1% self in steady state — repeated preparation
+  of the same statements; investigate whether the remaining per-render queries
+  can reuse cached statements.
 - Remaining per-process cost after opcache (~9 ms/page single-pass): Twig
   template class init + autoload I/O; fewer, longer-lived workers would be
   the next lever if it matters.
