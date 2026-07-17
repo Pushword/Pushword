@@ -1250,6 +1250,42 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertStringContainsString('success', $output);
     }
 
+    #[Group('serial')]
+    public function testParallelWorkersPopulateAnOpcacheFileCache(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $this->cleanupPidFiles();
+
+        /** @var string $projectDir */
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+        $opcacheDir = $projectDir.'/var/cache/opcache';
+        new Filesystem()->remove($opcacheDir);
+
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
+        $tester = new CommandTester($application->find('pw:static'));
+        $tester->execute(['host' => 'localhost.dev', '--workers' => 2, '--format' => 'text']);
+        self::assertStringContainsString('success', $tester->getDisplay());
+
+        self::assertDirectoryExists($opcacheDir);
+
+        if (! \extension_loaded('Zend OPcache')) {
+            return; // The flags are inert without the extension; only the dir wiring is observable.
+        }
+
+        $cachedScripts = 0;
+        /** @var SplFileInfo $file */
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($opcacheDir, FilesystemIterator::SKIP_DOTS)) as $file) {
+            if ($file->isFile()) {
+                ++$cachedScripts;
+
+                break;
+            }
+        }
+
+        self::assertGreaterThan(0, $cachedScripts, 'Workers should write compiled scripts into the shared opcache file cache.');
+    }
+
     public function testStateMergeFromFile(): void
     {
         $tempDir = sys_get_temp_dir().'/pushword-state-merge-'.getmypid();

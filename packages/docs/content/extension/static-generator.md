@@ -101,6 +101,20 @@ php bin/console pw:static $host
 php bin/console pw:static $host $slug
 ```
 
+### Performance
+
+Hosts with 10+ pages are rendered by parallel worker processes. Workers share a
+compiled-script cache in `var/cache/opcache` (opcache file cache) — the first
+build fills it, every following build and worker reuses it. Nothing to
+configure; the flags are inert if the CLI PHP has no opcache extension.
+
+The parent `pw:static` process (and any sequential build) can opt into the same
+cache manually:
+
+```shell
+php -d opcache.enable_cli=1 -d opcache.file_cache=var/cache/opcache bin/console pw:static
+```
+
 ## Page cache mode (serve pre-rendered pages without exporting)
 
 Set `cache: static` on an app to pre-render pages into `public/cache/{host}/` so the web server can serve them directly without booting PHP. Unlike the full static export, the application keeps running and invalidates the cache automatically on page save.

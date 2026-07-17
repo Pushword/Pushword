@@ -390,16 +390,45 @@ index entries and fragment churn on frequently-rebuilt sites.
 Guard: `StaticGeneratorTest::testBuildLeavesTheMediaVersionUntouched`
 (verified-to-fail with the bump restored).
 
-## Open leads for a pass 3 (unmeasured unless noted)
+## Pass 3, second fix — opcache file cache for static workers (DONE)
+
+Per-process fixed cost (~12 ms/page on a 48-page host) is mostly PHP
+compiling the whole codebase again in every worker: CLI opcache is per-process,
+so in-memory opcache alone is a **no-op** for `pw:static` workers (measured:
+zero delta). `opcache.file_cache` persists compiled scripts on disk across
+processes.
+
+Measured with the harness (fresh process each pass, `us.altimood.com`,
+interleaved, released vendor): plain 16.14/16.21/16.42 vs file cache
+13.23/13.61/13.26 ms/page → **−18%**; cache size 42 MB. End-to-end on the
+skeleton corpus (`pw:static localhost.dev --workers=4`): 0.95 s cold cache →
+0.59 s warm, 3 consistent pairs.
+
+Wired in `StaticAppGenerator::generatePagesInParallel`: workers spawn with
+`-d opcache.enable_cli=1 -d opcache.file_cache=var/cache/opcache` (dir mkdir'd
+first — opcache fatals on a missing dir; flags are inert without the
+extension). First build fills the cache, every later build/worker reuses it;
+default timestamp validation handles code changes. Guard:
+`StaticGeneratorTest::testParallelWorkersPopulateAnOpcacheFileCache`
+(verified-to-fail). Docs: `extension/static-generator.md` § Performance,
+including the manual flags for the parent/sequential process (can't be set
+from inside a running process).
+
+Downstream check (GA-microsites, rc748): vendor worker-spawn code is
+identical to the monorepo's → flows via normal update, no downstream patch.
+Their opcache tuning covers FrankenPHP web only; CLI builds (run per host over
+SSH) get the full benefit, and the shared cache carries across their
+sequential per-host `pw:static` runs.
+
+## Open leads for a pass 4 (unmeasured unless noted)
 
 - **Lazy `translations` hydration**: ~22% of steady-state (~1 ms/page absolute,
   warm and cold) loading the ManyToMany per page (16 locales). A batched
   preload in `PagesGenerator` (before the EM-clear cadence) would kill ~48
   queries per host.
-- **Per-process fixed costs** (~12 ms/page on a 48-page host): Twig block
-  template class loads (~8% single-pass), no CLI opcache. Fewer, longer-lived
-  worker processes or `opcache.enable_cli=1` for `pw:static` workers would cut
-  most of it; measure before touching `WorkerCountResolver`.
 - `LinkProvider::renderLink` + route generation ~16% of steady state; a
   per-request URL memo for repeated targets (footer/nav links) is the obvious
   candidate.
+- Remaining per-process cost after opcache (~9 ms/page single-pass): Twig
+  template class init + autoload I/O; fewer, longer-lived workers would be
+  the next lever if it matters.
