@@ -26,6 +26,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
 
         $this->preloadMediaCache();
         $pages = $this->getPageRepository()->getPublishedPages($this->app->getMainHost());
+        $this->getPageRepository()->preloadTranslations($pages);
 
         $stateManager = $this->staticAppGenerator->getStateManager();
         $hostName = $this->app->getMainHost();
@@ -178,6 +179,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
 
         $slugSet = array_flip($slugs);
         $pages = array_filter($pages, static fn (Page $page): bool => isset($slugSet[$page->getSlug()]));
+        $this->getPageRepository()->preloadTranslations($pages);
 
         $hostName = $this->app->getMainHost();
         $totalPages = \count($pages);

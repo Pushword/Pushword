@@ -589,6 +589,36 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     }
 
     /**
+     * Initialize the `translations` collection of every given (managed) page in
+     * a single query. Rendering touches the collection on every page (hreflang,
+     * language switcher), which otherwise lazy-loads it one query per page —
+     * measurable at static-build scale. Hydration attaches the joined rows to
+     * the already-managed instances, so the collections stay initialized even
+     * after a later EntityManager::clear().
+     *
+     * @param Page[] $pages
+     */
+    public function preloadTranslations(array $pages): void
+    {
+        $ids = [];
+        foreach ($pages as $page) {
+            if (null !== $page->id) {
+                $ids[] = $page->id;
+            }
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $this->createQueryBuilder('p')
+            ->leftJoin('p.translations', 't')->addSelect('t')
+            ->andWhere('p.id IN (:ids)')->setParameter('ids', $ids)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @param string|string[] $host
      *                              Return page for sitemap and main Feed (PageController)
      *                              $queryBuilder->getQuery()->getResult();
