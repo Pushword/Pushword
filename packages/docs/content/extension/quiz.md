@@ -11,7 +11,7 @@ revision: af539a6039be5151f3c1bfebe3f21dc685a22880 # read only
 
 Add interactive, client-side quizzes (QCM) to any page. A quiz works almost
 without a server: it is declared inline in the page content and runs in the
-browser. A conversion form (via [Conversation](conversation)) can be branched at
+browser. A conversion form (via [Conversation](/extension/conversation)) can be branched at
 the end.
 
 ## Install
@@ -189,7 +189,7 @@ with the quiz via the `referring` field.
 ## Validate from the API (AI agents)
 
 `POST /api/quiz/validate` (token-authenticated, like the rest of the
-[API](api)) validates a quiz payload against the same rules as the renderer and
+[API](/extension/api)) validates a quiz payload against the same rules as the renderer and
 the editor, returning precise violations:
 
 ```bash
