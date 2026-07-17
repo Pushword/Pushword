@@ -13,6 +13,16 @@ use Twig\Attribute\AsTwigFunction;
 
 class SVGExtension
 {
+    /**
+     * Icon file contents, keyed by the search path they were resolved against.
+     * A page repeats the same icon a lot (~20 svg() calls, a handful of icons),
+     * and reading one costs a mime_content_type() — which opens the file — plus
+     * a file_get_contents(). Icons are static files, so read each one once.
+     *
+     * @var array<string, string>
+     */
+    private array $svgCache = [];
+
     public function __construct(private readonly SiteRegistry $apps)
     {
     }
@@ -34,6 +44,26 @@ class SVGExtension
             $dirs = [$dirs];
         }
 
+        $svg = $this->loadSvg($name, $dirs, $retryWithFontAwesome5IconsRenamed);
+
+        return $this->replaceOnce('<svg ', '<svg '.Attribute::renderAll($attr).' ', $svg);
+    }
+
+    /**
+     * Resolve an icon name to its file contents. Keyed on the resolved search
+     * path, not on the `dir` argument: `svg_dir` is per app, so the same name
+     * can point at different files from one host to the next.
+     *
+     * @param string[] $dirs
+     */
+    private function loadSvg(string $name, array $dirs, bool $retryWithFontAwesome5IconsRenamed): string
+    {
+        $cacheKey = implode('|', $dirs).'|'.$name;
+
+        if (isset($this->svgCache[$cacheKey])) {
+            return $this->svgCache[$cacheKey];
+        }
+
         $file = null;
         foreach ($dirs as $d) {
             $file = $d.'/'.$name.'.svg';
@@ -46,11 +76,11 @@ class SVGExtension
 
         if (null === $file) {
             if ($retryWithFontAwesome5IconsRenamed) {
-                return $this->getSvg(SvgFontAwesome5To6::convertNameFromFontAwesome5To6($name), $attr, $dir, false);
+                return $this->svgCache[$cacheKey] = $this->loadSvg(SvgFontAwesome5To6::convertNameFromFontAwesome5To6($name), $dirs, false);
             }
 
-            return 'question' !== $name
-                ? $this->getSvg('question', $attr, $dir, $retryWithFontAwesome5IconsRenamed)
+            return $this->svgCache[$cacheKey] = 'question' !== $name
+                ? $this->loadSvg('question', $dirs, $retryWithFontAwesome5IconsRenamed)
                 : throw new Exception('`'.$name.'` (svg) not found.');
         }
 
@@ -59,7 +89,7 @@ class SVGExtension
             throw new Exception('`'.$name.'` seems not be a valid svg file.');
         }
 
-        return $this->replaceOnce('<svg ', '<svg '.Attribute::renderAll($attr).' ', $svg);
+        return $this->svgCache[$cacheKey] = $svg;
     }
 
     private function replaceOnce(string $needle, string $replace, string $haystack): string

@@ -95,10 +95,9 @@ which **re-parses the same HTML** just to read the headings back out.
    "HtmlMinifier: not worth it" below.** The O(n·m) protect loop called out here
    is only **7%** of the minifier; this ranking was wrong.
 
-4. **`SVGExtension::getSvg` — 1.8%, 949 calls (~20/page), zero caching.**
-   Every `svg()` call does `file_exists` + `mime_content_type` (libmagic — opens
-   the file) + `file_get_contents`. The same icon is re-read every time. Fix: a
-   static memo keyed on `(name, dir)`.
+4. **`SVGExtension::getSvg` — 949 calls (~20/page), zero caching. DONE — see
+   "Fix, applied — read each icon once" below.** Worth **−17%**, not the 1.8% the
+   profiler suggested.
 
 5. **Twig filter per markdown block — ~24% incl, 3266 calls.**
    `Twig::render()` runs `createTemplate()` **per markdown block**
@@ -193,6 +192,34 @@ memo ignores the version) and `testLookupStillResolvesAfterOnClear`.
 > Measuring trap: an `old/` HTML dump taken before any `cache:clear` is **not** a
 > valid baseline — unrelated cached state (internal link hrefs) drifts and shows
 > up as ~50 false diffs. Always dump control and candidate in the *same* state.
+
+## Fix, applied — read each icon once
+
+`SVGExtension::getSvg()` had no caching at all: every `svg()` call did
+`file_exists()` + `mime_content_type()` + `file_get_contents()`. A page makes
+~20 of those for a handful of distinct icons, so the same file was opened over
+and over.
+
+`getSvg()` now splits into the per-call part (rendering `$attr` onto the tag) and
+a memoized `loadSvg()` returning the raw file contents. The memo is keyed on the
+**resolved search path**, not the `$dir` argument: `svg_dir` is per app, so with
+`$dir = ''` the same name resolves differently per host — altimood serves 17.
+Icons are static files, so a per-instance memo needs no invalidation, and it
+survives across pages in a `pw:static` run.
+
+**Result:** warm render **20.1 ms → 16.6 ms (−17%)**, output identical on 473
+real pages (zero diffs).
+
+**The profiler said this was 1.8%.** It was 17%. Xdebug inflates PHP function
+calls but not C calls, so an IO-bound one-liner like `mime_content_type()`
+(libmagic: opens the file, reads magic bytes) is *under*-represented in a
+cachegrind profile — the mirror image of the Masterminds over-weighting. Trust
+the A/B wall-clock, not the profile share.
+
+Guards: `SVGExtensionTest` — attributes must not bleed between two calls for the
+same icon, and the same name in two dirs must not leak (both verified to fail
+under the obvious wrong implementations), plus the `question` and FontAwesome
+5→6 fallbacks, which the memo could otherwise poison.
 
 ## HtmlMinifier: not worth it (investigated, no change made)
 
