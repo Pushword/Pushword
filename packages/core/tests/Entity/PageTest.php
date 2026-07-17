@@ -298,4 +298,22 @@ final class PageTest extends TestCase
         self::assertTrue($page->isCache());
         self::assertTrue($page->getCustomProperty('cache'));
     }
+
+    /**
+     * `page.uniqueGalleryId` in the gallery template: sequential within a render,
+     * restarting for every freshly loaded entity — so re-rendering an unchanged
+     * page yields the same ids (static builds and content-hash caches depend on
+     * that; the template's `random()` fallback never should be reached when a
+     * page is in context).
+     */
+    public function testUniqueGalleryIdIsSequentialAndRestartsPerEntity(): void
+    {
+        $page = new Page(false);
+
+        self::assertSame(1, $page->uniqueGalleryId());
+        self::assertSame(2, $page->uniqueGalleryId());
+
+        $samePageFreshlyLoaded = new Page(false);
+        self::assertSame(1, $samePageFreshlyLoaded->uniqueGalleryId());
+    }
 }

@@ -78,6 +78,9 @@ class BlockExtension
             'image_filter' => $imageFilter,
             'pos' => $pos,
             'clickable' => $clickable,
+            // Lets the template take page.uniqueGalleryId instead of a random id,
+            // keeping re-renders of an unchanged page byte-identical.
+            'page' => $this->apps->getCurrentPage(),
         ]);
     }
 

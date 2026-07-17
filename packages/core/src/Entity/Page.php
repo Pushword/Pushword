@@ -100,6 +100,20 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
         $this->holdPublicationAt = null;
     }
 
+    /** Not persisted: render-scoped, restarts with every fresh entity. */
+    private int $galleryIdCounter = 0;
+
+    /**
+     * Backs `page.uniqueGalleryId` in the gallery template: each gallery on a page
+     * takes the next id. Deterministic — unlike the template's historic `random()`
+     * fallback — so an unchanged page re-renders to identical bytes, which lets
+     * static builds skip rewrites and content-hash caches actually hit.
+     */
+    public function uniqueGalleryId(): int
+    {
+        return ++$this->galleryIdCounter;
+    }
+
     public function getMainImage(): ?Media
     {
         return $this->mainImage ?? $this->extendedPage?->getMainImage();
