@@ -65,10 +65,12 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     /**
      * Populate the lightweight filename→id index with a single scalar DQL query.
-     * No Media entity hydration. Persisted across requests via cache.app keyed
-     * by a per-table version counter (unless kernel.debug is true or no cache
-     * pool is available, in which case the index lives for the repo instance
-     * only and is rebuilt per request).
+     * No Media entity hydration. Kept for the lifetime of the repo instance and
+     * revalidated against a per-table version counter, so an EntityManager
+     * clear() costs a version read instead of a rebuild. Also persisted across
+     * requests via cache.app under that same counter (unless kernel.debug is
+     * true or no cache pool is available, in which case the index lives for the
+     * repo instance only).
      */
     public function warmupFileNameIndexLight(): void
     {
@@ -90,35 +92,37 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
         $cache = $this->debug ? null : $this->cache;
 
-        if (null !== $cache) {
-            $indexItem = $cache->getItem(self::INDEX_CACHE_KEY_PREFIX.$version);
-            if ($indexItem->isHit()) {
-                /** @var array<string, array{id: int, fileName: string, fileNameHistory: list<string>}> $index */
-                $index = $indexItem->get();
-                $this->rememberIndex($index, $version);
-
-                return;
-            }
-
+        if (null === $cache) {
             $this->rememberIndex($this->buildFileNameIndex(), $version);
-
-            // Never persist an empty index: a warmup against a media table that
-            // is empty only transiently (mid-fixtures, mid-import — e.g. the
-            // static generator rendering synchronously from a postPersist while
-            // media rows are not flushed yet) would poison every later consumer
-            // at this version with a hit that misses all media.
-            if ([] === $this->fileNameIndexLight) {
-                return;
-            }
-
-            $indexItem->set($this->fileNameIndexLight);
-            $indexItem->expiresAfter(self::INDEX_CACHE_TTL);
-            $cache->save($indexItem);
 
             return;
         }
 
-        $this->rememberIndex($this->buildFileNameIndex(), $version);
+        $indexItem = $cache->getItem(self::INDEX_CACHE_KEY_PREFIX.$version);
+        if ($indexItem->isHit()) {
+            /** @var array<string, array{id: int, fileName: string, fileNameHistory: list<string>}> $index */
+            $index = $indexItem->get();
+            $this->rememberIndex($index, $version);
+
+            return;
+        }
+
+        $index = $this->buildFileNameIndex();
+        $this->rememberIndex($index, $version);
+
+        // Never persist an empty index: a warmup against a media table that
+        // is empty only transiently (mid-fixtures, mid-import — e.g. the
+        // static generator rendering synchronously from a postPersist while
+        // media rows are not flushed yet) would poison every later consumer
+        // at this version with a hit that misses all media.
+        if ([] === $index) {
+            return;
+        }
+
+        $indexItem->set($index);
+        $indexItem->expiresAfter(self::INDEX_CACHE_TTL);
+
+        $cache->save($indexItem);
     }
 
     /**

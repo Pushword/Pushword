@@ -202,6 +202,37 @@ final class MediaRepositoryTest extends KernelTestCase
         );
     }
 
+    /**
+     * The point of keeping the index across a clear: an unchanged version must
+     * not cost a rebuild. Guards the pw:static win, which no other test would
+     * notice disappearing.
+     */
+    public function testOnClearReusesIndexWhenVersionUnchanged(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $registry = self::getContainer()->get(ManagerRegistry::class);
+        $cache = new ArrayAdapter();
+
+        $repo = new MediaRepository($registry, $cache, debug: false);
+        self::assertNotNull($repo->findOneByFileName('1.jpg')); // warms at version 0
+
+        // Poison the pool at the version already in use: only a rebuild — the
+        // thing this must avoid — would read it back.
+        $indexItem = $cache->getItem(MediaRepository::INDEX_CACHE_KEY_PREFIX.'0');
+        $indexItem->set(['rebuilt-marker.jpg' => ['id' => 1, 'fileName' => 'rebuilt-marker.jpg', 'fileNameHistory' => []]]);
+
+        $cache->save($indexItem);
+
+        $repo->onClear();
+
+        self::assertNull(
+            $repo->findOneByFileName('rebuilt-marker.jpg'),
+            'onClear must keep the index when the version is unchanged, not requery',
+        );
+        self::assertNotNull($repo->findOneByFileName('1.jpg'));
+    }
+
     public function testSelfHealsStaleIndexId(): void
     {
         self::bootKernel();

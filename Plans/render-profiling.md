@@ -91,9 +91,9 @@ which **re-parses the same HTML** just to read the headings back out.
    / 48 pages). **DONE — see "Fix, applied — keep the media index across a
    clear" below.**
 
-3. **`HtmlMinifier` — 5.3 ms/page.** For each `pre|code|script|textarea` node it
-   does `str_replace($node->outerHtml(), …)` over the **whole document** →
-   O(n·m), plus 4 more full-document regex passes.
+3. ~~**`HtmlMinifier` — 5.3 ms/page.**~~ **Investigated and dropped — see
+   "HtmlMinifier: not worth it" below.** The O(n·m) protect loop called out here
+   is only **7%** of the minifier; this ranking was wrong.
 
 4. **`SVGExtension::getSvg` — 1.8%, 949 calls (~20/page), zero caching.**
    Every `svg()` call does `file_exists` + `mime_content_type` (libmagic — opens
@@ -193,6 +193,44 @@ memo ignores the version) and `testLookupStillResolvesAfterOnClear`.
 > Measuring trap: an `old/` HTML dump taken before any `cache:clear` is **not** a
 > valid baseline — unrelated cached state (internal link hrefs) drifts and shows
 > up as ~50 false diffs. Always dump control and candidate in the *same* state.
+
+## HtmlMinifier: not worth it (investigated, no change made)
+
+Ranked #3 above on the assumption that its per-node
+`str_replace($node->outerHtml(), …)` over the whole document (O(n·m)) was the
+cost. **Measured on 421 real pages (68.4 KB avg), that was wrong:**
+
+| Phase | ms/page | Share |
+|---|---|---|
+| **DomCrawler parse** | **1.14** | **45%** |
+| regex passes (4 full-document) | 0.75 | 30% |
+| DomCrawler serialize | 0.24 | 9% |
+| **protect loop (the supposed O(n·m))** | **0.18** | **7%** |
+| restore | 0.09 | 4% |
+| strip comments | 0.05 | 2% |
+| **total** | **2.53** | |
+
+There are only **5.5 protected nodes per page**, so `n` never gets big enough for
+the O(n·m) to matter. Optimising it would win ~7% of 2.5 ms.
+
+The 45% parse is **load-bearing**: the round-trip changes the markup on 421/421
+pages — it collapses whitespace inside tags, quotes bare attributes
+(`crossorigin` → `crossorigin=""`, `data-rot=/` → `data-rot="/"`) and decodes
+entities (`&raquo;` → `»`). The later regex passes also depend on it having
+lowercased tag names. Replacing it with regex would be a large behaviour change
+for ~1 ms.
+
+**And the minifier earns its cost.** It is tempting to argue it is pointless
+because the generator gzip/brotlis every page anyway, but measured:
+
+| | raw | minified | saved |
+|---|---|---|---|
+| uncompressed | 68.4 KB | 58.8 KB | 14.1% |
+| gzip -9 | 15.0 KB | 14.3 KB | **4.7%** |
+| brotli -11 | 12.6 KB | 12.0 KB | **4.4%** |
+
+~4.5% off every compressed response, paid once at build time for 2.5 ms/page. For
+a static site that is a good trade. **Left alone.**
 
 ## Markdown: verdict on tempest/markdown
 
