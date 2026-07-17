@@ -609,6 +609,68 @@ final class StaticGeneratorTest extends KernelTestCase
         }
     }
 
+    /**
+     * StaticOutputLinter end-to-end: any emitted href whose first path segment is
+     * a configured host (href="/pushword.piedweb.com/…") must fail the run — no
+     * matter what produced it (route-prefix regressions, stale cached fragments,
+     * hand-written content links). The failure must reach the exit code (cron
+     * visibility) and abort the atomic swap so the last good export keeps serving.
+     */
+    public function testLintRefusesToPublishHostPrefixedLinks(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
+        $staticDir = $this->getStaticDir();
+
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
+        $commandTester = new CommandTester($application->find('pw:static'));
+
+        // Clean full generation: publishes and exits 0.
+        $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
+        self::assertSame(0, $commandTester->getStatusCode(), $commandTester->getDisplay());
+        self::assertFileExists($staticDir.'/index.html');
+
+        // A markdown link renders its href verbatim (raw HTML would be stripped
+        // by CommonMark's default html_input).
+        $probe = new Page(); // default ctor sets publishedAt — getPublishedPages() must pick it up
+        $probe->host = 'localhost.dev';
+        $probe->setSlug('lint-probe');
+        $probe->locale = 'en';
+        $probe->setH1('Lint probe');
+        $probe->setMainContent('[poisoned](/pushword.piedweb.com/installation)');
+        $probe->publishedAt = new DateTime('2 days ago');
+
+        $em->persist($probe);
+        $em->flush();
+
+        try {
+            $commandTester = $this->rebootStaticCommandTester();
+            $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
+
+            self::assertSame(1, $commandTester->getStatusCode(), 'lint errors must reach the exit code');
+            self::assertStringContainsString('Host-prefixed internal link', $commandTester->getDisplay());
+
+            clearstatcache();
+            self::assertFileDoesNotExist(
+                $staticDir.'/lint-probe.html',
+                'a poisoned export must never replace the published one (swap aborted)',
+            );
+            self::assertFileExists($staticDir.'/index.html', 'the last good export must keep serving');
+        } finally {
+            new Filesystem()->remove($staticDir.'~'); // aborted swap leaves the temp dir
+
+            $resetEm = self::getContainer()->get('doctrine.orm.default_entity_manager');
+            $planted = self::getContainer()->get(PageRepository::class)
+                ->findOneBy(['host' => 'localhost.dev', 'slug' => 'lint-probe']);
+            if (null !== $planted) {
+                $resetEm->remove($planted);
+                $resetEm->flush();
+            }
+        }
+    }
+
     public function testGenerateCNAME(): void
     {
         self::bootKernel();

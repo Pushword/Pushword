@@ -161,6 +161,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             // Incremental mode: update in place
             $this->logger->info('Incremental generation for '.$host);
             $this->runGenerators($app);
+            $this->lintGeneratedOutput($originalStaticDir);
         } else {
             // Full generation: use temp dir + atomic swap
             $tempDir = $originalStaticDir.'~';
@@ -173,6 +174,12 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
             // Restore original staticDir before atomic swap
             $app->staticDir = $originalStaticDir; // @phpstan-ignore-line
+
+            // Lint BEFORE the swap: a poisoned export must never replace the
+            // last good one (a lint error aborts, so the site keeps serving it).
+            if (! $this->abortGeneration) {
+                $this->lintGeneratedOutput($tempDir);
+            }
 
             if (! $this->abortGeneration) {
                 // Held pages are skipped by the generators, so the temp dir lacks
@@ -410,6 +417,19 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
             $this->stateManager->mergeFromFile($worker['stateFile']);
             $this->redirectionManager->importFromFile($worker['redirectionsFile']);
+        }
+    }
+
+    /** See StaticOutputLinter — every configured host (aliases included) is a forbidden first path segment. */
+    private function lintGeneratedOutput(string $dir): void
+    {
+        $hosts = array_merge(...array_map(
+            static fn (SiteConfig $siteConfig): array => $siteConfig->getHosts(),
+            array_values($this->apps->getAll()),
+        ));
+
+        foreach (StaticOutputLinter::lint($dir, $hosts) as $error) {
+            $this->setError($error);
         }
     }
 

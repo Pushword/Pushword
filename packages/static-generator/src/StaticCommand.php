@@ -148,7 +148,8 @@ final class StaticCommand
             $status = [] !== $errors ? 'error' : 'completed';
             $this->outputStorage->setStatus($processType, $status);
 
-            return Command::SUCCESS;
+            // Errors must reach the exit code, or a cron'd regen fails silently.
+            return [] !== $errors ? Command::FAILURE : Command::SUCCESS;
         } catch (Throwable $throwable) {
             if ($this->agentMode) {
                 $this->writeAgentJson($teeOutput, [
