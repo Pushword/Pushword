@@ -29,7 +29,10 @@ class Twig implements FilterInterface
 
     protected function render(string $string, Page $page): string
     {
-        if (! str_contains($string, '{')) {
+        // Only `{{`, `{%` and `{#` open a Twig token; a string without them renders
+        // verbatim, so skip the whole createTemplate/render round-trip. Markdown
+        // attribute syntax (`{id=…}`, `{.class}`) lands here on every block.
+        if (! str_contains($string, '{{') && ! str_contains($string, '{%') && ! str_contains($string, '{#')) {
             return $string;
         }
 
