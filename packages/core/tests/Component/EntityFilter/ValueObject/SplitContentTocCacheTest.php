@@ -3,12 +3,11 @@
 namespace Pushword\Core\Tests\Component\EntityFilter\ValueObject;
 
 use PHPUnit\Framework\TestCase;
-use Psr\Cache\CacheItemInterface;
-use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Component\EntityFilter\ValueObject\SplitContent;
 use Pushword\Core\Entity\Page;
 use RuntimeException;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\CacheItem;
 
 /**
  * The heading-fix + TOC-extraction step is cached by content hash: a hit must
@@ -50,51 +49,10 @@ final class SplitContentTocCacheTest extends TestCase
         $page->host = 'localhost';
         $page->setCustomProperty('toc', true);
 
-        $brokenPool = new class implements CacheItemPoolInterface {
-            public function getItem(string $key): CacheItemInterface
+        $brokenPool = new class extends ArrayAdapter {
+            public function getItem(mixed $key): CacheItem
             {
                 throw new RuntimeException('backend down');
-            }
-
-            /** @return iterable<string, CacheItemInterface> */
-            public function getItems(array $keys = []): iterable
-            {
-                throw new RuntimeException('backend down');
-            }
-
-            public function hasItem(string $key): bool
-            {
-                throw new RuntimeException('backend down');
-            }
-
-            public function clear(): bool
-            {
-                return false;
-            }
-
-            public function deleteItem(string $key): bool
-            {
-                return false;
-            }
-
-            public function deleteItems(array $keys): bool
-            {
-                return false;
-            }
-
-            public function save(CacheItemInterface $item): bool
-            {
-                return false;
-            }
-
-            public function saveDeferred(CacheItemInterface $item): bool
-            {
-                return false;
-            }
-
-            public function commit(): bool
-            {
-                return false;
             }
         };
 
