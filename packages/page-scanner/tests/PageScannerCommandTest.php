@@ -5,7 +5,9 @@ namespace Pushword\PageScanner\Tests;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
 final class PageScannerCommandTest extends KernelTestCase
@@ -36,6 +38,34 @@ final class PageScannerCommandTest extends KernelTestCase
 
         $output = $commandTester->getDisplay();
         self::assertTrue(str_contains($output, 'Too many errors (>1), stopping scan...') || str_contains($output, 'done...'));
+    }
+
+    public function testADirectoryOnTheCachePathFailsFastInsteadOfLosingTheScan(): void
+    {
+        // Reported from a live project: something had left a directory where the
+        // scan writes its cache. dumpFile() then threw "Is a directory" — after
+        // minutes of rendering, with nothing said about what to do.
+        $kernel = self::createKernel();
+        $application = new Application($kernel);
+        /** @var string $varDir */
+        $varDir = self::getContainer()->getParameter('pw.var_dir');
+        $blocked = $varDir.'/page-scan--localhost.dev';
+
+        $filesystem = new Filesystem();
+        $filesystem->remove($blocked);
+        $filesystem->mkdir($blocked);
+
+        try {
+            $commandTester = new CommandTester($application->find('pw:page-scan'));
+            $commandTester->execute(['host' => 'localhost.dev', '--format' => 'text', '--skip-external' => true]);
+
+            self::assertSame(Command::FAILURE, $commandTester->getStatusCode());
+            self::assertStringContainsString('is a directory', $commandTester->getDisplay());
+            // Fast: it never rendered a page.
+            self::assertStringNotContainsString('Scanning', $commandTester->getDisplay());
+        } finally {
+            $filesystem->remove($blocked);
+        }
     }
 
     public function testPageScannerCommandAgentOutputIsJson(): void

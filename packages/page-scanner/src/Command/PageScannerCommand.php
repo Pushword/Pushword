@@ -296,6 +296,29 @@ final class PageScannerCommand
         return false;
     }
 
+    /**
+     * A scan takes minutes and only writes its caches at the very end, so a path
+     * it cannot write is worth catching before the work, not after losing it.
+     * Checked, never cleaned: these names are ours, but a directory sitting on one
+     * was put there by something we do not know, and deleting it blind is worse
+     * than saying so.
+     */
+    private function findBlockedCachePath(?string $host): ?string
+    {
+        $candidates = [PageScannerController::fileCache()];
+        if (null !== $host && '' !== $host) {
+            $candidates[] = PageScannerController::fileCache().'--'.$host;
+        }
+
+        foreach ($candidates as $candidate) {
+            if (is_dir($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
     public function __invoke(
         OutputInterface $output,
         #[Argument(name: 'host')]
@@ -312,6 +335,18 @@ final class PageScannerCommand
         $this->skipExternal = $skipExternal;
         $this->limit = $limit;
         $this->agentMode = $this->isAgentFormat($format);
+
+        if (null !== ($blocked = $this->findBlockedCachePath($host))) {
+            $message = $blocked.' is a directory, but the scan writes its cache there as a file. '
+                .'Nothing in Pushword creates it — move it aside, and check what does.';
+            if ($this->agentMode) {
+                $this->writeAgentJson($output, ['tool' => 'pw:page-scan', 'result' => 'failed', 'message' => $message]);
+            } else {
+                $output->writeln('<error>'.$message.'</error>');
+            }
+
+            return Command::FAILURE;
+        }
 
         if ($checkUnpublished) {
             $this->scanner->linkedDocsScanner->enableCheckUnpublished();
