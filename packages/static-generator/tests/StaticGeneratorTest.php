@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\Event\StaticPostGenerateEvent;
@@ -392,6 +393,25 @@ final class StaticGeneratorTest extends KernelTestCase
 
         $staticDir = $this->getStaticDir();
         self::assertFileExists($staticDir);
+    }
+
+    /**
+     * A build writes no media, so it must not advance the media version: a bump
+     * here invalidates every image-bearing markdown fragment on every build.
+     * Media writes bump the version themselves (MediaCacheInvalidationListener).
+     */
+    public function testBuildLeavesTheMediaVersionUntouched(): void
+    {
+        $generator = $this->getStaticAppGenerator();
+        $this->overrideStaticDir();
+
+        $mediaRepository = AbstractGenerator::getKernel()->getContainer()->get(MediaRepository::class);
+        $readVersion = new ReflectionMethod(MediaRepository::class, 'readVersion');
+        $before = $readVersion->invoke($mediaRepository);
+
+        $generator->generate('localhost.dev');
+
+        self::assertSame($before, $readVersion->invoke($mediaRepository));
     }
 
     private function getGenerator(string $name): GeneratorInterface

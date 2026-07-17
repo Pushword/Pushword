@@ -6,7 +6,6 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Override;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\StaticGenerator\IncrementalGeneratorInterface;
 use Throwable;
@@ -155,15 +154,11 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
     {
         $container = static::getKernel()->getContainer();
 
-        // Bump the version so the static-generator kernel's cache.app namespace gets a fresh
-        // index key. Without this, a stale empty-array entry (from a previous run that ran
-        // before fixtures were loaded) causes findMediaByFileName() to return null for every
-        // media and throws "Internal - Can't handle the value submitted `X.jpg`", producing
-        // HTTP 500 on pages that reference media by ID (e.g. the homepage card component).
-        /** @var MediaRepository $mediaRepository */
-        $mediaRepository = $container->get(MediaRepository::class);
-        $mediaRepository->bumpVersion();
-
+        // No version bump here: media writes bump it themselves
+        // (MediaCacheInvalidationListener), and MediaRepository never persists an
+        // empty index, so the transient-empty poisoning this used to guard
+        // against cannot be cached anymore. Bumping on every build was
+        // re-rendering every image-bearing markdown fragment for nothing.
         /** @var MediaExtension $mediaExtension */
         $mediaExtension = $container->get(MediaExtension::class);
         $mediaExtension->preloadMediaCache();
