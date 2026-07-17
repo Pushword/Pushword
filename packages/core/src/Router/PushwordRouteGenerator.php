@@ -16,6 +16,12 @@ final class PushwordRouteGenerator implements ResetInterface
 
     private bool $useCustomHostPath = true;
 
+    /**
+     * What reset() restores. Stays true on a live kernel (worker-mode safety);
+     * the static generator pins false on its render kernel — see setUseCustomHostPath().
+     */
+    private bool $useCustomHostPathAfterReset = true;
+
     public function __construct(
         private readonly SfRouterInterface $router,
         private readonly SiteRegistry $apps,
@@ -124,24 +130,32 @@ final class PushwordRouteGenerator implements ResetInterface
     }
 
     /**
-     * Set the value of isLive.
+     * With $pin, the value also becomes what reset() restores. A plain set does
+     * NOT survive rendering: Kernel::handle() marks services for reset, so the
+     * NEXT handle() runs the services_resetter inside its boot() — after any
+     * value set before the call, and before the request renders. The static
+     * generator's render kernel only ever renders host-less static HTML, so it
+     * pins false; a live kernel must never pin (see reset()).
      */
-    public function setUseCustomHostPath(bool $useCustomHostPath = true): self
+    public function setUseCustomHostPath(bool $useCustomHostPath = true, bool $pin = false): self
     {
         $this->useCustomHostPath = $useCustomHostPath;
+        if ($pin) {
+            $this->useCustomHostPathAfterReset = $useCustomHostPath;
+        }
 
         return $this;
     }
 
     /**
-     * Worker-mode safety (kernel.reset): restore the default so a synchronous
+     * Worker-mode safety (kernel.reset): restore the live default so a synchronous
      * static regeneration during a request (AbstractGenerator sets this to false)
      * never leaks into the next request served by the same worker — which would
      * render every link without its /{host}/ prefix, like the static site.
      */
     public function reset(): void
     {
-        $this->useCustomHostPath = true;
+        $this->useCustomHostPath = $this->useCustomHostPathAfterReset;
     }
 
     /**

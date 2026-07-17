@@ -31,9 +31,7 @@ abstract class AbstractGenerator implements GeneratorInterface
 
     /**
      * The render kernel's own PushwordRouteGenerator — the instance that page()
-     * resolves through while saveAsStatic() renders the HTML. Captured so it can be
-     * re-asserted host-less before every render (a long-lived worker's
-     * services_resetter flips the flag back between pages).
+     * resolves through while saveAsStatic() renders the HTML.
      */
     protected PushwordRouteGenerator $renderRouter;
 
@@ -55,6 +53,7 @@ abstract class AbstractGenerator implements GeneratorInterface
         // called with no host argument and no current page), so this is belt-and-
         // suspenders — but PushwordRouteGenerator::reset() still restores the flag
         // per request so a synchronous cache-mode regen never leaks it into a live one.
+        // Deliberately NOT pinned: this kernel serves live traffic.
         $this->router->setUseCustomHostPath(false);
         $this->publicDir = $params->get('pw.public_dir');
 
@@ -63,10 +62,15 @@ abstract class AbstractGenerator implements GeneratorInterface
 
         // The sub-kernel renders the page HTML itself (saveAsStatic → getKernel()->handle());
         // its own router must likewise drop the prefix. Distinct instance, not a duplicate.
-        // saveAsStatic re-asserts this per render (a worker's services_resetter flips it
-        // back between pages), so this constructor set is just the initial state.
+        // PINNED, because a plain set cannot survive rendering: each handle() marks
+        // services for reset, so from the second render on, the kernel's boot() runs
+        // the services_resetter — inside handle(), after any pre-render re-assert —
+        // and reset() would restore the /{host}/ prefix. Only the first page each
+        // process rendered came out host-less; every later one linked to
+        // /{host}/{slug}, which a brand static host serves as a 404. This kernel
+        // never serves live traffic, so pinning is safe.
         $this->renderRouter = static::getKernel()->getContainer()->get(PushwordRouteGenerator::class);
-        $this->renderRouter->setUseCustomHostPath(false);
+        $this->renderRouter->setUseCustomHostPath(false, pin: true);
 
         foreach ($this->apps->getAll() as $site) {
             $site->isStatic = true;

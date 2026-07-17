@@ -571,26 +571,33 @@ final class StaticGeneratorTest extends KernelTestCase
                 ->findOneBy(['host' => 'pushword.piedweb.com', 'slug' => 'worker-reset-probe']);
             self::assertNotNull($page);
 
-            $destination = $this->getStaticDir().'/worker-reset-regression.html';
-            new ReflectionMethod(PageGenerator::class, 'saveAsStatic')
-                ->invoke($generator, $generator->generateLivePathFor($page), $destination, $page);
+            // Render the SAME page twice. The second render is the one that
+            // crosses the real boundary: the first handle() marks services for
+            // reset, so the second handle() runs the services_resetter inside its
+            // boot() — after anything saveAsStatic could set before the call.
+            // Without the pinned flag, only the first render stays host-less.
+            $saveAsStatic = new ReflectionMethod(PageGenerator::class, 'saveAsStatic');
+            foreach (['first', 'second'] as $render) {
+                $destination = $this->getStaticDir().'/worker-reset-regression-'.$render.'.html';
+                $saveAsStatic->invoke($generator, $generator->generateLivePathFor($page), $destination, $page);
 
-            self::assertFileExists(
-                $destination,
-                'page must render 200 (errors: '.implode(' | ', $this->getStaticAppGenerator()->getErrors()).')',
-            );
-            $html = (string) file_get_contents($destination);
+                self::assertFileExists(
+                    $destination,
+                    $render.' render must be 200 (errors: '.implode(' | ', $this->getStaticAppGenerator()->getErrors()).')',
+                );
+                $html = (string) file_get_contents($destination);
 
-            // The bug's fingerprint: a root-relative link that begins with the host
-            // segment — href="/pushword.piedweb.com/…". Distinct from the legitimate
-            // absolute canonical href="https://pushword.piedweb.com/…".
-            self::assertStringNotContainsString(
-                'href="/pushword.piedweb.com',
-                $html,
-                'internal links must not carry the /{host}/ prefix on a static host',
-            );
-            // Non-vacuity: a page()-built nav link rendered host-less.
-            self::assertStringContainsString('href="/installation"', $html);
+                // The bug's fingerprint: a root-relative link that begins with the host
+                // segment — href="/pushword.piedweb.com/…". Distinct from the legitimate
+                // absolute canonical href="https://pushword.piedweb.com/…".
+                self::assertStringNotContainsString(
+                    'href="/pushword.piedweb.com',
+                    $html,
+                    $render.' render: internal links must not carry the /{host}/ prefix on a static host',
+                );
+                // Non-vacuity: a page()-built nav link rendered host-less.
+                self::assertStringContainsString('href="/installation"', $html, $render.' render');
+            }
         } finally {
             $resetEm = self::getContainer()->get('doctrine.orm.default_entity_manager');
             $planted = self::getContainer()->get(PageRepository::class)
