@@ -371,13 +371,27 @@ Guard: `SplitContentTocCacheTest` (hit must equal fresh computation).
 included), normalized diff (`data-gallery`, `sh-`, `{#objectid}`) — identical.
 All new guards verified-to-fail against the unfixed code.
 
+## Pass 3, first fix — no media-version bump at build start (DONE)
+
+`PagesGenerator::preloadMediaCache()` bumped the media version on **every**
+build, re-cold-rendering every image-bearing markdown fragment and orphaning a
+full 12k-row filename-index cache entry per build. Timeline shows it was a
+May 2026 workaround (d58963fa) for empty-index poisoning whose root cause was
+fixed at the repository level in June (3bdee248, "never persist an empty
+index"); real media writes bump the version themselves via
+`MediaCacheInvalidationListener` (which inlines the increment — grep for the
+key, not for `bumpVersion()`). Removed.
+
+Measured on altimood `us.altimood.com` (released vendor, interleaved):
+**−0.3 ms/page** only — just 4/48 pages carry literal `![` markdown images
+(galleries are Twig-expanded `<img>` HTML, media-independent by design). The
+win scales with markdown-image density; the bigger payoff is no more orphaned
+index entries and fragment churn on frequently-rebuilt sites.
+Guard: `StaticGeneratorTest::testBuildLeavesTheMediaVersionUntouched`
+(verified-to-fail with the bump restored).
+
 ## Open leads for a pass 3 (unmeasured unless noted)
 
-- **`PagesGenerator::preloadMediaCache()` calls `bumpVersion()` on every build**,
-  invalidating every image-bearing markdown fragment even when no media changed
-  — every real build pays partial-cold markdown. It papers over a stale-empty-
-  index bug (see the code comment); fixing the root cause would let incremental
-  builds keep the fragment cache.
 - **Lazy `translations` hydration**: ~22% of steady-state (~1 ms/page absolute,
   warm and cold) loading the ManyToMany per page (16 locales). A batched
   preload in `PagesGenerator` (before the EM-clear cadence) would kill ~48
