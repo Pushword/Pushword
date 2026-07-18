@@ -788,7 +788,11 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     {
         $alias = $this->getRootAlias($queryBuilder);
 
-        return $queryBuilder->andWhere($alias.'.metaRobots IS NULL OR '.$alias.'.metaRobots NOT LIKE :noi2')
+        // LOWER() rather than a bare LIKE: SQLite and a *_ci MySQL collation match
+        // case-insensitively on their own, but that is the collation's doing, not a
+        // guarantee — {@see Page::hasNoindex()}, the twin this must agree with, is
+        // explicitly case-insensitive.
+        return $queryBuilder->andWhere($alias.'.metaRobots IS NULL OR LOWER('.$alias.'.metaRobots) NOT LIKE :noi2')
             ->setParameter('noi2', '%noindex%');
     }
 

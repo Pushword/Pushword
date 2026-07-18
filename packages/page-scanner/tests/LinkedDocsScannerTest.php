@@ -297,10 +297,9 @@ final class LinkedDocsScannerTest extends KernelTestCase
     }
 
     /**
-     * Substring match, like {@see Page::isIndexable()} and the `LIKE %noindex%` in
-     * PageRepository::andIndexable(). Sharing their convention matters more than
-     * covering `none` or an uppercase value: warning here about a link the graph
-     * and the sitemap still count as indexable would be the worse bug.
+     * Delegated to {@see Page::hasNoindex()}, so this only guards the delegation:
+     * whatever the graph and the sitemap treat as noindex, the scanner warns about,
+     * and warning about a link they still count as indexable would be the worse bug.
      */
     #[DataProvider('metaRobotsProvider')]
     public function testMetaRobotsVariants(string $metaRobots, bool $expectReport): void
@@ -323,6 +322,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         yield 'bare noindex' => ['noindex', true];
         yield 'noindex among other directives' => ['noindex, noarchive', true];
         yield 'no space after the comma' => ['noindex,nofollow', true];
+        yield 'uppercase, as a flat file may spell it' => ['NOINDEX', true];
         yield 'noimageindex only bans images' => ['noimageindex', false];
         yield 'explicitly indexable' => ['index, follow', false];
         yield 'unrelated directive' => ['noarchive', false];

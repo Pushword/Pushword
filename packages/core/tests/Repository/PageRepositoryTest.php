@@ -34,6 +34,49 @@ final class PageRepositoryTest extends KernelTestCase
         self::assertSame('homepage', $pages[0]->getSlug());
     }
 
+    /**
+     * The SQL twin of {@see Page::hasNoindex()}, and what the sitemap and the main
+     * feed actually filter on.
+     *
+     * Note this cannot fail on SQLite or on a *_ci MySQL collation, where LIKE is
+     * already case-insensitive — it would pass even without the LOWER() the query
+     * carries. It is here to pin the contract for a case-sensitive backend, and to
+     * fail loudly if someone ever narrows the rule to an equality.
+     */
+    public function testIndexableQueryExcludesNoindexWhateverItsCase(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $page = new Page();
+        $page->setH1('Uppercase noindex');
+        $page->setSlug('uppercase-noindex');
+        $page->locale = 'en';
+        $page->host = 'localhost.dev';
+        $page->createdAt = new DateTime();
+        $page->updatedAt = new DateTime();
+        $page->setMainContent('content');
+        $page->setMetaRobots('NOINDEX, NOARCHIVE');
+
+        $em->persist($page);
+        $em->flush();
+
+        try {
+            /** @var Page[] $indexable */
+            $indexable = $em->getRepository(Page::class)
+                ->getIndexablePagesQuery('localhost.dev', 'en')
+                ->getQuery()->getResult();
+
+            $slugs = array_map(static fn (Page $indexablePage): string => $indexablePage->getSlug(), $indexable);
+
+            self::assertNotContains('uppercase-noindex', $slugs);
+        } finally {
+            $em->remove($page);
+            $em->flush();
+        }
+    }
+
     public function testNumericSlugDoesNotFallbackToId(): void
     {
         self::bootKernel();

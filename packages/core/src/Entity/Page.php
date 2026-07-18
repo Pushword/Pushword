@@ -382,7 +382,21 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     {
         return $this->isPublished()
             && ! $this->hasRedirection()
-            && ! str_contains($this->metaRobots, 'noindex');
+            && ! $this->hasNoindex();
+    }
+
+    /**
+     * Substring and case-insensitive, because `metaRobots` is a free-text list of
+     * directives: `noindex` travels with the others (`noindex, noarchive`), and the
+     * value is written by hand in a flat file or over the API, where nothing
+     * normalizes its case. Only the admin form spells it lowercase and alone.
+     *
+     * Its SQL twin is the `LOWER(...) NOT LIKE '%noindex%'` in
+     * {@see PageRepository::andIndexable()} — the two have to stay in step.
+     */
+    public function hasNoindex(): bool
+    {
+        return false !== stripos($this->metaRobots, 'noindex');
     }
 
     // --- Template ---

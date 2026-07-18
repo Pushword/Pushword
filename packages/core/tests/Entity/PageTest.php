@@ -81,12 +81,20 @@ final class PageTest extends TestCase
         $page->setMetaRobots('noindex');
         self::assertFalse($page->isIndexable());
 
-        // The rule matches the SQL twin's `NOT LIKE '%noindex%'`: noindex never
-        // travels alone, it comes paired with a follow directive.
+        // The rule matches the SQL twin's `LOWER(...) NOT LIKE '%noindex%'`: noindex
+        // never travels alone, it comes paired with a follow directive.
         $page->setMetaRobots('noindex, follow');
         self::assertFalse($page->isIndexable());
 
+        // Written by hand in a flat file or over the API, nothing lowercases it.
+        $page->setMetaRobots('NoIndex, NoArchive');
+        self::assertFalse($page->isIndexable());
+
         $page->setMetaRobots('index, follow');
+        self::assertTrue($page->isIndexable());
+
+        // noimageindex only bans the images: the substring does not line up.
+        $page->setMetaRobots('noimageindex');
         self::assertTrue($page->isIndexable());
     }
 

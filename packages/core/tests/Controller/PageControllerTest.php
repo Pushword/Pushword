@@ -79,6 +79,68 @@ final class PageControllerTest extends KernelTestCase
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
+    /**
+     * A per-page feed passes no `pages`, so the template falls back to the raw
+     * childrenPages — the noindex filter in the template is the only one there,
+     * unlike the main feed which is already filtered by getIndexablePagesQuery().
+     */
+    public function testPerPageFeedDropsNoindexChildrenWhateverTheDirectiveList(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $parent = $this->createFeedPage('feed-parent', 'Feed Parent');
+        $em->persist($parent);
+
+        $listed = $this->createFeedPage('feed-listed-child', 'Listed Child');
+        $listed->setParentPage($parent);
+
+        $em->persist($listed);
+
+        $hidden = $this->createFeedPage('feed-noindex-child', 'Hidden Child');
+        $hidden->setParentPage($parent);
+        $hidden->setMetaRobots('noindex, noarchive');
+
+        $em->persist($hidden);
+
+        $em->flush();
+        // childrenPages is EXTRA_LAZY and inverse: setParentPage() never touched the
+        // collection the identity map still holds, and it would read as empty.
+        $em->clear();
+
+        try {
+            $content = (string) $this->getFeedController()
+                ->show(Request::create('/feed-parent.xml'), 'feed-parent')
+                ->getContent();
+
+            self::assertStringContainsString('Listed Child', $content);
+            self::assertStringNotContainsString('Hidden Child', $content);
+        } finally {
+            $repository = $em->getRepository(Page::class);
+            foreach (['feed-noindex-child', 'feed-listed-child', 'feed-parent'] as $slug) {
+                $page = $repository->findOneBy(['slug' => $slug]);
+                if ($page instanceof Page) {
+                    $em->remove($page);
+                }
+            }
+
+            $em->flush();
+        }
+    }
+
+    private function createFeedPage(string $slug, string $h1): Page
+    {
+        $page = new Page();
+        $page->setH1($h1);
+        $page->setSlug($slug);
+        $page->locale = 'en';
+        $page->host = 'localhost.dev';
+        $page->createdAt = new DateTime();
+        $page->updatedAt = new DateTime();
+        $page->setMainContent('content');
+
+        return $page;
+    }
+
     public function testShowSitemap(): void
     {
         $response = $this->getSitemapController()->show(Request::create('/sitemap.xml'), 'xml');

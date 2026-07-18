@@ -387,7 +387,7 @@ final class LinkedDocsScanner extends AbstractScanner
     {
         return $target instanceof Page
             && isset($this->crawlableLinks[$url])
-            && str_contains($target->getMetaRobots(), 'noindex');
+            && $target->hasNoindex();
     }
 
     public function getLinksCheckedCounter(): int
