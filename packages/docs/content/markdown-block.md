@@ -24,6 +24,15 @@ Advanced content types such as **galleries**, **attachments**, or **page lists**
 
 _You can use twig syntax inside markdown inline code or markdown code block, it will not be parsed by twig. If you want to use twig inside inline code or code block, use html directly (`<pre></pre>`)._
 
+### Twig filters
+
+Two filters expose the parser in templates:
+
+- `{{ text|markdown }}` — full block-level rendering (paragraphs, headings, lists, tables…). The output is wrapped in block tags: a one-liner becomes `<p>…</p>`.
+- `{{ text|markdown_inline }}` — inline-only rendering, for text injected inside existing markup (a component lede, a caption, a subtitle): `<p class="lede">{{ lede|markdown_inline }}</p>`. Links, emphasis, inline code, strikethrough, `{attributes}` and Pushword inline shortcodes render exactly as with `markdown`, but no block tag is ever emitted. Block syntax (`#`, `-`, `>`, tables…) stays literal text, and blank lines don't create paragraphs — meant for one-line inputs.
+
+Both filters mark their output HTML-safe and pass raw inline HTML through as-is.
+
 ## Tables
 
 Standard GFM table syntax is supported. You can merge cells horizontally using `->` as the cell content — it merges into the preceding cell via `colspan`.

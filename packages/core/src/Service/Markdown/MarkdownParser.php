@@ -5,6 +5,7 @@ namespace Pushword\Core\Service\Markdown;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\Attributes\AttributesExtension;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\InlinesOnly\InlinesOnlyExtension;
 use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
 use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\Extension\TaskList\TaskListExtension;
@@ -30,6 +31,10 @@ class MarkdownParser
 
     private readonly MarkdownConverter $converter;
 
+    private ?MarkdownConverter $inlineConverter = null;
+
+    private readonly PushwordExtension $pushwordExtension;
+
     private ?string $cacheVersion = null;
 
     public function __construct(
@@ -41,25 +46,67 @@ class MarkdownParser
         #[Autowire(service: 'cache.app')]
         private readonly ?CacheItemPoolInterface $versionCache = null,
     ) {
+        $this->pushwordExtension = new PushwordExtension(
+            $linkProvider,
+            $mediaExtension,
+            $apps,
+            new Date($apps),
+        );
+
         $environment = new Environment();
         $environment->addExtension(new CommonMarkCoreExtension());
         $environment->addExtension(new AttributesExtension());
         $environment->addExtension(new StrikethroughExtension());
         $environment->addExtension(new TableExtension());
         $environment->addExtension(new TaskListExtension());
-        $environment->addExtension(new PushwordExtension(
-            $linkProvider,
-            $mediaExtension,
-            $apps,
-            new Date($apps),
-        ));
+        $environment->addExtension($this->pushwordExtension);
 
         $this->converter = new MarkdownConverter($environment);
     }
 
     /**
-     * Convert markdown to HTML.
+     * Convert markdown to HTML, blocks included.
+     */
+    #[AsTwigFilter('markdown', isSafe: ['html'])]
+    public function transform(string $text): string
+    {
+        return $this->convertCached($this->converter, 'pw_md.', $text);
+    }
+
+    /**
+     * Convert markdown to HTML without ever emitting a block tag — no `<p>`.
      *
+     * For short texts injected inside existing markup (a component lede, a
+     * caption, a subtitle): links, emphasis, inline code, strikethrough,
+     * `{attributes}`, raw inline HTML and Pushword inline shortcodes are
+     * rendered; block syntax (`#`, `-`, `>`, tables…) stays literal text and
+     * blank lines don't create paragraphs — meant for one-line inputs.
+     */
+    #[AsTwigFilter('markdown_inline', isSafe: ['html'])]
+    public function transformInline(string $text): string
+    {
+        return trim($this->convertCached($this->inlineConverter(), 'pw_mdi.', $text));
+    }
+
+    private function inlineConverter(): MarkdownConverter
+    {
+        if (null !== $this->inlineConverter) {
+            return $this->inlineConverter;
+        }
+
+        $environment = new Environment();
+        $environment->addExtension(new InlinesOnlyExtension());
+        $environment->addExtension(new AttributesExtension());
+        $environment->addExtension(new StrikethroughExtension());
+        // PushwordExtension's ImageRenderer (priority 10) overrides InlinesOnly's,
+        // so `![](…)` stays media-rendered and cacheKeyVersion()'s image
+        // detection applies to inline fragments too.
+        $environment->addExtension($this->pushwordExtension);
+
+        return $this->inlineConverter = new MarkdownConverter($environment);
+    }
+
+    /**
      * The input is the post-Twig block text, so any dynamic content (snippets,
      * page lists, galleries) is already baked into $text and thus into the cache
      * key. The only convert-time dependency left is media (image rendering),
@@ -68,28 +115,27 @@ class MarkdownParser
      * cached as-is: the slight staleness is acceptable and the fragment refreshes
      * whenever the page is saved or (for image fragments) the media version bumps.
      */
-    #[AsTwigFilter('markdown', isSafe: ['html'])]
-    public function transform(string $text): string
+    private function convertCached(MarkdownConverter $converter, string $keyPrefix, string $text): string
     {
         if (null === $this->cache) {
-            return $this->converter->convert($text)->__toString();
+            return $converter->convert($text)->__toString();
         }
 
         try {
-            $item = $this->cache->getItem('pw_md.'.hash('xxh3', $this->cacheKeyVersion($text).'|'.$text));
+            $item = $this->cache->getItem($keyPrefix.hash('xxh3', $this->cacheKeyVersion($text).'|'.$text));
             if ($item->isHit()) {
                 /** @var string */
                 return $item->get();
             }
 
-            $html = $this->converter->convert($text)->__toString();
+            $html = $converter->convert($text)->__toString();
             $item->set($html);
             $this->cache->save($item);
 
             return $html;
         } catch (Throwable) {
             // A cache backend hiccup must never break rendering.
-            return $this->converter->convert($text)->__toString();
+            return $converter->convert($text)->__toString();
         }
     }
 

@@ -8,8 +8,10 @@ use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\CacheItem;
 
 /**
  * Guards the markdown render cache: it must be transparent (identical output)
@@ -109,6 +111,52 @@ final class MarkdownParserCacheTest extends KernelTestCase
         $fresh = $this->buildParser($pool, 7)->transform($markdown);
         self::assertNotSame('POISONED', $fresh);
         self::assertStringContainsString('<picture', $fresh);
+    }
+
+    public function testInlineFilterUsesDistinctKeyNamespace(): void
+    {
+        $pool = new ArrayAdapter();
+        $parser = $this->buildParser($pool);
+
+        $markdown = 'A **bold** claim';
+
+        // Prime the inline cache, then poison the stored value: a hit must return it.
+        $parser->transformInline($markdown);
+        $key = 'pw_mdi.'.hash('xxh3', '2|'.$markdown);
+        $item = $pool->getItem($key);
+        self::assertTrue($item->isHit(), 'inline fragment should be cached under the pw_mdi. namespace');
+        $item->set('POISONED');
+        $pool->save($item);
+
+        self::assertSame('POISONED', $parser->transformInline($markdown));
+
+        // The block filter must not see the inline entry for the same source.
+        self::assertSame('<p>A <strong>bold</strong> claim</p>', trim($parser->transform($markdown)));
+    }
+
+    public function testInlineImageFragmentIsKeyedWithMediaVersion(): void
+    {
+        $pool = new ArrayAdapter();
+        $markdown = 'Photo: ![alt](/media/2.jpg)';
+
+        $this->buildParser($pool, 4)->transformInline($markdown);
+
+        $key = 'pw_mdi.'.hash('xxh3', '2m4|'.$markdown);
+        self::assertTrue($pool->getItem($key)->isHit(), 'inline image fragment is keyed with the media version');
+    }
+
+    public function testCacheBackendFailureNeverBreaksRendering(): void
+    {
+        $brokenPool = new class extends ArrayAdapter {
+            public function getItem(mixed $key): CacheItem
+            {
+                throw new RuntimeException('cache backend down');
+            }
+        };
+        $parser = $this->buildParser($brokenPool);
+
+        self::assertSame("<p>A <strong>bold</strong> claim</p>\n", $parser->transform('A **bold** claim'));
+        self::assertSame('A <strong>bold</strong> claim', $parser->transformInline('A **bold** claim'));
     }
 
     public function testDateShortcodeIsCached(): void
