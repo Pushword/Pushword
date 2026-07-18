@@ -97,7 +97,7 @@ php bin/console pw:flat:sync example.tld --mode=export --force
 
 Each exported `.md` ends with a `revision: <hash> # read only` line in its front matter — the content hash that mirrors the API's ETag / `If-Match` value, so an agent can read it from the file and `PUT` back without a preliminary `GET`. It is written on export and **ignored on import**.
 
-A normal export skips files whose content is unchanged (and whose mtime is newer than the DB row), so pages exported *before* the stamp existed — or any file missing the line — are **not** re-stamped by a plain sync. Run a full-host force export to rewrite them:
+A normal export skips files whose content is unchanged (and whose mtime is newer than the DB row), so pages exported _before_ the stamp existed — or any file missing the line — are **not** re-stamped by a plain sync. Run a full-host force export to rewrite them:
 
 ```bash
 php bin/console pw:flat:sync example.tld --mode=export --force
@@ -243,11 +243,11 @@ Returns exit code `0` if all files are valid, `1` if any errors are found. Each 
 
 **Common YAML pitfalls:**
 
-| Mistake | Fix |
-| --- | --- |
-| `title: 'It's broken'` | Use double quotes: `title: "It's fine"` |
-| `title: 'A: B'` unquoted colon | Already quoted — but inner single quote breaks it: `title: "A: B"` |
-| Smart quotes `'` from copy-paste | Replace with straight quotes `'` or `"` |
+| Mistake                          | Fix                                                                |
+| -------------------------------- | ------------------------------------------------------------------ |
+| `title: 'It's broken'`           | Use double quotes: `title: "It's fine"`                            |
+| `title: 'A: B'` unquoted colon   | Already quoted — but inner single quote breaks it: `title: "A: B"` |
+| Smart quotes `'` from copy-paste | Replace with straight quotes `'` or `"`                            |
 
 ## Sync Behavior Reference
 
@@ -482,7 +482,7 @@ translations:
   - en/kitchen-sink
 mainImage: illustration.jpg
 parentPage: homepage
-metaRobots: 'no-index'
+metaRobots: 'noindex'
 name: 'Kitchen Sink'
 title: 'Kitchen Sink - best google result'
 tags: 'demo example'
