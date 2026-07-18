@@ -8,6 +8,9 @@ use Throwable;
 
 final readonly class ImageOptimizer
 {
+    /** Glob matching {@see isOptimizationTmp()}, for callers that filter by pattern. */
+    public const string TMP_GLOB = '*.opt-*.tmp';
+
     public function __construct(
         private ImageCacheManager $imageCacheManager,
         private ImageCacheGenerator $imageCacheGenerator,
@@ -78,6 +81,20 @@ final readonly class ImageOptimizer
                 @unlink($tmpPath);
             }
         }
+    }
+
+    /**
+     * Whether a path is one of the throwaway files {@see optimizeAtomically()} writes.
+     *
+     * They have to sit next to the file they optimize, because rename() is only
+     * atomic within one filesystem — so anything walking the media tree meets them.
+     * They exist for the length of one optimize call and then vanish, which makes
+     * them poison for a reader: a static build that copies one either publishes a
+     * truncated image or dies when the file disappears mid-copy.
+     */
+    public static function isOptimizationTmp(string $path): bool
+    {
+        return fnmatch(self::TMP_GLOB, basename($path));
     }
 
     /**

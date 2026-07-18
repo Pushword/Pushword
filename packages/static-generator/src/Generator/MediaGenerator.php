@@ -4,11 +4,13 @@ namespace Pushword\StaticGenerator\Generator;
 
 use FilesystemIterator;
 use Override;
+use Pushword\Core\Image\ImageOptimizer;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\StaticGenerator\IncrementalGeneratorInterface;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use Symfony\Component\Finder\Finder;
 
 class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorInterface
 {
@@ -33,6 +35,31 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
             \dirname($targetPath),
         );
         $this->filesystem->symlink($relativePath.basename($sourcePath), $targetPath);
+    }
+
+    /**
+     * `.` and `..`, plus the transient files the image optimizer leaves beside the
+     * derivative it rewrites — {@see ImageOptimizer::isOptimizationTmp()}. Copying
+     * one is never right: it is half-written by construction, and it is routinely
+     * gone before the copy ends, which fails the whole build.
+     */
+    private function skipEntry(string $entry): bool
+    {
+        return \in_array($entry, ['.', '..'], true) || ImageOptimizer::isOptimizationTmp($entry);
+    }
+
+    /**
+     * mirror() walks the source with a plain recursive iterator of its own, which
+     * skipEntry() never sees — so the exclusion has to be restated here. Dotfiles
+     * and VCS files stay included, as they were before Finder took over.
+     */
+    private function mirrorIterator(string $sourceDir): Finder
+    {
+        return Finder::create()
+            ->in($sourceDir)
+            ->ignoreDotFiles(false)
+            ->ignoreVCS(false)
+            ->notName(ImageOptimizer::TMP_GLOB);
     }
 
     private function targetExists(string $targetPath): bool
@@ -122,7 +149,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
         }
 
         while (false !== $entry = $dir->read()) {
-            if (\in_array($entry, ['.', '..'], true)) {
+            if ($this->skipEntry($entry)) {
                 continue;
             }
 
@@ -143,7 +170,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
                 if ($symlink) {
                     $this->relativeSymlink($sourcePath, $targetPath);
                 } else {
-                    $this->filesystem->mirror($sourcePath, $targetPath);
+                    $this->filesystem->mirror($sourcePath, $targetPath, $this->mirrorIterator($sourcePath));
                     $this->resolveSymlinksInDirectory($targetPath);
                 }
 
@@ -215,7 +242,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
         }
 
         while (false !== $entry = $dir->read()) {
-            if (\in_array($entry, ['.', '..'], true)) {
+            if ($this->skipEntry($entry)) {
                 continue;
             }
 
@@ -249,7 +276,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
         }
 
         while (false !== $entry = $dir->read()) {
-            if (\in_array($entry, ['.', '..'], true)) {
+            if ($this->skipEntry($entry)) {
                 continue;
             }
 

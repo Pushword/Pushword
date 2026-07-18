@@ -791,6 +791,48 @@ final class StaticGeneratorTest extends KernelTestCase
         $this->assertMediaFilesAccessible($mediaDir);
     }
 
+    /**
+     * The image optimizer writes its throwaway next to the derivative it rewrites,
+     * so a build running while any image is optimized meets one. Copying it either
+     * publishes a truncated image or — because the file is unlinked as soon as the
+     * optimizer is done — kills the build with a half-finished copy.
+     */
+    #[Group('serial')]
+    public function testDownloadIgnoresImageOptimizerTempFiles(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $publicMediaDir = $this->getPublicMediaDir();
+        $tmpFiles = [
+            $publicMediaDir.'/optimizer-race.webp.opt-4242.abcdef123456.tmp',
+            $publicMediaDir.'/md/optimizer-race.webp.opt-4242.abcdef123456.tmp',
+        ];
+
+        foreach ($tmpFiles as $tmpFile) {
+            if (is_dir(\dirname($tmpFile))) {
+                file_put_contents($tmpFile, 'half-written');
+            }
+        }
+
+        try {
+            $this->getGenerator(MediaGenerator::class)->generate('localhost.dev');
+
+            $staticMediaDir = $this->getStaticDir().'/media';
+            self::assertFileExists($staticMediaDir);
+
+            foreach (glob($staticMediaDir.'/{,*/}*.tmp', \GLOB_BRACE) ?: [] as $leaked) {
+                self::fail('The optimizer temp file reached the build: '.$leaked);
+            }
+        } finally {
+            foreach ($tmpFiles as $tmpFile) {
+                if (is_file($tmpFile)) {
+                    unlink($tmpFile);
+                }
+            }
+        }
+    }
+
     #[Group('serial')]
     public function testDownloadWithSymlink(): void
     {
@@ -1412,6 +1454,11 @@ final class StaticGeneratorTest extends KernelTestCase
         }
 
         throw new Exception();
+    }
+
+    private function getPublicMediaDir(): string
+    {
+        return realpath(__DIR__.'/../../skeleton/public').'/media';
     }
 
     public function getPageRepo(): MockObject
