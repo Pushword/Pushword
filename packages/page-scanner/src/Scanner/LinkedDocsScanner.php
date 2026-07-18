@@ -25,8 +25,17 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class LinkedDocsScanner extends AbstractScanner
 {
-    /** @var array<string, bool> */
+    /** @var array<string, array{exists: bool, page: ?Page, redirect: bool}> */
     private array $everChecked = [];
+
+    /**
+     * URIs this page exposes through a crawlable attribute, ie. anything but
+     * `data-rot`. Obfuscated links are decrypted upstream and checked like any
+     * other, so this is what tells the two apart afterwards.
+     *
+     * @var array<string, true>
+     */
+    private array $crawlableLinks = [];
 
     private int $linksCheckedCounter = 0;
 
@@ -206,6 +215,7 @@ final class LinkedDocsScanner extends AbstractScanner
         $this->toIgnore = [...$this->linksToIgnore, ...$this->getPageScanLinksToIgnore()];
 
         $this->linksCheckedCounter = 0;
+        $this->crawlableLinks = [];
 
         if ($this->page->hasRedirection()) {
             $this->checkLinkedDoc($this->page->getRedirectionUrl(), false);
@@ -284,6 +294,10 @@ final class LinkedDocsScanner extends AbstractScanner
             if ($this->isMailtoOrTelLink($uri) && ! $isDataRotAttribute) {
                 $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scanObfuscateMail'));
             } elseif ('' !== $uri && $this->isWebLink($uri)) {
+                if (! $isDataRotAttribute) {
+                    $this->crawlableLinks[$uri] = true;
+                }
+
                 $linkedDocs[] = $uri;
             }
         }
@@ -355,7 +369,25 @@ final class LinkedDocsScanner extends AbstractScanner
             }
         } elseif ($checkRedirection && $page->hasRedirection()) {
             $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
+        } elseif ($this->isCrawlableLinkToNoindex($url, $page)) {
+            $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNoindexLink'));
         }
+    }
+
+    /**
+     * A crawlable link to a `noindex` page spends crawl budget and link equity on a
+     * page that cannot rank. Obfuscating it with `link()` keeps it for visitors and
+     * hides it from robots — so an already obfuscated link is exempt, even though it
+     * reaches this check like any other (`data-rot` is decrypted upstream).
+     *
+     * Unpublished and redirection targets are caught by the arms above, so what is
+     * left here is a page kept out of the index on purpose.
+     */
+    private function isCrawlableLinkToNoindex(string $url, ?Page $target): bool
+    {
+        return $target instanceof Page
+            && isset($this->crawlableLinks[$url])
+            && str_contains($target->getMetaRobots(), 'noindex');
     }
 
     public function getLinksCheckedCounter(): int
@@ -407,6 +439,8 @@ final class LinkedDocsScanner extends AbstractScanner
                 }
             } elseif ($checkRedirection && (($this->lastPageChecked instanceof Page && $this->lastPageChecked->hasRedirection()) || $this->lastUriIsRedirect)) {
                 $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
+            } elseif ($this->isCrawlableLinkToNoindex($url, $this->lastPageChecked)) {
+                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNoindexLink'));
             }
 
             return;
@@ -572,6 +606,11 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private bool $lastUriIsRedirect = false;
 
+    /**
+     * Caches the whole resolution, not just whether the slug exists: every check
+     * downstream reads `lastPageChecked`, so returning a bare bool on a cache hit
+     * silently exempted every page but the first to link a given target.
+     */
     private function uriExist(string $uri): bool
     {
         $this->lastPageChecked = null;
@@ -582,7 +621,11 @@ final class LinkedDocsScanner extends AbstractScanner
         $cacheKey = $this->page->host.'/'.$slug;
 
         if (isset($this->everChecked[$cacheKey])) {
-            return $this->everChecked[$cacheKey];
+            $resolved = $this->everChecked[$cacheKey];
+            $this->lastPageChecked = $resolved['page'];
+            $this->lastUriIsRedirect = $resolved['redirect'];
+
+            return $resolved['exists'];
         }
 
         $isMedia = str_starts_with($slug, 'media/');
@@ -598,14 +641,20 @@ final class LinkedDocsScanner extends AbstractScanner
             }
         }
 
-        $this->everChecked[$cacheKey] = $this->lastPageChecked instanceof Page
+        $exists = $this->lastPageChecked instanceof Page
             || $this->lastUriIsRedirect
             || ($isMedia && $this->mediaExistsBySlug(substr($slug, 6)))
             || file_exists($this->publicDir.'/'.$slug)
             || file_exists($this->publicDir.'/../'.$slug)
             || 'feed.xml' === $slug;
 
-        return $this->everChecked[$cacheKey];
+        $this->everChecked[$cacheKey] = [
+            'exists' => $exists,
+            'page' => $this->lastPageChecked,
+            'redirect' => $this->lastUriIsRedirect,
+        ];
+
+        return $exists;
     }
 
     /**

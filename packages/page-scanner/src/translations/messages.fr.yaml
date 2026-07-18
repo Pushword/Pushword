@@ -2,6 +2,7 @@ page_scanBrokenImage: 'image introuvable'
 page_scanCanonical: 'La canonical est différente'
 page_scanDifferentHost: 'La page parente a un domaine différent'
 page_scanIsRedirection: redirection
+page_scanNoindexLink: 'page noindex : obfusquez ce lien pour le garder hors du crawl.'
 page_scanNotFound: 'non trouvé'
 page_scanNotPublished: 'non publié'
 page_scanObfuscateMail: 'pour prévenir le spam, vous pouvez obfusquer ce lien.'

@@ -170,7 +170,7 @@ Enumerating pager pages would mean nodes that are URLs rather than pages
 
 ## What it checks
 
-- **Internal links**: page exists, is published, is not a redirect
+- **Internal links**: page exists, is published, is not a redirect, is not `noindex` (see below)
 - **Relative links**: an internal link must start with `/` (see below)
 - **External links**: HTTP status codes (parallel checking with caching)
 - **Anchor links**: target element exists in the page
@@ -180,6 +180,23 @@ Enumerating pager pages would mean nodes that are URLs rather than pages
 
 URLs written inside a `<code>` or `<pre>` block are illustrations, not links, and
 are never checked.
+
+## Links to noindex pages
+
+A crawlable link to a `noindex` page spends crawl budget and link equity on a page
+that cannot rank. The scanner reports it as:
+
+```
+`/search` noindex page: obfuscate this link to keep it out of the crawl.
+```
+
+Fix it with `link()`, which renders a `<span data-rot>` instead of an `<a href>`:
+visitors still follow it, robots never see it. An already obfuscated link is
+therefore silent — it is decrypted and checked like any other, so it is still
+validated against the usual 404 and redirect rules, just exempt from this one.
+
+Only the `noindex` case is reported here. An unpublished or redirecting target is
+already covered by its own message, so nothing is reported twice.
 
 ## Relative links
 

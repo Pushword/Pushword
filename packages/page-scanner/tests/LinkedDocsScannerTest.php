@@ -195,6 +195,175 @@ final class LinkedDocsScannerTest extends KernelTestCase
         }
     }
 
+    public function testCrawlableLinkToNoindexPageIsReported(): void
+    {
+        $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
+            $errors = $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/noindex-target">link</a>');
+
+            self::assertSame(['<code>/noindex-target</code> '.$this->transNoindex()], $errors);
+        });
+    }
+
+    public function testCrossHostCrawlableLinkToNoindexPageIsReported(): void
+    {
+        $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
+            $html = '<a href="https://localhost.dev/noindex-target">link</a>';
+            $errors = $scanner->scan($this->getPage('other-page'), $html);
+
+            self::assertSame(['<code>https://localhost.dev/noindex-target</code> '.$this->transNoindex()], $errors);
+        });
+    }
+
+    public function testObfuscatedLinkToNoindexPageIsSilent(): void
+    {
+        $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
+            $html = '<span data-rot="'.LinkProvider::obfuscate('/noindex-target').'">link</span>';
+
+            self::assertSame([], $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), $html));
+        });
+    }
+
+    public function testIndexablePageIsNotReported(): void
+    {
+        $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
+            self::assertSame([], $scanner->scan($this->getPage('other-page'), '<a href="https://localhost.dev/homepage">link</a>'));
+        });
+    }
+
+    /**
+     * A nav or footer link to a `noindex` page is the common case: the report is
+     * worthless if the second page linking the same target goes silent.
+     */
+    public function testNoindexLinkIsReportedOnEveryPageLinkingIt(): void
+    {
+        $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
+            $html = '<a href="/noindex-target">link</a>';
+            $expected = ['<code>/noindex-target</code> '.$this->transNoindex()];
+
+            self::assertSame($expected, $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), $html));
+            self::assertSame($expected, $scanner->scan($this->getPage('another-linking-page', 'localhost.dev'), $html));
+        });
+    }
+
+    /**
+     * The same target written both ways on one page stays a crawlable link: the
+     * plain href is what a robot follows, whatever else surrounds it.
+     */
+    public function testTargetLinkedBothPlainAndObfuscatedIsReported(): void
+    {
+        $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
+            $html = '<span data-rot="'.LinkProvider::obfuscate('/noindex-target').'">link</span>'
+                .'<a href="/noindex-target">link</a>';
+
+            self::assertSame(
+                ['<code>/noindex-target</code> '.$this->transNoindex()],
+                $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), $html),
+            );
+        });
+    }
+
+    /**
+     * A redirection page is checked before any link is collected, so the link set
+     * it is matched against must be its own, not the page scanned before it.
+     */
+    public function testRedirectionTargetIsNotJudgedOnThePreviousPageLinks(): void
+    {
+        $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
+            $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/noindex-target">link</a>');
+
+            $redirection = $this->getPage('scan-redirection', 'localhost.dev');
+            $redirection->setMainContent('Location: /noindex-target');
+
+            self::assertSame([], $scanner->scan($redirection, ''));
+        });
+    }
+
+    /**
+     * Same cache as the noindex check: the redirect warning used to fire only on
+     * the first page linking a given slug.
+     */
+    public function testRedirectionIsReportedOnEveryPageLinkingIt(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        // "pushword" page in fixtures has mainContent "Location: ..." → is a redirection
+        $expected = ['<code>/pushword</code> '.self::getContainer()->get(TranslatorInterface::class)->trans('page_scanIsRedirection')];
+        $html = '<a href="/pushword">link</a>';
+
+        self::assertSame($expected, $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), $html));
+        self::assertSame($expected, $scanner->scan($this->getPage('another-linking-page', 'localhost.dev'), $html));
+    }
+
+    /**
+     * Substring match, like {@see Page::isIndexable()} and the `LIKE %noindex%` in
+     * PageRepository::andIndexable(). Sharing their convention matters more than
+     * covering `none` or an uppercase value: warning here about a link the graph
+     * and the sitemap still count as indexable would be the worse bug.
+     */
+    #[DataProvider('metaRobotsProvider')]
+    public function testMetaRobotsVariants(string $metaRobots, bool $expectReport): void
+    {
+        $this->withNoindexPage(function (LinkedDocsScanner $scanner) use ($expectReport): void {
+            $errors = $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/noindex-target">link</a>');
+
+            self::assertSame(
+                $expectReport ? ['<code>/noindex-target</code> '.$this->transNoindex()] : [],
+                $errors,
+            );
+        }, $metaRobots);
+    }
+
+    /**
+     * @return Iterator<string, array{string, bool}>
+     */
+    public static function metaRobotsProvider(): Iterator
+    {
+        yield 'bare noindex' => ['noindex', true];
+        yield 'noindex among other directives' => ['noindex, noarchive', true];
+        yield 'no space after the comma' => ['noindex,nofollow', true];
+        yield 'noimageindex only bans images' => ['noimageindex', false];
+        yield 'explicitly indexable' => ['index, follow', false];
+        yield 'unrelated directive' => ['noarchive', false];
+        yield 'empty, the default' => ['', false];
+    }
+
+    private function transNoindex(): string
+    {
+        return self::getContainer()->get(TranslatorInterface::class)->trans('page_scanNoindexLink');
+    }
+
+    /**
+     * @param callable(LinkedDocsScanner): void $assert
+     */
+    private function withNoindexPage(callable $assert, string $metaRobots = 'noindex, follow'): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $noindex = new Page();
+        $noindex->setH1('Noindex target');
+        $noindex->setSlug('noindex-target');
+        $noindex->host = 'localhost.dev';
+        $noindex->locale = 'en';
+        $noindex->setMainContent('...');
+        $noindex->setMetaRobots($metaRobots);
+
+        $em->persist($noindex);
+        $em->flush();
+
+        try {
+            $scanner = $this->createScanner();
+            $scanner->preloadPageCache();
+
+            $assert($scanner);
+        } finally {
+            $em->remove($noindex);
+            $em->flush();
+        }
+    }
+
     public function testExternalLinkStillTreatedAsExternal(): void
     {
         self::bootKernel();
