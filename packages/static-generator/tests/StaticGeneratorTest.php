@@ -6,7 +6,9 @@ use DateTime;
 use DateTimeImmutable;
 use Exception;
 use FilesystemIterator;
+use Iterator;
 use LogicException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
@@ -798,10 +800,21 @@ final class StaticGeneratorTest extends KernelTestCase
      * optimizer is done — kills the build with a half-finished copy.
      */
     #[Group('serial')]
-    public function testDownloadIgnoresImageOptimizerTempFiles(): void
+    #[DataProvider('mediaBuildModeProvider')]
+    public function testDownloadIgnoresImageOptimizerTempFiles(bool $incremental): void
     {
         self::bootKernel();
         $this->overrideStaticDir();
+
+        $generator = $this->getGenerator(MediaGenerator::class);
+        self::assertInstanceOf(MediaGenerator::class, $generator);
+
+        // An incremental run only reaches its own copy path once the target exists;
+        // a first full build is what puts it there.
+        if ($incremental) {
+            $generator->generate('localhost.dev');
+            $generator->setIncremental(true);
+        }
 
         $publicMediaDir = $this->getPublicMediaDir();
         $tmpFiles = [
@@ -816,7 +829,7 @@ final class StaticGeneratorTest extends KernelTestCase
         }
 
         try {
-            $this->getGenerator(MediaGenerator::class)->generate('localhost.dev');
+            $generator->generate('localhost.dev');
 
             $staticMediaDir = $this->getStaticDir().'/media';
             self::assertFileExists($staticMediaDir);
@@ -825,12 +838,24 @@ final class StaticGeneratorTest extends KernelTestCase
                 self::fail('The optimizer temp file reached the build: '.$leaked);
             }
         } finally {
+            $generator->setIncremental(false);
             foreach ($tmpFiles as $tmpFile) {
                 if (is_file($tmpFile)) {
                     unlink($tmpFile);
                 }
             }
         }
+    }
+
+    /**
+     * @return Iterator<string, array{bool}>
+     */
+    public static function mediaBuildModeProvider(): Iterator
+    {
+        // mirror() copies the whole directory; the incremental path walks it file by
+        // file instead, so each has to drop the throwaway on its own.
+        yield 'full build' => [false];
+        yield 'incremental build' => [true];
     }
 
     #[Group('serial')]

@@ -391,11 +391,11 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
      * value is written by hand in a flat file or over the API, where nothing
      * normalizes its case. Only the admin form spells it lowercase and alone.
      *
-     * `none` is the robots shorthand for `noindex, nofollow`, and search engines
-     * honour it — so a page carrying it is de-indexed whatever we think. Missing it
-     * would not fail loudly, it would just quietly list the page in the sitemap, the
-     * feed and the link graph while it is dropped from the index. No other directive
-     * (`nosnippet`, `notranslate`, `noimageindex`, …) contains it as a substring.
+     * `none` is the robots shorthand for `noindex, nofollow`: search engines honour
+     * it, so a page carrying it is de-indexed whatever we think here. Missing it went
+     * unnoticed precisely because nothing failed — the page just stayed in the
+     * sitemap, the feed and the link graph after being dropped from the index. No
+     * other directive (`nosnippet`, `notranslate`, `noimageindex`, …) contains it.
      *
      * Its SQL twin is the pair of `LOWER(...) NOT LIKE` in
      * {@see PageRepository::andIndexable()} — the two have to stay in step.

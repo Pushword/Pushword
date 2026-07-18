@@ -103,6 +103,40 @@ final class ImageOptimizerTest extends KernelTestCase
     }
 
     /**
+     * The throwaway sits in the media tree, so readers of that tree have to skip it
+     * — pushword/static-generator does, keyed on isOptimizationTmp(). Nothing else
+     * ties the two ends together: rename the temp and the predicate stops matching,
+     * silently, and a static build starts publishing half-written images again. So
+     * assert against the path optimizeAtomically() really produced, never a copy of
+     * its format.
+     */
+    public function testIsOptimizationTmpRecognizesThePathItActuallyWrites(): void
+    {
+        $writtenTmpPath = null;
+
+        $optimizer = $this->optimizer($this->chain(static function (string $in, ?string $out) use (&$writtenTmpPath): void {
+            $writtenTmpPath = $out;
+            copy($in, (string) $out);
+        }));
+
+        [$media] = $this->prepareValidVariant();
+        $optimizer->optimizeFilter($media, 'md');
+
+        self::assertIsString($writtenTmpPath);
+        self::assertTrue(
+            ImageOptimizer::isOptimizationTmp($writtenTmpPath),
+            'isOptimizationTmp() no longer matches the temp file optimizeAtomically() writes: '.$writtenTmpPath,
+        );
+    }
+
+    public function testIsOptimizationTmpLeavesRealMediaAlone(): void
+    {
+        foreach (['photo.webp', 'photo.jpg', 'md/photo.webp', 'report.opt.pdf', 'notes.tmp'] as $fileName) {
+            self::assertFalse(ImageOptimizer::isOptimizationTmp($fileName), $fileName.' is a real file, not a throwaway');
+        }
+    }
+
+    /**
      * @return array{Media, string, string}
      */
     private function prepareValidVariant(): array

@@ -788,17 +788,16 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     {
         $alias = $this->getRootAlias($queryBuilder);
 
-        // LOWER() rather than a bare LIKE: SQLite and a *_ci MySQL collation match
-        // case-insensitively on their own, but that is the collation's doing, not a
-        // guarantee — {@see Page::hasNoindex()}, the twin this must agree with, is
-        // explicitly case-insensitive. `none` is there for the same reason it is
-        // there: it is the robots shorthand for `noindex, nofollow`.
+        // The SQL twin of {@see Page::hasNoindex()} — same two needles, same reason:
+        // `none` is the robots shorthand for `noindex, nofollow`. LOWER() rather than
+        // a bare LIKE because SQLite and a *_ci MySQL collation match case-insensitively
+        // on their own, which is the collation's doing and not a guarantee.
         $metaRobots = 'LOWER('.$alias.'.metaRobots)';
 
         return $queryBuilder
-            ->andWhere($alias.'.metaRobots IS NULL OR ('.$metaRobots.' NOT LIKE :noi2 AND '.$metaRobots.' NOT LIKE :noi3)')
-            ->setParameter('noi2', '%noindex%')
-            ->setParameter('noi3', '%none%');
+            ->andWhere($alias.'.metaRobots IS NULL OR ('.$metaRobots.' NOT LIKE :noindexNeedle AND '.$metaRobots.' NOT LIKE :noneNeedle)')
+            ->setParameter('noindexNeedle', '%noindex%')
+            ->setParameter('noneNeedle', '%none%');
     }
 
     public function andNotRedirection(QueryBuilder $queryBuilder): QueryBuilder
