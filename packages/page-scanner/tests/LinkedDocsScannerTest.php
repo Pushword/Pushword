@@ -323,7 +323,9 @@ final class LinkedDocsScannerTest extends KernelTestCase
         yield 'noindex among other directives' => ['noindex, noarchive', true];
         yield 'no space after the comma' => ['noindex,nofollow', true];
         yield 'uppercase, as a flat file may spell it' => ['NOINDEX', true];
+        yield 'none is the shorthand for noindex, nofollow' => ['none', true];
         yield 'noimageindex only bans images' => ['noimageindex', false];
+        yield 'nosnippet does not contain none' => ['nosnippet, notranslate', false];
         yield 'explicitly indexable' => ['index, follow', false];
         yield 'unrelated directive' => ['noarchive', false];
         yield 'empty, the default' => ['', false];

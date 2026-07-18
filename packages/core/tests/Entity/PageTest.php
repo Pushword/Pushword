@@ -90,11 +90,19 @@ final class PageTest extends TestCase
         $page->setMetaRobots('NoIndex, NoArchive');
         self::assertFalse($page->isIndexable());
 
+        // `none` is the robots shorthand for `noindex, nofollow`.
+        $page->setMetaRobots('none');
+        self::assertFalse($page->isIndexable());
+
         $page->setMetaRobots('index, follow');
         self::assertTrue($page->isIndexable());
 
         // noimageindex only bans the images: the substring does not line up.
         $page->setMetaRobots('noimageindex');
+        self::assertTrue($page->isIndexable());
+
+        // Nor does any other directive carry `none` inside it.
+        $page->setMetaRobots('nosnippet, notranslate, noarchive');
         self::assertTrue($page->isIndexable());
     }
 

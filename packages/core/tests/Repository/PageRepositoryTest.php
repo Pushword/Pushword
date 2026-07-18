@@ -4,6 +4,8 @@ namespace Pushword\Core\Tests\Controller;
 
 use DateTime;
 use Doctrine\ORM\PersistentCollection;
+use Iterator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -36,28 +38,29 @@ final class PageRepositoryTest extends KernelTestCase
 
     /**
      * The SQL twin of {@see Page::hasNoindex()}, and what the sitemap and the main
-     * feed actually filter on.
+     * feed actually filter on. Left to drift, it would list in the sitemap a page
+     * search engines have already dropped.
      *
-     * Note this cannot fail on SQLite or on a *_ci MySQL collation, where LIKE is
-     * already case-insensitive — it would pass even without the LOWER() the query
-     * carries. It is here to pin the contract for a case-sensitive backend, and to
-     * fail loudly if someone ever narrows the rule to an equality.
+     * The uppercase row cannot fail on SQLite or a *_ci MySQL collation, where LIKE
+     * is case-insensitive anyway — it pins the contract for a case-sensitive backend.
+     * The others fail on any backend.
      */
-    public function testIndexableQueryExcludesNoindexWhateverItsCase(): void
+    #[DataProvider('nonIndexableMetaRobotsProvider')]
+    public function testIndexableQueryExcludes(string $metaRobots): void
     {
         self::bootKernel();
 
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
         $page = new Page();
-        $page->setH1('Uppercase noindex');
-        $page->setSlug('uppercase-noindex');
+        $page->setH1('Not indexable');
+        $page->setSlug('not-indexable-by-meta-robots');
         $page->locale = 'en';
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
         $page->setMainContent('content');
-        $page->setMetaRobots('NOINDEX, NOARCHIVE');
+        $page->setMetaRobots($metaRobots);
 
         $em->persist($page);
         $em->flush();
@@ -70,7 +73,57 @@ final class PageRepositoryTest extends KernelTestCase
 
             $slugs = array_map(static fn (Page $indexablePage): string => $indexablePage->getSlug(), $indexable);
 
-            self::assertNotContains('uppercase-noindex', $slugs);
+            self::assertNotContains('not-indexable-by-meta-robots', $slugs);
+        } finally {
+            $em->remove($page);
+            $em->flush();
+        }
+    }
+
+    /**
+     * @return Iterator<string, array{string}>
+     */
+    public static function nonIndexableMetaRobotsProvider(): Iterator
+    {
+        yield 'bare noindex' => ['noindex'];
+        yield 'noindex among other directives' => ['noindex, noarchive'];
+        yield 'uppercase' => ['NOINDEX, NOARCHIVE'];
+        yield 'none, the noindex+nofollow shorthand' => ['none'];
+        yield 'uppercase none' => ['None'];
+    }
+
+    /**
+     * The mirror of the above: a directive that merely looks like one of the two
+     * must not cost a page its place in the sitemap.
+     */
+    public function testIndexableQueryKeepsLookalikeDirectives(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $page = new Page();
+        $page->setH1('Still indexable');
+        $page->setSlug('indexable-lookalike-directives');
+        $page->locale = 'en';
+        $page->host = 'localhost.dev';
+        $page->createdAt = new DateTime();
+        $page->updatedAt = new DateTime();
+        $page->setMainContent('content');
+        $page->setMetaRobots('noimageindex, nosnippet, notranslate');
+
+        $em->persist($page);
+        $em->flush();
+
+        try {
+            /** @var Page[] $indexable */
+            $indexable = $em->getRepository(Page::class)
+                ->getIndexablePagesQuery('localhost.dev', 'en')
+                ->getQuery()->getResult();
+
+            $slugs = array_map(static fn (Page $indexablePage): string => $indexablePage->getSlug(), $indexable);
+
+            self::assertContains('indexable-lookalike-directives', $slugs);
         } finally {
             $em->remove($page);
             $em->flush();
