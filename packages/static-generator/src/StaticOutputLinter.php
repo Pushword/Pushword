@@ -53,9 +53,11 @@ final class StaticOutputLinter
             if (! $file instanceof SplFileInfo) {
                 continue;
             }
+
             if ('html' !== $file->getExtension()) {
                 continue;
             }
+
             $content = file_get_contents($file->getPathname());
             if (false === $content) {
                 continue;
