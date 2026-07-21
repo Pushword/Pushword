@@ -5,6 +5,7 @@ namespace Pushword\Core\EventListener;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 use Symfony\Component\Security\Http\Event\LogoutEvent;
 
@@ -15,12 +16,22 @@ use Symfony\Component\Security\Http\Event\LogoutEvent;
  * dynamic admin fragments (e.g. admin buttons via liveBlock's data-live-if). It is
  * never trusted server-side; admin endpoints stay behind the Symfony firewall.
  *
+ * Only editors get it (matching the ROLE_EDITOR check the fragment endpoints
+ * enforce): LoginSuccessEvent also fires for downstream front-office firewalls
+ * (customer accounts, magic links), and on a statically served host a customer
+ * carrying pw_auth would dead-POST the unreachable admin fragment on every page.
+ *
  * Not HttpOnly by design: JavaScript has to read it. SameSite=Lax is fine because
  * this is a boolean presence check, not a session token.
  */
 final readonly class PwAuthCookieListener
 {
     public const string COOKIE_NAME = 'pw_auth';
+
+    public function __construct(
+        private RoleHierarchyInterface $roleHierarchy,
+    ) {
+    }
 
     /**
      * Single source of truth for the `pw_auth` cookie attributes, shared with
@@ -46,6 +57,11 @@ final readonly class PwAuthCookieListener
     {
         $response = $event->getResponse();
         if (! $response instanceof Response) {
+            return;
+        }
+
+        $roles = $this->roleHierarchy->getReachableRoleNames($event->getAuthenticatedToken()->getRoleNames());
+        if (! \in_array('ROLE_EDITOR', $roles, true)) {
             return;
         }
 

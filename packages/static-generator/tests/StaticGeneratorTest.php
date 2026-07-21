@@ -395,6 +395,17 @@ final class StaticGeneratorTest extends KernelTestCase
 
         $staticDir = $this->getStaticDir();
         self::assertFileExists($staticDir);
+
+        // A static host never proxies /admin, so exported HTML must not embed the
+        // admin-toolbar live block: with a pw_auth cookie it would dead-POST the
+        // unreachable fragment endpoint on every page view (page_default.html.twig
+        // skips the admin_buttons block when isStatic is true).
+        $indexFile = $staticDir.'/index.html';
+        self::assertFileExists($indexFile);
+        self::assertStringNotContainsString(
+            'admin/fragment/page-buttons',
+            (string) file_get_contents($indexFile),
+        );
     }
 
     /**
@@ -563,8 +574,8 @@ final class StaticGeneratorTest extends KernelTestCase
         AbstractGenerator::$appKernel = null;
 
         // A real, persisted page on a NON-default host: localhost.dev is the default
-        // host (prefix suppressed regardless of the flag), and an id-less page 500s in
-        // the page-buttons fragment — so persist a real pushword.piedweb.com page.
+        // host (prefix suppressed regardless of the flag), so persist a real
+        // pushword.piedweb.com page.
         $probe = new Page(false);
         $probe->host = 'pushword.piedweb.com';
         $probe->setSlug('worker-reset-probe');
@@ -1463,7 +1474,7 @@ final class StaticGeneratorTest extends KernelTestCase
     public static function getParams(string $name): string
     {
         if ('kernel.project_dir' === $name) {
-            return __DIR__.'/../../skeleton';
+            return __DIR__.'/../../dev-app';
         }
 
         if ('pw.public_media_dir' === $name) {
@@ -1471,11 +1482,11 @@ final class StaticGeneratorTest extends KernelTestCase
         }
 
         if ('pw.media_dir' === $name) {
-            return realpath(__DIR__.'/../../skeleton/media');
+            return realpath(__DIR__.'/../../dev-app/media');
         }
 
         if ('pw.public_dir' === $name) {
-            return realpath(__DIR__.'/../../skeleton/public');
+            return realpath(__DIR__.'/../../dev-app/public');
         }
 
         throw new Exception();
@@ -1483,7 +1494,7 @@ final class StaticGeneratorTest extends KernelTestCase
 
     private function getPublicMediaDir(): string
     {
-        return realpath(__DIR__.'/../../skeleton/public').'/media';
+        return realpath(__DIR__.'/../../dev-app/public').'/media';
     }
 
     public function getPageRepo(): MockObject

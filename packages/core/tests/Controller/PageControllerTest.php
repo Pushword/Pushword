@@ -23,7 +23,12 @@ final class PageControllerTest extends KernelTestCase
     {
         $slug = 'homepage';
         $response = $this->getPageController()->show(Request::create($slug), $slug);
-        self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
+        $content = (string) $response->getContent();
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode(), $content);
+
+        // Dynamic renders keep the admin-toolbar live block; only the static
+        // export drops it (isStatic guard in page_default.html.twig).
+        self::assertStringContainsString('admin/fragment/page-buttons', $content);
     }
 
     public function testShowAnotherPage(): void

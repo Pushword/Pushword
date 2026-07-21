@@ -7,8 +7,8 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 
 /**
- * Heals the invariant "authenticated ⇒ pw_auth=1 cookie present" without forcing
- * a re-login.
+ * Heals the invariant "authenticated editor ⇒ pw_auth=1 cookie present" without
+ * forcing a re-login.
  *
  * {@see PwAuthCookieListener} only writes pw_auth on LoginSuccessEvent, but the
  * authentication can outlive that write: pw_auth is a browser-session cookie while
@@ -18,7 +18,10 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
  * page_default.html.twig, block admin_buttons) never fires.
  *
  * On every authenticated main request that arrives without the cookie, we re-set
- * it — using {@see Security::getUser()}, which also covers remember-me. Requests
+ * it — using {@see Security::isGranted()}, which also covers remember-me. Like the
+ * login-time write, healing is restricted to ROLE_EDITOR: LoginSuccessEvent and
+ * this response hook also run for downstream front-office logins (customer
+ * accounts), whose sessions must never carry the admin-toolbar hint. Requests
  * that already carry pw_auth=1 are skipped, so at most one Set-Cookie is emitted
  * per browser session, never on every response. The header lands in document.cookie
  * before the page scripts run, so the toolbar reappears on the first authenticated
@@ -57,6 +60,10 @@ final readonly class PwAuthCookieHealListener
         }
 
         if (null === $this->security->getUser()) {
+            return;
+        }
+
+        if (! $this->security->isGranted('ROLE_EDITOR')) {
             return;
         }
 

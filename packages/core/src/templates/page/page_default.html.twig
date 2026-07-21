@@ -87,8 +87,10 @@
   {% block admin_buttons %}
     {# Loaded client-side via liveBlock (js-helper). Guarded by the pw_auth cookie
        so anonymous visits don't hit PHP on cached pages. The fragment endpoint is
-       still auth-protected; the cookie is only a client-side hint. #}
-    {% if class_exists('\\Pushword\\Admin\\PushwordAdminBundle') %}
+       still auth-protected; the cookie is only a client-side hint. Skipped on
+       static export: the fragment endpoint is unreachable on a frozen host, so
+       the placeholder would only produce dead POSTs. #}
+    {% if not isStatic|default(false) and class_exists('\\Pushword\\Admin\\PushwordAdminBundle') %}
       <div
         data-live="{{ path('pushword_admin_fragment_page_buttons', {id: page.id}) }}"
         data-live-if="cookie:pw_auth=1"></div>

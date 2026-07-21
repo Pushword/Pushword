@@ -26,6 +26,7 @@ function makeLiveFormBlock(action) {
 describe('liveBlock — getLiveBlock', () => {
   beforeEach(() => {
     document.body.innerHTML = ''
+    document.cookie = 'pw_auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
     vi.restoreAllMocks()
   })
 
@@ -51,15 +52,13 @@ describe('liveBlock — getLiveBlock', () => {
   })
 
   it('does not replace outerHTML on 403 and fires live-block-forbidden', async () => {
-    makeLiveBlockEl('/block')
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 403,
-        text: () => Promise.resolve('<html>login page</html>'),
-      }),
-    )
+    const el = makeLiveBlockEl('/block')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      text: () => Promise.resolve('<html>login page</html>'),
+    })
+    vi.stubGlobal('fetch', fetchMock)
 
     let forbiddenDetail = null
     document.body.addEventListener('live-block-forbidden', (e) => {
@@ -70,9 +69,46 @@ describe('liveBlock — getLiveBlock', () => {
 
     await vi.waitFor(() => expect(forbiddenDetail).not.toBeNull())
     expect(forbiddenDetail.status).toBe(403)
-    // original block must still be present
-    expect(document.body.querySelector('[data-live]')).not.toBeNull()
+    expect(forbiddenDetail.url).toBe('/block')
+    // original block must still be present, but without its fetch trigger:
+    // liveBlock() re-runs on every DOMChanged and must not retry a failed block
+    expect(document.body.contains(el)).toBe(true)
+    expect(el.hasAttribute('data-live')).toBe(false)
     expect(document.body.innerHTML).not.toContain('login page')
+
+    liveBlock()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('skips a data-live-if cookie-gated block when the cookie is absent', () => {
+    const el = makeLiveBlockEl('/admin/fragment/page-buttons/1')
+    el.setAttribute('data-live-if', 'cookie:pw_auth=1')
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    liveBlock()
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    // the trigger stays: the gate is re-evaluated on the next liveBlock() run
+    expect(el.hasAttribute('data-live')).toBe(true)
+  })
+
+  it('fetches a data-live-if cookie-gated block when the cookie matches', async () => {
+    const el = makeLiveBlockEl('/admin/fragment/page-buttons/1')
+    el.setAttribute('data-live-if', 'cookie:pw_auth=1')
+    document.cookie = 'pw_auth=1'
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve('<div>toolbar</div>'),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    liveBlock()
+
+    await vi.waitFor(() => expect(document.body.innerHTML).toContain('toolbar'))
+    expect(fetchMock).toHaveBeenCalledOnce()
+
+    document.cookie = 'pw_auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
   })
 })
 

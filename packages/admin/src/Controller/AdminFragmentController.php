@@ -7,7 +7,6 @@ use Pushword\Core\EventListener\PwAuthCookieListener;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -19,7 +18,9 @@ use Symfony\Component\Routing\Attribute\Route;
  * Auth is checked manually (not via #[IsGranted]) so unauthenticated requests
  * return 401 + cleared `pw_auth` cookie instead of being redirected to /login
  * by the firewall entry point — fetch() would otherwise follow the redirect
- * and swap the login HTML into the placeholder.
+ * and swap the login HTML into the placeholder. Authenticated non-editors get
+ * 403 + the same cookie clearing: pw_auth is an editor-only hint, so a session
+ * that reaches this endpoint without ROLE_EDITOR carries a stale cookie.
  */
 final class AdminFragmentController extends AbstractController
 {
@@ -36,11 +37,11 @@ final class AdminFragmentController extends AbstractController
     public function pageButtons(int $id): Response
     {
         if (null === $this->getUser()) {
-            return $this->emptyAndClearAuthCookie();
+            return $this->emptyAndClearAuthCookie(Response::HTTP_UNAUTHORIZED);
         }
 
         if (! $this->isGranted('ROLE_EDITOR')) {
-            throw new AccessDeniedHttpException();
+            return $this->emptyAndClearAuthCookie(Response::HTTP_FORBIDDEN);
         }
 
         $page = $this->pageRepository->find($id);
@@ -53,9 +54,9 @@ final class AdminFragmentController extends AbstractController
         ]);
     }
 
-    private function emptyAndClearAuthCookie(): Response
+    private function emptyAndClearAuthCookie(int $status): Response
     {
-        $response = new Response('', Response::HTTP_UNAUTHORIZED);
+        $response = new Response('', $status);
         $response->headers->clearCookie(PwAuthCookieListener::COOKIE_NAME, '/');
 
         return $response;

@@ -65,6 +65,20 @@ final class PwAuthCookieHealListenerTest extends WebTestCase
         self::assertNull($this->pwAuthResponseCookie(), 'Anonymous requests must not receive a pw_auth cookie');
     }
 
+    public function testDoesNotHealAuthenticatedNonEditor(): void
+    {
+        // A downstream front-office session (customer account): authenticated, no
+        // ROLE_EDITOR. The admin-toolbar hint must not be set for it.
+        $this->client->loginUser($this->getOrCreateUser('pw-auth-customer@example.tld', []));
+
+        $this->client->request(Request::METHOD_GET, '/_pushword/auth-check');
+
+        self::assertNull(
+            $this->pwAuthResponseCookie(),
+            'Authenticated non-editor requests must not receive a pw_auth cookie',
+        );
+    }
+
     private function pwAuthResponseCookie(): ?Cookie
     {
         $cookies = array_filter(
@@ -75,7 +89,8 @@ final class PwAuthCookieHealListenerTest extends WebTestCase
         return [] === $cookies ? null : current($cookies);
     }
 
-    private function getOrCreateUser(string $email): User
+    /** @param string[] $roles */
+    private function getOrCreateUser(string $email, array $roles = [User::ROLE_SUPER_ADMIN]): User
     {
         /** @var UserRepository $userRepo */
         $userRepo = self::getContainer()->get(UserRepository::class);
@@ -92,7 +107,7 @@ final class PwAuthCookieHealListenerTest extends WebTestCase
         $userClass = self::getContainer()->getParameter('pw.entity_user');
         $user = new $userClass();
         $user->email = $email;
-        $user->setRoles([User::ROLE_SUPER_ADMIN]);
+        $user->setRoles($roles);
 
         $em->persist($user);
         $em->flush();

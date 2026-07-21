@@ -26,6 +26,7 @@ final class PwAuthCookieHealListenerUnitTest extends TestCase
     {
         $security = $this->createMock(Security::class);
         $security->method('getUser')->willReturn(new InMemoryUser('u', null));
+        $security->method('isGranted')->willReturn(true);
 
         $response = new Response();
         new PwAuthCookieHealListener($security)->onKernelResponse(
@@ -33,6 +34,20 @@ final class PwAuthCookieHealListenerUnitTest extends TestCase
         );
 
         self::assertNotNull($this->pwAuthCookie($response));
+    }
+
+    public function testSkipsAuthenticatedNonEditor(): void
+    {
+        $security = $this->createMock(Security::class);
+        $security->method('getUser')->willReturn(new InMemoryUser('u', null));
+        $security->method('isGranted')->willReturn(false);
+
+        $response = new Response();
+        new PwAuthCookieHealListener($security)->onKernelResponse(
+            $this->event(Request::create('https://example.com/'), $response),
+        );
+
+        self::assertNull($this->pwAuthCookie($response));
     }
 
     public function testSkipsSubRequest(): void

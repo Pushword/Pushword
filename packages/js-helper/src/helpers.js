@@ -41,6 +41,11 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
     })
       .then(function (response) {
         if (!response.ok) {
+          // Drop the trigger: liveBlock() re-runs on every DOMChanged, so a kept
+          // data-live would re-fetch the failed block forever (e.g. on a static
+          // host where the endpoint 404s). The event detail keeps the url for
+          // listeners that want to handle or retry it deliberately.
+          item.removeAttribute('data-' + liveBlockAttribute)
           item.dispatchEvent(
             new CustomEvent('live-block-forbidden', {
               bubbles: true,
