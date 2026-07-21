@@ -53,7 +53,7 @@
     .slide figure:hover svg { transform: translateY(-3px); box-shadow: 0 12px 32px #0000002e; }
     .slide figcaption { text-align: center; color: var(--muted); font-size: .72rem; margin-top: .5rem; font-variant-numeric: tabular-nums; }
 
-    aside { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 1.1rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 1px 3px #0000000d; }
+    aside { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 1.1rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 1px 3px #0000000d; }
     .panel-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
     .panel-head .live { display: inline-flex; align-items: center; gap: .4rem; font-size: .72rem; color: var(--muted-2); }
     .live::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--muted); transition: background .2s, box-shadow .2s; }
@@ -166,6 +166,13 @@
     .tw-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; max-height: 11rem; overflow-y: auto; }
     .tw-sw { width: 100%; aspect-ratio: 1; border-radius: 4px; border: 1px solid #0000001a; cursor: pointer; padding: 0; transition: transform .1s, box-shadow .1s; }
     .tw-sw:hover { transform: scale(1.18); box-shadow: 0 0 0 2px var(--accent); }
+    .color-contrast { margin: 0; display: flex; justify-content: space-between; gap: .5rem; font-size: .7rem; font-variant-numeric: tabular-nums; padding: .28rem .45rem; border-radius: 7px; }
+    .color-contrast.ok { color: var(--ok); background: #d1fae5; }
+    .color-contrast.warn { color: var(--warn); background: #fef3c7; }
+    .color-contrast.bad { color: var(--bad); background: #f8d7da; }
+    .color-suggest { display: flex; align-items: center; gap: 3px; }
+    .color-suggest .tw-sw { width: 1.15rem; height: 1.15rem; aspect-ratio: auto; flex: 0 0 auto; }
+    .color-suggest__label { font-size: .64rem; color: var(--muted); margin-left: .2rem; }
 
     /* Fake-select trigger opening the background-effect modal. */
     .fake-select { display: flex; align-items: center; gap: .5rem; width: 100%; background: var(--field); border: 1px solid var(--line-2); border-radius: 8px; padding: .26rem .4rem; cursor: pointer; font: inherit; color: var(--text); }
@@ -255,7 +262,7 @@
       {# ---------- VISUAL EDITOR ---------- #}
       <div x-show="view === 'visual'" style="display:flex;flex-direction:column;gap:1rem;">
         <section class="group">
-          <div class="group-head" @click="deckOpen = !deckOpen">
+          <div class="group-head" @click="toggleDeck()">
             <span class="chev" x-text="deckOpen ? '▾' : '▸'"></span>
             <h2>Deck</h2>
           </div>
@@ -336,7 +343,18 @@
             </div>
             <div class="field">
               <label>Creator</label>
-              <input type="text" x-model="spec.creator" placeholder="config key or blank">
+              <template x-if="'object' === typeof spec.creator && null !== spec.creator">
+                <input type="text" :value="'Inline: ' + spec.creator.name" disabled title="Inline creator set via API/JSON — edit it in the Source view">
+              </template>
+              <template x-if="'object' !== typeof spec.creator || null === spec.creator">
+                <select x-model="spec.creator" x-init="$nextTick(() => $el.value = spec.creator || '')">
+                  <option value="">— brand —</option>
+                  <template x-for="(name, key) in vocab.creators" :key="key"><option :value="key" x-text="name"></option></template>
+                  <template x-if="spec.creator && !((spec.creator || '') in vocab.creators)">
+                    <option :value="spec.creator" x-text="spec.creator + ' — unknown key'"></option>
+                  </template>
+                </select>
+              </template>
             </div>
             <div class="field">
               <label>Counter style</label>
@@ -361,6 +379,14 @@
               <select x-model="spec.creatorOrientation" x-init="$nextTick(() => $el.value = spec.creatorOrientation)">
                 <option value="">— default —</option><template x-for="o in vocab.creatorOrientations" :key="o"><option :value="o" x-text="o"></option></template>
               </select>
+            </div>
+            <div class="field full">
+              <label>Background effect <span class="val">whole deck — a slide can override</span></label>
+              <button type="button" class="fake-select" @click="openEffect('deck')">
+                <span class="thumb" x-html="effectPreviewSvg(spec.background || 'none')"></span>
+                <span class="lbl" x-text="effectLabel(spec.background || 'none')"></span>
+                <span class="caret">▾</span>
+              </button>
             </div>
           </div>
         </section>
@@ -391,8 +417,8 @@
                     <div class="field"><label>Tagline</label><input type="text" x-model="slide.tagline"></div>
                     <div class="field"><label>Background effect</label>
                       <button type="button" class="fake-select" @click="openEffect(i)">
-                        <span class="thumb" x-html="effectPreviewSvg(slide.background || 'none')"></span>
-                        <span class="lbl" x-text="effectLabel(slide.background || 'none')"></span>
+                        <span class="thumb" x-html="slideEffectPreview(slide)"></span>
+                        <span class="lbl" x-text="slideEffectLabel(slide)"></span>
                         <span class="caret">▾</span>
                       </button>
                     </div>
@@ -419,6 +445,33 @@
                     </div>
                   </div>
                   <label class="switch"><input type="checkbox" x-model="slide.swipe"> Swipe hint (“→”)</label>
+
+                  <div class="grid2">
+                    <div class="field">
+                      <label>Palette · bg <span class="val">override</span></label>
+                      <button type="button" class="color-field" @click.stop="openColor(slide.palette, 'bg', $event)">
+                        <span class="sw" :style="slide.palette.bg ? ('background:' + slide.palette.bg) : ''"></span>
+                        <span class="hex" :class="!slide.palette.bg && 'empty'" x-text="slide.palette.bg || 'inherit'"></span>
+                        <span class="caret">▾</span>
+                      </button>
+                    </div>
+                    <div class="field">
+                      <label>Palette · text</label>
+                      <button type="button" class="color-field" @click.stop="openColor(slide.palette, 'text', $event)">
+                        <span class="sw" :style="slide.palette.text ? ('background:' + slide.palette.text) : ''"></span>
+                        <span class="hex" :class="!slide.palette.text && 'empty'" x-text="slide.palette.text || 'inherit'"></span>
+                        <span class="caret">▾</span>
+                      </button>
+                    </div>
+                    <div class="field">
+                      <label>Palette · accent</label>
+                      <button type="button" class="color-field" @click.stop="openColor(slide.palette, 'accent', $event)">
+                        <span class="sw" :style="slide.palette.accent ? ('background:' + slide.palette.accent) : ''"></span>
+                        <span class="hex" :class="!slide.palette.accent && 'empty'" x-text="slide.palette.accent || 'inherit'"></span>
+                        <span class="caret">▾</span>
+                      </button>
+                    </div>
+                  </div>
 
                   <div class="field">
                     <label>Image</label>
@@ -485,6 +538,17 @@
       <input class="color-pop__native" type="color" title="Custom colour"
              :value="/^#[0-9a-fA-F]{6}$/.test(colorValue) ? colorValue : '#000000'"
              @input="colorValue = $event.target.value">
+    </div>
+    <p class="color-contrast" x-show="colorContrast" x-cloak
+       :class="colorContrast && (colorContrast.pass ? 'ok' : (colorContrast.passLarge ? 'warn' : 'bad'))">
+      <span x-text="colorContrast ? ('Contrast ' + colorContrast.ratio + ':1') : ''"></span>
+      <span x-text="colorContrast ? (colorContrast.pass ? 'AA ✓' : (colorContrast.passLarge ? 'AA large only' : 'fails AA')) : ''"></span>
+    </p>
+    <div class="color-suggest" x-show="suggestedColors.length" x-cloak>
+      <template x-for="c in suggestedColors" :key="c.name">
+        <button type="button" class="tw-sw" :style="'background:' + c.hex" :title="c.name + ' ' + c.hex" @click="pickSwatch(c.hex)"></button>
+      </template>
+      <span class="color-suggest__label">deck / site</span>
     </div>
     <div class="tw-grid">
       <template x-for="c in tailwind" :key="c.name">

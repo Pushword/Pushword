@@ -3,6 +3,7 @@
 namespace Pushword\Repurpose\Model;
 
 use DateTimeImmutable;
+use Pushword\Repurpose\Service\BackgroundEffectRegistry;
 use Pushword\Repurpose\Service\FontPairingRegistry;
 use Pushword\Repurpose\Service\FormatRegistry;
 use Pushword\Repurpose\Service\NetworkRegistry;
@@ -56,7 +57,9 @@ class Carousel
         public ?string $fontPairing = null,
         #[Assert\Valid]
         public ?Counter $counter = null,
-        public ?string $creator = null,
+        #[Assert\Choice(callback: [BackgroundEffectRegistry::class, 'keys'], message: 'repurpose.background.invalid')]
+        public string $background = 'none',
+        public string|Creator|null $creator = null,
         #[Assert\Choice(choices: self::CREATOR_ORIENTATIONS, message: 'repurpose.creator.orientation.invalid')]
         public string $creatorOrientation = 'horizontal',
         #[Assert\Choice(choices: self::CREATOR_ON_SLIDES, message: 'repurpose.creator.onSlides.invalid')]

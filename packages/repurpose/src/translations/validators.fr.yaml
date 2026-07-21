@@ -16,6 +16,8 @@ repurpose:
     invalid: 'plannedAt doit être une date-heure valide.'
   fontPairing:
     invalid: 'Association de polices inconnue.'
+  background:
+    invalid: 'Effet de fond inconnu.'
   caption:
     max: 'La légende dépasse la limite de %max% caractères pour ce réseau.'
   slides:

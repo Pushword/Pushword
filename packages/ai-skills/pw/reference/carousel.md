@@ -84,7 +84,11 @@ Key rules (the schema is the source of truth — always fetch it):
 - **Overlay defaults to 0.35 on image slides** (0 without an image); set an
   explicit `0` only when the text provably reads without it.
 - **`creator`** is a key from the site's `repurpose_creators` config; omit it to
-  fall back to the brand. Do not invent creators.
+  fall back to the brand. Do not invent keys — an unknown one silently renders
+  the brand byline, and the PUT response flags it with a warning listing the
+  known keys. For a one-off byline (a guest author not in the config), pass an
+  inline object instead: `"creator": {"name": "Jane Doe", "role": "Guest"}`.
+  No avatar (or a missing one) renders an initials disc, never a broken image.
 - **Overlay only over an image**; a slide must have at least one text field or an
   image.
 

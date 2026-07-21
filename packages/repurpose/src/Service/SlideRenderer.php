@@ -71,9 +71,11 @@ final readonly class SlideRenderer
         $defs = $this->embedder->fontFace('rp-heading', $headingFile)
             .$this->embedder->fontFace('rp-body', $bodyFile);
 
+        $effect = $slide->background ?? $carousel->background;
+
         $body = '<rect width="'.$width.'" height="'.$height.'" fill="'.$bg.'"/>';
         $body .= $this->renderImage($slide, $width, $height, $index);
-        $body .= $this->renderEffect($slide->background, $index, $width, $height, $total);
+        $body .= $this->renderEffect($effect, $index, $width, $height, $total);
         $body .= $this->renderText($slide, $width, $height, $headingFile, $bodyFile, $text, $accent);
         $body .= $this->renderCreator($carousel, $creator, $index, $total, $width, $height, $text, $accent);
         $body .= $this->renderCounter($carousel, $index, $total, $width, $height, $bodyFile, $text, $accent);
@@ -257,7 +259,9 @@ final readonly class SlideRenderer
     /**
      * The creator byline (avatar + name + role), shown on the slides selected by
      * `creatorOnSlides` (all / intro-outro / first). Top-left, so it never clashes
-     * with bottom-anchored text or the top-right counter.
+     * with bottom-anchored text or the top-right counter. `creatorOrientation`
+     * places the text beside the avatar (horizontal) or stacked under it
+     * (vertical — reads better on centered cover layouts).
      */
     private function renderCreator(Carousel $carousel, ?Creator $creator, int $index, int $total, int $width, int $height, string $text, string $accent): string
     {
@@ -270,29 +274,63 @@ final readonly class SlideRenderer
         $d = $width * 0.09;
         $cx = $marginX + $d / 2;
         $cy = $top + $d / 2;
-        $svg = '';
-        $textX = $marginX;
+        $nameSize = $width * 0.03;
+        $roleSize = $width * 0.022;
 
+        $svg = $this->renderAvatar($creator, $index, $cx, $cy, $d, $text, $accent);
+
+        if ('vertical' === $carousel->creatorOrientation) {
+            $textX = $marginX;
+            $nameY = $top + $d + $nameSize * 1.3;
+            $roleY = $nameY + $roleSize * 1.5;
+        } else {
+            $textX = $cx + $d / 2 + $width * 0.02;
+            $nameY = $cy - $nameSize * 0.1;
+            $roleY = $cy + $roleSize * 1.1;
+        }
+
+        $svg .= '<text x="'.$this->n($textX).'" y="'.$this->n($nameY).'" font-family="rp-body" font-size="'.$this->n($nameSize).'" fill="'.$text.'" font-weight="600">'.$this->escape($creator->name).'</text>';
+        if (null !== $creator->role) {
+            $svg .= '<text x="'.$this->n($textX).'" y="'.$this->n($roleY).'" font-family="rp-body" font-size="'.$this->n($roleSize).'" fill="'.$text.'" fill-opacity="0.65">'.$this->escape($creator->role).'</text>';
+        }
+
+        return $svg;
+    }
+
+    /**
+     * The byline's portrait: the configured avatar clipped to a circle, or — when
+     * none is set or the media is missing — an initials disc with the same
+     * footprint, so the byline never loses its visual anchor.
+     */
+    private function renderAvatar(Creator $creator, int $index, float $cx, float $cy, float $d, string $text, string $accent): string
+    {
         if (null !== $creator->avatar) {
             $path = $this->media->derivativePath($creator->avatar, 'md');
             $dataUri = null === $path ? null : $this->embedder->imageDataUri($path);
             if (null !== $dataUri) {
-                $svg .= '<clipPath id="rp-av-'.$index.'"><circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($d / 2).'"/></clipPath>'
+                return '<clipPath id="rp-av-'.$index.'"><circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($d / 2).'"/></clipPath>'
                     .'<image href="'.$dataUri.'" x="'.$this->n($cx - $d / 2).'" y="'.$this->n($cy - $d / 2).'" width="'.$this->n($d).'" height="'.$this->n($d).'" '
                     .'clip-path="url(#rp-av-'.$index.')" preserveAspectRatio="xMidYMid slice"/>'
                     .'<circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($d / 2).'" fill="none" stroke="'.$accent.'" stroke-width="'.$this->n($d * 0.04).'"/>';
-                $textX = $cx + $d / 2 + $width * 0.02;
             }
         }
 
-        $nameSize = $width * 0.03;
-        $svg .= '<text x="'.$this->n($textX).'" y="'.$this->n($cy - $nameSize * 0.1).'" font-family="rp-body" font-size="'.$this->n($nameSize).'" fill="'.$text.'" font-weight="600">'.$this->escape($creator->name).'</text>';
-        if (null !== $creator->role) {
-            $roleSize = $width * 0.022;
-            $svg .= '<text x="'.$this->n($textX).'" y="'.$this->n($cy + $roleSize * 1.1).'" font-family="rp-body" font-size="'.$this->n($roleSize).'" fill="'.$text.'" fill-opacity="0.65">'.$this->escape($creator->role).'</text>';
-        }
+        $initialsSize = $d * 0.38;
 
-        return $svg;
+        return '<circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($d / 2).'" fill="'.$accent.'" fill-opacity="0.15" stroke="'.$accent.'" stroke-width="'.$this->n($d * 0.04).'"/>'
+            .'<text x="'.$this->n($cx).'" y="'.$this->n($cy + $initialsSize * 0.35).'" text-anchor="middle" font-family="rp-body" font-size="'.$this->n($initialsSize).'" fill="'.$text.'" font-weight="600">'.$this->escape($this->initials($creator->name)).'</text>';
+    }
+
+    /**
+     * "Jane Doe" → "JD", "Kelifos" → "K": first letter of the first and last word.
+     */
+    private function initials(string $name): string
+    {
+        $words = array_values(array_filter(preg_split('/\s+/u', $name) ?: [], static fn (string $w): bool => '' !== $w));
+        $first = $words[0] ?? '';
+        $last = \count($words) > 1 ? $words[\count($words) - 1] : '';
+
+        return mb_strtoupper(mb_substr($first, 0, 1).mb_substr($last, 0, 1));
     }
 
     private function showsCreator(string $onSlides, int $index, int $total): bool
@@ -338,11 +376,14 @@ final readonly class SlideRenderer
      * uses (so the thumbnail can never drift from the real output): rendered as slide 1
      * of a virtual 3-slide deck so the deck-windowed shapes land inside the frame.
      */
-    public function effectPreview(string $effect, string $bg = '#7c5cff', int $width = 200, int $height = 250): string
+    public function effectPreview(string $effect, int $width = 200, int $height = 250): string
     {
+        // A dark slate gradient like a real slide's default background, so the white
+        // effect reads exactly as it will on a deck (and never as a violet demo tile).
         return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '.$width.' '.$height.'">'
-            .'<defs><clipPath id="frame-1"><rect width="'.$width.'" height="'.$height.'"/></clipPath></defs>'
-            .'<rect width="'.$width.'" height="'.$height.'" fill="'.$bg.'"/>'
+            .'<defs><clipPath id="frame-1"><rect width="'.$width.'" height="'.$height.'"/></clipPath>'
+            .'<linearGradient id="rp-thumb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#334155"/><stop offset="1" stop-color="#0f172a"/></linearGradient></defs>'
+            .'<rect width="'.$width.'" height="'.$height.'" fill="url(#rp-thumb)"/>'
             .$this->renderEffect($effect, 1, $width, $height, 2)
             .'</svg>';
     }
@@ -374,24 +415,40 @@ final readonly class SlideRenderer
         }
 
         // blobs / bubbles / sketchy: shapes spread across the whole deck, windowed per slide.
+        $defs = '';
+        if ('blobs' === $effect) {
+            // A white→transparent radial fade reads as a soft glowing orb on any
+            // palette — richer than a flat ellipse, still tint-free (no per-palette art).
+            $defs = '<defs><radialGradient id="rp-blob-'.$index.'">'
+                .'<stop offset="0" stop-color="#fff" stop-opacity="0.17"/>'
+                .'<stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>';
+        }
+
         $shapes = '';
         for ($i = 0; $i <= $total; ++$i) {
             $cx = $i * $width + ($i % 2) * $width * 0.5;
             $cy = ($i % 3) * $height * 0.38 + $height * 0.1;
             if ('sketchy' === $effect) {
-                $shapes .= '<path d="M '.$this->n($cx).' '.$this->n($cy).' q '.$this->n($width * 0.18).' '.$this->n(-$height * 0.05).' '.$this->n($width * 0.36).' 0" '
-                    .'fill="none" stroke="#fff" stroke-opacity="0.14" stroke-width="'.$this->n($width * 0.006).'" stroke-linecap="round"/>';
+                // A little flock of hand-drawn direction strokes fanned around the point.
+                for ($k = -1; $k <= 1; ++$k) {
+                    $y = $cy + $k * $height * 0.055;
+                    $shapes .= '<path d="M '.$this->n($cx).' '.$this->n($y).' q '.$this->n($width * 0.16).' '.$this->n(-$height * 0.045).' '.$this->n($width * 0.32).' 0" '
+                        .'fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="'.$this->n($width * 0.007).'" stroke-linecap="round"/>';
+                }
             } elseif ('bubbles' === $effect) {
-                // A cluster of thin rings with one faintly-filled bubble — deterministic per i.
-                $shapes .= '<circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($width * 0.16).'" fill="none" stroke="#fff" stroke-opacity="0.14" stroke-width="'.$this->n($width * 0.006).'"/>'
-                    .'<circle cx="'.$this->n($cx + $width * 0.14).'" cy="'.$this->n($cy + $height * 0.06).'" r="'.$this->n($width * 0.06).'" fill="#fff" fill-opacity="0.05"/>'
-                    .'<circle cx="'.$this->n($cx - $width * 0.1).'" cy="'.$this->n($cy - $height * 0.05).'" r="'.$this->n($width * 0.04).'" fill="none" stroke="#fff" stroke-opacity="0.12" stroke-width="'.$this->n($width * 0.004).'"/>';
+                // Concentric rings plus a couple of faintly-filled bubbles — deterministic per i.
+                $shapes .= '<circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($width * 0.17).'" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="'.$this->n($width * 0.006).'"/>'
+                    .'<circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($width * 0.11).'" fill="#fff" fill-opacity="0.05"/>'
+                    .'<circle cx="'.$this->n($cx + $width * 0.16).'" cy="'.$this->n($cy + $height * 0.07).'" r="'.$this->n($width * 0.07).'" fill="none" stroke="#fff" stroke-opacity="0.14" stroke-width="'.$this->n($width * 0.005).'"/>'
+                    .'<circle cx="'.$this->n($cx - $width * 0.12).'" cy="'.$this->n($cy - $height * 0.06).'" r="'.$this->n($width * 0.05).'" fill="#fff" fill-opacity="0.06"/>';
             } else {
-                $shapes .= '<ellipse cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" rx="'.$this->n($width * 0.32).'" ry="'.$this->n($width * 0.28).'" fill="#fff" fill-opacity="0.06"/>';
+                // blobs: two overlapping soft orbs of varied size.
+                $shapes .= '<circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($width * 0.4).'" fill="url(#rp-blob-'.$index.')"/>'
+                    .'<circle cx="'.$this->n($cx + $width * 0.24).'" cy="'.$this->n($cy + $height * 0.18).'" r="'.$this->n($width * 0.26).'" fill="url(#rp-blob-'.$index.')"/>';
             }
         }
 
-        return '<g clip-path="url(#frame-'.$index.')"><g transform="translate('.$this->n(-$index * $width).' 0)">'.$shapes.'</g></g>';
+        return $defs.'<g clip-path="url(#frame-'.$index.')"><g transform="translate('.$this->n(-$index * $width).' 0)">'.$shapes.'</g></g>';
     }
 
     private function color(Carousel $carousel, Slide $slide, string $role, string $default): string

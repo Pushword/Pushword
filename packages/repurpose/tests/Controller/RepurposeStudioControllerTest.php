@@ -88,6 +88,10 @@ final class RepurposeStudioControllerTest extends WebTestCase
         // The deck previews at the network's mobile-feed width and says so.
         self::assertStringContainsString('width: 390px', $html);
         self::assertStringContainsString('linkedin mobile feed width', $html);
+        // The byline picker offers the host's configured creators, not a blind
+        // free-text key (the test host resolves to the default app's config).
+        self::assertStringContainsString('"creators":{"robin":"Robin"}', $html);
+        self::assertStringContainsString('— brand —', $html);
     }
 
     public function testSaveEditedSpecPersistsNewCopy(): void

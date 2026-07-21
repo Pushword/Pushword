@@ -4,6 +4,7 @@ namespace Pushword\Repurpose\Tests\Service;
 
 use DOMDocument;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Repurpose\Model\Creator;
 use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\SlideRenderer;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -92,6 +93,51 @@ final class SlideRendererTest extends KernelTestCase
         // The arrow disc + "→" path are drawn when the hint is on, and absent when off.
         self::assertStringContainsString('<circle', $with);
         self::assertStringNotContainsString('<circle', $without);
+    }
+
+    /**
+     * @param array<string, mixed> $carouselExtra
+     */
+    private function renderWithCreator(array $carouselExtra, Creator $creator): string
+    {
+        $spec = $carouselExtra + [
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['title' => 'Bylined']],
+        ];
+
+        return $this->renderer()->renderSlide(new CarouselFactory()->fromArray($spec), 0, $creator);
+    }
+
+    public function testCreatorWithoutAvatarGetsAnInitialsDisc(): void
+    {
+        $svg = $this->renderWithCreator([], new Creator('Jane Doe', role: 'Guest editor'));
+
+        $doc = new DOMDocument();
+        self::assertTrue($doc->loadXML($svg), 'the byline yields well-formed SVG');
+        // The initials disc anchors the byline when no portrait is configured.
+        self::assertStringContainsString('>JD</text>', $svg);
+        self::assertStringContainsString('Jane Doe', $svg);
+        self::assertStringContainsString('Guest editor', $svg);
+    }
+
+    public function testInitialsHandleSingleWordAndAccentedNames(): void
+    {
+        // Brand byline ("Pushword") → one letter; accents keep their case fold.
+        self::assertStringContainsString('>P</text>', $this->renderWithCreator([], new Creator('Pushword')));
+        self::assertStringContainsString('>ÉZ</text>', $this->renderWithCreator([], new Creator('Émile Zola')));
+    }
+
+    public function testCreatorOrientationChangesTheBylineLayout(): void
+    {
+        $horizontal = $this->renderWithCreator([], new Creator('Jane Doe', role: 'Guest editor'));
+        $vertical = $this->renderWithCreator(['creatorOrientation' => 'vertical'], new Creator('Jane Doe', role: 'Guest editor'));
+
+        // Regression pin: the orientation knob used to be parsed but never read.
+        self::assertNotSame($horizontal, $vertical, 'vertical stacks the byline under the avatar');
+
+        $doc = new DOMDocument();
+        self::assertTrue($doc->loadXML($vertical), 'the vertical byline yields well-formed SVG');
+        self::assertStringContainsString('Jane Doe', $vertical);
     }
 
     public function testMissingMediaDegradesToPlaceholderNotFatal(): void

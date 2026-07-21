@@ -115,6 +115,34 @@ preview return non-blocking contrast `warnings` (WCAG AA large-text, 3:1) naming
 the slide and the fix. Warnings never block a save — a deliberate low-contrast
 design stays possible.
 
+## Creator byline
+
+Slides can carry a byline (avatar + name + role, top-left; `creatorOnSlides`
+picks which slides, `creatorOrientation` puts the text beside the avatar or
+stacked under it). `creator` is either a key from the site's
+`repurpose_creators` config:
+
+```yaml
+pushword:
+  apps:
+    - hosts: [example.com]
+      repurpose_creators:
+        jane:
+          name: 'Jane Doe'
+          role: 'Editor in chief'
+          avatar: 'jane.jpg' # a media file name; optional
+```
+
+…or an inline `{name, role?, avatar?, type?}` object for a one-off byline.
+Omitted, the brand (site name) signs. An **unknown key** falls back to the brand
+too, but `PUT` and the studio preview flag it with a non-blocking warning
+listing the known keys — the same channel as contrast warnings. Without an
+avatar (or when the media is missing) the byline renders an initials disc, never
+a broken image. The studio offers the configured creators in a dropdown; a
+downstream app with richer author data can bind its own
+`CreatorResolverInterface` (implement `resolve()` plus `available()`, which
+feeds that dropdown and the warning).
+
 ## Export
 
 The studio rasterises each self-contained SVG to a PNG in the browser and posts

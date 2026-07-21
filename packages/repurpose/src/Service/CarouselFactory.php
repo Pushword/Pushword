@@ -4,6 +4,7 @@ namespace Pushword\Repurpose\Service;
 
 use Pushword\Repurpose\Model\Carousel;
 use Pushword\Repurpose\Model\Counter;
+use Pushword\Repurpose\Model\Creator;
 use Pushword\Repurpose\Model\Palette;
 use Pushword\Repurpose\Model\Slide;
 use Pushword\Repurpose\Model\SlideImage;
@@ -32,7 +33,8 @@ final class CarouselFactory
             palette: $this->palette($data['palette'] ?? null),
             fontPairing: $this->strOrNull($data['fontPairing'] ?? null),
             counter: $this->counter($data['counter'] ?? null),
-            creator: $this->creatorKey($data['creator'] ?? null),
+            background: $this->strOr($data['background'] ?? null, 'none'),
+            creator: $this->creator($data['creator'] ?? null),
             creatorOrientation: $this->strOr($data['creatorOrientation'] ?? null, 'horizontal'),
             creatorOnSlides: $this->strOr($data['creatorOnSlides'] ?? null, 'intro-outro'),
             slides: $this->slides($data['slides'] ?? null),
@@ -66,7 +68,7 @@ final class CarouselFactory
                 // advisor will flag it when it hurts).
                 overlay: $this->float($slide['overlay'] ?? null, \is_array($slide['image'] ?? null) ? 0.35 : 0.0),
                 textScale: $this->float($slide['textScale'] ?? null, 1.0),
-                background: $this->strOr($slide['background'] ?? null, 'none'),
+                background: $this->strOrNull($slide['background'] ?? null),
                 palette: $this->palette($slide['palette'] ?? null),
                 image: $this->image($slide['image'] ?? null),
             );
@@ -117,18 +119,23 @@ final class CarouselFactory
     }
 
     /**
-     * `creator` may be a registry key (string) or an inline object (one-off); the
-     * inline form is resolved by the CreatorRegistry in P3. Here we only keep the
-     * key form — an inline object is passed through as its `name` for now.
+     * `creator` may be a `repurpose_creators` key (string) or an inline
+     * `{name, role?, avatar?, type?}` object for a one-off byline (a guest author
+     * the site config will never list). Anything else falls back to null (brand).
      */
-    private function creatorKey(mixed $raw): ?string
+    private function creator(mixed $raw): string|Creator|null
     {
         if (\is_string($raw) && '' !== $raw) {
             return $raw;
         }
 
         if (\is_array($raw) && \is_string($raw['name'] ?? null) && '' !== $raw['name']) {
-            return $raw['name'];
+            return new Creator(
+                name: $raw['name'],
+                role: $this->strOrNull($raw['role'] ?? null),
+                avatar: $this->strOrNull($raw['avatar'] ?? null),
+                type: 'business' === ($raw['type'] ?? null) ? 'business' : 'personal',
+            );
         }
 
         return null;

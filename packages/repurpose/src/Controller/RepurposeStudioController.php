@@ -13,6 +13,7 @@ use Pushword\Repurpose\Repository\SocialPostRepository;
 use Pushword\Repurpose\Service\BackgroundEffectRegistry;
 use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\ContrastAdvisor;
+use Pushword\Repurpose\Service\CreatorAdvisor;
 use Pushword\Repurpose\Service\CreatorResolverInterface;
 use Pushword\Repurpose\Service\ExportBuilder;
 use Pushword\Repurpose\Service\FontPairingRegistry;
@@ -42,6 +43,7 @@ final class RepurposeStudioController extends AbstractController
         private readonly CarouselFactory $factory,
         private readonly SlideRenderer $renderer,
         private readonly ContrastAdvisor $contrastAdvisor,
+        private readonly CreatorAdvisor $creatorAdvisor,
         private readonly CreatorResolverInterface $creatorResolver,
         private readonly ExportBuilder $exportBuilder,
         private readonly NetworkRegistry $networks,
@@ -76,8 +78,13 @@ final class RepurposeStudioController extends AbstractController
             'backUrl' => $this->backUrl($request),
             'specJs' => json_encode($post->getSpec(), $scriptFlags),
             'slidesJs' => json_encode($this->renderer->renderDeck($carousel, $creator), $scriptFlags),
-            'vocabJs' => json_encode($this->vocabulary($carousel->network), $scriptFlags),
+            'vocabJs' => json_encode($this->vocabulary($carousel->network, $post->host), $scriptFlags),
             'backgroundEffectsJs' => json_encode($this->backgroundEffects(), $scriptFlags),
+            'defaultsJs' => json_encode([
+                'bg' => SlideRenderer::DEFAULT_BG,
+                'text' => SlideRenderer::DEFAULT_TEXT,
+                'accent' => SlideRenderer::DEFAULT_ACCENT,
+            ], $scriptFlags),
             'networkUrlsJs' => json_encode($networkUrls, $scriptFlags),
             'pageSlugs' => $this->pageSlugsForHost($post->host),
         ]);
@@ -161,7 +168,10 @@ final class RepurposeStudioController extends AbstractController
 
         return new JsonResponse([
             'slides' => $this->renderer->renderDeck($carousel, $creator),
-            'warnings' => $this->contrastAdvisor->warnings($carousel),
+            'warnings' => [
+                ...$this->contrastAdvisor->warnings($carousel),
+                ...$this->creatorAdvisor->warnings($carousel, $post->host),
+            ],
         ]);
     }
 
@@ -309,11 +319,12 @@ final class RepurposeStudioController extends AbstractController
      * The controlled vocabularies the visual editor's dropdowns and sliders need:
      * the formats allowed for this network, plus every enum the validator enforces.
      * Sourced from the same registries and model constants, so the editor can only
-     * offer choices the validator accepts.
+     * offer choices the validator accepts. `creators` maps this host's configured
+     * creator keys to display names for the byline picker.
      *
-     * @return array<string, list<string>>
+     * @return array<string, list<string>|array<string, string>>
      */
-    private function vocabulary(string $network): array
+    private function vocabulary(string $network, string $host): array
     {
         $formats = NetworkRegistry::formatsFor($network);
 
@@ -326,6 +337,7 @@ final class RepurposeStudioController extends AbstractController
             'statuses' => Carousel::STATUSES,
             'counterStyles' => Counter::STYLES,
             'counterAligns' => Counter::ALIGNS,
+            'creators' => $this->creatorResolver->available($host),
             'creatorOrientations' => Carousel::CREATOR_ORIENTATIONS,
             'creatorOnSlides' => Carousel::CREATOR_ON_SLIDES,
         ];

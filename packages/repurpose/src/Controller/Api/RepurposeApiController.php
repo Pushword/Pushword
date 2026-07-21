@@ -11,6 +11,7 @@ use Pushword\Repurpose\Service\CarouselSchemaProvider;
 use Pushword\Repurpose\Service\ChromiumRasterizer;
 use Pushword\Repurpose\Service\ContactSheet;
 use Pushword\Repurpose\Service\ContrastAdvisor;
+use Pushword\Repurpose\Service\CreatorAdvisor;
 use Pushword\Repurpose\Service\CreatorResolverInterface;
 use Pushword\Repurpose\Service\FontPairingRegistry;
 use Pushword\Repurpose\Service\FontResolver;
@@ -49,6 +50,7 @@ final class RepurposeApiController extends AbstractApiController
         private readonly SlideRenderer $renderer,
         private readonly CreatorResolverInterface $creatorResolver,
         private readonly ContrastAdvisor $contrastAdvisor,
+        private readonly CreatorAdvisor $creatorAdvisor,
         private readonly ContactSheet $contactSheet,
         private readonly ChromiumRasterizer $rasterizer,
     ) {
@@ -134,7 +136,10 @@ final class RepurposeApiController extends AbstractApiController
                 'page' => $page,
                 'network' => $network,
                 'status' => $post->getStatus(),
-                'warnings' => $this->contrastAdvisor->warnings($carousel),
+                'warnings' => [
+                    ...$this->contrastAdvisor->warnings($carousel),
+                    ...$this->creatorAdvisor->warnings($carousel, $host),
+                ],
                 ...$this->urls($post, \count($carousel->slides)),
             ],
             $created ? Response::HTTP_CREATED : Response::HTTP_OK,

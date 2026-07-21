@@ -28,11 +28,15 @@ final readonly class ConfigCreatorResolver implements CreatorResolverInterface
             return null;
         }
 
+        if ($carousel->creator instanceof Creator) {
+            return $carousel->creator;
+        }
+
         $app = $this->apps->getApp($host);
         /** @var array<string, array<string, mixed>> $creators */
         $creators = $app->getArray('repurpose_creators');
 
-        if (null !== $carousel->creator && isset($creators[$carousel->creator])) {
+        if (\is_string($carousel->creator) && isset($creators[$carousel->creator])) {
             return $this->fromEntry($creators[$carousel->creator]);
         }
 
@@ -40,6 +44,19 @@ final readonly class ConfigCreatorResolver implements CreatorResolverInterface
         $name = $app->getStr('name');
 
         return '' === $name ? null : new Creator($name, type: 'business');
+    }
+
+    public function available(string $host): array
+    {
+        /** @var array<string, array<string, mixed>> $creators */
+        $creators = $this->apps->getApp($host)->getArray('repurpose_creators');
+
+        $out = [];
+        foreach ($creators as $key => $entry) {
+            $out[$key] = \is_string($entry['name'] ?? null) && '' !== $entry['name'] ? $entry['name'] : $key;
+        }
+
+        return $out;
     }
 
     /**

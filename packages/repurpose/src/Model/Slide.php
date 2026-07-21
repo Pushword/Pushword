@@ -33,8 +33,9 @@ class Slide
         /** Multiplies the auto-fitted text size, 0.5 … 2. */
         #[Assert\Range(notInRangeMessage: 'repurpose.slide.textScale.range', min: 0.5, max: 2)]
         public float $textScale = 1.0,
+        /** Overrides the deck's background effect for this slide; null inherits the deck. */
         #[Assert\Choice(callback: [BackgroundEffectRegistry::class, 'keys'], message: 'repurpose.slide.background.invalid')]
-        public string $background = 'none',
+        public ?string $background = null,
         #[Assert\Valid]
         public ?Palette $palette = null,
         #[Assert\Valid]

@@ -16,6 +16,8 @@ repurpose:
     invalid: 'plannedAt must be a valid date-time.'
   fontPairing:
     invalid: 'Unknown font pairing.'
+  background:
+    invalid: 'Unknown background effect.'
   caption:
     max: 'The caption exceeds the %max%-character limit for this network.'
   slides:

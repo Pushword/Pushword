@@ -47,6 +47,33 @@
     return out
   }, [])
 
+  var HEX6 = /^#[0-9a-f]{6}$/i
+
+  /** WCAG relative luminance of a #rrggbb colour, or null when it is not a hex. */
+  function luminance(hex) {
+    if (!HEX6.test(hex || '')) {
+      return null
+    }
+    var channel = function (i) {
+      var c = parseInt(hex.substr(1 + i * 2, 2), 16) / 255
+
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+    }
+
+    return 0.2126 * channel(0) + 0.7152 * channel(1) + 0.0722 * channel(2)
+  }
+
+  /** WCAG contrast ratio (1..21) between two hex colours, or null if either is not hex. */
+  function contrastRatio(a, b) {
+    var la = luminance(a)
+    var lb = luminance(b)
+    if (null === la || null === lb) {
+      return null
+    }
+
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
+  }
+
   function jsonPost(body) {
     return {
       method: 'POST',
@@ -116,14 +143,21 @@
       delete s.hashtags
     }
     dropEmptyStrings(s, ['caption', 'creator', 'fontPairing', 'creatorOnSlides', 'creatorOrientation'])
+    // Deck-wide effect: 'none' is the factory default.
+    dropDefaults(s, { background: 'none' })
     if ('' === s.plannedAt) {
       s.plannedAt = null
     }
     ;(s.slides || []).forEach(function (slide) {
       dropEmptyObject(slide, 'palette')
       dropEmptyStrings(slide, ['tagline', 'title', 'paragraph'])
+      // '' means "inherit the deck effect" — store nothing; an explicit effect
+      // (including 'none') is a real per-slide override and is kept.
+      if ('' === slide.background) {
+        delete slide.background
+      }
       // Defaults the factory would apply anyway — keep the stored spec minimal.
-      dropDefaults(slide, { layout: 'bottom', align: 'left', background: 'none', textScale: 1, swipe: false })
+      dropDefaults(slide, { layout: 'bottom', align: 'left', textScale: 1, swipe: false })
       // The factory defaults overlay to 0.35 when the slide keeps an image (0 otherwise),
       // so only that value is prunable — an explicit 0 over an image must be stored.
       dropDefaults(slide, { overlay: slide.image && slide.image.media ? 0.35 : 0 })
@@ -147,6 +181,7 @@
       slides: cfg.slides || [],
       backgroundEffects: cfg.backgroundEffects || [],
       tailwind: TW_SWATCHES,
+      defaults: cfg.defaults || {},
       urls: cfg.urls || {},
       network: cfg.network || '',
       networkUrls: cfg.networkUrls || {},
@@ -161,7 +196,7 @@
       colorPop: { open: false, top: 0, left: 0 },
       _colorObj: null,
       _colorKey: '',
-      effectModal: { open: false, slide: null, tab: 'All' },
+      effectModal: { open: false, target: 'deck', tab: 'All' },
       mediaModal: { open: false, src: '' },
       dirty: false,
       saving: false,
@@ -174,6 +209,7 @@
 
       init: function () {
         this.normalize()
+        this.deckOpen = '0' !== this._store('rp-studio-deckOpen')
         this.$watch('spec', function () {
           this.dirty = true
           if ('visual' === this.view) {
@@ -193,6 +229,7 @@
         s.palette = s.palette || {}
         s.counter = s.counter || {}
         s.hashtags = Array.isArray(s.hashtags) ? s.hashtags : []
+        def(s, 'background', 'none')
         s.slides = Array.isArray(s.slides) ? s.slides : []
         s.slides.forEach(function (slide) {
           slide.image = slide.image || {}
@@ -200,7 +237,8 @@
           // Show the model defaults in the controls rather than a blank/min slider.
           def(slide, 'layout', 'bottom')
           def(slide, 'align', 'left')
-          def(slide, 'background', 'none')
+          // '' = inherit the deck effect (the control shows "Inherit — <deck>").
+          def(slide, 'background', '')
           def(slide, 'overlay', slide.image.media ? 0.35 : 0)
           def(slide, 'textScale', 1)
           def(slide, 'swipe', false)
@@ -465,6 +503,61 @@
         this.colorPop = { open: false, top: 0, left: 0 }
       },
 
+      // Quick picks shown above the Tailwind grid: the deck's own palette (or the
+      // site default it inherits) so "reuse a colour already in play" is one click.
+      get suggestedColors() {
+        var self = this
+        var seen = {}
+        var out = []
+        ;['bg', 'text', 'accent'].forEach(function (role) {
+          var hex = (self.spec.palette && self.spec.palette[role]) || self.defaults[role]
+          if (hex && HEX6.test(hex) && ! seen[hex]) {
+            seen[hex] = true
+            out.push({ name: 'deck ' + role, hex: hex })
+          }
+        })
+
+        return out
+      },
+
+      // Live WCAG readout while editing bg/text: the ratio between the colour being
+      // set (or the value it inherits) and the resolved other one. Null for accent.
+      get colorContrast() {
+        var key = this._colorKey
+        if ('bg' !== key && 'text' !== key) {
+          return null
+        }
+        var self = this
+        var resolve = function (role, primary) {
+          return primary
+            || (self._colorObj && self._colorObj[role])
+            || (self.spec.palette && self.spec.palette[role])
+            || self.defaults[role]
+        }
+        var ratio = contrastRatio(resolve(key, this.colorValue), resolve('bg' === key ? 'text' : 'bg', null))
+        if (null === ratio) {
+          return null
+        }
+
+        return { ratio: ratio.toFixed(2), pass: ratio >= 4.5, passLarge: ratio >= 3 }
+      },
+
+      // Collapse of the Deck panel, remembered across reloads (UI-only, not in the spec).
+      toggleDeck: function () {
+        this.deckOpen = ! this.deckOpen
+        this._store('rp-studio-deckOpen', this.deckOpen ? '1' : '0')
+      },
+      _store: function (key, value) {
+        try {
+          if (undefined === value) {
+            return window.localStorage.getItem(key)
+          }
+          window.localStorage.setItem(key, value)
+        } catch (error) {
+          return null
+        }
+      },
+
       // Background-effect picker. Tabs and thumbnails come from the server-rendered
       // catalogue (backgroundEffects), so the previews always match the real output.
       get effectTabs() {
@@ -476,18 +569,30 @@
           return tabs
         }, ['All'])
       },
+      // The modal targets the deck ('deck') or a slide index; a slide additionally
+      // offers an "Inherit deck" tile (key '') as the first choice.
+      get isDeckEffect() {
+        return 'deck' === this.effectModal.target
+      },
       get effectsInTab() {
         var tab = this.effectModal.tab
-        if ('All' === tab) {
-          return this.backgroundEffects
+        var tiles = 'All' === tab
+          ? this.backgroundEffects
+          : this.backgroundEffects.filter(function (effect) { return effect.category === tab })
+
+        if (! this.isDeckEffect && ('All' === tab || 'Basic' === tab)) {
+          return [{ key: '', label: 'Inherit deck', category: 'Basic', preview: this.effectPreviewSvg(this.spec.background || 'none') }].concat(tiles)
         }
 
-        return this.backgroundEffects.filter(function (effect) { return effect.category === tab })
+        return tiles
       },
       get currentEffectKey() {
-        var slide = this.spec.slides[this.effectModal.slide]
+        if (this.isDeckEffect) {
+          return this.spec.background || 'none'
+        }
+        var slide = this.spec.slides[this.effectModal.target]
 
-        return slide ? (slide.background || 'none') : ''
+        return slide ? (slide.background || '') : ''
       },
       effectByKey: function (key) {
         return this.backgroundEffects.find(function (effect) { return effect.key === key }) || null
@@ -502,18 +607,30 @@
 
         return effect ? effect.preview : ''
       },
-      openEffect: function (index) {
-        this.effectModal = { open: true, slide: index, tab: 'All' }
+      // The per-slide control: the slide's own effect, or the inherited deck effect
+      // prefixed with "Inherit —".
+      slideEffectLabel: function (slide) {
+        return slide.background ? this.effectLabel(slide.background) : 'Inherit — ' + this.effectLabel(this.spec.background || 'none')
+      },
+      slideEffectPreview: function (slide) {
+        return this.effectPreviewSvg(slide.background || this.spec.background || 'none')
+      },
+      openEffect: function (target) {
+        this.effectModal = { open: true, target: target, tab: 'All' }
       },
       chooseEffect: function (key) {
-        var slide = this.spec.slides[this.effectModal.slide]
-        if (slide) {
-          slide.background = key
+        if (this.isDeckEffect) {
+          this.spec.background = key
+        } else {
+          var slide = this.spec.slides[this.effectModal.target]
+          if (slide) {
+            slide.background = key
+          }
         }
         this.closeEffect()
       },
       closeEffect: function () {
-        this.effectModal = { open: false, slide: null, tab: 'All' }
+        this.effectModal = { open: false, target: 'deck', tab: 'All' }
       },
 
       setView: function (view) {

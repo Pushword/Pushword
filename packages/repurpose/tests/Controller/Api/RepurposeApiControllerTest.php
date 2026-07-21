@@ -130,6 +130,45 @@ final class RepurposeApiControllerTest extends WebTestCase
         self::assertSame('slides[0]', $first['path']);
     }
 
+    /**
+     * An unknown `creator` key silently falls back to the brand byline, so the
+     * upsert response must say so — and list the keys that would have worked.
+     * The test host is unconfigured, so it resolves to the default app, whose
+     * config declares the `robin` creator.
+     */
+    public function testUpsertWarnsOnAnUnknownCreatorKeyButNotOnAKnownOne(): void
+    {
+        $url = '/api/repurpose/'.self::HOST.'/linkedin/'.self::PAGE;
+
+        $spec = $this->validSpec();
+        $spec['creator'] = 'nobody-configured';
+        $result = $this->requestJson('PUT', $url, $spec);
+        $message = $this->creatorWarning($result);
+        self::assertNotNull($message, 'an unknown creator key must be flagged');
+        self::assertStringContainsString('"nobody-configured"', $message);
+        self::assertStringContainsString('robin', $message);
+        self::assertStringContainsString('Pushword', $message);
+
+        $spec['creator'] = 'robin';
+        self::assertNull($this->creatorWarning($this->requestJson('PUT', $url, $spec)));
+    }
+
+    /**
+     * @param array<string, mixed> $result
+     */
+    private function creatorWarning(array $result): ?string
+    {
+        $warnings = $result['warnings'];
+        self::assertIsArray($warnings);
+        foreach ($warnings as $warning) {
+            if (\is_array($warning) && 'creator' === ($warning['path'] ?? null) && \is_string($warning['message'] ?? null)) {
+                return $warning['message'];
+            }
+        }
+
+        return null;
+    }
+
     public function testValidateAcceptsAGoodSpecAndRejectsABadOne(): void
     {
         $valid = $this->requestJson('POST', '/api/repurpose/validate', $this->validSpec());

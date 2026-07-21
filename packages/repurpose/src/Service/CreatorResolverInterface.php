@@ -17,4 +17,14 @@ interface CreatorResolverInterface
      * @param string $host the host the carousel belongs to (for per-site config and page lookup)
      */
     public function resolve(Carousel $carousel, string $host): ?Creator;
+
+    /**
+     * Every creator key `resolve()` accepts for this host, mapped to its display
+     * name. Both the studio's creator picker and the unknown-key warning read
+     * this, so it must stay exhaustive — a key resolve() honours but available()
+     * omits would be flagged as unknown.
+     *
+     * @return array<string, string> key => display name
+     */
+    public function available(string $host): array;
 }
