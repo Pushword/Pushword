@@ -5,8 +5,8 @@
  *
  *  - Visual editor: form controls bound to the spec; a deep $watch re-previews on
  *    every change (debounced).
- *  - Source editor: the spec as JSON in Monaco (schema-aware, JSON worker). Toggling
- *    views syncs the two through the spec object.
+ *  - Source editor: the spec as JSON in a plain textarea. Toggling views syncs the two
+ *    through the spec object.
  *  - Live preview: POST the spec to the preview endpoint (validate + render, no
  *    persist); swap the returned SVG deck in, or list violations.
  *  - Export: rasterise each on-screen self-contained SVG to a PNG and post them back
@@ -91,7 +91,10 @@
       dropEmptyObject(slide, 'palette')
       dropEmptyStrings(slide, ['tagline', 'title', 'paragraph'])
       // Defaults the factory would apply anyway — keep the stored spec minimal.
-      dropDefaults(slide, { layout: 'bottom', align: 'left', background: 'none', overlay: 0, textScale: 1, swipe: false })
+      dropDefaults(slide, { layout: 'bottom', align: 'left', background: 'none', textScale: 1, swipe: false })
+      // The factory defaults overlay to 0.35 when the slide keeps an image (0 otherwise),
+      // so only that value is prunable — an explicit 0 over an image must be stored.
+      dropDefaults(slide, { overlay: slide.image && slide.image.media ? 0.35 : 0 })
       if (slide.image) {
         dropDefaults(slide.image, { focusX: 0.5, focusY: 0.5, zoom: 1 })
         if (!slide.image.media) {
@@ -125,7 +128,6 @@
       exporting: false,
       exportLabel: 'Export .zip',
       _timer: null,
-      _monaco: null,
       _sourceReady: false,
       _pickSlide: null,
 
@@ -158,7 +160,7 @@
           def(slide, 'layout', 'bottom')
           def(slide, 'align', 'left')
           def(slide, 'background', 'none')
-          def(slide, 'overlay', 0)
+          def(slide, 'overlay', slide.image.media ? 0.35 : 0)
           def(slide, 'textScale', 1)
           def(slide, 'swipe', false)
           def(slide.image, 'focusX', 0.5)
@@ -201,12 +203,8 @@
         return this.isStandalone ? this.spec.page : 'standalone/' + Math.random().toString(36).slice(2, 10)
       },
 
-      /** Raw text of the source editor — Monaco if it loaded, else the plain textarea. */
+      /** Raw text of the source editor textarea. */
       sourceText: function () {
-        if (this._monaco) {
-          return this._monaco.getValue()
-        }
-
         return this.$refs.source ? this.$refs.source.value : ''
       },
 
@@ -379,11 +377,14 @@
         }
 
         if ('source' === view) {
+          // Snapshot the visual spec as JSON *before* flipping the view: payload() reads the
+          // active view, so once view is 'source' it would parse the still-empty textarea and throw.
+          var text = JSON.stringify(this.payload(), null, 2)
           this.view = 'source'
           var self = this
           this.$nextTick(function () {
-            self.ensureMonaco()
-            self.setSource(JSON.stringify(self.payload(), null, 2))
+            self.ensureSourceEditor()
+            self.setSource(text)
           })
           return
         }
@@ -399,9 +400,11 @@
         this.view = 'visual'
       },
 
-      // Upgrade the source textarea to Monaco when the admin bundle is present;
-      // otherwise the plain textarea drives the live preview on its own.
-      ensureMonaco: function () {
+      // Wire the source textarea's live preview once. Kept a plain textarea on purpose:
+      // a heavyweight embedded code editor (Monaco) pegged the main thread and froze the
+      // studio here — its worst case was a hidden-init + a resize loop that wedged the tab.
+      // The server still validates the JSON on every preview, so editing stays guided.
+      ensureSourceEditor: function () {
         if (this._sourceReady) {
           return
         }
@@ -411,28 +414,15 @@
         }
         this._sourceReady = true
         var self = this
-        if (window.monacoHelper) {
-          this._monaco = window.monacoHelper.transformTextareaToMonaco(textarea)
-          textarea.removeAttribute('data-editor') // don't let the window-load auto-loader init it twice
-          this._monaco.onDidChangeModelContent(function () {
-            if ('source' === self.view) {
-              self.dirty = true
-              self.schedulePreview()
-            }
-          })
-        } else {
-          textarea.addEventListener('input', function () {
-            if ('source' === self.view) {
-              self.dirty = true
-              self.schedulePreview()
-            }
-          })
-        }
+        textarea.addEventListener('input', function () {
+          if ('source' === self.view) {
+            self.dirty = true
+            self.schedulePreview()
+          }
+        })
       },
       setSource: function (text) {
-        if (this._monaco) {
-          this._monaco.setValue(text)
-        } else if (this.$refs.source) {
+        if (this.$refs.source) {
           this.$refs.source.value = text
         }
       },

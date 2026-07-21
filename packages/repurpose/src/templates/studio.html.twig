@@ -380,9 +380,9 @@
 
       {# ---------- SOURCE EDITOR ---------- #}
       <div x-show="view === 'source'" x-cloak style="display:flex;flex-direction:column;gap:.6rem;">
-        <p class="hint">JSON spec — schema-aware, validated live. The visual editor and this view stay in sync when you switch.</p>
+        <p class="hint">JSON spec — validated live as you type. The visual editor and this view stay in sync when you switch.</p>
         <div class="source-wrap">
-          <textarea id="rp-spec" x-ref="source" data-editor="json" spellcheck="false" aria-label="Carousel spec JSON"></textarea>
+          <textarea id="rp-spec" x-ref="source" spellcheck="false" aria-label="Carousel spec JSON"></textarea>
         </div>
       </div>
     </aside>
@@ -400,6 +400,5 @@
 
   <script defer src="{{ asset('bundles/pushwordrepurpose/repurpose.js') }}"></script>
   <script defer src="/bundles/pushwordcore/alpine.js"></script>
-  <script defer src="/bundles/pushwordadmin/monaco/app.js"></script>
 </body>
 </html>
