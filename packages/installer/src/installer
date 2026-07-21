@@ -9,10 +9,10 @@ echo "Welcome to pushword World"
 cp vendor/pushword/installer/src/pushword.yaml config/packages/pushword.yaml
 
 # Copy Default Media
-cp -r vendor/pushword/skeleton/media~ media
+cp -r vendor/pushword/dev-app/media~ media
 
 # Copy Entities
-cp -R vendor/pushword/skeleton/src/DataFixtures/. src/DataFixtures
+cp -R vendor/pushword/dev-app/src/DataFixtures/. src/DataFixtures
 
 
 # Install sqlite by default
@@ -53,7 +53,7 @@ fi
 # Do some cleaning
 rm package.json
 rm -rf assets
-cp -r vendor/pushword/skeleton/assets assets
+cp -r vendor/pushword/dev-app/assets assets
 
 # Remove only the bash installer script from post-install-cmd (keep other scripts for future package installs)
 php -r "
@@ -68,8 +68,8 @@ if (empty(\$json['scripts']['post-install-cmd'])) {
 file_put_contents('composer.json', json_encode(\$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . \"\n\");
 "
 
-# Only remove skeleton (installer must stay for future package installs)
-composer remove pushword/skeleton -q
+# Only remove dev-app (installer must stay for future package installs)
+composer remove pushword/dev-app -q
 
 # Launch Server and Play
 read -p "Launch Server and play? [Y/n] " -n 1 -r

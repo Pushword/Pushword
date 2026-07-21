@@ -20,7 +20,7 @@ commonmark work.
 
 ## Method
 
-- Throwaway command in `packages/skeleton/` (now deleted): built the production
+- Throwaway command in `packages/dev-app/` (now deleted): built the production
   converter (same extensions as `MarkdownParser`) with a **null cache** so every
   `transform()` is a cold parse+render; fed the heaviest real altimood page
   (`refuges-vercors.md`, 37 KB, frontmatter stripped — the p100 of the 982-file,

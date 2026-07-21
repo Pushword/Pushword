@@ -20,7 +20,7 @@ npm install && npm run build
 npm run dev
 ```
 
-If you want to change the default location for assets, just edit `./config/packages/pushword.yaml` and configure `apps.0.assets` (#[eg](https://github.com/Pushword/Pushword/blob/main/packages/skeleton/config/packages/pushword.yaml#L31))
+If you want to change the default location for assets, just edit `./config/packages/pushword.yaml` and configure `apps.0.assets` (#[eg](https://github.com/Pushword/Pushword/blob/main/packages/dev-app/config/packages/pushword.yaml#L31))
 
 ## Automatic Tailwind Update on page update
 

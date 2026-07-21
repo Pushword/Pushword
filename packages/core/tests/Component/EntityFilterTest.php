@@ -243,7 +243,7 @@ final class EntityFilterTest extends KernelTestCase
         $page->locale = 'en';
         $page->createdAt = new DateTime('1 day ago');
         $page->updatedAt = new DateTime('1 day ago');
-        $page->setMainContent($content ?? file_get_contents(__DIR__.'/../../../skeleton/src/DataFixtures/WelcomePage.md'));
+        $page->setMainContent($content ?? file_get_contents(__DIR__.'/../../../dev-app/src/DataFixtures/WelcomePage.md'));
         $page->setCustomProperty('toc', true);
 
         return $page;

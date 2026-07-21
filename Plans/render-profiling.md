@@ -26,7 +26,7 @@ found cloning at 0.6%).
 - **Validity:** all **11 render-path files** are **byte-identical** between
   altimood's vendored `pushword/*` (rc738) and monorepo HEAD, so altimood
   profiles HEAD exactly. Verified by `diff` before profiling.
-  - *Do not* port altimood content into `packages/skeleton` to profile: the
+  - *Do not* port altimood content into `packages/dev-app` to profile: the
     content depends on altimood-only Twig functions (`gpx`, `price`, `mail`,
     `tel`, `link`, `refuges`, `pw`, `encrypt`) which would throw and degrade to
     `TwigErrorMarker` — you would be profiling error handling.
@@ -401,7 +401,7 @@ processes.
 Measured with the harness (fresh process each pass, `us.altimood.com`,
 interleaved, released vendor): plain 16.14/16.21/16.42 vs file cache
 13.23/13.61/13.26 ms/page → **−18%**; cache size 42 MB. End-to-end on the
-skeleton corpus (`pw:static localhost.dev --workers=4`): 0.95 s cold cache →
+dev-app corpus (`pw:static localhost.dev --workers=4`): 0.95 s cold cache →
 0.59 s warm, 3 consistent pairs.
 
 Wired in `StaticAppGenerator::generatePagesInParallel`: workers spawn with

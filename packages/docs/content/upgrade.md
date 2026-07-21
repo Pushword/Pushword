@@ -14,6 +14,37 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc757
+
+### `pushword/skeleton` renamed to `pushword/dev-app`
+
+The demo/test/installer package `pushword/skeleton` has been renamed to
+`pushword/dev-app` — it never was a copy-paste skeleton (the installer is the real
+starting point), so the name was misleading. `pushword/core` requires it, so every
+install pulls it into `vendor/` transitively.
+
+**For almost everyone: nothing to do.** A plain `composer update` resolves the new
+`pushword/dev-app` automatically through `pushword/core` and drops the old
+`pushword/skeleton`. The old package is no longer maintained.
+
+Only act if one of these applies to your project:
+
+- **You require `pushword/skeleton` explicitly** in your own `composer.json` (rare —
+  the installer removes it): replace it with `pushword/dev-app`.
+
+  ```bash
+  composer remove pushword/skeleton 2>/dev/null; composer require pushword/dev-app
+  ```
+
+- **You reference the `vendor/pushword/skeleton/…` path** in scripts, CI, config or
+  docs: update it to `vendor/pushword/dev-app/…`.
+
+  ```bash
+  grep -rl 'pushword/skeleton' . --exclude-dir=vendor | xargs -r sed -i 's#pushword/skeleton#pushword/dev-app#g'
+  ```
+
+Then `composer update && php bin/console cache:clear`.
+
 ## To 1.0.0-rc673
 
 ### Review replies (owner answers shown under each review)
@@ -533,7 +564,7 @@ sed -i "s|@PushwordCoreBundle/Resources/config/routes/all.yaml|@PushwordCoreBund
 
 ```
 
-- [ ] Check your `config/packages` and compare it with the new one in [`vendor/pushword/skeleton/config/packages`](https://github.com/Pushword/Pushword/blob/main/packages/skeleton/config/packages) - flex add tons of config but you need to maintain them. Best practice is to remove theme and to keep `framework.yaml` (you can easily compare with the maintained one in the skeleton), `pentatrion.yaml`, `twig.yaml`, `web_profiler.yaml`, `pushword.yaml` .
+- [ ] Check your `config/packages` and compare it with the new one in [`vendor/pushword/dev-app/config/packages`](https://github.com/Pushword/Pushword/blob/main/packages/dev-app/config/packages) - flex add tons of config but you need to maintain them. Best practice is to remove theme and to keep `framework.yaml` (you can easily compare with the maintained one in the dev-app), `pentatrion.yaml`, `twig.yaml`, `web_profiler.yaml`, `pushword.yaml` .
 - [ ] check if flex install you a `templates/base.html.twig` file, if yes, remove it.
 
 - [ ] remove sidecar yaml or json files in media `rm media/*.{yaml,json}` (we are now using a global index.csv)
@@ -573,7 +604,7 @@ https://tailwindcss.com/docs/upgrade-guide#changes-from-v3`)
 ```
 
 - [ ] transform your `./assets/webpack.config.js` to `./vite.config.js`
-      See [`vendor/pushword/skeleton/vite.config.js`](https://github.com/Pushword/Pushword/blob/main/packages/skeleton/vite.config.js)
+      See [`vendor/pushword/dev-app/vite.config.js`](https://github.com/Pushword/Pushword/blob/main/packages/dev-app/vite.config.js)
 - [ ] same for `./assets/package.json` to `./package.json`
 - [ ] install `composer require pentatrion/vite-bundle`
 - [ ] some utility has been moved from the webpack config helper function to the app.css file, update your app.css to use the new utilities

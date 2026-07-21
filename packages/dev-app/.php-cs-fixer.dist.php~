@@ -17,7 +17,7 @@ $finder = Finder::create()
         __DIR__.'/.php-cs-fixer.dist.php',
     ]);
 
-$rules = require __DIR__.'/vendor/pushword/skeleton/php-cs-fixer-rules.php';
+$rules = require __DIR__.'/vendor/pushword/dev-app/php-cs-fixer-rules.php';
 
 return (new Config())
     ->setRules($rules)

@@ -1,4 +1,4 @@
-// modification must be sync with packages/skeleton/vite.config.js
+// modification must be sync with packages/dev-app/vite.config.js
 
 import { defineConfig } from 'vite'
 import symfonyPlugin from 'vite-plugin-symfony'

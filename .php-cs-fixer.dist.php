@@ -17,7 +17,7 @@ $finder = Finder::create()
         __DIR__.'/.scripts/generate-docs-assets',
     ]);
 
-$rules = require __DIR__.'/packages/skeleton/php-cs-fixer-rules.php';
+$rules = require __DIR__.'/packages/dev-app/php-cs-fixer-rules.php';
 
 return new Config()
     ->setRules($rules)

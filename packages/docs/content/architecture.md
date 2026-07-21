@@ -7,7 +7,7 @@ toc: true
 
 If you are searching for :
 
-- organizing your own app code, see #[symfony good practices](https://symfony.com/doc/current/best_practices.html) or look at the #[demo app](https://github.com/Pushword/Pushword/tree/main/packages/skeleton)
+- organizing your own app code, see #[symfony good practices](https://symfony.com/doc/current/best_practices.html) or look at the #[demo app](https://github.com/Pushword/Pushword/tree/main/packages/dev-app)
 - organizing the code for a pushword extension : see [extensions and extension points](/extensions)
 
 Else, you are at the good place.
@@ -33,13 +33,13 @@ Each extension is optional.
 
 Keeping all these extensions in one repository permits testing that everything works easily, understanding the code faster and refactoring much quicker.
 
-The [skeleton](https://github.com/Pushword/Pushword/tree/main/packages/skeleton) isn't a real skeleton (copy and install).
+The [dev-app](https://github.com/Pushword/Pushword/tree/main/packages/dev-app) isn't a copy-and-install starter (it was formerly, and misleadingly, named `skeleton`).
 
-It's used for testing, demo, using for generating the docs and a few class from skeleton are extracted by the default installer.
+It's used for testing, demo, generating the docs, and a few classes from it are extracted by the default installer.
 
 ## On top of Symfony
 
-Each package (except _skeleton_, _installer_ and _js-helper_) is built as a [symfony bundle](https://symfony.com/doc/current/bundles.html).
+Each package (except _dev-app_, _installer_ and _js-helper_) is built as a [symfony bundle](https://symfony.com/doc/current/bundles.html).
 
 The `core` package requires a Symfony app installed to be functional.
 
@@ -58,7 +58,7 @@ This is only for [contribution](/contribute), if you are searching to develop a 
 3. Install dependencies and initialize default app
 
 ```shell
-composer update && composer reset-skeleton
+composer update && composer reset-dev-app
 ```
 
 ### Useful commands
@@ -73,7 +73,7 @@ composer rector
 # run phpstan
 composer stan
 
-# to play with default app console (skeleton)
+# to play with default app console (dev-app)
 composer console ...
 ```
 
@@ -95,7 +95,7 @@ composer console ...
 | page-scanner | Dead link detection, 404/301 checks, TODO scanning | core |
 | page-update-notifier | Email notifications on page edits | core |
 | search | Optional SQLite full-text search via Loupe (zero infra) | core |
-| skeleton | Dev/test/demo app (not a real skeleton for end users) | core |
+| dev-app | Dev/test/demo app (not a copy-paste starter for end users; formerly named `skeleton`) | core |
 | snippet | Reusable content fragments + dev-registered components, via `snippet()` | core |
 | static-generator | Generate static HTML sites | core |
 | template-editor | Edit Twig templates from the admin UI | core |

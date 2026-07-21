@@ -13,7 +13,7 @@ You will browse the entire Pushword site (public pages and admin) using dev-brow
 
 If `$ARGUMENTS` is provided and non-empty, use it as the base URL.
 
-Otherwise, run `symfony server:list` from `packages/skeleton/` to find the running local server URL. If no server is running, tell the user to start one with `composer dev` from `packages/skeleton/` and stop.
+Otherwise, run `symfony server:list` from `packages/dev-app/` to find the running local server URL. If no server is running, tell the user to start one with `composer dev` from `packages/dev-app/` and stop.
 
 Store the base URL (e.g. `https://127.0.0.1:8000`) for use in all subsequent steps.
 

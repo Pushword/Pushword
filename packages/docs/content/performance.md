@@ -12,7 +12,7 @@ which removes the per-request kernel boot.
 ## Worker mode
 
 Worker mode is provided by [FrankenPHP](https://frankenphp.dev/)'s `worker`
-directive (or any Symfony Runtime worker). In the skeleton `Caddyfile`:
+directive (or any Symfony Runtime worker). In the dev-app `Caddyfile`:
 
 ```caddyfile
 php_server {

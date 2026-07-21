@@ -21,7 +21,7 @@ final class ControllerTest extends AbstractAdminTestClass
     public function testBasics(): void
     {
         $client = $this->loginUser(
-            // static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
+            // static::createPantherClient([            'webServerDir' => __DIR__.'/../../dev-app/public'        ])
         );
 
         $id = $this->createNewPage();
@@ -55,7 +55,7 @@ final class ControllerTest extends AbstractAdminTestClass
     public function testPageController(): void
     {
         $client = $this->loginUser(
-            // static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
+            // static::createPantherClient([            'webServerDir' => __DIR__.'/../../dev-app/public'        ])
         );
         $client->request(
             Request::METHOD_POST,
@@ -92,7 +92,7 @@ final class ControllerTest extends AbstractAdminTestClass
     public function testMediaController(): void
     {
         $client = $this->loginUser(
-            // static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
+            // static::createPantherClient([            'webServerDir' => __DIR__.'/../../dev-app/public'        ])
         );
 
         $pngFile = sys_get_temp_dir().'/test-media-block.png';

@@ -29,9 +29,9 @@ abstract class AbstractAdminTestClass extends PantherTestCase
     protected static function createPantherClient(array $options = [], array $kernelOptions = [], array $managerOptions = []): Client
     {
         if (! isset($options['webServerDir'])) {
-            $publicDir = realpath(__DIR__.'/../../skeleton/public');
+            $publicDir = realpath(__DIR__.'/../../dev-app/public');
             if (false === $publicDir) {
-                throw new RuntimeException('Public directory not found: '.__DIR__.'/../../skeleton/public');
+                throw new RuntimeException('Public directory not found: '.__DIR__.'/../../dev-app/public');
             }
 
             $options['webServerDir'] = $publicDir;

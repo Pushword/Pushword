@@ -87,7 +87,7 @@ final class FlysystemConfigOverrideTest extends TestCase
 
     /**
      * Boot the real kernel and verify pushword.mediaStorage uses local adapter
-     * (baseline — no app-level override in skeleton).
+     * (baseline — no app-level override in dev-app).
      */
     public function testRealKernelUsesLocalByDefault(): void
     {

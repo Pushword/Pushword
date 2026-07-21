@@ -28,7 +28,7 @@ jobs:
           - snippet
           - static-generator
           - template-editor
-          - skeleton
+          - dev-app
           - installer
           - js-helper
           - version

@@ -27,11 +27,11 @@ check_git_status() {
 
 check_git_status
 
-#composer reset-skeleton
+#composer reset-dev-app
 
 # function restoreData {
 #     echo "restore data..."
-#      if [[ $CURRENT_DIR = 'packages/skeleton' ]]
+#      if [[ $CURRENT_DIR = 'packages/dev-app' ]]
 #     then
 #         cd ../../
 #     fi
@@ -43,8 +43,8 @@ check_git_status
 php ./.scripts/generate-docs-assets
 
 
-CURRENT_DIR='packages/skeleton'
-cd packages/skeleton
+CURRENT_DIR='packages/dev-app'
+cd packages/dev-app
 
 php bin/console pw:flat:sync pushword.piedweb.com --mode=import && php bin/console pw:static pushword.piedweb.com
 

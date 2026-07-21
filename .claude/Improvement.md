@@ -64,7 +64,7 @@ Three concerns beyond data storage:
 - `flat/MediaSync.php`, `flat/MediaImporter.php` (call `getHash()`) -> hash stays as simple getter
 - `core/MediaNamingListener.php`, `core/MediaHashListener.php`, `core/MediaStorageListener.php` (call `setHash()`) -> hash computation moves into these listeners
 - `admin-block-editor/MediaBlockController.php` (call `getHash()`) -> simple getter stays
-- `skeleton/AppFixtures.php` (call `setHash()`) -> call `setHash(sha1_file(...))` explicitly
+- `dev-app/AppFixtures.php` (call `setHash()`) -> call `setHash(sha1_file(...))` explicitly
 - `flat/MediaExportImportTest.php`, `core/MediaRepositoryTest.php` -> update test calls
 
 ---
@@ -120,7 +120,7 @@ Recursive bidirectional syncing is correct but hard to test without Doctrine.
 - Service handles graph synchronization (`synchronize(Page $page, Page $translation)`)
 - Update all callers to use the service:
   - `flat/PageImporter.php:417,430` -> inject `TranslationSynchronizer`
-  - `skeleton/AppFixtures.php:185-186` -> inject `TranslationSynchronizer`
+  - `dev-app/AppFixtures.php:185-186` -> inject `TranslationSynchronizer`
   - `flat/PageSyncTest.php` (25+ calls) -> update test setup to use service
 
 ---
@@ -227,7 +227,7 @@ Three concerns beyond data storage:
 - `flat/MediaSync.php`, `flat/MediaImporter.php` (call `getHash()`) -> hash stays as simple getter
 - `core/MediaNamingListener.php`, `core/MediaHashListener.php`, `core/MediaStorageListener.php` (call `setHash()`) -> hash computation moves into these listeners
 - `admin-block-editor/MediaBlockController.php` (call `getHash()`) -> simple getter stays
-- `skeleton/AppFixtures.php` (call `setHash()`) -> call `setHash(sha1_file(...))` explicitly
+- `dev-app/AppFixtures.php` (call `setHash()`) -> call `setHash(sha1_file(...))` explicitly
 - `flat/MediaExportImportTest.php`, `core/MediaRepositoryTest.php` -> update test calls
 
 ---
@@ -283,7 +283,7 @@ Recursive bidirectional syncing is correct but hard to test without Doctrine.
 - Service handles graph synchronization (`synchronize(Page $page, Page $translation)`)
 - Update all callers to use the service:
   - `flat/PageImporter.php:417,430` -> inject `TranslationSynchronizer`
-  - `skeleton/AppFixtures.php:185-186` -> inject `TranslationSynchronizer`
+  - `dev-app/AppFixtures.php:185-186` -> inject `TranslationSynchronizer`
   - `flat/PageSyncTest.php` (25+ calls) -> update test setup to use service
 
 ---

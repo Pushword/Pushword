@@ -14,8 +14,8 @@ const ignorePatterns = [
   '**/media~/',
   '**/*.min.js',
   '**/build/',
-  'packages/skeleton/var/',
-  'packages/skeleton/public/',
+  'packages/dev-app/var/',
+  'packages/dev-app/public/',
   'packages/admin-block-editor/src/Command/convert-json-to-markdown-built/', // Generated build files
 ]
 

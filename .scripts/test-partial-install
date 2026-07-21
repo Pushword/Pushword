@@ -19,7 +19,7 @@
 MONOREPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Always-present base needed for a bootable Pushword app.
-BASE_PACKAGES="core installer skeleton admin"
+BASE_PACKAGES="core installer dev-app admin"
 
 # profile name -> extra pushword packages installed ON TOP of the base.
 # Each profile deliberately omits a sibling to exercise an absent-dependency branch.

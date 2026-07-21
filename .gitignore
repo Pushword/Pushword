@@ -41,28 +41,28 @@ Draft.md
 /docs
 /docs~
 **/public/bundles
-**/skeleton/public/media
-**/skeleton/.env.local.php
-**/skeleton/content
-**/skeleton/config/reference.php
-**/skeleton/static/
-**/skeleton/admin-block-editor.test
-**/skeleton/localhost.dev
-**/skeleton/admin-block-editor.test
-**/skeleton/pushword.piedweb.com
-**/skeleton/src/Migrations
-packages/skeleton/templates/newTemplateFile2.html.twig
+**/dev-app/public/media
+**/dev-app/.env.local.php
+**/dev-app/content
+**/dev-app/config/reference.php
+**/dev-app/static/
+**/dev-app/admin-block-editor.test
+**/dev-app/localhost.dev
+**/dev-app/admin-block-editor.test
+**/dev-app/pushword.piedweb.com
+**/dev-app/src/Migrations
+packages/dev-app/templates/newTemplateFile2.html.twig
 
-# Skeleton var - high file activity during tests (SQLite journal, sessions, cache)
-packages/skeleton/var/
-**/skeleton/var/**
+# dev-app var - high file activity during tests (SQLite journal, sessions, cache)
+packages/dev-app/var/
+**/dev-app/var/**
 **/app.db-journal
 **/app.db-wal
 **/app.db-shm
 
-# Skeleton media - recreated during tests
-packages/skeleton/media/
-**/skeleton/media/**
+# dev-app media - recreated during tests
+packages/dev-app/media/
+**/dev-app/media/**
 
 !.gitkeep
 

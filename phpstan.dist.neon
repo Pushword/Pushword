@@ -41,8 +41,8 @@ parameters:
         - packages/quiz/tests
         - packages/repurpose/src
         - packages/repurpose/tests
-        - packages/skeleton/src
-        - packages/skeleton/tests
+        - packages/dev-app/src
+        - packages/dev-app/tests
         - packages/static-generator/src
         - packages/static-generator/tests
         - packages/template-editor/src
@@ -54,9 +54,9 @@ parameters:
         - packages/core/tests/DependencyInjection/PushwordConfigFactoryTest.php
     symfony:
         containerXmlPath: /tmp/com.github.pushword.pushword/tests/var/dev/cache/App_KernelDevDebugContainer.xml
-        consoleApplicationLoader: packages/skeleton/bin/console-test.php
+        consoleApplicationLoader: packages/dev-app/bin/console-test.php
     doctrine:
-        objectManagerLoader: packages/skeleton/bin/object-test.php
+        objectManagerLoader: packages/dev-app/bin/object-test.php
     unused_public:
         methods: false
         properties: false

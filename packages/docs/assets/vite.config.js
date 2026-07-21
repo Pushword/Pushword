@@ -38,7 +38,7 @@ export default defineConfig({
         assetFileNames: '[name].[ext]',
       },
     },
-    outDir: '../../skeleton/public/assets',
+    outDir: '../../dev-app/public/assets',
     emptyOutDir: true,
     manifest: true,
     sourcemap: false,

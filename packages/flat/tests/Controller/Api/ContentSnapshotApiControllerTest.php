@@ -22,7 +22,7 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
 {
     private const string HOST = 'localhost.dev';
 
-    /** Deterministic DB pages exported by the snapshot refresh, independent of skeleton fixtures. */
+    /** Deterministic DB pages exported by the snapshot refresh, independent of dev-app fixtures. */
     private const string ROOT_SLUG = 'snapshot-fixture';
 
     private const string NESTED_SLUG = 'snapshot-fixture/leaf';
@@ -63,7 +63,7 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
 
         // Seed deterministic pages for the host so the snapshot's DB → flat refresh
         // exports known files (a root and a nested one), regardless of whether the
-        // ambient skeleton fixtures are loaded in this worker's DB.
+        // ambient dev-app fixtures are loaded in this worker's DB.
         $this->seedPage($em, self::ROOT_SLUG);
         $this->seedPage($em, self::NESTED_SLUG);
         $em->flush();

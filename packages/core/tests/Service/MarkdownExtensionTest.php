@@ -383,7 +383,7 @@ final class MarkdownExtensionTest extends KernelTestCase
 
     public function testFencedCodeBlockUsesDefaultRendererWhenNoPreClassConfigured(): void
     {
-        // The skeleton's `localhost.dev` app does not set `fenced_code_pre_class`,
+        // The dev-app's `localhost.dev` app does not set `fenced_code_pre_class`,
         // so the default League renderer is used — no extra class on <pre>.
         $parser = $this->getMarkdownParser();
 

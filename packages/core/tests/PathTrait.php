@@ -6,9 +6,9 @@ use Symfony\Component\Filesystem\Filesystem;
 
 trait PathTrait
 {
-    private string $publicDir = __DIR__.'/../../skeleton/public';
+    private string $publicDir = __DIR__.'/../../dev-app/public';
 
-    private string $projectDir = __DIR__.'/../../skeleton';
+    private string $projectDir = __DIR__.'/../../dev-app';
 
     private string $publicMediaDir = 'media';
 
@@ -19,7 +19,7 @@ trait PathTrait
             return sys_get_temp_dir().'/com.github.pushword.pushword/tests/'.$runId.'/media';
         }
 
-        return __DIR__.'/../../skeleton/media';
+        return __DIR__.'/../../dev-app/media';
     }
 
     protected function ensureMediaFileExists(string $fileName = 'piedweb-logo.png'): void

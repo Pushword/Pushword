@@ -64,7 +64,7 @@ class PostAutoloadDump extends PostInstall
             return self::$kernel;
         }
 
-        new Dotenv()->loadEnv(file_exists('.env') ? '.env' : 'packages/skeleton/.env');
+        new Dotenv()->loadEnv(file_exists('.env') ? '.env' : 'packages/dev-app/.env');
         if (class_exists(Debug::class)) {
             Debug::enable();
         }

@@ -53,10 +53,10 @@ function computeDbCacheHash(string $monoRepoBase): string
 
     // Fixture and config files
     $extraFiles = [
-        $monoRepoBase.'/packages/skeleton/src/DataFixtures/AppFixtures.php',
-        $monoRepoBase.'/packages/skeleton/src/DataFixtures/WelcomePage.md',
-        $monoRepoBase.'/packages/skeleton/src/DataFixtures/KitchenSink.md',
-        $monoRepoBase.'/packages/skeleton/src/DataFixtures/reviews.yaml',
+        $monoRepoBase.'/packages/dev-app/src/DataFixtures/AppFixtures.php',
+        $monoRepoBase.'/packages/dev-app/src/DataFixtures/WelcomePage.md',
+        $monoRepoBase.'/packages/dev-app/src/DataFixtures/KitchenSink.md',
+        $monoRepoBase.'/packages/dev-app/src/DataFixtures/reviews.yaml',
         $monoRepoBase.'/packages/core/src/Resources/config/packages/doctrine.php',
         __FILE__,
     ];
@@ -118,9 +118,9 @@ if ($useMysql) {
 
 // Export env vars used by the compiled container (pushword.php test config uses %env(...)%)
 $envVars = [
-    'PUSHWORD_TEST_MEDIA_DIR' => '' !== $runId ? $testBaseDir.'/media' : $monoRepoBase.'/packages/skeleton/media',
+    'PUSHWORD_TEST_MEDIA_DIR' => '' !== $runId ? $testBaseDir.'/media' : $monoRepoBase.'/packages/dev-app/media',
     'PUSHWORD_TEST_DATABASE_URL' => $databaseUrl,
-    'PUSHWORD_TEST_FLAT_CONTENT_DIR' => '' !== $runId ? $testBaseDir.'/content/_host_' : $monoRepoBase.'/packages/skeleton/content/_host_',
+    'PUSHWORD_TEST_FLAT_CONTENT_DIR' => '' !== $runId ? $testBaseDir.'/content/_host_' : $monoRepoBase.'/packages/dev-app/content/_host_',
     'PUSHWORD_TEST_VAR_DIR' => $testBaseDir.'/var',
 ];
 $fs->mkdir($testBaseDir.'/var');
@@ -143,12 +143,12 @@ $fs->remove($testBaseDir.'/var/dev/cache');
 $fs->remove($testBaseDir.'/var/dev/log');
 $fs->remove($testBaseDir.'/var/test/log');
 
-// Media isolation: mirror backup into the run-specific tmp dir (or skeleton/media if no run ID)
+// Media isolation: mirror backup into the run-specific tmp dir (or dev-app/media if no run ID)
 $mediaDir = '' !== $runId
     ? $testBaseDir.'/media'
-    : $monoRepoBase.'/packages/skeleton/media';
+    : $monoRepoBase.'/packages/dev-app/media';
 $fs->remove($mediaDir);
-$fs->mirror($monoRepoBase.'/packages/skeleton/media~', $mediaDir);
+$fs->mirror($monoRepoBase.'/packages/dev-app/media~', $mediaDir);
 
 // Content isolation: ensure clean content directory in tmp
 if ('' !== $runId) {
@@ -157,7 +157,7 @@ if ('' !== $runId) {
 }
 
 // Mirror pushword.piedweb.com docs content so flat sync tests exercise real pages
-$piedwebContentDir = ('' !== $runId ? $testBaseDir.'/content' : $monoRepoBase.'/packages/skeleton/content').'/pushword.piedweb.com';
+$piedwebContentDir = ('' !== $runId ? $testBaseDir.'/content' : $monoRepoBase.'/packages/dev-app/content').'/pushword.piedweb.com';
 $fs->remove($piedwebContentDir);
 $fs->mirror($monoRepoBase.'/packages/docs/content', $piedwebContentDir);
 

@@ -13,7 +13,7 @@ Simplest way is to override it (partially or completly) by create a new file in 
 
 Eg: Overriding the default navbar can be done creating a file `./templates/{$host}/page/_navbar.html.twig`.
 
-You can see how it's handle #[for the documentation](https://github.com/Pushword/Pushword/tree/main/packages/skeleton/templates/pushword.piedweb.com/page).
+You can see how it's handle #[for the documentation](https://github.com/Pushword/Pushword/tree/main/packages/dev-app/templates/pushword.piedweb.com/page).
 
 ## The Bundle Way {id=symfony}
 

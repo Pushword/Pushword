@@ -81,7 +81,7 @@ white-label landing pages — anything consolidating onto a canonical page.
 
 1. **Entity.** Trait `packages/core/src/Entity/PageTrait/PageCanonicalTrait.php`
    with `?string $customCanonical = null` + grouped get/set; wire into `Page.php`.
-2. **Schema.** `cd packages/skeleton && php bin/console doctrine:schema:update --force`.
+2. **Schema.** `cd packages/dev-app && php bin/console doctrine:schema:update --force`.
 3. **Template.** `page_default.html.twig` `robots` block:
    ```twig
    {% if page.customCanonical %}

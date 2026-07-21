@@ -1,6 +1,6 @@
-# Pushword: Skeleton / Demo App
+# Pushword: Dev / Demo App
 
-Demo and test application for Pushword — used for testing, demoing and by the installer. It is **not** a copy-paste skeleton; prefer the [installer](https://pushword.piedweb.com/installation).
+Demo and test application for Pushword — used for testing, demoing and by the installer. It is **not** a copy-paste starter; prefer the [installer](https://pushword.piedweb.com/installation).
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -19,7 +19,7 @@ Demo and test application for Pushword — used for testing, demoing and by the 
 ## Build it
 
 ```bash
-cd packages/skeleton;
+cd packages/dev-app;
 
 rm -rf media && cp -r media~ media
 

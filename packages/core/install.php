@@ -23,9 +23,9 @@ PostInstall::replace('config/bundles.php', 'return [', 'return [
     '.PushwordCoreBundle::class."::class => ['all' => true],");
 
 // echo '~~ Copy Entities in ./src/Entity'.chr(10);
-// PostInstall::mirror('vendor/pushword/skeleton/src/Entity', 'src/Entity');
+// PostInstall::mirror('vendor/pushword/dev-app/src/Entity', 'src/Entity');
 @unlink('src/DataFixtures/AppFixtures.php');
-PostInstall::mirror('vendor/pushword/skeleton/src/DataFixtures', 'src/DataFixtures');
+PostInstall::mirror('vendor/pushword/dev-app/src/DataFixtures', 'src/DataFixtures');
 
 echo '~~ Adding Puswhord Routes'.chr(10);
 PostInstall::insertIn(
@@ -39,7 +39,7 @@ echo '~~ Create database'.chr(10);
 PostInstall::replace('.env', 'postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=16&charset=utf8', 'sqlite:///%kernel.project_dir%/var/app.db');
 // and define an APP_SECRET
 PostInstall::replace('.env', "APP_SECRET=\n", 'APP_SECRET='.sha1(md5(uniqid())).chr(10));
-PostInstall::mirror('vendor/pushword/skeleton/media~', 'media');
+PostInstall::mirror('vendor/pushword/dev-app/media~', 'media');
 $freshInstall = ! file_exists('var/app.db');
 $commands = 'php bin/console doctrine:schema:update --force -q';
 if ($freshInstall) {
@@ -55,26 +55,26 @@ PostInstall::dumpFile('public/build/manifest.json', '{}');
 
 echo '~~ Copy assets file in ./assets'.chr(10);
 PostInstall::remove(['package.json', 'webpack.config.js', 'assets']);
-PostInstall::mirror('vendor/pushword/skeleton/assets', 'assets');
-PostInstall::copy('vendor/pushword/skeleton/vite.config.js', 'vite.config.js');
-PostInstall::copy('vendor/pushword/skeleton/package.json', 'package.json');
-PostInstall::copy('vendor/pushword/skeleton/Caddyfile', 'Caddyfile');
+PostInstall::mirror('vendor/pushword/dev-app/assets', 'assets');
+PostInstall::copy('vendor/pushword/dev-app/vite.config.js', 'vite.config.js');
+PostInstall::copy('vendor/pushword/dev-app/package.json', 'package.json');
+PostInstall::copy('vendor/pushword/dev-app/Caddyfile', 'Caddyfile');
 
 $defaultConfig = 'pushword:'.chr(10)
     .'    # Documention'.chr(10)
     .'    # https://pushword.piedweb.com/installation'.chr(10)
     .'    # Example'.chr(10)
-    .'    # https://github.com/Pushword/Pushword/blob/main/packages/skeleton/config/packages/pushword.php'.chr(10);
+    .'    # https://github.com/Pushword/Pushword/blob/main/packages/dev-app/config/packages/pushword.php'.chr(10);
 
 PostInstall::dumpFile('config/packages/pushword.yaml', $defaultConfig);
 
 // Install phpstan
 // ---------------
 
-PostInstall::copy('vendor/pushword/skeleton/phpstan.dist.neon', 'phpstan.dist.neon');
-PostInstall::copy('vendor/pushword/skeleton/bin/console-test.php', 'bin/console-test.php');
+PostInstall::copy('vendor/pushword/dev-app/phpstan.dist.neon', 'phpstan.dist.neon');
+PostInstall::copy('vendor/pushword/dev-app/bin/console-test.php', 'bin/console-test.php');
 PostInstall::replace('bin/console-test.php', "'/../../../vendor/autoload.php'", "'/../vendor/autoload.php'");
-PostInstall::copy('vendor/pushword/skeleton/bin/object-test.php', 'bin/object-test.php');
+PostInstall::copy('vendor/pushword/dev-app/bin/object-test.php', 'bin/object-test.php');
 PostInstall::replace('bin/object-test.php', "'/../../../vendor/autoload.php'", "'/../vendor/autoload.php'");
 // À tester si appeler composer depuis composer ne fout pas le bordel
 exec('composer config --no-plugins allow-plugins.phpstan/extension-installer true');
@@ -85,7 +85,7 @@ if (! file_exists('vendor/phpstan/phpstan/phpstan.phar')) {
 
 // Install php-cs-fixer
 // -------------------
-PostInstall::copy('vendor/pushword/skeleton/.php-cs-fixer.dist.php~', '.php-cs-fixer.dist.php');
+PostInstall::copy('vendor/pushword/dev-app/.php-cs-fixer.dist.php~', '.php-cs-fixer.dist.php');
 exec('composer config --no-plugins scripts.format "vendor/bin/php-cs-fixer fix"');
 if (! file_exists('vendor/friendsofphp/php-cs-fixer/php-cs-fixer')) {
     exec('composer require --no-plugins  --dev friendsofphp/php-cs-fixer:*');
@@ -95,13 +95,13 @@ if (! file_exists('vendor/friendsofphp/php-cs-fixer/php-cs-fixer')) {
 // -------------------
 // Rector is a bit too expensive on a cheap VPS with 4Gb of RAM
 /*
-cp vendor/pushword/skeleton/rector.php rector.php && \
-cp vendor/pushword/skeleton/tests/symfonyContainer.php tests/symfonyContainer.php && \
+cp vendor/pushword/dev-app/rector.php rector.php && \
+cp vendor/pushword/dev-app/tests/symfonyContainer.php tests/symfonyContainer.php && \
 composer config --no-plugins scripts.rector "vendor/bin/rector process && composer format" && \
 composer require --no-plugins --dev rector/rector:*
 */
-// PostInstall::copy('vendor/pushword/skeleton/rector.php', 'rector.php');
-// PostInstall::copy('vendor/pushword/skeleton/tests/symfonyContainer.php', 'tests/symfonyContainer.php');
+// PostInstall::copy('vendor/pushword/dev-app/rector.php', 'rector.php');
+// PostInstall::copy('vendor/pushword/dev-app/tests/symfonyContainer.php', 'tests/symfonyContainer.php');
 // exec('composer config --no-plugins scripts.rector "vendor/bin/rector process && composer format"');
 // exec('composer require --no-plugins  --dev rector/rector:*');
 

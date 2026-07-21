@@ -10,7 +10,7 @@ final class ElementTest extends KernelTestCase
 {
     public function testIt(): void
     {
-        $templateDir = __DIR__.'/../../skeleton/templates';
+        $templateDir = __DIR__.'/../../dev-app/templates';
         $path = 'newTemplateFile.html.twig';
         $newPath = 'newTemplateFile2.html.twig';
 
@@ -40,7 +40,7 @@ final class ElementTest extends KernelTestCase
 
     public function testLoadCode(): void
     {
-        $templateDir = __DIR__.'/../../skeleton/templates';
+        $templateDir = __DIR__.'/../../dev-app/templates';
         $newPath = 'newTemplateFile2.html.twig';
 
         $element = new Element($templateDir);
@@ -57,7 +57,7 @@ final class ElementTest extends KernelTestCase
 
     public function testRepository(): void
     {
-        $templateDir = __DIR__.'/../../skeleton/templates';
+        $templateDir = __DIR__.'/../../dev-app/templates';
         $repo = new ElementRepository($templateDir, [], false);
 
         $templates = $repo->getAll();
@@ -65,7 +65,7 @@ final class ElementTest extends KernelTestCase
 
         self::assertSame($templates[0]->getPath(), $repo->getOneByEncodedPath($templates[0]->getEncodedPath())?->getPath());
 
-        $templateDir = __DIR__.'/../../skeleton/templates';
+        $templateDir = __DIR__.'/../../dev-app/templates';
         $repo = new ElementRepository($templateDir, [$templates[0]->getPath()], true);
 
         $templates = $repo->getAll();

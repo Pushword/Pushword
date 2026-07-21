@@ -26,7 +26,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
             self::getContainer()->get('doctrine.orm.default_entity_manager'),
             self::getContainer()->get(SiteRegistry::class),
             [],
-            __DIR__.'/../../skeleton/public',
+            __DIR__.'/../../dev-app/public',
             self::getContainer()->get('translator'),
         );
     }

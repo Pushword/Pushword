@@ -22,7 +22,7 @@
     "piedweb/render-html-attributes": "^0",
     "piedweb/curl": "@dev || ^0.1",
     "piedweb/extractor": "@dev || ^0.1.19",
-    "pushword/skeleton": "*",
+    "pushword/dev-app": "*",
     "thecodingmachine/safe": "*",
     "spatie/image-optimizer": "^1.3",
     "symfony/asset": "^8.0",

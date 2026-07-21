@@ -18,14 +18,14 @@
         "./docs~": true,
         "**/dist": true,
         "**/Resources/public": true,
-        "**/skeleton/var": true
+        "**/dev-app/var": true
     },
     "search.exclude": {
         "./docs": true,
         "./docs~": true,
         "**/dist": true,
         "**/Resources/public": true,
-        "**/skeleton/var": true
+        "**/dev-app/var": true
     },
     "intelephense.files.exclude": [
         "**/docs~*/**",

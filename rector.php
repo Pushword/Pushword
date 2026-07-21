@@ -31,7 +31,7 @@ return RectorConfig::configure()
     ->withParallel()
     ->withPaths($paths)
     ->withRootFiles()
-    ->withSymfonyContainerPhp(__DIR__.'/packages/skeleton/tests/symfonyContainer.php')
+    ->withSymfonyContainerPhp(__DIR__.'/packages/dev-app/tests/symfonyContainer.php')
     ->withComposerBased(
         twig: true,
         doctrine: true,
@@ -66,7 +66,7 @@ return RectorConfig::configure()
     ])
     ->withSkip([
         'packages/core/src/Twig/AppExtension.php',
-        'packages/skeleton/src/Kernel.php',
+        'packages/dev-app/src/Kernel.php',
         'packages/core/src/Site/SiteConfig.php',
         NullToStrictStringFuncCallArgRector::class,
         FlipTypeControlToUseExclusiveTypeRector::class,

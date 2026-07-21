@@ -125,7 +125,7 @@ See [Page Cache](/extension/page-cache) for setup, Caddy config, and the `pw:cac
 
 You must import the generated `static/example.tld/.Caddyfile` in your main Caddyfile.
 
-If you still use the default Caddyfile (from [pushword/skeleton](https://github.com/pushword/pushword/blob/main/packages/skeleton/Caddyfile)), see the last commented part :
+If you still use the default Caddyfile (from [pushword/dev-app](https://github.com/pushword/pushword/blob/main/packages/dev-app/Caddyfile)), see the last commented part :
 
 ```Caddyfile
 import static/example.tld/.Caddyfile

@@ -44,7 +44,7 @@ installed Pushword via Composer. The command references point at the right
 source either way:
 
 - **Monorepo** (a `packages/` directory with `packages/quiz/`): read source and
-  docs under `packages/`; run console commands from `packages/skeleton/`.
+  docs under `packages/`; run console commands from `packages/dev-app/`.
 - **Downstream site** (a `vendor/pushword/` directory): read docs under
   `vendor/pushword/docs/content/` and entity/model source under
   `vendor/pushword/<package>/src/`; run console commands from the app root

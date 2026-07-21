@@ -99,5 +99,5 @@ then
     cd ../../../
 fi
 
-cd packages/skeleton
+cd packages/dev-app
 php bin/console --symlink --relative  'assets:install'

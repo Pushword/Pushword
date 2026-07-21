@@ -32,7 +32,7 @@ jobs:
       - name: Build container
         # cache:warmup dumps App_KernelDevDebugContainer.xml that phpstan-symfony
         # reads (see phpstan.dist.neon); cache:clear warms then drops that XML.
-        run: cd packages/skeleton && php ./bin/console cache:warmup --env=dev
+        run: cd packages/dev-app && php ./bin/console cache:warmup --env=dev
 
       - name: PHPStan
         run: vendor/bin/phpstan --memory-limit=1G analyse --error-format=github
@@ -117,10 +117,10 @@ jobs:
       #- name: Install browsers
       #  run: vendor/bin/bdi detect drivers
       - name: Initialize
-        run: composer reset-skeleton
+        run: composer reset-dev-app
 
       - name: Generate Images Cache
-        run: cd packages/skeleton && php bin/console pw:image:cache
+        run: cd packages/dev-app && php bin/console pw:image:cache
 
       - name: Execute tests
         # The 'serial' group holds tests that need exclusive access to the shared
@@ -198,10 +198,10 @@ jobs:
           mysql -h127.0.0.1 -uroot -proot -e "CREATE USER IF NOT EXISTS 'pushword'@'%' IDENTIFIED BY 'pushword'; GRANT ALL PRIVILEGES ON \`pushword\_test%\`.* TO 'pushword'@'%'; FLUSH PRIVILEGES;"
 
       - name: Initialize
-        run: composer reset-skeleton
+        run: composer reset-dev-app
 
       - name: Generate Images Cache
-        run: cd packages/skeleton && php bin/console pw:image:cache
+        run: cd packages/dev-app && php bin/console pw:image:cache
 
       - name: Execute tests
         # Serial and worker groups run after the parallel batch — see the SQLite job above.

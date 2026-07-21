@@ -39,7 +39,7 @@ php -S 127.0.0.1:8004 -t public/
 ### Run Pushword with Franken PHP
 
 1. get the last bin from [frankenphp's repositories](https://github.com/dunglas/frankenphp)
-2. Create your own Caddyfile, or just [copy this one](https://github.com/Pushword/Pushword/blob/main/packages/skeleton/Caddyfile)
+2. Create your own Caddyfile, or just [copy this one](https://github.com/Pushword/Pushword/blob/main/packages/dev-app/Caddyfile)
 3. run it ➜ `php Caddy.php` or `frankenphp run --config Caddyfile`
 
 The first available port will be used automatically (like `symfony server:start`).

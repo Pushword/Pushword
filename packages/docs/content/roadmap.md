@@ -50,9 +50,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [Core] / [Admin] Bulk edition des tags depuis la page de listing
 
-- [ ] Rename skeleton
-      Wich is absolutely not a skeleton, it's more a dev-test env or a demo
-
 - [JsHelper] start-show-more : voir pour améliorer le close :
   - [ ] show more :
     - si l'utilisateur clique sur un jump link qui renvoie vers un contenu dans un bloc show-more

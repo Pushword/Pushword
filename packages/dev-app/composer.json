@@ -1,7 +1,7 @@
 {
-  "name": "pushword/skeleton",
+  "name": "pushword/dev-app",
   "type": "symfony-bundle",
-  "description": "This package is used for testing purpose, for demoing and by the installer. It's not a copy-paster skeleton, prefer use the installer (see https://pushword.piedweb.com/installation ).",
+  "description": "Pushword dev/test/demo application. Used for testing, demoing and by the installer. It's not a copy-paste starter, prefer the installer (see https://pushword.piedweb.com/installation ).",
   "keywords": [],
   "homepage": "https://pushword.piedweb.com",
   "license": "MIT",

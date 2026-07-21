@@ -117,7 +117,7 @@
     "branch-alias": {
       "dev-main": "1.0.x-dev"
     },
-    "public-dir": "packages/skeleton/public"
+    "public-dir": "packages/dev-app/public"
   },
   "autoload": {
     "psr-4": {
@@ -142,7 +142,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "App\\": "packages/skeleton/src",
+      "App\\": "packages/dev-app/src",
       "Pushword\\Admin\\Tests\\": "packages/admin/tests",
       "Pushword\\Api\\Tests\\": "packages/api/tests",
       "Pushword\\Conversation\\Tests\\": "packages/conversation/tests",
@@ -162,8 +162,8 @@
     }
   },
   "scripts": {
-    "console": "cd packages/skeleton && php bin/console $2",
-    "dev": "cd packages/skeleton && symfony server:start -d --no-tls",
+    "console": "cd packages/dev-app && php bin/console $2",
+    "dev": "cd packages/dev-app && symfony server:start -d --no-tls",
     "stan": "vendor/bin/phpstan",
     "test": "./.scripts/test $*",
     "test-live": "PANTHER_NO_HEADLESS=1 PANTHER_NO_SANDBOX=1 composer test $*",
@@ -174,9 +174,9 @@
     "rector": "vendor/bin/rector process && composer format",
     "format": "PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix rector.php && PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix",
     "assets": "./.scripts/generate-assets",
-    "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add packages/js-helper/. && git commit -m 'update pushword/js-helper version' && git push && cd packages/js-helper && npm publish",
+    "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add packages/js-helper/. && git commit --only -m 'update pushword/js-helper version' -- packages/js-helper && git push && cd packages/js-helper && npm publish",
     "docs": "./.scripts/generate-docs",
-    "reset-skeleton": "./.scripts/reset-skeleton",
+    "reset-dev-app": "./.scripts/reset-dev-app",
     "test-installer": "./.scripts/test-installer",
     "test-partial-install": "./.scripts/test-partial-install",
     "release": "./.scripts/release",

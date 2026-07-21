@@ -97,7 +97,7 @@ final class PerformanceRegressionTest extends KernelTestCase
     {
         $mediaDir = (string) getenv('PUSHWORD_TEST_MEDIA_DIR');
         if ('' === $mediaDir) {
-            $mediaDir = \dirname(__DIR__, 3).'/skeleton/media';
+            $mediaDir = \dirname(__DIR__, 3).'/dev-app/media';
         }
 
         $path = $mediaDir.'/'.$fileName;

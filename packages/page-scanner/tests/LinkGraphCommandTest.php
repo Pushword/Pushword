@@ -168,7 +168,7 @@ final class LinkGraphCommandTest extends KernelTestCase
 
     public function testTheHostDefaultsToTheFirstConfiguredSite(): void
     {
-        // localhost.dev is the skeleton's first app: omitting the argument must
+        // localhost.dev is the dev-app's first app: omitting the argument must
         // report it, not every site at once.
         $this->seed([self::HOST.'/homepage', self::HOST.'/one'], [self::HOST.'/homepage' => [self::HOST.'/one']]);
 
