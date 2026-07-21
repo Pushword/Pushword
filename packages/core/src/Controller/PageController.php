@@ -58,6 +58,15 @@ final class PageController extends AbstractPushwordController
     #[Route('/{slug}/{pager}', name: 'pushword_page_pager', requirements: ['slug' => RoutePatterns::SLUG_WITH_TRAILING, 'pager' => RoutePatterns::PAGER], defaults: ['slug' => '', 'pager' => 1], methods: ['GET', 'HEAD', 'POST'], priority: -80)]
     public function show(Request $request, string $slug = ''): Response
     {
+        // Bot scans like /wp-login.php match the custom-host route's {host} segment
+        // (they look like a hostname) but resolve to no configured site. Serving them
+        // would silently render the default site's page at a junk URL; 404 cheaply
+        // instead, before any page lookup.
+        $routeHost = $request->attributes->getString('host', '');
+        if ('' !== $routeHost && ! $this->apps->isKnownHost($routeHost)) {
+            throw $this->createNotFoundException();
+        }
+
         $normalizedSlug = '' === $slug ? 'homepage' : $slug;
         $page = $this->pageResolver->findPageOr404($request, $normalizedSlug, true);
 

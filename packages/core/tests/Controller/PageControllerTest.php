@@ -39,6 +39,27 @@ final class PageControllerTest extends KernelTestCase
         self::assertSame(404, $response->getStatusCode());
     }
 
+    public function testCustomHostRouteWithUnknownHostReturns404(): void
+    {
+        // /wp-aothait.php matches the custom-host route ({host}=wp-aothait.php, slug='')
+        // but resolves to no configured site → cheap 404 instead of the default homepage.
+        $request = Request::create('/wp-aothait.php');
+        $request->attributes->set('host', 'wp-aothait.php');
+
+        $this->expectException(NotFoundHttpException::class);
+        $this->getPageController()->show($request, '');
+    }
+
+    public function testCustomHostRouteWithKnownHostIsServed(): void
+    {
+        // A configured host in the {host} segment must still resolve and serve.
+        $request = Request::create('/localhost.dev');
+        $request->attributes->set('host', 'localhost.dev');
+
+        $response = $this->getPageController()->show($request, '');
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
+    }
+
     public function testShowRedirectsFromRedirectFrom(): void
     {
         $em = self::getContainer()->get(EntityManagerInterface::class);
