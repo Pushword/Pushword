@@ -17,11 +17,14 @@ use Pushword\Repurpose\Model\Slide;
  */
 final readonly class SlideRenderer
 {
-    private const string DEFAULT_BG = '#0b1120';
+    public const string DEFAULT_BG = '#0b1120';
 
-    private const string DEFAULT_TEXT = '#f8fafc';
+    public const string DEFAULT_TEXT = '#f8fafc';
 
-    private const string DEFAULT_ACCENT = '#38bdf8';
+    public const string DEFAULT_ACCENT = '#38bdf8';
+
+    /** The flat placeholder shown when a slide's media file is missing. */
+    public const string MISSING_MEDIA_BG = '#334155';
 
     public function __construct(
         private FormatRegistry $formats,
@@ -106,7 +109,7 @@ final readonly class SlideRenderer
 
         if (null === $dataUri) {
             // Missing media: a flat placeholder rather than a broken or blank slide.
-            return '<rect width="'.$width.'" height="'.$height.'" fill="#334155"/>';
+            return '<rect width="'.$width.'" height="'.$height.'" fill="'.self::MISSING_MEDIA_BG.'"/>';
         }
 
         $svg = '<g clip-path="url(#frame-'.$index.')">'
@@ -330,6 +333,21 @@ final readonly class SlideRenderer
     }
 
     /**
+     * A self-contained thumbnail SVG of one background effect over a sample fill, for
+     * the studio's effect picker. Painted through the same `renderEffect()` the deck
+     * uses (so the thumbnail can never drift from the real output): rendered as slide 1
+     * of a virtual 3-slide deck so the deck-windowed shapes land inside the frame.
+     */
+    public function effectPreview(string $effect, string $bg = '#7c5cff', int $width = 200, int $height = 250): string
+    {
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '.$width.' '.$height.'">'
+            .'<defs><clipPath id="frame-1"><rect width="'.$width.'" height="'.$height.'"/></clipPath></defs>'
+            .'<rect width="'.$width.'" height="'.$height.'" fill="'.$bg.'"/>'
+            .$this->renderEffect($effect, 1, $width, $height, 2)
+            .'</svg>';
+    }
+
+    /**
      * A deck-wide decorative layer, authored on a `total × width` canvas and shown
      * through the frame window at `-index × width` so a shape resumes across slides.
      */
@@ -340,9 +358,11 @@ final readonly class SlideRenderer
         }
 
         if ('paper' === $effect) {
+            // 0.12: strong enough to read as grain at social-post sizes (0.05
+            // was invisible once the slide was scaled down in a feed).
             return '<filter id="rp-paper-'.$index.'"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>'
                 .'<feColorMatrix type="saturate" values="0"/></filter>'
-                .'<rect width="'.$width.'" height="'.$height.'" filter="url(#rp-paper-'.$index.')" opacity="0.05"/>';
+                .'<rect width="'.$width.'" height="'.$height.'" filter="url(#rp-paper-'.$index.')" opacity="0.12"/>';
         }
 
         if ('poly-grid' === $effect) {

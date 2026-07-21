@@ -16,7 +16,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->autowire()
         ->autoconfigure()
         ->bind('$publicDir', '%pw.public_dir%')
-        ->bind('$publicMediaDir', '%pw.public_media_dir%');
+        ->bind('$publicMediaDir', '%pw.public_media_dir%')
+        ->bind('$fontDir', '%pw.pushword_repurpose.font_dir%')
+        ->bind('$chromiumBinary', '%pw.pushword_repurpose.chromium_binary%');
 
     $apiAvailable = interface_exists(ApiControllerInterface::class);
     $apiExclude = $apiAvailable ? [] : [__DIR__.'/../Controller/Api'];

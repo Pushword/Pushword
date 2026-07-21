@@ -3,6 +3,7 @@
 namespace Pushword\Repurpose\Service;
 
 use Pushword\Core\Entity\Page;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Drafts a starting carousel spec from a page (no AI): the h1 and main image
@@ -23,6 +24,7 @@ final readonly class CarouselDrafter
 
     public function __construct(
         private FormatRegistry $formats,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -47,7 +49,7 @@ final readonly class CarouselDrafter
             $slides[] = $this->bodySlide($section, $mainImage);
         }
 
-        $slides[] = $this->ctaSlide();
+        $slides[] = $this->ctaSlide($page->getLocale());
 
         return [
             'page' => $page->getSlug(),
@@ -108,15 +110,20 @@ final readonly class CarouselDrafter
     }
 
     /**
+     * The CTA copy follows the page's locale, not the admin's — the slide is
+     * published to the page's audience.
+     *
      * @return array<string, mixed>
      */
-    private function ctaSlide(): array
+    private function ctaSlide(string $locale): array
     {
+        $locale = '' === $locale ? null : $locale;
+
         return [
             'layout' => 'center',
             'align' => 'center',
-            'tagline' => 'Read more',
-            'title' => 'Read the full article',
+            'tagline' => $this->translator->trans('repurpose.draft.ctaTagline', [], 'messages', $locale),
+            'title' => $this->translator->trans('repurpose.draft.ctaTitle', [], 'messages', $locale),
             'background' => 'blobs',
         ];
     }

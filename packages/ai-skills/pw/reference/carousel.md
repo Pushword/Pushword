@@ -17,7 +17,10 @@ for LinkedIn).
 3. **Fetch the facts the package owns**, in one call:
    - `GET /api/repurpose/schema` — the exact JSON shape (keys, enums, ranges).
    - `GET /api/repurpose/networks` — formats (id → ratio/pixels), per-network
-     **hard limits** (errors) vs **guidance** (advice), and available font pairings.
+     **hard limits** (errors) vs **guidance** (advice), and font pairings.
+     **Only pick a pairing whose `installed` is true** — an uninstalled one
+     silently renders in Roboto; `bin/console pw:repurpose:fonts <pairing>`
+     installs the missing TTFs.
    Or on a flat-file site: `bin/console pw:repurpose:schema`.
 4. **Write the spec** (shape below). Keep titles short — the renderer shrinks text
    to fit, but a wall of text still reads badly.
@@ -28,13 +31,21 @@ for LinkedIn).
    Fix every violation. Common ones: `title_overflow` (shorten the title),
    `crop_out_of_bounds` / `source_too_small` (change `focusX/focusY/zoom` or pick a
    bigger image), `format` not allowed for the network, `slides` over the cap.
+   A valid response may also carry **`warnings`** (non-blocking) — mostly
+   text/background contrast. Treat them as bugs in your spec and fix them too.
 6. **Save it** (creates a `SocialPost`, one per page+network):
-   - API: `PUT /api/repurpose/{host}/{network}/{page}` (body = the spec).
+   - API: `PUT /api/repurpose/{host}/{network}/{page}` (body = the spec). The
+     response echoes the persisted `slides` count (confirm it matches), the
+     `warnings`, and `studioUrl` / `previewUrl` / `slideUrls`.
    - Flat site: write `content/{host}/social-post/{page}/{network}.json` and run
      `bin/console pw:flat:sync --mode=import`.
-7. **Check your framing without a browser** — the validator's geometry report is
-   usually enough. If you want eyes on it: `GET /api/repurpose/{id}/slide-{n}.svg`
-   returns a self-contained SVG you can open in a headless Chrome.
+7. **Look at what you made** — fetch `previewUrl`
+   (`GET /api/repurpose/{id}/preview.png`): the whole deck as one numbered
+   contact-sheet PNG, no browser needed. Slides are shown at the network's
+   **mobile feed width** (stated on the sheet) — judge text size at that scale,
+   not zoomed in. If it answers 501 (no Chromium on the host), fall back to the
+   per-slide SVGs (`slideUrls`) in a headless Chrome.
+   Check: is every text readable over its background? Is the crop framing right?
 
 ## Spec shape (author this)
 
@@ -67,6 +78,11 @@ Key rules (the schema is the source of truth — always fetch it):
 - **Cropping is `focusX`/`focusY`/`zoom`** — 0..1 focal point + zoom ≥ 1. The same
   numbers stay correct at any format, so don't hardcode pixel crops.
 - **Colours/fonts are optional** — omit them to inherit the site's own tokens.
+  If you set `palette.text`, keep it readable over the actual background — over a
+  photo that almost always means a light colour (the renderer applies your colour
+  verbatim; validate warns when contrast falls below WCAG AA large-text).
+- **Overlay defaults to 0.35 on image slides** (0 without an image); set an
+  explicit `0` only when the text provably reads without it.
 - **`creator`** is a key from the site's `repurpose_creators` config; omit it to
   fall back to the brand. Do not invent creators.
 - **Overlay only over an image**; a slide must have at least one text field or an
@@ -82,7 +98,7 @@ Key rules (the schema is the source of truth — always fetch it):
 
 ## Detect the project shape
 
-- **Monorepo** (`packages/repurpose/`): run `bin/console` from `packages/skeleton/`.
+- **Monorepo** (`packages/repurpose/`): run `bin/console` from `packages/dev-app/`.
 - **Downstream site** (`vendor/pushword/repurpose/`): run `bin/console` from the
   app root; if `pushword/api` is installed, prefer the API, otherwise write the
   flat `.json` and `pw:flat:sync`.

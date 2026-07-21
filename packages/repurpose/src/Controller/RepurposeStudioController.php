@@ -12,6 +12,7 @@ use Pushword\Repurpose\Model\Slide;
 use Pushword\Repurpose\Repository\SocialPostRepository;
 use Pushword\Repurpose\Service\BackgroundEffectRegistry;
 use Pushword\Repurpose\Service\CarouselFactory;
+use Pushword\Repurpose\Service\ContrastAdvisor;
 use Pushword\Repurpose\Service\CreatorResolverInterface;
 use Pushword\Repurpose\Service\ExportBuilder;
 use Pushword\Repurpose\Service\FontPairingRegistry;
@@ -40,6 +41,7 @@ final class RepurposeStudioController extends AbstractController
         private readonly SocialPostRepository $repository,
         private readonly CarouselFactory $factory,
         private readonly SlideRenderer $renderer,
+        private readonly ContrastAdvisor $contrastAdvisor,
         private readonly CreatorResolverInterface $creatorResolver,
         private readonly ExportBuilder $exportBuilder,
         private readonly NetworkRegistry $networks,
@@ -68,10 +70,14 @@ final class RepurposeStudioController extends AbstractController
         return $this->render('@PushwordRepurpose/studio.html.twig', [
             'post' => $post,
             'carousel' => $carousel,
+            // Slides preview at the network's mobile-feed width, so "is the text
+            // big enough?" is judged at the size a scrolling viewer actually sees.
+            'feedWidth' => $this->networks->mobileWidth($carousel->network),
             'backUrl' => $this->backUrl($request),
             'specJs' => json_encode($post->getSpec(), $scriptFlags),
             'slidesJs' => json_encode($this->renderer->renderDeck($carousel, $creator), $scriptFlags),
             'vocabJs' => json_encode($this->vocabulary($carousel->network), $scriptFlags),
+            'backgroundEffectsJs' => json_encode($this->backgroundEffects(), $scriptFlags),
             'networkUrlsJs' => json_encode($networkUrls, $scriptFlags),
             'pageSlugs' => $this->pageSlugsForHost($post->host),
         ]);
@@ -153,7 +159,10 @@ final class RepurposeStudioController extends AbstractController
 
         $creator = $this->creatorResolver->resolve($carousel, $post->host);
 
-        return new JsonResponse(['slides' => $this->renderer->renderDeck($carousel, $creator)]);
+        return new JsonResponse([
+            'slides' => $this->renderer->renderDeck($carousel, $creator),
+            'warnings' => $this->contrastAdvisor->warnings($carousel),
+        ]);
     }
 
     /**
@@ -312,7 +321,6 @@ final class RepurposeStudioController extends AbstractController
             'networks' => NetworkRegistry::keys(),
             'formats' => [] === $formats ? FormatRegistry::ids() : $formats,
             'fontPairings' => FontPairingRegistry::keys(),
-            'backgrounds' => BackgroundEffectRegistry::keys(),
             'layouts' => Slide::LAYOUTS,
             'aligns' => Slide::ALIGNS,
             'statuses' => Carousel::STATUSES,
@@ -321,6 +329,28 @@ final class RepurposeStudioController extends AbstractController
             'creatorOrientations' => Carousel::CREATOR_ORIENTATIONS,
             'creatorOnSlides' => Carousel::CREATOR_ON_SLIDES,
         ];
+    }
+
+    /**
+     * The background-effect catalogue the studio's picker modal shows: each effect
+     * with its category and a self-contained thumbnail SVG rendered by the same
+     * painter the deck uses, so the preview always matches the real output.
+     *
+     * @return list<array{key: string, label: string, category: string, preview: string}>
+     */
+    private function backgroundEffects(): array
+    {
+        $effects = [];
+        foreach (BackgroundEffectRegistry::EFFECTS as $key => $effect) {
+            $effects[] = [
+                'key' => $key,
+                'label' => $effect['label'],
+                'category' => $effect['category'],
+                'preview' => $this->renderer->effectPreview($key),
+            ];
+        }
+
+        return $effects;
     }
 
     /**

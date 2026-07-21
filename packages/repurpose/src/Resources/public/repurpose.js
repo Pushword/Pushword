@@ -1,7 +1,7 @@
 /**
  * Repurpose studio — an Alpine component with two interchangeable editors over one
- * spec, plus a live preview and export. All vanilla + the project's own Alpine and
- * Monaco bundles (no new dependency, no build step for this package).
+ * spec, plus a live preview and export. All vanilla + the project's own Alpine
+ * bundle (no new dependency, no build step for this package).
  *
  *  - Visual editor: form controls bound to the spec; a deep $watch re-previews on
  *    every change (debounced).
@@ -14,6 +14,38 @@
  */
 (function () {
   var PREVIEW_DEBOUNCE_MS = 450
+
+  // Tailwind's default palette (v3 hexes), one row per hue × these shades, plus a
+  // neutral ramp — the swatch suggestions offered by the colour popover.
+  var TW_SHADES = [300, 400, 500, 600, 700, 800]
+  var TW_HUES = {
+    neutral: ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040', '#262626'],
+    slate: ['#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155', '#1e293b'],
+    red: ['#fca5a5', '#f87171', '#ef4444', '#dc2626', '#b91c1c', '#991b1b'],
+    orange: ['#fdba74', '#fb923c', '#f97316', '#ea580c', '#c2410c', '#9a3412'],
+    amber: ['#fcd34d', '#fbbf24', '#f59e0b', '#d97706', '#b45309', '#92400e'],
+    yellow: ['#fde047', '#facc15', '#eab308', '#ca8a04', '#a16207', '#854d0e'],
+    lime: ['#bef264', '#a3e635', '#84cc16', '#65a30d', '#4d7c0f', '#3f6212'],
+    green: ['#86efac', '#4ade80', '#22c55e', '#16a34a', '#15803d', '#166534'],
+    emerald: ['#6ee7b7', '#34d399', '#10b981', '#059669', '#047857', '#065f46'],
+    teal: ['#5eead4', '#2dd4bf', '#14b8a6', '#0d9488', '#0f766e', '#115e59'],
+    cyan: ['#67e8f9', '#22d3ee', '#06b6d4', '#0891b2', '#0e7490', '#155e75'],
+    sky: ['#7dd3fc', '#38bdf8', '#0ea5e9', '#0284c7', '#0369a1', '#075985'],
+    blue: ['#93c5fd', '#60a5fa', '#3b82f6', '#2563eb', '#1d4ed8', '#1e40af'],
+    indigo: ['#a5b4fc', '#818cf8', '#6366f1', '#4f46e5', '#4338ca', '#3730a3'],
+    violet: ['#c4b5fd', '#a78bfa', '#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6'],
+    purple: ['#d8b4fe', '#c084fc', '#a855f7', '#9333ea', '#7e22ce', '#6b21a8'],
+    fuchsia: ['#f0abfc', '#e879f9', '#d946ef', '#c026d3', '#a21caf', '#86198f'],
+    pink: ['#f9a8d4', '#f472b6', '#ec4899', '#db2777', '#be185d', '#9d174d'],
+    rose: ['#fda4af', '#fb7185', '#f43f5e', '#e11d48', '#be123c', '#9f1239'],
+  }
+  var TW_SWATCHES = Object.keys(TW_HUES).reduce(function (out, hue) {
+    TW_HUES[hue].forEach(function (hex, i) {
+      out.push({ name: hue + '-' + TW_SHADES[i], hex: hex })
+    })
+
+    return out
+  }, [])
 
   function jsonPost(body) {
     return {
@@ -113,6 +145,8 @@
       spec: cfg.spec || { slides: [] },
       vocab: cfg.vocab || {},
       slides: cfg.slides || [],
+      backgroundEffects: cfg.backgroundEffects || [],
+      tailwind: TW_SWATCHES,
       urls: cfg.urls || {},
       network: cfg.network || '',
       networkUrls: cfg.networkUrls || {},
@@ -121,6 +155,13 @@
       live: { state: 'ok', text: 'in sync' },
       violations: [],
       slidesOpen: [],
+      deckOpen: true,
+      dragIndex: null,
+      dropIndex: null,
+      colorPop: { open: false, top: 0, left: 0 },
+      _colorObj: null,
+      _colorKey: '',
+      effectModal: { open: false, slide: null, tab: 'All' },
       mediaModal: { open: false, src: '' },
       dirty: false,
       saving: false,
@@ -300,21 +341,40 @@
         this.spec.slides.splice(index, 1)
         this.slidesOpen.splice(index, 1)
       },
-      moveSlide: function (index, direction) {
-        var target = index + direction
-        if (target < 0 || target >= this.spec.slides.length) {
-          return
-        }
-        this.swap(this.spec.slides, index, target)
-        this.swap(this.slidesOpen, index, target)
-      },
-      swap: function (list, a, b) {
-        var moved = list[a]
-        list[a] = list[b]
-        list[b] = moved
-      },
       toggleSlide: function (index) {
         this.slidesOpen[index] = !this.slidesOpen[index]
+      },
+
+      // Drag-to-reorder the slide list (native HTML5 DnD, grabbed from the ⠿ handle).
+      // The slide's open/collapsed state travels with it so the panel stays stable.
+      onDragStart: function (index, event) {
+        this.dragIndex = index
+        event.dataTransfer.effectAllowed = 'move'
+        event.dataTransfer.setData('text/plain', String(index))
+        var row = event.target.closest('.slide-item')
+        if (row) {
+          event.dataTransfer.setDragImage(row, 16, 16)
+        }
+      },
+      onDragOver: function (index) {
+        if (null !== this.dragIndex) {
+          this.dropIndex = index
+        }
+      },
+      onDrop: function (index) {
+        this.moveSlideTo(this.dragIndex, index)
+        this.onDragEnd()
+      },
+      onDragEnd: function () {
+        this.dragIndex = null
+        this.dropIndex = null
+      },
+      moveSlideTo: function (from, to) {
+        if (null === from || from === to) {
+          return
+        }
+        this.spec.slides.splice(to, 0, this.spec.slides.splice(from, 1)[0])
+        this.slidesOpen.splice(to, 0, this.slidesOpen.splice(from, 1)[0])
       },
 
       // Switch the studio to another network's carousel for this page. Navigation
@@ -369,6 +429,91 @@
           slide.image.media = name
         }
         this.closeMediaModal()
+      },
+
+      // Colour popover — one shared instance, anchored under the clicked field. It
+      // edits a (object, key) pair so any palette field can reuse it; writing back to
+      // the reactive spec triggers the same live preview as a plain input would.
+      openColor: function (obj, key, event) {
+        this._colorObj = obj
+        this._colorKey = key
+        var rect = event.currentTarget.getBoundingClientRect()
+        var width = 240
+        var height = 300
+        var left = Math.min(rect.left, window.innerWidth - width - 8)
+        // Flip above the field when it would overflow the viewport bottom.
+        var top = rect.bottom + 6 + height > window.innerHeight ? rect.top - height - 6 : rect.bottom + 6
+        this.colorPop = { open: true, top: Math.max(8, top), left: Math.max(8, left) }
+      },
+      get colorValue() {
+        return (this._colorObj && this._colorObj[this._colorKey]) || ''
+      },
+      set colorValue(value) {
+        if (this._colorObj) {
+          this._colorObj[this._colorKey] = value
+        }
+      },
+      pickSwatch: function (hex) {
+        this.colorValue = hex
+        this.closeColor()
+      },
+      clearColor: function () {
+        this.colorValue = ''
+        this.closeColor()
+      },
+      closeColor: function () {
+        this.colorPop = { open: false, top: 0, left: 0 }
+      },
+
+      // Background-effect picker. Tabs and thumbnails come from the server-rendered
+      // catalogue (backgroundEffects), so the previews always match the real output.
+      get effectTabs() {
+        return this.backgroundEffects.reduce(function (tabs, effect) {
+          if (tabs.indexOf(effect.category) < 0) {
+            tabs.push(effect.category)
+          }
+
+          return tabs
+        }, ['All'])
+      },
+      get effectsInTab() {
+        var tab = this.effectModal.tab
+        if ('All' === tab) {
+          return this.backgroundEffects
+        }
+
+        return this.backgroundEffects.filter(function (effect) { return effect.category === tab })
+      },
+      get currentEffectKey() {
+        var slide = this.spec.slides[this.effectModal.slide]
+
+        return slide ? (slide.background || 'none') : ''
+      },
+      effectByKey: function (key) {
+        return this.backgroundEffects.find(function (effect) { return effect.key === key }) || null
+      },
+      effectLabel: function (key) {
+        var effect = this.effectByKey(key)
+
+        return effect ? effect.label : key
+      },
+      effectPreviewSvg: function (key) {
+        var effect = this.effectByKey(key)
+
+        return effect ? effect.preview : ''
+      },
+      openEffect: function (index) {
+        this.effectModal = { open: true, slide: index, tab: 'All' }
+      },
+      chooseEffect: function (key) {
+        var slide = this.spec.slides[this.effectModal.slide]
+        if (slide) {
+          slide.background = key
+        }
+        this.closeEffect()
+      },
+      closeEffect: function () {
+        this.effectModal = { open: false, slide: null, tab: 'All' }
       },
 
       setView: function (view) {

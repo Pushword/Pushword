@@ -15,15 +15,15 @@ namespace Pushword\Repurpose\Service;
 final class BackgroundEffectRegistry
 {
     /**
-     * @var array<string, array{label: string, primitive: string}>
+     * @var array<string, array{label: string, primitive: string, category: string}>
      */
     public const array EFFECTS = [
-        'none' => ['label' => 'None', 'primitive' => 'none'],
-        'blobs' => ['label' => 'Blobs', 'primitive' => 'path'],
-        'bubbles' => ['label' => 'Bubbles', 'primitive' => 'path'],
-        'poly-grid' => ['label' => 'Poly Grid', 'primitive' => 'pattern'],
-        'sketchy' => ['label' => 'Sketchy Directions', 'primitive' => 'path'],
-        'paper' => ['label' => 'Paper Grain', 'primitive' => 'filter'],
+        'none' => ['label' => 'None', 'primitive' => 'none', 'category' => 'Basic'],
+        'blobs' => ['label' => 'Blobs', 'primitive' => 'path', 'category' => 'Shapes'],
+        'bubbles' => ['label' => 'Bubbles', 'primitive' => 'path', 'category' => 'Shapes'],
+        'poly-grid' => ['label' => 'Poly Grid', 'primitive' => 'pattern', 'category' => 'Patterns'],
+        'sketchy' => ['label' => 'Sketchy Directions', 'primitive' => 'path', 'category' => 'Shapes'],
+        'paper' => ['label' => 'Paper Grain', 'primitive' => 'filter', 'category' => 'Textures'],
     ];
 
     /**
@@ -35,7 +35,7 @@ final class BackgroundEffectRegistry
     }
 
     /**
-     * @return array{label: string, primitive: string}|null
+     * @return array{label: string, primitive: string, category: string}|null
      */
     public function get(string $key): ?array
     {
@@ -43,7 +43,7 @@ final class BackgroundEffectRegistry
     }
 
     /**
-     * @return array<string, array{label: string, primitive: string}>
+     * @return array<string, array{label: string, primitive: string, category: string}>
      */
     public function all(): array
     {

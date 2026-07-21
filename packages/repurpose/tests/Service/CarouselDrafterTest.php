@@ -9,6 +9,8 @@ use Pushword\Repurpose\Model\Carousel;
 use Pushword\Repurpose\Service\CarouselDrafter;
 use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\FormatRegistry;
+use Symfony\Component\Translation\Loader\YamlFileLoader;
+use Symfony\Component\Translation\Translator;
 
 #[Group('integration')]
 final class CarouselDrafterTest extends TestCase
@@ -17,7 +19,13 @@ final class CarouselDrafterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->drafter = new CarouselDrafter(new FormatRegistry());
+        // The package's real catalogues, so the CTA copy asserted is the shipped one.
+        $translator = new Translator('en');
+        $translator->addLoader('yaml', new YamlFileLoader());
+        $translator->addResource('yaml', __DIR__.'/../../src/translations/messages.en.yaml', 'en');
+        $translator->addResource('yaml', __DIR__.'/../../src/translations/messages.fr.yaml', 'fr');
+
+        $this->drafter = new CarouselDrafter(new FormatRegistry(), $translator);
     }
 
     /**
@@ -90,5 +98,22 @@ final class CarouselDrafterTest extends TestCase
         $carousel = $this->draftCarousel($this->page(), 'linkedin', 'no-such-format');
 
         self::assertSame('linkedin-4-5', $carousel->format);
+    }
+
+    public function testCtaSlideFollowsThePageLocale(): void
+    {
+        $english = $this->draftCarousel($this->page());
+        $cta = end($english->slides);
+        self::assertNotFalse($cta);
+        self::assertSame('Read the full article', $cta->title);
+
+        $page = $this->page();
+        $page->locale = 'fr';
+
+        $french = $this->draftCarousel($page);
+        $cta = end($french->slides);
+        self::assertNotFalse($cta);
+        self::assertSame("Lire l'article complet", $cta->title);
+        self::assertSame('En savoir plus', $cta->tagline);
     }
 }

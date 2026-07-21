@@ -5,7 +5,7 @@ namespace Pushword\Repurpose\Tests;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
- * Smoke test: the package autoloads, the bundle is registered in the skeleton
+ * Smoke test: the package autoloads, the bundle is registered in the dev-app
  * app and the kernel boots with it enabled.
  */
 final class BundleBootTest extends KernelTestCase

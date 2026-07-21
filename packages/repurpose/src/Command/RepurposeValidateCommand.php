@@ -4,6 +4,7 @@ namespace Pushword\Repurpose\Command;
 
 use Pushword\Core\Command\AgentOutputTrait;
 use Pushword\Repurpose\Service\CarouselFactory;
+use Pushword\Repurpose\Service\ContrastAdvisor;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -34,6 +35,7 @@ final class RepurposeValidateCommand
         private readonly CarouselFactory $factory,
         private readonly ValidatorInterface $validator,
         private readonly TranslatorInterface $translator,
+        private readonly ContrastAdvisor $contrastAdvisor,
     ) {
     }
 
@@ -77,7 +79,7 @@ final class RepurposeValidateCommand
             return $this->fail($io, $issues);
         }
 
-        return $this->pass($io);
+        return $this->pass($io, $this->contrastAdvisor->warnings($carousel));
     }
 
     /**
@@ -116,7 +118,10 @@ final class RepurposeValidateCommand
         return Command::FAILURE;
     }
 
-    private function pass(SymfonyStyle $io): int
+    /**
+     * @param list<array{path: string, message: string}> $warnings non-blocking (contrast) advisories
+     */
+    private function pass(SymfonyStyle $io, array $warnings): int
     {
         if ($this->agentMode) {
             $this->writeAgentJson($io, [
@@ -124,9 +129,14 @@ final class RepurposeValidateCommand
                 'result' => 'passed',
                 'errors' => 0,
                 'issues' => [],
+                'warnings' => $warnings,
             ]);
 
             return Command::SUCCESS;
+        }
+
+        foreach ($warnings as $warning) {
+            $io->warning(\sprintf('%s: %s', $warning['path'], $warning['message']));
         }
 
         $io->success('Carousel spec is valid.');

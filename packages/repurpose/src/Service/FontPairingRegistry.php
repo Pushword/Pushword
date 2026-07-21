@@ -7,12 +7,16 @@ namespace Pushword\Repurpose\Service;
  *
  * The package ships **metadata for every pairing** (so the schema, the API and an
  * agent always know what exists) but bundles only a small default set of TTFs; the
- * rest are fetched on demand with `pw:repurpose:fonts install <pairing>`. Every
- * family here is on Google Fonts (OFL 1.1 or Apache 2.0), so embedding and
+ * rest are fetched on demand with `pw:repurpose:fonts <pairing>`. Every family
+ * here is on Google Fonts (OFL 1.1 or Apache 2.0), so embedding and
  * redistribution are permitted.
  *
  * `heading`/`body` are the CSS family names (also the Google Fonts family names).
- * `bundled: true` marks a pairing shipped with the package.
+ * `bundled: true` marks a pairing whose TTFs ship with the package — kept true by
+ * {@see \Pushword\Repurpose\Tests\Service\RegistryConsistencyTest}, which checks
+ * the files are really on disk. Whether a pairing is usable *right now* (bundled
+ * or installed) is `FontResolver::isInstalled()`, exposed per pairing at
+ * `GET /api/repurpose/networks`.
  */
 final class FontPairingRegistry
 {
@@ -92,6 +96,16 @@ final class FontPairingRegistry
     public function isBundled(string $key): bool
     {
         return self::PAIRINGS[$key]['bundled'] ?? false;
+    }
+
+    /**
+     * True when the family headlines at least one pairing. One TTF serves a
+     * family everywhere, so heading families are fetched at weight 700 (headings
+     * must read bold) and body-only families at 400.
+     */
+    public static function isHeadingFamily(string $family): bool
+    {
+        return array_any(self::PAIRINGS, static fn (array $pairing): bool => $pairing['heading'] === $family);
     }
 
     /**

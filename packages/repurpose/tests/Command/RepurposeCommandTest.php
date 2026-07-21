@@ -121,6 +121,81 @@ final class RepurposeCommandTest extends KernelTestCase
         $this->rmDir($outDir);
     }
 
+    public function testFontsCommandListsPairingsWithInstalledStatus(): void
+    {
+        $tester = $this->tester('pw:repurpose:fonts');
+        $tester->execute(['--format' => 'text']);
+
+        self::assertSame(0, $tester->getStatusCode());
+        $display = $tester->getDisplay();
+        self::assertStringContainsString('playfair-chivo', $display);
+        self::assertStringContainsString('yes', $display, 'the bundled pairings report installed');
+        self::assertStringContainsString('no', $display, 'not-yet-installed pairings are honest about it');
+    }
+
+    public function testFontsCommandAgentOutputIsSingleJsonLine(): void
+    {
+        $tester = $this->tester('pw:repurpose:fonts');
+        $tester->execute(['--format' => 'agent']);
+
+        $lines = array_values(array_filter(explode("\n", trim($tester->getDisplay())), static fn (string $l): bool => '' !== trim($l)));
+        self::assertCount(1, $lines);
+
+        $decoded = json_decode($lines[0], true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame('pw:repurpose:fonts', $decoded['tool']);
+        self::assertIsArray($decoded['pairings']);
+        $byKey = array_column($decoded['pairings'], null, 'key');
+        $playfair = $byKey['playfair-chivo'] ?? null;
+        self::assertIsArray($playfair);
+        self::assertTrue($playfair['installed']);
+    }
+
+    public function testFontsCommandRejectsAnUnknownPairing(): void
+    {
+        $tester = $this->tester('pw:repurpose:fonts');
+        $tester->execute(['pairings' => ['no-such-pairing'], '--format' => 'text']);
+
+        self::assertSame(1, $tester->getStatusCode());
+        self::assertStringContainsString('unknown pairing', $tester->getDisplay());
+    }
+
+    /**
+     * Installing an already-bundled pairing must be a network-free no-op: both
+     * families are found on disk before any download is attempted.
+     */
+    public function testFontsCommandSkipsAlreadyPresentFamilies(): void
+    {
+        $tester = $this->tester('pw:repurpose:fonts');
+        $tester->execute(['pairings' => ['playfair-chivo'], '--format' => 'agent']);
+
+        self::assertSame(0, $tester->getStatusCode());
+        $decoded = json_decode(trim($tester->getDisplay()), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame('done', $decoded['result']);
+        self::assertSame([], $decoded['installed']);
+        self::assertSame([], $decoded['failed']);
+        self::assertIsArray($decoded['alreadyPresent']);
+        self::assertContains('Playfair Display', $decoded['alreadyPresent']);
+        self::assertContains('Chivo', $decoded['alreadyPresent']);
+    }
+
+    public function testValidateAgentOutputCarriesContrastWarnings(): void
+    {
+        $path = $this->fileWith('{"page":"blog/x","network":"linkedin","format":"linkedin-4-5",'
+            .'"slides":[{"title":"Hello","palette":{"bg":"#0b1120","text":"#1e293b"}}]}');
+        $tester = $this->tester('pw:repurpose:validate');
+        $tester->execute(['path' => $path, '--format' => 'agent']);
+
+        self::assertSame(0, $tester->getStatusCode(), 'warnings never fail the lint');
+        $decoded = json_decode(trim($tester->getDisplay()), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame('passed', $decoded['result']);
+        self::assertIsArray($decoded['warnings']);
+        self::assertNotEmpty($decoded['warnings']);
+        unlink($path);
+    }
+
     public function testRenderFailsOnMalformedJson(): void
     {
         $path = $this->fileWith('{not json');

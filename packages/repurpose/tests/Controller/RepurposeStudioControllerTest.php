@@ -85,6 +85,9 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertStringContainsString('id="rp-spec"', $html);
         // A rendered slide SVG is embedded in the config blob (tag-escaped for <script>).
         self::assertStringContainsString('\u003Csvg', $html);
+        // The deck previews at the network's mobile-feed width and says so.
+        self::assertStringContainsString('width: 390px', $html);
+        self::assertStringContainsString('linkedin mobile feed width', $html);
     }
 
     public function testSaveEditedSpecPersistsNewCopy(): void
@@ -220,6 +223,8 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $first = $slides[0] ?? null;
         self::assertIsString($first);
         self::assertStringContainsString('<svg', $first);
+        // Contrast advisories ride along so the studio can surface them.
+        self::assertIsArray($body['warnings'] ?? null);
 
         // Preview never touches the row: the stored spec still has its one slide.
         $reloaded = $this->em->getRepository(SocialPost::class)->find($post->id);

@@ -56,11 +56,20 @@ schema and validates it — free, with whatever model you already use.
 
 1. `GET /api/repurpose/schema` — the JSON shape (keys, enums, ranges).
 2. `GET /api/repurpose/networks` — formats (ratio/pixels), per-network **hard
-   limits** (errors) vs **guidance** (advice), and font pairings.
+   limits** (errors) vs **guidance** (advice), and font pairings — each with an
+   `installed` flag; only pick installed ones (the rest fall back to Roboto).
 3. `POST /api/repurpose/validate` — validate a spec, get precise
-   `{path, message}` violations (overflow, out-of-bounds crop, disallowed format…).
-4. `PUT /api/repurpose/{host}/{network}/{page}` — save it.
-5. `GET /api/repurpose/{id}/slide-{n}.svg` — render a slide to check framing.
+   `{path, message}` violations (overflow, out-of-bounds crop, disallowed format…)
+   plus non-blocking `warnings` (e.g. text/background contrast below WCAG AA).
+4. `PUT /api/repurpose/{host}/{network}/{page}` — save it. The response echoes the
+   persisted slide count, the warnings, and `studioUrl` / `previewUrl` /
+   `slideUrls` so the result can be confirmed and eyeballed without a follow-up GET.
+5. `GET /api/repurpose/{id}/preview.png` — the whole deck as one contact-sheet
+   PNG, slides sized to the network's **mobile feed width** (`feedMobile` in
+   `/api/repurpose/networks`, e.g. ~390px, Pinterest's two-column grid ~186px) so
+   text legibility is judged at the realistic worst case. Needs Chromium on the
+   host; without it, a 501 points back at the SVGs.
+   Or `GET /api/repurpose/{id}/slide-{n}.svg` for one slide.
 
 The [`pw` ai-skill](https://github.com/Pushword/Pushword/tree/main/packages/ai-skills)
 ships a `carousel` playbook for exactly this loop.
@@ -71,6 +80,8 @@ ships a `carousel` playbook for exactly this loop.
 bin/console pw:repurpose:schema                 # print the JSON Schema
 bin/console pw:repurpose:validate spec.json     # lint a spec (precise violations, non-zero exit)
 bin/console pw:repurpose:render spec.json out/  # render to out/slide-1.svg …
+bin/console pw:repurpose:fonts                  # list font pairings + installed status
+bin/console pw:repurpose:fonts bebas-neue-lato  # install a pairing's TTFs (or --all)
 ```
 
 All emit compact JSON when run by an AI agent (`--format=agent`).
@@ -85,10 +96,24 @@ slide is simply a wide image the frame clips.
 
 ## Fonts
 
-Slides use bundled TTF fonts (Apache-2.0 Roboto by default). Prettier pairings —
-all Google Fonts — are fetched on demand into your app so the slides can match
-your site's typography. Fonts must be local files: `imagettfbbox` measures a file
-on disk, and an SVG rasterised for canvas export cannot fetch remote resources.
+Six pairings ship with the package (DM Serif Display+DM Sans, Playfair+Chivo,
+Montserrat+Work Sans, Poppins+Inter, Anton+Roboto, Lora+Ubuntu); the other ~45 —
+all Google Fonts — are installed on demand with `pw:repurpose:fonts <pairing>`
+into `repurpose.font_dir` (defaults to `var/repurpose/fonts`, app-side so a
+composer update never wipes them). A pairing that is not installed falls back to
+Roboto — check the `installed` flag in `GET /api/repurpose/networks` (or
+`pw:repurpose:fonts`) before picking one. Fonts must be local files:
+`imagettfbbox` measures a file on disk, and an SVG rasterised for canvas export
+cannot fetch remote resources.
+
+## Legibility
+
+A spec can be valid yet unreadable — dark `palette.text` over a photo is the
+classic trap. Two guards: a slide with an image and no stated `overlay` defaults
+to `0.35` (an explicit `0` is honoured), and `validate` / `PUT` / the studio
+preview return non-blocking contrast `warnings` (WCAG AA large-text, 3:1) naming
+the slide and the fix. Warnings never block a save — a deliberate low-contrast
+design stays possible.
 
 ## Export
 

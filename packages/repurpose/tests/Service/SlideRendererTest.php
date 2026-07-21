@@ -68,6 +68,18 @@ final class SlideRendererTest extends KernelTestCase
         self::assertStringContainsString('clip-path="url(#frame-0)"', $svg);
     }
 
+    public function testPaperGrainIsStrongEnoughToBeVisible(): void
+    {
+        $svg = $this->render([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['title' => 'Grainy', 'background' => 'paper']],
+        ]);
+
+        self::assertStringContainsString('feTurbulence', $svg);
+        // Regression guard: 0.05 was invisible at feed size (enduser report).
+        self::assertStringContainsString('opacity="0.12"', $svg);
+    }
+
     public function testSwipeHintRendersAnArrowOnlyWhenEnabled(): void
     {
         $base = ['page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5'];

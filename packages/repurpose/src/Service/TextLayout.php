@@ -73,12 +73,28 @@ final class TextLayout
      */
     public function wrap(string $text, string $fontFile, float $cssPx, float $maxWidthPx): array
     {
+        $text = $this->glueTerminalPunctuation($text);
+
         $lines = [];
         foreach (preg_split('/\r\n|\r|\n/', $text) ?: [$text] as $paragraph) {
             $this->wrapParagraph($paragraph, $fontFile, $cssPx, $maxWidthPx, $lines);
         }
 
         return $lines;
+    }
+
+    /**
+     * Replace the space before `? ! ; : »` (and after `«`) with a no-break space
+     * so detached punctuation never wraps alone — "Naxos ou Paros ?" must not
+     * break into a widowed "?". French typography wants the space; NBSP keeps it
+     * while making the pair one wrap unit (the ASCII-only `\s+` splitter leaves
+     * U+00A0 untouched, and it measures like a normal space).
+     */
+    private function glueTerminalPunctuation(string $text): string
+    {
+        $text = (string) preg_replace('/ +([?!;:»])/u', "\u{00A0}$1", $text);
+
+        return (string) preg_replace('/(«) +/u', "$1\u{00A0}", $text);
     }
 
     /**

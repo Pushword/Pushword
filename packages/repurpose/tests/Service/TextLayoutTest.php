@@ -86,4 +86,37 @@ final class TextLayoutTest extends TestCase
         self::assertTrue($laid->isEmpty());
         self::assertFalse($laid->overflow);
     }
+
+    /**
+     * French spacing before `? ! ; :` must never wrap the punctuation alone onto
+     * its own line ("Naxos ou Paros" / "?").
+     */
+    public function testTerminalPunctuationNeverWrapsAlone(): void
+    {
+        // A width tight enough that "Paros ?" would otherwise split after "Paros".
+        $width = $this->layout->measureWidth('Naxos ou Paros', self::FONT, 48) + 1;
+        $lines = $this->layout->wrap('Naxos ou Paros ?', self::FONT, 48, $width);
+
+        self::assertGreaterThan(1, \count($lines));
+        foreach ($lines as $line) {
+            self::assertNotSame('?', trim($line->text), 'the question mark stayed glued to its word');
+        }
+
+        $last = end($lines);
+        self::assertNotFalse($last);
+        self::assertStringEndsWith("\u{00A0}?", $last->text);
+    }
+
+    public function testGuillemetsStayGluedToTheirWord(): void
+    {
+        // Width tight enough to force a break inside the quoted phrase.
+        $width = $this->layout->measureWidth('Il a dit', self::FONT, 48) + 1;
+        $lines = $this->layout->wrap('Il a dit « oui » à la fin', self::FONT, 48, $width);
+
+        self::assertGreaterThan(1, \count($lines));
+        foreach ($lines as $line) {
+            self::assertNotSame('«', trim($line->text));
+            self::assertNotSame('»', trim($line->text));
+        }
+    }
 }

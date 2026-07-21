@@ -6,6 +6,9 @@ repurpose:
     new: New carousel
     repurpose: Repurpose
     studio: Studio
+  draft:
+    ctaTagline: Read more
+    ctaTitle: Read the full article
   field:
     page: Page
     network: Network

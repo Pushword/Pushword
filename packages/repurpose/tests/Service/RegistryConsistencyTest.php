@@ -5,6 +5,7 @@ namespace Pushword\Repurpose\Tests\Service;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Pushword\Repurpose\Service\FontPairingRegistry;
+use Pushword\Repurpose\Service\FontResolver;
 use Pushword\Repurpose\Service\FormatRegistry;
 use Pushword\Repurpose\Service\NetworkRegistry;
 
@@ -49,6 +50,32 @@ final class RegistryConsistencyTest extends TestCase
         }
     }
 
+    public function testEveryNetworkHasAPlausibleMobileFeedWidth(): void
+    {
+        $registry = new NetworkRegistry();
+
+        foreach (NetworkRegistry::keys() as $network) {
+            $width = $registry->mobileWidth($network);
+            self::assertGreaterThanOrEqual(150, $width, \sprintf('network "%s" feedMobile', $network));
+            self::assertLessThanOrEqual(600, $width, \sprintf('network "%s" feedMobile', $network));
+        }
+
+        self::assertSame(390, $registry->mobileWidth('myspace'), 'unknown networks fall back to a sane width');
+    }
+
+    /**
+     * Drives which weight `pw:repurpose:fonts` downloads: 700 for families that
+     * headline somewhere, 400 for body-only ones.
+     */
+    public function testIsHeadingFamilyReflectsThePairingTable(): void
+    {
+        self::assertTrue(FontPairingRegistry::isHeadingFamily('Playfair Display'));
+        // Poppins headlines poppins-inter even though it is a body elsewhere.
+        self::assertTrue(FontPairingRegistry::isHeadingFamily('Poppins'));
+        self::assertFalse(FontPairingRegistry::isHeadingFamily('Roboto'), 'Roboto is body-only');
+        self::assertFalse(FontPairingRegistry::isHeadingFamily('No Such Family'));
+    }
+
     public function testEveryFormatHasPositiveDimensions(): void
     {
         $registry = new FormatRegistry();
@@ -73,6 +100,28 @@ final class RegistryConsistencyTest extends TestCase
             self::assertIsArray($pairing, \sprintf('bundled pairing "%s" is missing from the registry', $key));
             self::assertNotSame('', $pairing['heading']);
             self::assertNotSame('', $pairing['body']);
+        }
+    }
+
+    /**
+     * `bundled: true` is a promise the TTFs ship with the package — a pairing
+     * marked bundled with no font on disk silently renders in Roboto, lying to
+     * every agent that trusted the flag.
+     */
+    public function testEveryBundledPairingHasItsFontFilesOnDisk(): void
+    {
+        $registry = new FontPairingRegistry();
+        $resolver = new FontResolver($registry);
+
+        foreach (FontPairingRegistry::keys() as $key) {
+            if (! $registry->isBundled($key)) {
+                continue;
+            }
+
+            self::assertTrue(
+                $resolver->isInstalled($key),
+                \sprintf('pairing "%s" is marked bundled but its TTFs are not in src/Resources/font/', $key),
+            );
         }
     }
 }

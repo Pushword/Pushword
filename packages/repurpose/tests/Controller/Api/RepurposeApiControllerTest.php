@@ -91,6 +91,43 @@ final class RepurposeApiControllerTest extends WebTestCase
         $networks = $facts['networks'];
         self::assertIsArray($networks);
         self::assertArrayHasKey('linkedin', $networks);
+
+        // Every pairing states whether its TTFs are really on disk, so an agent
+        // never picks a font that would silently fall back to Roboto.
+        $pairings = $facts['fontPairings'];
+        self::assertIsArray($pairings);
+        $playfair = $pairings['playfair-chivo'];
+        self::assertIsArray($playfair);
+        self::assertTrue($playfair['installed'], 'bundled pairings ship their TTFs');
+        $rozha = $pairings['rozha-one-questrial'];
+        self::assertIsArray($rozha);
+        self::assertArrayHasKey('installed', $rozha);
+    }
+
+    public function testPreviewOfAnUnknownCarouselIs404(): void
+    {
+        $this->client->request(Request::METHOD_GET, '/api/repurpose/999999/preview.png', [], [], $this->authServer());
+
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testValidateWarnsOnUnreadableContrastWithoutBlocking(): void
+    {
+        $spec = $this->validSpec();
+        $spec['slides'] = [[
+            'title' => 'Hello',
+            'palette' => ['bg' => '#0b1120', 'text' => '#1e293b'],
+        ]];
+
+        $result = $this->requestJson('POST', '/api/repurpose/validate', $spec);
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode(), 'a low-contrast spec stays valid');
+        self::assertTrue($result['valid']);
+        $warnings = $result['warnings'];
+        self::assertIsArray($warnings);
+        self::assertNotEmpty($warnings);
+        $first = $warnings[0];
+        self::assertIsArray($first);
+        self::assertSame('slides[0]', $first['path']);
     }
 
     public function testValidateAcceptsAGoodSpecAndRejectsABadOne(): void
@@ -111,17 +148,32 @@ final class RepurposeApiControllerTest extends WebTestCase
     {
         $url = '/api/repurpose/'.self::HOST.'/linkedin/'.self::PAGE;
 
-        // Create.
+        // Create. The response closes the agent loop on its own: persisted slide
+        // count plus the studio/preview/slide URLs to look at the result.
         $created = $this->requestJson('PUT', $url, $this->validSpec());
         self::assertSame(Response::HTTP_CREATED, $this->client->getResponse()->getStatusCode());
         $id = $created['id'];
         self::assertIsInt($id);
+        self::assertSame(1, $created['slides']);
+        self::assertIsArray($created['warnings']);
+        self::assertIsString($created['studioUrl']);
+        self::assertStringContainsString('/admin/repurpose/studio/'.$id, $created['studioUrl']);
+        self::assertIsString($created['previewUrl']);
+        self::assertStringContainsString('/api/repurpose/'.$id.'/preview.png', $created['previewUrl']);
+        $slideUrls = $created['slideUrls'];
+        self::assertIsArray($slideUrls);
+        self::assertCount(1, $slideUrls);
+        self::assertIsString($slideUrls[0]);
+        self::assertStringContainsString('/api/repurpose/'.$id.'/slide-1.svg', $slideUrls[0]);
 
         // Read back.
         $read = $this->requestJson('GET', $url);
         self::assertSame(self::PAGE, $read['page']);
         self::assertSame('linkedin', $read['network']);
         self::assertSame('linkedin-4-5', $read['format']);
+        self::assertSame(1, $read['slides']);
+        self::assertIsString($read['studioUrl']);
+        self::assertStringContainsString('/admin/repurpose/studio/'.$id, $read['studioUrl']);
 
         // Reframe: PATCH the same key with a new zoom, confirm it persisted.
         $reframed = $this->validSpec();
@@ -138,6 +190,18 @@ final class RepurposeApiControllerTest extends WebTestCase
         self::assertSame(Response::HTTP_OK, $svg->getStatusCode());
         self::assertSame('image/svg+xml', $svg->headers->get('Content-Type'));
         self::assertStringContainsString('<svg', (string) $svg->getContent());
+
+        // Whole-deck preview: a PNG contact sheet when Chromium is on the host,
+        // an explicit 501 pointing back at the slide SVGs otherwise.
+        $this->client->request(Request::METHOD_GET, '/api/repurpose/'.$id.'/preview.png', [], [], $this->authServer());
+        $preview = $this->client->getResponse();
+        if (Response::HTTP_OK === $preview->getStatusCode()) {
+            self::assertSame('image/png', $preview->headers->get('Content-Type'));
+            self::assertStringStartsWith("\x89PNG", (string) $preview->getContent());
+        } else {
+            self::assertSame(Response::HTTP_NOT_IMPLEMENTED, $preview->getStatusCode());
+            self::assertStringContainsString('slideUrls', (string) $preview->getContent());
+        }
 
         // Delete, then confirm it is gone.
         $this->client->request(Request::METHOD_DELETE, $url, [], [], $this->authServer());

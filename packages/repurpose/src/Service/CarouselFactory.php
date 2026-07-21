@@ -61,7 +61,10 @@ final class CarouselFactory
                 title: $this->strOrNull($slide['title'] ?? null),
                 paragraph: $this->strOrNull($slide['paragraph'] ?? null),
                 swipe: (bool) ($slide['swipe'] ?? false),
-                overlay: $this->float($slide['overlay'] ?? null, 0.0),
+                // An image slide with no stated overlay gets a legibility-safe
+                // one by default; an explicit 0 is honoured (and the contrast
+                // advisor will flag it when it hurts).
+                overlay: $this->float($slide['overlay'] ?? null, \is_array($slide['image'] ?? null) ? 0.35 : 0.0),
                 textScale: $this->float($slide['textScale'] ?? null, 1.0),
                 background: $this->strOr($slide['background'] ?? null, 'none'),
                 palette: $this->palette($slide['palette'] ?? null),
