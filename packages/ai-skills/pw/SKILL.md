@@ -26,15 +26,15 @@ gotchas, and a verification step so the result renders the first time.
 | Command | Description | Reference |
 | --- | --- | --- |
 | `quiz [topic]` | Author, embed, and validate an interactive QCM quiz | [reference/quiz.md](reference/quiz.md) |
-
-More commands will be added; for now `quiz` is the only one.
+| `carousel [page]` | Repurpose a page into a social-media carousel (SVG slides) | [reference/carousel.md](reference/carousel.md) |
 
 ## Routing
 
-1. **First word matches a command** (`quiz`): read its reference file and follow
-   it. Everything after the command name is the target/topic.
-2. **No command, but the request is clearly a Pushword quiz** ("add a quiz…",
-   "make a QCM…"): treat it as `quiz` and read [reference/quiz.md](reference/quiz.md).
+1. **First word matches a command** (`quiz`, `carousel`): read its reference file
+   and follow it. Everything after the command name is the target/topic/page.
+2. **No command, but the request is clearly one of them** — "add a quiz…", "make a
+   QCM…" → `quiz`; "turn this into a carousel", "make a LinkedIn carousel",
+   "repurpose this article for Instagram" → `carousel`.
 3. **No argument**: show the command table above and ask what they'd like to build.
 
 ## Working in any Pushword project
@@ -52,3 +52,11 @@ source either way:
 
 Detect which by checking for `packages/quiz/` vs `vendor/pushword/quiz/` before
 you reach for a path.
+
+## Bring the project's own rules
+
+These references encode the *package's* rules (schemas, limits, gotchas) — never a
+project's editorial voice. For any copywriting, read the project's own brand/voice
+files first (e.g. `content/.rules/brands/*.md`, `.rules/ContentGuidelines.md`, or
+the site's CLAUDE.md) and follow them. The package publishes what only it knows;
+you bring what the project knows.

@@ -1,0 +1,37 @@
+{
+  "name": "pushword/repurpose",
+  "type": "symfony-bundle",
+  "description": "Repurpose a Pushword page into ready-to-post social carousels: an agent-authored JSON spec rendered to self-contained SVG slides, with server-side text layout, focal-point cropping and PNG/PDF export.",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/repurpose",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.4",
+    "ext-gd": "*",
+    "ext-zip": "*",
+    "pushword/core": "*"
+  },
+  "suggest": {
+    "pushword/api": "Expose the carousel spec over the token-authenticated REST API for AI agents.",
+    "pushword/flat": "Round-trip carousels as flat JSON files through pw:flat:sync."
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Repurpose\\": "src"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

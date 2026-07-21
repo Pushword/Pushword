@@ -20,6 +20,12 @@ pushword:
       conversation_review_default_reply_author: 'Etienne (Pushword)'
       page_update_notification_from: 'test@example.tld'
       page_update_notification_to: 'test@example.tld'
+      repurpose_creators:
+        robin:
+          type: personal
+          name: 'Robin'
+          role: 'Founder at Pushword'
+          avatar: '3.jpg'
     - hosts:
         - pushword.piedweb.com
         - 127.0.0.1:9090

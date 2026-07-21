@@ -40,6 +40,9 @@ Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the 
 - [pushword/page-update-notifier](https://github.com/Pushword/page-update-notifier) — Email alerts on content changes.
 - [pushword/conversation](https://github.com/Pushword/conversation) — Comments, contact & newsletter forms.
 
+**Content & workflow** (continued)
+- [pushword/repurpose](https://github.com/Pushword/repurpose) — Turn a page into ready-to-post social carousels (SVG slides, agent-authored, PNG/PDF export).
+
 **Publishing & performance**
 - [pushword/static-generator](https://github.com/Pushword/static-generator) — Export a static website (GitHub Pages, Apache, FrankenPHP).
 - [pushword/search](https://github.com/Pushword/search) — SQLite full-text search (Loupe), zero infra.

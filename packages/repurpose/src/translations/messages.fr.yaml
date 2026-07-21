@@ -1,0 +1,16 @@
+repurpose:
+  label:
+    singular: Carrousel social
+    plural: Carrousels sociaux
+  action:
+    new: Nouveau carrousel
+    repurpose: Repurposer
+    studio: Studio
+  field:
+    page: Page
+    network: Réseau
+    format: Format
+    host: Hôte
+    status: Statut
+    plannedAt: Planifié le
+    updatedAt: Mis à jour

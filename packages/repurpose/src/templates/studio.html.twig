@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Repurpose Studio · {{ post.page }}</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f5f7; --panel: #ffffff; --panel-2: #f8f9fa; --field: #ffffff;
+      --line: #dee2e6; --line-2: #ced4da; --text: #212529; --muted: #6c757d; --muted-2: #495057;
+      --accent: #0d6efd; --accent-hover: #0b5ed7; --ok: #198754; --warn: #b45309; --bad: #dc3545;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-hover); }
+    [x-cloak] { display: none !important; }
+
+    header { display: flex; align-items: center; gap: 1rem; padding: .8rem 1.5rem; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(10px); z-index: 20; }
+    header .back { font-size: .85rem; color: var(--muted-2); }
+    header .back:hover { color: var(--accent); }
+    header h1 { font-size: .95rem; font-weight: 600; margin: 0; letter-spacing: -.01em; white-space: nowrap; color: var(--text); }
+    header .crumbs { color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    header .spacer { margin-left: auto; }
+
+    .badge { font-size: .66rem; padding: .18rem .55rem; border-radius: 999px; border: 1px solid var(--line-2); text-transform: uppercase; letter-spacing: .06em; color: var(--muted-2); white-space: nowrap; }
+    .badge.draft { color: var(--warn); border-color: #fde68a; background: #fef3c7; }
+    .badge.planned { color: var(--accent); border-color: #bfdbfe; background: #dbeafe; }
+    .badge.posted { color: var(--ok); border-color: #a7f3d0; background: #d1fae5; }
+
+    .btn { border: 1px solid var(--line-2); border-radius: 8px; padding: .5rem .95rem; font-weight: 600; font-size: .82rem; cursor: pointer; background: var(--panel); color: var(--text); transition: border-color .15s, background .15s, opacity .15s; white-space: nowrap; }
+    .btn:hover:not(:disabled) { border-color: var(--muted); background: var(--panel-2); }
+    .btn:disabled { opacity: .55; cursor: default; }
+    .btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
+    .btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+    .toggle { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; }
+    .toggle button { background: var(--panel); color: var(--muted-2); border: 0; padding: .45rem .8rem; font-size: .8rem; font-weight: 600; cursor: pointer; }
+    .toggle button.on { background: var(--accent); color: #fff; }
+
+    .layout { display: grid; grid-template-columns: 1fr 28rem; gap: 1.5rem; padding: 1.5rem; align-items: start; }
+    @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } .deck-wrap { position: static; } }
+
+    .deck-wrap { min-width: 0; position: sticky; top: 4.75rem; }
+    .deck { display: flex; gap: 1.1rem; overflow-x: auto; padding: .25rem .25rem 1.25rem; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+    .deck::-webkit-scrollbar { height: 9px; }
+    .deck::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
+    .slide { flex: 0 0 auto; scroll-snap-align: start; }
+    .slide figure { margin: 0; }
+    .slide svg { display: block; width: 300px; height: auto; border-radius: 14px; box-shadow: 0 6px 24px #0000001f; border: 1px solid var(--line); transition: transform .18s, box-shadow .18s; }
+    .slide figure:hover svg { transform: translateY(-3px); box-shadow: 0 12px 32px #0000002e; }
+    .slide figcaption { text-align: center; color: var(--muted); font-size: .72rem; margin-top: .5rem; font-variant-numeric: tabular-nums; }
+
+    aside { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 1.1rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 1px 3px #0000000d; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .panel-head .live { display: inline-flex; align-items: center; gap: .4rem; font-size: .72rem; color: var(--muted-2); }
+    .live::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--muted); transition: background .2s, box-shadow .2s; }
+    .live.ok::before { background: var(--ok); box-shadow: 0 0 0 3px #19875426; }
+    .live.busy::before { background: var(--accent); box-shadow: 0 0 0 3px #0d6efd26; animation: pulse 1s ease-in-out infinite; }
+    .live.bad::before { background: var(--bad); box-shadow: 0 0 0 3px #dc354526; }
+    @keyframes pulse { 50% { opacity: .35; } }
+
+    section.group { display: flex; flex-direction: column; gap: .7rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
+    section.group:first-of-type { padding-top: 0; border-top: 0; }
+    section.group > h2 { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+    .field { display: flex; flex-direction: column; gap: .28rem; min-width: 0; }
+    .field > label { font-size: .72rem; color: var(--muted-2); display: flex; justify-content: space-between; gap: .5rem; }
+    .field > label .val { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .field.full { grid-column: 1 / -1; }
+
+    input[type=text], input[type=datetime-local], textarea, select {
+      width: 100%; background: var(--field); border: 1px solid var(--line-2); border-radius: 8px; padding: .42rem .55rem;
+      color: var(--text); font-size: .8rem; font-family: inherit;
+    }
+    textarea { resize: vertical; min-height: 3.2rem; line-height: 1.45; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px #0d6efd26; }
+    input[type=range] { width: 100%; accent-color: var(--accent); }
+    input[type=color] { width: 100%; height: 2rem; background: var(--field); border: 1px solid var(--line-2); border-radius: 8px; padding: 2px; cursor: pointer; }
+
+    .switch { display: inline-flex; align-items: center; gap: .5rem; font-size: .78rem; color: var(--muted-2); cursor: pointer; }
+    .switch input { width: 2.2rem; height: 1.2rem; accent-color: var(--accent); }
+
+    .slides-list { display: flex; flex-direction: column; }
+    .slide-item { border-top: 1px solid var(--line); }
+    .slide-item:first-child { border-top: 0; }
+    .slide-item__head { display: flex; align-items: center; gap: .5rem; padding: .6rem .1rem; cursor: pointer; user-select: none; }
+    .slide-item__head:hover .slide-item__title { color: var(--text); }
+    .slide-item .chev { width: .85rem; color: var(--muted); font-size: .7rem; text-align: center; transition: transform .15s; }
+    .slide-item__idx { font-size: .66rem; font-weight: 700; letter-spacing: .05em; color: var(--muted); text-transform: uppercase; white-space: nowrap; }
+    .slide-item__title { flex: 1; min-width: 0; font-size: .78rem; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .slide-item__head .sp { display: flex; gap: .3rem; }
+    .slide-item__body { display: flex; flex-direction: column; gap: .65rem; padding: .1rem 0 1rem; }
+    .icon-btn { background: var(--panel); border: 1px solid var(--line-2); color: var(--muted-2); border-radius: 7px; width: 1.7rem; height: 1.7rem; cursor: pointer; font-size: .8rem; line-height: 1; }
+    .icon-btn:hover { color: var(--text); border-color: var(--muted); }
+    .icon-btn.danger:hover { color: var(--bad); border-color: var(--bad); }
+
+    .page-link { display: flex; gap: .4rem; align-items: center; }
+    .page-link input { flex: 1; min-width: 0; }
+
+    .media-picker { display: flex; gap: .65rem; align-items: center; }
+    .media-picker__thumb { width: 3.4rem; height: 3.4rem; flex: 0 0 auto; border-radius: 8px; border: 1px solid var(--line-2); background: var(--panel-2) center / cover no-repeat; }
+    .media-picker__meta { display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
+    .media-picker__name { font-size: .74rem; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .media-picker.is-empty .media-picker__name { color: var(--muted); font-style: italic; }
+    .media-picker__actions { display: flex; gap: .35rem; }
+    .btn-xs { border: 1px solid var(--line-2); background: var(--panel); color: var(--muted-2); border-radius: 6px; padding: .28rem .55rem; font-size: .7rem; font-weight: 600; cursor: pointer; }
+    .btn-xs:hover { border-color: var(--muted); color: var(--text); }
+    .btn-xs.danger:hover { color: var(--bad); border-color: var(--bad); }
+
+    .rp-modal { position: fixed; inset: 0; z-index: 50; background: #0b1120b3; display: flex; padding: 3vh 3vw; }
+    .rp-modal__panel { display: flex; flex-direction: column; width: 100%; background: var(--panel); border-radius: 14px; overflow: hidden; box-shadow: 0 20px 60px #00000052; }
+    .rp-modal__bar { display: flex; align-items: center; justify-content: space-between; padding: .55rem 1rem; border-bottom: 1px solid var(--line); font-size: .82rem; font-weight: 600; }
+    .rp-modal__frame { flex: 1; width: 100%; border: 0; }
+
+    .swatches { display: flex; gap: .4rem; }
+    .swatch { flex: 1; }
+
+    #rp-spec { width: 100%; min-height: 30rem; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 11px; padding: .8rem; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .74rem; line-height: 1.55; color: var(--text); resize: vertical; tab-size: 2; }
+    #rp-spec:focus { outline: none; border-color: var(--accent); }
+
+    .source-wrap { position: relative; min-height: 30rem; }
+
+    ul.violations { list-style: none; margin: 0; padding: 0; font-size: .74rem; color: #842029; display: flex; flex-direction: column; gap: .3rem; }
+    ul.violations li { padding: .4rem .55rem; border-radius: 8px; background: #f8d7da; border: 1px solid #f1aeb5; }
+    ul.violations code { color: var(--bad); }
+
+    .actions { display: flex; gap: .6rem; }
+    .actions .btn { flex: 1; }
+    .hint { font-size: .72rem; color: var(--muted); margin: 0; line-height: 1.45; }
+  </style>
+</head>
+<body x-data="repurposeStudio()">
+  <script>
+    window.RP_STUDIO = {
+      spec: {{ specJs|raw }},
+      slides: {{ slidesJs|raw }},
+      vocab: {{ vocabJs|raw }},
+      network: {{ carousel.network|json_encode|raw }},
+      networkUrls: {{ networkUrlsJs|raw }},
+      urls: {
+        preview: {{ path('repurpose_studio_preview', {id: post.id})|json_encode|raw }},
+        save: {{ path('repurpose_studio_save', {id: post.id})|json_encode|raw }},
+        export: {{ path('repurpose_studio_export', {id: post.id})|json_encode|raw }},
+        mediaIndex: {{ path('admin_media_index', {view: 'mosaic', pwMediaPicker: '1', pwMediaPickerFieldId: 'rp-media'})|json_encode|raw }},
+        mediaUpload: {{ path('admin_media_new', {pwMediaPicker: '1', pwMediaPickerFieldId: 'rp-media'})|json_encode|raw }},
+        mediaThumb: {{ path('pushword_media_cache', {filter: 'md', fileName: 'RPFILENAME'})|json_encode|raw }}
+      },
+      filename: {{ (post.page|replace({'/': '-'}) ~ '-' ~ carousel.network)|json_encode|raw }}
+    }
+  </script>
+
+  <header>
+    <a class="back" href="{{ backUrl }}">← Back</a>
+    <h1>Repurpose Studio</h1>
+    <span class="crumbs"><span x-text="pageLabel"></span> · {{ carousel.network }} · <span x-text="spec.format"></span></span>
+    <span class="badge" :class="spec.status" x-text="spec.status"></span>
+    <span class="spacer"></span>
+    <div class="toggle" role="tablist">
+      <button type="button" :class="view === 'visual' && 'on'" @click="setView('visual')">Visual</button>
+      <button type="button" :class="view === 'source' && 'on'" @click="setView('source')">Source</button>
+    </div>
+    <button class="btn" type="button" @click="exportZip()" :disabled="exporting" x-text="exportLabel">Export .zip</button>
+    <button class="btn primary" type="button" @click="save()" :disabled="saving" x-text="saveLabel">Save</button>
+  </header>
+
+  <div class="layout">
+    <div class="deck-wrap">
+      <div class="deck">
+        <template x-for="(svg, i) in slides" :key="i">
+          <div class="slide">
+            <figure>
+              <div x-html="svg"></div>
+              <figcaption>Slide <span x-text="i + 1"></span> / <span x-text="slides.length"></span></figcaption>
+            </figure>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <aside>
+      <div class="panel-head">
+        <strong style="font-size:.8rem;">Editor</strong>
+        <span class="live" :class="live.state" x-text="live.text"></span>
+      </div>
+
+      <ul class="violations" x-show="violations.length" x-cloak>
+        <template x-for="(v, i) in violations" :key="i">
+          <li><code x-text="v.path || 'spec'"></code> — <span x-text="v.message"></span></li>
+        </template>
+      </ul>
+
+      {# ---------- VISUAL EDITOR ---------- #}
+      <div x-show="view === 'visual'" style="display:flex;flex-direction:column;gap:1rem;">
+        <section class="group">
+          <h2>Deck</h2>
+          <div class="grid2">
+            <div class="field full">
+              <label>Page <span class="val" x-show="isStandalone" x-cloak>standalone — not linked</span></label>
+              <div class="page-link">
+                <input type="text" x-model="pageField" list="rp-pages" placeholder="Standalone — type or pick a slug to link a page">
+                <button type="button" class="btn-xs" @click="detachPage()" x-show="!isStandalone">Detach</button>
+              </div>
+              <datalist id="rp-pages">
+                {% for slug in pageSlugs %}<option value="{{ slug }}"></option>{% endfor %}
+              </datalist>
+            </div>
+            <div class="field">
+              <label>Network</label>
+              <select @change="switchNetwork($event)" x-init="$nextTick(() => $el.value = network)">
+                <template x-for="n in vocab.networks" :key="n"><option :value="n" x-text="n"></option></template>
+              </select>
+            </div>
+            <div class="field">
+              <label>Format</label>
+              <select x-model="spec.format" x-init="$nextTick(() => $el.value = spec.format)">
+                <template x-for="f in vocab.formats" :key="f"><option :value="f" x-text="f"></option></template>
+              </select>
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <select x-model="spec.status" x-init="$nextTick(() => $el.value = spec.status)">
+                <template x-for="s in vocab.statuses" :key="s"><option :value="s" x-text="s"></option></template>
+              </select>
+            </div>
+            <div class="field">
+              <label>Font pairing</label>
+              <select x-model="spec.fontPairing" x-init="$nextTick(() => $el.value = spec.fontPairing)">
+                <option value="">— inherit —</option>
+                <template x-for="f in vocab.fontPairings" :key="f"><option :value="f" x-text="f"></option></template>
+              </select>
+            </div>
+            <div class="field">
+              <label>Planned at</label>
+              <input type="datetime-local" x-model="spec.plannedAt">
+            </div>
+            <div class="field full">
+              <label>Caption</label>
+              <textarea x-model="spec.caption" placeholder="The post caption…"></textarea>
+            </div>
+            <div class="field full">
+              <label>Hashtags <span class="val">comma-separated</span></label>
+              <input type="text" x-model="hashtagsText" placeholder="pushword, carousel">
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label>Palette · background</label>
+              <div class="swatches">
+                <input class="swatch" type="text" x-model="spec.palette.bg" placeholder="inherit">
+              </div>
+            </div>
+            <div class="field">
+              <label>Palette · text</label>
+              <input type="text" x-model="spec.palette.text" placeholder="inherit">
+            </div>
+            <div class="field">
+              <label>Palette · accent</label>
+              <input type="text" x-model="spec.palette.accent" placeholder="inherit">
+            </div>
+            <div class="field">
+              <label>Creator</label>
+              <input type="text" x-model="spec.creator" placeholder="config key or blank">
+            </div>
+            <div class="field">
+              <label>Counter style</label>
+              <select x-model="spec.counter.style" x-init="$nextTick(() => $el.value = spec.counter.style)">
+                <option value="">— default —</option><template x-for="s in vocab.counterStyles" :key="s"><option :value="s" x-text="s"></option></template>
+              </select>
+            </div>
+            <div class="field">
+              <label>Counter align</label>
+              <select x-model="spec.counter.align" x-init="$nextTick(() => $el.value = spec.counter.align)">
+                <option value="">— default —</option><template x-for="a in vocab.counterAligns" :key="a"><option :value="a" x-text="a"></option></template>
+              </select>
+            </div>
+            <div class="field">
+              <label>Creator on slides</label>
+              <select x-model="spec.creatorOnSlides" x-init="$nextTick(() => $el.value = spec.creatorOnSlides)">
+                <option value="">— default —</option><template x-for="o in vocab.creatorOnSlides" :key="o"><option :value="o" x-text="o"></option></template>
+              </select>
+            </div>
+            <div class="field">
+              <label>Creator orientation</label>
+              <select x-model="spec.creatorOrientation" x-init="$nextTick(() => $el.value = spec.creatorOrientation)">
+                <option value="">— default —</option><template x-for="o in vocab.creatorOrientations" :key="o"><option :value="o" x-text="o"></option></template>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2>Slides · <span x-text="spec.slides.length"></span></h2>
+          <div class="slides-list">
+            <template x-for="(slide, i) in spec.slides" :key="i">
+              <div class="slide-item" :class="slidesOpen[i] && 'open'">
+                <div class="slide-item__head" @click="toggleSlide(i)">
+                  <span class="chev" x-text="slidesOpen[i] ? '▾' : '▸'"></span>
+                  <span class="slide-item__idx" x-text="'Slide ' + (i + 1)"></span>
+                  <span class="slide-item__title" x-text="slide.title || slide.tagline || 'Untitled'"></span>
+                  <span class="sp" @click.stop>
+                    <button class="icon-btn" type="button" title="Move up" @click="moveSlide(i, -1)" :disabled="i === 0">↑</button>
+                    <button class="icon-btn" type="button" title="Move down" @click="moveSlide(i, 1)" :disabled="i === spec.slides.length - 1">↓</button>
+                    <button class="icon-btn danger" type="button" title="Remove" @click="removeSlide(i)">✕</button>
+                  </span>
+                </div>
+                <div class="slide-item__body" x-show="slidesOpen[i]" x-cloak>
+                  <div class="field">
+                    <label>Title</label>
+                    <input type="text" x-model="slide.title">
+                  </div>
+                  <div class="grid2">
+                    <div class="field"><label>Tagline</label><input type="text" x-model="slide.tagline"></div>
+                    <div class="field"><label>Background effect</label>
+                      <select x-model="slide.background" x-init="$nextTick(() => $el.value = slide.background)">
+                        <template x-for="b in vocab.backgrounds" :key="b"><option :value="b" x-text="b"></option></template>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="field"><label>Paragraph</label><textarea x-model="slide.paragraph"></textarea></div>
+                  <div class="grid2">
+                    <div class="field"><label>Layout</label>
+                      <select x-model="slide.layout" x-init="$nextTick(() => $el.value = slide.layout)">
+                        <template x-for="l in vocab.layouts" :key="l"><option :value="l" x-text="l"></option></template>
+                      </select>
+                    </div>
+                    <div class="field"><label>Align</label>
+                      <select x-model="slide.align" x-init="$nextTick(() => $el.value = slide.align)">
+                        <template x-for="a in vocab.aligns" :key="a"><option :value="a" x-text="a"></option></template>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Overlay <span class="val" x-text="Number(slide.overlay || 0).toFixed(2)"></span></label>
+                      <input type="range" min="0" max="1" step="0.05" x-model.number="slide.overlay">
+                    </div>
+                    <div class="field">
+                      <label>Text scale <span class="val" x-text="Number(slide.textScale || 1).toFixed(2)"></span></label>
+                      <input type="range" min="0.5" max="2" step="0.05" x-model.number="slide.textScale">
+                    </div>
+                  </div>
+                  <label class="switch"><input type="checkbox" x-model="slide.swipe"> Swipe hint (“→”)</label>
+
+                  <div class="field">
+                    <label>Image</label>
+                    <div class="media-picker" :class="!(slide.image && slide.image.media) && 'is-empty'">
+                      <div class="media-picker__thumb" :style="(slide.image && slide.image.media) ? ('background-image:url(\'' + thumbUrl(slide.image.media) + '\')') : ''"></div>
+                      <div class="media-picker__meta">
+                        <span class="media-picker__name" x-text="(slide.image && slide.image.media) || 'No image'"></span>
+                        <div class="media-picker__actions">
+                          <button type="button" class="btn-xs" @click="pickMedia(i, 'choose')">Choose</button>
+                          <button type="button" class="btn-xs" @click="pickMedia(i, 'upload')">Upload</button>
+                          <button type="button" class="btn-xs danger" x-show="slide.image && slide.image.media" @click="clearMedia(i)">Remove</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="grid2" x-show="slide.image && slide.image.media">
+                    <div class="field">
+                      <label>Focus X <span class="val" x-text="Number(slide.image.focusX ?? 0.5).toFixed(2)"></span></label>
+                      <input type="range" min="0" max="1" step="0.01" x-model.number="slide.image.focusX">
+                    </div>
+                    <div class="field">
+                      <label>Focus Y <span class="val" x-text="Number(slide.image.focusY ?? 0.5).toFixed(2)"></span></label>
+                      <input type="range" min="0" max="1" step="0.01" x-model.number="slide.image.focusY">
+                    </div>
+                    <div class="field full">
+                      <label>Zoom <span class="val" x-text="Number(slide.image.zoom ?? 1).toFixed(2)"></span></label>
+                      <input type="range" min="1" max="5" step="0.1" x-model.number="slide.image.zoom">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+          <button class="btn" type="button" @click="addSlide()">+ Add slide</button>
+        </section>
+      </div>
+
+      {# ---------- SOURCE EDITOR ---------- #}
+      <div x-show="view === 'source'" x-cloak style="display:flex;flex-direction:column;gap:.6rem;">
+        <p class="hint">JSON spec — schema-aware, validated live. The visual editor and this view stay in sync when you switch.</p>
+        <div class="source-wrap">
+          <textarea id="rp-spec" x-ref="source" data-editor="json" spellcheck="false" aria-label="Carousel spec JSON"></textarea>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="rp-modal" x-show="mediaModal.open" x-cloak @keydown.escape.window="closeMediaModal()">
+    <div class="rp-modal__panel">
+      <div class="rp-modal__bar">
+        <span>Choose an image</span>
+        <button class="icon-btn" type="button" @click="closeMediaModal()" aria-label="Close">✕</button>
+      </div>
+      <iframe class="rp-modal__frame" :src="mediaModal.src" title="Media picker"></iframe>
+    </div>
+  </div>
+
+  <script defer src="{{ asset('bundles/pushwordrepurpose/repurpose.js') }}"></script>
+  <script defer src="/bundles/pushwordcore/alpine.js"></script>
+  <script defer src="/bundles/pushwordadmin/monaco/app.js"></script>
+</body>
+</html>

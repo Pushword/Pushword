@@ -39,6 +39,8 @@ parameters:
         - packages/page-update-notifier/tests
         - packages/quiz/src
         - packages/quiz/tests
+        - packages/repurpose/src
+        - packages/repurpose/tests
         - packages/skeleton/src
         - packages/skeleton/tests
         - packages/static-generator/src

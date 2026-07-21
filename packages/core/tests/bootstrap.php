@@ -34,6 +34,7 @@ function computeDbCacheHash(string $monoRepoBase): string
         $monoRepoBase.'/packages/conversation/src/Entity',
         $monoRepoBase.'/packages/flat/src/Entity',
         $monoRepoBase.'/packages/quiz/src/Entity',
+        $monoRepoBase.'/packages/repurpose/src/Entity',
         $monoRepoBase.'/packages/snippet/src/Entity',
         $monoRepoBase.'/packages/version/src/Entity',
     ];

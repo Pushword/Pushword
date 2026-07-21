@@ -4,6 +4,7 @@ namespace Pushword\Flat;
 
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Sync\ConversationSyncInterface;
+use Pushword\Flat\Sync\FlatSyncInterface;
 use Pushword\Flat\Sync\MediaSync;
 use Pushword\Flat\Sync\PageSync;
 use Pushword\Flat\Sync\SnippetSync;
@@ -15,6 +16,9 @@ final class FlatFileSync
 {
     private ?Stopwatch $stopwatch = null;
 
+    /**
+     * @param iterable<FlatSyncInterface> $taggedSyncs
+     */
     public function __construct(
         public readonly PageSync $pageSync,
         public readonly MediaSync $mediaSync,
@@ -22,6 +26,7 @@ final class FlatFileSync
         private readonly ?ConversationSyncInterface $conversationSync = null,
         private readonly ?UserSync $userSync = null,
         public readonly ?SnippetSync $snippetSync = null,
+        private readonly iterable $taggedSyncs = [],
     ) {
     }
 
@@ -72,6 +77,12 @@ final class FlatFileSync
             $this->snippetSync->sync($host, $forceExport);
             $this->stopwatch?->stop('snippet.sync');
         }
+
+        foreach ($this->taggedSyncs as $taggedSync) {
+            if (\in_array($entity, [$taggedSync->getEntityName(), 'all'], true)) {
+                $taggedSync->sync($host, $forceExport);
+            }
+        }
     }
 
     /** @param string[] $pageSlugs */
@@ -106,6 +117,12 @@ final class FlatFileSync
             $this->snippetSync->import($host);
             $this->stopwatch?->stop('snippet.sync');
         }
+
+        foreach ($this->taggedSyncs as $taggedSync) {
+            if (\in_array($entity, [$taggedSync->getEntityName(), 'all'], true)) {
+                $taggedSync->import($host);
+            }
+        }
     }
 
     /** @param string[] $pageSlugs */
@@ -133,6 +150,12 @@ final class FlatFileSync
             $this->stopwatch?->start('snippet.sync');
             $this->snippetSync->export($host);
             $this->stopwatch?->stop('snippet.sync');
+        }
+
+        foreach ($this->taggedSyncs as $taggedSync) {
+            if (\in_array($entity, [$taggedSync->getEntityName(), 'all'], true)) {
+                $taggedSync->export($host);
+            }
         }
     }
 

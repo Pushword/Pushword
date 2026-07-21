@@ -138,9 +138,11 @@ return static function (ContainerConfigurator $container): void {
         ->autoconfigure();
 
     // FlatFileSync - inject optional ConversationSync (conversation bundle) and SnippetSync (snippet bundle)
+    // plus any package-contributed flat syncs tagged pushword.flat.sync.
     $services->set(FlatFileSync::class)
         ->arg('$conversationSync', service(ConversationSyncInterface::class)->nullOnInvalid())
-        ->arg('$snippetSync', service(SnippetSync::class)->nullOnInvalid());
+        ->arg('$snippetSync', service(SnippetSync::class)->nullOnInvalid())
+        ->arg('$taggedSyncs', tagged_iterator('pushword.flat.sync'));
 
     // AdminNotificationService - for persistent notifications and email alerts
     // Uses NotificationEmailSender (autowired), with flat-specific config passed via DI

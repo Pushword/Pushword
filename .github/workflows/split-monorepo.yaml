@@ -37,6 +37,7 @@ jobs:
           - advanced-main-image
           - api
           - quiz
+          - repurpose
           - docs
 
     steps:

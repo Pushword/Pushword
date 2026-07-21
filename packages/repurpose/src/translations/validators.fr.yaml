@@ -1,0 +1,56 @@
+repurpose:
+  page:
+    empty: 'Un carrousel doit référencer une page.'
+  network:
+    empty: 'Un carrousel doit cibler un réseau.'
+    invalid: 'Réseau inconnu.'
+  format:
+    empty: 'Un carrousel doit avoir un format.'
+    invalid: 'Format inconnu.'
+    notAllowedForNetwork: 'Format non autorisé pour %network% (autorisés : %formats%).'
+  template:
+    invalid: 'Template inconnu.'
+  status:
+    invalid: 'Le statut doit être « draft », « planned » ou « posted ».'
+  plannedAt:
+    invalid: 'plannedAt doit être une date-heure valide.'
+  fontPairing:
+    invalid: 'Association de polices inconnue.'
+  caption:
+    max: 'La légende dépasse la limite de %max% caractères pour ce réseau.'
+  slides:
+    min: 'Un carrousel a besoin d''au moins une slide.'
+    max: 'Un carrousel pour %network% ne peut avoir plus de %max% slides.'
+  creator:
+    orientation:
+      invalid: 'L''orientation du créateur doit être « horizontal » ou « vertical ».'
+    onSlides:
+      invalid: 'creatorOnSlides doit être « all », « intro-outro », « first » ou « none ».'
+  counter:
+    style:
+      invalid: 'Le style du compteur doit être « none », « dots », « fraction » ou « bar ».'
+    align:
+      invalid: 'L''alignement du compteur doit être « left », « center » ou « right ».'
+  palette:
+    color:
+      invalid: 'Une couleur de palette doit être une valeur hexadécimale comme #0b1120.'
+  slide:
+    layout:
+      invalid: 'La disposition de la slide doit être « top », « center » ou « bottom ».'
+    align:
+      invalid: 'L''alignement de la slide doit être « left », « center » ou « right ».'
+    background:
+      invalid: 'Effet de fond inconnu.'
+    overlay:
+      range: 'L''opacité du voile doit être entre 0 et 1.'
+      noImage: 'Un voile ne s''applique qu''au-dessus d''une image ; cette slide n''en a pas.'
+    textScale:
+      range: 'textScale doit être entre 0,5 et 2.'
+    empty: 'Une slide doit afficher au moins un texte ou une image de fond.'
+  image:
+    media:
+      empty: 'Une image de slide a besoin d''un nom de fichier média.'
+    focus:
+      range: 'Un point focal doit être entre 0 et 1.'
+    zoom:
+      range: 'Le zoom doit être entre 1 et 5.'

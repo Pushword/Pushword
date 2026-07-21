@@ -23,6 +23,8 @@ name: Extensions
   Get mail notification when your pushword content (page) is edited.
 - [Quiz](/extension/quiz)
   Interactive client-side QCM declared inline with a `{% quiz %}` block, rendered server-side for SEO, with an anonymous percentile and an optional end-of-quiz conversion form. A `mode: profile` variant turns it into a personality test ("Which X are you?").
+- [Repurpose](/extension/repurpose)
+  Turn a page into ready-to-post social carousels (LinkedIn, Instagram, …): an agent-authored JSON spec rendered to self-contained SVG slides, with server-side text layout so overflow and bad crops are validation errors, focal-point cropping, and PNG/PDF export.
 - [Search](/extension/search)
   Optional SQLite-native full-text search (typo tolerance, ranking) via Loupe — zero infra, ships with the static build.
 - [Snippet](/extension/snippet)

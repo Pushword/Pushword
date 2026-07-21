@@ -35,5 +35,8 @@ pushword_search:
 pushword_quiz:
     resource: "@PushwordQuizBundle/Resources/config/routes/quiz.yaml"
 
+pushword_repurpose:
+    resource: "@PushwordRepurposeBundle/Resources/config/routes/repurpose.yaml"
+
 pushword:
     resource: "@PushwordCoreBundle/Resources/config/routes.yaml"

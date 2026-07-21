@@ -1,0 +1,74 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://pushword.piedweb.com/schema/carousel.json",
+    "title": "Pushword Repurpose Carousel",
+    "description": "A social-media carousel derived from a Pushword page, stored as one JSON file per (page, network) and rendered to self-contained SVG slides. The Symfony Validator on the Carousel model is the source of truth; this schema mirrors it as an authoring aid. Cross-field rules it enforces but this schema only hints at: `format` must be one the `network` accepts (see /api/repurpose/networks); slide count and caption length must stay within the network's hard limits; each slide must show at least one text field or a background image; a text overlay only applies over an image. Colours and fonts left unset inherit the site's own design tokens.",
+    "type": "object",
+    "required": ["page", "network", "format", "slides"],
+    "additionalProperties": false,
+    "properties": {
+        "page": { "type": "string", "description": "The source page, addressed by its slug (host is the containing folder)." },
+        "network": { "enum": ["linkedin", "instagram", "facebook", "pinterest", "threads", "deck"], "description": "Target platform; selects the publishing rules (allowed formats, limits, export kind)." },
+        "format": { "enum": ["linkedin-4-5", "linkedin-1-1", "instagram-4-5", "instagram-3-4", "instagram-1-1", "story-9-16", "threads-4-5", "facebook-1-1", "pinterest-2-3", "deck-16-9"], "description": "Output size; must be allowed for the chosen network." },
+        "template": { "enum": ["editorial"], "default": "editorial", "description": "Slide template family." },
+        "status": { "enum": ["draft", "planned", "posted"], "default": "draft" },
+        "plannedAt": { "type": ["string", "null"], "description": "Parseable date-time when the post is scheduled, or null." },
+        "caption": { "type": ["string", "null"], "description": "The post caption; length capped per network." },
+        "hashtags": { "type": "array", "items": { "type": "string" } },
+        "palette": { "$ref": "#/$defs/palette", "description": "Deck-level colour override; any slide may override again." },
+        "fontPairing": { "type": ["string", "null"], "description": "A key from the font-pairing registry (see /api/repurpose/networks); null inherits site typography." },
+        "counter": { "$ref": "#/$defs/counter" },
+        "creator": { "type": ["string", "null"], "description": "A creator key from repurpose_creators, or an inline {name,…} object. Null defaults from the page author, then the brand." },
+        "creatorOrientation": { "enum": ["horizontal", "vertical"], "default": "horizontal" },
+        "creatorOnSlides": { "enum": ["all", "intro-outro", "first", "none"], "default": "intro-outro" },
+        "slides": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/slide" } }
+    },
+    "$defs": {
+        "palette": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "bg": { "$ref": "#/$defs/hex" },
+                "text": { "$ref": "#/$defs/hex" },
+                "accent": { "$ref": "#/$defs/hex" }
+            }
+        },
+        "counter": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "style": { "enum": ["none", "dots", "fraction", "bar"], "default": "fraction" },
+                "align": { "enum": ["left", "center", "right"], "default": "right" }
+            }
+        },
+        "slide": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "layout": { "enum": ["top", "center", "bottom"], "default": "bottom", "description": "Vertical anchor of the text block." },
+                "align": { "enum": ["left", "center", "right"], "default": "left" },
+                "tagline": { "type": ["string", "null"] },
+                "title": { "type": ["string", "null"] },
+                "paragraph": { "type": ["string", "null"] },
+                "swipe": { "type": "boolean", "default": false, "description": "Show a swipe indicator." },
+                "overlay": { "type": "number", "minimum": 0, "maximum": 1, "default": 0, "description": "Darken the image behind the text (only valid with an image)." },
+                "textScale": { "type": "number", "minimum": 0.5, "maximum": 2, "default": 1 },
+                "background": { "enum": ["none", "blobs", "bubbles", "poly-grid", "sketchy", "paper"], "default": "none", "description": "Deck-wide decorative effect." },
+                "palette": { "$ref": "#/$defs/palette" },
+                "image": { "$ref": "#/$defs/image" }
+            }
+        },
+        "image": {
+            "type": "object",
+            "required": ["media"],
+            "additionalProperties": false,
+            "properties": {
+                "media": { "type": "string", "description": "Media filename from the site library." },
+                "focusX": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5, "description": "Horizontal focal point kept in frame." },
+                "focusY": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5, "description": "Vertical focal point kept in frame." },
+                "zoom": { "type": "number", "minimum": 1, "maximum": 5, "default": 1, "description": "Punch-in relative to cover-fit (1 = fill)." }
+            }
+        },
+        "hex": { "type": "string", "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$" }
+    }
+}

@@ -1,0 +1,56 @@
+repurpose:
+  page:
+    empty: 'A carousel must reference a page.'
+  network:
+    empty: 'A carousel must target a network.'
+    invalid: 'Unknown network.'
+  format:
+    empty: 'A carousel must have a format.'
+    invalid: 'Unknown format.'
+    notAllowedForNetwork: 'Format not allowed for %network% (allowed: %formats%).'
+  template:
+    invalid: 'Unknown template.'
+  status:
+    invalid: 'Status must be "draft", "planned" or "posted".'
+  plannedAt:
+    invalid: 'plannedAt must be a valid date-time.'
+  fontPairing:
+    invalid: 'Unknown font pairing.'
+  caption:
+    max: 'The caption exceeds the %max%-character limit for this network.'
+  slides:
+    min: 'A carousel needs at least one slide.'
+    max: 'A carousel for %network% may have at most %max% slides.'
+  creator:
+    orientation:
+      invalid: 'Creator orientation must be "horizontal" or "vertical".'
+    onSlides:
+      invalid: 'creatorOnSlides must be "all", "intro-outro", "first" or "none".'
+  counter:
+    style:
+      invalid: 'Counter style must be "none", "dots", "fraction" or "bar".'
+    align:
+      invalid: 'Counter alignment must be "left", "center" or "right".'
+  palette:
+    color:
+      invalid: 'A palette colour must be a hex value like #0b1120.'
+  slide:
+    layout:
+      invalid: 'Slide layout must be "top", "center" or "bottom".'
+    align:
+      invalid: 'Slide alignment must be "left", "center" or "right".'
+    background:
+      invalid: 'Unknown background effect.'
+    overlay:
+      range: 'Overlay must be between 0 and 1.'
+      noImage: 'An overlay only applies over an image; this slide has none.'
+    textScale:
+      range: 'textScale must be between 0.5 and 2.'
+    empty: 'A slide must show at least a text field or a background image.'
+  image:
+    media:
+      empty: 'A slide image needs a media filename.'
+    focus:
+      range: 'A focal point must be between 0 and 1.'
+    zoom:
+      range: 'Zoom must be between 1 and 5.'

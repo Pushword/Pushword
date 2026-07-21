@@ -11,6 +11,7 @@ use Pushword\Core\Entity\EntityClassRegistry;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Repurpose\Entity\SocialPost;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -285,5 +286,44 @@ class AppFixtures extends Fixture
 
             $manager->flush();
         }
+
+        $this->loadRepurposeDemo($manager);
+    }
+
+    /**
+     * A demo social carousel repurposing the homepage, visible in the admin at
+     * /admin/repurpose and previewed in the studio.
+     */
+    private function loadRepurposeDemo(ObjectManager $manager): void
+    {
+        if (! class_exists(SocialPost::class)) {
+            return;
+        }
+
+        $spec = [
+            'page' => 'homepage',
+            'network' => 'linkedin',
+            'format' => 'linkedin-4-5',
+            'status' => 'draft',
+            'fontPairing' => 'playfair-chivo',
+            'palette' => ['bg' => '#0b1120', 'text' => '#f8fafc', 'accent' => '#38bdf8'],
+            'counter' => ['style' => 'dots', 'align' => 'right'],
+            'creator' => 'robin',
+            'creatorOnSlides' => 'intro-outro',
+            'caption' => 'Turn any article into a scroll-stopping carousel — rendered server-side, pixel-exact.',
+            'hashtags' => ['pushword', 'contentmarketing', 'carousel'],
+            'slides' => [
+                ['layout' => 'bottom', 'align' => 'left', 'tagline' => 'Repurpose', 'title' => 'Turn your article into a scroll-stopping carousel', 'paragraph' => 'Server-side SVG, pixel-exact text, focal-point crops.', 'swipe' => true, 'background' => 'blobs', 'overlay' => 0.45, 'image' => ['media' => '1.jpg', 'focusX' => 0.5, 'focusY' => 0.35, 'zoom' => 1.1]],
+                ['layout' => 'center', 'align' => 'center', 'title' => 'One spec, every network', 'paragraph' => 'LinkedIn, Instagram, Pinterest — the same JSON, re-cropped per format.', 'background' => 'blobs'],
+                ['layout' => 'bottom', 'align' => 'left', 'tagline' => 'Your move', 'title' => 'Draft, validate, export', 'paragraph' => 'An agent writes it, you nudge it, the studio exports the PNGs.', 'background' => 'blobs', 'overlay' => 0.5, 'image' => ['media' => '2.jpg', 'focusX' => 0.5, 'focusY' => 0.5, 'zoom' => 1.0]],
+            ],
+        ];
+
+        $post = new SocialPost();
+        $post->host = 'localhost.dev';
+        $post->setSpec($spec);
+
+        $manager->persist($post);
+        $manager->flush();
     }
 }
