@@ -89,7 +89,6 @@
     .slide-item__head { display: flex; align-items: center; gap: .5rem; padding: .6rem .1rem; cursor: pointer; user-select: none; }
     .slide-item__head:hover .slide-item__title { color: var(--text); }
     .slide-item .chev { width: .85rem; color: var(--muted); font-size: .7rem; text-align: center; transition: transform .15s; }
-    .slide-item__idx { font-size: .66rem; font-weight: 700; letter-spacing: .05em; color: var(--muted); text-transform: uppercase; white-space: nowrap; }
     .slide-item__title { flex: 1; min-width: 0; font-size: .78rem; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .slide-item__head .sp { display: flex; gap: .3rem; }
     .slide-item__body { display: flex; flex-direction: column; gap: .65rem; padding: .1rem 0 1rem; }
@@ -402,7 +401,6 @@
                   <span class="grip" title="Drag to reorder" draggable="true"
                         @click.stop @dragstart="onDragStart(i, $event)" @dragend="onDragEnd()">⠿</span>
                   <span class="chev" x-text="slidesOpen[i] ? '▾' : '▸'"></span>
-                  <span class="slide-item__idx">Slide</span>
                   <span class="slide-item__title" x-text="slide.title || slide.tagline || 'Untitled'"></span>
                   <span class="sp" @click.stop>
                     <button class="icon-btn danger" type="button" title="Remove" @click="removeSlide(i)">✕</button>
