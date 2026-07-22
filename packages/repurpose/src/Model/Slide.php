@@ -18,6 +18,17 @@ class Slide
 
     public const array ALIGNS = ['left', 'center', 'right'];
 
+    /**
+     * How a slide's images fill the frame: one image covering it (`full`), or two
+     * stacked vertically (`split-v`) / side by side (`split-h`). The list is the
+     * seam for further multi-image layouts (grids, thirds…) — each is just a set
+     * of sub-frames the renderer places images into.
+     */
+    public const array IMAGE_LAYOUTS = ['full', 'split-v', 'split-h'];
+
+    /**
+     * @param list<SlideImage> $images
+     */
     public function __construct(
         #[Assert\Choice(choices: self::LAYOUTS, message: 'repurpose.slide.layout.invalid')]
         public string $layout = 'bottom',
@@ -38,9 +49,29 @@ class Slide
         public ?string $background = null,
         #[Assert\Valid]
         public ?Palette $palette = null,
+        #[Assert\Choice(choices: self::IMAGE_LAYOUTS, message: 'repurpose.slide.imageLayout.invalid')]
+        public string $imageLayout = 'full',
         #[Assert\Valid]
-        public ?SlideImage $image = null,
+        public array $images = [],
     ) {
+    }
+
+    /**
+     * True when the slide carries at least one image (the compositing stack paints
+     * a photo behind the text).
+     */
+    public function hasImage(): bool
+    {
+        return [] !== $this->images;
+    }
+
+    /**
+     * The slide's primary image (the whole frame for `full`, the first cell for a
+     * split), or null when it has none — the anchor the contrast advisor samples.
+     */
+    public function firstImage(): ?SlideImage
+    {
+        return $this->images[0] ?? null;
     }
 
     /**
@@ -51,7 +82,7 @@ class Slide
     public function validateNotEmpty(ExecutionContextInterface $context): void
     {
         $hasText = null !== $this->tagline || null !== $this->title || null !== $this->paragraph;
-        if ($hasText || null !== $this->image) {
+        if ($hasText || $this->hasImage()) {
             return;
         }
 
@@ -67,9 +98,23 @@ class Slide
     #[Assert\Callback]
     public function validateOverlay(ExecutionContextInterface $context): void
     {
-        if ($this->overlay > 0.0 && null === $this->image) {
+        if ($this->overlay > 0.0 && ! $this->hasImage()) {
             $context->buildViolation('repurpose.slide.overlay.noImage')
                 ->atPath('overlay')
+                ->addViolation();
+        }
+    }
+
+    /**
+     * A split layout paints two cells, so it needs two images — one per cell.
+     * Fewer would leave a cell empty; flag it rather than render a lopsided slide.
+     */
+    #[Assert\Callback]
+    public function validateSplitImages(ExecutionContextInterface $context): void
+    {
+        if ('full' !== $this->imageLayout && \count($this->images) < 2) {
+            $context->buildViolation('repurpose.slide.split.needsTwoImages')
+                ->atPath('images')
                 ->addViolation();
         }
     }

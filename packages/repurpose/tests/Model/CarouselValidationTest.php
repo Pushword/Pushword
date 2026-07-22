@@ -84,12 +84,34 @@ final class CarouselValidationTest extends KernelTestCase
 
     public function testFocusPointOutOfRangeIsRejected(): void
     {
+        // Authored with the legacy singular `image` key — the factory wraps it into
+        // `images[0]`, so the violation surfaces there (proving back-compat too).
         $violations = $this->violations([
             'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
             'slides' => [['title' => 'Hi', 'image' => ['media' => 'p.jpg', 'focusX' => 2]]],
         ]);
 
-        self::assertArrayHasKey('slides[0].image.focusX', $violations);
+        self::assertArrayHasKey('slides[0].images[0].focusX', $violations);
+    }
+
+    public function testSplitLayoutNeedsTwoImages(): void
+    {
+        $violations = $this->violations([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['title' => 'Split', 'imageLayout' => 'split-v', 'images' => [['media' => 'top.jpg']]]],
+        ]);
+
+        self::assertArrayHasKey('slides[0].images', $violations);
+    }
+
+    public function testSplitLayoutWithTwoImagesPasses(): void
+    {
+        $violations = $this->violations([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['title' => 'Split', 'imageLayout' => 'split-h', 'images' => [['media' => 'left.jpg'], ['media' => 'right.jpg']]]],
+        ]);
+
+        self::assertSame([], $violations);
     }
 
     public function testTooManySlidesForNetworkIsRejected(): void

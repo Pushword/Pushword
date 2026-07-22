@@ -75,7 +75,7 @@ final readonly class CarouselDrafter
         ];
 
         if (null !== $mainImage) {
-            $slide['image'] = ['media' => $mainImage, 'focusX' => 0.5, 'focusY' => 0.4, 'zoom' => 1.05];
+            $slide['images'] = [['media' => $mainImage, 'focusX' => 0.5, 'focusY' => 0.4, 'zoom' => 1.05]];
             $slide['overlay'] = 0.45;
         }
 
@@ -101,7 +101,7 @@ final readonly class CarouselDrafter
         }
 
         if (null !== $image) {
-            $slide['image'] = ['media' => $image, 'focusX' => 0.5, 'focusY' => 0.5, 'zoom' => 1.0];
+            $slide['images'] = [['media' => $image, 'focusX' => 0.5, 'focusY' => 0.5, 'zoom' => 1.0]];
             $slide['overlay'] = 0.5;
         }
 

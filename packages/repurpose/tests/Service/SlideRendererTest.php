@@ -74,6 +74,43 @@ final class SlideRendererTest extends KernelTestCase
         self::assertStringContainsString('patternTransform="translate(-1080 0)"', $second);
     }
 
+    public function testSplitVerticalStacksTwoImageCells(): void
+    {
+        // Missing media proves the cell geometry without a fixture: split-v paints
+        // two full-width, half-height cells, the second offset by half the height.
+        $svg = $this->render([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [[
+                'title' => 'Split',
+                'imageLayout' => 'split-v',
+                'images' => [['media' => 'nope-top.jpg'], ['media' => 'nope-bottom.jpg']],
+            ]],
+        ]);
+
+        $doc = new DOMDocument();
+        self::assertTrue($doc->loadXML($svg), 'a split slide yields well-formed SVG');
+        self::assertStringContainsString('<rect x="0" y="0" width="1080" height="675" fill="'.SlideRenderer::MISSING_MEDIA_BG.'"', $svg);
+        self::assertStringContainsString('<rect x="0" y="675" width="1080" height="675" fill="'.SlideRenderer::MISSING_MEDIA_BG.'"', $svg);
+        self::assertStringNotContainsString('nope-top', $svg);
+    }
+
+    public function testSplitHorizontalSetsTwoImageCellsSideBySide(): void
+    {
+        $svg = $this->render([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [[
+                'title' => 'Split',
+                'imageLayout' => 'split-h',
+                'images' => [['media' => 'nope-left.jpg'], ['media' => 'nope-right.jpg']],
+            ]],
+        ]);
+
+        $doc = new DOMDocument();
+        self::assertTrue($doc->loadXML($svg), 'a split slide yields well-formed SVG');
+        self::assertStringContainsString('<rect x="0" y="0" width="540" height="1350" fill="'.SlideRenderer::MISSING_MEDIA_BG.'"', $svg);
+        self::assertStringContainsString('<rect x="540" y="0" width="540" height="1350" fill="'.SlideRenderer::MISSING_MEDIA_BG.'"', $svg);
+    }
+
     public function testPaperGrainIsStrongEnoughToBeVisible(): void
     {
         $svg = $this->render([

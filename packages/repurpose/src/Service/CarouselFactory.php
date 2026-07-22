@@ -56,6 +56,7 @@ final class CarouselFactory
                 continue;
             }
 
+            $images = $this->images($slide['images'] ?? null, $slide['image'] ?? null);
             $slides[] = new Slide(
                 layout: $this->strOr($slide['layout'] ?? null, 'bottom'),
                 align: $this->strOr($slide['align'] ?? null, 'left'),
@@ -66,15 +67,44 @@ final class CarouselFactory
                 // An image slide with no stated overlay gets a legibility-safe
                 // one by default; an explicit 0 is honoured (and the contrast
                 // advisor will flag it when it hurts).
-                overlay: $this->float($slide['overlay'] ?? null, \is_array($slide['image'] ?? null) ? 0.35 : 0.0),
+                overlay: $this->float($slide['overlay'] ?? null, [] !== $images ? 0.35 : 0.0),
                 textScale: $this->float($slide['textScale'] ?? null, 1.0),
                 background: $this->strOrNull($slide['background'] ?? null),
                 palette: $this->palette($slide['palette'] ?? null),
-                image: $this->image($slide['image'] ?? null),
+                imageLayout: $this->strOr($slide['imageLayout'] ?? null, 'full'),
+                images: $images,
             );
         }
 
         return $slides;
+    }
+
+    /**
+     * A slide's images, from the plural `images` list — or, when that is absent, a
+     * single legacy `image` object wrapped into a one-element list (specs authored
+     * before split layouts). Entries that are not objects, or carry no media, are
+     * dropped so an empty `{}` slot does not surface as a spurious "media empty"
+     * violation.
+     *
+     * @return list<SlideImage>
+     */
+    private function images(mixed $list, mixed $legacy): array
+    {
+        if (! \is_array($list)) {
+            $single = $this->image($legacy);
+
+            return null === $single ? [] : [$single];
+        }
+
+        $images = [];
+        foreach ($list as $entry) {
+            $image = $this->image($entry);
+            if (null !== $image) {
+                $images[] = $image;
+            }
+        }
+
+        return $images;
     }
 
     private function image(mixed $raw): ?SlideImage
@@ -83,8 +113,13 @@ final class CarouselFactory
             return null;
         }
 
+        $media = $this->str($raw['media'] ?? null);
+        if ('' === $media) {
+            return null;
+        }
+
         return new SlideImage(
-            media: $this->str($raw['media'] ?? null),
+            media: $media,
             focusX: $this->float($raw['focusX'] ?? null, 0.5),
             focusY: $this->float($raw['focusY'] ?? null, 0.5),
             zoom: $this->float($raw['zoom'] ?? null, 1.0),

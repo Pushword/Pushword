@@ -6,8 +6,10 @@ use RuntimeException;
 use ZipArchive;
 
 /**
- * Assembles an export from the slide PNGs the browser rasterised: a `.zip` of the
- * PNGs plus a `caption.txt`, and — for document networks — a multipage PDF.
+ * Assembles a downloadable export archive. Two shapes: a raster `.zip` from the
+ * slide PNGs the browser rasterised ({@see build()} — PNGs + `caption.txt`, plus a
+ * multipage PDF for document networks), or a vector `.zip` of the self-contained
+ * SVG slides ({@see buildSvgArchive()} — no rasterisation, no GD).
  *
  * The PDF is written in pure PHP (no Imagick, no library): each PNG is transcoded
  * to JPEG with GD and embedded via `/DCTDecode`, one full-bleed image per page.
@@ -25,20 +27,58 @@ final class ExportBuilder
      */
     public function build(array $slidePngs, string $caption, array $hashtags, bool $withPdf): string
     {
+        $files = [];
+        foreach ($slidePngs as $i => $png) {
+            $files['slide-'.($i + 1).'.png'] = $png;
+        }
+
+        $files['caption.txt'] = $this->captionFile($caption, $hashtags);
+
+        if ($withPdf && [] !== $slidePngs) {
+            $files['carousel.pdf'] = $this->pdf($slidePngs);
+        }
+
+        return $this->zip($files);
+    }
+
+    /**
+     * The vector counterpart to {@see build()}: a `.zip` of the self-contained SVG
+     * slides (font and image already embedded as `data:` URIs) plus `caption.txt`.
+     * No rasterisation, so it needs neither GD nor a browser and stays byte-faithful
+     * to what the renderer produced.
+     *
+     * @param list<string> $svgs     raw SVG strings, in slide order
+     * @param list<string> $hashtags
+     *
+     * @return string the raw bytes of a .zip archive
+     */
+    public function buildSvgArchive(array $svgs, string $caption, array $hashtags): string
+    {
+        $files = [];
+        foreach ($svgs as $i => $svg) {
+            $files['slide-'.($i + 1).'.svg'] = $svg;
+        }
+
+        $files['caption.txt'] = $this->captionFile($caption, $hashtags);
+
+        return $this->zip($files);
+    }
+
+    /**
+     * Pack named entries into a `.zip` and return its raw bytes.
+     *
+     * @param array<string, string> $files filename => raw bytes
+     */
+    private function zip(array $files): string
+    {
         $zipPath = (string) tempnam(sys_get_temp_dir(), 'pw-export-');
         $zip = new ZipArchive();
         if (true !== $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE)) {
             throw new RuntimeException('Cannot create export archive.');
         }
 
-        foreach ($slidePngs as $i => $png) {
-            $zip->addFromString('slide-'.($i + 1).'.png', $png);
-        }
-
-        $zip->addFromString('caption.txt', $this->captionFile($caption, $hashtags));
-
-        if ($withPdf && [] !== $slidePngs) {
-            $zip->addFromString('carousel.pdf', $this->pdf($slidePngs));
+        foreach ($files as $name => $bytes) {
+            $zip->addFromString($name, $bytes);
         }
 
         $zip->close();

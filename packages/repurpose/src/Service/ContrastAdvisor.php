@@ -68,7 +68,7 @@ final readonly class ContrastAdvisor
                     $ratio,
                     self::MIN_RATIO,
                     $suggestLighter ? 'lighter' : 'darker',
-                    null !== $slide->image && $suggestLighter ? ', or raise the overlay' : '',
+                    $slide->hasImage() && $suggestLighter ? ', or raise the overlay' : '',
                 ),
             ];
         }
@@ -81,13 +81,16 @@ final readonly class ContrastAdvisor
      */
     private function effectiveBackground(Carousel $carousel, Slide $slide): array
     {
-        if (null === $slide->image) {
+        // Sample the primary image (the whole frame, or a split's first cell); the
+        // text is bound to the deck margins, which fall over that cell.
+        $image = $slide->firstImage();
+        if (null === $image) {
             $bg = $this->color($carousel, $slide, static fn (Palette $p): ?string => $p->bg) ?? SlideRenderer::DEFAULT_BG;
 
             return [$this->hexLuminance($bg), \sprintf('background %s', $bg)];
         }
 
-        $path = $this->media->derivativePath($slide->image->media, 'md');
+        $path = $this->media->derivativePath($image->media, 'md');
         $imageLum = null === $path ? null : $this->meanLuminance($path);
         if (null === $imageLum) {
             // Missing media renders as the flat placeholder, without overlay.
@@ -97,7 +100,7 @@ final readonly class ContrastAdvisor
         // The overlay is black at `overlay` opacity, composited over the image.
         return [
             $imageLum * (1.0 - $slide->overlay),
-            \sprintf('the image "%s" (overlay %s)', $slide->image->media, round($slide->overlay, 2)),
+            \sprintf('the image "%s" (overlay %s)', $image->media, round($slide->overlay, 2)),
         ];
     }
 

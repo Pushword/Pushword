@@ -19,6 +19,8 @@ use Pushword\Repurpose\Service\ExportBuilder;
 use Pushword\Repurpose\Service\FontPairingRegistry;
 use Pushword\Repurpose\Service\FormatRegistry;
 use Pushword\Repurpose\Service\NetworkRegistry;
+use Pushword\Repurpose\Service\PinImageStore;
+use Pushword\Repurpose\Service\PinterestShare;
 use Pushword\Repurpose\Service\SlideRenderer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -46,6 +48,8 @@ final class RepurposeStudioController extends AbstractController
         private readonly CreatorAdvisor $creatorAdvisor,
         private readonly CreatorResolverInterface $creatorResolver,
         private readonly ExportBuilder $exportBuilder,
+        private readonly PinImageStore $pinImageStore,
+        private readonly PinterestShare $pinterestShare,
         private readonly NetworkRegistry $networks,
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $entityManager,
@@ -212,17 +216,29 @@ final class RepurposeStudioController extends AbstractController
     }
 
     /**
-     * Receives the browser-rasterised slide PNGs and returns a downloadable
-     * `.zip` (PNGs + caption, plus a PDF for document networks).
+     * Returns a downloadable `.zip`. Two payloads, one endpoint:
+     *  - `{slides: [dataURL, …]}` — the browser-rasterised PNGs → PNGs + caption
+     *    (plus a PDF for document networks);
+     *  - `{svgs: [svg, …]}` — the on-screen self-contained SVGs → a vector archive
+     *    of `.svg` files + caption, no rasterisation.
      */
     #[Route('/admin/repurpose/studio/{id}/export', name: 'repurpose_studio_export', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function export(int $id, Request $request): Response
     {
         $post = $this->loadPost($id);
+        $carousel = $this->factory->fromArray($post->getSpec());
 
         $data = json_decode($request->getContent(), true);
+
+        if (\is_array($data) && isset($data['svgs']) && \is_array($data['svgs'])) {
+            $svgs = array_values(array_filter($data['svgs'], static fn (mixed $s): bool => \is_string($s) && '' !== $s));
+            $zip = $this->exportBuilder->buildSvgArchive($svgs, $carousel->caption ?? '', array_values($carousel->hashtags));
+
+            return $this->zipResponse($zip, $this->slugFilename($post->getPage(), $carousel->network).'-svg');
+        }
+
         if (! \is_array($data) || ! isset($data['slides']) || ! \is_array($data['slides'])) {
-            return new JsonResponse(['error' => 'Expected {slides: [dataURL, …]}.'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'Expected {slides: [dataURL, …]} or {svgs: [svg, …]}.'], Response::HTTP_BAD_REQUEST);
         }
 
         $pngs = [];
@@ -234,15 +250,66 @@ final class RepurposeStudioController extends AbstractController
 
         $pngs = array_values(array_filter($pngs, static fn (string $p): bool => '' !== $p));
 
-        $carousel = $this->factory->fromArray($post->getSpec());
         $withPdf = 'pdf' === ($this->networks->get($carousel->network)['export'] ?? 'images');
 
         $zip = $this->exportBuilder->build($pngs, $carousel->caption ?? '', array_values($carousel->hashtags), $withPdf);
 
+        return $this->zipResponse($zip, $this->slugFilename($post->getPage(), $carousel->network));
+    }
+
+    private function zipResponse(string $zip, string $filename): Response
+    {
         return new Response($zip, Response::HTTP_OK, [
             'Content-Type' => 'application/zip',
-            'Content-Disposition' => 'attachment; filename="'.$this->slugFilename($post->getPage(), $carousel->network).'.zip"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'.zip"',
         ]);
+    }
+
+    /**
+     * Stores the browser-rasterised cover slide as a public PNG and returns the
+     * Pinterest "create pin" URL pre-filled with it (plus the page URL and caption).
+     * The studio opens that URL so the user finishes the pin in Pinterest itself —
+     * only Pinterest carousels get this, since the widget takes one image.
+     */
+    #[Route('/admin/repurpose/studio/{id}/pin-image', name: 'repurpose_studio_pin_image', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function pinImage(int $id, Request $request): JsonResponse
+    {
+        $post = $this->loadPost($id);
+        $carousel = $this->factory->fromArray($post->getSpec());
+
+        if ('pinterest' !== $carousel->network) {
+            return new JsonResponse(['error' => 'Direct pinning is only available for Pinterest carousels.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $dataUrl = \is_array($data) ? ($data['png'] ?? null) : null;
+        if (! \is_string($dataUrl)) {
+            return new JsonResponse(['error' => 'Expected {png: dataURL}.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $png = base64_decode((string) preg_replace('#^data:image/\w+;base64,#', '', $dataUrl), true);
+        if (false === $png || '' === $png) {
+            return new JsonResponse(['error' => 'The pin image could not be decoded.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $mediaUrl = $request->getSchemeAndHttpHost().$this->pinImageStore->save($id, $png);
+        $pinUrl = $this->pinterestShare->pinUrl($mediaUrl, $this->pageUrl($post), $carousel->caption);
+
+        return new JsonResponse(['url' => $mediaUrl, 'pinUrl' => $pinUrl]);
+    }
+
+    /**
+     * The public URL of the carousel's source page (`https://{host}/{slug}`), or
+     * null for a page-less standalone carousel — used as the pin's link-back.
+     */
+    private function pageUrl(SocialPost $post): ?string
+    {
+        $page = $post->getPage();
+        if ('' === $page || str_starts_with($page, 'standalone/')) {
+            return null;
+        }
+
+        return 'https://'.$post->host.'/'.ltrim($page, '/');
     }
 
     private function loadPost(int $id): SocialPost
@@ -334,6 +401,7 @@ final class RepurposeStudioController extends AbstractController
             'fontPairings' => FontPairingRegistry::keys(),
             'layouts' => Slide::LAYOUTS,
             'aligns' => Slide::ALIGNS,
+            'imageLayouts' => Slide::IMAGE_LAYOUTS,
             'statuses' => Carousel::STATUSES,
             'counterStyles' => Counter::STYLES,
             'counterAligns' => Counter::ALIGNS,

@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use ZipArchive;
 
 /**
  * The admin studio: an authenticated preview + spec editor. It renders a stored
@@ -303,11 +304,98 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
     }
 
+    public function testExportSvgReturnsAZipOfVectorSlides(): void
+    {
+        $post = $this->persistPost();
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>';
+        $this->client->request(
+            Request::METHOD_POST,
+            '/admin/repurpose/studio/'.$post->id.'/export',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            (string) json_encode(['svgs' => [$svg]]),
+        );
+
+        $response = $this->client->getResponse();
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+        self::assertSame('application/zip', $response->headers->get('Content-Type'));
+        self::assertStringContainsString('-svg.zip', (string) $response->headers->get('Content-Disposition'));
+
+        $tmp = (string) tempnam(sys_get_temp_dir(), 'pw-studio-svg-');
+        file_put_contents($tmp, (string) $response->getContent());
+        $zip = new ZipArchive();
+        self::assertTrue($zip->open($tmp));
+        // The SVG is bundled verbatim alongside the caption — no raster artifacts.
+        self::assertSame($svg, $zip->getFromName('slide-1.svg'));
+        self::assertNotFalse($zip->getFromName('caption.txt'));
+        self::assertFalse($zip->getFromName('slide-1.png'));
+        $zip->close();
+        @unlink($tmp);
+    }
+
+    public function testPinImageStoresAPublicPngAndReturnsAPinterestUrl(): void
+    {
+        $post = $this->persistPinterestPost();
+
+        // A 1×1 transparent PNG as the browser would post it.
+        $png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+        $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/pin-image', ['png' => $png]);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertIsString($body['url'] ?? null);
+        self::assertStringContainsString('/repurpose-pin/'.$post->id.'.png', $body['url']);
+        self::assertIsString($body['pinUrl'] ?? null);
+        self::assertStringStartsWith('https://www.pinterest.com/pin/create/button/?', $body['pinUrl']);
+        self::assertStringContainsString('A+caption+to+pin', $body['pinUrl']);
+
+        // The PNG landed under the web root where Pinterest can fetch it.
+        $publicDir = self::getContainer()->getParameter('pw.public_dir');
+        $file = $publicDir.'/repurpose-pin/'.$post->id.'.png';
+        self::assertFileExists($file);
+        @unlink($file);
+    }
+
+    public function testPinImageRejectsANonPinterestNetwork(): void
+    {
+        $post = $this->persistPost(); // a linkedin carousel
+
+        $this->postJson('/admin/repurpose/studio/'.$post->id.'/pin-image', ['png' => 'data:image/png;base64,AAAA']);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testPinImageRejectsAMissingPng(): void
+    {
+        $post = $this->persistPinterestPost();
+
+        $this->postJson('/admin/repurpose/studio/'.$post->id.'/pin-image', ['notPng' => 'x']);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+    }
+
     private function persistPost(): SocialPost
     {
         $post = new SocialPost();
         $post->host = self::HOST;
         $post->setSpec($this->validSpec());
+
+        $this->em->persist($post);
+        $this->em->flush();
+
+        return $post;
+    }
+
+    private function persistPinterestPost(): SocialPost
+    {
+        $post = new SocialPost();
+        $post->host = self::HOST;
+        $post->setSpec([
+            'page' => 'blog/studio-article', 'network' => 'pinterest', 'format' => 'pinterest-2-3',
+            'caption' => 'A caption to pin',
+            'slides' => [['title' => 'Cover', 'image' => ['media' => 'photo.jpg']]],
+        ]);
 
         $this->em->persist($post);
         $this->em->flush();

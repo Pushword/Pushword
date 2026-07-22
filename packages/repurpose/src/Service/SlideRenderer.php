@@ -8,6 +8,7 @@ use Pushword\Repurpose\Model\Creator;
 use Pushword\Repurpose\Model\LaidOutText;
 use Pushword\Repurpose\Model\Palette;
 use Pushword\Repurpose\Model\Slide;
+use Pushword\Repurpose\Model\SlideImage;
 
 /**
  * Renders a slide to one self-contained SVG string: font and image embedded as
@@ -75,7 +76,7 @@ final readonly class SlideRenderer
         $effect = $slide->background ?? $carousel->background;
 
         $body = '<rect width="'.$width.'" height="'.$height.'" fill="'.$bg.'"/>';
-        $body .= $this->renderImage($slide, $width, $height, $index);
+        $body .= $this->renderImages($slide, $width, $height, $index);
         $body .= $this->renderEffect($effect, $index, $width, $height, $total);
         $body .= $this->renderText($slide, $width, $height, $headingFile, $bodyFile, $text, $accent);
         $body .= $this->renderCreator($carousel, $creator, $index, $total, $width, $height, $text, $accent);
@@ -90,41 +91,86 @@ final readonly class SlideRenderer
             .'</svg>';
     }
 
-    private function renderImage(Slide $slide, int $width, int $height, int $index): string
+    private function renderImages(Slide $slide, int $width, int $height, int $index): string
     {
-        if (null === $slide->image) {
+        if (! $slide->hasImage()) {
             return '';
         }
 
-        $dims = $this->media->sourceDimensions($slide->image->media);
-        $placement = $this->geometry->place(
-            $dims[0] ?? $width,
-            $dims[1] ?? $height,
-            $slide->image->focusX,
-            $slide->image->focusY,
-            $slide->image->zoom,
-            $width,
-            $height,
-        );
+        $svg = '';
+        foreach ($this->imageFrames($slide->imageLayout, $width, $height) as $sub => $cell) {
+            $image = $slide->images[$sub] ?? null;
+            if (null === $image) {
+                continue;
+            }
 
-        $path = $this->media->derivativePath($slide->image->media, $placement->filter);
-        $dataUri = null === $path ? null : $this->embedder->imageDataUri($path);
-
-        if (null === $dataUri) {
-            // Missing media: a flat placeholder rather than a broken or blank slide.
-            return '<rect width="'.$width.'" height="'.$height.'" fill="'.self::MISSING_MEDIA_BG.'"/>';
+            $svg .= $this->renderOneImage($image, $cell, $index, $sub);
         }
 
-        $svg = '<g clip-path="url(#frame-'.$index.')">'
-            .'<image href="'.$dataUri.'" x="'.$this->n($placement->x).'" y="'.$this->n($placement->y).'" '
-            .'width="'.$this->n($placement->width).'" height="'.$this->n($placement->height).'" '
-            .'preserveAspectRatio="none"/></g>';
-
+        // One overlay across the whole frame — it darkens every cell together, so
+        // text bound to the deck's margins stays readable over any split.
         if ($slide->overlay > 0.0) {
             $svg .= '<rect width="'.$width.'" height="'.$height.'" fill="#000" fill-opacity="'.$this->n($slide->overlay).'"/>';
         }
 
         return $svg;
+    }
+
+    /**
+     * The cells an image layout paints into, each an [x, y, w, h] rect in frame
+     * coordinates. `full` is the whole frame; `split-v` stacks two half-height
+     * cells; `split-h` sets two half-width cells side by side. The geometry per
+     * cell is the same cover-fit maths as a full frame, just at the cell's size.
+     *
+     * @return list<array{0: float, 1: float, 2: float, 3: float}>
+     */
+    private function imageFrames(string $layout, int $width, int $height): array
+    {
+        return match ($layout) {
+            'split-v' => [[0.0, 0.0, (float) $width, $height / 2], [0.0, $height / 2, (float) $width, $height / 2]],
+            'split-h' => [[0.0, 0.0, $width / 2, (float) $height], [$width / 2, 0.0, $width / 2, (float) $height]],
+            default => [[0.0, 0.0, (float) $width, (float) $height]],
+        };
+    }
+
+    /**
+     * One image cover-fitted into a cell: the focal crop is placed by the shared
+     * {@see SlideGeometry} at the cell's size, then offset to the cell's origin and
+     * clipped to it. Missing media degrades to a flat placeholder filling the cell.
+     *
+     * @param array{0: float, 1: float, 2: float, 3: float} $cell [x, y, width, height]
+     */
+    private function renderOneImage(SlideImage $image, array $cell, int $index, int $sub): string
+    {
+        [$fx, $fy, $fw, $fh] = $cell;
+        $cellW = (int) round($fw);
+        $cellH = (int) round($fh);
+        $dims = $this->media->sourceDimensions($image->media);
+        $placement = $this->geometry->place(
+            $dims[0] ?? $cellW,
+            $dims[1] ?? $cellH,
+            $image->focusX,
+            $image->focusY,
+            $image->zoom,
+            $cellW,
+            $cellH,
+        );
+
+        $path = $this->media->derivativePath($image->media, $placement->filter);
+        $dataUri = null === $path ? null : $this->embedder->imageDataUri($path);
+
+        if (null === $dataUri) {
+            // A flat placeholder in this cell rather than a broken or blank slide.
+            return '<rect x="'.$this->n($fx).'" y="'.$this->n($fy).'" width="'.$this->n($fw).'" height="'.$this->n($fh).'" fill="'.self::MISSING_MEDIA_BG.'"/>';
+        }
+
+        $clipId = 'frame-'.$index.'-'.$sub;
+
+        return '<clipPath id="'.$clipId.'"><rect x="'.$this->n($fx).'" y="'.$this->n($fy).'" width="'.$this->n($fw).'" height="'.$this->n($fh).'"/></clipPath>'
+            .'<g clip-path="url(#'.$clipId.')">'
+            .'<image href="'.$dataUri.'" x="'.$this->n($fx + $placement->x).'" y="'.$this->n($fy + $placement->y).'" '
+            .'width="'.$this->n($placement->width).'" height="'.$this->n($placement->height).'" '
+            .'preserveAspectRatio="none"/></g>';
     }
 
     private function renderText(

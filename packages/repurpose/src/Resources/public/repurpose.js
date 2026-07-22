@@ -158,15 +158,22 @@
       }
       // Defaults the factory would apply anyway — keep the stored spec minimal.
       dropDefaults(slide, { layout: 'bottom', align: 'left', textScale: 1, swipe: false })
+      // Drop empty-media image slots, then normalise each kept one to the plural
+      // `images` list the model expects. A single populated slot in `full` layout
+      // still serialises as a one-element array — the canonical shape.
+      var images = (slide.images || []).filter(function (img) { return img && img.media })
+      images.forEach(function (img) { dropDefaults(img, { focusX: 0.5, focusY: 0.5, zoom: 1 }) })
+      delete slide.image
+      if (images.length) {
+        slide.images = images
+      } else {
+        delete slide.images
+      }
+      // 'full' is the model default; a split layout is a real override worth storing.
+      dropDefaults(slide, { imageLayout: 'full' })
       // The factory defaults overlay to 0.35 when the slide keeps an image (0 otherwise),
       // so only that value is prunable — an explicit 0 over an image must be stored.
-      dropDefaults(slide, { overlay: slide.image && slide.image.media ? 0.35 : 0 })
-      if (slide.image) {
-        dropDefaults(slide.image, { focusX: 0.5, focusY: 0.5, zoom: 1 })
-        if (!slide.image.media) {
-          delete slide.image
-        }
-      }
+      dropDefaults(slide, { overlay: images.length ? 0.35 : 0 })
     })
 
     return s
@@ -203,9 +210,14 @@
       saveLabel: 'Save',
       exporting: false,
       exportLabel: 'Export .zip',
+      exportingSvg: false,
+      exportSvgLabel: 'Export .svg',
+      pinning: false,
+      pinLabel: '📌 Pin to Pinterest',
       _timer: null,
       _sourceReady: false,
       _pickSlide: null,
+      _pickCell: null,
 
       init: function () {
         this.normalize()
@@ -220,6 +232,7 @@
       },
 
       normalize: function () {
+        var self = this
         var def = function (obj, key, value) {
           if (undefined === obj[key]) {
             obj[key] = value
@@ -232,19 +245,33 @@
         def(s, 'background', 'none')
         s.slides = Array.isArray(s.slides) ? s.slides : []
         s.slides.forEach(function (slide) {
-          slide.image = slide.image || {}
+          // Migrate the legacy singular `image` into the plural `images` list, then
+          // work with `images` only. Keep at least one (possibly empty) slot so the
+          // media picker and sliders always have something to bind to.
+          if (slide.image && !Array.isArray(slide.images)) {
+            slide.images = [slide.image]
+          }
+          delete slide.image
+          slide.images = Array.isArray(slide.images) ? slide.images : []
+          if (0 === slide.images.length) {
+            slide.images.push({})
+          }
           slide.palette = slide.palette || {}
+          def(slide, 'imageLayout', 'full')
           // Show the model defaults in the controls rather than a blank/min slider.
           def(slide, 'layout', 'bottom')
           def(slide, 'align', 'left')
           // '' = inherit the deck effect (the control shows "Inherit — <deck>").
           def(slide, 'background', '')
-          def(slide, 'overlay', slide.image.media ? 0.35 : 0)
+          def(slide, 'overlay', self.slideHasMedia(slide) ? 0.35 : 0)
           def(slide, 'textScale', 1)
           def(slide, 'swipe', false)
-          def(slide.image, 'focusX', 0.5)
-          def(slide.image, 'focusY', 0.5)
-          def(slide.image, 'zoom', 1)
+          self.ensureCells(slide)
+          slide.images.forEach(function (img) {
+            def(img, 'focusX', 0.5)
+            def(img, 'focusY', 0.5)
+            def(img, 'zoom', 1)
+          })
         })
         // UI-only: first slide expanded, the rest collapsed (kept out of the spec).
         this.slidesOpen = s.slides.map(function (_, i) { return 0 === i })
@@ -372,7 +399,7 @@
       },
 
       addSlide: function () {
-        this.spec.slides.push({ layout: 'bottom', align: 'left', title: 'New slide', image: {}, palette: {} })
+        this.spec.slides.push({ layout: 'bottom', align: 'left', title: 'New slide', imageLayout: 'full', images: [{ focusX: 0.5, focusY: 0.5, zoom: 1 }], palette: {} })
         this.slidesOpen.push(true)
       },
       removeSlide: function (index) {
@@ -433,22 +460,61 @@
       thumbUrl: function (filename) {
         return (this.urls.mediaThumb || '').replace('RPFILENAME', encodeURIComponent(filename))
       },
-      pickMedia: function (index, mode) {
+
+      // Image cells: one for a `full` slide, two for a split layout. The editor
+      // renders a picker + focus/zoom controls per cell, each bound to images[k].
+      cellCount: function (slide) {
+        return slide && slide.imageLayout && 'full' !== slide.imageLayout ? 2 : 1
+      },
+      imageSlots: function (slide) {
+        var slots = []
+        for (var k = 0; k < this.cellCount(slide); k++) {
+          slots.push(k)
+        }
+
+        return slots
+      },
+      // Materialise a cell per slot the layout needs, so the pickers and sliders
+      // bind to real (reactive) nodes. Called when the layout changes and on load,
+      // rather than lazily inside a render expression.
+      ensureCells: function (slide) {
+        slide.images = Array.isArray(slide.images) ? slide.images : []
+        while (slide.images.length < this.cellCount(slide)) {
+          slide.images.push({ focusX: 0.5, focusY: 0.5, zoom: 1 })
+        }
+      },
+      // A cell's image object, created on demand so the sliders always bind to a
+      // real (reactive) node even before a media file is chosen.
+      cellImage: function (slide, k) {
+        slide.images = Array.isArray(slide.images) ? slide.images : []
+        if (!slide.images[k]) {
+          slide.images[k] = { focusX: 0.5, focusY: 0.5, zoom: 1 }
+        }
+
+        return slide.images[k]
+      },
+      slideHasMedia: function (slide) {
+        return (slide.images || []).some(function (img) { return img && img.media })
+      },
+
+      pickMedia: function (index, cell, mode) {
         this._pickSlide = index
+        this._pickCell = cell
         this.mediaModal = { open: true, src: 'upload' === mode ? this.urls.mediaUpload : this.urls.mediaIndex }
       },
-      clearMedia: function (index) {
+      clearMedia: function (index, cell) {
         var slide = this.spec.slides[index]
-        if (slide && slide.image) {
-          slide.image.media = ''
+        if (slide && slide.images && slide.images[cell]) {
+          slide.images[cell].media = ''
         }
       },
       closeMediaModal: function () {
         this.mediaModal = { open: false, src: '' }
         this._pickSlide = null
+        this._pickCell = null
       },
       // Receives the picked media from the /admin/media picker iframe and drops its
-      // filename onto the slide whose "Choose"/"Upload" opened the modal.
+      // filename onto the cell whose "Choose"/"Upload" opened the modal.
       onMediaMessage: function (event) {
         if (event.origin !== window.location.origin) {
           return
@@ -463,8 +529,7 @@
         }
         var name = data.media.fileName || data.media.name || ''
         if (name) {
-          slide.image = slide.image || {}
-          slide.image.media = name
+          this.cellImage(slide, this._pickCell || 0).media = name
         }
         this.closeMediaModal()
       },
@@ -720,6 +785,65 @@
           var self = this
           setTimeout(function () { self.exportLabel = 'Export .zip' }, 2000)
           this.exporting = false
+        }
+      },
+
+      // Vector export: ship the on-screen self-contained SVGs verbatim (font +
+      // image already embedded) for a .zip of .svg files — no canvas, no raster.
+      exportSvg: async function () {
+        var svgs = Array.prototype.slice.call(document.querySelectorAll('.slide svg'))
+        if (0 === svgs.length) {
+          return
+        }
+
+        this.exportingSvg = true
+        this.exportSvgLabel = 'Bundling…'
+        try {
+          var serializer = new XMLSerializer()
+          var sources = svgs.map(function (svg) { return serializer.serializeToString(svg) })
+          var response = await fetch(this.urls.export, jsonPost({ svgs: sources }))
+          if (!response.ok) {
+            throw new Error('Export failed (' + response.status + ')')
+          }
+          download(await response.blob(), this.filename + '-svg.zip')
+          this.exportSvgLabel = 'Downloaded ✓'
+        } catch (error) {
+          console.error('[repurpose] svg export failed', error)
+          this.exportSvgLabel = 'Export failed'
+        } finally {
+          var self = this
+          setTimeout(function () { self.exportSvgLabel = 'Export .svg' }, 2000)
+          this.exportingSvg = false
+        }
+      },
+
+      // Pinterest "post directly": rasterise the cover slide, store it as a public
+      // PNG (Pinterest fetches the media URL server-side), then open Pinterest's own
+      // create-pin screen pre-filled with it — the user confirms and publishes there.
+      pinToPinterest: async function () {
+        var svgs = Array.prototype.slice.call(document.querySelectorAll('.slide svg'))
+        if (0 === svgs.length) {
+          return
+        }
+
+        this.pinning = true
+        this.pinLabel = 'Preparing…'
+        try {
+          var png = await svgToPng(svgs[0])
+          var response = await fetch(this.urls.pinImage, jsonPost({ png: png }))
+          if (!response.ok) {
+            throw new Error('Pin failed (' + response.status + ')')
+          }
+          var body = await response.json()
+          window.open(body.pinUrl, '_blank', 'noopener')
+          this.pinLabel = 'Opened Pinterest ✓'
+        } catch (error) {
+          console.error('[repurpose] pin failed', error)
+          this.pinLabel = 'Pin failed'
+        } finally {
+          var self = this
+          setTimeout(function () { self.pinLabel = '📌 Pin to Pinterest' }, 2500)
+          this.pinning = false
         }
       },
     }

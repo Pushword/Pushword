@@ -35,6 +35,36 @@ final class CarouselFactoryTest extends TestCase
     }
 
     /**
+     * Images hydrate from the plural `images` list, and the legacy singular `image`
+     * object is wrapped into a one-element list; empty-media slots are dropped so an
+     * `{}` placeholder never surfaces as a spurious violation.
+     */
+    public function testImagesFromPluralListAndLegacySingularKey(): void
+    {
+        $factory = new CarouselFactory();
+        $base = ['page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5'];
+
+        $plural = $factory->fromArray([...$base, 'slides' => [[
+            'title' => 'Split', 'imageLayout' => 'split-h',
+            'images' => [['media' => 'a.jpg'], ['media' => 'b.jpg', 'zoom' => 1.4]],
+        ]]])->slides[0];
+        self::assertSame('split-h', $plural->imageLayout);
+        self::assertCount(2, $plural->images);
+        self::assertSame('b.jpg', $plural->images[1]->media);
+        self::assertSame(1.4, $plural->images[1]->zoom);
+
+        $legacy = $factory->fromArray([...$base, 'slides' => [['title' => 'Hi', 'image' => ['media' => 'photo.jpg']]]])->slides[0];
+        self::assertSame('full', $legacy->imageLayout);
+        self::assertCount(1, $legacy->images);
+        $first = $legacy->firstImage();
+        self::assertNotNull($first);
+        self::assertSame('photo.jpg', $first->media);
+
+        $emptySlot = $factory->fromArray([...$base, 'slides' => [['title' => 'Hi', 'images' => [['media' => ''], []]]]])->slides[0];
+        self::assertSame([], $emptySlot->images);
+    }
+
+    /**
      * `creator` may be a config key (kept as string), an inline `{name,…}` object
      * (hydrated to a one-off Creator), or absent/nameless (null → brand byline).
      */

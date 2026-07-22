@@ -41,6 +41,7 @@ Draft.md
 /docs
 /docs~
 **/public/bundles
+**/public/repurpose-pin
 **/dev-app/public/media
 **/dev-app/.env.local.php
 **/dev-app/content

@@ -104,6 +104,7 @@
     .media-picker__meta { display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
     .media-picker__name { font-size: .74rem; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .media-picker.is-empty .media-picker__name { color: var(--muted); font-style: italic; }
+    .image-cell + .image-cell { margin-top: .55rem; padding-top: .55rem; border-top: 1px dashed var(--line-2); }
     .media-picker__actions { display: flex; gap: .35rem; }
     .btn-xs { border: 1px solid var(--line-2); background: var(--panel); color: var(--muted-2); border-radius: 6px; padding: .28rem .55rem; font-size: .7rem; font-weight: 600; cursor: pointer; }
     .btn-xs:hover { border-color: var(--muted); color: var(--text); }
@@ -209,6 +210,7 @@
         preview: {{ path('repurpose_studio_preview', {id: post.id})|json_encode|raw }},
         save: {{ path('repurpose_studio_save', {id: post.id})|json_encode|raw }},
         export: {{ path('repurpose_studio_export', {id: post.id})|json_encode|raw }},
+        pinImage: {{ path('repurpose_studio_pin_image', {id: post.id})|json_encode|raw }},
         mediaIndex: {{ path('admin_media_index', {view: 'mosaic', pwMediaPicker: '1', pwMediaPickerFieldId: 'rp-media'})|json_encode|raw }},
         mediaUpload: {{ path('admin_media_new', {pwMediaPicker: '1', pwMediaPickerFieldId: 'rp-media'})|json_encode|raw }},
         mediaThumb: {{ path('pushword_media_cache', {filter: 'md', fileName: 'RPFILENAME'})|json_encode|raw }}
@@ -228,6 +230,8 @@
       <button type="button" :class="view === 'source' && 'on'" @click="setView('source')">Source</button>
     </div>
     <button class="btn" type="button" @click="exportZip()" :disabled="exporting" x-text="exportLabel">Export .zip</button>
+    <button class="btn" type="button" @click="exportSvg()" :disabled="exportingSvg" x-text="exportSvgLabel">Export .svg</button>
+    <button class="btn" type="button" x-show="network === 'pinterest'" x-cloak @click="pinToPinterest()" :disabled="pinning" x-text="pinLabel">📌 Pin to Pinterest</button>
     <button class="btn primary" type="button" @click="save()" :disabled="saving" x-text="saveLabel">Save</button>
   </header>
 
@@ -472,33 +476,44 @@
                   </div>
 
                   <div class="field">
-                    <label>Image</label>
-                    <div class="media-picker" :class="!(slide.image && slide.image.media) && 'is-empty'">
-                      <div class="media-picker__thumb" :style="(slide.image && slide.image.media) ? ('background-image:url(\'' + thumbUrl(slide.image.media) + '\')') : ''"></div>
-                      <div class="media-picker__meta">
-                        <span class="media-picker__name" x-text="(slide.image && slide.image.media) || 'No image'"></span>
-                        <div class="media-picker__actions">
-                          <button type="button" class="btn-xs" @click="pickMedia(i, 'choose')">Choose</button>
-                          <button type="button" class="btn-xs" @click="pickMedia(i, 'upload')">Upload</button>
-                          <button type="button" class="btn-xs danger" x-show="slide.image && slide.image.media" @click="clearMedia(i)">Remove</button>
+                    <label>Image layout</label>
+                    <select x-model="slide.imageLayout" @change="ensureCells(slide)" x-init="$nextTick(() => $el.value = slide.imageLayout)">
+                      <template x-for="l in vocab.imageLayouts" :key="l"><option :value="l" x-text="l"></option></template>
+                    </select>
+                  </div>
+
+                  <template x-for="k in imageSlots(slide)" :key="k">
+                    <div class="image-cell">
+                      <div class="field">
+                        <label>Image <span class="val" x-show="cellCount(slide) > 1" x-text="k === 0 ? 'A' : 'B'"></span></label>
+                        <div class="media-picker" :class="!cellImage(slide, k).media && 'is-empty'">
+                          <div class="media-picker__thumb" :style="cellImage(slide, k).media ? ('background-image:url(\'' + thumbUrl(cellImage(slide, k).media) + '\')') : ''"></div>
+                          <div class="media-picker__meta">
+                            <span class="media-picker__name" x-text="cellImage(slide, k).media || 'No image'"></span>
+                            <div class="media-picker__actions">
+                              <button type="button" class="btn-xs" @click="pickMedia(i, k, 'choose')">Choose</button>
+                              <button type="button" class="btn-xs" @click="pickMedia(i, k, 'upload')">Upload</button>
+                              <button type="button" class="btn-xs danger" x-show="cellImage(slide, k).media" @click="clearMedia(i, k)">Remove</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="grid2" x-show="cellImage(slide, k).media">
+                        <div class="field">
+                          <label>Focus X <span class="val" x-text="Number(cellImage(slide, k).focusX ?? 0.5).toFixed(2)"></span></label>
+                          <input type="range" min="0" max="1" step="0.01" x-model.number="cellImage(slide, k).focusX">
+                        </div>
+                        <div class="field">
+                          <label>Focus Y <span class="val" x-text="Number(cellImage(slide, k).focusY ?? 0.5).toFixed(2)"></span></label>
+                          <input type="range" min="0" max="1" step="0.01" x-model.number="cellImage(slide, k).focusY">
+                        </div>
+                        <div class="field full">
+                          <label>Zoom <span class="val" x-text="Number(cellImage(slide, k).zoom ?? 1).toFixed(2)"></span></label>
+                          <input type="range" min="1" max="5" step="0.1" x-model.number="cellImage(slide, k).zoom">
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="grid2" x-show="slide.image && slide.image.media">
-                    <div class="field">
-                      <label>Focus X <span class="val" x-text="Number(slide.image.focusX ?? 0.5).toFixed(2)"></span></label>
-                      <input type="range" min="0" max="1" step="0.01" x-model.number="slide.image.focusX">
-                    </div>
-                    <div class="field">
-                      <label>Focus Y <span class="val" x-text="Number(slide.image.focusY ?? 0.5).toFixed(2)"></span></label>
-                      <input type="range" min="0" max="1" step="0.01" x-model.number="slide.image.focusY">
-                    </div>
-                    <div class="field full">
-                      <label>Zoom <span class="val" x-text="Number(slide.image.zoom ?? 1).toFixed(2)"></span></label>
-                      <input type="range" min="1" max="5" step="0.1" x-model.number="slide.image.zoom">
-                    </div>
-                  </div>
+                  </template>
                 </div>
               </div>
             </template>

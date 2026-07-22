@@ -49,6 +49,38 @@ final class ExportBuilderTest extends TestCase
         @unlink($path);
     }
 
+    public function testSvgArchiveContainsRawSvgsAndCaptionButNoPdf(): void
+    {
+        $builder = new ExportBuilder();
+        $svg1 = '<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>';
+        $svg2 = '<svg xmlns="http://www.w3.org/2000/svg"><circle/></svg>';
+        $bytes = $builder->buildSvgArchive([$svg1, $svg2], 'Vector caption', ['pushword']);
+
+        $path = (string) tempnam(sys_get_temp_dir(), 'pw-export-svg-');
+        file_put_contents($path, $bytes);
+        $zip = new ZipArchive();
+        self::assertTrue($zip->open($path));
+
+        $names = [];
+        for ($i = 0; $i < $zip->numFiles; ++$i) {
+            $names[] = $zip->getNameIndex($i);
+        }
+
+        self::assertContains('slide-1.svg', $names);
+        self::assertContains('slide-2.svg', $names);
+        self::assertContains('caption.txt', $names);
+        // A vector bundle carries no rasterised artifacts.
+        self::assertNotContains('carousel.pdf', $names);
+        self::assertNotContains('slide-1.png', $names);
+
+        // The SVGs are shipped verbatim, not re-encoded.
+        self::assertSame($svg1, $zip->getFromName('slide-1.svg'));
+        self::assertStringContainsString('Vector caption', (string) $zip->getFromName('caption.txt'));
+
+        $zip->close();
+        @unlink($path);
+    }
+
     public function testPdfIsValidAndEmbedsOnePagePerSlide(): void
     {
         $builder = new ExportBuilder();

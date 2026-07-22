@@ -89,8 +89,8 @@ final class CarouselDrafterTest extends TestCase
     {
         $carousel = $this->draftCarousel($this->page());
 
-        self::assertNotNull($carousel->slides[1]->image);
-        self::assertSame('photo-one.jpg', $carousel->slides[1]->image->media);
+        self::assertNotNull($carousel->slides[1]->firstImage());
+        self::assertSame('photo-one.jpg', $carousel->slides[1]->firstImage()->media);
     }
 
     public function testUnknownFormatFallsBackToDefault(): void

@@ -67,7 +67,8 @@
                 "textScale": { "type": "number", "minimum": 0.5, "maximum": 2, "default": 1 },
                 "background": { "enum": ["none", "dots", "rings", "waves", "scales", "chevron", "hexagon", "triangles", "plus", "diamonds", "memphis", "sketchy", "paper"], "description": "Overrides the deck's background effect for this slide; omit to inherit the deck effect." },
                 "palette": { "$ref": "#/$defs/palette" },
-                "image": { "$ref": "#/$defs/image" }
+                "imageLayout": { "enum": ["full", "split-v", "split-h"], "default": "full", "description": "How the slide's images fill the frame: one covering it (full), two stacked vertically (split-v) or side by side (split-h). Split layouts require two images." },
+                "images": { "type": "array", "items": { "$ref": "#/$defs/image" }, "description": "The slide's background image(s): one for `full`, two for a split layout, each with its own focal point and zoom. (The legacy singular `image` key is still accepted and treated as a one-element list.)" }
             }
         },
         "image": {
