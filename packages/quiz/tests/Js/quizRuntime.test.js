@@ -79,6 +79,7 @@ function leveledQuiz() {
 
 beforeEach(() => {
   document.body.innerHTML = ''
+  window.localStorage.clear()
 })
 
 describe('quiz runtime — leveled quiz (regression)', () => {
@@ -281,6 +282,91 @@ function resultQuiz(id, slug, config) {
   )
 }
 
+describe('quiz runtime — finished-attempt persistence', () => {
+  it('replays a completed quiz on the next load: chosen answers, result, restart button', () => {
+    document.body.innerHTML = singleQuiz()
+    bootRuntime()
+
+    const q = document.querySelectorAll('.pw-quiz-q')
+    // Q0 answered correctly (first button), Q1 answered wrong (second button).
+    q[0].querySelectorAll('.pw-quiz-a')[0].click()
+    q[1].querySelectorAll('.pw-quiz-a')[1].click()
+
+    // The finished attempt is stored under the quiz slug.
+    expect(window.localStorage.getItem('pwQuizDone:single')).not.toBeNull()
+
+    // Re-render the same quiz from scratch (a page reload) and boot again.
+    document.body.innerHTML = singleQuiz()
+    bootRuntime()
+
+    const r = document.querySelectorAll('.pw-quiz-q')
+    // Both questions come back marked answered with the same choices.
+    expect(r[0].classList.contains('pw-quiz-q--answered')).toBe(true)
+    expect(r[1].classList.contains('pw-quiz-q--answered')).toBe(true)
+    expect(r[0].querySelectorAll('.pw-quiz-a')[0].classList.contains('pw-quiz-a--chosen-correct')).toBe(true)
+    expect(r[1].querySelectorAll('.pw-quiz-a')[1].classList.contains('pw-quiz-a--chosen-wrong')).toBe(true)
+
+    // The result box is revealed and a restart button is offered.
+    expect(document.querySelector('.pw-quiz-result').hidden).toBe(false)
+    expect(document.querySelector('.pw-quiz-restart')).not.toBeNull()
+  })
+
+  it('replays a completed personality test, revealing the same winning profile', () => {
+    document.body.innerHTML = profileQuiz()
+    bootRuntime()
+
+    const answers = document.querySelectorAll('.pw-quiz-a')
+    answers[0].click() // explorer on Q0
+    answers[2].click() // explorer on Q1
+    expect(window.localStorage.getItem('pwQuizDone:perso')).not.toBeNull()
+
+    // Reload: the winning card comes back revealed, the rest hidden.
+    document.body.innerHTML = profileQuiz()
+    bootRuntime()
+
+    expect(document.querySelector('.pw-quiz-profile[data-profile-key="explorer"]').hidden).toBe(false)
+    expect(document.querySelector('.pw-quiz-profile[data-profile-key="builder"]').hidden).toBe(true)
+    expect(document.querySelector('.pw-quiz-restart')).not.toBeNull()
+    expect(Array.from(document.querySelectorAll('.pw-quiz-a')).every((b) => b.disabled)).toBe(true)
+  })
+
+  it('discards a stored attempt whose answer count no longer matches the quiz', () => {
+    window.localStorage.setItem('pwQuizDone:single', JSON.stringify({ v: 1, a: [0] }))
+    document.body.innerHTML = singleQuiz() // two questions, stored attempt has one
+    bootRuntime()
+
+    // Stale record ignored: the quiz starts fresh (first question live, rest locked).
+    const q = document.querySelectorAll('.pw-quiz-q')
+    expect(q[0].classList.contains('pw-quiz-q--answered')).toBe(false)
+    expect(q[1].hasAttribute('data-locked')).toBe(true)
+    expect(document.querySelector('.pw-quiz-result').hidden).toBe(true)
+  })
+
+  it('restart clears the stored attempt and resets the quiz to its first question', () => {
+    document.body.innerHTML = singleQuiz()
+    bootRuntime()
+    const q = document.querySelectorAll('.pw-quiz-q')
+    q[0].querySelectorAll('.pw-quiz-a')[0].click()
+    q[1].querySelectorAll('.pw-quiz-a')[1].click()
+
+    // Reload → restored state, then hit restart.
+    document.body.innerHTML = singleQuiz()
+    bootRuntime()
+    document.querySelector('.pw-quiz-restart').click()
+
+    expect(window.localStorage.getItem('pwQuizDone:single')).toBeNull()
+
+    const r = document.querySelectorAll('.pw-quiz-q')
+    expect(r[0].classList.contains('pw-quiz-q--answered')).toBe(false)
+    expect(r[0].hasAttribute('data-locked')).toBe(false)
+    expect(r[1].hasAttribute('data-locked')).toBe(true)
+    expect(document.querySelector('.pw-quiz-result').hidden).toBe(true)
+    const buttons = r[0].querySelectorAll('.pw-quiz-a')
+    expect(buttons[0].disabled).toBe(false)
+    expect(buttons[0].getAttribute('aria-pressed')).toBe('false')
+  })
+})
+
 describe('quiz runtime — result submission endpoint', () => {
   const realFetch = window.fetch
   afterEach(() => {
@@ -314,5 +400,25 @@ describe('quiz runtime — result submission endpoint', () => {
 
     expect(calls.length).toBe(1)
     expect(calls[0].url).toBe('/quiz/result')
+  })
+
+  it('does not re-post the result when a finished attempt is replayed on reload', () => {
+    const calls = mockFetch()
+    const html = () =>
+      resultQuiz('qr', 'restore-endpoint', {
+        feedback: 'immediate',
+        resultEndpoint: 'https://live.example/quiz/result',
+      })
+
+    document.body.innerHTML = html()
+    bootRuntime()
+    document.querySelector('.pw-quiz-a[data-correct]').click()
+    expect(calls.length).toBe(1) // the live finish records the attempt once
+
+    // Reload: the stored attempt is replayed, but the stat must not be recorded again.
+    document.body.innerHTML = html()
+    bootRuntime()
+    expect(document.querySelector('.pw-quiz-restart')).not.toBeNull() // proof it restored
+    expect(calls.length).toBe(1) // no second POST
   })
 })

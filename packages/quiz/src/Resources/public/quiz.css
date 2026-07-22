@@ -274,6 +274,30 @@
   padding-top: 1.25rem;
   border-top: 1px solid var(--pw-quiz-border);
 }
+/* "Restart" — shown on a finished quiz (also when a completed attempt is replayed
+   on return); resets it in place. Secondary/ghost styling so it never competes
+   with the primary "next level" action. */
+.pw-quiz-restart {
+  display: block;
+  font: inherit;
+  font-weight: 600;
+  color: var(--pw-quiz-accent);
+  background: transparent;
+  border: 1px solid var(--pw-quiz-accent);
+  border-radius: 999px;
+  padding: 0.55rem 1.3rem;
+  margin: 1.25rem auto 0;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.pw-quiz-restart:hover {
+  background: var(--pw-quiz-accent);
+  color: #fff;
+}
+.pw-quiz-restart:focus-visible {
+  outline: 2px solid var(--pw-quiz-accent);
+  outline-offset: 2px;
+}
 .pw-quiz-cta-title {
   font-size: 1.05rem;
   font-weight: 600;

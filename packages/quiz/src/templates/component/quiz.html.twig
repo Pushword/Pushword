@@ -72,7 +72,7 @@
     feedback: quiz.feedback,
     pass: quiz.pass,
     results: quiz.results|map(b => { min: b.min, msg: b.msg|markdown }),
-    labels: { score: l.score, better: l.better, nextLevel: l.nextLevel, profile: l.profile, share: l.share },
+    labels: { score: l.score, better: l.better, nextLevel: l.nextLevel, profile: l.profile, share: l.share, restart: l.restart },
     resultEndpoint: resultEndpoint,
   }|json_encode(constant('JSON_HEX_TAG'))|raw }}</script>
 {% endmacro %}
@@ -119,6 +119,7 @@
     nextLevel: quiz.labels.nextLevel|default('quiz.label.nextLevel'|trans),
     profile: quiz.labels.profile|default('quiz.label.profile'|trans),
     share: quiz.labels.share|default('quiz.label.share'|trans),
+    restart: quiz.labels.restart|default('quiz.label.restart'|trans),
   } %}
 
   <section class="pw-quiz{% if quiz.mode == 'profile' %} pw-quiz--profile{% endif %}" id="{{ id }}" data-pw-quiz data-slug="{{ baseSlug }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
@@ -176,6 +177,7 @@
         nextLevel: level.labels.nextLevel|default('quiz.label.nextLevel'|trans),
         profile: level.labels.profile|default('quiz.label.profile'|trans),
         share: level.labels.share|default('quiz.label.share'|trans),
+        restart: level.labels.restart|default('quiz.label.restart'|trans),
       } %}
 
       <div class="pw-quiz-panel" role="tabpanel"

@@ -13,6 +13,7 @@
 
   var RESULT_ENDPOINT = '/quiz/result'
   var STORAGE_KEY = 'pwQuizId'
+  var DONE_PREFIX = 'pwQuizDone:' // + slug → the finished attempt to replay on return
 
   function initAll() {
     // Multi-level quizzes first: each sets up its tab selector and then inits its
@@ -94,6 +95,7 @@
     root.classList.add('pw-quiz--js')
 
     var config = readConfig(root)
+    var slug = root.getAttribute('data-slug')
     var profileMode = 'profile' === config.mode
     var immediate = !profileMode && 'end' !== config.feedback
     var questions = Array.prototype.slice.call(root.querySelectorAll('.pw-quiz-q'))
@@ -104,6 +106,7 @@
     var score = 0
     var scores = {} // profile mode: tallied weights per profile key
     var chosenAnswers = [] // {q, a} per answered question — optional enrichment for a logged-in visitor
+    var chosenIdx = [] // chosen answer's index within each question — persisted to replay a finished attempt
 
     questions.forEach(function (q, idx) {
       if (idx > 0) q.setAttribute('data-locked', '1')
@@ -116,7 +119,14 @@
       })
     })
 
-    function answer(q, idx, chosen, buttons) {
+    // Already played on this browser? Replay the finished attempt (chosen answers
+    // + result + a "restart" button) instead of showing a blank quiz. Only fully
+    // completed attempts are stored, and a changed question count discards a stale one.
+    var done = readDone(slug)
+    if (done && done.a && done.a.length === total) restore(done.a)
+
+    // The per-question answered state, shared by a live click and a restore replay.
+    function applyChoice(q, idx, chosen, buttons) {
       q.setAttribute('data-answered', '1')
       q.classList.add('pw-quiz-q--answered')
 
@@ -126,13 +136,15 @@
         q: qText ? qText.textContent.trim() : '',
         a: (aText ? aText.textContent : chosen.textContent).trim(),
       })
+      chosenIdx[idx] = buttons.indexOf(chosen)
 
+      var isCorrect = false
       if (profileMode) {
         // No right or wrong: each answer tallies weights toward one or more profiles.
         var weights = parseWeights(chosen.getAttribute('data-weights'))
         for (var key in weights) if (Object.prototype.hasOwnProperty.call(weights, key)) scores[key] = (scores[key] || 0) + weights[key]
       } else {
-        var isCorrect = chosen.hasAttribute('data-correct')
+        isCorrect = chosen.hasAttribute('data-correct')
         if (isCorrect) score++
         q.classList.add(isCorrect ? 'pw-quiz-q--correct' : 'pw-quiz-q--wrong')
       }
@@ -147,8 +159,13 @@
       else chosen.classList.add(isCorrect ? 'pw-quiz-a--chosen-correct' : 'pw-quiz-a--chosen-wrong')
 
       answered++
+    }
+
+    function answer(q, idx, chosen, buttons) {
+      applyChoice(q, idx, chosen, buttons)
+
       if (answered >= total) {
-        finish()
+        finish(false)
         return
       }
 
@@ -159,27 +176,44 @@
       }
     }
 
-    function finish() {
+    // Replay a stored attempt: reveal every question at once, mark its recorded
+    // answer, then show the result. finish(true) skips re-recording the attempt.
+    function restore(savedAnswers) {
+      questions.forEach(function (q, idx) {
+        q.removeAttribute('data-locked')
+        var buttons = Array.prototype.slice.call(q.querySelectorAll('.pw-quiz-a'))
+        var chosen = buttons[savedAnswers[idx]]
+        if (chosen) applyChoice(q, idx, chosen, buttons)
+      })
+      finish(true)
+    }
+
+    function finish(restored) {
       root.classList.add('pw-quiz--done')
       var resultBox = root.querySelector('.pw-quiz-result')
       if (resultBox) resultBox.hidden = false
 
-      if (profileMode) finishProfile(resultBox)
-      else finishScore(resultBox)
+      if (profileMode) finishProfile(resultBox, restored)
+      else finishScore(resultBox, restored)
+
+      addRestartButton(resultBox)
+      // Persist a fresh finish only — a replay is already stored (and its
+      // finishScore/finishProfile skip the result POST so stats aren't inflated).
+      if (!restored) storeDone(slug, chosenIdx)
     }
 
-    function finishScore(resultBox) {
+    function finishScore(resultBox, restored) {
       var pct = Math.round((score / total) * 100)
       var scoreBox = root.querySelector('.pw-quiz-score')
       if (scoreBox) scoreBox.innerHTML = buildScoreHtml(pct, score, total, config)
-      if (resultBox) softScroll(resultBox)
+      if (resultBox && !restored) softScroll(resultBox)
 
-      submitResult(root.getAttribute('data-slug'), pct, scoreBox, config, chosenAnswers)
+      if (!restored) submitResult(slug, pct, scoreBox, config, chosenAnswers)
       maybeShowCta(root, 'quizScore=' + pct)
       maybeOfferNextLevel(scoreBox, pct, config, levelCtx)
     }
 
-    function finishProfile(resultBox) {
+    function finishProfile(resultBox, restored) {
       var winner = winningKey(root, scores)
       var scoreBox = root.querySelector('.pw-quiz-score')
 
@@ -195,10 +229,58 @@
       if (scoreBox && config.labels && config.labels.profile) {
         scoreBox.innerHTML = '<p class="pw-quiz-profile-intro">' + escapeHtml(config.labels.profile) + '</p>'
       }
-      if (resultBox) softScroll(resultBox)
+      if (resultBox && !restored) softScroll(resultBox)
 
-      submitProfileResult(root.getAttribute('data-slug'), winner, scoreBox, config, chosenAnswers)
+      if (!restored) submitProfileResult(slug, winner, scoreBox, config, chosenAnswers)
       maybeShowCta(root, 'quizProfile=' + encodeURIComponent(winner || ''))
+    }
+
+    // A "restart" affordance on the result box: clear the stored attempt and reset
+    // the quiz in place, back to its first-question state.
+    function addRestartButton(resultBox) {
+      if (!resultBox || resultBox.querySelector('.pw-quiz-restart')) return
+      var labels = config.labels || {}
+      var btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'pw-quiz-restart'
+      btn.textContent = '↻ ' + (labels.restart || 'Restart')
+      btn.addEventListener('click', restart)
+      resultBox.appendChild(btn)
+    }
+
+    function restart() {
+      clearDone(slug)
+
+      answered = 0
+      score = 0
+      scores = {}
+      chosenAnswers = []
+      chosenIdx = []
+      root.classList.remove('pw-quiz--done')
+
+      var resultBox = root.querySelector('.pw-quiz-result')
+      if (resultBox) resultBox.hidden = true
+      var scoreBox = root.querySelector('.pw-quiz-score')
+      if (scoreBox) scoreBox.innerHTML = ''
+      var cards = root.querySelectorAll('.pw-quiz-profile')
+      for (var c = 0; c < cards.length; c++) cards[c].hidden = true
+
+      questions.forEach(function (q, idx) {
+        q.removeAttribute('data-answered')
+        q.classList.remove('pw-quiz-q--answered', 'pw-quiz-q--correct', 'pw-quiz-q--wrong')
+        if (idx > 0) q.setAttribute('data-locked', '1')
+        else q.removeAttribute('data-locked')
+
+        var buttons = Array.prototype.slice.call(q.querySelectorAll('.pw-quiz-a'))
+        buttons.forEach(function (btn) {
+          btn.disabled = false
+          btn.removeAttribute('aria-disabled')
+          btn.setAttribute('aria-pressed', 'false')
+          btn.classList.remove('pw-quiz-a--correct', 'pw-quiz-a--chosen', 'pw-quiz-a--chosen-correct', 'pw-quiz-a--chosen-wrong')
+        })
+      })
+
+      softScroll(root)
     }
   }
 
@@ -408,6 +490,35 @@
     if (!id.e && !id.n) return
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(id))
+    } catch (e) {}
+  }
+
+  /* ----- finished-attempt storage (per quiz slug) ----- */
+
+  function doneKey(slug) {
+    return DONE_PREFIX + slug
+  }
+
+  function readDone(slug) {
+    if (!slug) return null
+    try {
+      return JSON.parse(window.localStorage.getItem(doneKey(slug))) || null
+    } catch (e) {
+      return null
+    }
+  }
+
+  function storeDone(slug, answers) {
+    if (!slug) return
+    try {
+      window.localStorage.setItem(doneKey(slug), JSON.stringify({ v: 1, a: answers }))
+    } catch (e) {}
+  }
+
+  function clearDone(slug) {
+    if (!slug) return
+    try {
+      window.localStorage.removeItem(doneKey(slug))
     } catch (e) {}
   }
 
