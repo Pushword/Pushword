@@ -48,6 +48,12 @@ final class SnippetCrudControllerTest extends AbstractAdminTestClass
         // Content reuses the page block editor (hidden textarea + holder).
         self::assertStringContainsString('data-editorjs', $html);
         self::assertStringContainsString('editorjs-holder', $html);
+
+        // The editor's image/gallery/attaches tools look up hidden media-picker
+        // selects globally (select[id*="inline_image"] / [id*="inline_attaches"]).
+        // They must ship with the widget so the picker works outside the Page form.
+        self::assertMatchesRegularExpression('/<select[^>]*id="[^"]*inline_image"[^>]*data-pw-media-picker/', $html);
+        self::assertMatchesRegularExpression('/<select[^>]*id="[^"]*inline_attaches"[^>]*data-pw-media-picker/', $html);
     }
 
     public function testIndexShowsHostColumnWithAllHostsLabel(): void

@@ -15,6 +15,19 @@
     {% set editor_id = 'editorjs_' ~ id %}
     <textarea style="display:none" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }}>{{ value }}</textarea>
     <div id="{{ editor_id }}" data-input-id="{{ id }}" class="editorjs-holder"></div>
+
+    {# Hidden media pickers the EditorJS image / gallery / attaches tools look up
+       globally (select[id*="inline_image"] / [id*="inline_attaches"]). Rendered
+       inside the widget so the block editor is self-contained on any form.
+       admin.mediaPicker.js enhances each [data-pw-media-picker] into a full picker. #}
+    <div class="d-none" aria-hidden="true">
+      <select id="{{ editor_id }}_inline_image"{% for name, attrValue in editorjs_media_picker_attributes('inline_image', {mimeType: {value: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']}}) %} {{ name }}="{{ attrValue }}"{% endfor %}>
+        <option value=""> </option>
+      </select>
+      <select id="{{ editor_id }}_inline_attaches"{% for name, attrValue in editorjs_media_picker_attributes('inline_attaches') %} {{ name }}="{{ attrValue }}"{% endfor %}>
+        <option value=""> </option>
+      </select>
+    </div>
 </div>
 <script>
 // Attendre que l'éditeur soit initialisé pour créer les fonctions de toggle

@@ -10,7 +10,6 @@ use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageMainContentField;
 use Pushword\Admin\Utils\FormFieldReplacer;
-use Pushword\AdminBlockEditor\FormField\PageInlineMediaField;
 use Pushword\AdminBlockEditor\FormField\PageMainContentEditorJsField;
 use Pushword\AdminBlockEditor\Service\MediaCaptionRenamer;
 use Pushword\Core\Entity\Page;
@@ -124,10 +123,6 @@ class AdminFormEventSubscriber extends AbstractEventSubscriber
         $fields = $formEvent->getFields();
         $replacer = new FormFieldReplacer();
         $replacer->run(PageMainContentField::class, PageMainContentEditorJsField::class, $fields);
-
-        if (isset($fields[0]) && \is_array($fields[0])) {
-            $fields[0][] = PageInlineMediaField::class;
-        }
 
         // @phpstan-ignore-next-line
         $formEvent->setFields($fields);

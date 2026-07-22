@@ -26,9 +26,26 @@ final class ControllerTest extends AbstractAdminTestClass
 
         $id = $this->createNewPage();
 
-        $client->request(Request::METHOD_GET, '/admin/page/'.$id.'/edit');
+        $crawler = $client->request(Request::METHOD_GET, '/admin/page/'.$id.'/edit');
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
         // does'nt throw error = good start, can do better ?
+
+        // The editor widget ships its own hidden media-picker selects, which the
+        // image/gallery/attaches tools look up globally. Exactly one per name:
+        // PageInlineMediaField is gone, so the widget is the only source.
+        $html = (string) $client->getResponse()->getContent();
+        self::assertSame(1, preg_match_all('/<select[^>]*id="[^"]*inline_image"[^>]*data-pw-media-picker/', $html), 'the Page editor must render a single inline_image media picker');
+        self::assertSame(1, preg_match_all('/<select[^>]*id="[^"]*inline_attaches"[^>]*data-pw-media-picker/', $html), 'the Page editor must render a single inline_attaches media picker');
+
+        // Picker URLs must target the Media CRUD without leaking the Page's
+        // entityId (else Media new/index would throw EntityNotFoundException),
+        // and only the image picker carries the image mimeType filter.
+        $imagePicker = $crawler->filter('select[id*="inline_image"]');
+        $imageModalUrl = (string) $imagePicker->attr('data-pw-media-picker-modal-url');
+        self::assertStringNotContainsString('entityId', $imageModalUrl, 'the picker modal URL must not carry the Page entityId');
+        self::assertStringNotContainsString('entityId', (string) $imagePicker->attr('data-pw-media-picker-upload-url'), 'the picker upload URL must not carry the Page entityId');
+        self::assertStringContainsString('mimeType', $imageModalUrl, 'the inline_image picker must filter to images');
+        self::assertStringNotContainsString('mimeType', (string) $crawler->filter('select[id*="inline_attaches"]')->attr('data-pw-media-picker-modal-url'), 'the inline_attaches picker must not carry the image filter');
 
         $client->request(Request::METHOD_GET, '/admin-block-editor.test/test');
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
