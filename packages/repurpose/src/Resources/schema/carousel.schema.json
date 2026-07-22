@@ -18,7 +18,7 @@
         "palette": { "$ref": "#/$defs/palette", "description": "Deck-level colour override; any slide may override again." },
         "fontPairing": { "type": ["string", "null"], "description": "A key from the font-pairing registry (see /api/repurpose/networks, fontPairings). Only pick a pairing whose `installed` is true — an uninstalled one silently falls back to Roboto; `pw:repurpose:fonts <pairing>` installs the missing TTFs. Null inherits site typography." },
         "counter": { "$ref": "#/$defs/counter" },
-        "background": { "enum": ["none", "blobs", "bubbles", "poly-grid", "sketchy", "paper"], "default": "none", "description": "Deck-wide decorative effect, authored once and sliced across every slide so a shape continues over a swipe. A slide may override it." },
+        "background": { "enum": ["none", "dots", "rings", "waves", "scales", "chevron", "hexagon", "triangles", "plus", "diamonds", "memphis", "sketchy", "paper"], "default": "none", "description": "Deck-wide decorative effect, authored once and sliced across every slide so a shape continues over a swipe. A slide may override it." },
         "creator": {
             "type": ["string", "object", "null"],
             "description": "A creator key from the site's repurpose_creators config (an unknown key falls back to the brand and raises a warning listing the known keys), or an inline object for a one-off byline. Null shows the brand.",
@@ -65,7 +65,7 @@
                 "swipe": { "type": "boolean", "default": false, "description": "Show a swipe indicator." },
                 "overlay": { "type": "number", "minimum": 0, "maximum": 1, "description": "Darken the image behind the text (only valid with an image). Defaults to 0.35 on a slide with an image (0 without) so light text stays readable; set 0 explicitly for no overlay — validate flags low text/background contrast as a warning." },
                 "textScale": { "type": "number", "minimum": 0.5, "maximum": 2, "default": 1 },
-                "background": { "enum": ["none", "blobs", "bubbles", "poly-grid", "sketchy", "paper"], "description": "Overrides the deck's background effect for this slide; omit to inherit the deck effect." },
+                "background": { "enum": ["none", "dots", "rings", "waves", "scales", "chevron", "hexagon", "triangles", "plus", "diamonds", "memphis", "sketchy", "paper"], "description": "Overrides the deck's background effect for this slide; omit to inherit the deck effect." },
                 "palette": { "$ref": "#/$defs/palette" },
                 "image": { "$ref": "#/$defs/image" }
             }

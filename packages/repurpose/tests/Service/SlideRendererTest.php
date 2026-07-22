@@ -55,18 +55,23 @@ final class SlideRendererTest extends KernelTestCase
         self::assertStringContainsString('viewBox="0 0 1000 1500"', $svg);
     }
 
-    public function testBubblesEffectRendersCirclesWindowedPerSlide(): void
+    public function testPatternEffectTilesAndAlignsAcrossSlides(): void
     {
-        $svg = $this->render([
+        $spec = [
             'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
-            'slides' => [['title' => 'Bubbly', 'background' => 'bubbles']],
-        ]);
+            'background' => 'waves',
+            'slides' => [['title' => 'One'], ['title' => 'Two']],
+        ];
+        $first = $this->render($spec, 0);
+        $second = $this->render($spec, 1);
 
         $doc = new DOMDocument();
-        self::assertTrue($doc->loadXML($svg), 'the bubbles effect yields well-formed SVG');
-        self::assertStringContainsString('<circle', $svg);
-        // Deck-wide layer is windowed through the slide frame.
-        self::assertStringContainsString('clip-path="url(#frame-0)"', $svg);
+        self::assertTrue($doc->loadXML($first), 'the pattern effect yields well-formed SVG');
+        self::assertStringContainsString('<pattern id="rp-pat-waves-0"', $first);
+        // The tile is shifted by one slide width on the next slide so the pattern
+        // lines up continuously across a swipe.
+        self::assertStringContainsString('patternTransform="translate(0 0)"', $first);
+        self::assertStringContainsString('patternTransform="translate(-1080 0)"', $second);
     }
 
     public function testPaperGrainIsStrongEnoughToBeVisible(): void

@@ -35,57 +35,59 @@ final class BackgroundEffectTest extends KernelTestCase
     {
         $carousel = new CarouselFactory()->fromArray([
             'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
-            'background' => 'poly-grid',
-            'slides' => [['title' => 'Inherits'], ['title' => 'Overrides', 'background' => 'blobs']],
+            'background' => 'waves',
+            'slides' => [['title' => 'Inherits'], ['title' => 'Overrides', 'background' => 'dots']],
         ]);
 
-        self::assertSame('poly-grid', $carousel->background);
+        self::assertSame('waves', $carousel->background);
         self::assertNull($carousel->slides[0]->background, 'an absent slide effect inherits the deck (null)');
-        self::assertSame('blobs', $carousel->slides[1]->background);
+        self::assertSame('dots', $carousel->slides[1]->background);
     }
 
     public function testDeckEffectPaintsOnASlideWithoutItsOwn(): void
     {
         $svg = $this->render([
             'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
-            'background' => 'poly-grid',
+            'background' => 'dots',
             'slides' => [['title' => 'Inherits the deck effect']],
         ]);
 
-        self::assertStringContainsString('rp-grid-0', $svg, 'the deck effect paints on a slide with no override');
+        self::assertStringContainsString('rp-pat-dots-0', $svg, 'the deck effect paints on a slide with no override');
     }
 
     public function testSlideEffectReplacesTheDeckEffect(): void
     {
+        // A pattern deck effect overridden by a filter effect: the slide keeps only
+        // its own layer, so the deck's pattern must be gone entirely.
         $svg = $this->render([
             'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
-            'background' => 'poly-grid',
-            'slides' => [['title' => 'Overrides', 'background' => 'blobs']],
+            'background' => 'dots',
+            'slides' => [['title' => 'Overrides', 'background' => 'paper']],
         ]);
 
-        self::assertStringContainsString('rp-blob-0', $svg);
-        self::assertStringNotContainsString('rp-grid-0', $svg, 'the slide override replaces the deck effect');
+        self::assertStringContainsString('rp-paper-0', $svg);
+        self::assertStringNotContainsString('rp-pat-', $svg, 'the slide override replaces the deck effect');
     }
 
     public function testExplicitNoneSuppressesTheInheritedDeckEffect(): void
     {
         $svg = $this->render([
             'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
-            'background' => 'blobs',
+            'background' => 'dots',
             'slides' => [['title' => 'Bare', 'background' => 'none']],
         ]);
 
-        self::assertStringNotContainsString('rp-blob-', $svg, 'an explicit none overrides the deck effect to nothing');
+        self::assertStringNotContainsString('rp-pat-', $svg, 'an explicit none overrides the deck effect to nothing');
     }
 
     public function testEffectPreviewIsSelfContainedSvgPaintingTheChosenEffect(): void
     {
-        $svg = $this->renderer()->effectPreview('blobs');
+        $svg = $this->renderer()->effectPreview('dots');
 
         $doc = new DOMDocument();
         self::assertTrue($doc->loadXML($svg), 'the preview is well-formed SVG');
         self::assertStringContainsString('viewBox="0 0 200 250"', $svg);
-        self::assertStringContainsString('rp-blob-', $svg, 'the chosen effect is painted');
+        self::assertStringContainsString('rp-pat-', $svg, 'the chosen effect is painted');
         self::assertStringContainsString('fill="#1e293b"', $svg, 'over a flat slate thumbnail background, never a violet demo fill');
     }
 
@@ -95,7 +97,7 @@ final class BackgroundEffectTest extends KernelTestCase
 
         $doc = new DOMDocument();
         self::assertTrue($doc->loadXML($svg));
-        self::assertStringNotContainsString('rp-blob-', $svg);
-        self::assertStringNotContainsString('<circle', $svg);
+        self::assertStringNotContainsString('rp-pat-', $svg);
+        self::assertStringNotContainsString('<pattern', $svg);
     }
 }

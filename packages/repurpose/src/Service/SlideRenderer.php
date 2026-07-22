@@ -33,6 +33,7 @@ final readonly class SlideRenderer
         private TextLayout $textLayout,
         private SlideGeometry $geometry,
         private MediaResolver $media,
+        private BackgroundEffectRegistry $effects,
     ) {
     }
 
@@ -391,62 +392,84 @@ final readonly class SlideRenderer
     }
 
     /**
-     * A deck-wide decorative layer, authored on a `total × width` canvas and shown
-     * through the frame window at `-index × width` so a shape resumes across slides.
+     * A deck-wide decorative layer. Dispatches on the effect's kind: a seamless
+     * `pattern` tile, hand-drawn `doodle` scrawls, or an SVG `filter` (grain).
+     * Unknown keys paint nothing.
      */
     private function renderEffect(string $effect, int $index, int $width, int $height, int $total): string
     {
-        if ('none' === $effect) {
+        $meta = $this->effects->get($effect);
+        if (null === $meta) {
             return '';
         }
 
-        if ('paper' === $effect) {
-            // 0.12: strong enough to read as grain at social-post sizes (0.05
-            // was invisible once the slide was scaled down in a feed).
-            return '<filter id="rp-paper-'.$index.'"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>'
-                .'<feColorMatrix type="saturate" values="0"/></filter>'
-                .'<rect width="'.$width.'" height="'.$height.'" filter="url(#rp-paper-'.$index.')" opacity="0.12"/>';
+        $pattern = $this->effects->pattern($effect);
+        if (null !== $pattern) {
+            return $this->renderPattern($pattern, $effect, $index, $width, $height);
         }
 
-        if ('poly-grid' === $effect) {
-            $cell = round($width * 0.06);
+        return match ($meta['type']) {
+            'doodle' => $this->renderDoodles($index, $width, $height, $total),
+            'filter' => $this->renderGrain($index, $width, $height),
+            default => '',
+        };
+    }
 
-            return '<defs><pattern id="rp-grid-'.$index.'" width="'.$cell.'" height="'.$cell.'" patternUnits="userSpaceOnUse" patternTransform="translate('.$this->n(-$index * $width).' 0)">'
-                .'<path d="M '.$cell.' 0 L 0 0 0 '.$cell.'" fill="none" stroke="#fff" stroke-opacity="0.12" stroke-width="1.5"/></pattern></defs>'
-                .'<rect width="'.$width.'" height="'.$height.'" fill="url(#rp-grid-'.$index.')"/>';
-        }
+    /**
+     * A seamless Pattern Monster tile as a deck-wide `<pattern>`. The tile is scaled
+     * to `scale × slideWidth` so density reads the same at any size, tinted flat
+     * white at low opacity so it works over any palette, and shifted by `-index ×
+     * width` so the tiling lines up across a swipe. The `<pattern>` id is namespaced
+     * by the effect key: the studio's picker renders every effect's thumbnail as a
+     * separate inline SVG on one page, so a bare `rp-pat-{index}` would collide and
+     * every tile would resolve `url()` to the first pattern in the document.
+     *
+     * @param array{mode: string, tile: array{0: float, 1: float}, scale: float, stroke: float, opacity: float, paths: list<string>} $pattern
+     */
+    private function renderPattern(array $pattern, string $key, int $index, int $width, int $height): string
+    {
+        [$tileW, $tileH] = $pattern['tile'];
+        $s = $width * $pattern['scale'] / $tileW;
+        $opacity = $this->n($pattern['opacity']);
+        $strokeWidth = $this->n($pattern['stroke']);
+        $id = 'rp-pat-'.$key.'-'.$index;
 
-        // blobs / bubbles / sketchy: shapes spread across the whole deck, windowed per slide.
-        $defs = '';
-        if ('blobs' === $effect) {
-            // A white→transparent radial fade reads as a soft glowing orb on any
-            // palette — richer than a flat ellipse, still tint-free (no per-palette art).
-            $defs = '<defs><radialGradient id="rp-blob-'.$index.'">'
-                .'<stop offset="0" stop-color="#fff" stop-opacity="0.17"/>'
-                .'<stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>';
-        }
+        $paint = match ($pattern['mode']) {
+            'fill' => 'fill="#fff" fill-opacity="'.$opacity.'"',
+            'stroke-join' => 'fill="none" stroke="#fff" stroke-opacity="'.$opacity.'" stroke-width="'.$strokeWidth.'" stroke-linecap="round" stroke-linejoin="round"',
+            default => 'fill="none" stroke="#fff" stroke-opacity="'.$opacity.'" stroke-width="'.$strokeWidth.'"',
+        };
 
+        return '<defs><pattern id="'.$id.'" width="'.$this->n($tileW * $s).'" height="'.$this->n($tileH * $s).'" '
+            .'patternUnits="userSpaceOnUse" patternTransform="translate('.$this->n(-$index * $width).' 0)">'
+            .'<g transform="scale('.$this->n($s).')" '.$paint.'>'.implode('', $pattern['paths']).'</g></pattern></defs>'
+            .'<rect width="'.$width.'" height="'.$height.'" fill="url(#'.$id.')"/>';
+    }
+
+    /**
+     * Casual, marker-drawn doodles — arrows and a loop — spread across the whole
+     * deck and windowed through the frame at `-index × width`, so a scrawl started
+     * on one slide continues onto the next.
+     */
+    private function renderDoodles(int $index, int $width, int $height, int $total): string
+    {
         $shapes = '';
         for ($i = 0; $i <= $total; ++$i) {
             $cx = $i * $width + ($i % 2) * $width * 0.5;
             $cy = ($i % 3) * $height * 0.38 + $height * 0.1;
-            if ('sketchy' === $effect) {
-                // Casual, marker-drawn doodles — arrows and a loop — cycled per position.
-                $shapes .= $this->sketchDoodle($i % 3, $cx, $cy, $width);
-            } elseif ('bubbles' === $effect) {
-                // Concentric rings plus a couple of faintly-filled bubbles — deterministic per i.
-                $shapes .= '<circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($width * 0.17).'" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="'.$this->n($width * 0.006).'"/>'
-                    .'<circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($width * 0.11).'" fill="#fff" fill-opacity="0.05"/>'
-                    .'<circle cx="'.$this->n($cx + $width * 0.16).'" cy="'.$this->n($cy + $height * 0.07).'" r="'.$this->n($width * 0.07).'" fill="none" stroke="#fff" stroke-opacity="0.14" stroke-width="'.$this->n($width * 0.005).'"/>'
-                    .'<circle cx="'.$this->n($cx - $width * 0.12).'" cy="'.$this->n($cy - $height * 0.06).'" r="'.$this->n($width * 0.05).'" fill="#fff" fill-opacity="0.06"/>';
-            } else {
-                // blobs: two overlapping soft orbs of varied size.
-                $shapes .= '<circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($width * 0.4).'" fill="url(#rp-blob-'.$index.')"/>'
-                    .'<circle cx="'.$this->n($cx + $width * 0.24).'" cy="'.$this->n($cy + $height * 0.18).'" r="'.$this->n($width * 0.26).'" fill="url(#rp-blob-'.$index.')"/>';
-            }
+            $shapes .= $this->sketchDoodle($i % 3, $cx, $cy, $width);
         }
 
-        return $defs.'<g clip-path="url(#frame-'.$index.')"><g transform="translate('.$this->n(-$index * $width).' 0)">'.$shapes.'</g></g>';
+        return '<g clip-path="url(#frame-'.$index.')"><g transform="translate('.$this->n(-$index * $width).' 0)">'.$shapes.'</g></g>';
+    }
+
+    private function renderGrain(int $index, int $width, int $height): string
+    {
+        // 0.12: strong enough to read as grain at social-post sizes (0.05 was
+        // invisible once the slide was scaled down in a feed).
+        return '<filter id="rp-paper-'.$index.'"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>'
+            .'<feColorMatrix type="saturate" values="0"/></filter>'
+            .'<rect width="'.$width.'" height="'.$height.'" filter="url(#rp-paper-'.$index.')" opacity="0.12"/>';
     }
 
     /**

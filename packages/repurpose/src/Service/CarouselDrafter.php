@@ -57,6 +57,7 @@ final readonly class CarouselDrafter
             'format' => $format,
             'status' => 'draft',
             'counter' => ['style' => 'dots', 'align' => 'right'],
+            'background' => 'dots',
             'slides' => $slides,
         ];
     }
@@ -76,7 +77,6 @@ final readonly class CarouselDrafter
         if (null !== $mainImage) {
             $slide['image'] = ['media' => $mainImage, 'focusX' => 0.5, 'focusY' => 0.4, 'zoom' => 1.05];
             $slide['overlay'] = 0.45;
-            $slide['background'] = 'blobs';
         }
 
         return $slide;
@@ -94,7 +94,6 @@ final readonly class CarouselDrafter
             'layout' => null !== $image ? 'bottom' : 'center',
             'align' => null !== $image ? 'left' : 'center',
             'title' => $section['title'],
-            'background' => 'blobs',
         ];
 
         if ('' !== $section['text']) {
@@ -124,7 +123,6 @@ final readonly class CarouselDrafter
             'align' => 'center',
             'tagline' => $this->translator->trans('repurpose.draft.ctaTagline', [], 'messages', $locale),
             'title' => $this->translator->trans('repurpose.draft.ctaTitle', [], 'messages', $locale),
-            'background' => 'blobs',
         ];
     }
 

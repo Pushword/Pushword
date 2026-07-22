@@ -308,14 +308,15 @@ class AppFixtures extends Fixture
             'fontPairing' => 'playfair-chivo',
             'palette' => ['bg' => '#0b1120', 'text' => '#f8fafc', 'accent' => '#38bdf8'],
             'counter' => ['style' => 'dots', 'align' => 'right'],
+            'background' => 'waves',
             'creator' => 'robin',
             'creatorOnSlides' => 'intro-outro',
             'caption' => 'Turn any article into a scroll-stopping carousel — rendered server-side, pixel-exact.',
             'hashtags' => ['pushword', 'contentmarketing', 'carousel'],
             'slides' => [
-                ['layout' => 'bottom', 'align' => 'left', 'tagline' => 'Repurpose', 'title' => 'Turn your article into a scroll-stopping carousel', 'paragraph' => 'Server-side SVG, pixel-exact text, focal-point crops.', 'swipe' => true, 'background' => 'blobs', 'overlay' => 0.45, 'image' => ['media' => '1.jpg', 'focusX' => 0.5, 'focusY' => 0.35, 'zoom' => 1.1]],
-                ['layout' => 'center', 'align' => 'center', 'title' => 'One spec, every network', 'paragraph' => 'LinkedIn, Instagram, Pinterest — the same JSON, re-cropped per format.', 'background' => 'blobs'],
-                ['layout' => 'bottom', 'align' => 'left', 'tagline' => 'Your move', 'title' => 'Draft, validate, export', 'paragraph' => 'An agent writes it, you nudge it, the studio exports the PNGs.', 'background' => 'blobs', 'overlay' => 0.5, 'image' => ['media' => '2.jpg', 'focusX' => 0.5, 'focusY' => 0.5, 'zoom' => 1.0]],
+                ['layout' => 'bottom', 'align' => 'left', 'tagline' => 'Repurpose', 'title' => 'Turn your article into a scroll-stopping carousel', 'paragraph' => 'Server-side SVG, pixel-exact text, focal-point crops.', 'swipe' => true, 'overlay' => 0.45, 'image' => ['media' => '1.jpg', 'focusX' => 0.5, 'focusY' => 0.35, 'zoom' => 1.1]],
+                ['layout' => 'center', 'align' => 'center', 'title' => 'One spec, every network', 'paragraph' => 'LinkedIn, Instagram, Pinterest — the same JSON, re-cropped per format.'],
+                ['layout' => 'bottom', 'align' => 'left', 'tagline' => 'Your move', 'title' => 'Draft, validate, export', 'paragraph' => 'An agent writes it, you nudge it, the studio exports the PNGs.', 'overlay' => 0.5, 'image' => ['media' => '2.jpg', 'focusX' => 0.5, 'focusY' => 0.5, 'zoom' => 1.0]],
             ],
         ];
 
