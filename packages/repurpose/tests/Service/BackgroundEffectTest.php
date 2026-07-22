@@ -86,7 +86,7 @@ final class BackgroundEffectTest extends KernelTestCase
         self::assertTrue($doc->loadXML($svg), 'the preview is well-formed SVG');
         self::assertStringContainsString('viewBox="0 0 200 250"', $svg);
         self::assertStringContainsString('rp-blob-', $svg, 'the chosen effect is painted');
-        self::assertStringContainsString('rp-thumb', $svg, 'over the slate thumbnail background, never a violet demo fill');
+        self::assertStringContainsString('fill="#1e293b"', $svg, 'over a flat slate thumbnail background, never a violet demo fill');
     }
 
     public function testEffectPreviewForNonePaintsOnlyTheBackground(): void

@@ -378,12 +378,14 @@ final readonly class SlideRenderer
      */
     public function effectPreview(string $effect, int $width = 200, int $height = 250): string
     {
-        // A dark slate gradient like a real slide's default background, so the white
-        // effect reads exactly as it will on a deck (and never as a violet demo tile).
+        // A flat dark-slate fill like a real slide, so the white effect reads as it
+        // will on a deck (never a violet demo tile). A *flat* fill on purpose: these
+        // previews are self-contained SVGs rendered many times in one page, so a
+        // shared gradient id would collide (and break once the first instance lands
+        // in a collapsed/hidden panel Chrome won't resolve url() into).
         return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '.$width.' '.$height.'">'
-            .'<defs><clipPath id="frame-1"><rect width="'.$width.'" height="'.$height.'"/></clipPath>'
-            .'<linearGradient id="rp-thumb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#334155"/><stop offset="1" stop-color="#0f172a"/></linearGradient></defs>'
-            .'<rect width="'.$width.'" height="'.$height.'" fill="url(#rp-thumb)"/>'
+            .'<defs><clipPath id="frame-1"><rect width="'.$width.'" height="'.$height.'"/></clipPath></defs>'
+            .'<rect width="'.$width.'" height="'.$height.'" fill="#1e293b"/>'
             .$this->renderEffect($effect, 1, $width, $height, 2)
             .'</svg>';
     }
@@ -429,12 +431,8 @@ final readonly class SlideRenderer
             $cx = $i * $width + ($i % 2) * $width * 0.5;
             $cy = ($i % 3) * $height * 0.38 + $height * 0.1;
             if ('sketchy' === $effect) {
-                // A little flock of hand-drawn direction strokes fanned around the point.
-                for ($k = -1; $k <= 1; ++$k) {
-                    $y = $cy + $k * $height * 0.055;
-                    $shapes .= '<path d="M '.$this->n($cx).' '.$this->n($y).' q '.$this->n($width * 0.16).' '.$this->n(-$height * 0.045).' '.$this->n($width * 0.32).' 0" '
-                        .'fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="'.$this->n($width * 0.007).'" stroke-linecap="round"/>';
-                }
+                // Casual, marker-drawn doodles — arrows and a loop — cycled per position.
+                $shapes .= $this->sketchDoodle($i % 3, $cx, $cy, $width);
             } elseif ('bubbles' === $effect) {
                 // Concentric rings plus a couple of faintly-filled bubbles — deterministic per i.
                 $shapes .= '<circle cx="'.$this->n($cx).'" cy="'.$this->n($cy).'" r="'.$this->n($width * 0.17).'" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="'.$this->n($width * 0.006).'"/>'
@@ -449,6 +447,34 @@ final readonly class SlideRenderer
         }
 
         return $defs.'<g clip-path="url(#frame-'.$index.')"><g transform="translate('.$this->n(-$index * $width).' 0)">'.$shapes.'</g></g>';
+    }
+
+    /**
+     * One hand-drawn "casual" doodle for the sketchy effect — a curved arrow, an
+     * S-arrow, or a loop-into-arrow — placed at (cx, cy) and scaled by the slide
+     * width. White stroke at low opacity with round joins for a felt-tip feel.
+     */
+    private function sketchDoodle(int $variant, float $cx, float $cy, float $s): string
+    {
+        $n = fn (float $v): string => $this->n($v);
+        $stroke = 'fill="none" stroke="#fff" stroke-opacity="0.2" stroke-width="'.$n($s * 0.008).'" stroke-linecap="round" stroke-linejoin="round"';
+
+        // Arrowhead: two barbs pointing back from the tip (doodles travel rightward).
+        $head = static fn (float $tx, float $ty): string => 'M '.$n($tx - $s * 0.07).' '.$n($ty - $s * 0.05)
+            .' L '.$n($tx).' '.$n($ty).' L '.$n($tx - $s * 0.06).' '.$n($ty + $s * 0.035);
+
+        $tipX = $cx + $s * 0.3;
+        $tipY = $cy - $s * 0.02;
+
+        return match ($variant) {
+            0 => '<path d="M '.$n($cx).' '.$n($cy).' Q '.$n($cx + $s * 0.13).' '.$n($cy - $s * 0.12).' '.$n($tipX).' '.$n($tipY).' '.$head($tipX, $tipY).'" '.$stroke.'/>',
+            1 => '<path d="M '.$n($cx).' '.$n($cy).' C '.$n($cx + $s * 0.08).' '.$n($cy - $s * 0.1).' '.$n($cx + $s * 0.17).' '.$n($cy + $s * 0.06).' '.$n($tipX).' '.$n($tipY).' '.$head($tipX, $tipY).'" '.$stroke.'/>',
+            default => '<path d="M '.$n($cx).' '.$n($cy)
+                .' c '.$n($s * 0.03).' '.$n(-$s * 0.11).' '.$n($s * 0.15).' '.$n(-$s * 0.1).' '.$n($s * 0.11).' 0'
+                .' c '.$n(-$s * 0.03).' '.$n($s * 0.07).' '.$n(-$s * 0.1).' '.$n($s * 0.01).' '.$n($s * 0.04).' '.$n(-$s * 0.05)
+                .' Q '.$n($cx + $s * 0.24).' '.$n($cy - $s * 0.09).' '.$n($cx + $s * 0.32).' '.$n($cy - $s * 0.01)
+                .' '.$head($cx + $s * 0.32, $cy - $s * 0.01).'" '.$stroke.'/>',
+        };
     }
 
     private function color(Carousel $carousel, Slide $slide, string $role, string $default): string
