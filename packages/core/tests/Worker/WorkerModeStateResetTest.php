@@ -7,6 +7,8 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Cache\PageCacheSuppressor;
+use Pushword\Core\Component\EntityFilter\ManagerPool;
+use Pushword\Core\Content\ContentPipelineFactory;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\EventListener\PageListener;
@@ -15,6 +17,7 @@ use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Twig\ContentExtension;
 use ReflectionObject;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -214,6 +217,59 @@ final class WorkerModeStateResetTest extends KernelTestCase
         self::assertTrue(
             $router->mayUseCustomPath('a-custom-host.dev'),
             'worker mode: a static regeneration must not leave links stripped of their /{host}/ prefix for the next request',
+        );
+    }
+
+    /**
+     * The render path memoizes by page id at three independent levels, and every one
+     * of them also pins the Page instance it was built from. Companion to
+     * WorkerModeCrossRequestTest's end-to-end body-edit test: this one pins each
+     * service individually, so removing any single reset() is caught here even when
+     * another layer would mask it over HTTP (ManagerPool serves the legacy
+     * `pw()`/filter paths, which the body-edit test does not exercise).
+     */
+    public function testRenderMemosDoNotSurviveTheWorkerBoundary(): void
+    {
+        self::bootKernel();
+
+        $page = $this->pageRepo()->findOneBy(['slug' => 'homepage']);
+        self::assertNotNull($page, 'fixture page with slug=homepage is required');
+
+        $contentExtension = self::getContainer()->get(ContentExtension::class);
+        $pipelineFactory = self::getContainer()->get(ContentPipelineFactory::class);
+        $managerPool = self::getContainer()->get(ManagerPool::class);
+
+        // --- Request A: a render warms all three memos. ---
+        $split = $contentExtension->mainContentSplit($page);
+        $pipeline = $pipelineFactory->get($page);
+        $manager = $managerPool->getManager($page);
+
+        // Within one request the memo must still memoize — a reset() that also
+        // defeated the per-request cache would re-run the whole filter pipeline on
+        // every call. This keeps the assertions below honest.
+        self::assertSame($split, $contentExtension->mainContentSplit($page));
+        self::assertSame($pipeline, $pipelineFactory->get($page));
+        self::assertSame($manager, $managerPool->getManager($page));
+
+        // --- The worker boundary. ---
+        $this->simulateWorkerRequestBoundary();
+
+        // --- Request B: each memo must be rebuilt. A survivor would keep serving the
+        // body it processed in request A for this id, for the worker's whole life. ---
+        self::assertNotSame(
+            $split,
+            $contentExtension->mainContentSplit($page),
+            'worker mode: the split body must not be memoized across requests',
+        );
+        self::assertNotSame(
+            $pipeline,
+            $pipelineFactory->get($page),
+            'worker mode: the content pipeline (and its filtered properties) must not be memoized across requests',
+        );
+        self::assertNotSame(
+            $manager,
+            $managerPool->getManager($page),
+            'worker mode: the legacy filter manager must not be memoized across requests',
         );
     }
 

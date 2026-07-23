@@ -2,7 +2,12 @@
 
 namespace Pushword\Core\Tests\Worker;
 
+use DateTime;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Cache\PageCacheSuppressor;
+use Pushword\Core\Entity\Page;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -63,6 +68,58 @@ final class WorkerModeCrossRequestTest extends KernelTestCase
         $enAgainBody = (string) $enAgain->getContent();
         self::assertSame('en', $this->lang($enAgainBody), 'locale from a previous request must not leak across the worker boundary');
         self::assertStringContainsString('Welcome to Pushword', $enAgainBody);
+    }
+
+    /**
+     * A body edit landing between two requests served by the same worker must be
+     * visible to the second one.
+     *
+     * The render path memoizes by page id at three levels — ContentExtension
+     * (the split body), ContentPipelineFactory (the filtered properties) and
+     * ManagerPool (the legacy manager) — and each memo short-circuits before the
+     * content-hash markdown pool, so that pool's self-invalidation never gets a
+     * chance to run. Under PHP-FPM the process dies between requests and none of
+     * it can go stale; under a worker all three survive, and a page rendered once
+     * would keep serving that exact body for its id until the worker restarts —
+     * no TTL, no recovery — however the edit arrived (api PUT, admin save,
+     * pw:flat:sync).
+     */
+    public function testBodyEditIsVisibleToTheNextRequestOnTheSameWorker(): void
+    {
+        self::bootKernel();
+
+        $slug = 'worker-stale-body-probe';
+        $url = 'https://localhost.dev/'.$slug;
+
+        $this->removeProbePage($slug);
+        $this->writeProbePage($slug, 'AlphaBodyMarker');
+
+        try {
+            // --- Request A: warms every per-page-id memo for this id. ---
+            $first = $this->workerHandle($url);
+            self::assertSame(Response::HTTP_OK, $first->getStatusCode());
+            self::assertStringContainsString('AlphaBodyMarker', (string) $first->getContent());
+
+            // --- Between requests: the body is edited, exactly as an api PUT or an
+            //     admin save would. The worker is not restarted. ---
+            $this->writeProbePage($slug, 'BravoBodyMarker');
+
+            // --- Request B: the same worker serves the page again. ---
+            $second = (string) $this->workerHandle($url)->getContent();
+
+            self::assertStringContainsString(
+                'BravoBodyMarker',
+                $second,
+                'worker mode: the edited body must be served by the next request, not the memoized one',
+            );
+            self::assertStringNotContainsString(
+                'AlphaBodyMarker',
+                $second,
+                'worker mode: a page rendered once must not keep serving its old body after the content changes',
+            );
+        } finally {
+            $this->removeProbePage($slug);
+        }
     }
 
     public function testMemoryStaysStableAcrossManyMixedRequests(): void
@@ -134,6 +191,53 @@ final class WorkerModeCrossRequestTest extends KernelTestCase
         $kernel->getContainer()->get('services_resetter')->reset();
 
         return $response;
+    }
+
+    /**
+     * Create the probe page, or rewrite its body if it already exists. Cache
+     * suppression keeps the save from triggering the OG-image/static side effects,
+     * which are irrelevant here and slow.
+     */
+    private function writeProbePage(string $slug, string $marker): void
+    {
+        self::getContainer()->get(PageCacheSuppressor::class)->suppress(function () use ($slug, $marker): void {
+            $em = $this->em();
+            $page = $em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
+
+            if (! $page instanceof Page) {
+                $page = new Page();
+                $page->setSlug($slug);
+                $page->host = 'localhost.dev';
+                $page->locale = 'en';
+                $page->createdAt = new DateTime();
+                $page->publishedAt = new DateTime();
+                $em->persist($page);
+            }
+
+            $page->setH1('Worker stale body probe');
+            $page->setMainContent($marker);
+            $page->updatedAt = new DateTime();
+
+            $em->flush();
+        });
+    }
+
+    private function removeProbePage(string $slug): void
+    {
+        $em = $this->em();
+        $existing = $em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
+        if ($existing instanceof Page) {
+            $em->remove($existing);
+            $em->flush();
+        }
+    }
+
+    private function em(): EntityManagerInterface
+    {
+        /** @var EntityManager $em */
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        return $em;
     }
 
     private function lang(string $body): string

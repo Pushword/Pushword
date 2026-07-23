@@ -6,8 +6,9 @@ use Exception;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
-final class ManagerPool
+final class ManagerPool implements ResetInterface
 {
     public function __construct(
         public SiteRegistry $apps,
@@ -18,6 +19,16 @@ final class ManagerPool
 
     /** @var array<(string|int), Manager> */
     private array $entityFilterManagers = [];
+
+    /**
+     * Worker-mode safety (kernel.reset): same leak as ContentPipelineFactory — each
+     * Manager is keyed by page id and caches filtered properties for the Page instance
+     * it was built from, which the next request replaces with a freshly loaded entity.
+     */
+    public function reset(): void
+    {
+        $this->entityFilterManagers = [];
+    }
 
     public function getManager(Page $page): Manager
     {

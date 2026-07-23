@@ -8,9 +8,10 @@ use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\Service\ResetInterface;
 use Twig\Attribute\AsTwigFunction;
 
-final class ContentPipelineFactory
+final class ContentPipelineFactory implements ResetInterface
 {
     /** @var array<(string|int), ContentPipeline> */
     private array $pipelines = [];
@@ -21,6 +22,18 @@ final class ContentPipelineFactory
         private readonly FilterRegistry $filterRegistry,
         private readonly ManagerPool $legacyManagerPool,
     ) {
+    }
+
+    /**
+     * Worker-mode safety (kernel.reset): each pipeline is keyed by page id and holds
+     * both its filtered property values and the Page it was built from, which the next
+     * request re-loads as a new entity. A survivor keeps serving the previous request's
+     * body — clearing ContentExtension's memo alone does not help, since it lands right
+     * back here — and pins every Page ever rendered for the worker's lifetime.
+     */
+    public function reset(): void
+    {
+        $this->pipelines = [];
     }
 
     public function get(Page $page): ContentPipeline
