@@ -667,7 +667,7 @@ final class ConversationFlatTest extends KernelTestCase
         $message->setAuthorEmail($email);
         $message->setAuthorName($name);
         $message->setReferring('/test-page');
-        $message->setAuthorIpRaw('127.0.0.1');
+        $message->setAuthorIpRaw('176.190.1.42'); // above 128.0.0.0: overflows a signed INT column
         $message->setPublishedAt(new DateTime());
 
         return $message;
@@ -685,7 +685,7 @@ final class ConversationFlatTest extends KernelTestCase
         $review->setAuthorEmail($email);
         $review->setAuthorName($name);
         $review->setReferring('/test-page');
-        $review->setAuthorIpRaw('127.0.0.1');
+        $review->setAuthorIpRaw('176.190.1.42'); // above 128.0.0.0: overflows a signed INT column
         $review->setRating($rating);
         $review->setPublishedAt(new DateTime());
 

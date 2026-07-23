@@ -48,7 +48,11 @@ class Message implements Stringable, Taggable, IdInterface
     #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]
     protected ?string $authorEmail = '';
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    /**
+     * ip2long() spans 0 to 4294967295, which overflows a signed 32-bit INT
+     * (MySQL/MariaDB) for every IPv4 in the upper half of the space (>= 128.0.0.0).
+     */
+    #[ORM\Column(type: Types::BIGINT, nullable: true)]
     protected ?int $authorIp = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -184,7 +188,6 @@ class Message implements Stringable, Taggable, IdInterface
             return $this;
         }
 
-        // Valide que c'est une IP valide avant d'appeler anonymize
         if (false === filter_var($trimmed, \FILTER_VALIDATE_IP)) {
             return $this;
         }
@@ -199,9 +202,9 @@ class Message implements Stringable, Taggable, IdInterface
         return $this->setAuthorIp($ipLong);
     }
 
-    public function getAuthorIpRaw(): bool|string
+    public function getAuthorIpRaw(): string
     {
-        return long2ip((int) $this->getAuthorIp());
+        return long2ip($this->authorIp ?? 0);
     }
 
     public function __toString(): string

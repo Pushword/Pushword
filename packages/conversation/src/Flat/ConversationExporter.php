@@ -184,7 +184,7 @@ final class ConversationExporter
         return match ($column) {
             'id' => (string) ($message->id ?? ''),
             'type' => $message::class,
-            'authorIp' => (string) ($message->getAuthorIpRaw() ?: ''),
+            'authorIp' => $message->getAuthorIpRaw(),
             'tags' => implode('|', $message->getTagList()),
             'mediaList' => $this->getMediaListValue($message),
             'publishedAt', 'createdAt', 'updatedAt' => $this->getDateValue($message, $column),
