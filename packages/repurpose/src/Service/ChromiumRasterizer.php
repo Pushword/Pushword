@@ -6,6 +6,7 @@ use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use Symfony\Component\Process\Exception\ExceptionInterface as ProcessException;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
@@ -24,6 +25,7 @@ final class ChromiumRasterizer
 
     public function __construct(
         private readonly ?string $chromiumBinary = null,
+        private readonly float $timeout = 60,
     ) {
     }
 
@@ -65,12 +67,18 @@ final class ChromiumRasterizer
                 '--window-size='.$width.','.$height,
                 '--screenshot='.$pngPath,
                 'file://'.$svgPath,
-            ], timeout: 60);
+            ], timeout: $this->timeout);
             $process->run();
 
             $png = @file_get_contents($pngPath);
 
             return false === $png || '' === $png ? null : $png;
+        } catch (ProcessException) {
+            // A Chromium that hangs past the timeout (or cannot be started at all)
+            // throws instead of exiting — seen on CI runners. The caller documents a
+            // 501 pointing back at the per-slide SVGs for "no preview available", so
+            // a stuck browser must degrade to that, never surface as a 500.
+            return null;
         } finally {
             $this->cleanup($dir);
         }
