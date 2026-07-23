@@ -22,6 +22,8 @@ use Pushword\Repurpose\Service\NetworkRegistry;
 use Pushword\Repurpose\Service\PinImageStore;
 use Pushword\Repurpose\Service\PinterestShare;
 use Pushword\Repurpose\Service\SlideRenderer;
+use Pushword\Repurpose\Service\VideoBuilder;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -48,9 +50,11 @@ final class RepurposeStudioController extends AbstractController
         private readonly CreatorAdvisor $creatorAdvisor,
         private readonly CreatorResolverInterface $creatorResolver,
         private readonly ExportBuilder $exportBuilder,
+        private readonly VideoBuilder $videoBuilder,
         private readonly PinImageStore $pinImageStore,
         private readonly PinterestShare $pinterestShare,
         private readonly NetworkRegistry $networks,
+        private readonly FormatRegistry $formats,
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $entityManager,
         private readonly SiteRegistry $siteRegistry,
@@ -241,14 +245,7 @@ final class RepurposeStudioController extends AbstractController
             return new JsonResponse(['error' => 'Expected {slides: [dataURL, …]} or {svgs: [svg, …]}.'], Response::HTTP_BAD_REQUEST);
         }
 
-        $pngs = [];
-        foreach ($data['slides'] as $dataUrl) {
-            if (\is_string($dataUrl)) {
-                $pngs[] = base64_decode((string) preg_replace('#^data:image/\w+;base64,#', '', $dataUrl), true) ?: '';
-            }
-        }
-
-        $pngs = array_values(array_filter($pngs, static fn (string $p): bool => '' !== $p));
+        $pngs = $this->decodeSlidePngs($data['slides']);
 
         $withPdf = 'pdf' === ($this->networks->get($carousel->network)['export'] ?? 'images');
 
@@ -263,6 +260,71 @@ final class RepurposeStudioController extends AbstractController
             'Content-Type' => 'application/zip',
             'Content-Disposition' => 'attachment; filename="'.$filename.'.zip"',
         ]);
+    }
+
+    /**
+     * Encodes the browser-rasterised slide PNGs into a single `.mp4` slideshow at
+     * the carousel's output size — a shareable video (TikTok, Reels, Shorts…) from
+     * the same frames the .zip export ships. ffmpeg is the site's own dependency:
+     * without it this returns a 503 telling the user to install it, while every
+     * other export keeps working.
+     */
+    #[Route('/admin/repurpose/studio/{id}/export-video', name: 'repurpose_studio_export_video', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function exportVideo(int $id, Request $request): Response
+    {
+        $post = $this->loadPost($id);
+        $carousel = $this->factory->fromArray($post->getSpec());
+
+        // Validate the request shape before reporting a server capability: a
+        // malformed body is a 400 whether or not ffmpeg is installed.
+        $data = json_decode($request->getContent(), true);
+        if (! \is_array($data) || ! isset($data['slides']) || ! \is_array($data['slides'])) {
+            return new JsonResponse(['error' => 'Expected {slides: [dataURL, …]}.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $pngs = $this->decodeSlidePngs($data['slides']);
+        if ([] === $pngs) {
+            return new JsonResponse(['error' => 'No slides to encode.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (! $this->videoBuilder->available()) {
+            return new JsonResponse([
+                'error' => 'Video export needs ffmpeg on the server. Install it (e.g. `apt install ffmpeg`, `brew install ffmpeg`) or set repurpose.ffmpeg_binary, then retry — the .zip and .svg exports work without it.',
+            ], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
+
+        $format = $carousel->format;
+
+        try {
+            $mp4 = $this->videoBuilder->build($pngs, $this->formats->width($format), $this->formats->height($format));
+        } catch (RuntimeException $runtimeException) {
+            return new JsonResponse(['error' => 'The video could not be encoded: '.$runtimeException->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return new Response($mp4, Response::HTTP_OK, [
+            'Content-Type' => 'video/mp4',
+            'Content-Disposition' => 'attachment; filename="'.$this->slugFilename($post->getPage(), $carousel->network).'.mp4"',
+        ]);
+    }
+
+    /**
+     * Decode the browser-posted `data:image/…;base64,…` slide URLs into raw PNG
+     * bytes, dropping any that fail to decode. Shared by the .zip and .mp4 exports.
+     *
+     * @param array<mixed> $slides
+     *
+     * @return list<string>
+     */
+    private function decodeSlidePngs(array $slides): array
+    {
+        $pngs = [];
+        foreach ($slides as $dataUrl) {
+            if (\is_string($dataUrl)) {
+                $pngs[] = base64_decode((string) preg_replace('#^data:image/\w+;base64,#', '', $dataUrl), true) ?: '';
+            }
+        }
+
+        return array_values(array_filter($pngs, static fn (string $p): bool => '' !== $p));
     }
 
     /**

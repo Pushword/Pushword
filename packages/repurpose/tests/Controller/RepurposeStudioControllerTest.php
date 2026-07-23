@@ -7,6 +7,7 @@ use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\User;
 use Pushword\Repurpose\Entity\SocialPost;
+use Pushword\Repurpose\Service\VideoBuilder;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -335,6 +336,73 @@ final class RepurposeStudioControllerTest extends WebTestCase
         @unlink($tmp);
     }
 
+    public function testExportVideoReturnsAnMp4OrWarnsWhenFfmpegIsMissing(): void
+    {
+        $post = $this->persistPost();
+
+        $this->client->request(
+            Request::METHOD_POST,
+            '/admin/repurpose/studio/'.$post->id.'/export-video',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            (string) json_encode(['slides' => [$this->pngDataUrl(), $this->pngDataUrl()]]),
+        );
+
+        $response = $this->client->getResponse();
+        if (Response::HTTP_OK === $response->getStatusCode()) {
+            // ffmpeg on the host: a real MP4 (the 'ftyp' box sits at offset 4).
+            self::assertSame('video/mp4', $response->headers->get('Content-Type'));
+            self::assertStringContainsString('.mp4', (string) $response->headers->get('Content-Disposition'));
+            self::assertSame('ftyp', substr((string) $response->getContent(), 4, 4));
+        } else {
+            // No ffmpeg: an honest install hint, not a broken file.
+            self::assertSame(Response::HTTP_SERVICE_UNAVAILABLE, $response->getStatusCode());
+            self::assertStringContainsStringIgnoringCase('ffmpeg', (string) $response->getContent());
+        }
+    }
+
+    public function testExportVideoRejectsAMissingSlidesPayload(): void
+    {
+        $post = $this->persistPost();
+
+        // Request-shape errors are a 400 regardless of ffmpeg (validated first).
+        $this->postJson('/admin/repurpose/studio/'.$post->id.'/export-video', ['notSlides' => 1]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testExportVideoRejectsSlidesThatDecodeToNothing(): void
+    {
+        $post = $this->persistPost();
+
+        // A slide whose base64 payload cannot be decoded leaves nothing to encode.
+        $this->postJson('/admin/repurpose/studio/'.$post->id.'/export-video', ['slides' => ['data:image/png;base64,@@@@']]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testExportVideoWarnsWhenFfmpegIsUnavailable(): void
+    {
+        $post = $this->persistPost();
+
+        // Force the "no ffmpeg" branch on any host by pointing the builder at a
+        // binary that does not exist.
+        self::getContainer()->set(VideoBuilder::class, new VideoBuilder('/nonexistent/ffmpeg-binary'));
+
+        $this->client->request(
+            Request::METHOD_POST,
+            '/admin/repurpose/studio/'.$post->id.'/export-video',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            (string) json_encode(['slides' => [$this->pngDataUrl()]]),
+        );
+
+        self::assertSame(Response::HTTP_SERVICE_UNAVAILABLE, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsStringIgnoringCase('ffmpeg', (string) $this->client->getResponse()->getContent());
+    }
+
     public function testPinImageStoresAPublicPngAndReturnsAPinterestUrl(): void
     {
         $post = $this->persistPinterestPost();
@@ -373,6 +441,22 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $this->postJson('/admin/repurpose/studio/'.$post->id.'/pin-image', ['notPng' => 'x']);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+    }
+
+    /**
+     * A real PNG as a `data:` URL, as the studio's canvas rasteriser would POST it.
+     * ffmpeg upscales it to the carousel format — content is irrelevant, only that
+     * it decodes.
+     */
+    private function pngDataUrl(): string
+    {
+        $image = imagecreatetruecolor(16, 20);
+
+        ob_start();
+        imagepng($image);
+        $bytes = ob_get_clean();
+
+        return 'data:image/png;base64,'.base64_encode($bytes);
     }
 
     private function persistPost(): SocialPost

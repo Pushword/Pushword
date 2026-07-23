@@ -127,6 +127,10 @@
     ul.violations li { padding: .4rem .55rem; border-radius: 8px; background: #f8d7da; border: 1px solid #f1aeb5; }
     ul.violations code { color: var(--bad); }
 
+    .notice { display: flex; align-items: flex-start; gap: .5rem; font-size: .74rem; color: var(--warn); background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: .55rem .65rem; line-height: 1.4; }
+    .notice span { flex: 1; }
+    .notice .icon-btn { flex: 0 0 auto; width: 1.5rem; height: 1.5rem; }
+
     .actions { display: flex; gap: .6rem; }
     .actions .btn { flex: 1; }
     .hint { font-size: .72rem; color: var(--muted); margin: 0; line-height: 1.45; }
@@ -210,6 +214,7 @@
         preview: {{ path('repurpose_studio_preview', {id: post.id})|json_encode|raw }},
         save: {{ path('repurpose_studio_save', {id: post.id})|json_encode|raw }},
         export: {{ path('repurpose_studio_export', {id: post.id})|json_encode|raw }},
+        exportVideo: {{ path('repurpose_studio_export_video', {id: post.id})|json_encode|raw }},
         pinImage: {{ path('repurpose_studio_pin_image', {id: post.id})|json_encode|raw }},
         mediaIndex: {{ path('admin_media_index', {view: 'mosaic', pwMediaPicker: '1', pwMediaPickerFieldId: 'rp-media'})|json_encode|raw }},
         mediaUpload: {{ path('admin_media_new', {pwMediaPicker: '1', pwMediaPickerFieldId: 'rp-media'})|json_encode|raw }},
@@ -231,6 +236,7 @@
     </div>
     <button class="btn" type="button" @click="exportZip()" :disabled="exporting" x-text="exportLabel">Export .zip</button>
     <button class="btn" type="button" @click="exportSvg()" :disabled="exportingSvg" x-text="exportSvgLabel">Export .svg</button>
+    <button class="btn" type="button" @click="exportVideo()" :disabled="exportingVideo" x-text="exportVideoLabel">Export .mp4</button>
     <button class="btn" type="button" x-show="network === 'pinterest'" x-cloak @click="pinToPinterest()" :disabled="pinning" x-text="pinLabel">📌 Pin to Pinterest</button>
     <button class="btn primary" type="button" @click="save()" :disabled="saving" x-text="saveLabel">Save</button>
   </header>
@@ -254,6 +260,11 @@
       <div class="panel-head">
         <strong style="font-size:.8rem;">Editor</strong>
         <span class="live" :class="live.state" x-text="live.text"></span>
+      </div>
+
+      <div class="notice" x-show="notice" x-cloak>
+        <span x-text="notice"></span>
+        <button type="button" class="icon-btn" @click="notice = ''" aria-label="Dismiss">✕</button>
       </div>
 
       <ul class="violations" x-show="violations.length" x-cloak>

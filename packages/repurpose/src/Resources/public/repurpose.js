@@ -212,8 +212,11 @@
       exportLabel: 'Export .zip',
       exportingSvg: false,
       exportSvgLabel: 'Export .svg',
+      exportingVideo: false,
+      exportVideoLabel: 'Export .mp4',
       pinning: false,
       pinLabel: '📌 Pin to Pinterest',
+      notice: '',
       _timer: null,
       _sourceReady: false,
       _pickSlide: null,
@@ -814,6 +817,42 @@
           var self = this
           setTimeout(function () { self.exportSvgLabel = 'Export .svg' }, 2000)
           this.exportingSvg = false
+        }
+      },
+
+      // Video export: rasterise every slide to PNG (as the .zip export does) and
+      // post them for ffmpeg to stitch into an .mp4 slideshow. ffmpeg is the site's
+      // own dependency — a 503 comes back with an install hint, shown as a notice.
+      exportVideo: async function () {
+        var svgs = Array.prototype.slice.call(document.querySelectorAll('.slide svg'))
+        if (0 === svgs.length) {
+          return
+        }
+
+        this.exportingVideo = true
+        this.exportVideoLabel = 'Encoding…'
+        this.notice = ''
+        try {
+          var pngs = []
+          for (var i = 0; i < svgs.length; i++) {
+            pngs.push(await svgToPng(svgs[i]))
+          }
+          var response = await fetch(this.urls.exportVideo, jsonPost({ slides: pngs }))
+          if (response.ok) {
+            download(await response.blob(), this.filename + '.mp4')
+            this.exportVideoLabel = 'Downloaded ✓'
+          } else {
+            var body = await response.json().catch(function () { return {} })
+            this.notice = body.error || ('Video export failed (' + response.status + ')')
+            this.exportVideoLabel = 503 === response.status ? 'ffmpeg required' : 'Export failed'
+          }
+        } catch (error) {
+          console.error('[repurpose] video export failed', error)
+          this.exportVideoLabel = 'Export failed'
+        } finally {
+          var self = this
+          setTimeout(function () { self.exportVideoLabel = 'Export .mp4' }, 2500)
+          this.exportingVideo = false
         }
       },
 

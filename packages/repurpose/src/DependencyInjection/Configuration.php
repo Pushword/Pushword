@@ -19,6 +19,10 @@ class Configuration implements ConfigurationInterface
               ->defaultNull()
               ->info('Chromium/Chrome binary used to rasterise the preview contact sheet; null auto-detects from PATH.')
             ->end()
+            ->scalarNode('ffmpeg_binary')
+              ->defaultNull()
+              ->info('ffmpeg binary used to encode the slideshow video (.mp4) export; null auto-detects from PATH.')
+            ->end()
         ->end();
 
         return $treeBuilder;
