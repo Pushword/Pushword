@@ -560,19 +560,119 @@ final class PageApiControllerTest extends WebTestCase
         self::assertSame(404, $response->getStatusCode());
     }
 
-    public function testDeleteHardRemovesPageByDefault(): void
+    public function testDeleteWithoutRedirectToIsRejected(): void
     {
         [$host, $slug] = $this->createTestPage();
 
         $response = $this->request('DELETE', '/api/page/'.$host.'/'.$slug);
+        self::assertSame(400, $response->getStatusCode());
+
+        // Nothing was deleted: the page is still readable.
+        self::assertSame(200, $this->request('GET', '/api/page/'.$host.'/'.$slug)->getStatusCode());
+    }
+
+    public function testDeleteRejectsRelativeRedirectToAndSelfTarget(): void
+    {
+        [$host, $slug] = $this->createTestPage();
+
+        self::assertSame(400, $this->request('DELETE', '/api/page/'.$host.'/'.$slug, ['redirectTo' => 'somewhere'])->getStatusCode());
+        self::assertSame(400, $this->request('DELETE', '/api/page/'.$host.'/'.$slug, ['redirectTo' => '/'.$slug])->getStatusCode());
+        self::assertSame(400, $this->request('DELETE', '/api/page/'.$host.'/'.$slug, ['redirectTo' => '/elsewhere', 'code' => 200])->getStatusCode());
+
+        self::assertSame(200, $this->request('GET', '/api/page/'.$host.'/'.$slug)->getStatusCode());
+    }
+
+    public function testDeleteHardRemovesPageAndFoldsRedirectIntoDestination(): void
+    {
+        [$host, $slug] = $this->createTestPage();
+        $destinationSlug = 'destination-'.uniqid();
+        $this->request('POST', '/api/page/'.$host, [
+            'frontmatter' => ['slug' => $destinationSlug, 'h1' => 'Destination', 'locale' => 'en'],
+            'body' => 'Still here',
+        ]);
+        $this->createdPageIds[] = $this->lookupPageId($host, $destinationSlug);
+
+        $response = $this->request('DELETE', '/api/page/'.$host.'/'.$slug, ['redirectTo' => '/'.$destinationSlug]);
         self::assertSame(204, $response->getStatusCode());
 
         // Default strategy is hard delete: the row is gone, not just unpublished.
         $this->em->clear();
-        $page = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]);
-        self::assertNull($page);
-
+        self::assertNull($this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]));
         self::assertSame(404, $this->request('GET', '/api/page/'.$host.'/'.$slug)->getStatusCode());
+
+        // The old path keeps redirecting, carried by the destination page.
+        $destination = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $destinationSlug]);
+        self::assertInstanceOf(Page::class, $destination);
+        self::assertSame([$slug => 301], $destination->getRedirectFrom());
+    }
+
+    public function testDeleteAcceptsRedirectToAsQueryParameter(): void
+    {
+        [$host, $slug] = $this->createTestPage();
+
+        // Some clients drop the body of a DELETE, hence the query-parameter fallback.
+        $response = $this->request('DELETE', '/api/page/'.$host.'/'.$slug.'?redirectTo=https://example.org/elsewhere');
+        self::assertSame(204, $response->getStatusCode());
+
+        $this->em->clear();
+        $page = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]);
+        self::assertInstanceOf(Page::class, $page);
+        self::assertSame('Location: https://example.org/elsewhere', $page->getMainContent());
+    }
+
+    public function testDeleteWithUnknownInternalTargetKeepsSlugAsRedirection(): void
+    {
+        [$host, $slug] = $this->createTestPage();
+
+        // No page owns the target, so nothing can carry a redirectFrom entry.
+        $response = $this->request('DELETE', '/api/page/'.$host.'/'.$slug, ['redirectTo' => '/not-created-yet']);
+        self::assertSame(204, $response->getStatusCode());
+
+        $this->em->clear();
+        $page = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]);
+        self::assertInstanceOf(Page::class, $page);
+        self::assertSame('Location: /not-created-yet', $page->getMainContent());
+    }
+
+    public function testDeleteDoesNotFoldIntoARedirectionTarget(): void
+    {
+        [$host, $slug] = $this->createTestPage();
+        $redirectionSlug = 'redirection-'.uniqid();
+        $this->request('POST', '/api/page/'.$host, [
+            'frontmatter' => ['slug' => $redirectionSlug, 'h1' => 'Moved', 'locale' => 'en'],
+            'body' => 'Location: https://example.org/final',
+        ]);
+        $this->createdPageIds[] = $this->lookupPageId($host, $redirectionSlug);
+
+        $response = $this->request('DELETE', '/api/page/'.$host.'/'.$slug, ['redirectTo' => '/'.$redirectionSlug]);
+        self::assertSame(204, $response->getStatusCode());
+
+        // A redirection cannot own the old path: the deleted slug stays a redirection itself.
+        $this->em->clear();
+        $page = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]);
+        self::assertInstanceOf(Page::class, $page);
+        self::assertSame('Location: /'.$redirectionSlug, $page->getMainContent());
+
+        $target = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $redirectionSlug]);
+        self::assertInstanceOf(Page::class, $target);
+        self::assertSame([], $target->getRedirectFrom());
+    }
+
+    public function testDeleteWithExternalTargetLeavesARedirectOnlyPage(): void
+    {
+        [$host, $slug] = $this->createTestPage();
+
+        $response = $this->request('DELETE', '/api/page/'.$host.'/'.$slug, [
+            'redirectTo' => 'https://example.org/elsewhere',
+            'code' => 302,
+        ]);
+        self::assertSame(204, $response->getStatusCode());
+
+        // No internal page can own the old path, so the slug survives as a redirection.
+        $this->em->clear();
+        $page = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]);
+        self::assertInstanceOf(Page::class, $page);
+        self::assertSame('Location: https://example.org/elsewhere 302', $page->getMainContent());
     }
 
     public function testWithoutTokenReturns401(): void

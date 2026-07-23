@@ -72,7 +72,7 @@ final class PageRedirectionApiController extends AbstractApiController
         $page = new Page();
         $page->host = $host;
         $page->setSlug($slug);
-        $page->setMainContent($this->formatLocation($target, $code));
+        $page->setMainContent(new PageRedirection($target, $code)->toContent());
         $page->editedBy = $this->getApiUser();
         $page->createdBy = $this->getApiUser();
 
@@ -116,7 +116,7 @@ final class PageRedirectionApiController extends AbstractApiController
             return $this->badRequest('Missing redirectTo');
         }
 
-        $page->setMainContent($this->formatLocation($target, $code));
+        $page->setMainContent(new PageRedirection($target, $code)->toContent());
         $page->editedBy = $this->getApiUser();
 
         $this->entityManager->flush();
@@ -130,11 +130,6 @@ final class PageRedirectionApiController extends AbstractApiController
         $this->entityManager->flush();
 
         return $this->noContent();
-    }
-
-    private function formatLocation(string $target, int $code): string
-    {
-        return 301 === $code ? 'Location: '.$target : 'Location: '.$target.' '.$code;
     }
 
     /**

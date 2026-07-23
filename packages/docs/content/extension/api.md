@@ -62,7 +62,7 @@ curl https://example.com/api/docs | jq '.paths | keys'
 | `POST`   | `/api/page/{host}`             | Create (slug comes from the frontmatter)            |
 | `PUT`    | `/api/page/{host}/{slug}`      | Replace body/frontmatter (`If-Match` required)      |
 | `PATCH`  | `/api/page/{host}/{slug}`      | Partial edit — find/replace on the body (`If-Match`)|
-| `DELETE` | `/api/page/{host}/{slug}`      | Hard-delete (default) or soft-delete (unpublish) via config |
+| `DELETE` | `/api/page/{host}/{slug}`      | Delete — a `redirectTo` is required (see below)      |
 | `POST`   | `/api/page/preview`            | Render Markdown to HTML without persisting          |
 
 ### Read a page
@@ -149,6 +149,36 @@ and nothing is persisted.
 
 `reason` is `not_found` (zero matches) or `ambiguous` (more than one); `index` is the
 position of the failing edit in your `edits` list.
+
+{id=delete}
+### Delete a page (`DELETE`) — a redirection is mandatory
+
+A deleted URL that answers `404` loses its inbound links and its search ranking, so the API
+refuses to delete without knowing where the slug goes next: `redirectTo` is **required**
+(`400` otherwise), in the JSON body or as a query parameter.
+
+```bash
+curl -X DELETE -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+     -d '{"redirectTo":"/pricing"}' \
+     https://example.com/api/page/example.com/old-pricing
+```
+
+- `redirectTo` — an internal path (`/pricing`) or an absolute URL. A bare relative string
+  (`pricing`) or the deleted page's own slug is a `400`.
+- `code` — optional, defaults to `301`; must be a `3xx` status.
+
+Returns `204`. Where the redirection lands depends on the target:
+
+- **Internal target that exists** (hard delete) — the page row is really deleted and the
+  destination page records the old path in its `redirectFrom`, like a slug rename does.
+- **External, unknown, or chained target** (and every soft delete) — the page keeps its
+  slug but its body is replaced by the redirection (`Location: …`), the same shape the
+  [redirection endpoints](#redirections) manage. Nothing else can serve a `301` for a slug
+  a row still owns.
+
+With `delete_strategy: soft` the page is also unpublished (kept out of listings and
+sitemaps). Soft delete no longer preserves the body — use the
+[Version](/extension/version) extension if you need the old content back.
 
 ### Search
 
@@ -320,7 +350,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 | Status | Meaning                                                              |
 |--------|---------------------------------------------------------------------|
-| `400`  | Malformed request (e.g. `PATCH` with neither `edits` nor `frontmatter`) |
+| `400`  | Malformed request (e.g. `PATCH` with neither `edits` nor `frontmatter`, `DELETE` without `redirectTo`) |
 | `401`  | Missing or invalid token                                            |
 | `403`  | Token valid but user lacks `ROLE_EDITOR`                            |
 | `404`  | Resource not found                                                  |

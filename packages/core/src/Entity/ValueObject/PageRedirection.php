@@ -12,6 +12,12 @@ final readonly class PageRedirection
     ) {
     }
 
+    /** Inverse of fromContent(): the mainContent a redirection page stores. */
+    public function toContent(): string
+    {
+        return 301 === $this->code ? 'Location: '.$this->url : 'Location: '.$this->url.' '.$this->code;
+    }
+
     public static function fromContent(string $mainContent): ?self
     {
         if (! str_starts_with($mainContent, 'Location:')) {

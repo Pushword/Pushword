@@ -9,6 +9,7 @@ use Pushword\Api\Service\BodyPatchException;
 use Pushword\Api\Service\InvalidFrontmatterException;
 use Pushword\Api\Service\PageFrontmatterMapper;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\ValueObject\PageRedirection;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Service\RevisionCalculator;
@@ -210,7 +211,7 @@ final class PageApiController extends AbstractApiController
             'GET' => $this->doGet($page),
             'PUT' => $this->doUpdate($page, $request),
             'PATCH' => $this->doPatch($page, $request),
-            'DELETE' => $this->doDelete($page),
+            'DELETE' => $this->doDelete($page, $request),
             default => $this->respond(['error' => 'Method not allowed'], Response::HTTP_METHOD_NOT_ALLOWED),
         };
     }
@@ -321,13 +322,50 @@ final class PageApiController extends AbstractApiController
         return null;
     }
 
-    private function doDelete(Page $page): JsonResponse
+    /**
+     * Deleting a page never leaves an orphan URL behind: the caller must say where the
+     * slug goes next (`redirectTo`, in the JSON body or as a query parameter).
+     *
+     * When the target is an internal page able to own the old path, the row really goes
+     * away and the destination gains a `redirectFrom` entry. Otherwise — external target,
+     * unknown target, or soft strategy — the slug survives as a redirect-only page.
+     */
+    private function doDelete(Page $page, Request $request): JsonResponse
     {
-        if ('hard' === $this->deleteStrategy) {
+        $data = $this->decodeJson($request);
+        $target = trim(\is_string($data['redirectTo'] ?? null) ? $data['redirectTo'] : $request->query->getString('redirectTo'));
+        $code = \is_int($data['code'] ?? null) ? $data['code'] : $request->query->getInt('code', 301);
+
+        if ('' === $target) {
+            return $this->badRequest('Missing redirectTo: deleting a page requires a redirection target');
+        }
+
+        if (! str_starts_with($target, '/') && false === filter_var($target, \FILTER_VALIDATE_URL)) {
+            return $this->badRequest('redirectTo must be an absolute URL or an internal path starting with /');
+        }
+
+        if ($code < 300 || $code > 399) {
+            return $this->badRequest('code must be an HTTP redirection status (300-399)');
+        }
+
+        $internalSlug = str_starts_with($target, '/') ? Page::normalizeSlug($target) : null;
+        if ($internalSlug === $page->getSlug()) {
+            return $this->badRequest('redirectTo targets the page being deleted');
+        }
+
+        $destination = null !== $internalSlug ? $this->findPage($page->host, $internalSlug) : null;
+
+        // A dangling or chained target cannot own the old path (cf. RedirectFromResolver).
+        if ('hard' === $this->deleteStrategy && null !== $destination && ! $destination->hasRedirection()) {
+            $destination->addRedirectFrom($page->getSlug(), $code);
             $this->entityManager->remove($page);
         } else {
-            $page->setPublishedAt(null);
+            $page->setMainContent(new PageRedirection($target, $code)->toContent());
             $page->editedBy = $this->getApiUser();
+
+            if ('hard' !== $this->deleteStrategy) {
+                $page->setPublishedAt(null);
+            }
         }
 
         $this->entityManager->flush();
@@ -500,8 +538,15 @@ final class PageApiController extends AbstractApiController
                         ],
                     ],
                     'delete' => [
-                        'summary' => 'Delete a page (soft/hard via config)',
-                        'responses' => ['204' => ['description' => 'Deleted']],
+                        'summary' => 'Delete a page (soft/hard via config) — a redirection target is required',
+                        'requestBody' => [
+                            'required' => true,
+                            'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/PageDelete']]],
+                        ],
+                        'responses' => [
+                            '204' => ['description' => 'Deleted, the slug now redirects to redirectTo'],
+                            '400' => ['description' => 'Missing or invalid redirectTo/code'],
+                        ],
                     ],
                 ],
             ],
@@ -516,6 +561,15 @@ final class PageApiController extends AbstractApiController
                             'find' => ['type' => 'string', 'description' => 'Exact text to locate; must match once unless replaceAll is true'],
                             'replace' => ['type' => 'string'],
                             'replaceAll' => ['type' => 'boolean', 'default' => false],
+                        ],
+                    ],
+                    'PageDelete' => [
+                        'type' => 'object',
+                        'description' => 'Where the deleted URL goes next. Both fields are also accepted as query parameters.',
+                        'required' => ['redirectTo'],
+                        'properties' => [
+                            'redirectTo' => ['type' => 'string', 'description' => 'Internal path (/new-slug) or absolute URL'],
+                            'code' => ['type' => 'integer', 'default' => 301, 'description' => 'HTTP redirection status (300-399)'],
                         ],
                     ],
                     'PagePatch' => [
