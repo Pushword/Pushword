@@ -34,7 +34,17 @@ final class SiteConfig
 
     private ?TemplateResolver $templateResolver = null;
 
-    public bool $isStatic = false;
+    /**
+     * True while this site is being frozen into a static export: templates then
+     * skip everything that needs a live endpoint (admin toolbar, fragments…).
+     */
+    private bool $isStatic = false;
+
+    /**
+     * What resetStatic() restores. Stays false on a live kernel (worker-mode
+     * safety); the static generator pins true on its render kernel — see setStatic().
+     */
+    private bool $isStaticAfterReset = false;
 
     public string $firstAppLocale = 'fr';
 
@@ -75,6 +85,38 @@ final class SiteConfig
     public function setTemplateResolver(TemplateResolver $templateResolver): void
     {
         $this->templateResolver = $templateResolver;
+    }
+
+    public function isStatic(): bool
+    {
+        return $this->isStatic;
+    }
+
+    /**
+     * With $pin, the value also becomes what resetStatic() restores. A plain set
+     * does NOT survive rendering: Kernel::handle() marks services for reset, so
+     * the NEXT handle() runs the services_resetter inside its boot(). Only the
+     * static generator's render kernel — which never serves live traffic — pins
+     * true; a kernel serving live traffic must never pin, or a worker keeps
+     * believing it is exporting for every later request (see resetStatic()).
+     */
+    public function setStatic(bool $isStatic, bool $pin = false): self
+    {
+        $this->isStatic = $isStatic;
+        if ($pin) {
+            $this->isStaticAfterReset = $isStatic;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Worker-mode safety (kernel.reset, via SiteRegistry): a SiteConfig outlives
+     * the request, so an in-process static generation must not leave the flag on.
+     */
+    public function resetStatic(): void
+    {
+        $this->isStatic = $this->isStaticAfterReset;
     }
 
     /** @return array{app_base_url: string, app_name: string, app_color: mixed, pwApp: self, isStatic: bool} */

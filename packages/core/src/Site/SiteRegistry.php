@@ -47,12 +47,18 @@ final class SiteRegistry implements ResetInterface
 
     /**
      * Worker-mode safety (kernel.reset): drop the per-request stash so rendered
-     * fragments from one request never leak into the next. The site config and
-     * RequestContext binding are process-global and intentionally kept.
+     * fragments from one request never leak into the next, and clear the static
+     * export flag a synchronous generation may have left on the (process-global)
+     * SiteConfig objects. The site config values and the RequestContext binding
+     * are process-global and intentionally kept.
      */
     public function reset(): void
     {
         $this->stashed = [];
+
+        foreach ($this->sites as $site) {
+            $site->resetStatic();
+        }
     }
 
     private function context(): RequestContext

@@ -167,6 +167,33 @@ final class WorkerModeStateResetTest extends KernelTestCase
         );
     }
 
+    public function testSiteIsStaticDoesNotLeakAcrossRequests(): void
+    {
+        self::bootKernel();
+
+        /** @var SiteRegistry $registry */
+        $registry = self::getContainer()->get(SiteRegistry::class);
+
+        // --- Request A: a synchronous static generation (cache mode, or the admin
+        // route) marks the sites as being frozen so templates drop everything that
+        // needs a live endpoint (admin toolbar, fragments…). ---
+        foreach ($registry->getAll() as $site) {
+            $site->setStatic(true);
+        }
+
+        // --- The worker boundary. SiteConfig objects are process-global and kept
+        // on purpose, so without kernel.reset the flag stays on and every later
+        // request served by this worker renders as if it were a static export. ---
+        $this->simulateWorkerRequestBoundary();
+
+        foreach ($registry->getAll() as $host => $site) {
+            self::assertFalse(
+                $site->isStatic(),
+                'worker mode: a static generation must not leave '.$host.' rendering as a static export',
+            );
+        }
+    }
+
     public function testPageListenerStaticStateDoesNotLeakAcrossRequests(): void
     {
         self::bootKernel();

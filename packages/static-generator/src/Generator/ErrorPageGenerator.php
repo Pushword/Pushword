@@ -69,11 +69,23 @@ class ErrorPageGenerator extends AbstractGenerator
             $this->requestStack->push(Request::create('/'.$uri));
         }
 
+        // The only render the generator runs on THIS kernel: error.html.twig
+        // forwards to PageController, whose params carry isStatic. Set on the
+        // shared SiteConfig objects for the render only, and restore right after —
+        // a worker reuses them for every later request.
+        foreach ($this->apps->getAll() as $site) {
+            $site->setStatic(true);
+        }
+
         try {
             $html = $this->twig->render('@Twig/Exception/error.html.twig');
             $dump = HtmlMinifier::compress($html);
             $this->filesystem->dumpFile($filepath, $dump);
         } finally {
+            foreach ($this->apps->getAll() as $site) {
+                $site->resetStatic();
+            }
+
             if ($needsRequest) {
                 $this->requestStack->pop();
             }

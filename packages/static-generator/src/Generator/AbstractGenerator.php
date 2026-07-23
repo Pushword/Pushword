@@ -72,13 +72,17 @@ abstract class AbstractGenerator implements GeneratorInterface
         $this->renderRouter = static::getKernel()->getContainer()->get(PushwordRouteGenerator::class);
         $this->renderRouter->setUseCustomHostPath(false, pin: true);
 
-        foreach ($this->apps->getAll() as $site) {
-            $site->isStatic = true;
-        }
-
-        $newKernelSiteRegistry = static::getKernel()->getContainer()->get(SiteRegistry::class);
-        foreach ($newKernelSiteRegistry->getAll() as $site) {
-            $site->isStatic = true;
+        // Same split as the routers above: the render kernel renders every exported
+        // page, so its sites are static for good — PINNED, because each handle()
+        // marks services for reset and SiteRegistry::reset() would otherwise clear
+        // the flag from the second page on. This kernel's sites are NOT touched:
+        // they are shared, process-global objects, and an in-process generation
+        // (cache mode, admin route) would leave every later request of a
+        // FrankenPHP worker believing it is being exported. The one live render
+        // that needs the flag sets and restores it — see ErrorPageGenerator.
+        $renderKernelSiteRegistry = static::getKernel()->getContainer()->get(SiteRegistry::class);
+        foreach ($renderKernelSiteRegistry->getAll() as $site) {
+            $site->setStatic(true, pin: true);
         }
     }
 

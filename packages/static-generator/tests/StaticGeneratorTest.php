@@ -738,6 +738,17 @@ final class StaticGeneratorTest extends KernelTestCase
         $generator->generate('localhost.dev');
 
         self::assertFileExists($this->getStaticDir().'/404.html');
+
+        // The error page is the only render the generator runs on the kernel that
+        // serves live traffic, so it is the only one that flips isStatic there.
+        // It must hand the shared SiteConfig objects back untouched: under a
+        // FrankenPHP worker they outlive the request, and every later one would
+        // render as if it were being exported.
+        /** @var SiteRegistry $registry */
+        $registry = self::getContainer()->get(SiteRegistry::class);
+        foreach ($registry->getAll() as $host => $site) {
+            self::assertFalse($site->isStatic(), $host.' must not stay flagged as a static export');
+        }
     }
 
     public function testGetDebugKernelIsAlwaysDebug(): void
