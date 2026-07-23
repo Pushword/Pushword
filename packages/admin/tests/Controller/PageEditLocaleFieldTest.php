@@ -10,6 +10,7 @@ use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteRegistry;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -35,12 +36,25 @@ final class PageEditLocaleFieldTest extends AbstractAdminTestClass
         $pageId = $page->id;
         self::assertNotNull($pageId);
 
+        // The fixture is shared with every other test running in the same worker:
+        // leaving `homepage` without a locale breaks their `locale => 'en'` lookups.
+        $originalLocale = $page->locale;
         $page->locale = '';
         $this->getEntityManager()->flush();
 
+        try {
+            $this->assertLocaleFieldFallsBackToHost($client, $page->host, $pageId);
+        } finally {
+            $page->locale = $originalLocale;
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    private function assertLocaleFieldFallsBackToHost(KernelBrowser $client, string $host, int $pageId): void
+    {
         /** @var SiteRegistry $apps */
         $apps = self::getContainer()->get(SiteRegistry::class);
-        $expectedLocale = $apps->get($page->host)->getLocale();
+        $expectedLocale = $apps->get($host)->getLocale();
         self::assertNotSame('', $expectedLocale, 'The test site must declare a locale');
 
         $crawler = $client->request(Request::METHOD_GET, $this->buildEditPath($pageId));
