@@ -77,11 +77,11 @@ final class PageListenerOpenGraphTest extends TestCase
             self::createStub(TailwindGenerator::class),
             $suppressor,
             new VariantManager(self::createStub(EntityManagerInterface::class)),
-            self::buildSiteRegistry(),
+            $this->buildSiteRegistry(),
         );
     }
 
-    private static function buildSiteRegistry(): SiteRegistry
+    private function buildSiteRegistry(): SiteRegistry
     {
         return new SiteRegistry(
             ['localhost.dev' => [
