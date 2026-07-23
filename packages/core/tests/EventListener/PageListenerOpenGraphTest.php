@@ -12,7 +12,13 @@ use Pushword\Core\EventListener\PageListener;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Service\TailwindGenerator;
 use Pushword\Core\Service\VariantManager;
+use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Template\TemplateResolver;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Twig\Environment as Twig;
+use Twig\Loader\FilesystemLoader;
 
 /**
  * Guards the fix for the flat-import 25GB RSS leak: the per-page Open Graph image
@@ -71,6 +77,24 @@ final class PageListenerOpenGraphTest extends TestCase
             self::createStub(TailwindGenerator::class),
             $suppressor,
             new VariantManager(self::createStub(EntityManagerInterface::class)),
+            self::buildSiteRegistry(),
+        );
+    }
+
+    private static function buildSiteRegistry(): SiteRegistry
+    {
+        return new SiteRegistry(
+            ['localhost.dev' => [
+                'hosts' => ['localhost.dev'],
+                'base_url' => 'https://localhost.dev',
+                'name' => 'Test',
+                'locale' => 'fr',
+                'locales' => ['fr'],
+                'template' => '@Pushword',
+                'entity_can_override_filters' => false,
+            ]],
+            new TemplateResolver(new Twig(new FilesystemLoader()), new ArrayAdapter()),
+            new ParameterBag(['kernel.project_dir' => sys_get_temp_dir()]),
         );
     }
 

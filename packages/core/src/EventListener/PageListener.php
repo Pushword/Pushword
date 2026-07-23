@@ -13,6 +13,7 @@ use Pushword\Core\Entity\User;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Service\TailwindGenerator;
 use Pushword\Core\Service\VariantManager;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Contracts\Service\ResetInterface;
 
@@ -36,6 +37,7 @@ final class PageListener implements ResetInterface
         private readonly TailwindGenerator $tailwindGenerator,
         private readonly PageCacheSuppressor $cacheSuppressor,
         private readonly VariantManager $variantManager,
+        private readonly SiteRegistry $apps,
     ) {
     }
 
@@ -72,6 +74,7 @@ final class PageListener implements ResetInterface
     {
         $page->initTimestampableProperties();
         $this->setIdAsSlugIfNotDefined($page);
+        $this->setLocaleIfNotDefined($page);
         $this->updatePageEditor($page);
         $this->generateOpenGraphImage($page);
     }
@@ -137,6 +140,25 @@ final class PageListener implements ResetInterface
         if ('' === $page->getSlug()) {
             $page->setSlug(substr(sha1(uniqid().random_int(0, mt_getrandmax())), 0, 8));
         }
+    }
+
+    /**
+     * A page created from the admin (PageCrudController::initializeNewPage) or imported
+     * by the flat sync (PageImporter) gets the site's locale; one written through the API
+     * only got one when the payload happened to carry `locale:`, so it landed with ''.
+     * Every read path then patched it back in-memory (PageResolver) without ever fixing
+     * the row. Enforce the invariant here so all write paths agree.
+     *
+     * Resolved from the page's own host: on a multi-host install each host declares its
+     * own locale, and the write may well happen under a different one.
+     */
+    private function setLocaleIfNotDefined(Page $page): void
+    {
+        if ('' !== $page->locale) {
+            return;
+        }
+
+        $page->locale = $this->apps->get($page->host)->getLocale();
     }
 
     private function detectSlugChange(Page $page, PreUpdateEventArgs $event): void
