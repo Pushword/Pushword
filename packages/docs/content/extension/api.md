@@ -35,8 +35,8 @@ curl -H "Authorization: Bearer $TOKEN" https://example.com/api/page/search
   not an internal `id` — the same identity used by flat files and public routes. The `host`
   field also drives multi-locale (one host per locale).
 - **Frontmatter + body.** A page is split into `frontmatter` (all metadata: `h1`, `title`,
-  `locale`, `tags`, `parentPage`, `mainImage`, `customProperties`, …) and `body` (the
-  `mainContent` Markdown), mirroring the flat-file format.
+  `locale`, `tags`, `parentPage`, `translations`, `mainImage`, `customProperties`, …) and
+  `body` (the `mainContent` Markdown), mirroring the flat-file format.
 - **Optimistic concurrency.** Each page carries an opaque `revision` (also sent as the
   `ETag` header). Writes must send `If-Match: <revision>`; a stale value yields `409`.
 - **Token-efficient responses.** Writes return a minimal body by default; reads return the
@@ -149,6 +149,27 @@ and nothing is persisted.
 
 `reason` is `not_found` (zero matches) or `ambiguous` (more than one); `index` is the
 position of the failing edit in your `edits` list.
+
+{id=translations}
+### Link translations (hreflang)
+
+Locales are separate hosts, so a page's translations are sent as the `translations`
+frontmatter key — a list of `host/slug` refs (a bare `slug` for a sibling on the same
+host). It works on `POST`, `PUT` and `PATCH` like any other frontmatter key:
+
+```bash
+curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "If-Match: $REV" \
+     -H 'Content-Type: application/json' \
+     -d '{"frontmatter":{"translations":["us.example.com/pricing"]}}' \
+     https://example.com/api/page/example.com/tarifs
+```
+
+- **One call pairs both directions.** The sibling gains the reverse link, so you never
+  have to send the mirror request.
+- **The list is authoritative.** Refs you drop are unlinked; `"translations": []` clears
+  the group. Omit the key to leave it untouched.
+- **An unknown ref is a `422`** (`invalid_frontmatter`, `key: translations`), and the
+  existing group is left as it was — create the target page before linking it.
 
 {id=delete}
 ### Delete a page (`DELETE`) — a redirection is mandatory

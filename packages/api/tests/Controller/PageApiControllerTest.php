@@ -55,6 +55,11 @@ final class PageApiControllerTest extends WebTestCase
         foreach ($this->createdPageIds as $id) {
             $page = $em->getRepository(Page::class)->find($id);
             if ($page instanceof Page) {
+                // Unlink first: translation rows point at the page from both sides.
+                foreach ($page->getTranslations()->toArray() as $translation) {
+                    $page->removeTranslation($translation);
+                }
+
                 $em->remove($page);
             }
         }
@@ -316,6 +321,81 @@ final class PageApiControllerTest extends WebTestCase
         self::assertIsArray($fresh['frontmatter']['customProperties']);
         self::assertSame('A short SEO summary.', $fresh['frontmatter']['customProperties']['searchExcerpt']);
         self::assertSame('about us', $fresh['frontmatter']['customProperties']['targetKeyword']);
+    }
+
+    public function testPatchLinksTranslationsAcrossHosts(): void
+    {
+        // Regression: `translations` was exported but never applied, so POST/PUT/PATCH
+        // all answered 200 and left the pair unlinked — the language switcher stayed
+        // empty and the pages could only be paired from the admin.
+        $sibling = 'about-'.uniqid();
+        $this->request('POST', '/api/page/pushword.piedweb.com', [
+            'frontmatter' => ['slug' => $sibling, 'h1' => 'About', 'locale' => 'en'],
+            'body' => 'Hello',
+        ]);
+        self::assertSame(201, $this->client->getResponse()->getStatusCode());
+        $this->createdPageIds[] = $this->lookupPageId('pushword.piedweb.com', $sibling);
+
+        [$host, $slug, $revision] = $this->createTestPage(['locale' => 'fr']);
+
+        $reference = 'pushword.piedweb.com/'.$sibling;
+        $response = $this->request('PATCH', '/api/page/'.$host.'/'.$slug, [
+            'frontmatter' => ['translations' => [$reference]],
+        ], ['HTTP_IF_MATCH' => $revision]);
+        self::assertSame(200, $response->getStatusCode());
+
+        $this->request('GET', '/api/page/'.$host.'/'.$slug);
+        $fresh = $this->decode();
+        self::assertIsArray($fresh['frontmatter']);
+        self::assertSame([$reference], $fresh['frontmatter']['translations']);
+
+        // The sibling gained the reverse link: one call pairs both directions.
+        $this->request('GET', '/api/page/pushword.piedweb.com/'.$sibling);
+        $other = $this->decode();
+        self::assertIsArray($other['frontmatter']);
+        self::assertSame([$host.'/'.$slug], $other['frontmatter']['translations']);
+    }
+
+    public function testCreateLinksTranslationOnTheSameHost(): void
+    {
+        // Regression: the URL host was assigned *after* the frontmatter was applied,
+        // so a same-host ref resolved against an empty host and found nothing.
+        $host = 'api-test-'.uniqid().'.example.com';
+        $english = 'about-'.uniqid();
+        $this->request('POST', '/api/page/'.$host, [
+            'frontmatter' => ['slug' => $english, 'h1' => 'About', 'locale' => 'en'],
+            'body' => 'Hello',
+        ]);
+        self::assertSame(201, $this->client->getResponse()->getStatusCode());
+        $this->createdPageIds[] = $this->lookupPageId($host, $english);
+
+        $french = 'a-propos-'.uniqid();
+        $response = $this->request('POST', '/api/page/'.$host, [
+            'frontmatter' => ['slug' => $french, 'h1' => 'À propos', 'locale' => 'fr', 'translations' => [$english]],
+            'body' => 'Bonjour',
+        ]);
+        self::assertSame(201, $response->getStatusCode());
+        $this->createdPageIds[] = $this->lookupPageId($host, $french);
+
+        $this->request('GET', '/api/page/'.$host.'/'.$french);
+        $fresh = $this->decode();
+        self::assertIsArray($fresh['frontmatter']);
+        self::assertSame([$english], $fresh['frontmatter']['translations']);
+    }
+
+    public function testPatchRejectsUnknownTranslationReference(): void
+    {
+        [$host, $slug, $revision] = $this->createTestPage();
+
+        // A ref pointing nowhere is a loud 422, never a 200 that drops the key.
+        $response = $this->request('PATCH', '/api/page/'.$host.'/'.$slug, [
+            'frontmatter' => ['translations' => ['ghost-'.uniqid()]],
+        ], ['HTTP_IF_MATCH' => $revision]);
+
+        self::assertSame(422, $response->getStatusCode());
+        $body = $this->decode();
+        self::assertSame('invalid_frontmatter', $body['error']);
+        self::assertSame('translations', $body['key']);
     }
 
     public function testPreviewRendersMarkdown(): void

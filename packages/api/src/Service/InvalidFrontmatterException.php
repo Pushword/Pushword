@@ -16,7 +16,13 @@ final class InvalidFrontmatterException extends RuntimeException
     public function __construct(
         public readonly string $key,
         public readonly mixed $value,
+        ?string $reason = null,
     ) {
-        parent::__construct(\sprintf('Invalid value %s for frontmatter key "%s".', json_encode($value), $key));
+        parent::__construct(\sprintf(
+            'Invalid value %s for frontmatter key "%s".%s',
+            json_encode($value),
+            $key,
+            null !== $reason ? ' '.$reason : '',
+        ));
     }
 }

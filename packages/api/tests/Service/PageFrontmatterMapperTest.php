@@ -40,6 +40,11 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         foreach ($this->createdPageIds as $id) {
             $page = $this->em->find(Page::class, $id);
             if (null !== $page) {
+                // Unlink first: translation rows point at the page from both sides.
+                foreach ($page->getTranslations()->toArray() as $translation) {
+                    $page->removeTranslation($translation);
+                }
+
                 $this->em->remove($page);
             }
         }
@@ -159,6 +164,136 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         self::assertNull($variant->getVariantOf());
         self::assertFalse($variant->isVariant());
         self::assertNull($variant->getCustomCanonical());
+    }
+
+    public function testTranslationsLinkAcrossHostsAndRoundTrip(): void
+    {
+        $suffix = uniqid();
+        // One locale per host is the norm, so the sibling lives on another host —
+        // which must be a registered one for the "host/slug" ref to be told apart
+        // from a nested slug.
+        $english = $this->persistPage('pushword.piedweb.com', 'about-'.$suffix, 'en');
+        $french = $this->persistPage('api-test-'.$suffix.'.example.com', 'a-propos-'.$suffix, 'fr');
+
+        $reference = 'pushword.piedweb.com/about-'.$suffix;
+        $this->mapper->applyFrontmatter($french, ['translations' => [$reference]]);
+
+        self::assertTrue($french->getTranslations()->contains($english));
+        // The relation is kept symmetric, so only one side needs to be sent.
+        self::assertTrue($english->getTranslations()->contains($french));
+        self::assertSame($english, $french->getTranslation('en'));
+
+        // The exported ref carries the host: a GET payload can be PUT back as-is.
+        self::assertSame([$reference], $this->mapper->toArray($french)['frontmatter']['translations']);
+
+        // The list is authoritative — an empty one unlinks the whole group.
+        $this->mapper->applyFrontmatter($french, ['translations' => []]);
+        self::assertCount(0, $french->getTranslations());
+        self::assertCount(0, $english->getTranslations());
+    }
+
+    public function testTranslationsAcceptBareSlugOnTheSameHost(): void
+    {
+        $suffix = uniqid();
+        $host = 'api-test-'.$suffix.'.example.com';
+        $english = $this->persistPage($host, 'about-'.$suffix, 'en');
+        $french = $this->persistPage($host, 'a-propos-'.$suffix, 'fr');
+
+        // An app serving two locales from one host: the ref needs no host prefix,
+        // and the export emits it back bare.
+        $this->mapper->applyFrontmatter($french, ['translations' => ['about-'.$suffix]]);
+
+        self::assertTrue($french->getTranslations()->contains($english));
+        self::assertSame(['about-'.$suffix], $this->mapper->toArray($french)['frontmatter']['translations']);
+    }
+
+    public function testTranslationsAcceptNestedSlugNotMistakenForAHost(): void
+    {
+        $suffix = uniqid();
+        $host = 'api-test-'.$suffix.'.example.com';
+        $english = $this->persistPage($host, 'blog/about-'.$suffix, 'en');
+        $french = $this->persistPage($host, 'a-propos-'.$suffix, 'fr');
+
+        // "blog/…" looks like a "host/slug" ref but blog is not a registered host,
+        // so the whole string must be read back as a nested same-host slug.
+        $this->mapper->applyFrontmatter($french, ['translations' => ['blog/about-'.$suffix]]);
+
+        self::assertTrue($french->getTranslations()->contains($english));
+    }
+
+    public function testTranslationsUnlinkOnlyTheDroppedReference(): void
+    {
+        $suffix = uniqid();
+        $host = 'api-test-'.$suffix.'.example.com';
+        $english = $this->persistPage($host, 'about-'.$suffix, 'en');
+        $spanish = $this->persistPage($host, 'acerca-'.$suffix, 'es');
+        $french = $this->persistPage($host, 'a-propos-'.$suffix, 'fr');
+        $french->addTranslation($english);
+        $french->addTranslation($spanish);
+
+        // Re-sending the list without the Spanish page unlinks it and keeps the rest.
+        $this->mapper->applyFrontmatter($french, ['translations' => ['about-'.$suffix]]);
+
+        self::assertTrue($french->getTranslations()->contains($english));
+        self::assertFalse($french->getTranslations()->contains($spanish));
+        self::assertFalse($spanish->getTranslations()->contains($french));
+    }
+
+    public function testOmittedTranslationsKeyLeavesTheGroupUntouched(): void
+    {
+        $suffix = uniqid();
+        $host = 'api-test-'.$suffix.'.example.com';
+        $english = $this->persistPage($host, 'about-'.$suffix, 'en');
+        $french = $this->persistPage($host, 'a-propos-'.$suffix, 'fr');
+        $french->addTranslation($english);
+
+        // A partial PATCH must not clear a group it says nothing about.
+        $this->mapper->applyFrontmatter($french, ['h1' => 'À propos']);
+
+        self::assertTrue($french->getTranslations()->contains($english));
+    }
+
+    /**
+     * @return Iterator<string, array{mixed}>
+     */
+    public static function malformedTranslationsProvider(): Iterator
+    {
+        yield 'bare string instead of a list' => ['en/about'];
+        yield 'list holding a non-string' => [[42]];
+        yield 'list holding an empty string' => [['']];
+    }
+
+    #[DataProvider('malformedTranslationsProvider')]
+    public function testTranslationsRejectMalformedPayload(mixed $translations): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('a-propos');
+
+        // A shape the mapper cannot read is a 422, never a silently ignored key.
+        $this->expectException(InvalidFrontmatterException::class);
+        $this->mapper->applyFrontmatter($page, ['translations' => $translations]);
+    }
+
+    public function testTranslationsRejectUnknownReferenceWithoutTouchingTheGroup(): void
+    {
+        $suffix = uniqid();
+        $host = 'api-test-'.$suffix.'.example.com';
+        $english = $this->persistPage($host, 'about-'.$suffix, 'en');
+        $french = $this->persistPage($host, 'a-propos-'.$suffix, 'fr');
+        $french->addTranslation($english);
+
+        // A ref pointing nowhere is a client error (422), not a silent drop — and
+        // it must leave the existing link intact rather than half-apply the list.
+        try {
+            $this->mapper->applyFrontmatter($french, ['translations' => ['about-'.$suffix, 'ghost-'.$suffix]]);
+            self::fail('Expected an InvalidFrontmatterException for the unknown translation ref.');
+        } catch (InvalidFrontmatterException $invalidFrontmatterException) {
+            self::assertSame('translations', $invalidFrontmatterException->key);
+            self::assertSame('ghost-'.$suffix, $invalidFrontmatterException->value);
+        }
+
+        self::assertTrue($french->getTranslations()->contains($english));
     }
 
     public function testApplyFrontmatterSkipsUnknownTypesAndPreservesExisting(): void
@@ -421,5 +556,20 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $this->mapper->applyFrontmatter($page, ['publishedAt' => $publishedAt]);
 
         self::assertNull($page->getPublishedAt());
+    }
+
+    private function persistPage(string $host, string $slug, string $locale): Page
+    {
+        $page = new Page();
+        $page->host = $host;
+        $page->setSlug($slug);
+        $page->locale = $locale;
+        $page->setMainContent('# '.$slug);
+
+        $this->em->persist($page);
+        $this->em->flush();
+        $this->createdPageIds[] = $page->id ?? 0;
+
+        return $page;
     }
 }

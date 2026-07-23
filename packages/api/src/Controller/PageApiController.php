@@ -127,6 +127,9 @@ final class PageApiController extends AbstractApiController
 
         $page = new Page();
         $page->setSlug($slug);
+        // Set before applying: same-host references (parentPage, variantOf,
+        // translations) are resolved against $page->host.
+        $page->host = $host;
 
         $error = $this->applyFrontmatterOrError($page, $frontmatter);
         if (null !== $error) {

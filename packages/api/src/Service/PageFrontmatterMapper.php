@@ -10,6 +10,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
 use Symfony\Component\Yaml\Yaml;
@@ -38,6 +39,7 @@ final readonly class PageFrontmatterMapper
     public function __construct(
         private PageRepository $pageRepository,
         private MediaRepository $mediaRepository,
+        private SiteRegistry $siteRegistry,
         private ?PropertyConverterRegistry $converterRegistry = null,
     ) {
     }
@@ -67,7 +69,7 @@ final readonly class PageFrontmatterMapper
             'variantOf' => $page->getVariantOf()?->getSlug(),
             'customCanonical' => $page->getCustomCanonical(),
             'translations' => array_values(array_map(
-                static fn (Page $t): string => $t->getSlug(),
+                fn (Page $t): string => $this->buildTranslationRef($t, $page->host),
                 $page->getTranslations()->toArray(),
             )),
             'customProperties' => $page->getCustomProperties(),
@@ -160,6 +162,10 @@ final readonly class PageFrontmatterMapper
 
         if (\array_key_exists('customCanonical', $frontmatter) && (\is_string($frontmatter['customCanonical']) || null === $frontmatter['customCanonical'])) {
             $page->setCustomCanonical($frontmatter['customCanonical']);
+        }
+
+        if (\array_key_exists('translations', $frontmatter)) {
+            $this->syncTranslations($page, $frontmatter['translations']);
         }
 
         if (\array_key_exists('customProperties', $frontmatter) && \is_array($frontmatter['customProperties'])) {
@@ -278,6 +284,77 @@ final readonly class PageFrontmatterMapper
         }
 
         return $this->pageRepository->findOneBy(['slug' => $reference, 'host' => $host]);
+    }
+
+    /**
+     * Link the page to its hreflang siblings. The payload is the whole list, so a
+     * ref it drops is unlinked and `translations: []` clears the group;
+     * Page::addTranslation() keeps the relation symmetric, so only one side of a
+     * pair needs to be sent. Everything is resolved before anything is mutated: an
+     * unknown ref leaves the existing group untouched instead of half-applying it.
+     */
+    private function syncTranslations(Page $page, mixed $references): void
+    {
+        if (! \is_array($references)) {
+            throw new InvalidFrontmatterException('translations', $references, 'Expected a list of page references.');
+        }
+
+        $targets = [];
+        foreach ($references as $reference) {
+            if (! \is_string($reference) || '' === $reference) {
+                throw new InvalidFrontmatterException('translations', $reference, 'Expected a page reference ("slug" or "host/slug").');
+            }
+
+            $translation = $this->resolveTranslationRef($reference, $page->host);
+            if (! $translation instanceof Page) {
+                throw new InvalidFrontmatterException('translations', $reference, 'Unknown page: create it before linking it as a translation.');
+            }
+
+            $targets[] = $translation;
+        }
+
+        foreach ($page->getTranslations()->toArray() as $current) {
+            if (! \in_array($current, $targets, true)) {
+                $page->removeTranslation($current);
+            }
+        }
+
+        foreach ($targets as $translation) {
+            $page->addTranslation($translation);
+        }
+    }
+
+    /**
+     * A translation reference is a bare slug on the page's own host, or
+     * "host/slug" for the usual cross-locale case (one host per locale) — the
+     * same shape the flat frontmatter uses. The part before the first "/" is
+     * matched against the registered hosts to tell it from a nested slug.
+     */
+    private function resolveTranslationRef(string $reference, string $host): ?Page
+    {
+        $slashPosition = strpos($reference, '/');
+        if (false !== $slashPosition) {
+            $referencedHost = substr($reference, 0, $slashPosition);
+            if ($this->siteRegistry->isKnownHost($referencedHost)) {
+                return $this->pageRepository->findOneBy([
+                    'slug' => substr($reference, $slashPosition + 1),
+                    'host' => $referencedHost,
+                ]);
+            }
+        }
+
+        return $this->resolvePageRef($reference, $host);
+    }
+
+    /**
+     * Cross-host siblings (the multi-locale norm) need their host in the ref, or
+     * the exported list cannot be sent back as-is.
+     */
+    private function buildTranslationRef(Page $translation, string $host): string
+    {
+        return $translation->host !== $host
+            ? $translation->host.'/'.$translation->getSlug()
+            : $translation->getSlug();
     }
 
     /**
