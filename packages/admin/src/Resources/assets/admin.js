@@ -27,6 +27,7 @@ import { inlinePopup } from './admin.inlinePopup'
 // Form modules
 import { textareaAutoSize, textareaWithoutNewLine } from './admin.textareaHelper'
 import { memorizeOpenPanel } from './admin.memorizeOpenPanel'
+import { revealInvalidField } from './admin.revealInvalidField'
 import { showTitlePixelWidth } from './admin.formHelpers'
 
 // State modules
@@ -76,6 +77,7 @@ window.addEventListener('load', function () {
 
   // Panel management
   memorizeOpenPanel()
+  revealInvalidField()
 
   // Textarea helpers
   textareaWithoutNewLine()

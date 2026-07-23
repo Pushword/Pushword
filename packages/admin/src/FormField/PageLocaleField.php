@@ -14,6 +14,11 @@ class PageLocaleField extends AbstractField
     public function getEasyAdminField(): ?FieldInterface
     {
         return $this->buildEasyAdminField('locale', TextType::class, [
+            // Page::$locale defaults to '' — an empty locale means "the site's locale".
+            // Leaving the form field required rendered `required` on an input sitting in a
+            // collapsed fieldset: the browser refused the submit and could not focus the
+            // offending control, so the save button silently did nothing.
+            'required' => false,
             'label' => 'adminPageLocaleLabel',
             'help_html' => true,
             'help' => 'adminPageLocaleHelp',
