@@ -49,11 +49,11 @@ class Message implements Stringable, Taggable, IdInterface
     protected ?string $authorEmail = '';
 
     /**
-     * ip2long() spans 0 to 4294967295, which overflows a signed 32-bit INT
-     * (MySQL/MariaDB) for every IPv4 in the upper half of the space (>= 128.0.0.0).
+     * Anonymized visitor IP, stored as text: ip2long() has no IPv6 counterpart,
+     * and 45 chars is the longest an IPv6 address can get.
      */
-    #[ORM\Column(type: Types::BIGINT, nullable: true)]
-    protected ?int $authorIp = null;
+    #[ORM\Column(type: Types::STRING, length: 45, nullable: true)]
+    protected ?string $authorIp = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\NotBlank]
@@ -164,7 +164,7 @@ class Message implements Stringable, Taggable, IdInterface
     /**
      * Get the value of authorIp.
      */
-    public function getAuthorIp(): ?int
+    public function getAuthorIp(): ?string
     {
         return $this->authorIp;
     }
@@ -172,7 +172,7 @@ class Message implements Stringable, Taggable, IdInterface
     /**
      * Set the value of authorIp.
      */
-    public function setAuthorIp(?int $authorIp): self
+    public function setAuthorIp(?string $authorIp): self
     {
         if (null !== $authorIp) {
             $this->authorIp = $authorIp;
@@ -181,30 +181,22 @@ class Message implements Stringable, Taggable, IdInterface
         return $this;
     }
 
+    /**
+     * Anonymize an untrusted client IP (IPv4 or IPv6) before storing it.
+     */
     public function setAuthorIpRaw(string $authorIp): self
     {
         $trimmed = trim($authorIp);
-        if ('' === $trimmed) {
-            return $this;
-        }
-
         if (false === filter_var($trimmed, \FILTER_VALIDATE_IP)) {
             return $this;
         }
 
-        $anonymized = IpUtils::anonymize($trimmed);
-
-        $ipLong = ip2long($anonymized);
-        if (false === $ipLong) {
-            return $this;
-        }
-
-        return $this->setAuthorIp($ipLong);
+        return $this->setAuthorIp(IpUtils::anonymize($trimmed));
     }
 
     public function getAuthorIpRaw(): string
     {
-        return long2ip($this->authorIp ?? 0);
+        return $this->authorIp ?? '';
     }
 
     public function __toString(): string

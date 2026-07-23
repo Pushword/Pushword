@@ -14,6 +14,33 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc769
+
+### Conversation messages store the author IP as text
+
+`Message::$authorIp` moved from an integer column to `VARCHAR(45)`, and
+`getAuthorIp()` / `setAuthorIp()` now take and return `?string` instead of `?int`.
+
+The IP used to be stored through `ip2long()`, which caps at 4294967295 and has no
+IPv6 counterpart. On MySQL/MariaDB the column was a signed `INT`, so every visitor
+from `128.0.0.0` upwards — the whole upper half of the IPv4 space — crashed the
+insert with `SQLSTATE[22003] 1264` and got a 500 on any conversation form. IPv6
+visitors hit no error but were recorded with no IP at all. Both are fixed.
+
+**Historic IPs are dropped.** Run this before updating the schema:
+
+```bash
+php bin/console dbal:run-sql "UPDATE conversation_message SET author_ip = NULL"
+php bin/console doctrine:schema:update --force
+```
+
+Skipping the first line leaves the old integers in the new text column, where
+`2965242112` would show up in the admin as though it were an address.
+
+If your own code reads the field, `getAuthorIp()` now returns the anonymized
+address (`176.190.1.0`) rather than an integer, and `getAuthorIpRaw()` returns an
+empty string instead of `0.0.0.0` when no IP was recorded.
+
 ## To 1.0.0-rc757
 
 ### `pushword/skeleton` renamed to `pushword/dev-app`

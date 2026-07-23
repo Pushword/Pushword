@@ -2,8 +2,6 @@
 
 namespace Pushword\Conversation\Tests\Entity;
 
-use Doctrine\DBAL\Platforms\MariaDBPlatform;
-use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManagerInterface;
 use Iterator;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -35,23 +33,30 @@ final class MessageAuthorIpTest extends KernelTestCase
         parent::tearDown();
     }
 
-    /** @return Iterator<string, array{string, string, int}> */
+    /** @return Iterator<string, array{string, string}> */
     public static function ipProvider(): Iterator
     {
-        yield 'loopback' => ['127.0.0.1', '127.0.0.0', 2130706432];
-        yield 'last signed-int-safe ip' => ['127.255.255.7', '127.255.255.0', 2147483392];
-        yield 'first overflowing ip' => ['128.0.0.1', '128.0.0.0', 2147483648];
-        yield 'french isp range' => ['176.190.1.42', '176.190.1.0', 2965242112];
-        yield 'broadcast' => ['255.255.255.255', '255.255.255.0', 4294967040];
+        // The whole IPv4 space, including the upper half a signed INT column could not hold.
+        yield 'loopback' => ['127.0.0.1', '127.0.0.0'];
+        yield 'last signed-int-safe ip' => ['127.255.255.7', '127.255.255.0'];
+        yield 'first ip past the old INT ceiling' => ['128.0.0.1', '128.0.0.0'];
+        yield 'french isp range' => ['176.190.1.42', '176.190.1.0'];
+        yield 'broadcast' => ['255.255.255.255', '255.255.255.0'];
+        // IPv6, which ip2long() could never encode.
+        yield 'ipv6' => ['2a01:e0a:1f2:3::1', '2a01:e0a:1f2:3::'];
+        yield 'ipv6 full form' => ['2001:0db8:85a3:1234:0000:8a2e:0370:7334', '2001:db8:85a3:1234::'];
+        yield 'ipv6 loopback' => ['::1', '::'];
+        // IPv4 reaching us in mapped notation, e.g. behind a proxy normalizing to IPv6.
+        yield 'ipv4-mapped ipv6' => ['::ffff:176.190.1.42', '::ffff:176.190.1.0'];
     }
 
     #[DataProvider('ipProvider')]
-    public function testAuthorIpRawRoundTrip(string $ip, string $anonymized, int $expectedLong): void
+    public function testAuthorIpRawRoundTrip(string $ip, string $anonymized): void
     {
         $message = new Message();
         $message->setAuthorIpRaw($ip);
 
-        self::assertSame($expectedLong, $message->getAuthorIp());
+        self::assertSame($anonymized, $message->getAuthorIp());
         self::assertSame($anonymized, $message->getAuthorIpRaw());
     }
 
@@ -60,7 +65,7 @@ final class MessageAuthorIpTest extends KernelTestCase
         $message = new Message();
         $message->setAuthorIpRaw("  176.190.1.42\n");
 
-        self::assertSame(2965242112, $message->getAuthorIp());
+        self::assertSame('176.190.1.0', $message->getAuthorIp());
     }
 
     /** @return Iterator<string, array{string}> */
@@ -70,7 +75,7 @@ final class MessageAuthorIpTest extends KernelTestCase
         yield 'blank string' => ['   '];
         yield 'not an ip' => ['not-an-ip'];
         yield 'truncated ipv4' => ['176.190.1'];
-        yield 'ipv6' => ['2a01:e0a:1f2:3::1']; // ip2long() has no IPv6 counterpart
+        yield 'out of range ipv4' => ['999.999.999.999'];
     }
 
     #[DataProvider('unsupportedIpProvider')]
@@ -80,8 +85,8 @@ final class MessageAuthorIpTest extends KernelTestCase
         $message->setAuthorIpRaw($ip);
 
         self::assertNull($message->getAuthorIp());
-        // Current behaviour: an unknown IP reads back as 0.0.0.0, not as an empty string.
-        self::assertSame('0.0.0.0', $message->getAuthorIpRaw());
+        // An unknown IP reads back as empty, never as a plausible-looking address.
+        self::assertSame('', $message->getAuthorIpRaw());
     }
 
     /**
@@ -94,26 +99,12 @@ final class MessageAuthorIpTest extends KernelTestCase
         $message->setAuthorIpRaw('176.190.1.42');
         $message->setAuthorIp(null);
 
-        self::assertSame(2965242112, $message->getAuthorIp());
-    }
-
-    /**
-     * ip2long() goes up to 4294967295, a signed INT stops at 2147483647:
-     * every IPv4 >= 128.0.0.0 would blow up with "Out of range value" on MySQL.
-     */
-    #[Group('integration')]
-    public function testAuthorIpColumnSpansTheWholeIpv4Range(): void
-    {
-        $metadata = $this->getEntityManager()->getClassMetadata(Message::class);
-        $declaration = Type::getType((string) $metadata->getTypeOfField('authorIp'))
-            ->getSQLDeclaration([], new MariaDBPlatform());
-
-        self::assertSame('BIGINT', $declaration);
+        self::assertSame('176.190.1.0', $message->getAuthorIp());
     }
 
     #[Group('integration')]
     #[DataProvider('ipProvider')]
-    public function testAuthorIpIsPersistedAndRead(string $ip, string $anonymized, int $expectedLong): void
+    public function testAuthorIpIsPersistedAndRead(string $ip, string $anonymized): void
     {
         $entityManager = $this->getEntityManager();
 
@@ -132,8 +123,7 @@ final class MessageAuthorIpTest extends KernelTestCase
 
         $reloaded = $entityManager->find(Message::class, $this->createdMessageId);
         self::assertInstanceOf(Message::class, $reloaded);
-        self::assertSame($expectedLong, $reloaded->getAuthorIp());
-        self::assertSame($anonymized, $reloaded->getAuthorIpRaw());
+        self::assertSame($anonymized, $reloaded->getAuthorIp());
     }
 
     private function getEntityManager(): EntityManagerInterface

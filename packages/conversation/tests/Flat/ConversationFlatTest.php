@@ -685,7 +685,7 @@ final class ConversationFlatTest extends KernelTestCase
         $review->setAuthorEmail($email);
         $review->setAuthorName($name);
         $review->setReferring('/test-page');
-        $review->setAuthorIpRaw('176.190.1.42'); // above 128.0.0.0: overflows a signed INT column
+        $review->setAuthorIpRaw('2a01:e0a:1f2:3::1'); // IPv6, to exercise both notations through the CSV
         $review->setRating($rating);
         $review->setPublishedAt(new DateTime());
 
