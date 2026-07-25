@@ -90,6 +90,31 @@ final class ConversationFormControllerTest extends WebTestCase
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
     }
 
+    public function testFormIsRenderedInTheRequestedLocale(): void
+    {
+        $client = self::createClient();
+
+        $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
+        $client->request(
+            Request::METHOD_GET,
+            '/conversation/message/test?locale=fr&host=localhost.dev',
+            [],
+            [],
+            $server,
+        );
+        $content = (string) $client->getResponse()->getContent();
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), $content);
+        self::assertStringContainsString('Valider', $content);
+        self::assertStringNotContainsString('Submit', $content);
+
+        // The next step must keep the requested locale, not fall back to the site's.
+        self::assertStringContainsString('locale=fr', $content);
+
+        // The listener resolves the locale through the `_locale` attribute, which lands
+        // in the router context: generated URLs must not carry it as a query parameter.
+        self::assertStringNotContainsString('_locale', $content);
+    }
+
     public function testFormWithoutOriginHeader(): void
     {
         $client = self::createClient();

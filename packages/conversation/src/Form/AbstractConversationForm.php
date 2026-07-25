@@ -96,10 +96,10 @@ abstract class AbstractConversationForm implements ConversationFormInterface
             'referring' => $this->getReferring(),
         ], UrlGeneratorInterface::ABSOLUTE_URL);
 
-        $currentPage = $this->apps->getCurrentPage();
         $queryParams = http_build_query([
             'host' => $this->app->getMainHost(),
-            'locale' => null !== $currentPage ? $currentPage->locale : $this->app->getLocale(),
+            // Carry the locale the current step renders in, so the next step keeps it.
+            'locale' => $this->request->getLocale(),
             'id' => $this->getId(),
             'step' => $this->getStep(),
         ]);

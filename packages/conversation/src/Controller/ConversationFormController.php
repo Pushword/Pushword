@@ -183,8 +183,8 @@ final class ConversationFormController extends AbstractController
         $host = $request->query->getString('host') ?: $request->getHost();
         $this->apps->switchSite($host);
 
-        $locale = $request->query->getString('locale') ?: $this->apps->get()->getLocale();
-        $request->setLocale($locale);
+        // The locale is resolved by ConversationLocaleListener, early enough for the
+        // translator and the validator to pick it up.
 
         $response = $this->initResponse($request);
 

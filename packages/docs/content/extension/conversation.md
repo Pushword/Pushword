@@ -58,6 +58,21 @@ import { liveForm } from "@pushword/js-helper/src/helpers";
 liveBlock();
 ```
 
+### Locale
+
+The form is loaded by its own HTTP request, so it cannot guess the language of the page
+embedding it. `conversation()` and `conversationFormBtn()` add `?locale=` for you; when
+you build the URL by hand with `path('pushword_conversation', …)`, add it to render the
+form in another language than the site's:
+
+```twig
+<div data-live="{{ path('pushword_conversation', {'type': 'newsletter', 'referring': 'newsletter-'~page.slug, 'host': page.host, 'locale': page.locale}) }}"></div>
+```
+
+Without `locale`, the form falls back to the locale of the site matching `host` (or the
+requested host). The locale is applied early enough to reach the translator and the
+validator, and is carried over to the next step of a multi-step form.
+
 ### Render published comment
 
 ```twig
