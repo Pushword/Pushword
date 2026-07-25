@@ -30,6 +30,7 @@ final class SearchIndexTest extends KernelTestCase
         $em->flush();
 
         $pageId = $page->id;
+        self::assertNotNull($pageId);
 
         try {
             $indexer->reindexHost(self::HOST);
@@ -261,7 +262,9 @@ final class SearchIndexTest extends KernelTestCase
             $hit = array_values(array_filter($hits, static fn (array $h): bool => $h['id'] === $page->id))[0];
 
             self::assertArrayNotHasKey('content', $hit);
-            self::assertStringContainsString($nonce, (string) $hit['_formatted']['content']);
+            self::assertIsArray($hit['_formatted']);
+            self::assertIsString($hit['_formatted']['content']);
+            self::assertStringContainsString($nonce, $hit['_formatted']['content']);
         } finally {
             $em->remove($page);
             $em->flush();

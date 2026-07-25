@@ -31,7 +31,6 @@ final class SnippetApiControllerTest extends WebTestCase
     {
         $this->client = self::createClient();
         $this->client->disableReboot();
-        /** @var EntityManagerInterface $em */
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $this->em = $em;
 
@@ -52,7 +51,6 @@ final class SnippetApiControllerTest extends WebTestCase
     protected function tearDown(): void
     {
         $container = $this->client->getContainer();
-        /** @var EntityManagerInterface $em */
         $em = $container->get('doctrine.orm.default_entity_manager');
         foreach ($this->createdSnippetIds as $id) {
             $snippet = $em->getRepository(Snippet::class)->find($id);

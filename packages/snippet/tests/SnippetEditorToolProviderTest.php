@@ -16,6 +16,8 @@ final class SnippetEditorToolProviderTest extends KernelTestCase
 
         self::assertArrayHasKey('snippet', $tools);
         self::assertSame('Snippet', $tools['snippet']['className']);
+        self::assertIsArray($tools['snippet']['config']);
+        self::assertIsArray($tools['snippet']['config']['definitions']);
         self::assertArrayHasKey('cta', $tools['snippet']['config']['definitions']);
     }
 

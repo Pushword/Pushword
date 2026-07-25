@@ -38,6 +38,7 @@ final class StaticSearchSubscriberTest extends KernelTestCase
             // simple-jekyll-search calls .trim() on every field value, so each
             // one must be a string — an array (e.g. tags) breaks client search.
             foreach ($json as $entry) {
+                self::assertIsArray($entry);
                 foreach ($entry as $value) {
                     self::assertIsString($value);
                 }

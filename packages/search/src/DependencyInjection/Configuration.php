@@ -11,7 +11,7 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('search');
 
-        $treeBuilder->getRootNode() // @phpstan-ignore-line
+        $treeBuilder->getRootNode()
             ->children()
                 ->scalarNode('index_dir')
                     ->defaultValue('%kernel.project_dir%/var/search')

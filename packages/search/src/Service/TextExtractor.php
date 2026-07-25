@@ -36,10 +36,13 @@ final readonly class TextExtractor
         // Strip <script>/<style> element *contents* so an embedded ld+json or
         // CSS block can't leak raw text into the index.
         $html = preg_replace('#<(script|style)\b[^>]*>.*?</\1>#is', ' ', $html);
+        assert(is_string($html));
 
         $text = strip_tags($html);
         $text = html_entity_decode($text, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/\s+/u', ' ', $text);
+        assert(is_string($text));
 
-        return trim((string) preg_replace('/\s+/u', ' ', $text));
+        return trim($text);
     }
 }

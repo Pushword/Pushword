@@ -147,8 +147,8 @@ final class SnippetApiController extends AbstractApiController
             'name' => $snippet->getName(),
             'content' => $snippet->getContent(),
             'tags' => $snippet->getTagList(),
-            'createdAt' => $snippet->createdAt->format(DateTimeInterface::ATOM),
-            'updatedAt' => $snippet->updatedAt->format(DateTimeInterface::ATOM),
+            'createdAt' => $snippet->createdAt?->format(DateTimeInterface::ATOM),
+            'updatedAt' => $snippet->updatedAt?->format(DateTimeInterface::ATOM),
         ];
     }
 

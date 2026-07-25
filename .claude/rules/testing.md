@@ -49,5 +49,5 @@ real bugs.
   subsets via path repos — CI only, not part of `composer test`.
 - **PHPStan needs `cache:warmup --env=dev`**, never `cache:clear` — phpstan-symfony reads
   the debug container XML, which only a container *compile* writes.
-- The **quiz** package is absent from `phpstan.dist.neon` paths; `composer stan` skips it.
-  Analyse it explicitly.
+- **A new package must be added to `phpstan.dist.neon` paths** (both `src` and `tests`) —
+  `composer stan` silently skips anything not listed.

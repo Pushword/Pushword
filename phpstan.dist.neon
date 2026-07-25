@@ -41,6 +41,10 @@ parameters:
         - packages/quiz/tests
         - packages/repurpose/src
         - packages/repurpose/tests
+        - packages/search/src
+        - packages/search/tests
+        - packages/snippet/src
+        - packages/snippet/tests
         - packages/dev-app/src
         - packages/dev-app/tests
         - packages/static-generator/src

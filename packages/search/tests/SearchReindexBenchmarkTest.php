@@ -46,9 +46,7 @@ final class SearchReindexBenchmarkTest extends KernelTestCase
 
         $this->em = $container->get(EntityManagerInterface::class);
         $this->indexer = $container->get(Indexer::class);
-        /** @var CacheItemPoolInterface $pool */
-        $pool = $container->get('cache.pushword_markdown');
-        $this->markdownCache = $pool;
+        $this->markdownCache = $container->get('cache.pushword_markdown');
     }
 
     protected function tearDown(): void

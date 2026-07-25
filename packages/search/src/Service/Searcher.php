@@ -46,7 +46,7 @@ final readonly class Searcher
         $result = $this->indexManager->getLoupe($host)->search($parameters);
 
         return [
-            'hits' => $this->stripRawContent($result->getHits()),
+            'hits' => $this->stripRawContent(array_values($result->getHits())),
             'facets' => $result->getFacetDistribution(),
             'query' => $query,
             'totalHits' => $result->getTotalHits(),

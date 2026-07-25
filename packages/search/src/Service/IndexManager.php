@@ -91,6 +91,9 @@ final class IndexManager
 
     private function sanitizeHost(string $host): string
     {
-        return preg_replace('/[^a-z0-9._-]+/i', '_', $host);
+        $sanitized = preg_replace('/[^a-z0-9._-]+/i', '_', $host);
+        assert(is_string($sanitized));
+
+        return $sanitized;
     }
 }
