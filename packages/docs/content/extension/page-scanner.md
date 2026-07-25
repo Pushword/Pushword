@@ -203,6 +203,12 @@ validated against the usual 404 and redirect rules, just exempt from this one.
 Only the `noindex` case is reported here. An unpublished or redirecting target is
 already covered by its own message, so nothing is reported twice.
 
+A `noindex` page never reports **itself**: it emits neither a self-canonical nor an
+`hreflang` cluster — both would designate a page it just asked to keep out of the
+index — so the only links it exposes to itself are the ones you wrote. An explicit
+`customCanonical` (or a variant's canonical → master) is still rendered: it points
+elsewhere on purpose.
+
 ## Relative links
 
 Pushword serves every page from the root, so `[Quiz](extension/quiz)` resolves

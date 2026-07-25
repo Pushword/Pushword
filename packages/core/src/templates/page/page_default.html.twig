@@ -19,14 +19,19 @@
     <link rel="canonical" href="{{ page(page.variantOf, true) }}">
   {% elseif page.customCanonical %}
     <link rel="canonical" href="{{ page.customCanonical }}">
-  {% else %}
+  {# A noindex page canonicalizing to itself contradicts its own robots directive:
+     it asks to be the indexed version of a page it just asked to keep out of the
+     index. Robots ignore it, and page-scan read it as the page linking to itself. #}
+  {% elseif not page.hasNoindex %}
     <link rel="canonical" href="{{ page(page, true, apps.getCurrentPager()) }}">
   {% endif %}
 {% endblock %}
 
 {% block alternate_language %}
-  {# A variant is not self-canonical (canonical → master), so it emits no hreflang cluster. #}
-  {% if page.locale is not null and not page.variantOf %}
+  {# A variant is not self-canonical (canonical → master), so it emits no hreflang cluster.
+     Neither does a noindex page: an hreflang cluster only holds indexable members, and
+     its first entry is that same self-reference. #}
+  {% if page.locale is not null and not page.variantOf and not page.hasNoindex %}
     <link rel="alternate" hreflang="{{ page.locale }}" href="{{ page(page, true) }}">
     {# x-default must be used only for a page where user must choose language
     {% if  page.locale == apps.get().defaultLocale %}

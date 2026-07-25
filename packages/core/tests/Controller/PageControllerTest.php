@@ -300,34 +300,93 @@ final class PageControllerTest extends KernelTestCase
 
     public function testCustomCanonicalOverridesCanonical(): void
     {
+        $content = $this->renderPage('custom-canonical-test', customCanonical: 'https://example.tld/master-page');
+
+        self::assertStringContainsString(
+            '<link rel="canonical" href="https://example.tld/master-page">',
+            $content,
+        );
+        self::assertStringNotContainsString(
+            'rel="canonical" href="https://localhost.dev/custom-canonical-test"',
+            $content,
+        );
+    }
+
+    /**
+     * A self-canonical asks to be the indexed version of a page that just asked to
+     * stay out of the index, and an hreflang cluster only holds indexable members —
+     * so a noindex page emits neither. Page-scan read the self-canonical as a link,
+     * which made every published noindex page report itself as linking to a noindex
+     * page.
+     */
+    public function testNoindexPageEmitsNoCanonicalNorHreflang(): void
+    {
+        $content = $this->renderPage('noindex-head-test', metaRobots: 'noindex, follow');
+
+        self::assertStringContainsString('<meta name="robots" content="noindex, follow">', $content);
+        self::assertStringNotContainsString('rel="canonical"', $content);
+        self::assertStringNotContainsString('hreflang=', $content);
+    }
+
+    /**
+     * Only the *self*-canonical contradicts `noindex`. A canonical pointing elsewhere
+     * was set on purpose, so the branch order has to keep it — dropping it would send
+     * the page's duplicates to nothing.
+     */
+    public function testNoindexPageKeepsAnExplicitCustomCanonical(): void
+    {
+        $content = $this->renderPage(
+            'noindex-custom-canonical-test',
+            metaRobots: 'noindex',
+            customCanonical: 'https://example.tld/master-page',
+        );
+
+        self::assertStringContainsString(
+            '<link rel="canonical" href="https://example.tld/master-page">',
+            $content,
+        );
+        self::assertStringNotContainsString('hreflang=', $content);
+    }
+
+    /**
+     * The counterpart of the check above: dropping the canonical must key on the
+     * robots directive, not on rendering a page created the same way.
+     */
+    public function testIndexablePageEmitsItsSelfCanonical(): void
+    {
+        $content = $this->renderPage('indexable-head-test');
+
+        self::assertStringContainsString(
+            '<link rel="canonical" href="https://localhost.dev/indexable-head-test">',
+            $content,
+        );
+        self::assertStringContainsString('hreflang="en" href="https://localhost.dev/indexable-head-test"', $content);
+    }
+
+    /**
+     * What the head holds is dictated by the page's own properties, so each case
+     * renders the page it is about, then drops it.
+     */
+    private function renderPage(string $slug, string $metaRobots = '', ?string $customCanonical = null): string
+    {
         $em = self::getContainer()->get(EntityManagerInterface::class);
 
         $page = new Page();
-        $page->setH1('Custom canonical page');
-        $page->setSlug('custom-canonical-test');
+        $page->setH1('Head of '.$slug);
+        $page->setSlug($slug);
         $page->locale = 'en';
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
         $page->setMainContent('Content here');
-        $page->setCustomCanonical('https://example.tld/master-page');
+        $page->setMetaRobots($metaRobots);
+        $page->setCustomCanonical($customCanonical);
 
         $em->persist($page);
         $em->flush();
 
         try {
-            $content = (string) $this->getPageController()
-                ->show(Request::create('/custom-canonical-test'), 'custom-canonical-test')
-                ->getContent();
-
-            self::assertStringContainsString(
-                '<link rel="canonical" href="https://example.tld/master-page">',
-                $content,
-            );
-            self::assertStringNotContainsString(
-                'rel="canonical" href="https://localhost.dev/custom-canonical-test"',
-                $content,
-            );
+            return (string) $this->getPageController()->show(Request::create('/'.$slug), $slug)->getContent();
         } finally {
             $em->remove($page);
             $em->flush();
