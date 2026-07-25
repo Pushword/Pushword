@@ -1543,7 +1543,6 @@ MD;
         $img = imagecreatetruecolor(1, 1);
         if (false !== $img) {
             imagepng($img, $path);
-            imagedestroy($img);
         }
     }
 

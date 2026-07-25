@@ -116,7 +116,6 @@ final class ControllerTest extends AbstractAdminTestClass
         $img = imagecreatetruecolor(1, 1);
         \assert(false !== $img);
         imagepng($img, $pngFile);
-        imagedestroy($img);
 
         $uploadedFile = new UploadedFile($pngFile, 'test.png', 'image/png', null, true);
 

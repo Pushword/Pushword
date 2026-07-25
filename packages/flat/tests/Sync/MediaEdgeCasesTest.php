@@ -350,7 +350,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         }
 
         imagepng($img, $imgPath);
-        imagedestroy($img);
+        unset($img); // frees the 23 MB buffer before the import resizes it (imagedestroy() never did)
         $this->tempFiles[] = $imgPath;
 
         // Verify it's oversized

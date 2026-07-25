@@ -806,7 +806,6 @@ CSV;
             $color = imagecolorallocate($img, random_int(0, 255), random_int(0, 255), random_int(0, 255));
             imagesetpixel($img, 0, 0, (int) $color);
             imagepng($img, $path);
-            imagedestroy($img);
         }
     }
 
