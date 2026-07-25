@@ -63,25 +63,31 @@ final readonly class StaticSearchSubscriber implements EventSubscriberInterface
      */
     private function writeSearchJson(string $staticDir, array $documents): void
     {
-        // Values are mixed because SearchDocumentEvent subscribers may replace
-        // any of them, so coerce at this boundary rather than trusting the shape.
         $entries = array_map(static function (array $doc): array {
-            $content = $doc['content'] ?? '';
             $tags = array_filter((array) ($doc['tags'] ?? []), is_scalar(...));
 
             return [
-                'title' => $doc['title'],
-                'h1' => $doc['h1'],
-                'url' => $doc['url'],
-                'slug' => $doc['slug'],
-                // The client-side search.json is consumed by simple-jekyll-search,
-                // which calls .trim() on every field value: tags must be a string,
-                // not the array kept for the Loupe index.
+                'title' => self::toString($doc['title'] ?? ''),
+                'h1' => self::toString($doc['h1'] ?? ''),
+                'url' => self::toString($doc['url'] ?? ''),
+                'slug' => self::toString($doc['slug'] ?? ''),
+                // tags must be a string here, not the array kept for the Loupe index.
                 'tags' => implode(' ', array_map(strval(...), $tags)),
-                'content' => mb_substr(is_string($content) ? $content : '', 0, self::JSON_CONTENT_LENGTH),
+                'content' => mb_substr(self::toString($doc['content'] ?? ''), 0, self::JSON_CONTENT_LENGTH),
             ];
         }, $documents);
 
         $this->filesystem->dumpFile($staticDir.'/search.json', json_encode($entries));
+    }
+
+    /**
+     * Document values are mixed because SearchDocumentEvent subscribers may
+     * replace any of them. The client-side search.json is consumed by
+     * simple-jekyll-search, which calls .trim() on every field value, so coerce
+     * at this boundary rather than trusting the shape.
+     */
+    private static function toString(mixed $value): string
+    {
+        return is_scalar($value) ? (string) $value : '';
     }
 }
