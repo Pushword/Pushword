@@ -107,7 +107,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         $app = $this->apps->switchSite($host)->get();
 
         if (self::isCacheMode($app)) {
-            $app->staticDir = $this->getCacheDir($app); // @phpstan-ignore-line
+            $app->setCustomProperty('static_dir', $this->getCacheDir($app));
         }
 
         $this->logger->info('Generating '.$host.'/'.$page);
@@ -165,7 +165,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         } else {
             // Full generation: use temp dir + atomic swap
             $tempDir = $originalStaticDir.'~';
-            $app->staticDir = $tempDir; // @phpstan-ignore-line
+            $app->setCustomProperty('static_dir', $tempDir);
 
             $filesystem->remove($tempDir);
             $filesystem->mkdir($tempDir);
@@ -173,7 +173,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             $this->runGenerators($app);
 
             // Restore original staticDir before atomic swap
-            $app->staticDir = $originalStaticDir; // @phpstan-ignore-line
+            $app->setCustomProperty('static_dir', $originalStaticDir);
 
             // Lint BEFORE the swap: a poisoned export must never replace the
             // last good one (a lint error aborts, so the site keeps serving it).
@@ -219,7 +219,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     private function generateHostInCacheMode(SiteConfig $app): void
     {
         $cacheDir = $this->getCacheDir($app);
-        $app->staticDir = $cacheDir; // @phpstan-ignore-line
+        $app->setCustomProperty('static_dir', $cacheDir);
 
         new Filesystem()->mkdir($cacheDir);
 

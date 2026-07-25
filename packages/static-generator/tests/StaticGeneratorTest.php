@@ -1150,6 +1150,32 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertDirectoryDoesNotExist($staleBackupDir, 'Stale backup dir should be cleaned up');
     }
 
+    /**
+     * The temp dir must not survive the atomic swap on the SiteConfig. The other
+     * multi-run tests reboot the kernel between generations (they simulate separate
+     * processes), so only an in-process second run catches the leak: it would take
+     * `<dir>~` for the real static dir and leave `<dir>` frozen on the first export.
+     */
+    public function testStaticDirIsRestoredAfterTheAtomicSwap(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $staticDir = $this->getStaticDir();
+        $siteConfig = self::getContainer()->get(SiteRegistry::class)->switchSite('localhost.dev')->get();
+        $staticAppGenerator = self::getContainer()->get(StaticAppGenerator::class);
+
+        $staticAppGenerator->generate('localhost.dev');
+        self::assertSame($staticDir, $siteConfig->getStr('static_dir'), 'the temp dir must not leak into the SiteConfig');
+
+        // Drop the first export before regenerating: without this the file left by
+        // the run above would satisfy the assertion even when the second generation
+        // published into `<dir>~` instead.
+        new Filesystem()->remove($staticDir.'/index.html');
+        $staticAppGenerator->generate('localhost.dev');
+        self::assertFileExists($staticDir.'/index.html');
+    }
+
     public function testNativeGzipCompression(): void
     {
         $compressor = new Compressor();
