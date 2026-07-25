@@ -4,7 +4,7 @@ Read to bootstrap, in order:
 1. This file — coding rules and project shape
 2. `packages/docs/content/architecture.md` — bundle map and dev environment
 3. `packages/docs/content/extensions.md` — what each extension does
-4. `packages/core/src/Entity/Page.php` — main entity (8 traits in `SharedTrait/` and `PageTrait/`)
+4. `packages/core/src/Entity/Page.php` — main entity (10 traits in `SharedTrait/` and `PageTrait/`)
 5. `packages/core/src/Entity/Media.php` — media entity
 6. `packages/core/src/Event/PushwordEvents.php` — event constants
 
@@ -29,16 +29,16 @@ Match the surrounding code; php-cs-fixer and Rector settle the rest. Two things 
 
 ## Commands
 
-From `packages/dev-app/`:
+`composer` scripts run from the repo root; `bin/console` from `packages/dev-app/`.
 
 ```bash
-php bin/console list pushword          # all commands
+composer console list pw               # all commands (or bin/console from packages/dev-app/)
 composer assets                        # build assets
 composer dev                           # start server (symfony server:list to check)
 composer reset-dev-app                # reset demo
 ```
 
-**Agent-optimized output**: `pw:page-scan`, `pw:link:graph`, `pw:flat:sync`, `pw:flat:lint`, `pw:static`, `pw:image:cache`, `pw:quiz:validate` emit one compact JSON line when run by an AI agent (auto-detected) instead of progress/colors/timing. Add it to a command with `Pushword\Core\Command\AgentOutputTrait` + a `--format` option (auto|agent|text); gate every human write behind `if (! $this->agentMode)`. Tests asserting human output must pass `'--format' => 'text'`. See `packages/docs/content/agent-output.md`.
+**Agent-optimized output**: some commands emit one compact JSON line when run by an AI agent (auto-detected) instead of progress/colors/timing. Add it to a command with `Pushword\Core\Command\AgentOutputTrait` + a `--format` option (auto|agent|text); gate every human write behind `if (! $this->agentMode)`. Tests asserting human output must pass `'--format' => 'text'`. `packages/docs/content/agent-output.md` lists which commands support it — update that list, not this file.
 
 ## Quality gates
 
@@ -56,7 +56,7 @@ php bin/console debug:container --deprecations                          # contai
 
 ## Debugging UI
 
-For admin UI or frontend changes, validate in the browser. Use the `dev-browser` skill (`/dev-browser`) for automated checks and screenshots — `getAISnapshot()` to discover elements, `selectSnapshotRef()` to interact.
+For admin UI or frontend changes, validate in the browser. Use the `dev-browser` skill (`/dev-browser`) for automated checks and screenshots — `page.snapshotForAI()` to discover elements, then act on them by node id (or with plain Playwright selectors when they are known).
 
 Credentials: `admin@example.tld` / `p@ssword` (ROLE_SUPER_ADMIN); reset via `composer reset-dev-app`.
 Admin login script: `.claude/skills/ui-debug/SKILL.md`.

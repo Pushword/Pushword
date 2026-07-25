@@ -43,13 +43,14 @@ Project purpose/stack, hosts/locales table, common commands, deployment workflow
 
 #### Agent-optimized output
 
-`pw:page-scan`, `pw:link:graph`, `pw:flat:sync`, `pw:flat:lint`, `pw:static`,
-`pw:image:cache` and `pw:quiz:validate` auto-detect when an AI agent runs them (via the same env vars as
-laravel/agent-detector) and emit a single compact JSON line instead of progress
+Many `pw:*` commands auto-detect when an AI agent runs them (via the same env vars
+as laravel/agent-detector) and emit a single compact JSON line instead of progress
 bars, colors, PID/timing/memory chatter — far cheaper to parse. Each starts with
 `{"tool": "...", "result": "passed|failed|done|running", ...}`. Force it with
 `--format=agent` (JSON) or `--format=text` (human); default is `--format=auto`.
-`pw:media:debug --json` and `pw:quiz:schema` are already JSON.
+
+`content/agent-output.md` lists which commands support it, and which already emit
+JSON unconditionally.
 
 ### Quality gates
 

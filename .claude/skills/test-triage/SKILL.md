@@ -69,17 +69,10 @@ class of failure, `--processes=2` is the deterministic reproducer.
 
 ## The systemic fix pattern
 
-Shared-`var/`-dir flakes are fixed by routing the directory through a `pw.*` container
-parameter (default `%kernel.project_dir%/var`) and overriding it per worker in
-`packages/dev-app/config/packages/test/pushword.php` from `%env(PUSHWORD_TEST_VAR_DIR)%`.
-Prefer that over runtime `getenv()` in service constructors: it keeps test concerns out of
-production code and guarantees app-overrides-bundle precedence. Version storage and the
-page-scan var dir both use this mechanism.
-
-Where per-worker isolation is impossible — `public/media/{filter}/` hangs off the
-compile-time `public_dir` param on a worker-shared container — tag the test
-`#[Group('serial')]` instead. Serial tests run after the parallel batch; the wiring lives
-in **both** `.github/workflows/run-tests.yml` and `.scripts/test`.
+Once you have confirmed a flake is a shared-directory race, the fix (a `pw.*` container
+parameter overridden per worker, or `#[Group('serial')]` where isolation is impossible)
+lives in `.claude/rules/testing.md`. Version storage and the page-scan var dir already use
+that mechanism; `public/media/{filter}/` is the case where it cannot work.
 
 ## Environmental, unrelated
 

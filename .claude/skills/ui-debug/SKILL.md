@@ -56,6 +56,6 @@ cannot be driven by automation at all — unit-test the reorder function in-page
 ## Editing locks
 
 `PageEditLockManager` writes JSON locks to `packages/dev-app/var/page-locks/`, shared with
-the test suite. A live admin tab holding page 1 makes `PageLockControllerTest` fail with
-`acquired=false` — that is your browser, not a regression. Check whether `lastPingAt` in
-`page_1.json` advances; close the tab rather than deleting the file.
+the test suite — so leaving an admin edit tab open makes `PageLockControllerTest` fail.
+Close the tab rather than deleting the file; the `test-triage` skill has the full
+signature if you hit that failure.

@@ -13,50 +13,47 @@ You will browse the entire Pushword site (public pages and admin) using dev-brow
 
 If `$ARGUMENTS` is provided and non-empty, use it as the base URL.
 
-Otherwise, run `symfony server:list` from `packages/dev-app/` to find the running local server URL. If no server is running, tell the user to start one with `composer dev` from `packages/dev-app/` and stop.
+Otherwise, run `symfony server:list` from `packages/dev-app/` to find the running local server URL. If no server is running, tell the user to start one with `composer dev` (from the repo root) and stop.
 
-Store the base URL (e.g. `https://127.0.0.1:8000`) for use in all subsequent steps.
+Store the base URL (e.g. `http://127.0.0.1:8000`) for use in all subsequent steps.
 
-## Step 2: Start dev-browser
+## Step 2: Login once
 
-Invoke the `/dev-browser` skill to start the browser automation server.
+Read `.claude/skills/ui-debug/SKILL.md` first — it documents the sandbox constraints and
+the **two-step** login form. Then run a dev-browser script to authenticate as admin and
+create a reusable page named `admin-session`:
 
-## Step 3: Login once
+```bash
+dev-browser --headless --timeout 90 <<'EOF'
+const page = await browser.getPage("admin-session");
+await page.setViewportSize({ width: 1280, height: 800 });
 
-Run a dev-browser script to authenticate as admin and create a reusable page named `admin-session`:
+await page.goto("BASE_URL/login", { waitUntil: "domcontentloaded" });
+await page.fill('#inputEmail', 'admin@example.tld');
+await page.click('button[type="submit"]');
+await page.waitForLoadState('domcontentloaded');   // -> /login?step=password
 
-```typescript
-import { connect, waitForPageLoad } from '@/client.js'
+await page.fill('#inputPassword', 'p@ssword');
+await page.click('button[type="submit"]');
+await page.waitForLoadState('domcontentloaded');   // -> /admin/page
 
-const client = await connect()
-const page = await client.page('admin-session')
-await page.setViewportSize({ width: 1280, height: 800 })
-
-await page.goto('BASE_URL/admin')
-await waitForPageLoad(page)
-
-await page.fill('input[name="_username"]', 'admin@example.tld')
-await page.fill('input[name="_password"]', 'p@ssword')
-await page.click('button[type="submit"]')
-await waitForPageLoad(page)
-
-await page.screenshot({ path: 'tmp/audit-login.png' })
-await client.disconnect()
+console.log(await saveScreenshot(await page.screenshot(), "audit-login.png"));
+EOF
 ```
 
 Replace `BASE_URL` with the actual base URL. Verify the login succeeded by reading the screenshot.
 
-## Step 4: Run sub-agents sequentially
+## Step 3: Run sub-agents sequentially
 
 Launch 4 sub-agents **one at a time** (sequential, NOT parallel) using the Agent tool with `subagent_type: general-purpose`. Each sub-agent reuses the `admin-session` page from dev-browser.
 
 **IMPORTANT for all sub-agents:**
 - All test data created must use the prefix `__audit_test_` so it's identifiable
 - Each sub-agent must **clean up after itself** (delete any test records it created)
-- Save screenshots to `tmp/` with descriptive names (e.g. `tmp/audit-public-homepage.png`)
+- Save screenshots with `saveScreenshot(await page.screenshot(), "audit-public-homepage.png")` — it writes to `~/.dev-browser/tmp/` and returns the path
 - Report findings as a list with severity: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `INFO`
-- Use `getAISnapshot()` to discover page elements when selectors are unknown
-- Use `waitForPageLoad(page)` after every navigation
+- Use `page.snapshotForAI()` to discover page elements when selectors are unknown
+- Use `page.waitForLoadState('domcontentloaded')` after every navigation
 
 ### Sub-agent A: Public Pages
 
@@ -76,7 +73,7 @@ Prompt the sub-agent with:
 > 7. Click all navigation items - verify they work
 > 8. If search is present, test it with a query
 >
-> Save screenshots to `tmp/audit-public-*.png`. Report all issues found with severity levels.
+> Save screenshots named `audit-public-*.png` via `saveScreenshot()`. Report all issues found with severity levels.
 
 ### Sub-agent B: Auth Flow
 
@@ -91,7 +88,7 @@ Prompt the sub-agent with:
 > 4. Click logout - verify redirect to public site or login page
 > 5. Login again to restore session for subsequent agents
 >
-> Save screenshots to `tmp/audit-auth-*.png`. Report all issues found with severity levels.
+> Save screenshots named `audit-auth-*.png` via `saveScreenshot()`. Report all issues found with severity levels.
 
 ### Sub-agent C: Admin Pages CRUD
 
@@ -111,7 +108,7 @@ Prompt the sub-agent with:
 >
 > IMPORTANT: Clean up - ensure the test page is deleted before finishing.
 >
-> Save screenshots to `tmp/audit-admin-crud-*.png`. Report all issues found with severity levels.
+> Save screenshots named `audit-admin-crud-*.png` via `saveScreenshot()`. Report all issues found with severity levels.
 
 ### Sub-agent D: Admin Media & Users
 
@@ -132,9 +129,9 @@ Prompt the sub-agent with:
 >
 > IMPORTANT: Clean up - ensure all test records (__audit_test_*) are deleted before finishing.
 >
-> Save screenshots to `tmp/audit-admin-media-*.png`. Report all issues found with severity levels.
+> Save screenshots named `audit-admin-media-*.png` via `saveScreenshot()`. Report all issues found with severity levels.
 
-## Step 5: Aggregate findings
+## Step 4: Aggregate findings
 
 After all 4 sub-agents complete, combine their reports into a single structured bug report:
 
@@ -142,7 +139,7 @@ After all 4 sub-agents complete, combine their reports into a single structured 
 ## Site Audit Report
 
 ### CRITICAL
-- [description] (screenshot: tmp/audit-*.png)
+- [description] (screenshot: `~/.dev-browser/tmp/audit-*.png`)
 
 ### HIGH
 - ...
@@ -159,7 +156,7 @@ After all 4 sub-agents complete, combine their reports into a single structured 
 
 If no bugs are found, report that the site passed the audit.
 
-## Step 6: Propose fix plan
+## Step 5: Propose fix plan
 
 For each bug found:
 1. Identify the likely source file(s) using Grep/Glob to search the codebase

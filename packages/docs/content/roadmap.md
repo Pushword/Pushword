@@ -103,8 +103,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
       - https://github.com/calumk/editorjs-columns/pull/6
   - [ ] Migrate to tiptap (lol)
 
-- [Admin] Migrate to EasyAdmin
-
 - [Static] revoir la compression pour du contenu statique ➜ https://dunglas.dev/2024/12/http-compression-in-php-new-symfony-assetmapper-feature/
 
 - https://x.com/jh3yy/status/1798728699459563905 (altimood)

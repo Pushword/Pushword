@@ -85,6 +85,8 @@ composer console ...
 | admin | CRUD interface for Page, Media, User built on EasyAdmin | core |
 | admin-block-editor | Rich text / block editor for the admin | core |
 | advanced-main-image | Main image format options (hidden, hero, etc.) and default templates | core, admin |
+| ai-skills | AI authoring skills (the `/pw` router skill and its reference playbooks) — Node package | — |
+| api | Token-authenticated REST API mirroring the admin, with an OpenAPI endpoint | core |
 | conversation | Comments, contact forms, user input | core, flat |
 | docs | Project documentation (ships to end users as `vendor/pushword/docs/content/`) | — |
 | flat | Flat-file CMS mode: sync pages/media between database and filesystem | core |
@@ -94,6 +96,8 @@ composer console ...
 | new | Meta-package that pulls in core + admin + common extensions | core |
 | page-scanner | Dead link detection, 404/301 checks, TODO scanning | core |
 | page-update-notifier | Email notifications on page edits | core |
+| quiz | Interactive client-side QCM / personality tests via a `{% quiz %}` block | core |
+| repurpose | Turn a page into social carousels rendered as SVG slides (PNG/PDF export) | core |
 | search | Optional SQLite full-text search via Loupe (zero infra) | core |
 | dev-app | Dev/test/demo app (not a copy-paste starter for end users; formerly named `skeleton`) | core |
 | snippet | Reusable content fragments + dev-registered components, via `snippet()` | core |
