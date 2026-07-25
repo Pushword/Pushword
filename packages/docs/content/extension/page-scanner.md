@@ -178,6 +178,10 @@ Enumerating pager pages would mean nodes that are URLs rather than pages
 - **Parent pages**: parent-child host consistency
 - **TODO comments**: deferred actions tied to page publication (see below)
 
+An absolute URL pointing at another host of the same installation is internal too:
+it is resolved against that host — a page, a media, a file under `public/` — with
+the same rules as a `/slug` link, never fetched over HTTP.
+
 URLs written inside a `<code>` or `<pre>` block are illustrations, not links, and
 are never checked.
 

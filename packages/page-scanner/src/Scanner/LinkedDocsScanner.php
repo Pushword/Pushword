@@ -349,25 +349,39 @@ final class LinkedDocsScanner extends AbstractScanner
         return \is_string($host) && $this->siteRegistry->isKnownHost($host);
     }
 
+    /**
+     * An absolute URL on another host of the installation resolves against that host,
+     * not the linking page's — but it reaches the very same things a root-relative link
+     * does: a page, a media, a file under public/. Only the host the slug is looked up
+     * against differs, so the resolution is shared with the root-relative branch.
+     */
     private function checkInternalCrossHostLink(string $url, bool $checkRedirection): void
     {
         $parsed = parse_url($url);
-        $host = $parsed['host'] ?? '';
-        $slug = ltrim($parsed['path'] ?? '', '/') ?: 'homepage';
 
-        $cacheKey = $host.'/'.$slug;
+        // The link may spell an alias host (a www., a port); pages are stored under the
+        // site's main host, which is what the page cache and the repository key on.
+        $host = $this->siteRegistry->findHost($parsed['host'] ?? '');
 
-        $page = null !== $this->pageCache
-            ? ($this->pageCache[$cacheKey] ?? null)
-            : $this->entityManager->getRepository(Page::class)->getPage($slug, $host);
+        $this->checkInternalUri($url, $parsed['path'] ?? '', $host, $checkRedirection);
+    }
 
-        if (! $page instanceof Page) {
+    /**
+     * @param string $url the link as written, quoted back in the error message
+     * @param string $uri its path, without scheme, host, query or fragment
+     */
+    private function checkInternalUri(string $url, string $uri, string $host, bool $checkRedirection): void
+    {
+        $target = $this->resolveUri($uri, $host);
+        $page = $target['page'];
+
+        if (! $target['exists']) {
             $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotFound'));
-        } elseif (! $page->isPublished()) {
+        } elseif ($page instanceof Page && ! $page->isPublished()) {
             if ($this->checkUnpublished) {
                 $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
             }
-        } elseif ($checkRedirection && $page->hasRedirection()) {
+        } elseif ($checkRedirection && ($target['redirect'] || ($page instanceof Page && $page->hasRedirection()))) {
             $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
         } elseif ($this->isCrawlableLinkToNoindex($url, $page)) {
             $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNoindexLink'));
@@ -431,17 +445,7 @@ final class LinkedDocsScanner extends AbstractScanner
         }
 
         if ('/' === $uri[0]) {
-            if (! $this->uriExist($this->removeParameters($uri))) {
-                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotFound'));
-            } elseif ($this->lastPageChecked instanceof Page && ! $this->lastPageChecked->isPublished()) {
-                if ($this->checkUnpublished) {
-                    $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
-                }
-            } elseif ($checkRedirection && (($this->lastPageChecked instanceof Page && $this->lastPageChecked->hasRedirection()) || $this->lastUriIsRedirect)) {
-                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
-            } elseif ($this->isCrawlableLinkToNoindex($url, $this->lastPageChecked)) {
-                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNoindexLink'));
-            }
+            $this->checkInternalUri($url, $this->removeParameters($uri), $this->page->host, $checkRedirection);
 
             return;
         }
@@ -602,59 +606,47 @@ final class LinkedDocsScanner extends AbstractScanner
         return true;
     }
 
-    private ?Page $lastPageChecked = null;
-
-    private bool $lastUriIsRedirect = false;
-
     /**
-     * Caches the whole resolution, not just whether the slug exists: every check
-     * downstream reads `lastPageChecked`, so returning a bare bool on a cache hit
+     * Resolves the whole target, not just whether the slug exists: every check
+     * downstream needs the page it landed on, so answering with a bare bool
      * silently exempted every page but the first to link a given target.
+     *
+     * @return array{exists: bool, page: ?Page, redirect: bool}
      */
-    private function uriExist(string $uri): bool
+    private function resolveUri(string $uri, string $host): array
     {
-        $this->lastPageChecked = null;
-        $this->lastUriIsRedirect = false;
-
         $slug = ltrim($uri, '/');
+        if ('' === $slug) {
+            $slug = 'homepage';
+        }
 
-        $cacheKey = $this->page->host.'/'.$slug;
+        $cacheKey = $host.'/'.$slug;
 
         if (isset($this->everChecked[$cacheKey])) {
-            $resolved = $this->everChecked[$cacheKey];
-            $this->lastPageChecked = $resolved['page'];
-            $this->lastUriIsRedirect = $resolved['redirect'];
-
-            return $resolved['exists'];
+            return $this->everChecked[$cacheKey];
         }
 
         $isMedia = str_starts_with($slug, 'media/');
+        $page = null;
+        $redirect = false;
 
         if (! $isMedia) {
-            $this->lastPageChecked = $this->findPageInCacheOrDb($slug);
+            $page = $this->findPageInCacheOrDb($slug, $host);
 
             // No page owns this slug, but a destination page's redirectFrom (or a phantom
             // redirect) may still resolve it — surface it as a redirection, not a dead link.
-            if (! $this->lastPageChecked instanceof Page
-                && null !== $this->entityManager->getRepository(Page::class)->getRedirectFor($slug, $this->page->host)) {
-                $this->lastUriIsRedirect = true;
-            }
+            $redirect = ! $page instanceof Page
+                && null !== $this->entityManager->getRepository(Page::class)->getRedirectFor($slug, $host);
         }
 
-        $exists = $this->lastPageChecked instanceof Page
-            || $this->lastUriIsRedirect
+        $exists = $page instanceof Page
+            || $redirect
             || ($isMedia && $this->mediaExistsBySlug(substr($slug, 6)))
             || file_exists($this->publicDir.'/'.$slug)
             || file_exists($this->publicDir.'/../'.$slug)
             || 'feed.xml' === $slug;
 
-        $this->everChecked[$cacheKey] = [
-            'exists' => $exists,
-            'page' => $this->lastPageChecked,
-            'redirect' => $this->lastUriIsRedirect,
-        ];
-
-        return $exists;
+        return $this->everChecked[$cacheKey] = ['exists' => $exists, 'page' => $page, 'redirect' => $redirect];
     }
 
     /**
@@ -676,17 +668,15 @@ final class LinkedDocsScanner extends AbstractScanner
         return array_any(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'], static fn (string $ext): bool => null !== $repo->findOneByFileName($baseName.'.'.$ext));
     }
 
-    private function findPageInCacheOrDb(string $slug): ?Page
+    private function findPageInCacheOrDb(string $slug, string $host): ?Page
     {
         // Use cache if available
         if (null !== $this->pageCache) {
-            $hostKey = $this->page->host.'/'.$slug;
-
-            return $this->pageCache[$hostKey] ?? null;
+            return $this->pageCache[$host.'/'.$slug] ?? null;
         }
 
         // Fall back to database query
         return $this->entityManager->getRepository(Page::class)
-            ->getPage($slug, $this->page->host);
+            ->getPage($slug, $host);
     }
 }

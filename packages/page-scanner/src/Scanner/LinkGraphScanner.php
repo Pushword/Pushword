@@ -20,11 +20,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *
  * Edges are (host/slug) couples, normalized but NOT resolved: whether a target
  * is a real page is decided by {@see LinkGraphBuilder} against the scanned page
- * set, so media, static files and dead links drop out by node membership. This
- * scanner deliberately does not reuse LinkedDocsScanner's resolution, whose
- * `everChecked` short-circuit leaves `lastPageChecked` null on every slug seen
- * more than once — an edge built on it would record one inbound per target for
- * the whole corpus.
+ * set, so media, static files and dead links drop out by node membership — the
+ * graph needs every edge, including the ones LinkedDocsScanner reports on.
  *
  * Rides the scanner loop only to get the rendered HTML for free; it reports no
  * error and always returns an empty error list.

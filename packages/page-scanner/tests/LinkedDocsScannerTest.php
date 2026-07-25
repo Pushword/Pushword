@@ -15,18 +15,19 @@ use Pushword\PageScanner\Scanner\LinkedDocsScanner;
 use function Safe\file_get_contents;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Group('integration')]
 final class LinkedDocsScannerTest extends KernelTestCase
 {
-    private function createScanner(): LinkedDocsScanner
+    private function createScanner(?string $publicDir = null): LinkedDocsScanner
     {
         return new LinkedDocsScanner(
             self::getContainer()->get('doctrine.orm.default_entity_manager'),
             self::getContainer()->get(SiteRegistry::class),
             [],
-            __DIR__.'/../../dev-app/public',
+            $publicDir ?? __DIR__.'/../../dev-app/public',
             self::getContainer()->get('translator'),
         );
     }
@@ -72,6 +73,84 @@ final class LinkedDocsScannerTest extends KernelTestCase
     {
         yield 'with trailing slash' => ['https://localhost.dev/'];
         yield 'without trailing slash' => ['https://localhost.dev'];
+    }
+
+    /**
+     * A media is not a page: resolving a cross-host URL against pages only reported
+     * every absolute link to a file served by another host as a dead link.
+     */
+    #[DataProvider('crossHostMediaUrlProvider')]
+    public function testCrossHostInternalLinkToMedia(string $url): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        $errors = $scanner->scan($this->getPage('other-page', 'pushword.piedweb.com'), '<a href="'.$url.'">doc</a>');
+
+        self::assertSame([], $errors, $url.' exists and must not be reported');
+    }
+
+    /**
+     * @return Iterator<string, array{string}>
+     */
+    public static function crossHostMediaUrlProvider(): Iterator
+    {
+        yield 'media' => ['https://localhost.dev/media/1.jpg'];
+        yield 'media behind an image filter' => ['https://localhost.dev/media/xs/1.jpg'];
+        yield 'media converted to another format' => ['https://localhost.dev/media/default/1.webp'];
+        yield 'media with a query string' => ['https://localhost.dev/media/1.jpg?v=2'];
+    }
+
+    /**
+     * The other half of what a host serves without owning a page for it: a plain file
+     * under public/. Resolved against the public directory, which every host shares.
+     */
+    public function testCrossHostInternalLinkToStaticFile(): void
+    {
+        self::bootKernel();
+
+        $publicDir = sys_get_temp_dir().'/pushword-page-scanner-public-'.getmypid();
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($publicDir.'/downloads/brochure.pdf', 'a pdf');
+
+        try {
+            $scanner = $this->createScanner($publicDir);
+            $scanner->preloadPageCache();
+
+            $html = '<a href="https://localhost.dev/downloads/brochure.pdf">doc</a>';
+
+            self::assertSame([], $scanner->scan($this->getPage('other-page', 'pushword.piedweb.com'), $html));
+        } finally {
+            $filesystem->remove($publicDir);
+        }
+    }
+
+    public function testCrossHostInternalLinkToMissingMedia(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        $html = '<a href="https://localhost.dev/media/nonexistent.pdf">doc</a>';
+        $errors = $scanner->scan($this->getPage('other-page', 'pushword.piedweb.com'), $html);
+
+        self::assertCount(1, $errors);
+        self::assertStringContainsString('https://localhost.dev/media/nonexistent.pdf', $errors[0]);
+    }
+
+    /**
+     * The root of a host is its homepage, whichever way the link spells it — it must
+     * be resolved as that page, not merely as a path the public directory happens to
+     * answer for, or the checks below "not found" never run on it.
+     */
+    public function testRootLinkResolvesToTheHomepage(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        self::assertSame([], $scanner->scan($this->getPage('other-page', 'localhost.dev'), '<a href="/">home</a>'));
     }
 
     public function testCrossHostInternalLinkToMissingPage(): void
@@ -163,7 +242,8 @@ final class LinkedDocsScannerTest extends KernelTestCase
         self::assertStringContainsString('https://localhost.dev/pushword', $errors[0]);
     }
 
-    public function testInternalLinkToRedirectFromOldSlugReportedAsRedirection(): void
+    #[DataProvider('redirectFromLinkProvider')]
+    public function testInternalLinkToRedirectFromOldSlugReportedAsRedirection(string $linkingHost, string $href): void
     {
         self::bootKernel();
         $em = self::getContainer()->get(EntityManagerInterface::class);
@@ -186,13 +266,22 @@ final class LinkedDocsScannerTest extends KernelTestCase
             $translator = self::getContainer()->get(TranslatorInterface::class);
             $redirectionMsg = $translator->trans('page_scanIsRedirection');
 
-            $errors = $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/scan-old">link</a>');
+            $errors = $scanner->scan($this->getPage('scan-linking-page', $linkingHost), '<a href="'.$href.'">link</a>');
 
-            self::assertContains('<code>/scan-old</code> '.$redirectionMsg, $errors);
+            self::assertContains('<code>'.$href.'</code> '.$redirectionMsg, $errors);
         } finally {
             $em->remove($destination);
             $em->flush();
         }
+    }
+
+    /**
+     * @return Iterator<string, array{string, string}>
+     */
+    public static function redirectFromLinkProvider(): Iterator
+    {
+        yield 'root-relative, from the same host' => ['localhost.dev', '/scan-old'];
+        yield 'absolute, from another host' => ['pushword.piedweb.com', 'https://localhost.dev/scan-old'];
     }
 
     public function testCrawlableLinkToNoindexPageIsReported(): void
@@ -211,6 +300,21 @@ final class LinkedDocsScannerTest extends KernelTestCase
             $errors = $scanner->scan($this->getPage('other-page'), $html);
 
             self::assertSame(['<code>https://localhost.dev/noindex-target</code> '.$this->transNoindex()], $errors);
+        });
+    }
+
+    /**
+     * Cross-host links resolve through the same host-keyed cache as root-relative ones,
+     * so a cache hit must restore what was found, not merely that something was.
+     */
+    public function testCrossHostNoindexLinkIsReportedOnEveryPageLinkingIt(): void
+    {
+        $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
+            $html = '<a href="https://localhost.dev/noindex-target">link</a>';
+            $expected = ['<code>https://localhost.dev/noindex-target</code> '.$this->transNoindex()];
+
+            self::assertSame($expected, $scanner->scan($this->getPage('scan-linking-page', 'pushword.piedweb.com'), $html));
+            self::assertSame($expected, $scanner->scan($this->getPage('another-linking-page', 'pushword.piedweb.com'), $html));
         });
     }
 
