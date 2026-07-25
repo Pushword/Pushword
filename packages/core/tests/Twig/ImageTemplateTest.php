@@ -92,4 +92,29 @@ final class ImageTemplateTest extends KernelTestCase
         self::assertStringContainsString('height="400"', $html);
         self::assertStringNotContainsString('1000', $html);
     }
+
+    public function testAltStripsMarkupComingFromATitle(): void
+    {
+        $twig = $this->getTwig();
+
+        // Cards hand over a page h1, which carries markup. Rendered as-is it would
+        // escape into the attribute and read as literal tags to a screen reader.
+        $html = $twig->render('@PushwordCore/component/image.html.twig', [
+            'image' => $this->createMedia(),
+            'image_alt' => 'Yann Gouffault<br><small>Mountain leader</small>',
+        ]);
+
+        self::assertStringContainsString('alt="Yann Gouffault Mountain leader"', $html);
+        self::assertStringNotContainsString('&lt;', $html);
+    }
+
+    public function testAltFallsBackToTheMediaAltWhenNoneIsGiven(): void
+    {
+        $twig = $this->getTwig();
+        $html = $twig->render('@PushwordCore/component/image.html.twig', [
+            'image' => $this->createMedia(),
+        ]);
+
+        self::assertStringContainsString('alt="Test image"', $html);
+    }
 }

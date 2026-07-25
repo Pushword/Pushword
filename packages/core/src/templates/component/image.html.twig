@@ -14,6 +14,13 @@
 {% set mode = mode ?? 'responsive' %}
 {% set lazy = lazy ?? true %}
 
+{# An alt is plain text. Callers commonly hand over a page title or an h1, which
+   carries markup (<br>, <small>, <span class>) and would render as escaped tags
+   inside the attribute. The <br> becomes a space first, otherwise stripping it
+   welds the two halves of a two-line title together. #}
+{% set image_alt = (image_alt ?? null) is empty ? null
+  : image_alt|replace({'<br>': ' ', '<br/>': ' ', '<br />': ' '})|striptags|replace({'  ': ' '})|trim %}
+
 {# SVG files are vector images - render simple img tag without srcset/picture complexity #}
 {% set picture_attr = picture_attr ?? {} %}
 
