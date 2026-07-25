@@ -17,7 +17,7 @@
 
 const DEFAULT_ZONE = '[data-variant-zone], main, #content'
 
-let variantLoaded = false
+let variantPath = null
 
 /**
  * Fetch a variant URL and swap its content zone into the current page.
@@ -39,7 +39,7 @@ export function loadVariant(url, zoneSelector = DEFAULT_ZONE) {
       if (!fresh) return
 
       zone.replaceWith(fresh)
-      variantLoaded = true
+      variantPath = new URL(url, window.location.href).pathname
       history.pushState({ pwVariant: url }, '', url)
       document.dispatchEvent(new Event('DOMChanged'))
     })
@@ -78,8 +78,10 @@ export function initVariantLinks(options = {}) {
     loadVariant(url, zoneSelector)
   })
 
-  // After navigating back/forward past a variant swap, restore real content.
+  // After navigating back/forward away from a variant swap, restore real content.
+  // Hash changes fire popstate too: comparing paths keeps in-page anchors from
+  // reloading the swapped content away.
   window.addEventListener('popstate', () => {
-    if (variantLoaded) window.location.reload()
+    if (variantPath && window.location.pathname !== variantPath) window.location.reload()
   })
 }
