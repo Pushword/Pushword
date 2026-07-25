@@ -153,6 +153,40 @@ final class LinkedDocsScannerTest extends KernelTestCase
         self::assertSame([], $scanner->scan($this->getPage('other-page', 'localhost.dev'), '<a href="/">home</a>'));
     }
 
+    /**
+     * Pages are stored under their site's main host, so a link spelling one of the
+     * site's alias hosts has to be resolved against the main one — otherwise every
+     * `www.` link to a page of the installation reads as a dead link.
+     */
+    public function testCrossHostInternalLinkToAliasHost(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $target = new Page();
+        $target->setH1('Alias target');
+        $target->setSlug('alias-target');
+        $target->host = 'admin-block-editor.test';
+        $target->locale = 'en';
+        $target->setMainContent('...');
+
+        $em->persist($target);
+        $em->flush();
+
+        try {
+            $scanner = $this->createScanner();
+            $scanner->preloadPageCache();
+
+            // www.admin-block-editor.test is an alias of admin-block-editor.test
+            $html = '<a href="https://www.admin-block-editor.test/alias-target">link</a>';
+
+            self::assertSame([], $scanner->scan($this->getPage('other-page', 'localhost.dev'), $html));
+        } finally {
+            $em->remove($target);
+            $em->flush();
+        }
+    }
+
     public function testCrossHostInternalLinkToMissingPage(): void
     {
         self::bootKernel();

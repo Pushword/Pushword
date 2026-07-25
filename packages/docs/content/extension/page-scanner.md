@@ -180,7 +180,8 @@ Enumerating pager pages would mean nodes that are URLs rather than pages
 
 An absolute URL pointing at another host of the same installation is internal too:
 it is resolved against that host — a page, a media, a file under `public/` — with
-the same rules as a `/slug` link, never fetched over HTTP.
+the same rules as a `/slug` link, never fetched over HTTP. An alias host resolves
+to the main host of its site, where its pages are stored.
 
 URLs written inside a `<code>` or `<pre>` block are illustrations, not links, and
 are never checked.

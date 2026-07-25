@@ -52,6 +52,10 @@ pushword:
         - assets
     - hosts:
         - admin-block-editor.test
+        # The only alias host a link can actually spell: page-scan skips hosts
+        # without a dot (localhost) or with a port (127.0.0.1:9090), so this is
+        # what covers resolving an alias back to its main host.
+        - www.admin-block-editor.test
       base_url: 'https://admin-block-editor.test'
 
 static_generator:
