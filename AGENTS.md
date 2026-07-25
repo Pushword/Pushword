@@ -10,49 +10,22 @@ Read to bootstrap, in order:
 
 ## Working principles
 
-- Think before acting. Read existing files before writing code; don't re-read files already read.
-- State assumptions; if uncertain or ambiguous, ask instead of picking silently.
-- Push back when a simpler approach exists. Keep solutions simple and direct — minimum code, nothing speculative (no unrequested features, abstractions, flexibility, or error handling for impossible cases).
-- Surgical changes: touch only what the request requires, match existing style, don't refactor working code. Remove orphans your change creates; flag (don't delete) pre-existing dead code.
-- Prefer editing over rewriting whole files.
-- Define success criteria and loop until verified ("add validation" → write tests for invalid inputs, then make them pass). State a brief plan for multi-step tasks.
-- Test your code before declaring done.
-- Be concise in output, thorough in reasoning. No sycophantic openers or closing fluff.
+- Nothing speculative: no unrequested features, abstractions, flexibility, or error handling for impossible cases.
+- Remove orphans your change creates; flag (don't delete) pre-existing dead code.
 
 ## Stack
 
 Pushword is a modular CMS: a monorepo of Symfony bundles (core + extensions).
 
-- **PHP** ≥ 8.4, **Symfony** 8.0, **Doctrine ORM** 3.0, **Twig**
-- **Node.js** + **Yarn** (assets), **Composer** (PHP deps), **Tailwind CSS 4**
 - **DB**: SQLite via Doctrine — no migrations, use `bin/console doctrine:schema:update --force`
+- No deprecated PHP/Symfony/Pushword features.
 
-```
-packages/
-├── dev-app/         # dev/demo app — run console commands from here
-├── core/             # core bundle; src/Entity/ has Page, User, Media
-├── docs/content/     # project documentation
-└── [other-bundles]/  # extensions (each with own src/ and tests/)
-```
+## Conventions
 
-### Compatibility & security
+Match the surrounding code; php-cs-fixer and Rector settle the rest. Two things they don't:
 
-- Target Symfony 8.0+ / PHP 8.4+; no deprecated PHP/Symfony/Pushword features.
-- Prevent XSS, CSRF, injection, auth bypass, etc.
-
-## PHP code
-
-- Modern PHP 8.4+ syntax; type declarations on all properties, args, returns.
-- `camelCase` for variables/methods, `SCREAMING_SNAKE_CASE` for constants.
-- Fast returns over nested logic. Trailing commas in multi-line arrays/arg lists.
-- PHPDoc only when needed (e.g. `@var Collection<ProductInterface>`).
 - Group getter/setter for the same property together.
-- Suffix interfaces with `Interface`, traits with `Trait`. Indent 4 spaces.
-
-## Twig templates
-
-- Indent 2 spaces.
-- i18n: camelCase keys, alphabetical, in `packages/<package>/translations/messages.<locale>.yaml`.
+- Twig i18n: camelCase keys, alphabetical, in `packages/<package>/translations/messages.<locale>.yaml`.
 
 ## Commands
 
@@ -60,15 +33,10 @@ From `packages/dev-app/`:
 
 ```bash
 php bin/console list pushword          # all commands
-php bin/console debug:config pushword  # config
-php bin/console debug:router           # routes
-php bin/console debug:container        # services
 composer assets                        # build assets
 composer dev                           # start server (symfony server:list to check)
 composer reset-dev-app                # reset demo
 ```
-
-Pushword CLI: `pw:flat:sync`, `pw:ai-index`, `pw:static`, `pw:media:normalize-filenames`, `pw:page-scan`, `pw:link:graph`, `pw:user:token {email}`.
 
 **Agent-optimized output**: `pw:page-scan`, `pw:link:graph`, `pw:flat:sync`, `pw:flat:lint`, `pw:static`, `pw:image:cache`, `pw:quiz:validate` emit one compact JSON line when run by an AI agent (auto-detected) instead of progress/colors/timing. Add it to a command with `Pushword\Core\Command\AgentOutputTrait` + a `--format` option (auto|agent|text); gate every human write behind `if (! $this->agentMode)`. Tests asserting human output must pass `'--format' => 'text'`. See `packages/docs/content/agent-output.md`.
 
@@ -91,21 +59,7 @@ php bin/console debug:container --deprecations                          # contai
 For admin UI or frontend changes, validate in the browser. Use the `dev-browser` skill (`/dev-browser`) for automated checks and screenshots — `getAISnapshot()` to discover elements, `selectSnapshotRef()` to interact.
 
 Credentials: `admin@example.tld` / `p@ssword` (ROLE_SUPER_ADMIN); reset via `composer reset-dev-app`.
-
-```typescript
-import { connect, waitForPageLoad } from '@/client.js'
-
-const client = await connect()
-const page = await client.page('pushword-admin')
-await page.goto('https://127.0.0.1:8000/admin')
-await waitForPageLoad(page)
-await page.fill('input[name="_username"]', 'admin@example.tld')
-await page.fill('input[name="_password"]', 'p@ssword')
-await page.click('button[type="submit"]')
-await waitForPageLoad(page)
-await page.screenshot({ path: 'tmp/admin-dashboard.png' })
-await client.disconnect()
-```
+Admin login script: `.claude/skills/ui-debug/SKILL.md`.
 
 ## Design
 
@@ -129,8 +83,4 @@ UI/templates/CSS: consult `packages/core/DesignGuidelines.md` (Tailwind, public 
 
 ## For AI agents on a downstream Pushword site
 
-Read from `vendor/pushword/docs/content/`: `architecture.md`, `extensions.md`, `media-api.md`, `ai-index.md`. Entity source in `vendor/pushword/core/src/Entity/` (docblocks summarize composition).
-
-**Multi-locale**: the `host` field drives multi-site/locale — each locale is a separate host (e.g. `altimood.com`, `us.altimood.com`). Pages link across locales via the `translations` relation (a `ManyToMany` on `Page`), not a custom property; localize slugs per language.
-
-A downstream CLAUDE.md should cover: project purpose/stack, hosts/locales table, common commands, deployment workflow, editorial rules (in `.rules/` or `docs/`), framework-unenforced invariants, and a pointer to `vendor/pushword/docs/content/`.
+See `packages/docs/CLAUDE.md` — the file that ships as `vendor/pushword/docs/CLAUDE.md`.

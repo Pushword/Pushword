@@ -4,10 +4,9 @@ This file ships to your project via `vendor/pushword/docs/CLAUDE.md`. Reference 
 
 ### Coding principles
 
-1. **Think before coding**: State assumptions. Present alternatives — don't pick silently. Push back if simpler exists.
-2. **Simplicity first**: Minimum code. No speculative abstractions.
-3. **Surgical changes**: Touch only what you must. Match existing style. Remove only orphans your changes created.
-4. **Goal-driven execution**: Write a failing test first when possible. State a brief plan with verification steps.
+- **Simplicity first**: minimum code, no speculative abstractions, no error handling for impossible cases.
+- **Surgical changes**: remove only orphans your changes created; flag pre-existing dead code rather than deleting it.
+- Write a failing test first when possible.
 
 ### Content structure
 
@@ -27,6 +26,10 @@ Entity class docblocks list traits, fields, and relations.
 ### Multi-locale content
 
 Pushword uses the `host` field for multi-site/multi-locale. Each locale is a separate host. Pages link across locales via the `translations` relation (a `ManyToMany` on `Page`, defined in `PageTrait/PageI18nTrait.php`), not a custom property. Slugs should be localized per language.
+
+### What your project's CLAUDE.md should cover
+
+Project purpose/stack, hosts/locales table, common commands, deployment workflow, editorial rules (in `.rules/` or `docs/`), framework-unenforced invariants, and a pointer to `vendor/pushword/docs/content/`.
 
 ### Common commands
 
