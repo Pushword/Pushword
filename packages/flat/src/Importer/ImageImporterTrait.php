@@ -23,6 +23,8 @@ trait ImageImporterTrait
 
     abstract private function hasFileContentChanged(string $filePath, Media $media, ?DateTimeInterface $fileModifiedAt = null): bool;
 
+    abstract private function importMetadataOnly(Media $media, string $fileName): bool;
+
     private const int MAX_IMAGE_WIDTH = 1980;
 
     private const int MAX_IMAGE_HEIGHT = 1280;
@@ -41,9 +43,7 @@ trait ImageImporterTrait
 
         // Use hash comparison to detect real content changes
         if (! $this->newMedia && ! $this->hasFileContentChanged($filePath, $media, $dateTime)) {
-            ++$this->skippedCount;
-
-            return false; // no update needed
+            return $this->importMetadataOnly($media, $fileName); // the file is untouched, media.csv may not be
         }
 
         $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->id).')');

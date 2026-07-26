@@ -267,6 +267,12 @@ final class MediaSync
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
         $lastSyncTime = $this->stateManager->getLastSyncTime('media', $app->getMainHost());
 
+        // media.csv sits in the base content dir, outside every directory scanned below,
+        // yet it holds the only media values a human edits by hand.
+        if ($this->isCsvNewerThan($lastSyncTime)) {
+            return true;
+        }
+
         // Preload all media into an index to avoid per-file DB queries (cached across hosts)
         if (null === $this->mediaIndexCache) {
             $allMedia = $this->mediaRepository->findAll();
@@ -301,6 +307,26 @@ final class MediaSync
         }
 
         return false;
+    }
+
+    /**
+     * A never-synced host keeps the previous behaviour: without a reference time, an
+     * exported-but-stale CSV would drag the whole database toward it.
+     */
+    private function isCsvNewerThan(int $lastSyncTime): bool
+    {
+        if (0 === $lastSyncTime) {
+            return false;
+        }
+
+        $csvPath = $this->getCsvPath();
+        if (! file_exists($csvPath)) {
+            return false;
+        }
+
+        $mtime = filemtime($csvPath);
+
+        return false !== $mtime && $mtime > $lastSyncTime;
     }
 
     /**

@@ -237,9 +237,7 @@ class MediaImporter extends AbstractImporter
         }
 
         if (! $this->newMedia && ! $this->hasFileContentChanged($localPath, $media, $dateTime)) {
-            ++$this->skippedCount;
-
-            return false;
+            return $this->importMetadataOnly($media, $fileName);
         }
 
         $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->id).')');
@@ -279,9 +277,7 @@ class MediaImporter extends AbstractImporter
         }
 
         if (! $this->newMedia && ! $this->hasFileContentChanged($localPath, $media, $dateTime)) {
-            ++$this->skippedCount;
-
-            return false;
+            return $this->importMetadataOnly($media, $fileName);
         }
 
         $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->id).')');
@@ -434,6 +430,99 @@ class MediaImporter extends AbstractImporter
         }
 
         return $alts;
+    }
+
+    /**
+     * The file content did not change, but media.csv is where a human edits alt, tags,
+     * localized alts and custom properties — that row still has to reach the entity.
+     *
+     * @return bool true when the CSV held something the database did not
+     */
+    private function importMetadataOnly(Media $media, string $fileName): bool
+    {
+        $data = $this->getDataForFileName($fileName);
+
+        // No row, or a row asking for what the database already holds.
+        if (! $this->hasMetadataChanged($media, $data)) {
+            ++$this->skippedCount;
+
+            return false;
+        }
+
+        $this->logger?->info('Updating media metadata from media.csv `'.$fileName.'` ('.$media->id.')');
+        ++$this->importedCount;
+
+        $this->setData($media, $data);
+
+        return true;
+    }
+
+    /**
+     * Only the keys the CSV actually carries are compared: parseIndexData() drops empty
+     * cells, and an empty cell means "keep what the database holds".
+     *
+     * @param array<string|int, mixed> $data
+     */
+    private function hasMetadataChanged(Media $media, array $data): bool
+    {
+        foreach ($data as $key => $value) {
+            $key = self::underscoreToCamelCase((string) $key);
+
+            $changed = 'alts' === $key
+                ? $this->hasAltsChanged($media, $value)
+                : $this->getPersistedValue($media, $key) !== $this->sanitizeUtf8($value);
+
+            if ($changed) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Mirror setData()'s dispatch, so that a value it would route to a real setter is
+     * not compared against a custom property that will always be missing.
+     */
+    private function getPersistedValue(Media $media, string $key): mixed
+    {
+        if ('alt' === $key) {
+            // getAlt() can return the soft alt a render just set — the diff needs the persisted one.
+            $original = $this->em->getUnitOfWork()->getOriginalEntityData($media);
+
+            return $original['alt'] ?? $media->getAlt(true);
+        }
+
+        if ('tags' === $key) {
+            return trim($media->getTags());
+        }
+
+        $setter = 'set'.ucfirst($key);
+        $getter = 'get'.ucfirst($key);
+
+        if (method_exists($media, $setter) && method_exists($media, $getter)) {
+            return $media->$getter(); // @phpstan-ignore-line
+        }
+
+        return $media->getCustomProperty($key);
+    }
+
+    /**
+     * Compared as maps: the exporter sorts the alt_* columns, so a locale order that
+     * differs from the stored YAML is not a change.
+     */
+    private function hasAltsChanged(Media $media, mixed $alts): bool
+    {
+        $fromCsv = \is_string($alts) ? Yaml::parse($alts) : null;
+        if (! \is_array($fromCsv)) {
+            return true;
+        }
+
+        $fromDb = $media->getAltsParsed();
+        ksort($fromCsv);
+        ksort($fromDb);
+
+        return $fromCsv !== $fromDb;
     }
 
     /**

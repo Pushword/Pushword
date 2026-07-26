@@ -340,41 +340,51 @@ php bin/console pw:redirect:migrate [host] [--dry-run]
 
 #### Import (flat to database)
 
-1. **CSV index loaded** from storage (via Flysystem)
+1. **CSV index loaded**: `media.csv`, read from the content base dir (shared by all hosts)
 2. **File validation**: checks that files referenced in CSV actually exist
-3. **Rename preparation**: if CSV has different `fileName` for an existing ID, the file is renamed in storage
-4. **Hash-based rename detection**: if a file on disk has the same SHA-1 hash as a missing media entity, the existing entity's filename is updated (no duplicate created)
-5. **Duplicate detection**: if a new file has the same SHA-1 hash as an existing media, the duplicate file is deleted and the existing entity's `fileNameHistory` is updated
-6. **Deletion**: media entities in DB whose IDs are NOT in the CSV are **deleted** (only if CSV contained IDs)
-7. **Storage import**: files from the Flysystem storage are imported (hash-based skip for unchanged)
-8. **Local dir import**: files from `{content_dir}/media/` are copied to storage then imported
+3. **Hash-based rename detection**: if a file on disk has the same SHA-1 hash as a missing media entity, the existing entity's filename is updated (no duplicate created)
+4. **Duplicate detection**: if a new file has the same SHA-1 hash as an existing media, the duplicate file is deleted and the existing entity's `fileNameHistory` is updated
+5. **Deletion**: media entities in DB whose `fileName` is NOT in the CSV are **deleted** (only if the CSV was loaded and holds at least one row)
+6. **Storage import**: files from the Flysystem storage are imported (hash-based skip for unchanged content)
+7. **Local dir import**: files from `{content_dir}/media/` are copied to storage then imported
+8. **Metadata import**: for a file whose content did not change, the CSV row is still compared with the database, and `alt`, `tags`, `alt_*` and custom properties are updated when they differ
 9. **Oversized image resize**: images exceeding 1980x1280 are automatically resized down (preserving aspect ratio), then background cache generation is triggered
-10. **Index regeneration**: `media/index.csv` is regenerated to reflect DB state
+10. **Index regeneration**: `media.csv` is regenerated to reflect DB state
+
+Steps 6 to 8 are what makes `media.csv` writable: the file hash decides whether the
+**file** is re-imported, the CSV row decides whether the **metadata** is.
 
 #### Media Edge Cases
 
 - **New file in media dir, not in CSV** — imported as new media entity. CSV regenerated to include it.
-- **File deleted from disk, CSV row remains** — the missing file is removed from the index, so its ID is no longer tracked. The media entity is **deleted from DB**. Row removed from regenerated CSV.
+- **File deleted from disk, CSV row remains** — the missing file is removed from the index, so its name is no longer tracked. The media entity is **deleted from DB**. Row removed from regenerated CSV.
 - **CSV row removed, file still exists** — media entity **deleted from DB**. Physical file also **deleted** via Doctrine's `preRemove` listener.
 - **File renamed on disk, CSV not updated** — hash-based detection: SHA-1 hash is compared against media with missing files. If a match is found, the existing entity's filename is updated (no duplicate created).
-- **Filename changed in CSV (same ID), file not renamed** — file is **automatically renamed** in storage via `prepareFileRenames()`.
+- **Filename changed in CSV, file not renamed on disk** — **not supported, and destructive**: the row points at a file that does not exist, so it is dropped from the index, and the media still carrying the old name is then deleted from the database along with its file. Rename the file on disk instead and let hash detection follow it.
 - **File content modified** — SHA-1 hash differs from DB — media re-imported with updated hash.
+- **CSV metadata edited, file untouched** — the row is compared with the database and applied when it differs. An empty cell is not an instruction to erase: it leaves the stored value alone.
 - **Lock/temp files** (`.~lock.*`, `~$*`) — **always skipped**, never imported.
 - **New file with same hash as existing media** — duplicate detected by SHA-1 hash. The new file is **deleted**, and the existing entity's `fileNameHistory` is updated. No new entity created.
 - **Oversized image imported** — images exceeding 1980x1280 are automatically resized down (preserving aspect ratio). Background cache generation is triggered for responsive variants + WebP.
 - **Duplicate filenames in CSV** — handled gracefully, first entry wins.
 
-#### media/index.csv Format
+#### media.csv Format
+
+`media.csv` lives in the content base dir (next to the per-host directories, not inside
+them): media are global, they are not owned by a host.
 
 ```csv
-id,fileName,alt,tags,width,height,ratio,fileNameHistory,alt_en,alt_fr
-1,image.jpg,Base alt,photo,800,600,1.33,old-image.jpg,English alt,French alt
-2,doc.pdf,A document,document,,,,,
+fileName,alt,tags,width,height,ratio,fileNameHistory,updatedAt,alt_en,alt_fr
+image.jpg,Base alt,photo,800,600,1.33,old-image.jpg,2025-01-31 14:02:11,English alt,French alt
+doc.pdf,A document,document,,,,,2025-01-30 09:11:40,,
 ```
 
-- `fileNameHistory`: comma-separated previous filenames (for rename tracking)
+- `fileName` identifies the row — there is no `id` column
+- `alt`, `tags`, `alt_*` and any extra column are **editable**: they are imported back
 - `alt_*` columns: localized alt texts, auto-detected by locale suffix
 - Extra columns are stored as custom properties
+- `width`, `height`, `ratio`, `fileNameHistory` and `updatedAt` are **read-only**: exported
+  for reference, never imported (they are derived from the file itself)
 
 ### User Sync
 
@@ -546,15 +556,15 @@ Here is what happens for typical editing workflows after running `pw:flat:sync -
 
 #### Media
 
-- **Drop a new image into `media/`** (either `content/{host}/media/` or the storage directory `media/` at project root) — the image is imported as a new media entity. If it exceeds 1980x1280 pixels, it is automatically resized down. A new row appears in `media/index.csv` after sync.
+- **Drop a new image into `media/`** (either `content/{host}/media/` or the storage directory `media/` at project root) — the image is imported as a new media entity. If it exceeds 1980x1280 pixels, it is automatically resized down. A new row appears in `media.csv` after sync.
 - **Drop a duplicate image** (same content as an existing media) — the duplicate file is **deleted**. The existing media's `fileNameHistory` is updated. No new entity is created.
 - **Replace an image** (same filename, different content) — the media entity is updated with the new file's hash, dimensions, and size.
-- **Delete an image from disk** — the media entity is **deleted from the database**. The row is removed from `media/index.csv` on next sync.
+- **Delete an image from disk** — the media entity is **deleted from the database**. The row is removed from `media.csv` on next sync.
 - **Rename an image on disk** (without editing CSV) — hash-based detection matches the renamed file to the missing media entity and updates its filename. No duplicate is created.
-- **Edit `media/index.csv` — change `alt` or `tags`** — the media entity is updated with the new values.
-- **Edit `media/index.csv` — change `fileName` (same ID)** — the file is **automatically renamed** in storage to match the new name.
-- **Edit `media/index.csv` — remove a row** — the media entity is **deleted from the database** and the physical file is also deleted.
-- **Edit `media/index.csv` — add a row for an existing file** — the file is imported as a new media entity with the provided metadata. If the file does not exist on disk, the row is silently ignored and removed from the regenerated CSV.
+- **Edit `media.csv` — change `alt`, `tags`, an `alt_*` or a custom column** — the media entity is updated with the new values, even though the file itself never changed. This is the flat-file way to fix an alt text.
+- **Edit `media.csv` — change `fileName`** — **do not**: the renamed row no longer matches a file, and the media still carrying the old name is deleted from the database together with its file. Rename the file on disk instead.
+- **Edit `media.csv` — remove a row** — the media entity is **deleted from the database** and the physical file is also deleted.
+- **Edit `media.csv` — add a row for an existing file** — the file is imported as a new media entity with the provided metadata. If the file does not exist on disk, the row is silently ignored and removed from the regenerated CSV.
 
 #### Users
 

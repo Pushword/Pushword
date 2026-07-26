@@ -7,10 +7,15 @@ use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Flat\Exporter\MediaExporter;
 use Pushword\Flat\FlatFileContentDirFinder;
+use Pushword\Flat\Importer\MediaImporter;
 use Pushword\Flat\Sync\MediaSync;
 use Pushword\Flat\Sync\PageSync;
+use Pushword\Flat\Sync\SyncStateManager;
 use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -237,6 +242,61 @@ final class AutoModeDetectionTest extends KernelTestCase
 
         // Cleanup dir
         @rmdir($mediaPath);
+    }
+
+    public function testMediaAutoModeDetectsCsvChange(): void
+    {
+        // Export first: media.csv then matches the database and the host gets a sync time.
+        $this->mediaSync->export('localhost.dev', true, $this->contentDir);
+
+        $csvPath = $this->contentDir.'/'.MediaExporter::CSV_FILE;
+        self::assertFileExists($csvPath);
+
+        $mediaSync = $this->mediaSyncWithEmptyMediaDir();
+        self::assertFalse($mediaSync->mustImport('localhost.dev'), 'mustImport should be false right after an export');
+
+        // Editing an alt touches media.csv and nothing else — no media file ever changes.
+        touch($csvPath, time() + 200);
+
+        self::assertTrue($mediaSync->mustImport('localhost.dev'), 'mustImport should detect media.csv changes');
+    }
+
+    /**
+     * MediaSync bound to an empty media dir: the shared dev-app media dir never matches
+     * the test database, so the directory scan alone would always answer "import" and
+     * hide what media.csv contributes to the decision.
+     */
+    private function mediaSyncWithEmptyMediaDir(): MediaSync
+    {
+        $emptyMediaDir = $this->isolatedContentDir.'/empty-media';
+        $this->filesystem->mkdir($emptyMediaDir);
+
+        return new MediaSync(
+            $this->service(SiteRegistry::class),
+            $this->service(FlatFileContentDirFinder::class),
+            $this->service(MediaImporter::class),
+            $this->service(MediaExporter::class),
+            $this->service(MediaRepository::class),
+            $this->em,
+            $this->service(SyncStateManager::class),
+            $this->service(MediaStorageAdapter::class),
+            $emptyMediaDir,
+        );
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $id
+     *
+     * @return T
+     */
+    private function service(string $id): object
+    {
+        $service = self::getContainer()->get($id);
+        self::assertInstanceOf($id, $service);
+
+        return $service;
     }
 
     public function testMediaAutoModeDetectsHashChange(): void
