@@ -24,6 +24,7 @@ parameters:
         - packages/admin-block-editor/src
         - packages/admin-block-editor/tests
         - packages/advanced-main-image/src
+        - packages/advanced-main-image/tests
         - packages/api/src
         - packages/api/tests
         - packages/conversation/src
