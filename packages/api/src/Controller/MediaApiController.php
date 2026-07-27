@@ -277,6 +277,7 @@ final class MediaApiController extends AbstractApiController
             'alts' => $media->getAltsParsed(),
             'tags' => $media->getTagList(),
             'customProperties' => $media->getCustomProperties(),
+            'licenseState' => $media->getLicenseState(),
             'image' => $media->isImage() ? [
                 'width' => $media->getWidth(),
                 'height' => $media->getHeight(),
@@ -312,7 +313,19 @@ final class MediaApiController extends AbstractApiController
                 'alt' => ['type' => 'string', 'nullable' => true],
                 'alts' => ['type' => 'object', 'additionalProperties' => ['type' => 'string']],
                 'tags' => ['type' => 'array', 'items' => ['type' => 'string']],
-                'customProperties' => ['type' => 'object', 'additionalProperties' => true],
+                'customProperties' => [
+                    'type' => 'object',
+                    'additionalProperties' => true,
+                    'description' => 'Includes the image license metadata keys read by Google: '
+                        .'license, acquireLicensePage, creditText, creator (array of {name, type} where type is '
+                        .'Person or Organization), copyrightNotice, digitalSourceType (IPTC NewsCode URI, stored but never emitted).',
+                ],
+                'licenseState' => [
+                    'type' => 'string',
+                    'description' => 'Read-only. How the license properties came to be: "" (none), seeded (from the app config), '
+                        ."overridden (asserted by a human) or thirdParty (imported from the file's embedded rights).",
+                    'enum' => ['', 'seeded', 'overridden', 'thirdParty'],
+                ],
                 'image' => [
                     'type' => 'object',
                     'nullable' => true,

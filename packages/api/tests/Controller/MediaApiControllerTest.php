@@ -7,6 +7,7 @@ use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Image\License\MediaLicense;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
@@ -154,8 +155,65 @@ final class MediaApiControllerTest extends WebTestCase
     }
 
     /**
-     * @param positive-int $width
-     * @param positive-int $height
+     * The license keys ride on customProperties, which is a merge-patch: a PATCH on one
+     * of them must not wipe the others, and licenseState follows on flush.
+     */
+    public function testLicenseKeysPatchAndRecomputeTheState(): void
+    {
+        $fileName = 'zz-license-'.uniqid().'.jpg';
+        $media = $this->createMedia($fileName, 'Refuge');
+        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Altimood');
+        $media->setCustomProperty(MediaLicense::CREATOR, [['name' => 'Altimood', 'type' => 'Organization']]);
+
+        $this->em->flush();
+
+        $response = $this->requestJson('PATCH', '/api/media/'.$fileName, [
+            'customProperties' => [MediaLicense::LICENSE => 'https://altimood.test/terms'],
+        ]);
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+
+        $data = $this->decode();
+        self::assertIsArray($data['customProperties']);
+        self::assertSame('https://altimood.test/terms', $data['customProperties'][MediaLicense::LICENSE]);
+        self::assertSame('Altimood', $data['customProperties'][MediaLicense::CREDIT_TEXT]);
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $data['licenseState']);
+    }
+
+    /** RFC 7396: a null removes the key. Removing them all stops the media emitting. */
+    public function testClearingEveryLicenseKeyLeavesNoLicenseState(): void
+    {
+        $fileName = 'zz-license-clear-'.uniqid().'.jpg';
+        $media = $this->createMedia($fileName, 'Refuge');
+        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Altimood');
+        $media->setLicenseState(MediaLicense::STATE_SEEDED);
+
+        $this->em->flush();
+
+        $response = $this->requestJson('PATCH', '/api/media/'.$fileName, [
+            'customProperties' => [MediaLicense::CREDIT_TEXT => null],
+        ]);
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+
+        $data = $this->decode();
+        self::assertIsArray($data['customProperties']);
+        self::assertArrayNotHasKey(MediaLicense::CREDIT_TEXT, $data['customProperties']);
+        self::assertSame(MediaLicense::STATE_NONE, $data['licenseState']);
+    }
+
+    /** licenseState is derived, so the API exposes it but never accepts it. */
+    public function testLicenseStateIsReadOnly(): void
+    {
+        $fileName = 'zz-license-ro-'.uniqid().'.jpg';
+        $this->createMedia($fileName, 'Refuge');
+
+        $this->requestJson('PATCH', '/api/media/'.$fileName, ['licenseState' => 'seeded']);
+
+        self::assertSame(MediaLicense::STATE_NONE, $this->decode()['licenseState']);
+    }
+
+    /**
+     * @param int<1, max> $width
+     * @param int<1, max> $height
      */
     private function createRealImageMedia(string $fileName, int $width, int $height): Media
     {
