@@ -21,6 +21,9 @@ forgotPasswordTitle: 'Reset password'
 fr: Français
 mediaAltsInvalidYaml: "Invalid YAML format. Use: locale: text (e.g. en: my description). Escape apostrophes by doubling them (e.g. Ko''Ono)."
 mediaDuplicateWarning: 'The file seems to already be present on disk: <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Delete this duplicate version</a>'
+mediaLicenseSeeded: "The site's license was added to this image. Open it to review or clear the License block."
+mediaLicenseThirdParty: 'This image carries rights of its own (%rights%), so the site license was not applied. Open it to claim it if the site owns it.'
+mediaLicenseWasReset: 'The license you had set by hand was reset: it described the previous file.'
 mediaNameWasChanged: 'Name was changed because another media has a similar name one.'
 new: New
 navigationToggle: 'Toggle Navigation'

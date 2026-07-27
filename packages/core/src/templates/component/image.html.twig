@@ -77,6 +77,9 @@
   </picture>
 {% endif %}
 
+{# Image license metadata (Google "Licensable" badge). Emits nothing unless the
+   media carries enough of its own license properties — see ImageObjectBuilder. #}
+{{ imageLicenseJsonLd(image) }}
 
 {% macro build_srcset(image, breakpoints, format) %}
   {%- for name, width in breakpoints -%}

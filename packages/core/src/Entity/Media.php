@@ -50,6 +50,7 @@ use Vich\UploaderBundle\Mapping\Attribute as Vich;
 #[ORM\Table(name: 'media')]
 #[ORM\Index(name: 'idx_media_filename', columns: ['media'])]
 #[ORM\Index(name: 'idx_media_hidden_from_admin', columns: ['hidden_from_admin'])]
+#[ORM\Index(name: 'idx_media_license_state', columns: ['license_state'])]
 class Media implements IdInterface, Taggable, Stringable
 {
     use ExtensiblePropertiesTrait;
@@ -642,6 +643,33 @@ class Media implements IdInterface, Taggable, Stringable
         $alts = $this->getAltsParsed();
 
         return $alts[$locale] ?? $this->getAlt();
+    }
+
+    // --- License state ---
+
+    /**
+     * Where the image license properties in customProperties come from: nothing (''),
+     * the app's `media_default_license_seed` (seeded), a human assertion (overridden),
+     * or the file's own embedded rights (thirdParty).
+     *
+     * Denormalized into a real column — like altSearch above — so the admin gets a
+     * plain ChoiceFilter and a sortable column instead of a json_extract filter.
+     *
+     * @see \Pushword\Core\Image\License\MediaLicense
+     */
+    #[ORM\Column(name: 'license_state', type: Types::STRING, length: 16, options: ['default' => ''])]
+    protected string $licenseState = '';
+
+    public function getLicenseState(): string
+    {
+        return $this->licenseState;
+    }
+
+    public function setLicenseState(string $licenseState): self
+    {
+        $this->licenseState = $licenseState;
+
+        return $this;
     }
 
     // --- Hash ---
