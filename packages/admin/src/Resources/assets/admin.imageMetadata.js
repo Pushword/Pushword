@@ -42,8 +42,6 @@ const EXIF_ASCII = 2
 const PNG_RAW_PROFILE_KEYWORD = 'Raw profile type xmp'
 const PNG_XMP_KEYWORDS = ['XML:com.adobe.xmp', PNG_RAW_PROFILE_KEYWORD]
 
-const EXTRACTABLE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-
 /**
  * A manifest embedding its ingredients' thumbnails has no natural size limit, and past
  * this one the sidecar costs more than the compression saves. Such a segment is dropped
@@ -136,7 +134,9 @@ function exifValues(view, offset, end) {
 function reassembleApp11(fragments) {
   if (fragments.length === 0) return null
 
-  const instance = Math.min(...fragments.map((fragment) => fragment.instance))
+  // The first instance met, not the lowest-numbered: a second box is a second
+  // manifest, and ImageContainer keeps the one it reached first too.
+  const { instance } = fragments[0]
   const ordered = fragments.filter((fragment) => fragment.instance === instance).sort((a, b) => a.sequence - b.sequence)
 
   return concat(ordered.map(({ sequence, bytes }) => (sequence === 1 ? bytes : bytes.subarray(8))))
@@ -239,6 +239,14 @@ async function iTXtText(rest) {
   return compressed ? inflate(body) : body
 }
 
+function decodeChunk(type, rest) {
+  if (type === 'tEXt') return rest
+  // zTXt is one compression-method byte, then a zlib stream.
+  if (type === 'zTXt') return inflate(rest.subarray(1))
+
+  return iTXtText(rest)
+}
+
 /**
  * The chunk type decides the encoding and the keyword decides the wrapping — the same
  * split ImageContainer makes, so either can appear with either.
@@ -250,13 +258,7 @@ async function pngText(type, chunk) {
   const keyword = LATIN1.decode(chunk.subarray(0, separator))
   if (!PNG_XMP_KEYWORDS.includes(keyword)) return null
 
-  const rest = chunk.subarray(separator + 1)
-  const text =
-    type === 'tEXt'
-      ? rest
-      : // zTXt is one compression-method byte, then a zlib stream.
-        await (type === 'zTXt' ? inflate(rest.subarray(1)) : iTXtText(rest))
-
+  const text = await decodeChunk(type, chunk.subarray(separator + 1))
   if (text === null) return null
 
   return keyword === PNG_RAW_PROFILE_KEYWORD ? rawProfile(text) : text
@@ -314,6 +316,17 @@ function webpSegments(view) {
 }
 
 /**
+ * The three containers that can carry metadata and that the compressors re-encode.
+ * GIF is the fourth image kind Pushword accepts and is deliberately absent, the same
+ * way ImageContainer leaves it out: nothing writes metadata there.
+ */
+const WALKERS = {
+  'image/jpeg': jpegSegments,
+  'image/png': pngSegments,
+  'image/webp': webpSegments,
+}
+
+/**
  * Every metadata segment the file carries, base64 encoded, or null when it carries
  * none. Base64 throughout rather than text for the XMP: a packet is UTF-8 and must
  * reach the server byte for byte, which a JSON round-trip through a latin1 decode
@@ -322,12 +335,11 @@ function webpSegments(view) {
  * @returns {Promise<null | {xmp?: string, iptc?: string, c2pa?: string, artist?: string, copyright?: string}>}
  */
 export async function extractEmbeddedMetadata(file) {
-  if (!EXTRACTABLE_TYPES.includes(file.type)) return null
+  const walk = WALKERS[file.type]
+  if (walk === undefined) return null
 
   try {
-    const view = new DataView(await file.arrayBuffer())
-    const segments =
-      file.type === 'image/jpeg' ? jpegSegments(view) : file.type === 'image/png' ? await pngSegments(view) : webpSegments(view)
+    const segments = await walk(new DataView(await file.arrayBuffer()))
 
     const encoded = {}
     for (const [name, bytes] of Object.entries(segments)) {

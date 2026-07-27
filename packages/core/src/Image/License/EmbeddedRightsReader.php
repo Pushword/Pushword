@@ -88,20 +88,29 @@ class EmbeddedRightsReader
             return new EmbeddedRights();
         }
 
-        $segment = static function (string $name) use ($decoded): string {
-            $value = $decoded[$name] ?? null;
-
-            return \is_string($value) ? (base64_decode($value, true) ?: '') : '';
-        };
-
         return EmbeddedRights::merge(
-            $this->parseXmp($segment('xmp')),
-            $this->parseIim($segment('iptc')),
+            $this->parseXmp($this->segment($decoded, 'xmp')),
+            $this->parseIim($this->segment($decoded, 'iptc')),
             // EXIF is the one source the browser parses itself: exif_read_data() reads
             // a file, and there is no file left by then.
-            $this->exifRights($segment('artist'), $segment('copyright')),
-            C2paManifest::read($segment('c2pa')),
+            $this->exifRights($this->segment($decoded, 'artist'), $this->segment($decoded, 'copyright')),
+            C2paManifest::read($this->segment($decoded, 'c2pa')),
         );
+    }
+
+    /**
+     * @param array<array-key, mixed> $decoded
+     */
+    private function segment(array $decoded, string $name): string
+    {
+        $value = $decoded[$name] ?? null;
+        if (! \is_string($value)) {
+            return '';
+        }
+
+        $bytes = base64_decode($value, true);
+
+        return false === $bytes ? '' : $bytes;
     }
 
     // --- XMP ---

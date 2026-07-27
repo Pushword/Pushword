@@ -90,7 +90,7 @@ export async function scaleDownImage(file) {
  * @param {HTMLInputElement} input
  * @param {object|null} metadata
  */
-function carryMetadata(input, metadata) {
+export function carryMetadata(input, metadata) {
   const form = input.form
   if (!form) {
     return

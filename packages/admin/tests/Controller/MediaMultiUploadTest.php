@@ -144,6 +144,48 @@ final class MediaMultiUploadTest extends AbstractAdminTestClass
         self::assertSame('', $data['license'][MediaLicense::CREATOR]);
     }
 
+    /**
+     * What the browser actually posts: the file scaled down through a canvas, which
+     * keeps no metadata, and the segments it lifted out beforehand beside it.
+     *
+     * The listener reads them off the current request, so nothing proves the endpoint
+     * carries them except going through the endpoint.
+     */
+    public function testMetadataPostedBesideAStrippedFileIsImported(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/multi-upload');
+        $csrfToken = $crawler->filter('#pw-multi-upload')->attr('data-csrf-token');
+
+        $fileName = 'test-sidecar-'.uniqid().'.jpg';
+        $tempFile = ImageMetadataFixture::write(sys_get_temp_dir().'/'.$fileName);
+        // Unique bytes past the EOI: a genuinely stripped upload differs from every
+        // other because its pixels were re-encoded, and a fixture repeating another
+        // test's bytes is deduplicated by hash before the listener ever runs.
+        file_put_contents($tempFile, uniqid(), \FILE_APPEND);
+
+        $client->request(Request::METHOD_POST, '/admin/multi-upload/upload', [
+            '_token' => $csrfToken,
+            'originalHash' => sha1_file($tempFile),
+            'embeddedMetadata' => json_encode([
+                'xmp' => base64_encode(ImageMetadataFixture::packet(
+                    '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+                    .'<dc:creator><rdf:Seq><rdf:li>Enrico Romanzi</rdf:li></rdf:Seq></dc:creator></rdf:Description>',
+                )),
+            ], \JSON_THROW_ON_ERROR),
+        ], ['file' => new UploadedFile($tempFile, $fileName, 'image/jpeg', null, true)]);
+
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+        /** @var array<string, mixed> $data */
+        $data = json_decode((string) $client->getResponse()->getContent(), true);
+
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $data['licenseState']);
+        self::assertIsArray($data['license']);
+        self::assertSame('Enrico Romanzi (Person)', $data['license'][MediaLicense::CREATOR]);
+    }
+
     private function createTempImage(string $fileName, string $mimeType): string
     {
         $tempFile = sys_get_temp_dir().'/'.$fileName;

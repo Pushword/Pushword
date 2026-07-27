@@ -263,6 +263,56 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
     }
 
     /**
+     * The single-file path carries the segments in a hidden input rather than a
+     * FormData part, and that input sits deliberately outside the `Media[…]`
+     * namespace: the Symfony form must not see a field it has no mapping for, or it
+     * rejects the whole submission as carrying extra fields.
+     */
+    public function testAMetadataFieldBesideTheFormIsImportedWithoutUpsettingTheForm(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $media = $this->createMedia();
+        $mediaId = $media->id;
+
+        $stripped = sys_get_temp_dir().'/stripped-'.uniqid().'.png';
+        $image = imagecreatetruecolor(6, 3);
+        \assert(false !== $image);
+        imagepng($image, $stripped);
+
+        $crawler = $this->editCrawler($media);
+        $form = $crawler->filter('form[name="Media"]')->form();
+        $fileField = $form['Media[mediaFile]'];
+        self::assertInstanceOf(FileFormField::class, $fileField);
+        $fileField->upload($stripped);
+
+        // submit() only reaches declared fields, so the extra one goes in by hand.
+        $client->request(
+            Request::METHOD_POST,
+            $form->getUri(),
+            [...$form->getPhpValues(), 'embeddedMetadata' => json_encode([
+                'artist' => base64_encode("Enrico Romanzi\0"),
+            ], \JSON_THROW_ON_ERROR)],
+            $form->getPhpFiles(),
+        );
+
+        self::assertTrue($client->getResponse()->isRedirect(), 'the form was rejected instead of saved');
+
+        /** @var EntityManager $em */
+        $em = self::getContainer()->get('doctrine.orm.entity_manager');
+        $em->clear();
+
+        $saved = $em->getRepository(Media::class)->find($mediaId);
+        self::assertInstanceOf(Media::class, $saved);
+
+        self::assertSame([['name' => 'Enrico Romanzi', 'type' => 'Person']], MediaLicense::creators($saved));
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $saved->getLicenseState());
+
+        $this->remove($saved);
+    }
+
+    /**
      * Discarding a hand-written license is the one case a replacement must not do
      * silently — the values described the previous file, and only the editor knows
      * whether they still hold.
