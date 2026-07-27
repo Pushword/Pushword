@@ -1,14 +1,17 @@
 {
   "devDependencies": {
     "@pushword/js-helper": "file:../js-helper",
-    "sass-embedded": "^1.93.3"
+    "sass-embedded": "^1.93.3",
+    "vite": "^7",
+    "vitest": "^3"
   },
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "dev": "vite",
     "watch": "vite build --watch",
-    "build": "NODE_ENV=production vite build"
+    "build": "NODE_ENV=production vite build",
+    "test": "vitest run"
   },
   "dependencies": {
     "browser-image-compression": "^2.0.2",

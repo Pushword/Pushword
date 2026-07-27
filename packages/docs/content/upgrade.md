@@ -14,6 +14,21 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc787
+
+### The browser no longer strips rights it cannot read
+
+Both upload paths scale images down through a canvas, which keeps no metadata, and both
+skip that step for a file whose bytes claim somebody's rights. The check behind them saw
+less than the server does: WebP was not looked at at all, PNG only in its uncompressed
+text chunks, and EXIF `Artist`/`Copyright` not at all. Such a file was re-encoded on its
+way up, so the server received bytes with nothing left to read and seeded the site's
+licence onto it.
+
+Nothing to run: the stripping happened before upload, so the credit is not recoverable
+from the stored file. Sort the media list by **License state** and look for photos you
+did not shoot sitting in *Site license* — those are the ones to correct by hand.
+
 ## To 1.0.0-rc785
 
 ### Image rights are now read from PNG, WebP and C2PA

@@ -71,6 +71,12 @@ jobs:
       - name: Quiz runtime tests
         run: cd packages/quiz && yarn test
 
+      - name: Install admin dependencies
+        run: cd packages/admin && yarn install
+
+      - name: Admin unit tests
+        run: cd packages/admin && yarn test
+
   test:
     runs-on: ${{ matrix.os }}
     strategy:

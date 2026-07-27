@@ -197,8 +197,15 @@ imported and from where, so a photographer's name is never stored in a field nob
 see.
 
 Because scaling an image down in the browser re-encodes it through a canvas and destroys
-every metadata segment, files that carry rights metadata are uploaded uncompressed. On a
-typical library that is about 1 % of uploads.
+every metadata segment, files that carry rights metadata are uploaded uncompressed. The
+browser walks the same three containers as the server, for XMP, IPTC-IIM and EXIF alike —
+a source it cannot see is a claim it destroys. On a typical library that is about 1 % of
+uploads.
+
+C2PA is the one source deliberately left out of that check: it only ever yields a
+`digitalSourceType`, so a manifest lost to the canvas costs provenance, never a credit,
+and keeping every signed file uncompressed would soon mean keeping every AI image
+uncompressed.
 
 {id=backfill}
 ## Backfilling an existing library
