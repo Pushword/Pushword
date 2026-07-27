@@ -44,6 +44,12 @@ class EmbeddedRightsReader
 
     private const string IIM_COPYRIGHT = '2#116';
 
+    /**
+     * The segments of one image, base64 encoded, cannot plausibly weigh more. Checked
+     * before decoding because the value arrives from a request.
+     */
+    private const int MAX_SUPPLIED = 8 * 1024 * 1024;
+
     public function read(string $path): EmbeddedRights
     {
         if (! is_file($path)) {
@@ -54,11 +60,47 @@ class EmbeddedRightsReader
 
         return EmbeddedRights::merge(
             $this->parseXmp($container->xmp),
-            $this->readIim($path),
+            $this->parseIim($this->app13($path)),
             $this->readExif($path),
             // Last: a rights claim somebody wrote by hand outranks a generator's own
             // note about how the pixels were made.
             C2paManifest::read($container->c2pa),
+        );
+    }
+
+    /**
+     * The same segments, handed over rather than found: the admin scales an image down
+     * through a canvas before uploading it, which keeps no metadata, so it posts what
+     * it lifted out beforehand.
+     *
+     * Only ever a supplement — the caller merges this behind what the stored file
+     * itself says, so a client cannot overrule bytes we hold. Each value is the raw
+     * segment, base64 encoded, parsed here by the readers used on a whole file.
+     */
+    public function readSupplied(string $json): EmbeddedRights
+    {
+        if ('' === $json || \strlen($json) > self::MAX_SUPPLIED) {
+            return new EmbeddedRights();
+        }
+
+        $decoded = json_decode($json, true);
+        if (! \is_array($decoded)) {
+            return new EmbeddedRights();
+        }
+
+        $segment = static function (string $name) use ($decoded): string {
+            $value = $decoded[$name] ?? null;
+
+            return \is_string($value) ? (base64_decode($value, true) ?: '') : '';
+        };
+
+        return EmbeddedRights::merge(
+            $this->parseXmp($segment('xmp')),
+            $this->parseIim($segment('iptc')),
+            // EXIF is the one source the browser parses itself: exif_read_data() reads
+            // a file, and there is no file left by then.
+            $this->exifRights($segment('artist'), $segment('copyright')),
+            C2paManifest::read($segment('c2pa')),
         );
     }
 
@@ -226,15 +268,21 @@ class EmbeddedRightsReader
 
     // --- IPTC-IIM (APP13) ---
 
-    private function readIim(string $path): EmbeddedRights
+    private function app13(string $path): string
     {
         $info = [];
         if (false === @getimagesize($path, $info)) {
-            return new EmbeddedRights();
+            return '';
         }
 
         $app13 = \is_array($info) ? ($info['APP13'] ?? null) : null;
-        if (! \is_string($app13)) {
+
+        return \is_string($app13) ? $app13 : '';
+    }
+
+    private function parseIim(string $app13): EmbeddedRights
+    {
+        if ('' === $app13) {
             return new EmbeddedRights();
         }
 
@@ -283,10 +331,16 @@ class EmbeddedRightsReader
         $artist = \is_string($exif['Artist'] ?? null) ? $exif['Artist'] : '';
         $copyright = \is_string($exif['Copyright'] ?? null) ? $exif['Copyright'] : '';
 
+        return $this->exifRights($artist, $copyright);
+    }
+
+    private function exifRights(string $artist, string $copyright): EmbeddedRights
+    {
         return new EmbeddedRights(
-            // A camera writing four spaces into Copyright has written nothing.
-            creator: $this->asList($artist),
-            copyrightNotice: trim($copyright),
+            // A camera writing four spaces into Copyright has written nothing, and the
+            // field is padded with NULs often enough to be trimmed with them.
+            creator: $this->asList(trim($artist, " \0\t\n\r\x0B")),
+            copyrightNotice: trim($copyright, " \0\t\n\r\x0B"),
         );
     }
 }

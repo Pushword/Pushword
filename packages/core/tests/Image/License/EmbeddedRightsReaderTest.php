@@ -366,6 +366,67 @@ final class EmbeddedRightsReaderTest extends TestCase
         self::assertSame('From EXIF too', $rights->copyrightNotice);
     }
 
+    /**
+     * @param array<string, string> $segments
+     */
+    private function supplied(array $segments): string
+    {
+        return json_encode(array_map(base64_encode(...), $segments), \JSON_THROW_ON_ERROR);
+    }
+
+    public function testEverySuppliedSegmentIsReadWithTheSameParsersAsAFile(): void
+    {
+        // The browser scales an image down through a canvas, which keeps no metadata,
+        // so it posts the segments it lifted out first. Same bytes, no file.
+        $rights = $this->reader->readSupplied($this->supplied([
+            'xmp' => ImageMetadataFixture::packet(
+                '<rdf:Description rdf:about="" xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/">'
+                .'<photoshop:Credit>Altimood</photoshop:Credit></rdf:Description>',
+            ),
+            'iptc' => ImageMetadataFixture::iimPayload(['2#080' => 'Enrico Romanzi']),
+            'copyright' => '(c) Altimood',
+            'c2pa' => ImageMetadataFixture::c2paActions(MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.MediaLicense::TRAINED_ALGORITHMIC_MEDIA),
+        ]));
+
+        self::assertSame('Altimood', $rights->creditText);
+        self::assertSame(['Enrico Romanzi'], $rights->creator);
+        self::assertSame('(c) Altimood', $rights->copyrightNotice);
+        self::assertSame(
+            MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.MediaLicense::TRAINED_ALGORITHMIC_MEDIA,
+            $rights->digitalSourceType,
+        );
+    }
+
+    public function testASuppliedArtistIsTrimmedOfItsTerminator(): void
+    {
+        // EXIF ASCII counts its NUL, and the browser forwards the value as it found it.
+        $rights = $this->reader->readSupplied($this->supplied(['artist' => "Enrico Romanzi\0"]));
+
+        self::assertSame(['Enrico Romanzi'], $rights->creator);
+    }
+
+    public function testABlankSuppliedValueIsNoClaim(): void
+    {
+        $rights = $this->reader->readSupplied($this->supplied(['artist' => "   \0", 'copyright' => '  ']));
+
+        self::assertSame([], $rights->toCustomProperties());
+    }
+
+    public function testUnusableSuppliedInputIsIgnoredRatherThanTrusted(): void
+    {
+        foreach ([
+            '',
+            'not json',
+            '"a string"',
+            '{"xmp": 42}',
+            '{"xmp": "not base64 @@@"}',
+            // Past the cap the value is refused before it is decoded at all.
+            json_encode(['xmp' => str_repeat('A', 9 * 1024 * 1024)], \JSON_THROW_ON_ERROR),
+        ] as $json) {
+            self::assertSame([], $this->reader->readSupplied($json)->toCustomProperties(), substr($json, 0, 40));
+        }
+    }
+
     public function testNonJpegFilesNeverThrow(): void
     {
         $svg = $this->dir.'/vector.svg';

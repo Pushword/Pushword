@@ -400,9 +400,9 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     }
 
     /** The listener needs a request in the stack to reach a flash bag at all. */
-    private function pushRequest(bool $xhr = false): FlashBagInterface
+    private function pushRequest(bool $xhr = false, string $supplied = ''): FlashBagInterface
     {
-        $request = new Request();
+        $request = new Request(request: '' === $supplied ? [] : ['embeddedMetadata' => $supplied]);
         $request->setSession(new Session(new MockArraySessionStorage()));
 
         if ($xhr) {
@@ -439,6 +439,62 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     private function trans(string $key): string
     {
         return self::getContainer()->get('translator')->trans($key, ['%rights%' => '']);
+    }
+
+    /**
+     * @param array<string, string> $segments
+     */
+    private function supplied(array $segments): string
+    {
+        return json_encode(array_map(base64_encode(...), $segments), \JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * The admin scales an image down through a canvas before uploading it, which keeps
+     * no metadata — so the file arrives bare and its segments arrive beside it.
+     */
+    public function testRightsPostedBesideAStrippedFileStillGate(): void
+    {
+        $this->pushRequest(xhr: true, supplied: $this->supplied(['xmp' => $this->creatorXmp('Enrico Romanzi')]));
+        $media = $this->upload('supplied-third-party');
+
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
+        self::assertSame([['name' => 'Enrico Romanzi', 'type' => 'Person']], $media->getCustomProperty(MediaLicense::CREATOR));
+    }
+
+    /** A gpt-image PNG has nothing else: no XMP, no IPTC, no EXIF. */
+    public function testProvenancePostedBesideAStrippedFileSurvives(): void
+    {
+        $c2pa = ImageMetadataFixture::c2paActions(MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.MediaLicense::TRAINED_ALGORITHMIC_MEDIA);
+        $this->pushRequest(xhr: true, supplied: $this->supplied(['c2pa' => $c2pa]));
+        $media = $this->upload('supplied-provenance');
+
+        self::assertSame(
+            MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.MediaLicense::TRAINED_ALGORITHMIC_MEDIA,
+            $media->getCustomProperty(MediaLicense::DIGITAL_SOURCE_TYPE),
+        );
+        // Provenance is not a rights claim, so the site still licenses the image.
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+    }
+
+    /**
+     * The sidecar is posted by a client and can say anything. It only ever fills what
+     * the stored bytes leave empty, so it cannot rewrite a credit we actually hold.
+     */
+    public function testTheStoredFileOutranksWhatIsPostedBesideIt(): void
+    {
+        $this->pushRequest(xhr: true, supplied: $this->supplied(['xmp' => $this->creatorXmp('Somebody Else')]));
+        $media = $this->upload('supplied-loses', $this->creatorXmp('Enrico Romanzi'));
+
+        self::assertSame([['name' => 'Enrico Romanzi', 'type' => 'Person']], $media->getCustomProperty(MediaLicense::CREATOR));
+    }
+
+    public function testAnUnusableSidecarLeavesTheDecisionToTheFile(): void
+    {
+        $this->pushRequest(xhr: true, supplied: 'not json at all');
+        $media = $this->upload('supplied-garbage');
+
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
     }
 
     /**

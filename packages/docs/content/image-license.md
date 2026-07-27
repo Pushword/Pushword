@@ -196,18 +196,20 @@ per file would only pile up. A row whose file claims third-party rights shows wh
 imported and from where, so a photographer's name is never stored in a field nobody can
 see.
 
-Because scaling an image down in the browser re-encodes it through a canvas and destroys
-every metadata segment, files that carry metadata are uploaded uncompressed. The browser
-walks the same three containers as the server and reads all four sources — a source it
-cannot see is a claim it destroys. On a typical library that is about 1 % of uploads.
+Scaling an image down in the browser re-encodes it through a canvas, and a canvas keeps
+no metadata. Rather than give up the scaling for the files that carry some, the browser
+lifts the segments out beforehand and posts them beside the compressed bytes, in an
+`embeddedMetadata` field.
 
-The first three are read for what they say, since every camera writes some of all three
-and only a few of those bytes are a rights claim. A C2PA manifest counts by its mere
-presence: nothing writes one by accident, and looking inside would mean a JUMBF and CBOR
-reader in the browser to answer a question the server re-asks on arrival. AI images are
-therefore stored as generated — for a 1536×1024 `gpt-image` PNG that is 2.7 MB instead of
-1.7 MB, entirely in the stored original, since the page itself is served from the
-`default` filter variant.
+It forwards them rather than interprets them: the XMP packet, the APP13 block and the
+C2PA manifest travel as they were found, base64 encoded, and the server parses them with
+the same readers it runs on a file it received intact. Only EXIF is read in the browser,
+because `exif_read_data()` wants a file and by then there is none. Nothing about what the
+bytes *mean* is decided twice, so the two paths cannot drift.
+
+What the stored file itself says still wins, property by property — the sidecar only
+fills what the bytes leave empty. It can add to the decision, never overrule it, which is
+what makes it safe to accept from a client.
 
 {id=backfill}
 ## Backfilling an existing library

@@ -16,28 +16,24 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 ## To 1.0.0-rc787
 
-### The browser no longer strips rights it cannot read
+### The browser no longer strips the rights it uploads
 
-Both upload paths scale images down through a canvas, which keeps no metadata, and both
-skip that step for a file whose bytes carry any. The check behind them saw less than the
-server does: WebP was not looked at at all, PNG only in its uncompressed text chunks,
-EXIF `Artist`/`Copyright` not at all, and C2PA nowhere. Such a file was re-encoded on its
-way up, so the server received bytes with nothing left to read — a photographer's credit
-became the site's own licence, and an AI image lost the provenance rc785 had just learnt
-to read.
+Both admin upload paths scale images down through a canvas, which keeps no metadata. They
+used to skip that step for a file whose bytes carried rights, and the check deciding it
+saw far less than the server does: WebP was not looked at at all, PNG only in its
+uncompressed text chunks, EXIF `Artist`/`Copyright` not at all, and C2PA nowhere. Such a
+file was re-encoded on its way up, so the server received bytes with nothing left to
+read — a photographer's credit became the site's own licence, and an AI image lost the
+provenance rc785 had just learnt to find.
 
-Nothing to run: the stripping happened before upload, so neither is recoverable from the
-stored file. Sort the media list by **License state** and look for photos you did not
-shoot sitting in *Site license* — those are the ones to correct by hand.
+The segments are now lifted out before the canvas touches the image and posted beside it,
+so every upload is scaled *and* keeps what it said about itself. See
+[Image license](image-license.md#upload).
 
-Signed files are now stored as they arrive, which for a 1536×1024 `gpt-image` PNG is
-2.7 MB rather than 1.7 MB. It costs disk, not page weight: the front serves the `default`
-filter variant, never the original.
-
-**Check `upload_max_filesize`.** PHP's own default is 2M, and a file kept uncompressed is
-exactly the one that can now exceed it — an AI image or a camera JPEG carrying its
-photographer. The upload fails loudly with PHP's message rather than storing a stripped
-file, but it fails. 20M and a `post_max_size` above it leave room for both.
+Nothing to run: the stripping happened before upload, so neither the credit nor the
+provenance is recoverable from a file already stored. Sort the media list by **License
+state** and look for photos you did not shoot sitting in *Site license* — those are the
+ones to correct by hand.
 
 ## To 1.0.0-rc785
 

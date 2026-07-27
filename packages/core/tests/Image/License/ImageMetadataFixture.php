@@ -66,6 +66,17 @@ final class ImageMetadataFixture
     }
 
     /**
+     * The APP13 payload as getimagesize() reports it and iptcparse() expects it —
+     * what the browser forwards when it strips a file before uploading it.
+     *
+     * @param array<string, string> $iptcIim
+     */
+    public static function iimPayload(array $iptcIim): string
+    {
+        return self::PHOTOSHOP_SIGNATURE.self::photoshopIptcBlock($iptcIim);
+    }
+
+    /**
      * Wraps a body in an XMP packet, the way a real writer does — xpacket processing
      * instructions included, since they sit outside the XML root element.
      */

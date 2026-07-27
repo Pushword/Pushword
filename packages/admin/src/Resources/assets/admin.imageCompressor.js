@@ -4,7 +4,7 @@
  * Quality is preserved (no compression) - backend handles quality optimization
  */
 import imageCompression from 'browser-image-compression'
-import { carriesEmbeddedRights } from './admin.imageMetadata'
+import { extractEmbeddedMetadata } from './admin.imageMetadata'
 import { debugLog } from './admin.constants'
 
 const MODULE_NAME = 'imageCompressor'
@@ -38,14 +38,6 @@ function shouldCompress(file) {
 export async function scaleDownImage(file) {
   if (!shouldCompress(file)) {
     debugLog(MODULE_NAME, `Skipping scale down for ${file.name} (type: ${file.type})`)
-    return file
-  }
-
-  // Scaling down re-encodes through a canvas, which keeps no metadata. Handing the
-  // server bare bytes for a file that claims somebody's rights would make it seed the
-  // site's own license onto a third party's photo.
-  if (await carriesEmbeddedRights(file)) {
-    debugLog(MODULE_NAME, `Skipping scale down for ${file.name} (carries rights metadata)`)
     return file
   }
 
@@ -89,6 +81,33 @@ export async function scaleDownImage(file) {
 }
 
 /**
+ * Carries the segments the canvas is about to destroy alongside the form.
+ *
+ * The field sits outside the Symfony form's own namespace on purpose: the form never
+ * sees it, so it needs no mapping and cannot trip `allow_extra_fields`. Rewritten on
+ * every change so picking a second file never sends the first one's metadata.
+ *
+ * @param {HTMLInputElement} input
+ * @param {object|null} metadata
+ */
+function carryMetadata(input, metadata) {
+  const form = input.form
+  if (!form) {
+    return
+  }
+
+  let field = form.querySelector('input[name="embeddedMetadata"]')
+  if (!field) {
+    field = document.createElement('input')
+    field.type = 'hidden'
+    field.name = 'embeddedMetadata'
+    form.appendChild(field)
+  }
+
+  field.value = metadata === null ? '' : JSON.stringify(metadata)
+}
+
+/**
  * Handle file input change event
  * @param {Event} event
  */
@@ -112,12 +131,16 @@ async function handleFileChange(event) {
   wrapper.style.pointerEvents = 'none'
 
   try {
+    // Before scaling, which is what destroys them.
+    const metadata = await extractEmbeddedMetadata(file)
     const scaledFile = await scaleDownImage(file)
 
     // Create a new FileList with the scaled file
     const dataTransfer = new DataTransfer()
     dataTransfer.items.add(scaledFile)
     input.files = dataTransfer.files
+
+    carryMetadata(input, metadata)
 
     debugLog(MODULE_NAME, 'File replaced with scaled version')
   } finally {

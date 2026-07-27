@@ -1,28 +1,23 @@
 /**
- * Detects, before upload, whether an image carries rights metadata in its bytes.
+ * Lifts the metadata segments out of an image before the browser re-encodes it.
  *
- * Both upload paths re-encode images through a canvas to scale them down, and a
- * canvas keeps no metadata. That is a fine trade for a plain photo and a bad one for
- * a file whose XMP, IPTC or EXIF block claims somebody's rights: the server reads those
- * to decide whether it may apply the site's own license, so stripping them silently
- * turns a third party's photo into a site-licensed one.
+ * Both upload paths scale images down through a canvas, and a canvas keeps no metadata.
+ * Rather than give up the scaling for the files that carry rights — which are also the
+ * ones most likely to exceed `upload_max_filesize` once kept whole — the segments are
+ * taken out here and posted alongside the compressed bytes. The server parses them with
+ * the same readers it runs on a file it received intact.
  *
- * A heuristic on purpose — it only decides whether to hand the server the original
- * bytes. EmbeddedRightsReader stays the authority on what those bytes mean. It walks the
- * same three containers ImageContainer does, because a source it cannot see is a claim
- * it destroys.
- *
- * XMP, IPTC and EXIF are read for what they say, since every camera writes some of all
- * three and only a few of those bytes are a rights claim. A C2PA manifest is taken at
- * its mere presence: nothing writes one by accident, and looking inside would mean a
- * JUMBF and CBOR reader in the browser to answer a question the server re-asks anyway.
+ * Nothing here decides what the bytes mean: no marker matching, no "does this claim
+ * rights". Whatever a container holds is handed over and EmbeddedRightsReader stays the
+ * single authority, so the two paths cannot drift. What the stored file itself says
+ * still wins on the server, so this can only add to a decision, never overrule it.
  */
 
 const LATIN1 = new TextDecoder('latin1')
 
-// Segment markers are walked, never string-matched against the whole payload:
-// compressed scan data, an EXIF thumbnail (itself a JPEG) or a COM segment can all
-// contain the literals we look for.
+// Segments are walked, never string-matched against the whole payload: compressed scan
+// data, an EXIF thumbnail (itself a JPEG) or a COM segment can all contain the literals
+// we look for.
 const SOI = 0xffd8
 const SOS = 0xffda
 const APP1 = 0xffe1
@@ -31,19 +26,11 @@ const APP13 = 0xffed
 
 const XMP_SIGNATURE = 'http://ns.adobe.com/xap/1.0/\0'
 const EXIF_SIGNATURE = 'Exif\0\0'
-const PHOTOSHOP_SIGNATURE = 'Photoshop 3.0\0'
 // C2PA rides in an APP11 fragment, a PNG caBX chunk or a WebP C2PA chunk. The JPEG one
 // opens with `JP`, without which an APP11 belongs to some other JUMBF user.
 const JUMBF_SIGNATURE = 'JP'
 const PNG_C2PA_CHUNK = 'caBX'
 const WEBP_C2PA_CHUNK = 'C2PA'
-
-// Local names, each kept with its colon so `dc:creator` does not also match
-// `xmp:CreatorTool`, and `photoshop:Credit` does not match a word in a caption.
-const XMP_RIGHTS_MARKERS = [':creator', ':rights', ':Credit', ':WebStatement', ':LicensorURL', ':UsageTerms']
-
-// IPTC-IIM record 2 datasets: By-line (80), Credit (110), Copyright notice (116).
-const IIM_RIGHTS_DATASETS = [80, 110, 116]
 
 // The two EXIF IFD0 tags EmbeddedRightsReader reads, and the ASCII type they carry.
 const EXIF_ARTIST = 0x013b
@@ -55,75 +42,75 @@ const EXIF_ASCII = 2
 const PNG_RAW_PROFILE_KEYWORD = 'Raw profile type xmp'
 const PNG_XMP_KEYWORDS = ['XML:com.adobe.xmp', PNG_RAW_PROFILE_KEYWORD]
 
-const HEAD_BYTES = 1024 * 1024
+const EXTRACTABLE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
-function readAscii(view, offset, length) {
+/**
+ * A manifest embedding its ingredients' thumbnails has no natural size limit, and past
+ * this one the sidecar costs more than the compression saves. Such a segment is dropped
+ * rather than sent: the rest of the metadata still travels.
+ */
+const MAX_SEGMENT = 1024 * 1024
+
+function ascii(view, offset, length) {
   return LATIN1.decode(new Uint8Array(view.buffer, offset, length))
 }
 
-function claimsRights(packet) {
-  return XMP_RIGHTS_MARKERS.some((marker) => packet.includes(marker))
+function slice(view, offset, length) {
+  return new Uint8Array(view.buffer, offset, length)
 }
 
-function xmpClaimsRights(view, offset, length) {
-  return claimsRights(readAscii(view, offset, length))
+function startsWith(view, offset, available, signature) {
+  return available > signature.length && ascii(view, offset, signature.length) === signature
 }
 
-/**
- * Walk the 8BIM blocks of an APP13 payload and look for rights datasets inside the
- * IPTC-IIM resource (0x0404).
- */
-function iimClaimsRights(view, offset, end) {
-  let cursor = offset
-  while (cursor + 12 < end) {
-    if (readAscii(view, cursor, 4) !== '8BIM') {
-      cursor += 1
-      continue
-    }
-    const resourceId = view.getUint16(cursor + 4)
-    const nameLength = view.getUint8(cursor + 6) + 1
-    // The Pascal-style name is padded to an even length, header included.
-    const padded = nameLength % 2 === 0 ? nameLength : nameLength + 1
-    let block = cursor + 6 + padded
-    const size = view.getUint32(block)
-    block += 4
-
-    if (resourceId === 0x0404) {
-      const blockEnd = Math.min(block + size, end)
-      for (let i = block; i + 4 < blockEnd; i += 1) {
-        if (view.getUint8(i) === 0x1c && view.getUint8(i + 1) === 0x02 && IIM_RIGHTS_DATASETS.includes(view.getUint8(i + 2))) {
-          return true
-        }
-      }
-    }
-
-    cursor = block + size + (size % 2)
+function concat(chunks) {
+  const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0)
+  const out = new Uint8Array(total)
+  let at = 0
+  for (const chunk of chunks) {
+    out.set(chunk, at)
+    at += chunk.length
   }
-  return false
+  return out
 }
 
 /**
- * Artist and Copyright out of IFD0. A camera that wrote four spaces into Copyright has
- * written nothing — the server trims the value too, and a blank claim must not be what
- * pins a file to its original bytes.
+ * btoa() takes a string, and spreading a whole segment into fromCharCode overflows the
+ * argument stack, so it goes a window at a time.
  */
-function exifClaimsRights(view, offset, end) {
-  if (offset + 8 > end) return false
+function base64(bytes) {
+  const WINDOW = 0x8000
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += WINDOW) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + WINDOW))
+  }
+  return btoa(binary)
+}
 
-  const order = readAscii(view, offset, 2)
-  if (order !== 'II' && order !== 'MM') return false
+// --- JPEG ---
+
+/**
+ * Artist and Copyright out of IFD0, as their own bytes. Everything else EXIF carries is
+ * left behind — those two are the only tags EmbeddedRightsReader looks at.
+ */
+function exifValues(view, offset, end) {
+  const found = {}
+  if (offset + 8 > end) return found
+
+  const order = ascii(view, offset, 2)
+  if (order !== 'II' && order !== 'MM') return found
 
   // The byte order applies to every field from here on, the TIFF header included.
   const little = order === 'II'
-  if (view.getUint16(offset + 2, little) !== 42) return false
+  if (view.getUint16(offset + 2, little) !== 42) return found
 
   const ifd = offset + view.getUint32(offset + 4, little)
-  if (ifd + 2 > end) return false
+  if (ifd + 2 > end) return found
 
   const entries = view.getUint16(ifd, little)
   for (let i = 0; i < entries; i += 1) {
     const entry = ifd + 2 + i * 12
-    if (entry + 12 > end) return false
+    if (entry + 12 > end) return found
 
     const tag = view.getUint16(entry, little)
     if (tag !== EXIF_ARTIST && tag !== EXIF_COPYRIGHT) continue
@@ -133,62 +120,84 @@ function exifClaimsRights(view, offset, end) {
     // Up to four bytes sit in the entry itself; anything longer at an offset counted
     // from the start of the TIFF header.
     const value = length <= 4 ? entry + 8 : offset + view.getUint32(entry + 8, little)
-    if (value + length > end) continue
+    if (length === 0 || value + length > end) continue
 
-    if (readAscii(view, value, length).replaceAll('\0', '').trim() !== '') return true
+    found[tag === EXIF_ARTIST ? 'artist' : 'copyright'] ??= slice(view, value, length)
   }
 
-  return false
+  return found
 }
 
-function jpegCarriesRights(view) {
-  if (view.byteLength < 4 || view.getUint16(0) !== SOI) return false
+/**
+ * ISO 19566-5 splits one JUMBF superbox across APP11 segments, each prefixed with `JP`,
+ * a box instance and a packet sequence, and each repeating the superbox LBox/TBox. Only
+ * the first fragment's header is kept — the same rule ImageContainer applies.
+ */
+function reassembleApp11(fragments) {
+  if (fragments.length === 0) return null
+
+  const instance = Math.min(...fragments.map((fragment) => fragment.instance))
+  const ordered = fragments.filter((fragment) => fragment.instance === instance).sort((a, b) => a.sequence - b.sequence)
+
+  return concat(ordered.map(({ sequence, bytes }) => (sequence === 1 ? bytes : bytes.subarray(8))))
+}
+
+function jpegSegments(view) {
+  const found = {}
+  const fragments = []
+
+  if (view.byteLength < 4 || view.getUint16(0) !== SOI) return found
 
   let cursor = 2
   while (cursor + 4 <= view.byteLength) {
     const marker = view.getUint16(cursor)
-    if (marker === SOS || (marker & 0xff00) !== 0xff00) return false
+    if (marker === SOS || (marker & 0xff00) !== 0xff00) break
 
     const length = view.getUint16(cursor + 2)
     const payload = cursor + 4
     const payloadEnd = cursor + 2 + length
+    if (payloadEnd > view.byteLength) break
 
-    // Before the bounds check below: a manifest is split over as many fragments as it
-    // needs and the first one alone already settles the question.
-    if (marker === APP11 && payload + JUMBF_SIGNATURE.length <= view.byteLength && readAscii(view, payload, JUMBF_SIGNATURE.length) === JUMBF_SIGNATURE) {
-      return true
-    }
+    const size = payloadEnd - payload
 
-    if (payloadEnd > view.byteLength) return false
-
-    if (marker === APP1 && length > XMP_SIGNATURE.length && readAscii(view, payload, XMP_SIGNATURE.length) === XMP_SIGNATURE) {
-      if (xmpClaimsRights(view, payload + XMP_SIGNATURE.length, payloadEnd - payload - XMP_SIGNATURE.length)) return true
-    }
-
-    if (marker === APP1 && length > EXIF_SIGNATURE.length && readAscii(view, payload, EXIF_SIGNATURE.length) === EXIF_SIGNATURE) {
-      if (exifClaimsRights(view, payload + EXIF_SIGNATURE.length, payloadEnd)) return true
-    }
-
-    if (marker === APP13 && length > PHOTOSHOP_SIGNATURE.length && readAscii(view, payload, PHOTOSHOP_SIGNATURE.length) === PHOTOSHOP_SIGNATURE) {
-      if (iimClaimsRights(view, payload + PHOTOSHOP_SIGNATURE.length, payloadEnd)) return true
+    if (marker === APP1 && startsWith(view, payload, size, XMP_SIGNATURE)) {
+      found.xmp ??= slice(view, payload + XMP_SIGNATURE.length, size - XMP_SIGNATURE.length)
+    } else if (marker === APP1 && startsWith(view, payload, size, EXIF_SIGNATURE)) {
+      for (const [name, value] of Object.entries(exifValues(view, payload + EXIF_SIGNATURE.length, payloadEnd))) {
+        found[name] ??= value
+      }
+    } else if (marker === APP13) {
+      // iptcparse() takes the APP13 payload whole, Photoshop signature included.
+      found.iptc ??= slice(view, payload, size)
+    } else if (marker === APP11 && startsWith(view, payload, size, JUMBF_SIGNATURE) && size >= 16) {
+      fragments.push({
+        instance: view.getUint16(payload + 2),
+        sequence: view.getUint32(payload + 4),
+        bytes: slice(view, payload + 8, size - 8),
+      })
     }
 
     cursor = payloadEnd
   }
 
-  return false
+  const c2pa = reassembleApp11(fragments)
+  if (c2pa !== null) found.c2pa = c2pa
+
+  return found
 }
+
+// --- PNG ---
 
 /**
  * PNG text chunks are zlib streams often enough that reading only the plain ones misses
  * whatever ImageMagick wrote. A stream we fail to inflate is one the server fails to
- * inflate too, so nothing is lost by treating it as empty.
+ * inflate too, so nothing is lost by dropping it.
  */
 async function inflate(bytes) {
   try {
     const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'))
 
-    return LATIN1.decode(await new Response(stream).arrayBuffer())
+    return new Uint8Array(await new Response(stream).arrayBuffer())
   } catch {
     return null
   }
@@ -199,14 +208,16 @@ async function inflate(bytes) {
  * columns, then the packet as hex split over lines.
  */
 function rawProfile(profile) {
-  const lines = profile.replace(/^\n+|\n+$/g, '').split('\n')
+  const lines = LATIN1.decode(profile)
+    .replace(/^\n+|\n+$/g, '')
+    .split('\n')
   if (lines.length < 3) return null
 
   const hex = lines.slice(2).join('').replace(/[\s\r]/g, '')
   if (hex.length === 0 || hex.length % 2 === 1 || /[^0-9a-fA-F]/.test(hex)) return null
 
-  let packet = ''
-  for (let i = 0; i < hex.length; i += 2) packet += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16))
+  const packet = new Uint8Array(hex.length / 2)
+  for (let i = 0; i < packet.length; i += 1) packet[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16)
 
   return packet
 }
@@ -225,7 +236,7 @@ async function iTXtText(rest) {
     body = body.subarray(end + 1)
   }
 
-  return compressed ? inflate(body) : LATIN1.decode(body)
+  return compressed ? inflate(body) : body
 }
 
 /**
@@ -242,7 +253,7 @@ async function pngText(type, chunk) {
   const rest = chunk.subarray(separator + 1)
   const text =
     type === 'tEXt'
-      ? LATIN1.decode(rest)
+      ? rest
       : // zTXt is one compression-method byte, then a zlib stream.
         await (type === 'zTXt' ? inflate(rest.subarray(1)) : iTXtText(rest))
 
@@ -251,63 +262,80 @@ async function pngText(type, chunk) {
   return keyword === PNG_RAW_PROFILE_KEYWORD ? rawProfile(text) : text
 }
 
-async function pngCarriesRights(view) {
+async function pngSegments(view) {
+  const found = {}
+
   let cursor = 8 // PNG signature
   while (cursor + 8 <= view.byteLength) {
     const length = view.getUint32(cursor)
-    const type = readAscii(view, cursor + 4, 4)
+    const type = ascii(view, cursor + 4, 4)
     const payload = cursor + 8
 
-    // Metadata precedes the pixels, and IDAT is also where the head slice runs out.
-    if (type === 'IDAT') return false
-    // Before the bounds check: a manifest carrying a thumbnail can outrun the slice,
-    // and its presence is the whole answer.
-    if (type === PNG_C2PA_CHUNK) return true
-    if (payload + length > view.byteLength) return false
+    // Metadata precedes the pixels; past IDAT there is nothing left to find.
+    if (type === 'IDAT') break
+    if (payload + length > view.byteLength) break
 
-    if (type === 'iTXt' || type === 'zTXt' || type === 'tEXt') {
-      const text = await pngText(type, new Uint8Array(view.buffer, payload, length))
-      if (text !== null && claimsRights(text)) return true
+    if (type === PNG_C2PA_CHUNK) {
+      found.c2pa ??= slice(view, payload, length)
+    } else if (type === 'iTXt' || type === 'zTXt' || type === 'tEXt') {
+      const packet = await pngText(type, slice(view, payload, length))
+      if (packet !== null) found.xmp ??= packet
     }
 
     cursor = payload + length + 4 // + CRC
   }
-  return false
+
+  return found
 }
 
-function webpCarriesRights(view) {
-  if (view.byteLength < 12) return false
-  if (readAscii(view, 0, 4) !== 'RIFF' || readAscii(view, 8, 4) !== 'WEBP') return false
+// --- WebP ---
+
+function webpSegments(view) {
+  const found = {}
+  if (view.byteLength < 12) return found
+  if (ascii(view, 0, 4) !== 'RIFF' || ascii(view, 8, 4) !== 'WEBP') return found
 
   let cursor = 12
   while (cursor + 8 <= view.byteLength) {
-    const type = readAscii(view, cursor, 4)
+    const type = ascii(view, cursor, 4)
     // RIFF, and only RIFF, is little-endian.
     const size = view.getUint32(cursor + 4, true)
     const payload = cursor + 8
+    if (payload + size > view.byteLength) break
 
-    if (type === WEBP_C2PA_CHUNK) return true
-    if (payload + size > view.byteLength) return false
+    if (type === 'XMP ') found.xmp ??= slice(view, payload, size)
+    else if (type === WEBP_C2PA_CHUNK) found.c2pa ??= slice(view, payload, size)
 
-    if (type === 'XMP ' && xmpClaimsRights(view, payload, size)) return true
-
-    // An odd-sized chunk is followed by a pad byte that is not counted in its size.
+    // An odd-sized chunk is followed by a pad byte that its size does not count.
     cursor = payload + size + (size % 2)
   }
 
-  return false
+  return found
 }
 
-export async function carriesEmbeddedRights(file) {
+/**
+ * Every metadata segment the file carries, base64 encoded, or null when it carries
+ * none. Base64 throughout rather than text for the XMP: a packet is UTF-8 and must
+ * reach the server byte for byte, which a JSON round-trip through a latin1 decode
+ * would not guarantee.
+ *
+ * @returns {Promise<null | {xmp?: string, iptc?: string, c2pa?: string, artist?: string, copyright?: string}>}
+ */
+export async function extractEmbeddedMetadata(file) {
+  if (!EXTRACTABLE_TYPES.includes(file.type)) return null
+
   try {
-    const view = new DataView(await file.slice(0, HEAD_BYTES).arrayBuffer())
+    const view = new DataView(await file.arrayBuffer())
+    const segments =
+      file.type === 'image/jpeg' ? jpegSegments(view) : file.type === 'image/png' ? await pngSegments(view) : webpSegments(view)
 
-    if (file.type === 'image/jpeg') return jpegCarriesRights(view)
-    if (file.type === 'image/png') return await pngCarriesRights(view)
-    if (file.type === 'image/webp') return webpCarriesRights(view)
+    const encoded = {}
+    for (const [name, bytes] of Object.entries(segments)) {
+      if (bytes.length > 0 && bytes.length <= MAX_SEGMENT) encoded[name] = base64(bytes)
+    }
 
-    return false
+    return Object.keys(encoded).length > 0 ? encoded : null
   } catch {
-    return false
+    return null
   }
 }

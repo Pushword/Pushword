@@ -66,7 +66,13 @@ final readonly class MediaLicenseSeedListener
 
         $previousState = $media->getLicenseState();
 
-        $imported = $this->rightsReader->read($file->getPathname())->stripGeneratorMarkers();
+        $imported = EmbeddedRights::merge(
+            $this->rightsReader->read($file->getPathname()),
+            // Behind the file, never in front of it: the admin scales an image down
+            // through a canvas before uploading, which keeps no metadata, so it posts
+            // the segments separately. Whatever the stored bytes say still wins.
+            $this->rightsReader->readSupplied($this->suppliedMetadata()),
+        )->stripGeneratorMarkers();
 
         // A replacement never merges: the previous values described the previous
         // bytes. Keeping the empty ones would either leave a stale photographer on a
@@ -96,6 +102,13 @@ final readonly class MediaLicenseSeedListener
         if (MediaLicense::STATE_OVERRIDDEN === $previousState) {
             $this->alert('warning', 'mediaLicenseWasReset');
         }
+    }
+
+    private function suppliedMetadata(): string
+    {
+        $supplied = $this->requestStack->getCurrentRequest()?->request->get('embeddedMetadata');
+
+        return \is_string($supplied) ? $supplied : '';
     }
 
     /**

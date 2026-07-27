@@ -1,5 +1,5 @@
 import imageCompression from 'browser-image-compression'
-import { carriesEmbeddedRights } from './admin.imageMetadata'
+import { extractEmbeddedMetadata } from './admin.imageMetadata'
 import { suggestTags } from './admin.tagsField'
 import {
   deleteMedia,
@@ -28,14 +28,6 @@ const UPLOAD_COMPRESSION_OPTIONS = {
 
 async function compressForUpload(file) {
   if (!COMPRESSIBLE_TYPES.includes(file.type)) {
-    return file
-  }
-
-  // Compression re-encodes through a canvas, which destroys every metadata segment.
-  // For a file whose bytes claim somebody's rights that is not a size trade-off, it
-  // is evidence loss: the server would see a bare image and seed the site's own
-  // license onto a third party's photo.
-  if (await carriesEmbeddedRights(file)) {
     return file
   }
 
@@ -125,11 +117,14 @@ export function initMultiUpload() {
     const row = createPlaceholderRow(file.name)
 
     const originalHash = await computeSha1(file)
+    // Before compressing, which is what destroys them.
+    const metadata = await extractEmbeddedMetadata(file)
     const processedFile = await compressForUpload(file)
 
     const formData = new FormData()
     formData.append('file', processedFile)
     formData.append('originalHash', originalHash)
+    if (metadata !== null) formData.append('embeddedMetadata', JSON.stringify(metadata))
     formData.append('_token', csrfToken)
 
     try {
