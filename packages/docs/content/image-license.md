@@ -86,9 +86,10 @@ any pixels:
 | EXIF | JPEG `APP1` | `Artist`, `Copyright` |
 | C2PA | JPEG `APP11`, PNG `caBX`, WebP `C2PA` chunk | `digitalSourceType` only |
 
-PNG carries XMP under four different shapes — the specified `XML:com.adobe.xmp` keyword
-raw or deflated, the same keyword in a plain `tEXt`, and ImageMagick's own hex-wrapped
-`Raw profile type xmp` — and all four are read.
+PNG is the awkward one: two keywords carry XMP — the specified `XML:com.adobe.xmp` and
+ImageMagick's own hex-wrapped `Raw profile type xmp` — and either can appear in any of
+the three text chunk types, deflated or not. The chunk type decides the encoding, the
+keyword decides the meaning, and every combination is read.
 
 ### AI-generated images
 

@@ -53,7 +53,7 @@ class EmbeddedRightsReader
         $container = ImageContainer::read($path);
 
         return EmbeddedRights::merge(
-            $this->readXmp($container->xmp),
+            $this->parseXmp($container->xmp),
             $this->readIim($path),
             $this->readExif($path),
             // Last: a rights claim somebody wrote by hand outranks a generator's own
@@ -64,13 +64,14 @@ class EmbeddedRightsReader
 
     // --- XMP ---
 
-    private function readXmp(string $packet): EmbeddedRights
-    {
-        return '' === $packet ? new EmbeddedRights() : $this->parseXmp($packet);
-    }
-
     private function parseXmp(string $packet): EmbeddedRights
     {
+        // Guarded here rather than left to the parser: loadXML() raises on an empty
+        // string instead of reporting it as malformed like every other bad input.
+        if ('' === $packet) {
+            return new EmbeddedRights();
+        }
+
         $xpath = $this->buildXpath($packet);
 
         if (null === $xpath) {

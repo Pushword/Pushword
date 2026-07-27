@@ -70,36 +70,14 @@ final class C2paManifest
         }
 
         $found = [];
-        $offset = 0;
-        $total = \strlen($boxes);
 
-        while ($offset + 8 <= $total) {
-            $length = Bytes::uint32($boxes, $offset);
-            if (null === $length) {
-                break;
-            }
-
-            $type = substr($boxes, $offset + 4, 4);
-
-            // A zero length means "runs to the end of the enclosing box".
-            if (0 === $length) {
-                $length = $total - $offset;
-            }
-
-            if ($length < 8 || $offset + $length > $total) {
-                break;
-            }
-
-            $payload = substr($boxes, $offset + 8, $length - 8);
-            $offset += $length;
-
+        foreach (self::boxes($boxes) as [$type, $payload]) {
             if (self::SUPERBOX !== $type) {
                 continue;
             }
 
             if (self::isActions($payload)) {
-                $cbor = self::firstCborPayload($payload);
-                $decoded = '' === $cbor ? null : Cbor::decode($cbor);
+                $decoded = Cbor::decode(self::firstCborPayload($payload));
 
                 if (\is_array($decoded)) {
                     $found[] = $decoded;
@@ -118,33 +96,53 @@ final class C2paManifest
     }
 
     /**
+     * Each box in sequence, as type and payload. Iteration stops at the first header
+     * that does not fit the bytes it sits in — a truncated box ends the walk rather
+     * than being guessed at.
+     *
+     * @return iterable<array{0: string, 1: string}>
+     */
+    private static function boxes(string $bytes): iterable
+    {
+        $offset = 0;
+        $total = \strlen($bytes);
+
+        while ($offset + 8 <= $total) {
+            $declared = Bytes::uint32($bytes, $offset);
+            if (null === $declared) {
+                return;
+            }
+
+            // A zero length means "runs to the end of the enclosing box".
+            $length = 0 === $declared ? $total - $offset : $declared;
+            if ($length < 8 || $offset + $length > $total) {
+                return;
+            }
+
+            yield [substr($bytes, $offset + 4, 4), substr($bytes, $offset + 8, $length - 8)];
+
+            $offset += $length;
+        }
+    }
+
+    /**
      * A superbox's first child is its `jumd`, whose label names the assertion.
      */
     private static function isActions(string $superbox): bool
     {
-        if (\strlen($superbox) < 8) {
-            return false;
+        foreach (self::boxes($superbox) as [$type, $payload]) {
+            // 16-byte content-type UUID, then the toggle byte, then the label.
+            if (self::DESCRIPTION !== $type || \strlen($payload) < 17) {
+                return false;
+            }
+
+            $label = substr($payload, 17);
+            $end = strpos($label, "\0");
+
+            return str_starts_with(false === $end ? $label : substr($label, 0, $end), self::ACTIONS_LABEL);
         }
 
-        $length = Bytes::uint32($superbox);
-        if (null === $length || self::DESCRIPTION !== substr($superbox, 4, 4)) {
-            return false;
-        }
-
-        if ($length < 8 || $length > \strlen($superbox)) {
-            return false;
-        }
-
-        // 16-byte content-type UUID, then the toggle byte, then the label.
-        $description = substr($superbox, 8, $length - 8);
-        if (\strlen($description) < 17) {
-            return false;
-        }
-
-        $label = substr($description, 17);
-        $end = strpos($label, "\0");
-
-        return str_starts_with(false === $end ? $label : substr($label, 0, $end), self::ACTIONS_LABEL);
+        return false;
     }
 
     /**
@@ -153,25 +151,10 @@ final class C2paManifest
      */
     private static function firstCborPayload(string $superbox): string
     {
-        $offset = 0;
-        $total = \strlen($superbox);
-
-        while ($offset + 8 <= $total) {
-            $declared = Bytes::uint32($superbox, $offset);
-            if (null === $declared) {
-                return '';
+        foreach (self::boxes($superbox) as [$type, $payload]) {
+            if (self::CBOR === $type) {
+                return $payload;
             }
-
-            $length = 0 === $declared ? $total - $offset : $declared;
-            if ($length < 8 || $offset + $length > $total) {
-                return '';
-            }
-
-            if (self::CBOR === substr($superbox, $offset + 4, 4)) {
-                return substr($superbox, $offset + 8, $length - 8);
-            }
-
-            $offset += $length;
         }
 
         return '';

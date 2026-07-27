@@ -87,9 +87,6 @@ final class MediaLicense
 
     public const string STATE_THIRD_PARTY = 'thirdParty';
 
-    /** @var string[] */
-    public const array STATES = [self::STATE_SEEDED, self::STATE_OVERRIDDEN, self::STATE_THIRD_PARTY];
-
     public const string CREATOR_TYPE_PERSON = 'Person';
 
     public const string CREATOR_TYPE_ORGANIZATION = 'Organization';
