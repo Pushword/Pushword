@@ -117,6 +117,11 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         }
 
         $this->finishCompression();
+
+        $notice = $this->minificationSkippedNotice();
+        if (null !== $notice) {
+            $this->staticAppGenerator->writeln('<comment>'.$notice.'</comment>');
+        }
     }
 
     /**
@@ -221,6 +226,11 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         }
 
         $this->finishCompression();
+
+        $notice = $this->minificationSkippedNotice();
+        if (null !== $notice) {
+            echo $notice."\n";
+        }
 
         // Write worker state
         file_put_contents($workerStateFile, json_encode(

@@ -194,4 +194,46 @@ final class HtmlMinifierTest extends TestCase
         self::assertStringStartsWith('<!DOCTYPE html>', $result);
         self::assertLessThanOrEqual(\strlen($html), \strlen($result));
     }
+
+    /**
+     * Observed in production on libxml 2.10.2: the leading byte of a multi-byte
+     * character whose first byte lands on a 4096-byte parse boundary is dropped,
+     * turning "débutant" into "d\xA9butant" and silently corrupting ~3% of the
+     * generated pages. Whatever the environment, compress() must never return
+     * invalid UTF-8.
+     */
+    public function testCompressNeverReturnsInvalidUtf8OnParseBoundary(): void
+    {
+        $head = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>t</title></head><body><p>';
+
+        foreach ([4096, 8192, 12288] as $boundary) {
+            // Place the two bytes of "é" astride the boundary: lead byte last.
+            $html = $head.str_repeat('x', $boundary - 1 - \strlen($head))."\u{00E9}fin</p></body></html>";
+            self::assertSame($boundary - 1, strpos($html, "\u{00E9}"));
+
+            $result = HtmlMinifier::compress($html);
+
+            self::assertTrue(mb_check_encoding($result, 'UTF-8'), 'invalid UTF-8 at boundary '.$boundary);
+            self::assertStringContainsString("\u{00E9}fin", $result, 'character lost at boundary '.$boundary);
+        }
+    }
+
+    /**
+     * The boundary test above only exercises the guard on a libxml that actually
+     * corrupts, so it proves nothing where libxml is healthy. Feeding invalid
+     * UTF-8 through a document without a doctype makes removeExtraWhiteSpace()
+     * hand it straight back, which trips the guard on every environment.
+     */
+    public function testCompressFallsBackWhenMinifyingWouldEmitInvalidUtf8(): void
+    {
+        $skipped = HtmlMinifier::$skippedOnBrokenLibxml;
+        // "caf\xC3" — a lead byte with no continuation, exactly what libxml leaves behind.
+        $html = "<p>caf\xC3</p><!-- dropped -->";
+
+        $result = HtmlMinifier::compress($html);
+
+        self::assertSame($skipped + 1, HtmlMinifier::$skippedOnBrokenLibxml);
+        // Comment stripping never goes through libxml, so the fallback keeps it.
+        self::assertSame("<p>caf\xC3</p>", $result);
+    }
 }

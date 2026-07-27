@@ -185,6 +185,30 @@ class PageGenerator extends AbstractGenerator
         }
     }
 
+    private int $minificationSkippedReported = 0;
+
+    /**
+     * One line per host when the environment's libxml forced us to serve
+     * unminified HTML, so a broken host is visible instead of silently bigger.
+     * The counter is process-wide, hence the delta: hosts sharing a process
+     * would otherwise each report their predecessors' pages too.
+     */
+    protected function minificationSkippedNotice(): ?string
+    {
+        $skipped = HtmlMinifier::$skippedOnBrokenLibxml - $this->minificationSkippedReported;
+        if (0 === $skipped) {
+            return null;
+        }
+
+        $this->minificationSkippedReported = HtmlMinifier::$skippedOnBrokenLibxml;
+
+        return \sprintf(
+            '%d page(s) served unminified: libxml %s drops multi-byte characters on 4096-byte parse boundaries — upgrade libxml',
+            $skipped,
+            \LIBXML_DOTTED_VERSION,
+        );
+    }
+
     /**
      * Wait for all compression processes to finish.
      * Should be called after generating all pages.

@@ -27,6 +27,7 @@ use Pushword\StaticGenerator\Generator\CopierGenerator;
 use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
 use Pushword\StaticGenerator\Generator\GeneratorInterface;
 use Pushword\StaticGenerator\Generator\HtaccessGenerator;
+use Pushword\StaticGenerator\Generator\HtmlMinifier;
 use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PageGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
@@ -1532,6 +1533,42 @@ final class StaticGeneratorTest extends KernelTestCase
     private function getPublicMediaDir(): string
     {
         return realpath(__DIR__.'/../../dev-app/public').'/media';
+    }
+
+    /**
+     * HtmlMinifier's skip counter is process-wide, so hosts sharing a process
+     * would each report their predecessors' pages if the notice did not take a
+     * delta. Reported counts drive the "upgrade libxml" hint; an inflated one
+     * would blame a healthy host for its neighbour's pages.
+     */
+    public function testMinificationNoticeReportsOnlyItsOwnPages(): void
+    {
+        $generator = $this->getGenerator(PagesGenerator::class);
+        $notice = new ReflectionMethod(PageGenerator::class, 'minificationSkippedNotice');
+        $reported = new ReflectionProperty(PageGenerator::class, 'minificationSkippedReported');
+
+        $skipped = HtmlMinifier::$skippedOnBrokenLibxml;
+        $reported->setValue($generator, 0);
+        HtmlMinifier::$skippedOnBrokenLibxml = 0;
+
+        try {
+            self::assertNull($notice->invoke($generator), 'nothing skipped yet');
+
+            HtmlMinifier::$skippedOnBrokenLibxml = 3;
+            self::assertStringContainsString('3 page(s)', (string) $notice->invoke($generator));
+
+            self::assertNull($notice->invoke($generator), 'a reported count must not be reported twice');
+
+            HtmlMinifier::$skippedOnBrokenLibxml = 5;
+            self::assertStringContainsString(
+                '2 page(s)',
+                (string) $notice->invoke($generator),
+                'the next host reports its own delta, not the running total',
+            );
+        } finally {
+            HtmlMinifier::$skippedOnBrokenLibxml = $skipped;
+            $reported->setValue($generator, 0);
+        }
     }
 
     public function getPageRepo(): MockObject
