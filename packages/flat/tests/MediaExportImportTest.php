@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaExporter;
@@ -550,6 +551,89 @@ CSV;
         $em->remove($reimported);
         $em->flush();
         @unlink($mediaDir.'/test-roundtrip.png');
+    }
+
+    /**
+     * The seven license keys are custom properties, so they become CSV columns for
+     * free — including creator, which is a list and has to survive the JSON encoding
+     * MediaCsvHelper applies to non-scalars.
+     */
+    public function testLicenseKeysRoundTripThroughMediaCsv(): void
+    {
+        /** @var EntityManager $em */
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        /** @var string $projectDir */
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+
+        /** @var string $mediaDir */
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+
+        $memStorage = $this->createInMemoryStorage($mediaDir);
+
+        $this->createTestImage($mediaDir.'/test-license.png');
+        $memStorage->write('test-license.png', (string) file_get_contents($mediaDir.'/test-license.png'));
+
+        $license = [
+            MediaLicense::LICENSE => 'https://altimood.test/mentions-legales',
+            MediaLicense::ACQUIRE_LICENSE_PAGE => 'https://altimood.test/contact',
+            MediaLicense::CREDIT_TEXT => 'Altimood',
+            // Nested rows, not a flat list: the CSV has to carry each creator's own
+            // type through YAML and back.
+            MediaLicense::CREATOR => [
+                ['name' => 'Dominique VIVARES', 'type' => 'Person'],
+                ['name' => 'Altimood', 'type' => 'Organization'],
+            ],
+            MediaLicense::COPYRIGHT_NOTICE => '© Altimood',
+            MediaLicense::DIGITAL_SOURCE_TYPE => MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.'digitalCapture',
+        ];
+
+        $media = new Media();
+        $media->setProjectDir($projectDir);
+        $media->setFileName('test-license.png');
+        $media->setAlt('License roundtrip');
+        $media->setMimeType('image/png');
+        $media->setSize(1024);
+        $media->setStoreIn($mediaDir);
+        foreach ($license as $key => $value) {
+            $media->setCustomProperty($key, $value);
+        }
+
+        $em->persist($media);
+        $em->flush();
+
+        $exporter = $this->createExporterWithStorage($memStorage);
+        $exporter->csvDir = $this->testMediaDir;
+        $exporter->exportMedias();
+
+        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
+        $csv = (string) file_get_contents($csvPath);
+        self::assertStringContainsString(MediaLicense::ACQUIRE_LICENSE_PAGE, $csv);
+        // Derived from the properties, so never re-imported.
+        self::assertStringNotContainsString('licenseState', $csv);
+
+        $em->remove($media);
+        $em->flush();
+        $em->clear();
+
+        $this->createTestImage($mediaDir.'/test-license.png');
+
+        $importer = $this->createImporterWithStorage($memStorage, $mediaDir, $projectDir);
+        $importer->resetIndex();
+        $importer->loadIndex($csvPath);
+        $importer->importFromStorage('test-license.png', new DateTime());
+        $importer->finishImport();
+
+        $reimported = $em->getRepository(Media::class)->findOneBy(['fileName' => 'test-license.png']);
+        self::assertInstanceOf(Media::class, $reimported);
+
+        foreach ($license as $key => $value) {
+            self::assertSame($value, $reimported->getCustomProperty($key), $key.' did not round-trip');
+        }
+
+        $em->remove($reimported);
+        $em->flush();
+        @unlink($mediaDir.'/test-license.png');
     }
 
     public function testValidateFilesExistChecksInMemoryStorage(): void
