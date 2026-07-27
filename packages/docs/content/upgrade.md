@@ -14,6 +14,34 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc785
+
+### Image rights are now read from PNG, WebP and C2PA
+
+**If you ran `pw:media:license` on rc784, re-run it.** Extraction went through
+`Imagick::pingImage()`, which exposes metadata profiles for JPEG only. Every PNG and
+WebP therefore read as carrying no rights whatever its XMP actually said, so a
+photographer's PNG could be recorded as `seeded` — the site's licence applied to
+somebody else's image, which is the one outcome this feature exists to prevent.
+
+```bash
+php bin/console pw:media:license --all --dry-run   # review what changes
+php bin/console pw:media:license --all
+```
+
+`--all` is required: the media already carry a `licenseState`, and without it they are
+skipped. Media whose licence was asserted by hand are still never rewritten, so a real
+decision you made in the admin survives the re-run.
+
+Two other changes come with it:
+
+- **C2PA manifests are read** for `digitalSourceType`. A `gpt-image` PNG carries no XMP,
+  no IPTC and no EXIF at all — only C2PA — so AI-generated images were not recognised as
+  such. See [Image license](image-license.md#c2pa).
+- **ext-imagick is no longer involved** in reading metadata; the containers are walked
+  directly, which is also why the `xmpReadable` key is gone from the
+  `pw:media:license --format=agent` JSON. Nothing to do unless you parsed that key.
+
 ## To 1.0.0-rc784
 
 ### Image license metadata (Google "Licensable" badge)

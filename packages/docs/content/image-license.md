@@ -53,7 +53,7 @@ the library. `pw:media:license` is what propagates it.
 ## What happens on upload
 
 ```
-imported = read(XMP) ?? read(IPTC-IIM) ?? read(EXIF)   # per property, first non-empty
+imported = read(XMP) ?? read(IPTC-IIM) ?? read(EXIF) ?? read(C2PA)   # per property, first non-empty
 
 if imported has a generator marker:
     record it as digitalSourceType, drop it from creditText
@@ -74,6 +74,22 @@ instead, with one button.
 The image still emits a valid `ImageObject` from its imported attribution — it is not
 excluded from Google, only from the site's licence.
 
+### Where the metadata is read from
+
+Four sources, in that order of precedence, walked out of the container without decoding
+any pixels:
+
+| Source | Carried in | Holds |
+| --- | --- | --- |
+| XMP | JPEG `APP1`, PNG `iTXt`/`zTXt`/`tEXt`, WebP `XMP ` chunk | every property |
+| IPTC-IIM | JPEG `APP13` | creator, credit, copyright |
+| EXIF | JPEG `APP1` | `Artist`, `Copyright` |
+| C2PA | JPEG `APP11`, PNG `caBX`, WebP `C2PA` chunk | `digitalSourceType` only |
+
+PNG carries XMP under four different shapes — the specified `XML:com.adobe.xmp` keyword
+raw or deflated, the same keyword in a plain `tEXt`, and ImageMagick's own hex-wrapped
+`Raw profile type xmp` — and all four are read.
+
 ### AI-generated images
 
 ChatGPT and Gemini stamp their output with `Iptc4xmpExt:DigitalSourceType` and a credit
@@ -83,6 +99,28 @@ credit line, and the image is seeded like any other image the site owns.
 
 The credit marker is matched exactly, so a real agency named "AI Generated Studio Ltd"
 keeps its credit and still gates as third-party.
+
+{id=c2pa}
+### C2PA (Content Credentials)
+
+A `gpt-image` PNG carries **no XMP, no IPTC and no EXIF at all** — its only metadata is a
+C2PA manifest, which is what OpenAI, Google, Adobe and the camera makers now write. The
+`c2pa.actions` assertion inside it holds the same IPTC NewsCode vocabulary:
+
+```
+claim_generator_info.name = "OpenAI Media Service API"
+softwareAgent             = gpt-image 2.0
+digitalSourceType         = …/digitalsourcetype/trainedAlgorithmicMedia
+```
+
+Only that `digitalSourceType` is read. The manifest also names the signer, and treating a
+signing certificate as the `creator` would publish an ownership claim nobody made.
+
+**The signature is not verified.** This answers "what does the file say about itself" —
+the same question asked of XMP, which anybody can equally write. It is not evidence of
+authenticity, and the resulting value stays editable in the admin. A camera writes the
+same assertion to say the opposite (`digitalCapture`), so the value is read rather than
+the mere presence of a manifest.
 
 ### Replacing the file on an existing media
 
