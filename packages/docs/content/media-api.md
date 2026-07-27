@@ -52,6 +52,7 @@ Returns metadata for the given media file. Supports current filename and histori
   "alts": { "fr": "Une vue de montagne" },
   "tags": ["landscape", "nature"],
   "customProperties": {},
+  "licenseState": "seeded",
   "image": {
     "width": 1920,
     "height": 1080,
@@ -64,7 +65,8 @@ Returns metadata for the given media file. Supports current filename and histori
 
 - `hash` — SHA-1 of the file content, hex-encoded. `null` if not yet computed.
 - `fileNameHistory` — previous filenames after renames.
-- `customProperties` — free-form key/value map. Writable (see below); keys are merged, not replaced, and a `null` value removes a key.
+- `customProperties` — free-form key/value map. Writable (see below); keys are merged, not replaced, and a `null` value removes a key. It also holds the [image license metadata](/image-license) keys (`license`, `acquireLicensePage`, `creditText`, `creator`, `copyrightNotice`, `digitalSourceType`), which are writable like any other.
+- `licenseState` — read-only: how those license properties came to be. `""` (none), `seeded` (from the app config), `overridden` (asserted by a human) or `thirdParty` (imported from the file's own embedded rights).
 - `image` is `null` for non-image media (PDF, video, etc.).
 
 ### POST /api/media/{filename}
