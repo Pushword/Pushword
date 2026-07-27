@@ -227,6 +227,11 @@ final readonly class ImageContainer
         return new self($xmp, $c2pa);
     }
 
+    /**
+     * How the text is stored is the chunk type's business; what the text means is the
+     * keyword's. Keeping them apart is what lets either keyword appear in any of the
+     * three chunk types, which the specification permits and tools take advantage of.
+     */
     private static function pngTextXmp(string $type, string $chunk): string
     {
         $separator = strpos($chunk, "\0");
@@ -237,33 +242,48 @@ final readonly class ImageContainer
         $keyword = substr($chunk, 0, $separator);
         $rest = substr($chunk, $separator + 1);
 
-        if (self::PNG_XMP_KEYWORD === $keyword) {
-            // iTXt: compression flag, compression method, language tag, translated
-            // keyword, then the text. tEXt holds the text directly.
-            if ('iTXt' !== $type) {
-                return $rest;
-            }
+        $text = match ($type) {
+            // One compression-method byte, then a deflate stream.
+            'zTXt' => self::inflate(substr($rest, 1)),
+            'tEXt' => $rest,
+            default => self::iTXtText($rest),
+        };
 
-            $compressed = str_starts_with($rest, "\x01");
-            $rest = substr($rest, 2);
+        return match ($keyword) {
+            self::PNG_XMP_KEYWORD => $text,
+            self::PNG_RAW_PROFILE_KEYWORD => self::rawProfile($text),
+            default => '',
+        };
+    }
 
-            foreach ([0, 1] as $ignored) {
-                $end = strpos($rest, "\0");
-                if (false === $end) {
-                    return '';
-                }
+    /**
+     * iTXt prefixes the text with a compression flag, a compression method, a language
+     * tag and a translated keyword — the last two null-terminated and both skippable.
+     */
+    private static function iTXtText(string $rest): string
+    {
+        $compressed = str_starts_with($rest, "\x01");
+        $text = self::skipNullTerminated(substr($rest, 2), 2);
 
-                $rest = substr($rest, $end + 1);
-            }
-
-            return $compressed ? self::inflate($rest) : $rest;
+        if (null === $text) {
+            return '';
         }
 
-        if (self::PNG_RAW_PROFILE_KEYWORD === $keyword) {
-            return self::rawProfile('zTXt' === $type ? self::inflate(substr($rest, 1)) : $rest);
+        return $compressed ? self::inflate($text) : $text;
+    }
+
+    private static function skipNullTerminated(string $bytes, int $count): ?string
+    {
+        for ($skipped = 0; $skipped < $count; ++$skipped) {
+            $end = strpos($bytes, "\0");
+            if (false === $end) {
+                return null;
+            }
+
+            $bytes = substr($bytes, $end + 1);
         }
 
-        return '';
+        return $bytes;
     }
 
     /**

@@ -291,7 +291,11 @@ final class EmbeddedRightsReaderTest extends TestCase
             'iTXt' => ['iTXt', ImageMetadataFixture::PNG_XMP_KEYWORD, false],
             'iTXt deflated' => ['iTXt', ImageMetadataFixture::PNG_XMP_KEYWORD, true],
             'tEXt' => ['tEXt', ImageMetadataFixture::PNG_XMP_KEYWORD, false],
+            // The chunk type decides the encoding, the keyword decides the meaning, so
+            // the standard keyword has to work in a deflated chunk too.
+            'zTXt' => ['zTXt', ImageMetadataFixture::PNG_XMP_KEYWORD, true],
             'raw profile' => ['zTXt', ImageMetadataFixture::PNG_RAW_PROFILE_KEYWORD, true],
+            'raw profile in tEXt' => ['tEXt', ImageMetadataFixture::PNG_RAW_PROFILE_KEYWORD, false],
         ];
 
         foreach ($shapes as $label => [$chunkType, $keyword, $compressed]) {

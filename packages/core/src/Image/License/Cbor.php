@@ -221,9 +221,14 @@ final class Cbor
         return $map;
     }
 
+    /**
+     * Strictly "the break marker is here" — running out of bytes is not a clean end.
+     * Each caller then fails on its next item() call, which is what makes a truncated
+     * indefinite-length item null instead of a plausible partial value.
+     */
     private static function atBreak(string $bytes, int $offset): bool
     {
-        return $offset >= \strlen($bytes) || self::BREAK === \ord($bytes[$offset]);
+        return $offset < \strlen($bytes) && self::BREAK === \ord($bytes[$offset]);
     }
 
     private static function simple(int $minor, int $argument): bool|float|null

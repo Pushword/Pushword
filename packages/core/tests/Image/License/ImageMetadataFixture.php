@@ -226,19 +226,21 @@ final class ImageMetadataFixture
 
     private static function pngTextChunk(string $keyword, string $chunkType, string $text, bool $compressed): string
     {
+        // The keyword decides how the text is wrapped, the chunk type how it is encoded —
+        // the same split the reader makes, so either can appear with either.
+        $payload = self::PNG_RAW_PROFILE_KEYWORD === $keyword ? self::rawProfile($text) : $text;
+
         if ('tEXt' === $chunkType) {
-            return $keyword."\x00".$text;
+            return $keyword."\x00".$payload;
         }
 
         if ('zTXt' === $chunkType) {
-            $payload = self::PNG_RAW_PROFILE_KEYWORD === $keyword ? self::rawProfile($text) : $text;
-
             return $keyword."\x00\x00".gzcompress($payload);
         }
 
         // iTXt: compression flag, compression method, language tag, translated keyword.
         return $keyword."\x00".($compressed ? "\x01" : "\x00")."\x00\x00\x00"
-            .($compressed ? gzcompress($text) : $text);
+            .($compressed ? gzcompress($payload) : $payload);
     }
 
     /** ImageMagick's wrapper: name, byte length in eight columns, then wrapped hex. */

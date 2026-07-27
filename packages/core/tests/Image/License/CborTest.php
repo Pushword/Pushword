@@ -85,6 +85,20 @@ final class CborTest extends TestCase
     }
 
     /**
+     * An indefinite-length item ends at a break marker; running out of bytes before one
+     * is truncation, not a clean end. Reading it as complete would hand back a partial
+     * value that looks exactly like a whole one.
+     */
+    public function testAnIndefiniteItemWithoutItsBreakMarkerIsRejected(): void
+    {
+        self::assertNull(Cbor::decode("\x9f\x01\x02"));
+        self::assertNull(Cbor::decode("\xbf\x61\x61\x01"));
+        self::assertNull(Cbor::decode("\x7f\x62\x61\x62"));
+        // Not even the first item, let alone the marker.
+        self::assertNull(Cbor::decode("\x9f"));
+    }
+
+    /**
      * The length fields come from an uploaded file. A map claiming four billion entries
      * must not be allocated before the bytes backing it are checked.
      */

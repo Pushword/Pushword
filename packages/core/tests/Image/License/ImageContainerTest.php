@@ -3,6 +3,7 @@
 namespace Pushword\Core\Tests\Image\License;
 
 use PHPUnit\Framework\TestCase;
+use Pushword\Core\Image\License\C2paManifest;
 use Pushword\Core\Image\License\ImageContainer;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -112,6 +113,54 @@ final class ImageContainerTest extends TestCase
         $webp = 'RIFF'.pack('V', \strlen($chunks) + 4).'WEBP'.$chunks;
 
         self::assertSame($xmp, ImageContainer::read($this->write('odd.webp', $webp))->xmp);
+    }
+
+    /**
+     * A length under the cap but past the end of the file is a different branch from an
+     * absurd one: the read is attempted and comes back short.
+     */
+    public function testAPlausibleButTruncatedLengthYieldsNoUsableManifest(): void
+    {
+        $png = "\x89PNG\r\n\x1A\n".pack('N', 1024 * 1024).'caBX'.str_repeat('A', 16);
+
+        // Whatever the short read returned, it is not a manifest.
+        self::assertSame('', C2paManifest::read(ImageContainer::read($this->write('trunc.png', $png))->c2pa)->digitalSourceType);
+    }
+
+    /**
+     * Markers without a length field must not have two bytes read as one. Getting this
+     * wrong desynchronises the walk and every later segment is garbage.
+     */
+    public function testStandaloneJpegMarkersCarryNoLength(): void
+    {
+        $xmp = ImageMetadataFixture::packet('<rdf:Description rdf:about=""'
+            .' xmlns:dc="http://purl.org/dc/elements/1.1/" dc:rights="Altimood"/>');
+        $signature = "http://ns.adobe.com/xap/1.0/\0";
+        $app1 = "\xFF\xE1".pack('n', \strlen($signature.$xmp) + 2).$signature.$xmp;
+
+        // TEM and a restart marker ahead of the segment that matters.
+        $jpeg = "\xFF\xD8\xFF\x01\xFF\xD0".$app1."\xFF\xD9";
+
+        self::assertStringContainsString('Altimood', ImageContainer::read($this->write('standalone.jpg', $jpeg))->xmp);
+    }
+
+    /** Both payloads can sit in one file, and finding one must not stop the walk. */
+    public function testXmpAndC2paAreBothCollectedFromTheSameFile(): void
+    {
+        $xmp = ImageMetadataFixture::packet('<rdf:Description rdf:about=""'
+            .' xmlns:dc="http://purl.org/dc/elements/1.1/" dc:rights="Altimood"/>');
+        $manifest = ImageMetadataFixture::c2paActions('http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture');
+
+        foreach ([
+            'png' => ImageMetadataFixture::writePng($this->dir.'/both.png', $xmp, c2pa: $manifest),
+            'webp' => ImageMetadataFixture::writeWebp($this->dir.'/both.webp', $xmp, $manifest),
+            'jpeg' => ImageMetadataFixture::write($this->dir.'/both.jpg', $xmp, c2pa: $manifest),
+        ] as $format => $path) {
+            $container = ImageContainer::read($path);
+
+            self::assertStringContainsString('Altimood', $container->xmp, $format);
+            self::assertNotSame('', $container->c2pa, $format);
+        }
     }
 
     /** A JPEG hides its metadata before the scan; nothing after SOS is walkable. */
