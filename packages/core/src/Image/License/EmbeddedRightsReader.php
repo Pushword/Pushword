@@ -7,14 +7,14 @@ use DOMDocument;
 use DOMElement;
 use DOMNode;
 use DOMXPath;
-use Imagick;
 use Throwable;
 
 /**
  * Reads the rights metadata a file carries in its own bytes.
  *
  * XMP first, IPTC-IIM and EXIF as per-property fallbacks: xmpRights:WebStatement and
- * plus:LicensorURL are XMP-only, IIM and EXIF structurally cannot carry them.
+ * plus:LicensorURL are XMP-only, IIM and EXIF structurally cannot carry them. The C2PA
+ * manifest comes last and only ever contributes a digitalSourceType.
  */
 class EmbeddedRightsReader
 {
@@ -44,68 +44,29 @@ class EmbeddedRightsReader
 
     private const string IIM_COPYRIGHT = '2#116';
 
-    /**
-     * Whether XMP can be extracted at all on this host.
-     *
-     * ext-imagick is not a Pushword requirement (only ext-gd is), and
-     * xmpRights:WebStatement, plus:LicensorURL and photoshop:Credit are XMP-only —
-     * IIM and EXIF structurally cannot carry them. Without it a photographer's file
-     * reads as carrying no rights at all, so a caller must not conclude the site owns
-     * it: seeding the site license there is exactly the false claim this design
-     * exists to prevent.
-     */
-    public function canReadXmp(): bool
-    {
-        return class_exists(Imagick::class);
-    }
-
     public function read(string $path): EmbeddedRights
     {
         if (! is_file($path)) {
             return new EmbeddedRights();
         }
 
+        $container = ImageContainer::read($path);
+
         return EmbeddedRights::merge(
-            $this->readXmp($path),
+            $this->readXmp($container->xmp),
             $this->readIim($path),
             $this->readExif($path),
+            // Last: a rights claim somebody wrote by hand outranks a generator's own
+            // note about how the pixels were made.
+            C2paManifest::read($container->c2pa),
         );
     }
 
     // --- XMP ---
 
-    private function readXmp(string $path): EmbeddedRights
+    private function readXmp(string $packet): EmbeddedRights
     {
-        $packet = $this->extractXmpPacket($path);
-
         return '' === $packet ? new EmbeddedRights() : $this->parseXmp($packet);
-    }
-
-    /**
-     * Imagick walks the container markers in C and reads no pixels, which handles
-     * JPEG, PNG and WebP uniformly at ~0.1 ms per file.
-     *
-     * getimagesize() is not an option: a JPEG carries two APP1 segments, EXIF then
-     * XMP, and it returns only the first. Scanning the raw bytes for the packet is
-     * not one either: an EXIF thumbnail is itself a JPEG that may carry its own XMP,
-     * and COM segments and IPTC caption text can hold the literal.
-     */
-    private function extractXmpPacket(string $path): string
-    {
-        if (! class_exists(Imagick::class)) {
-            return '';
-        }
-
-        try {
-            $imagick = new Imagick();
-            $imagick->pingImage($path);
-            $packet = $imagick->getImageProfile('xmp');
-            $imagick->clear();
-
-            return $packet;
-        } catch (Throwable) {
-            return '';
-        }
     }
 
     private function parseXmp(string $packet): EmbeddedRights

@@ -86,12 +86,6 @@ final readonly class MediaLicenseSeedListener
             // on its own. A human asserts it, with the admin button or --force.
             $media->setLicenseState(MediaLicense::STATE_THIRD_PARTY);
             $this->disclose('warning', 'mediaLicenseThirdParty', ['%rights%' => $this->rightsSummary($imported)]);
-        } elseif (! $this->rightsReader->canReadXmp()) {
-            // "No rights found" is only trustworthy when XMP could be read. Without
-            // imagick a photographer's file looks unowned, so seeding here would put
-            // the site's licensing on somebody else's photo. Leave it undecided; the
-            // backfill command reports these once imagick is available.
-            $media->setLicenseState(MediaLicense::STATE_NONE);
         } elseif ($this->seed($media)) {
             $media->setLicenseState(MediaLicense::STATE_SEEDED);
             $this->disclose('info', 'mediaLicenseSeeded');

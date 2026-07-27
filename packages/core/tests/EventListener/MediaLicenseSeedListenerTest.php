@@ -4,14 +4,12 @@ namespace Pushword\Core\Tests\EventListener;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageRotator;
-use Pushword\Core\Image\License\EmbeddedRightsReader;
 use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Site\SiteRegistry;
-use Pushword\Core\Tests\Image\License\JpegMetadataFixture;
+use Pushword\Core\Tests\Image\License\ImageMetadataFixture;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -79,15 +77,6 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         parent::tearDown();
     }
 
-    /**
-     * The listener is a service, so simulating a host without imagick means swapping
-     * the reader the container handed it.
-     */
-    private function replaceReader(EmbeddedRightsReader $reader): void
-    {
-        self::getContainer()->set(EmbeddedRightsReader::class, $reader);
-    }
-
     /** @param array<string, mixed> $seed */
     private function configureSeed(array $seed): void
     {
@@ -100,9 +89,9 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
      * @param array<string, string> $iptcIim
      * @param array<string, string> $exif
      */
-    private function upload(string $name, string $xmp = '', array $iptcIim = [], array $exif = []): Media
+    private function upload(string $name, string $xmp = '', array $iptcIim = [], array $exif = [], string $c2pa = ''): Media
     {
-        $path = JpegMetadataFixture::write($this->dir.'/'.$name.'.jpg', $xmp, $iptcIim, $exif);
+        $path = ImageMetadataFixture::write($this->dir.'/'.$name.'.jpg', $xmp, $iptcIim, $exif, $c2pa);
 
         $media = new Media();
         $media->setMediaFile(new UploadedFile($path, $name.'.jpg', 'image/jpeg', null, true));
@@ -120,14 +109,14 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
      */
     private function replaceFile(Media $media, string $name, string $xmp = '', array $iptcIim = []): void
     {
-        $path = JpegMetadataFixture::write($this->dir.'/'.$name.'.jpg', $xmp, $iptcIim);
+        $path = ImageMetadataFixture::write($this->dir.'/'.$name.'.jpg', $xmp, $iptcIim);
         $media->setMediaFile(new UploadedFile($path, $name.'.jpg', 'image/jpeg', null, true));
         $this->em->flush();
     }
 
     private function creatorXmp(string $name): string
     {
-        return JpegMetadataFixture::packet(
+        return ImageMetadataFixture::packet(
             '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
             .'<dc:creator><rdf:Seq><rdf:li>'.$name.'</rdf:li></rdf:Seq></dc:creator></rdf:Description>',
         );
@@ -165,7 +154,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     /** A rights claim is a rights claim, even without a name attached to it. */
     public function testAWebStatementAloneIsStillThirdParty(): void
     {
-        $media = $this->upload('web-statement', JpegMetadataFixture::packet(
+        $media = $this->upload('web-statement', ImageMetadataFixture::packet(
             '<rdf:Description rdf:about="" xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/"'
             .' xmpRights:WebStatement="www.bodinphoto.com"/>',
         ));
@@ -187,7 +176,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     {
         $media = $this->upload(
             'ai',
-            JpegMetadataFixture::packet('<rdf:Description rdf:about=""'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about=""'
                 .' xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/"'
                 .' Iptc4xmpExt:DigitalSourceType="TrainedAlgorithmicMedia"/>'),
             iptcIim: ['2#110' => 'AI Generated'],
@@ -210,43 +199,31 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         self::assertSame('AI Generated Studio Ltd', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
     }
 
-    /**
-     * ext-imagick is not a Pushword requirement, and WebStatement / LicensorURL /
-     * photoshop:Credit are XMP-only. Without it a photographer's file reads as
-     * carrying no rights at all, so seeding it would put the site's licensing on
-     * somebody else's photo — the failure this whole design exists to prevent.
-     */
-    public function testNothingIsSeededWhenXmpCannotBeRead(): void
+    /** A claim found outside XMP gates just as one found inside it does. */
+    public function testRightsFoundInIimGateTheSeed(): void
     {
-        $this->replaceReader(new class extends EmbeddedRightsReader {
-            #[Override]
-            public function canReadXmp(): bool
-            {
-                return false;
-            }
-        });
-
-        $media = $this->upload('no-imagick');
-
-        self::assertSame(MediaLicense::STATE_NONE, $media->getLicenseState());
-        self::assertSame([], MediaLicense::extract($media));
-    }
-
-    /** IIM and EXIF still work without imagick, and a claim found there still gates. */
-    public function testRightsFoundOutsideXmpStillGateWithoutImagick(): void
-    {
-        $this->replaceReader(new class extends EmbeddedRightsReader {
-            #[Override]
-            public function canReadXmp(): bool
-            {
-                return false;
-            }
-        });
-
-        $media = $this->upload('no-imagick-iim', iptcIim: ['2#080' => 'O2Ephotos']);
+        $media = $this->upload('iim-only', iptcIim: ['2#080' => 'O2Ephotos']);
 
         self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
         self::assertSame([['name' => 'O2Ephotos', 'type' => 'Person']], MediaLicense::creators($media));
+    }
+
+    /**
+     * A file whose only metadata is a C2PA manifest — what gpt-image writes — used to
+     * read as carrying nothing. It carries provenance, not a rights claim, so it is
+     * still the site's to license; the generator note just has to survive.
+     */
+    public function testAC2paOnlyFileIsSeededAndKeepsItsProvenance(): void
+    {
+        $media = $this->upload('c2pa-only', c2pa: ImageMetadataFixture::c2paActions(
+            MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.MediaLicense::TRAINED_ALGORITHMIC_MEDIA,
+        ));
+
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(
+            MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.MediaLicense::TRAINED_ALGORITHMIC_MEDIA,
+            $media->getCustomPropertyScalar(MediaLicense::DIGITAL_SOURCE_TYPE),
+        );
     }
 
     /**
@@ -307,7 +284,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
 
         // Vich moved the first upload into the media dir, so the same bytes have to be
         // written again — which is exactly what an accidental re-upload looks like.
-        $again = JpegMetadataFixture::write($this->dir.'/identical-again.jpg');
+        $again = ImageMetadataFixture::write($this->dir.'/identical-again.jpg');
         $media->setMediaFile(new UploadedFile($again, 'identical.jpg', 'image/jpeg', null, true));
         $this->em->flush();
 
@@ -348,7 +325,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
 
         // Built fresh: Vich moved the uploaded file out of the temp directory.
-        $truncated = JpegMetadataFixture::write($this->dir.'/truncated.jpg');
+        $truncated = ImageMetadataFixture::write($this->dir.'/truncated.jpg');
         file_put_contents($truncated, substr((string) file_get_contents($truncated), 0, 200));
         $media->setMediaFile(new UploadedFile($truncated, 'truncated.jpg', 'image/jpeg', null, true));
         $this->em->flush();

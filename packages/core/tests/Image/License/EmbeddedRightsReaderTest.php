@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Tests\Image\License;
 
-use Imagick;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Image\License\EmbeddedRightsReader;
 use Pushword\Core\Image\License\MediaLicense;
@@ -36,9 +35,9 @@ final class EmbeddedRightsReaderTest extends TestCase
     /** A JPEG carries EXIF then XMP as two APP1 segments; getimagesize() sees only the first. */
     public function testXmpIsFoundBehindAnExifSegment(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('two-app1'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
                 .'<dc:creator><rdf:Seq><rdf:li>Enrico Romanzi</rdf:li></rdf:Seq></dc:creator></rdf:Description>'),
             exif: ['Artist' => 'Somebody Else'],
         );
@@ -48,9 +47,9 @@ final class EmbeddedRightsReaderTest extends TestCase
 
     public function testEmptyRdfSeqIsAbsentNotEmpty(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('empty-seq'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
                 .'<dc:creator><rdf:Seq/></dc:creator></rdf:Description>'),
         );
 
@@ -61,9 +60,9 @@ final class EmbeddedRightsReaderTest extends TestCase
 
     public function testWhitespaceOnlyValueIsAbsent(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('whitespace'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
                 .'<dc:rights><rdf:Alt><rdf:li xml:lang="x-default">&#xA;&#x9;&#x9;</rdf:li></rdf:Alt></dc:rights>'
                 .'</rdf:Description>'),
         );
@@ -73,9 +72,9 @@ final class EmbeddedRightsReaderTest extends TestCase
 
     public function testAttributeFormIsRead(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('attribute'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about=""'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about=""'
                 .' xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/"'
                 .' xmpRights:WebStatement="www.enricoromanzi.it"/>'),
         );
@@ -85,9 +84,9 @@ final class EmbeddedRightsReaderTest extends TestCase
 
     public function testNodeFormIsRead(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('node'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about=""'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about=""'
                 .' xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/">'
                 .'<xmpRights:WebStatement>https://example.tld/terms</xmpRights:WebStatement></rdf:Description>'),
         );
@@ -97,9 +96,9 @@ final class EmbeddedRightsReaderTest extends TestCase
 
     public function testAltPrefersXDefault(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('x-default'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
                 .'<dc:rights><rdf:Alt>'
                 .'<rdf:li xml:lang="de">Deutsch</rdf:li>'
                 .'<rdf:li xml:lang="x-default">Default</rdf:li>'
@@ -111,9 +110,9 @@ final class EmbeddedRightsReaderTest extends TestCase
 
     public function testAltWithoutXDefaultTakesTheFirstItem(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('no-x-default'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
                 .'<dc:rights><rdf:Alt>'
                 .'<rdf:li xml:lang="fr">Premier</rdf:li>'
                 .'<rdf:li xml:lang="de">Zweite</rdf:li>'
@@ -125,9 +124,9 @@ final class EmbeddedRightsReaderTest extends TestCase
 
     public function testSeveralCreatorsKeepTheirOrder(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('two-creators'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
                 .'<dc:creator><rdf:Seq>'
                 .'<rdf:li>Dominique VIVARES</rdf:li><rdf:li>Jean Dupont</rdf:li>'
                 .'</rdf:Seq></dc:creator></rdf:Description>'),
@@ -138,9 +137,9 @@ final class EmbeddedRightsReaderTest extends TestCase
 
     public function testBareDigitalSourceTypeTokenIsNormalized(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('bare-token'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about=""'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about=""'
                 .' xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/"'
                 .' Iptc4xmpExt:DigitalSourceType="TrainedAlgorithmicMedia"/>'),
         );
@@ -154,9 +153,9 @@ final class EmbeddedRightsReaderTest extends TestCase
     public function testCanonicalDigitalSourceTypeIsNotDoublePrefixed(): void
     {
         $canonical = MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.'trainedAlgorithmicMedia';
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('canonical'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about=""'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about=""'
                 .' xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/"'
                 .' Iptc4xmpExt:DigitalSourceType="'.$canonical.'"/>'),
         );
@@ -167,9 +166,9 @@ final class EmbeddedRightsReaderTest extends TestCase
     /** refuge-du-pic-du-mas-de-la-grave.jpg carries both; some files only the FileType one. */
     public function testDigitalSourceFileTypeAloneIsDetected(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('file-type-only'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about=""'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about=""'
                 .' xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/"'
                 .' Iptc4xmpExt:DigitalSourceFileType="TrainedAlgorithmicMedia"/>'),
         );
@@ -182,9 +181,9 @@ final class EmbeddedRightsReaderTest extends TestCase
 
     public function testNamespacesAreMatchedByUriNotByPrefix(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('aliased'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:purl="http://purl.org/dc/elements/1.1/">'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:purl="http://purl.org/dc/elements/1.1/">'
                 .'<purl:creator><rdf:Seq><rdf:li>Aliased Prefix</rdf:li></rdf:Seq></purl:creator></rdf:Description>'),
         );
 
@@ -193,7 +192,7 @@ final class EmbeddedRightsReaderTest extends TestCase
 
     public function testMalformedPacketImportsNothingAndDoesNotThrow(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('malformed'),
             '<?xpacket begin=""?><x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF',
         );
@@ -216,9 +215,9 @@ final class EmbeddedRightsReaderTest extends TestCase
             .str_repeat('padding ', 4096)
             .'</rdf:li></rdf:Alt></dc:description>';
 
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('oversized'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
                 .'<dc:creator><rdf:Seq><rdf:li>Enrico Romanzi</rdf:li></rdf:Seq></dc:creator>'
                 .$filler
                 .'</rdf:Description>'),
@@ -233,9 +232,9 @@ final class EmbeddedRightsReaderTest extends TestCase
      */
     public function testXmpBelongingToAnEmbeddedThumbnailIsNotSurfaced(): void
     {
-        $thumbnail = JpegMetadataFixture::write(
+        $thumbnail = ImageMetadataFixture::write(
             $this->path('thumbnail-source'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
                 .'<dc:creator><rdf:Seq><rdf:li>Thumbnail Photographer</rdf:li></rdf:Seq></dc:creator></rdf:Description>'),
         );
 
@@ -251,28 +250,68 @@ final class EmbeddedRightsReaderTest extends TestCase
         self::assertSame(['Thumbnail Photographer'], $this->reader->read($host)->creator);
     }
 
-    public function testPngAndWebpAreReadTheSameWay(): void
+    /**
+     * The regression this suite missed for a whole release: extraction went through
+     * Imagick::pingImage(), which exposes profiles for JPEG only, so every PNG and
+     * WebP read as carrying nothing and got the site's licence seeded over whatever
+     * their XMP actually claimed. The old test asserted "does not throw", which an
+     * empty result satisfies.
+     */
+    public function testACreatorIsReadFromEveryContainerNotJustJpeg(): void
     {
-        foreach (['png', 'webp'] as $format) {
-            $path = $this->dir.'/plain.'.$format;
-            $image = imagecreatetruecolor(8, 8);
-            \assert(false !== $image);
-            'png' === $format ? imagepng($image, $path) : imagewebp($image, $path);
+        $packet = ImageMetadataFixture::packet(
+            '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            .'<dc:creator><rdf:Seq><rdf:li>Enrico Romanzi</rdf:li></rdf:Seq></dc:creator></rdf:Description>',
+        );
 
-            self::assertSame([], $this->reader->read($path)->toCustomProperties(), $format.' must not throw');
+        $files = [
+            'jpeg' => ImageMetadataFixture::write($this->path('container'), $packet),
+            'png' => ImageMetadataFixture::writePng($this->dir.'/container.png', $packet),
+            'webp' => ImageMetadataFixture::writeWebp($this->dir.'/container.webp', $packet),
+        ];
+
+        foreach ($files as $format => $path) {
+            self::assertSame(['Enrico Romanzi'], $this->reader->read($path)->creator, $format);
         }
     }
 
-    public function testXmpIsReportedAsReadableWhenImagickIsInstalled(): void
+    /**
+     * PNG has four ways to carry the packet and they all occur: the specified iTXt
+     * keyword raw or deflated, the same keyword in a plain tEXt, and ImageMagick's
+     * own hex-wrapped profile under a keyword of its own.
+     */
+    public function testEveryPngXmpShapeIsRead(): void
     {
-        self::assertSame(class_exists(Imagick::class), $this->reader->canReadXmp());
+        $packet = ImageMetadataFixture::packet(
+            '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            .'<dc:creator><rdf:Seq><rdf:li>Enrico Romanzi</rdf:li></rdf:Seq></dc:creator></rdf:Description>',
+        );
+
+        $shapes = [
+            'iTXt' => ['iTXt', ImageMetadataFixture::PNG_XMP_KEYWORD, false],
+            'iTXt deflated' => ['iTXt', ImageMetadataFixture::PNG_XMP_KEYWORD, true],
+            'tEXt' => ['tEXt', ImageMetadataFixture::PNG_XMP_KEYWORD, false],
+            'raw profile' => ['zTXt', ImageMetadataFixture::PNG_RAW_PROFILE_KEYWORD, true],
+        ];
+
+        foreach ($shapes as $label => [$chunkType, $keyword, $compressed]) {
+            $path = ImageMetadataFixture::writePng(
+                $this->dir.'/shape-'.md5($label).'.png',
+                $packet,
+                keyword: $keyword,
+                chunkType: $chunkType,
+                compressed: $compressed,
+            );
+
+            self::assertSame(['Enrico Romanzi'], $this->reader->read($path)->creator, $label);
+        }
     }
 
     // --- IIM and EXIF ---
 
     public function testIimValuesAreUnwrappedFromTheirArray(): void
     {
-        $path = JpegMetadataFixture::write($this->path('iim'), iptcIim: [
+        $path = ImageMetadataFixture::write($this->path('iim'), iptcIim: [
             '2#080' => 'O2Ephotos',
             '2#110' => 'AI Generated',
             '2#116' => 'Olivier Elie-Eynaud non libre de droits',
@@ -287,7 +326,7 @@ final class EmbeddedRightsReaderTest extends TestCase
     /** randonner-leger.jpg carries a Copyright of four spaces: a camera default, not a claim. */
     public function testBlankExifCopyrightIsAbsent(): void
     {
-        $path = JpegMetadataFixture::write($this->path('blank-exif'), exif: ['Copyright' => '    ']);
+        $path = ImageMetadataFixture::write($this->path('blank-exif'), exif: ['Copyright' => '    ']);
 
         $rights = $this->reader->read($path);
         self::assertSame('', $rights->copyrightNotice);
@@ -296,9 +335,9 @@ final class EmbeddedRightsReaderTest extends TestCase
 
     public function testXmpWinsOverIimAndExif(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('all-three'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
                 .'<dc:creator><rdf:Seq><rdf:li>From XMP</rdf:li></rdf:Seq></dc:creator></rdf:Description>'),
             iptcIim: ['2#080' => 'From IIM'],
             exif: ['Artist' => 'From EXIF'],
@@ -310,9 +349,9 @@ final class EmbeddedRightsReaderTest extends TestCase
     /** Each source only fills what the previous left empty — never duplicates it. */
     public function testSourcesAreMergedPerProperty(): void
     {
-        $path = JpegMetadataFixture::write(
+        $path = ImageMetadataFixture::write(
             $this->path('merged'),
-            JpegMetadataFixture::packet('<rdf:Description rdf:about=""'
+            ImageMetadataFixture::packet('<rdf:Description rdf:about=""'
                 .' xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/" photoshop:Credit="From XMP"/>'),
             exif: ['Artist' => 'From EXIF', 'Copyright' => 'From EXIF too'],
         );

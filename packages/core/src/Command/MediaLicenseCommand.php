@@ -58,13 +58,6 @@ final class MediaLicenseCommand
             $io->warning('No `media_default_license_seed` configured: nothing will be seeded, only embedded rights imported.');
         }
 
-        // Without imagick, a file whose rights live only in XMP reads as unowned, and
-        // seeding it would license somebody else's photo as the site's own.
-        $canReadXmp = $this->rightsReader->canReadXmp();
-        if (! $canReadXmp && ! $this->agentMode) {
-            $io->warning('ext-imagick is unavailable: XMP cannot be read, so nothing will be seeded. Install it and re-run.');
-        }
-
         $seeded = 0;
         $imported = 0;
         $skipped = 0;
@@ -106,9 +99,8 @@ final class MediaLicenseCommand
                 ];
             }
 
-            // A rights claim needs --force to override; a file that merely looks clean
-            // needs the XMP read to have been trustworthy in the first place.
-            $applySeed = [] !== $seed && ($isThirdParty ? $force : $canReadXmp);
+            // A rights claim needs --force to override; a file that looks clean is seeded.
+            $applySeed = [] !== $seed && (! $isThirdParty || $force);
 
             if ($isThirdParty && ! $applySeed) {
                 ++$imported;
@@ -152,7 +144,6 @@ final class MediaLicenseCommand
                 'command' => 'pw:media:license',
                 'dryRun' => $dryRun,
                 'force' => $force,
-                'xmpReadable' => $canReadXmp,
                 'seeded' => $seeded,
                 'thirdParty' => $imported,
                 'skipped' => $skipped,

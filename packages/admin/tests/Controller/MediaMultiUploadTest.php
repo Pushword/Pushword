@@ -4,7 +4,7 @@ namespace Pushword\Admin\Tests\Controller;
 
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Image\License\MediaLicense;
-use Pushword\Core\Tests\Image\License\JpegMetadataFixture;
+use Pushword\Core\Tests\Image\License\ImageMetadataFixture;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -79,9 +79,9 @@ final class MediaMultiUploadTest extends AbstractAdminTestClass
         self::assertNotEmpty($crawler->filter('#pw-multi-upload')->attr('data-license-labels'));
 
         $fileName = 'test-rights-'.uniqid().'.jpg';
-        $tempFile = JpegMetadataFixture::write(
+        $tempFile = ImageMetadataFixture::write(
             sys_get_temp_dir().'/'.$fileName,
-            JpegMetadataFixture::packet(
+            ImageMetadataFixture::packet(
                 '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
                 .'<dc:creator><rdf:Seq><rdf:li>Enrico Romanzi</rdf:li></rdf:Seq></dc:creator></rdf:Description>',
             ),
@@ -129,7 +129,7 @@ final class MediaMultiUploadTest extends AbstractAdminTestClass
         $csrfToken = $crawler->filter('#pw-multi-upload')->attr('data-csrf-token');
 
         $fileName = 'test-plain-'.uniqid().'.jpg';
-        $tempFile = JpegMetadataFixture::write(sys_get_temp_dir().'/'.$fileName);
+        $tempFile = ImageMetadataFixture::write(sys_get_temp_dir().'/'.$fileName);
 
         $client->request(Request::METHOD_POST, '/admin/multi-upload/upload', [
             '_token' => $csrfToken,

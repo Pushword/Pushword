@@ -5,14 +5,12 @@ namespace Pushword\Core\Tests\Command;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Image\License\EmbeddedRightsReader;
 use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
-use Pushword\Core\Tests\Image\License\JpegMetadataFixture;
+use Pushword\Core\Tests\Image\License\ImageMetadataFixture;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -90,7 +88,7 @@ final class MediaLicenseCommandTest extends KernelTestCase
     {
         $fileName = 'license-backfill-'.$name.'.jpg';
         $temporaryPath = sys_get_temp_dir().'/'.$fileName;
-        JpegMetadataFixture::write($temporaryPath, $xmp);
+        ImageMetadataFixture::write($temporaryPath, $xmp);
 
         $this->mediaStorage->write($fileName, (string) file_get_contents($temporaryPath));
         unlink($temporaryPath);
@@ -137,7 +135,7 @@ final class MediaLicenseCommandTest extends KernelTestCase
     public function testBackfillSeedsAndReportsTheExceptions(): void
     {
         $owned = $this->existingMedia('owned');
-        $thirdParty = $this->existingMedia('third-party', JpegMetadataFixture::packet(
+        $thirdParty = $this->existingMedia('third-party', ImageMetadataFixture::packet(
             '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
             .'<dc:creator><rdf:Seq><rdf:li>Enrico Romanzi</rdf:li></rdf:Seq></dc:creator></rdf:Description>',
         ));
@@ -179,7 +177,7 @@ final class MediaLicenseCommandTest extends KernelTestCase
     /** --force is a human asserting the site owns what the file credits to somebody else. */
     public function testForceAppliesTheSiteLicenseOverThirdPartyRights(): void
     {
-        $media = $this->existingMedia('forced', JpegMetadataFixture::packet(
+        $media = $this->existingMedia('forced', ImageMetadataFixture::packet(
             '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
             .'<dc:creator><rdf:Seq><rdf:li>Enrico Romanzi</rdf:li></rdf:Seq></dc:creator></rdf:Description>',
         ));
@@ -211,36 +209,9 @@ final class MediaLicenseCommandTest extends KernelTestCase
         self::assertSame('Robin', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
     }
 
-    /**
-     * ext-imagick is not a Pushword requirement. Without it, "no rights found" only
-     * means "no rights found outside XMP", so seeding would license other people's
-     * photos in bulk — the worst possible place for that to happen silently.
-     */
-    public function testNothingIsSeededWhenXmpCannotBeRead(): void
-    {
-        $media = $this->existingMedia('no-imagick');
-
-        self::getContainer()->set(EmbeddedRightsReader::class, new class extends EmbeddedRightsReader {
-            #[Override]
-            public function canReadXmp(): bool
-            {
-                return false;
-            }
-        });
-
-        $report = $this->decode($this->backfill());
-
-        self::assertFalse($report['xmpReadable']);
-        self::assertSame(0, $report['seeded']);
-
-        $this->em->refresh($media);
-        self::assertSame(MediaLicense::STATE_NONE, $media->getLicenseState());
-        self::assertSame([], MediaLicense::extract($media));
-    }
-
     public function testTextFormatListsTheExceptions(): void
     {
-        $this->existingMedia('reported', JpegMetadataFixture::packet(
+        $this->existingMedia('reported', ImageMetadataFixture::packet(
             '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
             .'<dc:creator><rdf:Seq><rdf:li>Enrico Romanzi</rdf:li></rdf:Seq></dc:creator></rdf:Description>',
         ));
