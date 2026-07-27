@@ -7,6 +7,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use InvalidArgumentException;
 use Override;
 use Pushword\Admin\AdminFormFieldManager;
@@ -249,6 +250,51 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
 
         /** @var class-string<AbstractField<T>> $block */
         return [$block];
+    }
+
+    /**
+     * Named sidebar block: an accordion fieldset, collapsed unless the block asked
+     * to be expanded.
+     *
+     * @param array<int|string, mixed>|class-string<AbstractField<T>> $block
+     */
+    protected function buildSettingsFieldset(string $groupName, array|string $block): FormField
+    {
+        $cssClasses = ['pw-settings-accordion'];
+        $cssClasses[] = $this->shouldExpandBlock($block) ? 'pw-settings-open' : 'pw-settings-collapsed';
+
+        return FormField::addFieldset($groupName)
+            ->setCssClass(implode(' ', $cssClasses))
+            ->setFormTypeOption('attr', [
+                'data-pw-panel-key' => $this->buildPanelKey($groupName),
+            ]);
+    }
+
+    /**
+     * @param array<int|string, mixed>|class-string<AbstractField<T>> $block
+     */
+    protected function shouldExpandBlock(array|string $block): bool
+    {
+        if (! \is_array($block)) {
+            return false;
+        }
+
+        if (! \array_key_exists('expand', $block)) {
+            return false;
+        }
+
+        return (bool) $block['expand'];
+    }
+
+    protected function buildPanelKey(string $groupName): string
+    {
+        $normalized = strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', $groupName), '-'));
+
+        if ('' === $normalized) {
+            return 'pw-panel-'.substr(md5($groupName), 0, 12);
+        }
+
+        return 'pw-panel-'.$normalized;
     }
 
     /**

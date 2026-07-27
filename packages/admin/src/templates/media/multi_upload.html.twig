@@ -9,7 +9,16 @@
        data-delete-url="{{ path('admin_media_multi_delete', {id: '__ID__'}) }}"
        data-edit-url="{{ path('admin_media_edit', {entityId: '__ID__'}) }}"
        data-csrf-token="{{ csrf_token('media_multi_upload') }}"
-       data-all-tags="{{ all_tags|json_encode }}">
+       data-all-tags="{{ all_tags|json_encode }}"
+       data-license-labels="{{ {
+         summary: 'adminMediaLicenseThirdPartyDisclosure'|trans,
+         clear: 'adminMediaLicenseClear'|trans,
+         creator: 'adminMediaCreatorLabel'|trans,
+         creditText: 'adminMediaCreditTextLabel'|trans,
+         copyrightNotice: 'adminMediaCopyrightNoticeLabel'|trans,
+         license: 'adminMediaLicenseLabel'|trans,
+         acquireLicensePage: 'adminMediaAcquireLicensePageLabel'|trans,
+       }|json_encode }}">
 
     <div id="pw-drop-zone" role="button" tabindex="0" aria-label="{{ 'adminMediaMultiUploadDrop'|trans }}">
       <i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color:#6c757d;"></i>
@@ -92,6 +101,11 @@
     .pw-filename-cell { white-space: nowrap; }
     .pw-filename-cell input { display: inline-block; width: auto; max-width: calc(100% - 30px); font-family: monospace; font-size: 13px; }
     .pw-ext { font-size: 12px; vertical-align: middle; font-family: monospace; }
+    .pw-license-row td { background: rgba(255,193,7,.08); }
+    .pw-license-row summary { cursor: pointer; font-size: 13px; color: #664d03; }
+    .pw-license-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-top: 8px; }
+    .pw-license-input { display: flex; flex-direction: column; font-size: 11px; color: #6c757d; }
+    .pw-license-input input { border: 1px solid #dee2e6; background: #fff; font-size: 13px; }
     .pw-lightbox { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; cursor: pointer; }
     .pw-lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,.4); }
   </style>

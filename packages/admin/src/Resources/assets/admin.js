@@ -20,6 +20,9 @@ import { initMultiUpload } from './admin.multiUpload'
 // Media list inline-edit module
 import { initMediaTableEdit } from './admin.mediaInlineEdit'
 
+// Media license fieldset module
+import { initMediaLicense } from './admin.mediaLicense'
+
 // Selection modules
 import { mediaPicker } from './admin.mediaPicker'
 import { inlinePopup } from './admin.inlinePopup'
@@ -95,6 +98,9 @@ window.addEventListener('load', function () {
 
   // Media list inline editing (?view=table)
   initMediaTableEdit()
+
+  // Media license fieldset buttons
+  initMediaLicense()
 
   // Selectors
   mediaPicker()

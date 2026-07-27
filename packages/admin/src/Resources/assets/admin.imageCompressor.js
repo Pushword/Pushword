@@ -4,6 +4,7 @@
  * Quality is preserved (no compression) - backend handles quality optimization
  */
 import imageCompression from 'browser-image-compression'
+import { carriesEmbeddedRights } from './admin.imageMetadata'
 import { debugLog } from './admin.constants'
 
 const MODULE_NAME = 'imageCompressor'
@@ -37,6 +38,14 @@ function shouldCompress(file) {
 export async function scaleDownImage(file) {
   if (!shouldCompress(file)) {
     debugLog(MODULE_NAME, `Skipping scale down for ${file.name} (type: ${file.type})`)
+    return file
+  }
+
+  // Scaling down re-encodes through a canvas, which keeps no metadata. Handing the
+  // server bare bytes for a file that claims somebody's rights would make it seed the
+  // site's own license onto a third party's photo.
+  if (await carriesEmbeddedRights(file)) {
+    debugLog(MODULE_NAME, `Skipping scale down for ${file.name} (carries rights metadata)`)
     return file
   }
 

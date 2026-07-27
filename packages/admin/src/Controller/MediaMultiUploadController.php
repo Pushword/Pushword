@@ -7,6 +7,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Repository\MediaRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -116,7 +117,32 @@ final class MediaMultiUploadController extends AbstractController
             'height' => $dimensions?->height,
             'size' => $media->getSize(),
             'mimeType' => $media->getMimeType(),
+            // The upload hook now imports the rights a file carries. A photographer's
+            // name silently written into a hidden field would be worse than no field,
+            // so the row discloses them — see admin.multiUpload.js.
+            'licenseState' => $media->getLicenseState(),
+            'license' => $this->licenseValues($media),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function licenseValues(Media $media): array
+    {
+        $values = [];
+
+        foreach (MediaLicense::KEYS as $key) {
+            $value = $media->getCustomProperty($key);
+
+            // One input per key in a row, so the creators collapse to their compact
+            // "Name (Type)" form — the shape setLicenseValue() reads back.
+            $values[$key] = MediaLicense::CREATOR === $key
+                ? MediaLicense::formatCreators(MediaLicense::normalizeCreators($value))
+                : (\is_scalar($value) ? (string) $value : '');
+        }
+
+        return $values;
     }
 
     #[AdminRoute(path: '/media/{id}/inline-update', name: 'media_multi_inline_update', options: ['methods' => ['POST']])]
@@ -130,11 +156,12 @@ final class MediaMultiUploadController extends AbstractController
         $field = trim((string) $request->request->get('field', ''));
         $value = (string) $request->request->get('value', '');
 
-        $updated = match ($field) {
-            'alt' => (bool) $media->setAlt($value),
-            'tags' => (bool) $media->setTags($value),
-            'alts' => (bool) $media->setAlts($value),
-            'slug' => (bool) $media->setSlugForce($value),
+        $updated = match (true) {
+            'alt' === $field => (bool) $media->setAlt($value),
+            'tags' === $field => (bool) $media->setTags($value),
+            'alts' === $field => (bool) $media->setAlts($value),
+            'slug' === $field => (bool) $media->setSlugForce($value),
+            \in_array($field, MediaLicense::KEYS, true) => $this->setLicenseValue($media, $field, $value),
             default => false,
         };
 
@@ -150,7 +177,35 @@ final class MediaMultiUploadController extends AbstractController
             $response['fileName'] = $media->getFileName();
         }
 
+        if (\in_array($field, MediaLicense::KEYS, true)) {
+            $response['licenseState'] = $media->getLicenseState();
+        }
+
         return new JsonResponse($response);
+    }
+
+    /**
+     * An emptied field removes its key, which is how the row's "clear" button makes a
+     * media stop emitting its ImageObject. licenseState follows on flush.
+     */
+    private function setLicenseValue(Media $media, string $key, string $value): bool
+    {
+        $value = trim($value);
+
+        if (MediaLicense::CREATOR === $key) {
+            $creators = MediaLicense::normalizeCreators($value);
+            [] === $creators ? $media->removeCustomProperty($key) : $media->setCustomProperty($key, $creators);
+
+            return true;
+        }
+
+        if (\in_array($key, MediaLicense::URL_KEYS, true)) {
+            $value = MediaLicense::normalizeUrl($value);
+        }
+
+        '' === $value ? $media->removeCustomProperty($key) : $media->setCustomProperty($key, $value);
+
+        return true;
     }
 
     #[AdminRoute(path: '/media/{id}/multi-delete', name: 'media_multi_delete', options: ['methods' => ['POST']])]

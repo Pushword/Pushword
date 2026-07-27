@@ -4,6 +4,12 @@
 
   {{ parent() }}
 
+  {# Button labels for admin.mediaLicense.js, which builds the clear / apply-the-site
+     -license pair next to the license fieldset. #}
+  <span id="pw-license-labels" hidden
+        data-apply="{{ 'adminMediaLicenseApplySeed'|trans }}"
+        data-clear="{{ 'adminMediaLicenseClear'|trans }}"
+        data-third-party="{{ 'adminMediaLicenseThirdPartyNote'|trans }}"></span>
 
   {% set mediaPreviewHtml = media_preview_html ?? null %}
   {% set mediaRelatedPagesHtml = media_related_pages_html ?? null %}

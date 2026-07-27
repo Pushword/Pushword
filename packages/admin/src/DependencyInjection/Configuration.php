@@ -5,6 +5,7 @@ namespace Pushword\Admin\DependencyInjection;
 use Pushword\Admin\FormField\CreatedAtField;
 use Pushword\Admin\FormField\CustomPropertiesField;
 use Pushword\Admin\FormField\HostField;
+use Pushword\Admin\FormField\MediaLicenseField;
 use Pushword\Admin\FormField\MediaMediaFileField;
 use Pushword\Admin\FormField\MediaNameField;
 use Pushword\Admin\FormField\MediaNamesField;
@@ -108,7 +109,16 @@ class Configuration implements ConfigurationInterface
             TagsField::class,
             MediaSlugField::class,
         ],
-        [CustomPropertiesField::class, MediaNamesField::class],
+        [
+            CustomPropertiesField::class,
+            MediaNamesField::class,
+            // Last: a named block opens an accordion fieldset, which would otherwise
+            // swallow every field declared after it.
+            'adminMediaLicenseBlockLabel' => [
+                'expand' => false,
+                'fields' => [MediaLicenseField::class],
+            ],
+        ],
         [],
     ];
 

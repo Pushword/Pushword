@@ -37,16 +37,40 @@ adminLabelTools: Tools
 adminLabelUpdate: Refresh
 adminLabelUser: User
 adminLabelUsers: Users
+adminMediaAcquireLicensePageHelp: "Page where the image can be licensed. On its own it does not qualify the image — Google also needs a creator, a credit, a copyright notice or a license URL."
+adminMediaAcquireLicensePageLabel: "Acquire license page"
 adminMediaAltHelp: "Alternative text, used for web page accessibility (visually impaired).<br><small>Choose one or more words describing your file. Feel free to use keywords to easily find your image (e.g. Massif des Ecrins - Glacier de la Meije).</small>"
 adminMediaAltLabel: Name
 adminMediaAltsHelp: "Format <code>Language: translated name</code> (e.g. <code>en: my image description</code>).<br>One translation per line."
 adminMediaAltsLabel: Translation
+adminMediaCopyrightNoticeLabel: "Copyright notice"
 adminMediaCreatedAtLabel: "Upload date"
+adminMediaCreatorHelp: "One row per creator. Each name carries its own type, so a photographer and the agency that commissioned the shot can be credited together."
+adminMediaCreatorLabel: Creator
+adminMediaCreatorNameLabel: Name
+adminMediaCreatorTypeLabel: "Creator type"
+adminMediaCreatorTypeOrganization: Organization
+adminMediaCreatorTypePerson: Person
+adminMediaCreditTextLabel: "Credit line"
+adminMediaDigitalSourceTypeHelp: "How the file was produced (IPTC NewsCode). Stored for editorial use: no schema.org property carries it, so it is never published in the structured data."
+adminMediaDigitalSourceTypeLabel: "Digital source type"
 adminMediaDimensionsIntFilterLabel: "Width/height (px)"
 adminMediaDimensionsLabel: Dimensions
 adminMediaFileNameLabel: Filename
 adminMediaFiletypeLabel: Filetype
 adminMediaHiddenFromAdminLabel: "Hidden from admin"
+adminMediaLicenseApplySeed: "Apply the site license"
+adminMediaLicenseBlockLabel: License
+adminMediaLicenseClear: "Clear the license"
+adminMediaLicenseHelp: "URL of the page describing the terms of use."
+adminMediaLicenseLabel: License
+adminMediaLicenseStateLabel: "License state"
+adminMediaLicenseStateNone: "Not licensed"
+adminMediaLicenseStateOverridden: "Asserted by hand"
+adminMediaLicenseStateSeeded: "Site license"
+adminMediaLicenseStateThirdParty: "Third-party rights"
+adminMediaLicenseThirdPartyDisclosure: "Third-party rights found in the file"
+adminMediaLicenseThirdPartyNote: "This file credits somebody else, so the site license was not applied. Press \"Apply the site license\" if the site does own the rights."
 adminMediaMainColorLabel: "Main Color"
 adminMediaMediaFileLabel: File
 adminMediaPreviewDominantColor: "Dominant color"

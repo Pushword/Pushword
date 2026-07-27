@@ -3,6 +3,8 @@
 namespace Pushword\Admin\Tests\Controller;
 
 use Pushword\Admin\Tests\AbstractAdminTestClass;
+use Pushword\Core\Image\License\MediaLicense;
+use Pushword\Core\Tests\Image\License\JpegMetadataFixture;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -60,6 +62,86 @@ final class MediaMultiUploadTest extends AbstractAdminTestClass
         $data2 = json_decode((string) $client->getResponse()->getContent(), true);
         self::assertTrue($data2['skipped'] ?? false, 'Second upload of same content should be skipped');
         self::assertSame($data1['id'], $data2['id'], 'Skipped response should reference the original media');
+    }
+
+    /**
+     * The upload hook now imports the rights a file carries, so a row whose file
+     * claims third-party rights has to disclose them — hiding a photographer's name
+     * in an invisible field would be worse than storing nothing.
+     */
+    public function testUploadDisclosesImportedThirdPartyRights(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/multi-upload');
+        $csrfToken = $crawler->filter('#pw-multi-upload')->attr('data-csrf-token');
+        self::assertNotEmpty($crawler->filter('#pw-multi-upload')->attr('data-license-labels'));
+
+        $fileName = 'test-rights-'.uniqid().'.jpg';
+        $tempFile = JpegMetadataFixture::write(
+            sys_get_temp_dir().'/'.$fileName,
+            JpegMetadataFixture::packet(
+                '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+                .'<dc:creator><rdf:Seq><rdf:li>Enrico Romanzi</rdf:li></rdf:Seq></dc:creator></rdf:Description>',
+            ),
+        );
+
+        $client->request(Request::METHOD_POST, '/admin/multi-upload/upload', [
+            '_token' => $csrfToken,
+            'originalHash' => sha1_file($tempFile),
+        ], ['file' => new UploadedFile($tempFile, $fileName, 'image/jpeg', null, true)]);
+
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+        /** @var array<string, mixed> $data */
+        $data = json_decode((string) $client->getResponse()->getContent(), true);
+
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $data['licenseState']);
+        self::assertIsArray($data['license']);
+        // One input per key in a row, so the creators collapse to their compact form.
+        // A file gives bare names, hence Person.
+        self::assertSame('Enrico Romanzi (Person)', $data['license'][MediaLicense::CREATOR]);
+
+        $mediaId = $data['id'];
+        self::assertIsInt($mediaId);
+
+        // The row's inline editing has to reach the license keys, not just alt/tags.
+        $client->request(Request::METHOD_POST, '/admin/media/'.$mediaId.'/inline-update', [
+            '_token' => $csrfToken,
+            'field' => MediaLicense::CREDIT_TEXT,
+            'value' => 'Enrico Romanzi photos',
+        ]);
+
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+        /** @var array<string, mixed> $updated */
+        $updated = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertTrue($updated['success']);
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $updated['licenseState']);
+    }
+
+    /** The other 99 % of rows: nothing to disclose, nothing rendered. */
+    public function testUploadOfAPlainImageDisclosesNothing(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/multi-upload');
+        $csrfToken = $crawler->filter('#pw-multi-upload')->attr('data-csrf-token');
+
+        $fileName = 'test-plain-'.uniqid().'.jpg';
+        $tempFile = JpegMetadataFixture::write(sys_get_temp_dir().'/'.$fileName);
+
+        $client->request(Request::METHOD_POST, '/admin/multi-upload/upload', [
+            '_token' => $csrfToken,
+            'originalHash' => sha1_file($tempFile),
+        ], ['file' => new UploadedFile($tempFile, $fileName, 'image/jpeg', null, true)]);
+
+        /** @var array<string, mixed> $data */
+        $data = json_decode((string) $client->getResponse()->getContent(), true);
+
+        self::assertNotSame(MediaLicense::STATE_THIRD_PARTY, $data['licenseState']);
+        self::assertIsArray($data['license']);
+        self::assertSame('', $data['license'][MediaLicense::CREATOR]);
     }
 
     private function createTempImage(string $fileName, string $mimeType): string

@@ -30,7 +30,6 @@ use Override;
 use Pushword\Admin\Crud\PageCrudExtensionInterface;
 use Pushword\Admin\Filter\PageHoldFilter;
 use Pushword\Admin\Filter\PageSearchFilter;
-use Pushword\Admin\FormField\AbstractField;
 use Pushword\Core\Controller\PageController;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
@@ -80,7 +79,7 @@ class PageCrudController extends AbstractAdminCrudController
         return $crud
             ->setDefaultSort(['updatedAt' => 'DESC'])
             ->setPaginatorPageSize($this->getRequestedPageSize())
-            ->addFormTheme('@pwAdmin/form/page_form_theme.html.twig')
+            ->addFormTheme('@pwAdmin/form/admin_form_theme.html.twig')
             ->addFormTheme('@PushwordAdminBlockEditor/editorjs_widget.html.twig')
             ->overrideTemplates([
                 'crud/index' => '@pwAdmin/page/index.html.twig',
@@ -530,48 +529,6 @@ class PageCrudController extends AbstractAdminCrudController
     protected function hideRedirectionsFromIndex(): bool
     {
         return true;
-    }
-
-    /**
-     * @param array<int|string, mixed>|class-string<AbstractField<Page>> $block
-     */
-    private function buildSettingsFieldset(string $groupName, array|string $block): FormField
-    {
-        $cssClasses = ['pw-settings-accordion'];
-        $cssClasses[] = $this->shouldExpandBlock($block) ? 'pw-settings-open' : 'pw-settings-collapsed';
-
-        return FormField::addFieldset($groupName)
-            ->setCssClass(implode(' ', $cssClasses))
-            ->setFormTypeOption('attr', [
-                'data-pw-panel-key' => $this->buildPanelKey($groupName),
-            ]);
-    }
-
-    /**
-     * @param array<int|string, mixed>|class-string<AbstractField<Page>> $block
-     */
-    private function shouldExpandBlock(array|string $block): bool
-    {
-        if (! \is_array($block)) {
-            return false;
-        }
-
-        if (! \array_key_exists('expand', $block)) {
-            return false;
-        }
-
-        return (bool) $block['expand'];
-    }
-
-    private function buildPanelKey(string $groupName): string
-    {
-        $normalized = strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', $groupName), '-'));
-
-        if ('' === $normalized) {
-            return 'pw-panel-'.substr(md5($groupName), 0, 12);
-        }
-
-        return 'pw-panel-'.$normalized;
     }
 
     #[Route(path: '/admin/page/{id}/toggle-published', name: 'pushword_page_toggle_publish', methods: ['POST'])]

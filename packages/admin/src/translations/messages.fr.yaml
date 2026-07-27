@@ -37,16 +37,40 @@ adminLabelTools: Outils
 adminLabelUpdate: Actualiser
 adminLabelUser: Utilisateur
 adminLabelUsers: Utilisateurs
+adminMediaAcquireLicensePageHelp: "Page permettant d'acquérir une licence. Seule, elle ne qualifie pas l'image : Google demande aussi un auteur, un crédit, une mention de copyright ou une URL de licence."
+adminMediaAcquireLicensePageLabel: "Page d'acquisition de licence"
 adminMediaAltHelp: "Texte alternatif, utilisé pour l'accessibilité des pages web (non-voyant).<br><small>Choisissez un à plusieurs mots décrivant votre fichier. N'hésitez pas à utiliser des mots clefs pour retrouver facilement votre image (ex: Massif des Ecrins - Glacier de la Meije).</small>"
 adminMediaAltLabel: Nom
 adminMediaAltsHelp: 'Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne.'
 adminMediaAltsLabel: Traduction
+adminMediaCopyrightNoticeLabel: 'Mention de copyright'
 adminMediaCreatedAtLabel: "Date d'upload"
+adminMediaCreatorHelp: "Une ligne par auteur. Chaque nom porte son propre type, de sorte qu'un photographe et l'agence qui a commandé la photo peuvent être crédités ensemble."
+adminMediaCreatorLabel: Auteur
+adminMediaCreatorNameLabel: Nom
+adminMediaCreatorTypeLabel: "Type d'auteur"
+adminMediaCreatorTypeOrganization: Organisation
+adminMediaCreatorTypePerson: Personne
+adminMediaCreditTextLabel: 'Ligne de crédit'
+adminMediaDigitalSourceTypeHelp: "Mode de production du fichier (NewsCode IPTC). Conservé pour un usage éditorial : aucune propriété schema.org ne le porte, il n'est donc jamais publié dans les données structurées."
+adminMediaDigitalSourceTypeLabel: 'Type de source numérique'
 adminMediaDimensionsIntFilterLabel: 'Largeur/hauteur (px)'
 adminMediaDimensionsLabel: Dimensions
 adminMediaFileNameLabel: 'Nom du fichier'
 adminMediaFiletypeLabel: 'Type de fichiers'
 adminMediaHiddenFromAdminLabel: "Masqué de l'admin"
+adminMediaLicenseApplySeed: 'Appliquer la licence du site'
+adminMediaLicenseBlockLabel: Licence
+adminMediaLicenseClear: 'Vider la licence'
+adminMediaLicenseHelp: "URL de la page décrivant les conditions d'utilisation."
+adminMediaLicenseLabel: Licence
+adminMediaLicenseStateLabel: 'État de la licence'
+adminMediaLicenseStateNone: 'Sans licence'
+adminMediaLicenseStateOverridden: 'Affirmée à la main'
+adminMediaLicenseStateSeeded: 'Licence du site'
+adminMediaLicenseStateThirdParty: 'Droits de tiers'
+adminMediaLicenseThirdPartyDisclosure: 'Droits de tiers trouvés dans le fichier'
+adminMediaLicenseThirdPartyNote: "Ce fichier crédite un tiers, la licence du site n'a donc pas été appliquée. Utilisez « Appliquer la licence du site » si le site en détient bien les droits."
 adminMediaMainColorLabel: 'Couleur Principale'
 adminMediaMediaFileLabel: Fichier
 adminMediaMosaicEmpty: 'Aucun média ne correspond à votre recherche.'

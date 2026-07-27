@@ -202,6 +202,12 @@
     {% set num_results = visible_entities|length %}
     {% set some_results_are_hidden = num_results != entities|length %}
     {% set currentSort = app.request.query.all('sort') %}
+    {# An undecided media ('') has nothing to show, so it is deliberately absent here. #}
+    {% set licenseStateLabels = {
+      seeded: 'adminMediaLicenseStateSeeded',
+      thirdParty: 'adminMediaLicenseStateThirdParty',
+      overridden: 'adminMediaLicenseStateOverridden',
+    } %}
 
     {% if num_results > 0 %}
       <div id="pw-media-table"
@@ -266,6 +272,15 @@
                 </td>
                 <td class="pw-m-meta-col">
                   {% if media.mimeType %}<div class="badge bg-light text-body">{{ media.mimeType }}</div>{% endif %}
+                  {% if licenseStateLabels[media.licenseState] is defined %}
+                    {# What the upload decided about this file's licensing, without
+                       opening it — the create form redirects here, so this row is the
+                       first thing the editor sees after adding a media. #}
+                    <div class="badge {{ media.licenseState == 'thirdParty' ? 'bg-warning text-dark' : 'bg-light text-body' }}"
+                      title="{{ 'adminMediaLicenseStateLabel'|trans }}">
+                      <i class="fa fa-copyright"></i> {{ licenseStateLabels[media.licenseState]|trans }}
+                    </div>
+                  {% endif %}
                   {% if media.width and media.height %}<div><i class="fa fa-expand"></i> {{ media.width }}×{{ media.height }}</div>{% endif %}
                   <div><i class="fa fa-weight-hanging"></i> {{ readableSize }}</div>
                 </td>

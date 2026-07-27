@@ -1,4 +1,5 @@
 import imageCompression from 'browser-image-compression'
+import { carriesEmbeddedRights } from './admin.imageMetadata'
 import { suggestTags } from './admin.tagsField'
 import {
   deleteMedia,
@@ -12,6 +13,11 @@ import {
 
 const COMPRESSIBLE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
+// digitalSourceType stays out of the row: it records what the file is rather than who
+// licenses it. Creators arrive as "Name (Person), Agency (Organization)" — the compact
+// form of the collection edited on the media form.
+const LICENSE_FIELDS = ['creator', 'creditText', 'copyrightNotice', 'license', 'acquireLicensePage']
+
 const UPLOAD_COMPRESSION_OPTIONS = {
   maxSizeMB: 1.8,
   maxWidthOrHeight: 1980,
@@ -22,6 +28,14 @@ const UPLOAD_COMPRESSION_OPTIONS = {
 
 async function compressForUpload(file) {
   if (!COMPRESSIBLE_TYPES.includes(file.type)) {
+    return file
+  }
+
+  // Compression re-encodes through a canvas, which destroys every metadata segment.
+  // For a file whose bytes claim somebody's rights that is not a size trade-off, it
+  // is evidence loss: the server would see a bare image and seed the site's own
+  // license onto a third party's photo.
+  if (await carriesEmbeddedRights(file)) {
     return file
   }
 
@@ -53,6 +67,7 @@ export function initMultiUpload() {
   const editUrlTemplate = container.dataset.editUrl
   const csrfToken = container.dataset.csrfToken
   const allTags = container.dataset.allTags
+  const licenseLabels = JSON.parse(container.dataset.licenseLabels ?? '{}')
   const ctx = {
     inlineUpdateUrl: container.dataset.inlineUpdateUrl,
     deleteUrl: container.dataset.deleteUrl,
@@ -118,7 +133,13 @@ export function initMultiUpload() {
     formData.append('_token', csrfToken)
 
     try {
-      const response = await fetch(uploadUrl, { method: 'POST', body: formData })
+      // Marks the upload as a background request: the license decision is disclosed
+      // on the row below, not through a flash that would queue up one per file.
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      })
       const data = await response.json()
 
       if (!response.ok) {
@@ -202,12 +223,56 @@ export function initMultiUpload() {
 
     row.querySelector('.pw-delete-btn').addEventListener('click', () => deleteMedia(data.id, row, ctx))
 
+    appendLicenseDisclosure(row, data)
+
     const thumb = row.querySelector('.pw-thumb')
     if (thumb) {
       thumb.addEventListener('click', () => openLightbox(thumb.dataset.fullSrc))
     }
 
     suggestTags()
+  }
+
+  /**
+   * The upload hook imports the rights a file carries. Silently storing a
+   * photographer's name in a field nobody sees would be worse than storing nothing,
+   * so a row whose file claims third-party rights gets a disclosure line — and only
+   * such a row: the other 99 % show nothing.
+   */
+  function appendLicenseDisclosure(row, data) {
+    if (data.licenseState !== 'thirdParty' || !data.license) return
+
+    const disclosure = document.createElement('tr')
+    disclosure.className = 'pw-license-row'
+
+    const inputs = LICENSE_FIELDS.map(
+      (field) =>
+        `<label class="pw-license-input"><span>${escapeHtml(licenseLabels[field] ?? field)}</span>` +
+        `<input type="text" value="${escapeAttr(data.license[field] ?? '')}" data-field="${field}" data-id="${data.id}"></label>`,
+    ).join('')
+
+    disclosure.innerHTML = `
+      <td></td>
+      <td colspan="7">
+        <details>
+          <summary>${escapeHtml(licenseLabels.summary ?? 'Third-party rights found in the file')}</summary>
+          <div class="pw-license-grid">${inputs}</div>
+          <button type="button" class="btn btn-outline-secondary btn-sm mt-2 pw-license-clear">${escapeHtml(licenseLabels.clear ?? 'Clear')}</button>
+        </details>
+      </td>
+    `
+
+    row.parentElement.insertBefore(disclosure, row.nextSibling)
+
+    const fields = Array.from(disclosure.querySelectorAll('input[data-field]'))
+    fields.forEach((input) => input.addEventListener('blur', () => saveField(input, row, ctx)))
+    disclosure.querySelector('.pw-license-clear').addEventListener('click', () => {
+      fields.forEach((input) => {
+        if (input.value === '') return
+        input.value = ''
+        saveField(input, row, ctx)
+      })
+    })
   }
 
   function setRowError(row, message) {

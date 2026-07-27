@@ -28,6 +28,7 @@ use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageRotator;
+use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Utils\FlashBag;
@@ -79,7 +80,11 @@ class MediaCrudController extends AbstractAdminCrudController
         if ([] !== $paramBlocks) {
             yield FormField::addColumn('col-12 col-md-4 columnFields');
             yield FormField::addFieldset();
-            foreach ($paramBlocks as $block) {
+            foreach ($paramBlocks as $groupName => $block) {
+                if (\is_string($groupName)) {
+                    yield $this->buildSettingsFieldset($groupName, $block);
+                }
+
                 $classes = $this->normalizeBlock($block);
                 yield from $this->adminFormFieldManager->getEasyAdminFields($classes, $this);
             }
@@ -103,6 +108,9 @@ class MediaCrudController extends AbstractAdminCrudController
             ->setEntityLabelInPlural('adminLabelMedias')
             ->setSearchFields(['alt', 'fileName', 'altSearch', 'tags'])
             ->setDefaultSort(['updatedAt' => 'DESC'])
+            // Renders a named sidebar block as a collapsible accordion; without it the
+            // fieldset header shows and its body stays display:none forever.
+            ->addFormTheme('@pwAdmin/form/admin_form_theme.html.twig')
             ->overrideTemplates([
                 'crud/index' => '@pwAdmin/media/index.html.twig',
                 'crud/edit' => '@pwAdmin/media/edit.html.twig',
@@ -236,6 +244,20 @@ class MediaCrudController extends AbstractAdminCrudController
 
         $filters->add(MediaDimensionIntFilter::new('adminMediaDimensionsIntFilterLabel'));
 
+        // A real column, so a plain ChoiceFilter — the point of denormalizing it out
+        // of the JSON customProperties. Answers "what is still unlicensed" and "did
+        // the backfill do what I think".
+        $filters->add(
+            ChoiceFilter::new('licenseState', 'adminMediaLicenseStateLabel')
+                ->setChoices([
+                    'adminMediaLicenseStateNone' => MediaLicense::STATE_NONE,
+                    'adminMediaLicenseStateSeeded' => MediaLicense::STATE_SEEDED,
+                    'adminMediaLicenseStateOverridden' => MediaLicense::STATE_OVERRIDDEN,
+                    'adminMediaLicenseStateThirdParty' => MediaLicense::STATE_THIRD_PARTY,
+                ])
+                ->canSelectMultiple(),
+        );
+
         $mediaTags = $this->mediaRepo->getMediaTags();
         if ([] !== $mediaTags) {
             $filters->add(
@@ -297,6 +319,8 @@ class MediaCrudController extends AbstractAdminCrudController
         yield TextField::new('alt', 'adminMediaAltLabel')
             ->setSortable(true);
         yield TextField::new('mimeType', 'adminMediaFiletypeLabel')
+            ->setSortable(true);
+        yield TextField::new('licenseState', 'adminMediaLicenseStateLabel')
             ->setSortable(true);
         yield DateTimeField::new('updatedAt', 'adminPageUpdatedAtLabel')
             ->setSortable(true);
