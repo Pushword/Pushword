@@ -3,11 +3,13 @@ import { carriesEmbeddedRights } from '../../src/Resources/assets/admin.imageMet
 import {
   CREATOR_TOOL_XMP,
   CREATOR_XMP,
+  app11,
   app13Iim,
   app1Exif,
   app1Xmp,
   jpeg,
   png,
+  pngC2paChunk,
   pngTextChunk,
   riffChunk,
   tiff,
@@ -130,6 +132,36 @@ describe('WebP', () => {
 
   it('ignores a file with no metadata at all', async () => {
     await expect(carries(webp(), 'image/webp')).resolves.toBe(false)
+  })
+})
+
+describe('C2PA', () => {
+  // A gpt-image PNG carries no XMP, no IPTC and no EXIF — the manifest is all there is,
+  // so re-encoding it through the canvas leaves the server nothing to read.
+  it('keeps a file that carries a manifest, in each container', async () => {
+    await expect(carries(png([pngC2paChunk('jumb bytes')]), 'image/png')).resolves.toBe(true)
+    await expect(carries(webp([riffChunk('C2PA', 'jumb bytes')]), 'image/webp')).resolves.toBe(true)
+    await expect(carries(jpeg([app11('jumb bytes')]), 'image/jpeg')).resolves.toBe(true)
+  })
+
+  it('answers on presence alone, without reading the manifest', async () => {
+    // Presence is the check on purpose: looking inside would mean a JUMBF and CBOR
+    // reader in the browser. An empty box still means somebody wrote provenance.
+    await expect(carries(png([pngC2paChunk('')]), 'image/png')).resolves.toBe(true)
+  })
+
+  it('does not mistake another APP11 user for a manifest', async () => {
+    const bytes = jpeg(['\xff\xeb\x00\x08notJP'])
+
+    await expect(carries(bytes, 'image/jpeg')).resolves.toBe(false)
+  })
+
+  it('finds a manifest whose bytes run past the head slice', async () => {
+    // A chunk claiming more than the file holds still answers the question, so the
+    // bounds check must not fire before the type is looked at.
+    const bytes = png([pngC2paChunk('short')]).replace('\0\0\0\x05caBX', '\x7f\xff\xff\xffcaBX')
+
+    await expect(carries(bytes, 'image/png')).resolves.toBe(true)
   })
 })
 

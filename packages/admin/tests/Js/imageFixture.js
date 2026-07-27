@@ -90,6 +90,14 @@ export function tiff(tags, little = true) {
   return (little ? 'II' : 'MM') + u16(42, little) + u32(8, little) + u16(tags.length, little) + entries.join('') + u32(0, little) + values
 }
 
+/**
+ * One APP11 fragment of a manifest: `JP`, the instance, the sequence, then the JUMBF
+ * bytes. Nothing here looks inside, so the payload only has to be plausible.
+ */
+export function app11(payload, instance = 1, sequence = 1) {
+  return segment(0xffeb, 'JP' + u16(instance) + u32(sequence) + payload)
+}
+
 export function jpeg(segments = []) {
   // SOS ends the walk, so nothing past it needs to be a real scan.
   return '\xff\xd8' + segments.join('') + '\xff\xda\x00\x02' + '\xff\xd9'
@@ -127,6 +135,10 @@ export function pngTextChunk(keyword, chunkType, text, compressed = false) {
 
   // iTXt: compression flag, compression method, language tag, translated keyword.
   return pngChunk('iTXt', keyword + '\0' + (compressed ? '\x01' : '\0') + '\0\0\0' + (compressed ? deflate(payload) : payload))
+}
+
+export function pngC2paChunk(payload) {
+  return pngChunk('caBX', payload)
 }
 
 export function png(chunks = []) {

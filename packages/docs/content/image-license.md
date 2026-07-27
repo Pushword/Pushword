@@ -197,15 +197,17 @@ imported and from where, so a photographer's name is never stored in a field nob
 see.
 
 Because scaling an image down in the browser re-encodes it through a canvas and destroys
-every metadata segment, files that carry rights metadata are uploaded uncompressed. The
-browser walks the same three containers as the server, for XMP, IPTC-IIM and EXIF alike —
-a source it cannot see is a claim it destroys. On a typical library that is about 1 % of
-uploads.
+every metadata segment, files that carry metadata are uploaded uncompressed. The browser
+walks the same three containers as the server and reads all four sources — a source it
+cannot see is a claim it destroys. On a typical library that is about 1 % of uploads.
 
-C2PA is the one source deliberately left out of that check: it only ever yields a
-`digitalSourceType`, so a manifest lost to the canvas costs provenance, never a credit,
-and keeping every signed file uncompressed would soon mean keeping every AI image
-uncompressed.
+The first three are read for what they say, since every camera writes some of all three
+and only a few of those bytes are a rights claim. A C2PA manifest counts by its mere
+presence: nothing writes one by accident, and looking inside would mean a JUMBF and CBOR
+reader in the browser to answer a question the server re-asks on arrival. AI images are
+therefore stored as generated — for a 1536×1024 `gpt-image` PNG that is 2.7 MB instead of
+1.7 MB, entirely in the stored original, since the page itself is served from the
+`default` filter variant.
 
 {id=backfill}
 ## Backfilling an existing library

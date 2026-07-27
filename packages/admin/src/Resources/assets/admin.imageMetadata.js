@@ -11,6 +11,11 @@
  * bytes. EmbeddedRightsReader stays the authority on what those bytes mean. It walks the
  * same three containers ImageContainer does, because a source it cannot see is a claim
  * it destroys.
+ *
+ * XMP, IPTC and EXIF are read for what they say, since every camera writes some of all
+ * three and only a few of those bytes are a rights claim. A C2PA manifest is taken at
+ * its mere presence: nothing writes one by accident, and looking inside would mean a
+ * JUMBF and CBOR reader in the browser to answer a question the server re-asks anyway.
  */
 
 const LATIN1 = new TextDecoder('latin1')
@@ -21,11 +26,17 @@ const LATIN1 = new TextDecoder('latin1')
 const SOI = 0xffd8
 const SOS = 0xffda
 const APP1 = 0xffe1
+const APP11 = 0xffeb
 const APP13 = 0xffed
 
 const XMP_SIGNATURE = 'http://ns.adobe.com/xap/1.0/\0'
 const EXIF_SIGNATURE = 'Exif\0\0'
 const PHOTOSHOP_SIGNATURE = 'Photoshop 3.0\0'
+// C2PA rides in an APP11 fragment, a PNG caBX chunk or a WebP C2PA chunk. The JPEG one
+// opens with `JP`, without which an APP11 belongs to some other JUMBF user.
+const JUMBF_SIGNATURE = 'JP'
+const PNG_C2PA_CHUNK = 'caBX'
+const WEBP_C2PA_CHUNK = 'C2PA'
 
 // Local names, each kept with its colon so `dc:creator` does not also match
 // `xmp:CreatorTool`, and `photoshop:Credit` does not match a word in a caption.
@@ -141,6 +152,13 @@ function jpegCarriesRights(view) {
     const length = view.getUint16(cursor + 2)
     const payload = cursor + 4
     const payloadEnd = cursor + 2 + length
+
+    // Before the bounds check below: a manifest is split over as many fragments as it
+    // needs and the first one alone already settles the question.
+    if (marker === APP11 && payload + JUMBF_SIGNATURE.length <= view.byteLength && readAscii(view, payload, JUMBF_SIGNATURE.length) === JUMBF_SIGNATURE) {
+      return true
+    }
+
     if (payloadEnd > view.byteLength) return false
 
     if (marker === APP1 && length > XMP_SIGNATURE.length && readAscii(view, payload, XMP_SIGNATURE.length) === XMP_SIGNATURE) {
@@ -242,6 +260,9 @@ async function pngCarriesRights(view) {
 
     // Metadata precedes the pixels, and IDAT is also where the head slice runs out.
     if (type === 'IDAT') return false
+    // Before the bounds check: a manifest carrying a thumbnail can outrun the slice,
+    // and its presence is the whole answer.
+    if (type === PNG_C2PA_CHUNK) return true
     if (payload + length > view.byteLength) return false
 
     if (type === 'iTXt' || type === 'zTXt' || type === 'tEXt') {
@@ -264,6 +285,8 @@ function webpCarriesRights(view) {
     // RIFF, and only RIFF, is little-endian.
     const size = view.getUint32(cursor + 4, true)
     const payload = cursor + 8
+
+    if (type === WEBP_C2PA_CHUNK) return true
     if (payload + size > view.byteLength) return false
 
     if (type === 'XMP ' && xmpClaimsRights(view, payload, size)) return true

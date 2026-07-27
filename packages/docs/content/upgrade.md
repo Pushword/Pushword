@@ -19,15 +19,25 @@ If you are doing a major upgrade, find the upgrade guide down there.
 ### The browser no longer strips rights it cannot read
 
 Both upload paths scale images down through a canvas, which keeps no metadata, and both
-skip that step for a file whose bytes claim somebody's rights. The check behind them saw
-less than the server does: WebP was not looked at at all, PNG only in its uncompressed
-text chunks, and EXIF `Artist`/`Copyright` not at all. Such a file was re-encoded on its
-way up, so the server received bytes with nothing left to read and seeded the site's
-licence onto it.
+skip that step for a file whose bytes carry any. The check behind them saw less than the
+server does: WebP was not looked at at all, PNG only in its uncompressed text chunks,
+EXIF `Artist`/`Copyright` not at all, and C2PA nowhere. Such a file was re-encoded on its
+way up, so the server received bytes with nothing left to read — a photographer's credit
+became the site's own licence, and an AI image lost the provenance rc785 had just learnt
+to read.
 
-Nothing to run: the stripping happened before upload, so the credit is not recoverable
-from the stored file. Sort the media list by **License state** and look for photos you
-did not shoot sitting in *Site license* — those are the ones to correct by hand.
+Nothing to run: the stripping happened before upload, so neither is recoverable from the
+stored file. Sort the media list by **License state** and look for photos you did not
+shoot sitting in *Site license* — those are the ones to correct by hand.
+
+Signed files are now stored as they arrive, which for a 1536×1024 `gpt-image` PNG is
+2.7 MB rather than 1.7 MB. It costs disk, not page weight: the front serves the `default`
+filter variant, never the original.
+
+**Check `upload_max_filesize`.** PHP's own default is 2M, and a file kept uncompressed is
+exactly the one that can now exceed it — an AI image or a camera JPEG carrying its
+photographer. The upload fails loudly with PHP's message rather than storing a stripped
+file, but it fails. 20M and a `post_max_size` above it leave room for both.
 
 ## To 1.0.0-rc785
 
