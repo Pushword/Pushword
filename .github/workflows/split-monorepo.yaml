@@ -24,6 +24,7 @@ jobs:
           - flat
           - page-scanner
           - page-update-notifier
+          - newsletter
           - search
           - snippet
           - static-generator

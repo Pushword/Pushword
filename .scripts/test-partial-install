@@ -30,6 +30,7 @@ declare -A PROFILES=(
     [flat]="flat"                   # flat WITHOUT api -> NotificationApiController excluded
     [conversation]="conversation"   # conversation WITHOUT api -> Api controllers excluded
     [snippet]="snippet"             # snippet WITHOUT api -> Api controller excluded
+    [newsletter]="newsletter"       # newsletter WITHOUT api/admin-block-editor -> Api controllers + block editor excluded
 )
 
 # pushword short name -> bundle FQCN (recipes don't exist yet for new packages,
@@ -40,6 +41,7 @@ declare -A BUNDLES=(
     [flat]="Pushword\\Flat\\PushwordFlatBundle"
     [conversation]="Pushword\\Conversation\\PushwordConversationBundle"
     [snippet]="Pushword\\Snippet\\PushwordSnippetBundle"
+    [newsletter]="Pushword\\Newsletter\\PushwordNewsletterBundle"
     [admin]="Pushword\\Admin\\PushwordAdminBundle"
 )
 

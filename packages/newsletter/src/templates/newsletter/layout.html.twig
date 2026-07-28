@@ -1,0 +1,35 @@
+{#
+  Standalone page for the newsletter's public routes. They must render on the
+  live host even when the site itself is a static build, so this layout depends
+  on nothing from the site's own templates. Override
+  `/newsletter/layout.html.twig` in the site's views to brand it.
+#}
+<!DOCTYPE html>
+<html lang="{{ contact ? contact.locale : app.request.locale }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{% block title %}{{ audience ? audience.name : 'Newsletter' }}{% endblock %}</title>
+    <style>
+        body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.55;
+               margin: 0; padding: 3rem 1.25rem; color: #1c1c1c; background: #fff; }
+        main { max-width: 34rem; margin: 0 auto; }
+        h1 { font-size: 1.5rem; margin: 0 0 1rem; }
+        p { margin: 0 0 1rem; }
+        .muted { color: #666; font-size: .9rem; }
+        button { font: inherit; padding: .6rem 1.2rem; border: 0; border-radius: .3rem;
+                 background: #1c1c1c; color: #fff; cursor: pointer; }
+        @media (prefers-color-scheme: dark) {
+            body { color: #ececec; background: #151515; }
+            .muted { color: #a0a0a0; }
+            button { background: #ececec; color: #151515; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>

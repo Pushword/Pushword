@@ -1,0 +1,48 @@
+{#
+  Subscription form. Rendered by `{{ newsletter_form('audience-slug') }}`.
+
+  The action is absolute and points at the audience's live host: on a statically
+  generated site the page has no PHP behind it, so the post must cross origins.
+  Without JS the browser would navigate to the bare response fragment, hence the
+  progressive enhancement below — it replaces the form in place and does nothing
+  when scripting is off, where a plain navigation still works.
+#}
+<form class="newsletter-form" method="post" action="{{ action }}" data-newsletter-form>
+    <input type="hidden" name="audience" value="{{ audience.slug }}">
+    <input type="hidden" name="locale" value="{{ locale }}">
+    {% if source %}<input type="hidden" name="source" value="{{ source }}">{% endif %}
+    {% for interest in interests %}
+        <input type="hidden" name="interests[]" value="{{ interest }}">
+    {% endfor %}
+
+    <label class="newsletter-form__label" for="newsletter-name-{{ audience.slug }}">{{ 'newsletter.form.name'|trans }}</label>
+    <input class="newsletter-form__input" type="text" id="newsletter-name-{{ audience.slug }}"
+           name="name" autocomplete="given-name">
+
+    <label class="newsletter-form__label" for="newsletter-email-{{ audience.slug }}">{{ 'newsletter.form.email'|trans }}</label>
+    <input class="newsletter-form__input" type="email" id="newsletter-email-{{ audience.slug }}"
+           name="email" autocomplete="email" required>
+
+    <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;">
+        <label>{{ 'newsletter.form.honeypot'|trans }}<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <button class="newsletter-form__submit" type="submit">{{ 'newsletter.form.submit'|trans }}</button>
+</form>
+<script>
+(function () {
+    var forms = document.querySelectorAll('[data-newsletter-form]:not([data-newsletter-bound])');
+    Array.prototype.forEach.call(forms, function (form) {
+        form.setAttribute('data-newsletter-bound', '1');
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            var button = form.querySelector('button[type="submit"]');
+            if (button) { button.disabled = true; }
+            fetch(form.action, { method: 'POST', body: new FormData(form) })
+                .then(function (response) { return response.text(); })
+                .then(function (html) { form.outerHTML = html; })
+                .catch(function () { if (button) { button.disabled = false; } });
+        });
+    });
+})();
+</script>

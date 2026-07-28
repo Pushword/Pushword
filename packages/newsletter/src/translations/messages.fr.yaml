@@ -1,0 +1,153 @@
+newsletter:
+  audience:
+    label:
+      plural: Audiences
+      singular: Audience
+    fieldset:
+      identity: Identité
+      rules: Règles
+      sender: Expéditeur
+    field:
+      doubleOptIn: Double opt-in
+      doubleOptIn.help: Demander une confirmation avant qu'un contact devienne joignable. À laisser activé sauf import d'une base ayant déjà consenti.
+      fromEmail: Adresse d'expédition
+      fromName: Nom d'expéditeur
+      interests: Centres d'intérêt
+      interests.help: Les seules valeurs que le formulaire public peut attacher. Toute autre valeur soumise est ignorée.
+      mainHost: Hôte
+      mainHost.help: Les liens de confirmation et de désinscription sont construits depuis l'URL live de cet hôte, pour fonctionner sur un site généré en statique.
+      name: Nom
+      rateSeconds: Cadence (s/mail)
+      replyTo: Répondre à
+      slug: Référence (slug)
+      slug.help: La clé utilisée par le formulaire d'inscription et l'API.
+  automation:
+    label:
+      plural: Automatisations
+      singular: Automatisation
+    action:
+      preview: Prévisualiser l'inscription
+    fieldset:
+      rules: Règles
+      steps: Étapes
+    field:
+      audience: Audience
+      enabled: Activée
+      enabled.help: La désactivation met la séquence en pause ; les inscriptions gardent leur position et reprennent.
+      enrollFrom: Inscrire à partir du
+      enrollFrom.help: Les contacts enregistrés avant cette date ne sont jamais inscrits. Cela évite qu'une nouvelle automatisation écrive à toute une base existante d'un coup.
+      enrollWhen: Inscrire si
+      enrollWhen.help: 'Liste JSON de conditions, toutes requises. Vide : tous les contacts inscrits. Exemple : [{"field":"tag","op":"has","value":"AmTrek"}]'
+      name: Nom
+      stepCount: Étapes
+      steps: Étapes
+      stopWhen: Arrêter si
+      stopWhen.help: Revérifié avant chaque étape. Une correspondance met fin à la séquence pour ce contact.
+  campaign:
+    label:
+      plural: Newsletters
+      singular: Newsletter
+    action:
+      cancelSchedule: Annuler la programmation
+      previewSegment: Compter l'audience
+      schedule: Programmer
+      send: Envoyer
+      sendTest: Envoyer un test
+    fieldset:
+      audience: Audience et programmation
+      content: Contenu
+      performance: Performance
+    field:
+      audience: Audience
+      body: Contenu
+      bounced: Rejetés
+      failed: Échecs
+      preheader: Pré-en-tête
+      preheader.help: Courte ligne d'aperçu affichée après l'objet dans la plupart des messageries.
+      rateSeconds: Cadence (s/mail)
+      rateSeconds.help: Secondes entre deux envois. Laisser vide pour utiliser la cadence de l'audience.
+      recipients: Destinataires
+      scheduledAt: Programmée pour
+      scheduledAt.help: Renseignez une date, puis utilisez « Programmer ». Le tick l'envoie une fois la date passée.
+      segment: Segment
+      segment.help: 'Liste JSON de conditions, toutes requises. Vide : toute l''audience inscrite. Exemple : [{"field":"prop.lastBoughtProduct","op":"=","value":"tmb"}]'
+      sent: Envoyés
+      sentAt: Envoyée le
+      status: Statut
+      subject: Objet
+      unsubscribed: Désinscrits
+    flash:
+      backToDraft: Programmation annulée — retour au brouillon.
+      invalidToken: Jeton invalide, veuillez réessayer.
+      noDate: Renseignez d'abord une date « Programmée pour », puis Programmer.
+      notDraft: Cette newsletter n'est plus un brouillon.
+      notFound: Newsletter introuvable.
+    test:
+      cancel: Annuler
+      help: Envoie la newsletter aux adresses ci-dessous, objet préfixé par [TEST]. Les contacts, destinataires et statistiques ne sont pas touchés.
+      recipients: Adresse(s) destinataire(s)
+      recipients.help: Séparées par des virgules, espaces ou retours à la ligne. Votre adresse par défaut.
+      title: Envoyer un test
+  confirm:
+    body: Confirmez votre inscription à %audience% en cliquant sur le bouton ci-dessous.
+    button: Je confirme mon inscription
+    ignore: Si vous n'êtes pas à l'origine de cette demande, ignorez ce message — rien ne vous sera envoyé.
+    subject: 'Confirmez votre inscription à %audience%'
+  confirmed:
+    body: Vous êtes désormais inscrit à %audience%.
+    title: Inscription confirmée
+  contact:
+    label:
+      plural: Contacts
+      singular: Contact
+    fieldset:
+      consent: Consentement
+      identity: Identité
+    field:
+      audience: Audience
+      bouncedAt: Rejeté le
+      confirmedAt: Confirmé le
+      customProperties: Propriétés personnalisées
+      customProperties.help: Paires clé-valeur en YAML. Les segments les lisent via prop.<clé>.
+      email: Email
+      locale: Langue
+      name: Prénom
+      optinHost: Hôte d'inscription
+      optinIp: IP d'inscription
+      registeredAt: Inscrit le
+      source: Source
+      status: Statut
+      tags: Tags
+      unsubscribedAt: Désinscrit le
+  email:
+    unsubscribe: Se désinscrire
+  form:
+    email: Email
+    honeypot: Laissez ce champ vide
+    name: Prénom
+    submit: S'inscrire
+  menu:
+    label: Newsletter
+  step:
+    field:
+      body: Contenu
+      delay: Délai (minutes)
+      delay.help: Attendre ce délai après l'inscription pour la première étape, ou après l'étape précédente.
+      position: Position
+      subject: Objet
+  subscribe:
+    done: Vous êtes inscrit. Merci !
+    invalidEmail: Cette adresse email ne semble pas valide.
+    pending: Presque terminé — cliquez sur le lien que nous venons de vous envoyer.
+    tooMany: Trop de tentatives. Réessayez plus tard.
+    unknownAudience: Cette newsletter n'existe pas.
+  unknown:
+    body: Ce lien n'est plus valide.
+    title: Lien inconnu
+  unsubscribe:
+    body: Confirmez que vous ne souhaitez plus recevoir de messages de %audience%.
+    confirm: Me désinscrire
+    title: Désinscription
+  unsubscribed:
+    body: Vous ne recevrez plus de message de %audience%.
+    title: Désinscription effectuée

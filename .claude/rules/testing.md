@@ -33,6 +33,21 @@ real bugs.
 - **New entities need `computeDbCacheHash`.** A package's `src/Entity` directory missing
   from `computeDbCacheHash` in `packages/core/tests/bootstrap.php` means schema changes
   silently reuse a stale cached test DB.
+- **Never run `vendor/bin/phpunit` without `TEST_RUN_ID`.** With no run id the bootstrap
+  drops its isolation: it writes `test.db` into the shared `/tmp/.../tests/` dir (never
+  cleaned) and mirrors media into the real `packages/dev-app/media`. If such a run is the
+  one that misses the DB cache, it builds the pristine copy on top of the leftover
+  `test.db` — the fixture purge is `DELETE FROM`, which does not reset SQLite's
+  `sqlite_sequence`, so entity ids come out shifted and every later run inherits it.
+  Tests hard-coding ids (`AdminTest` wants user `id = 1`) then fail in isolation and look
+  like real regressions. Cure: delete the cached `.sqlite` under
+  `/tmp/com.github.pushword.pushword/test-db-cache/` plus the stray
+  `/tmp/com.github.pushword.pushword/tests/test.db`, then re-run through `composer test`.
+- **`assertEmailCount()`'s second argument is `$transport`, not the failure message**
+  (`assertEmailCount(int $count, ?string $transport = null, string $message = '')`).
+  Passing a message there filters on a transport that does not exist and always reports
+  "0 sent". Also: one `send()` logs two `MessageEvent`s (queued + sent); `assertEmailCount`
+  counts only the non-queued one, while `getMailerMessages()` returns both.
 - **Reading a `StreamedResponse` body** in a `WebTestCase`: use
   `$client->getInternalResponse()->getContent()`. `$client->getResponse()->getContent()`
   returns `false` — the client already consumed the stream.

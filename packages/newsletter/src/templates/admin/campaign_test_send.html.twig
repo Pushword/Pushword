@@ -1,0 +1,22 @@
+{% extends '@EasyAdmin/layout.html.twig' %}
+
+{% block content_title %}{{ 'newsletter.campaign.test.title'|trans }} — {{ campaign.subject }}{% endblock %}
+
+{% block main %}
+    <p class="text-muted">{{ 'newsletter.campaign.test.help'|trans }}</p>
+
+    <form method="post" style="max-width:640px">
+        <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
+
+        <div class="form-group mb-3">
+            <label class="form-label" for="newsletter-test-emails">{{ 'newsletter.campaign.test.recipients'|trans }}</label>
+            <textarea id="newsletter-test-emails" name="emails" rows="3" class="form-control">{{ default_emails }}</textarea>
+            <small class="form-text text-muted">{{ 'newsletter.campaign.test.recipients.help'|trans }}</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="fa fa-flask"></i> {{ 'newsletter.campaign.action.sendTest'|trans }}
+        </button>
+        <a href="{{ back_url }}" class="btn btn-link">{{ 'newsletter.campaign.test.cancel'|trans }}</a>
+    </form>
+{% endblock %}

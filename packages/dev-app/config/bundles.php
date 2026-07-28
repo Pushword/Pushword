@@ -13,6 +13,7 @@ use Pushword\Api\PushwordApiBundle;
 use Pushword\Conversation\PushwordConversationBundle;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\PushwordFlatBundle;
+use Pushword\Newsletter\PushwordNewsletterBundle;
 use Pushword\PageScanner\PushwordPageScannerBundle;
 use Pushword\PageUpdateNotifier\PushwordPageUpdateNotifierBundle;
 use Pushword\Quiz\PushwordQuizBundle;
@@ -54,6 +55,7 @@ $bundles = [
     PushwordAdminBlockEditorBundle::class => ['all' => true],
     PushwordAdvancedMainImageBundle::class => ['all' => true],
     PushwordApiBundle::class => ['all' => true],
+    PushwordNewsletterBundle::class => ['all' => true],
 
     // Symfony
     MonologBundle::class => ['all' => true],

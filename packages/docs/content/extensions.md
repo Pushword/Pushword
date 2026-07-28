@@ -17,6 +17,8 @@ name: Extensions
   Extend your Pushword website with **comments**, a **contact** form or just an **user input**.
 - [Flat](/extension/flat)
   Transform Pushword in a FlatFile CMS.
+- [Newsletter](/extension/newsletter)
+  Audiences, contacts with custom properties, segmented campaigns and criteria-driven mailing automations, driven by one cron tick. Double opt-in, one-click unsubscribe, no click tracking.
 - [Page Scanner](/extension/page-scanner)
   Find dead links, 404, 301, TODO reminders and more (command line or admin).
 - [Page Update Notifier](/extension/page-update-notifier)

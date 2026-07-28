@@ -1,0 +1,153 @@
+newsletter:
+  audience:
+    label:
+      plural: Audiences
+      singular: Audience
+    fieldset:
+      identity: Identity
+      rules: Rules
+      sender: Sender
+    field:
+      doubleOptIn: Double opt-in
+      doubleOptIn.help: Ask for a confirmation click before a subscriber becomes mailable. Leave on unless you are importing a base that already consented.
+      fromEmail: From address
+      fromName: From name
+      interests: Interests
+      interests.help: The only interest values the public form may attach. Anything else it submits is dropped.
+      mainHost: Host
+      mainHost.help: Confirm and unsubscribe links are built from this host's live URL, so they work on a statically generated site.
+      name: Name
+      rateSeconds: Cadence (s/mail)
+      replyTo: Reply-to
+      slug: Reference (slug)
+      slug.help: The key the subscribe form and the API use.
+  automation:
+    label:
+      plural: Automations
+      singular: Automation
+    action:
+      preview: Preview enrollment
+    fieldset:
+      rules: Rules
+      steps: Steps
+    field:
+      audience: Audience
+      enabled: Enabled
+      enabled.help: Disabling pauses the sequence; enrollments keep their place and resume.
+      enrollFrom: Enroll from
+      enrollFrom.help: Contacts registered before this date are never enrolled. It stops a new automation from mailing an entire existing base at once.
+      enrollWhen: Enroll when
+      enrollWhen.help: 'JSON list of conditions, all of which must hold. Empty enrolls every subscribed contact. Example: [{"field":"tag","op":"has","value":"AmTrek"}]'
+      name: Name
+      stepCount: Steps
+      steps: Steps
+      stopWhen: Stop when
+      stopWhen.help: Re-checked before each step. A match ends the sequence for that contact.
+  campaign:
+    label:
+      plural: Newsletters
+      singular: Newsletter
+    action:
+      cancelSchedule: Cancel schedule
+      previewSegment: Count audience
+      schedule: Schedule
+      send: Send
+      sendTest: Send test
+    fieldset:
+      audience: Audience & scheduling
+      content: Content
+      performance: Performance
+    field:
+      audience: Audience
+      body: Body
+      bounced: Bounced
+      failed: Failed
+      preheader: Preheader
+      preheader.help: Short preview line shown after the subject in most inboxes.
+      rateSeconds: Cadence (s/mail)
+      rateSeconds.help: Seconds between two mails. Leave empty to use the audience cadence.
+      recipients: Recipients
+      scheduledAt: Scheduled for
+      scheduledAt.help: Set a date, then use "Schedule". The tick sends it once the date has passed.
+      segment: Segment
+      segment.help: 'JSON list of conditions, all of which must hold. Empty targets the whole subscribed audience. Example: [{"field":"prop.lastBoughtProduct","op":"=","value":"tmb"}]'
+      sent: Sent
+      sentAt: Sent at
+      status: Status
+      subject: Subject
+      unsubscribed: Unsubscribed
+    flash:
+      backToDraft: Schedule cancelled — back to draft.
+      invalidToken: Invalid token, please retry.
+      noDate: Set a "Scheduled for" date first, then Schedule.
+      notDraft: This newsletter is not a draft any more.
+      notFound: Newsletter not found.
+    test:
+      cancel: Cancel
+      help: Delivers the newsletter to the addresses below, with the subject prefixed by [TEST]. Contacts, recipients and stats are untouched.
+      recipients: Recipient address(es)
+      recipients.help: Comma-, space- or newline-separated. Defaults to your address.
+      title: Send a test
+  confirm:
+    body: Confirm your subscription to %audience% by clicking the button below.
+    button: Confirm my subscription
+    ignore: If you did not ask for this, ignore this mail — nothing will be sent.
+    subject: 'Confirm your subscription to %audience%'
+  confirmed:
+    body: You are now subscribed to %audience%.
+    title: Subscription confirmed
+  contact:
+    label:
+      plural: Contacts
+      singular: Contact
+    fieldset:
+      consent: Consent
+      identity: Identity
+    field:
+      audience: Audience
+      bouncedAt: Bounced at
+      confirmedAt: Confirmed at
+      customProperties: Custom properties
+      customProperties.help: YAML key-value pairs. Segments read them as prop.<key>.
+      email: Email
+      locale: Locale
+      name: Name
+      optinHost: Opt-in host
+      optinIp: Opt-in IP
+      registeredAt: Registered at
+      source: Source
+      status: Status
+      tags: Tags
+      unsubscribedAt: Unsubscribed at
+  email:
+    unsubscribe: Unsubscribe
+  form:
+    email: Email
+    honeypot: Leave this field empty
+    name: First name
+    submit: Subscribe
+  menu:
+    label: Newsletter
+  step:
+    field:
+      body: Body
+      delay: Delay (minutes)
+      delay.help: Wait this long after enrollment for the first step, or after the previous step.
+      position: Position
+      subject: Subject
+  subscribe:
+    done: You are subscribed. Thank you!
+    invalidEmail: This email address does not look valid.
+    pending: Almost done — click the link we just sent you.
+    tooMany: Too many attempts. Please try again later.
+    unknownAudience: This newsletter does not exist.
+  unknown:
+    body: This link is no longer valid.
+    title: Unknown link
+  unsubscribe:
+    body: Confirm that you want to stop receiving mails from %audience%.
+    confirm: Unsubscribe me
+    title: Unsubscribe
+  unsubscribed:
+    body: You will not receive any more mail from %audience%.
+    title: Unsubscribed

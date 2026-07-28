@@ -1,0 +1,30 @@
+{
+  "name": "pushword/newsletter",
+  "type": "symfony-bundle",
+  "description": "Newsletter for Pushword CMS: audiences, contacts with custom properties, segmented campaigns and criteria-driven automations.",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/newsletter",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Newsletter\\": "src"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

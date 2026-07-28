@@ -1,0 +1,38 @@
+{#
+  One-column newsletter body. Styles are inline and the layout is a table on
+  purpose: mail clients strip <style> blocks and ignore modern layout.
+#}
+<!DOCTYPE html>
+<html lang="{{ contact.locale }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ subject }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f4;">
+{% if preheader %}
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">{{ preheader }}</div>
+{% endif %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;">
+    <tr>
+        <td align="center" style="padding:24px 12px;">
+            <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+                   style="width:100%;max-width:600px;background:#ffffff;border-radius:6px;">
+                <tr>
+                    <td style="padding:32px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1c1c1c;">
+                        {{ body|raw }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:0 32px 28px;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#777777;">
+                        <hr style="border:0;border-top:1px solid #e6e6e6;margin:0 0 16px;">
+                        {{ audience.name }}<br>
+                        <a href="{{ unsubscribeUrl }}" style="color:#777777;">{{ 'newsletter.email.unsubscribe'|trans({}, null, contact.locale) }}</a>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

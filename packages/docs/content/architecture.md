@@ -94,6 +94,7 @@ composer console ...
 | js-helper | Shared JavaScript utilities (Node package) | — |
 | admin-monaco-editor | Monaco code editor for admin (Node package) | — |
 | new | Meta-package that pulls in core + admin + common extensions | core |
+| newsletter | Audiences, contacts, segmented campaigns and criteria-driven automations | core |
 | page-scanner | Dead link detection, 404/301 checks, TODO scanning | core |
 | page-update-notifier | Email notifications on page edits | core |
 | quiz | Interactive client-side QCM / personality tests via a `{% quiz %}` block | core |
