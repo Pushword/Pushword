@@ -31,6 +31,7 @@ final class SnippetApiControllerTest extends WebTestCase
     {
         $this->client = self::createClient();
         $this->client->disableReboot();
+
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $this->em = $em;
 
