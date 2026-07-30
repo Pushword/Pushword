@@ -34,6 +34,26 @@ final class SegmentCriteriaTest extends TestCase
         self::assertSame(['any' => false, 'conditions' => $conditions], SegmentCriteria::normalize($conditions));
     }
 
+    /**
+     * The textarea's round trip must not lose the operator: an `any` coming back
+     * as a bare list would silently become an `all`, and a segment written to
+     * reach two groups would reach only their intersection.
+     */
+    public function testTheJsonRoundTripKeepsTheOperator(): void
+    {
+        $rule = ['any' => [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']]];
+
+        self::assertSame($rule, SegmentCriteria::fromJson(SegmentCriteria::toJson($rule)));
+    }
+
+    public function testAGroupMustHoldAList(): void
+    {
+        $this->expectException(SegmentException::class);
+        $this->expectExceptionMessageMatches('/must hold a list of conditions/');
+
+        SegmentCriteria::normalize(['any' => 'AmTrek']);
+    }
+
     public function testARuleCannotBeBothAnyAndAll(): void
     {
         $this->expectException(SegmentException::class);

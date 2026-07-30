@@ -13,17 +13,15 @@ use DateTimeImmutable;
  *       {"field": "prop.lastBoughtProduct", "op": "=",         "value": "tmb"}
  *     ]
  *
- * A rule that needs OR says so, and then every condition belongs to that one
- * operator — the rule a `pages_list` search follows, and for the same reason:
- * one operator per expression is learnable, a tree is not.
+ * A rule that needs OR says so, in the shape {@see CriteriaGroup} defines:
  *
  *     {"any": [
  *       {"field": "tag", "op": "has", "value": "AmTrek"},
  *       {"field": "tag", "op": "has", "value": "AmTrek-VIP"}
  *     ]}
  *
- * `{"all": [...]}` spells the default out. Two campaigns do not replace that
- * `any`: a contact carrying both tags would be in both, and be mailed twice.
+ * Two campaigns do not replace that `any`: a contact carrying both tags would be
+ * in both, and be mailed twice.
  *
  * The same list drives a campaign segment, an automation's enrollment rule and
  * its stop condition, so there is one thing to learn and one thing to test.
@@ -58,17 +56,7 @@ final class SegmentCriteria
      */
     public static function normalize(array $criteria): array
     {
-        $any = \array_key_exists('any', $criteria);
-
-        if ($any && \array_key_exists('all', $criteria)) {
-            throw new SegmentException('A rule matches "any" of its conditions or "all" of them, not both.');
-        }
-
-        $conditions = $any ? $criteria['any'] : ($criteria['all'] ?? $criteria);
-
-        if (! \is_array($conditions)) {
-            throw new SegmentException(\sprintf('"%s" must hold a list of conditions.', $any ? 'any' : 'all'));
-        }
+        ['any' => $any, 'conditions' => $conditions] = CriteriaGroup::unwrap($criteria);
 
         return ['any' => $any, 'conditions' => self::normalizeConditions($conditions)];
     }
@@ -156,7 +144,7 @@ final class SegmentCriteria
 
         $rule = self::normalize($decoded);
 
-        return $rule['any'] ? ['any' => $rule['conditions']] : $rule['conditions'];
+        return CriteriaGroup::wrap($rule['any'], $rule['conditions']);
     }
 
     public static function isProperty(string $field): bool

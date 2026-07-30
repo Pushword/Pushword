@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Content;
 
+use Pushword\Newsletter\Segment\CriteriaGroup;
 use Pushword\Newsletter\Segment\SegmentException;
 
 /**
@@ -59,17 +60,7 @@ final class PageCriteria
      */
     public static function normalize(array $criteria): array
     {
-        $any = \array_key_exists('any', $criteria);
-
-        if ($any && \array_key_exists('all', $criteria)) {
-            throw new SegmentException('A rule matches "any" of its conditions or "all" of them, not both.');
-        }
-
-        $conditions = $any ? $criteria['any'] : ($criteria['all'] ?? $criteria);
-
-        if (! \is_array($conditions)) {
-            throw new SegmentException(\sprintf('"%s" must hold a list of conditions.', $any ? 'any' : 'all'));
-        }
+        ['any' => $any, 'conditions' => $conditions] = CriteriaGroup::unwrap($criteria);
 
         return ['any' => $any, 'conditions' => self::normalizeConditions($conditions)];
     }
@@ -153,7 +144,7 @@ final class PageCriteria
 
         $rule = self::normalize($decoded);
 
-        return $rule['any'] ? ['any' => $rule['conditions']] : $rule['conditions'];
+        return CriteriaGroup::wrap($rule['any'], $rule['conditions']);
     }
 
     public static function isProperty(string $field): bool

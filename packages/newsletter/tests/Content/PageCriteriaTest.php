@@ -95,6 +95,26 @@ final class PageCriteriaTest extends TestCase
         self::assertSame('', PageCriteria::toJson([]));
     }
 
+    /**
+     * The textarea's round trip must not lose the operator: an `any` coming back
+     * as a bare list would silently become an `all`, and the rule would quietly
+     * stop matching what it was written for.
+     */
+    public function testTheJsonRoundTripKeepsTheOperator(): void
+    {
+        $rule = ['any' => [['field' => 'tag', 'op' => 'has', 'value' => 'blog']]];
+
+        self::assertSame($rule, PageCriteria::fromJson(PageCriteria::toJson($rule)));
+    }
+
+    public function testAGroupMustHoldAList(): void
+    {
+        $this->expectException(SegmentException::class);
+        $this->expectExceptionMessageMatches('/must hold a list of conditions/');
+
+        PageCriteria::normalize(['any' => 'blog']);
+    }
+
     public function testMalformedJsonIsRejected(): void
     {
         $this->expectException(SegmentException::class);

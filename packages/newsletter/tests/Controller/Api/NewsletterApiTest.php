@@ -465,6 +465,29 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertNotNull($body['triggerFrom'], 'a trigger created over the API cannot mail a back catalogue either');
     }
 
+    /**
+     * A rule sent as a group comes back as one. Stored flat it would read as an
+     * `all`, and the trigger would quietly stop matching what it was created for.
+     */
+    public function testAnAnyGroupSurvivesTheApiRoundTrip(): void
+    {
+        $audience = $this->createAudience();
+        $rule = ['any' => [
+            ['field' => 'tag', 'op' => 'has', 'value' => 'blog'],
+            ['field' => 'ancestor', 'op' => '=', 'value' => 'blog'],
+        ]];
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
+            'audience' => $audience->getSlug(),
+            'name' => 'Either axis',
+            'pageWhen' => $rule,
+            'subjectTemplate' => 'New article: {{ page.h1 }}',
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $this->client->getResponse()->getStatusCode());
+        self::assertSame($rule, $body['pageWhen']);
+    }
+
     /** The page grammar is not the contact one; mixing them up must be said, not ignored. */
     public function testAContactFieldInPageWhenIsRejected(): void
     {
