@@ -45,15 +45,16 @@ final readonly class MailRenderer
     ): string {
         $body = $this->markdownParser->transform($this->personalize($bodyMarkdown, $contact));
         $body = $this->absolutize($body, $audience);
+        // Tagging the body and not the rendered mail leaves the template's
+        // unsubscribe link alone: leaving is an exit, not a visit.
+        $body = $this->utmDecorator->decorate($body, $audience, $utmTag);
 
         return $this->twig->render($this->view($audience, 'email.html.twig'), [
             'audience' => $audience,
             'contact' => $contact,
             'subject' => $this->personalize($subject, $contact),
             'preheader' => null !== $preheader ? $this->personalize($preheader, $contact) : null,
-            // Only the body is tagged: the unsubscribe link the template adds is
-            // an exit, not a visit, and its header twin could not be tagged anyway.
-            'body' => $this->utmDecorator->decorate($body, $audience, $utmTag),
+            'body' => $body,
             'unsubscribeUrl' => $unsubscribeUrl,
         ]);
     }
@@ -98,8 +99,10 @@ final readonly class MailRenderer
         return preg_replace_callback(
             HtmlUnpublishedLink::HTML_REGEX,
             static function (array $match) use ($base): string {
-                // `//host/path` is already absolute, protocol-relative.
-                if (! str_starts_with($match['href'], '/') || str_starts_with($match['href'], '//')) {
+                // `//host/path` only looks root-relative: it is already absolute.
+                $isRootRelative = str_starts_with($match['href'], '/') && ! str_starts_with($match['href'], '//');
+
+                if (! $isRootRelative) {
                     return $match[0];
                 }
 

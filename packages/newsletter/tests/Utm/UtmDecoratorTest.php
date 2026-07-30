@@ -49,6 +49,25 @@ final class UtmDecoratorTest extends AbstractNewsletterTestCase
         self::assertStringContainsString('utm_campaign=janvier#part', $html);
     }
 
+    /** Markdown writes a two-parameter query as `&amp;`; it has to survive the round trip. */
+    public function testItKeepsAnEncodedMultiParameterQuery(): void
+    {
+        $html = $this->decorate('<p><a href="https://localhost.dev/a?p=1&amp;q=2">L</a></p>');
+
+        self::assertStringContainsString('p=1&amp;q=2&amp;utm_source=newsletter', $html);
+        self::assertStringNotContainsString('&amp;amp;', $html);
+    }
+
+    public function testTheSourceIsNormalisedIntoTheParameter(): void
+    {
+        $audience = new Audience()->setMainHost('localhost.dev')->setUtmSource('Pied Web');
+
+        self::assertStringContainsString(
+            'utm_source=pied-web',
+            $this->decorator()->decorate(self::LINK, $audience, new UtmTag('janvier')),
+        );
+    }
+
     public function testItKeepsTheOtherAttributes(): void
     {
         $html = $this->decorate('<p><a class="btn" href="https://localhost.dev/a" rel="noopener">L</a></p>');

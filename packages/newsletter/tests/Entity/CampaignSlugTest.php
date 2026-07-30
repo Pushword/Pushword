@@ -55,6 +55,24 @@ final class CampaignSlugTest extends AbstractNewsletterTestCase
         self::assertSame(date('ymd').'-janvier', $campaign->getSlug());
     }
 
+    /**
+     * A subject may run to 255 characters and the column holds 128, prefix
+     * included. SQLite would swallow the overflow; MariaDB refuses the write.
+     */
+    public function testALongSubjectStillFitsTheColumnOnceDated(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'reader@example.tld');
+        $campaign = $this->createCampaign($audience, subject: str_repeat('nouveauté ', 25));
+
+        self::assertLessThanOrEqual(120, \strlen($campaign->getSlug()));
+
+        self::getContainer()->get(CampaignSender::class)->arm($campaign);
+
+        self::assertLessThanOrEqual(128, \strlen($campaign->getSlug()));
+        self::assertStringStartsWith(date('ymd').'-nouveaute', $campaign->getSlug());
+    }
+
     public function testAnExplicitSlugIsNormalised(): void
     {
         $campaign = new Campaign()

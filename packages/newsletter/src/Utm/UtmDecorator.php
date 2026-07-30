@@ -59,12 +59,14 @@ final readonly class UtmDecorator
     {
         $parts = parse_url($url);
 
-        // Anything without an http(s) host — a mailto:, an anchor, a relative
-        // path — has no analytics to reach.
+        // A mailto:, an anchor, a relative path: nothing with analytics behind it.
         if (false === $parts
             || ! isset($parts['scheme'], $parts['host'])
-            || ! \in_array($parts['scheme'], ['http', 'https'], true)
-            || ! $this->siteRegistry->isKnownHost($parts['host'])) {
+            || ! \in_array($parts['scheme'], ['http', 'https'], true)) {
+            return null;
+        }
+
+        if (! $this->siteRegistry->isKnownHost($parts['host'])) {
             return null;
         }
 
