@@ -62,7 +62,7 @@ class ContentTrigger implements IdInterface, Stringable
      * Which published pages of those hosts deserve a mail; an empty list means
      * every one of them.
      *
-     * @var array<int, array<string, mixed>>
+     * @var array<mixed>
      */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
     private array $pageWhen = [];
@@ -71,7 +71,7 @@ class ContentTrigger implements IdInterface, Stringable
      * Who receives it, in the ordinary segment language; empty means the whole
      * subscribed audience.
      *
-     * @var array<int, array<string, mixed>>
+     * @var array<mixed>
      */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
     private array $segment = [];
@@ -161,30 +161,30 @@ class ContentTrigger implements IdInterface, Stringable
         return $this;
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /** @return array<mixed> */
     public function getPageWhen(): array
     {
         return $this->pageWhen;
     }
 
-    /** @param array<int, array<string, mixed>> $pageWhen */
+    /** @param array<mixed> $pageWhen */
     public function setPageWhen(array $pageWhen): self
     {
-        $this->pageWhen = array_values($pageWhen);
+        $this->pageWhen = $pageWhen;
 
         return $this;
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /** @return array<mixed> */
     public function getSegment(): array
     {
         return $this->segment;
     }
 
-    /** @param array<int, array<string, mixed>> $segment */
+    /** @param array<mixed> $segment */
     public function setSegment(array $segment): self
     {
-        $this->segment = array_values($segment);
+        $this->segment = $segment;
 
         return $this;
     }

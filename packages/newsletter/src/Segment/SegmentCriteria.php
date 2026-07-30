@@ -5,14 +5,25 @@ namespace Pushword\Newsletter\Segment;
 use DateTimeImmutable;
 
 /**
- * The segment language: a flat list of conditions, ANDed. No nesting, no OR — a
- * second automation is cheaper than an expression tree.
+ * The segment language: a flat list of conditions, all of which must hold.
  *
  *     [
  *       {"field": "tag",                    "op": "has",       "value": "AmTrek"},
  *       {"field": "createdAt",              "op": "olderThan", "value": "7d"},
  *       {"field": "prop.lastBoughtProduct", "op": "=",         "value": "tmb"}
  *     ]
+ *
+ * A rule that needs OR says so, and then every condition belongs to that one
+ * operator — the rule a `pages_list` search follows, and for the same reason:
+ * one operator per expression is learnable, a tree is not.
+ *
+ *     {"any": [
+ *       {"field": "tag", "op": "has", "value": "AmTrek"},
+ *       {"field": "tag", "op": "has", "value": "AmTrek-VIP"}
+ *     ]}
+ *
+ * `{"all": [...]}` spells the default out. Two campaigns do not replace that
+ * `any`: a contact carrying both tags would be in both, and be mailed twice.
  *
  * The same list drives a campaign segment, an automation's enrollment rule and
  * its stop condition, so there is one thing to learn and one thing to test.
@@ -37,19 +48,43 @@ final class SegmentCriteria
     private const string DURATION_PATTERN = '/^(\d+)([mhdw])$/';
 
     /**
-     * Validate and normalise a raw criteria list.
+     * Validate and normalise a raw rule: its operator, and its conditions.
      *
      * @param array<mixed> $criteria
      *
-     * @return array<int, array{field: string, op: string, value: string}>
+     * @return array{any: bool, conditions: list<array{field: string, op: string, value: string}>}
      *
      * @throws SegmentException
      */
     public static function normalize(array $criteria): array
     {
+        $any = \array_key_exists('any', $criteria);
+
+        if ($any && \array_key_exists('all', $criteria)) {
+            throw new SegmentException('A rule matches "any" of its conditions or "all" of them, not both.');
+        }
+
+        $conditions = $any ? $criteria['any'] : ($criteria['all'] ?? $criteria);
+
+        if (! \is_array($conditions)) {
+            throw new SegmentException(\sprintf('"%s" must hold a list of conditions.', $any ? 'any' : 'all'));
+        }
+
+        return ['any' => $any, 'conditions' => self::normalizeConditions($conditions)];
+    }
+
+    /**
+     * @param array<mixed> $conditions
+     *
+     * @return list<array{field: string, op: string, value: string}>
+     *
+     * @throws SegmentException
+     */
+    private static function normalizeConditions(array $conditions): array
+    {
         $normalized = [];
 
-        foreach (array_values($criteria) as $index => $condition) {
+        foreach (array_values($conditions) as $index => $condition) {
             if (! \is_array($condition)) {
                 throw new SegmentException(\sprintf('Condition #%d is not an object.', $index));
             }
@@ -101,7 +136,7 @@ final class SegmentCriteria
     }
 
     /**
-     * @return array<int, array{field: string, op: string, value: string}>
+     * @return array<mixed> the rule, in the shape it is stored
      *
      * @throws SegmentException
      */
@@ -119,7 +154,9 @@ final class SegmentCriteria
             throw new SegmentException('Criteria must be a JSON list of conditions.');
         }
 
-        return self::normalize($decoded);
+        $rule = self::normalize($decoded);
+
+        return $rule['any'] ? ['any' => $rule['conditions']] : $rule['conditions'];
     }
 
     public static function isProperty(string $field): bool

@@ -102,7 +102,7 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
         return $contact;
     }
 
-    /** @param array<int, array<string, mixed>> $segment */
+    /** @param array<mixed> $segment */
     protected function createCampaign(Audience $audience, array $segment = [], string $subject = 'Hello'): Campaign
     {
         $campaign = new Campaign()
@@ -146,9 +146,9 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
     }
 
     /**
-     * @param string[]                         $hosts
-     * @param array<int, array<string, mixed>> $pageWhen
-     * @param array<int, array<string, mixed>> $segment
+     * @param string[]     $hosts
+     * @param array<mixed> $pageWhen
+     * @param array<mixed> $segment
      */
     protected function createContentTrigger(
         Audience $audience,

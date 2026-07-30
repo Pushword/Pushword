@@ -83,39 +83,58 @@ final readonly class PageMatcher
             $queryBuilder->andWhere('p.host IN (:hosts)')->setParameter('hosts', $hosts);
         }
 
-        foreach (PageCriteria::normalize($trigger->getPageWhen()) as $index => $condition) {
-            $this->applyCondition($queryBuilder, $condition, $index);
+        $rule = PageCriteria::normalize($trigger->getPageWhen());
+        $conditions = [];
+
+        foreach ($rule['conditions'] as $index => $condition) {
+            $conditions[] = $this->condition($queryBuilder, $condition, $index);
+        }
+
+        // The three guards above are ANDed with the whole group, never a disjunct
+        // of it: `any` widens which pages match, never past them.
+        if ([] !== $conditions) {
+            $queryBuilder->andWhere($rule['any']
+                ? $queryBuilder->expr()->orX(...$conditions)
+                : $queryBuilder->expr()->andX(...$conditions));
         }
 
         return $queryBuilder;
     }
 
     /** @param array{field: string, op: string, value: string} $condition */
-    private function applyCondition(QueryBuilder $queryBuilder, array $condition, int $index): void
+    private function condition(QueryBuilder $queryBuilder, array $condition, int $index): string
     {
         $parameter = 'page'.$index;
         ['field' => $field, 'op' => $op, 'value' => $value] = $condition;
 
         if (PageCriteria::isProperty($field)) {
-            $this->applyProperty($queryBuilder, $field, $op, $value, $parameter);
-
-            return;
+            return $this->property($queryBuilder, $field, $op, $value, $parameter);
         }
 
-        match ($field) {
-            'slug' => $this->applySlug($queryBuilder, $op, $value, $parameter),
-            'tag' => $this->applyTag($queryBuilder, $op, $value, $parameter),
-            'parentPage' => $this->applyParent($queryBuilder, $op, $value, $parameter),
-            'ancestor' => $this->applyAncestor($queryBuilder, $op, $value, $parameter),
-            default => $this->applyTemplate($queryBuilder, $op, $value, $parameter),
+        return match ($field) {
+            'slug' => $this->slug($queryBuilder, $op, $value, $parameter),
+            'tag' => $this->tag($queryBuilder, $op, $value, $parameter),
+            'parentPage' => $this->parent($queryBuilder, $op, $value, $parameter),
+            'ancestor' => $this->ancestor($queryBuilder, $op, $value, $parameter),
+            default => $this->template($queryBuilder, $op, $value, $parameter),
         };
     }
 
-    private function applySlug(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): void
+    private function slug(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): string
     {
-        $queryBuilder
-            ->andWhere(\sprintf("p.slug %s :%s ESCAPE '%s'", 'startsWith' === $op ? 'LIKE' : 'NOT LIKE', $parameter, self::LIKE_ESCAPE))
-            ->setParameter($parameter, $this->escapeLike($value).'%');
+        return $this->parameterized(
+            $queryBuilder,
+            \sprintf("p.slug %s :%s ESCAPE '%s'", 'startsWith' === $op ? 'LIKE' : 'NOT LIKE', $parameter, self::LIKE_ESCAPE),
+            $parameter,
+            $this->escapeLike($value).'%',
+        );
+    }
+
+    private function parameterized(QueryBuilder $queryBuilder, string $expression, string $parameter, mixed $value): string
+    {
+        $queryBuilder->setParameter($parameter, $value);
+
+        return $expression;
     }
 
     /** Every special character gets the escape prefix; nothing else is touched. */
@@ -132,51 +151,57 @@ final readonly class PageMatcher
      * tags live in a JSON array column, and the quoted form keeps a shorter tag
      * from matching a longer one that starts with it.
      */
-    private function applyTag(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): void
+    private function tag(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): string
     {
-        $queryBuilder
-            ->andWhere(\sprintf("p.tags %s :%s ESCAPE '%s'", 'has' === $op ? 'LIKE' : 'NOT LIKE', $parameter, self::LIKE_ESCAPE))
-            ->setParameter($parameter, '%"'.$this->escapeLike($value).'"%');
+        return $this->parameterized(
+            $queryBuilder,
+            \sprintf("p.tags %s :%s ESCAPE '%s'", 'has' === $op ? 'LIKE' : 'NOT LIKE', $parameter, self::LIKE_ESCAPE),
+            $parameter,
+            '%"'.$this->escapeLike($value).'"%',
+        );
     }
 
     /** The value is the parent's slug: what an editor knows, and what survives a re-parenting. */
-    private function applyParent(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): void
+    private function parent(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): string
     {
         if ([] === $queryBuilder->getDQLPart('join')) {
             $queryBuilder->leftJoin('p.parentPage', 'parent');
         }
 
-        $queryBuilder
-            ->andWhere('=' === $op
+        return $this->parameterized(
+            $queryBuilder,
+            '=' === $op
                 ? \sprintf('parent.slug = :%s', $parameter)
-                : \sprintf('(parent.slug IS NULL OR parent.slug != :%s)', $parameter))
-            ->setParameter($parameter, $value);
+                : \sprintf('(parent.slug IS NULL OR parent.slug != :%s)', $parameter),
+            $parameter,
+            $value,
+        );
     }
 
     /**
      * A whole section in one condition: the value is the slug of a page the
      * article sits under, however deep. `parentPage` names a single rubric, so
-     * a blog split in three needs three triggers; this names the blog.
+     * a blog split in three needs three conditions; this names the blog.
      */
-    private function applyAncestor(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): void
+    private function ancestor(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): string
     {
         $section = $this->sectionIds($value);
 
         // Nothing sits under a page that does not exist, and everything sits
-        // outside of it.
+        // outside of it — as a constant, so that an `any` group reads it as the
+        // false (or true) member it is rather than losing the condition.
         if ([] === $section) {
-            if ('=' === $op) {
-                $queryBuilder->andWhere('1 = 0');
-            }
-
-            return;
+            return '=' === $op ? '1 = 0' : '1 = 1';
         }
 
-        $queryBuilder
-            ->andWhere('=' === $op
+        return $this->parameterized(
+            $queryBuilder,
+            '=' === $op
                 ? \sprintf('p.parentPage IN (:%s)', $parameter)
-                : \sprintf('(p.parentPage IS NULL OR p.parentPage NOT IN (:%s))', $parameter))
-            ->setParameter($parameter, $section);
+                : \sprintf('(p.parentPage IS NULL OR p.parentPage NOT IN (:%s))', $parameter),
+            $parameter,
+            $section,
+        );
     }
 
     /**
@@ -224,31 +249,29 @@ final readonly class PageMatcher
      * genuinely not the one being excluded. Unlike a missing property, which is
      * unknown, NULL therefore belongs on the `!=` side.
      */
-    private function applyTemplate(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): void
+    private function template(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): string
     {
-        $queryBuilder
-            ->andWhere('=' === $op
+        return $this->parameterized(
+            $queryBuilder,
+            '=' === $op
                 ? \sprintf('p.template = :%s', $parameter)
-                : \sprintf('(p.template IS NULL OR p.template != :%s)', $parameter))
-            ->setParameter($parameter, $value);
+                : \sprintf('(p.template IS NULL OR p.template != :%s)', $parameter),
+            $parameter,
+            $value,
+        );
     }
 
-    private function applyProperty(QueryBuilder $queryBuilder, string $field, string $op, string $value, string $parameter): void
+    private function property(QueryBuilder $queryBuilder, string $field, string $op, string $value, string $parameter): string
     {
         $extract = \sprintf("JSON_SCALAR(p.customProperties, '%s')", PageCriteria::propertyPath($field));
 
-        match ($op) {
-            'isSet' => $queryBuilder->andWhere($extract.' IS NOT NULL'),
-            'isNotSet' => $queryBuilder->andWhere($extract.' IS NULL'),
+        return match ($op) {
+            'isSet' => $extract.' IS NOT NULL',
+            'isNotSet' => $extract.' IS NULL',
             // A missing property is not "different from x" — it is unknown; an
             // explicit IS NOT NULL keeps != from silently widening the match.
-            '!=' => $queryBuilder
-                ->andWhere($extract.' IS NOT NULL')
-                ->andWhere(\sprintf('%s != :%s', $extract, $parameter))
-                ->setParameter($parameter, $value),
-            default => $queryBuilder
-                ->andWhere(\sprintf('%s = :%s', $extract, $parameter))
-                ->setParameter($parameter, $value),
+            '!=' => $this->parameterized($queryBuilder, \sprintf('(%s IS NOT NULL AND %s != :%s)', $extract, $extract, $parameter), $parameter, $value),
+            default => $this->parameterized($queryBuilder, \sprintf('%s = :%s', $extract, $parameter), $parameter, $value),
         };
     }
 }

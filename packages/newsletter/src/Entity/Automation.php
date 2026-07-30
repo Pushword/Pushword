@@ -50,7 +50,7 @@ class Automation implements IdInterface, Stringable
      * Who gets enrolled; an empty list means every subscribed contact of the
      * audience.
      *
-     * @var array<int, array<string, mixed>>
+     * @var array<mixed>
      */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
     private array $enrollWhen = [];
@@ -59,7 +59,7 @@ class Automation implements IdInterface, Stringable
      * Re-checked before each step: a match stops the enrollment. Empty means the
      * sequence always runs to its end.
      *
-     * @var array<int, array<string, mixed>>
+     * @var array<mixed>
      */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
     private array $stopWhen = [];
@@ -129,30 +129,30 @@ class Automation implements IdInterface, Stringable
         return $this;
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /** @return array<mixed> */
     public function getEnrollWhen(): array
     {
         return $this->enrollWhen;
     }
 
-    /** @param array<int, array<string, mixed>> $enrollWhen */
+    /** @param array<mixed> $enrollWhen */
     public function setEnrollWhen(array $enrollWhen): self
     {
-        $this->enrollWhen = array_values($enrollWhen);
+        $this->enrollWhen = $enrollWhen;
 
         return $this;
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /** @return array<mixed> */
     public function getStopWhen(): array
     {
         return $this->stopWhen;
     }
 
-    /** @param array<int, array<string, mixed>> $stopWhen */
+    /** @param array<mixed> $stopWhen */
     public function setStopWhen(array $stopWhen): self
     {
-        $this->stopWhen = array_values($stopWhen);
+        $this->stopWhen = $stopWhen;
 
         return $this;
     }

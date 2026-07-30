@@ -158,6 +158,45 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
         self::assertSame('both@example.tld', $match[0]->getEmail());
     }
 
+    /**
+     * The reason `any` exists: two campaigns do not replace it — a contact
+     * carrying both tags would be in both, and be mailed twice.
+     */
+    public function testAnAnyGroupTakesEitherConditionAndCountsNobodyTwice(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'trek@example.tld', ['AmTrek']);
+        $this->createContact($audience, 'vip@example.tld', ['VIP']);
+        $this->createContact($audience, 'both@example.tld', ['AmTrek', 'VIP']);
+        $this->createContact($audience, 'neither@example.tld');
+
+        $criteria = ['any' => [
+            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'VIP'],
+        ]];
+
+        self::assertSame(3, $this->resolver()->count($audience, $criteria));
+    }
+
+    /** `any` widens who is reached, never past the audience or the subscribed status. */
+    public function testAnAnyGroupNeverWidensPastTheGuards(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'subscribed@example.tld', ['AmTrek']);
+        $this->createContact($this->createAudience(), 'elsewhere@example.tld', ['AmTrek']);
+
+        $this->createContact($audience, 'gone@example.tld', ['AmTrek'])->unsubscribe();
+        $this->entityManager->flush();
+
+        $match = $this->resolver()->contacts($audience, ['any' => [
+            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'VIP'],
+        ]]);
+
+        self::assertCount(1, $match);
+        self::assertSame('subscribed@example.tld', $match[0]->getEmail());
+    }
+
     public function testMatchesAgreesWithTheListForOneContact(): void
     {
         $audience = $this->createAudience();

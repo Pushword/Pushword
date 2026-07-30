@@ -262,7 +262,7 @@ final class CampaignApiController extends AbstractApiController
                 return $this->badRequest($segmentException->getMessage());
             }
 
-            /** @var array<int, array<string, mixed>> $segment */
+            /** @var array<mixed> $segment */
             $segment = $data['segment'];
             $campaign->setSegment($segment);
         }
@@ -365,7 +365,7 @@ final class CampaignApiController extends AbstractApiController
                             'slug' => ['type' => 'string', 'description' => 'utm_campaign value; derived from the subject when omitted'],
                             'preheader' => ['type' => 'string'],
                             'bodyMarkdown' => ['type' => 'string'],
-                            'segment' => ['type' => 'array', 'items' => ['type' => 'object']],
+                            'segment' => ['description' => 'Contact criteria, ANDed; {"any": [...]} ORs them instead', 'oneOf' => [['type' => 'array', 'items' => ['type' => 'object']], ['type' => 'object']]],
                             'rateSeconds' => ['type' => 'integer'],
                         ],
                     ],

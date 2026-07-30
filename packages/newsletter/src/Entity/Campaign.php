@@ -63,7 +63,7 @@ class Campaign implements IdInterface, Stringable
     /**
      * Segment criteria; an empty list targets the whole subscribed audience.
      *
-     * @var array<int, array<string, mixed>>
+     * @var array<mixed>
      */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
     private array $segment = [];
@@ -194,16 +194,16 @@ class Campaign implements IdInterface, Stringable
         return $this;
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /** @return array<mixed> */
     public function getSegment(): array
     {
         return $this->segment;
     }
 
-    /** @param array<int, array<string, mixed>> $segment */
+    /** @param array<mixed> $segment */
     public function setSegment(array $segment): self
     {
-        $this->segment = array_values($segment);
+        $this->segment = $segment;
 
         return $this;
     }

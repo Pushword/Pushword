@@ -93,64 +93,78 @@ final readonly class SegmentResolver
             ->setParameter('subscribed', ContactStatus::Subscribed->value);
 
         $now = new DateTimeImmutable();
+        $rule = SegmentCriteria::normalize($criteria);
+        $conditions = [];
 
-        foreach (SegmentCriteria::normalize($criteria) as $index => $condition) {
-            $this->applyCondition($queryBuilder, $condition, $index, $now);
+        foreach ($rule['conditions'] as $index => $condition) {
+            $conditions[] = $this->condition($queryBuilder, $condition, $index, $now);
+        }
+
+        // The audience and the subscribed status are ANDed with the whole group,
+        // never a disjunct of it: `any` widens who is reached, never past them.
+        if ([] !== $conditions) {
+            $queryBuilder->andWhere($rule['any']
+                ? $queryBuilder->expr()->orX(...$conditions)
+                : $queryBuilder->expr()->andX(...$conditions));
         }
 
         return $queryBuilder;
     }
 
     /** @param array{field: string, op: string, value: string} $condition */
-    private function applyCondition(QueryBuilder $queryBuilder, array $condition, int $index, DateTimeImmutable $now): void
+    private function condition(QueryBuilder $queryBuilder, array $condition, int $index, DateTimeImmutable $now): string
     {
         $parameter = 'seg'.$index;
         ['field' => $field, 'op' => $op, 'value' => $value] = $condition;
 
         if (SegmentCriteria::isProperty($field)) {
-            $this->applyProperty($queryBuilder, $field, $op, $value, $parameter);
-
-            return;
+            return $this->property($queryBuilder, $field, $op, $value, $parameter);
         }
 
-        match ($field) {
-            'tag' => $this->applyTag($queryBuilder, $op, $value, $parameter),
-            'locale' => $queryBuilder
-                ->andWhere(\sprintf('c.locale %s :%s', $op, $parameter))
-                ->setParameter($parameter, $value),
-            default => $queryBuilder
-                ->andWhere(\sprintf('c.%s %s :%s', $field, 'olderThan' === $op ? '<=' : '>=', $parameter))
-                ->setParameter($parameter, SegmentCriteria::threshold($value, $now)),
+        return match ($field) {
+            'tag' => $this->tag($queryBuilder, $op, $value, $parameter),
+            'locale' => $this->parameterized($queryBuilder, \sprintf('c.locale %s :%s', $op, $parameter), $parameter, $value),
+            default => $this->parameterized(
+                $queryBuilder,
+                \sprintf('c.%s %s :%s', $field, 'olderThan' === $op ? '<=' : '>=', $parameter),
+                $parameter,
+                SegmentCriteria::threshold($value, $now),
+            ),
         };
+    }
+
+    private function parameterized(QueryBuilder $queryBuilder, string $expression, string $parameter, mixed $value): string
+    {
+        $queryBuilder->setParameter($parameter, $value);
+
+        return $expression;
     }
 
     /**
      * Tags live in a JSON array column; matching on the quoted form (`"AmTrek"`)
      * keeps a shorter tag from matching a longer one that starts with it.
      */
-    private function applyTag(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): void
+    private function tag(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): string
     {
-        $queryBuilder
-            ->andWhere(\sprintf('c.tags %s :%s', 'has' === $op ? 'LIKE' : 'NOT LIKE', $parameter))
-            ->setParameter($parameter, '%"'.$value.'"%');
+        return $this->parameterized(
+            $queryBuilder,
+            \sprintf('c.tags %s :%s', 'has' === $op ? 'LIKE' : 'NOT LIKE', $parameter),
+            $parameter,
+            '%"'.$value.'"%',
+        );
     }
 
-    private function applyProperty(QueryBuilder $queryBuilder, string $field, string $op, string $value, string $parameter): void
+    private function property(QueryBuilder $queryBuilder, string $field, string $op, string $value, string $parameter): string
     {
         $extract = \sprintf("JSON_SCALAR(c.customProperties, '%s')", SegmentCriteria::propertyPath($field));
 
-        match ($op) {
-            'isSet' => $queryBuilder->andWhere($extract.' IS NOT NULL'),
-            'isNotSet' => $queryBuilder->andWhere($extract.' IS NULL'),
+        return match ($op) {
+            'isSet' => $extract.' IS NOT NULL',
+            'isNotSet' => $extract.' IS NULL',
             // A missing property is not "different from tmb" — it is unknown; an
             // explicit IS NOT NULL keeps != from silently widening the segment.
-            '!=' => $queryBuilder
-                ->andWhere($extract.' IS NOT NULL')
-                ->andWhere(\sprintf('%s != :%s', $extract, $parameter))
-                ->setParameter($parameter, $value),
-            default => $queryBuilder
-                ->andWhere(\sprintf('%s = :%s', $extract, $parameter))
-                ->setParameter($parameter, $value),
+            '!=' => $this->parameterized($queryBuilder, \sprintf('(%s IS NOT NULL AND %s != :%s)', $extract, $extract, $parameter), $parameter, $value),
+            default => $this->parameterized($queryBuilder, \sprintf('%s = :%s', $extract, $parameter), $parameter, $value),
         };
     }
 }

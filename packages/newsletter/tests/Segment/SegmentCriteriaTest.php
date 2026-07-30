@@ -17,11 +17,29 @@ final class SegmentCriteriaTest extends TestCase
             ['field' => 'prop.lastBoughtProduct', 'op' => '=', 'value' => 'tmb'],
         ]);
 
-        self::assertSame([
+        self::assertSame(['any' => false, 'conditions' => [
             ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
             ['field' => 'createdAt', 'op' => 'olderThan', 'value' => '7d'],
             ['field' => 'prop.lastBoughtProduct', 'op' => '=', 'value' => 'tmb'],
-        ], $normalized);
+        ]], $normalized);
+    }
+
+    /** A bare list is ANDed; `any` is the one thing a rule has to say out loud. */
+    public function testAGroupCarriesItsOperator(): void
+    {
+        $conditions = [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']];
+
+        self::assertSame(['any' => true, 'conditions' => $conditions], SegmentCriteria::normalize(['any' => $conditions]));
+        self::assertSame(['any' => false, 'conditions' => $conditions], SegmentCriteria::normalize(['all' => $conditions]));
+        self::assertSame(['any' => false, 'conditions' => $conditions], SegmentCriteria::normalize($conditions));
+    }
+
+    public function testARuleCannotBeBothAnyAndAll(): void
+    {
+        $this->expectException(SegmentException::class);
+        $this->expectExceptionMessageMatches('/not both/');
+
+        SegmentCriteria::normalize(['any' => [], 'all' => []]);
     }
 
     public function testValuelessOperatorsDropTheirValue(): void
@@ -30,12 +48,12 @@ final class SegmentCriteriaTest extends TestCase
             ['field' => 'prop.x', 'op' => 'isSet', 'value' => 'ignored'],
         ]);
 
-        self::assertSame('', $normalized[0]['value']);
+        self::assertSame('', $normalized['conditions'][0]['value']);
     }
 
     public function testAnEmptyListIsValid(): void
     {
-        self::assertSame([], SegmentCriteria::normalize([]));
+        self::assertSame(['any' => false, 'conditions' => []], SegmentCriteria::normalize([]));
     }
 
     public function testUnknownFieldIsRejected(): void

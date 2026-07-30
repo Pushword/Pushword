@@ -204,7 +204,7 @@ final class AutomationApiController extends AbstractApiController
                 return $this->badRequest($key.': '.$segmentException->getMessage());
             }
 
-            /** @var array<int, array<string, mixed>> $criteria */
+            /** @var array<mixed> $criteria */
             $criteria = $data[$key];
 
             if ('enrollWhen' === $key) {
@@ -326,7 +326,7 @@ final class AutomationApiController extends AbstractApiController
                             'audience' => ['type' => 'string'],
                             'name' => ['type' => 'string'],
                             'enabled' => ['type' => 'boolean'],
-                            'enrollWhen' => ['type' => 'array', 'description' => 'Segment criteria; empty enrolls every subscribed contact', 'items' => ['type' => 'object']],
+                            'enrollWhen' => ['description' => 'Segment criteria, ANDed; {"any": [...]} ORs them instead. Empty enrolls every subscribed contact', 'oneOf' => [['type' => 'array', 'items' => ['type' => 'object']], ['type' => 'object']]],
                             'stopWhen' => ['type' => 'array', 'description' => 'Re-checked before each step', 'items' => ['type' => 'object']],
                             'enrollFrom' => ['type' => 'string', 'format' => 'date-time', 'description' => 'Contacts registered before this are never enrolled; defaults to now'],
                             'steps' => [

@@ -228,6 +228,35 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
         ]));
     }
 
+    public function testAnAnyGroupTakesEitherCondition(): void
+    {
+        $this->page('tagged', tags: 'newsletter');
+        $this->page('templated', template: 'article.html.twig');
+        $this->page('neither');
+
+        self::assertSame(['tagged', 'templated'], $this->matching(['any' => [
+            ['field' => 'tag', 'op' => 'has', 'value' => 'newsletter'],
+            ['field' => 'template', 'op' => '=', 'value' => 'article.html.twig'],
+        ]]));
+    }
+
+    /**
+     * What `any` must never reach: the trigger's hosts and its `triggerFrom` are
+     * ANDed with the whole group, so no rule that can be written mails another
+     * site or a back catalogue.
+     */
+    public function testAnAnyGroupNeverWidensPastTheGuards(): void
+    {
+        $this->page('ours', tags: 'newsletter');
+        $this->page('otherHost', host: 'pushword.piedweb.com', tags: 'newsletter');
+        $this->page('backCatalogue', tags: 'newsletter', publishedAt: '-2 days');
+
+        self::assertSame(['ours'], $this->matching(['any' => [
+            ['field' => 'tag', 'op' => 'has', 'value' => 'newsletter'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'promo'],
+        ]]));
+    }
+
     public function testTheLimitBoundsWhatIsReturnedButNotWhatIsCounted(): void
     {
         $this->page('one');
@@ -242,9 +271,9 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
     }
 
     /**
-     * @param array<int, array<string, mixed>> $pageWhen
-     * @param (callable(): Page)|null          $extra    a page created after the others, to keep the expectation readable
-     * @param list<string>                     $hosts
+     * @param array<mixed>            $pageWhen a bare list of conditions, or one `{"any": [...]}` group
+     * @param (callable(): Page)|null $extra    a page created after the others, to keep the expectation readable
+     * @param list<string>            $hosts
      *
      * @return list<string> the matching slugs, prefix stripped, sorted
      */
@@ -263,21 +292,25 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
     }
 
     /**
-     * @param array<int, array<string, mixed>> $pageWhen
-     * @param list<string>                     $hosts
+     * @param array<mixed> $pageWhen
+     * @param list<string> $hosts
      */
     private function trigger(array $pageWhen, array $hosts = ['localhost.dev']): ContentTrigger
     {
-        // Every rule is scoped to this test's own pages: the fixtures publish
-        // their own on the same host.
-        return $this->createContentTrigger($this->audience, hosts: $hosts, pageWhen: [
+        // Every ANDed rule is scoped to this test's own pages: the fixtures
+        // publish their own on the same host. An `any` group cannot take that
+        // guard — one operator per rule, no nesting — and leans instead on the
+        // trigger's `triggerFrom`, which no fixture page is recent enough to pass.
+        $scoped = \array_key_exists('any', $pageWhen) ? $pageWhen : [
             ['field' => 'slug', 'op' => 'startsWith', 'value' => $this->prefix.'/'],
             ...$pageWhen,
-        ]);
+        ];
+
+        return $this->createContentTrigger($this->audience, hosts: $hosts, pageWhen: $scoped);
     }
 
     /** @param array<string, mixed> $properties */
-    private function page(string $slug, ?string $template = null, ?Page $parent = null, array $properties = [], string $host = 'localhost.dev', string $tags = ''): Page
+    private function page(string $slug, ?string $template = null, ?Page $parent = null, array $properties = [], string $host = 'localhost.dev', string $tags = '', string $publishedAt = '-10 minutes'): Page
     {
         $page = new Page();
         $page->host = $host;
@@ -285,7 +318,7 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
         $page->setH1('Hello');
         $page->setTemplate($template);
         $page->setTags($tags);
-        $page->setPublishedAt(new DateTime('-10 minutes'));
+        $page->setPublishedAt(new DateTime($publishedAt));
 
         if (null !== $parent) {
             $page->setParentPage($parent);

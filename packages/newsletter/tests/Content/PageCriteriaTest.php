@@ -18,18 +18,27 @@ final class PageCriteriaTest extends TestCase
             ['field' => 'prop.noNewsletter', 'op' => 'isNotSet'],
         ]);
 
-        self::assertSame([
+        self::assertSame(['any' => false, 'conditions' => [
             ['field' => 'slug', 'op' => 'startsWith', 'value' => 'blog/'],
             ['field' => 'template', 'op' => '=', 'value' => 'article.html.twig'],
             ['field' => 'parentPage', 'op' => '=', 'value' => 'blog'],
             ['field' => 'ancestor', 'op' => '!=', 'value' => 'blog'],
             ['field' => 'prop.noNewsletter', 'op' => 'isNotSet', 'value' => ''],
-        ], $normalized);
+        ]], $normalized);
+    }
+
+    /** Both grammars carry their operator the same way. */
+    public function testAGroupCarriesItsOperator(): void
+    {
+        $conditions = [['field' => 'tag', 'op' => 'has', 'value' => 'blog']];
+
+        self::assertSame(['any' => true, 'conditions' => $conditions], PageCriteria::normalize(['any' => $conditions]));
+        self::assertSame(['any' => false, 'conditions' => $conditions], PageCriteria::normalize(['all' => $conditions]));
     }
 
     public function testAnEmptyListIsValid(): void
     {
-        self::assertSame([], PageCriteria::normalize([]));
+        self::assertSame(['any' => false, 'conditions' => []], PageCriteria::normalize([]));
     }
 
     /**

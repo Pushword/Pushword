@@ -98,8 +98,21 @@ rule and its stop condition — a flat list of conditions, all of which must hol
 | `prop.<key>` | `=`, `!=`, `isSet`, `isNotSet` |
 | `locale` | `=`, `!=` |
 
-An empty list means the whole audience. There is no `OR` and no nesting: a second
-automation is cheaper than an expression tree.
+An empty list means the whole audience.
+
+**A rule that needs `OR` says so**, and then every condition belongs to that one
+operator — the rule a [`pages_list`](/pages-list) search follows, and for the same
+reason: one operator per expression is learnable, a tree is not.
+
+```json
+{"any": [
+  {"field": "tag", "op": "has", "value": "AmTrek"},
+  {"field": "tag", "op": "has", "value": "AmTrek-VIP"}
+]}
+```
+
+`{"all": [...]}` spells the default out. Two campaigns do not replace that `any`:
+a contact carrying both tags would be in both, and be mailed twice.
 
 Two properties hold whatever you write:
 
@@ -175,20 +188,23 @@ and body to send.
 | `tag` | `has`, `hasNot` — as on a contact, and as a bare [`pages_list`](/pages-list) search |
 | `prop.<key>` | `=`, `!=`, `isSet`, `isNotSet` |
 
-Same flat, ANDed shape as a segment, over pages instead of contacts. An empty
-list means every published page of those hosts. The two rules read as one
+Same shape as a segment, over pages instead of contacts — including `{"any": [...]}`.
+An empty list means every published page of those hosts. The two rules read as one
 sentence: `pageWhen` picks the article, `segment` picks the readers.
 
-Having no OR, it leans on what already groups pages — the same two axes a
-`pages_list` search leans on. A blog split in rubrics, whose articles sit at the
+Before reaching for `any`, reach for what already groups pages — the same two axes
+a `pages_list` search leans on. A blog split in rubrics, whose articles sit at the
 root and are attached by `parentPage`, shares no slug prefix and would otherwise
-need one trigger per rubric. Either axis covers it in one condition, and covers
-the rubric added next month too:
+need one trigger per rubric. Either axis covers it in one condition, and unlike an
+enumeration it covers the rubric added next month too:
 
 ```json
 [{"field": "ancestor", "op": "=", "value": "blog"}]
 [{"field": "tag", "op": "has", "value": "blog"}]
 ```
+
+Whatever the rule, the hosts, the `triggerFrom` and the pages already handled are
+ANDed with the whole of it: `any` widens which pages match, never past those.
 
 The subject and the body may quote four values of the page:
 
