@@ -104,6 +104,7 @@ final readonly class PageMatcher
 
         match ($field) {
             'slug' => $this->applySlug($queryBuilder, $op, $value, $parameter),
+            'tag' => $this->applyTag($queryBuilder, $op, $value, $parameter),
             'parentPage' => $this->applyParent($queryBuilder, $op, $value, $parameter),
             'ancestor' => $this->applyAncestor($queryBuilder, $op, $value, $parameter),
             default => $this->applyTemplate($queryBuilder, $op, $value, $parameter),
@@ -123,6 +124,19 @@ final readonly class PageMatcher
         $special = [self::LIKE_ESCAPE, '%', '_'];
 
         return str_replace($special, array_map(static fn (string $c): string => self::LIKE_ESCAPE.$c, $special), $value);
+    }
+
+    /**
+     * The other axis a `pages_list` search groups pages by, matched the way
+     * {@see \Pushword\Newsletter\Segment\SegmentResolver} matches a contact's:
+     * tags live in a JSON array column, and the quoted form keeps a shorter tag
+     * from matching a longer one that starts with it.
+     */
+    private function applyTag(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): void
+    {
+        $queryBuilder
+            ->andWhere(\sprintf("p.tags %s :%s ESCAPE '%s'", 'has' === $op ? 'LIKE' : 'NOT LIKE', $parameter, self::LIKE_ESCAPE))
+            ->setParameter($parameter, '%"'.$this->escapeLike($value).'"%');
     }
 
     /** The value is the parent's slug: what an editor knows, and what survives a re-parenting. */

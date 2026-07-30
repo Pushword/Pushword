@@ -32,13 +32,17 @@ final class PageCriteriaTest extends TestCase
         self::assertSame([], PageCriteria::normalize([]));
     }
 
-    /** The segment grammar's fields must not silently leak into the page one. */
+    /**
+     * The segment grammar's fields must not silently leak into the page one.
+     * `tag` is the exception, and a deliberate one: a page carries tags as a
+     * contact does, so both sides spell it the same.
+     */
     public function testAContactFieldIsRejected(): void
     {
         $this->expectException(SegmentException::class);
-        $this->expectExceptionMessageMatches('/unknown field "tag"/');
+        $this->expectExceptionMessageMatches('/unknown field "confirmedAt"/');
 
-        PageCriteria::normalize([['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']]);
+        PageCriteria::normalize([['field' => 'confirmedAt', 'op' => 'olderThan', 'value' => '7d']]);
     }
 
     public function testOperatorMustApplyToTheField(): void

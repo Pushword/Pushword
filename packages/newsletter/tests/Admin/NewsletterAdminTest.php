@@ -104,7 +104,8 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $form['ContentTrigger[name]'] = 'Broken rule';
         $form['ContentTrigger[audience]'] = (string) $audience->id;
         $form['ContentTrigger[subjectTemplate]'] = 'New article: {{ page.h1 }}';
-        $form['ContentTrigger[pageWhenAsJson]'] = '[{"field":"tag","op":"has","value":"AmTrek"}]';
+        // A contact field: `tag` reads the same on both sides, `confirmedAt` belongs to one.
+        $form['ContentTrigger[pageWhenAsJson]'] = '[{"field":"confirmedAt","op":"olderThan","value":"7d"}]';
         $client->submit($form);
 
         self::assertSame(422, $client->getResponse()->getStatusCode());

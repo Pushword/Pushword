@@ -85,6 +85,27 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
         self::assertSame(['none'], $this->matching([['field' => 'template', 'op' => '!=', 'value' => 'article.html.twig']]));
     }
 
+    /**
+     * The axis `pages_list` searches by default, and the one a blog whose
+     * articles share neither a parent nor a slug prefix still has.
+     */
+    public function testATagSelectsAndItsNegationExcludes(): void
+    {
+        $this->page('tagged', tags: 'blog ia');
+        $this->page('untagged');
+
+        self::assertSame(['tagged'], $this->matching([['field' => 'tag', 'op' => 'has', 'value' => 'blog']]));
+        self::assertSame(['untagged'], $this->matching([['field' => 'tag', 'op' => 'hasNot', 'value' => 'blog']]));
+    }
+
+    /** Matching on the quoted form is what keeps a tag from matching a longer one. */
+    public function testALongerTagIsNotTheOneAsked(): void
+    {
+        $this->page('longer', tags: 'blogging');
+
+        self::assertSame([], $this->matching([['field' => 'tag', 'op' => 'has', 'value' => 'blog']]));
+    }
+
     public function testParentPageSelectsOnTheParentSlug(): void
     {
         $parent = $this->page('blog');
@@ -256,13 +277,14 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
     }
 
     /** @param array<string, mixed> $properties */
-    private function page(string $slug, ?string $template = null, ?Page $parent = null, array $properties = [], string $host = 'localhost.dev'): Page
+    private function page(string $slug, ?string $template = null, ?Page $parent = null, array $properties = [], string $host = 'localhost.dev', string $tags = ''): Page
     {
         $page = new Page();
         $page->host = $host;
         $page->setSlug($this->prefix.'/'.$slug);
         $page->setH1('Hello');
         $page->setTemplate($template);
+        $page->setTags($tags);
         $page->setPublishedAt(new DateTime('-10 minutes'));
 
         if (null !== $parent) {

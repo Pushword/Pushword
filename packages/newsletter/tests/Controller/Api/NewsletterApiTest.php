@@ -474,7 +474,8 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
             'audience' => $audience->getSlug(),
             'name' => 'Broken',
             'subjectTemplate' => 'Hello',
-            'pageWhen' => [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']],
+            // `tag` reads the same on both sides; `confirmedAt` belongs to contacts alone.
+            'pageWhen' => [['field' => 'confirmedAt', 'op' => 'olderThan', 'value' => '7d']],
         ]);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());

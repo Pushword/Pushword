@@ -32,12 +32,17 @@ form into any page:
 {{ newsletter_form('altimood') }}
 {{ newsletter_form('altimood', ['AmTrek']) }}
 {{ newsletter_form(['altimood', 'altimood-promos']) }}
+{{ newsletter_form('altimood', [], 'footer') }}
 ```
 
 Given several audiences the form offers one ticked checkbox each, and a single
 submission opens a subscription per ticked list — each with its own confirmation
 mail where the list asks for one. An unknown slug fails the whole submission:
 half a subscription is not what anyone ticked.
+
+The third argument names where the form sits, and is kept on the contact as the
+*where* of the opt-in. Left out, it falls back to the slug of the page the form
+was rendered on — so two forms on one page are worth naming apart.
 
 Finally, add the clock to the server's crontab:
 
@@ -167,19 +172,22 @@ and body to send.
 | `slug` | `startsWith`, `notStartsWith` |
 | `template`, `parentPage` | `=`, `!=` — `parentPage` takes the parent's slug |
 | `ancestor` | `=`, `!=` — the slug of a page it sits under, at any depth |
+| `tag` | `has`, `hasNot` — as on a contact, and as a bare [`pages_list`](/pages-list) search |
 | `prop.<key>` | `=`, `!=`, `isSet`, `isNotSet` |
 
 Same flat, ANDed shape as a segment, over pages instead of contacts. An empty
 list means every published page of those hosts. The two rules read as one
 sentence: `pageWhen` picks the article, `segment` picks the readers.
 
-Having no OR, it leans on the page tree instead. A blog split in rubrics, whose
-articles sit at the root and are attached by `parentPage`, shares no slug prefix
-and would otherwise need one trigger per rubric — `ancestor` covers it in one
-condition, and covers the rubric added next month too:
+Having no OR, it leans on what already groups pages — the same two axes a
+`pages_list` search leans on. A blog split in rubrics, whose articles sit at the
+root and are attached by `parentPage`, shares no slug prefix and would otherwise
+need one trigger per rubric. Either axis covers it in one condition, and covers
+the rubric added next month too:
 
 ```json
 [{"field": "ancestor", "op": "=", "value": "blog"}]
+[{"field": "tag", "op": "has", "value": "blog"}]
 ```
 
 The subject and the body may quote four values of the page:
@@ -270,6 +278,15 @@ the command returns immediately and a campaign resumes at the right rate whateve
 happened to the previous run. `--batch` caps how many mails one run may send
 (default 50, configurable with `newsletter.send_batch`).
 
+The cadence itself is **seconds between two mails**: `rateSeconds` on the
+audience, 30 by default, which a campaign may override with its own for a
+one-off — a small list you want out now, or a big one your provider would rather
+receive slowly. It is what sets the rate; a minutely cron at 30 s sends two mails
+a run and nothing you do to `--batch` changes that. The batch is the other
+bound, and it only bites when catching up: after an outage the elapsed time
+allows hundreds at once, and the cap is what keeps a resumed campaign from
+becoming the burst the cadence existed to avoid.
+
 ```shell
 php bin/console pw:newsletter:tick
 php bin/console pw:newsletter:send 12    # arm a campaign now; the tick delivers
@@ -332,6 +349,43 @@ produced: they are ordinary campaigns, and some of them have been sent.
 
 Audiences have no endpoint: a consent scope and a sender identity are set up
 once, in the admin.
+
+## Posting the form yourself
+
+`newsletter_form()` renders one, but the endpoint behind it is public and takes
+an ordinary form post, so a front end of your own — a React island, a static
+site's own markup — can subscribe without a token:
+
+```
+POST https://example.com/newsletter/subscribe
+```
+
+| field | |
+|---|---|
+| `email` | required |
+| `audience` | required — one slug, or `audiences[]` to subscribe to several at once |
+| `name` | optional, substituted as `%name%` |
+| `interests[]` | tags to attach; only values the audience declares survive |
+| `locale` | defaults to the current site's |
+| `source` | where the form sits; defaults to the referer's path |
+| `website` | the honeypot — render it hidden, never fill it |
+
+The response is an HTML fragment, not JSON: the built-in form replaces itself
+with it, and it is `alert.html.twig` you override to restyle it. Read the status
+rather than the body — `200` subscribed (or awaiting confirmation), `400` a
+missing audience or a malformed address, `404` a slug that matches nothing, `429`
+the rate limit.
+
+Two behaviours to expect while testing:
+
+- **Ten subscriptions per IP per hour.** The endpoint is public, cross-origin and
+  sends a mail on success — without a ceiling it is a way to deliver confirmation
+  mails to an address of someone else's choosing.
+- **A filled honeypot gets the success page**, and no contact. A prober must not
+  be able to tell a rejected submission from an accepted one — which does mean a
+  form whose hidden field your own JS populates will silently subscribe nobody.
+
+Posting from another origin needs that origin allow-listed, below.
 
 ## Configuration
 

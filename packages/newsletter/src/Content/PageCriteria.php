@@ -18,9 +18,10 @@ use Pushword\Newsletter\Segment\SegmentException;
  *
  * It says *which* pages, never *when*: the wait is the trigger's own delay.
  *
- * Having no OR, it leans on the page tree instead: `parentPage` names one
- * rubric, `ancestor` names the section a rubric belongs to — which is what
- * keeps a blog split in rubrics down to a single condition.
+ * Having no OR, it leans on what already groups pages, the two axes a
+ * `pages_list` search leans on too: the tree — `parentPage` names one rubric,
+ * `ancestor` the section it belongs to — and `tag`. Either keeps a blog split
+ * in rubrics down to a single condition.
  *
  * A malformed list raises {@see SegmentException}, the same way a malformed
  * segment does — one grammar, one kind of mistake, one thing to catch.
@@ -35,6 +36,9 @@ final class PageCriteria
         'template' => ['=', '!='],
         'parentPage' => ['=', '!='],
         'ancestor' => ['=', '!='],
+        // A page carries tags as a contact does, so it reads as one on the
+        // segment side: `has`, not `=`.
+        'tag' => ['has', 'hasNot'],
     ];
 
     public const array PROP_OPERATORS = ['=', '!=', 'isSet', 'isNotSet'];
