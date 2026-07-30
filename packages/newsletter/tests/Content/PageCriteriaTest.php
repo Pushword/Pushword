@@ -55,6 +55,22 @@ final class PageCriteriaTest extends TestCase
         PageCriteria::normalize([['field' => 'slug', 'op' => 'startsWith']]);
     }
 
+    public function testAPropertyFieldNeedsAName(): void
+    {
+        $this->expectException(SegmentException::class);
+        $this->expectExceptionMessageMatches('/needs a property name/');
+
+        PageCriteria::normalize([['field' => 'prop.', 'op' => '=', 'value' => 'x']]);
+    }
+
+    public function testAConditionMustBeAnObject(): void
+    {
+        $this->expectException(SegmentException::class);
+        $this->expectExceptionMessageMatches('/is not an object/');
+
+        PageCriteria::normalize(['slug startsWith blog/']);
+    }
+
     public function testTheJsonRoundTrip(): void
     {
         $criteria = [['field' => 'slug', 'op' => 'startsWith', 'value' => 'blog/']];

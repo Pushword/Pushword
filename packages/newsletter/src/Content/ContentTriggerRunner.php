@@ -66,30 +66,19 @@ final readonly class ContentTriggerRunner
             return 0;
         }
 
-        try {
-            $pages = $this->pageMatcher->pages($trigger, $now);
-        } catch (SegmentException $segmentException) {
-            // A trigger nobody can fix from here: it stays quiet rather than
-            // failing the whole tick, and says so once per run.
-            $this->logger->error('Newsletter content trigger has invalid page criteria.', [
-                'trigger' => $trigger->id,
-                'error' => $segmentException->getMessage(),
-            ]);
-
-            return 0;
-        }
-
-        /** @var list<array{Page, Campaign}> $scheduled */
+        /** @var list<array{int, Campaign}> $scheduled */
         $scheduled = [];
 
-        foreach ($pages as $page) {
-            if (null === $page->id) {
+        foreach ($this->matchingPages($trigger, $now) as $page) {
+            $pageId = $page->id;
+
+            if (null === $pageId) {
                 continue;
             }
 
             $campaign = $this->campaignFor($trigger, $audience, $page, $now);
             $this->entityManager->persist($campaign);
-            $scheduled[] = [$page, $campaign];
+            $scheduled[] = [$pageId, $campaign];
         }
 
         if ([] === $scheduled) {
@@ -100,13 +89,34 @@ final readonly class ContentTriggerRunner
         // the flush is split in two rather than the log row holding a relation.
         $this->entityManager->flush();
 
-        foreach ($scheduled as [$page, $campaign]) {
-            $this->entityManager->persist(new ContentTriggerLog($trigger, (int) $page->id, (int) $campaign->id));
+        foreach ($scheduled as [$pageId, $campaign]) {
+            $this->entityManager->persist(new ContentTriggerLog($trigger, $pageId, (int) $campaign->id));
         }
 
         $this->entityManager->flush();
 
         return \count($scheduled);
+    }
+
+    /**
+     * A rule nobody can fix from here — hand-edited, or left behind by a grammar
+     * change. The trigger stays quiet rather than failing the whole tick, and
+     * says so once per run.
+     *
+     * @return list<Page>
+     */
+    private function matchingPages(ContentTrigger $trigger, DateTimeImmutable $now): array
+    {
+        try {
+            return $this->pageMatcher->pages($trigger, $now);
+        } catch (SegmentException $segmentException) {
+            $this->logger->error('Newsletter content trigger has invalid page criteria.', [
+                'trigger' => $trigger->id,
+                'error' => $segmentException->getMessage(),
+            ]);
+
+            return [];
+        }
     }
 
     private function campaignFor(ContentTrigger $trigger, Audience $audience, Page $page, DateTimeImmutable $now): Campaign

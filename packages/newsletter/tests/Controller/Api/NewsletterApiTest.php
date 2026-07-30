@@ -483,6 +483,66 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertStringStartsWith('pageWhen:', $error);
     }
 
+    public function testListingTriggersIsScopedByAudienceAndState(): void
+    {
+        $audience = $this->createAudience();
+        $other = $this->createAudience();
+        $this->createContentTrigger($audience);
+        $disabled = $this->createContentTrigger($audience);
+        $disabled->setEnabled(false);
+        $this->createContentTrigger($other);
+        $this->entityManager->flush();
+
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/content-trigger?audience='.$audience->getSlug());
+        self::assertSame(2, $body['total']);
+
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/content-trigger?audience='.$audience->getSlug().'&enabled=0');
+        self::assertSame(1, $body['total']);
+    }
+
+    public function testAnUnknownAudienceIsNotFound(): void
+    {
+        $this->request(Request::METHOD_GET, '/api/newsletter/content-trigger?audience=no-such-audience');
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+
+        $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
+            'audience' => 'no-such-audience',
+            'name' => 'Orphan',
+            'subjectTemplate' => 'Hello',
+        ]);
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+    }
+
+    /** Both rules are validated, and the message says which one was wrong. */
+    public function testAMalformedSegmentOnATriggerIsRejected(): void
+    {
+        $audience = $this->createAudience();
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
+            'audience' => $audience->getSlug(),
+            'name' => 'Broken',
+            'subjectTemplate' => 'Hello',
+            'segment' => [['field' => 'slug', 'op' => 'startsWith', 'value' => 'blog/']],
+        ]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+        $error = $body['error'];
+        self::assertIsString($error);
+        self::assertStringStartsWith('segment:', $error);
+    }
+
+    public function testATriggerNeedsANameAndASubject(): void
+    {
+        $audience = $this->createAudience();
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
+            'audience' => $audience->getSlug(),
+        ]);
+
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
+        self::assertSame('validation', $body['error']);
+    }
+
     public function testATriggerReportsBothSidesOfItsRule(): void
     {
         $audience = $this->createAudience();

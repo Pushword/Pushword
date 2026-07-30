@@ -101,6 +101,37 @@ final class ContentTriggerRunnerTest extends AbstractNewsletterTestCase
         self::assertSame(0, $this->runTriggers()['triggered']);
     }
 
+    public function testADisabledTriggerPicksNothingUp(): void
+    {
+        $audience = $this->createAudience();
+        $trigger = $this->trigger($audience);
+        $trigger->setEnabled(false);
+
+        $this->entityManager->flush();
+
+        $this->createPage('blog/hello', publishedAt: '-10 minutes');
+
+        self::assertSame(0, $this->runTriggers()['triggered']);
+    }
+
+    /**
+     * A rule nobody can fix from the tick — hand-edited in the database, or left
+     * behind by a grammar change. It must cost that trigger its run, not the run.
+     */
+    public function testAnUnusableRuleDoesNotTakeTheTickDownWithIt(): void
+    {
+        $audience = $this->createAudience();
+        $broken = $this->trigger($audience);
+        $broken->setPageWhen([['field' => 'nope', 'op' => '=', 'value' => 'x']]);
+
+        $this->entityManager->flush();
+
+        $this->trigger($this->createAudience());
+        $this->createPage('blog/hello', publishedAt: '-10 minutes');
+
+        self::assertSame(1, $this->runTriggers()['triggered'], 'the healthy trigger still ran');
+    }
+
     /** The guard that makes a trigger safe to switch on over an existing site. */
     public function testTheBackCatalogueIsNeverMailed(): void
     {

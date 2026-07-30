@@ -19,6 +19,14 @@ use Pushword\Newsletter\Segment\SegmentException;
  */
 final readonly class PageMatcher
 {
+    /**
+     * `_` is both a LIKE wildcard and a legal slug character, so a prefix has to
+     * be escaped. Not with a backslash: SQLite gives LIKE no escape character at
+     * all unless one is named, where MySQL takes the backslash for granted — the
+     * same pattern would then match nothing on one and work on the other.
+     */
+    private const string LIKE_ESCAPE = '!';
+
     public function __construct(private EntityManagerInterface $entityManager)
     {
     }
@@ -52,7 +60,7 @@ final readonly class PageMatcher
     }
 
     /** @throws SegmentException */
-    public function queryBuilder(ContentTrigger $trigger, DateTimeImmutable $now): QueryBuilder
+    private function queryBuilder(ContentTrigger $trigger, DateTimeImmutable $now): QueryBuilder
     {
         $alreadyHandled = $this->entityManager->createQueryBuilder()
             ->select('handled.pageId')
@@ -95,19 +103,25 @@ final readonly class PageMatcher
         }
 
         match ($field) {
-            'slug' => $queryBuilder
-                ->andWhere(\sprintf('p.slug %s :%s', 'startsWith' === $op ? 'LIKE' : 'NOT LIKE', $parameter))
-                ->setParameter($parameter, addcslashes($value, '%_').'%'),
+            'slug' => $this->applySlug($queryBuilder, $op, $value, $parameter),
             'parentPage' => $this->applyParent($queryBuilder, $op, $value, $parameter),
-            // An absent template is the site's default one — a known value, and
-            // genuinely not the one being excluded. Unlike a missing property,
-            // which is unknown, NULL therefore belongs on the `!=` side.
-            default => $queryBuilder
-                ->andWhere('=' === $op
-                    ? \sprintf('p.template = :%s', $parameter)
-                    : \sprintf('(p.template IS NULL OR p.template != :%s)', $parameter))
-                ->setParameter($parameter, $value),
+            default => $this->applyTemplate($queryBuilder, $op, $value, $parameter),
         };
+    }
+
+    private function applySlug(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): void
+    {
+        $queryBuilder
+            ->andWhere(\sprintf("p.slug %s :%s ESCAPE '%s'", 'startsWith' === $op ? 'LIKE' : 'NOT LIKE', $parameter, self::LIKE_ESCAPE))
+            ->setParameter($parameter, $this->escapeLike($value).'%');
+    }
+
+    /** Every special character gets the escape prefix; nothing else is touched. */
+    private function escapeLike(string $value): string
+    {
+        $special = [self::LIKE_ESCAPE, '%', '_'];
+
+        return str_replace($special, array_map(static fn (string $c): string => self::LIKE_ESCAPE.$c, $special), $value);
     }
 
     /** The value is the parent's slug: what an editor knows, and what survives a re-parenting. */
@@ -121,6 +135,20 @@ final readonly class PageMatcher
             ->andWhere('=' === $op
                 ? \sprintf('parent.slug = :%s', $parameter)
                 : \sprintf('(parent.slug IS NULL OR parent.slug != :%s)', $parameter))
+            ->setParameter($parameter, $value);
+    }
+
+    /**
+     * An absent template is the site's default one — a known value, and
+     * genuinely not the one being excluded. Unlike a missing property, which is
+     * unknown, NULL therefore belongs on the `!=` side.
+     */
+    private function applyTemplate(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): void
+    {
+        $queryBuilder
+            ->andWhere('=' === $op
+                ? \sprintf('p.template = :%s', $parameter)
+                : \sprintf('(p.template IS NULL OR p.template != :%s)', $parameter))
             ->setParameter($parameter, $value);
     }
 

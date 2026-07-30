@@ -8,6 +8,7 @@ use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Entity\ContentTrigger;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -108,6 +109,27 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
 
         self::assertSame(422, $client->getResponse()->getStatusCode());
         self::assertStringContainsString('unknown field', (string) $client->getResponse()->getContent());
+    }
+
+    /** A rule you cannot count is one you will not switch on. */
+    public function testTheTriggerPreviewReportsBothSidesOfTheRule(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $trigger = new ContentTrigger()
+            ->setAudience($audience)
+            ->setName('Preview me')
+            ->setHosts(['localhost.dev'])
+            ->setPageWhen([['field' => 'slug', 'op' => 'startsWith', 'value' => 'nothing-matches-this/']])
+            ->setSubjectTemplate('New article: {{ page.h1 }}');
+        $this->entityManager()->persist($trigger);
+        $this->entityManager()->flush();
+
+        $client->request(Request::METHOD_GET, '/admin/newsletter/content-trigger/'.$trigger->id.'/preview-pages');
+        $client->followRedirect();
+
+        self::assertStringContainsString('0 page(s) waiting', (string) $client->getResponse()->getContent());
     }
 
     /** Contacts are only ever created by an opt-in, never by hand in the admin. */

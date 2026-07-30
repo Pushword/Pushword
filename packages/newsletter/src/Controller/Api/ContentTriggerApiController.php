@@ -216,19 +216,17 @@ final class ContentTriggerApiController extends AbstractApiController
             $trigger->setPageWhen($pageWhen);
         }
 
-        if (! \array_key_exists('segment', $data)) {
-            return null;
-        }
+        if (\array_key_exists('segment', $data)) {
+            try {
+                SegmentCriteria::validate($data['segment']);
+            } catch (SegmentException $segmentException) {
+                return $this->badRequest('segment: '.$segmentException->getMessage());
+            }
 
-        try {
-            SegmentCriteria::validate($data['segment']);
-        } catch (SegmentException $segmentException) {
-            return $this->badRequest('segment: '.$segmentException->getMessage());
+            /** @var array<int, array<string, mixed>> $segment */
+            $segment = $data['segment'];
+            $trigger->setSegment($segment);
         }
-
-        /** @var array<int, array<string, mixed>> $segment */
-        $segment = $data['segment'];
-        $trigger->setSegment($segment);
 
         return null;
     }

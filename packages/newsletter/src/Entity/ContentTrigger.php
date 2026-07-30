@@ -225,24 +225,25 @@ class ContentTrigger implements IdInterface, Stringable
                 $this->pageWhen = PageCriteria::fromJson($this->criteriaJson['pageWhen']);
                 unset($this->criteriaJson['pageWhen']);
             } catch (SegmentException $segmentException) {
-                $executionContext->buildViolation($segmentException->getMessage())
-                    ->atPath('pageWhenAsJson')
-                    ->addViolation();
+                $this->reject($executionContext, 'pageWhenAsJson', $segmentException);
             }
         }
 
-        if (! isset($this->criteriaJson['segment'])) {
-            return;
+        if (isset($this->criteriaJson['segment'])) {
+            try {
+                $this->segment = SegmentCriteria::fromJson($this->criteriaJson['segment']);
+                unset($this->criteriaJson['segment']);
+            } catch (SegmentException $segmentException) {
+                $this->reject($executionContext, 'segmentAsJson', $segmentException);
+            }
         }
+    }
 
-        try {
-            $this->segment = SegmentCriteria::fromJson($this->criteriaJson['segment']);
-            unset($this->criteriaJson['segment']);
-        } catch (SegmentException $segmentException) {
-            $executionContext->buildViolation($segmentException->getMessage())
-                ->atPath('segmentAsJson')
-                ->addViolation();
-        }
+    private function reject(ExecutionContextInterface $executionContext, string $path, SegmentException $segmentException): void
+    {
+        $executionContext->buildViolation($segmentException->getMessage())
+            ->atPath($path)
+            ->addViolation();
     }
 
     public function getDelayMinutes(): int
