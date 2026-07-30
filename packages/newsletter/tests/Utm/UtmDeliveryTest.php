@@ -26,6 +26,7 @@ final class UtmDeliveryTest extends AbstractNewsletterTestCase
 
         $campaign = $this->createCampaign($audience, subject: 'Janvier');
         $campaign->setBodyMarkdown('[Read](/article)');
+
         $this->entityManager->flush();
 
         $sender = self::getContainer()->get(CampaignSender::class);
@@ -65,6 +66,7 @@ final class UtmDeliveryTest extends AbstractNewsletterTestCase
 
         $campaign = $this->createCampaign($audience);
         $campaign->setBodyMarkdown('[Read](/article)');
+
         $this->entityManager->flush();
 
         $sender = self::getContainer()->get(CampaignSender::class);
