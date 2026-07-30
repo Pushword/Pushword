@@ -66,9 +66,13 @@ final class NewsletterController extends AbstractController
             return $this->alert($response, 'newsletter.subscribe.pending', 'success');
         }
 
-        $audience = $this->audienceRepository->findOneBySlug((string) $request->request->get('audience', ''));
-        if (! $audience instanceof Audience) {
+        $audiences = $this->submittedAudiences($request);
+        if (null === $audiences) {
             return $this->alert($response, 'newsletter.subscribe.unknownAudience', 'error', Response::HTTP_NOT_FOUND);
+        }
+
+        if ([] === $audiences) {
+            return $this->alert($response, 'newsletter.subscribe.noAudience', 'error', Response::HTTP_BAD_REQUEST);
         }
 
         $email = trim((string) $request->request->get('email', ''));
@@ -80,20 +84,29 @@ final class NewsletterController extends AbstractController
             return $this->alert($response, 'newsletter.subscribe.tooMany', 'error', Response::HTTP_TOO_MANY_REQUESTS);
         }
 
-        $contact = $this->contactManager->subscribe(
-            $audience,
-            $email,
-            (string) $request->request->get('name', ''),
-            $this->resolveLocale($request),
-            $audience->filterInterests($this->submittedInterests($request)),
-            $this->resolveSource($request),
-            $this->resolveOptinHost($request),
-            $request->getClientIp(),
-        );
+        $interests = $this->submittedList($request, 'interests');
+        $pending = false;
 
+        foreach ($audiences as $audience) {
+            $contact = $this->contactManager->subscribe(
+                $audience,
+                $email,
+                (string) $request->request->get('name', ''),
+                $this->resolveLocale($request),
+                $audience->filterInterests($interests),
+                $this->resolveSource($request),
+                $this->resolveOptinHost($request),
+                $request->getClientIp(),
+            );
+
+            $pending = $pending || $contact->isPending();
+        }
+
+        // One confirmation to click is the whole story to tell: it is what stands
+        // between the person and their first mail, whatever the other lists did.
         return $this->alert(
             $response,
-            $contact->isPending() ? 'newsletter.subscribe.pending' : 'newsletter.subscribe.done',
+            $pending ? 'newsletter.subscribe.pending' : 'newsletter.subscribe.done',
             'success',
         );
     }
@@ -142,10 +155,56 @@ final class NewsletterController extends AbstractController
 
         $this->contactManager->unsubscribe($contact);
 
-        return $this->page('unsubscribed.html.twig', $contact);
+        return $this->unsubscribed($contact);
     }
 
-    private function page(string $template, ?Contact $contact, int $status = Response::HTTP_OK): Response
+    /**
+     * Leave the other lists of the same host too.
+     *
+     * They are offered as a choice, never acted on with the first opt-out:
+     * consent is scoped to one audience, and so is leaving. Only someone
+     * opening the link themselves ever gets here — the RFC 8058 one-click POST
+     * is sent by the mailbox provider, which shows the response to nobody.
+     */
+    #[Route(
+        path: '/newsletter/unsubscribe/{token}/others',
+        name: 'pushword_newsletter_unsubscribe_others',
+        requirements: ['token' => '[a-f0-9]{64}'],
+        methods: ['POST'],
+    )]
+    public function unsubscribeOthers(string $token, Request $request): Response
+    {
+        $contact = $this->contactRepository->findOneByToken($token);
+
+        if (! $contact instanceof Contact) {
+            return $this->page('unknown.html.twig', null, Response::HTTP_NOT_FOUND);
+        }
+
+        $all = $request->request->has('all');
+        $submitted = $this->submittedList($request, 'audiences');
+
+        // The siblings are re-read here rather than trusted from the form: the
+        // slugs decide nothing, they only pick from what the token may touch.
+        foreach ($this->contactRepository->findSubscribedSiblings($contact) as $sibling) {
+            if ($all || \in_array($sibling->getAudience()->getSlug(), $submitted, true)) {
+                $this->contactManager->unsubscribe($sibling);
+            }
+        }
+
+        return $this->unsubscribed($contact);
+    }
+
+    private function unsubscribed(Contact $contact): Response
+    {
+        return $this->page(
+            'unsubscribed.html.twig',
+            $contact,
+            siblings: $this->contactRepository->findSubscribedSiblings($contact),
+        );
+    }
+
+    /** @param list<Contact> $siblings */
+    private function page(string $template, ?Contact $contact, int $status = Response::HTTP_OK, array $siblings = []): Response
     {
         $audience = $contact?->getAudience();
         $view = $this->siteRegistry->get($audience?->getMainHost())
@@ -154,6 +213,7 @@ final class NewsletterController extends AbstractController
         return $this->render($view, [
             'contact' => $contact,
             'audience' => $audience,
+            'siblings' => $siblings,
         ], new Response(status: $status));
     }
 
@@ -191,10 +251,43 @@ final class NewsletterController extends AbstractController
         return true;
     }
 
-    /** @return string[] */
-    private function submittedInterests(Request $request): array
+    /**
+     * The lists a submission is for: `audiences[]` when the form offers several,
+     * `audience` when it offers one.
+     *
+     * Each is a consent of its own, so an unknown slug fails the whole
+     * submission — half a subscription is not what the person ticked.
+     *
+     * @return list<Audience>|null null when a submitted slug matches nothing
+     */
+    private function submittedAudiences(Request $request): ?array
     {
-        $submitted = $request->request->all()['interests'] ?? [];
+        $slugs = $this->submittedList($request, 'audiences');
+
+        if ([] === $slugs) {
+            $single = trim((string) $request->request->get('audience', ''));
+            $slugs = '' !== $single ? [$single] : [];
+        }
+
+        $audiences = [];
+
+        foreach (array_unique($slugs) as $slug) {
+            $audience = $this->audienceRepository->findOneBySlug($slug);
+
+            if (! $audience instanceof Audience) {
+                return null;
+            }
+
+            $audiences[] = $audience;
+        }
+
+        return $audiences;
+    }
+
+    /** @return string[] */
+    private function submittedList(Request $request, string $field): array
+    {
+        $submitted = $request->request->all()[$field] ?? [];
 
         if (\is_string($submitted)) {
             $submitted = explode(',', $submitted);

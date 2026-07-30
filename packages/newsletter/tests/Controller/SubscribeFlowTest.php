@@ -3,6 +3,7 @@
 namespace Pushword\Newsletter\Tests\Controller;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Repository\ContactRepository;
@@ -105,6 +106,70 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         self::assertSame(['AmTrek'], $this->find('tagged@example.tld')->getTagList());
     }
 
+    public function testOneSubmissionCanOpenSeveralSubscriptions(): void
+    {
+        $letter = $this->createAudience(requireDoubleOptIn: false);
+        $promos = $this->createAudience(requireDoubleOptIn: false);
+        $untouched = $this->createAudience(requireDoubleOptIn: false);
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
+            'audiences' => [$letter->getSlug(), $promos->getSlug()],
+            'email' => 'several@example.tld',
+        ]);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($letter, 'several@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($promos, 'several@example.tld')->getStatus());
+        self::assertNull($this->repository()->findOneByEmail($untouched, 'several@example.tld'), 'an unticked list stays unticked');
+    }
+
+    /** Each list confirms for itself — and one link left to click is what the page must say. */
+    public function testEachListNeedingAConfirmationAsksForItsOwn(): void
+    {
+        $direct = $this->createAudience(requireDoubleOptIn: false);
+        $confirmed = $this->createAudience();
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
+            'audiences' => [$direct->getSlug(), $confirmed->getSlug()],
+            'email' => 'mixed@example.tld',
+        ]);
+
+        self::assertEmailCount(1);
+        self::assertStringContainsString(
+            $this->translate('newsletter.subscribe.pending'),
+            (string) $this->client->getResponse()->getContent(),
+        );
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($direct, 'mixed@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Pending, $this->findIn($confirmed, 'mixed@example.tld')->getStatus());
+    }
+
+    /** Half a subscription is not what anyone ticked. */
+    public function testAnUnknownSlugInTheListFailsTheWholeSubmission(): void
+    {
+        $known = $this->createAudience(requireDoubleOptIn: false);
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
+            'audiences' => [$known->getSlug(), 'does-not-exist'],
+            'email' => 'partial@example.tld',
+        ]);
+
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+        self::assertNull($this->repository()->findOneByEmail($known, 'partial@example.tld'));
+    }
+
+    public function testUntickingEverythingAsksAgainRatherThanSubscribing(): void
+    {
+        $this->createAudience(requireDoubleOptIn: false);
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', ['email' => 'nothing@example.tld']);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString(
+            $this->translate('newsletter.subscribe.noAudience'),
+            (string) $this->client->getResponse()->getContent(),
+        );
+    }
+
     public function testAFilledHoneypotLooksLikeSuccessAndWritesNothing(): void
     {
         $audience = $this->createAudience();
@@ -168,6 +233,108 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         self::assertNotNull($left->getUnsubscribedAt());
     }
 
+    /**
+     * Leaving one list must not leave the others — the one-click POST comes from
+     * the mailbox provider and speaks for one audience only. The others are
+     * offered on the page, and only those sharing the audience's host.
+     */
+    public function testUnsubscribingOffersTheOtherListsOfTheSameHostWithoutTouchingThem(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $sameHost = $this->createAudience(requireDoubleOptIn: false);
+        $otherHost = $this->createAudience(requireDoubleOptIn: false, mainHost: 'elsewhere.dev');
+        $notConfirmed = $this->createAudience();
+
+        $token = $this->createContact($audience, 'multi@example.tld')->getToken();
+        $this->createContact($sameHost, 'multi@example.tld');
+        $this->createContact($otherHost, 'multi@example.tld');
+        $this->createContact($notConfirmed, 'multi@example.tld', subscribed: false);
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token);
+
+        $html = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString('value="'.$sameHost->getSlug().'"', $html);
+        self::assertStringNotContainsString($otherHost->getSlug(), $html, 'another host is another brand');
+        self::assertStringNotContainsString($notConfirmed->getSlug(), $html, 'a pending contact is on no list yet');
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($sameHost, 'multi@example.tld')->getStatus());
+    }
+
+    public function testLeavingTheOtherListsActsOnlyOnWhatWasTicked(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $ticked = $this->createAudience(requireDoubleOptIn: false);
+        $untouched = $this->createAudience(requireDoubleOptIn: false);
+
+        $token = $this->createContact($audience, 'picky@example.tld')->getToken();
+        $this->createContact($ticked, 'picky@example.tld');
+        $this->createContact($untouched, 'picky@example.tld');
+
+        $this->client->request(
+            Request::METHOD_POST,
+            '/newsletter/unsubscribe/'.$token.'/others',
+            ['audiences' => [$ticked->getSlug()]],
+        );
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertSame(ContactStatus::Unsubscribed, $this->findIn($ticked, 'picky@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($untouched, 'picky@example.tld')->getStatus());
+    }
+
+    public function testLeavingEverythingStopsEveryListOfTheHost(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $first = $this->createAudience(requireDoubleOptIn: false);
+        $second = $this->createAudience(requireDoubleOptIn: false);
+        $elsewhere = $this->createAudience(requireDoubleOptIn: false, mainHost: 'elsewhere.dev');
+
+        $token = $this->createContact($audience, 'gone@example.tld')->getToken();
+        $this->createContact($first, 'gone@example.tld');
+        $this->createContact($second, 'gone@example.tld');
+        $this->createContact($elsewhere, 'gone@example.tld');
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token.'/others', ['all' => '1']);
+
+        self::assertSame(ContactStatus::Unsubscribed, $this->findIn($first, 'gone@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Unsubscribed, $this->findIn($second, 'gone@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($elsewhere, 'gone@example.tld')->getStatus());
+    }
+
+    /**
+     * The submitted slugs pick from what the token may touch, they never widen
+     * it: a list of another host stays out of reach even when asked for by name.
+     */
+    public function testAForeignSlugIsIgnoredEvenWhenSubmitted(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $elsewhere = $this->createAudience(requireDoubleOptIn: false, mainHost: 'elsewhere.dev');
+
+        $token = $this->createContact($audience, 'reaching@example.tld')->getToken();
+        $this->createContact($elsewhere, 'reaching@example.tld');
+
+        $this->client->request(
+            Request::METHOD_POST,
+            '/newsletter/unsubscribe/'.$token.'/others',
+            ['audiences' => [$elsewhere->getSlug()]],
+        );
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($elsewhere, 'reaching@example.tld')->getStatus());
+    }
+
+    /** The same list ticked twice is one subscription, hence one confirmation to click. */
+    public function testTheSameListSubmittedTwiceSubscribesOnce(): void
+    {
+        $audience = $this->createAudience();
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
+            'audiences' => [$audience->getSlug(), $audience->getSlug()],
+            'email' => 'twice@example.tld',
+        ]);
+
+        self::assertEmailCount(1);
+        self::assertCount(1, $this->entityManager->getRepository(Contact::class)->findBy(['email' => 'twice@example.tld']));
+    }
+
     public function testAnUnknownTokenIsNotFound(): void
     {
         $token = str_repeat('a', 64);
@@ -177,12 +344,23 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
 
         $this->client->request(Request::METHOD_GET, '/newsletter/unsubscribe/'.$token);
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token.'/others');
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
     }
 
     /** @param array<string, mixed> $parameters */
     private function post(string $audienceSlug, array $parameters): void
     {
         $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', ['audience' => $audienceSlug] + $parameters);
+    }
+
+    private function findIn(Audience $audience, string $email): Contact
+    {
+        $contact = $this->repository()->findOneByEmail($audience, $email);
+        self::assertInstanceOf(Contact::class, $contact);
+
+        return $contact;
     }
 
     private function find(string $email): Contact
@@ -196,5 +374,10 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     private function repository(): ContactRepository
     {
         return self::getContainer()->get(ContactRepository::class);
+    }
+
+    private function translate(string $key): string
+    {
+        return self::getContainer()->get('translator')->trans($key);
     }
 }

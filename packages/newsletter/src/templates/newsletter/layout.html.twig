@@ -16,10 +16,17 @@
                margin: 0; padding: 3rem 1.25rem; color: #1c1c1c; background: #fff; }
         main { max-width: 34rem; margin: 0 auto; }
         h1 { font-size: 1.5rem; margin: 0 0 1rem; }
+        h2 { font-size: 1.1rem; margin: 2.5rem 0 .75rem; }
         p { margin: 0 0 1rem; }
         .muted { color: #666; font-size: .9rem; }
+        .audiences { list-style: none; padding: 0; margin: 0 0 1.25rem; }
+        .audiences li { margin: 0 0 .5rem; }
+        .audiences label { display: flex; gap: .5rem; align-items: center; }
         button { font: inherit; padding: .6rem 1.2rem; border: 0; border-radius: .3rem;
                  background: #1c1c1c; color: #fff; cursor: pointer; }
+        .actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+        button.secondary { background: transparent; color: inherit;
+                           box-shadow: inset 0 0 0 1px currentColor; }
         @media (prefers-color-scheme: dark) {
             body { color: #ececec; background: #151515; }
             .muted { color: #a0a0a0; }

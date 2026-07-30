@@ -1,5 +1,6 @@
 {#
-  Subscription form. Rendered by `{{ newsletter_form('audience-slug') }}`.
+  Subscription form. Rendered by `{{ newsletter_form('audience-slug') }}`, or by
+  `{{ newsletter_form(['a-slug', 'another']) }}` to offer a choice of lists.
 
   The action is absolute and points at the audience's live host: on a statically
   generated site the page has no PHP behind it, so the post must cross origins.
@@ -7,13 +8,31 @@
   progressive enhancement below — it replaces the form in place and does nothing
   when scripting is off, where a plain navigation still works.
 #}
+{% set audience = audiences|first %}
 <form class="newsletter-form" method="post" action="{{ action }}" data-newsletter-form>
-    <input type="hidden" name="audience" value="{{ audience.slug }}">
     <input type="hidden" name="locale" value="{{ locale }}">
     {% if source %}<input type="hidden" name="source" value="{{ source }}">{% endif %}
     {% for interest in interests %}
         <input type="hidden" name="interests[]" value="{{ interest }}">
     {% endfor %}
+
+    {# One list is a given; several are a choice — ticked by default and untickable
+       one by one, because the person is asked rather than enrolled. #}
+    {% if audiences|length == 1 %}
+        <input type="hidden" name="audience" value="{{ audience.slug }}">
+    {% else %}
+        <ul class="newsletter-form__audiences">
+            {% for offered in audiences %}
+                <li class="newsletter-form__audience">
+                    <label class="newsletter-form__label" for="newsletter-audience-{{ offered.slug }}">
+                        <input type="checkbox" id="newsletter-audience-{{ offered.slug }}"
+                               name="audiences[]" value="{{ offered.slug }}" checked>
+                        {{ offered.name }}
+                    </label>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 
     <label class="newsletter-form__label" for="newsletter-name-{{ audience.slug }}">{{ 'newsletter.form.name'|trans }}</label>
     <input class="newsletter-form__input" type="text" id="newsletter-name-{{ audience.slug }}"

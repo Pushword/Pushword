@@ -31,7 +31,13 @@ form into any page:
 ```twig
 {{ newsletter_form('altimood') }}
 {{ newsletter_form('altimood', ['AmTrek']) }}
+{{ newsletter_form(['altimood', 'altimood-promos']) }}
 ```
+
+Given several audiences the form offers one ticked checkbox each, and a single
+submission opens a subscription per ticked list — each with its own confirmation
+mail where the list asks for one. An unknown slug fails the whole submission:
+half a subscription is not what anyone ticked.
 
 Finally, add the clock to the server's crontab:
 

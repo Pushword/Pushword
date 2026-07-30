@@ -6,4 +6,26 @@
     <h1>{{ 'newsletter.unsubscribed.title'|trans }}</h1>
     <p>{{ 'newsletter.unsubscribed.body'|trans({'%audience%': audience.name}) }}</p>
     <p class="muted">{{ contact.email }}</p>
+
+    {# The other lists of the same host. Offered, never acted on: one consent per audience. #}
+    {% if siblings is not empty %}
+        <h2>{{ 'newsletter.unsubscribed.othersTitle'|trans }}</h2>
+        <p>{{ 'newsletter.unsubscribed.othersBody'|trans }}</p>
+        <form method="post" action="{{ path('pushword_newsletter_unsubscribe_others', {'token': contact.token}) }}">
+            <ul class="audiences">
+                {% for sibling in siblings %}
+                    <li>
+                        <label>
+                            <input type="checkbox" name="audiences[]" value="{{ sibling.audience.slug }}">
+                            {{ sibling.audience.name }}
+                        </label>
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="actions">
+                <button type="submit">{{ 'newsletter.unsubscribed.othersConfirm'|trans }}</button>
+                <button type="submit" name="all" value="1" class="secondary">{{ 'newsletter.unsubscribed.othersAll'|trans }}</button>
+            </div>
+        </form>
+    {% endif %}
 {% endblock %}
