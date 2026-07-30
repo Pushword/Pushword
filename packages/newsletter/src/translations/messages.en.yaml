@@ -144,7 +144,7 @@ newsletter:
       hosts.help: The sites to watch; empty watches every one. An audience often spans several locale hosts, so pick the ones worth a mail.
       name: Name
       pageWhen: Trigger on pages
-      pageWhen.help: 'JSON list of conditions, all of which must hold — which pages, not when. Empty matches every published page of those hosts. Example: [{"field":"slug","op":"startsWith","value":"blog/"}]'
+      pageWhen.help: 'JSON list of conditions, all of which must hold — which pages, not when. Empty matches every published page of those hosts. Fields: slug, template, parentPage, ancestor (the slug of a page they sit under, at any depth), prop.<key>. Example: [{"field":"ancestor","op":"=","value":"blog"}]'
       segment: Segment
       segment.help: 'Who receives the mail, in the usual contact criteria. Empty targets the whole subscribed audience.'
       subject: Subject

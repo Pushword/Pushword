@@ -14,6 +14,7 @@ final class PageCriteriaTest extends TestCase
             ['field' => ' slug ', 'op' => 'startsWith', 'value' => 'blog/'],
             ['field' => 'template', 'op' => '=', 'value' => 'article.html.twig'],
             ['field' => 'parentPage', 'op' => '=', 'value' => 'blog'],
+            ['field' => 'ancestor', 'op' => '!=', 'value' => 'blog'],
             ['field' => 'prop.noNewsletter', 'op' => 'isNotSet'],
         ]);
 
@@ -21,6 +22,7 @@ final class PageCriteriaTest extends TestCase
             ['field' => 'slug', 'op' => 'startsWith', 'value' => 'blog/'],
             ['field' => 'template', 'op' => '=', 'value' => 'article.html.twig'],
             ['field' => 'parentPage', 'op' => '=', 'value' => 'blog'],
+            ['field' => 'ancestor', 'op' => '!=', 'value' => 'blog'],
             ['field' => 'prop.noNewsletter', 'op' => 'isNotSet', 'value' => ''],
         ], $normalized);
     }

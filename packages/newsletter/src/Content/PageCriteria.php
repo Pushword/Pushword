@@ -11,12 +11,16 @@ use Pushword\Newsletter\Segment\SegmentException;
  * there is one thing to learn for both sides of a trigger:
  *
  *     [
- *       {"field": "slug",             "op": "startsWith", "value": "blog/"},
+ *       {"field": "ancestor",         "op": "=",          "value": "blog"},
  *       {"field": "template",         "op": "=",          "value": "article.html.twig"},
  *       {"field": "prop.noNewsletter","op": "isNotSet"}
  *     ]
  *
  * It says *which* pages, never *when*: the wait is the trigger's own delay.
+ *
+ * Having no OR, it leans on the page tree instead: `parentPage` names one
+ * rubric, `ancestor` names the section a rubric belongs to — which is what
+ * keeps a blog split in rubrics down to a single condition.
  *
  * A malformed list raises {@see SegmentException}, the same way a malformed
  * segment does — one grammar, one kind of mistake, one thing to catch.
@@ -30,6 +34,7 @@ final class PageCriteria
         'slug' => ['startsWith', 'notStartsWith'],
         'template' => ['=', '!='],
         'parentPage' => ['=', '!='],
+        'ancestor' => ['=', '!='],
     ];
 
     public const array PROP_OPERATORS = ['=', '!=', 'isSet', 'isNotSet'];

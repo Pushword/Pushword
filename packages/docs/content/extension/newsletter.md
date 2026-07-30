@@ -166,11 +166,21 @@ and body to send.
 |---|---|
 | `slug` | `startsWith`, `notStartsWith` |
 | `template`, `parentPage` | `=`, `!=` — `parentPage` takes the parent's slug |
+| `ancestor` | `=`, `!=` — the slug of a page it sits under, at any depth |
 | `prop.<key>` | `=`, `!=`, `isSet`, `isNotSet` |
 
 Same flat, ANDed shape as a segment, over pages instead of contacts. An empty
 list means every published page of those hosts. The two rules read as one
 sentence: `pageWhen` picks the article, `segment` picks the readers.
+
+Having no OR, it leans on the page tree instead. A blog split in rubrics, whose
+articles sit at the root and are attached by `parentPage`, shares no slug prefix
+and would otherwise need one trigger per rubric — `ancestor` covers it in one
+condition, and covers the rubric added next month too:
+
+```json
+[{"field": "ancestor", "op": "=", "value": "blog"}]
+```
 
 The subject and the body may quote four values of the page:
 

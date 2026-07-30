@@ -105,6 +105,7 @@ final readonly class PageMatcher
         match ($field) {
             'slug' => $this->applySlug($queryBuilder, $op, $value, $parameter),
             'parentPage' => $this->applyParent($queryBuilder, $op, $value, $parameter),
+            'ancestor' => $this->applyAncestor($queryBuilder, $op, $value, $parameter),
             default => $this->applyTemplate($queryBuilder, $op, $value, $parameter),
         };
     }
@@ -136,6 +137,72 @@ final readonly class PageMatcher
                 ? \sprintf('parent.slug = :%s', $parameter)
                 : \sprintf('(parent.slug IS NULL OR parent.slug != :%s)', $parameter))
             ->setParameter($parameter, $value);
+    }
+
+    /**
+     * A whole section in one condition: the value is the slug of a page the
+     * article sits under, however deep. `parentPage` names a single rubric, so
+     * a blog split in three needs three triggers; this names the blog.
+     */
+    private function applyAncestor(QueryBuilder $queryBuilder, string $op, string $value, string $parameter): void
+    {
+        $section = $this->sectionIds($value);
+
+        // Nothing sits under a page that does not exist, and everything sits
+        // outside of it.
+        if ([] === $section) {
+            if ('=' === $op) {
+                $queryBuilder->andWhere('1 = 0');
+            }
+
+            return;
+        }
+
+        $queryBuilder
+            ->andWhere('=' === $op
+                ? \sprintf('p.parentPage IN (:%s)', $parameter)
+                : \sprintf('(p.parentPage IS NULL OR p.parentPage NOT IN (:%s))', $parameter))
+            ->setParameter($parameter, $section);
+    }
+
+    /**
+     * The page named plus everything below it: the parents a page of that
+     * section can have. Walked one level at a time — Doctrine has no recursive
+     * query, and a page tree is a few rubrics deep. A page has a single parent
+     * and cannot be its own ancestor, so no level ever revisits an earlier one.
+     *
+     * @return list<int>
+     */
+    private function sectionIds(string $slug): array
+    {
+        $section = $this->pageIds('p.slug = :value', $slug);
+        $level = $section;
+
+        while ([] !== $level) {
+            $level = $this->pageIds('p.parentPage IN (:value)', $level);
+            $section = [...$section, ...$level];
+        }
+
+        return $section;
+    }
+
+    /**
+     * @param string|list<int> $value
+     *
+     * @return list<int>
+     */
+    private function pageIds(string $where, string|array $value): array
+    {
+        /** @var list<int|string> $ids */
+        $ids = $this->entityManager->createQueryBuilder()
+            ->select('p.id')
+            ->from(Page::class, 'p')
+            ->andWhere($where)
+            ->setParameter('value', $value)
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        return array_map(static fn (int|string $id): int => (int) $id, $ids);
     }
 
     /**

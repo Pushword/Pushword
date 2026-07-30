@@ -144,7 +144,7 @@ newsletter:
       hosts.help: 'Les sites à surveiller ; vide, tous. Une audience couvre souvent plusieurs hôtes de langue : choisissez ceux qui méritent un mail.'
       name: Nom
       pageWhen: Déclencher sur les pages
-      pageWhen.help: 'Liste JSON de conditions, toutes requises — quelles pages, pas quand. Vide : toutes les pages publiées de ces hôtes. Exemple : [{"field":"slug","op":"startsWith","value":"blog/"}]'
+      pageWhen.help: 'Liste JSON de conditions, toutes requises — quelles pages, pas quand. Vide : toutes les pages publiées de ces hôtes. Champs : slug, template, parentPage, ancestor (le slug d''une page dont elles descendent, à n''importe quelle profondeur), prop.<clé>. Exemple : [{"field":"ancestor","op":"=","value":"blog"}]'
       segment: Segment
       segment.help: 'Qui reçoit le mail, dans les critères de contact habituels. Vide : toute l''audience inscrite.'
       subject: Objet

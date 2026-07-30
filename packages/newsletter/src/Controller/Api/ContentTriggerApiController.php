@@ -318,7 +318,7 @@ final class ContentTriggerApiController extends AbstractApiController
                             'name' => ['type' => 'string'],
                             'enabled' => ['type' => 'boolean'],
                             'hosts' => ['type' => 'array', 'description' => 'Pushword hosts to watch; empty watches every one', 'items' => ['type' => 'string']],
-                            'pageWhen' => ['type' => 'array', 'description' => 'Page criteria (slug, template, parentPage, prop.<key>); empty matches every published page', 'items' => ['type' => 'object']],
+                            'pageWhen' => ['type' => 'array', 'description' => 'Page criteria (slug, template, parentPage, ancestor, prop.<key>); empty matches every published page', 'items' => ['type' => 'object']],
                             'segment' => ['type' => 'array', 'description' => 'Contact criteria for the mail that goes out', 'items' => ['type' => 'object']],
                             'delayMinutes' => ['type' => 'integer', 'description' => 'Wait after publication; 1440 is the day after'],
                             'subjectTemplate' => ['type' => 'string', 'description' => 'May quote {{ page.h1 }}, {{ page.excerpt }}, {{ page.url }}, {{ page.mainImage }}'],

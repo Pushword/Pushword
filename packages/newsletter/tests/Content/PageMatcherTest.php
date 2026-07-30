@@ -108,6 +108,67 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
         ], extra: fn (): Page => $this->page('orphan')));
     }
 
+    /**
+     * The shape `parentPage` cannot express without one trigger per rubric: the
+     * articles sit at the root, share no slug prefix, and hang off a rubric that
+     * itself hangs off the blog.
+     */
+    public function testAnAncestorSelectsTheWholeSectionHoweverDeep(): void
+    {
+        $blog = $this->page('blog');
+        $rubric = $this->page('blog/ia', parent: $blog);
+        $this->page('why-llms-hallucinate', parent: $rubric);
+        $this->page('a-word-from-us', parent: $blog);
+        $this->page('legal/terms');
+
+        self::assertSame(
+            ['a-word-from-us', 'blog/ia', 'why-llms-hallucinate'],
+            $this->matching([['field' => 'ancestor', 'op' => '=', 'value' => $this->prefix.'/blog']]),
+        );
+    }
+
+    public function testAnAncestorNegatedExcludesTheWholeSection(): void
+    {
+        $blog = $this->page('blog');
+        $rubric = $this->page('blog/ia', parent: $blog);
+        $this->page('why-llms-hallucinate', parent: $rubric);
+        $this->page('legal/terms');
+
+        // The blog page itself is not under itself.
+        self::assertSame(['blog', 'legal/terms'], $this->matching([
+            ['field' => 'ancestor', 'op' => '!=', 'value' => $this->prefix.'/blog'],
+        ]));
+    }
+
+    /**
+     * A slug is unique per host, not per site: resolving the section finds the
+     * other host's blog as well, and the trigger's own host filter is what keeps
+     * its articles out.
+     */
+    public function testAnAncestorStaysOnTheTriggersHosts(): void
+    {
+        $blog = $this->page('blog');
+        $this->page('ours', parent: $blog);
+
+        $otherBlog = $this->page('blog', host: 'pushword.piedweb.com');
+        $this->page('theirs', parent: $otherBlog, host: 'pushword.piedweb.com');
+
+        $under = [['field' => 'ancestor', 'op' => '=', 'value' => $this->prefix.'/blog']];
+
+        self::assertSame(['ours'], $this->matching($under));
+        // Both are under a page with that slug — watch both hosts and both come.
+        self::assertSame(['ours', 'theirs'], $this->matching($under, hosts: ['localhost.dev', 'pushword.piedweb.com']));
+    }
+
+    /** A slug nobody published is a section with nothing in it, not every page. */
+    public function testAnUnknownAncestorSelectsNothing(): void
+    {
+        $this->page('blog');
+
+        self::assertSame([], $this->matching([['field' => 'ancestor', 'op' => '=', 'value' => 'no-such-page']]));
+        self::assertSame(['blog'], $this->matching([['field' => 'ancestor', 'op' => '!=', 'value' => 'no-such-page']]));
+    }
+
     public function testAPropertySelectsOnItsValue(): void
     {
         $this->page('yes', properties: ['audience' => 'readers']);
@@ -162,16 +223,17 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
     /**
      * @param array<int, array<string, mixed>> $pageWhen
      * @param (callable(): Page)|null          $extra    a page created after the others, to keep the expectation readable
+     * @param list<string>                     $hosts
      *
      * @return list<string> the matching slugs, prefix stripped, sorted
      */
-    private function matching(array $pageWhen, ?callable $extra = null): array
+    private function matching(array $pageWhen, ?callable $extra = null, array $hosts = ['localhost.dev']): array
     {
         if (null !== $extra) {
             $extra();
         }
 
-        $pages = $this->matcher()->pages($this->trigger($pageWhen), new DateTimeImmutable());
+        $pages = $this->matcher()->pages($this->trigger($pageWhen, $hosts), new DateTimeImmutable());
 
         $slugs = array_map(fn (Page $page): string => substr($page->getSlug(), \strlen($this->prefix) + 1), $pages);
         sort($slugs);
@@ -179,22 +241,25 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
         return $slugs;
     }
 
-    /** @param array<int, array<string, mixed>> $pageWhen */
-    private function trigger(array $pageWhen): ContentTrigger
+    /**
+     * @param array<int, array<string, mixed>> $pageWhen
+     * @param list<string>                     $hosts
+     */
+    private function trigger(array $pageWhen, array $hosts = ['localhost.dev']): ContentTrigger
     {
         // Every rule is scoped to this test's own pages: the fixtures publish
         // their own on the same host.
-        return $this->createContentTrigger($this->audience, pageWhen: [
+        return $this->createContentTrigger($this->audience, hosts: $hosts, pageWhen: [
             ['field' => 'slug', 'op' => 'startsWith', 'value' => $this->prefix.'/'],
             ...$pageWhen,
         ]);
     }
 
     /** @param array<string, mixed> $properties */
-    private function page(string $slug, ?string $template = null, ?Page $parent = null, array $properties = []): Page
+    private function page(string $slug, ?string $template = null, ?Page $parent = null, array $properties = [], string $host = 'localhost.dev'): Page
     {
         $page = new Page();
-        $page->host = 'localhost.dev';
+        $page->host = $host;
         $page->setSlug($this->prefix.'/'.$slug);
         $page->setH1('Hello');
         $page->setTemplate($template);
