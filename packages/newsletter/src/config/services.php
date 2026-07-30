@@ -3,6 +3,7 @@
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use Pushword\Api\Controller\ApiControllerInterface;
 use Pushword\Core\PushwordCoreBundle;
+use Pushword\Newsletter\Controller\Api\AutomationApiController;
 use Pushword\Newsletter\Controller\Api\CampaignApiController;
 use Pushword\Newsletter\Controller\Api\ContactApiController;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -25,6 +26,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             __DIR__.'/../Repository/DQL',
             __DIR__.'/../Segment/SegmentCriteria.php',
             __DIR__.'/../Segment/SegmentException.php',
+            __DIR__.'/../Utm/UtmTag.php',
             ...$apiExclude,
         ]);
 
@@ -39,6 +41,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             ->tag('controller.service_arguments')
             ->tag('pushword.api.controller');
         $services->set(CampaignApiController::class)
+            ->autowire()
+            ->tag('controller.service_arguments')
+            ->tag('pushword.api.controller');
+        $services->set(AutomationApiController::class)
             ->autowire()
             ->tag('controller.service_arguments')
             ->tag('pushword.api.controller');

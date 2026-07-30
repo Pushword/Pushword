@@ -21,6 +21,8 @@ newsletter:
       replyTo: Reply-to
       slug: Reference (slug)
       slug.help: The key the subscribe form and the API use.
+      utmSource: Analytics source
+      utmSource.help: Set it (e.g. newsletter) to tag the links of this audience's mails with utm_source, utm_medium and utm_campaign. Leave empty to send them untouched. Only links to your own sites are tagged.
   automation:
     label:
       plural: Automations
@@ -37,7 +39,7 @@ newsletter:
       enrollFrom: Enroll from
       enrollFrom.help: Contacts registered before this date are never enrolled. It stops a new automation from mailing an entire existing base at once.
       enrollWhen: Enroll when
-      enrollWhen.help: 'JSON list of conditions, all of which must hold. Empty enrolls every subscribed contact. Example: [{"field":"tag","op":"has","value":"AmTrek"}]'
+      enrollWhen.help: 'JSON list of conditions, all of which must hold — who gets enrolled, not when. Empty enrolls every subscribed contact. Example: [{"field":"tag","op":"has","value":"AmTrek"}]'
       name: Name
       stepCount: Steps
       steps: Steps
@@ -73,6 +75,8 @@ newsletter:
       segment.help: 'JSON list of conditions, all of which must hold. Empty targets the whole subscribed audience. Example: [{"field":"prop.lastBoughtProduct","op":"=","value":"tmb"}]'
       sent: Sent
       sentAt: Sent at
+      slug: Analytics name
+      slug.help: Carried as utm_campaign. Derived from the subject when left empty, and prefixed with the send date (YYMMDD) once the newsletter is sent.
       status: Status
       subject: Subject
       unsubscribed: Unsubscribed
@@ -132,7 +136,7 @@ newsletter:
     field:
       body: Body
       delay: Delay (minutes)
-      delay.help: Wait this long after enrollment for the first step, or after the previous step.
+      delay.help: Wait this long after enrollment for the first step, or after the previous step. A contact is enrolled as soon as they are subscribed — with double opt-in, right after they confirm. Two days later is 2880.
       position: Position
       subject: Subject
   subscribe:

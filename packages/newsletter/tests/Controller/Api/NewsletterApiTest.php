@@ -2,13 +2,16 @@
 
 namespace Pushword\Newsletter\Tests\Controller\Api;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\UserRepository;
+use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Enum\ContactStatus;
+use Pushword\Newsletter\Service\AutomationRunner;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -226,6 +229,24 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertSame(1, $fetched['estimatedRecipients']);
     }
 
+    public function testACampaignSlugIsDerivedOrTakenAsGiven(): void
+    {
+        $audience = $this->createAudience();
+
+        $derived = $this->request(Request::METHOD_POST, '/api/newsletter/campaign', [
+            'audience' => $audience->getSlug(),
+            'subject' => 'Nos nouveautés',
+        ]);
+        $given = $this->request(Request::METHOD_POST, '/api/newsletter/campaign', [
+            'audience' => $audience->getSlug(),
+            'subject' => 'Nos nouveautés',
+            'slug' => 'promo-ete',
+        ]);
+
+        self::assertSame('nos-nouveautes', $derived['slug']);
+        self::assertSame('promo-ete', $given['slug']);
+    }
+
     public function testAnInvalidCampaignSegmentIsRejected(): void
     {
         $audience = $this->createAudience();
@@ -302,6 +323,130 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertSame(['broken'], $body['failed']);
         self::assertEmailCount(1);
         self::assertSame(0, $this->entityManager->getRepository(Campaign::class)->find($campaign->id)?->getSentCount());
+    }
+
+    public function testCreatingAnAutomationWithItsSteps(): void
+    {
+        $audience = $this->createAudience();
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
+            'audience' => $audience->getSlug(),
+            'name' => 'Bienvenue',
+            'steps' => [
+                ['delayMinutes' => 0, 'subject' => 'Merci', 'bodyMarkdown' => 'Bienvenue **%name%**'],
+                ['delayMinutes' => 2880, 'subject' => 'Deux jours plus tard', 'bodyMarkdown' => 'Encore nous'],
+            ],
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $this->client->getResponse()->getStatusCode());
+
+        $steps = $body['steps'];
+        self::assertIsArray($steps);
+        self::assertSame([0, 1], array_column($steps, 'position'));
+        self::assertSame([0, 2880], array_column($steps, 'delayMinutes'));
+    }
+
+    /** The order of the array is the order of the sequence, so a resend rewrites it whole. */
+    public function testSendingStepsReplacesTheWholeSequence(): void
+    {
+        $audience = $this->createAudience();
+        $automation = $this->createAutomation($audience, [
+            ['delay' => 0, 'subject' => 'One'],
+            ['delay' => 60, 'subject' => 'Two'],
+        ]);
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/automation/'.$automation->id, [
+            'steps' => [['delayMinutes' => 2880, 'subject' => 'Only one now', 'bodyMarkdown' => 'Hi']],
+        ]);
+
+        $steps = $body['steps'];
+        self::assertIsArray($steps);
+        self::assertCount(1, $steps);
+        self::assertSame(['position' => 0, 'delayMinutes' => 2880, 'subject' => 'Only one now', 'bodyMarkdown' => 'Hi'], $steps[0]);
+    }
+
+    public function testAnInvalidEnrollWhenIsRejected(): void
+    {
+        $audience = $this->createAudience();
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
+            'audience' => $audience->getSlug(),
+            'name' => 'Broken',
+            'enrollWhen' => [['field' => 'tag', 'op' => 'olderThan', 'value' => '7d']],
+        ]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+        $error = $body['error'];
+        self::assertIsString($error);
+        self::assertStringStartsWith('enrollWhen:', $error);
+    }
+
+    /** The guard must survive the API: switching a drip on cannot mail the existing base. */
+    public function testANewAutomationOnlyEnrollsContactsArrivingAfterIt(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'existing@example.tld', registeredAt: new DateTimeImmutable('-1 hour'));
+
+        $created = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
+            'audience' => $audience->getSlug(),
+            'name' => 'Welcome',
+            'steps' => [['delayMinutes' => 0, 'subject' => 'Hello']],
+        ]);
+
+        $automation = $this->entityManager->getRepository(Automation::class)->find($this->id($created));
+        self::assertInstanceOf(Automation::class, $automation);
+        self::assertSame(0, $this->runner()->enroll($automation));
+
+        $this->createContact($audience, 'newcomer@example.tld');
+
+        self::assertSame(1, $this->runner()->enroll($automation));
+    }
+
+    public function testAnAutomationReportsItsProgress(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'reader@example.tld', ['AmTrek']);
+        $this->createContact($audience, 'other@example.tld');
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']], [
+            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+        ]);
+
+        $this->runner()->enroll($automation);
+
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/automation/'.$automation->id);
+
+        self::assertSame(1, $body['matchingContacts']);
+        self::assertSame(['active' => 1, 'done' => 0, 'stopped' => 0], $body['stats']);
+    }
+
+    public function testDisablingThroughTheApiPausesTheDrip(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'reader@example.tld');
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/automation/'.$automation->id, ['enabled' => false]);
+
+        self::assertFalse($body['enabled']);
+        self::assertSame(0, $this->runner()->enroll($automation), 'a paused automation enrolls nobody');
+    }
+
+    /** Enrollments hang off the automation by a database cascade, which only MariaDB enforces. */
+    public function testDeletingAnAutomationTakesItsEnrollmentsWithIt(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'reader@example.tld');
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
+        $this->runner()->enroll($automation);
+
+        $this->request(Request::METHOD_DELETE, '/api/newsletter/automation/'.$automation->id);
+
+        self::assertSame(Response::HTTP_NO_CONTENT, $this->client->getResponse()->getStatusCode());
+    }
+
+    private function runner(): AutomationRunner
+    {
+        return self::getContainer()->get(AutomationRunner::class);
     }
 
     private function userRepository(): UserRepository

@@ -6,6 +6,7 @@
   "homepage": "https://pushword.piedweb.com/extension/newsletter",
   "license": "MIT",
   "require": {
+    "cocur/slugify": "^4.6",
     "pushword/core": "*"
   },
   "extra": {

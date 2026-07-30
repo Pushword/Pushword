@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Entity;
 
+use Cocur\Slugify\Slugify;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -31,6 +32,9 @@ class Campaign implements IdInterface, Stringable
     use IdTrait;
     use TimestampableTrait;
 
+    /** The column holds 128; "YYMMDD-" takes 7 of them. */
+    private const int SLUG_MAX_LENGTH = 120;
+
     #[Assert\NotNull]
     #[ORM\ManyToOne(targetEntity: Audience::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
@@ -39,6 +43,15 @@ class Campaign implements IdInterface, Stringable
     #[Assert\NotBlank]
     #[ORM\Column(type: Types::STRING, length: 255)]
     private string $subject = '';
+
+    /**
+     * The campaign's analytics identity, carried as `utm_campaign`. Derived from
+     * the subject when left empty, and prefixed with the send date when the
+     * campaign is armed — so a year of campaigns reads in order in a report,
+     * and rewording a subject afterwards renames nothing.
+     */
+    #[ORM\Column(type: Types::STRING, length: 128, options: ['default' => ''])]
+    private string $slug = '';
 
     /** Short preview line most inboxes show after the subject. */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
@@ -120,6 +133,41 @@ class Campaign implements IdInterface, Stringable
         $this->subject = $subject;
 
         return $this;
+    }
+
+    public function getSlug(): string
+    {
+        return '' !== $this->slug ? $this->slug : $this->normalizeSlug($this->subject);
+    }
+
+    public function setSlug(?string $slug): self
+    {
+        $this->slug = $this->normalizeSlug((string) $slug);
+
+        return $this;
+    }
+
+    /** Subjects are long and the column is not; leave room for the date prefix. */
+    private function normalizeSlug(string $value): string
+    {
+        return rtrim(mb_substr(new Slugify()->slugify($value), 0, self::SLUG_MAX_LENGTH), '-');
+    }
+
+    /** Freeze the derived slug once, so later subject edits leave it alone. */
+    #[ORM\PrePersist]
+    public function initSlug(): void
+    {
+        $this->slug = $this->getSlug();
+    }
+
+    /**
+     * The slug without its date prefix — what the author actually named the
+     * campaign. Re-arming one therefore re-dates it instead of stacking
+     * prefixes, and the real send date always wins over a typed-in one.
+     */
+    private function undatedSlug(): string
+    {
+        return preg_replace('/^\d{6}-/', '', $this->getSlug()) ?? $this->getSlug();
     }
 
     public function getPreheader(): ?string
@@ -249,10 +297,16 @@ class Campaign implements IdInterface, Stringable
         return $this;
     }
 
+    /**
+     * Arming is the moment the send date stops being a guess, so it is where the
+     * analytics name gets its `YYMMDD` prefix — a campaign scheduled in March and
+     * delayed to April is dated April, which is when people received it.
+     */
     public function markSending(int $recipientCount): self
     {
         $this->status = CampaignStatus::Sending;
         $this->recipientCount = $recipientCount;
+        $this->slug = new DateTimeImmutable()->format('ymd').'-'.$this->undatedSlug();
 
         return $this;
     }

@@ -16,6 +16,7 @@ use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Service\CampaignSender;
 use Pushword\Newsletter\Service\NewsletterMailer;
+use Pushword\Newsletter\Utm\UtmTag;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -188,7 +189,7 @@ final class CampaignApiController extends AbstractApiController
             }
 
             try {
-                $this->mailer->sendTest($audience, $campaign->getSubject(), $campaign->getBodyMarkdown(), $campaign->getPreheader(), $address);
+                $this->mailer->sendTest($audience, $campaign->getSubject(), $campaign->getBodyMarkdown(), $campaign->getPreheader(), $address, UtmTag::forCampaign($campaign));
                 $sent[] = $address;
             } catch (Throwable $throwable) {
                 $failed[] = $address.' ('.$throwable->getMessage().')';
@@ -236,6 +237,10 @@ final class CampaignApiController extends AbstractApiController
     {
         if (\array_key_exists('subject', $data) && \is_string($data['subject'])) {
             $campaign->setSubject($data['subject']);
+        }
+
+        if (\array_key_exists('slug', $data)) {
+            $campaign->setSlug(\is_string($data['slug']) ? $data['slug'] : null);
         }
 
         if (\array_key_exists('preheader', $data)) {
@@ -287,6 +292,7 @@ final class CampaignApiController extends AbstractApiController
             'id' => $campaign->id,
             'audience' => $audience?->getSlug(),
             'subject' => $campaign->getSubject(),
+            'slug' => $campaign->getSlug(),
             'preheader' => $campaign->getPreheader(),
             'bodyMarkdown' => $campaign->getBodyMarkdown(),
             'segment' => $campaign->getSegment(),
@@ -356,6 +362,7 @@ final class CampaignApiController extends AbstractApiController
                         'properties' => [
                             'audience' => ['type' => 'string'],
                             'subject' => ['type' => 'string'],
+                            'slug' => ['type' => 'string', 'description' => 'utm_campaign value; derived from the subject when omitted'],
                             'preheader' => ['type' => 'string'],
                             'bodyMarkdown' => ['type' => 'string'],
                             'segment' => ['type' => 'array', 'items' => ['type' => 'object']],

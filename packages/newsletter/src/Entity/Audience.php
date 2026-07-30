@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Entity;
 
+use Cocur\Slugify\Slugify;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
@@ -74,6 +75,13 @@ class Audience implements IdInterface, Stringable
     #[Assert\Positive]
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 30])]
     private int $rateSeconds = 30;
+
+    /**
+     * The `utm_source` this audience's links carry. Null leaves them untouched:
+     * the parameters are only worth adding where something reads them.
+     */
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    private ?string $utmSource = null;
 
     public function __construct()
     {
@@ -206,6 +214,19 @@ class Audience implements IdInterface, Stringable
     public function setRateSeconds(int $rateSeconds): self
     {
         $this->rateSeconds = max(1, $rateSeconds);
+
+        return $this;
+    }
+
+    public function getUtmSource(): ?string
+    {
+        return $this->utmSource;
+    }
+
+    public function setUtmSource(?string $utmSource): self
+    {
+        $utmSource = new Slugify()->slugify((string) $utmSource);
+        $this->utmSource = '' !== $utmSource ? $utmSource : null;
 
         return $this;
     }

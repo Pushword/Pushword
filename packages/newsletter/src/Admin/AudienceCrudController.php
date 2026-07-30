@@ -67,5 +67,8 @@ class AudienceCrudController extends AbstractCrudController
             ->setHelp('newsletter.audience.field.interests.help');
         yield IntegerField::new('rateSeconds', 'newsletter.audience.field.rateSeconds')->hideOnIndex()
             ->setHelp('newsletter.audience.field.rateSeconds.help');
+        yield TextField::new('utmSource', 'newsletter.audience.field.utmSource')->hideOnIndex()
+            ->setRequired(false)
+            ->setHelp('newsletter.audience.field.utmSource.help');
     }
 }

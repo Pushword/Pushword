@@ -21,8 +21,9 @@ Four entities and one command:
 ## Getting started
 
 Create an audience in the admin (**Newsletter → Audiences**): a slug, the host its
-public links belong to, a sender identity, and the interests the public form may
-attach. Then drop the form into any page:
+public links belong to, a sender identity, the interests the public form may
+attach, and — if you want the links tagged — an analytics source. Then drop the
+form into any page:
 
 ```twig
 {{ newsletter_form('altimood') }}
@@ -94,7 +95,9 @@ that reports how many contacts currently match; the API returns
 Author the body as Markdown (the block editor takes over when
 `pushword/admin-block-editor` is installed), pick an audience, optionally a
 segment, then **Send** or **Schedule**. `%name%` and `%email%` are substituted in
-the subject and the body.
+the subject and the body. The **analytics name** is the campaign's slug; leave it
+empty and it is derived from the subject. Either way the send date is prefixed to
+it when the campaign goes out.
 
 Sending never blocks: the recipients are frozen into rows up front and the tick
 drains them at the audience's cadence. That is also what makes it safe — a row
@@ -111,6 +114,12 @@ An automation enrolls every subscribed contact matching `enrollWhen` and sends
 its steps in order, each after its own delay. "Two mails after subscription" is an
 empty `enrollWhen` and two steps.
 
+`enrollWhen` says *who*, never *when*: the timing is the step's own delay. A
+contact is enrolled as soon as they are subscribed — with double opt-in, the
+moment they confirm, since a pending contact matches nothing — and the first
+step's delay counts from there. So "two days after the opt-in is validated" is an
+empty `enrollWhen` and a first step at 2880 minutes.
+
 `stopWhen` is re-checked before each step, so someone whose situation changed
 stops mid-sequence — do not send "discover us" to a customer who just booked.
 Unsubscribing stops every active sequence.
@@ -121,6 +130,35 @@ switching one on cannot mail an entire existing base at once. It is a field, not
 a criterion, because it must not be possible to forget.
 
 Disabling an automation pauses it: enrollments keep their place and resume.
+
+## Link attribution
+
+Set an audience's **analytics source** (`utm_source`, e.g. `newsletter`) and every
+link of its mails that points at one of your own sites carries:
+
+```
+https://example.com/article?utm_source=newsletter&utm_medium=email&utm_campaign=260728-janvier
+```
+
+`utm_campaign` is the campaign's slug, prefixed with the send date as `YYMMDD` so
+a year of campaigns reads in order in any report. The name is derived from the
+subject unless you set one, and the date is stamped when the campaign is armed —
+one scheduled in March and delayed to April is dated April, which is when people
+received it. Rewording the subject afterwards renames nothing.
+
+Automation steps carry the automation's name instead, plus `utm_content=step-2`,
+so a drip reads both as a whole and step by step. They get no date: a drip is not
+sent on a day, it runs.
+
+Four things it will not do: touch a link to somebody else's domain, touch a link
+you tagged by hand, touch the unsubscribe link (leaving is not a visit), or tag
+anything at all while the audience has no source set.
+
+This is attribution, not click tracking — see below.
+
+Related: a `/slug` link written in a body is made absolute against the site's
+canonical base URL before the mail goes out, because a root-relative link has
+nothing to resolve against in an inbox.
 
 ## Custom properties
 
@@ -174,6 +212,12 @@ DELETE /api/newsletter/campaign/{id}
 POST   /api/newsletter/campaign/{id}/schedule
 POST   /api/newsletter/campaign/{id}/send
 POST   /api/newsletter/campaign/{id}/test
+
+GET    /api/newsletter/automation?audience=&enabled=
+POST   /api/newsletter/automation
+GET    /api/newsletter/automation/{id}  # includes enrollment counts
+PATCH  /api/newsletter/automation/{id}
+DELETE /api/newsletter/automation/{id}
 ```
 
 `POST /contact` follows the audience's double opt-in rule; sending
@@ -182,6 +226,14 @@ already-consenting base needs.
 
 The `segment` query parameter takes the same JSON criteria as a campaign, so an
 external system can count an audience before asking for a send.
+
+An automation carries its whole sequence: `steps` is an array in the order the
+mails go out, and sending it again rewrites the sequence rather than appending to
+it. `enrollFrom` defaults to the moment of creation there too, so a drip created
+over the API cannot mail an existing base either.
+
+Audiences have no endpoint: a consent scope and a sender identity are set up
+once, in the admin.
 
 ## Configuration
 
@@ -206,7 +258,10 @@ Templates are overridable per site through the usual view resolution, under
 
 - **No click or open tracking.** Per-link personal-data logging is a liability in
   the EU for what it returns on a content site. The feedback a campaign records
-  is deliveries, failures, unsubscribes and bounces.
+  is deliveries, failures, unsubscribes and bounces. The `utm_*` parameters above
+  are a different thing: no redirect stands between the reader and the page, and
+  nothing is written against a contact — your site's own analytics reads them,
+  in aggregate.
 - **No provider feedback ingestion.** A bounce is recorded when the transport
   refuses the mail at send time, or when something posts it to
   `/api/newsletter/contact/{id}/bounce`. An asynchronous bounce (SES→SNS,

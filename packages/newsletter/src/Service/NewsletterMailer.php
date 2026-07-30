@@ -6,6 +6,7 @@ use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Utm\UtmTag;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
@@ -36,17 +37,21 @@ final readonly class NewsletterMailer
             $campaign->getSubject(),
             $campaign->getBodyMarkdown(),
             $campaign->getPreheader(),
+            UtmTag::forCampaign($campaign),
         );
     }
 
     public function sendStep(AutomationStep $step, Contact $contact): void
     {
+        $automation = $step->getAutomation();
+
         $this->send(
-            $step->getAutomation()?->getAudience() ?? $contact->getAudience(),
+            $automation?->getAudience() ?? $contact->getAudience(),
             $contact,
             $step->getSubject(),
             $step->getBodyMarkdown(),
             null,
+            null !== $automation ? UtmTag::forStep($automation, $step) : null,
         );
     }
 
@@ -74,7 +79,7 @@ final readonly class NewsletterMailer
     }
 
     /** Preview a body by mailing a copy that touches no contact and no counter. */
-    public function sendTest(Audience $audience, string $subject, string $bodyMarkdown, ?string $preheader, string $address): void
+    public function sendTest(Audience $audience, string $subject, string $bodyMarkdown, ?string $preheader, string $address, ?UtmTag $utmTag): void
     {
         $contact = new Contact($audience, $address);
         $contact->setName('Test');
@@ -86,19 +91,19 @@ final readonly class NewsletterMailer
         $email = $this->baseEmail($audience, $contact)
             ->subject('[TEST] '.$this->renderer->subject($subject, $contact))
             ->text($this->renderer->text($contact, $bodyMarkdown, $unsubscribeUrl))
-            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl));
+            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag));
 
         $this->mailer->send($email);
     }
 
-    private function send(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader): void
+    private function send(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader, ?UtmTag $utmTag): void
     {
         $unsubscribeUrl = $this->linkGenerator->unsubscribeUrl($contact);
 
         $email = $this->baseEmail($audience, $contact)
             ->subject($this->renderer->subject($subject, $contact))
             ->text($this->renderer->text($contact, $bodyMarkdown, $unsubscribeUrl))
-            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl));
+            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag));
 
         $headers = $email->getHeaders();
         $headers->addTextHeader('List-Unsubscribe', '<'.$unsubscribeUrl.'>');

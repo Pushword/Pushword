@@ -2,10 +2,13 @@
 
 namespace Pushword\Newsletter\Service;
 
+use Pushword\Core\Component\EntityFilter\Filter\HtmlUnpublishedLink;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Utm\UtmDecorator;
+use Pushword\Newsletter\Utm\UtmTag;
 use Twig\Environment as Twig;
 
 /**
@@ -22,6 +25,7 @@ final readonly class MailRenderer
         private MarkdownParser $markdownParser,
         private Twig $twig,
         private SiteRegistry $siteRegistry,
+        private UtmDecorator $utmDecorator,
     ) {
     }
 
@@ -37,15 +41,19 @@ final readonly class MailRenderer
         string $bodyMarkdown,
         ?string $preheader,
         string $unsubscribeUrl,
+        ?UtmTag $utmTag,
     ): string {
-        $body = $this->personalize($bodyMarkdown, $contact);
+        $body = $this->markdownParser->transform($this->personalize($bodyMarkdown, $contact));
+        $body = $this->absolutize($body, $audience);
 
         return $this->twig->render($this->view($audience, 'email.html.twig'), [
             'audience' => $audience,
             'contact' => $contact,
             'subject' => $this->personalize($subject, $contact),
             'preheader' => null !== $preheader ? $this->personalize($preheader, $contact) : null,
-            'body' => $this->markdownParser->transform($body),
+            // Only the body is tagged: the unsubscribe link the template adds is
+            // an exit, not a visit, and its header twin could not be tagged anyway.
+            'body' => $this->utmDecorator->decorate($body, $audience, $utmTag),
             'unsubscribeUrl' => $unsubscribeUrl,
         ]);
     }
@@ -71,6 +79,35 @@ final readonly class MailRenderer
     {
         return $this->siteRegistry->get($audience->getMainHost())
             ->getView('/newsletter/'.$template, '@PushwordNewsletter');
+    }
+
+    /**
+     * A root-relative link is dead in an inbox: there is no page to resolve it
+     * against. They are bound to the site's canonical base rather than to its
+     * live origin — the reader should land on the published page, not on the
+     * machine the mail happened to leave from.
+     */
+    private function absolutize(string $html, Audience $audience): string
+    {
+        if (! str_contains($html, '<a ')) {
+            return $html;
+        }
+
+        $base = rtrim($this->siteRegistry->get($audience->getMainHost())->getBaseUrl(), '/');
+
+        return preg_replace_callback(
+            HtmlUnpublishedLink::HTML_REGEX,
+            static function (array $match) use ($base): string {
+                // `//host/path` is already absolute, protocol-relative.
+                if (! str_starts_with($match['href'], '/') || str_starts_with($match['href'], '//')) {
+                    return $match[0];
+                }
+
+                return '<a'.$match['before'].'href='.$match['quote'].$base.$match['href'].$match['quote']
+                    .$match['after'].'>'.$match['content'].'</a>';
+            },
+            $html
+        ) ?? $html;
     }
 
     private function personalize(string $text, Contact $contact): string

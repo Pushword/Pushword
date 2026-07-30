@@ -28,6 +28,7 @@ use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Service\CampaignSender;
 use Pushword\Newsletter\Service\NewsletterMailer;
+use Pushword\Newsletter\Utm\UtmTag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -130,6 +131,9 @@ class CampaignCrudController extends AbstractCrudController
             ->hideOnForm();
         yield TextField::new('preheader', 'newsletter.campaign.field.preheader')->hideOnIndex()
             ->setHelp('newsletter.campaign.field.preheader.help');
+        yield TextField::new('slug', 'newsletter.campaign.field.slug')->hideOnIndex()
+            ->setRequired(false)
+            ->setHelp('newsletter.campaign.field.slug.help');
         yield $this->bodyField();
 
         yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users');
@@ -290,7 +294,7 @@ class CampaignCrudController extends AbstractCrudController
             }
 
             try {
-                $this->mailer->sendTest($audience, $campaign->getSubject(), $campaign->getBodyMarkdown(), $campaign->getPreheader(), $address);
+                $this->mailer->sendTest($audience, $campaign->getSubject(), $campaign->getBodyMarkdown(), $campaign->getPreheader(), $address, UtmTag::forCampaign($campaign));
                 $sent[] = $address;
             } catch (Throwable $throwable) {
                 $failed[] = $address.' ('.$throwable->getMessage().')';
