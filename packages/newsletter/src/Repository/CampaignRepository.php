@@ -38,6 +38,24 @@ class CampaignRepository extends ServiceEntityRepository
         return $campaigns;
     }
 
+    /**
+     * Campaigns that have not gone out yet: still editable, still cancellable.
+     *
+     * @return list<int>
+     */
+    public function findPendingIds(): array
+    {
+        /** @var list<array{id: int}> $rows */
+        $rows = $this->createQueryBuilder('c')
+            ->select('c.id')
+            ->andWhere('c.status IN (:pending)')
+            ->setParameter('pending', [CampaignStatus::Draft->value, CampaignStatus::Scheduled->value])
+            ->getQuery()
+            ->getResult();
+
+        return array_column($rows, 'id');
+    }
+
     /** @return list<Campaign> */
     public function findSending(): array
     {

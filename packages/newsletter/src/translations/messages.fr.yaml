@@ -123,6 +123,34 @@ newsletter:
       status: Statut
       tags: Tags
       unsubscribedAt: Désinscrit le
+  contentTrigger:
+    label:
+      plural: Déclencheurs de contenu
+      singular: Déclencheur de contenu
+    action:
+      preview: Prévisualiser les pages
+    fieldset:
+      mail: Mail
+      rules: Règles
+    field:
+      audience: Audience
+      body: Contenu
+      body.help: 'Markdown, avec les mêmes variables que l''objet plus {{ page.mainImage }} pour l''illustration. Les liens sont rendus absolus et marqués avant l''envoi, comme dans toute newsletter.'
+      delay: Délai (minutes)
+      delay.help: Attendre ce délai après la publication de la page. J+1 = 1440 ; 0 envoie au prochain tick.
+      enabled: Activé
+      enabled.help: La désactivation arrête la prise en compte des nouvelles pages. Les newsletters déjà créées ne sont pas touchées.
+      hosts: Hôtes
+      hosts.help: 'Les sites à surveiller ; vide, tous. Une audience couvre souvent plusieurs hôtes de langue : choisissez ceux qui méritent un mail.'
+      name: Nom
+      pageWhen: Déclencher sur les pages
+      pageWhen.help: 'Liste JSON de conditions, toutes requises — quelles pages, pas quand. Vide : toutes les pages publiées de ces hôtes. Exemple : [{"field":"slug","op":"startsWith","value":"blog/"}]'
+      segment: Segment
+      segment.help: 'Qui reçoit le mail, dans les critères de contact habituels. Vide : toute l''audience inscrite.'
+      subject: Objet
+      subject.help: 'Peut reprendre {{ page.h1 }}, {{ page.excerpt }} et {{ page.url }}. Par exemple : Nouvel article : {{ page.h1 }}'
+      triggerFrom: Déclencher à partir du
+      triggerFrom.help: Les pages publiées avant cette date ne déclenchent jamais rien. Cela évite qu'un nouveau déclencheur écrive à propos de tout un historique d'un coup.
   email:
     unsubscribe: Se désinscrire
   form:
@@ -142,6 +170,7 @@ newsletter:
   subscribe:
     done: Vous êtes inscrit. Merci !
     invalidEmail: Cette adresse email ne semble pas valide.
+    noAudience: Choisissez au moins une newsletter.
     pending: Presque terminé — cliquez sur le lien que nous venons de vous envoyer.
     tooMany: Trop de tentatives. Réessayez plus tard.
     unknownAudience: Cette newsletter n'existe pas.
@@ -154,4 +183,8 @@ newsletter:
     title: Désinscription
   unsubscribed:
     body: Vous ne recevrez plus de message de %audience%.
+    othersAll: Me désinscrire de toutes
+    othersBody: Votre adresse figure aussi sur ces listes. En quitter une ne dit rien des autres.
+    othersConfirm: Me désinscrire des listes cochées
+    othersTitle: Nos autres newsletters
     title: Désinscription effectuée

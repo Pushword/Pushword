@@ -21,6 +21,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         if (null !== $this->audienceId && null !== $this->client) {
             $connection = $this->entityManager()->getConnection();
             foreach ([
+                'DELETE FROM newsletter_content_trigger WHERE audience_id = :id',
                 'DELETE FROM newsletter_campaign WHERE audience_id = :id',
                 'DELETE FROM newsletter_contact WHERE audience_id = :id',
                 'DELETE FROM newsletter_audience WHERE id = :id',
@@ -37,7 +38,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $this->seed();
 
-        foreach (['audience', 'contact', 'campaign', 'automation'] as $section) {
+        foreach (['audience', 'contact', 'campaign', 'automation', 'content-trigger'] as $section) {
             $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section);
             self::assertSame(200, $client->getResponse()->getStatusCode(), $section.' index');
         }
@@ -89,6 +90,24 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $campaign = $this->entityManager()->getRepository(Campaign::class)->findOneBy(['subject' => 'Good segment']);
         self::assertInstanceOf(Campaign::class, $campaign);
         self::assertSame([['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']], $campaign->getSegment());
+    }
+
+    /** Same guarantee for the page grammar: a bad rule is a form error, never a 500. */
+    public function testAMalformedPageRuleIsAFormError(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/content-trigger/new');
+        $form = $crawler->filter('form[name="ContentTrigger"]')->form();
+        $form['ContentTrigger[name]'] = 'Broken rule';
+        $form['ContentTrigger[audience]'] = (string) $audience->id;
+        $form['ContentTrigger[subjectTemplate]'] = 'New article: {{ page.h1 }}';
+        $form['ContentTrigger[pageWhenAsJson]'] = '[{"field":"tag","op":"has","value":"AmTrek"}]';
+        $client->submit($form);
+
+        self::assertSame(422, $client->getResponse()->getStatusCode());
+        self::assertStringContainsString('unknown field', (string) $client->getResponse()->getContent());
     }
 
     /** Contacts are only ever created by an opt-in, never by hand in the admin. */

@@ -1,8 +1,9 @@
 # Pushword Newsletter
 
 Newsletter for [Pushword](https://pushword.piedweb.com): audiences, contacts with
-custom properties, segmented campaigns and criteria-driven automations — no CRM,
-no worker, no third-party ESP.
+custom properties, segmented campaigns, criteria-driven automations and content
+triggers that mail your readers when you publish — no CRM, no worker, no
+third-party ESP.
 
 ```twig
 {{ newsletter_form('my-audience') }}

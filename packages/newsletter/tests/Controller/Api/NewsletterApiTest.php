@@ -9,6 +9,7 @@ use Pushword\Core\Repository\UserRepository;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Entity\ContentTrigger;
 use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Service\AutomationRunner;
@@ -442,6 +443,85 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $this->request(Request::METHOD_DELETE, '/api/newsletter/automation/'.$automation->id);
 
         self::assertSame(Response::HTTP_NO_CONTENT, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testCreatingAContentTrigger(): void
+    {
+        $audience = $this->createAudience();
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
+            'audience' => $audience->getSlug(),
+            'name' => 'New articles',
+            'hosts' => ['localhost.dev'],
+            'pageWhen' => [['field' => 'slug', 'op' => 'startsWith', 'value' => 'blog/']],
+            'delayMinutes' => 1440,
+            'subjectTemplate' => 'New article: {{ page.h1 }}',
+            'bodyTemplate' => 'Read [{{ page.h1 }}]({{ page.url }}).',
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $this->client->getResponse()->getStatusCode());
+        self::assertSame(['localhost.dev'], $body['hosts']);
+        self::assertSame(1440, $body['delayMinutes']);
+        self::assertNotNull($body['triggerFrom'], 'a trigger created over the API cannot mail a back catalogue either');
+    }
+
+    /** The page grammar is not the contact one; mixing them up must be said, not ignored. */
+    public function testAContactFieldInPageWhenIsRejected(): void
+    {
+        $audience = $this->createAudience();
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
+            'audience' => $audience->getSlug(),
+            'name' => 'Broken',
+            'subjectTemplate' => 'Hello',
+            'pageWhen' => [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']],
+        ]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+        $error = $body['error'];
+        self::assertIsString($error);
+        self::assertStringStartsWith('pageWhen:', $error);
+    }
+
+    public function testATriggerReportsBothSidesOfItsRule(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'reader@example.tld');
+        $trigger = $this->createContentTrigger($audience, pageWhen: [
+            ['field' => 'slug', 'op' => 'startsWith', 'value' => 'nothing-matches-this/'],
+        ]);
+
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/content-trigger/'.$trigger->id);
+
+        self::assertSame(0, $body['campaignsCreated']);
+        self::assertSame(0, $body['waitingPages']);
+        self::assertSame(1, $body['matchingContacts']);
+    }
+
+    public function testDisablingATriggerThroughTheApiStopsIt(): void
+    {
+        $audience = $this->createAudience();
+        $trigger = $this->createContentTrigger($audience);
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/content-trigger/'.$trigger->id, [
+            'enabled' => false,
+        ]);
+
+        self::assertFalse($body['enabled']);
+        self::assertSame([], $this->entityManager->getRepository(ContentTrigger::class)->findEnabled());
+    }
+
+    /** A campaign it produced is an ordinary campaign — and some of them have been sent. */
+    public function testDeletingATriggerKeepsTheCampaignsItCreated(): void
+    {
+        $audience = $this->createAudience();
+        $trigger = $this->createContentTrigger($audience);
+        $campaign = $this->createCampaign($audience);
+
+        $this->request(Request::METHOD_DELETE, '/api/newsletter/content-trigger/'.$trigger->id);
+
+        self::assertSame(Response::HTTP_NO_CONTENT, $this->client->getResponse()->getStatusCode());
+        self::assertNotNull($this->entityManager->getRepository(Campaign::class)->find($campaign->id));
     }
 
     private function runner(): AutomationRunner

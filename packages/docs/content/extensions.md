@@ -18,7 +18,7 @@ name: Extensions
 - [Flat](/extension/flat)
   Transform Pushword in a FlatFile CMS.
 - [Newsletter](/extension/newsletter)
-  Audiences, contacts with custom properties, segmented campaigns and criteria-driven mailing automations, driven by one cron tick. Double opt-in, one-click unsubscribe, `utm_*` link attribution, no click tracking.
+  Audiences, contacts with custom properties, segmented campaigns, criteria-driven mailing automations and content triggers that mail the audience when you publish — all driven by one cron tick. Double opt-in, one-click unsubscribe, `utm_*` link attribution, no click tracking.
 - [Page Scanner](/extension/page-scanner)
   Find dead links, 404, 301, TODO reminders and more (command line or admin).
 - [Page Update Notifier](/extension/page-update-notifier)

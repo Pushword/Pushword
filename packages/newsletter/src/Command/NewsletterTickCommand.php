@@ -4,6 +4,7 @@ namespace Pushword\Newsletter\Command;
 
 use DateTimeImmutable;
 use Pushword\Core\Command\AgentOutputTrait;
+use Pushword\Newsletter\Content\ContentTriggerRunner;
 use Pushword\Newsletter\Repository\AutomationRepository;
 use Pushword\Newsletter\Repository\CampaignRepository;
 use Pushword\Newsletter\Service\AutomationRunner;
@@ -28,7 +29,7 @@ use Symfony\Component\Lock\LockFactory;
  */
 #[AsCommand(
     name: 'pw:newsletter:tick',
-    description: 'Send what is due: scheduled campaigns, paced broadcasts and automation steps',
+    description: 'Send what is due: content-triggered mailings, scheduled campaigns, paced broadcasts and automation steps',
 )]
 final class NewsletterTickCommand
 {
@@ -41,6 +42,7 @@ final class NewsletterTickCommand
         private readonly CampaignSender $campaignSender,
         private readonly AutomationRepository $automationRepository,
         private readonly AutomationRunner $automationRunner,
+        private readonly ContentTriggerRunner $contentTriggerRunner,
         private readonly LockFactory $lockFactory,
         #[Autowire(param: 'pw.newsletter.send_batch')]
         private readonly int $defaultBatch,
@@ -82,7 +84,8 @@ final class NewsletterTickCommand
         }
 
         $io->success(\sprintf(
-            '%d campaign(s) armed, %d broadcast mail(s), %d enrollment(s), %d automation mail(s).',
+            '%d campaign(s) triggered by content, %d campaign(s) armed, %d broadcast mail(s), %d enrollment(s), %d automation mail(s).',
+            $report['triggered'],
             $report['armed'],
             $report['campaignMails'],
             $report['enrolled'],
@@ -92,9 +95,13 @@ final class NewsletterTickCommand
         return Command::SUCCESS;
     }
 
-    /** @return array{armed: int, campaignMails: int, enrolled: int, automationMails: int, budgetLeft: int} */
+    /** @return array{triggered: int, cancelled: int, armed: int, campaignMails: int, enrolled: int, automationMails: int, budgetLeft: int} */
     private function run(int $budget): array
     {
+        // Before arming: a page published long enough ago is meant to go out in
+        // the same pass that noticed it, not a minute later.
+        $content = $this->contentTriggerRunner->run(new DateTimeImmutable());
+
         $armed = 0;
         foreach ($this->campaignRepository->findDue(new DateTimeImmutable()) as $campaign) {
             $this->campaignSender->arm($campaign);
@@ -119,7 +126,7 @@ final class NewsletterTickCommand
 
         $automationMails = $this->automationRunner->advance($budget);
 
-        return [
+        return $content + [
             'armed' => $armed,
             'campaignMails' => $campaignMails,
             'enrolled' => $enrolled,

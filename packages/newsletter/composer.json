@@ -1,7 +1,7 @@
 {
   "name": "pushword/newsletter",
   "type": "symfony-bundle",
-  "description": "Newsletter for Pushword CMS: audiences, contacts with custom properties, segmented campaigns and criteria-driven automations.",
+  "description": "Newsletter for Pushword CMS: audiences, contacts with custom properties, segmented campaigns, criteria-driven automations and content-triggered mailings.",
   "keywords": [],
   "homepage": "https://pushword.piedweb.com/extension/newsletter",
   "license": "MIT",

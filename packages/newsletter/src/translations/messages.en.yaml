@@ -123,6 +123,34 @@ newsletter:
       status: Status
       tags: Tags
       unsubscribedAt: Unsubscribed at
+  contentTrigger:
+    label:
+      plural: Content triggers
+      singular: Content trigger
+    action:
+      preview: Preview pages
+    fieldset:
+      mail: Mail
+      rules: Rules
+    field:
+      audience: Audience
+      body: Body
+      body.help: 'Markdown, with the same placeholders as the subject plus {{ page.mainImage }} for the illustration. Links are made absolute and tagged before sending, as in any newsletter.'
+      delay: Delay (minutes)
+      delay.help: Wait this long after the page was published. The day after is 1440; 0 sends on the next tick.
+      enabled: Enabled
+      enabled.help: Disabling stops new pages from being picked up. Campaigns already created are untouched.
+      hosts: Hosts
+      hosts.help: The sites to watch; empty watches every one. An audience often spans several locale hosts, so pick the ones worth a mail.
+      name: Name
+      pageWhen: Trigger on pages
+      pageWhen.help: 'JSON list of conditions, all of which must hold — which pages, not when. Empty matches every published page of those hosts. Example: [{"field":"slug","op":"startsWith","value":"blog/"}]'
+      segment: Segment
+      segment.help: 'Who receives the mail, in the usual contact criteria. Empty targets the whole subscribed audience.'
+      subject: Subject
+      subject.help: 'May quote {{ page.h1 }}, {{ page.excerpt }} and {{ page.url }}. For example: New article: {{ page.h1 }}'
+      triggerFrom: Trigger from
+      triggerFrom.help: Pages published before this date never trigger anything. It stops a new trigger from mailing an entire back catalogue at once.
   email:
     unsubscribe: Unsubscribe
   form:
@@ -142,6 +170,7 @@ newsletter:
   subscribe:
     done: You are subscribed. Thank you!
     invalidEmail: This email address does not look valid.
+    noAudience: Pick at least one newsletter.
     pending: Almost done — click the link we just sent you.
     tooMany: Too many attempts. Please try again later.
     unknownAudience: This newsletter does not exist.
@@ -154,4 +183,8 @@ newsletter:
     title: Unsubscribe
   unsubscribed:
     body: You will not receive any more mail from %audience%.
+    othersAll: Unsubscribe me from all of them
+    othersBody: Your address is also on these lists. Leaving one says nothing about the others.
+    othersConfirm: Unsubscribe me from the ticked lists
+    othersTitle: Our other newsletters
     title: Unsubscribed

@@ -6,6 +6,7 @@ use Pushword\Core\PushwordCoreBundle;
 use Pushword\Newsletter\Controller\Api\AutomationApiController;
 use Pushword\Newsletter\Controller\Api\CampaignApiController;
 use Pushword\Newsletter\Controller\Api\ContactApiController;
+use Pushword\Newsletter\Controller\Api\ContentTriggerApiController;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -22,6 +23,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->exclude([
             __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
             __DIR__.'/../Admin',
+            __DIR__.'/../Content/PageCriteria.php',
             __DIR__.'/../Enum',
             __DIR__.'/../Repository/DQL',
             __DIR__.'/../Segment/SegmentCriteria.php',
@@ -45,6 +47,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             ->tag('controller.service_arguments')
             ->tag('pushword.api.controller');
         $services->set(AutomationApiController::class)
+            ->autowire()
+            ->tag('controller.service_arguments')
+            ->tag('pushword.api.controller');
+        $services->set(ContentTriggerApiController::class)
             ->autowire()
             ->tag('controller.service_arguments')
             ->tag('pushword.api.controller');

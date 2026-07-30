@@ -5,16 +5,19 @@ publishedAt: '2026-07-27 10:00'
 toc: true
 ---
 
-Collect contacts, hold their consent, broadcast to a segment and drip a sequence —
-without a CRM, a worker, or a third-party ESP.
+Collect contacts, hold their consent, broadcast to a segment, drip a sequence and
+mail your readers when you publish — without a CRM, a worker, or a third-party
+ESP.
 
-Four entities and one command:
+Five entities and one command:
 
 - **Audience** — a mailing list, and the scope of consent. One per brand.
 - **Contact** — a person in an audience, with tags and free-form custom
   properties, plus the record of when and where they opted in.
 - **Campaign** — one broadcast, to the whole audience or to a segment.
 - **Automation** — a criteria-driven drip: enroll whoever matches, send the steps.
+- **Content trigger** — publish an article, and the audience hears about it a day
+  later. No campaign to write.
 
 `pw:newsletter:tick`, run from cron, is the only moving part at runtime.
 
@@ -51,6 +54,14 @@ off to import a base that has already consented.
 Every mail carries `List-Unsubscribe` and RFC 8058 one-click, so leaving never
 depends on finding the link in the body. The unsubscribe page acts on `POST`
 only — a mail scanner following the link must not opt anyone out on their behalf.
+
+Leaving one list leaves that one. The confirmation page then offers the other
+lists **of the same host** the address is subscribed to, to tick one by one or
+drop in a single click; the host is the boundary, so one brand's unsubscribe
+link never says what another brand knows about the address. Nobody sees that
+page during a one-click opt-out — the `POST` is sent by the mailbox provider,
+which shows the response to no one — but anyone opening the link themselves
+lands on it, before or after the fact.
 
 All public links (confirm, unsubscribe) are built from the audience host's
 `base_live_url`, so they keep working when the site itself is statically
@@ -131,6 +142,63 @@ a criterion, because it must not be possible to forget.
 
 Disabling an automation pauses it: enrollments keep their place and resume.
 
+## Content triggers
+
+An automation watches contacts. A content trigger watches the site: publish an
+article and, a configurable delay later, everyone in the segment gets a mail
+about it — unattended, with no campaign to write.
+
+Set it up once (**Newsletter → Content triggers**): the hosts to watch, which of
+their pages are worth a mail, who receives it, how long to wait, and the subject
+and body to send.
+
+```json
+[{"field": "slug", "op": "startsWith", "value": "blog/"}]
+```
+
+| field | operators |
+|---|---|
+| `slug` | `startsWith`, `notStartsWith` |
+| `template`, `parentPage` | `=`, `!=` — `parentPage` takes the parent's slug |
+| `prop.<key>` | `=`, `!=`, `isSet`, `isNotSet` |
+
+Same flat, ANDed shape as a segment, over pages instead of contacts. An empty
+list means every published page of those hosts. The two rules read as one
+sentence: `pageWhen` picks the article, `segment` picks the readers.
+
+The subject and the body may quote four values of the page:
+
+```
+{{ page.h1 }}   {{ page.excerpt }}   {{ page.url }}   {{ page.mainImage }}
+```
+
+The braces are borrowed from Twig; nothing is evaluated. They are substituted
+once, when the campaign is created, so what gets stored is plain Markdown —
+which is why link absolutization and `utm_*` tagging work on it exactly as they
+do on a hand-written newsletter. `{{ page.url }}` is built from the page's own
+host and its canonical base URL, so it keeps working on a statically generated
+site and across an audience that spans several locale hosts.
+
+**What it produces is an ordinary campaign**, scheduled at `publishedAt + delay`
+and sent by the same tick. During the delay you can read it, edit it, or cancel
+it in the admin; afterwards it reports deliveries, unsubscribes and bounces like
+any other. It is never rewritten: editing the page after the campaign exists
+changes the article, not the mail already queued about it.
+
+Three things it will not do:
+
+- **Mail a back catalogue.** `triggerFrom` defaults to the moment of creation;
+  pages published before it never trigger anything. Like `enrollFrom`, it is a
+  field rather than a criterion, because it must not be possible to forget.
+- **Mail the same page twice.** A trigger records the pages it has handled, so a
+  missed tick only delays work and a tick that runs twice writes nothing new.
+- **Mail a dead link.** A page unpublished or deleted before its campaign is
+  armed cancels it. Publish it again and it gets its mail — the record went with
+  the cancellation.
+
+Not to be confused with [Page Update Notifier](/extension/page-update-notifier),
+which mails *you* when content changes. This one mails your readers.
+
 ## Link attribution
 
 Set an audience's **analytics source** (`utm_source`, e.g. `newsletter`) and every
@@ -172,10 +240,14 @@ the others.
 
 `pw:newsletter:tick` is stateless and idempotent. Each run, under a lock:
 
-1. arms scheduled campaigns whose date has passed,
-2. drains pending recipients at the cadence,
-3. enrolls contacts newly matching an enabled automation,
-4. sends the automation steps that are due.
+1. schedules a campaign for each newly published page a content trigger matches,
+2. arms scheduled campaigns whose date has passed,
+3. drains pending recipients at the cadence,
+4. enrolls contacts newly matching an enabled automation,
+5. sends the automation steps that are due.
+
+Content triggers come first so that a page whose delay has already elapsed goes
+out in the pass that noticed it, rather than a minute later.
 
 Pacing is derived from the last mail actually sent rather than from a sleep, so
 the command returns immediately and a campaign resumes at the right rate whatever
@@ -218,6 +290,12 @@ POST   /api/newsletter/automation
 GET    /api/newsletter/automation/{id}  # includes enrollment counts
 PATCH  /api/newsletter/automation/{id}
 DELETE /api/newsletter/automation/{id}
+
+GET    /api/newsletter/content-trigger?audience=&enabled=
+POST   /api/newsletter/content-trigger
+GET    /api/newsletter/content-trigger/{id}  # includes waiting pages and reach
+PATCH  /api/newsletter/content-trigger/{id}
+DELETE /api/newsletter/content-trigger/{id}
 ```
 
 `POST /contact` follows the audience's double opt-in rule; sending
@@ -231,6 +309,10 @@ An automation carries its whole sequence: `steps` is an array in the order the
 mails go out, and sending it again rewrites the sequence rather than appending to
 it. `enrollFrom` defaults to the moment of creation there too, so a drip created
 over the API cannot mail an existing base either.
+
+A `GET` on a content trigger reports both sides of its rule — `waitingPages` and
+`matchingContacts` — plus `campaignsCreated`. Deleting one keeps the campaigns it
+produced: they are ordinary campaigns, and some of them have been sent.
 
 Audiences have no endpoint: a consent scope and a sender identity are set up
 once, in the admin.

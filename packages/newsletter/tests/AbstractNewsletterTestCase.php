@@ -11,6 +11,7 @@ use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Entity\ContentTrigger;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -50,12 +51,12 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
     }
 
     /** @param string[] $interests */
-    protected function createAudience(bool $requireDoubleOptIn = true, array $interests = [], int $rateSeconds = 30): Audience
+    protected function createAudience(bool $requireDoubleOptIn = true, array $interests = [], int $rateSeconds = 30, string $mainHost = 'localhost.dev'): Audience
     {
         $audience = new Audience()
             ->setSlug('test-'.bin2hex(random_bytes(6)))
             ->setName('Test audience')
-            ->setMainHost('localhost.dev')
+            ->setMainHost($mainHost)
             ->setFromName('Test')
             ->setFromEmail('newsletter@localhost.dev')
             ->setRequireDoubleOptIn($requireDoubleOptIn)
@@ -144,11 +145,45 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
         return $automation;
     }
 
+    /**
+     * @param string[]                         $hosts
+     * @param array<int, array<string, mixed>> $pageWhen
+     * @param array<int, array<string, mixed>> $segment
+     */
+    protected function createContentTrigger(
+        Audience $audience,
+        array $hosts = ['localhost.dev'],
+        array $pageWhen = [],
+        array $segment = [],
+        int $delayMinutes = 1440,
+        string $subjectTemplate = 'New article: {{ page.h1 }}',
+        string $bodyTemplate = 'Read [{{ page.h1 }}]({{ page.url }}).',
+        ?DateTimeImmutable $triggerFrom = null,
+    ): ContentTrigger {
+        $trigger = new ContentTrigger()
+            ->setAudience($audience)
+            ->setName('New articles')
+            ->setHosts($hosts)
+            ->setPageWhen($pageWhen)
+            ->setSegment($segment)
+            ->setDelayMinutes($delayMinutes)
+            ->setSubjectTemplate($subjectTemplate)
+            ->setBodyTemplate($bodyTemplate)
+            ->setTriggerFrom($triggerFrom ?? new DateTimeImmutable('-1 hour'));
+
+        $this->entityManager->persist($trigger);
+        $this->entityManager->flush();
+
+        return $trigger;
+    }
+
     private function purge(int $audienceId): void
     {
         $connection = $this->entityManager->getConnection();
 
         $statements = [
+            'DELETE FROM newsletter_content_trigger_log WHERE trigger_id IN (SELECT id FROM newsletter_content_trigger WHERE audience_id = :id)',
+            'DELETE FROM newsletter_content_trigger WHERE audience_id = :id',
             'DELETE FROM newsletter_enrollment WHERE contact_id IN (SELECT id FROM newsletter_contact WHERE audience_id = :id)',
             'DELETE FROM newsletter_campaign_recipient WHERE campaign_id IN (SELECT id FROM newsletter_campaign WHERE audience_id = :id)',
             'DELETE FROM newsletter_automation_step WHERE automation_id IN (SELECT id FROM newsletter_automation WHERE audience_id = :id)',
