@@ -10,19 +10,19 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
-final class PdfOptimizer
+final readonly class PdfOptimizer
 {
-    private ?string $ghostscriptPath = null;
+    private ?string $ghostscriptPath;
 
-    private ?string $qpdfPath = null;
+    private ?string $qpdfPath;
 
     public function __construct(
-        private readonly MediaStorageAdapter $mediaStorage,
-        private readonly BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
-        private readonly LoggerInterface $logger,
-        private readonly Filesystem $filesystem = new Filesystem(),
-        private readonly string $pdfPreset = 'ebook',
-        private readonly bool $pdfLinearize = true,
+        private MediaStorageAdapter $mediaStorage,
+        private BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
+        private LoggerInterface $logger,
+        private Filesystem $filesystem = new Filesystem(),
+        private string $pdfPreset = 'ebook',
+        private bool $pdfLinearize = true,
     ) {
         $finder = new ExecutableFinder();
         $this->ghostscriptPath = $finder->find('gs');
