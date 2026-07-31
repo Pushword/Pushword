@@ -51,7 +51,7 @@ final class SitemapController extends AbstractPushwordController
         $requestedLocale = rtrim($request->getLocale(), '/');
 
         return $this->pageRepository->getIndexablePagesQuery(
-            (string) $this->apps->getMainHost(),
+            $this->apps->getMainHost(),
             '' !== $requestedLocale ? $requestedLocale : $this->apps->getApp()->getLocale(),
             $limit
         )

@@ -75,10 +75,6 @@ final readonly class FlatChangeDetector
     private function detectChanges(?string $host): array
     {
         $resolvedHost = $host ?? $this->apps->getMainHost();
-        if (null === $resolvedHost) {
-            return ['hasChanges' => false, 'entityTypes' => [], 'newestFile' => null, 'newestMtime' => null];
-        }
-
         $contentDir = $this->contentDirFinder->get($resolvedHost);
         $lastSyncTime = $this->stateManager->getLastSyncAt($resolvedHost);
 

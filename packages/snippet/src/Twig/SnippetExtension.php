@@ -159,6 +159,6 @@ final readonly class SnippetExtension
     {
         $page = $this->siteRegistry->getCurrentPage();
 
-        return null !== $page ? $page->host : ($this->siteRegistry->getMainHost() ?? '');
+        return null !== $page ? $page->host : $this->siteRegistry->getMainHost();
     }
 }

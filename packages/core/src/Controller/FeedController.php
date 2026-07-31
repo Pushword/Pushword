@@ -86,7 +86,7 @@ final class FeedController extends AbstractPushwordController
 
         /** @var list<Page> */
         return $this->pageRepository->getIndexablePagesQuery(
-            (string) $this->apps->getMainHost(),
+            $this->apps->getMainHost(),
             '' !== $requestedLocale ? $requestedLocale : $this->params->get('kernel.default_locale'),
             $limit
         )

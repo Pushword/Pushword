@@ -8,7 +8,7 @@ use Symfony\Contracts\Service\ResetInterface;
 
 final class RequestContext implements ResetInterface
 {
-    private ?SiteConfig $currentSite = null;
+    private SiteConfig $currentSite;
 
     private ?Page $currentPage = null;
 
@@ -87,7 +87,7 @@ final class RequestContext implements ResetInterface
 
     public function getCurrentSite(): SiteConfig
     {
-        return $this->currentSite ?? $this->siteRegistry->getDefault();
+        return $this->currentSite;
     }
 
     public function getCurrentHost(): ?string
@@ -119,17 +119,17 @@ final class RequestContext implements ResetInterface
         return $this->getCurrentSite()->getLocale();
     }
 
-    public function getMainHost(): ?string
+    public function getMainHost(): string
     {
-        return $this->currentSite?->getMainHost();
+        return $this->currentSite->getMainHost();
     }
 
     public function sameHost(?string $host): bool
     {
         if (null === $host) {
-            return $this->siteRegistry->isDefaultHost($this->currentSite?->getMainHost());
+            return $this->siteRegistry->isDefaultHost($this->currentSite->getMainHost());
         }
 
-        return $host === $this->currentSite?->getMainHost();
+        return $host === $this->currentSite->getMainHost();
     }
 }

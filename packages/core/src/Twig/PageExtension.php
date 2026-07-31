@@ -77,7 +77,7 @@ final class PageExtension
     public function getPageUriList(string|array|null $host = null): array
     {
         $host ??= $this->apps->getCurrentPage()?->host;
-        $host ??= $this->apps->getMainHost() ?? [];
+        $host ??= $this->apps->getMainHost();
 
         return $this->pageRepo->getPageUriList($host);
     }
@@ -125,7 +125,7 @@ final class PageExtension
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
             : ['key' => $order[0], 'direction' => $order[1]];
 
-        return $this->pageRepo->getPublishedPages($host ?? $this->apps->getMainHost() ?? [], $criteria, $order, $this->getLimit($max), $withRedirection);
+        return $this->pageRepo->getPublishedPages($host ?? $this->apps->getMainHost(), $criteria, $order, $this->getLimit($max), $withRedirection);
     }
 
     /**
@@ -136,7 +136,7 @@ final class PageExtension
     public function getPublishedPage(string $slug, string|array|null $host = null): ?Page
     {
         $pages = $this->pageRepo->getPublishedPages(
-            $host ?? $this->apps->getMainHost() ?? [],
+            $host ?? $this->apps->getMainHost(),
             [['key' => 'slug', 'operator' => '=', 'value' => $slug]],
             [],
             1,

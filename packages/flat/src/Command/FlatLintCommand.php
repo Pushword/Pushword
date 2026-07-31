@@ -39,24 +39,6 @@ final class FlatLintCommand
         $this->agentMode = $this->isAgentFormat($format);
 
         $resolvedHost = $host ?? $this->apps->getMainHost();
-        if (null === $resolvedHost) {
-            if ($this->agentMode) {
-                $this->writeAgentJson($output, [
-                    'tool' => 'pw:flat:lint',
-                    'result' => 'failed',
-                    'files_checked' => 0,
-                    'errors' => 0,
-                    'issues' => [],
-                ]);
-
-                return Command::FAILURE;
-            }
-
-            $output->writeln('<error>No host configured.</error>');
-
-            return Command::FAILURE;
-        }
-
         $contentDir = $this->contentDirFinder->get($resolvedHost);
 
         $files = $this->collectMarkdownFiles($contentDir);

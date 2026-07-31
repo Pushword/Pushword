@@ -51,7 +51,7 @@ final readonly class RouterTwigExtension
         // Resolve host from the current site when not explicitly provided so the
         // repository can warm its lightweight URI cache. Without this, the
         // empty-host sentinel would short-circuit the redirect lookups below.
-        $host ??= $this->siteRegistry->getMainHost() ?? '';
+        $host ??= $this->siteRegistry->getMainHost();
 
         // Page instance: everything is already hydrated, no DB access required.
         if ($slug instanceof Page) {

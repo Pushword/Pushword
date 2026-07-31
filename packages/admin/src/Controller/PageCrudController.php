@@ -455,7 +455,7 @@ class PageCrudController extends AbstractAdminCrudController
     {
         $instance = $this->getContext()?->getEntity()?->getInstance();
         $page = $instance instanceof Page ? $instance
-            : $this->pageRepo->create($this->apps->getMainHost() ?? '');
+            : $this->pageRepo->create($this->apps->getMainHost());
         $this->setSubject($page);
 
         $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);

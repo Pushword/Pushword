@@ -15,7 +15,8 @@ final class SiteRegistry implements ResetInterface
     /** @var array<string, SiteConfig> */
     private array $sites = [];
 
-    private ?string $defaultHost = null;
+    /** Empty when no site is configured — {@see getDefault()} is then the only place that says so. */
+    private readonly string $defaultHost;
 
     /** @var array<string, string> */
     private array $stashed = [];
@@ -83,7 +84,7 @@ final class SiteRegistry implements ResetInterface
 
     public function getDefault(): SiteConfig
     {
-        if (null !== $this->defaultHost && isset($this->sites[$this->defaultHost])) {
+        if (isset($this->sites[$this->defaultHost])) {
             return $this->sites[$this->defaultHost];
         }
 
@@ -240,7 +241,7 @@ final class SiteRegistry implements ResetInterface
         return $this->context()->getCurrentSlug();
     }
 
-    public function getMainHost(): ?string
+    public function getMainHost(): string
     {
         return $this->context()->getMainHost();
     }
