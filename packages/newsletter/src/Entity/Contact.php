@@ -43,7 +43,7 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
     #[Assert\NotBlank]
     #[Assert\Email(mode: 'strict')]
     #[ORM\Column(type: Types::STRING, length: 180)]
-    private string $email = '';
+    private string $email;
 
     #[ORM\Column(type: Types::STRING, length: 180)]
     private string $name = '';
