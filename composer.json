@@ -37,7 +37,7 @@
     "league/commonmark": "^2.7",
     "league/flysystem-bundle": "^3.6",
     "league/oauth2-google": "^5",
-    "loupe/loupe": "^0.13",
+    "loupe/loupe": "^1.0",
     "nette/utils": "^4.0",
     "pagerfanta/twig": "^4.1",
     "pentatrion/vite-bundle": "*",

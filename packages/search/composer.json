@@ -7,7 +7,7 @@
   "license": "MIT",
   "require": {
     "pushword/core": "*",
-    "loupe/loupe": "^0.13"
+    "loupe/loupe": "^1.0"
   },
   "extra": {
     "branch-alias": {
