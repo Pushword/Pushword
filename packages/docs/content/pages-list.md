@@ -37,16 +37,18 @@ mistyped prefix. A search matching nothing is therefore silent — run
 
 ## Using Operators `OR` or `AND`
 
-Both, in the same query. `AND` binds tighter than `OR`, as in SQL, and
-parentheses override that.
+Both, in the same query — but never side by side without parentheses. There is no
+precedence rule to remember: mixing the two says which comes first, or the search
+is refused.
 
 Examples :
 
 - ✔ `related:comment:blog OR related`
 - ✔ `parent_children OR related OR page:custom-slug`
 - ✔ `parent_children AND related AND page:custom-slug` (this one will output only 1 result)
-- ✔ `parent_children AND related OR page:custom-slug` ➜ reads as `(parent_children AND related) OR page:custom-slug`
+- ✔ `(parent_children AND related) OR page:custom-slug`
 - ✔ `tag:blog AND (tag:featured OR tag:pinned)`
+- ✗ `parent_children AND related OR page:custom-slug` ➜ ambiguous, group one side
 
 `AND` and `OR` are recognised as whole uppercase words only, so a tag named
 `ORANGE` — or a lowercase `or` — is still ordinary text. A `(` opens a group only

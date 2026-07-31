@@ -9,15 +9,17 @@ use Pushword\Core\Query\Group;
 /**
  * Turns a search string into the {@see Group}/{@see Condition} tree.
  *
- *     expression := conjunction ( 'OR' conjunction )*
- *     conjunction := primary ( 'AND' primary )*
+ *     expression := primary ( conjunction primary )*   — one conjunction throughout
  *     primary := '(' expression ')' | term
  *
- * `AND` binds tighter than `OR`, as it does in SQL and everywhere else. No
- * existing search can change meaning because of it: the previous engine split on
- * `' OR '` first and never split the parts again, so a mixed expression already
- * did not work — `a AND b OR c` searched for a *tag named* "a AND b". Precedence
- * only decides cases that used to be broken.
+ * There is no precedence: one level carries one conjunction. `a AND b OR c` is
+ * refused, not silently read as `(a AND b) OR c` — the reader would have to know
+ * a rule to know which, and the two answers differ. Parentheses say it instead,
+ * and nothing is lost: `a AND (b OR c)` and `(a AND b) OR c` are both spellable.
+ *
+ * Nothing that worked before is refused now. The previous engine split on
+ * `' OR '` first and never split the parts again, so `a AND b OR c` searched for
+ * a *tag named* "a AND b" — a search that never worked now says so.
  *
  * Chains stay flat: `a OR b OR c` is one group of three, not two nested pairs.
  */
@@ -51,48 +53,29 @@ final readonly class SearchParser
     }
 
     /**
+     * A chain of terms and groups, held together by one conjunction — the first
+     * one met fixes it for the whole level.
+     *
      * @param list<array{SearchTokenType, string}> $tokens
      *
      * @throws SearchException
      */
     private function parseExpression(array $tokens, int &$position, string $search): Group|Condition
     {
-        return $this->parseChain($tokens, $position, $search, Conjunction::Any);
-    }
+        $children = [$this->parsePrimary($tokens, $position, $search)];
+        $conjunction = null;
 
-    /**
-     * One precedence level: parse the tighter level, then keep going while the
-     * next token is this level's conjunction.
-     *
-     * @param list<array{SearchTokenType, string}> $tokens
-     *
-     * @throws SearchException
-     */
-    private function parseChain(array $tokens, int &$position, string $search, Conjunction $conjunction): Group|Condition
-    {
-        $children = [$this->parseTighterThan($conjunction, $tokens, $position, $search)];
+        while (null !== ($next = $this->conjunctionAt($tokens, $position))) {
+            if (null !== $conjunction && $next !== $conjunction) {
+                throw new SearchException(\sprintf('"%s" mixes AND and OR without saying which comes first. Group one of them: "a AND (b OR c)" or "(a AND b) OR c".', $search));
+            }
 
-        while ($this->nextIs($tokens, $position, $conjunction)) {
+            $conjunction = $next;
             ++$position;
-            $children[] = $this->parseTighterThan($conjunction, $tokens, $position, $search);
+            $children[] = $this->parsePrimary($tokens, $position, $search);
         }
 
-        return 1 === \count($children) ? $children[0] : new Group($conjunction, $children);
-    }
-
-    /**
-     * The level below this one — which is what precedence *is*: an `OR` chain is
-     * made of `AND` chains, and an `AND` chain is made of terms and groups.
-     *
-     * @param list<array{SearchTokenType, string}> $tokens
-     *
-     * @throws SearchException
-     */
-    private function parseTighterThan(Conjunction $conjunction, array $tokens, int &$position, string $search): Group|Condition
-    {
-        return Conjunction::Any === $conjunction
-            ? $this->parseChain($tokens, $position, $search, Conjunction::All)
-            : $this->parsePrimary($tokens, $position, $search);
+        return null === $conjunction ? $children[0] : new Group($conjunction, $children);
     }
 
     /**
@@ -134,12 +117,12 @@ final readonly class SearchParser
     }
 
     /** @param list<array{SearchTokenType, string}> $tokens */
-    private function nextIs(array $tokens, int $position, Conjunction $conjunction): bool
+    private function conjunctionAt(array $tokens, int $position): ?Conjunction
     {
         $token = $tokens[$position] ?? null;
 
-        return null !== $token
-            && SearchTokenType::Conjunction === $token[0]
-            && $token[1] === $conjunction->value;
+        return null !== $token && SearchTokenType::Conjunction === $token[0]
+            ? Conjunction::from($token[1])
+            : null;
     }
 }

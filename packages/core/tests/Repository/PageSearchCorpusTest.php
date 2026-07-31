@@ -261,21 +261,13 @@ final class PageSearchCorpusTest extends KernelTestCase
             ['w0' => '%<!--blog-->%', 'w1' => '{current+3}', 'w2' => '{parent}', 'w3' => '{current+3}'],
         ];
 
-        // CHANGED deliberately. Before the parser this compiled to
-        // `p.tags LIKE '%"parent_children AND related"%' OR p.slug LIKE …`: the
-        // split happened on ` OR ` first, so the AND half was never split again
-        // and landed in the tag fallback whole. `pages-list.md` documented it as
-        // ✗. AND now binds tighter, and no working search could change meaning —
-        // this one did not work.
-        yield 'a mixed expression binds AND tighter than OR' => [
-            'parent_children AND related OR page:custom-slug',
-            '(p.parentPage = :w0 AND (p.parentPage = :w1 AND p.id < :w2)) OR p.slug LIKE :w3',
-            ['w0' => '{parent}', 'w1' => '{parent}', 'w2' => '{current+3}', 'w3' => 'custom-slug'],
-        ];
-
         // CHANGED deliberately: parentheses used to be ordinary characters and
-        // ended up inside the tag name. Written out, the grouping is the one
-        // precedence gives the line above.
+        // ended up inside the tag name — `parent_children AND related OR …`
+        // compiled to `p.tags LIKE '%"parent_children AND related"%' OR …`,
+        // because the split happened on ` OR ` first and the AND half was never
+        // split again. Ungrouped, that search is now refused
+        // ({@see \Pushword\Core\Tests\Query\SearchParserTest}); grouped, it is
+        // this.
         yield 'parentheses group explicitly' => [
             '(parent_children AND related) OR page:custom-slug',
             '(p.parentPage = :w0 AND (p.parentPage = :w1 AND p.id < :w2)) OR p.slug LIKE :w3',

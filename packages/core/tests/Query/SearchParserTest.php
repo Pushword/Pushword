@@ -14,9 +14,9 @@ use Pushword\Core\Query\Search\SearchParser;
  * The shape a search parses into, independently of what it compiles to.
  *
  * {@see \Pushword\Core\Tests\Repository\PageSearchCorpusTest} freezes the DQL;
- * this covers the grammar itself — precedence, grouping, and the boundaries that
- * keep parentheses and conjunctions from swallowing text that used to be part of
- * a tag name.
+ * this covers the grammar itself — grouping, the refusal to guess at a mixed
+ * expression, and the boundaries that keep parentheses and conjunctions from
+ * swallowing text that used to be part of a tag name.
  */
 final class SearchParserTest extends TestCase
 {
@@ -43,16 +43,12 @@ final class SearchParserTest extends TestCase
     {
         yield 'a lone term is not wrapped in a group' => ['blog', 'tag'];
 
-        yield 'AND binds tighter than OR' => [
-            'a AND b OR c', 'OR(AND(tag,tag),tag)',
-        ];
-
-        yield 'and on the other side too' => [
-            'a OR b AND c', 'OR(tag,AND(tag,tag))',
-        ];
-
-        yield 'parentheses override precedence' => [
+        yield 'parentheses are how the two are mixed' => [
             'a AND (b OR c)', 'AND(tag,OR(tag,tag))',
+        ];
+
+        yield 'and the other way round' => [
+            '(a AND b) OR c', 'OR(AND(tag,tag),tag)',
         ];
 
         yield 'a chain stays flat' => [
@@ -136,6 +132,18 @@ final class SearchParserTest extends TestCase
         yield 'a dangling conjunction' => ['a OR', 'ends on an operator'];
 
         yield 'two terms with nothing between them' => ['(a) b', 'Expected AND, OR'];
+
+        // No precedence rule, so no reading to fall back on: the two answers
+        // differ and only the author knows which one was meant.
+        yield 'AND then OR, ungrouped' => ['a AND b OR c', 'mixes AND and OR'];
+
+        yield 'OR then AND, ungrouped' => ['a OR b AND c', 'mixes AND and OR'];
+
+        // The refusal is per level: a group settles its own conjunction, and the
+        // level holding it is still mixed.
+        yield 'mixed around a group' => ['(a OR b) AND c OR d', 'mixes AND and OR'];
+
+        yield 'mixed inside a group' => ['x AND (a AND b OR c)', 'mixes AND and OR'];
     }
 
     #[DataProvider('structuralMistakes')]

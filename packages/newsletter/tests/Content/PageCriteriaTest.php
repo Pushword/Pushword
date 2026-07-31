@@ -277,7 +277,7 @@ final class PageCriteriaTest extends TestCase
         );
     }
 
-    /** Precedence and grouping come with it, so does the nesting they produce. */
+    /** Grouping comes with it, so does the nesting it produces. */
     public function testASearchMayGroup(): void
     {
         self::assertSame(
