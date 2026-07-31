@@ -16,6 +16,11 @@ use Pushword\Admin\Controller\PageCheatSheetCrudController;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\ValueObject\PageRedirection;
+use Pushword\Core\Query\ArrayCriteriaReader;
+use Pushword\Core\Query\Condition;
+use Pushword\Core\Query\Group;
+use Pushword\Core\Query\PageFieldRegistry;
+use Pushword\Core\Query\QueryCompiler;
 use RuntimeException;
 
 /**
@@ -365,14 +370,14 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      *
      * @param string|array<string>         $host
      * @param array<(string|int), string>  $orderBy
-     * @param array<mixed>                 $where
+     * @param array<mixed>|Group|Condition $where
      * @param int|array<(string|int), int> $limit
      *
      * @return Page[]
      */
     public function getPublishedPages(
         string|array $host = '',
-        array $where = [],
+        array|Group|Condition $where = [],
         array $orderBy = [],
         int|array $limit = 0,
         bool $withRedirection = true
@@ -428,10 +433,10 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      *
      * @param string|array<string>         $host
      * @param array<(string|int), string>  $orderBy
-     * @param array<mixed>                 $where
+     * @param array<mixed>|Group|Condition $where
      * @param int|array<(string|int), int> $limit
      */
-    public function getPublishedPageQueryBuilder(string|array $host = '', array $where = [], array $orderBy = [], int|array $limit = 0): QueryBuilder
+    public function getPublishedPageQueryBuilder(string|array $host = '', array|Group|Condition $where = [], array $orderBy = [], int|array $limit = 0): QueryBuilder
     {
         return $this->applyListCriteria($this->buildPublishedPageQuery('p'), $host, $where, $orderBy, $limit);
     }
@@ -442,24 +447,30 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      *
      * @param string|array<string>         $host
      * @param array<(string|int), string>  $orderBy
-     * @param array<mixed>                 $where
+     * @param array<mixed>|Group|Condition $where
      * @param int|array<(string|int), int> $limit
      */
-    public function getUnpublishedPageQueryBuilder(string|array $host = '', array $where = [], array $orderBy = [], int|array $limit = 0): QueryBuilder
+    public function getUnpublishedPageQueryBuilder(string|array $host = '', array|Group|Condition $where = [], array $orderBy = [], int|array $limit = 0): QueryBuilder
     {
         return $this->applyListCriteria($this->buildUnpublishedPageQuery('p'), $host, $where, $orderBy, $limit);
     }
 
     /**
      * @param string|array<string>         $host
-     * @param array<mixed>                 $where
+     * @param array<mixed>|Group|Condition $where
      * @param array<(string|int), string>  $orderBy
      * @param int|array<(string|int), int> $limit
      */
-    private function applyListCriteria(QueryBuilder $queryBuilder, string|array $host, array $where, array $orderBy, int|array $limit): QueryBuilder
+    private function applyListCriteria(QueryBuilder $queryBuilder, string|array $host, array|Group|Condition $where, array $orderBy, int|array $limit): QueryBuilder
     {
         $this->andHost($queryBuilder, $host);
-        new FilterWhereParser($queryBuilder, $where)->parseAndAdd();
+
+        $criteria = \is_array($where) ? new ArrayCriteriaReader()->read($where) : $where;
+
+        if (null !== $criteria) {
+            new QueryCompiler(new PageFieldRegistry($this->getEntityManager()))->apply($queryBuilder, $criteria);
+        }
+
         $this->orderBy($queryBuilder, $orderBy);
         $this->limit($queryBuilder, $limit);
 

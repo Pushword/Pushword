@@ -2,150 +2,33 @@
 
 namespace Pushword\Core\Utils;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Query\LegacyArrayRenderer;
+use Pushword\Core\Query\Search\PageSearchVocabulary;
+use Pushword\Core\Query\Search\SearchException;
+use Pushword\Core\Query\Search\SearchParser;
 
 /**
  * @see packages/docs/content/pages-list.md
+ * @deprecated parse with {@see SearchParser} and compile the tree; this only
+ *             renders it back into the legacy array form for callers that still
+ *             expect one
  */
 class StringToDQLCriteria
 {
-    /** @var array<int, string|array{0: string, 1: string, 2: string|int|float|int[]}|array{0: string, 1: string, 2: string|int|float|int[]}[]> */
-    private array $where = [];
-
     public function __construct(private readonly string $search, private readonly ?Page $currentPage)
     {
     }
 
-    /** @return array<int, string|array{0: string, 1: string, 2: string|int|float|int[]}|array{0: string, 1: string, 2: string|int|float|int[]}[]> */
+    /**
+     * @return array<mixed>
+     *
+     * @throws SearchException
+     */
     public function retrieve(): array
     {
-        foreach (['OR', 'AND'] as $operator) {
-            if (str_contains($this->search, ' '.$operator.' ')) {
-                $searchToParse = explode(' '.$operator.' ', $this->search);
-                foreach ($searchToParse as $singleSearchToParse) {
-                    // $where = array_merge($where, $this->stringToSearch($s), ['OR']);
-                    $this->simpleStringToSearch($singleSearchToParse);
-                    $this->where[] = $operator;
-                }
-
-                array_pop($this->where);
-
-                return $this->where;
-            }
-        }
-
-        $this->simpleStringToSearch($this->search);
-
-        return $this->where;
-    }
-
-    private function simpleStringToSearch(string $search): void
-    {
-        $search = trim($search);
-
-        if ($this->simpleStringToSearchChildren($search)) {
-            return;
-        }
-
-        if (str_starts_with($search, 'related:comment:')) {
-            $search = '<!--'.substr($search, \strlen('related:comment:')).'-->';
-
-            $this->where[] = [
-                ['mainContent', 'LIKE', '%'.$search.'%'],
-                ['id', '<', ($this->currentPage?->id ?? 0) + 3], // @phpstan-ignore nullsafe.neverNull
-            ];
-
-            return;
-        }
-
-        if (str_starts_with($search, 'comment:')) {
-            $search = '<!--'.substr($search, \strlen('comment:')).'-->';
-
-            $this->where[] = ['mainContent',  'LIKE',  '%'.$search.'%'];
-
-            return;
-        }
-
-        if (($searchTitle = str_starts_with($search, 'title:')) || str_starts_with($search, 'content:')) {
-            $search = substr($search, $searchTitle ? \strlen('title:') : \strlen('content:'));
-
-            $where = [['h1',  'LIKE',  '%'.$search.'%'], 'OR', ['title',  'LIKE',  '%'.$search.'%']];
-
-            if (! $searchTitle) {
-                $where[] = 'OR';
-                $where[] = ['mainContent',  'LIKE',  '%'.$search.'%'];
-            }
-
-            $this->where[] = $where;
-
-            return;
-        }
-
-        if (str_starts_with($search, 'slug:') || str_starts_with($search, 'page:')) {
-            $search = substr($search, \strlen('slug:'));
-
-            $this->where[] = ['slug',  'LIKE',  $search];
-
-            return;
-        }
-
-        if (str_starts_with($search, 'customProperty:')) {
-            $rest = substr($search, \strlen('customProperty:'));
-            $colonPos = strpos($rest, ':');
-            if (false !== $colonPos) {
-                $key = substr($rest, 0, $colonPos);
-                $value = substr($rest, $colonPos + 1);
-                $this->where[] = ['customProperties', 'LIKE', '%"'.$key.'":"'.$value.'"%'];
-
-                return;
-            }
-        }
-
-        $this->where[] = ['tags',  'LIKE',  '%"'.$search.'"%'];
-        // $this->where[] = ['mainContent',  'LIKE',  '%'.$search.'%'];
-    }
-
-    private function simpleStringToSearchChildren(string $search): bool
-    {
-        $searchLowerCased = strtolower($search);
-        if ('related' === $searchLowerCased) {
-            $currentPage = $this->currentPage;
-            if (null !== $currentPage && ($parentPage = $currentPage->getParentPage()) !== null) {
-                $this->where[] = [
-                    ['parentPage', '=', $parentPage->id ?? 0],
-                    ['id', '<', ($currentPage->id ?? 0) + 3],
-                ];
-
-                return true;
-            }
-
-            $this->where[] = ['id', '<', ($currentPage?->id ?? 0) + 3]; // @phpstan-ignore nullsafe.neverNull
-
-            return true;
-        }
-
-        if ('children' === $searchLowerCased) {
-            $this->where[] = ['parentPage', '=', $this->currentPage?->id ?? 0]; // @phpstan-ignore nullsafe.neverNull
-
-            return true;
-        }
-
-        if (\in_array($searchLowerCased, ['parent_children', 'sisters'], true)) {
-            $this->where[] = ['parentPage', '=', $this->currentPage?->getParentPage()?->id ?? 0]; // @phpstan-ignore nullsafe.neverNull
-
-            return true;
-        }
-
-        if (\in_array($searchLowerCased, ['children_children', 'grandchildren'], true)) {
-            $childrenPage = ($this->currentPage?->getChildrenPages() ?? new ArrayCollection([]))
-                ->map(static fn (Page $page): int => $page->id ?? 0)->toArray();
-
-            $this->where[] = ['parentPage', 'IN', $childrenPage];
-
-            return true;
-        }
-
-        return false;
+        return new LegacyArrayRenderer()->render(
+            new SearchParser(new PageSearchVocabulary($this->currentPage))->parse($this->search),
+        );
     }
 }

@@ -109,7 +109,9 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client->submit($form);
 
         self::assertSame(422, $client->getResponse()->getStatusCode());
-        self::assertStringContainsString('unknown field', (string) $client->getResponse()->getContent());
+        // Named, not merely refused: the two vocabularies overlap enough that
+        // "unknown field" would leave the editor guessing which side they wrote.
+        self::assertStringContainsString('filters a contact, not a page', (string) $client->getResponse()->getContent());
     }
 
     /** A rule you cannot count is one you will not switch on. */

@@ -100,9 +100,8 @@ rule and its stop condition — a flat list of conditions, all of which must hol
 
 An empty list means the whole audience.
 
-**A rule that needs `OR` says so**, and then every condition belongs to that one
-operator — the rule a [`pages_list`](/pages-list) search follows, and for the same
-reason: one operator per expression is learnable, a tree is not.
+**A rule that needs `OR` says so**, and then every condition of that list belongs
+to the one operator:
 
 ```json
 {"any": [
@@ -113,6 +112,24 @@ reason: one operator per expression is learnable, a tree is not.
 
 `{"all": [...]}` spells the default out. Two campaigns do not replace that `any`:
 a contact carrying both tags would be in both, and be mailed twice.
+
+**A condition may itself be a group**, which is how you say "either of those tags,
+but only among the customers". Keep the flat form for everything it can express —
+one operator is read at a glance — and reach for nesting when the alternative is
+two campaigns that overlap:
+
+```json
+[
+  {"field": "prop.lastBoughtProduct", "op": "isSet"},
+  {"any": [
+    {"field": "tag", "op": "has", "value": "AmTrek"},
+    {"field": "tag", "op": "has", "value": "AmTrek-VIP"}
+  ]}
+]
+```
+
+A nested group always names its operator, `all` included: coming back from the
+textarea as a bare list, it would be read as a condition.
 
 Two properties hold whatever you write:
 
@@ -183,7 +200,7 @@ and body to send.
 | field | operators |
 |---|---|
 | `slug` | `startsWith`, `notStartsWith` |
-| `template`, `parentPage` | `=`, `!=` — `parentPage` takes the parent's slug |
+| `template`, `parent` | `=`, `!=` — `parent` takes the parent page's slug |
 | `ancestor` | `=`, `!=` — the slug of a page it sits under, at any depth |
 | `tag` | `has`, `hasNot` — as on a contact, and as a bare [`pages_list`](/pages-list) search |
 | `prop.<key>` | `=`, `!=`, `isSet`, `isNotSet` |
@@ -192,9 +209,21 @@ Same shape as a segment, over pages instead of contacts — including `{"any": [
 An empty list means every published page of those hosts. The two rules read as one
 sentence: `pageWhen` picks the article, `segment` picks the readers.
 
+Or write it as a [`pages_list`](/pages-list) search, in the words you already use in
+a template. What you type is translated into the list above and stored as one, so
+you can always see what it understood:
+
+```
+ancestor:blog AND (tag:featured OR tag:pinned)
+```
+
+The search grammar is wider than a trigger's vocabulary, and the vocabulary wins: a
+`title:` search, or a `children`, is refused by name rather than quietly compiled —
+a trigger has no page being rendered to be relative to.
+
 Before reaching for `any`, reach for what already groups pages — the same two axes
 a `pages_list` search leans on. A blog split in rubrics, whose articles sit at the
-root and are attached by `parentPage`, shares no slug prefix and would otherwise
+root and are attached by `parent`, shares no slug prefix and would otherwise
 need one trigger per rubric. Either axis covers it in one condition, and unlike an
 enumeration it covers the rubric added next month too:
 
@@ -435,3 +464,16 @@ Templates are overridable per site through the usual view resolution, under
   `/api/newsletter/contact/{id}/bounce`. An asynchronous bounce (SES→SNS,
   a webhook, a Return-Path mailbox) needs an adapter that does not exist yet.
 - **No SMS.** Contacts are email-keyed; a phone number is a custom property.
+- **No `OR` between the two sides of a content trigger.** `pageWhen` selects
+  pages, `segment` selects contacts, and a trigger is their product: each matching
+  page becomes a campaign, sent to the matching contacts. `AND` between them is
+  implicit; an `OR` would be a condition on a (page, contact) *pair*, which is a
+  different model — no amount of nesting inside either side reaches it.
+
+  The intent behind wanting it is real: *this content to that audience, that
+  content to this one, in one trigger.* Today the answer is two triggers, and it
+  double-mails: `ContentTriggerLog` is unique on (trigger, page), so two triggers
+  keep independent logs and a contact in both segments gets two mails about the
+  same article. Fixing it properly means either a log keyed on (page, contact) or
+  a trigger holding a list of (pageWhen, segment) pairs with the recipients
+  deduplicated. Neither is built.

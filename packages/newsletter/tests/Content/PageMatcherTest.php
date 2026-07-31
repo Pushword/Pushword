@@ -106,7 +106,7 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
         self::assertSame([], $this->matching([['field' => 'tag', 'op' => 'has', 'value' => 'blog']]));
     }
 
-    public function testParentPageSelectsOnTheParentSlug(): void
+    public function testParentSelectsOnTheParentSlug(): void
     {
         $parent = $this->page('blog');
         $this->page('blog/child', parent: $parent);
@@ -114,7 +114,7 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
 
         self::assertSame(
             ['blog/child'],
-            $this->matching([['field' => 'parentPage', 'op' => '=', 'value' => $this->prefix.'/blog']]),
+            $this->matching([['field' => 'parent', 'op' => '=', 'value' => $this->prefix.'/blog']]),
         );
     }
 
@@ -125,12 +125,12 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
 
         // The parent itself has none, so it lands on the `!=` side.
         self::assertSame(['blog', 'orphan'], $this->matching([
-            ['field' => 'parentPage', 'op' => '!=', 'value' => $this->prefix.'/blog'],
+            ['field' => 'parent', 'op' => '!=', 'value' => $this->prefix.'/blog'],
         ], extra: fn (): Page => $this->page('orphan')));
     }
 
     /**
-     * The shape `parentPage` cannot express without one trigger per rubric: the
+     * The shape `parent` cannot express without one trigger per rubric: the
      * articles sit at the root, share no slug prefix, and hang off a rubric that
      * itself hangs off the blog.
      */
@@ -257,6 +257,50 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
         ]]));
     }
 
+    /**
+     * The rule that had no shape at all before a child could be a group: one
+     * section, restricted to either of two tags.
+     *
+     * Two triggers do not replace it. An article carrying both tags would match
+     * both, and each keeps its own log — `ContentTriggerLog` is unique on
+     * (trigger, page) — so a contact in both segments would be mailed twice
+     * about the same article.
+     */
+    public function testAGuardMayScopeAGroup(): void
+    {
+        $this->page('blog/featured', tags: 'featured');
+        $this->page('blog/pinned', tags: 'pinned');
+        $this->page('blog/plain');
+        $this->page('legal/featured', tags: 'featured');
+
+        self::assertSame(['blog/featured', 'blog/pinned'], $this->matching([
+            ['field' => 'slug', 'op' => 'startsWith', 'value' => $this->prefix.'/blog/'],
+            ['any' => [
+                ['field' => 'tag', 'op' => 'has', 'value' => 'featured'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'pinned'],
+            ]],
+        ]));
+    }
+
+    /** Depth is not capped at one: a group holds groups. */
+    public function testGroupsNestFurther(): void
+    {
+        $this->page('a', template: 'article.html.twig', tags: 'featured');
+        $this->page('b', template: 'other.html.twig', tags: 'featured');
+        $this->page('c', template: 'article.html.twig', tags: 'pinned');
+
+        self::assertSame(['a', 'c'], $this->matching([
+            ['field' => 'slug', 'op' => 'startsWith', 'value' => $this->prefix.'/'],
+            ['any' => [
+                ['all' => [
+                    ['field' => 'tag', 'op' => 'has', 'value' => 'featured'],
+                    ['field' => 'template', 'op' => '=', 'value' => 'article.html.twig'],
+                ]],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'pinned'],
+            ]],
+        ]));
+    }
+
     public function testTheLimitBoundsWhatIsReturnedButNotWhatIsCounted(): void
     {
         $this->page('one');
@@ -298,9 +342,11 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
     private function trigger(array $pageWhen, array $hosts = ['localhost.dev']): ContentTrigger
     {
         // Every ANDed rule is scoped to this test's own pages: the fixtures
-        // publish their own on the same host. An `any` group cannot take that
-        // guard — one operator per rule, no nesting — and leans instead on the
-        // trigger's `triggerFrom`, which no fixture page is recent enough to pass.
+        // publish their own on the same host. A top-level `any` is deliberately
+        // left unscoped — nesting it inside the guard is now possible and is
+        // what testAGuardMayScopeAGroup covers, but the tests that assert what
+        // `any` must *not* reach need it to be bounded by nothing but the
+        // trigger's own guards.
         $scoped = \array_key_exists('any', $pageWhen) ? $pageWhen : [
             ['field' => 'slug', 'op' => 'startsWith', 'value' => $this->prefix.'/'],
             ...$pageWhen,

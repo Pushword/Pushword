@@ -32,7 +32,7 @@ final class PageExtensionPagesListExcludeLinkedTest extends KernelTestCase
 
     private const array ALL_SLUGS = [self::ALPHA_SLUG, self::BRAVO_SLUG, self::CHARLIE_SLUG];
 
-    /** A slug: search keeps the locale filter out of the way and matches every fixture. */
+    /** Names every fixture; they share the context's locale, which the list always filters on. */
     private const string SEARCH = 'slug:'.self::ALPHA_SLUG
         .' OR slug:'.self::BRAVO_SLUG
         .' OR slug:'.self::CHARLIE_SLUG;

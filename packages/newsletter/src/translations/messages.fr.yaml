@@ -39,7 +39,7 @@ newsletter:
       enrollFrom: Inscrire à partir du
       enrollFrom.help: Les contacts enregistrés avant cette date ne sont jamais inscrits. Cela évite qu'une nouvelle automatisation écrive à toute une base existante d'un coup.
       enrollWhen: Inscrire si
-      enrollWhen.help: 'Liste JSON de conditions, toutes requises — qui entre dans la séquence, pas quand. Vide : tous les contacts inscrits. Exemple : [{"field":"tag","op":"has","value":"AmTrek"}] ; pour un OU, {"any":[…]}.'
+      enrollWhen.help: 'Liste JSON de conditions, toutes requises — qui entre dans la séquence, pas quand. Vide : tous les contacts inscrits. Exemple : [{"field":"tag","op":"has","value":"AmTrek"}] ; pour un OU, {"any":[…]}, imbricable.'
       name: Nom
       stepCount: Étapes
       steps: Étapes
@@ -72,7 +72,7 @@ newsletter:
       scheduledAt: Programmée pour
       scheduledAt.help: Renseignez une date, puis utilisez « Programmer ». Le tick l'envoie une fois la date passée.
       segment: Segment
-      segment.help: 'Liste JSON de conditions, toutes requises. Vide : toute l''audience inscrite. Exemple : [{"field":"prop.lastBoughtProduct","op":"=","value":"tmb"}] ; pour un OU, {"any":[…]}.'
+      segment.help: 'Liste JSON de conditions, toutes requises. Vide : toute l''audience inscrite. Exemple : [{"field":"prop.lastBoughtProduct","op":"=","value":"tmb"}] ; pour un OU, {"any":[…]}, imbricable.'
       sent: Envoyés
       sentAt: Envoyée le
       slug: Nom analytics
@@ -144,7 +144,7 @@ newsletter:
       hosts.help: 'Les sites à surveiller ; vide, tous. Une audience couvre souvent plusieurs hôtes de langue : choisissez ceux qui méritent un mail.'
       name: Nom
       pageWhen: Déclencher sur les pages
-      pageWhen.help: 'Liste JSON de conditions, toutes requises — quelles pages, pas quand. Vide : toutes les pages publiées de ces hôtes. Champs : slug, template, tag, parentPage, ancestor (le slug d''une page dont elles descendent, à n''importe quelle profondeur), prop.<clé>. Exemple : [{"field":"ancestor","op":"=","value":"blog"}] ; pour un OU, {"any":[…]}.'
+      pageWhen.help: 'Liste JSON de conditions, toutes requises — quelles pages, pas quand. Vide : toutes les pages publiées de ces hôtes. Champs : slug, template, tag, parent, ancestor (le slug d''une page dont elles descendent, à n''importe quelle profondeur), prop.<clé>. Exemple : [{"field":"ancestor","op":"=","value":"blog"}] ; pour un OU, {"any":[…]}, imbricable. Une recherche pages_list marche aussi : ancestor:blog AND tag:featured.'
       segment: Segment
       segment.help: 'Qui reçoit le mail, dans les critères de contact habituels. Vide : toute l''audience inscrite.'
       subject: Objet

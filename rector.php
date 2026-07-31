@@ -4,6 +4,7 @@ use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUselessReturnTagRector;
 use Rector\DeadCode\Rector\Node\RemoveNonExistingVarAnnotationRector;
+use Rector\DeadCode\Rector\Property\RemoveDefaultValueFromAssignedPropertyRector;
 use Rector\Doctrine\Set\DoctrineSetList;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
 use Rector\PHPUnit\CodeQuality\Rector\Class_\PreferPHPUnitThisCallRector;
@@ -81,6 +82,13 @@ return RectorConfig::configure()
         ControllerMethodInjectionToConstructorRector::class => [
             '*CrudController.php',
             'DashboardController.php',
+        ],
+        // `setFileCache()` reads the property to decide whether to overwrite it,
+        // so it is read before it is ever assigned. Dropping the default makes
+        // the first call a fatal — and it runs from the page-cache refresh
+        // handler, so every test that persists a Page goes down with it.
+        RemoveDefaultValueFromAssignedPropertyRector::class => [
+            'packages/page-scanner/src/Controller/PageScannerController.php',
         ],
     ])
 ;

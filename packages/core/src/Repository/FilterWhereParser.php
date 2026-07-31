@@ -2,10 +2,10 @@
 
 namespace Pushword\Core\Repository;
 
-use Doctrine\ORM\Query\Expr\Andx;
-use Doctrine\ORM\Query\Expr\Orx;
 use Doctrine\ORM\QueryBuilder;
-use Exception;
+use Pushword\Core\Query\ArrayCriteriaReader;
+use Pushword\Core\Query\PageFieldRegistry;
+use Pushword\Core\Query\QueryCompiler;
 
 /**
  * Eg:
@@ -13,6 +13,10 @@ use Exception;
  * [['title', 'LIKE' '%this%']] => works
  * [['title', 'LIKE' '%this%'], 'OR', ['title', 'LIKE' '%that%']] => works
  * [[['title', 'LIKE' '%this%'], ['title', 'LIKE' '%this%']], 'OR', ['title', 'LIKE' '%that%']] => works
+ *
+ * @deprecated read the array with {@see ArrayCriteriaReader} and compile the
+ *             tree with {@see QueryCompiler}; this only keeps the old entry
+ *             point working
  */
 class FilterWhereParser
 {
@@ -21,85 +25,28 @@ class FilterWhereParser
      */
     public function __construct(
         private readonly QueryBuilder $queryBuilder,
-        private array $where
+        private readonly array $where
     ) {
     }
 
     public function parseAndAdd(): QueryBuilder
     {
-        if ([] === $this->where) {
+        $criteria = new ArrayCriteriaReader()->read($this->where);
+
+        if (null === $criteria) {
             return $this->queryBuilder;
         }
 
-        // Normalize array [']
-        if (! isset($this->where[0]) || ! \is_array($this->where[0])) { // eg : ['key' => 'test'...] or ['test', ...]
-            $this->where = [$this->where];
-        }
+        $entityManager = $this->queryBuilder->getEntityManager();
 
-        return $this->queryBuilder->andWhere($this->retrieveFrom($this->where));
+        return new QueryCompiler(new PageFieldRegistry($entityManager))
+            ->apply($this->queryBuilder, $criteria, $this->rootAlias());
     }
 
-    /**
-     * @param array<mixed> $where
-     */
-    private function containsSubQuery(array $where): bool
+    private function rootAlias(): string
     {
-        return \is_array(array_values($where)[0] ?? throw new Exception());
-    }
+        $aliases = $this->queryBuilder->getRootAliases();
 
-    /**
-     * @param array<mixed> $where
-     */
-    private function retrieveFrom(array $where): Andx|Orx
-    {
-        $compose = \in_array('OR', $where, true) ? $this->queryBuilder->expr()->orX() : $this->queryBuilder->expr()->andX();
-        foreach ($where as $singleWhere) {
-            if (\in_array($singleWhere, ['OR', 'AND'], true)) {
-                continue;
-            }
-
-            if (! \is_array($singleWhere)) {
-                throw new Exception('malformated where params');
-            }
-
-            if ($this->containsSubQuery($singleWhere)) {
-                $compose->add($this->retrieveFrom($singleWhere));
-
-                continue;
-            }
-
-            $compose->add($this->retrieveExpressionFrom($singleWhere));
-        }
-
-        return $compose;
-    }
-
-    /**
-     * @param array{key_prefix: string, key: string, operator: string, value: string|null}|array{0: string, 1:string, 2: string|null, 4:string}|array{} $whereRow
-     */
-    private function retrieveExpressionFrom(array $whereRow): string
-    {
-        // Deterministic name: the parameter name is part of the DQL string, and a
-        // random one would make every generated DQL unique — defeating Doctrine's
-        // query cache on every run and growing the cache pool without bound.
-        $paramKey = 'w'.\count($this->queryBuilder->getParameters());
-
-        $prefix = $whereRow['key_prefix'] ?? $whereRow[4] ?? 'p.';
-        $key = $whereRow['key'] ?? $whereRow[0] ?? throw new Exception('key was forgotten');
-        $operator = $whereRow['operator'] ?? $whereRow[1] ?? throw new Exception('operator was forgotten');
-        $sqlValue = 'IN' === $operator ? '( :'.$paramKey.')' : ' :'.$paramKey;
-        $value = $whereRow['value'] ?? $whereRow[2] ?? null;
-
-        if (null === $value) {
-            if (! \in_array($operator, ['IS', 'IS NOT'], true)) {
-                throw new Exception('operator `'.$operator.'` forbidden for null value');
-            }
-
-            return $prefix.$key.' '.$operator.' NULL';
-        }
-
-        $this->queryBuilder->setParameter($paramKey, $value);
-
-        return $prefix.$key.' '.$operator.' '.$sqlValue;
+        return $aliases[0] ?? 'p';
     }
 }

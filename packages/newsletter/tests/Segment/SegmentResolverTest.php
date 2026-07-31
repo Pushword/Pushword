@@ -81,6 +81,99 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
         self::assertSame(1, $this->resolver()->count($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']]));
     }
 
+    /**
+     * `_` and `%` are LIKE wildcards and legal tag characters at once. Without an
+     * escape they widen the pattern instead of failing, so `AmTrek_2026` would
+     * reach `AmTrek-2026` and a segment would silently mail the wrong people.
+     */
+    public function testATagHoldingLikeWildcardsMatchesItselfOnly(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'underscore@example.tld', ['AmTrek_2026']);
+        $this->createContact($audience, 'dash@example.tld', ['AmTrek-2026']);
+        $this->createContact($audience, 'percent@example.tld', ['100%Trek']);
+        $this->createContact($audience, 'literal@example.tld', ['100Trek']);
+
+        $underscore = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek_2026']]);
+        self::assertCount(1, $underscore);
+        self::assertSame('underscore@example.tld', $underscore[0]->getEmail());
+
+        $percent = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'has', 'value' => '100%Trek']]);
+        self::assertCount(1, $percent);
+        self::assertSame('percent@example.tld', $percent[0]->getEmail());
+
+        // And the escape character itself is not a way back out of the escaping.
+        self::assertSame(0, $this->resolver()->count($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek!_2026']]));
+    }
+
+    /**
+     * Either of two tags, but only among the customers — the shape a flat rule
+     * has no room for, and the one two campaigns do not replace: a contact
+     * carrying both tags would be in both and be mailed twice.
+     */
+    public function testAGroupMayBeNestedInsideAnAndedRule(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'vip@example.tld', ['AmTrek'], ['lastBoughtProduct' => 'tmb']);
+        $this->createContact($audience, 'pinned@example.tld', ['AmBivouac'], ['lastBoughtProduct' => 'gr54']);
+        $this->createContact($audience, 'browsing@example.tld', ['AmTrek']);
+        $this->createContact($audience, 'other@example.tld', ['AmOther'], ['lastBoughtProduct' => 'tmb']);
+
+        $contacts = $this->resolver()->contacts($audience, [
+            ['field' => 'prop.lastBoughtProduct', 'op' => 'isSet'],
+            ['any' => [
+                ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'AmBivouac'],
+            ]],
+        ]);
+
+        self::assertSame(
+            ['pinned@example.tld', 'vip@example.tld'],
+            $this->sortedEmails($contacts),
+        );
+    }
+
+    /**
+     * The property the whole sending side rests on: the audience and the
+     * subscribed status are ANDed with the rule as a whole, so no amount of
+     * nesting reaches past them.
+     */
+    public function testNestingNeverWidensPastTheGuards(): void
+    {
+        $audience = $this->createAudience();
+        $other = $this->createAudience();
+        $this->createContact($audience, 'mine@example.tld', ['AmTrek']);
+        $this->createContact($other, 'theirs@example.tld', ['AmTrek']);
+
+        $gone = $this->createContact($audience, 'gone@example.tld', ['AmTrek']);
+        $gone->unsubscribe();
+
+        $this->entityManager->flush();
+
+        $contacts = $this->resolver()->contacts($audience, ['any' => [
+            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+            ['any' => [
+                ['field' => 'tag', 'op' => 'has', 'value' => 'AmBivouac'],
+                ['field' => 'locale', 'op' => '!=', 'value' => 'zz'],
+            ]],
+        ]]);
+
+        self::assertSame(['mine@example.tld'], $this->sortedEmails($contacts));
+    }
+
+    /**
+     * @param list<Contact> $contacts
+     *
+     * @return list<string>
+     */
+    private function sortedEmails(array $contacts): array
+    {
+        $emails = array_map(static fn (Contact $contact): string => $contact->getEmail(), $contacts);
+        sort($emails);
+
+        return $emails;
+    }
+
     public function testRegisteredAtOlderAndNewerThan(): void
     {
         $audience = $this->createAudience();

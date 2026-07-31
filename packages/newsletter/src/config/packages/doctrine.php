@@ -1,6 +1,5 @@
 <?php
 
-use Pushword\Newsletter\Repository\DQL\JsonScalarFunction;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -11,11 +10,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                     'type' => 'attribute',
                     'dir' => 'Entity',
                     'alias' => 'PushwordNewsletter',
-                ],
-            ],
-            'dql' => [
-                'string_functions' => [
-                    'JSON_SCALAR' => JsonScalarFunction::class,
                 ],
             ],
         ],

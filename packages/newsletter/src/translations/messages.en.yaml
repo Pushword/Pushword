@@ -39,7 +39,7 @@ newsletter:
       enrollFrom: Enroll from
       enrollFrom.help: Contacts registered before this date are never enrolled. It stops a new automation from mailing an entire existing base at once.
       enrollWhen: Enroll when
-      enrollWhen.help: 'JSON list of conditions, all of which must hold — who gets enrolled, not when. Empty enrolls every subscribed contact. Example: [{"field":"tag","op":"has","value":"AmTrek"}]; for an OR, {"any":[…]}.'
+      enrollWhen.help: 'JSON list of conditions, all of which must hold — who gets enrolled, not when. Empty enrolls every subscribed contact. Example: [{"field":"tag","op":"has","value":"AmTrek"}]; for an OR, {"any":[…]}, which may nest.'
       name: Name
       stepCount: Steps
       steps: Steps
@@ -72,7 +72,7 @@ newsletter:
       scheduledAt: Scheduled for
       scheduledAt.help: Set a date, then use "Schedule". The tick sends it once the date has passed.
       segment: Segment
-      segment.help: 'JSON list of conditions, all of which must hold. Empty targets the whole subscribed audience. Example: [{"field":"prop.lastBoughtProduct","op":"=","value":"tmb"}]; for an OR, {"any":[…]}.'
+      segment.help: 'JSON list of conditions, all of which must hold. Empty targets the whole subscribed audience. Example: [{"field":"prop.lastBoughtProduct","op":"=","value":"tmb"}]; for an OR, {"any":[…]}, which may nest.'
       sent: Sent
       sentAt: Sent at
       slug: Analytics name
@@ -144,7 +144,7 @@ newsletter:
       hosts.help: The sites to watch; empty watches every one. An audience often spans several locale hosts, so pick the ones worth a mail.
       name: Name
       pageWhen: Trigger on pages
-      pageWhen.help: 'JSON list of conditions, all of which must hold — which pages, not when. Empty matches every published page of those hosts. Fields: slug, template, tag, parentPage, ancestor (the slug of a page they sit under, at any depth), prop.<key>. Example: [{"field":"ancestor","op":"=","value":"blog"}]; for an OR, {"any":[…]}.'
+      pageWhen.help: 'JSON list of conditions, all of which must hold — which pages, not when. Empty matches every published page of those hosts. Fields: slug, template, tag, parent, ancestor (the slug of a page they sit under, at any depth), prop.<key>. Example: [{"field":"ancestor","op":"=","value":"blog"}]; for an OR, {"any":[…]}, which may nest. A pages_list search works too: ancestor:blog AND tag:featured.'
       segment: Segment
       segment.help: 'Who receives the mail, in the usual contact criteria. Empty targets the whole subscribed audience.'
       subject: Subject

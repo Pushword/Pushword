@@ -21,20 +21,38 @@ You can do advanced filtering toward the twig `pages_list` like in the [admin-bl
 | `content:`_exampleValue_         | same than `title` + searching in _mainContent_ too                                                              |
 | `slug:`_exampleValue_            | filter pages with the exact slug (useful only with **OR**)                                                      |
 | `slug:`_%exampleValue%_          | same than `slug:` with **%** ➜ filter page with the slug containing _exampleValue_.                             |
-| `customProperty:`_key_`:`_value_ | filter pages where custom property _key_ equals _value_                                                         |
+| `template:`_exampleValue_        | filter pages rendered by this template                                                                          |
+| `parent:`_exampleSlug_           | filter pages whose **parent page** has this slug                                                                 |
+| `ancestor:`_exampleSlug_         | filter pages sitting under that page, **at any depth** — a whole section in one condition                        |
+| `locale:`_exampleValue_          | filter pages of that language (a list is already filtered on the current one)                                    |
+| `tag:`_exampleValue_             | filter _tag_ — the explicit form of writing the tag on its own                                                  |
+| `prop:`_key_`:`_value_           | filter pages where custom property _key_ equals _value_                                                          |
+| `customProperty:`_key_`:`_value_ | the older spelling of `prop:`                                                                                    |
 | _exampleValue_                   | filter _tag_ (exact match only !)                                                                               |
+
+Anything the list above does not recognise is a tag search, and always will be:
+`type:product` is a perfectly good tag name, and no parser can tell it from a
+mistyped prefix. A search matching nothing is therefore silent — run
+`pw:pages-list:lint` to find the ones on your site that do.
 
 ## Using Operators `OR` or `AND`
 
-For now, you can only use `OR` or `AND` operator in the same query
+Both, in the same query. `AND` binds tighter than `OR`, as in SQL, and
+parentheses override that.
 
 Examples :
 
 - ✔ `related:comment:blog OR related`
 - ✔ `parent_children OR related OR page:custom-slug`
 - ✔ `parent_children AND related AND page:custom-slug` (this one will output only 1 result)
-- ✗ `parent_children AND related OR page:custom-slug` (this one will output only 1 result)
-- ✗ `(parent_children AND related) OR page:custom-slug` (this one will output only 1 result)
+- ✔ `parent_children AND related OR page:custom-slug` ➜ reads as `(parent_children AND related) OR page:custom-slug`
+- ✔ `tag:blog AND (tag:featured OR tag:pinned)`
+
+`AND` and `OR` are recognised as whole uppercase words only, so a tag named
+`ORANGE` — or a lowercase `or` — is still ordinary text. A `(` opens a group only
+where a term may start: at the beginning, after an operator, or after another
+`(`. Everywhere else it is an ordinary character, so a tag written `foo (bar)`
+still means what it did before parentheses existed.
 
 ## Exclude Already Linked Pages
 
@@ -97,11 +115,14 @@ final readonly class ProductSearchListener
 {
     public function __invoke(PagesListSearchEvent $event): void
     {
-        $search = $event->getSearch();
-        // e.g. expand "product:NLDLV0019" into "customProperty:productCode:NLDLV0019"
-        if (str_starts_with($search, 'product:')) {
-            $event->setSearch('customProperty:productCode:' . substr($search, 8));
-        }
+        // The raw search, before parsing — so a rewrite must stop at the
+        // delimiters. A `\S+` here would swallow a closing parenthesis and turn
+        // "(product:A OR product:B)" into a term ending in ")".
+        $event->setSearch(preg_replace(
+            '/product:([^\s)]+)/',
+            'prop:productCode:$1',
+            $event->getSearch(),
+        ) ?? $event->getSearch());
     }
 }
 ```

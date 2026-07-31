@@ -42,7 +42,7 @@ final class CriteriaGroup
      * The shape a rule is stored and edited in. An `any` that came back bare
      * would silently become an `all`, so the operator travels with it.
      *
-     * @param list<array{field: string, op: string, value: string}> $conditions
+     * @param list<array<mixed>> $conditions a condition, or a group of its own
      *
      * @return array<mixed>
      */

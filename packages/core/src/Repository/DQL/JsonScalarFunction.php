@@ -1,6 +1,6 @@
 <?php
 
-namespace Pushword\Newsletter\Repository\DQL;
+namespace Pushword\Core\Repository\DQL;
 
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\ORM\Query\AST\Functions\FunctionNode;
@@ -13,10 +13,11 @@ use Override;
 /**
  * `JSON_SCALAR(column, '$.path')` — read a JSON member as a comparable SQL scalar.
  *
- * Core's JSON_EXTRACT is enough for numbers, but a string member comes back
- * quoted on MySQL/MariaDB (`"tmb"`) and unquoted on SQLite (`tmb`), so the same
- * DQL comparison would match on one platform and not the other. This wraps the
- * MySQL side in JSON_UNQUOTE so `prop.*` segments behave identically on both.
+ * {@see JsonExtractFunction} is enough for numbers, but a string member comes
+ * back quoted on MySQL/MariaDB (`"tmb"`) and unquoted on SQLite (`tmb`), so the
+ * same DQL comparison would match on one platform and not the other. This wraps
+ * the MySQL side in JSON_UNQUOTE so a custom-property comparison behaves
+ * identically on both.
  */
 class JsonScalarFunction extends FunctionNode
 {

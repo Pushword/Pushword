@@ -13,11 +13,16 @@ use Pagerfanta\Twig\View\TwigView;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Event\PagesListSearchEvent;
+use Pushword\Core\Query\ArrayCriteriaReader;
+use Pushword\Core\Query\Condition;
+use Pushword\Core\Query\Conjunction;
+use Pushword\Core\Query\Group;
+use Pushword\Core\Query\Search\PageSearchVocabulary;
+use Pushword\Core\Query\Search\SearchParser;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkCollectorService;
 use Pushword\Core\Site\SiteRegistry;
-use Pushword\Core\Utils\StringToDQLCriteria;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Attribute\AsTwigFunction;
@@ -78,6 +83,21 @@ final class PageExtension
     }
 
     /**
+     * Both entry points take either a search string or the raw array form; this
+     * is where the two become the same tree.
+     *
+     * @param array<mixed>|string $where
+     */
+    private function criteria(array|string $where, ?Page $currentPage): Group|Condition|null
+    {
+        if (\is_array($where)) {
+            return new ArrayCriteriaReader()->read($where);
+        }
+
+        return new SearchParser(new PageSearchVocabulary($currentPage))->parse($where);
+    }
+
+    /**
      * @param string|string[]|null               $host
      * @param array<(string|int), string>|string $order
      * @param array<mixed>|string                $where
@@ -96,15 +116,16 @@ final class PageExtension
             $where = $event->getSearch();
         }
 
-        $where = [\is_array($where) ? $where : new StringToDQLCriteria($where, $currentPage)->retrieve()];
-        $where[] = ['id',  '<>', $currentPage?->id ?? 0]; // @phpstan-ignore nullsafe.neverNull
+        $criteria = $this->criteria($where, $currentPage);
+        $excludeCurrent = new Condition('id', '<>', $currentPage->id ?? 0);
+        $criteria = null === $criteria ? $excludeCurrent : new Group(Conjunction::All, [$criteria, $excludeCurrent]);
 
         $order = str_replace('priority', 'weight', $order); // bc
         $order = '' === $order ? 'publishedAt,weight' : $order;
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
             : ['key' => $order[0], 'direction' => $order[1]];
 
-        return $this->pageRepo->getPublishedPages($host ?? $this->apps->getMainHost() ?? [], $where, $order, $this->getLimit($max), $withRedirection);
+        return $this->pageRepo->getPublishedPages($host ?? $this->apps->getMainHost() ?? [], $criteria, $order, $this->getLimit($max), $withRedirection);
     }
 
     /**
@@ -269,9 +290,7 @@ final class PageExtension
             $search = $event->getSearch();
         }
 
-        $hasSlugFilter = \is_string($search) && (str_contains($search, 'slug:') || str_contains($search, 'page:'));
-
-        $search = \is_array($search) ? $search : new StringToDQLCriteria($search, $currentPage)->retrieve();
+        $search = $this->criteria($search, $currentPage) ?? [];
 
         $order = str_replace('priority', 'weight', $order); // bc
         $order = '' === $order ? 'publishedAt,weight' : $order;
@@ -288,14 +307,16 @@ final class PageExtension
             ? $this->pageRepo->getPublishedPageQueryBuilder($host, $search, $order, $limit)
             : $this->pageRepo->getUnpublishedPageQueryBuilder($host, $search, $order, $limit);
 
-        if (! $hasSlugFilter) {
-            $locale = $currentPage->locale ?? '';
-            if ('' === $locale) {
-                $locale = $this->apps->getLocale();
-            }
-
-            $this->pageRepo->andLocale($queryBuilder, $locale);
+        // Always, whatever the search says. A `slug:` used to switch this off, on the
+        // assumption that naming a page means wanting that page — but the sniff was a
+        // substring test on the whole expression, so it also switched the locale off
+        // for every other term ORed with it, and fired on any prefix ending in `slug:`.
+        $locale = $currentPage->locale ?? '';
+        if ('' === $locale) {
+            $locale = $this->apps->getLocale();
         }
+
+        $this->pageRepo->andLocale($queryBuilder, $locale);
 
         $this->pageRepo->andNotRedirection($queryBuilder);
 

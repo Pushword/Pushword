@@ -1,0 +1,62 @@
+<?php
+
+namespace Pushword\Newsletter\Query;
+
+use DateTimeImmutable;
+use Pushword\Core\Query\Field\FieldRegistry;
+use Pushword\Core\Query\Field\FieldStrategy;
+use Pushword\Core\Query\Field\Strategy\ColumnStrategy;
+use Pushword\Core\Query\Field\Strategy\JsonArrayStrategy;
+use Pushword\Core\Query\Field\Strategy\JsonPropertyStrategy;
+
+/**
+ * What is filterable on a `Contact`.
+ *
+ * The counterpart of {@see \Pushword\Core\Query\PageFieldRegistry}, behind the
+ * same interface: a segment and a page rule are two vocabularies over one
+ * compiler, so neither can drift into its own semantics for tags or for custom
+ * properties — those two strategies are literally the same objects.
+ *
+ * Built per resolution, because a duration only means something against an
+ * instant, and every condition of one rule must read the same one.
+ */
+final class ContactFieldRegistry implements FieldRegistry
+{
+    /** @var array<string, FieldStrategy>|null */
+    private ?array $strategies = null;
+
+    public function __construct(private readonly DateTimeImmutable $now)
+    {
+    }
+
+    public function strategy(string $field): ?FieldStrategy
+    {
+        if (str_starts_with($field, JsonPropertyStrategy::PREFIX)) {
+            return JsonPropertyStrategy::PREFIX === $field ? null : new JsonPropertyStrategy('customProperties');
+        }
+
+        return $this->strategies()[$field] ?? null;
+    }
+
+    public function fields(): array
+    {
+        return [...array_keys($this->strategies()), JsonPropertyStrategy::PREFIX.'<key>'];
+    }
+
+    /** A contact is never read relative to a page being rendered. */
+    public function contextualFields(): array
+    {
+        return [];
+    }
+
+    /** @return array<string, FieldStrategy> */
+    private function strategies(): array
+    {
+        return $this->strategies ??= [
+            'tag' => new JsonArrayStrategy('tags'),
+            'locale' => new ColumnStrategy('locale'),
+            'createdAt' => new DurationThresholdStrategy('createdAt', $this->now),
+            'confirmedAt' => new DurationThresholdStrategy('confirmedAt', $this->now),
+        ];
+    }
+}
