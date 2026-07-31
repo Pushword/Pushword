@@ -46,16 +46,31 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
         self::assertStringNotContainsString('Undeclared', $html);
     }
 
-    public function testSeveralAudiencesBecomeTickedCheckboxes(): void
+    public function testSeveralAudiencesTravelHidden(): void
     {
         $letter = $this->createAudience();
         $promos = $this->createAudience();
 
         $html = $this->extension()->renderForm([$letter->getSlug(), $promos->getSlug()]);
 
-        self::assertStringContainsString('name="audiences[]" value="'.$letter->getSlug().'" checked', $html);
-        self::assertStringContainsString('name="audiences[]" value="'.$promos->getSlug().'" checked', $html);
-        self::assertStringNotContainsString('name="audience"', $html, 'the single-audience hidden field would post a list nobody chose');
+        self::assertStringContainsString('type="hidden" name="audiences[]" value="'.$letter->getSlug().'"', $html);
+        self::assertStringContainsString('type="hidden" name="audiences[]" value="'.$promos->getSlug().'"', $html);
+        self::assertStringNotContainsString('name="audience"', $html, 'the single-audience field would post one list out of the two');
+    }
+
+    /**
+     * js-helper binds `.live-form` on every DOMChanged, which is what makes the
+     * form work when it is itself loaded dynamically. An inline <script> would
+     * not: one injected through innerHTML never runs.
+     */
+    public function testTheFormIsALiveFormRatherThanCarryingItsOwnScript(): void
+    {
+        $audience = $this->createAudience();
+
+        $html = $this->extension()->renderForm($audience->getSlug());
+
+        self::assertStringContainsString('class="live-form"', $html);
+        self::assertStringNotContainsString('<script', $html);
     }
 
     /** An interest one list declares must not be posted as if the other one knew it. */
@@ -70,7 +85,7 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
         self::assertStringNotContainsString('Undeclared', $html);
     }
 
-    /** A slug that matches nothing is left out, and one survivor is a form, not a choice. */
+    /** A slug that matches nothing is left out, and one survivor posts as one list. */
     public function testOnlyTheAudiencesThatExistAreOffered(): void
     {
         $audience = $this->createAudience();
@@ -79,7 +94,7 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
 
         self::assertStringContainsString('name="audience" value="'.$audience->getSlug().'"', $html);
         self::assertStringNotContainsString('does-not-exist', $html);
-        self::assertStringNotContainsString('type="checkbox"', $html);
+        self::assertStringNotContainsString('name="audiences[]"', $html);
     }
 
     public function testAnUnknownAudienceRendersNothing(): void

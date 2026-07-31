@@ -42,6 +42,10 @@ final class OriginGuard
             return $response;
         }
 
+        // js-helper posts the form with `credentials: 'include'`; without this
+        // header the browser drops the response it just got, and the form never
+        // shows what happened.
+        $response->headers->set('Access-Control-Allow-Credentials', 'true');
         $response->headers->set('Access-Control-Allow-Methods', 'POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept');
         $response->headers->set('Access-Control-Allow-Origin', $origin);

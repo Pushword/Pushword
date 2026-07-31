@@ -28,8 +28,8 @@ class NewsletterExtension
      *     {{ newsletter_form('altimood', ['AmTrek']) }}
      *     {{ newsletter_form(['altimood', 'altimood-promos']) }}
      *
-     * Several audiences render one ticked checkbox each: subscribing to a list
-     * is its own consent, and ticking one never signs anyone up for the next.
+     * The form asks for a name and an email, nothing else: the lists it
+     * subscribes to are the ones the template names, and travel hidden.
      *
      * Interests are attached to whoever subscribes through this form; only the
      * values an audience declares survive its allow-list.

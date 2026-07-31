@@ -1,37 +1,32 @@
 {#
   Subscription form. Rendered by `{{ newsletter_form('audience-slug') }}`, or by
-  `{{ newsletter_form(['a-slug', 'another']) }}` to offer a choice of lists.
+  `{{ newsletter_form(['a-slug', 'another']) }}` to subscribe to several lists at
+  once.
 
   The action is absolute and points at the audience's live host: on a statically
   generated site the page has no PHP behind it, so the post must cross origins.
-  Without JS the browser would navigate to the bare response fragment, hence the
-  progressive enhancement below — it replaces the form in place and does nothing
-  when scripting is off, where a plain navigation still works.
+
+  `.live-form` is js-helper's convention: liveBlock() binds the submit, posts it
+  and swaps this block for the response. It re-binds on every DOMChanged, so the
+  form still works when it is itself loaded into the page dynamically — an inline
+  <script> would not, since one injected through innerHTML never runs. Without
+  js-helper the browser posts and navigates, which still subscribes.
 #}
 {% set audience = audiences|first %}
-<form class="newsletter-form" method="post" action="{{ action }}" data-newsletter-form>
+<div class="live-form">
+<form class="newsletter-form" method="post" action="{{ action }}">
     <input type="hidden" name="locale" value="{{ locale }}">
     {% if source %}<input type="hidden" name="source" value="{{ source }}">{% endif %}
     {% for interest in interests %}
         <input type="hidden" name="interests[]" value="{{ interest }}">
     {% endfor %}
 
-    {# One list is a given; several are a choice — ticked by default and untickable
-       one by one, because the person is asked rather than enrolled. #}
     {% if audiences|length == 1 %}
         <input type="hidden" name="audience" value="{{ audience.slug }}">
     {% else %}
-        <ul class="newsletter-form__audiences">
-            {% for offered in audiences %}
-                <li class="newsletter-form__audience">
-                    <label class="newsletter-form__label" for="newsletter-audience-{{ offered.slug }}">
-                        <input type="checkbox" id="newsletter-audience-{{ offered.slug }}"
-                               name="audiences[]" value="{{ offered.slug }}" checked>
-                        {{ offered.name }}
-                    </label>
-                </li>
-            {% endfor %}
-        </ul>
+        {% for offered in audiences %}
+            <input type="hidden" name="audiences[]" value="{{ offered.slug }}">
+        {% endfor %}
     {% endif %}
 
     <label class="newsletter-form__label" for="newsletter-name-{{ audience.slug }}">{{ 'newsletter.form.name'|trans }}</label>
@@ -48,20 +43,4 @@
 
     <button class="newsletter-form__submit" type="submit">{{ 'newsletter.form.submit'|trans }}</button>
 </form>
-<script>
-(function () {
-    var forms = document.querySelectorAll('[data-newsletter-form]:not([data-newsletter-bound])');
-    Array.prototype.forEach.call(forms, function (form) {
-        form.setAttribute('data-newsletter-bound', '1');
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
-            var button = form.querySelector('button[type="submit"]');
-            if (button) { button.disabled = true; }
-            fetch(form.action, { method: 'POST', body: new FormData(form) })
-                .then(function (response) { return response.text(); })
-                .then(function (html) { form.outerHTML = html; })
-                .catch(function () { if (button) { button.disabled = false; } });
-        });
-    });
-})();
-</script>
+</div>

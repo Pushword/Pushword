@@ -35,10 +35,17 @@ form into any page:
 {{ newsletter_form('altimood', [], 'footer') }}
 ```
 
-Given several audiences the form offers one ticked checkbox each, and a single
-submission opens a subscription per ticked list — each with its own confirmation
-mail where the list asks for one. An unknown slug fails the whole submission:
-half a subscription is not what anyone ticked.
+The form asks for a name and an email, nothing else. Given several audiences it
+stays the same form and one submission opens a subscription per list — each with
+its own confirmation mail where the list asks for one. An unknown slug fails the
+whole submission: half a subscription is not what was asked for.
+
+It renders as a `.live-form`, the convention `@pushword/js-helper` binds: the
+submission is posted in the background and the form is replaced in place by the
+answer. Because that binding is re-applied on every `DOMChanged`, the form also
+works when the page loads it dynamically — inside a `data-live` block, or behind
+a `data-src-live` button. Without js-helper on the page the browser posts and
+navigates to the response fragment, which still subscribes.
 
 The third argument names where the form sits, and is kept on the contact as the
 *where* of the opt-in. Left out, it falls back to the slug of the page the form
