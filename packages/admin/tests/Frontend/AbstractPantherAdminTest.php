@@ -215,12 +215,6 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
         return $client;
     }
 
-    protected function tearDown(): void
-    {
-        // Don't quit the client between tests - reuse the logged-in session
-        parent::tearDown();
-    }
-
     #[Override]
     public static function tearDownAfterClass(): void
     {
