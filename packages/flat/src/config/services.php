@@ -9,7 +9,9 @@ use Pushword\Flat\Admin\FlatSyncNotifier;
 use Pushword\Flat\Controller\Admin\GitStatusController;
 use Pushword\Flat\Controller\Admin\NotificationCrudController;
 use Pushword\Flat\Controller\Api\ContentSnapshotApiController;
+use Pushword\Flat\Controller\Api\EditorSyncApiController;
 use Pushword\Flat\Controller\Api\NotificationApiController;
+use Pushword\Flat\Controller\Api\PageFileApiController;
 use Pushword\Flat\Controller\FlatLockApiController;
 use Pushword\Flat\Converter\FlatPropertyConverterInterface;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
@@ -104,6 +106,16 @@ return static function (ContainerConfigurator $container): void {
             ->tag('pushword.api.controller');
 
         $services->set(ContentSnapshotApiController::class)
+            ->autowire()
+            ->tag('controller.service_arguments')
+            ->tag('pushword.api.controller');
+
+        $services->set(PageFileApiController::class)
+            ->autowire()
+            ->tag('controller.service_arguments')
+            ->tag('pushword.api.controller');
+
+        $services->set(EditorSyncApiController::class)
             ->autowire()
             ->tag('controller.service_arguments')
             ->tag('pushword.api.controller');
