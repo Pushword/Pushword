@@ -26,6 +26,9 @@ Interactive, (almost) server-less quizzes (QCM) for [Pushword](https://pushword.
 - **`POST /api/quiz/validate`** — token-authenticated endpoint (for AI agents)
   that validates a quiz payload and returns precise `{path, message}` violations.
   **`GET /api/quiz/schema`** serves the payload's JSON Schema.
+- **`GET /api/quiz/result`** — the attempts, newest first;
+  **`GET /api/quiz/result/stats`** tallies them per quiz (participation, average
+  score, profile split), so usage is readable without an admin session.
 
 ## Quiz JSON shape
 

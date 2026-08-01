@@ -186,6 +186,26 @@ anonymous (no PII). If a `cta` is set, the Conversation form is shown at the end
 pre-filled from a previously stored identity (localStorage); the lead is tagged
 with the quiz via the `referring` field.
 
+## Read the results from the API
+
+The admin lists the attempts (**Quiz → Results**); the API answers the same
+question from outside, so participation is readable without an admin session.
+Both endpoints are token-authenticated and read-only — an attempt is written by
+the public endpoint above and round-tripped through `quiz-result.csv`.
+
+```
+GET /api/quiz/result?host=&quiz=       # attempts, newest first, paginated
+GET /api/quiz/result/stats?host=&quiz= # participation per quiz, unpaginated
+```
+
+A stats row reports `attempts` (both kinds), `knowledgeAttempts` and their
+`averageScore`, and the `profiles` split of a personality test:
+
+```json
+{"quiz":"Mountains","host":"example.tld","attempts":48,"knowledgeAttempts":40,
+ "averageScore":65.3,"profiles":{"sommet":5,"calm":3}}
+```
+
 ## Validate from the API (AI agents)
 
 `POST /api/quiz/validate` (token-authenticated, like the rest of the

@@ -53,6 +53,63 @@ class QuizResultRepository extends ServiceEntityRepository
         return (int) round($same / $total * 100);
     }
 
+    /**
+     * Participation per (quiz, host): how many attempts were made, the average
+     * score of the knowledge ones, and how the personality ones split between
+     * profiles. One grouped query — the two kinds live in the same table, told
+     * apart by `result`.
+     *
+     * An empty $host or $quiz does not filter on it.
+     *
+     * @return list<array{quiz: string, host: string, attempts: int, knowledgeAttempts: int, averageScore: float|null, profiles: array<string, int>}>
+     */
+    public function statsBy(string $host = '', string $quiz = ''): array
+    {
+        $qb = $this->createQueryBuilder('r')
+            ->select('r.quiz AS quiz', 'r.host AS host', 'r.result AS result', 'COUNT(r.id) AS attempts', 'AVG(r.score) AS averageScore')
+            ->groupBy('r.quiz')->addGroupBy('r.host')->addGroupBy('r.result')
+            ->orderBy('r.quiz', 'ASC')->addOrderBy('r.host', 'ASC')->addOrderBy('r.result', 'ASC');
+
+        if ('' !== $host) {
+            $qb->andWhere('r.host = :host')->setParameter('host', $host);
+        }
+
+        if ('' !== $quiz) {
+            $qb->andWhere('r.quiz = :quiz')->setParameter('quiz', $quiz);
+        }
+
+        /** @var array<string, array{quiz: string, host: string, attempts: int, knowledgeAttempts: int, averageScore: float|null, profiles: array<string, int>}> $stats */
+        $stats = [];
+
+        foreach ($qb->getQuery()->getResult() as $row) {
+            // NUL cannot appear in either value, so it separates them without
+            // a quiz named after a host ever landing in the same bucket.
+            $key = $row['quiz']."\0".$row['host'];
+            $stats[$key] ??= [
+                'quiz' => $row['quiz'],
+                'host' => $row['host'],
+                'attempts' => 0,
+                'knowledgeAttempts' => 0,
+                'averageScore' => null,
+                'profiles' => [],
+            ];
+
+            $attempts = $row['attempts'];
+            $stats[$key]['attempts'] += $attempts;
+
+            if (null === $row['result']) {
+                $stats[$key]['knowledgeAttempts'] = $attempts;
+                $stats[$key]['averageScore'] = round($row['averageScore'], 1);
+
+                continue;
+            }
+
+            $stats[$key]['profiles'][$row['result']] = $attempts;
+        }
+
+        return array_values($stats);
+    }
+
     /** Count knowledge-quiz rows (result IS NULL), optionally those scoring below $below. */
     private function countScores(string $host, string $quiz, ?int $below): int
     {

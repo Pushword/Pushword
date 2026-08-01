@@ -6,6 +6,7 @@ use Pushword\Api\Controller\ApiControllerInterface;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\Sync\FlatSyncInterface;
 use Pushword\Quiz\Controller\Api\QuizApiController;
+use Pushword\Quiz\Controller\Api\QuizResultApiController;
 use Pushword\Quiz\Flat\QuizResultSync;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -37,9 +38,13 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         $services->load('Pushword\Quiz\Admin\\', __DIR__.'/../Admin');
     }
 
-    // The validation endpoint is only wired when the optional API package is installed.
+    // The validation and result endpoints are only wired when the optional API package is installed.
     if ($apiAvailable) {
         $services->set(QuizApiController::class)
+            ->autowire()
+            ->tag('controller.service_arguments')
+            ->tag('pushword.api.controller');
+        $services->set(QuizResultApiController::class)
             ->autowire()
             ->tag('controller.service_arguments')
             ->tag('pushword.api.controller');
