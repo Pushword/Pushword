@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { loadVariant, initVariantLinks } from './variantLinks.js'
 
 function variantHtml(text) {
@@ -33,6 +33,26 @@ beforeEach(() => {
   vi.restoreAllMocks()
   reload.mockClear()
   history.replaceState({}, '', '/master')
+})
+
+// jsdom implements no View Transition API, so every test above exercises the
+// fallback. Install a stub to drive the animated branch. It reports the DOM as
+// the transition saw it — before the callback ran — so a swap that leaked
+// outside startViewTransition() is detectable.
+function stubViewTransition() {
+  const contentAtStart = []
+  const startViewTransition = vi.fn((callback) => {
+    contentAtStart.push(document.querySelector('#content')?.textContent)
+
+    return { updateCallbackDone: Promise.resolve().then(() => callback()) }
+  })
+  document.startViewTransition = startViewTransition
+
+  return { startViewTransition, contentAtStart }
+}
+
+afterEach(() => {
+  delete document.startViewTransition
 })
 
 describe('loadVariant', () => {
@@ -96,6 +116,58 @@ describe('loadVariant', () => {
     await loadVariant('/the-variant', '#content')
 
     expect(onChanged).toHaveBeenCalledOnce()
+  })
+})
+
+describe('loadVariant with the View Transition API', () => {
+  it('runs the swap through startViewTransition', async () => {
+    document.body.innerHTML = '<main id="content">master</main>'
+    stubFetch(variantHtml('variant body'))
+    const { startViewTransition } = stubViewTransition()
+
+    await loadVariant('/the-variant', '#content')
+
+    expect(startViewTransition).toHaveBeenCalledOnce()
+    expect(document.querySelector('#content').textContent).toBe('variant body')
+  })
+
+  it('defers the DOM change to the transition callback', async () => {
+    document.body.innerHTML = '<main id="content">master</main>'
+    stubFetch(variantHtml('variant body'))
+    const { contentAtStart } = stubViewTransition()
+
+    await loadVariant('/the-variant', '#content')
+
+    // Swapping before startViewTransition() would leave nothing to animate:
+    // the API snapshots the outgoing state when it is called.
+    expect(contentAtStart).toEqual(['master'])
+  })
+
+  it('still pushes the URL and dispatches DOMChanged', async () => {
+    document.body.innerHTML = '<main id="content">master</main>'
+    stubFetch(variantHtml('variant body'))
+    stubViewTransition()
+    const onChanged = vi.fn()
+    document.addEventListener('DOMChanged', onChanged)
+
+    await loadVariant('/the-variant', '#content')
+
+    expect(window.location.pathname).toBe('/the-variant')
+    expect(onChanged).toHaveBeenCalledOnce()
+  })
+
+  it('resolves once the content is swapped, not when the animation ends', async () => {
+    document.body.innerHTML = '<main id="content">master</main>'
+    stubFetch(variantHtml('variant body'))
+    // A transition whose animation never finishes must not hang loadVariant.
+    document.startViewTransition = vi.fn((callback) => ({
+      updateCallbackDone: Promise.resolve().then(() => callback()),
+      finished: new Promise(() => {}),
+    }))
+
+    await loadVariant('/the-variant', '#content')
+
+    expect(document.querySelector('#content').textContent).toBe('variant body')
   })
 })
 

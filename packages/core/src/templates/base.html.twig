@@ -29,6 +29,9 @@
             --font-family: {{ apps.get().get('css_var:font_family') ?? default_font }}
           }
         {% endblock %}
+        {# Inlined so the rule is parsed on the outgoing and the incoming document
+           before the navigation commits. Empty this block to opt a theme out. #}
+        {% block view_transition %}@view-transition{navigation:auto}{% endblock %}
         .nojs{display:inline-block}
       </style>
     {% endblock %}

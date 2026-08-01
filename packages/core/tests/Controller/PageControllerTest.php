@@ -393,6 +393,31 @@ final class PageControllerTest extends KernelTestCase
         }
     }
 
+    /**
+     * The opt-in must reach every document: a cross-document view transition
+     * needs the rule on the outgoing *and* the incoming page, so one template
+     * dropping it breaks navigations in both directions.
+     */
+    public function testViewTransitionOptInIsRenderedOnEveryPage(): void
+    {
+        foreach (['homepage', 'kitchen-sink'] as $slug) {
+            $content = (string) $this->getPageController()->show(Request::create($slug), $slug)->getContent();
+            self::assertStringContainsString('@view-transition{navigation:auto}', $content, $slug);
+        }
+    }
+
+    /**
+     * A view-transition-name used twice aborts the whole page's transition, so
+     * the elements core names must stay unique.
+     */
+    public function testNamedTransitionElementsAreUnique(): void
+    {
+        $content = (string) $this->getPageController()->show(Request::create('kitchen-sink'), 'kitchen-sink')->getContent();
+
+        self::assertSame(1, substr_count($content, 'id="navbar"'));
+        self::assertSame(1, substr_count($content, 'data-variant-zone'));
+    }
+
     public function getPageController(): PageController
     {
         return self::getContainer()->get(PageController::class);

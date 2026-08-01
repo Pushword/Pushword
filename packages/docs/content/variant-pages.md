@@ -44,6 +44,8 @@ The core only emits the `data-variant` hook. The opt-in vanilla helper in `pushw
 
 The content zone selector defaults to `[data-variant-zone], main, #content` and can be overridden: `initVariantLinks({ zone: '#my-zone' })`. The bundled theme (`page/_content.html.twig`) already exposes `data-variant-zone` on its content wrapper, so the swap works out of the box; custom themes should mark their content zone the same way.
 
+The swap runs inside `document.startViewTransition()`, so it animates with the same CSS as a full navigation — see [view transitions](/view-transitions).
+
 ## Reversibility (promote / demote)
 
 Promotion is the case-by-case SEO arbitrage lever. From the admin, **Promote to master** turns a variant into the master; its former master and the other variants follow automatically (`VariantManager::promote()`). Deleting a master auto-promotes one of its variants so none is orphaned and the self-referencing foreign key stays satisfied.

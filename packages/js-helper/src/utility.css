@@ -66,3 +66,40 @@
 .img-background {
   @apply px-6 sm:px-12 py-1 text-center bg-gray-200 rounded;
 }
+
+/* View transitions — base.html.twig inlines the `@view-transition` opt-in.
+   A name must be unique on the page: using one twice aborts the whole
+   transition, so only singletons get one. Transforms sit behind
+   `no-preference`; the browser still cross-fades, which is not motion.
+   See packages/docs/content/view-transitions.md. */
+@media (prefers-reduced-motion: no-preference) {
+  #navbar {
+    view-transition-name: pw-navbar;
+  }
+
+  [data-variant-zone] {
+    view-transition-name: pw-content;
+  }
+
+  ::view-transition-old(pw-content) {
+    animation: pw-content-out 120ms cubic-bezier(0.4, 0, 1, 1) both;
+  }
+
+  ::view-transition-new(pw-content) {
+    animation: pw-content-in 260ms cubic-bezier(0, 0, 0.2, 1) both;
+  }
+
+  @keyframes pw-content-out {
+    to {
+      opacity: 0;
+      transform: translateY(-0.5rem);
+    }
+  }
+
+  @keyframes pw-content-in {
+    from {
+      opacity: 0;
+      transform: translateY(1.25rem);
+    }
+  }
+}

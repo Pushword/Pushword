@@ -464,6 +464,17 @@ Use Alpine.js for UI state (toggles, dropdowns, modals, tabs, accordions). Don't
 - **Reduce borders:** before `border`/`divide-y`, try: (1) shadow, (2) background contrast, (3) spacing.
 - **Rethink components:** grid dropdowns with icons, selectable card radio buttons, hierarchical table cells.
 
+### 11.1 View transitions
+
+Navigations are animated natively (`@view-transition{navigation:auto}`, inlined by `base.html.twig`). Core names `#navbar` -> `pw-navbar` and `[data-variant-zone]` -> `pw-content`; everything else cross-fades with `root`.
+
+- **A `view-transition-name` used twice on a page aborts the whole page's transition** — silently. Only name elements guaranteed to appear once, and prefer `#id` selectors over element/class ones.
+- **Never set `view-transition-name` inside a `{% for %}` loop** (`content_part`, `cardList`, `pages_list`) unless you generate a unique name per item.
+- Tailwind cannot reach `::view-transition-old()` / `::view-transition-new()` — they sit outside the document tree. Write plain CSS.
+- Keep names and transforms inside `@media (prefers-reduced-motion: no-preference)`; the browser still cross-fades for everyone else.
+
+Full detail: `packages/docs/content/view-transitions.md`.
+
 ---
 
 ## 12. PERSONALITY

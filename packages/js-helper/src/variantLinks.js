@@ -38,10 +38,19 @@ export function loadVariant(url, zoneSelector = DEFAULT_ZONE) {
         .querySelector(zoneSelector)
       if (!fresh) return
 
-      zone.replaceWith(fresh)
-      variantPath = new URL(url, window.location.href).pathname
-      history.pushState({ pwVariant: url }, '', url)
-      document.dispatchEvent(new Event('DOMChanged'))
+      const swap = () => {
+        zone.replaceWith(fresh)
+        variantPath = new URL(url, window.location.href).pathname
+        history.pushState({ pwVariant: url }, '', url)
+        document.dispatchEvent(new Event('DOMChanged'))
+      }
+
+      // Animate the swap with the same CSS a full navigation uses.
+      if (typeof document.startViewTransition !== 'function') return swap()
+
+      // updateCallbackDone, not finished: the promise stands for "content
+      // swapped", not "animation over".
+      return document.startViewTransition(swap).updateCallbackDone
     })
     .catch(() => {
       /* ignore network errors — the master content stays in place */
