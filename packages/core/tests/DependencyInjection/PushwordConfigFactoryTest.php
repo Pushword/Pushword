@@ -53,6 +53,47 @@ final class PushwordConfigFactoryTest extends TestCase
         self::assertSame('blablabla', $container->getParameter('pw.apps')['localhost.dev']['custom_properties']['otherCustomProperty']);
     }
 
+    public function testPagePropertiesFallThroughAndMergePerApp(): void
+    {
+        $container = new ContainerBuilder(new ParameterBag([]));
+        $config = new Processor()->processConfiguration(new Configuration(), [[
+            'page_properties' => [
+                'author' => ['type' => 'string'],
+                'readingTime' => ['type' => 'int'],
+            ],
+            'apps' => [
+                ['hosts' => ['plain.tld']],
+                [
+                    'hosts' => ['custom.tld'],
+                    'page_properties' => [
+                        'cta' => ['type' => 'string'],
+                        // redeclaring replaces the whole descriptor
+                        'author' => ['type' => 'string', 'required' => true],
+                        // `~` un-declares for this app: the null must survive the merge
+                        'readingTime' => null,
+                    ],
+                ],
+            ],
+        ]]);
+
+        $factory = new PushwordConfigFactory($container, $config, new Configuration());
+        $factory->loadConfigToParams();
+        $factory->loadApps();
+
+        self::assertFalse($container->hasParameter('pw.page_properties'), 'fallback keys are not loaded as root params'); // @phpstan-ignore-line
+
+        $apps = $container->getParameter('pw.apps');
+
+        self::assertSame(['type' => 'string'], $apps['plain.tld']['page_properties']['author']);
+        self::assertArrayNotHasKey('cta', $apps['plain.tld']['page_properties']);
+
+        $custom = $apps['custom.tld']['page_properties'];
+        self::assertSame(['type' => 'string', 'required' => true], $custom['author']);
+        self::assertSame(['type' => 'string'], $custom['cta']);
+        self::assertArrayHasKey('readingTime', $custom);
+        self::assertNull($custom['readingTime']);
+    }
+
     public function testBadFormattedConfigException(): void
     {
         $container = new ContainerBuilder(new ParameterBag([]));

@@ -4,8 +4,10 @@ namespace Pushword\Core\DependencyInjection;
 
 use InvalidArgumentException;
 use LogicException;
+use Pushword\Core\PropertySchema\PagePropertySchemaFactory;
 use Pushword\Core\Utils\IsAssociativeArray;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use UnitEnum;
@@ -146,16 +148,53 @@ final class PushwordConfigFactory
                 $app[$fallbackProperty] = \is_string($this->config[$fallbackProperty])
                     ? str_replace(['%main_host%', '{main_host}'], $mainHost, $this->config[$fallbackProperty])
                     : $this->config[$fallbackProperty];
-            } elseif ('custom_properties' === $fallbackProperty) {
-                if (! \is_array($this->config['custom_properties']) || ! \is_array($app['custom_properties'])) {
+            } elseif ('custom_properties' === $fallbackProperty || 'page_properties' === $fallbackProperty) {
+                if (! \is_array($this->config[$fallbackProperty]) || ! \is_array($app[$fallbackProperty])) {
                     throw new LogicException();
                 }
 
-                $app['custom_properties'] = [...$this->config['custom_properties'], ...$app['custom_properties']];
+                // Shallow merge, app wins whole-descriptor. A null app value
+                // survives on purpose: `name: ~` un-declares a root-declared
+                // page property for this app.
+                $app[$fallbackProperty] = [...$this->config[$fallbackProperty], ...$app[$fallbackProperty]];
             }
         }
 
+        $this->validatePageProperties($app);
+
         return $app;
+    }
+
+    /**
+     * `page_properties` lives in a variableNode, which the tree never checks:
+     * building every schema here turns a typo'd type, option or constraint
+     * name into a failed container build instead of a per-request crash.
+     *
+     * @param array<mixed> $app
+     */
+    private function validatePageProperties(array $app): void
+    {
+        if (! isset($app['page_properties'])) {
+            return;
+        }
+
+        $host = isset($app['hosts']) && \is_array($app['hosts']) && isset($app['hosts'][0]) && is_scalar($app['hosts'][0]) ? (string) $app['hosts'][0] : '?';
+
+        if (! \is_array($app['page_properties'])) {
+            throw new InvalidConfigurationException(\sprintf('pushword app `%s`: `page_properties` must be a map', $host));
+        }
+
+        foreach ($app['page_properties'] as $name => $descriptor) {
+            if (null === $descriptor) {
+                continue;
+            }
+
+            try {
+                PagePropertySchemaFactory::fromConfig((string) $name, $descriptor);
+            } catch (InvalidArgumentException $invalidArgumentException) {
+                throw new InvalidConfigurationException(\sprintf('pushword app `%s`: %s', $host, $invalidArgumentException->getMessage()), 0, $invalidArgumentException);
+            }
+        }
     }
 
     /**
