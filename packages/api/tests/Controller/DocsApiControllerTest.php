@@ -46,5 +46,17 @@ final class DocsApiControllerTest extends WebTestCase
         self::assertIsArray($doc['components']['schemas']);
         self::assertArrayHasKey('Page', $doc['components']['schemas']);
         self::assertArrayHasKey('Media', $doc['components']['schemas']);
+
+        // Declared page properties are exposed per host so an agent knows the
+        // valid frontmatter keys before writing a page.
+        self::assertArrayHasKey('x-pushword-page-properties', $doc);
+        self::assertIsArray($doc['x-pushword-page-properties']);
+        $devApp = $doc['x-pushword-page-properties']['localhost.dev'] ?? null;
+        self::assertIsArray($devApp);
+        $priority = $devApp['priority'] ?? null;
+        self::assertIsArray($priority);
+        self::assertSame('int', $priority['type'] ?? null);
+        self::assertArrayHasKey('subtitle', $devApp, 'root-declared properties fall through to the app');
+        self::assertArrayHasKey('toc', $devApp, 'bundle-declared properties are exposed');
     }
 }

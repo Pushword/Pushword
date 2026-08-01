@@ -28,7 +28,7 @@ final readonly class PageFrontmatterMapper
      *
      * @var string[]
      */
-    private const array RESERVED_FRONTMATTER_KEYS = [
+    public const array RESERVED_FRONTMATTER_KEYS = [
         'h1', 'title', 'name', 'metaRobots', 'host', 'locale', 'template',
         'editMessage', 'slug', 'weight', 'tags', 'redirectFrom', 'publishedAt',
         'holdPublication', 'holdPublicationAt', 'mainImage', 'parentPage', 'variantOf',

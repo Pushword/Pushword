@@ -4,10 +4,10 @@ use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use PiedWeb\RenderAttributes\TwigExtension;
 use Pushword\Core\BackgroundTask\MessengerBackgroundTaskDispatcher;
 use Pushword\Core\BackgroundTask\RunCommandHandler;
+use Pushword\Core\Command\SchemaDumpCommand;
 use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
 use Pushword\Core\Component\EntityFilter\FilterRegistry;
 use Pushword\Core\Content\ContentPipelineFactory;
-use Pushword\Core\PropertySchema\PagePropertiesProviderInterface;
 use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Core\Repository\MediaRepository;
@@ -73,13 +73,12 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->arg('$filters', tagged_iterator('pushword.entity_filter'))
         ->public();
 
-    // Auto-tag bundle-declared page property schemas
-    $services->instanceof(PagePropertiesProviderInterface::class)
-        ->tag('pushword.page_properties_provider');
-
     $services->set(PagePropertySchemaRegistry::class)
         ->arg('$providers', tagged_iterator('pushword.page_properties_provider'))
         ->public();
+
+    $services->set(SchemaDumpCommand::class)
+        ->arg('$pageClass', '%pw.entity_page%');
 
     // # todo limit to test https://stackoverflow.com/questions/54466158/symfony-4-2-how-to-do-a-service-public-only-for-tests
     $services->set(PushwordRouteGenerator::class)

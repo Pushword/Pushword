@@ -3,6 +3,8 @@
 namespace Pushword\Api\Service;
 
 use Pushword\Api\Controller\ApiControllerInterface;
+use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
+use Pushword\Core\Site\SiteRegistry;
 
 /**
  * Assembles the /api/docs OpenAPI document from each controller's `describe()`
@@ -17,6 +19,8 @@ final readonly class OpenApiBuilder
      */
     public function __construct(
         private iterable $controllers,
+        private PagePropertySchemaRegistry $pageProperties,
+        private SiteRegistry $apps,
         private string $title = 'Pushword API',
         private string $version = '1.0.0',
     ) {
@@ -72,7 +76,19 @@ final readonly class OpenApiBuilder
         ksort($paths);
         ksort($schemas);
 
+        // Vendor extension: the per-host declared page properties, in the
+        // `page_properties` config shape, so an agent reading /api/docs knows
+        // which frontmatter keys are valid before writing a page.
+        $pagePropertiesPerHost = [];
+        foreach ($this->apps->getHosts() as $host) {
+            $described = $this->pageProperties->describe($host);
+            if ([] !== $described) {
+                $pagePropertiesPerHost[$host] = $described;
+            }
+        }
+
         return [
+            'x-pushword-page-properties' => $pagePropertiesPerHost,
             'openapi' => '3.1.0',
             'info' => [
                 'title' => $this->title,

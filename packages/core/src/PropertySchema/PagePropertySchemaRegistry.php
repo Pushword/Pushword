@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\PropertySchema;
 
+use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 
 /**
@@ -33,6 +34,28 @@ final class PagePropertySchemaRegistry
             return $this->cache[$mainHost];
         }
 
+        $schemas = [];
+        foreach ($this->describeSite($site) as $name => $descriptor) {
+            $schemas[$name] = PagePropertySchemaFactory::fromConfig($name, $descriptor);
+        }
+
+        return $this->cache[$mainHost] = $schemas;
+    }
+
+    /**
+     * The merged raw descriptors for a host, in the `page_properties` config
+     * shape — what an author would write, for `pw:schema:dump` and /api/docs.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function describe(?string $host = null): array
+    {
+        return $this->describeSite($this->apps->get($host));
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function describeSite(SiteConfig $site): array
+    {
         $declared = [];
         foreach ($this->providers as $provider) {
             $declared = [...$declared, ...$provider->getPageProperties()];
@@ -40,16 +63,14 @@ final class PagePropertySchemaRegistry
 
         $declared = [...$declared, ...$site->getArray('page_properties')];
 
-        $schemas = [];
         foreach ($declared as $name => $descriptor) {
             if (null === $descriptor) {
-                continue; // `name: ~` un-declares for this host
+                unset($declared[$name]); // `name: ~` un-declares for this host
             }
-
-            $schemas[(string) $name] = PagePropertySchemaFactory::fromConfig((string) $name, $descriptor);
         }
 
-        return $this->cache[$mainHost] = $schemas;
+        /** @var array<string, array<string, mixed>> $declared */
+        return $declared;
     }
 
     public function schema(?string $host, string $name): ?PagePropertySchema
