@@ -22,7 +22,7 @@
     <tr>
         <td style="padding:0 16px 24px;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#777777;">
             <hr style="border:0;border-top:1px solid #e6e6e6;margin:0 0 16px;">
-            {{ audience.name }} - <a href="{{ unsubscribeUrl }}" style="color:#777777;">{{ 'newsletter.email.unsubscribe'|trans({}, null, contact.locale) }}</a>
+            <a href="{{ unsubscribeUrl }}" style="color:#777777;">{{ 'newsletter.email.unsubscribe'|trans({}, null, contact.locale) }} ({{ audience.name }})</a>
         </td>
     </tr>
 </table>
