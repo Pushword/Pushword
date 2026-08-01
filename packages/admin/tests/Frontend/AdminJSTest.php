@@ -164,15 +164,17 @@ final class AdminJSTest extends AbstractPantherAdminTest
         $titleInput->clear();
         $titleInput->sendKeys('Test Title for Width Measurement');
 
-        $this->sleepMs(self::waitShort());
-
-        // Check that the counter has been updated
-        $widthValue = $client->executeScript(
-            'return document.getElementById("titleWidth")?.innerText || "";'
+        // The counter is wired on window "load"; under parallel CPU contention that
+        // can fire after the keystrokes, so poll instead of a fixed sleep.
+        $widthDisplayed = $this->pollUntilTrue(
+            $client,
+            'const input = document.querySelector(arguments[0]);
+             return input.value.length > 0
+                 && (document.getElementById("titleWidth")?.innerText || "") === String(input.value.length)',
+            [self::SELECTOR_TITLE_INPUT],
         );
 
-        // We expect to see the width
-        self::assertNotEmpty($widthValue, 'Title width should be displayed');
+        self::assertTrue($widthDisplayed, 'Title width should display the title length');
     }
 
     /**
