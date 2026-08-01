@@ -15,6 +15,38 @@ Three pieces, all in the default theme:
 - **`utility.css`** (`pushword/js-helper`) names two elements and animates the content zone.
 - **`variantLinks.js`** runs its same-document swap inside `document.startViewTransition()`, so [variant pages](/variant-pages) animate with the same CSS.
 
+## Getting it on an existing site
+
+The feature ships through **two channels**, and `composer update` only moves one of them:
+
+| Channel | Carries | Updated by |
+| ------- | ------- | ---------- |
+| `pushword/core` (Composer) | the `@view-transition` opt-in in `base.html.twig` | `composer update` |
+| `@pushword/js-helper` (npm / `github:`) | `view-transition-name` + the keyframes in `utility.css` | `yarn upgrade @pushword/js-helper` |
+
+With only the Composer half you get the browser's plain cross-fade — no pinned navbar, no
+content slide. That reads as "nothing happened". `yarn install` does **not** close the gap:
+a `github:`-resolved dependency is pinned to a commit in `yarn.lock`, and `--check-files`
+re-installs that same commit. Move the pin explicitly, then rebuild:
+
+```shell
+yarn upgrade @pushword/js-helper && yarn build
+```
+
+On a statically exported host, regenerate afterwards — `pw:static` renders through its own
+`prod`/`debug=false` kernel, so a template change is only picked up once its compiled Twig
+cache is gone:
+
+```shell
+rm -rf var/cache/prod && php bin/console pw:static {host}
+```
+
+To check a deployed host, compare it against the same app served dynamically: if the
+dynamic URL has `@view-transition` in its inline `<style>` and the static one does not,
+the export is stale, not the code.
+
+## Naming
+
 Two elements get a name:
 
 | Element                | Name         | Effect                                        |
@@ -42,7 +74,7 @@ To change the animation, redefine the keyframes in your own stylesheet — it lo
 
 To name more elements, do it in CSS, not in markup — see the rule below.
 
-## Naming rules
+### Naming rules
 
 **A `view-transition-name` used twice on the same page aborts the entire transition.** Not the element's animation — the whole page's. This is the single easiest way to break the feature, and it fails silently: navigation still works, it just stops animating.
 
