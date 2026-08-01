@@ -3,6 +3,7 @@ paths:
   - ".github/workflows/**"
   - ".scripts/release"
   - "monorepo-builder.php"
+  - "packages/*/.gitattributes"
 ---
 
 # Release and monorepo split
@@ -18,6 +19,13 @@ one race-free split run.
 - **A matrix entry needs both a `packages/<pkg>` directory and an existing mirror repo.**
   `admin-monaco-editor` and `ai-skills` have source dirs but no mirror and are
   deliberately absent; adding them would 404 at clone.
+- **A new matrix entry with tests also needs `packages/<pkg>/.gitattributes`.** It holds
+  `/tests export-ignore` so the dist archive Composer installs by default ships no tests
+  into a site's `vendor/`. Nothing checks this — add it with the matrix entry. Two
+  reminders: it only prunes dist (`--prefer-source` still gets tests, as contributors
+  want), and it lands only at the next tag, since the split runs on tag pushes.
+  `pushword/new` is the deliberate exception — `type: project`, so its `tests/` and
+  `phpunit.xml.dist` are the starter suite the site owner keeps.
 - **Seed a brand-new mirror before its first split.** A repo created without
   `--add-readme` has no `main` ref, and the failure is misleading — `cloned an empty
   repository` → `pathspec 'main' did not match` → `src refspec main does not match any`.
