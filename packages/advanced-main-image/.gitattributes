@@ -1,0 +1,2 @@
+# Not shipped in the Composer dist archive: dev-only, useless in a site vendor/.
+/tests export-ignore
