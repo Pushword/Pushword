@@ -150,6 +150,48 @@ and nothing is persisted.
 `reason` is `not_found` (zero matches) or `ambiguous` (more than one); `index` is the
 position of the failing edit in your `edits` list.
 
+{id=raw-markdown}
+### Raw `.md` file intake (`text/markdown`)
+
+A client editing flat snapshot files (see the [flat extension](flat.md)) does not need
+to speak YAML at all: `PUT` the raw file bytes and write the response bytes back. The
+server parses and re-serializes with the same code the flat export uses, so the response
+body is always the canonical file text a fresh export would write — carrying the new
+`revision:`.
+
+```bash
+# Update — If-Match is the `revision:` value stamped in the file's front matter
+curl -X PUT -H "Authorization: Bearer $TOKEN" -H "If-Match: $REV" \
+     -H 'Content-Type: text/markdown' \
+     --data-binary @content/example.com/pricing.md \
+     https://example.com/api/content/page/example.com/pricing
+
+# Create (no If-Match — the slug comes from the URL, nested slugs welcome)
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+     -H 'Content-Type: text/markdown' \
+     --data-binary @content/example.com/guides/new-guide.md \
+     https://example.com/api/content/page/example.com/guides/new-guide
+```
+
+Same operation as the JSON `PUT` (revision check, validation, `editedBy` stamping) —
+only the intake and the response format differ. One deliberate difference: **a file is a
+total document, not a patch**. A front-matter key present in the current canonical
+export but missing from the upload is reset to its default, and a vanished custom
+property is removed — deleting a line in the file is an edit.
+
+- `409` (stale `If-Match`, or `POST` on an existing slug) returns the server's current
+  canonical text, so the client can overwrite its local copy and re-apply the edit.
+- `400` — empty body, malformed YAML, or a document that does not open with `---`.
+- `422` and `428` are JSON errors, identical to the JSON endpoints.
+
+### The editor sync client — `GET /api/editor/sync.js`
+
+The Node client that editor repos run as a Claude Code PostToolUse hook is served by the
+instance itself, so every client is byte-identical to the server it talks to — refresh
+the local copy on each snapshot pull. It holds no YAML (raw bytes out, canonical bytes
+back via the endpoints above) and reads `PUSHWORD_API_BASE` plus `PUSHWORD_TOKEN_FILE`
+(default `<project>/.token`) from the environment; nothing per-site is baked in.
+
 {id=translations}
 ### Link translations (hreflang)
 
