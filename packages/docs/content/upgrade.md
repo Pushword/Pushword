@@ -14,7 +14,7 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
-## To 1.0.0-rc802
+## To 1.0.0-rc803
 
 ### One serializer for the flat page file — raw `.md` API intake
 
@@ -46,6 +46,8 @@ Behavior changes to review:
   serializer instead of the converter registry and revision calculator.
 - `pushword/api` now requires `pushword/flat` in composer (it already was a
   hard code dependency via the flat converters).
+
+## To 1.0.0-rc802
 
 ### Flat sync survives split databases (conversation, quiz)
 
