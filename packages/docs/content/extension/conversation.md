@@ -113,6 +113,28 @@ conversation messages with a CSV file.
 
 This allows you to backup or edit conversations alongside pages and medias without needing a database access.
 
+### Merge identity
+
+Each message carries a `uuid` column: it is the merge identity between databases
+that no longer travel together (a laptop and a production server each writing
+their own SQLite). Import matches rows by uuid — an unknown uuid becomes a new
+message, a known one is updated, and messages the CSV has never seen are kept
+and re-exported into the file. Nothing is ever deleted by a sync, and ids may
+differ between machines without messages overwriting each other.
+
+Rows predating the column are backfilled on their first export (run
+`bin/console doctrine:schema:update --force` after upgrading).
+
+### Deletion
+
+Deleting a message (admin or API) sets a `deletedAt` tombstone instead of
+removing the row: a hard-deleted row would simply be recreated by the next
+merge. Tombstoned messages disappear from the admin, the front and the API, but
+stay in the database and the CSV so the deletion reaches every synced copy. An
+empty `deletedAt` cell in a stale CSV never resurrects a deleted message —
+deletion is sticky; to un-delete, clear the value in the database (or CSV) on
+each side.
+
 ### Storage mode
 
 By default, all conversations are stored in a single global file at `content/conversation.csv`, regardless of host. This simplifies management, especially for single-site installations or when conversations don't need to be separated by host.

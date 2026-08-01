@@ -14,6 +14,64 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc802
+
+### One serializer for the flat page file — raw `.md` API intake
+
+The flat `.md` format now has a single owner, `PageFileSerializer` (flat): the
+exporter, the importer and the new API intake all go through it. New endpoints:
+
+- `PUT`/`POST /api/content/page/{host}/{slug}` accept the raw file text
+  (`text/markdown`) and answer with the canonical file text a fresh export
+  would write — editor clients no longer parse or dump YAML at all.
+- `GET /api/editor/sync.js` serves the matching Node sync client (Claude Code
+  PostToolUse hook); editor repos should curl it on each snapshot pull instead
+  of vendoring a copy.
+
+Behavior changes to review:
+
+- **File uploads have replace semantics**: a front-matter key present in the
+  current canonical export but missing from the uploaded file is reset, and a
+  vanished custom property is removed. The JSON endpoints keep their merge
+  semantics.
+- The API now **applies `holdPublicationAt` and `extendedPage`** from
+  frontmatter (previously silently dropped) and **rejects unparseable
+  `publishedAt`/`holdPublicationAt` values with a 422** instead of silently
+  storing null — a typo'd date no longer unpublishes a page.
+- Flat import parses files with the line-anchored front-matter parser: a tight
+  `Title\n---\nText` setext heading in a body is no longer rewritten into a
+  horizontal rule with padding on each sync.
+- `PageFrontmatterMapper::dumpFrontmatterYaml()` was removed (dead code — a
+  second, disagreeing YAML writer). `PageExporter`'s constructor now takes the
+  serializer instead of the converter registry and revision calculator.
+- `pushword/api` now requires `pushword/flat` in composer (it already was a
+  hard code dependency via the flat converters).
+
+### Flat sync survives split databases (conversation, quiz)
+
+`Message` and `QuizResult` now carry a `uuid` column — the merge identity that
+lets a local and a production database sync through flat CSV files without
+sharing auto-increment ids. Run `bin/console doctrine:schema:update --force`;
+existing rows are backfilled on their first export.
+
+Behavior changes in `pw:flat:sync`:
+
+- Conversation import matches rows by uuid (id only for not-yet-backfilled
+  rows), and after an import the merged union is re-exported so
+  database-only messages flow back into the CSV. A sync never deletes.
+- Deleting a message (admin or API) now sets a `deletedAt` tombstone instead
+  of removing the row, so the deletion propagates through the CSV instead of
+  resurrecting on the next merge. Tombstoned messages are hidden from admin,
+  front and API responses.
+- Quiz results round-trip through `content/<host>/quiz-result.csv`
+  (`--entity=quiz-result`): import creates unknown uuids only, rows are
+  immutable. The admin delete action on results is disabled — a deleted row
+  would come back on the next import.
+
+If your deploy rsyncs the SQLite file to production, do one deploy *after*
+upgrading before you stop shipping it: that first deploy propagates the
+backfilled uuids, keeping both databases on the same identities.
+
 ## To 1.0.0-rc799
 
 ### Entity and site state are native properties now (PHP 8.4)

@@ -227,3 +227,18 @@ curl https://example.tld/api/quiz/schema   # same schema (token-authenticated)
 
 The Symfony Validator on the `Quiz` model stays the source of truth; the schema
 mirrors its structure as an authoring aid.
+
+## Flat sync integration
+
+When the [Flat extension](/extension/flat) is enabled, every `pw:flat:sync` run
+(or `--entity=quiz-result` alone) round-trips quiz results through
+`content/<host>/quiz-result.csv`. Results are anonymous and immutable, so the
+merge is trivial: import only creates rows whose `uuid` is unknown — never
+updates, never deletes — and the merged union is written back on export.
+
+The point is deployment safety: a workflow that rebuilds the database from flat
+files (or does not ship `var/app.db` at all) cannot erase attempts collected in
+production, and the percentile keeps its history. Results predating the `uuid`
+column get one on their first export. For the same reason the admin delete
+action on results is disabled: a deleted row would be recreated by the next
+import.
