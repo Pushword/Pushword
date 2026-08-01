@@ -1,5 +1,8 @@
 pageCustomPropertiesMalformed: 'The extra properties must be in YAML format.'
+pageCustomPropertiesNotStandAlone: 'A property managed by a dedicated field cannot be set in the extra properties.'
 pagePageRendering: "An error occurred in your content... impossible to generate the page."
+pagePropertyInvalid: 'Property {{ property }}: {{ message }}'
+pagePropertyTypeMismatch: 'Property {{ property }} must be of type {{ type }}.'
 pageSlugAlreadyUsed: 'A page already uses this URL identifier'
 userEmailAlreadyUsed: 'An account is already associated with this email address.'
 userEmailInvalid: "The email address is invalid."

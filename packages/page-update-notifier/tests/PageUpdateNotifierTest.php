@@ -178,7 +178,7 @@ final class PageUpdateNotifierTest extends KernelTestCase
 
         $mock = $this->createMock(ExecutionContextInterface::class);
         $mock->method('buildViolation')->willReturnCallback(static function (string $arg) use ($mockConstraintViolationBuilder): MockObject {
-            if (\in_array($arg, ['pageCustomPropertiesMalformed', 'page.customProperties.notStandAlone'], true)) {
+            if (\in_array($arg, ['pageCustomPropertiesMalformed', 'pageCustomPropertiesNotStandAlone'], true)) {
                 throw new Error();
             }
 

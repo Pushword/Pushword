@@ -102,6 +102,63 @@ trait ExtensiblePropertiesTrait
         return \in_array(strtolower($name), array_map(strtolower(...), $this->getManagedPropertyKeys()), true);
     }
 
+    #[Ignore]
+    public function getValidationAtPath(): string
+    {
+        return $this->buildValidationAtPath;
+    }
+
+    /**
+     * The custom properties as they will read once the pending textarea YAML
+     * merges — a read-only preview for validators, which run BEFORE the
+     * `#[Assert\Callback]` performs the real merge. Malformed YAML and
+     * managed-key conflicts are ignored here: the merge raises them itself.
+     *
+     * @return array<mixed>
+     */
+    #[Ignore]
+    public function getEffectiveCustomProperties(): array
+    {
+        if (! $this->unmanagedPropertiesYamlProvided) {
+            return $this->customProperties;
+        }
+
+        try {
+            $unmanagedProperties = '' !== $this->unmanagedPropertiesYaml
+                ? Yaml::parse($this->unmanagedPropertiesYaml)
+                : [];
+        } catch (ParseException) {
+            return $this->customProperties;
+        }
+
+        if (! \is_array($unmanagedProperties)) {
+            return $this->customProperties;
+        }
+
+        $effective = $this->customProperties;
+        foreach (array_keys($effective) as $existingKey) {
+            if ($this->isManagedProperty((string) $existingKey)) {
+                continue;
+            }
+
+            if (isset($unmanagedProperties[(string) $existingKey])) {
+                continue;
+            }
+
+            unset($effective[$existingKey]);
+        }
+
+        foreach ($unmanagedProperties as $name => $value) {
+            if ($this->isManagedProperty((string) $name)) {
+                continue;
+            }
+
+            $effective[$name] = $value;
+        }
+
+        return $effective;
+    }
+
     protected function mergeUnmanagedProperties(): void
     {
         // Only reconcile when the YAML surface actually fed a value; otherwise
@@ -157,7 +214,7 @@ trait ExtensiblePropertiesTrait
                 ->atPath($this->buildValidationAtPath)
                 ->addViolation();
         } catch (InvalidArgumentException) {
-            $executionContext->buildViolation('page.customProperties.notStandAlone')
+            $executionContext->buildViolation('pageCustomPropertiesNotStandAlone')
                 ->atPath($this->buildValidationAtPath)
                 ->addViolation();
         }

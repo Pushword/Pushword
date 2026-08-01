@@ -116,6 +116,20 @@ final class PageApiControllerTest extends WebTestCase
         $this->createdPageIds[] = $this->lookupPageId($host, $body['slug']);
     }
 
+    public function testCreatePageViolatingTheDeclaredSchemaReturns422(): void
+    {
+        // An unknown host resolves to the default app (localhost.dev), whose
+        // schema declares priority as a Positive int.
+        $host = 'api-test-'.uniqid().'.example.com';
+        $response = $this->request('POST', '/api/page/'.$host, [
+            'frontmatter' => ['slug' => 'about-'.uniqid(), 'h1' => 'About', 'locale' => 'en', 'priority' => -3],
+            'body' => '# Hi',
+        ]);
+
+        self::assertSame(422, $response->getStatusCode());
+        self::assertStringContainsString('priority', (string) $response->getContent());
+    }
+
     public function testCreatePageRejectsUnresolvableConverterValueWith422(): void
     {
         // "banana" is not a mainImageFormat label, key, number or human name, so

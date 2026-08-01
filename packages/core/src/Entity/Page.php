@@ -28,6 +28,7 @@ use Pushword\Core\Entity\ValueObject\OpenGraphData;
 use Pushword\Core\Entity\ValueObject\PageRedirection;
 use Pushword\Core\Entity\ValueObject\TwitterCardData;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Validator\Constraints\PagePropertiesSchema;
 use Stringable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
@@ -44,6 +45,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity(fields: ['host', 'slug'], message: 'pageSlugAlreadyUsed', errorPath: 'slug')]
+#[PagePropertiesSchema(groups: ['Default', PagePropertiesSchema::SCHEMA_GROUP])]
 #[ORM\Entity(repositoryClass: PageRepository::class)]
 #[ORM\Table(name: 'page')]
 #[ORM\UniqueConstraint(name: 'unique_slug_host', columns: ['slug', 'host'])]
