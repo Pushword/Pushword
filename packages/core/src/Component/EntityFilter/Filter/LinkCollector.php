@@ -34,12 +34,8 @@ final readonly class LinkCollector implements FilterInterface
     public function apply(mixed $propertyValue, Page $page, Manager $manager, string $property = ''): mixed
     {
         assert(is_scalar($propertyValue));
-        $content = (string) $propertyValue;
 
-        $slugs = [
-            ...$this->extractSlugs(self::MARKDOWN_LINK_REGEX, $content),
-            ...$this->extractSlugs(self::HTML_HREF_REGEX, $content),
-        ];
+        $slugs = self::extractLinkSlugs((string) $propertyValue);
 
         foreach ($slugs as $slug) {
             $this->linkCollector->registerSlug($slug);
@@ -54,9 +50,24 @@ final readonly class LinkCollector implements FilterInterface
     }
 
     /**
+     * Internal link targets of a raw content string, in occurrence order. Also
+     * the seam PageCacheInvalidator diffs to decide whether a content edit can
+     * affect other pages (linked_slugs, exclude_linked, contains_link_to…).
+     *
      * @return string[]
      */
-    private function extractSlugs(string $pattern, string $content): array
+    public static function extractLinkSlugs(string $content): array
+    {
+        return [
+            ...self::extractSlugs(self::MARKDOWN_LINK_REGEX, $content),
+            ...self::extractSlugs(self::HTML_HREF_REGEX, $content),
+        ];
+    }
+
+    /**
+     * @return string[]
+     */
+    private static function extractSlugs(string $pattern, string $content): array
     {
         if (false === preg_match_all($pattern, $content, $matches) || [] === $matches[1]) {
             return [];
