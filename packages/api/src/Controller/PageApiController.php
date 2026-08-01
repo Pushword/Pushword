@@ -8,6 +8,7 @@ use Pushword\Api\Service\BodyPatcher;
 use Pushword\Api\Service\BodyPatchException;
 use Pushword\Api\Service\InvalidFrontmatterException;
 use Pushword\Api\Service\PageFrontmatterMapper;
+use Pushword\Api\Service\PageWriter;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\ValueObject\PageRedirection;
 use Pushword\Core\Repository\PageRepository;
@@ -18,7 +19,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[IsGranted('ROLE_EDITOR')]
 final class PageApiController extends AbstractApiController
@@ -27,8 +27,8 @@ final class PageApiController extends AbstractApiController
         private readonly PageRepository $pageRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly PageFrontmatterMapper $mapper,
+        private readonly PageWriter $pageWriter,
         private readonly RevisionCalculator $revisions,
-        private readonly ValidatorInterface $validator,
         private readonly MarkdownParser $markdownParser,
         private readonly BodyPatcher $bodyPatcher,
         private readonly string $deleteStrategy = 'hard',
@@ -131,27 +131,15 @@ final class PageApiController extends AbstractApiController
         // translations) are resolved against $page->host.
         $page->host = $host;
 
-        $error = $this->applyFrontmatterOrError($page, $frontmatter);
-        if (null !== $error) {
-            return $error;
+        try {
+            $violations = $this->pageWriter->create($page, $frontmatter, $body, $this->getApiUser());
+        } catch (InvalidFrontmatterException $invalidFrontmatterException) {
+            return $this->invalidFrontmatter($invalidFrontmatterException);
         }
 
-        if (null !== $body) {
-            $page->setMainContent($body);
-        }
-
-        // URL host wins over any host field in the frontmatter payload.
-        $page->host = $host;
-        $page->editedBy = $this->getApiUser();
-        $page->createdBy = $this->getApiUser();
-
-        $violations = $this->validator->validate($page);
         if (\count($violations) > 0) {
             return $this->validationErrors($violations);
         }
-
-        $this->entityManager->persist($page);
-        $this->entityManager->flush();
 
         // Echo the slug: it is not in the create URL and may have been normalized.
         return $this->writeResponse(
@@ -277,23 +265,15 @@ final class PageApiController extends AbstractApiController
      */
     private function applyAndRespond(Page $page, array $frontmatter, ?string $body, Request $request): JsonResponse
     {
-        $error = $this->applyFrontmatterOrError($page, $frontmatter);
-        if (null !== $error) {
-            return $error;
+        try {
+            $violations = $this->pageWriter->update($page, $frontmatter, $body, $this->getApiUser());
+        } catch (InvalidFrontmatterException $invalidFrontmatterException) {
+            return $this->invalidFrontmatter($invalidFrontmatterException);
         }
 
-        if (null !== $body) {
-            $page->setMainContent($body);
-        }
-
-        $page->editedBy = $this->getApiUser();
-
-        $violations = $this->validator->validate($page);
         if (\count($violations) > 0) {
             return $this->validationErrors($violations);
         }
-
-        $this->entityManager->flush();
 
         return $this->writeResponse(
             $request,
@@ -304,25 +284,17 @@ final class PageApiController extends AbstractApiController
     }
 
     /**
-     * Apply frontmatter, turning a rejected converter-backed value (e.g. an
-     * unknown mainImageFormat label) into a 422 instead of letting the invalid
-     * value reach the entity and crash at render time. Returns null on success.
-     *
-     * @param array<string, mixed> $frontmatter
+     * A rejected converter-backed value (e.g. an unknown mainImageFormat label)
+     * or a typo'd date becomes a 422 instead of reaching the entity and
+     * crashing at render time.
      */
-    private function applyFrontmatterOrError(Page $page, array $frontmatter): ?JsonResponse
+    private function invalidFrontmatter(InvalidFrontmatterException $invalidFrontmatterException): JsonResponse
     {
-        try {
-            $this->mapper->applyFrontmatter($page, $frontmatter);
-        } catch (InvalidFrontmatterException $invalidFrontmatterException) {
-            return $this->respond([
-                'error' => 'invalid_frontmatter',
-                'key' => $invalidFrontmatterException->key,
-                'message' => $invalidFrontmatterException->getMessage(),
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        return null;
+        return $this->respond([
+            'error' => 'invalid_frontmatter',
+            'key' => $invalidFrontmatterException->key,
+            'message' => $invalidFrontmatterException->getMessage(),
+        ], Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     /**

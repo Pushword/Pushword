@@ -6,7 +6,8 @@
   "homepage": "https://pushword.piedweb.com/extension/api",
   "license": "MIT",
   "require": {
-    "pushword/core": "*"
+    "pushword/core": "*",
+    "pushword/flat": "*"
   },
   "extra": {
     "branch-alias": {

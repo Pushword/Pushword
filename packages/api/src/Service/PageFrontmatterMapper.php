@@ -13,7 +13,6 @@ use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * Translates between the flat-file frontmatter shape (the editor-facing dict)
@@ -32,8 +31,8 @@ final readonly class PageFrontmatterMapper
     private const array RESERVED_FRONTMATTER_KEYS = [
         'h1', 'title', 'name', 'metaRobots', 'host', 'locale', 'template',
         'editMessage', 'slug', 'weight', 'tags', 'redirectFrom', 'publishedAt',
-        'holdPublication', 'mainImage', 'parentPage', 'variantOf', 'customCanonical',
-        'translations', 'customProperties', 'revision',
+        'holdPublication', 'holdPublicationAt', 'mainImage', 'parentPage', 'variantOf',
+        'extendedPage', 'customCanonical', 'translations', 'customProperties', 'revision',
     ];
 
     public function __construct(
@@ -64,9 +63,11 @@ final readonly class PageFrontmatterMapper
             'redirectFrom' => $page->redirectFrom,
             'publishedAt' => $page->getPublishedAt()?->format(DateTimeInterface::ATOM),
             'holdPublication' => $page->isHoldPublication(),
+            'holdPublicationAt' => $page->holdPublicationAt?->format(DateTimeInterface::ATOM),
             'mainImage' => $page->getMainImage()?->getFileName(),
             'parentPage' => $page->parentPage?->getSlug(),
             'variantOf' => $page->variantOf?->getSlug(),
+            'extendedPage' => $page->extendedPage?->getSlug(),
             'customCanonical' => $page->getCustomCanonical(),
             'translations' => array_values(array_map(
                 fn (Page $t): string => $this->buildTranslationRef($t, $page->host),
@@ -138,11 +139,24 @@ final readonly class PageFrontmatterMapper
         }
 
         if (\array_key_exists('publishedAt', $frontmatter)) {
-            $page->setPublishedAt($this->parseDateTime($frontmatter['publishedAt']));
+            $publishedAt = $this->parseDateTime($frontmatter['publishedAt'], 'publishedAt');
+            // Only touch the column when the instant changes: a fresh DateTime
+            // carrying an equal value still counts as dirty for Doctrine, which
+            // would bump updatedAt — and thus the revision — on every no-op write.
+            if ($publishedAt?->getTimestamp() !== $page->getPublishedAt()?->getTimestamp()) {
+                $page->setPublishedAt($publishedAt);
+            }
         }
 
         if (\array_key_exists('holdPublication', $frontmatter)) {
             $page->setHoldPublication((bool) $frontmatter['holdPublication']);
+        }
+
+        if (\array_key_exists('holdPublicationAt', $frontmatter)) {
+            $holdPublicationAt = $this->parseDateTime($frontmatter['holdPublicationAt'], 'holdPublicationAt');
+            if ($holdPublicationAt?->getTimestamp() !== $page->holdPublicationAt?->getTimestamp()) {
+                $page->setHoldPublicationAt($holdPublicationAt);
+            }
         }
 
         if (\array_key_exists('mainImage', $frontmatter)) {
@@ -158,6 +172,10 @@ final readonly class PageFrontmatterMapper
             // the single-level rule (a variant's master cannot itself be a variant
             // and a page cannot be its own master) and throws on violation.
             $page->variantOf = $this->resolvePageRef($frontmatter['variantOf'], $page->host);
+        }
+
+        if (\array_key_exists('extendedPage', $frontmatter)) {
+            $page->extendedPage = $this->resolvePageRef($frontmatter['extendedPage'], $page->host);
         }
 
         if (\array_key_exists('customCanonical', $frontmatter) && (\is_string($frontmatter['customCanonical']) || null === $frontmatter['customCanonical'])) {
@@ -222,7 +240,7 @@ final readonly class PageFrontmatterMapper
         // flat-file importer and route them into customProperties instead of
         // dropping them, so the snapshot round-trips through the API without
         // silent data loss. property_exists() keeps real declared columns (e.g.
-        // extendedPage, holdPublicationAt) out of customProperties.
+        // createdAt, updatedAt) out of customProperties.
         foreach ($frontmatter as $key => $value) {
             if (\in_array($key, self::RESERVED_FRONTMATTER_KEYS, true)) {
                 continue;
@@ -245,14 +263,14 @@ final readonly class PageFrontmatterMapper
         }
     }
 
-    private function parseDateTime(mixed $value): ?DateTimeInterface
+    private function parseDateTime(mixed $value, string $key): ?DateTimeInterface
     {
         if (null === $value || '' === $value) {
             return null;
         }
 
         if (! \is_string($value) && ! is_numeric($value)) {
-            return null;
+            throw new InvalidFrontmatterException($key, $value, 'Expected a date string.');
         }
 
         try {
@@ -260,7 +278,9 @@ final readonly class PageFrontmatterMapper
             // formats and `draft` sentinel as the on-disk frontmatter.
             $parsed = PublishedAtConverter::fromFlatValue($value);
         } catch (Exception) {
-            return null;
+            // A typo'd date must 422, not silently null the column: for
+            // publishedAt a swallowed error would unpublish the page.
+            throw new InvalidFrontmatterException($key, $value, 'Unparseable date.');
         }
 
         // Page::$publishedAt is mapped DATETIME_MUTABLE; Doctrine rejects a
@@ -390,10 +410,5 @@ final readonly class PageFrontmatterMapper
             'holdPublication' => $page->isHoldPublication(),
             'updatedAt' => $page->updatedAt?->format(DateTimeInterface::ATOM),
         ];
-    }
-
-    public function dumpFrontmatterYaml(Page $page): string
-    {
-        return Yaml::dump($this->toArray($page)['frontmatter'], 4, 2);
     }
 }

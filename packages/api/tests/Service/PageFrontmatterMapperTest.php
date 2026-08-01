@@ -539,15 +539,14 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     /**
      * @return Iterator<string, array{mixed}>
      */
-    public static function unparsablePublishedAtProvider(): Iterator
+    public static function emptyPublishedAtProvider(): Iterator
     {
-        yield 'garbage string' => ['not-a-date'];
         yield 'empty string' => [''];
         yield 'null' => [null];
     }
 
-    #[DataProvider('unparsablePublishedAtProvider')]
-    public function testApplyFrontmatterMapsUnparsablePublishedAtToNull(mixed $publishedAt): void
+    #[DataProvider('emptyPublishedAtProvider')]
+    public function testApplyFrontmatterMapsEmptyPublishedAtToNull(mixed $publishedAt): void
     {
         $page = new Page();
         $page->host = 'example.com';
@@ -556,6 +555,27 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $this->mapper->applyFrontmatter($page, ['publishedAt' => $publishedAt]);
 
         self::assertNull($page->getPublishedAt());
+    }
+
+    /**
+     * A typo'd date must be rejected, not silently mapped to null: for
+     * publishedAt a swallowed parse error would unpublish the page with a 200.
+     */
+    public function testApplyFrontmatterRejectsUnparsablePublishedAt(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('about');
+        $page->setPublishedAt(new DateTime('2025-06-01 10:30:00'));
+
+        try {
+            $this->mapper->applyFrontmatter($page, ['publishedAt' => 'not-a-date']);
+            self::fail('Expected InvalidFrontmatterException');
+        } catch (InvalidFrontmatterException $invalidFrontmatterException) {
+            self::assertSame('publishedAt', $invalidFrontmatterException->key);
+        }
+
+        self::assertNotNull($page->getPublishedAt(), 'a rejected date must leave the column untouched');
     }
 
     private function persistPage(string $host, string $slug, string $locale): Page
