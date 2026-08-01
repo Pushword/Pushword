@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Service;
 
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Entity\Campaign;
@@ -25,6 +26,7 @@ final readonly class NewsletterMailer
         private MailerInterface $mailer,
         private MailRenderer $renderer,
         private LinkGenerator $linkGenerator,
+        private SiteRegistry $siteRegistry,
         private TranslatorInterface $translator,
     ) {
     }
@@ -83,6 +85,7 @@ final readonly class NewsletterMailer
     {
         $contact = new Contact($audience, $address);
         $contact->setName('Test');
+        $contact->setLocale($this->siteRegistry->get($audience->getMainHost())->getLocale());
 
         // A test recipient has no persisted token, so the unsubscribe link would
         // 404. Point it at the site instead — the point is to read the body.

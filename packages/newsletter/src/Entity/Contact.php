@@ -48,8 +48,9 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
     #[ORM\Column(type: Types::STRING, length: 180)]
     private string $name = '';
 
+    /** Empty only until the first opt-in: the audience's host decides it, as a page's host decides a page's. */
     #[ORM\Column(type: Types::STRING, length: 8)]
-    private string $locale = 'en';
+    private string $locale = '';
 
     #[ORM\Column(type: Types::STRING, length: 20, enumType: ContactStatus::class)]
     private ContactStatus $status = ContactStatus::Pending;
@@ -135,8 +136,7 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
 
     public function setLocale(?string $locale): self
     {
-        $locale = trim((string) $locale);
-        $this->locale = '' !== $locale ? $locale : 'en';
+        $this->locale = trim((string) $locale);
 
         return $this;
     }

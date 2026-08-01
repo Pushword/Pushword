@@ -3,6 +3,7 @@
 namespace Pushword\Newsletter\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Repository\CampaignRecipientRepository;
@@ -24,6 +25,7 @@ final readonly class ContactManager
         private EnrollmentRepository $enrollmentRepository,
         private EntityManagerInterface $entityManager,
         private NewsletterMailer $mailer,
+        private SiteRegistry $siteRegistry,
     ) {
     }
 
@@ -54,8 +56,15 @@ final readonly class ContactManager
             $contact->setName($name);
         }
 
-        if (null !== $locale && '' !== $locale) {
+        if (null !== $locale && '' !== trim($locale)) {
             $contact->setLocale($locale);
+        }
+
+        // Nothing said which language this person reads — an API import rarely
+        // knows. The audience's host answers it, the way a page takes its locale
+        // from the host it belongs to.
+        if ('' === $contact->getLocale()) {
+            $contact->setLocale($this->siteRegistry->get($audience->getMainHost())->getLocale());
         }
 
         foreach ($interests as $interest) {

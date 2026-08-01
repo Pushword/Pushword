@@ -3,6 +3,7 @@
 namespace Pushword\Newsletter\Tests\Service;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\Enrollment;
@@ -36,6 +37,32 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         self::assertSame(ContactStatus::Subscribed, $reopened->getStatus());
         self::assertNull($reopened->getUnsubscribedAt());
         self::assertSame('second-thoughts', $reopened->getSource());
+    }
+
+    /**
+     * An import rarely says which language the person reads, and the entity must
+     * not invent one: a hardcoded 'en' mails English on a French install.
+     */
+    public function testAContactWithoutALocaleTakesTheOneOfTheAudiencesHost(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+
+        $contact = $this->manager()->subscribe($audience, 'silent@example.tld');
+
+        $site = self::getContainer()->get(SiteRegistry::class)->get($audience->getMainHost());
+        self::assertSame($site->getLocale(), $contact->getLocale());
+        self::assertNotSame('', $contact->getLocale(), 'an empty locale renders lang="" and mails in the sender\'s language');
+    }
+
+    /** Saying nothing about the language is not saying English. */
+    public function testASubmissionSilentOnTheLocaleLeavesTheKnownOneAlone(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $this->manager()->subscribe($audience, 'francois@example.tld', locale: 'fr');
+
+        $contact = $this->manager()->subscribe($audience, 'francois@example.tld');
+
+        self::assertSame('fr', $contact->getLocale());
     }
 
     /** Provenance must point at the moment consent was given, not at the latest form post. */
