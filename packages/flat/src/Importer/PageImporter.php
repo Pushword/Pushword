@@ -17,8 +17,8 @@ use Pushword\Core\Utils\Entity;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
 use Pushword\Flat\FlatFileContentDirFinder;
+use Pushword\Flat\Serializer\PageFileSerializer;
 use Spatie\YamlFrontMatter\Document;
-use Spatie\YamlFrontMatter\YamlFrontMatter;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Service\Attribute\Required;
 use TypeError;
@@ -54,6 +54,9 @@ final class PageImporter extends AbstractImporter
 
     #[Required]
     public PropertyConverterRegistry $converterRegistry;
+
+    #[Required]
+    public PageFileSerializer $pageFileSerializer;
 
     private Filesystem $filesystem {
         get => $this->filesystem ??= new Filesystem();
@@ -102,14 +105,7 @@ final class PageImporter extends AbstractImporter
             return null;
         }
 
-        $content = $this->filesystem->readFile($filePath);
-
-        // Strip UTF-8 BOM if present
-        if (str_starts_with($content, "\xEF\xBB\xBF")) {
-            $content = substr($content, 3);
-        }
-
-        return YamlFrontMatter::parse($content);
+        return $this->pageFileSerializer->parse($this->filesystem->readFile($filePath));
     }
 
     /**

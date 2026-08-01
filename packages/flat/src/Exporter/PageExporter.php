@@ -3,23 +3,16 @@
 namespace Pushword\Flat\Exporter;
 
 use DateTime;
-use DateTimeInterface;
-use Doctrine\Common\Collections\Collection;
 use Exception;
 use League\Csv\Writer;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
-use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Core\Site\SiteRegistry;
-use Pushword\Core\Utils\Entity;
-use Pushword\Flat\Converter\PropertyConverterRegistry;
-use Pushword\Flat\Converter\PublishedAtConverter;
+use Pushword\Flat\Serializer\PageFileSerializer;
 use Pushword\Flat\Sync\SnippetSync;
-use Stringable;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Yaml\Yaml;
 use Throwable;
 
 final class PageExporter
@@ -32,8 +25,6 @@ final class PageExporter
 
     private readonly Filesystem $filesystem;
 
-    private readonly ExporterDefaultValueHelper $defaultValue;
-
     /** @var string[] */
     private readonly array $pageIndexColumns;
 
@@ -43,24 +34,19 @@ final class PageExporter
 
     private ?OutputInterface $output = null;
 
-    /** @var string[]|null Cached entity properties (same for all Page instances) */
-    private ?array $cachedEntityProperties = null;
-
     /**
      * @param string[] $pageIndexColumns
      */
     public function __construct(
         private readonly SiteRegistry $apps,
         private readonly PageRepository $pageRepo,
-        private readonly PropertyConverterRegistry $converterRegistry,
-        private readonly RevisionCalculator $revisions,
+        private readonly PageFileSerializer $serializer,
         array $pageIndexColumns = [],
         /** @var string[] Filenames excluded from sync (e.g. CLAUDE.md, README.md) */
         private readonly array $excludeFiles = [],
         private readonly ?LoggerInterface $logger = null,
     ) {
         $this->filesystem = new Filesystem();
-        $this->defaultValue = new ExporterDefaultValueHelper();
         $this->pageIndexColumns = [] !== $pageIndexColumns
             ? $pageIndexColumns
             : ['slug', 'h1', 'publishedAt', 'locale', 'parentPage', 'tags'];
@@ -434,91 +420,7 @@ final class PageExporter
 
     public function generatePageContent(Page $page): string
     {
-        $baseProperties = ['title', 'h1', 'slug'];
-        $entityProperties = $this->cachedEntityProperties ??= array_filter(
-            Entity::getProperties($page),
-            static fn (string $prop): bool => 'id' !== $prop,
-        );
-
-        $properties = array_unique([...$baseProperties, ...$entityProperties]);
-
-        $data = [];
-        foreach ($properties as $property) {
-            if ('customProperties' === $property) {
-                continue; // Will be unpacked separately
-            }
-
-            $value = $this->getValue($property, $page);
-            if (null === $value) {
-                continue;
-            }
-
-            $data[$property] = $value;
-        }
-
-        // Internal redirects authored on this page (Jekyll redirect_from style).
-        // Emitted as a {path: code} map; ksort keeps the output stable for idempotency.
-        $redirectFrom = $page->redirectFrom;
-        if ([] !== $redirectFrom) {
-            ksort($redirectFrom);
-            $data['redirectFrom'] = $redirectFrom;
-        }
-
-        // Unpack custom properties at top level and apply converters
-        foreach ($page->customProperties as $key => $value) {
-            $converted = $this->converterRegistry->toFlatValue($key, $value);
-            if (null !== $converted) {
-                $data[$key] = $converted;
-            }
-        }
-
-        $metaData = Yaml::dump($this->normalizeQuotesDeep($data), indent: 2);
-
-        // Stamp the canonical revision id (content hash) last in the front matter.
-        // Matches the API's ETag / If-Match value so agents can read it from the
-        // .md and PUT back without a preliminary GET. The `# read only` comment
-        // tells editors not to touch it; the value is ignored on import (see
-        // PageImporter::editPage).
-        $metaData .= 'revision: '.$this->revisions->compute($page).' # read only'.\PHP_EOL;
-
-        // Normalize typographic quotes in the body only. The front matter values
-        // were already normalized *before* Yaml::dump (see normalizeQuotesDeep)
-        // so the dumper could escape them correctly — running normalizeQuotes over
-        // the dumped YAML would un-escape apostrophes inside single-quoted scalars
-        // (e.g. 'l''Albanie' → 'l'Albanie') and produce invalid YAML.
-        return '---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$this->normalizeQuotes($page->getMainContent());
-    }
-
-    private function normalizeQuotes(string $text): string
-    {
-        return strtr($text, [
-            "\u{2018}" => "'", // left single quote
-            "\u{2019}" => "'", // right single quote / apostrophe
-            "\u{201C}" => '"', // left double quote
-            "\u{201D}" => '"', // right double quote
-        ]);
-    }
-
-    /**
-     * Straighten typographic quotes in every string value before the YAML dump,
-     * so Yaml::dump() escapes the resulting apostrophes correctly. Applied
-     * recursively to support nested front-matter arrays (e.g. redirectFrom).
-     *
-     * @param array<int|string, mixed> $data
-     *
-     * @return array<int|string, mixed>
-     */
-    private function normalizeQuotesDeep(array $data): array
-    {
-        foreach ($data as $key => $value) {
-            if (\is_string($value)) {
-                $data[$key] = $this->normalizeQuotes($value);
-            } elseif (\is_array($value)) {
-                $data[$key] = $this->normalizeQuotesDeep($value);
-            }
-        }
-
-        return $data;
+        return $this->serializer->serialize($page);
     }
 
     private function exportPage(Page $page, bool $force = false): bool
@@ -555,106 +457,6 @@ final class PageExporter
         $this->filesystem->touch($exportFilePath, $page->updatedAt->getTimestamp()); // @phpstan-ignore method.nonObject
 
         return true;
-    }
-
-    /**
-     * @return scalar|string[]|null
-     */
-    private function getValue(string $property, Page $page): mixed
-    {
-        if ('mainContent' === $property) {
-            return null;
-        }
-
-        if ('mainImage' === $property) {
-            return null !== $page->mainImage ? (string) $page->mainImage : null;
-        }
-
-        if ('template' === $property) {
-            return $page->template;
-        }
-
-        $getter = 'get'.ucfirst($property);
-        $value = method_exists($page, $getter) ? $page->$getter() : $page->{$property}; // @phpstan-ignore-line
-
-        if ('publishedAt' === $property) {
-            assert(null === $value || $value instanceof DateTimeInterface);
-
-            return PublishedAtConverter::toFlatValue($value);
-        }
-
-        if ($value instanceof Page) {
-            $value = $value->getSlug();
-        }
-
-        if ($value instanceof Collection) {
-            if ($value->isEmpty()) {
-                return null;
-            }
-
-            $currentHost = $this->apps->get()->getMainHost();
-
-            if ('translations' === $property) {
-                $siteLocale = $this->apps->get()->locale;
-                $isMainLocale = '' === $page->locale || $page->locale === $siteLocale;
-
-                if (! $isMainLocale) {
-                    $mainLocalePages = $value->filter(
-                        static fn (mixed $t): bool => $t instanceof Page
-                            && $t->host === $currentHost
-                            && ('' === $t->locale || $t->locale === $siteLocale)
-                    );
-                    if (! $mainLocalePages->isEmpty()) {
-                        $value = $mainLocalePages;
-                    }
-                }
-            }
-
-            $slugs = [];
-            foreach ($value as $item) {
-                if ($item instanceof Page) {
-                    $slugs[] = $item->host !== $currentHost
-                        ? $item->host.'/'.$item->getSlug()
-                        : $item->getSlug();
-                }
-            }
-
-            return [] === $slugs ? null : $slugs;
-        }
-
-        if ($value instanceof Stringable) {
-            $value = (string) $value;
-        }
-
-        if (null === $value) {
-            return null;
-        }
-
-        if ('tags' === $property && in_array($value, [null, [], ''], true)) {
-            return null;
-        }
-
-        if ($value === $this->defaultValue->get($property)) {
-            return null;
-        }
-
-        if (in_array($property, ['createdAt', 'updatedAt', 'host', 'slug'], true)) {
-            return null;
-        }
-
-        if ('locale' === $property && $value === $this->apps->get()->locale) {
-            return null;
-        }
-
-        if ($value instanceof DateTimeInterface) {
-            $value = $value->format('Y-m-d H:i');
-        }
-
-        if (! is_scalar($value)) {
-            return null;
-        }
-
-        return $value;
     }
 
     public function getExportedCount(): int
