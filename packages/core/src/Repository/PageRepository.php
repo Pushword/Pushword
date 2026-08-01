@@ -11,13 +11,16 @@ use Doctrine\ORM\Events;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
+use InvalidArgumentException;
 use LogicException;
 use Pushword\Admin\Controller\PageCheatSheetCrudController;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\ValueObject\PageRedirection;
+use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\Query\ArrayCriteriaReader;
 use Pushword\Core\Query\Condition;
+use Pushword\Core\Query\Field\Strategy\JsonPropertyStrategy;
 use Pushword\Core\Query\Group;
 use Pushword\Core\Query\PageFieldRegistry;
 use Pushword\Core\Query\QueryCompiler;
@@ -88,6 +91,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
     public function __construct(
         ManagerRegistry $registry,
+        private readonly PagePropertySchemaRegistry $schemaRegistry,
         // #[Autowire('%pw.public_media_dir%')]
         // private readonly string $publicMediaDir,
     ) {
@@ -468,7 +472,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $criteria = \is_array($where) ? new ArrayCriteriaReader()->read($where) : $where;
 
         if (null !== $criteria) {
-            new QueryCompiler(new PageFieldRegistry($this->getEntityManager()))->apply($queryBuilder, $criteria);
+            new QueryCompiler(new PageFieldRegistry($this->getEntityManager(), $this->schemaRegistry))->apply($queryBuilder, $criteria);
         }
 
         $this->orderBy($queryBuilder, $orderBy);
@@ -733,7 +737,17 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
         $keys = explode(',', $orderBy['key'] ?? $orderBy[0]);
         foreach ($keys as $i => $key) {
-            $direction = $this->extractDirection($key, $orderBy);
+            $direction = strtoupper($this->extractDirection($key, $orderBy));
+            if (! \in_array($direction, ['ASC', 'DESC'], true)) {
+                throw new InvalidArgumentException(\sprintf('Invalid order direction `%s` for `%s`.', $direction, $key));
+            }
+
+            if (str_starts_with($key, JsonPropertyStrategy::PREFIX)) {
+                $this->orderByProperty($queryBuilder, $i, $key, $direction, 0 === $i);
+
+                continue;
+            }
+
             $orderByFunc = 0 === $i ? 'orderBy' : 'addOrderBy';
             if (! method_exists($queryBuilder, $orderByFunc)) {
                 throw new LogicException();
@@ -743,6 +757,36 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         }
 
         return $queryBuilder;
+    }
+
+    /**
+     * `prop.<key>` ordering. DQL cannot ORDER BY a function call, so the
+     * expression rides along as HIDDEN select aliases. Two of them: the
+     * property is sparse by nature, and without the IS NULL flag every page
+     * missing the key would sort first — NULLs go last on every platform
+     * instead. A declared int/float/date orders through JSON_NUMBER (the
+     * MySQL/MariaDB cast); anything else compares as text.
+     */
+    private function orderByProperty(QueryBuilder $queryBuilder, int $index, string $key, string $direction, bool $resetOrder): void
+    {
+        $property = substr($key, \strlen(JsonPropertyStrategy::PREFIX));
+        if (1 !== preg_match(JsonPropertyStrategy::KEY_PATTERN, $property)) {
+            throw new InvalidArgumentException(\sprintf('Invalid property name in `%s`.', $key));
+        }
+
+        $schema = $this->schemaRegistry->schema(null, $property);
+        $function = true === $schema?->type->isComparable() ? 'JSON_NUMBER' : 'JSON_SCALAR';
+        $expression = \sprintf("%s(%s.customProperties, '$.%s')", $function, $this->getRootAlias($queryBuilder), $property);
+
+        $nullAlias = 'pw_prop_null_'.$index;
+        $valueAlias = 'pw_prop_'.$index;
+        $queryBuilder->addSelect(\sprintf('CASE WHEN %s IS NULL THEN 1 ELSE 0 END AS HIDDEN %s', $expression, $nullAlias));
+        $queryBuilder->addSelect(\sprintf('%s AS HIDDEN %s', $expression, $valueAlias));
+
+        $resetOrder
+            ? $queryBuilder->orderBy($nullAlias, 'ASC')
+            : $queryBuilder->addOrderBy($nullAlias, 'ASC');
+        $queryBuilder->addOrderBy($valueAlias, $direction);
     }
 
     /**

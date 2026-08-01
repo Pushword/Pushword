@@ -6,6 +6,7 @@ use LogicException;
 use Override;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\DQL\JsonExtractFunction;
+use Pushword\Core\Repository\DQL\JsonNumberFunction;
 use Pushword\Core\Repository\DQL\JsonScalarFunction;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\Definition\Processor;
@@ -110,6 +111,9 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
                     'string_functions' => [
                         'JSON_EXTRACT' => JsonExtractFunction::class,
                         'JSON_SCALAR' => JsonScalarFunction::class,
+                    ],
+                    'numeric_functions' => [
+                        'JSON_NUMBER' => JsonNumberFunction::class,
                     ],
                 ],
             ],

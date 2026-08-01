@@ -6,6 +6,7 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\Query\PageFieldRegistry;
 use Pushword\Core\Query\QueryCompiler;
 use Pushword\Newsletter\Entity\ContentTrigger;
@@ -25,8 +26,10 @@ use Pushword\Newsletter\Segment\SegmentException;
  */
 final readonly class PageMatcher
 {
-    public function __construct(private EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private PagePropertySchemaRegistry $schemaRegistry,
+    ) {
     }
 
     /**
@@ -86,7 +89,7 @@ final readonly class PageMatcher
         // The three guards above are ANDed with the whole rule, never a disjunct
         // of it: an `any` widens which pages match, never past them.
         if (null !== $rule) {
-            new QueryCompiler(new PageFieldRegistry($this->entityManager))->apply($queryBuilder, $rule);
+            new QueryCompiler(new PageFieldRegistry($this->entityManager, $this->schemaRegistry))->apply($queryBuilder, $rule);
         }
 
         return $queryBuilder;

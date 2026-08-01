@@ -3,6 +3,7 @@
 namespace Pushword\Core\Query;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\Query\Field\FieldRegistry;
 use Pushword\Core\Query\Field\FieldStrategy;
 use Pushword\Core\Query\Field\Strategy\AncestorStrategy;
@@ -35,15 +36,28 @@ final class PageFieldRegistry implements FieldRegistry
     /** @var array<string, FieldStrategy>|null */
     private ?array $strategies = null;
 
-    public function __construct(private readonly EntityManagerInterface $entityManager)
-    {
+    /**
+     * Null schema registry (the deprecated FilterWhereParser path, which has no
+     * service context) keeps every `prop.*` non-comparable — the pre-schema
+     * behavior.
+     */
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ?PagePropertySchemaRegistry $schemaRegistry = null,
+    ) {
     }
 
     public function strategy(string $field): ?FieldStrategy
     {
         if (str_starts_with($field, JsonPropertyStrategy::PREFIX)) {
             // `prop.` alone names no property.
-            return JsonPropertyStrategy::PREFIX === $field ? null : new JsonPropertyStrategy('customProperties');
+            if (JsonPropertyStrategy::PREFIX === $field) {
+                return null;
+            }
+
+            $schema = $this->schemaRegistry?->schema(null, substr($field, \strlen(JsonPropertyStrategy::PREFIX)));
+
+            return new JsonPropertyStrategy('customProperties', $schema?->type->isComparable() ?? false);
         }
 
         return $this->strategies()[$field] ?? null;
