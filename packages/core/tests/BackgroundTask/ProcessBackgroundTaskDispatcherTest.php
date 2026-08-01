@@ -33,7 +33,7 @@ final class ProcessBackgroundTaskDispatcherTest extends TestCase
         $dispatcher = new ProcessBackgroundTaskDispatcher($manager);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('nohup failed');
+        $this->expectExceptionMessageIsOrContains('nohup failed');
 
         $dispatcher->dispatch('test', ['php', 'bin/console', 'test'], 'test');
     }

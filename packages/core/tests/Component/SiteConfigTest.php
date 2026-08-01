@@ -169,7 +169,7 @@ final class SiteConfigTest extends TestCase
         $resolver = $this->createTemplateResolver();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid view name: @Invalid');
+        $this->expectExceptionMessageIsOrContains('Invalid view name: @Invalid');
 
         // Use non-full path starting with @ but no /
         $resolver->resolve($site, '@Invalid', '@Fallback');

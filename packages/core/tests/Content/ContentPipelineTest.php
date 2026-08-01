@@ -215,7 +215,7 @@ final class ContentPipelineTest extends TestCase
         $pipeline = $this->createPipeline($page, null, ['name' => 'NonExistentFilter']);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Filter `NonExistentFilter` not found');
+        $this->expectExceptionMessageIsOrContains('Filter `NonExistentFilter` not found');
 
         $pipeline->getName();
     }

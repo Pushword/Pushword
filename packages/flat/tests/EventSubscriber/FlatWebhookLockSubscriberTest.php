@@ -75,7 +75,7 @@ final class FlatWebhookLockSubscriberTest extends TestCase
         $subscriber = $this->createSubscriber();
 
         $this->expectException(AccessDeniedHttpException::class);
-        $this->expectExceptionMessage('Content is locked by deploy@ci.com');
+        $this->expectExceptionMessageIsOrContains('Content is locked by deploy@ci.com');
 
         $subscriber->onBeforePersist($event);
     }
@@ -92,7 +92,7 @@ final class FlatWebhookLockSubscriberTest extends TestCase
         $subscriber = $this->createSubscriber();
 
         $this->expectException(AccessDeniedHttpException::class);
-        $this->expectExceptionMessage('Content is locked by external system: External sync');
+        $this->expectExceptionMessageIsOrContains('Content is locked by external system: External sync');
 
         $subscriber->onBeforeUpdate($event);
     }

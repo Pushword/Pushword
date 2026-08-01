@@ -125,7 +125,7 @@ final class CustomPropertiesTraitTest extends TestCase
         $yaml = Yaml::dump(['managed' => 'forbidden']);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('managed');
+        $this->expectExceptionMessageIsOrContains('managed');
 
         $page->setUnmanagedPropertiesFromYaml($yaml, true);
     }

@@ -93,7 +93,7 @@ final class SVGExtensionTest extends KernelTestCase
             $twig = new SVGExtension(self::getContainer()->get(SiteRegistry::class));
 
             $this->expectException(Exception::class);
-            $this->expectExceptionMessage('seems not be a valid svg file');
+            $this->expectExceptionMessageIsOrContains('seems not be a valid svg file');
             $twig->getSvg('not-really', [], $dir);
         } finally {
             @unlink($dir.'/not-really.svg');
@@ -112,7 +112,7 @@ final class SVGExtensionTest extends KernelTestCase
             $twig = new SVGExtension(self::getContainer()->get(SiteRegistry::class));
 
             $this->expectException(Exception::class);
-            $this->expectExceptionMessage('`question` (svg) not found.');
+            $this->expectExceptionMessageIsOrContains('`question` (svg) not found.');
             $twig->getSvg('zzz-no-such-icon', [], $dir);
         } finally {
             @rmdir($dir);
