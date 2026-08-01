@@ -471,6 +471,13 @@ REMOTE_DEPLOY='composer update && php bin/console doctrine:schema:update --force
 # PUBLISH_PATHS=('content' 'media')  # REMOTE_PUBLISH, POST_DEPLOY_LOCAL
 ```
 
+The default excludes keep every **generated output** out, on the model of
+`static/`: `public/assets/` (yarn build), `public/bundles/` (Symfony assets
+install) and `public/media/` (`pw:image:cache`) are all rebuilt by the remote
+chain. A site that does *not* rebuild one of them server-side opts back in by
+overriding `PUSH_EXCLUDES` without it — the exception lives in the conf, not
+the rule.
+
 ## Generate AI index
 
 ```bash

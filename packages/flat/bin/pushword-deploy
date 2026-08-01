@@ -47,11 +47,15 @@ CONF="$ROOT/deploy.conf"
 
 [[ -f $CONF ]] || { echo "No deploy.conf found from $PWD upward" >&2; exit 1; }
 
-# Defaults a conf may override
+# Defaults a conf may override. Generated outputs are excluded like static/:
+# public/assets/ (yarn build), public/bundles/ (Symfony assets install) and
+# public/media/ (pw:image:cache) are all rebuilt by the remote chain — a site
+# that does NOT rebuild one server-side overrides PUSH_EXCLUDES without it.
+GENERATED=('static/' 'public/assets/' 'public/bundles/' 'public/media/')
 SSH_OPTS=""
 DELETE=0
-PULL_EXCLUDES=('.git' 'vendor/' 'node_modules/' 'var/cache/' 'var/log/' 'var/static/' 'static/')
-PUSH_EXCLUDES=('.git' 'vendor/' 'node_modules/' 'var/cache/' 'var/log/' 'var/static/' 'static/')
+PULL_EXCLUDES=('.git' 'vendor/' 'node_modules/' 'var/cache/' 'var/log/' 'var/static/' "${GENERATED[@]}")
+PUSH_EXCLUDES=('.git' 'vendor/' 'node_modules/' 'var/cache/' 'var/log/' 'var/static/' "${GENERATED[@]}")
 PUBLISH_PATHS=('content' 'media')
 PRE_PUSH=('php bin/console pw:flat:sync')
 REMOTE_DEPLOY=''

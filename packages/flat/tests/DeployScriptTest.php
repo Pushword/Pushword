@@ -110,6 +110,11 @@ final class DeployScriptTest extends TestCase
         self::assertStringContainsString('--exclude=var/app.db*', $output, 'The push must always exclude the database');
         self::assertStringContainsString('--exclude=var/flat-sync/', $output, 'The push must always exclude the per-machine sync state');
         self::assertStringContainsString('[dry-run] local: php bin/console pw:flat:sync', $output, 'Dry-run must announce, not execute, the local chain');
+
+        // Generated outputs, rebuilt by the remote chain, stay out by default.
+        foreach (['static/', 'public/assets/', 'public/bundles/', 'public/media/'] as $generated) {
+            self::assertStringContainsString('--exclude='.$generated, $output, $generated.' is a build output and must not travel by default');
+        }
     }
 
     public function testPushWithDeleteAbortsUnlessConfirmed(): void
