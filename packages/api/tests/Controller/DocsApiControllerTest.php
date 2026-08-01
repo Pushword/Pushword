@@ -34,6 +34,8 @@ final class DocsApiControllerTest extends WebTestCase
             '/api/snippet',
             '/api/conversation',
             '/api/notification',
+            '/api/static/{host}',
+            '/api/static/{host}/{slug}',
         ] as $expected) {
             self::assertContains($expected, $paths, 'Missing path: '.$expected);
         }

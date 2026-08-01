@@ -9,8 +9,11 @@ use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\StaticGenerator\GenerationStateManager;
 use Pushword\StaticGenerator\StaticController;
+use Pushword\StaticGenerator\StaticGenerationCoordinator;
 use RuntimeException;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Twig\Error\RuntimeError;
@@ -80,9 +83,9 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
         $mockAdminContext = self::createStub(AdminContextProviderInterface::class);
         $mockAdminContext->method('getContext')->willReturn(null);
 
-        /** @var SiteRegistry $siteRegistry */
-        $siteRegistry = $container->get(SiteRegistry::class);
-        $controller = new StaticController($mockDispatcher, $mockProcessManager, $outputStorage, $siteRegistry);
+        $controller = new StaticController(
+            $this->coordinator($container, $mockDispatcher, $mockProcessManager, $outputStorage),
+        );
         $controller->setAdminContextProvider($mockAdminContext);
         $controller->setContainer($container);
 
@@ -113,9 +116,9 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
         $mockAdminContext = self::createStub(AdminContextProviderInterface::class);
         $mockAdminContext->method('getContext')->willReturn(null);
 
-        /** @var SiteRegistry $siteRegistry */
-        $siteRegistry = $container->get(SiteRegistry::class);
-        $controller = new StaticController($mockDispatcher, $mockProcessManager, $outputStorage, $siteRegistry);
+        $controller = new StaticController(
+            $this->coordinator($container, $mockDispatcher, $mockProcessManager, $outputStorage),
+        );
         $controller->setAdminContextProvider($mockAdminContext);
         $controller->setContainer($container);
 
@@ -126,5 +129,19 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
 
         self::assertSame('error', $outputStorage->getStatus('static-generator--localhost.dev'));
         self::assertStringContainsString('nohup failed', $outputStorage->read('static-generator--localhost.dev')['content']);
+    }
+
+    private function coordinator(
+        ContainerInterface $container,
+        BackgroundTaskDispatcherInterface $dispatcher,
+        BackgroundProcessManager $processManager,
+        ProcessOutputStorage $outputStorage,
+    ): StaticGenerationCoordinator {
+        /** @var SiteRegistry $siteRegistry */
+        $siteRegistry = $container->get(SiteRegistry::class);
+        /** @var GenerationStateManager $stateManager */
+        $stateManager = $container->get(GenerationStateManager::class);
+
+        return new StaticGenerationCoordinator($dispatcher, $processManager, $outputStorage, $siteRegistry, $stateManager);
     }
 }

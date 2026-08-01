@@ -1,9 +1,11 @@
 <?php
 
 use Pushword\Admin\PushwordAdminBundle;
+use Pushword\Api\Controller\ApiControllerInterface;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\StaticGenerator\Cache\MessageHandler\PageCacheRefreshHandler;
 use Pushword\StaticGenerator\Cache\PageCacheInvalidator;
+use Pushword\StaticGenerator\Controller\Api\StaticApiController;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -29,12 +31,24 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         __DIR__.'/../Cache/PageCacheInvalidator.php',
     ];
 
+    // The JSON API controller requires the optional pushword/api package.
+    $apiAvailable = interface_exists(ApiControllerInterface::class);
+    $apiExclude = $apiAvailable ? [] : [__DIR__.'/../Controller/Api/'];
+
     $services->load('Pushword\StaticGenerator\\', __DIR__.'/../*')
         ->exclude([
             __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
             ...$adminExclude,
             ...$messengerExclude,
+            ...$apiExclude,
         ]);
+
+    if ($apiAvailable) {
+        $services->set(StaticApiController::class)
+            ->autowire()
+            ->tag('controller.service_arguments')
+            ->tag('pushword.api.controller');
+    }
 
     if ($messengerInstalled) {
         $services->set(PageCacheInvalidator::class);
