@@ -84,9 +84,15 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
 
         $audienceId = $audience->id;
         self::assertIsInt($audienceId);
-        $this->audienceIds[] = $audienceId;
+        $this->trackAudience($audienceId);
 
         return $audience;
+    }
+
+    /** Purge an audience created elsewhere — over the API, say — with the others. */
+    protected function trackAudience(int $audienceId): void
+    {
+        $this->audienceIds[] = $audienceId;
     }
 
     /**

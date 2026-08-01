@@ -418,6 +418,12 @@ Available when `pushword/api` is installed, under the same token authentication,
 and self-describing at `/api/docs`.
 
 ```
+GET    /api/newsletter/audience?host=
+POST   /api/newsletter/audience
+GET    /api/newsletter/audience/{slug}  # includes contact counts per status
+PATCH  /api/newsletter/audience/{slug}
+DELETE /api/newsletter/audience/{slug}  # refused while it holds contacts
+
 GET    /api/newsletter/contact?audience=&status=&tag=&segment=&q=
 POST   /api/newsletter/contact          # upsert on (audience, email)
 GET    /api/newsletter/contact/{id}
@@ -464,8 +470,14 @@ A `GET` on a content trigger reports both sides of its rule — `waitingPages` a
 `matchingContacts` — plus `campaignsCreated`. Deleting one keeps the campaigns it
 produced: they are ordinary campaigns, and some of them have been sent.
 
-Audiences have no endpoint: a consent scope and a sender identity are set up
-once, in the admin.
+An audience can be created over the API too, so a site is set up without opening
+the admin first. Its `mainHost` must be one of the configured Pushword hosts — an
+unknown one would fall back to the default site and mail links pointing at
+another brand; an alias is stored as the main host it belongs to. The slug is the
+identity forms, contacts and campaigns all quote, so it is set once and a rename
+belongs to the admin, where the templates quoting it can be fixed in the same
+sitting. Deleting an audience that still holds contacts is refused: the cascade
+would drop their consent records without ever naming them.
 
 ## Posting the form yourself
 

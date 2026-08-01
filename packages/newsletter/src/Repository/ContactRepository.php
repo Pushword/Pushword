@@ -29,6 +29,31 @@ class ContactRepository extends ServiceEntityRepository
     }
 
     /**
+     * How the audience splits between statuses. Every status is present, so a
+     * reader never has to tell "none yet" from "key missing".
+     *
+     * @return array<string, int>
+     */
+    public function countByStatus(Audience $audience): array
+    {
+        $counts = array_fill_keys(array_column(ContactStatus::cases(), 'value'), 0);
+
+        $rows = $this->createQueryBuilder('c')
+            ->select('c.status AS status, COUNT(c.id) AS total')
+            ->andWhere('c.audience = :audience')
+            ->setParameter('audience', $audience)
+            ->groupBy('c.status')
+            ->getQuery()
+            ->getResult();
+
+        foreach ($rows as $row) {
+            $counts[$row['status']->value] = $row['total'];
+        }
+
+        return $counts;
+    }
+
+    /**
      * The same person on the other lists of the same host: same address, an
      * audience sharing the `mainHost`, still subscribed.
      *

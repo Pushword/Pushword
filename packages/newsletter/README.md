@@ -35,7 +35,8 @@ pushword_newsletter:
 ```
 
 Then update the schema (`bin/console doctrine:schema:update --force`) and create
-an audience from the admin.
+an audience — from the admin, or over `POST /api/newsletter/audience` when
+`pushword/api` is installed.
 
 ## License
 

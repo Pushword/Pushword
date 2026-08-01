@@ -3,6 +3,7 @@
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use Pushword\Api\Controller\ApiControllerInterface;
 use Pushword\Core\PushwordCoreBundle;
+use Pushword\Newsletter\Controller\Api\AudienceApiController;
 use Pushword\Newsletter\Controller\Api\AutomationApiController;
 use Pushword\Newsletter\Controller\Api\CampaignApiController;
 use Pushword\Newsletter\Controller\Api\ContactApiController;
@@ -38,6 +39,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     }
 
     if ($apiAvailable) {
+        $services->set(AudienceApiController::class)
+            ->autowire()
+            ->tag('controller.service_arguments')
+            ->tag('pushword.api.controller');
         $services->set(ContactApiController::class)
             ->autowire()
             ->tag('controller.service_arguments')

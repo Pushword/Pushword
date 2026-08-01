@@ -6,6 +6,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\UserRepository;
+use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
@@ -60,6 +61,166 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $this->client->request(Request::METHOD_GET, '/api/newsletter/contact');
 
         self::assertSame(Response::HTTP_UNAUTHORIZED, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testCreatingAnAudienceThroughTheApi(): void
+    {
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/audience', [
+            'slug' => 'api-'.bin2hex(random_bytes(6)),
+            'name' => 'Bootstrapped',
+            'mainHost' => 'localhost.dev',
+            'fromEmail' => 'News@Localhost.dev',
+            'interests' => ['AmTrek'],
+            'rateSeconds' => 60,
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $this->client->getResponse()->getStatusCode());
+        $this->trackAudience($this->id($body));
+        self::assertTrue($body['requireDoubleOptIn'], 'consent is asked for unless the caller says otherwise');
+        self::assertSame('news@localhost.dev', $body['fromEmail']);
+        self::assertSame(['AmTrek'], $body['interests']);
+        self::assertSame(60, $body['rateSeconds']);
+    }
+
+    public function testAnAudienceCarriesItsSenderIdentityAndOptInRule(): void
+    {
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/audience', [
+            'slug' => 'api-'.bin2hex(random_bytes(6)),
+            'name' => 'Altimood',
+            'mainHost' => 'localhost.dev',
+            'fromName' => 'Robin',
+            'fromEmail' => 'news@localhost.dev',
+            'replyTo' => 'Hello@Localhost.dev',
+            'requireDoubleOptIn' => false,
+        ]);
+
+        $this->trackAudience($this->id($body));
+        self::assertSame('Altimood', $body['name']);
+        self::assertSame('Robin', $body['fromName']);
+        self::assertSame('hello@localhost.dev', $body['replyTo']);
+        self::assertFalse($body['requireDoubleOptIn'], 'an already-consenting base is imported without a second ask');
+    }
+
+    public function testAnUnknownAudienceSlugIsNotFound(): void
+    {
+        $this->request(Request::METHOD_GET, '/api/newsletter/audience/no-such-audience');
+
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+    }
+
+    /** Everything else names an audience by slug, so two of them cannot share one. */
+    public function testAnAudienceSlugIsTakenOnlyOnce(): void
+    {
+        $audience = $this->createAudience();
+
+        $this->request(Request::METHOD_POST, '/api/newsletter/audience', [
+            'slug' => $audience->getSlug(),
+            'mainHost' => 'localhost.dev',
+            'fromEmail' => 'news@localhost.dev',
+        ]);
+
+        self::assertSame(Response::HTTP_CONFLICT, $this->client->getResponse()->getStatusCode());
+    }
+
+    /** An unknown host falls back to the default site: the links would point at another brand. */
+    public function testAnAudienceOnAnUnknownHostIsRefused(): void
+    {
+        $this->request(Request::METHOD_POST, '/api/newsletter/audience', [
+            'slug' => 'api-'.bin2hex(random_bytes(6)),
+            'mainHost' => 'unknown.example',
+            'fromEmail' => 'news@localhost.dev',
+        ]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+    }
+
+    /** An alias is stored as its main host, the one sibling lists are matched on. */
+    public function testAnAudienceHostAliasIsStoredAsTheMainHost(): void
+    {
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/audience', [
+            'slug' => 'api-'.bin2hex(random_bytes(6)),
+            'mainHost' => 'localhost',
+            'fromEmail' => 'news@localhost.dev',
+        ]);
+
+        $this->trackAudience($this->id($body));
+        self::assertSame('localhost.dev', $body['mainHost']);
+    }
+
+    public function testAnAudienceNeedsAHostAndASender(): void
+    {
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/audience', [
+            'slug' => 'api-'.bin2hex(random_bytes(6)),
+        ]);
+
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
+        self::assertSame('validation', $body['error']);
+    }
+
+    public function testAnAudienceReportsItsContactsPerStatus(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'in@example.tld');
+        $this->createContact($audience, 'waiting@example.tld', subscribed: false);
+
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/audience/'.$audience->getSlug());
+
+        self::assertSame(
+            ['pending' => 1, 'subscribed' => 1, 'unsubscribed' => 0, 'bounced' => 0],
+            $body['contacts'],
+        );
+    }
+
+    public function testPatchingAnAudience(): void
+    {
+        $audience = $this->createAudience();
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/audience/'.$audience->getSlug(), [
+            'rateSeconds' => 5,
+            'interests' => ['AmTrek'],
+            'utmSource' => 'Ma Newsletter',
+        ]);
+
+        self::assertSame(5, $body['rateSeconds']);
+        self::assertSame(['AmTrek'], $body['interests']);
+        self::assertSame('ma-newsletter', $body['utmSource']);
+    }
+
+    /** Consent records are not something one HTTP call gets to drop by the side. */
+    public function testDeletingAnAudienceIsRefusedWhileItHoldsContacts(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'held@example.tld');
+
+        $body = $this->request(Request::METHOD_DELETE, '/api/newsletter/audience/'.$audience->getSlug());
+
+        self::assertSame(Response::HTTP_CONFLICT, $this->client->getResponse()->getStatusCode());
+        self::assertSame(1, $body['contacts']);
+    }
+
+    public function testDeletingAnEmptyAudience(): void
+    {
+        $audience = $this->createAudience();
+
+        $this->request(Request::METHOD_DELETE, '/api/newsletter/audience/'.$audience->getSlug());
+
+        self::assertSame(Response::HTTP_NO_CONTENT, $this->client->getResponse()->getStatusCode());
+        self::assertNull($this->entityManager->getRepository(Audience::class)->findOneBy(['slug' => $audience->getSlug()]));
+    }
+
+    public function testListingAudiencesIsScopedByHost(): void
+    {
+        $audience = $this->createAudience();
+
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/audience?host='.$audience->getMainHost());
+        $items = $body['items'];
+        self::assertIsArray($items);
+        self::assertContains($audience->getSlug(), array_column($items, 'slug'));
+
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/audience?host=pushword.piedweb.com');
+        $items = $body['items'];
+        self::assertIsArray($items);
+        self::assertNotContains($audience->getSlug(), array_column($items, 'slug'));
     }
 
     public function testCreatingAContactHonoursTheAudienceDoubleOptIn(): void
