@@ -5,6 +5,7 @@ namespace Pushword\TemplateEditor;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Exception;
+use Pushword\Core\Cache\RenderEpoch;
 use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -32,6 +33,8 @@ final class ElementAdmin extends AbstractController
     private Twig $twig;
 
     private AdminContextProviderInterface $adminContextProvider;
+
+    private RenderEpoch $renderEpoch;
 
     /** @param string[] $canBeEditedList */
     public function __construct(
@@ -63,6 +66,12 @@ final class ElementAdmin extends AbstractController
     public function setAdminContextProvider(AdminContextProviderInterface $adminContextProvider): void
     {
         $this->adminContextProvider = $adminContextProvider;
+    }
+
+    #[Required]
+    public function setRenderEpoch(RenderEpoch $renderEpoch): void
+    {
+        $this->renderEpoch = $renderEpoch;
     }
 
     private function getElements(): ElementRepository
@@ -123,6 +132,8 @@ final class ElementAdmin extends AbstractController
             $element->storeElement();
 
             $this->clearTwigCache();
+            // A template edit can change any page's output on any host.
+            $this->renderEpoch->bump();
 
             return $this->redirectToRoute('admin_template_editor_edit', [
                 'encodedPath' => $element->getEncodedPath(),
@@ -179,6 +190,9 @@ final class ElementAdmin extends AbstractController
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $element->deleteElement();
+
+            $this->clearTwigCache();
+            $this->renderEpoch->bump();
 
             $this->addFlash('error', $this->translator->trans('template_editorElementDeleted'));
 
