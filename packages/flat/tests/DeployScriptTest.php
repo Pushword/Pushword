@@ -169,6 +169,38 @@ final class DeployScriptTest extends TestCase
         self::assertStringNotContainsString('--exclude=.git', $process->getOutput(), 'Publish transfers named paths, not the filtered tree');
     }
 
+    public function testPostDeployLocalRunsEvenWhenTheRemoteChainFails(): void
+    {
+        $this->writeOfflineConf(extra: "REMOTE_DEPLOY='composer update && yarn build'\nPOST_DEPLOY_LOCAL=('echo OPCACHE_RESET')\n");
+
+        $process = $this->runShimmed(['push'], sshExit: 1);
+
+        self::assertSame(1, $process->getExitCode(), 'The push must still report the remote failure');
+        self::assertStringContainsString('OPCACHE_RESET', $process->getOutput(), 'A dead remote chain may have rebuilt the container: the reset is most needed exactly then');
+        self::assertStringContainsString('running POST_DEPLOY_LOCAL anyway', $process->getErrorOutput());
+        self::assertStringNotContainsString('Done: push', $process->getOutput());
+    }
+
+    public function testPostDeployLocalRunsExactlyOnceOnSuccess(): void
+    {
+        $this->writeOfflineConf(extra: "POST_DEPLOY_LOCAL=('echo OPCACHE_RESET')\n");
+
+        $process = $this->runShimmed(['push']);
+
+        self::assertSame(0, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
+        self::assertSame(1, substr_count($process->getOutput(), 'OPCACHE_RESET'), 'The disarmed failure net must not replay the chain on exit');
+    }
+
+    public function testPostDeployLocalDoesNotRunWhenThePushIsAborted(): void
+    {
+        $this->writeOfflineConf(delete: 1, extra: "POST_DEPLOY_LOCAL=('echo OPCACHE_RESET')\n");
+
+        $process = $this->runShimmed(['push'], input: "no\n", probeReports: "deleting content/prod-only.md\n");
+
+        self::assertSame(1, $process->getExitCode());
+        self::assertStringNotContainsString('OPCACHE_RESET', $process->getOutput(), 'An aborted push touched nothing on prod — no reset must fire');
+    }
+
     public function testPullDbBacksUpTheLocalDatabaseFirst(): void
     {
         $this->writeOfflineConf();
@@ -200,7 +232,7 @@ final class DeployScriptTest extends TestCase
      *
      * @param string[] $args
      */
-    private function runShimmed(array $args, ?string $input = null, string $probeReports = ''): Process
+    private function runShimmed(array $args, ?string $input = null, string $probeReports = '', int $sshExit = 0): Process
     {
         if (! is_dir($this->siteDir.'/shims')) {
             mkdir($this->siteDir.'/shims');
@@ -214,7 +246,7 @@ final class DeployScriptTest extends TestCase
                 echo RSYNC "\$@"
                 BASH);
             chmod($this->siteDir.'/shims/rsync', 0o755);
-            file_put_contents($this->siteDir.'/shims/ssh', "#!/bin/bash\necho SSH \"\$@\"\n");
+            file_put_contents($this->siteDir.'/shims/ssh', "#!/bin/bash\necho SSH \"\$@\"\nexit {$sshExit}\n");
             chmod($this->siteDir.'/shims/ssh', 0o755);
         }
 
@@ -229,11 +261,11 @@ final class DeployScriptTest extends TestCase
         return $process;
     }
 
-    private function writeOfflineConf(int $delete = 0): void
+    private function writeOfflineConf(int $delete = 0, string $extra = ''): void
     {
         file_put_contents(
             $this->siteDir.'/deploy.conf',
-            "REMOTE=user@example.invalid\nREMOTE_PATH=/srv/site\nDELETE={$delete}\nPRE_PUSH=()\n",
+            "REMOTE=user@example.invalid\nREMOTE_PATH=/srv/site\nDELETE={$delete}\nPRE_PUSH=()\n".$extra,
         );
     }
 

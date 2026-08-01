@@ -471,6 +471,13 @@ REMOTE_DEPLOY='composer update && php bin/console doctrine:schema:update --force
 # PUBLISH_PATHS=('content' 'media')  # REMOTE_PUBLISH, POST_DEPLOY_LOCAL
 ```
 
+`POST_DEPLOY_LOCAL` (typically an opcache-reset loop over the PHP hosts) runs
+even when the push dies mid-remote-chain: a deploy failing after
+`composer update` has already rebuilt the container, and the reset is precisely
+what brings the hosts back. Only a push aborted at a confirmation prompt —
+before anything touched production — skips it. `publish` never runs it: its
+remote chain rebuilds nothing that stales opcache.
+
 The default excludes keep every **generated output** out, on the model of
 `static/`: `public/assets/` (yarn build), `public/bundles/` (Symfony assets
 install) and `public/media/` (`pw:image:cache`) are all rebuilt by the remote

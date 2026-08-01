@@ -14,6 +14,17 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc812
+
+### The deploy runs POST_DEPLOY_LOCAL even when the push fails
+
+`POST_DEPLOY_LOCAL` was the last line of a `set -e` push: a remote chain dying
+after `composer update` skipped it — exactly the moment the rebuilt container
+leaves opcache stale and every PHP host answering 500 until the reset runs. It
+now fires from an exit trap armed once the push starts mutating production, so
+a failed deploy still resets (and the push still exits with the failure code).
+A push aborted at a confirmation prompt touched nothing and still skips it.
+
 ## To 1.0.0-rc808
 
 ### The deploy excludes every generated output by default
