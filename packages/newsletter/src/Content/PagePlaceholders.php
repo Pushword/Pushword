@@ -2,15 +2,21 @@
 
 namespace Pushword\Newsletter\Content;
 
+use Pushword\Core\Component\EntityFilter\ValueObject\SplitContent;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Twig\ContentExtension;
+use Symfony\Component\String\TruncateMode;
+
+use function Symfony\Component\String\u;
 
 /**
  * Substitutes the handful of page values a content trigger's subject and body
  * may quote:
  *
- *     {{ page.h1 }}  {{ page.excerpt }}  {{ page.url }}  {{ page.mainImage }}
+ *     {{ page.h1 }}  {{ page.excerpt }}  {{ page.chapeau }}
+ *     {{ page.url }}  {{ page.mainImage }}
  *
  * The braces are borrowed from Twig; the evaluation is not. This is `strtr` with
  * a regex, exactly like the campaign body's `%name%` — a mail body is authored
@@ -24,25 +30,32 @@ use Pushword\Core\Site\SiteRegistry;
  */
 final readonly class PagePlaceholders
 {
-    private const string PATTERN = '/\{\{\s*page\.(h1|excerpt|url|mainImage)\s*\}\}/';
+    private const string PATTERN = '/\{\{\s*page\.(h1|excerpt|chapeau|url|mainImage)\s*\}\}/';
+
+    /** Long enough for an opening, short enough that nobody scrolls it in a preview pane. */
+    private const int EXCERPT_LENGTH = 300;
 
     public function __construct(
         private SiteRegistry $siteRegistry,
         private ImageCacheManager $imageCacheManager,
+        private ContentExtension $contentExtension,
     ) {
     }
 
+    /** The body is authored HTML-in-Markdown: what the page lends goes in as it stands. */
     public function render(string $template, Page $page): string
     {
-        if (! str_contains($template, '{{')) {
-            return $template;
-        }
+        return $this->substitute($template, $page, false);
+    }
 
-        return preg_replace_callback(
-            self::PATTERN,
-            fn (array $match): string => $this->value($match[1], $page),
-            $template,
-        ) ?? $template;
+    /**
+     * A subject line is a header, not a document. An h1 routinely carries `<em>`,
+     * `<br>` or a `<span class="…">`, and the excerpt's fallback is rendered HTML
+     * by construction — both would reach the inbox as literal markup.
+     */
+    public function renderSubject(string $template, Page $page): string
+    {
+        return $this->substitute($template, $page, true);
     }
 
     /**
@@ -55,14 +68,83 @@ final readonly class PagePlaceholders
         return $this->base($page).'/'.$page->getRealSlug();
     }
 
+    private function substitute(string $template, Page $page, bool $plainText): string
+    {
+        if (! str_contains($template, '{{')) {
+            return $template;
+        }
+
+        return preg_replace_callback(
+            self::PATTERN,
+            function (array $match) use ($page, $plainText): string {
+                $value = $this->value($match[1], $page);
+
+                return $plainText ? $this->plainText($value) : $value;
+            },
+            $template,
+        ) ?? $template;
+    }
+
     private function value(string $key, Page $page): string
     {
         return match ($key) {
             'h1' => $page->getH1(),
-            'excerpt' => $page->getSearchExcerpt() ?? '',
+            'excerpt' => $this->excerpt($page),
+            'chapeau' => trim($this->split($page)->getChapeau()),
             'url' => $this->url($page),
             default => $this->mainImageUrl($page),
         };
+    }
+
+    /**
+     * The article's own opening, never `searchExcerpt`: that property is written
+     * for a search result page, and a meta description read in an inbox sounds
+     * like one. The chapeau first, then the paragraphs before the first heading,
+     * then the opening paragraph on its own — each conditional, hence the chain:
+     * a chapeau needs a `<!--break-->`, an intro needs a page that asked for a
+     * table of contents.
+     *
+     * The last one is truncated because it is an extract rather than an authored
+     * accroche, and it comes back empty on a page that opens on a tool. Both are
+     * deliberate: an empty excerpt leaves the mail at its title, its image and its
+     * link, which says less but says nothing false.
+     */
+    private function excerpt(Page $page): string
+    {
+        $split = $this->split($page);
+
+        $chapeau = trim($split->getChapeau());
+
+        if ('' !== $chapeau) {
+            return $chapeau;
+        }
+
+        $intro = trim($split->getIntro());
+
+        // Only when it opens on text: an intro is everything before the first
+        // heading, which on a tool page is the widget.
+        if (str_starts_with($intro, '<p')) {
+            return $intro;
+        }
+
+        return u($split->getFirstParagraph())->truncate(self::EXCERPT_LENGTH, '…', TruncateMode::WordBefore)->toString();
+    }
+
+    private function split(Page $page): SplitContent
+    {
+        return $this->contentExtension->mainContentSplit($page);
+    }
+
+    /**
+     * Tags become a space rather than nothing: a `<br>` between two words must not
+     * glue them. Entities are decoded afterwards — never before, or an escaped
+     * `&lt;em&gt;` would turn into a tag on its way out.
+     */
+    private function plainText(string $html): string
+    {
+        $text = html_entity_decode(strip_tags(str_replace('<', ' <', $html)), \ENT_QUOTES | \ENT_HTML5);
+
+        return trim((string) preg_replace('/\s+/', ' ', $text));
     }
 
     /** Empty when the page has no main image — the author's template decides what that costs. */

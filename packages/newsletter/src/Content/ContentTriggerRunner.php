@@ -125,7 +125,7 @@ final readonly class ContentTriggerRunner
 
         return new Campaign()
             ->setAudience($audience)
-            ->setSubject($this->placeholders->render($trigger->getSubjectTemplate(), $page))
+            ->setSubject($this->placeholders->renderSubject($trigger->getSubjectTemplate(), $page))
             ->setBodyMarkdown($this->placeholders->render($trigger->getBodyTemplate(), $page))
             ->setSegment($trigger->getSegment())
             ->setSlug($page->getSlug())

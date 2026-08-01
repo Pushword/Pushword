@@ -290,13 +290,28 @@ do on a hand-written newsletter. `{{ page.url }}` is built from the page's own
 host and its canonical base URL, so it keeps working on a statically generated
 site and across an audience that spans several locale hosts.
 
-`{{ page.excerpt }}` is the `searchExcerpt` custom property when the page has
-one, and the article's own opening when it has not — the paragraphs before the
-first heading, or failing that the chapeau. That property is optional and often
-left empty, and a trigger that quoted it alone would send a mail reduced to a
-title and a link. `{{ page.chapeau }}` asks for the lede itself, whatever the
-excerpt resolved to: it is what sits before `<!--break-->`, and it is empty on a
-page with no break.
+`{{ page.excerpt }}` is the article's own opening, and deliberately never the
+`searchExcerpt` custom property: that one is written for a search result page,
+and a meta description read in an inbox sounds like one. Three candidates, in
+order:
+
+1. **the chapeau** — what sits before `<!--break-->`, as authored;
+2. **the intro** — every paragraph before the first heading, however many, on a
+   page that asked for a table of contents;
+3. **the opening paragraph alone**, as text, cut at 300 characters on a word
+   boundary. An extract rather than an accroche, hence the cut.
+
+The third one skips whatever precedes it: an article may open on a figure or on
+an interactive block, and the labels inside that block are not an opening. A
+page holding no paragraph at all — a tool with a heading and a widget — lends
+nothing, and the mail keeps its title, its image and its link. That is the
+intended outcome, not a gap to fill: an empty excerpt says less, but it says
+nothing false. Give such a page a `<!--break-->` if it deserves a real accroche.
+
+`{{ page.chapeau }}` asks for the lede itself, whatever the excerpt resolved to.
+On a page with no break it is empty — and on a page with a break but no table of
+contents it renders exactly what `{{ page.excerpt }}` does, so quote one or the
+other, not both.
 
 **The subject gets plain text, the body gets the markup.** An `h1` commonly
 carries an `<em>`, a `<br>` or a `<span class="…">`, and an excerpt falling back

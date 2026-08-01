@@ -3,8 +3,10 @@
 namespace Pushword\Core\Component\EntityFilter\ValueObject;
 
 use DOMComment;
+use DOMElement;
 use DOMXPath;
 use Knp\Menu\ItemInterface;
+use Masterminds\HTML5;
 use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\Toc\DomCapturingHtml5;
@@ -199,6 +201,37 @@ final readonly class SplitContent implements Stringable
     public function getBody(bool $withChapeau = false): string
     {
         return ($withChapeau ? $this->chapeau : '').$this->intro.$this->content;
+    }
+
+    /**
+     * The article's opening paragraph, as plain text — what a mail or a listing
+     * can quote from a page that has neither chapeau nor intro.
+     *
+     * Only a top-level paragraph counts, and whatever precedes it is skipped: an
+     * article may open on a figure or on an interactive block, and the labels
+     * inside that block are not an opening. A page holding no paragraph at all —
+     * a tool with a heading and a widget — returns nothing, which is the honest
+     * answer and lets the caller leave the slot empty.
+     */
+    public function getFirstParagraph(): string
+    {
+        foreach (new HTML5()->loadHTMLFragment($this->content)->childNodes as $node) {
+            if (! $node instanceof DOMElement) {
+                continue;
+            }
+
+            if ('p' !== $node->nodeName) {
+                continue;
+            }
+
+            $text = trim((string) preg_replace('/\s+/', ' ', $node->textContent));
+
+            if ('' !== $text) {
+                return $text;
+            }
+        }
+
+        return '';
     }
 
     /** @return string[] */
