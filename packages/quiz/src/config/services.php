@@ -4,7 +4,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use Pushword\AdminBlockEditor\Editor\EditorJsToolProviderInterface;
 use Pushword\Api\Controller\ApiControllerInterface;
 use Pushword\Core\PushwordCoreBundle;
+use Pushword\Flat\Sync\FlatSyncInterface;
 use Pushword\Quiz\Controller\Api\QuizApiController;
+use Pushword\Quiz\Flat\QuizResultSync;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -25,6 +27,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
             __DIR__.'/../Model', // plain value objects, not services
             __DIR__.'/../Admin', // loaded only when EasyAdmin is installed (below)
+            __DIR__.'/../Flat', // loaded only when the flat package is installed (below)
             ...$editorExclude,
             ...$apiExclude,
         ]);
@@ -40,5 +43,12 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             ->autowire()
             ->tag('controller.service_arguments')
             ->tag('pushword.api.controller');
+    }
+
+    // The result flat sync is only wired when the optional flat package is installed.
+    if (interface_exists(FlatSyncInterface::class)) {
+        $services->set(QuizResultSync::class)
+            ->autowire()
+            ->tag('pushword.flat.sync');
     }
 };

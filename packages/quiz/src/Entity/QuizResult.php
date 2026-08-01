@@ -8,6 +8,7 @@ use Pushword\Core\Entity\SharedTrait\HostTrait;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
+use Pushword\Core\Entity\SharedTrait\UuidTrait;
 use Pushword\Quiz\Repository\QuizResultRepository;
 
 /**
@@ -24,6 +25,7 @@ class QuizResult implements IdInterface
     use HostTrait;
     use IdTrait;
     use TimestampableTrait;
+    use UuidTrait;
 
     #[ORM\Column(type: Types::STRING, length: 255)]
     public string $quiz = '';
@@ -40,5 +42,6 @@ class QuizResult implements IdInterface
     public function __construct()
     {
         $this->initTimestampableProperties();
+        $this->getOrGenerateUuid();
     }
 }

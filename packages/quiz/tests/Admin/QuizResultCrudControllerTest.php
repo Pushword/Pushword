@@ -34,6 +34,10 @@ final class QuizResultCrudControllerTest extends AbstractAdminTestClass
         // Read-only: the New action is disabled, so the index offers no create link.
         self::assertStringNotContainsString('/admin/quiz-result/new', $html);
 
+        // Delete is disabled too: rows round-trip through quiz-result.csv by
+        // uuid, so a deleted row would be recreated on the next flat import.
+        self::assertStringNotContainsString('action-delete', $html);
+
         $entityManager->remove($entityManager->getRepository(QuizResult::class)->find($result->id) ?? $result);
         $entityManager->flush();
     }

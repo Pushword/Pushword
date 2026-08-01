@@ -40,7 +40,9 @@ class QuizResultCrudController extends AbstractCrudController
     {
         // Anonymous data points: viewable and prunable, never hand-edited.
         return $actions
-            ->disable(Action::NEW, Action::EDIT)
+            // DELETE included: rows round-trip through quiz-result.csv by uuid,
+            // so a deleted row would be recreated on the next flat import.
+            ->disable(Action::NEW, Action::EDIT, Action::DELETE)
             ->add(Crud::PAGE_INDEX, Action::DETAIL);
     }
 
