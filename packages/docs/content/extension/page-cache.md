@@ -28,6 +28,47 @@ Enabling `cache: static` changes three things for that app:
 2. A `cache` checkbox appears on every page's "State" fieldset in the admin (default: on). Disable it for pages with server-side dynamic content (forms posting to PHP, live counters, etc.).
 3. Saving a page fires a `PageCacheRefreshMessage` via Messenger that regenerates that single page's cached file. Deleting a page removes it.
 
+## Staleness beyond page saves: the render epoch
+
+A cached page's HTML depends on more than its own row: snippets, media, edited
+templates, reviews, and other pages (listings, navs, breadcrumbs, feeds). Each
+host carries a **render epoch** — an opaque token, stored in a small filesystem
+pool under `var/cache/{env}/pw_render_epoch/` — that any such change bumps.
+Every generated page is stamped with the epoch it was rendered under; a
+mismatch means "stale", whatever the cause. The storage is deliberately not
+`cache.app`: web and CLI must see the same token, and `cache.app` is often APCu
+(per-process, absent on CLI).
+
+What bumps the epoch:
+
+| Change | Scope |
+|---|---|
+| Snippet create/edit/delete | its host (all hosts when host-less) |
+| Media edit/delete (not upload — new files can't be referenced yet) | all hosts |
+| Template save/delete in the template editor | all hosts |
+| Review/message publication, edit or removal (conversation) | its host |
+| Page create/delete, or an edit that can affect *other* pages | its host |
+
+For that last row: metadata renders elsewhere (title, h1, name, slug, parent,
+publication date, weight, locale, main image, host) always counts, and a content
+edit counts only when it adds or removes an internal link (the link graph feeds
+`linked_slugs`, `exclude_linked`, `contains_link_to`). A plain prose edit stays
+on the instant single-page path and never triggers a sweep.
+
+A bump queues one `HostCacheRefreshMessage` per affected cache-mode host,
+dispatched at `kernel.terminate` (after the response) with a 60s `DelayStamp` so
+editing bursts coalesce. The handler runs an **incremental sweep** of the host:
+pages whose stored epoch matches are skipped; re-rendered pages whose HTML is
+byte-identical skip the write, so a sweep costs CPU but no disk churn and no
+cache-header churn for unaffected pages. A completed sweep records the epoch it
+sampled at start, and later messages for that epoch no-op — an editor saving
+every 30 seconds triggers one sweep, not twenty.
+
+If a sweep is lost (process killed, no worker running), nothing goes
+permanently stale: the epoch comparison is durable in
+`var/.static-generation-state.json`, and the next `pw:static --incremental`
+run (cron it on big hosts) or `pw:cache:clear` converges.
+
 ## Warm / clear the cache
 
 ```shell
@@ -72,7 +113,12 @@ The fragment endpoint (`pushword_admin_fragment_page_buttons`) is protected by `
 
 ## Messenger
 
-`PageCacheRefreshMessage` uses whatever transport you routed it to. With no routing, Symfony runs it synchronously (fine for dev, not great for admin UX under load). Route to an async transport in production:
+Both messages use whatever transport you route them to. With no routing, Symfony
+runs them synchronously — fine for `PageCacheRefreshMessage` (one page, ~10ms),
+and survivable for `HostCacheRefreshMessage` because it is dispatched after the
+response is sent; but the PHP worker then spends the whole sweep duration on it,
+and the 60s coalescing delay is ignored. Route both to an async transport in
+production:
 
 ```yaml
 # config/packages/messenger.yaml
@@ -80,9 +126,21 @@ framework:
   messenger:
     routing:
       'Pushword\StaticGenerator\Cache\Message\PageCacheRefreshMessage': async
+      'Pushword\StaticGenerator\Cache\Message\HostCacheRefreshMessage': async
 ```
 
 Run a worker: `php bin/console messenger:consume async`.
+
+Rule of thumb per install:
+
+- **Small host, no worker**: keep everything unrouted. Sweeps run inline after
+  the response; at a few dozen pages that is well under a second.
+- **Hundreds of pages or more**: route `HostCacheRefreshMessage` async (the
+  delay then debounces editing bursts), or skip the message path entirely and
+  cron `pw:static --incremental` — the epoch comparison is durable, so the cron
+  picks up everything the messages would have.
+- **Full-static sites (no `cache: static`)**: these messages never fire; the
+  epoch still works for you through `pw:static --incremental`.
 
 ## Flat import
 

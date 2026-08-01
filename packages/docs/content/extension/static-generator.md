@@ -99,7 +99,27 @@ php bin/console pw:static $host
 
 # (re)Generate only one page
 php bin/console pw:static $host $slug
+
+# Only regenerate what changed since the last run
+php bin/console pw:static $host --incremental
 ```
+
+### Incremental generation
+
+`--incremental` skips a page when neither its `updatedAt` nor the host's
+**render epoch** moved since it was last generated (state lives in
+`var/.static-generation-state.json`). The epoch is bumped by anything that can
+change rendered HTML without touching the page row: snippet, media and template
+edits, review publications, and edits of *other* pages that listings render —
+see [the render epoch](/extension/page-cache#staleness-beyond-page-saves-the-render-epoch).
+So an incremental cron converges on a fully fresh site even for changes no
+`updatedAt` reflects. Re-rendered pages whose HTML is byte-identical skip the
+write, keeping deploy diffs and rsyncs quiet.
+
+`bin/console cache:clear` wipes the epoch storage (a file pool under
+`var/cache/{env}/pw_render_epoch/`): the first incremental run after a deploy
+regenerates everything — which is correct, since a deploy may change templates
+or code.
 
 ### From the API
 
@@ -114,13 +134,16 @@ starts a background pass and returns a URL to poll. See
 Hosts with 10+ pages are rendered by parallel worker processes. Workers share a
 compiled-script cache in `var/cache/opcache` (opcache file cache) — the first
 build fills it, every following build and worker reuses it. Nothing to
-configure; the flags are inert if the CLI PHP has no opcache extension.
+configure; the flags are inert if the CLI PHP has no opcache extension. Because
+the cache outlives `composer update`, the workers force
+`opcache.validate_timestamps=1`: a host ini tuning it off would silently keep
+serving scripts compiled from the pre-update sources.
 
 The parent `pw:static` process (and any sequential build) can opt into the same
-cache manually:
+cache manually — keep the validation flag if your ini disables it:
 
 ```shell
-php -d opcache.enable_cli=1 -d opcache.file_cache=var/cache/opcache bin/console pw:static
+php -d opcache.enable_cli=1 -d opcache.file_cache=var/cache/opcache -d opcache.validate_timestamps=1 bin/console pw:static
 ```
 
 ## Page cache mode (serve pre-rendered pages without exporting)
