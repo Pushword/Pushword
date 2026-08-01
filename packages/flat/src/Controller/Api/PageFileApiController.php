@@ -131,11 +131,7 @@ final class PageFileApiController extends AbstractApiController
                 ? $this->pageWriter->update($page, $frontmatter, $body, $this->getApiUser())
                 : $this->pageWriter->create($page, $frontmatter, $body, $this->getApiUser());
         } catch (InvalidFrontmatterException $invalidFrontmatterException) {
-            return $this->respond([
-                'error' => 'invalid_frontmatter',
-                'key' => $invalidFrontmatterException->key,
-                'message' => $invalidFrontmatterException->getMessage(),
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            return $this->invalidFrontmatter($invalidFrontmatterException);
         }
 
         if (\count($violations) > 0) {

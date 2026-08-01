@@ -2,6 +2,7 @@
 
 namespace Pushword\Api\Controller;
 
+use Pushword\Api\Service\InvalidFrontmatterException;
 use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -62,6 +63,20 @@ abstract class AbstractApiController extends AbstractController implements ApiCo
     protected function noContent(): JsonResponse
     {
         return $this->respond(null, Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * A rejected converter-backed value (e.g. an unknown mainImageFormat label)
+     * or a typo'd date becomes a 422 instead of reaching the entity and
+     * crashing at render time.
+     */
+    protected function invalidFrontmatter(InvalidFrontmatterException $invalidFrontmatterException): JsonResponse
+    {
+        return $this->respond([
+            'error' => 'invalid_frontmatter',
+            'key' => $invalidFrontmatterException->key,
+            'message' => $invalidFrontmatterException->getMessage(),
+        ], Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     protected function validationErrors(ConstraintViolationListInterface $violations): JsonResponse

@@ -284,20 +284,6 @@ final class PageApiController extends AbstractApiController
     }
 
     /**
-     * A rejected converter-backed value (e.g. an unknown mainImageFormat label)
-     * or a typo'd date becomes a 422 instead of reaching the entity and
-     * crashing at render time.
-     */
-    private function invalidFrontmatter(InvalidFrontmatterException $invalidFrontmatterException): JsonResponse
-    {
-        return $this->respond([
-            'error' => 'invalid_frontmatter',
-            'key' => $invalidFrontmatterException->key,
-            'message' => $invalidFrontmatterException->getMessage(),
-        ], Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    /**
      * Deleting a page never leaves an orphan URL behind: the caller must say where the
      * slug goes next (`redirectTo`, in the JSON body or as a query parameter).
      *
