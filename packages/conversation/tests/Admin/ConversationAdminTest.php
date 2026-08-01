@@ -5,6 +5,7 @@ namespace Pushword\conversation\Tests\Admin;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Entity\Review;
 use Symfony\Component\HttpFoundation\Request;
 
 #[Group('integration')]
@@ -25,6 +26,40 @@ final class ConversationAdminTest extends AbstractAdminTestClass
                 self::assertResponseIsSuccessful();
             }
         }
+    }
+
+    public function testAdminDeleteCreatesTombstone(): void
+    {
+        $client = $this->loginUser();
+        $entityManager = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $message = new Review();
+        $message->host = 'localhost.dev';
+        $message->setContent('Admin delete tombstone check');
+        $message->setRating(4);
+
+        $entityManager->persist($message);
+        $entityManager->flush();
+
+        $id = $message->id;
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/review/'.$id.'/edit');
+        self::assertResponseIsSuccessful();
+
+        $formaction = (string) $crawler->filter('.action-delete')->attr('formaction');
+        $token = (string) $crawler->filter('#action-confirmation-form input[name=token]')->attr('value');
+        self::assertNotSame('', $formaction);
+        $client->request(Request::METHOD_POST, $formaction, ['token' => $token]);
+
+        // The row must survive as a tombstone: it carries the deletion through
+        // the flat CSV to other databases.
+        $entityManager->clear();
+        $reloaded = $entityManager->find(Message::class, $id);
+        self::assertInstanceOf(Message::class, $reloaded);
+        self::assertNotNull($reloaded->deletedAt);
+
+        $entityManager->remove($reloaded);
+        $entityManager->flush();
     }
 
     public function testIndexHidesTombstonedMessages(): void
