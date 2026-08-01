@@ -14,6 +14,28 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc805
+
+### The deploy script ships with pushword/flat
+
+`vendor/bin/pushword-deploy` — one configurable pull/push/publish deploy script
+for every site, installed and updated by composer; per-site specifics live in a
+`deploy.conf` at the site root. Its push can never overwrite the production
+database (see the [flat extension](/extension/flat) page).
+
+## To 1.0.0-rc804
+
+### API coverage and merge safety
+
+- New `GET /api/quiz/result` and `/api/quiz/result/stats` read quiz attempts
+  and per-quiz stats.
+- Newsletter audiences get full CRUD over the API
+  (`/api/newsletter/audience[/{slug}]`).
+- Conversation import keeps the database row when the CSV row is strictly
+  older and would change the content, and notifies the admin (a stale file
+  rsynced over a production admin edit no longer silently wins). Hand-edited
+  rows keep their exported `updatedAt` and still apply.
+
 ## To 1.0.0-rc803
 
 ### One serializer for the flat page file — raw `.md` API intake
@@ -46,14 +68,6 @@ Behavior changes to review:
   serializer instead of the converter registry and revision calculator.
 - `pushword/api` now requires `pushword/flat` in composer (it already was a
   hard code dependency via the flat converters).
-- Conversation import keeps the database row when the CSV row is strictly
-  older and would change the content, and notifies the admin (a stale file
-  rsynced over a production admin edit no longer silently wins). Hand-edited
-  rows keep their exported `updatedAt` and still apply.
-- `pushword/flat` now ships `vendor/bin/pushword-deploy` — a configurable
-  pull/push/publish deploy script whose push can never overwrite the
-  production database (see the [flat extension](/extension/flat) page). Site
-  specifics live in a `deploy.conf` at the site root.
 
 ## To 1.0.0-rc802
 
