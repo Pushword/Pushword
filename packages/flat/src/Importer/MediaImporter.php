@@ -18,6 +18,7 @@ use Pushword\Core\Utils\Entity;
 use Pushword\Flat\Exporter\MediaCsvHelper;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
+use TypeError;
 
 /**
  * Permit to find error in image or link.
@@ -552,9 +553,13 @@ class MediaImporter extends AbstractImporter
             }
 
             if (Entity::isPubliclyWritableProperty($media, $key)) {
-                $media->{$key} = $value; // @phpstan-ignore property.dynamicName
+                try {
+                    $media->{$key} = $value; // @phpstan-ignore property.dynamicName
 
-                continue;
+                    continue;
+                } catch (TypeError) {
+                    // Incompatible value for a typed property: keep the customProperties fallback.
+                }
             }
 
             $media->setCustomProperty($key, $this->sanitizeUtf8($value));

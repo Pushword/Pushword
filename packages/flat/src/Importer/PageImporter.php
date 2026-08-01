@@ -21,6 +21,7 @@ use Spatie\YamlFrontMatter\Document;
 use Spatie\YamlFrontMatter\YamlFrontMatter;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Service\Attribute\Required;
+use TypeError;
 
 /**
  * Permit to find error in image or link.
@@ -287,9 +288,14 @@ final class PageImporter extends AbstractImporter
             }
 
             if (Entity::isPubliclyWritableProperty($page, $camelKey)) {
-                $page->{$camelKey} = $value; // @phpstan-ignore property.dynamicName
+                try {
+                    $page->{$camelKey} = $value; // @phpstan-ignore property.dynamicName
 
-                continue;
+                    continue;
+                } catch (TypeError) {
+                    // Incompatible value for a typed property (eg a string for
+                    // editedBy: ?User): keep the historic customProperties fallback.
+                }
             }
 
             $converted = $this->converterRegistry->fromFlatValue($key, $value);
