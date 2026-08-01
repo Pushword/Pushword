@@ -93,18 +93,7 @@ final class DeployScriptTest extends TestCase
     {
         $this->writeValidConf();
 
-        // An rsync shim prints its arguments, keeping the test offline while
-        // asserting the real command the script builds.
-        mkdir($this->siteDir.'/shims');
-        file_put_contents($this->siteDir.'/shims/rsync', "#!/bin/bash\necho RSYNC \"\$@\"\n");
-        chmod($this->siteDir.'/shims/rsync', 0o755);
-
-        $process = new Process(
-            ['bash', self::SCRIPT, 'push', '--dry-run'],
-            $this->siteDir,
-            ['PATH' => $this->siteDir.'/shims:'.getenv('PATH')],
-        );
-        $process->run();
+        $process = $this->runShimmed(['push', '--dry-run']);
 
         $output = $process->getOutput();
         self::assertStringContainsString('--exclude=var/app.db*', $output, 'The push must always exclude the database');
@@ -146,32 +135,91 @@ final class DeployScriptTest extends TestCase
         self::assertStringContainsString('Done: push', $process->getOutput());
     }
 
+    public function testShipDbAbortsUnlessConfirmed(): void
+    {
+        $this->writeOfflineConf();
+
+        $process = $this->runShimmed(['push', '--ship-db'], input: "nope\n");
+
+        self::assertSame(1, $process->getExitCode());
+        self::assertStringContainsString('OVERWRITES the production database', $process->getOutput());
+        self::assertStringContainsString('Aborted', $process->getOutput());
+        self::assertStringNotContainsString('RSYNC', $process->getOutput(), 'Nothing may be transferred after a refusal');
+    }
+
+    public function testShipDbConfirmedSendsTheDatabaseExplicitly(): void
+    {
+        $this->writeOfflineConf();
+
+        $process = $this->runShimmed(['push', '--ship-db'], input: "ship\n");
+
+        self::assertSame(0, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
+        self::assertStringContainsString('var/app.db user@example.invalid:/srv/site/var/app.db', $process->getOutput(), 'The database file must be sent explicitly on top of the tree');
+    }
+
+    public function testPublishSendsOnlyTheConfiguredPaths(): void
+    {
+        $this->writeOfflineConf();
+
+        $process = $this->runShimmed(['publish']);
+
+        self::assertSame(0, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
+        self::assertStringContainsString('content media user@example.invalid:/srv/site/', $process->getOutput());
+        self::assertStringContainsString("SSH user@example.invalid cd '/srv/site' &&", $process->getOutput(), 'The remote publish chain must run over ssh');
+        self::assertStringNotContainsString('--exclude=.git', $process->getOutput(), 'Publish transfers named paths, not the filtered tree');
+    }
+
+    public function testPullDbBacksUpTheLocalDatabaseFirst(): void
+    {
+        $this->writeOfflineConf();
+        mkdir($this->siteDir.'/var');
+        file_put_contents($this->siteDir.'/var/app.db', 'local data');
+
+        $process = $this->runShimmed(['pull-db']);
+
+        self::assertSame(0, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
+        $backups = glob($this->siteDir.'/var/app.db.before-pull-*') ?: [];
+        self::assertCount(1, $backups, 'The local database must be backed up before being overwritten');
+        self::assertSame('local data', file_get_contents($backups[0]));
+    }
+
     /**
      * Push against an rsync shim: the --dry-run probe reports one prod-only
      * file, the real invocation prints its arguments.
      */
     private function runGuardedPush(?string $input, int $delete = 1): Process
     {
-        file_put_contents(
-            $this->siteDir.'/deploy.conf',
-            "REMOTE=user@example.invalid\nREMOTE_PATH=/srv/site\nDELETE={$delete}\nPRE_PUSH=()\n",
-        );
+        $this->writeOfflineConf($delete);
 
-        mkdir($this->siteDir.'/shims');
-        file_put_contents($this->siteDir.'/shims/rsync', <<<'BASH'
-            #!/bin/bash
-            for a in "$@"; do
-                if [[ $a == --dry-run ]]; then
-                    echo "deleting content/prod-only.md"
-                    exit 0
-                fi
-            done
-            echo RSYNC "$@"
-            BASH);
-        chmod($this->siteDir.'/shims/rsync', 0o755);
+        return $this->runShimmed(['push'], input: $input, probeReports: "deleting content/prod-only.md\n");
+    }
+
+    /**
+     * Run the script against rsync/ssh shims printing their arguments — fully
+     * offline. A --dry-run rsync invocation answers $probeReports instead.
+     *
+     * @param string[] $args
+     */
+    private function runShimmed(array $args, ?string $input = null, string $probeReports = ''): Process
+    {
+        if (! is_dir($this->siteDir.'/shims')) {
+            mkdir($this->siteDir.'/shims');
+            file_put_contents($this->siteDir.'/shims/rsync', <<<BASH
+                #!/bin/bash
+                dry=0
+                for a in "\$@"; do
+                    if [[ \$a == --dry-run ]]; then dry=1; fi
+                done
+                if [[ \$dry == 1 ]]; then printf '%s' '{$probeReports}'; fi
+                echo RSYNC "\$@"
+                BASH);
+            chmod($this->siteDir.'/shims/rsync', 0o755);
+            file_put_contents($this->siteDir.'/shims/ssh', "#!/bin/bash\necho SSH \"\$@\"\n");
+            chmod($this->siteDir.'/shims/ssh', 0o755);
+        }
 
         $process = new Process(
-            ['bash', self::SCRIPT, 'push'],
+            ['bash', self::SCRIPT, ...$args],
             $this->siteDir,
             ['PATH' => $this->siteDir.'/shims:'.getenv('PATH')],
             $input,
@@ -179,6 +227,14 @@ final class DeployScriptTest extends TestCase
         $process->run();
 
         return $process;
+    }
+
+    private function writeOfflineConf(int $delete = 0): void
+    {
+        file_put_contents(
+            $this->siteDir.'/deploy.conf',
+            "REMOTE=user@example.invalid\nREMOTE_PATH=/srv/site\nDELETE={$delete}\nPRE_PUSH=()\n",
+        );
     }
 
     private function writeValidConf(): void
