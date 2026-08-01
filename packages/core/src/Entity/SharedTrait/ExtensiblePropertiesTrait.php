@@ -44,7 +44,7 @@ trait ExtensiblePropertiesTrait
 
         $unmanagedProperties = array_filter(
             $this->customProperties,
-            fn (string $key): bool => ! $this->isManagedProperty($key),
+            fn (string $key): bool => ! $this->isManagedProperty($key) && ! $this->isSchemaProperty($key),
             \ARRAY_FILTER_USE_KEY,
         );
 
@@ -77,6 +77,29 @@ trait ExtensiblePropertiesTrait
     protected array $runtimeManagedKeys = [];
 
     /**
+     * Keys shielded from the destructive textarea reconciliation without being
+     * owned by a field: the API registers everything it writes here so a later
+     * validation merge cannot wipe it. Preserved keys stay visible and editable
+     * in the textarea.
+     *
+     * @var array<string, true>
+     */
+    #[Ignore]
+    protected array $preservedKeys = [];
+
+    /**
+     * Schema-declared keys rendered by a generated admin field. Filtered from
+     * the textarea like managed keys, but a textarea that still carries one —
+     * a form opened before the key's field existed — writes through instead of
+     * throwing. Permanent rule, not a migration workaround: the stale-form
+     * window reopens every time any site declares a new property.
+     *
+     * @var array<string, true>
+     */
+    #[Ignore]
+    protected array $schemaKeys = [];
+
+    /**
      * Declare which custom property keys are managed by dedicated form fields.
      * Override in entity to add keys.
      *
@@ -100,6 +123,37 @@ trait ExtensiblePropertiesTrait
     public function isManagedProperty(string $name): bool
     {
         return \in_array(strtolower($name), array_map(strtolower(...), $this->getManagedPropertyKeys()), true);
+    }
+
+    /**
+     * Shield a key from the destructive textarea reconciliation ("don't wipe
+     * this"), without a field owning it.
+     */
+    public function preserveCustomProperty(string $name): self
+    {
+        $this->preservedKeys[strtolower($name)] = true;
+
+        return $this;
+    }
+
+    public function isPreservedProperty(string $name): bool
+    {
+        return isset($this->preservedKeys[strtolower($name)]);
+    }
+
+    /**
+     * Register a schema-declared key rendered by a generated admin field.
+     */
+    public function registerSchemaPropertyKey(string $name): self
+    {
+        $this->schemaKeys[strtolower($name)] = true;
+
+        return $this;
+    }
+
+    public function isSchemaProperty(string $name): bool
+    {
+        return isset($this->schemaKeys[strtolower($name)]);
     }
 
     #[Ignore]
@@ -137,7 +191,7 @@ trait ExtensiblePropertiesTrait
 
         $effective = $this->customProperties;
         foreach (array_keys($effective) as $existingKey) {
-            if ($this->isManagedProperty((string) $existingKey)) {
+            if ($this->isShieldedFromReconciliation((string) $existingKey)) {
                 continue;
             }
 
@@ -180,7 +234,7 @@ trait ExtensiblePropertiesTrait
 
         // Remove unmanaged properties that were deleted from the YAML
         foreach (array_keys($this->customProperties) as $existingKey) {
-            if ($this->isManagedProperty((string) $existingKey)) {
+            if ($this->isShieldedFromReconciliation((string) $existingKey)) {
                 continue;
             }
 
@@ -200,8 +254,16 @@ trait ExtensiblePropertiesTrait
                 throw new InvalidArgumentException('Property `'.$name.'` is managed by a dedicated field and cannot be set via unmanaged properties');
             }
 
+            // A schema key found here comes from a form rendered before its
+            // field existed — the typed value wins over the stale stored one;
+            // the field writeback overwrites later when the payload carries it.
             $this->setCustomProperty((string) $name, $value);
         }
+    }
+
+    private function isShieldedFromReconciliation(string $key): bool
+    {
+        return $this->isManagedProperty($key) || $this->isPreservedProperty($key) || $this->isSchemaProperty($key);
     }
 
     #[Assert\Callback]

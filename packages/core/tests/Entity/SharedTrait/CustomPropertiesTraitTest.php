@@ -48,6 +48,43 @@ final class CustomPropertiesTraitTest extends TestCase
         self::assertArrayNotHasKey('newCustomPropertyNotIndexed', $customProperties->customProperties);
     }
 
+    public function testPreservedPropertySurvivesTheMergeButStaysInTheTextarea(): void
+    {
+        $page = new Page();
+        $page->customProperties = ['apiWritten' => 'foo'];
+        $page->preserveCustomProperty('apiWritten');
+
+        // Preserved = shielded from the destructive reconciliation, NOT hidden.
+        self::assertStringContainsString('apiWritten', $page->getUnmanagedPropertiesAsYaml());
+
+        $page->setUnmanagedPropertiesFromYaml('other: kept', true);
+        self::assertSame('foo', $page->getCustomProperty('apiWritten'));
+        self::assertSame('kept', $page->getCustomProperty('other'));
+
+        // And the textarea can still overwrite it — no throw, field-less key.
+        $page->setUnmanagedPropertiesFromYaml("apiWritten: changed\nother: kept", true);
+        self::assertSame('changed', $page->getCustomProperty('apiWritten'));
+    }
+
+    public function testSchemaPropertyIsHiddenSurvivesTheMergeAndAcceptsAStaleTextareaValue(): void
+    {
+        $page = new Page();
+        $page->customProperties = ['author' => 'Robin'];
+        $page->registerSchemaPropertyKey('author');
+
+        // Hidden like a managed key: a generated field renders it instead.
+        self::assertSame('', $page->getUnmanagedPropertiesAsYaml());
+
+        // An empty textarea must not wipe it.
+        $page->setUnmanagedPropertiesFromYaml('', true);
+        self::assertSame('Robin', $page->getCustomProperty('author'));
+
+        // A stale form (opened before the field existed) still carries the key
+        // in the textarea: the typed value writes through instead of throwing.
+        $page->setUnmanagedPropertiesFromYaml('author: Alice', true);
+        self::assertSame('Alice', $page->getCustomProperty('author'));
+    }
+
     public function testManagedPropertyKeyIsHidden(): void
     {
         $customProperties = new Page();

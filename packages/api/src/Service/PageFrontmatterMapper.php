@@ -191,7 +191,7 @@ final readonly class PageFrontmatterMapper
             $custom = $frontmatter['customProperties'];
             $page->customProperties = $custom;
             foreach (array_keys($custom) as $key) {
-                $page->registerManagedPropertyKey($key);
+                $page->preserveCustomProperty($key);
             }
         }
 
@@ -202,7 +202,7 @@ final readonly class PageFrontmatterMapper
 
             $propKey = substr($key, \strlen('customProperty.'));
             $page->setCustomProperty($propKey, $value);
-            $page->registerManagedPropertyKey($propKey);
+            $page->preserveCustomProperty($propKey);
         }
 
         // Top-level keys backed by a flat converter (e.g. mainImageFormat) are
@@ -228,7 +228,7 @@ final readonly class PageFrontmatterMapper
                 }
 
                 $page->setCustomProperty($key, $converted);
-                $page->registerManagedPropertyKey($key);
+                $page->preserveCustomProperty($key);
             }
         }
 
@@ -259,7 +259,7 @@ final readonly class PageFrontmatterMapper
             }
 
             $page->setCustomProperty($key, $value);
-            $page->registerManagedPropertyKey($key);
+            $page->preserveCustomProperty($key);
         }
     }
 
