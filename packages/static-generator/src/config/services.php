@@ -3,6 +3,8 @@
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\Api\Controller\ApiControllerInterface;
 use Pushword\Core\PushwordCoreBundle;
+use Pushword\StaticGenerator\Cache\HostSweepDispatcher;
+use Pushword\StaticGenerator\Cache\MessageHandler\HostCacheRefreshHandler;
 use Pushword\StaticGenerator\Cache\MessageHandler\PageCacheRefreshHandler;
 use Pushword\StaticGenerator\Cache\PageCacheInvalidator;
 use Pushword\StaticGenerator\Controller\Api\StaticApiController;
@@ -29,6 +31,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $messengerExclude = $messengerInstalled ? [] : [
         __DIR__.'/../Cache/MessageHandler/',
         __DIR__.'/../Cache/PageCacheInvalidator.php',
+        __DIR__.'/../Cache/HostSweepDispatcher.php',
     ];
 
     // The JSON API controller requires the optional pushword/api package.
@@ -53,5 +56,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     if ($messengerInstalled) {
         $services->set(PageCacheInvalidator::class);
         $services->set(PageCacheRefreshHandler::class);
+        $services->set(HostCacheRefreshHandler::class);
+        $services->set(HostSweepDispatcher::class);
     }
 };

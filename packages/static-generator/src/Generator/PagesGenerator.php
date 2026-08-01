@@ -30,6 +30,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
 
         $stateManager = $this->staticAppGenerator->getStateManager();
         $hostName = $this->app->getMainHost();
+        $epoch = $this->staticAppGenerator->getSampledRenderEpoch($hostName);
 
         // Track current slugs for cleanup
         $currentSlugs = [];
@@ -42,7 +43,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
             $currentSlugs[] = $page->getSlug();
 
             // In incremental mode, skip pages that haven't changed
-            if ($this->incremental && ! $this->needsRegeneration($page, $hostName)) {
+            if ($this->incremental && ! $this->needsRegeneration($page, $hostName, $epoch)) {
                 $this->staticAppGenerator->writeln(\sprintf(
                     '[%d/%d] <comment>Skipped</comment> %s/%s (unchanged)',
                     $currentPage,
@@ -93,7 +94,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
                 }
 
                 // Update state for this page
-                $stateManager->setPageState($hostName, $page->getSlug(), $this->toImmutable($page->updatedAt)); // @phpstan-ignore argument.type
+                $stateManager->setPageState($hostName, $page->getSlug(), $this->toImmutable($page->updatedAt), $epoch); // @phpstan-ignore argument.type
             } catch (Throwable $e) {
                 if (true === $stopwatch?->isStarted('page:'.$slug)) {
                     $stopwatch->stop('page:'.$slug);
@@ -127,7 +128,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
     /**
      * Check if a page needs regeneration.
      */
-    private function needsRegeneration(Page $page, string $host): bool
+    private function needsRegeneration(Page $page, string $host, string $epoch): bool
     {
         // Redirections are always processed (they update the redirection manager)
         if ($page->hasRedirection() || [] !== $page->redirectFrom) {
@@ -139,7 +140,8 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         return $stateManager->needsRegeneration(
             $host,
             $page->getSlug(),
-            $this->toImmutable($page->updatedAt) // @phpstan-ignore argument.type
+            $this->toImmutable($page->updatedAt), // @phpstan-ignore argument.type
+            $epoch,
         );
     }
 
@@ -187,6 +189,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         $this->getPageRepository()->preloadTranslations($pages);
 
         $hostName = $this->app->getMainHost();
+        $epoch = $this->staticAppGenerator->getSampledRenderEpoch($hostName);
         $totalPages = \count($pages);
         $currentPage = 0;
         $pageStates = [];
@@ -194,7 +197,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         foreach ($pages as $page) {
             ++$currentPage;
 
-            if ($this->incremental && ! $this->needsRegeneration($page, $hostName)) {
+            if ($this->incremental && ! $this->needsRegeneration($page, $hostName, $epoch)) {
                 echo \sprintf("[%d/%d] Skipped %s/%s (unchanged)\n", $currentPage, $totalPages, $hostName, $page->getSlug() ?: 'index');
 
                 continue;
@@ -215,6 +218,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
                 $pageStates[$page->getSlug()] = [
                     'generatedAt' => new DateTimeImmutable()->format(DateTimeInterface::ATOM),
                     'pageUpdatedAt' => $this->toImmutable($page->updatedAt)->format(DateTimeInterface::ATOM), // @phpstan-ignore argument.type
+                    'epoch' => $epoch,
                 ];
             } catch (Throwable $e) {
                 echo \sprintf("[ERROR] %s/%s: %s\n", $hostName, $slug, $e->getMessage());

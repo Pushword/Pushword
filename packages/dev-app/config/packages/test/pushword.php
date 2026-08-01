@@ -18,6 +18,10 @@ return static function (ContainerConfigurator $container): void {
         // — e.g. the all-hosts page-scan status reads as non-idle. Mirrors the
         // per-worker version storage and PID file isolation below.
         'var_dir' => '%env(PUSHWORD_TEST_VAR_DIR)%',
+        // Per-worker render epoch. The default sits under kernel.cache_dir,
+        // which the test kernel shares across workers: one worker's bump would
+        // make another's incremental-generation assertions flake.
+        'render_epoch_dir' => '%env(PUSHWORD_TEST_VAR_DIR)%/render_epoch',
     ]);
 
     $container->extension('pushword_flat', [

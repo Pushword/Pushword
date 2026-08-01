@@ -2,9 +2,13 @@
 
 namespace Pushword\StaticGenerator\Tests\Cache;
 
+use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Event\PreUpdateEventArgs;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Cache\PageCacheSuppressor;
+use Pushword\Core\Cache\RenderEpoch;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Template\TemplateResolver;
@@ -29,11 +33,15 @@ final class PageCacheInvalidatorTest extends TestCase
     /** @var PageCacheFileManager&MockObject */
     private MockObject $fileManager;
 
+    /** @var RenderEpoch&MockObject */
+    private MockObject $renderEpoch;
+
     protected function setUp(): void
     {
         $this->bus = $this->createMock(MessageBusInterface::class);
         $this->suppressor = new PageCacheSuppressor();
         $this->fileManager = $this->createMock(PageCacheFileManager::class);
+        $this->renderEpoch = $this->createMock(RenderEpoch::class);
     }
 
     // --- postPersist / postUpdate ---
@@ -164,13 +172,169 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->suppressor->suppress(static fn () => $invalidator->preRemove($page));
     }
 
+    // --- listing-relevance → epoch bump (Phase 2) ---
+
+    public function testPersistingAPublishedPageBumpsTheEpoch(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev', published: true);
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->bus->method('dispatch')->willReturn(new Envelope(new PageCacheRefreshMessage(42)));
+        $this->renderEpoch->expects($this->once())->method('bump')->with('localhost.dev');
+
+        $invalidator->postPersist($page);
+    }
+
+    public function testPersistingADraftDoesNotBump(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev');
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->bus->method('dispatch')->willReturn(new Envelope(new PageCacheRefreshMessage(42)));
+        $this->renderEpoch->expects($this->never())->method('bump');
+
+        $invalidator->postPersist($page);
+    }
+
+    public function testMetadataChangeOnPublishedPageBumps(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev', published: true);
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->bus->method('dispatch')->willReturn(new Envelope(new PageCacheRefreshMessage(42)));
+        $this->renderEpoch->expects($this->once())->method('bump')->with('localhost.dev');
+
+        $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['title' => ['Old', 'New']]));
+        $invalidator->postUpdate($page);
+    }
+
+    public function testBumpHappensEvenWhenTheHostIsNotCacheMode(): void
+    {
+        // Full-static (GA-class) hosts consume the epoch via cron incremental:
+        // the bump must not be gated on cache mode, only the refresh message is.
+        $page = $this->makePersistedPage('localhost.dev', published: true);
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'none');
+
+        $this->bus->expects($this->never())->method('dispatch');
+        $this->renderEpoch->expects($this->once())->method('bump')->with('localhost.dev');
+
+        $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['slug' => ['old-slug', 'new-slug']]));
+        $invalidator->postUpdate($page);
+    }
+
+    public function testProseOnlyContentEditDoesNotBump(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev', published: true);
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->bus->method('dispatch')->willReturn(new Envelope(new PageCacheRefreshMessage(42)));
+        $this->renderEpoch->expects($this->never())->method('bump');
+
+        $changeSet = ['mainContent' => ['Some text with a [link](/about).', 'Rewritten text, same [link](/about).']];
+        $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, $changeSet));
+        $invalidator->postUpdate($page);
+    }
+
+    public function testContentEditChangingTheLinkSetBumps(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev', published: true);
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->bus->method('dispatch')->willReturn(new Envelope(new PageCacheRefreshMessage(42)));
+        $this->renderEpoch->expects($this->once())->method('bump')->with('localhost.dev');
+
+        $changeSet = ['mainContent' => ['No links here.', 'Now with a [link](/about).']];
+        $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, $changeSet));
+        $invalidator->postUpdate($page);
+    }
+
+    public function testDraftMetadataChangeDoesNotBump(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev');
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->bus->method('dispatch')->willReturn(new Envelope(new PageCacheRefreshMessage(42)));
+        $this->renderEpoch->expects($this->never())->method('bump');
+
+        $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['title' => ['Old', 'New']]));
+        $invalidator->postUpdate($page);
+    }
+
+    public function testUnpublishingBumps(): void
+    {
+        // publishedAt → null: the page must drop out of every listing. The page
+        // reads as unpublished already, the changeset carries the transition.
+        $page = $this->makePersistedPage('localhost.dev');
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->bus->method('dispatch')->willReturn(new Envelope(new PageCacheRefreshMessage(42)));
+        $this->renderEpoch->expects($this->once())->method('bump')->with('localhost.dev');
+
+        $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['publishedAt' => [new DateTime('-1 day'), null]]));
+        $invalidator->postUpdate($page);
+    }
+
+    public function testSuppressedUpdateDoesNotBump(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev', published: true);
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->renderEpoch->expects($this->never())->method('bump');
+
+        $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['title' => ['Old', 'New']]));
+        $this->suppressor->suppress(static fn () => $invalidator->postUpdate($page));
+    }
+
+    public function testRemovingAPublishedPageBumps(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev', published: true);
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->fileManager->expects($this->once())->method('delete')->with($page);
+        $this->renderEpoch->expects($this->once())->method('bump')->with('localhost.dev');
+
+        $invalidator->preRemove($page);
+    }
+
+    public function testRemovingADraftDeletesWithoutBump(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev');
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->fileManager->expects($this->once())->method('delete')->with($page);
+        $this->renderEpoch->expects($this->never())->method('bump');
+
+        $invalidator->preRemove($page);
+    }
+
+    public function testResetDrainsPendingRelevance(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev', published: true);
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->bus->method('dispatch')->willReturn(new Envelope(new PageCacheRefreshMessage(42)));
+        $this->renderEpoch->expects($this->never())->method('bump');
+
+        $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['title' => ['Old', 'New']]));
+        $invalidator->reset();
+        $invalidator->postUpdate($page);
+    }
+
     // --- helpers ---
+
+    /**
+     * @param array<string, array{mixed, mixed}> $changeSet
+     */
+    private function makePreUpdateArgs(Page $page, array $changeSet): PreUpdateEventArgs
+    {
+        return new PreUpdateEventArgs($page, self::createStub(EntityManagerInterface::class), $changeSet);
+    }
 
     private function makeInvalidator(string $host, string $cacheMode): PageCacheInvalidator
     {
         $registry = $this->makeRegistry($host, $cacheMode);
 
-        return new PageCacheInvalidator($this->bus, $registry, $this->suppressor, $this->fileManager);
+        return new PageCacheInvalidator($this->bus, $registry, $this->suppressor, $this->fileManager, $this->renderEpoch);
     }
 
     private function makeRegistry(string $host, string $cacheMode): SiteRegistry
@@ -194,10 +358,12 @@ final class PageCacheInvalidatorTest extends TestCase
         );
     }
 
-    private function makePersistedPage(string $host): Page
+    private function makePersistedPage(string $host, bool $published = false): Page
     {
         $page = new Page();
         $page->host = $host;
+        // new Page() defaults publishedAt to now — a draft needs it nulled.
+        $page->publishedAt = $published ? new DateTime('-1 day') : null;
 
         // id has asymmetric visibility (private(set)) — set via Reflection to simulate a persisted entity.
         $ref = new ReflectionProperty(Page::class, 'id');

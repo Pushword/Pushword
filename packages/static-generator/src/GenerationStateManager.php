@@ -14,7 +14,7 @@ final class GenerationStateManager
 {
     private const string STATE_FILE = '.static-generation-state.json';
 
-    /** @var array<string, array{lastGeneration: string, pages: array<string, array{generatedAt: string, pageUpdatedAt: string}>}> */
+    /** @var array<string, array{lastGeneration: string, sweptEpoch?: string, pages: array<string, array{generatedAt: string, pageUpdatedAt: string, epoch?: string}>}> */
     private array $state = [];
 
     private bool $loaded = false;
@@ -54,9 +54,20 @@ final class GenerationStateManager
 
         $content = $this->filesystem->readFile($path);
 
-        /** @var array<string, array{lastGeneration: string, pages: array<string, array{generatedAt: string, pageUpdatedAt: string}>}>|null $decoded */
+        /** @var array<string, array{lastGeneration: string, sweptEpoch?: string, pages: array<string, array{generatedAt: string, pageUpdatedAt: string, epoch?: string}>}>|null $decoded */
         $decoded = json_decode($content, true);
         $this->state = $decoded ?? [];
+    }
+
+    /**
+     * Drop the in-memory copy and re-read from disk. Long-lived processes
+     * (messenger workers) call this before comparing against state another
+     * process may have written since.
+     */
+    public function reload(): void
+    {
+        $this->loaded = false;
+        $this->load();
     }
 
     public function save(): void
@@ -102,7 +113,7 @@ final class GenerationStateManager
         return new DateTimeImmutable($this->state[$host]['pages'][$slug]['generatedAt']);
     }
 
-    public function setPageState(string $host, string $slug, DateTimeImmutable $pageUpdatedAt): void
+    public function setPageState(string $host, string $slug, DateTimeImmutable $pageUpdatedAt, string $epoch): void
     {
         $this->load();
 
@@ -114,13 +125,16 @@ final class GenerationStateManager
         $this->state[$host]['pages'][$slug] = [
             'generatedAt' => $now->format(DateTimeInterface::ATOM),
             'pageUpdatedAt' => $pageUpdatedAt->format(DateTimeInterface::ATOM),
+            'epoch' => $epoch,
         ];
     }
 
     /**
-     * Check if a page needs regeneration based on its updatedAt timestamp.
+     * A page is stale when its updatedAt changed (a Page write) or when the host
+     * epoch moved since it was generated (anything else: snippet, media, template,
+     * another page). Entries written before the epoch existed read as stale.
      */
-    public function needsRegeneration(string $host, string $slug, DateTimeImmutable $pageUpdatedAt): bool
+    public function needsRegeneration(string $host, string $slug, DateTimeImmutable $pageUpdatedAt, string $currentEpoch): bool
     {
         $this->load();
 
@@ -128,9 +142,35 @@ final class GenerationStateManager
             return true;
         }
 
-        $storedUpdatedAt = $this->state[$host]['pages'][$slug]['pageUpdatedAt'];
+        $stored = $this->state[$host]['pages'][$slug];
+        if ($pageUpdatedAt->format(DateTimeInterface::ATOM) !== $stored['pageUpdatedAt']) {
+            return true;
+        }
 
-        return $pageUpdatedAt->format(DateTimeInterface::ATOM) !== $storedUpdatedAt;
+        return $currentEpoch !== ($stored['epoch'] ?? null);
+    }
+
+    /**
+     * Epoch sampled at the start of the last completed generation of this host.
+     * Always the sampled value, never the epoch current at completion: a bump
+     * landing mid-generation must leave the host looking unswept.
+     */
+    public function getSweptEpoch(string $host): ?string
+    {
+        $this->load();
+
+        return $this->state[$host]['sweptEpoch'] ?? null;
+    }
+
+    public function setSweptEpoch(string $host, string $epoch): void
+    {
+        $this->load();
+
+        if (! isset($this->state[$host])) {
+            $this->state[$host] = ['lastGeneration' => '', 'pages' => []];
+        }
+
+        $this->state[$host]['sweptEpoch'] = $epoch;
     }
 
     /**
@@ -181,7 +221,7 @@ final class GenerationStateManager
 
         $this->load();
 
-        /** @var array<string, array{pages: array<string, array{generatedAt: string, pageUpdatedAt: string}>}> $workerState */
+        /** @var array<string, array{pages: array<string, array{generatedAt: string, pageUpdatedAt: string, epoch?: string}>}> $workerState */
         $workerState = json_decode((string) file_get_contents($workerStateFile), true) ?? [];
 
         foreach ($workerState as $host => $hostData) {

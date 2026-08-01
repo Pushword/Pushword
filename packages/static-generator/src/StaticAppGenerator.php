@@ -4,6 +4,7 @@ namespace Pushword\StaticGenerator;
 
 use LogicException;
 use Psr\Log\LoggerInterface;
+use Pushword\Core\Cache\RenderEpoch;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteConfig;
@@ -19,6 +20,8 @@ use Pushword\StaticGenerator\Generator\RedirectionManager;
 use RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\FlockStore;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Stopwatch\Stopwatch;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -41,17 +44,34 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
     private int $workers = 0;
 
+    /** @var array<string, string> */
+    private array $sampledEpochs = [];
+
+    private ?LockFactory $lockFactory = null;
+
     public function __construct(
         private readonly SiteRegistry $apps,
         private readonly GeneratorBag $generatorBag,
         private readonly RedirectionManager $redirectionManager,
         private readonly LoggerInterface $logger,
         private readonly GenerationStateManager $stateManager,
+        private readonly RenderEpoch $renderEpoch,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly PageRepository $pageRepository,
         private readonly string $projectDir,
         private readonly string $environment,
     ) {
+    }
+
+    /**
+     * Epoch sampled once per host per generate() call. Pages are stamped with the
+     * sample and the sample is recorded as sweptEpoch on success — never the
+     * then-current value, so a bump landing mid-generation always reads as stale
+     * on the next pass instead of being silently absorbed.
+     */
+    public function getSampledRenderEpoch(string $host): string
+    {
+        return $this->sampledEpochs[$host] ??= $this->renderEpoch->get($host);
     }
 
     public function setWorkers(int $workers): void
@@ -88,18 +108,39 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     public function generate(?string $hostToGenerate = null, bool $incremental = false): int
     {
         $this->incremental = $incremental;
+        // A messenger worker reuses this service across messages: a sample kept
+        // from a previous sweep would stamp post-bump renders with a pre-bump
+        // epoch and the debounce would loop forever.
+        $this->sampledEpochs = [];
         $i = 0;
         foreach ($this->apps->getHosts() as $host) {
             if (null !== $hostToGenerate && $hostToGenerate !== $host) {
                 continue;
             }
 
-            $this->generateHost($host);
-            $this->redirectionManager->reset();
+            // Serialize whole-host runs (message handler, cron, manual): each run
+            // read-modify-writes the shared state file. Flock releases on process
+            // death, so no stale-lock TTL is needed. Workers spawned by this run
+            // are not serialized — they write per-worker files the parent merges.
+            $lock = $this->getLockFactory()->createLock('pw-static-'.$host);
+            $lock->acquire(true);
+
+            try {
+                $this->generateHost($host);
+                $this->redirectionManager->reset();
+            } finally {
+                $lock->release();
+            }
+
             ++$i;
         }
 
         return $i;
+    }
+
+    private function getLockFactory(): LockFactory
+    {
+        return $this->lockFactory ??= new LockFactory(new FlockStore());
     }
 
     public function generatePage(string $host, string $page): void
@@ -139,6 +180,10 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     private function generateHost(string $host): void
     {
         $app = $this->apps->switchSite($host)->get();
+
+        // Sample before any rendering: pages must never be stamped with an epoch
+        // newer than the content they were rendered from.
+        $sampledEpoch = $this->getSampledRenderEpoch($app->getMainHost());
 
         if (self::isCacheMode($app)) {
             $this->generateHostInCacheMode($app);
@@ -202,6 +247,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         // Save state after successful generation
         if (! $this->abortGeneration) {
             $this->stateManager->setLastGenerationTime($host);
+            $this->stateManager->setSweptEpoch($app->getMainHost(), $sampledEpoch);
             $this->stateManager->save();
         }
 
@@ -218,6 +264,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
      */
     private function generateHostInCacheMode(SiteConfig $app): void
     {
+        $sampledEpoch = $this->getSampledRenderEpoch($app->getMainHost());
         $cacheDir = $this->getCacheDir($app);
         $app->setCustomProperty('static_dir', $cacheDir);
 
@@ -231,6 +278,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
         if (! $this->abortGeneration) {
             $this->stateManager->setLastGenerationTime($app->getMainHost());
+            $this->stateManager->setSweptEpoch($app->getMainHost(), $sampledEpoch);
             $this->stateManager->save();
         }
 
@@ -349,6 +397,9 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         // codebase unless compiled scripts persist on disk. The file cache is
         // shared across workers and successive builds (~-18% per fresh worker
         // pass); the flags are inert when the CLI has no opcache extension.
+        // The cache also outlives composer update, so timestamp validation is
+        // forced on: a host ini tuning it off would silently keep serving
+        // entries compiled from the pre-update sources.
         $opcacheDir = $stateDir.'/cache/opcache';
         new Filesystem()->mkdir($opcacheDir);
 
@@ -366,6 +417,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
                 'php',
                 '-d', 'opcache.enable_cli=1',
                 '-d', 'opcache.file_cache='.$opcacheDir,
+                '-d', 'opcache.validate_timestamps=1',
                 'bin/console', 'pw:static:worker', $host,
                 '--slugs='.implode(',', $chunk),
                 '--state-file='.$stateFile,

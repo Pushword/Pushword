@@ -1,6 +1,15 @@
 framework:
     test: true
     lock: "%env(LOCK_DSN)%"
+    messenger:
+        transports:
+            # Host sweeps mirror a production async install: queued, never
+            # consumed inline. Handled synchronously (the dev default), every
+            # admin edit of a listing-relevant field or a media would run a
+            # whole-host sweep at kernel.terminate inside the test.
+            host_sweep: "in-memory://"
+        routing:
+            'Pushword\StaticGenerator\Cache\Message\HostCacheRefreshMessage': host_sweep
     cache:
         # Per-worker cache pools (cache.app persists the MediaRepository
         # filename index across requests). The default directory sits in the
