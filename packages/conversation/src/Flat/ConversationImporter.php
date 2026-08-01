@@ -54,7 +54,7 @@ final class ConversationImporter
         $this->importFromCsv(
             $this->buildCsvPath($app),
             $app->getMainHost(),
-            fn (array $row, string $_host): ?Message => $this->findMessage($row['id'] ?? null),
+            fn (array $row, string $_host): ?Message => $this->resolveMessage($row),
         );
     }
 
@@ -78,6 +78,33 @@ final class ConversationImporter
         }
 
         return $this->getMessageRepository()->find((int) $id);
+    }
+
+    /**
+     * Uuid is the merge identity: ids diverge between databases written
+     * independently (each machine auto-increments on its own). Falling back to
+     * the id is only safe for rows the uuid rollout has not reached — a row
+     * whose id matches a message already claimed by a DIFFERENT uuid is a
+     * distinct message from another database lineage, not an update.
+     *
+     * @param array<string, string|null> $row
+     */
+    private function resolveMessage(array $row): ?Message
+    {
+        $uuid = trim($row['uuid'] ?? '');
+        if ('' === $uuid) {
+            return $this->findMessage($row['id'] ?? null);
+        }
+
+        $message = $this->getMessageRepository()->findOneBy(['uuid' => $uuid]);
+        if (null !== $message) {
+            return $message;
+        }
+
+        // Legacy row not yet backfilled: adopt the CSV uuid onto it.
+        $byId = $this->findMessage($row['id'] ?? null);
+
+        return null !== $byId && null === $byId->uuid ? $byId : null;
     }
 
     /**
@@ -140,6 +167,13 @@ final class ConversationImporter
         $updatedAtValue = $row['updatedAt'] ?? null;
         if (null !== $updatedAtValue && '' !== trim($updatedAtValue)) {
             $data['updatedAt'] = trim($updatedAtValue);
+        }
+
+        // Deletion is sticky: an empty CSV cell never clears an existing
+        // tombstone — a stale file must not resurrect a deleted message.
+        $deletedAtValue = $row['deletedAt'] ?? null;
+        if (null !== $deletedAtValue && '' !== trim($deletedAtValue)) {
+            $data['deletedAt'] = trim($deletedAtValue);
         }
 
         $mediaList = $this->extractMediaList($row['mediaList'] ?? null);
@@ -259,7 +293,7 @@ final class ConversationImporter
     private function extractDates(array $data): array
     {
         $dates = [];
-        foreach (['publishedAt', 'createdAt', 'updatedAt'] as $field) {
+        foreach (['publishedAt', 'createdAt', 'updatedAt', 'deletedAt'] as $field) {
             $value = $data[$field] ?? null;
             unset($data[$field]);
 
@@ -291,6 +325,10 @@ final class ConversationImporter
 
         if (isset($dates['updatedAt'])) {
             $message->updatedAt = $dates['updatedAt'];
+        }
+
+        if (isset($dates['deletedAt'])) {
+            $message->deletedAt = $dates['deletedAt'];
         }
     }
 
@@ -397,6 +435,7 @@ final class ConversationImporter
                 $ignoredAttributes[] = 'publishedAt';
                 $ignoredAttributes[] = 'createdAt';
                 $ignoredAttributes[] = 'updatedAt';
+                $ignoredAttributes[] = 'deletedAt';
 
                 $options[AbstractNormalizer::IGNORED_ATTRIBUTES] = $ignoredAttributes;
                 $options[AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES] = true;
@@ -406,6 +445,15 @@ final class ConversationImporter
                     $normalizedMessage = $this->denormalizer->denormalize($data, $messageClass, 'array', $options);
 
                     $this->applyDates($normalizedMessage, $dates);
+
+                    // Keep the CSV identity: a created message must carry the
+                    // row's uuid (not a fresh one) so it stays the same message
+                    // on every machine; on a legacy id-matched row this is the
+                    // backfill adoption.
+                    $rowUuid = trim($row['uuid'] ?? '');
+                    if ('' !== $rowUuid) {
+                        $normalizedMessage->uuid = $rowUuid;
+                    }
 
                     // Sync media: clear existing then re-add from CSV
                     if (isset($options[AbstractNormalizer::OBJECT_TO_POPULATE])) {

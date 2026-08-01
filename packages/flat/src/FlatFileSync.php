@@ -142,7 +142,7 @@ final class FlatFileSync
 
         if (\in_array($entity, ['conversation', 'all'], true) && null !== $this->conversationSync) {
             $this->stopwatch?->start('conversation.sync');
-            $this->conversationSync->export($host);
+            $this->conversationSync->export($host, $force);
             $this->stopwatch?->stop('conversation.sync');
         }
 

@@ -121,6 +121,15 @@ final class ConversationApiControllerTest extends WebTestCase
 
         $response = $this->request('GET', '/api/conversation/'.$id);
         self::assertSame(404, $response->getStatusCode());
+
+        // Gone for the API, but the row must survive as a tombstone: it carries
+        // the deletion to databases synced through the flat CSV.
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $message = $em->getRepository(Message::class)->find($id);
+        self::assertInstanceOf(Message::class, $message);
+        self::assertNotNull($message->deletedAt);
     }
 
     public function testListFiltersByHost(): void

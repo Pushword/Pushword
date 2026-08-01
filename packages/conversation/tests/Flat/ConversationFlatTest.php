@@ -57,7 +57,7 @@ final class ConversationFlatTest extends KernelTestCase
         $appPool = self::getContainer()->get(SiteRegistry::class);
         $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
 
-        $this->exporter = new ConversationExporter();
+        $this->exporter = new ConversationExporter($this->entityManager);
         $this->exporter->initConversationContext(
             $appPool,
             $contentDirFinder,

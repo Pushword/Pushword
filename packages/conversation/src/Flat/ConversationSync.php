@@ -29,6 +29,11 @@ final class ConversationSync implements ConversationSyncInterface
         if (! $forceExport && $this->mustImport($host)) {
             $this->import($host);
 
+            // Re-export the merged union: the database may hold messages the
+            // CSV has never seen (received while the file lived on another
+            // machine) and they must flow back into the file.
+            $this->export($host, force: true);
+
             return;
         }
 
@@ -51,7 +56,7 @@ final class ConversationSync implements ConversationSyncInterface
         }
     }
 
-    public function export(?string $host = null): void
+    public function export(?string $host = null, bool $force = false): void
     {
         $isGlobalMode = $this->isGlobalMode($host);
 
@@ -66,7 +71,7 @@ final class ConversationSync implements ConversationSyncInterface
 
         // Skip if CSV is already up to date (no messages changed since last export)
         $csvPath = $this->getCsvPath($host);
-        if ($this->filesystem->exists($csvPath)) {
+        if (! $force && $this->filesystem->exists($csvPath)) {
             $lastMessage = $this->importer->getLastUpdatedMessage(
                 $isGlobalMode ? null : $this->resolveHost($host),
             );

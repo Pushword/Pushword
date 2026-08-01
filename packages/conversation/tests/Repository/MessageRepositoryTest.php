@@ -5,6 +5,7 @@ namespace Pushword\Conversation\Tests\Repository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Conversation\Repository\MessageRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -190,6 +191,37 @@ final class MessageRepositoryTest extends KernelTestCase
         $filteredTest = array_values($filteredTest);
         self::assertCount(1, $filteredTest);
         self::assertSame('5 star review', $filteredTest[0]->getContent());
+    }
+
+    public function testPublishedQueriesExcludeTombstonedMessages(): void
+    {
+        $alive = $this->createTestReview('Tombstone check alive', 1);
+        $deleted = $this->createTestReview('Tombstone check deleted', 1);
+        $deleted->softDelete();
+
+        $this->entityManager->persist($alive);
+        $this->entityManager->persist($deleted);
+        $this->entityManager->flush();
+
+        $this->trackCreatedMessage($alive);
+        $this->trackCreatedMessage($deleted);
+
+        $reviewContents = array_map(
+            static fn (Review $r): string => $r->getContent(),
+            array_filter(
+                $this->messageRepository->getPublishedReviewsByTag([]),
+                static fn (mixed $r): bool => $r instanceof Review && str_starts_with($r->getContent(), 'Tombstone check')
+            ),
+        );
+        self::assertSame(['Tombstone check alive'], array_values($reviewContents));
+
+        /** @var Message[] $byReferring */
+        $byReferring = $this->messageRepository->getMessagesPublishedByReferring('/test-page');
+        $referringContents = array_map(
+            static fn (Message $m): string => $m->getContent(),
+            array_filter($byReferring, static fn (Message $m): bool => str_starts_with($m->getContent(), 'Tombstone check')),
+        );
+        self::assertSame(['Tombstone check alive'], array_values($referringContents));
     }
 
     private function createTestReview(string $content, int $weight, int $rating = 5): Review

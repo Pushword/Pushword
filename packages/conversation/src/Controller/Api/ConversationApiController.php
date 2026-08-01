@@ -30,7 +30,8 @@ final class ConversationApiController extends AbstractApiController
     public function list(Request $request): JsonResponse
     {
         $pagination = $this->paginationParams($request);
-        $qb = $this->messageRepository->createQueryBuilder('m');
+        $qb = $this->messageRepository->createQueryBuilder('m')
+            ->andWhere('m.deletedAt IS NULL');
 
         if (null !== $request->query->get('host')) {
             $qb->andWhere('m.host = :host')->setParameter('host', $request->query->getString('host'));
@@ -74,7 +75,8 @@ final class ConversationApiController extends AbstractApiController
     public function item(int $id, Request $request): JsonResponse
     {
         $message = $this->messageRepository->find($id);
-        if (! $message instanceof Message) {
+        // A tombstoned message is gone as far as the API contract goes.
+        if (! $message instanceof Message || null !== $message->deletedAt) {
             return $this->notFound('Message not found');
         }
 
@@ -101,7 +103,9 @@ final class ConversationApiController extends AbstractApiController
 
     private function doDelete(Message $message): JsonResponse
     {
-        $this->entityManager->remove($message);
+        // Tombstone, not removal: the row carries the deletion to databases
+        // synced through the flat CSV (see Message::$deletedAt).
+        $message->softDelete();
         $this->entityManager->flush();
 
         return $this->noContent();

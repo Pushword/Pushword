@@ -106,6 +106,18 @@ final class ReviewApiControllerTest extends WebTestCase
         $id = $this->seed();
         $response = $this->request('DELETE', '/api/review/'.$id);
         self::assertSame(204, $response->getStatusCode());
+
+        $response = $this->request('GET', '/api/review/'.$id);
+        self::assertSame(404, $response->getStatusCode());
+
+        // Gone for the API, but the row must survive as a tombstone: it carries
+        // the deletion to databases synced through the flat CSV.
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $review = $em->getRepository(Review::class)->find($id);
+        self::assertInstanceOf(Review::class, $review);
+        self::assertNotNull($review->deletedAt);
     }
 
     public function testListFiltersByHost(): void

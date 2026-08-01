@@ -4,6 +4,9 @@ namespace Pushword\Conversation\Controller\Admin;
 
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
@@ -11,6 +14,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
@@ -56,6 +61,31 @@ class ConversationCrudController extends AbstractAdminCrudController
     public function configureActions(Actions $actions): Actions
     {
         return $actions->add(Crud::PAGE_EDIT, Action::DELETE);
+    }
+
+    /**
+     * Delete is a tombstone (see Message::$deletedAt): the row must survive to
+     * carry the deletion through the flat CSV to other databases.
+     */
+    #[Override]
+    public function deleteEntity(EntityManagerInterface $entityManager, object $entityInstance): void
+    {
+        $entityInstance->softDelete();
+        $entityManager->flush();
+    }
+
+    #[Override]
+    public function createIndexQueryBuilder(
+        SearchDto $searchDto,
+        EntityDto $entityDto,
+        FieldCollection $fields,
+        FilterCollection $filters,
+    ): QueryBuilder {
+        $queryBuilder = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
+
+        $alias = $queryBuilder->getRootAliases()[0] ?? 'entity';
+
+        return $queryBuilder->andWhere(\sprintf('%s.deletedAt IS NULL', $alias));
     }
 
     #[Override]

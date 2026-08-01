@@ -28,7 +28,8 @@ final class ReviewApiController extends AbstractApiController
     public function list(Request $request): JsonResponse
     {
         $pagination = $this->paginationParams($request);
-        $qb = $this->entityManager->getRepository(Review::class)->createQueryBuilder('r');
+        $qb = $this->entityManager->getRepository(Review::class)->createQueryBuilder('r')
+            ->andWhere('r.deletedAt IS NULL');
 
         if (null !== $request->query->get('host')) {
             $qb->andWhere('r.host = :host')->setParameter('host', $request->query->getString('host'));
@@ -68,7 +69,8 @@ final class ReviewApiController extends AbstractApiController
     public function item(int $id, Request $request): JsonResponse
     {
         $review = $this->entityManager->getRepository(Review::class)->find($id);
-        if (! $review instanceof Review) {
+        // A tombstoned review is gone as far as the API contract goes.
+        if (! $review instanceof Review || null !== $review->deletedAt) {
             return $this->notFound('Review not found');
         }
 
@@ -95,7 +97,9 @@ final class ReviewApiController extends AbstractApiController
 
     private function doDelete(Review $review): JsonResponse
     {
-        $this->entityManager->remove($review);
+        // Tombstone, not removal: the row carries the deletion to databases
+        // synced through the flat CSV (see Message::$deletedAt).
+        $review->softDelete();
         $this->entityManager->flush();
 
         return $this->noContent();

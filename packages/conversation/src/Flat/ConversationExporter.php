@@ -4,6 +4,7 @@ namespace Pushword\Conversation\Flat;
 
 use DateTimeInterface;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\ManyToMany;
 use League\Csv\Writer;
@@ -17,6 +18,7 @@ final class ConversationExporter
     use ConversationContextTrait;
 
     public function __construct(
+        private readonly EntityManagerInterface $entityManager,
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
@@ -34,6 +36,8 @@ final class ConversationExporter
         if ([] === $messages) {
             return;
         }
+
+        $this->backfillUuids($messages);
 
         $baseColumns = $this->detectBaseColumns($messages[0] ?? null);
         $customColumns = $this->collectCustomColumns($messages);
@@ -70,6 +74,28 @@ final class ConversationExporter
         }
 
         $this->filesystem->rename($tempPath, $csvPath, true);
+    }
+
+    /**
+     * Messages predating the uuid column get one on their first export, and it
+     * must be flushed: the uuid written to the CSV is only an identity if the
+     * database keeps the same value.
+     *
+     * @param Message[] $messages
+     */
+    private function backfillUuids(array $messages): void
+    {
+        $backfilled = false;
+        foreach ($messages as $message) {
+            if (null === $message->uuid) {
+                $message->getOrGenerateUuid();
+                $backfilled = true;
+            }
+        }
+
+        if ($backfilled) {
+            $this->entityManager->flush();
+        }
     }
 
     /**

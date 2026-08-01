@@ -12,5 +12,5 @@ interface ConversationSyncInterface
 
     public function import(?string $host = null): void;
 
-    public function export(?string $host = null): void;
+    public function export(?string $host = null, bool $force = false): void;
 }

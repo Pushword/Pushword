@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Entity;
 
+use DateTime;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,6 +15,7 @@ use Pushword\Core\Entity\SharedTrait\MediaListTrait;
 use Pushword\Core\Entity\SharedTrait\Taggable;
 use Pushword\Core\Entity\SharedTrait\TagsTrait;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
+use Pushword\Core\Entity\SharedTrait\UuidTrait;
 use Pushword\Core\Entity\SharedTrait\WeightTrait;
 use Stringable;
 use Symfony\Component\HttpFoundation\IpUtils;
@@ -42,6 +44,8 @@ class Message implements Stringable, Taggable, IdInterface
 
     use ExtensiblePropertiesTrait;
 
+    use UuidTrait;
+
     #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]
     protected ?string $authorName = '';
 
@@ -69,12 +73,28 @@ class Message implements Stringable, Taggable, IdInterface
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     protected ?DateTimeInterface $publishedAt = null;
 
+    /**
+     * Deletion tombstone: the row is kept (and synced through the flat CSV) so
+     * the deletion propagates to databases that no longer travel together — a
+     * hard delete would resurrect on the next merge. Import never clears it.
+     */
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    public ?DateTimeInterface $deletedAt = null;
+
     #[ORM\Column(type: Types::STRING, length: 5, nullable: true)]
     public ?string $locale = null;
 
     public function __construct()
     {
         $this->initTimestampableProperties();
+        $this->getOrGenerateUuid();
+    }
+
+    public function softDelete(): void
+    {
+        $this->deletedAt = new DateTime();
+        // Bump updatedAt so the sync sees the row as changed and exports it.
+        $this->updatedAt = new DateTime();
     }
 
     public function getPublishedAt(): ?DateTimeInterface

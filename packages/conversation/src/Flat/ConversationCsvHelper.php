@@ -11,6 +11,7 @@ final class ConversationCsvHelper
 {
     public const array BASE_COLUMNS = [
         'id',
+        'uuid',
         'type',
         'host',
         'referring',
@@ -23,6 +24,7 @@ final class ConversationCsvHelper
         'publishedAt',
         'createdAt',
         'updatedAt',
+        'deletedAt',
     ];
 
     public static function formatDate(?DateTimeInterface $date): ?string

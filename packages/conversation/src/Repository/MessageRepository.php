@@ -30,6 +30,7 @@ class MessageRepository extends ServiceEntityRepository
 
         $queryBuilder = $this->createQueryBuilder('m')
             ->andWhere('m.publishedAt is NOT NULL')
+            ->andWhere('m.deletedAt IS NULL')
             ->andWhere('m.referring =  :referring OR m.tags LIKE :tag')
             ->setParameter('referring', $referring)
             ->setParameter('tag', '%"'.trim($referring).'"%')
@@ -80,6 +81,7 @@ class MessageRepository extends ServiceEntityRepository
     {
         $queryBuilder = $this->createQueryBuilder('m')
             ->andWhere('m.publishedAt is NOT NULL')
+            ->andWhere('m.deletedAt IS NULL')
             // permits to filter only reviews
             ->andWhere('m.customProperties LIKE :noteFilter')
             ->setParameter('noteFilter', '%"rating":%');
@@ -111,6 +113,7 @@ class MessageRepository extends ServiceEntityRepository
     {
         $queryBuilder = $this->createQueryBuilder('m')
             ->select('m.tags')
+            ->andWhere('m.deletedAt IS NULL')
             ->setMaxResults(30000);
 
         /** @var array{tags: string[]}[] */
