@@ -215,6 +215,19 @@ final class SiteConfigTest extends TestCase
         self::assertSame('https://localhost.dev', $site->get('base_url'));
     }
 
+    /**
+     * Regression: normalizePropertyName() used to lowercase 'baseUrl' to 'baseurl',
+     * which only resolved while a getter existed (method_exists is case-insensitive,
+     * property_exists is not). The router asks for the camelCase key.
+     */
+    public function testGetResolvesCamelCaseKey(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+
+        self::assertSame('https://localhost.dev', $site->get('baseUrl'));
+        self::assertSame('https://localhost.dev', $site->getStr('baseUrl', ''));
+    }
+
     public function testGetResolvesCustomProperty(): void
     {
         $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');

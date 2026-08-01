@@ -272,25 +272,21 @@ final class PageImporter extends AbstractImporter
                 continue;
             }
 
+            if ('publishedAt' === $camelKey) {
+                $value = PublishedAtConverter::fromFlatValue($value);
+                $publishedAtExplicitlySet = true;
+            } elseif (\in_array($camelKey, ['createdAt', 'updatedAt', 'holdPublicationAt'], true) && \is_scalar($value)) {
+                $value = new DateTime((string) $value);
+            }
+
             $setter = 'set'.ucfirst($camelKey);
             if (method_exists($page, $setter)) {
-                if ('publishedAt' === $camelKey) {
-                    $value = PublishedAtConverter::fromFlatValue($value);
-                    $publishedAtExplicitlySet = true;
-                } elseif (\in_array($camelKey, ['createdAt', 'updatedAt', 'holdPublicationAt'], true) && \is_scalar($value)) {
-                    $value = new DateTime((string) $value);
-                }
-
                 $page->$setter($value); // @phpstan-ignore-line
 
                 continue;
             }
 
             if (Entity::isPubliclyWritableProperty($page, $camelKey)) {
-                if (\in_array($camelKey, ['createdAt', 'updatedAt', 'holdPublicationAt'], true) && \is_scalar($value)) {
-                    $value = new DateTime((string) $value);
-                }
-
                 $page->{$camelKey} = $value; // @phpstan-ignore property.dynamicName
 
                 continue;

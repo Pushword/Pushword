@@ -3,6 +3,7 @@
 namespace Pushword\Core\Tests\Entity;
 
 use DateTime;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
@@ -104,6 +105,23 @@ final class PageTest extends TestCase
         // Nor does any other directive carry `none` inside it.
         $page->setMetaRobots('nosnippet, notranslate, noarchive');
         self::assertTrue($page->isIndexable());
+    }
+
+    public function testAPageCannotBeItsOwnParent(): void
+    {
+        $page = new Page();
+        $this->expectException(LogicException::class);
+        $page->parentPage = $page;
+    }
+
+    public function testParentAssignmentRejectsCycles(): void
+    {
+        $parent = new Page();
+        $child = new Page();
+        $child->parentPage = $parent;
+
+        $this->expectException(LogicException::class);
+        $parent->parentPage = $child;
     }
 
     public function testRedirectFromNormalizesMapListAndRows(): void

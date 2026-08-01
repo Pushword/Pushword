@@ -540,22 +540,18 @@ class MediaImporter extends AbstractImporter
         foreach ($data as $key => $value) {
             $key = self::underscoreToCamelCase((string) $key);
 
+            if (\in_array($key, ['createdAt', 'updatedAt', 'fileName'], true)) {
+                continue;
+            }
+
             $setter = 'set'.ucfirst($key);
             if (method_exists($media, $setter)) {
-                if (\in_array($key, ['createdAt', 'updatedAt', 'fileName'], true)) {
-                    continue;
-                }
-
                 $media->$setter($value); // @phpstan-ignore-line
 
                 continue;
             }
 
             if (Entity::isPubliclyWritableProperty($media, $key)) {
-                if (\in_array($key, ['createdAt', 'updatedAt'], true)) {
-                    continue;
-                }
-
                 $media->{$key} = $value; // @phpstan-ignore property.dynamicName
 
                 continue;
