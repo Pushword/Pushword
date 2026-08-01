@@ -14,7 +14,7 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
-## To 1.0.0-rc806
+## To 1.0.0-rc807
 
 ### The deploy push counts its deletions before making them
 
