@@ -18,10 +18,13 @@
 # The push always protects prod's database and sync state (var/app.db*,
 # var/flat-sync/) whatever PUSH_EXCLUDES says; --ship-db sends the db file
 # explicitly instead of relaxing excludes, so it works with every topology.
+# With DELETE=1, the push first probes what --delete would remove on prod
+# (files that exist only there are usually unpulled prod-side work) and asks
+# before removing anything.
 
 set -euo pipefail
 
-usage() { sed -n '2,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 1; }
+usage() { sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 1; }
 
 MODE="${1:-}"
 case $MODE in ''|-h|--help) usage ;; esac
@@ -101,6 +104,21 @@ case $MODE in
         fi
         run_local_chain "${PRE_PUSH[@]}"
         mapfile -t EX < <(excludes "${PUSH_EXCLUDES[@]}" 'var/app.db*' 'var/flat-sync/' '*~conflict-*')
+        # Files existing only on prod are usually prod-side work the local copy
+        # has not pulled; with DELETE=1 the push would destroy them. Probe with
+        # the same excludes and ask before removing anything. rsync itself has
+        # no conflict detection in either direction — this is the only stop.
+        if [[ $DELETE -eq 1 && ${#DRY[@]} -eq 0 ]]; then
+            mapfile -t DOOMED < <(rsync -az --dry-run --delete -v -e "ssh $SSH_OPTS" "${EX[@]}" "$ROOT/" "$REMOTE:$REMOTE_PATH/" | sed -n 's/^deleting //p')
+            if [[ ${#DOOMED[@]} -gt 0 ]]; then
+                printf '%s\n' "${DOOMED[@]:0:20}"
+                if [[ ${#DOOMED[@]} -gt 20 ]]; then echo "… and $((${#DOOMED[@]} - 20)) more"; fi
+                echo "${#DOOMED[@]} file(s) exist on prod but not locally — the push would DELETE them."
+                echo "They may be prod-side edits not pulled yet (pushword-deploy pull first?)."
+                read -rp "Type 'delete' to remove them anyway: " answer
+                [[ $answer == delete ]] || { echo "Aborted."; exit 1; }
+            fi
+        fi
         "${RSYNC[@]}" "${EX[@]}" "$ROOT/" "$REMOTE:$REMOTE_PATH/"
         if [[ $SHIP_DB -eq 1 ]]; then
             "${RSYNC[@]}" "$ROOT/var/app.db" "$REMOTE:$REMOTE_PATH/var/app.db"

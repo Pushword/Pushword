@@ -112,6 +112,70 @@ final class DeployScriptTest extends TestCase
         self::assertStringContainsString('[dry-run] local: php bin/console pw:flat:sync', $output, 'Dry-run must announce, not execute, the local chain');
     }
 
+    public function testPushWithDeleteAbortsUnlessConfirmed(): void
+    {
+        $process = $this->runGuardedPush(input: "no\n");
+
+        self::assertSame(1, $process->getExitCode());
+        self::assertStringContainsString('content/prod-only.md', $process->getOutput());
+        self::assertStringContainsString('the push would DELETE them', $process->getOutput());
+        self::assertStringContainsString('Aborted', $process->getOutput());
+    }
+
+    public function testPushWithDeleteProceedsWhenConfirmed(): void
+    {
+        $process = $this->runGuardedPush(input: "delete\n");
+
+        self::assertSame(0, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
+        self::assertStringContainsString('RSYNC', $process->getOutput(), 'The real rsync must run after confirmation');
+        self::assertStringContainsString('Done: push', $process->getOutput());
+    }
+
+    public function testPushWithoutDeleteNeverPrompts(): void
+    {
+        // Closed stdin: any prompt would read EOF and abort — completion
+        // proves DELETE=0 skips the probe entirely.
+        $process = $this->runGuardedPush(input: null, delete: 0);
+
+        self::assertSame(0, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
+        self::assertStringContainsString('Done: push', $process->getOutput());
+    }
+
+    /**
+     * Push against an rsync shim: the --dry-run probe reports one prod-only
+     * file, the real invocation prints its arguments.
+     */
+    private function runGuardedPush(?string $input, int $delete = 1): Process
+    {
+        file_put_contents(
+            $this->siteDir.'/deploy.conf',
+            "REMOTE=user@example.invalid\nREMOTE_PATH=/srv/site\nDELETE={$delete}\nPRE_PUSH=()\n",
+        );
+
+        mkdir($this->siteDir.'/shims');
+        file_put_contents($this->siteDir.'/shims/rsync', <<<'BASH'
+            #!/bin/bash
+            for a in "$@"; do
+                if [[ $a == --dry-run ]]; then
+                    echo "deleting content/prod-only.md"
+                    exit 0
+                fi
+            done
+            echo RSYNC "$@"
+            BASH);
+        chmod($this->siteDir.'/shims/rsync', 0o755);
+
+        $process = new Process(
+            ['bash', self::SCRIPT, 'push'],
+            $this->siteDir,
+            ['PATH' => $this->siteDir.'/shims:'.getenv('PATH')],
+            $input,
+        );
+        $process->run();
+
+        return $process;
+    }
+
     private function writeValidConf(): void
     {
         file_put_contents(

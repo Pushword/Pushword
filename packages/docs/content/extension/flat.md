@@ -452,6 +452,13 @@ sync state. `--ship-db` (confirmation required) sends the database file
 explicitly on top of the tree — only for the documented one-time uuid
 migration.
 
+With `DELETE=1`, the push first probes (same excludes, `--dry-run`) what
+`--delete` would remove on production. Files that exist only there are usually
+prod-side work the local copy has not pulled; the push lists them and asks for
+an explicit confirmation before removing anything. rsync itself has no conflict
+detection in either direction — the last machine to sync wins — so this probe
+is what makes `--delete` safe to keep on.
+
 Minimal `deploy.conf`:
 
 ```bash

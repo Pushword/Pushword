@@ -14,6 +14,15 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc806
+
+### The deploy push counts its deletions before making them
+
+With `DELETE=1`, `pushword-deploy push` now probes what `--delete` would remove
+on production (same excludes, `--dry-run`), lists the files that exist only
+there — usually prod-side work not pulled yet — and asks for an explicit
+confirmation before removing anything.
+
 ## To 1.0.0-rc805
 
 ### The deploy script ships with pushword/flat
