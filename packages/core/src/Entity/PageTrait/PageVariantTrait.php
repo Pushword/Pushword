@@ -17,28 +17,22 @@ use Pushword\Core\Entity\Page;
 trait PageVariantTrait
 {
     #[ORM\ManyToOne(targetEntity: Page::class, inversedBy: 'variants')]
-    protected ?Page $variantOf = null;
+    public ?Page $variantOf = null {
+        set {
+            if (null !== $value && ! $this->validateVariantOf($value)) {
+                throw new LogicException("A variant's master cannot itself be a variant, and a page cannot be its own master.");
+            }
+
+            $this->variantOf = $value;
+        }
+    }
 
     /**
      * @var Collection<int, Page>
      */
     #[ORM\OneToMany(targetEntity: Page::class, mappedBy: 'variantOf', fetch: 'EXTRA_LAZY')]
-    protected ?Collection $variants;  // @phpstan-ignore-line
-
-    public function getVariantOf(): ?Page
-    {
-        return $this->variantOf;
-    }
-
-    public function setVariantOf(?Page $page): self
-    {
-        if (null !== $page && ! $this->validateVariantOf($page)) {
-            throw new LogicException("A variant's master cannot itself be a variant, and a page cannot be its own master.");
-        }
-
-        $this->variantOf = $page;
-
-        return $this;
+    public Collection $variants {
+        get => $this->variants ??= new ArrayCollection();
     }
 
     /**
@@ -55,16 +49,8 @@ trait PageVariantTrait
         return null !== $this->variantOf;
     }
 
-    /**
-     * @return Collection<int, Page>
-     */
-    public function getVariants(): Collection
-    {
-        return $this->variants ?? new ArrayCollection([]);
-    }
-
     public function hasVariants(): bool
     {
-        return ! $this->getVariants()->isEmpty();
+        return ! $this->variants->isEmpty();
     }
 }

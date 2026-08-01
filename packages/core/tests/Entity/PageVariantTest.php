@@ -18,10 +18,10 @@ final class PageVariantTest extends TestCase
         self::assertFalse($master->isVariant());
         self::assertFalse($variant->isVariant());
 
-        $variant->setVariantOf($master);
+        $variant->variantOf = $master;
 
         self::assertTrue($variant->isVariant());
-        self::assertSame($master, $variant->getVariantOf());
+        self::assertSame($master, $variant->variantOf);
         self::assertFalse($master->isVariant());
     }
 
@@ -30,32 +30,31 @@ final class PageVariantTest extends TestCase
         $page = new Page();
 
         $this->expectException(LogicException::class);
-        $page->setVariantOf($page);
+        $page->variantOf = $page;
     }
 
     public function testRejectsVariantOfVariant(): void
     {
         $master = new Page();
         $variant = new Page();
-        $variant->setVariantOf($master);
+        $variant->variantOf = $master;
 
         $third = new Page();
 
         // The master must not itself be a variant (flat hierarchy).
         $this->expectException(LogicException::class);
-        $third->setVariantOf($variant);
+        $third->variantOf = $variant;
     }
 
     public function testClearingVariantOf(): void
     {
-        $master = new Page();
+        new Page();
         $variant = new Page();
-        $variant->setVariantOf($master);
 
-        $variant->setVariantOf(null);
+        $variant->variantOf = null;
 
         self::assertFalse($variant->isVariant());
-        self::assertNull($variant->getVariantOf());
+        self::assertNull($variant->variantOf);
     }
 
     public function testPromoteThrowsOnNonVariant(): void

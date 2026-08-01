@@ -367,7 +367,7 @@ final class PageMatcherTest extends AbstractNewsletterTestCase
         $page->setPublishedAt(new DateTime($publishedAt));
 
         if (null !== $parent) {
-            $page->setParentPage($parent);
+            $page->parentPage = $parent;
         }
 
         foreach ($properties as $key => $value) {

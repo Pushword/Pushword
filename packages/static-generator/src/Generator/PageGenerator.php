@@ -46,7 +46,7 @@ class PageGenerator extends AbstractGenerator
             return;
         }
 
-        if ([] !== $page->getRedirectFromMap()) {
+        if ([] !== $page->redirectFrom) {
             $this->redirectionManager->addRedirectFrom($page);
         }
 

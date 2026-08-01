@@ -501,7 +501,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $page->host = 'localhost.dev';
         $page->setSlug('redirect-dest-test');
         $page->setMainContent('content');
-        $page->setRedirectFrom(['old-incoming' => 308]);
+        $page->redirectFrom = ['old-incoming' => 308];
 
         $redirectionManager->addRedirectFrom($page);
 
@@ -535,7 +535,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $page->host = 'pushword.piedweb.com';
         $page->setSlug('redirect-dest-test');
         $page->setMainContent('content');
-        $page->setRedirectFrom(['old-incoming' => 308]);
+        $page->redirectFrom = ['old-incoming' => 308];
 
         $redirectionManager->addRedirectFrom($page);
 

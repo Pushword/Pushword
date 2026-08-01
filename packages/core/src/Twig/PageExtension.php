@@ -61,7 +61,7 @@ final class PageExtension
     #[AsTwigFunction('breadcrumb_list_position')]
     public function getBreadcrumbListPosition(Page $page): int
     {
-        if (null !== ($parentPage = $page->getParentPage())) {
+        if (null !== ($parentPage = $page->parentPage)) {
             return $this->getBreadcrumbListPosition($parentPage) + 1;
         }
 

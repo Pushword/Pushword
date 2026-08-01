@@ -65,11 +65,11 @@ final readonly class PageSearchVocabulary
         return match (strtolower($term)) {
             'related' => $this->related($currentPage),
             'children' => new Condition('parentPage', '=', $currentPage->id ?? 0),
-            'sisters', 'parent_children' => new Condition('parentPage', '=', $currentPage?->getParentPage()->id ?? 0),
+            'sisters', 'parent_children' => new Condition('parentPage', '=', $currentPage?->parentPage->id ?? 0),
             'grandchildren', 'children_children' => new Condition(
                 'parentPage',
                 'IN',
-                $currentPage?->getChildrenPages()->map(static fn (Page $page): int => $page->id ?? 0)->toArray() ?? [],
+                $currentPage?->childrenPages->map(static fn (Page $page): int => $page->id ?? 0)->toArray() ?? [],
             ),
             default => null,
         };
@@ -83,7 +83,7 @@ final readonly class PageSearchVocabulary
     private function related(?Page $currentPage): Group|Condition
     {
         $bound = new Condition('id', '<', ($currentPage->id ?? 0) + 3);
-        $parentPage = $currentPage?->getParentPage();
+        $parentPage = $currentPage?->parentPage;
 
         if (null === $parentPage) {
             return $bound;

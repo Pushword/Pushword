@@ -276,7 +276,7 @@ final class MediaApiController extends AbstractApiController
             'alt' => $media->getAlt(true),
             'alts' => $media->getAltsParsed(),
             'tags' => $media->getTagList(),
-            'customProperties' => $media->getCustomProperties(),
+            'customProperties' => $media->customProperties,
             'licenseState' => $media->getLicenseState(),
             'image' => $media->isImage() ? [
                 'width' => $media->getWidth(),

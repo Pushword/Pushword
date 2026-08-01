@@ -23,7 +23,7 @@ final readonly class VariantManager
      */
     public function promote(Page $variant): void
     {
-        $master = $variant->getVariantOf();
+        $master = $variant->variantOf;
 
         if (null === $master) {
             throw new LogicException('Only a variant can be promoted to master.');
@@ -32,15 +32,15 @@ final readonly class VariantManager
         $siblings = $this->variantsOf($master);
 
         // Detach first so the flat-hierarchy validation accepts the rewiring below.
-        $variant->setVariantOf(null);
+        $variant->variantOf = null;
 
         foreach ($siblings as $sibling) {
             if ($sibling !== $variant) {
-                $sibling->setVariantOf($variant);
+                $sibling->variantOf = $variant;
             }
         }
 
-        $master->setVariantOf($variant);
+        $master->variantOf = $variant;
     }
 
     /**
@@ -56,10 +56,10 @@ final readonly class VariantManager
         }
 
         $newMaster = array_shift($variants);
-        $newMaster->setVariantOf(null);
+        $newMaster->variantOf = null;
 
         foreach ($variants as $variant) {
-            $variant->setVariantOf($newMaster);
+            $variant->variantOf = $newMaster;
         }
     }
 

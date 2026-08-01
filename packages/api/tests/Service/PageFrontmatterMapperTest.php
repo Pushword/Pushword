@@ -41,7 +41,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
             $page = $this->em->find(Page::class, $id);
             if (null !== $page) {
                 // Unlink first: translation rows point at the page from both sides.
-                foreach ($page->getTranslations()->toArray() as $translation) {
+                foreach ($page->translations->toArray() as $translation) {
                     $page->removeTranslation($translation);
                 }
 
@@ -107,8 +107,8 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         self::assertSame('custom.twig', $page->template);
         self::assertSame('set via api', $page->editMessage);
         self::assertSame(['a', 'b', 'c'], $page->getTagList());
-        self::assertSame(5, $page->getWeight());
-        self::assertSame(['ogDescription' => 'desc'], $page->getCustomProperties());
+        self::assertSame(5, $page->weight);
+        self::assertSame(['ogDescription' => 'desc'], $page->customProperties);
     }
 
     public function testRedirectFromRoundtrips(): void
@@ -119,7 +119,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
 
         // Accepts a {path: code} map and a Jekyll-style bare list (→ 301).
         $this->mapper->applyFrontmatter($page, ['redirectFrom' => ['old-one' => 302, 'old-two']]);
-        self::assertSame(['old-one' => 302, 'old-two' => 301], $page->getRedirectFromMap());
+        self::assertSame(['old-one' => 302, 'old-two' => 301], $page->redirectFrom);
 
         // Emitted back in the frontmatter shape.
         $shape = $this->mapper->toArray($page);
@@ -150,7 +150,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
             'customCanonical' => 'https://example.com/canonical',
         ]);
 
-        self::assertSame($master, $variant->getVariantOf());
+        self::assertSame($master, $variant->variantOf);
         self::assertTrue($variant->isVariant());
         self::assertSame('https://example.com/canonical', $variant->getCustomCanonical());
 
@@ -161,7 +161,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
 
         // Clearing the relation un-links and resets the canonical override.
         $this->mapper->applyFrontmatter($variant, ['variantOf' => '', 'customCanonical' => null]);
-        self::assertNull($variant->getVariantOf());
+        self::assertNull($variant->variantOf);
         self::assertFalse($variant->isVariant());
         self::assertNull($variant->getCustomCanonical());
     }
@@ -178,9 +178,9 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $reference = 'pushword.piedweb.com/about-'.$suffix;
         $this->mapper->applyFrontmatter($french, ['translations' => [$reference]]);
 
-        self::assertTrue($french->getTranslations()->contains($english));
+        self::assertTrue($french->translations->contains($english));
         // The relation is kept symmetric, so only one side needs to be sent.
-        self::assertTrue($english->getTranslations()->contains($french));
+        self::assertTrue($english->translations->contains($french));
         self::assertSame($english, $french->getTranslation('en'));
 
         // The exported ref carries the host: a GET payload can be PUT back as-is.
@@ -188,8 +188,8 @@ final class PageFrontmatterMapperTest extends KernelTestCase
 
         // The list is authoritative — an empty one unlinks the whole group.
         $this->mapper->applyFrontmatter($french, ['translations' => []]);
-        self::assertCount(0, $french->getTranslations());
-        self::assertCount(0, $english->getTranslations());
+        self::assertCount(0, $french->translations);
+        self::assertCount(0, $english->translations);
     }
 
     public function testTranslationsAcceptBareSlugOnTheSameHost(): void
@@ -203,7 +203,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         // and the export emits it back bare.
         $this->mapper->applyFrontmatter($french, ['translations' => ['about-'.$suffix]]);
 
-        self::assertTrue($french->getTranslations()->contains($english));
+        self::assertTrue($french->translations->contains($english));
         self::assertSame(['about-'.$suffix], $this->mapper->toArray($french)['frontmatter']['translations']);
     }
 
@@ -218,7 +218,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         // so the whole string must be read back as a nested same-host slug.
         $this->mapper->applyFrontmatter($french, ['translations' => ['blog/about-'.$suffix]]);
 
-        self::assertTrue($french->getTranslations()->contains($english));
+        self::assertTrue($french->translations->contains($english));
     }
 
     public function testTranslationsUnlinkOnlyTheDroppedReference(): void
@@ -234,9 +234,9 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         // Re-sending the list without the Spanish page unlinks it and keeps the rest.
         $this->mapper->applyFrontmatter($french, ['translations' => ['about-'.$suffix]]);
 
-        self::assertTrue($french->getTranslations()->contains($english));
-        self::assertFalse($french->getTranslations()->contains($spanish));
-        self::assertFalse($spanish->getTranslations()->contains($french));
+        self::assertTrue($french->translations->contains($english));
+        self::assertFalse($french->translations->contains($spanish));
+        self::assertFalse($spanish->translations->contains($french));
     }
 
     public function testOmittedTranslationsKeyLeavesTheGroupUntouched(): void
@@ -250,7 +250,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         // A partial PATCH must not clear a group it says nothing about.
         $this->mapper->applyFrontmatter($french, ['h1' => 'À propos']);
 
-        self::assertTrue($french->getTranslations()->contains($english));
+        self::assertTrue($french->translations->contains($english));
     }
 
     /**
@@ -293,7 +293,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
             self::assertSame('ghost-'.$suffix, $invalidFrontmatterException->value);
         }
 
-        self::assertTrue($french->getTranslations()->contains($english));
+        self::assertTrue($french->translations->contains($english));
     }
 
     public function testApplyFrontmatterSkipsUnknownTypesAndPreservesExisting(): void
@@ -426,7 +426,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $this->mapper->applyFrontmatter($page, ['h1' => 'About', 'revision' => 'abc123']);
 
         self::assertNull($page->getCustomProperty('revision'));
-        self::assertSame([], $page->getCustomProperties());
+        self::assertSame([], $page->customProperties);
     }
 
     public function testRealEntityColumnIsNotMisroutedToCustomProperties(): void

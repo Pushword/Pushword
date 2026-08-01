@@ -169,7 +169,7 @@ final class SnippetSync
         $snippet->setContent(trim($document->body()));
 
         unset($data['name'], $data['tags']);
-        $snippet->setCustomProperties($data);
+        $snippet->customProperties = $data;
 
         $snippet->updatedAt = $fileEditTime;
 
@@ -248,7 +248,7 @@ final class SnippetSync
             $data['tags'] = $tags;
         }
 
-        foreach ($snippet->getCustomProperties() as $key => $value) {
+        foreach ($snippet->customProperties as $key => $value) {
             $data[$key] = $value;
         }
 

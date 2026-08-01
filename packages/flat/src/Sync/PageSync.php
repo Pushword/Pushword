@@ -476,12 +476,12 @@ final class PageSync
         // Break the self-referential parent and variant links first so the deletes
         // below don't violate the self-referencing foreign keys (enforced by MySQL/MariaDB).
         foreach ($pages as $page) {
-            if (null !== $page->getParentPage()) {
-                $page->setParentPage(null);
+            if (null !== $page->parentPage) {
+                $page->parentPage = null;
             }
 
-            if (null !== $page->getVariantOf()) {
-                $page->setVariantOf(null);
+            if (null !== $page->variantOf) {
+                $page->variantOf = null;
             }
         }
 

@@ -142,7 +142,7 @@ final class ConversationExporter
         $columns = [];
         foreach ($messages as $message) {
             /** @var array<string, mixed> $customProperties */
-            $customProperties = $message->getCustomProperties();
+            $customProperties = $message->customProperties;
             foreach (array_keys($customProperties) as $property) {
                 $columns[$property] = true;
             }
@@ -169,7 +169,7 @@ final class ConversationExporter
         }
 
         /** @var array<string, mixed> $customProperties */
-        $customProperties = $message->getCustomProperties();
+        $customProperties = $message->customProperties;
         foreach ($customColumns as $column) {
             $row[$column] = array_key_exists($column, $customProperties)
                 ? ConversationCsvHelper::encodeValue($customProperties[$column])
@@ -195,7 +195,7 @@ final class ConversationExporter
     private function getMediaListValue(Message $message): string
     {
         $mediaFileNames = [];
-        foreach ($message->getMediaList() as $media) {
+        foreach ($message->mediaList as $media) {
             $mediaFileNames[] = $media->getFileName();
         }
 
@@ -215,11 +215,13 @@ final class ConversationExporter
     private function getPropertyValue(Message $message, string $property): float|int|string|null
     {
         $getter = 'get'.ucfirst($property);
-        if (! method_exists($message, $getter)) {
+        if (method_exists($message, $getter)) {
+            $value = $message->$getter(); // @phpstan-ignore-line
+        } elseif (Entity::isPubliclyReadableProperty($message, $property)) {
+            $value = $message->{$property}; // @phpstan-ignore property.dynamicName
+        } else {
             return null;
         }
-
-        $value = $message->$getter(); // @phpstan-ignore-line
 
         if ($value instanceof Collection) {
             // Pour les collections, on exporte une représentation string

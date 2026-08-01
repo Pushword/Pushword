@@ -94,8 +94,8 @@ final class PageUpdateNotifierTest extends KernelTestCase
             // Break parent and variant links first so MariaDB's parent_page_id
             // and variant_of_id FKs aren't violated by the non-topological
             // delete order below.
-            $page->setParentPage(null);
-            $page->setVariantOf(null);
+            $page->parentPage = null;
+            $page->variantOf = null;
         }
 
         $em->flush();

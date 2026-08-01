@@ -10,33 +10,24 @@ use Pushword\Core\Entity\Media;
 trait MediaListTrait
 {
     /**
-     * @var Collection<int, Media>|null
+     * @var Collection<int, Media>
      */
     #[ORM\ManyToMany(targetEntity: Media::class)]
-    protected ?Collection $mediaList = null;  // @phpstan-ignore-line
+    public Collection $mediaList {
+        get => $this->mediaList ??= new ArrayCollection();
+        set {
+            $this->mediaList = new ArrayCollection();
 
-    /** @return Collection<int, Media> */
-    public function getMediaList(): Collection
-    {
-        return $this->mediaList ?? ($this->mediaList = new ArrayCollection());
-    }
-
-    /** @param Collection<int, Media> $mediaList */
-    public function setMediaList(Collection $mediaList): self
-    {
-        $this->mediaList = new ArrayCollection();
-
-        foreach ($mediaList as $media) {
-            $this->addMedia($media);
+            foreach ($value as $media) {
+                $this->addMedia($media);
+            }
         }
-
-        return $this;
     }
 
     public function addMedia(Media $media): self
     {
-        if (! $this->getMediaList()->contains($media)) {
-            $this->getMediaList()->add($media);
+        if (! $this->mediaList->contains($media)) {
+            $this->mediaList->add($media);
         }
 
         return $this;
@@ -44,7 +35,7 @@ trait MediaListTrait
 
     public function removeMedia(Media $media): self
     {
-        $this->getMediaList()->removeElement($media);
+        $this->mediaList->removeElement($media);
 
         return $this;
     }

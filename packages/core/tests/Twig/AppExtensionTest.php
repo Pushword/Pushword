@@ -17,7 +17,7 @@ final class AppExtensionTest extends KernelTestCase
         $page->host = 'localhost.dev';
         $page->setSlug($slug);
         $page->setName($name);
-        $page->setParentPage($parent);
+        $page->parentPage = $parent;
 
         return $page;
     }

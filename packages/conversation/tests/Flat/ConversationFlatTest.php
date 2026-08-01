@@ -228,7 +228,7 @@ final class ConversationFlatTest extends KernelTestCase
         self::assertContains('export', $tagList);
 
         // Vérifie la mediaList
-        $mediaList = $importedMessage1->getMediaList();
+        $mediaList = $importedMessage1->mediaList;
         self::assertCount(2, $mediaList);
         $mediaFileNames = [];
         foreach ($mediaList as $media) {
@@ -245,7 +245,7 @@ final class ConversationFlatTest extends KernelTestCase
         ]);
         self::assertInstanceOf(Review::class, $importedMessage2);
         self::assertSame(5, $importedMessage2->getRating());
-        self::assertCount(1, $importedMessage2->getMediaList());
+        self::assertCount(1, $importedMessage2->mediaList);
 
         // Nettoie les messages importés
         if (null !== $importedMessage1->id) {
@@ -342,7 +342,7 @@ final class ConversationFlatTest extends KernelTestCase
         ]);
         self::assertInstanceOf(Message::class, $importedMessage);
         // La mediaList devrait être vide car le média n'existe pas
-        self::assertCount(0, $importedMessage->getMediaList());
+        self::assertCount(0, $importedMessage->mediaList);
 
         if (null !== $importedMessage->id) {
             $this->createdMessageIds[] = $importedMessage->id;
@@ -409,7 +409,7 @@ final class ConversationFlatTest extends KernelTestCase
         ]);
         self::assertInstanceOf(Message::class, $importedMessage);
         // La mediaList devrait contenir le média trouvé par son nom sans extension
-        $mediaList = $importedMessage->getMediaList();
+        $mediaList = $importedMessage->mediaList;
         self::assertCount(1, $mediaList);
         $mediaArray = $mediaList->toArray();
         self::assertArrayHasKey(0, $mediaArray);
@@ -438,7 +438,7 @@ final class ConversationFlatTest extends KernelTestCase
         $this->createdMessageIds[] = $messageId;
 
         // Verify no media initially
-        self::assertCount(0, $message->getMediaList());
+        self::assertCount(0, $message->mediaList);
 
         // Export to CSV
         $this->exporter->export($this->testHost);
@@ -473,7 +473,7 @@ final class ConversationFlatTest extends KernelTestCase
         self::assertInstanceOf(Message::class, $updatedMessage);
 
         // Assert media was added
-        $mediaList = $updatedMessage->getMediaList();
+        $mediaList = $updatedMessage->mediaList;
         self::assertCount(2, $mediaList);
         $fileNames = array_map(static fn (Media $m): string => $m->getFileName(), $mediaList->toArray());
         self::assertContains('update-media-1.jpg', $fileNames);
@@ -496,7 +496,7 @@ final class ConversationFlatTest extends KernelTestCase
         $messageId = $message->id;
         self::assertNotNull($messageId);
         $this->createdMessageIds[] = $messageId;
-        self::assertCount(2, $message->getMediaList());
+        self::assertCount(2, $message->mediaList);
 
         // Export to CSV
         $this->exporter->export($this->testHost);
@@ -528,7 +528,7 @@ final class ConversationFlatTest extends KernelTestCase
         $updatedMessage = $this->messageRepository->find($messageId);
         self::assertInstanceOf(Message::class, $updatedMessage);
 
-        $mediaList = $updatedMessage->getMediaList();
+        $mediaList = $updatedMessage->mediaList;
         self::assertCount(1, $mediaList);
         $fileNames = array_map(static fn (Media $m): string => $m->getFileName(), $mediaList->toArray());
         self::assertContains('remove-media-1.jpg', $fileNames);

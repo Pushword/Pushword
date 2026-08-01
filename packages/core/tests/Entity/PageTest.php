@@ -109,19 +109,19 @@ final class PageTest extends TestCase
     public function testRedirectFromNormalizesMapListAndRows(): void
     {
         $page = new Page();
-        self::assertSame([], $page->getRedirectFromMap());
+        self::assertSame([], $page->redirectFrom);
 
         // Map form, with leading slash and out-of-order keys → normalized + ksorted.
-        $page->setRedirectFrom(['/old/two' => 302, 'old-one' => 301]);
-        self::assertSame(['old-one' => 301, 'old/two' => 302], $page->getRedirectFromMap());
+        $page->redirectFrom = ['/old/two' => 302, 'old-one' => 301];
+        self::assertSame(['old-one' => 301, 'old/two' => 302], $page->redirectFrom);
 
         // Jekyll-style bare list → implicit 301.
-        $page->setRedirectFrom(['a-slug', 'b-slug']);
-        self::assertSame(['a-slug' => 301, 'b-slug' => 301], $page->getRedirectFromMap());
+        $page->redirectFrom = ['a-slug', 'b-slug'];
+        self::assertSame(['a-slug' => 301, 'b-slug' => 301], $page->redirectFrom);
 
         // Row form (admin collection) → map, invalid code falls back to 301.
-        $page->setRedirectFrom([['from' => 'foo', 'code' => 307], ['from' => 'bar', 'code' => 999]]);
-        self::assertSame(['bar' => 301, 'foo' => 307], $page->getRedirectFromMap());
+        $page->redirectFrom = [['from' => 'foo', 'code' => 307], ['from' => 'bar', 'code' => 999]];
+        self::assertSame(['bar' => 301, 'foo' => 307], $page->redirectFrom);
 
         // Rows view round-trips.
         self::assertSame(
@@ -136,7 +136,7 @@ final class PageTest extends TestCase
         $page->addRedirectFrom('first');
         $page->addRedirectFrom('second', 308);
 
-        self::assertSame(['first' => 301, 'second' => 308], $page->getRedirectFromMap());
+        self::assertSame(['first' => 301, 'second' => 308], $page->redirectFrom);
     }
 
     public function testMainImageInheritance(): void
@@ -285,8 +285,8 @@ final class PageTest extends TestCase
         $child->extendedPage = $parent;
         $child->setCustomProperty('own', 'mine');
 
-        self::assertArrayNotHasKey('inherited', $child->getCustomProperties());
-        self::assertArrayHasKey('own', $child->getCustomProperties());
+        self::assertArrayNotHasKey('inherited', $child->customProperties);
+        self::assertArrayHasKey('own', $child->customProperties);
     }
 
     public function testIsCacheDefaultsToTrue(): void

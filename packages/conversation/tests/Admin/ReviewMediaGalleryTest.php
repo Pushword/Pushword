@@ -188,7 +188,7 @@ final class ReviewMediaGalleryTest extends AbstractAdminTestClass
             return false;
         }
 
-        foreach ($review->getMediaList() as $media) {
+        foreach ($review->mediaList as $media) {
             if ($media->id === $mediaId) {
                 return true;
             }

@@ -111,7 +111,7 @@ class AppFixtures extends Fixture
         $ksPage->setSlug('kitchen-sink');
         $ksPage->setMainImage($media['Demo 1']);
         $ksPage->locale = 'en';
-        $ksPage->setParentPage($homepage);
+        $ksPage->parentPage = $homepage;
         $ksPage->createdAt = new DateTime('1 day ago');
         $ksPage->updatedAt = new DateTime('1 day ago');
         $ksPage->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.md'));
@@ -129,7 +129,7 @@ class AppFixtures extends Fixture
         $quizPage->setSlug('quiz-montagnes');
         $quizPage->setMainImage($media['Demo 3']);
         $quizPage->locale = 'fr';
-        $quizPage->setParentPage($homepage);
+        $quizPage->parentPage = $homepage;
         $quizPage->createdAt = new DateTime('1 day ago');
         $quizPage->updatedAt = new DateTime('1 day ago');
         $quizPage->setMainContent((string) file_get_contents(__DIR__.'/Quiz.md'));
@@ -175,7 +175,7 @@ class AppFixtures extends Fixture
                 .'[the master](/demo-variant-master), it emits no hreflang, and it is excluded from the '
                 .'sitemap, the internal search and the menus. Use **Promote to master** in the admin to swap roles.'
             );
-            $variantPartner->setVariantOf($variantMaster);
+            $variantPartner->variantOf = $variantMaster;
 
             $manager->persist($variantMaster);
             $manager->persist($variantPartner);
@@ -187,7 +187,7 @@ class AppFixtures extends Fixture
             $ksBlockPage->setSlug('kitchen-sink');
             $ksBlockPage->setMainImage($media['Demo 1']);
             $ksBlockPage->locale = 'en';
-            $ksBlockPage->setParentPage($homepage);
+            $ksBlockPage->parentPage = $homepage;
             $ksBlockPage->createdAt = new DateTime('1 day ago');
             $ksBlockPage->updatedAt = new DateTime('1 day ago');
             $ksBlockPage->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.md'));

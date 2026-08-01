@@ -15,38 +15,21 @@ use Pushword\Core\Entity\Page;
  */
 trait RedirectFromTrait
 {
-    /** @var array<string, int> */
-    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
-    protected array $redirectFrom = [];
-
-    /** @return array<string, int> normalized path => http code */
-    public function getRedirectFrom(): array
-    {
-        return $this->redirectFrom;
-    }
-
-    /** @return array<string, int> alias used by the runtime/static redirect layer */
-    public function getRedirectFromMap(): array
-    {
-        return $this->redirectFrom;
-    }
-
     /**
      * Accepts a map ({path: code}), a Jekyll-style list ([path, …], all 301),
      * a list of rows ([{from: path, code: 301}, …]) or a whitespace/comma string.
      *
-     * @param array<mixed>|string|null $value
+     * @var array<string, int> normalized path => http code
      */
-    public function setRedirectFrom(array|string|null $value): self
-    {
-        $this->redirectFrom = self::normalizeRedirectFrom($value);
-
-        return $this;
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
+    public array $redirectFrom = [] {
+        /** @param array<mixed>|string|null $value */
+        set(array|string|null $value) => self::normalizeRedirectFrom($value);
     }
 
     public function addRedirectFrom(string $path, int $code = 301): self
     {
-        $this->setRedirectFrom([...$this->redirectFrom, $path => $code]);
+        $this->redirectFrom = [...$this->redirectFrom, $path => $code];
 
         return $this;
     }
@@ -71,7 +54,9 @@ trait RedirectFromTrait
      */
     public function setRedirectFromRows(?array $rows): self
     {
-        return $this->setRedirectFrom($rows ?? []);
+        $this->redirectFrom = $rows ?? [];
+
+        return $this;
     }
 
     /**

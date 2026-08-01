@@ -13,6 +13,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Utils\Entity;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
 use Pushword\Flat\FlatFileContentDirFinder;
@@ -240,7 +241,7 @@ final class PageImporter extends AbstractImporter
         // null. Record the flat origin in editMessage to keep the edit traceable.
         $page->editMessage = 'Imported via pw:flat:sync from '.$relativeFilePath;
 
-        $page->setCustomProperties([]);
+        $page->customProperties = [];
 
         $publishedAtExplicitlySet = false;
 
@@ -285,6 +286,16 @@ final class PageImporter extends AbstractImporter
                 continue;
             }
 
+            if (Entity::isPubliclyWritableProperty($page, $camelKey)) {
+                if (\in_array($camelKey, ['createdAt', 'updatedAt', 'holdPublicationAt'], true) && \is_scalar($value)) {
+                    $value = new DateTime((string) $value);
+                }
+
+                $page->{$camelKey} = $value; // @phpstan-ignore property.dynamicName
+
+                continue;
+            }
+
             $converted = $this->converterRegistry->fromFlatValue($key, $value);
             if (null !== $converted) {
                 $page->setCustomProperty($key, $converted);
@@ -304,7 +315,7 @@ final class PageImporter extends AbstractImporter
             $this->em->persist($page);
         } else {
             $page->updatedAt = $lastEditDateTime;
-            $page->setSkipAutoTimestamp(true);
+            $page->skipAutoTimestamp = true;
         }
 
         return $page;
@@ -354,15 +365,12 @@ final class PageImporter extends AbstractImporter
                         throw new LogicException(\sprintf('Property "%s" in page "%s" must be a slug string, got %s (%s)', $property, $slug, get_debug_type($value), var_export($value, true)));
                     }
 
-                    $setter = 'set'.ucfirst($property);
-                    /** @phpstan-ignore-next-line */
-                    $page->$setter($this->getPage($value));
+                    $page->{$property} = $this->getPage($value); // @phpstan-ignore property.dynamicName
 
                     continue;
                 }
 
                 if (Media::class === $object) {
-                    $setter = 'set'.ucfirst($property);
                     if (! \is_string($value)) {
                         throw new LogicException(\sprintf('Expected string value for media property "%s", got %s', $property, get_debug_type($value)));
                     }
@@ -381,7 +389,7 @@ final class PageImporter extends AbstractImporter
                         continue;
                     }
 
-                    $page->$setter($media); // @phpstan-ignore-line
+                    $page->setMainImage($media);
 
                     continue;
                 }
@@ -423,7 +431,7 @@ final class PageImporter extends AbstractImporter
      */
     private function syncTranslations(Page $page, array $newTranslationRefs): void
     {
-        $currentTranslations = $page->getTranslations()->toArray();
+        $currentTranslations = $page->translations->toArray();
         $currentRefs = array_map($this->buildTranslationRef(...), $currentTranslations);
         $pageSlug = $page->getSlug();
 
@@ -445,7 +453,7 @@ final class PageImporter extends AbstractImporter
 
         // Mark all transitive pairs created by recursive addTranslation
         if ([] !== $toAdd) {
-            $allRefs = array_map($this->buildTranslationRef(...), $page->getTranslations()->toArray());
+            $allRefs = array_map($this->buildTranslationRef(...), $page->translations->toArray());
             foreach ($allRefs as $refA) {
                 foreach ($allRefs as $refB) {
                     if ($refA !== $refB) {

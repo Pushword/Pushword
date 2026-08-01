@@ -380,7 +380,7 @@ final class ConversationImporter
                 // after denormalization (see extractDates() for the rationale).
                 [$data, $dates] = $this->extractDates($data);
 
-                // Extrait mediaList avant la dénormalisation car setMediaList() attend une Collection
+                // Pull mediaList out before denormalization: the mediaList property expects a Collection
                 /** @var Media[] $mediaList */
                 $mediaList = $data['mediaList'] ?? [];
                 unset($data['mediaList']);
@@ -409,7 +409,7 @@ final class ConversationImporter
 
                     // Sync media: clear existing then re-add from CSV
                     if (isset($options[AbstractNormalizer::OBJECT_TO_POPULATE])) {
-                        foreach ($normalizedMessage->getMediaList()->toArray() as $existing) {
+                        foreach ($normalizedMessage->mediaList->toArray() as $existing) {
                             $normalizedMessage->removeMedia($existing);
                         }
                     }

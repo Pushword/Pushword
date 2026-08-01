@@ -96,7 +96,7 @@ final class AiIndexCommandTest extends KernelTestCase
             // Retrieve parent page from database so it's in the same EntityManager
             $parentPage = $em->getRepository(Page::class)->findOneBy(['slug' => $parentPage->getSlug()]);
             if (null !== $parentPage) {
-                $page->setParentPage($parentPage);
+                $page->parentPage = $parentPage;
             }
         }
 

@@ -274,7 +274,7 @@ final class ContactApiController extends AbstractApiController
             'locale' => $contact->getLocale(),
             'status' => $contact->getStatusLabel(),
             'tags' => $contact->getTagList(),
-            'customProperties' => $contact->getCustomProperties(),
+            'customProperties' => $contact->customProperties,
             'source' => $contact->getSource(),
             'optinHost' => $contact->getOptinHost(),
             'createdAt' => $contact->createdAt?->format(DateTimeInterface::ATOM),

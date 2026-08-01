@@ -52,7 +52,7 @@ final readonly class MediaLicenseStateListener
         $old = $event->getOldValue('customProperties');
         $previous = \is_array($old) ? $this->licenseValues($old) : [];
 
-        if ($previous === $this->licenseValues($media->getCustomProperties())) {
+        if ($previous === $this->licenseValues($media->customProperties)) {
             return;
         }
 

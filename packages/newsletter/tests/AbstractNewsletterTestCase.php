@@ -106,7 +106,7 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
         $contact->setName('Test');
         $contact->setLocale($locale);
         $contact->setTags($tags);
-        $contact->setCustomProperties($customProperties);
+        $contact->customProperties = $customProperties;
         $contact->optIn(! $subscribed);
 
         if (null !== $registeredAt) {

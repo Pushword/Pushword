@@ -9,13 +9,13 @@ trait WeightTrait
 {
     // name 'priority' permits backward compatibility
     #[ORM\Column(name: 'priority', type: Types::INTEGER, options: ['default' => 0])]
-    private int $weight = 0;
+    public int $weight = 0;
 
-    public function getWeight(): int
-    {
-        return $this->weight;
-    }
-
+    /**
+     * Tolerant parser for user input (admin inline edit, frontmatter import).
+     *
+     * @return bool True if value was valid and set, false otherwise
+     */
     public function setWeight(string|int|null $value): bool
     {
         if (null === $value || '' === $value) {

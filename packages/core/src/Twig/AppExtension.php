@@ -111,7 +111,7 @@ final class AppExtension
                 'item' => $this->router->generate($currentPage, true),
             ];
 
-            $currentPage = $currentPage->getParentPage();
+            $currentPage = $currentPage->parentPage;
         }
 
         $breadcrumbs = array_reverse($breadcrumbs);

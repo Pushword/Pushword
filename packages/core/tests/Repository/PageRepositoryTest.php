@@ -222,7 +222,7 @@ final class PageRepositoryTest extends KernelTestCase
         $destination->updatedAt = new DateTime();
         $destination->setMainContent('content');
         // 'homepage' collides with a real page → must be shadowed by it.
-        $destination->setRedirectFrom(['rfm-repo-old' => 308, 'homepage' => 301]);
+        $destination->redirectFrom = ['rfm-repo-old' => 308, 'homepage' => 301];
 
         $em->persist($destination);
         $em->flush();
@@ -434,7 +434,7 @@ final class PageRepositoryTest extends KernelTestCase
         $homepage = array_find($pages, static fn (Page $page): bool => 'homepage' === $page->getSlug());
 
         self::assertInstanceOf(Page::class, $homepage);
-        $fresh = $homepage->getTranslations();
+        $fresh = $homepage->translations;
         self::assertInstanceOf(PersistentCollection::class, $fresh);
         self::assertFalse($fresh->isInitialized(), 'A fresh load must not have initialized the collection yet.');
 
@@ -444,18 +444,18 @@ final class PageRepositoryTest extends KernelTestCase
         $pageRepo->preloadTranslations($pages); // idempotent on initialized collections
 
         foreach ($pages as $page) {
-            $collection = $page->getTranslations();
+            $collection = $page->translations;
             self::assertInstanceOf(PersistentCollection::class, $collection);
             self::assertTrue($collection->isInitialized(), 'Not preloaded: '.$page->getSlug());
         }
 
         // The preloaded rows are the real data (AppFixtures links homepage → fr)…
-        $locales = array_map(static fn (Page $page): string => $page->locale, $homepage->getTranslations()->toArray());
+        $locales = array_map(static fn (Page $page): string => $page->locale, $homepage->translations->toArray());
         self::assertContains('fr', $locales);
 
         // …and stay initialized across the EM clear the build loop does every few pages.
         $em->clear();
-        $afterClear = $homepage->getTranslations();
+        $afterClear = $homepage->translations;
         self::assertInstanceOf(PersistentCollection::class, $afterClear);
         self::assertTrue($afterClear->isInitialized());
     }

@@ -4,11 +4,8 @@ namespace Pushword\Core\Entity\SharedTrait;
 
 interface CustomPropertiesInterface
 {
-    /** @param array<mixed> $customProperties */
-    public function setCustomProperties(array $customProperties): self;
-
-    /** @return array<mixed> */
-    public function getCustomProperties(): array;
+    /** @var array<mixed> */
+    public array $customProperties { get; set; }
 
     public function getUnmanagedPropertiesAsYaml(): string;
 

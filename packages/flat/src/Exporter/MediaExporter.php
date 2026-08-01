@@ -143,7 +143,7 @@ final class MediaExporter
         $columns = [];
         foreach ($medias as $media) {
             /** @var array<string, mixed> $customProperties */
-            $customProperties = $media->getCustomProperties();
+            $customProperties = $media->customProperties;
             foreach (array_keys($customProperties) as $property) {
                 $columns[$property] = true;
             }
@@ -184,7 +184,7 @@ final class MediaExporter
 
         // Add custom properties
         /** @var array<string, mixed> $customProperties */
-        $customProperties = $media->getCustomProperties();
+        $customProperties = $media->customProperties;
         foreach ($customColumns as $column) {
             $row[$column] = array_key_exists($column, $customProperties)
                 ? MediaCsvHelper::encodeValue($customProperties[$column])

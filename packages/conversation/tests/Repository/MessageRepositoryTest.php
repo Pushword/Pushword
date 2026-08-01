@@ -149,7 +149,7 @@ final class MessageRepositoryTest extends KernelTestCase
         // Filter to only our test reviews (by weight 5)
         $testReviews = array_filter(
             $reviews,
-            static fn (mixed $r): bool => $r instanceof Review && 5 === $r->getWeight()
+            static fn (mixed $r): bool => $r instanceof Review && 5 === $r->weight
                 && ('' === $r->getContent() || 'Review with text content' === $r->getContent())
         );
         $testReviews = array_values($testReviews);

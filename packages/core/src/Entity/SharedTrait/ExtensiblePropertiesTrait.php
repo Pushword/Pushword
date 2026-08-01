@@ -17,7 +17,7 @@ trait ExtensiblePropertiesTrait
 {
     /** @var array<mixed> */
     #[ORM\Column(type: Types::JSON, options: ['default' => '{}'])]
-    protected array $customProperties = [];
+    public array $customProperties = [];
 
     protected string $unmanagedPropertiesYaml = '';
 
@@ -31,20 +31,6 @@ trait ExtensiblePropertiesTrait
 
     #[Ignore]
     protected string $buildValidationAtPath = 'unmanagedPropertiesAsYaml';
-
-    /** @return array<mixed> */
-    public function getCustomProperties(): array
-    {
-        return $this->customProperties;
-    }
-
-    /** @param array<mixed> $customProperties */
-    public function setCustomProperties(array $customProperties): self
-    {
-        $this->customProperties = $customProperties;
-
-        return $this;
-    }
 
     /**
      * Return custom properties without the ones which have a dedicated getter/setter.

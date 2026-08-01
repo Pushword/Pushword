@@ -247,7 +247,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         self::assertInstanceOf(Media::class, $media);
 
         // Extra columns should be stored as custom properties
-        $customProps = $media->getCustomProperties();
+        $customProps = $media->customProperties;
         self::assertArrayHasKey('customField1', $customProps);
         self::assertSame('value1', $customProps['customField1']);
         self::assertArrayHasKey('customField2', $customProps);

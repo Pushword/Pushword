@@ -32,7 +32,7 @@ final class VariantPageTest extends KernelTestCase
         $page->setMainContent('Content of '.$slug);
 
         if (null !== $variantOf) {
-            $page->setVariantOf($variantOf);
+            $page->variantOf = $variantOf;
         }
 
         return $page;
@@ -204,14 +204,14 @@ final class VariantPageTest extends KernelTestCase
             self::assertNotNull($b);
             self::assertNotNull($m);
             self::assertFalse($a->isVariant(), 'Promoted page is now the master');
-            self::assertSame('promote-a', $m->getVariantOf()?->getSlug());
-            self::assertSame('promote-a', $b->getVariantOf()?->getSlug());
+            self::assertSame('promote-a', $m->variantOf?->getSlug());
+            self::assertSame('promote-a', $b->variantOf?->getSlug());
         } finally {
             $repo = $em->getRepository(Page::class);
             foreach (['promote-a', 'promote-b', 'promote-master'] as $slug) {
                 $page = $repo->findOneBy(['slug' => $slug]);
                 if (null !== $page) {
-                    $page->setVariantOf(null);
+                    $page->variantOf = null;
                 }
             }
 

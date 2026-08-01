@@ -59,7 +59,7 @@ final class ParentPageSyncTest extends KernelTestCase
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 // Must remove children first (due to FK constraints)
-                $page->setParentPage(null);
+                $page->parentPage = null;
             }
         }
 
@@ -104,7 +104,7 @@ final class ParentPageSyncTest extends KernelTestCase
         $child->host = 'localhost.dev';
         $child->locale = 'en';
         $child->setMainContent('Child content');
-        $child->setParentPage($parent);
+        $child->parentPage = $parent;
 
         $this->em->persist($child);
         $this->em->flush();
@@ -146,8 +146,8 @@ final class ParentPageSyncTest extends KernelTestCase
 
         $child = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'child-import-test', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $child);
-        self::assertNotNull($child->getParentPage());
-        self::assertSame('parent-import-test', $child->getParentPage()->getSlug());
+        self::assertNotNull($child->parentPage);
+        self::assertSame('parent-import-test', $child->parentPage->getSlug());
     }
 
     public function testParentPageRoundTrip(): void
@@ -171,7 +171,7 @@ final class ParentPageSyncTest extends KernelTestCase
         $child->host = 'localhost.dev';
         $child->locale = 'en';
         $child->setMainContent('Child');
-        $child->setParentPage($parent);
+        $child->parentPage = $parent;
 
         $this->em->persist($child);
         $this->em->flush();
@@ -182,7 +182,7 @@ final class ParentPageSyncTest extends KernelTestCase
         $this->createdFiles[] = $this->contentDir.'/child-roundtrip.md';
 
         // Delete child from DB
-        $child->setParentPage(null);
+        $child->parentPage = null;
         $this->em->flush();
         $this->em->remove($child);
         $this->em->flush();
@@ -195,8 +195,8 @@ final class ParentPageSyncTest extends KernelTestCase
 
         $reimportedChild = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'child-roundtrip', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $reimportedChild);
-        self::assertNotNull($reimportedChild->getParentPage());
-        self::assertSame('parent-roundtrip', $reimportedChild->getParentPage()->getSlug());
+        self::assertNotNull($reimportedChild->parentPage);
+        self::assertSame('parent-roundtrip', $reimportedChild->parentPage->getSlug());
     }
 
     public function testNestedThreeLevelHierarchy(): void
@@ -211,12 +211,12 @@ final class ParentPageSyncTest extends KernelTestCase
 
         $child = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'child-nested-test', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $child);
-        self::assertNotNull($child->getParentPage(), 'Child should have parent');
-        self::assertSame('parent-nested-test', $child->getParentPage()->getSlug());
+        self::assertNotNull($child->parentPage, 'Child should have parent');
+        self::assertSame('parent-nested-test', $child->parentPage->getSlug());
 
-        $parentPage = $child->getParentPage();
-        self::assertNotNull($parentPage->getParentPage(), 'Parent should have grandparent');
-        self::assertSame('grandparent-test', $parentPage->getParentPage()->getSlug());
+        $parentPage = $child->parentPage;
+        self::assertNotNull($parentPage->parentPage, 'Parent should have grandparent');
+        self::assertSame('grandparent-test', $parentPage->parentPage->getSlug());
     }
 
     public function testParentPageRemovedWhenExplicitlyNulled(): void
@@ -231,7 +231,7 @@ final class ParentPageSyncTest extends KernelTestCase
 
         $child = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'child-remove-test', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $child);
-        self::assertNotNull($child->getParentPage());
+        self::assertNotNull($child->parentPage);
 
         // Update child .md with parentPage explicitly set to empty
         $this->createMd('child-remove-test.md', "---\nh1: 'Child Remove'\nparentPage: ''\n---\n\nChild without parent");
@@ -258,7 +258,7 @@ final class ParentPageSyncTest extends KernelTestCase
 
         $child = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'new-child-deferred', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $child);
-        self::assertNotNull($child->getParentPage(), 'Parent page created in same import cycle should be resolved via deferred resolution');
-        self::assertSame('new-parent-deferred', $child->getParentPage()->getSlug());
+        self::assertNotNull($child->parentPage, 'Parent page created in same import cycle should be resolved via deferred resolution');
+        self::assertSame('new-parent-deferred', $child->parentPage->getSlug());
     }
 }

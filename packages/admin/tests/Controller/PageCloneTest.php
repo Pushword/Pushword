@@ -51,7 +51,7 @@ final class PageCloneTest extends AbstractAdminTestClass
         $clone = $pageRepo->findOneBy(['slug' => 'homepage-copy']);
         self::assertNotNull($clone, 'Cloned page "homepage-copy" must exist. Redirect was to: '.$location);
         self::assertNull($clone->getPublishedAt(), 'Clone must be unpublished');
-        self::assertCount(0, $clone->getTranslations(), 'Clone must have no translation links');
+        self::assertCount(0, $clone->translations, 'Clone must have no translation links');
         self::assertStringContainsString((string) $clone->id, $location);
 
         // Clean up so the test is repeatable

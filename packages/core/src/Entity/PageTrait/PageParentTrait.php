@@ -11,18 +11,23 @@ use Pushword\Core\Entity\Page;
 trait PageParentTrait
 {
     #[ORM\ManyToOne(targetEntity: Page::class, inversedBy: 'childrenPages')]
-    protected ?Page $parentPage = null;
+    public ?Page $parentPage = null {
+        set {
+            if (null !== $value && ! $this->validateParentPage($value)) {
+                throw new LogicException("Current Page can't be it own parent page.");
+            }
+
+            $this->parentPage = $value;
+        }
+    }
 
     /**
      * @var Collection<int, Page>
      */
     #[ORM\OneToMany(targetEntity: Page::class, mappedBy: 'parentPage', fetch: 'EXTRA_LAZY')]
     #[ORM\OrderBy(['publishedAt' => 'DESC', 'weight' => 'DESC'])]
-    protected ?Collection $childrenPages;  // @phpstan-ignore-line
-
-    public function getParentPage(): ?Page
-    {
-        return $this->parentPage;
+    public Collection $childrenPages {
+        get => $this->childrenPages ??= new ArrayCollection();
     }
 
     // todo, move to assert
@@ -32,32 +37,13 @@ trait PageParentTrait
             return false;
         }
 
-        $grandParentPage = $parentPage->getParentPage();
+        $grandParentPage = $parentPage->parentPage;
 
         return null !== $grandParentPage ? $this->validateParentPage($grandParentPage) : true;
     }
 
-    public function setParentPage(?Page $page): self
-    {
-        if (null !== $page && ! $this->validateParentPage($page)) {
-            throw new LogicException("Current Page can't be it own parent page.");
-        }
-
-        $this->parentPage = $page;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Page>
-     */
-    public function getChildrenPages(): Collection
-    {
-        return $this->childrenPages ?? new ArrayCollection([]);
-    }
-
     public function hasChildrenPages(): bool
     {
-        return ! $this->getChildrenPages()->isEmpty();
+        return ! $this->childrenPages->isEmpty();
     }
 }

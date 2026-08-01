@@ -20,25 +20,13 @@ trait PageI18nTrait
      * @var Collection<int, Page>
      */
     #[ORM\ManyToMany(targetEntity: Page::class)]
-    protected ?Collection $translations = null;  // @phpstan-ignore-line
-
-    /** @param Collection<int, Page> $translations */
-    public function setTranslations(Collection $translations): self
-    {
-        $this->translations = $translations;
-
-        return $this;
-    }
-
-    /** @return Collection<int, Page> */
-    public function getTranslations(): Collection
-    {
-        return $this->translations ?? ($this->translations = new ArrayCollection());
+    public Collection $translations {
+        get => $this->translations ??= new ArrayCollection();
     }
 
     public function getTranslation(string $locale): ?Page
     {
-        foreach ($this->getTranslations() as $translation) {
+        foreach ($this->translations as $translation) {
             if ($translation->locale === $locale) {
                 return $translation;
             }
@@ -49,8 +37,8 @@ trait PageI18nTrait
 
     public function addTranslation(Page $page, bool $recursive = true): self
     {
-        if (! $this->getTranslations()->contains($page) && $this !== $page) {
-            $this->getTranslations()->add($page);
+        if (! $this->translations->contains($page) && $this !== $page) {
+            $this->translations->add($page);
         }
 
         // Add the other ('ever exist') translations to the new added Translation
@@ -58,12 +46,12 @@ trait PageI18nTrait
         // Add this Page to the translated Page
         // + Add the translated Page to the other translation
         if ($recursive) {
-            foreach ($this->getTranslations() as $otherTranslation) {
+            foreach ($this->translations as $otherTranslation) {
                 $page->addTranslation($otherTranslation, false);
             }
 
             $page->addTranslation($this, false);
-            foreach ($this->getTranslations() as $otherTranslation) {
+            foreach ($this->translations as $otherTranslation) {
                 if ($otherTranslation === $this) {  // déjà fait
                     continue;
                 }
@@ -81,11 +69,11 @@ trait PageI18nTrait
 
     public function removeTranslation(Page $page, bool $recursive = true): self
     {
-        if ($this->getTranslations()->contains($page)) {
-            $this->getTranslations()->removeElement($page);
+        if ($this->translations->contains($page)) {
+            $this->translations->removeElement($page);
 
             if ($recursive) {
-                foreach ($this->getTranslations() as $otherTranslation) {
+                foreach ($this->translations as $otherTranslation) {
                     $page->removeTranslation($otherTranslation, false);
                 }
             }
@@ -94,7 +82,7 @@ trait PageI18nTrait
         if ($recursive) {
             $page->removeTranslation($this, false);
 
-            foreach ($this->getTranslations() as $otherTranslation) {
+            foreach ($this->translations as $otherTranslation) {
                 if ($otherTranslation === $this) {
                     continue;
                 }

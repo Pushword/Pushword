@@ -11,6 +11,37 @@ use ReflectionProperty;
 
 class Entity
 {
+    /** @var array<string, ReflectionProperty|null> */
+    private static array $propertyCache = [];
+
+    private static function reflectProperty(object $object, string $property): ?ReflectionProperty
+    {
+        $key = $object::class.'::'.$property;
+        if (! \array_key_exists($key, self::$propertyCache)) {
+            self::$propertyCache[$key] = property_exists($object, $property)
+                ? new ReflectionProperty($object, $property)
+                : null;
+        }
+
+        return self::$propertyCache[$key];
+    }
+
+    public static function isPubliclyReadableProperty(object $object, string $property): bool
+    {
+        return self::reflectProperty($object, $property)?->isPublic() ?? false;
+    }
+
+    public static function isPubliclyWritableProperty(object $object, string $property): bool
+    {
+        $reflectionProperty = self::reflectProperty($object, $property);
+
+        return null !== $reflectionProperty
+            && $reflectionProperty->isPublic()
+            && ! $reflectionProperty->isPrivateSet()
+            && ! $reflectionProperty->isProtectedSet()
+            && ! $reflectionProperty->isReadOnly();
+    }
+
     /**
      * @param array<ReflectionAttribute<object>> $attributes
      */

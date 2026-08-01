@@ -209,7 +209,7 @@ final class IdempotencyTest extends KernelTestCase
 
         $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'redirect-from-test', 'host' => 'localhost.dev']);
         self::assertNotNull($page);
-        self::assertSame(['old-one' => 301, 'old/two' => 302], $page->getRedirectFromMap());
+        self::assertSame(['old-one' => 301, 'old/two' => 302], $page->redirectFrom);
 
         // Export re-emits redirectFrom; a second export is a no-op (idempotent).
         $this->pageSync->export('localhost.dev', true, $this->contentDir);

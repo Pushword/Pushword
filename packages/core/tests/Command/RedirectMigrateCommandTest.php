@@ -54,7 +54,7 @@ final class RedirectMigrateCommandTest extends KernelTestCase
         // Internal phantom folded into the destination's redirectFrom, and deleted.
         $destination = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'rfm-destination', 'host' => 'localhost.dev']);
         self::assertNotNull($destination);
-        self::assertSame(['rfm-old' => 301], $destination->getRedirectFromMap());
+        self::assertSame(['rfm-old' => 301], $destination->redirectFrom);
 
         self::assertNull($this->em->getRepository(Page::class)->findOneBy(['slug' => 'rfm-old', 'host' => 'localhost.dev']));
 
@@ -77,7 +77,7 @@ final class RedirectMigrateCommandTest extends KernelTestCase
         self::assertNotNull($phantom, 'Dry run must not delete the phantom page');
         $destination = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'rfm-destination', 'host' => 'localhost.dev']);
         self::assertNotNull($destination);
-        self::assertSame([], $destination->getRedirectFromMap());
+        self::assertSame([], $destination->redirectFrom);
     }
 
     private function createPage(string $slug, string $mainContent): void

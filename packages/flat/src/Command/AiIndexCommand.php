@@ -160,7 +160,7 @@ final class AiIndexCommand
                 $page->getTags(),
                 $page->getSearchExcerpt() ?? '',
                 implode(', ', $mediaUsed),
-                $page->getParentPage()?->getSlug() ?? '',
+                $page->parentPage?->getSlug() ?? '',
                 implode(', ', $pageLinked),
                 $length,
             ];

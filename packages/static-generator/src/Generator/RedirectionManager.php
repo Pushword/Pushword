@@ -36,7 +36,7 @@ class RedirectionManager extends AbstractGenerator
     public function addRedirectFrom(Page $page): void
     {
         $to = $this->router->generate($page->getRealSlug());
-        foreach ($page->getRedirectFromMap() as $from => $code) {
+        foreach ($page->redirectFrom as $from => $code) {
             $this->redirections[] = [$this->router->generate($from), $to, $code];
         }
     }

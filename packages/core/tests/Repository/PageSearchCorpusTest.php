@@ -57,7 +57,7 @@ final class PageSearchCorpusTest extends KernelTestCase
         $current = $this->createPage(self::CURRENT_SLUG, $parent);
         $this->createPage(self::CHILD_SLUG, $current);
 
-        // setParentPage() does not maintain the inverse side, so `grandchildren`
+        // assigning parentPage does not maintain the inverse side, so `grandchildren`
         // would read an empty collection off the entity that just created it.
         // Re-reading makes the fixture behave like a page loaded from a request.
         $this->entityManager->clear();
@@ -93,7 +93,7 @@ final class PageSearchCorpusTest extends KernelTestCase
         $page->setSlug($slug);
         $page->setH1('Corpus fixture '.$slug);
         $page->setMainContent('Corpus fixture content.');
-        $page->setParentPage($parent);
+        $page->parentPage = $parent;
 
         $this->entityManager->persist($page);
         $this->entityManager->flush();
@@ -463,7 +463,7 @@ final class PageSearchCorpusTest extends KernelTestCase
         return match ($expected) {
             '{current}' => $current,
             '{current+3}' => $current + 3,
-            '{parent}' => $this->currentPage->getParentPage()->id ?? 0,
+            '{parent}' => $this->currentPage->parentPage->id ?? 0,
             '{children}' => [$this->childId()],
             // The named page plus everything below it — the parents a page of
             // that section can have.

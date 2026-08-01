@@ -34,24 +34,24 @@ final class CustomPropertiesTraitTest extends TestCase
     {
         $customProperties = new Page();
 
-        self::assertEmpty($customProperties->getCustomProperties());
+        self::assertEmpty($customProperties->customProperties);
 
-        $customProperties->setCustomProperties(self::customPorperties());
+        $customProperties->customProperties = self::customPorperties();
 
-        self::assertSame($customProperties->getCustomProperties(), self::customPorperties());
+        self::assertSame($customProperties->customProperties, self::customPorperties());
         self::assertSame($customProperties->getUnmanagedPropertiesAsYaml(), self::unmanagedPropertiesYaml());
 
         $customProperties->setUnmanagedPropertiesFromYaml(self::unmanagedPropertiesYaml('test 1234'), true);
-        self::assertSame(self::customPorperties('test 1234'), $customProperties->getCustomProperties());
+        self::assertSame(self::customPorperties('test 1234'), $customProperties->customProperties);
 
         $customProperties->removeCustomProperty('newCustomPropertyNotIndexed');
-        self::assertArrayNotHasKey('newCustomPropertyNotIndexed', $customProperties->getCustomProperties());
+        self::assertArrayNotHasKey('newCustomPropertyNotIndexed', $customProperties->customProperties);
     }
 
     public function testManagedPropertyKeyIsHidden(): void
     {
         $customProperties = new Page();
-        $customProperties->setCustomProperties(['handledExternally' => 'foo']);
+        $customProperties->customProperties = ['handledExternally' => 'foo'];
 
         self::assertStringContainsString('handledExternally', $customProperties->getUnmanagedPropertiesAsYaml());
 
@@ -63,22 +63,22 @@ final class CustomPropertiesTraitTest extends TestCase
     public function testMergeEmptyYamlClearsUnmanagedProperties(): void
     {
         $page = new Page();
-        $page->setCustomProperties(['unmanaged' => 'val', 'other' => 'val2']);
+        $page->customProperties = ['unmanaged' => 'val', 'other' => 'val2'];
 
         $page->setUnmanagedPropertiesFromYaml('', true);
 
-        self::assertSame([], $page->getCustomProperties());
+        self::assertSame([], $page->customProperties);
     }
 
     public function testMergeEmptyYamlKeepsManagedProperties(): void
     {
         $page = new Page();
-        $page->setCustomProperties(['managed' => 'keep', 'unmanaged' => 'remove']);
+        $page->customProperties = ['managed' => 'keep', 'unmanaged' => 'remove'];
         $page->registerManagedPropertyKey('managed');
 
         $page->setUnmanagedPropertiesFromYaml('', true);
 
-        self::assertSame(['managed' => 'keep'], $page->getCustomProperties());
+        self::assertSame(['managed' => 'keep'], $page->customProperties);
     }
 
     public function testMergeAddsNewPropertiesFromYaml(): void
@@ -95,7 +95,7 @@ final class CustomPropertiesTraitTest extends TestCase
     public function testMergeRemovesDeletedUnmanagedProperty(): void
     {
         $page = new Page();
-        $page->setCustomProperties(['keepThis' => 'a', 'removeThis' => 'b']);
+        $page->customProperties = ['keepThis' => 'a', 'removeThis' => 'b'];
 
         // YAML only has 'keepThis', so 'removeThis' should be removed
         $yaml = Yaml::dump(['keepThis' => 'updated']);
@@ -110,11 +110,11 @@ final class CustomPropertiesTraitTest extends TestCase
         // Reproduces the API flow: customProperties are set directly and the page
         // is validated without the admin YAML textarea ever feeding a value.
         $page = new Page();
-        $page->setCustomProperties(['productCode' => 'ABC-123']);
+        $page->customProperties = ['productCode' => 'ABC-123'];
 
         $page->validateUnmanagedProperties($this->getExceptionContextInterface());
 
-        self::assertSame(['productCode' => 'ABC-123'], $page->getCustomProperties());
+        self::assertSame(['productCode' => 'ABC-123'], $page->customProperties);
     }
 
     public function testMergeThrowsWhenYamlContainsManagedProperty(): void
@@ -142,11 +142,11 @@ final class CustomPropertiesTraitTest extends TestCase
     public function testMergeMixedScenario(): void
     {
         $page = new Page();
-        $page->setCustomProperties([
+        $page->customProperties = [
             'managed' => 'stays',
             'old_unmanaged' => 'removed',
             'kept_unmanaged' => 'updated',
-        ]);
+        ];
         $page->registerManagedPropertyKey('managed');
 
         $yaml = Yaml::dump([

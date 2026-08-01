@@ -288,7 +288,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $destination->host = 'localhost.dev';
         $destination->locale = 'en';
         $destination->setMainContent('content');
-        $destination->setRedirectFrom(['scan-old' => 301]);
+        $destination->redirectFrom = ['scan-old' => 301];
 
         $em->persist($destination);
         $em->flush();

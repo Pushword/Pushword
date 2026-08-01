@@ -59,20 +59,20 @@ final readonly class PageFrontmatterMapper
             'template' => $page->template,
             'editMessage' => $page->editMessage,
             'slug' => $page->getSlug(),
-            'weight' => $page->getWeight(),
+            'weight' => $page->weight,
             'tags' => $page->getTagList(),
-            'redirectFrom' => $page->getRedirectFromMap(),
+            'redirectFrom' => $page->redirectFrom,
             'publishedAt' => $page->getPublishedAt()?->format(DateTimeInterface::ATOM),
             'holdPublication' => $page->isHoldPublication(),
             'mainImage' => $page->getMainImage()?->getFileName(),
-            'parentPage' => $page->getParentPage()?->getSlug(),
-            'variantOf' => $page->getVariantOf()?->getSlug(),
+            'parentPage' => $page->parentPage?->getSlug(),
+            'variantOf' => $page->variantOf?->getSlug(),
             'customCanonical' => $page->getCustomCanonical(),
             'translations' => array_values(array_map(
                 fn (Page $t): string => $this->buildTranslationRef($t, $page->host),
-                $page->getTranslations()->toArray(),
+                $page->translations->toArray(),
             )),
-            'customProperties' => $page->getCustomProperties(),
+            'customProperties' => $page->customProperties,
         ];
 
         return [
@@ -134,7 +134,7 @@ final readonly class PageFrontmatterMapper
         }
 
         if (\array_key_exists('redirectFrom', $frontmatter) && (\is_array($frontmatter['redirectFrom']) || \is_string($frontmatter['redirectFrom']))) {
-            $page->setRedirectFrom($frontmatter['redirectFrom']);
+            $page->redirectFrom = $frontmatter['redirectFrom'];
         }
 
         if (\array_key_exists('publishedAt', $frontmatter)) {
@@ -150,14 +150,14 @@ final readonly class PageFrontmatterMapper
         }
 
         if (\array_key_exists('parentPage', $frontmatter)) {
-            $page->setParentPage($this->resolvePageRef($frontmatter['parentPage'], $page->host));
+            $page->parentPage = $this->resolvePageRef($frontmatter['parentPage'], $page->host);
         }
 
         if (\array_key_exists('variantOf', $frontmatter)) {
-            // Resolve the master by slug on the same host. setVariantOf() enforces
+            // Resolve the master by slug on the same host. the variantOf set hook enforces
             // the single-level rule (a variant's master cannot itself be a variant
             // and a page cannot be its own master) and throws on violation.
-            $page->setVariantOf($this->resolvePageRef($frontmatter['variantOf'], $page->host));
+            $page->variantOf = $this->resolvePageRef($frontmatter['variantOf'], $page->host);
         }
 
         if (\array_key_exists('customCanonical', $frontmatter) && (\is_string($frontmatter['customCanonical']) || null === $frontmatter['customCanonical'])) {
@@ -171,7 +171,7 @@ final readonly class PageFrontmatterMapper
         if (\array_key_exists('customProperties', $frontmatter) && \is_array($frontmatter['customProperties'])) {
             /** @var array<string, mixed> $custom */
             $custom = $frontmatter['customProperties'];
-            $page->setCustomProperties($custom);
+            $page->customProperties = $custom;
             foreach (array_keys($custom) as $key) {
                 $page->registerManagedPropertyKey($key);
             }
@@ -313,7 +313,7 @@ final readonly class PageFrontmatterMapper
             $targets[] = $translation;
         }
 
-        foreach ($page->getTranslations()->toArray() as $current) {
+        foreach ($page->translations->toArray() as $current) {
             if (! \in_array($current, $targets, true)) {
                 $page->removeTranslation($current);
             }

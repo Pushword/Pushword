@@ -77,7 +77,7 @@ final class PageControllerTest extends KernelTestCase
         $destination->createdAt = new DateTime();
         $destination->updatedAt = new DateTime();
         $destination->setMainContent('Destination content');
-        $destination->setRedirectFrom(['old-incoming' => 301]);
+        $destination->redirectFrom = ['old-incoming' => 301];
 
         $em->persist($destination);
         $em->flush();
@@ -118,18 +118,18 @@ final class PageControllerTest extends KernelTestCase
         $em->persist($parent);
 
         $listed = $this->createFeedPage('feed-listed-child', 'Listed Child');
-        $listed->setParentPage($parent);
+        $listed->parentPage = $parent;
 
         $em->persist($listed);
 
         $hidden = $this->createFeedPage('feed-noindex-child', 'Hidden Child');
-        $hidden->setParentPage($parent);
+        $hidden->parentPage = $parent;
         $hidden->setMetaRobots('noindex, noarchive');
 
         $em->persist($hidden);
 
         $em->flush();
-        // childrenPages is EXTRA_LAZY and inverse: setParentPage() never touched the
+        // childrenPages is EXTRA_LAZY and inverse: assigning parentPage never touched the
         // collection the identity map still holds, and it would read as empty.
         $em->clear();
 

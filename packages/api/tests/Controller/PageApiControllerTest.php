@@ -56,7 +56,7 @@ final class PageApiControllerTest extends WebTestCase
             $page = $em->getRepository(Page::class)->find($id);
             if ($page instanceof Page) {
                 // Unlink first: translation rows point at the page from both sides.
-                foreach ($page->getTranslations()->toArray() as $translation) {
+                foreach ($page->translations->toArray() as $translation) {
                     $page->removeTranslation($translation);
                 }
 
@@ -683,7 +683,7 @@ final class PageApiControllerTest extends WebTestCase
         // The old path keeps redirecting, carried by the destination page.
         $destination = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $destinationSlug]);
         self::assertInstanceOf(Page::class, $destination);
-        self::assertSame([$slug => 301], $destination->getRedirectFrom());
+        self::assertSame([$slug => 301], $destination->redirectFrom);
     }
 
     public function testDeleteAcceptsRedirectToAsQueryParameter(): void
@@ -735,7 +735,7 @@ final class PageApiControllerTest extends WebTestCase
 
         $target = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $redirectionSlug]);
         self::assertInstanceOf(Page::class, $target);
-        self::assertSame([], $target->getRedirectFrom());
+        self::assertSame([], $target->redirectFrom);
     }
 
     public function testDeleteWithExternalTargetLeavesARedirectOnlyPage(): void

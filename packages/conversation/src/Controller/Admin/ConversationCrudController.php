@@ -338,7 +338,7 @@ class ConversationCrudController extends AbstractAdminCrudController
 
         return new Response($this->adminFormFieldManager->twig->render($template, [
             'entity' => ['instance' => $message],
-            'value' => 'weight' === $field ? $message->getWeight() : null,
+            'value' => 'weight' === $field ? $message->weight : null,
             'field' => null,
         ]));
     }
@@ -389,7 +389,7 @@ class ConversationCrudController extends AbstractAdminCrudController
             return new Response('Invalid CSRF token.', Response::HTTP_FORBIDDEN);
         }
 
-        foreach ($message->getMediaList() as $media) {
+        foreach ($message->mediaList as $media) {
             if ($media->id === $mediaId) {
                 $message->removeMedia($media);
 

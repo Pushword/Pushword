@@ -600,7 +600,7 @@ class PageCrudController extends AbstractAdminCrudController
 
         return new Response($this->adminFormFieldManager->twig->render($template, [
             'entity' => ['instance' => $page],
-            'value' => 'weight' === $field ? $page->getWeight() : null,
+            'value' => 'weight' === $field ? $page->weight : null,
             'field' => null,
         ]));
     }

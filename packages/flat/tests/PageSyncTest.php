@@ -275,7 +275,7 @@ final class PageSyncTest extends KernelTestCase
         $variant->locale = 'en';
         $variant->setMainContent('Variant content');
         $variant->setPublishedAt(new DateTime());
-        $variant->setVariantOf($master);
+        $variant->variantOf = $master;
 
         $this->em->persist($master);
         $this->em->persist($variant);
@@ -310,7 +310,7 @@ final class PageSyncTest extends KernelTestCase
             self::assertNotNull($reVariant);
             self::assertSame('https://example.tld/forced', $reMaster->customCanonical);
             self::assertTrue($reVariant->isVariant());
-            self::assertSame('rt-master', $reVariant->getVariantOf()?->getSlug());
+            self::assertSame('rt-master', $reVariant->variantOf?->getSlug());
         } finally {
             if (null !== $reVariant) {
                 $this->em->remove($reVariant);
@@ -903,8 +903,8 @@ MD;
         self::assertNotNull($importedFrPage, 'FR page should be recreated');
 
         // Verify bidirectional translations
-        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage), 'EN should have FR as translation');
-        self::assertTrue($importedFrPage->getTranslations()->contains($importedEnPage), 'FR should have EN as translation');
+        self::assertTrue($importedEnPage->translations->contains($importedFrPage), 'EN should have FR as translation');
+        self::assertTrue($importedFrPage->translations->contains($importedEnPage), 'FR should have EN as translation');
 
         // Cleanup
         $importedEnPage->removeTranslation($importedFrPage);
@@ -961,9 +961,9 @@ MD;
         $this->em->flush();
 
         // Verify initial state
-        self::assertCount(2, $enPage->getTranslations());
-        self::assertCount(2, $frPage->getTranslations());
-        self::assertCount(2, $dePage->getTranslations());
+        self::assertCount(2, $enPage->translations);
+        self::assertCount(2, $frPage->translations);
+        self::assertCount(2, $dePage->translations);
 
         // Export
         $this->pageSync->export('localhost.dev', true, $contentDir);
@@ -996,12 +996,12 @@ MD;
         self::assertNotNull($importedDePage);
 
         // EN should only have FR
-        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should only have 1 translation now');
-        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage), 'EN should still have FR');
-        self::assertFalse($importedEnPage->getTranslations()->contains($importedDePage), 'EN should no longer have DE');
+        self::assertCount(1, $importedEnPage->translations, 'EN should only have 1 translation now');
+        self::assertTrue($importedEnPage->translations->contains($importedFrPage), 'EN should still have FR');
+        self::assertFalse($importedEnPage->translations->contains($importedDePage), 'EN should no longer have DE');
 
         // DE should no longer have EN (bidirectional removal)
-        self::assertFalse($importedDePage->getTranslations()->contains($importedEnPage), 'DE should no longer have EN');
+        self::assertFalse($importedDePage->translations->contains($importedEnPage), 'DE should no longer have EN');
 
         // Cleanup
         $importedEnPage->removeTranslation($importedFrPage);
@@ -1050,7 +1050,7 @@ MD;
         $this->em->flush();
 
         // Verify initial state
-        self::assertCount(1, $enPage->getTranslations());
+        self::assertCount(1, $enPage->translations);
 
         // Export
         $this->pageSync->export('localhost.dev', true, $contentDir);
@@ -1078,8 +1078,8 @@ MD;
         self::assertNotNull($importedFrPage);
 
         // Both should still have the translation because FR added it
-        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should still have FR (addition takes precedence)');
-        self::assertTrue($importedFrPage->getTranslations()->contains($importedEnPage), 'FR should still have EN');
+        self::assertCount(1, $importedEnPage->translations, 'EN should still have FR (addition takes precedence)');
+        self::assertTrue($importedFrPage->translations->contains($importedEnPage), 'FR should still have EN');
 
         // Cleanup
         $importedEnPage->removeTranslation($importedFrPage);
@@ -1125,8 +1125,8 @@ MD;
         $this->em->flush();
 
         // Verify initial state
-        self::assertCount(1, $aPage->getTranslations());
-        self::assertCount(1, $bPage->getTranslations());
+        self::assertCount(1, $aPage->translations);
+        self::assertCount(1, $bPage->translations);
 
         // Export
         $this->pageSync->export('localhost.dev', true, $contentDir);
@@ -1154,8 +1154,8 @@ MD;
         self::assertNotNull($importedAPage);
         self::assertNotNull($importedBPage);
 
-        self::assertCount(1, $importedAPage->getTranslations(), 'A should have B (addition takes precedence)');
-        self::assertCount(1, $importedBPage->getTranslations(), 'B should have A');
+        self::assertCount(1, $importedAPage->translations, 'A should have B (addition takes precedence)');
+        self::assertCount(1, $importedBPage->translations, 'B should have A');
 
         // Cleanup
         $importedAPage->removeTranslation($importedBPage);
@@ -1228,8 +1228,8 @@ MD;
         self::assertNotNull($importedFrPage);
 
         // Translations remain because no explicit translations key was set
-        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should keep FR (no translations key = dont modify)');
-        self::assertCount(1, $importedFrPage->getTranslations(), 'FR should keep EN');
+        self::assertCount(1, $importedEnPage->translations, 'EN should keep FR (no translations key = dont modify)');
+        self::assertCount(1, $importedFrPage->translations, 'FR should keep EN');
 
         // Cleanup
         $importedEnPage->removeTranslation($importedFrPage);
@@ -1300,8 +1300,8 @@ MD;
         self::assertNotNull($importedEnPage);
         self::assertNotNull($importedFrPage);
 
-        self::assertCount(0, $importedEnPage->getTranslations(), 'EN should have no translations');
-        self::assertCount(0, $importedFrPage->getTranslations(), 'FR should have no translations');
+        self::assertCount(0, $importedEnPage->translations, 'EN should have no translations');
+        self::assertCount(0, $importedFrPage->translations, 'FR should have no translations');
 
         // Cleanup
         $this->em->remove($importedEnPage);
@@ -1366,10 +1366,10 @@ MD;
         self::assertNotNull($importedEnPage);
         self::assertNotNull($importedFrPage);
 
-        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have FR');
-        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage));
-        self::assertCount(1, $importedFrPage->getTranslations(), 'FR should have EN (bidirectional)');
-        self::assertTrue($importedFrPage->getTranslations()->contains($importedEnPage));
+        self::assertCount(1, $importedEnPage->translations, 'EN should have FR');
+        self::assertTrue($importedEnPage->translations->contains($importedFrPage));
+        self::assertCount(1, $importedFrPage->translations, 'FR should have EN (bidirectional)');
+        self::assertTrue($importedFrPage->translations->contains($importedEnPage));
 
         // Cleanup
         $importedEnPage->removeTranslation($importedFrPage);
@@ -1902,9 +1902,9 @@ YAML;
 
         self::assertNotNull($importedEnPage, 'EN page should be imported');
         self::assertNotNull($importedFrPage, 'FR page on other host should still exist');
-        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have 1 translation');
-        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage), 'EN should link to FR on other host');
-        self::assertTrue($importedFrPage->getTranslations()->contains($importedEnPage), 'FR should link back to EN (bidirectional)');
+        self::assertCount(1, $importedEnPage->translations, 'EN should have 1 translation');
+        self::assertTrue($importedEnPage->translations->contains($importedFrPage), 'EN should link to FR on other host');
+        self::assertTrue($importedFrPage->translations->contains($importedEnPage), 'FR should link back to EN (bidirectional)');
 
         // Cleanup
         $importedEnPage->removeTranslation($importedFrPage);
@@ -1956,7 +1956,7 @@ YAML;
         $this->em->clear();
         $enPageToRemove = $this->em->find(Page::class, $enPageId);
         self::assertNotNull($enPageToRemove);
-        foreach ($enPageToRemove->getTranslations()->toArray() as $t) {
+        foreach ($enPageToRemove->translations->toArray() as $t) {
             $enPageToRemove->removeTranslation($t);
         }
 
@@ -1973,8 +1973,8 @@ YAML;
 
         self::assertNotNull($importedEnPage, 'EN page should be recreated');
         self::assertNotNull($importedFrPage, 'FR page should still exist on other host');
-        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have 1 translation after round-trip');
-        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage), 'Cross-host link should survive round-trip');
+        self::assertCount(1, $importedEnPage->translations, 'EN should have 1 translation after round-trip');
+        self::assertTrue($importedEnPage->translations->contains($importedFrPage), 'Cross-host link should survive round-trip');
 
         // Cleanup
         $importedEnPage->removeTranslation($importedFrPage);
@@ -2035,8 +2035,8 @@ YAML;
 
         self::assertNotNull($importedEnPage, 'EN page should be imported');
         self::assertNotNull($importedNestedPage, 'Nested slug page should exist');
-        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have 1 translation');
-        self::assertTrue($importedEnPage->getTranslations()->contains($importedNestedPage), 'Translation should resolve to same-host nested slug');
+        self::assertCount(1, $importedEnPage->translations, 'EN should have 1 translation');
+        self::assertTrue($importedEnPage->translations->contains($importedNestedPage), 'Translation should resolve to same-host nested slug');
 
         // Cleanup
         $importedEnPage->removeTranslation($importedNestedPage);
@@ -2095,9 +2095,9 @@ YAML;
 
         self::assertNotNull($importedEnPage, 'EN page should be created');
         self::assertNotNull($importedFrPage, 'FR page should be created');
-        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have FR as translation');
-        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage));
-        self::assertTrue($importedFrPage->getTranslations()->contains($importedEnPage), 'FR should have EN (bidirectional)');
+        self::assertCount(1, $importedEnPage->translations, 'EN should have FR as translation');
+        self::assertTrue($importedEnPage->translations->contains($importedFrPage));
+        self::assertTrue($importedFrPage->translations->contains($importedEnPage), 'FR should have EN (bidirectional)');
 
         // Cleanup
         $importedEnPage->removeTranslation($importedFrPage);
@@ -2164,8 +2164,8 @@ YAML;
 
         self::assertNotNull($importedEnPage, 'EN page should exist');
         self::assertNotNull($importedFrPage, 'FR page on other host should exist');
-        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have FR as translation after re-import');
-        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage), 'Cross-host link should be established');
+        self::assertCount(1, $importedEnPage->translations, 'EN should have FR as translation after re-import');
+        self::assertTrue($importedEnPage->translations->contains($importedFrPage), 'Cross-host link should be established');
 
         // Cleanup
         $importedEnPage->removeTranslation($importedFrPage);
@@ -2326,8 +2326,8 @@ MD);
         self::assertNotNull($notFoundPage, 'Page with slug "404" should be imported');
         self::assertNotNull($frPage, 'FR translation page should be imported');
         self::assertSame('404', $notFoundPage->slug);
-        self::assertCount(1, $notFoundPage->getTranslations(), '404 page should have 1 translation');
-        $firstTranslation = $notFoundPage->getTranslations()->first();
+        self::assertCount(1, $notFoundPage->translations, '404 page should have 1 translation');
+        $firstTranslation = $notFoundPage->translations->first();
         self::assertNotFalse($firstTranslation);
         self::assertSame('error-page-fr', $firstTranslation->getSlug());
 
@@ -2506,7 +2506,7 @@ YAML;
         foreach ([$enId, $frId, $frCaId] as $id) {
             $p = $this->em->find(Page::class, $id);
             self::assertNotNull($p);
-            foreach ($p->getTranslations()->toArray() as $t) {
+            foreach ($p->translations->toArray() as $t) {
                 $p->removeTranslation($t);
             }
 
@@ -2527,13 +2527,13 @@ YAML;
         self::assertNotNull($importedFrCa);
 
         // All three should be mutually linked despite minimal export
-        self::assertCount(2, $importedEn->getTranslations());
-        self::assertCount(2, $importedFr->getTranslations());
-        self::assertCount(2, $importedFrCa->getTranslations());
+        self::assertCount(2, $importedEn->translations);
+        self::assertCount(2, $importedFr->translations);
+        self::assertCount(2, $importedFrCa->translations);
 
         // Cleanup
         foreach ([$importedEn, $importedFr, $importedFrCa] as $p) {
-            foreach ($p->getTranslations()->toArray() as $t) {
+            foreach ($p->translations->toArray() as $t) {
                 $p->removeTranslation($t);
             }
 
@@ -2655,7 +2655,7 @@ YAML;
 
         // Cleanup
         foreach ([$mainPage, $frPage, $dePage] as $p) {
-            foreach ($p->getTranslations()->toArray() as $t) {
+            foreach ($p->translations->toArray() as $t) {
                 $p->removeTranslation($t);
             }
 
@@ -2724,7 +2724,7 @@ YAML;
 
         // Cleanup
         foreach ([$enPage, $frPage, $dePage] as $p) {
-            foreach ($p->getTranslations()->toArray() as $t) {
+            foreach ($p->translations->toArray() as $t) {
                 $p->removeTranslation($t);
             }
 

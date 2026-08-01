@@ -58,7 +58,7 @@ final readonly class HtmlVariantLink implements FilterInterface
     {
         $target = $this->resolveTargetPage($match['href'], $currentPage);
 
-        $master = $target?->getVariantOf();
+        $master = $target?->variantOf;
         if (null === $master) {
             return $match[0];
         }
