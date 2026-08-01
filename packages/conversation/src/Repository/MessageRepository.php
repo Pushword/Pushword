@@ -123,6 +123,29 @@ class MessageRepository extends ServiceEntityRepository
     }
 
     /**
+     * Every message's uuid, keyed by id. Two scalars a row, where hydrating the
+     * entities to read the same two would carry their whole content along —
+     * the flat import reads this once instead of asking per CSV row.
+     *
+     * @return array<int, string|null>
+     */
+    public function getUuidById(): array
+    {
+        /** @var array{id: int, uuid: string|null}[] $rows */
+        $rows = $this->createQueryBuilder('m')
+            ->select('m.id', 'm.uuid')
+            ->getQuery()
+            ->getResult();
+
+        $uuidById = [];
+        foreach ($rows as $row) {
+            $uuidById[$row['id']] = $row['uuid'];
+        }
+
+        return $uuidById;
+    }
+
+    /**
      * @return Message[]
      */
     public function findByHost(string $host): array

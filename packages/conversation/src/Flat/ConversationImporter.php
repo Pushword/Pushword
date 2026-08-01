@@ -27,6 +27,16 @@ final class ConversationImporter
      */
     private array $messagesCacheByHost = [];
 
+    /**
+     * The merge identities of the database, read once per import run.
+     *
+     * @var array<string, int>|null uuid => message id
+     */
+    private ?array $idByUuid = null;
+
+    /** @var array<int, true>|null ids of the messages the uuid rollout has not reached */
+    private ?array $idsWithoutUuid = null;
+
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly DenormalizerInterface $denormalizer,
@@ -52,6 +62,11 @@ final class ConversationImporter
     public function import(?string $host = null): void
     {
         $app = $this->resolveApp($host);
+
+        // The rows this run writes are flushed at its end, so the index is only
+        // an index of the database this run started from.
+        $this->idByUuid = null;
+        $this->idsWithoutUuid = null;
 
         $this->importFromCsv(
             $this->buildCsvPath($app),
@@ -98,15 +113,46 @@ final class ConversationImporter
             return $this->findMessage($row['id'] ?? null);
         }
 
-        $message = $this->getMessageRepository()->findOneBy(['uuid' => $uuid]);
-        if (null !== $message) {
-            return $message;
+        $this->indexIdentities();
+
+        $id = $this->idByUuid[$uuid] ?? null;
+        if (null !== $id) {
+            return $this->getMessageRepository()->find($id);
         }
 
-        // Legacy row not yet backfilled: adopt the CSV uuid onto it.
-        $byId = $this->findMessage($row['id'] ?? null);
+        // Legacy row not yet backfilled: adopt the CSV uuid onto it. An id the
+        // index does not hold either names no message or names one another uuid
+        // already claims — a distinct message, not this one.
+        $legacyId = $row['id'] ?? null;
 
-        return null !== $byId && null === $byId->uuid ? $byId : null;
+        return null !== $legacyId && isset($this->idsWithoutUuid[(int) trim($legacyId)])
+            ? $this->findMessage($legacyId)
+            : null;
+    }
+
+    /**
+     * Both merge indexes in one query, rather than one lookup per CSV row: an
+     * import into a rebuilt database matches nothing, and it was paying two
+     * misses for every row to find that out.
+     */
+    private function indexIdentities(): void
+    {
+        if (null !== $this->idByUuid) {
+            return;
+        }
+
+        $this->idByUuid = [];
+        $this->idsWithoutUuid = [];
+
+        foreach ($this->getMessageRepository()->getUuidById() as $id => $uuid) {
+            if (null === $uuid) {
+                $this->idsWithoutUuid[$id] = true;
+
+                continue;
+            }
+
+            $this->idByUuid[$uuid] = $id;
+        }
     }
 
     /**
