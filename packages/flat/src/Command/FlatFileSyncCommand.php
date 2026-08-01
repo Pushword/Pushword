@@ -297,7 +297,7 @@ final class FlatFileSyncCommand
             default => 'auto',
         };
 
-        return [
+        $summary = [
             'tool' => 'pw:flat:sync',
             'result' => 'passed',
             'mode' => $displayMode,
@@ -307,6 +307,16 @@ final class FlatFileSyncCommand
             'yaml_errors' => $pageSync->getYamlErrorCount(),
             'duration_ms' => (int) $duration,
         ];
+
+        // Import and report, never block: schema findings ride along without
+        // touching the exit code.
+        foreach ($pageSync->getSchemaReport() as $key => $findings) {
+            if ([] !== $findings) {
+                $summary[$key] = $findings;
+            }
+        }
+
+        return $summary;
     }
 
     /** @param string[] $pageSlugs */
@@ -377,6 +387,15 @@ final class FlatFileSyncCommand
 
         if ($yamlErrors > 0) {
             $io->warning(\sprintf('%d file(s) skipped due to YAML front matter errors. Run `pw:flat:lint` for details.', $yamlErrors));
+        }
+
+        $schemaReport = $pageSync->getSchemaReport();
+        if ([] !== $schemaReport['invalid']) {
+            $io->warning(\sprintf('%d page(s) violate the declared page properties (imported anyway). Run `pw:schema:dump` for the schema.', \count($schemaReport['invalid'])));
+        }
+
+        if ([] !== $schemaReport['missing_required']) {
+            $io->warning('Missing required page properties: '.json_encode($schemaReport['missing_required'], \JSON_UNESCAPED_UNICODE));
         }
     }
 

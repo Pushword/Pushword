@@ -574,4 +574,12 @@ final class PageSync
     {
         return \count($this->yamlErrorSlugs);
     }
+
+    /**
+     * @return array{invalid: array<string, list<string>>, undeclared: array<string, int>, missing_required: array<string, int>}
+     */
+    public function getSchemaReport(): array
+    {
+        return $this->pageImporter->getSchemaReport();
+    }
 }

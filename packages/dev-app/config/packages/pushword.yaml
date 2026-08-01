@@ -62,6 +62,8 @@ pushword:
         # what covers resolving an alias back to its main host.
         - www.admin-block-editor.test
       base_url: 'https://admin-block-editor.test'
+      page_properties:
+        author: { type: string, required: true }
 
 static_generator:
   static_symlink: false

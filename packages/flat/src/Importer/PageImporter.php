@@ -11,15 +11,18 @@ use Override;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Utils\Entity;
+use Pushword\Core\Validator\Constraints\PagePropertiesSchema;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Serializer\PageFileSerializer;
 use Spatie\YamlFrontMatter\Document;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Service\Attribute\Required;
 use TypeError;
 
@@ -57,6 +60,21 @@ final class PageImporter extends AbstractImporter
 
     #[Required]
     public PageFileSerializer $pageFileSerializer;
+
+    #[Required]
+    public ValidatorInterface $validator;
+
+    #[Required]
+    public PagePropertySchemaRegistry $schemaRegistry;
+
+    /** @var array<string, list<string>> slug => translated violation messages */
+    private array $invalidPages = [];
+
+    /** @var array<string, int> undeclared custom property key => pages carrying it */
+    private array $undeclaredKeys = [];
+
+    /** @var array<string, int> required property key => pages missing it */
+    private array $missingRequired = [];
 
     private Filesystem $filesystem {
         get => $this->filesystem ??= new Filesystem();
@@ -316,7 +334,56 @@ final class PageImporter extends AbstractImporter
             $page->skipAutoTimestamp = true;
         }
 
+        $this->reportSchemaCompliance($slug, $page);
+
         return $page;
+    }
+
+    /**
+     * Import and report, never block: one bad frontmatter must not fail a
+     * deploy. Validates the pw_schema group alone (cheap, no DB lookups) and
+     * tallies undeclared and missing-required keys — the near-miss net that
+     * catches a `toc_title` typo'd for `tocTitle`.
+     */
+    private function reportSchemaCompliance(string $slug, Page $page): void
+    {
+        $violations = $this->validator->validate($page, null, [PagePropertiesSchema::SCHEMA_GROUP]);
+        foreach ($violations as $violation) {
+            $this->invalidPages[$slug][] = (string) $violation->getMessage();
+        }
+
+        $schemas = $this->schemaRegistry->for($page->host);
+        if ([] === $schemas) {
+            return;
+        }
+
+        foreach (array_keys($page->customProperties) as $key) {
+            if (isset($schemas[(string) $key])) {
+                continue;
+            }
+            if ($page->isManagedProperty((string) $key)) {
+                continue;
+            }
+            $this->undeclaredKeys[(string) $key] = ($this->undeclaredKeys[(string) $key] ?? 0) + 1;
+        }
+
+        foreach ($schemas as $name => $schema) {
+            if ($schema->required && ! $page->hasCustomProperty($name)) {
+                $this->missingRequired[$name] = ($this->missingRequired[$name] ?? 0) + 1;
+            }
+        }
+    }
+
+    /**
+     * @return array{invalid: array<string, list<string>>, undeclared: array<string, int>, missing_required: array<string, int>}
+     */
+    public function getSchemaReport(): array
+    {
+        return [
+            'invalid' => $this->invalidPages,
+            'undeclared' => $this->undeclaredKeys,
+            'missing_required' => $this->missingRequired,
+        ];
     }
 
     private function initDateTimeProperties(Page $page, DateTimeInterface $lastEditDateTime, bool $publishedAtExplicitlySet = false): void
@@ -652,6 +719,9 @@ final class PageImporter extends AbstractImporter
         $this->addedTranslationPairs = [];
         $this->importedCount = 0;
         $this->skippedCount = 0;
+        $this->invalidPages = [];
+        $this->undeclaredKeys = [];
+        $this->missingRequired = [];
     }
 
     public function getImportedCount(): int
