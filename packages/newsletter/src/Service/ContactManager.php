@@ -82,11 +82,13 @@ final readonly class ContactManager
             $contact->optIn($requireDoubleOptIn);
         }
 
-        $this->entityManager->flush();
-
+        // Send before flushing: a transport refusing the address (a typo most
+        // often) must not leave a pending contact no confirmation ever reached.
         if ($reopening && $contact->isPending()) {
             $this->mailer->sendConfirmation($contact);
         }
+
+        $this->entityManager->flush();
 
         return $contact;
     }

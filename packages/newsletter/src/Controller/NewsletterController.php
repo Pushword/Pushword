@@ -14,6 +14,7 @@ use Pushword\Newsletter\Service\SubscribeForm;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -103,6 +104,11 @@ final class NewsletterController extends AbstractController
             return $response;
         }
 
+        // The request reaches the live host, whose own locale says nothing about
+        // the reader; the form sends the locale of the page it sat in.
+        $locale = $this->resolveLocale($request->request->all());
+        $this->localeSwitcher->setLocale($locale);
+
         // A filled honeypot gets the success page a human would get: a prober
         // must not be able to tell a rejected submission from an accepted one.
         if ('' !== trim((string) $request->request->get(self::HONEYPOT_FIELD, ''))) {
@@ -136,19 +142,25 @@ final class NewsletterController extends AbstractController
         $interests = $this->submittedList($request->request->all(), 'interests');
         $pending = false;
 
-        foreach ($audiences as $audience) {
-            $contact = $this->contactManager->subscribe(
-                $audience,
-                $email,
-                (string) $request->request->get('name', ''),
-                $this->resolveLocale($request->request->all()),
-                $audience->filterInterests($interests),
-                $this->resolveSource($request),
-                $this->resolveOptinHost($request),
-                $request->getClientIp(),
-            );
+        try {
+            foreach ($audiences as $audience) {
+                $contact = $this->contactManager->subscribe(
+                    $audience,
+                    $email,
+                    (string) $request->request->get('name', ''),
+                    $locale,
+                    $audience->filterInterests($interests),
+                    $this->resolveSource($request),
+                    $this->resolveOptinHost($request),
+                    $request->getClientIp(),
+                );
 
-            $pending = $pending || $contact->isPending();
+                $pending = $pending || $contact->isPending();
+            }
+        } catch (TransportExceptionInterface) {
+            // Most often the server refusing the mailbox — a typo in the address.
+            // The person can fix it and resubmit; nothing pending was stored.
+            return $this->alert($response, 'newsletter.subscribe.sendFailed', 'error', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         // One confirmation to click is the whole story to tell: it is what stands

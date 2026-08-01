@@ -66,6 +66,8 @@ final readonly class MailRenderer
             'contact' => $contact,
             'subject' => $subject,
             'confirmUrl' => $confirmUrl,
+            'primaryColor' => $this->siteRegistry->get($audience->getMainHost())
+                ->getStr('css_var:color_primary', '#1c1c1c'),
         ]);
     }
 

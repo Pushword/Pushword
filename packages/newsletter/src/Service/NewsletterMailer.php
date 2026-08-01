@@ -65,16 +65,17 @@ final readonly class NewsletterMailer
     {
         $audience = $contact->getAudience();
         $confirmUrl = $this->linkGenerator->confirmUrl($contact);
-        $subject = $this->translator->trans(
-            'newsletter.confirm.subject',
+        $trans = fn (string $key): string => $this->translator->trans(
+            'newsletter.confirm.'.$key,
             ['%audience%' => $audience->getName()],
             null,
             $contact->getLocale(),
         );
+        $subject = $trans('subject');
 
         $email = $this->baseEmail($audience, $contact)
             ->subject($subject)
-            ->text($confirmUrl."\n")
+            ->text($trans('body')."\n\n".$confirmUrl."\n\n".$trans('ignore')."\n")
             ->html($this->renderer->confirmationHtml($audience, $contact, $subject, $confirmUrl));
 
         $this->mailer->send($email);

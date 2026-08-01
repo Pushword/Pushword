@@ -8,6 +8,7 @@ use Pushword\Newsletter\Repository\AudienceRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Component\Translation\LocaleSwitcher;
 use Twig\Environment as Twig;
 
 /**
@@ -31,6 +32,7 @@ final readonly class SubscribeForm
         private UrlGeneratorInterface $urlGenerator,
         private Twig $twig,
         private CsrfTokenManagerInterface $csrfTokenManager,
+        private LocaleSwitcher $localeSwitcher,
     ) {
     }
 
@@ -101,7 +103,9 @@ final readonly class SubscribeForm
      */
     public function render(array $audiences, array $interests, string $locale, ?string $source): string
     {
-        return $this->twig->render(
+        // The fragment is served by the live host, whose request locale is not
+        // the reader's: the page the form will sit in sent its own.
+        return $this->localeSwitcher->runWithLocale($locale, fn (): string => $this->twig->render(
             $this->view('form.html.twig', $audiences[0]->getMainHost()),
             [
                 'audiences' => $audiences,
@@ -114,7 +118,7 @@ final readonly class SubscribeForm
                     ? $this->csrfTokenManager->getToken(self::CSRF_TOKEN_ID)->getValue()
                     : null,
             ],
-        );
+        ));
     }
 
     public function placeholder(string $url): string

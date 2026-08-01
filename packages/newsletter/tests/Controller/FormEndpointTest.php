@@ -94,6 +94,15 @@ final class FormEndpointTest extends AbstractNewsletterTestCase
         self::assertStringNotContainsString('Undeclared', $html);
     }
 
+    /** The fragment is served by the live host; its labels must follow the page that asked. */
+    public function testTheFormSpeaksTheLocaleItWasAskedIn(): void
+    {
+        $audience = $this->createAudience();
+
+        self::assertStringContainsString('First name', $this->fetch(['audiences' => $audience->getSlug()]));
+        self::assertStringContainsString('Prénom', $this->fetch(['audiences' => $audience->getSlug(), 'locale' => 'fr']));
+    }
+
     public function testAnUnknownAudienceIsNotFound(): void
     {
         $this->client->request(Request::METHOD_POST, '/newsletter/form?audiences=does-not-exist');

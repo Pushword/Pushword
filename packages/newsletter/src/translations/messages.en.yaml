@@ -93,7 +93,7 @@ newsletter:
       recipients.help: Comma-, space- or newline-separated. Defaults to your address.
       title: Send a test
   confirm:
-    body: Confirm your subscription to %audience% by clicking the button below.
+    body: Thank you for signing up! To start receiving our emails, click the button below to confirm your email address.
     button: Confirm my subscription
     ignore: If you did not ask for this, ignore this mail — nothing will be sent.
     subject: 'Confirm your subscription to %audience%'
@@ -173,6 +173,7 @@ newsletter:
     invalidToken: Your form expired. Please reload the page and try again.
     noAudience: Pick at least one newsletter.
     pending: Almost done — click the link we just sent you.
+    sendFailed: We could not send the confirmation email. Check your address and try again.
     tooMany: Too many attempts. Please try again later.
     unknownAudience: This newsletter does not exist.
   unknown:

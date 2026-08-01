@@ -13,7 +13,7 @@
             <p style="margin:0 0 20px;">{{ 'newsletter.confirm.body'|trans({'%audience%': audience.name}, null, contact.locale) }}</p>
             <p style="margin:0 0 24px;">
                 <a href="{{ confirmUrl }}"
-                   style="display:inline-block;padding:12px 22px;background:#1c1c1c;color:#ffffff;text-decoration:none;border-radius:4px;">
+                   style="display:inline-block;padding:12px 22px;background:{{ primaryColor }};color:#ffffff;text-decoration:none;border-radius:4px;">
                     {{ 'newsletter.confirm.button'|trans({}, null, contact.locale) }}
                 </a>
             </p>

@@ -11,7 +11,11 @@ use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Envelope;
+use Symfony\Component\Mailer\Exception\TransportException;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\RawMessage;
 
 #[Group('integration')]
 final class SubscribeFlowTest extends AbstractNewsletterTestCase
@@ -42,7 +46,51 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         self::assertEmailCount(1);
         $email = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $email);
-        self::assertStringContainsString('/newsletter/confirm/'.$contact->getToken(), (string) $email->getTextBody());
+        $text = (string) $email->getTextBody();
+        self::assertStringContainsString('/newsletter/confirm/'.$contact->getToken(), $text);
+        self::assertStringContainsString($this->translate('newsletter.confirm.body', 'en'), $text, 'the text part reads like a mail, not a bare link');
+        self::assertStringContainsString($this->translate('newsletter.confirm.ignore', 'en'), $text);
+    }
+
+    /**
+     * A transport refusing the mailbox — a typo in the address, mostly — must
+     * answer the visitor rather than crash: no 500, and no pending contact a
+     * confirmation never reached.
+     */
+    public function testARefusedRecipientGetsAnAnswerAndLeavesNothingBehind(): void
+    {
+        $audience = $this->createAudience();
+        self::getContainer()->set('mailer.mailer', new class implements MailerInterface {
+            public function send(RawMessage $message, ?Envelope $envelope = null): void
+            {
+                throw new TransportException('550 5.1.1 Recipient address rejected');
+            }
+        });
+
+        $this->post($audience->getSlug(), ['email' => 'typo@rejected.tld']);
+
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString(
+            $this->translate('newsletter.subscribe.sendFailed'),
+            (string) $this->client->getResponse()->getContent(),
+        );
+        self::assertNull($this->repository()->findOneByEmail($audience, 'typo@rejected.tld'));
+    }
+
+    /** The alert answers in the locale the form sent, not the live host's. */
+    public function testTheAlertAndTheMailSpeakTheLocaleTheFormSent(): void
+    {
+        $audience = $this->createAudience();
+
+        $this->post($audience->getSlug(), ['email' => 'francois@example.tld', 'locale' => 'fr']);
+
+        self::assertStringContainsString(
+            $this->translate('newsletter.subscribe.pending', 'fr'),
+            (string) $this->client->getResponse()->getContent(),
+        );
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertStringContainsString($this->translate('newsletter.confirm.body', 'fr'), (string) $email->getTextBody());
     }
 
     public function testConfirmingSubscribes(): void

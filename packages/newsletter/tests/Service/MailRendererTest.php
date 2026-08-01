@@ -3,6 +3,7 @@
 namespace Pushword\Newsletter\Tests\Service;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Service\MailRenderer;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
@@ -37,6 +38,28 @@ final class MailRendererTest extends AbstractNewsletterTestCase
 
         self::assertStringContainsString('https://localhost.dev/article?utm_source=newsletter', $html);
         self::assertStringContainsString('href="'.self::UNSUBSCRIBE.'"', $html);
+    }
+
+    public function testTheConfirmationButtonWearsTheHostsPrimaryColor(): void
+    {
+        self::getContainer()->get(SiteRegistry::class)->get('localhost.dev')
+            ->setCustomProperty('css_var:color_primary', '#92400e');
+
+        self::assertStringContainsString('background:#92400e', $this->confirmation());
+    }
+
+    public function testWithoutAPrimaryColorTheConfirmationButtonKeepsItsDefault(): void
+    {
+        self::assertStringContainsString('background:#1c1c1c', $this->confirmation());
+    }
+
+    private function confirmation(): string
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'reader@example.tld', subscribed: false);
+
+        return self::getContainer()->get(MailRenderer::class)
+            ->confirmationHtml($audience, $contact, 'Subject', 'https://localhost.dev/newsletter/confirm/'.str_repeat('a', 64));
     }
 
     private function render(Audience $audience, string $bodyMarkdown, ?UtmTag $utmTag): string
