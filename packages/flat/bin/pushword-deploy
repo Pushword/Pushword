@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+#
+# Pushword site pull/deploy (ships with pushword/flat, runs as
+# vendor/bin/pushword-deploy). Configuration lives in deploy.conf at the site
+# root; the script finds it upward from the current directory.
+#
+#   pushword-deploy pull         sync prod -> local (database follows PULL_EXCLUDES)
+#   pushword-deploy push         full deploy: PRE_PUSH, rsync, remote build chain
+#   pushword-deploy publish      content-only fast path (no composer/build)
+#   pushword-deploy pull-db      fetch prod var/app.db (backs up the local one first)
+#
+# Flags:
+#   -n, --dry-run                show what rsync would transfer, run nothing
+#   --ship-db                    ALSO push local var/app.db to prod (transitional
+#                                rc802 migration only — overwrites prod runtime
+#                                data: subscribers, messages, quiz results)
+#
+# The push always protects prod's database and sync state (var/app.db*,
+# var/flat-sync/) whatever PUSH_EXCLUDES says; --ship-db sends the db file
+# explicitly instead of relaxing excludes, so it works with every topology.
+
+set -euo pipefail
+
+usage() { sed -n '2,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 1; }
+
+MODE="${1:-}"
+case $MODE in ''|-h|--help) usage ;; esac
+shift
+DRY=(); SHIP_DB=0
+for arg in "$@"; do
+    case $arg in
+        -n|--dry-run) DRY=(--dry-run) ;;
+        --ship-db) SHIP_DB=1 ;;
+        *) echo "Unknown option: $arg" >&2; usage ;;
+    esac
+done
+
+# The site root is wherever deploy.conf lives, looked up from the current
+# directory: composer symlinks this script into vendor/bin, so its own path
+# says nothing about the site.
+ROOT="$PWD"
+while [[ ! -f $ROOT/deploy.conf && $ROOT != / ]]; do ROOT="$(dirname "$ROOT")"; done
+CONF="$ROOT/deploy.conf"
+
+[[ -f $CONF ]] || { echo "No deploy.conf found from $PWD upward" >&2; exit 1; }
+
+# Defaults a conf may override
+SSH_OPTS=""
+DELETE=0
+PULL_EXCLUDES=('.git' 'vendor/' 'node_modules/' 'var/cache/' 'var/log/' 'var/static/' 'static/')
+PUSH_EXCLUDES=('.git' 'vendor/' 'node_modules/' 'var/cache/' 'var/log/' 'var/static/' 'static/')
+PUBLISH_PATHS=('content' 'media')
+PRE_PUSH=('php bin/console pw:flat:sync')
+REMOTE_DEPLOY=''
+REMOTE_PUBLISH='php bin/console pw:flat:sync && php bin/console pw:static'
+POST_DEPLOY_LOCAL=()
+
+# shellcheck source=/dev/null
+source "$CONF"
+
+[[ -n ${REMOTE:-} && -n ${REMOTE_PATH:-} ]] || { echo "deploy.conf must set REMOTE and REMOTE_PATH" >&2; exit 1; }
+
+read -ra SSH_CMD <<<"ssh $SSH_OPTS"
+RSYNC=(rsync -avz --progress "${DRY[@]}" -e "ssh $SSH_OPTS")
+if [[ $DELETE -eq 1 ]]; then RSYNC+=(--delete); fi
+
+excludes() { local e; for e in "$@"; do printf -- "--exclude=%s\n" "$e"; done; }
+
+run_remote() {
+    if [[ ${#DRY[@]} -gt 0 ]]; then echo "[dry-run] ssh $REMOTE: $1"; return; fi
+    "${SSH_CMD[@]}" "$REMOTE" "cd '$REMOTE_PATH' && $1"
+}
+
+run_local_chain() {
+    local cmd
+    for cmd in "$@"; do
+        if [[ ${#DRY[@]} -gt 0 ]]; then echo "[dry-run] local: $cmd"; continue; fi
+        (cd "$ROOT" && eval "$cmd")
+    done
+}
+
+case $MODE in
+    pull)
+        mapfile -t EX < <(excludes "${PULL_EXCLUDES[@]}" '*~conflict-*')
+        "${RSYNC[@]}" "${EX[@]}" "$REMOTE:$REMOTE_PATH/" "$ROOT/"
+        ;;
+
+    pull-db)
+        if [[ -f $ROOT/var/app.db && ${#DRY[@]} -eq 0 ]]; then
+            cp "$ROOT/var/app.db" "$ROOT/var/app.db.before-pull-$(date +%Y%m%d%H%M%S)"
+        fi
+        "${RSYNC[@]}" "$REMOTE:$REMOTE_PATH/var/app.db" "$ROOT/var/app.db"
+        ;;
+
+    push)
+        if [[ $SHIP_DB -eq 1 && ${#DRY[@]} -eq 0 ]]; then
+            echo "--ship-db OVERWRITES the production database (subscribers, messages,"
+            echo "quiz results collected on prod are replaced by your local copy)."
+            read -rp "Type 'ship' to confirm: " answer
+            [[ $answer == ship ]] || { echo "Aborted."; exit 1; }
+        fi
+        run_local_chain "${PRE_PUSH[@]}"
+        mapfile -t EX < <(excludes "${PUSH_EXCLUDES[@]}" 'var/app.db*' 'var/flat-sync/' '*~conflict-*')
+        "${RSYNC[@]}" "${EX[@]}" "$ROOT/" "$REMOTE:$REMOTE_PATH/"
+        if [[ $SHIP_DB -eq 1 ]]; then
+            "${RSYNC[@]}" "$ROOT/var/app.db" "$REMOTE:$REMOTE_PATH/var/app.db"
+        fi
+        if [[ -n $REMOTE_DEPLOY ]]; then run_remote "$REMOTE_DEPLOY"; fi
+        run_local_chain "${POST_DEPLOY_LOCAL[@]}"
+        ;;
+
+    publish)
+        run_local_chain "${PRE_PUSH[@]}"
+        mapfile -t EX < <(excludes '*~conflict-*')
+        (cd "$ROOT" && "${RSYNC[@]}" "${EX[@]}" "${PUBLISH_PATHS[@]}" "$REMOTE:$REMOTE_PATH/")
+        run_remote "$REMOTE_PUBLISH"
+        ;;
+
+    *) usage ;;
+esac
+
+echo "Done: $MODE"

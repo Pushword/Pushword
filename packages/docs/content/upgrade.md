@@ -50,6 +50,10 @@ Behavior changes to review:
   older and would change the content, and notifies the admin (a stale file
   rsynced over a production admin edit no longer silently wins). Hand-edited
   rows keep their exported `updatedAt` and still apply.
+- `pushword/flat` now ships `vendor/bin/pushword-deploy` — a configurable
+  pull/push/publish deploy script whose push can never overwrite the
+  production database (see the [flat extension](/extension/flat) page). Site
+  specifics live in a `deploy.conf` at the site root.
 
 ## To 1.0.0-rc802
 

@@ -430,6 +430,40 @@ When running without `--host`:
 - Pages from host A are never written to host B's content directory
 - Sync state (timestamps, conflicts) is tracked **per host**
 
+## Deploying a site: `vendor/bin/pushword-deploy`
+
+The bundle ships a site-agnostic deploy script (installed by composer, updated
+with it). Per-site specifics — remote, SSH options, excludes, local and remote
+command chains — live in a `deploy.conf` at the site root, found upward from
+wherever you run it:
+
+```bash
+vendor/bin/pushword-deploy pull       # prod -> local
+vendor/bin/pushword-deploy push       # full deploy: local prep, rsync, remote build
+vendor/bin/pushword-deploy publish    # content/ + media/ only, no composer/build
+vendor/bin/pushword-deploy pull-db    # fetch prod var/app.db (backs up local first)
+# -n / --dry-run everywhere; --ship-db for the one-time rc802 migration
+```
+
+The push **always** excludes `var/app.db*` and `var/flat-sync/`, whatever the
+configured excludes say: production owns its database (messages, quiz results,
+newsletter contacts, admin edits between two pulls) and each machine owns its
+sync state. `--ship-db` (confirmation required) sends the database file
+explicitly on top of the tree — only for the documented one-time uuid
+migration.
+
+Minimal `deploy.conf`:
+
+```bash
+REMOTE="user@server"
+REMOTE_PATH="/home/user/mysite.com"
+# SSH_OPTS="-p 5022"                 # DELETE=1 for rsync --delete
+# PULL_EXCLUDES / PUSH_EXCLUDES      # arrays, sensible defaults provided
+# PRE_PUSH=('php bin/console pw:flat:sync')
+REMOTE_DEPLOY='composer update && php bin/console doctrine:schema:update --force && bin/console cache:clear && php bin/console pw:flat:sync && php bin/console pw:static'
+# PUBLISH_PATHS=('content' 'media')  # REMOTE_PUBLISH, POST_DEPLOY_LOCAL
+```
+
 ## Generate AI index
 
 ```bash

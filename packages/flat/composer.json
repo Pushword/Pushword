@@ -10,6 +10,9 @@
     "league/csv": "^9.0",
     "spatie/yaml-front-matter": "^2.0"
   },
+  "bin": [
+    "bin/pushword-deploy"
+  ],
   "extra": {
     "branch-alias": {
       "dev-main": "1.0.x-dev"
