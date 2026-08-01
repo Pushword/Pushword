@@ -14,7 +14,7 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
-## To 1.0.0-rc798
+## To 1.0.0-rc799
 
 ### Entity and site state are native properties now (PHP 8.4)
 
@@ -67,6 +67,8 @@ Removed → replacement, per class (methods with real logic all remain):
 If you import flat content, note that frontmatter keys matching a public
 property now assign it directly (hooks included) instead of silently landing in
 `customProperties` when no setter matched.
+
+## To 1.0.0-rc798
 
 ### The newsletter form is now fetched, and CSRF-protected
 
