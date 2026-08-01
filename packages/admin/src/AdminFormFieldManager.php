@@ -9,6 +9,7 @@ use Pushword\Admin\FormField\AbstractField;
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteRegistry;
@@ -32,6 +33,7 @@ class AdminFormFieldManager
         public readonly PageRepository $pageRepo,
         public readonly MediaRepository $mediaRepo,
         public readonly AdminUrlGenerator $adminUrlGenerator,
+        public readonly PagePropertySchemaRegistry $schemaRegistry,
     ) {
     }
 

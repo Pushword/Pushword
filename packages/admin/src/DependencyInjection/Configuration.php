@@ -21,6 +21,7 @@ use Pushword\Admin\FormField\PageNameField;
 use Pushword\Admin\FormField\PageParentPageField;
 use Pushword\Admin\FormField\PagePublishedAtField;
 use Pushword\Admin\FormField\PageRedirectFromField;
+use Pushword\Admin\FormField\PageSchemaPropertiesField;
 use Pushword\Admin\FormField\PageSearchExcreptField;
 use Pushword\Admin\FormField\PageSlugField;
 use Pushword\Admin\FormField\PageTitleField;
@@ -90,7 +91,7 @@ class Configuration implements ConfigurationInterface
             'adminPageTranslationsLabel' => [PageLocaleField::class, PageTranslationsField::class],
             'adminPageCustomPropertiesLabel' => [
                 'expand' => true,
-                'fields' => [CustomPropertiesField::class],
+                'fields' => [PageSchemaPropertiesField::class, CustomPropertiesField::class],
             ],
             /*
             'adminPageOgLabel' => [
