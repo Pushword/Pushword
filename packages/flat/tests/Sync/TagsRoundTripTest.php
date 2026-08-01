@@ -145,7 +145,7 @@ final class TagsRoundTripTest extends KernelTestCase
         $media->setAlt('Tags Test Media');
         $media->setTags('document important');
         $media->setMimeType('text/plain');
-        $media->setSize(12);
+        $media->size = 12;
         $media->setStoreIn($mediaDir);
         $media->setHash((string) sha1_file($testPath, true));
 
@@ -190,7 +190,7 @@ final class TagsRoundTripTest extends KernelTestCase
         $media->setAlt('Tags RoundTrip Media');
         $media->setTags('archive backup');
         $media->setMimeType('text/plain');
-        $media->setSize(21);
+        $media->size = 21;
         $media->setStoreIn($mediaDir);
         $media->setHash((string) sha1_file($testPath, true));
 

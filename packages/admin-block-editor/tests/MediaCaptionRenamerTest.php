@@ -125,7 +125,7 @@ final class MediaCaptionRenamerTest extends AbstractAdminTestClass
         );
 
         self::assertSame('steady-name.jpg', $media->getFileName());
-        self::assertSame([], $media->getFileNameHistory());
+        self::assertSame([], $media->fileNameHistory);
     }
 
     public function testSkipsEmptyCaption(): void
@@ -138,7 +138,7 @@ final class MediaCaptionRenamerTest extends AbstractAdminTestClass
         );
 
         self::assertSame('solo-name.jpg', $media->getFileName());
-        self::assertSame([], $media->getFileNameHistory());
+        self::assertSame([], $media->fileNameHistory);
     }
 
     public function testRenameIntoExistingNameIsSuffixed(): void

@@ -714,7 +714,7 @@ final class ConversationFlatTest extends KernelTestCase
         $media->setFileName($fileName);
         $media->setAlt('Test media '.$fileName);
         $media->setMimeType('image/jpeg');
-        $media->setSize(1024);
+        $media->size = 1024;
 
         $this->entityManager->persist($media);
         $this->entityManager->flush();

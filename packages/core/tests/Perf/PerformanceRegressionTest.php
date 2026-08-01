@@ -287,7 +287,7 @@ final class PerformanceRegressionTest extends KernelTestCase
                 ->setDimensions([10, 10])
                 ->setFileName('history-probe-current.png')
                 ->setAlt('history-probe')
-                ->setFileNameHistory(['history-probe-legacy.png']);
+                ->fileNameHistory = ['history-probe-legacy.png'];
             $this->em->persist($media);
             $this->em->flush();
 

@@ -115,12 +115,12 @@ final class MediaMultiUploadController extends AbstractController
             'thumbnailUrl' => $thumbnailUrl,
             'width' => $dimensions?->width,
             'height' => $dimensions?->height,
-            'size' => $media->getSize(),
+            'size' => $media->size,
             'mimeType' => $media->getMimeType(),
             // The upload hook now imports the rights a file carries. A photographer's
             // name silently written into a hidden field would be worse than no field,
             // so the row discloses them — see admin.multiUpload.js.
-            'licenseState' => $media->getLicenseState(),
+            'licenseState' => $media->licenseState,
             'license' => $this->licenseValues($media),
         ];
     }
@@ -178,7 +178,7 @@ final class MediaMultiUploadController extends AbstractController
         }
 
         if (\in_array($field, MediaLicense::KEYS, true)) {
-            $response['licenseState'] = $media->getLicenseState();
+            $response['licenseState'] = $media->licenseState;
         }
 
         return new JsonResponse($response);

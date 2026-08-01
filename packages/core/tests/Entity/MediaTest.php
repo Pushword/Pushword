@@ -2,8 +2,12 @@
 
 namespace Pushword\Core\Tests\Entity;
 
+use DateTime;
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Media;
+use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final class MediaTest extends TestCase
 {
@@ -127,5 +131,112 @@ final class MediaTest extends TestCase
         $media = new Media();
         $media->hiddenFromAdmin = true;
         self::assertTrue($media->hiddenFromAdmin);
+    }
+
+    public function testSetMediaFileTouchesUpdatedAtOnlyWithAFile(): void
+    {
+        $media = new Media();
+        $before = new DateTime('2020-01-01');
+        $media->updatedAt = $before;
+
+        $media->setMediaFile();
+        self::assertSame($before, $media->getUpdatedAtNullable());
+
+        $media->setMediaFile(new File(__FILE__, false));
+        self::assertNotSame($before, $media->getUpdatedAtNullable());
+    }
+
+    public function testGetMediaFileNameThrowsWithoutAFile(): void
+    {
+        $media = new Media();
+        $this->expectException(Exception::class);
+        $media->getMediaFileName();
+    }
+
+    public function testGetMediaFileNameReturnsClientNameForUploads(): void
+    {
+        $media = new Media();
+        $media->setMediaFile(new UploadedFile(__FILE__, 'Original Name.php', null, null, true));
+        self::assertSame('Original Name.php', $media->getMediaFileName());
+
+        $media->setMediaFile(new File(__FILE__, false));
+        self::assertSame('MediaTest.php', $media->getMediaFileName());
+    }
+
+    public function testMimeTypeIsNormalized(): void
+    {
+        $media = new Media();
+        self::assertNull($media->getMimeType());
+
+        $media->setMimeType('image/jpg');
+        self::assertSame('image/jpeg', $media->getMimeType());
+
+        $media->setMimeType('image/png');
+        self::assertSame('image/png', $media->getMimeType());
+    }
+
+    public function testStoreInRequiresProjectDirAndKeepsThePlaceholder(): void
+    {
+        $media = new Media();
+        $this->expectException(Exception::class);
+        $media->getStoreIn();
+    }
+
+    public function testStoreInSubstitutesProjectDir(): void
+    {
+        $media = new Media();
+        $media->projectDir = '/var/www';
+        $media->setStoreIn('/var/www/media/');
+        self::assertSame('/var/www/media', $media->getStoreIn());
+        self::assertSame('/var/www/media/pic.jpg', $media->setFileName('pic.jpg')->getPath());
+    }
+
+    public function testSlugFallsBackToFileNameWithoutExtension(): void
+    {
+        $media = new Media();
+        $media->setFileName('voyage-sur-mesure.jpg');
+        self::assertSame('voyage-sur-mesure', $media->getSlug());
+    }
+
+    public function testChangingTheSlugRenamesTheFile(): void
+    {
+        $media = new Media();
+        $media->setFileName('old-name.jpg');
+        $media->setSlug('old-name');
+
+        $media->setSlugForce('New Name');
+        self::assertSame('new-name.jpg', $media->getFileName());
+        self::assertTrue($media->hasFileNameInHistory('old-name.jpg'));
+    }
+
+    public function testSizeCoercesNullToZero(): void
+    {
+        $media = new Media();
+        self::assertSame(0, $media->size);
+
+        $media->size = 12345;
+        self::assertSame(12345, $media->size);
+
+        $media->size = null;
+        self::assertSame(0, $media->size);
+    }
+
+    public function testFileNameBeforeUpdateKeepsTheFirstValue(): void
+    {
+        $media = new Media();
+        $media->setFileName('first.jpg');
+        $media->setFileName('second.jpg');
+        $media->setFileName('third.jpg');
+        self::assertSame('first.jpg', $media->fileNameBeforeUpdate);
+        self::assertSame(['first.jpg', 'second.jpg'], $media->fileNameHistory);
+    }
+
+    public function testLicenseStateDefaultsToEmpty(): void
+    {
+        $media = new Media();
+        self::assertSame('', $media->licenseState);
+
+        $media->licenseState = 'seeded';
+        self::assertSame('seeded', $media->licenseState);
     }
 }

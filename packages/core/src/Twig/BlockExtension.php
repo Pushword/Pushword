@@ -39,7 +39,7 @@ class BlockExtension
             $media = $this->mediaExtension->transformStringToMedia($url);
             $url = '/'.$this->publicMediaDir.'/'.$media->getFileName();
             if (0 === $size) {
-                $size = $media->getSize();
+                $size = $media->size;
             }
         } catch (Exception) {
             if (! str_starts_with($url, '/') && ! str_starts_with($url, 'http')) {

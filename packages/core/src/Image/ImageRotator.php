@@ -59,7 +59,7 @@ final readonly class ImageRotator
             $this->filesystem->dumpFile($this->mediaStorage->getLocalPath($fileName), $binary);
         }
 
-        $media->setSize(\strlen($binary));
+        $media->size = \strlen($binary);
         $media->setHash(sha1($binary, true));
 
         // Same rebuild as an upload: drop the stale cache, regenerate a quick

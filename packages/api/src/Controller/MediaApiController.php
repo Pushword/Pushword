@@ -182,7 +182,7 @@ final class MediaApiController extends AbstractApiController
         if (\array_key_exists('fileNameHistory', $data) && \is_array($data['fileNameHistory'])) {
             /** @var string[] $history */
             $history = array_values(array_filter($data['fileNameHistory'], is_string(...)));
-            $media->setFileNameHistory($history);
+            $media->fileNameHistory = $history;
         }
 
         if (\array_key_exists('filename', $data) && \is_string($data['filename'])) {
@@ -270,14 +270,14 @@ final class MediaApiController extends AbstractApiController
         return [
             'filename' => $media->getFileName(),
             'mimeType' => $media->getMimeType(),
-            'size' => $media->getSize(),
+            'size' => $media->size,
             'hash' => $this->hashToHex($media->getHash()),
-            'fileNameHistory' => $media->getFileNameHistory(),
+            'fileNameHistory' => $media->fileNameHistory,
             'alt' => $media->getAlt(true),
             'alts' => $media->getAltsParsed(),
             'tags' => $media->getTagList(),
             'customProperties' => $media->customProperties,
-            'licenseState' => $media->getLicenseState(),
+            'licenseState' => $media->licenseState,
             'image' => $media->isImage() ? [
                 'width' => $media->getWidth(),
                 'height' => $media->getHeight(),

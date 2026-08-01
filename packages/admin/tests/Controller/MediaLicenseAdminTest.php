@@ -175,7 +175,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
     public function testAThirdPartyMediaCarriesItsStateForTheExplanatoryNote(): void
     {
         $media = $this->createMedia([MediaLicense::CREATOR => ['Enrico Romanzi']]);
-        $media->setLicenseState(MediaLicense::STATE_THIRD_PARTY);
+        $media->licenseState = MediaLicense::STATE_THIRD_PARTY;
 
         /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.entity_manager');
@@ -225,7 +225,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         ], MediaLicense::creators($saved));
         // A bare hostname would fail the UrlField's own validation on the next save.
         self::assertSame('https://altimood.test/terms', $saved->getCustomPropertyScalar(MediaLicense::LICENSE));
-        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $saved->getLicenseState());
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $saved->licenseState);
 
         $this->remove($saved);
     }
@@ -237,7 +237,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
             MediaLicense::CREDIT_TEXT => 'Altimood',
             MediaLicense::CREATOR => ['Robin'],
         ]);
-        $media->setLicenseState(MediaLicense::STATE_SEEDED);
+        $media->licenseState = MediaLicense::STATE_SEEDED;
 
         /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.entity_manager');
@@ -257,7 +257,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         self::assertInstanceOf(Media::class, $saved);
 
         self::assertSame([], MediaLicense::extract($saved));
-        self::assertSame(MediaLicense::STATE_NONE, $saved->getLicenseState());
+        self::assertSame(MediaLicense::STATE_NONE, $saved->licenseState);
 
         $this->remove($saved);
     }
@@ -307,7 +307,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         self::assertInstanceOf(Media::class, $saved);
 
         self::assertSame([['name' => 'Enrico Romanzi', 'type' => 'Person']], MediaLicense::creators($saved));
-        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $saved->getLicenseState());
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $saved->licenseState);
 
         $this->remove($saved);
     }
@@ -323,7 +323,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         $client->catchExceptions(false);
 
         $media = $this->createMedia([MediaLicense::CREDIT_TEXT => 'Photo maison']);
-        $media->setLicenseState(MediaLicense::STATE_OVERRIDDEN);
+        $media->licenseState = MediaLicense::STATE_OVERRIDDEN;
 
         /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.entity_manager');
@@ -397,7 +397,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
     public function testTheIndexShowsTheLicenseStateOfEachMedia(): void
     {
         $media = $this->createMedia([MediaLicense::CREATOR => ['Enrico Romanzi']]);
-        $media->setLicenseState(MediaLicense::STATE_THIRD_PARTY);
+        $media->licenseState = MediaLicense::STATE_THIRD_PARTY;
 
         /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.entity_manager');

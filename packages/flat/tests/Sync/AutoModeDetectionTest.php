@@ -316,7 +316,7 @@ final class AutoModeDetectionTest extends KernelTestCase
         $media->setFileName('auto-detect-hash.txt');
         $media->setAlt('Auto Detect Hash');
         $media->setMimeType('text/plain');
-        $media->setSize(16);
+        $media->size = 16;
         $media->setStoreIn($mediaDir);
         $media->setHash((string) sha1_file($testPath, true));
 

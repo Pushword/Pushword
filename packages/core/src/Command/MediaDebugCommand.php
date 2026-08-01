@@ -69,7 +69,7 @@ final readonly class MediaDebugCommand
             }
 
             $foundVia = $media->getFileName() === $term ? 'fileName' : 'fileNameHistory';
-            $history = $media->getFileNameHistory();
+            $history = $media->fileNameHistory;
 
             $io->success('Media found!');
             $io->table(

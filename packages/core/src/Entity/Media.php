@@ -66,7 +66,6 @@ class Media implements IdInterface, Taggable, Stringable
 
     public function __construct()
     {
-        $this->mainImagePages = new ArrayCollection();
         $this->imageData = new ImageData();
         $this->initTimestampableProperties();
     }
@@ -74,23 +73,33 @@ class Media implements IdInterface, Taggable, Stringable
     #[ORM\Column(type: Types::TEXT)]
     protected string $storeIn = '';
 
-    protected string $projectDir = '';
+    public string $projectDir = '';
 
     // column name = media to avoid bc
     #[ORM\Column(name: 'media', type: Types::STRING, length: 255)]
     protected string $fileName = '';
 
-    protected string $fileNameBeforeUpdate = '';
+    public private(set) string $fileNameBeforeUpdate = '';
 
     /** @var string[] */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
-    protected array $fileNameHistory = [];
+    public array $fileNameHistory = [];
 
     #[ORM\Column(type: Types::STRING, length: 50)]
     protected ?string $mimeType = null; // @phpstan-ignore-line
 
     #[ORM\Column(type: Types::INTEGER)]
-    protected int $size = 0;
+    public int $size = 0 {
+        set(?int $value) => (int) $value;
+    }
+
+    /** Fluent variant kept for fixture/importer chains. */
+    public function setSize(?int $size): self
+    {
+        $this->size = $size;
+
+        return $this;
+    }
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     public bool $hiddenFromAdmin = false;
@@ -100,7 +109,9 @@ class Media implements IdInterface, Taggable, Stringable
 
     /** @var Collection<int, Page> */
     #[ORM\OneToMany(targetEntity: Page::class, mappedBy: 'mainImage')]
-    protected ?Collection $mainImagePages; // @phpstan-ignore-line
+    public Collection $mainImagePages {
+        get => $this->mainImagePages ??= new ArrayCollection();
+    }
 
     public function setProjectDir(string $projectDir): self
     {
@@ -283,37 +294,12 @@ class Media implements IdInterface, Taggable, Stringable
         return $mimeType;
     }
 
-    public function getSize(): int
-    {
-        return $this->size;
-    }
-
-    public function setSize(?int $size): self
-    {
-        $this->size = (int) $size;
-
-        return $this;
-    }
-
-    /** @return Collection<int, Page> */
-    public function getMainImagePages(): Collection
-    {
-        return $this->mainImagePages ?? throw new Exception();
-    }
-
     #[ORM\PreRemove]
     public function removeMainImageFromPages(): void
     {
-        if (null !== $this->mainImagePages) {
-            foreach ($this->mainImagePages as $page) {
-                $page->setMainImage(null);
-            }
+        foreach ($this->mainImagePages as $page) {
+            $page->setMainImage(null);
         }
-    }
-
-    public function getFileNameBeforeUpdate(): string
-    {
-        return $this->fileNameBeforeUpdate;
     }
 
     public function setFileNameBeforeUpdate(string $fileNameBeforeUpdate): self
@@ -321,20 +307,6 @@ class Media implements IdInterface, Taggable, Stringable
         if ('' === $this->fileNameBeforeUpdate || '' === $fileNameBeforeUpdate) {
             $this->fileNameBeforeUpdate = $fileNameBeforeUpdate;
         }
-
-        return $this;
-    }
-
-    /** @return string[] */
-    public function getFileNameHistory(): array
-    {
-        return $this->fileNameHistory;
-    }
-
-    /** @param string[] $fileNameHistory */
-    public function setFileNameHistory(array $fileNameHistory): self
-    {
-        $this->fileNameHistory = $fileNameHistory;
 
         return $this;
     }
@@ -658,19 +630,7 @@ class Media implements IdInterface, Taggable, Stringable
      * @see \Pushword\Core\Image\License\MediaLicense
      */
     #[ORM\Column(name: 'license_state', type: Types::STRING, length: 16, options: ['default' => ''])]
-    protected string $licenseState = '';
-
-    public function getLicenseState(): string
-    {
-        return $this->licenseState;
-    }
-
-    public function setLicenseState(string $licenseState): self
-    {
-        $this->licenseState = $licenseState;
-
-        return $this;
-    }
+    public string $licenseState = '';
 
     // --- Hash ---
 

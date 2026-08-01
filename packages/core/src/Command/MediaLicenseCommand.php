@@ -68,7 +68,7 @@ final class MediaLicenseCommand
                 continue;
             }
 
-            if (! $all && MediaLicense::STATE_NONE !== $media->getLicenseState()) {
+            if (! $all && MediaLicense::STATE_NONE !== $media->licenseState) {
                 ++$skipped;
 
                 continue;
@@ -76,7 +76,7 @@ final class MediaLicenseCommand
 
             // A human assertion is never silently rewritten; --all is not a licence to
             // discard one, only to re-run the machine decision.
-            if (MediaLicense::STATE_OVERRIDDEN === $media->getLicenseState()) {
+            if (MediaLicense::STATE_OVERRIDDEN === $media->licenseState) {
                 ++$skipped;
 
                 continue;
@@ -121,7 +121,7 @@ final class MediaLicenseCommand
             }
 
             if (! $applySeed) {
-                $media->setLicenseState($isThirdParty ? MediaLicense::STATE_THIRD_PARTY : MediaLicense::STATE_NONE);
+                $media->licenseState = $isThirdParty ? MediaLicense::STATE_THIRD_PARTY : MediaLicense::STATE_NONE;
 
                 continue;
             }
@@ -132,7 +132,7 @@ final class MediaLicenseCommand
 
             // --force over a rights claim is a human asserting ownership — the same act
             // as the admin's "apply the site license" button, hence the same state.
-            $media->setLicenseState($isThirdParty ? MediaLicense::STATE_OVERRIDDEN : MediaLicense::STATE_SEEDED);
+            $media->licenseState = $isThirdParty ? MediaLicense::STATE_OVERRIDDEN : MediaLicense::STATE_SEEDED;
         }
 
         if (! $dryRun) {

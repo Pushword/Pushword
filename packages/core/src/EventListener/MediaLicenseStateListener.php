@@ -23,14 +23,14 @@ final readonly class MediaLicenseStateListener
 {
     public function prePersist(Media $media): void
     {
-        if ($this->isUploading($media) || MediaLicense::STATE_NONE !== $media->getLicenseState()) {
+        if ($this->isUploading($media) || MediaLicense::STATE_NONE !== $media->licenseState) {
             return;
         }
 
         // A media created with license properties but no upload — a flat import, an
         // API POST — carries values somebody chose deliberately.
         if (MediaLicense::hasRightsValue(MediaLicense::extract($media))) {
-            $media->setLicenseState(MediaLicense::STATE_OVERRIDDEN);
+            $media->licenseState = MediaLicense::STATE_OVERRIDDEN;
         }
     }
 
@@ -62,11 +62,11 @@ final readonly class MediaLicenseStateListener
             ? MediaLicense::STATE_OVERRIDDEN
             : MediaLicense::STATE_NONE;
 
-        if ($state === $media->getLicenseState()) {
+        if ($state === $media->licenseState) {
             return;
         }
 
-        $media->setLicenseState($state);
+        $media->licenseState = $state;
 
         // A field assigned during preUpdate is invisible to the already-computed
         // changeset: without this the new state is simply never written.

@@ -1504,7 +1504,7 @@ MD;
         $media->setProjectDir($projectDir);
         $media->setFileName('heal-me.png');
         $media->setMimeType('image/png');
-        $media->setSize(100);
+        $media->size = 100;
         $media->setStoreIn($mediaDir);
         $media->setDimensions([100, 100]);
 

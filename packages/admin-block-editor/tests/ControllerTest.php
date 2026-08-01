@@ -173,7 +173,7 @@ final class ControllerTest extends AbstractAdminTestClass
         $media->setSlugForce('test-resolve');
         $media->setFileName('test-resolve.jpg');
         $media->setMimeType('image/jpeg');
-        $media->setSize(1);
+        $media->size = 1;
         $media->addFileNameToHistory('Old Name With Spaces.jpg');
 
         $em->persist($media);

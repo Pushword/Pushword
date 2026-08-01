@@ -126,7 +126,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     {
         $media = $this->upload('plain');
 
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
         self::assertSame('Altimood', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
         self::assertSame([['name' => 'Altimood', 'type' => 'Organization']], MediaLicense::creators($media));
     }
@@ -136,7 +136,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $this->configureSeed([]);
         $media = $this->upload('no-seed');
 
-        self::assertSame(MediaLicense::STATE_NONE, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_NONE, $media->licenseState);
         self::assertSame([], MediaLicense::extract($media));
     }
 
@@ -144,7 +144,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     {
         $media = $this->upload('third-party', $this->creatorXmp('Enrico Romanzi'));
 
-        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->licenseState);
         // A file gives bare names, so an imported creator falls back to Person.
         self::assertSame([['name' => 'Enrico Romanzi', 'type' => 'Person']], MediaLicense::creators($media));
         self::assertNull($media->getCustomProperty(MediaLicense::LICENSE));
@@ -159,7 +159,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
             .' xmpRights:WebStatement="www.bodinphoto.com"/>',
         ));
 
-        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->licenseState);
         self::assertSame('https://www.bodinphoto.com', $media->getCustomPropertyScalar(MediaLicense::LICENSE));
     }
 
@@ -182,7 +182,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
             iptcIim: ['2#110' => 'AI Generated'],
         );
 
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
         self::assertSame('Altimood', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
         self::assertSame(
             MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.'trainedAlgorithmicMedia',
@@ -195,7 +195,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     {
         $media = $this->upload('ai-lookalike', iptcIim: ['2#110' => 'AI Generated Studio Ltd']);
 
-        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->licenseState);
         self::assertSame('AI Generated Studio Ltd', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
     }
 
@@ -204,7 +204,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     {
         $media = $this->upload('iim-only', iptcIim: ['2#080' => 'O2Ephotos']);
 
-        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->licenseState);
         self::assertSame([['name' => 'O2Ephotos', 'type' => 'Person']], MediaLicense::creators($media));
     }
 
@@ -219,7 +219,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
             MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.MediaLicense::TRAINED_ALGORITHMIC_MEDIA,
         ));
 
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
         self::assertSame(
             MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.MediaLicense::TRAINED_ALGORITHMIC_MEDIA,
             $media->getCustomPropertyScalar(MediaLicense::DIGITAL_SOURCE_TYPE),
@@ -251,11 +251,11 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     public function testReplacingAThirdPartyFileWithAnOwnedOneDropsTheOldRights(): void
     {
         $media = $this->upload('swap-in', $this->creatorXmp('Enrico Romanzi'));
-        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->licenseState);
 
         $this->replaceFile($media, 'swap-out');
 
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
         self::assertSame([['name' => 'Altimood', 'type' => 'Organization']], MediaLicense::creators($media));
     }
 
@@ -263,11 +263,11 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     public function testReplacingAnOwnedFileWithAThirdPartyOneDropsTheSiteLicense(): void
     {
         $media = $this->upload('owned');
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
 
         $this->replaceFile($media, 'now-third-party', $this->creatorXmp('Enrico Romanzi'));
 
-        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->licenseState);
         self::assertNull($media->getCustomProperty(MediaLicense::ACQUIRE_LICENSE_PAGE));
         self::assertNull($media->getCustomProperty(MediaLicense::LICENSE));
     }
@@ -280,7 +280,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Photo maison');
 
         $this->em->flush();
-        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
 
         // Vich moved the first upload into the media dir, so the same bytes have to be
         // written again — which is exactly what an accidental re-upload looks like.
@@ -289,7 +289,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $this->em->flush();
 
         self::assertSame('Photo maison', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
-        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
     }
 
     /**
@@ -311,7 +311,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $this->em->flush();
 
         self::assertSame('Photo maison', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
-        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
     }
 
     /**
@@ -322,7 +322,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     public function testReplacingWithACorruptImageLeavesNoHalfWrittenState(): void
     {
         $media = $this->upload('readable', $this->creatorXmp('Enrico Romanzi'));
-        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->licenseState);
 
         // Built fresh: Vich moved the uploaded file out of the temp directory.
         $truncated = ImageMetadataFixture::write($this->dir.'/truncated.jpg');
@@ -331,7 +331,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $this->em->flush();
 
         self::assertSame([['name' => 'Altimood', 'type' => 'Organization']], MediaLicense::creators($media));
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
     }
 
     /**
@@ -349,7 +349,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $this->em->flush();
 
         self::assertSame($before, MediaLicense::extract($media));
-        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->licenseState);
     }
 
     // --- licenseState ---
@@ -357,12 +357,12 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     public function testEditingAValueMarksTheLicenseAsAsserted(): void
     {
         $media = $this->upload('edited');
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
 
         $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Robin');
         $this->em->flush();
 
-        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
     }
 
     /**
@@ -381,7 +381,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
 
         $reloaded = $this->em->getRepository(Media::class)->find($media->id);
         self::assertInstanceOf(Media::class, $reloaded);
-        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $reloaded->getLicenseState());
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $reloaded->licenseState);
 
         $this->created = [$reloaded];
     }
@@ -396,7 +396,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
 
         $this->em->flush();
 
-        self::assertSame(MediaLicense::STATE_NONE, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_NONE, $media->licenseState);
     }
 
     /** The listener needs a request in the stack to reach a flash bag at all. */
@@ -458,7 +458,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $this->pushRequest(xhr: true, supplied: $this->supplied(['xmp' => $this->creatorXmp('Enrico Romanzi')]));
         $media = $this->upload('supplied-third-party');
 
-        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->licenseState);
         self::assertSame([['name' => 'Enrico Romanzi', 'type' => 'Person']], $media->getCustomProperty(MediaLicense::CREATOR));
     }
 
@@ -474,7 +474,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
             $media->getCustomProperty(MediaLicense::DIGITAL_SOURCE_TYPE),
         );
         // Provenance is not a rights claim, so the site still licenses the image.
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
     }
 
     /**
@@ -494,7 +494,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $this->pushRequest(xhr: true, supplied: 'not json at all');
         $media = $this->upload('supplied-garbage');
 
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
     }
 
     /**
@@ -507,7 +507,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $flashBag = $this->pushRequest();
         $media = $this->upload('disclosed-seed');
 
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
         self::assertStringContainsString($this->trans('mediaLicenseSeeded'), $this->flashText($flashBag));
     }
 
@@ -540,7 +540,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $flashBag = $this->pushRequest(xhr: true);
         $media = $this->upload('disclosed-xhr');
 
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
         // Not an empty bag: other listeners have their own say (a duplicate warning
         // when a fixture repeats bytes). Only the license disclosure must be absent.
         self::assertStringNotContainsString($this->trans('mediaLicenseSeeded'), $this->flashText($flashBag));
@@ -553,7 +553,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $flashBag = $this->pushRequest();
         $media = $this->upload('disclosed-none');
 
-        self::assertSame(MediaLicense::STATE_NONE, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_NONE, $media->licenseState);
         self::assertStringNotContainsString($this->trans('mediaLicenseSeeded'), $this->flashText($flashBag));
     }
 }

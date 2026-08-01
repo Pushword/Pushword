@@ -51,7 +51,7 @@ final class MediaLicenseField extends AbstractField
                 // The state tells the editor why the licensing fields are empty on a
                 // media whose file credits somebody else — admin.mediaLicense.js turns
                 // it into a note above the buttons.
-                ['data-pw-license-state' => $subject->getLicenseState()] + $this->seedAttributes($seed),
+                ['data-pw-license-state' => $subject->licenseState] + $this->seedAttributes($seed),
             ));
 
         yield UrlField::new(MediaLicense::ACQUIRE_LICENSE_PAGE, 'adminMediaAcquireLicensePageLabel')

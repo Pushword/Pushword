@@ -44,11 +44,11 @@ final readonly class MediaStorageListener
         if ($preUpdateEventArgs->hasChangedField('fileName')) {
             $this->conflictResolver->resolveConflicts($media);
 
-            if ('' === $media->getFileNameBeforeUpdate()) {
+            if ('' === $media->fileNameBeforeUpdate) {
                 throw new LogicException();
             }
 
-            $oldFileName = $media->getFileNameBeforeUpdate();
+            $oldFileName = $media->fileNameBeforeUpdate;
             $newFileName = $media->getFileName();
             $sourceExists = $this->mediaStorage->fileExists($oldFileName);
             $destExists = $this->mediaStorage->fileExists($newFileName);

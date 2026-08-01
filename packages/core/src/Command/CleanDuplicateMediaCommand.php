@@ -85,7 +85,7 @@ final readonly class CleanDuplicateMediaCommand
                     }
 
                     $canonical->addFileNameToHistory($duplicate->getFileName());
-                    foreach ($duplicate->getFileNameHistory() as $historyName) {
+                    foreach ($duplicate->fileNameHistory as $historyName) {
                         $canonical->addFileNameToHistory($historyName);
                     }
 

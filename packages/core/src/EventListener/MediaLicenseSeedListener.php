@@ -64,7 +64,7 @@ final readonly class MediaLicenseSeedListener
             return;
         }
 
-        $previousState = $media->getLicenseState();
+        $previousState = $media->licenseState;
 
         $imported = EmbeddedRights::merge(
             $this->rightsReader->read($file->getPathname()),
@@ -90,13 +90,13 @@ final readonly class MediaLicenseSeedListener
             // Nothing in the bytes tells "commissioned, we hold the rights" apart from
             // "someone else's photo", so the site does not license over a rights claim
             // on its own. A human asserts it, with the admin button or --force.
-            $media->setLicenseState(MediaLicense::STATE_THIRD_PARTY);
+            $media->licenseState = MediaLicense::STATE_THIRD_PARTY;
             $this->disclose('warning', 'mediaLicenseThirdParty', ['%rights%' => $this->rightsSummary($imported)]);
         } elseif ($this->seed($media)) {
-            $media->setLicenseState(MediaLicense::STATE_SEEDED);
+            $media->licenseState = MediaLicense::STATE_SEEDED;
             $this->disclose('info', 'mediaLicenseSeeded');
         } else {
-            $media->setLicenseState(MediaLicense::STATE_NONE);
+            $media->licenseState = MediaLicense::STATE_NONE;
         }
 
         if (MediaLicense::STATE_OVERRIDDEN === $previousState) {

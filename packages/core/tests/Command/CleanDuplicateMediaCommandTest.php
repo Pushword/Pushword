@@ -208,7 +208,7 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
         $duplicate->setProjectDir($projectDir);
         $duplicate->setStoreIn($mediaDir);
         $duplicate->setMimeType('image/png');
-        $duplicate->setSize($original->getSize());
+        $duplicate->size = $original->size;
         $duplicate->setDimensions([1000, 1000]);
         $duplicate->setFileName($fileName);
         $duplicate->setAlt($alt);

@@ -77,7 +77,7 @@ final class MediaDeletionSyncTest extends KernelTestCase
         $media->setFileName($fileName);
         $media->setAlt($alt);
         $media->setMimeType('text/plain');
-        $media->setSize(\strlen('test content for '.$fileName));
+        $media->size = \strlen('test content for '.$fileName);
         $media->setStoreIn($mediaDir);
         $media->setHash((string) sha1_file($filePath, true));
 

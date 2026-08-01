@@ -106,7 +106,7 @@ final class MediaRepositoryTest extends KernelTestCase
         $renamedFileName = 'renamed-for-history-test.jpg';
 
         $source->setFileName($renamedFileName);
-        self::assertContains($originalFileName, $source->getFileNameHistory());
+        self::assertContains($originalFileName, $source->fileNameHistory);
         $em->flush();
 
         try {
@@ -124,7 +124,7 @@ final class MediaRepositoryTest extends KernelTestCase
             self::assertNull($repo->findOneByFileNameOrHistory('nope-history.jpg'));
         } finally {
             $source->setFileName($originalFileName);
-            $source->setFileNameHistory([]);
+            $source->fileNameHistory = [];
             $em->flush();
         }
     }
@@ -296,7 +296,7 @@ final class MediaRepositoryTest extends KernelTestCase
             ->setStoreIn($mediaDir)
             ->setFileName($testFileName)
             ->setMimeType('image/jpeg')
-            ->setSize(1);
+            ->size = 1;
         $em->persist($media);
         $em->flush();
 

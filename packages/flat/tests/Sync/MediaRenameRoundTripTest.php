@@ -63,10 +63,10 @@ final class MediaRenameRoundTripTest extends KernelTestCase
         $media->setFileName('history-current.txt');
         $media->setAlt('History Test');
         $media->setMimeType('text/plain');
-        $media->setSize(20);
+        $media->size = 20;
         $media->setStoreIn($mediaDir);
         $media->setHash((string) sha1_file($path, true));
-        $media->setFileNameHistory(['history-original.txt']);
+        $media->fileNameHistory = ['history-original.txt'];
 
         $this->em->persist($media);
         $this->em->flush();

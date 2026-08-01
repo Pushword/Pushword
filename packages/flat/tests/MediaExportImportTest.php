@@ -71,7 +71,7 @@ final class MediaExportImportTest extends KernelTestCase
         $media->setAlt('Test Image');
         $media->setAlts(Yaml::dump(['fr' => 'Image de test', 'en' => 'Test Image EN']));
         $media->setMimeType('image/png');
-        $media->setSize(1024);
+        $media->size = 1024;
         $media->setStoreIn($mediaDir);
 
         $em->persist($media);
@@ -209,7 +209,7 @@ CSV;
         $media->setFileName('test-hash.pdf');
         $media->setAlt('Test PDF');
         $media->setMimeType('application/pdf');
-        $media->setSize(\strlen($pdfContent));
+        $media->size = \strlen($pdfContent);
         $media->setStoreIn($mediaDir);
         $media->setHash(sha1_file($pdfPath, true));
 
@@ -276,7 +276,7 @@ CSV;
         $media->setFileName('test-no-reimport.txt');
         $media->setAlt('Test Doc');
         $media->setMimeType('text/plain');
-        $media->setSize(\strlen($content));
+        $media->size = \strlen($content);
         $media->setStoreIn($mediaDir);
         $media->setHash(sha1_file($docPath, true));
 
@@ -399,7 +399,7 @@ CSV;
         $media->setFileName('test-mem-export.png');
         $media->setAlt('Memory Export Test');
         $media->setMimeType('image/png');
-        $media->setSize(1024);
+        $media->size = 1024;
         $media->setStoreIn($mediaDir);
 
         $em->persist($media);
@@ -499,7 +499,7 @@ CSV;
         $media->setAlt('Roundtrip Test');
         $media->setAlts(Yaml::dump(['fr' => 'Test aller-retour']));
         $media->setMimeType('image/png');
-        $media->setSize(1024);
+        $media->size = 1024;
         $media->setStoreIn($mediaDir);
 
         $em->persist($media);
@@ -593,7 +593,7 @@ CSV;
         $media->setFileName('test-license.png');
         $media->setAlt('License roundtrip');
         $media->setMimeType('image/png');
-        $media->setSize(1024);
+        $media->size = 1024;
         $media->setStoreIn($mediaDir);
         foreach ($license as $key => $value) {
             $media->setCustomProperty($key, $value);
@@ -659,7 +659,7 @@ CSV;
         $media1->setFileName('exists-in-storage.pdf');
         $media1->setAlt('Exists');
         $media1->setMimeType('application/pdf');
-        $media1->setSize(11);
+        $media1->size = 11;
         $media1->setStoreIn($mediaDir);
 
         $media2 = new Media();
@@ -667,7 +667,7 @@ CSV;
         $media2->setFileName('missing-everywhere.pdf');
         $media2->setAlt('Missing');
         $media2->setMimeType('application/pdf');
-        $media2->setSize(11);
+        $media2->size = 11;
         $media2->setStoreIn($mediaDir);
 
         $em->persist($media1);
@@ -788,7 +788,7 @@ CSV;
         $media->setFileName('test-hash-remote.txt');
         $media->setAlt('Hash Remote Test');
         $media->setMimeType('text/plain');
-        $media->setSize(\strlen($originalContent));
+        $media->size = \strlen($originalContent);
         $media->setStoreIn($mediaDir);
 
         $em->persist($media);

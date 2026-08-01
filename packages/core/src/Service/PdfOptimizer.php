@@ -105,7 +105,7 @@ final readonly class PdfOptimizer
         }
 
         // Update media size
-        $media->setSize($newSize);
+        $media->size = $newSize;
 
         $reduction = round((1 - $newSize / $originalSize) * 100, 1);
         $this->logger->info('PDF optimized successfully', [

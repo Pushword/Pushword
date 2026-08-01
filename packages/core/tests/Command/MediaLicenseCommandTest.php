@@ -148,10 +148,10 @@ final class MediaLicenseCommandTest extends KernelTestCase
         $this->em->refresh($owned);
         $this->em->refresh($thirdParty);
 
-        self::assertSame(MediaLicense::STATE_SEEDED, $owned->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $owned->licenseState);
         self::assertSame('Altimood', $owned->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
 
-        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $thirdParty->getLicenseState());
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $thirdParty->licenseState);
         self::assertSame([['name' => 'Enrico Romanzi', 'type' => 'Person']], MediaLicense::creators($thirdParty));
         self::assertNull($thirdParty->getCustomProperty(MediaLicense::LICENSE));
 
@@ -170,7 +170,7 @@ final class MediaLicenseCommandTest extends KernelTestCase
         self::assertGreaterThanOrEqual(1, $report['seeded']);
 
         $this->em->refresh($media);
-        self::assertSame(MediaLicense::STATE_NONE, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_NONE, $media->licenseState);
         self::assertSame([], MediaLicense::extract($media));
     }
 
@@ -185,7 +185,7 @@ final class MediaLicenseCommandTest extends KernelTestCase
         $this->backfill('--force');
         $this->em->refresh($media);
 
-        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
         self::assertSame('https://altimood.test/mentions-legales', $media->getCustomPropertyScalar(MediaLicense::LICENSE));
         self::assertSame([['name' => 'Altimood', 'type' => 'Organization']], MediaLicense::creators($media));
     }
@@ -196,16 +196,16 @@ final class MediaLicenseCommandTest extends KernelTestCase
         $media = $this->existingMedia('skipped');
         $this->backfill();
         $this->em->refresh($media);
-        self::assertSame(MediaLicense::STATE_SEEDED, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
 
         $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Robin');
         $this->em->flush();
-        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
 
         $this->backfill('--all');
         $this->em->refresh($media);
 
-        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->getLicenseState());
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
         self::assertSame('Robin', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
     }
 

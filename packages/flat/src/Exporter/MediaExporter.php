@@ -163,7 +163,7 @@ final class MediaExporter
      */
     private function buildRow(Media $media, array $altLocaleColumns, array $customColumns): array
     {
-        $fileNameHistory = $media->getFileNameHistory();
+        $fileNameHistory = $media->fileNameHistory;
         $row = [
             'fileName' => $media->getFileName(),
             'alt' => $media->getAlt(true),

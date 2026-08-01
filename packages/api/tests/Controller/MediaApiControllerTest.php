@@ -185,7 +185,7 @@ final class MediaApiControllerTest extends WebTestCase
         $fileName = 'zz-license-clear-'.uniqid().'.jpg';
         $media = $this->createMedia($fileName, 'Refuge');
         $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Altimood');
-        $media->setLicenseState(MediaLicense::STATE_SEEDED);
+        $media->licenseState = MediaLicense::STATE_SEEDED;
 
         $this->em->flush();
 

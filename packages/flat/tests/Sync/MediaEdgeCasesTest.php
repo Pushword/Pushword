@@ -120,7 +120,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $media->setFileName('edge-hash-change.txt');
         $media->setAlt('Hash Change Test');
         $media->setMimeType('text/plain');
-        $media->setSize(16);
+        $media->size = 16;
         $media->setStoreIn($mediaDir);
         $media->setHash((string) sha1_file($filePath, true));
 
@@ -298,7 +298,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $media->setFileName('edge-dedup-original.txt');
         $media->setAlt('Dedup Original');
         $media->setMimeType('text/plain');
-        $media->setSize(\strlen($originalContent));
+        $media->size = \strlen($originalContent);
         $media->setStoreIn($mediaDir);
         $media->setHash((string) sha1_file($originalPath, true));
 
@@ -330,7 +330,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
 
         $updatedMedia = $this->em->getRepository(Media::class)->find($mediaId);
         self::assertInstanceOf(Media::class, $updatedMedia);
-        self::assertContains('edge-dedup-copy.txt', $updatedMedia->getFileNameHistory(), 'Duplicate filename should be added to fileNameHistory');
+        self::assertContains('edge-dedup-copy.txt', $updatedMedia->fileNameHistory, 'Duplicate filename should be added to fileNameHistory');
 
         // Cleanup
         $this->em->remove($updatedMedia);
@@ -444,7 +444,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $media->setFileName('edge-rename-original.txt');
         $media->setAlt('Rename Detection');
         $media->setMimeType('text/plain');
-        $media->setSize(\strlen($content));
+        $media->size = \strlen($content);
         $media->setStoreIn($mediaDir);
         $media->setHash((string) sha1_file($originalPath, true));
 
