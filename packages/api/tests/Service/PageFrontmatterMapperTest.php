@@ -3,6 +3,7 @@
 namespace Pushword\Api\Tests\Service;
 
 use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Iterator;
 use Override;
@@ -555,6 +556,54 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $this->mapper->applyFrontmatter($page, ['publishedAt' => $publishedAt]);
 
         self::assertNull($page->getPublishedAt());
+    }
+
+    public function testExtendedPageResolvesAndRoundTrips(): void
+    {
+        $host = 'extended-test-'.uniqid().'.example.com';
+
+        $base = new Page();
+        $base->host = $host;
+        $base->setSlug('base-layout');
+        $base->setMainContent('# Base');
+
+        $this->em->persist($base);
+        $this->em->flush();
+        $this->createdPageIds[] = $base->id ?? 0;
+
+        $page = new Page();
+        $page->host = $host;
+        $page->setSlug('extending-page');
+
+        $this->mapper->applyFrontmatter($page, ['extendedPage' => 'base-layout']);
+        self::assertSame($base, $page->extendedPage);
+        self::assertSame('base-layout', $this->mapper->toArray($page)['frontmatter']['extendedPage']);
+
+        $this->mapper->applyFrontmatter($page, ['extendedPage' => null]);
+        self::assertNull($page->extendedPage);
+    }
+
+    public function testHoldPublicationAtAppliesAndRejectsGarbage(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('held');
+
+        $this->mapper->applyFrontmatter($page, ['holdPublicationAt' => '2025-12-01 08:00']);
+        self::assertSame('2025-12-01 08:00', $page->holdPublicationAt?->format('Y-m-d H:i'));
+        self::assertSame(
+            $page->holdPublicationAt->format(DateTimeInterface::ATOM),
+            $this->mapper->toArray($page)['frontmatter']['holdPublicationAt'],
+        );
+
+        try {
+            $this->mapper->applyFrontmatter($page, ['holdPublicationAt' => 'not-a-date']);
+            self::fail('Expected InvalidFrontmatterException');
+        } catch (InvalidFrontmatterException $invalidFrontmatterException) {
+            self::assertSame('holdPublicationAt', $invalidFrontmatterException->key);
+        }
+
+        self::assertNotNull($page->holdPublicationAt, 'a rejected date must leave the hold untouched');
     }
 
     /**

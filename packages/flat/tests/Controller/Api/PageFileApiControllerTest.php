@@ -8,6 +8,7 @@ use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Serializer\PageFileSerializer;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -68,7 +69,8 @@ final class PageFileApiControllerTest extends WebTestCase
     {
         $container = $this->client->getContainer();
         $em = $container->get('doctrine.orm.default_entity_manager');
-        foreach ($this->createdPageIds as $id) {
+        // Reverse order: children are created after their parent and must go first.
+        foreach (array_reverse($this->createdPageIds) as $id) {
             $page = $em->getRepository(Page::class)->find($id);
             if ($page instanceof Page) {
                 $em->remove($page);
@@ -218,6 +220,52 @@ final class PageFileApiControllerTest extends WebTestCase
         $this->em->refresh($page);
         self::assertFalse($page->hasCustomProperty('searchExcerpt'), 'deleting the line in the file is an edit');
         self::assertTrue($page->hasCustomProperty('toc'));
+    }
+
+    public function testDeletedParentPageLineResets(): void
+    {
+        $parent = $this->persistPage(static function (Page $page): void {
+            $page->setSlug('parent-page');
+        });
+
+        $child = $this->persistPage(static function (Page $page) use ($parent): void {
+            $page->host = $parent->host;
+            $page->setSlug('child-page');
+            $page->parentPage = $parent;
+        });
+
+        $exported = $this->serializer->serialize($child);
+        $edited = preg_replace('/^parentPage:.*\n/m', '', $exported);
+        self::assertNotSame($exported, $edited, 'fixture must carry the parentPage line');
+
+        $response = $this->putFile($child->host, $child->getSlug(), (string) $edited, $this->revisionOf($exported));
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+        self::assertStringNotContainsString('parentPage', (string) $response->getContent());
+
+        $this->em->refresh($child);
+        self::assertNull($child->parentPage);
+    }
+
+    public function testDeletedLocaleLineResetsToSiteLocale(): void
+    {
+        $siteLocale = self::getContainer()->get(SiteRegistry::class)->getDefault()->locale;
+        $fixtureLocale = 'en' === $siteLocale ? 'it' : 'en';
+
+        $page = $this->persistPage(static function (Page $page) use ($fixtureLocale): void {
+            $page->locale = $fixtureLocale;
+        });
+
+        $exported = $this->serializer->serialize($page);
+        self::assertStringContainsString('locale: '.$fixtureLocale, $exported);
+        $edited = preg_replace('/^locale:.*\n/m', '', $exported);
+
+        $response = $this->putFile($page->host, $page->getSlug(), (string) $edited, $this->revisionOf($exported));
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+        // The site locale is the exporter's default and stays omitted.
+        self::assertStringNotContainsString('locale:', (string) $response->getContent());
+
+        $this->em->refresh($page);
+        self::assertSame($siteLocale, $page->locale);
     }
 
     public function testDeletedMetaRobotsResets(): void
