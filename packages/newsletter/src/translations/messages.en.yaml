@@ -170,6 +170,7 @@ newsletter:
   subscribe:
     done: You are subscribed. Thank you!
     invalidEmail: This email address does not look valid.
+    invalidToken: Your form expired. Please reload the page and try again.
     noAudience: Pick at least one newsletter.
     pending: Almost done — click the link we just sent you.
     tooMany: Too many attempts. Please try again later.

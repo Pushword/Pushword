@@ -115,6 +115,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
             'audiences' => [$letter->getSlug(), $promos->getSlug()],
             'email' => 'several@example.tld',
+            '_token' => $this->csrfToken($letter->getSlug()),
         ]);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
@@ -132,6 +133,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
             'audiences' => [$direct->getSlug(), $confirmed->getSlug()],
             'email' => 'mixed@example.tld',
+            '_token' => $this->csrfToken($direct->getSlug()),
         ]);
 
         self::assertEmailCount(1);
@@ -151,6 +153,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
             'audiences' => [$known->getSlug(), 'does-not-exist'],
             'email' => 'partial@example.tld',
+            '_token' => $this->csrfToken($known->getSlug()),
         ]);
 
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
@@ -159,9 +162,12 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
 
     public function testUntickingEverythingAsksAgainRatherThanSubscribing(): void
     {
-        $this->createAudience(requireDoubleOptIn: false);
+        $audience = $this->createAudience(requireDoubleOptIn: false);
 
-        $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', ['email' => 'nothing@example.tld']);
+        $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
+            'email' => 'nothing@example.tld',
+            '_token' => $this->csrfToken($audience->getSlug()),
+        ]);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
         self::assertStringContainsString(
@@ -193,7 +199,9 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
 
     public function testAnUnknownAudienceIsNotFound(): void
     {
-        $this->post('does-not-exist', ['email' => 'nobody@example.tld']);
+        $audience = $this->createAudience();
+
+        $this->post('does-not-exist', ['email' => 'nobody@example.tld'], tokenFrom: $audience->getSlug());
 
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
     }
@@ -329,10 +337,36 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
             'audiences' => [$audience->getSlug(), $audience->getSlug()],
             'email' => 'twice@example.tld',
+            '_token' => $this->csrfToken($audience->getSlug()),
         ]);
 
         self::assertEmailCount(1);
         self::assertCount(1, $this->entityManager->getRepository(Contact::class)->findBy(['email' => 'twice@example.tld']));
+    }
+
+    /**
+     * The host serving these pages is the audience's, the only one its links are
+     * built from — a French list reached from an English site would otherwise
+     * answer in French to everyone.
+     */
+    public function testThesePagesSpeakTheContactsLocaleAndNotTheHosts(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'francois@example.tld', subscribed: false, locale: 'fr');
+
+        $this->client->request(Request::METHOD_GET, '/newsletter/confirm/'.$contact->getToken());
+
+        self::assertStringContainsString(
+            $this->translate('newsletter.confirmed.title', 'fr'),
+            (string) $this->client->getResponse()->getContent(),
+        );
+
+        $this->client->request(Request::METHOD_GET, '/newsletter/unsubscribe/'.$contact->getToken());
+
+        self::assertStringContainsString(
+            $this->translate('newsletter.unsubscribe.confirm', 'fr'),
+            (string) $this->client->getResponse()->getContent(),
+        );
     }
 
     public function testAnUnknownTokenIsNotFound(): void
@@ -350,9 +384,13 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     }
 
     /** @param array<string, mixed> $parameters */
-    private function post(string $audienceSlug, array $parameters): void
+    private function post(string $audienceSlug, array $parameters, ?string $tokenFrom = null): void
     {
-        $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', ['audience' => $audienceSlug] + $parameters);
+        // A rejected slug still has to carry a token, so the list under test and
+        // the list that opens the session are named apart.
+        $token = $this->csrfToken($tokenFrom ?? $audienceSlug);
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', ['audience' => $audienceSlug, '_token' => $token] + $parameters);
     }
 
     private function findIn(Audience $audience, string $email): Contact
@@ -376,8 +414,8 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         return self::getContainer()->get(ContactRepository::class);
     }
 
-    private function translate(string $key): string
+    private function translate(string $key, ?string $locale = null): string
     {
-        return self::getContainer()->get('translator')->trans($key);
+        return self::getContainer()->get('translator')->trans($key, [], null, $locale);
     }
 }

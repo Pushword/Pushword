@@ -15,6 +15,7 @@ class Configuration implements ConfigurationInterface
      */
     final public const array DEFAULT_APP_FALLBACK = [
         'newsletter_possible_origins',
+        'newsletter_csrf_protection',
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder
@@ -27,6 +28,10 @@ class Configuration implements ConfigurationInterface
                     ->scalarNode('newsletter_possible_origins')
                         ->defaultNull()
                         ->info('Regex matching the origins allowed to POST the subscribe endpoint cross-domain (a statically generated site posting to its live host). Falls back to the conversation setting when null.')
+                    ->end()
+                    ->booleanNode('newsletter_csrf_protection')
+                        ->defaultTrue()
+                        ->info('Require a token issued by the form endpoint before accepting a subscription. The token lives in the session, so it only survives when the page and the live host are same-site — turn this off where a static build is served from another domain, or the session cookie never comes back and every subscription fails.')
                     ->end()
                     ->integerNode('send_batch')
                         ->defaultValue(50)

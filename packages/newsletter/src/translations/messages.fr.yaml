@@ -170,6 +170,7 @@ newsletter:
   subscribe:
     done: Vous êtes inscrit. Merci !
     invalidEmail: Cette adresse email ne semble pas valide.
+    invalidToken: Le formulaire a expiré. Rechargez la page et réessayez.
     noAudience: Choisissez au moins une newsletter.
     pending: Presque terminé — cliquez sur le lien que nous venons de vous envoyer.
     tooMany: Trop de tentatives. Réessayez plus tard.

@@ -14,63 +14,39 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
         return self::getContainer()->get(NewsletterExtension::class);
     }
 
-    public function testTheFormPostsToTheLiveHostSoAStaticPageCanUseIt(): void
+    /**
+     * The call may run at build time on a statically generated site, so it can
+     * only leave an address behind: the form is fetched per visitor.
+     */
+    public function testTheCallLeavesAPlaceholderPointingAtTheLiveHost(): void
     {
         $audience = $this->createAudience();
 
         $html = $this->extension()->renderForm($audience->getSlug());
 
-        self::assertStringContainsString('action="https://localhost.dev/newsletter/subscribe"', $html);
-        self::assertStringContainsString('name="audience" value="'.$audience->getSlug().'"', $html);
-        self::assertStringContainsString('name="email"', $html);
-        self::assertStringContainsString('name="name"', $html);
+        self::assertStringContainsString('data-live="https://localhost.dev/newsletter/form?', $html);
+        self::assertStringContainsString('audiences='.$audience->getSlug(), $html);
+        self::assertStringNotContainsString('<form', $html);
     }
 
-    public function testTheHoneypotIsShippedAndHidden(): void
-    {
-        $audience = $this->createAudience();
-
-        $html = $this->extension()->renderForm($audience->getSlug());
-
-        self::assertStringContainsString('name="website"', $html);
-        self::assertMatchesRegularExpression('/aria-hidden="true"[^>]*style="[^"]*-9999px/', $html);
-    }
-
-    public function testOnlyDeclaredInterestsBecomeHiddenFields(): void
-    {
-        $audience = $this->createAudience(interests: ['AmTrek']);
-
-        $html = $this->extension()->renderForm($audience->getSlug(), ['AmTrek', 'Undeclared']);
-
-        self::assertStringContainsString('name="interests[]" value="AmTrek"', $html);
-        self::assertStringNotContainsString('Undeclared', $html);
-    }
-
-    public function testSeveralAudiencesTravelHidden(): void
+    public function testSeveralAudiencesTravelInOneAddress(): void
     {
         $letter = $this->createAudience();
         $promos = $this->createAudience();
 
         $html = $this->extension()->renderForm([$letter->getSlug(), $promos->getSlug()]);
 
-        self::assertStringContainsString('type="hidden" name="audiences[]" value="'.$letter->getSlug().'"', $html);
-        self::assertStringContainsString('type="hidden" name="audiences[]" value="'.$promos->getSlug().'"', $html);
-        self::assertStringNotContainsString('name="audience"', $html, 'the single-audience field would post one list out of the two');
+        self::assertStringContainsString('audiences='.$letter->getSlug().'%2C'.$promos->getSlug(), $html);
     }
 
-    /**
-     * js-helper binds `.live-form` on every DOMChanged, which is what makes the
-     * form work when it is itself loaded dynamically. An inline <script> would
-     * not: one injected through innerHTML never runs.
-     */
-    public function testTheFormIsALiveFormRatherThanCarryingItsOwnScript(): void
+    public function testOnlyDeclaredInterestsReachTheAddress(): void
     {
-        $audience = $this->createAudience();
+        $audience = $this->createAudience(interests: ['AmTrek']);
 
-        $html = $this->extension()->renderForm($audience->getSlug());
+        $html = $this->extension()->renderForm($audience->getSlug(), ['AmTrek', 'Undeclared']);
 
-        self::assertStringContainsString('class="live-form"', $html);
-        self::assertStringNotContainsString('<script', $html);
+        self::assertStringContainsString('interests=AmTrek', $html);
+        self::assertStringNotContainsString('Undeclared', $html);
     }
 
     /** An interest one list declares must not be posted as if the other one knew it. */
@@ -81,20 +57,28 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
 
         $html = $this->extension()->renderForm([$without->getSlug(), $withInterest->getSlug()], ['AmTrek', 'Undeclared']);
 
-        self::assertStringContainsString('name="interests[]" value="AmTrek"', $html);
+        self::assertStringContainsString('interests=AmTrek', $html);
         self::assertStringNotContainsString('Undeclared', $html);
     }
 
-    /** A slug that matches nothing is left out, and one survivor posts as one list. */
+    /** A slug that matches nothing is left out rather than asked for. */
     public function testOnlyTheAudiencesThatExistAreOffered(): void
     {
         $audience = $this->createAudience();
 
         $html = $this->extension()->renderForm([$audience->getSlug(), 'does-not-exist']);
 
-        self::assertStringContainsString('name="audience" value="'.$audience->getSlug().'"', $html);
+        self::assertStringContainsString('audiences='.$audience->getSlug().'&', $html);
         self::assertStringNotContainsString('does-not-exist', $html);
-        self::assertStringNotContainsString('name="audiences[]"', $html);
+    }
+
+    public function testTheSourceNamesWhereTheFormSits(): void
+    {
+        $audience = $this->createAudience();
+
+        $html = $this->extension()->renderForm($audience->getSlug(), [], 'footer');
+
+        self::assertStringContainsString('source=footer', $html);
     }
 
     public function testAnUnknownAudienceRendersNothing(): void

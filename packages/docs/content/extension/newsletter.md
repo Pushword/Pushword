@@ -40,12 +40,16 @@ stays the same form and one submission opens a subscription per list — each wi
 its own confirmation mail where the list asks for one. An unknown slug fails the
 whole submission: half a subscription is not what was asked for.
 
-It renders as a `.live-form`, the convention `@pushword/js-helper` binds: the
-submission is posted in the background and the form is replaced in place by the
-answer. Because that binding is re-applied on every `DOMChanged`, the form also
-works when the page loads it dynamically — inside a `data-live` block, or behind
-a `data-src-live` button. Without js-helper on the page the browser posts and
-navigates to the response fragment, which still subscribes.
+The call leaves a placeholder, not the form: like a conversation form, the markup
+is fetched from the live host when someone loads the page. On a statically
+generated site this call runs at build time, so anything per-visitor rendered
+here — a CSRF token above all — would be one constant baked into a public file.
+
+`@pushword/js-helper` drives both halves. `liveBlock()` fetches the placeholder's
+`data-live` url and swaps the element for the form; the form comes back as a
+`.live-form`, so the same pass binds its submit, posts it in the background and
+replaces it with the answer. **The page needs js-helper**: without it the
+placeholder stays empty and no form appears.
 
 The third argument names where the form sits, and is kept on the contact as the
 *where* of the opt-in. Left out, it falls back to the slug of the page the form
@@ -56,6 +60,36 @@ Finally, add the clock to the server's crontab:
 ```shell
 * * * * * cd /path/to/app && php bin/console pw:newsletter:tick
 ```
+
+## CSRF
+
+On by default. The form endpoint issues a token, and the subscribe endpoint
+answers `403` to a post that does not carry it. Nothing to wire: the placeholder
+fetches the form, the form comes back with its token, js-helper posts it.
+
+**Turn it off where the token cannot make the round trip**:
+
+```yaml
+pushword:
+    apps:
+        - hosts: ['example.com']
+          newsletter_csrf_protection: false
+```
+
+The token lives in the session, so the session cookie has to reach the subscribe
+endpoint. It does when the page and `base_live_url` are same-site — the same
+domain, or two subdomains of it. It does not when a static build is served from
+one domain and PHP runs on another: `SameSite=Lax` withholds the cookie, the
+endpoint opens a fresh session per request, and **every subscription fails with
+`403`**. Same story for a front end that posts the endpoint itself without
+fetching a form first.
+
+What a token does and does not buy here: this endpoint is anonymous by design, so
+a forged cross-site post obtains nothing a direct `curl` would not — there is no
+ambient authority for the token to protect. It does raise the cost of driving the
+endpoint from someone else's page. The abuse it cannot address is guarded
+elsewhere: the honeypot, the per-IP ceiling, and above all the double opt-in,
+which keeps a subscription nobody asked for inert until the address owner clicks.
 
 ## Consent
 
@@ -242,10 +276,11 @@ enumeration it covers the rubric added next month too:
 Whatever the rule, the hosts, the `triggerFrom` and the pages already handled are
 ANDed with the whole of it: `any` widens which pages match, never past those.
 
-The subject and the body may quote four values of the page:
+The subject and the body may quote five values of the page:
 
 ```
-{{ page.h1 }}   {{ page.excerpt }}   {{ page.url }}   {{ page.mainImage }}
+{{ page.h1 }}   {{ page.excerpt }}   {{ page.chapeau }}
+{{ page.url }}  {{ page.mainImage }}
 ```
 
 The braces are borrowed from Twig; nothing is evaluated. They are substituted
@@ -254,6 +289,21 @@ which is why link absolutization and `utm_*` tagging work on it exactly as they
 do on a hand-written newsletter. `{{ page.url }}` is built from the page's own
 host and its canonical base URL, so it keeps working on a statically generated
 site and across an audience that spans several locale hosts.
+
+`{{ page.excerpt }}` is the `searchExcerpt` custom property when the page has
+one, and the article's own opening when it has not — the paragraphs before the
+first heading, or failing that the chapeau. That property is optional and often
+left empty, and a trigger that quoted it alone would send a mail reduced to a
+title and a link. `{{ page.chapeau }}` asks for the lede itself, whatever the
+excerpt resolved to: it is what sits before `<!--break-->`, and it is empty on a
+page with no break.
+
+**The subject gets plain text, the body gets the markup.** An `h1` commonly
+carries an `<em>`, a `<br>` or a `<span class="…">`, and an excerpt falling back
+to the article's opening is rendered HTML by construction — in a subject line
+that would reach the inbox as literal markup, so tags are dropped there (each one
+leaving a space, so a `<br>` does not glue two words) and entities decoded. The
+body keeps everything: inline HTML is legitimate Markdown.
 
 **What it produces is an ordinary campaign**, scheduled at `publishedAt + delay`
 and sent by the same tick. During the delay you can read it, edit it, or cancel
@@ -404,9 +454,9 @@ once, in the admin.
 
 ## Posting the form yourself
 
-`newsletter_form()` renders one, but the endpoint behind it is public and takes
+`newsletter_form()` gives you one, but the endpoint behind it is public and takes
 an ordinary form post, so a front end of your own — a React island, a static
-site's own markup — can subscribe without a token:
+site's own markup — can subscribe on its own:
 
 ```
 POST https://example.com/newsletter/subscribe
@@ -421,12 +471,13 @@ POST https://example.com/newsletter/subscribe
 | `locale` | defaults to the current site's |
 | `source` | where the form sits; defaults to the referer's path |
 | `website` | the honeypot — render it hidden, never fill it |
+| `_token` | required unless `newsletter_csrf_protection` is off — read it out of `GET /newsletter/form?audiences=<slug>`, sending that response's session cookie back with the post |
 
 The response is an HTML fragment, not JSON: the built-in form replaces itself
 with it, and it is `alert.html.twig` you override to restyle it. Read the status
 rather than the body — `200` subscribed (or awaiting confirmation), `400` a
-missing audience or a malformed address, `404` a slug that matches nothing, `429`
-the rate limit.
+missing audience or a malformed address, `403` a missing or stale token, `404` a
+slug that matches nothing, `429` the rate limit.
 
 Two behaviours to expect while testing:
 

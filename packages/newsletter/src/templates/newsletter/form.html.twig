@@ -1,21 +1,20 @@
 {#
-  Subscription form. Rendered by `{{ newsletter_form('audience-slug') }}`, or by
-  `{{ newsletter_form(['a-slug', 'another']) }}` to subscribe to several lists at
-  once.
+  Subscription form, served by the newsletter form endpoint and dropped into the
+  page by the placeholder `newsletter_form()` left behind.
 
   The action is absolute and points at the audience's live host: on a statically
   generated site the page has no PHP behind it, so the post must cross origins.
 
   `.live-form` is js-helper's convention: liveBlock() binds the submit, posts it
-  and swaps this block for the response. It re-binds on every DOMChanged, so the
-  form still works when it is itself loaded into the page dynamically — an inline
-  <script> would not, since one injected through innerHTML never runs. Without
-  js-helper the browser posts and navigates, which still subscribes.
+  and swaps this block for the response. It re-binds on every DOMChanged, which
+  is what picks this form up once the placeholder has been replaced by it.
+  Without js-helper the browser posts and navigates, which still subscribes.
 #}
 {% set audience = audiences|first %}
 <div class="live-form">
 <form class="newsletter-form" method="post" action="{{ action }}">
     <input type="hidden" name="locale" value="{{ locale }}">
+    {% if csrfToken %}<input type="hidden" name="_token" value="{{ csrfToken }}">{% endif %}
     {% if source %}<input type="hidden" name="source" value="{{ source }}">{% endif %}
     {% for interest in interests %}
         <input type="hidden" name="interests[]" value="{{ interest }}">

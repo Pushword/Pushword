@@ -14,6 +14,7 @@ use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\ContentTrigger;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Every test owns one audience with a unique slug and drops everything hanging
@@ -50,6 +51,21 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
         parent::tearDown();
     }
 
+    /**
+     * A CSRF token, fetched the way a browser gets one. It is issued per session
+     * under one id, so whichever audience opens the session, the token fits any
+     * subscription posted with the same client afterwards.
+     */
+    protected function csrfToken(string $audienceSlug): string
+    {
+        $this->client->request(Request::METHOD_POST, '/newsletter/form?audiences='.$audienceSlug);
+
+        $html = (string) $this->client->getResponse()->getContent();
+        self::assertSame(1, preg_match('/name="_token" value="([^"]+)"/', $html, $matches));
+
+        return $matches[1];
+    }
+
     /** @param string[] $interests */
     protected function createAudience(bool $requireDoubleOptIn = true, array $interests = [], int $rateSeconds = 30, string $mainHost = 'localhost.dev'): Audience
     {
@@ -84,9 +100,11 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
         array $customProperties = [],
         bool $subscribed = true,
         ?DateTimeImmutable $registeredAt = null,
+        string $locale = 'en',
     ): Contact {
         $contact = new Contact($audience, $email);
         $contact->setName('Test');
+        $contact->setLocale($locale);
         $contact->setTags($tags);
         $contact->setCustomProperties($customProperties);
         $contact->optIn(! $subscribed);

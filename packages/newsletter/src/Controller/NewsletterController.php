@@ -10,10 +10,12 @@ use Pushword\Newsletter\Repository\AudienceRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Service\ContactManager;
 use Pushword\Newsletter\Service\OriginGuard;
+use Pushword\Newsletter\Service\SubscribeForm;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -38,10 +40,51 @@ final class NewsletterController extends AbstractController
         private readonly ContactRepository $contactRepository,
         private readonly ContactManager $contactManager,
         private readonly OriginGuard $originGuard,
+        private readonly SubscribeForm $subscribeForm,
         private readonly SiteRegistry $siteRegistry,
         private readonly TranslatorInterface $translator,
+        private readonly LocaleSwitcher $localeSwitcher,
         private readonly CacheItemPoolInterface $cache,
     ) {
+    }
+
+    /**
+     * The form itself, fetched by the placeholder `newsletter_form()` leaves in
+     * the page. Everything it takes is already what the subscribe endpoint
+     * accepts from anyone, so serving it opens nothing the POST did not.
+     */
+    #[Route(
+        path: '/newsletter/form',
+        name: 'pushword_newsletter_form',
+        methods: ['GET', 'POST', 'OPTIONS'],
+    )]
+    public function form(Request $request): Response
+    {
+        $this->originGuard->reset();
+        $response = $this->originGuard->respond($request);
+
+        if ($request->isMethod('OPTIONS')) {
+            $response->setStatusCode(Response::HTTP_NO_CONTENT);
+
+            return $response;
+        }
+
+        $audiences = $this->subscribeForm->audiences($this->submittedList($request->query->all(), 'audiences'));
+
+        if ([] === $audiences) {
+            $response->setStatusCode(Response::HTTP_NOT_FOUND);
+
+            return $response;
+        }
+
+        $response->setContent($this->subscribeForm->render(
+            $audiences,
+            $this->subscribeForm->declaredInterests($audiences, $this->submittedList($request->query->all(), 'interests')),
+            $this->resolveLocale($request->query->all()),
+            $request->query->getString('source') ?: null,
+        ));
+
+        return $response;
     }
 
     #[Route(
@@ -66,6 +109,12 @@ final class NewsletterController extends AbstractController
             return $this->alert($response, 'newsletter.subscribe.pending', 'success');
         }
 
+        // Only checked where the setting turned it on, and then it is the form
+        // endpoint that issued the token — a hand-rolled post has to fetch one.
+        if (! $this->subscribeForm->isTokenValid($request->request->getString('_token'))) {
+            return $this->alert($response, 'newsletter.subscribe.invalidToken', 'error', Response::HTTP_FORBIDDEN);
+        }
+
         $audiences = $this->submittedAudiences($request);
         if (null === $audiences) {
             return $this->alert($response, 'newsletter.subscribe.unknownAudience', 'error', Response::HTTP_NOT_FOUND);
@@ -84,7 +133,7 @@ final class NewsletterController extends AbstractController
             return $this->alert($response, 'newsletter.subscribe.tooMany', 'error', Response::HTTP_TOO_MANY_REQUESTS);
         }
 
-        $interests = $this->submittedList($request, 'interests');
+        $interests = $this->submittedList($request->request->all(), 'interests');
         $pending = false;
 
         foreach ($audiences as $audience) {
@@ -92,7 +141,7 @@ final class NewsletterController extends AbstractController
                 $audience,
                 $email,
                 (string) $request->request->get('name', ''),
-                $this->resolveLocale($request),
+                $this->resolveLocale($request->request->all()),
                 $audience->filterInterests($interests),
                 $this->resolveSource($request),
                 $this->resolveOptinHost($request),
@@ -181,7 +230,7 @@ final class NewsletterController extends AbstractController
         }
 
         $all = $request->request->has('all');
-        $submitted = $this->submittedList($request, 'audiences');
+        $submitted = $this->submittedList($request->request->all(), 'audiences');
 
         // The siblings are re-read here rather than trusted from the form: the
         // slugs decide nothing, they only pick from what the token may touch.
@@ -203,12 +252,23 @@ final class NewsletterController extends AbstractController
         );
     }
 
-    /** @param list<Contact> $siblings */
+    /**
+     * An audience covers several language hosts by design, but the links it sends
+     * are all built from one host's `base_live_url` — so the request locale here
+     * is that host's, not the reader's. The contact carries their own: translate
+     * in it, as the mail that brought them the link already does.
+     *
+     * @param list<Contact> $siblings
+     */
     private function page(string $template, ?Contact $contact, int $status = Response::HTTP_OK, array $siblings = []): Response
     {
         $audience = $contact?->getAudience();
         $view = $this->siteRegistry->get($audience?->getMainHost())
             ->getView('/newsletter/'.$template, '@PushwordNewsletter');
+
+        if (null !== $contact) {
+            $this->localeSwitcher->setLocale($contact->getLocale());
+        }
 
         return $this->render($view, [
             'contact' => $contact,
@@ -262,7 +322,7 @@ final class NewsletterController extends AbstractController
      */
     private function submittedAudiences(Request $request): ?array
     {
-        $slugs = $this->submittedList($request, 'audiences');
+        $slugs = $this->submittedList($request->request->all(), 'audiences');
 
         if ([] === $slugs) {
             $single = trim((string) $request->request->get('audience', ''));
@@ -284,10 +344,14 @@ final class NewsletterController extends AbstractController
         return $audiences;
     }
 
-    /** @return string[] */
-    private function submittedList(Request $request, string $field): array
+    /**
+     * @param array<string, mixed> $submitted the query or the body, as sent
+     *
+     * @return string[]
+     */
+    private function submittedList(array $submitted, string $field): array
     {
-        $submitted = $request->request->all()[$field] ?? [];
+        $submitted = $submitted[$field] ?? [];
 
         if (\is_string($submitted)) {
             $submitted = explode(',', $submitted);
@@ -303,9 +367,11 @@ final class NewsletterController extends AbstractController
         ));
     }
 
-    private function resolveLocale(Request $request): string
+    /** @param array<string, mixed> $submitted the query or the body, as sent */
+    private function resolveLocale(array $submitted): string
     {
-        $locale = trim((string) $request->request->get('locale', ''));
+        $sent = $submitted['locale'] ?? null;
+        $locale = \is_scalar($sent) ? trim((string) $sent) : '';
 
         return '' !== $locale ? $locale : $this->siteRegistry->get()->getLocale();
     }
