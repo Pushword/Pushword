@@ -203,14 +203,7 @@ final readonly class QuizResultSync implements FlatSyncInterface
      */
     private function getKnownUuids(string $host): array
     {
-        $knownUuids = [];
-        foreach ($this->quizResultRepository->findBy(['host' => $host]) as $quizResult) {
-            if (null !== $quizResult->uuid) {
-                $knownUuids[$quizResult->uuid] = true;
-            }
-        }
-
-        return $knownUuids;
+        return array_fill_keys($this->quizResultRepository->uuidsByHost($host), true);
     }
 
     private function parseDate(?string $value): ?DateTime

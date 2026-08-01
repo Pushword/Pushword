@@ -110,6 +110,24 @@ class QuizResultRepository extends ServiceEntityRepository
         return array_values($stats);
     }
 
+    /**
+     * The uuids already stored for a host, read as a single column. The flat
+     * import only needs to know which rows it can skip, and hydrating every
+     * result to reach one field is what made a large table costly to sync.
+     *
+     * @return list<string>
+     */
+    public function uuidsByHost(string $host): array
+    {
+        /** @var list<string> */
+        return $this->createQueryBuilder('r')
+            ->select('r.uuid')
+            ->where('r.host = :host')->setParameter('host', $host)
+            ->andWhere('r.uuid IS NOT NULL')
+            ->getQuery()
+            ->getSingleColumnResult();
+    }
+
     /** Count knowledge-quiz rows (result IS NULL), optionally those scoring below $below. */
     private function countScores(string $host, string $quiz, ?int $below): int
     {
