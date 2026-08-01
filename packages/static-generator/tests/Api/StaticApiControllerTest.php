@@ -8,7 +8,6 @@ use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
-use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\ProcessOutputStorage;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\StaticAppGenerator;
@@ -163,19 +162,68 @@ final class StaticApiControllerTest extends WebTestCase
      */
     public function testHeldPageIsRefusedInsteadOfSilentlyDoingNothing(): void
     {
-        $page = $this->homepage();
-        $page->holdPublicationAt = new DateTime('+1 day');
+        $this->assertRefusesToGenerate(
+            'publication_on_hold',
+            static function (Page $page): void { $page->holdPublicationAt = new DateTime('+1 day'); },
+        );
+    }
 
+    /**
+     * An unpublished page has no business being exported: the whole-site pass
+     * skips it, so regenerating it individually must not claim otherwise.
+     */
+    public function testUnpublishedPageIsRefused(): void
+    {
+        $this->assertRefusesToGenerate(
+            'page_not_published',
+            static function (Page $page): void { $page->publishedAt = new DateTime('+1 year'); },
+        );
+    }
+
+    /**
+     * A page opted out of the cache produces no file at all, so a success here
+     * would send the caller looking for something that will never exist.
+     */
+    public function testPageOptedOutOfTheCacheIsRefused(): void
+    {
+        $this->assertRefusesToGenerate(
+            'cache_disabled_for_page',
+            static function (Page $page): void { $page->customProperties = ['cache' => false]; },
+        );
+    }
+
+    /**
+     * Build a throwaway page in the state $makeUnexportable puts it in, and assert
+     * the endpoint names that state instead of writing a file.
+     *
+     * A throwaway rather than a fixture page on purpose: any flush made while the
+     * API user is authenticated stamps the page's `editedBy`, and that user is
+     * dropped in tearDown — a mutated fixture page would keep pointing at it and
+     * break the next test in the class.
+     *
+     * @param callable(Page): void $makeUnexportable
+     */
+    private function assertRefusesToGenerate(string $expectedError, callable $makeUnexportable): void
+    {
+        $slug = 'static-api-'.uniqid();
+        $page = new Page();
+        $page->host = self::HOST;
+        $page->setSlug($slug);
+        $page->h1 = 'Static API test';
+        $page->publishedAt = new DateTime('-1 day');
+        $makeUnexportable($page);
+
+        $this->em->persist($page);
         $this->em->flush();
 
         try {
-            $body = $this->request('POST', '/api/static/'.self::HOST.'/homepage');
+            $body = $this->request('POST', '/api/static/'.self::HOST.'/'.$slug);
 
             self::assertSame(Response::HTTP_CONFLICT, $this->client->getResponse()->getStatusCode());
-            self::assertSame('publication_on_hold', $body['error']);
-            self::assertFileDoesNotExist($this->cacheDir.'/index.html');
+            self::assertSame($expectedError, $body['error']);
+            self::assertFileDoesNotExist($this->cacheDir.'/'.$slug.'.html');
         } finally {
-            $page->holdPublicationAt = null;
+            $this->em->remove($page);
             $this->em->flush();
         }
     }
@@ -207,15 +255,6 @@ final class StaticApiControllerTest extends WebTestCase
         self::assertSame('running', $body['status']);
         self::assertIsString($body['statusUrl']);
         self::assertStringContainsString('/api/static/'.self::HOST, $body['statusUrl']);
-    }
-
-    private function homepage(): Page
-    {
-        $page = self::getContainer()->get(PageRepository::class)
-            ->findOneBy(['host' => self::HOST, 'slug' => 'homepage']);
-        self::assertInstanceOf(Page::class, $page);
-
-        return $page;
     }
 
     /**

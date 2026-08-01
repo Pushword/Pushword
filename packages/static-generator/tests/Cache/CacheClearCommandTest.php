@@ -11,7 +11,15 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 
+/**
+ * Warming the cache mirrors the whole shared public/media tree — tens of thousands of
+ * generated OG images — into the worker's cache dir. Any parallel test that renders a
+ * page rewrites one of those images, and the copy then fails half way through with a
+ * truncated file. public_dir is a compile-time parameter, so this directory cannot be
+ * isolated per worker: the only cure is not to run alongside a writer.
+ */
 #[Group('integration')]
+#[Group('serial')]
 final class CacheClearCommandTest extends KernelTestCase
 {
     private string $cacheDir = '';
