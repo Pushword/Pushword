@@ -366,6 +366,97 @@ curl -H "Authorization: Bearer $TOKEN" \
   rather than infinite.
 - `orphanCount` counts pages with at most one inbound link. A homepage is never an orphan.
 
+{id=static}
+## Static regeneration
+
+Sites exported with [static-generator](/extension/static-generator) do not update when a page
+is written through the API — the HTML on disk is a snapshot. These endpoints rebuild it.
+
+| Method | Route                        | Action                                        |
+|--------|------------------------------|-----------------------------------------------|
+| `POST` | `/api/static/{host}/{slug}`  | Rebuild one page, **synchronously**            |
+| `POST` | `/api/static/{host}`         | Rebuild the whole site in the background       |
+| `GET`  | `/api/static/{host}`         | Poll status, live output, and the last errors  |
+
+Drop the `{host}` segment (`POST /api/static`, `GET /api/static`) to act on every site at once.
+
+You do not need any of this on a site running in **cache mode** (`cache: static`): there,
+writing a page through the API already refreshes its cached file by itself. See
+[page cache](/extension/page-cache).
+
+### One page — no polling
+
+A single page is one render, so it happens inside the request and the response *is* the
+confirmation:
+
+```bash
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+     https://example.com/api/static/example.com/pricing
+```
+
+```json
+{
+  "host": "example.com",
+  "slug": "pricing",
+  "generated": true,
+  "durationMs": 34,
+  "errors": []
+}
+```
+
+Use `homepage` as the slug for the home page, exactly as in `/api/page/{host}/{slug}`.
+
+**Only that page's file is written.** The sitemap, feeds, listing pages and the redirection
+map belong to the whole-site pass, so a page you just *created* or *deleted* exists on disk
+but is not linked from anywhere yet — follow it with a `POST /api/static/{host}`.
+
+The endpoint answers `409` rather than pretend to have written a file that the generator
+skips on purpose:
+
+| `error`                  | Why nothing was written                                |
+|--------------------------|--------------------------------------------------------|
+| `page_not_published`     | Unpublished pages are not exported                     |
+| `publication_on_hold`    | `holdPublicationAt` keeps the current file in place     |
+| `page_is_a_redirection`  | It is an entry in the host-wide redirect map, not a file |
+| `cache_disabled_for_page`| The page opted out with `cache: false`                  |
+| `generation_running`     | A whole-site pass is running — poll its `statusUrl` first |
+
+A page that fails to render answers `500` with the reason in `errors`.
+
+### A whole site — trigger and poll
+
+Same shape as [page scan](#page-scan): `POST` returns `202` with a `statusUrl`, `GET` polls it.
+
+```bash
+# Trigger — returns 202 immediately
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+     "https://example.com/api/static/example.com?incremental=1"
+
+# Poll until status is "completed"
+curl -H "Authorization: Bearer $TOKEN" \
+     "https://example.com/api/static/example.com"
+```
+
+```json
+{
+  "host": "example.com",
+  "status": "completed",
+  "running": false,
+  "lastGeneratedAt": "2026-06-02T09:14:00+00:00",
+  "errorCount": 0,
+  "errors": []
+}
+```
+
+- `?incremental=1` regenerates only the pages changed since the last pass — the right default
+  for a site of any size.
+- `status` is `idle` until the site has ever been generated, then `running`, `completed` or
+  `error`. `output` (the live console log) is included while running and on error.
+- `lastGeneratedAt` tracks **full** passes only; a single-page rebuild does not move it. On
+  the all-hosts scope it reports the oldest of the per-host timestamps.
+- Triggering while a pass is already running returns `202` with `"started": false` — it never
+  starts a second one.
+
 {id=errors}
 ## Error reference
 

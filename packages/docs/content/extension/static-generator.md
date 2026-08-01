@@ -101,6 +101,14 @@ php bin/console pw:static $host
 php bin/console pw:static $host $slug
 ```
 
+### From the API
+
+The same three scopes are reachable over HTTP once [pushword/api](/extension/api) is
+installed, so a script or an agent editing pages remotely can publish its own changes:
+`POST /api/static/{host}/{slug}` rebuilds one page synchronously, `POST /api/static/{host}`
+starts a background pass and returns a URL to poll. See
+[Static regeneration](/extension/api#static).
+
 ### Performance
 
 Hosts with 10+ pages are rendered by parallel worker processes. Workers share a
