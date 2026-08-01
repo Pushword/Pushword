@@ -27,7 +27,7 @@ class Date implements FilterInterface
         assert(is_scalar($propertyValue));
         $propertyValue = (string) $propertyValue;
 
-        return $this->convertDateShortCode($propertyValue, $this->apps->get($page->host)->getLocale());
+        return $this->convertDateShortCode($propertyValue, $this->apps->get($page->host)->locale);
     }
 
     private function getFormatter(string $locale): IntlDateFormatter

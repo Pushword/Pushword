@@ -85,7 +85,7 @@ final readonly class NewsletterMailer
     {
         $contact = new Contact($audience, $address);
         $contact->setName('Test');
-        $contact->setLocale($this->siteRegistry->get($audience->getMainHost())->getLocale());
+        $contact->setLocale($this->siteRegistry->get($audience->getMainHost())->locale);
 
         // A test recipient has no persisted token, so the unsubscribe link would
         // 404. Point it at the site instead — the point is to read the body.

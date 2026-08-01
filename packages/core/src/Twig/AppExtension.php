@@ -30,7 +30,7 @@ final class AppExtension
     #[AsTwigFilter('date_shortcode')]
     public function dateShortcode(string $text): string
     {
-        return $this->dateFilter->convertDateShortCode($text, $this->apps->get()->getLocale());
+        return $this->dateFilter->convertDateShortCode($text, $this->apps->get()->locale);
     }
 
     #[AsTwigFunction('codeBlock', isSafe: ['html'], needsEnvironment: false)]
@@ -106,7 +106,7 @@ final class AppExtension
                 '@type' => 'ListItem',
                 'name' => strip_tags($this->dateFilter->convertDateShortCode(
                     $currentPage->getName() ?: $currentPage->getH1() ?: $currentPage->getTitle(),
-                    $this->apps->get()->getLocale(),
+                    $this->apps->get()->locale,
                 )),
                 'item' => $this->router->generate($currentPage, true),
             ];

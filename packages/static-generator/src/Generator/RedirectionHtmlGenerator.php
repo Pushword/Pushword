@@ -27,7 +27,7 @@ class RedirectionHtmlGenerator extends PageGenerator
         }
 
         $template = $this->apps->get()->getView('/redirect.html.twig', '@PushwordStatic');
-        $lang = $this->app->getLocale();
+        $lang = $this->app->locale;
 
         foreach ($redirections as [$from, $to]) {
             $file = $this->resolveStubPath($from);

@@ -136,7 +136,7 @@ final readonly class SnippetExtension
      */
     private function contentFilters(string $host): array
     {
-        $filters = $this->normalizeFilters($this->siteRegistry->get($host)->getFilters()['main_content'] ?? 'markdown');
+        $filters = $this->normalizeFilters($this->siteRegistry->get($host)->filters['main_content'] ?? 'markdown');
 
         return array_values(array_filter($filters, static fn (string $filter): bool => 'twig' !== $filter));
     }

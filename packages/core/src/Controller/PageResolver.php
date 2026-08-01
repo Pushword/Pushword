@@ -29,7 +29,7 @@ final readonly class PageResolver
         $preloaded = $request->attributes->get('_pushword_page');
         $page = $preloaded instanceof Page && self::normalizeSlug($preloaded->getSlug()) === $slug
             ? $preloaded
-            : $this->pageRepository->getPage($slug, $this->requestContext->getCurrentSite()->getHostForDoctrineSearch());
+            : $this->pageRepository->getPage($slug, $this->requestContext->currentSite->getHostForDoctrineSearch());
 
         if (! $page instanceof Page && $extractPager) {
             $page = $this->extractPager($request, $slug);
@@ -40,14 +40,14 @@ final readonly class PageResolver
         }
 
         if ('' === $page->locale) {
-            $page->locale = $this->requestContext->getCurrentSite()->getLocale();
+            $page->locale = $this->requestContext->currentSite->locale;
         }
 
         if ($page->createdAt > new DateTime() && ! $this->security->isGranted('ROLE_EDITOR')) {
             return null;
         }
 
-        $this->requestContext->setCurrentPage($page);
+        $this->requestContext->currentPage = $page;
 
         return $page;
     }

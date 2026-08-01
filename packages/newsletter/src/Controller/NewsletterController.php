@@ -373,7 +373,7 @@ final class NewsletterController extends AbstractController
         $sent = $submitted['locale'] ?? null;
         $locale = \is_scalar($sent) ? trim((string) $sent) : '';
 
-        return '' !== $locale ? $locale : $this->siteRegistry->get()->getLocale();
+        return '' !== $locale ? $locale : $this->siteRegistry->get()->locale;
     }
 
     private function resolveSource(Request $request): ?string

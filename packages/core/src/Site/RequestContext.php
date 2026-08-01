@@ -8,17 +8,17 @@ use Symfony\Contracts\Service\ResetInterface;
 
 final class RequestContext implements ResetInterface
 {
-    private SiteConfig $currentSite;
+    public private(set) SiteConfig $currentSite;
 
-    private ?Page $currentPage = null;
+    public ?Page $currentPage = null;
 
-    private ?string $currentHost = null;
+    public private(set) ?string $currentHost = null;
 
-    private ?string $currentRoute = null;
+    public private(set) ?string $currentRoute = null;
 
-    private ?string $currentSlug = null;
+    public private(set) ?string $currentSlug = null;
 
-    private int $currentPager = 1;
+    public private(set) int $currentPager = 1;
 
     public function __construct(
         private readonly SiteRegistry $siteRegistry,
@@ -58,18 +58,6 @@ final class RequestContext implements ResetInterface
         return $this;
     }
 
-    public function setCurrentPage(Page $page): self
-    {
-        $this->currentPage = $page;
-
-        return $this;
-    }
-
-    public function getCurrentPage(): ?Page
-    {
-        return $this->currentPage;
-    }
-
     public function requirePage(): Page
     {
         return $this->currentPage ?? throw new LogicException('No current page set');
@@ -85,38 +73,13 @@ final class RequestContext implements ResetInterface
         return $this;
     }
 
-    public function getCurrentSite(): SiteConfig
-    {
-        return $this->currentSite;
-    }
-
-    public function getCurrentHost(): ?string
-    {
-        return $this->currentHost;
-    }
-
-    public function getCurrentRoute(): ?string
-    {
-        return $this->currentRoute;
-    }
-
-    public function getCurrentPager(): int
-    {
-        return $this->currentPager;
-    }
-
-    public function getCurrentSlug(): ?string
-    {
-        return $this->currentSlug;
-    }
-
     public function getLocale(): string
     {
         if (null !== $this->currentPage && '' !== $this->currentPage->locale) {
             return $this->currentPage->locale;
         }
 
-        return $this->getCurrentSite()->getLocale();
+        return $this->currentSite->locale;
     }
 
     public function getMainHost(): string

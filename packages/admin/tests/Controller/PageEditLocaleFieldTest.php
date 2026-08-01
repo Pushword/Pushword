@@ -54,7 +54,7 @@ final class PageEditLocaleFieldTest extends AbstractAdminTestClass
     {
         /** @var SiteRegistry $apps */
         $apps = self::getContainer()->get(SiteRegistry::class);
-        $expectedLocale = $apps->get($host)->getLocale();
+        $expectedLocale = $apps->get($host)->locale;
         self::assertNotSame('', $expectedLocale, 'The test site must declare a locale');
 
         $crawler = $client->request(Request::METHOD_GET, $this->buildEditPath($pageId));

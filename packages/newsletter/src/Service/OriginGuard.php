@@ -74,7 +74,7 @@ final class OriginGuard
 
         $origins = \is_string($configured) ? explode(' ', $configured) : [];
 
-        foreach ($site->getHosts() as $host) {
+        foreach ($site->hosts as $host) {
             $origins[] = 'https://'.$host;
         }
 

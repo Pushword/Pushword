@@ -39,6 +39,6 @@ final readonly class LinkGenerator
         $site = $this->siteRegistry->get($audience->getMainHost());
         $base = $site->getStr('base_live_url');
 
-        return rtrim('' !== $base ? $base : $site->getBaseUrl(), '/');
+        return rtrim('' !== $base ? $base : $site->baseUrl, '/');
     }
 }

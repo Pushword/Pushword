@@ -469,7 +469,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $this->overrideStaticDir();
 
         $siteRegistry = self::getContainer()->get(SiteRegistry::class);
-        $locale = $siteRegistry->switchSite('localhost.dev')->get()->getLocale();
+        $locale = $siteRegistry->switchSite('localhost.dev')->get()->locale;
 
         /** @var RedirectionManager $redirectionManager */
         $redirectionManager = $this->getGeneratorBag()->get(RedirectionManager::class);
@@ -748,7 +748,7 @@ final class StaticGeneratorTest extends KernelTestCase
         /** @var SiteRegistry $registry */
         $registry = self::getContainer()->get(SiteRegistry::class);
         foreach ($registry->getAll() as $host => $site) {
-            self::assertFalse($site->isStatic(), $host.' must not stay flagged as a static export');
+            self::assertFalse($site->isStatic, $host.' must not stay flagged as a static export');
         }
     }
 

@@ -39,13 +39,13 @@ final class PushwordRouteGenerator implements ResetInterface
         $homepage = new Page()->setSlug('');
 
         if (null !== $page) {
-            if ($page->locale !== $this->apps->get()->getLocale()) {
+            if ($page->locale !== $this->apps->get()->locale) {
                 $homepage->setSlug($page->locale);
             }
 
             $homepage->host = $page->host;
         } else {
-            $homepage->locale = $this->apps->get()->getLocale();
+            $homepage->locale = $this->apps->get()->locale;
             $homepage->host = $this->apps->get()->getMainHost();
         }
 

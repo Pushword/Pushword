@@ -26,6 +26,6 @@ abstract class AbstractPushwordController extends AbstractController
 
     protected function getView(string $path): string
     {
-        return $this->requestContext->getCurrentSite()->getView($path);
+        return $this->requestContext->currentSite->getView($path);
     }
 }

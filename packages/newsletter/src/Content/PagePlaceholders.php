@@ -170,6 +170,6 @@ final readonly class PagePlaceholders
      */
     private function base(Page $page): string
     {
-        return rtrim($this->siteRegistry->get($page->host)->getBaseUrl(), '/');
+        return rtrim($this->siteRegistry->get($page->host)->baseUrl, '/');
     }
 }

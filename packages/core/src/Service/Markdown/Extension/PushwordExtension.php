@@ -42,7 +42,7 @@ final readonly class PushwordExtension implements ExtensionInterface
 
         $environment->addInlineParser(new PhoneAutolinkParser(), 100);
 
-        $environment->addInlineParser(new DateShortcodeParser($this->dateFilter, $this->apps->get()->getLocale()), 150);
+        $environment->addInlineParser(new DateShortcodeParser($this->dateFilter, $this->apps->get()->locale), 150);
 
         $environment->addRenderer(
             ObfuscatedLink::class,

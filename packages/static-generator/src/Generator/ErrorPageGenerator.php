@@ -37,7 +37,7 @@ class ErrorPageGenerator extends AbstractGenerator
         $this->generateErrorPage();
 
         foreach ($this->app->getLocales() as $locale) {
-            if ($this->app->getLocale() === $locale) {
+            if ($this->app->locale === $locale) {
                 continue;
             }
 

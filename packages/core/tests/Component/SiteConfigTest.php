@@ -351,12 +351,12 @@ final class SiteConfigTest extends TestCase
         $live = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
         $live->setStatic(true);
         $live->resetStatic();
-        self::assertFalse($live->isStatic(), 'an unpinned flag must not survive a reset');
+        self::assertFalse($live->isStatic, 'an unpinned flag must not survive a reset');
 
         $renderKernel = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
         $renderKernel->setStatic(true, pin: true);
         $renderKernel->resetStatic();
-        self::assertTrue($renderKernel->isStatic(), 'the generator pins the flag on its render kernel');
+        self::assertTrue($renderKernel->isStatic, 'the generator pins the flag on its render kernel');
     }
 
     private function createTemplateResolver(): TemplateResolver

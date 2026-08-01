@@ -35,7 +35,7 @@ final class SiteRegistry implements ResetInterface
         foreach ($rawApps as $mainHost => $app) {
             $site = new SiteConfig($parameterBag, $app, $this->defaultHost === $mainHost);
             $site->setTemplateResolver($templateResolver);
-            $firstLocale ??= $site->getLocale();
+            $firstLocale ??= $site->locale;
             $site->firstAppLocale = $firstLocale;
             $this->sites[$mainHost] = $site;
         }
@@ -76,7 +76,7 @@ final class SiteRegistry implements ResetInterface
         }
 
         if (null !== $this->requestContext) {
-            return $this->requestContext->getCurrentSite();
+            return $this->requestContext->currentSite;
         }
 
         return $this->getDefault();
@@ -98,7 +98,7 @@ final class SiteRegistry implements ResetInterface
         }
 
         foreach ($this->sites as $site) {
-            if (\in_array($host, $site->getHosts(), true)) {
+            if (\in_array($host, $site->hosts, true)) {
                 return $site;
             }
         }
@@ -118,7 +118,7 @@ final class SiteRegistry implements ResetInterface
         }
 
         foreach ($this->sites as $key => $site) {
-            if (\in_array($host, $site->getHosts(), true)) {
+            if (\in_array($host, $site->hosts, true)) {
                 return $key;
             }
         }
@@ -198,14 +198,14 @@ final class SiteRegistry implements ResetInterface
     public function setCurrentPage(Page $page): self
     {
         $this->stashed = [];
-        $this->context()->setCurrentPage($page);
+        $this->context()->currentPage = $page;
 
         return $this;
     }
 
     public function getCurrentPage(): ?Page
     {
-        return $this->context()->getCurrentPage();
+        return $this->context()->currentPage;
     }
 
     public function requirePage(): Page
@@ -223,22 +223,22 @@ final class SiteRegistry implements ResetInterface
 
     public function getCurrentHost(): ?string
     {
-        return $this->context()->getCurrentHost();
+        return $this->context()->currentHost;
     }
 
     public function getCurrentRoute(): ?string
     {
-        return $this->context()->getCurrentRoute();
+        return $this->context()->currentRoute;
     }
 
     public function getCurrentPager(): int
     {
-        return $this->context()->getCurrentPager();
+        return $this->context()->currentPager;
     }
 
     public function getCurrentSlug(): ?string
     {
-        return $this->context()->getCurrentSlug();
+        return $this->context()->currentSlug;
     }
 
     public function getMainHost(): string

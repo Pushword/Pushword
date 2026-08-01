@@ -50,7 +50,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $contact = $this->manager()->subscribe($audience, 'silent@example.tld');
 
         $site = self::getContainer()->get(SiteRegistry::class)->get($audience->getMainHost());
-        self::assertSame($site->getLocale(), $contact->getLocale());
+        self::assertSame($site->locale, $contact->getLocale());
         self::assertNotSame('', $contact->getLocale(), 'an empty locale renders lang="" and mails in the sender\'s language');
     }
 

@@ -94,7 +94,7 @@ final readonly class MailRenderer
             return $html;
         }
 
-        $base = rtrim($this->siteRegistry->get($audience->getMainHost())->getBaseUrl(), '/');
+        $base = rtrim($this->siteRegistry->get($audience->getMainHost())->baseUrl, '/');
 
         return preg_replace_callback(
             HtmlUnpublishedLink::HTML_REGEX,

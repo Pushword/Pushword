@@ -435,7 +435,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     private function lintGeneratedOutput(string $dir): void
     {
         $hosts = array_merge(...array_map(
-            static fn (SiteConfig $siteConfig): array => $siteConfig->getHosts(),
+            static fn (SiteConfig $siteConfig): array => $siteConfig->hosts,
             array_values($this->apps->getAll()),
         ));
 

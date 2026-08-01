@@ -36,7 +36,7 @@ final readonly class ConversationLocaleListener
         }
 
         $host = $request->query->getString('host') ?: $request->getHost();
-        $locale = $request->query->getString('locale') ?: $this->siteRegistry->get($host)->getLocale();
+        $locale = $request->query->getString('locale') ?: $this->siteRegistry->get($host)->locale;
 
         $request->attributes->set('_locale', $locale);
     }

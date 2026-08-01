@@ -8,23 +8,23 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 final class SiteConfig
 {
     /** @var string[] */
-    private array $hosts;
+    public private(set) array $hosts = [];
 
-    private string $locale;
+    public private(set) string $locale;
 
     /** @var string|string[]|null */
     private string|array|null $locales = null;
 
-    private string $baseUrl;
+    public private(set) string $baseUrl;
 
-    private string $name;
+    public private(set) string $name;
 
-    private string $template;
+    public private(set) string $template;
 
     /** @var array<string, string> */
-    private array $filters = [];
+    public array $filters = [];
 
-    private bool $entityCanOverrideFilters;
+    public private(set) bool $entityCanOverrideFilters;
 
     /** @var array<string, mixed> */
     private array $assets = [];
@@ -38,7 +38,7 @@ final class SiteConfig
      * True while this site is being frozen into a static export: templates then
      * skip everything that needs a live endpoint (admin toolbar, fragments…).
      */
-    private bool $isStatic = false;
+    public private(set) bool $isStatic = false;
 
     /**
      * What resetStatic() restores. Stays false on a live kernel (worker-mode
@@ -52,7 +52,7 @@ final class SiteConfig
     public function __construct(
         private readonly ParameterBagInterface $params,
         array $properties,
-        private readonly bool $isDefaultSite,
+        public readonly bool $isDefaultSite,
     ) {
         // Process custom_properties first (merge into the internal map)
         if (isset($properties['custom_properties']) && \is_array($properties['custom_properties'])) {
@@ -77,6 +77,10 @@ final class SiteConfig
 
     private static function normalizePropertyName(string $string): string
     {
+        if (! str_contains($string, '_')) {
+            return $string; // already camelCase — lowercasing it would break property_exists (case-sensitive)
+        }
+
         $string = str_replace('_', '', ucwords(strtolower($string), '_'));
 
         return lcfirst($string);
@@ -85,11 +89,6 @@ final class SiteConfig
     public function setTemplateResolver(TemplateResolver $templateResolver): void
     {
         $this->templateResolver = $templateResolver;
-    }
-
-    public function isStatic(): bool
-    {
-        return $this->isStatic;
     }
 
     /**
@@ -123,7 +122,7 @@ final class SiteConfig
     public function getParamsForRendering(): array
     {
         return [
-            'app_base_url' => $this->getBaseUrl(),
+            'app_base_url' => $this->baseUrl,
             'app_name' => $this->name,
             'app_color' => $this->getCustomProperty('color'),
             'pwApp' => $this,
@@ -138,17 +137,6 @@ final class SiteConfig
         }
 
         return $this->hosts[0];
-    }
-
-    /** @return string[] */
-    public function getHosts(): array
-    {
-        return $this->hosts;
-    }
-
-    public function getBaseUrl(): string
-    {
-        return $this->baseUrl;
     }
 
     public function has(string $key): bool
@@ -237,28 +225,6 @@ final class SiteConfig
         return $this->customProperties[$key] ?? null;
     }
 
-    public function getTemplate(): string
-    {
-        return $this->template;
-    }
-
-    /** @return array<string, string> */
-    public function getFilters(): array
-    {
-        return $this->filters;
-    }
-
-    /** @param array<string, string> $filters */
-    public function setFilters(array $filters): void
-    {
-        $this->filters = $filters;
-    }
-
-    public function entityCanOverrideFilters(): bool
-    {
-        return $this->entityCanOverrideFilters;
-    }
-
     /** @return string[] */
     public function getJavascripts(): array
     {
@@ -296,20 +262,10 @@ final class SiteConfig
         return $this->templateResolver->resolve($this, $path, $fallback);
     }
 
-    public function isDefaultSite(): bool
-    {
-        return $this->isDefaultSite;
-    }
-
     /** @return string[]|string */
     public function getHostForDoctrineSearch(): array|string
     {
         return $this->isDefaultSite ? ['', $this->getMainHost()] : $this->getMainHost();
-    }
-
-    public function getLocale(): string
-    {
-        return $this->locale;
     }
 
     public function getDefaultLocale(): string
@@ -329,10 +285,5 @@ final class SiteConfig
         }
 
         return $this->locales ?? throw new \Exception();
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
     }
 }

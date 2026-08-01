@@ -124,7 +124,7 @@ final readonly class ImageObjectBuilder
         $base = $app->getStr('base_live_url');
 
         if ('' === $base) {
-            $base = $app->getBaseUrl();
+            $base = $app->baseUrl;
         }
 
         // The source format, not the preferred modern one: `default/photo.webp` is

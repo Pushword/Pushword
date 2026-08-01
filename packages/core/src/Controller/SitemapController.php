@@ -38,7 +38,7 @@ final class SitemapController extends AbstractPushwordController
             $this->getView('/page/sitemap.'.$_format.'.twig'),
             [
                 'pages' => $pages,
-                'app_base_url' => $this->apps->getApp()->getBaseUrl(),
+                'app_base_url' => $this->apps->getApp()->baseUrl,
             ]
         );
     }
@@ -52,7 +52,7 @@ final class SitemapController extends AbstractPushwordController
 
         return $this->pageRepository->getIndexablePagesQuery(
             $this->apps->getMainHost(),
-            '' !== $requestedLocale ? $requestedLocale : $this->apps->getApp()->getLocale(),
+            '' !== $requestedLocale ? $requestedLocale : $this->apps->getApp()->locale,
             $limit
         )
         ->orderBy('p.publishedAt', 'DESC')

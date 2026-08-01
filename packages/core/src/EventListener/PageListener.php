@@ -158,7 +158,7 @@ final class PageListener implements ResetInterface
             return;
         }
 
-        $page->locale = $this->apps->get($page->host)->getLocale();
+        $page->locale = $this->apps->get($page->host)->locale;
     }
 
     private function detectSlugChange(Page $page, PreUpdateEventArgs $event): void

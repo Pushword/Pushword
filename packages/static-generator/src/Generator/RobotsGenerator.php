@@ -29,7 +29,7 @@ class RobotsGenerator extends PageGenerator
             ['locale' => $locale, '_format' => $format]
         );
 
-        if ($this->app->getLocale() === $locale) {
+        if ($this->app->locale === $locale) {
             $staticFile = $this->getStaticDir().'/sitemap.'.$format;
         } else {
             $staticFile = $this->getStaticDir().'/'.$locale.'/sitemap.'.$format;

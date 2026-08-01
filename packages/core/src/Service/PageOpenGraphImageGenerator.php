@@ -75,7 +75,7 @@ class PageOpenGraphImageGenerator implements ResetInterface
     {
         return ($browserPath ? '' : $this->publicDir).'/'.$this->publicMediaDir.'/og/'
             .str_replace('/', '_', $this->getPage()->getSlug()).'-'
-            .substr(sha1($this->getPage()->getSlug().$this->apps->get()->getHosts()[0]), 0, 6).'.png';
+            .substr(sha1($this->getPage()->getSlug().$this->apps->get()->hosts[0]), 0, 6).'.png';
     }
 
     public function generatePreviewImage(): void
@@ -129,7 +129,7 @@ class PageOpenGraphImageGenerator implements ResetInterface
 
     private function drawAuthorName(DrawerInterface $drawer): void
     {
-        $author = $this->apps->get()->getHosts()[0];
+        $author = $this->apps->get()->hosts[0];
         // $this->page->getCustomProperty('Author') ?? ' ';
 
         $drawer->text(

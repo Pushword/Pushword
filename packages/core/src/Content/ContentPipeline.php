@@ -134,12 +134,12 @@ final class ContentPipeline
     {
         $filters = null;
 
-        if ($this->site->entityCanOverrideFilters()) {
+        if ($this->site->entityCanOverrideFilters) {
             $filters = $this->page->getCustomProperty($label.'_filters');
         }
 
         if (null === $filters || '' === $filters) {
-            $filters = $this->site->getFilters()[$label] ?? null;
+            $filters = $this->site->filters[$label] ?? null;
         }
 
         if (\is_string($filters)) {

@@ -305,7 +305,7 @@ final class PageImporter extends AbstractImporter
         $page->host = $this->apps->get()->getMainHost();
         $page->setSlug($slug);
         if ('' === $page->locale || '0' === $page->locale) {
-            $page->locale = $this->apps->get()->getLocale();
+            $page->locale = $this->apps->get()->locale;
         }
 
         $page->setMainContent($content);

@@ -133,8 +133,8 @@ final class WorkerModeStateResetTest extends KernelTestCase
         $page = new Page();
         $page->setSlug(self::PROBE_SLUG);
 
-        $context->setCurrentPage($page);
-        self::assertSame($page, $context->getCurrentPage());
+        $context->currentPage = $page;
+        self::assertSame($page, $context->currentPage);
 
         // --- The worker boundary. RequestContext is tagged kernel.reset, so this
         // must clear the current page. Without it a later non-page request (404,
@@ -143,7 +143,7 @@ final class WorkerModeStateResetTest extends KernelTestCase
         $this->simulateWorkerRequestBoundary();
 
         self::assertNull(
-            $context->getCurrentPage(),
+            $context->currentPage,
             'worker mode: the current page must not leak into a request that does not set its own',
         );
     }
@@ -188,7 +188,7 @@ final class WorkerModeStateResetTest extends KernelTestCase
 
         foreach ($registry->getAll() as $host => $site) {
             self::assertFalse(
-                $site->isStatic(),
+                $site->isStatic,
                 'worker mode: a static generation must not leave '.$host.' rendering as a static export',
             );
         }

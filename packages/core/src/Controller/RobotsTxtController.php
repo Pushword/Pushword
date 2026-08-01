@@ -20,7 +20,7 @@ final class RobotsTxtController extends AbstractPushwordController
         return $this->render(
             $this->getView('/page/robots.txt.twig'),
             [
-                'app_base_url' => $this->apps->getApp()->getBaseUrl(),
+                'app_base_url' => $this->apps->getApp()->baseUrl,
             ],
             $response
         );

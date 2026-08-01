@@ -43,7 +43,7 @@ final class TemplateResolver
     private function doResolve(SiteConfig $site, ?string $path, string $fallback): string
     {
         if (null === $path) {
-            return $site->getTemplate().'/page/page.html.twig';
+            return $site->template.'/page/page.html.twig';
         }
 
         if ($this->isFullPath($path)) {
@@ -59,7 +59,7 @@ final class TemplateResolver
             return $overridden;
         }
 
-        $name = $site->getTemplate().$path;
+        $name = $site->template.$path;
 
         try {
             $this->twig->load($name);
@@ -101,9 +101,9 @@ final class TemplateResolver
         }
 
         // 2. Theme-specific override
-        $themeOverride = $templateDir.'/'.ltrim($site->getTemplate(), '@').$name;
+        $themeOverride = $templateDir.'/'.ltrim($site->template, '@').$name;
         if (file_exists($themeOverride)) {
-            return '/'.ltrim($site->getTemplate(), '@').$name;
+            return '/'.ltrim($site->template, '@').$name;
         }
 
         // 3. Pushword core override

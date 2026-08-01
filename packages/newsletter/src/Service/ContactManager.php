@@ -64,7 +64,7 @@ final readonly class ContactManager
         // knows. The audience's host answers it, the way a page takes its locale
         // from the host it belongs to.
         if ('' === $contact->getLocale()) {
-            $contact->setLocale($this->siteRegistry->get($audience->getMainHost())->getLocale());
+            $contact->setLocale($this->siteRegistry->get($audience->getMainHost())->locale);
         }
 
         foreach ($interests as $interest) {

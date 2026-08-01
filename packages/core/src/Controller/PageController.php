@@ -99,9 +99,9 @@ final class PageController extends AbstractPushwordController
 
     public function showPage(Page $page): Response
     {
-        $this->requestContext->setCurrentPage($page);
+        $this->requestContext->currentPage = $page;
 
-        $params = ['page' => $page, ...$this->requestContext->getCurrentSite()->getParamsForRendering()];
+        $params = ['page' => $page, ...$this->requestContext->currentSite->getParamsForRendering()];
 
         $view = $this->getView($page->getTemplate() ?? '/page/page.html.twig');
 
@@ -119,7 +119,7 @@ final class PageController extends AbstractPushwordController
      */
     private function resolveRedirectFrom(string $slug): ?array
     {
-        $host = $this->requestContext->getCurrentSite()->getMainHost();
+        $host = $this->requestContext->currentSite->getMainHost();
         $redirect = $this->pageRepository->getRedirectFor(Page::normalizeSlug($slug), $host);
 
         if (null === $redirect) {

@@ -134,7 +134,7 @@ final class RedirectionImporter
             }
         }
 
-        return $this->apps->get()->getLocale();
+        return $this->apps->get()->locale;
     }
 
     /**

@@ -43,6 +43,6 @@ class PageLocaleField extends AbstractField
             return;
         }
 
-        $page->locale = $this->formFieldManager->apps->get($page->host)->getLocale();
+        $page->locale = $this->formFieldManager->apps->get($page->host)->locale;
     }
 }

@@ -116,12 +116,12 @@ final class Manager
      */
     private function getFilters(string $label): array
     {
-        if ($this->app->entityCanOverrideFilters()) {
+        if ($this->app->entityCanOverrideFilters) {
             $filters = $this->page->getCustomProperty($label.'_filters');
         }
 
         if (! isset($filters) || \is_string($filters) && \in_array($filters, [[], '', null], true)) {
-            $appFilters = $this->app->getFilters();
+            $appFilters = $this->app->filters;
             $filters = $appFilters[$label] ?? null;
         }
 

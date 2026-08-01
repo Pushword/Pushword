@@ -359,7 +359,7 @@ class PageCrudController extends AbstractAdminCrudController
     private function initializeNewPage(Page $page): void
     {
         if ('' === $page->locale) {
-            $page->locale = $this->apps->get()->getLocale();
+            $page->locale = $this->apps->get()->locale;
         }
 
         if ('' === $page->host) {

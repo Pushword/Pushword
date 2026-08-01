@@ -106,8 +106,8 @@ final class PageScannerService
     {
         try {
             $this->pageController->setHost($page->host);
-            $this->requestContext->setCurrentPage($page);
-            $this->translator->setLocale('' !== $page->locale ? $page->locale : $this->requestContext->getCurrentSite()->getLocale());
+            $this->requestContext->currentPage = $page;
+            $this->translator->setLocale('' !== $page->locale ? $page->locale : $this->requestContext->currentSite->locale);
             $response = $this->pageController->showPage($page);
 
             if ($response->isRedirect()) {

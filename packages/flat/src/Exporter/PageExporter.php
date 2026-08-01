@@ -281,7 +281,7 @@ final class PageExporter
             return;
         }
 
-        $defaultLocale = $this->apps->get()->getLocale();
+        $defaultLocale = $this->apps->get()->locale;
 
         /** @var array<string, Page[]> $publishedByLocale */
         $publishedByLocale = [];
@@ -595,7 +595,7 @@ final class PageExporter
             $currentHost = $this->apps->get()->getMainHost();
 
             if ('translations' === $property) {
-                $siteLocale = $this->apps->get()->getLocale();
+                $siteLocale = $this->apps->get()->locale;
                 $isMainLocale = '' === $page->locale || $page->locale === $siteLocale;
 
                 if (! $isMainLocale) {
@@ -642,7 +642,7 @@ final class PageExporter
             return null;
         }
 
-        if ('locale' === $property && $value === $this->apps->get()->getLocale()) {
+        if ('locale' === $property && $value === $this->apps->get()->locale) {
             return null;
         }
 

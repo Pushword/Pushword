@@ -49,7 +49,7 @@ final class ContentPipelineTest extends TestCase
             $params,
         );
 
-        $siteRegistry->get('localhost')->setFilters($siteFilters);
+        $siteRegistry->get('localhost')->filters = $siteFilters;
 
         $managerPool = new ManagerPool($siteRegistry, $eventDispatcher, $filterRegistry);
         $factory = new ContentPipelineFactory($siteRegistry, $eventDispatcher, $filterRegistry, $managerPool);

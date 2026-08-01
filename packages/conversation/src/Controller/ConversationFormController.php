@@ -139,7 +139,7 @@ final class ConversationFormController extends AbstractController
             $this->possibleOrigins[] = 'http://'.$request->getHost().':8002';
         }
 
-        foreach ($app->getHosts() as $host) {
+        foreach ($app->hosts as $host) {
             $this->possibleOrigins[] = 'https://'.$host;
         }
 
