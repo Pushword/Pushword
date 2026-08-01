@@ -10,6 +10,7 @@ use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Service\ImportContext;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Flat\Service\AdminNotificationService;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -31,6 +32,7 @@ final class ConversationImporter
         private readonly DenormalizerInterface $denormalizer,
         private readonly MediaRepository $mediaRepository,
         private readonly ImportContext $importContext,
+        private readonly ?AdminNotificationService $notificationService = null,
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
@@ -400,6 +402,10 @@ final class ConversationImporter
                     continue;
                 }
 
+                if (null !== $message && $this->keepNewerDbMessage($message, $row)) {
+                    continue;
+                }
+
                 if (null === $message) {
                     $messageClass = $this->resolveMessageClass($row['type'] ?? null, $row);
                     if (null === $messageClass) {
@@ -479,6 +485,38 @@ final class ConversationImporter
         } finally {
             $this->importContext->stopImport();
         }
+    }
+
+    /**
+     * A row strictly older than the database row is stale — a file rsynced from
+     * a machine that has not seen an edit made here (e.g. through the
+     * production admin, when the pull did not happen before the deploy). Keep
+     * the database version; notify when the row would have changed the content
+     * so the divergence is visible instead of silently absorbed. A hand-edited
+     * row keeps its exported updatedAt (equal, not older) and still applies.
+     *
+     * @param array<string, string|null> $row
+     */
+    private function keepNewerDbMessage(Message $message, array $row): bool
+    {
+        $rowUpdatedAt = ConversationCsvHelper::parseDate($row['updatedAt'] ?? null);
+        // Compare at second precision — all the CSV can express; the in-memory
+        // entity may carry microseconds the exported value never had.
+        if (null === $rowUpdatedAt
+            || ($message->updatedAt?->getTimestamp() ?? 0) <= $rowUpdatedAt->getTimestamp()) {
+            return false;
+        }
+
+        if (trim($row['content'] ?? '') !== trim($message->getContent())) {
+            $this->notificationService?->notifyConflict([
+                'entityType' => 'message',
+                'entityId' => $message->id,
+                'winner' => 'db',
+                'uuid' => $message->uuid,
+            ], $message->host);
+        }
+
+        return true;
     }
 
     /**

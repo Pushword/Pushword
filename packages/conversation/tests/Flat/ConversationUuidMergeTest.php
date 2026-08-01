@@ -12,7 +12,9 @@ use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Conversation\Service\ImportContext;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Flat\Entity\AdminNotification;
 use Pushword\Flat\FlatFileContentDirFinder;
+use Pushword\Flat\Service\AdminNotificationService;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -59,6 +61,7 @@ final class ConversationUuidMergeTest extends KernelTestCase
             self::getContainer()->get('serializer'),
             self::getContainer()->get(MediaRepository::class),
             new ImportContext(),
+            self::getContainer()->get(AdminNotificationService::class),
         );
         $this->importer->initConversationContext($appPool, $contentDirFinder, $this->messageRepository);
 
@@ -138,7 +141,7 @@ final class ConversationUuidMergeTest extends KernelTestCase
         $adoptedUuid = 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff';
         $this->createdMessageUuids[] = $adoptedUuid;
         $this->writeCsv([
-            [(string) $legacy->id, $adoptedUuid, 'Legacy content edited', '2026-01-01 10:00'],
+            [(string) $legacy->id, $adoptedUuid, 'Legacy content edited', '2030-01-01 10:00'],
         ]);
 
         $this->importer->import($this->testHost);
@@ -172,6 +175,55 @@ final class ConversationUuidMergeTest extends KernelTestCase
         self::assertStringContainsString((string) $dbOnly->uuid, $csvContent, 'Database-only messages must flow back into the CSV after import');
     }
 
+    public function testStaleRowKeepsNewerDbMessageAndNotifies(): void
+    {
+        $message = $this->createMessage('Edited through the production admin');
+        $this->entityManager->flush();
+        $this->createdMessageUuids[] = (string) $message->uuid;
+
+        // A CSV exported before that edit: strictly older row, different content.
+        $this->writeCsv([
+            ['', (string) $message->uuid, 'Stale content from the other machine', '2020-01-01 10:00'],
+        ]);
+
+        $this->importer->import($this->testHost);
+        $this->entityManager->refresh($message);
+
+        self::assertSame('Edited through the production admin', $message->getContent(), 'A stale row must never overwrite a newer database message');
+
+        $notification = self::getContainer()->get(AdminNotificationService::class)->getUnread($this->testHost);
+        $matching = array_filter(
+            $notification,
+            static fn (AdminNotification $adminNotification): bool => ($adminNotification->metadata['uuid'] ?? null) === $message->uuid,
+        );
+        self::assertCount(1, $matching, 'Keeping the database version over a differing stale row must be notified');
+
+        foreach ($matching as $adminNotification) {
+            $this->entityManager->remove($adminNotification);
+        }
+
+        $this->entityManager->flush();
+    }
+
+    public function testEqualTimestampRowStillApplies(): void
+    {
+        $message = $this->createMessage('Hand edition target');
+        $this->entityManager->flush();
+        $this->createdMessageUuids[] = (string) $message->uuid;
+        // Reload to get the stored (second-precision) timestamp the export writes.
+        $this->entityManager->refresh($message);
+
+        // Hand-editing a CSV keeps the exported updatedAt: equal, not older.
+        $this->writeCsv([
+            ['', (string) $message->uuid, 'Hand edition applied', $message->updatedAt?->format(\DATE_ATOM) ?? ''],
+        ]);
+
+        $this->importer->import($this->testHost);
+        $this->entityManager->refresh($message);
+
+        self::assertSame('Hand edition applied', $message->getContent(), 'A row with the exported timestamp is a manual edition and must apply');
+    }
+
     public function testDeletionPropagatesAsTombstone(): void
     {
         $message = $this->createMessage('Message deleted on the other machine');
@@ -179,7 +231,7 @@ final class ConversationUuidMergeTest extends KernelTestCase
         $this->createdMessageUuids[] = (string) $message->uuid;
 
         $this->writeCsv([
-            ['', (string) $message->uuid, 'Message deleted on the other machine', '2026-01-01 10:00', '2026-01-02 12:00'],
+            ['', (string) $message->uuid, 'Message deleted on the other machine', '2030-01-01 10:00', '2030-01-02 12:00'],
         ]);
 
         $this->importer->import($this->testHost);

@@ -135,6 +135,15 @@ empty `deletedAt` cell in a stale CSV never resurrects a deleted message —
 deletion is sticky; to un-delete, clear the value in the database (or CSV) on
 each side.
 
+### Stale rows never overwrite fresher database edits
+
+A row whose `updatedAt` is strictly older than the database row is stale — a
+CSV rsynced from a machine that has not seen an edit made here (typically
+through the production admin, when no pull happened before the deploy). Import
+keeps the database version and, when the row's content differs, creates an
+admin notification (with email alert) so the divergence is visible. Hand-edited
+rows keep their exported `updatedAt` (equal, not older) and still apply.
+
 ### Storage mode
 
 By default, all conversations are stored in a single global file at `content/conversation.csv`, regardless of host. This simplifies management, especially for single-site installations or when conversations don't need to be separated by host.
