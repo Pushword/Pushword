@@ -40,6 +40,14 @@ export default defineConfig({
         entryFileNames: '[name].js',
         chunkFileNames: '[name].js',
         assetFileNames: '[name].[ext]',
+        // Give every chunk its own scope. They are served as classic scripts, so
+        // their top-level declarations otherwise share one global lexical scope:
+        // the minifier named a const in app.js and a function in alpine.js `_e`
+        // alike, and whichever parsed second threw on the duplicate — leaving
+        // Alpine dead on every page. Rollup refuses iife for a multi-entry
+        // build, so the wrap is done here.
+        banner: '(function(){',
+        footer: '})();',
       },
     },
     outDir: 'src/Resources/public',

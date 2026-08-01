@@ -94,7 +94,12 @@ function onDomChanged() {
   //refreshFsLightbox();
 }
 
-document.addEventListener('DOMContentLoaded', onPageLoaded())
+// The bundle is served async, so it can land either side of DOMContentLoaded.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', onPageLoaded)
+} else {
+  onPageLoaded()
+}
 
 document.addEventListener('DOMChanged', onDomChanged)
 
