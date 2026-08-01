@@ -118,13 +118,11 @@ final readonly class StaticGenerationCoordinator
         $errors = $this->parseErrors($output);
         $storageStatus = $this->outputStorage->getStatus($processType);
 
-        if ($isRunning) {
-            $status = 'running';
-        } elseif ('error' === $storageStatus || [] !== $errors) {
-            $status = 'error';
-        } else {
-            $status = 'completed';
-        }
+        $status = match (true) {
+            $isRunning => 'running',
+            'error' === $storageStatus || [] !== $errors => 'error',
+            default => 'completed',
+        };
 
         return ['status' => $status, 'output' => $output, 'isRunning' => $isRunning, 'errors' => $errors];
     }
@@ -164,20 +162,18 @@ final readonly class StaticGenerationCoordinator
      */
     public function parseErrors(string $output): array
     {
-        if ('' === $output) {
-            return [];
-        }
-
         $errors = [];
         foreach (explode("\n", $output) as $line) {
             $line = trim($line);
-            $lowerLine = strtolower($line);
+            if ('' === $line) {
+                continue;
+            }
 
-            if ('' !== $line && (
-                str_contains($lowerLine, 'error')
+            $lowerLine = strtolower($line);
+            if (str_contains($lowerLine, 'error')
                 || str_contains($lowerLine, 'failed')
                 || str_contains($lowerLine, 'exception')
-            )) {
+            ) {
                 $errors[] = $line;
             }
         }

@@ -76,8 +76,7 @@ final class StaticApiController extends AbstractApiController
 
         // A whole-site pass rebuilds into a temp dir and swaps it in; a page
         // written meanwhile would vanish with the directory it replaced.
-        $running = $this->runningProcessType($host);
-        if (null !== $running) {
+        if ($this->isGenerationRunning($host)) {
             return $this->respond([
                 'error' => 'generation_running',
                 'host' => $host,
@@ -118,7 +117,7 @@ final class StaticApiController extends AbstractApiController
         }
 
         // Already generating — never start a second pass for the same scope.
-        if (null !== $this->runningProcessType($host)) {
+        if ($this->isGenerationRunning($host)) {
             return $this->running($host, started: false);
         }
 
@@ -196,19 +195,16 @@ final class StaticApiController extends AbstractApiController
     }
 
     /**
-     * The process type of a generation this scope must wait for — its own, or the
-     * one it cross-locks with — or null when nothing is running.
+     * Whether a generation this scope must wait for is under way — its own, or the
+     * one it cross-locks with.
      */
-    private function runningProcessType(?string $host): ?string
+    private function isGenerationRunning(?string $host): bool
     {
-        $blocking = $this->coordinator->findBlockingProcess($host);
-        if (null !== $blocking) {
-            return $blocking['processType'];
+        if (null !== $this->coordinator->findBlockingProcess($host)) {
+            return true;
         }
 
-        $processType = $this->coordinator->getProcessType($host);
-
-        return $this->coordinator->getProcessInfo($processType)['isRunning'] ? $processType : null;
+        return $this->coordinator->getProcessInfo($this->coordinator->getProcessType($host))['isRunning'];
     }
 
     private function running(?string $host, bool $started): JsonResponse
