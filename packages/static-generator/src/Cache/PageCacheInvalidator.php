@@ -78,8 +78,9 @@ final class PageCacheInvalidator implements ResetInterface
     {
         $this->queueRefresh($page);
 
-        $relevant = isset($this->pendingListingRelevant[spl_object_id($page)]);
-        unset($this->pendingListingRelevant[spl_object_id($page)]);
+        $objectId = spl_object_id($page);
+        $relevant = isset($this->pendingListingRelevant[$objectId]);
+        unset($this->pendingListingRelevant[$objectId]);
 
         if ($relevant && ! $this->suppressor->isSuppressed()) {
             $this->renderEpoch->bump($page->host);

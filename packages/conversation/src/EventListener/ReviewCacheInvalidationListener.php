@@ -53,8 +53,9 @@ final class ReviewCacheInvalidationListener implements ResetInterface
 
     public function postUpdate(Message $message): void
     {
-        if (isset($this->pendingBump[spl_object_id($message)])) {
-            unset($this->pendingBump[spl_object_id($message)]);
+        $objectId = spl_object_id($message);
+        if (isset($this->pendingBump[$objectId])) {
+            unset($this->pendingBump[$objectId]);
             $this->bump($message);
         }
     }
