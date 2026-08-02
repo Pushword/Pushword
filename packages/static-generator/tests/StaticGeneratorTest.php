@@ -2,6 +2,7 @@
 
 namespace Pushword\StaticGenerator;
 
+use Composer\Autoload\ClassLoader;
 use DateTime;
 use DateTimeImmutable;
 use Exception;
@@ -36,6 +37,7 @@ use Pushword\StaticGenerator\Generator\RedirectionHtmlGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
 
@@ -49,6 +51,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Process\Process;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[Group('integration')]
@@ -1502,21 +1505,61 @@ final class StaticGeneratorTest extends KernelTestCase
 
         self::assertDirectoryExists($opcacheDir);
 
-        if (! \extension_loaded('Zend OPcache')) {
-            return; // The flags are inert without the extension; only the dir wiring is observable.
+        // The flags are the worker's, so the precondition is the worker's too.
+        // Reading this process says little: opcache can be loaded here and still
+        // cache nothing in a child — built without file-cache support, or with
+        // the ini locked. Probe a child spawned the way the generator spawns
+        // one, and only hold the workers to what that child proved possible.
+        if (! $this->aChildCanFileCache()) {
+            return;
         }
 
-        $hasCachedScript = false;
-        /** @var SplFileInfo $file */
-        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($opcacheDir, FilesystemIterator::SKIP_DOTS)) as $file) {
-            if ($file->isFile()) {
-                $hasCachedScript = true;
+        self::assertTrue(
+            $this->holdsAFile($opcacheDir),
+            'A child of this process file-caches, so the workers should have written compiled scripts too.',
+        );
+    }
 
-                break;
+    /**
+     * Whether a child process, given the flags the workers get, actually writes
+     * compiled scripts to disk. `-r` code is never cached — the required file is
+     * what proves the capability.
+     */
+    private function aChildCanFileCache(): bool
+    {
+        $probeDir = sys_get_temp_dir().'/pushword-opcache-probe-'.getmypid();
+        $filesystem = new Filesystem();
+        $filesystem->remove($probeDir);
+        $filesystem->mkdir($probeDir);
+
+        $subject = (string) new ReflectionClass(ClassLoader::class)->getFileName();
+
+        $probe = new Process([
+            'php',
+            '-d', 'opcache.enable=1',
+            '-d', 'opcache.enable_cli=1',
+            '-d', 'opcache.file_cache='.$probeDir,
+            '-d', 'opcache.validate_timestamps=1',
+            '-r', 'require '.var_export($subject, true).';',
+        ]);
+        $probe->run();
+
+        $cached = $this->holdsAFile($probeDir);
+        $filesystem->remove($probeDir);
+
+        return $cached;
+    }
+
+    private function holdsAFile(string $dir): bool
+    {
+        /** @var SplFileInfo $file */
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) {
+            if ($file->isFile()) {
+                return true;
             }
         }
 
-        self::assertTrue($hasCachedScript, 'Workers should write compiled scripts into the shared opcache file cache.');
+        return false;
     }
 
     public function testStateMergeFromFile(): void
