@@ -49,6 +49,8 @@ final class PageCriteria extends AbstractCriteria
 {
     public const string SUBJECT = 'a page';
 
+    public const bool ACCEPTS_SEARCH = true;
+
     /** Operators accepted for each plain field. `prop.*` is handled apart. */
     public const array FIELD_OPERATORS = [
         'slug' => ['startsWith', 'notStartsWith'],

@@ -150,6 +150,154 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertStringContainsString('0 waiting', (string) $client->getResponse()->getContent());
     }
 
+    /**
+     * The builder grows over the textarea, so what the form has to carry is the
+     * side the rule is written on and where to ask about it. A wrongly-named
+     * attribute renders and does nothing.
+     */
+    public function testTheAutomationFormWiresEveryRuleToTheBuilder(): void
+    {
+        $client = $this->loginUser();
+        $this->seed();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/automation/new');
+
+        self::assertSame(200, $client->getResponse()->getStatusCode());
+        self::assertCount(1, $crawler->filter('textarea[name="Automation[triggerWhenAsJson]"][data-pw-criteria="trigger"]'));
+        self::assertCount(2, $crawler->filter('textarea[data-pw-criteria="contact"]'));
+        self::assertCount(3, $crawler->filter('textarea[data-pw-criteria-vocabulary][data-pw-criteria-preview]'));
+    }
+
+    /** The editor offers what the picked source speaks, and nothing else. */
+    public function testTheVocabularyFollowsTheSource(): void
+    {
+        $client = $this->loginUser();
+        $this->seed();
+
+        $page = $this->vocabulary($client, 'trigger', 'page');
+        $pageFields = $this->subArray($page, 'fields');
+        self::assertArrayHasKey('template', $pageFields);
+        self::assertArrayHasKey('prop.', $pageFields);
+        self::assertArrayNotHasKey('confirmedAt', $pageFields);
+        // A page rule may be written as a pages_list search, and the editor has
+        // to say so rather than let it look like malformed JSON.
+        self::assertTrue($page['acceptsSearch']);
+
+        $contact = $this->vocabulary($client, 'contact', '');
+        $contactFields = $this->subArray($contact, 'fields');
+        self::assertArrayHasKey('confirmedAt', $contactFields);
+        self::assertArrayNotHasKey('template', $contactFields);
+        self::assertFalse($contact['acceptsSearch']);
+    }
+
+    /**
+     * An amount and a unit, not "7d" from memory; and no value box at all for
+     * the operators that carry none.
+     */
+    public function testTheVocabularyMarksWhatAnOperatorTakes(): void
+    {
+        $client = $this->loginUser();
+        $this->seed();
+
+        $fields = $this->subArray($this->vocabulary($client, 'contact', ''), 'fields');
+
+        self::assertContains(
+            ['name' => 'olderThan', 'valueless' => false, 'duration' => true],
+            $this->subArray($this->subArray($fields, 'createdAt'), 'operators'),
+        );
+        self::assertContains(
+            ['name' => 'isSet', 'valueless' => true, 'duration' => false],
+            $this->subArray($this->subArray($fields, 'prop.'), 'operators'),
+        );
+    }
+
+    public function testAnUnknownSourceHasNoVocabulary(): void
+    {
+        $client = $this->loginUser();
+        $this->seed();
+
+        $client->request(Request::METHOD_GET, '/admin/newsletter/criteria/vocabulary?side=trigger&source=nope');
+
+        self::assertSame(400, $client->getResponse()->getStatusCode());
+        self::assertStringContainsString('No trigger source is named', (string) $client->getResponse()->getContent());
+    }
+
+    /** Counting a rule is asking a question, so it must not answer by storing it. */
+    public function testThePreviewCountsAnUnsavedRuleWithoutStoringIt(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $automation = new Automation();
+        $automation->audience = $audience;
+        $automation->name = 'Count me';
+        $automation->source = 'page';
+        $automation->triggerWhen = [['field' => 'slug', 'op' => 'startsWith', 'value' => 'stored/']];
+        $this->entityManager()->persist($automation);
+        $this->entityManager()->flush();
+        $automationId = $automation->id;
+
+        $preview = $this->preview($client, [
+            'side' => 'trigger',
+            'source' => 'page',
+            'automation' => $automationId,
+            'hosts' => ['localhost.dev'],
+            'rule' => '[{"field":"slug","op":"startsWith","value":"previewed-only/"}]',
+            'sinceAll' => true,
+        ]);
+
+        self::assertIsInt($preview['count']);
+
+        $stored = $this->entityManager()->getRepository(Automation::class)->find($automationId);
+        self::assertInstanceOf(Automation::class, $stored);
+        self::assertSame([['field' => 'slug', 'op' => 'startsWith', 'value' => 'stored/']], $stored->triggerWhen);
+    }
+
+    /** The other side of the rule: who a broadcast would reach, as it is typed. */
+    public function testThePreviewCountsTheContactsASegmentReaches(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $preview = $this->preview($client, [
+            'side' => 'contact',
+            'audience' => $audience->id,
+            'rule' => '[{"field":"tag","op":"has","value":"AmTrek"}]',
+        ]);
+
+        self::assertSame(1, $preview['count']);
+        self::assertSame(['admin-contact@example.tld'], $preview['samples']);
+    }
+
+    /** A trigger rule cannot be counted before there is an automation to scope it. */
+    public function testThePreviewSaysWhenThereIsNothingToCountAgainstYet(): void
+    {
+        $client = $this->loginUser();
+        $this->seed();
+
+        $preview = $this->preview($client, ['side' => 'trigger', 'source' => 'page', 'rule' => '']);
+
+        self::assertNull($preview['count']);
+        self::assertTrue($preview['saveFirst']);
+    }
+
+    /** While typing, a broken rule is an answer — the one the save would give. */
+    public function testAMalformedRuleIsPreviewedAsTheMessageTheValidatorWouldGive(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $preview = $this->preview($client, [
+            'side' => 'contact',
+            'audience' => $audience->id,
+            'rule' => '[{"field":"nope","op":"=","value":"x"}]',
+        ]);
+
+        $error = $preview['error'] ?? null;
+        self::assertIsString($error);
+        self::assertStringContainsString('unknown field', $error);
+    }
+
     /** Contacts are only ever created by an opt-in, never by hand in the admin. */
     public function testContactsCannotBeCreatedByHand(): void
     {
@@ -336,6 +484,58 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
 
         self::assertInstanceOf(Contact::class, $confirmed);
         self::assertTrue($confirmed->isSubscribed());
+    }
+
+    /** @return array<mixed> */
+    private function vocabulary(KernelBrowser $client, string $side, string $source): array
+    {
+        $client->request(Request::METHOD_GET, '/admin/newsletter/criteria/vocabulary?side='.$side.'&source='.$source);
+        self::assertSame(200, $client->getResponse()->getStatusCode());
+
+        return $this->decode($client);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     *
+     * @return array<mixed>
+     */
+    private function preview(KernelBrowser $client, array $payload): array
+    {
+        $client->request(
+            Request::METHOD_POST,
+            '/admin/newsletter/criteria/preview',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($payload, \JSON_THROW_ON_ERROR),
+        );
+
+        self::assertSame(200, $client->getResponse()->getStatusCode(), substr(strip_tags((string) $client->getResponse()->getContent()), 0, 900));
+
+        return $this->decode($client);
+    }
+
+    /** @return array<mixed> */
+    private function decode(KernelBrowser $client): array
+    {
+        $decoded = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertIsArray($decoded);
+
+        return $decoded;
+    }
+
+    /**
+     * @param array<mixed> $data
+     *
+     * @return array<mixed>
+     */
+    private function subArray(array $data, string $key): array
+    {
+        $value = $data[$key] ?? null;
+        self::assertIsArray($value);
+
+        return $value;
     }
 
     private function reloadContact(?int $contactId): Contact

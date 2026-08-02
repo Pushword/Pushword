@@ -50,6 +50,9 @@ import { autoInitEditLock } from './admin.editLock'
 // Tags modules
 import { suggestTags } from './admin.tagsField'
 
+// Criteria modules
+import { initCriteriaBuilder } from './admin.criteriaBuilder'
+
 // Sidebar modules
 import { submenuFilter } from './admin.submenuFilter'
 
@@ -110,6 +113,9 @@ window.addEventListener('load', function () {
   mediaPicker()
   inlinePopup()
   suggestTags()
+
+  // Criteria textareas (newsletter segments, automation triggers)
+  initCriteriaBuilder()
 
   // Page state
   retrieveCurrentPageLocale()

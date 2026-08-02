@@ -279,9 +279,29 @@ Two properties hold whatever you write:
 - `prop.x != y` skips contacts that have no `x` at all — a missing property is
   unknown, not "different from y".
 
-**Count before you send.** The campaign and automation screens both have a button
-that reports how many contacts currently match; the API returns
-`estimatedRecipients` on any draft campaign.
+**The admin writes it for you.** Every rule — a campaign's segment, an
+automation's trigger, its recipients, its stop condition — is edited as rows: a
+field, an operator, a value, with `All`/`Any` above them and one level of
+grouping. The fields offered are the ones the rule's own language declares, so
+picking `page` as an automation's source swaps the vocabulary under the rows,
+and values are suggested from what the site already has — its tags, its
+templates, the slugs that name a section, the property keys in use.
+
+**Edit as text** hands the JSON back at any point, which is what everything above
+is written in. A rule the builder cannot show — a `pages_list` search — simply
+stays text. Nothing about the stored format changes either way: the builder types
+into the same field, and the same validator has the last word.
+
+**Count before you send.** The count under each rule follows what is being typed:
+how many subjects are waiting, or how many subscribed contacts a broadcast would
+reach, with the first few named. A malformed rule answers there, in the words the
+save would have used. Two things it cannot do: a *trigger* has to be saved once
+before it can be counted — subtracting what the automation has already handled
+needs the automation to exist — and a fresh automation counts zero by
+construction, its **Active from** being now, which is what *Ignore the start
+date* is for. The campaign and automation lists keep a button that reports the
+same count on a saved row; the API returns `estimatedRecipients` on any draft
+campaign.
 
 ## Campaigns
 
@@ -544,7 +564,32 @@ Four things worth knowing:
 Your vocabulary is an `AbstractCriteria` subclass — the same base the segment and
 page languages extend — so `{"any": [...]}`, the JSON round trip through the admin
 textarea, and the error messages come for free. Its `FieldRegistry` is what says
-how each field compiles.
+how each field compiles. The admin's condition builder reads it too: whatever
+`FIELD_OPERATORS` declares becomes rows and dropdowns, and `DURATION_OPERATORS`
+is what makes an editor ask for an amount and a unit rather than for `7d`.
+
+To fill those dropdowns with what your application already holds — the statuses
+in use, the products bought — implement `CriteriaSuggestions` for your criteria
+class and tag it `pushword.newsletter.criteria_suggestions`:
+
+```php
+#[AutoconfigureTag('pushword.newsletter.criteria_suggestions')]
+final readonly class CustomerCriteriaSuggestions implements CriteriaSuggestions
+{
+    public function criteria(): string { return CustomerCriteria::class; }
+
+    /** @return array<string, list<string>> by field name */
+    public function suggest(array $hosts): array
+    {
+        return ['status' => $this->statusesInUse(), 'prop.' => $this->propertyKeys()];
+    }
+}
+```
+
+They stay suggestions: a rule may name a status nobody has yet, which is what
+lets an automation be written before the thing it waits for exists. A source that
+ships none is offered plain text boxes, and its language validates them exactly
+the same.
 
 ## Link attribution
 

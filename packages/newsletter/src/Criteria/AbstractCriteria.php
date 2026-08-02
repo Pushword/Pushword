@@ -42,6 +42,21 @@ abstract class AbstractCriteria
     /** Operators that carry no value. */
     public const array VALUELESS_OPERATORS = ['isSet', 'isNotSet'];
 
+    /**
+     * Operators whose value is a duration rather than free text. What
+     * {@see assertValue()} checks, and what an editor reads to offer an amount
+     * and a unit instead of a text box.
+     *
+     * @var list<string>
+     */
+    public const array DURATION_OPERATORS = [];
+
+    /**
+     * Whether a rule may also be written as a search string, the spelling
+     * {@see fromSearch()} reads. Said out loud so the admin can offer it.
+     */
+    public const bool ACCEPTS_SEARCH = false;
+
     /** What this language filters, for an error message: "a page", "a contact". */
     public const string SUBJECT = '';
 

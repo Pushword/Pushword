@@ -4,6 +4,7 @@ namespace Pushword\Newsletter\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Pushword\Core\Repository\TagsRepositoryTrait;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Enum\ContactStatus;
@@ -13,9 +14,72 @@ use Pushword\Newsletter\Enum\ContactStatus;
  */
 class ContactRepository extends ServiceEntityRepository
 {
+    use TagsRepositoryTrait;
+
+    /**
+     * What the three methods below read at most. They answer "what has been
+     * written here already" for the segment editor, so a base too large to scan
+     * gives a shorter list of suggestions rather than a slow page.
+     */
+    private const int SUGGESTION_SCAN = 5000;
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Contact::class);
+    }
+
+    /**
+     * The tags the base carries, for the segment editor to offer.
+     *
+     * @return list<string>
+     */
+    public function getAllTags(): array
+    {
+        /** @var array{tags: string[]}[] $rows */
+        $rows = $this->createQueryBuilder('c')
+            ->select('c.tags')
+            ->setMaxResults(self::SUGGESTION_SCAN)
+            ->getQuery()
+            ->getResult();
+
+        return $this->sorted($this->flattenTags($rows));
+    }
+
+    /** @return list<string> */
+    public function getAllLocales(): array
+    {
+        /** @var array{locale: string}[] $rows */
+        $rows = $this->createQueryBuilder('c')
+            ->select('DISTINCT c.locale')
+            ->andWhere("c.locale != ''")
+            ->getQuery()
+            ->getResult();
+
+        return $this->sorted(array_column($rows, 'locale'));
+    }
+
+    /**
+     * The property keys the site has stored on someone. A contact's properties
+     * are whatever an import or the API wrote — there is no declaration to read
+     * them from, unlike a page's `page_properties`.
+     *
+     * @return list<string>
+     */
+    public function getAllPropertyKeys(): array
+    {
+        /** @var array{customProperties: array<string, mixed>}[] $rows */
+        $rows = $this->createQueryBuilder('c')
+            ->select('c.customProperties')
+            ->setMaxResults(self::SUGGESTION_SCAN)
+            ->getQuery()
+            ->getResult();
+
+        $keys = [];
+        foreach ($rows as $row) {
+            $keys = [...$keys, ...array_keys($row['customProperties'])];
+        }
+
+        return $this->sorted($keys);
     }
 
     public function findOneByEmail(Audience $audience, string $email): ?Contact
@@ -99,5 +163,18 @@ class ContactRepository extends ServiceEntityRepository
             ->orderBy('a.slug', 'ASC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @param string[] $values
+     *
+     * @return list<string>
+     */
+    private function sorted(array $values): array
+    {
+        $values = array_values(array_unique($values));
+        sort($values);
+
+        return $values;
     }
 }

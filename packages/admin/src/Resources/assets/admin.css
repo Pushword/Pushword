@@ -12,6 +12,7 @@
 @import './admin.mediaPicker.css';
 @import './admin.textareaHelper.css';
 @import './admin.tagsField.css';
+@import './admin.criteriaBuilder.css';
 
 :root {
   --color-primary: var(--sky-700);

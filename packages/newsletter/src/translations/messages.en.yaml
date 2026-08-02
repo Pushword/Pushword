@@ -43,7 +43,7 @@ newsletter:
       hosts.help: The sites to watch, for the sources scoped to one; empty watches every one. An audience often spans several locale hosts, so pick the ones worth a mail.
       name: Name
       recipientWhen: Recipients
-      recipientWhen.help: 'Who receives the mails an occurrence broadcasts, in the usual contact criteria. Empty targets the whole subscribed audience. Ignored when the occurrence names its own contact — a drip is addressed to whoever triggered it. Example: [{"field":"prop.lastSeenAt","op":"olderThan","value":"30d"}]'
+      recipientWhen.help: Who receives the mails an occurrence broadcasts, in the usual contact criteria. No condition targets the whole subscribed audience. Ignored when the occurrence names its own contact — a drip is addressed to whoever triggered it.
       source: Trigger on
       source.help: What this watches. "contact" starts a sequence at whoever comes to match; "page" announces a publication to the audience. Other sources come from the bundles you install.
       stepCount: Steps
@@ -51,7 +51,7 @@ newsletter:
       stopWhen: Stop when
       stopWhen.help: Re-checked before each step of a drip. A match ends the sequence for that contact.
       triggerWhen: Trigger when
-      triggerWhen.help: 'JSON list of conditions, all of which must hold — which subjects, not when. Empty matches every one of them. The vocabulary is the source''s: a contact source reads tag, locale, createdAt, confirmedAt, prop.<key>; a page source slug, template, tag, parent, ancestor, prop.<key>, and takes a pages_list search too (ancestor:blog AND tag:featured). For an OR, {"any":[…]}, which may nest.'
+      triggerWhen.help: 'Which subjects deserve the sequence — which, not when. No condition matches every one of them, and the fields offered are the source''s own. "Edit as text" gives the stored JSON back, where a page rule may also be written as a pages_list search (ancestor:blog AND tag:featured).'
   campaign:
     label:
       plural: Newsletters
@@ -79,7 +79,7 @@ newsletter:
       scheduledAt: Scheduled for
       scheduledAt.help: Set a date, then use "Schedule". The tick sends it once the date has passed.
       segment: Segment
-      segment.help: 'JSON list of conditions, all of which must hold. Empty targets the whole subscribed audience. Example: [{"field":"prop.lastBoughtProduct","op":"=","value":"tmb"}]; for an OR, {"any":[…]}, which may nest.'
+      segment.help: 'Who this newsletter goes to. No condition targets the whole subscribed audience; "Edit as text" gives the stored JSON back.'
       sent: Sent
       sentAt: Sent at
       slug: Analytics name
@@ -156,6 +156,33 @@ newsletter:
     subscriptions:
       help: The same address on every list of this install. The one being edited is highlighted.
       title: Subscriptions
+  criteria:
+    addCondition: Add a condition
+    addGroup: Add a group
+    all: All
+    any: Any
+    duration: Duration
+    empty: No condition — everything matches.
+    field: Field
+    operator: Operator
+    previewContacts: subscribed contact(s)
+    previewFailed: This rule could not be counted.
+    previewNeedsAudience: Pick an audience to count this rule.
+    previewSaveFirst: Save the automation to count what its trigger would catch.
+    previewTrigger: waiting
+    property: Property key
+    raw: Edit as text
+    rawHint: The rule as it is stored. Leave it empty to match everything.
+    rawInvalid: The builder cannot show this rule, so it is left as written.
+    remove: Remove
+    searchHint: 'You may also write a pages_list search, e.g. ancestor:blog AND tag:featured'
+    sinceAll: Ignore the start date
+    toBuilder: Back to the builder
+    unitDays: days
+    unitHours: hours
+    unitMinutes: minutes
+    unitWeeks: weeks
+    value: Value
   email:
     unsubscribe: Unsubscribe
   form:
@@ -174,6 +201,7 @@ newsletter:
       delay: Delay (minutes)
       delay.help: Wait this long after enrollment for the first step, or after the previous step. A contact is enrolled as soon as they are subscribed — with double opt-in, right after they confirm. Two days later is 2880.
       position: Position
+      position.help: Order within the sequence, counting from 0. Equal numbers keep the order they were added in.
       subject: Subject
   subscribe:
     done: You are subscribed. Thank you!

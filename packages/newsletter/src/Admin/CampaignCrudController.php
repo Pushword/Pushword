@@ -21,6 +21,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
 use Pushword\AdminBlockEditor\Form\EditorjsType;
+use Pushword\Newsletter\Controller\CriteriaController;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Enum\CampaignStatus;
@@ -32,6 +33,7 @@ use Pushword\Newsletter\Utm\UtmTag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Throwable;
 
 /**
@@ -46,6 +48,7 @@ class CampaignCrudController extends AbstractCrudController
         private readonly SegmentResolver $segmentResolver,
         private readonly EntityManagerInterface $entityManager,
         private readonly AdminUrlGenerator $adminUrlGenerator,
+        private readonly UrlGeneratorInterface $urlGenerator,
     ) {
     }
 
@@ -138,7 +141,7 @@ class CampaignCrudController extends AbstractCrudController
 
         yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users');
         yield AssociationField::new('audience', 'newsletter.campaign.field.audience')->hideOnIndex();
-        yield TextareaField::new('segmentAsJson', 'newsletter.campaign.field.segment')->hideOnIndex()
+        yield CriteriaField::new('segmentAsJson', 'newsletter.campaign.field.segment', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(6)
             ->setHelp('newsletter.campaign.field.segment.help');
         yield DateTimeField::new('scheduledAt', 'newsletter.campaign.field.scheduledAt')->hideOnIndex()

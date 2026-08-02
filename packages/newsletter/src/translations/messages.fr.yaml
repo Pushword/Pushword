@@ -43,7 +43,7 @@ newsletter:
       hosts.help: Les sites à surveiller, pour les sources qui s'y limitent ; vide surveille tout. Une audience couvre souvent plusieurs sites de langue, choisissez ceux qui méritent un envoi.
       name: Nom
       recipientWhen: Destinataires
-      recipientWhen.help: 'Qui reçoit les envois diffusés, dans les critères de contact habituels. Vide vise toute l''audience abonnée. Ignoré quand l''occurrence désigne son propre contact — un scénario s''adresse à qui l''a déclenché. Exemple : [{"field":"prop.lastSeenAt","op":"olderThan","value":"30d"}]'
+      recipientWhen.help: Qui reçoit les envois diffusés, dans les critères de contact habituels. Sans condition, toute l'audience abonnée est visée. Ignoré quand l'occurrence désigne son propre contact — un scénario s'adresse à qui l'a déclenché.
       source: Déclencher sur
       source.help: Ce qui est surveillé. « contact » démarre une séquence chez qui vient à correspondre ; « page » annonce une publication à l'audience. Les autres sources viennent des bundles installés.
       stepCount: Étapes
@@ -51,7 +51,7 @@ newsletter:
       stopWhen: Arrêter si
       stopWhen.help: Revérifié avant chaque étape d'un scénario. Une correspondance met fin à la séquence pour ce contact.
       triggerWhen: Déclencher quand
-      triggerWhen.help: 'Liste JSON de conditions, toutes devant être vraies — quels sujets, pas quand. Vide correspond à tous. Le vocabulaire est celui de la source : une source contact lit tag, locale, createdAt, confirmedAt, prop.<key> ; une source page slug, template, tag, parent, ancestor, prop.<key>, et accepte aussi une recherche pages_list (ancestor:blog AND tag:featured). Pour un OU, {"any":[…]}, imbricable.'
+      triggerWhen.help: 'Quels sujets méritent la séquence — lesquels, pas quand. Sans condition, tous correspondent, et les champs proposés sont ceux de la source. « Éditer en texte » redonne le JSON stocké, où une règle de page peut aussi s''écrire comme une recherche pages_list (ancestor:blog AND tag:featured).'
   campaign:
     label:
       plural: Newsletters
@@ -79,7 +79,7 @@ newsletter:
       scheduledAt: Programmée pour
       scheduledAt.help: Renseignez une date, puis utilisez « Programmer ». Le tick l'envoie une fois la date passée.
       segment: Segment
-      segment.help: 'Liste JSON de conditions, toutes requises. Vide : toute l''audience inscrite. Exemple : [{"field":"prop.lastBoughtProduct","op":"=","value":"tmb"}] ; pour un OU, {"any":[…]}, imbricable.'
+      segment.help: 'À qui part cette newsletter. Sans condition, toute l''audience inscrite ; « Éditer en texte » redonne le JSON stocké.'
       sent: Envoyés
       sentAt: Envoyée le
       slug: Nom analytics
@@ -156,6 +156,33 @@ newsletter:
     subscriptions:
       help: La même adresse sur toutes les listes de cette installation. Celle en cours d'édition est surlignée.
       title: Inscriptions
+  criteria:
+    addCondition: Ajouter une condition
+    addGroup: Ajouter un groupe
+    all: Toutes
+    any: Au moins une
+    duration: Durée
+    empty: Aucune condition — tout correspond.
+    field: Champ
+    operator: Opérateur
+    previewContacts: contact(s) inscrit(s)
+    previewFailed: Cette règle n'a pas pu être comptée.
+    previewNeedsAudience: Choisissez une audience pour compter cette règle.
+    previewSaveFirst: Enregistrez l'automatisation pour compter ce que son déclencheur attraperait.
+    previewTrigger: en attente
+    property: Clé de propriété
+    raw: Éditer en texte
+    rawHint: La règle telle qu'elle est stockée. Laissez vide pour tout faire correspondre.
+    rawInvalid: L'éditeur ne peut pas afficher cette règle, elle est laissée telle quelle.
+    remove: Supprimer
+    searchHint: 'Vous pouvez aussi écrire une recherche pages_list, par exemple ancestor:blog AND tag:featured'
+    sinceAll: Ignorer la date de départ
+    toBuilder: Revenir à l'éditeur
+    unitDays: jours
+    unitHours: heures
+    unitMinutes: minutes
+    unitWeeks: semaines
+    value: Valeur
   email:
     unsubscribe: Se désinscrire
   form:
@@ -174,6 +201,7 @@ newsletter:
       delay: Délai (minutes)
       delay.help: Attendre ce délai après l'entrée dans la séquence pour la première étape, ou après l'étape précédente. Un contact y entre dès qu'il est inscrit — avec double opt-in, juste après sa confirmation. J+2 = 2880.
       position: Position
+      position.help: Ordre dans la séquence, à partir de 0. À numéro égal, l'ordre d'ajout est conservé.
       subject: Objet
   subscribe:
     done: Vous êtes inscrit. Merci !

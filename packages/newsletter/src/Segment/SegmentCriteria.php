@@ -47,7 +47,9 @@ final class SegmentCriteria extends AbstractCriteria
      *
      * @var list<string>
      */
-    public const array PROP_OPERATORS = [...parent::PROP_OPERATORS, 'olderThan', 'newerThan'];
+    public const array PROP_OPERATORS = [...parent::PROP_OPERATORS, ...self::DURATION_OPERATORS];
+
+    public const array DURATION_OPERATORS = ['olderThan', 'newerThan'];
 
     /** Operators accepted for each plain field. `prop.*` is handled apart. */
     public const array FIELD_OPERATORS = [
@@ -93,7 +95,7 @@ final class SegmentCriteria extends AbstractCriteria
      */
     protected static function assertValue(string $field, string $op, string $value, string $path): void
     {
-        if (\in_array($op, ['olderThan', 'newerThan'], true)) {
+        if (\in_array($op, self::DURATION_OPERATORS, true)) {
             self::parseDuration($value, $path);
         }
     }

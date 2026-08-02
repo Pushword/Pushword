@@ -16,17 +16,18 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Newsletter\Controller\CriteriaController;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Trigger\TriggerSourceRegistry;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * @extends AbstractCrudController<Automation>
@@ -42,6 +43,7 @@ class AutomationCrudController extends AbstractCrudController
         private readonly TriggerSourceRegistry $sources,
         private readonly SiteRegistry $siteRegistry,
         private readonly AdminUrlGenerator $adminUrlGenerator,
+        private readonly UrlGeneratorInterface $urlGenerator,
     ) {
     }
 
@@ -85,6 +87,8 @@ class AutomationCrudController extends AbstractCrudController
     {
         $hosts = $this->siteRegistry->getHosts();
         $sources = $this->sources->names();
+        $automation = $this->getContext()?->getEntity()->getInstance();
+        $automationId = $automation instanceof Automation ? $automation->id : null;
 
         yield FormField::addFieldset('newsletter.automation.fieldset.trigger')->setIcon('fa fa-bolt');
         yield TextField::new('name', 'newsletter.automation.field.name');
@@ -94,7 +98,7 @@ class AutomationCrudController extends AbstractCrudController
         yield ChoiceField::new('source', 'newsletter.automation.field.source')
             ->setChoices(array_combine($sources, $sources))
             ->setHelp('newsletter.automation.field.source.help');
-        yield TextareaField::new('triggerWhenAsJson', 'newsletter.automation.field.triggerWhen')->hideOnIndex()
+        yield CriteriaField::new('triggerWhenAsJson', 'newsletter.automation.field.triggerWhen', CriteriaController::SIDE_TRIGGER, $this->urlGenerator, $automationId)
             ->setNumOfRows(6)
             ->setHelp('newsletter.automation.field.triggerWhen.help');
         yield ChoiceField::new('hosts', 'newsletter.automation.field.hosts')->hideOnIndex()
@@ -107,10 +111,10 @@ class AutomationCrudController extends AbstractCrudController
             ->setHelp('newsletter.automation.field.activeFrom.help');
 
         yield FormField::addFieldset('newsletter.automation.fieldset.recipients')->setIcon('fa fa-filter');
-        yield TextareaField::new('recipientWhenAsJson', 'newsletter.automation.field.recipientWhen')->hideOnIndex()
+        yield CriteriaField::new('recipientWhenAsJson', 'newsletter.automation.field.recipientWhen', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(4)
             ->setHelp('newsletter.automation.field.recipientWhen.help');
-        yield TextareaField::new('stopWhenAsJson', 'newsletter.automation.field.stopWhen')->hideOnIndex()
+        yield CriteriaField::new('stopWhenAsJson', 'newsletter.automation.field.stopWhen', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(4)
             ->setHelp('newsletter.automation.field.stopWhen.help');
 
@@ -118,8 +122,11 @@ class AutomationCrudController extends AbstractCrudController
         yield IntegerField::new('stepCount', 'newsletter.automation.field.stepCount')
             ->onlyOnIndex()
             ->formatValue(static fn (mixed $value, ?Automation $automation): string => (string) ($automation?->countSteps() ?? 0));
-        yield CollectionField::new('steps', 'newsletter.automation.field.steps')
+        // No label: the fieldset above already says "Steps". Full width, because a
+        // step embeds a whole mail.
+        yield CollectionField::new('steps', false)
             ->hideOnIndex()
+            ->setColumns('col-12')
             ->allowAdd()
             ->allowDelete()
             ->useEntryCrudForm(AutomationStepCrudController::class);
