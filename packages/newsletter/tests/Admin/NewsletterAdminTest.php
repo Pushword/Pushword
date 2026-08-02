@@ -5,6 +5,7 @@ namespace Pushword\Newsletter\Tests\Admin;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
+use Pushword\Core\Entity\Page;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
@@ -23,10 +24,20 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
     /** @var list<int> */
     private array $extraAudienceIds = [];
 
+    /** @var list<int|null> child first: the parent cannot go while it is one */
+    private array $sectionPageIds = [];
+
     protected function tearDown(): void
     {
         if (null !== $this->client) {
             $connection = $this->entityManager()->getConnection();
+
+            $pageIds = array_filter($this->sectionPageIds, static fn (?int $pageId): bool => null !== $pageId);
+
+            foreach ($pageIds as $pageId) {
+                $connection->executeStatement('DELETE FROM page WHERE id = :id', ['id' => $pageId]);
+            }
+
             $audienceIds = array_filter(
                 [$this->audienceId, ...$this->extraAudienceIds],
                 static fn (?int $audienceId): bool => null !== $audienceId,
@@ -50,6 +61,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         }
 
         $this->extraAudienceIds = [];
+        $this->sectionPageIds = [];
 
         parent::tearDown();
     }
@@ -357,10 +369,15 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $contactFields = $this->subArray($this->vocabulary($client, 'contact', ''), 'fields');
         self::assertContains('AmTrek', $this->subArray($this->subArray($contactFields, 'tag'), 'suggestions'));
 
-        $pageFields = $this->subArray($this->vocabulary($client, 'trigger', 'page'), 'fields');
         // `parent` and `ancestor` take a slug that has pages under it, which is
-        // the only set of slugs short enough to offer.
-        self::assertContains('homepage', $this->subArray($this->subArray($pageFields, 'ancestor'), 'suggestions'));
+        // the only set of slugs short enough to offer. The section is created
+        // here rather than read off the fixtures: what the fixture tree looks
+        // like by the time this runs is up to every other test in the worker,
+        // and one of them reparents the demo pages.
+        $section = $this->seedSection();
+
+        $pageFields = $this->subArray($this->vocabulary($client, 'trigger', 'page'), 'fields');
+        self::assertContains($section, $this->subArray($this->subArray($pageFields, 'ancestor'), 'suggestions'));
     }
 
     public function testAnUnknownSourceHasNoVocabulary(): void
@@ -805,6 +822,37 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $this->extraAudienceIds[] = $audienceId;
 
         return $audience;
+    }
+
+    /**
+     * A parent page with one page under it, which is what makes its slug worth
+     * suggesting. Returns the parent's slug.
+     */
+    private function seedSection(): string
+    {
+        $entityManager = $this->entityManager();
+        $slug = 'section-'.bin2hex(random_bytes(5));
+
+        $parent = new Page();
+        $parent->slug = $slug;
+        $parent->h1 = $slug;
+        $parent->locale = 'en';
+        $parent->host = 'localhost.dev';
+
+        $child = new Page();
+        $child->slug = $slug.'/child';
+        $child->h1 = 'Child';
+        $child->locale = 'en';
+        $child->host = 'localhost.dev';
+        $child->parentPage = $parent;
+
+        $entityManager->persist($parent);
+        $entityManager->persist($child);
+        $entityManager->flush();
+
+        $this->sectionPageIds = [$child->id, $parent->id];
+
+        return $slug;
     }
 
     private function seed(): Audience

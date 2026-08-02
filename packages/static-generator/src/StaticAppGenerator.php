@@ -463,6 +463,11 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
             $cmd = [
                 'php',
+                // Both switches, not just the CLI one: a host shipping opcache
+                // disabled (`opcache.enable=0`) still loads the extension, so
+                // `enable_cli` alone leaves it inactive — the file cache stays
+                // empty and every worker recompiles from source, silently.
+                '-d', 'opcache.enable=1',
                 '-d', 'opcache.enable_cli=1',
                 '-d', 'opcache.file_cache='.$opcacheDir,
                 '-d', 'opcache.validate_timestamps=1',

@@ -43,6 +43,15 @@ throws `Unable to guess "…/public/media/md/2.jpg.<n>.<hash>.tmp" file type` �
 image-optimizer temp file caught mid-write in the shared `public/media` dir. Both re-run
 green and pass in isolation.
 
+**`StaticGeneratorTest::testParallelWorkersPopulateAnOpcacheFileCache` — was never a
+flake.** It failed on the MariaDB job and only there, every run, because that job is the
+only one setup-php gives a usable CLI opcache (`coverage: pcov` shadows it on the others,
+so the test early-returned and passed trivially). The worker spawn passed
+`opcache.enable_cli=1` without `opcache.enable=1`; a host shipping opcache disabled loads
+the extension but caches nothing, so the dir was created and stayed empty — which is also
+what the assertion says. Fixed in `StaticAppGenerator::generatePagesInParallel()`. Treat a
+fresh failure here as real, and check the `-d` flags first.
+
 **`PageScanner\Tests\Api\PageScanApiControllerTest`** — occasionally still flaky.
 
 **`PageLockControllerTest::testPingAcquiresLockForEditor`** — not a flake at all. It fails
