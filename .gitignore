@@ -22,7 +22,7 @@ packages/admin-monaco-editor/dist
 .twig-cs-fixer.cache
 /.phpunit.cache*
 coverage
-coverage.xml
+coverage*.xml
 /debug
 /debug-container
 /drivers

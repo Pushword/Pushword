@@ -76,6 +76,18 @@ GRANT ALL PRIVILEGES ON `pushword\_test%`.* TO 'pushword'@'%';
 The DSN lives in the `test-mariadb` script (`composer.json`); override it by exporting
 `PUSHWORD_TEST_MYSQL_URL` before running `composer test`.
 
+### Coverage
+
+```
+composer test-coverage
+```
+
+Writes `coverage/index.html` and `coverage.xml`. It needs the `pcov` extension
+(`dnf install php-pecl-pcov`, `apt install php-pcov`, …); pcov ships disabled, but the
+script enables it per run, so no php.ini change is required. Like CI, it runs the suite
+in three batches — parallel, serial, worker — and merges their reports, so a batch left
+out never silently reads as uncovered.
+
 ### Other Requirements
 
 This attention would be nice :

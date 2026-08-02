@@ -1,0 +1,78 @@
+#!/bin/bash -e
+#
+# Code-coverage run, writing coverage/ (HTML) and coverage.xml (clover).
+#
+# TEST_RUN_ID is mandatory: without it the bootstrap drops its per-run isolation
+# and builds the cached test DB on top of leftover state, which shifts entity ids
+# for every later run (see .claude/rules/testing.md).
+#
+# pcov ships disabled, so it is switched on for the paratest parent *and* for its
+# workers — the workers are what actually collect, and they only see the ini flags
+# handed to them through --passthru-php.
+#
+# The suite runs in the same three batches as .scripts/test (parallel, serial,
+# worker); merge-coverage.php folds their dumps into one report. Dropping a batch
+# would silently under-report it.
+
+START_TIME=$(date +%s)
+
+export TEST_RUN_ID="${TEST_RUN_ID:-cov-$$}"
+export PANTHER_CHROME_ARGUMENTS="--headless --disable-gpu --disable-dev-shm-usage --no-sandbox --user-data-dir=/tmp/panther-chrome-${TEST_RUN_ID}"
+export LOCK_DSN="flock:///tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}/locks"
+
+if ! php -r 'exit(extension_loaded("pcov") ? 0 : 1);'; then
+    echo "pcov is required: dnf install php-pecl-pcov (or apt install php-pcov)" >&2
+    exit 1
+fi
+
+DUMP_DIR=$(mktemp -d)
+PCOV_INI=(-d pcov.enabled=1 -d pcov.directory=packages)
+PASSTHRU="'-d' 'pcov.enabled=1' '-d' 'pcov.directory=packages'"
+EXIT=0
+
+function cleanup {
+    pkill -f chromedriver 2>/dev/null || true
+    pkill -f 'chrome.*headless' 2>/dev/null || true
+    rm -rf "/tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}"
+    rm -rf /tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}-w*
+    rm -rf "/tmp/panther-chrome-${TEST_RUN_ID}"
+    rm -rf ".phpunit.cache-${TEST_RUN_ID}"
+    rm -rf "$DUMP_DIR"
+}
+
+trap cleanup EXIT
+
+function step {
+    echo ""
+    echo -e "\033[1;34m→ $1\033[0m"
+}
+
+function batch {
+    local name=$1
+    shift
+    step "Running PHPUnit ($name)"
+    XDEBUG_MODE=off php -dxdebug.mode=off "${PCOV_INI[@]}" vendor/bin/paratest \
+        --no-progress --colors=always \
+        --cache-directory=".phpunit.cache-${TEST_RUN_ID}" \
+        --passthru-php="$PASSTHRU" \
+        --coverage-php "$DUMP_DIR/$name.cov" \
+        "$@" || EXIT=$?
+}
+
+step "Warming container cache"
+WARMUP_DIR=$(mktemp -d)
+PUSHWORD_TEST_MEDIA_DIR="$WARMUP_DIR/media" PUSHWORD_TEST_DATABASE_URL="sqlite:///$WARMUP_DIR/warmup.db" PUSHWORD_TEST_FLAT_CONTENT_DIR="$WARMUP_DIR/content" \
+    XDEBUG_MODE=off php -dxdebug.mode=off packages/dev-app/bin/console cache:warmup --env=test --quiet 2>/dev/null || true
+rm -rf "$WARMUP_DIR"
+
+batch parallel --processes=auto --exclude-group=serial --exclude-group=worker
+batch serial --processes=1 --group=serial
+batch worker --processes=1 --group=worker
+
+step "Merging coverage"
+XDEBUG_MODE=off php -dxdebug.mode=off .scripts/merge-coverage.php coverage coverage.xml "$DUMP_DIR"/*.cov
+
+echo ""
+echo -e "\033[1;32m✓ coverage/index.html + coverage.xml written in $(( $(date +%s) - START_TIME ))s\033[0m"
+
+exit $EXIT

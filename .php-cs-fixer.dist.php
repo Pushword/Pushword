@@ -15,6 +15,7 @@ $finder = Finder::create()
         __DIR__.'/.php-cs-fixer.dist.php',
         __DIR__.'/rector.php',
         __DIR__.'/.scripts/generate-docs-assets',
+        __DIR__.'/.scripts/merge-coverage.php',
         __DIR__.'/.scripts/release-upgrade-note',
     ]);
 

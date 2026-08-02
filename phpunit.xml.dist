@@ -40,8 +40,11 @@
       <directory>packages/*/src/</directory>
     </include>
     <exclude>
-      <!-- those simple array are tested by bootstrap.php -->
-      <directory>packages/*/*/config/packages/</directory>
+      <!-- those simple array are tested by bootstrap.php. Both layouts have to be
+           listed: the glob is one segment deep, so src/config/ does not reach
+           src/Resources/config/, and a container config left in counts as 0%. -->
+      <directory>packages/*/src/config/</directory>
+      <directory>packages/*/src/Resources/config/</directory>
       <!-- no need to test dev-app -->
       <directory>packages/dev-app/src/</directory>
       <file>packages/core/src/Service/WebPConverter.php</file>
