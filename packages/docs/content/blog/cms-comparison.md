@@ -1,10 +1,21 @@
 ---
-title: 'CMS Comparison - Pushword vs WordPress, Statamic, Sulu'
+title: 'CMS Comparison - Pushword vs WordPress, Statamic, Sulu  - Best PHP CMS in date(Y) ?'
 h1: 'Choosing the Right CMS: Pushword vs WordPress, Statamic & Sulu'
 publishedAt: '2025-12-28 17:25'
 ---
 
 Choosing the right CMS is a critical decision that affects your project's long-term success, maintenance costs, and team productivity. This comparison examines four PHP-based content management systems, each with distinct philosophies, target audiences, and trade-offs.
+
+## The short answer
+
+Most of this page is nuance. The decision usually is not.
+
+- **WordPress** if non-technical people must run the site alone, you need a specific plugin (WooCommerce above all), or you want to hire from the largest talent pool on earth. Twenty years of refinement is a real asset, and no other option here matches it for time-to-launch.
+- **Statamic** if your team is Laravel-native and the editing experience is the priority. The Control Panel and Live Preview are the best in this comparison, and the Pro licence buys you commercial support.
+- **Sulu** if you have enterprise content governance requirements — workflows, granular permissions, audit trails — and Symfony expertise on staff.
+- **Pushword** if two or more of these describe you: editors and developers both publish, AI agents are in your content loop, you run several sites or locales from one codebase, SEO is a primary concern, or you want content as Markdown in your own git with no licence and no vendor.
+
+If you recognised yourself immediately, the rest of this page is detail.
 
 ---
 
@@ -12,8 +23,8 @@ Choosing the right CMS is a critical decision that affects your project's long-t
 
 | CMS           | Best For                                              | Philosophy                               | Community Size                   |
 | ------------- | ----------------------------------------------------- | ---------------------------------------- | -------------------------------- |
-| **Pushword**  | Developers wanting modern PHP + flat-file flexibility | Modular, SEO-first, AI-friendly          | Small (emerging)                 |
-| **WordPress** | Non-technical users, plugin ecosystem                 | Accessibility, massive community         | Massive (43% of all websites)    |
+| **Pushword**  | Developers wanting modern PHP + flat-file flexibility | Modular, SEO-first, AI-friendly          | Small, shipping since Dec 2020   |
+| **WordPress** | Non-technical users, plugin ecosystem                 | Accessibility, massive community         | Massive (41.5% of all websites)  |
 | **Statamic**  | Laravel developers, content-focused sites             | Elegant flat-file with commercial polish | Medium (growing)                 |
 | **Sulu**      | Enterprise, complex content structures                | Headless-first, enterprise features      | Small/Niche (enterprise-focused) |
 
@@ -23,8 +34,9 @@ Choosing the right CMS is a critical decision that affects your project's long-t
 
 | Aspect              | Pushword                  | WordPress                  | Statamic                     | Sulu                   |
 | ------------------- | ------------------------- | -------------------------- | ---------------------------- | ---------------------- |
-| **PHP Version**     | 8.4+                      | 7.4–8.3\*                  | 8.1+                         | 8.1+                   |
-| **Framework**       | Symfony 8                 | Custom (legacy)            | Laravel 10–12                | Symfony 6–7            |
+| **PHP Version**     | 8.4+                      | 8.3+ (official minimum)    | 8.2+                         | 8.2–8.5                |
+| **Current version** | 1.0.0-rc (rolling)        | 7.0 (April 2026)           | 6.x                          | 3.0 (May 2026)         |
+| **Framework**       | Symfony 8                 | Custom (legacy)            | Laravel (Laravel-native)     | Symfony 6.4–7.4        |
 | **Database**        | SQLite / MySQL (optional) | MySQL / MariaDB (required) | Flat-file / MySQL (optional) | MySQL / PostgreSQL     |
 | **Templating**      | Twig                      | PHP / Blade (themes)       | Antlers / Blade              | Twig                   |
 | **Frontend Stack**  | Tailwind, Alpine.js       | Gutenberg (React)          | Tailwind, Alpine.js          | Custom (flexible)      |
@@ -35,11 +47,11 @@ Choosing the right CMS is a critical decision that affects your project's long-t
 
 **Pushword** runs on the cutting edge: PHP 8.4+ and Symfony 8 with Doctrine 3. This means access to the latest language features (property hooks, asymmetric visibility) and security improvements, but requires modern hosting environments.
 
-**WordPress** maintains broad backward compatibility (PHP 7.4+), making it accessible on nearly any hosting environment. However, PHP 7.4 reached end-of-life in November 2022. WordPress 6.7 offers only beta support for PHP 8.4, meaning cutting-edge PHP versions may introduce compatibility issues. WordPress recommends PHP 8.3+ for modern deployments.
+**WordPress** long maintained broad backward compatibility, which is why it runs on nearly any host — but the floor has moved. As of the May 2026 revision of its official requirements, WordPress asks for **PHP 8.3+**, MariaDB 10.6+ or MySQL 8.0+, and HTTPS on every install; PHP 7.2 and 7.3 support was dropped in January 2026. WordPress 7.0 shipped in April 2026. The practical upshot: the "runs anywhere on cheap shared hosting" advantage is smaller than its reputation suggests.
 
-**Statamic** leverages Laravel's mature ecosystem, supporting Laravel 10, 11, and 12. This flexibility allows teams to standardize on their preferred Laravel version while maintaining Statamic compatibility.
+**Statamic** leverages Laravel's mature ecosystem and has been Laravel-native for eight years. This lets teams standardise on their preferred Laravel version while keeping Statamic compatibility.
 
-**Sulu** shares Symfony foundations with Pushword but typically standardizes on established versions (6–7) for enterprise stability rather than bleeding-edge features.
+**Sulu** shares Symfony foundations with Pushword but deliberately standardises on established versions — Sulu 3.0 (May 2026) supports Symfony 6.4 through 7.4 and PHP 8.2 to 8.5 — favouring enterprise stability over bleeding-edge features. That is a legitimate strategy, not a lag.
 
 ---
 
@@ -66,7 +78,7 @@ Choosing the right CMS is a critical decision that affects your project's long-t
 
 **WordPress** pioneered block editing with Gutenberg (2018+). While powerful, Gutenberg is React-based and can feel heavyweight in browser. The ecosystem provides extensive field plugins (ACF, Meta Box), but multilingual sites require paid plugins (WPML ~€99/year or free but less feature-rich Polylang). Multi-site mode is available but less polished than dedicated multi-site CMSs.
 
-**Statamic**'s Bard editor is praised for writing experience and live preview across device sizes. Peak (visual editor) offers drag-and-drop layout building. Flat-file storage enables Git workflows for content versioning—critical for teams using version control for documentation or content-heavy sites. Native multi-site requires Pro license ($275/site/year).
+**Statamic**'s Bard editor is praised for writing experience and live preview across device sizes. Peak (visual editor) offers drag-and-drop layout building. Flat-file storage enables Git workflows for content versioning—critical for teams using version control for documentation or content-heavy sites. Native multi-site requires a Pro licence ($349/site).
 
 Recent additions strengthen Pushword's collaborative and headless story: a per-page **publication hold**—edits to a published page are saved to the database immediately, but in static (cache) mode the public keeps seeing the previously generated static file until you release the hold (Page "hold publication" switch / API `holdPublication: true`) and regenerate. The **version** extension adds automatic versioning with side-by-side diff, one-click restore, and a time-slider timeline so you can review exactly what changed. The **api** extension exposes a token-authenticated REST API (Page, Media, redirections) with an OpenAPI description and optimistic-concurrency revision guards—built for headless and scripted workflows.
 
@@ -216,10 +228,11 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 
 | Aspect                       | Pushword                | WordPress                     | Statamic                   | Sulu                     |
 | ---------------------------- | ----------------------- | ----------------------------- | -------------------------- | ------------------------ |
-| **Global Market Share**      | <0.1%                   | 43% of all websites           | ~1–2%                      | <0.5%                    |
-| **CMS Market Share**         | <1%                     | 61–64% of CMS market          | ~3–5%                      | ~2%                      |
-| **Community Size**           | Small (emerging)        | Massive (5M+ users)           | Medium (growing)           | Small (enterprise-niche) |
-| **Extensions / Plugins**     | ~15–20 official         | 60,000+ plugins               | 400+ addons (curated)      | Moderate (via bundles)   |
+| **Global Market Share**      | <0.1%                   | 41.5% of all websites         | ~1–2%                      | <0.5%                    |
+| **CMS Market Share**         | <1%                     | 64.3% of CMS market           | ~3–5%                      | ~2%                      |
+| **Community Size**           | Small, since Dec 2020   | Massive (5M+ users)           | Medium (growing)           | Small (enterprise-niche) |
+| **Extensions / Plugins**     | 24 bundles, one project | ~61,000 plugins (.org)        | 400+ addons (curated)      | Moderate (via bundles)   |
+| **Extension risk model**     | Concentration           | Entropy                       | Curation                   | Concentration            |
 | **Commercial Support**       | Consulting (small team) | Thousands of agencies         | Official support available | Professional services    |
 | **License**                  | MIT (open-source)       | GPL v2 (open-source)          | Core free, Pro paid        | MIT (open-source)        |
 | **Hosting Options**          | Any PHP host            | Specialized WP hosts          | Any PHP host               | Any PHP host             |
@@ -247,6 +260,22 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 
 - **Advantage**: Professional services available, Symfony ecosystem support, stability focus
 - **Disadvantage**: Small community, limited public resources, requires consulting for complex projects
+
+### Three ways an extension ecosystem can hurt you
+
+"Ecosystem size" is usually reported as a single number, but the number hides the risk model, and the risk models here are genuinely different:
+
+- **Entropy (WordPress).** Plugins run at request time, share the same hooks and tables, and are often click-installed with auto-update on. Because core almost never breaks compatibility, nothing forces a cleanup — so plugins accumulate, conflicts surface in production, and abandoned ones are risky both to keep and to remove. The unmatched breadth and the maintenance burden are the same fact seen from two sides.
+- **Curation (Statamic).** A vetted marketplace is a real middle path: fewer, better addons, with someone standing behind them. The cost is that the good ones are frequently paid, and the ecosystem is a fraction of WordPress's size.
+- **Concentration (Pushword, Sulu).** There is no third-party extension market to conflict. Pushword's 24 bundles are versioned, released and tested together, so "does the newsletter package work with this admin version?" is a question CI answers rather than you. The mirror-image cost: if something is missing, you write it — fine when the gaps are small, a real problem when they are not, and with a bus factor that is not a large company.
+
+None of these is the "right" model. Pick the failure mode you would rather manage.
+
+### "So why haven't I heard of Pushword?"
+
+A fair question, and the honest answer is not flattering to our marketing: Pushword was built to run its authors' own client sites, and has been doing that since December 2020 — 800+ tagged releases, 24 bundles, around 2,600 tests in CI. There was never a launch campaign, a funding round, a conference track or a growth team. Features arrived when real sites needed them.
+
+Worth knowing in both directions. It means a much smaller community, fewer tutorials, and nobody but us to call — a real cost, and the main reason to choose one of the other three. It also means "small" here describes _audience_, not age or maturity, and that the roadmap has never been driven by adoption targets or an investor's timeline.
 
 ---
 
@@ -310,12 +339,12 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 
 **Strengths**:
 
-- Massive ecosystem: 60,000+ plugins and themes
+- Massive ecosystem: ~61,000 plugins in the .org directory, plus themes
 - Extremely beginner-friendly with extensive tutorials
 - Runs on any hosting (PHP 7.4+, though 8.3+ recommended)
 - Huge job market and agency support worldwide
 - Extensive documentation, tutorials, and community knowledge
-- Proven at scale (43% of all websites, 61%+ of CMS market)
+- Proven at scale (41.5% of all websites, 64.3% of the CMS market)
 - Gutenberg block editor is mature and powerful
 - REST API core feature (GraphQL via plugins)
 
@@ -358,7 +387,7 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 **Core Pricing**:
 
 - **Solo (Free)**: Single admin, development use, basic features
-- **Pro ($275/site/year + $65/year thereafter)**: Multi-site, collaborators, extended features, REST + GraphQL
+- **Pro ($349/site, plus an optional $99/year for updates and support — price revised May 2026)**: Multi-site, collaborators, extended features, REST + GraphQL. Volume and platform-subscription plans exist for agencies.
 
 **Strengths**:
 
@@ -373,7 +402,7 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 
 **Limitations**:
 
-- Pro features require paid license ($275+/site/year)
+- Pro features require a paid licence ($349/site, +$99/year for updates)
 - Multi-site requires Pro tier
 - Smaller addon ecosystem than WordPress
 - GraphQL only in Pro tier
@@ -547,7 +576,7 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 - Team is invested in Laravel ecosystem
 - Flat-file with commercial support appeals to you
 - Content editing experience is paramount
-- Budget available for Pro license ($275+/site/year)
+- Budget available for a Pro licence ($349/site, +$99/year for updates)
 - Project is content-focused marketing site
 - Performance (30–50% faster than WordPress) is important
 - Multi-language support needed natively
@@ -573,7 +602,7 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 ### Pushword
 
 - **Licensing**: $0 (MIT open-source)
-- **Hosting**: $0-120$–$1,200/year (github.io to shared to managed)
+- **Hosting**: $0–$1,200/year (GitHub Pages / static host, to shared, to managed)
 - **Development**: $5,000–$50,000 (Symfony expertise required)
 - **Maintenance**: Low (fewer plugins to update)
 
@@ -587,7 +616,7 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 
 ### Statamic
 
-- **Licensing**: $0–$1,375/year (Pro $275/site + updates $65/year for 5 sites)
+- **Licensing**: $1,745 up front for 5 sites (Pro $349/site), plus up to $495/year if you keep updates active
 - **Hosting**: $600–$2,400/year
 - **Development**: $5,000–$40,000 (Laravel experience helpful)
 - **Maintenance**: Low (curated addons)
@@ -624,6 +653,25 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 - **Content rearchitecture**: Significant planning needed
 - **Time estimate**: 3–8 weeks
 - **Benefit**: Enterprise features, permissions, scalability
+
+### What it costs to be wrong
+
+Adopting a smaller CMS should be judged on its exit cost, not on a feeling — and exit cost is the dimension where the four differ most:
+
+| | Content lives as | Getting it out |
+| --- | --- | --- |
+| **Pushword** | Markdown + YAML frontmatter in your git; SQLite or MySQL you own | Copy a directory |
+| **Statamic** | Markdown + YAML in your git (flat-file default) | Copy a directory |
+| **WordPress** | Rows in MySQL, plus per-plugin tables and serialised meta | Export and convert; plugin data often needs bespoke work |
+| **Sulu** | Structured PHPCR / database content types | Export and re-model |
+
+For Pushword specifically: templates are Twig, the app is a standard Symfony application, media are ordinary files on disk, and the whole monorepo is MIT and public. If the project stopped tomorrow, you would be maintaining a Symfony bundle set — an ordinary thing for a PHP team to do. That is a far cheaper failure mode than the community-size table implies, and it is the honest counterweight to betting on a small project.
+
+The reasonable way to test any of this is an afternoon with a real page:
+
+```shell
+composer create-project pushword/new pushword @dev
+```
 
 ---
 
@@ -677,6 +725,6 @@ Before choosing, evaluate your project across these dimensions:
 <div class="not-prose p-4 mt-8 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
   <p class="text-sm text-amber-800 dark:text-amber-200">
     <strong>Version</strong><br>
-    Last updated: June 2026 (added Pushword publication hold, versioning and REST API). This comparison reflects platform status as of June 2026. Features and pricing may change; we welcome updates via GitHub issues.
+    Last updated: August 2026. Reflects WordPress 7.0 (April 2026) and its PHP 8.3+ requirement, Statamic's May 2026 price revision, Sulu 3.0 (May 2026), and Pushword's publication hold, versioning and REST API. Features and pricing change often — corrections welcome via GitHub issues. See also our <a href="/blog/astro-vs-pushword" class="underline">Astro vs Pushword</a> comparison.
   </p>
 </div>
