@@ -1,6 +1,6 @@
 # Pushword
 
-A modular PHP **CMS** built on top of **Symfony** to **rapidly** create, manage and maintain **modern, multi-site websites** — Markdown + Twig content, media management and a rich bundle ecosystem.
+A **Symfony CMS** to rapidly create, manage and maintain your websites — from the **admin**, from **Git**, or from your **AI agent**. Markdown + Twig content, multi-site, media management and a rich bundle ecosystem.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)

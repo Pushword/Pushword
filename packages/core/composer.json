@@ -1,7 +1,7 @@
 {
   "name": "pushword/core",
   "type": "symfony-bundle",
-  "description": "A php CMS built on top of Symfony to rapidly create, manage and maintain Modern Website(s).",
+  "description": "A Symfony CMS to rapidly create, manage and maintain your websites — from the admin, from Git, or from your AI agent.",
   "keywords": ["cms", "symfony", "php-cms", "markdown", "twig", "multisite", "content-management", "seo", "pushword"],
   "homepage": "https://pushword.piedweb.com",
   "license": "MIT",
