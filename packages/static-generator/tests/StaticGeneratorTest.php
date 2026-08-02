@@ -1359,6 +1359,43 @@ final class StaticGeneratorTest extends KernelTestCase
         new Filesystem()->remove([$seqDir, $parDir]);
     }
 
+    /**
+     * Workers stamp state entries through their own path (generateSlugs → worker
+     * state file → parent merge), separate from the sequential loop. If they
+     * stamped a wrong or missing epoch, every page would read as stale on the
+     * next incremental run and the "Skipped" branch would never be taken.
+     */
+    #[Group('serial')]
+    public function testIncrementalAfterParallelBuildSkipsUnchangedPages(): void
+    {
+        self::bootKernel();
+
+        $parDir = sys_get_temp_dir().'/pushword-static-par-incr-'.getmypid();
+        $siteConfig = self::getContainer()->get(SiteRegistry::class)->switchSite('localhost.dev')->get();
+        $siteConfig->setCustomProperty('static_dir', $parDir);
+        $siteConfig->setCustomProperty('cache', 'none');
+        $this->cleanupPidFiles();
+
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
+        $tester = new CommandTester($application->find('pw:static'));
+
+        try {
+            $tester->execute(['host' => 'localhost.dev', '--workers' => 2, '--format' => 'text']);
+            self::assertStringContainsString('success', $tester->getDisplay(), 'Parallel build failed: '.$tester->getDisplay());
+
+            $this->cleanupPidFiles();
+            $tester->execute(['host' => 'localhost.dev', '--incremental' => true, '--format' => 'text']);
+
+            $output = $tester->getDisplay();
+            self::assertStringContainsString('success', $output, 'Incremental run failed: '.$output);
+            // Not homepage/pushword: fixtures carrying redirections are always
+            // re-processed to rebuild the redirection map, epoch or not.
+            self::assertStringContainsString('Skipped localhost.dev/kitchen-sink (unchanged)', $output);
+        } finally {
+            new Filesystem()->remove($parDir);
+        }
+    }
+
     #[Group('serial')]
     public function testParallelGenerationShowsWorkerPrefix(): void
     {

@@ -274,6 +274,16 @@ final class PageCacheInvalidatorTest extends TestCase
         $invalidator->postUpdate($page);
     }
 
+    public function testSuppressedPersistDoesNotBump(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev', published: true);
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        $this->renderEpoch->expects($this->never())->method('bump');
+
+        $this->suppressor->suppress(static fn () => $invalidator->postPersist($page));
+    }
+
     public function testSuppressedUpdateDoesNotBump(): void
     {
         $page = $this->makePersistedPage('localhost.dev', published: true);
