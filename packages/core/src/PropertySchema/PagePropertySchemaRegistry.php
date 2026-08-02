@@ -93,15 +93,15 @@ final class PagePropertySchemaRegistry
 
         $undeclared = [];
         foreach (array_keys($page->customProperties) as $key) {
-            if (isset($schemas[(string) $key])) {
+            $key = (string) $key;
+            if (isset($schemas[$key])) {
+                continue;
+            }
+            if ($page->isManagedProperty($key)) {
                 continue;
             }
 
-            if ($page->isManagedProperty((string) $key)) {
-                continue;
-            }
-
-            $undeclared[] = (string) $key;
+            $undeclared[] = $key;
         }
 
         $missingRequired = [];

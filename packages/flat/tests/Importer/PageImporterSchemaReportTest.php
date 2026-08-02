@@ -24,6 +24,7 @@ final class PageImporterSchemaReportTest extends KernelTestCase
         foreach ($this->createdFiles as $createdFile) {
             @unlink($createdFile);
         }
+
         parent::tearDown();
     }
 
