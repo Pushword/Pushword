@@ -16,7 +16,23 @@
   "suggest": {
     "ext-zstd": "For zstd compression support",
     "brotli": "System binary for brotli compression (apt install brotli)",
-    "gzip": "System binary for gzip compression"
+    "gzip": "System binary for gzip compression",
+    "pushword/admin": "Manage pages, media and users from an EasyAdmin-based back-office.",
+    "pushword/admin-block-editor": "Rich block editor (EditorJS) for the admin.",
+    "pushword/advanced-main-image": "Choose the main image format per page, from hidden to full hero.",
+    "pushword/api": "Token-authenticated REST API mirroring the admin, OpenAPI-described.",
+    "pushword/conversation": "Add comments, a contact form or any user input to your website.",
+    "pushword/docs": "Pushword documentation, readable offline from vendor/.",
+    "pushword/flat": "Turn Pushword into a flat-file CMS: content as Markdown in Git.",
+    "pushword/newsletter": "Audiences, segmented campaigns and criteria-driven automations.",
+    "pushword/page-scanner": "Find dead links, 404s, redirects and TODO reminders.",
+    "pushword/page-update-notifier": "Get an email when a page is created or edited.",
+    "pushword/quiz": "Interactive client-side quizzes (QCM) and personality tests.",
+    "pushword/repurpose": "Turn a page into ready-to-post social carousels (PNG/PDF).",
+    "pushword/search": "SQLite-native full-text search via Loupe, zero infrastructure.",
+    "pushword/snippet": "Reusable content fragments and dev-registered Twig components.",
+    "pushword/template-editor": "Edit Twig view files online from the admin.",
+    "pushword/version": "Keep a version history of your pages and compare revisions."
   },
   "extra": {
     "branch-alias": {
