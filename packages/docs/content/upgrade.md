@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc828](/upgrade/rc828) | `core` `installer` `new` | the first install is repaired: no destructive installer, a super admin, starter content |
 | [rc827](/upgrade/rc827) | `conversation` `core` `page-scanner` `repurpose` `snippet` | four more entities expose their columns as properties |
 | [rc825](/upgrade/rc825) | `core` | page exposes its columns as properties, with no getter/setter left |
 | [rc823](/upgrade/rc823) | `newsletter` | content triggers merged into automations, newsletter entities expose properties — run `doctrine:schema:update --force` |
