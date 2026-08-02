@@ -13,22 +13,41 @@ use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Newsletter\Repository\AutomationRepository;
 use Pushword\Newsletter\Segment\SegmentCriteria;
 use Pushword\Newsletter\Segment\SegmentException;
+use Pushword\Newsletter\Trigger\Source\ContactTriggerSource;
+use Pushword\Newsletter\Trigger\TriggerSource;
+use Pushword\Newsletter\Validator\ValidTriggerWhen;
 use Stringable;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
- * A criteria-driven drip. Every tick, contacts matching {@see self::$enrollWhen}
- * and registered after {@see self::$enrollFrom} are enrolled and then receive the
- * ordered steps. {@see self::$stopWhen} is re-checked before each step, so a
- * contact whose situation changed stops mid-sequence.
+ * Something happens, and a sequence of mails follows.
  *
- * "Two mails after subscription" is an empty `enrollWhen` (every subscribed
- * contact) with two steps.
+ * What counts as "something happens" is a {@see TriggerSource}, named in
+ * {@see self::$source}: contacts and pages ship with the bundle, a site adds
+ * orders or bookings by tagging a service. {@see self::$triggerWhen} narrows it,
+ * in whichever vocabulary that source speaks — so one screen, one grammar and
+ * one set of steps cover "two mails after subscription" and "announce every
+ * article the day after it goes out".
+ *
+ * The source also decides how each occurrence is delivered, per occurrence:
+ *
+ * - about one person — a new contact, a customer who ordered — and the steps are
+ *   dripped at them, an {@see Enrollment} holding their place and
+ *   {@see self::$stopWhen} re-checked before each one;
+ * - about the site — a page was published — and each step becomes an ordinary
+ *   scheduled {@see Campaign} broadcast to {@see self::$recipientWhen}, which is
+ *   read at send time and so can name a state the mail is a reaction to: every
+ *   subscriber who has not been seen in a month.
+ *
+ * A triggered mail is therefore paced, resumable and reportable exactly like a
+ * hand-written one, and can be read, edited or cancelled in the admin during the
+ * delay before it.
  */
 #[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: AutomationRepository::class)]
 #[ORM\Table(name: 'newsletter_automation')]
+#[ValidTriggerWhen]
 class Automation implements IdInterface, Stringable
 {
     use IdTrait;
@@ -37,53 +56,96 @@ class Automation implements IdInterface, Stringable
     #[Assert\NotNull]
     #[ORM\ManyToOne(targetEntity: Audience::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
-    private ?Audience $audience = null;
+    public ?Audience $audience = null;
 
     #[Assert\NotBlank]
     #[ORM\Column(type: Types::STRING, length: 255)]
-    private string $name = '';
+    public string $name = '';
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
-    private bool $enabled = true;
+    public bool $enabled = true;
 
     /**
-     * Who gets enrolled; an empty list means every subscribed contact of the
-     * audience.
+     * The {@see TriggerSource} this watches. A name and not an enum: the point of
+     * the registry is that a bundle adds one without this package knowing.
+     */
+    #[Assert\NotBlank]
+    #[ORM\Column(type: Types::STRING, length: 64, options: ['default' => ContactTriggerSource::NAME])]
+    public string $source = ContactTriggerSource::NAME {
+        set(string $value) => trim($value);
+    }
+
+    /**
+     * Which of the source's subjects deserve the sequence, in that source's own
+     * vocabulary; an empty list means every one of them.
      *
      * @var array<mixed>
      */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
-    private array $enrollWhen = [];
+    public array $triggerWhen = [];
 
     /**
-     * Re-checked before each step: a match stops the enrollment. Empty means the
-     * sequence always runs to its end.
+     * The Pushword hosts to watch, for the sources that are scoped to one. Not
+     * derived from the audience's own host: one audience commonly spans several
+     * locale hosts, and which of them are worth mailing about is an editorial
+     * choice. Empty watches every one.
+     *
+     * @var string[]
+     */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
+    public array $hosts = [] {
+        /** @param string[] $value */
+        set(array $value) => array_values(array_unique(
+            array_filter(array_map(trim(...), $value), static fn (string $host): bool => '' !== $host)
+        ));
+    }
+
+    /**
+     * Who receives an occurrence that is about the site rather than about one
+     * person, in the ordinary segment language; empty means the whole subscribed
+     * audience. Ignored when the occurrence names its own contact — a drip is
+     * addressed to the person it was triggered by, and a second filter over them
+     * would only be a way to silently drop them.
      *
      * @var array<mixed>
      */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
-    private array $stopWhen = [];
+    public array $recipientWhen = [];
 
     /**
-     * Contacts registered before this date are never enrolled. Set at creation
-     * so switching on an automation with a wide `enrollWhen` cannot mail an
-     * entire existing base at once. A column rather than a criterion, because
-     * this must not be possible to forget.
+     * Re-checked before each step of a drip: a match stops the enrollment. Empty
+     * means the sequence always runs to its end.
+     *
+     * A broadcast has no equivalent and needs none: its recipients are resolved
+     * when each step's campaign is armed, so someone who stopped matching
+     * `recipientWhen` between step one and step two is simply not in step two.
+     *
+     * @var array<mixed>
+     */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
+    public array $stopWhen = [];
+
+    /**
+     * Nothing that occurred before this date ever triggers anything. Set at
+     * creation so switching on an automation with a wide rule cannot mail an
+     * entire existing base, or announce an entire back catalogue, at once. A
+     * column rather than a criterion, because this must not be possible to
+     * forget.
      */
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private DateTimeImmutable $enrollFrom;
+    public DateTimeImmutable $activeFrom;
 
     /** @var Collection<int, AutomationStep> */
     #[ORM\OneToMany(targetEntity: AutomationStep::class, mappedBy: 'automation', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
-    private Collection $steps;
+    public private(set) Collection $steps;
 
     /** @var array<string, string> the admin's raw JSON, pending validation */
     private array $criteriaJson = [];
 
     public function __construct()
     {
-        $this->enrollFrom = new DateTimeImmutable();
+        $this->activeFrom = new DateTimeImmutable();
         $this->steps = new ArrayCollection();
         $this->initTimestampableProperties();
     }
@@ -93,82 +155,34 @@ class Automation implements IdInterface, Stringable
         return '' !== $this->name ? $this->name : 'Automation #'.($this->id ?? '?');
     }
 
-    public function getAudience(): ?Audience
-    {
-        return $this->audience;
-    }
-
-    public function setAudience(?Audience $audience): self
-    {
-        $this->audience = $audience;
-
-        return $this;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function setName(string $name): self
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
-    public function isEnabled(): bool
-    {
-        return $this->enabled;
-    }
-
-    public function setEnabled(bool $enabled): self
-    {
-        $this->enabled = $enabled;
-
-        return $this;
-    }
-
-    /** @return array<mixed> */
-    public function getEnrollWhen(): array
-    {
-        return $this->enrollWhen;
-    }
-
-    /** @param array<mixed> $enrollWhen */
-    public function setEnrollWhen(array $enrollWhen): self
-    {
-        $this->enrollWhen = $enrollWhen;
-
-        return $this;
-    }
-
-    /** @return array<mixed> */
-    public function getStopWhen(): array
-    {
-        return $this->stopWhen;
-    }
-
-    /** @param array<mixed> $stopWhen */
-    public function setStopWhen(array $stopWhen): self
-    {
-        $this->stopWhen = $stopWhen;
-
-        return $this;
-    }
-
     /**
-     * The admin's editing surface for both criteria lists. Parsing happens
-     * during validation so a malformed expression is a form error, not a 500.
+     * The admin's editing surface for the criteria lists. Parsing happens during
+     * validation so a malformed expression is a form error, not a 500.
+     *
+     * `triggerWhen` is the odd one out: which vocabulary it is written in depends
+     * on the source, which only the registry knows, so {@see ValidTriggerWhen}
+     * parses it and this holds the raw text meanwhile.
      */
-    public function getEnrollWhenAsJson(): string
+    public function getTriggerWhenAsJson(): string
     {
-        return $this->criteriaJson['enrollWhen'] ?? SegmentCriteria::toJson($this->enrollWhen);
+        return $this->criteriaJson['triggerWhen'] ?? SegmentCriteria::toJson($this->triggerWhen);
     }
 
-    public function setEnrollWhenAsJson(?string $json): self
+    public function setTriggerWhenAsJson(?string $json): self
     {
-        $this->criteriaJson['enrollWhen'] = (string) $json;
+        $this->criteriaJson['triggerWhen'] = (string) $json;
+
+        return $this;
+    }
+
+    public function getRecipientWhenAsJson(): string
+    {
+        return $this->criteriaJson['recipientWhen'] ?? SegmentCriteria::toJson($this->recipientWhen);
+    }
+
+    public function setRecipientWhenAsJson(?string $json): self
+    {
+        $this->criteriaJson['recipientWhen'] = (string) $json;
 
         return $this;
     }
@@ -185,24 +199,41 @@ class Automation implements IdInterface, Stringable
         return $this;
     }
 
+    /** The raw text a validator has yet to parse, or null once it has. */
+    public function pendingCriteriaJson(string $key): ?string
+    {
+        return $this->criteriaJson[$key] ?? null;
+    }
+
+    public function criteriaJsonParsed(string $key): void
+    {
+        unset($this->criteriaJson[$key]);
+    }
+
+    /**
+     * `recipientWhen` and `stopWhen` are contact criteria whatever the source is,
+     * so they parse here. {@see ValidTriggerWhen} takes the third.
+     */
     #[Assert\Callback]
     public function validateCriteria(ExecutionContextInterface $executionContext): void
     {
-        foreach (['enrollWhen', 'stopWhen'] as $key) {
-            if (! isset($this->criteriaJson[$key])) {
+        foreach (['recipientWhen', 'stopWhen'] as $key) {
+            $json = $this->pendingCriteriaJson($key);
+
+            if (null === $json) {
                 continue;
             }
 
             try {
-                $parsed = SegmentCriteria::fromJson($this->criteriaJson[$key]);
+                $parsed = SegmentCriteria::fromJson($json);
 
-                if ('enrollWhen' === $key) {
-                    $this->enrollWhen = $parsed;
+                if ('recipientWhen' === $key) {
+                    $this->recipientWhen = $parsed;
                 } else {
                     $this->stopWhen = $parsed;
                 }
 
-                unset($this->criteriaJson[$key]);
+                $this->criteriaJsonParsed($key);
             } catch (SegmentException $segmentException) {
                 $executionContext->buildViolation($segmentException->getMessage())
                     ->atPath($key.'AsJson')
@@ -211,29 +242,11 @@ class Automation implements IdInterface, Stringable
         }
     }
 
-    public function getEnrollFrom(): DateTimeImmutable
-    {
-        return $this->enrollFrom;
-    }
-
-    public function setEnrollFrom(DateTimeImmutable $enrollFrom): self
-    {
-        $this->enrollFrom = $enrollFrom;
-
-        return $this;
-    }
-
-    /** @return Collection<int, AutomationStep> */
-    public function getSteps(): Collection
-    {
-        return $this->steps;
-    }
-
     /** @return list<AutomationStep> */
     public function getOrderedSteps(): array
     {
         $steps = $this->steps->toArray();
-        usort($steps, static fn (AutomationStep $a, AutomationStep $b): int => $a->getPosition() <=> $b->getPosition());
+        usort($steps, static fn (AutomationStep $a, AutomationStep $b): int => $a->position <=> $b->position);
 
         return $steps;
     }
@@ -248,11 +261,32 @@ class Automation implements IdInterface, Stringable
         return $this->steps->count();
     }
 
+    /**
+     * How long after the occurrence the step at `$position` goes out. A step's
+     * own delay is counted from the one before it, so a broadcast — which
+     * schedules every step up-front instead of advancing one at a time — has to
+     * add them up.
+     */
+    public function delayToStep(int $position): int
+    {
+        $minutes = 0;
+
+        foreach ($this->getOrderedSteps() as $index => $step) {
+            if ($index > $position) {
+                break;
+            }
+
+            $minutes += $step->delayMinutes;
+        }
+
+        return $minutes;
+    }
+
     public function addStep(AutomationStep $step): self
     {
         if (! $this->steps->contains($step)) {
             $this->steps->add($step);
-            $step->setAutomation($this);
+            $step->automation = $this;
         }
 
         return $this;
@@ -260,8 +294,8 @@ class Automation implements IdInterface, Stringable
 
     public function removeStep(AutomationStep $step): self
     {
-        if ($this->steps->removeElement($step) && $step->getAutomation() === $this) {
-            $step->setAutomation(null);
+        if ($this->steps->removeElement($step) && $step->automation === $this) {
+            $step->automation = null;
         }
 
         return $this;

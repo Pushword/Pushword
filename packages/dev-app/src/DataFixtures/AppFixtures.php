@@ -11,6 +11,9 @@ use Pushword\Core\Entity\EntityClassRegistry;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Repurpose\Entity\SocialPost;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Yaml\Yaml;
@@ -288,6 +291,55 @@ class AppFixtures extends Fixture
         }
 
         $this->loadRepurposeDemo($manager);
+        $this->loadNewsletterDemo($manager);
+    }
+
+    /**
+     * Two lists on two hosts, and one address on both of them — the case the
+     * admin has to make readable: a contact row is scoped to one audience, so a
+     * person on two lists is two rows with two consent records.
+     */
+    private function loadNewsletterDemo(ObjectManager $manager): void
+    {
+        if (! class_exists(Audience::class)) {
+            return;
+        }
+
+        foreach ([
+            ['news-localhost', 'Localhost news', 'localhost.dev', [
+                ['demo@example.tld', 'Demo', ContactStatus::Subscribed],
+                ['gone@example.tld', 'Gone', ContactStatus::Unsubscribed],
+            ]],
+            ['news-block-editor', 'Block editor news', 'admin-block-editor.test', [
+                ['demo@example.tld', 'Demo', ContactStatus::Pending],
+            ]],
+        ] as [$slug, $name, $host, $contacts]) {
+            $audience = new Audience();
+            $audience->slug = $slug;
+            $audience->name = $name;
+            $audience->mainHost = $host;
+            $audience->fromName = $name;
+            $audience->fromEmail = 'newsletter@'.$host;
+
+            $manager->persist($audience);
+
+            foreach ($contacts as [$email, $contactName, $status]) {
+                $contact = new Contact($audience, $email);
+                $contact->name = $contactName;
+                $contact->locale = 'en';
+                $contact->source = 'homepage';
+                $contact->optinHost = $host;
+                $contact->optIn(ContactStatus::Pending === $status);
+
+                if (ContactStatus::Unsubscribed === $status) {
+                    $contact->unsubscribe();
+                }
+
+                $manager->persist($contact);
+            }
+        }
+
+        $manager->flush();
     }
 
     /**

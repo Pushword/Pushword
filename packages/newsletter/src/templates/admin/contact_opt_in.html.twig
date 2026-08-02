@@ -1,0 +1,41 @@
+{% extends '@EasyAdmin/layout.html.twig' %}
+
+{% block content_title %}{{ 'newsletter.contact.optIn.title'|trans }}{% endblock %}
+
+{% block main %}
+    <p class="text-muted">{{ 'newsletter.contact.optIn.help'|trans }}</p>
+
+    <form method="post" style="max-width:640px">
+        <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
+
+        <div class="form-group mb-3">
+            <label class="form-label" for="newsletter-opt-in-audience">{{ 'newsletter.contact.field.audience'|trans }}</label>
+            <select id="newsletter-opt-in-audience" name="audience" class="form-select" required>
+                {% for audience in audiences %}
+                    <option value="{{ audience.id }}">{{ audience.name }} — {{ audience.mainHost }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group mb-3">
+            <label class="form-label" for="newsletter-opt-in-email">{{ 'newsletter.contact.field.email'|trans }}</label>
+            <input type="email" id="newsletter-opt-in-email" name="email" value="{{ email }}" class="form-control" required>
+        </div>
+
+        <div class="form-group mb-3">
+            <label class="form-label" for="newsletter-opt-in-name">{{ 'newsletter.contact.field.name'|trans }}</label>
+            <input type="text" id="newsletter-opt-in-name" name="name" class="form-control">
+        </div>
+
+        <div class="form-check mb-3">
+            <input type="checkbox" id="newsletter-opt-in-consented" name="alreadyConsented" value="1" class="form-check-input">
+            <label class="form-check-label" for="newsletter-opt-in-consented">{{ 'newsletter.contact.optIn.alreadyConsented'|trans }}</label>
+            <small class="form-text text-muted d-block">{{ 'newsletter.contact.optIn.alreadyConsented.help'|trans }}</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="fa fa-user-plus"></i> {{ 'newsletter.contact.action.optIn'|trans }}
+        </button>
+        <a href="{{ back_url }}" class="btn btn-link">{{ 'newsletter.contact.optIn.cancel'|trans }}</a>
+    </form>
+{% endblock %}

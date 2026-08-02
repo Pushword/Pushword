@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Tests\Utm;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Newsletter\Service\AutomationRunner;
 use Pushword\Newsletter\Service\CampaignSender;
@@ -21,11 +22,11 @@ final class UtmDeliveryTest extends AbstractNewsletterTestCase
     public function testASentCampaignCarriesItsDatedName(): void
     {
         $audience = $this->createAudience();
-        $audience->setUtmSource('newsletter');
+        $audience->utmSource = 'newsletter';
         $this->createContact($audience, 'reader@example.tld');
 
         $campaign = $this->createCampaign($audience, subject: 'Janvier');
-        $campaign->setBodyMarkdown('[Read](/article)');
+        $campaign->bodyMarkdown = '[Read](/article)';
 
         $this->entityManager->flush();
 
@@ -42,15 +43,15 @@ final class UtmDeliveryTest extends AbstractNewsletterTestCase
     public function testAnAutomationStepCarriesItsPosition(): void
     {
         $audience = $this->createAudience();
-        $audience->setUtmSource('newsletter');
+        $audience->utmSource = 'newsletter';
         $this->createContact($audience, 'reader@example.tld');
 
         $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
-        $automation->getOrderedSteps()[0]->setBodyMarkdown('[Read](/article)');
+        $automation->getOrderedSteps()[0]->bodyMarkdown = '[Read](/article)';
         $this->entityManager->flush();
 
         $runner = self::getContainer()->get(AutomationRunner::class);
-        $runner->enroll($automation);
+        $runner->triggerOne($automation, new DateTimeImmutable());
         $runner->advance(10);
 
         $html = $this->lastHtml();
@@ -65,7 +66,7 @@ final class UtmDeliveryTest extends AbstractNewsletterTestCase
         $this->createContact($audience, 'reader@example.tld');
 
         $campaign = $this->createCampaign($audience);
-        $campaign->setBodyMarkdown('[Read](/article)');
+        $campaign->bodyMarkdown = '[Read](/article)';
 
         $this->entityManager->flush();
 

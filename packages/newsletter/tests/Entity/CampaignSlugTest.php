@@ -14,18 +14,18 @@ final class CampaignSlugTest extends AbstractNewsletterTestCase
     {
         $campaign = $this->createCampaign($this->createAudience(), subject: 'Nos nouveautés de janvier');
 
-        self::assertSame('nos-nouveautes-de-janvier', $campaign->getSlug());
+        self::assertSame('nos-nouveautes-de-janvier', $campaign->slug);
     }
 
     /** Renaming a campaign halfway through its reporting is worse than an ugly name. */
     public function testItDoesNotFollowALaterSubjectEdit(): void
     {
         $campaign = $this->createCampaign($this->createAudience(), subject: 'Janvier');
-        $campaign->setSubject('Février');
+        $campaign->subject = 'Février';
 
         $this->entityManager->flush();
 
-        self::assertSame('janvier', $campaign->getSlug());
+        self::assertSame('janvier', $campaign->slug);
     }
 
     public function testArmingStampsTheSendDate(): void
@@ -36,7 +36,7 @@ final class CampaignSlugTest extends AbstractNewsletterTestCase
 
         self::getContainer()->get(CampaignSender::class)->arm($campaign);
 
-        self::assertSame(date('ymd').'-janvier', $campaign->getSlug());
+        self::assertSame(date('ymd').'-janvier', $campaign->slug);
     }
 
     /** Re-arming re-dates the campaign; it does not stack another prefix. */
@@ -52,7 +52,7 @@ final class CampaignSlugTest extends AbstractNewsletterTestCase
         $campaign->revertToDraft();
         $sender->arm($campaign);
 
-        self::assertSame(date('ymd').'-janvier', $campaign->getSlug());
+        self::assertSame(date('ymd').'-janvier', $campaign->slug);
     }
 
     /**
@@ -65,24 +65,24 @@ final class CampaignSlugTest extends AbstractNewsletterTestCase
         $this->createContact($audience, 'reader@example.tld');
         $campaign = $this->createCampaign($audience, subject: str_repeat('nouveauté ', 25));
 
-        self::assertLessThanOrEqual(120, \strlen($campaign->getSlug()));
+        self::assertLessThanOrEqual(120, \strlen($campaign->slug));
 
         self::getContainer()->get(CampaignSender::class)->arm($campaign);
 
-        self::assertLessThanOrEqual(128, \strlen($campaign->getSlug()));
-        self::assertStringStartsWith(date('ymd').'-nouveaute', $campaign->getSlug());
+        self::assertLessThanOrEqual(128, \strlen($campaign->slug));
+        self::assertStringStartsWith(date('ymd').'-nouveaute', $campaign->slug);
     }
 
     public function testAnExplicitSlugIsNormalised(): void
     {
-        $campaign = new Campaign()
-            ->setAudience($this->createAudience())
-            ->setSubject('Hello')
-            ->setSlug('Été 2026 Promo');
+        $campaign = new Campaign();
+        $campaign->audience = $this->createAudience();
+        $campaign->subject = 'Hello';
+        $campaign->slug = 'Été 2026 Promo';
 
         $this->entityManager->persist($campaign);
         $this->entityManager->flush();
 
-        self::assertSame('ete-2026-promo', $campaign->getSlug());
+        self::assertSame('ete-2026-promo', $campaign->slug);
     }
 }

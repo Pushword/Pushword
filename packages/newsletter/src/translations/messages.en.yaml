@@ -28,23 +28,30 @@ newsletter:
       plural: Automations
       singular: Automation
     action:
-      preview: Preview enrollment
+      preview: Preview trigger
     fieldset:
-      rules: Rules
+      recipients: Recipients
       steps: Steps
+      trigger: Trigger
     field:
+      activeFrom: Active from
+      activeFrom.help: Nothing that happened before this date ever triggers anything. It stops a new automation from mailing an entire existing base, or announcing an entire back catalogue, at once.
       audience: Audience
       enabled: Enabled
-      enabled.help: Disabling pauses the sequence; enrollments keep their place and resume.
-      enrollFrom: Enroll from
-      enrollFrom.help: Contacts registered before this date are never enrolled. It stops a new automation from mailing an entire existing base at once.
-      enrollWhen: Enroll when
-      enrollWhen.help: 'JSON list of conditions, all of which must hold — who gets enrolled, not when. Empty enrolls every subscribed contact. Example: [{"field":"tag","op":"has","value":"AmTrek"}]; for an OR, {"any":[…]}, which may nest.'
+      enabled.help: Disabling pauses the sequence; enrollments keep their place and resume, and nothing new is picked up.
+      hosts: Hosts
+      hosts.help: The sites to watch, for the sources scoped to one; empty watches every one. An audience often spans several locale hosts, so pick the ones worth a mail.
       name: Name
+      recipientWhen: Recipients
+      recipientWhen.help: 'Who receives the mails an occurrence broadcasts, in the usual contact criteria. Empty targets the whole subscribed audience. Ignored when the occurrence names its own contact — a drip is addressed to whoever triggered it. Example: [{"field":"prop.lastSeenAt","op":"olderThan","value":"30d"}]'
+      source: Trigger on
+      source.help: What this watches. "contact" starts a sequence at whoever comes to match; "page" announces a publication to the audience. Other sources come from the bundles you install.
       stepCount: Steps
       steps: Steps
       stopWhen: Stop when
-      stopWhen.help: Re-checked before each step. A match ends the sequence for that contact.
+      stopWhen.help: Re-checked before each step of a drip. A match ends the sequence for that contact.
+      triggerWhen: Trigger when
+      triggerWhen.help: 'JSON list of conditions, all of which must hold — which subjects, not when. Empty matches every one of them. The vocabulary is the source''s: a contact source reads tag, locale, createdAt, confirmedAt, prop.<key>; a page source slug, template, tag, parent, ancestor, prop.<key>, and takes a pages_list search too (ancestor:blog AND tag:featured). For an OR, {"any":[…]}, which may nest.'
   campaign:
     label:
       plural: Newsletters
@@ -104,11 +111,18 @@ newsletter:
     label:
       plural: Contacts
       singular: Contact
+    action:
+      confirm: Confirm by hand
+      optIn: Opt in a contact
+      optInAnother: Add to another list
+      resubscribe: Put back on the list
+      unsubscribe: Unsubscribe
     fieldset:
       consent: Consent
       identity: Identity
     field:
       audience: Audience
+      audience.help: Changing it moves this subscription to another list. To add one, use "Add to another list".
       bouncedAt: Bounced at
       confirmedAt: Confirmed at
       customProperties: Custom properties
@@ -123,34 +137,25 @@ newsletter:
       status: Status
       tags: Tags
       unsubscribedAt: Unsubscribed at
-  contentTrigger:
-    label:
-      plural: Content triggers
-      singular: Content trigger
-    action:
-      preview: Preview pages
-    fieldset:
-      mail: Mail
-      rules: Rules
-    field:
-      audience: Audience
-      body: Body
-      body.help: 'Markdown, with the same placeholders as the subject plus {{ page.mainImage }} for the illustration. Links are made absolute and tagged before sending, as in any newsletter.'
-      delay: Delay (minutes)
-      delay.help: Wait this long after the page was published. The day after is 1440; 0 sends on the next tick.
-      enabled: Enabled
-      enabled.help: Disabling stops new pages from being picked up. Campaigns already created are untouched.
-      hosts: Hosts
-      hosts.help: The sites to watch; empty watches every one. An audience often spans several locale hosts, so pick the ones worth a mail.
-      name: Name
-      pageWhen: Trigger on pages
-      pageWhen.help: 'JSON list of conditions, all of which must hold — which pages, not when. Empty matches every published page of those hosts. Fields: slug, template, tag, parent, ancestor (the slug of a page they sit under, at any depth), prop.<key>. Example: [{"field":"ancestor","op":"=","value":"blog"}]; for an OR, {"any":[…]}, which may nest. A pages_list search works too: ancestor:blog AND tag:featured.'
-      segment: Segment
-      segment.help: 'Who receives the mail, in the usual contact criteria. Empty targets the whole subscribed audience.'
-      subject: Subject
-      subject.help: 'May quote {{ page.h1 }}, {{ page.excerpt }} and {{ page.url }}. For example: New article: {{ page.h1 }}'
-      triggerFrom: Trigger from
-      triggerFrom.help: Pages published before this date never trigger anything. It stops a new trigger from mailing an entire back catalogue at once.
+    flash:
+      confirmationSent: Opt-in opened — a confirmation mail is on its way.
+      confirmed: Confirmed by hand.
+      invalidOptIn: Pick a list and a valid address.
+      invalidToken: Invalid token, please retry.
+      noAudience: Create an audience first.
+      notFound: Contact not found.
+      resubscribed: Back on the list.
+      subscribed: Subscribed.
+      unsubscribed: Unsubscribed.
+    optIn:
+      alreadyConsented: They already consented
+      alreadyConsented.help: Skips the confirmation mail and subscribes right away. Only for consent you can produce — a paper form, a written reply.
+      cancel: Cancel
+      help: One list at a time, as the public form does. An address already on another list gets a second subscription, with its own consent record.
+      title: Opt in a contact
+    subscriptions:
+      help: The same address on every list of this install. The one being edited is highlighted.
+      title: Subscriptions
   email:
     unsubscribe: Unsubscribe
   form:

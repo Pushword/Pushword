@@ -24,37 +24,22 @@ class CampaignRecipient implements IdInterface
     use IdTrait;
 
     #[ORM\Column(type: Types::STRING, length: 20, enumType: RecipientState::class)]
-    private RecipientState $state = RecipientState::Pending;
+    public private(set) RecipientState $state = RecipientState::Pending;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?DateTimeImmutable $sentAt = null;
+    public private(set) ?DateTimeImmutable $sentAt = null;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
-    private ?string $error = null;
+    public private(set) ?string $error = null;
 
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Campaign::class)]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-        private Campaign $campaign,
+        public private(set) Campaign $campaign,
         #[ORM\ManyToOne(targetEntity: Contact::class)]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-        private Contact $contact,
+        public private(set) Contact $contact,
     ) {
-    }
-
-    public function getCampaign(): Campaign
-    {
-        return $this->campaign;
-    }
-
-    public function getContact(): Contact
-    {
-        return $this->contact;
-    }
-
-    public function getState(): RecipientState
-    {
-        return $this->state;
     }
 
     public function isPending(): bool
@@ -92,15 +77,5 @@ class CampaignRecipient implements IdInterface
         $this->state = RecipientState::Bounced;
 
         return $this;
-    }
-
-    public function getSentAt(): ?DateTimeImmutable
-    {
-        return $this->sentAt;
-    }
-
-    public function getError(): ?string
-    {
-        return $this->error;
     }
 }

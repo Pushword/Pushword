@@ -14,8 +14,9 @@ use Pushword\Newsletter\Segment\SegmentCriteria;
 use Pushword\Newsletter\Segment\SegmentException;
 
 /**
- * The page language: which published pages a {@see \Pushword\Newsletter\Entity\ContentTrigger}
- * reacts to. Same shape as {@see SegmentCriteria} — a list of conditions, all of
+ * The page language: which published pages an automation on the
+ * {@see \Pushword\Newsletter\Trigger\Source\PageTriggerSource} reacts to. Same
+ * shape as {@see SegmentCriteria} — a list of conditions, all of
  * which must hold, or a `{"any": [...]}` group where a single one is enough, and
  * a child of either may be a group of its own — so there is one thing to learn
  * for both sides of a trigger:

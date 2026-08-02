@@ -18,7 +18,7 @@ name: Extensions
 - [Flat](/extension/flat)
   Transform Pushword in a FlatFile CMS.
 - [Newsletter](/extension/newsletter)
-  Audiences, contacts with custom properties, segmented campaigns, criteria-driven mailing automations and content triggers that mail the audience when you publish — all driven by one cron tick. Double opt-in, one-click unsubscribe, `utm_*` link attribution, no click tracking.
+  Audiences, contacts with custom properties, segmented campaigns, and automations that start a sequence of mails when something happens — a contact comes to match a rule, an article is published, or whatever trigger source your own bundle registers. All driven by one cron tick. Double opt-in, one-click unsubscribe, `utm_*` link attribution, no click tracking.
 - [Page Scanner](/extension/page-scanner)
   Find dead links, 404, 301, TODO reminders and more (command line or admin).
 - [Page Update Notifier](/extension/page-update-notifier)
@@ -47,3 +47,4 @@ Add your own extension #[editing this file on github](https://github.com/Pushwor
 - **Events:** See constants in `Pushword\Core\Event\PushwordEvents`. Usage examples: [Admin Menu](/extension/admin-menu), [Pages List Search](/pages-list).
 - **Entity filters:** Implement `Pushword\Core\Component\EntityFilter\Filter\FilterInterface`, auto-tagged as `pushword.entity_filter`.
 - **Markdown extensions:** Extend the CommonMark environment via `PushwordExtension`.
+- **Newsletter trigger sources:** Implement `Pushword\Newsletter\Trigger\TriggerSource` and tag it `pushword.newsletter.trigger_source` to start a mail sequence from anything your app watches — see [Newsletter](/extension/newsletter#custom-trigger-sources).

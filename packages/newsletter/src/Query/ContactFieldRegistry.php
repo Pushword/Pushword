@@ -14,8 +14,10 @@ use Pushword\Core\Query\Field\Strategy\JsonPropertyStrategy;
  *
  * The counterpart of {@see \Pushword\Core\Query\PageFieldRegistry}, behind the
  * same interface: a segment and a page rule are two vocabularies over one
- * compiler, so neither can drift into its own semantics for tags or for custom
- * properties — those two strategies are literally the same objects.
+ * compiler, so neither can drift into its own semantics for tags — that strategy
+ * is literally the same object. A custom property is read through the same one
+ * too, wrapped by {@see ContactPropertyStrategy} to add the duration operators:
+ * what `=` means on a property is shared, what `olderThan` means is a segment's.
  *
  * Built per resolution, because a duration only means something against an
  * instant, and every condition of one rule must read the same one.
@@ -32,7 +34,7 @@ final class ContactFieldRegistry implements FieldRegistry
     public function strategy(string $field): ?FieldStrategy
     {
         if (str_starts_with($field, JsonPropertyStrategy::PREFIX)) {
-            return JsonPropertyStrategy::PREFIX === $field ? null : new JsonPropertyStrategy('customProperties');
+            return JsonPropertyStrategy::PREFIX === $field ? null : new ContactPropertyStrategy('customProperties', $this->now);
         }
 
         return $this->strategies()[$field] ?? null;

@@ -12,7 +12,10 @@ final class UtmTagTest extends TestCase
 {
     public function testACampaignIsNamedByItsSlug(): void
     {
-        $tag = UtmTag::forCampaign(new Campaign()->setSubject('Nos nouveautés'));
+        $campaign = new Campaign();
+        $campaign->subject = 'Nos nouveautés';
+
+        $tag = UtmTag::forCampaign($campaign);
 
         self::assertSame('nos-nouveautes', $tag->campaign);
         self::assertNull($tag->content, 'a campaign is one mail, it has no variant');
@@ -21,8 +24,11 @@ final class UtmTagTest extends TestCase
     /** Steps are stored 0-based but read as "step 1, step 2" by whoever opens the report. */
     public function testAStepIsNumberedFromOneUnderItsAutomationName(): void
     {
-        $automation = new Automation()->setName('Bienvenue AmTrek');
-        $step = new AutomationStep()->setPosition(1);
+        $automation = new Automation();
+        $automation->name = 'Bienvenue AmTrek';
+
+        $step = new AutomationStep();
+        $step->position = 1;
 
         $tag = UtmTag::forStep($automation, $step);
 

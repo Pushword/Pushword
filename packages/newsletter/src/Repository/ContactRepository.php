@@ -29,6 +29,27 @@ class ContactRepository extends ServiceEntityRepository
     }
 
     /**
+     * Every subscription held by one address, on every audience and whatever its
+     * status. The admin edits one of them at a time and has to see the others:
+     * a row moved to another audience instead of added is a subscription lost.
+     *
+     * Unlike {@see findSubscribedSiblings()}, nothing is hidden here — the admin
+     * is not a public page, and an unsubscribe is exactly what one needs to see.
+     *
+     * @return list<Contact>
+     */
+    public function findAllByEmail(string $email): array
+    {
+        return $this->createQueryBuilder('c')
+            ->innerJoin('c.audience', 'a')
+            ->andWhere('c.email = :email')
+            ->setParameter('email', mb_strtolower(trim($email)))
+            ->orderBy('a.slug', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * How the audience splits between statuses. Every status is present, so a
      * reader never has to tell "none yet" from "key missing".
      *
@@ -71,10 +92,10 @@ class ContactRepository extends ServiceEntityRepository
             ->andWhere('c.id != :id')
             ->andWhere('c.status = :subscribed')
             ->andWhere('a.mainHost = :host')
-            ->setParameter('email', $contact->getEmail())
+            ->setParameter('email', $contact->email)
             ->setParameter('id', $contact->id)
             ->setParameter('subscribed', ContactStatus::Subscribed->value)
-            ->setParameter('host', $contact->getAudience()->getMainHost())
+            ->setParameter('host', $contact->audience->mainHost)
             ->orderBy('a.slug', 'ASC')
             ->getQuery()
             ->getResult();

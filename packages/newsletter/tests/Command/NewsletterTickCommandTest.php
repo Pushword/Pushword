@@ -30,7 +30,7 @@ final class NewsletterTickCommandTest extends AbstractNewsletterTestCase
         self::assertSame(1, $report['armed']);
         self::assertSame(1, $report['campaignMails']);
         self::assertEmailCount(1);
-        self::assertSame(CampaignStatus::Sent, $this->reload($campaign)->getStatus());
+        self::assertSame(CampaignStatus::Sent, $this->reload($campaign)->status);
     }
 
     public function testAFutureCampaignIsLeftAlone(): void
@@ -46,7 +46,7 @@ final class NewsletterTickCommandTest extends AbstractNewsletterTestCase
 
         self::assertSame(0, $report['armed']);
         self::assertEmailCount(0);
-        self::assertSame(CampaignStatus::Scheduled, $this->reload($campaign)->getStatus());
+        self::assertSame(CampaignStatus::Scheduled, $this->reload($campaign)->status);
     }
 
     public function testAnAutomationEnrollsAndSendsInOneRun(): void
@@ -58,7 +58,7 @@ final class NewsletterTickCommandTest extends AbstractNewsletterTestCase
         $report = $this->tick();
 
         self::assertSame(1, $report['enrolled']);
-        self::assertSame(1, $report['automationMails']);
+        self::assertSame(1, $report['dripMails']);
         self::assertEmailCount(1);
     }
 
@@ -72,7 +72,7 @@ final class NewsletterTickCommandTest extends AbstractNewsletterTestCase
         $report = $this->tick(['--batch' => 1]);
 
         self::assertSame(2, $report['enrolled']);
-        self::assertSame(1, $report['automationMails']);
+        self::assertSame(1, $report['dripMails']);
         self::assertEmailCount(1);
     }
 
@@ -81,7 +81,7 @@ final class NewsletterTickCommandTest extends AbstractNewsletterTestCase
         $tester = $this->runTick(['--format' => 'text']);
 
         $tester->assertCommandIsSuccessful();
-        self::assertStringContainsString('campaign(s) armed', $tester->getDisplay());
+        self::assertStringContainsString('armed', $tester->getDisplay());
     }
 
     /**

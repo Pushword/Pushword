@@ -19,86 +19,32 @@ class AutomationStep implements IdInterface, Stringable
     #[Assert\NotNull]
     #[ORM\ManyToOne(targetEntity: Automation::class, inversedBy: 'steps')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
-    private ?Automation $automation = null;
+    public ?Automation $automation = null;
 
     /** 0-based order within the automation. */
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
-    private int $position = 0;
+    public int $position = 0 {
+        set(int $value) => max(0, $value);
+    }
 
     /** Minutes to wait after enrollment (first step) or after the previous step. */
     #[Assert\PositiveOrZero]
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
-    private int $delayMinutes = 0;
+    public int $delayMinutes = 0 {
+        set(int $value) => max(0, $value);
+    }
 
     #[Assert\NotBlank]
     #[ORM\Column(type: Types::STRING, length: 255)]
-    private string $subject = '';
+    public string $subject = '';
 
     #[ORM\Column(type: Types::TEXT)]
-    private string $bodyMarkdown = '';
+    public string $bodyMarkdown = '' {
+        set(?string $value) => (string) $value;
+    }
 
     public function __toString(): string
     {
         return '' !== $this->subject ? $this->subject : 'Step '.$this->position;
-    }
-
-    public function getAutomation(): ?Automation
-    {
-        return $this->automation;
-    }
-
-    public function setAutomation(?Automation $automation): self
-    {
-        $this->automation = $automation;
-
-        return $this;
-    }
-
-    public function getPosition(): int
-    {
-        return $this->position;
-    }
-
-    public function setPosition(int $position): self
-    {
-        $this->position = max(0, $position);
-
-        return $this;
-    }
-
-    public function getDelayMinutes(): int
-    {
-        return $this->delayMinutes;
-    }
-
-    public function setDelayMinutes(int $delayMinutes): self
-    {
-        $this->delayMinutes = max(0, $delayMinutes);
-
-        return $this;
-    }
-
-    public function getSubject(): string
-    {
-        return $this->subject;
-    }
-
-    public function setSubject(string $subject): self
-    {
-        $this->subject = $subject;
-
-        return $this;
-    }
-
-    public function getBodyMarkdown(): string
-    {
-        return $this->bodyMarkdown;
-    }
-
-    public function setBodyMarkdown(?string $bodyMarkdown): self
-    {
-        $this->bodyMarkdown = (string) $bodyMarkdown;
-
-        return $this;
     }
 }

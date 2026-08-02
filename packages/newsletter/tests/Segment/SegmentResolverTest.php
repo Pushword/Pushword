@@ -3,6 +3,7 @@
 namespace Pushword\Newsletter\Tests\Segment;
 
 use DateTimeImmutable;
+use DateTimeInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Segment\SegmentException;
@@ -43,7 +44,7 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
         $contacts = $this->resolver()->contacts($audience, []);
 
         self::assertCount(1, $contacts);
-        self::assertSame('subscribed@example.tld', $contacts[0]->getEmail());
+        self::assertSame('subscribed@example.tld', $contacts[0]->email);
     }
 
     public function testAudienceIsAlwaysScoped(): void
@@ -64,11 +65,11 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
 
         $has = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']]);
         self::assertCount(1, $has);
-        self::assertSame('trek@example.tld', $has[0]->getEmail());
+        self::assertSame('trek@example.tld', $has[0]->email);
 
         $hasNot = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'hasNot', 'value' => 'AmTrek']]);
         self::assertCount(1, $hasNot);
-        self::assertSame('other@example.tld', $hasNot[0]->getEmail());
+        self::assertSame('other@example.tld', $hasNot[0]->email);
     }
 
     /** A shorter tag must not match a longer one that starts with it. */
@@ -96,11 +97,11 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
 
         $underscore = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek_2026']]);
         self::assertCount(1, $underscore);
-        self::assertSame('underscore@example.tld', $underscore[0]->getEmail());
+        self::assertSame('underscore@example.tld', $underscore[0]->email);
 
         $percent = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'has', 'value' => '100%Trek']]);
         self::assertCount(1, $percent);
-        self::assertSame('percent@example.tld', $percent[0]->getEmail());
+        self::assertSame('percent@example.tld', $percent[0]->email);
 
         // And the escape character itself is not a way back out of the escaping.
         self::assertSame(0, $this->resolver()->count($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek!_2026']]));
@@ -168,7 +169,7 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
      */
     private function sortedEmails(array $contacts): array
     {
-        $emails = array_map(static fn (Contact $contact): string => $contact->getEmail(), $contacts);
+        $emails = array_map(static fn (Contact $contact): string => $contact->email, $contacts);
         sort($emails);
 
         return $emails;
@@ -182,11 +183,11 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
 
         $old = $this->resolver()->contacts($audience, [['field' => 'createdAt', 'op' => 'olderThan', 'value' => '7d']]);
         self::assertCount(1, $old);
-        self::assertSame('old@example.tld', $old[0]->getEmail());
+        self::assertSame('old@example.tld', $old[0]->email);
 
         $fresh = $this->resolver()->contacts($audience, [['field' => 'createdAt', 'op' => 'newerThan', 'value' => '7d']]);
         self::assertCount(1, $fresh);
-        self::assertSame('fresh@example.tld', $fresh[0]->getEmail());
+        self::assertSame('fresh@example.tld', $fresh[0]->email);
     }
 
     public function testCustomPropertyEquality(): void
@@ -201,7 +202,7 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
         ]);
 
         self::assertCount(1, $match);
-        self::assertSame('buyer@example.tld', $match[0]->getEmail());
+        self::assertSame('buyer@example.tld', $match[0]->email);
     }
 
     /** A missing property is unknown, not "different from tmb". */
@@ -217,7 +218,7 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
         ]);
 
         self::assertCount(1, $match);
-        self::assertSame('other@example.tld', $match[0]->getEmail());
+        self::assertSame('other@example.tld', $match[0]->email);
     }
 
     public function testCustomPropertyPresence(): void
@@ -228,11 +229,65 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
 
         $isSet = $this->resolver()->contacts($audience, [['field' => 'prop.lastBoughtProduct', 'op' => 'isSet']]);
         self::assertCount(1, $isSet);
-        self::assertSame('known@example.tld', $isSet[0]->getEmail());
+        self::assertSame('known@example.tld', $isSet[0]->email);
 
         $isNotSet = $this->resolver()->contacts($audience, [['field' => 'prop.lastBoughtProduct', 'op' => 'isNotSet']]);
         self::assertCount(1, $isNotSet);
-        self::assertSame('unknown@example.tld', $isNotSet[0]->getEmail());
+        self::assertSame('unknown@example.tld', $isNotSet[0]->email);
+    }
+
+    public function testCustomPropertyDateTakesDurations(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'dormant@example.tld', customProperties: ['lastSeenAt' => $this->atom('-90 days')]);
+        $this->createContact($audience, 'active@example.tld', customProperties: ['lastSeenAt' => $this->atom('-2 days')]);
+
+        $stale = $this->resolver()->contacts($audience, [
+            ['field' => 'prop.lastSeenAt', 'op' => 'olderThan', 'value' => '30d'],
+        ]);
+        self::assertCount(1, $stale);
+        self::assertSame('dormant@example.tld', $stale[0]->email);
+
+        $recent = $this->resolver()->contacts($audience, [
+            ['field' => 'prop.lastSeenAt', 'op' => 'newerThan', 'value' => '30d'],
+        ]);
+        self::assertCount(1, $recent);
+        self::assertSame('active@example.tld', $recent[0]->email);
+    }
+
+    /** NULL compares to nothing: never having been seen is not being old. */
+    public function testACustomPropertyNobodyWroteIsOnNeitherSideOfADuration(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'dormant@example.tld', customProperties: ['lastSeenAt' => $this->atom('-90 days')]);
+        $this->createContact($audience, 'never@example.tld');
+
+        self::assertSame(1, $this->resolver()->count($audience, [
+            ['field' => 'prop.lastSeenAt', 'op' => 'olderThan', 'value' => '30d'],
+        ]));
+
+        // Saying "dormant or never seen" is the caller's to write, and it does.
+        self::assertSame(2, $this->resolver()->count($audience, [
+            ['any' => [
+                ['field' => 'prop.lastSeenAt', 'op' => 'olderThan', 'value' => '30d'],
+                ['field' => 'prop.lastSeenAt', 'op' => 'isNotSet'],
+            ]],
+        ]));
+    }
+
+    /** The comparison is lexical, so it only holds while the offsets agree. */
+    public function testCustomPropertyDurationsComparePastAYearBoundary(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'old@example.tld', customProperties: ['lastSeenAt' => '2025-12-30T09:00:00+00:00']);
+        $this->createContact($audience, 'new@example.tld', customProperties: ['lastSeenAt' => $this->atom('-1 day')]);
+
+        $stale = $this->resolver()->contacts($audience, [
+            ['field' => 'prop.lastSeenAt', 'op' => 'olderThan', 'value' => '2w'],
+        ]);
+
+        self::assertCount(1, $stale);
+        self::assertSame('old@example.tld', $stale[0]->email);
     }
 
     public function testConditionsAreAnded(): void
@@ -248,7 +303,7 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
         ]);
 
         self::assertCount(1, $match);
-        self::assertSame('both@example.tld', $match[0]->getEmail());
+        self::assertSame('both@example.tld', $match[0]->email);
     }
 
     /**
@@ -287,7 +342,7 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
         ]]);
 
         self::assertCount(1, $match);
-        self::assertSame('subscribed@example.tld', $match[0]->getEmail());
+        self::assertSame('subscribed@example.tld', $match[0]->email);
     }
 
     public function testMatchesAgreesWithTheListForOneContact(): void
@@ -316,7 +371,9 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
         $french = new Contact($audience, 'fr@example.tld');
-        $french->setLocale('fr')->optIn(false);
+        $french->locale = 'fr';
+        $french->optIn(false);
+
         $this->entityManager->persist($french);
         $this->createContact($audience, 'en@example.tld');
         $this->entityManager->flush();
@@ -324,7 +381,7 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
         $match = $this->resolver()->contacts($audience, [['field' => 'locale', 'op' => '=', 'value' => 'fr']]);
 
         self::assertCount(1, $match);
-        self::assertSame('fr@example.tld', $match[0]->getEmail());
+        self::assertSame('fr@example.tld', $match[0]->email);
     }
 
     public function testAnInvalidSegmentThrowsRatherThanSilentlyWidening(): void
@@ -344,5 +401,10 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
         $this->createContact($audience, 'c@example.tld');
 
         self::assertCount(2, $this->resolver()->contacts($audience, [], 2));
+    }
+
+    private function atom(string $modifier): string
+    {
+        return new DateTimeImmutable()->modify($modifier)->format(DateTimeInterface::ATOM);
     }
 }

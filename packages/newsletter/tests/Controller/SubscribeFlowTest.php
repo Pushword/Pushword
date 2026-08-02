@@ -35,20 +35,20 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $this->post($audience->getSlug(), ['email' => 'new@example.tld', 'name' => 'Robin']);
+        $this->post($audience->slug, ['email' => 'new@example.tld', 'name' => 'Robin']);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
 
         $contact = $this->find('new@example.tld');
-        self::assertSame(ContactStatus::Pending, $contact->getStatus());
-        self::assertSame('Robin', $contact->getName());
-        self::assertSame('localhost', $contact->getOptinHost());
+        self::assertSame(ContactStatus::Pending, $contact->status);
+        self::assertSame('Robin', $contact->name);
+        self::assertSame('localhost', $contact->optinHost);
 
         self::assertEmailCount(1);
         $email = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $email);
         $text = (string) $email->getTextBody();
-        self::assertStringContainsString('/newsletter/confirm/'.$contact->getToken(), $text);
+        self::assertStringContainsString('/newsletter/confirm/'.$contact->token, $text);
         self::assertStringContainsString($this->translate('newsletter.confirm.body', 'en'), $text, 'the text part reads like a mail, not a bare link');
         self::assertStringContainsString($this->translate('newsletter.confirm.ignore', 'en'), $text);
     }
@@ -68,7 +68,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
             }
         });
 
-        $this->post($audience->getSlug(), ['email' => 'typo@rejected.tld']);
+        $this->post($audience->slug, ['email' => 'typo@rejected.tld']);
 
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
         self::assertStringContainsString(
@@ -83,7 +83,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $this->post($audience->getSlug(), ['email' => 'francois@example.tld', 'locale' => 'fr']);
+        $this->post($audience->slug, ['email' => 'francois@example.tld', 'locale' => 'fr']);
 
         self::assertStringContainsString(
             $this->translate('newsletter.subscribe.pending', 'fr'),
@@ -97,34 +97,34 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     public function testConfirmingSubscribes(): void
     {
         $audience = $this->createAudience();
-        $this->post($audience->getSlug(), ['email' => 'confirm@example.tld']);
+        $this->post($audience->slug, ['email' => 'confirm@example.tld']);
         $contact = $this->find('confirm@example.tld');
 
-        $this->client->request(Request::METHOD_GET, '/newsletter/confirm/'.$contact->getToken());
+        $this->client->request(Request::METHOD_GET, '/newsletter/confirm/'.$contact->token);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
         $confirmed = $this->find('confirm@example.tld');
-        self::assertSame(ContactStatus::Subscribed, $confirmed->getStatus());
-        self::assertNotNull($confirmed->getConfirmedAt());
+        self::assertSame(ContactStatus::Subscribed, $confirmed->status);
+        self::assertNotNull($confirmed->confirmedAt);
     }
 
     public function testAnAudienceWithoutDoubleOptInSubscribesImmediately(): void
     {
         $audience = $this->createAudience(requireDoubleOptIn: false);
 
-        $this->post($audience->getSlug(), ['email' => 'direct@example.tld']);
+        $this->post($audience->slug, ['email' => 'direct@example.tld']);
 
-        self::assertSame(ContactStatus::Subscribed, $this->find('direct@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Subscribed, $this->find('direct@example.tld')->status);
         self::assertEmailCount(0);
     }
 
     public function testResubmittingWhilePendingResendsTheConfirmation(): void
     {
         $audience = $this->createAudience();
-        $this->post($audience->getSlug(), ['email' => 'again@example.tld']);
+        $this->post($audience->slug, ['email' => 'again@example.tld']);
         self::assertEmailCount(1);
 
-        $this->post($audience->getSlug(), ['email' => 'again@example.tld']);
+        $this->post($audience->slug, ['email' => 'again@example.tld']);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
         self::assertEmailCount(1, null, 'a pending contact asking again gets the link again');
@@ -135,19 +135,19 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     public function testResubmittingWhenAlreadySubscribedSendsNothing(): void
     {
         $audience = $this->createAudience(requireDoubleOptIn: false);
-        $this->post($audience->getSlug(), ['email' => 'known@example.tld']);
+        $this->post($audience->slug, ['email' => 'known@example.tld']);
 
-        $this->post($audience->getSlug(), ['email' => 'known@example.tld', 'name' => 'Updated']);
+        $this->post($audience->slug, ['email' => 'known@example.tld', 'name' => 'Updated']);
 
         self::assertEmailCount(0);
-        self::assertSame('Updated', $this->find('known@example.tld')->getName());
+        self::assertSame('Updated', $this->find('known@example.tld')->name);
     }
 
     public function testOnlyDeclaredInterestsAreAttached(): void
     {
         $audience = $this->createAudience(interests: ['AmTrek', 'AmBivouac']);
 
-        $this->post($audience->getSlug(), [
+        $this->post($audience->slug, [
             'email' => 'tagged@example.tld',
             'interests' => ['AmTrek', 'NotDeclared'],
         ]);
@@ -162,14 +162,14 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $untouched = $this->createAudience(requireDoubleOptIn: false);
 
         $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
-            'audiences' => [$letter->getSlug(), $promos->getSlug()],
+            'audiences' => [$letter->slug, $promos->slug],
             'email' => 'several@example.tld',
-            '_token' => $this->csrfToken($letter->getSlug()),
+            '_token' => $this->csrfToken($letter->slug),
         ]);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
-        self::assertSame(ContactStatus::Subscribed, $this->findIn($letter, 'several@example.tld')->getStatus());
-        self::assertSame(ContactStatus::Subscribed, $this->findIn($promos, 'several@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($letter, 'several@example.tld')->status);
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($promos, 'several@example.tld')->status);
         self::assertNull($this->repository()->findOneByEmail($untouched, 'several@example.tld'), 'an unticked list stays unticked');
     }
 
@@ -180,9 +180,9 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $confirmed = $this->createAudience();
 
         $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
-            'audiences' => [$direct->getSlug(), $confirmed->getSlug()],
+            'audiences' => [$direct->slug, $confirmed->slug],
             'email' => 'mixed@example.tld',
-            '_token' => $this->csrfToken($direct->getSlug()),
+            '_token' => $this->csrfToken($direct->slug),
         ]);
 
         self::assertEmailCount(1);
@@ -190,8 +190,8 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
             $this->translate('newsletter.subscribe.pending'),
             (string) $this->client->getResponse()->getContent(),
         );
-        self::assertSame(ContactStatus::Subscribed, $this->findIn($direct, 'mixed@example.tld')->getStatus());
-        self::assertSame(ContactStatus::Pending, $this->findIn($confirmed, 'mixed@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($direct, 'mixed@example.tld')->status);
+        self::assertSame(ContactStatus::Pending, $this->findIn($confirmed, 'mixed@example.tld')->status);
     }
 
     /** Half a subscription is not what anyone ticked. */
@@ -200,9 +200,9 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $known = $this->createAudience(requireDoubleOptIn: false);
 
         $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
-            'audiences' => [$known->getSlug(), 'does-not-exist'],
+            'audiences' => [$known->slug, 'does-not-exist'],
             'email' => 'partial@example.tld',
-            '_token' => $this->csrfToken($known->getSlug()),
+            '_token' => $this->csrfToken($known->slug),
         ]);
 
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
@@ -215,7 +215,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
 
         $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
             'email' => 'nothing@example.tld',
-            '_token' => $this->csrfToken($audience->getSlug()),
+            '_token' => $this->csrfToken($audience->slug),
         ]);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
@@ -235,10 +235,10 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $this->post($audience->getSlug(), ['email' => 'reader@example.tld']);
+        $this->post($audience->slug, ['email' => 'reader@example.tld']);
         $success = (string) $this->client->getResponse()->getContent();
 
-        $this->post($audience->getSlug(), ['email' => 'not-an-email']);
+        $this->post($audience->slug, ['email' => 'not-an-email']);
         $error = (string) $this->client->getResponse()->getContent();
 
         self::assertStringContainsString('bg-green-100', $success);
@@ -251,7 +251,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $this->post($audience->getSlug(), ['email' => 'bot@example.tld', 'website' => 'http://spam.example']);
+        $this->post($audience->slug, ['email' => 'bot@example.tld', 'website' => 'http://spam.example']);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
         self::assertNull($this->repository()->findOneByEmail($audience, 'bot@example.tld'));
@@ -262,7 +262,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $this->post($audience->getSlug(), ['email' => 'not-an-email']);
+        $this->post($audience->slug, ['email' => 'not-an-email']);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
         self::assertEmailCount(0);
@@ -272,7 +272,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $this->post('does-not-exist', ['email' => 'nobody@example.tld'], tokenFrom: $audience->getSlug());
+        $this->post('does-not-exist', ['email' => 'nobody@example.tld'], tokenFrom: $audience->slug);
 
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
     }
@@ -282,11 +282,11 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
 
         for ($i = 0; $i < 10; ++$i) {
-            $this->post($audience->getSlug(), ['email' => 'flood'.$i.'@example.tld']);
+            $this->post($audience->slug, ['email' => 'flood'.$i.'@example.tld']);
             self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
         }
 
-        $this->post($audience->getSlug(), ['email' => 'flood10@example.tld']);
+        $this->post($audience->slug, ['email' => 'flood10@example.tld']);
 
         self::assertSame(Response::HTTP_TOO_MANY_REQUESTS, $this->client->getResponse()->getStatusCode());
         self::assertNull($this->repository()->findOneByEmail($audience, 'flood10@example.tld'));
@@ -296,7 +296,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     public function testAClickUnsubscribesOnTheSpot(): void
     {
         $audience = $this->createAudience(requireDoubleOptIn: false);
-        $token = $this->createContact($audience, 'leaving@example.tld')->getToken();
+        $token = $this->createContact($audience, 'leaving@example.tld')->token;
 
         $this->click('/newsletter/unsubscribe/'.$token);
 
@@ -306,8 +306,8 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         );
 
         $left = $this->find('leaving@example.tld');
-        self::assertSame(ContactStatus::Unsubscribed, $left->getStatus());
-        self::assertNotNull($left->getUnsubscribedAt());
+        self::assertSame(ContactStatus::Unsubscribed, $left->status);
+        self::assertNotNull($left->unsubscribedAt);
     }
 
     /**
@@ -320,17 +320,17 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     public function testAFetchWithoutAGestureOnlyGetsThePage(array $headers): void
     {
         $audience = $this->createAudience(requireDoubleOptIn: false);
-        $token = $this->createContact($audience, 'scanned@example.tld')->getToken();
+        $token = $this->createContact($audience, 'scanned@example.tld')->token;
 
         $this->client->request(Request::METHOD_GET, '/newsletter/unsubscribe/'.$token, server: $headers);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
         self::assertStringContainsString('<form method="post"', (string) $this->client->getResponse()->getContent());
-        self::assertSame(ContactStatus::Subscribed, $this->find('scanned@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Subscribed, $this->find('scanned@example.tld')->status);
 
         $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token);
 
-        self::assertSame(ContactStatus::Unsubscribed, $this->find('scanned@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Unsubscribed, $this->find('scanned@example.tld')->status);
     }
 
     /** @return iterable<string, array{array<string, string>}> */
@@ -355,7 +355,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     public function testTheUndoPutsThemBackWithNoConfirmationMail(): void
     {
         $audience = $this->createAudience();
-        $token = $this->createContact($audience, 'oops@example.tld')->getToken();
+        $token = $this->createContact($audience, 'oops@example.tld')->token;
 
         $this->click('/newsletter/unsubscribe/'.$token);
         self::assertStringContainsString(
@@ -371,8 +371,8 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         );
 
         $back = $this->find('oops@example.tld');
-        self::assertSame(ContactStatus::Subscribed, $back->getStatus());
-        self::assertNull($back->getUnsubscribedAt());
+        self::assertSame(ContactStatus::Subscribed, $back->status);
+        self::assertNull($back->unsubscribedAt);
         self::assertEmailCount(0);
     }
 
@@ -387,9 +387,9 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
         $contact = $this->createContact($audience, 'waiting@example.tld', subscribed: false);
 
-        $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$contact->getToken().'/undo');
+        $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$contact->token.'/undo');
 
-        self::assertSame(ContactStatus::Pending, $this->find('waiting@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Pending, $this->find('waiting@example.tld')->status);
     }
 
     /** Once gone, there is nothing left to confirm — and the other lists stay one click away. */
@@ -397,13 +397,13 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience(requireDoubleOptIn: false);
         $sibling = $this->createAudience(requireDoubleOptIn: false);
-        $token = $this->createContact($audience, 'back@example.tld')->getToken();
+        $token = $this->createContact($audience, 'back@example.tld')->token;
         $this->createContact($sibling, 'back@example.tld');
 
         $this->click('/newsletter/unsubscribe/'.$token);
         $this->client->request(Request::METHOD_GET, '/newsletter/unsubscribe/'.$token);
 
-        self::assertStringContainsString('value="'.$sibling->getSlug().'"', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('value="'.$sibling->slug.'"', (string) $this->client->getResponse()->getContent());
     }
 
     /**
@@ -418,7 +418,7 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $otherHost = $this->createAudience(requireDoubleOptIn: false, mainHost: 'elsewhere.dev');
         $notConfirmed = $this->createAudience();
 
-        $token = $this->createContact($audience, 'multi@example.tld')->getToken();
+        $token = $this->createContact($audience, 'multi@example.tld')->token;
         $this->createContact($sameHost, 'multi@example.tld');
         $this->createContact($otherHost, 'multi@example.tld');
         $this->createContact($notConfirmed, 'multi@example.tld', subscribed: false);
@@ -426,10 +426,10 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token);
 
         $html = (string) $this->client->getResponse()->getContent();
-        self::assertStringContainsString('value="'.$sameHost->getSlug().'"', $html);
-        self::assertStringNotContainsString($otherHost->getSlug(), $html, 'another host is another brand');
-        self::assertStringNotContainsString($notConfirmed->getSlug(), $html, 'a pending contact is on no list yet');
-        self::assertSame(ContactStatus::Subscribed, $this->findIn($sameHost, 'multi@example.tld')->getStatus());
+        self::assertStringContainsString('value="'.$sameHost->slug.'"', $html);
+        self::assertStringNotContainsString($otherHost->slug, $html, 'another host is another brand');
+        self::assertStringNotContainsString($notConfirmed->slug, $html, 'a pending contact is on no list yet');
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($sameHost, 'multi@example.tld')->status);
     }
 
     public function testLeavingTheOtherListsActsOnlyOnWhatWasTicked(): void
@@ -438,19 +438,19 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $ticked = $this->createAudience(requireDoubleOptIn: false);
         $untouched = $this->createAudience(requireDoubleOptIn: false);
 
-        $token = $this->createContact($audience, 'picky@example.tld')->getToken();
+        $token = $this->createContact($audience, 'picky@example.tld')->token;
         $this->createContact($ticked, 'picky@example.tld');
         $this->createContact($untouched, 'picky@example.tld');
 
         $this->client->request(
             Request::METHOD_POST,
             '/newsletter/unsubscribe/'.$token.'/others',
-            ['audiences' => [$ticked->getSlug()]],
+            ['audiences' => [$ticked->slug]],
         );
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
-        self::assertSame(ContactStatus::Unsubscribed, $this->findIn($ticked, 'picky@example.tld')->getStatus());
-        self::assertSame(ContactStatus::Subscribed, $this->findIn($untouched, 'picky@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Unsubscribed, $this->findIn($ticked, 'picky@example.tld')->status);
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($untouched, 'picky@example.tld')->status);
     }
 
     public function testLeavingEverythingStopsEveryListOfTheHost(): void
@@ -460,16 +460,16 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $second = $this->createAudience(requireDoubleOptIn: false);
         $elsewhere = $this->createAudience(requireDoubleOptIn: false, mainHost: 'elsewhere.dev');
 
-        $token = $this->createContact($audience, 'gone@example.tld')->getToken();
+        $token = $this->createContact($audience, 'gone@example.tld')->token;
         $this->createContact($first, 'gone@example.tld');
         $this->createContact($second, 'gone@example.tld');
         $this->createContact($elsewhere, 'gone@example.tld');
 
         $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token.'/others', ['all' => '1']);
 
-        self::assertSame(ContactStatus::Unsubscribed, $this->findIn($first, 'gone@example.tld')->getStatus());
-        self::assertSame(ContactStatus::Unsubscribed, $this->findIn($second, 'gone@example.tld')->getStatus());
-        self::assertSame(ContactStatus::Subscribed, $this->findIn($elsewhere, 'gone@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Unsubscribed, $this->findIn($first, 'gone@example.tld')->status);
+        self::assertSame(ContactStatus::Unsubscribed, $this->findIn($second, 'gone@example.tld')->status);
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($elsewhere, 'gone@example.tld')->status);
     }
 
     /**
@@ -481,17 +481,17 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience(requireDoubleOptIn: false);
         $elsewhere = $this->createAudience(requireDoubleOptIn: false, mainHost: 'elsewhere.dev');
 
-        $token = $this->createContact($audience, 'reaching@example.tld')->getToken();
+        $token = $this->createContact($audience, 'reaching@example.tld')->token;
         $this->createContact($elsewhere, 'reaching@example.tld');
 
         $this->client->request(
             Request::METHOD_POST,
             '/newsletter/unsubscribe/'.$token.'/others',
-            ['audiences' => [$elsewhere->getSlug()]],
+            ['audiences' => [$elsewhere->slug]],
         );
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
-        self::assertSame(ContactStatus::Subscribed, $this->findIn($elsewhere, 'reaching@example.tld')->getStatus());
+        self::assertSame(ContactStatus::Subscribed, $this->findIn($elsewhere, 'reaching@example.tld')->status);
     }
 
     /** The same list ticked twice is one subscription, hence one confirmation to click. */
@@ -500,9 +500,9 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
 
         $this->client->request(Request::METHOD_POST, '/newsletter/subscribe', [
-            'audiences' => [$audience->getSlug(), $audience->getSlug()],
+            'audiences' => [$audience->slug, $audience->slug],
             'email' => 'twice@example.tld',
-            '_token' => $this->csrfToken($audience->getSlug()),
+            '_token' => $this->csrfToken($audience->slug),
         ]);
 
         self::assertEmailCount(1);
@@ -519,14 +519,14 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
         $contact = $this->createContact($audience, 'francois@example.tld', subscribed: false, locale: 'fr');
 
-        $this->client->request(Request::METHOD_GET, '/newsletter/confirm/'.$contact->getToken());
+        $this->client->request(Request::METHOD_GET, '/newsletter/confirm/'.$contact->token);
 
         self::assertStringContainsString(
             $this->translate('newsletter.confirmed.title', 'fr'),
             (string) $this->client->getResponse()->getContent(),
         );
 
-        $this->click('/newsletter/unsubscribe/'.$contact->getToken());
+        $this->click('/newsletter/unsubscribe/'.$contact->token);
 
         self::assertStringContainsString(
             $this->translate('newsletter.unsubscribed.title', 'fr'),

@@ -44,7 +44,7 @@ final class FormEndpointTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
         self::getContainer()->get(Environment::class)->addGlobal('pwNewsletterSubmitClass', 'my-own-button');
 
-        $html = $this->fetch(['audiences' => $audience->getSlug()]);
+        $html = $this->fetch(['audiences' => $audience->slug]);
 
         self::assertStringContainsString('class="my-own-button"', $html);
         self::assertStringNotContainsString('class="link-btn"', $html);
@@ -72,11 +72,11 @@ final class FormEndpointTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $html = $this->fetch(['audiences' => $audience->getSlug()]);
+        $html = $this->fetch(['audiences' => $audience->slug]);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
         self::assertStringContainsString('action="https://localhost.dev/newsletter/subscribe"', $html);
-        self::assertStringContainsString('name="audience" value="'.$audience->getSlug().'"', $html);
+        self::assertStringContainsString('name="audience" value="'.$audience->slug.'"', $html);
         self::assertStringContainsString('name="email"', $html);
         self::assertStringContainsString('name="name"', $html);
     }
@@ -90,7 +90,7 @@ final class FormEndpointTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $html = $this->fetch(['audiences' => $audience->getSlug()]);
+        $html = $this->fetch(['audiences' => $audience->slug]);
 
         self::assertStringContainsString('class="live-form"', $html);
         self::assertStringNotContainsString('<script', $html);
@@ -100,7 +100,7 @@ final class FormEndpointTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $html = $this->fetch(['audiences' => $audience->getSlug()]);
+        $html = $this->fetch(['audiences' => $audience->slug]);
 
         self::assertStringContainsString('name="website"', $html);
         self::assertMatchesRegularExpression('/aria-hidden="true"[^>]*style="[^"]*-9999px/', $html);
@@ -111,10 +111,10 @@ final class FormEndpointTest extends AbstractNewsletterTestCase
         $letter = $this->createAudience();
         $promos = $this->createAudience();
 
-        $html = $this->fetch(['audiences' => $letter->getSlug().','.$promos->getSlug()]);
+        $html = $this->fetch(['audiences' => $letter->slug.','.$promos->slug]);
 
-        self::assertStringContainsString('type="hidden" name="audiences[]" value="'.$letter->getSlug().'"', $html);
-        self::assertStringContainsString('type="hidden" name="audiences[]" value="'.$promos->getSlug().'"', $html);
+        self::assertStringContainsString('type="hidden" name="audiences[]" value="'.$letter->slug.'"', $html);
+        self::assertStringContainsString('type="hidden" name="audiences[]" value="'.$promos->slug.'"', $html);
         self::assertStringNotContainsString('name="audience"', $html, 'the single-audience field would post one list out of the two');
     }
 
@@ -122,7 +122,7 @@ final class FormEndpointTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience(interests: ['AmTrek']);
 
-        $html = $this->fetch(['audiences' => $audience->getSlug(), 'interests' => 'AmTrek,Undeclared']);
+        $html = $this->fetch(['audiences' => $audience->slug, 'interests' => 'AmTrek,Undeclared']);
 
         self::assertStringContainsString('name="interests[]" value="AmTrek"', $html);
         self::assertStringNotContainsString('Undeclared', $html);
@@ -133,8 +133,8 @@ final class FormEndpointTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        self::assertStringContainsString('First name', $this->fetch(['audiences' => $audience->getSlug()]));
-        self::assertStringContainsString('Prénom', $this->fetch(['audiences' => $audience->getSlug(), 'locale' => 'fr']));
+        self::assertStringContainsString('First name', $this->fetch(['audiences' => $audience->slug]));
+        self::assertStringContainsString('Prénom', $this->fetch(['audiences' => $audience->slug, 'locale' => 'fr']));
     }
 
     public function testAnUnknownAudienceIsNotFound(): void
@@ -148,7 +148,7 @@ final class FormEndpointTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        self::assertStringContainsString('name="_token"', $this->fetch(['audiences' => $audience->getSlug()]));
+        self::assertStringContainsString('name="_token"', $this->fetch(['audiences' => $audience->slug]));
     }
 
     public function testTurningTheSettingOffIssuesNoToken(): void
@@ -156,6 +156,6 @@ final class FormEndpointTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
         $this->enableCsrf(false);
 
-        self::assertStringNotContainsString('name="_token"', $this->fetch(['audiences' => $audience->getSlug()]));
+        self::assertStringNotContainsString('name="_token"', $this->fetch(['audiences' => $audience->slug]));
     }
 }

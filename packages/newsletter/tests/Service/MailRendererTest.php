@@ -32,7 +32,7 @@ final class MailRendererTest extends AbstractNewsletterTestCase
     public function testTheBodyIsTaggedButTheUnsubscribeLinkIsNot(): void
     {
         $audience = $this->createAudience();
-        $audience->setUtmSource('newsletter');
+        $audience->utmSource = 'newsletter';
 
         $html = $this->render($audience, '[Read](/article)', new UtmTag('janvier'));
 

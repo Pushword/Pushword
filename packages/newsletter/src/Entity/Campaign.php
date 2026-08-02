@@ -22,6 +22,10 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  * to the subset matching {@see self::$segment}, immediately or at a scheduled
  * date. Sending is paced: recipients are materialised up-front and drained by
  * the tick, so a restart can never re-send.
+ *
+ * Everything the send writes about itself — the status, the counters, the
+ * provenance — is `private(set)`: those are a record of what happened, and the
+ * methods below are the only events that may change it.
  */
 #[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: CampaignRepository::class)]
@@ -38,11 +42,11 @@ class Campaign implements IdInterface, Stringable
     #[Assert\NotNull]
     #[ORM\ManyToOne(targetEntity: Audience::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
-    private ?Audience $audience = null;
+    public ?Audience $audience = null;
 
     #[Assert\NotBlank]
     #[ORM\Column(type: Types::STRING, length: 255)]
-    private string $subject = '';
+    public string $subject = '';
 
     /**
      * The campaign's analytics identity, carried as `utm_campaign`. Derived from
@@ -51,14 +55,19 @@ class Campaign implements IdInterface, Stringable
      * and rewording a subject afterwards renames nothing.
      */
     #[ORM\Column(type: Types::STRING, length: 128, options: ['default' => ''])]
-    private string $slug = '';
+    public string $slug = '' {
+        get => '' !== $this->slug ? $this->slug : $this->normalizeSlug($this->subject);
+        set(?string $value) => $this->normalizeSlug((string) $value);
+    }
 
     /** Short preview line most inboxes show after the subject. */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
-    private ?string $preheader = null;
+    public ?string $preheader = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    private string $bodyMarkdown = '';
+    public string $bodyMarkdown = '' {
+        set(?string $value) => (string) $value;
+    }
 
     /**
      * Segment criteria; an empty list targets the whole subscribed audience.
@@ -66,36 +75,55 @@ class Campaign implements IdInterface, Stringable
      * @var array<mixed>
      */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
-    private array $segment = [];
+    public array $segment = [];
 
     #[ORM\Column(type: Types::STRING, length: 20, enumType: CampaignStatus::class)]
-    private CampaignStatus $status = CampaignStatus::Draft;
+    public private(set) CampaignStatus $status = CampaignStatus::Draft;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?DateTimeImmutable $scheduledAt = null;
+    public ?DateTimeImmutable $scheduledAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?DateTimeImmutable $sentAt = null;
+    public private(set) ?DateTimeImmutable $sentAt = null;
 
     /** Seconds between two mails; null falls back to the audience cadence. */
     #[Assert\Positive]
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    private ?int $rateSeconds = null;
+    public ?int $rateSeconds = null {
+        set(?int $value) => null !== $value ? max(1, $value) : null;
+    }
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
-    private int $recipientCount = 0;
+    public private(set) int $recipientCount = 0;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
-    private int $sentCount = 0;
+    public private(set) int $sentCount = 0;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
-    private int $failedCount = 0;
+    public private(set) int $failedCount = 0;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
-    private int $unsubCount = 0;
+    public private(set) int $unsubCount = 0;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
-    private int $bounceCount = 0;
+    public private(set) int $bounceCount = 0;
+
+    /**
+     * Where this came from, when it was not written by hand. Provenance, and the
+     * way back to the subject: during the delay the runner asks the automation's
+     * source whether {@see self::$triggerSubjectId} still deserves its mail, and
+     * drops the campaign when the answer is no.
+     *
+     * The automation may be deleted out from under it — a sent campaign is a
+     * record and outlives the rule that produced it — so the link is nullable and
+     * the id is kept beside it rather than through it.
+     */
+    #[ORM\ManyToOne(targetEntity: Automation::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    public private(set) ?Automation $automation = null;
+
+    #[ORM\Column(name: 'trigger_subject_id', type: Types::INTEGER, nullable: true)]
+    public private(set) ?int $triggerSubjectId = null;
 
     private string $segmentJson = '';
 
@@ -111,53 +139,24 @@ class Campaign implements IdInterface, Stringable
         return '' !== $this->subject ? $this->subject : 'Campaign #'.($this->id ?? '?');
     }
 
-    public function getAudience(): ?Audience
-    {
-        return $this->audience;
-    }
-
-    public function setAudience(?Audience $audience): self
-    {
-        $this->audience = $audience;
-
-        return $this;
-    }
-
-    public function getSubject(): string
-    {
-        return $this->subject;
-    }
-
-    public function setSubject(string $subject): self
-    {
-        $this->subject = $subject;
-
-        return $this;
-    }
-
-    public function getSlug(): string
-    {
-        return '' !== $this->slug ? $this->slug : $this->normalizeSlug($this->subject);
-    }
-
-    public function setSlug(?string $slug): self
-    {
-        $this->slug = $this->normalizeSlug((string) $slug);
-
-        return $this;
-    }
-
     /** Subjects are long and the column is not; leave room for the date prefix. */
     private function normalizeSlug(string $value): string
     {
         return rtrim(mb_substr(new Slugify()->slugify($value), 0, self::SLUG_MAX_LENGTH), '-');
     }
 
-    /** Freeze the derived slug once, so later subject edits leave it alone. */
+    /**
+     * Freeze the derived slug once, so later subject edits leave it alone.
+     *
+     * Reading goes through the get hook, which derives from the subject while
+     * the column is still empty; normalising is idempotent and is what keeps
+     * this from reading as the self-assignment a `$this->slug = $this->slug`
+     * would be — and from being deleted as one.
+     */
     #[ORM\PrePersist]
     public function initSlug(): void
     {
-        $this->slug = $this->getSlug();
+        $this->slug = $this->normalizeSlug($this->slug);
     }
 
     /**
@@ -167,45 +166,7 @@ class Campaign implements IdInterface, Stringable
      */
     private function undatedSlug(): string
     {
-        return preg_replace('/^\d{6}-/', '', $this->getSlug()) ?? $this->getSlug();
-    }
-
-    public function getPreheader(): ?string
-    {
-        return $this->preheader;
-    }
-
-    public function setPreheader(?string $preheader): self
-    {
-        $this->preheader = $preheader;
-
-        return $this;
-    }
-
-    public function getBodyMarkdown(): string
-    {
-        return $this->bodyMarkdown;
-    }
-
-    public function setBodyMarkdown(?string $bodyMarkdown): self
-    {
-        $this->bodyMarkdown = (string) $bodyMarkdown;
-
-        return $this;
-    }
-
-    /** @return array<mixed> */
-    public function getSegment(): array
-    {
-        return $this->segment;
-    }
-
-    /** @param array<mixed> $segment */
-    public function setSegment(array $segment): self
-    {
-        $this->segment = $segment;
-
-        return $this;
+        return preg_replace('/^\d{6}-/', '', $this->slug) ?? $this->slug;
     }
 
     /**
@@ -242,11 +203,6 @@ class Campaign implements IdInterface, Stringable
         }
     }
 
-    public function getStatus(): CampaignStatus
-    {
-        return $this->status;
-    }
-
     public function getStatusLabel(): string
     {
         return $this->status->value;
@@ -265,18 +221,6 @@ class Campaign implements IdInterface, Stringable
     public function isSending(): bool
     {
         return CampaignStatus::Sending === $this->status;
-    }
-
-    public function getScheduledAt(): ?DateTimeImmutable
-    {
-        return $this->scheduledAt;
-    }
-
-    public function setScheduledAt(?DateTimeImmutable $scheduledAt): self
-    {
-        $this->scheduledAt = $scheduledAt;
-
-        return $this;
     }
 
     /** Arm a draft: the tick materialises its recipients once the date has passed. */
@@ -319,36 +263,18 @@ class Campaign implements IdInterface, Stringable
         return $this;
     }
 
-    public function getSentAt(): ?DateTimeImmutable
+    /** Both or neither: a subject id without the automation that read it means nothing. */
+    public function triggeredBy(Automation $automation, int $subjectId): self
     {
-        return $this->sentAt;
-    }
-
-    public function getRateSeconds(): ?int
-    {
-        return $this->rateSeconds;
-    }
-
-    public function setRateSeconds(?int $rateSeconds): self
-    {
-        $this->rateSeconds = null !== $rateSeconds ? max(1, $rateSeconds) : null;
+        $this->automation = $automation;
+        $this->triggerSubjectId = $subjectId;
 
         return $this;
     }
 
     public function getEffectiveRateSeconds(): int
     {
-        return $this->rateSeconds ?? $this->audience?->getRateSeconds() ?? 30;
-    }
-
-    public function getRecipientCount(): int
-    {
-        return $this->recipientCount;
-    }
-
-    public function getSentCount(): int
-    {
-        return $this->sentCount;
+        return $this->rateSeconds ?? $this->audience->rateSeconds ?? 30;
     }
 
     public function incrementSent(): self
@@ -358,21 +284,11 @@ class Campaign implements IdInterface, Stringable
         return $this;
     }
 
-    public function getFailedCount(): int
-    {
-        return $this->failedCount;
-    }
-
     public function incrementFailed(): self
     {
         ++$this->failedCount;
 
         return $this;
-    }
-
-    public function getUnsubCount(): int
-    {
-        return $this->unsubCount;
     }
 
     public function incrementUnsub(): self
@@ -388,11 +304,6 @@ class Campaign implements IdInterface, Stringable
         --$this->unsubCount;
 
         return $this;
-    }
-
-    public function getBounceCount(): int
-    {
-        return $this->bounceCount;
     }
 
     public function incrementBounce(): self

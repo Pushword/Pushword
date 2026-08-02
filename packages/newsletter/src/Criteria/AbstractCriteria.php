@@ -30,6 +30,13 @@ abstract class AbstractCriteria
 {
     public const string PROP_PREFIX = 'prop.';
 
+    /**
+     * Operators every language accepts on a `prop.*` field. A language whose
+     * registry knows how to read those values further — a contact's dates, as
+     * durations — widens it.
+     *
+     * @var list<string>
+     */
     public const array PROP_OPERATORS = ['=', '!=', 'isSet', 'isNotSet'];
 
     /** Operators that carry no value. */
@@ -304,7 +311,7 @@ abstract class AbstractCriteria
     private static function assertOperator(string $field, string $op, string $path): void
     {
         $allowed = self::isProperty($field)
-            ? self::PROP_OPERATORS
+            ? static::PROP_OPERATORS
             : (static::FIELD_OPERATORS[$field] ?? null);
 
         if (null === $allowed) {

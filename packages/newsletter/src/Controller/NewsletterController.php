@@ -217,7 +217,7 @@ final class NewsletterController extends AbstractController
 
         // Once they are gone there is nothing left to confirm, so a second visit
         // goes through to the page keeping the other lists within reach.
-        if ($request->isMethod('GET') && ! $this->clicked($request) && null === $contact->getUnsubscribedAt()) {
+        if ($request->isMethod('GET') && ! $this->clicked($request) && null === $contact->unsubscribedAt) {
             return $this->page('unsubscribe.html.twig', $contact);
         }
 
@@ -300,7 +300,7 @@ final class NewsletterController extends AbstractController
         // The siblings are re-read here rather than trusted from the form: the
         // slugs decide nothing, they only pick from what the token may touch.
         foreach ($this->contactRepository->findSubscribedSiblings($contact) as $sibling) {
-            if ($all || \in_array($sibling->getAudience()->getSlug(), $submitted, true)) {
+            if ($all || \in_array($sibling->audience->slug, $submitted, true)) {
                 $this->contactManager->unsubscribe($sibling);
             }
         }
@@ -327,12 +327,12 @@ final class NewsletterController extends AbstractController
      */
     private function page(string $template, ?Contact $contact, int $status = Response::HTTP_OK, array $siblings = []): Response
     {
-        $audience = $contact?->getAudience();
-        $view = $this->siteRegistry->get($audience?->getMainHost())
+        $audience = $contact?->audience;
+        $view = $this->siteRegistry->get($audience?->mainHost)
             ->getView('/newsletter/'.$template, '@PushwordNewsletter');
 
         if (null !== $contact) {
-            $this->localeSwitcher->setLocale($contact->getLocale());
+            $this->localeSwitcher->setLocale($contact->locale);
         }
 
         return $this->render($view, [

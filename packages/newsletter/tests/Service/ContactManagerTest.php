@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Tests\Service;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Campaign;
@@ -34,9 +35,9 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
 
         $reopened = $this->manager()->subscribe($audience, 'back@example.tld', source: 'second-thoughts');
 
-        self::assertSame(ContactStatus::Subscribed, $reopened->getStatus());
-        self::assertNull($reopened->getUnsubscribedAt());
-        self::assertSame('second-thoughts', $reopened->getSource());
+        self::assertSame(ContactStatus::Subscribed, $reopened->status);
+        self::assertNull($reopened->unsubscribedAt);
+        self::assertSame('second-thoughts', $reopened->source);
     }
 
     /**
@@ -49,9 +50,9 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
 
         $contact = $this->manager()->subscribe($audience, 'silent@example.tld');
 
-        $site = self::getContainer()->get(SiteRegistry::class)->get($audience->getMainHost());
-        self::assertSame($site->locale, $contact->getLocale());
-        self::assertNotSame('', $contact->getLocale(), 'an empty locale renders lang="" and mails in the sender\'s language');
+        $site = self::getContainer()->get(SiteRegistry::class)->get($audience->mainHost);
+        self::assertSame($site->locale, $contact->locale);
+        self::assertNotSame('', $contact->locale, 'an empty locale renders lang="" and mails in the sender\'s language');
     }
 
     /** Saying nothing about the language is not saying English. */
@@ -62,7 +63,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
 
         $contact = $this->manager()->subscribe($audience, 'francois@example.tld');
 
-        self::assertSame('fr', $contact->getLocale());
+        self::assertSame('fr', $contact->locale);
     }
 
     /** Provenance must point at the moment consent was given, not at the latest form post. */
@@ -73,7 +74,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
 
         $contact = $this->manager()->subscribe($audience, 'known@example.tld', source: 'other-page');
 
-        self::assertSame('first-page', $contact->getSource());
+        self::assertSame('first-page', $contact->source);
     }
 
     public function testUnsubscribingIsCreditedToTheLastCampaignReceived(): void
@@ -88,7 +89,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
 
         $this->manager()->unsubscribe($contact);
 
-        self::assertSame(1, $campaign->getUnsubCount());
+        self::assertSame(1, $campaign->unsubCount);
     }
 
     public function testABounceIsCreditedAndMarksTheRecipient(): void
@@ -103,8 +104,8 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
 
         $this->manager()->markBounced($contact);
 
-        self::assertSame(ContactStatus::Bounced, $contact->getStatus());
-        self::assertSame(1, $campaign->getBounceCount());
+        self::assertSame(ContactStatus::Bounced, $contact->status);
+        self::assertSame(1, $campaign->bounceCount);
         self::assertSame(RecipientState::Bounced, $this->recipientState($campaign));
     }
 
@@ -115,13 +116,13 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $automation = $this->createAutomation($audience, [['delay' => 60, 'subject' => 'Welcome']]);
 
         $runner = self::getContainer()->get(AutomationRunner::class);
-        $runner->enroll($automation);
+        $runner->triggerOne($automation, new DateTimeImmutable());
 
         $this->manager()->unsubscribe($contact);
 
         $enrollment = $this->entityManager->getRepository(Enrollment::class)->findOneBy(['contact' => $contact]);
         self::assertInstanceOf(Enrollment::class, $enrollment);
-        self::assertSame(EnrollmentStatus::Stopped, $enrollment->getStatus());
+        self::assertSame(EnrollmentStatus::Stopped, $enrollment->status);
     }
 
     /** An opt-out taken back is not one the campaign's rate should keep carrying. */
@@ -136,12 +137,12 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $sender->drain($campaign, 10);
 
         $this->manager()->unsubscribe($contact);
-        self::assertSame(1, $campaign->getUnsubCount());
+        self::assertSame(1, $campaign->unsubCount);
 
         $this->manager()->resubscribe($contact);
 
-        self::assertSame(ContactStatus::Subscribed, $contact->getStatus());
-        self::assertSame(0, $campaign->getUnsubCount());
+        self::assertSame(ContactStatus::Subscribed, $contact->status);
+        self::assertSame(0, $campaign->unsubCount);
     }
 
     /** The mail server refused the address; a click on a page says nothing about that. */
@@ -155,8 +156,8 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
 
         $this->manager()->resubscribe($contact);
 
-        self::assertSame(ContactStatus::Unsubscribed, $contact->getStatus());
-        self::assertNotNull($contact->getBouncedAt());
+        self::assertSame(ContactStatus::Unsubscribed, $contact->status);
+        self::assertNotNull($contact->bouncedAt);
     }
 
     public function testUnsubscribingTwiceChangesNothing(): void
@@ -172,7 +173,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $this->manager()->unsubscribe($contact);
         $this->manager()->unsubscribe($contact);
 
-        self::assertSame(1, $campaign->getUnsubCount());
+        self::assertSame(1, $campaign->unsubCount);
     }
 
     private function recipientState(Campaign $campaign): RecipientState
@@ -180,6 +181,6 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $recipients = $this->entityManager->getRepository(CampaignRecipient::class)->findBy(['campaign' => $campaign]);
         self::assertCount(1, $recipients);
 
-        return $recipients[0]->getState();
+        return $recipients[0]->state;
     }
 }

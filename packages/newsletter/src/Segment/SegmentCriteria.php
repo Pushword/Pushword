@@ -36,6 +36,19 @@ final class SegmentCriteria extends AbstractCriteria
 {
     public const string SUBJECT = 'a contact';
 
+    /**
+     * A contact's custom property takes the duration operators too. What the site
+     * knows about someone is mostly dates — `lastSeenAt`, `lastOrderAt` — and
+     * they are the reason a segment exists at all; refusing them would mean
+     * mirroring every one of them into a tag to filter on it.
+     *
+     * {@see \Pushword\Newsletter\Query\ContactPropertyStrategy} says what the
+     * stored value has to look like for the comparison to mean anything.
+     *
+     * @var list<string>
+     */
+    public const array PROP_OPERATORS = [...parent::PROP_OPERATORS, 'olderThan', 'newerThan'];
+
     /** Operators accepted for each plain field. `prop.*` is handled apart. */
     public const array FIELD_OPERATORS = [
         'tag' => ['has', 'hasNot'],

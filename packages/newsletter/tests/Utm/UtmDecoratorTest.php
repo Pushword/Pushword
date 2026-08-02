@@ -60,7 +60,9 @@ final class UtmDecoratorTest extends AbstractNewsletterTestCase
 
     public function testTheSourceIsNormalisedIntoTheParameter(): void
     {
-        $audience = new Audience()->setMainHost('localhost.dev')->setUtmSource('Pied Web');
+        $audience = new Audience();
+        $audience->mainHost = 'localhost.dev';
+        $audience->utmSource = 'Pied Web';
 
         self::assertStringContainsString(
             'utm_source=pied-web',
@@ -87,7 +89,8 @@ final class UtmDecoratorTest extends AbstractNewsletterTestCase
 
     public function testAnAudienceWithoutASourceIsLeftUntouched(): void
     {
-        $audience = new Audience()->setMainHost('localhost.dev');
+        $audience = new Audience();
+        $audience->mainHost = 'localhost.dev';
 
         self::assertSame(self::LINK, $this->decorator()->decorate(self::LINK, $audience, new UtmTag('janvier')));
     }
@@ -112,7 +115,11 @@ final class UtmDecoratorTest extends AbstractNewsletterTestCase
 
     private function audience(): Audience
     {
-        return new Audience()->setMainHost('localhost.dev')->setUtmSource('newsletter');
+        $audience = new Audience();
+        $audience->mainHost = 'localhost.dev';
+        $audience->utmSource = 'newsletter';
+
+        return $audience;
     }
 
     private function decorator(): UtmDecorator

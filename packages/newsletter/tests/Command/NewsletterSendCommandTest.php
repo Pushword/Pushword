@@ -30,7 +30,7 @@ final class NewsletterSendCommandTest extends AbstractNewsletterTestCase
         self::assertIsArray($decoded);
         self::assertSame(1, $decoded['recipients']);
         self::assertEmailCount(0);
-        self::assertSame(CampaignStatus::Sending, $campaign->getStatus());
+        self::assertSame(CampaignStatus::Sending, $campaign->status);
     }
 
     public function testHumanOutput(): void

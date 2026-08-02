@@ -5,6 +5,7 @@ namespace Pushword\Newsletter\Repository;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Enum\CampaignStatus;
 
@@ -13,6 +14,9 @@ use Pushword\Newsletter\Enum\CampaignStatus;
  */
 class CampaignRepository extends ServiceEntityRepository
 {
+    /** Not armed yet: nothing has been frozen and nobody has received anything. */
+    private const array PENDING = [CampaignStatus::Draft->value, CampaignStatus::Scheduled->value];
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Campaign::class);
@@ -39,21 +43,43 @@ class CampaignRepository extends ServiceEntityRepository
     }
 
     /**
-     * Campaigns that have not gone out yet: still editable, still cancellable.
+     * The campaigns an automation produced that have not gone out yet: still
+     * editable, still cancellable, and still worth asking the source about.
      *
-     * @return list<int>
+     * @return list<Campaign>
      */
-    public function findPendingIds(): array
+    public function findPendingTriggered(): array
     {
-        /** @var list<array{id: int}> $rows */
-        $rows = $this->createQueryBuilder('c')
-            ->select('c.id')
+        /** @var list<Campaign> $campaigns */
+        $campaigns = $this->createQueryBuilder('c')
             ->andWhere('c.status IN (:pending)')
-            ->setParameter('pending', [CampaignStatus::Draft->value, CampaignStatus::Scheduled->value])
+            ->andWhere('c.automation IS NOT NULL')
+            ->setParameter('pending', self::PENDING)
+            ->orderBy('c.id', 'ASC')
             ->getQuery()
             ->getResult();
 
-        return array_column($rows, 'id');
+        return $campaigns;
+    }
+
+    /**
+     * Has any campaign for this subject already been armed? Past that point the
+     * subject has been announced, whatever became of the steps after it.
+     */
+    public function hasArmed(Automation $automation, int $subjectId): bool
+    {
+        $count = (int) $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->andWhere('c.automation = :automation')
+            ->andWhere('c.triggerSubjectId = :subjectId')
+            ->andWhere('c.status NOT IN (:pending)')
+            ->setParameter('automation', $automation)
+            ->setParameter('subjectId', $subjectId)
+            ->setParameter('pending', self::PENDING)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count > 0;
     }
 
     /** @return list<Campaign> */

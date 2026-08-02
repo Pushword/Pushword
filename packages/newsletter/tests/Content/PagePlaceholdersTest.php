@@ -6,6 +6,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Newsletter\Content\PagePlaceholders;
+use Pushword\Newsletter\Trigger\PlaceholderRenderer;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
@@ -13,7 +14,7 @@ final class PagePlaceholdersTest extends KernelTestCase
 {
     public function testTheFiveValuesAPageMayLend(): void
     {
-        $rendered = $this->placeholders()->render(
+        $rendered = $this->render(
             '# {{ page.h1 }}'."\n\n".'{{ page.chapeau }}'."\n\n".'{{ page.excerpt }}'."\n\n"
             .'![]({{ page.mainImage }})'."\n\n".'[Read]({{ page.url }})',
             $this->page(),
@@ -30,20 +31,20 @@ final class PagePlaceholdersTest extends KernelTestCase
     /** Spacing inside the braces is Twig's habit; the substitution keeps it. */
     public function testWhitespaceInsideTheBracesIsTolerated(): void
     {
-        self::assertSame('Hello / Hello', $this->placeholders()->render('{{page.h1}} / {{   page.h1   }}', $this->page()));
+        self::assertSame('Hello / Hello', $this->render('{{page.h1}} / {{   page.h1   }}', $this->page()));
     }
 
     /** A typo must show up in the preview rather than vanish from the mail. */
     public function testAnUnknownPlaceholderIsLeftWhereItIs(): void
     {
-        self::assertSame('{{ page.title }}', $this->placeholders()->render('{{ page.title }}', $this->page()));
+        self::assertSame('{{ page.title }}', $this->render('{{ page.title }}', $this->page()));
     }
 
     /** The homepage has no slug of its own; the URL must still be one. */
     public function testTheHomepageStillGetsAUrl(): void
     {
         $page = $this->page();
-        $page->setSlug('homepage');
+        $page->slug = 'homepage';
 
         self::assertSame('https://localhost.dev/', $this->placeholders()->url($page));
     }
@@ -53,13 +54,13 @@ final class PagePlaceholdersTest extends KernelTestCase
         $page = $this->page();
         $page->setMainImage(null);
 
-        self::assertSame('![]()', $this->placeholders()->render('![]({{ page.mainImage }})', $page));
+        self::assertSame('![]()', $this->render('![]({{ page.mainImage }})', $page));
     }
 
     /** A meta description read in an inbox sounds like a search result; the article does not. */
     public function testTheChapeauWinsOverTheAuthoredSearchExcerpt(): void
     {
-        self::assertSame('<p>The lede.</p>', $this->placeholders()->render('{{ page.excerpt }}', $this->page()));
+        self::assertSame('<p>The lede.</p>', $this->render('{{ page.excerpt }}', $this->page()));
     }
 
     /** The paragraphs before the first heading, however many — they were written as one opening. */
@@ -70,7 +71,7 @@ final class PagePlaceholdersTest extends KernelTestCase
 
         self::assertSame(
             '<p>First opening line.</p> <p>Second one.</p>',
-            (string) preg_replace('/\s+/', ' ', $this->placeholders()->render('{{ page.excerpt }}', $page)),
+            (string) preg_replace('/\s+/', ' ', $this->render('{{ page.excerpt }}', $page)),
         );
     }
 
@@ -81,7 +82,7 @@ final class PagePlaceholdersTest extends KernelTestCase
         $page->setCustomProperty('toc', null);
         $page->setMainContent('The opening lines.'."\n\n".'## A heading'."\n\n".'The rest.');
 
-        self::assertSame('The opening lines.', $this->placeholders()->render('{{ page.excerpt }}', $page));
+        self::assertSame('The opening lines.', $this->render('{{ page.excerpt }}', $page));
     }
 
     public function testAnOverlongFirstParagraphIsTruncatedOnAWordBoundary(): void
@@ -90,7 +91,7 @@ final class PagePlaceholdersTest extends KernelTestCase
         $page->setCustomProperty('toc', null);
         $page->setMainContent(trim(str_repeat('Cheval ', 60)).'.'."\n\n".'## A heading');
 
-        $rendered = $this->placeholders()->render('{{ page.excerpt }}', $page);
+        $rendered = $this->render('{{ page.excerpt }}', $page);
 
         self::assertStringEndsWith('Cheval…', $rendered);
         self::assertLessThanOrEqual(300, mb_strlen($rendered));
@@ -109,7 +110,7 @@ final class PagePlaceholdersTest extends KernelTestCase
             .'The opening lines.'."\n\n".'## A heading',
         );
 
-        self::assertSame('The opening lines.', $this->placeholders()->render('{{ page.excerpt }}', $page));
+        self::assertSame('The opening lines.', $this->render('{{ page.excerpt }}', $page));
     }
 
     /** Nothing to quote is worth saying: the mail keeps its title, its image and its link. */
@@ -119,7 +120,7 @@ final class PagePlaceholdersTest extends KernelTestCase
         $page->setCustomProperty('toc', null);
         $page->setMainContent('<div class="tool"><p>Budget</p></div>'."\n\n".'## A heading'."\n\n".'### Another');
 
-        self::assertSame('', $this->placeholders()->render('{{ page.excerpt }}', $page));
+        self::assertSame('', $this->render('{{ page.excerpt }}', $page));
     }
 
     /**
@@ -134,7 +135,7 @@ final class PagePlaceholdersTest extends KernelTestCase
         $page->setCustomProperty('toc', null);
         $page->setMainContent('Rendered for {{ apps.getMainHost() }}.'."\n\n".'## A heading');
 
-        self::assertSame('Rendered for pushword.piedweb.com.', $this->placeholders()->render('{{ page.excerpt }}', $page));
+        self::assertSame('Rendered for pushword.piedweb.com.', $this->render('{{ page.excerpt }}', $page));
     }
 
     /**
@@ -143,24 +144,22 @@ final class PagePlaceholdersTest extends KernelTestCase
      */
     public function testAPageWithoutAHostIsNotRenderedUnderTheOneBeforeIt(): void
     {
-        $placeholders = $this->placeholders();
-
         $hosted = $this->page();
         $hosted->host = 'pushword.piedweb.com';
 
-        $placeholders->render('{{ page.excerpt }}', $hosted);
+        $this->render('{{ page.excerpt }}', $hosted);
 
         $hostless = $this->page();
         $hostless->host = '';
         $hostless->setCustomProperty('toc', null);
         $hostless->setMainContent('Rendered for {{ apps.getMainHost() }}.'."\n\n".'## A heading');
 
-        self::assertSame('Rendered for localhost.dev.', $placeholders->render('{{ page.excerpt }}', $hostless));
+        self::assertSame('Rendered for localhost.dev.', $this->render('{{ page.excerpt }}', $hostless));
     }
 
     public function testTheChapeauIsLentOnItsOwn(): void
     {
-        self::assertSame('<p>The lede.</p>', $this->placeholders()->render('{{ page.chapeau }}', $this->page()));
+        self::assertSame('<p>The lede.</p>', $this->render('{{ page.chapeau }}', $this->page()));
     }
 
     /** A body is HTML-in-Markdown: what the page lends belongs there as it stands. */
@@ -169,7 +168,7 @@ final class PagePlaceholdersTest extends KernelTestCase
         $page = $this->page();
         $page->setH1('The <em>real</em> guide');
 
-        self::assertSame('# The <em>real</em> guide', $this->placeholders()->render('# {{ page.h1 }}', $page));
+        self::assertSame('# The <em>real</em> guide', $this->render('# {{ page.h1 }}', $page));
     }
 
     public function testASubjectGetsPlainTextOnly(): void
@@ -179,7 +178,7 @@ final class PagePlaceholdersTest extends KernelTestCase
 
         self::assertSame(
             'New: The real guide second line — The lede.',
-            $this->placeholders()->renderSubject('New: {{ page.h1 }} — {{ page.excerpt }}', $page),
+            $this->renderSubject('New: {{ page.h1 }} — {{ page.excerpt }}', $page),
         );
     }
 
@@ -189,14 +188,14 @@ final class PagePlaceholdersTest extends KernelTestCase
         $page = $this->page();
         $page->setH1('Rock &amp; Roll &lt;em&gt;');
 
-        self::assertSame('Rock & Roll <em>', $this->placeholders()->renderSubject('{{ page.h1 }}', $page));
+        self::assertSame('Rock & Roll <em>', $this->renderSubject('{{ page.h1 }}', $page));
     }
 
     private function page(): Page
     {
         $page = new Page();
         $page->host = 'localhost.dev';
-        $page->setSlug('blog/hello');
+        $page->slug = 'blog/hello';
         $page->setH1('Hello');
         $page->setSearchExcerpt('What it is about.');
         $page->setMainContent('The lede.'."\n\n".'<!--break-->'."\n\n".'The opening lines.'."\n\n".'## A heading'."\n\n".'The rest.');
@@ -215,10 +214,31 @@ final class PagePlaceholdersTest extends KernelTestCase
         return $page;
     }
 
+    /**
+     * What a page lends and how it reaches a template are two objects now; every
+     * case here is about the pair, so the tests compose them as the runner does.
+     */
+    private function render(string $template, Page $page): string
+    {
+        return $this->renderer()->render($template, $this->placeholders()->map($page));
+    }
+
+    private function renderSubject(string $template, Page $page): string
+    {
+        return $this->renderer()->renderSubject($template, $this->placeholders()->map($page));
+    }
+
     private function placeholders(): PagePlaceholders
     {
         self::bootKernel();
 
         return self::getContainer()->get(PagePlaceholders::class);
+    }
+
+    private function renderer(): PlaceholderRenderer
+    {
+        self::bootKernel();
+
+        return self::getContainer()->get(PlaceholderRenderer::class);
     }
 }

@@ -12,26 +12,23 @@ use Symfony\Component\String\TruncateMode;
 use function Symfony\Component\String\u;
 
 /**
- * Substitutes the handful of page values a content trigger's subject and body
- * may quote:
+ * What a page lends the steps triggered by its publication:
  *
  *     {{ page.h1 }}  {{ page.excerpt }}  {{ page.chapeau }}
  *     {{ page.url }}  {{ page.mainImage }}
  *
- * The braces are borrowed from Twig; the evaluation is not. This is `strtr` with
- * a regex, exactly like the campaign body's `%name%` — a mail body is authored
- * content, and rendering it as a template would mean evaluating editor input at
- * send time. Anything else between braces is left where it is, so a typo shows
- * up in the preview instead of vanishing.
+ * Only the values — putting them into a template is
+ * {@see \Pushword\Newsletter\Trigger\PlaceholderRenderer}'s, and it does the
+ * same for whatever any other source lends. Reading them is what needs a page:
+ * an excerpt is an editorial decision, and a URL has to be built against the
+ * page's own host rather than the one the tick happens to be running under.
  *
- * Substitution happens once, when the campaign is created. What the campaign
- * stores is plain Markdown, which is why every later stage — Markdown, link
- * absolutization, `utm_*` tagging — needs to know nothing about pages.
+ * They are read once, when the occurrence is handled, and travel as plain
+ * strings from there — which is why every later stage, Markdown, link
+ * absolutization, `utm_*` tagging, needs to know nothing about pages.
  */
 final readonly class PagePlaceholders
 {
-    private const string PATTERN = '/\{\{\s*page\.(h1|excerpt|chapeau|url|mainImage)\s*\}\}/';
-
     /** Long enough for an opening, short enough that nobody scrolls it in a preview pane. */
     private const int EXCERPT_LENGTH = 300;
 
@@ -42,20 +39,24 @@ final readonly class PagePlaceholders
     ) {
     }
 
-    /** The body is authored HTML-in-Markdown: what the page lends goes in as it stands. */
-    public function render(string $template, Page $page): string
-    {
-        return $this->substitute($template, $page, false);
-    }
-
     /**
-     * A subject line is a header, not a document. An h1 routinely carries `<em>`,
-     * `<br>` or a `<span class="…">`, and the excerpt's fallback is rendered HTML
-     * by construction — both would reach the inbox as literal markup.
+     * Every value at once: the excerpt costs a content render, and a body that
+     * quotes both it and the chapeau would otherwise pay for it twice.
+     *
+     * @return array<string, string>
      */
-    public function renderSubject(string $template, Page $page): string
+    public function map(Page $page): array
     {
-        return $this->substitute($template, $page, true);
+        $split = $this->split($page);
+        $chapeau = trim($split->getChapeau());
+
+        return [
+            'page.h1' => $page->getH1(),
+            'page.excerpt' => $this->excerpt($split),
+            'page.chapeau' => $chapeau,
+            'page.url' => $this->url($page),
+            'page.mainImage' => $this->mainImageUrl($page),
+        ];
     }
 
     /**
@@ -66,34 +67,6 @@ final readonly class PagePlaceholders
     public function url(Page $page): string
     {
         return $this->base($page).'/'.$page->getRealSlug();
-    }
-
-    private function substitute(string $template, Page $page, bool $plainText): string
-    {
-        if (! str_contains($template, '{{')) {
-            return $template;
-        }
-
-        return preg_replace_callback(
-            self::PATTERN,
-            function (array $match) use ($page, $plainText): string {
-                $value = $this->value($match[1], $page);
-
-                return $plainText ? $this->plainText($value) : $value;
-            },
-            $template,
-        ) ?? $template;
-    }
-
-    private function value(string $key, Page $page): string
-    {
-        return match ($key) {
-            'h1' => $page->getH1(),
-            'excerpt' => $this->excerpt($page),
-            'chapeau' => trim($this->split($page)->getChapeau()),
-            'url' => $this->url($page),
-            default => $this->mainImageUrl($page),
-        };
     }
 
     /**
@@ -109,10 +82,8 @@ final readonly class PagePlaceholders
      * deliberate: an empty excerpt leaves the mail at its title, its image and its
      * link, which says less but says nothing false.
      */
-    private function excerpt(Page $page): string
+    private function excerpt(SplitContent $split): string
     {
-        $split = $this->split($page);
-
         $chapeau = trim($split->getChapeau());
 
         if ('' !== $chapeau) {
@@ -148,18 +119,6 @@ final readonly class PagePlaceholders
         } finally {
             $this->siteRegistry->switchSite($previousHost);
         }
-    }
-
-    /**
-     * Tags become a space rather than nothing: a `<br>` between two words must not
-     * glue them. Entities are decoded afterwards — never before, or an escaped
-     * `&lt;em&gt;` would turn into a tag on its way out.
-     */
-    private function plainText(string $html): string
-    {
-        $text = html_entity_decode(strip_tags(str_replace('<', ' <', $html)), \ENT_QUOTES | \ENT_HTML5);
-
-        return trim((string) preg_replace('/\s+/', ' ', $text));
     }
 
     /** Empty when the page has no main image — the author's template decides what that costs. */

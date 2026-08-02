@@ -1,0 +1,6 @@
+{% extends '@EasyAdmin/crud/detail.html.twig' %}
+
+{% block main %}
+    {{ parent() }}
+    {{ include('@PushwordNewsletter/admin/_contact_subscriptions.html.twig') }}
+{% endblock %}

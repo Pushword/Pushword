@@ -13,9 +13,11 @@ use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Repository\AudienceRepository;
 use Pushword\Newsletter\Repository\AutomationRepository;
 use Pushword\Newsletter\Repository\EnrollmentRepository;
+use Pushword\Newsletter\Repository\TriggerLogRepository;
 use Pushword\Newsletter\Segment\SegmentCriteria;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
+use Pushword\Newsletter\Trigger\TriggerSourceRegistry;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,11 +26,16 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
- * Automations over HTTP: build a drip, change its rules, watch it run.
+ * Automations over HTTP: wire something to a sequence of mails, change its
+ * rules, watch it run.
  *
  * Steps travel as one array rather than as a sub-resource. They are ordered and
  * an automation without them does nothing, so a single round trip writes a
  * coherent sequence and the array's order is the sequence's order.
+ *
+ * A `GET` on one reports both sides of the rule — how many subjects are waiting
+ * and how many contacts a broadcast would reach — because an automation nobody
+ * can count is one nobody switches on.
  */
 #[IsGranted('ROLE_EDITOR')]
 final class AutomationApiController extends AbstractApiController
@@ -37,6 +44,8 @@ final class AutomationApiController extends AbstractApiController
         private readonly AutomationRepository $automationRepository,
         private readonly AudienceRepository $audienceRepository,
         private readonly EnrollmentRepository $enrollmentRepository,
+        private readonly TriggerLogRepository $logRepository,
+        private readonly TriggerSourceRegistry $sources,
         private readonly SegmentResolver $segmentResolver,
         private readonly EntityManagerInterface $entityManager,
         private readonly ValidatorInterface $validator,
@@ -84,7 +93,8 @@ final class AutomationApiController extends AbstractApiController
             return $this->notFound('Audience not found');
         }
 
-        $automation = new Automation()->setAudience($audience);
+        $automation = new Automation();
+        $automation->audience = $audience;
 
         $error = $this->apply($automation, $data);
         if (null !== $error) {
@@ -144,6 +154,13 @@ final class AutomationApiController extends AbstractApiController
             $this->entityManager->remove($enrollment);
         }
 
+        // The markers go the same way. The campaigns they produced are left
+        // alone: they are ordinary campaigns, and some of them have been sent —
+        // their link back to the automation is nullable for exactly this.
+        foreach ($this->logRepository->findBy(['automation' => $automation]) as $log) {
+            $this->entityManager->remove($log);
+        }
+
         $this->entityManager->remove($automation);
         $this->entityManager->flush();
 
@@ -158,11 +175,29 @@ final class AutomationApiController extends AbstractApiController
     private function apply(Automation $automation, array $data): ?JsonResponse
     {
         if (\array_key_exists('name', $data) && \is_string($data['name'])) {
-            $automation->setName($data['name']);
+            $automation->name = $data['name'];
         }
 
         if (\array_key_exists('enabled', $data) && \is_bool($data['enabled'])) {
-            $automation->setEnabled($data['enabled']);
+            $automation->enabled = $data['enabled'];
+        }
+
+        // Before the criteria: which vocabulary `triggerWhen` is read in depends
+        // on it, so a request changing both has to change the source first.
+        if (\array_key_exists('source', $data)) {
+            if (! \is_string($data['source']) || null === $this->sources->find($data['source'])) {
+                return $this->badRequest('Unknown source; known sources: '.implode(', ', $this->sources->names()));
+            }
+
+            $automation->source = $data['source'];
+        }
+
+        if (\array_key_exists('hosts', $data)) {
+            if (! \is_array($data['hosts'])) {
+                return $this->badRequest('hosts must be a list');
+            }
+
+            $automation->hosts = array_values(array_filter($data['hosts'], is_string(...)));
         }
 
         $error = $this->applyCriteria($automation, $data);
@@ -170,13 +205,13 @@ final class AutomationApiController extends AbstractApiController
             return $error;
         }
 
-        if (\array_key_exists('enrollFrom', $data)) {
-            $enrollFrom = $this->parseDate(\is_string($data['enrollFrom']) ? $data['enrollFrom'] : null);
-            if (! $enrollFrom instanceof DateTimeImmutable) {
-                return $this->badRequest('Invalid enrollFrom');
+        if (\array_key_exists('activeFrom', $data)) {
+            $activeFrom = $this->parseDate(\is_string($data['activeFrom']) ? $data['activeFrom'] : null);
+            if (! $activeFrom instanceof DateTimeImmutable) {
+                return $this->badRequest('Invalid activeFrom');
             }
 
-            $automation->setEnrollFrom($enrollFrom);
+            $automation->activeFrom = $activeFrom;
         }
 
         if (! \array_key_exists('steps', $data)) {
@@ -190,16 +225,33 @@ final class AutomationApiController extends AbstractApiController
         return $this->applySteps($automation, $data['steps']);
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * `triggerWhen` is read in the source's vocabulary; the other two are contact
+     * criteria whatever the source is.
+     *
+     * @param array<string, mixed> $data
+     */
     private function applyCriteria(Automation $automation, array $data): ?JsonResponse
     {
-        foreach (['enrollWhen', 'stopWhen'] as $key) {
+        $source = $this->sources->for($automation);
+
+        if (null === $source) {
+            return $this->badRequest('Unknown source; known sources: '.implode(', ', $this->sources->names()));
+        }
+
+        $languages = [
+            'triggerWhen' => $source->criteria(),
+            'recipientWhen' => SegmentCriteria::class,
+            'stopWhen' => SegmentCriteria::class,
+        ];
+
+        foreach ($languages as $key => $criteriaClass) {
             if (! \array_key_exists($key, $data)) {
                 continue;
             }
 
             try {
-                SegmentCriteria::validate($data[$key]);
+                $criteriaClass::validate($data[$key]);
             } catch (SegmentException $segmentException) {
                 return $this->badRequest($key.': '.$segmentException->getMessage());
             }
@@ -207,11 +259,11 @@ final class AutomationApiController extends AbstractApiController
             /** @var array<mixed> $criteria */
             $criteria = $data[$key];
 
-            if ('enrollWhen' === $key) {
-                $automation->setEnrollWhen($criteria);
-            } else {
-                $automation->setStopWhen($criteria);
-            }
+            match ($key) {
+                'triggerWhen' => $automation->triggerWhen = $criteria,
+                'recipientWhen' => $automation->recipientWhen = $criteria,
+                default => $automation->stopWhen = $criteria,
+            };
         }
 
         return null;
@@ -225,7 +277,7 @@ final class AutomationApiController extends AbstractApiController
      */
     private function applySteps(Automation $automation, array $steps): ?JsonResponse
     {
-        foreach ($automation->getSteps()->toArray() as $existing) {
+        foreach ($automation->steps->toArray() as $existing) {
             $automation->removeStep($existing);
         }
 
@@ -234,11 +286,13 @@ final class AutomationApiController extends AbstractApiController
                 return $this->badRequest(\sprintf('Step #%d needs a subject', $position));
             }
 
-            $automation->addStep(new AutomationStep()
-                ->setPosition($position)
-                ->setDelayMinutes(\is_int($step['delayMinutes'] ?? null) ? $step['delayMinutes'] : 0)
-                ->setSubject($step['subject'])
-                ->setBodyMarkdown(\is_string($step['bodyMarkdown'] ?? null) ? $step['bodyMarkdown'] : ''));
+            $automationStep = new AutomationStep();
+            $automationStep->position = $position;
+            $automationStep->delayMinutes = \is_int($step['delayMinutes'] ?? null) ? $step['delayMinutes'] : 0;
+            $automationStep->subject = $step['subject'];
+            $automationStep->bodyMarkdown = \is_string($step['bodyMarkdown'] ?? null) ? $step['bodyMarkdown'] : '';
+
+            $automation->addStep($automationStep);
         }
 
         return null;
@@ -260,21 +314,24 @@ final class AutomationApiController extends AbstractApiController
     /** @return array<string, mixed> */
     private function toArray(Automation $automation, bool $withProgress = false): array
     {
-        $audience = $automation->getAudience();
+        $audience = $automation->audience;
 
         $payload = [
             'id' => $automation->id,
-            'audience' => $audience?->getSlug(),
-            'name' => $automation->getName(),
-            'enabled' => $automation->isEnabled(),
-            'enrollWhen' => $automation->getEnrollWhen(),
-            'stopWhen' => $automation->getStopWhen(),
-            'enrollFrom' => $automation->getEnrollFrom()->format(DateTimeInterface::ATOM),
+            'audience' => $audience?->slug,
+            'name' => $automation->name,
+            'enabled' => $automation->enabled,
+            'source' => $automation->source,
+            'triggerWhen' => $automation->triggerWhen,
+            'hosts' => $automation->hosts,
+            'recipientWhen' => $automation->recipientWhen,
+            'stopWhen' => $automation->stopWhen,
+            'activeFrom' => $automation->activeFrom->format(DateTimeInterface::ATOM),
             'steps' => array_map(static fn (AutomationStep $step): array => [
-                'position' => $step->getPosition(),
-                'delayMinutes' => $step->getDelayMinutes(),
-                'subject' => $step->getSubject(),
-                'bodyMarkdown' => $step->getBodyMarkdown(),
+                'position' => $step->position,
+                'delayMinutes' => $step->delayMinutes,
+                'subject' => $step->subject,
+                'bodyMarkdown' => $step->bodyMarkdown,
             ], $automation->getOrderedSteps()),
         ];
 
@@ -283,10 +340,19 @@ final class AutomationApiController extends AbstractApiController
         }
 
         $payload['stats'] = $this->enrollmentRepository->countByStatus($automation);
+        $payload['handled'] = $this->logRepository->countFor($automation);
+
+        $source = $this->sources->for($automation);
+
+        try {
+            $payload['waiting'] = null !== $source ? $source->count($automation, new DateTimeImmutable()) : null;
+        } catch (SegmentException) {
+            $payload['waiting'] = null;
+        }
 
         if ($audience instanceof Audience) {
             try {
-                $payload['matchingContacts'] = $this->segmentResolver->count($audience, $automation->getEnrollWhen());
+                $payload['matchingContacts'] = $this->segmentResolver->count($audience, $automation->recipientWhen);
             } catch (SegmentException) {
                 $payload['matchingContacts'] = null;
             }
@@ -313,9 +379,9 @@ final class AutomationApiController extends AbstractApiController
                 ],
                 '/api/newsletter/automation/{id}' => [
                     'parameters' => [['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],
-                    'get' => ['summary' => 'Get an automation, with its enrollment counts and how many contacts match enrollWhen', 'responses' => ['200' => ['description' => 'OK']]],
+                    'get' => ['summary' => 'Get an automation, with its enrollment counts, the subjects waiting for it and how many contacts recipientWhen reaches', 'responses' => ['200' => ['description' => 'OK']]],
                     'patch' => ['summary' => 'Update an automation; sending steps replaces the whole sequence', 'responses' => ['200' => ['description' => 'OK']]],
-                    'delete' => ['summary' => 'Delete an automation and its enrollments', 'responses' => ['204' => ['description' => 'Deleted']]],
+                    'delete' => ['summary' => 'Delete an automation, its enrollments and its markers; the campaigns it created are kept', 'responses' => ['204' => ['description' => 'Deleted']]],
                 ],
             ],
             'components' => [
@@ -326,18 +392,21 @@ final class AutomationApiController extends AbstractApiController
                             'audience' => ['type' => 'string'],
                             'name' => ['type' => 'string'],
                             'enabled' => ['type' => 'boolean'],
-                            'enrollWhen' => ['description' => 'Segment criteria, ANDed; {"any": [...]} ORs them instead. Empty enrolls every subscribed contact', 'oneOf' => [['type' => 'array', 'items' => ['type' => 'object']], ['type' => 'object']]],
-                            'stopWhen' => ['type' => 'array', 'description' => 'Re-checked before each step', 'items' => ['type' => 'object']],
-                            'enrollFrom' => ['type' => 'string', 'format' => 'date-time', 'description' => 'Contacts registered before this are never enrolled; defaults to now'],
+                            'source' => ['type' => 'string', 'description' => 'What this watches: "contact", "page", or any source a bundle registered'],
+                            'triggerWhen' => ['description' => "Criteria in the source's own vocabulary, ANDed; {\"any\": [...]} ORs them instead. Empty matches every subject. A contact source speaks tag, locale, createdAt, confirmedAt, prop.<key>; a page source slug, template, parent, ancestor, tag, prop.<key>", 'oneOf' => [['type' => 'array', 'items' => ['type' => 'object']], ['type' => 'object']]],
+                            'hosts' => ['type' => 'array', 'description' => 'Hosts to watch, for the sources scoped to one; empty watches every one', 'items' => ['type' => 'string']],
+                            'recipientWhen' => ['description' => 'Contact criteria for the mails an occurrence broadcasts. Ignored when the occurrence names its own contact — a drip is addressed to whoever triggered it', 'oneOf' => [['type' => 'array', 'items' => ['type' => 'object']], ['type' => 'object']]],
+                            'stopWhen' => ['type' => 'array', 'description' => 'Re-checked before each step of a drip', 'items' => ['type' => 'object']],
+                            'activeFrom' => ['type' => 'string', 'format' => 'date-time', 'description' => 'Nothing that occurred before this ever triggers; defaults to now'],
                             'steps' => [
                                 'type' => 'array',
                                 'description' => 'The whole sequence, in order',
                                 'items' => [
                                     'type' => 'object',
                                     'properties' => [
-                                        'delayMinutes' => ['type' => 'integer', 'description' => 'After enrollment for the first step, after the previous one otherwise'],
-                                        'subject' => ['type' => 'string'],
-                                        'bodyMarkdown' => ['type' => 'string'],
+                                        'delayMinutes' => ['type' => 'integer', 'description' => 'After the occurrence for the first step, after the previous one otherwise'],
+                                        'subject' => ['type' => 'string', 'description' => 'May quote what the source lends: {{ page.h1 }}, {{ page.excerpt }}, {{ page.url }}, {{ page.mainImage }}, {{ contact.name }}'],
+                                        'bodyMarkdown' => ['type' => 'string', 'description' => 'Markdown, same placeholders'],
                                     ],
                                 ],
                             ],

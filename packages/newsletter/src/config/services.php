@@ -7,7 +7,6 @@ use Pushword\Newsletter\Controller\Api\AudienceApiController;
 use Pushword\Newsletter\Controller\Api\AutomationApiController;
 use Pushword\Newsletter\Controller\Api\CampaignApiController;
 use Pushword\Newsletter\Controller\Api\ContactApiController;
-use Pushword\Newsletter\Controller\Api\ContentTriggerApiController;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -29,7 +28,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             __DIR__.'/../Repository/DQL',
             __DIR__.'/../Segment/SegmentCriteria.php',
             __DIR__.'/../Segment/SegmentException.php',
+            __DIR__.'/../Trigger/TriggerOccurrence.php',
             __DIR__.'/../Utm/UtmTag.php',
+            __DIR__.'/../Validator/ValidTriggerWhen.php',
             ...$apiExclude,
         ]);
 
@@ -52,10 +53,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             ->tag('controller.service_arguments')
             ->tag('pushword.api.controller');
         $services->set(AutomationApiController::class)
-            ->autowire()
-            ->tag('controller.service_arguments')
-            ->tag('pushword.api.controller');
-        $services->set(ContentTriggerApiController::class)
             ->autowire()
             ->tag('controller.service_arguments')
             ->tag('pushword.api.controller');

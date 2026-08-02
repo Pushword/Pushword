@@ -26,7 +26,7 @@ final readonly class UtmDecorator
 
     public function decorate(string $html, Audience $audience, ?UtmTag $utmTag): string
     {
-        $source = $audience->getUtmSource();
+        $source = $audience->utmSource;
 
         if (null === $source || ! $utmTag instanceof UtmTag || ! str_contains($html, '<a ')) {
             return $html;

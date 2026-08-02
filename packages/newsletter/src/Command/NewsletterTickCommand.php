@@ -4,8 +4,6 @@ namespace Pushword\Newsletter\Command;
 
 use DateTimeImmutable;
 use Pushword\Core\Command\AgentOutputTrait;
-use Pushword\Newsletter\Content\ContentTriggerRunner;
-use Pushword\Newsletter\Repository\AutomationRepository;
 use Pushword\Newsletter\Repository\CampaignRepository;
 use Pushword\Newsletter\Service\AutomationRunner;
 use Pushword\Newsletter\Service\CampaignSender;
@@ -29,7 +27,7 @@ use Symfony\Component\Lock\LockFactory;
  */
 #[AsCommand(
     name: 'pw:newsletter:tick',
-    description: 'Send what is due: content-triggered mailings, scheduled campaigns, paced broadcasts and automation steps',
+    description: 'Send what is due: triggered sequences, scheduled campaigns, paced broadcasts and drip steps',
 )]
 final class NewsletterTickCommand
 {
@@ -40,9 +38,7 @@ final class NewsletterTickCommand
     public function __construct(
         private readonly CampaignRepository $campaignRepository,
         private readonly CampaignSender $campaignSender,
-        private readonly AutomationRepository $automationRepository,
         private readonly AutomationRunner $automationRunner,
-        private readonly ContentTriggerRunner $contentTriggerRunner,
         private readonly LockFactory $lockFactory,
         #[Autowire(param: 'pw.newsletter.send_batch')]
         private readonly int $defaultBatch,
@@ -84,26 +80,30 @@ final class NewsletterTickCommand
         }
 
         $io->success(\sprintf(
-            '%d campaign(s) triggered by content, %d campaign(s) armed, %d broadcast mail(s), %d enrollment(s), %d automation mail(s).',
-            $report['triggered'],
+            '%d enrollment(s), %d campaign(s) scheduled by a trigger, %d cancelled, %d armed, %d broadcast mail(s), %d drip mail(s).',
+            $report['enrolled'],
+            $report['scheduled'],
+            $report['cancelled'],
             $report['armed'],
             $report['campaignMails'],
-            $report['enrolled'],
-            $report['automationMails'],
+            $report['dripMails'],
         ));
 
         return Command::SUCCESS;
     }
 
-    /** @return array{triggered: int, cancelled: int, armed: int, campaignMails: int, enrolled: int, automationMails: int, budgetLeft: int} */
+    /** @return array{enrolled: int, scheduled: int, cancelled: int, armed: int, campaignMails: int, dripMails: int, budgetLeft: int} */
     private function run(int $budget): array
     {
-        // Before arming: a page published long enough ago is meant to go out in
-        // the same pass that noticed it, not a minute later.
-        $content = $this->contentTriggerRunner->run(new DateTimeImmutable());
+        $now = new DateTimeImmutable();
+
+        // Before arming: something that happened long enough ago is meant to go
+        // out in the same pass that noticed it, not a minute later.
+        $triggered = $this->automationRunner->trigger($now);
+        $cancelled = $this->automationRunner->cancelStale();
 
         $armed = 0;
-        foreach ($this->campaignRepository->findDue(new DateTimeImmutable()) as $campaign) {
+        foreach ($this->campaignRepository->findDue($now) as $campaign) {
             $this->campaignSender->arm($campaign);
             ++$armed;
         }
@@ -119,19 +119,14 @@ final class NewsletterTickCommand
             $campaignMails += $sent;
         }
 
-        $enrolled = 0;
-        foreach ($this->automationRepository->findEnabled() as $automation) {
-            $enrolled += $this->automationRunner->enroll($automation);
-        }
+        $dripMails = $this->automationRunner->advance($budget);
 
-        $automationMails = $this->automationRunner->advance($budget);
-
-        return $content + [
+        return $triggered + [
+            'cancelled' => $cancelled,
             'armed' => $armed,
             'campaignMails' => $campaignMails,
-            'enrolled' => $enrolled,
-            'automationMails' => $automationMails,
-            'budgetLeft' => $budget - $automationMails,
+            'dripMails' => $dripMails,
+            'budgetLeft' => $budget - $dripMails,
         ];
     }
 }

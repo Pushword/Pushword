@@ -59,7 +59,7 @@ final class SubscribeCsrfTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
         $this->enableCsrf(false);
 
-        $this->post($audience->getSlug(), ['email' => 'no-token@example.tld']);
+        $this->post($audience->slug, ['email' => 'no-token@example.tld']);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
         self::assertInstanceOf(Contact::class, $this->entityManager->getRepository(Contact::class)
@@ -70,7 +70,7 @@ final class SubscribeCsrfTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $this->post($audience->getSlug(), ['email' => 'forged@example.tld']);
+        $this->post($audience->slug, ['email' => 'forged@example.tld']);
 
         self::assertSame(Response::HTTP_FORBIDDEN, $this->client->getResponse()->getStatusCode());
         self::assertNull($this->entityManager->getRepository(Contact::class)->findOneBy(['email' => 'forged@example.tld']));
@@ -80,7 +80,7 @@ final class SubscribeCsrfTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $this->post($audience->getSlug(), ['email' => 'wrong@example.tld', '_token' => 'not-the-one']);
+        $this->post($audience->slug, ['email' => 'wrong@example.tld', '_token' => 'not-the-one']);
 
         self::assertSame(Response::HTTP_FORBIDDEN, $this->client->getResponse()->getStatusCode());
         self::assertNull($this->entityManager->getRepository(Contact::class)->findOneBy(['email' => 'wrong@example.tld']));
@@ -90,9 +90,9 @@ final class SubscribeCsrfTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $token = $this->tokenFromTheForm($audience->getSlug());
+        $token = $this->tokenFromTheForm($audience->slug);
 
-        $this->post($audience->getSlug(), ['email' => 'valid@example.tld', '_token' => $token]);
+        $this->post($audience->slug, ['email' => 'valid@example.tld', '_token' => $token]);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
         self::assertInstanceOf(Contact::class, $this->entityManager->getRepository(Contact::class)

@@ -235,11 +235,11 @@ final class ContactApiController extends AbstractApiController
     private function apply(Contact $contact, array $data): void
     {
         if (\array_key_exists('name', $data) && \is_string($data['name'])) {
-            $contact->setName($data['name']);
+            $contact->name = $data['name'];
         }
 
         if (\array_key_exists('locale', $data) && \is_string($data['locale'])) {
-            $contact->setLocale($data['locale']);
+            $contact->locale = $data['locale'];
         }
 
         if (\array_key_exists('tags', $data) && \is_array($data['tags'])) {
@@ -268,19 +268,19 @@ final class ContactApiController extends AbstractApiController
     {
         return [
             'id' => $contact->id,
-            'audience' => $contact->getAudience()->getSlug(),
-            'email' => $contact->getEmail(),
-            'name' => $contact->getName(),
-            'locale' => $contact->getLocale(),
+            'audience' => $contact->audience->slug,
+            'email' => $contact->email,
+            'name' => $contact->name,
+            'locale' => $contact->locale,
             'status' => $contact->getStatusLabel(),
             'tags' => $contact->getTagList(),
             'customProperties' => $contact->customProperties,
-            'source' => $contact->getSource(),
-            'optinHost' => $contact->getOptinHost(),
+            'source' => $contact->source,
+            'optinHost' => $contact->optinHost,
             'createdAt' => $contact->createdAt?->format(DateTimeInterface::ATOM),
-            'confirmedAt' => $contact->getConfirmedAt()?->format(DateTimeInterface::ATOM),
-            'unsubscribedAt' => $contact->getUnsubscribedAt()?->format(DateTimeInterface::ATOM),
-            'bouncedAt' => $contact->getBouncedAt()?->format(DateTimeInterface::ATOM),
+            'confirmedAt' => $contact->confirmedAt?->format(DateTimeInterface::ATOM),
+            'unsubscribedAt' => $contact->unsubscribedAt?->format(DateTimeInterface::ATOM),
+            'bouncedAt' => $contact->bouncedAt?->format(DateTimeInterface::ATOM),
         ];
     }
 

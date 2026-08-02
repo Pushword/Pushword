@@ -34,24 +34,29 @@ final readonly class NewsletterMailer
     public function sendCampaign(Campaign $campaign, Contact $contact): void
     {
         $this->send(
-            $campaign->getAudience() ?? $contact->getAudience(),
+            $campaign->audience ?? $contact->audience,
             $contact,
-            $campaign->getSubject(),
-            $campaign->getBodyMarkdown(),
-            $campaign->getPreheader(),
+            $campaign->subject,
+            $campaign->bodyMarkdown,
+            $campaign->preheader,
             UtmTag::forCampaign($campaign),
         );
     }
 
-    public function sendStep(AutomationStep $step, Contact $contact): void
+    /**
+     * The subject and the body arrive already rendered: what a step quotes comes
+     * from the occurrence that enrolled this contact, which the caller holds and
+     * this does not.
+     */
+    public function sendStep(AutomationStep $step, Contact $contact, string $subject, string $bodyMarkdown): void
     {
-        $automation = $step->getAutomation();
+        $automation = $step->automation;
 
         $this->send(
-            $automation?->getAudience() ?? $contact->getAudience(),
+            $automation->audience ?? $contact->audience,
             $contact,
-            $step->getSubject(),
-            $step->getBodyMarkdown(),
+            $subject,
+            $bodyMarkdown,
             null,
             null !== $automation ? UtmTag::forStep($automation, $step) : null,
         );
@@ -63,16 +68,16 @@ final readonly class NewsletterMailer
      */
     public function sendConfirmation(Contact $contact): void
     {
-        $audience = $contact->getAudience();
+        $audience = $contact->audience;
         $confirmUrl = $this->linkGenerator->confirmUrl($contact);
         $trans = fn (string $key): string => $this->translator->trans(
             'newsletter.confirm.'.$key,
             [
-                '%audience%' => $audience->getName(),
-                '%host%' => $this->siteRegistry->get($audience->getMainHost())->getMainHost(),
+                '%audience%' => $audience->name,
+                '%host%' => $this->siteRegistry->get($audience->mainHost)->getMainHost(),
             ],
             null,
-            $contact->getLocale(),
+            $contact->locale,
         );
         $subject = $trans('subject');
 
@@ -88,8 +93,8 @@ final readonly class NewsletterMailer
     public function sendTest(Audience $audience, string $subject, string $bodyMarkdown, ?string $preheader, string $address, ?UtmTag $utmTag): void
     {
         $contact = new Contact($audience, $address);
-        $contact->setName('Test');
-        $contact->setLocale($this->siteRegistry->get($audience->getMainHost())->locale);
+        $contact->name = 'Test';
+        $contact->locale = $this->siteRegistry->get($audience->mainHost)->locale;
 
         // A test recipient has no persisted token, so the unsubscribe link would
         // 404. Point it at the site instead — the point is to read the body.
@@ -122,10 +127,10 @@ final readonly class NewsletterMailer
     private function baseEmail(Audience $audience, Contact $contact): Email
     {
         $email = new Email()
-            ->from(new Address($audience->getFromEmail(), $audience->getFromName()))
-            ->to(new Address($contact->getEmail(), $contact->getName()));
+            ->from(new Address($audience->fromEmail, $audience->fromName))
+            ->to(new Address($contact->email, $contact->name));
 
-        $replyTo = $audience->getReplyTo();
+        $replyTo = $audience->replyTo;
         if (null !== $replyTo) {
             $email->replyTo($replyTo);
         }

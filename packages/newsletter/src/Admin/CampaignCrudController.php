@@ -192,7 +192,7 @@ class CampaignCrudController extends AbstractCrudController
             return new RedirectResponse($this->indexUrl());
         }
 
-        $when = $campaign->getScheduledAt();
+        $when = $campaign->scheduledAt;
 
         if (! $campaign->isDraft()) {
             $this->addFlash('warning', 'newsletter.campaign.flash.notDraft');
@@ -226,14 +226,14 @@ class CampaignCrudController extends AbstractCrudController
     public function previewSegment(): RedirectResponse
     {
         $campaign = $this->campaign();
-        $audience = $campaign?->getAudience();
+        $audience = $campaign?->audience;
 
         if (! $campaign instanceof Campaign || ! $audience instanceof Audience) {
             return new RedirectResponse($this->indexUrl());
         }
 
         try {
-            $count = $this->segmentResolver->count($audience, $campaign->getSegment());
+            $count = $this->segmentResolver->count($audience, $campaign->segment);
             $this->addFlash('info', \sprintf('%d subscribed contact(s) match this segment.', $count));
         } catch (SegmentException $segmentException) {
             $this->addFlash('danger', $segmentException->getMessage());
@@ -246,7 +246,7 @@ class CampaignCrudController extends AbstractCrudController
     public function sendTest(Request $request): Response
     {
         $campaign = $this->campaign();
-        $audience = $campaign?->getAudience();
+        $audience = $campaign?->audience;
 
         if (! $campaign instanceof Campaign || ! $audience instanceof Audience) {
             return new RedirectResponse($this->indexUrl());
@@ -294,7 +294,7 @@ class CampaignCrudController extends AbstractCrudController
             }
 
             try {
-                $this->mailer->sendTest($audience, $campaign->getSubject(), $campaign->getBodyMarkdown(), $campaign->getPreheader(), $address, UtmTag::forCampaign($campaign));
+                $this->mailer->sendTest($audience, $campaign->subject, $campaign->bodyMarkdown, $campaign->preheader, $address, UtmTag::forCampaign($campaign));
                 $sent[] = $address;
             } catch (Throwable $throwable) {
                 $failed[] = $address.' ('.$throwable->getMessage().')';
@@ -319,7 +319,7 @@ class CampaignCrudController extends AbstractCrudController
         }
 
         $campaign = $this->getContext()?->getEntity()->getInstance();
-        $host = $campaign instanceof Campaign ? ($campaign->getAudience()?->getMainHost() ?? '') : '';
+        $host = $campaign instanceof Campaign ? ($campaign->audience->mainHost ?? '') : '';
 
         // page_id is page-only context (the PagesList block preview URL); a
         // campaign has no page, so it stays empty but the key must exist.

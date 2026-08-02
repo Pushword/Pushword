@@ -9,15 +9,15 @@ Collect contacts, hold their consent, broadcast to a segment, drip a sequence an
 mail your readers when you publish — without a CRM, a worker, or a third-party
 ESP.
 
-Five entities and one command:
+Four entities and one command:
 
 - **Audience** — a mailing list, and the scope of consent. One per brand.
 - **Contact** — a person in an audience, with tags and free-form custom
   properties, plus the record of when and where they opted in.
 - **Campaign** — one broadcast, to the whole audience or to a segment.
-- **Automation** — a criteria-driven drip: enroll whoever matches, send the steps.
-- **Content trigger** — publish an article, and the audience hears about it a day
-  later. No campaign to write.
+- **Automation** — something happens, and a sequence of mails follows. What
+  counts as "something happens" is a *trigger source*: a contact comes to match a
+  rule, an article is published, or whatever a bundle of yours registers.
 
 `pw:newsletter:tick`, run from cron, is the only moving part at runtime.
 
@@ -183,6 +183,42 @@ All public links (confirm, unsubscribe) are built from the audience host's
 `base_live_url`, so they keep working when the site itself is statically
 generated.
 
+### One contact row per list
+
+A contact belongs to exactly one audience — the pair `(audience, email)` is
+unique. Somebody on three lists is three rows, each with its own tags, custom
+properties and consent record: one shared row could not carry three confirm
+dates, three opt-in IPs, or an unsubscribe from one list and not the others.
+
+The consequence in the admin: the **audience** select on a contact *moves* that
+subscription, it does not add one. Every row for the same address is listed
+under **Subscriptions** at the bottom of the contact page, whatever its audience
+and status, so the person is visible and not only the subscription being edited.
+
+Two hosts wanting the same address twice is therefore a matter of two audiences —
+one per host — not of anything on the contact. `optinHost` is provenance, never
+a scope; an audience spanning several locale hosts stays one list and one row,
+which is what keeps a reader from being mailed twice.
+
+### Opting somebody in by hand
+
+**Newsletter → Contacts → Opt in a contact** opens a subscription from the admin:
+pick a list, give an address, and the audience's double opt-in rule decides the
+rest — the confirmation mail goes out exactly as it would from the public form.
+Tick *they already consented* only for consent you can produce (a paper form, a
+written reply): it skips the mail and subscribes at once, as `status:
+subscribed` does over the API.
+
+The row records who opened it (`source: admin:<user>`), which is the evidence a
+hand-made opt-in owes. There is still no **New** button: a contact written field
+by field would have no recorded opt-in at all.
+
+From a contact, the same page reached through **Add to another list** comes with
+the address prefilled — the way to put one person on a second list. **Confirm by
+hand**, **Unsubscribe** and **Put back on the list** are the other three, and go
+through the same code as the public links, so campaign counters and running
+automations stay in agreement.
+
 ## Segments
 
 One expression language drives a campaign's audience, an automation's enrollment
@@ -267,36 +303,72 @@ subject prefix, touching no contact and no counter.
 
 ## Automations
 
-An automation enrolls every subscribed contact matching `enrollWhen` and sends
-its steps in order, each after its own delay. "Two mails after subscription" is an
-empty `enrollWhen` and two steps.
+One screen covers "two mails after subscription" and "announce every article the
+day after it goes out". An automation is three things:
 
-`enrollWhen` says *who*, never *when*: the timing is the step's own delay. A
-contact is enrolled as soon as they are subscribed — with double opt-in, the
-moment they confirm, since a pending contact matches nothing — and the first
-step's delay counts from there. So "two days after the opt-in is validated" is an
-empty `enrollWhen` and a first step at 2880 minutes.
+- a **trigger source** — what it watches;
+- **`triggerWhen`** — which of that source's subjects deserve the sequence,
+  written in that source's own vocabulary;
+- **steps** — the mails, in order, each after its own delay.
 
-`stopWhen` is re-checked before each step, so someone whose situation changed
-stops mid-sequence — do not send "discover us" to a customer who just booked.
-Unsubscribing stops every active sequence.
+Two sources ship with the bundle, and a bundle of yours can add more (see
+[Custom trigger sources](#custom-trigger-sources)).
 
-**`enrollFrom`** is the guard worth knowing about: contacts registered before that
-date are never enrolled. It defaults to the automation's creation date, so
-switching one on cannot mail an entire existing base at once. It is a field, not
-a criterion, because it must not be possible to forget.
+**`activeFrom`** is the guard worth knowing about, whatever the source: nothing
+that happened before that date ever triggers anything. It defaults to the
+automation's creation date, so switching one on cannot mail an entire existing
+base, nor announce an entire back catalogue, at once. It is a field rather than a
+criterion, because it must not be possible to forget.
 
-Disabling an automation pauses it: enrollments keep their place and resume.
+Disabling an automation pauses it: sequences under way keep their place and
+resume, and nothing new is picked up.
 
-## Content triggers
+### Two ways a sequence is delivered
 
-An automation watches contacts. A content trigger watches the site: publish an
-article and, a configurable delay later, everyone in the segment gets a mail
-about it — unattended, with no campaign to write.
+The source decides, per occurrence, and it decides by answering one question: is
+this about *one person*, or about *the site*?
 
-Set it up once (**Newsletter → Content triggers**): the hosts to watch, which of
-their pages are worth a mail, who receives it, how long to wait, and the subject
-and body to send.
+**About one person** — a new contact, a customer who ordered — and the steps are
+dripped at them. An enrollment holds their place, and `stopWhen` is re-checked
+before each step, so someone whose situation changed stops mid-sequence: do not
+send "discover us" to a customer who just booked. Unsubscribing stops every
+active sequence.
+
+**About the site** — an article was published — and each step becomes an ordinary
+scheduled **campaign**, broadcast to whoever `recipientWhen` selects. `stopWhen`
+has no meaning there and needs none: a campaign's recipients are resolved when it
+is armed, so someone who stopped matching `recipientWhen` between step one and
+step two is simply not in step two.
+
+That second half is worth stating plainly, because it is what makes the two
+halves compose: **`recipientWhen` is read at send time, not at trigger time.** A
+publication can therefore mail a state of the reader that has nothing to do with
+the publication —
+
+```json
+[{"field": "prop.lastSeenAt", "op": "olderThan", "value": "30d"}]
+```
+
+— *every article, but only to subscribers we have not seen in a month.* The
+article picks the moment; the contact's own history picks the audience.
+
+### Watching contacts
+
+`triggerWhen` is an ordinary [segment](#segments). Every subscribed contact who
+comes to match is enrolled once and receives the steps. "Two mails after
+subscription" is an empty `triggerWhen` and two steps.
+
+It says *who*, never *when*: the timing is the step's own delay. A contact is
+enrolled as soon as they are subscribed — with double opt-in, the moment they
+confirm, since a pending contact matches nothing — and the first step's delay
+counts from their registration. So "two days after the opt-in is validated" is an
+empty `triggerWhen` and a first step at 2880 minutes.
+
+### Watching pages
+
+Publish an article and, a delay later, everyone `recipientWhen` selects gets a
+mail about it — unattended, with no campaign to write. Set the source to `page`,
+name the hosts to watch, and write `triggerWhen` over pages instead of contacts:
 
 ```json
 [{"field": "slug", "op": "startsWith", "value": "blog/"}]
@@ -310,9 +382,10 @@ and body to send.
 | `tag` | `has`, `hasNot` — as on a contact, and as a bare [`pages_list`](/pages-list) search |
 | `prop.<key>` | `=`, `!=`, `isSet`, `isNotSet` |
 
-Same shape as a segment, over pages instead of contacts — including `{"any": [...]}`.
-An empty list means every published page of those hosts. The two rules read as one
-sentence: `pageWhen` picks the article, `segment` picks the readers.
+Same shape as a segment, over pages instead of contacts — including
+`{"any": [...]}`. An empty list means every published page of those hosts. The two
+rules read as one sentence: `triggerWhen` picks the article, `recipientWhen` picks
+the readers.
 
 Or write it as a [`pages_list`](/pages-list) search, in the words you already use in
 a template. What you type is translated into the list above and stored as one, so
@@ -322,37 +395,48 @@ you can always see what it understood:
 ancestor:blog AND (tag:featured OR tag:pinned)
 ```
 
-The search grammar is wider than a trigger's vocabulary, and the vocabulary wins: a
+The search grammar is wider than this vocabulary, and the vocabulary wins: a
 `title:` search, or a `children`, is refused by name rather than quietly compiled —
-a trigger has no page being rendered to be relative to.
+an automation has no page being rendered to be relative to.
 
 Before reaching for `any`, reach for what already groups pages — the same two axes
 a `pages_list` search leans on. A blog split in rubrics, whose articles sit at the
 root and are attached by `parent`, shares no slug prefix and would otherwise
-need one trigger per rubric. Either axis covers it in one condition, and unlike an
-enumeration it covers the rubric added next month too:
+need one automation per rubric. Either axis covers it in one condition, and unlike
+an enumeration it covers the rubric added next month too:
 
 ```json
 [{"field": "ancestor", "op": "=", "value": "blog"}]
 [{"field": "tag", "op": "has", "value": "blog"}]
 ```
 
-Whatever the rule, the hosts, the `triggerFrom` and the pages already handled are
+Whatever the rule, the hosts, the `activeFrom` and the pages already handled are
 ANDed with the whole of it: `any` widens which pages match, never past those.
 
-The subject and the body may quote five values of the page:
+### What a step may quote
+
+A step's subject and body may quote what the occurrence lends. A page lends five
+values:
 
 ```
 {{ page.h1 }}   {{ page.excerpt }}   {{ page.chapeau }}
 {{ page.url }}  {{ page.mainImage }}
 ```
 
+A contact lends `{{ contact.name }}` and `{{ contact.email }}`; another source
+lends whatever it says it lends.
+
 The braces are borrowed from Twig; nothing is evaluated. They are substituted
-once, when the campaign is created, so what gets stored is plain Markdown —
+once, when the occurrence is handled, so what gets stored is plain Markdown —
 which is why link absolutization and `utm_*` tagging work on it exactly as they
-do on a hand-written newsletter. `{{ page.url }}` is built from the page's own
-host and its canonical base URL, so it keeps working on a statically generated
-site and across an audience that spans several locale hosts.
+do on a hand-written newsletter. A name nobody lent is left where it stands, so a
+typo shows up in the preview instead of vanishing. `{{ page.url }}` is built from
+the page's own host and its canonical base URL, so it keeps working on a
+statically generated site and across an audience that spans several locale hosts.
+
+The values are frozen when the sequence starts. A three-step drip quotes the same
+title in its last mail as in its first, even if the article was retitled in
+between: a sequence has to read as one conversation.
 
 `{{ page.excerpt }}` is the article's own opening, and deliberately never the
 `searchExcerpt` custom property: that one is written for a search result page,
@@ -384,25 +468,83 @@ that would reach the inbox as literal markup, so tags are dropped there (each on
 leaving a space, so a `<br>` does not glue two words) and entities decoded. The
 body keeps everything: inline HTML is legitimate Markdown.
 
-**What it produces is an ordinary campaign**, scheduled at `publishedAt + delay`
-and sent by the same tick. During the delay you can read it, edit it, or cancel
-it in the admin; afterwards it reports deliveries, unsubscribes and bounces like
-any other. It is never rewritten: editing the page after the campaign exists
-changes the article, not the mail already queued about it.
+### What a broadcast produces
+
+**Ordinary campaigns**, one per step, scheduled at `occurredAt + delay` and sent
+by the same tick. During the delay you can read them, edit them, or cancel them
+in the admin; afterwards they report deliveries, unsubscribes and bounces like
+any other, and each carries the automation it came from. They are never
+rewritten: editing the page after the campaign exists changes the article, not
+the mail already queued about it.
 
 Three things it will not do:
 
-- **Mail a back catalogue.** `triggerFrom` defaults to the moment of creation;
-  pages published before it never trigger anything. Like `enrollFrom`, it is a
-  field rather than a criterion, because it must not be possible to forget.
-- **Mail the same page twice.** A trigger records the pages it has handled, so a
-  missed tick only delays work and a tick that runs twice writes nothing new.
+- **Mail a back catalogue.** `activeFrom`, as above.
+- **Mail the same subject twice.** An automation records the subjects it has
+  handled, so a missed tick only delays work and a tick that runs twice writes
+  nothing new.
 - **Mail a dead link.** A page unpublished or deleted before its campaign is
   armed cancels it. Publish it again and it gets its mail — the record went with
-  the cancellation.
+  the cancellation. Once a step has been armed the article has been announced,
+  and the remaining steps are cancelled without clearing the record.
 
 Not to be confused with [Page Update Notifier](/extension/page-update-notifier),
 which mails *you* when content changes. This one mails your readers.
+
+### Custom trigger sources
+
+Anything your application knows how to watch can start a sequence. Implement
+`TriggerSource` and tag the service `pushword.newsletter.trigger_source`; it then
+appears in the admin's source list, its vocabulary validates in the same
+textarea, and the steps, the delays, the segment and the reporting are the ones
+every other automation already uses.
+
+```php
+use Pushword\Newsletter\Trigger\{TriggerSource, TriggerOccurrence};
+
+#[AutoconfigureTag('pushword.newsletter.trigger_source')]
+final readonly class CustomerTriggerSource implements TriggerSource
+{
+    public function name(): string { return 'customer'; }
+
+    /** The vocabulary triggerWhen is written in — your own AbstractCriteria subclass. */
+    public function criteria(): string { return CustomerCriteria::class; }
+
+    /** @return list<TriggerOccurrence> */
+    public function occurrences(Automation $automation, DateTimeImmutable $now, ?int $limit = null): array
+    {
+        return array_map(fn (Customer $customer) => new TriggerOccurrence(
+            subjectId: $customer->getId(),
+            occurredAt: $customer->getFirstOrderAt(),
+            placeholders: ['customer.firstName' => $customer->getFirstName()],
+            contact: $this->contactOf($customer),   // null broadcasts instead
+        ), $this->matching($automation, $now, $limit));
+    }
+
+    public function count(Automation $automation, DateTimeImmutable $now): int { /* … */ }
+
+    /** Asked during the delay: a refunded order is no longer worth a mail. */
+    public function stillMatches(int $subjectId): bool { /* … */ }
+}
+```
+
+Four things worth knowing:
+
+- **`subjectId` is the identity an automation remembers having handled.** Return
+  the same subject twice and the second one is dropped, so a source written
+  without a `LIMIT` is still safe to call.
+- **`contact` picks the delivery**, per occurrence. Set it, and the steps are
+  dripped at that person; leave it null, and they are broadcast to
+  `recipientWhen`.
+- **`occurredAt` starts the clock**, and it is the event's own date rather than
+  the tick's — a delayed tick still mails on time.
+- **Remembering is not yours to do.** The automation writes the marker; your
+  source exposes the query and stays stateless.
+
+Your vocabulary is an `AbstractCriteria` subclass — the same base the segment and
+page languages extend — so `{"any": [...]}`, the JSON round trip through the admin
+textarea, and the error messages come for free. Its `FieldRegistry` is what says
+how each field compiles.
 
 ## Link attribution
 
@@ -445,14 +587,15 @@ the others.
 
 `pw:newsletter:tick` is stateless and idempotent. Each run, under a lock:
 
-1. schedules a campaign for each newly published page a content trigger matches,
-2. arms scheduled campaigns whose date has passed,
-3. drains pending recipients at the cadence,
-4. enrolls contacts newly matching an enabled automation,
-5. sends the automation steps that are due.
+1. asks every enabled automation's source what newly happened, and starts a
+   sequence at each of them — an enrollment, or a campaign per step,
+2. cancels the campaigns whose subject stopped deserving them,
+3. arms scheduled campaigns whose date has passed,
+4. drains pending recipients at the cadence,
+5. sends the drip steps that are due.
 
-Content triggers come first so that a page whose delay has already elapsed goes
-out in the pass that noticed it, rather than a minute later.
+Triggering comes first so that something whose delay has already elapsed goes out
+in the pass that noticed it, rather than a minute later.
 
 Pacing is derived from the last mail actually sent rather than from a sleep, so
 the command returns immediately and a campaign resumes at the right rate whatever
@@ -507,15 +650,9 @@ POST   /api/newsletter/campaign/{id}/test
 
 GET    /api/newsletter/automation?audience=&enabled=
 POST   /api/newsletter/automation
-GET    /api/newsletter/automation/{id}  # includes enrollment counts
+GET    /api/newsletter/automation/{id}  # includes progress, subjects waiting and reach
 PATCH  /api/newsletter/automation/{id}
 DELETE /api/newsletter/automation/{id}
-
-GET    /api/newsletter/content-trigger?audience=&enabled=
-POST   /api/newsletter/content-trigger
-GET    /api/newsletter/content-trigger/{id}  # includes waiting pages and reach
-PATCH  /api/newsletter/content-trigger/{id}
-DELETE /api/newsletter/content-trigger/{id}
 ```
 
 `POST /contact` follows the audience's double opt-in rule; sending
@@ -527,12 +664,18 @@ external system can count an audience before asking for a send.
 
 An automation carries its whole sequence: `steps` is an array in the order the
 mails go out, and sending it again rewrites the sequence rather than appending to
-it. `enrollFrom` defaults to the moment of creation there too, so a drip created
-over the API cannot mail an existing base either.
+it. `activeFrom` defaults to the moment of creation there too, so an automation
+created over the API cannot mail an existing base either.
 
-A `GET` on a content trigger reports both sides of its rule — `waitingPages` and
-`matchingContacts` — plus `campaignsCreated`. Deleting one keeps the campaigns it
-produced: they are ordinary campaigns, and some of them have been sent.
+`source` decides which vocabulary `triggerWhen` is validated against, so a request
+changing both must send the source — an unknown one, or a rule written in the
+wrong language, is a `400` naming which of the three rules was wrong.
+
+A `GET` reports both sides — `waiting` (subjects the source has for it right now)
+and `matchingContacts` (what `recipientWhen` reaches) — plus `handled` and the
+enrollment `stats`. Deleting an automation drops its enrollments and its markers
+but keeps the campaigns it produced: they are ordinary campaigns, and some of them
+have been sent.
 
 An audience can be created over the API too, so a site is set up without opening
 the admin first. Its `mainHost` must be one of the configured Pushword hosts — an
@@ -619,16 +762,21 @@ action, what the site sells.
   `/api/newsletter/contact/{id}/bounce`. An asynchronous bounce (SES→SNS,
   a webhook, a Return-Path mailbox) needs an adapter that does not exist yet.
 - **No SMS.** Contacts are email-keyed; a phone number is a custom property.
-- **No `OR` between the two sides of a content trigger.** `pageWhen` selects
-  pages, `segment` selects contacts, and a trigger is their product: each matching
-  page becomes a campaign, sent to the matching contacts. `AND` between them is
-  implicit; an `OR` would be a condition on a (page, contact) *pair*, which is a
-  different model — no amount of nesting inside either side reaches it.
+- **No `OR` between the two sides of a broadcast.** `triggerWhen` selects
+  subjects, `recipientWhen` selects contacts, and a broadcast is their product:
+  each matching page becomes a campaign, sent to the matching contacts. `AND`
+  between them is implicit; an `OR` would be a condition on a (page, contact)
+  *pair*, which is a different model — no amount of nesting inside either side
+  reaches it.
 
   The intent behind wanting it is real: *this content to that audience, that
-  content to this one, in one trigger.* Today the answer is two triggers, and it
-  double-mails: `ContentTriggerLog` is unique on (trigger, page), so two triggers
-  keep independent logs and a contact in both segments gets two mails about the
-  same article. Fixing it properly means either a log keyed on (page, contact) or
-  a trigger holding a list of (pageWhen, segment) pairs with the recipients
-  deduplicated. Neither is built.
+  content to this one, in one automation.* Today the answer is two automations,
+  and it double-mails: `TriggerLog` is unique on (automation, subject), so two
+  automations keep independent records and a contact in both segments gets two
+  mails about the same article. Fixing it properly means either a record keyed on
+  (subject, contact) or an automation holding a list of
+  (triggerWhen, recipientWhen) pairs with the recipients deduplicated. Neither is
+  built.
+- **No `stopWhen` on a broadcast.** It would have to mean "drop this contact from
+  the remaining steps", which is what `recipientWhen` already does at each arming
+  — an inverted duplicate of a rule that is read at the right moment anyway.

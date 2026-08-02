@@ -11,7 +11,8 @@ use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
-use Pushword\Newsletter\Entity\ContentTrigger;
+use Pushword\Newsletter\Trigger\Source\ContactTriggerSource;
+use Pushword\Newsletter\Trigger\Source\PageTriggerSource;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -69,15 +70,15 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
     /** @param string[] $interests */
     protected function createAudience(bool $requireDoubleOptIn = true, array $interests = [], int $rateSeconds = 30, string $mainHost = 'localhost.dev'): Audience
     {
-        $audience = new Audience()
-            ->setSlug('test-'.bin2hex(random_bytes(6)))
-            ->setName('Test audience')
-            ->setMainHost($mainHost)
-            ->setFromName('Test')
-            ->setFromEmail('newsletter@localhost.dev')
-            ->setRequireDoubleOptIn($requireDoubleOptIn)
-            ->setInterests($interests)
-            ->setRateSeconds($rateSeconds);
+        $audience = new Audience();
+        $audience->slug = 'test-'.bin2hex(random_bytes(6));
+        $audience->name = 'Test audience';
+        $audience->mainHost = $mainHost;
+        $audience->fromName = 'Test';
+        $audience->fromEmail = 'newsletter@localhost.dev';
+        $audience->requireDoubleOptIn = $requireDoubleOptIn;
+        $audience->interests = $interests;
+        $audience->rateSeconds = $rateSeconds;
 
         $this->entityManager->persist($audience);
         $this->entityManager->flush();
@@ -109,8 +110,8 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
         string $locale = 'en',
     ): Contact {
         $contact = new Contact($audience, $email);
-        $contact->setName('Test');
-        $contact->setLocale($locale);
+        $contact->name = 'Test';
+        $contact->locale = $locale;
         $contact->setTags($tags);
         $contact->customProperties = $customProperties;
         $contact->optIn(! $subscribed);
@@ -129,11 +130,11 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
     /** @param array<mixed> $segment */
     protected function createCampaign(Audience $audience, array $segment = [], string $subject = 'Hello'): Campaign
     {
-        $campaign = new Campaign()
-            ->setAudience($audience)
-            ->setSubject($subject)
-            ->setBodyMarkdown('Hello **%name%**.')
-            ->setSegment($segment);
+        $campaign = new Campaign();
+        $campaign->audience = $audience;
+        $campaign->subject = $subject;
+        $campaign->bodyMarkdown = 'Hello **%name%**.';
+        $campaign->segment = $segment;
 
         $this->entityManager->persist($campaign);
         $this->entityManager->flush();
@@ -142,25 +143,70 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
     }
 
     /**
+     * A drip on the contact source: the shape every automation had before there
+     * were others.
+     *
      * @param list<array{delay: int, subject: string}> $steps
-     * @param array<int, array<string, mixed>>         $enrollWhen
+     * @param array<int, array<string, mixed>>         $triggerWhen
      * @param array<int, array<string, mixed>>         $stopWhen
      */
-    protected function createAutomation(Audience $audience, array $steps, array $enrollWhen = [], array $stopWhen = []): Automation
+    protected function createAutomation(Audience $audience, array $steps, array $triggerWhen = [], array $stopWhen = []): Automation
     {
-        $automation = new Automation()
-            ->setAudience($audience)
-            ->setName('Welcome')
-            ->setEnrollWhen($enrollWhen)
-            ->setStopWhen($stopWhen)
-            ->setEnrollFrom(new DateTimeImmutable('-1 year'));
+        $automation = new Automation();
+        $automation->audience = $audience;
+        $automation->name = 'Welcome';
+        $automation->source = ContactTriggerSource::NAME;
+        $automation->triggerWhen = $triggerWhen;
+        $automation->stopWhen = $stopWhen;
+        $automation->activeFrom = new DateTimeImmutable('-1 year');
 
+        return $this->persistAutomation($automation, $steps);
+    }
+
+    /**
+     * A broadcast on the page source — what a content trigger used to be, now
+     * one automation among the others.
+     *
+     * @param string[]                                 $hosts
+     * @param array<mixed>                             $triggerWhen
+     * @param array<mixed>                             $recipientWhen
+     * @param list<array{delay: int, subject: string}> $steps
+     */
+    protected function createPageAutomation(
+        Audience $audience,
+        array $hosts = ['localhost.dev'],
+        array $triggerWhen = [],
+        array $recipientWhen = [],
+        ?array $steps = null,
+        ?DateTimeImmutable $activeFrom = null,
+    ): Automation {
+        $automation = new Automation();
+        $automation->audience = $audience;
+        $automation->name = 'New articles';
+        $automation->source = PageTriggerSource::NAME;
+        $automation->hosts = $hosts;
+        $automation->triggerWhen = $triggerWhen;
+        $automation->recipientWhen = $recipientWhen;
+        $automation->activeFrom = $activeFrom ?? new DateTimeImmutable('-1 hour');
+
+        return $this->persistAutomation(
+            $automation,
+            $steps ?? [['delay' => 1440, 'subject' => 'New article: {{ page.h1 }}']],
+            'Read [{{ page.h1 }}]({{ page.url }}).'
+        );
+    }
+
+    /** @param list<array{delay: int, subject: string}> $steps */
+    private function persistAutomation(Automation $automation, array $steps, string $body = 'Step body.'): Automation
+    {
         foreach ($steps as $position => $step) {
-            $automation->addStep(new AutomationStep()
-                ->setPosition($position)
-                ->setDelayMinutes($step['delay'])
-                ->setSubject($step['subject'])
-                ->setBodyMarkdown('Step body.'));
+            $automationStep = new AutomationStep();
+            $automationStep->position = $position;
+            $automationStep->delayMinutes = $step['delay'];
+            $automationStep->subject = $step['subject'];
+            $automationStep->bodyMarkdown = $body;
+
+            $automation->addStep($automationStep);
         }
 
         $this->entityManager->persist($automation);
@@ -169,45 +215,12 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
         return $automation;
     }
 
-    /**
-     * @param string[]     $hosts
-     * @param array<mixed> $pageWhen
-     * @param array<mixed> $segment
-     */
-    protected function createContentTrigger(
-        Audience $audience,
-        array $hosts = ['localhost.dev'],
-        array $pageWhen = [],
-        array $segment = [],
-        int $delayMinutes = 1440,
-        string $subjectTemplate = 'New article: {{ page.h1 }}',
-        string $bodyTemplate = 'Read [{{ page.h1 }}]({{ page.url }}).',
-        ?DateTimeImmutable $triggerFrom = null,
-    ): ContentTrigger {
-        $trigger = new ContentTrigger()
-            ->setAudience($audience)
-            ->setName('New articles')
-            ->setHosts($hosts)
-            ->setPageWhen($pageWhen)
-            ->setSegment($segment)
-            ->setDelayMinutes($delayMinutes)
-            ->setSubjectTemplate($subjectTemplate)
-            ->setBodyTemplate($bodyTemplate)
-            ->setTriggerFrom($triggerFrom ?? new DateTimeImmutable('-1 hour'));
-
-        $this->entityManager->persist($trigger);
-        $this->entityManager->flush();
-
-        return $trigger;
-    }
-
     private function purge(int $audienceId): void
     {
         $connection = $this->entityManager->getConnection();
 
         $statements = [
-            'DELETE FROM newsletter_content_trigger_log WHERE trigger_id IN (SELECT id FROM newsletter_content_trigger WHERE audience_id = :id)',
-            'DELETE FROM newsletter_content_trigger WHERE audience_id = :id',
+            'DELETE FROM newsletter_trigger_log WHERE automation_id IN (SELECT id FROM newsletter_automation WHERE audience_id = :id)',
             'DELETE FROM newsletter_enrollment WHERE contact_id IN (SELECT id FROM newsletter_contact WHERE audience_id = :id)',
             'DELETE FROM newsletter_campaign_recipient WHERE campaign_id IN (SELECT id FROM newsletter_campaign WHERE audience_id = :id)',
             'DELETE FROM newsletter_automation_step WHERE automation_id IN (SELECT id FROM newsletter_automation WHERE audience_id = :id)',

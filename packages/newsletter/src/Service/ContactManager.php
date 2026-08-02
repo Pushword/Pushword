@@ -44,7 +44,7 @@ final readonly class ContactManager
         ?string $optinIp = null,
         ?bool $requireDoubleOptIn = null,
     ): Contact {
-        $requireDoubleOptIn ??= $audience->requireDoubleOptIn();
+        $requireDoubleOptIn ??= $audience->requireDoubleOptIn;
         $contact = $this->contactRepository->findOneByEmail($audience, $email);
         $isNew = ! $contact instanceof Contact;
 
@@ -54,18 +54,18 @@ final readonly class ContactManager
         }
 
         if (null !== $name && '' !== trim($name)) {
-            $contact->setName($name);
+            $contact->name = $name;
         }
 
         if (null !== $locale && '' !== trim($locale)) {
-            $contact->setLocale($locale);
+            $contact->locale = $locale;
         }
 
         // Nothing said which language this person reads — an API import rarely
         // knows. The audience's host answers it, the way a page takes its locale
         // from the host it belongs to.
-        if ('' === $contact->getLocale()) {
-            $contact->setLocale($this->siteRegistry->get($audience->getMainHost())->locale);
+        if ('' === $contact->locale) {
+            $contact->locale = $this->siteRegistry->get($audience->mainHost)->locale;
         }
 
         foreach ($interests as $interest) {
@@ -77,9 +77,9 @@ final readonly class ContactManager
         // must point at the moment consent was actually given.
         $reopening = $isNew || ! $contact->isSubscribed();
         if ($reopening) {
-            $contact->setSource($source);
-            $contact->setOptinHost($optinHost);
-            $contact->setOptinIp($optinIp);
+            $contact->source = $source;
+            $contact->optinHost = $optinHost;
+            $contact->optinIp = $optinIp;
             $contact->optIn($requireDoubleOptIn);
         }
 
@@ -106,7 +106,7 @@ final readonly class ContactManager
 
     public function unsubscribe(Contact $contact): void
     {
-        if (null !== $contact->getUnsubscribedAt()) {
+        if (null !== $contact->unsubscribedAt) {
             return;
         }
 
@@ -129,7 +129,7 @@ final readonly class ContactManager
      */
     public function resubscribe(Contact $contact): void
     {
-        if (null === $contact->getUnsubscribedAt() || null !== $contact->getBouncedAt()) {
+        if (null === $contact->unsubscribedAt || null !== $contact->bouncedAt) {
             return;
         }
 
@@ -137,7 +137,7 @@ final readonly class ContactManager
 
         // The campaign credited with the opt-out gets its count back. It is the
         // same row `unsubscribe()` picked: nothing was sent to them in between.
-        $this->lastSentTo($contact)?->getCampaign()->decrementUnsub();
+        $this->lastSentTo($contact)?->campaign->decrementUnsub();
 
         $this->entityManager->flush();
     }
@@ -145,7 +145,7 @@ final readonly class ContactManager
     /** A permanent delivery failure: the address leaves every future segment. */
     public function markBounced(Contact $contact): void
     {
-        if (null !== $contact->getBouncedAt()) {
+        if (null !== $contact->bouncedAt) {
             return;
         }
 
@@ -169,12 +169,12 @@ final readonly class ContactManager
 
         if ('bounce' === $kind) {
             $last->markBounced();
-            $last->getCampaign()->incrementBounce();
+            $last->campaign->incrementBounce();
 
             return;
         }
 
-        $last->getCampaign()->incrementUnsub();
+        $last->campaign->incrementUnsub();
     }
 
     /**

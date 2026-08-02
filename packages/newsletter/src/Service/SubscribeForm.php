@@ -90,7 +90,7 @@ final readonly class SubscribeForm
     {
         return $this->linkGenerator->base($audiences[0])
             .$this->urlGenerator->generate('pushword_newsletter_form').'?'.http_build_query([
-                'audiences' => implode(',', array_map(static fn (Audience $audience): string => $audience->getSlug(), $audiences)),
+                'audiences' => implode(',', array_map(static fn (Audience $audience): string => $audience->slug, $audiences)),
                 'interests' => implode(',', $interests),
                 'locale' => $locale,
                 'source' => $source ?? '',
@@ -106,7 +106,7 @@ final readonly class SubscribeForm
         // The fragment is served by the live host, whose request locale is not
         // the reader's: the page the form will sit in sent its own.
         return $this->localeSwitcher->runWithLocale($locale, fn (): string => $this->twig->render(
-            $this->view('form.html.twig', $audiences[0]->getMainHost()),
+            $this->view('form.html.twig', $audiences[0]->mainHost),
             [
                 'audiences' => $audiences,
                 'interests' => $interests,

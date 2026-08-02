@@ -32,10 +32,15 @@ class Audience implements IdInterface, Stringable
     #[Assert\NotBlank]
     #[Assert\Regex(pattern: '/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/', message: 'newsletter.audience.slug.invalid')]
     #[ORM\Column(type: Types::STRING, length: 100)]
-    private string $slug = '';
+    public string $slug = '' {
+        set(string $value) => trim(strtolower($value));
+    }
 
     #[ORM\Column(type: Types::STRING, length: 255)]
-    private string $name = '';
+    public string $name = '' {
+        get => '' !== $this->name ? $this->name : $this->slug;
+        set(?string $value) => (string) $value;
+    }
 
     /**
      * The Pushword host this audience belongs to. Public links (confirm,
@@ -44,22 +49,32 @@ class Audience implements IdInterface, Stringable
      */
     #[Assert\NotBlank]
     #[ORM\Column(type: Types::STRING, length: 255)]
-    private string $mainHost = '';
+    public string $mainHost = '';
 
     #[ORM\Column(type: Types::STRING, length: 255)]
-    private string $fromName = '';
+    public string $fromName = '' {
+        get => '' !== $this->fromName ? $this->fromName : $this->name;
+        set(?string $value) => (string) $value;
+    }
 
     #[Assert\NotBlank]
     #[Assert\Email(mode: 'strict')]
     #[ORM\Column(type: Types::STRING, length: 180)]
-    private string $fromEmail = '';
+    public string $fromEmail = '' {
+        set(string $value) => mb_strtolower(trim($value));
+    }
 
     #[Assert\Email(mode: 'strict')]
     #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]
-    private ?string $replyTo = null;
+    public ?string $replyTo = null {
+        set(?string $value) {
+            $replyTo = mb_strtolower(trim((string) $value));
+            $this->replyTo = '' !== $replyTo ? $replyTo : null;
+        }
+    }
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
-    private bool $requireDoubleOptIn = true;
+    public bool $requireDoubleOptIn = true;
 
     /**
      * The only interest values the public subscribe endpoint may write. That
@@ -69,19 +84,31 @@ class Audience implements IdInterface, Stringable
      * @var string[]
      */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
-    private array $interests = [];
+    public array $interests = [] {
+        /** @param string[] $value */
+        set(array $value) => array_values(array_unique(
+            array_filter(array_map(trim(...), $value), static fn (string $i): bool => '' !== $i)
+        ));
+    }
 
     /** Seconds between two mails of this audience. Sets the ceiling the transport is asked to hold. */
     #[Assert\Positive]
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 30])]
-    private int $rateSeconds = 30;
+    public int $rateSeconds = 30 {
+        set(int $value) => max(1, $value);
+    }
 
     /**
      * The `utm_source` this audience's links carry. Null leaves them untouched:
      * the parameters are only worth adding where something reads them.
      */
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
-    private ?string $utmSource = null;
+    public ?string $utmSource = null {
+        set(?string $value) {
+            $utmSource = new Slugify()->slugify((string) $value);
+            $this->utmSource = '' !== $utmSource ? $utmSource : null;
+        }
+    }
 
     public function __construct()
     {
@@ -90,107 +117,7 @@ class Audience implements IdInterface, Stringable
 
     public function __toString(): string
     {
-        return '' !== $this->name ? $this->name : $this->slug;
-    }
-
-    public function getSlug(): string
-    {
-        return $this->slug;
-    }
-
-    public function setSlug(string $slug): self
-    {
-        $this->slug = trim(strtolower($slug));
-
-        return $this;
-    }
-
-    public function getName(): string
-    {
-        return '' !== $this->name ? $this->name : $this->slug;
-    }
-
-    public function setName(?string $name): self
-    {
-        $this->name = (string) $name;
-
-        return $this;
-    }
-
-    public function getMainHost(): string
-    {
-        return $this->mainHost;
-    }
-
-    public function setMainHost(string $mainHost): self
-    {
-        $this->mainHost = $mainHost;
-
-        return $this;
-    }
-
-    public function getFromName(): string
-    {
-        return '' !== $this->fromName ? $this->fromName : $this->getName();
-    }
-
-    public function setFromName(?string $fromName): self
-    {
-        $this->fromName = (string) $fromName;
-
-        return $this;
-    }
-
-    public function getFromEmail(): string
-    {
-        return $this->fromEmail;
-    }
-
-    public function setFromEmail(string $fromEmail): self
-    {
-        $this->fromEmail = mb_strtolower(trim($fromEmail));
-
-        return $this;
-    }
-
-    public function getReplyTo(): ?string
-    {
-        return $this->replyTo;
-    }
-
-    public function setReplyTo(?string $replyTo): self
-    {
-        $replyTo = null === $replyTo ? '' : mb_strtolower(trim($replyTo));
-        $this->replyTo = '' !== $replyTo ? $replyTo : null;
-
-        return $this;
-    }
-
-    public function requireDoubleOptIn(): bool
-    {
-        return $this->requireDoubleOptIn;
-    }
-
-    public function setRequireDoubleOptIn(bool $requireDoubleOptIn): self
-    {
-        $this->requireDoubleOptIn = $requireDoubleOptIn;
-
-        return $this;
-    }
-
-    /** @return string[] */
-    public function getInterests(): array
-    {
-        return $this->interests;
-    }
-
-    /** @param string[] $interests */
-    public function setInterests(array $interests): self
-    {
-        $interests = array_filter(array_map(trim(...), $interests), static fn (string $i): bool => '' !== $i);
-        $this->interests = array_values(array_unique($interests));
-
-        return $this;
+        return $this->name;
     }
 
     /**
@@ -204,30 +131,5 @@ class Audience implements IdInterface, Stringable
     public function filterInterests(array $submitted): array
     {
         return array_values(array_intersect(array_map(trim(...), $submitted), $this->interests));
-    }
-
-    public function getRateSeconds(): int
-    {
-        return $this->rateSeconds;
-    }
-
-    public function setRateSeconds(int $rateSeconds): self
-    {
-        $this->rateSeconds = max(1, $rateSeconds);
-
-        return $this;
-    }
-
-    public function getUtmSource(): ?string
-    {
-        return $this->utmSource;
-    }
-
-    public function setUtmSource(?string $utmSource): self
-    {
-        $utmSource = new Slugify()->slugify((string) $utmSource);
-        $this->utmSource = '' !== $utmSource ? $utmSource : null;
-
-        return $this;
     }
 }

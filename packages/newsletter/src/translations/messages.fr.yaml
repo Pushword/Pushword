@@ -28,23 +28,30 @@ newsletter:
       plural: Automatisations
       singular: Automatisation
     action:
-      preview: Prévisualiser l'inscription
+      preview: Prévisualiser le déclencheur
     fieldset:
-      rules: Règles
+      recipients: Destinataires
       steps: Étapes
+      trigger: Déclencheur
     field:
+      activeFrom: Actif à partir du
+      activeFrom.help: Rien de ce qui s'est produit avant cette date ne déclenche quoi que ce soit. Cela évite qu'une nouvelle automatisation écrive à toute une base existante, ou annonce tout un historique, d'un coup.
       audience: Audience
-      enabled: Activée
-      enabled.help: La désactivation met la séquence en pause ; les inscriptions gardent leur position et reprennent.
-      enrollFrom: Inscrire à partir du
-      enrollFrom.help: Les contacts enregistrés avant cette date ne sont jamais inscrits. Cela évite qu'une nouvelle automatisation écrive à toute une base existante d'un coup.
-      enrollWhen: Inscrire si
-      enrollWhen.help: 'Liste JSON de conditions, toutes requises — qui entre dans la séquence, pas quand. Vide : tous les contacts inscrits. Exemple : [{"field":"tag","op":"has","value":"AmTrek"}] ; pour un OU, {"any":[…]}, imbricable.'
+      enabled: Activé
+      enabled.help: 'La désactivation met en pause : les inscriptions gardent leur place et reprennent, et plus rien de nouveau n''est capté.'
+      hosts: Sites
+      hosts.help: Les sites à surveiller, pour les sources qui s'y limitent ; vide surveille tout. Une audience couvre souvent plusieurs sites de langue, choisissez ceux qui méritent un envoi.
       name: Nom
+      recipientWhen: Destinataires
+      recipientWhen.help: 'Qui reçoit les envois diffusés, dans les critères de contact habituels. Vide vise toute l''audience abonnée. Ignoré quand l''occurrence désigne son propre contact — un scénario s''adresse à qui l''a déclenché. Exemple : [{"field":"prop.lastSeenAt","op":"olderThan","value":"30d"}]'
+      source: Déclencher sur
+      source.help: Ce qui est surveillé. « contact » démarre une séquence chez qui vient à correspondre ; « page » annonce une publication à l'audience. Les autres sources viennent des bundles installés.
       stepCount: Étapes
       steps: Étapes
       stopWhen: Arrêter si
-      stopWhen.help: Revérifié avant chaque étape. Une correspondance met fin à la séquence pour ce contact.
+      stopWhen.help: Revérifié avant chaque étape d'un scénario. Une correspondance met fin à la séquence pour ce contact.
+      triggerWhen: Déclencher quand
+      triggerWhen.help: 'Liste JSON de conditions, toutes devant être vraies — quels sujets, pas quand. Vide correspond à tous. Le vocabulaire est celui de la source : une source contact lit tag, locale, createdAt, confirmedAt, prop.<key> ; une source page slug, template, tag, parent, ancestor, prop.<key>, et accepte aussi une recherche pages_list (ancestor:blog AND tag:featured). Pour un OU, {"any":[…]}, imbricable.'
   campaign:
     label:
       plural: Newsletters
@@ -104,11 +111,18 @@ newsletter:
     label:
       plural: Contacts
       singular: Contact
+    action:
+      confirm: Confirmer à la main
+      optIn: Inscrire un contact
+      optInAnother: Ajouter à une autre liste
+      resubscribe: Réinscrire
+      unsubscribe: Désinscrire
     fieldset:
       consent: Consentement
       identity: Identité
     field:
       audience: Audience
+      audience.help: La modifier déplace cette inscription vers une autre liste. Pour en ajouter une, utilisez « Ajouter à une autre liste ».
       bouncedAt: Rejeté le
       confirmedAt: Confirmé le
       customProperties: Propriétés personnalisées
@@ -123,34 +137,25 @@ newsletter:
       status: Statut
       tags: Tags
       unsubscribedAt: Désinscrit le
-  contentTrigger:
-    label:
-      plural: Déclencheurs de contenu
-      singular: Déclencheur de contenu
-    action:
-      preview: Prévisualiser les pages
-    fieldset:
-      mail: Mail
-      rules: Règles
-    field:
-      audience: Audience
-      body: Contenu
-      body.help: "Markdown, avec les mêmes variables que l'objet plus {{ page.mainImage }} pour l'illustration. Les liens sont rendus absolus et marqués avant l'envoi, comme dans toute newsletter."
-      delay: Délai (minutes)
-      delay.help: Attendre ce délai après la publication de la page. J+1 = 1440 ; 0 envoie au prochain tick.
-      enabled: Activé
-      enabled.help: La désactivation arrête la prise en compte des nouvelles pages. Les newsletters déjà créées ne sont pas touchées.
-      hosts: Hôtes
-      hosts.help: 'Les sites à surveiller ; vide, tous. Une audience couvre souvent plusieurs hôtes de langue : choisissez ceux qui méritent un mail.'
-      name: Nom
-      pageWhen: Déclencher sur les pages
-      pageWhen.help: 'Liste JSON de conditions, toutes requises — quelles pages, pas quand. Vide : toutes les pages publiées de ces hôtes. Champs : slug, template, tag, parent, ancestor (le slug d''une page dont elles descendent, à n''importe quelle profondeur), prop.<clé>. Exemple : [{"field":"ancestor","op":"=","value":"blog"}] ; pour un OU, {"any":[…]}, imbricable. Une recherche pages_list marche aussi : ancestor:blog AND tag:featured.'
-      segment: Segment
-      segment.help: "Qui reçoit le mail, dans les critères de contact habituels. Vide : toute l'audience inscrite."
-      subject: Objet
-      subject.help: 'Peut reprendre {{ page.h1 }}, {{ page.excerpt }} et {{ page.url }}. Par exemple : Nouvel article : {{ page.h1 }}'
-      triggerFrom: Déclencher à partir du
-      triggerFrom.help: Les pages publiées avant cette date ne déclenchent jamais rien. Cela évite qu'un nouveau déclencheur écrive à propos de tout un historique d'un coup.
+    flash:
+      confirmationSent: Inscription ouverte — un mail de confirmation part.
+      confirmed: Confirmé à la main.
+      invalidOptIn: Choisissez une liste et une adresse valide.
+      invalidToken: Jeton invalide, merci de réessayer.
+      noAudience: Créez d'abord une audience.
+      notFound: Contact introuvable.
+      resubscribed: Réinscrit.
+      subscribed: Inscrit.
+      unsubscribed: Désinscrit.
+    optIn:
+      alreadyConsented: A déjà consenti
+      alreadyConsented.help: Passe le mail de confirmation et inscrit directement. Uniquement pour un consentement que vous pouvez produire — un formulaire papier, une réponse écrite.
+      cancel: Annuler
+      help: Une liste à la fois, comme le formulaire public. Une adresse déjà présente sur une autre liste reçoit une seconde inscription, avec son propre consentement.
+      title: Inscrire un contact
+    subscriptions:
+      help: La même adresse sur toutes les listes de cette installation. Celle en cours d'édition est surlignée.
+      title: Inscriptions
   email:
     unsubscribe: Se désinscrire
   form:

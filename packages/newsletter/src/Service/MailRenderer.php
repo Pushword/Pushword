@@ -66,7 +66,7 @@ final readonly class MailRenderer
             'contact' => $contact,
             'subject' => $subject,
             'confirmUrl' => $confirmUrl,
-            'primaryColor' => $this->siteRegistry->get($audience->getMainHost())
+            'primaryColor' => $this->siteRegistry->get($audience->mainHost)
                 ->getStr('css_var:color_primary', '#1c1c1c'),
         ]);
     }
@@ -80,7 +80,7 @@ final readonly class MailRenderer
     /** Resolve a template, letting the site override the bundle's default. */
     public function view(Audience $audience, string $template): string
     {
-        return $this->siteRegistry->get($audience->getMainHost())
+        return $this->siteRegistry->get($audience->mainHost)
             ->getView('/newsletter/'.$template, '@PushwordNewsletter');
     }
 
@@ -96,7 +96,7 @@ final readonly class MailRenderer
             return $html;
         }
 
-        $base = rtrim($this->siteRegistry->get($audience->getMainHost())->baseUrl, '/');
+        $base = rtrim($this->siteRegistry->get($audience->mainHost)->baseUrl, '/');
 
         return preg_replace_callback(
             HtmlUnpublishedLink::HTML_REGEX,
@@ -118,8 +118,8 @@ final readonly class MailRenderer
     private function personalize(string $text, Contact $contact): string
     {
         return strtr($text, [
-            '%name%' => $contact->getName(),
-            '%email%' => $contact->getEmail(),
+            '%name%' => $contact->name,
+            '%email%' => $contact->email,
         ]);
     }
 }

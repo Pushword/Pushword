@@ -36,7 +36,7 @@ final readonly class CampaignSender
      */
     public function arm(Campaign $campaign): int
     {
-        $audience = $campaign->getAudience() ?? throw new LogicException('Campaign has no audience.');
+        $audience = $campaign->audience ?? throw new LogicException('Campaign has no audience.');
 
         if (! $campaign->isDraft() && ! $campaign->isScheduled()) {
             throw new LogicException('Only a draft or scheduled campaign can be armed.');
@@ -45,7 +45,7 @@ final readonly class CampaignSender
         $already = array_flip($this->recipientRepository->contactIds($campaign));
         $count = 0;
 
-        foreach ($this->segmentResolver->contacts($audience, $campaign->getSegment()) as $contact) {
+        foreach ($this->segmentResolver->contacts($audience, $campaign->segment) as $contact) {
             if (null !== $contact->id && isset($already[$contact->id])) {
                 continue;
             }
@@ -57,7 +57,7 @@ final readonly class CampaignSender
         $campaign->markSending($count + \count($already));
         $this->entityManager->flush();
 
-        return $campaign->getRecipientCount();
+        return $campaign->recipientCount;
     }
 
     /**
@@ -78,7 +78,7 @@ final readonly class CampaignSender
 
         $sent = 0;
         foreach ($this->recipientRepository->findPending($campaign, $allowance) as $recipient) {
-            $contact = $recipient->getContact();
+            $contact = $recipient->contact;
 
             // Consent can change between arming and sending; the ledger records
             // that we chose not to send, which is not a delivery failure.

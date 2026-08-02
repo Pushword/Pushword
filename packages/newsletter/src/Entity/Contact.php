@@ -40,50 +40,55 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
     use TagsTrait;
     use TimestampableTrait;
 
-    #[Assert\NotBlank]
-    #[Assert\Email(mode: 'strict')]
     #[ORM\Column(type: Types::STRING, length: 180)]
-    private string $email;
-
-    #[ORM\Column(type: Types::STRING, length: 180)]
-    private string $name = '';
+    public string $name = '' {
+        set(?string $value) => trim((string) $value);
+    }
 
     /** Empty only until the first opt-in: the audience's host decides it, as a page's host decides a page's. */
     #[ORM\Column(type: Types::STRING, length: 8)]
-    private string $locale = '';
+    public string $locale = '' {
+        set(?string $value) => trim((string) $value);
+    }
 
     #[ORM\Column(type: Types::STRING, length: 20, enumType: ContactStatus::class)]
-    private ContactStatus $status = ContactStatus::Pending;
+    public private(set) ContactStatus $status = ContactStatus::Pending;
 
     /** Secret used by the confirm and unsubscribe links. Regenerated never — the links stay valid. */
     #[ORM\Column(type: Types::STRING, length: 64)]
-    private string $token;
+    public private(set) string $token;
 
     /** Where the subscription came from: a page slug, `api`, `import`, … */
     #[ORM\Column(type: Types::STRING, length: 120, nullable: true)]
-    private ?string $source = null;
+    public ?string $source = null {
+        set(?string $value) => null !== $value ? mb_substr($value, 0, 120) : null;
+    }
 
     /** The host that served the opt-in form. Provenance only — consent is scoped to the audience. */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
-    private ?string $optinHost = null;
+    public ?string $optinHost = null;
 
     #[ORM\Column(type: Types::STRING, length: 45, nullable: true)]
-    private ?string $optinIp = null;
+    public ?string $optinIp = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?DateTimeImmutable $confirmedAt = null;
+    public private(set) ?DateTimeImmutable $confirmedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?DateTimeImmutable $unsubscribedAt = null;
+    public private(set) ?DateTimeImmutable $unsubscribedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?DateTimeImmutable $bouncedAt = null;
+    public private(set) ?DateTimeImmutable $bouncedAt = null;
 
     public function __construct(#[ORM\ManyToOne(targetEntity: Audience::class)]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-        private Audience $audience, string $email)
+        public Audience $audience, #[Assert\NotBlank]
+        #[Assert\Email(mode: 'strict')]
+        #[ORM\Column(type: Types::STRING, length: 180)]
+        public string $email {
+            set(string $value) => mb_strtolower(trim($value));
+        })
     {
-        $this->setEmail($email);
         $this->token = bin2hex(random_bytes(32));
         $this->initTimestampableProperties();
     }
@@ -91,59 +96,6 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
     public function __toString(): string
     {
         return '' !== $this->name ? $this->name.' <'.$this->email.'>' : $this->email;
-    }
-
-    public function getAudience(): Audience
-    {
-        return $this->audience;
-    }
-
-    public function setAudience(Audience $audience): self
-    {
-        $this->audience = $audience;
-
-        return $this;
-    }
-
-    public function getEmail(): string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): self
-    {
-        $this->email = mb_strtolower(trim($email));
-
-        return $this;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function setName(?string $name): self
-    {
-        $this->name = trim((string) $name);
-
-        return $this;
-    }
-
-    public function getLocale(): string
-    {
-        return $this->locale;
-    }
-
-    public function setLocale(?string $locale): self
-    {
-        $this->locale = trim((string) $locale);
-
-        return $this;
-    }
-
-    public function getStatus(): ContactStatus
-    {
-        return $this->status;
     }
 
     public function getStatusLabel(): string
@@ -159,62 +111,6 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
     public function isPending(): bool
     {
         return ContactStatus::Pending === $this->status;
-    }
-
-    public function getToken(): string
-    {
-        return $this->token;
-    }
-
-    public function getSource(): ?string
-    {
-        return $this->source;
-    }
-
-    public function setSource(?string $source): self
-    {
-        $this->source = null !== $source ? mb_substr($source, 0, 120) : null;
-
-        return $this;
-    }
-
-    public function getOptinHost(): ?string
-    {
-        return $this->optinHost;
-    }
-
-    public function setOptinHost(?string $optinHost): self
-    {
-        $this->optinHost = $optinHost;
-
-        return $this;
-    }
-
-    public function getOptinIp(): ?string
-    {
-        return $this->optinIp;
-    }
-
-    public function setOptinIp(?string $optinIp): self
-    {
-        $this->optinIp = $optinIp;
-
-        return $this;
-    }
-
-    public function getConfirmedAt(): ?DateTimeImmutable
-    {
-        return $this->confirmedAt;
-    }
-
-    public function getUnsubscribedAt(): ?DateTimeImmutable
-    {
-        return $this->unsubscribedAt;
-    }
-
-    public function getBouncedAt(): ?DateTimeImmutable
-    {
-        return $this->bouncedAt;
     }
 
     /**

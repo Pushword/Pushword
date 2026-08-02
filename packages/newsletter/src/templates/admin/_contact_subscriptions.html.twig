@@ -1,0 +1,51 @@
+{# Every list this address is on. The audience select above moves the row being
+   edited; adding a list is another row, which the button here opens.
+
+   The .row > .form-column wrapper is what EasyAdmin's own fieldsets sit in — the
+   panel frame comes from `.form-column .form-fieldset`, not from the fieldset. #}
+{% set badges = {'pending': 'warning', 'subscribed': 'success', 'unsubscribed': 'secondary', 'bounced': 'danger'} %}
+
+<div class="row">
+  <div class="form-column form-column-no-header col-12">
+    <div class="form-fieldset">
+      <div class="form-fieldset-header">
+        <div class="form-fieldset-title">
+          <span class="not-collapsible form-fieldset-title-content">
+            <i class="fa fa-layer-group form-fieldset-icon"></i> {{ 'newsletter.contact.subscriptions.title'|trans }}
+          </span>
+          <div class="form-fieldset-help">{{ 'newsletter.contact.subscriptions.help'|trans }}</div>
+        </div>
+      </div>
+
+      <div class="form-fieldset-body">
+        <table class="table datagrid">
+          <thead>
+            <tr>
+              <th>{{ 'newsletter.contact.field.audience'|trans }}</th>
+              <th>{{ 'newsletter.audience.field.mainHost'|trans }}</th>
+              <th>{{ 'newsletter.contact.field.status'|trans }}</th>
+              <th>{{ 'newsletter.contact.field.registeredAt'|trans }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for subscription in subscriptions %}
+              {% set contact = subscription.contact %}
+              <tr class="{{ subscription.current ? 'table-active' }}">
+                <td>
+                  {% if subscription.current %}
+                    <strong>{{ contact.audience.name }}</strong>
+                  {% else %}
+                    <a href="{{ subscription.url }}">{{ contact.audience.name }}</a>
+                  {% endif %}
+                </td>
+                <td class="text-muted">{{ contact.audience.mainHost }}</td>
+                <td><span class="badge badge-{{ badges[contact.statusLabel] }}">{{ contact.statusLabel }}</span></td>
+                <td class="text-muted">{{ contact.registeredAt|date('d M Y') }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -62,7 +62,8 @@ final class AudienceApiController extends AbstractApiController
     {
         $data = $this->decodeJson($request);
 
-        $audience = new Audience()->setSlug(\is_string($data['slug'] ?? null) ? $data['slug'] : '');
+        $audience = new Audience();
+        $audience->slug = \is_string($data['slug'] ?? null) ? $data['slug'] : '';
 
         $error = $this->apply($audience, $data);
         if (null !== $error) {
@@ -76,7 +77,7 @@ final class AudienceApiController extends AbstractApiController
 
         // The slug is unique in the database; saying so is better than the 500
         // the constraint would raise.
-        if ($this->audienceRepository->findOneBySlug($audience->getSlug()) instanceof Audience) {
+        if ($this->audienceRepository->findOneBySlug($audience->slug) instanceof Audience) {
             return $this->respond(['error' => 'An audience already uses this slug'], Response::HTTP_CONFLICT);
         }
 
@@ -154,39 +155,39 @@ final class AudienceApiController extends AbstractApiController
                 return $this->badRequest('Unknown host: '.$data['mainHost']);
             }
 
-            $audience->setMainHost($mainHost);
+            $audience->mainHost = $mainHost;
         }
 
         if (\array_key_exists('name', $data) && \is_string($data['name'])) {
-            $audience->setName($data['name']);
+            $audience->name = $data['name'];
         }
 
         if (\array_key_exists('fromName', $data) && \is_string($data['fromName'])) {
-            $audience->setFromName($data['fromName']);
+            $audience->fromName = $data['fromName'];
         }
 
         if (\array_key_exists('fromEmail', $data) && \is_string($data['fromEmail'])) {
-            $audience->setFromEmail($data['fromEmail']);
+            $audience->fromEmail = $data['fromEmail'];
         }
 
         if (\array_key_exists('replyTo', $data)) {
-            $audience->setReplyTo(\is_string($data['replyTo']) ? $data['replyTo'] : null);
+            $audience->replyTo = \is_string($data['replyTo']) ? $data['replyTo'] : null;
         }
 
         if (\array_key_exists('requireDoubleOptIn', $data) && \is_bool($data['requireDoubleOptIn'])) {
-            $audience->setRequireDoubleOptIn($data['requireDoubleOptIn']);
+            $audience->requireDoubleOptIn = $data['requireDoubleOptIn'];
         }
 
         if (\array_key_exists('interests', $data) && \is_array($data['interests'])) {
-            $audience->setInterests(array_values(array_filter($data['interests'], is_string(...))));
+            $audience->interests = array_values(array_filter($data['interests'], is_string(...)));
         }
 
         if (\array_key_exists('rateSeconds', $data) && \is_int($data['rateSeconds'])) {
-            $audience->setRateSeconds($data['rateSeconds']);
+            $audience->rateSeconds = $data['rateSeconds'];
         }
 
         if (\array_key_exists('utmSource', $data)) {
-            $audience->setUtmSource(\is_string($data['utmSource']) ? $data['utmSource'] : null);
+            $audience->utmSource = \is_string($data['utmSource']) ? $data['utmSource'] : null;
         }
 
         return null;
@@ -197,16 +198,16 @@ final class AudienceApiController extends AbstractApiController
     {
         $payload = [
             'id' => $audience->id,
-            'slug' => $audience->getSlug(),
-            'name' => $audience->getName(),
-            'mainHost' => $audience->getMainHost(),
-            'fromName' => $audience->getFromName(),
-            'fromEmail' => $audience->getFromEmail(),
-            'replyTo' => $audience->getReplyTo(),
-            'requireDoubleOptIn' => $audience->requireDoubleOptIn(),
-            'interests' => $audience->getInterests(),
-            'rateSeconds' => $audience->getRateSeconds(),
-            'utmSource' => $audience->getUtmSource(),
+            'slug' => $audience->slug,
+            'name' => $audience->name,
+            'mainHost' => $audience->mainHost,
+            'fromName' => $audience->fromName,
+            'fromEmail' => $audience->fromEmail,
+            'replyTo' => $audience->replyTo,
+            'requireDoubleOptIn' => $audience->requireDoubleOptIn,
+            'interests' => $audience->interests,
+            'rateSeconds' => $audience->rateSeconds,
+            'utmSource' => $audience->utmSource,
             'createdAt' => $audience->createdAt?->format(DateTimeInterface::ATOM),
         ];
 

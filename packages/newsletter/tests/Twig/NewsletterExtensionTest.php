@@ -22,10 +22,10 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $html = $this->extension()->renderForm($audience->getSlug());
+        $html = $this->extension()->renderForm($audience->slug);
 
         self::assertStringContainsString('data-live="https://localhost.dev/newsletter/form?', $html);
-        self::assertStringContainsString('audiences='.$audience->getSlug(), $html);
+        self::assertStringContainsString('audiences='.$audience->slug, $html);
         self::assertStringNotContainsString('<form', $html);
     }
 
@@ -34,16 +34,16 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
         $letter = $this->createAudience();
         $promos = $this->createAudience();
 
-        $html = $this->extension()->renderForm([$letter->getSlug(), $promos->getSlug()]);
+        $html = $this->extension()->renderForm([$letter->slug, $promos->slug]);
 
-        self::assertStringContainsString('audiences='.$letter->getSlug().'%2C'.$promos->getSlug(), $html);
+        self::assertStringContainsString('audiences='.$letter->slug.'%2C'.$promos->slug, $html);
     }
 
     public function testOnlyDeclaredInterestsReachTheAddress(): void
     {
         $audience = $this->createAudience(interests: ['AmTrek']);
 
-        $html = $this->extension()->renderForm($audience->getSlug(), ['AmTrek', 'Undeclared']);
+        $html = $this->extension()->renderForm($audience->slug, ['AmTrek', 'Undeclared']);
 
         self::assertStringContainsString('interests=AmTrek', $html);
         self::assertStringNotContainsString('Undeclared', $html);
@@ -55,7 +55,7 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
         $withInterest = $this->createAudience(interests: ['AmTrek']);
         $without = $this->createAudience();
 
-        $html = $this->extension()->renderForm([$without->getSlug(), $withInterest->getSlug()], ['AmTrek', 'Undeclared']);
+        $html = $this->extension()->renderForm([$without->slug, $withInterest->slug], ['AmTrek', 'Undeclared']);
 
         self::assertStringContainsString('interests=AmTrek', $html);
         self::assertStringNotContainsString('Undeclared', $html);
@@ -66,9 +66,9 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $html = $this->extension()->renderForm([$audience->getSlug(), 'does-not-exist']);
+        $html = $this->extension()->renderForm([$audience->slug, 'does-not-exist']);
 
-        self::assertStringContainsString('audiences='.$audience->getSlug().'&', $html);
+        self::assertStringContainsString('audiences='.$audience->slug.'&', $html);
         self::assertStringNotContainsString('does-not-exist', $html);
     }
 
@@ -76,7 +76,7 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $html = $this->extension()->renderForm($audience->getSlug(), [], 'footer');
+        $html = $this->extension()->renderForm($audience->slug, [], 'footer');
 
         self::assertStringContainsString('source=footer', $html);
     }

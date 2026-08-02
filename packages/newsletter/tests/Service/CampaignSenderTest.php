@@ -33,9 +33,9 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
         $count = $this->sender()->arm($campaign);
 
         self::assertSame(1, $count);
-        self::assertSame(CampaignStatus::Sending, $campaign->getStatus());
-        self::assertSame(1, $campaign->getRecipientCount());
-        self::assertSame('trek@example.tld', $this->recipients($campaign)[0]->getContact()->getEmail());
+        self::assertSame(CampaignStatus::Sending, $campaign->status);
+        self::assertSame(1, $campaign->recipientCount);
+        self::assertSame('trek@example.tld', $this->recipients($campaign)[0]->contact->email);
     }
 
     public function testArmingIgnoresContactsWhoAreNotSubscribed(): void
@@ -60,7 +60,7 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
         $this->sender()->arm($campaign);
 
         self::assertCount(1, $this->recipients($campaign));
-        self::assertSame(1, $campaign->getRecipientCount());
+        self::assertSame(1, $campaign->recipientCount);
     }
 
     public function testASentCampaignCannotBeArmedAgain(): void
@@ -86,9 +86,9 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
 
         self::assertSame(1, $sent);
         self::assertEmailCount(1);
-        self::assertSame(RecipientState::Sent, $this->recipients($campaign)[0]->getState());
-        self::assertSame(1, $campaign->getSentCount());
-        self::assertSame(CampaignStatus::Sent, $campaign->getStatus());
+        self::assertSame(RecipientState::Sent, $this->recipients($campaign)[0]->state);
+        self::assertSame(1, $campaign->sentCount);
+        self::assertSame(CampaignStatus::Sent, $campaign->status);
 
         $email = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $email);
@@ -114,7 +114,7 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
         $this->rewindLastSend($campaign, 60);
 
         self::assertSame(2, $this->sender()->drain($campaign, 10));
-        self::assertSame(CampaignStatus::Sent, $campaign->getStatus());
+        self::assertSame(CampaignStatus::Sent, $campaign->status);
     }
 
     public function testTheBudgetCapsARun(): void
@@ -126,7 +126,7 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
         $this->sender()->arm($campaign);
 
         self::assertSame(1, $this->sender()->drain($campaign, 1));
-        self::assertSame(CampaignStatus::Sending, $campaign->getStatus());
+        self::assertSame(CampaignStatus::Sending, $campaign->status);
     }
 
     /** Consent can change between arming and sending; that is not a delivery failure. */
@@ -142,9 +142,9 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
 
         self::assertSame(0, $this->sender()->drain($campaign, 10));
         self::assertEmailCount(0);
-        self::assertSame(RecipientState::Skipped, $this->recipients($campaign)[0]->getState());
-        self::assertSame(0, $campaign->getFailedCount());
-        self::assertSame(CampaignStatus::Sent, $campaign->getStatus());
+        self::assertSame(RecipientState::Skipped, $this->recipients($campaign)[0]->state);
+        self::assertSame(0, $campaign->failedCount);
+        self::assertSame(CampaignStatus::Sent, $campaign->status);
     }
 
     public function testATransportFailureIsRecordedOnTheRecipient(): void
@@ -155,15 +155,15 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
         $this->sender()->arm($campaign);
 
         // An unusable sender identity: the mail can never be built.
-        $audience->setFromEmail('not a valid address');
+        $audience->fromEmail = 'not a valid address';
         $this->entityManager->flush();
 
         self::assertSame(0, $this->sender()->drain($campaign, 10));
 
         $recipient = $this->recipients($campaign)[0];
-        self::assertSame(RecipientState::Failed, $recipient->getState());
-        self::assertNotNull($recipient->getError());
-        self::assertSame(1, $campaign->getFailedCount());
+        self::assertSame(RecipientState::Failed, $recipient->state);
+        self::assertNotNull($recipient->error);
+        self::assertSame(1, $campaign->failedCount);
     }
 
     /** @return list<CampaignRecipient> */

@@ -24,19 +24,19 @@ final readonly class LinkGenerator
 
     public function confirmUrl(Contact $contact): string
     {
-        return $this->base($contact->getAudience())
-            .$this->urlGenerator->generate('pushword_newsletter_confirm', ['token' => $contact->getToken()]);
+        return $this->base($contact->audience)
+            .$this->urlGenerator->generate('pushword_newsletter_confirm', ['token' => $contact->token]);
     }
 
     public function unsubscribeUrl(Contact $contact): string
     {
-        return $this->base($contact->getAudience())
-            .$this->urlGenerator->generate('pushword_newsletter_unsubscribe', ['token' => $contact->getToken()]);
+        return $this->base($contact->audience)
+            .$this->urlGenerator->generate('pushword_newsletter_unsubscribe', ['token' => $contact->token]);
     }
 
     public function base(Audience $audience): string
     {
-        $site = $this->siteRegistry->get($audience->getMainHost());
+        $site = $this->siteRegistry->get($audience->mainHost);
         $base = $site->getStr('base_live_url');
 
         return rtrim('' !== $base ? $base : $site->baseUrl, '/');

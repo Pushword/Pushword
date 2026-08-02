@@ -73,7 +73,7 @@ final readonly class SegmentResolver
      */
     public function matches(Contact $contact, array $criteria): bool
     {
-        $count = (int) $this->queryBuilder($contact->getAudience(), $criteria)
+        $count = (int) $this->queryBuilder($contact->audience, $criteria)
             ->select('COUNT(c.id)')
             ->andWhere('c.id = :contactId')
             ->setParameter('contactId', $contact->id)

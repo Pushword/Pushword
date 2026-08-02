@@ -18,7 +18,7 @@ final readonly class UtmTag
 
     public static function forCampaign(Campaign $campaign): self
     {
-        return new self($campaign->getSlug());
+        return new self($campaign->slug);
     }
 
     /**
@@ -31,8 +31,8 @@ final readonly class UtmTag
     public static function forStep(Automation $automation, AutomationStep $step): self
     {
         return new self(
-            new Slugify()->slugify($automation->getName()),
-            'step-'.($step->getPosition() + 1),
+            new Slugify()->slugify($automation->name),
+            'step-'.($step->position + 1),
         );
     }
 }

@@ -87,7 +87,8 @@ final class CampaignApiController extends AbstractApiController
             return $this->notFound('Audience not found');
         }
 
-        $campaign = new Campaign()->setAudience($audience);
+        $campaign = new Campaign();
+        $campaign->audience = $audience;
 
         $error = $this->apply($campaign, $data);
         if (null !== $error) {
@@ -170,7 +171,7 @@ final class CampaignApiController extends AbstractApiController
             return $this->notFound('Campaign not found');
         }
 
-        $audience = $campaign->getAudience();
+        $audience = $campaign->audience;
         if (! $audience instanceof Audience) {
             return $this->badRequest('Campaign has no audience');
         }
@@ -189,7 +190,7 @@ final class CampaignApiController extends AbstractApiController
             }
 
             try {
-                $this->mailer->sendTest($audience, $campaign->getSubject(), $campaign->getBodyMarkdown(), $campaign->getPreheader(), $address, UtmTag::forCampaign($campaign));
+                $this->mailer->sendTest($audience, $campaign->subject, $campaign->bodyMarkdown, $campaign->preheader, $address, UtmTag::forCampaign($campaign));
                 $sent[] = $address;
             } catch (Throwable $throwable) {
                 $failed[] = $address.' ('.$throwable->getMessage().')';
@@ -236,23 +237,23 @@ final class CampaignApiController extends AbstractApiController
     private function apply(Campaign $campaign, array $data): ?JsonResponse
     {
         if (\array_key_exists('subject', $data) && \is_string($data['subject'])) {
-            $campaign->setSubject($data['subject']);
+            $campaign->subject = $data['subject'];
         }
 
         if (\array_key_exists('slug', $data)) {
-            $campaign->setSlug(\is_string($data['slug']) ? $data['slug'] : null);
+            $campaign->slug = \is_string($data['slug']) ? $data['slug'] : null;
         }
 
         if (\array_key_exists('preheader', $data)) {
-            $campaign->setPreheader(\is_string($data['preheader']) ? $data['preheader'] : null);
+            $campaign->preheader = \is_string($data['preheader']) ? $data['preheader'] : null;
         }
 
         if (\array_key_exists('bodyMarkdown', $data) && \is_string($data['bodyMarkdown'])) {
-            $campaign->setBodyMarkdown($data['bodyMarkdown']);
+            $campaign->bodyMarkdown = $data['bodyMarkdown'];
         }
 
         if (\array_key_exists('rateSeconds', $data)) {
-            $campaign->setRateSeconds(\is_int($data['rateSeconds']) ? $data['rateSeconds'] : null);
+            $campaign->rateSeconds = \is_int($data['rateSeconds']) ? $data['rateSeconds'] : null;
         }
 
         if (\array_key_exists('segment', $data)) {
@@ -264,7 +265,7 @@ final class CampaignApiController extends AbstractApiController
 
             /** @var array<mixed> $segment */
             $segment = $data['segment'];
-            $campaign->setSegment($segment);
+            $campaign->segment = $segment;
         }
 
         return null;
@@ -286,32 +287,32 @@ final class CampaignApiController extends AbstractApiController
     /** @return array<string, mixed> */
     private function toArray(Campaign $campaign, bool $withEstimate = false): array
     {
-        $audience = $campaign->getAudience();
+        $audience = $campaign->audience;
 
         $payload = [
             'id' => $campaign->id,
-            'audience' => $audience?->getSlug(),
-            'subject' => $campaign->getSubject(),
-            'slug' => $campaign->getSlug(),
-            'preheader' => $campaign->getPreheader(),
-            'bodyMarkdown' => $campaign->getBodyMarkdown(),
-            'segment' => $campaign->getSegment(),
+            'audience' => $audience?->slug,
+            'subject' => $campaign->subject,
+            'slug' => $campaign->slug,
+            'preheader' => $campaign->preheader,
+            'bodyMarkdown' => $campaign->bodyMarkdown,
+            'segment' => $campaign->segment,
             'status' => $campaign->getStatusLabel(),
             'rateSeconds' => $campaign->getEffectiveRateSeconds(),
-            'scheduledAt' => $campaign->getScheduledAt()?->format(DateTimeInterface::ATOM),
-            'sentAt' => $campaign->getSentAt()?->format(DateTimeInterface::ATOM),
+            'scheduledAt' => $campaign->scheduledAt?->format(DateTimeInterface::ATOM),
+            'sentAt' => $campaign->sentAt?->format(DateTimeInterface::ATOM),
             'stats' => [
-                'recipients' => $campaign->getRecipientCount(),
-                'sent' => $campaign->getSentCount(),
-                'failed' => $campaign->getFailedCount(),
-                'unsubscribed' => $campaign->getUnsubCount(),
-                'bounced' => $campaign->getBounceCount(),
+                'recipients' => $campaign->recipientCount,
+                'sent' => $campaign->sentCount,
+                'failed' => $campaign->failedCount,
+                'unsubscribed' => $campaign->unsubCount,
+                'bounced' => $campaign->bounceCount,
             ],
         ];
 
         if ($withEstimate && null !== $audience && $campaign->isDraft()) {
             try {
-                $payload['estimatedRecipients'] = $this->segmentResolver->count($audience, $campaign->getSegment());
+                $payload['estimatedRecipients'] = $this->segmentResolver->count($audience, $campaign->segment);
             } catch (SegmentException) {
                 $payload['estimatedRecipients'] = null;
             }

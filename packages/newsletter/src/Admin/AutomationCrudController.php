@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Admin;
 
+use DateTimeImmutable;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -10,6 +11,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
@@ -18,10 +20,12 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
+use Pushword\Newsletter\Trigger\TriggerSourceRegistry;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -30,8 +34,13 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 #[AdminRoute(path: '/newsletter/automation', name: 'newsletter_automation')]
 class AutomationCrudController extends AbstractCrudController
 {
+    /** Enough matches to tell a working rule from a runaway one. */
+    private const int PREVIEW_LIMIT = 5;
+
     public function __construct(
         private readonly SegmentResolver $segmentResolver,
+        private readonly TriggerSourceRegistry $sources,
+        private readonly SiteRegistry $siteRegistry,
         private readonly AdminUrlGenerator $adminUrlGenerator,
     ) {
     }
@@ -54,14 +63,14 @@ class AutomationCrudController extends AbstractCrudController
     #[Override]
     public function configureFilters(Filters $filters): Filters
     {
-        return $filters->add('audience')->add('enabled');
+        return $filters->add('audience')->add('enabled')->add('source');
     }
 
     #[Override]
     public function configureActions(Actions $actions): Actions
     {
-        $preview = Action::new('previewEnrollment', 'newsletter.automation.action.preview', 'fa fa-users')
-            ->linkToCrudAction('previewEnrollment')
+        $preview = Action::new('previewTrigger', 'newsletter.automation.action.preview', 'fa fa-bolt')
+            ->linkToCrudAction('previewTrigger')
             ->setCssClass('btn btn-outline-secondary');
 
         return $actions
@@ -74,24 +83,41 @@ class AutomationCrudController extends AbstractCrudController
     #[Override]
     public function configureFields(string $pageName): iterable
     {
-        yield FormField::addFieldset('newsletter.automation.fieldset.rules')->setIcon('fa fa-filter');
+        $hosts = $this->siteRegistry->getHosts();
+        $sources = $this->sources->names();
+
+        yield FormField::addFieldset('newsletter.automation.fieldset.trigger')->setIcon('fa fa-bolt');
         yield TextField::new('name', 'newsletter.automation.field.name');
         yield AssociationField::new('audience', 'newsletter.automation.field.audience');
         yield BooleanField::new('enabled', 'newsletter.automation.field.enabled')
             ->setHelp('newsletter.automation.field.enabled.help');
-        yield TextareaField::new('enrollWhenAsJson', 'newsletter.automation.field.enrollWhen')->hideOnIndex()
+        yield ChoiceField::new('source', 'newsletter.automation.field.source')
+            ->setChoices(array_combine($sources, $sources))
+            ->setHelp('newsletter.automation.field.source.help');
+        yield TextareaField::new('triggerWhenAsJson', 'newsletter.automation.field.triggerWhen')->hideOnIndex()
             ->setNumOfRows(6)
-            ->setHelp('newsletter.automation.field.enrollWhen.help');
+            ->setHelp('newsletter.automation.field.triggerWhen.help');
+        yield ChoiceField::new('hosts', 'newsletter.automation.field.hosts')->hideOnIndex()
+            ->setChoices(array_combine($hosts, $hosts))
+            ->allowMultipleChoices()
+            ->renderExpanded()
+            ->setRequired(false)
+            ->setHelp('newsletter.automation.field.hosts.help');
+        yield DateTimeField::new('activeFrom', 'newsletter.automation.field.activeFrom')->hideOnIndex()
+            ->setHelp('newsletter.automation.field.activeFrom.help');
+
+        yield FormField::addFieldset('newsletter.automation.fieldset.recipients')->setIcon('fa fa-filter');
+        yield TextareaField::new('recipientWhenAsJson', 'newsletter.automation.field.recipientWhen')->hideOnIndex()
+            ->setNumOfRows(4)
+            ->setHelp('newsletter.automation.field.recipientWhen.help');
         yield TextareaField::new('stopWhenAsJson', 'newsletter.automation.field.stopWhen')->hideOnIndex()
             ->setNumOfRows(4)
             ->setHelp('newsletter.automation.field.stopWhen.help');
-        yield DateTimeField::new('enrollFrom', 'newsletter.automation.field.enrollFrom')->hideOnIndex()
-            ->setHelp('newsletter.automation.field.enrollFrom.help');
+
+        yield FormField::addFieldset('newsletter.automation.fieldset.steps')->setIcon('fa fa-list-ol');
         yield IntegerField::new('stepCount', 'newsletter.automation.field.stepCount')
             ->onlyOnIndex()
             ->formatValue(static fn (mixed $value, ?Automation $automation): string => (string) ($automation?->countSteps() ?? 0));
-
-        yield FormField::addFieldset('newsletter.automation.fieldset.steps')->setIcon('fa fa-list-ol');
         yield CollectionField::new('steps', 'newsletter.automation.field.steps')
             ->hideOnIndex()
             ->allowAdd()
@@ -99,24 +125,36 @@ class AutomationCrudController extends AbstractCrudController
             ->useEntryCrudForm(AutomationStepCrudController::class);
     }
 
-    /** Who would be enrolled if the automation ran right now. */
-    #[AdminRoute(path: '/{entityId}/preview-enrollment', name: 'preview_enrollment')]
-    public function previewEnrollment(): RedirectResponse
+    /** What this would catch if a tick ran right now, on both sides of the rule. */
+    #[AdminRoute(path: '/{entityId}/preview-trigger', name: 'preview_trigger')]
+    public function previewTrigger(): RedirectResponse
     {
         $automation = $this->getContext()?->getEntity()->getInstance();
-        $audience = $automation instanceof Automation ? $automation->getAudience() : null;
+        $audience = $automation instanceof Automation ? $automation->audience : null;
+        $source = $automation instanceof Automation ? $this->sources->for($automation) : null;
 
         if (! $automation instanceof Automation || ! $audience instanceof Audience) {
             return new RedirectResponse($this->indexUrl());
         }
 
+        if (null === $source) {
+            $this->addFlash('danger', \sprintf('No trigger source is named "%s".', $automation->source));
+
+            return new RedirectResponse($this->indexUrl());
+        }
+
         try {
-            $count = $this->segmentResolver->count($audience, $automation->getEnrollWhen());
-            $this->addFlash('info', \sprintf(
-                '%d subscribed contact(s) match; only those registered after %s are enrolled.',
-                $count,
-                $automation->getEnrollFrom()->format('d M Y H:i'),
-            ));
+            $now = new DateTimeImmutable();
+            $occurrences = $source->occurrences($automation, $now, self::PREVIEW_LIMIT);
+            $total = $source->count($automation, $now);
+
+            // A drip is addressed to whoever triggered it, so counting a segment
+            // over the audience would answer a question nobody asked.
+            $addressed = [] !== $occurrences && null !== $occurrences[0]->contact
+                ? 'each of them receives the sequence'
+                : \sprintf('each would mail %d subscribed contact(s)', $this->segmentResolver->count($audience, $automation->recipientWhen));
+
+            $this->addFlash('info', \sprintf('%d waiting — %s.', $total, $addressed));
         } catch (SegmentException $segmentException) {
             $this->addFlash('danger', $segmentException->getMessage());
         }

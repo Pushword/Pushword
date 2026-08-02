@@ -10,7 +10,6 @@ use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
-use Pushword\Newsletter\Entity\ContentTrigger;
 use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Service\AutomationRunner;
@@ -114,7 +113,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
 
         $this->request(Request::METHOD_POST, '/api/newsletter/audience', [
-            'slug' => $audience->getSlug(),
+            'slug' => $audience->slug,
             'mainHost' => 'localhost.dev',
             'fromEmail' => 'news@localhost.dev',
         ]);
@@ -163,7 +162,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $this->createContact($audience, 'in@example.tld');
         $this->createContact($audience, 'waiting@example.tld', subscribed: false);
 
-        $body = $this->request(Request::METHOD_GET, '/api/newsletter/audience/'.$audience->getSlug());
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/audience/'.$audience->slug);
 
         self::assertSame(
             ['pending' => 1, 'subscribed' => 1, 'unsubscribed' => 0, 'bounced' => 0],
@@ -175,7 +174,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/audience/'.$audience->getSlug(), [
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/audience/'.$audience->slug, [
             'rateSeconds' => 5,
             'interests' => ['AmTrek'],
             'utmSource' => 'Ma Newsletter',
@@ -192,7 +191,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
         $this->createContact($audience, 'held@example.tld');
 
-        $body = $this->request(Request::METHOD_DELETE, '/api/newsletter/audience/'.$audience->getSlug());
+        $body = $this->request(Request::METHOD_DELETE, '/api/newsletter/audience/'.$audience->slug);
 
         self::assertSame(Response::HTTP_CONFLICT, $this->client->getResponse()->getStatusCode());
         self::assertSame(1, $body['contacts']);
@@ -202,25 +201,25 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
 
-        $this->request(Request::METHOD_DELETE, '/api/newsletter/audience/'.$audience->getSlug());
+        $this->request(Request::METHOD_DELETE, '/api/newsletter/audience/'.$audience->slug);
 
         self::assertSame(Response::HTTP_NO_CONTENT, $this->client->getResponse()->getStatusCode());
-        self::assertNull($this->entityManager->getRepository(Audience::class)->findOneBy(['slug' => $audience->getSlug()]));
+        self::assertNull($this->entityManager->getRepository(Audience::class)->findOneBy(['slug' => $audience->slug]));
     }
 
     public function testListingAudiencesIsScopedByHost(): void
     {
         $audience = $this->createAudience();
 
-        $body = $this->request(Request::METHOD_GET, '/api/newsletter/audience?host='.$audience->getMainHost());
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/audience?host='.$audience->mainHost);
         $items = $body['items'];
         self::assertIsArray($items);
-        self::assertContains($audience->getSlug(), array_column($items, 'slug'));
+        self::assertContains($audience->slug, array_column($items, 'slug'));
 
         $body = $this->request(Request::METHOD_GET, '/api/newsletter/audience?host=pushword.piedweb.com');
         $items = $body['items'];
         self::assertIsArray($items);
-        self::assertNotContains($audience->getSlug(), array_column($items, 'slug'));
+        self::assertNotContains($audience->slug, array_column($items, 'slug'));
     }
 
     public function testCreatingAContactHonoursTheAudienceDoubleOptIn(): void
@@ -228,7 +227,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
 
         $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'email' => 'api@example.tld',
             'name' => 'Robin',
         ]);
@@ -245,7 +244,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
 
         $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'email' => 'imported@example.tld',
             'status' => 'subscribed',
         ]);
@@ -258,13 +257,13 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience(requireDoubleOptIn: false);
         $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'email' => 'twice@example.tld',
             'name' => 'First',
         ]);
 
         $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'email' => 'twice@example.tld',
             'name' => 'Second',
         ]);
@@ -286,7 +285,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
 
         $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'email' => 'not-an-email',
         ]);
 
@@ -326,7 +325,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact/'.$contact->id.'/unsubscribe');
 
         self::assertSame('unsubscribed', $body['status']);
-        self::assertSame(ContactStatus::Unsubscribed, $this->reload($contact)->getStatus());
+        self::assertSame(ContactStatus::Unsubscribed, $this->reload($contact)->status);
     }
 
     public function testBouncingThroughTheApi(): void
@@ -350,7 +349,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
 
         $body = $this->request(
             Request::METHOD_GET,
-            '/api/newsletter/contact?audience='.$audience->getSlug().'&segment='.urlencode($segment),
+            '/api/newsletter/contact?audience='.$audience->slug.'&segment='.urlencode($segment),
         );
 
         self::assertSame(1, $body['total']);
@@ -364,7 +363,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
 
         $this->request(
             Request::METHOD_GET,
-            '/api/newsletter/contact?audience='.$audience->getSlug().'&segment='.urlencode($segment),
+            '/api/newsletter/contact?audience='.$audience->slug.'&segment='.urlencode($segment),
         );
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
@@ -377,7 +376,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $this->createContact($audience, 'b@example.tld');
 
         $created = $this->request(Request::METHOD_POST, '/api/newsletter/campaign', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'subject' => 'Summer',
             'bodyMarkdown' => 'Hi **%name%**',
             'segment' => [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']],
@@ -396,11 +395,11 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
 
         $derived = $this->request(Request::METHOD_POST, '/api/newsletter/campaign', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'subject' => 'Nos nouveautés',
         ]);
         $given = $this->request(Request::METHOD_POST, '/api/newsletter/campaign', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'subject' => 'Nos nouveautés',
             'slug' => 'promo-ete',
         ]);
@@ -414,7 +413,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
 
         $this->request(Request::METHOD_POST, '/api/newsletter/campaign', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'subject' => 'Summer',
             'segment' => [['field' => 'tag', 'op' => 'olderThan', 'value' => '7d']],
         ]);
@@ -459,7 +458,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         ]);
 
         self::assertSame('scheduled', $body['status']);
-        self::assertSame(CampaignStatus::Scheduled, $this->entityManager->getRepository(Campaign::class)->find($campaign->id)?->getStatus());
+        self::assertSame(CampaignStatus::Scheduled, $this->entityManager->getRepository(Campaign::class)->find($campaign->id)?->status);
     }
 
     public function testSchedulingNeedsADate(): void
@@ -484,7 +483,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertSame(['me@example.tld'], $body['sent']);
         self::assertSame(['broken'], $body['failed']);
         self::assertEmailCount(1);
-        self::assertSame(0, $this->entityManager->getRepository(Campaign::class)->find($campaign->id)?->getSentCount());
+        self::assertSame(0, $this->entityManager->getRepository(Campaign::class)->find($campaign->id)?->sentCount);
     }
 
     public function testCreatingAnAutomationWithItsSteps(): void
@@ -492,7 +491,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
 
         $body = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'name' => 'Bienvenue',
             'steps' => [
                 ['delayMinutes' => 0, 'subject' => 'Merci', 'bodyMarkdown' => 'Bienvenue **%name%**'],
@@ -527,20 +526,37 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertSame(['position' => 0, 'delayMinutes' => 2880, 'subject' => 'Only one now', 'bodyMarkdown' => 'Hi'], $steps[0]);
     }
 
-    public function testAnInvalidEnrollWhenIsRejected(): void
+    public function testAnInvalidTriggerWhenIsRejected(): void
     {
         $audience = $this->createAudience();
 
         $body = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'name' => 'Broken',
-            'enrollWhen' => [['field' => 'tag', 'op' => 'olderThan', 'value' => '7d']],
+            'triggerWhen' => [['field' => 'tag', 'op' => 'olderThan', 'value' => '7d']],
         ]);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
         $error = $body['error'];
         self::assertIsString($error);
-        self::assertStringStartsWith('enrollWhen:', $error);
+        self::assertStringStartsWith('triggerWhen:', $error);
+    }
+
+    /** The vocabulary follows the source, so the same rule is right or wrong depending on it. */
+    public function testAnUnknownSourceIsRejected(): void
+    {
+        $audience = $this->createAudience();
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
+            'audience' => $audience->slug,
+            'name' => 'Watches nothing',
+            'source' => 'no-such-source',
+        ]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+        $error = $body['error'];
+        self::assertIsString($error);
+        self::assertStringContainsString('Unknown source', $error);
     }
 
     /** The guard must survive the API: switching a drip on cannot mail the existing base. */
@@ -550,18 +566,18 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $this->createContact($audience, 'existing@example.tld', registeredAt: new DateTimeImmutable('-1 hour'));
 
         $created = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
-            'audience' => $audience->getSlug(),
+            'audience' => $audience->slug,
             'name' => 'Welcome',
             'steps' => [['delayMinutes' => 0, 'subject' => 'Hello']],
         ]);
 
         $automation = $this->entityManager->getRepository(Automation::class)->find($this->id($created));
         self::assertInstanceOf(Automation::class, $automation);
-        self::assertSame(0, $this->runner()->enroll($automation));
+        self::assertSame(0, $this->enroll($automation));
 
         $this->createContact($audience, 'newcomer@example.tld');
 
-        self::assertSame(1, $this->runner()->enroll($automation));
+        self::assertSame(1, $this->enroll($automation));
     }
 
     public function testAnAutomationReportsItsProgress(): void
@@ -573,12 +589,21 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
             ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
         ]);
 
-        $this->runner()->enroll($automation);
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/automation/'.$automation->id);
+        self::assertSame(1, $body['waiting'], 'one contact matches the rule and has not been enrolled yet');
+
+        $this->enroll($automation);
 
         $body = $this->request(Request::METHOD_GET, '/api/newsletter/automation/'.$automation->id);
 
-        self::assertSame(1, $body['matchingContacts']);
+        self::assertSame(0, $body['waiting'], 'and once enrolled it is handled, not waiting');
+        self::assertSame(1, $body['handled']);
         self::assertSame(['active' => 1, 'done' => 0, 'stopped' => 0], $body['stats']);
+
+        // recipientWhen is empty and this source addresses its own contacts, so
+        // the reach it reports is the whole audience — the figure a broadcast
+        // would use, reported whether or not this automation broadcasts.
+        self::assertSame(2, $body['matchingContacts']);
     }
 
     public function testDisablingThroughTheApiPausesTheDrip(): void
@@ -590,7 +615,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/automation/'.$automation->id, ['enabled' => false]);
 
         self::assertFalse($body['enabled']);
-        self::assertSame(0, $this->runner()->enroll($automation), 'a paused automation enrolls nobody');
+        self::assertSame(0, $this->enroll($automation), 'a paused automation enrolls nobody');
     }
 
     /** Enrollments hang off the automation by a database cascade, which only MariaDB enforces. */
@@ -599,36 +624,43 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
         $this->createContact($audience, 'reader@example.tld');
         $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
-        $this->runner()->enroll($automation);
+        $this->enroll($automation);
 
         $this->request(Request::METHOD_DELETE, '/api/newsletter/automation/'.$automation->id);
 
         self::assertSame(Response::HTTP_NO_CONTENT, $this->client->getResponse()->getStatusCode());
     }
 
-    public function testCreatingAContentTrigger(): void
+    public function testCreatingAPageAutomation(): void
     {
         $audience = $this->createAudience();
 
-        $body = $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
-            'audience' => $audience->getSlug(),
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
+            'audience' => $audience->slug,
             'name' => 'New articles',
+            'source' => 'page',
             'hosts' => ['localhost.dev'],
-            'pageWhen' => [['field' => 'slug', 'op' => 'startsWith', 'value' => 'blog/']],
-            'delayMinutes' => 1440,
-            'subjectTemplate' => 'New article: {{ page.h1 }}',
-            'bodyTemplate' => 'Read [{{ page.h1 }}]({{ page.url }}).',
+            'triggerWhen' => [['field' => 'slug', 'op' => 'startsWith', 'value' => 'blog/']],
+            'steps' => [[
+                'delayMinutes' => 1440,
+                'subject' => 'New article: {{ page.h1 }}',
+                'bodyMarkdown' => 'Read [{{ page.h1 }}]({{ page.url }}).',
+            ]],
         ]);
 
         self::assertSame(Response::HTTP_CREATED, $this->client->getResponse()->getStatusCode());
+        self::assertSame('page', $body['source']);
         self::assertSame(['localhost.dev'], $body['hosts']);
-        self::assertSame(1440, $body['delayMinutes']);
-        self::assertNotNull($body['triggerFrom'], 'a trigger created over the API cannot mail a back catalogue either');
+        self::assertNotNull($body['activeFrom'], 'an automation created over the API cannot mail a back catalogue either');
+
+        $steps = $body['steps'];
+        self::assertIsArray($steps);
+        self::assertSame([1440], array_column($steps, 'delayMinutes'));
     }
 
     /**
      * A rule sent as a group comes back as one. Stored flat it would read as an
-     * `all`, and the trigger would quietly stop matching what it was created for.
+     * `all`, and the automation would quietly stop matching what it was created for.
      */
     public function testAnAnyGroupSurvivesTheApiRoundTrip(): void
     {
@@ -638,135 +670,142 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
             ['field' => 'ancestor', 'op' => '=', 'value' => 'blog'],
         ]];
 
-        $body = $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
-            'audience' => $audience->getSlug(),
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
+            'audience' => $audience->slug,
             'name' => 'Either axis',
-            'pageWhen' => $rule,
-            'subjectTemplate' => 'New article: {{ page.h1 }}',
+            'source' => 'page',
+            'triggerWhen' => $rule,
+            'steps' => [['delayMinutes' => 0, 'subject' => 'New article: {{ page.h1 }}']],
         ]);
 
         self::assertSame(Response::HTTP_CREATED, $this->client->getResponse()->getStatusCode());
-        self::assertSame($rule, $body['pageWhen']);
+        self::assertSame($rule, $body['triggerWhen']);
     }
 
     /** The page grammar is not the contact one; mixing them up must be said, not ignored. */
-    public function testAContactFieldInPageWhenIsRejected(): void
+    public function testAContactFieldInAPageRuleIsRejected(): void
     {
         $audience = $this->createAudience();
 
-        $body = $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
-            'audience' => $audience->getSlug(),
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
+            'audience' => $audience->slug,
             'name' => 'Broken',
-            'subjectTemplate' => 'Hello',
+            'source' => 'page',
             // `tag` reads the same on both sides; `confirmedAt` belongs to contacts alone.
-            'pageWhen' => [['field' => 'confirmedAt', 'op' => 'olderThan', 'value' => '7d']],
+            'triggerWhen' => [['field' => 'confirmedAt', 'op' => 'olderThan', 'value' => '7d']],
         ]);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
         $error = $body['error'];
         self::assertIsString($error);
-        self::assertStringStartsWith('pageWhen:', $error);
+        self::assertStringStartsWith('triggerWhen:', $error);
+        self::assertStringContainsString('filters a contact, not a page', $error);
     }
 
-    public function testListingTriggersIsScopedByAudienceAndState(): void
+    public function testListingAutomationsIsScopedByAudienceAndState(): void
     {
         $audience = $this->createAudience();
         $other = $this->createAudience();
-        $this->createContentTrigger($audience);
-        $disabled = $this->createContentTrigger($audience);
-        $disabled->setEnabled(false);
-        $this->createContentTrigger($other);
+        $this->createPageAutomation($audience);
+        $disabled = $this->createPageAutomation($audience);
+        $disabled->enabled = false;
+        $this->createPageAutomation($other);
         $this->entityManager->flush();
 
-        $body = $this->request(Request::METHOD_GET, '/api/newsletter/content-trigger?audience='.$audience->getSlug());
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/automation?audience='.$audience->slug);
         self::assertSame(2, $body['total']);
 
-        $body = $this->request(Request::METHOD_GET, '/api/newsletter/content-trigger?audience='.$audience->getSlug().'&enabled=0');
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/automation?audience='.$audience->slug.'&enabled=0');
         self::assertSame(1, $body['total']);
     }
 
     public function testAnUnknownAudienceIsNotFound(): void
     {
-        $this->request(Request::METHOD_GET, '/api/newsletter/content-trigger?audience=no-such-audience');
+        $this->request(Request::METHOD_GET, '/api/newsletter/automation?audience=no-such-audience');
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
 
-        $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
+        $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
             'audience' => 'no-such-audience',
             'name' => 'Orphan',
-            'subjectTemplate' => 'Hello',
         ]);
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
     }
 
-    /** Both rules are validated, and the message says which one was wrong. */
-    public function testAMalformedSegmentOnATriggerIsRejected(): void
+    /** All three rules are validated, and the message says which one was wrong. */
+    public function testAPageFieldInRecipientWhenIsRejected(): void
     {
         $audience = $this->createAudience();
 
-        $body = $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
-            'audience' => $audience->getSlug(),
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
+            'audience' => $audience->slug,
             'name' => 'Broken',
-            'subjectTemplate' => 'Hello',
-            'segment' => [['field' => 'slug', 'op' => 'startsWith', 'value' => 'blog/']],
+            'source' => 'page',
+            'recipientWhen' => [['field' => 'slug', 'op' => 'startsWith', 'value' => 'blog/']],
         ]);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
         $error = $body['error'];
         self::assertIsString($error);
-        self::assertStringStartsWith('segment:', $error);
+        self::assertStringStartsWith('recipientWhen:', $error);
     }
 
-    public function testATriggerNeedsANameAndASubject(): void
+    public function testAnAutomationNeedsAName(): void
     {
         $audience = $this->createAudience();
 
-        $body = $this->request(Request::METHOD_POST, '/api/newsletter/content-trigger', [
-            'audience' => $audience->getSlug(),
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/automation', [
+            'audience' => $audience->slug,
         ]);
 
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
         self::assertSame('validation', $body['error']);
     }
 
-    public function testATriggerReportsBothSidesOfItsRule(): void
+    public function testAPageAutomationReportsBothSidesOfItsRule(): void
     {
         $audience = $this->createAudience();
         $this->createContact($audience, 'reader@example.tld');
-        $trigger = $this->createContentTrigger($audience, pageWhen: [
+        $automation = $this->createPageAutomation($audience, triggerWhen: [
             ['field' => 'slug', 'op' => 'startsWith', 'value' => 'nothing-matches-this/'],
         ]);
 
-        $body = $this->request(Request::METHOD_GET, '/api/newsletter/content-trigger/'.$trigger->id);
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/automation/'.$automation->id);
 
-        self::assertSame(0, $body['campaignsCreated']);
-        self::assertSame(0, $body['waitingPages']);
+        self::assertSame(0, $body['handled']);
+        self::assertSame(0, $body['waiting']);
         self::assertSame(1, $body['matchingContacts']);
     }
 
-    public function testDisablingATriggerThroughTheApiStopsIt(): void
+    public function testDisablingAPageAutomationThroughTheApiStopsIt(): void
     {
         $audience = $this->createAudience();
-        $trigger = $this->createContentTrigger($audience);
+        $automation = $this->createPageAutomation($audience);
 
-        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/content-trigger/'.$trigger->id, [
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/automation/'.$automation->id, [
             'enabled' => false,
         ]);
 
         self::assertFalse($body['enabled']);
-        self::assertSame([], $this->entityManager->getRepository(ContentTrigger::class)->findEnabled());
+        self::assertSame([], $this->entityManager->getRepository(Automation::class)->findEnabled());
     }
 
     /** A campaign it produced is an ordinary campaign — and some of them have been sent. */
-    public function testDeletingATriggerKeepsTheCampaignsItCreated(): void
+    public function testDeletingAnAutomationKeepsTheCampaignsItCreated(): void
     {
         $audience = $this->createAudience();
-        $trigger = $this->createContentTrigger($audience);
+        $automation = $this->createPageAutomation($audience);
         $campaign = $this->createCampaign($audience);
 
-        $this->request(Request::METHOD_DELETE, '/api/newsletter/content-trigger/'.$trigger->id);
+        $this->request(Request::METHOD_DELETE, '/api/newsletter/automation/'.$automation->id);
 
         self::assertSame(Response::HTTP_NO_CONTENT, $this->client->getResponse()->getStatusCode());
         self::assertNotNull($this->entityManager->getRepository(Campaign::class)->find($campaign->id));
+    }
+
+    /** The occurrences a contact source produces are enrollments, and only those. */
+    private function enroll(Automation $automation): int
+    {
+        return $this->runner()->triggerOne($automation, new DateTimeImmutable())['enrolled'];
     }
 
     private function runner(): AutomationRunner
