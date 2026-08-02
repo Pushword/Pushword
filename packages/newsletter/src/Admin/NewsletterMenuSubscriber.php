@@ -22,6 +22,7 @@ final class NewsletterMenuSubscriber implements EventSubscriberInterface
             MenuItem::subMenu('newsletter.menu.label', 'fas fa-envelope-open-text')->setSubItems([
                 MenuItem::linkTo(CampaignCrudController::class, 'newsletter.campaign.label.plural', 'fas fa-paper-plane'),
                 MenuItem::linkTo(AutomationCrudController::class, 'newsletter.automation.label.plural', 'fas fa-robot'),
+                MenuItem::linkTo(AutomationDeliveryCrudController::class, 'newsletter.delivery.label.plural', 'fas fa-list-check'),
                 MenuItem::linkTo(ContactCrudController::class, 'newsletter.contact.label.plural', 'fas fa-address-book'),
                 MenuItem::linkTo(AudienceCrudController::class, 'newsletter.audience.label.plural', 'fas fa-users'),
             ]),

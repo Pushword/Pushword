@@ -516,6 +516,24 @@ that would reach the inbox as literal markup, so tags are dropped there (each on
 leaving a space, so a `<br>` does not glue two words) and entities decoded. The
 body keeps everything: inline HTML is legitimate Markdown.
 
+### What a drip records
+
+A broadcast reports through the campaigns it produces. A drip has no campaign, so
+it keeps its own ledger: **Deliveries** in the newsletter menu, one row per step
+per contact, with the subject as that person actually received it — placeholders
+already filled — and the state it ended in (`sent`, `failed`, `bounced`).
+
+It is worth knowing about for one reason: a step the transport refuses is stepped
+over rather than retried, because retrying it forever would freeze that contact's
+sequence at the same mail. The row is the only lasting record that somebody is
+missing a step, and the only place the transport's reason is kept.
+
+A bounce or an unsubscribe is credited to the last mail that person actually
+received, whichever half of the bundle sent it. When that is a drip step it is
+marked on its own row and no campaign is charged for it — a campaign's counters
+mean "caused by this send", and a send somebody had already read something else
+after did not cause anything.
+
 ### What a broadcast produces
 
 **Ordinary campaigns**, one per step, scheduled at `occurredAt + delay` and sent

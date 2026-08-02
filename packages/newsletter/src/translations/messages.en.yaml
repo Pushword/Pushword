@@ -184,6 +184,19 @@ newsletter:
     unitMinutes: minutes
     unitWeeks: weeks
     value: Value
+  delivery:
+    label:
+      plural: Deliveries
+      singular: Delivery
+    field:
+      attemptedAt: Attempted at
+      automation: Automation
+      contact: Contact
+      error: Error
+      position: Step
+      state: State
+      subject: Subject
+      subjectId: Trigger subject
   email:
     unsubscribe: Unsubscribe
   form:

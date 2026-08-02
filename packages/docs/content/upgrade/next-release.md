@@ -1,8 +1,37 @@
 ---
-title: 'a fresh install ships real starter content; six unused editorjs twig helpers are gone'
+title: 'a fresh install ships real starter content; six unused editorjs twig helpers are gone; automations keep a send ledger'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
+
+**Concerns:** `pushword/newsletter`
+
+## Automations keep a ledger of what they sent
+
+A drip step used to leave nothing behind. It is sent one contact at a time, with
+no campaign to report through, so a step the transport refused was written to the
+log and stepped over — deliberately, since retrying it forever would freeze that
+contact's sequence — and nothing recorded that somebody was missing a mail.
+
+Each attempt now writes a row: contact, automation, step, the subject as that
+person received it, the state (`sent`, `failed`, `bounced`) and, for a failure,
+what the transport said. **Deliveries**, in the newsletter menu, is the read-only
+list of them.
+
+This adds one table, so run:
+
+```bash
+php bin/console doctrine:schema:update --force
+```
+
+Only steps sent from now on are recorded; there is nothing to backfill.
+
+One behaviour changed with it. A bounce or an unsubscribe is credited to the last
+mail the contact actually received — and when that is a drip step, it is now
+marked on its own row instead of being charged to the newest campaign, which had
+not sent it. Campaign `bounceCount` and `unsubCount` therefore drop on sites
+running automations: they now count what those campaigns caused, which is what
+they always claimed to count.
 
 **Concerns:** `pushword/admin-block-editor`, `pushword/core`
 

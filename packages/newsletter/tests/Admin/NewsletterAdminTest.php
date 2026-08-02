@@ -59,7 +59,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $this->seed();
 
-        foreach (['audience', 'contact', 'campaign', 'campaign-recipient', 'automation'] as $section) {
+        foreach (['audience', 'contact', 'campaign', 'campaign-recipient', 'automation', 'automation-delivery'] as $section) {
             $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section);
             self::assertSame(200, $client->getResponse()->getStatusCode(), $section.' index');
         }

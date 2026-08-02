@@ -5,8 +5,11 @@ namespace Pushword\Newsletter\Tests\Service;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Entity\AutomationDelivery;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
+use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\Enrollment;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Enum\EnrollmentStatus;
@@ -174,6 +177,138 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $this->manager()->unsubscribe($contact);
 
         self::assertSame(1, $campaign->unsubCount);
+    }
+
+    /**
+     * The event lands on the last mail actually received. A drip step belongs to
+     * no campaign, so charging the newest one would blame a send this person had
+     * already read something else after.
+     */
+    public function testABounceAfterADripStepIsNotChargedToACampaign(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->createContact($audience, 'dead@example.tld');
+        $campaign = $this->sendCampaignYesterday($audience);
+        $this->sendDripStep($audience);
+
+        $this->manager()->markBounced($contact);
+
+        self::assertSame(0, $campaign->bounceCount);
+        self::assertSame(RecipientState::Sent, $this->recipientState($campaign));
+        self::assertSame(RecipientState::Bounced, $this->deliveryState($contact));
+    }
+
+    /** And an opt-out taken back cannot then give a campaign a count it never lost. */
+    public function testAnOptOutAfterADripStepIsNotChargedToACampaign(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->createContact($audience, 'leaving@example.tld');
+        $campaign = $this->sendCampaignYesterday($audience);
+        $this->sendDripStep($audience);
+
+        $this->manager()->unsubscribe($contact);
+        self::assertSame(0, $campaign->unsubCount);
+
+        $this->manager()->resubscribe($contact);
+        self::assertSame(0, $campaign->unsubCount);
+    }
+
+    /** The other order: a newsletter sent after the sequence still answers for it. */
+    public function testABounceAfterACampaignIsStillChargedToIt(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->createContact($audience, 'dead@example.tld');
+        $this->sendDripStep($audience);
+        $this->rewindDeliveries($contact);
+        $campaign = $this->sendCampaign($audience);
+
+        $this->manager()->markBounced($contact);
+
+        self::assertSame(1, $campaign->bounceCount);
+        self::assertSame(RecipientState::Bounced, $this->recipientState($campaign));
+        self::assertSame(RecipientState::Sent, $this->deliveryState($contact));
+    }
+
+    /**
+     * A step the transport refused never reached anybody, so it cannot be what a
+     * later bounce was caused by — the campaign before it is.
+     */
+    public function testARefusedStepIsNotTheLastMailReceived(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->createContact($audience, 'dead@example.tld');
+        $campaign = $this->sendCampaignYesterday($audience);
+
+        // An unusable sender identity: the step's mail can never be built.
+        $audience->fromEmail = 'not a valid address';
+        $this->entityManager->flush();
+        $this->sendDripStep($audience);
+
+        $this->manager()->markBounced($contact);
+
+        self::assertSame(1, $campaign->bounceCount);
+        self::assertSame(RecipientState::Bounced, $this->recipientState($campaign));
+        self::assertSame(RecipientState::Failed, $this->deliveryState($contact));
+    }
+
+    /**
+     * A campaign whose send is unambiguously older than whatever follows it.
+     * Both dates are written to the second, so same-second sends cannot be
+     * ordered — which no reading of them could fix.
+     */
+    private function sendCampaignYesterday(Audience $audience): Campaign
+    {
+        $campaign = $this->sendCampaign($audience);
+
+        foreach ($this->entityManager->getRepository(CampaignRecipient::class)->findBy(['campaign' => $campaign]) as $recipient) {
+            $this->entityManager->detach($recipient);
+        }
+
+        $this->entityManager->getConnection()->executeStatement(
+            'UPDATE newsletter_campaign_recipient SET sent_at = :when WHERE campaign_id = :campaign',
+            ['when' => date('Y-m-d H:i:s', time() - 86400), 'campaign' => $campaign->id],
+        );
+
+        return $campaign;
+    }
+
+    /** The same, for the sequence's own ledger. */
+    private function rewindDeliveries(Contact $contact): void
+    {
+        foreach ($this->entityManager->getRepository(AutomationDelivery::class)->findBy(['contact' => $contact]) as $delivery) {
+            $this->entityManager->detach($delivery);
+        }
+
+        $this->entityManager->getConnection()->executeStatement(
+            'UPDATE newsletter_automation_delivery SET attempted_at = :when WHERE contact_id = :contact',
+            ['when' => date('Y-m-d H:i:s', time() - 86400), 'contact' => $contact->id],
+        );
+    }
+
+    private function sendCampaign(Audience $audience): Campaign
+    {
+        $campaign = $this->createCampaign($audience);
+        $sender = self::getContainer()->get(CampaignSender::class);
+        $sender->arm($campaign);
+        $sender->drain($campaign, 10);
+
+        return $campaign;
+    }
+
+    private function sendDripStep(Audience $audience): void
+    {
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
+        $runner = self::getContainer()->get(AutomationRunner::class);
+        $runner->triggerOne($automation, new DateTimeImmutable());
+        $runner->advance(10);
+    }
+
+    private function deliveryState(Contact $contact): RecipientState
+    {
+        $deliveries = $this->entityManager->getRepository(AutomationDelivery::class)->findBy(['contact' => $contact]);
+        self::assertCount(1, $deliveries);
+
+        return $deliveries[0]->state;
     }
 
     private function recipientState(Campaign $campaign): RecipientState

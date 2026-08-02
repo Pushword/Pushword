@@ -5,8 +5,10 @@ namespace Pushword\Newsletter\Tests\Service;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Newsletter\Entity\Automation;
+use Pushword\Newsletter\Entity\AutomationDelivery;
 use Pushword\Newsletter\Entity\Enrollment;
 use Pushword\Newsletter\Enum\EnrollmentStatus;
+use Pushword\Newsletter\Enum\RecipientState;
 use Pushword\Newsletter\Service\AutomationRunner;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
@@ -253,6 +255,123 @@ final class AutomationRunnerTest extends AbstractNewsletterTestCase
         $this->createContact($other, 'theirs@example.tld');
 
         self::assertSame(1, $this->enroll($this->createAutomation($audience, self::TWO_STEPS)));
+    }
+
+    /**
+     * The ledger a sequence leaves behind: what went out, to whom, under which
+     * subject — the step's own subject line can be edited afterwards.
+     */
+    public function testASentStepIsRecorded(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'new@example.tld');
+        $contact->name = 'Robin';
+
+        $this->entityManager->flush();
+
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome {{ contact.name }}']]);
+        $this->enroll($automation);
+        $this->runner()->advance(10);
+
+        $deliveries = $this->deliveries($automation);
+        self::assertCount(1, $deliveries);
+        self::assertSame(RecipientState::Sent, $deliveries[0]->state);
+        self::assertSame(0, $deliveries[0]->position, 'the row belongs to the step attempted, not to the next one');
+        self::assertSame('Welcome Robin', $deliveries[0]->subject);
+        self::assertSame($contact->id, $deliveries[0]->contact->id);
+        self::assertNull($deliveries[0]->error);
+    }
+
+    /** Every step of a sequence leaves its own row, numbered as it was sent. */
+    public function testEachStepLeavesItsOwnRow(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'new@example.tld');
+        $automation = $this->createAutomation($audience, self::TWO_STEPS);
+        $this->enroll($automation);
+        $this->runner()->advance(10);
+
+        $this->makeDue($automation);
+        $this->runner()->advance(10);
+
+        self::assertSame([0, 1], array_map(
+            static fn (AutomationDelivery $delivery): int => $delivery->position,
+            $this->deliveries($automation),
+        ));
+    }
+
+    /**
+     * The sequence steps over a refused mail so one permanent failure cannot
+     * block it forever — which makes this row the only lasting trace of it.
+     */
+    public function testARefusedStepIsRecordedAndTheSequenceMovesOn(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'new@example.tld');
+        $automation = $this->createAutomation($audience, self::TWO_STEPS);
+        $this->enroll($automation);
+
+        // An unusable sender identity: the mail can never be built.
+        $audience->fromEmail = 'not a valid address';
+        $this->entityManager->flush();
+
+        self::assertSame(0, $this->runner()->advance(10));
+
+        $deliveries = $this->deliveries($automation);
+        self::assertCount(1, $deliveries);
+        self::assertSame(RecipientState::Failed, $deliveries[0]->state);
+        self::assertNotNull($deliveries[0]->error);
+        self::assertSame('Welcome', $deliveries[0]->subject);
+        self::assertSame(1, $this->enrollments($automation)[0]->position);
+    }
+
+    /**
+     * A placeholder can push a subject past the column it is recorded in — the
+     * step's own is capped at 255, what it expands to is not. SQLite would keep
+     * the overflow and MariaDB would refuse the row, losing the record of a mail
+     * that did go out.
+     */
+    public function testASubjectTooLongForTheLedgerIsCutToFit(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'new@example.tld');
+        $contact->name = str_repeat('a', 100);
+
+        $this->entityManager->flush();
+
+        $automation = $this->createAutomation($audience, [
+            ['delay' => 0, 'subject' => str_repeat('b', 200).' {{ contact.name }}'],
+        ]);
+        $this->enroll($automation);
+        $this->runner()->advance(10);
+
+        self::assertSame(255, mb_strlen($this->deliveries($automation)[0]->subject));
+    }
+
+    /** A step nobody was sent — stopped, unsubscribed, paused — is not a delivery. */
+    public function testAStoppedSequenceRecordsNothing(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'leaving@example.tld');
+        $automation = $this->createAutomation($audience, self::TWO_STEPS);
+        $this->enroll($automation);
+
+        $contact->unsubscribe();
+        $this->entityManager->flush();
+
+        $this->runner()->advance(10);
+
+        self::assertSame([], $this->deliveries($automation));
+    }
+
+    /** @return list<AutomationDelivery> */
+    private function deliveries(Automation $automation): array
+    {
+        /** @var list<AutomationDelivery> $deliveries */
+        $deliveries = $this->entityManager->getRepository(AutomationDelivery::class)
+            ->findBy(['automation' => $automation], ['id' => 'ASC']);
+
+        return $deliveries;
     }
 
     /** Messages accumulate across service calls in one test; the drip's latest is the last one. */

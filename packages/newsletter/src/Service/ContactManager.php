@@ -5,8 +5,10 @@ namespace Pushword\Newsletter\Service;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Entity\AutomationDelivery;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Repository\AutomationDeliveryRepository;
 use Pushword\Newsletter\Repository\CampaignRecipientRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Repository\EnrollmentRepository;
@@ -23,6 +25,7 @@ final readonly class ContactManager
     public function __construct(
         private ContactRepository $contactRepository,
         private CampaignRecipientRepository $recipientRepository,
+        private AutomationDeliveryRepository $deliveryRepository,
         private EnrollmentRepository $enrollmentRepository,
         private EntityManagerInterface $entityManager,
         private NewsletterMailer $mailer,
@@ -111,7 +114,7 @@ final readonly class ContactManager
         }
 
         $contact->unsubscribe();
-        $this->attributeToLastCampaign($contact, 'unsub');
+        $this->attributeToLastMail($contact, 'unsub');
         $this->stopEnrollments($contact);
         $this->entityManager->flush();
     }
@@ -136,8 +139,13 @@ final readonly class ContactManager
         $contact->optIn(false);
 
         // The campaign credited with the opt-out gets its count back. It is the
-        // same row `unsubscribe()` picked: nothing was sent to them in between.
-        $this->lastSentTo($contact)?->campaign->decrementUnsub();
+        // same row `unsubscribe()` picked: nothing was sent to them in between —
+        // and if that row was a drip step, no campaign was charged to begin with.
+        $last = $this->lastMailTo($contact);
+
+        if ($last instanceof CampaignRecipient) {
+            $last->campaign->decrementUnsub();
+        }
 
         $this->entityManager->flush();
     }
@@ -150,18 +158,31 @@ final readonly class ContactManager
         }
 
         $contact->markBounced();
-        $this->attributeToLastCampaign($contact, 'bounce');
+        $this->attributeToLastMail($contact, 'bounce');
         $this->stopEnrollments($contact);
         $this->entityManager->flush();
     }
 
     /**
-     * Credit the event to the last campaign this contact actually received, so a
+     * Credit the event to the last mail this contact actually received, so a
      * campaign's unsubscribe and bounce counts mean "caused by this send".
+     *
+     * That mail may be a drip step, which belongs to no campaign: the bounce is
+     * then recorded on its own delivery row and nothing is charged. Charging the
+     * newest campaign anyway would blame a send this person had already read
+     * something else after.
      */
-    private function attributeToLastCampaign(Contact $contact, string $kind): void
+    private function attributeToLastMail(Contact $contact, string $kind): void
     {
-        $last = $this->lastSentTo($contact);
+        $last = $this->lastMailTo($contact);
+
+        if ($last instanceof AutomationDelivery) {
+            if ('bounce' === $kind) {
+                $last->markBounced();
+            }
+
+            return;
+        }
 
         if (null === $last) {
             return;
@@ -178,13 +199,24 @@ final readonly class ContactManager
     }
 
     /**
-     * The last campaign this contact actually received. Crediting an event and
-     * taking it back read it the same way, or a taken-back opt-out lands on
-     * another campaign than the one it was charged to.
+     * The last mail of either kind this contact actually received. Crediting an
+     * event and taking it back read it the same way, or a taken-back opt-out
+     * lands on another campaign than the one it was charged to.
      */
-    private function lastSentTo(Contact $contact): ?CampaignRecipient
+    private function lastMailTo(Contact $contact): CampaignRecipient|AutomationDelivery|null
     {
-        return $this->recipientRepository->findSentFor($contact)[0] ?? null;
+        $recipient = $this->recipientRepository->findSentFor($contact)[0] ?? null;
+        $delivery = $this->deliveryRepository->findLastSentFor($contact);
+
+        if (null === $delivery) {
+            return $recipient;
+        }
+
+        if (! $recipient instanceof CampaignRecipient || null === $recipient->sentAt) {
+            return $delivery;
+        }
+
+        return $delivery->attemptedAt > $recipient->sentAt ? $delivery : $recipient;
     }
 
     private function stopEnrollments(Contact $contact): void

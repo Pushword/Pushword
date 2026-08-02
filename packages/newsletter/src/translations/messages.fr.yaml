@@ -184,6 +184,19 @@ newsletter:
     unitMinutes: minutes
     unitWeeks: semaines
     value: Valeur
+  delivery:
+    label:
+      plural: Envois
+      singular: Envoi
+    field:
+      attemptedAt: Tenté le
+      automation: Automatisation
+      contact: Contact
+      error: Erreur
+      position: Étape
+      state: État
+      subject: Sujet
+      subjectId: Sujet déclencheur
   email:
     unsubscribe: Se désinscrire
   form:

@@ -6,6 +6,7 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Pushword\Newsletter\Entity\Automation;
+use Pushword\Newsletter\Entity\AutomationDelivery;
 use Pushword\Newsletter\Entity\Enrollment;
 use Pushword\Newsletter\Entity\TriggerLog;
 use Pushword\Newsletter\Repository\AutomationRepository;
@@ -233,32 +234,39 @@ final readonly class AutomationRunner
             return false;
         }
 
-        $delivered = true;
         $placeholders = $enrollment->placeholders;
+        $subject = $this->renderer->renderSubject($step->subject, $placeholders);
+        $error = null;
 
         try {
             $this->mailer->sendStep(
                 $step,
                 $contact,
-                $this->renderer->renderSubject($step->subject, $placeholders),
+                $subject,
                 $this->renderer->render($step->bodyMarkdown, $placeholders),
             );
         } catch (Throwable $throwable) {
             // The sequence moves on rather than retrying: a permanent failure
             // would otherwise block this contact's drip at the same step forever.
-            // The loss is one step, and it is visible here.
+            // The loss is one step, and the delivery row below is what says so.
             $this->logger->error('Newsletter step could not be sent.', [
                 'automation' => $automation->id,
                 'step' => $step->position,
                 'contact' => $contact->id,
                 'error' => $throwable->getMessage(),
             ]);
-            $delivered = false;
+            $error = $throwable->getMessage();
         }
+
+        // Written before the enrollment advances: the row belongs to the step
+        // that was just attempted, not to the one it is about to wait for.
+        $this->entityManager->persist(null === $error
+            ? AutomationDelivery::sent($enrollment, $subject)
+            : AutomationDelivery::failed($enrollment, $subject, $error));
 
         $next = $automation->getStep($enrollment->position + 1);
         $enrollment->advance($now->modify('+'.($next->delayMinutes ?? 0).' minutes'));
 
-        return $delivered;
+        return null === $error;
     }
 }
