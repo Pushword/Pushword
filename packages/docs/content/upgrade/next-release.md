@@ -76,6 +76,12 @@ the property that replaced it rather than by an unset custom property. Update th
 anyway — any argument they carry (`page.getTitle(true)`, from a signature that has not
 existed for a long time) is silently ignored.
 
+That bridge lives in `ExtensiblePropertiesTrait::__call()`, so it covers every entity
+using it — `Page`, `Media`, `User`, `Message`, `Snippet`, `Contact`. The one case it
+changes is a custom property deliberately named after a public column and read as
+`$entity->getThatName()`: the column now answers instead of the bag. Read it explicitly
+with `getCustomProperty('thatName')`.
+
 ## The filter pipeline reads properties, and Manager is a facade
 
 `ContentPipeline` used to resolve a filtered property by building a getter name and
@@ -85,9 +91,15 @@ consequences for custom code:
 
 - `Pushword\Core\Component\EntityFilter\Manager` no longer implements the filtering — it
   delegates to the page's `ContentPipeline`. Filters and `pushword.filter_before`/`_after`
-  listeners still receive it, unchanged. `Manager::getManagerPool()` is gone: to resolve a
-  property against another page, use
+  listeners still receive it, unchanged, and `$manager->page`, `getPage()` and the magic
+  `$manager->title()` all still answer. Its constructor now takes that single pipeline,
+  and `getManagerPool()` is gone: to resolve a property against another page, use
   `$manager->getPipeline()->for($otherPage)->getFilteredProperty('Title')`.
 - `ManagerPool` is now a thin delegate over `ContentPipelineFactory`: it takes only that
   factory, and `ContentPipelineFactory` no longer takes a `ManagerPool`. Only code
-  constructing either by hand, rather than autowiring it, has to change.
+  constructing either by hand, rather than autowiring it, has to change. `ManagerPool`
+  also stops implementing `ResetInterface` — it holds no cache of its own now, and the
+  managers are discarded with the pipelines when `ContentPipelineFactory` is reset, so
+  worker mode is unaffected. Call `reset()` on the factory instead.
+- New on `ContentPipeline`: `for(Page)` returns the pipeline of another page, and
+  `getLegacyManager()` the Manager facade of this one.
