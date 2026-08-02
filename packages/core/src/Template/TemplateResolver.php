@@ -46,13 +46,26 @@ final class TemplateResolver
             return $site->template.'/page/page.html.twig';
         }
 
-        if ($this->isFullPath($path)) {
+        // A path that names its own namespace is already resolved. A namespace
+        // with nothing behind it is a caller error: everything below would
+        // prepend a second one to it.
+        if (str_starts_with($path, '@')) {
+            if (! str_contains($path, '/')) {
+                throw new InvalidArgumentException('Invalid view name: '.$path);
+            }
+
             return $path;
         }
 
         if ('none' === $path) {
             $path = '/page/raw.twig';
         }
+
+        // Everything below prepends a namespace, so the leading slash cannot be
+        // left to the caller: `abo.html.twig` — what a page's template property
+        // or a `view()` call spells — would come back as `@Pushwordabo.html.twig`
+        // and only fail at include time, several frames from here.
+        $path = '/'.ltrim($path, '/');
 
         $overridden = $this->findOverride($site, $path);
         if (null !== $overridden) {
@@ -70,19 +83,9 @@ final class TemplateResolver
         }
     }
 
+    /** $name is normalized by doResolve(): no namespace, one leading slash. */
     private function findOverride(SiteConfig $site, string $name): ?string
     {
-        if (str_starts_with($name, '@')) {
-            $namePart = explode('/', $name, 2);
-            if (! isset($namePart[1])) {
-                throw new InvalidArgumentException('Invalid view name: '.$name);
-            }
-
-            $name = $namePart[1];
-        }
-
-        $name = ('/' === $name[0] ? '' : '/').$name;
-
         $templateDir = $site->getStr('template_dir');
 
         // 1. Host-specific override
@@ -119,10 +122,5 @@ final class TemplateResolver
         }
 
         return null;
-    }
-
-    private function isFullPath(string $path): bool
-    {
-        return str_starts_with($path, '@') && str_contains($path, '/');
     }
 }

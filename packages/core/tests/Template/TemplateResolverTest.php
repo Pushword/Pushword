@@ -35,6 +35,42 @@ final class TemplateResolverTest extends KernelTestCase
         self::assertSame($first, $memo[$cacheKey]);
     }
 
+    /** The two shorthands a page's `template` property may hold instead of a path. */
+    public function testTheShorthandsAPageMayAskFor(): void
+    {
+        self::bootKernel();
+        $site = self::getContainer()->get(SiteRegistry::class)->get();
+        $resolver = $this->uncachedResolver();
+
+        // No template at all: the site's own page template, overrides not consulted.
+        self::assertSame('@Pushword/page/page.html.twig', $resolver->resolve($site));
+
+        // `none` is the body with nothing around it.
+        self::assertSame('@Pushword/page/raw.twig', $resolver->resolve($site, 'none'));
+    }
+
+    /**
+     * A page's `template` property and a `view()` call are authored by hand and
+     * rarely carry the leading slash the resolver's own callers use. Unnormalized,
+     * the no-override branch glued the namespace straight onto the path
+     * (`@Pushwordabo.html.twig`) and only failed at include time, far from here.
+     */
+    public function testAPathWithoutALeadingSlashResolvesLikeOneWithIt(): void
+    {
+        self::bootKernel();
+        $site = self::getContainer()->get(SiteRegistry::class)->get();
+        $resolver = $this->uncachedResolver();
+
+        // Nothing overrides it and no theme holds it: the fallback branch.
+        self::assertSame('@Pushword/_test_missing.html.twig', $resolver->resolve($site, '_test_missing.html.twig'));
+
+        // And the branch that does find something answers the same either way.
+        self::assertSame(
+            $resolver->resolve($site, '/component/image.html.twig'),
+            $resolver->resolve($site, 'component/image.html.twig'),
+        );
+    }
+
     /**
      * The memo is keyed by host, so the same path must resolve independently per
      * host: a host-specific override must never leak into another host through the
@@ -61,9 +97,9 @@ final class TemplateResolverTest extends KernelTestCase
         $filesystem->dumpFile($overrideFile, '{# probe #}');
 
         try {
-            // Fresh cache so a stale cache.app entry from a previous run (when the
-            // probe file did not exist) cannot mask a host-keying regression.
-            $resolver = new TemplateResolver(self::getContainer()->get('twig'), new ArrayAdapter());
+            // A stale cache.app entry from a previous run (when the probe file did
+            // not exist) would otherwise mask a host-keying regression.
+            $resolver = $this->uncachedResolver();
 
             $resolvedForOverrideHost = $resolver->resolve($siteWithOverride, $probePath);
             $resolvedForOtherHost = $resolver->resolve($otherSite, $probePath);
@@ -78,5 +114,11 @@ final class TemplateResolverTest extends KernelTestCase
         } finally {
             $filesystem->remove($overrideFile);
         }
+    }
+
+    /** A resolver of its own, so no cache.app entry outlives the test that wrote it. */
+    private function uncachedResolver(): TemplateResolver
+    {
+        return new TemplateResolver(self::getContainer()->get('twig'), new ArrayAdapter());
     }
 }

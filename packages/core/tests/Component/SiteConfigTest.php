@@ -47,7 +47,7 @@ final class SiteConfigTest extends TestCase
 
         $result = $resolver->resolve($site, '@PushwordConversation/conversation/review.html.twig');
 
-        // Full path is returned as-is (isFullPath: starts with @ and contains /)
+        // A path that names its own namespace is returned as-is
         self::assertSame('@PushwordConversation/conversation/review.html.twig', $result);
     }
 
