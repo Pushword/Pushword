@@ -16,6 +16,7 @@ use RuntimeException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
+use Twig\Environment;
 use Twig\Error\RuntimeError;
 
 #[Group('integration')]
@@ -62,6 +63,94 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
 
         $client->request(Request::METHOD_GET, '/admin/static/localhost.dev');
         self::assertResponseIsSuccessful();
+    }
+
+    /**
+     * The live console polls itself: each fragment re-carries the trigger that
+     * fetches the next one. Losing it freezes the output mid-generation.
+     */
+    public function testRunningOutputFragmentCarriesThePollTrigger(): void
+    {
+        $this->loginUser();
+
+        $fragment = $this->renderOutputFragment('running');
+
+        self::assertStringContainsString('hx-get=', $fragment);
+        self::assertStringContainsString('hx-trigger="load delay:500ms"', $fragment);
+        self::assertStringContainsString('hx-swap="outerHTML"', $fragment);
+        self::assertStringContainsString('hx-target="#static-output-content"', $fragment);
+    }
+
+    /**
+     * The other half of the same contract: the server ends the loop by omitting
+     * the trigger and downgrading the swap, so the finished fragment lands
+     * inside the container instead of replacing it. A fragment that keeps its
+     * trigger polls the endpoint forever.
+     */
+    public function testOutputFragmentStopsPollingAndReswapsWhenGenerationIsOver(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $this->markProcessFinished('completed');
+
+        $client->request(Request::METHOD_GET, '/admin/static-output');
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('id="static-output-content"', $content);
+        self::assertStringNotContainsString('hx-trigger', $content);
+        self::assertStringNotContainsString('hx-get', $content);
+        self::assertSame('innerHTML', $client->getResponse()->headers->get('HX-Reswap'));
+    }
+
+    /**
+     * A fragment that was waiting on a blocking generation hands the browser off
+     * with HX-Redirect once it ends — htmx 4 still honours the header.
+     */
+    public function testPendingOutputHandsOffWithHxRedirectWhenGenerationIsOver(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $this->markProcessFinished('completed');
+
+        $client->request(Request::METHOD_GET, '/admin/static-output?pending=1');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('', (string) $client->getResponse()->getContent());
+        self::assertResponseHasHeader('HX-Redirect');
+        self::assertStringContainsString('/admin/static', (string) $client->getResponse()->headers->get('HX-Redirect'));
+    }
+
+    private function renderOutputFragment(string $status): string
+    {
+        /** @var Environment $twig */
+        $twig = self::getContainer()->get('twig');
+
+        return $twig->render('@PushwordStatic/output_fragment.html.twig', [
+            'status' => $status,
+            'output' => '',
+            'errors' => [],
+            'host' => null,
+            'pending' => false,
+            'outputProcessType' => StaticGenerationCoordinator::PROCESS_TYPE,
+        ]);
+    }
+
+    /**
+     * No pid file means no running process, so readOutput() falls back to the
+     * stored status — the state the controller sees once a generation is over.
+     */
+    private function markProcessFinished(string $status): void
+    {
+        /** @var BackgroundProcessManager $processManager */
+        $processManager = self::getContainer()->get(BackgroundProcessManager::class);
+        /** @var ProcessOutputStorage $outputStorage */
+        $outputStorage = self::getContainer()->get(ProcessOutputStorage::class);
+
+        new Filesystem()->remove($processManager->getPidFilePath(StaticGenerationCoordinator::PROCESS_TYPE));
+        $outputStorage->setStatus(StaticGenerationCoordinator::PROCESS_TYPE, $status);
     }
 
     public function testDispatchErrorIsShownInConsole(): void
