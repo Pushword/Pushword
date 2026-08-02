@@ -15,19 +15,30 @@
   background-color: transparent;
 }
 
-/* Remove "Edit Page" h1 on edit */
+/* The title is hidden, so nothing holds the buttons at the end of the row any more */
 .ea-edit .page-actions,
 .ea-new .page-actions {
   background-color: rgba(255, 255, 255, 0.5);
   padding: 5px;
   margin-top: -10px;
   margin-right: -5px;
+  margin-inline-start: auto;
 }
 
-/* Remove "Edit Page" h1 on edit */
+/* Hide the "Edit Page" h1 on edit, keeping it for screen readers. It used to be
+   pushed off with a -10144px margin, which took the whole form with it as soon as
+   the header stopped being a flex row (under 768px) and left the page blank. */
 .ea-new .content-header-title,
 .ea-edit .content-header-title {
-  margin-top: -10144px;
+  position: absolute;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* Have sticky save button even on mobile */
@@ -130,6 +141,23 @@ body.ea-new .content-header {
 .form-column .form-fieldset-header {
   padding: calc(var(--bs-gutter-x) / 4) var(--bs-gutter-x) calc(var(--bs-gutter-x) / 4);
   box-shadow: 0 1px 2px #0000000d;
+}
+
+/* A collection entry rendered by useEntryCrudForm() carries the entry CRUD's own
+   grid columns, and EasyAdmin then splits every one of those cells again into a
+   20% label and a flexed widget — leaving a few characters of label beside a
+   squeezed input, with the help text overlapping it. Inside that grid, entry
+   fields stack like they do on every other CRUD form. Collections built from a
+   plain entry type have no fieldset and keep EasyAdmin's horizontal layout. */
+.form-group.field-collection .accordion-item .form-fieldset .form-group {
+  display: block;
+  padding: 0 0 var(--ea-sp-12);
+}
+
+.form-group.field-collection .accordion-item .form-fieldset .form-group > label {
+  inline-size: auto;
+  margin: 0;
+  padding: 0 0 var(--ea-sp-4);
 }
 
 /* Transform the current input file to a drop area */

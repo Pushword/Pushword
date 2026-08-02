@@ -27,10 +27,18 @@ class AutomationStepCrudController extends AbstractCrudController
     #[Override]
     public function configureFields(string $pageName): iterable
     {
-        yield IntegerField::new('position', 'newsletter.step.field.position');
+        // Explicit columns, or EasyAdmin gives every field a row of its own: the two
+        // numbers pair up, the mail itself takes the full width.
+        yield IntegerField::new('position', 'newsletter.step.field.position')
+            ->setColumns('col-6 col-lg-3')
+            ->setHelp('newsletter.step.field.position.help');
         yield IntegerField::new('delayMinutes', 'newsletter.step.field.delay')
+            ->setColumns('col-6 col-lg-5')
             ->setHelp('newsletter.step.field.delay.help');
-        yield TextField::new('subject', 'newsletter.step.field.subject');
-        yield TextareaField::new('bodyMarkdown', 'newsletter.step.field.body')->setNumOfRows(10);
+        yield TextField::new('subject', 'newsletter.step.field.subject')
+            ->setColumns('col-12');
+        yield TextareaField::new('bodyMarkdown', 'newsletter.step.field.body')
+            ->setColumns('col-12')
+            ->setNumOfRows(10);
     }
 }

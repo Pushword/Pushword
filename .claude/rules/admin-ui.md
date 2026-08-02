@@ -23,6 +23,14 @@ paths:
 - **Do not use form themes for editor wiring.** EasyAdmin's per-CRUD `addFormTheme` makes
   form-theme overrides lose the precedence fight; the Twig-function merge above is the
   supported seam.
+- **`useEntryCrudForm()` collections need the stacked-field override.** EasyAdmin's
+  `fields.css` forces every `.form-group` inside a collection accordion into a
+  horizontal `label 20% | widget flex:1` split, which assumes a plain `setEntryType()`
+  form spanning the accordion body. An entry CRUD form brings its own `col-*` grid, so
+  the split runs inside each cell and squeezes labels to a few characters. `adminForm.css`
+  re-stacks them, scoped to `.form-fieldset` — the marker only a CRUD-form entry emits, so
+  plain-entry collections (page redirects, media creators) keep the horizontal layout.
+  Entry fields also need explicit `setColumns()`, or EasyAdmin gives each one its own row.
 - **Rebuild core assets after editing js-helper.** `packages/core/src/Resources/public/app.js`
   is compiled — run `yarn build` in `packages/core` after touching `helpers.js`.
 - **`pw_auth=1` is a ROLE_EDITOR-only hint.** Cookie set, heal, and 403-clear paths must
