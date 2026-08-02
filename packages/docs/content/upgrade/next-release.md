@@ -1,29 +1,34 @@
 ---
-title: ''
+title: 'six unused editorjs twig helpers are gone'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
 
-<!--
-The upgrade note for the next release. `.scripts/release` renames this file to
-`upgrade/rc<N>.md`, adds its row to the table in `upgrade.md` and empties it back
-to this scaffold, at the tag.
+**Concerns:** `pushword/admin-block-editor`, `pushword/core`
 
-Write here, in the same commit as the change, whenever a release asks something of
-a site that upgrades: a command to run, a config key to set, a template to copy, a
-behaviour that changed under an unchanged call. A change `composer update` fully
-absorbs needs no note.
+## `blockWrapperAttr` and five other block helpers were removed
 
-- `title:` — the "What changed" cell of the index table. One line, lower case,
-  written from the site's side ("the newsletter form is fetched, and CSRF-protected")
-  rather than the diff's ("refactor NewsletterFormController"). Required as soon as
-  the note has a section; the release stops if it is still empty.
-- `run:` — the command(s) the release expects, without `php bin/console`. Omit the
-  key when there is none. A list runs in the order given.
-- `**Concerns:**` — first line of the body, listing every package a site has to
-  install to be affected. Alphabetical, full composer names, `@pushword/js-helper`
-  last. Add the packages your change touches to the line, keep the others.
-- One `##` section per change, saying what breaks and what to do about it.
+Six Twig callables left over from an earlier EditorJS rendering scheme have been
+dropped. None was called by any shipped template, none was documented, and two of
+them could not have worked:
 
-Several changes land here between two tags: append to the file, do not replace it.
--->
+| Removed | From |
+| --- | --- |
+| `blockWrapperAttr()` | `Pushword\Core\Twig\BlockExtension` |
+| `blockWrapperAlignment()` | `Pushword\Core\Twig\BlockExtension` |
+| `legacyImageArray()` | `Pushword\Core\Twig\BlockExtension` |
+| `legacyImageName()` | `Pushword\AdminBlockEditor\Twig\AppExtension` |
+| `legacyImageArray()` | `Pushword\AdminBlockEditor\Twig\AppExtension` |
+| `fixHref` (filter) | `Pushword\AdminBlockEditor\Twig\AppExtension` |
+
+`blockWrapperAttr()` emitted `class=" "` on every block carrying no class tune, and
+raised two `Undefined array key "class"` warnings doing it — its normalizer never set
+the default its own docblock promised. And `legacyImageArray` was registered twice
+under that one Twig name with two different return shapes, so which one you got
+depended on extension registration order.
+
+`blockWrapperId()` stays — that one is used by the `attaches`, `video` and
+`pages_list` components.
+
+If a template of yours calls one of these, copy the body out of the git history into
+your own Twig extension. Nothing else in Pushword reads them.

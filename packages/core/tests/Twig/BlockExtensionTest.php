@@ -14,7 +14,6 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 #[Group('integration')]
 final class BlockExtensionTest extends KernelTestCase
 {
-    /** @return BlockExtension<object> */
     private function getBlockExtension(): BlockExtension
     {
         self::bootKernel();
@@ -112,5 +111,14 @@ final class BlockExtensionTest extends KernelTestCase
         // …while the broken one degrades to an invisible, scannable marker instead of 500-ing.
         self::assertStringContainsString('pushword:broken-image', $html);
         self::assertStringContainsString('does-not-exist-broken.jpg', $html);
+    }
+
+    /** Components take an optional anchor; an absent one must add no attribute at all. */
+    public function testBlockWrapperId(): void
+    {
+        $ext = $this->getBlockExtension();
+
+        self::assertSame('', $ext->blockWrapperId());
+        self::assertSame(' id="a&quot;b"', $ext->blockWrapperId('a"b'));
     }
 }
