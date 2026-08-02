@@ -185,6 +185,63 @@ final class QuizValidationTest extends KernelTestCase
         self::assertStringContainsString('"resultEndpoint":""', $html);
     }
 
+    /**
+     * The utilities on each element are a `pwQuiz*Class` default a site may
+     * redefine. Most of the markup is built inside `{% macro %}`, which sees no
+     * render context — a twig global is the only override that reaches in, so
+     * that is what this asserts.
+     */
+    public function testAClassGlobalOverridesTheDefaultUtilitiesInsideMacrosToo(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $twig = self::getContainer()->get(Environment::class);
+        $twig->addGlobal('pwQuizQClass', 'question-card-of-my-own');   // inside qitem()
+        $twig->addGlobal('pwQuizClass', 'quiz-root-of-my-own');        // outside any macro
+
+        $output = self::getContainer()->get(QuizExtension::class)->renderQuiz(json_encode($this->validQuiz(), \JSON_THROW_ON_ERROR));
+
+        self::assertStringContainsString('class="pw-quiz-q question-card-of-my-own"', $output);
+        self::assertStringContainsString('quiz-root-of-my-own', $output);
+        self::assertStringNotContainsString('rounded-xl border border-gray-200 bg-white p-5', $output);
+    }
+
+    /**
+     * Since the look moved onto utilities, a `pw-quiz-*` name carries no visible
+     * styling in the template and reads like dead markup — but quiz.css keys its
+     * runtime-state rules off exactly those names. Deleting one silently breaks
+     * a state (a wrong answer stops turning red) with no test failing, so every
+     * selector quiz.css targets has to exist in the template or in quiz.js.
+     */
+    public function testEveryClassQuizCssTargetsStillExistsInTheMarkup(): void
+    {
+        $dir = __DIR__.'/../src';
+        $css = (string) file_get_contents($dir.'/Resources/public/quiz.css');
+        $markup = file_get_contents($dir.'/templates/component/quiz.html.twig')
+            .file_get_contents($dir.'/Resources/public/quiz.js')
+            .file_get_contents($dir.'/Service/QuizRenderer.php');
+
+        preg_match_all('#\.(pw-quiz[\w-]*)#', $css, $matches);
+        $targeted = array_unique($matches[1]);
+
+        self::assertNotEmpty($targeted);
+        foreach ($targeted as $class) {
+            self::assertStringContainsString($class, $markup, sprintf('quiz.css styles .%s, which nothing renders any more.', $class));
+        }
+    }
+
+    /** Nothing HTML-escapable may sit in a default: `{{ }}` would mangle it into a class that matches no rule. */
+    public function testNoDefaultCarriesACharacterTwigWouldEscape(): void
+    {
+        $template = (string) file_get_contents(__DIR__.'/../src/templates/component/quiz.html.twig');
+        $found = preg_match_all("#pwQuiz\w+Class\|default\('([^']*)'\)#", $template, $matches);
+
+        self::assertGreaterThan(0, $found, 'The class defaults were renamed or removed.');
+        foreach ($matches[1] as $default) {
+            self::assertSame($default, htmlspecialchars($default, \ENT_QUOTES), 'A default utility string must survive Twig escaping: '.$default);
+        }
+    }
+
     public function testProfileMessageRendersMarkdown(): void
     {
         self::bootKernel();
@@ -196,7 +253,7 @@ final class QuizValidationTest extends KernelTestCase
             .'"questions":[{"q":"Q?","answers":[{"a":"Yes","profile":"a"},{"a":"No"}]}]}';
         $output = $extension->renderQuiz($json);
 
-        self::assertStringContainsString('<div class="pw-quiz-profile-msg">', $output);
+        self::assertStringContainsString('<div class="pw-quiz-profile-msg ', $output);
         self::assertStringContainsString('href="https://example.com"', $output);
         self::assertStringNotContainsString('[guide]', $output);
     }

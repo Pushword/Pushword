@@ -9,53 +9,66 @@
 #}
 
 {# ---- one question <li>; shared by the single quiz and every level ---- #}
+{# The `pw-quiz-*` names are load-bearing and stay: quiz.js queries them and
+   quiz.css keys its runtime-state rules off them. The utilities next to each
+   one are only the look, and each set is a `pwQuiz*Class` Twig global you can
+   redefine to restyle that element without forking this template — see
+   /extension/quiz. Set them as twig globals: macros do not see a render
+   context, so a variable passed to the block would not reach in here. #}
 {% macro qitem(q, idx0, idx, total, prefixes, l) %}
-  <li class="pw-quiz-q" data-q="{{ idx0 }}">
-    <span class="pw-quiz-q-num" aria-hidden="true">{{ l.question }} {{ idx }}/{{ total }}</span>
+  <li class="pw-quiz-q {{ pwQuizQClass|default('relative rounded-[14px] border border-gray-200 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]') }}" data-q="{{ idx0 }}">
+    <span class="pw-quiz-q-num {{ pwQuizQNumClass|default('mb-2 inline-block text-[0.8rem] font-bold tracking-[0.03em] uppercase text-primary') }}" aria-hidden="true">{{ l.question }} {{ idx }}/{{ total }}</span>
 
     {# Guarded render: a missing/broken media file skips the figure instead of 500-ing the page. #}
     {{ quiz_figure(q) }}
 
-    <p class="pw-quiz-question">{{ q.q }}</p>
+    <p class="pw-quiz-question {{ pwQuizQuestionClass|default('mt-0 mb-4 text-[1.15rem] font-semibold') }}">{{ q.q }}</p>
 
-    <ul class="pw-quiz-answers">
+    {# 540px is deliberately below Tailwind's sm: two answers fit side by side
+       well before a tablet. auto-rows-fr keeps both boxes in a row as tall as
+       the longest answer. #}
+    <ul class="pw-quiz-answers {{ pwQuizAnswersClass|default('m-0 grid list-none grid-cols-1 gap-[0.6rem] p-0 min-[540px]:auto-rows-fr min-[540px]:grid-cols-2') }}">
       {% for a in q.answers %}
-        <li>
-          <button type="button" class="pw-quiz-a"{{ a.correct ? ' data-correct' : '' }}{% if a.weights is not empty %} data-weights="{{ a.weights|json_encode }}"{% endif %} aria-pressed="false">
-            {% if prefixes[loop.index0] is defined %}<span class="pw-quiz-a-prefix" aria-hidden="true">{{ prefixes[loop.index0] }}</span>{% endif %}
+        <li class="{{ pwQuizAnswerItemClass|default('flex') }}">
+          {# [font:inherit] — a button does not inherit the page font on its own. #}
+          <button type="button" class="pw-quiz-a {{ pwQuizAClass|default('flex w-full cursor-default items-center gap-[0.6rem] rounded-full border border-gray-200 bg-gray-50 px-4 py-[0.7rem] text-left [font:inherit] transition-colors motion-reduce:transition-none') }}"{{ a.correct ? ' data-correct' : '' }}{% if a.weights is not empty %} data-weights="{{ a.weights|json_encode }}"{% endif %} aria-pressed="false">
+            {% if prefixes[loop.index0] is defined %}<span class="pw-quiz-a-prefix {{ pwQuizAPrefixClass|default('inline-flex h-[1.7rem] w-[1.7rem] shrink-0 items-center justify-center rounded-full bg-primary/15 text-[0.85rem] font-bold text-primary') }}" aria-hidden="true">{{ prefixes[loop.index0] }}</span>{% endif %}
             {{ quiz_answer_image(a) }}
-            <span class="pw-quiz-a-text">{{ a.text }}</span>
-            <span class="pw-quiz-a-mark" aria-hidden="true"></span>
+            <span class="pw-quiz-a-text {{ pwQuizATextClass|default('grow') }}">{{ a.text }}</span>
+            <span class="pw-quiz-a-mark {{ pwQuizAMarkClass|default('w-5 shrink-0 text-center font-bold') }}" aria-hidden="true"></span>
           </button>
         </li>
       {% endfor %}
     </ul>
 
     {% if q.explanation %}
-      <p class="pw-quiz-explanation"><span class="pw-quiz-explanation-label">{{ l.explanation }}</span> {{ q.explanation }}</p>
+      <p class="pw-quiz-explanation {{ pwQuizExplanationClass|default('mt-[0.9rem] mb-0 rounded-[10px] bg-gray-100 px-4 py-3 text-[0.95rem] text-gray-700') }}"><span class="pw-quiz-explanation-label {{ pwQuizExplanationLabelClass|default('font-bold') }}">{{ l.explanation }}</span> {{ q.explanation }}</p>
     {% endif %}
   </li>
 {% endmacro %}
 
 {# ---- end-of-quiz result box (score or personality card + optional conversion form) ---- #}
 {% macro resultBox(quiz, slug, conversationAvailable) %}
-  <div class="pw-quiz-result" hidden>
+  <div class="pw-quiz-result {{ pwQuizResultClass|default('mt-6 rounded-[14px] border border-gray-200 bg-white p-6') }}" hidden>
     <div class="pw-quiz-score" aria-live="polite"></div>
     {% if quiz.mode == 'profile' %}
       {# Every possible outcome is server-rendered (SEO + no-JS); the runtime reveals the winning one. #}
       <div class="pw-quiz-profiles">
         {% for p in quiz.profiles %}
           <div class="pw-quiz-profile" data-profile-key="{{ p.key }}" hidden>
-            <h3 class="pw-quiz-profile-title">{{ p.title }}</h3>
+            <h3 class="pw-quiz-profile-title {{ pwQuizProfileTitleClass|default('mt-0 mb-3 text-center text-[1.4rem] text-primary') }}">{{ p.title }}</h3>
             {{ quiz_profile_image(p) }}
-            {% if p.msg %}<div class="pw-quiz-profile-msg">{{ p.msg|markdown }}</div>{% endif %}
+            {# Holds rendered Markdown; quiz.css collapses the outer margins of the
+               blocks inside. That stays CSS on purpose: a `[&>…]` arbitrary variant
+               would come out of `{{ }}` HTML-escaped and match nothing. #}
+            {% if p.msg %}<div class="pw-quiz-profile-msg {{ pwQuizProfileMsgClass|default('mx-auto mt-1 max-w-2xl leading-[1.6]') }}">{{ p.msg|markdown }}</div>{% endif %}
           </div>
         {% endfor %}
       </div>
     {% endif %}
     {% if quiz.cta and conversationAvailable %}
-      <div class="pw-quiz-cta">
-        {% if quiz.ctaTitle %}<p class="pw-quiz-cta-title">{{ quiz.ctaTitle }}</p>{% endif %}
+      <div class="pw-quiz-cta {{ pwQuizCtaClass|default('mt-6 border-t border-gray-200 pt-5') }}">
+        {% if quiz.ctaTitle %}<p class="pw-quiz-cta-title {{ pwQuizCtaTitleClass|default('mt-0 mb-3 text-[1.05rem] font-semibold') }}">{{ quiz.ctaTitle }}</p>{% endif %}
         <div class="pw-quiz-cta-form" data-quiz-cta="{{ conversation(quiz.cta, 'quiz-' ~ slug) }}"></div>
       </div>
     {% endif %}
@@ -122,18 +135,18 @@
     restart: quiz.labels.restart|default('quiz.label.restart'|trans),
   } %}
 
-  <section class="pw-quiz{% if quiz.mode == 'profile' %} pw-quiz--profile{% endif %}" id="{{ id }}" data-pw-quiz data-slug="{{ baseSlug }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
+  <section class="pw-quiz{% if quiz.mode == 'profile' %} pw-quiz--profile{% endif %} {{ pwQuizClass|default('my-8 block') }}" id="{{ id }}" data-pw-quiz data-slug="{{ baseSlug }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
     {% if quiz.title or quiz.difficulty %}
-      <header class="pw-quiz-head">
-        {% if quiz.title %}<h2 class="pw-quiz-title">{{ quiz.title }}</h2>{% endif %}
-        <p class="pw-quiz-meta">
+      <header class="pw-quiz-head {{ pwQuizHeadClass|default('mb-5') }}">
+        {% if quiz.title %}<h2 class="pw-quiz-title {{ pwQuizTitleClass|default('mt-0 mb-1') }}">{{ quiz.title }}</h2>{% endif %}
+        <p class="pw-quiz-meta {{ pwQuizMetaClass|default('m-0 flex items-center justify-center gap-3 text-[0.9rem] text-gray-500') }}">
           <span>{{ total }} {{ l.questions }}</span>
-          {% if quiz.difficulty %}<span class="pw-quiz-diff">{{ quiz.difficulty }}</span>{% endif %}
+          {% if quiz.difficulty %}<span class="pw-quiz-diff {{ pwQuizDiffClass|default('rounded-full bg-primary px-[0.6rem] py-[0.1rem] text-[0.8rem] text-white') }}">{{ quiz.difficulty }}</span>{% endif %}
         </p>
       </header>
     {% endif %}
 
-    <ol class="pw-quiz-questions">
+    <ol class="pw-quiz-questions {{ pwQuizQuestionsClass|default('relative m-0 flex list-none flex-col gap-5 p-0') }}">
       {% for q in quiz.questions %}{{ _self.qitem(q, loop.index0, loop.index, total, prefixes, l) }}{% endfor %}
     </ol>
 
@@ -148,12 +161,13 @@
 
 {% else %}
   {# Several difficulty levels: an accessible tab selector, one leaf quiz per panel. #}
-  <section class="pw-quiz pw-quiz--levels" id="{{ id }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
-    {% if quiz.title %}<header class="pw-quiz-head"><h2 class="pw-quiz-title">{{ quiz.title }}</h2></header>{% endif %}
+  <section class="pw-quiz pw-quiz--levels {{ pwQuizClass|default('my-8 block') }}" id="{{ id }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
+    {% if quiz.title %}<header class="pw-quiz-head {{ pwQuizHeadClass|default('mb-5') }}"><h2 class="pw-quiz-title {{ pwQuizTitleClass|default('mt-0 mb-1') }}">{{ quiz.title }}</h2></header>{% endif %}
 
-    <div class="pw-quiz-tabs" role="tablist"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
+    <div class="pw-quiz-tabs {{ pwQuizTabsClass|default('mb-5 flex flex-wrap justify-center gap-2') }}" role="tablist"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
       {% for level in quiz.levels %}
-        <button type="button" class="pw-quiz-tab" role="tab"
+        {# aria-selected is the selected state — the runtime flips the attribute, so the variant reads it directly. #}
+        <button type="button" class="pw-quiz-tab {{ pwQuizTabClass|default('cursor-pointer rounded-full border border-gray-200 bg-primary/10 px-[1.1rem] py-[0.45rem] font-semibold text-primary [font:inherit] transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary aria-selected:border-primary aria-selected:bg-primary aria-selected:text-white') }}" role="tab"
                 id="{{ id }}-tab-{{ loop.index0 }}"
                 aria-controls="{{ id }}-panel-{{ loop.index0 }}"
                 aria-selected="{{ loop.first ? 'true' : 'false' }}"
@@ -184,12 +198,13 @@
            id="{{ id }}-panel-{{ loop.index0 }}"
            aria-labelledby="{{ id }}-tab-{{ loop.index0 }}"{% if not loop.first %} hidden{% endif %}>
         <div class="pw-quiz-level" data-pw-quiz data-slug="{{ lslug }}" data-next-tab="{{ nextTab }}">
-          <p class="pw-quiz-meta">
+          {# Each level keeps its own meta line, spaced off the questions below it. #}
+          <p class="pw-quiz-meta {{ pwQuizLevelMetaClass|default('mt-0 mb-5 flex items-center justify-center gap-3 text-[0.9rem] text-gray-500') }}">
             <span>{{ ltotal }} {{ l.questions }}</span>
-            {% if level.difficulty %}<span class="pw-quiz-diff">{{ level.difficulty }}</span>{% endif %}
+            {% if level.difficulty %}<span class="pw-quiz-diff {{ pwQuizDiffClass|default('rounded-full bg-primary px-[0.6rem] py-[0.1rem] text-[0.8rem] text-white') }}">{{ level.difficulty }}</span>{% endif %}
           </p>
 
-          <ol class="pw-quiz-questions">
+          <ol class="pw-quiz-questions {{ pwQuizQuestionsClass|default('relative m-0 flex list-none flex-col gap-5 p-0') }}">
             {% for q in level.questions %}{{ _self.qitem(q, loop.index0, loop.index, ltotal, prefixes, l) }}{% endfor %}
           </ol>
 
