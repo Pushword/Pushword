@@ -275,6 +275,15 @@ been normalized (e.g. `"Qui Sommes-Nous"` → `"qui-sommes-nous"`).
 The new `revision` is also in the `ETag` header. Add `?return=full` to get the complete
 page payload (same shape as `GET`) instead.
 
+When the host declares [page properties](/page-properties), a successful write may also
+carry a `warnings` object — `undeclared` (custom property keys the schema does not know,
+the net that catches a `toc_titel` typo) and `missingRequired`. Informational only: the
+write went through. A value *violating* a declared type or constraint is a `422` instead.
+
+```json
+{ "revision": "9f1c…", "updatedAt": "…", "warnings": { "undeclared": ["toc_titel"] } }
+```
+
 `GET` always returns the full page, and a `409` conflict always includes the fresh
 `current` page so a client can rebase without a second request.
 
