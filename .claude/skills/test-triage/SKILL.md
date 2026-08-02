@@ -31,9 +31,6 @@ converge. Check the failing test against this dossier before investigating your 
 **`Flat\Tests\Command\ConsumePendingTest::testConsumePendingReadsFlagAndRunsExport`** —
 missing `var/flat-sync/localhost_dev_lock.json`; a shared `var/flat-sync` race. Not fixed.
 
-**`Flat\Tests\Sync\AutoModeDetectionTest::testMediaAutoModeDetectsHashChange`** — a
-media-hash/DB visibility race. Not fixed.
-
 **`StaticGenerator\Tests\StaticGeneratorTest::testParallelGeneration*`** — in CI, output
 ends `SQLSTATE[HY000]: General error: 26 file is not a database`: parallel-worker child
 processes racing the dev-app SQLite file. This has hit both PHP 8.5 jobs at once while
