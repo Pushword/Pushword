@@ -26,8 +26,15 @@ if ! php -r 'exit(extension_loaded("pcov") ? 0 : 1);'; then
 fi
 
 DUMP_DIR=$(mktemp -d)
-PCOV_INI=(-d pcov.enabled=1 -d pcov.directory=packages)
-PASSTHRU="'-d' 'pcov.enabled=1' '-d' 'pcov.directory=packages'"
+
+# Finite memory limits, as in .scripts/test — php.ini ships memory_limit=-1, so a
+# runaway grows until the kernel OOM-kills the desktop session. The parent aggregates
+# every worker's coverage, so it gets the larger of the two.
+PW_WORKER_MEMORY_LIMIT="${PW_WORKER_MEMORY_LIMIT:-2G}"
+PW_MERGE_MEMORY_LIMIT="${PW_MERGE_MEMORY_LIMIT:-8G}"
+
+PCOV_INI=(-d pcov.enabled=1 -d pcov.directory=packages -d "memory_limit=${PW_MERGE_MEMORY_LIMIT}")
+PASSTHRU="'-d' 'pcov.enabled=1' '-d' 'pcov.directory=packages' '-d' 'memory_limit=${PW_WORKER_MEMORY_LIMIT}'"
 EXIT=0
 
 function cleanup {
@@ -70,7 +77,7 @@ batch serial --processes=1 --group=serial
 batch worker --processes=1 --group=worker
 
 step "Merging coverage"
-XDEBUG_MODE=off php -dxdebug.mode=off .scripts/merge-coverage.php coverage coverage.xml "$DUMP_DIR"/*.cov
+XDEBUG_MODE=off php -dxdebug.mode=off -dmemory_limit="${PW_MERGE_MEMORY_LIMIT}" .scripts/merge-coverage.php coverage coverage.xml "$DUMP_DIR"/*.cov
 
 echo ""
 echo -e "\033[1;32m✓ coverage/index.html + coverage.xml written in $(( $(date +%s) - START_TIME ))s\033[0m"
