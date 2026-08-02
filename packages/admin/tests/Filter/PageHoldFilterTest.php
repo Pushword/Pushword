@@ -2,16 +2,12 @@
 
 namespace Pushword\Admin\Tests\Filter;
 
-use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
-use EasyCorp\Bundle\EasyAdminBundle\Dto\FilterDataDto;
-use EasyCorp\Bundle\EasyAdminBundle\Dto\FilterDto;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Filter\PageHoldFilter;
 use Pushword\Core\Entity\Page;
-use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-final class PageHoldFilterTest extends KernelTestCase
+final class PageHoldFilterTest extends AbstractFilterTestCase
 {
     public function testHeldValueFiltersNotNull(): void
     {
@@ -30,21 +26,11 @@ final class PageHoldFilterTest extends KernelTestCase
 
     private function applyDql(mixed $value): string
     {
-        self::bootKernel();
-        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-
-        $queryBuilder = $em->createQueryBuilder()
-            ->select('entity')
-            ->from(Page::class, 'entity');
-
-        $filterDto = new FilterDto();
-        $filterDto->setProperty('holdPublicationAt');
-
-        $filterDataDto = FilterDataDto::new(0, $filterDto, 'entity', ['comparison' => '=', 'value' => $value]);
-        $entityDto = new EntityDto(Page::class, $em->getMetadataFactory()->getMetadataFor(Page::class));
-
-        PageHoldFilter::new('holdPublicationAt')->apply($queryBuilder, $filterDataDto, null, $entityDto);
-
-        return $queryBuilder->getDQL();
+        return $this->apply(
+            PageHoldFilter::new('holdPublicationAt'),
+            Page::class,
+            'holdPublicationAt',
+            ['comparison' => '=', 'value' => $value],
+        )->getDQL();
     }
 }

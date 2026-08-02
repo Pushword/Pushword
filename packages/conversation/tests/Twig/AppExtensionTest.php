@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Tests\Twig;
 
+use Exception;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Twig\AppExtension;
 use Pushword\Core\Entity\Page;
@@ -72,5 +73,58 @@ final class AppExtensionTest extends KernelTestCase
         $html = $ext->conversationFormBtn($twig, 'Ask', 'ms-message', 'link-btn', 'question');
 
         self::assertStringContainsString('Ask', $html);
+    }
+
+    public function testShowConversationRendersTheMessagesListView(): void
+    {
+        $ext = $this->getExtensionWithPage();
+
+        $html = $ext->showConversation(self::getContainer()->get('twig'), 'ms-message_localhost.dev/test-page');
+
+        // No message published against that referring, so the list renders empty
+        // rather than erroring — that is what a page with no comment yet looks like.
+        self::assertSame('', trim($html));
+    }
+
+    /** A tag is spelled several ways in templates; each resolves to the same lookup. */
+    public function testReviewsCountAcceptsEveryTagSpelling(): void
+    {
+        $ext = $this->getExtensionWithPage('localhost.dev', 'a-page-without-review');
+
+        $page = new Page();
+        $page->slug = 'a-tag-nobody-uses';
+
+        self::assertSame(0, $ext->count('a-tag-nobody-uses'));
+        self::assertSame(0, $ext->count([' a-tag-nobody-uses ']));
+        self::assertSame(0, $ext->count($page));
+    }
+
+    /**
+     * '#' asks for every review whatever its tag, so the empty tag list it produces
+     * must reach the query — unlike the empty string, which counts nothing.
+     */
+    public function testHashCountsEveryReviewWhereAnEmptyTagCountsNone(): void
+    {
+        $ext = $this->getExtensionWithPage();
+
+        self::assertGreaterThan(0, $ext->count('#'));
+        self::assertSame(0, $ext->count(''));
+        self::assertSame(0, $ext->count([]));
+    }
+
+    public function testReviewsCountFallsBackToTheCurrentPage(): void
+    {
+        self::assertSame(0, $this->getExtensionWithPage('localhost.dev', 'a-page-without-review')->count());
+    }
+
+    public function testReviewsCountNeedsAPageContext(): void
+    {
+        self::bootKernel();
+        $ext = self::getContainer()->get(AppExtension::class);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageIsOrContains('No page or tag provided');
+
+        $ext->count();
     }
 }
