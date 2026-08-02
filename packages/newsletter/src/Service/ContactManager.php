@@ -5,6 +5,7 @@ namespace Pushword\Newsletter\Service;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Repository\CampaignRecipientRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
@@ -115,6 +116,32 @@ final readonly class ContactManager
         $this->entityManager->flush();
     }
 
+    /**
+     * Take an opt-out back, from the person's own unsubscribe link.
+     *
+     * No confirmation mail stands in the way: the token reached them by mail and
+     * nowhere else, so the mailbox is already proven — making them prove it again
+     * to undo a click they just made would be theatre. It is also what lets the
+     * opt-out itself cost one click.
+     *
+     * A bounced address is not revived this way. The mail server refused it; a
+     * click says nothing about that.
+     */
+    public function resubscribe(Contact $contact): void
+    {
+        if (null === $contact->getUnsubscribedAt() || null !== $contact->getBouncedAt()) {
+            return;
+        }
+
+        $contact->optIn(false);
+
+        // The campaign credited with the opt-out gets its count back. It is the
+        // same row `unsubscribe()` picked: nothing was sent to them in between.
+        $this->lastSentTo($contact)?->getCampaign()->decrementUnsub();
+
+        $this->entityManager->flush();
+    }
+
     /** A permanent delivery failure: the address leaves every future segment. */
     public function markBounced(Contact $contact): void
     {
@@ -134,8 +161,7 @@ final readonly class ContactManager
      */
     private function attributeToLastCampaign(Contact $contact, string $kind): void
     {
-        $recipients = $this->recipientRepository->findSentFor($contact);
-        $last = $recipients[0] ?? null;
+        $last = $this->lastSentTo($contact);
 
         if (null === $last) {
             return;
@@ -149,6 +175,16 @@ final readonly class ContactManager
         }
 
         $last->getCampaign()->incrementUnsub();
+    }
+
+    /**
+     * The last campaign this contact actually received. Crediting an event and
+     * taking it back read it the same way, or a taken-back opt-out lands on
+     * another campaign than the one it was charged to.
+     */
+    private function lastSentTo(Contact $contact): ?CampaignRecipient
+    {
+        return $this->recipientRepository->findSentFor($contact)[0] ?? null;
     }
 
     private function stopEnrollments(Contact $contact): void

@@ -1,0 +1,9 @@
+{% extends '@PushwordNewsletter/newsletter/layout.html.twig' %}
+
+{% block title %}{{ 'newsletter.resubscribed.title'|trans }}{% endblock %}
+
+{% block content %}
+    <h1>{{ 'newsletter.resubscribed.title'|trans }}</h1>
+    <p>{{ 'newsletter.resubscribed.body'|trans({'%audience%': audience.name}) }}</p>
+    <p class="muted">{{ contact.email }}</p>
+{% endblock %}

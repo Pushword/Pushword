@@ -160,6 +160,9 @@ newsletter:
     submit: Subscribe
   menu:
     label: Newsletter
+  resubscribed:
+    body: You will receive mail from %audience% again.
+    title: Resubscribed
   step:
     field:
       body: Body
@@ -190,3 +193,4 @@ newsletter:
     othersConfirm: Unsubscribe me from the ticked lists
     othersTitle: Our other newsletters
     title: Unsubscribed
+    undo: Undo, put me back

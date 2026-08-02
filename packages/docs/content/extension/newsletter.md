@@ -110,12 +110,26 @@ clicked. A link that makes people work is what turns an opt-out into a spam
 report.
 
 **A click, not a fetch.** The page acts on `GET` only when the browser sends
-`Sec-Fetch-User: ?1` — the header it adds for a navigation it attributes to a
-real gesture. A mail scanner following the link has no gesture to report,
-whatever user agent it claims, so it lands on a confirmation page and opts
-nobody out; the `POST` behind that page's button is the same one RFC 8058
-sends. Browsers too old to send the header (Safari before 16.4) read as a fetch
-too, which costs their reader one click and never the wrong outcome.
+`Sec-Fetch-User: ?1`, the header marking a navigation it attributes to whoever
+is driving it. A plain HTTP fetch sends no `Sec-Fetch-*` at all and a prefetch
+sends them without this one, so both land on a confirmation page and opt nobody
+out; the `POST` behind that page's button is the same one RFC 8058 sends.
+
+Know what this buys. It stops **fetchers** — which is what a mail scanner
+following a link almost always is — and browser prefetch. It does **not** stop a
+scanner driving a real browser: Chromium marks a scripted top-level navigation
+as user-driven and sends `?1`. Browsers too old to send the header (Safari
+before 16.4) read as a fetch, which costs their reader one click and never the
+wrong outcome. Whatever slips through is recoverable: the page it lands on
+carries an undo.
+
+**Undo is one click too.** The page carries a button that puts the address back,
+with no confirmation mail: the token reached that mailbox and nowhere else,
+which is the proof a confirmation would ask for again. It is what makes the
+opt-out safe to do in one click, and it hands the campaign back the unsubscribe
+it was credited with. A bounced address is not revived this way — the mail
+server refused it, and a click on a page says nothing about that. Nor does it
+restart an automation the opt-out stopped; a half-finished drip does not resume.
 
 Leaving one list leaves that one. The page it lands on then offers the other
 lists **of the same host** the address is subscribed to, to tick one by one or
@@ -543,8 +557,8 @@ posted from does not have to declare it twice.
 Templates are overridable per site through the usual view resolution, under
 `/newsletter/`: `form.html.twig`, `email.html.twig`,
 `confirm.email.html.twig`, `layout.html.twig`, `confirmed.html.twig`,
-`unsubscribe.html.twig`, `unsubscribed.html.twig`, `unknown.html.twig`,
-`alert.html.twig`.
+`unsubscribe.html.twig`, `unsubscribed.html.twig`, `resubscribed.html.twig`,
+`unknown.html.twig`, `alert.html.twig`.
 
 `confirmed.html.twig` is the override to make first. The reader landing on
 `/newsletter/confirm/{token}` just clicked a mail from you — nobody on the site

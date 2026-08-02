@@ -289,8 +289,8 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     }
 
     /**
-     * A mail scanner following the link reports no gesture, and opts nobody out —
-     * whether it fetches the URL plainly or dresses the request as a navigation.
+     * A fetch reports no gesture, and opts nobody out — whether it asks plainly
+     * or sets the headers a navigation carries.
      *
      * @param array<string, string> $headers
      */
@@ -316,13 +316,58 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
     {
         yield 'a plain fetch' => [[]];
 
-        // A headless browser told to open the URL: every header a real navigation
-        // carries, except the one only a gesture produces.
-        yield 'a scripted navigation' => [[
+        // Not a real browser — Chromium sends all four of these, `Sec-Fetch-User`
+        // included, even for a scripted navigation. This pins which header the
+        // guard reads, so nobody widens it to "any Sec-Fetch header will do".
+        yield 'a fetch dressed as a navigation' => [[
             'HTTP_SEC_FETCH_SITE' => 'none',
             'HTTP_SEC_FETCH_MODE' => 'navigate',
             'HTTP_SEC_FETCH_DEST' => 'document',
         ]];
+    }
+
+    /**
+     * Leaving costs one click, so coming back costs one too: the token reached
+     * them by mail, which is the proof a confirmation would ask for again.
+     */
+    public function testTheUndoPutsThemBackWithNoConfirmationMail(): void
+    {
+        $audience = $this->createAudience();
+        $token = $this->createContact($audience, 'oops@example.tld')->getToken();
+
+        $this->click('/newsletter/unsubscribe/'.$token);
+        self::assertStringContainsString(
+            $this->translate('newsletter.unsubscribed.undo'),
+            (string) $this->client->getResponse()->getContent(),
+        );
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token.'/undo');
+
+        self::assertStringContainsString(
+            $this->translate('newsletter.resubscribed.title'),
+            (string) $this->client->getResponse()->getContent(),
+        );
+
+        $back = $this->find('oops@example.tld');
+        self::assertSame(ContactStatus::Subscribed, $back->getStatus());
+        self::assertNull($back->getUnsubscribedAt());
+        self::assertEmailCount(0);
+    }
+
+    /**
+     * A token exists from the moment somebody subscribes, so a contact still
+     * waiting on their double opt-in holds one. It must not be a way around the
+     * confirmation they were sent: undoing an opt-out they never made would
+     * promote them without anyone answering that mail.
+     */
+    public function testTheUndoCannotConfirmAContactStillPending(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'waiting@example.tld', subscribed: false);
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$contact->getToken().'/undo');
+
+        self::assertSame(ContactStatus::Pending, $this->find('waiting@example.tld')->getStatus());
     }
 
     /** Once gone, there is nothing left to confirm — and the other lists stay one click away. */
@@ -478,6 +523,9 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
 
         $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token.'/others');
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token.'/undo');
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
     }
 

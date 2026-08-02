@@ -135,7 +135,7 @@ newsletter:
     field:
       audience: Audience
       body: Contenu
-      body.help: 'Markdown, avec les mêmes variables que l''objet plus {{ page.mainImage }} pour l''illustration. Les liens sont rendus absolus et marqués avant l''envoi, comme dans toute newsletter.'
+      body.help: "Markdown, avec les mêmes variables que l'objet plus {{ page.mainImage }} pour l'illustration. Les liens sont rendus absolus et marqués avant l'envoi, comme dans toute newsletter."
       delay: Délai (minutes)
       delay.help: Attendre ce délai après la publication de la page. J+1 = 1440 ; 0 envoie au prochain tick.
       enabled: Activé
@@ -146,7 +146,7 @@ newsletter:
       pageWhen: Déclencher sur les pages
       pageWhen.help: 'Liste JSON de conditions, toutes requises — quelles pages, pas quand. Vide : toutes les pages publiées de ces hôtes. Champs : slug, template, tag, parent, ancestor (le slug d''une page dont elles descendent, à n''importe quelle profondeur), prop.<clé>. Exemple : [{"field":"ancestor","op":"=","value":"blog"}] ; pour un OU, {"any":[…]}, imbricable. Une recherche pages_list marche aussi : ancestor:blog AND tag:featured.'
       segment: Segment
-      segment.help: 'Qui reçoit le mail, dans les critères de contact habituels. Vide : toute l''audience inscrite.'
+      segment.help: "Qui reçoit le mail, dans les critères de contact habituels. Vide : toute l'audience inscrite."
       subject: Objet
       subject.help: 'Peut reprendre {{ page.h1 }}, {{ page.excerpt }} et {{ page.url }}. Par exemple : Nouvel article : {{ page.h1 }}'
       triggerFrom: Déclencher à partir du
@@ -160,6 +160,9 @@ newsletter:
     submit: S'inscrire
   menu:
     label: Newsletter
+  resubscribed:
+    body: Vous recevrez de nouveau les messages de %audience%.
+    title: Réinscription effectuée
   step:
     field:
       body: Contenu
@@ -172,7 +175,7 @@ newsletter:
     invalidEmail: Cette adresse email ne semble pas valide.
     invalidToken: Le formulaire a expiré. Rechargez la page et réessayez.
     noAudience: Choisissez au moins une newsletter.
-    pending: Presque terminé — cliquez sur le lien que nous venons de vous envoyer.
+    pending: Presque terminé - cliquez sur le lien que nous venons de vous envoyer.
     sendFailed: L'envoi de l'e-mail de confirmation a échoué. Vérifiez votre adresse et réessayez.
     tooMany: Trop de tentatives. Réessayez plus tard.
     unknownAudience: Cette newsletter n'existe pas.
@@ -190,3 +193,4 @@ newsletter:
     othersConfirm: Me désinscrire des listes cochées
     othersTitle: Nos autres newsletters
     title: Désinscription effectuée
+    undo: Annuler, me réinscrire

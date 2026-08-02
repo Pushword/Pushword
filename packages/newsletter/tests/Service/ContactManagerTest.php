@@ -124,6 +124,41 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         self::assertSame(EnrollmentStatus::Stopped, $enrollment->getStatus());
     }
 
+    /** An opt-out taken back is not one the campaign's rate should keep carrying. */
+    public function testTakingAnOptOutBackGivesTheCampaignItsCountBack(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->createContact($audience, 'oops@example.tld');
+        $campaign = $this->createCampaign($audience);
+
+        $sender = self::getContainer()->get(CampaignSender::class);
+        $sender->arm($campaign);
+        $sender->drain($campaign, 10);
+
+        $this->manager()->unsubscribe($contact);
+        self::assertSame(1, $campaign->getUnsubCount());
+
+        $this->manager()->resubscribe($contact);
+
+        self::assertSame(ContactStatus::Subscribed, $contact->getStatus());
+        self::assertSame(0, $campaign->getUnsubCount());
+    }
+
+    /** The mail server refused the address; a click on a page says nothing about that. */
+    public function testABouncedAddressIsNotRevivedByTakingAnOptOutBack(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->createContact($audience, 'dead@example.tld');
+
+        $this->manager()->markBounced($contact);
+        $this->manager()->unsubscribe($contact);
+
+        $this->manager()->resubscribe($contact);
+
+        self::assertSame(ContactStatus::Unsubscribed, $contact->getStatus());
+        self::assertNotNull($contact->getBouncedAt());
+    }
+
     public function testUnsubscribingTwiceChangesNothing(): void
     {
         $audience = $this->createAudience(requireDoubleOptIn: false);

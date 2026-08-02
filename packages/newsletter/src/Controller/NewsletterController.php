@@ -227,18 +227,49 @@ final class NewsletterController extends AbstractController
     }
 
     /**
-     * Did a person click, or did something fetch the link?
+     * Did a person open this, or did something fetch it?
      *
-     * `Sec-Fetch-User` is sent as `?1` only for a navigation the browser
-     * attributes to a real gesture. A scanner following the link has none to
-     * report, whatever user agent it claims — which is why this recognises
-     * clicks rather than trying to recognise scanners. A browser too old to send
-     * it (Safari before 16.4) reads as a fetch too: one more click for its
-     * reader, never the wrong outcome.
+     * `Sec-Fetch-User: ?1` marks a navigation the browser attributes to whoever
+     * is driving it — a click, the address bar, a link opened from another app.
+     * A plain HTTP fetch sends no `Sec-Fetch-*` at all and a prefetch sends them
+     * without this one, so both land on the page instead.
+     *
+     * What this stops is fetchers, which is what a mail scanner following a link
+     * almost always is. It does not stop a scanner driving a real browser:
+     * Chromium marks a scripted top-level navigation as user-driven too
+     * (measured, not assumed). A browser too old to send the header (Safari
+     * before 16.4) reads as a fetch: one more click for its reader, never the
+     * wrong outcome.
      */
     private function clicked(Request $request): bool
     {
         return '?1' === $request->headers->get('Sec-Fetch-User');
+    }
+
+    /**
+     * Take it back, in one click and with no confirmation mail.
+     *
+     * A `POST`, like every act on this page: the link that brought them here is
+     * followed by things that are not people, and none of them decides who is on
+     * a list.
+     */
+    #[Route(
+        path: '/newsletter/unsubscribe/{token}/undo',
+        name: 'pushword_newsletter_resubscribe',
+        requirements: ['token' => '[a-f0-9]{64}'],
+        methods: ['POST'],
+    )]
+    public function resubscribe(string $token): Response
+    {
+        $contact = $this->contactRepository->findOneByToken($token);
+
+        if (! $contact instanceof Contact) {
+            return $this->page('unknown.html.twig', null, Response::HTTP_NOT_FOUND);
+        }
+
+        $this->contactManager->resubscribe($contact);
+
+        return $this->page('resubscribed.html.twig', $contact);
     }
 
     /**

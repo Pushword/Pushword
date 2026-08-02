@@ -382,6 +382,14 @@ class Campaign implements IdInterface, Stringable
         return $this;
     }
 
+    /** An opt-out taken back is not an opt-out this campaign's rate should carry. */
+    public function decrementUnsub(): self
+    {
+        --$this->unsubCount;
+
+        return $this;
+    }
+
     public function getBounceCount(): int
     {
         return $this->bounceCount;
