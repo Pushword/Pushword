@@ -30,6 +30,13 @@ final readonly class ImageOptimizerCommand
         $io = new SymfonyStyle($input, $output);
         $medias = null !== $mediaName ? $this->mediaRepository->findBy(['fileName' => $mediaName]) : $this->mediaRepository->findAll();
 
+        // A zero-step ProgressBar cannot render %estimated%, so it would throw here.
+        if ([] === $medias) {
+            $io->warning('No media to optimize.');
+
+            return 0;
+        }
+
         $progressBar = new ProgressBar($output, \count($medias));
         $progressBar->setMessage('');
         $progressBar->setFormat("%current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% \r\n %message%");
