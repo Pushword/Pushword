@@ -19,19 +19,20 @@ final class SchemaDumpCommandTest extends KernelTestCase
         self::assertSame('pw:schema:dump', $json['tool']);
         self::assertSame('done', $json['result']);
 
-        $hosts = self::arr($json['hosts']);
-        $devApp = self::arr($hosts['localhost.dev']);
-        $pageProperties = self::arr($devApp['page_properties']);
+        $hosts = $this->arr($json['hosts']);
+        $devApp = $this->arr($hosts['localhost.dev']);
+        $pageProperties = $this->arr($devApp['page_properties']);
 
-        self::assertSame('int', self::arr($pageProperties['priority'])['type']);
-        self::assertSame([['Choice' => ['choices' => ['beginner', 'advanced']]]], self::arr($pageProperties['level'])['constraints']);
+        self::assertSame('int', $this->arr($pageProperties['priority'])['type']);
+        self::assertSame([['Choice' => ['choices' => ['beginner', 'advanced']]]], $this->arr($pageProperties['level'])['constraints']);
         self::assertArrayHasKey('subtitle', $pageProperties, 'root-declared property falls through');
-        self::assertSame('bool', self::arr($pageProperties['toc'])['type'], 'bundle-declared property is listed');
-        self::assertContains('ogTitle', self::arr($devApp['managed_keys']));
-        self::assertContains('slug', self::arr($devApp['frontmatter_columns']));
+        self::assertSame('bool', $this->arr($pageProperties['toc'])['type'], 'bundle-declared property is listed');
+        self::assertSame('int', $this->arr($pageProperties['mainImageFormat'])['type'], 'extension-declared property is listed');
+        self::assertContains('ogTitle', $this->arr($devApp['managed_keys']));
+        self::assertContains('slug', $this->arr($devApp['frontmatter_columns']));
 
         self::assertArrayHasKey('pushword.piedweb.com', $hosts);
-        $piedweb = self::arr(self::arr($hosts['pushword.piedweb.com'])['page_properties']);
+        $piedweb = $this->arr($this->arr($hosts['pushword.piedweb.com'])['page_properties']);
         self::assertArrayNotHasKey('priority', $piedweb, 'app declarations stay per host');
         self::assertArrayHasKey('subtitle', $piedweb, 'root declarations reach every host');
     }
@@ -40,7 +41,7 @@ final class SchemaDumpCommandTest extends KernelTestCase
     {
         $json = $this->decode($this->execute(['--format' => 'agent', '--host' => 'localhost.dev']));
 
-        self::assertSame(['localhost.dev'], array_keys(self::arr($json['hosts'])));
+        self::assertSame(['localhost.dev'], array_keys($this->arr($json['hosts'])));
     }
 
     public function testTextFormat(): void
@@ -73,7 +74,7 @@ final class SchemaDumpCommandTest extends KernelTestCase
     }
 
     /** @return array<string, mixed> */
-    private static function arr(mixed $value): array
+    private function arr(mixed $value): array
     {
         self::assertIsArray($value);
 
