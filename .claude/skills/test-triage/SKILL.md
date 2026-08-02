@@ -28,8 +28,11 @@ converge. Check the failing test against this dossier before investigating your 
 
 ## Known flakes
 
-**`Flat\Tests\Command\ConsumePendingTest::testConsumePendingReadsFlagAndRunsExport`** —
-missing `var/flat-sync/localhost_dev_lock.json`; a shared `var/flat-sync` race. Not fixed.
+**`Flat\Tests\Command\ConsumePendingTest` — fixed, no longer a flake.** Four flat
+services hardcoded `%kernel.project_dir%/var`, so every worker shared one
+`var/flat-sync/export-pending.json`: any test touching a page wrote the flag this one
+then read. They take `%pw.var_dir%` now. Treat a fresh failure here as real, and check
+whether a new service reintroduced the hardcoded path.
 
 **`StaticGenerator\Tests\StaticGeneratorTest::testParallelGeneration*`** — in CI, output
 ends `SQLSTATE[HY000]: General error: 26 file is not a database`: parallel-worker child
