@@ -14,6 +14,38 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc819
+
+### The admin runs on htmx 4
+
+`pushword/admin` upgraded its bundled htmx from 1.9 to a pinned `4.0.0-beta6`.
+Stock admin templates need nothing. If your project extends the admin with its
+own htmx hooks:
+
+- Event names are colon-separated in htmx 4: `htmx:afterSwap` →
+  `htmx:after:swap`, `htmx:beforeRequest` → `htmx:before:request`, and so on.
+- Requests use `fetch()`, not XHR: `event.detail.xhr` is gone; the status
+  lives at `event.detail.ctx.response.status`.
+- When a fragment swaps its own trigger away, htmx 4 fires `htmx:after:swap`
+  on `document` (the source element is detached) — attach such listeners to
+  `document`, not `document.body`.
+
+Core restores two htmx 2 behaviours on every admin page: error responses
+never replace a fragment, and `changed`-triggered inputs do not re-post
+unedited values.
+
+### Live blocks: gates, deferred triggers, htmx alias
+
+`data-live` blocks gain eval-free directives —
+`data-live-if="media:(min-width: 640px)"`, `data-live-trigger="my-event"`
+(plus `data-live-repeat`) — and alias themselves to native htmx attributes
+when htmx ≥ 4 is on the page; see [page-cache](/extension/page-cache).
+One behaviour change: unknown `data-live-if` prefixes now fail closed (the
+block is skipped) instead of loading anyway; `cookie:` and `media:` are the
+supported gates. Sites using core's compiled `app.js` get all this with
+`composer update`; sites bundling `@pushword/js-helper` themselves need the
+next npm release.
+
 ## To 1.0.0-rc812
 
 ### The deploy runs POST_DEPLOY_LOCAL even when the push fails

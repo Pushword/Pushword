@@ -105,7 +105,7 @@ The names and the transforms sit inside `@media (prefers-reduced-motion: no-pref
 The same CSS drives partial swaps, so the animation is written once:
 
 - **Variant links** — `variantLinks.js` wraps its content-zone swap in `startViewTransition()`. Nothing to configure.
-- **htmx** — if your theme loads htmx, set `htmx.config.globalViewTransitions = true`, or opt in per swap with `hx-swap="innerHTML transition:true"`. The `pw-content` keyframes apply unchanged.
+- **htmx** — if your theme loads htmx, set `htmx.config.globalViewTransitions = true` (htmx 2) / `htmx.config.transitions = true` (htmx 4), or opt in per swap with `hx-swap="innerHTML transition:true"`. The `pw-content` keyframes apply unchanged.
 
 Both paths animate through `::view-transition-old(pw-content)` / `::view-transition-new(pw-content)`, exactly like a full navigation.
 
