@@ -346,7 +346,7 @@ final class WorkerModeStateResetTest extends KernelTestCase
             $page->locale = 'en';
             $page->createdAt = new DateTime();
             $page->updatedAt = new DateTime();
-            $page->setMainContent('worker mode probe content');
+            $page->mainContent = 'worker mode probe content';
 
             $em->persist($page);
             $em->flush();

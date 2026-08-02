@@ -117,7 +117,7 @@ final class RedirectionImporter
             $mainContent .= ' '.$code;
         }
 
-        $page->setMainContent($mainContent);
+        $page->mainContent = $mainContent;
 
         // Set a minimal h1 if not set
         if ('' === $page->h1) {

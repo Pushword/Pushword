@@ -101,7 +101,7 @@ final class AdminListQueryCountTest extends AbstractAdminTestClass
                 $page->locale = 'en';
                 $page->createdAt = new DateTime();
                 $page->updatedAt = new DateTime();
-                $page->setMainContent('admin list bench content '.($offset + $i));
+                $page->mainContent = 'admin list bench content '.($offset + $i);
                 $em->persist($page);
                 $pages[] = $page;
             }

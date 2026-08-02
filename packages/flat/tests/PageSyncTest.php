@@ -89,7 +89,7 @@ final class PageSyncTest extends KernelTestCase
                 $redirections[$page->slug] = [
                     'locale' => $page->locale,
                     'h1' => $page->h1,
-                    'mainContent' => $page->getMainContent(),
+                    'mainContent' => $page->mainContent,
                 ];
             }
         }
@@ -118,7 +118,7 @@ final class PageSyncTest extends KernelTestCase
             $page->host = 'localhost.dev';
             $page->locale = $redirection['locale'];
             $page->h1 = $redirection['h1'];
-            $page->setMainContent($redirection['mainContent']);
+            $page->mainContent = $redirection['mainContent'];
             $this->em->persist($page);
             $restored = true;
         }
@@ -161,7 +161,7 @@ final class PageSyncTest extends KernelTestCase
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->publishedAt = new DateTime();
-        $page->setMainContent('temporary content');
+        $page->mainContent = 'temporary content';
 
         $this->em->persist($page);
         $this->em->flush();
@@ -202,7 +202,7 @@ final class PageSyncTest extends KernelTestCase
         $testRedirection->h1 = 'Test Redirection';
         $testRedirection->host = 'localhost.dev';
         $testRedirection->locale = 'en';
-        $testRedirection->setMainContent('Location: https://example.com');
+        $testRedirection->mainContent = 'Location: https://example.com';
 
         $this->em->persist($testRedirection);
         $this->em->flush();
@@ -306,7 +306,7 @@ final class PageSyncTest extends KernelTestCase
         self::assertSame(302, $updatedPage->getRedirectionCode());
 
         // Restore original
-        $updatedPage->setMainContent('Location: '.$originalTarget);
+        $updatedPage->mainContent = 'Location: '.$originalTarget;
         $this->em->flush();
     }
 
@@ -324,7 +324,7 @@ final class PageSyncTest extends KernelTestCase
         $master->h1 = 'RT Master';
         $master->host = 'localhost.dev';
         $master->locale = 'en';
-        $master->setMainContent('Master content');
+        $master->mainContent = 'Master content';
         $master->publishedAt = new DateTime();
         $master->customCanonical = 'https://example.tld/forced';
 
@@ -333,7 +333,7 @@ final class PageSyncTest extends KernelTestCase
         $variant->h1 = 'RT Variant';
         $variant->host = 'localhost.dev';
         $variant->locale = 'en';
-        $variant->setMainContent('Variant content');
+        $variant->mainContent = 'Variant content';
         $variant->publishedAt = new DateTime();
         $variant->variantOf = $master;
 
@@ -399,7 +399,7 @@ final class PageSyncTest extends KernelTestCase
         $tempPage->h1 = 'Temporary Page';
         $tempPage->host = 'localhost.dev';
         $tempPage->locale = 'en';
-        $tempPage->setMainContent('Temporary content');
+        $tempPage->mainContent = 'Temporary content';
         $tempPage->publishedAt = new DateTime();
 
         $this->em->persist($tempPage);
@@ -547,7 +547,7 @@ MD;
         $draftPage->h1 = 'Draft Page';
         $draftPage->host = 'localhost.dev';
         $draftPage->locale = 'en';
-        $draftPage->setMainContent('Draft content');
+        $draftPage->mainContent = 'Draft content';
         $draftPage->publishedAt = new DateTime('+1 year');
         // Future date = draft
         $this->em->persist($draftPage);
@@ -749,7 +749,7 @@ MD;
         $draftPage->h1 = 'Null PublishedAt Test';
         $draftPage->host = 'localhost.dev';
         $draftPage->locale = 'en';
-        $draftPage->setMainContent('Content with null publishedAt');
+        $draftPage->mainContent = 'Content with null publishedAt';
         $draftPage->publishedAt = null;
 
         $this->em->persist($draftPage);
@@ -805,7 +805,7 @@ MD;
         $page->h1 = 'Explicit Date Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('Content with explicit date');
+        $page->mainContent = 'Content with explicit date';
         $page->publishedAt = $specificDate;
 
         $this->em->persist($page);
@@ -860,7 +860,7 @@ MD;
         $page->h1 = 'YAML Format Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('Testing YAML format');
+        $page->mainContent = 'Testing YAML format';
         $page->publishedAt = new DateTime('2024-12-25 14:30:45');
 
         $this->em->persist($page);
@@ -902,7 +902,7 @@ MD;
         $enPage->h1 = 'English Page';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
-        $enPage->setMainContent('English content');
+        $enPage->mainContent = 'English content';
         $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
@@ -910,7 +910,7 @@ MD;
         $frPage->h1 = 'Page française';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Contenu français');
+        $frPage->mainContent = 'Contenu français';
         $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
@@ -990,7 +990,7 @@ MD;
         $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
-        $enPage->setMainContent('English');
+        $enPage->mainContent = 'English';
         $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
@@ -998,7 +998,7 @@ MD;
         $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Français');
+        $frPage->mainContent = 'Français';
         $frPage->publishedAt = new DateTime();
 
         $dePage = new Page();
@@ -1006,7 +1006,7 @@ MD;
         $dePage->h1 = 'Deutsch';
         $dePage->host = 'localhost.dev';
         $dePage->locale = 'de';
-        $dePage->setMainContent('Deutsch');
+        $dePage->mainContent = 'Deutsch';
         $dePage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
@@ -1091,7 +1091,7 @@ MD;
         $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
-        $enPage->setMainContent('English');
+        $enPage->mainContent = 'English';
         $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
@@ -1099,7 +1099,7 @@ MD;
         $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Français');
+        $frPage->mainContent = 'Français';
         $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
@@ -1166,7 +1166,7 @@ MD;
         $aPage->h1 = 'Page A';
         $aPage->host = 'localhost.dev';
         $aPage->locale = 'en';
-        $aPage->setMainContent('Page A content');
+        $aPage->mainContent = 'Page A content';
         $aPage->publishedAt = new DateTime();
 
         $bPage = new Page();
@@ -1174,7 +1174,7 @@ MD;
         $bPage->h1 = 'Page B';
         $bPage->host = 'localhost.dev';
         $bPage->locale = 'fr';
-        $bPage->setMainContent('Page B content');
+        $bPage->mainContent = 'Page B content';
         $bPage->publishedAt = new DateTime();
 
         $this->em->persist($aPage);
@@ -1242,7 +1242,7 @@ MD;
         $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
-        $enPage->setMainContent('English');
+        $enPage->mainContent = 'English';
         $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
@@ -1250,7 +1250,7 @@ MD;
         $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Français');
+        $frPage->mainContent = 'Français';
         $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
@@ -1315,7 +1315,7 @@ MD;
         $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
-        $enPage->setMainContent('English');
+        $enPage->mainContent = 'English';
         $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
@@ -1323,7 +1323,7 @@ MD;
         $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Français');
+        $frPage->mainContent = 'Français';
         $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
@@ -1386,7 +1386,7 @@ MD;
         $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
-        $enPage->setMainContent('English');
+        $enPage->mainContent = 'English';
         $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
@@ -1394,7 +1394,7 @@ MD;
         $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Français');
+        $frPage->mainContent = 'Français';
         $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
@@ -1455,7 +1455,7 @@ MD;
         $page->h1 = 'Custom Properties Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('Content');
+        $page->mainContent = 'Content';
         $page->publishedAt = new DateTime();
         // A plain (non-converter-managed) custom property: it must round-trip
         // verbatim. mainImageFormat is deliberately not used here — it is an
@@ -1621,7 +1621,7 @@ MD;
         $page->h1 = 'Main Image Format Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('Content');
+        $page->mainContent = 'Content';
         $page->publishedAt = new DateTime();
         $page->setCustomProperty('mainImageFormat', 1); // Integer value for "none"
 
@@ -1765,7 +1765,7 @@ YAML;
         $page->h1 = 'Test Round Trip';
         $page->host = 'localhost.dev';
         $page->locale = 'fr-CA';
-        $page->setMainContent('Contenu test');
+        $page->mainContent = 'Contenu test';
         $page->publishedAt = new DateTime();
 
         $this->em->persist($page);
@@ -1877,7 +1877,7 @@ YAML;
         $enPage->h1 = 'English Page';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
-        $enPage->setMainContent('English content');
+        $enPage->mainContent = 'English content';
         $enPage->publishedAt = new DateTime();
 
         // Create a page on pushword.piedweb.com
@@ -1886,7 +1886,7 @@ YAML;
         $frPage->h1 = 'Page française';
         $frPage->host = 'pushword.piedweb.com';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Contenu français');
+        $frPage->mainContent = 'Contenu français';
         $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
@@ -1931,7 +1931,7 @@ YAML;
         $frPage->h1 = 'Page française';
         $frPage->host = 'pushword.piedweb.com';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Contenu français');
+        $frPage->mainContent = 'Contenu français';
         $frPage->publishedAt = new DateTime();
 
         $this->em->persist($frPage);
@@ -1989,7 +1989,7 @@ YAML;
         $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
-        $enPage->setMainContent('English');
+        $enPage->mainContent = 'English';
         $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
@@ -1997,7 +1997,7 @@ YAML;
         $frPage->h1 = 'Français';
         $frPage->host = 'pushword.piedweb.com';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Français');
+        $frPage->mainContent = 'Français';
         $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
@@ -2509,7 +2509,7 @@ YAML;
         $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
-        $enPage->setMainContent('English');
+        $enPage->mainContent = 'English';
         $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
@@ -2517,7 +2517,7 @@ YAML;
         $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Français');
+        $frPage->mainContent = 'Français';
         $frPage->publishedAt = new DateTime();
 
         $frCaPage = new Page();
@@ -2525,7 +2525,7 @@ YAML;
         $frCaPage->h1 = 'Français CA';
         $frCaPage->host = 'localhost.dev';
         $frCaPage->locale = 'fr-CA';
-        $frCaPage->setMainContent('Français canadien');
+        $frCaPage->mainContent = 'Français canadien';
         $frCaPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
@@ -2617,7 +2617,7 @@ YAML;
         $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Français');
+        $frPage->mainContent = 'Français';
         $frPage->publishedAt = new DateTime();
 
         $dePage = new Page();
@@ -2625,7 +2625,7 @@ YAML;
         $dePage->h1 = 'Deutsch';
         $dePage->host = 'localhost.dev';
         $dePage->locale = 'de';
-        $dePage->setMainContent('Deutsch');
+        $dePage->mainContent = 'Deutsch';
         $dePage->publishedAt = new DateTime();
 
         $this->em->persist($frPage);
@@ -2665,7 +2665,7 @@ YAML;
         $mainPage->h1 = 'Main';
         $mainPage->host = 'localhost.dev';
         $mainPage->locale = '';
-        $mainPage->setMainContent('Main content');
+        $mainPage->mainContent = 'Main content';
         $mainPage->publishedAt = new DateTime();
 
         $frPage = new Page();
@@ -2673,7 +2673,7 @@ YAML;
         $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Français');
+        $frPage->mainContent = 'Français';
         $frPage->publishedAt = new DateTime();
 
         $dePage = new Page();
@@ -2681,7 +2681,7 @@ YAML;
         $dePage->h1 = 'Deutsch';
         $dePage->host = 'localhost.dev';
         $dePage->locale = 'de';
-        $dePage->setMainContent('Deutsch');
+        $dePage->mainContent = 'Deutsch';
         $dePage->publishedAt = new DateTime();
 
         $this->em->persist($mainPage);
@@ -2739,7 +2739,7 @@ YAML;
         $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
-        $enPage->setMainContent('English');
+        $enPage->mainContent = 'English';
         $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
@@ -2747,7 +2747,7 @@ YAML;
         $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
-        $frPage->setMainContent('Français');
+        $frPage->mainContent = 'Français';
         $frPage->publishedAt = new DateTime();
 
         $dePage = new Page();
@@ -2755,7 +2755,7 @@ YAML;
         $dePage->h1 = 'Deutsch';
         $dePage->host = 'pushword.piedweb.com';
         $dePage->locale = 'de';
-        $dePage->setMainContent('Deutsch');
+        $dePage->mainContent = 'Deutsch';
         $dePage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
@@ -2809,7 +2809,7 @@ YAML;
         $parent->host = 'localhost.dev';
         $parent->template = 'parent_template.html.twig';
         $parent->setCustomProperty('mainImageFormat', 'wide');
-        $parent->setMainContent('Parent content');
+        $parent->mainContent = 'Parent content';
 
         $this->em->persist($parent);
         $this->em->flush();
@@ -2820,7 +2820,7 @@ YAML;
         $child->h1 = 'Child';
         $child->host = 'localhost.dev';
         $child->extendedPage = $parent;
-        $child->setMainContent('Child content');
+        $child->mainContent = 'Child content';
 
         $this->em->persist($child);
         $this->em->flush();
@@ -2876,7 +2876,7 @@ YAML;
         $page->h1 = 'Timestamp Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('Original content');
+        $page->mainContent = 'Original content';
         $page->publishedAt = new DateTime('-1 day');
 
         $this->em->persist($page);
@@ -2933,7 +2933,7 @@ YAML;
         $page->h1 = 'No False Conflict';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('Same content');
+        $page->mainContent = 'Same content';
         $page->publishedAt = new DateTime('-1 day');
 
         $this->em->persist($page);
@@ -2991,7 +2991,7 @@ YAML;
         $pageA->h1 = 'Page A';
         $pageA->host = 'localhost.dev';
         $pageA->locale = 'en';
-        $pageA->setMainContent('Content A');
+        $pageA->mainContent = 'Content A';
         $pageA->publishedAt = new DateTime();
 
         $pageB = new Page();
@@ -2999,7 +2999,7 @@ YAML;
         $pageB->h1 = 'Page B';
         $pageB->host = 'localhost.dev';
         $pageB->locale = 'en';
-        $pageB->setMainContent('Content B');
+        $pageB->mainContent = 'Content B';
         $pageB->publishedAt = new DateTime();
 
         $this->em->persist($pageA);
@@ -3062,7 +3062,7 @@ MD;
         $pageA->h1 = 'Page A';
         $pageA->host = 'localhost.dev';
         $pageA->locale = 'en';
-        $pageA->setMainContent('Content A');
+        $pageA->mainContent = 'Content A';
         $pageA->publishedAt = new DateTime();
 
         $pageB = new Page();
@@ -3070,7 +3070,7 @@ MD;
         $pageB->h1 = 'Page B';
         $pageB->host = 'localhost.dev';
         $pageB->locale = 'en';
-        $pageB->setMainContent('Content B');
+        $pageB->mainContent = 'Content B';
         $pageB->publishedAt = new DateTime();
 
         $this->em->persist($pageA);

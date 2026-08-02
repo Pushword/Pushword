@@ -50,7 +50,7 @@ final class PageLockController extends AbstractController
         $lockInfo = $this->lockManager->getLockInfo($pageId);
 
         // Determine if locked by same user (different tab) or different user
-        $isSameUser = null !== $lockInfo && $lockInfo['userId'] === $user->getId();
+        $isSameUser = null !== $lockInfo && $lockInfo['userId'] === $user->id;
 
         return new JsonResponse([
             'acquired' => $acquired,

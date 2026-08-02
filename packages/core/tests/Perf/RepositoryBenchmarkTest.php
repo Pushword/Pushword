@@ -172,9 +172,9 @@ final class RepositoryBenchmarkTest extends KernelTestCase
             $page->createdAt = new DateTime();
             // Make ~5% of pages redirects to exercise the redirect map.
             if (0 === $i % 20) {
-                $page->setMainContent('Location: /perf-page-'.(($i + 1) % $count));
+                $page->mainContent = 'Location: /perf-page-'.(($i + 1) % $count);
             } else {
-                $page->setMainContent('bench content '.$i);
+                $page->mainContent = 'bench content '.$i;
             }
 
             $this->em->persist($page);

@@ -92,7 +92,7 @@ final class PageSearchCorpusTest extends KernelTestCase
         $page->locale = 'en';
         $page->slug = $slug;
         $page->h1 = 'Corpus fixture '.$slug;
-        $page->setMainContent('Corpus fixture content.');
+        $page->mainContent = 'Corpus fixture content.';
         $page->parentPage = $parent;
 
         $this->entityManager->persist($page);

@@ -22,7 +22,7 @@ final class TodoScanner extends AbstractScanner
 
     protected function run(): void
     {
-        $content = $this->page->getMainContent();
+        $content = $this->page->mainContent;
         preg_match_all(self::PATTERN, $content, $matches, \PREG_SET_ORDER);
 
         if (null === $matches || [] === $matches) {

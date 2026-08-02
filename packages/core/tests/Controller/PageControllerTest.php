@@ -76,7 +76,7 @@ final class PageControllerTest extends KernelTestCase
         $destination->host = 'localhost.dev';
         $destination->createdAt = new DateTime();
         $destination->updatedAt = new DateTime();
-        $destination->setMainContent('Destination content');
+        $destination->mainContent = 'Destination content';
         $destination->redirectFrom = ['old-incoming' => 301];
 
         $em->persist($destination);
@@ -162,7 +162,7 @@ final class PageControllerTest extends KernelTestCase
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
-        $page->setMainContent('content');
+        $page->mainContent = 'content';
 
         return $page;
     }
@@ -210,7 +210,7 @@ final class PageControllerTest extends KernelTestCase
         $enPage->host = 'localhost.dev';
         $enPage->createdAt = new DateTime();
         $enPage->updatedAt = new DateTime();
-        $enPage->setMainContent('English page');
+        $enPage->mainContent = 'English page';
 
         $dePage = new Page();
         $dePage->h1 = 'Cross-host DE';
@@ -219,7 +219,7 @@ final class PageControllerTest extends KernelTestCase
         $dePage->host = 'admin-block-editor.test';
         $dePage->createdAt = new DateTime();
         $dePage->updatedAt = new DateTime();
-        $dePage->setMainContent('German page');
+        $dePage->mainContent = 'German page';
 
         $enPage->addTranslation($dePage);
 
@@ -276,7 +276,7 @@ final class PageControllerTest extends KernelTestCase
         $page->locale = 'en';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
-        $page->setMainContent('Content here');
+        $page->mainContent = 'Content here';
         if (null !== $media) {
             $page->setMainImage($media);
         }
@@ -378,7 +378,7 @@ final class PageControllerTest extends KernelTestCase
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
-        $page->setMainContent('Content here');
+        $page->mainContent = 'Content here';
         $page->metaRobots = $metaRobots;
         $page->customCanonical = $customCanonical;
 

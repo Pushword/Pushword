@@ -144,7 +144,7 @@ final class PageRedirectionApiControllerTest extends WebTestCase
         $page = new Page();
         $page->host = $host;
         $page->slug = 'regular-page';
-        $page->setMainContent('# Just content');
+        $page->mainContent = '# Just content';
 
         $this->em->persist($page);
         $this->em->flush();

@@ -63,9 +63,9 @@ final class SnippetCrudControllerTest extends AbstractAdminTestClass
 
         $global = new Snippet();
         $global->host = ''; // "All hosts"
-        $global->setSlug('index-global-'.uniqid());
-        $global->setName('Index global snippet');
-        $global->setContent('x');
+        $global->slug = 'index-global-'.uniqid();
+        $global->name = 'Index global snippet';
+        $global->content = 'x';
 
         $em->persist($global);
         $em->flush();

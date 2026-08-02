@@ -30,7 +30,7 @@ final readonly class MediaCaptionRenamer
     {
         $renamed = false;
 
-        foreach (self::extractCaptionedMedia($page->getMainContent()) as [$src, $caption]) {
+        foreach (self::extractCaptionedMedia($page->mainContent) as [$src, $caption]) {
             if ($this->rename($src, $caption)) {
                 $renamed = true;
             }

@@ -185,7 +185,7 @@ final class MediaCaptionRenamerTest extends AbstractAdminTestClass
     private function page(string $content): Page
     {
         $page = new Page();
-        $page->setMainContent($content);
+        $page->mainContent = $content;
 
         return $page;
     }

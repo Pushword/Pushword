@@ -66,7 +66,7 @@ final class RepurposeStudioController extends AbstractController
     {
         $post = $this->loadPost($id);
 
-        $carousel = $this->factory->fromArray($post->getSpec());
+        $carousel = $this->factory->fromArray($post->spec);
         $creator = $this->creatorResolver->resolve($carousel, $post->host);
 
         // Safe to embed inside a <script> block (escapes </script>, quotes, etc.).
@@ -84,7 +84,7 @@ final class RepurposeStudioController extends AbstractController
             // big enough?" is judged at the size a scrolling viewer actually sees.
             'feedWidth' => $this->networks->mobileWidth($carousel->network),
             'backUrl' => $this->backUrl($request),
-            'specJs' => json_encode($post->getSpec(), $scriptFlags),
+            'specJs' => json_encode($post->spec, $scriptFlags),
             'slidesJs' => json_encode($this->renderer->renderDeck($carousel, $creator), $scriptFlags),
             'vocabJs' => json_encode($this->vocabulary($carousel->network, $post->host), $scriptFlags),
             'backgroundEffectsJs' => json_encode($this->backgroundEffects(), $scriptFlags),
@@ -110,13 +110,13 @@ final class RepurposeStudioController extends AbstractController
     {
         $post = new SocialPost();
         $post->host = $this->siteRegistry->getHosts()[0] ?? '';
-        $post->setSpec([
+        $post->spec = [
             'page' => $this->mintStandaloneSlug(),
             'network' => 'linkedin',
             'format' => 'linkedin-4-5',
             'status' => 'draft',
             'slides' => [['layout' => 'center', 'align' => 'center', 'title' => 'New carousel']],
-        ]);
+        ];
 
         $this->entityManager->persist($post);
         $this->entityManager->flush();
@@ -140,11 +140,11 @@ final class RepurposeStudioController extends AbstractController
             throw new NotFoundHttpException('Unknown network.');
         }
 
-        if ($network === $post->getNetwork()) {
+        if ($network === $post->network) {
             return $this->redirectToRoute('repurpose_studio', ['id' => $id]);
         }
 
-        $sibling = $this->repository->findOneBy(['host' => $post->host, 'page' => $post->getPage(), 'network' => $network])
+        $sibling = $this->repository->findOneBy(['host' => $post->host, 'page' => $post->page, 'network' => $network])
             ?? $this->createSiblingForNetwork($post, $network);
 
         return $this->redirectToRoute('repurpose_studio', ['id' => $sibling->id]);
@@ -207,13 +207,13 @@ final class RepurposeStudioController extends AbstractController
 
         // Re-linking to another page must not collide with an existing carousel on
         // the same (host, page, network) key.
-        $page = \is_string($spec['page'] ?? null) ? $spec['page'] : $post->getPage();
-        $existing = $this->repository->findOneByKey($post->host, $page, $post->getNetwork());
+        $page = \is_string($spec['page'] ?? null) ? $spec['page'] : $post->page;
+        $existing = $this->repository->findOneByKey($post->host, $page, $post->network);
         if (null !== $existing && $existing->id !== $post->id) {
             return new JsonResponse(['violations' => [['path' => 'page', 'message' => 'A carousel already exists for this page on this network.']]], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $post->setSpec($spec);
+        $post->spec = $spec;
         $this->entityManager->flush();
 
         return new JsonResponse(['ok' => true]);
@@ -230,7 +230,7 @@ final class RepurposeStudioController extends AbstractController
     public function export(int $id, Request $request): Response
     {
         $post = $this->loadPost($id);
-        $carousel = $this->factory->fromArray($post->getSpec());
+        $carousel = $this->factory->fromArray($post->spec);
 
         $data = json_decode($request->getContent(), true);
 
@@ -238,7 +238,7 @@ final class RepurposeStudioController extends AbstractController
             $svgs = array_values(array_filter($data['svgs'], static fn (mixed $s): bool => \is_string($s) && '' !== $s));
             $zip = $this->exportBuilder->buildSvgArchive($svgs, $carousel->caption ?? '', array_values($carousel->hashtags));
 
-            return $this->zipResponse($zip, $this->slugFilename($post->getPage(), $carousel->network).'-svg');
+            return $this->zipResponse($zip, $this->slugFilename($post->page, $carousel->network).'-svg');
         }
 
         if (! \is_array($data) || ! isset($data['slides']) || ! \is_array($data['slides'])) {
@@ -251,7 +251,7 @@ final class RepurposeStudioController extends AbstractController
 
         $zip = $this->exportBuilder->build($pngs, $carousel->caption ?? '', array_values($carousel->hashtags), $withPdf);
 
-        return $this->zipResponse($zip, $this->slugFilename($post->getPage(), $carousel->network));
+        return $this->zipResponse($zip, $this->slugFilename($post->page, $carousel->network));
     }
 
     private function zipResponse(string $zip, string $filename): Response
@@ -273,7 +273,7 @@ final class RepurposeStudioController extends AbstractController
     public function exportVideo(int $id, Request $request): Response
     {
         $post = $this->loadPost($id);
-        $carousel = $this->factory->fromArray($post->getSpec());
+        $carousel = $this->factory->fromArray($post->spec);
 
         // Validate the request shape before reporting a server capability: a
         // malformed body is a 400 whether or not ffmpeg is installed.
@@ -303,7 +303,7 @@ final class RepurposeStudioController extends AbstractController
 
         return new Response($mp4, Response::HTTP_OK, [
             'Content-Type' => 'video/mp4',
-            'Content-Disposition' => 'attachment; filename="'.$this->slugFilename($post->getPage(), $carousel->network).'.mp4"',
+            'Content-Disposition' => 'attachment; filename="'.$this->slugFilename($post->page, $carousel->network).'.mp4"',
         ]);
     }
 
@@ -337,7 +337,7 @@ final class RepurposeStudioController extends AbstractController
     public function pinImage(int $id, Request $request): JsonResponse
     {
         $post = $this->loadPost($id);
-        $carousel = $this->factory->fromArray($post->getSpec());
+        $carousel = $this->factory->fromArray($post->spec);
 
         if ('pinterest' !== $carousel->network) {
             return new JsonResponse(['error' => 'Direct pinning is only available for Pinterest carousels.'], Response::HTTP_BAD_REQUEST);
@@ -366,7 +366,7 @@ final class RepurposeStudioController extends AbstractController
      */
     private function pageUrl(SocialPost $post): ?string
     {
-        $page = $post->getPage();
+        $page = $post->page;
         if ('' === $page || str_starts_with($page, 'standalone/')) {
             return null;
         }
@@ -412,7 +412,7 @@ final class RepurposeStudioController extends AbstractController
      */
     private function createSiblingForNetwork(SocialPost $post, string $network): SocialPost
     {
-        $spec = $post->getSpec();
+        $spec = $post->spec;
         $spec['network'] = $network;
 
         $formats = NetworkRegistry::formatsFor($network);
@@ -422,7 +422,7 @@ final class RepurposeStudioController extends AbstractController
 
         $sibling = new SocialPost();
         $sibling->host = $post->host;
-        $sibling->setSpec($spec);
+        $sibling->spec = $spec;
 
         $this->entityManager->persist($sibling);
         $this->entityManager->flush();
@@ -513,9 +513,9 @@ final class RepurposeStudioController extends AbstractController
         }
 
         /** @var array<string, mixed> $spec */
-        $spec['network'] = $post->getNetwork();
+        $spec['network'] = $post->network;
         if (! isset($spec['page']) || ! \is_string($spec['page']) || '' === $spec['page']) {
-            $spec['page'] = $post->getPage();
+            $spec['page'] = $post->page;
         }
 
         return $spec;

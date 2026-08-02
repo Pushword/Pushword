@@ -151,7 +151,7 @@ final class AiIndexCommand
         foreach ($pages as $page) {
             $mediaUsed = $this->extractMediaUsed($page);
             $pageLinked = $this->extractPageLinked($page);
-            $length = strlen($page->getMainContent());
+            $length = strlen($page->mainContent);
 
             $rows[] = [
                 $page->slug,
@@ -182,7 +182,7 @@ final class AiIndexCommand
     private function extractMediaUsed(Page $page): array
     {
         $mediaUsed = [];
-        $content = $page->getMainContent();
+        $content = $page->mainContent;
 
         foreach ($this->mediaList as $media) {
             if (str_contains($content, $media)) {
@@ -205,7 +205,7 @@ final class AiIndexCommand
     private function extractPageLinked(Page $page): array
     {
         $pageLinked = [];
-        $content = $page->getMainContent();
+        $content = $page->mainContent;
 
         foreach ($this->pageSlugList as $pageSlug) {
             if ($pageSlug === $page->slug) {

@@ -67,7 +67,7 @@ final readonly class SocialPostSync implements FlatSyncInterface
         foreach ($this->hosts($host) as $eachHost) {
             $dir = $this->dir($eachHost);
             foreach ($this->repository->findByHost($eachHost) as $post) {
-                $this->filesystem->dumpFile($this->pathFor($dir, $post->getPage(), $post->getNetwork()), $this->encode($post->getSpec()));
+                $this->filesystem->dumpFile($this->pathFor($dir, $post->page, $post->network), $this->encode($post->spec));
             }
         }
     }
@@ -104,7 +104,7 @@ final readonly class SocialPostSync implements FlatSyncInterface
 
                 $post = $this->repository->findOneByKey($host, $page, $network) ?? new SocialPost();
                 $post->host = $host;
-                $post->setSpec($spec);
+                $post->spec = $spec;
                 $this->entityManager->persist($post);
                 $seen[$page.' '.$network] = true;
             }
@@ -112,7 +112,7 @@ final readonly class SocialPostSync implements FlatSyncInterface
 
         // Delete rows whose file has gone (flat is authoritative).
         foreach ($this->repository->findByHost($host) as $post) {
-            if (! isset($seen[$post->getPage().' '.$post->getNetwork()])) {
+            if (! isset($seen[$post->page.' '.$post->network])) {
                 $this->entityManager->remove($post);
             }
         }

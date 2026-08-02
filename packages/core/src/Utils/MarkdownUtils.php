@@ -117,7 +117,7 @@ final class MarkdownUtils
      */
     public static function addAnchor(Page $page, string $anchor, string $regex, array $on = ['header'], ?callable $outputCallback = null): void
     {
-        $text = $page->getMainContent();
+        $text = $page->mainContent;
 
         if (self::hasAnchor($text, $anchor)) {
             return;
@@ -176,7 +176,7 @@ final class MarkdownUtils
         }
 
         if ($modified) {
-            $page->setMainContent($modifiedText);
+            $page->mainContent = $modifiedText;
         }
     }
 }

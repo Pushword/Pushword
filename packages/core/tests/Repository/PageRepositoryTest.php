@@ -59,7 +59,7 @@ final class PageRepositoryTest extends KernelTestCase
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
-        $page->setMainContent('content');
+        $page->mainContent = 'content';
         $page->metaRobots = $metaRobots;
 
         $em->persist($page);
@@ -109,7 +109,7 @@ final class PageRepositoryTest extends KernelTestCase
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
-        $page->setMainContent('content');
+        $page->mainContent = 'content';
         $page->metaRobots = 'noimageindex, nosnippet, notranslate';
 
         $em->persist($page);
@@ -220,7 +220,7 @@ final class PageRepositoryTest extends KernelTestCase
         $destination->locale = 'en';
         $destination->createdAt = new DateTime();
         $destination->updatedAt = new DateTime();
-        $destination->setMainContent('content');
+        $destination->mainContent = 'content';
         // 'homepage' collides with a real page → must be shadowed by it.
         $destination->redirectFrom = ['rfm-repo-old' => 308, 'homepage' => 301];
 

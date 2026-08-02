@@ -68,13 +68,15 @@ final class ContentPipelineTest extends TestCase
     public function testAMethodWinsOverThePropertyItWraps(): void
     {
         $page = new Page();
-        $page->setMainContent('  from the getter  ');
+        $page->extendedPage = new Page();
+        $page->extendedPage->template = 'inherited.html.twig';
 
         $pipeline = $this->createPipeline($page);
 
-        // mainContent is a protected column read through getMainContent(), which is
-        // also where the trimming setMainContent() applied has to survive.
-        self::assertSame('from the getter', $pipeline->getMainContent());
+        // `template` is a column *and* a getTemplate() that falls back to the
+        // extended page. Reading the property would answer null.
+        self::assertNull($page->template);
+        self::assertSame('inherited.html.twig', $pipeline->getFilteredProperty('Template'));
     }
 
     public function testAPropertyWithNoAccessorIsStillFiltered(): void
@@ -311,7 +313,7 @@ final class ContentPipelineTest extends TestCase
         $filterRegistry = new FilterRegistry([$filter]);
 
         $page = new Page();
-        $page->setMainContent('raw');
+        $page->mainContent = 'raw';
 
         // The filter key for MainContent is 'main_content' (snake_case)
         $pipeline = $this->createPipeline($page, $filterRegistry, ['main_content' => $filter::class]);

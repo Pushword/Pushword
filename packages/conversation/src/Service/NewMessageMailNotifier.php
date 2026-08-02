@@ -78,7 +78,7 @@ class NewMessageMailNotifier
             return;
         } // we send notification only for message sent by not logged people
 
-        if (false === filter_var($message->getAuthorEmail(), \FILTER_VALIDATE_EMAIL)) {
+        if (false === filter_var($message->authorEmail, \FILTER_VALIDATE_EMAIL)) {
             return; // no valid email, so nothing to reply, no notification.
         }
 
@@ -91,7 +91,7 @@ class NewMessageMailNotifier
             return; // Skip notifications during import
         }
 
-        if (false === filter_var($message->getAuthorEmail(), \FILTER_VALIDATE_EMAIL)) {
+        if (false === filter_var($message->authorEmail, \FILTER_VALIDATE_EMAIL)) {
             // $this->send();
 
             return;
@@ -108,10 +108,10 @@ class NewMessageMailNotifier
             return;
         }
 
-        $authorEmail = $message->getAuthorEmail() ?? throw new Exception();
+        $authorEmail = $message->authorEmail ?? throw new Exception();
         $subject = $this->translator->trans('adminConversationNotificationTitleSingular', ['%appName%' => $this->appName]);
 
-        $cacheKey = 'conversation_message_'.md5($message->getContent().' '.$message->getAuthorEmail());
+        $cacheKey = 'conversation_message_'.md5($message->getContent().' '.$message->authorEmail);
 
         $this->cache->get($cacheKey, function (ItemInterface $item) use ($message, $authorEmail, $subject): bool {
             $item->expiresAfter(600); // 10 minutes
@@ -121,12 +121,12 @@ class NewMessageMailNotifier
             $textBody = htmlspecialchars_decode($message->getContent())
                 ."\n\n---\n"
                 .$this->translator->trans('adminConversationNotificationSentBy', [
-                    '%authorName%' => $message->getAuthorName() ?? '...',
-                    '%authorEmail%' => $message->getAuthorEmail(),
+                    '%authorName%' => $message->authorName ?? '...',
+                    '%authorEmail%' => $message->authorEmail,
                 ])
                 ."\n".$this->translator->trans('adminConversationNotificationFrom', [
                     '%host%' => $message->host,
-                    '%referring%' => $message->getReferring(),
+                    '%referring%' => $message->referring,
                 ]);
 
             $this->emailSender->send($envelopeWithReply, $subject, nl2br($textBody), $textBody);

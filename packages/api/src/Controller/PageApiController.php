@@ -106,7 +106,7 @@ final class PageApiController extends AbstractApiController
         return $this->respond([
             'host' => $page->host,
             'slug' => $page->slug,
-            'html' => $this->markdownParser->transform($page->getMainContent()),
+            'html' => $this->markdownParser->transform($page->mainContent),
             'frontmatter' => $this->mapper->toArray($page)['frontmatter'],
         ]);
     }
@@ -244,7 +244,7 @@ final class PageApiController extends AbstractApiController
         }
 
         try {
-            $body = [] === $edits ? null : $this->bodyPatcher->apply($page->getMainContent(), $edits);
+            $body = [] === $edits ? null : $this->bodyPatcher->apply($page->mainContent, $edits);
         } catch (BodyPatchException $bodyPatchException) {
             return $this->respond([
                 'error' => 'patch_failed',
@@ -323,7 +323,7 @@ final class PageApiController extends AbstractApiController
             $destination->addRedirectFrom($page->slug, $code);
             $this->entityManager->remove($page);
         } else {
-            $page->setMainContent(new PageRedirection($target, $code)->toContent());
+            $page->mainContent = new PageRedirection($target, $code)->toContent();
             $page->editedBy = $this->getApiUser();
 
             if ('hard' !== $this->deleteStrategy) {

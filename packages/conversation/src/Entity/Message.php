@@ -47,17 +47,22 @@ class Message implements Stringable, Taggable, IdInterface
     use UuidTrait;
 
     #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]
-    protected ?string $authorName = '';
+    public ?string $authorName = '';
 
     #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]
-    protected ?string $authorEmail = '';
+    public ?string $authorEmail = '';
 
     /**
      * Anonymized visitor IP, stored as text: ip2long() has no IPv6 counterpart,
      * and 45 chars is the longest an IPv6 address can get.
+     *
+     * Writing null leaves the stored value untouched — see {@see setAuthorIpRaw()},
+     * the only writer, which drops anything that is not a valid IP.
      */
     #[ORM\Column(type: Types::STRING, length: 45, nullable: true)]
-    protected ?string $authorIp = null;
+    public ?string $authorIp = null {
+        set(?string $value) => $this->authorIp = $value ?? $this->authorIp;
+    }
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\NotBlank]
@@ -68,10 +73,12 @@ class Message implements Stringable, Taggable, IdInterface
      * Identifier referring (most of time, URI).
      */
     #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
-    protected string $referring = '';
+    public string $referring = '' {
+        set(?string $value) => $this->referring = (string) $value;
+    }
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    protected ?DateTimeInterface $publishedAt = null;
+    public ?DateTimeInterface $publishedAt = null;
 
     /**
      * Deletion tombstone: the row is kept (and synced through the flat CSV) so
@@ -97,18 +104,6 @@ class Message implements Stringable, Taggable, IdInterface
         $this->updatedAt = new DateTime();
     }
 
-    public function getPublishedAt(): ?DateTimeInterface
-    {
-        return $this->publishedAt;
-    }
-
-    public function setPublishedAt(?DateTimeInterface $publishedAt): self
-    {
-        $this->publishedAt = $publishedAt;
-
-        return $this;
-    }
-
     /**
      * Set message content.
      */
@@ -120,85 +115,12 @@ class Message implements Stringable, Taggable, IdInterface
     }
 
     /**
-     * Get message content.
+     * Get message content. Stays a method: the column is nullable, and a get hook
+     * cannot narrow `?string` to the string every caller relies on.
      */
     public function getContent(): string
     {
         return $this->content ?? '';
-    }
-
-    /**
-     * Get the value of authorName.
-     */
-    public function getAuthorName(): ?string
-    {
-        return $this->authorName;
-    }
-
-    /**
-     * Set the value of authorName.
-     */
-    public function setAuthorName(?string $authorName): self
-    {
-        $this->authorName = $authorName;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of authorEmail.
-     */
-    public function getAuthorEmail(): ?string
-    {
-        return $this->authorEmail;
-    }
-
-    /**
-     * Set the value of authorEmail.
-     */
-    public function setAuthorEmail(?string $authorEmail): self
-    {
-        $this->authorEmail = $authorEmail;
-
-        return $this;
-    }
-
-    /**
-     * Get identifier referring.
-     */
-    public function getReferring(): string
-    {
-        return $this->referring;
-    }
-
-    /**
-     * Set identifier referring.
-     */
-    public function setReferring(?string $referring): self
-    {
-        $this->referring = $referring ?? '';
-
-        return $this;
-    }
-
-    /**
-     * Get the value of authorIp.
-     */
-    public function getAuthorIp(): ?string
-    {
-        return $this->authorIp;
-    }
-
-    /**
-     * Set the value of authorIp.
-     */
-    public function setAuthorIp(?string $authorIp): self
-    {
-        if (null !== $authorIp) {
-            $this->authorIp = $authorIp;
-        }
-
-        return $this;
     }
 
     /**
@@ -211,7 +133,9 @@ class Message implements Stringable, Taggable, IdInterface
             return $this;
         }
 
-        return $this->setAuthorIp(IpUtils::anonymize($trimmed));
+        $this->authorIp = IpUtils::anonymize($trimmed);
+
+        return $this;
     }
 
     public function getAuthorIpRaw(): string

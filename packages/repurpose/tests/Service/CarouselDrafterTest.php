@@ -42,7 +42,7 @@ final class CarouselDrafterTest extends TestCase
         $page = new Page();
         $page->slug = 'blog/my-article';
         $page->h1 = 'How to repurpose your content';
-        $page->setMainContent(<<<'MD'
+        $page->mainContent = <<<'MD'
             An intro paragraph that is not a section.
 
             ## First takeaway
@@ -54,7 +54,7 @@ final class CarouselDrafterTest extends TestCase
             ## Second takeaway
 
             {{ someTwigCall() }} The lead of the second section, after a Twig call.
-            MD);
+            MD;
 
         return $page;
     }

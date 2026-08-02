@@ -5,6 +5,7 @@ namespace Pushword\Flat\Tests;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\ValueObject\PageRedirection;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Flat\Exporter\PageExporter;
 use RuntimeException;
@@ -44,11 +45,21 @@ final class PageExportResilienceTest extends KernelTestCase
         $pageRepo = self::getContainer()->get(PageRepository::class);
         $realPages = $pageRepo->findByHost('localhost.dev');
 
+        // Reading the body raises — standing in for a throwing converter or a
+        // lazy-load that fails — and the fixture never sets one, so every read
+        // takes the throwing branch. getRedirection() is neutralised because the
+        // redirection check runs before the guarded section and would otherwise
+        // blow up the whole export rather than the one page.
         $badPage = new class extends Page {
+            public string $mainContent = '' {
+                get => '' === $this->mainContent
+                    ? throw new RuntimeException('boom: this page cannot be exported') : $this->mainContent;
+            }
+
             #[Override]
-            public function getMainContent(): string
+            public function getRedirection(): ?PageRedirection
             {
-                throw new RuntimeException('boom: this page cannot be exported');
+                return null;
             }
         };
         $badPage->slug = 'broken-export-page';

@@ -92,7 +92,7 @@ final class PagePropertiesSchemaValidatorTest extends KernelTestCase
         $page->locale = 'en';
         $page->slug = 'schema-validator-fixture-'.uniqid();
         $page->h1 = 'Schema fixture';
-        $page->setMainContent('Hello');
+        $page->mainContent = 'Hello';
         $page->publishedAt = new DateTime('-1 day');
 
         return $page;

@@ -121,15 +121,15 @@ final class ConversationApiController extends AbstractApiController
         }
 
         if (\array_key_exists('authorName', $data) && \is_string($data['authorName'])) {
-            $message->setAuthorName($data['authorName']);
+            $message->authorName = $data['authorName'];
         }
 
         if (\array_key_exists('authorEmail', $data) && \is_string($data['authorEmail'])) {
-            $message->setAuthorEmail($data['authorEmail']);
+            $message->authorEmail = $data['authorEmail'];
         }
 
         if (\array_key_exists('referring', $data) && \is_string($data['referring'])) {
-            $message->setReferring($data['referring']);
+            $message->referring = $data['referring'];
         }
 
         if (\array_key_exists('locale', $data) && \is_string($data['locale'])) {
@@ -142,7 +142,7 @@ final class ConversationApiController extends AbstractApiController
 
         if (\array_key_exists('publishedAt', $data) && \is_string($data['publishedAt'])) {
             try {
-                $message->setPublishedAt(new DateTimeImmutable($data['publishedAt']));
+                $message->publishedAt = new DateTimeImmutable($data['publishedAt']);
             } catch (Exception) {
                 // ignore unparseable date
             }
@@ -164,12 +164,12 @@ final class ConversationApiController extends AbstractApiController
             'id' => $message->id,
             'host' => $message->host,
             'locale' => $message->locale,
-            'authorName' => $message->getAuthorName(),
-            'authorEmail' => $message->getAuthorEmail(),
+            'authorName' => $message->authorName,
+            'authorEmail' => $message->authorEmail,
             'content' => $message->getContent(),
-            'referring' => $message->getReferring(),
+            'referring' => $message->referring,
             'tags' => $message->getTagList(),
-            'publishedAt' => $message->getPublishedAt()?->format(DateTimeInterface::ATOM),
+            'publishedAt' => $message->publishedAt?->format(DateTimeInterface::ATOM),
             'createdAt' => $message->createdAt?->format(DateTimeInterface::ATOM),
             'updatedAt' => $message->updatedAt?->format(DateTimeInterface::ATOM),
         ];

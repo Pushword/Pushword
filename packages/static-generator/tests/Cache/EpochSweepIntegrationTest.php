@@ -88,9 +88,9 @@ final class EpochSweepIntegrationTest extends KernelTestCase
         $this->snippet = new Snippet();
         $snippet = $this->snippet;
         $snippet->host = self::HOST;
-        $snippet->setSlug($slug);
-        $snippet->setName('Epoch Integration');
-        $snippet->setContent('snippet-v1');
+        $snippet->slug = $slug;
+        $snippet->name = 'Epoch Integration';
+        $snippet->content = 'snippet-v1';
 
         $this->page = new Page();
         $page = $this->page;
@@ -98,7 +98,7 @@ final class EpochSweepIntegrationTest extends KernelTestCase
         $page->slug = 'epoch-int-page';
         $page->title = "Epoch {{ snippet('".$slug."') }}";
         $page->h1 = 'Epoch integration page';
-        $page->setMainContent('Content that never changes.');
+        $page->mainContent = 'Content that never changes.';
         $page->publishedAt = new DateTime('-1 hour');
 
         $em->persist($snippet);
@@ -125,7 +125,7 @@ final class EpochSweepIntegrationTest extends KernelTestCase
 
         // Edit the snippet: the page row is untouched (updatedAt frozen), yet its
         // rendered output must change — the pre-epoch blind spot.
-        $snippet->setContent('snippet-v2');
+        $snippet->content = 'snippet-v2';
         $em->flush();
         $dispatcher->flush();
         $handler(new HostCacheRefreshMessage(self::HOST));
@@ -172,7 +172,7 @@ final class EpochSweepIntegrationTest extends KernelTestCase
         $page->host = self::HOST;
         $page->slug = 'epoch-flush-page';
         $page->title = 'Epoch flush page';
-        $page->setMainContent('Prose without links.');
+        $page->mainContent = 'Prose without links.';
 
         $em->persist($page);
         $em->flush();
@@ -181,7 +181,7 @@ final class EpochSweepIntegrationTest extends KernelTestCase
         self::assertNotSame($before, $afterPersist, 'persisting a published page must bump (it enters listings)');
 
         // Prose edit touching no link: private to the page, no bump.
-        $page->setMainContent('Rewritten prose, still without links.');
+        $page->mainContent = 'Rewritten prose, still without links.';
         $em->flush();
         self::assertSame($afterPersist, $renderEpoch->get(self::HOST));
 
@@ -192,7 +192,7 @@ final class EpochSweepIntegrationTest extends KernelTestCase
         self::assertNotSame($afterPersist, $afterTitle);
 
         // Content edit adding an internal link: other pages render the link graph.
-        $page->setMainContent('Rewritten prose with a [link](/epoch-int-page).');
+        $page->mainContent = 'Rewritten prose with a [link](/epoch-int-page).';
         $em->flush();
         self::assertNotSame($afterTitle, $renderEpoch->get(self::HOST));
     }

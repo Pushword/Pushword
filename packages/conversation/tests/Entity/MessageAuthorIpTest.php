@@ -56,7 +56,7 @@ final class MessageAuthorIpTest extends KernelTestCase
         $message = new Message();
         $message->setAuthorIpRaw($ip);
 
-        self::assertSame($anonymized, $message->getAuthorIp());
+        self::assertSame($anonymized, $message->authorIp);
         self::assertSame($anonymized, $message->getAuthorIpRaw());
     }
 
@@ -65,7 +65,7 @@ final class MessageAuthorIpTest extends KernelTestCase
         $message = new Message();
         $message->setAuthorIpRaw("  176.190.1.42\n");
 
-        self::assertSame('176.190.1.0', $message->getAuthorIp());
+        self::assertSame('176.190.1.0', $message->authorIp);
     }
 
     /** @return Iterator<string, array{string}> */
@@ -84,7 +84,7 @@ final class MessageAuthorIpTest extends KernelTestCase
         $message = new Message();
         $message->setAuthorIpRaw($ip);
 
-        self::assertNull($message->getAuthorIp());
+        self::assertNull($message->authorIp);
         // An unknown IP reads back as empty, never as a plausible-looking address.
         self::assertSame('', $message->getAuthorIpRaw());
     }
@@ -97,9 +97,9 @@ final class MessageAuthorIpTest extends KernelTestCase
     {
         $message = new Message();
         $message->setAuthorIpRaw('176.190.1.42');
-        $message->setAuthorIp(null);
+        $message->authorIp = null;
 
-        self::assertSame('176.190.1.0', $message->getAuthorIp());
+        self::assertSame('176.190.1.0', $message->authorIp);
     }
 
     #[Group('integration')]
@@ -111,7 +111,7 @@ final class MessageAuthorIpTest extends KernelTestCase
         $message = new Message();
         $message->host = 'localhost.dev';
         $message->setContent('Message from '.$ip);
-        $message->setReferring('/contact');
+        $message->referring = '/contact';
         $message->setAuthorIpRaw($ip);
 
         $entityManager->persist($message);
@@ -123,7 +123,7 @@ final class MessageAuthorIpTest extends KernelTestCase
 
         $reloaded = $entityManager->find(Message::class, $this->createdMessageId);
         self::assertInstanceOf(Message::class, $reloaded);
-        self::assertSame($anonymized, $reloaded->getAuthorIp());
+        self::assertSame($anonymized, $reloaded->authorIp);
     }
 
     private function getEntityManager(): EntityManagerInterface

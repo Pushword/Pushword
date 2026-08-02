@@ -3,6 +3,7 @@
 namespace Pushword\Core\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 
@@ -15,9 +16,8 @@ final readonly class CleanPageCommand
 
     public function __invoke(): int
     {
-        $pages = $this->pageRepo->findAll();
-        foreach ($pages as $page) {
-            $page->setMainContent($page->getMainContent());
+        foreach ($this->pageRepo->findAll() as $page) {
+            $page->mainContent = Page::normalizeMainContent($page->mainContent);
         }
 
         $this->em->flush();

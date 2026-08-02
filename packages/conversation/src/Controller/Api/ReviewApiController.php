@@ -129,11 +129,11 @@ final class ReviewApiController extends AbstractApiController
         }
 
         if (\array_key_exists('authorName', $data) && \is_string($data['authorName'])) {
-            $review->setAuthorName($data['authorName']);
+            $review->authorName = $data['authorName'];
         }
 
         if (\array_key_exists('authorEmail', $data) && \is_string($data['authorEmail'])) {
-            $review->setAuthorEmail($data['authorEmail']);
+            $review->authorEmail = $data['authorEmail'];
         }
 
         if (\array_key_exists('locale', $data) && \is_string($data['locale'])) {
@@ -145,12 +145,12 @@ final class ReviewApiController extends AbstractApiController
         }
 
         if (\array_key_exists('referring', $data) && \is_string($data['referring'])) {
-            $review->setReferring($data['referring']);
+            $review->referring = $data['referring'];
         }
 
         if (\array_key_exists('publishedAt', $data) && \is_string($data['publishedAt'])) {
             try {
-                $review->setPublishedAt(new DateTimeImmutable($data['publishedAt']));
+                $review->publishedAt = new DateTimeImmutable($data['publishedAt']);
             } catch (Exception) {
                 // ignore unparseable
             }
@@ -166,14 +166,14 @@ final class ReviewApiController extends AbstractApiController
             'id' => $review->id,
             'host' => $review->host,
             'locale' => $review->locale,
-            'authorName' => $review->getAuthorName(),
-            'authorEmail' => $review->getAuthorEmail(),
+            'authorName' => $review->authorName,
+            'authorEmail' => $review->authorEmail,
             'title' => $review->getTitle(),
             'content' => $review->getContent(),
             'rating' => $review->getRating(),
-            'referring' => $review->getReferring(),
+            'referring' => $review->referring,
             'translations' => $review->getTranslations(),
-            'publishedAt' => $review->getPublishedAt()?->format(DateTimeInterface::ATOM),
+            'publishedAt' => $review->publishedAt?->format(DateTimeInterface::ATOM),
             'createdAt' => $review->createdAt?->format(DateTimeInterface::ATOM),
             'updatedAt' => $review->updatedAt?->format(DateTimeInterface::ATOM),
         ];

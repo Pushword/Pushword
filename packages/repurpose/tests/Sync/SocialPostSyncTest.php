@@ -101,7 +101,7 @@ final class SocialPostSyncTest extends KernelTestCase
     {
         $post = new SocialPost();
         $post->host = self::HOST;
-        $post->setSpec($this->spec());
+        $post->spec = $this->spec();
         $this->persist($post);
 
         $this->sync->export(self::HOST);
@@ -119,7 +119,7 @@ final class SocialPostSyncTest extends KernelTestCase
     {
         $post = new SocialPost();
         $post->host = self::HOST;
-        $post->setSpec($this->spec('draft'));
+        $post->spec = $this->spec('draft');
         $this->persist($post);
         $this->sync->export(self::HOST);
 
@@ -130,14 +130,14 @@ final class SocialPostSyncTest extends KernelTestCase
 
         $reloaded = $this->repository->findOneByKey(self::HOST, self::PAGE, self::NETWORK);
         self::assertNotNull($reloaded);
-        self::assertSame('posted', $reloaded->getStatus());
+        self::assertSame('posted', $reloaded->status);
     }
 
     public function testDeletingTheFileSweepsTheRow(): void
     {
         $post = new SocialPost();
         $post->host = self::HOST;
-        $post->setSpec($this->spec());
+        $post->spec = $this->spec();
         $this->persist($post);
         $this->sync->export(self::HOST);
 

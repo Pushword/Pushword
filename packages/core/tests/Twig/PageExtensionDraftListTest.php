@@ -86,7 +86,7 @@ final class PageExtensionDraftListTest extends KernelTestCase
         $page->metaRobots = $metaRobots;
         $page->slug = $slug;
         $page->h1 = 'Draft list fixture '.$slug;
-        $page->setMainContent('Draft list fixture content.');
+        $page->mainContent = 'Draft list fixture content.';
         $page->publishedAt = $publishedAt;
 
         $this->entityManager->persist($page);

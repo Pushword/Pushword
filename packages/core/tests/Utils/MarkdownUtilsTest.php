@@ -13,12 +13,12 @@ final class MarkdownUtilsTest extends TestCase
         $page = new Page();
         $page->host = 'example.com';
         $page->slug = 'test-page';
-        $page->setMainContent("# Mon titre\n\nUn paragraphe.");
+        $page->mainContent = "# Mon titre\n\nUn paragraphe.";
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
 
         $expected = "{#mon-titre}\n# Mon titre\n\nUn paragraphe.";
-        self::assertSame($expected, $page->getMainContent());
+        self::assertSame($expected, $page->mainContent);
     }
 
     public function testAddAnchorToParagraph(): void
@@ -26,12 +26,12 @@ final class MarkdownUtilsTest extends TestCase
         $page = new Page();
         $page->host = 'example.com';
         $page->slug = 'test-page';
-        $page->setMainContent("# Titre\n\nUn paragraphe important.");
+        $page->mainContent = "# Titre\n\nUn paragraphe important.";
 
         MarkdownUtils::addAnchor($page, 'paragraphe-important', '/paragraphe important/', ['paragraph']);
 
         $expected = "# Titre\n\n{#paragraphe-important}\nUn paragraphe important.";
-        self::assertSame($expected, $page->getMainContent());
+        self::assertSame($expected, $page->mainContent);
     }
 
     public function testAddAnchorWithExistingAttribute(): void
@@ -39,12 +39,12 @@ final class MarkdownUtilsTest extends TestCase
         $page = new Page();
         $page->host = 'example.com';
         $page->slug = 'test-page';
-        $page->setMainContent("{.class}\n# Mon titre\n\nUn paragraphe.");
+        $page->mainContent = "{.class}\n# Mon titre\n\nUn paragraphe.";
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
 
         $expected = "{.class #mon-titre}\n# Mon titre\n\nUn paragraphe.";
-        self::assertSame($expected, $page->getMainContent());
+        self::assertSame($expected, $page->mainContent);
     }
 
     public function testAddAnchorSkipIfAlreadyHasAnchor(): void
@@ -54,12 +54,12 @@ final class MarkdownUtilsTest extends TestCase
         $page->slug = 'test-page';
 
         $originalContent = "{#existing-anchor}\n# Mon titre\n\nUn paragraphe.";
-        $page->setMainContent($originalContent);
+        $page->mainContent = $originalContent;
 
         MarkdownUtils::addAnchor($page, 'new-anchor', '/^# Mon titre/');
 
         // Le contenu ne doit pas être modifié car l'ancre existe déjà
-        self::assertSame($originalContent, $page->getMainContent());
+        self::assertSame($originalContent, $page->mainContent);
     }
 
     public function testAddAnchorWithMultipleAnchorsInAttribute(): void
@@ -69,12 +69,12 @@ final class MarkdownUtilsTest extends TestCase
         $page->slug = 'test-page';
 
         $originalContent = "{.class #anchor1}\n# Mon titre\n\nUn paragraphe.";
-        $page->setMainContent($originalContent);
+        $page->mainContent = $originalContent;
 
         MarkdownUtils::addAnchor($page, 'new-anchor', '/^# Mon titre/');
 
         // Ne doit pas modifier car l'attribut contient déjà une ancre
-        self::assertSame($originalContent, $page->getMainContent());
+        self::assertSame($originalContent, $page->mainContent);
     }
 
     public function testAddAnchorNoMatch(): void
@@ -84,12 +84,12 @@ final class MarkdownUtilsTest extends TestCase
         $page->slug = 'test-page';
 
         $originalContent = "# Mon titre\n\nUn paragraphe.";
-        $page->setMainContent($originalContent);
+        $page->mainContent = $originalContent;
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Autre titre/');
 
         // Le contenu ne doit pas être modifié car aucun bloc ne correspond
-        self::assertSame($originalContent, $page->getMainContent());
+        self::assertSame($originalContent, $page->mainContent);
     }
 
     public function testAddAnchorOnlyFirstMatch(): void
@@ -97,13 +97,13 @@ final class MarkdownUtilsTest extends TestCase
         $page = new Page();
         $page->host = 'example.com';
         $page->slug = 'test-page';
-        $page->setMainContent("# Mon titre\n\nUn paragraphe.\n\n# Mon titre\n\nAutre paragraphe.");
+        $page->mainContent = "# Mon titre\n\nUn paragraphe.\n\n# Mon titre\n\nAutre paragraphe.";
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
 
         // Seul le premier header correspondant doit être modifié
         $expected = "{#mon-titre}\n# Mon titre\n\nUn paragraphe.\n\n# Mon titre\n\nAutre paragraphe.";
-        self::assertSame($expected, $page->getMainContent());
+        self::assertSame($expected, $page->mainContent);
     }
 
     public function testAddAnchorWithCallback(): void
@@ -111,7 +111,7 @@ final class MarkdownUtilsTest extends TestCase
         $page = new Page();
         $page->host = 'example.com';
         $page->slug = 'test-page';
-        $page->setMainContent("# Mon titre\n\nUn paragraphe.");
+        $page->mainContent = "# Mon titre\n\nUn paragraphe.";
 
         $output = [];
         $callback = static function (string $message) use (&$output): void {
@@ -131,13 +131,13 @@ final class MarkdownUtilsTest extends TestCase
         $page = new Page();
         $page->host = 'example.com';
         $page->slug = 'test-page';
-        $page->setMainContent("# Mon titre\n\n```php\ncode here\n```\n\nUn paragraphe.");
+        $page->mainContent = "# Mon titre\n\n```php\ncode here\n```\n\nUn paragraphe.";
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
 
         // Les blocs de code doivent être préservés
         $expected = "{#mon-titre}\n# Mon titre\n\n```php\ncode here\n```\n\nUn paragraphe.";
-        self::assertSame($expected, $page->getMainContent());
+        self::assertSame($expected, $page->mainContent);
     }
 
     public function testAddAnchorWithMultipleBlockTypes(): void
@@ -145,14 +145,14 @@ final class MarkdownUtilsTest extends TestCase
         $page = new Page();
         $page->host = 'example.com';
         $page->slug = 'test-page';
-        $page->setMainContent("Autre texte.\n\nUn paragraphe important.\n\n# Titre");
+        $page->mainContent = "Autre texte.\n\nUn paragraphe important.\n\n# Titre";
 
         MarkdownUtils::addAnchor($page, 'paragraphe-important', '/paragraphe important/', ['header', 'paragraph']);
 
         // Le premier bloc qui correspond est le paragraphe "Un paragraphe important."
         // Note: les blocs précédents non modifiés ne sont pas inclus dans le résultat
         $expected = "Autre texte.\n\n{#paragraphe-important}\nUn paragraphe important.\n\n# Titre";
-        self::assertSame($expected, $page->getMainContent());
+        self::assertSame($expected, $page->mainContent);
     }
 
     public function testAddAnchorWithWindowsLineEndings(): void
@@ -160,13 +160,13 @@ final class MarkdownUtilsTest extends TestCase
         $page = new Page();
         $page->host = 'example.com';
         $page->slug = 'test-page';
-        $page->setMainContent("# Mon titre\r\n\r\nUn paragraphe.");
+        $page->mainContent = "# Mon titre\r\n\r\nUn paragraphe.";
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
 
         // Les fins de ligne doivent être normalisées
         $expected = "{#mon-titre}\n# Mon titre\n\nUn paragraphe.";
-        self::assertSame($expected, $page->getMainContent());
+        self::assertSame($expected, $page->mainContent);
     }
 
     public function testHasAnchorWithMarkdownStyle(): void
@@ -200,11 +200,11 @@ final class MarkdownUtilsTest extends TestCase
         $page->slug = 'test-page';
 
         $originalContent = "# Mon titre\n\n<div id=\"mon-titre\">Content</div>";
-        $page->setMainContent($originalContent);
+        $page->mainContent = $originalContent;
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
 
         // Content should not be modified because the anchor already exists in HTML
-        self::assertSame($originalContent, $page->getMainContent());
+        self::assertSame($originalContent, $page->mainContent);
     }
 }

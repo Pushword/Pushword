@@ -214,7 +214,7 @@ final class PageImporter extends AbstractImporter
         foreach ($this->slugs as $slug) {
             $page = $this->pageList[$slug] ?? throw new Exception($slug);
 
-            $content = $page->getMainContent();
+            $content = $page->mainContent;
             // $content = preg_replace('/\[(.+)\]\(([^\/].*)\.md\)/', '[$1](/$2)', $content);
             preg_match_all('/\[(.+)\]\(([^\/].*\.md)(#?(.*))\)/', $content, $matches);
             foreach ($matches[0] as $k => $match) {
@@ -225,7 +225,7 @@ final class PageImporter extends AbstractImporter
                 $content = str_replace($match, '['.$matches[1][$k].'](/'.$this->slugs[$matches[2][$k]].($matches[3][$k] ?? '').')', $content);
             }
 
-            $page->setMainContent($content);
+            $page->mainContent = $content;
         }
     }
 
@@ -324,7 +324,7 @@ final class PageImporter extends AbstractImporter
             $page->locale = $this->apps->get()->locale;
         }
 
-        $page->setMainContent($content);
+        $page->mainContent = $content;
 
         if ($this->newPage) {
             $this->initDateTimeProperties($page, $lastEditDateTime, $publishedAtExplicitlySet);

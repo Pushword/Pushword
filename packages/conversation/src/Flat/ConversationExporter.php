@@ -231,7 +231,7 @@ final class ConversationExporter
     private function getDateValue(Message $message, string $column): ?string
     {
         return match ($column) {
-            'publishedAt' => ConversationCsvHelper::formatDate($message->getPublishedAt()),
+            'publishedAt' => ConversationCsvHelper::formatDate($message->publishedAt),
             'createdAt' => ConversationCsvHelper::formatDate($message->createdAt),
             'updatedAt' => ConversationCsvHelper::formatDate($message->updatedAt),
             default => null,

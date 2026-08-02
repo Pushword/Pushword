@@ -223,7 +223,7 @@ final class PageListener implements ResetInterface
                     ->getResult();
 
                 foreach ($chainingRedirects as $chainingRedirect) {
-                    $chainingRedirect->setMainContent('Location: /'.$data['newSlug'].' '.$chainingRedirect->getRedirectionCode());
+                    $chainingRedirect->mainContent = 'Location: /'.$data['newSlug'].' '.$chainingRedirect->getRedirectionCode();
                 }
 
                 // Record the old slug next to the content, on the destination page's redirectFrom.

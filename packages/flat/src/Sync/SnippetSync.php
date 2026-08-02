@@ -120,7 +120,7 @@ final class SnippetSync
     {
         $existing = [];
         foreach ($this->snippetRepository->findByHost($host) as $snippet) {
-            $existing[$snippet->getSlug()] = $snippet;
+            $existing[$snippet->slug] = $snippet;
         }
 
         $seenSlugs = [];
@@ -163,10 +163,10 @@ final class SnippetSync
 
         $snippet ??= new Snippet();
         $snippet->host = $host;
-        $snippet->setSlug($slug);
-        $snippet->setName(\is_string($data['name'] ?? null) ? $data['name'] : '');
+        $snippet->slug = $slug;
+        $snippet->name = \is_string($data['name'] ?? null) ? $data['name'] : '';
         $snippet->setTags($this->normalizeTags($data['tags'] ?? []));
-        $snippet->setContent(trim($document->body()));
+        $snippet->content = trim($document->body());
 
         unset($data['name'], $data['tags']);
         $snippet->customProperties = $data;
@@ -193,7 +193,7 @@ final class SnippetSync
 
         $keepFiles = [];
         foreach ($this->snippetRepository->findByHost($host) as $snippet) {
-            $path = $dir.'/'.$snippet->getSlug().'.md';
+            $path = $dir.'/'.$snippet->slug.'.md';
             $keepFiles[$path] = true;
             $content = $this->generateContent($snippet);
 
@@ -241,7 +241,7 @@ final class SnippetSync
 
     public function generateContent(Snippet $snippet): string
     {
-        $data = ['name' => $snippet->getName()];
+        $data = ['name' => $snippet->name];
 
         $tags = $snippet->getTagList();
         if ([] !== $tags) {
@@ -252,7 +252,7 @@ final class SnippetSync
             $data[$key] = $value;
         }
 
-        return '---'.\PHP_EOL.Yaml::dump($data, 2).'---'.\PHP_EOL.\PHP_EOL.$snippet->getContent().\PHP_EOL;
+        return '---'.\PHP_EOL.Yaml::dump($data, 2).'---'.\PHP_EOL.\PHP_EOL.$snippet->content.\PHP_EOL;
     }
 
     private function mustImport(string $dir, string $host): bool

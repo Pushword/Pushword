@@ -364,7 +364,7 @@ final class ConversationImporter
     private function applyDates(Message $message, array $dates): void
     {
         if (isset($dates['publishedAt'])) {
-            $message->setPublishedAt($dates['publishedAt']);
+            $message->publishedAt = $dates['publishedAt'];
         }
 
         if (isset($dates['createdAt'])) {

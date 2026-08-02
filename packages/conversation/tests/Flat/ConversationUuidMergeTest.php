@@ -279,7 +279,7 @@ final class ConversationUuidMergeTest extends KernelTestCase
         $message = new Message();
         $message->host = $this->testHost;
         $message->setContent($content);
-        $message->setReferring('/uuid-merge-test');
+        $message->referring = '/uuid-merge-test';
 
         $this->entityManager->persist($message);
 

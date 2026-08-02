@@ -78,7 +78,7 @@ final class TranslateReviewsCommandTest extends KernelTestCase
         $toTranslate = new Review();
         $toTranslate->host = $this->testHost;
         $toTranslate->setRating(5);
-        $toTranslate->setReferring('/trip');
+        $toTranslate->referring = '/trip';
         $toTranslate->setContent('A wonderful trip along the river.');
 
         $em->persist($toTranslate);
@@ -87,7 +87,7 @@ final class TranslateReviewsCommandTest extends KernelTestCase
         $alreadyTranslated = new Review();
         $alreadyTranslated->host = $this->testHost;
         $alreadyTranslated->setRating(5);
-        $alreadyTranslated->setReferring('/trip2');
+        $alreadyTranslated->referring = '/trip2';
         $alreadyTranslated->setContent('Another great trip.');
         $alreadyTranslated->locale = 'en';
         $alreadyTranslated->setTranslation('fr', null, 'déjà traduit');
@@ -143,7 +143,7 @@ final class TranslateReviewsCommandTest extends KernelTestCase
             $review = new Review();
             $review->host = $this->testHost;
             $review->setRating(5);
-            $review->setReferring('/batch-'.$i);
+            $review->referring = '/batch-'.$i;
             $review->setContent('A wonderful trip number '.$i.'.');
             $review->locale = 'en';
             $em->persist($review);

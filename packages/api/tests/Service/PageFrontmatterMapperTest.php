@@ -65,7 +65,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $page->h1 = 'About us';
         $page->title = 'About | Example';
         $page->metaRobots = 'noindex';
-        $page->setMainContent('# Hello');
+        $page->mainContent = '# Hello';
         $page->setTags(['team', 'history']);
         $page->setCustomProperty('ogTitle', 'OG About');
 
@@ -135,7 +135,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $master = new Page();
         $master->host = $host;
         $master->slug = 'master-trek';
-        $master->setMainContent('# Master');
+        $master->mainContent = '# Master';
 
         $this->em->persist($master);
         $this->em->flush();
@@ -144,7 +144,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $variant = new Page();
         $variant->host = $host;
         $variant->slug = 'master-trek-self-guided';
-        $variant->setMainContent('# Variant');
+        $variant->mainContent = '# Variant';
 
         $this->mapper->applyFrontmatter($variant, [
             'variantOf' => 'master-trek',
@@ -467,7 +467,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
 
         self::assertNull($page->id);
         self::assertSame('Preview', $page->h1);
-        self::assertSame('# Body', $page->getMainContent());
+        self::assertSame('# Body', $page->mainContent);
     }
 
     /**
@@ -490,7 +490,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $page = new Page();
         $page->host = $host;
         $page->slug = 'published-'.uniqid();
-        $page->setMainContent('# Content');
+        $page->mainContent = '# Content';
 
         $this->mapper->applyFrontmatter($page, ['publishedAt' => $publishedAt]);
 
@@ -565,7 +565,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $base = new Page();
         $base->host = $host;
         $base->slug = 'base-layout';
-        $base->setMainContent('# Base');
+        $base->mainContent = '# Base';
 
         $this->em->persist($base);
         $this->em->flush();
@@ -633,7 +633,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $page->host = $host;
         $page->slug = $slug;
         $page->locale = $locale;
-        $page->setMainContent('# '.$slug);
+        $page->mainContent = '# '.$slug;
 
         $this->em->persist($page);
         $this->em->flush();

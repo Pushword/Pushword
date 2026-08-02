@@ -85,7 +85,7 @@ final class UserControllerTest extends WebTestCase
         $plainToken = bin2hex(random_bytes(32));
         $this->createLoginToken($user, $plainToken, LoginToken::TYPE_LOGIN);
 
-        $urlToken = base64_encode($user->getId().':'.$plainToken);
+        $urlToken = base64_encode($user->id.':'.$plainToken);
         $this->client->request(Request::METHOD_GET, '/login/magic/'.$urlToken);
 
         // Should redirect to admin after successful login
@@ -98,7 +98,7 @@ final class UserControllerTest extends WebTestCase
         $plainToken = bin2hex(random_bytes(32));
         $this->createLoginToken($user, $plainToken, LoginToken::TYPE_SET_PASSWORD);
 
-        $urlToken = base64_encode($user->getId().':'.$plainToken);
+        $urlToken = base64_encode($user->id.':'.$plainToken);
         $this->client->request(Request::METHOD_GET, '/login/set-password/'.$urlToken);
 
         self::assertResponseIsSuccessful();
@@ -112,7 +112,7 @@ final class UserControllerTest extends WebTestCase
         $plainToken = bin2hex(random_bytes(32));
         $this->createLoginToken($user, $plainToken, LoginToken::TYPE_SET_PASSWORD);
 
-        $urlToken = base64_encode($user->getId().':'.$plainToken);
+        $urlToken = base64_encode($user->id.':'.$plainToken);
         $this->client->request(Request::METHOD_GET, '/login/set-password/'.$urlToken);
 
         $crawler = $this->client->getCrawler();
@@ -131,7 +131,7 @@ final class UserControllerTest extends WebTestCase
         $plainToken = bin2hex(random_bytes(32));
         $this->createLoginToken($user, $plainToken, LoginToken::TYPE_SET_PASSWORD);
 
-        $urlToken = base64_encode($user->getId().':'.$plainToken);
+        $urlToken = base64_encode($user->id.':'.$plainToken);
         $this->client->request(Request::METHOD_GET, '/login/set-password/'.$urlToken);
 
         $crawler = $this->client->getCrawler();
@@ -150,7 +150,7 @@ final class UserControllerTest extends WebTestCase
         $plainToken = bin2hex(random_bytes(32));
         $this->createLoginToken($user, $plainToken, LoginToken::TYPE_SET_PASSWORD);
 
-        $urlToken = base64_encode($user->getId().':'.$plainToken);
+        $urlToken = base64_encode($user->id.':'.$plainToken);
         $this->client->request(Request::METHOD_GET, '/login/set-password/'.$urlToken);
 
         $crawler = $this->client->getCrawler();
@@ -205,7 +205,7 @@ final class UserControllerTest extends WebTestCase
         $plainToken = bin2hex(random_bytes(32));
         $this->createLoginToken($user, $plainToken, LoginToken::TYPE_PASSWORD_RESET);
 
-        $urlToken = base64_encode($user->getId().':'.$plainToken);
+        $urlToken = base64_encode($user->id.':'.$plainToken);
         $this->client->request(Request::METHOD_GET, '/login/set-password/'.$urlToken);
 
         self::assertResponseIsSuccessful();
@@ -254,7 +254,7 @@ final class UserControllerTest extends WebTestCase
         $this->createLoginToken($user, $plainToken, LoginToken::TYPE_PASSWORD_RESET);
 
         // Step 4: Visit set-password page with the token
-        $urlToken = base64_encode($user->getId().':'.$plainToken);
+        $urlToken = base64_encode($user->id.':'.$plainToken);
         $this->client->request(Request::METHOD_GET, '/login/set-password/'.$urlToken);
         self::assertResponseIsSuccessful();
 

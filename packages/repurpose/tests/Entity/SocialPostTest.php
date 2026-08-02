@@ -18,21 +18,21 @@ final class SocialPostTest extends TestCase
     public function testSetSpecDerivesQueryableColumns(): void
     {
         $post = new SocialPost();
-        $post->setSpec([
+        $post->spec = [
             'page' => 'blog/x',
             'network' => 'linkedin',
             'format' => 'linkedin-4-5',
             'status' => 'planned',
             'plannedAt' => '2026-07-20T10:00:00+00:00',
             'slides' => [['title' => 'Hi']],
-        ]);
+        ];
 
-        self::assertSame('blog/x', $post->getPage());
-        self::assertSame('linkedin', $post->getNetwork());
-        self::assertSame('linkedin-4-5', $post->getFormat());
-        self::assertSame('planned', $post->getStatus());
+        self::assertSame('blog/x', $post->page);
+        self::assertSame('linkedin', $post->network);
+        self::assertSame('linkedin-4-5', $post->format);
+        self::assertSame('planned', $post->status);
 
-        $plannedAt = $post->getPlannedAt();
+        $plannedAt = $post->plannedAt;
         self::assertInstanceOf(DateTimeImmutable::class, $plannedAt);
         self::assertSame('2026-07-20 10:00', $plannedAt->format('Y-m-d H:i'));
     }
@@ -40,20 +40,20 @@ final class SocialPostTest extends TestCase
     public function testSetSpecKeepsColumnDefaultsAndNullsPlannedAtWhenAbsent(): void
     {
         $post = new SocialPost();
-        $post->setSpec(['page' => 'x', 'network' => 'instagram', 'format' => 'instagram-4-5']);
+        $post->spec = ['page' => 'x', 'network' => 'instagram', 'format' => 'instagram-4-5'];
 
-        self::assertSame('draft', $post->getStatus());
-        self::assertNull($post->getPlannedAt());
+        self::assertSame('draft', $post->status);
+        self::assertNull($post->plannedAt);
     }
 
     public function testSetSpecKeepsExistingColumnWhenSpecOmitsIt(): void
     {
         $post = new SocialPost();
-        $post->setPage('blog/original');
-        $post->setSpec(['network' => 'linkedin']);
+        $post->page = 'blog/original';
+        $post->spec = ['network' => 'linkedin'];
 
-        self::assertSame('blog/original', $post->getPage());
-        self::assertSame('linkedin', $post->getNetwork());
+        self::assertSame('blog/original', $post->page);
+        self::assertSame('linkedin', $post->network);
     }
 
     public function testGetSpecReturnsWhatWasStored(): void
@@ -61,8 +61,8 @@ final class SocialPostTest extends TestCase
         $spec = ['page' => 'x', 'network' => 'linkedin', 'slides' => [['title' => 'A']]];
 
         $post = new SocialPost();
-        $post->setSpec($spec);
+        $post->spec = $spec;
 
-        self::assertSame($spec, $post->getSpec());
+        self::assertSame($spec, $post->spec);
     }
 }

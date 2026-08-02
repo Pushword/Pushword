@@ -74,9 +74,9 @@ final class VersionTest extends KernelTestCase
 
         $snippet = new Snippet();
         $snippet->host = 'localhost.dev';
-        $snippet->setSlug('version-test-'.uniqid());
-        $snippet->setName('placeholder');
-        $snippet->setContent('placeholder');
+        $snippet->slug = 'version-test-'.uniqid();
+        $snippet->name = 'placeholder';
+        $snippet->content = 'placeholder';
 
         $em->persist($snippet);
         $em->flush(); // assigns the id
@@ -90,13 +90,13 @@ final class VersionTest extends KernelTestCase
         // the two versions this test relies on.
         $versionner->reset('snippet', (int) $snippet->id);
 
-        $snippet->setName('Original name');
-        $snippet->setContent('original content');
+        $snippet->name = 'Original name';
+        $snippet->content = 'original content';
 
         $em->flush(); // version 1 (the state we will restore to)
 
-        $snippet->setName('Renamed');
-        $snippet->setContent('changed content');
+        $snippet->name = 'Renamed';
+        $snippet->content = 'changed content';
 
         $em->flush(); // version 2
 
@@ -108,8 +108,8 @@ final class VersionTest extends KernelTestCase
 
         $restored = $em->getRepository(Snippet::class)->find($snippet->id);
         self::assertNotNull($restored);
-        self::assertSame('Original name', $restored->getName());
-        self::assertSame('original content', $restored->getContent());
+        self::assertSame('Original name', $restored->name);
+        self::assertSame('original content', $restored->content);
 
         $versionner->reset('snippet', (int) $snippet->id);
         $em->remove($restored);
@@ -130,9 +130,9 @@ final class VersionTest extends KernelTestCase
 
         $snippet = new Snippet();
         $snippet->host = 'localhost.dev';
-        $snippet->setSlug('idempotent-version-'.uniqid());
-        $snippet->setName('Stable name');
-        $snippet->setContent('Stable content');
+        $snippet->slug = 'idempotent-version-'.uniqid();
+        $snippet->name = 'Stable name';
+        $snippet->content = 'Stable content';
 
         $em->persist($snippet);
         $em->flush(); // assigns the id
@@ -247,9 +247,9 @@ final class VersionTest extends KernelTestCase
 
         $snippet = new Snippet();
         $snippet->host = 'localhost.dev';
-        $snippet->setSlug('retention-test-'.uniqid());
-        $snippet->setName('placeholder');
-        $snippet->setContent('placeholder');
+        $snippet->slug = 'retention-test-'.uniqid();
+        $snippet->name = 'placeholder';
+        $snippet->content = 'placeholder';
 
         $em->persist($snippet);
         $em->flush(); // assigns the id (and creates a recent version)
@@ -280,7 +280,7 @@ final class VersionTest extends KernelTestCase
         self::assertCount(6, $versionner->getVersions('snippet', $id));
 
         // A new save triggers pruning.
-        $snippet->setContent('changed');
+        $snippet->content = 'changed';
         $em->flush();
 
         $versions = $versionner->getVersions('snippet', $id);
@@ -342,13 +342,13 @@ final class VersionTest extends KernelTestCase
         $id = (int) $page->id;
         $versionner->reset('page', $id); // drop the creation snapshot for a clean slate
 
-        $page->setMainContent('B');
+        $page->mainContent = 'B';
         $em->flush(); // v1 — live
-        $page->setMainContent('C');
+        $page->mainContent = 'C';
         $em->flush(); // v2 — live (the newest not-held state)
 
         $page->setHoldPublication(true);
-        $page->setMainContent('D');
+        $page->mainContent = 'D';
 
         $em->flush(); // v3 — held
 
@@ -380,9 +380,9 @@ final class VersionTest extends KernelTestCase
         $id = (int) $page->id;
         $versionner->reset('page', $id);
 
-        $page->setMainContent('B');
+        $page->mainContent = 'B';
         $em->flush(); // v1
-        $page->setMainContent('C');
+        $page->mainContent = 'C';
         $em->flush(); // v2 — mirrors current
 
         $versions = $versionner->getVersions('page', $id);
@@ -412,10 +412,10 @@ final class VersionTest extends KernelTestCase
         $versionner->reset('page', $id);
 
         $page->setHoldPublication(true);
-        $page->setMainContent('B');
+        $page->mainContent = 'B';
 
         $em->flush(); // v1 — held
-        $page->setMainContent('C');
+        $page->mainContent = 'C';
         $em->flush(); // v2 — held
 
         $versions = $versionner->getVersions('page', $id);
@@ -442,7 +442,7 @@ final class VersionTest extends KernelTestCase
         $page = new Page();
         $page->host = 'version-pick-'.uniqid().'.example.com';
         $page->slug = 'pick-'.uniqid();
-        $page->setMainContent($mainContent);
+        $page->mainContent = $mainContent;
 
         $em->persist($page);
         $em->flush(); // assigns the id (and creates a first snapshot)
@@ -485,9 +485,9 @@ final class VersionTest extends KernelTestCase
         $slug = 'activity-log-'.uniqid();
         $snippet = new Snippet();
         $snippet->host = 'localhost.dev';
-        $snippet->setSlug($slug);
-        $snippet->setName('First name');
-        $snippet->setContent('Body');
+        $snippet->slug = $slug;
+        $snippet->name = 'First name';
+        $snippet->content = 'Body';
 
         $em->persist($snippet);
         $em->flush();
@@ -501,7 +501,7 @@ final class VersionTest extends KernelTestCase
         self::assertSame($slug, $created[0]->slug, 'Slug is denormalized for the journal second line');
         self::assertSame('localhost.dev', $created[0]->host);
 
-        $snippet->setName('Second name');
+        $snippet->name = 'Second name';
         $em->flush(); // postUpdate => "updated"
 
         // Newest first: createdAt may tie within the same second, so id breaks it.
@@ -544,9 +544,9 @@ final class VersionTest extends KernelTestCase
 
         $snippet = new Snippet();
         $snippet->host = 'localhost.dev';
-        $snippet->setSlug('clear-log-'.uniqid());
-        $snippet->setName('Clear me');
-        $snippet->setContent('Body');
+        $snippet->slug = 'clear-log-'.uniqid();
+        $snippet->name = 'Clear me';
+        $snippet->content = 'Body';
 
         $em->persist($snippet);
         $em->flush(); // logs one "created" row

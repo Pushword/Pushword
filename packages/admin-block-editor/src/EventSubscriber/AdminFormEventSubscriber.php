@@ -94,7 +94,7 @@ class AdminFormEventSubscriber extends AbstractEventSubscriber
             return;
         }
 
-        $page->setMainContent($mainContent);
+        $page->mainContent = $mainContent;
     }
 
     /**

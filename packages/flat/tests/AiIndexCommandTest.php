@@ -89,7 +89,7 @@ final class AiIndexCommandTest extends KernelTestCase
         $page = new Page();
         $page->slug = $slug;
         $page->h1 = 'Test '.$slug;
-        $page->setMainContent($content);
+        $page->mainContent = $content;
         $page->host = $apps->get()->getMainHost();
         $page->createdAt = new DateTime();
         if (null !== $parentPage) {

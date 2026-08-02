@@ -90,7 +90,7 @@ final class ControllerTest extends AbstractAdminTestClass
         $page = new Page();
         $page->host = 'localhost.dev';
         $page->slug = 'review-route-'.uniqid();
-        $page->setMainContent('first');
+        $page->mainContent = 'first';
 
         $em->persist($page);
         $em->flush();
@@ -100,9 +100,9 @@ final class ControllerTest extends AbstractAdminTestClass
         $versionner = self::getContainer()->get(Versionner::class);
         $versionner->reset('page', $id);
 
-        $page->setMainContent('second');
+        $page->mainContent = 'second';
         $em->flush(); // v1
-        $page->setMainContent('third');
+        $page->mainContent = 'third';
         $em->flush(); // v2 — mirrors current
 
         $versions = $versionner->getVersions('page', $id);
@@ -139,7 +139,7 @@ final class ControllerTest extends AbstractAdminTestClass
         $page = new Page();
         $page->host = 'localhost.dev';
         $page->slug = 'review-empty-'.uniqid();
-        $page->setMainContent('only');
+        $page->mainContent = 'only';
 
         $em->persist($page);
         $em->flush();
@@ -169,9 +169,9 @@ final class ControllerTest extends AbstractAdminTestClass
 
         $snippet = new Snippet();
         $snippet->host = 'localhost.dev';
-        $snippet->setSlug('version-route-'.uniqid());
-        $snippet->setName('Snippet version route');
-        $snippet->setContent('init');
+        $snippet->slug = 'version-route-'.uniqid();
+        $snippet->name = 'Snippet version route';
+        $snippet->content = 'init';
 
         $em->persist($snippet);
         $em->flush();
@@ -188,10 +188,10 @@ final class ControllerTest extends AbstractAdminTestClass
         // Reset before creating the snapshots this test asserts on.
         $versionner->reset('snippet', (int) $snippet->id);
 
-        $snippet->setContent('first');
+        $snippet->content = 'first';
         $em->flush();
 
-        $snippet->setContent('second');
+        $snippet->content = 'second';
         $em->flush();
 
         $versions = $versionner->getVersions('snippet', (int) $snippet->id);
@@ -237,9 +237,9 @@ final class ControllerTest extends AbstractAdminTestClass
 
         $snippet = new Snippet();
         $snippet->host = 'localhost.dev';
-        $snippet->setSlug('save-compare-'.uniqid());
-        $snippet->setName('Before');
-        $snippet->setContent('before content');
+        $snippet->slug = 'save-compare-'.uniqid();
+        $snippet->name = 'Before';
+        $snippet->content = 'before content';
 
         $em->persist($snippet);
         $em->flush();
@@ -251,15 +251,15 @@ final class ControllerTest extends AbstractAdminTestClass
         $client->request(Request::METHOD_POST, $saveUrl, [
             'content' => 'after content',
             'name' => 'After',
-            'slug' => $snippet->getSlug(),
+            'slug' => $snippet->slug,
         ]);
         self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
         $em->clear();
         $updated = $em->getRepository(Snippet::class)->find($snippet->id);
         self::assertNotNull($updated);
-        self::assertSame('after content', $updated->getContent());
-        self::assertSame('After', $updated->getName());
+        self::assertSame('after content', $updated->content);
+        self::assertSame('After', $updated->name);
 
         /** @var string $storageDir */
         $storageDir = self::getContainer()->getParameter('pw.pushword_version.storage_dir');
@@ -276,9 +276,9 @@ final class ControllerTest extends AbstractAdminTestClass
 
         $snippet = new Snippet();
         $snippet->host = 'localhost.dev';
-        $snippet->setSlug('cp-compare-'.uniqid());
-        $snippet->setName('CP');
-        $snippet->setContent('content');
+        $snippet->slug = 'cp-compare-'.uniqid();
+        $snippet->name = 'CP';
+        $snippet->content = 'content';
         $snippet->setCustomProperty('foo', 'bar');
 
         $em->persist($snippet);
@@ -300,7 +300,7 @@ final class ControllerTest extends AbstractAdminTestClass
         $client->request(Request::METHOD_POST, $saveUrl, [
             'content' => 'content',
             'name' => 'CP',
-            'slug' => $snippet->getSlug(),
+            'slug' => $snippet->slug,
             'unmanagedPropertiesAsYaml' => "foo: baz\nnewKey: value",
         ]);
         self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());

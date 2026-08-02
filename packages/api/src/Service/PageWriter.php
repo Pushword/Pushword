@@ -33,7 +33,7 @@ final readonly class PageWriter
         $this->mapper->applyFrontmatter($page, $frontmatter);
 
         if (null !== $body) {
-            $page->setMainContent($body);
+            $page->mainContent = $body;
         }
 
         $page->editedBy = $editor;
@@ -60,7 +60,7 @@ final readonly class PageWriter
         $this->mapper->applyFrontmatter($page, $frontmatter);
 
         if (null !== $body) {
-            $page->setMainContent($body);
+            $page->mainContent = $body;
         }
 
         // The caller-set host (from the URL) wins over any host field in the payload.

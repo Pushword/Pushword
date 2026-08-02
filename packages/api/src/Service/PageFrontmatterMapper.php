@@ -78,7 +78,7 @@ final readonly class PageFrontmatterMapper
 
         return [
             'frontmatter' => $frontmatter,
-            'body' => $page->getMainContent(),
+            'body' => $page->mainContent,
         ];
     }
 
@@ -389,7 +389,7 @@ final readonly class PageFrontmatterMapper
         $page->slug = $slug;
         $this->applyFrontmatter($page, $frontmatter);
         if (null !== $body) {
-            $page->setMainContent($body);
+            $page->mainContent = $body;
         }
 
         return $page;

@@ -78,7 +78,7 @@ final class StaticGeneratorBenchmarkTest extends KernelTestCase
             $page = new Page();
             $page->h1 = 'Benchmark Page '.$i;
             $page->slug = 'bench-page-'.$i;
-            $page->setMainContent('<p>Content for benchmark page '.$i.'</p>');
+            $page->mainContent = '<p>Content for benchmark page '.$i.'</p>';
             $page->host = 'localhost.dev';
             $page->locale = 'en';
             $page->createdAt = new DateTime();

@@ -111,7 +111,7 @@ final class CrashRecoveryTest extends KernelTestCase
         $page->h1 = 'Deletion Guard';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('Should survive');
+        $page->mainContent = 'Should survive';
 
         $this->em->persist($page);
         $this->em->flush();
@@ -226,7 +226,7 @@ final class CrashRecoveryTest extends KernelTestCase
         $page->h1 = 'Conflict Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('Original content');
+        $page->mainContent = 'Original content';
 
         $this->em->persist($page);
         $this->em->flush();
@@ -246,7 +246,7 @@ final class CrashRecoveryTest extends KernelTestCase
 
             // Modify the DB version
             $page->h1 = 'Conflict Test Modified in DB';
-            $page->setMainContent('Modified in database');
+            $page->mainContent = 'Modified in database';
             $page->updatedAt = new DateTime('+100 seconds');
             $this->em->flush();
 

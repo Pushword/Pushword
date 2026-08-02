@@ -50,7 +50,7 @@ final class RepurposeFromPageController extends AbstractController
 
         $post = new SocialPost();
         $post->host = $host;
-        $post->setSpec($this->drafter->draft($page));
+        $post->spec = $this->drafter->draft($page);
 
         $this->entityManager->persist($post);
         $this->entityManager->flush();

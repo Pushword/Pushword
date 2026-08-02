@@ -190,7 +190,7 @@ final class TodoScannerTest extends KernelTestCase
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->createdAt = new DateTime();
-        $page->setMainContent($mainContent);
+        $page->mainContent = $mainContent;
 
         return $page;
     }
@@ -204,7 +204,7 @@ final class TodoScannerTest extends KernelTestCase
         $page->locale = 'en';
         $page->createdAt = new DateTime();
         $page->publishedAt = $publishedAt;
-        $page->setMainContent('Target page content');
+        $page->mainContent = 'Target page content';
 
         $this->entityManager->persist($page);
         $this->entityManager->flush();

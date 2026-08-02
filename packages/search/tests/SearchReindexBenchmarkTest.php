@@ -139,11 +139,11 @@ final class SearchReindexBenchmarkTest extends KernelTestCase
             $page->publishedAt = new DateTime('-1 day');
             // Realistic-ish body: a heading, prose with **bold**, a list and a
             // link — covers the markdown paths the parser actually exercises.
-            $page->setMainContent(\sprintf(
+            $page->mainContent = \sprintf(
                 "## Bench %d\n\nSome **bold** prose for page %d, with a [link](/page) and a list:\n\n- one\n- two\n- three\n",
                 $i,
                 $i,
-            ));
+            );
             $this->em->persist($page);
 
             if (0 === $i % 100) {

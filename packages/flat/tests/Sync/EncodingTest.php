@@ -112,8 +112,8 @@ final class EncodingTest extends KernelTestCase
 
         $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'cjk-test', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $page);
-        self::assertStringContainsString('这是中文内容', $page->getMainContent());
-        self::assertStringContainsString('日本語のコンテンツ', $page->getMainContent());
+        self::assertStringContainsString('这是中文内容', $page->mainContent);
+        self::assertStringContainsString('日本語のコンテンツ', $page->mainContent);
     }
 
     public function testEmojiInFrontmatterValues(): void
@@ -125,7 +125,7 @@ final class EncodingTest extends KernelTestCase
         $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'emoji-test', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $page);
         self::assertStringContainsString('🎉', $page->getTags());
-        self::assertStringContainsString('🚀', $page->getMainContent());
+        self::assertStringContainsString('🚀', $page->mainContent);
     }
 
     public function testSpecialYamlCharactersInH1(): void

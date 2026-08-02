@@ -321,7 +321,7 @@ final class LinkGraphCommandTest extends KernelTestCase
         $noindex->createdAt = new DateTime();
         $noindex->updatedAt = new DateTime();
         $noindex->metaRobots = 'noindex';
-        $noindex->setMainContent('A list of [everything](/kitchen-sink).');
+        $noindex->mainContent = 'A list of [everything](/kitchen-sink).';
 
         $entityManager->persist($noindex);
         $entityManager->flush();

@@ -30,9 +30,9 @@ final class SnippetRenderTest extends KernelTestCase
         $slug = 'editor-def-'.uniqid();
         $snippet = new Snippet();
         $snippet->host = 'localhost.dev';
-        $snippet->setSlug($slug);
-        $snippet->setName('Editor Def');
-        $snippet->setContent('hi');
+        $snippet->slug = $slug;
+        $snippet->name = 'Editor Def';
+        $snippet->content = 'hi';
 
         $em->persist($snippet);
         $em->flush();
@@ -79,9 +79,9 @@ final class SnippetRenderTest extends KernelTestCase
         $slug = 'global-'.uniqid();
         $global = new Snippet();
         $global->host = ''; // "All hosts"
-        $global->setSlug($slug);
-        $global->setName('Global');
-        $global->setContent('global body');
+        $global->slug = $slug;
+        $global->name = 'Global';
+        $global->content = 'global body';
 
         $em->persist($global);
         $em->flush();
@@ -106,9 +106,9 @@ final class SnippetRenderTest extends KernelTestCase
         $slug = 'broken-'.uniqid();
         $snippet = new Snippet();
         $snippet->host = '';
-        $snippet->setSlug($slug);
-        $snippet->setName('Broken');
-        $snippet->setContent('{{ undefined_function_xyz() }}');
+        $snippet->slug = $slug;
+        $snippet->name = 'Broken';
+        $snippet->content = '{{ undefined_function_xyz() }}';
 
         $em->persist($snippet);
         $em->flush();
@@ -136,17 +136,17 @@ final class SnippetRenderTest extends KernelTestCase
 
         $global = new Snippet();
         $global->host = '';
-        $global->setSlug($slug);
-        $global->setName('Global');
-        $global->setContent('global body');
+        $global->slug = $slug;
+        $global->name = 'Global';
+        $global->content = 'global body';
 
         $em->persist($global);
 
         $specific = new Snippet();
         $specific->host = $page->host;
-        $specific->setSlug($slug);
-        $specific->setName('Specific');
-        $specific->setContent('host specific body');
+        $specific->slug = $slug;
+        $specific->name = 'Specific';
+        $specific->content = 'host specific body';
 
         $em->persist($specific);
         $em->flush();
@@ -175,9 +175,9 @@ final class SnippetRenderTest extends KernelTestCase
         $slug = 'greeting-'.uniqid();
         $snippet = new Snippet();
         $snippet->host = $page->host;
-        $snippet->setSlug($slug);
-        $snippet->setName('Greeting');
-        $snippet->setContent('# Hello {{ params.name }}');
+        $snippet->slug = $slug;
+        $snippet->name = 'Greeting';
+        $snippet->content = '# Hello {{ params.name }}';
 
         $em->persist($snippet);
         $em->flush();

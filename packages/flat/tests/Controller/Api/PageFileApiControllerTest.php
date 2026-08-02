@@ -93,7 +93,7 @@ final class PageFileApiControllerTest extends WebTestCase
     public function testBodyWithHorizontalRuleRoundTripsByteExact(): void
     {
         $this->assertByteExactRoundTrip(static function (Page $page): void {
-            $page->setMainContent("Intro paragraph.\n\n---\n\nEverything below the rule must survive.");
+            $page->mainContent = "Intro paragraph.\n\n---\n\nEverything below the rule must survive.";
         });
     }
 
@@ -103,7 +103,7 @@ final class PageFileApiControllerTest extends WebTestCase
         // split on every `---` line and re-joined with fixed padding, turning
         // the heading into a rule — the serializer's anchored parser must not.
         $this->assertByteExactRoundTrip(static function (Page $page): void {
-            $page->setMainContent("Section title\n---\nBody right under the setext underline.");
+            $page->mainContent = "Section title\n---\nBody right under the setext underline.";
         });
     }
 
@@ -131,7 +131,7 @@ final class PageFileApiControllerTest extends WebTestCase
         $this->assertByteExactRoundTrip(static function (Page $page): void {
             $page->title = 'Tour de l\'Albanie : "joyaux" de l\'Île';
             $page->h1 = 'Les îles d\'Åland';
-            $page->setMainContent("L'apostrophe et les \"guillemets\" restent intacts.");
+            $page->mainContent = "L'apostrophe et les \"guillemets\" restent intacts.";
         });
     }
 
@@ -151,7 +151,7 @@ final class PageFileApiControllerTest extends WebTestCase
     {
         $page = $this->persistPage(static function (Page $page): void {
             $page->title = "Tour de l\u{2019}Albanie";
-            $page->setMainContent("Corps avec l\u{2019}apostrophe typographique.");
+            $page->mainContent = "Corps avec l\u{2019}apostrophe typographique.";
         });
 
         $exported = $this->serializer->serialize($page);
@@ -408,7 +408,7 @@ final class PageFileApiControllerTest extends WebTestCase
         $page->slug = 'corpus-page';
         $page->h1 = 'Corpus fixture';
         $page->publishedAt = new DateTime('2025-06-01 10:30:00');
-        $page->setMainContent('Default body.');
+        $page->mainContent = 'Default body.';
         // Pre-stamp the API user: the write re-stamps the same entity, so an
         // unchanged PUT produces an empty changeset and a stable revision.
         $page->editedBy = $this->apiUser;

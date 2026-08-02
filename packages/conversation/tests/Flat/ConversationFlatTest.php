@@ -217,8 +217,8 @@ final class ConversationFlatTest extends KernelTestCase
         ]);
         self::assertInstanceOf(Message::class, $importedMessage1);
         self::assertSame('Test message 1', $importedMessage1->getContent());
-        self::assertSame('user1@example.com', $importedMessage1->getAuthorEmail());
-        self::assertSame('User One', $importedMessage1->getAuthorName());
+        self::assertSame('user1@example.com', $importedMessage1->authorEmail);
+        self::assertSame('User One', $importedMessage1->authorName);
         self::assertSame('value1', $importedMessage1->getCustomProperty('customField1'));
         self::assertSame(42, $importedMessage1->getCustomProperty('customField2'));
 
@@ -555,7 +555,7 @@ final class ConversationFlatTest extends KernelTestCase
         ]);
 
         self::assertInstanceOf(Message::class, $message);
-        self::assertSame('external@example.com', $message->getAuthorEmail());
+        self::assertSame('external@example.com', $message->authorEmail);
 
         if (null !== $message->id) {
             $this->createdMessageIds[] = $message->id;
@@ -588,7 +588,7 @@ final class ConversationFlatTest extends KernelTestCase
         self::assertInstanceOf(Message::class, $message);
         // DateTimeImmutable does not extend DateTime, so this also pins the
         // mutable type Doctrine's DATETIME_MUTABLE column requires.
-        $publishedAt = $message->getPublishedAt();
+        $publishedAt = $message->publishedAt;
         self::assertInstanceOf(DateTime::class, $publishedAt);
         self::assertSame('2026-04-09 10:00', $publishedAt->format('Y-m-d H:i'));
 
@@ -625,7 +625,7 @@ final class ConversationFlatTest extends KernelTestCase
         ]);
 
         self::assertCount(1, $messages);
-        self::assertSame('dup@example.com', $messages[0]->getAuthorEmail());
+        self::assertSame('dup@example.com', $messages[0]->authorEmail);
     }
 
     private function getColumnIndex(string $headerLine, string $columnName): int
@@ -664,11 +664,11 @@ final class ConversationFlatTest extends KernelTestCase
         $message = new Message();
         $message->host = $this->testHost;
         $message->setContent($content);
-        $message->setAuthorEmail($email);
-        $message->setAuthorName($name);
-        $message->setReferring('/test-page');
+        $message->authorEmail = $email;
+        $message->authorName = $name;
+        $message->referring = '/test-page';
         $message->setAuthorIpRaw('176.190.1.42'); // above 128.0.0.0: overflows a signed INT column
-        $message->setPublishedAt(new DateTime());
+        $message->publishedAt = new DateTime();
 
         return $message;
     }
@@ -682,12 +682,12 @@ final class ConversationFlatTest extends KernelTestCase
         $review = new Review();
         $review->host = $this->testHost;
         $review->setContent($content);
-        $review->setAuthorEmail($email);
-        $review->setAuthorName($name);
-        $review->setReferring('/test-page');
+        $review->authorEmail = $email;
+        $review->authorName = $name;
+        $review->referring = '/test-page';
         $review->setAuthorIpRaw('2a01:e0a:1f2:3::1'); // IPv6, to exercise both notations through the CSV
         $review->setRating($rating);
-        $review->setPublishedAt(new DateTime());
+        $review->publishedAt = new DateTime();
 
         return $review;
     }
@@ -787,8 +787,8 @@ final class ConversationFlatTest extends KernelTestCase
         ]);
 
         self::assertInstanceOf(Message::class, $importedMessage);
-        self::assertSame('imported@example.com', $importedMessage->getAuthorEmail());
-        self::assertSame('Imported User', $importedMessage->getAuthorName());
+        self::assertSame('imported@example.com', $importedMessage->authorEmail);
+        self::assertSame('Imported User', $importedMessage->authorName);
 
         if (null !== $importedMessage->id) {
             $this->createdMessageIds[] = $importedMessage->id;

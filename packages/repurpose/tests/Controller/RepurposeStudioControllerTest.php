@@ -109,7 +109,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $reloaded = $this->em->getRepository(SocialPost::class)->find($post->id);
         self::assertInstanceOf(SocialPost::class, $reloaded);
 
-        $slides = $reloaded->getSpec()['slides'] ?? null;
+        $slides = $reloaded->spec['slides'] ?? null;
         self::assertIsArray($slides);
         $firstSlide = $slides[0] ?? null;
         self::assertIsArray($firstSlide);
@@ -129,8 +129,8 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $reloaded = $this->em->getRepository(SocialPost::class)->find($post->id);
         self::assertInstanceOf(SocialPost::class, $reloaded);
-        self::assertSame('blog/some-other-page', $reloaded->getPage()); // page re-linked
-        self::assertSame('linkedin', $reloaded->getNetwork());          // network pinned
+        self::assertSame('blog/some-other-page', $reloaded->page); // page re-linked
+        self::assertSame('linkedin', $reloaded->network);          // network pinned
     }
 
     public function testSaveRejectsRelinkingToAPageThatAlreadyHasACarousel(): void
@@ -142,7 +142,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $otherSpec = $this->validSpec();
         $otherSpec['page'] = 'blog/occupied';
-        $other->setSpec($otherSpec);
+        $other->spec = $otherSpec;
         $this->em->persist($other);
         $this->em->flush();
 
@@ -155,7 +155,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $reloaded = $this->em->getRepository(SocialPost::class)->find($post->id);
         self::assertInstanceOf(SocialPost::class, $reloaded);
-        self::assertSame('blog/studio-article', $reloaded->getPage()); // unchanged
+        self::assertSame('blog/studio-article', $reloaded->page); // unchanged
     }
 
     public function testCreateStandaloneDraftOpensTheStudio(): void
@@ -170,7 +170,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $created = $this->em->getRepository(SocialPost::class)->find((int) ($matches[1] ?? 0));
         self::assertInstanceOf(SocialPost::class, $created);
         // A page-less draft: a generated standalone slug, not linked to any page.
-        self::assertStringStartsWith('standalone/', $created->getPage());
+        self::assertStringStartsWith('standalone/', $created->page);
 
         $this->em->remove($created); // created on the default host, outside tearDown's HOST scope
         $this->em->flush();
@@ -183,7 +183,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $spec = $this->validSpec();
         $spec['page'] = 'standalone/deadbeef';
-        $post->setSpec($spec);
+        $post->spec = $spec;
         $this->em->persist($post);
         $this->em->flush();
 
@@ -198,7 +198,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $reloaded = $this->em->getRepository(SocialPost::class)->find($post->id);
         self::assertInstanceOf(SocialPost::class, $reloaded);
-        self::assertSame('standalone/deadbeef', $reloaded->getPage()); // slug preserved
+        self::assertSame('standalone/deadbeef', $reloaded->page); // slug preserved
     }
 
     public function testSaveRejectsAnInvalidSpecWithViolations(): void
@@ -235,7 +235,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         // Preview never touches the row: the stored spec still has its one slide.
         $reloaded = $this->em->getRepository(SocialPost::class)->find($post->id);
         self::assertInstanceOf(SocialPost::class, $reloaded);
-        $stored = $reloaded->getSpec()['slides'] ?? null;
+        $stored = $reloaded->spec['slides'] ?? null;
         self::assertIsArray($stored);
         self::assertCount(1, $stored);
     }
@@ -265,8 +265,8 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertInstanceOf(SocialPost::class, $sibling);
         self::assertNotSame($post->id, $sibling->id);
         // Format is retargeted to the network's primary one; the slides are carried over.
-        self::assertSame('instagram-4-5', $sibling->getFormat());
-        $siblingSlides = $sibling->getSpec()['slides'] ?? null;
+        self::assertSame('instagram-4-5', $sibling->format);
+        $siblingSlides = $sibling->spec['slides'] ?? null;
         self::assertIsArray($siblingSlides);
         self::assertCount(1, $siblingSlides);
         self::assertStringContainsString('/admin/repurpose/studio/'.$sibling->id, (string) $this->client->getResponse()->headers->get('Location'));
@@ -282,7 +282,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $spec = $this->validSpec();
         $spec['network'] = 'instagram';
         $spec['format'] = 'instagram-4-5';
-        $instagram->setSpec($spec);
+        $instagram->spec = $spec;
         $this->em->persist($instagram);
         $this->em->flush();
 
@@ -463,7 +463,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
     {
         $post = new SocialPost();
         $post->host = self::HOST;
-        $post->setSpec($this->validSpec());
+        $post->spec = $this->validSpec();
 
         $this->em->persist($post);
         $this->em->flush();
@@ -475,11 +475,11 @@ final class RepurposeStudioControllerTest extends WebTestCase
     {
         $post = new SocialPost();
         $post->host = self::HOST;
-        $post->setSpec([
+        $post->spec = [
             'page' => 'blog/studio-article', 'network' => 'pinterest', 'format' => 'pinterest-2-3',
             'caption' => 'A caption to pin',
             'slides' => [['title' => 'Cover', 'image' => ['media' => 'photo.jpg']]],
-        ]);
+        ];
 
         $this->em->persist($post);
         $this->em->flush();

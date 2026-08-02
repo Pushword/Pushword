@@ -75,7 +75,7 @@ final class ReviewCacheInvalidationListener implements ResetInterface
     /** Mirrors MessageRepository's published queries: publishedAt set, no tombstone. */
     private function isPublished(Message $message): bool
     {
-        return null !== $message->getPublishedAt() && null === $message->deletedAt;
+        return null !== $message->publishedAt && null === $message->deletedAt;
     }
 
     private function bump(Message $message): void

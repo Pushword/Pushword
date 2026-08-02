@@ -32,7 +32,7 @@ final readonly class MigrateV2Command
             if (null === $page->getTemplate() && $page->hasCustomProperty('template')) {
                 $template = $page->getCustomProperty('template');
                 if (\is_string($template)) {
-                    $page->setTemplate($template);
+                    $page->template = $template;
                     $page->removeCustomProperty('template');
                     $changed = true;
                     $output->writeln('  Promoted template for page "'.$page->slug.'"');

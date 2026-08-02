@@ -52,7 +52,7 @@ final class PageScannerTest extends KernelTestCase
         $page->slug = 'homepage';
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');
-        $page->setMainContent('...');
+        $page->mainContent = '...';
 
         return $page;
     }

@@ -35,7 +35,7 @@ final readonly class MagicLinkMailer
         $this->em->persist($token);
         $this->em->flush();
 
-        $urlToken = base64_encode($user->getId().':'.$plainToken);
+        $urlToken = base64_encode($user->id.':'.$plainToken);
 
         $resetUrl = $this->urlGenerator->generate(
             'pushword_login_set_password',
@@ -82,8 +82,8 @@ final readonly class MagicLinkMailer
 
         $this->em->flush();
 
-        $loginUrlToken = base64_encode($user->getId().':'.$loginPlainToken);
-        $setPasswordUrlToken = base64_encode($user->getId().':'.$setPasswordPlainToken);
+        $loginUrlToken = base64_encode($user->id.':'.$loginPlainToken);
+        $setPasswordUrlToken = base64_encode($user->id.':'.$setPasswordPlainToken);
 
         $loginUrl = $this->urlGenerator->generate(
             'pushword_login_magic',

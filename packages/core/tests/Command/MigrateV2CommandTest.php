@@ -104,7 +104,7 @@ final class MigrateV2CommandTest extends KernelTestCase
         $page->h1 = 'Migrate V2 Test';
         $page->slug = $slug;
         $page->locale = 'en';
-        $page->setMainContent('Page for the v2 migration command.');
+        $page->mainContent = 'Page for the v2 migration command.';
 
         foreach ($customProperties as $name => $value) {
             $page->setCustomProperty($name, $value);

@@ -72,7 +72,7 @@ final class PageRedirectionApiController extends AbstractApiController
         $page = new Page();
         $page->host = $host;
         $page->slug = $slug;
-        $page->setMainContent(new PageRedirection($target, $code)->toContent());
+        $page->mainContent = new PageRedirection($target, $code)->toContent();
         $page->editedBy = $this->getApiUser();
         $page->createdBy = $this->getApiUser();
 
@@ -86,7 +86,7 @@ final class PageRedirectionApiController extends AbstractApiController
     public function item(string $host, string $slug, Request $request): JsonResponse
     {
         $page = $this->pageRepository->findOneBy(['host' => $host, 'slug' => Page::normalizeSlug($slug)]);
-        if (null === $page || null === PageRedirection::fromContent($page->getMainContent())) {
+        if (null === $page || null === PageRedirection::fromContent($page->mainContent)) {
             return $this->notFound('Redirection not found');
         }
 
@@ -116,7 +116,7 @@ final class PageRedirectionApiController extends AbstractApiController
             return $this->badRequest('Missing redirectTo');
         }
 
-        $page->setMainContent(new PageRedirection($target, $code)->toContent());
+        $page->mainContent = new PageRedirection($target, $code)->toContent();
         $page->editedBy = $this->getApiUser();
 
         $this->entityManager->flush();
@@ -137,7 +137,7 @@ final class PageRedirectionApiController extends AbstractApiController
      */
     private function toArray(Page $page): ?array
     {
-        $redirection = PageRedirection::fromContent($page->getMainContent());
+        $redirection = PageRedirection::fromContent($page->mainContent);
         if (null === $redirection) {
             return null;
         }

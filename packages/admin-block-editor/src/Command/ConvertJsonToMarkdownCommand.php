@@ -130,7 +130,7 @@ final readonly class ConvertJsonToMarkdownCommand
      */
     private function isPageInJsonFormat(Page $page): bool
     {
-        $mainContent = $page->getMainContent();
+        $mainContent = $page->mainContent;
 
         return false !== EditorJsHelper::tryToDecode($mainContent);
     }
@@ -140,13 +140,13 @@ final readonly class ConvertJsonToMarkdownCommand
      */
     private function convertPage(Page $page, SymfonyStyle $io): void
     {
-        $jsonContent = $page->getMainContent();
+        $jsonContent = $page->mainContent;
 
         // Appeler le script Node.js pour la conversion
         $markdown = $this->convertJsonToMarkdown($jsonContent);
 
         // Mettre à jour la page
-        $page->setMainContent(trim($markdown));
+        $page->mainContent = trim($markdown);
 
         if ($io->isVerbose()) {
             $io->text(\sprintf(

@@ -80,7 +80,7 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');
         $page->updatedAt = new DateTime('now');
-        $page->setMainContent('Body of '.$slug);
+        $page->mainContent = 'Body of '.$slug;
 
         $em->persist($page);
     }

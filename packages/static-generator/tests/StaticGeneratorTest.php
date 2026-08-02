@@ -311,7 +311,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $page->slug = $slug;
         $page->title = 'Prune probe '.$slug;
         $page->h1 = 'Prune probe';
-        $page->setMainContent('Content destined for pruning.');
+        $page->mainContent = 'Content destined for pruning.';
         $page->publishedAt = new DateTime('-1 hour');
 
         return $page;
@@ -580,7 +580,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $page = new Page(false);
         $page->host = 'localhost.dev';
         $page->slug = 'redirect-dest-test';
-        $page->setMainContent('content');
+        $page->mainContent = 'content';
         $page->redirectFrom = ['old-incoming' => 308];
 
         $redirectionManager->addRedirectFrom($page);
@@ -614,7 +614,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $page = new Page(false);
         $page->host = 'pushword.piedweb.com';
         $page->slug = 'redirect-dest-test';
-        $page->setMainContent('content');
+        $page->mainContent = 'content';
         $page->redirectFrom = ['old-incoming' => 308];
 
         $redirectionManager->addRedirectFrom($page);
@@ -662,7 +662,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $probe->slug = 'worker-reset-probe';
         $probe->locale = 'en';
         $probe->h1 = 'Worker reset probe';
-        $probe->setMainContent('Probe body.');
+        $probe->mainContent = 'Probe body.';
         $probe->createdAt = new DateTime('2 days ago');
 
         $em->persist($probe);
@@ -753,7 +753,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $probe->slug = 'lint-probe';
         $probe->locale = 'en';
         $probe->h1 = 'Lint probe';
-        $probe->setMainContent('[poisoned](/pushword.piedweb.com/installation)');
+        $probe->mainContent = '[poisoned](/pushword.piedweb.com/installation)';
         $probe->publishedAt = new DateTime('2 days ago');
 
         $em->persist($probe);
@@ -1696,7 +1696,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $page->slug = 'homepage';
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');
-        $page->setMainContent('...');
+        $page->mainContent = '...';
 
         $pageRepo = $this->createMock(PageRepository::class);
         $pageRepo->method('getPublishedPages')

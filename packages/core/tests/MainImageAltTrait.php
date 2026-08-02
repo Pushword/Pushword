@@ -43,6 +43,16 @@ trait MainImageAltTrait
         self::assertStringContainsString('alt="Mountains of the world"', $html);
     }
 
+    public function testTheH1FillsTheAltWhenThePageHasNoTitle(): void
+    {
+        // The alt reads the title through the filter pipeline, whose first `title`
+        // filter is ElseH1 — so a page that only has an h1 still gets a real alt
+        // instead of the empty one the raw column would have produced.
+        $html = $this->renderMainImage($this->createMedia(), h1: 'Mountains of the world');
+
+        self::assertStringContainsString('alt="Mountains of the world"', $html);
+    }
+
     public function testACaptionFromTheBodyDoesNotLeakIntoTheMainImage(): void
     {
         // Rendering `![caption](src)` in the content soft-sets the media alt in
@@ -67,7 +77,7 @@ trait MainImageAltTrait
         self::assertStringNotContainsString('alt="', $html);
     }
 
-    protected function renderMainImage(Media $media, string $title = '', string $locale = 'en'): string
+    protected function renderMainImage(Media $media, string $title = '', string $locale = 'en', string $h1 = ''): string
     {
         self::bootKernel();
 
@@ -78,6 +88,7 @@ trait MainImageAltTrait
         $page->slug = 'a-page';
         $page->locale = $locale;
         $page->title = $title;
+        $page->h1 = $h1;
         $page->setMainImage($media);
 
         return $twig->load($this->mainImageTemplate())

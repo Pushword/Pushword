@@ -54,9 +54,9 @@ final class SnippetQueryRegressionTest extends KernelTestCase
             $this->slugs[] = $slug;
             $snippet = new Snippet();
             $snippet->host = $this->host;
-            $snippet->setSlug($slug);
-            $snippet->setName('Perf '.$i);
-            $snippet->setContent('body '.$i);
+            $snippet->slug = $slug;
+            $snippet->name = 'Perf '.$i;
+            $snippet->content = 'body '.$i;
             $em->persist($snippet);
         }
 
@@ -64,9 +64,9 @@ final class SnippetQueryRegressionTest extends KernelTestCase
         $this->slugs[] = $globalSlug;
         $global = new Snippet();
         $global->host = '';
-        $global->setSlug($globalSlug);
-        $global->setName('Global');
-        $global->setContent('global body');
+        $global->slug = $globalSlug;
+        $global->name = 'Global';
+        $global->content = 'global body';
 
         $em->persist($global);
 

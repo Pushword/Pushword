@@ -127,7 +127,7 @@ final class PageRenderQueryCountTest extends KernelTestCase
                 $page->host = $host;
                 $page->locale = 'en';
                 $page->createdAt = new DateTime();
-                $page->setMainContent('render bench content '.$i);
+                $page->mainContent = 'render bench content '.$i;
                 $this->em->persist($page);
             }
 

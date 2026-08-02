@@ -78,7 +78,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         if (1 === $this->getStep()) {
             $this->message = new Message();
             $this->message->setAuthorIpRaw((string) $this->request->getClientIp());
-            $this->message->setReferring($this->getReferring());
+            $this->message->referring = $this->getReferring();
             $this->message->host = $this->app->getMainHost();
         } else {
             $this->message = $this->messageRepo->find($this->getId())
@@ -160,7 +160,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         if ($form->isValid()) {
             $this->sanitizeConversation();
 
-            $cacheKey = 'conversation_dedup_'.md5($this->message->getContent().$this->message->getAuthorEmail());
+            $cacheKey = 'conversation_dedup_'.md5($this->message->getContent().$this->message->authorEmail);
             $isFirstSubmit = false;
             $this->cache->get($cacheKey, static function (ItemInterface $item) use (&$isFirstSubmit): bool {
                 $item->expiresAfter(600);
@@ -252,9 +252,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
 
     protected function sanitizeConversation(): void
     {
-        $this->message->setContent(
-            htmlspecialchars($this->message->getContent())
-        );
+        $this->message->setContent(htmlspecialchars($this->message->getContent()));
     }
 
     protected function getStep(): int

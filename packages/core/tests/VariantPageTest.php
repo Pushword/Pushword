@@ -29,7 +29,7 @@ final class VariantPageTest extends KernelTestCase
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
-        $page->setMainContent('Content of '.$slug);
+        $page->mainContent = 'Content of '.$slug;
 
         if (null !== $variantOf) {
             $page->variantOf = $variantOf;
@@ -75,7 +75,7 @@ final class VariantPageTest extends KernelTestCase
         $master = $this->newPage('link-master-page');
         $variant = $this->newPage('link-variant-page', $master);
         $linking = $this->newPage('link-source-page');
-        $linking->setMainContent('See [the offer](/link-variant-page) now.');
+        $linking->mainContent = 'See [the offer](/link-variant-page) now.';
 
         $em->persist($master);
         $em->persist($variant);
@@ -107,7 +107,7 @@ final class VariantPageTest extends KernelTestCase
         $em = $this->em();
         $target = $this->newPage('plain-target-page');
         $linking = $this->newPage('plain-source-page');
-        $linking->setMainContent('See [the page](/plain-target-page) now.');
+        $linking->mainContent = 'See [the page](/plain-target-page) now.';
 
         $em->persist($target);
         $em->persist($linking);

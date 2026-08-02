@@ -123,7 +123,7 @@ final class RepurposeApiController extends AbstractApiController
         $post = $this->repository->findOneByKey($host, $page, $network) ?? new SocialPost();
         $created = null === $post->id;
         $post->host = $host;
-        $post->setSpec($spec);
+        $post->spec = $spec;
 
         $this->entityManager->persist($post);
         $this->entityManager->flush();
@@ -135,7 +135,7 @@ final class RepurposeApiController extends AbstractApiController
                 'id' => $post->id,
                 'page' => $page,
                 'network' => $network,
-                'status' => $post->getStatus(),
+                'status' => $post->status,
                 'warnings' => [
                     ...$this->contrastAdvisor->warnings($carousel),
                     ...$this->creatorAdvisor->warnings($carousel, $host),
@@ -168,7 +168,7 @@ final class RepurposeApiController extends AbstractApiController
             return $this->notFound('Carousel not found.');
         }
 
-        $carousel = $this->factory->fromArray($post->getSpec());
+        $carousel = $this->factory->fromArray($post->spec);
         $creator = $this->creatorResolver->resolve($carousel, $post->host);
         $svg = $this->renderer->renderSlide($carousel, $n - 1, $creator);
         if ('' === $svg) {
@@ -192,7 +192,7 @@ final class RepurposeApiController extends AbstractApiController
             return $this->notFound('Carousel not found.');
         }
 
-        $carousel = $this->factory->fromArray($post->getSpec());
+        $carousel = $this->factory->fromArray($post->spec);
         $creator = $this->creatorResolver->resolve($carousel, $post->host);
         // Cells at the network's mobile-feed width: text legibility is judged at
         // the realistic worst case, not at a flattering zoom.
@@ -222,17 +222,17 @@ final class RepurposeApiController extends AbstractApiController
      */
     private function payload(SocialPost $post): array
     {
-        $spec = $post->getSpec();
+        $spec = $post->spec;
         $slideCount = \is_array($spec['slides'] ?? null) ? \count($spec['slides']) : 0;
 
         return [
             'id' => $post->id,
             'host' => $post->host,
-            'page' => $post->getPage(),
-            'network' => $post->getNetwork(),
-            'format' => $post->getFormat(),
-            'status' => $post->getStatus(),
-            'plannedAt' => $post->getPlannedAt()?->format(\DATE_ATOM),
+            'page' => $post->page,
+            'network' => $post->network,
+            'format' => $post->format,
+            'status' => $post->status,
+            'plannedAt' => $post->plannedAt?->format(\DATE_ATOM),
             'spec' => $spec,
             ...$this->urls($post, $slideCount),
         ];

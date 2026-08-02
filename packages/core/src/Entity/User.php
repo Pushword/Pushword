@@ -83,11 +83,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         return $this->email;
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
     public function setPlainPassword(?string $password): self
     {
         $this->plainPassword = $password;

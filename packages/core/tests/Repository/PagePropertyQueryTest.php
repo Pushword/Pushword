@@ -41,7 +41,7 @@ final class PagePropertyQueryTest extends KernelTestCase
             $page->locale = 'en';
             $page->slug = self::PREFIX.$suffix;
             $page->h1 = 'Prop query fixture '.$suffix;
-            $page->setMainContent('Content');
+            $page->mainContent = 'Content';
             $page->publishedAt = new DateTime('-1 day');
             if (null !== $priority) {
                 $page->setCustomProperty('priority', $priority);

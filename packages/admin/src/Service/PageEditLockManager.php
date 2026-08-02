@@ -35,7 +35,7 @@ final readonly class PageEditLockManager
         }
 
         // Different user = locked by other
-        if ($lockInfo['userId'] !== $currentUser->getId()) {
+        if ($lockInfo['userId'] !== $currentUser->id) {
             return true;
         }
 
@@ -80,7 +80,7 @@ final readonly class PageEditLockManager
     public function acquireOrRefresh(int $pageId, User $user, ?string $tabId = null): bool
     {
         $existingLock = $this->getLockInfo($pageId);
-        $userId = $user->getId();
+        $userId = $user->id;
 
         if (null === $userId) {
             return false;
@@ -121,7 +121,7 @@ final readonly class PageEditLockManager
     {
         $lockInfo = $this->getLockInfo($pageId);
 
-        if (null === $lockInfo || $lockInfo['userId'] !== $user->getId()) {
+        if (null === $lockInfo || $lockInfo['userId'] !== $user->id) {
             return;
         }
 

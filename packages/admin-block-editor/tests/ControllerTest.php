@@ -61,7 +61,7 @@ final class ControllerTest extends AbstractAdminTestClass
         $page->slug = 'test';
         $page->host = 'admin-block-editor.test';
         $page->locale = 'en';
-        $page->setMainContent(file_get_contents(__DIR__.'/content/content.json'));
+        $page->mainContent = file_get_contents(__DIR__.'/content/content.json');
 
         $em->persist($page);
         $em->flush();

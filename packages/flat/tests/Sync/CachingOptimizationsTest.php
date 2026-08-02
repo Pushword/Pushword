@@ -156,7 +156,7 @@ final class CachingOptimizationsTest extends KernelTestCase
         self::assertFileExists($filePath);
 
         // Change DB content and set file mtime to the past
-        $page->setMainContent($page->getMainContent()."\n<!-- modified for cache test -->");
+        $page->mainContent .= "\n<!-- modified for cache test -->";
         $em->flush();
         touch($filePath, $page->updatedAt->getTimestamp() - 100); // @phpstan-ignore method.nonObject
 

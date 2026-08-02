@@ -291,7 +291,7 @@ class ConversationCrudController extends AbstractAdminCrudController
         yield TextField::new('authorName', 'adminConversationAuthorNameLabel')
             ->setFormTypeOption('required', false);
         yield TextField::new('authorIpRaw', 'adminConversationAuthorIpLabel')
-            ->setFormTypeOption('disabled', null !== $message->getAuthorIp());
+            ->setFormTypeOption('disabled', null !== $message->authorIp);
 
         yield FormField::addFieldset('adminConversationLabelPublishedAt')
             ->setCssClass('pw-settings-accordion pw-settings-open');
@@ -331,13 +331,13 @@ class ConversationCrudController extends AbstractAdminCrudController
 
         $shouldPublish = $this->normalizePublishedState((string) $request->request->get('published'));
 
-        $message->setPublishedAt($shouldPublish ? new DateTime() : null);
+        $message->publishedAt = $shouldPublish ? new DateTime() : null;
 
         $this->getEntityManager()->flush();
 
         return new Response($this->adminFormFieldManager->twig->render('@pwAdmin/components/published_toggle.html.twig', [
             'entity' => ['instance' => $message],
-            'value' => $message->getPublishedAt(),
+            'value' => $message->publishedAt,
             'field' => null,
         ]));
     }
@@ -440,14 +440,10 @@ class ConversationCrudController extends AbstractAdminCrudController
 
         return match ($field) {
             'content' => $this->updateContent($message, $value),
-            'authorName' => $this->updateNullableString(static fn (?string $val): Message => $message->setAuthorName($val), $trimmed),
-            'authorEmail' => $this->updateNullableString(static fn (?string $val): Message => $message->setAuthorEmail($val), $trimmed),
-            'referring' => $this->updateNullableString(static fn (?string $val): Message => $message->setReferring($val), $trimmed),
-            'host' => $this->updateNullableString(static function (?string $val) use ($message): Message {
-                $message->host = $val;
-
-                return $message;
-            }, $trimmed),
+            'authorName' => $this->updateNullableString(static fn (?string $val): ?string => $message->authorName = $val, $trimmed),
+            'authorEmail' => $this->updateNullableString(static fn (?string $val): ?string => $message->authorEmail = $val, $trimmed),
+            'referring' => $this->updateNullableString(static fn (?string $val): ?string => $message->referring = $val, $trimmed),
+            'host' => $this->updateNullableString(static fn (?string $val): ?string => $message->host = $val, $trimmed),
             'tags' => $this->updateTags($message, $value),
             'weight' => $message->setWeight($value),
             'title' => $this->updateReviewField($message, $trimmed, 'title'),
@@ -458,7 +454,7 @@ class ConversationCrudController extends AbstractAdminCrudController
     }
 
     /**
-     * @param callable(?string): Message $callback
+     * @param callable(?string): mixed $callback
      */
     private function updateNullableString(callable $callback, string $value): bool
     {

@@ -152,9 +152,32 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
         set(?string $value) => $this->h1 = (string) $value;
     }
 
-    /** RawContent would have been a more appropriate name. */
+    /**
+     * RawContent would have been a more appropriate name.
+     *
+     * Writing it drops the empty anchors the editor leaves behind and invalidates
+     * the redirection parsed from the previous content. Doctrine writes the backing
+     * store directly, so loading a row does neither.
+     */
     #[ORM\Column(type: Types::TEXT)]
-    protected string $mainContent = '';
+    public string $mainContent = '' {
+        set(?string $value) {
+            $this->mainContent = self::normalizeMainContent($value);
+
+            $this->redirectionCache = null;
+            $this->redirectionChecked = false;
+        }
+    }
+
+    /**
+     * Named so a caller can re-run the normalization over stored content — see
+     * {@see \Pushword\Core\Command\CleanPageCommand}. Assigning the property to
+     * itself would do the same, but reads (and gets refactored away) as a no-op.
+     */
+    public static function normalizeMainContent(?string $content): string
+    {
+        return preg_replace('@<a[^>]+"></a>@U', '', trim((string) $content)) ?? throw new Exception();
+    }
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['default' => 'CURRENT_TIMESTAMP'])]
     public ?DateTimeInterface $publishedAt = null;
@@ -242,23 +265,6 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
         return trim($slug, '/');
     }
 
-    public function getMainContent(): string
-    {
-        return $this->mainContent;
-    }
-
-    public function setMainContent(?string $mainContent): self
-    {
-        $this->mainContent = (string) $mainContent;
-        $this->mainContent = trim($this->mainContent);
-        $this->mainContent = preg_replace('@<a[^>]+"></a>@U', '', $this->mainContent) ?? throw new Exception();
-
-        $this->redirectionCache = null;
-        $this->redirectionChecked = false;
-
-        return $this;
-    }
-
     public function isPublished(): bool
     {
         return null !== $this->publishedAt && $this->publishedAt <= new DateTime('now');
@@ -305,13 +311,6 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     public function getTemplate(): ?string
     {
         return $this->template ?? $this->extendedPage?->getTemplate();
-    }
-
-    public function setTemplate(?string $template): self
-    {
-        $this->template = $template;
-
-        return $this;
     }
 
     public function getCustomProperty(string $name): mixed

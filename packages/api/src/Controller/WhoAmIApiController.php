@@ -16,7 +16,7 @@ final class WhoAmIApiController extends AbstractApiController
         $user = $this->getApiUser();
 
         return $this->respond([
-            'id' => $user->getId(),
+            'id' => $user->id,
             'email' => $user->email,
             'username' => $user->getUserIdentifier(),
             'roles' => $user->getRoles(),

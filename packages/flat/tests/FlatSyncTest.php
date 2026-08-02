@@ -58,7 +58,7 @@ final class FlatSyncTest extends KernelTestCase
         $page = $em->getRepository(Page::class)->findOneBy(['slug' => 'test-link']);
 
         self::assertInstanceOf(Page::class, $page);
-        self::assertStringContainsString('](/test-content)', $page->getMainContent());
+        self::assertStringContainsString('](/test-content)', $page->mainContent);
 
         // Cleanup imported pages
         $testContent = $em->getRepository(Page::class)->findOneBy(['slug' => 'test-content']);

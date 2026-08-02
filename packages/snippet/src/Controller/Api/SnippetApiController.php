@@ -65,7 +65,7 @@ final class SnippetApiController extends AbstractApiController
 
         $snippet = new Snippet();
         $snippet->host = $host;
-        $snippet->setSlug($slug);
+        $snippet->slug = $slug;
         $this->apply($snippet, $data);
 
         $violations = $this->validator->validate($snippet);
@@ -122,11 +122,11 @@ final class SnippetApiController extends AbstractApiController
     private function apply(Snippet $snippet, array $data): void
     {
         if (\array_key_exists('name', $data) && \is_string($data['name'])) {
-            $snippet->setName($data['name']);
+            $snippet->name = $data['name'];
         }
 
         if (\array_key_exists('content', $data) && \is_string($data['content'])) {
-            $snippet->setContent($data['content']);
+            $snippet->content = $data['content'];
         }
 
         if (\array_key_exists('tags', $data) && \is_array($data['tags'])) {
@@ -143,9 +143,9 @@ final class SnippetApiController extends AbstractApiController
     {
         return [
             'host' => $snippet->host,
-            'slug' => $snippet->getSlug(),
-            'name' => $snippet->getName(),
-            'content' => $snippet->getContent(),
+            'slug' => $snippet->slug,
+            'name' => $snippet->name,
+            'content' => $snippet->content,
             'tags' => $snippet->getTagList(),
             'createdAt' => $snippet->createdAt?->format(DateTimeInterface::ATOM),
             'updatedAt' => $snippet->updatedAt?->format(DateTimeInterface::ATOM),

@@ -62,6 +62,6 @@ class AdminExtension implements ResetInterface
     #[AsTwigFunction('pw_broken_images')]
     public function getBrokenImages(Page $page): array
     {
-        return $this->mediaExtension->findBrokenInternalImages($page->getMainContent());
+        return $this->mediaExtension->findBrokenInternalImages($page->mainContent);
     }
 }

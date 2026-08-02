@@ -66,7 +66,7 @@ class SnippetRepository extends ServiceEntityRepository
 
         $this->slugCache[$host] = [];
         foreach ($this->findByHost($host) as $snippet) {
-            $this->slugCache[$host][$snippet->getSlug()] = $snippet;
+            $this->slugCache[$host][$snippet->slug] = $snippet;
         }
 
         $this->warmedHosts[$host] = true;

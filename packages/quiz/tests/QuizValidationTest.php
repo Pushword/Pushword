@@ -736,12 +736,10 @@ final class QuizValidationTest extends KernelTestCase
         $page->locale = 'en';
         $page->createdAt = new DateTime('1 day ago');
         $page->updatedAt = new DateTime('1 day ago');
-        $page->setMainContent(
-            'Intro paragraph.'."\n\n"
-            .'{% quiz %}{"questions":[{"q":"L\'eau bout à ?",'
-            .'"answers":[{"a":"100°C","correct":true},{"a":"0°C"}]}]}{% endquiz %}'."\n\n"
-            .'Outro paragraph.'
-        );
+        $page->mainContent = 'Intro paragraph.'."\n\n"
+        .'{% quiz %}{"questions":[{"q":"L\'eau bout à ?",'
+        .'"answers":[{"a":"100°C","correct":true},{"a":"0°C"}]}]}{% endquiz %}'."\n\n"
+        .'Outro paragraph.';
 
         $manager = self::getContainer()->get(ManagerPool::class)->getManager($page);
         $html = $manager->mainContent(); // @phpstan-ignore-line (magic __call applies the main_content chain)

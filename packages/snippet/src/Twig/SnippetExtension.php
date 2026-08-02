@@ -45,8 +45,8 @@ final readonly class SnippetExtension
         // Host-specific snippets first, then global (host-less) ones as a
         // fallback so a host-specific snippet is never shadowed by its global twin.
         foreach ([...$this->snippetRepository->findByHost($host), ...$this->snippetRepository->findByHost('')] as $snippet) {
-            $definitions[$snippet->getSlug()] ??= [
-                'label' => $snippet->getName(),
+            $definitions[$snippet->slug] ??= [
+                'label' => $snippet->name,
                 'schema' => [],
             ];
         }
@@ -102,7 +102,7 @@ final readonly class SnippetExtension
         $page = $this->siteRegistry->getCurrentPage();
 
         try {
-            $content = $this->twig->createTemplate($snippet->getContent())->render([
+            $content = $this->twig->createTemplate($snippet->content)->render([
                 'page' => $page,
                 'snippet' => $snippet,
                 'params' => $params,
@@ -111,7 +111,7 @@ final readonly class SnippetExtension
             // A malformed snippet must not 500 every page that embeds it: degrade to
             // an invisible marker (scanner reports it, editors see a badge).
             $this->logger->warning('Twig rendering failed in snippet "{slug}": {message}', [
-                'slug' => $snippet->getSlug(),
+                'slug' => $snippet->slug,
                 'message' => $twigError->getRawMessage(),
             ]);
 

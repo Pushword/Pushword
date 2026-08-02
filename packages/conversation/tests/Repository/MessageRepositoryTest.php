@@ -229,12 +229,12 @@ final class MessageRepositoryTest extends KernelTestCase
         $review = new Review();
         $review->host = $this->testHost;
         $review->setContent($content);
-        $review->setAuthorEmail('test@example.com');
-        $review->setAuthorName('Test User');
-        $review->setReferring('/test-page');
+        $review->authorEmail = 'test@example.com';
+        $review->authorName = 'Test User';
+        $review->referring = '/test-page';
         $review->setRating($rating);
         $review->setWeight($weight);
-        $review->setPublishedAt(new DateTime());
+        $review->publishedAt = new DateTime();
 
         return $review;
     }

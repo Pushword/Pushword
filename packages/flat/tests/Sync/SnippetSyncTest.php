@@ -49,10 +49,10 @@ final class SnippetSyncTest extends KernelTestCase
     {
         $snippet = new Snippet();
         $snippet->host = 'localhost.dev';
-        $snippet->setSlug($this->slug);
-        $snippet->setName('Sync Test');
+        $snippet->slug = $this->slug;
+        $snippet->name = 'Sync Test';
         $snippet->setTags('alpha beta');
-        $snippet->setContent('# Hello flat sync');
+        $snippet->content = '# Hello flat sync';
 
         $this->em->persist($snippet);
         $this->em->flush();
@@ -78,9 +78,9 @@ final class SnippetSyncTest extends KernelTestCase
         $orphanSlug = 'orphan-'.uniqid();
         $orphan = new Snippet();
         $orphan->host = 'localhost.dev';
-        $orphan->setSlug($orphanSlug);
-        $orphan->setName('Orphan');
-        $orphan->setContent('gone');
+        $orphan->slug = $orphanSlug;
+        $orphan->name = 'Orphan';
+        $orphan->content = 'gone';
 
         $this->em->persist($orphan);
         $this->em->flush();
@@ -103,9 +103,9 @@ final class SnippetSyncTest extends KernelTestCase
 
         $snippet = $this->em->getRepository(Snippet::class)->findOneBy(['slug' => $this->slug]);
         self::assertInstanceOf(Snippet::class, $snippet);
-        self::assertSame('Imported snippet', $snippet->getName());
+        self::assertSame('Imported snippet', $snippet->name);
         self::assertSame(['news'], $snippet->getTagList());
-        self::assertStringContainsString('Imported **body**', $snippet->getContent());
+        self::assertStringContainsString('Imported **body**', $snippet->content);
     }
 
     public function testExportWritesGlobalSnippetToBaseSnippetsDir(): void
@@ -115,9 +115,9 @@ final class SnippetSyncTest extends KernelTestCase
         $globalSlug = 'global-export-'.uniqid();
         $snippet = new Snippet();
         $snippet->host = ''; // "All hosts"
-        $snippet->setSlug($globalSlug);
-        $snippet->setName('Global Export');
-        $snippet->setContent('# Global body');
+        $snippet->slug = $globalSlug;
+        $snippet->name = 'Global Export';
+        $snippet->content = '# Global body';
 
         $this->em->persist($snippet);
         $this->em->flush();
@@ -151,7 +151,7 @@ final class SnippetSyncTest extends KernelTestCase
             $snippet = $this->em->getRepository(Snippet::class)->findOneBy(['slug' => $globalSlug]);
             self::assertInstanceOf(Snippet::class, $snippet);
             self::assertSame('', $snippet->host, 'a snippet under the base snippets dir is global (host = "")');
-            self::assertSame('Global Import', $snippet->getName());
+            self::assertSame('Global Import', $snippet->name);
         } finally {
             new Filesystem()->remove($path);
             $snippet = $this->em->getRepository(Snippet::class)->findOneBy(['slug' => $globalSlug]);
@@ -169,9 +169,9 @@ final class SnippetSyncTest extends KernelTestCase
         $globalSlug = 'global-guard-'.uniqid();
         $snippet = new Snippet();
         $snippet->host = ''; // "All hosts"
-        $snippet->setSlug($globalSlug);
-        $snippet->setName('Global Guard');
-        $snippet->setContent('global');
+        $snippet->slug = $globalSlug;
+        $snippet->name = 'Global Guard';
+        $snippet->content = 'global';
 
         $this->em->persist($snippet);
         $this->em->flush();
@@ -204,9 +204,9 @@ final class SnippetSyncTest extends KernelTestCase
         $orphanSlug = 'global-orphan-'.uniqid();
         $orphan = new Snippet();
         $orphan->host = '';
-        $orphan->setSlug($orphanSlug);
-        $orphan->setName('Orphan');
-        $orphan->setContent('gone');
+        $orphan->slug = $orphanSlug;
+        $orphan->name = 'Orphan';
+        $orphan->content = 'gone';
 
         $this->em->persist($orphan);
         $this->em->flush();

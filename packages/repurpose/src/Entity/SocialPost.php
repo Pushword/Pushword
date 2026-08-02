@@ -38,25 +38,42 @@ class SocialPost implements IdInterface, Stringable
     use TimestampableTrait;
 
     #[ORM\Column(type: Types::STRING, length: 255)]
-    private string $page = '';
+    public string $page = '';
 
     #[ORM\Column(type: Types::STRING, length: 32)]
-    private string $network = '';
+    public string $network = '';
 
     #[ORM\Column(type: Types::STRING, length: 32)]
-    private string $format = '';
+    public string $format = '';
 
     #[ORM\Column(type: Types::STRING, length: 16)]
-    private string $status = 'draft';
+    public string $status = 'draft';
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?DateTimeImmutable $plannedAt = null;
+    public ?DateTimeImmutable $plannedAt = null;
 
     /**
+     * Writing the payload mirrors its queryable fields into the columns above.
+     * Doctrine writes the backing store directly, so loading a row never re-derives
+     * them — only an application-level write does.
+     *
      * @var array<string, mixed>
      */
     #[ORM\Column(type: Types::JSON)]
-    private array $spec = [];
+    public array $spec = [] {
+        set(array $value) {
+            $this->spec = $value;
+            $this->page = \is_string($value['page'] ?? null) ? $value['page'] : $this->page;
+            $this->network = \is_string($value['network'] ?? null) ? $value['network'] : $this->network;
+            $this->format = \is_string($value['format'] ?? null) ? $value['format'] : $this->format;
+            $this->status = \is_string($value['status'] ?? null) ? $value['status'] : $this->status;
+
+            $plannedAt = $value['plannedAt'] ?? null;
+            $this->plannedAt = \is_string($plannedAt) && '' !== $plannedAt
+                ? new DateTimeImmutable($plannedAt)
+                : null;
+        }
+    }
 
     public function __construct()
     {
@@ -66,94 +83,5 @@ class SocialPost implements IdInterface, Stringable
     public function __toString(): string
     {
         return $this->page.' · '.$this->network;
-    }
-
-    public function getPage(): string
-    {
-        return $this->page;
-    }
-
-    public function setPage(string $page): self
-    {
-        $this->page = $page;
-
-        return $this;
-    }
-
-    public function getNetwork(): string
-    {
-        return $this->network;
-    }
-
-    public function setNetwork(string $network): self
-    {
-        $this->network = $network;
-
-        return $this;
-    }
-
-    public function getFormat(): string
-    {
-        return $this->format;
-    }
-
-    public function setFormat(string $format): self
-    {
-        $this->format = $format;
-
-        return $this;
-    }
-
-    public function getStatus(): string
-    {
-        return $this->status;
-    }
-
-    public function setStatus(string $status): self
-    {
-        $this->status = $status;
-
-        return $this;
-    }
-
-    public function getPlannedAt(): ?DateTimeImmutable
-    {
-        return $this->plannedAt;
-    }
-
-    public function setPlannedAt(?DateTimeImmutable $plannedAt): self
-    {
-        $this->plannedAt = $plannedAt;
-
-        return $this;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function getSpec(): array
-    {
-        return $this->spec;
-    }
-
-    /**
-     * Store the carousel payload and mirror its queryable fields into columns.
-     *
-     * @param array<string, mixed> $spec
-     */
-    public function setSpec(array $spec): self
-    {
-        $this->spec = $spec;
-        $this->page = \is_string($spec['page'] ?? null) ? $spec['page'] : $this->page;
-        $this->network = \is_string($spec['network'] ?? null) ? $spec['network'] : $this->network;
-        $this->format = \is_string($spec['format'] ?? null) ? $spec['format'] : $this->format;
-        $this->status = \is_string($spec['status'] ?? null) ? $spec['status'] : $this->status;
-
-        $plannedAt = $spec['plannedAt'] ?? null;
-        $this->plannedAt = \is_string($plannedAt) && '' !== $plannedAt
-            ? new DateTimeImmutable($plannedAt)
-            : null;
-
-        return $this;
     }
 }

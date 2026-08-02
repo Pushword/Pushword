@@ -38,7 +38,7 @@ final readonly class ConvertBlockFormatCommand
 
     private function upgradeBlocks(Page $page): void
     {
-        $mainContent = $page->getMainContent();
+        $mainContent = $page->mainContent;
         $editorJs = EditorJsHelper::tryToDecode($mainContent);
         if (false === $editorJs) {
             return;
@@ -58,7 +58,7 @@ final readonly class ConvertBlockFormatCommand
             }
         }
 
-        $page->setMainContent(json_encode($editorJs, \JSON_THROW_ON_ERROR));
+        $page->mainContent = json_encode($editorJs, \JSON_THROW_ON_ERROR);
     }
 
     private function convertImage(object $block): void

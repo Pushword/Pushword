@@ -399,7 +399,7 @@ final class PerformanceRegressionTest extends KernelTestCase
                 $page->host = $host;
                 $page->locale = 'en';
                 $page->createdAt = new DateTime();
-                $page->setMainContent('perf content '.$i);
+                $page->mainContent = 'perf content '.$i;
                 $this->em->persist($page);
             }
 

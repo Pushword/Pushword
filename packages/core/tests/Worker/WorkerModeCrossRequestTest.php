@@ -215,7 +215,7 @@ final class WorkerModeCrossRequestTest extends KernelTestCase
             }
 
             $page->h1 = 'Worker stale body probe';
-            $page->setMainContent($marker);
+            $page->mainContent = $marker;
             $page->updatedAt = new DateTime();
 
             $em->flush();

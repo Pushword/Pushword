@@ -89,7 +89,7 @@ final class RedirectMigrateCommandTest extends KernelTestCase
         $page->locale = 'en';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
-        $page->setMainContent($mainContent);
+        $page->mainContent = $mainContent;
 
         $this->em->persist($page);
         $this->em->flush();

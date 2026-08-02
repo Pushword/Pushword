@@ -91,7 +91,7 @@ final class PageListenerTest extends KernelTestCase
         $page = $this->createPage('no-redirect-test');
         $this->testSlugs[] = 'no-redirect-test';
 
-        $page->setMainContent('Updated content');
+        $page->mainContent = 'Updated content';
         $this->em->flush();
 
         $count = $this->em->getRepository(Page::class)->count(['host' => 'localhost.dev', 'slug' => 'no-redirect-test']);
@@ -126,7 +126,7 @@ final class PageListenerTest extends KernelTestCase
         $page->locale = 'en';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
-        $page->setMainContent('Test content');
+        $page->mainContent = 'Test content';
 
         $this->em->persist($page);
         $this->em->flush();

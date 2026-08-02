@@ -93,7 +93,7 @@ final class ParentPageSyncTest extends KernelTestCase
         $parent->h1 = 'Parent Export';
         $parent->host = 'localhost.dev';
         $parent->locale = 'en';
-        $parent->setMainContent('Parent content');
+        $parent->mainContent = 'Parent content';
 
         $this->em->persist($parent);
         $this->em->flush();
@@ -103,7 +103,7 @@ final class ParentPageSyncTest extends KernelTestCase
         $child->h1 = 'Child Export';
         $child->host = 'localhost.dev';
         $child->locale = 'en';
-        $child->setMainContent('Child content');
+        $child->mainContent = 'Child content';
         $child->parentPage = $parent;
 
         $this->em->persist($child);
@@ -130,7 +130,7 @@ final class ParentPageSyncTest extends KernelTestCase
         $parent->h1 = 'Parent Import';
         $parent->host = 'localhost.dev';
         $parent->locale = 'en';
-        $parent->setMainContent('Parent content');
+        $parent->mainContent = 'Parent content';
 
         $this->em->persist($parent);
         $this->em->flush();
@@ -160,7 +160,7 @@ final class ParentPageSyncTest extends KernelTestCase
         $parent->h1 = 'Parent Round Trip';
         $parent->host = 'localhost.dev';
         $parent->locale = 'en';
-        $parent->setMainContent('Parent');
+        $parent->mainContent = 'Parent';
 
         $this->em->persist($parent);
         $this->em->flush();
@@ -170,7 +170,7 @@ final class ParentPageSyncTest extends KernelTestCase
         $child->h1 = 'Child Round Trip';
         $child->host = 'localhost.dev';
         $child->locale = 'en';
-        $child->setMainContent('Child');
+        $child->mainContent = 'Child';
         $child->parentPage = $parent;
 
         $this->em->persist($child);

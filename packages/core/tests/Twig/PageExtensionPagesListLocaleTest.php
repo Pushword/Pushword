@@ -71,7 +71,7 @@ final class PageExtensionPagesListLocaleTest extends KernelTestCase
         $page->locale = $locale;
         $page->slug = $slug;
         $page->h1 = 'Locale fixture '.$slug;
-        $page->setMainContent('Locale fixture content.');
+        $page->mainContent = 'Locale fixture content.';
         $page->setTags([self::SHARED_TAG]);
         $page->publishedAt = new DateTime('-1 day');
 

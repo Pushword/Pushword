@@ -37,7 +37,7 @@ final readonly class CarouselDrafter
             $format = 'linkedin-4-5';
         }
 
-        $content = $page->getMainContent();
+        $content = $page->mainContent;
         $mainImage = $page->getMainImage()?->getFileName();
 
         $slides = [$this->coverSlide($page, $mainImage)];

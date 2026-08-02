@@ -181,7 +181,7 @@ final class PageSchemaPropertiesFieldTest extends AbstractAdminTestClass
         $page->locale = 'en';
         $page->slug = self::SLUG;
         $page->h1 = 'Schema field fixture';
-        $page->setMainContent('Content');
+        $page->mainContent = 'Content';
         $page->publishedAt = new DateTime('-1 day');
         $page->setCustomProperty('level', 'beginner');
         $page->setCustomProperty('freeKey', 'kept');

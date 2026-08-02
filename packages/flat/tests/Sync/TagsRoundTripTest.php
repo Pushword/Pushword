@@ -83,7 +83,7 @@ final class TagsRoundTripTest extends KernelTestCase
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setTags('cms php symfony');
-        $page->setMainContent('Test content');
+        $page->mainContent = 'Test content';
         $page->publishedAt = new DateTime();
 
         $this->em->persist($page);

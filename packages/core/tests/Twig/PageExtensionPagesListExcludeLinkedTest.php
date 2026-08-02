@@ -75,7 +75,7 @@ final class PageExtensionPagesListExcludeLinkedTest extends KernelTestCase
         $page->locale = 'en';
         $page->slug = $slug;
         $page->h1 = 'Dedupe fixture '.$slug;
-        $page->setMainContent('Dedupe fixture content.');
+        $page->mainContent = 'Dedupe fixture content.';
         $page->publishedAt = new DateTime('-1 day');
 
         $this->entityManager->persist($page);

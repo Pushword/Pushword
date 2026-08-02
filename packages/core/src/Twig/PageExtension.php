@@ -45,7 +45,7 @@ final class PageExtension
     #[AsTwigFunction('pageContainsBlock')]
     public function pageContainsBlock(Page $page, string $blockId): bool
     {
-        $mainContent = $page->getMainContent();
+        $mainContent = $page->mainContent;
 
         if (str_contains($mainContent, '{#'.$blockId.'')) {
             return true;

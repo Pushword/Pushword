@@ -77,7 +77,7 @@ final class AppExtension
     {
         if (null === $content) {
             $stashed = $this->apps->stash('content');
-            $content = '' !== $stashed ? $stashed : ($this->apps->getCurrentPage()?->getMainContent() ?? '');
+            $content = '' !== $stashed ? $stashed : ($this->apps->getCurrentPage()->mainContent ?? '');
         }
 
         $currentPage = $this->apps->getCurrentPage();

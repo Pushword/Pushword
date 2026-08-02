@@ -94,7 +94,7 @@ final class PageFileSerializer
         // so the dumper could escape them correctly — running normalizeQuotes over
         // the dumped YAML would un-escape apostrophes inside single-quoted scalars
         // (e.g. 'l''Albanie' → 'l'Albanie') and produce invalid YAML.
-        return '---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$this->normalizeQuotes($page->getMainContent());
+        return '---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$this->normalizeQuotes($page->mainContent);
     }
 
     /**

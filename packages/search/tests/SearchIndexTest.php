@@ -218,7 +218,7 @@ final class SearchIndexTest extends KernelTestCase
 
         $easy = $this->createPage($nonce.'b');
         $easy->setTags('easy');
-        $easy->setMainContent('A unique marker '.$nonce.' used by the full-text search test.');
+        $easy->mainContent = 'A unique marker '.$nonce.' used by the full-text search test.';
 
         $em->persist($hard);
         $em->persist($easy);
@@ -278,7 +278,7 @@ final class SearchIndexTest extends KernelTestCase
         $page->locale = $locale;
         $page->slug = 'search-it-'.$locale.'-'.$nonce;
         $page->h1 = 'Indexable Page';
-        $page->setMainContent('A unique marker '.$nonce.' used by the full-text search test.');
+        $page->mainContent = 'A unique marker '.$nonce.' used by the full-text search test.';
         $page->publishedAt = new DateTime('-1 day');
 
         return $page;

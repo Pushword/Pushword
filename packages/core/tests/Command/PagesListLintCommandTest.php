@@ -52,7 +52,7 @@ final class PagesListLintCommandTest extends KernelTestCase
         $page->locale = 'en';
         $page->slug = self::PREFIX.$slug;
         $page->h1 = 'Lint fixture '.$slug;
-        $page->setMainContent($mainContent);
+        $page->mainContent = $mainContent;
         $page->setTags('' === $tags ? [] : [$tags]);
         $page->publishedAt = new DateTime('-1 day');
 

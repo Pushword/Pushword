@@ -39,13 +39,21 @@ class Snippet implements IdInterface, Taggable, Stringable, CustomPropertiesInte
 
     #[Assert\Regex(pattern: '/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/', message: 'snippet.slug.invalid')]
     #[ORM\Column(type: Types::STRING, length: 255)]
-    protected string $slug = '';
+    public string $slug = '' {
+        set(string $value) => $this->slug = self::normalizeSlug($value);
+    }
 
+    /** Falls back to the slug, so a snippet always has something to show. */
     #[ORM\Column(type: Types::STRING, length: 255)]
-    protected string $name = '';
+    public string $name = '' {
+        get => '' !== $this->name ? $this->name : $this->slug;
+        set(?string $value) => $this->name = (string) $value;
+    }
 
     #[ORM\Column(type: Types::TEXT)]
-    protected string $content = '';
+    public string $content = '' {
+        set(?string $value) => $this->content = (string) $value;
+    }
 
     public function __construct()
     {
@@ -54,47 +62,11 @@ class Snippet implements IdInterface, Taggable, Stringable, CustomPropertiesInte
 
     public function __toString(): string
     {
-        return '' !== $this->name ? $this->name : $this->slug;
-    }
-
-    public function getSlug(): string
-    {
-        return $this->slug;
-    }
-
-    public function setSlug(string $slug): self
-    {
-        $this->slug = self::normalizeSlug($slug);
-
-        return $this;
+        return $this->name;
     }
 
     public static function normalizeSlug(string $slug): string
     {
         return trim(strtolower($slug));
-    }
-
-    public function getName(): string
-    {
-        return '' !== $this->name ? $this->name : $this->slug;
-    }
-
-    public function setName(?string $name): self
-    {
-        $this->name = (string) $name;
-
-        return $this;
-    }
-
-    public function getContent(): string
-    {
-        return $this->content;
-    }
-
-    public function setContent(?string $content): self
-    {
-        $this->content = (string) $content;
-
-        return $this;
     }
 }

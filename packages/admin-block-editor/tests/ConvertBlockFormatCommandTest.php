@@ -119,7 +119,7 @@ final class ConvertBlockFormatCommandTest extends KernelTestCase
         $page->h1 = 'Block Upgrade Markdown';
         $page->slug = 'block-upgrade-markdown';
         $page->locale = 'en';
-        $page->setMainContent('# Just markdown, no blocks here.');
+        $page->mainContent = '# Just markdown, no blocks here.';
 
         $em->persist($page);
         $em->flush();
@@ -132,7 +132,7 @@ final class ConvertBlockFormatCommandTest extends KernelTestCase
         $em->clear();
         $reloaded = $em->find(Page::class, $pageId);
         self::assertNotNull($reloaded);
-        self::assertSame('# Just markdown, no blocks here.', $reloaded->getMainContent());
+        self::assertSame('# Just markdown, no blocks here.', $reloaded->mainContent);
     }
 
     private function runUpgradeCommand(): CommandTester
@@ -161,7 +161,7 @@ final class ConvertBlockFormatCommandTest extends KernelTestCase
         $page->h1 = 'Block Upgrade Test';
         $page->slug = $slug;
         $page->locale = 'en';
-        $page->setMainContent(json_encode($editorJs, \JSON_THROW_ON_ERROR));
+        $page->mainContent = json_encode($editorJs, \JSON_THROW_ON_ERROR);
 
         $em->persist($page);
         $em->flush();
@@ -181,7 +181,7 @@ final class ConvertBlockFormatCommandTest extends KernelTestCase
         self::assertNotNull($page);
 
         /** @var array{blocks: array<int, array{type: string, data: array<mixed>}>} $decoded */
-        $decoded = json_decode($page->getMainContent(), true, 512, \JSON_THROW_ON_ERROR);
+        $decoded = json_decode($page->mainContent, true, 512, \JSON_THROW_ON_ERROR);
 
         return $decoded['blocks'][0];
     }

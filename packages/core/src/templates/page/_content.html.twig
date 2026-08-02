@@ -22,7 +22,7 @@
     {% block main_image %}
       {% if page.mainImage is not null %}
         {{ image(page.mainImage,
-            alt: page.mainImage.altLocalized(page.locale)|default(page.title|striptags)|date_shortcode,
+            alt: page.mainImage.altLocalized(page.locale)|default(pw(page).title|striptags)|date_shortcode,
             wrapperClass: (page.mainImageFormat is same as(1) ? 'hidden' : ' ')) }}
         {# @var page.mainImageFormat is a custom property wich culd be managed via advanced-main-image #}
       {% endif %}

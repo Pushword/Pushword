@@ -88,7 +88,7 @@ final class PagesListLintCommand
      */
     private function searchesIn(Page $page): array
     {
-        if (0 === preg_match_all(self::CALL_PATTERN, $page->getMainContent(), $matches)) {
+        if (0 === preg_match_all(self::CALL_PATTERN, $page->mainContent, $matches)) {
             return [];
         }
 

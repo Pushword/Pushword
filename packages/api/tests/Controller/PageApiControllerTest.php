@@ -763,7 +763,7 @@ final class PageApiControllerTest extends WebTestCase
         $this->em->clear();
         $page = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]);
         self::assertInstanceOf(Page::class, $page);
-        self::assertSame('Location: https://example.org/elsewhere', $page->getMainContent());
+        self::assertSame('Location: https://example.org/elsewhere', $page->mainContent);
     }
 
     public function testDeleteWithUnknownInternalTargetKeepsSlugAsRedirection(): void
@@ -777,7 +777,7 @@ final class PageApiControllerTest extends WebTestCase
         $this->em->clear();
         $page = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]);
         self::assertInstanceOf(Page::class, $page);
-        self::assertSame('Location: /not-created-yet', $page->getMainContent());
+        self::assertSame('Location: /not-created-yet', $page->mainContent);
     }
 
     public function testDeleteDoesNotFoldIntoARedirectionTarget(): void
@@ -797,7 +797,7 @@ final class PageApiControllerTest extends WebTestCase
         $this->em->clear();
         $page = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]);
         self::assertInstanceOf(Page::class, $page);
-        self::assertSame('Location: /'.$redirectionSlug, $page->getMainContent());
+        self::assertSame('Location: /'.$redirectionSlug, $page->mainContent);
 
         $target = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $redirectionSlug]);
         self::assertInstanceOf(Page::class, $target);
@@ -818,7 +818,7 @@ final class PageApiControllerTest extends WebTestCase
         $this->em->clear();
         $page = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]);
         self::assertInstanceOf(Page::class, $page);
-        self::assertSame('Location: https://example.org/elsewhere 302', $page->getMainContent());
+        self::assertSame('Location: https://example.org/elsewhere 302', $page->mainContent);
     }
 
     public function testWithoutTokenReturns401(): void

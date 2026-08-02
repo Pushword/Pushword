@@ -168,7 +168,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $target->slug = 'alias-target';
         $target->host = 'admin-block-editor.test';
         $target->locale = 'en';
-        $target->setMainContent('...');
+        $target->mainContent = '...';
 
         $em->persist($target);
         $em->flush();
@@ -256,7 +256,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $page->slug = 'future-page';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('...');
+        $page->mainContent = '...';
         $page->publishedAt = new DateTime('+1 year');
 
         return $page;
@@ -287,7 +287,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $destination->slug = 'scan-destination';
         $destination->host = 'localhost.dev';
         $destination->locale = 'en';
-        $destination->setMainContent('content');
+        $destination->mainContent = 'content';
         $destination->redirectFrom = ['scan-old' => 301];
 
         $em->persist($destination);
@@ -410,7 +410,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
             $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/noindex-target">link</a>');
 
             $redirection = $this->getPage('scan-redirection', 'localhost.dev');
-            $redirection->setMainContent('Location: /noindex-target');
+            $redirection->mainContent = 'Location: /noindex-target';
 
             self::assertSame([], $scanner->scan($redirection, ''));
         });
@@ -487,7 +487,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $noindex->slug = 'noindex-target';
         $noindex->host = 'localhost.dev';
         $noindex->locale = 'en';
-        $noindex->setMainContent('...');
+        $noindex->mainContent = '...';
         $noindex->metaRobots = $metaRobots;
 
         $em->persist($noindex);
@@ -661,7 +661,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $page->host = $host;
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');
-        $page->setMainContent('...');
+        $page->mainContent = '...';
         $page->setCustomProperty('pageScanLinksToIgnore', ['https://example2.tld/*', 'ignored-relative']);
 
         return $page;

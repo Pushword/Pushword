@@ -232,7 +232,7 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
         $page->slug = 'test-dup-media-'.uniqid();
         $page->locale = 'en';
         $page->setMainImage($media);
-        $page->setMainContent('Test page for duplicate media command.');
+        $page->mainContent = 'Test page for duplicate media command.';
 
         $em->persist($page);
         $em->flush();

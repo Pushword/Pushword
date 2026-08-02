@@ -69,7 +69,7 @@ final class PageExtensionPagesListPaginationTest extends KernelTestCase
         $page->locale = 'en';
         $page->slug = $slug;
         $page->h1 = 'Pager fixture '.$slug;
-        $page->setMainContent('Pager fixture content.');
+        $page->mainContent = 'Pager fixture content.';
         $page->publishedAt = $publishedAt;
 
         $this->entityManager->persist($page);

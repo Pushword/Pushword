@@ -85,7 +85,7 @@ final class PageUpdateNotifierTest extends KernelTestCase
             $savedPagesData[] = [
                 'slug' => $page->slug,
                 'h1' => $page->h1,
-                'mainContent' => $page->getMainContent(),
+                'mainContent' => $page->mainContent,
                 'locale' => $page->locale,
                 'publishedAt' => $page->publishedAt,
                 'createdAt' => $page->createdAt,
@@ -130,7 +130,7 @@ final class PageUpdateNotifierTest extends KernelTestCase
             $restoredPage = new Page();
             $restoredPage->slug = $pageData['slug'];
             $restoredPage->h1 = $pageData['h1'];
-            $restoredPage->setMainContent($pageData['mainContent']);
+            $restoredPage->mainContent = $pageData['mainContent'];
             $restoredPage->locale = $pageData['locale'];
             $restoredPage->host = 'localhost.dev';
             $restoredPage->createdAt = $pageData['createdAt'];

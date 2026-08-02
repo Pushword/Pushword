@@ -82,7 +82,7 @@ final class MultiHostSyncTest extends KernelTestCase
         $page->h1 = 'Multi Host Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('Host A only');
+        $page->mainContent = 'Host A only';
 
         $this->em->persist($page);
         $this->em->flush();

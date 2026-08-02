@@ -141,7 +141,7 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
         ]);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $client->getResponse()->getStatusCode());
-        self::assertSame('Fixture body.', $this->reloadPage($pageId)->getMainContent());
+        self::assertSame('Fixture body.', $this->reloadPage($pageId)->mainContent);
     }
 
     public function testTogglePublishedSwitchesBothWaysAndRendersBackAnInteractiveFragment(): void
@@ -255,7 +255,7 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
         $page->locale = 'en';
         $page->slug = 'inline-fragment-'.uniqid();
         $page->h1 = 'Inline fragment fixture';
-        $page->setMainContent('Fixture body.');
+        $page->mainContent = 'Fixture body.';
 
         $entityManager = $this->getEntityManager();
         $entityManager->persist($page);

@@ -44,7 +44,7 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
         $page = $em->getRepository(Page::class)->find($pageId);
         self::assertNotNull($page);
 
-        $convertedContent = $page->getMainContent();
+        $convertedContent = $page->mainContent;
 
         // Charger le contenu Markdown attendu
         $expectedContent = file_get_contents(__DIR__.'/content/KitchenSink.md');
@@ -87,7 +87,7 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
         $page = $em->getRepository(Page::class)->find($pageId);
         self::assertNotNull($page);
 
-        $content = $page->getMainContent();
+        $content = $page->mainContent;
 
         // Le contenu doit toujours être en JSON
         self::assertTrue($this->isJsonContent($content), 'Le contenu devrait toujours être en JSON après un dry-run');
@@ -113,7 +113,7 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
         self::assertNotNull($page);
 
         // The GFM delimiter row must carry per-column alignment markers.
-        $content = $page->getMainContent();
+        $content = $page->mainContent;
         self::assertMatchesRegularExpression('/\|\s*:-+\s*\|/', $content, 'left-aligned column');
         self::assertMatchesRegularExpression('/\|\s*-+:\s*\|/', $content, 'right-aligned column');
         self::assertMatchesRegularExpression('/\|\s*:-+:\s*\|/', $content, 'center-aligned column');
@@ -169,7 +169,7 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
         $page->slug = $slug;
         $page->host = 'admin-block-editor.test';
         $page->locale = 'en';
-        $page->setMainContent($content);
+        $page->mainContent = $content;
 
         $em->persist($page);
         $em->flush();

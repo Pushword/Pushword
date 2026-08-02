@@ -164,8 +164,7 @@ class Versionner
     private function slugOf(IdInterface $entity): ?string
     {
         return match (true) {
-            $entity instanceof Page => $entity->slug,
-            $entity instanceof Snippet => $entity->getSlug(),
+            $entity instanceof Page, $entity instanceof Snippet => $entity->slug,
             default => null,
         };
     }

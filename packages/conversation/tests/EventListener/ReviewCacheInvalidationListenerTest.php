@@ -50,7 +50,7 @@ final class ReviewCacheInvalidationListenerTest extends KernelTestCase
         self::assertSame($epoch, $renderEpoch->get(self::HOST));
 
         // Approving it is the transition every listing reacts to.
-        $pending->setPublishedAt(new DateTime('-1 minute'));
+        $pending->publishedAt = new DateTime('-1 minute');
         $em->flush();
         $afterApproval = $renderEpoch->get(self::HOST);
         self::assertNotSame($epoch, $afterApproval);
@@ -77,9 +77,9 @@ final class ReviewCacheInvalidationListenerTest extends KernelTestCase
     {
         $review = new Review();
         $review->host = self::HOST;
-        $review->setAuthorName('Epoch Tester');
+        $review->authorName = 'Epoch Tester';
         $review->setContent($content);
-        $review->setReferring('epoch-listener-test');
+        $review->referring = 'epoch-listener-test';
 
         $this->reviews[] = $review;
 

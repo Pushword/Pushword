@@ -71,9 +71,41 @@ final class PageTest extends TestCase
     public function testARedirectionIsNotIndexable(): void
     {
         $page = new Page();
-        $page->setMainContent('Location: https://example.tld');
+        $page->mainContent = 'Location: https://example.tld';
 
         self::assertFalse($page->isIndexable());
+    }
+
+    public function testWritingTheContentTrimsItAndDropsTheEditorsEmptyAnchors(): void
+    {
+        $page = new Page();
+        $page->mainContent = "\n  Before <a href=\"#x\" class=\"anchor\"></a>after.  \n";
+
+        self::assertSame('Before after.', $page->mainContent);
+    }
+
+    public function testTheContentNormalizationIsReusableOnStoredContent(): void
+    {
+        // What pw:page:clean re-runs over pages written before a normalization
+        // changed — assigning the property to itself would read as a no-op.
+        self::assertSame(
+            'Before after.',
+            Page::normalizeMainContent('  Before <a href="#x" class="anchor"></a>after.  '),
+        );
+        self::assertSame('', Page::normalizeMainContent(null));
+    }
+
+    public function testRewritingTheContentReparsesTheRedirection(): void
+    {
+        $page = new Page();
+        $page->mainContent = 'Location: https://example.tld';
+        self::assertTrue($page->hasRedirection());
+
+        // The parse is cached; the write has to invalidate it or the page keeps
+        // redirecting to a target its content no longer names.
+        $page->mainContent = 'Plain content now.';
+
+        self::assertFalse($page->hasRedirection());
     }
 
     public function testANoindexPageIsNotIndexable(): void

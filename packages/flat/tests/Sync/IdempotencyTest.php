@@ -81,7 +81,7 @@ final class IdempotencyTest extends KernelTestCase
         $page->h1 = 'Revision Export Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('Content');
+        $page->mainContent = 'Content';
         $page->publishedAt = new DateTime();
 
         $this->em->persist($page);
@@ -109,7 +109,7 @@ final class IdempotencyTest extends KernelTestCase
         $page->h1 = 'Agreement Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setMainContent('Body');
+        $page->mainContent = 'Body';
         $page->publishedAt = new DateTime();
 
         $this->em->persist($page);
@@ -255,7 +255,7 @@ final class IdempotencyTest extends KernelTestCase
         foreach ($pagesBefore as $page) {
             $dataBefore[$page->slug] = [
                 'h1' => $page->h1,
-                'mainContent' => $page->getMainContent(),
+                'mainContent' => $page->mainContent,
                 'tags' => $page->getTags(),
             ];
         }
@@ -270,7 +270,7 @@ final class IdempotencyTest extends KernelTestCase
             $slug = $page->slug;
             if (isset($dataBefore[$slug])) {
                 self::assertSame($dataBefore[$slug]['h1'], $page->h1, 'H1 changed for page '.$slug);
-                self::assertSame($dataBefore[$slug]['mainContent'], $page->getMainContent(), 'Content changed for page '.$slug);
+                self::assertSame($dataBefore[$slug]['mainContent'], $page->mainContent, 'Content changed for page '.$slug);
             }
         }
     }
