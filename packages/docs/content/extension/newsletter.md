@@ -104,16 +104,26 @@ receives a confirmation mail, and only becomes mailable after clicking. Turn it
 off to import a base that has already consented.
 
 Every mail carries `List-Unsubscribe` and RFC 8058 one-click, so leaving never
-depends on finding the link in the body. The unsubscribe page acts on `POST`
-only — a mail scanner following the link must not opt anyone out on their behalf.
+depends on finding the link in the body. The link in the body is one click too:
+clicking it opts the address out, it does not ask to confirm what was just
+clicked. A link that makes people work is what turns an opt-out into a spam
+report.
 
-Leaving one list leaves that one. The confirmation page then offers the other
+**A click, not a fetch.** The page acts on `GET` only when the browser sends
+`Sec-Fetch-User: ?1` — the header it adds for a navigation it attributes to a
+real gesture. A mail scanner following the link has no gesture to report,
+whatever user agent it claims, so it lands on a confirmation page and opts
+nobody out; the `POST` behind that page's button is the same one RFC 8058
+sends. Browsers too old to send the header (Safari before 16.4) read as a fetch
+too, which costs their reader one click and never the wrong outcome.
+
+Leaving one list leaves that one. The page it lands on then offers the other
 lists **of the same host** the address is subscribed to, to tick one by one or
 drop in a single click; the host is the boundary, so one brand's unsubscribe
 link never says what another brand knows about the address. Nobody sees that
-page during a one-click opt-out — the `POST` is sent by the mailbox provider,
+page during an RFC 8058 opt-out — the `POST` is sent by the mailbox provider,
 which shows the response to no one — but anyone opening the link themselves
-lands on it, before or after the fact.
+lands on it.
 
 All public links (confirm, unsubscribe) are built from the audience host's
 `base_live_url`, so they keep working when the site itself is statically

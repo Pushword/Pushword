@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Tests\Controller;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
@@ -269,24 +270,73 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         self::assertNull($this->repository()->findOneByEmail($audience, 'flood10@example.tld'));
     }
 
-    /** A mail scanner following the link must not opt anyone out. */
-    public function testUnsubscribeNeedsThePost(): void
+    /** Clicking the link in the mail is the whole opt-out: nothing left to confirm. */
+    public function testAClickUnsubscribesOnTheSpot(): void
     {
         $audience = $this->createAudience(requireDoubleOptIn: false);
         $token = $this->createContact($audience, 'leaving@example.tld')->getToken();
 
-        $this->client->request(Request::METHOD_GET, '/newsletter/unsubscribe/'.$token);
+        $this->click('/newsletter/unsubscribe/'.$token);
 
-        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
-        self::assertStringContainsString('<form method="post"', (string) $this->client->getResponse()->getContent());
-        self::assertSame(ContactStatus::Subscribed, $this->find('leaving@example.tld')->getStatus());
+        self::assertStringContainsString(
+            $this->translate('newsletter.unsubscribed.title'),
+            (string) $this->client->getResponse()->getContent(),
+        );
 
-        $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token);
-
-        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
         $left = $this->find('leaving@example.tld');
         self::assertSame(ContactStatus::Unsubscribed, $left->getStatus());
         self::assertNotNull($left->getUnsubscribedAt());
+    }
+
+    /**
+     * A mail scanner following the link reports no gesture, and opts nobody out —
+     * whether it fetches the URL plainly or dresses the request as a navigation.
+     *
+     * @param array<string, string> $headers
+     */
+    #[DataProvider('gesturelessFetchProvider')]
+    public function testAFetchWithoutAGestureOnlyGetsThePage(array $headers): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $token = $this->createContact($audience, 'scanned@example.tld')->getToken();
+
+        $this->client->request(Request::METHOD_GET, '/newsletter/unsubscribe/'.$token, server: $headers);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString('<form method="post"', (string) $this->client->getResponse()->getContent());
+        self::assertSame(ContactStatus::Subscribed, $this->find('scanned@example.tld')->getStatus());
+
+        $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token);
+
+        self::assertSame(ContactStatus::Unsubscribed, $this->find('scanned@example.tld')->getStatus());
+    }
+
+    /** @return iterable<string, array{array<string, string>}> */
+    public static function gesturelessFetchProvider(): iterable
+    {
+        yield 'a plain fetch' => [[]];
+
+        // A headless browser told to open the URL: every header a real navigation
+        // carries, except the one only a gesture produces.
+        yield 'a scripted navigation' => [[
+            'HTTP_SEC_FETCH_SITE' => 'none',
+            'HTTP_SEC_FETCH_MODE' => 'navigate',
+            'HTTP_SEC_FETCH_DEST' => 'document',
+        ]];
+    }
+
+    /** Once gone, there is nothing left to confirm — and the other lists stay one click away. */
+    public function testAFetchOfAnAlreadyLeftAddressStillGetsTheOtherLists(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $sibling = $this->createAudience(requireDoubleOptIn: false);
+        $token = $this->createContact($audience, 'back@example.tld')->getToken();
+        $this->createContact($sibling, 'back@example.tld');
+
+        $this->click('/newsletter/unsubscribe/'.$token);
+        $this->client->request(Request::METHOD_GET, '/newsletter/unsubscribe/'.$token);
+
+        self::assertStringContainsString('value="'.$sibling->getSlug().'"', (string) $this->client->getResponse()->getContent());
     }
 
     /**
@@ -409,10 +459,10 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
             (string) $this->client->getResponse()->getContent(),
         );
 
-        $this->client->request(Request::METHOD_GET, '/newsletter/unsubscribe/'.$contact->getToken());
+        $this->click('/newsletter/unsubscribe/'.$contact->getToken());
 
         self::assertStringContainsString(
-            $this->translate('newsletter.unsubscribe.confirm', 'fr'),
+            $this->translate('newsletter.unsubscribed.title', 'fr'),
             (string) $this->client->getResponse()->getContent(),
         );
     }
@@ -429,6 +479,12 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
 
         $this->client->request(Request::METHOD_POST, '/newsletter/unsubscribe/'.$token.'/others');
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+    }
+
+    /** A navigation a browser attributes to a real gesture, which is what a click is. */
+    private function click(string $uri): void
+    {
+        $this->client->request(Request::METHOD_GET, $uri, server: ['HTTP_SEC_FETCH_USER' => '?1']);
     }
 
     /** @param array<string, mixed> $parameters */

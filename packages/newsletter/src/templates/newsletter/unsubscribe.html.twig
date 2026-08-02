@@ -6,7 +6,7 @@
     <h1>{{ 'newsletter.unsubscribe.title'|trans }}</h1>
     <p>{{ 'newsletter.unsubscribe.body'|trans({'%audience%': audience.name}) }}</p>
     <p class="muted">{{ contact.email }}</p>
-    {# The opt-out is a POST: a mail scanner following the link must not act on someone's behalf. #}
+    {# Whatever asked for this page did not click its way here, so the opt-out is the POST. #}
     <form method="post">
         <button type="submit">{{ 'newsletter.unsubscribe.confirm'|trans }}</button>
     </form>

@@ -192,9 +192,14 @@ final class NewsletterController extends AbstractController
     }
 
     /**
-     * GET only shows the page: a mail scanner following the link must not
-     * unsubscribe anyone. The actual opt-out is the POST, which is also what
-     * RFC 8058 one-click sends.
+     * One click for a person, a page to confirm for everything else.
+     *
+     * Somebody who clicked "unsubscribe" in a mail has already said what they
+     * want, and making them say it twice is what turns an opt-out into a spam
+     * report. A mail scanner following the same link clicked nothing, so it gets
+     * the page instead, which acts on POST.
+     *
+     * The RFC 8058 one-click POST lands here too, for the same effect.
      */
     #[Route(
         path: '/newsletter/unsubscribe/{token}',
@@ -210,13 +215,30 @@ final class NewsletterController extends AbstractController
             return $this->page('unknown.html.twig', null, Response::HTTP_NOT_FOUND);
         }
 
-        if ($request->isMethod('GET') && null === $contact->getUnsubscribedAt()) {
+        // Once they are gone there is nothing left to confirm, so a second visit
+        // goes through to the page keeping the other lists within reach.
+        if ($request->isMethod('GET') && ! $this->clicked($request) && null === $contact->getUnsubscribedAt()) {
             return $this->page('unsubscribe.html.twig', $contact);
         }
 
         $this->contactManager->unsubscribe($contact);
 
         return $this->unsubscribed($contact);
+    }
+
+    /**
+     * Did a person click, or did something fetch the link?
+     *
+     * `Sec-Fetch-User` is sent as `?1` only for a navigation the browser
+     * attributes to a real gesture. A scanner following the link has none to
+     * report, whatever user agent it claims — which is why this recognises
+     * clicks rather than trying to recognise scanners. A browser too old to send
+     * it (Safari before 16.4) reads as a fetch too: one more click for its
+     * reader, never the wrong outcome.
+     */
+    private function clicked(Request $request): bool
+    {
+        return '?1' === $request->headers->get('Sec-Fetch-User');
     }
 
     /**
