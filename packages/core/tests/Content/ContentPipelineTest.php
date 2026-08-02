@@ -65,6 +65,47 @@ final class ContentPipelineTest extends TestCase
         self::assertSame('Hello World', $pipeline->getTitle());
     }
 
+    public function testAMethodWinsOverThePropertyItWraps(): void
+    {
+        $page = new Page();
+        $page->setMainContent('  from the getter  ');
+
+        $pipeline = $this->createPipeline($page);
+
+        // mainContent is a protected column read through getMainContent(), which is
+        // also where the trimming setMainContent() applied has to survive.
+        self::assertSame('from the getter', $pipeline->getMainContent());
+    }
+
+    public function testAPropertyWithNoAccessorIsStillFiltered(): void
+    {
+        $filter = new class implements FilterInterface {
+            public function apply(mixed $propertyValue, Page $page, Manager $manager, string $property = ''): mixed
+            {
+                \assert(\is_string($propertyValue));
+
+                return '['.$propertyValue.']';
+            }
+        };
+
+        $page = new Page();
+        $page->h1 = 'Hooked, accessorless';
+
+        $pipeline = $this->createPipeline($page, new FilterRegistry([$filter]), ['h1' => $filter::class]);
+
+        self::assertSame('[Hooked, accessorless]', $pipeline->getFilteredProperty('H1'));
+    }
+
+    public function testAnUnknownPropertyFallsBackToTheCustomPropertyBag(): void
+    {
+        $page = new Page();
+        $page->setCustomProperty('subtitle', 'From the bag');
+
+        $pipeline = $this->createPipeline($page);
+
+        self::assertSame('From the bag', $pipeline->getFilteredProperty('Subtitle'));
+    }
+
     public function testGetFilteredPropertyCachesResult(): void
     {
         $callCount = 0;

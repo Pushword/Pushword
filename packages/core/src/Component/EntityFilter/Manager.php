@@ -5,8 +5,6 @@ namespace Pushword\Core\Component\EntityFilter;
 use Pushword\Core\Content\ContentPipeline;
 use Pushword\Core\Entity\Page;
 
-use function Safe\preg_match;
-
 /**
  * Facade kept for the filter API: {@see Filter\FilterInterface::apply()} and
  * {@see FilterEvent} hand a Manager to filters and listeners. Everything it does
@@ -36,17 +34,15 @@ final class Manager
     }
 
     /**
-     * Magic getter for Entity properties.
+     * Magic getter for Entity properties: `$manager->title()` and `getTitle()` both
+     * resolve `Title`. The pipeline's own magic getter spells that out, so the two
+     * cannot drift.
      *
      * @param array<mixed> $arguments
      */
     public function __call(string $method, array $arguments = []): mixed
     {
-        if (preg_match('/^get/', $method) < 1) {
-            $method = 'get'.ucfirst($method);
-        }
-
-        return $this->pipeline->getFilteredProperty(substr($method, 3), $arguments);
+        return $this->pipeline->__call($method, $arguments);
     }
 
     /**

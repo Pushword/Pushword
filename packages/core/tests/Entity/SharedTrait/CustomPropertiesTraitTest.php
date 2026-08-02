@@ -85,6 +85,32 @@ final class CustomPropertiesTraitTest extends TestCase
         self::assertSame('Alice', $page->getCustomProperty('author'));
     }
 
+    /**
+     * The columns lost their accessors to property hooks; __call() must answer those
+     * names from the property, not from the bag — a template still calling
+     * `page.getTitle()` rendered empty when it read an unset custom property.
+     */
+    public function testAGetterNamedCallIsAnsweredByThePropertyThatReplacedIt(): void
+    {
+        $page = new Page();
+        $page->title = 'From the column';
+        $page->setCustomProperty('title', 'From the bag');
+
+        self::assertSame('From the column', $page->getTitle()); // @phpstan-ignore-line
+        self::assertSame('From the column', $page->title()); // @phpstan-ignore-line
+        self::assertSame('From the bag', $page->getCustomProperty('title'));
+    }
+
+    public function testACallNamingNoPropertyStillReadsTheCustomProperty(): void
+    {
+        $page = new Page();
+        $page->setCustomProperty('somethingCustom', 'from the bag');
+
+        self::assertSame('from the bag', $page->getSomethingCustom()); // @phpstan-ignore-line
+        self::assertSame('from the bag', $page->somethingCustom()); // @phpstan-ignore-line
+        self::assertNull($page->getNeverSet()); // @phpstan-ignore-line
+    }
+
     public function testManagedPropertyKeyIsHidden(): void
     {
         $customProperties = new Page();
