@@ -268,9 +268,11 @@ final class AutoModeDetectionTest extends KernelTestCase
      */
     private function mediaSyncWithEmptyMediaDir(): MediaSync
     {
-        $emptyMediaDir = $this->isolatedContentDir.'/empty-media';
-        $this->filesystem->mkdir($emptyMediaDir);
+        return $this->mediaSyncWithMediaDir($this->isolatedMediaDir('empty-media'));
+    }
 
+    private function mediaSyncWithMediaDir(string $mediaDir): MediaSync
+    {
         return new MediaSync(
             $this->service(SiteRegistry::class),
             $this->service(FlatFileContentDirFinder::class),
@@ -280,8 +282,16 @@ final class AutoModeDetectionTest extends KernelTestCase
             $this->em,
             $this->service(SyncStateManager::class),
             $this->service(MediaStorageAdapter::class),
-            $emptyMediaDir,
+            $mediaDir,
         );
+    }
+
+    private function isolatedMediaDir(string $name): string
+    {
+        $mediaDir = $this->isolatedContentDir.'/'.$name;
+        $this->filesystem->mkdir($mediaDir);
+
+        return $mediaDir;
     }
 
     /**
@@ -301,11 +311,13 @@ final class AutoModeDetectionTest extends KernelTestCase
 
     public function testMediaAutoModeDetectsHashChange(): void
     {
-        /** @var string $mediaDir */
-        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
-
         /** @var string $projectDir */
         $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+
+        // A media dir holding nothing but the file under test. The shared one carries
+        // every fixture media, and any one of them looking new answers "import" on its
+        // own — so this would assert green without ever comparing a hash.
+        $mediaDir = $this->isolatedMediaDir('hash-media');
 
         // Create media in DB with hash
         $testPath = $mediaDir.'/auto-detect-hash.txt';
@@ -326,7 +338,12 @@ final class AutoModeDetectionTest extends KernelTestCase
         // Modify file content (hash will differ)
         file_put_contents($testPath, 'modified content that is different');
 
-        self::assertTrue($this->mediaSync->mustImport('localhost.dev'), 'mustImport should return true when file hash differs from DB');
+        // MediaSync skips the hash check for files no newer than the last recorded sync,
+        // and filemtime has one-second granularity: an earlier test syncing media in this
+        // same worker, in this same second, hides the very change asserted on below.
+        touch($testPath, time() + 200);
+
+        self::assertTrue($this->mediaSyncWithMediaDir($mediaDir)->mustImport('localhost.dev'), 'mustImport should return true when file hash differs from DB');
 
         // Cleanup
         $this->em->remove($media);
