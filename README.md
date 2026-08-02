@@ -59,6 +59,7 @@ read-only to its own repository for distribution. Issues and pull requests belon
 If you're interested in contributing to Pushword, please read our [contributing docs](https://pushword.piedweb.com/contribute) before submitting a pull request.
 
 If Pushword is useful to you, starring the repository is the simplest way to help others find it.
+You can also support its maintenance on [Liberapay](https://liberapay.com/RobinPiedWeb).
 
 ## Credits
 

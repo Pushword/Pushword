@@ -10,6 +10,12 @@
     "source": "https://github.com/Pushword/Pushword/tree/main/packages/version",
     "docs": "https://pushword.piedweb.com/extension/version"
   },
+  "funding": [
+    {
+      "type": "liberapay",
+      "url": "https://liberapay.com/RobinPiedWeb"
+    }
+  ],
   "require": {
     "pushword/core": "*",
     "symfony/serializer": "^8.0"

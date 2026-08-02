@@ -10,6 +10,12 @@
     "source": "https://github.com/Pushword/Pushword/tree/main/packages/flat",
     "docs": "https://pushword.piedweb.com/extension/flat"
   },
+  "funding": [
+    {
+      "type": "liberapay",
+      "url": "https://liberapay.com/RobinPiedWeb"
+    }
+  ],
   "require": {
     "pushword/core": "*",
     "league/csv": "^9.0",

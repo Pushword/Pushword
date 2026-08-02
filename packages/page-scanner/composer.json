@@ -10,6 +10,12 @@
     "source": "https://github.com/Pushword/Pushword/tree/main/packages/page-scanner",
     "docs": "https://pushword.piedweb.com/extension/page-scanner"
   },
+  "funding": [
+    {
+      "type": "liberapay",
+      "url": "https://liberapay.com/RobinPiedWeb"
+    }
+  ],
   "require": {
     "pushword/core": "*"
   },

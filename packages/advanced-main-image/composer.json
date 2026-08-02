@@ -10,6 +10,12 @@
     "source": "https://github.com/Pushword/Pushword/tree/main/packages/advanced-main-image",
     "docs": "https://pushword.piedweb.com/extension/advanced-main-image"
   },
+  "funding": [
+    {
+      "type": "liberapay",
+      "url": "https://liberapay.com/RobinPiedWeb"
+    }
+  ],
   "require": {
     "pushword/core": "*",
     "pushword/admin": "^1"

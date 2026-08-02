@@ -10,6 +10,12 @@
     "source": "https://github.com/Pushword/Pushword/tree/main/packages/conversation",
     "docs": "https://pushword.piedweb.com/extension/conversation"
   },
+  "funding": [
+    {
+      "type": "liberapay",
+      "url": "https://liberapay.com/RobinPiedWeb"
+    }
+  ],
   "require": {
     "pushword/core": "*",
     "pushword/flat": "*",

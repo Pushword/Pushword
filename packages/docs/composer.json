@@ -9,6 +9,12 @@
     "source": "https://github.com/Pushword/Pushword/tree/main/packages/docs",
     "docs": "https://pushword.piedweb.com"
   },
+  "funding": [
+    {
+      "type": "liberapay",
+      "url": "https://liberapay.com/RobinPiedWeb"
+    }
+  ],
   "require": {},
   "suggest": {
     "pushword/admin": "Manage pages, media and users from an EasyAdmin-based back-office.",

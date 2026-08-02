@@ -10,6 +10,12 @@
     "source": "https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor",
     "docs": "https://pushword.piedweb.com/extension/admin-block-editor"
   },
+  "funding": [
+    {
+      "type": "liberapay",
+      "url": "https://liberapay.com/RobinPiedWeb"
+    }
+  ],
   "require": {
     "jolicode/jolitypo": "^1.4",
     "pushword/core": "*"
