@@ -7,6 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
+use Pushword\Core\Utils\Entity;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -340,6 +341,10 @@ trait ExtensiblePropertiesTrait
     /**
      * Minimal __call for Twig ergonomics: page.someKey delegates to getCustomProperty().
      *
+     * A getter dropped in favour of a hooked property is answered by that property:
+     * a template still calling `page.getTitle()` would otherwise land on the custom
+     * property `title`, which nobody set — rendering empty rather than failing.
+     *
      * @param mixed[] $arguments
      */
     public function __call(string $method, array $arguments = []): mixed
@@ -348,12 +353,12 @@ trait ExtensiblePropertiesTrait
             return null;
         }
 
-        if (str_starts_with($method, 'get')) {
-            $property = lcfirst(substr($method, 3));
+        $property = str_starts_with($method, 'get') ? lcfirst(substr($method, 3)) : lcfirst($method);
 
-            return $this->getCustomProperty($property);
+        if (Entity::isPubliclyReadableProperty($this, $property)) {
+            return $this->{$property}; // @phpstan-ignore property.dynamicName
         }
 
-        return $this->getCustomProperty(lcfirst($method));
+        return $this->getCustomProperty($property);
     }
 }

@@ -217,104 +217,6 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
         return trim($this->host.'/'.$this->slug.' ');
     }
 
-    // --- Getters/setters for hooked properties (for caller compatibility) ---
-
-    public function getSlug(): string
-    {
-        return $this->slug;
-    }
-
-    public function setSlug(string|int|null $slug): self
-    {
-        $this->slug = is_int($slug) ? (string) $slug : $slug;
-
-        return $this;
-    }
-
-    public function getH1(): string
-    {
-        return $this->h1;
-    }
-
-    public function setH1(?string $h1): self
-    {
-        $this->h1 = $h1;
-
-        return $this;
-    }
-
-    public function getTitle(): string
-    {
-        return $this->title;
-    }
-
-    public function setTitle(?string $title): self
-    {
-        $this->title = $title;
-
-        return $this;
-    }
-
-    public function getMetaRobots(): string
-    {
-        return $this->metaRobots;
-    }
-
-    public function setMetaRobots(?string $metaRobots): self
-    {
-        $this->metaRobots = $metaRobots;
-
-        return $this;
-    }
-
-    public function getCustomCanonical(): ?string
-    {
-        return $this->customCanonical;
-    }
-
-    public function setCustomCanonical(?string $customCanonical): self
-    {
-        $this->customCanonical = $customCanonical;
-
-        return $this;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function setName(?string $name): self
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
-    public function getPublishedAt(): ?DateTimeInterface
-    {
-        return $this->publishedAt;
-    }
-
-    public function setPublishedAt(?DateTimeInterface $publishedAt): self
-    {
-        $this->publishedAt = $publishedAt;
-
-        return $this;
-    }
-
-    public function getHoldPublicationAt(): ?DateTimeInterface
-    {
-        return $this->holdPublicationAt;
-    }
-
-    public function setHoldPublicationAt(?DateTimeInterface $holdPublicationAt): self
-    {
-        $this->holdPublicationAt = $holdPublicationAt;
-
-        return $this;
-    }
-
     public function isHoldPublication(): bool
     {
         return null !== $this->holdPublicationAt;
@@ -325,16 +227,6 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
         $this->holdPublicationAt = $hold ? ($this->holdPublicationAt ?? new DateTime()) : null;
 
         return $this;
-    }
-
-    public function getLocale(): string
-    {
-        return $this->locale;
-    }
-
-    public function getEditMessage(): string
-    {
-        return $this->editMessage;
     }
 
     public function getRealSlug(): string

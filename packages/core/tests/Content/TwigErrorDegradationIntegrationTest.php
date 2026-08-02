@@ -24,7 +24,7 @@ final class TwigErrorDegradationIntegrationTest extends KernelTestCase
         $page = new Page();
         $page->host = 'localhost';
         $page->locale = 'en';
-        $page->setSlug('twig-error-demo');
+        $page->slug = 'twig-error-demo';
         $page->setMainContent("Good paragraph.\n\nBroken: {{ undefined_function_xyz() }}\n\nAnother good paragraph.");
 
         $html = $factory->get($page)->getMainContent();

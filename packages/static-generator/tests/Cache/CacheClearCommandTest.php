@@ -104,13 +104,13 @@ final class CacheClearCommandTest extends KernelTestCase
         $entityManager = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $homepage = $entityManager->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev', 'slug' => 'homepage']);
         self::assertInstanceOf(Page::class, $homepage);
-        $originalH1 = $homepage->getH1();
+        $originalH1 = $homepage->h1;
 
         try {
             // Hold the page and mutate its content: the draft must never reach the
             // cache dir; the frozen version must survive the clear + warm cycle.
             $homepage->setHoldPublication(true);
-            $homepage->setH1('DRAFT must not be published');
+            $homepage->h1 = 'DRAFT must not be published';
             $entityManager->flush();
 
             $commandTester->execute(['host' => 'localhost.dev']);
@@ -120,7 +120,7 @@ final class CacheClearCommandTest extends KernelTestCase
             self::assertStringNotContainsString('DRAFT must not be published', (string) file_get_contents($this->cacheDir.'/index.html'));
         } finally {
             $homepage->setHoldPublication(false);
-            $homepage->setH1($originalH1);
+            $homepage->h1 = $originalH1;
             $entityManager->flush();
         }
     }

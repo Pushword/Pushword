@@ -32,9 +32,7 @@ class Extended implements FilterInterface
         $this->resolutionStack[$stackKey] = true;
 
         try {
-            $getter = 'get'.ucfirst($property);
-
-            return $manager->getManagerPool()->getManager($extendedPage)->$getter(); // @phpstan-ignore-line
+            return $manager->getPipeline()->for($extendedPage)->getFilteredProperty(ucfirst($property));
         } finally {
             unset($this->resolutionStack[$stackKey]);
         }

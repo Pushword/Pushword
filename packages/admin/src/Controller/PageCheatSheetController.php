@@ -28,9 +28,9 @@ class PageCheatSheetController extends AbstractController
     {
         if (null === ($page = $this->pageRepo->findOneBy(['slug' => PageCheatSheetCrudController::CHEATSHEET_SLUG]))) {
             $page = (new Page());
-            $page->setSlug(PageCheatSheetCrudController::CHEATSHEET_SLUG);
-            $page->setH1($this->translator->trans('adminLabelCheatsheet'));
-            $page->setMetaRobots('noindex');
+            $page->slug = PageCheatSheetCrudController::CHEATSHEET_SLUG;
+            $page->h1 = $this->translator->trans('adminLabelCheatsheet');
+            $page->metaRobots = 'noindex';
             $this->entityManager->persist($page);
             $this->entityManager->flush();
         }

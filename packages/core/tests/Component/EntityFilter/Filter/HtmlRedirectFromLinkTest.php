@@ -19,7 +19,7 @@ final class HtmlRedirectFromLinkTest extends TestCase
     private function createPage(string $slug, string $host = 'localhost'): Page
     {
         $page = new Page(false);
-        $page->setSlug($slug);
+        $page->slug = $slug;
         $page->host = $host;
         $page->locale = 'en';
 

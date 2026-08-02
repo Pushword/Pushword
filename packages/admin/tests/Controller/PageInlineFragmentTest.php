@@ -159,7 +159,7 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
             '_token' => $token,
         ]);
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
-        self::assertNotNull($this->reloadPage($pageId)->getPublishedAt());
+        self::assertNotNull($this->reloadPage($pageId)->publishedAt);
 
         $fragment = new Crawler((string) $client->getResponse()->getContent());
         $input = $fragment->filter('input[hx-vals*="published"]');
@@ -172,7 +172,7 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
             '_token' => $token,
         ]);
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
-        self::assertNull($this->reloadPage($pageId)->getPublishedAt());
+        self::assertNull($this->reloadPage($pageId)->publishedAt);
         self::assertNull(
             new Crawler((string) $client->getResponse()->getContent())
                 ->filter('input[hx-vals*="published"]')->attr('checked'),
@@ -187,7 +187,7 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
         $pageId = $this->createPage();
         // A new page comes out published, so ask for the opposite: a rejected
         // request must leave the state exactly where it was.
-        $before = $this->reloadPage($pageId)->getPublishedAt();
+        $before = $this->reloadPage($pageId)->publishedAt;
         self::assertNotNull($before);
 
         $client->request(Request::METHOD_POST, '/admin/page/'.$pageId.'/toggle-published', [
@@ -196,7 +196,7 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
         ]);
 
         self::assertSame(Response::HTTP_FORBIDDEN, $client->getResponse()->getStatusCode());
-        self::assertEquals($before, $this->reloadPage($pageId)->getPublishedAt());
+        self::assertEquals($before, $this->reloadPage($pageId)->publishedAt);
     }
 
     public function testToggleHoldSwitchesBothWaysAndRendersBackAnInteractiveFragment(): void
@@ -253,8 +253,8 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
         $page = new Page();
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setSlug('inline-fragment-'.uniqid());
-        $page->setH1('Inline fragment fixture');
+        $page->slug = 'inline-fragment-'.uniqid();
+        $page->h1 = 'Inline fragment fixture';
         $page->setMainContent('Fixture body.');
 
         $entityManager = $this->getEntityManager();

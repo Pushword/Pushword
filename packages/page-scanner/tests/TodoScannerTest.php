@@ -185,8 +185,8 @@ final class TodoScannerTest extends KernelTestCase
     private function buildSourcePage(string $mainContent): Page
     {
         $page = new Page();
-        $page->setH1('Source page');
-        $page->setSlug('source-page');
+        $page->h1 = 'Source page';
+        $page->slug = 'source-page';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->createdAt = new DateTime();
@@ -198,8 +198,8 @@ final class TodoScannerTest extends KernelTestCase
     private function createPage(string $slug, string $host, DateTime $publishedAt): Page
     {
         $page = new Page();
-        $page->setH1('Target: '.$slug);
-        $page->setSlug($slug);
+        $page->h1 = 'Target: '.$slug;
+        $page->slug = $slug;
         $page->host = $host;
         $page->locale = 'en';
         $page->createdAt = new DateTime();

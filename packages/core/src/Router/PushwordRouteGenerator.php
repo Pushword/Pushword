@@ -36,11 +36,12 @@ final class PushwordRouteGenerator implements ResetInterface
     #[AsTwigFunction('homepage')]
     public function generatePathForHomePage(?Page $page = null, bool $canonical = false): string
     {
-        $homepage = new Page()->setSlug('');
+        $homepage = new Page();
+        $homepage->slug = '';
 
         if (null !== $page) {
             if ($page->locale !== $this->apps->get()->locale) {
-                $homepage->setSlug($page->locale);
+                $homepage->slug = $page->locale;
             }
 
             $homepage->host = $page->host;

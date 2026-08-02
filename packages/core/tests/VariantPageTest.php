@@ -23,8 +23,8 @@ final class VariantPageTest extends KernelTestCase
     private function newPage(string $slug, ?Page $variantOf = null): Page
     {
         $page = new Page();
-        $page->setH1(ucfirst($slug));
-        $page->setSlug($slug);
+        $page->h1 = ucfirst($slug);
+        $page->slug = $slug;
         $page->locale = 'en';
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
@@ -146,7 +146,7 @@ final class VariantPageTest extends KernelTestCase
             $slugs = [];
             foreach ($result as $page) {
                 self::assertInstanceOf(Page::class, $page);
-                $slugs[] = $page->getSlug();
+                $slugs[] = $page->slug;
             }
 
             self::assertContains('indexable-master-page', $slugs);
@@ -204,8 +204,8 @@ final class VariantPageTest extends KernelTestCase
             self::assertNotNull($b);
             self::assertNotNull($m);
             self::assertFalse($a->isVariant(), 'Promoted page is now the master');
-            self::assertSame('promote-a', $m->variantOf?->getSlug());
-            self::assertSame('promote-a', $b->variantOf?->getSlug());
+            self::assertSame('promote-a', $m->variantOf?->slug);
+            self::assertSame('promote-a', $b->variantOf?->slug);
         } finally {
             $repo = $em->getRepository(Page::class);
             foreach (['promote-a', 'promote-b', 'promote-master'] as $slug) {

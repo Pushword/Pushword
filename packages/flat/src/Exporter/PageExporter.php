@@ -89,7 +89,7 @@ final class PageExporter
         }
 
         $slugSet = array_flip($slugs);
-        $subset = array_filter($pages, static fn (Page $page): bool => isset($slugSet[$page->getSlug()]));
+        $subset = array_filter($pages, static fn (Page $page): bool => isset($slugSet[$page->slug]));
 
         foreach ($subset as $page) {
             if ($page->hasRedirection()) {
@@ -113,10 +113,10 @@ final class PageExporter
         // Delete .md files for pages that have become redirections
         $redirectionPages = array_filter($pages, static fn (Page $page): bool => $page->hasRedirection());
         foreach ($redirectionPages as $page) {
-            $mdFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
+            $mdFilePath = $this->exportDir.'/'.$page->slug.'.md';
             if ($this->filesystem->exists($mdFilePath)) {
                 $this->filesystem->remove($mdFilePath);
-                $this->output?->writeln(\sprintf('Deleted %s.md (now a redirection)', $page->getSlug()));
+                $this->output?->writeln(\sprintf('Deleted %s.md (now a redirection)', $page->slug));
             }
         }
 
@@ -153,7 +153,7 @@ final class PageExporter
 
         $expectedSlugs = [];
         foreach ($exportablePages as $page) {
-            $expectedSlugs[$page->getSlug()] = true;
+            $expectedSlugs[$page->slug] = true;
         }
 
         foreach ($this->collectExportedMarkdownFiles($this->exportDir) as $filePath) {
@@ -246,7 +246,7 @@ final class PageExporter
             $exported = $this->exportPage($page, $force);
         } catch (Throwable $throwable) {
             $this->logger?->error('Flat export failed for page {slug}: {message}', [
-                'slug' => $page->getSlug(),
+                'slug' => $page->slug,
                 'message' => $throwable->getMessage(),
             ]);
 
@@ -254,7 +254,7 @@ final class PageExporter
         }
 
         if ($exported) {
-            $this->output?->writeln(\sprintf('Exported %s.md', $page->getSlug()));
+            $this->output?->writeln(\sprintf('Exported %s.md', $page->slug));
         }
     }
 
@@ -319,7 +319,7 @@ final class PageExporter
 
     private function isPublished(Page $page): bool
     {
-        $publishedAt = $page->getPublishedAt();
+        $publishedAt = $page->publishedAt;
 
         return null !== $publishedAt && $publishedAt <= new DateTime();
     }
@@ -406,14 +406,14 @@ final class PageExporter
      */
     private function buildCsvRow(Page $page): array
     {
-        $h1 = $page->getH1();
+        $h1 = $page->h1;
 
         return [
-            'slug' => $page->getSlug(),
-            'h1' => '' !== $h1 ? $h1 : $page->getTitle(),
-            'publishedAt' => null !== $page->getPublishedAt() ? $page->getPublishedAt()->format('Y-m-d H:i') : '',
+            'slug' => $page->slug,
+            'h1' => '' !== $h1 ? $h1 : $page->title,
+            'publishedAt' => null !== $page->publishedAt ? $page->publishedAt->format('Y-m-d H:i') : '',
             'locale' => $page->locale,
-            'parentPage' => null !== $page->parentPage ? $page->parentPage->getSlug() : '',
+            'parentPage' => null !== $page->parentPage ? $page->parentPage->slug : '',
             'tags' => trim($page->getTags()),
         ];
     }
@@ -425,7 +425,7 @@ final class PageExporter
 
     private function exportPage(Page $page, bool $force = false): bool
     {
-        $exportFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
+        $exportFilePath = $this->exportDir.'/'.$page->slug.'.md';
 
         // Fast path: skip if file is newer than DB and not forced (avoids expensive content generation)
         if (

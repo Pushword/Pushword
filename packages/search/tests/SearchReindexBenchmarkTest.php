@@ -131,8 +131,8 @@ final class SearchReindexBenchmarkTest extends KernelTestCase
     {
         for ($i = 0; $i < $count; ++$i) {
             $page = new Page();
-            $page->setH1('Bench Page '.$i);
-            $page->setSlug('search-bench-'.$i);
+            $page->h1 = 'Bench Page '.$i;
+            $page->slug = 'search-bench-'.$i;
             $page->host = self::HOST;
             $page->locale = 'en';
             $page->createdAt = new DateTime();

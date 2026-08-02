@@ -27,7 +27,7 @@ final readonly class PageResolver
 
         // Use pre-loaded page from static generator if available (avoids DB re-query)
         $preloaded = $request->attributes->get('_pushword_page');
-        $page = $preloaded instanceof Page && self::normalizeSlug($preloaded->getSlug()) === $slug
+        $page = $preloaded instanceof Page && self::normalizeSlug($preloaded->slug) === $slug
             ? $preloaded
             : $this->pageRepository->getPage($slug, $this->requestContext->currentSite->getHostForDoctrineSearch());
 

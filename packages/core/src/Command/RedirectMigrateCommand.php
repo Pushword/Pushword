@@ -43,7 +43,7 @@ final readonly class RedirectMigrateCommand
             $pages = $this->pageRepo->findByHost($currentHost);
             $bySlug = [];
             foreach ($pages as $page) {
-                $bySlug[$page->getSlug()] = $page;
+                $bySlug[$page->slug] = $page;
             }
 
             $result = $this->resolver->resolve($pages);

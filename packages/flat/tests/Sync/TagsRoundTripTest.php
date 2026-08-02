@@ -78,13 +78,13 @@ final class TagsRoundTripTest extends KernelTestCase
     {
         // Create a page with tags
         $page = new Page();
-        $page->setSlug('tags-test-page');
-        $page->setH1('Tags Test');
+        $page->slug = 'tags-test-page';
+        $page->h1 = 'Tags Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setTags('cms php symfony');
         $page->setMainContent('Test content');
-        $page->setPublishedAt(new DateTime());
+        $page->publishedAt = new DateTime();
 
         $this->em->persist($page);
         $this->em->flush();

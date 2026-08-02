@@ -48,8 +48,8 @@ final class PageScannerTest extends KernelTestCase
     public function getPage(): Page
     {
         $page = new Page();
-        $page->setH1('Welcome to Pushword !');
-        $page->setSlug('homepage');
+        $page->h1 = 'Welcome to Pushword !';
+        $page->slug = 'homepage';
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');
         $page->setMainContent('...');

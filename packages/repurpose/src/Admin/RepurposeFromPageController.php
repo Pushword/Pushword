@@ -36,7 +36,7 @@ final class RepurposeFromPageController extends AbstractController
     {
         $page = $this->pageRepository->find($id) ?? throw new NotFoundHttpException('Page not found.');
         $host = $page->host;
-        $slug = $page->getSlug();
+        $slug = $page->slug;
 
         if ([] !== $this->socialPosts->findBy(['host' => $host, 'page' => $slug])) {
             return $this->redirect(

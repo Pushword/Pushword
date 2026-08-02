@@ -45,7 +45,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
                     $currentPage,
                     $totalPages,
                     $hostName,
-                    $page->getSlug() ?: 'index',
+                    $page->slug ?: 'index',
                 ));
 
                 continue;
@@ -58,13 +58,13 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
                     $currentPage,
                     $totalPages,
                     $hostName,
-                    $page->getSlug() ?: 'index',
+                    $page->slug ?: 'index',
                 ));
 
                 continue;
             }
 
-            $slug = $page->getSlug() ?: 'index';
+            $slug = $page->slug ?: 'index';
             $this->staticAppGenerator->writeln(\sprintf(
                 '[%d/%d] Generating %s/%s',
                 $currentPage,
@@ -90,7 +90,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
                 }
 
                 // Update state for this page
-                $stateManager->setPageState($hostName, $page->getSlug(), $this->toImmutable($page->updatedAt), $epoch); // @phpstan-ignore argument.type
+                $stateManager->setPageState($hostName, $page->slug, $this->toImmutable($page->updatedAt), $epoch); // @phpstan-ignore argument.type
             } catch (Throwable $e) {
                 if (true === $stopwatch?->isStarted('page:'.$slug)) {
                     $stopwatch->stop('page:'.$slug);
@@ -130,7 +130,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
 
         return $stateManager->needsRegeneration(
             $host,
-            $page->getSlug(),
+            $page->slug,
             $this->toImmutable($page->updatedAt), // @phpstan-ignore argument.type
             $epoch,
         );
@@ -176,7 +176,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         $pages = $this->getPageRepository()->getPublishedPages($this->app->getMainHost());
 
         $slugSet = array_flip($slugs);
-        $pages = array_filter($pages, static fn (Page $page): bool => isset($slugSet[$page->getSlug()]));
+        $pages = array_filter($pages, static fn (Page $page): bool => isset($slugSet[$page->slug]));
         $this->getPageRepository()->preloadTranslations($pages);
 
         $hostName = $this->app->getMainHost();
@@ -189,24 +189,24 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
             ++$currentPage;
 
             if ($this->incremental && ! $this->needsRegeneration($page, $hostName, $epoch)) {
-                echo \sprintf("[%d/%d] Skipped %s/%s (unchanged)\n", $currentPage, $totalPages, $hostName, $page->getSlug() ?: 'index');
+                echo \sprintf("[%d/%d] Skipped %s/%s (unchanged)\n", $currentPage, $totalPages, $hostName, $page->slug ?: 'index');
 
                 continue;
             }
 
             if (null !== $page->holdPublicationAt) {
-                echo \sprintf("[%d/%d] Held %s/%s (publication on hold)\n", $currentPage, $totalPages, $hostName, $page->getSlug() ?: 'index');
+                echo \sprintf("[%d/%d] Held %s/%s (publication on hold)\n", $currentPage, $totalPages, $hostName, $page->slug ?: 'index');
 
                 continue;
             }
 
-            $slug = $page->getSlug() ?: 'index';
+            $slug = $page->slug ?: 'index';
             echo \sprintf("[%d/%d] Generating %s/%s\n", $currentPage, $totalPages, $hostName, $slug);
 
             try {
                 $this->generatePage($page);
 
-                $pageStates[$page->getSlug()] = [
+                $pageStates[$page->slug] = [
                     'generatedAt' => new DateTimeImmutable()->format(DateTimeInterface::ATOM),
                     'pageUpdatedAt' => $this->toImmutable($page->updatedAt)->format(DateTimeInterface::ATOM), // @phpstan-ignore argument.type
                     'epoch' => $epoch,

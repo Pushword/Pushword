@@ -165,8 +165,8 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
         }
 
         $page = new Page();
-        $page->setH1($h1);
-        $page->setSlug($slug);
+        $page->h1 = $h1;
+        $page->slug = $slug;
         $page->host = 'admin-block-editor.test';
         $page->locale = 'en';
         $page->setMainContent($content);

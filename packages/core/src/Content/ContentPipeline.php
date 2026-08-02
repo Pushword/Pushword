@@ -6,9 +6,11 @@ use Exception;
 use LogicException;
 use Pushword\Core\Component\EntityFilter\FilterEvent;
 use Pushword\Core\Component\EntityFilter\FilterRegistry;
+use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Utils\Entity;
 
 use function Safe\preg_match;
 
@@ -17,6 +19,8 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 final class ContentPipeline
 {
     private readonly SiteConfig $site;
+
+    private ?Manager $legacyManager = null;
 
     /** @var array<string, mixed> */
     private array $propertyCache = [];
@@ -69,18 +73,10 @@ final class ContentPipeline
             return $this->propertyCache[$cacheKey];
         }
 
-        $filterEvent = new FilterEvent(
-            $this->factory->getLegacyManager($this->page),
-            $property,
-        );
+        $filterEvent = new FilterEvent($this->getLegacyManager(), $property);
         $this->eventDispatcher->dispatch($filterEvent, FilterEvent::NAME_BEFORE);
 
-        $method = 'get'.$property;
-        if (! \is_callable($pageMethod = [$this->page, $method])) {
-            throw new LogicException('Method '.$method.' is not callable on Page');
-        }
-
-        $returnValue = [] !== $arguments ? \call_user_func_array($pageMethod, $arguments) : \call_user_func($pageMethod);
+        $returnValue = $this->readProperty($property, $arguments);
 
         if (! \is_scalar($returnValue)) {
             throw new LogicException('Property '.$property.' must return a scalar value');
@@ -93,6 +89,47 @@ final class ContentPipeline
         $this->propertyCache[$cacheKey] = $returnValue;
 
         return $returnValue;
+    }
+
+    /**
+     * Page carries its columns as PHP 8.4 hooked properties and keeps a getter only
+     * where reading does more than return the value — `getMainContent()` (protected
+     * column), `getTemplate()` (falls back to the extended page). A real method wins
+     * over the property it wraps, and `Page::__call()` answers what is neither, from
+     * `customProperties`. The test has to be `method_exists()`: `is_callable()` is
+     * true for every `getX` on a class that declares `__call()`.
+     *
+     * @param array<mixed> $arguments
+     */
+    private function readProperty(string $property, array $arguments): mixed
+    {
+        $method = 'get'.$property;
+        $name = lcfirst($property);
+
+        if ([] === $arguments
+            && ! method_exists($this->page, $method)
+            && Entity::isPubliclyReadableProperty($this->page, $name)) {
+            return $this->page->{$name}; // @phpstan-ignore property.dynamicName
+        }
+
+        return $this->page->{$method}(...$arguments); // @phpstan-ignore method.dynamicName
+    }
+
+    /**
+     * The pipeline of another page, to resolve a property against it — what the
+     * `Extended` filter walks when a page inherits an empty field.
+     */
+    public function for(Page $page): self
+    {
+        return $this->factory->get($page);
+    }
+
+    /**
+     * Filters still receive the legacy Manager, which is a facade over this pipeline.
+     */
+    public function getLegacyManager(): Manager
+    {
+        return $this->legacyManager ??= new Manager($this);
     }
 
     /**
@@ -169,9 +206,7 @@ final class ContentPipeline
                 throw new Exception('Filter `'.$filter.'` not found');
             }
 
-            // Pass the legacy Manager for backward compatibility
-            $legacyManager = $this->factory->getLegacyManager($this->page);
-            $propertyValue = $filterInstance->apply($propertyValue, $this->page, $legacyManager, $property);
+            $propertyValue = $filterInstance->apply($propertyValue, $this->page, $this->getLegacyManager(), $property);
         }
 
         return $propertyValue;

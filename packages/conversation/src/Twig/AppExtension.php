@@ -141,7 +141,7 @@ class AppExtension
             return '' === $pageOrTag ? [] : [trim($pageOrTag)];
         }
 
-        return [trim($pageOrTag->getSlug())];
+        return [trim($pageOrTag->slug)];
     }
 
     /**

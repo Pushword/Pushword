@@ -131,7 +131,7 @@ final class WorkerModeStateResetTest extends KernelTestCase
 
         // --- Request A: a page request sets the current page. ---
         $page = new Page();
-        $page->setSlug(self::PROBE_SLUG);
+        $page->slug = self::PROBE_SLUG;
 
         $context->currentPage = $page;
         self::assertSame($page, $context->currentPage);
@@ -340,8 +340,8 @@ final class WorkerModeStateResetTest extends KernelTestCase
         self::getContainer()->get(PageCacheSuppressor::class)->suppress(function () use ($host): void {
             $em = $this->em();
             $page = new Page();
-            $page->setH1('Worker mode probe');
-            $page->setSlug(self::PROBE_SLUG);
+            $page->h1 = 'Worker mode probe';
+            $page->slug = self::PROBE_SLUG;
             $page->host = $host;
             $page->locale = 'en';
             $page->createdAt = new DateTime();

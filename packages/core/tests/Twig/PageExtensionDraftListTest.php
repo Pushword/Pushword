@@ -84,10 +84,10 @@ final class PageExtensionDraftListTest extends KernelTestCase
         $page->host = $host;
         $page->locale = 'en';
         $page->metaRobots = $metaRobots;
-        $page->setSlug($slug);
-        $page->setH1('Draft list fixture '.$slug);
+        $page->slug = $slug;
+        $page->h1 = 'Draft list fixture '.$slug;
         $page->setMainContent('Draft list fixture content.');
-        $page->setPublishedAt($publishedAt);
+        $page->publishedAt = $publishedAt;
 
         $this->entityManager->persist($page);
     }

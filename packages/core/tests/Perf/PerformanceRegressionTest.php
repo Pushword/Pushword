@@ -394,8 +394,8 @@ final class PerformanceRegressionTest extends KernelTestCase
         self::getContainer()->get(PageCacheSuppressor::class)->suppress(function () use ($host, $count): void {
             for ($i = 0; $i < $count; ++$i) {
                 $page = new Page();
-                $page->setH1('Perf '.$i);
-                $page->setSlug('perf-page-'.$i);
+                $page->h1 = 'Perf '.$i;
+                $page->slug = 'perf-page-'.$i;
                 $page->host = $host;
                 $page->locale = 'en';
                 $page->createdAt = new DateTime();

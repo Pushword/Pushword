@@ -69,11 +69,11 @@ final class PageExtensionPagesListLocaleTest extends KernelTestCase
         $page = new Page();
         $page->host = self::HOST;
         $page->locale = $locale;
-        $page->setSlug($slug);
-        $page->setH1('Locale fixture '.$slug);
+        $page->slug = $slug;
+        $page->h1 = 'Locale fixture '.$slug;
         $page->setMainContent('Locale fixture content.');
         $page->setTags([self::SHARED_TAG]);
-        $page->setPublishedAt(new DateTime('-1 day'));
+        $page->publishedAt = new DateTime('-1 day');
 
         $this->entityManager->persist($page);
     }

@@ -70,8 +70,8 @@ final class PageControllerTest extends KernelTestCase
         $em = self::getContainer()->get(EntityManagerInterface::class);
 
         $destination = new Page();
-        $destination->setH1('Redirect Destination');
-        $destination->setSlug('redirect-from-destination');
+        $destination->h1 = 'Redirect Destination';
+        $destination->slug = 'redirect-from-destination';
         $destination->locale = 'en';
         $destination->host = 'localhost.dev';
         $destination->createdAt = new DateTime();
@@ -124,7 +124,7 @@ final class PageControllerTest extends KernelTestCase
 
         $hidden = $this->createFeedPage('feed-noindex-child', 'Hidden Child');
         $hidden->parentPage = $parent;
-        $hidden->setMetaRobots('noindex, noarchive');
+        $hidden->metaRobots = 'noindex, noarchive';
 
         $em->persist($hidden);
 
@@ -156,8 +156,8 @@ final class PageControllerTest extends KernelTestCase
     private function createFeedPage(string $slug, string $h1): Page
     {
         $page = new Page();
-        $page->setH1($h1);
-        $page->setSlug($slug);
+        $page->h1 = $h1;
+        $page->slug = $slug;
         $page->locale = 'en';
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
@@ -204,8 +204,8 @@ final class PageControllerTest extends KernelTestCase
 
         // Create a page on localhost.dev with a translation on admin-block-editor.test
         $enPage = new Page();
-        $enPage->setH1('Cross-host EN');
-        $enPage->setSlug('cross-host-test');
+        $enPage->h1 = 'Cross-host EN';
+        $enPage->slug = 'cross-host-test';
         $enPage->locale = 'en';
         $enPage->host = 'localhost.dev';
         $enPage->createdAt = new DateTime();
@@ -213,8 +213,8 @@ final class PageControllerTest extends KernelTestCase
         $enPage->setMainContent('English page');
 
         $dePage = new Page();
-        $dePage->setH1('Cross-host DE');
-        $dePage->setSlug('cross-host-test-de');
+        $dePage->h1 = 'Cross-host DE';
+        $dePage->slug = 'cross-host-test-de';
         $dePage->locale = 'de';
         $dePage->host = 'admin-block-editor.test';
         $dePage->createdAt = new DateTime();
@@ -269,9 +269,9 @@ final class PageControllerTest extends KernelTestCase
         $media = $em->getRepository(Media::class)->findOneBy([]);
 
         $page = new Page();
-        $page->setH1('Escapade en date(Y)');
-        $page->setSlug('date-shortcode-test');
-        $page->setTitle('Voyage en date(Y)');
+        $page->h1 = 'Escapade en date(Y)';
+        $page->slug = 'date-shortcode-test';
+        $page->title = 'Voyage en date(Y)';
         $page->setSearchExcerpt('Une escapade inoubliable en date(Y).');
         $page->locale = 'en';
         $page->createdAt = new DateTime();
@@ -372,15 +372,15 @@ final class PageControllerTest extends KernelTestCase
         $em = self::getContainer()->get(EntityManagerInterface::class);
 
         $page = new Page();
-        $page->setH1('Head of '.$slug);
-        $page->setSlug($slug);
+        $page->h1 = 'Head of '.$slug;
+        $page->slug = $slug;
         $page->locale = 'en';
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
         $page->setMainContent('Content here');
-        $page->setMetaRobots($metaRobots);
-        $page->setCustomCanonical($customCanonical);
+        $page->metaRobots = $metaRobots;
+        $page->customCanonical = $customCanonical;
 
         $em->persist($page);
         $em->flush();

@@ -2,39 +2,27 @@
 
 namespace Pushword\Core\Component\EntityFilter;
 
-use Exception;
-use LogicException;
+use Pushword\Core\Content\ContentPipeline;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Site\SiteConfig;
-use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\preg_match;
 
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-
 /**
+ * Facade kept for the filter API: {@see Filter\FilterInterface::apply()} and
+ * {@see FilterEvent} hand a Manager to filters and listeners. Everything it does
+ * happens in the {@see ContentPipeline} it wraps — there is one pipeline per page
+ * and one Manager per pipeline, so both see the same filtered values.
+ *
  * @method string getMainContent()
  */
 final class Manager
 {
-    private readonly SiteConfig $app;
+    public function __construct(private readonly ContentPipeline $pipeline)
+    {
+    }
 
-    private readonly SiteRegistry $apps;
-
-    /** @var array<string, mixed> */
-    private array $propertyCache = [];
-
-    /** @var array<string, string> */
-    private static array $snakeCaseCache = [];
-
-    public function __construct(
-        private readonly ManagerPool $managerPool,
-        private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly FilterRegistry $filterRegistry,
-        public readonly Page $page,
-    ) {
-        $this->apps = $managerPool->apps;
-        $this->app = $this->apps->get($page->host);
+    public Page $page {
+        get => $this->pipeline->page;
     }
 
     public function getPage(): Page
@@ -42,9 +30,9 @@ final class Manager
         return $this->page;
     }
 
-    public function getManagerPool(): ManagerPool
+    public function getPipeline(): ContentPipeline
     {
-        return $this->managerPool;
+        return $this->pipeline;
     }
 
     /**
@@ -58,83 +46,7 @@ final class Manager
             $method = 'get'.ucfirst($method);
         }
 
-        $property = substr($method, 3);
-        $cacheKey = [] !== $arguments ? $property.':'.hash('xxh3', (string) json_encode($arguments)) : $property;
-
-        if (isset($this->propertyCache[$cacheKey])) {
-            return $this->propertyCache[$cacheKey];
-        }
-
-        $filterEvent = new FilterEvent($this, $property);
-        $this->eventDispatcher->dispatch($filterEvent, FilterEvent::NAME_BEFORE);
-
-        if (! \is_callable($pageMethod = [$this->page, $method])) {
-            throw new LogicException();
-        }
-
-        $returnValue = [] !== $arguments ? \call_user_func_array($pageMethod, $arguments) : \call_user_func($pageMethod);
-
-        if (! \is_scalar($returnValue)) {
-            throw new LogicException();
-        }
-
-        $returnValue = $this->filter($property, $returnValue);
-
-        $this->eventDispatcher->dispatch($filterEvent, FilterEvent::NAME_AFTER);
-
-        $this->propertyCache[$cacheKey] = $returnValue;
-
-        return $returnValue;
-    }
-
-    /**
-     * main_content => apply filters on mainContent (*_filters => camelCase(*))
-     * string       => apply filters on each string property.
-     */
-    private function filter(string $property, bool|float|int|string|null $propertyValue): mixed
-    {
-        $filters = $this->getFilters($this->camelCaseToSnakeCase($property));
-
-        if ([] === $filters && \is_string($propertyValue)) {
-            $filters = $this->getFilters('string');
-        }
-
-        return [] !== $filters
-            ? $this->applyFilters('' !== (string) $propertyValue ? $propertyValue : '', $filters, $property)
-            : $propertyValue;
-    }
-
-    private function camelCaseToSnakeCase(string $string): string
-    {
-        return self::$snakeCaseCache[$string] ??= strtolower(
-            preg_replace('/[A-Z]/', '_\\0', lcfirst($string)) ?? throw new Exception()
-        );
-    }
-
-    /**
-     * @return string[]
-     */
-    private function getFilters(string $label): array
-    {
-        if ($this->app->entityCanOverrideFilters) {
-            $filters = $this->page->getCustomProperty($label.'_filters');
-        }
-
-        if (! isset($filters) || \is_string($filters) && \in_array($filters, [[], '', null], true)) {
-            $appFilters = $this->app->filters;
-            $filters = $appFilters[$label] ?? null;
-        }
-
-        if (is_string($filters)) {
-            return explode(',', $filters);
-        }
-
-        if (! is_array($filters)) {
-            return [];
-        }
-
-        // Ensure all elements are strings
-        return array_map(static fn (mixed $item): string => is_scalar($item) ? (string) $item : throw new Exception(), $filters);
+        return $this->pipeline->getFilteredProperty(substr($method, 3), $arguments);
     }
 
     /**
@@ -142,27 +54,6 @@ final class Manager
      */
     public function applyFilters(bool|float|int|string|null $propertyValue, array $filters, string $property = ''): mixed
     {
-        foreach ($filters as $filter) {
-            if (\in_array($this->page->getCustomProperty('filter_'.$this->className($filter)), [0, false], true)) {
-                continue;
-            }
-
-            $filterInstance = $this->filterRegistry->getFilter($filter);
-
-            if (null === $filterInstance) {
-                throw new Exception('Filter `'.$filter.'` not found');
-            }
-
-            $propertyValue = $filterInstance->apply($propertyValue, $this->page, $this, $property);
-        }
-
-        return $propertyValue;
-    }
-
-    private function className(string $name): string
-    {
-        $name = substr($name, (int) strrpos($name, '/'));
-
-        return lcfirst($name);
+        return $this->pipeline->applyFilters($propertyValue, $filters, $property);
     }
 }

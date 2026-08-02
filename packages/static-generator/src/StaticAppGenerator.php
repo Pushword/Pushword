@@ -331,7 +331,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     /** Mirrors PageGenerator::generateFilePath for the static-dir-relative path. */
     private function staticRelativePathFor(Page $page): string
     {
-        return $this->staticRelativePathForSlug($page->getSlug());
+        return $this->staticRelativePathForSlug($page->slug);
     }
 
     /** @param string $slug the raw entity slug, as keyed in the generation state */
@@ -362,7 +362,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     private function runGenerators(SiteConfig $app): array
     {
         $slugs = array_map(
-            static fn (Page $page): string => $page->getSlug(),
+            static fn (Page $page): string => $page->slug,
             $this->pageRepository->getPublishedPages($app->getMainHost()),
         );
         $workerCount = WorkerCountResolver::resolve($this->workers, \count($slugs));

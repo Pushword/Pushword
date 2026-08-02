@@ -134,8 +134,8 @@ final readonly class Indexer
             'locale' => $page->locale,
             'slug' => $page->getRealSlug(),
             'url' => $this->routeGenerator->generate($page, true),
-            'title' => '' !== $page->getTitle() ? $page->getTitle() : $page->getH1(),
-            'h1' => $page->getH1(),
+            'title' => '' !== $page->title ? $page->title : $page->h1,
+            'h1' => $page->h1,
             'tags' => $page->getTagList(),
             'content' => $this->textExtractor->extract($page),
         ];

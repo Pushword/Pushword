@@ -264,7 +264,7 @@ final class LinkGraphCommandTest extends KernelTestCase
         self::assertInstanceOf(Page::class, $page);
 
         // preUpdate stamps updatedAt: the very thing the corpus state watches.
-        $page->setH1($page->getH1().' (edited)');
+        $page->h1 .= ' (edited)';
         $entityManager->flush();
 
         $snapshot = self::getContainer()->get(LinkGraphStorage::class)->read(self::HOST);
@@ -314,13 +314,13 @@ final class LinkGraphCommandTest extends KernelTestCase
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
 
         $noindex = new Page();
-        $noindex->setH1('Search results');
-        $noindex->setSlug('noindex-lists-everything');
+        $noindex->h1 = 'Search results';
+        $noindex->slug = 'noindex-lists-everything';
         $noindex->locale = 'en';
         $noindex->host = self::HOST;
         $noindex->createdAt = new DateTime();
         $noindex->updatedAt = new DateTime();
-        $noindex->setMetaRobots('noindex');
+        $noindex->metaRobots = 'noindex';
         $noindex->setMainContent('A list of [everything](/kitchen-sink).');
 
         $entityManager->persist($noindex);

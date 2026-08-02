@@ -155,9 +155,9 @@ final class PageScannerService
             'message' => $message,
             'page' => [
                 'id' => $page->id ?? 0,
-                'slug' => $page->getSlug(),
-                'h1' => $page->getH1(),
-                'metaRobots' => $page->getMetaRobots(),
+                'slug' => $page->slug,
+                'h1' => $page->h1,
+                'metaRobots' => $page->metaRobots,
                 'host' => $page->host,
             ],
         ];

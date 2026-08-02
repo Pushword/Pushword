@@ -44,7 +44,7 @@ class PageTranslationsField extends AbstractField
             ->setFormTypeOption('multiple', true)
             ->setFormTypeOption('required', false)
             ->setFormTypeOption('by_reference', false)
-            ->setFormTypeOption('choice_label', static fn (Page $entity): string => $entity->locale.' ('.$entity->getSlug().')')
+            ->setFormTypeOption('choice_label', static fn (Page $entity): string => $entity->locale.' ('.$entity->slug.')')
             ->setQueryBuilder(fn (QueryBuilder $qb): QueryBuilder => $this->configureQueryBuilder($qb, $page));
     }
 }

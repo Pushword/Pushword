@@ -49,10 +49,10 @@ final readonly class CarouselDrafter
             $slides[] = $this->bodySlide($section, $mainImage);
         }
 
-        $slides[] = $this->ctaSlide($page->getLocale());
+        $slides[] = $this->ctaSlide($page->locale);
 
         return [
-            'page' => $page->getSlug(),
+            'page' => $page->slug,
             'network' => $network,
             'format' => $format,
             'status' => 'draft',
@@ -70,7 +70,7 @@ final readonly class CarouselDrafter
         $slide = [
             'layout' => 'bottom',
             'align' => 'left',
-            'title' => $this->clean($page->getH1()),
+            'title' => $this->clean($page->h1),
             'swipe' => true,
         ];
 

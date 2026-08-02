@@ -74,8 +74,8 @@ class PageOpenGraphImageGenerator implements ResetInterface
     public function getPath(bool $browserPath = false): string
     {
         return ($browserPath ? '' : $this->publicDir).'/'.$this->publicMediaDir.'/og/'
-            .str_replace('/', '_', $this->getPage()->getSlug()).'-'
-            .substr(sha1($this->getPage()->getSlug().$this->apps->get()->hosts[0]), 0, 6).'.png';
+            .str_replace('/', '_', $this->getPage()->slug).'-'
+            .substr(sha1($this->getPage()->slug.$this->apps->get()->hosts[0]), 0, 6).'.png';
     }
 
     public function generatePreviewImage(): void
@@ -104,7 +104,7 @@ class PageOpenGraphImageGenerator implements ResetInterface
             $image->save($this->getPath());
         } catch (Throwable $throwable) {
             $this->logger?->error('OG image generation failed for page "{slug}": {message}', [
-                'slug' => $this->getPage()->getSlug(),
+                'slug' => $this->getPage()->slug,
                 'message' => $throwable->getMessage(),
             ]);
         }
@@ -112,7 +112,7 @@ class PageOpenGraphImageGenerator implements ResetInterface
 
     private function drawTitle(DrawerInterface $drawer): void
     {
-        $titleText = $this->getPage()->getH1() ?: '...';
+        $titleText = $this->getPage()->h1 ?: '...';
 
         if (\strlen($titleText) > 90) {
             $titleText = substr($titleText, 0, 87).'…';

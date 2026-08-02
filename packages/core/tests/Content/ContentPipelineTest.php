@@ -7,7 +7,6 @@ use PHPUnit\Framework\TestCase;
 use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
 use Pushword\Core\Component\EntityFilter\FilterRegistry;
 use Pushword\Core\Component\EntityFilter\Manager;
-use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Content\ContentPipeline;
 use Pushword\Core\Content\ContentPipelineFactory;
 use Pushword\Core\Entity\Page;
@@ -51,8 +50,7 @@ final class ContentPipelineTest extends TestCase
 
         $siteRegistry->get('localhost')->filters = $siteFilters;
 
-        $managerPool = new ManagerPool($siteRegistry, $eventDispatcher, $filterRegistry);
-        $factory = new ContentPipelineFactory($siteRegistry, $eventDispatcher, $filterRegistry, $managerPool);
+        $factory = new ContentPipelineFactory($siteRegistry, $eventDispatcher, $filterRegistry);
 
         return new ContentPipeline($factory, $eventDispatcher, $filterRegistry, $page, $siteRegistry);
     }

@@ -63,7 +63,7 @@ final class LinkGraphScanner extends AbstractScanner implements ResetInterface
             return; // redirection or a page whose render failed: not a node
         }
 
-        $source = $this->page->host.'/'.$this->page->getSlug();
+        $source = $this->page->host.'/'.$this->page->slug;
         $targets = $this->edges[$source] ?? [];
 
         foreach ($this->extractHrefs() as $href) {

@@ -77,12 +77,12 @@ final class IdempotencyTest extends KernelTestCase
     public function testExportStampsRevisionInFrontMatter(): void
     {
         $page = new Page();
-        $page->setSlug('revision-export-test');
-        $page->setH1('Revision Export Test');
+        $page->slug = 'revision-export-test';
+        $page->h1 = 'Revision Export Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Content');
-        $page->setPublishedAt(new DateTime());
+        $page->publishedAt = new DateTime();
 
         $this->em->persist($page);
         $this->em->flush();
@@ -105,12 +105,12 @@ final class IdempotencyTest extends KernelTestCase
     public function testExportedRevisionMatchesApiRevisionCalculator(): void
     {
         $page = new Page();
-        $page->setSlug('revision-export-test');
-        $page->setH1('Agreement Test');
+        $page->slug = 'revision-export-test';
+        $page->h1 = 'Agreement Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Body');
-        $page->setPublishedAt(new DateTime());
+        $page->publishedAt = new DateTime();
 
         $this->em->persist($page);
         $this->em->flush();
@@ -149,7 +149,7 @@ final class IdempotencyTest extends KernelTestCase
         self::assertNotNull($importedPage, 'Page should be imported');
         self::assertNull($importedPage->getCustomProperty('revision'), 'revision must not be stored as a custom property');
         // The inline comment must not corrupt parsing of the rest of the front matter.
-        self::assertSame('Revision Import Test', $importedPage->getH1(), 'sibling keys must parse despite the revision comment');
+        self::assertSame('Revision Import Test', $importedPage->h1, 'sibling keys must parse despite the revision comment');
     }
 
     /**
@@ -253,8 +253,8 @@ final class IdempotencyTest extends KernelTestCase
         $pagesBefore = $this->em->getRepository(Page::class)->findBy(['host' => 'localhost.dev']);
         $dataBefore = [];
         foreach ($pagesBefore as $page) {
-            $dataBefore[$page->getSlug()] = [
-                'h1' => $page->getH1(),
+            $dataBefore[$page->slug] = [
+                'h1' => $page->h1,
                 'mainContent' => $page->getMainContent(),
                 'tags' => $page->getTags(),
             ];
@@ -267,9 +267,9 @@ final class IdempotencyTest extends KernelTestCase
         $this->em->clear();
         $pagesAfter = $this->em->getRepository(Page::class)->findBy(['host' => 'localhost.dev']);
         foreach ($pagesAfter as $page) {
-            $slug = $page->getSlug();
+            $slug = $page->slug;
             if (isset($dataBefore[$slug])) {
-                self::assertSame($dataBefore[$slug]['h1'], $page->getH1(), 'H1 changed for page '.$slug);
+                self::assertSame($dataBefore[$slug]['h1'], $page->h1, 'H1 changed for page '.$slug);
                 self::assertSame($dataBefore[$slug]['mainContent'], $page->getMainContent(), 'Content changed for page '.$slug);
             }
         }

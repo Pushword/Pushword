@@ -52,7 +52,7 @@ final class RedirectionExporter
     private function buildRow(Page $page): array
     {
         return [
-            'slug' => $page->getSlug(),
+            'slug' => $page->slug,
             'target' => $page->getRedirectionUrl(),
             'code' => (string) $page->getRedirectionCode(),
         ];

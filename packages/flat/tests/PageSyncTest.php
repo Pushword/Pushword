@@ -86,9 +86,9 @@ final class PageSyncTest extends KernelTestCase
         $redirections = [];
         foreach ($this->pageRepo->findBy(['host' => 'localhost.dev']) as $page) {
             if ($page->hasRedirection()) {
-                $redirections[$page->getSlug()] = [
+                $redirections[$page->slug] = [
                     'locale' => $page->locale,
-                    'h1' => $page->getH1(),
+                    'h1' => $page->h1,
                     'mainContent' => $page->getMainContent(),
                 ];
             }
@@ -114,10 +114,10 @@ final class PageSyncTest extends KernelTestCase
             }
 
             $page = new Page();
-            $page->setSlug($slug);
+            $page->slug = $slug;
             $page->host = 'localhost.dev';
             $page->locale = $redirection['locale'];
-            $page->setH1($redirection['h1']);
+            $page->h1 = $redirection['h1'];
             $page->setMainContent($redirection['mainContent']);
             $this->em->persist($page);
             $restored = true;
@@ -156,11 +156,11 @@ final class PageSyncTest extends KernelTestCase
 
         $slug = 'hard-delete-e2e-'.uniqid();
         $page = new Page();
-        $page->setSlug($slug);
-        $page->setH1('To be deleted');
+        $page->slug = $slug;
+        $page->h1 = 'To be deleted';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
-        $page->setPublishedAt(new DateTime());
+        $page->publishedAt = new DateTime();
         $page->setMainContent('temporary content');
 
         $this->em->persist($page);
@@ -198,8 +198,8 @@ final class PageSyncTest extends KernelTestCase
 
         // Create a test redirection to delete
         $testRedirection = new Page();
-        $testRedirection->setSlug('test-redirection-to-delete');
-        $testRedirection->setH1('Test Redirection');
+        $testRedirection->slug = 'test-redirection-to-delete';
+        $testRedirection->h1 = 'Test Redirection';
         $testRedirection->host = 'localhost.dev';
         $testRedirection->locale = 'en';
         $testRedirection->setMainContent('Location: https://example.com');
@@ -320,21 +320,21 @@ final class PageSyncTest extends KernelTestCase
         $contentDir = $contentDirFinder->get('localhost.dev');
 
         $master = new Page();
-        $master->setSlug('rt-master');
-        $master->setH1('RT Master');
+        $master->slug = 'rt-master';
+        $master->h1 = 'RT Master';
         $master->host = 'localhost.dev';
         $master->locale = 'en';
         $master->setMainContent('Master content');
-        $master->setPublishedAt(new DateTime());
-        $master->setCustomCanonical('https://example.tld/forced');
+        $master->publishedAt = new DateTime();
+        $master->customCanonical = 'https://example.tld/forced';
 
         $variant = new Page();
-        $variant->setSlug('rt-variant');
-        $variant->setH1('RT Variant');
+        $variant->slug = 'rt-variant';
+        $variant->h1 = 'RT Variant';
         $variant->host = 'localhost.dev';
         $variant->locale = 'en';
         $variant->setMainContent('Variant content');
-        $variant->setPublishedAt(new DateTime());
+        $variant->publishedAt = new DateTime();
         $variant->variantOf = $master;
 
         $this->em->persist($master);
@@ -370,7 +370,7 @@ final class PageSyncTest extends KernelTestCase
             self::assertNotNull($reVariant);
             self::assertSame('https://example.tld/forced', $reMaster->customCanonical);
             self::assertTrue($reVariant->isVariant());
-            self::assertSame('rt-master', $reVariant->variantOf?->getSlug());
+            self::assertSame('rt-master', $reVariant->variantOf?->slug);
         } finally {
             if (null !== $reVariant) {
                 $this->em->remove($reVariant);
@@ -395,12 +395,12 @@ final class PageSyncTest extends KernelTestCase
 
         // Create a temporary page
         $tempPage = new Page();
-        $tempPage->setSlug('temp-page-for-deletion-test');
-        $tempPage->setH1('Temporary Page');
+        $tempPage->slug = 'temp-page-for-deletion-test';
+        $tempPage->h1 = 'Temporary Page';
         $tempPage->host = 'localhost.dev';
         $tempPage->locale = 'en';
         $tempPage->setMainContent('Temporary content');
-        $tempPage->setPublishedAt(new DateTime());
+        $tempPage->publishedAt = new DateTime();
 
         $this->em->persist($tempPage);
         $this->em->flush();
@@ -514,7 +514,7 @@ MD;
         // Get current homepage state
         $homepage = $this->pageRepo->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev', 'locale' => 'en']);
         self::assertNotNull($homepage);
-        $originalH1 = $homepage->getH1();
+        $originalH1 = $homepage->h1;
 
         // Modify index.csv to change homepage h1 (this should be ignored)
         $modifiedCsv = "id,slug,h1,publishedAt,locale,parentPage,tags\n";
@@ -529,7 +529,7 @@ MD;
         $this->em->clear();
         $homepage = $this->pageRepo->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev', 'locale' => 'en']);
         self::assertNotNull($homepage);
-        self::assertSame($originalH1, $homepage->getH1(), 'Homepage h1 should NOT be changed by index.csv modifications');
+        self::assertSame($originalH1, $homepage->h1, 'Homepage h1 should NOT be changed by index.csv modifications');
     }
 
     /**
@@ -543,12 +543,12 @@ MD;
 
         // Create a draft page (publishedAt in future)
         $draftPage = new Page();
-        $draftPage->setSlug('draft-page-test');
-        $draftPage->setH1('Draft Page');
+        $draftPage->slug = 'draft-page-test';
+        $draftPage->h1 = 'Draft Page';
         $draftPage->host = 'localhost.dev';
         $draftPage->locale = 'en';
         $draftPage->setMainContent('Draft content');
-        $draftPage->setPublishedAt(new DateTime('+1 year'));
+        $draftPage->publishedAt = new DateTime('+1 year');
         // Future date = draft
         $this->em->persist($draftPage);
         $this->em->flush();
@@ -745,12 +745,12 @@ MD;
 
         // Create a page with null publishedAt (true draft)
         $draftPage = new Page();
-        $draftPage->setSlug('null-published-at-test');
-        $draftPage->setH1('Null PublishedAt Test');
+        $draftPage->slug = 'null-published-at-test';
+        $draftPage->h1 = 'Null PublishedAt Test';
         $draftPage->host = 'localhost.dev';
         $draftPage->locale = 'en';
         $draftPage->setMainContent('Content with null publishedAt');
-        $draftPage->setPublishedAt(null);
+        $draftPage->publishedAt = null;
 
         $this->em->persist($draftPage);
         $this->em->flush();
@@ -780,7 +780,7 @@ MD;
         $this->em->clear();
         $importedPage = $this->pageRepo->findOneBy(['slug' => 'null-published-at-test', 'host' => 'localhost.dev']);
         self::assertNotNull($importedPage, 'Page should be recreated after import');
-        self::assertNull($importedPage->getPublishedAt(), 'PublishedAt should remain null after round-trip');
+        self::assertNull($importedPage->publishedAt, 'PublishedAt should remain null after round-trip');
 
         // Cleanup
         $this->em->remove($importedPage);
@@ -801,12 +801,12 @@ MD;
 
         // Create a page with specific publishedAt
         $page = new Page();
-        $page->setSlug('explicit-date-test');
-        $page->setH1('Explicit Date Test');
+        $page->slug = 'explicit-date-test';
+        $page->h1 = 'Explicit Date Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Content with explicit date');
-        $page->setPublishedAt($specificDate);
+        $page->publishedAt = $specificDate;
 
         $this->em->persist($page);
         $this->em->flush();
@@ -836,8 +836,8 @@ MD;
         $this->em->clear();
         $importedPage = $this->pageRepo->findOneBy(['slug' => 'explicit-date-test', 'host' => 'localhost.dev']);
         self::assertNotNull($importedPage, 'Page should be recreated after import');
-        self::assertNotNull($importedPage->getPublishedAt(), 'PublishedAt should not be null');
-        self::assertSame('2023-05-15 10:30', $importedPage->getPublishedAt()->format('Y-m-d H:i'), 'PublishedAt should match original');
+        self::assertNotNull($importedPage->publishedAt, 'PublishedAt should not be null');
+        self::assertSame('2023-05-15 10:30', $importedPage->publishedAt->format('Y-m-d H:i'), 'PublishedAt should match original');
 
         // Cleanup
         $this->em->remove($importedPage);
@@ -856,12 +856,12 @@ MD;
 
         // Create a page with specific publishedAt including seconds (which should be truncated)
         $page = new Page();
-        $page->setSlug('yaml-format-test');
-        $page->setH1('YAML Format Test');
+        $page->slug = 'yaml-format-test';
+        $page->h1 = 'YAML Format Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Testing YAML format');
-        $page->setPublishedAt(new DateTime('2024-12-25 14:30:45'));
+        $page->publishedAt = new DateTime('2024-12-25 14:30:45');
 
         $this->em->persist($page);
         $this->em->flush();
@@ -898,20 +898,20 @@ MD;
 
         // Create two pages and link them as translations
         $enPage = new Page();
-        $enPage->setSlug('translation-test-en');
-        $enPage->setH1('English Page');
+        $enPage->slug = 'translation-test-en';
+        $enPage->h1 = 'English Page';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
         $enPage->setMainContent('English content');
-        $enPage->setPublishedAt(new DateTime());
+        $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
-        $frPage->setSlug('translation-test-fr');
-        $frPage->setH1('Page française');
+        $frPage->slug = 'translation-test-fr';
+        $frPage->h1 = 'Page française';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Contenu français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
         $this->em->persist($frPage);
@@ -986,28 +986,28 @@ MD;
 
         // Create three pages linked as translations
         $enPage = new Page();
-        $enPage->setSlug('trans-removal-en');
-        $enPage->setH1('English');
+        $enPage->slug = 'trans-removal-en';
+        $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
         $enPage->setMainContent('English');
-        $enPage->setPublishedAt(new DateTime());
+        $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
-        $frPage->setSlug('trans-removal-fr');
-        $frPage->setH1('Français');
+        $frPage->slug = 'trans-removal-fr';
+        $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $dePage = new Page();
-        $dePage->setSlug('trans-removal-de');
-        $dePage->setH1('Deutsch');
+        $dePage->slug = 'trans-removal-de';
+        $dePage->h1 = 'Deutsch';
         $dePage->host = 'localhost.dev';
         $dePage->locale = 'de';
         $dePage->setMainContent('Deutsch');
-        $dePage->setPublishedAt(new DateTime());
+        $dePage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
         $this->em->persist($frPage);
@@ -1087,20 +1087,20 @@ MD;
 
         // Create two pages linked as translations
         $enPage = new Page();
-        $enPage->setSlug('trans-keep-en');
-        $enPage->setH1('English');
+        $enPage->slug = 'trans-keep-en';
+        $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
         $enPage->setMainContent('English');
-        $enPage->setPublishedAt(new DateTime());
+        $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
-        $frPage->setSlug('trans-keep-fr');
-        $frPage->setH1('Français');
+        $frPage->slug = 'trans-keep-fr';
+        $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
         $this->em->persist($frPage);
@@ -1162,20 +1162,20 @@ MD;
         // Create two pages linked as translations
         // Using 'a-' and 'b-' prefixes to control alphabetical order (a comes before b)
         $aPage = new Page();
-        $aPage->setSlug('a-trans-precedence');
-        $aPage->setH1('Page A');
+        $aPage->slug = 'a-trans-precedence';
+        $aPage->h1 = 'Page A';
         $aPage->host = 'localhost.dev';
         $aPage->locale = 'en';
         $aPage->setMainContent('Page A content');
-        $aPage->setPublishedAt(new DateTime());
+        $aPage->publishedAt = new DateTime();
 
         $bPage = new Page();
-        $bPage->setSlug('b-trans-precedence');
-        $bPage->setH1('Page B');
+        $bPage->slug = 'b-trans-precedence';
+        $bPage->h1 = 'Page B';
         $bPage->host = 'localhost.dev';
         $bPage->locale = 'fr';
         $bPage->setMainContent('Page B content');
-        $bPage->setPublishedAt(new DateTime());
+        $bPage->publishedAt = new DateTime();
 
         $this->em->persist($aPage);
         $this->em->persist($bPage);
@@ -1238,20 +1238,20 @@ MD;
 
         // Create two pages linked as translations
         $enPage = new Page();
-        $enPage->setSlug('trans-keep-existing-en');
-        $enPage->setH1('English');
+        $enPage->slug = 'trans-keep-existing-en';
+        $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
         $enPage->setMainContent('English');
-        $enPage->setPublishedAt(new DateTime());
+        $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
-        $frPage->setSlug('trans-keep-existing-fr');
-        $frPage->setH1('Français');
+        $frPage->slug = 'trans-keep-existing-fr';
+        $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
         $this->em->persist($frPage);
@@ -1311,20 +1311,20 @@ MD;
 
         // Create two pages linked as translations
         $enPage = new Page();
-        $enPage->setSlug('trans-explicit-empty-en');
-        $enPage->setH1('English');
+        $enPage->slug = 'trans-explicit-empty-en';
+        $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
         $enPage->setMainContent('English');
-        $enPage->setPublishedAt(new DateTime());
+        $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
-        $frPage->setSlug('trans-explicit-empty-fr');
-        $frPage->setH1('Français');
+        $frPage->slug = 'trans-explicit-empty-fr';
+        $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
         $this->em->persist($frPage);
@@ -1382,20 +1382,20 @@ MD;
 
         // Create two pages NOT linked
         $enPage = new Page();
-        $enPage->setSlug('trans-add-one-en');
-        $enPage->setH1('English');
+        $enPage->slug = 'trans-add-one-en';
+        $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
         $enPage->setMainContent('English');
-        $enPage->setPublishedAt(new DateTime());
+        $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
-        $frPage->setSlug('trans-add-one-fr');
-        $frPage->setH1('Français');
+        $frPage->slug = 'trans-add-one-fr';
+        $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
         $this->em->persist($frPage);
@@ -1451,12 +1451,12 @@ MD;
 
         // Create a page with custom properties
         $page = new Page();
-        $page->setSlug('custom-props-test');
-        $page->setH1('Custom Properties Test');
+        $page->slug = 'custom-props-test';
+        $page->h1 = 'Custom Properties Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Content');
-        $page->setPublishedAt(new DateTime());
+        $page->publishedAt = new DateTime();
         // A plain (non-converter-managed) custom property: it must round-trip
         // verbatim. mainImageFormat is deliberately not used here — it is an
         // integer-backed converter property whose round-trip is covered by
@@ -1617,12 +1617,12 @@ MD;
 
         // Create a page with mainImageFormat as integer (1 = none)
         $page = new Page();
-        $page->setSlug('main-image-format-test');
-        $page->setH1('Main Image Format Test');
+        $page->slug = 'main-image-format-test';
+        $page->h1 = 'Main Image Format Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Content');
-        $page->setPublishedAt(new DateTime());
+        $page->publishedAt = new DateTime();
         $page->setCustomProperty('mainImageFormat', 1); // Integer value for "none"
 
         $this->em->persist($page);
@@ -1761,12 +1761,12 @@ YAML;
 
         // Create a page with fr-CA locale
         $page = new Page();
-        $page->setSlug('fr-ca/round-trip-test');
-        $page->setH1('Test Round Trip');
+        $page->slug = 'fr-ca/round-trip-test';
+        $page->h1 = 'Test Round Trip';
         $page->host = 'localhost.dev';
         $page->locale = 'fr-CA';
         $page->setMainContent('Contenu test');
-        $page->setPublishedAt(new DateTime());
+        $page->publishedAt = new DateTime();
 
         $this->em->persist($page);
         $this->em->flush();
@@ -1873,21 +1873,21 @@ YAML;
 
         // Create a page on localhost.dev
         $enPage = new Page();
-        $enPage->setSlug('cross-host-en');
-        $enPage->setH1('English Page');
+        $enPage->slug = 'cross-host-en';
+        $enPage->h1 = 'English Page';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
         $enPage->setMainContent('English content');
-        $enPage->setPublishedAt(new DateTime());
+        $enPage->publishedAt = new DateTime();
 
         // Create a page on pushword.piedweb.com
         $frPage = new Page();
-        $frPage->setSlug('cross-host-fr');
-        $frPage->setH1('Page française');
+        $frPage->slug = 'cross-host-fr';
+        $frPage->h1 = 'Page française';
         $frPage->host = 'pushword.piedweb.com';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Contenu français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
         $this->em->persist($frPage);
@@ -1927,12 +1927,12 @@ YAML;
 
         // Create a page on the OTHER host first (it must exist for the reference to resolve)
         $frPage = new Page();
-        $frPage->setSlug('cross-import-fr');
-        $frPage->setH1('Page française');
+        $frPage->slug = 'cross-import-fr';
+        $frPage->h1 = 'Page française';
         $frPage->host = 'pushword.piedweb.com';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Contenu français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $this->em->persist($frPage);
         $this->em->flush();
@@ -1985,20 +1985,20 @@ YAML;
 
         // Create pages on different hosts and link them
         $enPage = new Page();
-        $enPage->setSlug('cross-rt-en');
-        $enPage->setH1('English');
+        $enPage->slug = 'cross-rt-en';
+        $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
         $enPage->setMainContent('English');
-        $enPage->setPublishedAt(new DateTime());
+        $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
-        $frPage->setSlug('cross-rt-fr');
-        $frPage->setH1('Français');
+        $frPage->slug = 'cross-rt-fr';
+        $frPage->h1 = 'Français';
         $frPage->host = 'pushword.piedweb.com';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
         $this->em->persist($frPage);
@@ -2389,7 +2389,7 @@ MD);
         self::assertCount(1, $notFoundPage->translations, '404 page should have 1 translation');
         $firstTranslation = $notFoundPage->translations->first();
         self::assertNotFalse($firstTranslation);
-        self::assertSame('error-page-fr', $firstTranslation->getSlug());
+        self::assertSame('error-page-fr', $firstTranslation->slug);
 
         // Cleanup
         $this->em->remove($notFoundPage);
@@ -2454,8 +2454,8 @@ MD);
 
         // Create an existing page in DB that has NO corresponding .md file
         $existingPage = new Page();
-        $existingPage->setSlug('force-reset-test-existing');
-        $existingPage->setH1('Existing Page To Be Reset');
+        $existingPage->slug = 'force-reset-test-existing';
+        $existingPage->h1 = 'Existing Page To Be Reset';
         $existingPage->host = 'localhost.dev';
         $existingPage->locale = 'en';
 
@@ -2505,28 +2505,28 @@ YAML;
         $contentDir = $contentDirFinder->get('localhost.dev');
 
         $enPage = new Page();
-        $enPage->setSlug('main-locale-export-en');
-        $enPage->setH1('English');
+        $enPage->slug = 'main-locale-export-en';
+        $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
         $enPage->setMainContent('English');
-        $enPage->setPublishedAt(new DateTime());
+        $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
-        $frPage->setSlug('main-locale-export-fr');
-        $frPage->setH1('Français');
+        $frPage->slug = 'main-locale-export-fr';
+        $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $frCaPage = new Page();
-        $frCaPage->setSlug('main-locale-export-fr-ca');
-        $frCaPage->setH1('Français CA');
+        $frCaPage->slug = 'main-locale-export-fr-ca';
+        $frCaPage->h1 = 'Français CA';
         $frCaPage->host = 'localhost.dev';
         $frCaPage->locale = 'fr-CA';
         $frCaPage->setMainContent('Français canadien');
-        $frCaPage->setPublishedAt(new DateTime());
+        $frCaPage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
         $this->em->persist($frPage);
@@ -2613,20 +2613,20 @@ YAML;
 
         // Two non-main-locale pages linked together (no en page in the group)
         $frPage = new Page();
-        $frPage->setSlug('no-main-fallback-fr');
-        $frPage->setH1('Français');
+        $frPage->slug = 'no-main-fallback-fr';
+        $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $dePage = new Page();
-        $dePage->setSlug('no-main-fallback-de');
-        $dePage->setH1('Deutsch');
+        $dePage->slug = 'no-main-fallback-de';
+        $dePage->h1 = 'Deutsch';
         $dePage->host = 'localhost.dev';
         $dePage->locale = 'de';
         $dePage->setMainContent('Deutsch');
-        $dePage->setPublishedAt(new DateTime());
+        $dePage->publishedAt = new DateTime();
 
         $this->em->persist($frPage);
         $this->em->persist($dePage);
@@ -2661,28 +2661,28 @@ YAML;
 
         // Page with empty locale (treated as main) linked to fr and de
         $mainPage = new Page();
-        $mainPage->setSlug('empty-locale-main');
-        $mainPage->setH1('Main');
+        $mainPage->slug = 'empty-locale-main';
+        $mainPage->h1 = 'Main';
         $mainPage->host = 'localhost.dev';
         $mainPage->locale = '';
         $mainPage->setMainContent('Main content');
-        $mainPage->setPublishedAt(new DateTime());
+        $mainPage->publishedAt = new DateTime();
 
         $frPage = new Page();
-        $frPage->setSlug('empty-locale-fr');
-        $frPage->setH1('Français');
+        $frPage->slug = 'empty-locale-fr';
+        $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $dePage = new Page();
-        $dePage->setSlug('empty-locale-de');
-        $dePage->setH1('Deutsch');
+        $dePage->slug = 'empty-locale-de';
+        $dePage->h1 = 'Deutsch';
         $dePage->host = 'localhost.dev';
         $dePage->locale = 'de';
         $dePage->setMainContent('Deutsch');
-        $dePage->setPublishedAt(new DateTime());
+        $dePage->publishedAt = new DateTime();
 
         $this->em->persist($mainPage);
         $this->em->persist($frPage);
@@ -2735,28 +2735,28 @@ YAML;
 
         // EN (main locale) on localhost.dev, FR on localhost.dev, DE on another host
         $enPage = new Page();
-        $enPage->setSlug('cross-minimal-en');
-        $enPage->setH1('English');
+        $enPage->slug = 'cross-minimal-en';
+        $enPage->h1 = 'English';
         $enPage->host = 'localhost.dev';
         $enPage->locale = 'en';
         $enPage->setMainContent('English');
-        $enPage->setPublishedAt(new DateTime());
+        $enPage->publishedAt = new DateTime();
 
         $frPage = new Page();
-        $frPage->setSlug('cross-minimal-fr');
-        $frPage->setH1('Français');
+        $frPage->slug = 'cross-minimal-fr';
+        $frPage->h1 = 'Français';
         $frPage->host = 'localhost.dev';
         $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
-        $frPage->setPublishedAt(new DateTime());
+        $frPage->publishedAt = new DateTime();
 
         $dePage = new Page();
-        $dePage->setSlug('cross-minimal-de');
-        $dePage->setH1('Deutsch');
+        $dePage->slug = 'cross-minimal-de';
+        $dePage->h1 = 'Deutsch';
         $dePage->host = 'pushword.piedweb.com';
         $dePage->locale = 'de';
         $dePage->setMainContent('Deutsch');
-        $dePage->setPublishedAt(new DateTime());
+        $dePage->publishedAt = new DateTime();
 
         $this->em->persist($enPage);
         $this->em->persist($frPage);
@@ -2804,8 +2804,8 @@ YAML;
 
         // Create parent page with template and custom property
         $parent = new Page();
-        $parent->setSlug('inherit-parent');
-        $parent->setH1('Parent');
+        $parent->slug = 'inherit-parent';
+        $parent->h1 = 'Parent';
         $parent->host = 'localhost.dev';
         $parent->template = 'parent_template.html.twig';
         $parent->setCustomProperty('mainImageFormat', 'wide');
@@ -2816,8 +2816,8 @@ YAML;
 
         // Create child page extending parent, with NO template or custom property
         $child = new Page();
-        $child->setSlug('inherit-child');
-        $child->setH1('Child');
+        $child->slug = 'inherit-child';
+        $child->h1 = 'Child';
         $child->host = 'localhost.dev';
         $child->extendedPage = $parent;
         $child->setMainContent('Child content');
@@ -2872,12 +2872,12 @@ YAML;
 
         // Create a page in DB
         $page = new Page();
-        $page->setSlug('timestamp-preserve-test');
-        $page->setH1('Timestamp Test');
+        $page->slug = 'timestamp-preserve-test';
+        $page->h1 = 'Timestamp Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Original content');
-        $page->setPublishedAt(new DateTime('-1 day'));
+        $page->publishedAt = new DateTime('-1 day');
 
         $this->em->persist($page);
         $this->em->flush();
@@ -2929,12 +2929,12 @@ YAML;
 
         // Create a page and export it (this also records an export sync timestamp)
         $page = new Page();
-        $page->setSlug('no-false-conflict-test');
-        $page->setH1('No False Conflict');
+        $page->slug = 'no-false-conflict-test';
+        $page->h1 = 'No False Conflict';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Same content');
-        $page->setPublishedAt(new DateTime('-1 day'));
+        $page->publishedAt = new DateTime('-1 day');
 
         $this->em->persist($page);
         $this->em->flush();
@@ -2987,20 +2987,20 @@ YAML;
         $contentDir = $contentDirFinder->get('localhost.dev');
 
         $pageA = new Page();
-        $pageA->setSlug('slug-filter-a');
-        $pageA->setH1('Page A');
+        $pageA->slug = 'slug-filter-a';
+        $pageA->h1 = 'Page A';
         $pageA->host = 'localhost.dev';
         $pageA->locale = 'en';
         $pageA->setMainContent('Content A');
-        $pageA->setPublishedAt(new DateTime());
+        $pageA->publishedAt = new DateTime();
 
         $pageB = new Page();
-        $pageB->setSlug('slug-filter-b');
-        $pageB->setH1('Page B');
+        $pageB->slug = 'slug-filter-b';
+        $pageB->h1 = 'Page B';
         $pageB->host = 'localhost.dev';
         $pageB->locale = 'en';
         $pageB->setMainContent('Content B');
-        $pageB->setPublishedAt(new DateTime());
+        $pageB->publishedAt = new DateTime();
 
         $this->em->persist($pageA);
         $this->em->persist($pageB);
@@ -3039,7 +3039,7 @@ MD;
         $importedB = $this->pageRepo->findOneBy(['slug' => 'slug-filter-b', 'host' => 'localhost.dev']);
 
         self::assertNotNull($importedA, 'Targeted page should be imported');
-        self::assertSame('Page A Updated', $importedA->getH1(), 'Updated content should be reflected');
+        self::assertSame('Page A Updated', $importedA->h1, 'Updated content should be reflected');
         self::assertNull($importedB, 'Non-targeted page should not be imported');
 
         // Cleanup
@@ -3058,20 +3058,20 @@ MD;
 
         // Create two pages in DB, export them so .md files exist
         $pageA = new Page();
-        $pageA->setSlug('no-delete-filter-a');
-        $pageA->setH1('Page A');
+        $pageA->slug = 'no-delete-filter-a';
+        $pageA->h1 = 'Page A';
         $pageA->host = 'localhost.dev';
         $pageA->locale = 'en';
         $pageA->setMainContent('Content A');
-        $pageA->setPublishedAt(new DateTime());
+        $pageA->publishedAt = new DateTime();
 
         $pageB = new Page();
-        $pageB->setSlug('no-delete-filter-b');
-        $pageB->setH1('Page B');
+        $pageB->slug = 'no-delete-filter-b';
+        $pageB->h1 = 'Page B';
         $pageB->host = 'localhost.dev';
         $pageB->locale = 'en';
         $pageB->setMainContent('Content B');
-        $pageB->setPublishedAt(new DateTime());
+        $pageB->publishedAt = new DateTime();
 
         $this->em->persist($pageA);
         $this->em->persist($pageB);

@@ -166,7 +166,7 @@ final class PagePlaceholdersTest extends KernelTestCase
     public function testTheBodyKeepsTheMarkupThePageCarries(): void
     {
         $page = $this->page();
-        $page->setH1('The <em>real</em> guide');
+        $page->h1 = 'The <em>real</em> guide';
 
         self::assertSame('# The <em>real</em> guide', $this->render('# {{ page.h1 }}', $page));
     }
@@ -174,7 +174,7 @@ final class PagePlaceholdersTest extends KernelTestCase
     public function testASubjectGetsPlainTextOnly(): void
     {
         $page = $this->page();
-        $page->setH1('The <em>real</em> guide<br>second line');
+        $page->h1 = 'The <em>real</em> guide<br>second line';
 
         self::assertSame(
             'New: The real guide second line — The lede.',
@@ -186,7 +186,7 @@ final class PagePlaceholdersTest extends KernelTestCase
     public function testASubjectDecodesEntitiesWithoutRevivingTags(): void
     {
         $page = $this->page();
-        $page->setH1('Rock &amp; Roll &lt;em&gt;');
+        $page->h1 = 'Rock &amp; Roll &lt;em&gt;';
 
         self::assertSame('Rock & Roll <em>', $this->renderSubject('{{ page.h1 }}', $page));
     }
@@ -196,7 +196,7 @@ final class PagePlaceholdersTest extends KernelTestCase
         $page = new Page();
         $page->host = 'localhost.dev';
         $page->slug = 'blog/hello';
-        $page->setH1('Hello');
+        $page->h1 = 'Hello';
         $page->setSearchExcerpt('What it is about.');
         $page->setMainContent('The lede.'."\n\n".'<!--break-->'."\n\n".'The opening lines.'."\n\n".'## A heading'."\n\n".'The rest.');
 

@@ -53,7 +53,7 @@ final class AiIndexCommand
         $this->pages = $this->pageRepository->findAll();
         $this->medias = $this->mediaRepository->findAll();
         $this->mediaList = array_map(static fn (Media $media): string => $media->getFileName(), $this->medias);
-        $this->pageSlugList = array_map(static fn (Page $page): string => $page->getSlug(), $this->pages);
+        $this->pageSlugList = array_map(static fn (Page $page): string => $page->slug, $this->pages);
         $host ??= '';
 
         $app = $this->apps->switchSite($host)->get();
@@ -154,13 +154,13 @@ final class AiIndexCommand
             $length = strlen($page->getMainContent());
 
             $rows[] = [
-                $page->getSlug(),
-                '' !== $page->getTitle() ? $page->getTitle() : $page->getH1(),
+                $page->slug,
+                '' !== $page->title ? $page->title : $page->h1,
                 $page->getCreatedAtNullable()?->format('Y-m-d H:i:s') ?? '',
                 $page->getTags(),
                 $page->getSearchExcerpt() ?? '',
                 implode(', ', $mediaUsed),
-                $page->parentPage?->getSlug() ?? '',
+                $page->parentPage->slug ?? '',
                 implode(', ', $pageLinked),
                 $length,
             ];
@@ -192,7 +192,7 @@ final class AiIndexCommand
                     $this->mediaUsedInPage[$media] = [];
                 }
 
-                $this->mediaUsedInPage[$media][] = $page->getSlug();
+                $this->mediaUsedInPage[$media][] = $page->slug;
             }
         }
 
@@ -208,7 +208,7 @@ final class AiIndexCommand
         $content = $page->getMainContent();
 
         foreach ($this->pageSlugList as $pageSlug) {
-            if ($pageSlug === $page->getSlug()) {
+            if ($pageSlug === $page->slug) {
                 continue;
             }
 

@@ -25,8 +25,8 @@ final class PageExtensionPagesListTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'localhost.dev';
-        $page->setSlug('pages-list-context');
-        $page->setName('Context');
+        $page->slug = 'pages-list-context';
+        $page->name = 'Context';
 
         return $page;
     }

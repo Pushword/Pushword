@@ -151,7 +151,7 @@ final class PagesListLintCommand
     private function finding(Page $page, string $search, string $reason, string $hint): array
     {
         return [
-            'page' => $page->getSlug(),
+            'page' => $page->slug,
             'host' => $page->host,
             'search' => $search,
             'reason' => $reason,

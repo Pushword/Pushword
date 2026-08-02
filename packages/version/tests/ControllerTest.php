@@ -51,7 +51,7 @@ final class ControllerTest extends AbstractAdminTestClass
         $versionner->reset('page', $pageId);
 
         // Update the page to trigger version creation via the Doctrine postUpdate listener
-        $page->setTitle($page->getTitle().' (version test)');
+        $page->title .= ' (version test)';
         $em->flush();
 
         /** @var Router $router */
@@ -89,7 +89,7 @@ final class ControllerTest extends AbstractAdminTestClass
 
         $page = new Page();
         $page->host = 'localhost.dev';
-        $page->setSlug('review-route-'.uniqid());
+        $page->slug = 'review-route-'.uniqid();
         $page->setMainContent('first');
 
         $em->persist($page);
@@ -138,7 +138,7 @@ final class ControllerTest extends AbstractAdminTestClass
 
         $page = new Page();
         $page->host = 'localhost.dev';
-        $page->setSlug('review-empty-'.uniqid());
+        $page->slug = 'review-empty-'.uniqid();
         $page->setMainContent('only');
 
         $em->persist($page);

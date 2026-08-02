@@ -46,7 +46,7 @@ final class PageListenerTest extends KernelTestCase
         $this->testSlugs[] = 'slug-redirect-old';
         $this->testSlugs[] = 'slug-redirect-new';
 
-        $page->setSlug('slug-redirect-new');
+        $page->slug = 'slug-redirect-new';
         $this->em->flush();
         $this->em->clear();
 
@@ -67,11 +67,11 @@ final class PageListenerTest extends KernelTestCase
         $this->testSlugs[] = 'chain-test-c';
 
         // a→b
-        $page->setSlug('chain-test-b');
+        $page->slug = 'chain-test-b';
         $this->em->flush();
 
         // b→c: both old paths now redirect straight to c (no chain), stored on the destination page.
-        $page->setSlug('chain-test-c');
+        $page->slug = 'chain-test-c';
         $this->em->flush();
         $this->em->clear();
 
@@ -104,7 +104,7 @@ final class PageListenerTest extends KernelTestCase
         $this->testSlugs[] = 'host-test-slug';
         $this->testSlugs[] = 'host-test-new';
 
-        $page->setSlug('host-test-new');
+        $page->slug = 'host-test-new';
         $this->em->flush();
         $this->em->clear();
 
@@ -120,8 +120,8 @@ final class PageListenerTest extends KernelTestCase
     private function createPage(string $slug): Page
     {
         $page = new Page();
-        $page->setSlug($slug);
-        $page->setH1('Test '.$slug);
+        $page->slug = $slug;
+        $page->h1 = 'Test '.$slug;
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->createdAt = new DateTime();

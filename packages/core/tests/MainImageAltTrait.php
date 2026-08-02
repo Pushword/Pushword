@@ -75,9 +75,9 @@ trait MainImageAltTrait
         $twig = self::getContainer()->get('twig');
 
         $page = new Page();
-        $page->setSlug('a-page');
+        $page->slug = 'a-page';
         $page->locale = $locale;
-        $page->setTitle($title);
+        $page->title = $title;
         $page->setMainImage($media);
 
         return $twig->load($this->mainImageTemplate())

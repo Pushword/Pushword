@@ -113,7 +113,7 @@ final class PageFileApiController extends AbstractApiController
         [$frontmatter, $body] = $parsed;
 
         $page = new Page();
-        $page->setSlug($slug);
+        $page->slug = $slug;
         // Set before applying: same-host references (parentPage, variantOf,
         // translations) are resolved against $page->host.
         $page->host = $host;

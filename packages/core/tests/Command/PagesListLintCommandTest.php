@@ -35,7 +35,7 @@ final class PagesListLintCommandTest extends KernelTestCase
     protected function tearDown(): void
     {
         foreach ($this->entityManager->getRepository(Page::class)->findBy(['host' => self::HOST]) as $page) {
-            if (str_starts_with($page->getSlug(), self::PREFIX)) {
+            if (str_starts_with($page->slug, self::PREFIX)) {
                 $this->entityManager->remove($page);
             }
         }
@@ -50,11 +50,11 @@ final class PagesListLintCommandTest extends KernelTestCase
         $page = new Page();
         $page->host = self::HOST;
         $page->locale = 'en';
-        $page->setSlug(self::PREFIX.$slug);
-        $page->setH1('Lint fixture '.$slug);
+        $page->slug = self::PREFIX.$slug;
+        $page->h1 = 'Lint fixture '.$slug;
         $page->setMainContent($mainContent);
         $page->setTags('' === $tags ? [] : [$tags]);
-        $page->setPublishedAt(new DateTime('-1 day'));
+        $page->publishedAt = new DateTime('-1 day');
 
         $this->entityManager->persist($page);
         $this->entityManager->flush();

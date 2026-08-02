@@ -76,8 +76,8 @@ class AppFixtures extends Fixture
 
         // VERSION 1: Create homepage with minimal initial content
         $homepage = new Page();
-        $homepage->setH1('Welcome to Pushword');
-        $homepage->setSlug('homepage1');
+        $homepage->h1 = 'Welcome to Pushword';
+        $homepage->slug = 'homepage1';
         $homepage->setMainImage($media['Demo 2']);
         $homepage->locale = 'en';
         $homepage->createdAt = new DateTime('2 days ago');
@@ -93,7 +93,7 @@ class AppFixtures extends Fixture
         $manager->flush();
 
         // VERSION 2: Add more content
-        $homepage->setSlug('homepage2');
+        $homepage->slug = 'homepage2';
         $homepage->setMainImage($media['Demo 1']);
         $homepage->setMainContent("# Welcome to Pushword\n\nThis is version 2 with more content.\n\n## Features\n- Fast\n- Flexible");
         $homepage->updatedAt = new DateTime('1 day ago');
@@ -101,8 +101,8 @@ class AppFixtures extends Fixture
         $manager->flush();
 
         // VERSION 3 (final): Set the real homepage content
-        $homepage->setH1('Welcome to Pushword !');
-        $homepage->setSlug('homepage');
+        $homepage->h1 = 'Welcome to Pushword !';
+        $homepage->slug = 'homepage';
         $homepage->setMainImage($media['Demo 2']);
         $homepage->setMainContent($finalContent);
         $homepage->updatedAt = new DateTime('now');
@@ -110,8 +110,8 @@ class AppFixtures extends Fixture
         $manager->flush();
 
         $ksPage = new Page();
-        $ksPage->setH1('Demo Page - Kitchen Sink  Markdown + Twig');
-        $ksPage->setSlug('kitchen-sink');
+        $ksPage->h1 = 'Demo Page - Kitchen Sink  Markdown + Twig';
+        $ksPage->slug = 'kitchen-sink';
         $ksPage->setMainImage($media['Demo 1']);
         $ksPage->locale = 'en';
         $ksPage->parentPage = $homepage;
@@ -127,9 +127,9 @@ class AppFixtures extends Fixture
 
         // Quiz block demo: a client-side QCM with an end-of-quiz conversion form.
         $quizPage = new Page();
-        $quizPage->setH1('Quiz — Montagnes du monde');
-        $quizPage->setTitle('Quiz — Montagnes du monde | Demo');
-        $quizPage->setSlug('quiz-montagnes');
+        $quizPage->h1 = 'Quiz — Montagnes du monde';
+        $quizPage->title = 'Quiz — Montagnes du monde | Demo';
+        $quizPage->slug = 'quiz-montagnes';
         $quizPage->setMainImage($media['Demo 3']);
         $quizPage->locale = 'fr';
         $quizPage->parentPage = $homepage;
@@ -147,9 +147,9 @@ class AppFixtures extends Fixture
         // that consolidates onto it (canonical → master, link rewriting, exclusions).
         if ('localhost.dev' === $this->apps->getMainHost()) {
             $variantMaster = new Page();
-            $variantMaster->setH1('Mountain Lodge — 3-night stay');
-            $variantMaster->setTitle('Mountain Lodge — 3-night stay | Variant pages demo');
-            $variantMaster->setSlug('demo-variant-master');
+            $variantMaster->h1 = 'Mountain Lodge — 3-night stay';
+            $variantMaster->title = 'Mountain Lodge — 3-night stay | Variant pages demo';
+            $variantMaster->slug = 'demo-variant-master';
             $variantMaster->locale = 'en';
             $variantMaster->host = 'localhost.dev';
             $variantMaster->createdAt = new DateTime('1 day ago');
@@ -164,9 +164,9 @@ class AppFixtures extends Fixture
             );
 
             $variantPartner = new Page();
-            $variantPartner->setH1('Mountain Lodge getaway, curated by Partner B');
-            $variantPartner->setTitle('Mountain Lodge getaway — Partner B | Variant pages demo');
-            $variantPartner->setSlug('demo-variant-partner');
+            $variantPartner->h1 = 'Mountain Lodge getaway, curated by Partner B';
+            $variantPartner->title = 'Mountain Lodge getaway — Partner B | Variant pages demo';
+            $variantPartner->slug = 'demo-variant-partner';
             $variantPartner->locale = 'en';
             $variantPartner->host = 'localhost.dev';
             $variantPartner->createdAt = new DateTime('1 day ago');
@@ -186,8 +186,8 @@ class AppFixtures extends Fixture
 
         if (\in_array('admin-block-editor.test', $this->apps->getHosts(), true)) {
             $ksBlockPage = new Page();
-            $ksBlockPage->setH1('Demo Page - Kitchen Sink Block');
-            $ksBlockPage->setSlug('kitchen-sink');
+            $ksBlockPage->h1 = 'Demo Page - Kitchen Sink Block';
+            $ksBlockPage->slug = 'kitchen-sink';
             $ksBlockPage->setMainImage($media['Demo 1']);
             $ksBlockPage->locale = 'en';
             $ksBlockPage->parentPage = $homepage;
@@ -200,8 +200,8 @@ class AppFixtures extends Fixture
         }
 
         $redirectionPage = new Page();
-        $redirectionPage->setH1('Redirection');
-        $redirectionPage->setSlug('pushword');
+        $redirectionPage->h1 = 'Redirection';
+        $redirectionPage->slug = 'pushword';
         $redirectionPage->locale = 'en';
         $redirectionPage->createdAt = new DateTime('1 day ago');
         $redirectionPage->updatedAt = new DateTime('1 day ago');
@@ -215,8 +215,8 @@ class AppFixtures extends Fixture
 
         // French page for localhost.dev to test multilingual menu
         $homepageFr = new Page();
-        $homepageFr->setH1('Bienvenue sur Pushword !');
-        $homepageFr->setSlug('fr/homepage');
+        $homepageFr->h1 = 'Bienvenue sur Pushword !';
+        $homepageFr->slug = 'fr/homepage';
         $homepageFr->setMainImage($media['Demo 3']);
         $homepageFr->locale = 'fr';
         $homepageFr->createdAt = new DateTime('2 days ago');
@@ -231,8 +231,8 @@ class AppFixtures extends Fixture
 
         // Canadian French page to test locale with region code (fr-CA)
         $homepageFrCa = new Page();
-        $homepageFrCa->setH1('Bienvenue sur Pushword !');
-        $homepageFrCa->setSlug('fr-ca/homepage');
+        $homepageFrCa->h1 = 'Bienvenue sur Pushword !';
+        $homepageFrCa->slug = 'fr-ca/homepage';
         $homepageFrCa->setMainImage($media['Demo 3']);
         $homepageFrCa->locale = 'fr-CA';
         $homepageFrCa->createdAt = new DateTime('2 days ago');

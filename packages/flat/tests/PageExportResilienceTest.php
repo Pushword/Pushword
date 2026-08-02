@@ -51,7 +51,7 @@ final class PageExportResilienceTest extends KernelTestCase
                 throw new RuntimeException('boom: this page cannot be exported');
             }
         };
-        $badPage->setSlug('broken-export-page');
+        $badPage->slug = 'broken-export-page';
         $badPage->host = 'localhost.dev';
 
         /** @var PageExporter $exporter */
@@ -80,10 +80,10 @@ final class PageExportResilienceTest extends KernelTestCase
     public function testTypographicQuotesInFrontMatterStayValidYaml(): void
     {
         $page = new Page(false);
-        $page->setSlug('apostrophe-page');
+        $page->slug = 'apostrophe-page';
         $page->host = 'localhost.dev';
-        $page->setTitle("Tour de l\u{2019}Albanie : \u{201C}joyaux\u{201D} de l\u{2019}\u{00CE}le");
-        $page->setH1("Les \u{00EE}les d\u{2019}\u{00C5}land");
+        $page->title = "Tour de l\u{2019}Albanie : \u{201C}joyaux\u{201D} de l\u{2019}\u{00CE}le";
+        $page->h1 = "Les \u{00EE}les d\u{2019}\u{00C5}land";
 
         /** @var PageExporter $exporter */
         $exporter = self::getContainer()->get(PageExporter::class);

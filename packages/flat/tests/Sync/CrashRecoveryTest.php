@@ -107,8 +107,8 @@ final class CrashRecoveryTest extends KernelTestCase
     {
         // 1. Create a page in DB and export it to a .md file
         $page = new Page();
-        $page->setSlug('yaml-deletion-guard');
-        $page->setH1('Deletion Guard');
+        $page->slug = 'yaml-deletion-guard';
+        $page->h1 = 'Deletion Guard';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Should survive');
@@ -222,8 +222,8 @@ final class CrashRecoveryTest extends KernelTestCase
     {
         // Create a page and export it
         $page = new Page();
-        $page->setSlug('valid-crash-test');
-        $page->setH1('Conflict Test');
+        $page->slug = 'valid-crash-test';
+        $page->h1 = 'Conflict Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Original content');
@@ -245,7 +245,7 @@ final class CrashRecoveryTest extends KernelTestCase
             touch($mdPath, time() + 200);
 
             // Modify the DB version
-            $page->setH1('Conflict Test Modified in DB');
+            $page->h1 = 'Conflict Test Modified in DB';
             $page->setMainContent('Modified in database');
             $page->updatedAt = new DateTime('+100 seconds');
             $this->em->flush();

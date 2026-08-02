@@ -152,7 +152,7 @@ final class CachingOptimizationsTest extends KernelTestCase
         $page = $em->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $page);
 
-        $filePath = $this->contentDir.'/'.$page->getSlug().'.md';
+        $filePath = $this->contentDir.'/'.$page->slug.'.md';
         self::assertFileExists($filePath);
 
         // Change DB content and set file mtime to the past
@@ -176,7 +176,7 @@ final class CachingOptimizationsTest extends KernelTestCase
         $page = $em->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $page);
 
-        $filePath = $this->contentDir.'/'.$page->getSlug().'.md';
+        $filePath = $this->contentDir.'/'.$page->slug.'.md';
         self::assertFileExists($filePath);
 
         $originalMtime = (int) filemtime($filePath);

@@ -147,7 +147,7 @@ class Versionner
     private function labelOf(IdInterface $entity): string
     {
         if ($entity instanceof Page) {
-            return $entity->getH1() ?: ($entity->getTitle() ?: $entity->getSlug());
+            return $entity->h1 ?: ($entity->title ?: $entity->slug);
         }
 
         // Snippet (the only other versionable type) is Stringable: name ?: slug.
@@ -163,7 +163,11 @@ class Versionner
 
     private function slugOf(IdInterface $entity): ?string
     {
-        return $entity instanceof Page || $entity instanceof Snippet ? $entity->getSlug() : null;
+        return match (true) {
+            $entity instanceof Page => $entity->slug,
+            $entity instanceof Snippet => $entity->getSlug(),
+            default => null,
+        };
     }
 
     /**

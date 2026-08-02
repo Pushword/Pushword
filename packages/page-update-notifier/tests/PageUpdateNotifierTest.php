@@ -57,8 +57,8 @@ final class PageUpdateNotifierTest extends KernelTestCase
     protected function getPage(): Page
     {
         $page = new Page();
-        $page->setSlug('page-updater');
-        $page->setTitle('Just created');
+        $page->slug = 'page-updater';
+        $page->title = 'Just created';
         $page->createdAt = new DateTime();
         $page->locale = 'en';
         $page->host = 'localhost.dev';
@@ -83,11 +83,11 @@ final class PageUpdateNotifierTest extends KernelTestCase
         $savedPagesData = [];
         foreach ($pages as $page) {
             $savedPagesData[] = [
-                'slug' => $page->getSlug(),
-                'h1' => $page->getH1(),
+                'slug' => $page->slug,
+                'h1' => $page->h1,
                 'mainContent' => $page->getMainContent(),
                 'locale' => $page->locale,
-                'publishedAt' => $page->getPublishedAt(),
+                'publishedAt' => $page->publishedAt,
                 'createdAt' => $page->createdAt,
                 'updatedAt' => $page->updatedAt,
             ];
@@ -128,8 +128,8 @@ final class PageUpdateNotifierTest extends KernelTestCase
             $this->removePageIfExists($em, $pageData['slug'], 'localhost.dev');
 
             $restoredPage = new Page();
-            $restoredPage->setSlug($pageData['slug']);
-            $restoredPage->setH1($pageData['h1']);
+            $restoredPage->slug = $pageData['slug'];
+            $restoredPage->h1 = $pageData['h1'];
             $restoredPage->setMainContent($pageData['mainContent']);
             $restoredPage->locale = $pageData['locale'];
             $restoredPage->host = 'localhost.dev';
@@ -137,7 +137,7 @@ final class PageUpdateNotifierTest extends KernelTestCase
             $restoredPage->updatedAt = $pageData['updatedAt'];
 
             if (null !== $pageData['publishedAt']) {
-                $restoredPage->setPublishedAt($pageData['publishedAt']);
+                $restoredPage->publishedAt = $pageData['publishedAt'];
             }
 
             $em->persist($restoredPage);

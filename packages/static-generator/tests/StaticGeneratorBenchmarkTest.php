@@ -76,8 +76,8 @@ final class StaticGeneratorBenchmarkTest extends KernelTestCase
         $em = $container->get('doctrine.orm.entity_manager');
         for ($i = 1; $i <= 200; ++$i) {
             $page = new Page();
-            $page->setH1('Benchmark Page '.$i);
-            $page->setSlug('bench-page-'.$i);
+            $page->h1 = 'Benchmark Page '.$i;
+            $page->slug = 'bench-page-'.$i;
             $page->setMainContent('<p>Content for benchmark page '.$i.'</p>');
             $page->host = 'localhost.dev';
             $page->locale = 'en';

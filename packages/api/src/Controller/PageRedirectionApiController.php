@@ -71,7 +71,7 @@ final class PageRedirectionApiController extends AbstractApiController
 
         $page = new Page();
         $page->host = $host;
-        $page->setSlug($slug);
+        $page->slug = $slug;
         $page->setMainContent(new PageRedirection($target, $code)->toContent());
         $page->editedBy = $this->getApiUser();
         $page->createdBy = $this->getApiUser();
@@ -144,7 +144,7 @@ final class PageRedirectionApiController extends AbstractApiController
 
         return [
             'host' => $page->host,
-            'slug' => $page->getSlug(),
+            'slug' => $page->slug,
             'redirectTo' => $redirection->url,
             'code' => $redirection->code,
             'revision' => $this->revisions->compute($page),

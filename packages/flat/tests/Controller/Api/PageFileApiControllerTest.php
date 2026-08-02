@@ -129,8 +129,8 @@ final class PageFileApiControllerTest extends WebTestCase
     public function testApostrophesAndQuotesRoundTripByteExact(): void
     {
         $this->assertByteExactRoundTrip(static function (Page $page): void {
-            $page->setTitle('Tour de l\'Albanie : "joyaux" de l\'Île');
-            $page->setH1('Les îles d\'Åland');
+            $page->title = 'Tour de l\'Albanie : "joyaux" de l\'Île';
+            $page->h1 = 'Les îles d\'Åland';
             $page->setMainContent("L'apostrophe et les \"guillemets\" restent intacts.");
         });
     }
@@ -138,7 +138,7 @@ final class PageFileApiControllerTest extends WebTestCase
     public function testHeldPageRoundTripsByteExact(): void
     {
         $this->assertByteExactRoundTrip(static function (Page $page): void {
-            $page->setHoldPublicationAt(new DateTime('2025-12-01 08:00:00'));
+            $page->holdPublicationAt = new DateTime('2025-12-01 08:00:00');
         });
     }
 
@@ -150,18 +150,18 @@ final class PageFileApiControllerTest extends WebTestCase
     public function testCurlyQuotesConvergeInOneWrite(): void
     {
         $page = $this->persistPage(static function (Page $page): void {
-            $page->setTitle("Tour de l\u{2019}Albanie");
+            $page->title = "Tour de l\u{2019}Albanie";
             $page->setMainContent("Corps avec l\u{2019}apostrophe typographique.");
         });
 
         $exported = $this->serializer->serialize($page);
         self::assertStringContainsString("l'Albanie", $exported, 'export straightens the curly apostrophe');
 
-        $first = $this->putFile($page->host, $page->getSlug(), $exported, $this->revisionOf($exported));
+        $first = $this->putFile($page->host, $page->slug, $exported, $this->revisionOf($exported));
         self::assertSame(Response::HTTP_OK, $first->getStatusCode());
         $firstText = (string) $first->getContent();
 
-        $second = $this->putFile($page->host, $page->getSlug(), $firstText, $this->revisionOf($firstText));
+        $second = $this->putFile($page->host, $page->slug, $firstText, $this->revisionOf($firstText));
         self::assertSame(Response::HTTP_OK, $second->getStatusCode());
         self::assertSame($firstText, (string) $second->getContent(), 'second write must be a byte-exact fixed point');
     }
@@ -171,31 +171,31 @@ final class PageFileApiControllerTest extends WebTestCase
     public function testChangedH1AppliesAndRoundTrips(): void
     {
         $page = $this->persistPage(static function (Page $page): void {
-            $page->setH1('Original heading');
+            $page->h1 = 'Original heading';
         });
 
         $exported = $this->serializer->serialize($page);
         $edited = str_replace('Original heading', 'Changed heading', $exported);
 
-        $response = $this->putFile($page->host, $page->getSlug(), $edited, $this->revisionOf($exported));
+        $response = $this->putFile($page->host, $page->slug, $edited, $this->revisionOf($exported));
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         self::assertStringContainsString('Changed heading', (string) $response->getContent());
 
         $this->em->refresh($page);
-        self::assertSame('Changed heading', $page->getH1());
+        self::assertSame('Changed heading', $page->h1);
     }
 
     public function testChangedHoldPublicationAtApplies(): void
     {
         $page = $this->persistPage(static function (Page $page): void {
-            $page->setHoldPublicationAt(new DateTime('2025-12-01 08:00:00'));
+            $page->holdPublicationAt = new DateTime('2025-12-01 08:00:00');
         });
 
         $exported = $this->serializer->serialize($page);
         $edited = str_replace('2025-12-01 08:00', '2026-01-15 09:30', $exported);
         self::assertNotSame($exported, $edited, 'fixture must carry the hold date');
 
-        $response = $this->putFile($page->host, $page->getSlug(), $edited, $this->revisionOf($exported));
+        $response = $this->putFile($page->host, $page->slug, $edited, $this->revisionOf($exported));
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
 
         $this->em->refresh($page);
@@ -213,7 +213,7 @@ final class PageFileApiControllerTest extends WebTestCase
         $edited = preg_replace('/^searchExcerpt:.*\n/m', '', $exported);
         self::assertNotSame($exported, $edited, 'fixture must carry the property line');
 
-        $response = $this->putFile($page->host, $page->getSlug(), (string) $edited, $this->revisionOf($exported));
+        $response = $this->putFile($page->host, $page->slug, (string) $edited, $this->revisionOf($exported));
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         self::assertStringNotContainsString('searchExcerpt', (string) $response->getContent());
 
@@ -225,12 +225,12 @@ final class PageFileApiControllerTest extends WebTestCase
     public function testDeletedParentPageLineResets(): void
     {
         $parent = $this->persistPage(static function (Page $page): void {
-            $page->setSlug('parent-page');
+            $page->slug = 'parent-page';
         });
 
         $child = $this->persistPage(static function (Page $page) use ($parent): void {
             $page->host = $parent->host;
-            $page->setSlug('child-page');
+            $page->slug = 'child-page';
             $page->parentPage = $parent;
         });
 
@@ -238,7 +238,7 @@ final class PageFileApiControllerTest extends WebTestCase
         $edited = preg_replace('/^parentPage:.*\n/m', '', $exported);
         self::assertNotSame($exported, $edited, 'fixture must carry the parentPage line');
 
-        $response = $this->putFile($child->host, $child->getSlug(), (string) $edited, $this->revisionOf($exported));
+        $response = $this->putFile($child->host, $child->slug, (string) $edited, $this->revisionOf($exported));
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         self::assertStringNotContainsString('parentPage', (string) $response->getContent());
 
@@ -259,7 +259,7 @@ final class PageFileApiControllerTest extends WebTestCase
         self::assertStringContainsString('locale: '.$fixtureLocale, $exported);
         $edited = preg_replace('/^locale:.*\n/m', '', $exported);
 
-        $response = $this->putFile($page->host, $page->getSlug(), (string) $edited, $this->revisionOf($exported));
+        $response = $this->putFile($page->host, $page->slug, (string) $edited, $this->revisionOf($exported));
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         // The site locale is the exporter's default and stays omitted.
         self::assertStringNotContainsString('locale:', (string) $response->getContent());
@@ -271,14 +271,14 @@ final class PageFileApiControllerTest extends WebTestCase
     public function testDeletedMetaRobotsResets(): void
     {
         $page = $this->persistPage(static function (Page $page): void {
-            $page->setMetaRobots('noindex');
+            $page->metaRobots = 'noindex';
         });
 
         $exported = $this->serializer->serialize($page);
         $edited = preg_replace('/^metaRobots:.*\n/m', '', $exported);
         self::assertNotSame($exported, $edited, 'fixture must carry the metaRobots line');
 
-        $response = $this->putFile($page->host, $page->getSlug(), (string) $edited, $this->revisionOf($exported));
+        $response = $this->putFile($page->host, $page->slug, (string) $edited, $this->revisionOf($exported));
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         self::assertStringNotContainsString('metaRobots', (string) $response->getContent());
 
@@ -289,19 +289,19 @@ final class PageFileApiControllerTest extends WebTestCase
     public function testUnparsablePublishedAtIsRejected(): void
     {
         $page = $this->persistPage(static function (Page $page): void {
-            $page->setPublishedAt(new DateTime('2025-06-01 10:30:00'));
+            $page->publishedAt = new DateTime('2025-06-01 10:30:00');
         });
 
         $exported = $this->serializer->serialize($page);
         $edited = str_replace("publishedAt: '2025-06-01 10:30'", 'publishedAt: not-a-date', $exported);
         self::assertNotSame($exported, $edited, 'fixture must carry the published date');
 
-        $response = $this->putFile($page->host, $page->getSlug(), $edited, $this->revisionOf($exported));
+        $response = $this->putFile($page->host, $page->slug, $edited, $this->revisionOf($exported));
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
         self::assertStringContainsString('invalid_frontmatter', (string) $response->getContent());
 
         $this->em->refresh($page);
-        self::assertSame('2025-06-01 10:30', $page->getPublishedAt()?->format('Y-m-d H:i'), 'a typo must not unpublish');
+        self::assertSame('2025-06-01 10:30', $page->publishedAt?->format('Y-m-d H:i'), 'a typo must not unpublish');
     }
 
     // ----- protocol -----
@@ -311,18 +311,18 @@ final class PageFileApiControllerTest extends WebTestCase
         $page = $this->persistPage(static fn (Page $page): null => null);
         $exported = $this->serializer->serialize($page);
 
-        $response = $this->putFile($page->host, $page->getSlug(), $exported, null);
+        $response = $this->putFile($page->host, $page->slug, $exported, null);
         self::assertSame(Response::HTTP_PRECONDITION_REQUIRED, $response->getStatusCode());
     }
 
     public function testStaleIfMatchGetsCanonicalTextWith409(): void
     {
         $page = $this->persistPage(static function (Page $page): void {
-            $page->setH1('Server truth');
+            $page->h1 = 'Server truth';
         });
         $exported = $this->serializer->serialize($page);
 
-        $response = $this->putFile($page->host, $page->getSlug(), $exported, 'stale-revision');
+        $response = $this->putFile($page->host, $page->slug, $exported, 'stale-revision');
         self::assertSame(Response::HTTP_CONFLICT, $response->getStatusCode());
         self::assertStringStartsWith('text/markdown', (string) $response->headers->get('Content-Type'));
         self::assertSame($exported, (string) $response->getContent(), '409 body is the current canonical file text');
@@ -333,7 +333,7 @@ final class PageFileApiControllerTest extends WebTestCase
         $page = $this->persistPage(static fn (Page $page): null => null);
         $exported = $this->serializer->serialize($page);
 
-        $response = $this->putFile($page->host, $page->getSlug(), "Just a body, no front matter.\n", $this->revisionOf($exported));
+        $response = $this->putFile($page->host, $page->slug, "Just a body, no front matter.\n", $this->revisionOf($exported));
         self::assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
     }
 
@@ -352,7 +352,7 @@ final class PageFileApiControllerTest extends WebTestCase
         self::assertInstanceOf(Page::class, $page);
         $this->createdPageIds[] = $page->id ?? 0;
 
-        self::assertSame('Née par POST', $page->getH1());
+        self::assertSame('Née par POST', $page->h1);
         self::assertSame($this->serializer->serialize($page), (string) $response->getContent());
         self::assertNotNull($this->revisionOf((string) $response->getContent()), 'the response carries the new revision');
     }
@@ -361,7 +361,7 @@ final class PageFileApiControllerTest extends WebTestCase
     {
         $page = $this->persistPage(static fn (Page $page): null => null);
 
-        $this->client->request(Request::METHOD_POST, '/api/content/page/'.$page->host.'/'.$page->getSlug(), server: $this->server(), content: "---\nh1: Doublon\n---\n\nx");
+        $this->client->request(Request::METHOD_POST, '/api/content/page/'.$page->host.'/'.$page->slug, server: $this->server(), content: "---\nh1: Doublon\n---\n\nx");
         $response = $this->client->getResponse();
 
         self::assertSame(Response::HTTP_CONFLICT, $response->getStatusCode());
@@ -390,7 +390,7 @@ final class PageFileApiControllerTest extends WebTestCase
         $page = $this->persistPage($configure);
         $exported = $this->serializer->serialize($page);
 
-        $response = $this->putFile($page->host, $page->getSlug(), $exported, $this->revisionOf($exported));
+        $response = $this->putFile($page->host, $page->slug, $exported, $this->revisionOf($exported));
 
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
         self::assertStringStartsWith('text/markdown', (string) $response->headers->get('Content-Type'));
@@ -405,9 +405,9 @@ final class PageFileApiControllerTest extends WebTestCase
     {
         $page = new Page();
         $page->host = $this->uniqueHost();
-        $page->setSlug('corpus-page');
-        $page->setH1('Corpus fixture');
-        $page->setPublishedAt(new DateTime('2025-06-01 10:30:00'));
+        $page->slug = 'corpus-page';
+        $page->h1 = 'Corpus fixture';
+        $page->publishedAt = new DateTime('2025-06-01 10:30:00');
         $page->setMainContent('Default body.');
         // Pre-stamp the API user: the write re-stamps the same entity, so an
         // unchanged PUT produces an empty changeset and a stable revision.

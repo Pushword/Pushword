@@ -12,7 +12,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
         $page->setMainContent("# Mon titre\n\nUn paragraphe.");
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
@@ -25,7 +25,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
         $page->setMainContent("# Titre\n\nUn paragraphe important.");
 
         MarkdownUtils::addAnchor($page, 'paragraphe-important', '/paragraphe important/', ['paragraph']);
@@ -38,7 +38,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
         $page->setMainContent("{.class}\n# Mon titre\n\nUn paragraphe.");
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
@@ -51,7 +51,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
 
         $originalContent = "{#existing-anchor}\n# Mon titre\n\nUn paragraphe.";
         $page->setMainContent($originalContent);
@@ -66,7 +66,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
 
         $originalContent = "{.class #anchor1}\n# Mon titre\n\nUn paragraphe.";
         $page->setMainContent($originalContent);
@@ -81,7 +81,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
 
         $originalContent = "# Mon titre\n\nUn paragraphe.";
         $page->setMainContent($originalContent);
@@ -96,7 +96,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
         $page->setMainContent("# Mon titre\n\nUn paragraphe.\n\n# Mon titre\n\nAutre paragraphe.");
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
@@ -110,7 +110,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
         $page->setMainContent("# Mon titre\n\nUn paragraphe.");
 
         $output = [];
@@ -130,7 +130,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
         $page->setMainContent("# Mon titre\n\n```php\ncode here\n```\n\nUn paragraphe.");
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
@@ -144,7 +144,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
         $page->setMainContent("Autre texte.\n\nUn paragraphe important.\n\n# Titre");
 
         MarkdownUtils::addAnchor($page, 'paragraphe-important', '/paragraphe important/', ['header', 'paragraph']);
@@ -159,7 +159,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
         $page->setMainContent("# Mon titre\r\n\r\nUn paragraphe.");
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
@@ -197,7 +197,7 @@ final class MarkdownUtilsTest extends TestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
 
         $originalContent = "# Mon titre\n\n<div id=\"mon-titre\">Content</div>";
         $page->setMainContent($originalContent);

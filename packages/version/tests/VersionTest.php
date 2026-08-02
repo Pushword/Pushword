@@ -50,10 +50,10 @@ final class VersionTest extends KernelTestCase
             ?? $repo->findOneBy([]);
         self::assertNotNull($page, 'At least one page should exist');
 
-        $page->setH1('edited title to test Versioning');
+        $page->h1 = 'edited title to test Versioning';
 
         $em->flush();
-        $page->setH1('edited title to test Versioning the second time');
+        $page->h1 = 'edited title to test Versioning the second time';
         $em->flush();
 
         /** @var string $storageDir */
@@ -183,7 +183,7 @@ final class VersionTest extends KernelTestCase
         self::assertNotNull($page);
 
         $page->editedBy = $user;
-        $page->setH1('editor capture test '.uniqid());
+        $page->h1 = 'editor capture test '.uniqid();
 
         $em->flush();
 
@@ -441,7 +441,7 @@ final class VersionTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'version-pick-'.uniqid().'.example.com';
-        $page->setSlug('pick-'.uniqid());
+        $page->slug = 'pick-'.uniqid();
         $page->setMainContent($mainContent);
 
         $em->persist($page);

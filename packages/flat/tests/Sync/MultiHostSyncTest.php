@@ -78,8 +78,8 @@ final class MultiHostSyncTest extends KernelTestCase
     {
         // Create page only on host A
         $page = new Page();
-        $page->setSlug('multi-host-test-page');
-        $page->setH1('Multi Host Test');
+        $page->slug = 'multi-host-test-page';
+        $page->h1 = 'Multi Host Test';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Host A only');
@@ -108,7 +108,7 @@ final class MultiHostSyncTest extends KernelTestCase
     {
         // Get pages for host B before import
         $hostBPagesBefore = $this->em->getRepository(Page::class)->findBy(['host' => 'pushword.piedweb.com']);
-        $hostBSlugsBefore = array_map(static fn (Page $p): string => $p->getSlug(), $hostBPagesBefore);
+        $hostBSlugsBefore = array_map(static fn (Page $p): string => $p->slug, $hostBPagesBefore);
 
         // Export host A and import
         $this->flatFileSync->export('localhost.dev');
@@ -117,7 +117,7 @@ final class MultiHostSyncTest extends KernelTestCase
         // Host B pages should be unchanged
         $this->em->clear();
         $hostBPagesAfter = $this->em->getRepository(Page::class)->findBy(['host' => 'pushword.piedweb.com']);
-        $hostBSlugsAfter = array_map(static fn (Page $p): string => $p->getSlug(), $hostBPagesAfter);
+        $hostBSlugsAfter = array_map(static fn (Page $p): string => $p->slug, $hostBPagesAfter);
 
         sort($hostBSlugsBefore);
         sort($hostBSlugsAfter);

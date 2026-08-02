@@ -35,7 +35,7 @@ final readonly class MigrateV2Command
                     $page->setTemplate($template);
                     $page->removeCustomProperty('template');
                     $changed = true;
-                    $output->writeln('  Promoted template for page "'.$page->getSlug().'"');
+                    $output->writeln('  Promoted template for page "'.$page->slug.'"');
                 }
             }
 
@@ -45,7 +45,7 @@ final readonly class MigrateV2Command
                 $page->removeCustomProperty('searchExcrept');
                 $page->setCustomProperty('searchExcerpt', $value);
                 $changed = true;
-                $output->writeln('  Fixed searchExcerpt typo for page "'.$page->getSlug().'"');
+                $output->writeln('  Fixed searchExcerpt typo for page "'.$page->slug.'"');
             }
 
             if ($changed) {

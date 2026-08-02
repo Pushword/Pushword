@@ -196,7 +196,7 @@ final class LinkedDocsScanner extends AbstractScanner
             ->getResult();
 
         foreach ($pages as $page) {
-            $this->pageCache[$page->host.'/'.$page->getSlug()] = $page;
+            $this->pageCache[$page->host.'/'.$page->slug] = $page;
         }
     }
 
@@ -480,9 +480,9 @@ final class LinkedDocsScanner extends AbstractScanner
                     'url' => $url,
                     'pageId' => (int) $this->page->id,
                     'pageHost' => $this->page->host,
-                    'pageSlug' => $this->page->getSlug(),
-                    'pageH1' => $this->page->getH1(),
-                    'pageMetaRobots' => $this->page->getMetaRobots(),
+                    'pageSlug' => $this->page->slug,
+                    'pageH1' => $this->page->h1,
+                    'pageMetaRobots' => $this->page->metaRobots,
                 ];
 
                 return;

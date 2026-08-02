@@ -24,7 +24,7 @@ class ShowMore
     private function getPagePrefix(): string
     {
         if (null === $this->pagePrefix) {
-            $this->pagePrefix = $this->apps->getCurrentPage()?->getSlug() ?? uniqid();
+            $this->pagePrefix = $this->apps->getCurrentPage()->slug ?? uniqid();
         }
 
         return $this->pagePrefix;

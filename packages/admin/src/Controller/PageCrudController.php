@@ -117,8 +117,8 @@ class PageCrudController extends AbstractAdminCrudController
         assert($page instanceof Page);
 
         $clone = clone $page;
-        $clone->setSlug($page->getSlug().'-copy');
-        $clone->setPublishedAt(null);
+        $clone->slug = $page->slug.'-copy';
+        $clone->publishedAt = null;
 
         $this->getEntityManager()->persist($clone);
         $this->getEntityManager()->flush();
@@ -326,7 +326,7 @@ class PageCrudController extends AbstractAdminCrudController
     public function getPageUrl(Page $page): string
     {
         return $this->routeGenerator->generate(
-            $page->getSlug(),
+            $page->slug,
             false,
             null,
             $page->host,
@@ -542,13 +542,13 @@ class PageCrudController extends AbstractAdminCrudController
 
         $shouldPublish = $this->normalizePublishedState((string) $request->request->get('published'));
 
-        $page->setPublishedAt($shouldPublish ? new DateTime() : null);
+        $page->publishedAt = $shouldPublish ? new DateTime() : null;
 
         $this->getEntityManager()->flush();
 
         return new Response($this->adminFormFieldManager->twig->render('@pwAdmin/components/published_toggle.html.twig', [
             'entity' => ['instance' => $page],
-            'value' => $page->getPublishedAt(),
+            'value' => $page->publishedAt,
             'field' => null,
         ]));
     }

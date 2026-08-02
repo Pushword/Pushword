@@ -731,8 +731,8 @@ final class QuizValidationTest extends KernelTestCase
         self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
 
         $page = new Page();
-        $page->setH1('Quiz pipeline page');
-        $page->setSlug('quiz-pipeline');
+        $page->h1 = 'Quiz pipeline page';
+        $page->slug = 'quiz-pipeline';
         $page->locale = 'en';
         $page->createdAt = new DateTime('1 day ago');
         $page->updatedAt = new DateTime('1 day ago');

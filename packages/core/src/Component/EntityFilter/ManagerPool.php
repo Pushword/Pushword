@@ -3,49 +3,24 @@
 namespace Pushword\Core\Component\EntityFilter;
 
 use Exception;
+use Pushword\Core\Content\ContentPipelineFactory;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Site\SiteRegistry;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Service\ResetInterface;
 
-final class ManagerPool implements ResetInterface
+/**
+ * Legacy entry point to the filtered properties of a page: it hands out the
+ * {@see Manager} facade of the page's {@see \Pushword\Core\Content\ContentPipeline}.
+ * New code asks {@see ContentPipelineFactory} directly.
+ */
+final readonly class ManagerPool
 {
     public function __construct(
-        public SiteRegistry $apps,
-        public EventDispatcherInterface $eventDispatcher,
-        private readonly FilterRegistry $filterRegistry,
+        private ContentPipelineFactory $factory,
     ) {
-    }
-
-    /** @var array<(string|int), Manager> */
-    private array $entityFilterManagers = [];
-
-    /**
-     * Worker-mode safety (kernel.reset): same leak as ContentPipelineFactory — each
-     * Manager is keyed by page id and caches filtered properties for the Page instance
-     * it was built from, which the next request replaces with a freshly loaded entity.
-     */
-    public function reset(): void
-    {
-        $this->entityFilterManagers = [];
     }
 
     public function getManager(Page $page): Manager
     {
-        $id = $page->id ?? 'obj_'.spl_object_id($page);
-
-        if (isset($this->entityFilterManagers[$id])) {
-            return $this->entityFilterManagers[$id];
-        }
-
-        $this->entityFilterManagers[$id] = new Manager(
-            $this,
-            $this->eventDispatcher,
-            $this->filterRegistry,
-            $page
-        );
-
-        return $this->entityFilterManagers[$id];
+        return $this->factory->getLegacyManager($page);
     }
 
     /**

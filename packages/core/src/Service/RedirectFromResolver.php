@@ -23,7 +23,7 @@ final class RedirectFromResolver
     {
         $bySlug = [];
         foreach ($pages as $page) {
-            $bySlug[$page->getSlug()] = $page;
+            $bySlug[$page->slug] = $page;
         }
 
         $reverse = [];
@@ -44,8 +44,8 @@ final class RedirectFromResolver
                 continue; // dangling or chained target — keep as phantom
             }
 
-            $reverse[$targetSlug][$page->getSlug()] = $page->getRedirectionCode();
-            $foldedSlugs[$page->getSlug()] = true;
+            $reverse[$targetSlug][$page->slug] = $page->getRedirectionCode();
+            $foldedSlugs[$page->slug] = true;
         }
 
         return ['reverse' => $reverse, 'foldedSlugs' => $foldedSlugs];

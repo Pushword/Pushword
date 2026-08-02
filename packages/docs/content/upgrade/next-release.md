@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'page exposes its columns as properties, with no getter/setter left'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -27,3 +27,67 @@ absorbs needs no note.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`
+
+## Page drops the last of its getter/setter pairs
+
+[rc372](/upgrade/rc372) turned `Page`'s simple columns into PHP 8.4 property hooks and
+kept the accessors "for caller compatibility"; [rc799](/upgrade/rc799) removed the
+equivalent pairs everywhere else. The ones on `Page` are gone now — read or assign the
+property of the same name:
+
+```diff
+-$page->getH1();          $page->setH1('Bonjour');
+-$page->getSlug();        $page->setSlug('bonjour');
+-$page->getTitle();       $page->setTitle('Bonjour | Demo');
+-$page->getName();        $page->setName('Bonjour');
+-$page->getMetaRobots();  $page->setMetaRobots('noindex');
+-$page->getPublishedAt(); $page->setPublishedAt(new DateTime());
++$page->h1;               $page->h1 = 'Bonjour';
++$page->slug;             $page->slug = 'bonjour';
++$page->title;            $page->title = 'Bonjour | Demo';
++$page->name;             $page->name = 'Bonjour';
++$page->metaRobots;       $page->metaRobots = 'noindex';
++$page->publishedAt;      $page->publishedAt = new DateTime();
+```
+
+Also gone: `getCustomCanonical()`/`setCustomCanonical()`,
+`getHoldPublicationAt()`/`setHoldPublicationAt()`, `getLocale()` and `getEditMessage()`.
+
+The hooks still normalize on assignment, so `$page->slug = 'Ma Page'` stores `ma-page`
+exactly as `setSlug()` did, and `null` still lands as `''`. Everything that does more
+than return a value stays a method: `isHoldPublication()`, `setHoldPublication()`,
+`getRealSlug()`, `getMainContent()`/`setMainContent()`, `getTemplate()`,
+`isPublished()`, `isIndexable()`.
+
+Fluent construction goes with the setters; assign instead:
+
+```diff
+-$page = new Page()->setSlug('bonjour')->setH1('Bonjour');
++$page = new Page();
++$page->slug = 'bonjour';
++$page->h1 = 'Bonjour';
+```
+
+**In Twig nothing changes**: `page.h1`, `page.slug` and `pw(page).title` resolve the same
+through property access, and a template still calling `page.getTitle()` is answered by
+the property that replaced it rather than by an unset custom property. Update those calls
+anyway — any argument they carry (`page.getTitle(true)`, from a signature that has not
+existed for a long time) is silently ignored.
+
+## The filter pipeline reads properties, and Manager is a facade
+
+`ContentPipeline` used to resolve a filtered property by building a getter name and
+calling it. It now prefers a real method and falls back to the public property of the
+same name, so a hooked column with no accessor still goes through the filters. Two
+consequences for custom code:
+
+- `Pushword\Core\Component\EntityFilter\Manager` no longer implements the filtering — it
+  delegates to the page's `ContentPipeline`. Filters and `pushword.filter_before`/`_after`
+  listeners still receive it, unchanged. `Manager::getManagerPool()` is gone: to resolve a
+  property against another page, use
+  `$manager->getPipeline()->for($otherPage)->getFilteredProperty('Title')`.
+- `ManagerPool` is now a thin delegate over `ContentPipelineFactory`: it takes only that
+  factory, and `ContentPipelineFactory` no longer takes a `ManagerPool`. Only code
+  constructing either by hand, rather than autowiring it, has to change.

@@ -40,7 +40,7 @@ final class TwigErrorScannerTest extends KernelTestCase
     private function getPage(): Page
     {
         $page = new Page();
-        $page->setSlug('homepage');
+        $page->slug = 'homepage';
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');
 

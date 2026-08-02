@@ -20,10 +20,10 @@ final class HtmlUnpublishedLinkTest extends TestCase
     private function createPage(string $slug, ?DateTime $publishedAt = null, string $host = 'localhost'): Page
     {
         $page = new Page(false);
-        $page->setSlug($slug);
+        $page->slug = $slug;
         $page->host = $host;
         $page->locale = 'en';
-        $page->setPublishedAt($publishedAt);
+        $page->publishedAt = $publishedAt;
 
         return $page;
     }

@@ -22,6 +22,6 @@ class Name implements FilterInterface
             return trim($names[0]);
         }
 
-        return '' !== $propertyValue ? $propertyValue : $page->getH1();
+        return '' !== $propertyValue ? $propertyValue : $page->h1;
     }
 }

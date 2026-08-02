@@ -95,7 +95,7 @@ final class EpochSweepIntegrationTest extends KernelTestCase
         $this->page = new Page();
         $page = $this->page;
         $page->host = self::HOST;
-        $page->setSlug('epoch-int-page');
+        $page->slug = 'epoch-int-page';
         $page->title = "Epoch {{ snippet('".$slug."') }}";
         $page->h1 = 'Epoch integration page';
         $page->setMainContent('Content that never changes.');
@@ -170,7 +170,7 @@ final class EpochSweepIntegrationTest extends KernelTestCase
         $this->page = new Page();
         $page = $this->page;
         $page->host = self::HOST;
-        $page->setSlug('epoch-flush-page');
+        $page->slug = 'epoch-flush-page';
         $page->title = 'Epoch flush page';
         $page->setMainContent('Prose without links.');
 

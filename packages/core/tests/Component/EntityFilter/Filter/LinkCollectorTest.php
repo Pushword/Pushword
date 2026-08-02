@@ -139,7 +139,7 @@ final class LinkCollectorTest extends KernelTestCase
     private function createPage(): Page
     {
         $page = new Page();
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
         $page->locale = 'en';
         $page->host = 'localhost';
 

@@ -33,7 +33,7 @@ final class PageRepositoryTest extends KernelTestCase
             1
         );
 
-        self::assertSame('homepage', $pages[0]->getSlug());
+        self::assertSame('homepage', $pages[0]->slug);
     }
 
     /**
@@ -53,14 +53,14 @@ final class PageRepositoryTest extends KernelTestCase
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
         $page = new Page();
-        $page->setH1('Not indexable');
-        $page->setSlug('not-indexable-by-meta-robots');
+        $page->h1 = 'Not indexable';
+        $page->slug = 'not-indexable-by-meta-robots';
         $page->locale = 'en';
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
         $page->setMainContent('content');
-        $page->setMetaRobots($metaRobots);
+        $page->metaRobots = $metaRobots;
 
         $em->persist($page);
         $em->flush();
@@ -71,7 +71,7 @@ final class PageRepositoryTest extends KernelTestCase
                 ->getIndexablePagesQuery('localhost.dev', 'en')
                 ->getQuery()->getResult();
 
-            $slugs = array_map(static fn (Page $indexablePage): string => $indexablePage->getSlug(), $indexable);
+            $slugs = array_map(static fn (Page $indexablePage): string => $indexablePage->slug, $indexable);
 
             self::assertNotContains('not-indexable-by-meta-robots', $slugs);
         } finally {
@@ -103,14 +103,14 @@ final class PageRepositoryTest extends KernelTestCase
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
         $page = new Page();
-        $page->setH1('Still indexable');
-        $page->setSlug('indexable-lookalike-directives');
+        $page->h1 = 'Still indexable';
+        $page->slug = 'indexable-lookalike-directives';
         $page->locale = 'en';
         $page->host = 'localhost.dev';
         $page->createdAt = new DateTime();
         $page->updatedAt = new DateTime();
         $page->setMainContent('content');
-        $page->setMetaRobots('noimageindex, nosnippet, notranslate');
+        $page->metaRobots = 'noimageindex, nosnippet, notranslate';
 
         $em->persist($page);
         $em->flush();
@@ -121,7 +121,7 @@ final class PageRepositoryTest extends KernelTestCase
                 ->getIndexablePagesQuery('localhost.dev', 'en')
                 ->getQuery()->getResult();
 
-            $slugs = array_map(static fn (Page $indexablePage): string => $indexablePage->getSlug(), $indexable);
+            $slugs = array_map(static fn (Page $indexablePage): string => $indexablePage->slug, $indexable);
 
             self::assertContains('indexable-lookalike-directives', $slugs);
         } finally {
@@ -214,8 +214,8 @@ final class PageRepositoryTest extends KernelTestCase
         $host = $homepage->host;
 
         $destination = new Page();
-        $destination->setH1('RFM Repo Dest');
-        $destination->setSlug('rfm-repo-dest');
+        $destination->h1 = 'RFM Repo Dest';
+        $destination->slug = 'rfm-repo-dest';
         $destination->host = $host;
         $destination->locale = 'en';
         $destination->createdAt = new DateTime();
@@ -301,7 +301,7 @@ final class PageRepositoryTest extends KernelTestCase
         // A found slug resolves to the real page from the warm cache.
         $page = $pageRepo->getPageBySlug('homepage', $host);
         self::assertNotNull($page);
-        self::assertSame('homepage', $page->getSlug());
+        self::assertSame('homepage', $page->slug);
 
         // A missing slug resolves to null and stays null (negative cache).
         self::assertNull($pageRepo->getPageBySlug('no-such-page', $host));
@@ -417,8 +417,8 @@ final class PageRepositoryTest extends KernelTestCase
 
         self::assertNotSame([], $pages);
         foreach ($pages as $page) {
-            self::assertStringStartsWith('home', $page->getSlug());
-            self::assertNotSame('homepage-draft', $page->getSlug());
+            self::assertStringStartsWith('home', $page->slug);
+            self::assertNotSame('homepage-draft', $page->slug);
         }
     }
 
@@ -431,7 +431,7 @@ final class PageRepositoryTest extends KernelTestCase
         $em->clear();
 
         $pages = $pageRepo->getPublishedPages('');
-        $homepage = array_find($pages, static fn (Page $page): bool => 'homepage' === $page->getSlug());
+        $homepage = array_find($pages, static fn (Page $page): bool => 'homepage' === $page->slug);
 
         self::assertInstanceOf(Page::class, $homepage);
         $fresh = $homepage->translations;
@@ -446,7 +446,7 @@ final class PageRepositoryTest extends KernelTestCase
         foreach ($pages as $page) {
             $collection = $page->translations;
             self::assertInstanceOf(PersistentCollection::class, $collection);
-            self::assertTrue($collection->isInitialized(), 'Not preloaded: '.$page->getSlug());
+            self::assertTrue($collection->isInitialized(), 'Not preloaded: '.$page->slug);
         }
 
         // The preloaded rows are the real data (AppFixtures links homepage → fr)…

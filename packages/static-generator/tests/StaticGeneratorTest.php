@@ -308,7 +308,7 @@ final class StaticGeneratorTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'localhost.dev';
-        $page->setSlug($slug);
+        $page->slug = $slug;
         $page->title = 'Prune probe '.$slug;
         $page->h1 = 'Prune probe';
         $page->setMainContent('Content destined for pruning.');
@@ -338,13 +338,13 @@ final class StaticGeneratorTest extends KernelTestCase
 
         $homepage = $pageRepository->findOneBy(['host' => 'localhost.dev', 'slug' => 'homepage']);
         self::assertNotNull($homepage);
-        $originalH1 = $homepage->getH1();
+        $originalH1 = $homepage->h1;
 
         try {
             // Edit the page AND hold it: the live DB changes but production must
             // keep serving the previously published version across a full rebuild.
             $homepage->setHoldPublication(true);
-            $homepage->setH1('Held edit '.uniqid());
+            $homepage->h1 = 'Held edit '.uniqid();
             $em->flush();
 
             $commandTester = $this->rebootStaticCommandTester();
@@ -376,7 +376,7 @@ final class StaticGeneratorTest extends KernelTestCase
                 ->findOneBy(['host' => 'localhost.dev', 'slug' => 'homepage']);
             if (null !== $reloaded) {
                 $reloaded->setHoldPublication(false);
-                $reloaded->setH1($originalH1);
+                $reloaded->h1 = $originalH1;
                 $resetEm->flush();
             }
         }
@@ -579,7 +579,7 @@ final class StaticGeneratorTest extends KernelTestCase
 
         $page = new Page(false);
         $page->host = 'localhost.dev';
-        $page->setSlug('redirect-dest-test');
+        $page->slug = 'redirect-dest-test';
         $page->setMainContent('content');
         $page->redirectFrom = ['old-incoming' => 308];
 
@@ -613,7 +613,7 @@ final class StaticGeneratorTest extends KernelTestCase
 
         $page = new Page(false);
         $page->host = 'pushword.piedweb.com';
-        $page->setSlug('redirect-dest-test');
+        $page->slug = 'redirect-dest-test';
         $page->setMainContent('content');
         $page->redirectFrom = ['old-incoming' => 308];
 
@@ -659,9 +659,9 @@ final class StaticGeneratorTest extends KernelTestCase
         // pushword.piedweb.com page.
         $probe = new Page(false);
         $probe->host = 'pushword.piedweb.com';
-        $probe->setSlug('worker-reset-probe');
+        $probe->slug = 'worker-reset-probe';
         $probe->locale = 'en';
-        $probe->setH1('Worker reset probe');
+        $probe->h1 = 'Worker reset probe';
         $probe->setMainContent('Probe body.');
         $probe->createdAt = new DateTime('2 days ago');
 
@@ -750,9 +750,9 @@ final class StaticGeneratorTest extends KernelTestCase
         // by CommonMark's default html_input).
         $probe = new Page(); // default ctor sets publishedAt — getPublishedPages() must pick it up
         $probe->host = 'localhost.dev';
-        $probe->setSlug('lint-probe');
+        $probe->slug = 'lint-probe';
         $probe->locale = 'en';
-        $probe->setH1('Lint probe');
+        $probe->h1 = 'Lint probe';
         $probe->setMainContent('[poisoned](/pushword.piedweb.com/installation)');
         $probe->publishedAt = new DateTime('2 days ago');
 
@@ -1692,8 +1692,8 @@ final class StaticGeneratorTest extends KernelTestCase
     public function getPageRepo(): MockObject
     {
         $page = new Page();
-        $page->setH1('Welcome to Pushword !');
-        $page->setSlug('homepage');
+        $page->h1 = 'Welcome to Pushword !';
+        $page->slug = 'homepage';
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');
         $page->setMainContent('...');

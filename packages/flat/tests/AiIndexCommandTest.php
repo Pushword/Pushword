@@ -87,14 +87,14 @@ final class AiIndexCommandTest extends KernelTestCase
         $apps = self::getContainer()->get(SiteRegistry::class);
 
         $page = new Page();
-        $page->setSlug($slug);
-        $page->setH1('Test '.$slug);
+        $page->slug = $slug;
+        $page->h1 = 'Test '.$slug;
         $page->setMainContent($content);
         $page->host = $apps->get()->getMainHost();
         $page->createdAt = new DateTime();
         if (null !== $parentPage) {
             // Retrieve parent page from database so it's in the same EntityManager
-            $parentPage = $em->getRepository(Page::class)->findOneBy(['slug' => $parentPage->getSlug()]);
+            $parentPage = $em->getRepository(Page::class)->findOneBy(['slug' => $parentPage->slug]);
             if (null !== $parentPage) {
                 $page->parentPage = $parentPage;
             }

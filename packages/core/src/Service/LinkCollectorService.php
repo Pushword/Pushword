@@ -16,7 +16,7 @@ final class LinkCollectorService
 
     public function register(Page $page): void
     {
-        $this->registeredSlugs[$page->getSlug()] = true;
+        $this->registeredSlugs[$page->slug] = true;
     }
 
     /**
@@ -25,13 +25,13 @@ final class LinkCollectorService
     public function registerAll(array $pages): void
     {
         foreach ($pages as $page) {
-            $this->registeredSlugs[$page->getSlug()] = true;
+            $this->registeredSlugs[$page->slug] = true;
         }
     }
 
     public function isRegistered(Page $page): bool
     {
-        return isset($this->registeredSlugs[$page->getSlug()]);
+        return isset($this->registeredSlugs[$page->slug]);
     }
 
     public function isSlugRegistered(string $slug): bool
@@ -56,7 +56,7 @@ final class LinkCollectorService
     {
         return array_values(array_filter(
             $pages,
-            fn (Page $page): bool => ! isset($this->registeredSlugs[$page->getSlug()])
+            fn (Page $page): bool => ! isset($this->registeredSlugs[$page->slug])
         ));
     }
 

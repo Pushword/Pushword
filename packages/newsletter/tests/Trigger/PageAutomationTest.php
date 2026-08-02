@@ -62,7 +62,7 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
 
         self::assertSame(1, $this->runTriggers());
 
-        $publishedAt = $page->getPublishedAt();
+        $publishedAt = $page->publishedAt;
         self::assertInstanceOf(DateTime::class, $publishedAt);
 
         $campaign = $this->onlyCampaignOf($automation);
@@ -89,7 +89,7 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
 
         self::assertSame(2, $this->runTriggers());
 
-        $publishedAt = $page->getPublishedAt();
+        $publishedAt = $page->publishedAt;
         self::assertInstanceOf(DateTime::class, $publishedAt);
 
         $campaigns = $this->campaignsOf($automation);
@@ -207,7 +207,7 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
 
         self::assertSame(0, $this->runTriggers());
 
-        $page->setPublishedAt(new DateTime('-1 minute'));
+        $page->publishedAt = new DateTime('-1 minute');
         $this->entityManager->flush();
 
         self::assertSame(1, $this->runTriggers());
@@ -222,14 +222,14 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
         $this->runTriggers();
         $campaignId = $this->onlyCampaignOf($automation)->id;
 
-        $page->setPublishedAt(new DateTime('+1 year'));
+        $page->publishedAt = new DateTime('+1 year');
         $this->entityManager->flush();
 
         self::assertSame(1, $this->runner()->cancelStale());
         self::assertNull($this->entityManager->getRepository(Campaign::class)->find($campaignId));
 
         // The marker went with it, so a proper publication still gets its mail.
-        $page->setPublishedAt(new DateTime('-1 minute'));
+        $page->publishedAt = new DateTime('-1 minute');
         $this->entityManager->flush();
 
         self::assertSame(1, $this->runTriggers());
@@ -247,7 +247,7 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
         $campaign = $this->onlyCampaignOf($automation);
         self::assertSame(CampaignStatus::Sent, $campaign->status);
 
-        $page->setPublishedAt(new DateTime('+1 year'));
+        $page->publishedAt = new DateTime('+1 year');
         $this->entityManager->flush();
 
         self::assertSame(0, $this->runner()->cancelStale());
@@ -278,14 +278,14 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
 
         [$sentId, $pendingId] = [$campaigns[0]->id, $campaigns[1]->id];
 
-        $page->setPublishedAt(new DateTime('+1 year'));
+        $page->publishedAt = new DateTime('+1 year');
         $this->entityManager->flush();
 
         self::assertSame(1, $this->runner()->cancelStale(), 'only the step nobody received');
         self::assertNotNull($this->entityManager->getRepository(Campaign::class)->find($sentId));
         self::assertNull($this->entityManager->getRepository(Campaign::class)->find($pendingId));
 
-        $page->setPublishedAt(new DateTime('-1 minute'));
+        $page->publishedAt = new DateTime('-1 minute');
         $this->entityManager->flush();
 
         self::assertSame(0, $this->runTriggers(), 'the article was already announced');
@@ -411,9 +411,9 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
         $page = new Page();
         $page->host = 'localhost.dev';
         $page->slug = $this->prefix.'/'.$slug;
-        $page->setH1('Hello');
+        $page->h1 = 'Hello';
         $page->setSearchExcerpt('What it is about.');
-        $page->setPublishedAt(new DateTime($publishedAt));
+        $page->publishedAt = new DateTime($publishedAt);
 
         $this->entityManager->persist($page);
         $this->entityManager->flush();

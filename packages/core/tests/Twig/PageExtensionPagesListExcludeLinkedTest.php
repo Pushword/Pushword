@@ -73,10 +73,10 @@ final class PageExtensionPagesListExcludeLinkedTest extends KernelTestCase
         $page = new Page();
         $page->host = self::HOST;
         $page->locale = 'en';
-        $page->setSlug($slug);
-        $page->setH1('Dedupe fixture '.$slug);
+        $page->slug = $slug;
+        $page->h1 = 'Dedupe fixture '.$slug;
         $page->setMainContent('Dedupe fixture content.');
-        $page->setPublishedAt(new DateTime('-1 day'));
+        $page->publishedAt = new DateTime('-1 day');
 
         $this->entityManager->persist($page);
     }
@@ -108,7 +108,7 @@ final class PageExtensionPagesListExcludeLinkedTest extends KernelTestCase
         $context = new Page();
         $context->host = self::HOST;
         $context->locale = 'en';
-        $context->setSlug('pages-list-dedupe-context');
+        $context->slug = 'pages-list-dedupe-context';
 
         new LinkCollector(
             self::getContainer()->get(LinkCollectorService::class),

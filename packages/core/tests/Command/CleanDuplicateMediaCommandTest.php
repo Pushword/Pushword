@@ -228,8 +228,8 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
         self::assertNotNull($media);
 
         $page = new Page();
-        $page->setH1('Test Duplicate Media Page');
-        $page->setSlug('test-dup-media-'.uniqid());
+        $page->h1 = 'Test Duplicate Media Page';
+        $page->slug = 'test-dup-media-'.uniqid();
         $page->locale = 'en';
         $page->setMainImage($media);
         $page->setMainContent('Test page for duplicate media command.');

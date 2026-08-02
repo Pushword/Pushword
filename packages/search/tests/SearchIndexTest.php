@@ -87,7 +87,7 @@ final class SearchIndexTest extends KernelTestCase
 
         $nonce = 'hidnonce'.bin2hex(random_bytes(4));
         $page = $this->createPage($nonce);
-        $page->setMetaRobots('noindex,nofollow');
+        $page->metaRobots = 'noindex,nofollow';
 
         $em->persist($page);
         $em->flush();
@@ -276,8 +276,8 @@ final class SearchIndexTest extends KernelTestCase
         $page = new Page();
         $page->host = self::HOST;
         $page->locale = $locale;
-        $page->setSlug('search-it-'.$locale.'-'.$nonce);
-        $page->setH1('Indexable Page');
+        $page->slug = 'search-it-'.$locale.'-'.$nonce;
+        $page->h1 = 'Indexable Page';
         $page->setMainContent('A unique marker '.$nonce.' used by the full-text search test.');
         $page->publishedAt = new DateTime('-1 day');
 

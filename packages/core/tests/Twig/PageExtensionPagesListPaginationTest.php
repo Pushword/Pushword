@@ -67,10 +67,10 @@ final class PageExtensionPagesListPaginationTest extends KernelTestCase
         $page = new Page();
         $page->host = self::HOST;
         $page->locale = 'en';
-        $page->setSlug($slug);
-        $page->setH1('Pager fixture '.$slug);
+        $page->slug = $slug;
+        $page->h1 = 'Pager fixture '.$slug;
         $page->setMainContent('Pager fixture content.');
-        $page->setPublishedAt($publishedAt);
+        $page->publishedAt = $publishedAt;
 
         $this->entityManager->persist($page);
     }

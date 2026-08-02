@@ -143,7 +143,7 @@ final class PageRedirectionApiControllerTest extends WebTestCase
         $host = 'api-test-'.uniqid().'.example.com';
         $page = new Page();
         $page->host = $host;
-        $page->setSlug('regular-page');
+        $page->slug = 'regular-page';
         $page->setMainContent('# Just content');
 
         $this->em->persist($page);

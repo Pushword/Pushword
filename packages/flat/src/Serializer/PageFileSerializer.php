@@ -182,7 +182,7 @@ final class PageFileSerializer
         }
 
         if ($value instanceof Page) {
-            $value = $value->getSlug();
+            $value = $value->slug;
         }
 
         if ($value instanceof Collection) {
@@ -212,8 +212,8 @@ final class PageFileSerializer
             foreach ($value as $item) {
                 if ($item instanceof Page) {
                     $slugs[] = $item->host !== $currentHost
-                        ? $item->host.'/'.$item->getSlug()
-                        : $item->getSlug();
+                        ? $item->host.'/'.$item->slug
+                        : $item->slug;
                 }
             }
 

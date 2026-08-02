@@ -153,7 +153,7 @@ final class PageExtension
     {
         $params = [];
         if (null !== $this->apps->getCurrentPage()) {
-            $params['slug'] = $this->apps->getCurrentPage()->getSlug();
+            $params['slug'] = $this->apps->getCurrentPage()->slug;
             $params['host'] = $this->apps->getCurrentPage()->host;
         }
 

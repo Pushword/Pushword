@@ -83,8 +83,8 @@ final class RedirectMigrateCommandTest extends KernelTestCase
     private function createPage(string $slug, string $mainContent): void
     {
         $page = new Page();
-        $page->setSlug($slug);
-        $page->setH1('Test '.$slug);
+        $page->slug = $slug;
+        $page->h1 = 'Test '.$slug;
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->createdAt = new DateTime();

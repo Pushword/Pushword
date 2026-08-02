@@ -40,8 +40,8 @@ final class CarouselDrafterTest extends TestCase
     private function page(): Page
     {
         $page = new Page();
-        $page->setSlug('blog/my-article');
-        $page->setH1('How to repurpose your content');
+        $page->slug = 'blog/my-article';
+        $page->h1 = 'How to repurpose your content';
         $page->setMainContent(<<<'MD'
             An intro paragraph that is not a section.
 

@@ -136,7 +136,7 @@ final class RouterTest extends KernelTestCase
         $registry->switchSite('pushword.piedweb.com');
         $page = new Page();
         $page->host = 'pushword.piedweb.com';
-        $page->setSlug('test-page');
+        $page->slug = 'test-page';
 
         $registry->setCurrentPage($page);
 
@@ -155,7 +155,7 @@ final class RouterTest extends KernelTestCase
         $registry->switchSite('pushword.piedweb.com');
         $page = new Page();
         $page->host = 'pushword.piedweb.com';
-        $page->setSlug('other-page');
+        $page->slug = 'other-page';
 
         $registry->setCurrentPage($page);
 

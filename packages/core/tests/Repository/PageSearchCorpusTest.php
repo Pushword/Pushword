@@ -90,8 +90,8 @@ final class PageSearchCorpusTest extends KernelTestCase
         $page = new Page();
         $page->host = self::HOST;
         $page->locale = 'en';
-        $page->setSlug($slug);
-        $page->setH1('Corpus fixture '.$slug);
+        $page->slug = $slug;
+        $page->h1 = 'Corpus fixture '.$slug;
         $page->setMainContent('Corpus fixture content.');
         $page->parentPage = $parent;
 

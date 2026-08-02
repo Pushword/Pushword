@@ -39,10 +39,10 @@ final class PagePropertyQueryTest extends KernelTestCase
             $page = new Page();
             $page->host = self::HOST;
             $page->locale = 'en';
-            $page->setSlug(self::PREFIX.$suffix);
-            $page->setH1('Prop query fixture '.$suffix);
+            $page->slug = self::PREFIX.$suffix;
+            $page->h1 = 'Prop query fixture '.$suffix;
             $page->setMainContent('Content');
-            $page->setPublishedAt(new DateTime('-1 day'));
+            $page->publishedAt = new DateTime('-1 day');
             if (null !== $priority) {
                 $page->setCustomProperty('priority', $priority);
             }
@@ -56,7 +56,7 @@ final class PagePropertyQueryTest extends KernelTestCase
     protected function tearDown(): void
     {
         foreach ($this->entityManager->getRepository(Page::class)->findBy(['host' => self::HOST]) as $page) {
-            if (str_starts_with($page->getSlug(), self::PREFIX)) {
+            if (str_starts_with($page->slug, self::PREFIX)) {
                 $this->entityManager->remove($page);
             }
         }
@@ -141,7 +141,7 @@ final class PagePropertyQueryTest extends KernelTestCase
         /** @var Page[] $pages */
         $pages = $this->pageRepository->getPublishedPages(self::HOST, $where, $orderBy);
 
-        return array_values(array_filter($pages, static fn (Page $page): bool => str_starts_with($page->getSlug(), self::PREFIX)));
+        return array_values(array_filter($pages, static fn (Page $page): bool => str_starts_with($page->slug, self::PREFIX)));
     }
 
     /**
@@ -151,6 +151,6 @@ final class PagePropertyQueryTest extends KernelTestCase
      */
     private function slugs(array $pages): array
     {
-        return array_map(static fn (Page $page): string => $page->getSlug(), $pages);
+        return array_map(static fn (Page $page): string => $page->slug, $pages);
     }
 }

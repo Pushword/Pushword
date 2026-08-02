@@ -27,7 +27,7 @@ class PagePublishedAtField extends AbstractField
     private function getHelp(): string
     {
         $page = $this->getSubject();
-        $publishedAt = $page->getPublishedAt();
+        $publishedAt = $page->publishedAt;
         $draft = null === $publishedAt || $publishedAt > new DateTime('now');
 
         return $this->formFieldManager->twig->render('@pwAdmin/page/page_draft.html.twig', ['page' => $page, 'draft' => $draft]);

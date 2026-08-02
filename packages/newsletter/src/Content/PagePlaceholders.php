@@ -51,7 +51,7 @@ final readonly class PagePlaceholders
         $chapeau = trim($split->getChapeau());
 
         return [
-            'page.h1' => $page->getH1(),
+            'page.h1' => $page->h1,
             'page.excerpt' => $this->excerpt($split),
             'page.chapeau' => $chapeau,
             'page.url' => $this->url($page),

@@ -23,7 +23,8 @@ final class LinkGraphScannerTest extends KernelTestCase
 
     private function createPage(string $slug = 'source'): Page
     {
-        $page = new Page()->setSlug($slug);
+        $page = new Page();
+        $page->slug = $slug;
         $page->host = 'localhost.dev';
 
         return $page;

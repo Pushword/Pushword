@@ -206,7 +206,7 @@ final class WorkerModeCrossRequestTest extends KernelTestCase
 
             if (! $page instanceof Page) {
                 $page = new Page();
-                $page->setSlug($slug);
+                $page->slug = $slug;
                 $page->host = 'localhost.dev';
                 $page->locale = 'en';
                 $page->createdAt = new DateTime();
@@ -214,7 +214,7 @@ final class WorkerModeCrossRequestTest extends KernelTestCase
                 $em->persist($page);
             }
 
-            $page->setH1('Worker stale body probe');
+            $page->h1 = 'Worker stale body probe';
             $page->setMainContent($marker);
             $page->updatedAt = new DateTime();
 

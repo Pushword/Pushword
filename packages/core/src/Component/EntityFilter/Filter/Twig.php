@@ -43,7 +43,7 @@ class Twig implements FilterInterface
             // Degrade to an invisible marker (scanner reports it, editors see a badge).
             $this->logger->warning('Twig rendering failed in page content: {message}', [
                 'message' => $twigError->getRawMessage(),
-                'slug' => $page->getSlug(),
+                'slug' => $page->slug,
                 'host' => $page->host,
             ]);
 

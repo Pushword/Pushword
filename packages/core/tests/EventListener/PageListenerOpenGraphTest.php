@@ -101,8 +101,8 @@ final class PageListenerOpenGraphTest extends TestCase
     private function buildPage(): Page
     {
         $page = new Page();
-        $page->setSlug('og-suppression-test');
-        $page->setH1('Test');
+        $page->slug = 'og-suppression-test';
+        $page->h1 = 'Test';
         $page->host = 'localhost.dev';
 
         return $page;

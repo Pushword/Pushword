@@ -93,7 +93,7 @@ final class PageCacheRefreshHandlerTest extends TestCase
     {
         $page = new Page();
         $page->host = $host;
-        $page->setSlug($slug);
+        $page->slug = $slug;
 
         return $page;
     }

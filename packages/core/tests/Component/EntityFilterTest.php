@@ -29,8 +29,8 @@ final class EntityFilterTest extends KernelTestCase
         $page = $this->getPage();
         $manager = $this->getManagerPool()->getManager($page);
 
-        self::assertSame($page->getH1(), $manager->title()); // @phpstan-ignore-line
-        self::assertSame($page->getH1(), $manager->getTitle()); // @phpstan-ignore-line
+        self::assertSame($page->h1, $manager->title()); // @phpstan-ignore-line
+        self::assertSame($page->h1, $manager->getTitle()); // @phpstan-ignore-line
 
         $splitContent = $this->getContentExtension()->mainContentSplit($page);
         self::assertSame('', $splitContent->getChapeau());
@@ -238,8 +238,8 @@ final class EntityFilterTest extends KernelTestCase
     private function getPage(?string $content = null): Page
     {
         $page = new Page();
-        $page->setH1('Demo Page - Kitchen Sink  Markdown + Twig');
-        $page->setSlug('kitchen-sink');
+        $page->h1 = 'Demo Page - Kitchen Sink  Markdown + Twig';
+        $page->slug = 'kitchen-sink';
         $page->locale = 'en';
         $page->createdAt = new DateTime('1 day ago');
         $page->updatedAt = new DateTime('1 day ago');

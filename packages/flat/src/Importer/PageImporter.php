@@ -319,7 +319,7 @@ final class PageImporter extends AbstractImporter
         }
 
         $page->host = $this->apps->get()->getMainHost();
-        $page->setSlug($slug);
+        $page->slug = $slug;
         if ('' === $page->locale || '0' === $page->locale) {
             $page->locale = $this->apps->get()->locale;
         }
@@ -375,8 +375,8 @@ final class PageImporter extends AbstractImporter
 
     private function initDateTimeProperties(Page $page, DateTimeInterface $lastEditDateTime, bool $publishedAtExplicitlySet = false): void
     {
-        if (! $publishedAtExplicitlySet && null === $page->getPublishedAt()) {
-            $page->setPublishedAt($lastEditDateTime);
+        if (! $publishedAtExplicitlySet && null === $page->publishedAt) {
+            $page->publishedAt = $lastEditDateTime;
         }
 
         if (null === $page->getCreatedAtNullable()) {
@@ -485,7 +485,7 @@ final class PageImporter extends AbstractImporter
     {
         $currentTranslations = $page->translations->toArray();
         $currentRefs = array_map($this->buildTranslationRef(...), $currentTranslations);
-        $pageSlug = $page->getSlug();
+        $pageSlug = $page->slug;
 
         $toAdd = array_diff($newTranslationRefs, $currentRefs);
         $toRemove = array_diff($currentRefs, $newTranslationRefs);
@@ -555,10 +555,10 @@ final class PageImporter extends AbstractImporter
     {
         $currentHost = $this->apps->get()->getMainHost();
         if ($page->host !== $currentHost) {
-            return $page->host.'/'.$page->getSlug();
+            return $page->host.'/'.$page->slug;
         }
 
-        return $page->getSlug();
+        return $page->slug;
     }
 
     /**
@@ -654,7 +654,7 @@ final class PageImporter extends AbstractImporter
 
         $this->slugIndex = [];
         foreach ($this->pages as $page) {
-            $this->slugIndex[$page->getSlug()] = $page;
+            $this->slugIndex[$page->slug] = $page;
         }
 
         return $this->pages;

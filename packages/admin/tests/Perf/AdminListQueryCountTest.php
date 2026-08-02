@@ -95,8 +95,8 @@ final class AdminListQueryCountTest extends AbstractAdminTestClass
             $pages = [];
             for ($i = 0; $i < $count; ++$i) {
                 $page = new Page();
-                $page->setH1('Admin list bench '.($offset + $i));
-                $page->setSlug('admin-list-bench-'.($offset + $i));
+                $page->h1 = 'Admin list bench '.($offset + $i);
+                $page->slug = 'admin-list-bench-'.($offset + $i);
                 $page->host = $host;
                 $page->locale = 'en';
                 $page->createdAt = new DateTime();

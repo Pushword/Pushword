@@ -208,7 +208,7 @@ final class StaticApiControllerTest extends WebTestCase
         $slug = 'static-api-'.uniqid();
         $page = new Page();
         $page->host = self::HOST;
-        $page->setSlug($slug);
+        $page->slug = $slug;
         $page->h1 = 'Static API test';
         $page->publishedAt = new DateTime('-1 day');
         $makeUnexportable($page);

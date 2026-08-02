@@ -105,7 +105,7 @@ final class AppExtension
             $breadcrumbs[] = [
                 '@type' => 'ListItem',
                 'name' => strip_tags($this->dateFilter->convertDateShortCode(
-                    $currentPage->getName() ?: $currentPage->getH1() ?: $currentPage->getTitle(),
+                    $currentPage->name ?: $currentPage->h1 ?: $currentPage->title,
                     $this->apps->get()->locale,
                 )),
                 'item' => $this->router->generate($currentPage, true),

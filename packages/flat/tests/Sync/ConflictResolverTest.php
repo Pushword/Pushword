@@ -213,8 +213,8 @@ final class ConflictResolverTest extends TestCase
     private function createPage(): Page
     {
         $page = new Page();
-        $page->setSlug('test-page');
-        $page->setH1('Test Page');
+        $page->slug = 'test-page';
+        $page->h1 = 'Test Page';
         $page->host = 'test.host';
 
         // Use reflection to set the id property

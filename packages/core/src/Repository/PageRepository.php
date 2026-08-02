@@ -112,7 +112,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
         $this->slugCache[$host] = [];
         foreach ($pages as $page) {
-            $this->slugCache[$host][$page->getSlug()] = $page;
+            $this->slugCache[$host][$page->slug] = $page;
         }
 
         $this->warmedHosts[$host] = true;
@@ -171,7 +171,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $pendingSlugs = array_keys($pending);
 
         foreach ($this->findBy(['slug' => $pendingSlugs, 'host' => $host]) as $page) {
-            $this->slugCache[$host][$page->getSlug()] = $page;
+            $this->slugCache[$host][$page->slug] = $page;
         }
 
         foreach ($pendingSlugs as $slug) {

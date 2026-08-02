@@ -21,7 +21,7 @@ final class LinkCollectorServiceTest extends TestCase
     {
         $service = new LinkCollectorService();
         $page = new Page();
-        $page->setSlug('test-slug');
+        $page->slug = 'test-slug';
 
         $service->register($page);
 
@@ -34,14 +34,19 @@ final class LinkCollectorServiceTest extends TestCase
         $service->registerSlug('page-1');
         $service->registerSlug('page-3');
 
-        $page1 = new Page()->setSlug('page-1');
-        $page2 = new Page()->setSlug('page-2');
-        $page3 = new Page()->setSlug('page-3');
+        $page1 = new Page();
+        $page1->slug = 'page-1';
+
+        $page2 = new Page();
+        $page2->slug = 'page-2';
+
+        $page3 = new Page();
+        $page3->slug = 'page-3';
 
         $result = $service->excludeRegistered([$page1, $page2, $page3]);
 
         self::assertCount(1, $result);
-        self::assertSame('page-2', $result[0]->getSlug());
+        self::assertSame('page-2', $result[0]->slug);
     }
 
     public function testReset(): void
@@ -83,8 +88,11 @@ final class LinkCollectorServiceTest extends TestCase
     public function testRegisterAll(): void
     {
         $service = new LinkCollectorService();
-        $page1 = new Page()->setSlug('page-1');
-        $page2 = new Page()->setSlug('page-2');
+        $page1 = new Page();
+        $page1->slug = 'page-1';
+
+        $page2 = new Page();
+        $page2->slug = 'page-2';
 
         $service->registerAll([$page1, $page2]);
 
@@ -95,7 +103,8 @@ final class LinkCollectorServiceTest extends TestCase
     public function testIsRegistered(): void
     {
         $service = new LinkCollectorService();
-        $page = new Page()->setSlug('test-page');
+        $page = new Page();
+        $page->slug = 'test-page';
 
         self::assertFalse($service->isRegistered($page));
         $service->register($page);

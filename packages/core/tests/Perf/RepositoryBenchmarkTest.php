@@ -165,8 +165,8 @@ final class RepositoryBenchmarkTest extends KernelTestCase
     {
         for ($i = 0; $i < $count; ++$i) {
             $page = new Page();
-            $page->setH1('Bench '.$i);
-            $page->setSlug('perf-page-'.$i);
+            $page->h1 = 'Bench '.$i;
+            $page->slug = 'perf-page-'.$i;
             $page->host = $host;
             $page->locale = 'en';
             $page->createdAt = new DateTime();

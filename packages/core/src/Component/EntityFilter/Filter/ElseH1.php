@@ -12,7 +12,7 @@ class ElseH1 implements FilterInterface
 {
     public function apply(mixed $propertyValue, Page $page, Manager $manager, string $property = ''): mixed
     {
-        $return = '' !== $propertyValue ? $propertyValue : $page->getH1();
+        $return = '' !== $propertyValue ? $propertyValue : $page->h1;
         if (\is_string($return)) {
             return $return;
         }

@@ -46,7 +46,7 @@ final class RevisionCalculatorTest extends TestCase
         $calculator = $this->buildCalculator();
         $a = $this->buildPage('example.com', 'about', '2026-05-28T10:00:00+00:00');
         $b = $this->buildPage('example.com', 'about', '2026-05-28T10:00:00+00:00');
-        $b->setH1('Different headline');
+        $b->h1 = 'Different headline';
 
         self::assertNotSame(
             $calculator->compute($a),
@@ -67,7 +67,7 @@ final class RevisionCalculatorTest extends TestCase
     {
         $page = new Page(false);
         $page->host = $host;
-        $page->setSlug($slug);
+        $page->slug = $slug;
         $page->updatedAt = new DateTimeImmutable($updatedAt);
 
         return $page;

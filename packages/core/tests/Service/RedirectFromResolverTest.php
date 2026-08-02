@@ -38,7 +38,7 @@ final class RedirectFromResolverTest extends TestCase
     {
         $page = new Page(false);
         $page->host = 'localhost.dev';
-        $page->setSlug($slug);
+        $page->slug = $slug;
         $page->setMainContent($mainContent);
 
         return $page;

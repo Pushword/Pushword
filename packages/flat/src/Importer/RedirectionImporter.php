@@ -75,7 +75,7 @@ final class RedirectionImporter
         // Pre-load all pages for this host once
         $slugIndex = [];
         foreach ($this->pageRepo->findByHost($host) as $page) {
-            $slugIndex[$page->getSlug()] = $page;
+            $slugIndex[$page->slug] = $page;
         }
 
         foreach ($this->indexData as $slug => $row) {
@@ -102,7 +102,7 @@ final class RedirectionImporter
         // Create new if not found
         if (null === $page) {
             $page = new Page();
-            $page->setSlug($slug);
+            $page->slug = $slug;
             $page->host = $host;
             $this->em->persist($page);
         }
@@ -120,8 +120,8 @@ final class RedirectionImporter
         $page->setMainContent($mainContent);
 
         // Set a minimal h1 if not set
-        if ('' === $page->getH1()) {
-            $page->setH1('Redirection');
+        if ('' === $page->h1) {
+            $page->h1 = 'Redirection';
         }
     }
 

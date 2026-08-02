@@ -105,7 +105,7 @@ final class PageApiController extends AbstractApiController
 
         return $this->respond([
             'host' => $page->host,
-            'slug' => $page->getSlug(),
+            'slug' => $page->slug,
             'html' => $this->markdownParser->transform($page->getMainContent()),
             'frontmatter' => $this->mapper->toArray($page)['frontmatter'],
         ]);
@@ -128,7 +128,7 @@ final class PageApiController extends AbstractApiController
         }
 
         $page = new Page();
-        $page->setSlug($slug);
+        $page->slug = $slug;
         // Set before applying: same-host references (parentPage, variantOf,
         // translations) are resolved against $page->host.
         $page->host = $host;
@@ -146,7 +146,7 @@ final class PageApiController extends AbstractApiController
         // Echo the slug: it is not in the create URL and may have been normalized.
         return $this->writeResponse(
             $request,
-            ['slug' => $page->getSlug()] + $this->buildMinimalPayload($page),
+            ['slug' => $page->slug] + $this->buildMinimalPayload($page),
             fn (): array => $this->buildPagePayload($page),
             $this->revisions->compute($page),
             Response::HTTP_CREATED,
@@ -312,7 +312,7 @@ final class PageApiController extends AbstractApiController
         }
 
         $internalSlug = str_starts_with($target, '/') ? Page::normalizeSlug($target) : null;
-        if ($internalSlug === $page->getSlug()) {
+        if ($internalSlug === $page->slug) {
             return $this->badRequest('redirectTo targets the page being deleted');
         }
 
@@ -320,14 +320,14 @@ final class PageApiController extends AbstractApiController
 
         // A dangling or chained target cannot own the old path (cf. RedirectFromResolver).
         if ('hard' === $this->deleteStrategy && null !== $destination && ! $destination->hasRedirection()) {
-            $destination->addRedirectFrom($page->getSlug(), $code);
+            $destination->addRedirectFrom($page->slug, $code);
             $this->entityManager->remove($page);
         } else {
             $page->setMainContent(new PageRedirection($target, $code)->toContent());
             $page->editedBy = $this->getApiUser();
 
             if ('hard' !== $this->deleteStrategy) {
-                $page->setPublishedAt(null);
+                $page->publishedAt = null;
             }
         }
 
@@ -382,7 +382,7 @@ final class PageApiController extends AbstractApiController
 
         return [
             'host' => $page->host,
-            'slug' => $page->getSlug(),
+            'slug' => $page->slug,
             'revision' => $this->revisions->compute($page),
             'frontmatter' => $shape['frontmatter'],
             'body' => $shape['body'],

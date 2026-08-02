@@ -78,9 +78,9 @@ final readonly class PageTriggerSource implements TriggerSource
 
             $occurrences[] = new TriggerOccurrence(
                 subjectId: $id,
-                occurredAt: DateTimeImmutable::createFromInterface($page->getPublishedAt() ?? $now),
+                occurredAt: DateTimeImmutable::createFromInterface($page->publishedAt ?? $now),
                 placeholders: $this->placeholders->map($page),
-                slug: $page->getSlug(),
+                slug: $page->slug,
             );
         }
 

@@ -4,7 +4,6 @@ namespace Pushword\Core\Content;
 
 use Pushword\Core\Component\EntityFilter\FilterRegistry;
 use Pushword\Core\Component\EntityFilter\Manager;
-use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -20,7 +19,6 @@ final class ContentPipelineFactory implements ResetInterface
         public readonly SiteRegistry $apps,
         public readonly EventDispatcherInterface $eventDispatcher,
         private readonly FilterRegistry $filterRegistry,
-        private readonly ManagerPool $legacyManagerPool,
     ) {
     }
 
@@ -71,6 +69,6 @@ final class ContentPipelineFactory implements ResetInterface
      */
     public function getLegacyManager(Page $page): Manager
     {
-        return $this->legacyManagerPool->getManager($page);
+        return $this->get($page)->getLegacyManager();
     }
 }

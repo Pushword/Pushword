@@ -49,7 +49,7 @@ final readonly class PageFrontmatterMapper
     public function toArray(Page $page): array
     {
         $frontmatter = [
-            'h1' => $page->getH1(),
+            'h1' => $page->h1,
             'title' => $page->title,
             'name' => $page->name,
             'metaRobots' => $page->metaRobots,
@@ -57,18 +57,18 @@ final readonly class PageFrontmatterMapper
             'locale' => $page->locale,
             'template' => $page->template,
             'editMessage' => $page->editMessage,
-            'slug' => $page->getSlug(),
+            'slug' => $page->slug,
             'weight' => $page->weight,
             'tags' => $page->getTagList(),
             'redirectFrom' => $page->redirectFrom,
-            'publishedAt' => $page->getPublishedAt()?->format(DateTimeInterface::ATOM),
+            'publishedAt' => $page->publishedAt?->format(DateTimeInterface::ATOM),
             'holdPublication' => $page->isHoldPublication(),
             'holdPublicationAt' => $page->holdPublicationAt?->format(DateTimeInterface::ATOM),
             'mainImage' => $page->getMainImage()?->getFileName(),
-            'parentPage' => $page->parentPage?->getSlug(),
-            'variantOf' => $page->variantOf?->getSlug(),
-            'extendedPage' => $page->extendedPage?->getSlug(),
-            'customCanonical' => $page->getCustomCanonical(),
+            'parentPage' => $page->parentPage?->slug,
+            'variantOf' => $page->variantOf?->slug,
+            'extendedPage' => $page->extendedPage?->slug,
+            'customCanonical' => $page->customCanonical,
             'translations' => array_values(array_map(
                 fn (Page $t): string => $this->buildTranslationRef($t, $page->host),
                 $page->translations->toArray(),
@@ -90,19 +90,19 @@ final readonly class PageFrontmatterMapper
     public function applyFrontmatter(Page $page, array $frontmatter): void
     {
         if (\array_key_exists('h1', $frontmatter) && (\is_string($frontmatter['h1']) || null === $frontmatter['h1'])) {
-            $page->setH1($frontmatter['h1'] ?? '');
+            $page->h1 = $frontmatter['h1'] ?? '';
         }
 
         if (\array_key_exists('title', $frontmatter) && (\is_string($frontmatter['title']) || null === $frontmatter['title'])) {
-            $page->setTitle($frontmatter['title'] ?? '');
+            $page->title = $frontmatter['title'] ?? '';
         }
 
         if (\array_key_exists('name', $frontmatter) && (\is_string($frontmatter['name']) || null === $frontmatter['name'])) {
-            $page->setName($frontmatter['name'] ?? '');
+            $page->name = $frontmatter['name'] ?? '';
         }
 
         if (\array_key_exists('metaRobots', $frontmatter) && (\is_string($frontmatter['metaRobots']) || null === $frontmatter['metaRobots'])) {
-            $page->setMetaRobots($frontmatter['metaRobots'] ?? '');
+            $page->metaRobots = $frontmatter['metaRobots'] ?? '';
         }
 
         if (\array_key_exists('host', $frontmatter) && \is_string($frontmatter['host'])) {
@@ -122,7 +122,7 @@ final readonly class PageFrontmatterMapper
         }
 
         if (\array_key_exists('slug', $frontmatter) && \is_string($frontmatter['slug']) && '' !== $frontmatter['slug']) {
-            $page->setSlug($frontmatter['slug']);
+            $page->slug = $frontmatter['slug'];
         }
 
         if (\array_key_exists('weight', $frontmatter) && is_numeric($frontmatter['weight'])) {
@@ -143,8 +143,8 @@ final readonly class PageFrontmatterMapper
             // Only touch the column when the instant changes: a fresh DateTime
             // carrying an equal value still counts as dirty for Doctrine, which
             // would bump updatedAt — and thus the revision — on every no-op write.
-            if ($publishedAt?->getTimestamp() !== $page->getPublishedAt()?->getTimestamp()) {
-                $page->setPublishedAt($publishedAt);
+            if ($publishedAt?->getTimestamp() !== $page->publishedAt?->getTimestamp()) {
+                $page->publishedAt = $publishedAt;
             }
         }
 
@@ -155,7 +155,7 @@ final readonly class PageFrontmatterMapper
         if (\array_key_exists('holdPublicationAt', $frontmatter)) {
             $holdPublicationAt = $this->parseDateTime($frontmatter['holdPublicationAt'], 'holdPublicationAt');
             if ($holdPublicationAt?->getTimestamp() !== $page->holdPublicationAt?->getTimestamp()) {
-                $page->setHoldPublicationAt($holdPublicationAt);
+                $page->holdPublicationAt = $holdPublicationAt;
             }
         }
 
@@ -179,7 +179,7 @@ final readonly class PageFrontmatterMapper
         }
 
         if (\array_key_exists('customCanonical', $frontmatter) && (\is_string($frontmatter['customCanonical']) || null === $frontmatter['customCanonical'])) {
-            $page->setCustomCanonical($frontmatter['customCanonical']);
+            $page->customCanonical = $frontmatter['customCanonical'];
         }
 
         if (\array_key_exists('translations', $frontmatter)) {
@@ -373,8 +373,8 @@ final readonly class PageFrontmatterMapper
     private function buildTranslationRef(Page $translation, string $host): string
     {
         return $translation->host !== $host
-            ? $translation->host.'/'.$translation->getSlug()
-            : $translation->getSlug();
+            ? $translation->host.'/'.$translation->slug
+            : $translation->slug;
     }
 
     /**
@@ -386,7 +386,7 @@ final readonly class PageFrontmatterMapper
     {
         $page = new Page();
         $page->host = $host;
-        $page->setSlug($slug);
+        $page->slug = $slug;
         $this->applyFrontmatter($page, $frontmatter);
         if (null !== $body) {
             $page->setMainContent($body);
@@ -404,8 +404,8 @@ final readonly class PageFrontmatterMapper
     {
         return [
             'host' => $page->host,
-            'slug' => $page->getSlug(),
-            'h1' => $page->getH1(),
+            'slug' => $page->slug,
+            'h1' => $page->h1,
             'locale' => $page->locale,
             'holdPublication' => $page->isHoldPublication(),
             'updatedAt' => $page->updatedAt?->format(DateTimeInterface::ATOM),

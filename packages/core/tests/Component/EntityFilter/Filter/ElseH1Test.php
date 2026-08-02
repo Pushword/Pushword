@@ -19,7 +19,7 @@ final class ElseH1Test extends TestCase
     {
         $filter = new ElseH1();
         $page = new Page();
-        $page->setH1('Fallback Title');
+        $page->h1 = 'Fallback Title';
 
         $result = $filter->apply('Custom Title', $page, $this->createManagerStub());
 
@@ -30,7 +30,7 @@ final class ElseH1Test extends TestCase
     {
         $filter = new ElseH1();
         $page = new Page();
-        $page->setH1('Fallback Title');
+        $page->h1 = 'Fallback Title';
 
         $result = $filter->apply('', $page, $this->createManagerStub());
 

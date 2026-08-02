@@ -137,8 +137,8 @@ final class PageListener implements ResetInterface
 
     public function setIdAsSlugIfNotDefined(Page $page): void
     {
-        if ('' === $page->getSlug()) {
-            $page->setSlug(substr(sha1(uniqid().random_int(0, mt_getrandmax())), 0, 8));
+        if ('' === $page->slug) {
+            $page->slug = substr(sha1(uniqid().random_int(0, mt_getrandmax())), 0, 8);
         }
     }
 

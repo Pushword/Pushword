@@ -275,7 +275,7 @@ final class PageSync
         $pages = $this->pageRepository->findByHost($mainHost);
         $slugIndex = [];
         foreach ($pages as $page) {
-            $slugIndex[$page->getSlug()] = $page;
+            $slugIndex[$page->slug] = $page;
         }
 
         $lastSyncTime = $this->stateManager->getLastSyncTime('page', $mainHost);
@@ -512,7 +512,7 @@ final class PageSync
         $yamlErrorSlugSet = array_flip($this->yamlErrorSlugs);
 
         foreach ($allPages as $page) {
-            $slug = $page->getSlug();
+            $slug = $page->slug;
 
             // Skip if page was imported from .md file
             if (isset($importedSlugSet[$slug])) {

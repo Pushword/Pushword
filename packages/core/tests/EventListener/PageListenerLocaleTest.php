@@ -60,8 +60,8 @@ final class PageListenerLocaleTest extends TestCase
     private function buildPage(string $host): Page
     {
         $page = new Page();
-        $page->setSlug('locale-invariant-test');
-        $page->setH1('Test');
+        $page->slug = 'locale-invariant-test';
+        $page->h1 = 'Test';
         $page->host = $host;
 
         return $page;

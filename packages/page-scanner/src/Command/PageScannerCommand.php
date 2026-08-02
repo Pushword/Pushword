@@ -94,7 +94,7 @@ final class PageScannerCommand
 
         foreach ($pages as $page) {
             ++$currentPage;
-            $pageSlug = $page->getSlug() ?: 'index';
+            $pageSlug = $page->slug ?: 'index';
             $pageHost = $page->host ?? '';
 
             // Progress indicator: overwrite line unless previous was an error
@@ -115,13 +115,13 @@ final class PageScannerCommand
             // links no editor chose. A redirection is not a node either: a 301 is not
             // a page, and it renders no HTML to take links from.
             if ($page->isIndexable()) {
-                $this->scannedNodes[] = $pageHost.'/'.$page->getSlug();
+                $this->scannedNodes[] = $pageHost.'/'.$page->slug;
             }
 
             $this->stopwatch?->start('scanPage');
-            $this->stopwatch?->start('scan:'.$page->getSlug());
+            $this->stopwatch?->start('scan:'.$page->slug);
             $scan = $this->scanner->scan($page);
-            $event = $this->stopwatch?->stop('scan:'.$page->getSlug());
+            $event = $this->stopwatch?->stop('scan:'.$page->slug);
             $this->stopwatch?->stop('scanPage');
 
             if (! $this->agentMode && null !== $event && $event->getDuration() > 500 && null !== $this->output && $this->output->isVerbose()) {

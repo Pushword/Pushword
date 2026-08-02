@@ -83,8 +83,8 @@ final class EncodingTest extends KernelTestCase
         $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'utf8-bom-test', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $page);
         // H1 should not contain BOM characters
-        self::assertStringNotContainsString($bom, $page->getH1());
-        self::assertStringContainsString('BOM Test Page', $page->getH1());
+        self::assertStringNotContainsString($bom, $page->h1);
+        self::assertStringContainsString('BOM Test Page', $page->h1);
     }
 
     public function testAccentedCharactersInFrontmatter(): void
@@ -95,7 +95,7 @@ final class EncodingTest extends KernelTestCase
 
         $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'accented-test', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $page);
-        self::assertSame('Échange et coopération', $page->getH1());
+        self::assertSame('Échange et coopération', $page->h1);
 
         // Round-trip: export and re-import
         $this->pageSync->export('localhost.dev', true, $this->contentDir);
@@ -136,7 +136,7 @@ final class EncodingTest extends KernelTestCase
 
         $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'special-yaml-test', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $page);
-        self::assertSame("Test: A Page's Title", $page->getH1());
+        self::assertSame("Test: A Page's Title", $page->h1);
     }
 
     /**
@@ -213,6 +213,6 @@ final class EncodingTest extends KernelTestCase
         }
 
         self::assertInstanceOf(Page::class, $page, 'Page from non-ASCII filename should be imported');
-        self::assertSame('Café Crème', $page->getH1());
+        self::assertSame('Café Crème', $page->h1);
     }
 }

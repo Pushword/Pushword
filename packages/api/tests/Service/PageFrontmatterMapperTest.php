@@ -61,10 +61,10 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
-        $page->setH1('About us');
-        $page->setTitle('About | Example');
-        $page->setMetaRobots('noindex');
+        $page->slug = 'about';
+        $page->h1 = 'About us';
+        $page->title = 'About | Example';
+        $page->metaRobots = 'noindex';
         $page->setMainContent('# Hello');
         $page->setTags(['team', 'history']);
         $page->setCustomProperty('ogTitle', 'OG About');
@@ -85,7 +85,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('initial');
+        $page->slug = 'initial';
 
         $this->mapper->applyFrontmatter($page, [
             'h1' => 'New title',
@@ -100,7 +100,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
             'customProperties' => ['ogDescription' => 'desc'],
         ]);
 
-        self::assertSame('New title', $page->getH1());
+        self::assertSame('New title', $page->h1);
         self::assertSame('SEO', $page->title);
         self::assertSame('Breadcrumb', $page->name);
         self::assertSame('index', $page->metaRobots);
@@ -116,7 +116,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('dest');
+        $page->slug = 'dest';
 
         // Accepts a {path: code} map and a Jekyll-style bare list (→ 301).
         $this->mapper->applyFrontmatter($page, ['redirectFrom' => ['old-one' => 302, 'old-two']]);
@@ -134,7 +134,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         // The master must exist so resolvePageRef() can find it by slug+host.
         $master = new Page();
         $master->host = $host;
-        $master->setSlug('master-trek');
+        $master->slug = 'master-trek';
         $master->setMainContent('# Master');
 
         $this->em->persist($master);
@@ -143,7 +143,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
 
         $variant = new Page();
         $variant->host = $host;
-        $variant->setSlug('master-trek-self-guided');
+        $variant->slug = 'master-trek-self-guided';
         $variant->setMainContent('# Variant');
 
         $this->mapper->applyFrontmatter($variant, [
@@ -153,7 +153,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
 
         self::assertSame($master, $variant->variantOf);
         self::assertTrue($variant->isVariant());
-        self::assertSame('https://example.com/canonical', $variant->getCustomCanonical());
+        self::assertSame('https://example.com/canonical', $variant->customCanonical);
 
         // Both fields are emitted back in the frontmatter shape.
         $shape = $this->mapper->toArray($variant);
@@ -164,7 +164,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $this->mapper->applyFrontmatter($variant, ['variantOf' => '', 'customCanonical' => null]);
         self::assertNull($variant->variantOf);
         self::assertFalse($variant->isVariant());
-        self::assertNull($variant->getCustomCanonical());
+        self::assertNull($variant->customCanonical);
     }
 
     public function testTranslationsLinkAcrossHostsAndRoundTrip(): void
@@ -269,7 +269,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('a-propos');
+        $page->slug = 'a-propos';
 
         // A shape the mapper cannot read is a 422, never a silently ignored key.
         $this->expectException(InvalidFrontmatterException::class);
@@ -301,13 +301,13 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
-        $page->setH1('Keep me');
+        $page->slug = 'about';
+        $page->h1 = 'Keep me';
 
         // Wrong type for h1 (int) should be ignored
         $this->mapper->applyFrontmatter($page, ['h1' => 42, 'name' => null]);
 
-        self::assertSame('Keep me', $page->getH1());
+        self::assertSame('Keep me', $page->h1);
         self::assertSame('', $page->name);
     }
 
@@ -315,7 +315,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
+        $page->slug = 'about';
 
         $this->mapper->applyFrontmatter($page, ['customProperty.searchExcerpt' => 'short summary']);
 
@@ -326,7 +326,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
+        $page->slug = 'about';
 
         // mainImageFormat is a managed custom property exposed at the top level in
         // the on-disk frontmatter shape; the human label must reach the entity as
@@ -340,7 +340,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
+        $page->slug = 'about';
 
         // A machine client sends the raw integer instead of the human label.
         $this->mapper->applyFrontmatter($page, ['mainImageFormat' => 2]);
@@ -352,7 +352,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
+        $page->slug = 'about';
 
         // The None format's label is the symbol "∅"; the human name "None" (the
         // key suffix) must still resolve to its integer value, case-insensitively.
@@ -367,7 +367,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
+        $page->slug = 'about';
 
         // Neither a label, a translation key, a number nor a known human name, so
         // it cannot resolve to the integer-backed mainImageFormat. Rejected here
@@ -381,7 +381,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
+        $page->slug = 'about';
 
         // An explicit null is "unset", not an invalid value: skip it silently
         // rather than rejecting it as an unresolvable value.
@@ -393,7 +393,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
+        $page->slug = 'about';
 
         // The flat exporter unpacks customProperties to the top level, so a payload
         // built from a .md snapshot arrives with bare keys (no customProperty.*
@@ -407,7 +407,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
             'toc' => true,
         ]);
 
-        self::assertSame('About', $page->getH1()); // recognized column still applied
+        self::assertSame('About', $page->h1); // recognized column still applied
         self::assertSame('A short SEO summary.', $page->getCustomProperty('searchExcerpt'));
         self::assertSame('A short SEO summary.', $page->getSearchExcerpt());
         self::assertSame('about us', $page->getCustomProperty('targetKeyword'));
@@ -418,7 +418,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
+        $page->slug = 'about';
 
         // Every exported .md carries a read-only `revision:` stamp; an editor that
         // PUTs the snapshot's frontmatter verbatim includes it. It is the ETag
@@ -434,7 +434,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
+        $page->slug = 'about';
 
         // holdPublicationAt is a real declared column the flat exporter can emit at
         // the top level; property_exists() must keep it out of customProperties so
@@ -448,8 +448,8 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
-        $page->setH1('About');
+        $page->slug = 'about';
+        $page->h1 = 'About';
         $page->locale = 'en';
 
         $summary = $this->mapper->summary($page);
@@ -466,7 +466,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $page = $this->mapper->buildTransient('example.com', 'preview-page', ['h1' => 'Preview'], '# Body');
 
         self::assertNull($page->id);
-        self::assertSame('Preview', $page->getH1());
+        self::assertSame('Preview', $page->h1);
         self::assertSame('# Body', $page->getMainContent());
     }
 
@@ -489,14 +489,14 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $host = 'api-test-'.uniqid().'.example.com';
         $page = new Page();
         $page->host = $host;
-        $page->setSlug('published-'.uniqid());
+        $page->slug = 'published-'.uniqid();
         $page->setMainContent('# Content');
 
         $this->mapper->applyFrontmatter($page, ['publishedAt' => $publishedAt]);
 
         // DateTimeImmutable does not extend DateTime, so this also asserts the
         // stored value is mutable as Doctrine's DATETIME_MUTABLE column requires.
-        $stored = $page->getPublishedAt();
+        $stored = $page->publishedAt;
         self::assertInstanceOf(DateTime::class, $stored);
         self::assertSame('2026-04-09 10:00', $stored->format('Y-m-d H:i'));
 
@@ -513,7 +513,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('held');
+        $page->slug = 'held';
 
         // Held via API: stored as a timestamp, exposed back as a boolean.
         $this->mapper->applyFrontmatter($page, ['holdPublication' => true]);
@@ -523,18 +523,18 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         // Releasing via API clears it.
         $this->mapper->applyFrontmatter($page, ['holdPublication' => false]);
         self::assertFalse($page->isHoldPublication());
-        self::assertNull($page->getHoldPublicationAt());
+        self::assertNull($page->holdPublicationAt);
     }
 
     public function testApplyFrontmatterAcceptsDraftSentinel(): void
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('draft-page');
+        $page->slug = 'draft-page';
 
         $this->mapper->applyFrontmatter($page, ['publishedAt' => PublishedAtConverter::DRAFT_VALUE]);
 
-        self::assertNull($page->getPublishedAt());
+        self::assertNull($page->publishedAt);
     }
 
     /**
@@ -551,11 +551,11 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
+        $page->slug = 'about';
 
         $this->mapper->applyFrontmatter($page, ['publishedAt' => $publishedAt]);
 
-        self::assertNull($page->getPublishedAt());
+        self::assertNull($page->publishedAt);
     }
 
     public function testExtendedPageResolvesAndRoundTrips(): void
@@ -564,7 +564,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
 
         $base = new Page();
         $base->host = $host;
-        $base->setSlug('base-layout');
+        $base->slug = 'base-layout';
         $base->setMainContent('# Base');
 
         $this->em->persist($base);
@@ -573,7 +573,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
 
         $page = new Page();
         $page->host = $host;
-        $page->setSlug('extending-page');
+        $page->slug = 'extending-page';
 
         $this->mapper->applyFrontmatter($page, ['extendedPage' => 'base-layout']);
         self::assertSame($base, $page->extendedPage);
@@ -587,7 +587,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('held');
+        $page->slug = 'held';
 
         $this->mapper->applyFrontmatter($page, ['holdPublicationAt' => '2025-12-01 08:00']);
         self::assertSame('2025-12-01 08:00', $page->holdPublicationAt?->format('Y-m-d H:i'));
@@ -614,8 +614,8 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         $page = new Page();
         $page->host = 'example.com';
-        $page->setSlug('about');
-        $page->setPublishedAt(new DateTime('2025-06-01 10:30:00'));
+        $page->slug = 'about';
+        $page->publishedAt = new DateTime('2025-06-01 10:30:00');
 
         try {
             $this->mapper->applyFrontmatter($page, ['publishedAt' => 'not-a-date']);
@@ -624,14 +624,14 @@ final class PageFrontmatterMapperTest extends KernelTestCase
             self::assertSame('publishedAt', $invalidFrontmatterException->key);
         }
 
-        self::assertNotNull($page->getPublishedAt(), 'a rejected date must leave the column untouched');
+        self::assertNotNull($page->publishedAt, 'a rejected date must leave the column untouched');
     }
 
     private function persistPage(string $host, string $slug, string $locale): Page
     {
         $page = new Page();
         $page->host = $host;
-        $page->setSlug($slug);
+        $page->slug = $slug;
         $page->locale = $locale;
         $page->setMainContent('# '.$slug);
 

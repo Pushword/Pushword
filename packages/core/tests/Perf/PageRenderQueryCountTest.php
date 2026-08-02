@@ -122,8 +122,8 @@ final class PageRenderQueryCountTest extends KernelTestCase
         self::getContainer()->get(PageCacheSuppressor::class)->suppress(function () use ($host, $count): void {
             for ($i = 0; $i < $count; ++$i) {
                 $page = new Page();
-                $page->setH1('Render bench '.$i);
-                $page->setSlug('render-bench-'.$i);
+                $page->h1 = 'Render bench '.$i;
+                $page->slug = 'render-bench-'.$i;
                 $page->host = $host;
                 $page->locale = 'en';
                 $page->createdAt = new DateTime();

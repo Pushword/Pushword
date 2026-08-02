@@ -164,8 +164,8 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $em = self::getContainer()->get(EntityManagerInterface::class);
 
         $target = new Page();
-        $target->setH1('Alias target');
-        $target->setSlug('alias-target');
+        $target->h1 = 'Alias target';
+        $target->slug = 'alias-target';
         $target->host = 'admin-block-editor.test';
         $target->locale = 'en';
         $target->setMainContent('...');
@@ -252,12 +252,12 @@ final class LinkedDocsScannerTest extends KernelTestCase
     private function createUnpublishedFuturePage(): Page
     {
         $page = new Page();
-        $page->setH1('Future page');
-        $page->setSlug('future-page');
+        $page->h1 = 'Future page';
+        $page->slug = 'future-page';
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('...');
-        $page->setPublishedAt(new DateTime('+1 year'));
+        $page->publishedAt = new DateTime('+1 year');
 
         return $page;
     }
@@ -283,8 +283,8 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $em = self::getContainer()->get(EntityManagerInterface::class);
 
         $destination = new Page();
-        $destination->setH1('Scan Destination');
-        $destination->setSlug('scan-destination');
+        $destination->h1 = 'Scan Destination';
+        $destination->slug = 'scan-destination';
         $destination->host = 'localhost.dev';
         $destination->locale = 'en';
         $destination->setMainContent('content');
@@ -483,12 +483,12 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $em = self::getContainer()->get(EntityManagerInterface::class);
 
         $noindex = new Page();
-        $noindex->setH1('Noindex target');
-        $noindex->setSlug('noindex-target');
+        $noindex->h1 = 'Noindex target';
+        $noindex->slug = 'noindex-target';
         $noindex->host = 'localhost.dev';
         $noindex->locale = 'en';
         $noindex->setMainContent('...');
-        $noindex->setMetaRobots($metaRobots);
+        $noindex->metaRobots = $metaRobots;
 
         $em->persist($noindex);
         $em->flush();
@@ -656,8 +656,8 @@ final class LinkedDocsScannerTest extends KernelTestCase
     private function getPage(string $slug = 'homepage', string $host = ''): Page
     {
         $page = new Page();
-        $page->setH1('Welcome to Pushword !');
-        $page->setSlug($slug);
+        $page->h1 = 'Welcome to Pushword !';
+        $page->slug = $slug;
         $page->host = $host;
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');

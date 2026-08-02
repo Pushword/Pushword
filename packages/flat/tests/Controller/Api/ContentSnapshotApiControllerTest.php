@@ -74,8 +74,8 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
     private function seedPage(EntityManagerInterface $em, string $slug): void
     {
         $page = new Page();
-        $page->setSlug($slug);
-        $page->setH1('Snapshot fixture');
+        $page->slug = $slug;
+        $page->h1 = 'Snapshot fixture';
         $page->host = self::HOST;
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');

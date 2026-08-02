@@ -13,13 +13,13 @@ final class PageTest extends TestCase
     public function testBasics(): void
     {
         $page = new Page();
-        self::assertEmpty($page->getTitle());
+        self::assertEmpty($page->title);
 
-        $page->setTitle('hello');
-        self::assertSame('hello', $page->getTitle());
+        $page->title = 'hello';
+        self::assertSame('hello', $page->title);
 
-        $page->setSlug('hello you');
-        self::assertSame('hello-you', $page->getSlug());
+        $page->slug = 'hello you';
+        self::assertSame('hello-you', $page->slug);
     }
 
     public function testHoldPublication(): void
@@ -32,19 +32,19 @@ final class PageTest extends TestCase
 
         $page->setHoldPublication(false);
         self::assertFalse($page->isHoldPublication());
-        self::assertNull($page->getHoldPublicationAt());
+        self::assertNull($page->holdPublicationAt);
     }
 
     public function testHoldPublicationKeepsExplicitTimestamp(): void
     {
         $page = new Page();
         $explicit = new DateTime('2026-01-01 00:00');
-        $page->setHoldPublicationAt($explicit);
+        $page->holdPublicationAt = $explicit;
         self::assertTrue($page->isHoldPublication());
 
         // Holding again must not overwrite an existing timestamp.
         $page->setHoldPublication(true);
-        self::assertSame($explicit, $page->getHoldPublicationAt());
+        self::assertSame($explicit, $page->holdPublicationAt);
     }
 
     public function testCloneResetsHoldPublication(): void
@@ -79,31 +79,31 @@ final class PageTest extends TestCase
     public function testANoindexPageIsNotIndexable(): void
     {
         $page = new Page();
-        $page->setMetaRobots('noindex');
+        $page->metaRobots = 'noindex';
         self::assertFalse($page->isIndexable());
 
         // The rule matches the SQL twin's `LOWER(...) NOT LIKE '%noindex%'`: noindex
         // never travels alone, it comes paired with a follow directive.
-        $page->setMetaRobots('noindex, follow');
+        $page->metaRobots = 'noindex, follow';
         self::assertFalse($page->isIndexable());
 
         // Written by hand in a flat file or over the API, nothing lowercases it.
-        $page->setMetaRobots('NoIndex, NoArchive');
+        $page->metaRobots = 'NoIndex, NoArchive';
         self::assertFalse($page->isIndexable());
 
         // `none` is the robots shorthand for `noindex, nofollow`.
-        $page->setMetaRobots('none');
+        $page->metaRobots = 'none';
         self::assertFalse($page->isIndexable());
 
-        $page->setMetaRobots('index, follow');
+        $page->metaRobots = 'index, follow';
         self::assertTrue($page->isIndexable());
 
         // noimageindex only bans the images: the substring does not line up.
-        $page->setMetaRobots('noimageindex');
+        $page->metaRobots = 'noimageindex';
         self::assertTrue($page->isIndexable());
 
         // Nor does any other directive carry `none` inside it.
-        $page->setMetaRobots('nosnippet, notranslate, noarchive');
+        $page->metaRobots = 'nosnippet, notranslate, noarchive';
         self::assertTrue($page->isIndexable());
     }
 

@@ -16,7 +16,7 @@ class PageSlugField extends AbstractField
 {
     protected function getSlugHelp(): string
     {
-        if ('' === $this->admin->getSubject()->getSlug()) {
+        if ('' === $this->admin->getSubject()->slug) {
             return 'adminPageSlugHelp';
         }
 
@@ -38,7 +38,7 @@ class PageSlugField extends AbstractField
 
     public function getEasyAdminField(): ?FieldInterface
     {
-        $hasSlug = '' !== $this->admin->getSubject()->getSlug();
+        $hasSlug = '' !== $this->admin->getSubject()->slug;
 
         return $this->buildEasyAdminField('slug', TextType::class, [
             'required' => false,

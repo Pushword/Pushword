@@ -68,7 +68,7 @@ final class CronCommandTest extends TestCase
         touch($this->varDir.'/pw-cron-last-run', new DateTime('-1 hour')->getTimestamp());
 
         $page = new Page();
-        $page->setPublishedAt(new DateTime('-30 minutes'));
+        $page->publishedAt = new DateTime('-30 minutes');
 
         $dispatcher = $this->createMock(BackgroundTaskDispatcherInterface::class);
         $dispatcher->expects(self::once())

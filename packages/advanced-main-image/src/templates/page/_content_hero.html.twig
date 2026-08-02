@@ -33,13 +33,13 @@
                 {% for bg in page.main_image_multiple|split(';') %}
                     {% set bg = bg|split(':') %}
                     {{ image(bg.1,
-                        alt: (bg.0 ~ ' ' ~ (page.mainImage.altLocalized(page.locale)|default(page.getTitle(true))))|striptags|date_shortcode,
+                        alt: (bg.0 ~ ' ' ~ (page.mainImage.altLocalized(page.locale)|default(page.title)))|striptags|date_shortcode,
                         attr: {style: 'display:none', 'x-hash': bg.0}) }}
                 {% endfor %}
             {% endif %}
             {% if page.mainImage is not null %}
                 {{ image(page.mainImage,
-                    alt: page.mainImage.altLocalized(page.locale)|default(page.getTitle(true))|striptags|date_shortcode,
+                    alt: page.mainImage.altLocalized(page.locale)|default(page.title)|striptags|date_shortcode,
                     class: hero_image_class ?? 'md:object-cover md:h-full md:absolute md:top-0 md:z-0 w-full h-auto') }}
             {% endif %}
             {% if page.video is not null %}
