@@ -85,13 +85,13 @@ export function initCtrlSAutoSave() {
     true,
   )
 
-  form.addEventListener('htmx:beforeRequest', () => {
+  form.addEventListener('htmx:before:request', () => {
     updateIndicator('saving', 'Saving...')
   })
 
-  form.addEventListener('htmx:afterRequest', (event) => {
+  form.addEventListener('htmx:after:request', (event) => {
     resetState()
-    const status = event?.detail?.xhr?.status ?? 0
+    const status = event?.detail?.ctx?.response?.status ?? 0
     if (status >= 200 && status < 400) {
       handleSuccess()
     } else {
@@ -99,12 +99,13 @@ export function initCtrlSAutoSave() {
     }
   })
 
-  form.addEventListener('htmx:sendError', () => {
+  // htmx 4 has no htmx:send:error — network failures fire htmx:error
+  form.addEventListener('htmx:error', () => {
     resetState()
     handleError()
   })
 
-  form.addEventListener('htmx:responseError', () => {
+  form.addEventListener('htmx:response:error', () => {
     resetState()
     handleError()
   })

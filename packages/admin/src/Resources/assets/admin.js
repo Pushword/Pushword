@@ -2,7 +2,9 @@ import './admin.css'
 
 // HTMX for Ctrl+S auto-save
 import htmx from 'htmx.org'
+import { installHtmxCompat } from './admin.htmxCompat'
 window.htmx = htmx
+installHtmxCompat(htmx)
 
 // Editor modules
 import { easyMDEditor } from './admin.easymde-editor'
@@ -65,7 +67,9 @@ function markContentEditableElements() {
 }
 document.addEventListener('DOMContentLoaded', markContentEditableElements)
 document.addEventListener('turbo:render', markContentEditableElements)
-document.body?.addEventListener('htmx:afterSwap', markContentEditableElements)
+// On document, not body: when a fragment swaps its own trigger away, htmx 4
+// dispatches after:swap directly on document (detached-source fallback).
+document.addEventListener('htmx:after:swap', markContentEditableElements)
 
 /**
  * Initialize all admin interface modules
@@ -120,7 +124,7 @@ window.addEventListener('load', function () {
   // Sidebar submenu filter
   submenuFilter()
 
-  // document.body.addEventListener('htmx:afterSwap', function () {
+  // document.addEventListener('htmx:after:swap', function () {
   //   suggestTags()
   // })
 })
