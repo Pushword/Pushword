@@ -735,7 +735,12 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             return $queryBuilder;
         }
 
-        $keys = explode(',', $orderBy['key'] ?? $orderBy[0]);
+        // `weight DESC, publishedAt DESC` is written with a space after the
+        // comma. Unsplit, the second key keeps it, and the direction parser
+        // below reads that as an empty key ordered `publishedAt DESC` — which
+        // Doctrine's lexer used to swallow as `p.publishedAt DESC` until the
+        // direction was validated. Trim here rather than at every call site.
+        $keys = array_map(trim(...), explode(',', $orderBy['key'] ?? $orderBy[0]));
         foreach ($keys as $i => $key) {
             $direction = strtoupper($this->extractDirection($key, $orderBy));
             if (! \in_array($direction, ['ASC', 'DESC'], true)) {
@@ -801,7 +806,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $keyDir = explode(' ', $key, 2);
         $key = $keyDir[0];
 
-        return $keyDir[1];
+        return trim($keyDir[1]);
     }
 
     /**

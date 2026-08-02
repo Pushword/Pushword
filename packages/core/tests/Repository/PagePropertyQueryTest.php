@@ -88,6 +88,17 @@ final class PagePropertyQueryTest extends KernelTestCase
         self::assertSame([self::PREFIX.'c', self::PREFIX.'a', self::PREFIX.'b', self::PREFIX.'d'], $slugs);
     }
 
+    public function testAMultiKeyOrderToleratesTheSpaceAfterTheComma(): void
+    {
+        // `weight DESC, publishedAt DESC` is how these are written. Unsplit,
+        // the second key kept the space that followed the comma and was read
+        // as an empty key ordered `publishedAt DESC` — tolerated by Doctrine's
+        // lexer until the direction was validated, then a hard throw.
+        $slugs = $this->slugs($this->pages([['slug', 'LIKE', self::PREFIX.'%']], ['slug ASC, publishedAt DESC']));
+
+        self::assertSame([self::PREFIX.'a', self::PREFIX.'b', self::PREFIX.'c', self::PREFIX.'d'], $slugs);
+    }
+
     public function testComparisonOnUndeclaredPropertyFailsClean(): void
     {
         $this->expectException(InvalidArgumentException::class);
