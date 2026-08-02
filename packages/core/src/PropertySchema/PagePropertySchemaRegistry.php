@@ -97,6 +97,7 @@ final class PagePropertySchemaRegistry
             if (isset($schemas[$key])) {
                 continue;
             }
+
             if ($page->isManagedProperty($key)) {
                 continue;
             }
