@@ -61,6 +61,11 @@ final class PageSchemaPropertiesFieldTest extends AbstractAdminTestClass
         self::assertStringContainsString('advanced', $levelSelect->html());
         self::assertCount(1, $crawler->filter('input#Page_priority'), 'the int property renders as its own input');
 
+        // Declared by advanced-main-image AND owned by its dedicated ChoiceField,
+        // which registers the key managed before the generated fields build:
+        // exactly one input, never a generated duplicate.
+        self::assertCount(1, $crawler->filter('#Page_mainImageFormat'));
+
         // ...and leave the free-form textarea, which keeps undeclared keys.
         $textarea = $crawler->filter('textarea#Page_unmanagedPropertiesAsYaml')->text();
         self::assertStringContainsString('freeKey', $textarea);

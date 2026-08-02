@@ -11,6 +11,7 @@ use Pushword\Api\Service\PageFrontmatterMapper;
 use Pushword\Api\Service\PageWriter;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\ValueObject\PageRedirection;
+use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Service\RevisionCalculator;
@@ -31,6 +32,7 @@ final class PageApiController extends AbstractApiController
         private readonly RevisionCalculator $revisions,
         private readonly MarkdownParser $markdownParser,
         private readonly BodyPatcher $bodyPatcher,
+        private readonly PagePropertySchemaRegistry $schemaRegistry,
         private readonly string $deleteStrategy = 'hard',
     ) {
     }
@@ -354,7 +356,23 @@ final class PageApiController extends AbstractApiController
         return [
             'revision' => $this->revisions->compute($page),
             'updatedAt' => $page->updatedAt?->format(DateTimeInterface::ATOM),
-        ];
+        ] + $this->schemaWarnings($page);
+    }
+
+    /**
+     * Same informational findings the flat import reports, per write: keys the
+     * host's schema does not know and declared-required keys the page lacks.
+     * Never blocks — the key is simply absent when there is nothing to say.
+     *
+     * @return array{}|array{warnings: array<string, list<string>>}
+     */
+    private function schemaWarnings(Page $page): array
+    {
+        $compliance = $this->schemaRegistry->complianceFor($page);
+
+        $warnings = array_filter($compliance, static fn (array $findings): bool => [] !== $findings);
+
+        return [] === $warnings ? [] : ['warnings' => $warnings];
     }
 
     /**
@@ -394,6 +412,14 @@ final class PageApiController extends AbstractApiController
                 'body' => ['type' => 'string', 'description' => 'Page mainContent (Markdown)'],
                 'updatedBy' => ['type' => 'string', 'nullable' => true],
                 'updatedAt' => ['type' => 'string', 'format' => 'date-time'],
+                'warnings' => [
+                    'type' => 'object',
+                    'description' => 'Only on write responses, only when non-empty: undeclared (custom property keys the host schema does not know) and missingRequired (declared-required keys the page lacks). Informational — the write succeeded. See x-pushword-page-properties for the schema.',
+                    'properties' => [
+                        'undeclared' => ['type' => 'array', 'items' => ['type' => 'string']],
+                        'missingRequired' => ['type' => 'array', 'items' => ['type' => 'string']],
+                    ],
+                ],
             ],
         ];
 

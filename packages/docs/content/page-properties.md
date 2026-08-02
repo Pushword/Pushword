@@ -78,6 +78,10 @@ The flat import **reports and never blocks**: `pw:flat:sync`'s summary gains
 — the net that catches a `toc_title` typo'd for `tocTitle`) and
 `missing_required`. The exit code never changes.
 
+API writes (POST/PUT/PATCH) carry the same findings: a successful write
+response gains a `warnings` object (`undeclared`, `missingRequired`) — only
+when there is something to say. Informational; the write went through.
+
 ## Queries and sorting
 
 Any custom property supports `=`, `!=`, `isSet`, `isNotSet` in `pages_list`.

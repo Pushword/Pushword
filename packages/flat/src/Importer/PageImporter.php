@@ -342,8 +342,7 @@ final class PageImporter extends AbstractImporter
     /**
      * Import and report, never block: one bad frontmatter must not fail a
      * deploy. Validates the pw_schema group alone (cheap, no DB lookups) and
-     * tallies undeclared and missing-required keys — the near-miss net that
-     * catches a `toc_title` typo'd for `tocTitle`.
+     * tallies the registry's compliance findings across pages.
      */
     private function reportSchemaCompliance(string $slug, Page $page): void
     {
@@ -352,25 +351,13 @@ final class PageImporter extends AbstractImporter
             $this->invalidPages[$slug][] = (string) $violation->getMessage();
         }
 
-        $schemas = $this->schemaRegistry->for($page->host);
-        if ([] === $schemas) {
-            return;
+        $compliance = $this->schemaRegistry->complianceFor($page);
+        foreach ($compliance['undeclared'] as $key) {
+            $this->undeclaredKeys[$key] = ($this->undeclaredKeys[$key] ?? 0) + 1;
         }
 
-        foreach (array_keys($page->customProperties) as $key) {
-            if (isset($schemas[(string) $key])) {
-                continue;
-            }
-            if ($page->isManagedProperty((string) $key)) {
-                continue;
-            }
-            $this->undeclaredKeys[(string) $key] = ($this->undeclaredKeys[(string) $key] ?? 0) + 1;
-        }
-
-        foreach ($schemas as $name => $schema) {
-            if ($schema->required && ! $page->hasCustomProperty($name)) {
-                $this->missingRequired[$name] = ($this->missingRequired[$name] ?? 0) + 1;
-            }
+        foreach ($compliance['missingRequired'] as $name) {
+            $this->missingRequired[$name] = ($this->missingRequired[$name] ?? 0) + 1;
         }
     }
 

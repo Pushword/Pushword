@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\PropertySchema;
 
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 
@@ -76,5 +77,40 @@ final class PagePropertySchemaRegistry
     public function schema(?string $host, string $name): ?PagePropertySchema
     {
         return $this->for($host)[$name] ?? null;
+    }
+
+    /**
+     * The informational findings for one page: custom property keys the host's
+     * schema does not know (the near-miss net that catches a `toc_title` typo'd
+     * for `tocTitle`) and declared-required keys the page lacks. Shared by the
+     * flat import summary and the API write warnings; never blocks anything.
+     *
+     * @return array{undeclared: list<string>, missingRequired: list<string>}
+     */
+    public function complianceFor(Page $page): array
+    {
+        $schemas = $this->for('' !== $page->host ? $page->host : null);
+
+        $undeclared = [];
+        foreach (array_keys($page->customProperties) as $key) {
+            if (isset($schemas[(string) $key])) {
+                continue;
+            }
+
+            if ($page->isManagedProperty((string) $key)) {
+                continue;
+            }
+
+            $undeclared[] = (string) $key;
+        }
+
+        $missingRequired = [];
+        foreach ($schemas as $name => $schema) {
+            if ($schema->required && ! $page->hasCustomProperty($name)) {
+                $missingRequired[] = $name;
+            }
+        }
+
+        return ['undeclared' => $undeclared, 'missingRequired' => $missingRequired];
     }
 }

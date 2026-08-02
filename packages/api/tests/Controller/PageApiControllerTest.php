@@ -116,6 +116,38 @@ final class PageApiControllerTest extends WebTestCase
         $this->createdPageIds[] = $this->lookupPageId($host, $body['slug']);
     }
 
+    public function testPutViolatingTheDeclaredSchemaReturns422(): void
+    {
+        // The update path (shared by PUT and PATCH) must block like create.
+        [$host, $slug] = $this->createTestPage();
+        $revision = $this->currentRevision($host, $slug);
+
+        $response = $this->request('PUT', '/api/page/'.$host.'/'.$slug, [
+            'frontmatter' => ['priority' => -3],
+        ], ['HTTP_IF_MATCH' => $revision]);
+
+        self::assertSame(422, $response->getStatusCode());
+        self::assertStringContainsString('priority', (string) $response->getContent());
+    }
+
+    public function testWriteResponsesWarnAboutUndeclaredKeys(): void
+    {
+        // A near-miss key (toc_titel for tocTitle) stores fine but rides the
+        // write response as an informational warning — same net as the flat
+        // import summary.
+        $this->createTestPage(['toc_titel' => 'Sommaire']);
+
+        $created = $this->decode();
+        self::assertIsArray($created['warnings']);
+        $undeclared = $created['warnings']['undeclared'];
+        self::assertIsArray($undeclared);
+        self::assertContains('toc_titel', $undeclared);
+
+        // A clean write carries no warnings key at all.
+        $this->createTestPage();
+        self::assertArrayNotHasKey('warnings', $this->decode());
+    }
+
     public function testCreatePageViolatingTheDeclaredSchemaReturns422(): void
     {
         // An unknown host resolves to the default app (localhost.dev), whose
