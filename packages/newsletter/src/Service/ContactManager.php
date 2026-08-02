@@ -176,20 +176,23 @@ final readonly class ContactManager
     {
         $last = $this->lastMailTo($contact);
 
-        if ($last instanceof AutomationDelivery) {
-            if ('bounce' === $kind) {
-                $last->markBounced();
-            }
-
-            return;
-        }
-
         if (null === $last) {
             return;
         }
 
-        if ('bounce' === $kind) {
+        $isBounce = 'bounce' === $kind;
+
+        // Both ledgers mark their own row; only one of them has a campaign whose
+        // counters the event also belongs in.
+        if ($isBounce) {
             $last->markBounced();
+        }
+
+        if (! $last instanceof CampaignRecipient) {
+            return;
+        }
+
+        if ($isBounce) {
             $last->campaign->incrementBounce();
 
             return;
