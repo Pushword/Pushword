@@ -15,7 +15,7 @@ use function Symfony\Component\String\u;
  * What a page lends the steps triggered by its publication:
  *
  *     {{ page.h1 }}  {{ page.excerpt }}  {{ page.chapeau }}
- *     {{ page.url }}  {{ page.mainImage }}
+ *     {{ page.mainContent }}  {{ page.url }}  {{ page.mainImage }}
  *
  * Only the values — putting them into a template is
  * {@see \Pushword\Newsletter\Trigger\PlaceholderRenderer}'s, and it does the
@@ -31,6 +31,13 @@ final readonly class PagePlaceholders
 {
     /** Long enough for an opening, short enough that nobody scrolls it in a preview pane. */
     private const int EXCERPT_LENGTH = 300;
+
+    /**
+     * A teaser, not the article. Long enough to carry an argument far enough
+     * that clicking through is a decision rather than a guess, short enough that
+     * the mail is still an invitation to read the page.
+     */
+    private const int MAIN_CONTENT_LENGTH = 900;
 
     public function __construct(
         private SiteRegistry $siteRegistry,
@@ -54,6 +61,7 @@ final readonly class PagePlaceholders
             'page.h1' => $page->h1,
             'page.excerpt' => $this->excerpt($split),
             'page.chapeau' => $chapeau,
+            'page.mainContent' => $this->mainContent($split),
             'page.url' => $this->url($page),
             'page.mainImage' => $this->mainImageUrl($page),
         ];
@@ -99,6 +107,31 @@ final readonly class PagePlaceholders
         }
 
         return u($split->getFirstParagraph())->truncate(self::EXCERPT_LENGTH, '…', TruncateMode::WordBefore)->toString();
+    }
+
+    /**
+     * As much of the article as a mail should carry: its paragraphs from the very
+     * top, run together and cut on a word boundary once they have said enough.
+     *
+     * Where {@see excerpt()} asks what the author wrote as an opening — and comes
+     * back with a single line on a page whose first paragraph is a single line —
+     * this asks how much of the piece the mail can hold, and keeps reading until
+     * it has that much. It is the placeholder for a newsletter meant to be worth
+     * opening on its own; the excerpt is the one for a mail that only points.
+     *
+     * It starts above the `<!--break-->`, so a page with a chapeau leads with it
+     * here too and the two never contradict each other in the same mail.
+     *
+     * Paragraphs only, as plain text: the headings and widgets between them
+     * belong to a page being read, not to a quotation, and a body separated by
+     * blank lines is Markdown's own idea of prose. A page holding no paragraph
+     * lends nothing, exactly as the excerpt does.
+     */
+    private function mainContent(SplitContent $split): string
+    {
+        $prose = implode("\n\n", $split->getParagraphs(withChapeau: true));
+
+        return u($prose)->truncate(self::MAIN_CONTENT_LENGTH, '…', TruncateMode::WordBefore)->toString();
     }
 
     /**

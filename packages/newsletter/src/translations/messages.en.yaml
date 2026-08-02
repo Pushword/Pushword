@@ -59,6 +59,7 @@ newsletter:
     action:
       cancelSchedule: Cancel schedule
       previewSegment: Count audience
+      recipients: Recipients
       schedule: Schedule
       send: Send
       sendTest: Send test
@@ -192,6 +193,16 @@ newsletter:
     submit: Subscribe
   menu:
     label: Newsletter
+  recipient:
+    label:
+      plural: Recipients
+      singular: Recipient
+    field:
+      campaign: Newsletter
+      contact: Contact
+      error: Error
+      sentAt: Sent at
+      state: State
   resubscribed:
     body: You will receive mail from %audience% again.
     title: Resubscribed

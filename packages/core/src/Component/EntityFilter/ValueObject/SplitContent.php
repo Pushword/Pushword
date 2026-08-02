@@ -215,7 +215,35 @@ final readonly class SplitContent implements Stringable
      */
     public function getFirstParagraph(): string
     {
-        foreach (new HTML5()->loadHTMLFragment($this->content)->childNodes as $node) {
+        return $this->getParagraphs()[0] ?? '';
+    }
+
+    /**
+     * Every top-level paragraph, as plain text, in document order — the whole of
+     * what {@see getFirstParagraph()} takes one of, for a caller that wants to
+     * quote more of the opening than a single paragraph.
+     *
+     * Headings, figures and interactive blocks are left out rather than
+     * flattened: run together as text they read as noise, and a caller taking
+     * the first N characters would spend them on a widget's labels.
+     *
+     * `$withChapeau` reaches above the `<!--break-->` for callers quoting the
+     * article from its very top; the default keeps the reading
+     * {@see getFirstParagraph()} has always had.
+     *
+     * @return list<string>
+     */
+    public function getParagraphs(bool $withChapeau = false): array
+    {
+        return $this->paragraphsIn($withChapeau ? $this->getBody(true) : $this->content);
+    }
+
+    /** @return list<string> */
+    private function paragraphsIn(string $html): array
+    {
+        $paragraphs = [];
+
+        foreach (new HTML5()->loadHTMLFragment($html)->childNodes as $node) {
             if (! $node instanceof DOMElement) {
                 continue;
             }
@@ -227,11 +255,11 @@ final readonly class SplitContent implements Stringable
             $text = trim((string) preg_replace('/\s+/', ' ', $node->textContent));
 
             if ('' !== $text) {
-                return $text;
+                $paragraphs[] = $text;
             }
         }
 
-        return '';
+        return $paragraphs;
     }
 
     /** @return string[] */

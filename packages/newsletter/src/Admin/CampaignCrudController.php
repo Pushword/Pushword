@@ -18,6 +18,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use EasyCorp\Bundle\EasyAdminBundle\Form\Type\ComparisonType;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
 use Pushword\AdminBlockEditor\Form\EditorjsType;
@@ -102,6 +103,14 @@ class CampaignCrudController extends AbstractCrudController
             ->displayIf(static fn (Campaign $campaign): bool => $campaign->isDraft())
             ->setCssClass('btn btn-outline-secondary');
 
+        // The counters answer "how many"; this opens the rows behind them. A
+        // campaign only has rows once armed, which is exactly when the count
+        // stops being zero.
+        $recipients = Action::new('recipients', 'newsletter.campaign.action.recipients', 'fa fa-list-check')
+            ->linkToUrl(fn (Campaign $campaign): string => $this->recipientsUrl($campaign))
+            ->displayIf(static fn (Campaign $campaign): bool => $campaign->recipientCount > 0)
+            ->setCssClass('btn btn-outline-secondary');
+
         // A test never touches recipients or counters, so it stays available.
         $sendTest = Action::new('sendTest', 'newsletter.campaign.action.sendTest', 'fa fa-flask')
             ->linkToCrudAction('sendTest')
@@ -113,6 +122,7 @@ class CampaignCrudController extends AbstractCrudController
                 ->add($page, $schedule)
                 ->add($page, $cancelSchedule)
                 ->add($page, $preview)
+                ->add($page, $recipients)
                 ->add($page, $sendTest);
         }
 
@@ -350,6 +360,16 @@ class CampaignCrudController extends AbstractCrudController
         return $this->adminUrlGenerator
             ->setController(self::class)
             ->setAction(Action::INDEX)
+            ->generateUrl();
+    }
+
+    /** The send ledger of one campaign: its own rows, none of any other's. */
+    private function recipientsUrl(Campaign $campaign): string
+    {
+        return $this->adminUrlGenerator
+            ->setController(CampaignRecipientCrudController::class)
+            ->setAction(Action::INDEX)
+            ->set('filters', ['campaign' => ['comparison' => ComparisonType::EQ, 'value' => $campaign->id]])
             ->generateUrl();
     }
 

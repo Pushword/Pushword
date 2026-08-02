@@ -8,7 +8,9 @@ use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
+use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Service\CampaignSender;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,6 +34,9 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
 
             foreach ($audienceIds as $audienceId) {
                 foreach ([
+                    // SQLite does not enforce the `ON DELETE CASCADE` the schema
+                    // declares, so the ledger is cleared by hand and first.
+                    'DELETE FROM newsletter_campaign_recipient WHERE campaign_id IN (SELECT id FROM newsletter_campaign WHERE audience_id = :id)',
                     'DELETE FROM newsletter_trigger_log WHERE automation_id IN (SELECT id FROM newsletter_automation WHERE audience_id = :id)',
                     'DELETE FROM newsletter_automation_step WHERE automation_id IN (SELECT id FROM newsletter_automation WHERE audience_id = :id)',
                     'DELETE FROM newsletter_automation WHERE audience_id = :id',
@@ -54,7 +59,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $this->seed();
 
-        foreach (['audience', 'contact', 'campaign', 'automation'] as $section) {
+        foreach (['audience', 'contact', 'campaign', 'campaign-recipient', 'automation'] as $section) {
             $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section);
             self::assertSame(200, $client->getResponse()->getStatusCode(), $section.' index');
         }
@@ -106,6 +111,135 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $campaign = $this->entityManager()->getRepository(Campaign::class)->findOneBy(['subject' => 'Good segment']);
         self::assertInstanceOf(Campaign::class, $campaign);
         self::assertSame([['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']], $campaign->segment);
+    }
+
+    /** The counters say how many; the ledger says which, and why a mail did not leave. */
+    public function testTheLedgerListsWhoTheNewsletterWentTo(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $campaign = $this->campaign($audience, 'Ledger');
+        $this->recipient($campaign, 'sent@example.tld')->markSent();
+        $this->recipient($campaign, 'failed@example.tld')->markFailed('Mailbox unavailable');
+        $campaign->markSending(2);
+        $this->entityManager()->flush();
+
+        $client->request(Request::METHOD_GET, $this->ledgerUrl($client, $campaign));
+
+        self::assertSame(200, $client->getResponse()->getStatusCode());
+        $html = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('sent@example.tld', $html);
+        self::assertStringContainsString('failed@example.tld', $html);
+        // Why it failed is only ever legible here: `failedCount` sums the rows
+        // and loses the transport's answer.
+        self::assertStringContainsString('Mailbox unavailable', $html);
+    }
+
+    /** One campaign's rows, not every campaign's — the link carries the filter. */
+    public function testTheLedgerLinkNarrowsToOneCampaign(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $campaign = $this->campaign($audience, 'Mine');
+        $this->recipient($campaign, 'mine@example.tld')->markSent();
+        $campaign->markSending(1);
+
+        $other = $this->campaign($audience, 'Someone else');
+        $this->recipient($other, 'theirs@example.tld')->markSent();
+        $other->markSending(1);
+        $this->entityManager()->flush();
+
+        $client->request(Request::METHOD_GET, $this->ledgerUrl($client, $campaign));
+
+        $html = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('mine@example.tld', $html);
+        self::assertStringNotContainsString('theirs@example.tld', $html);
+    }
+
+    /**
+     * "Which ones failed" is the question the ledger exists to answer, and the
+     * state filter is the only thing that answers it — a filter whose choices go
+     * missing throws at render time rather than degrading.
+     */
+    public function testTheLedgerNarrowsToOneState(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $campaign = $this->campaign($audience, 'Mixed states');
+        $this->recipient($campaign, 'delivered@example.tld')->markSent();
+        $this->recipient($campaign, 'refused@example.tld')->markFailed('550 user unknown');
+        $campaign->markSending(2);
+        $this->entityManager()->flush();
+
+        $client->request(Request::METHOD_GET, $this->ledgerUrl($client, $campaign).'&'.http_build_query([
+            'filters' => ['state' => ['comparison' => '=', 'value' => 'failed']],
+        ]));
+
+        self::assertSame(200, $client->getResponse()->getStatusCode());
+        $html = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('refused@example.tld', $html);
+        self::assertStringNotContainsString('delivered@example.tld', $html);
+    }
+
+    /** Searching the ledger reads through to the contact, which is a join and not a column. */
+    public function testTheLedgerIsSearchedByAddress(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $campaign = $this->campaign($audience, 'Searchable');
+        $this->recipient($campaign, 'needle@example.tld')->markSent();
+        $this->recipient($campaign, 'haystack@example.tld')->markSent();
+        $campaign->markSending(2);
+        $this->entityManager()->flush();
+
+        $client->request(Request::METHOD_GET, $this->ledgerUrl($client, $campaign).'&'.http_build_query(['query' => 'needle@example.tld']));
+
+        self::assertSame(200, $client->getResponse()->getStatusCode());
+        $html = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('needle@example.tld', $html);
+        self::assertStringNotContainsString('haystack@example.tld', $html);
+    }
+
+    /** A campaign nobody has been armed for has no rows to open. */
+    public function testADraftCampaignOffersNoLedger(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $campaign = $this->campaign($audience, 'Still a draft');
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$campaign->id);
+
+        self::assertSame(200, $client->getResponse()->getStatusCode());
+        self::assertCount(0, $crawler->filter('a[href*="campaign-recipient"]'));
+    }
+
+    /** A row records a send that happened: editing it would make the ledger lie. */
+    public function testTheLedgerIsReadOnly(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $campaign = $this->campaign($audience, 'Read only');
+        $recipient = $this->recipient($campaign, 'row@example.tld');
+        $recipient->markSent();
+
+        $campaign->markSending(1);
+        $this->entityManager()->flush();
+
+        foreach ([
+            [Request::METHOD_GET, '/admin/newsletter/campaign-recipient/new'],
+            [Request::METHOD_GET, '/admin/newsletter/campaign-recipient/'.$recipient->id.'/edit'],
+            [Request::METHOD_POST, '/admin/newsletter/campaign-recipient/'.$recipient->id.'/delete'],
+        ] as [$method, $url]) {
+            $client->request($method, $url);
+            self::assertSame(403, $client->getResponse()->getStatusCode(), $method.' '.$url);
+        }
     }
 
     /** Same guarantee for the page grammar, which the source picks: a bad rule is a form error, never a 500. */
@@ -600,6 +734,50 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertIsArray($value);
 
         return $value;
+    }
+
+    /**
+     * The URL the campaign's own "Recipients" button points at — reading it off
+     * the page is what keeps the filter and the ledger tested together.
+     */
+    private function ledgerUrl(KernelBrowser $client, Campaign $campaign): string
+    {
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$campaign->id);
+        $link = $crawler->filter('a[href*="campaign-recipient"]');
+
+        self::assertGreaterThan(0, $link->count(), 'the campaign detail page links to its ledger');
+
+        return (string) $link->attr('href');
+    }
+
+    private function campaign(Audience $audience, string $subject): Campaign
+    {
+        $campaign = new Campaign();
+        $campaign->audience = $audience;
+        $campaign->subject = $subject;
+        $campaign->bodyMarkdown = 'Body';
+
+        $this->entityManager()->persist($campaign);
+
+        return $campaign;
+    }
+
+    /** A row of the send ledger, in the state {@see CampaignSender::arm()} leaves it in. */
+    private function recipient(Campaign $campaign, string $email): CampaignRecipient
+    {
+        $entityManager = $this->entityManager();
+        $audience = $campaign->audience;
+        self::assertInstanceOf(Audience::class, $audience);
+
+        $contact = new Contact($audience, $email);
+        $contact->optIn(false);
+
+        $entityManager->persist($contact);
+
+        $recipient = new CampaignRecipient($campaign, $contact);
+        $entityManager->persist($recipient);
+
+        return $recipient;
     }
 
     private function reloadContact(?int $contactId): Contact

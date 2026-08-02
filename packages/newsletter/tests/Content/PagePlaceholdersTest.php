@@ -12,16 +12,18 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 #[Group('integration')]
 final class PagePlaceholdersTest extends KernelTestCase
 {
-    public function testTheFiveValuesAPageMayLend(): void
+    public function testEveryValueAPageMayLend(): void
     {
         $rendered = $this->render(
             '# {{ page.h1 }}'."\n\n".'{{ page.chapeau }}'."\n\n".'{{ page.excerpt }}'."\n\n"
+            .'{{ page.mainContent }}'."\n\n"
             .'![]({{ page.mainImage }})'."\n\n".'[Read]({{ page.url }})',
             $this->page(),
         );
 
         self::assertSame(
             '# Hello'."\n\n".'<p>The lede.</p>'."\n\n".'<p>The lede.</p>'."\n\n"
+            .'The lede.'."\n\n".'The opening lines.'."\n\n".'The rest.'."\n\n"
             .'![](https://localhost.dev/media/default/photo.jpg)'."\n\n"
             .'[Read](https://localhost.dev/blog/hello)',
             $rendered,
@@ -67,7 +69,7 @@ final class PagePlaceholdersTest extends KernelTestCase
     public function testWithoutAChapeauTheExcerptIsTheWholeIntro(): void
     {
         $page = $this->page();
-        $page->setMainContent('First opening line.'."\n\n".'Second one.'."\n\n".'## A heading'."\n\n".'The rest.');
+        $page->mainContent = 'First opening line.'."\n\n".'Second one.'."\n\n".'## A heading'."\n\n".'The rest.';
 
         self::assertSame(
             '<p>First opening line.</p> <p>Second one.</p>',
@@ -80,7 +82,7 @@ final class PagePlaceholdersTest extends KernelTestCase
     {
         $page = $this->page();
         $page->setCustomProperty('toc', null);
-        $page->setMainContent('The opening lines.'."\n\n".'## A heading'."\n\n".'The rest.');
+        $page->mainContent = 'The opening lines.'."\n\n".'## A heading'."\n\n".'The rest.';
 
         self::assertSame('The opening lines.', $this->render('{{ page.excerpt }}', $page));
     }
@@ -89,7 +91,7 @@ final class PagePlaceholdersTest extends KernelTestCase
     {
         $page = $this->page();
         $page->setCustomProperty('toc', null);
-        $page->setMainContent(trim(str_repeat('Cheval ', 60)).'.'."\n\n".'## A heading');
+        $page->mainContent = trim(str_repeat('Cheval ', 60)).'.'."\n\n".'## A heading';
 
         $rendered = $this->render('{{ page.excerpt }}', $page);
 
@@ -105,10 +107,8 @@ final class PagePlaceholdersTest extends KernelTestCase
     {
         $page = $this->page();
         $page->setCustomProperty('toc', null);
-        $page->setMainContent(
-            '<div class="tool"><p>Budget</p><p>m/j</p></div>'."\n\n"
-            .'The opening lines.'."\n\n".'## A heading',
-        );
+        $page->mainContent = '<div class="tool"><p>Budget</p><p>m/j</p></div>'."\n\n"
+        .'The opening lines.'."\n\n".'## A heading';
 
         self::assertSame('The opening lines.', $this->render('{{ page.excerpt }}', $page));
     }
@@ -118,7 +118,7 @@ final class PagePlaceholdersTest extends KernelTestCase
     {
         $page = $this->page();
         $page->setCustomProperty('toc', null);
-        $page->setMainContent('<div class="tool"><p>Budget</p></div>'."\n\n".'## A heading'."\n\n".'### Another');
+        $page->mainContent = '<div class="tool"><p>Budget</p></div>'."\n\n".'## A heading'."\n\n".'### Another';
 
         self::assertSame('', $this->render('{{ page.excerpt }}', $page));
     }
@@ -133,7 +133,7 @@ final class PagePlaceholdersTest extends KernelTestCase
         $page = $this->page();
         $page->host = 'pushword.piedweb.com';
         $page->setCustomProperty('toc', null);
-        $page->setMainContent('Rendered for {{ apps.getMainHost() }}.'."\n\n".'## A heading');
+        $page->mainContent = 'Rendered for {{ apps.getMainHost() }}.'."\n\n".'## A heading';
 
         self::assertSame('Rendered for pushword.piedweb.com.', $this->render('{{ page.excerpt }}', $page));
     }
@@ -152,7 +152,7 @@ final class PagePlaceholdersTest extends KernelTestCase
         $hostless = $this->page();
         $hostless->host = '';
         $hostless->setCustomProperty('toc', null);
-        $hostless->setMainContent('Rendered for {{ apps.getMainHost() }}.'."\n\n".'## A heading');
+        $hostless->mainContent = 'Rendered for {{ apps.getMainHost() }}.'."\n\n".'## A heading';
 
         self::assertSame('Rendered for localhost.dev.', $this->render('{{ page.excerpt }}', $hostless));
     }
@@ -160,6 +160,69 @@ final class PagePlaceholdersTest extends KernelTestCase
     public function testTheChapeauIsLentOnItsOwn(): void
     {
         self::assertSame('<p>The lede.</p>', $this->render('{{ page.chapeau }}', $this->page()));
+    }
+
+    /**
+     * The whole opening, not the first line of it: an article whose first
+     * paragraph is one sentence is exactly the case the excerpt reads thinly.
+     */
+    public function testTheMainContentRunsTheParagraphsTogether(): void
+    {
+        $page = $this->page();
+        $page->setCustomProperty('toc', null);
+        $page->mainContent = 'One.'."\n\n".'Two.'."\n\n".'## A heading'."\n\n".'Three.';
+
+        self::assertSame('One.'."\n\n".'Two.'."\n\n".'Three.', $this->render('{{ page.mainContent }}', $page));
+    }
+
+    /** A chapeau is the top of the article, so the quotation opens on it. */
+    public function testTheMainContentStartsAboveTheBreak(): void
+    {
+        self::assertStringStartsWith('The lede.', $this->render('{{ page.mainContent }}', $this->page()));
+    }
+
+    /** Headings and widgets belong to a page being read, not to a quotation. */
+    public function testTheMainContentLeavesOutWhatIsNotAParagraph(): void
+    {
+        $page = $this->page();
+        $page->setCustomProperty('toc', null);
+        $page->mainContent = '<div class="tool"><p>Budget</p></div>'."\n\n"
+        .'The opening lines.'."\n\n".'## A heading'."\n\n".'The rest.';
+
+        self::assertSame('The opening lines.'."\n\n".'The rest.', $this->render('{{ page.mainContent }}', $page));
+    }
+
+    public function testAnOverlongArticleIsTruncatedOnAWordBoundary(): void
+    {
+        $page = $this->page();
+        $page->setCustomProperty('toc', null);
+        $page->mainContent = trim(str_repeat('Cheval ', 400)).'.'."\n\n".'## A heading';
+
+        $rendered = $this->render('{{ page.mainContent }}', $page);
+
+        self::assertStringEndsWith('Cheval…', $rendered);
+        self::assertLessThanOrEqual(900, mb_strlen($rendered));
+    }
+
+    /** It carries more than the excerpt, which is the whole point of having both. */
+    public function testTheMainContentOutrunsTheExcerptOnTheSamePage(): void
+    {
+        $page = $this->page();
+        $page->setCustomProperty('toc', null);
+        $page->mainContent = 'One short line.'."\n\n".str_repeat('More prose. ', 40)."\n\n".'## A heading';
+
+        self::assertSame('One short line.', $this->render('{{ page.excerpt }}', $page));
+        self::assertGreaterThan(400, mb_strlen($this->render('{{ page.mainContent }}', $page)));
+    }
+
+    /** Nothing to quote stays nothing to quote, however much room the budget leaves. */
+    public function testAPageWithoutAParagraphLendsNoMainContent(): void
+    {
+        $page = $this->page();
+        $page->setCustomProperty('toc', null);
+        $page->mainContent = '<div class="tool"><p>Budget</p></div>'."\n\n".'## A heading'."\n\n".'### Another';
+
+        self::assertSame('', $this->render('{{ page.mainContent }}', $page));
     }
 
     /** A body is HTML-in-Markdown: what the page lends belongs there as it stands. */
@@ -198,7 +261,7 @@ final class PagePlaceholdersTest extends KernelTestCase
         $page->slug = 'blog/hello';
         $page->h1 = 'Hello';
         $page->setSearchExcerpt('What it is about.');
-        $page->setMainContent('The lede.'."\n\n".'<!--break-->'."\n\n".'The opening lines.'."\n\n".'## A heading'."\n\n".'The rest.');
+        $page->mainContent = 'The lede.'."\n\n".'<!--break-->'."\n\n".'The opening lines.'."\n\n".'## A heading'."\n\n".'The rest.';
 
         // The intro is only isolated on a page that asked for a table of contents.
         $page->setCustomProperty('toc', true);

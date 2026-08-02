@@ -59,6 +59,7 @@ newsletter:
     action:
       cancelSchedule: Annuler la programmation
       previewSegment: Compter l'audience
+      recipients: Destinataires
       schedule: Programmer
       send: Envoyer
       sendTest: Envoyer un test
@@ -192,6 +193,16 @@ newsletter:
     submit: S'inscrire
   menu:
     label: Newsletter
+  recipient:
+    label:
+      plural: Destinataires
+      singular: Destinataire
+    field:
+      campaign: Newsletter
+      contact: Contact
+      error: Erreur
+      sentAt: Envoyé le
+      state: État
   resubscribed:
     body: Vous recevrez de nouveau les messages de %audience%.
     title: Réinscription effectuée

@@ -321,6 +321,16 @@ which the ledger records as `skipped` rather than as a failure.
 **Send test** mails a copy of any campaign to arbitrary addresses with a `[TEST]`
 subject prefix, touching no contact and no counter.
 
+### Who it went to
+
+The counters on a campaign say how many; **Recipients** opens the rows behind
+them — one per contact, with its state (`pending`, `sent`, `skipped`, `failed`,
+`bounced`) and, for a failure, the message the transport gave back. That message
+lives nowhere else: `failedCount` only sums the rows. The button appears once a
+campaign has been armed, which is when the rows exist, and the list is read-only:
+a row records a send that happened, and editing it would make the ledger disagree
+with what left the server.
+
 ## Automations
 
 One screen covers "two mails after subscription" and "announce every article the
@@ -435,12 +445,12 @@ ANDed with the whole of it: `any` widens which pages match, never past those.
 
 ### What a step may quote
 
-A step's subject and body may quote what the occurrence lends. A page lends five
+A step's subject and body may quote what the occurrence lends. A page lends six
 values:
 
 ```
-{{ page.h1 }}   {{ page.excerpt }}   {{ page.chapeau }}
-{{ page.url }}  {{ page.mainImage }}
+{{ page.h1 }}           {{ page.excerpt }}   {{ page.chapeau }}
+{{ page.mainContent }}  {{ page.url }}       {{ page.mainImage }}
 ```
 
 A contact lends `{{ contact.name }}` and `{{ contact.email }}`; another source
@@ -480,6 +490,24 @@ nothing false. Give such a page a `<!--break-->` if it deserves a real accroche.
 On a page with no break it is empty — and on a page with a break but no table of
 contents it renders exactly what `{{ page.excerpt }}` does, so quote one or the
 other, not both.
+
+`{{ page.mainContent }}` answers the other question: not what the author wrote as
+an opening, but how much of the article the mail can carry. It is the page's
+paragraphs from the very top — above the `<!--break-->`, so a chapeau leads here
+too — run together with a blank line between them and cut at 900 characters on a
+word boundary.
+
+Reach for it when the newsletter is meant to be worth opening on its own, and for
+`{{ page.excerpt }}` when the mail only points at the page. The difference shows
+on an article that opens on a one-line hook: the excerpt stops at that line,
+which is all the author wrote as an opening, while `{{ page.mainContent }}` keeps
+reading until it has enough to make clicking through a decision rather than a
+guess.
+
+It quotes paragraphs and nothing else. Headings, figures and interactive blocks
+are left out rather than flattened: run together as text they read as noise, and
+a budget spent on a widget's labels is a budget wasted. A page holding no
+paragraph lends nothing here either.
 
 **The subject gets plain text, the body gets the markup.** An `h1` commonly
 carries an `<em>`, a `<br>` or a `<span class="…">`, and an excerpt falling back
