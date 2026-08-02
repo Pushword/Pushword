@@ -3,6 +3,7 @@
 namespace Pushword\Core\Command;
 
 use Exception;
+use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -33,6 +34,16 @@ trait AskIfNotSettedTrait
         // If empty is allowed and no value provided, return the default
         if ($allowEmpty) {
             return $default ?? '';
+        }
+
+        // Without a terminal, asking would loop forever: QuestionHelper returns the
+        // (empty) default straight away. Fall back to the default or give up.
+        if (! $input->isInteractive()) {
+            if (null !== $default && '' !== $default) {
+                return $default;
+            }
+
+            throw new RuntimeException($argument.' is required: pass it as an argument when running non-interactively.');
         }
 
         $defaultDisplay = null !== $default && '' !== $default ? ' (default: '.$default.')' : '';

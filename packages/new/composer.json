@@ -23,6 +23,7 @@
     "symfony/runtime": "*",
     "symfony/yaml": "^8.0",
     "pushword/core": "^1.0.0-rc84",
+    "pushword/docs": "^1.0.0-rc84",
     "pushword/installer": "^1.0.0-rc84",
     "pushword/dev-app": "^1.0.0-rc84",
     "pushword/admin": "^1.0.0-rc84",
@@ -74,7 +75,6 @@
     "dev": "symfony server:start -d",
     "auto-scripts": [],
     "post-install-cmd": [
-      "bash ./vendor/pushword/installer/src/installer",
       "@auto-scripts"
     ],
     "post-update-cmd": [

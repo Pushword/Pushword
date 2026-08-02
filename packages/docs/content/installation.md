@@ -23,10 +23,12 @@ _Facultative_ :
 
 ```shell
 composer create-project pushword/new pushword @dev
-
-# Create the admin user
-cd pushword && php bin/console pw:user:create
+cd pushword
 ```
+
+The installer creates the database, the demo content and a super admin:
+**`admin@example.tld` / `p@ssword`**. Log in on `/admin` and change them right away
+— or create your own account with `php bin/console pw:user:create`.
 
 That's it ! You can still configure an app or directly launch a PHP Server :
 
@@ -58,17 +60,21 @@ php Caddy.php status   # Show server status
 
 ## _Recommended Extensions_ to get Pushword Classic
 
-By running the following command, it will install a few extensions to have a **classic** installation.
+`composer create-project` already gives you the **classic** set: `admin`,
+`admin-block-editor`, `page-scanner`, `static-generator` and `template-editor`.
+
+Add the rest as you need them:
 
 ```shell
-composer req pushword/admin pushword/admin-block-editor pushword/page-scanner pushword/static-generator pushword/template-editor pushword/version
-
-# More specific
-composer req pushword/page-update-notifier
-composer req pushword/advanced-main-image
-composer req pushword/conversation
-
+composer req pushword/version              # page history and diffs
+composer req pushword/search               # SQLite full-text search
+composer req pushword/flat                 # content as Markdown files in Git
+composer req pushword/conversation         # comments, contact & newsletter forms
+composer req pushword/advanced-main-image  # hero images
+composer req pushword/page-update-notifier # email alert when a page changes
 ```
+
+Each one registers its own routes and config on install — nothing to wire by hand.
 
 ## Image Processing
 

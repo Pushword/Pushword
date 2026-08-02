@@ -1,61 +1,19 @@
 #!/bin/bash
 
-# Use it :
-# ./installer ./my-folder
+# Obsolete. `vendor/pushword/core/install.php` — run by the Composer post-update and
+# post-autoload hooks — does everything this script used to, without prompting.
+#
+# It ran from `post-install-cmd`, which `composer create-project` never fires, so on the
+# documented install path it was dead code. On the *second* `composer install` it did
+# fire, truncating config/routes.yaml, overwriting config/packages/pushword.yaml and
+# blocking forever on a `read` prompt that no terminal was attached to.
+#
+# The file stays as a no-op because projects created before rc828 still carry the line
+# in their composer.json. It now only unhooks itself, so the next `composer install`
+# cleans it up for good.
 
-echo "Welcome to pushword World"
+echo "~ pushword/installer: this script is obsolete, vendor/pushword/core/install.php replaces it."
 
-# We copy pushword config to easily edit it later manually
-cp vendor/pushword/installer/src/pushword.yaml config/packages/pushword.yaml
-
-# Copy Default Media
-cp -r vendor/pushword/dev-app/media~ media
-
-# Copy Entities
-cp -R vendor/pushword/dev-app/src/DataFixtures/. src/DataFixtures
-
-
-# Install sqlite by default
-sed -i -e "s/DATABASE_URL=\".*\"/DATABASE_URL=\"sqlite:\/\/\/%kernel\.project_dir%\/var\/app\.db\"/" .env
-
-## Install default routes
-echo -e "pushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes/all.php'" >config/routes.yaml
-
-# Create Database:
-php bin/console doctrine:schema:create -q
-php bin/console doctrine:fixtures:load -q
-php bin/console pw:image:cache -q &
-
-echo "Configure the SUPER ADMIN (you can skip this step pressing enter if you use flat file)"
-# Add an admin user :
-read -p 'Email: ' emailvar
-read -sp 'Password: ' passvar
-php bin/console pw:user:create $emailvar $passvar ROLE_SUPER_ADMIN
-#php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN
-
-# Install Bundle Assets
-php bin/console assets:install --symlink --relative -q
-
-mkdir public/build && echo -e "{}" >public/build/manifest.json
-
-# Install recommended extension
-read -p "Install recommended extensions (admin, page-scanner, static-generator, svg, template-editor) ? [Y/n] " -n 1 -r
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-    composer require pushword/admin pushword/page-scanner pushword/static-generator pushword/template-editor pushword/version -q
-    sed -i '1s/^/page_scanner:\n    resource: "@PushwordPageScannerBundle\/PageScannerRoutes.yaml"\n/' config/routes.yaml
-    sed -i '1s/^/static:\n    resource: "@PushwordStaticGeneratorBundle\/StaticRoutes.yaml"\n/' config/routes.yaml
-    sed -i '1s/^/template_editor:\n    resource: "@PushwordTemplateEditorBundle\/TemplateEditorRoutes.yaml"\n/' config/routes.yaml
-    sed -i '1s/^/admin:\n    resource: "@PushwordAdminBundle\/AdminRoutes.yaml"\n/' config/routes.yaml
-    sed -i '1s/^/version:\n    resource: "@PushwordVersionBundle\/VersionRoutes.yaml"\n/' config/routes.yaml
-fi
-
-# Do some cleaning
-rm package.json
-rm -rf assets
-cp -r vendor/pushword/dev-app/assets assets
-
-# Remove only the bash installer script from post-install-cmd (keep other scripts for future package installs)
 php -r "
 \$json = json_decode(file_get_contents('composer.json'), true);
 \$json['scripts']['post-install-cmd'] = array_values(array_filter(
@@ -68,14 +26,4 @@ if (empty(\$json['scripts']['post-install-cmd'])) {
 file_put_contents('composer.json', json_encode(\$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . \"\n\");
 "
 
-# Only remove dev-app (installer must stay for future package installs)
-composer remove pushword/dev-app -q
-
-# Launch Server and Play
-read -p "Launch Server and play? [Y/n] " -n 1 -r
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-    #symfony server:start -d --no-tls
-    php -S 127.0.0.1:8004 -t public/  > /dev/null 2>&1 &
-    echo 'http://127.0.0.1:8004/'
-fi
+echo "~ Removed it from composer.json > scripts > post-install-cmd."

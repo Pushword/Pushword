@@ -41,7 +41,7 @@ class AppFixtures extends Fixture
     {
         $userClass = EntityClassRegistry::getUserClass();
         $user = new $userClass();
-        $user->email = 'contact@piedweb.com';
+        $user->email = 'john.doe@example.com';
         $user->username = 'John Doe';
         $user->setRoles([$userClass::ROLE_DEFAULT]);
 

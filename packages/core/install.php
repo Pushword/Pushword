@@ -43,7 +43,8 @@ PostInstall::mirror('vendor/pushword/dev-app/media~', 'media');
 $freshInstall = ! file_exists('var/app.db');
 $commands = 'php bin/console doctrine:schema:update --force -q';
 if ($freshInstall) {
-    $commands .= ' && php bin/console doctrine:fixtures:load --no-interaction -q';
+    $commands .= ' && php bin/console doctrine:fixtures:load --no-interaction -q'
+        .' && php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN -q';
 }
 
 $commands .= ' && php bin/console pw:image:cache -q';
@@ -52,6 +53,11 @@ echo '~~ Symlinking assets'.chr(10);
 $commands .= ' && php bin/console assets:install --symlink --relative -q';
 exec($commands);
 PostInstall::dumpFile('public/build/manifest.json', '{}');
+
+if ($freshInstall) {
+    echo '~~ Super admin created: admin@example.tld / p@ssword'.chr(10);
+    echo '~~ Log in on /admin and change these credentials.'.chr(10);
+}
 
 echo '~~ Copy assets file in ./assets'.chr(10);
 PostInstall::remove(['package.json', 'webpack.config.js', 'assets']);
@@ -67,6 +73,35 @@ $defaultConfig = 'pushword:'.chr(10)
     .'    # https://github.com/Pushword/Pushword/blob/main/packages/dev-app/config/packages/pushword.php'.chr(10);
 
 PostInstall::dumpFile('config/packages/pushword.yaml', $defaultConfig);
+
+// An agent opening the project only reads the root: point it at the reference the docs
+// package ships. Never overwrite a CLAUDE.md the site already wrote.
+if (! file_exists('CLAUDE.md')) {
+    PostInstall::dumpFile('CLAUDE.md', <<<'MD'
+        # This site
+
+        A [Pushword](https://pushword.piedweb.com) site: a modular CMS made of Symfony bundles.
+
+        ## Read first
+
+        - `vendor/pushword/docs/CLAUDE.md` — Pushword's reference for AI agents
+        - `vendor/pushword/docs/content/` — one `.md` per topic (`architecture.md`, `extensions.md`, …)
+        - `vendor/pushword/core/src/Entity/Page.php` — the main entity
+
+        ## Commands
+
+        ```bash
+        php bin/console list pw     # every Pushword command
+        php bin/console cache:clear # after each change
+        ```
+
+        ## About this site
+
+        Describe here what a newcomer cannot read from the code: hosts and locales,
+        deployment, editorial rules, and anything the framework does not enforce.
+
+        MD);
+}
 
 // Install phpstan
 // ---------------

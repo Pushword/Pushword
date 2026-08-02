@@ -1,6 +1,6 @@
 # Pushword Installer
 
-Install Pushword and its packages in minutes — an interactive setup script plus automatic per-package install hooks.
+Install Pushword and its packages in minutes — automatic per-package install hooks.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -12,19 +12,26 @@ Install Pushword and its packages in minutes — an interactive setup script plu
 
 ## Features
 
-- **Interactive setup** during `composer create-project` (database, admin user, routes, assets).
 - **Automatic package setup** — runs each package's `install.php` on `composer require`.
 - Stays installed to support **future package installs**.
 
 ## How It Works
 
-This package provides two mechanisms:
+`PostInstall::runPostUpdate` executes each package's `install.php` when you add a Pushword
+package, once per package. `pushword/core`'s script is what sets a new project up: database,
+super admin, routes, assets and default config.
 
-1. **Interactive Setup** (`src/installer`): A bash script that runs once during `composer create-project` to set up a new Pushword project (database, admin user, routes, assets).
+`pushword/installer` remains installed afterwards so later `composer require` calls get the
+same treatment.
 
-2. **Automatic Package Setup** (`PostInstall::runPostUpdate`): Automatically executes each package's `install.php` when you add new Pushword packages via `composer require`.
+### The `src/installer` bash script is obsolete
 
-After initial setup, `pushword/installer` remains installed to support future package installations. Only the interactive bash script reference is removed from `post-install-cmd`.
+It hung off `post-install-cmd`, which `composer create-project` never fires — so it never ran
+on the documented install path, while `install.php` quietly did the same work. It did fire on
+a later `composer install`, where it truncated `config/routes.yaml` and blocked on a prompt.
+
+Since rc828 it is a no-op that removes itself from `post-install-cmd`. Projects created
+before then clean up on their next `composer install`; nothing to do by hand.
 
 ## Manual Installation
 
