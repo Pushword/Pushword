@@ -130,9 +130,24 @@ final readonly class PagePlaceholders
         return u($split->getFirstParagraph())->truncate(self::EXCERPT_LENGTH, '…', TruncateMode::WordBefore)->toString();
     }
 
+    /**
+     * Rendering happens on a tick, outside any request: nothing has bound the
+     * registry to this page's host, so the body would be rendered against the
+     * default site and every template lookup it makes — `view()` first among them
+     * — would miss the host's own overrides. What a request's listener does at
+     * its start, this does for the length of one render; restoring afterwards is
+     * what makes it safe on a page in the middle of a loop over several hosts.
+     */
     private function split(Page $page): SplitContent
     {
-        return $this->contentExtension->mainContentSplit($page);
+        $previousHost = $this->siteRegistry->get()->getMainHost();
+        $this->siteRegistry->switchSite($page->host);
+
+        try {
+            return $this->contentExtension->mainContentSplit($page);
+        } finally {
+            $this->siteRegistry->switchSite($previousHost);
+        }
     }
 
     /**

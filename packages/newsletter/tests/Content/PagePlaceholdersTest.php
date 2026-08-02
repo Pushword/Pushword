@@ -122,6 +122,42 @@ final class PagePlaceholdersTest extends KernelTestCase
         self::assertSame('', $this->placeholders()->render('{{ page.excerpt }}', $page));
     }
 
+    /**
+     * The body renders on a tick, outside any request, so nothing has bound the
+     * registry to the page's host: left on the default site, `view()` and every
+     * other lookup keyed on the current site miss this host's own overrides.
+     */
+    public function testTheBodyRendersUnderThePagesOwnHost(): void
+    {
+        $page = $this->page();
+        $page->host = 'pushword.piedweb.com';
+        $page->setCustomProperty('toc', null);
+        $page->setMainContent('Rendered for {{ apps.getMainHost() }}.'."\n\n".'## A heading');
+
+        self::assertSame('Rendered for pushword.piedweb.com.', $this->placeholders()->render('{{ page.excerpt }}', $page));
+    }
+
+    /**
+     * One tick walks pages from several hosts, and a page on the default site
+     * carries no host of its own: the page rendered before it must not lend it one.
+     */
+    public function testAPageWithoutAHostIsNotRenderedUnderTheOneBeforeIt(): void
+    {
+        $placeholders = $this->placeholders();
+
+        $hosted = $this->page();
+        $hosted->host = 'pushword.piedweb.com';
+
+        $placeholders->render('{{ page.excerpt }}', $hosted);
+
+        $hostless = $this->page();
+        $hostless->host = '';
+        $hostless->setCustomProperty('toc', null);
+        $hostless->setMainContent('Rendered for {{ apps.getMainHost() }}.'."\n\n".'## A heading');
+
+        self::assertSame('Rendered for localhost.dev.', $placeholders->render('{{ page.excerpt }}', $hostless));
+    }
+
     public function testTheChapeauIsLentOnItsOwn(): void
     {
         self::assertSame('<p>The lede.</p>', $this->placeholders()->render('{{ page.chapeau }}', $this->page()));
