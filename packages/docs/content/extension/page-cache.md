@@ -94,9 +94,29 @@ The cached HTML is the **same for everyone** — anonymous visitors, logged-in a
 
 The fragment endpoint stays behind the Symfony firewall; the cookie is only a client-side hint. Pattern is reusable for any dynamic block.
 
-### htmx alternative
+### Gates and deferred triggers
 
-If your theme already loads htmx, replace `data-live` / `data-live-if` with the native htmx conditional trigger:
+`data-live-if` accepts two gate prefixes, both string-matched (no `eval`, so
+they work under a strict CSP): `cookie:NAME=VALUE` (above) and
+`media:(min-width: 640px)` — the block loads only when the media query
+matches, and a widened window or rotated phone is picked up automatically.
+Unknown prefixes fail closed: the block is skipped, never fetched by accident.
+
+`data-live-trigger="my-event"` defers the fetch until `my-event` fires on
+`window` (e.g. a modal opening), once by default; add `data-live-repeat` to
+refetch on every occurrence into the surviving container.
+
+### With htmx 4 on the page
+
+If your theme loads htmx (>= 4), `liveBlock` stops fetching and **aliases**
+every `data-live` block to native htmx attributes automatically — templates
+need no change, htmx becomes the single request engine, and js-helper installs
+a two-way bridge (`htmx:after:swap` → `DOMChanged`, and `DOMChanged` →
+`htmx.process()` so content added by Alpine or other scripts is discovered).
+Gates keep their eval-free semantics, and a 4xx/5xx response never replaces an
+aliased block.
+
+You can also author htmx syntax directly:
 
 ```html
 <div
@@ -105,9 +125,17 @@ If your theme already loads htmx, replace `data-live` / `data-live-if` with the 
   hx-swap="outerHTML"></div>
 ```
 
-- `hx-trigger="load[…]"` — htmx evaluates the JS expression on page load; the request is skipped when the cookie is absent, so there is no network request for anonymous visitors. `pw_auth=1` is the same cookie core sets on login and clears on logout (see above).
-- `hx-swap="outerHTML"` — replaces the placeholder `<div>` with the fragment, matching the `liveBlock` behaviour.
-- After the swap, subscribe to `htmx:afterSwap` (instead of `DOMChanged`) if you need to re-init icons or tooltips.
+- `hx-trigger="load[…]"` evaluates the JS expression at process time — this
+  variant needs `unsafe-eval` under a strict CSP; the `data-live-if` gates do
+  not.
+- htmx 4 swaps 4xx/5xx response bodies by default. Restore the no-swap
+  behaviour globally with
+  `<meta name="htmx-config" content='noSwap:[204, 304, "4xx", "5xx"]'>` or
+  per element with `hx-status:4xx="swap:none"`.
+- Cross-origin fragment hosts need `hx-config='credentials:"include"'`
+  (`data-live` always sends credentials).
+- htmx 4 is in beta (the admin bundle runs a pinned version); for public
+  downstream sites prefer `data-live` until the stable release.
 
 The fragment endpoint (`pushword_admin_fragment_page_buttons`) is protected by `ROLE_EDITOR`; anonymous requests receive a redirect or 403, not fragment HTML.
 
