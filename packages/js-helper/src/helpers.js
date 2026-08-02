@@ -12,6 +12,52 @@
  * - convertImageLinkToWebPLink()
  */
 
+// Media-query gates re-evaluate when the viewport changes: one change listener
+// per distinct query re-runs the scan through the DOMChanged contract.
+const mediaWatched = new Set()
+// Trigger bindings are tracked outside the DOM (WeakSet, not dataset): a
+// cloned or re-serialized block must arrive unbound, like a fresh node.
+const boundTriggers = new WeakSet()
+let htmxBridgeInstalled = false
+
+function htmx4() {
+  return window.htmx && parseInt(window.htmx.version) >= 4 ? window.htmx : null
+}
+
+// When htmx 4 is on the page it owns all swaps; this bridge keeps the two
+// worlds in sync. Installed once, with dynamic window.htmx lookups so it stays
+// inert when htmx is absent.
+function installHtmxBridge() {
+  if (htmxBridgeInstalled || !htmx4()) return
+  htmxBridgeInstalled = true
+  // On document, not body: when a fragment swaps its own trigger away, htmx 4
+  // dispatches after:swap directly on document (detached-source fallback).
+  document.addEventListener('htmx:after:swap', () =>
+    document.dispatchEvent(new Event('DOMChanged')),
+  )
+  // Content added outside a swap (an Alpine x-teleport clone) becomes
+  // discoverable; re-processing unchanged nodes is a no-op for htmx.
+  document.addEventListener('DOMChanged', () => {
+    const htmx = htmx4()
+    if (htmx) htmx.process(document.body)
+  })
+  // Aliased blocks keep the legacy failure contract.
+  document.addEventListener('htmx:response:error', (event) => {
+    const el = event.detail && event.detail.ctx && event.detail.ctx.sourceElement
+    if (el && el.hasAttribute && el.hasAttribute('data-live-alias')) {
+      el.dispatchEvent(
+        new CustomEvent('live-block-forbidden', {
+          bubbles: true,
+          detail: {
+            status: event.detail.ctx.response.status,
+            url: el.getAttribute('data-live-alias'),
+          },
+        }),
+      )
+    }
+  })
+}
+
 /**
  * Live Block Watcher (and button)
  *
@@ -20,6 +66,7 @@
  * @param {string} attribute
  */
 export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live-form') {
+  installHtmxBridge()
   var btnToBlock = function (event, btn) {
     const liveBlockUrl = btn.getAttribute('data-src-' + liveBlockAttribute)
     if (btn.hasAttribute('data-target') && btn.getAttribute('data-target') == 'parent') {
@@ -29,11 +76,15 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
     getLiveBlock(btn)
   }
 
-  var getLiveBlock = function (item) {
+  var liveUrl = function (item) {
     var url = item.getAttribute('data-' + liveBlockAttribute)
-    url = url.startsWith('e:')
+    return url.startsWith('e:')
       ? convertShortchutForLink(rot13ToText(url.substring(2)))
       : url
+  }
+
+  var getLiveBlock = function (item, keepContainer) {
+    var url = liveUrl(item)
     fetch(url, {
       //headers: { "Content-Type": "application/json", Accept: "text/plain" },
       method: 'POST',
@@ -45,7 +96,9 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
           // data-live would re-fetch the failed block forever (e.g. on a static
           // host where the endpoint 404s). The event detail keeps the url for
           // listeners that want to handle or retry it deliberately.
-          item.removeAttribute('data-' + liveBlockAttribute)
+          // Repeat mode keeps it: its fetch only ever runs on an explicit
+          // event, so there is no refetch loop and the block stays retryable.
+          if (!keepContainer) item.removeAttribute('data-' + liveBlockAttribute)
           item.dispatchEvent(
             new CustomEvent('live-block-forbidden', {
               bubbles: true,
@@ -58,8 +111,12 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
       })
       .then(function (body) {
         if (body === null) return
-        item.removeAttribute('data-' + liveBlockAttribute)
-        item.outerHTML = body
+        if (keepContainer) {
+          item.innerHTML = body
+        } else {
+          item.removeAttribute('data-' + liveBlockAttribute)
+          item.outerHTML = body
+        }
         document.dispatchEvent(new Event('DOMChanged'))
       })
   }
@@ -119,23 +176,88 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
     return null
   }
 
-  // Optional gate on data-live-if="cookie:NAME=VALUE". Extensible prefix form
-  // so we can add data-live-if="media:(min-width: …)", "localStorage:…", etc.
+  // Gates for data-live-if="<kind>:<rest>". All string-matched, never eval'd —
+  // a strict-CSP site can use every one of them.
+  var gates = {
+    cookie: function (rest) {
+      var eq = rest.indexOf('=')
+      var name = eq === -1 ? rest : rest.substring(0, eq)
+      var value = eq === -1 ? '1' : rest.substring(eq + 1)
+      return document.cookie.split('; ').indexOf(name + '=' + value) !== -1
+    },
+    media: function (rest) {
+      if (!window.matchMedia) return false
+      var mql = window.matchMedia(rest)
+      if (!mediaWatched.has(rest)) {
+        mediaWatched.add(rest)
+        // Re-scan when the query flips, so a widened window or a phone
+        // rotated to landscape still loads its gated block.
+        mql.addEventListener('change', function () {
+          document.dispatchEvent(new Event('DOMChanged'))
+        })
+      }
+      return mql.matches
+    },
+  }
+
+  // Unknown or empty gates fail closed: the block is skipped (and re-evaluated
+  // on the next pass), never fetched by accident.
   var evalLiveIf = function (expr) {
-    var parts = expr.split(':')
-    var kind = parts.shift()
-    var rest = parts.join(':')
-    if (kind !== 'cookie' || !rest) return true
-    var eq = rest.indexOf('=')
-    var name = eq === -1 ? rest : rest.substring(0, eq)
-    var value = eq === -1 ? '1' : rest.substring(eq + 1)
-    return document.cookie.split('; ').indexOf(name + '=' + value) !== -1
+    var i = expr.indexOf(':')
+    var kind = i === -1 ? expr : expr.substring(0, i)
+    var rest = i === -1 ? '' : expr.substring(i + 1)
+    var gate = gates[kind]
+    return gate !== undefined && rest !== '' ? gate(rest) : false
+  }
+
+  // data-live-trigger="<event>": defer the fetch until the event fires on
+  // window. Once by default; data-live-repeat refetches on every occurrence
+  // into a surviving container (inner swap).
+  var bindTrigger = function (item, eventName, repeat) {
+    if (boundTriggers.has(item)) return
+    boundTriggers.add(item)
+    var handler = function () {
+      if (!repeat) window.removeEventListener(eventName, handler)
+      getLiveBlock(item, repeat)
+    }
+    window.addEventListener(eventName, handler)
+  }
+
+  // Under htmx 4, a data-live block becomes a plain htmx element: one request
+  // engine on the page, and htmx's process passes discover it everywhere
+  // (x-teleport clones included). Gates stay ours — evaluated before this.
+  var aliasToHtmx = function (item, trig, repeat, htmx) {
+    var url = liveUrl(item)
+    item.removeAttribute('data-' + liveBlockAttribute)
+    item.setAttribute('data-' + liveBlockAttribute + '-alias', url)
+    item.setAttribute('hx-post', url)
+    item.setAttribute(
+      'hx-trigger',
+      trig ? trig + ' from:window' + (repeat ? '' : ' once') : 'load',
+    )
+    item.setAttribute('hx-swap', repeat ? 'innerHTML' : 'outerHTML')
+    item.setAttribute('hx-config', 'credentials:"include"')
+    // Legacy semantics: an error page never replaces the block.
+    item.setAttribute('hx-status:4xx', 'swap:none')
+    item.setAttribute('hx-status:5xx', 'swap:none')
+    htmx.process(item)
   }
 
   // Listen data-live
   document.querySelectorAll('[data-' + liveBlockAttribute + ']').forEach((item) => {
     var cond = item.getAttribute('data-' + liveBlockAttribute + '-if')
     if (cond && !evalLiveIf(cond)) return
+    var trig = item.getAttribute('data-' + liveBlockAttribute + '-trigger')
+    var repeat = item.hasAttribute('data-' + liveBlockAttribute + '-repeat')
+    var htmx = htmx4()
+    if (htmx) {
+      aliasToHtmx(item, trig, repeat, htmx)
+      return
+    }
+    if (trig) {
+      bindTrigger(item, trig, repeat)
+      return
+    }
     getLiveBlock(item)
   })
 

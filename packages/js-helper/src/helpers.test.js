@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { liveBlock, addClassForNormalUser } from './helpers.js'
 
 // Helpers to build minimal DOM fixtures
@@ -143,6 +143,153 @@ describe('addClassForNormalUser — one-time hash navigation', () => {
   })
 })
 
+describe('liveBlock — gate registry', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+    vi.restoreAllMocks()
+  })
+
+  it('fails closed on an unknown gate prefix', () => {
+    const el = makeLiveBlockEl('/block')
+    el.setAttribute('data-live-if', 'weird:thing')
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    liveBlock()
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(el.hasAttribute('data-live')).toBe(true)
+  })
+
+  it('skips a media-gated block when the query does not match, and watches it', () => {
+    const el = makeLiveBlockEl('/block')
+    el.setAttribute('data-live-if', 'media:(min-width: 100px)')
+    const addListener = vi.fn()
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: addListener })))
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    liveBlock()
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(el.hasAttribute('data-live')).toBe(true)
+    expect(addListener).toHaveBeenCalledWith('change', expect.any(Function))
+  })
+
+  it('fetches a media-gated block when the query matches', async () => {
+    makeLiveBlockEl('/block').setAttribute('data-live-if', 'media:(min-width: 200px)')
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: vi.fn() })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, text: () => Promise.resolve('<div>wide</div>') }),
+    )
+
+    liveBlock()
+
+    await vi.waitFor(() => expect(document.body.innerHTML).toContain('wide'))
+  })
+
+  it('re-dispatches DOMChanged when a watched media query flips', () => {
+    makeLiveBlockEl('/block').setAttribute('data-live-if', 'media:(min-width: 300px)')
+    let changeHandler = null
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({ matches: false, addEventListener: (_, fn) => (changeHandler = fn) })),
+    )
+    vi.stubGlobal('fetch', vi.fn())
+
+    liveBlock()
+    const domChanged = vi.fn()
+    document.addEventListener('DOMChanged', domChanged)
+    changeHandler()
+    expect(domChanged).toHaveBeenCalledOnce()
+    document.removeEventListener('DOMChanged', domChanged)
+  })
+})
+
+describe('liveBlock — data-live-trigger', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+    vi.restoreAllMocks()
+  })
+
+  it('defers the fetch to the window event and fires once by default', async () => {
+    makeLiveBlockEl('/deferred').setAttribute('data-live-trigger', 'open-once')
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, text: () => Promise.resolve('<div>opened</div>') })
+    vi.stubGlobal('fetch', fetchMock)
+
+    liveBlock()
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    // a second scan pass must not double-bind
+    liveBlock()
+    window.dispatchEvent(new Event('open-once'))
+    await vi.waitFor(() => expect(document.body.innerHTML).toContain('opened'))
+    expect(fetchMock).toHaveBeenCalledOnce()
+
+    window.dispatchEvent(new Event('open-once'))
+    expect(fetchMock).toHaveBeenCalledOnce()
+  })
+
+  it('refetches on every event into a surviving container with data-live-repeat', async () => {
+    const el = makeLiveBlockEl('/fresh')
+    el.setAttribute('data-live-trigger', 'open-repeat')
+    el.setAttribute('data-live-repeat', '')
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, text: () => Promise.resolve('<form>fresh</form>') })
+    vi.stubGlobal('fetch', fetchMock)
+
+    liveBlock()
+    window.dispatchEvent(new Event('open-repeat'))
+    await vi.waitFor(() => expect(el.innerHTML).toContain('fresh'))
+    expect(document.body.contains(el)).toBe(true)
+    expect(el.hasAttribute('data-live')).toBe(true)
+
+    window.dispatchEvent(new Event('open-repeat'))
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
+  })
+
+  it('disarms a once trigger even when the fetch fails', async () => {
+    const el = makeLiveBlockEl('/once-fail')
+    el.setAttribute('data-live-trigger', 'open-once-fail')
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 403, text: () => Promise.resolve('nope') })
+    vi.stubGlobal('fetch', fetchMock)
+    let forbidden = null
+    document.body.addEventListener('live-block-forbidden', (e) => (forbidden = e.detail))
+
+    liveBlock()
+    window.dispatchEvent(new Event('open-once-fail'))
+    await vi.waitFor(() => expect(forbidden).not.toBeNull())
+    // the trigger is stripped (no-retry rule) and the listener disarmed
+    expect(el.hasAttribute('data-live')).toBe(false)
+    window.dispatchEvent(new Event('open-once-fail'))
+    expect(fetchMock).toHaveBeenCalledOnce()
+  })
+
+  it('keeps a repeat block retryable after a failure', async () => {
+    const el = makeLiveBlockEl('/fresh-fail')
+    el.setAttribute('data-live-trigger', 'open-fail')
+    el.setAttribute('data-live-repeat', '')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 403, text: () => Promise.resolve('nope') }),
+    )
+    let forbidden = null
+    document.body.addEventListener('live-block-forbidden', (e) => (forbidden = e.detail))
+
+    liveBlock()
+    window.dispatchEvent(new Event('open-fail'))
+    await vi.waitFor(() => expect(forbidden).not.toBeNull())
+    expect(forbidden.status).toBe(403)
+    expect(el.hasAttribute('data-live')).toBe(true)
+  })
+})
+
 describe('liveBlock — sendForm', () => {
   beforeEach(() => {
     document.body.innerHTML = ''
@@ -195,5 +342,140 @@ describe('liveBlock — sendForm', () => {
     expect(document.body.innerHTML).not.toContain('login')
     // data-submitting must be cleared so the form is retryable
     expect(block.dataset.submitting).toBeUndefined()
+  })
+})
+
+// Last on purpose: the first liveBlock() run with window.htmx present installs
+// the module-level bridge, whose listeners must not exist during legacy tests.
+describe('liveBlock — htmx 4 alias & bridge', () => {
+  const fakeHtmx = () => ({ version: '4.0.0-beta6', process: vi.fn() })
+
+  beforeEach(() => {
+    document.body.innerHTML = ''
+    vi.restoreAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('translates a data-live block to htmx attributes instead of fetching', () => {
+    const el = makeLiveBlockEl('/block')
+    const htmx = fakeHtmx()
+    vi.stubGlobal('htmx', htmx)
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    liveBlock()
+
+    expect(el.getAttribute('hx-post')).toBe('/block')
+    expect(el.getAttribute('hx-trigger')).toBe('load')
+    expect(el.getAttribute('hx-swap')).toBe('outerHTML')
+    expect(el.getAttribute('hx-config')).toBe('credentials:"include"')
+    expect(el.getAttribute('hx-status:4xx')).toBe('swap:none')
+    expect(el.getAttribute('hx-status:5xx')).toBe('swap:none')
+    expect(el.hasAttribute('data-live')).toBe(false)
+    expect(el.getAttribute('data-live-alias')).toBe('/block')
+    expect(htmx.process).toHaveBeenCalledWith(el)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('leaves a gate-failing block untranslated for the next pass', () => {
+    const el = makeLiveBlockEl('/admin-buttons')
+    el.setAttribute('data-live-if', 'cookie:pw_auth=1')
+    const htmx = fakeHtmx()
+    vi.stubGlobal('htmx', htmx)
+    vi.stubGlobal('fetch', vi.fn())
+
+    liveBlock()
+
+    expect(htmx.process).not.toHaveBeenCalled()
+    expect(el.hasAttribute('data-live')).toBe(true)
+    expect(el.hasAttribute('hx-post')).toBe(false)
+  })
+
+  it('decodes e:-prefixed rot13 urls when aliasing', () => {
+    const el = makeLiveBlockEl('e:/oybpx')
+    vi.stubGlobal('htmx', fakeHtmx())
+    vi.stubGlobal('fetch', vi.fn())
+
+    liveBlock()
+
+    expect(el.getAttribute('hx-post')).toBe('/block')
+    expect(el.getAttribute('data-live-alias')).toBe('/block')
+  })
+
+  it('does not re-process an aliased block on a later scan pass', () => {
+    const el = makeLiveBlockEl('/block')
+    const htmx = fakeHtmx()
+    vi.stubGlobal('htmx', htmx)
+    vi.stubGlobal('fetch', vi.fn())
+
+    liveBlock()
+    liveBlock()
+
+    expect(htmx.process.mock.calls.filter((c) => c[0] === el)).toHaveLength(1)
+  })
+
+  it('does not alias under htmx 2', () => {
+    makeLiveBlockEl('/block')
+    vi.stubGlobal('htmx', { version: '2.0.10', process: vi.fn() })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, text: () => Promise.resolve('<div>own</div>') }),
+    )
+
+    liveBlock()
+
+    expect(window.htmx.process).not.toHaveBeenCalled()
+    expect(fetch).toHaveBeenCalledOnce()
+  })
+
+  it('translates data-live-trigger to the htmx trigger grammar', () => {
+    const once = makeLiveBlockEl('/a')
+    once.setAttribute('data-live-trigger', 'open-modal')
+    const repeat = makeLiveBlockEl('/b')
+    repeat.setAttribute('data-live-trigger', 'open-modal')
+    repeat.setAttribute('data-live-repeat', '')
+    vi.stubGlobal('htmx', fakeHtmx())
+    vi.stubGlobal('fetch', vi.fn())
+
+    liveBlock()
+
+    expect(once.getAttribute('hx-trigger')).toBe('open-modal from:window once')
+    expect(once.getAttribute('hx-swap')).toBe('outerHTML')
+    expect(repeat.getAttribute('hx-trigger')).toBe('open-modal from:window')
+    expect(repeat.getAttribute('hx-swap')).toBe('innerHTML')
+  })
+
+  it('bridges htmx:after:swap to DOMChanged and DOMChanged to htmx.process', () => {
+    const htmx = fakeHtmx()
+    vi.stubGlobal('htmx', htmx)
+    liveBlock()
+
+    const domChanged = vi.fn()
+    document.addEventListener('DOMChanged', domChanged)
+    document.dispatchEvent(new CustomEvent('htmx:after:swap'))
+    expect(domChanged).toHaveBeenCalledOnce()
+    document.removeEventListener('DOMChanged', domChanged)
+
+    htmx.process.mockClear()
+    document.dispatchEvent(new Event('DOMChanged'))
+    expect(htmx.process).toHaveBeenCalledWith(document.body)
+  })
+
+  it('re-dispatches htmx:response:error on aliased blocks as live-block-forbidden', () => {
+    const el = makeLiveBlockEl('/gone')
+    vi.stubGlobal('htmx', fakeHtmx())
+    liveBlock()
+
+    let forbidden = null
+    document.body.addEventListener('live-block-forbidden', (e) => (forbidden = e.detail))
+    document.dispatchEvent(
+      new CustomEvent('htmx:response:error', {
+        detail: { ctx: { sourceElement: el, response: { status: 403 } } },
+      }),
+    )
+    expect(forbidden).toEqual({ status: 403, url: '/gone' })
   })
 })
