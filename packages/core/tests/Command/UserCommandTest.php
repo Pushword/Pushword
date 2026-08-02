@@ -3,6 +3,7 @@
 namespace Pushword\Core\Tests\Command;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Exception\RuntimeException;
@@ -43,5 +44,21 @@ final class UserCommandTest extends KernelTestCase
         $this->expectExceptionMessageIsOrContains('email is required');
 
         $commandTester->execute([], ['interactive' => false]);
+    }
+
+    /** The other half of that guard: an argument with a default takes it rather than failing. */
+    public function testAnOmittedArgumentFallsBackToItsDefaultWithoutATerminal(): void
+    {
+        $application = new Application(self::createKernel());
+        $commandTester = new CommandTester($application->find('pw:user:create'));
+
+        $commandTester->execute(
+            ['email' => 'defaulted-role@example.tld', 'password' => 'mySecr3tpAssword'],
+            ['interactive' => false]
+        );
+
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'defaulted-role@example.tld']);
+        self::assertNotNull($user);
+        self::assertContains('ROLE_SUPER_ADMIN', $user->getRoles());
     }
 }

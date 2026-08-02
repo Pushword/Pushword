@@ -28,6 +28,18 @@ NEW_TAG="1.0.0-rc$NEXT_RC"
 
 echo -e "${GREEN}Creating release $NEW_TAG (previous: $LATEST_TAG)${NC}"
 
+# The note is promoted from the working tree into the tag. Releasing it while it is still
+# uncommitted ships a note describing code the tag does not contain — which is what
+# happens when a parallel agent is mid-change. Its note belongs in the same commit as its
+# change, so a dirty note means that change has not landed yet.
+NOTE_DRAFT="packages/docs/content/upgrade/next-release.md"
+if ! git diff --quiet -- "$NOTE_DRAFT" || ! git diff --cached --quiet -- "$NOTE_DRAFT"; then
+    echo -e "${RED}Error: $NOTE_DRAFT has uncommitted changes.${NC}"
+    echo "Commit the upgrade note with the change it documents, then release:"
+    echo "    git commit --only -m \"...\" -- <your files> $NOTE_DRAFT"
+    exit 1
+fi
+
 # Promote the drafted upgrade note to rc<N> and index it, before the tag is cut
 set +e
 php ./.scripts/release-upgrade-note "$NEW_TAG"

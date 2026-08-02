@@ -65,6 +65,39 @@ final class DeletePageCommandTest extends KernelTestCase
         self::assertNotNull($pageRepo->findOneBy(['slug' => 'delete-cmd-untouched']));
     }
 
+    public function testAnsweringNoToTheConfirmationDeletesNothing(): void
+    {
+        $commandTester = $this->tester();
+        $this->createPage('delete-cmd-declined', 'demoDeclined');
+
+        $commandTester->setInputs(['no']);
+        $commandTester->execute(['--tag' => 'demoDeclined', '--format' => 'text']);
+
+        self::assertSame(Command::SUCCESS, $commandTester->getStatusCode());
+        self::assertStringContainsString('delete-cmd-declined', $commandTester->getDisplay());
+
+        $pageRepo = self::getContainer()->get(PageRepository::class);
+        self::assertNotNull($pageRepo->findOneBy(['slug' => 'delete-cmd-declined']));
+    }
+
+    public function testAgentFormatReportsWhyItRefusedWithoutForce(): void
+    {
+        $commandTester = $this->tester();
+        $this->createPage('delete-cmd-blocked', 'demoBlocked');
+
+        $commandTester->execute(['--tag' => 'demoBlocked', '--format' => 'agent'], ['interactive' => false]);
+
+        $json = json_decode(trim($commandTester->getDisplay()), true, 512, \JSON_THROW_ON_ERROR);
+        self::assertSame([
+            'tool' => 'pw:page:delete',
+            'result' => 'blocked',
+            'tag' => 'demoBlocked',
+            'matched' => 1,
+            'slugs' => ['delete-cmd-blocked'],
+            'error' => 'pass --force to delete without a terminal',
+        ], $json);
+    }
+
     public function testAgentFormatReportsWhatItDeleted(): void
     {
         $commandTester = $this->tester();

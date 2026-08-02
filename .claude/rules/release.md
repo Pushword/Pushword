@@ -35,6 +35,11 @@ one race-free split run.
   downstream `composer require` resolves.
 - **A workflow fix only takes effect if the tagged commit contains it** — `.scripts/release`
   pushes commits before tagging the same HEAD, so it does.
+- **`next-release.md` must be committed before releasing.** The note is promoted from the
+  working tree, so an uncommitted draft ships into `rc<N>.md` describing code the tag does
+  not contain — exactly what happens when a parallel agent is mid-change. `.scripts/release`
+  now aborts on a dirty draft. If it ever slips through, move the offending sections back
+  into `next-release.md` and fix both the `rc<N>.md` title and its row in `upgrade.md`.
 
 ## Legacy tag conflicts
 
