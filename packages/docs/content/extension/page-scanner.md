@@ -176,6 +176,7 @@ Enumerating pager pages would mean nodes that are URLs rather than pages
 - **Anchor links**: target element exists in the page
 - **Media files**: referenced images and files exist
 - **Parent pages**: parent-child host consistency
+- **Date shortcodes**: a `date(Y)` still readable in the HTML (see below)
 - **TODO comments**: deferred actions tied to page publication (see below)
 
 An absolute URL pointing at another host of the same installation is internal too:
@@ -223,6 +224,27 @@ relative link is invisible to every internal tool. The scanner reports it as:
 
 Fix it by writing the target absolute (`/extension/quiz`). Genuinely relative
 targets can be silenced per page with `pageScanLinksToIgnore`.
+
+## Date shortcodes
+
+`date(Y)`, `date(M)`, `date(S)`, `date(Y+1)`… are resolved by the markdown parser in
+the content and by the `Date` entity filter in the fields read through `pw(page)`. A
+shortcode still readable in the rendered HTML therefore means the text got there
+without crossing either — a raw `page.title` in a template, a meta tag, an `alt`, a
+custom property printed as-is. Visitors see the literal `date(Y)`:
+
+```
+`date(Y)` date shortcode left unresolved: this text is rendered outside the content pipeline
+```
+
+Fix it by reading the field through the filter chain (`pw(page).title` rather than
+`page.title`), never by hardcoding the year. Each distinct shortcode is reported once
+per page.
+
+Two places are exempt, because the shortcode is not content there: a `<code>` or
+`<pre>` block, which documents the syntax, and a `<script>` or `<style>` block, where
+`new Date(y)` is JavaScript. Only the codes the filter knows are looked for, so a
+typo like `date(d)` is not reported — it is not a shortcode either.
 
 ## TODO comments
 

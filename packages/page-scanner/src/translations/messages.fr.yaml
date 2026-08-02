@@ -1,5 +1,6 @@
 page_scanBrokenImage: 'image introuvable'
 page_scanCanonical: 'La canonical est différente'
+page_scanDateShortcode: 'raccourci date non converti : ce texte est rendu hors du pipeline de contenu'
 page_scanDifferentHost: 'La page parente a un domaine différent'
 page_scanIsRedirection: redirection
 page_scanNoindexLink: 'page noindex : obfusquez ce lien pour le garder hors du crawl.'
