@@ -263,7 +263,15 @@ trait ExtensiblePropertiesTrait
 
     private function isShieldedFromReconciliation(string $key): bool
     {
-        return $this->isManagedProperty($key) || $this->isPreservedProperty($key) || $this->isSchemaProperty($key);
+        if ($this->isManagedProperty($key)) {
+            return true;
+        }
+
+        if ($this->isPreservedProperty($key)) {
+            return true;
+        }
+
+        return $this->isSchemaProperty($key);
     }
 
     #[Assert\Callback]
