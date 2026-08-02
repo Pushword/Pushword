@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc825](/upgrade/rc825) | `core` | page exposes its columns as properties, with no getter/setter left |
 | [rc823](/upgrade/rc823) | `newsletter` | content triggers merged into automations, newsletter entities expose properties — run `doctrine:schema:update --force` |
 | [rc819](/upgrade/rc819) | `admin` `core` `js-helper` | htmx 4 in the admin, gated live blocks |
 | [rc812](/upgrade/rc812) | `flat` | the deploy resets production even when the push fails |
