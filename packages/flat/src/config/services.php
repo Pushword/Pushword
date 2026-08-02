@@ -81,11 +81,11 @@ return static function (ContainerConfigurator $container): void {
 
     // SyncStateManager configuration
     $services->set(SyncStateManager::class)
-        ->arg('$varDir', '%kernel.project_dir%/var');
+        ->arg('$varDir', '%pw.var_dir%');
 
     // FlatLockManager configuration
     $services->set(FlatLockManager::class)
-        ->arg('$varDir', '%kernel.project_dir%/var')
+        ->arg('$varDir', '%pw.var_dir%')
         ->arg('$defaultTtl', '%pw.pushword_flat.lock_ttl%')
         ->arg('$webhookDefaultTtl', '%pw.pushword_flat.webhook_lock_default_ttl%');
 
@@ -134,7 +134,7 @@ return static function (ContainerConfigurator $container): void {
 
     // DeferredExportProcessor configuration
     $services->set(DeferredExportProcessor::class)
-        ->arg('$varDir', '%kernel.project_dir%/var')
+        ->arg('$varDir', '%pw.var_dir%')
         ->arg('$messageBus', service(MessageBusInterface::class)->nullOnInvalid())
         ->arg('$autoExportEnabled', '%pw.pushword_flat.auto_export_enabled%')
         ->arg('$debounceDelay', '%pw.pushword_flat.export_debounce_delay%');
@@ -142,7 +142,7 @@ return static function (ContainerConfigurator $container): void {
     // GitAutoCommitter configuration
     $services->set(GitAutoCommitter::class)
         ->arg('$enabled', '%pw.pushword_flat.auto_git_commit%')
-        ->arg('$varDir', '%kernel.project_dir%/var');
+        ->arg('$varDir', '%pw.var_dir%');
 
     // FlatSyncNotifier - make it optional (only works if admin bundle is present)
     $services->set(FlatSyncNotifier::class)
