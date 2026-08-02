@@ -28,6 +28,20 @@ NEW_TAG="1.0.0-rc$NEXT_RC"
 
 echo -e "${GREEN}Creating release $NEW_TAG (previous: $LATEST_TAG)${NC}"
 
+# Promote the drafted upgrade note to rc<N> and index it, before the tag is cut
+set +e
+php ./.scripts/release-upgrade-note "$NEW_TAG"
+NOTE_STATUS=$?
+set -e
+if [ "$NOTE_STATUS" -eq 10 ]; then
+    NOTE="packages/docs/content/upgrade/rc$NEXT_RC.md"
+    git add "$NOTE"
+    git commit --only -m "docs: upgrade note for $NEW_TAG" -- \
+        "$NOTE" packages/docs/content/upgrade/next-release.md packages/docs/content/upgrade.md
+elif [ "$NOTE_STATUS" -ne 0 ]; then
+    exit "$NOTE_STATUS"
+fi
+
 # Push commits and create/push tag
 git push
 git tag "$NEW_TAG"

@@ -1,0 +1,162 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Turns packages/docs/content/upgrade/next-release.md into the released note
+ * upgrade/rc<N>.md, adds its row to the table in upgrade.md, and resets the
+ * draft. Called by .scripts/release before the tag is cut.
+ *
+ * Usage: release-upgrade-note 1.0.0-rc823
+ *        release-upgrade-note --reset
+ *
+ * Exit codes: 0 nothing drafted, 10 note released, 1 the draft is unusable.
+ */
+
+use Symfony\Component\Yaml\Yaml;
+
+require __DIR__.'/../vendor/autoload.php';
+
+const CONTENT = __DIR__.'/../packages/docs/content';
+const DRAFT = CONTENT.'/upgrade/next-release.md';
+const NOTHING_DRAFTED = 0;
+const RELEASED = 10;
+const UNUSABLE = 1;
+
+const SCAFFOLD = <<<'MD'
+    ---
+    title: ''
+    publishedAt: '2099-01-01 00:00'
+    parentPage: upgrade
+    ---
+
+    <!--
+    The upgrade note for the next release. `.scripts/release` renames this file to
+    `upgrade/rc<N>.md`, adds its row to the table in `upgrade.md` and empties it back
+    to this scaffold, at the tag.
+
+    Write here, in the same commit as the change, whenever a release asks something of
+    a site that upgrades: a command to run, a config key to set, a template to copy, a
+    behaviour that changed under an unchanged call. A change `composer update` fully
+    absorbs needs no note.
+
+    - `title:` — the "What changed" cell of the index table. One line, lower case,
+      written from the site's side ("the newsletter form is fetched, and CSRF-protected")
+      rather than the diff's ("refactor NewsletterFormController"). Required as soon as
+      the note has a section; the release stops if it is still empty.
+    - `run:` — the command(s) the release expects, without `php bin/console`. Omit the
+      key when there is none. A list runs in the order given.
+    - `**Concerns:**` — first line of the body, listing every package a site has to
+      install to be affected. Alphabetical, full composer names, `@pushword/js-helper`
+      last. Add the packages your change touches to the line, keep the others.
+    - One `##` section per change, saying what breaks and what to do about it.
+
+    Several changes land here between two tags: append to the file, do not replace it.
+    -->
+    MD;
+
+/** @return array{0: array<string, mixed>, 1: string} frontmatter, body */
+function splitNote(string $text): array
+{
+    if (! preg_match("/^---\n(.*?)\n---\n(.*)$/s", $text, $matches)) {
+        fwrite(\STDERR, "release-upgrade-note: the draft has no frontmatter\n");
+        exit(UNUSABLE);
+    }
+
+    /** @var array<string, mixed> $frontmatter */
+    $frontmatter = Yaml::parse($matches[1]) ?? [];
+
+    return [$frontmatter, $matches[2]];
+}
+
+function resetDraft(): void
+{
+    file_put_contents(DRAFT, SCAFFOLD."\n");
+}
+
+/** @param list<string> $commands */
+function indexRow(string $slug, string $packages, string $title, array $commands): string
+{
+    $changed = $title;
+    if ([] !== $commands) {
+        $quoted = array_map(static fn (string $c): string => '`'.$c.'`', $commands);
+        $changed .= ' — run '.implode(', then ', $quoted);
+    }
+
+    return \sprintf('| [%s](/upgrade/%s) | %s | %s |', $slug, $slug, $packages, $changed);
+}
+
+/** The `**Concerns:**` line drives the Packages column: `pushword/core` -> `core`. */
+function packagesColumn(string $body): string
+{
+    if (! preg_match('/^\*\*Concerns:\*\*(.*)$/m', $body, $matches)) {
+        fwrite(\STDERR, "release-upgrade-note: the draft has no **Concerns:** line\n");
+        exit(UNUSABLE);
+    }
+
+    preg_match_all('/`(?:@?pushword\/)?([a-z-]+)`/', $matches[1], $names);
+    if ([] === $names[1]) {
+        fwrite(\STDERR, "release-upgrade-note: the **Concerns:** line names no package\n");
+        exit(UNUSABLE);
+    }
+
+    return implode(' ', array_map(static fn (string $n): string => '`'.$n.'`', $names[1]));
+}
+
+function insertRow(string $row): void
+{
+    $index = CONTENT.'/upgrade.md';
+    $text = (string) file_get_contents($index);
+    $separator = "| --- | --- | --- |\n";
+    $at = strpos($text, $separator);
+    if (false === $at) {
+        fwrite(\STDERR, "release-upgrade-note: no release table found in upgrade.md\n");
+        exit(UNUSABLE);
+    }
+
+    $at += \strlen($separator);
+    file_put_contents($index, substr($text, 0, $at).$row."\n".substr($text, $at));
+}
+
+$argument = $argv[1] ?? '';
+
+if ('--reset' === $argument) {
+    resetDraft();
+    exit(NOTHING_DRAFTED);
+}
+
+if (1 !== preg_match('/^1\.0\.0-(rc\d+)$/', $argument, $version)) {
+    fwrite(\STDERR, "usage: release-upgrade-note <1.0.0-rcN>|--reset\n");
+    exit(UNUSABLE);
+}
+
+$slug = $version[1];
+[$frontmatter, $body] = splitNote((string) file_get_contents(DRAFT));
+$body = trim((string) preg_replace('/<!--.*?-->/s', '', $body));
+
+if (! str_contains($body, '## ')) {
+    exit(NOTHING_DRAFTED);
+}
+
+$title = trim((string) ($frontmatter['title'] ?? ''));
+if ('' === $title) {
+    fwrite(\STDERR, 'release-upgrade-note: the draft has sections but no title — fill it in '.DRAFT."\n");
+    exit(UNUSABLE);
+}
+
+$run = $frontmatter['run'] ?? [];
+$commands = array_values(array_filter(array_map('trim', (array) $run)));
+
+$released = "---\n"
+    ."title: 'Upgrade to 1.0.0-".$slug.': '.str_replace("'", "''", $title)."'\n"
+    ."h1: 'Upgrade to 1.0.0-".$slug."'\n"
+    ."publishedAt: '".date('Y-m-d H:i')."'\n"
+    ."parentPage: upgrade\n"
+    .(substr_count($body, "\n## ") >= 2 ? "toc: true\n" : '')
+    ."---\n\n".$body."\n";
+
+file_put_contents(CONTENT.'/upgrade/'.$slug.'.md', $released);
+insertRow(indexRow($slug, packagesColumn($body), $title, $commands));
+resetDraft();
+
+echo 'release-upgrade-note: upgrade/'.$slug.".md written and indexed\n";
+exit(RELEASED);
