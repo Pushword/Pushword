@@ -53,9 +53,12 @@ final class AppTest extends TestCase
         self::assertStringContainsString('ROLE_SUPER_ADMIN', $roles);
     }
 
-    public function testClaudeMdPointsAtTheShippedAgentReference(): void
+    public function testAgentsMdShipsAndClaudeMdSymlinksToIt(): void
     {
-        $content = file_get_contents(self::$projectDir.'/CLAUDE.md');
+        self::assertFileExists(self::$projectDir.'/AGENTS.md');
+        self::assertSame('AGENTS.md', readlink(self::$projectDir.'/CLAUDE.md'));
+
+        $content = file_get_contents(self::$projectDir.'/AGENTS.md');
         self::assertNotFalse($content);
         self::assertStringContainsString('vendor/pushword/docs/CLAUDE.md', $content);
     }

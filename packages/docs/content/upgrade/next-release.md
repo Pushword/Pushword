@@ -93,9 +93,15 @@ email is required: pass it as an argument when running non-interactively.
 Scripts that relied on the prompt must pass the values:
 `bin/console pw:user:create you@example.com 's3cret' ROLE_SUPER_ADMIN`.
 
-## New projects ship a `CLAUDE.md` and the docs package
+## New projects ship an `AGENTS.md` and the docs package
 
 `pushword/new` now requires `pushword/docs`, so `vendor/pushword/docs/CLAUDE.md` — the
 agent reference that file always claimed to ship — actually reaches your project.
-`install.php` writes a root `CLAUDE.md` pointing at it, **only if you do not have one**.
-Existing projects keep theirs untouched.
+
+The skeleton carries an `AGENTS.md` pointing at it, and `install.php` symlinks `CLAUDE.md`
+to it the way this monorepo does, so both agents read one file. The symlink is created at
+install time because Composer's zip extraction does not preserve it; it is skipped when
+`CLAUDE.md` already exists, so existing projects keep theirs untouched.
+
+Fill in its *About this site* section — hosts, locales, deployment, editorial rules. That
+is the part an agent cannot infer from the code.

@@ -74,33 +74,11 @@ $defaultConfig = 'pushword:'.chr(10)
 
 PostInstall::dumpFile('config/packages/pushword.yaml', $defaultConfig);
 
-// An agent opening the project only reads the root: point it at the reference the docs
-// package ships. Never overwrite a CLAUDE.md the site already wrote.
-if (! file_exists('CLAUDE.md')) {
-    PostInstall::dumpFile('CLAUDE.md', <<<'MD'
-        # This site
-
-        A [Pushword](https://pushword.piedweb.com) site: a modular CMS made of Symfony bundles.
-
-        ## Read first
-
-        - `vendor/pushword/docs/CLAUDE.md` — Pushword's reference for AI agents
-        - `vendor/pushword/docs/content/` — one `.md` per topic (`architecture.md`, `extensions.md`, …)
-        - `vendor/pushword/core/src/Entity/Page.php` — the main entity
-
-        ## Commands
-
-        ```bash
-        php bin/console list pw     # every Pushword command
-        php bin/console cache:clear # after each change
-        ```
-
-        ## About this site
-
-        Describe here what a newcomer cannot read from the code: hosts and locales,
-        deployment, editorial rules, and anything the framework does not enforce.
-
-        MD);
+// pushword/new ships AGENTS.md; Claude Code reads CLAUDE.md. Symlink one to the other,
+// as the monorepo does, so both agents get the same file. Composer's zip extraction does
+// not preserve symlinks, hence creating it here rather than shipping it.
+if (file_exists('AGENTS.md') && ! file_exists('CLAUDE.md')) {
+    symlink('AGENTS.md', 'CLAUDE.md');
 }
 
 // Install phpstan

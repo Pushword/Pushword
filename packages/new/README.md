@@ -1,73 +1,82 @@
-# Welcome on your new Pushword Installation
+# Your new Pushword site
 
-This is the default content shipped with a fresh [Pushword](https://pushword.piedweb.com) install. Edit it from the admin or replace it with your own pages.
+This is a fresh [Pushword](https://pushword.piedweb.com) install — a modular CMS built on
+Symfony, where content is Markdown + Twig and every feature is its own bundle.
 
-[![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
-[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/Pushword/Pushword/run-tests.yml?branch=main)](https://github.com/Pushword/Pushword/actions)
+Replace this README with your own once the site is yours.
 
-[![Code Coverage](https://codecov.io/gh/Pushword/Pushword/branch/main/graph/badge.svg)](https://codecov.io/gh/Pushword/Pushword/tree/main)
-[![Type Coverage](https://shepherd.dev/github/pushword/pushword/coverage.svg)](https://shepherd.dev/github/pushword/pushword)
-[![Total Downloads](https://img.shields.io/packagist/dt/pushword/core.svg?style=flat)](https://packagist.org/packages/pushword/core)
+## Run it
 
-## Getting started
+```shell
+php -S 127.0.0.1:8004 -t public/
+# or, with the Symfony CLI
+symfony server:start -d
+```
 
-- Log in to `/admin` and create your first page.
-- Read the [getting-started guide](https://pushword.piedweb.com).
-- Add features by installing [extensions](https://pushword.piedweb.com/extensions).
+A `Caddyfile` is included if you prefer [FrankenPHP](https://frankenphp.dev), which also
+runs Pushword in worker mode.
 
-## Documentation
+## Log in
 
-Visit [pushword.piedweb.com](https://pushword.piedweb.com).
+Open `/admin` with the account the installer created:
 
-## The Pushword ecosystem
+```
+admin@example.tld
+p@ssword
+```
 
-Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the core and one bundle per feature. Pick only what you need:
+**Change it right away** — from the admin, or with
+`php bin/console pw:user:create you@example.com 'your-password' ROLE_SUPER_ADMIN`.
 
-**Core**
-- [pushword/core](https://github.com/Pushword/core) — Symfony-based CMS core: Page, Media & User entities, Markdown + Twig rendering.
+## First steps
 
-**Editing & admin**
-- [pushword/admin](https://github.com/Pushword/admin) — EasyAdmin interface to manage pages, media and users.
-- [pushword/admin-block-editor](https://github.com/Pushword/admin-block-editor) — Gutenberg-like block editor (stores Markdown).
-- [pushword/advanced-main-image](https://github.com/Pushword/advanced-main-image) — Hero images & main-image format control.
-- [pushword/template-editor](https://github.com/Pushword/template-editor) — Edit Twig templates online.
-- [pushword/snippet](https://github.com/Pushword/snippet) — Reusable content fragments & components.
+1. **Name your site** — `config/packages/pushword.yaml` holds hosts, locales and
+   templates. `php bin/console pw:new` adds another site to it.
+2. **Write a page** — from `/admin`, or as Markdown files if you install
+   [Flat](https://pushword.piedweb.com/extension/flat).
+3. **Make it yours** — override the Twig views in `templates/`, see
+   [themes](https://pushword.piedweb.com/themes).
+4. **Delete the demo content** — the pages and media that came with the install are
+   examples, not a starting point.
 
-**Content & workflow**
-- [pushword/flat](https://github.com/Pushword/flat) — Flat-file (Markdown + Git) CMS mode.
-- [pushword/version](https://github.com/Pushword/version) — Page & snippet versioning.
-- [pushword/page-update-notifier](https://github.com/Pushword/page-update-notifier) — Email alerts on content changes.
-- [pushword/conversation](https://github.com/Pushword/conversation) — Comments, contact & newsletter forms.
+## What came with it
 
-**Content & workflow** (continued)
-- [pushword/repurpose](https://github.com/Pushword/repurpose) — Turn a page into ready-to-post social carousels (SVG slides, agent-authored, PNG/PDF export).
+| | |
+|---|---|
+| [Admin](https://pushword.piedweb.com/extension/admin) | Manage pages, media and users |
+| [Block editor](https://pushword.piedweb.com/extension/admin-block-editor) | Write in blocks, stored as Markdown |
+| [Page Scanner](https://pushword.piedweb.com/extension/page-scanner) | Find dead links, 404s and redirects |
+| [Static Generator](https://pushword.piedweb.com/extension/static-generator) | Export the site as static files |
+| [Template Editor](https://pushword.piedweb.com/extension/template-editor) | Edit Twig views from the admin |
 
-**Publishing & performance**
-- [pushword/static-generator](https://github.com/Pushword/static-generator) — Export a static website (GitHub Pages, Apache, FrankenPHP).
-- [pushword/search](https://github.com/Pushword/search) — SQLite full-text search (Loupe), zero infra.
-- [pushword/page-scanner](https://github.com/Pushword/page-scanner) — Find dead links, 404s, redirects & TODOs.
-- [pushword/api](https://github.com/Pushword/api) — Token-authenticated REST API.
+Add more as you need them — versioning, search, flat files, comments, newsletter:
 
-**Tooling**
-- [pushword/installer](https://github.com/Pushword/installer) — Project & package installer.
-- [pushword/js-helper](https://github.com/Pushword/js-helper) — Front-end JavaScript helpers.
+```shell
+composer req pushword/version
+composer req pushword/search
+```
 
-Full list and guides on [pushword.piedweb.com/extensions](https://pushword.piedweb.com/extensions).
+The full list is on [pushword.piedweb.com/extensions](https://pushword.piedweb.com/extensions).
 
-## Contributing
+## Working with an AI agent
 
-If you're interested in contributing to Pushword, please read our [contributing docs](https://pushword.piedweb.com/contribute) before submitting a pull request.
+`AGENTS.md` at the root (symlinked as `CLAUDE.md`) tells an agent how this project is laid
+out and points it at `vendor/pushword/docs/CLAUDE.md`, Pushword's own reference. Fill in
+its *About this site* section — that is the part no agent can infer from the code.
 
-## Credits
+## Update
 
-- [PiedWeb](https://piedweb.com)
-- [All Contributors](https://github.com/Pushword/Core/graphs/contributors)
+```shell
+composer update
+```
+
+## Help
+
+- Documentation — [pushword.piedweb.com](https://pushword.piedweb.com)
+- Questions and bugs — [github.com/Pushword/Pushword/issues](https://github.com/Pushword/Pushword/issues)
+- Support the project — [Liberapay](https://liberapay.com/RobinPiedWeb), or a star on
+  [GitHub](https://github.com/Pushword/Pushword)
 
 ## License
 
-The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/license#license) for more information.
-
-<p align="center"><a href="https://dev.piedweb.com">
-<img src="https://raw.githubusercontent.com/Pushword/Pushword/f5021f4c5d5d3ab3f2858ec2e4bdd70818806c6a/packages/admin/src/Resources/assets/logo.svg" width="200" height="200" alt="PHP Packages Open Source" />
-</a></p>
+Pushword is MIT licensed. See the [license](https://pushword.piedweb.com/license#license).
