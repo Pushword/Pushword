@@ -37,6 +37,12 @@ final class PageSyncTest extends KernelTestCase
     /** @var string[] Directories created during the test that should be cleaned up */
     private array $createdDirs = [];
 
+    /**
+     * @var array<string, array{locale: string, h1: string, mainContent: string}>
+     *                                                                            The host's redirections as they stood before the test ran, keyed by slug
+     */
+    private array $redirections = [];
+
     #[Override]
     protected function setUp(): void
     {
@@ -53,10 +59,14 @@ final class PageSyncTest extends KernelTestCase
         /** @var PageSync $pageSync */
         $pageSync = self::getContainer()->get(PageSync::class);
         $this->pageSync = $pageSync;
+
+        $this->redirections = $this->readRedirections();
     }
 
     protected function tearDown(): void
     {
+        $this->restoreRedirections();
+
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
@@ -66,6 +76,56 @@ final class PageSyncTest extends KernelTestCase
         }
 
         parent::tearDown();
+    }
+
+    /**
+     * @return array<string, array{locale: string, h1: string, mainContent: string}>
+     */
+    private function readRedirections(): array
+    {
+        $redirections = [];
+        foreach ($this->pageRepo->findBy(['host' => 'localhost.dev']) as $page) {
+            if ($page->hasRedirection()) {
+                $redirections[$page->getSlug()] = [
+                    'locale' => $page->locale,
+                    'h1' => $page->getH1(),
+                    'mainContent' => $page->getMainContent(),
+                ];
+            }
+        }
+
+        return $redirections;
+    }
+
+    /**
+     * Importing a redirection.csv deletes every redirection missing from it, and
+     * most tests here write a csv holding only the rows they are about. Left
+     * alone, the first of them takes the fixtures' own redirections down with it
+     * — for the rest of the worker, not just for the rest of this class.
+     */
+    private function restoreRedirections(): void
+    {
+        $this->em->clear();
+
+        $restored = false;
+        foreach ($this->redirections as $slug => $redirection) {
+            if (null !== $this->pageRepo->findOneBy(['slug' => $slug, 'host' => 'localhost.dev'])) {
+                continue;
+            }
+
+            $page = new Page();
+            $page->setSlug($slug);
+            $page->host = 'localhost.dev';
+            $page->locale = $redirection['locale'];
+            $page->setH1($redirection['h1']);
+            $page->setMainContent($redirection['mainContent']);
+            $this->em->persist($page);
+            $restored = true;
+        }
+
+        if ($restored) {
+            $this->em->flush();
+        }
     }
 
     private function trackFile(string $path): void

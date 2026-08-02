@@ -13,8 +13,17 @@ converge. Check the failing test against this dossier before investigating your 
 
 1. Is the failing test named below? If yes, it is almost certainly pre-existing noise.
 2. Re-run that test **in isolation**. Passing in isolation but failing under load means
-   parallel pollution, not a portability bug.
-3. Confirm the tests *your* change touches pass deterministically — repeat-run locally,
+   pollution, not a portability bug.
+3. Before blaming a cross-worker race, look for the *class* that poisons it and re-run
+   just that pair: `composer test-filter 'ThatClass|FailingClass'`. Workers get their own
+   DB, media, var and flat content dir (`$testBaseDir` carries `w<token>`), so a fixture
+   another class destroyed and never restored is the likelier cause — and it reads
+   exactly like a race, because paratest distributes by class and only some layouts put
+   the two together. That is what
+   `LinkedDocsScannerTest::testRedirectionIsReportedOnEveryPageLinkingIt` turned out to
+   be: `Flat\Tests\PageSyncTest` imported a redirection.csv without the fixtures' own
+   rows, and `import()` deletes what the csv omits.
+4. Confirm the tests *your* change touches pass deterministically — repeat-run locally,
    then `composer test-mariadb`.
 
 ## Known flakes
@@ -35,16 +44,6 @@ image-optimizer temp file caught mid-write in the shared `public/media` dir. Bot
 green and pass in isolation.
 
 **`PageScanner\Tests\Api\PageScanApiControllerTest`** — occasionally still flaky.
-
-**`PageScanner\LinkedDocsScannerTest::testRedirectionIsReportedOnEveryPageLinkingIt`** —
-CI-only: expects the fixtures `pushword` redirection page and gets `not found`, meaning a
-flat full-import on the same worker ran `deleteMissingPages()` after reading a
-redirection.csv another worker was rewriting (the flat content dir is shared across
-workers, same class as `public/media`). Passes in isolation, passes locally in a forced
-single-process ordering (all of `flat/tests` then the scanner, 415 green), passes on some
-CI shards and not others — worker layout decides. 2026-08-01: hit MariaDB-N24 + both N25
-jobs while both N24 SQLite jobs were green on the same commit. Candidate for the
-per-worker `pw.*` content-dir parameter fix.
 
 **`PageLockControllerTest::testPingAcquiresLockForEditor`** — not a flake at all. It fails
 whenever *your own browser* has the admin edit screen for page 1 open, because the test
