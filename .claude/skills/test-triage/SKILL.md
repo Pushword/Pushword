@@ -35,22 +35,34 @@ then read. They take `%pw.var_dir%` now. Treat a fresh failure here as real, and
 whether a new service reintroduced the hardcoded path.
 
 **`StaticGenerator\Tests\StaticGeneratorTest::testParallelGeneration*`** — in CI, output
-ends `SQLSTATE[HY000]: General error: 26 file is not a database`: parallel-worker child
-processes racing the dev-app SQLite file. This has hit both PHP 8.5 jobs at once while
-all 8.4 and MariaDB jobs passed, which *looks* like a version regression and is not — a
-plain `gh run rerun --failed` goes green with no code change. Locally the same class
-throws `Unable to guess "…/public/media/md/2.jpg.<n>.<hash>.tmp" file type` — an
-image-optimizer temp file caught mid-write in the shared `public/media` dir. Both re-run
-green and pass in isolation.
+ends `SQLSTATE[HY000]: General error: 26 file is not a database`. Read the stack before
+assuming it is the dev-app DB: the connection that fails is Loupe's, opened from
+`IndexManager::getLoupe()` under `StaticSearchSubscriber::onPostGenerate` — the corrupt
+file is the per-worker search index, `%pw.var_dir%/search/<host>/loupe.db`, not
+`test.db`. Whatever leaves it corrupt has not been pinned down; it does not reproduce
+from the serial group alone (that batch passes repeatedly in a fresh run dir), only when
+the batch inherits a `var/` the parallel batch already wrote. The first casualty is
+usually whichever static test runs first — `CacheClearCommandTest::testCacheClearWarmsFiles`
+in one run — and every later test that generates then fails the same way. It has hit both
+PHP 8.5 jobs at once while all 8.4 and MariaDB jobs passed, which *looks* like a version
+regression and is not — a plain `gh run rerun --failed` goes green with no code change.
+Note the matrix is fail-fast, so one flaked shard cancels its siblings and the whole run
+reads red. Locally the same class throws `Unable to guess
+"…/public/media/md/2.jpg.<n>.<hash>.tmp" file type` — an image-optimizer temp file caught
+mid-write in the shared `public/media` dir. Both re-run green and pass in isolation.
 
 **`StaticGeneratorTest::testParallelWorkersPopulateAnOpcacheFileCache` — was never a
 flake.** It failed on the MariaDB job and only there, every run, because that job is the
 only one setup-php gives a usable CLI opcache (`coverage: pcov` shadows it on the others,
-so the test early-returned and passed trivially). The worker spawn passed
-`opcache.enable_cli=1` without `opcache.enable=1`; a host shipping opcache disabled loads
-the extension but caches nothing, so the dir was created and stayed empty — which is also
-what the assertion says. Fixed in `StaticAppGenerator::generatePagesInParallel()`. Treat a
-fresh failure here as real, and check the `-d` flags first.
+so the test early-returned and passed trivially). Adding `opcache.enable=1` next to
+`opcache.enable_cli=1` in the worker spawn was the obvious cure and did not work — the job
+stayed red. A child on that runner writes nothing to an `opcache.file_cache` dir even with
+every flag set, so the capability the test asserted was never observable there. The test
+now spawns its own probe child and returns early when that child caches nothing, which is
+the only honest precondition: `extension_loaded()` in the test process says nothing about
+what a child can do. A local CLI with opcache still runs the assertion for real, so the
+test keeps its teeth. Treat a fresh failure here as real — it means a probe child *did*
+file-cache and the workers did not.
 
 **`PageScanner\Tests\Api\PageScanApiControllerTest`** — occasionally still flaky.
 
