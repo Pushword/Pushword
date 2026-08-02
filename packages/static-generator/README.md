@@ -65,7 +65,7 @@ If you're interested in contributing to Pushword, please read our [contributing 
 
 ## Credits
 
-- [PiedWeb](https://piedweb.com)
+- [PiedWeb](https://en.piedweb.com)
 - [All Contributors](https://github.com/Pushword/Pushword/graphs/contributors)
 
 ## License
