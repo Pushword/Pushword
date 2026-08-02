@@ -1,2 +1,10 @@
-{# Fragment returned by the subscribe endpoint; the form replaces itself with it. #}
-<div class="newsletter-alert newsletter-alert--{{ context }}" role="status">{{ message }}</div>
+{#
+  Fragment returned by the subscribe endpoint; the form replaces itself with it.
+  `context` is `success` or `error`. Both variants are spelled out as whole class
+  strings — Tailwind scans this file as text, so a class built by concatenation
+  would not be emitted. Each is a `pwNewsletterAlert*Class` twig global you can
+  redefine to restyle without forking; see /extension/newsletter.
+#}
+<div class="{{ pwNewsletterAlertClass|default('relative block px-3 py-3 mb-4 mx-1 border rounded') }} {{ 'success' == context
+      ? pwNewsletterAlertSuccessClass|default('text-green-800 bg-green-100 border-green-300')
+      : pwNewsletterAlertErrorClass|default('text-red-800 bg-red-100 border-red-300') }}" role="status">{{ message }}</div>

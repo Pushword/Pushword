@@ -225,6 +225,28 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         );
     }
 
+    /**
+     * The alert is the whole response body, so its `context` is the only thing
+     * telling a reader success from failure. Both branches are spelled out as
+     * complete class strings in the template — a class built by concatenation
+     * would never be emitted by Tailwind — so both are asserted here.
+     */
+    public function testTheAlertLooksDifferentWhenItSucceededAndWhenItFailed(): void
+    {
+        $audience = $this->createAudience();
+
+        $this->post($audience->getSlug(), ['email' => 'reader@example.tld']);
+        $success = (string) $this->client->getResponse()->getContent();
+
+        $this->post($audience->getSlug(), ['email' => 'not-an-email']);
+        $error = (string) $this->client->getResponse()->getContent();
+
+        self::assertStringContainsString('bg-green-100', $success);
+        self::assertStringNotContainsString('bg-red-100', $success);
+        self::assertStringContainsString('bg-red-100', $error);
+        self::assertStringNotContainsString('bg-green-100', $error);
+    }
+
     public function testAFilledHoneypotLooksLikeSuccessAndWritesNothing(): void
     {
         $audience = $this->createAudience();

@@ -9,10 +9,15 @@
   and swaps this block for the response. It re-binds on every DOMChanged, which
   is what picks this form up once the placeholder has been replaced by it.
   Without js-helper the browser posts and navigates, which still subscribes.
+
+  Each set of utilities is a `pwNewsletter*Class` default: redefine it as a twig
+  global to restyle that element without forking this template. Anything Twig
+  would HTML-escape (`&`, `>`) cannot go in one — it would reach the class
+  attribute mangled. See /extension/newsletter.
 #}
 {% set audience = audiences|first %}
 <div class="live-form">
-<form class="newsletter-form" method="post" action="{{ action }}">
+<form class="{{ pwNewsletterFormClass|default('w-full mt-4') }}" method="post" action="{{ action }}">
     <input type="hidden" name="locale" value="{{ locale }}">
     {% if csrfToken %}<input type="hidden" name="_token" value="{{ csrfToken }}">{% endif %}
     {% if source %}<input type="hidden" name="source" value="{{ source }}">{% endif %}
@@ -28,18 +33,20 @@
         {% endfor %}
     {% endif %}
 
-    <label class="newsletter-form__label" for="newsletter-name-{{ audience.slug }}">{{ 'newsletter.form.name'|trans }}</label>
-    <input class="newsletter-form__input" type="text" id="newsletter-name-{{ audience.slug }}"
+    <label class="{{ pwNewsletterLabelClass|default('block mb-1.5 text-sm font-medium text-gray-700') }}" for="newsletter-name-{{ audience.slug }}">{{ 'newsletter.form.name'|trans }}</label>
+    <input class="{{ pwNewsletterInputClass|default('bg-white border-2 border-gray-100 w-full mb-3 py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary') }}" type="text" id="newsletter-name-{{ audience.slug }}"
            name="name" autocomplete="given-name">
 
-    <label class="newsletter-form__label" for="newsletter-email-{{ audience.slug }}">{{ 'newsletter.form.email'|trans }}</label>
-    <input class="newsletter-form__input" type="email" id="newsletter-email-{{ audience.slug }}"
+    <label class="{{ pwNewsletterLabelClass|default('block mb-1.5 text-sm font-medium text-gray-700') }}" for="newsletter-email-{{ audience.slug }}">{{ 'newsletter.form.email'|trans }}</label>
+    <input class="{{ pwNewsletterEmailInputClass|default('bg-white border-2 border-gray-100 w-full mb-4 py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary') }}" type="email" id="newsletter-email-{{ audience.slug }}"
            name="email" autocomplete="email" required>
 
+    {# Inline rather than utility classes on purpose: a bot trap that a purged
+       stylesheet or a site's CSS reset can un-hide stops being a trap. #}
     <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;">
         <label>{{ 'newsletter.form.honeypot'|trans }}<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
     </div>
 
-    <button class="newsletter-form__submit" type="submit">{{ 'newsletter.form.submit'|trans }}</button>
+    <button class="{{ pwNewsletterSubmitClass|default('link-btn') }}" type="submit">{{ 'newsletter.form.submit'|trans }}</button>
 </form>
 </div>
