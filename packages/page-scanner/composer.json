@@ -2,9 +2,14 @@
   "name": "pushword/page-scanner",
   "type": "symfony-bundle",
   "description": "Find dead links, 404, 301 and more (command line or admin).",
-  "keywords": [],
+  "keywords": ["broken-link-checker", "link-checker", "dead-links", "crawler", "seo", "404", "pushword"],
   "homepage": "https://pushword.piedweb.com/extension/page-scanner",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/page-scanner",
+    "docs": "https://pushword.piedweb.com/extension/page-scanner"
+  },
   "require": {
     "pushword/core": "*"
   },

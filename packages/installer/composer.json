@@ -1,9 +1,14 @@
 {
   "name": "pushword/installer",
-  "description": "",
-  "keywords": [],
+  "description": "Run the post-install scripts shipped by Pushword bundles when a Pushword app is installed or updated.",
+  "keywords": ["installer", "symfony", "cms", "pushword"],
   "homepage": "https://pushword.piedweb.com",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/installer",
+    "docs": "https://pushword.piedweb.com"
+  },
   "require": {
     "pushword/core": "*",
     "symfony/filesystem": "^7.3 || ^8.0"

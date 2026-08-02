@@ -2,9 +2,14 @@
   "name": "pushword/dev-app",
   "type": "symfony-bundle",
   "description": "Pushword dev/test/demo application. Used for testing, demoing and by the installer. It's not a copy-paste starter, prefer the installer (see https://pushword.piedweb.com/installation ).",
-  "keywords": [],
+  "keywords": ["demo", "cms", "pushword"],
   "homepage": "https://pushword.piedweb.com",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/dev-app",
+    "docs": "https://pushword.piedweb.com"
+  },
   "require": {
     "pushword/core": "*"
   },

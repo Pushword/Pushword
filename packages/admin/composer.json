@@ -2,9 +2,14 @@
   "name": "pushword/admin",
   "type": "symfony-bundle",
   "description": "Default Admin to manage online Pushword App and websites.",
-  "keywords": [],
+  "keywords": ["admin", "back-office", "easyadmin", "crud", "cms", "symfony", "pushword"],
   "homepage": "https://pushword.piedweb.com/extension/admin",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/admin",
+    "docs": "https://pushword.piedweb.com/extension/admin"
+  },
   "require": {
     "pushword/core": "*",
     "easycorp/easyadmin-bundle": "^5",

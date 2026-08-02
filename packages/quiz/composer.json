@@ -2,9 +2,14 @@
     "name": "pushword/quiz",
     "type": "symfony-bundle",
     "description": "Interactive client-side quizzes (QCM) for Pushword: a {{ quiz(...) }} Twig block, an EditorJS editor, anonymous percentile stats and an optional end-of-quiz conversion form.",
-    "keywords": [],
+    "keywords": ["quiz", "qcm", "survey", "personality-test", "cms", "pushword"],
     "homepage": "https://pushword.piedweb.com/extension/quiz",
     "license": "MIT",
+    "support": {
+        "issues": "https://github.com/Pushword/Pushword/issues",
+        "source": "https://github.com/Pushword/Pushword/tree/main/packages/quiz",
+        "docs": "https://pushword.piedweb.com/extension/quiz"
+    },
     "require": {
         "pushword/core": "*"
     },

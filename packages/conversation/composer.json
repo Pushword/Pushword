@@ -2,9 +2,14 @@
   "name": "pushword/conversation",
   "type": "symfony-bundle",
   "description": "Extend your Pushword website with **comments**, a **contact** form or just an **user input**.",
-  "keywords": [],
+  "keywords": ["comments", "contact-form", "form", "cms", "symfony", "pushword"],
   "homepage": "https://pushword.piedweb.com/extension/conversation",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/conversation",
+    "docs": "https://pushword.piedweb.com/extension/conversation"
+  },
   "require": {
     "pushword/core": "*",
     "pushword/flat": "*",

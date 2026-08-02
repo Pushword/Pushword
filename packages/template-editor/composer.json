@@ -1,10 +1,15 @@
 {
   "name": "pushword/template-editor",
   "type": "symfony-bundle",
-  "description": "",
-  "keywords": [],
+  "description": "Edit Twig view files online from the Pushword admin.",
+  "keywords": ["twig", "template-editor", "theme-editor", "admin", "cms", "pushword"],
   "homepage": "https://pushword.piedweb.com",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/template-editor",
+    "docs": "https://pushword.piedweb.com"
+  },
   "require": {
     "pushword/core": "*"
   },

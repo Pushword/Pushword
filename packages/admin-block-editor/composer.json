@@ -2,9 +2,14 @@
   "name": "pushword/admin-block-editor",
   "type": "symfony-bundle",
   "description": "Supercharged the Pushword Admin with block editor (gutenberg like).",
-  "keywords": [],
+  "keywords": ["block-editor", "editorjs", "rich-text-editor", "wysiwyg", "admin", "cms", "pushword"],
   "homepage": "https://pushword.piedweb.com/extension/admin-block-editor",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor",
+    "docs": "https://pushword.piedweb.com/extension/admin-block-editor"
+  },
   "require": {
     "jolicode/jolitypo": "^1.4",
     "pushword/core": "*"

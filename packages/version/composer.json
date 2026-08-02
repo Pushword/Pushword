@@ -2,9 +2,14 @@
   "name": "pushword/version",
   "type": "symfony-bundle",
   "description": "Versioning pages with Pushword CMS.",
-  "keywords": [],
+  "keywords": ["versioning", "revisions", "history", "cms", "pushword"],
   "homepage": "https://pushword.piedweb.com/extension/version",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/version",
+    "docs": "https://pushword.piedweb.com/extension/version"
+  },
   "require": {
     "pushword/core": "*",
     "symfony/serializer": "^8.0"

@@ -2,9 +2,14 @@
   "name": "pushword/snippet",
   "type": "symfony-bundle",
   "description": "Reusable, editor-owned content fragments and dev-registered components for Pushword CMS.",
-  "keywords": [],
+  "keywords": ["snippet", "components", "content-fragments", "twig", "cms", "pushword"],
   "homepage": "https://pushword.piedweb.com/extension/snippet",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/snippet",
+    "docs": "https://pushword.piedweb.com/extension/snippet"
+  },
   "require": {
     "pushword/core": "*"
   },

@@ -2,9 +2,14 @@
   "name": "pushword/api",
   "type": "symfony-bundle",
   "description": "REST API mirror of the Pushword admin (Page, Media, …). Token-authenticated, OpenAPI-described.",
-  "keywords": [],
+  "keywords": ["api", "rest", "openapi", "headless-cms", "content-api", "symfony", "pushword"],
   "homepage": "https://pushword.piedweb.com/extension/api",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/api",
+    "docs": "https://pushword.piedweb.com/extension/api"
+  },
   "require": {
     "pushword/core": "*",
     "pushword/flat": "*"

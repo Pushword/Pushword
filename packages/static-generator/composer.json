@@ -2,9 +2,14 @@
   "name": "pushword/static-generator",
   "type": "symfony-bundle",
   "description": "Generate a static website serve by github pages, apaches with one command or via the [admin](https://pushword.piedweb.com/extension/admin).",
-  "keywords": [],
+  "keywords": ["static-site-generator", "ssg", "jamstack", "github-pages", "static", "cms", "pushword"],
   "homepage": "https://pushword.piedweb.com/extension/static-generator",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/static-generator",
+    "docs": "https://pushword.piedweb.com/extension/static-generator"
+  },
   "require": {
     "pushword/core": "*"
   },

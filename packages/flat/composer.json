@@ -2,9 +2,14 @@
   "name": "pushword/flat",
   "type": "symfony-bundle",
   "description": "Transform Pushword in a FlatFile CMS.",
-  "keywords": [],
+  "keywords": ["flat-file-cms", "cms", "markdown", "git-based-cms", "front-matter", "static", "symfony", "pushword"],
   "homepage": "https://pushword.piedweb.com/extension/flat",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/flat",
+    "docs": "https://pushword.piedweb.com/extension/flat"
+  },
   "require": {
     "pushword/core": "*",
     "league/csv": "^9.0",

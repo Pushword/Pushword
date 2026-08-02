@@ -2,9 +2,14 @@
   "name": "pushword/search",
   "type": "symfony-bundle",
   "description": "Optional SQLite-native full-text search for Pushword CMS, powered by Loupe (zero infra).",
-  "keywords": [],
+  "keywords": ["search", "full-text-search", "loupe", "sqlite", "cms", "symfony", "pushword"],
   "homepage": "https://pushword.piedweb.com/extension/search",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/search",
+    "docs": "https://pushword.piedweb.com/extension/search"
+  },
   "require": {
     "pushword/core": "*",
     "loupe/loupe": "^1.0"

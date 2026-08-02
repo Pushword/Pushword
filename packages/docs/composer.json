@@ -1,9 +1,14 @@
 {
   "name": "pushword/docs",
   "description": "Pushword documentation.",
-  "keywords": [],
+  "keywords": ["documentation", "cms", "pushword"],
   "homepage": "https://pushword.piedweb.com",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/docs",
+    "docs": "https://pushword.piedweb.com"
+  },
   "require": {},
   "extra": {
     "branch-alias": {

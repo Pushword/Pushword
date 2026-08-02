@@ -2,9 +2,14 @@
   "name": "pushword/core",
   "type": "symfony-bundle",
   "description": "A php CMS built on top of Symfony to rapidly create, manage and maintain Modern Website(s).",
-  "keywords": [],
+  "keywords": ["cms", "symfony", "php-cms", "markdown", "twig", "multisite", "content-management", "seo", "pushword"],
   "homepage": "https://pushword.piedweb.com",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/core",
+    "docs": "https://pushword.piedweb.com"
+  },
   "require": {
     "php": ">=8.4",
     "ext-gd": "*",

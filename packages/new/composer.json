@@ -2,7 +2,12 @@
   "name": "pushword/new",
   "type": "project",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/new"
+  },
   "description": "Install a new Pushword instance with ease.",
+  "keywords": ["installer", "skeleton", "project-template", "cms", "symfony", "pushword"],
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {

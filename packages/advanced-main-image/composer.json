@@ -2,9 +2,14 @@
   "name": "pushword/advanced-main-image",
   "type": "symfony-bundle",
   "description": "Supercharged the Pushword Main Image with format options and hero page.",
-  "keywords": [],
+  "keywords": ["image", "hero", "responsive-images", "media", "admin", "cms", "pushword"],
   "homepage": "https://pushword.piedweb.com/extension/advanced-main-image",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/advanced-main-image",
+    "docs": "https://pushword.piedweb.com/extension/advanced-main-image"
+  },
   "require": {
     "pushword/core": "*",
     "pushword/admin": "^1"
