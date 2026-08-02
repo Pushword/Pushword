@@ -22,6 +22,29 @@ npm run dev
 
 If you want to change the default location for assets, just edit `./config/packages/pushword.yaml` and configure `apps.0.assets` (#[eg](https://github.com/Pushword/Pushword/blob/main/packages/dev-app/config/packages/pushword.yaml#L31))
 
+## Tailwind content sources
+
+Bundle templates ship inside `vendor/pushword/`, and Tailwind's automatic
+detection never walks in there: it skips whatever your `.gitignore` covers. They
+have to be declared, which is what the `app.css` shipped by `@pushword/js-helper`
+does — an explicit `@source` **does** reach a gitignored path:
+
+```css
+@source "./../../../../vendor/pushword/*/src/templates/**/*.twig";
+```
+
+Build your stylesheet from that file (the default `vite.config.js` does) and
+bundle templates are covered. Write your own entry point instead and you must
+carry the line over, relative to your own CSS file — otherwise every class a
+bundle template uses (the newsletter form, the conversation form, the video
+component) is purged and that markup renders unstyled.
+
+One trap if you edit these lines: **an `@source` pattern has to end on a
+filename.** `vendor/pushword/**/templates/` reads correctly and matches nothing
+whatsoever, silently — you only notice because the stylesheet came out smaller.
+A plain directory with no glob in it (`@source "templates";`) is walked whole and
+is fine; anything with a `*` in it needs to reach files.
+
 ## Automatic Tailwind Update on page update
 
 If you use Tailwind classes inside page content, by default the command `npm run build` is run when you update a page.

@@ -167,6 +167,79 @@ Pick *"Personality test"* in the **Type** selector. The profiles are edited
   while playing the quiz. A question weighing nothing at all is flagged too.
 - *"+ Question"* seeds one answer per profile, each designating its own.
 
+## Styling
+
+The quiz is styled with Tailwind utilities on the markup, so it inherits your
+site's design system — the accent follows `--primary`, and the spacing and
+colours come from your theme's scale. Nothing to import: the utilities are in
+your stylesheet already, because `@pushword/js-helper`'s `app.css` scans bundle
+templates (see [managing assets](/manage-assets) if you build your CSS from an
+entry point of your own).
+
+### Restyling one element
+
+Every element's utilities are a `pwQuiz*Class` default. Redefine one as a **twig
+global** and that element restyles, no template fork:
+
+```yaml
+# config/packages/twig.yaml
+twig:
+    globals:
+        pwQuizQClass: 'rounded-none border-l-4 border-brand-500 bg-brand-50 p-6'
+        pwQuizAClass: 'flex w-full items-center gap-3 rounded-md border px-4 py-3 text-left'
+```
+
+| variable | element |
+|---|---|
+| `pwQuizClass` | the `<section>` root |
+| `pwQuizHeadClass` / `pwQuizTitleClass` | header, `<h2>` |
+| `pwQuizMetaClass` / `pwQuizLevelMetaClass` / `pwQuizDiffClass` | meta line, per-level meta line, difficulty badge |
+| `pwQuizQuestionsClass` / `pwQuizQClass` / `pwQuizQNumClass` / `pwQuizQuestionClass` | question list, card, "Question 1/5", the question text |
+| `pwQuizAnswersClass` / `pwQuizAnswerItemClass` / `pwQuizAClass` | answer grid, its `<li>`, the answer button |
+| `pwQuizAPrefixClass` / `pwQuizATextClass` / `pwQuizAMarkClass` | A/B/C bullet, answer text, ✓/✗ slot |
+| `pwQuizExplanationClass` / `pwQuizExplanationLabelClass` | explanation box and its label |
+| `pwQuizResultClass` / `pwQuizProfileTitleClass` / `pwQuizProfileMsgClass` | result box, profile title, profile message |
+| `pwQuizCtaClass` / `pwQuizCtaTitleClass` | CTA block and its title |
+| `pwQuizTabsClass` / `pwQuizTabClass` | difficulty tablist and its tabs |
+
+Two constraints worth knowing:
+
+- **It must be a global, not a render variable.** Most of the markup is built in
+  `{% macro %}`, and a macro sees no render context — only globals reach inside.
+- **The value is HTML-escaped.** An arbitrary variant containing `&` or `>`
+  (`[&>p]:mt-0`) comes out as `[&amp;&gt;p]:mt-0` and matches nothing. Put those
+  in CSS instead.
+- Tailwind must *see* your override to emit it. A class named only in
+  `twig.yaml` is not scanned — add `@source "../config/packages/twig.yaml";` to
+  your CSS, or keep the classes in a file already scanned.
+
+### What is still CSS
+
+`quiz.css` ships alongside and holds only what a class attribute cannot express:
+
+1. **runtime state** — rules like "hide the explanation until its question is
+   answered" read a class `quiz.js` toggles on an *ancestor*, and Tailwind has no
+   ancestor variant;
+2. **markup built by `quiz.js`** — the score donut, the restart/next/share
+   buttons. Tailwind scans templates, not JS, so utilities there would be purged;
+3. **images rendered from `QuizRenderer.php`**, for the same reason.
+
+The file is unlayered, so its rules outrank the template's utilities whatever the
+source order — which is what lets the answered/correct/wrong states override the
+base look. It keeps the `--pw-quiz-*` variables for its own colours:
+
+```css
+.pw-quiz {
+  --pw-quiz-accent: var(--primary, #6d28d9);
+  --pw-quiz-correct: #16a34a;
+  --pw-quiz-wrong: #e11d48;
+}
+```
+
+The `pw-quiz-*` class names themselves are load-bearing — `quiz.js` queries them
+and those state rules key off them. Restyle by adding to them, never by replacing
+them.
+
 ## SEO & accessibility
 
 The whole quiz — questions, answers, the correct flag and the explanations —

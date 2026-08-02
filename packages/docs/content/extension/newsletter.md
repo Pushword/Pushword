@@ -61,6 +61,46 @@ Finally, add the clock to the server's crontab:
 * * * * * cd /path/to/app && php bin/console pw:newsletter:tick
 ```
 
+## Styling
+
+The form and the alert it is replaced by are plain Tailwind, reusing the
+utilities the conversation form uses so the two look alike on one site. Nothing
+extra to load: they are covered by the `@source` lines in js-helper's `app.css`,
+which is what the default `vite.config.js` builds. If you build your stylesheet
+from an entry point of your own, read *Tailwind content sources* in
+[managing assets](/manage-assets) first — a bundle template Tailwind never
+scanned renders unstyled.
+
+Every element's utilities are a `pwNewsletter*Class` default. Redefine one as a
+**twig global** and that element restyles, no template fork:
+
+```yaml
+# config/packages/twig.yaml
+twig:
+    globals:
+        pwNewsletterInputClass: 'w-full rounded-md border border-gray-300 px-3 py-2'
+        pwNewsletterSubmitClass: 'rounded-md bg-brand-600 px-4 py-2 text-white'
+```
+
+`pwNewsletterFormClass`, `pwNewsletterLabelClass`, `pwNewsletterInputClass`,
+`pwNewsletterEmailInputClass`, `pwNewsletterSubmitClass`, and for the response
+fragment `pwNewsletterAlertClass` plus `pwNewsletterAlertSuccessClass` /
+`pwNewsletterAlertErrorClass`.
+
+The value is HTML-escaped, so an arbitrary variant containing `&` or `>`
+(`[&>p]:mt-0`) arrives mangled and matches nothing — put those in CSS. And
+Tailwind has to *see* your override to emit it: a class named only in
+`twig.yaml` is not scanned unless you add that file to your `@source` list.
+
+For anything structural, override `/newsletter/form.html.twig` and
+`/newsletter/alert.html.twig` in the site's views.
+
+The pages behind the confirmation and opt-out links are a different case. They
+have to render on the live host even when the site itself is a static build, so
+`/newsletter/layout.html.twig` deliberately depends on none of the site's assets
+and carries a small inline stylesheet instead of Tailwind. Override that layout
+to brand them.
+
 ## CSRF
 
 On by default. The form endpoint issues a token, and the subscribe endpoint
