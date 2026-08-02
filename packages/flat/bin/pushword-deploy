@@ -59,7 +59,7 @@ PUSH_EXCLUDES=('.git' 'vendor/' 'node_modules/' 'var/cache/' 'var/log/' 'var/sta
 PUBLISH_PATHS=('content' 'media')
 PRE_PUSH=('php bin/console pw:flat:sync')
 REMOTE_DEPLOY=''
-REMOTE_PUBLISH='php bin/console pw:flat:sync && php bin/console pw:static'
+REMOTE_PUBLISH='php bin/console pw:flat:sync && php bin/console pw:static --incremental'
 POST_DEPLOY_LOCAL=()
 
 # shellcheck source=/dev/null

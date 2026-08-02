@@ -471,6 +471,13 @@ REMOTE_DEPLOY='composer update && php bin/console doctrine:schema:update --force
 # PUBLISH_PATHS=('content' 'media')  # REMOTE_PUBLISH, POST_DEPLOY_LOCAL
 ```
 
+`publish` runs `pw:flat:sync && pw:static --incremental` remotely by default:
+the import moves the render epoch for anything listing-relevant, and the
+incremental build regenerates just that — including pruning the pages the sync
+deleted. Keep a plain `pw:static` at the end of `REMOTE_DEPLOY`: after
+`cache:clear` the epoch is fresh so incremental would rebuild everything anyway,
+and the full build's lint-before-swap protects the freshly deployed code path.
+
 `POST_DEPLOY_LOCAL` (typically an opcache-reset loop over the PHP hosts) runs
 even when the push dies mid-remote-chain: a deploy failing after
 `composer update` has already rebuilt the container, and the reset is precisely
