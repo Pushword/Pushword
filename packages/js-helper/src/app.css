@@ -10,19 +10,37 @@
 /*
 Tailwind content sources for all packages
 -----------------------------------------
+A pattern containing `*` is matched against file paths, so it has to end in a
+file-matching segment: `**/templates/` matches zero files and warns about
+nothing — which is why conversation and the markdown cheatsheet used to carry
+literal paths of their own while every other bundle template went unscanned. A
+literal path with no glob is the exception: it is taken as a directory root and
+walked whole, as `../../../../templates` is below.
+
+Paths come in pairs because this file is compiled from two places: an installed
+site loads it from node_modules/@pushword/js-helper/src/, so there
+`./../../../../` is the project root, while in the monorepo it points outside
+the repo — and the reverse for `./../../`, which is `packages/` here and dead
+weight there. Content is the odd pair: the monorepo scans packages/*/content
+directly, while an installed site gets those classes from the TailwindGenerator
+cache below.
 */
 
-@source "./../../../../vendor/pushword/**/templates/";
-@source "./../../**/templates/";
-@source "./../../**/src/templates/";
-@source "./../../**/content/**/*.md";
-@source "./../../conversation/src/templates/";
+/* Bundle templates */
+@source "./../../../../vendor/pushword/*/src/templates/**/*.twig";
+@source "./../../*/src/templates/**/*.twig";
+
+/* Twig extensions that build class attributes in PHP */
+@source "./../../../../vendor/pushword/core/src/Twig/**/*.php";
+@source "./../../core/src/Twig/**/*.php";
+
+/* The site's own templates and content */
 @source "./../../../../templates";
+@source "./../../*/templates/**/*.twig";
+@source "./../../*/content/**/*.md";
+
+/* Classes written inside page content, collected on save by TailwindGenerator */
 @source "./../../../../var/TailwindGeneratorCache/*";
-@source "./../../../../vendor/pushword/core/src/Twig/**.php";
-@source "./../../core/src/Twig/**.php";
-@source "./../../../../vendor/pushword/admin/src/templates/markdown_cheatsheet.html.twig";
-@source "./../../admin/src/templates/markdown_cheatsheet.html.twig";
 
 [x-cloak] {
   display: none !important;
