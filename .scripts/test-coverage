@@ -28,10 +28,13 @@ fi
 DUMP_DIR=$(mktemp -d)
 
 # Finite memory limits, as in .scripts/test — php.ini ships memory_limit=-1, so a
-# runaway grows until the kernel OOM-kills the desktop session. The parent aggregates
-# every worker's coverage, so it gets the larger of the two.
-PW_WORKER_MEMORY_LIMIT="${PW_WORKER_MEMORY_LIMIT:-2G}"
-PW_MERGE_MEMORY_LIMIT="${PW_MERGE_MEMORY_LIMIT:-8G}"
+# runaway grows until the kernel OOM-kills the desktop session.
+#
+# Unlike the test heap, which plateaus near 80MB, merging is genuinely size-bound: the
+# parallel batch alone dumps ~100MB of serialized coverage and folding it peaks around
+# 430MB. Hence the larger ceiling on the parent and the merge.
+PW_WORKER_MEMORY_LIMIT="${PW_WORKER_MEMORY_LIMIT:-1G}"
+PW_MERGE_MEMORY_LIMIT="${PW_MERGE_MEMORY_LIMIT:-2G}"
 
 PCOV_INI=(-d pcov.enabled=1 -d pcov.directory=packages -d "memory_limit=${PW_MERGE_MEMORY_LIMIT}")
 PASSTHRU="'-d' 'pcov.enabled=1' '-d' 'pcov.directory=packages' '-d' 'memory_limit=${PW_WORKER_MEMORY_LIMIT}'"

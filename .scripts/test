@@ -10,12 +10,17 @@ JUNIT_XML="/tmp/pushword-test-${TEST_RUN_ID}.xml"
 
 # php.ini ships memory_limit=-1, so a runaway test grows until the kernel OOM-kills
 # something — on a desktop that is the whole GNOME session, not just the run. A finite
-# limit turns it into an "Allowed memory size exhausted" with the stack trace at the
-# leak. A paratest worker only ever holds a slice of the suite; a sequential run holds
-# all of it (packages/core/tests alone peaks near 4G), hence the two values.
-PW_WORKER_MEMORY_LIMIT="${PW_WORKER_MEMORY_LIMIT:-2G}"
-PW_SEQUENTIAL_MEMORY_LIMIT="${PW_SEQUENTIAL_MEMORY_LIMIT:-8G}"
-PASSTHRU_PHP="'-d' 'memory_limit=${PW_WORKER_MEMORY_LIMIT}'"
+# limit turns it into an "Allowed memory size exhausted" with the stack trace at the leak.
+#
+# 1G is ~11x the observed ceiling: the heap plateaus around 80-90MB and stays there,
+# whether a process runs 50 tests or 1145 — nothing accumulates across a run, so the
+# peak tracks the heaviest single test rather than the length of the batch.
+#
+# Note what this does NOT bound: Imagick buffers and the ghostscript/optipng/chrome
+# child processes live outside the Zend allocator, and they are what actually drives
+# RSS into the gigabytes. Only a cgroup cap (systemd-run -p MemoryMax=) bounds those.
+PW_MEMORY_LIMIT="${PW_MEMORY_LIMIT:-1G}"
+PASSTHRU_PHP="'-d' 'memory_limit=${PW_MEMORY_LIMIT}'"
 
 # Per-step timing arrays
 declare -a STEP_NAMES=()
@@ -197,7 +202,7 @@ if [ "$1" = "full" ]; then
     step "Running PHPUnit (prefer-lowest)"
     PHPUNIT_EXIT=0
     PHPUNIT_START=$(date +%s)
-    XDEBUG_MODE=off php -dxdebug.mode=off -dmemory_limit=${PW_SEQUENTIAL_MEMORY_LIMIT} vendor/bin/phpunit --no-progress --colors=always --stop-on-failure --debug --no-cache-result --log-junit="$JUNIT_XML" $FILTER_ARG || PHPUNIT_EXIT=$?
+    XDEBUG_MODE=off php -dxdebug.mode=off -dmemory_limit=${PW_MEMORY_LIMIT} vendor/bin/phpunit --no-progress --colors=always --stop-on-failure --debug --no-cache-result --log-junit="$JUNIT_XML" $FILTER_ARG || PHPUNIT_EXIT=$?
     record_step "PHPUnit (prefer-lowest)" $(( $(date +%s) - PHPUNIT_START ))
 
     if ! wait_for_background_tasks; then
@@ -244,7 +249,7 @@ else
     else
         step "Running PHPUnit"
         PHPUNIT_START=$(date +%s)
-        XDEBUG_MODE=off php -dxdebug.mode=off -dmemory_limit=${PW_SEQUENTIAL_MEMORY_LIMIT} vendor/bin/phpunit --no-progress --colors=always --stop-on-failure --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" $FILTER_ARG || PHPUNIT_EXIT=$?
+        XDEBUG_MODE=off php -dxdebug.mode=off -dmemory_limit=${PW_MEMORY_LIMIT} vendor/bin/phpunit --no-progress --colors=always --stop-on-failure --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" $FILTER_ARG || PHPUNIT_EXIT=$?
         record_step "PHPUnit" $(( $(date +%s) - PHPUNIT_START ))
     fi
 
