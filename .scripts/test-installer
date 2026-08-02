@@ -17,6 +17,7 @@ TEMP_DIR="/tmp/pushword-installer-test-$$"
 HASH_INPUT=$(cat \
     "$MONOREPO_DIR"/packages/*/composer.json \
     "$MONOREPO_DIR"/packages/*/install.php \
+    "$MONOREPO_DIR"/packages/core/starter/* \
     "$MONOREPO_DIR"/packages/new/tests/AppTest.php \
     "$MONOREPO_DIR"/packages/new/tests/bootstrap.php \
     "$MONOREPO_DIR"/packages/new/phpunit.xml.dist \

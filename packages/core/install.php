@@ -24,8 +24,10 @@ PostInstall::replace('config/bundles.php', 'return [', 'return [
 
 // echo '~~ Copy Entities in ./src/Entity'.chr(10);
 // PostInstall::mirror('vendor/pushword/dev-app/src/Entity', 'src/Entity');
+// The starter content, not dev-app's fixtures: those are the test suite's rig, they
+// reference pages and bundles a fresh install does not have.
 @unlink('src/DataFixtures/AppFixtures.php');
-PostInstall::mirror('vendor/pushword/dev-app/src/DataFixtures', 'src/DataFixtures');
+PostInstall::mirror('vendor/pushword/core/starter', 'src/DataFixtures');
 
 echo '~~ Adding Puswhord Routes'.chr(10);
 PostInstall::insertIn(
@@ -39,7 +41,10 @@ echo '~~ Create database'.chr(10);
 PostInstall::replace('.env', 'postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=16&charset=utf8', 'sqlite:///%kernel.project_dir%/var/app.db');
 // and define an APP_SECRET
 PostInstall::replace('.env', "APP_SECRET=\n", 'APP_SECRET='.sha1(md5(uniqid())).chr(10));
+// dev-app's media doubles as the test suite's fixtures: take the demo photos, leave the
+// branding and the PDF test artifact behind.
 PostInstall::mirror('vendor/pushword/dev-app/media~', 'media');
+PostInstall::remove(['media/piedweb-logo.png', 'media/logo.svg', 'media/test.pdf']);
 $freshInstall = ! file_exists('var/app.db');
 $commands = 'php bin/console doctrine:schema:update --force -q';
 if ($freshInstall) {

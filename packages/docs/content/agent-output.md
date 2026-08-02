@@ -36,7 +36,7 @@ when the command short-circuits.
 `pw:page-scan`, `pw:link:graph`, `pw:flat:sync`, `pw:flat:lint`, `pw:static`,
 `pw:image:cache`, `pw:media:license`, `pw:pages-list:lint`, `pw:quiz:validate`, `pw:repurpose:render`,
 `pw:repurpose:validate`, `pw:repurpose:fonts`, `pw:newsletter:tick`, `pw:newsletter:send`,
-`pw:schema:dump`. (`pw:media:debug --json`, `pw:quiz:schema` and
+`pw:schema:dump`, `pw:page:delete`. (`pw:media:debug --json`, `pw:quiz:schema` and
 `pw:repurpose:schema` already emit JSON.)
 
 ## Adding it to a command

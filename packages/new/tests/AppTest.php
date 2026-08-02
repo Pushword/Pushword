@@ -42,6 +42,23 @@ final class AppTest extends TestCase
         $db->close();
     }
 
+    public function testStarterContentIsTheDemoSetNotTheTestFixtures(): void
+    {
+        $db = new SQLite3(self::$projectDir.'/var/app.db');
+
+        $slugs = [];
+        $result = $db->query('SELECT slug, tags FROM page ORDER BY slug');
+        self::assertNotFalse($result);
+        while (false !== ($row = $result->fetchArray(\SQLITE3_ASSOC))) {
+            $slugs[] = $row['slug'];
+            self::assertStringContainsString('demo', (string) $row['tags'], $row['slug'].' should be removable with pw:page:delete --tag=demo');
+        }
+
+        $db->close();
+
+        self::assertSame(['contact', 'examples', 'getting-started', 'homepage'], $slugs);
+    }
+
     public function testSuperAdminCreated(): void
     {
         $db = new SQLite3(self::$projectDir.'/var/app.db');

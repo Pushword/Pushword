@@ -40,7 +40,7 @@ final class UserCommandTest extends KernelTestCase
         $commandTester = new CommandTester($application->find('pw:user:create'));
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('email is required');
+        $this->expectExceptionMessageIsOrContains('email is required');
 
         $commandTester->execute([], ['interactive' => false]);
     }

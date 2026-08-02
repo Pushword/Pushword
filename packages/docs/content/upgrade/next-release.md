@@ -1,5 +1,5 @@
 ---
-title: 'six unused editorjs twig helpers are gone'
+title: 'a fresh install ships real starter content; six unused editorjs twig helpers are gone'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -32,3 +32,33 @@ depended on extension registration order.
 
 If a template of yours calls one of these, copy the body out of the git history into
 your own Twig extension. Nothing else in Pushword reads them.
+
+## A fresh install ships starter content, not the test fixtures
+
+`install.php` used to copy `dev-app`'s `AppFixtures.php` — 378 lines of the monorepo's own
+test rig — into your `src/DataFixtures`, and load it. New installs got `kitchen-sink`,
+`quiz-montagnes` (French), `fr/homepage`, `fr-ca/homepage` and two variant-demo pages,
+several of which render empty on a site that has none of the pages or bundles they refer
+to.
+
+It now copies `vendor/pushword/core/starter`: four pages — `homepage`,
+`getting-started`, `examples` and `contact` — in the app's default locale, all tagged
+`demo`. Edit `src/DataFixtures/AppFixtures.php` to seed your own content instead.
+
+Three files no longer land in `media/`: `piedweb-logo.png`, `logo.svg` and `test.pdf`.
+They are the test suite's fixtures, not yours. `dev-app` keeps all of them, so nothing
+changes when developing Pushword itself.
+
+Only fresh installs are affected — an existing `var/app.db` is never reloaded.
+
+## `pw:page:delete` removes pages by tag
+
+```bash
+php bin/console pw:page:delete --tag=demo
+```
+
+It lists what it matched and asks before deleting. Without a terminal it refuses unless
+you pass `--force`, so a hook or an agent cannot wipe pages by accident. It supports
+`--format=agent` and reports the slugs it removed.
+
+This is how you clear the starter content once you have read it.
