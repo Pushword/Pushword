@@ -4,6 +4,7 @@ namespace Pushword\Core\Tests\PropertySchema;
 
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\PropertySchema\CorePagePropertiesProvider;
 use Pushword\Core\PropertySchema\PagePropertySchemaFactory;
 use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
@@ -148,6 +149,35 @@ final class PagePropertySchemaTest extends TestCase
 
         self::assertNull($registry->schema('one.tld', 'undeclared'));
         self::assertSame($one['price_from'], $registry->schema('one.tld', 'price_from'));
+    }
+
+    public function testComplianceForReportsNearMissesAndMissingRequired(): void
+    {
+        $registry = $this->createRegistry([
+            'one.tld' => [
+                'page_properties' => [
+                    'author' => ['type' => 'string', 'required' => true],
+                ],
+            ],
+        ]);
+
+        $page = new Page();
+        $page->host = 'one.tld';
+        $page->setCustomProperty('toc_titel', 'Sommaire'); // near-miss for tocTitle
+        $page->setCustomProperty('tocTitle', 'Sommaire'); // declared by the core provider
+        $page->setCustomProperty('ogTitle', 'x'); // managed key, never reported
+
+        self::assertSame(
+            ['undeclared' => ['toc_titel'], 'missingRequired' => ['author']],
+            $registry->complianceFor($page),
+        );
+
+        $page->setCustomProperty('author', 'Robin');
+        self::assertSame(
+            ['undeclared' => ['toc_titel'], 'missingRequired' => []],
+            $registry->complianceFor($page),
+            'required is satisfied once the key exists',
+        );
     }
 
     /** @param array<string, array<string, mixed>> $appsExtra */

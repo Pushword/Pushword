@@ -114,6 +114,26 @@ final class PageSchemaPropertiesFieldTest extends AbstractAdminTestClass
         self::assertSame('beginner', $properties['level'], 'a stale textarea value writes through instead of throwing');
         self::assertSame('kept', $properties['freeKey']);
 
+        // Date and list round-trip: the date widget stores the same shape an
+        // unquoted frontmatter date yields (a Unix timestamp), the collection
+        // stores a plain list; hydration renders both back.
+        $crawler = $client->request(Request::METHOD_GET, $editPath);
+        self::assertCount(1, $crawler->filter('input#Page_eventDate'), 'the date property renders as a date input');
+        $form = $crawler->filter('form[method=post]')->form();
+        $values = $form->getPhpValues();
+        self::assertIsArray($values['Page']);
+        $values['Page']['eventDate'] = '2026-08-15';
+        $values['Page']['highlights'] = ['pool', 'sauna'];
+        $client->request(Request::METHOD_POST, $form->getUri(), $values);
+        self::assertResponseRedirects();
+
+        $properties = $this->reloadProperties();
+        self::assertSame(strtotime('2026-08-15'), $properties['eventDate'], 'the date stores as a timestamp, like YAML frontmatter');
+        self::assertSame(['pool', 'sauna'], $properties['highlights']);
+
+        $crawler = $client->request(Request::METHOD_GET, $editPath);
+        self::assertSame('2026-08-15', $crawler->filter('input#Page_eventDate')->attr('value'), 'the stored timestamp hydrates the widget');
+
         // Checkbox round-trip: checking stores true, unchecking removes the
         // key — templates test `null !== page.toc`, a stored false would lie.
         $crawler = $client->request(Request::METHOD_GET, $editPath);

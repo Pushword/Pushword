@@ -60,6 +60,7 @@ final class PagePropertyQueryTest extends KernelTestCase
                 $this->entityManager->remove($page);
             }
         }
+
         $this->entityManager->flush();
         parent::tearDown();
     }
@@ -93,6 +94,14 @@ final class PagePropertyQueryTest extends KernelTestCase
         $this->expectExceptionMessageIsOrContains('page_properties');
 
         $this->pages([['prop.undeclaredThing', '>', 2]]);
+    }
+
+    public function testComparisonWithANonNumericValueFailsClean(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('needs a numeric value');
+
+        $this->pages([['prop.priority', '>', 'abc']]);
     }
 
     public function testHostileKeyIsRejected(): void
