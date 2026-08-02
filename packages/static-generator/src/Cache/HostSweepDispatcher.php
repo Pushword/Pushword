@@ -43,8 +43,9 @@ final class HostSweepDispatcher implements ResetInterface
     #[AsEventListener]
     public function onEpochBumped(RenderEpochBumpedEvent $renderEpochBumpedEvent): void
     {
-        // Suppressed = a bulk operation owns regeneration (pw:cache:clear after a
-        // flat import). The bump stays recorded either way; only the sweep is skipped.
+        // Suppressed = a bulk operation owns regeneration (the deploy chain runs
+        // `pw:static --incremental` after a flat import). The bump stays recorded
+        // either way; only the sweep is skipped.
         if ($this->suppressor->isSuppressed()) {
             return;
         }

@@ -161,13 +161,16 @@ final class PageCacheInvalidatorTest extends TestCase
         $invalidator->preRemove($page);
     }
 
-    public function testPreRemoveSkipsWhenSuppressed(): void
+    public function testSuppressedRemoveSkipsFileDeleteButBumps(): void
     {
-        $page = $this->makePersistedPage('localhost.dev');
+        // `--force` flat imports delete every page before re-importing it: the
+        // static output must survive that reset, but listings still go stale.
+        $page = $this->makePersistedPage('localhost.dev', published: true);
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
         $this->fileManager->expects($this->never())->method('delete');
         $this->bus->expects($this->never())->method('dispatch');
+        $this->renderEpoch->expects($this->once())->method('bump')->with('localhost.dev');
 
         $this->suppressor->suppress(static fn () => $invalidator->preRemove($page));
     }
@@ -274,25 +277,33 @@ final class PageCacheInvalidatorTest extends TestCase
         $invalidator->postUpdate($page);
     }
 
-    public function testSuppressedPersistDoesNotBump(): void
+    public function testSuppressedPersistBumpsWithoutDispatching(): void
     {
+        // A bulk flat import mutes the per-page messages, but the epoch must
+        // still move: the deploy chain's `pw:static --incremental` reads it to
+        // know listings need a resweep.
         $page = $this->makePersistedPage('localhost.dev', published: true);
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
-        $this->renderEpoch->expects($this->never())->method('bump');
+        $this->bus->expects($this->never())->method('dispatch');
+        $this->renderEpoch->expects($this->once())->method('bump')->with('localhost.dev');
 
         $this->suppressor->suppress(static fn () => $invalidator->postPersist($page));
     }
 
-    public function testSuppressedUpdateDoesNotBump(): void
+    public function testSuppressedUpdateBumpsWithoutDispatching(): void
     {
         $page = $this->makePersistedPage('localhost.dev', published: true);
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
-        $this->renderEpoch->expects($this->never())->method('bump');
+        $this->bus->expects($this->never())->method('dispatch');
+        $this->renderEpoch->expects($this->once())->method('bump')->with('localhost.dev');
 
-        $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['title' => ['Old', 'New']]));
-        $this->suppressor->suppress(static fn () => $invalidator->postUpdate($page));
+        $preUpdateArgs = $this->makePreUpdateArgs($page, ['title' => ['Old', 'New']]);
+        $this->suppressor->suppress(static function () use ($invalidator, $page, $preUpdateArgs): void {
+            $invalidator->preUpdate($page, $preUpdateArgs);
+            $invalidator->postUpdate($page);
+        });
     }
 
     public function testRemovingAPublishedPageBumps(): void

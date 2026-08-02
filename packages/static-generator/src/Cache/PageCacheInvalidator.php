@@ -24,6 +24,11 @@ use Symfony\Contracts\Service\ResetInterface;
  *   (listings, navs, feeds, breadcrumbs). The bump feeds every consumer of the
  *   epoch: the sweep message for cache-mode hosts, cron `pw:static --incremental`
  *   for full-static ones — so it is deliberately not gated on cache mode.
+ *
+ * The suppressor (bulk flat imports) mutes the per-page message and the file
+ * operations, never the bump: the deploy chain runs `pw:static --incremental`
+ * after the import and relies on the epoch to know listings must resweep.
+ * (HostSweepDispatcher separately drops sweep-queueing while suppressed.)
  */
 #[AsEntityListener(event: Events::postPersist, entity: Page::class)]
 #[AsEntityListener(event: Events::preUpdate, entity: Page::class)]
@@ -62,7 +67,7 @@ final class PageCacheInvalidator implements ResetInterface
         $this->queueRefresh($page);
 
         // A new published page appears in listings, navs and feeds.
-        if (! $this->suppressor->isSuppressed() && $page->isPublished()) {
+        if ($page->isPublished()) {
             $this->renderEpoch->bump($page->host);
         }
     }
@@ -82,18 +87,16 @@ final class PageCacheInvalidator implements ResetInterface
         $relevant = isset($this->pendingListingRelevant[$objectId]);
         unset($this->pendingListingRelevant[$objectId]);
 
-        if ($relevant && ! $this->suppressor->isSuppressed()) {
+        if ($relevant) {
             $this->renderEpoch->bump($page->host);
         }
     }
 
     public function preRemove(Page $page): void
     {
-        if ($this->suppressor->isSuppressed()) {
-            return;
-        }
-
-        if ($this->isCacheSite($page)) {
+        // Suppressed = a bulk import owns the files (`--force` deletes every
+        // page before re-importing it — its output must survive that reset).
+        if (! $this->suppressor->isSuppressed() && $this->isCacheSite($page)) {
             $this->fileManager->delete($page);
         }
 

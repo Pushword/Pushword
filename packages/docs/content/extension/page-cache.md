@@ -144,7 +144,7 @@ Rule of thumb per install:
 
 ## Flat import
 
-`pushword/flat`'s `import` wraps its loop with the `PageCacheSuppressor`, so bulk imports don't fire thousands of Messenger messages. Run `pw:cache:clear` after a large import.
+`pushword/flat`'s `import` wraps its loop with the `PageCacheSuppressor`, so bulk imports don't fire thousands of Messenger messages and a `--force` re-import doesn't delete the cached files it is about to recreate. The render epoch still moves for every listing-relevant change: follow the import with `pw:static --incremental` (the `pushword-deploy publish` default) and it resweeps exactly what the import staled. `pw:cache:clear` stays the hard reset.
 
 ## Caddy config
 
