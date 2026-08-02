@@ -536,6 +536,12 @@ Templates are overridable per site through the usual view resolution, under
 `unsubscribe.html.twig`, `unsubscribed.html.twig`, `unknown.html.twig`,
 `alert.html.twig`.
 
+`confirmed.html.twig` is the override to make first. The reader landing on
+`/newsletter/confirm/{token}` just clicked a mail from you — nobody on the site
+is more engaged, and the default page spends that attention on one sentence.
+Override it with a next step: a `pages_list()` of what to read first, a call to
+action, what the site sells.
+
 ## What it deliberately does not do
 
 - **No click or open tracking.** Per-link personal-data logging is a liability in

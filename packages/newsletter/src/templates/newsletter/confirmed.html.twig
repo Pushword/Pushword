@@ -1,3 +1,9 @@
+{#
+  The reader just clicked a confirmation mail to land here — nobody on the site
+  is more engaged. Override `/newsletter/confirmed.html.twig` in the site's
+  views to put that attention to work: a pages_list() of what to read first,
+  a call to action, what the site sells.
+#}
 {% extends '@PushwordNewsletter/newsletter/layout.html.twig' %}
 
 {% block title %}{{ 'newsletter.confirmed.title'|trans }}{% endblock %}

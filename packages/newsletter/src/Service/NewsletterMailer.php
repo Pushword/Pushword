@@ -67,7 +67,10 @@ final readonly class NewsletterMailer
         $confirmUrl = $this->linkGenerator->confirmUrl($contact);
         $trans = fn (string $key): string => $this->translator->trans(
             'newsletter.confirm.'.$key,
-            ['%audience%' => $audience->getName()],
+            [
+                '%audience%' => $audience->getName(),
+                '%host%' => $this->siteRegistry->get($audience->getMainHost())->getMainHost(),
+            ],
             null,
             $contact->getLocale(),
         );

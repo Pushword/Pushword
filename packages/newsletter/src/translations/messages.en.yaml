@@ -96,9 +96,9 @@ newsletter:
     body: Thank you for signing up! To start receiving our emails, click the button below to confirm your email address.
     button: Confirm my subscription
     ignore: If you did not ask for this, ignore this mail — nothing will be sent.
-    subject: 'Confirm your subscription to %audience%'
+    subject: '%host% - Confirm your subscription'
   confirmed:
-    body: You are now subscribed to %audience%.
+    body: You are now subscribed.
     title: Subscription confirmed
   contact:
     label:

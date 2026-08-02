@@ -96,9 +96,9 @@ newsletter:
     body: Merci pour votre inscription ! Pour commencer à recevoir nos mails, cliquez sur le bouton ci-dessous afin de confirmer votre adresse e-mail.
     button: Je confirme mon inscription
     ignore: Si vous n'êtes pas à l'origine de cette demande, ignorez ce message — rien ne vous sera envoyé.
-    subject: 'Confirmez votre inscription à %audience%'
+    subject: '%host% - Confirmez votre inscription'
   confirmed:
-    body: Vous êtes désormais inscrit à %audience%.
+    body: Vous êtes désormais inscrit.
     title: Inscription confirmée
   contact:
     label:
