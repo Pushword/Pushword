@@ -148,6 +148,26 @@ final class PageApiControllerTest extends WebTestCase
         self::assertArrayNotHasKey('warnings', $this->decode());
     }
 
+    public function testWriteResponsesWarnAboutMissingRequiredKeys(): void
+    {
+        // admin-block-editor.test declares author as required. Leaving it out
+        // stores fine — required reports, it does not gate — but the write
+        // response says what the page lacks.
+        $slug = 'missing-required-'.uniqid();
+        $response = $this->request('POST', '/api/page/admin-block-editor.test', [
+            'frontmatter' => ['slug' => $slug, 'h1' => 'Test', 'locale' => 'en'],
+            'body' => 'Hello',
+        ]);
+
+        self::assertSame(201, $response->getStatusCode());
+        $body = $this->decode();
+        self::assertIsString($body['slug']);
+        $this->createdPageIds[] = $this->lookupPageId('admin-block-editor.test', $body['slug']);
+
+        self::assertIsArray($body['warnings']);
+        self::assertSame(['author'], $body['warnings']['missingRequired']);
+    }
+
     public function testCreatePageViolatingTheDeclaredSchemaReturns422(): void
     {
         // An unknown host resolves to the default app (localhost.dev), whose

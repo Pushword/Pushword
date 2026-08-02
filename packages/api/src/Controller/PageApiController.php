@@ -368,9 +368,7 @@ final class PageApiController extends AbstractApiController
      */
     private function schemaWarnings(Page $page): array
     {
-        $compliance = $this->schemaRegistry->complianceFor($page);
-
-        $warnings = array_filter($compliance, static fn (array $findings): bool => [] !== $findings);
+        $warnings = array_filter($this->schemaRegistry->complianceFor($page));
 
         return [] === $warnings ? [] : ['warnings' => $warnings];
     }
