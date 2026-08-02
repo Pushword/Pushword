@@ -248,6 +248,75 @@ final class StaticGeneratorTest extends KernelTestCase
         return new CommandTester($application->find('pw:static'));
     }
 
+    public function testIncrementalPrunesDeletedAndUnpublishedPages(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $staticDir = $this->getStaticDir();
+
+        $doomed = $this->makeProbePage('prune-deleted-probe');
+        $retired = $this->makeProbePage('prune-unpublished-probe');
+        $em->persist($doomed);
+        $em->persist($retired);
+        $em->flush();
+
+        try {
+            // Workers=1 keeps the build in-process so it reads the just-committed
+            // rows deterministically (see testHeldPageKeepsPublishedVersionAcrossFullRebuild).
+            $commandTester = new CommandTester(new Application(self::$kernel)->find('pw:static')); // @phpstan-ignore-line
+            $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
+
+            self::assertFileExists($staticDir.'/prune-deleted-probe.html');
+            self::assertFileExists($staticDir.'/prune-deleted-probe.html.gz');
+            self::assertFileExists($staticDir.'/prune-unpublished-probe.html');
+
+            $em->remove($doomed);
+            $retired->publishedAt = null;
+            $em->flush();
+
+            $commandTester = $this->rebootStaticCommandTester();
+            $commandTester->execute(['host' => 'localhost.dev', '--incremental' => true, '--workers' => 1, '--format' => 'text']);
+
+            $output = $commandTester->getDisplay();
+            self::assertStringContainsString('Removed localhost.dev/prune-deleted-probe', $output);
+            self::assertStringContainsString('Removed localhost.dev/prune-unpublished-probe', $output);
+
+            // The in-place incremental build must sweep the vanished pages' files
+            // (the full build gets this for free from its atomic dir swap)...
+            self::assertFileDoesNotExist($staticDir.'/prune-deleted-probe.html');
+            self::assertFileDoesNotExist($staticDir.'/prune-deleted-probe.html.gz');
+            self::assertFileDoesNotExist($staticDir.'/prune-unpublished-probe.html');
+            // ...without touching anything still published.
+            self::assertFileExists($staticDir.'/index.html');
+        } finally {
+            // Restore pristine state for the shared worker DB.
+            $resetEm = self::getContainer()->get('doctrine.orm.default_entity_manager');
+            $pageRepository = self::getContainer()->get(PageRepository::class);
+            foreach (['prune-deleted-probe', 'prune-unpublished-probe'] as $slug) {
+                $leftover = $pageRepository->findOneBy(['host' => 'localhost.dev', 'slug' => $slug]);
+                if (null !== $leftover) {
+                    $resetEm->remove($leftover);
+                }
+            }
+
+            $resetEm->flush();
+        }
+    }
+
+    private function makeProbePage(string $slug): Page
+    {
+        $page = new Page();
+        $page->host = 'localhost.dev';
+        $page->setSlug($slug);
+        $page->title = 'Prune probe '.$slug;
+        $page->h1 = 'Prune probe';
+        $page->setMainContent('Content destined for pruning.');
+        $page->publishedAt = new DateTime('-1 hour');
+
+        return $page;
+    }
+
     public function testHeldPageKeepsPublishedVersionAcrossFullRebuild(): void
     {
         self::bootKernel();

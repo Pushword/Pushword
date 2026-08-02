@@ -116,6 +116,16 @@ So an incremental cron converges on a fully fresh site even for changes no
 `updatedAt` reflects. Re-rendered pages whose HTML is byte-identical skip the
 write, keeping deploy diffs and rsyncs quiet.
 
+Pages deleted or unpublished since the last run are pruned: the in-place build
+removes their generated files and compression sidecars along with their state
+entries (the full build gets this for free from its atomic dir swap). Only
+pager files (`slug/2.html`) wait for the next full build — their directory also
+holds child pages' output.
+
+Bulk flat imports bump the epoch too — the `PageCacheSuppressor` mutes the
+per-page messages, never the bump — so `pw:flat:sync && pw:static --incremental`
+is a complete publish chain. It is the `pushword-deploy publish` default.
+
 `bin/console cache:clear` wipes the epoch storage (a file pool under
 `var/cache/{env}/pw_render_epoch/`): the first incremental run after a deploy
 regenerates everything — which is correct, since a deploy may change templates

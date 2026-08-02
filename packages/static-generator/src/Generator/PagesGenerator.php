@@ -32,15 +32,11 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         $hostName = $this->app->getMainHost();
         $epoch = $this->staticAppGenerator->getSampledRenderEpoch($hostName);
 
-        // Track current slugs for cleanup
-        $currentSlugs = [];
-
         $totalPages = \count($pages);
         $currentPage = 0;
 
         foreach ($pages as $page) {
             ++$currentPage;
-            $currentSlugs[] = $page->getSlug();
 
             // In incremental mode, skip pages that haven't changed
             if ($this->incremental && ! $this->needsRegeneration($page, $hostName, $epoch)) {
@@ -110,11 +106,6 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
             if (0 === $currentPage % 2) {
                 static::getKernel()->getContainer()->get('doctrine.orm.entity_manager')->clear();
             }
-        }
-
-        // Cleanup deleted pages from state
-        if ($this->incremental) {
-            $stateManager->cleanupDeletedPages($hostName, $currentSlugs);
         }
 
         $this->finishCompression();

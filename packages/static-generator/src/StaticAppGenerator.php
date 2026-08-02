@@ -205,7 +205,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         if ($this->incremental && $this->stateManager->hasState($host) && $filesystem->exists($originalStaticDir)) {
             // Incremental mode: update in place
             $this->logger->info('Incremental generation for '.$host);
-            $this->runGenerators($app);
+            $currentSlugs = $this->runGenerators($app);
             $this->lintGeneratedOutput($originalStaticDir);
         } else {
             // Full generation: use temp dir + atomic swap
@@ -215,7 +215,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             $filesystem->remove($tempDir);
             $filesystem->mkdir($tempDir);
 
-            $this->runGenerators($app);
+            $currentSlugs = $this->runGenerators($app);
 
             // Restore original staticDir before atomic swap
             $app->setCustomProperty('static_dir', $originalStaticDir);
@@ -246,6 +246,9 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
         // Save state after successful generation
         if (! $this->abortGeneration) {
+            // After the swap the pruning only trims state entries; in-place
+            // (incremental) builds also lose the files of vanished pages here.
+            $this->pruneDeletedPages($app, $originalStaticDir, $currentSlugs);
             $this->stateManager->setLastGenerationTime($host);
             $this->stateManager->setSweptEpoch($app->getMainHost(), $sampledEpoch);
             $this->stateManager->save();
@@ -274,9 +277,12 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             new StaticPreGenerateEvent($app, $cacheDir, $this->incremental),
         );
 
-        $this->runGenerators($app);
+        $currentSlugs = $this->runGenerators($app);
 
         if (! $this->abortGeneration) {
+            // Cache mode always writes in place: deleted pages must be pruned
+            // on every build, not just incremental ones.
+            $this->pruneDeletedPages($app, $cacheDir, $currentSlugs);
             $this->stateManager->setLastGenerationTime($app->getMainHost());
             $this->stateManager->setSweptEpoch($app->getMainHost(), $sampledEpoch);
             $this->stateManager->save();
@@ -325,7 +331,15 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     /** Mirrors PageGenerator::generateFilePath for the static-dir-relative path. */
     private function staticRelativePathFor(Page $page): string
     {
-        $slug = '' === $page->getRealSlug() ? 'index' : $page->getRealSlug();
+        return $this->staticRelativePathForSlug($page->getSlug());
+    }
+
+    /** @param string $slug the raw entity slug, as keyed in the generation state */
+    private function staticRelativePathForSlug(string $slug): string
+    {
+        if ('homepage' === $slug || '' === $slug) {
+            return 'index.html';
+        }
 
         if (str_ends_with($slug, '.json') || str_ends_with($slug, '.xml')) {
             return $slug;
@@ -344,7 +358,8 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         }
     }
 
-    private function runGenerators(SiteConfig $app): void
+    /** @return string[] the published slugs of the host — the witness list for pruning */
+    private function runGenerators(SiteConfig $app): array
     {
         $slugs = array_map(
             static fn (Page $page): string => $page->getSlug(),
@@ -373,6 +388,39 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             }
 
             $generatorInstance->generate();
+        }
+
+        return $slugs;
+    }
+
+    /**
+     * In-place builds (incremental and cache mode) never sweep the output of
+     * pages deleted or unpublished since the last run — only the full build's
+     * atomic swap does. Drop their state entries and their generated files.
+     * Pager files (`slug/2.html`) are left to the next full build: the pager
+     * directory also holds child pages' output.
+     *
+     * @param string[] $currentSlugs
+     */
+    private function pruneDeletedPages(SiteConfig $app, string $staticDir, array $currentSlugs): void
+    {
+        $host = $app->getMainHost();
+        $filesystem = new Filesystem();
+
+        foreach ($this->stateManager->cleanupDeletedPages($host, $currentSlugs) as $slug) {
+            $relativePath = $this->staticRelativePathForSlug($slug);
+            $bases = [$relativePath];
+            if (str_ends_with($relativePath, '.html')) {
+                $bases[] = substr($relativePath, 0, -5).'.xml'; // children feed variant
+            }
+
+            foreach ($bases as $base) {
+                foreach (CompressionAlgorithm::fileSuffixes() as $suffix) {
+                    $filesystem->remove($staticDir.'/'.$base.$suffix);
+                }
+            }
+
+            $this->writeln(\sprintf('<comment>Removed</comment> %s/%s (no longer published)', $host, '' === $slug ? 'index' : $slug));
         }
     }
 

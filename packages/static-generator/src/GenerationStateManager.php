@@ -174,24 +174,30 @@ final class GenerationStateManager
     }
 
     /**
-     * Remove pages from state that no longer exist (were deleted).
+     * Remove pages from state that no longer exist (were deleted or unpublished).
      *
      * @param string[] $currentSlugs List of slugs that currently exist
+     *
+     * @return string[] the slugs that were dropped
      */
-    public function cleanupDeletedPages(string $host, array $currentSlugs): void
+    public function cleanupDeletedPages(string $host, array $currentSlugs): array
     {
         $this->load();
 
         if (! isset($this->state[$host]['pages'])) {
-            return;
+            return [];
         }
 
         $slugSet = array_flip($currentSlugs);
+        $removedSlugs = [];
         foreach (array_keys($this->state[$host]['pages']) as $slug) {
             if (! isset($slugSet[$slug])) {
                 unset($this->state[$host]['pages'][$slug]);
+                $removedSlugs[] = $slug;
             }
         }
+
+        return $removedSlugs;
     }
 
     /**
