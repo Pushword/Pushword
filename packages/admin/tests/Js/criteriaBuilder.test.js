@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import { parseRule, serializeRule } from '../../src/Resources/assets/admin.criteriaBuilder.js'
+import { parseRule, pruneGroup, serializeRule } from '../../src/Resources/assets/admin.criteriaBuilder.js'
 
 const roundTrip = (text) => serializeRule(parseRule(text))
 
@@ -57,6 +57,57 @@ describe('serializeRule', () => {
     expect(JSON.parse(serializeRule({ any: false, children: [{ field: 'prop.x', op: 'isSet', value: '' }] }))).toEqual([
       { field: 'prop.x', op: 'isSet' },
     ])
+  })
+})
+
+// Changing an automation's source changes the language its rule is written in:
+// the fields of the one just left mostly do not exist in the one just picked.
+describe('pruneGroup', () => {
+  const pageVocabulary = { propertyPrefix: 'prop.', fields: { slug: {}, tag: {}, ancestor: {} } }
+
+  it('keeps what the new language also knows and drops the rest', () => {
+    const pruned = pruneGroup(
+      {
+        any: false,
+        children: [
+          { field: 'tag', op: 'has', value: 'a' },
+          { field: 'confirmedAt', op: 'olderThan', value: '7d' },
+        ],
+      },
+      pageVocabulary,
+    )
+
+    expect(pruned.children).toEqual([{ field: 'tag', op: 'has', value: 'a' }])
+  })
+
+  // Both languages read `prop.<key>`, and no vocabulary can list every key.
+  it('keeps any property, which every language takes', () => {
+    const pruned = pruneGroup({ any: false, children: [{ field: 'prop.whatever', op: 'isSet', value: '' }] }, pageVocabulary)
+
+    expect(pruned.children).toHaveLength(1)
+  })
+
+  // `slug` is a field of both; `slugish` is a field of neither.
+  it('does not keep a field merely because a known one prefixes it', () => {
+    const pruned = pruneGroup({ any: false, children: [{ field: 'slugish', op: '=', value: 'x' }] }, pageVocabulary)
+
+    expect(pruned.children).toEqual([])
+  })
+
+  it('drops a group left empty, and keeps the operator of one that survives', () => {
+    const pruned = pruneGroup(
+      {
+        any: true,
+        children: [
+          { any: false, children: [{ field: 'locale', op: '=', value: 'fr' }] },
+          { any: false, children: [{ field: 'slug', op: 'startsWith', value: 'blog/' }] },
+        ],
+      },
+      pageVocabulary,
+    )
+
+    expect(pruned.any).toBe(true)
+    expect(pruned.children).toEqual([{ any: false, children: [{ field: 'slug', op: 'startsWith', value: 'blog/' }] }])
   })
 })
 

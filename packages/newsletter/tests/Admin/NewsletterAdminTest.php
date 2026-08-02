@@ -211,6 +211,24 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         );
     }
 
+    /**
+     * A rule is picked from what the site holds rather than remembered — the
+     * tags carried, the slugs that already name a section.
+     */
+    public function testTheVocabularyOffersWhatTheSiteAlreadyHas(): void
+    {
+        $client = $this->loginUser();
+        $this->seed();
+
+        $contactFields = $this->subArray($this->vocabulary($client, 'contact', ''), 'fields');
+        self::assertContains('AmTrek', $this->subArray($this->subArray($contactFields, 'tag'), 'suggestions'));
+
+        $pageFields = $this->subArray($this->vocabulary($client, 'trigger', 'page'), 'fields');
+        // `parent` and `ancestor` take a slug that has pages under it, which is
+        // the only set of slugs short enough to offer.
+        self::assertContains('homepage', $this->subArray($this->subArray($pageFields, 'ancestor'), 'suggestions'));
+    }
+
     public function testAnUnknownSourceHasNoVocabulary(): void
     {
         $client = $this->loginUser();
@@ -220,6 +238,18 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
 
         self::assertSame(400, $client->getResponse()->getStatusCode());
         self::assertStringContainsString('No trigger source is named', (string) $client->getResponse()->getContent());
+    }
+
+    /** Neither side named means no language to read the rule in, and no guess. */
+    public function testAnUnknownSideHasNoVocabulary(): void
+    {
+        $client = $this->loginUser();
+        $this->seed();
+
+        $client->request(Request::METHOD_GET, '/admin/newsletter/criteria/vocabulary?side=whatever');
+
+        self::assertSame(400, $client->getResponse()->getStatusCode());
+        self::assertStringContainsString('Unknown criteria side', (string) $client->getResponse()->getContent());
     }
 
     /** Counting a rule is asking a question, so it must not answer by storing it. */
@@ -253,6 +283,34 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertSame([['field' => 'slug', 'op' => 'startsWith', 'value' => 'stored/']], $stored->triggerWhen);
     }
 
+    /**
+     * A fresh automation counts zero by construction — its start date is its
+     * creation, and nothing has happened since. Lifting it is what answers
+     * "would this rule ever catch anything" while the rule is being written.
+     */
+    public function testTheStartDateGuardCanBeLiftedForTheCount(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $automation = new Automation();
+        $automation->audience = $audience;
+        $automation->name = 'Since me';
+        $automation->source = 'page';
+        $this->entityManager()->persist($automation);
+        $this->entityManager()->flush();
+
+        $payload = [
+            'side' => 'trigger',
+            'source' => 'page',
+            'automation' => $automation->id,
+            'rule' => '[{"field":"slug","op":"startsWith","value":"kitchen"}]',
+        ];
+
+        self::assertSame(0, $this->preview($client, $payload)['count'], 'nothing has been published since it was created');
+        self::assertGreaterThan(0, $this->preview($client, [...$payload, 'sinceAll' => true])['count']);
+    }
+
     /** The other side of the rule: who a broadcast would reach, as it is typed. */
     public function testThePreviewCountsTheContactsASegmentReaches(): void
     {
@@ -279,6 +337,12 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
 
         self::assertNull($preview['count']);
         self::assertTrue($preview['saveFirst']);
+
+        // The same on the contact side, where a count is over one audience and
+        // no audience is picked yet.
+        $noAudience = $this->preview($client, ['side' => 'contact', 'rule' => '']);
+        self::assertNull($noAudience['count']);
+        self::assertTrue($noAudience['needsAudience']);
     }
 
     /** While typing, a broken rule is an answer — the one the save would give. */

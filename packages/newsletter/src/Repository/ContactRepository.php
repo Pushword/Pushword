@@ -31,7 +31,7 @@ class ContactRepository extends ServiceEntityRepository
     /**
      * The tags the base carries, for the segment editor to offer.
      *
-     * @return list<string>
+     * @return string[]
      */
     public function getAllTags(): array
     {
@@ -42,10 +42,10 @@ class ContactRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
 
-        return $this->sorted($this->flattenTags($rows));
+        return $this->flattenTags($rows);
     }
 
-    /** @return list<string> */
+    /** @return string[] */
     public function getAllLocales(): array
     {
         /** @var array{locale: string}[] $rows */
@@ -55,7 +55,7 @@ class ContactRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
 
-        return $this->sorted(array_column($rows, 'locale'));
+        return array_column($rows, 'locale');
     }
 
     /**
@@ -63,7 +63,7 @@ class ContactRepository extends ServiceEntityRepository
      * are whatever an import or the API wrote — there is no declaration to read
      * them from, unlike a page's `page_properties`.
      *
-     * @return list<string>
+     * @return string[]
      */
     public function getAllPropertyKeys(): array
     {
@@ -79,7 +79,7 @@ class ContactRepository extends ServiceEntityRepository
             $keys = [...$keys, ...array_keys($row['customProperties'])];
         }
 
-        return $this->sorted($keys);
+        return array_values(array_unique($keys));
     }
 
     public function findOneByEmail(Audience $audience, string $email): ?Contact
@@ -163,18 +163,5 @@ class ContactRepository extends ServiceEntityRepository
             ->orderBy('a.slug', 'ASC')
             ->getQuery()
             ->getResult();
-    }
-
-    /**
-     * @param string[] $values
-     *
-     * @return list<string>
-     */
-    private function sorted(array $values): array
-    {
-        $values = array_values(array_unique($values));
-        sort($values);
-
-        return $values;
     }
 }

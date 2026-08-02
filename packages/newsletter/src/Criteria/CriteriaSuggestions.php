@@ -22,9 +22,13 @@ interface CriteriaSuggestions
     public function criteria(): string;
 
     /**
+     * The values themselves, in whatever order they come out: deduplicating and
+     * ordering what is offered is {@see CriteriaVocabulary}'s, so an
+     * implementation is only ever a query.
+     *
      * @param string[] $hosts the sites in scope, empty for every one
      *
-     * @return array<string, list<string>> by field name, {@see AbstractCriteria::PROP_PREFIX} holding property keys
+     * @return array<string, string[]> by field name, {@see AbstractCriteria::PROP_PREFIX} holding property keys
      */
     public function suggest(array $hosts): array;
 }

@@ -100,11 +100,7 @@ final class CriteriaController extends AbstractController
 
         try {
             $rule = $criteria::fromJson(\is_string($payload['rule'] ?? null) ? $payload['rule'] : '');
-        } catch (SegmentException $segmentException) {
-            return new JsonResponse(['error' => $segmentException->getMessage()]);
-        }
 
-        try {
             return new JsonResponse(self::SIDE_TRIGGER === $side
                 ? $this->countTrigger($source, $rule, $payload)
                 : $this->countContacts($rule, $payload));

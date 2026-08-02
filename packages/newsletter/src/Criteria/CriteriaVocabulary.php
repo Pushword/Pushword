@@ -87,9 +87,19 @@ final readonly class CriteriaVocabulary
     private function suggestions(string $criteria, array $hosts): array
     {
         foreach ($this->suggesters as $suggester) {
-            if ($suggester->criteria() === $criteria) {
-                return $suggester->suggest($hosts);
+            if ($suggester->criteria() !== $criteria) {
+                continue;
             }
+
+            // Deduplicated and alphabetical here rather than in each provider:
+            // that a list read by an editor is ordered is this layer's business,
+            // and a provider that only knows how to query should not repeat it.
+            return array_map(static function (array $values): array {
+                $values = array_values(array_unique($values));
+                sort($values);
+
+                return $values;
+            }, $suggester->suggest($hosts));
         }
 
         return [];

@@ -118,6 +118,7 @@ function isGroup(node) {
   return Object.prototype.hasOwnProperty.call(node, 'children')
 }
 
+/** Only ever spent on datalist ids, which have to be unique across the page. */
 let uid = 0
 
 class CriteriaBuilder {
@@ -125,7 +126,6 @@ class CriteriaBuilder {
     this.textarea = textarea
     this.form = textarea.closest('form')
     this.side = textarea.dataset.pwCriteria
-    this.uid = `pw-criteria-${++uid}`
     this.model = parseRule(textarea.value)
     this.raw = this.model === null
     this.sinceAll = false
@@ -517,7 +517,7 @@ class CriteriaBuilder {
     if (suggestions.length === 0) return
 
     const list = element('datalist')
-    list.id = `${this.uid}-${++uid}`
+    list.id = `pw-criteria-list-${++uid}`
     suggestions.forEach((suggestion) => {
       const option = element('option')
       option.value = suggestion
@@ -570,7 +570,7 @@ class CriteriaBuilder {
 }
 
 /** Drop what the language just picked has no field for, keeping the rest. */
-function pruneGroup(group, vocabulary) {
+export function pruneGroup(group, vocabulary) {
   return {
     any: group.any,
     children: group.children

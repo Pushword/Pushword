@@ -36,7 +36,7 @@ final readonly class PageCriteriaSuggestions implements CriteriaSuggestions
         $sections = $this->sections($hosts);
 
         return [
-            'tag' => $this->sorted($this->pageRepository->getAllTags([] !== $hosts ? $hosts : null)),
+            'tag' => $this->pageRepository->getAllTags([] !== $hosts ? $hosts : null),
             'template' => $this->templates($hosts),
             'parent' => $sections,
             'ancestor' => $sections,
@@ -48,7 +48,7 @@ final readonly class PageCriteriaSuggestions implements CriteriaSuggestions
     /**
      * @param string[] $hosts
      *
-     * @return list<string>
+     * @return string[]
      */
     private function sections(array $hosts): array
     {
@@ -61,27 +61,31 @@ final readonly class PageCriteriaSuggestions implements CriteriaSuggestions
             $queryBuilder->andWhere('p.host IN (:hosts)')->setParameter('hosts', $hosts);
         }
 
-        return $this->column($queryBuilder->getQuery()->getResult(), 'slug');
+        return array_column($queryBuilder->getQuery()->getResult(), 'slug');
     }
 
     /**
      * @param string[] $hosts
      *
-     * @return list<string>
+     * @return string[]
      */
     private function templates(array $hosts): array
     {
         $queryBuilder = $this->entityManager->createQueryBuilder()
             ->select('DISTINCT p.template')
-            ->from(Page::class, 'p')
-            ->andWhere('p.template IS NOT NULL')
-            ->andWhere("p.template != ''");
+            ->from(Page::class, 'p');
 
         if ([] !== $hosts) {
             $queryBuilder->andWhere('p.host IN (:hosts)')->setParameter('hosts', $hosts);
         }
 
-        return $this->column($queryBuilder->getQuery()->getResult(), 'template');
+        // A page inheriting its template stores none, which `DISTINCT` brings
+        // back as one null row; dropping it here rather than in the query keeps
+        // "no template" a single idea.
+        return array_filter(
+            array_column($queryBuilder->getQuery()->getResult(), 'template'),
+            static fn (?string $template): bool => null !== $template && '' !== $template,
+        );
     }
 
     /**
@@ -91,7 +95,7 @@ final readonly class PageCriteriaSuggestions implements CriteriaSuggestions
      *
      * @param string[] $hosts
      *
-     * @return list<string>
+     * @return string[]
      */
     private function propertyKeys(array $hosts): array
     {
@@ -101,32 +105,6 @@ final readonly class PageCriteriaSuggestions implements CriteriaSuggestions
             $keys = [...$keys, ...array_keys($this->schemaRegistry->for($host))];
         }
 
-        return $this->sorted($keys);
-    }
-
-    /**
-     * @param mixed[] $rows
-     *
-     * @return list<string>
-     */
-    private function column(array $rows, string $key): array
-    {
-        /** @var list<string> $values */
-        $values = array_column($rows, $key);
-
-        return $this->sorted($values);
-    }
-
-    /**
-     * @param string[] $values
-     *
-     * @return list<string>
-     */
-    private function sorted(array $values): array
-    {
-        $values = array_values(array_unique($values));
-        sort($values);
-
-        return $values;
+        return $keys;
     }
 }
