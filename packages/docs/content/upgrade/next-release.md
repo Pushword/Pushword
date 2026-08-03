@@ -28,7 +28,7 @@ absorbs needs no note.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** pushword/static-generator
+**Concerns:** `pushword/static-generator`
 
 ## The opcache file cache moved under `var/cache/opcache/w{n}`
 
