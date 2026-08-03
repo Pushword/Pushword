@@ -2,6 +2,8 @@
 
 namespace Pushword\Search\Tests;
 
+use Loupe\Loupe\Internal\Index\IndexInfo;
+use PDO;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Search\Event\SearchDocumentEvent;
@@ -25,6 +27,16 @@ final class StaticSearchSubscriberTest extends KernelTestCase
         try {
             self::assertFileExists($dir.'/search.json');
             self::assertFileExists($dir.'/search/loupe.db');
+
+            // Loupe writes in WAL mode: the documents land in `loupe.db-wal` and
+            // reach `loupe.db` only once it is checkpointed. Copying the bare file
+            // before that ships a valid but empty index — the JSON fallback still
+            // works, so only counting the rows catches it.
+            self::assertGreaterThan(
+                0,
+                $this->countExportedDocuments($dir),
+                'the exported index must carry the documents, not just an empty header page',
+            );
 
             // simple-jekyll-search calls .trim() on every field value, so each
             // one must be a string — an array (e.g. tags) breaks client search.
@@ -121,6 +133,29 @@ final class StaticSearchSubscriberTest extends KernelTestCase
         $dispatcher->dispatch(new StaticPostGenerateEvent($app, $dir, false, $errors));
 
         return $dir;
+    }
+
+    /**
+     * Read the exported index as a deployed endpoint would: straight off the
+     * copied file, with none of the sidecars that were next to the original.
+     */
+    private function countExportedDocuments(string $dir): int
+    {
+        $pdo = new PDO('sqlite:'.$dir.'/search/loupe.db');
+
+        // Copied before the WAL was folded in, the file carries no schema at all —
+        // report that as zero documents so the assertion, not PDO, tells the story.
+        $tables = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = '".IndexInfo::TABLE_NAME_DOCUMENTS."'");
+        self::assertNotFalse($tables);
+
+        if (false === $tables->fetchColumn()) {
+            return 0;
+        }
+
+        $statement = $pdo->query('SELECT COUNT(*) FROM '.IndexInfo::TABLE_NAME_DOCUMENTS);
+        self::assertNotFalse($statement);
+
+        return (int) $statement->fetchColumn();
     }
 
     /**

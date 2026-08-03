@@ -46,6 +46,10 @@ final readonly class StaticSearchSubscriber implements EventSubscriberInterface
         $this->indexManager->replaceAll($host, $documents);
 
         if (\in_array($this->staticMode, ['endpoint', 'both'], true)) {
+            // The documents just written are still in the WAL; without this the
+            // copied file is an empty index.
+            $this->indexManager->checkpoint($host);
+
             $this->filesystem->copy(
                 $this->indexManager->getIndexFile($host),
                 $event->staticDir.'/search/loupe.db',

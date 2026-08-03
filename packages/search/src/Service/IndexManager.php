@@ -2,12 +2,17 @@
 
 namespace Pushword\Search\Service;
 
+use Doctrine\DBAL\Exception\DriverException;
 use Loupe\Loupe\Configuration as LoupeConfiguration;
 use Loupe\Loupe\Loupe;
 use Loupe\Loupe\LoupeFactory;
+use PDO;
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\preg_replace;
+
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Opens (and lazily creates) one Loupe index per host.
@@ -17,6 +22,12 @@ use function Safe\preg_replace;
  */
 final class IndexManager
 {
+    /**
+     * SQLite codes meaning the file cannot be read as a database at all:
+     * SQLITE_CORRUPT and SQLITE_NOTADB.
+     */
+    private const array UNREADABLE_INDEX_CODES = [11, 26];
+
     /** @var array<string, Loupe> */
     private array $indexes = [];
 
@@ -33,6 +44,7 @@ final class IndexManager
         string $indexDir,
         private readonly array $searchableAttributes,
         private readonly array $filterableAttributes,
+        private readonly ?LoggerInterface $logger = null,
     ) {
         // ParaTest isolates the index dir per worker to avoid SQLite races on
         // a shared var/search, mirroring the static generator's cache dir.
@@ -44,10 +56,27 @@ final class IndexManager
 
     public function getLoupe(string $host): Loupe
     {
-        return $this->indexes[$host] ??= $this->factory->create(
-            $this->getIndexPath($host),
-            $this->buildConfiguration($host),
-        );
+        return $this->indexes[$host] ??= $this->openIndex($host);
+    }
+
+    /**
+     * Fold the write-ahead log back into `loupe.db`, leaving the file
+     * self-contained.
+     *
+     * Loupe indexes in WAL mode, so right after a write the documents sit in
+     * `loupe.db-wal` and the main file still holds none of them. Anything that
+     * copies the bare file — the static export — ships an empty index without
+     * this.
+     */
+    public function checkpoint(string $host): void
+    {
+        if (! $this->exists($host)) {
+            return;
+        }
+
+        // Loupe keeps its own connection private, and a checkpoint is valid over
+        // any connection to the file.
+        new PDO('sqlite:'.$this->getIndexFile($host))->exec('PRAGMA wal_checkpoint(TRUNCATE)');
     }
 
     /**
@@ -78,6 +107,43 @@ final class IndexManager
     public function exists(string $host): bool
     {
         return is_file($this->getIndexFile($host));
+    }
+
+    /**
+     * Loupe deliberately runs SQLite with `synchronous = OFF` — a search index is
+     * rebuildable, so it trades durability for write speed. The cost is that a
+     * writer killed mid-checkpoint leaves `loupe.db` unreadable, and every later
+     * open then fails for good, taking the whole static build down with it. Take
+     * Loupe up on its own remedy: drop the unusable file and index again.
+     */
+    private function openIndex(string $host): Loupe
+    {
+        $loupe = $this->createLoupe($host);
+
+        try {
+            // An unreadable file only gives itself away when queried, not when opened.
+            $loupe->needsReindex();
+
+            return $loupe;
+        } catch (DriverException $driverException) {
+            if (! \in_array($driverException->getCode(), self::UNREADABLE_INDEX_CODES, true)) {
+                throw $driverException;
+            }
+
+            $this->logger?->warning(
+                'Search: the index of {host} was unreadable and has been reset — run pw:search:index to repopulate it.',
+                ['host' => $host],
+            );
+        }
+
+        new Filesystem()->remove($this->getIndexPath($host));
+
+        return $this->createLoupe($host);
+    }
+
+    private function createLoupe(string $host): Loupe
+    {
+        return $this->factory->create($this->getIndexPath($host), $this->buildConfiguration($host));
     }
 
     private function buildConfiguration(string $host): LoupeConfiguration

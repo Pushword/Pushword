@@ -113,6 +113,21 @@ no-PHP page cache (a dynamic exception, like the `liveBlock` fragments). Add
   like Loupe — minus typo tolerance and stemming;
 - **`both`** (default) — both.
 
+The exported `loupe.db` is checkpointed before it is copied, so the file carries
+the documents on its own — Loupe writes through a log that lives beside it, and a
+copy taken mid-write would be a valid but empty index.
+
+### Recovering a damaged index
+
+Loupe runs SQLite with `synchronous = OFF`: a search index is rebuildable, so it
+trades durability for write speed. A writer killed mid-checkpoint — power loss, an
+OOM kill, an interrupted deploy — therefore leaves `loupe.db` unreadable, and
+SQLite refuses it from then on (`26 file is not a database`).
+
+Such an index is dropped and recreated the next time it is opened, with a warning
+in the log. It comes back **empty**: run `pw:search:index` to repopulate it. A
+`pw:static` build refills it on its own, since it reindexes as part of the build.
+
 ## Configuration
 
 ```yaml

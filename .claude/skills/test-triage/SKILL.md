@@ -34,22 +34,33 @@ services hardcoded `%kernel.project_dir%/var`, so every worker shared one
 then read. They take `%pw.var_dir%` now. Treat a fresh failure here as real, and check
 whether a new service reintroduced the hardcoded path.
 
-**`StaticGenerator\Tests\StaticGeneratorTest::testParallelGeneration*`** — in CI, output
-ends `SQLSTATE[HY000]: General error: 26 file is not a database`. Read the stack before
-assuming it is the dev-app DB: the connection that fails is Loupe's, opened from
-`IndexManager::getLoupe()` under `StaticSearchSubscriber::onPostGenerate` — the corrupt
-file is the per-worker search index, `%pw.var_dir%/search/<host>/loupe.db`, not
-`test.db`. Whatever leaves it corrupt has not been pinned down; it does not reproduce
-from the serial group alone (that batch passes repeatedly in a fresh run dir), only when
-the batch inherits a `var/` the parallel batch already wrote. The first casualty is
-usually whichever static test runs first — `CacheClearCommandTest::testCacheClearWarmsFiles`
-in one run — and every later test that generates then fails the same way. It has hit both
-PHP 8.5 jobs at once while all 8.4 and MariaDB jobs passed, which *looks* like a version
-regression and is not — a plain `gh run rerun --failed` goes green with no code change.
-Note the matrix is fail-fast, so one flaked shard cancels its siblings and the whole run
-reads red. Locally the same class throws `Unable to guess
+**`StaticGenerator\Tests\StaticGeneratorTest::testParallelGeneration*`** — output ends
+`SQLSTATE[HY000]: General error: 26 file is not a database`. **The amplifier is fixed;
+treat a fresh occurrence as real.** Read the stack before assuming it is the dev-app DB:
+the connection that fails is Loupe's, opened from `IndexManager::getLoupe()` under
+`StaticSearchSubscriber::onPostGenerate` — the file is the per-worker search index,
+`%pw.var_dir%/search/<host>/loupe.db`, not `test.db`.
+
+Why one damaged file used to redden a whole run: Loupe sets `synchronous = OFF`
+(`LoupeFactory::optimizeSQLiteConnection`), so a writer killed mid-checkpoint leaves
+`loupe.db` with a torn header — and SQLITE_NOTADB is **permanent**, so every later
+process that opened that index failed too. Since the index is built on post-generate,
+each failure took the whole build down with it. That is why the first casualty was
+whichever static test ran first (`CacheClearCommandTest::testCacheClearWarmsFiles` in one
+run) and everything after it fell over the same way, and why the serial batch was the
+victim: it reuses `TEST_TOKEN=1`, i.e. parallel worker 1's var dir, because CI runs both
+batches under one `TEST_RUN_ID`. `IndexManager` now resets an unreadable index instead of
+propagating, so the damage no longer cascades. What *damaged* the file in the first place
+was never caught in the act — it did not reproduce in 4 full local batch pairs.
+
+It once hit both PHP 8.5 jobs while all 8.4 and MariaDB jobs passed, which *looks* like a
+version regression and is not. Note the matrix is fail-fast, so one flaked shard cancels
+its siblings and the whole run reads red — check `conclusion` on the siblings via
+`gh api repos/:owner/:repo/actions/jobs/<id>` before believing four jobs failed.
+
+Locally the same class throws `Unable to guess
 "…/public/media/md/2.jpg.<n>.<hash>.tmp" file type` — an image-optimizer temp file caught
-mid-write in the shared `public/media` dir. Both re-run green and pass in isolation.
+mid-write in the shared `public/media` dir. That one re-runs green and passes in isolation.
 
 **`StaticGeneratorTest::testParallelWorkersPopulateAnOpcacheFileCache` — was never a
 flake.** It failed on the MariaDB job and only there, every run, because that job is the
