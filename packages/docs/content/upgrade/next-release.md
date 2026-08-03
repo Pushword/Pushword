@@ -1,5 +1,5 @@
 ---
-title: 'parallel static workers each get their own opcache file cache'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -27,21 +27,3 @@ absorbs needs no note.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/static-generator`
-
-## The opcache file cache moved under `var/cache/opcache/w{n}`
-
-`pw:static` used to point every parallel worker at one shared
-`var/cache/opcache`. Concurrent processes writing a single opcache file cache
-segfault the workers on some PHP builds (reported on CloudLinux alt-php 8.4.3:
-6 workers out of 8 killed on every run, exit 139). Each worker now writes its own
-directory.
-
-Nothing to run: the new directories are created on the next build. Two things to
-know:
-
-- The old shared entries are now orphaned — delete `var/cache/opcache` once to
-  reclaim the space (safe at any time; the next build refills what it needs).
-- Disk grows to roughly one full compiled-code cache per worker. If the build
-  machine is tight on disk, cap the workers with `pw:static --workers=N`.
