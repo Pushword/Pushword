@@ -440,16 +440,22 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         }
 
         $stateDir = $this->projectDir.'/var';
+        $filesystem = new Filesystem();
 
         // CLI opcache is per-process, so each worker recompiles the whole
-        // codebase unless compiled scripts persist on disk. The file cache is
-        // shared across workers and successive builds (~-18% per fresh worker
-        // pass); the flags are inert when the CLI has no opcache extension.
-        // The cache also outlives composer update, so timestamp validation is
-        // forced on: a host ini tuning it off would silently keep serving
-        // entries compiled from the pre-update sources.
+        // codebase unless compiled scripts persist on disk (~-18% per fresh
+        // worker pass); the flags are inert when the CLI has no opcache
+        // extension. The cache outlives composer update, so timestamp
+        // validation is forced on: a host ini tuning it off would silently keep
+        // serving entries compiled from the pre-update sources.
+        //
+        // One directory per worker, never a shared one: concurrent processes
+        // writing the same file cache segfault (reported on alt-php 8.4.3,
+        // 6 workers out of 8 killed on every run; per-worker directories, and
+        // either flag alone, never crashed). Each worker still warms its own
+        // cache once and reuses it across builds, so only the disk cost —
+        // roughly one full cache per worker — is traded away.
         $opcacheDir = $stateDir.'/cache/opcache';
-        new Filesystem()->mkdir($opcacheDir);
 
         $processes = [];
 
@@ -460,6 +466,8 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
             $stateFile = $stateDir.'/.static-worker-'.$i.'.json';
             $redirectionsFile = $stateDir.'/.static-worker-'.$i.'-redirections.json';
+            $workerOpcacheDir = $opcacheDir.'/w'.$i;
+            $filesystem->mkdir($workerOpcacheDir);
 
             $cmd = [
                 'php',
@@ -469,7 +477,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
                 // empty and every worker recompiles from source, silently.
                 '-d', 'opcache.enable=1',
                 '-d', 'opcache.enable_cli=1',
-                '-d', 'opcache.file_cache='.$opcacheDir,
+                '-d', 'opcache.file_cache='.$workerOpcacheDir,
                 '-d', 'opcache.validate_timestamps=1',
                 'bin/console', 'pw:static:worker', $host,
                 '--slugs='.implode(',', $chunk),
@@ -509,14 +517,15 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
                 $process = $worker['process'];
                 $running = $running || $process->isRunning();
 
-                $output = $process->getIncrementalOutput();
-                if ('' !== $output) {
-                    foreach (explode("\n", rtrim($output, "\n")) as $line) {
-                        $this->writeln(\sprintf('<comment>[W%d]</comment> %s', $i, $line));
-                    }
+                foreach ($this->outputLines($process->getIncrementalOutput()) as $line) {
+                    $this->writeln(\sprintf('<comment>[W%d]</comment> %s', $i, $line));
                 }
 
-                $process->getIncrementalErrorOutput(); // drain stderr
+                // Warnings and fatals reach the parent only here: a worker that
+                // dies mid-chunk, or survives while complaining, said it on stderr.
+                foreach ($this->outputLines($process->getIncrementalErrorOutput()) as $line) {
+                    $this->writeln(\sprintf('<comment>[W%d]</comment> <fg=red>%s</>', $i, $line));
+                }
             }
 
             if ($running) {
@@ -528,12 +537,29 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             $process = $worker['process'];
 
             if (! $process->isSuccessful()) {
-                $this->setError(\sprintf('Worker %d failed (exit %d): %s', $i, $process->getExitCode() ?? -1, $process->getErrorOutput()));
+                // A worker killed by a signal — segfault, OOM killer — writes
+                // nothing before dying, so the exit code is the whole diagnosis:
+                // spell it out instead of reporting a bare number and no message.
+                $errorOutput = trim($process->getErrorOutput());
+
+                $this->setError(\sprintf(
+                    'Worker %d failed (exit %d: %s): %s',
+                    $i,
+                    $process->getExitCode() ?? -1,
+                    $process->getExitCodeText() ?? 'unknown',
+                    '' === $errorOutput ? 'no error output' : $errorOutput,
+                ));
             }
 
             $this->stateManager->mergeFromFile($worker['stateFile']);
             $this->redirectionManager->importFromFile($worker['redirectionsFile']);
         }
+    }
+
+    /** @return string[] */
+    private function outputLines(string $output): array
+    {
+        return '' === $output ? [] : explode("\n", rtrim($output, "\n"));
     }
 
     /** See StaticOutputLinter — every configured host (aliases included) is a forbidden first path segment. */

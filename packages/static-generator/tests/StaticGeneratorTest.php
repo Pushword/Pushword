@@ -1503,7 +1503,9 @@ final class StaticGeneratorTest extends KernelTestCase
         $tester->execute(['host' => 'localhost.dev', '--workers' => 2, '--format' => 'text']);
         self::assertStringContainsString('success', $tester->getDisplay());
 
-        self::assertDirectoryExists($opcacheDir);
+        // One cache per worker, never a shared one: concurrent writers into a
+        // single file cache segfault the workers on some PHP builds.
+        self::assertDirectoryExists($opcacheDir.'/w0');
 
         // The flags are the worker's, so the precondition is the worker's too.
         // Reading this process says little: opcache can be loaded here and still
@@ -1515,7 +1517,7 @@ final class StaticGeneratorTest extends KernelTestCase
         }
 
         self::assertTrue(
-            $this->holdsAFile($opcacheDir),
+            $this->holdsAFile($opcacheDir.'/w0'),
             'A child of this process file-caches, so the workers should have written compiled scripts too.',
         );
     }

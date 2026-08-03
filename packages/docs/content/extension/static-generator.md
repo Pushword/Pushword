@@ -141,13 +141,19 @@ starts a background pass and returns a URL to poll. See
 
 ### Performance
 
-Hosts with 10+ pages are rendered by parallel worker processes. Workers share a
-compiled-script cache in `var/cache/opcache` (opcache file cache) — the first
-build fills it, every following build and worker reuses it. Nothing to
-configure; the flags are inert if the CLI PHP has no opcache extension. Because
-the cache outlives `composer update`, the workers force
-`opcache.validate_timestamps=1`: a host ini tuning it off would silently keep
-serving scripts compiled from the pre-update sources.
+Hosts with 10+ pages are rendered by parallel worker processes. Each worker
+keeps a compiled-script cache in `var/cache/opcache/w{n}` (opcache file cache) —
+its first build fills it, every following build reuses it. Nothing to configure;
+the flags are inert if the CLI PHP has no opcache extension. Because the cache
+outlives `composer update`, the workers force `opcache.validate_timestamps=1`: a
+host ini tuning it off would silently keep serving scripts compiled from the
+pre-update sources.
+
+The caches are per worker rather than shared because concurrent processes
+writing one file cache segfault the workers on some PHP builds. Budget the disk
+accordingly: one full compiled-code cache per worker (a few hundred MB for a
+typical app across 8 workers). Deleting the directory is always safe — the next
+build refills it.
 
 The parent `pw:static` process (and any sequential build) can opt into the same
 cache manually — keep the validation flag if your ini disables it:
