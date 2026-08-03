@@ -46,6 +46,7 @@ use function Safe\realpath;
 use SplFileInfo;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -1550,6 +1551,43 @@ final class StaticGeneratorTest extends KernelTestCase
         $filesystem->remove($probeDir);
 
         return $cached;
+    }
+
+    /**
+     * A worker killed by a signal writes nothing before dying, so its exit code
+     * is everything the parent gets — reported as a bare number, every crash read
+     * `failed (exit 139):` with nothing after the colon. `exit(139)` stands in for
+     * the segfault here: Symfony reports a signaled child as 128 + the signal, so
+     * a real SIGSEGV reaches this code as that same exit code and empty stderr.
+     */
+    public function testAFailedWorkerIsReportedWithWhatKilledItAndItsStderr(): void
+    {
+        self::bootKernel();
+        $staticAppGenerator = self::getContainer()->get(StaticAppGenerator::class);
+
+        $output = new BufferedOutput();
+        $staticAppGenerator->setOutput($output);
+
+        // A worker that dies leaves no state files behind, as here.
+        $missing = sys_get_temp_dir().'/pushword-no-such-worker-file-'.getmypid().'.json';
+
+        $workers = [];
+        foreach ([0 => 'exit(139);', 1 => 'fwrite(STDERR, "PHP Fatal error: boom\n"); exit(255);'] as $i => $code) {
+            $process = new Process(['php', '-r', $code]);
+            $process->start();
+            $workers[$i] = ['process' => $process, 'stateFile' => $missing, 'redirectionsFile' => $missing];
+        }
+
+        new ReflectionMethod(StaticAppGenerator::class, 'waitForWorkers')->invoke($staticAppGenerator, $workers);
+
+        $errors = $staticAppGenerator->getErrors();
+        self::assertCount(2, $errors);
+        self::assertSame('Worker 0 failed (exit 139: Segmentation violation): no error output', $errors[0]);
+        self::assertStringContainsString('Worker 1 failed (exit 255:', $errors[1]);
+        self::assertStringContainsString('PHP Fatal error: boom', $errors[1]);
+
+        // Stderr also reaches the operator while the build runs, not only after it.
+        self::assertStringContainsString('[W1] PHP Fatal error: boom', $output->fetch());
     }
 
     private function holdsAFile(string $dir): bool
