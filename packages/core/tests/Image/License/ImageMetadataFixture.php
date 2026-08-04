@@ -28,8 +28,8 @@ final class ImageMetadataFixture
     private const string EXIF_SIGNATURE = "Exif\0\0";
 
     /**
-     * @param array<string, string> $exif    tag name => ASCII value (Artist, Copyright)
-     * @param array<string, string> $iptcIim IIM tag ("2#080") => value
+     * @param array<string, string>              $exif    tag name => ASCII value (Artist, Copyright)
+     * @param array<string, string|list<string>> $iptcIim IIM tag ("2#080") => value, or values for a repeatable tag
      */
     public static function write(
         string $path,
@@ -69,7 +69,7 @@ final class ImageMetadataFixture
      * The APP13 payload as getimagesize() reports it and iptcparse() expects it —
      * what the browser forwards when it strips a file before uploading it.
      *
-     * @param array<string, string> $iptcIim
+     * @param array<string, string|list<string>> $iptcIim
      */
     public static function iimPayload(array $iptcIim): string
     {
@@ -333,7 +333,10 @@ final class ImageMetadataFixture
      * 8BIM container holding the IPTC-IIM resource (0x0404); each dataset is
      * 0x1C, record, tag, then a 2-byte length.
      *
-     * @param array<string, string> $iptcIim
+     * A list value writes one dataset per entry — how repeatable tags such as the
+     * keywords (2#025) a photo manager exports actually appear in a file.
+     *
+     * @param array<string, string|list<string>> $iptcIim
      */
     private static function photoshopIptcBlock(array $iptcIim): string
     {
@@ -358,7 +361,9 @@ final class ImageMetadataFixture
                 continue;
             }
 
-            $datasets .= "\x1C".\chr($record).\chr($dataset).pack('n', \strlen($value)).$value;
+            foreach ((array) $value as $occurrence) {
+                $datasets .= "\x1C".\chr($record).\chr($dataset).pack('n', \strlen($occurrence)).$occurrence;
+            }
         }
 
         // '8BIM' + resource id + empty Pascal name (padded to even) + size + data
