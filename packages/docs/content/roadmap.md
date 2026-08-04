@@ -22,16 +22,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] simple image self linked (`component/image.html.twig` never wraps in a link)
   - [ ] convertImageLinkToWebPLink() is not working anymore
 
-- [AdminBlockEditor] rerender de l'inline-toolbar https://github.com/codex-team/editor.js/issues/2821
-  - [x] PR #2993 mergée et sortie en **2.31.4** ("Prevent inline-toolbar re-renders when
-        linked text is selected", `defaultValue` au lieu de `.value`) — on est en 2.31.6
-  - [x] notre `Hyperlink.ts` est un tool maison, pas le `inline-tool-link` upstream : il
-        porte déjà l'équivalent (`setAttribute('value', …)`, l'ancienne ligne juste
-        au-dessus en commentaire)
-  - [ ] valider à la main dans l'admin (l'inline toolbar ne s'ouvre pas sous sélection
-        synthétique, donc non vérifiable en headless) — puis fermer l'issue upstream,
-        toujours ouverte
-
 - [Ai] Add AiFeature to Flat
   - [x] Generate a map of the content = [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
   - [x] Generate a map of the media

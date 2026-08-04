@@ -23,6 +23,18 @@ paths:
 - **Do not use form themes for editor wiring.** EasyAdmin's per-CRUD `addFormTheme` makes
   form-theme overrides lose the precedence fight; the Twig-function merge above is the
   supported seam.
+- **Testing an inline tool by hand: click the toolbar button, not `Ctrl+K`.**
+  `@codexteam/shortcuts` never calls `preventDefault()` — editor.js does, but only inside
+  `currentBlock && currentBlock.tool.enabledInlineTools`. With no focused block the event
+  falls through to Chrome, which opens its omnibox search, and the tool looks broken when
+  it is not. Automation cannot reach these tools at all: editor.js relocates a
+  programmatic caret back to the first block, so a scripted selection never survives —
+  assert on the tool class instead (`Hyperlink.test.ts` is the pattern).
+- **An inline tool must write its input through `setAttribute('value', …)`, never
+  `input.value =`.** `checkState()` runs on every `selectionchange`, which editor.js
+  listens to on the document; assigning the live property moves the caret, re-raising the
+  event, and the toolbar rebuilds in a loop as soon as the caret is inside a link
+  (codex-team/editor.js#2821, fixed upstream in 2.31.4 as `defaultValue`).
 - **`useEntryCrudForm()` collections need the stacked-field override.** EasyAdmin's
   `fields.css` forces every `.form-group` inside a collection accordion into a
   horizontal `label 20% | widget flex:1` split, which assumes a plain `setEntryType()`
