@@ -78,6 +78,54 @@ final class ContactRepositoryTest extends AbstractNewsletterTestCase
         self::assertSame(1, $this->repository()->countMailable($audience));
     }
 
+    /**
+     * What decides whether a broadcast needs narrowing by language, and what the
+     * campaign form counts its translations against. It answers about one
+     * audience's readers, never about the site's hosts.
+     */
+    public function testTheLanguagesAnAudienceIsReadIn(): void
+    {
+        $audience = $this->createAudience();
+        $other = $this->createAudience();
+
+        $this->createContact($audience, 'de@example.tld', locale: 'de');
+        $this->createContact($audience, 'fr@example.tld', locale: 'fr');
+        $this->createContact($audience, 'fr2@example.tld', locale: 'fr');
+        $this->createContact($other, 'it@example.tld', locale: 'it');
+
+        self::assertSame(['de', 'fr'], $this->repository()->localesIn($audience));
+        self::assertSame(['it'], $this->repository()->localesIn($other));
+    }
+
+    /**
+     * Only who would receive a mail. Both callers ask this to decide whether a
+     * language needs its own text, and nobody owes a translation to a language
+     * only an unsubscribed reader — or one the site can only phone — reads.
+     */
+    public function testALanguageNobodyMailableReadsIsNotOne(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'fr@example.tld', locale: 'fr');
+        $this->createPhoneContact($audience, '+33612345678');
+
+        $gone = $this->createContact($audience, 'gone@example.tld', locale: 'it');
+        $gone->unsubscribe();
+
+        $this->entityManager->flush();
+
+        self::assertSame(['fr'], $this->repository()->localesIn($audience));
+    }
+
+    /** A contact whose language nothing recorded is on neither side of the question. */
+    public function testAnEmptyLocaleIsNotALanguage(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'known@example.tld', locale: 'fr');
+        $this->createContact($audience, 'unknown@example.tld', locale: '');
+
+        self::assertSame(['fr'], $this->repository()->localesIn($audience));
+    }
+
     private function repository(): ContactRepository
     {
         return self::getContainer()->get(ContactRepository::class);

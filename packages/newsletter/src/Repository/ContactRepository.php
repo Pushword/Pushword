@@ -59,12 +59,17 @@ class ContactRepository extends ServiceEntityRepository
     }
 
     /**
-     * The languages one audience is actually read in, sorted.
+     * The languages one audience can actually be mailed in, sorted.
      *
      * An audience spanning several locale hosts is still one list, so what it
      * covers is a question about its contacts and not about the site's
-     * configuration: a base nobody has yet subscribed to in German does not
-     * need a German anything.
+     * configuration: a base nobody has yet subscribed to in German does not need
+     * a German anything.
+     *
+     * Scoped to who would receive a mail, since that is what both readers ask
+     * it for — whether a broadcast needs splitting by language, and how many
+     * translations a campaign still owes. A language only somebody unsubscribed
+     * or somebody the site can only phone reads is not one of them.
      *
      * @return list<string>
      */
@@ -74,8 +79,11 @@ class ContactRepository extends ServiceEntityRepository
         $rows = $this->createQueryBuilder('c')
             ->select('DISTINCT c.locale')
             ->andWhere('c.audience = :audience')
+            ->andWhere('c.status = :subscribed')
+            ->andWhere('c.email IS NOT NULL')
             ->andWhere("c.locale != ''")
             ->setParameter('audience', $audience)
+            ->setParameter('subscribed', ContactStatus::Subscribed->value)
             ->orderBy('c.locale', 'ASC')
             ->getQuery()
             ->getResult();

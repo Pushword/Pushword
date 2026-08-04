@@ -56,6 +56,20 @@ final class AutomationRunnerTest extends AbstractNewsletterTestCase
         self::assertSame(1, $this->enroll($this->createAutomation($audience, self::TWO_STEPS)));
     }
 
+    /**
+     * A drip leads to a mail, so a contact with no address is not enrolled in
+     * one. Without this the sequence would enroll them and fail at every step,
+     * writing a delivery row each time for a mail that could never be built.
+     */
+    public function testAContactWithNoAddressIsNeverEnrolled(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'in@example.tld');
+        $this->createPhoneContact($audience, '+33612345678');
+
+        self::assertSame(1, $this->enroll($this->createAutomation($audience, self::TWO_STEPS)));
+    }
+
     public function testTriggerWhenNarrowsTheEnrollment(): void
     {
         $audience = $this->createAudience();
@@ -221,6 +235,24 @@ final class AutomationRunnerTest extends AbstractNewsletterTestCase
         $this->enroll($automation);
 
         $contact->unsubscribe();
+        $this->entityManager->flush();
+
+        self::assertSame(0, $this->runner()->advance(10));
+        self::assertEmailCount(0);
+        self::assertSame(EnrollmentStatus::Stopped, $this->enrollments($automation)[0]->status);
+    }
+
+    /** Losing the address mid-sequence ends it the same way leaving does. */
+    public function testLosingTheAddressEndsTheSequence(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'moving@example.tld');
+        $automation = $this->createAutomation($audience, self::TWO_STEPS);
+        $this->enroll($automation);
+
+        $contact->phone = '+33612345678';
+        $contact->email = null;
+
         $this->entityManager->flush();
 
         self::assertSame(0, $this->runner()->advance(10));

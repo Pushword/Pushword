@@ -111,6 +111,26 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertSame('Hallo', $campaign->contentFor('de-CH')['subject']);
     }
 
+    /** Clearing the field takes the translations back, rather than leaving the last ones. */
+    public function testEmptyingTheTranslationsClearsThem(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $campaign = $this->campaign($audience, 'Was translated');
+        $campaign->translations = ['de' => ['subject' => 'Hallo']];
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$campaign->id.'/edit');
+        $form = $crawler->filter('form[name="Campaign"]')->form();
+        $form['Campaign[translationsAsJson]'] = '';
+        $client->submit($form);
+
+        $stored = $this->entityManager()->getRepository(Campaign::class)->findOneBy(['subject' => 'Was translated']);
+        self::assertInstanceOf(Campaign::class, $stored);
+        self::assertSame([], $stored->translations);
+    }
+
     /** Malformed translations come back as a form error, never as a 500 or an empty mail. */
     public function testMalformedTranslationsAreAFormError(): void
     {
@@ -642,6 +662,53 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertInstanceOf(Contact::class, $contact);
         self::assertTrue($contact->isPending());
         self::assertEmailCount(1);
+    }
+
+    /**
+     * A booking taken over the phone: the number is the whole of what the site
+     * knows. Nothing to confirm by mail, so the row is subscribed at once, and
+     * `source` records who entered it.
+     */
+    public function testAnAdminOptsInSomebodyByPhoneAlone(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/opt-in');
+        $form = $crawler->filter('form[method=post]')->form();
+        $form['audience'] = (string) $audience->id;
+        $form['email'] = '';
+        $form['phone'] = '06 12 34 56 78';
+        $form['name'] = 'Called';
+        $client->submit($form);
+
+        $contact = $this->entityManager()->getRepository(Contact::class)
+            ->findOneBy(['audience' => $audience, 'phone' => '0612345678']);
+
+        self::assertInstanceOf(Contact::class, $contact);
+        self::assertNull($contact->email);
+        self::assertTrue($contact->isSubscribed());
+        self::assertFalse($contact->isMailable());
+        self::assertStringStartsWith('admin:', (string) $contact->source);
+    }
+
+    /** Neither one nor the other is guessed: nothing is written and the form comes back. */
+    public function testAnOptInWithoutAnyIdentifierWritesNothing(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $before = $this->entityManager()->getRepository(Contact::class)->count(['audience' => $audience]);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/opt-in');
+        $form = $crawler->filter('form[method=post]')->form();
+        $form['audience'] = (string) $audience->id;
+        $form['email'] = '';
+        $form['phone'] = '';
+        $client->submit($form);
+        $client->followRedirect();
+
+        self::assertStringContainsString('/admin/newsletter/contact/opt-in', $client->getRequest()->getUri());
+        self::assertSame($before, $this->entityManager()->getRepository(Contact::class)->count(['audience' => $audience]));
     }
 
     /** Neither a list nor an address is guessed: nothing is written and the form comes back. */

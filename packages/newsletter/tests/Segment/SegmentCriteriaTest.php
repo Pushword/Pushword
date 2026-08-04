@@ -6,6 +6,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Query\Condition;
 use Pushword\Core\Query\Group;
+use Pushword\Newsletter\Segment\CriteriaGroup;
 use Pushword\Newsletter\Segment\SegmentCriteria;
 use Pushword\Newsletter\Segment\SegmentException;
 
@@ -232,5 +233,40 @@ final class SegmentCriteriaTest extends TestCase
     {
         self::assertTrue(SegmentCriteria::isProperty('prop.lastBoughtProduct'));
         self::assertFalse(SegmentCriteria::isProperty('tag'));
+    }
+
+    /**
+     * Narrowing a rule by one more condition — what a page automation does with
+     * the locale of the page that triggered it. It has to hold whichever of the
+     * three shapes a rule is stored in.
+     */
+    public function testNarrowingARule(): void
+    {
+        $locale = ['field' => 'locale', 'op' => '=', 'value' => 'fr'];
+        $tag = ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'];
+        $vip = ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek-VIP'];
+
+        self::assertSame([$locale], CriteriaGroup::and([], $locale), 'an empty rule becomes the condition');
+        self::assertSame([$tag, $locale], CriteriaGroup::and([$tag], $locale), 'a bare list is appended to');
+        self::assertSame([$tag, $locale], CriteriaGroup::and(['all' => [$tag]], $locale), 'so is an explicit all');
+
+        // The one that matters: appending to the `any` would widen the rule by
+        // the very condition meant to narrow it, and spreading its conditions
+        // into the list would turn "either tag" into "both".
+        self::assertSame(
+            [['any' => [$tag, $vip]], $locale],
+            CriteriaGroup::and(['any' => [$tag, $vip]], $locale),
+        );
+    }
+
+    /** Whatever shape it came from, the result is a rule the language accepts. */
+    public function testANarrowedRuleStillNormalises(): void
+    {
+        $narrowed = CriteriaGroup::and(
+            ['any' => [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']]],
+            ['field' => 'locale', 'op' => '=', 'value' => 'fr'],
+        );
+
+        self::assertSame('AND(OR(tag),locale)', $this->shape(SegmentCriteria::normalize($narrowed)));
     }
 }
