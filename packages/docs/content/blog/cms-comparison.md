@@ -670,7 +670,7 @@ For Pushword specifically: templates are Twig, the app is a standard Symfony app
 The reasonable way to test any of this is an afternoon with a real page:
 
 ```shell
-composer create-project pushword/new pushword @dev
+composer create-project pushword/new pushword "^1.0.0-rc"
 ```
 
 ---

@@ -181,6 +181,7 @@
     "docs": "./.scripts/generate-docs",
     "reset-dev-app": "./.scripts/reset-dev-app",
     "test-installer": "./.scripts/test-installer",
+    "test-create-project": "./.scripts/test-create-project",
     "test-partial-install": "./.scripts/test-partial-install",
     "release": "./.scripts/release",
     "validate-monorepo": "vendor/bin/monorepo-builder validate",

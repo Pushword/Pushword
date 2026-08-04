@@ -432,7 +432,7 @@ through the part that matters most to you — the admin UI, the flat-file round 
 API:
 
 ```shell
-composer create-project pushword/new pushword @dev
+composer create-project pushword/new pushword "^1.0.0-rc"
 ```
 
 ---

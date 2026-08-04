@@ -1,0 +1,101 @@
+#!/bin/bash -e
+
+# Verify the install command the docs advertise actually resolves to a current release.
+#
+# `composer create-project` selects the newest *stable* version when given no constraint.
+# pushword/new still carries hundreds of abandoned 0.x stable tags on Packagist, and RC
+# versions rank below stable — so the bare command installs 0.1.9980 (Feb 2024), which
+# pins Symfony ^7.0 and pulls a mismatched Pushword set. That is why the documented
+# command must carry "^1.0.0-rc" until a stable 1.0.0 is tagged.
+#
+# `.scripts/test-installer` cannot catch this: it resolves against local path
+# repositories with every pushword/* rewritten to @dev, so it never consults Packagist.
+# This script deliberately does, and is the only test of the path a new user takes.
+
+set -e
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+cd "$(git rev-parse --show-toplevel)"
+
+DOC_SOURCES=(README.md packages/docs/content)
+
+# Every advertised command, stripped of surrounding markdown/HTML. homepage.md carries it
+# inside a <pre>, hence stopping at '<' and at the backtick that closes a fenced span.
+mapfile -t COMMANDS < <(
+    grep -rhoE 'composer create-project pushword/new [^<`]+' "${DOC_SOURCES[@]}" --include='*.md' \
+        | sed 's/[[:space:]]*$//' | sort -u
+)
+
+if [ "${#COMMANDS[@]}" -eq 0 ]; then
+    echo -e "${RED}Error: no 'composer create-project pushword/new' command found in ${DOC_SOURCES[*]}${NC}"
+    exit 1
+fi
+
+echo "=== Documented install commands ==="
+
+CONSTRAINT=""
+for cmd in "${COMMANDS[@]}"; do
+    echo "  $cmd"
+    # composer(1) create-project(2) pushword/new(3) <dir>(4) <constraint>(5)
+    c=$(echo "$cmd" | awk '{print $5}' | tr -d '"')
+    if [ -z "$c" ]; then
+        echo -e "${RED}Error: this command has no version constraint.${NC}"
+        echo "Without one, composer installs the newest stable 0.x tag from 2024."
+        exit 1
+    fi
+    if [ -n "$CONSTRAINT" ] && [ "$c" != "$CONSTRAINT" ]; then
+        echo -e "${RED}Error: documented commands disagree: '$CONSTRAINT' vs '$c'.${NC}"
+        echo "They have drifted apart before — keep every occurrence identical."
+        exit 1
+    fi
+    CONSTRAINT="$c"
+done
+
+echo
+echo "=== Resolving '$CONSTRAINT' against Packagist ==="
+
+TEMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TEMP_DIR"' EXIT
+
+# --no-install stops after the template itself: enough to prove version selection,
+# without paying for the full dependency tree.
+OUTPUT=$(composer create-project pushword/new "$TEMP_DIR/app" "$CONSTRAINT" \
+    --no-install --no-scripts --no-interaction 2>&1)
+
+SELECTED=$(echo "$OUTPUT" | sed -n 's/^Installing pushword\/new (\([^)]*\)).*/\1/p' | head -1)
+
+if [ -z "$SELECTED" ]; then
+    echo -e "${RED}Error: could not determine the selected version.${NC}"
+    echo "$OUTPUT"
+    exit 1
+fi
+
+echo "  pushword/new -> $SELECTED"
+
+case "$SELECTED" in
+    1.0.0-rc*) ;;
+    *)
+        echo -e "${RED}Error: resolved to '$SELECTED', not a 1.0.0-rc release.${NC}"
+        echo "The documented command is installing an abandoned version."
+        exit 1
+        ;;
+esac
+
+# The template's own constraints are what dragged in Symfony 7 and a stale installer.
+FLEX_SYMFONY=$(php -r '
+    $j = json_decode(file_get_contents($argv[1]), true);
+    echo $j["flex-require"]["symfony/framework-bundle"] ?? "";
+' "$TEMP_DIR/app/composer.json")
+echo "  symfony/framework-bundle -> ${FLEX_SYMFONY:-<none>}"
+
+# Informational: a local tag ahead of Packagist just means the split has not synced yet.
+LATEST_TAG=$(git tag -l '1.0.0-rc*' | sort -V | tail -1)
+if [ -n "$LATEST_TAG" ] && [ "$SELECTED" != "$LATEST_TAG" ]; then
+    echo "  note: latest local tag is $LATEST_TAG (Packagist may still be syncing)"
+fi
+
+echo
+echo -e "${GREEN}=== create-project test passed ===${NC}"

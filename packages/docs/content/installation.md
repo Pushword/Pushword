@@ -22,9 +22,14 @@ _Facultative_ :
 ## Automatic installer via composer
 
 ```shell
-composer create-project pushword/new pushword @dev
+composer create-project pushword/new pushword "^1.0.0-rc"
 cd pushword
 ```
+
+The `"^1.0.0-rc"` is required: Pushword is still tagged as release candidates, and
+`create-project` picks the newest *stable* version by default — which, for
+`pushword/new`, is a long-abandoned 0.x tag. Without the constraint you get a 2024
+template that installs the wrong Symfony and a mismatched set of Pushword packages.
 
 The installer creates the database, the demo content and a super admin:
 **`admin@example.tld` / `p@ssword`**. Log in on `/admin` and change them right away

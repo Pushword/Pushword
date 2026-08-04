@@ -21,7 +21,7 @@ A **Symfony CMS** to rapidly create, manage and maintain your websites — from 
 ## Installation
 
 ```shell
-composer create-project pushword/new pushword @dev
+composer create-project pushword/new pushword "^1.0.0-rc"
 
 cd pushword && php bin/console pw:user:create
 php -S 127.0.0.1:8004 -t public/

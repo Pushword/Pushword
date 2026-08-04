@@ -11,7 +11,11 @@ on:
       - 'packages/*/src/Resources/config/services.php'
       - '.scripts/test-installer'
       - '.scripts/test-partial-install'
+      - '.scripts/test-create-project'
       - '.github/workflows/test-installer.yml'
+      - 'README.md'
+      - 'packages/docs/content/installation.md'
+      - 'packages/docs/content/homepage.md'
   pull_request:
     paths:
       - 'packages/core/install.php'
@@ -21,6 +25,10 @@ on:
       - 'packages/*/src/config/services.php'
       - 'packages/*/src/Resources/config/services.php'
       - '.scripts/test-partial-install'
+      - '.scripts/test-create-project'
+      - 'README.md'
+      - 'packages/docs/content/installation.md'
+      - 'packages/docs/content/homepage.md'
   repository_dispatch:
     types: [after-split-monorepo]
 
@@ -76,3 +84,23 @@ jobs:
 
       - name: Run partial-install profile
         run: ./.scripts/test-partial-install ${{ matrix.profile }}
+
+  create-project:
+    runs-on: ubuntu-latest
+
+    # Resolves the documented install command against real Packagist, which the
+    # path-repository installer test structurally cannot do.
+    name: Documented create-project
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          extensions: dom, curl, libxml, mbstring, zip, iconv
+
+      - name: Resolve documented install command
+        run: ./.scripts/test-create-project
