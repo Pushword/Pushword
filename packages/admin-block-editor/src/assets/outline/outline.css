@@ -194,27 +194,31 @@
   box-shadow: inset 0 -2px 0 #3b82f6;
 }
 
-/* Floating opener, shown while the rail is collapsed. */
+/* Opener, shown while the rail is collapsed: pinned top-left where the rail's
+   own collapse chevron sits when open (the Gutenberg list-view spot), so the
+   two buttons visually swap in place. */
 .pw-outline-opener {
   position: fixed;
   left: 10px;
-  bottom: 14px;
+  top: 10px;
   z-index: 1035;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
   border: 1px solid #e2e8f0;
   background: #fff;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: #334155;
   cursor: pointer;
 }
 
 .pw-outline-opener:hover {
-  color: #334155;
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #fff;
 }
 
 .pw-outline-opener[hidden] {
