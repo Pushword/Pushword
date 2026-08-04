@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { liveBlock, addClassForNormalUser } from './helpers.js'
+import {
+  liveBlock,
+  addClassForNormalUser,
+  resolveLightboxSources,
+  uncloakLinks,
+} from './helpers.js'
 
 // Helpers to build minimal DOM fixtures
 function makeLiveBlockEl(url) {
@@ -477,5 +482,96 @@ describe('liveBlock — htmx 4 alias & bridge', () => {
       }),
     )
     expect(forbidden).toEqual({ status: 403, url: '/gone' })
+  })
+})
+
+describe('resolveLightboxSources', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+    vi.restoreAllMocks()
+    // responsiveImage() picks the Liip filter from the viewport: pin it.
+    window.innerWidth = 1600
+  })
+
+  function stubWebPSupport(supported) {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({})
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
+      supported ? 'data:image/webp;base64,x' : 'data:image/png;base64,x',
+    )
+  }
+
+  // <span class="glightbox" data-rot="…" data-dwl="…webp"> — what link() renders
+  // for a gallery item once obfuscation has done its job.
+  function makeCloakedGalleryItem() {
+    const span = document.createElement('span')
+    span.className = 'glightbox'
+    span.setAttribute('data-type', 'image')
+    span.setAttribute('data-rot', '/zrqvn/qrsnhyg/2.wct') // /media/default/2.jpg
+    span.setAttribute('data-dwl', '/media/default/2.webp')
+    span.innerHTML = '<img src="/media/xs/2.jpg" alt="">'
+    document.body.appendChild(span)
+    return span
+  }
+
+  it('decodes data-rot into the data-href the lightbox reads', () => {
+    stubWebPSupport(false)
+    const span = makeCloakedGalleryItem()
+
+    resolveLightboxSources()
+
+    expect(span.getAttribute('data-href')).toBe('/media/xl/2.jpg')
+    expect(span.hasAttribute('data-rot')).toBe(false)
+    expect(span.hasAttribute('data-dwl')).toBe(false)
+
+    // It re-runs on every DOMChanged: a second pass must leave the node alone.
+    resolveLightboxSources()
+    expect(span.getAttribute('data-href')).toBe('/media/xl/2.jpg')
+  })
+
+  it('prefers the WebP variant when the browser supports it', () => {
+    stubWebPSupport(true)
+    const span = makeCloakedGalleryItem()
+
+    resolveLightboxSources()
+
+    expect(span.getAttribute('data-href')).toBe('/media/xl/2.webp')
+  })
+
+  it('decodes an absolute video URL, with no WebP variant to prefer', () => {
+    stubWebPSupport(true)
+    const span = document.createElement('span')
+    span.className = 'glightbox'
+    span.setAttribute('data-type', 'video')
+    // https://www.youtube.com/watch?v=A — the `_` shortcut link() writes for https
+    span.setAttribute('data-rot', '_jjj.lbhghor.pbz/jngpu?i=N')
+    document.body.appendChild(span)
+
+    resolveLightboxSources()
+
+    expect(span.getAttribute('data-href')).toBe('https://www.youtube.com/watch?v=A')
+  })
+
+  it('leaves the node to uncloakLinks() when it is not a lightbox link', () => {
+    stubWebPSupport(false)
+    const span = document.createElement('span')
+    span.setAttribute('data-rot', '_rknzcyr.pbz') // https://example.com
+    document.body.appendChild(span)
+
+    resolveLightboxSources()
+
+    expect(span.hasAttribute('data-href')).toBe(false)
+    expect(span.getAttribute('data-rot')).toBe('_rknzcyr.pbz')
+  })
+
+  it('keeps uncloakLinks() from turning a resolved item into an anchor', async () => {
+    stubWebPSupport(false)
+    const span = makeCloakedGalleryItem()
+
+    resolveLightboxSources()
+    await uncloakLinks()
+    span.dispatchEvent(new Event('click'))
+
+    expect(document.querySelector('a')).toBeNull()
+    expect(document.body.firstChild).toBe(span)
   })
 })

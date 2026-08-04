@@ -3,6 +3,7 @@
 namespace Pushword\Core\Service\Markdown\Extension\Renderer;
 
 use League\CommonMark\Extension\CommonMark\Node\Inline\Image;
+use League\CommonMark\Extension\CommonMark\Node\Inline\Link;
 use League\CommonMark\Node\Inline\Newline;
 use League\CommonMark\Node\Node;
 use League\CommonMark\Node\NodeIterator;
@@ -30,7 +31,13 @@ final readonly class ImageRenderer implements NodeRendererInterface
         $alt = $this->getAltText($node);
 
         try {
-            return new RawHtml($this->mediaExtension->renderImage($src, htmlspecialchars($alt)));
+            // A body image links to itself so it opens in the lightbox — unless
+            // the author already gave it a destination (`[![alt](img)](/page)`).
+            return new RawHtml($this->mediaExtension->renderImage(
+                $src,
+                htmlspecialchars($alt),
+                link: ! $node->parent() instanceof Link,
+            ));
         } catch (Throwable) {
             // A body image that can't be resolved (old Drupal name, deleted file,
             // typo…) must degrade to an invisible marker, never take down the whole

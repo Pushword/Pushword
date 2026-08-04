@@ -1,6 +1,7 @@
 import Glightbox from 'glightbox'
 import {
   uncloakLinks,
+  resolveLightboxSources,
   addClassForNormalUser,
   readableEmail,
   convertImageLinkToWebPLink,
@@ -25,8 +26,12 @@ initVariantLinks()
 let lightbox
 function onDomChanged() {
   liveBlock()
-  convertImageLinkToWebPLink()
+  // These three are ordered: the first consumes data-rot on lightbox nodes so
+  // the second leaves them alone, and the third targets anchors, which only
+  // exist once the second has un-cloaked them.
+  resolveLightboxSources()
   uncloakLinks()
+  convertImageLinkToWebPLink()
   readableEmail('.cea')
   replaceOn()
   if (lightbox) {
@@ -39,8 +44,10 @@ function onDomChanged() {
 }
 
 function onPageLoaded() {
-  lightbox = new Glightbox()
+  // Glightbox reads each node's config when it binds, so it must come after
+  // the pass that gives the cloaked media spans their data-href.
   onDomChanged()
+  lightbox = new Glightbox()
 }
 
 document.addEventListener('DOMContentLoaded', onPageLoaded)

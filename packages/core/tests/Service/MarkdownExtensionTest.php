@@ -125,6 +125,31 @@ final class MarkdownExtensionTest extends KernelTestCase
         self::assertStringContainsString('Alt text', $result);
     }
 
+    public function testBodyImageIsItsOwnLightboxLink(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform('![Alt text](/media/2.jpg)');
+
+        // Cloaked like every other link(), so no href for the lightbox to sniff
+        // a type from — hence data-type — and carrying the WebP variant the
+        // front swaps in for a browser that takes it.
+        self::assertStringContainsString('class="glightbox"', $result);
+        self::assertStringContainsString('data-type="image"', $result);
+        self::assertStringContainsString('data-dwl="/media/default/2.webp"', $result);
+        self::assertStringContainsString('data-rot="', $result);
+        self::assertStringNotContainsString('href="/media/', $result);
+    }
+
+    public function testImageAlreadyInsideALinkIsNotSelfLinked(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform('[![Alt text](/media/2.jpg)](/somewhere)');
+
+        self::assertStringContainsString('<picture', $result);
+        self::assertStringContainsString('href="/somewhere"', $result);
+        self::assertStringNotContainsString('glightbox', $result);
+    }
+
     public function testBrokenBodyImageDegradesToComment(): void
     {
         $parser = $this->getMarkdownParser();

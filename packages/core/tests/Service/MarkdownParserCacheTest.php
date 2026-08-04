@@ -21,7 +21,7 @@ use Symfony\Component\Cache\CacheItem;
 final class MarkdownParserCacheTest extends KernelTestCase
 {
     /** Mirrors MarkdownParser::CACHE_VERSION, which is bumped whenever render output changes. */
-    private const string PARSER_VERSION = '3';
+    private const string PARSER_VERSION = '4';
 
     private function buildParser(ArrayAdapter $pool, int $mediaVersion = 0): MarkdownParser
     {

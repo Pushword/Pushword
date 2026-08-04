@@ -50,8 +50,10 @@
 
       {# Link wrapping #}
       {% if imageClickable is same as true %}
+        {# data-type: the link is cloaked, so the lightbox has no href to sniff the type from. #}
         {{ link(img, current_media|image('default'), linkAttr ?? {
         class: 'glightbox',
+        'data-type': 'image',
         'data-gallery': gallery_id,
         'data-dwl': current_media|image('default', 'webp'),
         }) }}

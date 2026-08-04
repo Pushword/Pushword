@@ -7,6 +7,7 @@
  * -  seasonedBackground
  * - responsiveImage(string)  Relative to Liip filters
  * - uncloakLinks(attr)
+ * - resolveLightboxSources()
  * - convertFormFromRot13(attr)
  * - readableEmail(attr)
  * - convertImageLinkToWebPLink()
@@ -493,6 +494,33 @@ export async function uncloakLinks(
       },
     )
   } else convertAll(attribute)
+}
+
+/**
+ * Hand the lightbox the source of a cloaked media link.
+ *
+ * `link()` obfuscates by default, so a gallery item or a video thumb is a
+ * `<span data-rot>` with no href — and the lightbox reads the href when it
+ * binds. Decode `data-rot` into the `data-href` the lightbox reads from the
+ * node's dataset instead of un-cloaking the span into an `<a>`: the media URL
+ * never becomes a link a crawler could follow, and uncloakLinks() no longer
+ * races the lightbox for the same click.
+ *
+ * Consumes `data-rot`, so it must run before uncloakLinks() and before the
+ * lightbox binds.
+ */
+export function resolveLightboxSources() {
+  var webP = testWebPSupport()
+  document.querySelectorAll('.glightbox[data-rot]').forEach(function (element) {
+    var webPSource = element.getAttribute('data-dwl')
+    var source =
+      webP && webPSource !== null
+        ? webPSource
+        : convertShortchutForLink(rot13ToText(element.getAttribute('data-rot')))
+    element.setAttribute('data-href', responsiveImage(source))
+    element.removeAttribute('data-dwl')
+    element.removeAttribute('data-rot')
+  })
 }
 
 /**

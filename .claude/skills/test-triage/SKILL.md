@@ -101,6 +101,24 @@ rm -rf packages/*/tests/var/*/cache
 
 The cache dir comes from `App\Kernel::getCacheDir()`, **not** `packages/dev-app/var`.
 
+**A broken-image comment where a `<picture>` belongs, and clearing the caches above
+does not fix it.** The markdown fragment pool is deliberately built *next to*
+`kernel.cache_dir` (`PushwordCoreExtension::registerMarkdownCachePool`) so deploys
+cannot wipe it — which also means the two `rm -rf`s above miss it. One run against a
+stale schema is enough to store the degraded render, and every later run serves it,
+including in isolation. It masks the real exception too: `ImageRenderer` catches
+`Throwable`, so instrumenting the catch shows nothing while the cache answers first.
+
+```bash
+rm -rf /tmp/com.github.pushword.pushword/container-cache/pushword-pools
+```
+
+When the real error turns out to be `no such column`, the DB cache is stale as well
+(a peer's entity change, an interrupted rebuild): delete
+`/tmp/com.github.pushword.pushword/test-db-cache` and re-run. That one failure
+cascades to ~50 across media, gallery, static-generation and admin-frontend classes,
+which reads as a broken tree and is one wrong `.sqlite`.
+
 ## Reproducing contention
 
 Shared-`public/media` races need real contention: loop

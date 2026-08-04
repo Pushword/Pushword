@@ -74,11 +74,15 @@ class MediaExtension
         if (null !== $link && false !== $link) {
             $href =
               true === $link ? $this->imageCacheManager->getBrowserPath($mediaObj) : $link;
+            // The link is cloaked by default, leaving the lightbox no href to
+            // sniff a type from — hence data-type. data-dwl is the WebP variant
+            // the front swaps in when the browser takes it.
             $resolvedLinkAttr =
               [] === $linkAttr
                 ? [
                     'class' => 'glightbox',
-                    'data-dwl' => $this->imageCacheManager->getBrowserPath($mediaObj, 'xl'),
+                    'data-type' => 'image',
+                    'data-dwl' => $this->imageCacheManager->getBrowserPath($mediaObj, 'default', 'webp'),
                 ]
                 : $linkAttr;
             $html = $this->linkProvider->renderLink(

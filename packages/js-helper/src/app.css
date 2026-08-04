@@ -46,6 +46,11 @@ cache below.
   display: none !important;
 }
 
+/* A lightbox trigger is a cloaked <span>, not an <a>, so it gets no cursor of its own. */
+.glightbox {
+  cursor: pointer;
+}
+
 /* Tables marked with {.table-sticky-header} keep their heading row pinned on scroll. */
 .table-sticky-header thead th {
   position: sticky;

@@ -113,6 +113,18 @@ final class BlockExtensionTest extends KernelTestCase
         self::assertStringContainsString('does-not-exist-broken.jpg', $html);
     }
 
+    /**
+     * A gallery item is a cloaked <span>, so the lightbox has no href to sniff a
+     * type from: without data-type the slide opens blank.
+     */
+    public function testRenderGalleryDeclaresTheLightboxType(): void
+    {
+        $html = $this->getBlockExtension()->renderGallery(['2.jpg' => 'A valid photo']);
+
+        self::assertStringContainsString('data-type="image"', $html);
+        self::assertStringContainsString('data-dwl="/media/default/2.webp"', $html);
+    }
+
     /** Components take an optional anchor; an absent one must add no attribute at all. */
     public function testBlockWrapperId(): void
     {
