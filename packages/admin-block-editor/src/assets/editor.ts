@@ -1,4 +1,4 @@
-import EditorJS, { API } from '@editorjs/editorjs'
+import EditorJS, { API, OutputData } from '@editorjs/editorjs'
 import Header from './tools/Header/Header'
 import Small from './tools/Small/Small'
 import List from './tools/List/List'
@@ -127,11 +127,24 @@ export class editorJs {
       })
     }
 
+    // Undo takes its baseline when it is built, at which point an editor whose
+    // content is markdown is still empty — it would then count the parse as an
+    // edit, and one Ctrl+Z before typing anything would empty the page (and the
+    // field Save submits). The parse lands asynchronously, so we re-baseline on
+    // the first onChange it triggers: that is Editor.js' own "changes settled".
+    let undo: { initialize: (data: OutputData) => void } | null = null
+    let undoAwaitsParsedBaseline = false
+
     // save
     // eslint-disable-next-line @typescript-eslint/no-this-alias -- onChange's own `this` (the Editor.js instance, for `this.holder`) shadows the class instance, so we keep a reference to it.
     const self = this
     config.onChange = async function (this: any) {
-      await self.editorjsSave(this.holder)
+      const outputData = await self.editorjsSave(this.holder)
+
+      if (undoAwaitsParsedBaseline && undo !== null && outputData !== null) {
+        undoAwaitsParsedBaseline = false
+        undo.initialize(outputData)
+      }
     }
 
     // drag'n drop
@@ -155,12 +168,13 @@ export class editorJs {
       Object.assign(config, {
         onReady: () => {
           new DragDrop(editor)
-          new Undo({ editor })
+          undo = new Undo({ editor })
           new PasteLink({ editor })
           new ClipboardManager({ editor })
 
           // Markdown content must be parsed after editor is ready (needs tool instances)
           if (markdownContent) {
+            undoAwaitsParsedBaseline = true
             // @ts-ignore
             new window.EditorJsParseMarkdown(editor, markdownContent).parseMarkdown()
           }
@@ -178,14 +192,14 @@ export class editorJs {
     editorJsHelper.setModeManager(config.holder!, modeManager)
   }
 
-  async editorjsSave(holderId: string): Promise<void> {
+  async editorjsSave(holderId: string): Promise<OutputData | null> {
     const editorHolder = document.getElementById(holderId)
     const editorInput = document.getElementById(
       editorHolder?.getAttribute('data-input-id') || '',
     ) as HTMLInputElement | null
     const editor = this.editors[holderId]
 
-    if (!editorInput || !editor) return
+    if (!editorInput || !editor) return null
 
     const outputData = await editor.saver.save()
     //editorInput.value = JSON.stringify(outputData)
@@ -198,5 +212,7 @@ export class editorJs {
       outputData,
     ).exportToMarkdown()
     editorInput.value = markdown
+
+    return outputData
   }
 }
