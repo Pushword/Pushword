@@ -72,6 +72,12 @@ See **bold** _italic_ `inline code` #[link](/kitchen-sink){target="_blank"} <mar
 
 {{ pages_list('content:fun', '9', 'publishedAt ↓', 'card') }}
 
+### Horizontal scroll
+
+The same cards in one scrolling row, with **no JavaScript**: the arrows are `::scroll-button()`, the edge fade is a `mask-image`, and the ends disable themselves. The arrows are Chromium-only — in Firefox and Safari they are simply absent and the scrollbar takes over.
+
+{{ pages_list('slug:%demo-scroller%', 9, 'publishedAt ↓', 'horizontalScroll', wrapperClass: 'bleed') }}
+
 ### Variant pages in a content list
 
 The master stay and its variant share the `mountain-lodge` tag. Both appear below — variants are kept out of the sitemap, the search and the menus, but **not** out of content lists/cards:

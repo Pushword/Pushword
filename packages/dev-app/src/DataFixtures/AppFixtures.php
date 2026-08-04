@@ -286,8 +286,60 @@ class AppFixtures extends Fixture
             $manager->flush();
         }
 
+        $this->loadHorizontalScrollDemo($manager, $homepage, $media);
         $this->loadRepurposeDemo($manager);
         $this->loadNewsletterDemo($manager);
+    }
+
+    /**
+     * Enough illustrated pages for the `horizontalScroll` view of pages_list() to be
+     * worth looking at: its arrows only appear once the row overflows, so three cards —
+     * what the other demo searches yield — would show a scroller that never scrolls.
+     *
+     * They carry **no tag on purpose**, and the kitchen sink finds them by slug instead.
+     * A media inherits the tags of every page using it, and `MediaUsageTrackerTest`
+     * asserts the exact inherited list for `1.jpg` and `2.jpg`; these are the first
+     * fixtures to combine `setMainImage()` with tags, so tagging them would leak into
+     * that test.
+     *
+     * @param array<string, Media> $media
+     */
+    private function loadHorizontalScrollDemo(ObjectManager $manager, Page $parent, array $media): void
+    {
+        $images = ['Demo 1', 'Demo 2', 'Demo 3'];
+
+        foreach ([
+            ['tour-du-mont-blanc', 'Tour du Mont-Blanc in 11 days', 'The classic loop around the massif, hut to hut.'],
+            ['gr54-in-seven-days', 'The GR54 in seven days', 'A compressed traverse of the Écrins, for walkers already fit.'],
+            ['snowshoeing-devoluy', 'Snowshoeing in the Dévoluy', 'A weekend on quiet plateaus, an hour from Grenoble.'],
+            ['lakes-of-the-ecrins', 'Lakes of the Écrins', 'Four days linking the highest lakes of the range.'],
+            ['rocher-rond', 'Rocher Rond in a day', 'A long day out with a summit ridge to finish.'],
+            ['crossing-the-vercors', 'Crossing the Vercors', 'Five days through the plateaus and their gorges.'],
+            ['canyoning-champsaur', 'Canyoning in the Champsaur', 'A half day in the water, suitable for beginners.'],
+            ['bivouac-valgaudemar', 'Bivouac in the Valgaudemar', 'Two days and one night under the stars.'],
+        ] as $i => [$slug, $h1, $description]) {
+            $page = new Page();
+            $page->h1 = $h1;
+            $page->title = $h1.' | Horizontal scroll demo';
+            $page->slug = 'demo-scroller/'.$slug;
+            $page->locale = 'en';
+            $page->parentPage = $parent;
+            $page->setMainImage($media[$images[$i % \count($images)]]);
+            // Spread the dates so `publishedAt ↓` puts them in the order listed above.
+            $page->publishedAt = new DateTime($i.' days ago');
+            $page->createdAt = new DateTime($i.' days ago');
+            $page->updatedAt = new DateTime($i.' days ago');
+            $page->mainContent = $description."\n\nA demo page, here only to fill the horizontal scroller "
+                .'rendered on the [kitchen sink](/kitchen-sink).';
+
+            if ('localhost.dev' === $this->apps->getMainHost()) {
+                $page->host = 'localhost.dev';
+            }
+
+            $manager->persist($page);
+        }
+
+        $manager->flush();
     }
 
     /**
