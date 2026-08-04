@@ -59,10 +59,7 @@ describe('List.importFromMarkdown', () => {
 
     expect(data.items).toHaveLength(2)
     expect(data.items[0].content).toBe('Parent')
-    expect(data.items[0].items.map((i: any) => i.content)).toEqual([
-      'Child',
-      'Child 2',
-    ])
+    expect(data.items[0].items.map((i: any) => i.content)).toEqual(['Child', 'Child 2'])
     expect(data.items[1].content).toBe('Sibling')
   })
 
@@ -70,5 +67,51 @@ describe('List.importFromMarkdown', () => {
     const data = importList('- **bold** and _italic_')
 
     expect(data.items[0].content).toBe('<b>bold</b> and <i>italic</i>')
+  })
+
+  it('imports task list markers as a checklist', () => {
+    const data = importList(['- [ ] todo', '- [x] done'].join('\n'))
+
+    expect(data.style).toBe('checklist')
+    expect(data.items.map((i) => i.content)).toEqual(['todo', 'done'])
+    expect(data.items.map((i) => i.meta.checked)).toEqual([false, true])
+  })
+
+  it('leaves a link at the start of an item alone', () => {
+    const data = importList('- [x](#anchor) and more')
+
+    expect(data.style).toBe('unordered')
+    expect(data.items[0].content).toBe('<a href="#anchor">x</a> and more')
+  })
+})
+
+describe('List.exportToMarkdown', () => {
+  it('writes a checklist back as task list markers', async () => {
+    const markdown = await List.exportToMarkdown({
+      style: 'checklist',
+      meta: {},
+      items: [
+        { content: 'todo', meta: { checked: false }, items: [] },
+        { content: 'done', meta: { checked: true }, items: [] },
+      ],
+    })
+
+    expect(markdown.trim()).toBe(['- [ ] todo', '- [x] done'].join('\n'))
+  })
+
+  it('keeps unordered and ordered markers', async () => {
+    const unordered = await List.exportToMarkdown({
+      style: 'unordered',
+      meta: {},
+      items: [{ content: 'one', meta: {}, items: [] }],
+    })
+    const ordered = await List.exportToMarkdown({
+      style: 'ordered',
+      meta: {},
+      items: [{ content: 'one', meta: {}, items: [] }],
+    })
+
+    expect(unordered.trim()).toBe('- one')
+    expect(ordered.trim()).toBe('1. one')
   })
 })

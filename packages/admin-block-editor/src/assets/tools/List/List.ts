@@ -1,11 +1,14 @@
-import ListTool from '@editorjs/nested-list'
+import ListTool from '@editorjs/list'
 import { MarkdownUtils } from '../utils/MarkdownUtils'
 import { BlockToolData, API } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import Raw from '../Raw/Raw'
 
+export type ListStyle = 'ordered' | 'unordered' | 'checklist'
+
 export interface ListData extends BlockToolData {
-  style?: 'ordered' | 'unordered'
+  style?: ListStyle
+  meta?: Record<string, unknown>
   items?: any[]
 }
 
@@ -15,17 +18,12 @@ export default class List extends ListTool {
       return ''
     }
 
-    const isOrdered = data.style === 'ordered'
-    const markdown = List._itemsToMarkdown(data.items, isOrdered, 0)
+    const markdown = List._itemsToMarkdown(data.items, data.style ?? 'unordered', 0)
     const formattedMarkdown = await MarkdownUtils.formatMarkdownWithPrettier(markdown)
     return MarkdownUtils.addAttributes(formattedMarkdown, tunes)
   }
 
-  private static _itemsToMarkdown(
-    items: any[],
-    isOrdered: boolean,
-    depth: number,
-  ): string {
+  private static _itemsToMarkdown(items: any[], style: ListStyle, depth: number): string {
     if (!items || items.length === 0) {
       return ''
     }
@@ -34,14 +32,16 @@ export default class List extends ListTool {
     let markdown = ''
 
     items.forEach((item, index) => {
-      if (isOrdered) {
-        markdown += `${indent}${index + 1}. ${item.content || item}\n`
-      } else {
-        markdown += `${indent}- ${item.content || item}\n`
-      }
+      const marker =
+        style === 'ordered'
+          ? `${index + 1}.`
+          : style === 'checklist'
+            ? `- [${item.meta?.checked === true ? 'x' : ' '}]`
+            : '-'
+      markdown += `${indent}${marker} ${item.content || item}\n`
 
       if (item.items && item.items.length > 0) {
-        markdown += List._itemsToMarkdown(item.items, isOrdered, depth + 1)
+        markdown += List._itemsToMarkdown(item.items, style, depth + 1)
       }
     })
 
@@ -64,8 +64,13 @@ export default class List extends ListTool {
     const stack: Array<{ items: any[]; depth: number }> = [
       { items: rootItems, depth: -1 },
     ]
-    let currentItem: { content: string; items: any[] } | null = null
+    let currentItem: {
+      content: string
+      meta: Record<string, unknown>
+      items: any[]
+    } | null = null
     let isOrdered: boolean | null = null
+    let hasCheckbox = false
 
     for (const line of lines) {
       const trimmedLine = line.trim()
@@ -95,7 +100,17 @@ export default class List extends ListTool {
       const isCurrentOrdered = orderedMatch !== null
 
       // @ts-ignore
-      const rawContent: string = orderedMatch ? orderedMatch[2] : unorderedMatch[1]
+      let rawContent: string = orderedMatch ? orderedMatch[2] : unorderedMatch[1]
+
+      // A task list marker turns the whole list into a checklist
+      const checkboxMatch = rawContent.match(/^\[([ xX])\]\s+(.*)/)
+      const meta: Record<string, unknown> = {}
+      if (checkboxMatch && !isCurrentOrdered) {
+        hasCheckbox = true
+        meta['checked'] = checkboxMatch[1]!.toLowerCase() === 'x'
+        rawContent = checkboxMatch[2]!
+      }
+
       const content: string = MarkdownUtils.convertInlineMarkdownToHtml(rawContent)
 
       // first item permits to set isOrdered
@@ -111,7 +126,7 @@ export default class List extends ListTool {
       const currentDepth = Math.floor(leadingSpaces / 2)
 
       // Create new item
-      currentItem = { content: content, items: [] }
+      currentItem = { content: content, meta, items: [] }
 
       // Find the correct parent level
       while (stack.length > 1 && stack[stack.length - 1]!.depth >= currentDepth) {
@@ -134,7 +149,8 @@ export default class List extends ListTool {
     editor.blocks.update(
       block.id,
       {
-        style: isOrdered ? 'ordered' : 'unordered',
+        style: hasCheckbox ? 'checklist' : isOrdered ? 'ordered' : 'unordered',
+        meta: {},
         items: rootItems,
       },
       tunes,
