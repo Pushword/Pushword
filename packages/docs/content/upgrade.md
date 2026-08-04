@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc838](/upgrade/rc838) | `admin-block-editor` `page-scanner` | the block editor uploads inline, groups blocks under a div wrapper, links carry any rel, and page-scan tells an unreachable link from a bad status |
 | [rc837](/upgrade/rc837) | `admin-block-editor` `core` `js-helper` | pages_list gets a CSS-only horizontal scroller |
 | [rc835](/upgrade/rc835) | `admin` `admin-block-editor` `core` `flat` `js-helper` `newsletter` `page-scanner` `static-generator` | the database now knows which pages use which media; admin dates follow the locale; page-scan findings have a code |
 | [rc834](/upgrade/rc834) | `core` `newsletter` `page-scanner` `js-helper` | the page scanner reports missing image alts and colliding translation locales, two newsletter contacts can be joined into one, galleries, videos and body images open in the lightbox again |
