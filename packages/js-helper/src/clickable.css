@@ -1,0 +1,17 @@
+/* A .clickable box acts as the link (or button) it contains: the inner element's
+   pseudo-element stretches over the whole box (https://codepen.io/potatoDie/pen/abzvGxG).
+   Cloaked spans stretch too, so the first interaction anywhere on the box reaches
+   the span, whose uncloak listener converts it and replays the click on the <a>;
+   the cursor lives on the box because the span state has none of its own.
+
+   Standalone on purpose: a stylesheet that does not import app.css can
+   @import '@pushword/js-helper/src/clickable.css' to get just this behavior. */
+.clickable {
+  position: relative;
+  cursor: pointer;
+}
+.clickable :is(a, button, span[data-rot])::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}

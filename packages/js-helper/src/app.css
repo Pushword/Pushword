@@ -6,6 +6,7 @@
 /* @plugin "@tailwindcss/forms"; */
 
 @import 'glightbox/dist/css/glightbox.css';
+@import './clickable.css';
 
 /*
 Tailwind content sources for all packages
@@ -51,20 +52,6 @@ cache below.
   cursor: pointer;
 }
 
-/* A .clickable box acts as the link (or button) it contains: the inner element's
-   pseudo-element stretches over the whole box (https://codepen.io/potatoDie/pen/abzvGxG).
-   Cloaked spans stretch too, so the first interaction anywhere on the box reaches
-   the span, whose uncloak listener converts it and replays the click on the <a>;
-   the cursor lives on the box because the span state has none of its own. */
-.clickable {
-  position: relative;
-  cursor: pointer;
-}
-.clickable :is(a, button, span[data-rot])::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-}
 
 /* Tables marked with {.table-sticky-header} keep their heading row pinned on scroll. */
 .table-sticky-header thead th {
