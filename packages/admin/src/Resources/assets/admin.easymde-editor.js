@@ -63,10 +63,14 @@ export function easyMDEditor() {
         },
       })
 
-      // Expose the instance: assigning the hidden textarea's value leaves the
-      // CodeMirror view showing the old text, so a caller restoring content
-      // needs a way in.
-      editorElement.easyMDE = editor
+      // Uniform write seam (the block editor exposes the same): assigning the
+      // hidden textarea's value leaves the CodeMirror view showing the old
+      // text, so a caller restoring content needs a way in.
+      editorElement.pwEditor = {
+        setValue: function (markdown) {
+          editor.value(markdown)
+        },
+      }
 
       // forceSync copies CodeMirror into the textarea without firing an event,
       // so typing in the body is invisible to anything watching the form.
