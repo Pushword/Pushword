@@ -157,52 +157,82 @@ final class NewsletterBouncesCommand
         );
     }
 
-    /** @param array{soft: int, foreign: int, unfiled: int, unknown: list<string>, ...} $report */
+    /**
+     * The console rendering: the same three sentences, each in the style that
+     * says how much it matters.
+     *
+     * @param array{soft: int, foreign: int, unfiled: int, unknown: list<string>, ...} $report
+     */
     private function detail(SymfonyStyle $io, array $report): void
     {
-        if ([] !== $report['unknown']) {
-            $io->note(\sprintf(
-                "%d bounced address(es) are on no list, and were left alone:\n%s",
-                \count($report['unknown']),
-                implode(', ', \array_slice($report['unknown'], 0, 10)),
-            ));
+        $unknown = $this->unknownLine($report);
+        if (null !== $unknown) {
+            $io->note($unknown);
         }
 
+        // Only worth a line on screen when it is not all zeroes; the mail keeps
+        // it either way, being a record rather than a glance.
         if ($report['soft'] > 0 || $report['foreign'] > 0) {
-            $io->writeln(\sprintf(
-                '<comment>%d temporary failure(s) ignored, %d message(s) were not delivery reports.</comment>',
-                $report['soft'],
-                $report['foreign'],
-            ));
+            $io->writeln('<comment>'.$this->ignoredLine($report).'</comment>');
         }
 
-        if ($report['unfiled'] > 0) {
-            $io->warning(\sprintf('%d message(s) could not be marked read and will be read again.', $report['unfiled']));
+        $unfiled = $this->unfiledLine($report);
+        if (null !== $unfiled) {
+            $io->warning($unfiled);
         }
     }
 
-    /** @param array{soft: int, foreign: int, unfiled: int, unknown: list<string>, ...} $report */
+    /**
+     * The same, for a mail that has no styles to say it with.
+     *
+     * @param array{soft: int, foreign: int, unfiled: int, unknown: list<string>, ...} $report
+     */
     private function plainDetail(array $report): string
     {
-        $lines = [\sprintf(
+        $lines = [
+            $this->ignoredLine($report),
+            $this->unknownLine($report),
+            $this->unfiledLine($report),
+        ];
+
+        return implode("\n", array_filter($lines, static fn (?string $line): bool => null !== $line));
+    }
+
+    /**
+     * The mailbox collects the failures of everything else the app sends, so
+     * some of what it holds concerns nobody on the list.
+     *
+     * @param array{unknown: list<string>, ...} $report
+     */
+    private function unknownLine(array $report): ?string
+    {
+        if ([] === $report['unknown']) {
+            return null;
+        }
+
+        return \sprintf(
+            '%d bounced address(es) are on no list, and were left alone: %s',
+            \count($report['unknown']),
+            implode(', ', \array_slice($report['unknown'], 0, 10)),
+        );
+    }
+
+    /** @param array{soft: int, foreign: int, ...} $report */
+    private function ignoredLine(array $report): string
+    {
+        return \sprintf(
             '%d temporary failure(s) ignored, %d message(s) were not delivery reports.',
             $report['soft'],
             $report['foreign'],
-        )];
+        );
+    }
 
-        if ([] !== $report['unknown']) {
-            $lines[] = \sprintf(
-                '%d bounced address(es) are on no list, and were left alone: %s',
-                \count($report['unknown']),
-                implode(', ', \array_slice($report['unknown'], 0, 10)),
-            );
-        }
-
-        if ($report['unfiled'] > 0) {
-            $lines[] = \sprintf('%d message(s) could not be marked read and will be read again.', $report['unfiled']);
-        }
-
-        return implode("\n", $lines);
+    /** @param array{unfiled: int, ...} $report */
+    private function unfiledLine(array $report): ?string
+    {
+        return $report['unfiled'] > 0
+            ? \sprintf('%d message(s) could not be marked read and will be read again.', $report['unfiled'])
+            : null;
     }
 
     private function fail(OutputInterface $output, SymfonyStyle $io, string $error, string $message): int

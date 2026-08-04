@@ -260,11 +260,16 @@ class ContactCrudController extends AbstractCrudController
         $phone = trim($request->request->getString('phone'));
 
         // A number alone is enough: the person consented over the phone, and
-        // there is nothing to confirm by mail.
+        // there is nothing to confirm by mail. An address that was typed and is
+        // not one is a typo either way, and never a phone-only opt-in.
         $hasEmail = '' !== $email && false !== filter_var($email, \FILTER_VALIDATE_EMAIL);
         $hasPhone = null !== Contact::normalizePhone($phone);
 
-        if (! $audience instanceof Audience || (! $hasEmail && ! $hasPhone) || ('' !== $email && ! $hasEmail)) {
+        $usable = $audience instanceof Audience
+            && ($hasEmail || $hasPhone)
+            && ('' === $email || $hasEmail);
+
+        if (! $usable) {
             $this->addFlash('danger', 'newsletter.contact.flash.invalidOptIn');
 
             return new RedirectResponse($this->optInUrl($email, $phone));

@@ -195,26 +195,33 @@ class CampaignCrudController extends AbstractCrudController
     private function coverage(): string
     {
         $campaign = $this->getContext()?->getEntity()->getInstance();
-        $audience = $campaign instanceof Campaign ? $campaign->audience : null;
 
-        if (! $audience instanceof Audience) {
+        if (! $campaign instanceof Campaign || ! $campaign->audience instanceof Audience) {
             return '';
         }
 
-        $spoken = $this->contactRepository->localesIn($audience);
+        $spoken = $this->contactRepository->localesIn($campaign->audience);
 
+        // One language is not a coverage question, and a campaign not yet saved
+        // has no audience to ask about.
         if (\count($spoken) < 2) {
             return '';
         }
 
-        $translated = array_values(array_intersect($spoken, $campaign->translatedLocales()));
-        $missing = array_values(array_diff($spoken, $translated));
-
+        $translated = array_intersect($spoken, $campaign->translatedLocales());
+        $missing = array_diff($spoken, $translated);
         $read = \sprintf('Read in %d languages: %s.', \count($spoken), implode(', ', $spoken));
 
-        return [] === $missing
-            ? $read.' All of them translated.'
-            : $read.\sprintf(' Translated: %s. %s receive the text above.', [] === $translated ? 'none' : implode(', ', $translated), implode(', ', $missing));
+        if ([] === $missing) {
+            return $read.' All of them translated.';
+        }
+
+        return \sprintf(
+            '%s Translated: %s. %s receive the text above.',
+            $read,
+            [] === $translated ? 'none' : implode(', ', $translated),
+            implode(', ', $missing),
+        );
     }
 
     #[AdminRoute(path: '/{entityId}/send', name: 'send')]

@@ -209,7 +209,7 @@ class Campaign implements IdInterface, Stringable
             return [];
         }
 
-        $language = str_contains($locale, '-') ? substr($locale, 0, (int) strpos($locale, '-')) : $locale;
+        $language = explode('-', $locale)[0];
 
         return $this->translations[$locale] ?? $this->translations[$language] ?? [];
     }
