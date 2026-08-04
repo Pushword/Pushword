@@ -168,6 +168,22 @@
   display: none;
 }
 
+/* The picture's container is hidden while empty, which hides the button with it. */
+.image-tool__image {
+  position: relative;
+}
+
+.image-tool__image .media-tool__delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.image-tool--loading .media-tool__delete {
+  display: none;
+}
+
 .image-tool__caption:focus {
   color: #707684;
   outline: none;

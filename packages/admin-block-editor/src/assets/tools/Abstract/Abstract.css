@@ -55,6 +55,32 @@
   margin-left: 25px;
 }
 
+/** Remove the media held by a block — the gallery item's own remove button. **/
+.media-tool__delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 3px;
+  border: 0;
+  border-radius: 3px;
+  background-color: #fff;
+  color: #000;
+  box-shadow: 0 1px 3px rgba(29, 32, 43, 0.25);
+  cursor: pointer;
+  transition: background 200ms;
+}
+
+.media-tool__delete:hover {
+  background: #eff2f5;
+}
+
+.media-tool__delete:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: 2px;
+}
+
 /** Toggler **/
 .toggle-wrapper {
   color: #707684;

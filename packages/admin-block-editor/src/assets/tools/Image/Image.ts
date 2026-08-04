@@ -33,11 +33,13 @@ export interface ImageNodes extends MediaNodes {
   imageContainer: HTMLElement
   imageEl?: HTMLImageElement
   caption: HTMLElement
+  deleteButton: HTMLElement
 }
 
 export default class Image extends AbstractMediaTool {
   protected data: ImageData
   public nodes: ImageNodes
+  public override uploadAccept = 'image/*'
 
   static get toolbox() {
     return {
@@ -72,7 +74,16 @@ export default class Image extends AbstractMediaTool {
       caption: make.element('div', [this.api.styles.input, 'image-tool__caption'], {
         contentEditable: !this.readOnly,
       }),
+      deleteButton: this.createDeleteButton(() => this.removeMedia()),
     }
+  }
+
+  /** Drop the picture, keeping the caption: the Select/Upload buttons come back. */
+  private removeMedia(): void {
+    this.data.media = ''
+    this.nodes.imageEl?.remove()
+    delete this.nodes.imageEl
+    this.toggleStatus(STATUS.EMPTY)
   }
 
   static normalizeData(data: ImageData | ImageDataToNormalize): ImageData {
@@ -137,6 +148,7 @@ export default class Image extends AbstractMediaTool {
      */
     this.nodes.caption.dataset.placeholder = this.api.i18n.t('Caption')
     this.nodes.imageContainer.appendChild(this.nodes.preloader)
+    this.nodes.imageContainer.appendChild(this.nodes.deleteButton)
     this.nodes.wrapper.appendChild(this.nodes.imageContainer)
     this.nodes.wrapper.appendChild(this.nodes.caption)
     this.nodes.wrapper.appendChild(this.nodes.fileButton)
@@ -284,22 +296,6 @@ export default class Image extends AbstractMediaTool {
     if (event.type === 'file') {
       const file = event.detail?.file as File | undefined
       if (file) void this.uploadFile(file)
-    }
-  }
-
-  /** Upload a dropped/pasted file through the shared media endpoint, then fill the block. */
-  private async uploadFile(file: File): Promise<void> {
-    this.onFileLoading()
-
-    const formData = new FormData()
-    formData.append('image', file)
-
-    try {
-      const response = await fetch('/admin/media/block', { method: 'POST', body: formData })
-      if (!response.ok) throw new Error(await MediaUtils.uploadErrorMessage(response))
-      this.onUpload(await response.json())
-    } catch (error) {
-      this.handleUploadError(error)
     }
   }
 }

@@ -62,6 +62,17 @@ function toolWithActions(): { tool: Hyperlink; input: HTMLInputElement } {
   return { tool, input }
 }
 
+/** The two selects renderActions() builds, in the order it appends them. */
+function selects(wrapper: HTMLElement): {
+  rel: HTMLSelectElement
+  design: HTMLSelectElement
+} {
+  const [rel, design] = wrapper.querySelectorAll<HTMLSelectElement>('select')
+  if (!rel || !design) throw new Error('renderActions() did not build both selects')
+
+  return { rel, design }
+}
+
 function anchor(html: string): HTMLElement {
   const holder = document.createElement('div')
   holder.innerHTML = html
@@ -102,6 +113,46 @@ describe('Hyperlink.updateActionValues', () => {
 
     const switches = wrapper.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')
     expect([...switches].every((box) => box.checked)).toBe(true)
-    expect(wrapper.querySelector<HTMLSelectElement>('select')!.value).toBe('link-btn')
+    expect(selects(wrapper).rel.value).toBe('obfuscate')
+    expect(selects(wrapper).design.value).toBe('link-btn')
+  })
+
+  it('keeps a rel the list does not offer rather than dropping it silently', () => {
+    const { tool } = toolWithActions()
+    const wrapper = tool.renderActions()
+
+    tool.updateActionValues(anchor('<a href="/x" rel="me">x</a>'))
+
+    // Without an option of its own the select would fall back to "no rel", and
+    // the next change would strip the attribute off the link.
+    expect(selects(wrapper).rel.value).toBe('me')
+  })
+})
+
+describe('Hyperlink.updateLink', () => {
+  it('writes the picked rel onto the anchor', () => {
+    const { tool } = toolWithActions()
+    const wrapper = tool.renderActions()
+    const link = anchor('<a href="/x">x</a>')
+    tool.updateActionValues(link)
+    ;(tool as unknown as { anchorTag: HTMLElement }).anchorTag = link
+
+    selects(wrapper).rel.value = 'nofollow sponsored'
+    tool.updateLink()
+
+    expect(link.getAttribute('rel')).toBe('nofollow sponsored')
+  })
+
+  it('removes the attribute when no rel is picked', () => {
+    const { tool } = toolWithActions()
+    const wrapper = tool.renderActions()
+    const link = anchor('<a href="/x" rel="nofollow">x</a>')
+    tool.updateActionValues(link)
+    ;(tool as unknown as { anchorTag: HTMLElement }).anchorTag = link
+
+    selects(wrapper).rel.value = ''
+    tool.updateLink()
+
+    expect(link.hasAttribute('rel')).toBe(false)
   })
 })

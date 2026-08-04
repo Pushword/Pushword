@@ -11,6 +11,11 @@ interface ToolWithMultiCallbacks {
   onMultiUpload: (items: Array<{ media: string; name: string; url: string }>) => void
 }
 
+interface ToolWithInlineUpload {
+  uploadFile: (file: File) => Promise<void>
+  uploadAccept: string
+}
+
 export class editorJsHelper {
   private static modeManagers: Record<string, EditorModeManager> = {}
   public modeManagers: Record<string, EditorModeManager> = {}
@@ -199,6 +204,32 @@ export class editorJsHelper {
     selectElement.dataset[urlKey] = originalUrl
   }
 
+  /**
+   * Pick a file from the device and upload it right away.
+   *
+   * The media picker's upload button opens the media form in a modal; a block
+   * carries its own caption, which becomes the media's alt on render, so that
+   * form has nothing left to ask that the block does not already hold.
+   */
+  static uploadInline(Tool: ToolWithInlineUpload): void {
+    // Left out of the document on purpose: a dialog the editor cancels fires no
+    // event, so an attached input would pile up one dead node per cancel.
+    const input = document.createElement('input')
+    input.type = 'file'
+    if (Tool.uploadAccept) input.accept = Tool.uploadAccept
+
+    input.addEventListener('change', () => {
+      const file = input.files?.[0]
+      if (file) void Tool.uploadFile(file)
+    })
+
+    input.click()
+  }
+
+  onUploadInline(Tool: ToolWithInlineUpload, _event: Event): void {
+    editorJsHelper.uploadInline(Tool)
+  }
+
   onSelectImage(Tool: ToolWithCallbacks, event: Event): void {
     editorJsHelper.abstractOn(Tool, event, 'select')
   }
@@ -213,10 +244,6 @@ export class editorJsHelper {
 
   onMultiSelectImage(Tool: ToolWithMultiCallbacks, _event: Event): void {
     editorJsHelper.abstractOnMulti(Tool, _event)
-  }
-
-  onUploadFile(Tool: ToolWithCallbacks, event: Event): void {
-    editorJsHelper.abstractOn(Tool, event, 'upload', '[id*="inline_attaches"]')
   }
 
   toggleEditorJs(editorId: string): void {

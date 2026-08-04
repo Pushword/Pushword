@@ -150,6 +150,15 @@ export default class Attaches extends AbstractMediaTool {
     return this.data.file.media
   }
 
+  /** Drop the file and show the Select/Upload buttons back. */
+  private removeMedia(): void {
+    this.data = { title: '', file: { media: '', size: 0 } }
+    this.nodes.wrapper.classList.remove('cdx-attaches--with-file')
+    this.nodes.wrapper.replaceChildren(this.nodes.fileButton)
+    this.hidePreloader(STATUS.EMPTY)
+    this.block.dispatchChange()
+  }
+
   showFileData(): void {
     this.nodes.wrapper.classList.add('cdx-attaches--with-file')
 
@@ -160,6 +169,10 @@ export default class Attaches extends AbstractMediaTool {
       this.hidePreloader(STATUS.EMPTY)
       return
     }
+
+    // A file replacing another renders over the empty state, or over the
+    // previous file: both leave nodes behind.
+    this.nodes.wrapper.replaceChildren()
 
     this.appendFileIcon()
 
@@ -181,6 +194,7 @@ export default class Attaches extends AbstractMediaTool {
     }
 
     this.nodes.wrapper.appendChild(fileInfo)
+    this.nodes.wrapper.appendChild(this.createDeleteButton(() => this.removeMedia()))
 
     this.hidePreloader(STATUS.FILLED)
   }

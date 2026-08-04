@@ -19,6 +19,7 @@ final readonly class EditorJsMessages
         'Alternative text' => 'editorAlternativeText',
         'An error occurred' => 'editorErrorOccurred',
         'Caption' => 'editorCaption',
+        'Remove the media' => 'editorRemoveMedia',
         'Select' => 'editorSelect',
         'Upload' => 'editorUpload',
     ];
@@ -115,6 +116,7 @@ final readonly class EditorJsMessages
                     'Nouvel onglet' => 'editorNewTab',
                     'Obfusquer' => 'editorObfuscate',
                     'Style' => 'editorStyle',
+                    'rel' => 'editorRel',
                 ]),
                 'pages_list' => $this->translate(['No parameters' => 'editorNoParameters']),
                 'snippet' => $this->translate([

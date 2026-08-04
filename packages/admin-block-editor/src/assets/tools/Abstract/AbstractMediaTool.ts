@@ -2,7 +2,9 @@ import { API, BlockToolData } from '@editorjs/editorjs'
 import { logger } from '../utils/logger'
 import SelectIcon from './icon/folder.svg?raw'
 import UploadIcon from './icon/upload.svg?raw'
+import { IconCross } from '@codexteam/icons'
 import make from '../utils/make'
+import { MediaUtils } from '../utils/media'
 import { BaseTool } from './BaseTool'
 
 export const STATUS = {
@@ -185,5 +187,42 @@ export abstract class AbstractMediaTool extends BaseTool {
     buttonWrapper.appendChild(uploadButton)
 
     return buttonWrapper
+  }
+
+  /**
+   * Button that empties the block so another media can be picked: a filled block
+   * hides its Select/Upload buttons, so without it the only way to change the
+   * media is to delete the block and start over.
+   */
+  protected createDeleteButton(onDelete: () => void): HTMLElement {
+    return make.element(
+      'button',
+      'media-tool__delete',
+      { type: 'button', title: this.api.i18n.t('Remove the media') },
+      IconCross,
+      (event: Event) => {
+        event.preventDefault()
+        onDelete()
+      },
+    )
+  }
+
+  /** What the inline uploader's file dialog offers; empty means any file. */
+  public uploadAccept = ''
+
+  /** Upload a file straight through the media endpoint, then fill the block. */
+  public async uploadFile(file: File): Promise<void> {
+    this.onFileLoading()
+
+    const formData = new FormData()
+    formData.append('image', file)
+
+    try {
+      const response = await fetch('/admin/media/block', { method: 'POST', body: formData })
+      if (!response.ok) throw new Error(await MediaUtils.uploadErrorMessage(response))
+      this.onUpload(await response.json())
+    } catch (error) {
+      this.handleUploadError(error)
+    }
   }
 }

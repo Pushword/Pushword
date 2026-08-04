@@ -10,7 +10,7 @@ interface HyperlinkNodes {
   wrapper: HTMLElement | null
   input: HTMLInputElement | null
   selectDesign: HTMLSelectElement | null
-  hideForBot: HTMLElement | null
+  selectRel: HTMLSelectElement | null
   targetBlank: HTMLElement | null
   button: HTMLButtonElement | null
   linkButton: HTMLButtonElement | null
@@ -33,14 +33,27 @@ export default class Hyperlink {
     discret: 'ninja',
   }
 
+  /**
+   * Label => rel value. `obfuscate` is Pushword's own: HtmlObfuscateLink matches
+   * `rel="obfuscate"` exactly, so it cannot be combined with a real rel — one
+   * value per link, which is what a select gives.
+   */
+  private static readonly defaultRels: Record<string, string> = {
+    Obfusquer: 'obfuscate',
+    nofollow: 'nofollow',
+    'nofollow sponsored': 'nofollow sponsored',
+    'nofollow ugc': 'nofollow ugc',
+  }
+
   private api: API
   private availableDesigns: Record<string, string>
+  private availableRels: Record<string, string>
 
   private nodes: HyperlinkNodes = {
     wrapper: null,
     input: null,
     selectDesign: null,
-    hideForBot: null,
+    selectRel: null,
     targetBlank: null,
     button: null,
     linkButton: null,
@@ -51,9 +64,19 @@ export default class Hyperlink {
   private anchorTag: HTMLElement | null = null
   private selection: SelectionUtils
 
-  constructor({ api, config }: { api: API; config?: { availableDesigns?: Record<string, string> } }) {
+  constructor({
+    api,
+    config,
+  }: {
+    api: API
+    config?: {
+      availableDesigns?: Record<string, string>
+      availableRels?: Record<string, string>
+    }
+  }) {
     this.api = api
     this.availableDesigns = config?.availableDesigns ?? Hyperlink.defaultDesigns
+    this.availableRels = config?.availableRels ?? Hyperlink.defaultRels
     this.selection = new SelectionUtils()
   }
 
@@ -79,11 +102,21 @@ export default class Hyperlink {
       options,
     )
 
-    this.nodes.hideForBot = make.switchInput('hideForBot', this.api.i18n.t('Obfusquer'))
     this.nodes.targetBlank = make.switchInput(
       'targetBlank',
       this.api.i18n.t('Nouvel onglet'),
     )
+
+    this.nodes.selectRel = make.element(
+      'select',
+      this.api.styles.input,
+    ) as HTMLSelectElement
+    make.option(this.nodes.selectRel, '', this.api.i18n.t('rel'), {
+      style: 'opacity: 0.5',
+    })
+    for (const [label, value] of Object.entries(this.availableRels)) {
+      make.option(this.nodes.selectRel, value, this.api.i18n.t(label))
+    }
 
     this.nodes.selectDesign = make.element(
       'select',
@@ -101,8 +134,8 @@ export default class Hyperlink {
     this.nodes.wrapper.append(
       this.nodes.input,
       this.nodes.suggester!,
-      this.nodes.hideForBot,
       this.nodes.targetBlank,
+      this.nodes.selectRel,
       this.nodes.selectDesign,
     )
 
@@ -199,8 +232,17 @@ export default class Hyperlink {
     //this.nodes.input.value = hrefAttr ? hrefAttr : ''
     this.nodes.input.setAttribute('value', hrefAttr ? hrefAttr : '')
 
-    const relAttr = anchorTag.getAttribute('rel')
-    this.nodes.hideForBot!.querySelector('input')!.checked = !!relAttr
+    const relAttr = anchorTag.getAttribute('rel') ?? ''
+    // A rel the list does not offer — hand-written, or left by another site's
+    // config — becomes an option of its own, or selecting anything else would
+    // silently drop it.
+    const offered = Array.from(this.nodes.selectRel!.options).some(
+      (option) => option.value === relAttr,
+    )
+    if (relAttr && !offered) {
+      make.option(this.nodes.selectRel!, relAttr)
+    }
+    this.nodes.selectRel!.value = relAttr
 
     const targetAttr = anchorTag.getAttribute('target')
     this.nodes.targetBlank!.querySelector('input')!.checked = !!targetAttr
@@ -282,7 +324,7 @@ export default class Hyperlink {
       this.anchorTag.removeAttribute('target')
     }
 
-    const rel = this.nodes.hideForBot!.querySelector('input')!.checked ? 'obfuscate' : ''
+    const rel = this.nodes.selectRel!.value || ''
     if (rel) {
       this.anchorTag.setAttribute('rel', rel)
     } else {
