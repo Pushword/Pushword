@@ -49,6 +49,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
+  vi.unstubAllGlobals()
 })
 
 // ─── open() ──────────────────────────────────────────────────────────────────
@@ -299,6 +300,91 @@ describe('scrollToHash()', () => {
 
   it('does nothing when hash is empty', () => {
     expect(() => ShowMore.scrollToHash('')).not.toThrow()
+  })
+})
+
+// ─── text fragments (#:~:text=) ──────────────────────────────────────────────
+
+describe('scrollToHash() with a text fragment directive', () => {
+  it('opens the block whose content contains the text', () => {
+    const { wrapper, content } = makeBlock()
+    content.textContent = 'Long review praising the fast delivery and quality.'
+    ShowMore.scrollToHash('#:~:text=fast%20delivery')
+    expect(wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('matches case-insensitively across collapsed whitespace and inline tags', () => {
+    const { wrapper, content } = makeBlock()
+    content.innerHTML = '<p>The <strong>QUICK</strong> brown\n fox</p>'
+    ShowMore.scrollToHash('#:~:text=quick%20brown%20fox')
+    expect(wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('still scrolls to the element part of a combined #id:~:text= hash', () => {
+    const { wrapper, content } = makeBlock()
+    const target = document.createElement('span')
+    target.id = 'review-3'
+    content.appendChild(target)
+    ShowMore.scrollToHash('#review-3:~:text=absent%20phrase')
+    expect(wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('searches the start term, not the prefix, in prefix-,start,-suffix syntax', () => {
+    const { wrapper, content } = makeBlock()
+    content.textContent = 'delivery was fast and cheap overall'
+    ShowMore.scrollToHash('#:~:text=nowhere-,fast%20and%20cheap,-elsewhere')
+    expect(wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('force-opens even when block is in _userClosed', () => {
+    const { wrapper, content } = makeBlock()
+    ShowMore._userClosed.add(wrapper)
+    content.textContent = 'hidden gem paragraph'
+    ShowMore.scrollToHash('#:~:text=hidden%20gem')
+    expect(ShowMore._userClosed.has(wrapper)).toBe(false)
+    expect(wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('opens each block matched by multiple text directives', () => {
+    const a = makeBlock({ id: 'a' })
+    const b = makeBlock({ id: 'b' })
+    a.content.textContent = 'alpha text here'
+    b.content.textContent = 'beta text here'
+    ShowMore.scrollToHash('#:~:text=alpha%20text&text=beta%20text')
+    expect(a.wrapper.dataset.showMoreOpen).toBe('true')
+    expect(b.wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('does nothing when no block contains the text', () => {
+    const { wrapper } = makeBlock()
+    expect(() => ShowMore.scrollToHash('#:~:text=absent%20phrase')).not.toThrow()
+    expect(wrapper.dataset.showMoreOpen).toBeUndefined()
+  })
+
+  it('ignores malformed percent-encoding without throwing', () => {
+    makeBlock()
+    expect(() => ShowMore.scrollToHash('#:~:text=%E0%A4%A')).not.toThrow()
+  })
+})
+
+describe('_openNavigationTextFragment()', () => {
+  it('recovers a directive the browser stripped from location.hash', () => {
+    const { wrapper, content } = makeBlock()
+    content.textContent = 'stripped by the browser but findable'
+    vi.stubGlobal('performance', {
+      getEntriesByType: () => [{ name: 'https://example.tld/page#:~:text=stripped%20by%20the%20browser' }],
+    })
+    ShowMore._openNavigationTextFragment()
+    expect(wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('does nothing when the navigation entry has no directive', () => {
+    const { wrapper } = makeBlock()
+    vi.stubGlobal('performance', {
+      getEntriesByType: () => [{ name: 'https://example.tld/page#section' }],
+    })
+    ShowMore._openNavigationTextFragment()
+    expect(wrapper.dataset.showMoreOpen).toBeUndefined()
   })
 })
 

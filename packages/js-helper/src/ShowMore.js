@@ -7,6 +7,7 @@
  *    2. On scroll → `addClassForNormalUser` adds `max-h-[250px]` via `data-acinb`, collapsing them
  *       Exception → blocks previously opened by user (in localStorage) stay open
  * - [x] Auto-open when URL contains hash pointing inside block
+ * - [x] Auto-open when URL contains a text fragment (#:~:text=) matching block content
  * - [x] Auto-open when page loads with scroll position (browser back/refresh)
  * - [x] Auto-open on hash change (SPA navigation)
  * - [x] Ctrl+F: Auto-open when browser finds text in collapsed block
@@ -186,6 +187,16 @@ const ShowMore = {
   scrollToHash(hash) {
     if (!hash) return
 
+    // Browsers without text-fragment support keep the fragment directive in
+    // location.hash, where it would make querySelector() throw. Split it off:
+    // the element part still scrolls, the text part opens its block.
+    const directiveStart = hash.lastIndexOf(':~:')
+    if (directiveStart !== -1) {
+      this.openTextFragment(hash.slice(directiveStart + 3))
+      hash = hash.slice(0, directiveStart)
+      if (hash.length <= 1) return
+    }
+
     try {
       const target = document.querySelector(hash)
       if (target) {
@@ -202,6 +213,62 @@ const ShowMore = {
       }
     } catch (e) {
       // Invalid selector, ignore
+    }
+  },
+
+  /**
+   * Open every block whose content matches a text directive
+   * ("text=foo&text=prefix-,bar,-suffix"). Scrolling and highlighting stay
+   * the browser's job (native, or absent pre-support); ours is only to keep
+   * the matched text out of collapsed blocks.
+   * @param {string} directive - Fragment directive, without the ':~:' prefix
+   */
+  openTextFragment(directive) {
+    for (const match of directive.matchAll(/(?:^|&)text=([^&]*)/g)) {
+      let parts = match[1].split(',')
+      // Syntax: text=[prefix-,]start[,end][,-suffix] — only start is searched.
+      if (parts.length > 1 && parts[0].endsWith('-')) parts = parts.slice(1)
+      let start = parts[0]
+      try {
+        start = decodeURIComponent(start)
+      } catch (e) {
+        // Malformed percent-encoding: match on the raw text
+      }
+      const wrapper = this._findBlockContaining(start)
+      if (!wrapper) continue
+      // Like hash navigation, a text fragment is explicit user intent.
+      this._userClosed.delete(wrapper)
+      this.openContaining(wrapper, false)
+    }
+  },
+
+  /**
+   * @param {string} text
+   * @returns {?HTMLElement} First .show-more whose content contains the text
+   */
+  _findBlockContaining(text) {
+    const normalize = (s) => s.toLowerCase().replace(/\s+/g, ' ').trim()
+    const needle = normalize(text)
+    if (!needle) return null
+    for (const wrapper of document.querySelectorAll('.show-more')) {
+      const content = wrapper.children[1]
+      if (content && normalize(content.textContent).includes(needle)) {
+        return wrapper
+      }
+    }
+    return null
+  },
+
+  // Browsers with native text-fragment support strip the ':~:…' directive
+  // from location (scrollToHash only ever sees it on browsers without
+  // support). The launch URL survives in the navigation timing entry —
+  // recover it from there so the block holding the native highlight opens.
+  _openNavigationTextFragment() {
+    if (location.hash.includes(':~:')) return // scrollToHash already handled it
+    const url = performance.getEntriesByType?.('navigation')[0]?.name ?? ''
+    const directiveStart = url.lastIndexOf(':~:')
+    if (directiveStart !== -1) {
+      this.openTextFragment(url.slice(directiveStart + 3))
     }
   },
 
@@ -237,6 +304,7 @@ const ShowMore = {
     if (location.hash) {
       this.scrollToHash(location.hash)
     }
+    this._openNavigationTextFragment()
 
     let scrollCheckCount = 0
     const maxScrollChecks = 10
