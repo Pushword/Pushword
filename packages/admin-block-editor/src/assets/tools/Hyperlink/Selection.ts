@@ -33,8 +33,10 @@ export default class SelectionUtils {
       return
     }
 
+    // Undo the backColor set by setFakeBackground. `removeFormat` would work too,
+    // but it also strips every inline tag of the selection (bold, marker, code…).
+    document.execCommand('backColor', false, 'transparent')
     this.isFakeBackgroundEnabled = false
-    document.execCommand('removeFormat')
   }
 
   public setFakeBackground() {
