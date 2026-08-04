@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc832](/upgrade/rc832) | `newsletter` | a mailbox of delivery failures can be read back into the list |
 | [rc831](/upgrade/rc831) | `search` | the static search endpoint ships a populated index, and an unreadable index rebuilds itself — run `pw:static` |
 | [rc830](/upgrade/rc830) | `static-generator` | parallel static workers each get their own opcache file cache |
 | [rc829](/upgrade/rc829) | `newsletter` | a fresh install ships real starter content; six unused editorjs twig helpers are gone; automations keep a send ledger |
