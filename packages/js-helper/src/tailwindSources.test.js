@@ -15,11 +15,48 @@ import { readFileSync } from 'node:fs'
  * does not give this module a file:// url to resolve against.
  */
 const css = readFileSync('src/app.css', 'utf8')
-const sources = [...css.matchAll(/@source\s+"([^"]+)"/g)].map((match) => match[1])
+
+/** Drop comments the way a CSS parser does: a comment ends on its first `*` + `/`,
+ * wherever that falls — including inside a glob someone spelled out in prose. */
+const stripComments = (input) => {
+  let code = ''
+  let quote = null
+  for (let index = 0; index < input.length; index++) {
+    const char = input[index]
+    if (quote !== null) {
+      code += char
+      if (char === quote) quote = null
+    } else if (char === '"' || char === "'") {
+      quote = char
+      code += char
+    } else if (char === '/' && input[index + 1] === '*') {
+      const end = input.indexOf('*/', index + 2)
+      index = end === -1 ? input.length : end + 1
+      code += ' '
+    } else {
+      code += char
+    }
+  }
+  return code
+}
+
+const code = stripComments(css)
+const sources = [...code.matchAll(/@source\s+"([^"]+)"/g)].map((match) => match[1])
 
 describe('app.css tailwind @source list', () => {
   it('declares sources', () => {
     expect(sources.length).toBeGreaterThan(0)
+  })
+
+  it('starts every @source on its own statement', () => {
+    // A comment cut short by a glob leaves its remaining prose in the code, and
+    // that prose parses as a declaration running to the next `;` — swallowing
+    // the directive on that line. Tailwind never registers it; the build says
+    // nothing louder than an "unexpected token" warning from the CSS optimizer.
+    for (const match of code.matchAll(/@source\s+"[^"]+"/g)) {
+      const before = code.slice(0, match.index).trimEnd()
+      expect(before === '' || before.endsWith(';') || before.endsWith('}')).toBe(true)
+    }
   })
 
   it.each(sources.filter((source) => source.includes('*')))('%s resolves to files, not a directory', (source) => {
