@@ -18,7 +18,10 @@ runs Pushword in worker mode.
 
 ## Log in
 
-Open `/admin` with the account the installer created:
+Open `/admin` with the account the installer asked you for.
+
+If it ran unattended — CI, a script, `composer --no-interaction` — it could not ask,
+and fell back to a demo account whose credentials are published:
 
 ```
 admin@example.tld

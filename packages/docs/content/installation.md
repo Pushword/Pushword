@@ -31,9 +31,13 @@ The `"^1.0.0-rc"` is required: Pushword is still tagged as release candidates, a
 `pushword/new`, is a long-abandoned 0.x tag. Without the constraint you get a 2024
 template that installs the wrong Symfony and a mismatched set of Pushword packages.
 
-The installer creates the database, the demo content and a super admin:
-**`admin@example.tld` / `p@ssword`**. Log in on `/admin` and change them right away
-— or create your own account with `php bin/console pw:user:create`.
+The installer creates the database and the demo content, then asks for the account
+you will log in with — email, password, role (`ROLE_SUPER_ADMIN` by default).
+
+Run unattended (CI, a provisioning script, `composer --no-interaction`), it cannot
+ask, so it falls back to a super admin with **published credentials**:
+**`admin@example.tld` / `p@ssword`**. Change them on first login, or create your own
+account with `php bin/console pw:user:create`.
 
 That's it ! You can still configure an app or directly launch a PHP Server :
 

@@ -104,4 +104,21 @@ class PostInstall
     {
         return file_exists('vendor');
     }
+
+    /**
+     * Whether an install step may stop and ask the person running it something.
+     *
+     * Composer exports COMPOSER_NO_INTERACTION when it was itself run with
+     * `--no-interaction`; beyond that, a question is only answerable if stdin is a
+     * terminal — never in CI, a Dockerfile or a provisioning script.
+     */
+    public static function isInteractive(): bool
+    {
+        $noInteraction = (string) getenv('COMPOSER_NO_INTERACTION');
+        if ('' !== $noInteraction && '0' !== $noInteraction) {
+            return false;
+        }
+
+        return \defined('STDIN') && stream_isatty(\STDIN);
+    }
 }

@@ -48,8 +48,7 @@ PostInstall::remove(['media/piedweb-logo.png', 'media/logo.svg', 'media/test.pdf
 $freshInstall = ! file_exists('var/app.db');
 $commands = 'php bin/console doctrine:schema:update --force -q';
 if ($freshInstall) {
-    $commands .= ' && php bin/console doctrine:fixtures:load --no-interaction -q'
-        .' && php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN -q';
+    $commands .= ' && php bin/console doctrine:fixtures:load --no-interaction -q';
 }
 
 $commands .= ' && php bin/console pw:image:cache -q';
@@ -60,8 +59,23 @@ exec($commands);
 PostInstall::dumpFile('public/build/manifest.json', '{}');
 
 if ($freshInstall) {
-    echo '~~ Super admin created: admin@example.tld / p@ssword'.chr(10);
-    echo '~~ Log in on /admin and change these credentials.'.chr(10);
+    // Asking beats seeding a password that ships in the documentation — but only when
+    // someone is there to answer. Run from CI, a script or `composer --no-interaction`,
+    // this falls back to the demo account so the install still completes unattended.
+    $userCreated = false;
+    if (PostInstall::isInteractive()) {
+        echo '~~ Create the account you will log in with:'.chr(10);
+        // No arguments: the command asks for each one, and already defaults the role
+        // to ROLE_SUPER_ADMIN.
+        passthru('php bin/console pw:user:create', $status);
+        $userCreated = 0 === $status;
+    }
+
+    if (! $userCreated) {
+        exec('php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN -q');
+        echo '~~ Super admin created: admin@example.tld / p@ssword'.chr(10);
+        echo '~~ Log in on /admin and change these credentials.'.chr(10);
+    }
 }
 
 echo '~~ Copy assets file in ./assets'.chr(10);
