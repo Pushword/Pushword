@@ -216,6 +216,12 @@ body.pw-outline-open .content-wrapper {
   color: #334155;
 }
 
+/* Span handles preview a move: same blue as the drop indicator. */
+.pw-outline-handle.pw-outline-action--span:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
 /* A hairline sets the section pair apart from the heading pair. */
 .pw-outline-action + .pw-outline-handle.pw-outline-action--span {
   margin-left: 7px;
@@ -242,11 +248,27 @@ body.pw-outline-open .content-wrapper {
 }
 
 /* Hovering a whole-span action (move/delete section or group) surrounds
-   everything the action covers: the row and its nested children. */
-.pw-outline-item:has(> .pw-outline-row .pw-outline-action--span:hover) {
+   everything the action covers: the row and its nested children. Move previews
+   in the drop-indicator blue, delete in the danger red, and the row's own slate
+   hover steps aside so the span reads as one single-color container. */
+.pw-outline-item:has(
+    > .pw-outline-row .pw-outline-action--span:is(:hover, :focus-visible)
+  ) {
   background: #eff6ff;
   box-shadow: inset 0 0 0 1px #bfdbfe;
   border-radius: 6px;
+}
+
+.pw-outline-item:has(
+    > .pw-outline-row .pw-outline-action.pw-outline-action--span:is(:hover, :focus-visible)
+  ) {
+  background: #fef2f2;
+  box-shadow: inset 0 0 0 1px #fecaca;
+}
+
+.pw-outline-item:has(> .pw-outline-row .pw-outline-action--span:is(:hover, :focus-visible))
+  > .pw-outline-row {
+  background: transparent;
 }
 
 /* Opener, shown while the rail is collapsed: docked at the top right of the
