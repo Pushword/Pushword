@@ -197,7 +197,7 @@ adminPageTwitterCreatorHelp: "<code>@Username</code>, default value if set in th
 adminPageTwitterCreatorLabel: "Twitter Creator"
 adminPageTwitterSiteHelp: "<code>@Username</code>, default value if set in the App."
 adminPageTwitterSiteLabel: "Twitter Site"
-adminPageUnsavedChanges: "You have unsaved changes from %time%, kept in this browser."
+adminPageUnsavedChanges: "You left unsaved changes here %time%, kept in this browser."
 adminPageUnsavedDiscard: "Discard"
 adminPageUnsavedRestore: "Restore them"
 adminPageUpdateNotificationTitle: "[%appName%] Editing in progress"

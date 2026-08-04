@@ -17,6 +17,7 @@
 import { SELECTORS, debugLog } from './admin.constants'
 
 const WRITE_DEBOUNCE_MS = 800
+const DISMISS_MS = 150
 
 /**
  * Controls whose value is worth keeping. Files cannot be restored, and the CSRF
@@ -71,10 +72,10 @@ const restore = (form, values) => {
     } else if (isMultiSelect(element)) {
       for (const option of element.options)
         option.selected = stored.includes(option.value)
-    } else if (element.easyMDE) {
-      // Writing .value on a textarea EasyMDE owns leaves the CodeMirror view
-      // showing the old text; the editor instance is the way in.
-      element.easyMDE.value(stored[0])
+    } else if (element.pwEditor) {
+      // A rich editor (EasyMDE, EditorJS) renders beside the field it feeds, so
+      // assigning .value would leave the visible editor on the old content.
+      element.pwEditor.setValue(stored[0])
     } else {
       element.value = stored[0]
     }
@@ -85,6 +86,31 @@ const restore = (form, values) => {
 
 // Key order comes from form.elements, which is render-stable.
 const isSameState = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+
+const MINUTE = 60_000
+const UNITS = [
+  ['day', 24 * 60 * MINUTE],
+  ['hour', 60 * MINUTE],
+  ['minute', MINUTE],
+]
+
+/**
+ * "5 minutes ago" rather than a timestamp: what the editor needs to decide is
+ * how stale the copy is, and they cannot answer that from "19:59:47" without
+ * doing the arithmetic. The exact date stays on the element's title.
+ */
+const relativeTime = (savedAt) => {
+  const elapsed = Date.now() - savedAt
+  const format = new Intl.RelativeTimeFormat(document.documentElement.lang || 'en', {
+    numeric: 'auto',
+  })
+
+  for (const [unit, ms] of UNITS) {
+    if (elapsed >= ms) return format.format(-Math.floor(elapsed / ms), unit)
+  }
+
+  return format.format(0, 'minute') // under a minute: "this minute"
+}
 
 const read = (key) => {
   try {
@@ -135,24 +161,33 @@ export function initUnsavedChangesRecovery() {
   let baseline = serialize(form)
   let writeTimeout = null
 
+  // Fades out before hiding, so dismissing reads as an answer rather than a
+  // repaint. The class is inert under prefers-reduced-motion (no transition),
+  // and the timeout still lands, so the banner goes either way.
   const hideBanner = () => {
-    if (null === banner) return
-    banner.style.display = 'none'
-    banner.setAttribute('aria-hidden', 'true')
+    if (null === banner || banner.hidden) return
+
+    banner.classList.add('pw-unsaved--dismissing')
+    window.setTimeout(() => {
+      banner.hidden = true
+      banner.classList.remove('pw-unsaved--dismissing')
+    }, DISMISS_MS)
   }
 
   const showBanner = (savedAt) => {
     if (null === banner) return
 
     if (null !== bannerMessage) {
-      const time = new Date(savedAt).toLocaleString()
+      const time = relativeTime(savedAt)
       bannerMessage.textContent =
         window.pwUnsavedChangesTranslations?.message?.replace('%time%', time) ??
-        `You have unsaved changes from ${time}.`
+        `You left unsaved changes here ${time}.`
+      bannerMessage.title = new Date(savedAt).toLocaleString()
     }
 
-    banner.style.display = 'flex'
-    banner.setAttribute('aria-hidden', 'false')
+    // hidden, not aria-hidden: it drops the banner out of the accessibility
+    // tree too, so removing it is what makes role=status announce.
+    banner.hidden = false
   }
 
   const save = () => {

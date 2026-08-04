@@ -5,12 +5,12 @@ import { initUnsavedChangesRecovery } from '../../src/Resources/assets/admin.uns
 const KEY = 'pw:unsaved:page:7'
 
 const banner = () => document.getElementById('pw-unsaved-banner')
-const isVisible = () => banner().style.display === 'flex'
+const isVisible = () => !banner().hidden
 const stored = () => JSON.parse(window.localStorage.getItem(KEY))
 
 const render = (formFields) => {
   document.body.innerHTML =
-    '<div id="pw-unsaved-banner" style="display: none" aria-hidden="true">' +
+    '<div id="pw-unsaved-banner" hidden>' +
     '<span id="pw-unsaved-message"></span>' +
     '<button id="pw-unsaved-restore"></button>' +
     '<button id="pw-unsaved-discard"></button>' +
@@ -42,7 +42,7 @@ describe('initUnsavedChangesRecovery', () => {
     vi.useRealTimers()
   })
 
-  it('stores the form state under the draft key once typing settles', () => {
+  it('stores the form state under the recovery key once typing settles', () => {
     initUnsavedChangesRecovery()
     type(form.elements['page[h1]'], 'Edited title')
 
@@ -61,7 +61,7 @@ describe('initUnsavedChangesRecovery', () => {
     expect(stored().values['page[_token]']).toBeUndefined()
   })
 
-  it('drops the draft when the user undoes back to the rendered state', () => {
+  it('drops the copy when the user undoes back to the rendered state', () => {
     initUnsavedChangesRecovery()
     type(form.elements['page[h1]'], 'Edited title')
     vi.advanceTimersByTime(800)
@@ -73,24 +73,47 @@ describe('initUnsavedChangesRecovery', () => {
     expect(window.localStorage.getItem(KEY)).toBeNull()
   })
 
-  it('offers a stored draft that differs from what the server rendered', () => {
+  it('offers a stored copy that differs from what the server rendered', () => {
     window.localStorage.setItem(
       KEY,
       JSON.stringify({
-        values: { 'page[h1]': ['Draft title'], 'page[mainContent]': ['Draft body'] },
-        savedAt: Date.parse('2026-08-04T14:32:00Z'),
+        values: { 'page[h1]': ['Kept title'], 'page[mainContent]': ['Kept body'] },
+        savedAt: Date.now(),
       }),
     )
     initUnsavedChangesRecovery()
 
     expect(isVisible()).toBe(true)
-    expect(banner().getAttribute('aria-hidden')).toBe('false')
+  })
+
+  // How stale the copy is decides whether to take it, and a wall-clock time
+  // makes the editor work that out. The exact date stays reachable on hover.
+  it('dates the copy relatively, keeping the timestamp on the title', () => {
+    const savedAt = Date.now() - 5 * 60_000
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({ values: { 'page[h1]': ['Kept title'] }, savedAt }),
+    )
+    initUnsavedChangesRecovery()
+
+    const message = document.getElementById('pw-unsaved-message')
+    expect(message.textContent).toContain('5 minutes ago')
+    expect(message.title).toBe(new Date(savedAt).toLocaleString())
+  })
+
+  it('says "this minute" rather than "0 minutes ago" for a fresh copy', () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({ values: { 'page[h1]': ['Kept title'] }, savedAt: Date.now() }),
+    )
+    initUnsavedChangesRecovery()
+
     expect(document.getElementById('pw-unsaved-message').textContent).toContain(
-      new Date(Date.parse('2026-08-04T14:32:00Z')).toLocaleString(),
+      'this minute',
     )
   })
 
-  it('silently forgets a draft the server state already matches', () => {
+  it('silently forgets a copy the server state already matches', () => {
     window.localStorage.setItem(
       KEY,
       JSON.stringify({
@@ -107,37 +130,39 @@ describe('initUnsavedChangesRecovery', () => {
     expect(window.localStorage.getItem(KEY)).toBeNull()
   })
 
-  it('restores the draft into the form and keeps it stored, since it is still unsaved', () => {
+  it('restores into the form and keeps the copy, since it is still unsaved', () => {
     window.localStorage.setItem(
       KEY,
       JSON.stringify({
-        values: { 'page[h1]': ['Draft title'], 'page[mainContent]': ['Draft body'] },
+        values: { 'page[h1]': ['Kept title'], 'page[mainContent]': ['Kept body'] },
         savedAt: Date.now(),
       }),
     )
     initUnsavedChangesRecovery()
     document.getElementById('pw-unsaved-restore').click()
 
-    expect(form.elements['page[h1]'].value).toBe('Draft title')
-    expect(form.elements['page[mainContent]'].value).toBe('Draft body')
+    expect(form.elements['page[h1]'].value).toBe('Kept title')
+    expect(form.elements['page[mainContent]'].value).toBe('Kept body')
+    vi.advanceTimersByTime(150) // the dismissal fade
     expect(isVisible()).toBe(false)
     expect(window.localStorage.getItem(KEY)).not.toBeNull()
   })
 
-  it('discards the draft on demand', () => {
+  it('discards the copy on demand', () => {
     window.localStorage.setItem(
       KEY,
-      JSON.stringify({ values: { 'page[h1]': ['Draft title'] }, savedAt: Date.now() }),
+      JSON.stringify({ values: { 'page[h1]': ['Kept title'] }, savedAt: Date.now() }),
     )
     initUnsavedChangesRecovery()
     document.getElementById('pw-unsaved-discard').click()
 
+    vi.advanceTimersByTime(150) // the dismissal fade
     expect(isVisible()).toBe(false)
     expect(window.localStorage.getItem(KEY)).toBeNull()
     expect(form.elements['page[h1]'].value).toBe('Server title') // untouched
   })
 
-  it('clears the draft once a Ctrl+S save succeeds', () => {
+  it('clears the copy once a Ctrl+S save succeeds', () => {
     initUnsavedChangesRecovery()
     type(form.elements['page[h1]'], 'Edited title')
     vi.advanceTimersByTime(800)
@@ -151,7 +176,7 @@ describe('initUnsavedChangesRecovery', () => {
     expect(window.localStorage.getItem(KEY)).toBeNull()
   })
 
-  it('keeps the draft when the save failed', () => {
+  it('keeps the copy when the save failed', () => {
     initUnsavedChangesRecovery()
     type(form.elements['page[h1]'], 'Edited title')
     vi.advanceTimersByTime(800)
@@ -165,27 +190,31 @@ describe('initUnsavedChangesRecovery', () => {
     expect(window.localStorage.getItem(KEY)).not.toBeNull()
   })
 
-  it('does nothing on a form without a draft key (a page being created)', () => {
+  it('does nothing on a form without a recovery key (a page being created)', () => {
     document.body.innerHTML = '<form data-pw-ctrl-s-form="1"></form>'
 
     expect(initUnsavedChangesRecovery()).toBeNull()
   })
 
-  it('writes through the EasyMDE instance so the visible editor updates too', () => {
-    const value = vi.fn()
+  // EasyMDE and EditorJS both render beside the field they feed, and both write
+  // it without firing an event, so both expose this seam.
+  it('writes through the editor seam so a rich editor updates too', () => {
+    const setValue = vi.fn()
     window.localStorage.setItem(
       KEY,
       JSON.stringify({
-        values: { 'page[mainContent]': ['Draft body'] },
+        values: { 'page[mainContent]': ['Recovered body'] },
         savedAt: Date.now(),
       }),
     )
-    form.elements['page[mainContent]'].easyMDE = { value }
+    form.elements['page[mainContent]'].pwEditor = { setValue }
 
     initUnsavedChangesRecovery()
     document.getElementById('pw-unsaved-restore').click()
 
-    expect(value).toHaveBeenCalledWith('Draft body')
+    expect(setValue).toHaveBeenCalledWith('Recovered body')
+    // The field is left to the editor, which syncs it back on its own.
+    expect(form.elements['page[mainContent]'].value).toBe('Server body')
   })
 })
 
@@ -217,7 +246,7 @@ describe('initUnsavedChangesRecovery on checkboxes and multi-selects', () => {
     expect(stored().values['page[markdown]']).toEqual([])
   })
 
-  it('unchecks a box the draft recorded as empty', () => {
+  it('unchecks a box the copy recorded as empty', () => {
     window.localStorage.setItem(
       KEY,
       JSON.stringify({ values: { 'page[markdown]': [] }, savedAt: Date.now() }),

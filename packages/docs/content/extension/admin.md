@@ -37,8 +37,8 @@ page), so nothing writes to the server until you say so.
 What is automatic is the safety net. While you type, the form state is kept in your
 browser's `localStorage`, and reopening the page offers it back:
 
-> You have unsaved changes from 04/08/2026 19:59, kept in this browser.
-> **Restore them** — **Discard**
+> You left unsaved changes here 7 minutes ago, kept in this browser.
+> **Restore them** · **Discard**
 
 It covers the crash, the closed tab and the expired session. *Restore them* refills the
 form (including the markdown body) without saving anything, so you still review before

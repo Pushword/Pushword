@@ -177,4 +177,63 @@ body.ea-new .content-header {
   cursor: pointer;
 }
 
+/* Unsaved changes recovery.
+
+   The other banners on the edit screen are alarms (webhook lock, edit lock,
+   broken images) and look like it: saturated fill, big round icon, sticky. This
+   one is an offer with a safe answer, so it sits on the surface palette and lets
+   the single accented button carry the colour. Everything comes from --bs-*,
+   which EasyAdmin re-tunes for its dark scheme; hardcoded hex would leave a pale
+   slab on a near-black page. */
+
+.pw-unsaved {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ea-sp-8, 0.5rem) var(--ea-sp-12, 0.75rem);
+  margin-block-end: var(--ea-sp-16, 1rem);
+  padding: var(--ea-sp-8, 0.5rem) var(--ea-sp-12, 0.75rem);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  background-color: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+  font-size: 0.875rem;
+}
+
+.pw-unsaved[hidden] {
+  display: none;
+}
+
+.pw-unsaved__icon {
+  flex-shrink: 0;
+  inline-size: 1rem;
+  block-size: 1rem;
+  opacity: 0.55;
+}
+
+.pw-unsaved__message {
+  flex: 1 1 16rem;
+}
+
+/* Push the answers to the end on one line, and let them keep their own row once
+   the message no longer fits beside them. */
+.pw-unsaved__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ea-sp-8, 0.5rem);
+  margin-inline-start: auto;
+}
+
+/* Dismissal is the only motion: it confirms an action the user just took.
+   Opacity only, so nothing animates layout. */
+.pw-unsaved--dismissing {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pw-unsaved {
+    transition: opacity 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
 /*************************************************/

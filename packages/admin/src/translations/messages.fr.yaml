@@ -199,7 +199,7 @@ adminPageTwitterCreatorLabel: 'Twitter Creator'
 adminPageTwitterSiteHelp: "<code>@Username</code>, valeur par défaut si régler dans l'App."
 
 adminPageTwitterSiteLabel: 'Twitter Site'
-adminPageUnsavedChanges: "Vous avez des modifications non enregistrées du %time%, conservées dans ce navigateur."
+adminPageUnsavedChanges: "Vous avez laissé ici des modifications non enregistrées %time%, conservées dans ce navigateur."
 adminPageUnsavedDiscard: 'Ignorer'
 adminPageUnsavedRestore: 'Les restaurer'
 adminPageUpdateNotificationTitle: '[%appName%] Edition en cours'
