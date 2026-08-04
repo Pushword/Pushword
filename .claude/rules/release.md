@@ -38,8 +38,13 @@ one race-free split run.
 - **`next-release.md` must be committed before releasing.** The note is promoted from the
   working tree, so an uncommitted draft ships into `rc<N>.md` describing code the tag does
   not contain — exactly what happens when a parallel agent is mid-change. `.scripts/release`
-  now aborts on a dirty draft. If it ever slips through, move the offending sections back
+  aborts on a dirty draft. If it ever slips through, move the offending sections back
   into `next-release.md` and fix both the `rc<N>.md` title and its row in `upgrade.md`.
+  **The guard cannot see the case that actually bites:** a peer committing
+  `next-release.md` scoped sweeps in whatever another agent has drafted in that same file,
+  and the draft then reads clean. `next-release.md` is the one file where a scoped commit
+  is not enough isolation — before releasing, read the draft and check every section is
+  yours, or that its code is in `HEAD`.
 
 ## Legacy tag conflicts
 
