@@ -16,7 +16,7 @@ final class ErrorIgnoreRulesTest extends TestCase
 
     public function testAWildcardSilencesAWholeFamily(): void
     {
-        self::assertTrue(ErrorIgnoreRules::isIgnored(['link-*'], 'localhost.dev/a', 'link-external', 'unreachable'));
+        self::assertTrue(ErrorIgnoreRules::isIgnored(['link-*'], 'localhost.dev/a', 'link-unreachable', 'unreachable'));
         self::assertFalse(ErrorIgnoreRules::isIgnored(['link-*'], 'localhost.dev/a', 'image-alt-missing', 'image without alternative text'));
     }
 
@@ -59,18 +59,18 @@ final class ErrorIgnoreRulesTest extends TestCase
 
     public function testAPagePatternMatchesTheCodeOrTheMessage(): void
     {
-        self::assertTrue(ErrorIgnoreRules::matches(['link-*'], 'link-external', 'unreachable'));
-        self::assertTrue(ErrorIgnoreRules::matches(['*unreachable*'], 'link-external', 'unreachable'));
-        self::assertFalse(ErrorIgnoreRules::matches(['image-*'], 'link-external', 'unreachable'));
-        self::assertFalse(ErrorIgnoreRules::matches([], 'link-external', 'unreachable'));
+        self::assertTrue(ErrorIgnoreRules::matches(['link-*'], 'link-unreachable', 'unreachable'));
+        self::assertTrue(ErrorIgnoreRules::matches(['*unreachable*'], 'link-unreachable', 'unreachable'));
+        self::assertFalse(ErrorIgnoreRules::matches(['image-*'], 'link-unreachable', 'unreachable'));
+        self::assertFalse(ErrorIgnoreRules::matches([], 'link-unreachable', 'unreachable'));
     }
 
     public function testAPageDeclaresItsOwnPatternsInline(): void
     {
         $page = new Page();
-        $page->mainContent = "# Title\n\n<!-- page-scanner-ignore: image-alt-missing, link-external -->\n\ncontent";
+        $page->mainContent = "# Title\n\n<!-- page-scanner-ignore: image-alt-missing, link-unreachable -->\n\ncontent";
 
-        self::assertSame(['image-alt-missing', 'link-external'], ErrorIgnoreRules::forPage($page));
+        self::assertSame(['image-alt-missing', 'link-unreachable'], ErrorIgnoreRules::forPage($page));
     }
 
     public function testEveryInlineDeclarationCounts(): void

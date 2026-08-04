@@ -1,5 +1,5 @@
 ---
-title: 'the block editor uploads inline, and links carry any rel'
+title: 'the block editor uploads inline, links carry any rel, and page-scan tells an unreachable link from a bad status'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -28,7 +28,7 @@ absorbs needs no note.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin-block-editor`
+**Concerns:** `pushword/admin-block-editor`, `pushword/page-scanner`
 
 ## The Upload button opens your file dialog instead of the media form
 
@@ -67,3 +67,28 @@ link: {
 
 `obfuscate` stays exclusive: `HtmlObfuscateLink` matches `rel="obfuscate"` exactly,
 so it cannot be combined with a real rel.
+
+## `link-external` splits into `link-status` and `link-unreachable`
+
+An external link can fail two ways, and they are not the same problem: a URL that
+answers something unexpected (`link-status`) versus one that does not answer at all —
+DNS, timeout, TLS (`link-unreachable`). Both shipped under one `link-external` code in
+rc835, so silencing a flaky host also silenced every 404.
+
+**If your `errors_to_ignore` names `link-external`, it no longer matches anything.**
+Replace it with whichever half you meant, or with `link-*` to keep both:
+
+```yaml
+pushword_page_scanner:
+  errors_to_ignore:
+    - 'link-unreachable'   # the host is down, not your link
+```
+
+Same for a `<!-- page-scanner-ignore: link-external -->` comment in a page.
+
+This is the one code change there will be: `ScanErrorCodeTest` now pins the whole set,
+so a rename fails the build rather than silently un-ignoring findings on every site
+relying on it.
+
+The external-URL cache is keyed by result shape, so the first scan after upgrading
+rechecks every external link once, then goes back to being cached.

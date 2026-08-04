@@ -23,6 +23,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Permit to find error in image or link.
+ *
+ * @phpstan-import-type UrlCheckResult from ParallelUrlChecker
  */
 final class LinkedDocsScanner extends AbstractScanner
 {
@@ -46,7 +48,7 @@ final class LinkedDocsScanner extends AbstractScanner
     private array $toIgnore = [];
 
     /**
-     * @var array<string, string|true>
+     * @var array<string, UrlCheckResult>
      */
     private array $urlExistCache = [];
 
@@ -66,7 +68,7 @@ final class LinkedDocsScanner extends AbstractScanner
     /** @var string[] */
     private array $collectedExternalUrls = [];
 
-    /** @var array<string, true|string> */
+    /** @var array<string, UrlCheckResult> */
     private array $externalUrlResults = [];
 
     /** @var array<int, array{url: string, pageId: int, pageHost: string, pageSlug: string, pageH1: string, pageMetaRobots: string, pageIgnorePatterns: string[]}> */
@@ -141,16 +143,17 @@ final class LinkedDocsScanner extends AbstractScanner
         $errors = [];
         foreach ($this->deferredExternalChecks as $check) {
             $url = $check['url'];
-            if (isset($this->externalUrlResults[$url]) && true !== $this->externalUrlResults[$url]) {
-                $message = '<code>'.$url.'</code> '.$this->externalUrlResults[$url];
-                if (ErrorIgnoreRules::matches($check['pageIgnorePatterns'], ScanErrorCode::LinkExternal->value, $message)) {
+            $result = $this->externalUrlResults[$url] ?? true;
+            if (true !== $result) {
+                $message = '<code>'.$url.'</code> '.$result['message'];
+                if (ErrorIgnoreRules::matches($check['pageIgnorePatterns'], $result['code'], $message)) {
                     continue;
                 }
 
                 $pageId = $check['pageId'];
                 $errors[$pageId] ??= [];
                 $errors[$pageId][] = [
-                    'code' => ScanErrorCode::LinkExternal->value,
+                    'code' => $result['code'],
                     'page' => [
                         'id' => $check['pageId'],
                         'host' => $check['pageHost'],
@@ -177,7 +180,7 @@ final class LinkedDocsScanner extends AbstractScanner
     }
 
     /**
-     * @param array<string, true|string> $results
+     * @param array<string, UrlCheckResult> $results
      */
     public function setExternalUrlResults(array $results): void
     {
@@ -499,18 +502,9 @@ final class LinkedDocsScanner extends AbstractScanner
             }
 
             // Use pre-computed results if available
-            if (isset($this->externalUrlResults[$url])) {
-                $result = $this->externalUrlResults[$url];
-                if (true !== $result) {
-                    $this->addError(ScanErrorCode::LinkExternal, '<code>'.$url.'</code> '.$result);
-                }
-
-                return;
-            }
-
-            // Fallback to synchronous check
-            if (true !== ($errorMsg = $this->urlExist($url))) {
-                $this->addError(ScanErrorCode::LinkExternal, '<code>'.$url.'</code> '.$errorMsg);
+            $result = $this->externalUrlResults[$url] ?? $this->urlExist($url);
+            if (true !== $result) {
+                $this->addError(ScanErrorCode::from($result['code']), '<code>'.$url.'</code> '.$result['message']);
             }
 
             return;
@@ -559,7 +553,10 @@ final class LinkedDocsScanner extends AbstractScanner
         return null !== $node;
     }
 
-    private function urlExist(string $url): true|string
+    /**
+     * @return UrlCheckResult
+     */
+    private function urlExist(string $url): true|array
     {
         // Check in-memory cache first
         if (isset($this->urlExistCache[$url])) {
@@ -568,10 +565,8 @@ final class LinkedDocsScanner extends AbstractScanner
 
         // Use persistent cache if available
         if (null !== $this->externalUrlCache) {
-            $cacheKey = 'url_'.hash('xxh3', $url);
-
-            /** @var true|string $result */
-            $result = $this->externalUrlCache->get($cacheKey, function (ItemInterface $item) use ($url): true|string {
+            /** @var UrlCheckResult $result */
+            $result = $this->externalUrlCache->get(ParallelUrlChecker::cacheKey($url), function (ItemInterface $item) use ($url): true|array {
                 $item->expiresAfter($this->externalUrlCacheTtl);
 
                 return $this->checkUrlViaHttp($url);
@@ -583,7 +578,10 @@ final class LinkedDocsScanner extends AbstractScanner
         return $this->urlExistCache[$url] = $this->checkUrlViaHttp($url);
     }
 
-    private function checkUrlViaHttp(string $url): true|string
+    /**
+     * @return UrlCheckResult
+     */
+    private function checkUrlViaHttp(string $url): true|array
     {
         $client = new ExtendedClient($url);
         $client
@@ -603,14 +601,20 @@ final class LinkedDocsScanner extends AbstractScanner
             /** @var string */
             $httpCode = $client->getCurlInfo(\CURLINFO_HTTP_CODE);
 
-            return $this->trans('page_scanStatusCode').' ('.$httpCode.')';
+            return [
+                'code' => ScanErrorCode::LinkStatus->value,
+                'message' => $this->trans('page_scanStatusCode').' ('.$httpCode.')',
+            ];
         }
 
         if ($client->getError() > 0) {
-            return $this->trans(
-                'page_scanUnreachable',
-                92832 === $client->getError() ? [' - errorMessage' => ''] : ['errorMessage' => $client->getErrorMessage()]
-            );
+            return [
+                'code' => ScanErrorCode::LinkUnreachable->value,
+                'message' => $this->trans(
+                    'page_scanUnreachable',
+                    92832 === $client->getError() ? [' - errorMessage' => ''] : ['errorMessage' => $client->getErrorMessage()]
+                ),
+            ];
         }
 
         return true;

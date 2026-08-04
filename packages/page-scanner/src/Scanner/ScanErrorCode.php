@@ -45,8 +45,11 @@ enum ScanErrorCode: string
     /** A `#anchor` naming no element of the page. */
     case LinkAnchor = 'link-anchor';
 
-    /** An external URL answering an unexpected status, or not answering at all. */
-    case LinkExternal = 'link-external';
+    /** An external URL answering an unexpected status. */
+    case LinkStatus = 'link-status';
+
+    /** An external URL not answering at all: DNS, timeout, TLS. */
+    case LinkUnreachable = 'link-unreachable';
 
     /** A `mailto:`/`tel:` link left in clear, harvestable by a spam bot. */
     case LinkMailto = 'link-mailto';

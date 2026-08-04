@@ -368,7 +368,8 @@ language.
 | `link-redirection` | the target is a redirection |
 | `link-noindex` | a crawlable link to a `noindex` page |
 | `link-anchor` | a `#anchor` naming no element of the page |
-| `link-external` | an external URL answering an unexpected status, or not answering |
+| `link-status` | an external URL answering an unexpected status |
+| `link-unreachable` | an external URL not answering at all: DNS, timeout, TLS |
 | `link-mailto` | a `mailto:`/`tel:` link left in clear |
 | `todo-unknown-page` | a `TODO:` comment referencing a page that does not exist |
 | `todo-link-when-published` | the page a `TODO:linkWhenPublished` waits for is published |
@@ -379,6 +380,11 @@ language.
 A pattern is matched against the code first, then against the plain-text message —
 so a code silences a family of findings and a message pins one occurrence. `fnmatch`
 wildcards work in both.
+
+Prefer the code. A message is translated into the locale of the *page* being scanned,
+so one site's scan can report the same finding as `not found` and `non trouvé`, and a
+rule written on the wording only covers part of the corpus. Codes never change once
+released — `ScanErrorCodeTest` pins the whole set.
 
 ### For the whole site
 
@@ -400,7 +406,7 @@ them takes effect without a new scan.
 A page can silence its own findings, with a comment anywhere in its content:
 
 ```markdown
-<!-- page-scanner-ignore: image-alt-missing, link-external -->
+<!-- page-scanner-ignore: image-alt-missing, link-unreachable -->
 ```
 
 or with a custom property, for a page whose content is not the place to say it:
@@ -408,7 +414,7 @@ or with a custom property, for a page whose content is not the place to say it:
 ```yaml
 pageScanErrorsToIgnore:
     - image-alt-missing
-    - link-external
+    - link-unreachable
 ```
 
 Both accept the same patterns as the config, minus the route prefix — the page is

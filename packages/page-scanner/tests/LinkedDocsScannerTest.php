@@ -661,23 +661,45 @@ final class LinkedDocsScannerTest extends KernelTestCase
     {
         self::bootKernel();
         $url = 'https://unreachable.example.com/x';
+        $failure = [$url => ['code' => 'link-unreachable', 'message' => 'unreachable']];
 
         $scanner = $this->createScanner();
         $scanner->preloadPageCache();
         $scanner->enableDeferredExternalMode();
         $scanner->scan($this->getPage('other-page'), '<a href="'.$url.'">link</a>');
-        $scanner->setExternalUrlResults([$url => 'unreachable']);
+        $scanner->setExternalUrlResults($failure);
 
         self::assertCount(1, $scanner->resolveDeferredExternalErrors(), 'Nothing was ignored yet.');
 
         $silenced = $this->getPage('other-page');
-        $silenced->mainContent = '<!-- page-scanner-ignore: link-external -->';
+        $silenced->mainContent = '<!-- page-scanner-ignore: link-unreachable -->';
 
         $scanner->enableDeferredExternalMode();
         $scanner->scan($silenced, '<a href="'.$url.'">link</a>');
-        $scanner->setExternalUrlResults([$url => 'unreachable']);
+        $scanner->setExternalUrlResults($failure);
 
         self::assertSame([], $scanner->resolveDeferredExternalErrors());
+    }
+
+    /**
+     * An unexpected status and an unreachable host are two different problems, and a
+     * site silencing one keeps hearing about the other — so the finding carries which
+     * of the two it is, all the way from the checker.
+     */
+    public function testAnExternalFailureKeepsTheCodeTheCheckerGaveIt(): void
+    {
+        self::bootKernel();
+        $url = 'https://example.org/gone';
+
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+        $scanner->setExternalUrlResults([$url => ['code' => 'link-status', 'message' => 'Unexpected status code (404)']]);
+
+        $errors = $scanner->scan($this->getPage('other-page'), '<a href="'.$url.'">link</a>');
+
+        self::assertCount(1, $errors);
+        self::assertSame('link-status', $errors[0]['code']);
+        self::assertStringContainsString('404', $errors[0]['message']);
     }
 
     /**

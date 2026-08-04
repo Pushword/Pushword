@@ -8,11 +8,20 @@ use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+/**
+ * @phpstan-type UrlCheckResult true|array{code: string, message: string}
+ */
 final class ParallelUrlChecker
 {
     private const string DEFAULT_USER_AGENT = 'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36';
 
-    /** @var array<string, true|string> */
+    /**
+     * The stored shape is part of the cache key: an entry written before findings
+     * carried a code is a bare message, which nothing downstream can read now.
+     */
+    private const string CACHE_PREFIX = 'url.v2.';
+
+    /** @var array<string, UrlCheckResult> */
     private array $results = [];
 
     public function __construct(
@@ -29,7 +38,7 @@ final class ParallelUrlChecker
      *
      * @param string[] $urls
      *
-     * @return array<string, true|string> URL => true or error message
+     * @return array<string, UrlCheckResult> URL => true or the finding it failed with
      */
     public function checkUrls(array $urls): array
     {
@@ -38,10 +47,8 @@ final class ParallelUrlChecker
 
         $uncachedUrls = [];
         foreach ($urls as $url) {
-            $cacheKey = 'url_'.hash('xxh3', $url);
-
-            /** @var true|string|null $cached */
-            $cached = $this->externalUrlCache->get($cacheKey, static fn (): null => null);
+            /** @var UrlCheckResult|null $cached */
+            $cached = $this->externalUrlCache->get(self::cacheKey($url), static fn (): null => null);
 
             if (null !== $cached) {
                 $this->results[$url] = $cached;
@@ -119,28 +126,38 @@ final class ParallelUrlChecker
         return $ch;
     }
 
-    private function interpretResult(int $httpCode, int $error, string $errorMessage): true|string
+    /**
+     * @return UrlCheckResult
+     */
+    private function interpretResult(int $httpCode, int $error, string $errorMessage): true|array
     {
         if (in_array($httpCode, [200, 206, 403, 410], true)) {
             return true;
         }
 
         if ($httpCode > 0) {
-            return $this->translator->trans('page_scanStatusCode').' ('.$httpCode.')';
+            return [
+                'code' => ScanErrorCode::LinkStatus->value,
+                'message' => $this->translator->trans('page_scanStatusCode').' ('.$httpCode.')',
+            ];
         }
 
         if ($error > 0) {
-            return $this->translator->trans('page_scanUnreachable', ['errorMessage' => $errorMessage]);
+            return [
+                'code' => ScanErrorCode::LinkUnreachable->value,
+                'message' => $this->translator->trans('page_scanUnreachable', ['errorMessage' => $errorMessage]),
+            ];
         }
 
         return true;
     }
 
-    private function cacheResult(string $url, true|string $result): void
+    /**
+     * @param UrlCheckResult $result
+     */
+    private function cacheResult(string $url, true|array $result): void
     {
-        $cacheKey = 'url_'.hash('xxh3', $url);
-
-        $this->externalUrlCache->get($cacheKey, function (ItemInterface $item) use ($result): true|string {
+        $this->externalUrlCache->get(self::cacheKey($url), function (ItemInterface $item) use ($result): true|array {
             $item->expiresAfter($this->externalUrlCacheTtl);
 
             return $result;
@@ -152,7 +169,14 @@ final class ParallelUrlChecker
      */
     public function clearCacheFor(string $url): void
     {
-        $cacheKey = 'url_'.hash('xxh3', $url);
-        $this->externalUrlCache->delete($cacheKey);
+        $this->externalUrlCache->delete(self::cacheKey($url));
+    }
+
+    /**
+     * Shared with LinkedDocsScanner, which fills the same pool on its synchronous path.
+     */
+    public static function cacheKey(string $url): string
+    {
+        return self::CACHE_PREFIX.hash('xxh3', $url);
     }
 }
