@@ -44,14 +44,14 @@
   </span> #}
   {% endblock %}
   <{{ title_tag }}
-    class="py-4 px-6 mt-0 font-bold text-xl leading-tight">
+    class="p-4 mt-0 font-bold text-xl leading-tight">
     {{ link
       ? link(title, link, obfuscateLink)
       : title|raw }}
   </{{ title_tag }}>
   {% block card_description %}
   {% if description or buttonLink %}
-  <div class="prose px-2 pb-3">
+  <div class="prose px-4 pb-4">
     {% if description %}
       {{ description|markdown }}
     {% endif %}
