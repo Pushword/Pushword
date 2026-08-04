@@ -67,11 +67,18 @@ final readonly class ContactManager
             : $this->contactRepository->findOneByPhone($audience, $phone);
         $isNew = ! $contact instanceof Contact;
 
+        // Wherever the number is about to land — on a row being created as much
+        // as on one already there — it has to be free. A new row skipping the
+        // check reaches the unique index instead, and a driver exception is not
+        // an answer a caller can act on.
+        if (null !== $phone && (! $contact instanceof Contact || $phone !== $contact->phone)) {
+            $this->assertPhoneIsFree($audience, $phone, $contact);
+        }
+
         if ($isNew) {
             $contact = new Contact($audience, $email, $phone);
             $this->entityManager->persist($contact);
         } elseif (null !== $phone && $phone !== $contact->phone) {
-            $this->assertPhoneIsFree($audience, $phone, $contact);
             $contact->phone = $phone;
         }
 
@@ -118,22 +125,23 @@ final readonly class ContactManager
 
     /**
      * A number already held by somebody else in the audience is refused, not
-     * moved and not merged.
+     * moved and not taken over.
      *
      * The two rows may well be one person — that is exactly why the site is
-     * adding the number. But joining them means deciding which consent record
+     * adding the number. Joining them means deciding which consent record
      * survives, which token the live unsubscribe links keep working with, and
-     * what happens to two ledgers of campaigns and enrollments. That is an
-     * operation somebody performs deliberately, never the side effect of a
-     * write that meant to fill in a field.
+     * what happens to two ledgers of campaigns and enrollments. It is an
+     * operation somebody performs deliberately — {@see ContactMerger}, which the
+     * admin and the API both offer once this refusal has been read — and never
+     * the side effect of a write that meant to fill in a field.
      *
      * @throws InvalidArgumentException
      */
-    private function assertPhoneIsFree(Audience $audience, string $phone, Contact $contact): void
+    private function assertPhoneIsFree(Audience $audience, string $phone, ?Contact $contact): void
     {
         $holder = $this->contactRepository->findOneByPhone($audience, $phone);
 
-        if ($holder instanceof Contact && $holder->id !== $contact->id) {
+        if ($holder instanceof Contact && $holder->id !== $contact?->id) {
             throw new InvalidArgumentException(\sprintf('Phone %s already belongs to contact #%s in this audience.', $phone, $holder->id ?? '?'));
         }
     }

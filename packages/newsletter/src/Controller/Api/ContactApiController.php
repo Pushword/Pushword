@@ -13,6 +13,7 @@ use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Service\ContactManager;
+use Pushword\Newsletter\Service\ContactMerger;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,10 +32,23 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[IsGranted('ROLE_EDITOR')]
 final class ContactApiController extends AbstractApiController
 {
+    /**
+     * A phone number and an address the site knows separately are one person,
+     * and this is the caller saying so. The row holding the address survives —
+     * it is the one the unsubscribe links are keyed on.
+     */
+    private const array MERGE_PARAMETER = [
+        'name' => 'merge',
+        'in' => 'query',
+        'description' => 'Join the contact this write names with the one already holding the identifier, instead of refusing',
+        'schema' => ['type' => 'boolean'],
+    ];
+
     public function __construct(
         private readonly ContactRepository $contactRepository,
         private readonly AudienceRepository $audienceRepository,
         private readonly ContactManager $contactManager,
+        private readonly ContactMerger $contactMerger,
         private readonly SegmentResolver $segmentResolver,
         private readonly EntityManagerInterface $entityManager,
         private readonly ValidatorInterface $validator,
@@ -126,6 +140,10 @@ final class ContactApiController extends AbstractApiController
         $requireDoubleOptIn = 'subscribed' === ($data['status'] ?? null) ? false : null;
 
         try {
+            if (null !== $phone && $request->query->getBoolean('merge')) {
+                $existing = $this->joinOnUpsert($audience, $existing, $email, $phone);
+            }
+
             $contact = $this->contactManager->subscribe(
                 $audience,
                 '' !== $email ? $email : null,
@@ -140,7 +158,9 @@ final class ContactApiController extends AbstractApiController
             );
         } catch (InvalidArgumentException $invalidArgumentException) {
             // The number is somebody else's. Joining two rows is a deliberate
-            // operation, not something an upsert gets to do on the way past.
+            // operation, not something an upsert gets to do on the way past —
+            // `?merge=true` is how a caller asks for it, and this is what
+            // answers when even that cannot be honoured.
             return $this->respond(['error' => $invalidArgumentException->getMessage()], Response::HTTP_CONFLICT);
         }
 
@@ -227,9 +247,49 @@ final class ContactApiController extends AbstractApiController
         ));
     }
 
+    /**
+     * The row this write is about, once the number it carries has been accounted
+     * for. Only called when the caller asked for a merge.
+     *
+     * @throws InvalidArgumentException when the two rows cannot be joined
+     */
+    private function joinOnUpsert(Audience $audience, ?Contact $existing, string $email, string $phone): ?Contact
+    {
+        $holder = $this->contactRepository->findOneByPhone($audience, $phone);
+
+        if (! $holder instanceof Contact || $holder === $existing) {
+            return $existing;
+        }
+
+        if ($existing instanceof Contact) {
+            return $this->contactMerger->merge($existing, $holder);
+        }
+
+        // There is nothing to join: no row holds this address yet, so the row
+        // holding the number is the person and the address is what it lacked.
+        if (null !== $holder->email) {
+            throw new InvalidArgumentException(\sprintf('Contact #%s holds this number under another address.', $holder->id ?? '?'));
+        }
+
+        $holder->email = $email;
+        $this->entityManager->flush();
+
+        return $holder;
+    }
+
     private function doUpdate(Contact $contact, Request $request): JsonResponse
     {
-        $this->apply($contact, $this->decodeJson($request));
+        $data = $this->decodeJson($request);
+
+        if ($request->query->getBoolean('merge')) {
+            try {
+                $contact = $this->joinOnPatch($contact, $data);
+            } catch (InvalidArgumentException $invalidArgumentException) {
+                return $this->respond(['error' => $invalidArgumentException->getMessage()], Response::HTTP_CONFLICT);
+            }
+        }
+
+        $this->apply($contact, $data);
 
         $rejected = $this->rejected($contact);
         if ($rejected instanceof JsonResponse) {
@@ -239,6 +299,62 @@ final class ContactApiController extends AbstractApiController
         $this->entityManager->flush();
 
         return $this->respond($this->toArray($contact));
+    }
+
+    /**
+     * The row this write is about, once the identifiers it carries have been
+     * accounted for. Only called when the caller asked for a merge.
+     *
+     * A write naming an identifier another row holds is otherwise refused (422),
+     * and `?merge=true` is the caller saying the two rows are one person. What
+     * comes back may not be the contact in the URL: the address decides, so a
+     * number gaining an address answers with the addressed row.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @throws InvalidArgumentException when the rows cannot be joined
+     */
+    private function joinOnPatch(Contact $contact, array $data): Contact
+    {
+        $holders = $this->holders($contact, $data);
+
+        if (\count($holders) > 1) {
+            throw new InvalidArgumentException('This write names two other contacts; join them one at a time.');
+        }
+
+        return [] === $holders ? $contact : $this->contactMerger->merge($contact, $holders[0]);
+    }
+
+    /**
+     * The rows other than this one holding an identifier the write carries.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<Contact>
+     */
+    private function holders(Contact $contact, array $data): array
+    {
+        $holders = [];
+
+        if (\is_string($data['email'] ?? null) && '' !== trim($data['email'])) {
+            $holder = $this->contactRepository->findOneByEmail($contact->audience, trim($data['email']));
+
+            if ($holder instanceof Contact && $holder !== $contact) {
+                $holders[spl_object_id($holder)] = $holder;
+            }
+        }
+
+        $phone = Contact::normalizePhone(\is_string($data['phone'] ?? null) ? $data['phone'] : null);
+
+        if (null !== $phone) {
+            $holder = $this->contactRepository->findOneByPhone($contact->audience, $phone);
+
+            if ($holder instanceof Contact && $holder !== $contact) {
+                $holders[spl_object_id($holder)] = $holder;
+            }
+        }
+
+        return array_values($holders);
     }
 
     /**
@@ -359,13 +475,26 @@ final class ContactApiController extends AbstractApiController
                     ],
                     'post' => [
                         'summary' => 'Create or update a contact, keyed on (audience, email) or on (audience, phone) when no email is given',
-                        'responses' => ['200' => ['description' => 'Updated'], '201' => ['description' => 'Created']],
+                        'parameters' => [self::MERGE_PARAMETER],
+                        'responses' => [
+                            '200' => ['description' => 'Updated'],
+                            '201' => ['description' => 'Created'],
+                            '409' => ['description' => 'The number belongs to another contact, and merging it was not asked for or not possible'],
+                        ],
                     ],
                 ],
                 '/api/newsletter/contact/{id}' => [
                     'parameters' => [['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],
                     'get' => ['summary' => 'Get a contact', 'responses' => ['200' => ['description' => 'OK']]],
-                    'patch' => ['summary' => 'Update a contact; customProperties are merged, a null value removes a key', 'responses' => ['200' => ['description' => 'OK']]],
+                    'patch' => [
+                        'summary' => 'Update a contact; customProperties are merged, a null value removes a key',
+                        'parameters' => [self::MERGE_PARAMETER],
+                        'responses' => [
+                            '200' => ['description' => 'OK — with `merge=true`, the body may carry another id than the one in the path'],
+                            '409' => ['description' => 'The two rows cannot be joined'],
+                            '422' => ['description' => 'An identifier another contact holds'],
+                        ],
+                    ],
                     'delete' => ['summary' => 'Delete a contact', 'responses' => ['204' => ['description' => 'Deleted']]],
                 ],
                 '/api/newsletter/contact/{id}/unsubscribe' => [

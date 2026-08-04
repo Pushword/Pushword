@@ -642,6 +642,127 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
     }
 
     /**
+     * A number another row already holds comes back as a form error — and, since
+     * the two are most often one person, as an offer to join them in one click.
+     * The address is what survives, so the number lands on the row being edited.
+     */
+    public function testARefusedNumberIsOfferedAsAMergeAndPerformedInOneClick(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $phoneOnly = $this->phoneContact($audience);
+        $absorbedId = $phoneOnly->id;
+
+        $contact = $this->entityManager()->getRepository(Contact::class)
+            ->findOneBy(['audience' => $audience, 'email' => 'admin-contact@example.tld']);
+        self::assertInstanceOf(Contact::class, $contact);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contact->id.'/edit');
+        $form = $crawler->filter('form[name="Contact"]')->form();
+        $form['Contact[phone]'] = '06 12 34 56 78';
+        $crawler = $client->submit($form);
+
+        // A refused form is re-rendered, which EasyAdmin answers 422 — the save
+        // did not happen, and the page carries the offer.
+        self::assertSame(422, $client->getResponse()->getStatusCode());
+        $offer = $crawler->filter('form[action*="/merge"]');
+        self::assertCount(1, $offer);
+        self::assertSame((string) $absorbedId, $offer->filter('input[name="with"]')->attr('value'));
+
+        $client->submit($offer->form());
+
+        $this->entityManager()->clear();
+        self::assertNull($this->entityManager()->getRepository(Contact::class)->find($absorbedId));
+
+        $kept = $this->entityManager()->getRepository(Contact::class)->find($contact->id);
+        self::assertInstanceOf(Contact::class, $kept);
+        self::assertSame('0612345678', $kept->phone);
+        self::assertSame('admin-contact@example.tld', $kept->email);
+    }
+
+    /**
+     * The same offer from the other side — a number gaining an address another
+     * row holds. The address is what survives, so the click lands on the *other*
+     * contact's page and the row being edited is the one that goes.
+     */
+    public function testARefusedAddressIsOfferedAsAMergeOntoTheAddressedRow(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $phoneOnly = $this->phoneContact($audience);
+        $absorbedId = $phoneOnly->id;
+
+        $addressed = $this->entityManager()->getRepository(Contact::class)
+            ->findOneBy(['audience' => $audience, 'email' => 'admin-contact@example.tld']);
+        self::assertInstanceOf(Contact::class, $addressed);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$phoneOnly->id.'/edit');
+        $form = $crawler->filter('form[name="Contact"]')->form();
+        $form['Contact[email]'] = 'admin-contact@example.tld';
+        $crawler = $client->submit($form);
+
+        self::assertSame(422, $client->getResponse()->getStatusCode());
+        $offer = $crawler->filter('form[action*="/merge"]');
+        self::assertCount(1, $offer);
+        self::assertStringContainsString(
+            'admin-contact@example.tld',
+            $crawler->filter('.alert-warning')->text(),
+            'the row that stays is named, and it is not the one being edited',
+        );
+
+        $client->submit($offer->form());
+
+        $this->entityManager()->clear();
+        self::assertNull($this->entityManager()->getRepository(Contact::class)->find($absorbedId));
+
+        $kept = $this->entityManager()->getRepository(Contact::class)->find($addressed->id);
+        self::assertInstanceOf(Contact::class, $kept);
+        self::assertSame('0612345678', $kept->phone);
+    }
+
+    /** A merge deletes a row, so it is never a link somebody else's page can follow. */
+    public function testTheMergeRouteRefusesAPostWithoutAToken(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $phoneOnly = $this->phoneContact($audience);
+
+        $addressed = $this->entityManager()->getRepository(Contact::class)
+            ->findOneBy(['audience' => $audience, 'email' => 'admin-contact@example.tld']);
+        self::assertInstanceOf(Contact::class, $addressed);
+
+        $client->request(Request::METHOD_POST, '/admin/newsletter/contact/'.$addressed->id.'/merge', ['with' => $phoneOnly->id]);
+
+        $this->entityManager()->clear();
+        self::assertNotNull(
+            $this->entityManager()->getRepository(Contact::class)->find($phoneOnly->id),
+            'the row is still there',
+        );
+    }
+
+    /** Nothing to offer when the save is refused for its own reasons. */
+    public function testAContactWithoutAnIdentifierIsRefusedWithNoMergeOffered(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $contact = $this->entityManager()->getRepository(Contact::class)
+            ->findOneBy(['audience' => $audience, 'email' => 'admin-contact@example.tld']);
+        self::assertInstanceOf(Contact::class, $contact);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contact->id.'/edit');
+        $form = $crawler->filter('form[name="Contact"]')->form();
+        $form['Contact[email]'] = '';
+        $crawler = $client->submit($form);
+
+        self::assertSame(422, $client->getResponse()->getStatusCode());
+        self::assertCount(0, $crawler->filter('form[action*="/merge"]'));
+    }
+
+    /**
      * The unticked checkbox is the defensible default: the audience's rule
      * decides, so the address stays pending until it answers the mail.
      */
@@ -957,6 +1078,19 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $this->sectionPageIds = [$child->id, $parent->id];
 
         return $slug;
+    }
+
+    /** Somebody the site can only phone — the half a merge joins to an address. */
+    private function phoneContact(Audience $audience, string $phone = '0612345678'): Contact
+    {
+        $contact = new Contact($audience, null, $phone);
+        $contact->name = 'Called';
+        $contact->optIn(false);
+
+        $this->entityManager()->persist($contact);
+        $this->entityManager()->flush();
+
+        return $contact;
     }
 
     private function seed(): Audience

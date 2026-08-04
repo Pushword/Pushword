@@ -226,13 +226,53 @@ address, the same rule read the other way — comes back as `409` from the upser
 and as a validation error from `PATCH` and the admin form, naming the row that
 holds it. The two rows may well be one person, and that is exactly why somebody
 is writing it; but joining them means deciding which consent record survives and
-which token the unsubscribe links already in inboxes keep working with. That is
-a merge somebody performs deliberately, not the side effect of filling a field
-in. There is no merge operation in the bundle yet: delete one row, or write the
-identifier onto the row you mean to keep.
+which token the unsubscribe links already in inboxes keep working with. So it is
+a merge somebody asks for, never the side effect of filling a field in.
 
 **The public form stays email-only.** A number reaches the base over the API, or
 through the admin's *Opt in a contact* — never from a page anybody can post to.
+
+### Two rows, one person
+
+The row holding the **address** is the one that survives a merge, whichever side
+asked for it. That is not a preference for mail: the address is what the confirm
+and unsubscribe links are keyed on, so keeping the other row would quietly break
+every link already in somebody's mailbox, and the consent record the addressed
+row carries is the one that has to be produced if the opt-in is questioned.
+
+It keeps its id, its token, its status and its consent dates, and it gains:
+
+- the number,
+- the name and the language, **only where it had none** — what somebody wrote on
+  the kept row is not overruled,
+- the tags, added to its own,
+- the custom properties it was missing,
+- every campaign, enrollment and drip step either row was sent. A merge costs no
+  history; that is what makes it something other than deleting a row. Where both
+  rows have a line for the same campaign or the same run of an automation, the
+  kept row's own line stays and the duplicate goes.
+
+Only an addressed row and a phone-only row can be joined. **Two addresses are two
+people** until somebody says otherwise, and no rule can pick which of the two
+consent records to throw away — as with a kept row that already holds a different
+number, the merge is refused rather than arbitrated. Delete one row, or write the
+identifier onto the row you mean to keep.
+
+In the admin, a save refused for a taken identifier offers the join under the
+form: it names both rows, says which one stays, and performs it in one click.
+Over the API, `?merge=true` on the upsert or on `PATCH` asks for the same thing —
+`409` when it still cannot be honoured. Note that `PATCH` may then answer with
+**another id than the one in the path**: patching an address onto a phone-only
+row leaves the person on the addressed row.
+
+```bash
+curl -X POST 'https://example.tld/api/newsletter/contact?merge=true' \
+  -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' \
+  -d '{"audience": "readers", "email": "reader@example.tld", "phone": "+33612345678"}'
+```
+
+A merge never sends anything and never re-opens a confirmation: the address was
+already confirmed, or was not, and gaining a number does not change that.
 
 ### One contact row per list
 

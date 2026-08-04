@@ -73,6 +73,12 @@ class Enrollment implements IdInterface
         return EnrollmentStatus::Active === $this->status;
     }
 
+    /** Follow the row a merge kept — see {@see \Pushword\Newsletter\Service\ContactMerger}. */
+    public function moveTo(Contact $contact): void
+    {
+        $this->contact = $contact;
+    }
+
     /** Move to the next step, or finish when the sequence has no more. */
     public function advance(DateTimeImmutable $nextRunAt): self
     {

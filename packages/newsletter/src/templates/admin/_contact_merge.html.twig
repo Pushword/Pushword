@@ -1,0 +1,19 @@
+{# Offered only when a save was just refused because another row of this list
+   already holds the address or the number that was typed. Which row survives is
+   decided by the merger, not here: the one holding the address keeps its id, its
+   consent record and the links already in somebody's mailbox. #}
+{% if mergeCandidate is defined and mergeCandidate is not null %}
+  <div class="alert alert-warning" role="alert">
+    <div class="alert-title">
+      <i class="fa fa-code-merge"></i> {{ 'newsletter.contact.merge.title'|trans }}
+    </div>
+    <p class="mb-3">{{ 'newsletter.contact.merge.help'|trans({'%kept%': mergeCandidate.kept, '%dropped%': mergeCandidate.dropped}) }}</p>
+    <form method="post" action="{{ mergeCandidate.url }}">
+      <input type="hidden" name="_token" value="{{ csrf_token(mergeCandidate.csrfId) }}">
+      <input type="hidden" name="with" value="{{ mergeCandidate.with }}">
+      <button type="submit" class="btn btn-warning">
+        <i class="fa fa-code-merge"></i> {{ 'newsletter.contact.action.merge'|trans }}
+      </button>
+    </form>
+  </div>
+{% endif %}

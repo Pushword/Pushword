@@ -123,6 +123,7 @@ newsletter:
       singular: Contact
     action:
       confirm: Confirm by hand
+      merge: Merge the two
       optIn: Opt in a contact
       optInAnother: Add to another list
       resubscribe: Put back on the list
@@ -138,14 +139,14 @@ newsletter:
       customProperties: Custom properties
       customProperties.help: YAML key-value pairs. Segments read them as prop.<key>.
       email: Email
-      email.taken: Another contact of this list already uses this address.
+      email.taken: Another contact of this list already uses this address. Merge the two, or change it.
       locale: Locale
       name: Name
       optinHost: Opt-in host
       optinIp: Opt-in IP
       phone: Phone
       phone.help: Kept as digits and a leading +. A contact keyed on a number alone is stored, tagged and segmented, and is never mailed.
-      phone.taken: Another contact of this list already uses this number. Joining the two is a deliberate merge, not something this form does.
+      phone.taken: Another contact of this list already uses this number. Merge the two, or change it.
       registeredAt: Registered at
       source: Source
       status: Status
@@ -156,6 +157,7 @@ newsletter:
       confirmed: Confirmed by hand.
       invalidOptIn: Pick a list and either a valid address or a phone number.
       invalidToken: Invalid token, please retry.
+      merged: The two rows are one contact now.
       noAudience: Create an audience first.
       notFound: Contact not found.
       resubscribed: Back on the list.
@@ -163,6 +165,9 @@ newsletter:
       unsubscribed: Unsubscribed.
     identifier:
       missing: A contact needs an email address or a phone number.
+    merge:
+      help: "%kept% and %dropped% look like one person. Merging keeps %kept% — its subscription, its unsubscribe link and everything it was sent — and gives it the number. %dropped% disappears."
+      title: The same person, entered twice?
     optIn:
       alreadyConsented: They already consented
       alreadyConsented.help: Skips the confirmation mail and subscribes right away. Only for consent you can produce — a paper form, a written reply.

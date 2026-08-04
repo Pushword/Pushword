@@ -123,6 +123,7 @@ newsletter:
       singular: Contact
     action:
       confirm: Confirmer à la main
+      merge: Fusionner les deux
       optIn: Inscrire un contact
       optInAnother: Ajouter à une autre liste
       resubscribe: Réinscrire
@@ -138,14 +139,14 @@ newsletter:
       customProperties: Propriétés personnalisées
       customProperties.help: Paires clé-valeur en YAML. Les segments les lisent via prop.<clé>.
       email: Email
-      email.taken: Un autre contact de cette liste utilise déjà cette adresse.
+      email.taken: Un autre contact de cette liste utilise déjà cette adresse. Fusionnez les deux, ou changez-la.
       locale: Langue
       name: Prénom
       optinHost: Hôte d'inscription
       optinIp: IP d'inscription
       phone: Téléphone
       phone.help: Conservé en chiffres, avec le + initial. Un contact identifié par un numéro seul est stocké, tagué et segmenté, et n'est jamais destinataire d'un mail.
-      phone.taken: Un autre contact de cette liste utilise déjà ce numéro. Les réunir est une fusion délibérée, pas quelque chose que ce formulaire fait.
+      phone.taken: Un autre contact de cette liste utilise déjà ce numéro. Fusionnez les deux, ou changez-le.
       registeredAt: Inscrit le
       source: Source
       status: Statut
@@ -156,6 +157,7 @@ newsletter:
       confirmed: Confirmé à la main.
       invalidOptIn: Choisissez une liste et, au choix, une adresse valide ou un numéro de téléphone.
       invalidToken: Jeton invalide, merci de réessayer.
+      merged: Les deux lignes n'en font plus qu'une.
       noAudience: Créez d'abord une audience.
       notFound: Contact introuvable.
       resubscribed: Réinscrit.
@@ -163,6 +165,9 @@ newsletter:
       unsubscribed: Désinscrit.
     identifier:
       missing: Un contact a besoin d'une adresse email ou d'un numéro de téléphone.
+    merge:
+      help: "%kept% et %dropped% semblent être la même personne. La fusion garde %kept% — son inscription, son lien de désinscription et tout ce qui lui a été envoyé — et lui ajoute le numéro. %dropped% disparaît."
+      title: La même personne, saisie deux fois ?
     optIn:
       alreadyConsented: A déjà consenti
       alreadyConsented.help: Passe le mail de confirmation et inscrit directement. Uniquement pour un consentement que vous pouvez produire — un formulaire papier, une réponse écrite.

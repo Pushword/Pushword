@@ -47,6 +47,12 @@ class CampaignRecipient implements IdInterface
         return RecipientState::Pending === $this->state;
     }
 
+    /** Follow the row a merge kept — see {@see \Pushword\Newsletter\Service\ContactMerger}. */
+    public function moveTo(Contact $contact): void
+    {
+        $this->contact = $contact;
+    }
+
     public function markSent(): self
     {
         $this->state = RecipientState::Sent;

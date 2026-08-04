@@ -97,6 +97,12 @@ class AutomationDelivery implements IdInterface
         );
     }
 
+    /** Follow the row a merge kept — see {@see \Pushword\Newsletter\Service\ContactMerger}. */
+    public function moveTo(Contact $contact): void
+    {
+        $this->contact = $contact;
+    }
+
     /** A later bounce, credited here because this was the last mail sent. */
     public function markBounced(): self
     {

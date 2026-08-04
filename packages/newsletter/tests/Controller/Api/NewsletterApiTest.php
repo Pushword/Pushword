@@ -378,8 +378,8 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
     /**
      * The two rows may well be one person, and that is exactly why somebody is
      * writing the number — but joining them means deciding which consent record
-     * survives and which token the live unsubscribe links keep working with.
-     * It is refused, with the row that holds it named.
+     * survives and which token the live unsubscribe links keep working with. It
+     * is refused unless the caller asks for it, with the row that holds it named.
      */
     public function testUpsertingANumberSomebodyElseHoldsIsRefused(): void
     {
@@ -413,6 +413,116 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertSame('validation', $body['error']);
     }
 
+    /**
+     * `?merge=true` is the caller saying the two rows are one person. The row
+     * holding the address survives, keeping its id and its links; the number
+     * moves onto it and the other row goes.
+     */
+    public function testUpsertingWithMergeJoinsTheTwoRows(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $phoneOnly = $this->createPhoneContact($audience, '+33612345678');
+        $reader = $this->createContact($audience, 'reader@example.tld');
+        $absorbedId = $phoneOnly->id;
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact?merge=true', [
+            'audience' => $audience->slug,
+            'email' => 'reader@example.tld',
+            'phone' => '+33 6 12 34 56 78',
+        ]);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertSame($reader->id, $body['id']);
+        self::assertSame('+33612345678', $body['phone']);
+        self::assertNull($this->entityManager->getRepository(Contact::class)->find($absorbedId));
+    }
+
+    /**
+     * Nothing to join: no row holds the address yet, so the row holding the
+     * number is the person and the address is what it was missing.
+     */
+    public function testUpsertingWithMergeGivesTheAddressToTheNumberItKnows(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $phoneOnly = $this->createPhoneContact($audience, '+33612345678');
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact?merge=true', [
+            'audience' => $audience->slug,
+            'email' => 'called@example.tld',
+            'phone' => '+33612345678',
+        ]);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertSame($phoneOnly->id, $body['id']);
+        self::assertSame('called@example.tld', $body['email']);
+        self::assertTrue($body['mailable']);
+    }
+
+    /** Two addressed rows stay two people, whatever the caller asks for. */
+    public function testMergeCannotJoinTwoAddressedRows(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $holder = $this->createContact($audience, 'first@example.tld');
+        $holder->phone = '+33612345678';
+
+        $this->entityManager->flush();
+        $this->createContact($audience, 'second@example.tld');
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact?merge=true', [
+            'audience' => $audience->slug,
+            'email' => 'second@example.tld',
+            'phone' => '+33612345678',
+        ]);
+
+        self::assertSame(Response::HTTP_CONFLICT, $this->client->getResponse()->getStatusCode());
+        self::assertIsString($body['error']);
+    }
+
+    /**
+     * The number belongs to a row that has an address of its own, and the write
+     * carries a third one. Three rows is not a merge anybody asked for.
+     */
+    public function testMergeRefusesANumberHeldUnderAnotherAddress(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $holder = $this->createContact($audience, 'holder@example.tld');
+        $holder->phone = '+33612345678';
+
+        $this->entityManager->flush();
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact?merge=true', [
+            'audience' => $audience->slug,
+            'email' => 'newcomer@example.tld',
+            'phone' => '+33612345678',
+        ]);
+
+        self::assertSame(Response::HTTP_CONFLICT, $this->client->getResponse()->getStatusCode());
+        self::assertIsString($body['error']);
+        self::assertStringContainsString('another address', $body['error']);
+        self::assertNull($this->entityManager->getRepository(Contact::class)->findOneBy(['email' => 'newcomer@example.tld']));
+    }
+
+    /**
+     * A number that reaches the row it is being created on has to be free too:
+     * without the check the write reaches the unique index, and a driver
+     * exception is not an answer a caller can act on.
+     */
+    public function testCreatingAContactOnANumberSomebodyElseHoldsIsRefused(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $phoneOnly = $this->createPhoneContact($audience, '+33612345678');
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
+            'audience' => $audience->slug,
+            'email' => 'newcomer@example.tld',
+            'phone' => '+33612345678',
+        ]);
+
+        self::assertSame(Response::HTTP_CONFLICT, $this->client->getResponse()->getStatusCode());
+        self::assertIsString($body['error']);
+        self::assertStringContainsString((string) $phoneOnly->id, $body['error']);
+    }
+
     /** And an address somebody else holds, which is the same rule read the other way. */
     public function testPatchingAnAddressSomebodyElseHoldsIsRefused(): void
     {
@@ -426,6 +536,64 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
 
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
         self::assertSame('validation', $body['error']);
+    }
+
+    public function testPatchingANumberWithMergeJoinsTheTwoRows(): void
+    {
+        $audience = $this->createAudience();
+        $phoneOnly = $this->createPhoneContact($audience, '+33612345678');
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $absorbedId = $phoneOnly->id;
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/contact/'.$contact->id.'?merge=true', [
+            'phone' => '+33612345678',
+        ]);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertSame($contact->id, $body['id']);
+        self::assertSame('+33612345678', $body['phone']);
+        self::assertNull($this->entityManager->getRepository(Contact::class)->find($absorbedId));
+    }
+
+    /**
+     * Patching an address onto a number answers with another id than the one in
+     * the path: the addressed row is the one that survives, whichever side the
+     * write came from.
+     */
+    public function testPatchingAnAddressWithMergeAnswersWithTheAddressedRow(): void
+    {
+        $audience = $this->createAudience();
+        $reader = $this->createContact($audience, 'taken@example.tld');
+        $contact = $this->createPhoneContact($audience, '+33612345678');
+        $absorbedId = $contact->id;
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/contact/'.$contact->id.'?merge=true', [
+            'email' => 'taken@example.tld',
+        ]);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertSame($reader->id, $body['id']);
+        self::assertSame('+33612345678', $body['phone']);
+        self::assertNull($this->entityManager->getRepository(Contact::class)->find($absorbedId));
+    }
+
+    /** One write naming two other rows would join three; it is refused rather than guessed at. */
+    public function testPatchingWithMergeRefusesToJoinThreeRows(): void
+    {
+        $audience = $this->createAudience();
+        $phoneOnly = $this->createPhoneContact($audience, '+33612345678');
+        $addressed = $this->createContact($audience, 'taken@example.tld');
+        $contact = $this->createContact($audience, 'third@example.tld');
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/contact/'.$contact->id.'?merge=true', [
+            'email' => 'taken@example.tld',
+            'phone' => '+33612345678',
+        ]);
+
+        self::assertSame(Response::HTTP_CONFLICT, $this->client->getResponse()->getStatusCode());
+        self::assertIsString($body['error']);
+        self::assertNotNull($this->entityManager->getRepository(Contact::class)->find($phoneOnly->id));
+        self::assertNotNull($this->entityManager->getRepository(Contact::class)->find($addressed->id));
     }
 
     /** A caller that knows one property must not have to preserve the others. */

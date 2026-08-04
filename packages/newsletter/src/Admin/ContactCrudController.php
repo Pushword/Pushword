@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Admin;
 
+use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -19,6 +20,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TelephoneField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use InvalidArgumentException;
 use Override;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
@@ -26,6 +28,7 @@ use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Repository\AudienceRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Service\ContactManager;
+use Pushword\Newsletter\Service\ContactMerger;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -39,11 +42,15 @@ class ContactCrudController extends AbstractCrudController
 {
     private const string OPT_IN_CSRF_ID = 'newsletter_contact_opt_in';
 
+    private const string MERGE_CSRF_ID = 'newsletter_contact_merge';
+
     public function __construct(
         private readonly ContactManager $contactManager,
+        private readonly ContactMerger $contactMerger,
         private readonly ContactRepository $contactRepository,
         private readonly AudienceRepository $audienceRepository,
         private readonly AdminUrlGenerator $adminUrlGenerator,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -172,9 +179,85 @@ class ContactCrudController extends AbstractCrudController
 
         if ($contact instanceof Contact) {
             $responseParameters->set('subscriptions', $this->subscriptionsOf($contact));
+            $responseParameters->set('mergeCandidate', $this->mergeCandidate($contact));
         }
 
         return $responseParameters;
+    }
+
+    /**
+     * What to offer when a save was refused because another row already holds
+     * the address or the number that was typed.
+     *
+     * Only a refused save gets here, which is why it looks at the submitted
+     * request: on a page merely being read, the contact's identifiers are its
+     * own and there is nobody else to find.
+     *
+     * The refused form has already written what was typed onto the contact, and
+     * a merge runs on what the database holds — so the offer is decided on that.
+     * Somebody typing an address another row holds is offering to join a row
+     * that has none; asked with the typed address in place, the answer would be
+     * "two addresses, two people". The typed values go back before the form is
+     * rendered, so the screen still shows them.
+     *
+     * @return array{url: string, with: int, csrfId: string, kept: string, dropped: string}|null
+     */
+    private function mergeCandidate(Contact $contact): ?array
+    {
+        $request = $this->getContext()?->getRequest();
+
+        if (null === $request || ! $request->isMethod(Request::METHOD_POST)) {
+            return null;
+        }
+
+        $holder = $this->holderOf($contact);
+
+        if (! $holder instanceof Contact) {
+            return null;
+        }
+
+        $typedEmail = $contact->email;
+        $typedPhone = $contact->phone;
+        $stored = $this->entityManager->getUnitOfWork()->getOriginalEntityData($contact);
+        $contact->email = \is_string($stored['email'] ?? null) ? $stored['email'] : null;
+        $contact->phone = \is_string($stored['phone'] ?? null) ? $stored['phone'] : null;
+
+        try {
+            $keeper = $this->contactMerger->keeper($contact, $holder);
+
+            if (! $keeper instanceof Contact) {
+                return null;
+            }
+
+            return [
+                'url' => $this->mergeUrl($contact),
+                'with' => $holder->id ?? 0,
+                'csrfId' => self::MERGE_CSRF_ID,
+                'kept' => $keeper->identifier(),
+                'dropped' => ($keeper === $contact ? $holder : $contact)->identifier(),
+            ];
+        } finally {
+            $contact->email = $typedEmail;
+            $contact->phone = $typedPhone;
+        }
+    }
+
+    /** The other row of this list holding what was just typed, if there is one. */
+    private function holderOf(Contact $contact): ?Contact
+    {
+        $byEmail = null !== $contact->email
+            ? $this->contactRepository->findOneByEmail($contact->audience, $contact->email)
+            : null;
+
+        if ($byEmail instanceof Contact && $byEmail !== $contact) {
+            return $byEmail;
+        }
+
+        $byPhone = null !== $contact->phone
+            ? $this->contactRepository->findOneByPhone($contact->audience, $contact->phone)
+            : null;
+
+        return $byPhone instanceof Contact && $byPhone !== $contact ? $byPhone : null;
     }
 
     /**
@@ -219,6 +302,50 @@ class ContactCrudController extends AbstractCrudController
         }
 
         return new RedirectResponse($this->editUrl($contact));
+    }
+
+    /**
+     * Join the row being edited with the one holding the identifier that was
+     * refused. One click, from the offer the refused save renders.
+     *
+     * Which of the two survives is not this screen's to choose — the address
+     * decides, so the redirect goes wherever {@see ContactMerger} left the
+     * person, which for a number gaining an address is the other row.
+     */
+    #[AdminRoute(path: '/{entityId}/merge', name: 'merge', options: ['methods' => ['POST']])]
+    public function merge(Request $request): RedirectResponse
+    {
+        $contact = $this->contact();
+
+        if (! $contact instanceof Contact) {
+            return new RedirectResponse($this->indexUrl());
+        }
+
+        if (! $this->isCsrfTokenValid(self::MERGE_CSRF_ID, (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'newsletter.contact.flash.invalidToken');
+
+            return new RedirectResponse($this->editUrl($contact));
+        }
+
+        $other = $this->contactRepository->find($request->request->getInt('with'));
+
+        if (! $other instanceof Contact) {
+            $this->addFlash('danger', 'newsletter.contact.flash.notFound');
+
+            return new RedirectResponse($this->editUrl($contact));
+        }
+
+        try {
+            $kept = $this->contactMerger->merge($contact, $other);
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            $this->addFlash('danger', $invalidArgumentException->getMessage());
+
+            return new RedirectResponse($this->editUrl($contact));
+        }
+
+        $this->addFlash('success', 'newsletter.contact.flash.merged');
+
+        return new RedirectResponse($this->editUrl($kept));
     }
 
     #[AdminRoute(path: '/{entityId}/unsubscribe', name: 'unsubscribe')]
@@ -348,6 +475,17 @@ class ContactCrudController extends AbstractCrudController
             ->unset(EA::ENTITY_ID)
             ->set('email', $email)
             ->set('phone', $phone)
+            ->generateUrl();
+    }
+
+    private function mergeUrl(Contact $contact): string
+    {
+        return $this->adminUrlGenerator
+            ->setController(self::class)
+            ->setAction('merge')
+            ->setEntityId($contact->id)
+            ->unset('email')
+            ->unset('phone')
             ->generateUrl();
     }
 
