@@ -18,7 +18,7 @@ final class BrokenImageScanner extends AbstractScanner
         }
 
         foreach (BrokenImageComment::extractSources($this->pageHtml) as $src) {
-            $this->addError('<code>'.htmlspecialchars($src).'</code> '.$this->trans('page_scanBrokenImage'));
+            $this->addError(ScanErrorCode::ImageNotFound, '<code>'.htmlspecialchars($src).'</code> '.$this->trans('page_scanBrokenImage'));
         }
     }
 }

@@ -9,6 +9,7 @@ use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\Core\Utils\TwigErrorExtractor;
+use Pushword\PageScanner\Service\ErrorIgnoreRules;
 use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Translation\DataCollectorTranslator;
@@ -24,9 +25,12 @@ use Twig\Error\SyntaxError;
 final class PageScannerService
 {
     /**
-     * @var array{message: string, page: array{id:int, slug: string, h1: string, metaRobots: string, host: string}}[]
+     * @var array{code: string, message: string, page: array{id:int, slug: string, h1: string, metaRobots: string, host: string}}[]
      */
     private array $errors = [];
+
+    /** @var string[] What the page being scanned asked not to be told about. */
+    private array $pageIgnorePatterns = [];
 
     #[Required]
     public LinkedDocsScanner $linkedDocsScanner;
@@ -84,17 +88,13 @@ final class PageScannerService
         $this->linkedDocsScanner->preloadPageCache();
     }
 
-    private function resetErrors(): void
-    {
-        $this->errors = [];
-    }
-
     /**
-     * @return array{message: string, page: array{id:int, slug: string, h1: string, metaRobots: string, host: string}}[]|true
+     * @return array{code: string, message: string, page: array{id:int, slug: string, h1: string, metaRobots: string, host: string}}[]|true
      */
     public function scan(Page $page): array|bool
     {
-        $this->resetErrors();
+        $this->errors = [];
+        $this->pageIgnorePatterns = ErrorIgnoreRules::forPage($page);
 
         $pageHtml = $page->hasRedirection() ? '' : $this->getHtml($page);
 
@@ -152,18 +152,35 @@ final class PageScannerService
     }
 
     /**
-     * @param string[] $messages
+     * @param array<array{code: string, message: string}> $errors the scanners already
+     *                                                            dropped what the page asked to ignore
      */
-    private function addErrors(Page $page, array $messages): void
+    private function addErrors(Page $page, array $errors): void
     {
-        foreach ($messages as $message) {
-            $this->addError($page, $message);
+        foreach ($errors as $error) {
+            $this->errors[] = $this->record($page, $error['code'], $error['message']);
         }
     }
 
+    /**
+     * Every error this service raises itself is a page that would not render.
+     */
     private function addError(Page $page, string $message): void
     {
-        $this->errors[] = [
+        if (ErrorIgnoreRules::matches($this->pageIgnorePatterns, ScanErrorCode::RenderError->value, $message)) {
+            return;
+        }
+
+        $this->errors[] = $this->record($page, ScanErrorCode::RenderError->value, $message);
+    }
+
+    /**
+     * @return array{code: string, message: string, page: array{id:int, slug: string, h1: string, metaRobots: string, host: string}}
+     */
+    private function record(Page $page, string $code, string $message): array
+    {
+        return [
+            'code' => $code,
             'message' => $message,
             'page' => [
                 'id' => $page->id ?? 0,

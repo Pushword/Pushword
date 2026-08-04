@@ -133,6 +133,7 @@ final class PageScanApiController extends AbstractApiController
                 $errors[] = [
                     'host' => $error['page']['host'],
                     'slug' => $error['page']['slug'],
+                    'code' => $error['code'],
                     'message' => trim(strip_tags($error['message'])),
                 ];
             }
@@ -217,6 +218,7 @@ final class PageScanApiController extends AbstractApiController
                         'properties' => [
                             'host' => ['type' => 'string'],
                             'slug' => ['type' => 'string'],
+                            'code' => ['type' => 'string', 'description' => 'Stable identity of the finding, e.g. `link-not-found`; what `errors_to_ignore` matches.'],
                             'message' => ['type' => 'string'],
                         ],
                     ]],

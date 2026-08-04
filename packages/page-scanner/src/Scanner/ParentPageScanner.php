@@ -33,7 +33,7 @@ final class ParentPageScanner extends AbstractScanner
             return;
         }
 
-        $this->addError($this->trans('page_scanDifferentHost')
+        $this->addError(ScanErrorCode::ParentHost, $this->trans('page_scanDifferentHost')
             .' : <code>'.$parent->host.'</code> vs <code>'.$Page->host.'</code>');
     }
 }

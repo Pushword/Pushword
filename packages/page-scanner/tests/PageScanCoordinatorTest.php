@@ -82,8 +82,8 @@ final class PageScanCoordinatorTest extends KernelTestCase
     public function testReadResultsFiltersIgnoredErrorsAndKeepsTheRest(): void
     {
         $errors = [42 => [
-            ['page' => ['host' => 'localhost.dev', 'slug' => 'a'], 'message' => '404 <a href="/x">/x</a>'],
-            ['page' => ['host' => 'localhost.dev', 'slug' => 'a'], 'message' => 'known noise'],
+            ['code' => 'link-not-found', 'page' => ['host' => 'localhost.dev', 'slug' => 'a'], 'message' => '404 <a href="/x">/x</a>'],
+            ['code' => 'image-alt-missing', 'page' => ['host' => 'localhost.dev', 'slug' => 'a'], 'message' => 'known noise'],
         ]];
         new Filesystem()->dumpFile($this->varDir.'/page-scan', serialize($errors));
 
@@ -95,6 +95,36 @@ final class PageScanCoordinatorTest extends KernelTestCase
         self::assertGreaterThan(0, $results['lastEdit']);
         self::assertCount(1, $results['errorsByPages'][42]);
         self::assertSame('404 <a href="/x">/x</a>', $results['errorsByPages'][42][0]['message']);
+    }
+
+    public function testReadResultsFiltersOnTheErrorCode(): void
+    {
+        $errors = [42 => [
+            ['code' => 'link-not-found', 'page' => ['host' => 'localhost.dev', 'slug' => 'a'], 'message' => '404 <a href="/x">/x</a>'],
+            ['code' => 'image-alt-missing', 'page' => ['host' => 'localhost.dev', 'slug' => 'a'], 'message' => 'image without alternative text'],
+        ]];
+        new Filesystem()->dumpFile($this->varDir.'/page-scan', serialize($errors));
+
+        $results = $this->coordinator(
+            self::createStub(BackgroundTaskDispatcherInterface::class),
+            errorsToIgnore: ['image-*'],
+        )->readResults(null);
+
+        self::assertCount(1, $results['errorsByPages'][42]);
+        self::assertSame('link-not-found', $results['errorsByPages'][42][0]['code']);
+    }
+
+    /**
+     * A cache written before findings carried a code still has to render.
+     */
+    public function testAResultCachedWithoutACodeReadsWithAnEmptyOne(): void
+    {
+        $errors = [42 => [['page' => ['host' => 'localhost.dev', 'slug' => 'a'], 'message' => 'legacy']]];
+        new Filesystem()->dumpFile($this->varDir.'/page-scan', serialize($errors));
+
+        $results = $this->coordinator(self::createStub(BackgroundTaskDispatcherInterface::class))->readResults(null);
+
+        self::assertSame('', $results['errorsByPages'][42][0]['code']);
     }
 
     /**

@@ -18,7 +18,7 @@ final class TwigErrorScanner extends AbstractScanner
         }
 
         foreach (TwigErrorMarker::extractMessages($this->pageHtml) as $message) {
-            $this->addError($this->trans('page_scanTwigError').' <code>'.htmlspecialchars($message).'</code>');
+            $this->addError(ScanErrorCode::TwigError, $this->trans('page_scanTwigError').' <code>'.htmlspecialchars($message).'</code>');
         }
     }
 }

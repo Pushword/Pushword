@@ -5,6 +5,7 @@ namespace Pushword\PageScanner\Tests\Scanner;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Pushword\Core\Entity\Page;
 use Pushword\PageScanner\Scanner\MissingAltScanner;
+use Pushword\PageScanner\Scanner\ScanErrorCode;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 final class MissingAltScannerTest extends KernelTestCase
@@ -85,6 +86,35 @@ final class MissingAltScannerTest extends KernelTestCase
         self::assertSame([], $this->scan(''));
     }
 
+    public function testReportsTheFindingUnderItsCode(): void
+    {
+        self::bootKernel();
+
+        /** @var MissingAltScanner $scanner */
+        $scanner = self::getContainer()->get(MissingAltScanner::class);
+
+        $errors = $scanner->scan($this->page(), '<img src="/a.jpg">');
+
+        self::assertSame(ScanErrorCode::ImageAltMissing->value, $errors[0]['code']);
+    }
+
+    /**
+     * A page that decided an image is fine as it is says so in its own content,
+     * and the finding never reaches the report.
+     */
+    public function testAPageSilencesAFindingItDeclaresInline(): void
+    {
+        self::bootKernel();
+
+        /** @var MissingAltScanner $scanner */
+        $scanner = self::getContainer()->get(MissingAltScanner::class);
+
+        $page = $this->page();
+        $page->mainContent = '<!-- page-scanner-ignore: image-alt-missing -->';
+
+        self::assertSame([], $scanner->scan($page, '<img src="/a.jpg">'));
+    }
+
     /** @return string[] */
     private function scan(string $pageHtml): array
     {
@@ -93,10 +123,15 @@ final class MissingAltScannerTest extends KernelTestCase
         /** @var MissingAltScanner $scanner */
         $scanner = self::getContainer()->get(MissingAltScanner::class);
 
+        return array_column($scanner->scan($this->page(), $pageHtml), 'message');
+    }
+
+    private function page(): Page
+    {
         $page = new Page();
         $page->slug = 'homepage';
         $page->locale = 'en';
 
-        return array_values($scanner->scan($page, $pageHtml));
+        return $page;
     }
 }

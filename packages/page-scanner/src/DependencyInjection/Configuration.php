@@ -44,7 +44,7 @@ class Configuration implements ConfigurationInterface
                     ->arrayNode('errors_to_ignore')
                         ->prototype('scalar')->end()
                         ->defaultValue([])
-                        ->info('Error messages to ignore. Format: "message" (global) or "host/slug: message" (per-route). Supports fnmatch patterns.')
+                        ->info('Errors to ignore, matched against the error code then its message. Format: "pattern" (global) or "host/slug: pattern" (per-route). Supports fnmatch wildcards.')
         ;
 
         return $treeBuilder;

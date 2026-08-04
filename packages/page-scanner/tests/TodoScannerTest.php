@@ -40,10 +40,20 @@ final class TodoScannerTest extends KernelTestCase
         parent::tearDown();
     }
 
+    /**
+     * The findings' messages — what every assertion here is about.
+     *
+     * @return string[]
+     */
+    private function scan(Page $page): array
+    {
+        return array_column($this->scanner->scan($page, ''), 'message');
+    }
+
     public function testEmptyContent(): void
     {
         $source = $this->buildSourcePage('');
-        self::assertCount(0, $this->scanner->scan($source, ''));
+        self::assertCount(0, $this->scan($source));
     }
 
     public function testLinkWhenPublishedWithPublishedTarget(): void
@@ -51,7 +61,7 @@ final class TodoScannerTest extends KernelTestCase
         $this->createPage('published-target', 'localhost.dev', new DateTime('-1 day'));
         $source = $this->buildSourcePage('<!--TODO:linkWhenPublished published-target -->');
 
-        $errors = $this->scanner->scan($source, '');
+        $errors = $this->scan($source);
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('published-target', $errors[0]);
@@ -63,14 +73,14 @@ final class TodoScannerTest extends KernelTestCase
         $this->createPage('unpublished-target', 'localhost.dev', new DateTime('+10 days'));
         $source = $this->buildSourcePage('<!--TODO:linkWhenPublished unpublished-target -->');
 
-        self::assertCount(0, $this->scanner->scan($source, ''));
+        self::assertCount(0, $this->scan($source));
     }
 
     public function testLinkWhenPublishedWithUnknownSlug(): void
     {
         $source = $this->buildSourcePage('<!--TODO:linkWhenPublished nonexistent-slug -->');
 
-        $errors = $this->scanner->scan($source, '');
+        $errors = $this->scan($source);
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('nonexistent-slug', $errors[0]);
@@ -81,7 +91,7 @@ final class TodoScannerTest extends KernelTestCase
         $this->createPage('do-target', 'localhost.dev', new DateTime('-1 day'));
         $source = $this->buildSourcePage('<!--TODO:doWhenPublished do-target "add comparison table" -->');
 
-        $errors = $this->scanner->scan($source, '');
+        $errors = $this->scan($source);
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('do-target', $errors[0]);
@@ -94,14 +104,14 @@ final class TodoScannerTest extends KernelTestCase
         $this->createPage('do-unpublished', 'localhost.dev', new DateTime('+10 days'));
         $source = $this->buildSourcePage('<!--TODO:doWhenPublished do-unpublished "update section" -->');
 
-        self::assertCount(0, $this->scanner->scan($source, ''));
+        self::assertCount(0, $this->scan($source));
     }
 
     public function testDoWhenPublishedWithUnknownSlug(): void
     {
         $source = $this->buildSourcePage('<!--TODO:doWhenPublished unknown-do-target "fix this" -->');
 
-        $errors = $this->scanner->scan($source, '');
+        $errors = $this->scan($source);
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('unknown-do-target', $errors[0]);
@@ -112,7 +122,7 @@ final class TodoScannerTest extends KernelTestCase
         $this->createPage('do-nolabel', 'localhost.dev', new DateTime('-1 day'));
         $source = $this->buildSourcePage('<!--TODO:doWhenPublished do-nolabel -->');
 
-        $errors = $this->scanner->scan($source, '');
+        $errors = $this->scan($source);
 
         self::assertCount(1, $errors);
         self::assertStringNotContainsString('(', $errors[0]);
@@ -123,7 +133,7 @@ final class TodoScannerTest extends KernelTestCase
         $this->createPage('anchor-target', 'localhost.dev', new DateTime('-1 day'));
         $source = $this->buildSourcePage('<!--TODO:linkWhenPublished anchor-target "click here" -->');
 
-        $errors = $this->scanner->scan($source, '');
+        $errors = $this->scan($source);
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('click here', $errors[0]);
@@ -134,7 +144,7 @@ final class TodoScannerTest extends KernelTestCase
         $this->createPage('case-target', 'localhost.dev', new DateTime('-1 day'));
         $source = $this->buildSourcePage('<!--todo:linkwhenpublished case-target -->');
 
-        self::assertCount(1, $this->scanner->scan($source, ''));
+        self::assertCount(1, $this->scan($source));
     }
 
     public function testLinkWhenPublishedWithExplicitHost(): void
@@ -142,7 +152,7 @@ final class TodoScannerTest extends KernelTestCase
         $this->createPage('cross-host-target', 'pushword.piedweb.com', new DateTime('-1 day'));
         $source = $this->buildSourcePage('<!--TODO:linkWhenPublished pushword.piedweb.com/cross-host-target -->');
 
-        $errors = $this->scanner->scan($source, '');
+        $errors = $this->scan($source);
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('cross-host-target', $errors[0]);
@@ -153,7 +163,7 @@ final class TodoScannerTest extends KernelTestCase
         $this->createPage('host-mismatch', 'localhost.dev', new DateTime('-1 day'));
         $source = $this->buildSourcePage('<!--TODO:linkWhenPublished other-host.com/host-mismatch -->');
 
-        $errors = $this->scanner->scan($source, '');
+        $errors = $this->scan($source);
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('unknown', strtolower($errors[0]));
@@ -162,13 +172,13 @@ final class TodoScannerTest extends KernelTestCase
     public function testPlainTodoCommentIsIgnored(): void
     {
         $source = $this->buildSourcePage('<!--TODO-->');
-        self::assertCount(0, $this->scanner->scan($source, ''));
+        self::assertCount(0, $this->scan($source));
     }
 
     public function testUnrecognizedTodoCommentIsIgnored(): void
     {
         $source = $this->buildSourcePage('<!--TODO: fix this later -->');
-        self::assertCount(0, $this->scanner->scan($source, ''));
+        self::assertCount(0, $this->scan($source));
     }
 
     public function testMultipleTodosInSamePage(): void
@@ -177,7 +187,7 @@ final class TodoScannerTest extends KernelTestCase
         $content = "Some text\n<!--TODO:linkWhenPublished multi-target -->\nMore text\n<!--TODO:linkWhenPublished nonexistent-page -->";
         $source = $this->buildSourcePage($content);
 
-        $errors = $this->scanner->scan($source, '');
+        $errors = $this->scan($source);
 
         self::assertCount(2, $errors);
     }

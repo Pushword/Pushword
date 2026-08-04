@@ -11,6 +11,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\PageScanner\Service\ErrorIgnoreRules;
 
 use function Safe\preg_match;
 use function Safe\preg_match_all;
@@ -68,7 +69,7 @@ final class LinkedDocsScanner extends AbstractScanner
     /** @var array<string, true|string> */
     private array $externalUrlResults = [];
 
-    /** @var array<int, array{url: string, pageId: int, pageHost: string, pageSlug: string, pageH1: string, pageMetaRobots: string}> */
+    /** @var array<int, array{url: string, pageId: int, pageHost: string, pageSlug: string, pageH1: string, pageMetaRobots: string, pageIgnorePatterns: string[]}> */
     private array $deferredExternalChecks = [];
 
     /**
@@ -133,7 +134,7 @@ final class LinkedDocsScanner extends AbstractScanner
     /**
      * Resolve deferred external URL errors after parallel validation.
      *
-     * @return array<int, array<int, array{page: array{id: int, host: string, slug: string, h1: string, metaRobots: string}, message: string}>>
+     * @return array<int, array<int, array{code: string, page: array{id: int, host: string, slug: string, h1: string, metaRobots: string}, message: string}>>
      */
     public function resolveDeferredExternalErrors(): array
     {
@@ -141,9 +142,15 @@ final class LinkedDocsScanner extends AbstractScanner
         foreach ($this->deferredExternalChecks as $check) {
             $url = $check['url'];
             if (isset($this->externalUrlResults[$url]) && true !== $this->externalUrlResults[$url]) {
+                $message = '<code>'.$url.'</code> '.$this->externalUrlResults[$url];
+                if (ErrorIgnoreRules::matches($check['pageIgnorePatterns'], ScanErrorCode::LinkExternal->value, $message)) {
+                    continue;
+                }
+
                 $pageId = $check['pageId'];
                 $errors[$pageId] ??= [];
                 $errors[$pageId][] = [
+                    'code' => ScanErrorCode::LinkExternal->value,
                     'page' => [
                         'id' => $check['pageId'],
                         'host' => $check['pageHost'],
@@ -151,7 +158,7 @@ final class LinkedDocsScanner extends AbstractScanner
                         'h1' => $check['pageH1'],
                         'metaRobots' => $check['pageMetaRobots'],
                     ],
-                    'message' => '<code>'.$url.'</code> '.$this->externalUrlResults[$url],
+                    'message' => $message,
                 ];
             }
         }
@@ -292,7 +299,7 @@ final class LinkedDocsScanner extends AbstractScanner
             $isDataRotAttribute = 'data-rot' === $matches[1][$k]; // @phpstan-ignore-line
             $uri = $isDataRotAttribute ? LinkProvider::decrypt($uri) : $uri;
             if ($this->isMailtoOrTelLink($uri) && ! $isDataRotAttribute) {
-                $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scanObfuscateMail'));
+                $this->addError(ScanErrorCode::LinkMailto, '<code>'.$uri.'</code> '.$this->trans('page_scanObfuscateMail'));
             } elseif ('' !== $uri && $this->isWebLink($uri)) {
                 if (! $isDataRotAttribute) {
                     $this->crawlableLinks[$uri] = true;
@@ -376,15 +383,15 @@ final class LinkedDocsScanner extends AbstractScanner
         $page = $target['page'];
 
         if (! $target['exists']) {
-            $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotFound'));
+            $this->addError(ScanErrorCode::LinkNotFound, '<code>'.$url.'</code> '.$this->trans('page_scanNotFound'));
         } elseif ($page instanceof Page && ! $page->isPublished()) {
             if ($this->checkUnpublished) {
-                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
+                $this->addError(ScanErrorCode::LinkNotPublished, '<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
             }
         } elseif ($checkRedirection && ($target['redirect'] || ($page instanceof Page && $page->hasRedirection()))) {
-            $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
+            $this->addError(ScanErrorCode::LinkRedirection, '<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
         } elseif ($this->isCrawlableLinkToNoindex($url, $page)) {
-            $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNoindexLink'));
+            $this->addError(ScanErrorCode::LinkNoindex, '<code>'.$url.'</code> '.$this->trans('page_scanNoindexLink'));
         }
     }
 
@@ -439,7 +446,7 @@ final class LinkedDocsScanner extends AbstractScanner
         }
 
         if (! isset($uri[0])) {
-            $this->addError('<code>'.$url.'</code> empty link');
+            $this->addError(ScanErrorCode::LinkEmpty, '<code>'.$url.'</code> empty link');
 
             return;
         }
@@ -483,6 +490,9 @@ final class LinkedDocsScanner extends AbstractScanner
                     'pageSlug' => $this->page->slug,
                     'pageH1' => $this->page->h1,
                     'pageMetaRobots' => $this->page->metaRobots,
+                    // The page is long out of scope when the check resolves, so what
+                    // it asked not to be told about travels with it.
+                    'pageIgnorePatterns' => $this->pageIgnorePatterns,
                 ];
 
                 return;
@@ -492,7 +502,7 @@ final class LinkedDocsScanner extends AbstractScanner
             if (isset($this->externalUrlResults[$url])) {
                 $result = $this->externalUrlResults[$url];
                 if (true !== $result) {
-                    $this->addError('<code>'.$url.'</code> '.$result);
+                    $this->addError(ScanErrorCode::LinkExternal, '<code>'.$url.'</code> '.$result);
                 }
 
                 return;
@@ -500,7 +510,7 @@ final class LinkedDocsScanner extends AbstractScanner
 
             // Fallback to synchronous check
             if (true !== ($errorMsg = $this->urlExist($url))) {
-                $this->addError('<code>'.$url.'</code> '.$errorMsg);
+                $this->addError(ScanErrorCode::LinkExternal, '<code>'.$url.'</code> '.$errorMsg);
             }
 
             return;
@@ -509,7 +519,7 @@ final class LinkedDocsScanner extends AbstractScanner
         // anchor/bookmark/jump link
         if (str_starts_with($url, '#')) {
             if (! $this->targetExist(substr($url, 1))) {
-                $this->addError('<code>'.$url.'</code> target not found');
+                $this->addError(ScanErrorCode::LinkAnchor, '<code>'.$url.'</code> target not found');
             }
 
             return;
@@ -519,7 +529,7 @@ final class LinkedDocsScanner extends AbstractScanner
         // from the root, so a relative link resolves against a path owning no page,
         // and no internal tool sees it: LinkCollector, the link graph and the checks
         // above all key on a leading slash.
-        $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanRelativeLink'));
+        $this->addError(ScanErrorCode::LinkRelative, '<code>'.$url.'</code> '.$this->trans('page_scanRelativeLink'));
     }
 
     private function patchUnreachableDomain(string $url): bool

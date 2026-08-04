@@ -20,7 +20,7 @@ final class DateShortcodeScanner extends AbstractScanner
         preg_match_all(self::PATTERN, $this->stripLiteralBlocks(), $matches);
 
         foreach (array_unique($matches[0]) as $shortcode) {
-            $this->addError('<code>'.$shortcode.'</code> '.$this->trans('page_scanDateShortcode'));
+            $this->addError(ScanErrorCode::DateShortcode, '<code>'.$shortcode.'</code> '.$this->trans('page_scanDateShortcode'));
         }
     }
 

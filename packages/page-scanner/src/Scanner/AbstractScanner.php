@@ -3,6 +3,7 @@
 namespace Pushword\PageScanner\Scanner;
 
 use Pushword\Core\Entity\Page;
+use Pushword\PageScanner\Service\ErrorIgnoreRules;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -15,26 +16,38 @@ abstract class AbstractScanner
     protected string $pageHtml;
 
     /**
-     * @var string[]
+     * @var array<array{code: string, message: string}>
      */
     protected array $errors = [];
+
+    /**
+     * What the page being scanned asked not to be told about.
+     *
+     * @var string[]
+     */
+    protected array $pageIgnorePatterns = [];
 
     public function __construct(
         protected readonly TranslatorInterface $translator
     ) {
     }
 
-    public function addError(string $msg): void
+    public function addError(ScanErrorCode $code, string $msg): void
     {
-        $this->errors[] = $msg;
+        if (ErrorIgnoreRules::matches($this->pageIgnorePatterns, $code->value, $msg)) {
+            return;
+        }
+
+        $this->errors[] = ['code' => $code->value, 'message' => $msg];
     }
 
-    /** @return string[] */
+    /** @return array<array{code: string, message: string}> */
     public function scan(Page $page, string $pageHtml): array
     {
         $this->errors = [];
         $this->page = $page;
         $this->pageHtml = $pageHtml;
+        $this->pageIgnorePatterns = ErrorIgnoreRules::forPage($page);
 
         $this->run();
 

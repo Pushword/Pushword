@@ -48,7 +48,7 @@ final class MissingAltScanner extends AbstractScanner
             $reported[$src] = true;
             // With no src there is nothing to name the image by, so quote the tag.
             $label = '' !== $src ? $src : $img;
-            $this->addError('<code>'.htmlspecialchars($label).'</code> '.$this->trans('page_scanMissingAlt'));
+            $this->addError(ScanErrorCode::ImageAltMissing, '<code>'.htmlspecialchars($label).'</code> '.$this->trans('page_scanMissingAlt'));
         }
     }
 

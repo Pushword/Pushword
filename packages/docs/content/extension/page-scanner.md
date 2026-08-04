@@ -32,8 +32,11 @@ it drops the progress bar, colors, PID, timing and memory lines and emits a sing
 compact JSON document instead — issues grouped per page, ignored errors filtered out:
 
 ```json
-{"tool":"pw:page-scan","result":"failed","pages_scanned":42,"pages_with_errors":1,"errors":2,"issues":[{"page":"localhost.dev/about","errors":["Dead link → `/old-page`","Broken anchor → `#missing`"]}],"duration_ms":1280}
+{"tool":"pw:page-scan","result":"failed","pages_scanned":42,"pages_with_errors":1,"errors":2,"issues":[{"page":"localhost.dev/about","errors":[{"code":"link-not-found","message":"`/old-page` not found"},{"code":"link-anchor","message":"`#missing` target not found"}]}],"duration_ms":1280}
 ```
+
+Each finding carries its [error code](#ignoring-a-finding) next to the message — the
+code is what an ignore rule matches, so nothing has to be guessed from the wording.
 
 Detection is automatic; force it either way with `--format=agent` (JSON) or
 `--format=text` (human output). The admin UI always uses text.
@@ -339,7 +342,77 @@ pushword_page_scanner:
   links_to_ignore:                         # glob patterns for links to skip
     - 'https://www.example.tld/*'
     - '/admin/*'
-  errors_to_ignore: []                     # error message patterns to suppress
+  errors_to_ignore: []                     # findings to suppress, see below
 ```
 
-`errors_to_ignore` supports global patterns (`"message"`) and per-route patterns (`"host/slug: message"`) with `fnmatch` wildcards.
+## Ignoring a finding
+
+Every finding carries a **code** — a stable name for what was found, independent of
+its wording and its locale. The admin shows it next to each message, the CLI in
+brackets, the JSON output and the API as a `code` field. It is what an ignore rule
+matches, so a rule keeps working when a message is reworded or read in another
+language.
+
+| Code | What it reports |
+|---|---|
+| `render-error` | the page did not render: a 5xx, an empty response, a Twig error in its template |
+| `twig-error` | a content block whose Twig failed and degraded to an invisible marker |
+| `date-shortcode` | a `date(Y)` still readable in the HTML |
+| `parent-host` | parent page on another host |
+| `image-not-found` | a body image whose media could not be resolved |
+| `image-alt-missing` | a rendered `<img>` with no alternative text |
+| `link-empty` | an empty `href` |
+| `link-relative` | an internal link not starting with `/` |
+| `link-not-found` | the target page, media or file does not exist |
+| `link-not-published` | the target page exists but is not published (`--check-unpublished`) |
+| `link-redirection` | the target is a redirection |
+| `link-noindex` | a crawlable link to a `noindex` page |
+| `link-anchor` | a `#anchor` naming no element of the page |
+| `link-external` | an external URL answering an unexpected status, or not answering |
+| `link-mailto` | a `mailto:`/`tel:` link left in clear |
+| `todo-unknown-page` | a `TODO:` comment referencing a page that does not exist |
+| `todo-link-when-published` | the page a `TODO:linkWhenPublished` waits for is published |
+| `todo-do-when-published` | the page a `TODO:doWhenPublished` waits for is published |
+| `translation-same-locale` | a translation in the same language as the page |
+| `translation-duplicate-locale` | two translations sharing one language |
+
+A pattern is matched against the code first, then against the plain-text message —
+so a code silences a family of findings and a message pins one occurrence. `fnmatch`
+wildcards work in both.
+
+### For the whole site
+
+```yaml
+pushword_page_scanner:
+  errors_to_ignore:
+    - 'image-alt-missing'                        # everywhere
+    - 'link-*'                                   # a whole family
+    - 'localhost.dev/legacy-*: link-not-found'   # only on these routes
+    - '*date shortcode left unresolved*'         # by message
+```
+
+Written as `"pattern"` it applies everywhere; as `"host/slug: pattern"` only to the
+routes the left side matches. These are applied when results are read, so editing
+them takes effect without a new scan.
+
+### For one page
+
+A page can silence its own findings, with a comment anywhere in its content:
+
+```markdown
+<!-- page-scanner-ignore: image-alt-missing, link-external -->
+```
+
+or with a custom property, for a page whose content is not the place to say it:
+
+```yaml
+pageScanErrorsToIgnore:
+    - image-alt-missing
+    - link-external
+```
+
+Both accept the same patterns as the config, minus the route prefix — the page is
+the scope. They are applied while scanning, so they take effect on the next scan.
+
+`pageScanLinksToIgnore` remains the way to skip a **link** rather than a finding:
+the URLs it lists are never checked at all, so they cost nothing and report nothing.

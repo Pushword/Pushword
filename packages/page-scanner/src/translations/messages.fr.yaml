@@ -12,6 +12,7 @@ page_scanRelativeLink: 'lien relatif, un lien interne doit commencer par /'
 page_scanStatusCode: 'Code de réponse HTTP innatendu'
 page_scanTwigError: "Le rendu Twig d'un bloc de contenu a échoué"
 page_scanUnreachable: 'inaccessible - errorMessage'
+page_scannerErrorCodeHint: "Code d'erreur : à ignorer via errors_to_ignore, ou via un commentaire page-scanner-ignore dans la page"
 page_scannerForceNewScan: 'forcer un nouveau scan'
 page_scannerForceScan: 'Forcer un scan'
 page_scannerNewScanInProgress: "<em>nouveau scan en cours</em>, la page s'actualisera automatiquement à la fin de celui-ci"

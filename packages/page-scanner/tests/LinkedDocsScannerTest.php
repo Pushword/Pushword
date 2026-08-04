@@ -35,7 +35,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
     public function testLinkedDocsScanner(): void
     {
         self::bootKernel();
-        $errors = $this->createScanner()->scan($this->getPage(), file_get_contents(__DIR__.'/data/page.html'));
+        $errors = $this->messages($this->createScanner(), $this->getPage(), file_get_contents(__DIR__.'/data/page.html'));
 
         self::assertContains('<code>#install</code> target not found', $errors);
         self::assertNotContains('<code>#fun</code> target not found', $errors);
@@ -49,7 +49,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
         // localhost.dev/homepage exists in fixtures → no error
         $html = '<a href="https://localhost.dev/homepage">link</a>';
-        $errors = $scanner->scan($this->getPage(), $html);
+        $errors = $this->messages($scanner, $this->getPage(), $html);
 
         self::assertSame([], $errors);
     }
@@ -61,7 +61,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner = $this->createScanner();
         $scanner->preloadPageCache();
 
-        $errors = $scanner->scan($this->getPage('other-page'), '<a href="'.$url.'">home</a>');
+        $errors = $this->messages($scanner, $this->getPage('other-page'), '<a href="'.$url.'">home</a>');
 
         self::assertSame([], $errors, $url.' should resolve internally without error');
     }
@@ -86,7 +86,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner = $this->createScanner();
         $scanner->preloadPageCache();
 
-        $errors = $scanner->scan($this->getPage('other-page', 'pushword.piedweb.com'), '<a href="'.$url.'">doc</a>');
+        $errors = $this->messages($scanner, $this->getPage('other-page', 'pushword.piedweb.com'), '<a href="'.$url.'">doc</a>');
 
         self::assertSame([], $errors, $url.' exists and must not be reported');
     }
@@ -120,7 +120,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
             $html = '<a href="https://localhost.dev/downloads/brochure.pdf">doc</a>';
 
-            self::assertSame([], $scanner->scan($this->getPage('other-page', 'pushword.piedweb.com'), $html));
+            self::assertSame([], $this->messages($scanner, $this->getPage('other-page', 'pushword.piedweb.com'), $html));
         } finally {
             $filesystem->remove($publicDir);
         }
@@ -133,7 +133,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner->preloadPageCache();
 
         $html = '<a href="https://localhost.dev/media/nonexistent.pdf">doc</a>';
-        $errors = $scanner->scan($this->getPage('other-page', 'pushword.piedweb.com'), $html);
+        $errors = $this->messages($scanner, $this->getPage('other-page', 'pushword.piedweb.com'), $html);
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('https://localhost.dev/media/nonexistent.pdf', $errors[0]);
@@ -150,7 +150,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner = $this->createScanner();
         $scanner->preloadPageCache();
 
-        self::assertSame([], $scanner->scan($this->getPage('other-page', 'localhost.dev'), '<a href="/">home</a>'));
+        self::assertSame([], $this->messages($scanner, $this->getPage('other-page', 'localhost.dev'), '<a href="/">home</a>'));
     }
 
     /**
@@ -180,7 +180,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
             // www.admin-block-editor.test is an alias of admin-block-editor.test
             $html = '<a href="https://www.admin-block-editor.test/alias-target">link</a>';
 
-            self::assertSame([], $scanner->scan($this->getPage('other-page', 'localhost.dev'), $html));
+            self::assertSame([], $this->messages($scanner, $this->getPage('other-page', 'localhost.dev'), $html));
         } finally {
             $em->remove($target);
             $em->flush();
@@ -195,7 +195,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
         // localhost.dev/nonexistent does not exist → "not found" error
         $html = '<a href="https://localhost.dev/nonexistent">link</a>';
-        $errors = $scanner->scan($this->getPage(), $html);
+        $errors = $this->messages($scanner, $this->getPage(), $html);
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('https://localhost.dev/nonexistent', $errors[0]);
@@ -215,7 +215,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
             $scanner->preloadPageCache();
 
             $html = '<a href="https://localhost.dev/future-page">link</a>';
-            $errors = $scanner->scan($this->getPage('other-page'), $html);
+            $errors = $this->messages($scanner, $this->getPage('other-page'), $html);
 
             self::assertSame([], $errors, 'unpublished targets must be silent by default');
         } finally {
@@ -239,7 +239,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
             $scanner->enableCheckUnpublished();
 
             $html = '<a href="https://localhost.dev/future-page">link</a>';
-            $errors = $scanner->scan($this->getPage('other-page'), $html);
+            $errors = $this->messages($scanner, $this->getPage('other-page'), $html);
 
             self::assertCount(1, $errors);
             self::assertStringContainsString('https://localhost.dev/future-page', $errors[0]);
@@ -270,7 +270,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
         // "pushword" page in fixtures has mainContent "Location: ..." → is a redirection
         $html = '<a href="https://localhost.dev/pushword">link</a>';
-        $errors = $scanner->scan($this->getPage('other-page'), $html);
+        $errors = $this->messages($scanner, $this->getPage('other-page'), $html);
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('https://localhost.dev/pushword', $errors[0]);
@@ -300,7 +300,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
             $translator = self::getContainer()->get(TranslatorInterface::class);
             $redirectionMsg = $translator->trans('page_scanIsRedirection');
 
-            $errors = $scanner->scan($this->getPage('scan-linking-page', $linkingHost), '<a href="'.$href.'">link</a>');
+            $errors = $this->messages($scanner, $this->getPage('scan-linking-page', $linkingHost), '<a href="'.$href.'">link</a>');
 
             self::assertContains('<code>'.$href.'</code> '.$redirectionMsg, $errors);
         } finally {
@@ -321,7 +321,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
     public function testCrawlableLinkToNoindexPageIsReported(): void
     {
         $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
-            $errors = $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/noindex-target">link</a>');
+            $errors = $this->messages($scanner, $this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/noindex-target">link</a>');
 
             self::assertSame(['<code>/noindex-target</code> '.$this->transNoindex()], $errors);
         });
@@ -331,7 +331,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
     {
         $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
             $html = '<a href="https://localhost.dev/noindex-target">link</a>';
-            $errors = $scanner->scan($this->getPage('other-page'), $html);
+            $errors = $this->messages($scanner, $this->getPage('other-page'), $html);
 
             self::assertSame(['<code>https://localhost.dev/noindex-target</code> '.$this->transNoindex()], $errors);
         });
@@ -347,8 +347,8 @@ final class LinkedDocsScannerTest extends KernelTestCase
             $html = '<a href="https://localhost.dev/noindex-target">link</a>';
             $expected = ['<code>https://localhost.dev/noindex-target</code> '.$this->transNoindex()];
 
-            self::assertSame($expected, $scanner->scan($this->getPage('scan-linking-page', 'pushword.piedweb.com'), $html));
-            self::assertSame($expected, $scanner->scan($this->getPage('another-linking-page', 'pushword.piedweb.com'), $html));
+            self::assertSame($expected, $this->messages($scanner, $this->getPage('scan-linking-page', 'pushword.piedweb.com'), $html));
+            self::assertSame($expected, $this->messages($scanner, $this->getPage('another-linking-page', 'pushword.piedweb.com'), $html));
         });
     }
 
@@ -357,14 +357,14 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
             $html = '<span data-rot="'.LinkProvider::obfuscate('/noindex-target').'">link</span>';
 
-            self::assertSame([], $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), $html));
+            self::assertSame([], $this->messages($scanner, $this->getPage('scan-linking-page', 'localhost.dev'), $html));
         });
     }
 
     public function testIndexablePageIsNotReported(): void
     {
         $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
-            self::assertSame([], $scanner->scan($this->getPage('other-page'), '<a href="https://localhost.dev/homepage">link</a>'));
+            self::assertSame([], $this->messages($scanner, $this->getPage('other-page'), '<a href="https://localhost.dev/homepage">link</a>'));
         });
     }
 
@@ -378,8 +378,8 @@ final class LinkedDocsScannerTest extends KernelTestCase
             $html = '<a href="/noindex-target">link</a>';
             $expected = ['<code>/noindex-target</code> '.$this->transNoindex()];
 
-            self::assertSame($expected, $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), $html));
-            self::assertSame($expected, $scanner->scan($this->getPage('another-linking-page', 'localhost.dev'), $html));
+            self::assertSame($expected, $this->messages($scanner, $this->getPage('scan-linking-page', 'localhost.dev'), $html));
+            self::assertSame($expected, $this->messages($scanner, $this->getPage('another-linking-page', 'localhost.dev'), $html));
         });
     }
 
@@ -395,7 +395,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
             self::assertSame(
                 ['<code>/noindex-target</code> '.$this->transNoindex()],
-                $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), $html),
+                $this->messages($scanner, $this->getPage('scan-linking-page', 'localhost.dev'), $html),
             );
         });
     }
@@ -407,12 +407,12 @@ final class LinkedDocsScannerTest extends KernelTestCase
     public function testRedirectionTargetIsNotJudgedOnThePreviousPageLinks(): void
     {
         $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
-            $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/noindex-target">link</a>');
+            $this->messages($scanner, $this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/noindex-target">link</a>');
 
             $redirection = $this->getPage('scan-redirection', 'localhost.dev');
             $redirection->mainContent = 'Location: /noindex-target';
 
-            self::assertSame([], $scanner->scan($redirection, ''));
+            self::assertSame([], $this->messages($scanner, $redirection, ''));
         });
     }
 
@@ -430,8 +430,8 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $expected = ['<code>/pushword</code> '.self::getContainer()->get(TranslatorInterface::class)->trans('page_scanIsRedirection')];
         $html = '<a href="/pushword">link</a>';
 
-        self::assertSame($expected, $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), $html));
-        self::assertSame($expected, $scanner->scan($this->getPage('another-linking-page', 'localhost.dev'), $html));
+        self::assertSame($expected, $this->messages($scanner, $this->getPage('scan-linking-page', 'localhost.dev'), $html));
+        self::assertSame($expected, $this->messages($scanner, $this->getPage('another-linking-page', 'localhost.dev'), $html));
     }
 
     /**
@@ -443,7 +443,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
     public function testMetaRobotsVariants(string $metaRobots, bool $expectReport): void
     {
         $this->withNoindexPage(function (LinkedDocsScanner $scanner) use ($expectReport): void {
-            $errors = $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/noindex-target">link</a>');
+            $errors = $this->messages($scanner, $this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/noindex-target">link</a>');
 
             self::assertSame(
                 $expectReport ? ['<code>/noindex-target</code> '.$this->transNoindex()] : [],
@@ -513,7 +513,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
         // unknown-host.com is not a known Pushword host → collected as external
         $html = '<a href="https://unknown-host.com/page">link</a>';
-        $scanner->scan($this->getPage(), $html);
+        $this->messages($scanner, $this->getPage(), $html);
 
         self::assertContains('https://unknown-host.com/page', $scanner->getCollectedExternalUrls());
     }
@@ -525,7 +525,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner->preloadPageCache();
         $scanner->enableCollectMode();
 
-        $scanner->scan($this->getPage(), '<a href=https://unknown-host.com/unquoted>link</a>');
+        $this->messages($scanner, $this->getPage(), '<a href=https://unknown-host.com/unquoted>link</a>');
 
         self::assertContains('https://unknown-host.com/unquoted', $scanner->getCollectedExternalUrls());
     }
@@ -538,7 +538,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner->enableCollectMode();
 
         $html = '<span data-rot="'.LinkProvider::obfuscate('https://unknown-host.com/obfuscated').'">link</span>';
-        $scanner->scan($this->getPage(), $html);
+        $this->messages($scanner, $this->getPage(), $html);
 
         self::assertContains('https://unknown-host.com/obfuscated', $scanner->getCollectedExternalUrls());
     }
@@ -551,7 +551,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
         $html = '<span data-rot="'.LinkProvider::obfuscate('mailto:hello@example.tld').'">mail</span>';
 
-        self::assertSame([], $scanner->scan($this->getPage(), $html));
+        self::assertSame([], $this->messages($scanner, $this->getPage(), $html));
     }
 
     public function testPlainMailLinkRaisesObfuscateError(): void
@@ -561,7 +561,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner->preloadPageCache();
 
         $translator = self::getContainer()->get(TranslatorInterface::class);
-        $errors = $scanner->scan($this->getPage(), '<a href="mailto:hello@example.tld">mail</a>');
+        $errors = $this->messages($scanner, $this->getPage(), '<a href="mailto:hello@example.tld">mail</a>');
 
         self::assertContains('<code>mailto:hello@example.tld</code> '.$translator->trans('page_scanObfuscateMail'), $errors);
     }
@@ -574,7 +574,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner->preloadPageCache();
 
         $translator = self::getContainer()->get(TranslatorInterface::class);
-        $errors = $scanner->scan($this->getPage(), '<a href="'.$href.'">link</a>');
+        $errors = $this->messages($scanner, $this->getPage(), '<a href="'.$href.'">link</a>');
 
         self::assertContains('<code>'.$href.'</code> '.$translator->trans('page_scanRelativeLink'), $errors);
     }
@@ -597,7 +597,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner = $this->createScanner();
         $scanner->preloadPageCache();
 
-        self::assertSame([], $scanner->scan($this->getPage(), $html));
+        self::assertSame([], $this->messages($scanner, $this->getPage(), $html));
     }
 
     /**
@@ -639,7 +639,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
         self::assertSame(
             ['<code>/not-a-page</code> '.$translator->trans('page_scanNotFound')],
-            $scanner->scan($this->getPage(), $html),
+            $this->messages($scanner, $this->getPage(), $html),
         );
     }
 
@@ -650,7 +650,44 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner->preloadPageCache();
 
         // pageScanLinksToIgnore is set on the page fixture below
-        self::assertSame([], $scanner->scan($this->getPage(), '<a href="ignored-relative">link</a>'));
+        self::assertSame([], $this->messages($scanner, $this->getPage(), '<a href="ignored-relative">link</a>'));
+    }
+
+    /**
+     * An external URL is checked long after the page left scope, so what the page
+     * asked not to be told about has to travel with the deferred check.
+     */
+    public function testAPageSilencesADeferredExternalFindingItDeclaresInline(): void
+    {
+        self::bootKernel();
+        $url = 'https://unreachable.example.com/x';
+
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+        $scanner->enableDeferredExternalMode();
+        $scanner->scan($this->getPage('other-page'), '<a href="'.$url.'">link</a>');
+        $scanner->setExternalUrlResults([$url => 'unreachable']);
+
+        self::assertCount(1, $scanner->resolveDeferredExternalErrors(), 'Nothing was ignored yet.');
+
+        $silenced = $this->getPage('other-page');
+        $silenced->mainContent = '<!-- page-scanner-ignore: link-external -->';
+
+        $scanner->enableDeferredExternalMode();
+        $scanner->scan($silenced, '<a href="'.$url.'">link</a>');
+        $scanner->setExternalUrlResults([$url => 'unreachable']);
+
+        self::assertSame([], $scanner->resolveDeferredExternalErrors());
+    }
+
+    /**
+     * The findings' messages — what nearly every assertion here is about.
+     *
+     * @return string[]
+     */
+    private function messages(LinkedDocsScanner $scanner, Page $page, string $pageHtml): array
+    {
+        return array_column($scanner->scan($page, $pageHtml), 'message');
     }
 
     private function getPage(string $slug = 'homepage', string $host = ''): Page

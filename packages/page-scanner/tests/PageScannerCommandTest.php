@@ -92,5 +92,18 @@ final class PageScannerCommandTest extends KernelTestCase
         self::assertArrayHasKey('errors', $decoded);
         self::assertArrayHasKey('issues', $decoded);
         self::assertArrayHasKey('duration_ms', $decoded);
+
+        // Each finding names itself: the code is what `errors_to_ignore` takes, so an
+        // agent can silence one without guessing its identity from the wording.
+        self::assertIsArray($decoded['issues']);
+        foreach ($decoded['issues'] as $issue) {
+            self::assertIsArray($issue);
+            self::assertIsArray($issue['errors']);
+            foreach ($issue['errors'] as $error) {
+                self::assertIsArray($error);
+                self::assertArrayHasKey('code', $error);
+                self::assertArrayHasKey('message', $error);
+            }
+        }
     }
 }

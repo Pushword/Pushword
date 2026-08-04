@@ -42,7 +42,7 @@ final class TodoScanner extends AbstractScanner
         $targetPage = $this->entityManager->getRepository(Page::class)->getPage($slug, $host);
 
         if (! $targetPage instanceof Page) {
-            $this->addError('<code>'.$target.'</code> '.$this->trans('page_scanTodoUnknownPage'));
+            $this->addError(ScanErrorCode::TodoUnknownPage, '<code>'.$target.'</code> '.$this->trans('page_scanTodoUnknownPage'));
 
             return;
         }
@@ -51,16 +51,15 @@ final class TodoScanner extends AbstractScanner
             return;
         }
 
-        $translationKey = str_contains($type, 'link') || str_contains($type, 'Link')
-            ? 'page_scanTodoLinkWhenPublished'
-            : 'page_scanTodoDoWhenPublished';
+        $isLink = str_contains($type, 'link') || str_contains($type, 'Link');
+        $code = $isLink ? ScanErrorCode::TodoLinkWhenPublished : ScanErrorCode::TodoDoWhenPublished;
 
-        $message = '<code>'.$target.'</code> '.$this->trans($translationKey);
+        $message = '<code>'.$target.'</code> '.$this->trans($isLink ? 'page_scanTodoLinkWhenPublished' : 'page_scanTodoDoWhenPublished');
         if ('' !== $label) {
             $message .= ' ('.$label.')';
         }
 
-        $this->addError($message);
+        $this->addError($code, $message);
     }
 
     /**

@@ -60,7 +60,12 @@
                                     <td>
                                         <ul class="mb-0 ps-3">
                                             {% for error in errorsBypage %}
-                                                <li>{{ error.message|raw }}</li>
+                                                <li>
+                                                    {{ error.message|raw }}
+                                                    {% if error.code %}
+                                                        <span class="badge border text-body-secondary fw-normal ms-1" title="{{ 'page_scannerErrorCodeHint'|trans }}">{{ error.code }}</span>
+                                                    {% endif %}
+                                                </li>
                                             {% endfor %}
                                         </ul>
                                     </td>

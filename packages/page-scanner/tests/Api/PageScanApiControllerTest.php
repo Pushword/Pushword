@@ -94,7 +94,7 @@ final class PageScanApiControllerTest extends WebTestCase
     public function testStatusReturnsCachedFindings(): void
     {
         $this->seedResults([7 => [
-            ['page' => ['host' => self::HOST, 'slug' => 'broken'], 'message' => '404 <a href="/missing">/missing</a>'],
+            ['code' => 'link-not-found', 'page' => ['host' => self::HOST, 'slug' => 'broken'], 'message' => '404 <a href="/missing">/missing</a>'],
         ]]);
 
         $body = $this->request('GET', '/api/page-scan?host='.self::HOST);
@@ -111,6 +111,8 @@ final class PageScanApiControllerTest extends WebTestCase
         self::assertSame('broken', $first['slug']);
         // HTML stripped to a plain, agent-friendly message.
         self::assertSame('404 /missing', $first['message']);
+        // The code is what `errors_to_ignore` takes, so a client can silence it.
+        self::assertSame('link-not-found', $first['code']);
     }
 
     public function testStatusForAllHostsWhenNeverScanned(): void
@@ -159,7 +161,7 @@ final class PageScanApiControllerTest extends WebTestCase
     }
 
     /**
-     * @param array<int, array<int, array{page: array{host: string, slug: string}, message: string}>> $errors
+     * @param array<int, array<int, array{code?: string, page: array{host: string, slug: string}, message: string}>> $errors
      */
     private function seedResults(array $errors): void
     {

@@ -105,6 +105,6 @@ final class DateShortcodeScannerTest extends KernelTestCase
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');
 
-        return array_values($scanner->scan($page, $pageHtml));
+        return array_column($scanner->scan($page, $pageHtml), 'message');
     }
 }

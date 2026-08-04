@@ -8,6 +8,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\Markdown\BrokenImageComment;
 use Pushword\PageScanner\Scanner\BrokenImageScanner;
 use Pushword\PageScanner\Scanner\PageScannerService;
+use Pushword\PageScanner\Scanner\ScanErrorCode;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
@@ -40,9 +41,10 @@ final class PageScannerTest extends KernelTestCase
         $errors = $scanner->scan($this->getPage(), $pageHtml);
 
         self::assertNotEmpty(
-            array_filter($errors, static fn (string $message): bool => str_contains($message, 'does-not-exist-broken.jpg')),
+            array_filter($errors, static fn (array $error): bool => str_contains($error['message'], 'does-not-exist-broken.jpg')),
             'A broken body image must surface as a scan error.',
         );
+        self::assertSame(ScanErrorCode::ImageNotFound->value, $errors[0]['code']);
     }
 
     public function getPage(): Page

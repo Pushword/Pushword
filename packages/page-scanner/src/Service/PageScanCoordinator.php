@@ -144,7 +144,7 @@ final readonly class PageScanCoordinator
     }
 
     /**
-     * @return array{lastEdit: int, errorsByPages: array<int, array<int, array{page: array{host: string, slug: string}, message: string}>>}
+     * @return array{lastEdit: int, errorsByPages: array<int, array<int, array{code: string, page: array{host: string, slug: string}, message: string}>>}
      */
     public function readResults(?string $host): array
     {
@@ -154,7 +154,7 @@ final readonly class PageScanCoordinator
             return ['lastEdit' => 0, 'errorsByPages' => []];
         }
 
-        /** @var array<int, array<int, array{page: array{host: string, slug: string}, message: string}>> $errors */
+        /** @var array<int, array<int, array{code?: string, page: array{host: string, slug: string}, message: string}>> $errors */
         $errors = unserialize($this->filesystem->readFile($fileCache));
 
         return [
@@ -174,22 +174,22 @@ final readonly class PageScanCoordinator
     }
 
     /**
-     * @param array<int, array<int, array{page: array{host: string, slug: string}, message: string}>> $errorsByPages
+     * Drops what the config asked not to see, and fills in the code a result cached
+     * before codes existed does not carry.
      *
-     * @return array<int, array<int, array{page: array{host: string, slug: string}, message: string}>>
+     * @param array<int, array<int, array{code?: string, page: array{host: string, slug: string}, message: string}>> $errorsByPages
+     *
+     * @return array<int, array<int, array{code: string, page: array{host: string, slug: string}, message: string}>>
      */
     private function filterErrors(array $errorsByPages): array
     {
-        if ([] === $this->errorsToIgnore) {
-            return $errorsByPages;
-        }
-
         $filtered = [];
         foreach ($errorsByPages as $pageId => $pageErrors) {
             $filteredPageErrors = [];
             foreach ($pageErrors as $error) {
+                $error['code'] ??= '';
                 $route = $error['page']['host'].'/'.$error['page']['slug'];
-                if (! $this->mustIgnoreError($route, $error['message'])) {
+                if (! ErrorIgnoreRules::isIgnored($this->errorsToIgnore, $route, $error['code'], $error['message'])) {
                     $filteredPageErrors[] = $error;
                 }
             }
@@ -200,23 +200,5 @@ final readonly class PageScanCoordinator
         }
 
         return $filtered;
-    }
-
-    private function mustIgnoreError(string $route, string $message): bool
-    {
-        $plainMessage = strip_tags($message);
-
-        foreach ($this->errorsToIgnore as $pattern) {
-            if (str_contains($pattern, ': ')) {
-                [$routePattern, $messagePattern] = explode(': ', $pattern, 2);
-                if (fnmatch($routePattern, $route) && fnmatch($messagePattern, $plainMessage)) {
-                    return true;
-                }
-            } elseif (fnmatch($pattern, $plainMessage)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

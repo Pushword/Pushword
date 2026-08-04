@@ -1,5 +1,5 @@
 ---
-title: 'the database now knows which pages use which media; admin dates follow the locale'
+title: 'the database now knows which pages use which media; admin dates follow the locale; page-scan findings have a code'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -110,7 +110,7 @@ a template you overrode copied one of those lines and you want the same fix.
 The JS that made a `.clickable` box follow its inner link is gone —
 `@pushword/js-helper` no longer ships `src/clickable.js` (`clickable`,
 `allClickable`, `smoothScroll`), and `app.js` no longer binds `.clickable`.
-The class now works through CSS in `js-helper/src/app.css`: the box is
+The class now works through CSS in `js-helper/src/clickable.css`: the box is
 `position: relative` and the inner link (or button, or still-cloaked
 `span[data-rot]`) stretches a pseudo-element over it, so the whole box is a real
 link — middle-click, `Ctrl`+click and keyboard focus behave natively, which the
@@ -120,8 +120,8 @@ Rebuild your assets (`yarn build` / `npm run build`) and the class keeps working
 wherever your CSS imports `@pushword/js-helper/src/app.css`. Two cases need a
 look:
 
-- A stylesheet that does **not** import js-helper's `app.css` must copy the two
-  `.clickable` rules from it.
+- A stylesheet that does **not** import js-helper's `app.css` can add
+  `@import '@pushword/js-helper/src/clickable.css';` to get just this behavior.
 - Code importing `clickable.js` directly must drop the import; same-page hash
   links that relied on its `smoothScroll` can use the CSS
   `scroll-behavior: smooth` instead.
@@ -129,3 +129,42 @@ look:
 The commented `card_date` example in core's `component/card.html.twig` suggests
 `format_datetime('short', 'short')` now; existing copies of that block keep
 whatever format they chose.
+
+## Page-scan findings have a code, and a page can silence its own
+
+Every page-scan finding now carries a **code** — `link-not-found`,
+`image-alt-missing`, `render-error`… — a stable name for what was found, printed
+next to the message in the admin, in brackets on the CLI, and as a `code` field in
+the API and the agent JSON. The full list is in the
+[page-scanner docs](/extension/page-scanner#ignoring-a-finding).
+
+`errors_to_ignore` matches that code first, then the message as before, so **existing
+rules keep working** — and a rule can now be written against the code instead of a
+translated sentence:
+
+```yaml
+pushword_page_scanner:
+  errors_to_ignore:
+    - 'image-alt-missing'                        # a whole kind of finding
+    - 'link-*'                                   # a whole family
+    - 'localhost.dev/legacy-*: link-not-found'   # scoped to routes, as before
+```
+
+A page can also silence its own findings now, with a comment in its content or a
+`pageScanErrorsToIgnore` custom property:
+
+```markdown
+<!-- page-scanner-ignore: image-alt-missing, link-external -->
+```
+
+Unlike the config, which applies when results are read, a page's own rules apply
+while scanning: they take effect on the next scan.
+
+Two things changed shape for anything reading the output rather than a human:
+
+- the agent JSON's `issues[].errors` are objects (`{"code":…,"message":…}`) where
+  they were plain strings;
+- `GET /api/page-scan` findings gained a `code` field next to `message`.
+
+Results cached by the previous release still render — their findings simply carry an
+empty code until the next scan.

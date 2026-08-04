@@ -94,6 +94,6 @@ final class TranslationLocaleScannerTest extends KernelTestCase
         /** @var TranslationLocaleScanner $scanner */
         $scanner = self::getContainer()->get(TranslationLocaleScanner::class);
 
-        return array_values($scanner->scan($page, ''));
+        return array_column($scanner->scan($page, ''), 'message');
     }
 }

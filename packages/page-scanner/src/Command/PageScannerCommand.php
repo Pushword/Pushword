@@ -12,6 +12,7 @@ use Pushword\Core\Service\TeeOutput;
 use Pushword\PageScanner\Controller\PageScannerController;
 use Pushword\PageScanner\Scanner\PageScannerService;
 use Pushword\PageScanner\Scanner\ParallelUrlChecker;
+use Pushword\PageScanner\Service\ErrorIgnoreRules;
 use Pushword\PageScanner\Service\LinkGraphStorage;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -24,7 +25,7 @@ use Symfony\Component\Stopwatch\Stopwatch;
 /**
  * @phpstan-import-type CorpusState from PageRepository
  *
- * @phpstan-type ScanError array{message: string, page: array{id: int, slug: string, h1: string, metaRobots: string, host: string}}
+ * @phpstan-type ScanError array{code: string, message: string, page: array{id: int, slug: string, h1: string, metaRobots: string, host: string}}
  */
 #[AsCommand(
     name: 'pw:page-scan',
@@ -136,14 +137,13 @@ final class PageScannerCommand
                 if (! $this->agentMode) {
                     $hasVisibleErrors = false;
                     foreach ($scan as $s) {
-                        $route = $s['page']['host'].'/'.$s['page']['slug'];
-                        if (! $this->mustIgnoreError($route, $s['message'])) {
+                        if (! $this->mustIgnoreError($s)) {
                             if (! $hasVisibleErrors) {
                                 $this->output?->writeln("\n".$pageHost.'/'.$pageSlug);
                                 $hasVisibleErrors = true;
                             }
 
-                            $this->output?->writeln('  <error>➜ '.$this->formatErrorForCli($s['message']).'</error>');
+                            $this->output?->writeln('  <error>➜ '.$this->formatErrorForCli($s['message']).'</error> <comment>['.$s['code'].']</comment>');
                         }
                     }
 
@@ -186,9 +186,9 @@ final class PageScannerCommand
         $externalErrors = $this->skipExternal ? [] : $this->scanner->linkedDocsScanner->resolveDeferredExternalErrors();
         foreach ($externalErrors as $pageId => $pageErrors) {
             foreach ($pageErrors as $error) {
-                $route = $error['page']['host'].'/'.$error['page']['slug'];
-                if (! $this->agentMode && ! $this->mustIgnoreError($route, $error['message'])) {
-                    $this->output?->writeln($route.' <error>➜ '.$this->formatErrorForCli($error['message']).'</error>');
+                if (! $this->agentMode && ! $this->mustIgnoreError($error)) {
+                    $route = $error['page']['host'].'/'.$error['page']['slug'];
+                    $this->output?->writeln($route.' <error>➜ '.$this->formatErrorForCli($error['message']).'</error> <comment>['.$error['code'].']</comment>');
                 }
             }
 
@@ -244,19 +244,21 @@ final class PageScannerCommand
 
         foreach ($errors as $pageErrors) {
             $route = '';
-            $messages = [];
+            $reported = [];
             foreach ($pageErrors as $error) {
                 $route = $error['page']['host'].'/'.$error['page']['slug'];
-                if ($this->mustIgnoreError($route, $error['message'])) {
+                if ($this->mustIgnoreError($error)) {
                     continue;
                 }
 
-                $messages[] = $this->formatErrorForCli($error['message']);
+                // The code is what `errors_to_ignore` takes, so an agent reading this
+                // can silence a finding without having to guess its identity.
+                $reported[] = ['code' => $error['code'], 'message' => $this->formatErrorForCli($error['message'])];
             }
 
-            if ([] !== $messages) {
-                $issues[] = ['page' => $route, 'errors' => $messages];
-                $errorCount += \count($messages);
+            if ([] !== $reported) {
+                $issues[] = ['page' => $route, 'errors' => $reported];
+                $errorCount += \count($reported);
             }
         }
 
@@ -298,22 +300,17 @@ final class PageScannerCommand
         return trim($message);
     }
 
-    private function mustIgnoreError(string $route, string $message): bool
+    /**
+     * @param ScanError $error
+     */
+    private function mustIgnoreError(array $error): bool
     {
-        $plainMessage = strip_tags($message);
-
-        foreach ($this->errorsToIgnore as $pattern) {
-            $parts = explode(': ', $pattern, 2);
-            if (isset($parts[1])) {
-                if (fnmatch($parts[0], $route) && fnmatch($parts[1], $plainMessage)) {
-                    return true;
-                }
-            } elseif (fnmatch($pattern, $plainMessage)) {
-                return true;
-            }
-        }
-
-        return false;
+        return ErrorIgnoreRules::isIgnored(
+            $this->errorsToIgnore,
+            $error['page']['host'].'/'.$error['page']['slug'],
+            $error['code'],
+            $error['message'],
+        );
     }
 
     /**

@@ -5,6 +5,7 @@ namespace Pushword\PageScanner\Tests\Scanner;
 use DateTime;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\EditorNotice\TwigErrorMarker;
+use Pushword\PageScanner\Scanner\ScanErrorCode;
 use Pushword\PageScanner\Scanner\TwigErrorScanner;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -22,9 +23,10 @@ final class TwigErrorScannerTest extends KernelTestCase
         $errors = $scanner->scan($this->getPage(), $pageHtml);
 
         self::assertNotEmpty(
-            array_filter($errors, static fn (string $message): bool => str_contains($message, 'undefined_function_xyz')),
+            array_filter($errors, static fn (array $error): bool => str_contains($error['message'], 'undefined_function_xyz')),
             'A failed Twig block must surface as a scan error.',
         );
+        self::assertSame(ScanErrorCode::TwigError->value, $errors[0]['code']);
     }
 
     public function testReportsNothingWhenNoMarkerPresent(): void

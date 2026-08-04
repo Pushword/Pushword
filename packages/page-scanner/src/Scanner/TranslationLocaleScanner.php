@@ -22,7 +22,7 @@ final class TranslationLocaleScanner extends AbstractScanner
             $locale = $translation->locale;
 
             if ($locale === $this->page->locale) {
-                $this->addError($this->trans('page_scanTranslationSameLocale', [
+                $this->addError(ScanErrorCode::TranslationSameLocale, $this->trans('page_scanTranslationSameLocale', [
                     '%locale%' => $locale,
                     '%page%' => $this->describe($translation),
                 ]));
@@ -31,7 +31,7 @@ final class TranslationLocaleScanner extends AbstractScanner
             }
 
             if (isset($seen[$locale])) {
-                $this->addError($this->trans('page_scanTranslationDuplicateLocale', [
+                $this->addError(ScanErrorCode::TranslationDuplicateLocale, $this->trans('page_scanTranslationDuplicateLocale', [
                     '%locale%' => $locale,
                     '%page%' => $this->describe($translation),
                     '%other%' => $seen[$locale],
