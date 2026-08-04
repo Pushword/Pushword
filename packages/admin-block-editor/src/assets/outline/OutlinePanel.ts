@@ -149,6 +149,15 @@ export class OutlinePanel {
     this.root.classList.toggle('pw-outline--collapsed', collapsed)
     this.opener.hidden = !collapsed
     if (persist) localStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? '1' : '0')
+    this.syncLayout()
+  }
+
+  /** An open rail takes layout space (body shift) so the form recenters beside it. */
+  private syncLayout(): void {
+    const open =
+      !this.root.classList.contains('pw-outline--collapsed') &&
+      !this.root.classList.contains('pw-outline--off')
+    document.body.classList.toggle('pw-outline-open', open)
   }
 
   /**
@@ -183,6 +192,7 @@ export class OutlinePanel {
     const off = next === null
     this.root.classList.toggle('pw-outline--off', off)
     this.opener.classList.toggle('pw-outline--off', off)
+    this.syncLayout()
     if (next === null) return
 
     this.source = next

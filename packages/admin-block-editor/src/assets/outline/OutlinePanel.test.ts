@@ -70,6 +70,7 @@ function rowText(row: HTMLElement | undefined): string {
 
 beforeEach(() => {
   document.body.innerHTML = ''
+  document.body.className = ''
   localStorage.setItem('pw-outline-collapsed', '0')
 })
 
@@ -296,5 +297,14 @@ describe('OutlinePanel collapse', () => {
     buildPanel([entry(0, 'paragraph', 'intro')])
 
     expect(document.querySelector('.pw-outline--collapsed')).not.toBeNull()
+  })
+
+  it('shifts the admin while open, releases it once collapsed', () => {
+    buildPanel([entry(0, 'paragraph', 'intro')])
+    expect(document.body.classList.contains('pw-outline-open')).toBe(true)
+
+    document.querySelector<HTMLButtonElement>('.pw-outline-toggle')?.click()
+
+    expect(document.body.classList.contains('pw-outline-open')).toBe(false)
   })
 })
