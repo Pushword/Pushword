@@ -710,6 +710,63 @@ php bin/console pw:newsletter:send 12    # arm a campaign now; the tick delivers
 The transport is the site's own `MAILER_DSN`: each site owns its provider and its
 reputation.
 
+## Bounces
+
+A mail refused at send time is recorded as it happens. The harder case is the
+one that comes back minutes later: the relay accepted the message, the remote
+server refused it afterwards, and the failure is returned as a separate mail to
+the **envelope sender**, which is a different address from the `From:` a reader
+sees. Left unread, a dead address stays subscribed and is retried by every
+campaign, which is how a sending reputation is spent.
+
+Point the envelope at a mailbox nobody reads by hand, and read it from cron:
+
+```yaml
+# config/packages/mailer.yaml
+framework:
+  mailer:
+    envelope:
+      sender: bounce@example.com
+
+# config/packages/pushword.yaml
+newsletter:
+  bounce_maildir: /home/user/mail/example.com/bounce
+```
+
+```shell
+php bin/console pw:newsletter:bounces --dry-run   # what it would drop
+php bin/console pw:newsletter:bounces
+```
+
+```cron
+0,15,30,45 * * * * cd /path/to/app && bin/console pw:newsletter:bounces -q
+```
+
+On a shared host this needs nothing else: a bounce is a file, delivered next to
+every other mailbox, so there is no IMAP extension to compile, no webhook to
+expose and no credentials to store. A mailbox that only exists on a remote IMAP
+server is out of scope, the path has to be readable from the filesystem.
+
+What the command does with what it reads:
+
+- it parses the `message/delivery-status` part, never the human-readable one,
+  which the remote server writes in its own language and layout,
+- it acts on **permanent failures only** (`Status: 5.x.x`). A 4.x.x is a mailbox
+  that was full an hour ago, and dropping a reader over one loses an address the
+  next retry reaches,
+- an address held on several audiences leaves all of them: the server refused
+  the address, not one of the lists,
+- a bounce for somebody on no list is counted and reported, never acted on. The
+  same mailbox collects the failures of everything else the app sends,
+- a message it has read is moved to `cur/` with the seen flag, which is what
+  keeps the next run from reading it again. One that cannot be moved is only
+  counted: re-reading it costs nothing, since marking an address that already
+  bounced is a no-op.
+
+A bounced contact is terminal. `resubscribe()` refuses to revive one, because a
+click says nothing about a mail server's refusal; only a new explicit opt-in
+does.
+
 ## API
 
 Available when `pushword/api` is installed, under the same token authentication,
@@ -820,8 +877,13 @@ Posting from another origin needs that origin allow-listed, below.
 ```yaml
 newsletter:
   send_batch: 50
+  bounce_maildir: /home/user/mail/example.com/bounce
   newsletter_possible_origins: 'https://example.com https://www.example.com'
 ```
+
+`bounce_maildir` is where `pw:newsletter:bounces` reads delivery failures from,
+the mailbox `framework.mailer.envelope.sender` points at. Null by default, which
+leaves the command with nothing to read.
 
 `newsletter_possible_origins` is the CORS allow-list for the subscribe endpoint —
 a statically generated site posts to the origin where PHP runs. It falls back to
@@ -848,10 +910,12 @@ action, what the site sells.
   are a different thing: no redirect stands between the reader and the page, and
   nothing is written against a contact — your site's own analytics reads them,
   in aggregate.
-- **No provider feedback ingestion.** A bounce is recorded when the transport
-  refuses the mail at send time, or when something posts it to
-  `/api/newsletter/contact/{id}/bounce`. An asynchronous bounce (SES→SNS,
-  a webhook, a Return-Path mailbox) needs an adapter that does not exist yet.
+- **No provider webhook ingestion.** A bounce is recorded when the transport
+  refuses the mail at send time, when `pw:newsletter:bounces` reads it out of the
+  Return-Path mailbox (see [Bounces](#bounces)), or when something posts it to
+  `/api/newsletter/contact/{id}/bounce`. A provider's own feedback channel
+  (SES→SNS, a Mailgun or Postmark webhook) still needs an adapter that does not
+  exist yet. Complaints (FBL) are not ingested by any route.
 - **No SMS.** Contacts are email-keyed; a phone number is a custom property.
 - **No `OR` between the two sides of a broadcast.** `triggerWhen` selects
   subjects, `recipientWhen` selects contacts, and a broadcast is their product:

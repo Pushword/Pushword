@@ -37,6 +37,10 @@ class Configuration implements ConfigurationInterface
                         ->defaultValue(50)
                         ->info('Maximum number of mails a single `pw:newsletter:tick` run may send.')
                     ->end()
+                    ->scalarNode('bounce_maildir')
+                        ->defaultNull()
+                        ->info('Absolute path to the maildir delivery failures come back to, which is the mailbox `framework.mailer.envelope.sender` points at. `pw:newsletter:bounces` reads `new/` there and files what it read into `cur/`. Null leaves the command with nothing to read.')
+                    ->end()
                 ->end()
         ;
 
