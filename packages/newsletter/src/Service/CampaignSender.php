@@ -45,7 +45,9 @@ final readonly class CampaignSender
         $already = array_flip($this->recipientRepository->contactIds($campaign));
         $count = 0;
 
-        foreach ($this->segmentResolver->contacts($audience, $campaign->segment) as $contact) {
+        // Only who can be reached: a contact the site knows by phone alone
+        // consented, and is simply not a recipient of anything sent by mail.
+        foreach ($this->segmentResolver->mailableContacts($audience, $campaign->segment) as $contact) {
             if (null !== $contact->id && isset($already[$contact->id])) {
                 continue;
             }
@@ -80,9 +82,10 @@ final readonly class CampaignSender
         foreach ($this->recipientRepository->findPending($campaign, $allowance) as $recipient) {
             $contact = $recipient->contact;
 
-            // Consent can change between arming and sending; the ledger records
-            // that we chose not to send, which is not a delivery failure.
-            if (! $contact->isSubscribed()) {
+            // Consent — or the address itself — can change between arming and
+            // sending; the ledger records that we chose not to send, which is
+            // not a delivery failure.
+            if (! $contact->isMailable()) {
                 $recipient->markSkipped();
 
                 continue;

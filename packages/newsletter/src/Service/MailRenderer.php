@@ -119,7 +119,7 @@ final readonly class MailRenderer
     {
         return strtr($text, [
             '%name%' => $contact->name,
-            '%email%' => $contact->email,
+            '%email%' => $contact->email ?? '',
         ]);
     }
 }

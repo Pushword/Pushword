@@ -19,7 +19,13 @@
 
         <div class="form-group mb-3">
             <label class="form-label" for="newsletter-opt-in-email">{{ 'newsletter.contact.field.email'|trans }}</label>
-            <input type="email" id="newsletter-opt-in-email" name="email" value="{{ email }}" class="form-control" required>
+            <input type="email" id="newsletter-opt-in-email" name="email" value="{{ email }}" class="form-control">
+        </div>
+
+        <div class="form-group mb-3">
+            <label class="form-label" for="newsletter-opt-in-phone">{{ 'newsletter.contact.field.phone'|trans }}</label>
+            <input type="tel" id="newsletter-opt-in-phone" name="phone" value="{{ phone }}" class="form-control">
+            <small class="form-text text-muted">{{ 'newsletter.contact.optIn.identifier.help'|trans }}</small>
         </div>
 
         <div class="form-group mb-3">

@@ -143,6 +143,13 @@ Double opt-in is a per-audience flag, on by default: the contact is `pending`,
 receives a confirmation mail, and only becomes mailable after clicking. Turn it
 off to import a base that has already consented.
 
+**A contact with no address skips it.** Pending means waiting for a click on a
+link sent by mail, and there is none to send — so a contact keyed on a phone
+number alone is `subscribed` at once, whatever the audience asks. That is not a
+hole in the consent model, it moves the burden: a number entered by hand carries
+the consent of whoever entered it, and `source` records who (`admin:<user>`,
+`import:…`, `api`) — the same evidence a hand-made opt-in already owes.
+
 Every mail carries `List-Unsubscribe` and RFC 8058 one-click, so leaving never
 depends on finding the link in the body. The link in the body is one click too:
 clicking it opts the address out, it does not ask to confirm what was just
@@ -183,6 +190,50 @@ All public links (confirm, unsubscribe) are built from the audience host's
 `base_live_url`, so they keep working when the site itself is statically
 generated.
 
+### Subscribed is not the same as mailable
+
+A contact is keyed on an address **or** on a phone number — a booking taken over
+the phone, a client met on site, a number on a paper form. Both fields are
+optional on their own and at least one is required; `phone` is kept as digits
+and a leading `+`, and is unique per audience like the address.
+
+Consent and reachability then become two questions:
+
+- `subscribed` says they agreed to hear from the site.
+- **mailable** — subscribed *and* holding an address — says a mail can carry it.
+
+Everything that sends asks the second. A contact with no address is never a
+campaign recipient, never enrolled in an automation, and never counted in what a
+send will reach: the audience page, the campaign preview and the API's audience
+payload report `subscribed` and `mailable` side by side, because conflating them
+is how somebody believes a campaign reached 1406 people when it reached 1137.
+
+They are otherwise ordinary contacts — tagged, segmented, exported, and
+filterable with `isSet` / `isNotSet` on `email` and `phone`:
+
+```json
+[{"field": "email", "op": "isNotSet"}]
+```
+
+**No country is inferred.** `+33 6 12 34 56 78` and `+33612345678` are one row;
+`+33 (0)6…` is another, because deciding that the `(0)` is a French trunk prefix
+is a guess, and a wrong guess silently merges two people. Normalise at the
+import if a base needs it.
+
+**An identifier somebody else holds is refused, never moved.** Writing a number
+onto a contact when another row of the same audience already carries it — or an
+address, the same rule read the other way — comes back as `409` from the upsert
+and as a validation error from `PATCH` and the admin form, naming the row that
+holds it. The two rows may well be one person, and that is exactly why somebody
+is writing it; but joining them means deciding which consent record survives and
+which token the unsubscribe links already in inboxes keep working with. That is
+a merge somebody performs deliberately, not the side effect of filling a field
+in. There is no merge operation in the bundle yet: delete one row, or write the
+identifier onto the row you mean to keep.
+
+**The public form stays email-only.** A number reaches the base over the API, or
+through the admin's *Opt in a contact* — never from a page anybody can post to.
+
 ### One contact row per list
 
 A contact belongs to exactly one audience — the pair `(audience, email)` is
@@ -203,8 +254,9 @@ which is what keeps a reader from being mailed twice.
 ### Opting somebody in by hand
 
 **Newsletter → Contacts → Opt in a contact** opens a subscription from the admin:
-pick a list, give an address, and the audience's double opt-in rule decides the
-rest — the confirmation mail goes out exactly as it would from the public form.
+pick a list, give an address or a phone number, and the audience's double opt-in
+rule decides the rest — the confirmation mail goes out exactly as it would from
+the public form. A number alone subscribes at once; there is nothing to confirm.
 Tick *they already consented* only for consent you can produce (a paper form, a
 written reply): it skips the mail and subscribes at once, as `status:
 subscribed` does over the API.
@@ -238,6 +290,7 @@ rule and its stop condition — a flat list of conditions, all of which must hol
 | `createdAt`, `confirmedAt` | `olderThan`, `newerThan` — a duration like `90m`, `6h`, `7d`, `2w` |
 | `prop.<key>` | `=`, `!=`, `isSet`, `isNotSet` |
 | `locale` | `=`, `!=` |
+| `email`, `phone` | `=`, `!=`, `isSet`, `isNotSet` |
 
 An empty list means the whole audience.
 
@@ -916,7 +969,9 @@ action, what the site sells.
   `/api/newsletter/contact/{id}/bounce`. A provider's own feedback channel
   (SES→SNS, a Mailgun or Postmark webhook) still needs an adapter that does not
   exist yet. Complaints (FBL) are not ingested by any route.
-- **No SMS.** Contacts are email-keyed; a phone number is a custom property.
+- **No SMS sending.** A phone number is a first-class field and a contact may be
+  keyed on it alone — stored, tagged, segmented, exported over the API. Nothing
+  in the bundle sends to it; a phone-only contact is never a campaign recipient.
 - **No `OR` between the two sides of a broadcast.** `triggerWhen` selects
   subjects, `recipientWhen` selects contacts, and a broadcast is their product:
   each matching page becomes a campaign, sent to the matching contacts. `AND`

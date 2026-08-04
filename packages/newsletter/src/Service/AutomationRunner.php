@@ -214,7 +214,7 @@ final readonly class AutomationRunner
             return false;
         }
 
-        if (! $contact->isSubscribed()) {
+        if (! $contact->isMailable()) {
             $enrollment->stop();
 
             return false;

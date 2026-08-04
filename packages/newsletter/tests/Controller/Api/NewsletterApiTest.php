@@ -165,9 +165,24 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $body = $this->request(Request::METHOD_GET, '/api/newsletter/audience/'.$audience->slug);
 
         self::assertSame(
-            ['pending' => 1, 'subscribed' => 1, 'unsubscribed' => 0, 'bounced' => 0],
+            ['pending' => 1, 'subscribed' => 1, 'unsubscribed' => 0, 'bounced' => 0, 'mailable' => 1],
             $body['contacts'],
         );
+    }
+
+    /** Consented and reachable are two numbers, and reporting one as the other overstates a send. */
+    public function testAnAudienceCountsTheMailableApartFromTheSubscribed(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'in@example.tld');
+        $this->createPhoneContact($audience, '+33612345678');
+
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/audience/'.$audience->slug);
+        $contacts = $body['contacts'];
+
+        self::assertIsArray($contacts);
+        self::assertSame(2, $contacts['subscribed']);
+        self::assertSame(1, $contacts['mailable']);
     }
 
     public function testPatchingAnAudience(): void
@@ -290,6 +305,127 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         ]);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+    }
+
+    /**
+     * The public form stays email-only on purpose. A contact known by phone
+     * alone arrives here, or through the admin's opt-in — from a booking taken
+     * over the phone, a paper form, a number written down on site.
+     */
+    public function testCreatingAContactOnAPhoneAlone(): void
+    {
+        $audience = $this->createAudience();
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
+            'audience' => $audience->slug,
+            'phone' => '+33 6 12 34 56 78',
+            'name' => 'Called',
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $this->client->getResponse()->getStatusCode());
+        self::assertNull($body['email']);
+        self::assertSame('+33612345678', $body['phone']);
+        // Nothing to confirm by mail, so consent is recorded straight away —
+        // and no confirmation was attempted.
+        self::assertSame('subscribed', $body['status']);
+        self::assertFalse($body['mailable']);
+        self::assertEmailCount(0);
+    }
+
+    public function testAPhoneUpsertKeysOnTheNumber(): void
+    {
+        $audience = $this->createAudience();
+        $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
+            'audience' => $audience->slug,
+            'phone' => '+33612345678',
+            'name' => 'First',
+        ]);
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
+            'audience' => $audience->slug,
+            'phone' => '+33 6 12 34 56 78',
+            'name' => 'Second',
+        ]);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertSame('Second', $body['name']);
+        self::assertCount(1, $this->entityManager->getRepository(Contact::class)->findBy(['phone' => '+33612345678']));
+    }
+
+    public function testNeitherAnAddressNorANumberIsRefused(): void
+    {
+        $audience = $this->createAudience();
+
+        $this->request(Request::METHOD_POST, '/api/newsletter/contact', ['audience' => $audience->slug, 'name' => 'Nobody']);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testPatchingAPhoneOntoAnEmailOnlyContact(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'both@example.tld');
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/contact/'.$contact->id, [
+            'phone' => '06 12 34 56 78',
+        ]);
+
+        self::assertSame('0612345678', $body['phone']);
+        self::assertSame('both@example.tld', $body['email']);
+        self::assertTrue($body['mailable']);
+    }
+
+    /**
+     * The two rows may well be one person, and that is exactly why somebody is
+     * writing the number — but joining them means deciding which consent record
+     * survives and which token the live unsubscribe links keep working with.
+     * It is refused, with the row that holds it named.
+     */
+    public function testUpsertingANumberSomebodyElseHoldsIsRefused(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $phoneOnly = $this->createPhoneContact($audience, '+33612345678');
+        $this->createContact($audience, 'reader@example.tld');
+
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
+            'audience' => $audience->slug,
+            'email' => 'reader@example.tld',
+            'phone' => '+33 6 12 34 56 78',
+        ]);
+
+        self::assertSame(Response::HTTP_CONFLICT, $this->client->getResponse()->getStatusCode());
+        self::assertIsString($body['error']);
+        self::assertStringContainsString((string) $phoneOnly->id, $body['error']);
+    }
+
+    /** The same wall from the other side: PATCH is validated before it reaches the driver. */
+    public function testPatchingANumberSomebodyElseHoldsIsRefused(): void
+    {
+        $audience = $this->createAudience();
+        $this->createPhoneContact($audience, '+33612345678');
+        $contact = $this->createContact($audience, 'reader@example.tld');
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/contact/'.$contact->id, [
+            'phone' => '+33612345678',
+        ]);
+
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
+        self::assertSame('validation', $body['error']);
+    }
+
+    /** And an address somebody else holds, which is the same rule read the other way. */
+    public function testPatchingAnAddressSomebodyElseHoldsIsRefused(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'taken@example.tld');
+        $contact = $this->createPhoneContact($audience, '+33612345678');
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/contact/'.$contact->id, [
+            'email' => 'taken@example.tld',
+        ]);
+
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
+        self::assertSame('validation', $body['error']);
     }
 
     /** A caller that knows one property must not have to preserve the others. */

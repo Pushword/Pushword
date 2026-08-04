@@ -191,7 +191,7 @@ final class CriteriaController extends AbstractController
         return [
             'count' => $this->segmentResolver->count($audience, $rule),
             'samples' => array_map(
-                static fn (Contact $contact): string => $contact->email,
+                static fn (Contact $contact): string => $contact->identifier(),
                 $this->segmentResolver->contacts($audience, $rule, self::PREVIEW_LIMIT),
             ),
         ];

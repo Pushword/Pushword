@@ -77,7 +77,7 @@ final readonly class ContactTriggerSource implements TriggerSource
                 occurredAt: DateTimeImmutable::createFromInterface($contact->getRegisteredAt()),
                 placeholders: [
                     'contact.name' => $contact->name,
-                    'contact.email' => $contact->email,
+                    'contact.email' => $contact->email ?? '',
                 ],
                 contact: $contact,
             );
@@ -116,10 +116,11 @@ final readonly class ContactTriggerSource implements TriggerSource
             return null;
         }
 
-        // The segment resolver already scopes to the audience and to subscribed
-        // contacts, and compiles the rule; the three guards below are what makes
-        // it a trigger rather than a segment.
-        return $this->segmentResolver->queryBuilder($audience, $automation->triggerWhen)
+        // The segment resolver already scopes to the audience and to contacts a
+        // mail can reach — an enrollment leads to one — and compiles the rule;
+        // the three guards below are what makes it a trigger rather than a
+        // segment.
+        return $this->segmentResolver->mailableQueryBuilder($audience, $automation->triggerWhen)
             ->andWhere('c.createdAt >= :activeFrom')
             ->andWhere('c.createdAt <= :now')
             ->andWhere('c.id NOT IN ('.$this->logRepository->handledSubjectsDql().')')

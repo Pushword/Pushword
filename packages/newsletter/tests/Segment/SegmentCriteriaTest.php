@@ -124,9 +124,9 @@ final class SegmentCriteriaTest extends TestCase
     public function testUnknownFieldIsRejected(): void
     {
         $this->expectException(SegmentException::class);
-        $this->expectExceptionMessageMatches('/unknown field "email"/');
+        $this->expectExceptionMessageMatches('/unknown field "nickname"/');
 
-        SegmentCriteria::normalize([['field' => 'email', 'op' => '=', 'value' => 'a@b.c']]);
+        SegmentCriteria::normalize([['field' => 'nickname', 'op' => '=', 'value' => 'Robin']]);
     }
 
     /** The page language is next door, and its fields say so rather than reading as unknown. */

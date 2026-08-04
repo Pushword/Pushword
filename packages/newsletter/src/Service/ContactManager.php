@@ -3,6 +3,7 @@
 namespace Pushword\Newsletter\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\AutomationDelivery;
@@ -35,10 +36,12 @@ final readonly class ContactManager
 
     /**
      * @param string[] $interests values already filtered against the audience vocabulary
+     *
+     * @throws InvalidArgumentException when neither an address nor a number is given
      */
     public function subscribe(
         Audience $audience,
-        string $email,
+        ?string $email = null,
         ?string $name = null,
         ?string $locale = null,
         array $interests = [],
@@ -46,14 +49,30 @@ final readonly class ContactManager
         ?string $optinHost = null,
         ?string $optinIp = null,
         ?bool $requireDoubleOptIn = null,
+        ?string $phone = null,
     ): Contact {
+        $email = null !== $email && '' !== trim($email) ? $email : null;
+        $phone = Contact::normalizePhone($phone);
+
+        if (null === $email && null === $phone) {
+            throw new InvalidArgumentException('A contact needs an email address or a phone number.');
+        }
+
         $requireDoubleOptIn ??= $audience->requireDoubleOptIn;
-        $contact = $this->contactRepository->findOneByEmail($audience, $email);
+
+        // The address identifies the person when there is one: somebody already
+        // on the list who now gives their number gains it, rather than a row.
+        $contact = null !== $email
+            ? $this->contactRepository->findOneByEmail($audience, $email)
+            : $this->contactRepository->findOneByPhone($audience, $phone);
         $isNew = ! $contact instanceof Contact;
 
         if ($isNew) {
-            $contact = new Contact($audience, $email);
+            $contact = new Contact($audience, $email, $phone);
             $this->entityManager->persist($contact);
+        } elseif (null !== $phone && $phone !== $contact->phone) {
+            $this->assertPhoneIsFree($audience, $phone, $contact);
+            $contact->phone = $phone;
         }
 
         if (null !== $name && '' !== trim($name)) {
@@ -95,6 +114,28 @@ final readonly class ContactManager
         $this->entityManager->flush();
 
         return $contact;
+    }
+
+    /**
+     * A number already held by somebody else in the audience is refused, not
+     * moved and not merged.
+     *
+     * The two rows may well be one person — that is exactly why the site is
+     * adding the number. But joining them means deciding which consent record
+     * survives, which token the live unsubscribe links keep working with, and
+     * what happens to two ledgers of campaigns and enrollments. That is an
+     * operation somebody performs deliberately, never the side effect of a
+     * write that meant to fill in a field.
+     *
+     * @throws InvalidArgumentException
+     */
+    private function assertPhoneIsFree(Audience $audience, string $phone, Contact $contact): void
+    {
+        $holder = $this->contactRepository->findOneByPhone($audience, $phone);
+
+        if ($holder instanceof Contact && $holder->id !== $contact->id) {
+            throw new InvalidArgumentException(\sprintf('Phone %s already belongs to contact #%s in this audience.', $phone, $holder->id ?? '?'));
+        }
     }
 
     public function confirm(Contact $contact): void

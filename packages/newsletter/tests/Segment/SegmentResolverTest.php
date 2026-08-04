@@ -169,7 +169,7 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
      */
     private function sortedEmails(array $contacts): array
     {
-        $emails = array_map(static fn (Contact $contact): string => $contact->email, $contacts);
+        $emails = array_map(static fn (Contact $contact): string => $contact->identifier(), $contacts);
         sort($emails);
 
         return $emails;
@@ -343,6 +343,39 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
 
         self::assertCount(1, $match);
         self::assertSame('subscribed@example.tld', $match[0]->email);
+    }
+
+    /**
+     * The plain query still holds everybody who consented — a contact known
+     * only by phone is listed, exported and segmented; the mailable one is what
+     * anything that sends goes through.
+     */
+    public function testMailableNarrowsToContactsHoldingAnAddress(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'reader@example.tld');
+        $this->createPhoneContact($audience, '+33612345678');
+
+        self::assertSame(2, $this->resolver()->count($audience, []));
+        self::assertSame(1, $this->resolver()->countMailable($audience, []));
+        self::assertSame(['reader@example.tld'], $this->sortedEmails($this->resolver()->mailableContacts($audience, [])));
+    }
+
+    public function testAnAbsentIdentifierIsASegmentOfItsOwn(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'reader@example.tld');
+        $phoneOnly = $this->createPhoneContact($audience, '+33612345678');
+
+        self::assertSame(
+            [$phoneOnly->identifier()],
+            $this->sortedEmails($this->resolver()->contacts($audience, [['field' => 'email', 'op' => 'isNotSet']])),
+        );
+        self::assertSame(
+            [$phoneOnly->identifier()],
+            $this->sortedEmails($this->resolver()->contacts($audience, [['field' => 'phone', 'op' => 'isSet']])),
+        );
+        self::assertSame(1, $this->resolver()->count($audience, [['field' => 'email', 'op' => 'isSet']]));
     }
 
     public function testMatchesAgreesWithTheListForOneContact(): void

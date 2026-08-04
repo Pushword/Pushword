@@ -87,6 +87,14 @@ class ContactRepository extends ServiceEntityRepository
         return $this->findOneBy(['audience' => $audience, 'email' => mb_strtolower(trim($email))]);
     }
 
+    /** Normalised the way {@see Contact::$phone} stores it, or the lookup misses its own rows. */
+    public function findOneByPhone(Audience $audience, string $phone): ?Contact
+    {
+        $normalized = Contact::normalizePhone($phone);
+
+        return null === $normalized ? null : $this->findOneBy(['audience' => $audience, 'phone' => $normalized]);
+    }
+
     public function findOneByToken(string $token): ?Contact
     {
         return $this->findOneBy(['token' => $token]);
@@ -100,10 +108,19 @@ class ContactRepository extends ServiceEntityRepository
      * Unlike {@see findSubscribedSiblings()}, nothing is hidden here — the admin
      * is not a public page, and an unsubscribe is exactly what one needs to see.
      *
+     * A contact with no address has no sibling: the address is what makes two
+     * rows the same person. Answering the question at all for a null one would
+     * match every phone-only contact in the database and show a hundred
+     * strangers as one person's subscriptions.
+     *
      * @return list<Contact>
      */
-    public function findAllByEmail(string $email): array
+    public function findAllByEmail(?string $email): array
     {
+        if (null === $email || '' === trim($email)) {
+            return [];
+        }
+
         return $this->createQueryBuilder('c')
             ->innerJoin('c.audience', 'a')
             ->andWhere('c.email = :email')
@@ -139,6 +156,25 @@ class ContactRepository extends ServiceEntityRepository
     }
 
     /**
+     * How many of the subscribed can actually be mailed. Reported next to the
+     * subscribed count rather than instead of it: an audience where the two
+     * differ is one where somebody would otherwise believe a campaign reached
+     * everybody who consented.
+     */
+    public function countMailable(Audience $audience): int
+    {
+        return (int) $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->andWhere('c.audience = :audience')
+            ->andWhere('c.status = :subscribed')
+            ->andWhere('c.email IS NOT NULL')
+            ->setParameter('audience', $audience)
+            ->setParameter('subscribed', ContactStatus::Subscribed->value)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
      * The same person on the other lists of the same host: same address, an
      * audience sharing the `mainHost`, still subscribed.
      *
@@ -146,10 +182,17 @@ class ContactRepository extends ServiceEntityRepository
      * install, and a link belonging to one of them must never say what the
      * others know about the address.
      *
+     * Nothing for a contact with no address, for the reason
+     * {@see findAllByEmail()} gives — and here it would be in public.
+     *
      * @return list<Contact>
      */
     public function findSubscribedSiblings(Contact $contact): array
     {
+        if (null === $contact->email) {
+            return [];
+        }
+
         return $this->createQueryBuilder('c')
             ->innerJoin('c.audience', 'a')
             ->andWhere('c.email = :email')

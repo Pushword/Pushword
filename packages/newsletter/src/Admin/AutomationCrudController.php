@@ -159,7 +159,7 @@ class AutomationCrudController extends AbstractCrudController
             // over the audience would answer a question nobody asked.
             $addressed = [] !== $occurrences && null !== $occurrences[0]->contact
                 ? 'each of them receives the sequence'
-                : \sprintf('each would mail %d subscribed contact(s)', $this->segmentResolver->count($audience, $automation->recipientWhen));
+                : \sprintf('each would mail %d contact(s)', $this->segmentResolver->countMailable($audience, $automation->recipientWhen));
 
             $this->addFlash('info', \sprintf('%d waiting — %s.', $total, $addressed));
         } catch (SegmentException $segmentException) {

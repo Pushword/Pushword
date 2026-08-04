@@ -4,6 +4,7 @@ namespace Pushword\Newsletter\Controller\Api;
 
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
@@ -78,7 +79,7 @@ final class ContactApiController extends AbstractApiController
         }
 
         if (null !== $request->query->get('q')) {
-            $queryBuilder->andWhere('c.email LIKE :q OR c.name LIKE :q')
+            $queryBuilder->andWhere('c.email LIKE :q OR c.phone LIKE :q OR c.name LIKE :q')
                 ->setParameter('q', '%'.$request->query->getString('q').'%');
         }
 
@@ -104,33 +105,50 @@ final class ContactApiController extends AbstractApiController
         }
 
         $email = \is_string($data['email'] ?? null) ? trim($data['email']) : '';
-        if (false === filter_var($email, \FILTER_VALIDATE_EMAIL)) {
-            return $this->badRequest('Missing or invalid email');
+        $phone = Contact::normalizePhone(\is_string($data['phone'] ?? null) ? $data['phone'] : null);
+
+        if ('' !== $email && false === filter_var($email, \FILTER_VALIDATE_EMAIL)) {
+            return $this->badRequest('Invalid email');
         }
 
-        $existing = $this->contactRepository->findOneByEmail($audience, $email);
+        if ('' === $email && null === $phone) {
+            return $this->badRequest('Missing email or phone');
+        }
+
+        // Keyed on the address when there is one, on the number otherwise:
+        // an address is what makes two rows the same person.
+        $existing = '' !== $email
+            ? $this->contactRepository->findOneByEmail($audience, $email)
+            : $this->contactRepository->findOneByPhone($audience, $phone);
 
         // An import of an already-consenting base skips the confirmation mail;
         // anything else follows the audience's own rule.
         $requireDoubleOptIn = 'subscribed' === ($data['status'] ?? null) ? false : null;
 
-        $contact = $this->contactManager->subscribe(
-            $audience,
-            $email,
-            \is_string($data['name'] ?? null) ? $data['name'] : null,
-            \is_string($data['locale'] ?? null) ? $data['locale'] : null,
-            [],
-            \is_string($data['source'] ?? null) ? $data['source'] : 'api',
-            null,
-            null,
-            $requireDoubleOptIn,
-        );
+        try {
+            $contact = $this->contactManager->subscribe(
+                $audience,
+                '' !== $email ? $email : null,
+                \is_string($data['name'] ?? null) ? $data['name'] : null,
+                \is_string($data['locale'] ?? null) ? $data['locale'] : null,
+                [],
+                \is_string($data['source'] ?? null) ? $data['source'] : 'api',
+                null,
+                null,
+                $requireDoubleOptIn,
+                $phone,
+            );
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            // The number is somebody else's. Joining two rows is a deliberate
+            // operation, not something an upsert gets to do on the way past.
+            return $this->respond(['error' => $invalidArgumentException->getMessage()], Response::HTTP_CONFLICT);
+        }
 
         $this->apply($contact, $data);
 
-        $violations = $this->validator->validate($contact);
-        if (\count($violations) > 0) {
-            return $this->validationErrors($violations);
+        $rejected = $this->rejected($contact);
+        if ($rejected instanceof JsonResponse) {
+            return $rejected;
         }
 
         $this->entityManager->flush();
@@ -213,14 +231,39 @@ final class ContactApiController extends AbstractApiController
     {
         $this->apply($contact, $this->decodeJson($request));
 
-        $violations = $this->validator->validate($contact);
-        if (\count($violations) > 0) {
-            return $this->validationErrors($violations);
+        $rejected = $this->rejected($contact);
+        if ($rejected instanceof JsonResponse) {
+            return $rejected;
         }
 
         $this->entityManager->flush();
 
         return $this->respond($this->toArray($contact));
+    }
+
+    /**
+     * The violations, if any — and the entity put back the way the database
+     * holds it.
+     *
+     * {@see apply()} writes onto a managed object before anything has been
+     * checked, so a refused write is still sitting in the unit of work when the
+     * response leaves. The request ends without flushing and nothing reaches
+     * the database, but the next flush of the same manager would write it: what
+     * a 422 says is that nothing was written, and this is what makes it true.
+     *
+     * @return JsonResponse|null null when the contact is valid
+     */
+    private function rejected(Contact $contact): ?JsonResponse
+    {
+        $violations = $this->validator->validate($contact);
+
+        if (0 === \count($violations)) {
+            return null;
+        }
+
+        $this->entityManager->refresh($contact);
+
+        return $this->validationErrors($violations);
     }
 
     private function doDelete(Contact $contact): JsonResponse
@@ -240,6 +283,17 @@ final class ContactApiController extends AbstractApiController
 
         if (\array_key_exists('locale', $data) && \is_string($data['locale'])) {
             $contact->locale = $data['locale'];
+        }
+
+        if (\array_key_exists('phone', $data)) {
+            $contact->phone = \is_string($data['phone']) ? $data['phone'] : null;
+        }
+
+        // Somebody known by phone alone gives their address later, and the
+        // reverse. Which row the identifier may land on is the validator's
+        // business, and it refuses one another contact already holds.
+        if (\array_key_exists('email', $data)) {
+            $contact->email = \is_string($data['email']) ? $data['email'] : null;
         }
 
         if (\array_key_exists('tags', $data) && \is_array($data['tags'])) {
@@ -270,7 +324,9 @@ final class ContactApiController extends AbstractApiController
             'id' => $contact->id,
             'audience' => $contact->audience->slug,
             'email' => $contact->email,
+            'phone' => $contact->phone,
             'name' => $contact->name,
+            'mailable' => $contact->isMailable(),
             'locale' => $contact->locale,
             'status' => $contact->getStatusLabel(),
             'tags' => $contact->getTagList(),
@@ -302,7 +358,7 @@ final class ContactApiController extends AbstractApiController
                         'responses' => ['200' => ['description' => 'OK']],
                     ],
                     'post' => [
-                        'summary' => 'Create or update a contact, keyed on (audience, email)',
+                        'summary' => 'Create or update a contact, keyed on (audience, email) or on (audience, phone) when no email is given',
                         'responses' => ['200' => ['description' => 'Updated'], '201' => ['description' => 'Created']],
                     ],
                 ],
@@ -327,8 +383,10 @@ final class ContactApiController extends AbstractApiController
                         'type' => 'object',
                         'properties' => [
                             'audience' => ['type' => 'string'],
-                            'email' => ['type' => 'string'],
+                            'email' => ['type' => 'string', 'nullable' => true],
+                            'phone' => ['type' => 'string', 'nullable' => true, 'description' => 'Digits and a leading `+`; a contact may be keyed on it alone and is then never mailed'],
                             'name' => ['type' => 'string'],
+                            'mailable' => ['type' => 'boolean', 'description' => 'Subscribed *and* holding an address'],
                             'locale' => ['type' => 'string'],
                             'status' => ['type' => 'string'],
                             'tags' => ['type' => 'array', 'items' => ['type' => 'string']],

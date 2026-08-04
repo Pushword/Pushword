@@ -24,12 +24,22 @@ final readonly class OptionalColumnStrategy implements FieldStrategy
 
     public function operators(): array
     {
-        return ['=', '!='];
+        return ['=', '!=', 'isSet', 'isNotSet'];
     }
 
     public function compile(FieldCompilation $compilation): string
     {
         $column = $compilation->column($this->column, $this->alias);
+
+        // Asking whether the column holds anything at all, which is a question
+        // only a nullable one can be asked. The operators carry no value.
+        if ('isSet' === $compilation->operator) {
+            return $column.' IS NOT NULL';
+        }
+
+        if ('isNotSet' === $compilation->operator) {
+            return $column.' IS NULL';
+        }
 
         $expression = '=' === $compilation->operator
             ? \sprintf('%s = :%s', $column, $compilation->parameter)

@@ -18,8 +18,14 @@ use Pushword\Newsletter\Query\ContactFieldRegistry;
  * an unsubscribed or bounced address cannot be reached by any criteria that can
  * be written, which is the property the whole sending side relies on.
  *
+ * The `mailable` variants add the second half of that property — an address to
+ * send to — and are what every surface that *sends* or predicts a send goes
+ * through. The plain ones stay unfiltered, because a contact the site can only
+ * phone is still to be listed, segmented and exported; they are simply never a
+ * recipient.
+ *
  * What each field means is {@see ContactFieldRegistry}'s business, and walking
- * the rule is {@see QueryCompiler}'s, so what is left here is exactly those two
+ * the rule is {@see QueryCompiler}'s, so what is left here is exactly those
  * guards.
  */
 final readonly class SegmentResolver
@@ -42,6 +48,34 @@ final readonly class SegmentResolver
     }
 
     /**
+     * How many the segment would actually reach — what a preview before Send has
+     * to say, and what a campaign's `estimatedRecipients` means.
+     *
+     * @param array<mixed> $criteria
+     *
+     * @throws SegmentException
+     */
+    public function countMailable(Audience $audience, array $criteria): int
+    {
+        return (int) $this->mailableQueryBuilder($audience, $criteria)
+            ->select('COUNT(c.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * @param array<mixed> $criteria
+     *
+     * @return list<Contact>
+     *
+     * @throws SegmentException
+     */
+    public function mailableContacts(Audience $audience, array $criteria, ?int $limit = null): array
+    {
+        return $this->fetch($this->mailableQueryBuilder($audience, $criteria), $limit);
+    }
+
+    /**
      * @param array<mixed> $criteria
      *
      * @return list<Contact>
@@ -50,7 +84,13 @@ final readonly class SegmentResolver
      */
     public function contacts(Audience $audience, array $criteria, ?int $limit = null): array
     {
-        $queryBuilder = $this->queryBuilder($audience, $criteria)->orderBy('c.id', 'ASC');
+        return $this->fetch($this->queryBuilder($audience, $criteria), $limit);
+    }
+
+    /** @return list<Contact> */
+    private function fetch(QueryBuilder $queryBuilder, ?int $limit): array
+    {
+        $queryBuilder->orderBy('c.id', 'ASC');
 
         if (null !== $limit) {
             $queryBuilder->setMaxResults($limit);
@@ -60,6 +100,18 @@ final readonly class SegmentResolver
         $contacts = $queryBuilder->getQuery()->getResult();
 
         return $contacts;
+    }
+
+    /**
+     * The same query, narrowed to the contacts a mail can reach.
+     *
+     * @param array<mixed> $criteria
+     *
+     * @throws SegmentException
+     */
+    public function mailableQueryBuilder(Audience $audience, array $criteria): QueryBuilder
+    {
+        return $this->queryBuilder($audience, $criteria)->andWhere('c.email IS NOT NULL');
     }
 
     /**

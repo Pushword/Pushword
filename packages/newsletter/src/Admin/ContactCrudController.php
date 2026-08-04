@@ -15,6 +15,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TelephoneField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
@@ -58,7 +59,7 @@ class ContactCrudController extends AbstractCrudController
             ->setEntityLabelInSingular('newsletter.contact.label.singular')
             ->setEntityLabelInPlural('newsletter.contact.label.plural')
             ->setDefaultSort(['id' => 'DESC'])
-            ->setSearchFields(['email', 'name', 'tags'])
+            ->setSearchFields(['email', 'phone', 'name', 'tags'])
             ->overrideTemplates([
                 'crud/edit' => '@PushwordNewsletter/admin/contact_edit.html.twig',
                 'crud/detail' => '@PushwordNewsletter/admin/contact_detail.html.twig',
@@ -92,7 +93,7 @@ class ContactCrudController extends AbstractCrudController
         // The audience select on the form *moves* a subscription; adding one is
         // a second row, which is what this opens — with the address prefilled.
         $optInAnother = Action::new('optInAnother', 'newsletter.contact.action.optInAnother', 'fa fa-user-plus')
-            ->linkToUrl(fn (Contact $contact): string => $this->optInUrl($contact->email))
+            ->linkToUrl(fn (Contact $contact): string => $this->optInUrl($contact->email ?? '', $contact->phone ?? ''))
             ->setCssClass('btn btn-outline-primary');
 
         $confirm = Action::new('confirm', 'newsletter.contact.action.confirm', 'fa fa-check')
@@ -131,7 +132,10 @@ class ContactCrudController extends AbstractCrudController
     {
         yield FormField::addColumn('col-12 col-lg-8 mainFields');
         yield FormField::addFieldset('newsletter.contact.fieldset.identity');
-        yield EmailField::new('email', 'newsletter.contact.field.email');
+        yield EmailField::new('email', 'newsletter.contact.field.email')->setRequired(false);
+        yield TelephoneField::new('phone', 'newsletter.contact.field.phone')
+            ->setRequired(false)
+            ->setHelp('newsletter.contact.field.phone.help');
         yield TextField::new('name', 'newsletter.contact.field.name');
         yield ChoiceField::new('status', 'newsletter.contact.field.status')
             ->renderAsBadges([
@@ -197,6 +201,7 @@ class ContactCrudController extends AbstractCrudController
         return $this->render('@PushwordNewsletter/admin/contact_opt_in.html.twig', [
             'audiences' => $audiences,
             'email' => $request->query->getString('email'),
+            'phone' => $request->query->getString('phone'),
             'back_url' => $this->indexUrl(),
             'csrf_id' => self::OPT_IN_CSRF_ID,
         ]);
@@ -252,11 +257,17 @@ class ContactCrudController extends AbstractCrudController
 
         $audience = $this->audienceRepository->find($request->request->getInt('audience'));
         $email = trim($request->request->getString('email'));
+        $phone = trim($request->request->getString('phone'));
 
-        if (! $audience instanceof Audience || false === filter_var($email, \FILTER_VALIDATE_EMAIL)) {
+        // A number alone is enough: the person consented over the phone, and
+        // there is nothing to confirm by mail.
+        $hasEmail = '' !== $email && false !== filter_var($email, \FILTER_VALIDATE_EMAIL);
+        $hasPhone = null !== Contact::normalizePhone($phone);
+
+        if (! $audience instanceof Audience || (! $hasEmail && ! $hasPhone) || ('' !== $email && ! $hasEmail)) {
             $this->addFlash('danger', 'newsletter.contact.flash.invalidOptIn');
 
-            return new RedirectResponse($this->optInUrl($email));
+            return new RedirectResponse($this->optInUrl($email, $phone));
         }
 
         // Who added the row is the evidence a hand-made opt-in owes: "admin" alone
@@ -266,19 +277,20 @@ class ContactCrudController extends AbstractCrudController
         try {
             $contact = $this->contactManager->subscribe(
                 $audience,
-                $email,
+                $hasEmail ? $email : null,
                 name: $request->request->getString('name'),
                 source: $source,
                 // Consent given elsewhere skips the confirmation mail; anything
                 // else leaves the audience's own rule to decide.
                 requireDoubleOptIn: $request->request->getBoolean('alreadyConsented') ? false : null,
+                phone: $hasPhone ? $phone : null,
             );
         } catch (Throwable $throwable) {
             // A confirmation mail the transport refuses is the usual one, and it
             // leaves nothing behind: ContactManager sends before it flushes.
             $this->addFlash('danger', $throwable->getMessage());
 
-            return new RedirectResponse($this->optInUrl($email));
+            return new RedirectResponse($this->optInUrl($email, $phone));
         }
 
         $this->addFlash('success', $contact->isPending()
@@ -319,16 +331,18 @@ class ContactCrudController extends AbstractCrudController
             ->setController(self::class)
             ->setAction(Action::INDEX)
             ->unset('email')
+            ->unset('phone')
             ->generateUrl();
     }
 
-    private function optInUrl(string $email): string
+    private function optInUrl(string $email, string $phone = ''): string
     {
         return $this->adminUrlGenerator
             ->setController(self::class)
             ->setAction('optIn')
             ->unset(EA::ENTITY_ID)
             ->set('email', $email)
+            ->set('phone', $phone)
             ->generateUrl();
     }
 
@@ -343,6 +357,7 @@ class ContactCrudController extends AbstractCrudController
             ->setAction(Action::EDIT)
             ->setEntityId($contact->id)
             ->unset('email')
+            ->unset('phone')
             ->generateUrl();
     }
 }

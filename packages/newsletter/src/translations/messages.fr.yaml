@@ -129,10 +129,14 @@ newsletter:
       customProperties: Propriétés personnalisées
       customProperties.help: Paires clé-valeur en YAML. Les segments les lisent via prop.<clé>.
       email: Email
+      email.taken: Un autre contact de cette liste utilise déjà cette adresse.
       locale: Langue
       name: Prénom
       optinHost: Hôte d'inscription
       optinIp: IP d'inscription
+      phone: Téléphone
+      phone.help: Conservé en chiffres, avec le + initial. Un contact identifié par un numéro seul est stocké, tagué et segmenté, et n'est jamais destinataire d'un mail.
+      phone.taken: Un autre contact de cette liste utilise déjà ce numéro. Les réunir est une fusion délibérée, pas quelque chose que ce formulaire fait.
       registeredAt: Inscrit le
       source: Source
       status: Statut
@@ -141,18 +145,21 @@ newsletter:
     flash:
       confirmationSent: Inscription ouverte — un mail de confirmation part.
       confirmed: Confirmé à la main.
-      invalidOptIn: Choisissez une liste et une adresse valide.
+      invalidOptIn: Choisissez une liste et, au choix, une adresse valide ou un numéro de téléphone.
       invalidToken: Jeton invalide, merci de réessayer.
       noAudience: Créez d'abord une audience.
       notFound: Contact introuvable.
       resubscribed: Réinscrit.
       subscribed: Inscrit.
       unsubscribed: Désinscrit.
+    identifier:
+      missing: Un contact a besoin d'une adresse email ou d'un numéro de téléphone.
     optIn:
       alreadyConsented: A déjà consenti
       alreadyConsented.help: Passe le mail de confirmation et inscrit directement. Uniquement pour un consentement que vous pouvez produire — un formulaire papier, une réponse écrite.
       cancel: Annuler
       help: Une liste à la fois, comme le formulaire public. Une adresse déjà présente sur une autre liste reçoit une seconde inscription, avec son propre consentement.
+      identifier.help: L'un ou l'autre suffit. Un contact avec un numéro et sans adresse ne reçoit aucun mail — rien à confirmer, il est inscrit directement.
       title: Inscrire un contact
     subscriptions:
       help: La même adresse sur toutes les listes de cette installation. Celle en cours d'édition est surlignée.

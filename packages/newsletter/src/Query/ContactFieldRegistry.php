@@ -8,6 +8,7 @@ use Pushword\Core\Query\Field\FieldStrategy;
 use Pushword\Core\Query\Field\Strategy\ColumnStrategy;
 use Pushword\Core\Query\Field\Strategy\JsonArrayStrategy;
 use Pushword\Core\Query\Field\Strategy\JsonPropertyStrategy;
+use Pushword\Core\Query\Field\Strategy\OptionalColumnStrategy;
 
 /**
  * What is filterable on a `Contact`.
@@ -57,6 +58,10 @@ final class ContactFieldRegistry implements FieldRegistry
         return $this->strategies ??= [
             'tag' => new JsonArrayStrategy('tags'),
             'locale' => new ColumnStrategy('locale'),
+            // Nullable, so `isSet` / `isNotSet` are the operators that matter:
+            // "everybody I can only phone" is a segment somebody writes.
+            'email' => new OptionalColumnStrategy('email'),
+            'phone' => new OptionalColumnStrategy('phone'),
             'createdAt' => new DurationThresholdStrategy('createdAt', $this->now),
             'confirmedAt' => new DurationThresholdStrategy('confirmedAt', $this->now),
         ];

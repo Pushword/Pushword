@@ -147,6 +147,38 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
         self::assertSame(CampaignStatus::Sent, $campaign->status);
     }
 
+    /** Consenting and being reachable are two questions; arming asks both. */
+    public function testArmingIgnoresContactsWithNoAddress(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'in@example.tld');
+        $this->createPhoneContact($audience, '+33612345678');
+
+        $campaign = $this->createCampaign($audience);
+
+        self::assertSame(1, $this->sender()->arm($campaign));
+        self::assertSame('in@example.tld', $this->recipients($campaign)[0]->contact->email);
+    }
+
+    /** An address cleared between arming and sending is not a delivery failure either. */
+    public function testAContactWhoLostTheirAddressAfterArmingIsSkipped(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'leaving@example.tld');
+        $campaign = $this->createCampaign($audience);
+        $this->sender()->arm($campaign);
+
+        $contact->phone = '+33612345678';
+        $contact->email = null;
+
+        $this->entityManager->flush();
+
+        self::assertSame(0, $this->sender()->drain($campaign, 10));
+        self::assertEmailCount(0);
+        self::assertSame(RecipientState::Skipped, $this->recipients($campaign)[0]->state);
+        self::assertSame(0, $campaign->failedCount);
+    }
+
     public function testATransportFailureIsRecordedOnTheRecipient(): void
     {
         $audience = $this->createAudience();

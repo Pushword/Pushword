@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Service;
 
+use LogicException;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\AutomationStep;
@@ -126,9 +127,13 @@ final readonly class NewsletterMailer
 
     private function baseEmail(Audience $audience, Contact $contact): Email
     {
+        // Whoever got here already asked `isMailable()`; saying which contact
+        // slipped through beats a TypeError on a null address.
+        $to = $contact->email ?? throw new LogicException('Contact #'.($contact->id ?? '?').' has no email address.');
+
         $email = new Email()
             ->from(new Address($audience->fromEmail, $audience->fromName))
-            ->to(new Address($contact->email, $contact->name));
+            ->to(new Address($to, $contact->name));
 
         $replyTo = $audience->replyTo;
         if (null !== $replyTo) {

@@ -127,6 +127,20 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
         return $contact;
     }
 
+    /** Somebody the site can only phone: consented, stored, never a recipient. */
+    protected function createPhoneContact(Audience $audience, string $phone, bool $subscribed = true): Contact
+    {
+        $contact = new Contact($audience, null, $phone);
+        $contact->name = 'Test';
+        $contact->locale = 'en';
+        $contact->optIn(! $subscribed);
+
+        $this->entityManager->persist($contact);
+        $this->entityManager->flush();
+
+        return $contact;
+    }
+
     /** @param array<mixed> $segment */
     protected function createCampaign(Audience $audience, array $segment = [], string $subject = 'Hello'): Campaign
     {

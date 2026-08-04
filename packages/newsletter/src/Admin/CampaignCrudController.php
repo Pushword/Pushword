@@ -246,8 +246,12 @@ class CampaignCrudController extends AbstractCrudController
         }
 
         try {
-            $count = $this->segmentResolver->count($audience, $campaign->segment);
-            $this->addFlash('info', \sprintf('%d subscribed contact(s) match this segment.', $count));
+            $subscribed = $this->segmentResolver->count($audience, $campaign->segment);
+            $mailable = $this->segmentResolver->countMailable($audience, $campaign->segment);
+
+            $this->addFlash('info', $subscribed === $mailable
+                ? \sprintf('%d subscribed contact(s) match this segment.', $subscribed)
+                : \sprintf('%d subscribed contact(s) match this segment, %d of them can be mailed.', $subscribed, $mailable));
         } catch (SegmentException $segmentException) {
             $this->addFlash('danger', $segmentException->getMessage());
         }

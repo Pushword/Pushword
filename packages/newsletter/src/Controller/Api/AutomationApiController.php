@@ -352,7 +352,7 @@ final class AutomationApiController extends AbstractApiController
 
         if ($audience instanceof Audience) {
             try {
-                $payload['matchingContacts'] = $this->segmentResolver->count($audience, $automation->recipientWhen);
+                $payload['matchingContacts'] = $this->segmentResolver->countMailable($audience, $automation->recipientWhen);
             } catch (SegmentException) {
                 $payload['matchingContacts'] = null;
             }

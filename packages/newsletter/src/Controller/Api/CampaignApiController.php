@@ -312,7 +312,7 @@ final class CampaignApiController extends AbstractApiController
 
         if ($withEstimate && null !== $audience && $campaign->isDraft()) {
             try {
-                $payload['estimatedRecipients'] = $this->segmentResolver->count($audience, $campaign->segment);
+                $payload['estimatedRecipients'] = $this->segmentResolver->countMailable($audience, $campaign->segment);
             } catch (SegmentException) {
                 $payload['estimatedRecipients'] = null;
             }

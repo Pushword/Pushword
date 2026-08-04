@@ -57,6 +57,8 @@ final class SegmentCriteria extends AbstractCriteria
         'createdAt' => ['olderThan', 'newerThan'],
         'confirmedAt' => ['olderThan', 'newerThan'],
         'locale' => ['=', '!='],
+        'email' => ['=', '!=', 'isSet', 'isNotSet'],
+        'phone' => ['=', '!=', 'isSet', 'isNotSet'],
     ];
 
     private const string DURATION_PATTERN = '/^(\d+)([mhdw])$/';

@@ -212,7 +212,10 @@ final class AudienceApiController extends AbstractApiController
         ];
 
         if ($withContacts) {
-            $payload['contacts'] = $this->contactRepository->countByStatus($audience);
+            // `mailable` next to `subscribed`, not instead of it: a base holding
+            // contacts known only by phone reaches fewer people than consented.
+            $payload['contacts'] = $this->contactRepository->countByStatus($audience)
+                + ['mailable' => $this->contactRepository->countMailable($audience)];
         }
 
         return $payload;

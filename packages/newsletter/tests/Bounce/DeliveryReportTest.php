@@ -4,6 +4,7 @@ namespace Pushword\Newsletter\Tests\Bounce;
 
 use PHPUnit\Framework\TestCase;
 use Pushword\Newsletter\Bounce\DeliveryReport;
+use Pushword\Newsletter\Bounce\FailedRecipient;
 
 /**
  * The fixtures are shaped after what a Postfix relay actually returns, folded
@@ -61,7 +62,7 @@ final class DeliveryReportTest extends TestCase
         self::assertInstanceOf(DeliveryReport::class, $report);
         self::assertSame(
             ['no-such-user@example.tld', 'second@example.tld'],
-            array_map(static fn ($failure): string => $failure->email, $report->failures),
+            array_map(static fn (FailedRecipient $failure): string => $failure->email, $report->failures),
         );
     }
 
