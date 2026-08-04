@@ -75,9 +75,10 @@ export class EditorModeManager {
   }
 
   /**
-   * Récupère l'instance Monaco
+   * Récupère l'instance Monaco (publique : la source Monaco du panneau outline
+   * lit et réécrit le texte à travers elle)
    */
-  private getMonacoInstance(): any {
+  getMonacoInstance(): any {
     return this.monacoInstance
   }
 

@@ -4,12 +4,37 @@ import { ToolInterface } from './tools/Abstract/ToolInterface'
 import { MarkdownUtils } from './tools/utils/MarkdownUtils'
 
 // Extended BlockToolAdapter to access the constructable property
-interface BlockToolAdapterWithConstructable extends BlockToolAdapter {
+export interface BlockToolAdapterWithConstructable extends BlockToolAdapter {
   constructable?: ToolInterface
 }
 
+/**
+ * The tool a markdown chunk belongs to, probed in the parser's own order —
+ * shared with the outline panel so both always classify a chunk identically.
+ */
+export function chunkTool(
+  blockTools: BlockToolAdapterWithConstructable[],
+  markdownBlock: string,
+): BlockToolAdapterWithConstructable | null {
+  const stripped = MarkdownUtils.retrieveMarkdownWithoutTunes(markdownBlock)
+  const claims = (adapter: BlockToolAdapterWithConstructable): boolean =>
+    typeof adapter.constructable?.isItMarkdownExported === 'function' &&
+    adapter.constructable.isItMarkdownExported(stripped)
+
+  for (const adapter of blockTools) {
+    if (['paragraph', 'raw', 'stub'].includes(adapter.name)) continue
+    if (claims(adapter)) return adapter
+  }
+  for (const fallback of ['paragraph', 'raw']) {
+    const adapter = blockTools.find((tool) => tool.name === fallback)
+    if (adapter !== undefined && claims(adapter)) return adapter
+  }
+
+  return null
+}
+
 export class EditorJsParseMarkdown {
-  private editorjsTools: ToolInterface[]
+  private editorjsTools: BlockToolAdapterWithConstructable[]
   private editorJsInstance: API
   private markdown: string
 
@@ -20,52 +45,13 @@ export class EditorJsParseMarkdown {
     this.markdown = markdown
   }
 
-  private importBlockWithTool(markdownBlock: string, toolClass: ToolInterface): boolean {
-    if (typeof toolClass.isItMarkdownExported !== 'function') {
-      console.error('isItMarkdownExported is not available for ', toolClass)
-      return false
-    }
-    const markdownBlockWithoutTunes =
-      MarkdownUtils.retrieveMarkdownWithoutTunes(markdownBlock)
-    if (!toolClass.isItMarkdownExported(markdownBlockWithoutTunes)) return false
-
-    toolClass.importFromMarkdown(this.editorJsInstance, markdownBlock)
-    return true
-  }
-
-  private importBlock(block: string): void {
-    for (const tool of this.editorjsTools) {
-      if (['paragraph', 'raw', 'stub'].includes(tool.name)) continue
-      const toolClass = tool.constructable
-      if (this.importBlockWithTool(block, toolClass)) return
-    }
-
-    const paragraphTool = this.getToolClass('paragraph')
-    if (this.importBlockWithTool(block, paragraphTool)) return
-
-    const rawTool = this.getToolClass('raw')
-    if (this.importBlockWithTool(block, rawTool)) return
-
-    //fallbackType.importFromMarkdown(this.editorJsInstance, block)
-  }
-
   parseMarkdown(): void {
     this.editorJsInstance.blocks.clear()
 
     for (const chunk of MarkdownUtils.chunkMarkdown(this.markdown)) {
-      this.importBlock(chunk.text)
+      const adapter = chunkTool(this.editorjsTools, chunk.text)
+      adapter?.constructable?.importFromMarkdown(this.editorJsInstance, chunk.text)
     }
-  }
-
-  private getToolClass(blockType: string): ToolInterface {
-    const tool = this.editorjsTools.find((t) => t.name === blockType) as
-      | BlockToolAdapterWithConstructable
-      | undefined
-
-    if (!tool || !tool.constructable) {
-      throw new Error(`Tool class for block type ${blockType} not found`)
-    }
-    return tool.constructable
   }
 }
 

@@ -34,6 +34,8 @@ export interface OutlinePanelOptions {
   source: OutlineSource
   labels: OutlineLabels
   toolMeta: (type: string) => OutlineToolMeta
+  /** Source serving a Monaco view ('markdown' | 'json'); null hides the panel there. */
+  monacoSource?: (mode: string) => OutlineSource | null
 }
 
 const COLLAPSE_STORAGE_KEY = 'pw-outline-collapsed'
@@ -49,7 +51,9 @@ const FALLBACK_ICON =
  */
 export class OutlinePanel {
   private readonly holderId: string
-  private readonly source: OutlineSource
+  private readonly editorSource: OutlineSource
+  private readonly monacoSource: ((mode: string) => OutlineSource | null) | undefined
+  private source: OutlineSource
   private readonly labels: OutlineLabels
   private readonly toolMeta: (type: string) => OutlineToolMeta
 
@@ -67,6 +71,8 @@ export class OutlinePanel {
 
   constructor(options: OutlinePanelOptions) {
     this.holderId = options.holderId
+    this.editorSource = options.source
+    this.monacoSource = options.monacoSource
     this.source = options.source
     this.labels = options.labels
     this.toolMeta = options.toolMeta
@@ -133,24 +139,42 @@ export class OutlinePanel {
   }
 
   /**
-   * The mode manager hides the holder while a Monaco source view is open, and
-   * panel edits would then be silently discarded by the next mode switch — so
-   * the panel follows the holder's visibility.
+   * The mode manager hides the holder while a Monaco source view is open; the
+   * panel follows that visibility to swap between the EditorJS source and the
+   * Monaco one — no coupling back into the manager.
    */
   private followEditorVisibility(): void {
     const holder = document.getElementById(this.holderId)
     if (holder === null) return
 
     const follow = (): void => {
-      const off = holder.style.display === 'none'
-      this.root.classList.toggle('pw-outline--off', off)
-      this.opener.classList.toggle('pw-outline--off', off)
-      if (!off) this.scheduleRefresh()
+      this.swapSource(holder.style.display === 'none' ? this.currentMode() : null)
     }
     new MutationObserver(follow).observe(holder, {
       attributes: true,
       attributeFilter: ['style'],
     })
+  }
+
+  /** data-editor of the bound field: 'markdown' | 'json', or null for EditorJS. */
+  private currentMode(): string | null {
+    const holder = document.getElementById(this.holderId)
+    const input = document.getElementById(holder?.getAttribute('data-input-id') ?? '')
+    return input?.getAttribute('data-editor') ?? null
+  }
+
+  private swapSource(mode: string | null): void {
+    this.source.dispose?.()
+    const next = mode === null ? this.editorSource : (this.monacoSource?.(mode) ?? null)
+
+    const off = next === null
+    this.root.classList.toggle('pw-outline--off', off)
+    this.opener.classList.toggle('pw-outline--off', off)
+    if (next === null) return
+
+    this.source = next
+    next.bind?.(() => this.scheduleRefresh())
+    this.scheduleRefresh()
   }
 
   private renderNode(node: OutlineNode, depth: number): HTMLLIElement {

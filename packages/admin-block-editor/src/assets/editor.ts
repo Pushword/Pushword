@@ -41,6 +41,11 @@ import { GroupRegistry } from './tools/Group/GroupRegistry'
 import EditorJsExportMarkdown from './EditorJsExportMarkdown'
 import { OutlineLabels, OutlinePanel, OutlineToolMeta } from './outline/OutlinePanel'
 import { EditorJsOutlineSource } from './outline/EditorJsOutlineSource'
+import {
+  JsonMonacoSource,
+  MarkdownMonacoSource,
+  MonacoContext,
+} from './outline/MonacoOutlineSource'
 
 interface EditorJSConfig {
   holder?: string
@@ -218,9 +223,21 @@ export class editorJs {
     editorJsHelper.setModeManager(config.holder!, modeManager)
 
     if (outlineConfig !== undefined) {
+      const holderId = config.holder!
+      const editorApi = editor as unknown as API
+      const monacoContext: MonacoContext = {
+        monaco: () => this.modeManagers[holderId]?.getMonacoInstance() ?? null,
+        input: () => this.boundInputOf(holderId),
+      }
       outline = new OutlinePanel({
-        holderId: config.holder!,
-        source: new EditorJsOutlineSource(editor as unknown as API),
+        holderId,
+        source: new EditorJsOutlineSource(editorApi),
+        monacoSource: (mode) =>
+          mode === 'markdown'
+            ? new MarkdownMonacoSource(monacoContext, editorApi)
+            : mode === 'json'
+              ? new JsonMonacoSource(monacoContext)
+              : null,
         labels: outlineConfig.labels,
         toolMeta: (type) => this.toolMetaOf(config, type),
       })

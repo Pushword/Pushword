@@ -41,6 +41,9 @@ export interface OutlineSource {
   deleteSpan(start: number, end: number): void
   /** Move units start..end (inclusive) so they land before the unit at `to`. */
   moveSpan(start: number, end: number, to: number): void
+  /** Start pushing change notifications, for sources the panel cannot observe otherwise. */
+  bind?(onChange: () => void): void
+  dispose?(): void
 }
 
 export function buildOutlineTree(entries: OutlineEntry[]): OutlineNode[] {
