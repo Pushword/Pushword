@@ -74,6 +74,56 @@ Or use the `exclude_linked()` function with `pages()`:
 
 See the [Link Collector documentation](/link-collector) for detailed usage, examples, and the full API reference.
 
+## Paginating a List
+
+`max` alone caps a list. Pass `maxPages` as well and the same list is paginated:
+`max` becomes the number of cards on **one** pager page, and `maxPages` the number
+of pager pages the list may ever have.
+
+```twig
+{{ pages_list('type:blog', 12, maxPages: 5) }}
+```
+
+That renders 12 cards per page across at most 5 pages — 60 posts in total, the
+newest first. The pager itself is rendered by
+`component/pager.html.twig`, which extends Pagerfanta's Tailwind view; override it
+like any other component to restyle it.
+
+Both numbers matter, and only together:
+
+- `max` is required as soon as `maxPages > 1`. Paginating without a per-page count
+  is refused rather than guessed (`"max" (items per page) must be >= 1 when
+  paginating with maxPages`).
+- `maxPages` is a hard ceiling, not a page count. The query fetches `max × maxPages`
+  rows once and Pagerfanta slices them, so raising `maxPages` costs one bigger
+  query, not one query per page. Rows beyond that product are never reachable.
+- `maxPages: 1` (or 0) means no pagination at all — the list behaves as if only
+  `max` were given, and no pager is rendered.
+
+The array form `pages_list('type:blog', [12, 5])` is the older spelling of the same
+thing. It still works; passing both an array `max` and `maxPages` is an error.
+
+### Pager URLs
+
+The pager appends the page number as a path segment on the current page:
+
+```
+/blog      ← page 1
+/blog/2    ← page 2
+```
+
+Page 1 is always the bare URL; the route is built from the page currently being
+rendered, so a paginated list works on any page, on any host, without configuration.
+
+Two consequences worth knowing before you paginate:
+
+- **`excludeAlreadyLinked` only sees the current pager page.** The other pages are
+  never rendered, so they cannot register their cards with the
+  [Link Collector](/link-collector).
+- **Avoid paginating the homepage.** Its pager URLs are `/2`, `/3`… at the site
+  root, which collide with any page whose slug is a bare number, and the page wins —
+  the pager silently shows page 1 again. Paginate a section page instead.
+
 ## Listing What Is Not Online Yet
 
 `pages_list()` only ever returns pages that are online right now. `draft_list()` takes the
