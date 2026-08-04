@@ -78,6 +78,10 @@ The same cards in one scrolling row, with **no JavaScript**: the arrows are `::s
 
 {{ pages_list('slug:%demo-scroller%', 9, 'publishedAt ↓', 'horizontalScroll', wrapperClass: 'bleed') }}
 
+The same list with the optional dots, via `wrapperClass: 'horizontal-scroll-dots'`. Every **visible** card's dot is filled, half-visible ones half-filled — so reaching the end and clicking the last dot doing nothing reads as "you are already there".
+
+{{ pages_list('slug:%demo-scroller%', 9, 'publishedAt ↓', 'horizontalScroll', wrapperClass: 'bleed horizontal-scroll-dots') }}
+
 ### Variant pages in a content list
 
 The master stay and its variant share the `mountain-lodge` tag. Both appear below — variants are kept out of the sitemap, the search and the menus, but **not** out of content lists/cards:

@@ -81,6 +81,11 @@ component that carries **no JavaScript at all**. The prev/next arrows are
 "disabled at both ends" behaviour comes from `:disabled` — none of it is computed
 in script.
 
+Each edge fades only when something is scrolled past it: at rest the first card is
+sharp and only the right edge is faded, and the reverse once you reach the end. That
+half is a scroll-driven animation over the mask, guarded by `@supports`; where it is
+unsupported both edges stay faded, which is what the plain mask does on its own.
+
 The arrows are an enhancement, not the mechanism. They are Chromium-only today, so
 elsewhere they are simply absent and the row is scrolled by trackpad, swipe,
 shift+wheel or the scrollbar. That is why the scroller is `overflow-x: auto` and
@@ -112,7 +117,8 @@ Two limits worth knowing before you reach for it:
 `wrapperClass` lands on the **wrapper**, not on the scrolling row — the arrows are
 positioned against that wrapper, so a layout class on the row would widen the cards and
 leave the arrows pinned to the narrow box. Inside a `prose` column the scroller inherits
-its 65ch width; pass `bleed` to break out of it:
+its 65ch width; pass `bleed` to break out of it, which also gives the row a gutter so the
+first card does not touch the edge of the window:
 
 ```twig
 {{ pages_list('type:blog', 9, 'publishedAt ↓', 'horizontalScroll', wrapperClass: 'bleed') }}
@@ -123,6 +129,7 @@ Three custom properties theme it:
 | Property                        | Default   | Effect                              |
 | ------------------------------- | --------- | ----------------------------------- |
 | `--horizontal-scroll-fade`      | `2rem`    | width of the edge fade              |
+| `--horizontal-scroll-gutter`    | `1rem`    | space before the first card, `bleed` only |
 | `--horizontal-scroll-thumb`     | `#d1d5db` | scrollbar thumb, where it is shown  |
 | `--horizontal-scroll-previous` / `--horizontal-scroll-next` | from translations | the arrows' accessible names |
 

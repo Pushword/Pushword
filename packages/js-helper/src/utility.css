@@ -27,6 +27,17 @@
   max-width: none;
 }
 
+/* `bleed` and `img-stretched` are 100vw wide, and 100vw counts the classic vertical
+   scrollbar — so on any platform whose scrollbars take up space (Windows, Linux
+   without overlay scrollbars) they are a scrollbar wider than the content box and
+   the page gains an unwanted horizontal scroll of exactly that much.
+   `clip` rather than `hidden`: it does not create a scroll container, so sticky
+   positioning inside keeps working, and it does not force the other axis to auto.
+   Scoped with :has() so only a page that actually bleeds is affected. */
+body:has(.bleed, .img-stretched) {
+  overflow-x: clip;
+}
+
 @utility bleed-disable {
   width: inherit;
   margin-inline-start: inherit;
@@ -58,6 +69,23 @@
 .prose span[data-rot]:hover:not(.not-prose span[data-rot]:hover),
 .prose .link:hover:not(.not-prose .link:hover) {
   opacity: 0.75;
+}
+
+/* How far each edge of the scroller is faded. Driven by the scroll position, so a
+   side with nothing scrolled past it stays sharp. `initial-value` must be
+   computationally independent — no rem — and doubles as the fallback wherever
+   scroll-driven animations are missing: both edges faded, as before.
+   Keep the 32px in step with the 2rem default of `--horizontal-scroll-fade`. */
+@property --horizontal-scroll-fade-start {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 32px;
+}
+
+@property --horizontal-scroll-fade-end {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 32px;
 }
 
 /* Horizontal scroller — the `horizontalScroll` view of `pages_list()`, and any
@@ -92,12 +120,14 @@
   scroll-behavior: smooth;
 
   /* The fade the JavaScript used to inject as gradient <div>s. The build does not
-     autoprefix it, so both spellings are written from one definition. */
+     autoprefix it, so both spellings are written from one definition.
+     Each side is driven by the scroll position below, so an edge with nothing
+     behind it is not faded — at rest the first card is fully opaque. */
   --horizontal-scroll-mask: linear-gradient(
     to right,
     transparent 0,
-    #000 var(--horizontal-scroll-fade),
-    #000 calc(100% - var(--horizontal-scroll-fade)),
+    #000 var(--horizontal-scroll-fade-start),
+    #000 calc(100% - var(--horizontal-scroll-fade-end)),
     transparent 100%
   );
   -webkit-mask-image: var(--horizontal-scroll-mask);
@@ -115,6 +145,52 @@
 .horizontal-scroll > * {
   flex: none;
   scroll-snap-align: start;
+}
+
+/* A row that spans the window has nothing between the first card and the edge of
+   the screen. Only the full-bleed case needs the gutter: inside a prose column the
+   cards should stay aligned with the paragraphs around them.
+   `scroll-padding` has to grow with it, or a snapped card hides under the gutter. */
+.horizontal-scroll-wrap.bleed .horizontal-scroll {
+  padding-inline: var(--horizontal-scroll-gutter, 1rem);
+  scroll-padding-inline: calc(var(--horizontal-scroll-gutter, 1rem) + var(--horizontal-scroll-fade));
+}
+
+/* Fade only the side that has something behind it. At rest the first card is
+   sharp and only the right edge is faded; at the end it is the other way round.
+
+   The @supports guard is load-bearing, not decorative: with an unrecognised
+   `animation-timeline` the animation would fall back to the document timeline
+   with a zero duration and `both` would snap it straight to its end state —
+   left permanently faded, right never. No support must mean no animation. */
+@supports (animation-timeline: scroll(self inline)) {
+  .horizontal-scroll {
+    animation:
+      horizontal-scroll-fade-in linear both,
+      horizontal-scroll-fade-out linear both;
+    animation-timeline: scroll(self inline), scroll(self inline);
+    animation-range:
+      0 var(--horizontal-scroll-fade),
+      calc(100% - var(--horizontal-scroll-fade)) 100%;
+  }
+}
+
+@keyframes horizontal-scroll-fade-in {
+  from {
+    --horizontal-scroll-fade-start: 0px;
+  }
+  to {
+    --horizontal-scroll-fade-start: var(--horizontal-scroll-fade);
+  }
+}
+
+@keyframes horizontal-scroll-fade-out {
+  from {
+    --horizontal-scroll-fade-end: var(--horizontal-scroll-fade);
+  }
+  to {
+    --horizontal-scroll-fade-end: 0px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -173,6 +249,71 @@
   .horizontal-scroll::scroll-button(inline-end) {
     content: '›' / var(--horizontal-scroll-next, 'Next');
     right: 0.35rem;
+  }
+}
+
+/* Opt-in dots, via `wrapperClass: 'horizontal-scroll-dots'`. Same Chromium-only
+   branch as the arrows, so it adds no risk: elsewhere the whole block is dropped
+   and the scroller keeps its scrollbar.
+
+   `:target-current` matches a single marker, which is wrong here — four cards are
+   visible at once, so the last dots would be unreachable and clicking them a
+   silent no-op. Instead each card carries a view-timeline on its own visibility
+   that animates `--horizontal-scroll-visible`; a `::scroll-marker` inherits from
+   its originating card and uses it as fill opacity. The card never moves, it only
+   carries a number. Every visible card's dot is filled, half-visible ones
+   half-filled — so a dead click reads as "you are already here". */
+@property --horizontal-scroll-visible {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@supports selector(::scroll-marker-group) {
+  .horizontal-scroll-dots .horizontal-scroll {
+    scroll-marker-group: after;
+  }
+
+  .horizontal-scroll-dots .horizontal-scroll::scroll-marker-group {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.9rem 0 0.2rem;
+  }
+
+  .horizontal-scroll-dots .horizontal-scroll > * {
+    animation: horizontal-scroll-card-visible linear both;
+    animation-timeline: view(inline);
+  }
+
+  .horizontal-scroll-dots .horizontal-scroll > *::scroll-marker {
+    content: '';
+    width: 0.6rem;
+    height: 0.6rem;
+    border: 1px solid #9ca3af;
+    border-radius: 50%;
+    background: rgb(31 41 55 / var(--horizontal-scroll-visible));
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .horizontal-scroll-dots .horizontal-scroll > *::scroll-marker:target-current {
+    border-color: #1f2937;
+  }
+}
+
+@keyframes horizontal-scroll-card-visible {
+  entry 0% {
+    --horizontal-scroll-visible: 0;
+  }
+  entry 100% {
+    --horizontal-scroll-visible: 1;
+  }
+  exit 0% {
+    --horizontal-scroll-visible: 1;
+  }
+  exit 100% {
+    --horizontal-scroll-visible: 0;
   }
 }
 
