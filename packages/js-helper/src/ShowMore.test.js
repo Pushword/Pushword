@@ -365,6 +365,20 @@ describe('scrollToHash() with a text fragment directive', () => {
     makeBlock()
     expect(() => ShowMore.scrollToHash('#:~:text=%E0%A4%A')).not.toThrow()
   })
+
+  it('does not open when the text is blank (text=%20)', () => {
+    const { wrapper, content } = makeBlock()
+    content.textContent = 'some content'
+    ShowMore.scrollToHash('#:~:text=%20')
+    expect(wrapper.dataset.showMoreOpen).toBeUndefined()
+  })
+
+  it('does not open when the text only appears in the block header', () => {
+    const { wrapper, btn } = makeBlock()
+    btn.textContent = 'title only in header'
+    ShowMore.scrollToHash('#:~:text=title%20only%20in%20header')
+    expect(wrapper.dataset.showMoreOpen).toBeUndefined()
+  })
 })
 
 describe('_openNavigationTextFragment()', () => {
@@ -385,6 +399,25 @@ describe('_openNavigationTextFragment()', () => {
     })
     ShowMore._openNavigationTextFragment()
     expect(wrapper.dataset.showMoreOpen).toBeUndefined()
+  })
+
+  it('does nothing when there is no navigation entry', () => {
+    makeBlock()
+    vi.stubGlobal('performance', { getEntriesByType: () => [] })
+    expect(() => ShowMore._openNavigationTextFragment()).not.toThrow()
+  })
+
+  it('skips the lookup when location.hash still carries the directive', () => {
+    makeBlock()
+    const getEntriesByType = vi.fn(() => [])
+    vi.stubGlobal('performance', { getEntriesByType })
+    location.hash = '#:~:text=old%20browser'
+    try {
+      ShowMore._openNavigationTextFragment()
+      expect(getEntriesByType).not.toHaveBeenCalled()
+    } finally {
+      location.hash = ''
+    }
   })
 })
 
