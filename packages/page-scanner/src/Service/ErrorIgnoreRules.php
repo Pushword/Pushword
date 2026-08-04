@@ -62,21 +62,19 @@ final class ErrorIgnoreRules
      */
     public static function forPage(Page $page): array
     {
-        $declared = $page->getCustomProperty(self::PAGE_PROPERTY);
+        $property = $page->getCustomProperty(self::PAGE_PROPERTY);
+        $declarations = \is_array($property) ? $property : [$property];
 
-        $patterns = [];
-        foreach (\is_array($declared) ? $declared : [$declared] as $pattern) {
-            if (\is_string($pattern) && '' !== trim($pattern)) {
-                $patterns[] = trim($pattern);
-            }
-        }
-
+        // A page can carry several comments, and one comment can list several patterns.
         preg_match_all(self::INLINE_PATTERN, $page->mainContent, $matches);
         foreach ($matches[1] as $declaration) {
-            foreach (explode(',', $declaration) as $pattern) {
-                if ('' !== trim($pattern)) {
-                    $patterns[] = trim($pattern);
-                }
+            $declarations = [...$declarations, ...explode(',', $declaration)];
+        }
+
+        $patterns = [];
+        foreach ($declarations as $declaration) {
+            if (\is_string($declaration) && '' !== ($pattern = trim($declaration))) {
+                $patterns[] = $pattern;
             }
         }
 

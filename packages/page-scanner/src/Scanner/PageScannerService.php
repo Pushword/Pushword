@@ -127,25 +127,25 @@ final class PageScannerService
             }
 
             if (Response::HTTP_OK !== $response->getStatusCode()) {
-                $this->addError($page, sprintf('error occurred generating the page (%d)', $response->getStatusCode()));
+                $this->addRenderError($page, sprintf('error occurred generating the page (%d)', $response->getStatusCode()));
 
                 return '';
             }
 
             $content = $response->getContent();
             if (false === $content) {
-                $this->addError($page, 'error occurred generating the page (empty response)');
+                $this->addRenderError($page, 'error occurred generating the page (empty response)');
 
                 return '';
             }
 
             return $content;
         } catch (RuntimeError|SyntaxError $twigError) {
-            $this->addError($page, $this->errorExtractor->formatErrorMessage($twigError));
+            $this->addRenderError($page, $this->errorExtractor->formatErrorMessage($twigError));
 
             return '';
         } catch (Throwable $exception) {
-            $this->addError($page, $this->errorExtractor->formatGenericErrorMessage($exception));
+            $this->addRenderError($page, $this->errorExtractor->formatGenericErrorMessage($exception));
 
             return '';
         }
@@ -163,9 +163,10 @@ final class PageScannerService
     }
 
     /**
-     * Every error this service raises itself is a page that would not render.
+     * The only finding this service raises itself: the page did not render, so
+     * every scanner below it was handed an empty HTML.
      */
-    private function addError(Page $page, string $message): void
+    private function addRenderError(Page $page, string $message): void
     {
         if (ErrorIgnoreRules::matches($this->pageIgnorePatterns, ScanErrorCode::RenderError->value, $message)) {
             return;
