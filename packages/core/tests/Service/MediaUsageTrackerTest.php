@@ -9,7 +9,10 @@ use Pushword\Core\Entity\MediaUsage;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\MediaUsageRepository;
+use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * The listener half of the feature: usage rows have to follow a page write without
@@ -18,9 +21,13 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 #[Group('integration')]
 final class MediaUsageTrackerTest extends KernelTestCase
 {
+    use PathTrait;
+
     private const string HOST = 'localhost.dev';
 
     private const string SLUG = 'media-usage-tracker-fixture';
+
+    private const string DISPOSABLE_FILE_NAME = 'media-usage-disposable.png';
 
     private EntityManagerInterface $entityManager;
 
@@ -96,6 +103,56 @@ final class MediaUsageTrackerTest extends KernelTestCase
         self::assertSame([], $this->mediaUsageRepository->findMediaIdsForPage($pageId));
     }
 
+    /**
+     * A page still pointing at a file that was renamed under it renders that file, so
+     * it still uses it — the usage map answers historical names too.
+     */
+    public function testAPageReferencingARenamedFileStillCountsAsUsingIt(): void
+    {
+        $page = $this->persistPage('Look ![](/media/default/1.jpg)');
+
+        $this->media->setSlugForce('renamed-under-the-page');
+        $this->entityManager->flush();
+        self::assertSame('renamed-under-the-page.jpg', $this->media->getFileName());
+
+        // Re-save the page without touching the reference: it still reads 1.jpg.
+        $page->mainContent = 'Still ![](/media/default/1.jpg)';
+        $this->entityManager->flush();
+
+        self::assertContains((int) $this->media->id, $this->mediaUsageRepository->findMediaIdsForPage((int) $page->id));
+    }
+
+    /** Its rows point at nothing, and SQLite does not enforce the cascade that would drop them. */
+    public function testRemovingAReferencedMediaRemovesItsRows(): void
+    {
+        $orphanMedia = $this->createDisposableMedia();
+        $mediaId = (int) $orphanMedia->id;
+        $page = $this->persistPage('Look ![](/media/default/'.$orphanMedia->getFileName().')');
+
+        self::assertContains($mediaId, $this->mediaUsageRepository->findMediaIdsForPage((int) $page->id));
+
+        $this->entityManager->remove($orphanMedia);
+        $this->entityManager->flush();
+
+        self::assertSame([], $this->mediaUsageRepository->findSourcesByPageForMedia($mediaId));
+    }
+
+    /** The admin's "used on" panel reads this; it used to be a LIKE over mainContent. */
+    public function testGetPagesUsingMediaAnswersFromTheStoredRelation(): void
+    {
+        $page = $this->persistPage('Look ![](/media/default/1.jpg)');
+
+        /** @var PageRepository $pageRepository */
+        $pageRepository = self::getContainer()->get(PageRepository::class);
+        $slugs = array_map(static fn (Page $found): string => $found->slug, $pageRepository->getPagesUsingMedia($this->media));
+
+        self::assertContains($page->slug, $slugs);
+        self::assertNotContains($page->slug, array_map(
+            static fn (Page $found): string => $found->slug,
+            $pageRepository->getPagesUsingMedia($this->media, 'admin-block-editor.test'),
+        ), 'the host argument scopes the answer');
+    }
+
     public function testTheMediaInheritsTheTagsOfThePagesUsingIt(): void
     {
         $page = $this->persistPage('Look ![](/media/default/1.jpg)');
@@ -168,6 +225,30 @@ final class MediaUsageTrackerTest extends KernelTestCase
         return $page;
     }
 
+    /** A media of this test's own, so removing it cannot take a fixture with it. */
+    private function createDisposableMedia(): Media
+    {
+        /** @var string $projectDir */
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+        $mediaDir = $this->getMediaDir();
+
+        new Filesystem()->copy($mediaDir.'/piedweb-logo.png', $mediaDir.'/'.self::DISPOSABLE_FILE_NAME, true);
+
+        $media = new Media();
+        $media->setProjectDir($projectDir);
+        $media->setStoreIn($mediaDir);
+        $media->setMimeType('image/png');
+        $media->setDimensions([1000, 1000]);
+        $media->setFileName(self::DISPOSABLE_FILE_NAME);
+        $media->setAlt('Media usage disposable');
+        $media->setHash();
+
+        $this->entityManager->persist($media);
+        $this->entityManager->flush();
+
+        return $media;
+    }
+
     private function getMedia(string $fileName): Media
     {
         $media = $this->entityManager->getRepository(Media::class)->findOneBy(['fileName' => $fileName]);
@@ -201,6 +282,20 @@ final class MediaUsageTrackerTest extends KernelTestCase
         }
 
         $this->media->setTags('');
+
+        if ('1.jpg' !== $this->media->getFileName()) {
+            $this->media->setSlugForce('1');
+        }
+
         $this->entityManager->flush();
+
+        $disposable = $this->entityManager->getRepository(Media::class)
+            ->findOneBy(['fileName' => self::DISPOSABLE_FILE_NAME]);
+        if (null !== $disposable) {
+            $this->entityManager->remove($disposable);
+            $this->entityManager->flush();
+        }
+
+        new Filesystem()->remove($this->getMediaDir().'/'.self::DISPOSABLE_FILE_NAME);
     }
 }

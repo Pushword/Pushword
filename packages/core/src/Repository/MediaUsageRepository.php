@@ -62,12 +62,7 @@ final class MediaUsageRepository extends ServiceEntityRepository
 
         $this->insert($rows);
 
-        $touched = [];
-        foreach ([...array_values($before), ...array_values($after)] as $usage) {
-            $touched[$usage['mediaId']] = true;
-        }
-
-        return array_keys($touched);
+        return $this->mediaIdsOf([...array_values($before), ...array_values($after)]);
     }
 
     /** @return list<int> the media ids that were referenced by this page */
@@ -79,8 +74,18 @@ final class MediaUsageRepository extends ServiceEntityRepository
             $this->getEntityManager()->getConnection()->delete('media_usage', ['page_id' => $pageId]);
         }
 
+        return $this->mediaIdsOf(array_values($before));
+    }
+
+    /**
+     * @param list<array{mediaId: int, source: string}> $usages
+     *
+     * @return list<int>
+     */
+    private function mediaIdsOf(array $usages): array
+    {
         $mediaIds = [];
-        foreach ($before as $usage) {
+        foreach ($usages as $usage) {
             $mediaIds[$usage['mediaId']] = true;
         }
 
@@ -214,7 +219,6 @@ final class MediaUsageRepository extends ServiceEntityRepository
         $tagsByMedia = [];
         foreach ($rows as $row) {
             $mediaId = (int) $row['media_id'];
-            $tagsByMedia[$mediaId] ??= [];
 
             foreach ($this->decodeTags($row['tags']) as $tag) {
                 $tagsByMedia[$mediaId][$tag] = true;

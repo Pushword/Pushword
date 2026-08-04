@@ -640,6 +640,16 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             ->getResult();
     }
 
+    /** For callers that only report the number — hydrating every orphan to count it is the thing this feature exists to stop doing. */
+    public function countNotReferencedByAPage(): int
+    {
+        return (int) $this->createQueryBuilder('m')
+            ->select('COUNT(m.id)')
+            ->where($this->getNotReferencedByAPageDql('m'))
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     /**
      * The derived tags currently stored for these media, to tell an update that is
      * needed from one that would rewrite the same value.

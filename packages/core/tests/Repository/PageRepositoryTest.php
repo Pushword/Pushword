@@ -459,4 +459,53 @@ final class PageRepositoryTest extends KernelTestCase
         self::assertInstanceOf(PersistentCollection::class, $afterClear);
         self::assertTrue($afterClear->isInitialized());
     }
+
+    /**
+     * The rebuild walks the corpus by keyset, not offset. A batch smaller than the
+     * corpus is where that either walks the whole thing or silently truncates it.
+     */
+    public function testFindContentBatchAfterWalksTheWholeCorpusOneBatchAtATime(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        $expected = array_map(static fn (Page $page): ?int => $page->id, $pageRepo->findAll());
+        sort($expected);
+        self::assertGreaterThan(2, \count($expected), 'fixtures must provide more pages than one batch');
+
+        $seen = [];
+        $afterId = 0;
+        while ([] !== ($batch = $pageRepo->findContentBatchAfter($afterId, 2))) {
+            self::assertLessThanOrEqual(2, \count($batch));
+
+            foreach ($batch as $row) {
+                $seen[] = $row['id'];
+                $afterId = $row['id'];
+            }
+        }
+
+        self::assertSame($expected, $seen, 'every page is visited exactly once, in id order');
+    }
+
+    public function testFindContentBatchAfterReturnsTheRawMaterialAUsageScanReads(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        // The homepage fixture carries a mainImage (AppFixtures).
+        $homepage = $pageRepo->findOneBy(['slug' => 'homepage']);
+        self::assertNotNull($homepage);
+        self::assertNotNull($homepage->mainImage);
+
+        $batch = $pageRepo->findContentBatchAfter((int) $homepage->id - 1, 1);
+
+        self::assertSame($homepage->id, $batch[0]['id']);
+        self::assertSame($homepage->mainImage->id, $batch[0]['mainImageId'], 'the relation comes back as a plain id');
+        self::assertSame($homepage->mainContent, $batch[0]['mainContent']);
+        self::assertSame($homepage->customProperties, $batch[0]['customProperties'], 'the JSON column arrives decoded');
+    }
 }

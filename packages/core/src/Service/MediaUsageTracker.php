@@ -83,13 +83,13 @@ final readonly class MediaUsageTracker
         $stored = $this->mediaRepository->findPageTags($mediaIds);
 
         foreach ($mediaIds as $mediaId) {
-            $pageTags = $computed[$mediaId] ?? [];
             // A media absent from the stored snapshot was deleted between the two
             // queries; writing its tags back would resurrect nothing but a no-op.
             if (! isset($stored[$mediaId])) {
                 continue;
             }
 
+            $pageTags = $computed[$mediaId] ?? [];
             if ($stored[$mediaId] === $pageTags) {
                 continue;
             }

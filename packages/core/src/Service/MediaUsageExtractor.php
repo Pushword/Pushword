@@ -6,6 +6,8 @@ use Pushword\Core\Entity\MediaUsage;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 
+use function Safe\json_encode;
+
 /**
  * Which media a page references, and through what.
  *
@@ -65,7 +67,7 @@ final readonly class MediaUsageExtractor
         if ([] !== $customProperties) {
             $serialized = json_encode($customProperties, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
 
-            foreach ($this->resolve(false === $serialized ? '' : $serialized, $index) as $mediaId) {
+            foreach ($this->resolve($serialized, $index) as $mediaId) {
                 $usages[] = ['mediaId' => $mediaId, 'source' => MediaUsage::SOURCE_PROPERTY];
             }
         }

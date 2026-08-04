@@ -83,7 +83,7 @@ final readonly class MediaUsageRebuildCommand
         // usage has inherited tags to drop.
         $this->mediaUsageTracker->refreshPageTags($this->mediaRepository->getAllIds());
 
-        $unusedCount = \count($this->mediaRepository->findNotReferencedByAPage());
+        $unusedCount = $this->mediaRepository->countNotReferencedByAPage();
 
         if ($agentMode) {
             $this->writeAgentJson($output, [
