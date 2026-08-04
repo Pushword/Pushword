@@ -855,11 +855,55 @@ php bin/console pw:newsletter:bounces
 ```
 
 On a shared host this needs nothing else: a bounce is a file, delivered next to
-every other mailbox, so there is no IMAP extension to compile, no webhook to
-expose and no credentials to store. A mailbox that only exists on a remote IMAP
-server is out of scope, the path has to be readable from the filesystem.
+every other mailbox, so there is no extension to compile, no webhook to expose
+and no credentials to store.
 
-What the command does with what it reads:
+### When the mailbox is not on this machine
+
+The filesystem premise holds for a site whose PHP and whose mail live on the same
+host. It fails for the other common arrangement — the app on a VPS or in a
+container, the mail at a provider — where the envelope sender's mailbox is
+reachable by IMAP and by nothing else. Point the command at it instead:
+
+```shell
+composer require webklex/php-imap
+```
+
+```yaml
+newsletter:
+  bounce_imap_dsn: '%env(NEWSLETTER_BOUNCE_IMAP_DSN)%'
+```
+
+```dotenv
+NEWSLETTER_BOUNCE_IMAP_DSN=imaps://bounce%40example.com:secret@imap.example.com:993/INBOX
+```
+
+The folder is optional and defaults to `INBOX`; `imap://` on port 143 uses
+STARTTLS instead. Percent-encode the credentials — a generated password holds
+`@` and `/` often enough that not doing so authenticates as somebody else.
+
+Everything below is unchanged: the same parsing, the same `5.x.x`-only rule, the
+same multi-audience drop. What replaces the `cur/` move is `\Seen`, and the
+command searches `UNSEEN` on the next run — same property, same consequence when
+it fails.
+
+Two caveats a maildir does not have:
+
+- **Set one or the other, never both.** They are two ways to read one mailbox,
+  and configuring both stops the command with a message saying so. The check
+  happens when the command runs rather than when the container builds, because
+  an `%env()%` DSN is still an unresolved placeholder at build time and would
+  read as set whatever the environment holds.
+- **Nothing else may read that mailbox.** That is already the premise — a
+  mailbox nobody reads by hand — but anything that marks messages seen, a webmail
+  session included, takes them out of the command's reach. Pointing the DSN at a
+  real inbox is a temptation a filesystem path never offered.
+
+One thing it does not reproduce: the maildir reads 64 KB off disk per message and
+stops, while IMAP hands back what it asked for in one piece — so a returned
+message still crosses the wire whole, and only the parse is bounded.
+
+### What the command does with what it reads
 
 - it parses the `message/delivery-status` part, never the human-readable one,
   which the remote server writes in its own language and layout,
@@ -870,10 +914,21 @@ What the command does with what it reads:
   the address, not one of the lists,
 - a bounce for somebody on no list is counted and reported, never acted on. The
   same mailbox collects the failures of everything else the app sends,
-- a message it has read is moved to `cur/` with the seen flag, which is what
-  keeps the next run from reading it again. One that cannot be moved is only
-  counted: re-reading it costs nothing, since marking an address that already
-  bounced is a no-op.
+- a message it has read is moved to `cur/` with the seen flag — or flagged
+  `\Seen` over IMAP — which is what keeps the next run from reading it again. One
+  that cannot be marked is only counted: re-reading it costs nothing, since
+  marking an address that already bounced is a no-op.
+
+### Hearing about it
+
+`--notify=ops@example.com` mails the summary, **only when something actually
+moved** — at least one address dropped or one permanent failure recorded. The
+command runs four times an hour; a site that mails its operator every run trains
+them to filter it, which costs the one message that mattered. Zero movement, zero
+mail, and `--dry-run` never mails at all.
+
+The sender is `notification_email_from`, falling back to `noreply@<host>` like
+every other notification the install sends.
 
 A bounced contact is terminal. `resubscribe()` refuses to revive one, because a
 click says nothing about a mail server's refusal; only a new explicit opt-in
@@ -990,12 +1045,16 @@ Posting from another origin needs that origin allow-listed, below.
 newsletter:
   send_batch: 50
   bounce_maildir: /home/user/mail/example.com/bounce
+  # or, when that mailbox only exists on a remote server:
+  # bounce_imap_dsn: '%env(NEWSLETTER_BOUNCE_IMAP_DSN)%'
   newsletter_possible_origins: 'https://example.com https://www.example.com'
 ```
 
 `bounce_maildir` is where `pw:newsletter:bounces` reads delivery failures from,
 the mailbox `framework.mailer.envelope.sender` points at. Null by default, which
-leaves the command with nothing to read.
+leaves the command with nothing to read. `bounce_imap_dsn` reads the same mailbox
+over IMAP when it is not on this machine (see [Bounces](#bounces)); set one or
+the other, never both.
 
 `newsletter_possible_origins` is the CORS allow-list for the subscribe endpoint —
 a statically generated site posts to the origin where PHP runs. It falls back to

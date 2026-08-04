@@ -2,29 +2,29 @@
 
 namespace Pushword\Newsletter\Tests\Command;
 
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
+use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Mime\Email;
 
 #[Group('integration')]
 final class NewsletterBouncesCommandTest extends AbstractNewsletterTestCase
 {
+    use MailerAssertionsTrait;
+
     private string $maildir = '';
 
-    #[Override]
     protected function setUp(): void
     {
         parent::setUp();
-
         $this->maildir = sys_get_temp_dir().'/pw-bounces-'.bin2hex(random_bytes(6));
         mkdir($this->maildir.'/new', 0o755, true);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         foreach (glob($this->maildir.'/{new,cur}/*', \GLOB_BRACE) ?: [] as $file) {
@@ -49,6 +49,7 @@ final class NewsletterBouncesCommandTest extends AbstractNewsletterTestCase
         $tester = $this->runBounces(['--maildir' => $this->maildir, '--format' => 'agent']);
 
         $tester->assertCommandIsSuccessful();
+
         $this->entityManager->refresh($contact);
         self::assertSame(ContactStatus::Bounced, $contact->status);
         self::assertNotNull($contact->bouncedAt);
@@ -129,6 +130,86 @@ final class NewsletterBouncesCommandTest extends AbstractNewsletterTestCase
         self::assertSame(Command::FAILURE, $tester->getStatusCode());
     }
 
+    /**
+     * The command runs four times an hour. A recap on every one of them trains
+     * its reader to filter it, which costs the one message that mattered.
+     */
+    public function testTheRecapIsMailedOnlyWhenSomethingMoved(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'dead@example.tld');
+        $this->deliver('1785786812.M1P1.host', $this->bounce('dead@example.tld', '5.1.1'));
+
+        $tester = $this->runBounces([
+            '--maildir' => $this->maildir,
+            '--notify' => 'ops@example.tld',
+            '--format' => 'agent',
+        ]);
+
+        self::assertEmailCount(1);
+        self::assertTrue($this->decode($tester)['notified']);
+
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertSame('ops@example.tld', $email->getTo()[0]->getAddress());
+        self::assertStringContainsString('1 address(es) dropped', (string) $email->getTextBody());
+    }
+
+    public function testAnEmptyRunMailsNothing(): void
+    {
+        $tester = $this->runBounces([
+            '--maildir' => $this->maildir,
+            '--notify' => 'ops@example.tld',
+            '--format' => 'agent',
+        ]);
+
+        self::assertEmailCount(0);
+        self::assertFalse($this->decode($tester)['notified']);
+    }
+
+    /** A mailbox read to decide whether to let it act must not mail anybody about it. */
+    public function testADryRunMailsNothing(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'dead@example.tld');
+        $this->deliver('1785786812.M1P1.host', $this->bounce('dead@example.tld', '5.1.1'));
+
+        $tester = $this->runBounces([
+            '--maildir' => $this->maildir,
+            '--notify' => 'ops@example.tld',
+            '--dry-run' => true,
+            '--format' => 'agent',
+        ]);
+
+        self::assertEmailCount(0);
+        self::assertFalse($this->decode($tester)['notified']);
+    }
+
+    /** A message that was not a bounce moved nothing, so it is not worth a mail either. */
+    public function testAMailboxHoldingNoBounceMailsNothing(): void
+    {
+        $this->deliver('1785786812.M1P1.host', "From: someone@example.tld\r\nSubject: Hello\r\n\r\nNot a report.");
+
+        $tester = $this->runBounces([
+            '--maildir' => $this->maildir,
+            '--notify' => 'ops@example.tld',
+            '--format' => 'agent',
+        ]);
+
+        self::assertSame(1, $this->decode($tester)['scanned']);
+        self::assertEmailCount(0);
+        self::assertFalse($this->decode($tester)['notified']);
+    }
+
+    /** @return array<array-key, mixed> */
+    private function decode(CommandTester $tester): array
+    {
+        $decoded = json_decode(trim($tester->getDisplay()), true);
+        self::assertIsArray($decoded);
+
+        return $decoded;
+    }
+
     private function deliver(string $name, string $content): void
     {
         file_put_contents($this->maildir.'/new/'.$name, $content);
@@ -136,31 +217,7 @@ final class NewsletterBouncesCommandTest extends AbstractNewsletterTestCase
 
     private function bounce(string $email, string $status): string
     {
-        return str_replace("\n", "\r\n", <<<MAIL
-            From: MAILER-DAEMON@relay.example.tld (Mail Delivery System)
-            Subject: Undelivered Mail Returned to Sender
-            To: bounce@example.tld
-            MIME-Version: 1.0
-            Content-Type: multipart/report; report-type=delivery-status;
-            \tboundary="BOUNDARY"
-
-            --BOUNDARY
-            Content-Type: text/plain; charset=us-ascii
-
-            Your message could not be delivered.
-
-            --BOUNDARY
-            Content-Type: message/delivery-status
-
-            Reporting-MTA: dns; relay.example.tld
-
-            Final-Recipient: rfc822; {$email}
-            Action: failed
-            Status: {$status}
-            Diagnostic-Code: smtp; 550 no such user
-
-            --BOUNDARY--
-            MAIL);
+        return BounceFixture::bounce($email, $status);
     }
 
     /** @param array<string, mixed> $input */

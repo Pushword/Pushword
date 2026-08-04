@@ -112,7 +112,8 @@
     "symfony/stopwatch": "^8.0",
     "tomasvotruba/type-coverage": "^2.2",
     "tomasvotruba/unused-public": "^2.0",
-    "vincentlanglet/twig-cs-fixer": "*"
+    "vincentlanglet/twig-cs-fixer": "*",
+    "webklex/php-imap": "^6.2"
   },
   "extra": {
     "branch-alias": {

@@ -41,6 +41,10 @@ class Configuration implements ConfigurationInterface
                         ->defaultNull()
                         ->info('Absolute path to the maildir delivery failures come back to, which is the mailbox `framework.mailer.envelope.sender` points at. `pw:newsletter:bounces` reads `new/` there and files what it read into `cur/`. Null leaves the command with nothing to read.')
                     ->end()
+                    ->scalarNode('bounce_imap_dsn')
+                        ->defaultNull()
+                        ->info('The same mailbox when it only exists on a remote server: `imaps://user:password@host:993/INBOX`, the folder optional. `pw:newsletter:bounces` searches UNSEEN there and sets \Seen on what it read, which is the IMAP equivalent of the maildir `cur/` move. Needs `webklex/php-imap`. Set this or `bounce_maildir`, never both.')
+                    ->end()
                 ->end()
         ;
 

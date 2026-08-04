@@ -2,8 +2,11 @@
 
 namespace Pushword\Newsletter\Command;
 
+use InvalidArgumentException;
 use Pushword\Core\Command\AgentOutputTrait;
+use Pushword\Core\Service\Email\NotificationEmailSender;
 use Pushword\Newsletter\Service\BounceCollector;
+use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
@@ -39,30 +42,29 @@ final class NewsletterBouncesCommand
     public function __construct(
         private readonly BounceCollector $bounceCollector,
         private readonly LockFactory $lockFactory,
+        private readonly NotificationEmailSender $emailSender,
     ) {
     }
 
     public function __invoke(
         InputInterface $input,
         OutputInterface $output,
-        #[Option(description: 'Maildir to read, instead of the configured one', name: 'maildir')]
+        #[Option(description: 'Maildir to read, instead of the configured mailbox', name: 'maildir')]
         ?string $maildir = null,
         #[Option(description: 'Report what would happen, marking nobody and filing nothing', name: 'dry-run')]
         bool $dryRun = false,
+        #[Option(description: 'Mail the summary to this address, and only when something moved', name: 'notify')]
+        ?string $notify = null,
         #[Option(description: 'Output format: auto (compact JSON when an AI agent is detected), agent (force JSON), or text', name: 'format')]
         string $format = 'auto',
     ): int {
         $this->agentMode = $this->isAgentFormat($format);
         $io = new SymfonyStyle($input, $output);
 
-        $mailbox = $this->bounceCollector->maildir($maildir);
-
-        if (null === $mailbox) {
-            return $this->fail($output, $io, 'no bounce mailbox configured', 'Set `newsletter.bounce_maildir` (the mailbox `framework.mailer.envelope.sender` points at) or pass --maildir.');
-        }
-
-        if (! is_dir($mailbox)) {
-            return $this->fail($output, $io, 'maildir not found', \sprintf('No maildir at "%s".', $mailbox));
+        try {
+            $source = $this->bounceCollector->source($maildir, $dryRun);
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            return $this->fail($output, $io, 'no readable bounce mailbox', $invalidArgumentException->getMessage());
         }
 
         // Two runs reading the same mailbox would file each other's messages.
@@ -79,13 +81,20 @@ final class NewsletterBouncesCommand
         }
 
         try {
-            $report = $this->bounceCollector->collect($mailbox, $dryRun);
+            $report = $this->bounceCollector->collect($source, $dryRun);
+        } catch (InvalidArgumentException|RuntimeException $throwable) {
+            // A mailbox that cannot be reached — credentials, DNS, a folder that
+            // is not there — is a failed run and not a crash: the next quarter
+            // of an hour tries again, and nothing has been read or marked.
+            return $this->fail($output, $io, 'the mailbox could not be read', $throwable->getMessage());
         } finally {
             $lock->release();
         }
 
+        $notified = $this->notify($notify, $report, $dryRun);
+
         if ($this->agentMode) {
-            $this->writeAgentJson($output, ['tool' => 'pw:newsletter:bounces', 'result' => 'done', 'dryRun' => $dryRun] + $report);
+            $this->writeAgentJson($output, ['tool' => 'pw:newsletter:bounces', 'result' => 'done', 'dryRun' => $dryRun, 'notified' => $notified] + $report);
 
             return Command::SUCCESS;
         }
@@ -96,17 +105,56 @@ final class NewsletterBouncesCommand
             return Command::SUCCESS;
         }
 
-        $io->success(\sprintf(
+        $io->success($this->summary($report, $dryRun));
+
+        $this->detail($io, $report);
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * The recap, sent **only when something actually moved**.
+     *
+     * The command runs four times an hour. A site that mails its operator every
+     * run trains them to filter it, which costs the one message that mattered.
+     * Zero movement, zero mail — and a dry run never mails at all, since it is
+     * the run one performs precisely to decide whether to let it act.
+     *
+     * @param array{scanned: int, failures: int, marked: int, soft: int, foreign: int, unfiled: int, unknown: list<string>} $report
+     *
+     * @return bool whether a mail was handed to the transport
+     */
+    private function notify(?string $notify, array $report, bool $dryRun): bool
+    {
+        if (null === $notify || '' === trim($notify) || $dryRun) {
+            return false;
+        }
+
+        if (0 === $report['marked'] && 0 === $report['failures']) {
+            return false;
+        }
+
+        $envelope = $this->emailSender->resolveEnvelope(null, [trim($notify)]);
+        $body = $this->summary($report, false)."\n".$this->plainDetail($report);
+
+        return $this->emailSender->send(
+            $envelope,
+            \sprintf('%d address(es) dropped from the newsletter', $report['marked']),
+            nl2br(htmlspecialchars($body)),
+            $body,
+        );
+    }
+
+    /** @param array{scanned: int, failures: int, marked: int, ...} $report */
+    private function summary(array $report, bool $dryRun): string
+    {
+        return \sprintf(
             '%d message(s) read, %d permanent failure(s), %d address(es) %s.',
             $report['scanned'],
             $report['failures'],
             $report['marked'],
             $dryRun ? 'would be dropped' : 'dropped',
-        ));
-
-        $this->detail($io, $report);
-
-        return Command::SUCCESS;
+        );
     }
 
     /** @param array{soft: int, foreign: int, unfiled: int, unknown: list<string>, ...} $report */
@@ -129,8 +177,32 @@ final class NewsletterBouncesCommand
         }
 
         if ($report['unfiled'] > 0) {
-            $io->warning(\sprintf('%d message(s) could not be moved to cur/ and will be read again.', $report['unfiled']));
+            $io->warning(\sprintf('%d message(s) could not be marked read and will be read again.', $report['unfiled']));
         }
+    }
+
+    /** @param array{soft: int, foreign: int, unfiled: int, unknown: list<string>, ...} $report */
+    private function plainDetail(array $report): string
+    {
+        $lines = [\sprintf(
+            '%d temporary failure(s) ignored, %d message(s) were not delivery reports.',
+            $report['soft'],
+            $report['foreign'],
+        )];
+
+        if ([] !== $report['unknown']) {
+            $lines[] = \sprintf(
+                '%d bounced address(es) are on no list, and were left alone: %s',
+                \count($report['unknown']),
+                implode(', ', \array_slice($report['unknown'], 0, 10)),
+            );
+        }
+
+        if ($report['unfiled'] > 0) {
+            $lines[] = \sprintf('%d message(s) could not be marked read and will be read again.', $report['unfiled']);
+        }
+
+        return implode("\n", $lines);
     }
 
     private function fail(OutputInterface $output, SymfonyStyle $io, string $error, string $message): int

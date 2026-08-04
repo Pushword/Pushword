@@ -2,48 +2,98 @@
 
 namespace Pushword\Newsletter\Service;
 
+use InvalidArgumentException;
+use Pushword\Newsletter\Bounce\BounceSource;
 use Pushword\Newsletter\Bounce\DeliveryReport;
+use Pushword\Newsletter\Bounce\ImapSource;
+use Pushword\Newsletter\Bounce\MaildirSource;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Webklex\PHPIMAP\ClientManager;
 
 /**
  * Takes off the list the addresses a mail server has refused for good, by
  * reading the mailbox those refusals are delivered to.
  *
- * There is no webhook to receive and no IMAP session to open: on a shared host
- * a bounce is a file, written next to every other mailbox, and reading it needs
- * no extension and no credentials. What makes that possible is the envelope
- * sender pointing at a mailbox nobody reads by hand
- * (`framework.mailer.envelope.sender`), so failures land somewhere a machine
- * owns instead of in the middle of someone's correspondence.
+ * What makes that possible is the envelope sender pointing at a mailbox nobody
+ * reads by hand (`framework.mailer.envelope.sender`), so failures land somewhere
+ * a machine owns instead of in the middle of someone's correspondence.
+ *
+ * On a shared host that mailbox is a directory and reading it needs no extension
+ * and no credentials; with the app on a VPS or in a container it usually only
+ * exists on the provider's server, reachable by IMAP and by nothing else. Which
+ * of the two it is, is a {@see BounceSource}'s business — the parsing, the
+ * `5.x.x`-only rule and the multi-audience drop below are the same either way.
  *
  * Left alone, a dead address stays subscribed and is retried by every campaign,
  * which is how a sending reputation is spent.
  */
 final readonly class BounceCollector
 {
-    /**
-     * A bounce carries the refused message back with it, which can run to
-     * megabytes. Everything read here sits in the report part, written before
-     * that attachment, so the head of the file is enough and a mailbox full of
-     * large returns cannot exhaust memory.
-     */
-    private const int READ_BYTES = 65536;
-
     public function __construct(
         private ContactRepository $contactRepository,
         private ContactManager $contactManager,
         #[Autowire(param: 'pw.newsletter.bounce_maildir')]
         private ?string $configuredMaildir,
+        #[Autowire(param: 'pw.newsletter.bounce_imap_dsn')]
+        private ?string $configuredImapDsn,
     ) {
     }
 
     /** The mailbox to read, an explicit one winning over the configured default. */
     public function maildir(?string $override = null): ?string
     {
-        $maildir = $override ?? $this->configuredMaildir;
+        $maildir = $this->clean($override ?? $this->configuredMaildir);
 
-        return null === $maildir || '' === trim($maildir) ? null : rtrim(trim($maildir), '/');
+        return null === $maildir ? null : rtrim($maildir, '/');
+    }
+
+    public function imapDsn(): ?string
+    {
+        return $this->clean($this->configuredImapDsn);
+    }
+
+    /**
+     * Which mailbox this run reads, and what to say when the answer is neither
+     * or both.
+     *
+     * The exclusion is decided here rather than in `Configuration`, where it
+     * cannot be: `bounce_imap_dsn: '%env(NEWSLETTER_BOUNCE_IMAP_DSN)%'` is still
+     * an unresolved placeholder when the container compiles, so a build-time
+     * rule would read it as set whatever the environment holds — and would
+     * refuse to build every site that keeps both keys with one of them empty.
+     *
+     * @throws InvalidArgumentException with what to do about it
+     */
+    public function source(?string $maildirOverride = null, bool $dryRun = false): BounceSource
+    {
+        $maildir = $this->maildir($maildirOverride);
+
+        // An explicit --maildir is an answer to this very question, so it is not
+        // also an ambiguity with whatever the config holds.
+        $dsn = null === $maildirOverride ? $this->imapDsn() : null;
+
+        if (null !== $maildir && null !== $dsn) {
+            throw new InvalidArgumentException('Set `newsletter.bounce_maildir` or `newsletter.bounce_imap_dsn`, not both: they are two ways to read one mailbox.');
+        }
+
+        if (null !== $dsn) {
+            if (! class_exists(ClientManager::class)) {
+                throw new InvalidArgumentException('Reading bounces over IMAP needs `composer require webklex/php-imap`.');
+            }
+
+            return new ImapSource($dsn, $dryRun);
+        }
+
+        if (null === $maildir) {
+            throw new InvalidArgumentException('Set `newsletter.bounce_maildir` (the mailbox `framework.mailer.envelope.sender` points at), or `newsletter.bounce_imap_dsn` when that mailbox only exists on a remote server, or pass --maildir.');
+        }
+
+        if (! is_dir($maildir)) {
+            throw new InvalidArgumentException(\sprintf('No maildir at "%s".', $maildir));
+        }
+
+        return new MaildirSource($maildir, $dryRun);
     }
 
     /**
@@ -55,31 +105,14 @@ final readonly class BounceCollector
      *
      * @return array{scanned: int, failures: int, marked: int, soft: int, foreign: int, unfiled: int, unknown: list<string>}
      */
-    public function collect(string $maildir, bool $dryRun = false): array
+    public function collect(BounceSource $source, bool $dryRun = false): array
     {
         $report = ['scanned' => 0, 'failures' => 0, 'marked' => 0, 'soft' => 0, 'foreign' => 0, 'unfiled' => 0, 'unknown' => []];
 
-        $unread = $maildir.'/new';
-        $read = $maildir.'/cur';
-
-        if (! is_dir($unread)) {
-            return $report;
-        }
-
-        $files = glob($unread.'/*') ?: [];
-
-        // Oldest first: a maildir name opens with the delivery timestamp, so the
-        // order the server wrote them in is the order they are answered in.
-        sort($files);
-
-        foreach ($files as $file) {
-            if (! is_file($file) || ! is_readable($file)) {
-                continue;
-            }
-
+        foreach ($source->messages() as $key => $raw) {
             ++$report['scanned'];
 
-            $deliveryReport = DeliveryReport::fromRaw((string) file_get_contents($file, false, null, 0, self::READ_BYTES));
+            $deliveryReport = DeliveryReport::fromRaw($raw);
 
             if (! $deliveryReport instanceof DeliveryReport) {
                 ++$report['foreign'];
@@ -92,7 +125,12 @@ final readonly class BounceCollector
                 }
             }
 
-            if (! $this->file($file, $read, $dryRun)) {
+            // Marking read is what keeps a run from repeating itself. What was
+            // not a bounce is marked too, or every run would re-read it for
+            // ever. A message that cannot be marked is only counted: re-reading
+            // it later costs nothing, since marking an address that already
+            // bounced is a no-op.
+            if (! $source->markRead($key)) {
                 ++$report['unfiled'];
             }
         }
@@ -137,30 +175,8 @@ final readonly class BounceCollector
         return $marked;
     }
 
-    /**
-     * Filing a message is what keeps a run from repeating itself: maildir holds
-     * unread mail in `new/`, and a message moved to `cur/` with the seen flag is
-     * one that will not be read again. What was not a bounce is filed too, or
-     * every run would re-read it for ever.
-     *
-     * A message that cannot be filed is only counted. Re-reading it later costs
-     * nothing: marking an address that already bounced is a no-op.
-     */
-    private function file(string $path, string $read, bool $dryRun): bool
+    private function clean(?string $value): ?string
     {
-        if ($dryRun) {
-            return true;
-        }
-
-        if (! is_dir($read) && ! mkdir($read, 0o755, true) && ! is_dir($read)) {
-            return false;
-        }
-
-        if (! is_writable($read) || ! is_writable(\dirname($path))) {
-            return false;
-        }
-
-        // Maildir keeps a message's flags after `:2,` in its name, `S` for seen.
-        return rename($path, $read.'/'.basename($path).':2,S');
+        return null === $value || '' === trim($value) ? null : trim($value);
     }
 }

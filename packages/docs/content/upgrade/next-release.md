@@ -1,5 +1,5 @@
 ---
-title: 'a newsletter contact can be keyed on a phone number, and a campaign carries one body per locale'
+title: 'newsletter contacts can be keyed on a phone number, campaigns carry one body per locale, and bounces can be read over IMAP'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 run: 'doctrine:schema:update --force'
@@ -111,3 +111,44 @@ everybody. What changed under an unchanged call:
 An audience spanning several locale hosts can now be reached in one broadcast
 rather than one campaign per language, which is also what stops a bilingual
 reader being mailed twice.
+
+## The bounce mailbox can live on a remote IMAP server
+
+`pw:newsletter:bounces` could only read a maildir on the filesystem, which
+assumes the app and its mail share a host. With the app on a VPS or in a
+container and the mail at a provider, the envelope sender's mailbox is reachable
+by IMAP and by nothing else — so nothing read it, dead addresses stayed
+subscribed, and every campaign retried them.
+
+```shell
+composer require webklex/php-imap
+```
+
+```yaml
+newsletter:
+  bounce_imap_dsn: '%env(NEWSLETTER_BOUNCE_IMAP_DSN)%'
+```
+
+```dotenv
+NEWSLETTER_BOUNCE_IMAP_DSN=imaps://bounce%40example.com:secret@imap.example.com:993/INBOX
+```
+
+Set `bounce_maildir` **or** `bounce_imap_dsn`, never both: the command stops with
+a message saying so. Percent-encode the credentials. The mailbox must still be
+one nothing else reads, since anything marking a message seen takes it out of
+the command's reach.
+
+Nothing changes for a site reading a maildir. Two things changed for anyone
+calling the service directly:
+
+- **`BounceCollector::collect()` takes a `BounceSource`**, not a path. Ask
+  `BounceCollector::source($maildirOverride, $dryRun)` for one — it resolves the
+  configuration and says what to set when the answer is neither or both.
+- The mutual exclusion is checked when the command runs, not when the container
+  builds: an `%env()%` DSN is still an unresolved placeholder at compile time,
+  so a build-time rule would read it as set whatever the environment holds.
+
+`--notify=ops@example.com` mails the summary, and only when something moved — at
+least one address dropped or one permanent failure recorded. The command runs
+four times an hour, and a recap on every one of them trains its reader to filter
+it. `--dry-run` never mails.

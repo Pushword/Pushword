@@ -36,7 +36,8 @@
     "pushword/snippet": "Reusable content fragments and dev-registered Twig components.",
     "pushword/static-generator": "Export the whole site as static files (GitHub Pages, Apache, FrankenPHP).",
     "pushword/template-editor": "Edit Twig view files online from the admin.",
-    "pushword/version": "Keep a version history of your pages and compare revisions."
+    "pushword/version": "Keep a version history of your pages and compare revisions.",
+    "webklex/php-imap": "Read the bounce mailbox over IMAP, when it only exists on a remote server (newsletter.bounce_imap_dsn)."
   },
   "extra": {
     "branch-alias": {
