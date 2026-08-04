@@ -4,6 +4,7 @@ namespace Pushword\AdminBlockEditor\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Pushword\AdminBlockEditor\Editor\EditorJsMessages;
+use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Translator;
 
 final class EditorJsMessagesTest extends TestCase
@@ -14,7 +15,7 @@ final class EditorJsMessagesTest extends TestCase
     private function messages(): array
     {
         $translator = new Translator('fr');
-        $translator->addLoader('array', new \Symfony\Component\Translation\Loader\ArrayLoader());
+        $translator->addLoader('array', new ArrayLoader());
         $translator->addResource('array', [
             'editorAlignLeft' => 'Aligner à gauche',
             'editorCaption' => 'Légende',
@@ -23,7 +24,7 @@ final class EditorJsMessagesTest extends TestCase
             'editorWithHeadings' => 'Avec en-têtes',
         ], 'fr');
 
-        return (new EditorJsMessages($translator))->getMessages();
+        return new EditorJsMessages($translator)->getMessages();
     }
 
     public function testLabelsAreKeyedOnTheStringToolsPass(): void
