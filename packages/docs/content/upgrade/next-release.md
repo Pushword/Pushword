@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'the block editor uploads inline, and links carry any rel'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -27,3 +27,43 @@ absorbs needs no note.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin-block-editor`
+
+## The Upload button opens your file dialog instead of the media form
+
+On an image or attachment block, **Upload** used to open the media form in a modal
+iframe: pick a file, fill the form, submit, come back. It now opens the device's
+file dialog and uploads what you pick straight away — the same request a file
+dropped on the block already made. **Select** still opens the media library.
+
+Nothing to do, unless you ship your own copy of `editorjs_widget.html.twig`: the
+`onUploadFile` callback of the `image` and `attaches` tools must become
+`window.editorJsHelper.onUploadInline`, and `editorJsHelper.onUploadFile` is gone
+(`onUploadImage`, which the gallery and embed tools still use, is untouched).
+
+Both blocks also gained a button to drop the media they hold, so changing a picture
+no longer means deleting the block and building a new one.
+
+## Links take any rel, not just "obfuscate"
+
+The link tool's **Obfusquer** switch is now a `rel` select: `obfuscate`, `nofollow`,
+`nofollow sponsored`, `nofollow ugc`. Existing links keep the rel they carry — one
+the list does not offer is kept as an entry of its own rather than dropped.
+
+The list is `availableRels` next to `availableDesigns` in the tool's config, so a
+site that overrides `editorjs_widget.html.twig` can declare its own:
+
+```js
+link: {
+    name: "link",
+    className: "Hyperlink",
+    config: {
+        availableDesigns: { /* … */ },
+        availableRels: { Obfusquer: 'obfuscate', me: 'me' },
+    }
+},
+```
+
+`obfuscate` stays exclusive: `HtmlObfuscateLink` matches `rel="obfuscate"` exactly,
+so it cannot be combined with a real rel.
