@@ -280,9 +280,12 @@ final class PageExtension
 
         // end normalize args
 
-        $view = 'card' === $view ? '/component/pages_list_card.html.twig'
-            : (\in_array($view, ['', 'list'], true) ? '/component/pages_list.html.twig'
-                : $view);
+        $view = match (true) {
+            'card' === $view => '/component/pages_list_card.html.twig',
+            'horizontalScroll' === $view => '/component/pages_list_horizontal.html.twig',
+            \in_array($view, ['', 'list'], true) => '/component/pages_list.html.twig',
+            default => $view,
+        };
 
         if (\is_string($search)) {
             $event = new PagesListSearchEvent($search, $currentPage);

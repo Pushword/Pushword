@@ -13,9 +13,6 @@ import { initShowMore } from './ShowMore.js'
 import { restoreUnpublishedLinks } from './unpublishedLinks.js'
 import { initVariantLinks } from './variantLinks.js'
 
-//import { HorizontalScroll } from '@pushword/js-helper/src/horizontalScroll.js';
-//window.HorizontalScroll = HorizontalScroll;
-
 // Initialize ShowMore (exposes window.ShowMore and sets up event listeners)
 initShowMore()
 

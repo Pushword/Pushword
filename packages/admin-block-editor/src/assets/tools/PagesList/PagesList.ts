@@ -137,7 +137,11 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
     this.nodes.displaySelect.classList.add('cdx-select')
     this.nodes.displaySelect.classList.add('mr-5px')
     make.option(this.nodes.displaySelect, '', 'format', { disabled: true })
-    make.options(this.nodes.displaySelect, ['list', 'card'], this.data.display)
+    make.options(
+      this.nodes.displaySelect,
+      ['list', 'card', 'horizontalScroll'],
+      this.data.display,
+    )
     this.nodes.displaySelect.value = this.data.display
 
     const detailsWrapper = make.element('div', ['flex'])

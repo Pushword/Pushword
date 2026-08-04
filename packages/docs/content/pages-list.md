@@ -56,6 +56,72 @@ where a term may start: at the beginning, after an operator, or after another
 `(`. Everywhere else it is an ordinary character, so a tag written `foo (bar)`
 still means what it did before parentheses existed.
 
+## Choosing How the List Renders
+
+The fourth argument picks the view. Three are built in; anything else is taken as a
+template path, so a site can pass its own.
+
+| Value              | Renders                                                            |
+| ------------------ | ------------------------------------------------------------------ |
+| `list` (or empty)  | a plain `<ul>` of links — `component/pages_list.html.twig`          |
+| `card`             | the card grid — `component/pages_list_card.html.twig`               |
+| `horizontalScroll` | the same cards in one scrolling row — `component/pages_list_horizontal.html.twig` |
+
+```twig
+{{ pages_list('type:blog', 9, 'publishedAt ↓', 'horizontalScroll') }}
+```
+
+All three are available from the block editor's **format** select.
+
+### The Horizontal Scroller
+
+`horizontalScroll` renders the `card` view's cards inside `.horizontal-scroll`, a
+component that carries **no JavaScript at all**. The prev/next arrows are
+`::scroll-button()` pseudo-elements, the edge fade is a `mask-image`, and the
+"disabled at both ends" behaviour comes from `:disabled` — none of it is computed
+in script.
+
+The arrows are an enhancement, not the mechanism. They are Chromium-only today, so
+elsewhere they are simply absent and the row is scrolled by trackpad, swipe,
+shift+wheel or the scrollbar. That is why the scroller is `overflow-x: auto` and
+never `overflow-x: hidden`: with `hidden` the arrows become the only way to move,
+and every browser without them shows content nobody can reach.
+
+The scrollbar follows the same logic in reverse — it is the fallback affordance and
+the only position indicator when there are no arrows, so it is hidden **only** where
+`::scroll-button()` is supported:
+
+```css
+@supports selector(::scroll-button(inline-end)) {
+  .horizontal-scroll { scrollbar-width: none; }
+}
+```
+
+Two limits worth knowing before you reach for it:
+
+- **The arrow step is not configurable.** The browser scrolls about 85% of the visible
+  width — roughly three cards at desktop widths — and its smooth-scroll duration follows
+  that distance (~550ms). If the jump feels too big, widen the cards; there is no CSS
+  lever for the step itself.
+- **The arrows' accessible name comes from CSS**, since a pseudo-element takes no
+  `aria-label`. The template sets `--horizontal-scroll-previous` and
+  `--horizontal-scroll-next` from the `horizontalScrollPrevious` /
+  `horizontalScrollNext` translation keys; override them in your own CSS or
+  translations, not in the markup.
+
+Three custom properties theme it:
+
+| Property                        | Default   | Effect                              |
+| ------------------------------- | --------- | ----------------------------------- |
+| `--horizontal-scroll-fade`      | `2rem`    | width of the edge fade              |
+| `--horizontal-scroll-thumb`     | `#d1d5db` | scrollbar thumb, where it is shown  |
+| `--horizontal-scroll-previous` / `--horizontal-scroll-next` | from translations | the arrows' accessible names |
+
+`--horizontal-scroll-thumb` is worth setting on a dark background. The scrollbar is
+given an explicit colour on purpose: left to the platform default, Firefox draws an
+overlay scrollbar that only appears while scrolling — invisible exactly where it is
+the only affordance.
+
 ## Exclude Already Linked Pages
 
 When your page content contains links to other pages, you can exclude those pages from your listings to avoid duplicates. Add the `excludeAlreadyLinked: true` parameter:

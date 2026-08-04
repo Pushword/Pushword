@@ -1,0 +1,35 @@
+{# @var pages Page[] #}
+{# @var pager Pagerfanta #}
+{# @var pager_route string #}
+{# @var pager_route_params array<string, string> #}
+{# @var id string #}
+{# @var wrapperClass string #}
+
+{#
+  The `horizontalScroll` view of pages_list(): the `card` view's cards in one
+  scrolling row. All of the behaviour is `.horizontal-scroll`, in js-helper's
+  utility.css — there is no JavaScript.
+
+  The custom properties carry the arrows' accessible names: `::scroll-button()`
+  takes no aria-label, so its name comes from the string after the slash in
+  `content`.
+#}
+
+{%- if pages is not empty -%}
+  <div class="horizontal-scroll-wrap not-prose my-5"
+    style="--horizontal-scroll-previous: '{{ 'horizontalScrollPrevious'|trans|e('css') }}'; --horizontal-scroll-next: '{{ 'horizontalScrollNext'|trans|e('css') }}'">
+    {{- include(view('/component/cardList.html.twig'), {
+      items: pages,
+      wrapperClass: ('horizontal-scroll ' ~ wrapperClass|default(''))|trim,
+      itemClass: 'w-72 sm:w-80',
+    }) -}}
+  </div>
+{%- else -%}
+  <p>...<!-- empty list --></p>
+{%- endif -%}
+{%- if pager is defined
+      and pager is not null
+      and (pager.currentPage != 1 or pager.hasNextPage)
+-%}
+  <div class="mb-5">{{ pager(pager, {omitFirstPage: true, pageParameter: '[pager]', routeName: pager_route, routeParams: pager_route_params}) }}</div>
+{%- endif -%}

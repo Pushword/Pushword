@@ -19,6 +19,8 @@ forgotPasswordLink: 'Forgot password?'
 forgotPasswordResetButton: 'Reset your password'
 forgotPasswordTitle: 'Reset password'
 fr: Français
+horizontalScrollNext: Next
+horizontalScrollPrevious: Previous
 mediaAltsInvalidYaml: "Invalid YAML format. Use: locale: text (e.g. en: my description). Escape apostrophes by doubling them (e.g. Ko''Ono)."
 mediaDuplicateWarning: 'The file seems to already be present on disk: <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Delete this duplicate version</a>'
 mediaLicenseSeeded: "The site's license was added to this image. Open it to review or clear the License block."

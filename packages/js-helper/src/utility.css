@@ -60,6 +60,122 @@
   opacity: 0.75;
 }
 
+/* Horizontal scroller — the `horizontalScroll` view of `pages_list()`, and any
+   list that opts in with the class. No JavaScript: the arrows are
+   `::scroll-button()`, the edge fade is a mask, and the end states come from
+   `:disabled`. See packages/docs/content/pages-list.md.
+
+   The wrapper is not optional: `::scroll-button()` is laid out against the
+   nearest positioned ancestor, and the scroller itself does not qualify — the
+   buttons land on the initial containing block instead, far from the list. */
+.horizontal-scroll-wrap {
+  position: relative;
+}
+
+.horizontal-scroll {
+  --horizontal-scroll-fade: 2rem;
+
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  padding: 0 0 0.5rem;
+  list-style: none;
+
+  /* `auto`, never `hidden`: it is what keeps the list reachable where the
+     browser draws no arrows. With `hidden` the arrows become functional and
+     the cards past the fold are unreachable in Firefox and Safari. */
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--horizontal-scroll-fade); /* keeps a snapped item clear of the fade */
+  scroll-behavior: smooth;
+
+  /* The fade the JavaScript used to inject as gradient <div>s. The build does not
+     autoprefix it, so both spellings are written from one definition. */
+  --horizontal-scroll-mask: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--horizontal-scroll-fade),
+    #000 calc(100% - var(--horizontal-scroll-fade)),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--horizontal-scroll-mask);
+  mask-image: var(--horizontal-scroll-mask);
+
+  /* Fallback affordance, and the only position indicator where there are no
+     arrows — so it stays unless the arrows exist (see the @supports below).
+     `scrollbar-color` is what makes it permanent: left to the platform default,
+     Firefox draws an overlay scrollbar that only surfaces while scrolling, so
+     the affordance is invisible exactly when it is the only one. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--horizontal-scroll-thumb, #d1d5db) transparent;
+}
+
+.horizontal-scroll > * {
+  flex: none;
+  scroll-snap-align: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .horizontal-scroll {
+    scroll-behavior: auto;
+  }
+}
+
+/* Chromium only today. Elsewhere these rules are dropped: no arrows, and the
+   scrollbar above stays as the affordance. A browser that does not parse
+   `@supports selector()` keeps it too, so the fallback is right by construction. */
+@supports selector(::scroll-button(inline-end)) {
+  .horizontal-scroll {
+    scrollbar-width: none;
+  }
+
+  .horizontal-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .horizontal-scroll::scroll-button(*) {
+    position: absolute;
+    top: 50%;
+    translate: 0 -50%;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid rgb(0 0 0 / 0.1);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow:
+      0 1px 3px rgb(0 0 0 / 0.12),
+      0 4px 12px rgb(0 0 0 / 0.06);
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  /* Both end states and "the list does not overflow", computed by the browser.
+     This is what the JS implementations were doing with scrollLeft arithmetic. */
+  .horizontal-scroll::scroll-button(*):disabled {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* The half after the slash is the accessible name: a pseudo-element takes no
+     aria-label. The template feeds the translated strings in. */
+  .horizontal-scroll::scroll-button(inline-start) {
+    content: '‹' / var(--horizontal-scroll-previous, 'Previous');
+    left: 0.35rem;
+  }
+
+  .horizontal-scroll::scroll-button(inline-end) {
+    content: '›' / var(--horizontal-scroll-next, 'Next');
+    right: 0.35rem;
+  }
+}
+
 .img-stretched {
   @apply w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw];
 }
