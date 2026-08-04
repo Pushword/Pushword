@@ -97,6 +97,7 @@ var editorjsConfig = {
     name: "default",
     initialBlock: "paragraph",
     placeholder: "...",
+    i18n: { messages: {{ editorjs_i18n_messages()|json_encode|raw }} },
     tools: {
         header: {
             name: "header",
