@@ -147,12 +147,6 @@ export class editorJs {
       }
     }
 
-    // drag'n drop
-    config.onReady = function (this: any) {
-      new DragDrop(editor)
-      new Undo({ editor })
-    }
-
     // Parse content upfront: pass JSON data directly to constructor to avoid double-render
     let markdownContent: string | null = null
     if (window.pageMainContent) {
