@@ -7,94 +7,96 @@ toc: true
 
 Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
-## Before v1
+### In progress<>
 
 - [ ] npx pushword ai plugin inspired from https://github.com/gsd-build/get-shit-done https://github.com/pbakaus/impeccable and current prompt/cmd/skills on my projects (wip -> ai-skills package)
 
-### In progress<>
-
-- [New] When release v1, remove version from composer.json (restore 1.0.0-rc[0-9]+ to \*)
-
 ### On our way
 
-- [Core] fix glightbox or rollback to fslightbox
-  - [ ] video in lightbox
-  - [ ] simple image self linked (the pb is more a missing code after migrating to markdown block)
+- [Core] fix glightbox or rollback to fslightbox ➜ `Plans/lightbox-obfuscated-links.md`
+  One cause behind the three symptoms: `link()` obfuscates by default, so a gallery
+  item and a video thumb render as a `<span>` with no `href` — glightbox has nothing
+  to bind, and `convertImageLinkToWebPLink()` looks for `a[data-dwl]` that does not
+  exist yet.
+  - [ ] video in lightbox
+  - [ ] simple image self linked (`component/image.html.twig` never wraps in a link)
   - [ ] convertImageLinkToWebPLink() is not working anymore
 
-- check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
-
-- [flat] import media tags from lightroom/darktable keywords (exif data ?)
-  ➜ done, but need test
+- [AdminBlockEditor] rerender de l'inline-toolbar https://github.com/codex-team/editor.js/issues/2821
+  - [x] PR #2993 mergée et sortie en **2.31.4** ("Prevent inline-toolbar re-renders when
+        linked text is selected", `defaultValue` au lieu de `.value`) — on est en 2.31.6
+  - [x] notre `Hyperlink.ts` est un tool maison, pas le `inline-tool-link` upstream : il
+        porte déjà l'équivalent (`setAttribute('value', …)`, l'ancienne ligne juste
+        au-dessus en commentaire)
+  - [ ] valider à la main dans l'admin (l'inline toolbar ne s'ouvre pas sous sélection
+        synthétique, donc non vérifiable en headless) — puis fermer l'issue upstream,
+        toujours ouverte
 
 - [Ai] Add AiFeature to Flat
   - [x] Generate a map of the content = [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
-        index.{locale}.csv
   - [x] Generate a map of the media
-  - [ ] In new, create default AGENTS.md (inspired from altimood)
   - [ ] upgrade skills -> composer req pushword/docs, composer update (retrieve pushword core version upgrade), read vendor/pushword/docs.../upgrade.md, fix local codebase, test (manual composer dev + check few pages) and composer test if available claude --resume b88a1a80-843c-4e8f-994c-23ef98e63f59
 
 - best bractice : migrate to #[MapQueryParameter] ?string $source = null, and #[MapFormParameter] instead of request
+  (zero usage in the repo today)
 
 - [Admin] / [Version] Autosave with unsaved state : envoyer un event toutes les secondes si le contenu a été modifié, celui-ci créé une nouvelle version du contenu en précisant que c'est une sauvegarde automatique, si la précédente sauvegarde est une sauvegarde automatique et qu'elle date de moins d'une heure, alors on ne garde qu'une version dans le versionner (la dernière)
 
-- [Core] / [Admin] **Media** :
+- [Core] / [Admin] **Media** usages ➜ `Plans/media-usage-tracking.md`
+  Aujourd'hui le seul calcul est un `str_contains` pages × médias dans `pw:ai-index`,
+  jeté après export. Rien en base.
   - [ ] revoir comment sont récoltés les usages d'un média
   - [ ] stocker en DB (donc mieux tuiler avec pages, quid des medias utiliser dans des templates ?)
   - [ ] pouvoir filtrer les médias non utilisés (cf point précédent) via Admin
   - [ ] cli tool to clean unused media ?
-
-- [Core] / [Admin] **Media** : Ajouter les tags au media
-  - [ ] Tags manuellement
-  - [ ] Tags importé depuis les pages qui utilisent le média
+  - [ ] Tags importés depuis les pages qui utilisent le média
 
 - [Core] / [Admin] Bulk edition des tags depuis la page de listing
 
-- [JsHelper] start-show-more : voir pour améliorer le close :
-  - [ ] show more :
-    - si l'utilisateur clique sur un jump link qui renvoie vers un contenu dans un bloc show-more
-    - si un hash dans l'url renvoie vers un contenu dans un bloc show-more
-    - si un hash de type (`#:~:text=`) renvoie vers un contenu dans un bloc show-more
-  - [ ] désactiver si le scroll est très rapide (couvre l'use case l'utilisateur utilise ctrl+f)
-  - [ ] garder en mémoire qui est ouvert, qui est fermé (couvrira le rechargement)
-  - [ ] désactiver si l'utilisateur n'est pas en haut de la page (couvrira ctrl+f ),
+- [JsHelper] show-more : gérer les fragments de texte (`#:~:text=`)
+  Le reste est fait (jump links, hash, mémoire localStorage, Ctrl+F) —
+  `packages/js-helper/src/ShowMore.js`. Reste ce seul cas : `querySelector()`
+  ne sait pas résoudre un text fragment, l'exception est avalée.
 
 - [ ] Replace .clickable by css (https://codepen.io/potatoDie/pen/abzvGxG)
 
 - [Admin] / [Core] easily customize navbar with favorites `page` ➜ utiliser plutôt les tags et ajouter un loader spécifique : #navbar100 #navbar200 #navbar300, charger toutes les pages qui ont un tag commençant par #navbar, organisé par ordre alphabétique et créer le menu d'après ces pages)
 
-- [Core] **pagination** : tester & documenter
+- [Core] **pagination** : documentée dans `/pages-list`, reste le format d'URL
   - Bug quand une page a le même URI qu'une page de la pagination OU sur l'ID (attrapé avant la pagination)
     => En fait, c'est paginer la page d'accueil qui fait le max de bordel - changer pour un format d'uril + robuste (ex : /1 ➜ /p1 et interdire les slugs de type /p[0-9]+)
+    `RoutePatterns::PAGER` vaut toujours `\d+`
 
 - [PageScanner] Ignorer les erreurs :
   - [ ] donner un code unique aux erreurs
-  - [ ] via la config (fait pour les URLs)
+  - [x] via la config (`errors_to_ignore`, global ou `host/slug:`, fnmatch)
   - [ ] via un code inline de type <!-- page-scanner-ignore: what to ignore --> ou othersParameters
-- [PageScanner] Live page scanner
-- [PageScanner] image ➜ texte alternatif manquant
-
-- [Core] / [Admin] / [PageScanner] Check there is no translation with the same language than current page
+- [PageScanner] Live page scanner : le polling existe (`getScanOutput` +
+  `output_fragment.html.twig`) — préciser ce qui manque encore
 
 - check a new blank installation + ci + last details
   - [x] dev environnement setup
-  - [ ] Docker image / Frankenphp ?
-  - [ ] usage setup - see if there is a prompt for first user
-  - [ ] TwigStan + TwigFormatter
-  - [ ] translate all packages (fr / en) + manage date i18n a better way than randomly
+  - [ ] Docker image / Frankenphp ? (documenté, mais aucune image)
+  - [x] usage setup - prompt for first user
+  - [x] TwigFormatter (`.twig-cs-fixer.dist.php`, dans `composer format` et la CI)
+  - [ ] TwigStan
+  - [ ] manage date i18n a better way than randomly
+    (les clés fr/en sont à parité ; reste `card.html.twig` qui code en dur `d/m/Y à H:i`)
 
 - [Admin] / [AdminBlockEditor] (cerise) TocAvoir un block à gauche de l'éditeur pour afficher la liste des blocs utilisés, pouvoir déplacer ces blocs facilement en sélecctionnant un bloc, ou un groupe de blocs naturellement groupés sous un header, fonctionne depuis le markdown ou depuis l'editorjs
 
-- [AdminBlockEditor] New features
+- [AdminBlockEditor] New features ➜ `Plans/editorjs-next-features.md`
   - [ ] upgrade editorjs/list ajoute notamment le support des checklists
-        https://github.com/editor-js/list/pull/126
+        v2.0.9 est publiée (on est en 1.10) — elle absorbe `nested-list` et change
+        la forme stockée, donc migration à écrire
   - [ ] Hyperlink - Custom rel (onclick button to configure the rel instead of hideForBot)
-        same for _target_ (blank) and _class_ (button/discret) ➜ input with suggests + icon to set quick
+        _target_ et _class_ sont déjà là ; il ne manque que la valeur du rel
   - [ ] Attaches / Images
     - [ ] Add a delete button to change the media
     - [ ] Add the inline uploader (Uploader.ts~) (?)
   - [ ] inline tool, on right or left from the border of inline tool, go outside the tag inline (bold, italic, strike, underline, link, marker)
   - [ ] on paste on paragraph, être capable de détecter si le contenu collé est du markdown et créer les blocs en fonction
+        (remark/rehype sont déjà dans package.json et jamais importés)
   - [ ] New Block :
     - [ ] Audio block ?!
     - [ ] Notices block (with different notices level)
@@ -103,19 +105,22 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
       - https://github.com/calumk/editorjs-columns/pull/6
   - [ ] Migrate to tiptap (lol)
 
-- [Static] revoir la compression pour du contenu statique ➜ https://dunglas.dev/2024/12/http-compression-in-php-new-symfony-assetmapper-feature/
-
-- https://x.com/jh3yy/status/1798728699459563905 (altimood)
+- [JsHelper] horizontal scroll + fondus en CSS ➜ `Plans/horizontal-scroll.md`
+  `HorizontalScroll.js` et `ScrollEnhancer.js` sont dans le repo, jamais importés.
+  Les fondus JS de `ScrollEnhancer` sont remplaçables par `animation-timeline: view(inline)`
+  (https://x.com/jh3yy/status/1798728699459563905, altimood).
 
 - [AdminBlockEditor] PagesList/CardList/Gallery ➜ Voir pour utiliser grid-col-12 and col-span-3/4/2 to be able to fully customize it - via Class ?
+  (la gallery a une grille auto-calculée ; `pages_list` et `cardList` n'en ont aucune)
 
-- [Version] Advanced Diff Checker basé sur Monaco et le versionning de markdown
-  And **Change requester**, **Public Historic** (or make accessible historic from page object)
+- [Version] **Change requester**, **Public Historic** (or make accessible historic from page object)
+  Le diff Monaco est fait (`version/src/templates/compare.html.twig`).
 
 - [Static] Make ErrorPageGenerator consistent with htaccess (on htaccess, filter by beginning url to return the correct one ?!)
 
-- Intégrer **LinksImprover** (+ UX)
+- Intégrer **LinksImprover** (+ UX) ➜ `Plans/links-improver-integration.md`
+  Dépendance déjà installée et référencée nulle part : à intégrer ou à retirer.
 
-- **Complex Right System** : Multi-user editor Multi-site but not everybody can edit everything (extension or core ?)
+- **Complex Right System** : Multi-user editor Multi-site but not everybody can edit everything (extension or core ?) ➜ `Plans/scoped-permissions.md`
 
 - **eCommerce** bridge with sylius or odoo ?!
