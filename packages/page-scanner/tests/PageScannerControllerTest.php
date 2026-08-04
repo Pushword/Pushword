@@ -14,6 +14,42 @@ use Twig\Environment;
 #[Group('integration')]
 final class PageScannerControllerTest extends AbstractAdminTestClass
 {
+    /**
+     * Declared before testAdmin on purpose: at this point no test of the class
+     * has dispatched a background scan, so nothing can rewrite the seeded
+     * results file mid-request — and shouldScan() reading it as fresh keeps
+     * this request from starting one.
+     *
+     * The scan date goes through format_datetime — an int mtime in, a
+     * locale-formatted string out — and each error row carries its message
+     * and its code badge.
+     */
+    public function testResultsRenderTheScanDateAndTheErrorRows(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        /** @var PageScanCoordinator $pageScanCoordinator */
+        $pageScanCoordinator = self::getContainer()->get(PageScanCoordinator::class);
+        new Filesystem()->dumpFile($pageScanCoordinator->getFileCache(null), serialize([
+            1 => [[
+                'code' => 'link-not-found',
+                'message' => 'this link points nowhere',
+                'page' => ['id' => 1, 'slug' => 'index', 'h1' => 'Home', 'metaRobots' => '', 'host' => 'localhost.dev'],
+            ]],
+        ]));
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/scan');
+
+        self::assertResponseIsSuccessful();
+        $alert = $crawler->filter('.alert-info')->text();
+        self::assertStringNotContainsString('%date%', $alert);
+        self::assertMatchesRegularExpression('#\d{1,2}/\d{1,2}/\d{2}#', $alert);
+        $table = $crawler->filter('tbody')->text();
+        self::assertStringContainsString('this link points nowhere', $table);
+        self::assertStringContainsString('link-not-found', $table);
+    }
+
     public function testAdmin(): void
     {
         $client = $this->loginUser();
