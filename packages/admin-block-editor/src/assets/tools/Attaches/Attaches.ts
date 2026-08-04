@@ -66,7 +66,7 @@ export default class Attaches extends AbstractMediaTool {
     this.nodes = {
       // @ts-ignore
       ...this.nodes,
-      // ...
+      deleteButton: this.createDeleteButton(() => this.removeMedia()),
     }
 
     this.data = Attaches.normalizeData(data)
@@ -194,7 +194,7 @@ export default class Attaches extends AbstractMediaTool {
     }
 
     this.nodes.wrapper.appendChild(fileInfo)
-    this.nodes.wrapper.appendChild(this.createDeleteButton(() => this.removeMedia()))
+    this.nodes.wrapper.appendChild(this.nodes.deleteButton!)
 
     this.hidePreloader(STATUS.FILLED)
   }

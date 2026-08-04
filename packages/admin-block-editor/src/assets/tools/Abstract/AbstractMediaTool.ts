@@ -55,6 +55,9 @@ export abstract class AbstractMediaTool extends BaseTool {
   public onUploadFile: (tool: AbstractMediaTool, event?: Event) => void
   public onMultiSelectFile?: ((tool: AbstractMediaTool, event?: Event) => void) | undefined
 
+  /** What the inline uploader's file dialog offers; empty means any file. */
+  public uploadAccept = ''
+
   constructor({
     api,
     config,
@@ -206,9 +209,6 @@ export abstract class AbstractMediaTool extends BaseTool {
       },
     )
   }
-
-  /** What the inline uploader's file dialog offers; empty means any file. */
-  public uploadAccept = ''
 
   /** Upload a file straight through the media endpoint, then fill the block. */
   public async uploadFile(file: File): Promise<void> {

@@ -107,27 +107,8 @@ export default class Hyperlink {
       this.api.i18n.t('Nouvel onglet'),
     )
 
-    this.nodes.selectRel = make.element(
-      'select',
-      this.api.styles.input,
-    ) as HTMLSelectElement
-    make.option(this.nodes.selectRel, '', this.api.i18n.t('rel'), {
-      style: 'opacity: 0.5',
-    })
-    for (const [label, value] of Object.entries(this.availableRels)) {
-      make.option(this.nodes.selectRel, value, this.api.i18n.t(label))
-    }
-
-    this.nodes.selectDesign = make.element(
-      'select',
-      this.api.styles.input,
-    ) as HTMLSelectElement
-    make.option(this.nodes.selectDesign, '', this.api.i18n.t('Style'), {
-      style: 'opacity: 0.5',
-    })
-    for (const [key, value] of Object.entries(this.availableDesigns)) {
-      make.option(this.nodes.selectDesign, value, key)
-    }
+    this.nodes.selectRel = this.buildSelect('rel', this.availableRels)
+    this.nodes.selectDesign = this.buildSelect('Style', this.availableDesigns)
 
     this.nodes.wrapper = document.createElement('div')
     this.nodes.wrapper.classList.add('link-options-wrapper')
@@ -163,6 +144,18 @@ export default class Hyperlink {
       }
     })
     return this.nodes.wrapper
+  }
+
+  /** A select whose blank first option names the field, label => value. */
+  private buildSelect(name: string, choices: Record<string, string>): HTMLSelectElement {
+    const select = make.element('select', this.api.styles.input) as HTMLSelectElement
+    make.option(select, '', this.api.i18n.t(name), { style: 'opacity: 0.5' })
+
+    for (const [label, value] of Object.entries(choices)) {
+      make.option(select, value, this.api.i18n.t(label))
+    }
+
+    return select
   }
 
   checkState(): boolean {

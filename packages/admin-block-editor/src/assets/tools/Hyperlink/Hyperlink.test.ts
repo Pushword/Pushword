@@ -129,6 +129,19 @@ describe('Hyperlink.updateActionValues', () => {
   })
 })
 
+describe('Hyperlink.renderActions', () => {
+  it('offers the rels the site declares instead of the built-in ones', () => {
+    const tool = new Hyperlink({
+      api: stubApi(),
+      config: { availableRels: { 'my profile': 'me' } },
+    })
+
+    const values = Array.from(selects(tool.renderActions()).rel.options).map((o) => o.value)
+
+    expect(values).toEqual(['', 'me'])
+  })
+})
+
 describe('Hyperlink.updateLink', () => {
   it('writes the picked rel onto the anchor', () => {
     const { tool } = toolWithActions()
