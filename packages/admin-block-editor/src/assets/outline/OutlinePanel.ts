@@ -92,6 +92,7 @@ export class OutlinePanel {
     this.setCollapsed(this.initialCollapsed(), false)
     this.followEditorVisibility()
     this.attachListDropTarget()
+    this.attachListKeyboard()
   }
 
   /** Debounced full re-render; every data change funnels through here. */
@@ -104,10 +105,22 @@ export class OutlinePanel {
   }
 
   refresh(): void {
+    const focused =
+      document.activeElement instanceof HTMLElement &&
+      this.list.contains(document.activeElement)
+        ? document.activeElement.closest('.pw-outline-row')?.getAttribute('data-index')
+        : null
+
     const entries = this.source.entries()
     this.unitCount = entries.length
     const tree = buildOutlineTree(entries)
     this.list.replaceChildren(...tree.map((node) => this.renderNode(node, 0)))
+
+    if (focused != null) {
+      this.list
+        .querySelector<HTMLButtonElement>(`[data-index="${focused}"] .pw-outline-label`)
+        ?.focus()
+    }
   }
 
   private buildHead(): HTMLElement {
@@ -183,6 +196,7 @@ export class OutlinePanel {
 
     const row = document.createElement('div')
     row.className = 'pw-outline-row'
+    row.dataset.index = String(node.entry.index)
     row.style.setProperty('--pw-outline-depth', String(depth))
     if (node.entry.level !== null) {
       row.classList.add('pw-outline-row--header', `pw-outline-row--h${node.entry.level}`)
@@ -247,7 +261,43 @@ export class OutlinePanel {
     button.title = meta.title
     button.append(icon, text)
     button.addEventListener('click', () => this.source.navigateTo(node.entry))
+    button.addEventListener('keydown', (event) => this.moveByKeyboard(event, node))
     return button
+  }
+
+  /** Alt+Arrow moves the block one slot; Alt+Shift+Arrow its section (groups always whole). */
+  private moveByKeyboard(event: KeyboardEvent, node: OutlineNode): void {
+    if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return
+    event.preventDefault()
+
+    const start = node.entry.index
+    const wholeSpan =
+      node.entry.type === GroupRegistry.START ||
+      (event.shiftKey && node.entry.level !== null)
+    const end = wholeSpan ? node.spanEnd : start
+    const up = event.key === 'ArrowUp'
+    const to = up ? start - 1 : end + 2
+    if (to < 0 || to > this.unitCount) return
+
+    this.source.moveSpan(start, end, to)
+    this.refresh()
+    this.list
+      .querySelector<HTMLButtonElement>(
+        `[data-index="${up ? start - 1 : start + 1}"] .pw-outline-label`,
+      )
+      ?.focus()
+  }
+
+  /** Plain arrows walk the list from label to label. */
+  private attachListKeyboard(): void {
+    this.list.addEventListener('keydown', (event) => {
+      if (event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return
+      const labels = [...this.list.querySelectorAll<HTMLButtonElement>('.pw-outline-label')]
+      const current = labels.indexOf(document.activeElement as HTMLButtonElement)
+      if (current === -1) return
+      event.preventDefault()
+      labels[current + (event.key === 'ArrowDown' ? 1 : -1)]?.focus()
+    })
   }
 
   private buildActions(node: OutlineNode): HTMLElement {

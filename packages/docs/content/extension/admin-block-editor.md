@@ -50,6 +50,21 @@ Content is stored as **markdown** in the database. The editor converts EditorJS 
 
 ## Usage
 
+### Outline panel
+
+A collapsible left rail lists the blocks in use — in the block editor and in
+its Markdown/JSON source views alike. Headings nest their sections, group
+markers nest their content, and each row offers:
+
+- click to scroll to the block (highlighted on arrival),
+- a caret to fold or unfold a section,
+- drag handles — headings carry two, one for the heading alone and one for the
+  whole section; keyboard: `Alt+Arrow` moves a block, `Alt+Shift+Arrow` a section,
+- delete, for the block or the whole section/group (undo restores everything).
+
+The rail overlays the admin navigation; collapse it (state is remembered) to
+get the menu back — the opener stays pinned top-left.
+
 ### Pages List Block
 
 The search input permit to perfom action like :

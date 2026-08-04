@@ -242,6 +242,43 @@ describe('OutlinePanel drag and drop', () => {
   })
 })
 
+describe('OutlinePanel keyboard', () => {
+  function pressOnLabel(row: number, key: string, init: KeyboardEventInit = {}): void {
+    rows()[row]?.querySelector<HTMLButtonElement>('.pw-outline-label')?.dispatchEvent(
+      new KeyboardEvent('keydown', { key, ...init }),
+    )
+  }
+
+  it('moves a block one slot with Alt+Arrow', () => {
+    const source = buildPanel([entry(0, 'paragraph', 'a'), entry(1, 'paragraph', 'b')])
+
+    pressOnLabel(0, 'ArrowDown', { altKey: true })
+
+    expect(source.moved).toEqual([[0, 0, 2]])
+  })
+
+  it('moves the whole section with Alt+Shift+Arrow', () => {
+    const source = buildPanel([
+      entry(0, 'header', 'S', 2),
+      entry(1, 'paragraph', 'body'),
+      entry(2, 'header', 'T', 2),
+    ])
+
+    pressOnLabel(0, 'ArrowDown', { altKey: true, shiftKey: true })
+
+    expect(source.moved).toEqual([[0, 1, 3]])
+  })
+
+  it('never moves past the edges', () => {
+    const source = buildPanel([entry(0, 'paragraph', 'a'), entry(1, 'paragraph', 'b')])
+
+    pressOnLabel(0, 'ArrowUp', { altKey: true })
+    pressOnLabel(1, 'ArrowDown', { altKey: true })
+
+    expect(source.moved).toEqual([])
+  })
+})
+
 describe('OutlinePanel collapse', () => {
   it('collapses to the opener and persists the choice', () => {
     buildPanel([entry(0, 'paragraph', 'intro')])

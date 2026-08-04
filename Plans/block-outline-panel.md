@@ -145,6 +145,16 @@ panel) go through the widget config like the rest of the editor i18n
 `packages/admin-block-editor/translations/messages.{en,fr}.yaml` — camelCase,
 alphabetical.
 
+## Status
+
+Shipped 2026-08-04, steps 1–6 all done (commits 27bd3b35a → outline rail,
+80ea49cbf → drag, 062e7759e/6c6232112 → layout + opener, 0fa4bd53e → Monaco
+views, then keyboard + docs). Verified in-browser on the kitchen-sink page:
+navigate, fold, section drag (one undo step), Monaco markdown/json round-trip.
+Labels asked by Robin along the way: heading rows say "heading", not "block";
+opener pinned top-left (Gutenberg spot); title field capped to the content
+column so the rail can widen (clamp 260px–400px).
+
 ## Implementation order
 
 1. **Shared model** — extract the markdown chunker from `EditorJsParseMarkdown`
