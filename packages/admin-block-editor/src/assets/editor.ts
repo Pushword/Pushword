@@ -12,8 +12,7 @@ import Paragraph from './tools/Paragraph/Paragraph'
 import Table from './tools/Table'
 // @ts-ignore
 import DragDrop from 'editorjs-drag-drop'
-// @ts-ignore
-import Undo from 'editorjs-undo'
+import Undo from './tools/utils/Undo/Undo'
 // @ts-ignore
 import Strikethrough from '@sotaproject/strikethrough'
 import Attaches from './tools/Attaches/Attaches'
@@ -132,7 +131,7 @@ export class editorJs {
     // edit, and one Ctrl+Z before typing anything would empty the page (and the
     // field Save submits). The parse lands asynchronously, so we re-baseline on
     // the first onChange it triggers: that is Editor.js' own "changes settled".
-    let undo: { initialize: (data: OutputData) => void } | null = null
+    let undo: Undo | null = null
     let undoAwaitsParsedBaseline = false
 
     // save
