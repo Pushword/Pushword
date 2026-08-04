@@ -302,9 +302,30 @@ class AppFixtures extends Fixture
      * fixtures to combine `setMainImage()` with tags, so tagging them would leak into
      * that test.
      *
+     * One set per host rendering the kitchen sink: the block editor site serves the
+     * same KitchenSink.md, and pages_list is host-scoped — so without its own copies
+     * the scroller previews empty in the editor, where the block is what we demo.
+     *
      * @param array<string, Media> $media
      */
     private function loadHorizontalScrollDemo(ObjectManager $manager, Page $parent, array $media): void
+    {
+        $hosts = ['localhost.dev' === $this->apps->getMainHost() ? 'localhost.dev' : ''];
+        if (\in_array('admin-block-editor.test', $this->apps->getHosts(), true)) {
+            $hosts[] = 'admin-block-editor.test';
+        }
+
+        foreach ($hosts as $host) {
+            $this->loadHorizontalScrollDemoPages($manager, $parent, $media, $host);
+        }
+
+        $manager->flush();
+    }
+
+    /**
+     * @param array<string, Media> $media
+     */
+    private function loadHorizontalScrollDemoPages(ObjectManager $manager, Page $parent, array $media, string $host): void
     {
         $images = ['Demo 1', 'Demo 2', 'Demo 3'];
 
@@ -332,14 +353,12 @@ class AppFixtures extends Fixture
             $page->mainContent = $description."\n\nA demo page, here only to fill the horizontal scroller "
                 .'rendered on the [kitchen sink](/kitchen-sink).';
 
-            if ('localhost.dev' === $this->apps->getMainHost()) {
-                $page->host = 'localhost.dev';
+            if ('' !== $host) {
+                $page->host = $host;
             }
 
             $manager->persist($page);
         }
-
-        $manager->flush();
     }
 
     /**

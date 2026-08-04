@@ -76,11 +76,13 @@ See **bold** _italic_ `inline code` #[link](/kitchen-sink){target="_blank"} <mar
 
 The same cards in one scrolling row, with **no JavaScript**: the arrows are `::scroll-button()`, the edge fade is a `mask-image`, and the ends disable themselves. The arrows are Chromium-only — in Firefox and Safari they are simply absent and the scrollbar takes over.
 
-{{ pages_list('slug:%demo-scroller%', 9, 'publishedAt ↓', 'horizontalScroll', wrapperClass: 'bleed') }}
+Written positionally, and with every argument quoted, so the block editor reads it back as a Pages List block: `horizontalScroll` lands in the format select, `bleed` in the block's class tune.
 
-The same list with the optional dots, via `wrapperClass: 'horizontal-scroll-dots'`. Every **visible** card's dot is filled, half-visible ones half-filled — so reaching the end and clicking the last dot doing nothing reads as "you are already there".
+{{ pages_list('slug:%demo-scroller%', '9', 'publishedAt ↓', 'horizontalScroll', '0', 'bleed') }}
 
-{{ pages_list('slug:%demo-scroller%', 9, 'publishedAt ↓', 'horizontalScroll', wrapperClass: 'bleed horizontal-scroll-dots') }}
+The same list with the optional dots, added to that same class tune. Every **visible** card's dot is filled, half-visible ones half-filled — so reaching the end and clicking the last dot doing nothing reads as "you are already there".
+
+{{ pages_list('slug:%demo-scroller%', '9', 'publishedAt ↓', 'horizontalScroll', '0', 'bleed horizontal-scroll-dots') }}
 
 ### Variant pages in a content list
 

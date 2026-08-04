@@ -58,20 +58,59 @@ still means what it did before parentheses existed.
 
 ## Choosing How the List Renders
 
-The fourth argument picks the view. Three are built in; anything else is taken as a
-template path, so a site can pass its own.
+The fourth argument picks the view. Three are built in; any other bare name is a
+**display variant** your site provides by convention, and a value containing `/` or
+`.` is taken as a template path.
 
 | Value              | Renders                                                            |
 | ------------------ | ------------------------------------------------------------------ |
 | `list` (or empty)  | a plain `<ul>` of links — `component/pages_list.html.twig`          |
 | `card`             | the card grid — `component/pages_list_card.html.twig`               |
 | `horizontalScroll` | the same cards in one scrolling row — `component/pages_list_horizontal.html.twig` |
+| any other bare name | your site's `component/pages_list_<name>.html.twig`               |
 
 ```twig
 {{ pages_list('type:blog', 9, 'publishedAt ↓', 'horizontalScroll') }}
 ```
 
 All three are available from the block editor's **format** select.
+
+### Site display variants
+
+Drop a template at `templates/<host>/component/pages_list_smallCard.html.twig` (any
+of the usual template override locations works) and `smallCard` becomes a valid
+view name — from Twig calls and from the block editor alike. It receives the same
+variables as the built-in views: `pages`, `pager`, `pager_route`,
+`pager_route_params`, `id`, `wrapperClass`.
+
+To offer the variant in the block editor's **format** select, list it in the app's
+custom properties:
+
+```yaml
+pushword:
+    apps:
+        - hosts: [example.tld]
+          custom_properties:
+              pages_list_displays: [smallCard]
+```
+
+A block saved with an undeclared variant keeps working — the select simply shows
+the stored name without proposing it elsewhere.
+
+### Changing the card grid's columns
+
+The `card` view's columns live on the wrapper alone
+(`grid gap-2 sm:grid-cols-2 md:grid-cols-3`); the items carry no width class. So
+`wrapperClass` — or the class tune on the block — replaces the whole layout in one
+string, no template override needed:
+
+```twig
+{{ pages_list('type:blog', 8, 'publishedAt ↓', 'card', wrapperClass: 'not-prose grid gap-4 sm:grid-cols-2 lg:grid-cols-4 my-5') }}
+```
+
+One caveat: classes typed in content only work if they exist in your compiled CSS.
+Tailwind generates what it sees in scanned files, so either keep a safelist of the
+grid classes you allow, or stick to classes your templates already use.
 
 ### The Horizontal Scroller
 
@@ -122,6 +161,16 @@ first card does not touch the edge of the window:
 
 ```twig
 {{ pages_list('type:blog', 9, 'publishedAt ↓', 'horizontalScroll', wrapperClass: 'bleed') }}
+```
+
+On a site using the block editor, write that call **positionally and fully quoted**
+instead — `wrapperClass` is the sixth argument, and the class tune the editor round-trips
+to. The block editor's markdown reader only accepts quoted positional arguments, so a
+named argument (or a bare `9`) leaves the call as a raw block: it still renders, but it
+is no longer editable as a Pages List block.
+
+```twig
+{{ pages_list('type:blog', '9', 'publishedAt ↓', 'horizontalScroll', '0', 'bleed') }}
 ```
 
 Three custom properties theme it:

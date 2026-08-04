@@ -58,3 +58,30 @@ describe('pages_list markdown round trip', () => {
     expect(properties?.[6]).toBe('listing')
   })
 })
+
+/**
+ * What a hand-written call has to look like to stay editable. The reader accepts
+ * quoted positional arguments only, so a named argument or a bare number makes the
+ * whole call unreadable and the block imports as raw markdown — it still renders,
+ * but the format select never sees it. Documented in /pages-list.
+ */
+describe('pages_list markdown the editor can read back', () => {
+  const read = (markdown: string) =>
+    MarkdownUtils.extractTwigFunctionProperties('pages_list', markdown)
+
+  it('reads a quoted positional call, wrapperClass included', () => {
+    const properties = read(
+      "{{ pages_list('type:blog', '9', 'publishedAt ↓', 'horizontalScroll', '0', 'bleed') }}",
+    )
+
+    expect(properties?.[3]).toBe('horizontalScroll')
+    expect(properties?.[5]).toBe('bleed')
+  })
+
+  it.each([
+    ["a named argument", "{{ pages_list('type:blog', '9', 'publishedAt ↓', 'horizontalScroll', wrapperClass: 'bleed') }}"],
+    ["an unquoted number", "{{ pages_list('type:blog', 9, 'publishedAt ↓', 'horizontalScroll') }}"],
+  ])('gives up on %s', (_label, markdown) => {
+    expect(read(markdown)).toBeNull()
+  })
+})
