@@ -142,16 +142,15 @@ const clear = (key) => {
 }
 
 /**
- * Initialize unsaved-changes recovery on the edit form.
- *
- * @returns {{save: () => void, forget: () => void}|null}
+ * Initialize unsaved-changes recovery on the edit form. Does nothing on a form
+ * that carries no recovery key, which is every screen but a saved page's edit.
  */
 export function initUnsavedChangesRecovery() {
   const form = document.querySelector(SELECTORS.FORM_AUTOSAVE)
-  if (null === form) return null
+  if (null === form) return
 
   const key = form.dataset.pwUnsavedKey
-  if (undefined === key || '' === key) return null
+  if (undefined === key || '' === key) return
 
   const banner = document.getElementById('pw-unsaved-banner')
   const bannerMessage = document.getElementById('pw-unsaved-message')
@@ -240,6 +239,4 @@ export function initUnsavedChangesRecovery() {
   })
 
   form.addEventListener('submit', forget)
-
-  return { save, forget }
 }

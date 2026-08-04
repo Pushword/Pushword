@@ -113,6 +113,73 @@ describe('initUnsavedChangesRecovery', () => {
     )
   })
 
+  it.each([
+    ['2 hours ago', 2 * 60 * 60_000],
+    ['yesterday', 24 * 60 * 60_000],
+    ['3 days ago', 3 * 24 * 60 * 60_000],
+  ])('scales the unit up to %s', (expected, elapsed) => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        values: { 'page[h1]': ['Kept title'] },
+        savedAt: Date.now() - elapsed,
+      }),
+    )
+    initUnsavedChangesRecovery()
+
+    expect(document.getElementById('pw-unsaved-message').textContent).toContain(expected)
+  })
+
+  it('clears the copy when the form is submitted the ordinary way', () => {
+    initUnsavedChangesRecovery()
+    type(form.elements['page[h1]'], 'Edited title')
+    vi.advanceTimersByTime(800)
+    expect(window.localStorage.getItem(KEY)).not.toBeNull()
+
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+
+    expect(window.localStorage.getItem(KEY)).toBeNull()
+  })
+
+  // After a save the form on screen IS the server state, so the comparison has
+  // to move with it: otherwise editing again would be measured against what the
+  // page was rendered with, and undoing back to it would wrongly drop the copy.
+  it('re-baselines on save, so later edits are still captured', () => {
+    initUnsavedChangesRecovery()
+    type(form.elements['page[h1]'], 'Saved title')
+    vi.advanceTimersByTime(800)
+
+    form.dispatchEvent(
+      new CustomEvent('htmx:after:request', {
+        detail: { ctx: { response: { status: 200 } } },
+      }),
+    )
+    expect(window.localStorage.getItem(KEY)).toBeNull()
+
+    type(form.elements['page[h1]'], 'Saved title, edited further')
+    vi.advanceTimersByTime(800)
+    expect(stored().values['page[h1]']).toEqual(['Saved title, edited further'])
+
+    // Back to what was saved: nothing left to recover.
+    type(form.elements['page[h1]'], 'Saved title')
+    vi.advanceTimersByTime(800)
+    expect(window.localStorage.getItem(KEY)).toBeNull()
+  })
+
+  it('coalesces a burst of typing into one write', () => {
+    initUnsavedChangesRecovery()
+    const writes = vi.spyOn(Storage.prototype, 'setItem')
+
+    for (const value of ['E', 'Ed', 'Edi', 'Edit']) {
+      type(form.elements['page[h1]'], value)
+      vi.advanceTimersByTime(200) // under the debounce
+    }
+    vi.advanceTimersByTime(800)
+
+    expect(writes).toHaveBeenCalledOnce()
+    writes.mockRestore()
+  })
+
   it('silently forgets a copy the server state already matches', () => {
     window.localStorage.setItem(
       KEY,
@@ -191,9 +258,15 @@ describe('initUnsavedChangesRecovery', () => {
   })
 
   it('does nothing on a form without a recovery key (a page being created)', () => {
-    document.body.innerHTML = '<form data-pw-ctrl-s-form="1"></form>'
+    document.body.innerHTML =
+      '<form data-pw-ctrl-s-form="1"><input name="page[h1]" value="A"></form>'
+    const created = document.querySelector('form')
+    initUnsavedChangesRecovery()
 
-    expect(initUnsavedChangesRecovery()).toBeNull()
+    type(created.elements['page[h1]'], 'Typed while creating')
+    vi.advanceTimersByTime(800)
+
+    expect(window.localStorage.length).toBe(0)
   })
 
   // EasyMDE and EditorJS both render beside the field they feed, and both write
@@ -265,5 +338,145 @@ describe('initUnsavedChangesRecovery on checkboxes and multi-selects', () => {
     vi.advanceTimersByTime(800)
 
     expect(stored().values['page[tags][]']).toEqual(['a', 'b'])
+  })
+})
+
+describe('initUnsavedChangesRecovery on radio groups', () => {
+  let form
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    window.localStorage.clear()
+    form = render(
+      '<input name="page[h1]" value="Server title">' +
+        '<input type="radio" name="page[metaRobots]" value="index" checked>' +
+        '<input type="radio" name="page[metaRobots]" value="noindex">',
+    )
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // Same name across several controls: serialize must keep the checked one, not
+  // simply the last one it walked past. Asserting the *unchanged* group is what
+  // separates the two, since the last radio here is the unchecked one.
+  it('keeps the selected radio, not the last of the group', () => {
+    initUnsavedChangesRecovery()
+    type(form.elements['page[h1]'], 'Edited title')
+    vi.advanceTimersByTime(800)
+
+    expect(stored().values['page[metaRobots]']).toEqual(['index'])
+  })
+
+  it('follows the selection when it moves', () => {
+    initUnsavedChangesRecovery()
+    const [, noindex] = form.elements['page[metaRobots]']
+    noindex.checked = true
+    noindex.dispatchEvent(new Event('change', { bubbles: true }))
+    vi.advanceTimersByTime(800)
+
+    expect(stored().values['page[metaRobots]']).toEqual(['noindex'])
+  })
+
+  it('moves the selection back on restore', () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        values: { 'page[metaRobots]': ['noindex'] },
+        savedAt: Date.now(),
+      }),
+    )
+    initUnsavedChangesRecovery()
+    document.getElementById('pw-unsaved-restore').click()
+
+    const [index, noindex] = form.elements['page[metaRobots]']
+    expect(noindex.checked).toBe(true)
+    expect(index.checked).toBe(false)
+  })
+})
+
+describe('initUnsavedChangesRecovery on fields it must leave alone', () => {
+  let form
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    window.localStorage.clear()
+    form = render(
+      '<input name="page[h1]" value="Server title">' +
+        '<input type="file" name="page[mediaFile]">' +
+        '<input name="page[locked]" value="Read only" disabled>',
+    )
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // A file input's value cannot be set back for security reasons, and a
+  // disabled field is not the user's to restore.
+  it('stores neither file inputs nor disabled fields', () => {
+    initUnsavedChangesRecovery()
+    type(form.elements['page[h1]'], 'Edited title')
+    vi.advanceTimersByTime(800)
+
+    expect(Object.keys(stored().values)).toEqual(['page[h1]'])
+  })
+
+  it('leaves a field the stored copy never mentioned', () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({ values: { 'page[absent]': ['x'] }, savedAt: Date.now() }),
+    )
+    initUnsavedChangesRecovery()
+    document.getElementById('pw-unsaved-restore').click()
+
+    expect(form.elements['page[h1]'].value).toBe('Server title')
+  })
+})
+
+describe('initUnsavedChangesRecovery when storage misbehaves', () => {
+  let form
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    window.localStorage.clear()
+    form = render('<input name="page[h1]" value="Server title">')
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  // Recovery is a bonus. A browser with storage disabled, or a quota already
+  // full, must not take the edit form down with it.
+  it('keeps typing working when the write is refused', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError')
+    })
+    initUnsavedChangesRecovery()
+
+    expect(() => {
+      type(form.elements['page[h1]'], 'Edited title')
+      vi.advanceTimersByTime(800)
+    }).not.toThrow()
+  })
+
+  it('ignores an unparsable stored value instead of throwing', () => {
+    window.localStorage.setItem(KEY, 'not json {')
+
+    expect(() => initUnsavedChangesRecovery()).not.toThrow()
+    expect(isVisible()).toBe(false)
+  })
+
+  it('overwrites that unparsable value on the next change', () => {
+    window.localStorage.setItem(KEY, 'not json {')
+    initUnsavedChangesRecovery()
+
+    type(form.elements['page[h1]'], 'Edited title')
+    vi.advanceTimersByTime(800)
+
+    expect(stored().values['page[h1]']).toEqual(['Edited title'])
   })
 })
