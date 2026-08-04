@@ -179,6 +179,10 @@ final class CampaignApiController extends AbstractApiController
         $data = $this->decodeJson($request);
         $addresses = \is_array($data['emails'] ?? null) ? $data['emails'] : [];
 
+        // Which language to proofread; the campaign's own text when unsaid.
+        $locale = \is_string($data['locale'] ?? null) ? trim($data['locale']) : '';
+        $content = $campaign->contentFor($locale);
+
         $sent = [];
         $failed = [];
 
@@ -190,7 +194,7 @@ final class CampaignApiController extends AbstractApiController
             }
 
             try {
-                $this->mailer->sendTest($audience, $campaign->subject, $campaign->bodyMarkdown, $campaign->preheader, $address, UtmTag::forCampaign($campaign));
+                $this->mailer->sendTest($audience, $content['subject'], $content['bodyMarkdown'], $content['preheader'], $address, UtmTag::forCampaign($campaign), $locale);
                 $sent[] = $address;
             } catch (Throwable $throwable) {
                 $failed[] = $address.' ('.$throwable->getMessage().')';
@@ -252,6 +256,10 @@ final class CampaignApiController extends AbstractApiController
             $campaign->bodyMarkdown = $data['bodyMarkdown'];
         }
 
+        if (\array_key_exists('translations', $data) && \is_array($data['translations'])) {
+            $campaign->translations = $this->mergedTranslations($campaign, $data['translations']);
+        }
+
         if (\array_key_exists('rateSeconds', $data)) {
             $campaign->rateSeconds = \is_int($data['rateSeconds']) ? $data['rateSeconds'] : null;
         }
@@ -269,6 +277,43 @@ final class CampaignApiController extends AbstractApiController
         }
 
         return null;
+    }
+
+    /**
+     * Merged per locale, the way `customProperties` merges per key: a caller
+     * sending the German translation must not have to resend the other seven.
+     * A locale set to null drops it, which is the only way to take one back.
+     *
+     * @param array<mixed> $written
+     *
+     * @return array<string, array<string, string>>
+     */
+    private function mergedTranslations(Campaign $campaign, array $written): array
+    {
+        $translations = $campaign->translations;
+
+        foreach ($written as $locale => $fields) {
+            if (null === $fields) {
+                unset($translations[(string) $locale]);
+
+                continue;
+            }
+
+            if (! \is_array($fields)) {
+                continue;
+            }
+
+            $kept = [];
+            foreach (['subject', 'preheader', 'bodyMarkdown'] as $field) {
+                if (\is_string($fields[$field] ?? null)) {
+                    $kept[$field] = $fields[$field];
+                }
+            }
+
+            $translations[(string) $locale] = $kept;
+        }
+
+        return $translations;
     }
 
     private function parseDate(?string $value): ?DateTimeImmutable
@@ -296,6 +341,7 @@ final class CampaignApiController extends AbstractApiController
             'slug' => $campaign->slug,
             'preheader' => $campaign->preheader,
             'bodyMarkdown' => $campaign->bodyMarkdown,
+            'translations' => $campaign->translations,
             'segment' => $campaign->segment,
             'status' => $campaign->getStatusLabel(),
             'rateSeconds' => $campaign->getEffectiveRateSeconds(),
@@ -353,7 +399,7 @@ final class CampaignApiController extends AbstractApiController
                 ],
                 '/api/newsletter/campaign/{id}/test' => [
                     'parameters' => [['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],
-                    'post' => ['summary' => 'Mail a preview to arbitrary addresses; touches no contact and no counter', 'responses' => ['200' => ['description' => 'OK']]],
+                    'post' => ['summary' => 'Mail a preview to arbitrary addresses; touches no contact and no counter. `locale` picks which translation to proofread', 'responses' => ['200' => ['description' => 'OK']]],
                 ],
             ],
             'components' => [
@@ -366,6 +412,18 @@ final class CampaignApiController extends AbstractApiController
                             'slug' => ['type' => 'string', 'description' => 'utm_campaign value; derived from the subject when omitted'],
                             'preheader' => ['type' => 'string'],
                             'bodyMarkdown' => ['type' => 'string'],
+                            'translations' => [
+                                'type' => 'object',
+                                'description' => 'The same campaign per locale — {"de": {"subject", "preheader", "bodyMarkdown"}}. Merged per locale on PATCH; a locale set to null drops it. A contact is sent their own locale, else its language part, else the campaign\'s own text',
+                                'additionalProperties' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'subject' => ['type' => 'string'],
+                                        'preheader' => ['type' => 'string'],
+                                        'bodyMarkdown' => ['type' => 'string'],
+                                    ],
+                                ],
+                            ],
                             'segment' => ['description' => 'Contact criteria, ANDed; {"any": [...]} ORs them instead', 'oneOf' => [['type' => 'array', 'items' => ['type' => 'object']], ['type' => 'object']]],
                             'rateSeconds' => ['type' => 'integer'],
                         ],

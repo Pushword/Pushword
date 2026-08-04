@@ -66,6 +66,7 @@ newsletter:
     fieldset:
       audience: Audience et programmation
       content: Contenu
+      languages: Langues
       performance: Performance
     field:
       audience: Audience
@@ -87,6 +88,8 @@ newsletter:
       slug.help: Transmis comme utm_campaign. Déduit de l'objet si laissé vide, et préfixé par la date d'envoi (AAMMJJ) au moment de l'envoi.
       status: Statut
       subject: Objet
+      translations: Traductions
+      translations.help: 'JSON, une entrée par langue : {"de": {"subject": "…", "preheader": "…", "bodyMarkdown": "…"}}. Un champ absent reprend le texte ci-dessus, donc un lecteur ne reçoit jamais un mail vide. Laissez vide pour envoyer le même texte à tout le monde.'
       unsubscribed: Désinscrits
     flash:
       backToDraft: Programmation annulée — retour au brouillon.
@@ -97,9 +100,15 @@ newsletter:
     test:
       cancel: Annuler
       help: Envoie la newsletter aux adresses ci-dessous, objet préfixé par [TEST]. Les contacts, destinataires et statistiques ne sont pas touchés.
+      locale: Langue
+      locale.default: Le texte ci-dessus (défaut)
+      locale.help: Quelle traduction relire. Le mail autour du corps est écrit dans cette langue aussi.
       recipients: Adresse(s) destinataire(s)
       recipients.help: Séparées par des virgules, espaces ou retours à la ligne. Votre adresse par défaut.
       title: Envoyer un test
+    translations:
+      invalidJson: Les traductions doivent être un objet JSON indexé par langue.
+      invalidLocale: 'La traduction « %locale% » doit être un objet contenant subject, preheader et bodyMarkdown.'
   confirm:
     body: Merci pour votre inscription ! Pour commencer à recevoir nos mails, cliquez sur le bouton ci-dessous afin de confirmer votre adresse e-mail.
     button: Je confirme mon inscription

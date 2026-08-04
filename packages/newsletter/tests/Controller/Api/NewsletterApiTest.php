@@ -572,6 +572,45 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertEmailCount(0, null, 'the tick delivers, the API only arms');
     }
 
+    /** A caller sending the German translation must not have to resend the other seven. */
+    public function testTranslationsRoundTripAndMergePerLocale(): void
+    {
+        $audience = $this->createAudience();
+
+        $created = $this->request(Request::METHOD_POST, '/api/newsletter/campaign', [
+            'audience' => $audience->slug,
+            'subject' => 'Hello',
+            'bodyMarkdown' => 'Read this.',
+            'translations' => [
+                'de' => ['subject' => 'Hallo', 'bodyMarkdown' => 'Lies das.'],
+                'it' => ['subject' => 'Ciao'],
+            ],
+        ]);
+
+        self::assertSame([
+            'de' => ['subject' => 'Hallo', 'bodyMarkdown' => 'Lies das.'],
+            'it' => ['subject' => 'Ciao'],
+        ], $created['translations']);
+
+        $id = $created['id'];
+        self::assertIsInt($id);
+
+        $patched = $this->request(Request::METHOD_PATCH, '/api/newsletter/campaign/'.$id, [
+            'translations' => ['it' => ['subject' => 'Ciao', 'bodyMarkdown' => 'Leggi questo.']],
+        ]);
+
+        self::assertSame([
+            'de' => ['subject' => 'Hallo', 'bodyMarkdown' => 'Lies das.'],
+            'it' => ['subject' => 'Ciao', 'bodyMarkdown' => 'Leggi questo.'],
+        ], $patched['translations'], 'a locale left out is kept');
+
+        $dropped = $this->request(Request::METHOD_PATCH, '/api/newsletter/campaign/'.$id, [
+            'translations' => ['de' => null],
+        ]);
+
+        self::assertSame(['it' => ['subject' => 'Ciao', 'bodyMarkdown' => 'Leggi questo.']], $dropped['translations']);
+    }
+
     public function testAnArmedCampaignCanNoLongerBeEdited(): void
     {
         $audience = $this->createAudience();

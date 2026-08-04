@@ -1,5 +1,5 @@
 ---
-title: 'a newsletter contact can be keyed on a phone number, a page automation stops mailing one article once per language'
+title: 'a newsletter contact can be keyed on a phone number, and a campaign carries one body per locale'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 run: 'doctrine:schema:update --force'
@@ -90,3 +90,24 @@ single-language list is unaffected and nothing has to be configured.
 If you had worked around this with one automation per language, each carrying
 `[{"field":"locale","op":"=","value":"xx"}]` in `recipientWhen`, they keep
 working unchanged — the condition is simply now redundant.
+
+## A campaign carries one body per locale
+
+`Campaign` gains a `translations` JSON column: the same campaign per locale,
+`{"de": {"subject", "preheader", "bodyMarkdown"}}`, edited under a **Languages**
+fieldset and readable and writable over the API, where `PATCH` merges per locale
+and a locale set to `null` drops it.
+
+Nothing changes for a campaign that has none — it keeps sending its own text to
+everybody. What changed under an unchanged call:
+
+- **`NewsletterMailer::sendCampaign()` resolves the body per contact**, through
+  the contact's locale, then its language part (`de-ch` reads `de`), then the
+  campaign's own text. A campaign with no translations resolves to exactly what
+  it sent before.
+- **`NewsletterMailer::sendTest()` takes a trailing `$locale`**, defaulting to
+  the audience host's own — so the signature is compatible with existing calls.
+
+An audience spanning several locale hosts can now be reached in one broadcast
+rather than one campaign per language, which is also what stops a bilingual
+reader being mailed twice.

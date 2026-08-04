@@ -26,6 +26,7 @@ use Pushword\Newsletter\Controller\CriteriaController;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Enum\CampaignStatus;
+use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Service\CampaignSender;
@@ -47,6 +48,7 @@ class CampaignCrudController extends AbstractCrudController
         private readonly CampaignSender $campaignSender,
         private readonly NewsletterMailer $mailer,
         private readonly SegmentResolver $segmentResolver,
+        private readonly ContactRepository $contactRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly AdminUrlGenerator $adminUrlGenerator,
         private readonly UrlGeneratorInterface $urlGenerator,
@@ -149,6 +151,16 @@ class CampaignCrudController extends AbstractCrudController
             ->setHelp('newsletter.campaign.field.slug.help');
         yield $this->bodyField();
 
+        yield FormField::addFieldset('newsletter.campaign.fieldset.languages')->setIcon('fa fa-language')
+            ->setHelp($this->coverage())
+            ->hideOnIndex()
+            ->collapsible();
+        yield TextareaField::new('translationsAsJson', 'newsletter.campaign.field.translations')
+            ->hideOnIndex()
+            ->setRequired(false)
+            ->setNumOfRows(10)
+            ->setHelp('newsletter.campaign.field.translations.help');
+
         yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users');
         yield AssociationField::new('audience', 'newsletter.campaign.field.audience')->hideOnIndex();
         yield CriteriaField::new('segmentAsJson', 'newsletter.campaign.field.segment', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
@@ -169,6 +181,40 @@ class CampaignCrudController extends AbstractCrudController
         yield TextField::new('sentAt', 'newsletter.campaign.field.sentAt')->onlyOnDetail()->formatValue(
             static fn (mixed $value): string => $value instanceof DateTimeInterface ? $value->format('d M Y H:i') : '—',
         );
+    }
+
+    /**
+     * Which languages the audience is read in, and which of them this campaign
+     * is written in — the denominator being the contacts' own locales rather
+     * than the site's hosts, since an audience is a list of readers and not a
+     * set of domains.
+     *
+     * Whoever is about to press Send should be able to see, before doing so,
+     * that four of eight languages will receive the default text.
+     */
+    private function coverage(): string
+    {
+        $campaign = $this->getContext()?->getEntity()->getInstance();
+        $audience = $campaign instanceof Campaign ? $campaign->audience : null;
+
+        if (! $audience instanceof Audience) {
+            return '';
+        }
+
+        $spoken = $this->contactRepository->localesIn($audience);
+
+        if (\count($spoken) < 2) {
+            return '';
+        }
+
+        $translated = array_values(array_intersect($spoken, $campaign->translatedLocales()));
+        $missing = array_values(array_diff($spoken, $translated));
+
+        $read = \sprintf('Read in %d languages: %s.', \count($spoken), implode(', ', $spoken));
+
+        return [] === $missing
+            ? $read.' All of them translated.'
+            : $read.\sprintf(' Translated: %s. %s receive the text above.', [] === $translated ? 'none' : implode(', ', $translated), implode(', ', $missing));
     }
 
     #[AdminRoute(path: '/{entityId}/send', name: 'send')]
@@ -287,6 +333,9 @@ class CampaignCrudController extends AbstractCrudController
         return $this->render('@PushwordNewsletter/admin/campaign_test_send.html.twig', [
             'campaign' => $campaign,
             'default_emails' => $this->getUser()?->getUserIdentifier() ?? '',
+            // Only offered once a translation exists: a list of one language is
+            // a choice nobody has.
+            'locales' => $campaign->translatedLocales(),
             'back_url' => $backUrl,
             'csrf_id' => $csrfId,
         ]);
@@ -300,6 +349,11 @@ class CampaignCrudController extends AbstractCrudController
             static fn (string $address): bool => '' !== $address,
         );
 
+        // Which language to proofread. Empty is the audience host's own, which
+        // is the campaign's default text.
+        $locale = trim($request->request->getString('locale'));
+        $content = $campaign->contentFor($locale);
+
         $sent = [];
         $failed = [];
 
@@ -311,7 +365,7 @@ class CampaignCrudController extends AbstractCrudController
             }
 
             try {
-                $this->mailer->sendTest($audience, $campaign->subject, $campaign->bodyMarkdown, $campaign->preheader, $address, UtmTag::forCampaign($campaign));
+                $this->mailer->sendTest($audience, $content['subject'], $content['bodyMarkdown'], $content['preheader'], $address, UtmTag::forCampaign($campaign), $locale);
                 $sent[] = $address;
             } catch (Throwable $throwable) {
                 $failed[] = $address.' ('.$throwable->getMessage().')';

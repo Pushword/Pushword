@@ -372,7 +372,53 @@ double-send. A contact who unsubscribed between arming and sending is skipped,
 which the ledger records as `skipped` rather than as a failure.
 
 **Send test** mails a copy of any campaign to arbitrary addresses with a `[TEST]`
-subject prefix, touching no contact and no counter.
+subject prefix, touching no contact and no counter. Once the campaign carries
+translations it also asks which language to proofread.
+
+### Languages
+
+One campaign carries one body per locale, so an audience spanning several locale
+hosts is mailed once and each reader gets their own language. The alternative —
+one campaign per language, each carrying
+`[{"field":"locale","op":"=","value":"xx"}]` — mails a bilingual reader twice
+and has to be armed eight times.
+
+The **Languages** fieldset holds them as JSON, one entry per locale:
+
+```json
+{
+  "de": {"subject": "Hallo", "preheader": "…", "bodyMarkdown": "Lies das."},
+  "it": {"subject": "Ciao"}
+}
+```
+
+What a given reader is sent is resolved when the mail goes out, in three steps:
+
+1. `translations[<the contact's locale>]`,
+2. otherwise its language part — `de-ch` reads the `de` written once for eight
+   languages over seventeen hosts,
+3. otherwise the campaign's own subject, preheader and body.
+
+Each of the three fields falls back on its own, so translating a subject without
+its body is allowed and means what it looks like. A blank field is not stored at
+all, which is what keeps a locale somebody opened and left alone from mailing an
+empty body. **Nobody ever receives an empty mail**: a missing translation sends
+the default text, and the fieldset says how many of the languages the audience is
+read in are covered before anyone presses Send.
+
+Resolution happens at send, not at arming: a recipient row freezes *who*, never
+*what* — as is already true of `%name%`. Freezing the rendered body per recipient
+would multiply the ledger by the body size for no gain and make fixing a typo
+mid-campaign impossible.
+
+Counters stay per campaign. A campaign is one broadcast; splitting `sentCount` by
+language is a reporting question, answerable from `CampaignRecipient` joined to
+`Contact.locale` if it ever comes up.
+
+The segment stays orthogonal: `locale` remains a segment field, so one campaign
+per market — different offers per market, not the same offer translated — keeps
+working exactly as before. This removes an obligation, it does not impose a
+model.
 
 ### Who it went to
 

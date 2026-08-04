@@ -70,6 +70,29 @@ class Campaign implements IdInterface, Stringable
     }
 
     /**
+     * The same campaign in the other languages of its audience, keyed by locale:
+     *
+     *     {"de": {"subject": "…", "preheader": "…", "bodyMarkdown": "…"}}
+     *
+     * An audience spanning several locale hosts is one consent scope and one
+     * list, so reaching it in every language it is read in is one campaign and
+     * not one per language — which is also what keeps a bilingual reader from
+     * being mailed twice.
+     *
+     * A JSON column rather than a `CampaignTranslation` entity: the values are
+     * authored together, read together, never queried and never joined, so an
+     * entity would buy a schema and a repository for nothing. It mirrors the way
+     * `customProperties` already carries per-contact data on one aggregate.
+     *
+     * @var array<string, array<string, string>>
+     */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '{}'])]
+    public array $translations = [] {
+        /** @param array<array-key, mixed> $value */
+        set(array $value) => $this->normalizeTranslations($value);
+    }
+
+    /**
      * Segment criteria; an empty list targets the whole subscribed audience.
      *
      * @var array<mixed>
@@ -129,9 +152,113 @@ class Campaign implements IdInterface, Stringable
 
     private bool $segmentJsonProvided = false;
 
+    private string $translationsJson = '';
+
+    private bool $translationsJsonProvided = false;
+
     public function __construct()
     {
         $this->initTimestampableProperties();
+    }
+
+    /**
+     * What one reader is sent, resolved at send time.
+     *
+     * Three steps: the locale as the contact carries it, then its language part
+     * — `de-ch` reads the German written for eight languages over seventeen
+     * hosts — then the campaign's own text. So a missing translation sends the
+     * default rather than an empty mail, and a body is never frozen per
+     * recipient: fixing a typo mid-campaign still reaches whoever is left.
+     *
+     * A translation may carry only some of the three fields; each falls back on
+     * its own, so translating the subject without the preheader is allowed and
+     * means what it looks like.
+     *
+     * @return array{subject: string, preheader: string|null, bodyMarkdown: string}
+     */
+    public function contentFor(string $locale): array
+    {
+        $translation = $this->translationFor($locale);
+
+        return [
+            'subject' => $translation['subject'] ?? $this->subject,
+            'preheader' => $translation['preheader'] ?? $this->preheader,
+            'bodyMarkdown' => $translation['bodyMarkdown'] ?? $this->bodyMarkdown,
+        ];
+    }
+
+    /**
+     * The languages this campaign is written in besides its own text.
+     *
+     * @return list<string>
+     */
+    public function translatedLocales(): array
+    {
+        return array_keys($this->translations);
+    }
+
+    /**
+     * @return array<string, string> the fields actually written for this locale,
+     *                               empty when none is
+     */
+    private function translationFor(string $locale): array
+    {
+        $locale = $this->normalizeLocale($locale);
+
+        if ('' === $locale) {
+            return [];
+        }
+
+        $language = str_contains($locale, '-') ? substr($locale, 0, (int) strpos($locale, '-')) : $locale;
+
+        return $this->translations[$locale] ?? $this->translations[$language] ?? [];
+    }
+
+    /**
+     * Blank values are dropped rather than stored: an empty field in the admin
+     * means "not translated", which is what makes it fall back. Stored the other
+     * way, a locale opened and left alone would mail an empty body.
+     *
+     * @param array<array-key, mixed> $translations whatever the API or the admin textarea decoded
+     *
+     * @return array<string, array<string, string>>
+     */
+    private function normalizeTranslations(array $translations): array
+    {
+        $normalized = [];
+
+        foreach ($translations as $locale => $fields) {
+            $locale = $this->normalizeLocale((string) $locale);
+            if ('' === $locale) {
+                continue;
+            }
+
+            if (! \is_array($fields)) {
+                continue;
+            }
+
+            $kept = [];
+            foreach (['subject', 'preheader', 'bodyMarkdown'] as $field) {
+                $value = \is_string($fields[$field] ?? null) ? trim($fields[$field]) : '';
+
+                if ('' !== $value) {
+                    $kept[$field] = $value;
+                }
+            }
+
+            if ([] !== $kept) {
+                $normalized[$locale] = $kept;
+            }
+        }
+
+        ksort($normalized);
+
+        return $normalized;
+    }
+
+    private function normalizeLocale(string $locale): string
+    {
+        return str_replace('_', '-', mb_strtolower(trim($locale)));
     }
 
     public function __toString(): string
@@ -184,6 +311,72 @@ class Campaign implements IdInterface, Stringable
         $this->segmentJsonProvided = true;
 
         return $this;
+    }
+
+    /**
+     * The admin edits the translations as JSON, the way it edits the segment —
+     * one textarea rather than a form grown at runtime for whichever languages
+     * an audience turns out to be read in.
+     */
+    public function getTranslationsAsJson(): string
+    {
+        if ($this->translationsJsonProvided) {
+            return $this->translationsJson;
+        }
+
+        return [] === $this->translations
+            ? ''
+            : json_encode($this->translations, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR);
+    }
+
+    public function setTranslationsAsJson(?string $translationsJson): self
+    {
+        $this->translationsJson = (string) $translationsJson;
+        $this->translationsJsonProvided = true;
+
+        return $this;
+    }
+
+    #[Assert\Callback]
+    public function validateTranslations(ExecutionContextInterface $executionContext): void
+    {
+        if (! $this->translationsJsonProvided) {
+            return;
+        }
+
+        $json = trim($this->translationsJson);
+
+        if ('' === $json) {
+            $this->translations = [];
+            $this->translationsJsonProvided = false;
+
+            return;
+        }
+
+        $decoded = json_decode($json, true);
+
+        if (! \is_array($decoded)) {
+            $executionContext->buildViolation('newsletter.campaign.translations.invalidJson')
+                ->atPath('translationsAsJson')
+                ->addViolation();
+
+            return;
+        }
+
+        foreach ($decoded as $locale => $fields) {
+            if (! \is_array($fields)) {
+                $executionContext->buildViolation('newsletter.campaign.translations.invalidLocale')
+                    ->setParameter('%locale%', (string) $locale)
+                    ->atPath('translationsAsJson')
+                    ->addViolation();
+
+                return;
+            }
+        }
+
+        /** @var array<string, array<string, string>> $decoded */
+        $this->translations = $decoded;
+        $this->translationsJsonProvided = false;
     }
 
     #[Assert\Callback]

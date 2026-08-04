@@ -89,6 +89,43 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertMatchesRegularExpression('/name="[^"]*\[subject\]"/', $html);
         self::assertMatchesRegularExpression('/name="[^"]*\[segmentAsJson\]"/', $html);
         self::assertMatchesRegularExpression('/name="[^"]*\[audience\]"/', $html);
+        self::assertMatchesRegularExpression('/name="[^"]*\[translationsAsJson\]"/', $html);
+    }
+
+    /** The per-locale bodies edit the way the segment does: JSON, validated before it is stored. */
+    public function testACampaignIsWrittenInSeveralLanguages(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
+        $form = $crawler->filter('form[name="Campaign"]')->form();
+        $form['Campaign[subject]'] = 'Translated';
+        $form['Campaign[audience]'] = (string) $audience->id;
+        $form['Campaign[translationsAsJson]'] = '{"DE": {"subject": "Hallo", "bodyMarkdown": "Lies das."}}';
+        $client->submit($form);
+
+        $campaign = $this->entityManager()->getRepository(Campaign::class)->findOneBy(['subject' => 'Translated']);
+        self::assertInstanceOf(Campaign::class, $campaign);
+        self::assertSame(['de' => ['subject' => 'Hallo', 'bodyMarkdown' => 'Lies das.']], $campaign->translations);
+        self::assertSame('Hallo', $campaign->contentFor('de-CH')['subject']);
+    }
+
+    /** Malformed translations come back as a form error, never as a 500 or an empty mail. */
+    public function testMalformedTranslationsAreAFormError(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
+        $form = $crawler->filter('form[name="Campaign"]')->form();
+        $form['Campaign[subject]'] = 'Broken translations';
+        $form['Campaign[audience]'] = (string) $audience->id;
+        $form['Campaign[translationsAsJson]'] = '{"de": "Hallo"}';
+        $client->submit($form);
+
+        self::assertSame(422, $client->getResponse()->getStatusCode());
+        self::assertNull($this->entityManager()->getRepository(Campaign::class)->findOneBy(['subject' => 'Broken translations']));
     }
 
     /** A malformed segment must come back as a form error, never as a 500. */

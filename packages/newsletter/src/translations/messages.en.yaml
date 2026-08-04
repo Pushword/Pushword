@@ -66,6 +66,7 @@ newsletter:
     fieldset:
       audience: Audience & scheduling
       content: Content
+      languages: Languages
       performance: Performance
     field:
       audience: Audience
@@ -87,6 +88,8 @@ newsletter:
       slug.help: Carried as utm_campaign. Derived from the subject when left empty, and prefixed with the send date (YYMMDD) once the newsletter is sent.
       status: Status
       subject: Subject
+      translations: Translations
+      translations.help: 'JSON, one entry per locale: {"de": {"subject": "…", "preheader": "…", "bodyMarkdown": "…"}}. A field left out falls back on the text above, so a reader never gets an empty mail. Leave empty to mail everybody the same text.'
       unsubscribed: Unsubscribed
     flash:
       backToDraft: Schedule cancelled — back to draft.
@@ -97,9 +100,15 @@ newsletter:
     test:
       cancel: Cancel
       help: Delivers the newsletter to the addresses below, with the subject prefixed by [TEST]. Contacts, recipients and stats are untouched.
+      locale: Language
+      locale.default: The text above (default)
+      locale.help: Which translation to proofread. The mail around the body is written in it too.
       recipients: Recipient address(es)
       recipients.help: Comma-, space- or newline-separated. Defaults to your address.
       title: Send a test
+    translations:
+      invalidJson: Translations must be a JSON object keyed by locale.
+      invalidLocale: 'Translation "%locale%" must be an object of subject, preheader and bodyMarkdown.'
   confirm:
     body: Thank you for signing up! To start receiving our emails, click the button below to confirm your email address.
     button: Confirm my subscription

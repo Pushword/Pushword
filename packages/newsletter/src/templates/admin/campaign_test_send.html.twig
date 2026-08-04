@@ -14,6 +14,19 @@
             <small class="form-text text-muted">{{ 'newsletter.campaign.test.recipients.help'|trans }}</small>
         </div>
 
+        {% if locales is not empty %}
+            <div class="form-group mb-3">
+                <label class="form-label" for="newsletter-test-locale">{{ 'newsletter.campaign.test.locale'|trans }}</label>
+                <select id="newsletter-test-locale" name="locale" class="form-select">
+                    <option value="">{{ 'newsletter.campaign.test.locale.default'|trans }}</option>
+                    {% for locale in locales %}
+                        <option value="{{ locale }}">{{ locale }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">{{ 'newsletter.campaign.test.locale.help'|trans }}</small>
+            </div>
+        {% endif %}
+
         <button type="submit" class="btn btn-primary">
             <i class="fa fa-flask"></i> {{ 'newsletter.campaign.action.sendTest'|trans }}
         </button>
