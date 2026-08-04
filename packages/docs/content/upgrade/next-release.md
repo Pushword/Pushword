@@ -1,5 +1,5 @@
 ---
-title: 'Docker is offered at install time'
+title: 'Docker is offered at install time; the page scan sees unreachable hosts again'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -28,7 +28,7 @@ absorbs needs no note.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/core`, `pushword/dev-app`, `pushword/installer`
+**Concerns:** `pushword/core`, `pushword/dev-app`, `pushword/installer`, `pushword/page-scanner`
 
 ## Pushword ships a Docker/FrankenPHP setup, and the installer asks before writing it
 
@@ -72,3 +72,38 @@ and how the first boot seeds itself.
 It was in the requirement list on [Installation](/installation) and nothing in Pushword
 or its dependencies has ever called it. Removed from the list, and absent from the check
 the installer runs — a PHP without it was already running Pushword fine.
+
+## The page scan sees unreachable hosts again, and its URL cache works
+
+Two bugs in the parallel external-link checker, both found by finally testing it.
+
+**An external host that never answered was reported as fine.** A transfer run through
+`curl_multi` leaves `curl_errno()` at zero — the failure is only in
+`curl_multi_info_read()` — so a domain that had expired, a host that timed out and a
+broken TLS handshake all read as reachable. Only the synchronous fallback, which
+`pw:page-scan` never takes, ever saw them.
+
+**Expect new `link-unreachable` findings on the first scan after upgrading**, on links
+that have been dead for as long as this has. A flaky third-party host is exactly what
+the ignore rules are for:
+
+```markdown
+<!-- page-scanner-ignore-link: https://flaky.example.com/* -->
+```
+
+**And the external-URL cache never stored anything.** The lookup saved its own miss, so
+the pool answered every later read — including the one meant to store the result — with
+that null. `external_url_cache_ttl` had no effect and every scan rechecked every URL
+over the network. It caches now, so scans after the first are markedly faster.
+
+## A page can skip a link from its content
+
+`pageScanLinksToIgnore` was reachable only through the page properties. It takes an
+inline comment now, like the findings it neighbours:
+
+```markdown
+<!-- page-scanner-ignore-link: https://flaky.example.com/*, /legacy-path -->
+```
+
+Same `fnmatch` patterns, and the two sources add up. Nothing to change — the property
+keeps working.

@@ -47,8 +47,15 @@ final class ParallelUrlChecker
 
         $uncachedUrls = [];
         foreach ($urls as $url) {
+            // `$save = false` or the probe stores its own miss: the pool then answers
+            // every later get() with that null, callback included, and the result of
+            // the check below is never written — nothing was ever cached.
             /** @var UrlCheckResult|null $cached */
-            $cached = $this->externalUrlCache->get(self::cacheKey($url), static fn (): null => null);
+            $cached = $this->externalUrlCache->get(self::cacheKey($url), static function (ItemInterface $item, bool &$save): null {
+                $save = false;
+
+                return null;
+            });
 
             if (null !== $cached) {
                 $this->results[$url] = $cached;
@@ -86,11 +93,23 @@ final class ParallelUrlChecker
             curl_multi_select($multiHandle);
         } while ($running > 0);
 
+        // A transfer run through curl_multi reports its failure here and nowhere else:
+        // curl_errno() stays 0 and curl_error() empty on the handle itself. Reading it
+        // from the handle is what made every unresolvable host read as reachable.
+        $transferErrors = [];
+        while (false !== ($info = curl_multi_info_read($multiHandle))) {
+            // The stub types this array as untyped: `handle` is the CurlHandle the
+            // message is about, `result` its CURLE_* code.
+            if ($info['handle'] instanceof CurlHandle && \is_int($info['result'])) {
+                $transferErrors[spl_object_id($info['handle'])] = $info['result'];
+            }
+        }
+
         foreach ($handles as $url => $ch) {
             $httpCode = curl_getinfo($ch, \CURLINFO_HTTP_CODE);
-            $error = curl_errno($ch);
+            $error = $transferErrors[spl_object_id($ch)] ?? \CURLE_OK;
 
-            $result = $this->interpretResult($httpCode, $error, curl_error($ch));
+            $result = $this->interpretResult($httpCode, $error, \CURLE_OK === $error ? '' : (string) curl_strerror($error));
             $this->results[$url] = $result;
 
             $this->cacheResult($url, $result);

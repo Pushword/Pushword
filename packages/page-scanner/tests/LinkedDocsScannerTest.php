@@ -11,17 +11,19 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\PageScanner\Scanner\LinkedDocsScanner;
+use Pushword\PageScanner\Scanner\ParallelUrlChecker;
 
 use function Safe\file_get_contents;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Group('integration')]
 final class LinkedDocsScannerTest extends KernelTestCase
 {
-    private function createScanner(?string $publicDir = null): LinkedDocsScanner
+    private function createScanner(?string $publicDir = null, ?CacheInterface $externalUrlCache = null): LinkedDocsScanner
     {
         return new LinkedDocsScanner(
             self::getContainer()->get('doctrine.orm.default_entity_manager'),
@@ -29,7 +31,39 @@ final class LinkedDocsScannerTest extends KernelTestCase
             [],
             $publicDir ?? __DIR__.'/../../dev-app/public',
             self::getContainer()->get('translator'),
+            $externalUrlCache,
         );
+    }
+
+    /**
+     * The two classes checking external URLs fill one cache pool — the parallel one
+     * during a scan, this scanner on its synchronous fallback. They have to agree on
+     * both the key and what is stored under it, or a warm cache reads as a miss at
+     * best and a type error at worst.
+     */
+    public function testTheSynchronousPathReadsWhatTheParallelCheckerCached(): void
+    {
+        self::bootKernel();
+        $url = 'https://cached.example.org/gone';
+
+        $cache = self::getContainer()->get('cache.page_scanner');
+        $cache->delete(ParallelUrlChecker::cacheKey($url));
+        $cache->get(
+            ParallelUrlChecker::cacheKey($url),
+            static fn (): array => ['code' => 'link-status', 'message' => 'Unexpected status code (404)'],
+        );
+
+        try {
+            $scanner = $this->createScanner(null, $cache);
+            $scanner->preloadPageCache();
+
+            $errors = $scanner->scan($this->getPage('other-page'), '<a href="'.$url.'">link</a>');
+
+            self::assertCount(1, $errors, 'The cached failure must surface without a request.');
+            self::assertSame('link-status', $errors[0]['code']);
+        } finally {
+            $cache->delete(ParallelUrlChecker::cacheKey($url));
+        }
     }
 
     public function testLinkedDocsScanner(): void
