@@ -30,11 +30,11 @@
 {% set imageAlt = imageAlt ?? null %}
 {% set link = link ?? null %}
 
-{% set isClickable = link is defined and (buttonLink is not defined or buttonLink == link) ? true : false %}
+{% set isClickable = link and (buttonLink is null or buttonLink == link) %}
 
 {% block card %}
 <article
-  class="overflow-hidden rounded-lg shadow transition-all duration-75 ease-in-out motion-reduce:transition-none hover:shadow-md {{ isClickable ? 'clickable cursor-pointer' : '' }}">
+  class="overflow-hidden rounded-lg shadow transition-all duration-75 ease-in-out motion-reduce:transition-none hover:shadow-md {{ isClickable ? 'clickable' : '' }}">
   {% if image %}
     {{ image(image, alt: imageAlt, class: 'block w-full aspect-square object-cover m-0') }}
   {% endif %}

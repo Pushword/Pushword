@@ -9,7 +9,6 @@ import {
   liveBlock,
   convertFormFromRot13,
 } from './helpers.js'
-import { allClickable } from './clickable.js'
 import { initShowMore } from './ShowMore.js'
 import { restoreUnpublishedLinks } from './unpublishedLinks.js'
 import { initVariantLinks } from './variantLinks.js'
@@ -37,7 +36,6 @@ function onDomChanged() {
   if (lightbox) {
     lightbox.reload()
   }
-  allClickable('.clickable')
   addClassForNormalUser()
   convertFormFromRot13()
   restoreUnpublishedLinks()
