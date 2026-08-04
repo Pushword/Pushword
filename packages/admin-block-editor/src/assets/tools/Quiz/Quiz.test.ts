@@ -41,19 +41,19 @@ describe('Quiz difficulty levels', () => {
     expect(json.cta).toBe('newsletter')
     expect(json.questions).toBeUndefined()
     expect(json.levels).toHaveLength(2)
-    expect(json.levels![0].difficulty).toBe('Easy')
-    expect(json.levels![0].pass).toBe(50)
-    expect(json.levels![0].questions).toHaveLength(1)
+    expect(json.levels![0]!.difficulty).toBe('Easy')
+    expect(json.levels![0]!.pass).toBe(50)
+    expect(json.levels![0]!.questions).toHaveLength(1)
   })
 
   it('renders in levels mode and saves the levels back', () => {
     const saved = mounted(leveled).save()
 
     expect(saved.levels).toHaveLength(2)
-    expect(saved.levels![0].difficulty).toBe('Easy')
-    expect(saved.levels![0].pass).toBe(50)
-    expect(saved.levels![0].questions![0].answers!.find((a) => a.correct)?.a).toBe('A')
-    expect(saved.levels![1].difficulty).toBe('Hard')
+    expect(saved.levels![0]!.difficulty).toBe('Easy')
+    expect(saved.levels![0]!.pass).toBe(50)
+    expect(saved.levels![0]!.questions![0]!.answers!.find((a) => a.correct)?.a).toBe('A')
+    expect(saved.levels![1]!.difficulty).toBe('Hard')
     // The root keeps no questions of its own once levels carry them.
     expect(saved.questions).toEqual([])
   })
@@ -128,11 +128,11 @@ describe('Quiz personality test (profile mode)', () => {
     expect(json.feedback).toBe('end')
     expect(json.results).toBeUndefined()
     expect(json.profiles).toHaveLength(2)
-    expect(json.profiles![0].key).toBe('sommet')
-    expect(json.questions![0].answers![0].weights).toEqual({ sommet: 2 })
+    expect(json.profiles![0]!.key).toBe('sommet')
+    expect(json.questions![0]!.answers![0]!.weights).toEqual({ sommet: 2 })
     // The `profile` shorthand is normalised to a {key: 1} weight on export.
-    expect(json.questions![0].answers![1].weights).toEqual({ calm: 1 })
-    expect(json.questions![0].answers![1].correct).toBeUndefined()
+    expect(json.questions![0]!.answers![1]!.weights).toEqual({ calm: 1 })
+    expect(json.questions![0]!.answers![1]!.correct).toBeUndefined()
   })
 
   it('renders in profile mode and saves profiles + weighted answers back', () => {
@@ -140,9 +140,9 @@ describe('Quiz personality test (profile mode)', () => {
 
     expect(saved.mode).toBe('profile')
     expect(saved.profiles).toHaveLength(2)
-    expect(saved.profiles![1].key).toBe('calm')
-    expect(saved.questions![0].answers![0].weights).toEqual({ sommet: 2 })
-    expect(saved.questions![0].answers![0].correct).toBeUndefined()
+    expect(saved.profiles![1]!.key).toBe('calm')
+    expect(saved.questions![0]!.answers![0]!.weights).toEqual({ sommet: 2 })
+    expect(saved.questions![0]!.answers![0]!.correct).toBeUndefined()
   })
 
   it('round-trips export → parse → export without drift', () => {
@@ -157,7 +157,7 @@ describe('Quiz personality test (profile mode)', () => {
  * free-text "explorer:2, builder" field could not guarantee — that a weight can
  * never name a profile that does not exist, and never drifts when a key is renamed.
  */
-function chipsOf(tool: Quiz, question = 0, answer = 0): HTMLButtonElement[] {
+function chipsOf(question = 0, answer = 0): HTMLButtonElement[] {
   const el = document.body.querySelector('.cdx-quiz') as HTMLElement
   const aEl = el.querySelectorAll('.cdx-quiz__q')[question]!.querySelectorAll('.cdx-quiz__a')[answer]!
   return [...aEl.querySelectorAll('.cdx-quiz__chip')] as HTMLButtonElement[]
@@ -172,8 +172,8 @@ function mountedInDom(data: QuizData): Quiz {
 
 describe('Quiz personality chips', () => {
   it('renders one chip per declared profile, labelled by title', () => {
-    const tool = mountedInDom(personality)
-    const chips = chipsOf(tool)
+    mountedInDom(personality)
+    const chips = chipsOf()
 
     expect(chips).toHaveLength(2)
     expect(chips[0]!.dataset.label).toBe('The Summiteer')
@@ -186,7 +186,7 @@ describe('Quiz personality chips', () => {
 
   it('cycles a chip off → 1 → 2 → 3 → off', () => {
     const tool = mountedInDom(personality)
-    const chip = chipsOf(tool)[1]! // 'calm', currently off
+    const chip = chipsOf()[1]! // 'calm', currently off
 
     chip.click()
     expect(tool.save().questions![0]!.answers![0]!.weights).toEqual({ sommet: 2, calm: 1 })
@@ -205,7 +205,7 @@ describe('Quiz personality chips', () => {
       questions: [{ q: 'Q', answers: [{ a: 'A', weights: { sommet: 5 } }] }],
     })
 
-    const chip = chipsOf(tool)[0]!
+    const chip = chipsOf()[0]!
     expect(chip.textContent).toBe('The Summiteer ×5')
     expect(chip.classList.contains('is-heavy')).toBe(true)
     // Untouched, it survives the round-trip verbatim.
@@ -258,7 +258,7 @@ describe('Quiz personality chips', () => {
   })
 
   it('flags a question that weighs nothing, in words', () => {
-    const tool = mountedInDom({
+    mountedInDom({
       mode: 'profile',
       profiles: [{ key: 'sommet', title: 'The Summiteer' }],
       questions: [{ q: 'Weighs nothing', answers: [{ a: 'A' }, { a: 'B' }] }],
@@ -269,14 +269,14 @@ describe('Quiz personality chips', () => {
     expect(q.querySelector('.cdx-quiz__q-warn')!.textContent).toBe('No answer weighs a profile')
 
     // Weighing any profile clears both the wash and the wording.
-    chipsOf(tool)[0]!.click()
+    chipsOf()[0]!.click()
     expect(q.classList.contains('is-mute')).toBe(false)
     expect(q.querySelector('.cdx-quiz__q-warn')!.textContent).toBe('')
   })
 
   it('exposes the chip toggle state and its weight to assistive tech', () => {
-    const tool = mountedInDom(personality)
-    const [main, off] = chipsOf(tool)
+    mountedInDom(personality)
+    const [main, off] = chipsOf()
 
     expect(main!.getAttribute('aria-pressed')).toBe('true')
     expect(main!.getAttribute('aria-label')).toBe('The Summiteer, 2 points')
