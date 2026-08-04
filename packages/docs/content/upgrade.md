@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc835](/upgrade/rc835) | `admin` `admin-block-editor` `core` `flat` `js-helper` `newsletter` `page-scanner` `static-generator` | the database now knows which pages use which media; admin dates follow the locale; page-scan findings have a code |
 | [rc834](/upgrade/rc834) | `core` `newsletter` `page-scanner` `js-helper` | the page scanner reports missing image alts and colliding translation locales, two newsletter contacts can be joined into one, galleries, videos and body images open in the lightbox again |
 | [rc833](/upgrade/rc833) | `newsletter` | newsletter contacts can be keyed on a phone number, campaigns carry one body per locale, and bounces can be read over IMAP — run `doctrine:schema:update --force` |
 | [rc832](/upgrade/rc832) | `newsletter` | a mailbox of delivery failures can be read back into the list |
