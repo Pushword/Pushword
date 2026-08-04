@@ -654,6 +654,28 @@ final class LinkedDocsScannerTest extends KernelTestCase
     }
 
     /**
+     * The same list, declared in the content instead of the properties. A skipped link
+     * is never fetched, so this is what a flaky external host calls for — silencing the
+     * finding would still pay for the request on every scan.
+     */
+    public function testALinkCanBeIgnoredFromTheContent(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        $url = 'https://localhost.dev/nonexistent';
+        $html = '<a href="'.$url.'">link</a>';
+
+        self::assertCount(1, $this->messages($scanner, $this->getPage('other-page'), $html), 'Nothing was ignored yet.');
+
+        $page = $this->getPage('other-page');
+        $page->mainContent = '<!-- page-scanner-ignore-link: https://localhost.dev/nonex* -->';
+
+        self::assertSame([], $this->messages($scanner, $page, $html));
+    }
+
+    /**
      * An external URL is checked long after the page left scope, so what the page
      * asked not to be told about has to travel with the deferred check.
      */

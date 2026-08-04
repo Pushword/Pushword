@@ -21,7 +21,7 @@ final class ErrorIgnoreRules
 {
     public const string PAGE_PROPERTY = 'pageScanErrorsToIgnore';
 
-    private const string INLINE_PATTERN = '/<!--\s*page-scanner-ignore:(.*?)-->/is';
+    public const string INLINE_DIRECTIVE = 'page-scanner-ignore';
 
     /**
      * @param string[] $configPatterns
@@ -54,31 +54,20 @@ final class ErrorIgnoreRules
     /**
      * The patterns a page declares about itself.
      *
-     * Read from the content rather than from the rendered HTML: a page whose render
-     * failed produces no HTML, and silencing that failure is exactly what an editor
-     * would want to write there.
-     *
      * @return string[]
      */
     public static function forPage(Page $page): array
     {
         $property = $page->getCustomProperty(self::PAGE_PROPERTY);
-        $declarations = \is_array($property) ? $property : [$property];
-
-        // A page can carry several comments, and one comment can list several patterns.
-        preg_match_all(self::INLINE_PATTERN, $page->mainContent, $matches);
-        foreach ($matches[1] as $declaration) {
-            $declarations = [...$declarations, ...explode(',', $declaration)];
-        }
 
         $patterns = [];
-        foreach ($declarations as $declaration) {
-            if (\is_string($declaration) && '' !== ($pattern = trim($declaration))) {
+        foreach (\is_array($property) ? $property : [$property] as $declared) {
+            if (\is_string($declared) && '' !== ($pattern = trim($declared))) {
                 $patterns[] = $pattern;
             }
         }
 
-        return $patterns;
+        return [...$patterns, ...InlineDirective::patterns($page->mainContent, self::INLINE_DIRECTIVE)];
     }
 
     private static function matchesOne(string $pattern, string $code, string $message): bool

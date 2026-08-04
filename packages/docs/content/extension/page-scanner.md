@@ -420,5 +420,28 @@ pageScanErrorsToIgnore:
 Both accept the same patterns as the config, minus the route prefix — the page is
 the scope. They are applied while scanning, so they take effect on the next scan.
 
-`pageScanLinksToIgnore` remains the way to skip a **link** rather than a finding:
-the URLs it lists are never checked at all, so they cost nothing and report nothing.
+A pattern silences every finding of that kind on the page, whichever link or image
+raised it. To pin one, write the pattern against the message instead, which quotes
+the URL: `<!-- page-scanner-ignore: *flaky.example.com* -->`. A URL is not translated,
+so that stays as stable as a code.
+
+### Skipping a link rather than a finding
+
+`pageScanLinksToIgnore` lists URLs that are **never checked at all** — same two
+surfaces, same `fnmatch` patterns:
+
+```markdown
+<!-- page-scanner-ignore-link: https://flaky.example.com/* -->
+```
+
+```yaml
+pageScanLinksToIgnore:
+    - 'https://flaky.example.com/*'
+```
+
+Reach for it when the link itself is the problem — a host that times out costs a
+request on every scan, and silencing its finding still pays for that request. The
+trade: it drops *every* check on that URL, so a 404, a redirection or a noindex
+target behind it goes unreported too.
+
+The global equivalent is `links_to_ignore` in the configuration above.

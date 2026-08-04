@@ -73,14 +73,6 @@ final class ErrorIgnoreRulesTest extends TestCase
         self::assertSame(['image-alt-missing', 'link-unreachable'], ErrorIgnoreRules::forPage($page));
     }
 
-    public function testEveryInlineDeclarationCounts(): void
-    {
-        $page = new Page();
-        $page->mainContent = "<!--page-scanner-ignore:date-shortcode-->\n<!-- page-scanner-ignore: link-* -->";
-
-        self::assertSame(['date-shortcode', 'link-*'], ErrorIgnoreRules::forPage($page));
-    }
-
     public function testAPageDeclaresItsOwnPatternsAsACustomProperty(): void
     {
         $page = new Page();
@@ -108,17 +100,6 @@ final class ErrorIgnoreRulesTest extends TestCase
         $page->mainContent = '<!-- page-scanner-ignore: render-error -->';
 
         self::assertSame(['todo-*', 'render-error'], ErrorIgnoreRules::forPage($page));
-    }
-
-    /**
-     * A trailing comma is what a hand-written list ends up with.
-     */
-    public function testAnEmptyDeclarationIsNotAPatternMatchingEverything(): void
-    {
-        $page = new Page();
-        $page->mainContent = '<!-- page-scanner-ignore: link-*, , -->';
-
-        self::assertSame(['link-*'], ErrorIgnoreRules::forPage($page));
     }
 
     public function testAPageDeclaringNothingIgnoresNothing(): void

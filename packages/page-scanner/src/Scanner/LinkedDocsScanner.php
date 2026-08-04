@@ -12,6 +12,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\PageScanner\Service\ErrorIgnoreRules;
+use Pushword\PageScanner\Service\InlineDirective;
 
 use function Safe\preg_match;
 use function Safe\preg_match_all;
@@ -28,6 +29,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class LinkedDocsScanner extends AbstractScanner
 {
+    public const string PAGE_PROPERTY = 'pageScanLinksToIgnore';
+
+    public const string INLINE_DIRECTIVE = 'page-scanner-ignore-link';
+
     /** @var array<string, array{exists: bool, page: ?Page, redirect: bool}> */
     private array $everChecked = [];
 
@@ -211,12 +216,17 @@ final class LinkedDocsScanner extends AbstractScanner
     }
 
     /**
+     * The URLs this page asks not to check at all — a link ignored here costs nothing
+     * and reports nothing, where an ignored *finding* is still fetched every scan.
+     *
      * @return array<string>
      */
     private function getPageScanLinksToIgnore(): array
     {
-        return $this->page->hasCustomProperty('pageScanLinksToIgnore')
-            ? $this->page->getCustomPropertyList('pageScanLinksToIgnore') : [];
+        $declared = $this->page->hasCustomProperty(self::PAGE_PROPERTY)
+            ? $this->page->getCustomPropertyList(self::PAGE_PROPERTY) : [];
+
+        return [...$declared, ...InlineDirective::patterns($this->page->mainContent, self::INLINE_DIRECTIVE)];
     }
 
     // Starting point called from AbstractSanner::scan
