@@ -1,0 +1,32 @@
+.git
+.github
+.idea
+.vscode
+node_modules
+
+# State, not source. Kept out so a fresh production volume starts empty and the
+# entrypoint seeds it — and so the host's SQLite database is never baked into an image.
+var/
+
+# Rebuilt inside the image: `composer install` in the builder stage, and
+# `assets:install` at boot (public/bundles is a tree of symlinks to vendor/).
+vendor/
+public/bundles/
+
+# Derivatives, regenerated on demand from media/. media/ itself is NOT ignored: it is
+# what a fresh media volume inherits.
+public/media/
+
+# static-generator output.
+static/
+
+.env.local
+.env.local.php
+.env.*.local
+
+# Not needed at runtime, and Dockerfile changes should not bust the COPY layer.
+tests/
+Dockerfile
+.dockerignore
+compose.yaml
+compose.prod.yaml

@@ -8,7 +8,7 @@ toc: true
 ## Requirements
 
 - **PHP** >=8.4
-- **PHP extensions** : dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd (or imagick), exif, iconv, fileinfo
+- **PHP extensions** : dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, intl, gd (or imagick), exif, iconv, fileinfo
 - **Composer** - [how to install composer](https://getcomposer.org/download/)
 
 _Facultative_ :
@@ -65,6 +65,21 @@ php Caddy.php start    # Start the server
 php Caddy.php stop     # Stop the server
 php Caddy.php restart  # Restart the server
 php Caddy.php status   # Show server status
+```
+
+### Run Pushword with Docker
+
+The installer checks which of the extensions above your PHP actually has, and — if a
+Docker daemon is answering — asks once whether to use Docker, recommending the answer
+that fits your machine. Answer no and no Docker file is written.
+
+The image is FrankenPHP with every extension already in place, so it is the shortest
+path when installing them yourself is the hard part. See [Docker](/docker) for the
+development and production stacks, and for what has to live in a volume.
+
+```shell
+php bin/console pw:docker:init   # if you said no, or want them added later
+docker compose up --build
 ```
 
 ## _Recommended Extensions_ to get Pushword Classic

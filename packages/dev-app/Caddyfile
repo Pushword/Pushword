@@ -1,5 +1,9 @@
+# The placeholders below are what lets this one file serve both a local
+# `frankenphp run --config Caddyfile` and the container (see /docker); unset, every
+# one of them falls back to the local default, so nothing changes for a native run.
 {
-	admin off
+	# The container turns the admin API on so its healthcheck can read /metrics.
+	admin {$CADDY_ADMIN:off}
 	frankenphp
 }
 
@@ -30,17 +34,20 @@
 	}
 }
 
-:0 {
+# Defaults to `:0` — the first available port, like `symfony server:start`. The
+# container sets CADDY_SERVER_NAME to `:80` (or to your domain, which also gets Caddy
+# to provision the TLS certificate).
+{$CADDY_SERVER_NAME::0} {
 	root * public/
 
 	php_server {
 		resolve_root_symlink
-	    # Uncomment for worker mode (long-running kernel). Safe — see
-	    # docs/content/performance.md. Perf gain depends on workload: it mostly
-	    # amortizes the kernel boot, so it helps light pages most.
-        # root public/
-        # worker index.php 1
-    }
+		# Worker mode (a long-running kernel) is opt-in: set FRANKENPHP_WORKER_CONFIG
+		# to `worker ./public/index.php 1` once `runtime/frankenphp-symfony` is
+		# installed. Safe — see docs/content/performance.md. The gain mostly amortizes
+		# the kernel boot, so it helps light pages most.
+		{$FRANKENPHP_WORKER_CONFIG}
+	}
 
 	import performance
 	import cache

@@ -121,4 +121,23 @@ class PostInstall
 
         return \defined('STDIN') && stream_isatty(\STDIN);
     }
+
+    /**
+     * Read a yes/no answer. Only ever called behind isInteractive().
+     *
+     * Anything unrecognised — including an empty line — keeps the default, so a typo
+     * lands on the recommendation rather than silently against it.
+     */
+    public static function confirm(string $question, bool $default): bool
+    {
+        echo $question;
+
+        $answer = fgets(\STDIN);
+
+        return match (false === $answer ? '' : strtolower(trim($answer))) {
+            'y', 'yes' => true,
+            'n', 'no' => false,
+            default => $default,
+        };
+    }
 }

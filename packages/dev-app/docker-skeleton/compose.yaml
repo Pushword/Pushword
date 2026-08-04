@@ -1,0 +1,27 @@
+# Development stack: `docker compose up`.
+#
+# The project is bind-mounted, so your editor stays the source of truth and
+# `docker compose exec pushword php bin/console …` works on the files you see.
+# For production use compose.prod.yaml instead — the two are deliberately separate
+# files rather than a base plus an override, because an override can add a mount but
+# never remove one, and the two setups differ precisely in their mounts.
+
+services:
+  pushword:
+    build:
+      context: .
+      target: pushword_dev
+    environment:
+      APP_ENV: dev
+      CADDY_SERVER_NAME: ':80'
+    volumes:
+      - ./:/app
+      # Symfony bakes absolute paths into its compiled cache, so the host's var/cache
+      # (built by `composer create-project` under the host's PHP) and the container's
+      # cannot be the same directory. Everything else in var/ — app.db above all —
+      # stays on the host, where you can back it up and where it survives a
+      # `docker compose down -v`.
+      - /app/var/cache
+    ports:
+      - '${HTTP_PORT:-8080}:80'
+    tty: true

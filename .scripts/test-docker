@@ -1,0 +1,197 @@
+#!/bin/bash -e
+
+# End-to-end test of the Docker/FrankenPHP setup shipped by `pw:docker:init`.
+#
+# Builds the production image from a project installed out of the *working tree* (not
+# Packagist) and boots it with no volumes, so the entrypoint runs against an empty var/
+# and has to seed it. What this proves that a unit test cannot: the extension list is
+# complete, the Caddyfile is valid under the container's environment, the entrypoint's
+# console calls work, and the site actually answers.
+#
+# `.scripts/test-create-project` covers the other half — that the documented command
+# resolves against real Packagist.
+
+set -e
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+MONOREPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+CACHE_BASE="/tmp/com.github.pushword.pushword/installer-cache"
+CONTEXT_DIR="/tmp/pushword-docker-test-$$"
+IMAGE=pushword-docker-test
+CONTAINER=pushword-docker-test
+PORT="${PUSHWORD_DOCKER_TEST_PORT:-18080}"
+
+cleanup() {
+    docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+    (cd "$CONTEXT_DIR" 2>/dev/null && docker compose down -v --remove-orphans >/dev/null 2>&1) || true
+    # The containers write into the mounted var/ as another user, so the host cannot
+    # delete what they left. Borrow root from the image we just built.
+    docker run --rm --user root -v "$CONTEXT_DIR:/ctx" --entrypoint rm "$IMAGE" \
+        -rf /ctx/var /ctx/var-state >/dev/null 2>&1 || true
+    rm -rf "$CONTEXT_DIR"
+}
+trap cleanup EXIT
+
+echo "=== Pushword Docker test ==="
+
+# 1. An installed project. test-installer caches it, so this is usually a no-op.
+"$MONOREPO_DIR/.scripts/test-installer" --quiet >/dev/null
+PROJECT_DIR=$(find "$CACHE_BASE" -mindepth 1 -maxdepth 1 -type d | head -1)
+if [ -z "$PROJECT_DIR" ]; then
+    echo -e "${RED}Error: .scripts/test-installer left no project in $CACHE_BASE${NC}"
+    exit 1
+fi
+echo "Project: $PROJECT_DIR"
+
+cp -r "$PROJECT_DIR" "$CONTEXT_DIR"
+
+# 2. The files under test.
+(cd "$CONTEXT_DIR" && php bin/console pw:docker:init -q)
+for f in Dockerfile compose.yaml compose.prod.yaml .dockerignore docker/docker-entrypoint.sh; do
+    if [ ! -f "$CONTEXT_DIR/$f" ]; then
+        echo -e "${RED}Error: pw:docker:init did not write $f${NC}"
+        exit 1
+    fi
+done
+
+# The image must seed itself: drop the marker pw:docker:init just wrote, and the state
+# the host install produced.
+rm -rf "$CONTEXT_DIR/var"
+
+# 3. The project resolves pushword/* through path repositories pointing at this
+#    monorepo — absolute host paths that do not exist inside the image. Copy the
+#    packages into the build context and repoint composer.json *and* composer.lock at
+#    them, so the builder's `composer install` runs for real against the working tree
+#    rather than against released packages.
+cp -r "$MONOREPO_DIR/packages" "$CONTEXT_DIR/_packages"
+find "$CONTEXT_DIR/_packages" -type d \( -name node_modules -o -name vendor -o -name var \) -prune -exec rm -rf {} + 2>/dev/null || true
+sed -i "s#$MONOREPO_DIR/packages#/app/_packages#g" "$CONTEXT_DIR/composer.json" "$CONTEXT_DIR/composer.lock"
+
+#    The builder installs dependencies before it copies the sources in — that ordering
+#    is what keeps the composer layer cached across source edits — so the packages have
+#    to be in the image by then. This COPY is the ONLY difference between the Dockerfile
+#    under test and the one pw:docker:init ships; it stands in for what Packagist gives
+#    a real user.
+if ! grep -q '^RUN composer install --no-cache' "$CONTEXT_DIR/Dockerfile"; then
+    echo -e "${RED}Error: the builder's composer install step moved; this splice no longer applies${NC}"
+    exit 1
+fi
+sed -i 's#^RUN composer install --no-cache#COPY --link _packages ./_packages\nRUN composer install --no-cache#' "$CONTEXT_DIR/Dockerfile"
+
+echo
+echo "=== Building the production image ==="
+docker build --target pushword_prod -t "$IMAGE" "$CONTEXT_DIR"
+
+fail() {
+    echo -e "${RED}Error: $1${NC}"
+    echo "--- container logs ---"
+    docker logs "$CONTAINER" 2>&1 | tail -40
+    exit 1
+}
+
+boot() {
+    docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+    docker run -d --name "$CONTAINER" -p "$PORT:80" "$@" "$IMAGE" >/dev/null
+
+    # The first boot creates the schema and warms the cache, so give it room.
+    for _ in $(seq 1 90); do
+        if curl -sS -o /dev/null -m 2 "http://127.0.0.1:$PORT/admin" 2>/dev/null; then
+            return 0
+        fi
+        sleep 2
+    done
+
+    fail "the container never answered on port $PORT"
+}
+
+check_status() {
+    local path="$1" expected="$2"
+    local status
+    status=$(curl -sS -o /dev/null -w '%{http_code}' -L -m 20 "http://127.0.0.1:$PORT$path" || echo 000)
+    if [ "$status" != "$expected" ]; then
+        fail "GET $path returned $status, expected $expected"
+    fi
+    echo "  GET $path -> $status"
+}
+
+# --- A fresh volume has to become a reachable instance on its own ---------------------
+echo
+echo "=== Booting with an empty var/ ==="
+boot
+
+check_status /admin 200
+if ! curl -sS -L -m 20 "http://127.0.0.1:$PORT/admin" | grep -q '/login/check-email'; then
+    fail '/admin did not land on the login screen'
+fi
+if ! docker exec "$CONTAINER" php bin/console dbal:run-sql 'SELECT email FROM user' 2>&1 | grep -q 'admin@example.tld'; then
+    fail 'the entrypoint did not create the super admin on an empty volume'
+fi
+echo "  /admin serves the login screen, and the super admin exists"
+
+# Caddy has to be able to write its own state, or automatic HTTPS silently has nowhere
+# to keep a certificate.
+if docker logs "$CONTAINER" 2>&1 | grep -q 'permission denied'; then
+    fail 'the container logged a permission error (see the logs below)'
+fi
+echo "  no permission errors in the logs"
+
+# --- …and with real state mounted, it has to render the site -------------------------
+# The shape of a production deploy: the image carries the code, the volume carries the
+# database. Here that database is the one `composer create-project` built on the host.
+echo
+echo "=== Booting with the installed project's var/ mounted ==="
+cp -r "$PROJECT_DIR/var" "$CONTEXT_DIR/var-state"
+chmod -R a+rwX "$CONTEXT_DIR/var-state"
+boot -v "$CONTEXT_DIR/var-state:/app/var"
+
+check_status / 200
+check_status /getting-started 200
+check_status /admin 200
+
+if ! curl -sS -m 20 "http://127.0.0.1:$PORT/" | grep -q '<title>'; then
+    fail '/ rendered without a <title>'
+fi
+echo "  / renders the starter content out of the mounted database"
+
+# --- The development stack, which is what `docker compose up` runs ------------------
+docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+mv "$CONTEXT_DIR/var-state" "$CONTEXT_DIR/var"
+
+echo
+echo "=== Development stack (docker compose up) ==="
+(cd "$CONTEXT_DIR" && HTTP_PORT="$PORT" docker compose up -d --build --quiet-pull)
+
+compose_fail() {
+    echo -e "${RED}Error: $1${NC}"
+    echo "--- compose logs ---"
+    (cd "$CONTEXT_DIR" && docker compose logs 2>&1 | tail -40)
+    exit 1
+}
+
+for _ in $(seq 1 90); do
+    if curl -sS -o /dev/null -m 2 "http://127.0.0.1:$PORT/" 2>/dev/null; then
+        break
+    fi
+    sleep 2
+done
+
+status=$(curl -sS -o /dev/null -w '%{http_code}' -L -m 20 "http://127.0.0.1:$PORT/" || echo 000)
+if [ "$status" != "200" ]; then
+    compose_fail "GET / returned $status, expected 200"
+fi
+echo "  GET / -> 200"
+
+# The bind mount is the point: the container has to see the project's own database,
+# not a copy, and must not reseed a project that pw:docker:init already marked.
+if ! (cd "$CONTEXT_DIR" && docker compose exec -T pushword php bin/console dbal:run-sql 'SELECT slug FROM page' 2>&1 | grep -q 'getting-started'); then
+    compose_fail 'the dev container does not see the bind-mounted database'
+fi
+echo "  the bind-mounted database is the one being served"
+
+(cd "$CONTEXT_DIR" && docker compose down -v >/dev/null 2>&1) || true
+
+echo
+echo -e "${GREEN}=== Docker test passed ===${NC}"

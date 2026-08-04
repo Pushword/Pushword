@@ -18,6 +18,13 @@ HASH_INPUT=$(cat \
     "$MONOREPO_DIR"/packages/*/composer.json \
     "$MONOREPO_DIR"/packages/*/install.php \
     "$MONOREPO_DIR"/packages/core/starter/* \
+    "$MONOREPO_DIR"/packages/core/src/Command/DockerInitCommand.php \
+    "$MONOREPO_DIR"/packages/installer/src/SystemCheck.php \
+    "$MONOREPO_DIR"/packages/dev-app/Caddyfile \
+    "$MONOREPO_DIR"/packages/dev-app/docker-skeleton/Dockerfile \
+    "$MONOREPO_DIR"/packages/dev-app/docker-skeleton/compose*.yaml \
+    "$MONOREPO_DIR"/packages/dev-app/docker-skeleton/.dockerignore \
+    "$MONOREPO_DIR"/packages/dev-app/docker-skeleton/docker/* \
     "$MONOREPO_DIR"/packages/new/tests/AppTest.php \
     "$MONOREPO_DIR"/packages/new/tests/bootstrap.php \
     "$MONOREPO_DIR"/packages/new/phpunit.xml.dist \

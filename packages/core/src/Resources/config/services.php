@@ -42,6 +42,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->autowire()
         ->autoconfigure()
         ->bind('$projectDir', '%kernel.project_dir%')
+        // pushword/core and pushword/dev-app are siblings, in vendor/pushword/ as in the
+        // monorepo's packages/, so one relative path reaches the skeleton in both.
+        ->bind('$dockerSkeletonDir', \dirname(__DIR__, 4).'/dev-app/docker-skeleton')
         ->bind('$varDir', '%pw.var_dir%')
         ->bind('$filterSets', '%pw.image_filter_sets%')
         ->bind('$publicMediaDir', '%pw.public_media_dir%')

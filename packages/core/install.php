@@ -2,6 +2,7 @@
 
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Installer\PostInstall;
+use Pushword\Installer\SystemCheck;
 
 /**
  * Execute via Pushword\Installer\PostInstall::postUpdateCommand.
@@ -15,6 +16,11 @@ PostInstall::remove([
     'config/packages/security.yaml',
     'config/packages/doctrine.yaml',
     'config/packages/vich_uploader.yaml',
+    // doctrine/doctrine-bundle's recipe writes a PostgreSQL service, and symfony/mailer
+    // adds a Mailpit one to the override — a stack with no application service, for a
+    // database Pushword does not use. `pw:docker:init` writes the real thing.
+    'compose.yaml',
+    'compose.override.yaml',
 ]);
 
 // Set pushword bundle first to avoid errors
@@ -146,3 +152,33 @@ static/
 !/var/installer/
 ###< pushword ###
 ', PostInstall::INSERT_AT_END);
+
+// Docker
+// ------
+// Offered last, so the answer is the last thing on screen, and offered only when it is
+// a real choice: no Docker daemon, no question and no Dockerfile left lying around.
+// The recommendation follows the machine — a PHP that already has what Pushword needs
+// is better off without a layer in between; one that does not is better off with the
+// image, which ships them.
+$systemCheck = SystemCheck::probe();
+
+if (! $systemCheck->shouldAsk()) {
+    if ($systemCheck->recommendsDocker()) {
+        echo '⚠ Pushword needs '.implode(', ', $systemCheck->missing).', which this PHP does not have.'.chr(10);
+        echo '⚠ Install them (see https://pushword.piedweb.com/installation), or install'.chr(10);
+        echo '⚠ Docker and run `php bin/console pw:docker:init`.'.chr(10);
+    }
+} elseif (PostInstall::isInteractive()) {
+    $dockerRecommended = $systemCheck->recommendsDocker();
+
+    echo chr(10).'~~ Docker is available here. '.ucfirst($systemCheck->reason()).'.'.chr(10);
+
+    if (PostInstall::confirm(
+        '~~ Run Pushword in Docker? '.($dockerRecommended ? '[Yes (recommended) / no]' : '[yes / No (recommended)]').': ',
+        $dockerRecommended
+    )) {
+        passthru('php bin/console pw:docker:init');
+    } else {
+        echo '~~ No Docker file written. `php bin/console pw:docker:init` adds them later.'.chr(10);
+    }
+}

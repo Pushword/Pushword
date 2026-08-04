@@ -1,0 +1,48 @@
+name: Test Docker
+
+on:
+  push:
+    paths:
+      - 'packages/dev-app/docker-skeleton/**'
+      - 'packages/dev-app/Caddyfile'
+      - 'packages/core/install.php'
+      - 'packages/core/src/Command/DockerInitCommand.php'
+      - 'packages/installer/**'
+      - '.scripts/test-docker'
+      - '.scripts/test-installer'
+      - '.github/workflows/test-docker.yml'
+  pull_request:
+    paths:
+      - 'packages/dev-app/docker-skeleton/**'
+      - 'packages/dev-app/Caddyfile'
+      - 'packages/core/install.php'
+      - 'packages/core/src/Command/DockerInitCommand.php'
+      - 'packages/installer/**'
+      - '.scripts/test-docker'
+      - '.scripts/test-installer'
+      - '.github/workflows/test-docker.yml'
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    name: Docker image
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # .scripts/test-docker installs the project on the runner before building the
+      # image from it, so the host needs the same PHP as the installer job.
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: pecl
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, intl, gd, exif, iconv, imagick, fileinfo
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build the image and boot it
+        run: ./.scripts/test-docker

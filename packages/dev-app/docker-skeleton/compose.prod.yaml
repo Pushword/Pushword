@@ -1,0 +1,41 @@
+# Production stack: `docker compose -f compose.prod.yaml up -d --build`.
+#
+# Set these in a `.env` next to this file:
+#   CADDY_SERVER_NAME=example.com   # a domain, not a port: Caddy then gets the
+#                                   # TLS certificate itself
+#   HTTP_PORT=80
+#   HTTPS_PORT=443
+
+services:
+  pushword:
+    build:
+      context: .
+      target: pushword_prod
+    restart: unless-stopped
+    environment:
+      APP_ENV: prod
+      CADDY_SERVER_NAME: ${CADDY_SERVER_NAME:-:80}
+      # Read once, on the first boot of an empty database.
+      PUSHWORD_ADMIN_EMAIL: ${PUSHWORD_ADMIN_EMAIL:-admin@example.tld}
+      PUSHWORD_ADMIN_PASSWORD: ${PUSHWORD_ADMIN_PASSWORD:-}
+    volumes:
+      # Everything Pushword writes. Delete one of these and you delete content:
+      # var/ holds the SQLite database, media/ the originals you uploaded.
+      - var:/app/var
+      - media:/app/media
+      - media_cache:/app/public/media
+      - static:/app/static
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - '${HTTP_PORT:-8080}:80'
+      - '${HTTPS_PORT:-8443}:443'
+      - '${HTTPS_PORT:-8443}:443/udp'
+
+volumes:
+  var:
+  media:
+  media_cache:
+  static:
+  caddy_data:
+  caddy_config:

@@ -153,6 +153,35 @@ final class AppTest extends TestCase
         self::assertFileExists(self::$projectDir.'/package.json');
     }
 
+    /**
+     * The Docker question is only asked when a terminal is attached and a daemon
+     * answers. Run unattended — CI, a provisioning script, `composer --no-interaction`
+     * — the installer must leave no Docker file behind.
+     */
+    public function testUnattendedInstallShipsNoDockerFile(): void
+    {
+        foreach (['Dockerfile', 'compose.yaml', 'compose.prod.yaml', '.dockerignore', 'docker'] as $path) {
+            self::assertFileDoesNotExist(self::$projectDir.'/'.$path);
+        }
+    }
+
+    /**
+     * …and `pw:docker:init` is the way to get them, which is what the installer points
+     * at when the answer is no.
+     */
+    public function testDockerInitCommandIsAvailable(): void
+    {
+        $output = [];
+        $returnCode = 0;
+        exec(
+            'php '.escapeshellarg(self::$projectDir.'/bin/console').' pw:docker:init --help 2>&1',
+            $output,
+            $returnCode
+        );
+
+        self::assertSame(0, $returnCode, implode("\n", $output));
+    }
+
     public function testGitignoreUpdated(): void
     {
         $content = file_get_contents(self::$projectDir.'/.gitignore');

@@ -151,6 +151,7 @@
       "Pushword\\Conversation\\Tests\\": "packages/conversation/tests",
       "Pushword\\Core\\Tests\\": "packages/core/tests",
       "Pushword\\Flat\\Tests\\": "packages/flat/tests",
+      "Pushword\\Installer\\Tests\\": "packages/installer/tests",
       "Pushword\\Newsletter\\Tests\\": "packages/newsletter/tests",
       "Pushword\\PageScanner\\Tests\\": "packages/page-scanner/tests",
       "Pushword\\PageUpdateNotifier\\Tests\\": "packages/page-update-notifier/tests",

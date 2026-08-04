@@ -12,14 +12,22 @@ which removes the per-request kernel boot.
 ## Worker mode
 
 Worker mode is provided by [FrankenPHP](https://frankenphp.dev/)'s `worker`
-directive (or any Symfony Runtime worker). In the dev-app `Caddyfile`:
+directive (or any Symfony Runtime worker). The `Caddyfile` reads it from the
+environment, so turning it on means setting one variable rather than editing the file:
+
+```dotenv
+FRANKENPHP_WORKER_CONFIG=worker ./public/index.php 1
+```
 
 ```caddyfile
 php_server {
-    root public/
-    worker index.php 1
+    resolve_root_symlink
+    {$FRANKENPHP_WORKER_CONFIG}
 }
 ```
+
+It needs `composer require runtime/frankenphp-symfony` first. The same variable works
+in the [Docker](/docker) setup.
 
 Between requests the runtime resets every service tagged `kernel.reset`
 (`services_resetter`), exactly as a fresh FPM process would start clean.
