@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'the page scanner reports missing image alts and colliding translation locales'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -27,3 +27,41 @@ absorbs needs no note.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** pushword/newsletter, pushword/page-scanner
+
+## Two new checks report on content that already exists
+
+`pw:page-scan` gained two checks, so a site that was green can go red on the first
+run after the upgrade without its content having changed.
+
+**Image alt.** Every rendered `<img>` with no `alt`, or an `alt` that is empty or
+only whitespace, is reported once per `src`:
+
+```
+`/media/default/lake.jpg` image without alternative text
+```
+
+Fill the alt in the admin, in `media.csv`, or as the `![alt](…)` caption. An image
+that really is decorative keeps its empty alt and says so — the scanner skips
+`role="presentation"` and `aria-hidden="true"`.
+
+**Translation locales.** A page whose `translations` hold its own language, or two
+of them sharing one language, is now reported:
+
+```
+translation `/home` has the same language as this page (en)
+two translations share the language fr: `/bienvenue` and `/accueil`
+```
+
+Detach the extra page from the group: two pages in the same language are variants,
+not translations.
+
+Either check can be silenced site-wide or per route through the existing
+`errors_to_ignore`, which accepts `fnmatch` patterns:
+
+```yaml
+pushword_page_scanner:
+  errors_to_ignore:
+    - '*image without alternative text*'
+```

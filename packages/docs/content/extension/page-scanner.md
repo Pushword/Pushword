@@ -176,6 +176,8 @@ Enumerating pager pages would mean nodes that are URLs rather than pages
 - **Anchor links**: target element exists in the page
 - **Media files**: referenced images and files exist
 - **Parent pages**: parent-child host consistency
+- **Image alt**: a rendered `<img>` carrying no alternative text (see below)
+- **Translations**: each one speaks a distinct language (see below)
 - **Date shortcodes**: a `date(Y)` still readable in the HTML (see below)
 - **TODO comments**: deferred actions tied to page publication (see below)
 
@@ -224,6 +226,40 @@ relative link is invisible to every internal tool. The scanner reports it as:
 
 Fix it by writing the target absolute (`/extension/quiz`). Genuinely relative
 targets can be silenced per page with `pageScanLinksToIgnore`.
+
+## Image alt
+
+An `<img>` in the rendered page with no `alt`, or an `alt` that is empty or only
+whitespace, is reported once per `src`:
+
+```
+`/media/default/lake.jpg` image without alternative text
+```
+
+The usual cause is a media whose alt was never filled in — set it in the admin, in
+`media.csv`, or as the `![alt](…)` caption. A genuinely decorative image keeps its
+empty alt and declares itself as such, which the scanner then skips:
+
+```html
+<img src="/media/default/separator.svg" alt="" role="presentation">
+<img src="/media/default/separator.svg" alt="" aria-hidden="true">
+```
+
+## Translations
+
+A page and its `translations` must each speak a different language. Nothing in the
+entity enforces it, and the damage is silent: `getTranslation()` returns whichever
+page it walks into first, and the `hreflang` block emits two entries for one
+language — a contradiction to a crawler. The scanner reports both shapes:
+
+```
+translation `/home` has the same language as this page (en)
+two translations share the language fr: `/bienvenue` and `/accueil`
+```
+
+Fix it by detaching the extra page from the translation group. Two pages that
+really are the same language are variants, not translations — see
+[variant pages](/variant-pages).
 
 ## Date shortcodes
 
