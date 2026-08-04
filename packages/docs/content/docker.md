@@ -3,6 +3,7 @@ title: 'Run Pushword with Docker and FrankenPHP'
 h1: Docker
 publishedAt: '2026-08-04 12:00'
 name: Docker
+parentPage: installation
 toc: true
 ---
 
