@@ -68,6 +68,14 @@ div[data-item-name='convert-to'] {
   }
 }
 
+/* The two-column toolbox needs more room than editor.js's 200px default;
+   --width also drives the --open-left positioning, so override it, not width. */
+.ce-popover:not(.ce-popover--inline):not(.ce-popover--nested):not(
+    :has([data-item-name='move-up'])
+  ) {
+  --width: 320px;
+}
+
 .ce-popover__items:not(:has([data-item-name='move-up'])) {
   overflow-x: hidden;
   display: grid;
