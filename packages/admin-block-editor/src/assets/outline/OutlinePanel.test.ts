@@ -5,7 +5,12 @@ import { OutlineEntry, OutlineSource } from './OutlineModel'
 const labels: OutlineLabels = {
   deleteBlock: 'Delete the block',
   deleteGroup: 'Delete the group',
+  deleteHeading: 'Delete the heading',
   deleteSection: 'Delete the section',
+  moveBlock: 'Move the block',
+  moveGroup: 'Move the group',
+  moveHeading: 'Move the heading',
+  moveSection: 'Move the section',
   outline: 'Outline',
   toggleSection: 'Collapse',
 }
@@ -13,6 +18,7 @@ const labels: OutlineLabels = {
 class StubSource implements OutlineSource {
   navigated: OutlineEntry[] = []
   deleted: [number, number][] = []
+  moved: [number, number, number][] = []
 
   constructor(private readonly list: OutlineEntry[]) {}
 
@@ -26,6 +32,10 @@ class StubSource implements OutlineSource {
 
   deleteSpan(start: number, end: number): void {
     this.deleted.push([start, end])
+  }
+
+  moveSpan(start: number, end: number, to: number): void {
+    this.moved.push([start, end, to])
   }
 }
 
@@ -122,7 +132,7 @@ describe('OutlinePanel actions', () => {
     expect(source.deleted).toEqual([[0, 0]])
   })
 
-  it('offers block and section deletion on a section header', () => {
+  it('offers heading and section deletion on a section header', () => {
     const source = buildPanel([
       entry(0, 'paragraph', 'intro'),
       entry(1, 'header', 'Title', 2),
@@ -133,7 +143,7 @@ describe('OutlinePanel actions', () => {
       ...(rows()[1]?.querySelectorAll<HTMLButtonElement>('.pw-outline-action') ?? []),
     ]
     expect(headerActions.map((button) => button.title)).toEqual([
-      'Delete the block',
+      'Delete the heading',
       'Delete the section',
     ])
 
@@ -143,6 +153,23 @@ describe('OutlinePanel actions', () => {
       [1, 1],
       [1, 2],
     ])
+  })
+
+  it('pairs heading and section drag handles on a section header', () => {
+    buildPanel([
+      entry(0, 'paragraph', 'intro'),
+      entry(1, 'header', 'Title', 2),
+      entry(2, 'paragraph', 'body'),
+    ])
+
+    const handles = [
+      ...(rows()[1]?.querySelectorAll<HTMLButtonElement>('.pw-outline-handle') ?? []),
+    ]
+    expect(handles.map((handle) => handle.title)).toEqual([
+      'Move the heading',
+      'Move the section',
+    ])
+    expect(handles.every((handle) => handle.draggable)).toBe(true)
   })
 
   it('deletes a group with its whole span, end marker included', () => {
@@ -159,6 +186,59 @@ describe('OutlinePanel actions', () => {
 
     groupActions[0]?.click()
     expect(source.deleted).toEqual([[0, 2]])
+  })
+})
+
+describe('OutlinePanel drag and drop', () => {
+  function dragFromRow(index: number): void {
+    const row = rows()[index]
+    row?.querySelector<HTMLButtonElement>('.pw-outline-handle')?.dispatchEvent(
+      new Event('dragstart'),
+    )
+  }
+
+  it('moves a block dropped above another row', () => {
+    const source = buildPanel([
+      entry(0, 'paragraph', 'a'),
+      entry(1, 'paragraph', 'b'),
+      entry(2, 'paragraph', 'c'),
+    ])
+
+    dragFromRow(0)
+    // Row rects are all zero-sized in happy-dom: a negative clientY lands "above".
+    rows()[2]?.dispatchEvent(new MouseEvent('drop', { clientY: -5 }))
+
+    expect(source.moved).toEqual([[0, 0, 2]])
+  })
+
+  it('drops a section after a folded span, not inside it', () => {
+    const source = buildPanel([
+      entry(0, 'paragraph', 'a'),
+      entry(1, 'header', 'Section', 2),
+      entry(2, 'paragraph', 'body'),
+    ])
+    document.querySelector<HTMLButtonElement>('.pw-outline-caret[aria-expanded]')?.click()
+
+    dragFromRow(0)
+    rows()[1]?.dispatchEvent(new MouseEvent('drop', { clientY: 5 }))
+
+    expect(source.moved).toEqual([[0, 0, 3]])
+  })
+
+  it('ignores a drop of a span into itself', () => {
+    const source = buildPanel([
+      entry(0, 'header', 'Section', 2),
+      entry(1, 'paragraph', 'body'),
+      entry(2, 'paragraph', 'after'),
+    ])
+
+    const sectionHandle = [
+      ...(rows()[0]?.querySelectorAll<HTMLButtonElement>('.pw-outline-handle') ?? []),
+    ][1]
+    sectionHandle?.dispatchEvent(new Event('dragstart'))
+    rows()[1]?.dispatchEvent(new MouseEvent('drop', { clientY: -5 }))
+
+    expect(source.moved).toEqual([])
   })
 })
 

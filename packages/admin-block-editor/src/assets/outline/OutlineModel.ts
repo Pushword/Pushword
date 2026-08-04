@@ -39,6 +39,8 @@ export interface OutlineSource {
   entries(): OutlineEntry[]
   navigateTo(entry: OutlineEntry): void
   deleteSpan(start: number, end: number): void
+  /** Move units start..end (inclusive) so they land before the unit at `to`. */
+  moveSpan(start: number, end: number, to: number): void
 }
 
 export function buildOutlineTree(entries: OutlineEntry[]): OutlineNode[] {

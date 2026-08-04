@@ -3,11 +3,13 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconListBulleted,
+  IconMenuSmall,
   IconTrash,
 } from '@codexteam/icons'
 import './outline.css'
 import { GroupRegistry } from '../tools/Group/GroupRegistry'
 import { buildOutlineTree, OutlineNode, OutlineSource } from './OutlineModel'
+import { DragSpan, dropIndexFor, isActualMove } from './outlineDnd'
 
 export interface OutlineToolMeta {
   title: string
@@ -17,7 +19,12 @@ export interface OutlineToolMeta {
 export interface OutlineLabels {
   deleteBlock: string
   deleteGroup: string
+  deleteHeading: string
   deleteSection: string
+  moveBlock: string
+  moveGroup: string
+  moveHeading: string
+  moveSection: string
   outline: string
   toggleSection: string
 }
@@ -54,6 +61,10 @@ export class OutlinePanel {
   private readonly foldedSections = new Set<number>()
   private refreshTimer: number | null = null
 
+  /** Span being dragged from one of the panel handles, if any. */
+  private dragging: DragSpan | null = null
+  private unitCount = 0
+
   constructor(options: OutlinePanelOptions) {
     this.holderId = options.holderId
     this.source = options.source
@@ -74,6 +85,7 @@ export class OutlinePanel {
     document.body.append(this.root, this.opener)
     this.setCollapsed(this.initialCollapsed(), false)
     this.followEditorVisibility()
+    this.attachListDropTarget()
   }
 
   /** Debounced full re-render; every data change funnels through here. */
@@ -86,7 +98,9 @@ export class OutlinePanel {
   }
 
   refresh(): void {
-    const tree = buildOutlineTree(this.source.entries())
+    const entries = this.source.entries()
+    this.unitCount = entries.length
+    const tree = buildOutlineTree(entries)
     this.list.replaceChildren(...tree.map((node) => this.renderNode(node, 0)))
   }
 
@@ -156,6 +170,7 @@ export class OutlinePanel {
       this.labelButton(node),
       this.buildActions(node),
     )
+    this.attachDropTarget(row, node, node.children.length > 0 && !folded)
     item.appendChild(row)
 
     if (node.children.length > 0 && !folded) {
@@ -218,19 +233,121 @@ export class OutlinePanel {
     const start = node.entry.index
     const isSpan = node.spanEnd > start
     if (node.entry.type === GroupRegistry.START && isSpan) {
-      actions.appendChild(
+      // A group is atomic — its markers live and die together — so no block-alone pair.
+      actions.append(
+        this.dragHandle(this.labels.moveGroup, { start, end: node.spanEnd }, true),
         this.deleteButton(this.labels.deleteGroup, start, node.spanEnd, true),
       )
     } else if (node.entry.level !== null && isSpan) {
+      // "the heading", not "the block": next to "the section" the generic word reads
+      // as if it also covered the section's content.
       actions.append(
-        this.deleteButton(this.labels.deleteBlock, start, start, false),
+        this.dragHandle(this.labels.moveHeading, { start, end: start }, false),
+        this.deleteButton(this.labels.deleteHeading, start, start, false),
+        this.dragHandle(this.labels.moveSection, { start, end: node.spanEnd }, true),
         this.deleteButton(this.labels.deleteSection, start, node.spanEnd, true),
       )
     } else {
-      actions.appendChild(this.deleteButton(this.labels.deleteBlock, start, start, false))
+      actions.append(
+        this.dragHandle(this.labels.moveBlock, { start, end: start }, false),
+        this.deleteButton(this.labels.deleteBlock, start, start, false),
+      )
     }
 
     return actions
+  }
+
+  private dragHandle(label: string, span: DragSpan, wholeSpan: boolean): HTMLButtonElement {
+    const handle = this.iconButton(
+      IconMenuSmall,
+      label,
+      'pw-outline-handle' + (wholeSpan ? ' pw-outline-action--span' : ''),
+    )
+    handle.draggable = true
+    handle.addEventListener('dragstart', (event) => {
+      this.dragging = span
+      const row = handle.closest('.pw-outline-row')
+      if (event.dataTransfer && row instanceof HTMLElement) {
+        event.dataTransfer.effectAllowed = 'move'
+        // Firefox starts no drag without data.
+        event.dataTransfer.setData('text/plain', '')
+        event.dataTransfer.setDragImage(row, 0, 0)
+      }
+    })
+    handle.addEventListener('dragend', () => {
+      this.dragging = null
+      this.clearDropIndicator()
+    })
+    return handle
+  }
+
+  private attachDropTarget(
+    row: HTMLElement,
+    node: OutlineNode,
+    childrenVisible: boolean,
+  ): void {
+    row.addEventListener('dragover', (event) => {
+      if (this.dragging === null) return
+      const below = this.isBelow(event, row)
+      if (!isActualMove(this.dragging, dropIndexFor(node, below, childrenVisible))) {
+        this.clearDropIndicator()
+        return
+      }
+      event.preventDefault()
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+      this.showDropIndicator(row, below)
+    })
+    row.addEventListener('dragleave', () => {
+      row.classList.remove('pw-outline-drop--above', 'pw-outline-drop--below')
+    })
+    row.addEventListener('drop', (event) => {
+      if (this.dragging === null) return
+      event.preventDefault()
+      this.dropSpan(dropIndexFor(node, this.isBelow(event, row), childrenVisible))
+    })
+  }
+
+  /** The list's own padding is the drop zone for "after everything". */
+  private attachListDropTarget(): void {
+    this.list.addEventListener('dragover', (event) => {
+      if (this.dragging === null || event.target !== this.list) return
+      if (!isActualMove(this.dragging, this.unitCount)) return
+      event.preventDefault()
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+      const lastRow = [...this.list.querySelectorAll<HTMLElement>('.pw-outline-row')].pop()
+      if (lastRow !== undefined) this.showDropIndicator(lastRow, true)
+    })
+    this.list.addEventListener('drop', (event) => {
+      if (this.dragging === null || event.target !== this.list) return
+      event.preventDefault()
+      this.dropSpan(this.unitCount)
+    })
+  }
+
+  private dropSpan(to: number): void {
+    const span = this.dragging
+    this.dragging = null
+    this.clearDropIndicator()
+    if (span === null || !isActualMove(span, to)) return
+
+    this.source.moveSpan(span.start, span.end, to)
+    this.scheduleRefresh()
+  }
+
+  private isBelow(event: DragEvent, row: HTMLElement): boolean {
+    const rect = row.getBoundingClientRect()
+    return event.clientY > rect.top + rect.height / 2
+  }
+
+  private showDropIndicator(row: HTMLElement, below: boolean): void {
+    this.clearDropIndicator()
+    row.classList.add(below ? 'pw-outline-drop--below' : 'pw-outline-drop--above')
+  }
+
+  private clearDropIndicator(): void {
+    this.root
+      .querySelectorAll('.pw-outline-drop--above, .pw-outline-drop--below')
+      .forEach((row) => row.classList.remove('pw-outline-drop--above', 'pw-outline-drop--below'))
   }
 
   private deleteButton(

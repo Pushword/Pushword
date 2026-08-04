@@ -50,6 +50,22 @@ export class EditorJsOutlineSource implements OutlineSource {
     }
   }
 
+  moveSpan(start: number, end: number, to: number): void {
+    if (to >= start && to <= end + 1) return
+
+    const length = end - start + 1
+    if (to > end) {
+      // Each move slides the next span block into position `start`.
+      for (let i = 0; i < length; i++) {
+        this.api.blocks.move(to - 1, start)
+      }
+    } else {
+      for (let i = 0; i < length; i++) {
+        this.api.blocks.move(to + i, start + i)
+      }
+    }
+  }
+
   private levelOf(block: BlockAPI): number | null {
     if (block.name !== 'header') return null
 

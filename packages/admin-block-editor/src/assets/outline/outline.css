@@ -171,6 +171,27 @@
   height: 18px;
 }
 
+.pw-outline-handle {
+  padding: 3px;
+  border-radius: 4px;
+  color: #94a3b8;
+  cursor: grab;
+}
+
+.pw-outline-handle:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+/* Drop indicator: a line above or below the hovered row. */
+.pw-outline-drop--above {
+  box-shadow: inset 0 2px 0 #3b82f6;
+}
+
+.pw-outline-drop--below {
+  box-shadow: inset 0 -2px 0 #3b82f6;
+}
+
 /* Floating opener, shown while the rail is collapsed. */
 .pw-outline-opener {
   position: fixed;
