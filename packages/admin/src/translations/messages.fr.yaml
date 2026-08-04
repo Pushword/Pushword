@@ -79,6 +79,7 @@ adminMediaMultiUploadDrop: "Déposez vos fichiers ici"
 adminMediaMultiUploadOr: "ou cliquez pour parcourir"
 adminMediaMultiUploadTagAll: "Tags à appliquer à tous les fichiers"
 adminMediaMultiUploadTagAllApply: "Appliquer à tous"
+adminMediaPageTagsLabel: 'Tags des pages'
 adminMediaPickerChoose: Choisir
 adminMediaPickerEdit: Modifier
 adminMediaPickerEmpty: 'Aucune image sélectionnée'
@@ -98,6 +99,12 @@ adminMediaRotateSuccess: "Image pivotée. Le cache est en cours de régénérati
 adminMediaSizeLabel: 'Taille du fichier'
 adminMediaSlugWarning: "Changer le slug change l'URL de l'image et peut créer des erreurs."
 adminMediaTagsLabel: Tags
+adminMediaUsageLabel: 'Référencé par une page'
+adminMediaUsageNotReferencedChoice: 'Référencé par aucune page'
+adminMediaUsageReferencedChoice: 'Référencé par au moins une page'
+adminMediaUsageSourceContent: contenu
+adminMediaUsageSourceMainImage: 'image principale'
+adminMediaUsageSourceProperty: propriété
 adminMediaViewLabel: "Mode d'affichage"
 adminMediaViewMosaic: 'Vue mosaïque'
 adminMediaViewSelectAll: 'Tout sélectionner'

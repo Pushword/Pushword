@@ -22,14 +22,17 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
 use Pushword\Admin\Filter\MediaDimensionIntFilter;
+use Pushword\Admin\Filter\MediaPageTagFilter;
 use Pushword\Admin\Filter\MediaSearchFilter;
 use Pushword\Admin\Filter\MediaTagFilter;
+use Pushword\Admin\Filter\MediaUsageFilter;
 use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageRotator;
 use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Repository\MediaUsageRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Utils\FlashBag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -43,6 +46,7 @@ class MediaCrudController extends AbstractAdminCrudController
     public function __construct(
         private readonly ImageCacheManager $imageCacheManager,
         private readonly MediaRepository $mediaRepo,
+        private readonly MediaUsageRepository $mediaUsageRepo,
         private readonly PageRepository $pageRepository,
         private readonly AdminUrlGenerator $adminUrlGenerator,
         private readonly ImageRotator $imageRotator,
@@ -210,6 +214,8 @@ class MediaCrudController extends AbstractAdminCrudController
                 'media_related_pages_html',
                 $this->renderView('@pwAdmin/media/media_show.relatedPages.html.twig', [
                     'related_pages' => $relatedPages,
+                    'usage_sources' => $this->mediaUsageRepo->findSourcesByPageForMedia((int) $entity->id),
+                    'page_tags' => $entity->pageTags,
                 ]),
             );
         }
@@ -264,6 +270,18 @@ class MediaCrudController extends AbstractAdminCrudController
                 MediaTagFilter::new($this->mediaRepo, 'adminMediaTagsLabel'),
             );
         }
+
+        // Its own filter, not extra choices in the one above: a tag somebody put on
+        // the media and a tag the pages using it happen to carry answer different
+        // questions, and merging them would make neither answerable.
+        $mediaPageTags = $this->mediaRepo->getMediaPageTags();
+        if ([] !== $mediaPageTags) {
+            $filters->add(
+                MediaPageTagFilter::new($this->mediaRepo, 'adminMediaPageTagsLabel'),
+            );
+        }
+
+        $filters->add(MediaUsageFilter::new($this->mediaRepo, 'adminMediaUsageLabel'));
 
         return $filters;
     }

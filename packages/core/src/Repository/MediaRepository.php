@@ -12,6 +12,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
 use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Entity\MediaUsage;
 use Pushword\Core\Utils\SearchNormalizer;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -50,6 +51,15 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     /** Version the in-memory index was built for, to tell a stale memo from a reusable one. */
     private ?int $indexVersion = null;
+
+    /**
+     * Flattened `filename => id`, historical names included — what resolves a
+     * reference found in a page's content. Derived from the index above and dropped
+     * with it.
+     *
+     * @var array<string, int>|null
+     */
+    private ?array $fileNameToId = null;
 
     private bool $warmedLight = false;
 
@@ -133,6 +143,38 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         $this->fileNameIndexLight = $index;
         $this->indexVersion = $version;
         $this->warmedLight = true;
+        $this->fileNameToId = null;
+    }
+
+    /**
+     * Every name a media answers to — current and historical — mapped to its id.
+     * A page still referencing a renamed file renders it, so it still uses it.
+     *
+     * Current names are written last: two media can share a historical name, and
+     * the one that carries it today is the one a reference means.
+     *
+     * @return array<string, int>
+     */
+    public function getFileNameToIdMap(): array
+    {
+        $this->warmupFileNameIndexLight();
+
+        if (null !== $this->fileNameToId) {
+            return $this->fileNameToId;
+        }
+
+        $map = [];
+        foreach ($this->fileNameIndexLight ?? [] as $entry) {
+            foreach ($entry['fileNameHistory'] as $historicalFileName) {
+                $map[$historicalFileName] = $entry['id'];
+            }
+        }
+
+        foreach ($this->fileNameIndexLight ?? [] as $entry) {
+            $map[$entry['fileName']] = $entry['id'];
+        }
+
+        return $this->fileNameToId = $map;
     }
 
     /**
@@ -205,6 +247,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         $this->fileNameIndexLight = null;
         $this->indexVersion = null;
         $this->warmedLight = false;
+        $this->fileNameToId = null;
     }
 
     public function isWarmedLight(): bool
@@ -444,6 +487,19 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         return $groups;
     }
 
+    /** @return list<int> */
+    public function getAllIds(): array
+    {
+        /** @var list<int|string> $ids */
+        $ids = $this->createQueryBuilder('m')
+            ->select('m.id AS id')
+            ->orderBy('m.id', 'ASC')
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        return array_map(intval(...), $ids);
+    }
+
     /** @return array<string> */
     public function getAllMedia(): array
     {
@@ -469,6 +525,24 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         $mediaTags = $queryBuilder->getQuery()->getResult();
 
         return $this->flattenTags($mediaTags);
+    }
+
+    /**
+     * The tags media inherit from the pages using them — kept apart from
+     * {@see self::getMediaTags()} so the two never mix in a filter's choices.
+     *
+     * @return string[]
+     */
+    public function getMediaPageTags(): array
+    {
+        $queryBuilder = $this->createQueryBuilder('m')
+            ->select('m.pageTags AS tags')
+            ->setMaxResults(30000);
+
+        /** @var array{tags: string[]}[] */
+        $pageTags = $queryBuilder->getQuery()->getResult();
+
+        return $this->flattenTags($pageTags);
     }
 
     /**
@@ -538,5 +612,78 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             ->where($exp)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * DQL fragment for "no page references this media" — a `NOT EXISTS` rather than
+     * a `LEFT JOIN … IS NULL` so it cannot multiply rows or disturb the paginator
+     * counting them in the admin.
+     *
+     * Never "unused": a media a Twig template holds has no usage row either.
+     */
+    public function getNotReferencedByAPageDql(string $alias): string
+    {
+        return \sprintf(
+            'NOT EXISTS (SELECT u.id FROM %s u WHERE u.media = %s)',
+            MediaUsage::class,
+            $alias,
+        );
+    }
+
+    /** @return Media[] */
+    public function findNotReferencedByAPage(): array
+    {
+        return $this->createQueryBuilder('m')
+            ->where($this->getNotReferencedByAPageDql('m'))
+            ->orderBy('m.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * The derived tags currently stored for these media, to tell an update that is
+     * needed from one that would rewrite the same value.
+     *
+     * @param list<int> $mediaIds
+     *
+     * @return array<int, list<string>>
+     */
+    public function findPageTags(array $mediaIds): array
+    {
+        if ([] === $mediaIds) {
+            return [];
+        }
+
+        /** @var list<array{id: int, pageTags: string[]}> $rows */
+        $rows = $this->createQueryBuilder('m')
+            ->select('m.id AS id, m.pageTags AS pageTags')
+            ->where('m.id IN (:ids)')
+            ->setParameter('ids', $mediaIds)
+            ->getQuery()
+            ->getArrayResult();
+
+        $toReturn = [];
+        foreach ($rows as $row) {
+            $toReturn[$row['id']] = array_values($row['pageTags']);
+        }
+
+        return $toReturn;
+    }
+
+    /**
+     * Write the derived tags straight to the column, bypassing the ORM on purpose:
+     * this is a projection of `media_usage`, and routing it through a Media entity
+     * would fire the rename, hash, cache-invalidation and license listeners for a
+     * value no human touched — and bump the render epoch on every page save.
+     *
+     * @param list<string> $pageTags
+     */
+    public function updatePageTags(int $mediaId, array $pageTags): void
+    {
+        $this->getEntityManager()->getConnection()->update(
+            'media',
+            ['page_tags' => json_encode($pageTags, \JSON_THROW_ON_ERROR)],
+            ['id' => $mediaId],
+        );
     }
 }

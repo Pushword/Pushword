@@ -15,6 +15,7 @@ use InvalidArgumentException;
 use LogicException;
 use Pushword\Admin\Controller\PageCheatSheetCrudController;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Entity\MediaUsage;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\ValueObject\PageRedirection;
 use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
@@ -677,40 +678,53 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      * Used in admin Media.
      * Finds pages that reference a given media file.
      *
+     * Reads the usage table instead of scanning `mainContent` with a LIKE: the answer
+     * is already stored, indexed, and does not mistake `myphoto.jpg` for `photo.jpg`.
+     * A media whose usage was never built reads as used by nothing — `pw:media:usage:rebuild`.
+     *
      * @return Page[]
      */
     public function getPagesUsingMedia(Media $media, ?string $host = null): array
     {
-        $queryBuilder = $this->createQueryBuilder('p');
+        $queryBuilder = $this->createQueryBuilder('p')
+            ->where(\sprintf('EXISTS (SELECT u.id FROM %s u WHERE u.page = p AND u.media = :idMedia)', MediaUsage::class))
+            ->setParameter('idMedia', $media->id)
+            ->orderBy('p.slug', 'ASC');
 
         if (null !== $host) {
             $queryBuilder->andWhere('p.host = :host')->setParameter('host', $host);
         }
 
-        $orx = $queryBuilder->expr()->orX();
-
-        // Direct relation via mainImage
-        $orx->add($queryBuilder->expr()->eq('p.mainImage', ':idMedia'));
-
-        // Escape special characters for LIKE patterns
-        $escapedFileName = $this->escapeLikePattern($media->getFileName());
-
-        // Search for filename in content (with proper escaping)
-        $orx->add($queryBuilder->expr()->like('p.mainContent', ':fileNamePattern'));
-
-        $query = $queryBuilder->where($orx)
-            ->setParameter('idMedia', $media->id)
-            ->setParameter('fileNamePattern', '%'.$escapedFileName.'%');
-
-        return $query->getQuery()->getResult();
+        return $queryBuilder->getQuery()->getResult();
     }
 
     /**
-     * Escape special characters for LIKE pattern matching.
+     * One batch of the raw material a media-usage scan reads, keyed off the last id
+     * seen rather than an offset so a full rebuild stays linear.
+     *
+     * Scalar rows on purpose: hydrating Page entities for a whole-corpus scan is what
+     * turns a rebuild into a memory problem.
+     *
+     * @return list<array{id: int, mainContent: string, customProperties: array<mixed>, mainImageId: int|null}>
      */
-    private function escapeLikePattern(string $value): string
+    public function findContentBatchAfter(int $afterId, int $limit): array
     {
-        return addcslashes($value, '%_\\');
+        /** @var list<array{id: int, mainContent: string, customProperties: array<mixed>, mainImageId: int|string|null}> $rows */
+        $rows = $this->createQueryBuilder('p')
+            ->select('p.id AS id, p.mainContent AS mainContent, p.customProperties AS customProperties, IDENTITY(p.mainImage) AS mainImageId')
+            ->where('p.id > :afterId')
+            ->setParameter('afterId', $afterId)
+            ->orderBy('p.id', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn (array $row): array => [
+            'id' => $row['id'],
+            'mainContent' => $row['mainContent'],
+            'customProperties' => $row['customProperties'],
+            'mainImageId' => null === $row['mainImageId'] ? null : (int) $row['mainImageId'],
+        ], $rows);
     }
 
     private function getRootAlias(QueryBuilder $queryBuilder): string

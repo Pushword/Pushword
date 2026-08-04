@@ -617,6 +617,23 @@ class Media implements IdInterface, Taggable, Stringable
         return $alts[$locale] ?? $this->getAlt();
     }
 
+    // --- Tags inherited from the pages using this media ---
+
+    /**
+     * The union of the tags of every page referencing this media, derived from
+     * `media_usage` and rewritten whenever that changes.
+     *
+     * Its own column rather than a merge into `tags`: a derivation and a human
+     * decision must stay tellable apart — in the admin filters, and so a page
+     * retag can never rewrite what somebody tagged by hand.
+     *
+     * @see \Pushword\Core\Service\MediaUsageTracker
+     *
+     * @var string[]
+     */
+    #[ORM\Column(name: 'page_tags', type: Types::JSON, options: ['default' => '[]'])]
+    public private(set) array $pageTags = [];
+
     // --- License state ---
 
     /**

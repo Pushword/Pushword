@@ -7,41 +7,23 @@ toc: true
 
 Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
-### In progress<>
+### In progress
 
 - [ ] npx pushword ai plugin inspired from https://github.com/gsd-build/get-shit-done https://github.com/pbakaus/impeccable and current prompt/cmd/skills on my projects (wip -> ai-skills package)
 
 ### On our way
-
-- [Core] fix glightbox or rollback to fslightbox ➜ `Plans/lightbox-obfuscated-links.md`
-  One cause behind the three symptoms: `link()` obfuscates by default, so a gallery
-  item and a video thumb render as a `<span>` with no `href` — glightbox has nothing
-  to bind, and `convertImageLinkToWebPLink()` looks for `a[data-dwl]` that does not
-  exist yet.
-  - [ ] video in lightbox
-  - [ ] simple image self linked (`component/image.html.twig` never wraps in a link)
-  - [ ] convertImageLinkToWebPLink() is not working anymore
 
 - [Ai] Add AiFeature to Flat
   - [x] Generate a map of the content = [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
   - [x] Generate a map of the media
   - [ ] upgrade skills -> composer req pushword/docs, composer update (retrieve pushword core version upgrade), read vendor/pushword/docs.../upgrade.md, fix local codebase, test (manual composer dev + check few pages) and composer test if available claude --resume b88a1a80-843c-4e8f-994c-23ef98e63f59
 
-- best bractice : migrate to #[MapQueryParameter] ?string $source = null, and #[MapFormParameter] instead of request
+- best practice : migrate to #[MapQueryParameter] ?string $source = null, and #[MapFormParameter] instead of request
   (zero usage in the repo today)
 
 - [Admin] / [Version] Autosave with unsaved state : envoyer un event toutes les secondes si le contenu a été modifié, celui-ci créé une nouvelle version du contenu en précisant que c'est une sauvegarde automatique, si la précédente sauvegarde est une sauvegarde automatique et qu'elle date de moins d'une heure, alors on ne garde qu'une version dans le versionner (la dernière)
 
-- [Core] / [Admin] **Media** usages ➜ `Plans/media-usage-tracking.md`
-  Aujourd'hui le seul calcul est un `str_contains` pages × médias dans `pw:ai-index`,
-  jeté après export. Rien en base.
-  - [ ] revoir comment sont récoltés les usages d'un média
-  - [ ] stocker en DB (donc mieux tuiler avec pages, quid des medias utiliser dans des templates ?)
-  - [ ] pouvoir filtrer les médias non utilisés (cf point précédent) via Admin
-  - [ ] cli tool to clean unused media ?
-  - [ ] Tags importés depuis les pages qui utilisent le média
-
-- [Core] / [Admin] Bulk edition des tags depuis la page de listing
+- [Core] / [Admin] Bulk edition des tags depuis la page de listing -> must rely on checkbox, on checked instead of only having "Delete" action, having "Bulk edit"
 
 - [JsHelper] show-more : gérer les fragments de texte (`#:~:text=`)
   Le reste est fait (jump links, hash, mémoire localStorage, Ctrl+F) —
@@ -71,7 +53,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [x] TwigFormatter (`.twig-cs-fixer.dist.php`, dans `composer format` et la CI)
   - [ ] TwigStan
   - [ ] manage date i18n a better way than randomly
-    (les clés fr/en sont à parité ; reste `card.html.twig` qui code en dur `d/m/Y à H:i`)
+        (les clés fr/en sont à parité ; reste `card.html.twig` qui code en dur `d/m/Y à H:i`)
 
 - [Admin] / [AdminBlockEditor] (cerise) TocAvoir un block à gauche de l'éditeur pour afficher la liste des blocs utilisés, pouvoir déplacer ces blocs facilement en sélecctionnant un bloc, ou un groupe de blocs naturellement groupés sous un header, fonctionne depuis le markdown ou depuis l'editorjs
 

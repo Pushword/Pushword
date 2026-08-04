@@ -6,6 +6,7 @@ use League\Csv\Writer as CsvWriter;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Repository\MediaUsageRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
@@ -21,9 +22,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class AiIndexCommand
 {
     /** @var array<string> */
-    private array $mediaList;
-
-    /** @var array<string> */
     private array $pageSlugList;
 
     /** @var array<Page> */
@@ -37,6 +35,7 @@ final class AiIndexCommand
     public function __construct(
         private readonly PageRepository $pageRepository,
         private readonly MediaRepository $mediaRepository,
+        private readonly MediaUsageRepository $mediaUsageRepository,
         private readonly FlatFileContentDirFinder $contentDirFinder,
         private readonly SiteRegistry $apps,
         private readonly string $projectDir,
@@ -52,7 +51,6 @@ final class AiIndexCommand
     ): int {
         $this->pages = $this->pageRepository->findAll();
         $this->medias = $this->mediaRepository->findAll();
-        $this->mediaList = array_map(static fn (Media $media): string => $media->getFileName(), $this->medias);
         $this->pageSlugList = array_map(static fn (Page $page): string => $page->slug, $this->pages);
         $host ??= '';
 
@@ -64,7 +62,13 @@ final class AiIndexCommand
                 ? $this->contentDirFinder->get($host)
                 : $this->projectDir.'/var/export/'.uniqid());
 
-        $result = $this->createpages($output, $host);
+        $exportedPages = '' === $host
+            ? $this->pages
+            : $this->pageRepository->findByHost($host);
+
+        $this->loadMediaUsage($exportedPages);
+
+        $result = $this->createpages($output, $exportedPages);
 
         $result2 = $this->createmedias($output);
 
@@ -92,7 +96,7 @@ final class AiIndexCommand
     ): int {
         $output->writeln('Generating medias.csv...');
 
-        $output->writeln('Found '.count($this->mediaList).' media files');
+        $output->writeln('Found '.count($this->medias).' media files');
 
         $writer = $this->getCsvWriter($this->exportDir.'/medias.csv');
         // Write CSV header
@@ -122,13 +126,10 @@ final class AiIndexCommand
         return Command::SUCCESS;
     }
 
-    private function createpages(OutputInterface $output, string $host): int
+    /** @param Page[] $pages */
+    private function createpages(OutputInterface $output, array $pages): int
     {
         $output->writeln('Generating pages.csv...');
-
-        $pages = '' === $host
-            ? $this->pageRepository->findAll()
-            : $this->pageRepository->findByHost($host);
 
         $output->writeln('Found '.count($pages).' pages');
 
@@ -149,7 +150,7 @@ final class AiIndexCommand
 
         $rows = [];
         foreach ($pages as $page) {
-            $mediaUsed = $this->extractMediaUsed($page);
+            $mediaUsed = $this->mediaUsedByPage[(int) $page->id] ?? [];
             $pageLinked = $this->extractPageLinked($page);
             $length = strlen($page->mainContent);
 
@@ -173,30 +174,51 @@ final class AiIndexCommand
         return Command::SUCCESS;
     }
 
-    /** @var array<string, array<string>> */
+    /** @var array<string, array<string>> media filename => slugs of the pages using it */
     private array $mediaUsedInPage = [];
 
+    /** @var array<int, array<string>> page id => filenames of the media it uses */
+    private array $mediaUsedByPage = [];
+
     /**
-     * @return string[]
+     * Both directions of the usage relation, read from `media_usage` in one query
+     * and resolved against the ids already in memory.
+     *
+     * This used to be a `str_contains()` of every media in every page — the reason
+     * the relation is stored now. A media the table does not know about exports as
+     * unused here: `pw:media:usage:rebuild` is what fills it in.
+     *
+     * Scoped to the pages being exported, so a per-host export does not credit a
+     * media to a page living on another site.
+     *
+     * @param Page[] $exportedPages
      */
-    private function extractMediaUsed(Page $page): array
+    private function loadMediaUsage(array $exportedPages): void
     {
-        $mediaUsed = [];
-        $content = $page->mainContent;
-
-        foreach ($this->mediaList as $media) {
-            if (str_contains($content, $media)) {
-                $mediaUsed[] = $media;
-
-                if (! isset($this->mediaUsedInPage[$media])) {
-                    $this->mediaUsedInPage[$media] = [];
-                }
-
-                $this->mediaUsedInPage[$media][] = $page->slug;
-            }
+        $fileNameById = [];
+        foreach ($this->medias as $media) {
+            $fileNameById[(int) $media->id] = $media->getFileName();
         }
 
-        return $mediaUsed;
+        $slugById = [];
+        foreach ($exportedPages as $page) {
+            $slugById[(int) $page->id] = $page->slug;
+        }
+
+        foreach ($this->mediaUsageRepository->findAllEdges() as $edge) {
+            $fileName = $fileNameById[$edge['mediaId']] ?? null;
+            $slug = $slugById[$edge['pageId']] ?? null;
+            if (null === $fileName) {
+                continue;
+            }
+
+            if (null === $slug) {
+                continue;
+            }
+
+            $this->mediaUsedInPage[$fileName][] = $slug;
+            $this->mediaUsedByPage[$edge['pageId']][] = $fileName;
+        }
     }
 
     /**

@@ -27,7 +27,7 @@ php bin/console pw:ai-index [host] [exportDir]
 | createdAt | Creation date (Y-m-d H:i:s) |
 | tags | Comma-separated tags |
 | summary | Search excerpt |
-| mediaUsed | Media filenames referenced in content |
+| mediaUsed | Media filenames the page references (body, main image, custom property) |
 | parentPage | Parent page slug |
 | pageLinked | Other page slugs linked from content |
 | length | Character count of mainContent |
@@ -39,7 +39,7 @@ php bin/console pw:ai-index [host] [exportDir]
 | media | Filename |
 | mimeType | MIME type |
 | name | Alt text |
-| usedInPages | Page slugs that reference this media |
+| usedInPages | Page slugs referencing this media |
 
 ## Example
 
@@ -50,5 +50,9 @@ php bin/console pw:ai-index altimood.com
 # Export all pages to a custom directory
 php bin/console pw:ai-index "" /tmp/pushword-export
 ```
+
+Both usage columns are read from the stored media↔page relation — see
+[Media usage](/media-usage). A site that has never run `pw:media:usage:rebuild`
+exports them empty.
 
 The CSV files use comma delimiters and double-quote enclosure. Feed them to your AI agent for content analysis, link graph extraction, or editorial audits.

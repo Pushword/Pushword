@@ -73,6 +73,7 @@ adminMediaLicenseThirdPartyDisclosure: "Third-party rights found in the file"
 adminMediaLicenseThirdPartyNote: "This file credits somebody else, so the site license was not applied. Press \"Apply the site license\" if the site does own the rights."
 adminMediaMainColorLabel: "Main Color"
 adminMediaMediaFileLabel: File
+adminMediaPageTagsLabel: "Tags from the pages"
 adminMediaPreviewDominantColor: "Dominant color"
 adminMediaPreviewHistory: "Previous filenames"
 adminMediaPreviewJson: JSON
@@ -86,6 +87,12 @@ adminMediaRotateSuccess: "Image rotated. The cache is being regenerated."
 adminMediaSizeLabel: "File size"
 adminMediaSlugWarning: "Changing the slug changes the image URL and may cause errors."
 adminMediaTagsLabel: Tags
+adminMediaUsageLabel: "Referenced by a page"
+adminMediaUsageNotReferencedChoice: "Referenced by no page"
+adminMediaUsageReferencedChoice: "Referenced by at least one page"
+adminMediaUsageSourceContent: content
+adminMediaUsageSourceMainImage: "main image"
+adminMediaUsageSourceProperty: property
 adminMediaViewLabel: "View mode"
 adminMediaViewMosaic: Mosaic
 adminMediaViewSelectAll: "Select all"
