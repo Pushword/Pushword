@@ -59,6 +59,31 @@ class ContactRepository extends ServiceEntityRepository
     }
 
     /**
+     * The languages one audience is actually read in, sorted.
+     *
+     * An audience spanning several locale hosts is still one list, so what it
+     * covers is a question about its contacts and not about the site's
+     * configuration: a base nobody has yet subscribed to in German does not
+     * need a German anything.
+     *
+     * @return list<string>
+     */
+    public function localesIn(Audience $audience): array
+    {
+        /** @var array{locale: string}[] $rows */
+        $rows = $this->createQueryBuilder('c')
+            ->select('DISTINCT c.locale')
+            ->andWhere('c.audience = :audience')
+            ->andWhere("c.locale != ''")
+            ->setParameter('audience', $audience)
+            ->orderBy('c.locale', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return array_column($rows, 'locale');
+    }
+
+    /**
      * The property keys the site has stored on someone. A contact's properties
      * are whatever an import or the API wrote — there is no declaration to read
      * them from, unlike a page's `page_properties`.

@@ -106,6 +106,78 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
         self::assertNotSame($campaigns[0]->slug, $campaigns[1]->slug);
     }
 
+    /**
+     * Seventeen locale versions of an article are seventeen pages, so a page
+     * automation produces seventeen campaigns — all of them addressed to the
+     * same `recipientWhen`. Left alone, every reader gets the same article once
+     * per language.
+     */
+    public function testEachLanguageVersionOnlyReachesItsOwnReaders(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'fr@example.tld', locale: 'fr');
+        $this->createContact($audience, 'de@example.tld', locale: 'de');
+        $automation = $this->automation($audience, activeFrom: new DateTimeImmutable('-3 days'));
+
+        $this->createPage('blog/bonjour', publishedAt: '-2 days', locale: 'fr');
+        $this->createPage('blog/hallo', publishedAt: '-2 days', locale: 'de');
+
+        $report = $this->tick();
+        self::assertSame(2, $report['scheduled']);
+
+        $segments = array_map(
+            static fn (Campaign $campaign): array => $campaign->segment,
+            $this->campaignsOf($automation),
+        );
+
+        self::assertSame([
+            [['field' => 'locale', 'op' => '=', 'value' => 'fr']],
+            [['field' => 'locale', 'op' => '=', 'value' => 'de']],
+        ], $segments);
+
+        // What the readers actually get: one mail each. Unnarrowed, the two
+        // campaigns would reach both of them — the same article twice, once per
+        // language.
+        self::assertEmailCount(2);
+    }
+
+    /** The automation's own rule is kept, and narrowed — never replaced or widened. */
+    public function testTheLocaleIsAndedOntoTheAutomationsOwnRule(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'fr@example.tld', locale: 'fr');
+        $this->createContact($audience, 'de@example.tld', locale: 'de');
+        $automation = $this->automation($audience, recipientWhen: ['any' => [
+            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek-VIP'],
+        ]]);
+
+        $this->createPage('blog/bonjour', publishedAt: '-10 minutes', locale: 'fr');
+
+        self::assertSame(1, $this->runTriggers());
+
+        self::assertSame([
+            ['any' => [
+                ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek-VIP'],
+            ]],
+            ['field' => 'locale', 'op' => '=', 'value' => 'fr'],
+        ], $this->onlyCampaignOf($automation)->segment);
+    }
+
+    /** An audience read in one language has nothing to disambiguate. */
+    public function testASingleLanguageAudienceKeepsItsRuleUntouched(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'fr@example.tld', locale: 'fr');
+        $automation = $this->automation($audience);
+
+        $this->createPage('blog/bonjour', publishedAt: '-10 minutes', locale: 'fr');
+
+        self::assertSame(1, $this->runTriggers());
+        self::assertSame([], $this->onlyCampaignOf($automation)->segment);
+    }
+
     public function testTheSamePageIsOnlyEverMailedOnce(): void
     {
         $audience = $this->createAudience();
@@ -382,7 +454,7 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
 
     /**
      * @param array<int, array<string, mixed>>              $triggerWhen
-     * @param array<int, array<string, mixed>>              $recipientWhen
+     * @param array<mixed>                                  $recipientWhen a rule as stored, so a group as well as a list
      * @param string[]                                      $hosts
      * @param list<array{delay: int, subject: string}>|null $steps
      */
@@ -406,12 +478,13 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
         );
     }
 
-    private function createPage(string $slug, string $publishedAt): Page
+    private function createPage(string $slug, string $publishedAt, string $locale = ''): Page
     {
         $page = new Page();
         $page->host = 'localhost.dev';
         $page->slug = $this->prefix.'/'.$slug;
         $page->h1 = 'Hello';
+        $page->locale = $locale;
         $page->setSearchExcerpt('What it is about.');
         $page->publishedAt = new DateTime($publishedAt);
 

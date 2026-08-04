@@ -81,6 +81,7 @@ final readonly class PageTriggerSource implements TriggerSource
                 occurredAt: DateTimeImmutable::createFromInterface($page->publishedAt ?? $now),
                 placeholders: $this->placeholders->map($page),
                 slug: $page->slug,
+                locale: '' !== $page->locale ? $page->locale : null,
             );
         }
 

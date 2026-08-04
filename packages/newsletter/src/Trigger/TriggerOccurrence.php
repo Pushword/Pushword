@@ -35,6 +35,10 @@ final readonly class TriggerOccurrence
      * @param string|null           $slug         analytics name for the campaigns it produces; the
      *                                            subject's own slug reads better in a report than a
      *                                            step's subject line
+     * @param string|null           $locale       the language this occurrence is in, when it has
+     *                                            one — seventeen locale versions of an article are
+     *                                            seventeen occurrences, and each concerns the
+     *                                            readers of its own language
      */
     public function __construct(
         public int $subjectId,
@@ -42,6 +46,7 @@ final readonly class TriggerOccurrence
         public array $placeholders = [],
         public ?Contact $contact = null,
         public ?string $slug = null,
+        public ?string $locale = null,
     ) {
     }
 }

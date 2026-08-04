@@ -50,4 +50,32 @@ final class CriteriaGroup
     {
         return $any ? ['any' => $conditions] : $conditions;
     }
+
+    /**
+     * The rule, narrowed by one more condition every row must also satisfy.
+     *
+     * An `any` is kept whole and nested rather than flattened: spreading its
+     * conditions into the ANDed list would turn "either of those tags" into
+     * "both of them", and appending to it would widen the rule by the very
+     * condition meant to narrow it.
+     *
+     * @param array<mixed>         $criteria  the rule as stored, possibly empty
+     * @param array<string,string> $condition
+     *
+     * @return array<mixed> the rule as stored
+     *
+     * @throws SegmentException
+     */
+    public static function and(array $criteria, array $condition): array
+    {
+        if ([] === $criteria) {
+            return [$condition];
+        }
+
+        ['any' => $any, 'conditions' => $conditions] = self::unwrap($criteria);
+
+        return $any
+            ? [['any' => $conditions], $condition]
+            : [...array_values($conditions), $condition];
+    }
 }

@@ -1,5 +1,5 @@
 ---
-title: 'a newsletter contact can be keyed on a phone number, and subscribed no longer means mailable'
+title: 'a newsletter contact can be keyed on a phone number, a page automation stops mailing one article once per language'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 run: 'doctrine:schema:update --force'
@@ -73,3 +73,20 @@ absorbs needs no note.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+## A page automation no longer mails one article once per language
+
+An automation on the page source produces one campaign per page per step, and
+every one of them was addressed to the automation's single `recipientWhen`. On a
+site whose article exists in several locale versions — seventeen pages, one per
+host — that meant seventeen campaigns each broadcast to the whole audience, and
+every reader receiving the same article once per language.
+
+Each campaign's segment is now narrowed by the locale of the page that triggered
+it, ANDed onto `recipientWhen` rather than replacing it. The narrowing only
+happens once the audience actually holds contacts in more than one locale, so a
+single-language list is unaffected and nothing has to be configured.
+
+If you had worked around this with one automation per language, each carrying
+`[{"field":"locale","op":"=","value":"xx"}]` in `recipientWhen`, they keep
+working unchanged — the condition is simply now redundant.

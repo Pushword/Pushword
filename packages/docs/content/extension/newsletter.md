@@ -596,6 +596,19 @@ any other, and each carries the automation it came from. They are never
 rewritten: editing the page after the campaign exists changes the article, not
 the mail already queued about it.
 
+**One language per campaign, when there is more than one.** Seventeen locale
+versions of an article are seventeen pages, so a page automation produces
+seventeen campaigns — and `recipientWhen` is one rule for all of them. As soon
+as the audience holds contacts in more than one locale, each campaign's segment
+is narrowed by the language of the page that triggered it, so a reader gets the
+article once rather than once per language. An audience read in a single
+language has nothing to disambiguate and keeps its rule exactly as written.
+
+The narrowing is ANDed onto `recipientWhen`, never replaces it: an `any` group
+is kept whole. Writing `locale` into the rule yourself still works and still
+means what it says — one campaign per market, for editorial reasons rather than
+technical ones, is a model this does not take away.
+
 Three things it will not do:
 
 - **Mail a back catalogue.** `activeFrom`, as above.
