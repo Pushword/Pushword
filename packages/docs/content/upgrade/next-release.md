@@ -28,7 +28,7 @@ absorbs needs no note.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** pushword/core, pushword/newsletter, pushword/page-scanner, @pushword/js-helper
+**Concerns:** `pushword/core`, `pushword/newsletter`, `pushword/page-scanner`, `@pushword/js-helper`
 
 ## Two new checks report on content that already exists
 
