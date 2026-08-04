@@ -180,10 +180,7 @@ export class editorJs {
     // Uniform seam for writing the body back from outside (unsaved changes
     // recovery): the field this editor feeds is a plain textarea, so setting
     // its value would leave the rendered blocks showing the old content.
-    const holderElement = document.getElementById(config.holder!)
-    const boundInput = document.getElementById(
-      holderElement?.getAttribute('data-input-id') || '',
-    )
+    const boundInput = this.boundInputOf(config.holder!)
     if (boundInput) {
       boundInput.pwEditor = {
         setValue: (markdown: string) => {
@@ -201,11 +198,17 @@ export class editorJs {
     editorJsHelper.setModeManager(config.holder!, modeManager)
   }
 
-  async editorjsSave(holderId: string): Promise<OutputData | null> {
-    const editorHolder = document.getElementById(holderId)
-    const editorInput = document.getElementById(
-      editorHolder?.getAttribute('data-input-id') || '',
+  /** The form field a holder feeds, named by its data-input-id. */
+  private boundInputOf(holderId: string): HTMLInputElement | null {
+    const holder = document.getElementById(holderId)
+
+    return document.getElementById(
+      holder?.getAttribute('data-input-id') || '',
     ) as HTMLInputElement | null
+  }
+
+  async editorjsSave(holderId: string): Promise<OutputData | null> {
+    const editorInput = this.boundInputOf(holderId)
     const editor = this.editors[holderId]
 
     if (!editorInput || !editor) return null
