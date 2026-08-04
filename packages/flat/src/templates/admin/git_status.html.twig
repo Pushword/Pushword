@@ -34,7 +34,7 @@
             <tbody>
               {% for entry in history %}
                 <tr>
-                  <td class="text-nowrap">{{ entry.timestamp|date('d/m/Y H:i:s') }}</td>
+                  <td class="text-nowrap">{{ entry.timestamp|format_datetime('short', 'medium') }}</td>
                   <td>
                     {% if entry.success %}
                       <span class="badge bg-success">{{ 'flatGitStatusSuccess'|trans }}</span>

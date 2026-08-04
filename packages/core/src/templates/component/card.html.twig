@@ -40,7 +40,7 @@
   {% endif %}
   {% block card_date %}
   {# <span class="block p-2 text-sm text-white bg-primary">
-    {{ (date ?? 'now')|date('d/m/Y à H:i') }}
+    {{ (date ?? 'now')|format_datetime('short', 'short') }}
   </span> #}
   {% endblock %}
   <{{ title_tag }}

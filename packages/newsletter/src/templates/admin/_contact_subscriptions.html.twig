@@ -40,7 +40,7 @@
                 </td>
                 <td class="text-muted">{{ contact.audience.mainHost }}</td>
                 <td><span class="badge badge-{{ badges[contact.statusLabel] }}">{{ contact.statusLabel }}</span></td>
-                <td class="text-muted">{{ contact.registeredAt|date('d M Y') }}</td>
+                <td class="text-muted">{{ contact.registeredAt|format_date('medium') }}</td>
               </tr>
             {% endfor %}
           </tbody>

@@ -1,5 +1,5 @@
 ---
-title: 'the database now knows which pages use which media'
+title: 'the database now knows which pages use which media; admin dates follow the locale'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -28,7 +28,7 @@ absorbs needs no note.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin`, `pushword/core`, `pushword/flat`
+**Concerns:** `pushword/admin`, `pushword/core`, `pushword/flat`, `pushword/newsletter`, `pushword/page-scanner`, `pushword/static-generator`
 
 ## The database now knows which pages use which media
 
@@ -68,3 +68,16 @@ One behaviour changed under an unchanged call. `PageRepository::getPagesUsingMed
 reads the table instead of running a `LIKE` over `mainContent`, so it is both faster
 and stricter — `myphoto.jpg` no longer counts as a use of `photo.jpg` — and it
 answers with nothing until the rebuild has run.
+
+## Admin dates follow the locale
+
+The admin screens that hardcoded a French date format (page-scanner results and
+progress, static-generator progress, flat's git status, the newsletter contact
+panel) now render dates with `format_datetime`/`format_date` from `twig/intl-extra`,
+so they follow the request locale. On a French admin `04/08/2026 à 14:30` becomes
+`04/08/2026 14:30`; other locales stop getting French dates. Nothing to do — unless
+a template you overrode copied one of those lines and you want the same fix.
+
+The commented `card_date` example in core's `component/card.html.twig` suggests
+`format_datetime('short', 'short')` now; existing copies of that block keep
+whatever format they chose.

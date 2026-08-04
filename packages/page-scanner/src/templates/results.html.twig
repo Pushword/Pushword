@@ -28,7 +28,7 @@
                     <meta http-equiv="refresh" content="2">
                 {% else %}
                     <div class="alert alert-info" role="alert">
-                        {{ 'page_scannerScanResult'|trans({'%date%': lastEdit|date('d/m/Y à H:i')}) }}
+                        {{ 'page_scannerScanResult'|trans({'%date%': lastEdit|format_datetime('short', 'short')}) }}
                         {{ newRun
                             ? (' (' ~ 'page_scannerNewScanInProgress'|trans ~ '<meta http-equiv="refresh" content="4">)')|raw
                             : ''
