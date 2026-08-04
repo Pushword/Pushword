@@ -102,11 +102,15 @@ body:has(.bleed, .img-stretched) {
 
 .horizontal-scroll {
   --horizontal-scroll-fade: 2rem;
+  /* Space before the first card. Only a row spanning the window needs it; inside
+     a prose column the cards stay aligned with the paragraphs around them, so the
+     `.bleed` rule below is what turns it on. */
+  --horizontal-scroll-gutter: 0rem;
 
   display: flex;
   gap: 1rem;
   margin: 0;
-  padding: 0 0 0.5rem;
+  padding: 0 var(--horizontal-scroll-gutter) 0.5rem;
   list-style: none;
 
   /* `auto`, never `hidden`: it is what keeps the list reachable where the
@@ -116,7 +120,8 @@ body:has(.bleed, .img-stretched) {
   overscroll-behavior-x: contain;
 
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: var(--horizontal-scroll-fade); /* keeps a snapped item clear of the fade */
+  /* keeps a snapped card clear of both the fade and the gutter */
+  scroll-padding-inline: calc(var(--horizontal-scroll-gutter) + var(--horizontal-scroll-fade));
   scroll-behavior: smooth;
 
   /* The fade the JavaScript used to inject as gradient <div>s. The build does not
@@ -147,13 +152,11 @@ body:has(.bleed, .img-stretched) {
   scroll-snap-align: start;
 }
 
-/* A row that spans the window has nothing between the first card and the edge of
-   the screen. Only the full-bleed case needs the gutter: inside a prose column the
-   cards should stay aligned with the paragraphs around them.
-   `scroll-padding` has to grow with it, or a snapped card hides under the gutter. */
+/* A row spanning the window has nothing between the first card and the edge of the
+   screen. Padding and scroll-padding both read the gutter above, so this only has
+   to say how wide it gets. */
 .horizontal-scroll-wrap.bleed .horizontal-scroll {
-  padding-inline: var(--horizontal-scroll-gutter, 1rem);
-  scroll-padding-inline: calc(var(--horizontal-scroll-gutter, 1rem) + var(--horizontal-scroll-fade));
+  --horizontal-scroll-gutter: 1rem;
 }
 
 /* Fade only the side that has something behind it. At rest the first card is

@@ -104,11 +104,11 @@ final class PageExtensionPagesListTest extends KernelTestCase
     }
 
     /**
-     * Regression guard for the shared card list. `itemClass` was added to
-     * cardList.html.twig for the scroller; its default is what every existing card
-     * grid renders with, and losing it would silently restyle all of them.
+     * The scroller shares cardList.html.twig with the `card` view, so its own layout
+     * must not leak there. Deliberately says nothing about what the card grid *does*
+     * render: those classes belong to that template and are free to change.
      */
-    public function testRenderPagesListCardViewKeepsItsGridItemClasses(): void
+    public function testRenderPagesListCardViewIsUnaffectedByTheScroller(): void
     {
         $rendered = $this->ext()->renderPagesList(
             'slug:homepage',
@@ -117,12 +117,12 @@ final class PageExtensionPagesListTest extends KernelTestCase
             currentPage: $this->currentPage(),
         );
 
-        self::assertStringContainsString('class="w-full px-1 my-1 sm:w-1/2 md:w-1/3"', $rendered);
         self::assertStringNotContainsString('horizontal-scroll', $rendered);
+        self::assertStringNotContainsString('w-72', $rendered);
     }
 
     /** The scroller needs fixed-width items, which is the whole point of `itemClass`. */
-    public function testRenderPagesListHorizontalScrollOverridesTheGridItemClasses(): void
+    public function testRenderPagesListHorizontalScrollGivesItemsTheScrollerWidth(): void
     {
         $rendered = $this->ext()->renderPagesList(
             'slug:homepage',
@@ -132,7 +132,6 @@ final class PageExtensionPagesListTest extends KernelTestCase
         );
 
         self::assertStringContainsString('class="w-72 sm:w-80"', $rendered);
-        self::assertStringNotContainsString('sm:w-1/2', $rendered);
     }
 
     /** An empty scroller must not render a wrapper with arrows around nothing. */

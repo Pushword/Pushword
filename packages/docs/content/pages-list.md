@@ -129,7 +129,7 @@ Three custom properties theme it:
 | Property                        | Default   | Effect                              |
 | ------------------------------- | --------- | ----------------------------------- |
 | `--horizontal-scroll-fade`      | `2rem`    | width of the edge fade              |
-| `--horizontal-scroll-gutter`    | `1rem`    | space before the first card, `bleed` only |
+| `--horizontal-scroll-gutter`    | `0`, `1rem` under `bleed` | space before the first card |
 | `--horizontal-scroll-thumb`     | `#d1d5db` | scrollbar thumb, where it is shown  |
 | `--horizontal-scroll-previous` / `--horizontal-scroll-next` | from translations | the arrows' accessible names |
 
