@@ -28,7 +28,7 @@ absorbs needs no note.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin`, `pushword/core`, `pushword/flat`, `pushword/newsletter`, `pushword/page-scanner`, `pushword/static-generator`
+**Concerns:** `pushword/admin`, `pushword/core`, `pushword/flat`, `@pushword/js-helper`, `pushword/newsletter`, `pushword/page-scanner`, `pushword/static-generator`
 
 ## The database now knows which pages use which media
 
@@ -69,6 +69,33 @@ reads the table instead of running a `LIKE` over `mainContent`, so it is both fa
 and stricter — `myphoto.jpg` no longer counts as a use of `photo.jpg` — and it
 answers with nothing until the rebuild has run.
 
+## Unsaved page edits survive a closed tab
+
+The page edit form now keeps what you typed in the browser's `localStorage`, and
+offers it back on reopen with a *Restore them / Discard* banner. It is a local
+safety net for the crash, the closed tab and the expired session — nothing is sent
+to the server, and no timer saves for you. That is deliberate: a page save is a
+publication here, and a timed one would republish half-typed content, rewrite the
+flat markdown on every pause, and turn each intermediate slug into a redirect page.
+
+Nothing to run, and nothing to configure — **unless the site overrides
+`@pwAdmin/page/edit.html.twig`**. An override that predates this release keeps
+rendering, silently without the feature. Copy two things from the bundle's template
+into yours:
+
+```twig
+{% include '@pwAdmin/components/unsaved_changes_banner.html.twig' %}
+```
+
+and, on the form tag, the attribute the banner is keyed by:
+
+```twig
+'data-pw-unsaved-key': 'pw:unsaved:page:' ~ entity.instance.id,
+```
+
+Both belong inside the `entity.instance.id` guard already wrapping the edit-lock
+banner: a page being created has no id to key a recovery copy on.
+
 ## Admin dates follow the locale
 
 The admin screens that hardcoded a French date format (page-scanner results and
@@ -77,6 +104,27 @@ panel) now render dates with `format_datetime`/`format_date` from `twig/intl-ext
 so they follow the request locale. On a French admin `04/08/2026 à 14:30` becomes
 `04/08/2026 14:30`; other locales stop getting French dates. Nothing to do — unless
 a template you overrode copied one of those lines and you want the same fix.
+
+## `.clickable` boxes are pure CSS now
+
+The JS that made a `.clickable` box follow its inner link is gone —
+`@pushword/js-helper` no longer ships `src/clickable.js` (`clickable`,
+`allClickable`, `smoothScroll`), and `app.js` no longer binds `.clickable`.
+The class now works through CSS in `js-helper/src/app.css`: the box is
+`position: relative` and the inner link (or button, or still-cloaked
+`span[data-rot]`) stretches a pseudo-element over it, so the whole box is a real
+link — middle-click, `Ctrl`+click and keyboard focus behave natively, which the
+JS never did.
+
+Rebuild your assets (`yarn build` / `npm run build`) and the class keeps working
+wherever your CSS imports `@pushword/js-helper/src/app.css`. Two cases need a
+look:
+
+- A stylesheet that does **not** import js-helper's `app.css` must copy the two
+  `.clickable` rules from it.
+- Code importing `clickable.js` directly must drop the import; same-page hash
+  links that relied on its `smoothScroll` can use the CSS
+  `scroll-behavior: smooth` instead.
 
 The commented `card_date` example in core's `component/card.html.twig` suggests
 `format_datetime('short', 'short')` now; existing copies of that block keep

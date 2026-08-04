@@ -43,6 +43,7 @@ import { copyElementText } from './admin.domUtils'
 
 // Auto-save modules
 import { initCtrlSAutoSave } from './admin.ctrlSAutoSave'
+import { initUnsavedChangesRecovery } from './admin.unsavedChanges'
 
 // Edit lock modules
 import { autoInitEditLock } from './admin.editLock'
@@ -123,6 +124,9 @@ window.addEventListener('load', function () {
 
   // Auto-save
   initCtrlSAutoSave()
+
+  // Local draft recovery (after the editors, so the body textarea is wired)
+  initUnsavedChangesRecovery()
 
   // Edit lock
   autoInitEditLock()

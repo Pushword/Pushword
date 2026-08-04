@@ -4,6 +4,7 @@
     {% include '@pwFlat/components/webhook_lock_banner.html.twig' ignore missing %}
     {% if entity.instance.id is defined and entity.instance.id %}
         {% include '@pwAdmin/components/edit_lock_banner.html.twig' %}
+        {% include '@pwAdmin/components/unsaved_changes_banner.html.twig' %}
     {% endif %}
     {% include '@pwAdmin/components/broken_image_banner.html.twig' %}
     {{ parent() }}
@@ -11,10 +12,13 @@
 
 {% block edit_form %}
     {% set autosave_event = 'pw-ctrl-s-event' %}
-    {% set edit_lock_attrs = entity.instance.id is defined and entity.instance.id ? {
+    {# The lock and the local recovery copy are both keyed by id, so neither
+       exists before the page has been saved once. #}
+    {% set entity_attrs = entity.instance.id is defined and entity.instance.id ? {
         'data-pw-edit-lock-page-id': entity.instance.id,
+        'data-pw-unsaved-key': 'pw:unsaved:page:' ~ entity.instance.id,
     } : {} %}
-    {% set autosave_attrs = edit_form.vars.attr|merge(edit_lock_attrs)|merge({
+    {% set autosave_attrs = edit_form.vars.attr|merge(entity_attrs)|merge({
         'data-pw-ctrl-s-form': '1',
         'data-pw-ctrl-s-event': autosave_event,
         'data-pw-ctrl-s-indicator': '.action-saveAndContinue .action-label',
@@ -36,6 +40,9 @@
             warning: "{{ 'adminPageEditLockWarning'|trans|e('js') }}",
             warningSameUser: "{{ 'adminPageEditLockWarningSameUser'|trans|e('js') }}",
             refreshButton: "{{ 'adminPageEditLockRefresh'|trans|e('js') }}"
+        };
+        window.pwUnsavedChangesTranslations = {
+            message: "{{ 'adminPageUnsavedChanges'|trans|e('js') }}"
         };
     </script>
 {% endblock %}

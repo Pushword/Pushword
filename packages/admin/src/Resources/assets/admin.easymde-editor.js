@@ -8,7 +8,7 @@ export function easyMDEditor() {
   document
     .querySelectorAll('textarea[data-editor="markdown"]')
     .forEach(function (editorElement) {
-      new EasyMDE({
+      var editor = new EasyMDE({
         element: editorElement,
         autoDownloadFontAwesome: false,
         toolbar: [
@@ -61,6 +61,18 @@ export function easyMDEditor() {
             }, 1000)
           })
         },
+      })
+
+      // Expose the instance: assigning the hidden textarea's value leaves the
+      // CodeMirror view showing the old text, so a caller restoring content
+      // needs a way in.
+      editorElement.easyMDE = editor
+
+      // forceSync copies CodeMirror into the textarea without firing an event,
+      // so typing in the body is invisible to anything watching the form.
+      // Relay it (draft recovery listens for this).
+      editor.codemirror.on('change', function () {
+        editorElement.dispatchEvent(new Event('input', { bubbles: true }))
       })
     })
 

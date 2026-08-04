@@ -1,0 +1,25 @@
+<div id="pw-unsaved-banner"
+     style="display: none; position: sticky; top: 0; z-index: 999; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-bottom: 2px solid #3b82f6; padding: 12px 20px; margin-bottom: 16px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);"
+     aria-hidden="true"
+     role="status">
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; width: 100%;">
+    <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #3b82f6; border-radius: 50%; flex-shrink: 0;">
+      <svg style="width: 18px; height: 18px; color: white;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v3.5c0 .199.079.39.22.53l2 2a.75.75 0 101.06-1.06l-1.78-1.78V6.75z" clip-rule="evenodd" />
+      </svg>
+    </div>
+    <span id="pw-unsaved-message" style="flex-grow: 1; font-size: 14px; font-weight: 500; color: #1e40af;"></span>
+    <button id="pw-unsaved-restore"
+            type="button"
+            style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"
+            onmouseover="this.style.background='#2563eb'"
+            onmouseout="this.style.background='#3b82f6'">
+      {{ 'adminPageUnsavedRestore'|trans }}
+    </button>
+    <button id="pw-unsaved-discard"
+            type="button"
+            style="padding: 8px 16px; background: transparent; color: #1e40af; border: 1px solid #93c5fd; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+      {{ 'adminPageUnsavedDiscard'|trans }}
+    </button>
+  </div>
+</div>

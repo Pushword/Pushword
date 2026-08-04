@@ -26,6 +26,30 @@ php bin/console pw:user:create
 
 You may be intersted by the [block editor](/extension/admin-block-editor).
 
+## Editing a page
+
+Saving is always something you ask for: `Ctrl+S` saves without leaving the form, and the
+*Save and continue editing* button shows the result. There is no timed autosave, on
+purpose — a page save is a publication (it rewrites the flat markdown, regenerates the
+Open Graph image, purges the static cache, and turns a half-typed slug into a redirect
+page), so nothing writes to the server until you say so.
+
+What is automatic is the safety net. While you type, the form state is kept in your
+browser's `localStorage`, and reopening the page offers it back:
+
+> You have unsaved changes from 04/08/2026 19:59, kept in this browser.
+> **Restore them** — **Discard**
+
+It covers the crash, the closed tab and the expired session. *Restore them* refills the
+form (including the markdown body) without saving anything, so you still review before
+publishing; the copy is only dropped once a save succeeds, or when you press *Discard*.
+It never leaves your browser, so it does not follow you to another machine — and it is
+unrelated to the **Draft** toggle, which is a publication state stored in the database.
+
+A site overriding `@pwAdmin/page/edit.html.twig` has to carry over the
+`unsaved_changes_banner.html.twig` include and the form's `data-pw-unsaved-key`
+attribute, or the recovery has nowhere to render.
+
 ## Customize the admin
 
 Admin is built on top of EasyAdmin with one more feature : the ability to manage displayed form fields from the configuration ([not yet for list fields and search fields](/roadmap)).
