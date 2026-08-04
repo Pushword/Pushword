@@ -46,7 +46,17 @@ final readonly class EditorJsMessages
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{
+     *     ui: array{
+     *         blockTunes: array{toggler: array<string, string>},
+     *         inlineToolbar: array{converter: array<string, string>},
+     *         toolbar: array{toolbox: array<string, string>},
+     *         popover: array<string, string>,
+     *     },
+     *     toolNames: array<string, string>,
+     *     tools: array<string, array<string, string>>,
+     *     blockTunes: array<string, array<string, string>>,
+     * }
      */
     public function getMessages(): array
     {
