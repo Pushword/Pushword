@@ -28,7 +28,7 @@ absorbs needs no note.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin`, `pushword/core`, `pushword/flat`, `@pushword/js-helper`, `pushword/newsletter`, `pushword/page-scanner`, `pushword/static-generator`
+**Concerns:** `pushword/admin`, `pushword/admin-block-editor`, `pushword/core`, `pushword/flat`, `@pushword/js-helper`, `pushword/newsletter`, `pushword/page-scanner`, `pushword/static-generator`
 
 ## The database now knows which pages use which media
 

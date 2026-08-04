@@ -102,3 +102,32 @@ describe('editorJs – the undo baseline', () => {
     expect(initialize).not.toHaveBeenCalled()
   })
 })
+
+/**
+ * The bound field is written by assignment, which fires nothing — so the body of
+ * a block-edited page was invisible to anything watching the form, and setting
+ * that field back would have left the rendered blocks on the old content.
+ */
+describe('editorJs – the field it feeds', () => {
+  it('announces every change with an input event that bubbles', async () => {
+    boot('# A page stored as markdown')
+    const seen = vi.fn()
+    document.addEventListener('input', seen)
+
+    await captured.onChange.call({ holder: 'ed' })
+
+    expect(seen).toHaveBeenCalledOnce()
+    document.removeEventListener('input', seen)
+  })
+
+  it('exposes a write seam that re-parses markdown into the blocks', () => {
+    boot('# A page stored as markdown')
+
+    const input = document.getElementById('inp')!
+    expect(input.pwEditor).toBeDefined()
+
+    input.pwEditor!.setValue('# Recovered')
+
+    expect(parseMarkdown).toHaveBeenCalledOnce()
+  })
+})

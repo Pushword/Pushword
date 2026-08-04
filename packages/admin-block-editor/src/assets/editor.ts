@@ -177,6 +177,22 @@ export class editorJs {
 
     this.editors[config.holder!] = editor
 
+    // Uniform seam for writing the body back from outside (unsaved changes
+    // recovery): the field this editor feeds is a plain textarea, so setting
+    // its value would leave the rendered blocks showing the old content.
+    const holderElement = document.getElementById(config.holder!)
+    const boundInput = document.getElementById(
+      holderElement?.getAttribute('data-input-id') || '',
+    )
+    if (boundInput) {
+      boundInput.pwEditor = {
+        setValue: (markdown: string) => {
+          // @ts-ignore same window global the initial parse above goes through
+          new window.EditorJsParseMarkdown(editor, markdown).parseMarkdown()
+        },
+      }
+    }
+
     // Créer le gestionnaire de modes pour cet éditeur
     const modeManager = new EditorModeManager(config.holder!)
     this.modeManagers[config.holder!] = modeManager
@@ -205,6 +221,10 @@ export class editorJs {
       outputData,
     ).exportToMarkdown()
     editorInput.value = markdown
+
+    // Assigning .value fires nothing, so anything watching the form (unsaved
+    // changes recovery in pushword/admin) would never see the body change.
+    editorInput.dispatchEvent(new Event('input', { bubbles: true }))
 
     return outputData
   }

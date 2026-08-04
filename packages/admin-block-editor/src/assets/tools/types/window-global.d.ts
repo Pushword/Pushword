@@ -3,6 +3,15 @@ import type MonacoHelper from './../../../../../admin-monaco-editor/MonacoHelper
 import type { BlockToolAdapter } from '@editorjs/editorjs/types/tools/adapters/block-tool-adapter'
 
 declare global {
+  /**
+   * Write seam a rich editor attaches to the form field it owns, so code outside
+   * can set the value and see the rendered editor follow. Read by the unsaved
+   * changes recovery in pushword/admin; EasyMDE implements it there too.
+   */
+  interface HTMLElement {
+    pwEditor?: { setValue: (value: string) => void }
+  }
+
   interface Window {
     pagesUriList?: string[]
     monaco?: typeof monaco
