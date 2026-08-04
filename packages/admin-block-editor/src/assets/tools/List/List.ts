@@ -23,6 +23,17 @@ export default class List extends ListTool {
     return MarkdownUtils.addAttributes(formattedMarkdown, tunes)
   }
 
+  private static _marker(style: ListStyle, item: any, index: number): string {
+    switch (style) {
+      case 'ordered':
+        return `${index + 1}.`
+      case 'checklist':
+        return `- [${item.meta?.checked === true ? 'x' : ' '}]`
+      default:
+        return '-'
+    }
+  }
+
   private static _itemsToMarkdown(items: any[], style: ListStyle, depth: number): string {
     if (!items || items.length === 0) {
       return ''
@@ -32,13 +43,7 @@ export default class List extends ListTool {
     let markdown = ''
 
     items.forEach((item, index) => {
-      const marker =
-        style === 'ordered'
-          ? `${index + 1}.`
-          : style === 'checklist'
-            ? `- [${item.meta?.checked === true ? 'x' : ' '}]`
-            : '-'
-      markdown += `${indent}${marker} ${item.content || item}\n`
+      markdown += `${indent}${List._marker(style, item, index)} ${item.content || item}\n`
 
       if (item.items && item.items.length > 0) {
         markdown += List._itemsToMarkdown(item.items, style, depth + 1)
@@ -47,6 +52,14 @@ export default class List extends ListTool {
 
     markdown = MarkdownUtils.convertInlineHtmlToMarkdown(markdown)
     return markdown
+  }
+
+  private static _style(hasCheckbox: boolean, isOrdered: boolean | null): ListStyle {
+    if (hasCheckbox) {
+      return 'checklist'
+    }
+
+    return isOrdered === true ? 'ordered' : 'unordered'
   }
 
   static importFromMarkdown(editor: API, markdown: string): void {
@@ -149,7 +162,7 @@ export default class List extends ListTool {
     editor.blocks.update(
       block.id,
       {
-        style: hasCheckbox ? 'checklist' : isOrdered ? 'ordered' : 'unordered',
+        style: List._style(hasCheckbox, isOrdered),
         meta: {},
         items: rootItems,
       },

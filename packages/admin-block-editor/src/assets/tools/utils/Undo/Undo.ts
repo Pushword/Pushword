@@ -198,7 +198,8 @@ export class Undo {
   }
 
   private save(state: OutputBlockData[]): void {
-    this.position = Math.min(this.position, this.stack.length - 1)
+    // Anything ahead of the current position is a redo branch the new change
+    // replaces.
     this.stack = this.stack.slice(0, this.position + 1)
 
     const domIndex = this.blocks.getCurrentBlockIndex()

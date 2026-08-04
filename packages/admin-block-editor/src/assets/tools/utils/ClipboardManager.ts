@@ -826,12 +826,25 @@ export default class ClipboardManager {
      * lives in its own `__item-content` element, so reading an item's innerHTML
      * would carry that markup into the clipboard.
      */
+    private listMarker(list: Element, item: Element, index: number): string {
+        if (list.classList.contains('cdx-list-ordered')) {
+            return `${index + 1}.`
+        }
+
+        if (list.classList.contains('cdx-list-checklist')) {
+            const checked = item.querySelector('.cdx-list__checkbox--checked') !== null
+
+            return `- [${checked ? 'x' : ' '}]`
+        }
+
+        return '-'
+    }
+
     private extractList(
         list: Element,
         depth: number,
     ): { markdown: string; html: string } {
         const ordered = list.classList.contains('cdx-list-ordered')
-        const checklist = list.classList.contains('cdx-list-checklist')
         const indent = '  '.repeat(depth)
         const lines: string[] = []
         const htmlItems: string[] = []
@@ -846,13 +859,7 @@ export default class ClipboardManager {
             const text = MarkdownUtils.convertInlineHtmlToMarkdown(inner, false).trim()
 
             if (text) {
-                const checked = item.querySelector('.cdx-list__checkbox--checked') !== null
-                const marker = ordered
-                    ? `${index + 1}.`
-                    : checklist
-                      ? `- [${checked ? 'x' : ' '}]`
-                      : '-'
-                lines.push(`${indent}${marker} ${text}`)
+                lines.push(`${indent}${this.listMarker(list, item, index)} ${text}`)
             }
 
             const children = item.querySelector('.cdx-list__item-children')
