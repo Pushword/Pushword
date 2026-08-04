@@ -324,19 +324,9 @@ export default class ClipboardManager {
         // List
         const list = block.querySelector('.cdx-list')
         if (list) {
-            const items: string[] = []
-            const htmlItems: string[] = []
-            list.querySelectorAll('.cdx-list__item').forEach(item => {
-                const text = MarkdownUtils.convertInlineHtmlToMarkdown(item.innerHTML, false).trim()
-                if (text) {
-                    items.push('- ' + text)
-                    htmlItems.push('<li>' + item.innerHTML + '</li>')
-                }
-            })
-            if (items.length > 0) {
-                return { markdown: items.join('\n'), html: '<ul>' + htmlItems.join('') + '</ul>' }
-            }
-            return null
+            const { markdown, html } = this.extractList(list, 0)
+
+            return markdown ? { markdown, html } : null
         }
 
         // Quote
@@ -827,6 +817,61 @@ export default class ClipboardManager {
         return parts.join('')
             .replace(/\n{3,}/g, '\n\n') // Normalize multiple newlines
             .replace(/\u00A0/g, ' ')     // Replace any remaining non-breaking spaces
+    }
+
+    /**
+     * Convert a list block's DOM into markdown, mirroring the List tool's own
+     * export. Recursion is what a flat `querySelectorAll('.cdx-list__item')`
+     * cannot do: nested items would come out unindented, and each item's text
+     * lives in its own `__item-content` element, so reading an item's innerHTML
+     * would carry that markup into the clipboard.
+     */
+    private extractList(
+        list: Element,
+        depth: number,
+    ): { markdown: string; html: string } {
+        const ordered = list.classList.contains('cdx-list-ordered')
+        const checklist = list.classList.contains('cdx-list-checklist')
+        const indent = '  '.repeat(depth)
+        const lines: string[] = []
+        const htmlItems: string[] = []
+
+        Array.from(list.children).forEach((item, index) => {
+            if (!item.classList.contains('cdx-list__item')) {
+                return
+            }
+
+            const content = item.querySelector('.cdx-list__item-content')
+            const inner = content?.innerHTML ?? ''
+            const text = MarkdownUtils.convertInlineHtmlToMarkdown(inner, false).trim()
+
+            if (text) {
+                const checked = item.querySelector('.cdx-list__checkbox--checked') !== null
+                const marker = ordered
+                    ? `${index + 1}.`
+                    : checklist
+                      ? `- [${checked ? 'x' : ' '}]`
+                      : '-'
+                lines.push(`${indent}${marker} ${text}`)
+            }
+
+            const children = item.querySelector('.cdx-list__item-children')
+            const nested = children === null ? null : this.extractList(children, depth + 1)
+            if (nested?.markdown) {
+                lines.push(nested.markdown)
+            }
+
+            if (text || nested?.markdown) {
+                htmlItems.push('<li>' + inner + (nested?.html ?? '') + '</li>')
+            }
+        })
+
+        const tag = ordered ? 'ol' : 'ul'
+
+        return {
+            markdown: lines.join('\n'),
+            html: htmlItems.length > 0 ? `<${tag}>${htmlItems.join('')}</${tag}>` : '',
+        }
     }
 
     /**

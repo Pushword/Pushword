@@ -344,3 +344,106 @@ describe('ClipboardManager – handlePaste routing', () => {
     expect(insert).not.toHaveBeenCalled()
   })
 })
+
+/** Build a detached @editorjs/list block. */
+function buildListBlock(
+  style: 'unordered' | 'ordered' | 'checklist',
+  items: Array<{ content: string; checked?: boolean; children?: string[] }>,
+): HTMLElement {
+  const block = document.createElement('div')
+  block.className = 'ce-block'
+
+  const buildList = (
+    listStyle: string,
+    entries: Array<{ content: string; checked?: boolean; children?: string[] }>,
+  ): HTMLElement => {
+    const list = document.createElement(listStyle === 'ordered' ? 'ol' : 'ul')
+    list.className = `cdx-list cdx-list-${listStyle}`
+
+    entries.forEach((entry) => {
+      const item = document.createElement('li')
+      item.className = 'cdx-list__item'
+
+      if (listStyle === 'checklist') {
+        const checkbox = document.createElement('span')
+        checkbox.className =
+          'cdx-list__checkbox' + (entry.checked ? ' cdx-list__checkbox--checked' : '')
+        item.appendChild(checkbox)
+      }
+
+      const content = document.createElement('div')
+      content.className = 'cdx-list__item-content'
+      content.innerHTML = entry.content
+      item.appendChild(content)
+
+      if (entry.children) {
+        const children = buildList(
+          listStyle,
+          entry.children.map((c) => ({ content: c })),
+        )
+        children.classList.add('cdx-list__item-children')
+        item.appendChild(children)
+      }
+
+      list.appendChild(item)
+    })
+
+    return list
+  }
+
+  block.appendChild(buildList(style, items))
+
+  return block
+}
+
+describe('ClipboardManager – copying a list block', () => {
+  it('copies item text, not the markup @editorjs/list wraps it in', () => {
+    const block = buildListBlock('unordered', [
+      { content: '<a href="/">Homepage</a>' },
+      { content: 'Plain item' },
+    ])
+
+    const result = newManager().extractBlockContent(block)
+
+    expect(result.markdown).toBe('- [Homepage](/)\n- Plain item')
+    expect(result.markdown).not.toContain('cdx-list')
+    expect(result.html).toBe('<ul><li><a href="/">Homepage</a></li><li>Plain item</li></ul>')
+  })
+
+  it('numbers an ordered list instead of bulleting it', () => {
+    const block = buildListBlock('ordered', [{ content: 'One' }, { content: 'Two' }])
+
+    const result = newManager().extractBlockContent(block)
+
+    expect(result.markdown).toBe('1. One\n2. Two')
+    expect(result.html).toBe('<ol><li>One</li><li>Two</li></ol>')
+  })
+
+  it('carries the checked state of a checklist', () => {
+    const block = buildListBlock('checklist', [
+      { content: 'todo', checked: false },
+      { content: 'done', checked: true },
+    ])
+
+    const result = newManager().extractBlockContent(block)
+
+    expect(result.markdown).toBe('- [ ] todo\n- [x] done')
+  })
+
+  it('indents nested items', () => {
+    const block = buildListBlock('unordered', [
+      { content: 'Parent', children: ['Child', 'Child 2'] },
+      { content: 'Sibling' },
+    ])
+
+    const result = newManager().extractBlockContent(block)
+
+    expect(result.markdown).toBe('- Parent\n  - Child\n  - Child 2\n- Sibling')
+  })
+
+  it('reports nothing for an empty list', () => {
+    const block = buildListBlock('unordered', [{ content: '' }])
+
+    expect(newManager().extractBlockContent(block)).toBeNull()
+  })
+})
