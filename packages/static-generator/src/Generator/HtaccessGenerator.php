@@ -19,6 +19,28 @@ class HtaccessGenerator extends PageGenerator
             'html_swr' => $this->app->get('static_html_stale_while_revalidate') ?? 3600,
         ]);
         $this->filesystem->dumpFile($this->getStaticDir().'/.htaccess', $htaccess);
+
+        $this->generateLocaleErrorDocuments();
+    }
+
+    /**
+     * Serve the localized 404.html (see ErrorPageGenerator) for URLs under
+     * /{locale}/. Apache scopes an ErrorDocument to a URL prefix via the
+     * directory's own .htaccess — unlike an <If> block in the root file, it
+     * needs no AllowOverride beyond the FileInfo the root file already
+     * requires, and a file without mod_rewrite directives leaves the root
+     * rewrite rules fully inherited.
+     */
+    protected function generateLocaleErrorDocuments(): void
+    {
+        foreach ($this->getExtraLocales() as $locale) {
+            $htaccess = '';
+            foreach ([403, 404, 500] as $code) {
+                $htaccess .= 'ErrorDocument '.$code.' /'.$locale.'/404'.\PHP_EOL;
+            }
+
+            $this->filesystem->dumpFile($this->getStaticDir().'/'.$locale.'/.htaccess', $htaccess);
+        }
     }
 
     /**

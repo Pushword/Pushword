@@ -126,6 +126,18 @@ abstract class AbstractGenerator implements GeneratorInterface
     }
 
     /**
+     * Locales beyond the site's default one. ErrorPageGenerator dumps a 404.html
+     * for each of them; HtaccessGenerator and CaddyfileGenerator must route the
+     * matching /{locale}/ URLs to it — same list, single definition.
+     *
+     * @return string[]
+     */
+    protected function getExtraLocales(): array
+    {
+        return array_values(array_diff($this->app->getLocales(), [$this->app->locale]));
+    }
+
+    /**
      * @param class-string<GeneratorInterface> $generatorClass
      */
     protected function useGenerator(string $generatorClass): bool

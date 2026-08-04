@@ -33,7 +33,7 @@ Create a page with the slug `404` in the admin to customize your error page. Pus
 
 If no `404` page exists, Pushword falls back to a generic error template displaying translated messages (`errorTitle`, `errorDescription`).
 
-For **static sites** (using [static-generator](/extension/static-generator)), a `404.html` file is generated automatically from the same mechanism — one per configured locale.
+For **static sites** (using [static-generator](/extension/static-generator)), a `404.html` file is generated automatically from the same mechanism — one per configured locale. The generated server configs route errors to the right one by URL prefix: `/fr/…` serves `/fr/404.html` (via a small `fr/.htaccess` on Apache, a matcher in `handle_errors` on Caddy), everything else serves the root `404.html`.
 
 ---
 

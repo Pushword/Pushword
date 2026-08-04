@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'multilingual static sites serve the localized 404 page'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -27,3 +27,17 @@ absorbs needs no note.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/static-generator`
+
+## Static multilingual sites serve the localized 404
+
+**Only affects statically generated sites with more than one locale.** The per-locale
+`404.html` files were already generated but never served: every error got the
+default-locale page. The next `pw:static` run now also emits one three-line
+`.htaccess` per extra locale folder (scoped `ErrorDocument`s, overriding the root
+ones for `/{locale}/…`), and the generated `.Caddyfile` rewrites errors to the
+localized file by URL prefix.
+
+Nothing to do — unless you override `Caddyfile.twig`, whose `handle_errors` block
+now reads an `extra_locales` variable; copy the new block to get the same behaviour.

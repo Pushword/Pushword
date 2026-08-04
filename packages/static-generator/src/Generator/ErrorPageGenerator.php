@@ -36,11 +36,7 @@ class ErrorPageGenerator extends AbstractGenerator
 
         $this->generateErrorPage();
 
-        foreach ($this->app->getLocales() as $locale) {
-            if ($this->app->locale === $locale) {
-                continue;
-            }
-
+        foreach ($this->getExtraLocales() as $locale) {
             $this->filesystem->mkdir($this->getStaticDir().'/'.$locale);
             $this->generateErrorPage($locale);
         }

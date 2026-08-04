@@ -530,6 +530,37 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertFileExists($this->getStaticDir().'/.htaccess');
         self::assertStringContainsString('max-age=10800', $htaccess);
         self::assertStringContainsString('stale-while-revalidate=3600', $htaccess);
+        self::assertStringContainsString('ErrorDocument 404 /404', $htaccess);
+
+        // localhost.dev is en|fr: the fr folder overrides the root ErrorDocument
+        // so /fr/… errors serve the localized 404 dumped by ErrorPageGenerator.
+        // Exact match: any mod_rewrite directive sneaking in here would stop the
+        // root rewrite rules from being inherited under /fr/.
+        self::assertSame(
+            'ErrorDocument 403 /fr/404'.\PHP_EOL.'ErrorDocument 404 /fr/404'.\PHP_EOL.'ErrorDocument 500 /fr/404'.\PHP_EOL,
+            (string) file_get_contents($this->getStaticDir().'/fr/.htaccess')
+        );
+    }
+
+    public function testLocaleErrorRoutingSkippedOnSingleLocaleSite(): void
+    {
+        self::bootKernel();
+
+        // admin-block-editor.test keeps the default single locale: no scoped
+        // error routing must be emitted at all.
+        $siteRegistry = self::getContainer()->get(SiteRegistry::class);
+        $siteRegistry->switchSite('admin-block-editor.test')->get()
+            ->setCustomProperty('static_dir', $this->getStaticDir());
+
+        $this->getGenerator(HtaccessGenerator::class)->generate('admin-block-editor.test');
+        $this->getGenerator(CaddyfileGenerator::class)->generate('admin-block-editor.test');
+
+        self::assertFileExists($this->getStaticDir().'/.htaccess');
+        self::assertFileDoesNotExist($this->getStaticDir().'/en/.htaccess');
+
+        $caddyfile = (string) file_get_contents($this->getStaticDir().'/.Caddyfile');
+        self::assertStringNotContainsString('@error_', $caddyfile);
+        self::assertStringContainsString('rewrite * /404.html', $caddyfile);
     }
 
     public function testGenerateCaddyfile(): void
@@ -545,6 +576,8 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertFileExists($this->getStaticDir().'/.Caddyfile');
         self::assertStringContainsString('max-age=10800', $caddyfile);
         self::assertStringContainsString('stale-while-revalidate=3600', $caddyfile);
+        self::assertStringContainsString('rewrite * /fr/404.html', $caddyfile);
+        self::assertStringContainsString('rewrite * /404.html', $caddyfile);
     }
 
     public function testGenerateRedirectionHtml(): void
@@ -823,6 +856,13 @@ final class StaticGeneratorTest extends KernelTestCase
         $generator->generate('localhost.dev');
 
         self::assertFileExists($this->getStaticDir().'/404.html');
+
+        // One 404 per extra locale, rendered with that locale's translations;
+        // the root one stays in the default locale.
+        $localized = (string) file_get_contents($this->getStaticDir().'/fr/404.html');
+        self::assertStringContainsString('Une erreur', $localized);
+        $root = (string) file_get_contents($this->getStaticDir().'/404.html');
+        self::assertStringContainsString('An error', $root);
 
         // The error page is the only render the generator runs on the kernel that
         // serves live traffic, so it is the only one that flips isStatic there.

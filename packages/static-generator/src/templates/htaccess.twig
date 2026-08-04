@@ -76,7 +76,7 @@ RewriteRule ^media/(.+)\.webp$ /media/$1 [L,END]
 {% endif %}
 
 #---
-# Errors
+# Errors (each extra locale's folder ships its own .htaccess pointing to its localized 404)
 #---
 ErrorDocument 403 /404
 ErrorDocument 404 /404
