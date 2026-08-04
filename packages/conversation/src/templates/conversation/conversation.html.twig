@@ -24,8 +24,8 @@
                         onfocus: "this.placeholder = ''",
                         onblur: "this.placeholder = '{{ 'conversationContentPlaceholder'|trans|e('js') }}'",
                         rows: 8,
-                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary'
-                    }
+                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary',
+                    },
                 }) }}
                 {{ form_errors(conversation.content) }}
             </div>
@@ -45,8 +45,8 @@
                         onblur: "this.placeholder = '" ~ 'conversationNamePlaceholder'|trans ~ "'",
                         required: 'text',
                         type: 'text',
-                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary'
-                    }
+                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary',
+                    },
                 }) }}
                 {{ form_errors(conversation.authorName) }}
                 </div>
@@ -68,8 +68,8 @@
                         required: 'text',
                         pattern: '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{1,63}$',
                         type: 'email',
-                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary'
-                    }
+                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary',
+                    },
                 }) }}
                 {{ form_errors(conversation.authorEmail) }}
                 </div>

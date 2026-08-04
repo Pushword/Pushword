@@ -39,9 +39,9 @@
     {{ image(image, alt: imageAlt, class: 'block w-full aspect-square object-cover m-0') }}
   {% endif %}
   {% block card_date %}
-  {#<span class="block p-2 text-sm text-white bg-primary">
+  {# <span class="block p-2 text-sm text-white bg-primary">
     {{ (date ?? 'now')|date('d/m/Y à H:i') }}
-  </span>#}
+  </span> #}
   {% endblock %}
   <{{ title_tag }}
     class="py-4 px-6 mt-0 font-bold text-xl leading-tight">
@@ -56,7 +56,7 @@
       {{ description|markdown }}
     {% endif %}
     {% if buttonLink %}
-      <p class="mt-6!">{{ link(buttonLinkLabel|default('cardButtonDefaultLabel'|trans), buttonLink, {'class': 'link-btn'}) }}</p>
+      <p class="mt-6!">{{ link(buttonLinkLabel|default('cardButtonDefaultLabel'|trans), buttonLink, {class: 'link-btn'}) }}</p>
     {% endif %}
   </div>
   {% endif %}

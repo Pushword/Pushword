@@ -8,7 +8,7 @@
 {% set reviewsLength = reviews|length %}
 <div class="not-prose" id="{{ 'reviewList'|trans() }}">
   {% for message in reviews %}
-    {% if loop.index == 2  and reviewsLength > 2 %}
+    {% if loop.index == 2 and reviewsLength > 2 %}
       {{ block('before') }}
     {% endif %}
     {% include view('/conversation/review.html.twig', '@PushwordConversation') with {

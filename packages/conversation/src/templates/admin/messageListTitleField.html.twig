@@ -14,8 +14,7 @@
     : 'Pushword\\Conversation\\Controller\\Admin\\ConversationCrudController')
   .setAction('edit')
   .setEntityId(message.id)
-%}{#.set('pwInline', 1)#}
-
+%}{# .set('pwInline', 1) #}
 
 <div id="{{ inlineTarget }}" class="pw-message-inline d-flex flex-column">
   {% if isReview %}
@@ -129,7 +128,7 @@
   </div>
 
   {% if message.mediaList is not empty %}
-    {% include '@PushwordConversation/admin/messageListMediaGallery.html.twig' with { message: message } only %}
+    {% include '@PushwordConversation/admin/messageListMediaGallery.html.twig' with {message: message} only %}
   {% endif %}
 
   <div class="d-flex flex-wrap align-items-center text-muted small pw-inline-tags-wrapper">

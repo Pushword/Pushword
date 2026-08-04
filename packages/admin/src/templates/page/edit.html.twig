@@ -12,7 +12,7 @@
 {% block edit_form %}
     {% set autosave_event = 'pw-ctrl-s-event' %}
     {% set edit_lock_attrs = entity.instance.id is defined and entity.instance.id ? {
-        'data-pw-edit-lock-page-id': entity.instance.id
+        'data-pw-edit-lock-page-id': entity.instance.id,
     } : {} %}
     {% set autosave_attrs = edit_form.vars.attr|merge(edit_lock_attrs)|merge({
         'data-pw-ctrl-s-form': '1',
@@ -24,7 +24,7 @@
         'hx-swap': 'none',
     }) %}
 
-    {{ form_start(edit_form, { attr: autosave_attrs }) }}
+    {{ form_start(edit_form, {attr: autosave_attrs}) }}
         {{ form_widget(edit_form) }}
     {{ form_end(edit_form) }}
 {% endblock %}

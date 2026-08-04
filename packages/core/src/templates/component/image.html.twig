@@ -31,7 +31,7 @@
       class: image_class ?? 'w-full h-auto mb-4',
       width: image.width,
       height: image.height,
-      alt: image_alt|default(image.alt ?? image.fileName)
+      alt: image_alt|default(image.alt ?? image.fileName),
     }, image_attr ?? {}, lazy ? {loading: 'lazy'} : {}) }}>
   </picture>
 {% else %}
@@ -72,7 +72,7 @@
       class: image_class ?? 'w-full h-auto mb-4',
       width: width,
       height: height,
-      alt: alt
+      alt: alt,
     }, image_attr ?? {}, lazy ? {loading: 'lazy'} : {}) }}>
   </picture>
 {% endif %}

@@ -303,21 +303,21 @@ Discover more on {{ link('Advanced Pages Listing', 'https://pushword.piedweb.com
 <p class="prose dark:prose-light mb-4">Collapse long content blocks with expand/collapse functionality.</p>
 
 <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
-{{ "{{ startShowMore() }}"|escapeTwig }}
+{{ '{{ startShowMore() }}'|escapeTwig }}
 
 Your long content here (only first 250px height will be visible base on your templete file `/component/show_more.html.twig`)...
 
-{{ "{{ endShowMore() }}"|escapeTwig }}
+{{ '{{ endShowMore() }}'|escapeTwig }}
 
 # With custom background (for non-white backgrounds)
-{{ "{{ startShowMore() }}"|escapeTwig }}
+{{ '{{ startShowMore() }}'|escapeTwig }}
 ...
 {{ "{{ endShowMore('via-gray-100 to-gray-100') }}"|escapeTwig }}
 
 # With custom ID (for linking via #hash)
 {{ "{{ startShowMore('my-custom-id') }}"|escapeTwig }}
 ...
-{{ "{{ endShowMore() }}"|escapeTwig }}
+{{ '{{ endShowMore() }}'|escapeTwig }}
 </code></pre>
 </section>
 

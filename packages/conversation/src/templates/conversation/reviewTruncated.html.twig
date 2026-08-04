@@ -1,13 +1,11 @@
 {# @var review \Pushword\Conversation\Entity\Review #}
 
-
 {% set anonymous = 'conversationReviewAnonymous'|trans %}
 {% set reviewAuthor = review.authorName|default(anonymous) %}
 
 {% set reviewBody = review.content %}
-{% set reviewMonth = review.createdAt|format_datetime(pattern='MMMM') %}
+{% set reviewMonth = review.createdAt|format_datetime(pattern: 'MMMM') %}
 {% set reviewBodyHtml = reviewBody|markdown %}
-
 
 {% block review %}
 <blockquote
@@ -106,7 +104,7 @@
     <div class="overflow-x-hidden md:overflow-x-auto w-full mt-4">
       {% include view('/component/images_gallery.html.twig') with {
         images: review.mediaList,
-        isReview: true
+        isReview: true,
       } %}
     </div>
   {% endif %}
@@ -130,7 +128,7 @@
 
 {% macro renderSource(source) %}
   {% set sourceName =
-  'tripa' in source? 'TripAdvisor' :
+  'tripa' in source ? 'TripAdvisor' :
   'google' in source ? 'Google' :
   'maps.app.goo.gl' in source ? 'Google' :
   'facebook' in source ? 'Facebook' :

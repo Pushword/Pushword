@@ -8,7 +8,7 @@
     {% if hasErrors %}
         {% set attr = attr|merge({
             'aria-invalid': 'true',
-            'aria-describedby': (attr['aria-describedby'] is defined ? attr['aria-describedby'] ~ ' ' : '') ~ errorId
+            'aria-describedby': (attr['aria-describedby'] is defined ? attr['aria-describedby'] ~ ' ' : '') ~ errorId,
         }) %}
     {% endif %}
 

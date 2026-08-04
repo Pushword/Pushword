@@ -35,9 +35,9 @@
         {% set content = mainContent.content %}
         {{ mainContent.intro|raw }}
         {# if content contains '<!-- toc -->' #}
-        {% if '<!-- toc -->' in content%}
+        {% if '<!-- toc -->' in content %}
           {% set content = content|replace({
-            '<!-- toc -->': mainContent.toc
+            '<!-- toc -->': mainContent.toc,
           }) %}
         {% else %}
           <h3>{{ page.tocTitle|default('Nav') }}</h3>

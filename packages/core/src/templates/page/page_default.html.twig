@@ -36,22 +36,21 @@
     {# x-default must be used only for a page where user must choose language
     {% if  page.locale == apps.get().defaultLocale %}
       <link rel="alternate" hreflang="x-default" href="{{ page(page, true) }}">
-    {% endif %}#}
+    {% endif %} #}
 
     {% for translation in page.translations %}
       <link rel="alternate" hreflang="{{ translation.locale }}" href="{{ page(translation, true) }}">
-      {#{% if  translation.locale == apps.get().defaultLocale %}
+      {# {% if  translation.locale == apps.get().defaultLocale %}
         <link rel="alternate" hreflang="x-default" href="{{ page(translation, true) }}">
-      {% endif %}#}
+      {% endif %} #}
 
     {% endfor %}
-
 
   {% endif %}
 {% endblock %}
 
 {% block open_graph %}
-  {#<script>const base = "{{ page('homepage') }}"</script>#}
+  {# <script>const base = "{{ page('homepage') }}"</script> #}
   {# Where is `base` used ? #}
 
   <meta property="og:title" content="{{ page.ogTitle|default(pw(page).title)|striptags|date_shortcode }}">

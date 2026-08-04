@@ -84,8 +84,8 @@
     mode: quiz.mode,
     feedback: quiz.feedback,
     pass: quiz.pass,
-    results: quiz.results|map(b => { min: b.min, msg: b.msg|markdown }),
-    labels: { score: l.score, better: l.better, nextLevel: l.nextLevel, profile: l.profile, share: l.share, restart: l.restart },
+    results: quiz.results|map(b => {min: b.min, msg: b.msg|markdown}),
+    labels: {score: l.score, better: l.better, nextLevel: l.nextLevel, profile: l.profile, share: l.share, restart: l.restart},
     resultEndpoint: resultEndpoint,
   }|json_encode(constant('JSON_HEX_TAG'))|raw }}</script>
 {% endmacro %}
@@ -97,24 +97,24 @@
     {% set correct = q.answers|filter(a => a.correct)|first %}
     {% set questionsLd = questionsLd|merge([{
       '@type': 'Question',
-      'name': q.q,
-      'acceptedAnswer': { '@type': 'Answer', 'text': correct.text ~ (q.explanation ? ' — ' ~ q.explanation : '') },
-      'suggestedAnswer': q.answers|map(a => { '@type': 'Answer', 'text': a.text }),
+      name: q.q,
+      acceptedAnswer: {'@type': 'Answer', text: correct.text ~ (q.explanation ? ' — ' ~ q.explanation : '')},
+      suggestedAnswer: q.answers|map(a => {'@type': 'Answer', text: a.text}),
     }]) %}
   {% endfor %}
   <script type="application/ld+json">{{ {
     '@context': 'https://schema.org',
     '@type': 'Quiz',
-    'name': name,
-    'hasPart': questionsLd,
+    name: name,
+    hasPart: questionsLd,
   }|json_encode|raw }}</script>
 {% endmacro %}
 
 {% set baseSlug = page.slug|default('') %}
 {% set numberings = {
-  'A': 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z'|split(' '),
-  'a': 'a b c d e f g h i j k l m n o p q r s t u v w x y z'|split(' '),
-  '1': 1..30,
+  A: 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z'|split(' '),
+  a: 'a b c d e f g h i j k l m n o p q r s t u v w x y z'|split(' '),
+  1: 1..30,
 } %}
 
 <link rel="stylesheet" href="{{ asset('bundles/pushwordquiz/quiz.css') }}">

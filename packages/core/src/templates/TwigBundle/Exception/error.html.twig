@@ -2,7 +2,7 @@
 
 {% if error_page is not null %}
     {{ render(controller(
-        'Pushword\\Core\\Controller\\PageController::showPage', {page: error_page}
+        'Pushword\\Core\\Controller\\PageController::showPage', {page: error_page},
     )) }}
 {% else %}
     {{ include(view('/error.html.twig')) }}

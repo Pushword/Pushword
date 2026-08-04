@@ -53,7 +53,7 @@
         {{ link(img, current_media|image('default'), linkAttr ?? {
         class: 'glightbox',
         'data-gallery': gallery_id,
-        'data-dwl': current_media|image('default', 'webp')
+        'data-dwl': current_media|image('default', 'webp'),
         }) }}
       {% elseif imageClickable %}
         {{ link(img, imageClickable, linkAttr ?? {}, linkObfuscate) }}

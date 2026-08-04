@@ -8,7 +8,7 @@
     <p class="muted">{{ contact.email }}</p>
 
     {# Coming back must cost what leaving cost: one button, and no confirmation mail. #}
-    <form method="post" action="{{ path('pushword_newsletter_resubscribe', {'token': contact.token}) }}">
+    <form method="post" action="{{ path('pushword_newsletter_resubscribe', {token: contact.token}) }}">
         <button type="submit" class="secondary">{{ 'newsletter.unsubscribed.undo'|trans }}</button>
     </form>
 
@@ -16,7 +16,7 @@
     {% if siblings is not empty %}
         <h2>{{ 'newsletter.unsubscribed.othersTitle'|trans }}</h2>
         <p>{{ 'newsletter.unsubscribed.othersBody'|trans }}</p>
-        <form method="post" action="{{ path('pushword_newsletter_unsubscribe_others', {'token': contact.token}) }}">
+        <form method="post" action="{{ path('pushword_newsletter_unsubscribe_others', {token: contact.token}) }}">
             <ul class="audiences">
                 {% for sibling in siblings %}
                     <li>

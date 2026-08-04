@@ -18,7 +18,7 @@
       <div style="font-size: 13px; color: #b91c1c; margin-top: 2px;">
         {{ 'flatWebhookLockMessage'|trans({
           '%reason%': lockInfo.reason|default('External workflow in progress'),
-          '%user%': lockInfo.lockedByUser|default('external system')
+          '%user%': lockInfo.lockedByUser|default('external system'),
         }) }}
       </div>
     </div>

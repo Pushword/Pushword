@@ -176,7 +176,7 @@
     "test-unit": "XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --exclude-group integration --exclude-group panther",
     "test-coverage": "./.scripts/test-coverage",
     "rector": "vendor/bin/rector process && composer format",
-    "format": "PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix rector.php && PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix",
+    "format": "PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix rector.php && PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix && vendor/bin/twig-cs-fixer lint --fix",
     "assets": "./.scripts/generate-assets",
     "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add packages/js-helper/. && git commit --only -m 'update pushword/js-helper version' -- packages/js-helper && git push && cd packages/js-helper && npm publish",
     "docs": "./.scripts/generate-docs",
