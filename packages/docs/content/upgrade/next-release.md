@@ -1,5 +1,5 @@
 ---
-title: 'the block editor uploads inline, links carry any rel, and page-scan tells an unreachable link from a bad status'
+title: 'the block editor uploads inline, groups blocks under a div wrapper, links carry any rel, and page-scan tells an unreachable link from a bad status'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -44,6 +44,23 @@ Nothing to do, unless you ship your own copy of `editorjs_widget.html.twig`: the
 
 Both blocks also gained a button to drop the media they hold, so changing a picture
 no longer means deleting the block and building a new one.
+
+## Blocks group under a div wrapper
+
+The block editor gains a **Group** block: an opening marker carrying an anchor and
+CSS classes, closed by an end marker inserted with it. Everything in between is
+wrapped in a `<div>` on the front — the markdown stays flat (a `<div …>` line and a
+`</div>` line), so nothing changes server-side and existing wrappers written by
+hand in markdown now show up as group markers in the editor. Deleting either
+marker removes the other; the wrapped blocks stay.
+
+Nothing to do, unless you ship your own copy of `editorjs_widget.html.twig` — add
+the two tools to see the block:
+
+```js
+groupStart: { name: "groupStart", className: "GroupStart" },
+groupEnd: { name: "groupEnd", className: "GroupEnd" },
+```
 
 ## Links take any rel, not just "obfuscate"
 

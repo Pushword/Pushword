@@ -35,6 +35,9 @@ import { editorJsHelper } from './editorJsHelper'
 import ClickableTune from './tools/Gallery/ClickableTune'
 import AnchorTune from './tools/AnchorTune/AnchorTune'
 import ClassTune from './tools/ClassTune/ClassTune'
+import GroupStart from './tools/Group/GroupStart'
+import GroupEnd from './tools/Group/GroupEnd'
+import { GroupRegistry } from './tools/Group/GroupRegistry'
 import EditorJsExportMarkdown from './EditorJsExportMarkdown'
 
 interface EditorJSConfig {
@@ -71,6 +74,8 @@ export class editorJs {
       List: List,
       Raw: Raw,
       Delimiter: Delimiter,
+      GroupStart: GroupStart,
+      GroupEnd: GroupEnd,
       Quote: Quote,
       Marker: Marker,
       Hyperlink: Hyperlink,
@@ -138,6 +143,10 @@ export class editorJs {
     // eslint-disable-next-line @typescript-eslint/no-this-alias -- onChange's own `this` (the Editor.js instance, for `this.holder`) shadows the class instance, so we keep a reference to it.
     const self = this
     config.onChange = async function (this: any) {
+      // Blocks dragged into or out of a group change membership without any
+      // group marker firing a lifecycle hook, so retag on every change.
+      GroupRegistry.decorateSoon()
+
       const outputData = await self.editorjsSave(this.holder)
 
       if (undoAwaitsParsedBaseline && undo !== null && outputData !== null) {

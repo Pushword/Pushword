@@ -28,6 +28,8 @@ editorEmbed: 'Intégration'
 editorErrorOccurred: "Une erreur s'est produite"
 editorFilter: 'Rechercher'
 editorGallery: 'Galerie'
+editorGroup: 'Groupe'
+editorGroupEnd: 'Fin de groupe'
 editorHeading: 'Titre'
 editorImage: 'Image'
 editorItalic: 'Italique'

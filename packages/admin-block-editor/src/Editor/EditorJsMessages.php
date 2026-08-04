@@ -89,6 +89,7 @@ final readonly class EditorJsMessages
                 'Delimiter' => 'editorDelimiter',
                 'Embed' => 'editorEmbed',
                 'Gallery' => 'editorGallery',
+                'Group' => 'editorGroup',
                 'Heading' => 'editorHeading',
                 'Image' => 'editorImage',
                 'Italic' => 'editorItalic',
@@ -109,6 +110,12 @@ final readonly class EditorJsMessages
                 'gallery' => $this->translate([
                     ...self::MEDIA,
                     'Ce média est déjà présent dans la galerie.' => 'editorMediaAlreadyInGallery',
+                ]),
+                'groupEnd' => $this->translate(['End of group' => 'editorGroupEnd']),
+                'groupStart' => $this->translate([
+                    'Anchor' => 'editorAnchor',
+                    'Class' => 'editorClass',
+                    'Group' => 'editorGroup',
                 ]),
                 'header' => $this->translate(['Heading' => 'editorHeading']),
                 'image' => $this->translate(self::MEDIA),

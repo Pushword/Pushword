@@ -33,6 +33,26 @@ Two filters expose the parser in templates:
 
 Both filters mark their output HTML-safe and pass raw inline HTML through as-is.
 
+## Groups
+
+Consecutive blocks can be wrapped in a single `<div>` by placing an opening and a
+closing tag as blocks of their own (blank-line separated). The markdown between the
+two lines is rendered normally — CommonMark passes the wrapper through as-is:
+
+```markdown
+<div id="pricing" class="grid md:grid-cols-2">
+
+## Plan A
+
+## Plan B
+
+</div>
+```
+
+The block editor shows the pair as **Group** markers carrying the anchor and the
+classes; the markers are inserted and deleted together. It only claims a `<div>`
+line whose attributes are `id` and/or `class` — anything richer stays a Raw block.
+
 ## Tables
 
 Standard GFM table syntax is supported. You can merge cells horizontally using `->` as the cell content — it merges into the preceding cell via `colspan`.

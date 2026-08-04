@@ -54,7 +54,15 @@ for. Nothing implemented.
 
 - **Notices** — cheapest. A wrapper with a level; renders to a Twig component,
   and `core/src/templates/component/` has no equivalent yet, so it needs one.
-- **Group** (div wrapper with anchor + class) — the roadmap's own references
-  (serlo#83, editorjs-columns#6) are the prior art. Bigger: it is a container
-  block, which EditorJS does not natively model.
+- **Group** (div wrapper with anchor + class) — **shipped**, and cheaper than the
+  roadmap implied. Its references were dead ends (serlo/backlog#83: archived
+  unresolved investigation; editorjs-columns#6: rejected PR about column widths,
+  and that plugin's nested-instance model can't round-trip our markdown anyway).
+  No container needed: raw `<div id class>` / `</div>` lines already render
+  markdown between them, and AnchorTune/ClassTune already covered per-block
+  attributes. Implemented as a paired-marker tool (`tools/Group/`): groupStart /
+  groupEnd export those lines and are claimed on import before Raw; deleting one
+  marker deletes its partner (GroupRegistry pairs them by document order);
+  in-editor grouping is CSS. Group-move as a unit is deferred to the outline
+  panel.
 - **Audio** — no demand recorded; leave last.
