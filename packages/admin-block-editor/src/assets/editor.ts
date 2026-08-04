@@ -39,6 +39,8 @@ import GroupStart from './tools/Group/GroupStart'
 import GroupEnd from './tools/Group/GroupEnd'
 import { GroupRegistry } from './tools/Group/GroupRegistry'
 import EditorJsExportMarkdown from './EditorJsExportMarkdown'
+import { OutlineLabels, OutlinePanel, OutlineToolMeta } from './outline/OutlinePanel'
+import { EditorJsOutlineSource } from './outline/EditorJsOutlineSource'
 
 interface EditorJSConfig {
   holder?: string
@@ -131,6 +133,11 @@ export class editorJs {
       })
     }
 
+    // The outline panel's config is ours, not EditorJS's: strip it before construction.
+    const outlineConfig = config.outline as { labels: OutlineLabels } | undefined
+    delete config.outline
+    let outline: OutlinePanel | null = null
+
     // Undo takes its baseline when it is built, at which point an editor whose
     // content is markdown is still empty — it would then count the parse as an
     // edit, and one Ctrl+Z before typing anything would empty the page (and the
@@ -146,6 +153,7 @@ export class editorJs {
       // Blocks dragged into or out of a group change membership without any
       // group marker firing a lifecycle hook, so retag on every change.
       GroupRegistry.decorateSoon()
+      outline?.scheduleRefresh()
 
       const outputData = await self.editorjsSave(this.holder)
 
@@ -180,6 +188,9 @@ export class editorJs {
             // @ts-ignore
             new window.EditorJsParseMarkdown(editor, markdownContent).parseMarkdown()
           }
+
+          // Content loaded from JSON data never fires onChange, so seed the panel here.
+          outline?.scheduleRefresh()
         },
       }),
     )
@@ -205,6 +216,27 @@ export class editorJs {
 
     // Enregistrer dans editorJsHelper pour l'accès global
     editorJsHelper.setModeManager(config.holder!, modeManager)
+
+    if (outlineConfig !== undefined) {
+      outline = new OutlinePanel({
+        holderId: config.holder!,
+        source: new EditorJsOutlineSource(editor as unknown as API),
+        labels: outlineConfig.labels,
+        toolMeta: (type) => this.toolMetaOf(config, type),
+      })
+    }
+  }
+
+  /** Toolbox title and icon of a tool, the title translated through the editor's own dictionary. */
+  private toolMetaOf(config: EditorJSConfig, type: string): OutlineToolMeta {
+    const rawToolbox = (config.tools?.[type] as EditorJSTool | undefined)?.class?.toolbox
+    const toolbox = Array.isArray(rawToolbox) ? rawToolbox[0] : rawToolbox
+    const title: string = toolbox?.title ?? type
+
+    return {
+      title: config.i18n?.messages?.toolNames?.[title] ?? title,
+      icon: toolbox?.icon ?? '',
+    }
   }
 
   /** The form field a holder feeds, named by its data-input-id. */

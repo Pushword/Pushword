@@ -44,3 +44,53 @@ describe('MarkdownUtils.extractSnippetCall', () => {
     })
   })
 })
+
+describe('MarkdownUtils.chunkMarkdown', () => {
+  /** The rule chunkMarkdown must reproduce byte-for-byte: the parser's historical split. */
+  function legacyChunks(markdown: string): string[] {
+    if (markdown.trim() === '') return []
+    return markdown.replace(/\n\s*\n+/g, '\n\n').split('\n\n')
+  }
+
+  it.each([
+    ['two blocks', 'a\n\nb'],
+    ['single block', 'a'],
+    ['multi-line block', 'line1\nline2\n\nb'],
+    ['extra blank lines', 'a\n\n\n\nb'],
+    ['whitespace-only separator lines', 'a\n  \t\nb'],
+    ['leading blank lines', '\n\na'],
+    ['trailing blank lines', 'a\n\n'],
+    ['empty string', ''],
+    ['whitespace-only string', '  \n \n '],
+  ])('matches the parser split for %s', (_label, markdown) => {
+    expect(MarkdownUtils.chunkMarkdown(markdown).map((chunk) => chunk.text)).toEqual(
+      legacyChunks(markdown),
+    )
+  })
+
+  it('maps each chunk to its source lines', () => {
+    const chunks = MarkdownUtils.chunkMarkdown('# T\n\npara line1\npara line2\n\nlast')
+
+    expect(chunks).toEqual([
+      { text: '# T', startLine: 0, endLine: 0 },
+      { text: 'para line1\npara line2', startLine: 2, endLine: 3 },
+      { text: 'last', startLine: 5, endLine: 5 },
+    ])
+  })
+
+  it('keeps line positions across collapsed blank-line runs', () => {
+    const chunks = MarkdownUtils.chunkMarkdown('a\n\n\n\nb')
+
+    expect(chunks).toEqual([
+      { text: 'a', startLine: 0, endLine: 0 },
+      { text: 'b', startLine: 4, endLine: 4 },
+    ])
+  })
+
+  it('anchors an empty leading chunk at line zero', () => {
+    expect(MarkdownUtils.chunkMarkdown('\n\na')).toEqual([
+      { text: '', startLine: 0, endLine: 0 },
+      { text: 'a', startLine: 2, endLine: 2 },
+    ])
+  })
+})

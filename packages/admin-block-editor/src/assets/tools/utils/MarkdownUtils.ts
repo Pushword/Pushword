@@ -10,10 +10,51 @@ export interface BlockTuneDataPushword extends BlockTuneData {
   class?: string
   linkTune?: HyperlinkTuneData
 }
+export interface MarkdownChunk {
+  text: string
+  /** 0-based line range of the chunk in the source, end inclusive. */
+  startLine: number
+  endLine: number
+}
+
 /**
  * Utilitaires pour l'export Markdown
  */
 export class MarkdownUtils {
+  /**
+   * Split markdown into its block chunks — the unit the editor round-trips on.
+   * Chunk texts are byte-for-byte what the historical
+   * `replace(/\n\s*\n+/g, '\n\n')` + `split('\n\n')` produced (the parser and
+   * the outline panel MUST share this rule), but each chunk keeps its line
+   * range in the source so chunk N maps back to source lines. Whitespace-only
+   * input yields no chunk, mirroring the parser's empty-content guard.
+   */
+  static chunkMarkdown(markdown: string): MarkdownChunk[] {
+    if (markdown.trim() === '') return []
+
+    const chunks: MarkdownChunk[] = []
+    const separator = /\n\s*\n+/g
+    let start = 0
+    let startLine = 0
+    const pushChunk = (end: number): void => {
+      const text = markdown.slice(start, end)
+      chunks.push({ text, startLine, endLine: startLine + MarkdownUtils.countLines(text) })
+    }
+
+    let match: RegExpExecArray | null
+    while ((match = separator.exec(markdown)) !== null) {
+      pushChunk(match.index)
+      startLine += MarkdownUtils.countLines(markdown.slice(start, separator.lastIndex))
+      start = separator.lastIndex
+    }
+    pushChunk(markdown.length)
+
+    return chunks
+  }
+
+  private static countLines(text: string): number {
+    return (text.match(/\n/g) ?? []).length
+  }
   static wrapWithLink(markdown: string, tunes: BlockTuneDataPushword): string {
     if (!tunes.linkTune) {
       return MarkdownUtils.addAttributes(markdown, tunes)

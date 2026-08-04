@@ -98,6 +98,15 @@ var editorjsConfig = {
     initialBlock: "paragraph",
     placeholder: "...",
     i18n: { messages: {{ editorjs_i18n_messages()|json_encode|raw }} },
+    outline: {
+        labels: {
+            deleteBlock: "{{ 'editorOutlineDeleteBlock'|trans|e('js') }}",
+            deleteGroup: "{{ 'editorOutlineDeleteGroup'|trans|e('js') }}",
+            deleteSection: "{{ 'editorOutlineDeleteSection'|trans|e('js') }}",
+            outline: "{{ 'editorOutline'|trans|e('js') }}",
+            toggleSection: "{{ 'editorCollapse'|trans|e('js') }}",
+        },
+    },
     tools: {
         header: {
             name: "header",

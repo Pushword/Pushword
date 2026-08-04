@@ -51,17 +51,9 @@ export class EditorJsParseMarkdown {
 
   parseMarkdown(): void {
     this.editorJsInstance.blocks.clear()
-    //const blockToDelete = this.editorJsInstance.blocks.getCurrentBlockIndex()
 
-    if (!this.markdown || this.markdown.trim() === '') {
-      return
-    }
-
-    this.markdown = this.markdown.replace(/\n\s*\n+/g, '\n\n')
-    const blocks = this.markdown.split('\n\n')
-
-    for (const block of blocks) {
-      this.importBlock(block)
+    for (const chunk of MarkdownUtils.chunkMarkdown(this.markdown)) {
+      this.importBlock(chunk.text)
     }
   }
 
