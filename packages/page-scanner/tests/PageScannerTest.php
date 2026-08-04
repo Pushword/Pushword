@@ -47,6 +47,44 @@ final class PageScannerTest extends KernelTestCase
         self::assertSame(ScanErrorCode::ImageNotFound->value, $errors[0]['code']);
     }
 
+    /**
+     * A page that throws on render is the one finding this service raises itself,
+     * rather than collecting from a scanner.
+     */
+    public function testAPageThatCannotRenderIsReportedAsARenderError(): void
+    {
+        self::bootKernel();
+
+        /** @var PageScannerService $scanner */
+        $scanner = self::getContainer()->get(PageScannerService::class);
+
+        $page = $this->getPage();
+        $page->template = 'page/no-such-template.html.twig';
+
+        $errors = $scanner->scan($page);
+
+        self::assertIsArray($errors);
+        self::assertSame(ScanErrorCode::RenderError->value, $errors[0]['code']);
+    }
+
+    /**
+     * Read from the content, not the rendered HTML — a page that renders nothing
+     * has no HTML to carry the directive that silences exactly that failure.
+     */
+    public function testAPageSilencesItsOwnRenderError(): void
+    {
+        self::bootKernel();
+
+        /** @var PageScannerService $scanner */
+        $scanner = self::getContainer()->get(PageScannerService::class);
+
+        $page = $this->getPage();
+        $page->template = 'page/no-such-template.html.twig';
+        $page->mainContent = '<!-- page-scanner-ignore: render-error -->';
+
+        self::assertTrue($scanner->scan($page));
+    }
+
     public function getPage(): Page
     {
         $page = new Page();
