@@ -181,12 +181,27 @@ class AppFixtures extends Fixture
         }
 
         if (\in_array('admin-block-editor.test', $this->apps->getHosts(), true)) {
+            // The block editor site had a single page, so its root 404'd and every
+            // pages_list on its kitchen sink previewed empty — pages_list is
+            // host-scoped, and there was nothing on the host to find.
+            $blockHomepage = new Page();
+            $blockHomepage->h1 = 'Welcome to the block editor demo';
+            $blockHomepage->slug = 'homepage';
+            $blockHomepage->setMainImage($media['Demo 2']);
+            $blockHomepage->locale = 'en';
+            $blockHomepage->createdAt = new DateTime('2 days ago');
+            $blockHomepage->updatedAt = new DateTime('2 days ago');
+            $blockHomepage->mainContent = $finalContent;
+            $blockHomepage->host = 'admin-block-editor.test';
+
+            $manager->persist($blockHomepage);
+
             $ksBlockPage = new Page();
             $ksBlockPage->h1 = 'Demo Page - Kitchen Sink Block';
             $ksBlockPage->slug = 'kitchen-sink';
             $ksBlockPage->setMainImage($media['Demo 1']);
             $ksBlockPage->locale = 'en';
-            $ksBlockPage->parentPage = $homepage;
+            $ksBlockPage->parentPage = $blockHomepage;
             $ksBlockPage->createdAt = new DateTime('1 day ago');
             $ksBlockPage->updatedAt = new DateTime('1 day ago');
             $ksBlockPage->mainContent = (string) file_get_contents(__DIR__.'/KitchenSink.md');
@@ -286,7 +301,12 @@ class AppFixtures extends Fixture
             $manager->flush();
         }
 
-        $this->loadHorizontalScrollDemo($manager, $homepage, $media);
+        $scrollerParents = ['localhost.dev' === $this->apps->getMainHost() ? 'localhost.dev' : '' => $homepage];
+        if (isset($blockHomepage)) {
+            $scrollerParents['admin-block-editor.test'] = $blockHomepage;
+        }
+
+        $this->loadHorizontalScrollDemo($manager, $media, $scrollerParents);
         $this->loadRepurposeDemo($manager);
         $this->loadNewsletterDemo($manager);
     }
@@ -307,15 +327,12 @@ class AppFixtures extends Fixture
      * the scroller previews empty in the editor, where the block is what we demo.
      *
      * @param array<string, Media> $media
+     * @param array<string, Page>  $parentByHost one demo set per host, under that host's
+     *                                           own homepage ('' = the app's default host)
      */
-    private function loadHorizontalScrollDemo(ObjectManager $manager, Page $parent, array $media): void
+    private function loadHorizontalScrollDemo(ObjectManager $manager, array $media, array $parentByHost): void
     {
-        $hosts = ['localhost.dev' === $this->apps->getMainHost() ? 'localhost.dev' : ''];
-        if (\in_array('admin-block-editor.test', $this->apps->getHosts(), true)) {
-            $hosts[] = 'admin-block-editor.test';
-        }
-
-        foreach ($hosts as $host) {
+        foreach ($parentByHost as $host => $parent) {
             $this->loadHorizontalScrollDemoPages($manager, $parent, $media, $host);
         }
 
