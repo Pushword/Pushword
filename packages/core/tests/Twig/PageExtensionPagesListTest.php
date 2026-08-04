@@ -148,17 +148,23 @@ final class PageExtensionPagesListTest extends KernelTestCase
         self::assertStringNotContainsString('horizontal-scroll', $rendered);
     }
 
-    /** The wrapperClass tune must survive next to the class the scroller needs. */
-    public function testRenderPagesListHorizontalScrollKeepsWrapperClass(): void
+    /**
+     * wrapperClass lands on the positioned wrapper, not on the scrolling <ul>. The
+     * arrows are absolutely positioned against that wrapper, so a layout class on the
+     * <ul> — `bleed` being the obvious one — would widen the row and leave the arrows
+     * pinned to the narrow box. The scroller keeps its own class untouched.
+     */
+    public function testRenderPagesListHorizontalScrollPutsWrapperClassOnThePositionedWrapper(): void
     {
         $rendered = $this->ext()->renderPagesList(
             'slug:homepage',
             10,
             view: 'horizontalScroll',
-            wrapperClass: 'bg-pink-50',
+            wrapperClass: 'bleed',
             currentPage: $this->currentPage(),
         );
 
-        self::assertStringContainsString('class="horizontal-scroll bg-pink-50"', $rendered);
+        self::assertStringContainsString('class="horizontal-scroll-wrap not-prose my-5 bleed"', $rendered);
+        self::assertStringContainsString('class="horizontal-scroll"', $rendered);
     }
 }

@@ -109,6 +109,15 @@ Two limits worth knowing before you reach for it:
   `horizontalScrollNext` translation keys; override them in your own CSS or
   translations, not in the markup.
 
+`wrapperClass` lands on the **wrapper**, not on the scrolling row — the arrows are
+positioned against that wrapper, so a layout class on the row would widen the cards and
+leave the arrows pinned to the narrow box. Inside a `prose` column the scroller inherits
+its 65ch width; pass `bleed` to break out of it:
+
+```twig
+{{ pages_list('type:blog', 9, 'publishedAt ↓', 'horizontalScroll', wrapperClass: 'bleed') }}
+```
+
 Three custom properties theme it:
 
 | Property                        | Default   | Effect                              |

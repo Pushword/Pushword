@@ -16,11 +16,11 @@
 #}
 
 {%- if pages is not empty -%}
-  <div class="horizontal-scroll-wrap not-prose my-5"
+  <div class="{{ ('horizontal-scroll-wrap not-prose my-5 ' ~ wrapperClass|default(''))|trim }}"
     style="--horizontal-scroll-previous: '{{ 'horizontalScrollPrevious'|trans|e('css') }}'; --horizontal-scroll-next: '{{ 'horizontalScrollNext'|trans|e('css') }}'">
     {{- include(view('/component/cardList.html.twig'), {
       items: pages,
-      wrapperClass: ('horizontal-scroll ' ~ wrapperClass|default(''))|trim,
+      wrapperClass: 'horizontal-scroll',
       itemClass: 'w-72 sm:w-80',
     }) -}}
   </div>
