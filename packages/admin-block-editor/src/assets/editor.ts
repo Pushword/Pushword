@@ -2,13 +2,11 @@ import EditorJS, { API } from '@editorjs/editorjs'
 import Header from './tools/Header/Header'
 import Small from './tools/Small/Small'
 import List from './tools/List/List'
-//import Raw from '@editorjs/raw';
 import Delimiter from './tools/Delimiter/Delimiter'
 import Quote from './tools/Quote/Quote'
 // @ts-ignore
 import Marker from '@editorjs/marker'
 import InlineCode from '@editorjs/inline-code'
-//import { StyleInlineTool } from "editorjs-style";
 import Hyperlink from './tools/Hyperlink/Hyperlink'
 import Paragraph from './tools/Paragraph/Paragraph'
 import Table from './tools/Table'
@@ -91,7 +89,6 @@ export class editorJs {
       Strikethrough: Strikethrough,
       CodeBlock: CodeBlock,
       Small: Small,
-      //StyleInlineTool: StyleInlineTool,
     }
 
     setupPopoverTitles()

@@ -1,6 +1,5 @@
 import { BlockToolData, API } from '@editorjs/editorjs'
 import Icon from './icon.svg?raw'
-//import css from './../../node_modules/@editorjs/raw/src/index.css'
 import './Raw-monaco.css'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { BaseTool } from '../Abstract/BaseTool'
