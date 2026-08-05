@@ -80,20 +80,6 @@ describe('TableBlock inline Markdown in cells', () => {
     ])
   })
 
-  it('exports cell HTML back to inline Markdown', async () => {
-    const markdown = await TableBlock.exportToMarkdown({
-      content: [
-        ['<b>PHP Version</b>', '8.4+'],
-        ['<i>italic</i>', '<code class="inline-code">code</code>'],
-      ],
-      withHeadings: true,
-    })
-
-    expect(markdown).toContain('**PHP Version**')
-    expect(markdown).toContain('_italic_')
-    expect(markdown).toContain('`code`')
-  })
-
   it('keeps a cell line break inside its pipe row', async () => {
     const markdown = await TableBlock.exportToMarkdown({
       content: [['one<br>two', 'b']],
@@ -108,6 +94,30 @@ describe('TableBlock inline Markdown in cells', () => {
     })
 
     expect(markdown.split('\n')[0]).toBe('| spanned | -> |')
+  })
+
+  it('gives back every marker it was imported with', async () => {
+    const { editor, updates } = fakeEditor()
+    const source = '| **b** | _i_ | `c` | ~~s~~ | [t](/u) |'
+
+    TableBlock.importFromMarkdown(editor, source)
+    const markdown = await TableBlock.exportToMarkdown(updates[0].data)
+
+    expect(markdown.split('\n')[0]).toBe(source)
+  })
+
+  it('allows every tag the inline converter emits through the sanitizer', () => {
+    // editor.js cleans each cell string with this map on save, so a tag the
+    // import can produce but the map omits loses its Markdown marker on save.
+    const converted = MarkdownUtils.convertInlineMarkdownToHtml(
+      '**b** _i_ `c` ~~s~~ [t](/u)\nbr',
+    )
+    const tags = [...converted.matchAll(/<([a-z]+)[\s>]/g)].map((match) => match[1]!)
+
+    // Pinned so a marker added to the converter fails here rather than silently
+    // widening what the map has to allow.
+    expect(tags).toEqual(['b', 'i', 'code', 's', 'a', 'br'])
+    tags.forEach((tag) => expect(TableBlock.sanitize).toHaveProperty(tag, true))
   })
 })
 

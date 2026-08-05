@@ -388,13 +388,12 @@ export default class TableBlock {
     const alignments = data.columnAlignments ?? [];
 
     rows.forEach((row, rowIndex) => {
-      // Cells hold HTML (see getData()), so the inline tags go back to Markdown —
+      // Cells are stored as innerHTML, so their inline tags go back to Markdown:
       // a bold cell must export as `**x**`, not `<b>x</b>`. The converter also
-      // decodes entities: contenteditable serializes `->` as `-&gt;`, which the
-      // colspan processor would miss until CommonMark decodes it. Typography
-      // fixes stay off here: they would rewrite dashes and quotes in every cell
-      // of every table on the next save. Line breaks cannot live inside a pipe
-      // row, so the newlines the converter emits go back to `<br>`.
+      // decodes entities, which is what keeps a `-&gt;` colspan marker readable.
+      // Typography fixes stay off — they would rewrite dashes and quotes in every
+      // cell on every save — and the newlines the converter emits go back to
+      // `<br>`, the only line break a pipe row can hold.
       const cells = row.map((cell) =>
         MarkdownUtils.convertInlineHtmlToMarkdown(cell, false).replace(/\n/g, '<br>').trim(),
       );
