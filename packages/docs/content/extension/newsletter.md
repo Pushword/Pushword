@@ -446,6 +446,13 @@ empty body. **Nobody ever receives an empty mail**: a missing translation sends
 the default text, and the fieldset says how many of the languages the audience is
 read in are covered before anyone presses Send.
 
+Over the API, `translations` merges the way `customProperties` does, one step
+deeper: a `PATCH` writes only the fields it names, so sending the German subject
+keeps the German body and the seven other languages. A field set to `""` clears
+that field alone, and a locale set to `null` drops the whole entry — which is the
+only way to take one back. Locales are matched as they are stored, lowercased and
+dash-separated, so `"DE"` and `"de_CH"` address `de` and `de-ch`.
+
 Resolution happens at send, not at arming: a recipient row freezes *who*, never
 *what* — as is already true of `%name%`. Freezing the rendered body per recipient
 would multiply the ledger by the body size for no gain and make fixing a typo
@@ -947,6 +954,8 @@ message still crosses the wire whole, and only the parse is bounded.
 
 - it parses the `message/delivery-status` part, never the human-readable one,
   which the remote server writes in its own language and layout,
+- it acts only on reports about a message this site really sent — see
+  [below](#only-reports-about-mail-this-site-sent),
 - it acts on **permanent failures only** (`Status: 5.x.x`). A 4.x.x is a mailbox
   that was full an hour ago, and dropping a reader over one loses an address the
   next retry reaches,
@@ -958,6 +967,45 @@ message still crosses the wire whole, and only the parse is bounded.
   `\Seen` over IMAP — which is what keeps the next run from reading it again. One
   that cannot be marked is only counted: re-reading it costs nothing, since
   marking an address that already bounced is a no-op.
+
+### Only reports about mail this site sent
+
+The bounce mailbox is a real address, published in the `Return-Path` of every
+newsletter, and by design it accepts mail from any server on the internet. A
+`multipart/report` arriving there proves nothing on its own: anybody can write
+one naming `Final-Recipient: someone@example.com`, and acting on it would let
+anybody take anybody off the list — permanently, since a bounce is never taken
+back.
+
+So a report has to say **which message** failed, and that message has to be one
+this install issued. Every newsletter goes out with a `Message-ID` of its own
+making:
+
+```
+Message-ID: <nl.<nonce>.<signature>@example.com>
+```
+
+The signature is an HMAC of the nonce and the recipient's address, keyed on the
+site's `APP_SECRET`. A delivery report returns a copy of the message that failed
+— the whole thing as `message/rfc822`, or its headers alone as
+`text/rfc822-headers` — and a `Final-Recipient` is honoured only when one of the
+ids in that copy recomputes for that same address.
+
+Nothing is stored: the id carries its own evidence, so there is no ledger to
+keep and no key to distribute. Producing a valid one needs the secret, or a copy
+of a mail really sent to that address — which is exactly what a mail server
+returning our message has. Lifting the headers out of a genuine bounce of one's
+own and putting somebody else's address on them does not work either: the
+signature names the recipient.
+
+A report that proves nothing is counted as `unverified` and left alone. That
+number is worth watching, because it has two causes:
+
+- somebody is writing reports at your list, or
+- your relay returns no copy of the message it failed to deliver — RFC 3464 only
+  recommends it. Then no bounce is ever acted on, and dead addresses stay
+  subscribed. `--dry-run` on a mailbox with real bounces in it is how you find
+  out which.
 
 ### Hearing about it
 

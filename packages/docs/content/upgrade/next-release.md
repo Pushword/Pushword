@@ -1,5 +1,5 @@
 ---
-title: 'the newsletter bounce reader no longer takes an address off the list on anybody''s say-so, a Docker container no longer adds a default-credential super admin to a restored database, nor starts from a var/cache built somewhere else, a campaign translation PATCH merges per field, a template named by page content or a snippet, but missing, no longer 500s the page, a page-scanner directive shown in a code sample no longer silences the page showing it, a blockquote opening on `> [!label]` renders as a notice, a clickable card follows its own title again, a horizontal list whose cards all fit stops fading its edges and drawing dots, a media uploaded after the pages naming it gets its usage rows, and a fenced code block holding a blank line stays one block in the editor'
+title: 'the newsletter bounce reader no longer takes an address off the list on anybody''s say-so, a Docker container no longer adds a default-credential super admin to a restored database, nor starts from a var/cache built somewhere else, a campaign translation PATCH merges per field, a template named by page content or a snippet, but missing, no longer 500s the page, a page-scanner directive shown in a code sample no longer silences the page showing it, a blockquote opening on `> [!label]` renders as a notice, a clickable card follows its own title again, a horizontal list whose cards all fit stops fading its edges and drawing dots, a media uploaded after the pages naming it gets its usage rows, a fenced code block holding a blank line stays one block in the editor, an outline-rail click never lands on the block that moved into its place, and an unsaved-changes copy stays its editor''s own, restoring the fields they changed and no others'
 run:
     - 'pw:media:usage:rebuild'
 publishedAt: '2099-01-01 00:00'
@@ -310,6 +310,63 @@ Rail edits also stop rewriting blank lines they did not touch: deleting one bloc
 rejoin the whole field with exactly one blank line between blocks, normalising every
 other separator in the file. The document's own spacing is preserved now, which keeps a
 flat-file site's diffs to the block that actually changed.
+
+## Block editor: an outline-rail click no longer lands on the block that moved up
+
+A rail row carries the block numbers it was drawn with, and the rail rebuilt itself on a
+300 ms debounce — so for that window the rows on screen were live buttons holding numbers
+the document had already moved past. Double-clicking "delete the section", which is how
+people click, ran the delete twice: the second time against the section that had just
+moved up into those numbers. Clicking within 300 ms of typing in the editor did the same,
+and a drag whose rows were rebuilt mid-flight dropped its span at a stale position.
+
+An edit made from the rail now redraws it immediately, and a row that is no longer part
+of the current drawing refuses to act — it brings the rail up to date instead. You may
+see a click do nothing in the moment right after an edit; the rail visibly refreshes, and
+the row you meant is there, correctly numbered. Nothing to run.
+
+## Admin: the unsaved-changes copy is one editor's own, and puts back only their fields
+
+The local recovery of unsaved page edits (`localStorage`, offered by the banner on
+reopen) had three faults, all of them silent.
+
+**It was keyed by page alone.** `localStorage` is per browser and nothing clears it at
+sign-out, so on a shared machine the next person to sign in was offered — and could
+restore — work that was not theirs. The key now carries the editor's id, and signing out
+drops every copy this browser holds.
+
+Two consequences on upgrade:
+
+- **Copies held in a browser before the upgrade are no longer offered**, the key having
+  changed under them. They are still in `localStorage` under `pw:unsaved:page:<id>` for
+  anyone who wants one back through the browser's devtools; nothing else reads them, and
+  the next sign-out clears them.
+- **A dashboard that overrides `configureAssets()` without calling the parent** publishes
+  no `window.pwLogoutPath`, and then nothing recognises the way out: the copies survive
+  the sign-out. Keep the `parent::configureAssets()` assets, or publish the path
+  yourself.
+
+**Restoring was a whole-form rollback.** The copy holds every field, so recovering a
+one-word fix to the title also put the body, the slug and the meta back to where they
+stood when you left — reverting, without a word, whatever a colleague had saved
+meanwhile. *Restore them* now writes back only the fields that copy actually changed, and
+when the page moved under one of them the banner says so before you take it
+(`adminPageUnsavedChangesConflict`, a new key — a site that translates Pushword's
+messages has one more string to fill).
+
+**A page opened in the block editor stored a copy nobody typed.** The editor's initial
+parse writes its own normalisation of the markdown back into the field, which the
+recovery read as typing — so a hand-written or flat-imported page banked a copy on every
+open, over the real one, and offered it back on the next. The editor now announces when
+its parse has landed, and the recovery baselines against that.
+
+A site overriding `@pwAdmin/page/edit.html.twig` carries the key itself: it becomes
+`'pw:unsaved:' ~ app.user.id ~ ':page:' ~ entity.instance.id`, and the
+`pwUnsavedChangesTranslations` script gains a `conflict` entry beside `message`. A rich
+editor of your own that writes into a form field wants the same handshake as the block
+editor's — `data-pw-baseline-pending` on the field it feeds, removed and announced with a
+bubbling `pw:baseline-ready` once it has written — or its normalisation is stored as an
+edit.
 
 <!--
 The upgrade note for the next release. `.scripts/release` renames this file to
