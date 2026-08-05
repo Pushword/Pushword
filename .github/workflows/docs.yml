@@ -1,0 +1,84 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# The `docs` branch is replaced outright rather than appended to, so two runs
+# racing the push would leave the site on whichever finished last instead of on
+# the newest commit. Cancelling collapses a burst of pushes into one publish.
+concurrency:
+  group: docs
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      # Push the `docs` branch GitHub Pages serves.
+      contents: write
+
+    name: Build and publish pushword.piedweb.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: pecl
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction
+
+      - name: Install image optimization tools
+        run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf
+
+      - name: Initialize
+        run: composer reset-dev-app
+
+      - name: Build the site
+        # The front-end assets are committed under packages/dev-app/public/assets, so
+        # .scripts/generate-docs-assets — which runs `yarn upgrade` — is deliberately
+        # not part of this job: a docs deploy must not pick up new npm releases.
+        # The app's static_dir is the repo-root `docs/`, which the checkout does not
+        # carry, so the output holds what this run generated and nothing else.
+        run: |
+          cd packages/dev-app
+          php bin/console pw:flat:sync pushword.piedweb.com --mode=import --format=text
+          php bin/console pw:static pushword.piedweb.com --format=text
+
+      - name: Check the build is publishable
+        # pw:static already exits non-zero on a render error. This catches the build
+        # that succeeds and still cannot be served: without CNAME, Pages drops the
+        # custom domain, and a truncated page set would go live as a half-empty site.
+        run: |
+          test -f docs/index.html
+          test -f docs/404.html
+          grep -qx 'pushword.piedweb.com' docs/CNAME
+          pages=$(find docs -name '*.html' | wc -l)
+          echo "$pages pages generated"
+          [ "$pages" -ge 100 ]
+
+      - name: Publish
+        if: github.ref == 'refs/heads/main'
+        # Pages serves this repo from the `docs` branch, folder /docs. The commit is
+        # built in a scratch repo outside the checkout and force-pushed as a single
+        # orphan commit — the shape .scripts/generate-docs published by hand.
+        run: |
+          mkdir -p "$RUNNER_TEMP/publish/docs"
+          cp -a docs/. "$RUNNER_TEMP/publish/docs/"
+          cd "$RUNNER_TEMP/publish"
+          git init -q -b docs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          git commit -q -m "docs: build ${GITHUB_SHA}"
+          git push -q --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" docs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
