@@ -26,6 +26,12 @@ real bugs.
   shared variant path and flakes belongs in `#[Group('serial')]`, which runs after the
   parallel batch. Wire changes in **both** `.github/workflows/run-tests.yml` and
   `.scripts/test` — CI calls paratest directly and does not use the script.
+- **A CLI `--group`/`--exclude-group` discards the whole XML `<groups>` block** — PHPUnit
+  replaces that config rather than merging it. `phpunit.xml.dist` excludes `benchmark`,
+  so any batch passing a group flag must repeat `--exclude-group=benchmark` or the
+  benchmarks run. Missing it on the parallel batch cost `composer test` ~16s (the
+  59s `RepositoryBenchmarkTest` plus `StaticGeneratorBenchmarkTest`) while CI, which
+  passes the flag, skipped them.
 - **Agent output breaks status-quo tests.** The suite itself runs with `CLAUDECODE` set,
   so commands using `AgentOutputTrait` auto-switch to JSON. Any test asserting human
   output must pass `'--format' => 'text'`; add a `'--format' => 'agent'` test for the
