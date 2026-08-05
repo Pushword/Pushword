@@ -51,8 +51,15 @@ class VersionLog
     #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]
     public ?string $editor = null;
 
+    /**
+     * A page's own `title` is TEXT, so the label copied here has to be cut to fit —
+     * MySQL rejects an over-long row rather than truncating it, which took the whole
+     * write down. Cut in Versionner::logActivity().
+     */
+    public const int TITLE_MAX_LENGTH = 255;
+
     /** Denormalized human label of the entity (its H1/title/name) at action time. */
-    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    #[ORM\Column(type: Types::STRING, length: self::TITLE_MAX_LENGTH, nullable: true)]
     public ?string $title = null;
 
     /** Denormalized slug of the entity at action time (second line of the journal). */

@@ -137,7 +137,10 @@ class Versionner
             'version' => $version,
             'action' => $action,
             'editor' => $editor,
-            'title' => $this->labelOf($entity),
+            // A page falls back to its `title`, which is TEXT: an upgrade note titled
+            // with a whole sentence overflows the column, and MySQL refuses the row
+            // instead of truncating — taking the page write down with it.
+            'title' => mb_substr($this->labelOf($entity), 0, VersionLog::TITLE_MAX_LENGTH),
             'slug' => $this->slugOf($entity),
             'host' => $this->hostOf($entity),
             'created_at' => new DateTimeImmutable(),
