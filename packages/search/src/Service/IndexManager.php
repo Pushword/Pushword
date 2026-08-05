@@ -86,11 +86,24 @@ final class IndexManager
      */
     public function replaceAll(string $host, array $documents): void
     {
-        $loupe = $this->getLoupe($host);
-        $loupe->deleteAllDocuments();
+        try {
+            $this->write($host, $documents);
+        } catch (DriverException $driverException) {
+            if (! $this->isUnreadable($driverException)) {
+                throw $driverException;
+            }
 
-        if ([] !== $documents) {
-            $loupe->addDocuments($documents);
+            // Damage confined to the interior of the file gets past the check in
+            // openIndex(): the pages it reads are intact, and SQLite only trips
+            // over the torn ones once a statement reaches them. Resetting from
+            // here costs nothing — we are replacing every document anyway.
+            $this->logger?->warning(
+                'Search: the index of {host} was unreadable and has been rebuilt from scratch.',
+                ['host' => $host],
+            );
+
+            $this->reset($host);
+            $this->write($host, $documents);
         }
     }
 
@@ -110,23 +123,39 @@ final class IndexManager
     }
 
     /**
+     * @param list<array<string, mixed>> $documents
+     */
+    private function write(string $host, array $documents): void
+    {
+        $loupe = $this->getLoupe($host);
+        $loupe->deleteAllDocuments();
+
+        if ([] !== $documents) {
+            $loupe->addDocuments($documents);
+        }
+    }
+
+    /**
      * Loupe deliberately runs SQLite with `synchronous = OFF` — a search index is
      * rebuildable, so it trades durability for write speed. The cost is that a
-     * writer killed mid-checkpoint leaves `loupe.db` unreadable, and every later
-     * open then fails for good, taking the whole static build down with it. Take
-     * Loupe up on its own remedy: drop the unusable file and index again.
+     * writer killed mid-write leaves `loupe.db` unreadable, and every later open
+     * then fails for good, taking the whole static build down with it. Take Loupe
+     * up on its own remedy: drop the unusable file and index again.
      */
     private function openIndex(string $host): Loupe
     {
         $loupe = $this->createLoupe($host);
 
         try {
-            // An unreadable file only gives itself away when queried, not when opened.
+            // An unreadable file only gives itself away when queried, not when
+            // opened. This reads the head of the file, where a truncated write
+            // leaves its damage; the interior is only covered once replaceAll()
+            // walks it.
             $loupe->needsReindex();
 
             return $loupe;
         } catch (DriverException $driverException) {
-            if (! \in_array($driverException->getCode(), self::UNREADABLE_INDEX_CODES, true)) {
+            if (! $this->isUnreadable($driverException)) {
                 throw $driverException;
             }
 
@@ -136,9 +165,22 @@ final class IndexManager
             );
         }
 
-        new Filesystem()->remove($this->getIndexPath($host));
+        $this->reset($host);
 
         return $this->createLoupe($host);
+    }
+
+    /** Drop the unusable file, so the next open builds a fresh index. */
+    private function reset(string $host): void
+    {
+        unset($this->indexes[$host]);
+
+        new Filesystem()->remove($this->getIndexPath($host));
+    }
+
+    private function isUnreadable(DriverException $driverException): bool
+    {
+        return \in_array($driverException->getCode(), self::UNREADABLE_INDEX_CODES, true);
     }
 
     private function createLoupe(string $host): Loupe

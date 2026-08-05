@@ -69,6 +69,36 @@ final class IndexManagerTest extends KernelTestCase
     }
 
     /**
+     * The same interrupted write can tear pages in the middle of the file while
+     * leaving its head — and the small `info` table the open reads — intact. The
+     * open then succeeds and SQLite only trips over the damage once the rebuild
+     * walks those pages, so the reset has to cover the write as well.
+     */
+    public function testAnIndexDamagedPastItsHeadIsRebuiltRatherThanFailingForGood(): void
+    {
+        $indexManager = $this->indexManager();
+        $indexManager->replaceAll(self::HOST, $this->documents(20));
+        $indexManager->checkpoint(self::HOST);
+
+        $indexFile = $indexManager->getIndexFile(self::HOST);
+        new Filesystem()->remove([$indexFile.'-wal', $indexFile.'-shm']);
+
+        $size = filesize($indexFile);
+        self::assertNotFalse($size);
+        $handle = fopen($indexFile, 'r+');
+        self::assertNotFalse($handle);
+        // Halfway in: past the head, inside the pages holding the documents.
+        fseek($handle, intdiv($size, 2));
+        fwrite($handle, str_repeat('X', intdiv($size, 4)));
+        fclose($handle);
+
+        $reopened = $this->indexManager();
+        $reopened->replaceAll(self::HOST, $this->documents(3));
+
+        self::assertSame(3, $reopened->getLoupe(self::HOST)->countDocuments());
+    }
+
+    /**
      * The static export copies `loupe.db` on its own, so the write-ahead log has
      * to be folded in first.
      */
@@ -95,19 +125,30 @@ final class IndexManagerTest extends KernelTestCase
         self::assertFalse($this->indexManager()->exists(self::HOST));
     }
 
-    /** @return array<string, mixed> */
-    private function document(): array
+    /** @return list<array<string, mixed>> */
+    private function documents(int $count): array
+    {
+        return array_map($this->document(...), range(1, $count));
+    }
+
+    /**
+     * The content is padded so that a handful of documents already spread the
+     * index over enough SQLite pages to have an interior to damage.
+     *
+     * @return array<string, mixed>
+     */
+    private function document(int $id = 1): array
     {
         return [
-            'id' => 1,
-            'title' => 'Zylphor',
-            'h1' => 'Zylphor',
-            'url' => 'https://'.self::HOST.'/zylphor',
-            'slug' => 'zylphor',
+            'id' => $id,
+            'title' => 'Zylphor '.$id,
+            'h1' => 'Zylphor '.$id,
+            'url' => 'https://'.self::HOST.'/zylphor-'.$id,
+            'slug' => 'zylphor-'.$id,
             'host' => self::HOST,
             'locale' => 'en',
             'tags' => [],
-            'content' => 'zylphor content',
+            'content' => str_repeat('zylphor content lorem ipsum dolor sit amet '.$id.' ', 20),
         ];
     }
 
