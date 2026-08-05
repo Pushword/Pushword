@@ -2,7 +2,6 @@ import Table from './table';
 import * as $ from './utils/dom';
 import { MarkdownUtils } from '../utils/MarkdownUtils';
 import { HtmlTableUtils } from '../utils/HtmlTableUtils';
-import he from 'he';
 import { BlockToolData, API } from '@editorjs/editorjs';
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data';
 
@@ -107,6 +106,11 @@ export default class TableBlock {
   /**
    * Do not sanitize <br> and basic inline tags while inline toolbar enabled (upstream #144)
    *
+   * The list must cover every tag the Markdown round-trip puts in a cell (see
+   * MarkdownUtils.convertInlineMarkdownToHtml): editor.js applies these rules to
+   * each cell string on save, so a tag missing here is silently dropped and its
+   * Markdown marker lost.
+   *
    * @returns {object}
    * @public
    */
@@ -115,8 +119,16 @@ export default class TableBlock {
       br: true,
       u: true,
       b: true,
+      strong: true,
       i: true,
+      em: true,
+      s: true,
       del: true,
+      code: true,
+      mark: true,
+      sup: true,
+      sub: true,
+      small: true,
       p: true,
       a: true
     };
@@ -376,10 +388,16 @@ export default class TableBlock {
     const alignments = data.columnAlignments ?? [];
 
     rows.forEach((row, rowIndex) => {
-      // Decode HTML entities: contenteditable serializes `->` as `-&gt;`, which
-      // the colspan processor would miss until CommonMark decodes it, but clean
-      // source is preferable.
-      const cells = row.map((cell) => he.decode(cell));
+      // Cells hold HTML (see getData()), so the inline tags go back to Markdown —
+      // a bold cell must export as `**x**`, not `<b>x</b>`. The converter also
+      // decodes entities: contenteditable serializes `->` as `-&gt;`, which the
+      // colspan processor would miss until CommonMark decodes it. Typography
+      // fixes stay off here: they would rewrite dashes and quotes in every cell
+      // of every table on the next save. Line breaks cannot live inside a pipe
+      // row, so the newlines the converter emits go back to `<br>`.
+      const cells = row.map((cell) =>
+        MarkdownUtils.convertInlineHtmlToMarkdown(cell, false).replace(/\n/g, '<br>').trim(),
+      );
       markdown += '| ' + cells.join(' | ') + ' |\n';
 
       // The GFM delimiter row carries per-column alignment (`:---`, `:--:`, `---:`).
@@ -450,7 +468,13 @@ export default class TableBlock {
       }
 
       if (line.includes('|')) {
-        content.push(TableBlock.splitPipeRow(line));
+        // A cell renders as innerHTML, so its inline Markdown has to be HTML by
+        // then — otherwise `**bold**` shows as literal asterisks in the editor.
+        content.push(
+          TableBlock.splitPipeRow(line).map((cell) =>
+            MarkdownUtils.convertInlineMarkdownToHtml(cell),
+          ),
+        );
 
         if (i + 1 < lines.length && lines[i + 1]?.trim().match(/^\|[|\s\-:]+\|$/)) {
           withHeadings = true;

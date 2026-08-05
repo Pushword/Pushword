@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import TableBlock from './plugin'
+import { MarkdownUtils } from '../utils/MarkdownUtils'
 
 describe('TableBlock.splitPipeRow', () => {
   it('drops only the outer pipe artifacts', () => {
@@ -43,18 +44,74 @@ describe('TableBlock.isItMarkdownExported', () => {
   })
 })
 
-describe('TableBlock.importFromMarkdown (HTML table)', () => {
-  function fakeEditor(): { editor: any; updates: any[] } {
-    const updates: any[] = []
-    const editor = {
-      blocks: {
-        insert: () => ({ id: 'b1' }),
-        update: (id: string, data: any, tunes: any) => updates.push({ id, data, tunes }),
-      },
-    }
-
-    return { editor, updates }
+function fakeEditor(): { editor: any; updates: any[] } {
+  const updates: any[] = []
+  const editor = {
+    blocks: {
+      insert: () => ({ id: 'b1' }),
+      update: (id: string, data: any, tunes: any) => updates.push({ id, data, tunes }),
+    },
   }
+
+  return { editor, updates }
+}
+
+describe('TableBlock inline Markdown in cells', () => {
+  beforeEach(() => {
+    // Prettier is fetched from the bundle's public path — out of reach here, and
+    // its pipe alignment would only blur what these tests assert.
+    vi.spyOn(MarkdownUtils, 'formatMarkdownWithPrettier').mockImplementation(
+      async (markdown: string) => markdown.trim(),
+    )
+  })
+
+  it('imports inline Markdown as the HTML a cell renders', () => {
+    const { editor, updates } = fakeEditor()
+
+    TableBlock.importFromMarkdown(
+      editor,
+      '| **PHP Version** | 8.4+ |\n| --- | --- |\n| _italic_ | `code` |',
+    )
+
+    expect(updates[0].data.content[0]).toEqual(['<b>PHP Version</b>', '8.4+'])
+    expect(updates[0].data.content[1]).toEqual([
+      '<i>italic</i>',
+      '<code class="inline-code">code</code>',
+    ])
+  })
+
+  it('exports cell HTML back to inline Markdown', async () => {
+    const markdown = await TableBlock.exportToMarkdown({
+      content: [
+        ['<b>PHP Version</b>', '8.4+'],
+        ['<i>italic</i>', '<code class="inline-code">code</code>'],
+      ],
+      withHeadings: true,
+    })
+
+    expect(markdown).toContain('**PHP Version**')
+    expect(markdown).toContain('_italic_')
+    expect(markdown).toContain('`code`')
+  })
+
+  it('keeps a cell line break inside its pipe row', async () => {
+    const markdown = await TableBlock.exportToMarkdown({
+      content: [['one<br>two', 'b']],
+    })
+
+    expect(markdown.split('\n')[0]).toBe('| one<br>two | b |')
+  })
+
+  it('leaves a `->` colspan marker alone', async () => {
+    const markdown = await TableBlock.exportToMarkdown({
+      content: [['spanned', '-&gt;']],
+    })
+
+    expect(markdown.split('\n')[0]).toBe('| spanned | -> |')
+  })
+})
+
+describe('TableBlock.importFromMarkdown (HTML table)', () => {
 
   it('imports a headerless HTML table with an empty header row', () => {
     const { editor, updates } = fakeEditor()
