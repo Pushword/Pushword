@@ -79,3 +79,4 @@ packages/dev-app/media/
 
 # Demo data (regenerated on reset)
 packages/docs/content/conversation.csv
+.claude/skills/per*
