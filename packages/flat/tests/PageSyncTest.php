@@ -2944,11 +2944,9 @@ YAML;
         $mdFilePath = $contentDir.'/no-false-conflict-test.md';
         self::assertFileExists($mdFilePath);
 
-        // Wait to ensure timestamps diverge from the sync time
-        sleep(1);
-
-        // Touch file (content unchanged) to simulate timestamp drift
-        touch($mdFilePath);
+        // Touch file (content unchanged) to simulate timestamp drift. The mtime is set
+        // ahead explicitly rather than by sleeping past the filesystem's 1s granularity.
+        touch($mdFilePath, time() + 2);
 
         // Also bump DB updatedAt to simulate the false-conflict scenario
         // (both sides appear modified since last sync, but content is the same)

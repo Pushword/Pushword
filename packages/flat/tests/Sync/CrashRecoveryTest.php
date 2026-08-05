@@ -235,10 +235,9 @@ final class CrashRecoveryTest extends KernelTestCase
         $this->pageSync->export('localhost.dev', true, $this->contentDir);
         $this->stateManager->recordExport('page', 'localhost.dev');
 
-        // Wait a moment and then modify BOTH the file AND the DB (creating a conflict)
-        sleep(1);
-
-        // Modify the .md file
+        // Modify BOTH the .md file AND the DB, creating a conflict. The touch below
+        // sets the mtime explicitly ahead of the export, so no sleep is needed to
+        // clear the filesystem's 1s granularity.
         $mdPath = $this->contentDir.'/valid-crash-test.md';
         if (file_exists($mdPath)) {
             $this->filesystem->dumpFile($mdPath, "---\nh1: 'Conflict Test Modified in Flat'\n---\n\nModified in flat file");
