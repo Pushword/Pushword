@@ -90,9 +90,12 @@ down whichever `StaticGeneratorTest` case was building (`testIncrementalGenerati
 dies with no summary. Nothing about the test is wrong — read past the assertion to the
 worker line, and do not "fix" the assertion.
 
-What is known: 2 of 5 consecutive runs, **always the `P8.4 - N25 - prefer-stable` shard**,
-never on 8.5 and never on the other 8.4 shard. 139 is 128+SIGSEGV. Peak memory was 218 MB,
-so not the memory limit. Never reproduced locally — the machine here runs 8.5.
+What is known: 3 of 6 consecutive runs. It has hit `P8.4 - N25` twice and `P8.5 - N25`
+once — so **not a PHP-version bug**, whatever the first two occurrences suggested. The
+only constant across all three is the `N25` half of the matrix, which is a *Node* version
+and has no business touching a PHP child; at n=3 treat that as unexplained rather than as
+the cause. 139 is 128+SIGSEGV. Peak memory was 218 MB, so not the memory limit. Never
+reproduced locally, at `TEST_PROCESSES=4` or otherwise.
 
 The lead worth pulling first: `StaticAppGenerator::runParallel()` spawns each child with
 `-d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.file_cache=<per-worker dir> -d
