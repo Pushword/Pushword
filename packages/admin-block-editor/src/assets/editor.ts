@@ -4,6 +4,7 @@ import Small from './tools/Small/Small'
 import List from './tools/List/List'
 import Delimiter from './tools/Delimiter/Delimiter'
 import Quote from './tools/Quote/Quote'
+import Notice from './tools/Notice/Notice'
 // @ts-ignore
 import Marker from '@editorjs/marker'
 import InlineCode from '@editorjs/inline-code'
@@ -83,6 +84,8 @@ export class editorJs {
       Delimiter: Delimiter,
       GroupStart: GroupStart,
       GroupEnd: GroupEnd,
+      // Before Quote: both claim a `> ` chunk, and the first match wins.
+      Notice: Notice,
       Quote: Quote,
       Marker: Marker,
       Hyperlink: Hyperlink,
@@ -165,6 +168,7 @@ export class editorJs {
       if (undoAwaitsParsedBaseline && undo !== null && outputData !== null) {
         undoAwaitsParsedBaseline = false
         undo.initialize(outputData)
+        self.announceParsedBaseline(this.holder)
       }
     }
 
@@ -179,11 +183,29 @@ export class editorJs {
       }
     }
 
+    // The markdown we export is a normalisation, not the byte-for-byte source,
+    // so the field stops holding what the server rendered the moment the parse
+    // writes back. Unsaved-changes recovery (pushword/admin) baselines the form
+    // on window load, either side of that: it waits on this flag and on the
+    // event that clears it. Content that came as JSON never fires onChange, so
+    // nothing rewrites the field and there is nothing to wait for.
+    if (markdownContent !== null) {
+      this.boundInputOf(config.holder!)?.setAttribute('data-pw-baseline-pending', '1')
+    }
+
     const editor = new EditorJS(
       Object.assign(config, {
         onReady: () => {
           new DragDrop(editor)
-          undo = new Undo({ editor })
+          undo = new Undo({
+            editor,
+            // An applied snapshot bypasses onChange, so undo and redo write the
+            // bound field (and refresh the outline) through this hook instead.
+            onApply: () => {
+              outline?.scheduleRefresh()
+              void self.editorjsSave(config.holder!)
+            },
+          })
           new PasteLink({ editor })
           new ClipboardManager({ editor })
 
@@ -254,6 +276,18 @@ export class editorJs {
       title: config.i18n?.messages?.toolNames?.[title] ?? title,
       icon: toolbox?.icon ?? '',
     }
+  }
+
+  /**
+   * Tells the form the field now carries the parse's own markdown rather than
+   * the value the server rendered — the point from which a change is the user's.
+   */
+  private announceParsedBaseline(holderId: string): void {
+    const input = this.boundInputOf(holderId)
+    if (!input) return
+
+    input.removeAttribute('data-pw-baseline-pending')
+    input.dispatchEvent(new CustomEvent('pw:baseline-ready', { bubbles: true }))
   }
 
   /** The form field a holder feeds, named by its data-input-id. */

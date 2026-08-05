@@ -40,7 +40,8 @@ interface UndoConfig {
 interface UndoOptions {
   editor: EditorJS
   config?: UndoConfig
-  onUpdate?: () => void
+  /** Called once an undo or a redo has put its snapshot on screen. */
+  onApply?: () => void
   maxLength?: number
 }
 
@@ -62,7 +63,7 @@ export class Undo {
   private readonly caret: EditorJS['caret']
   private readonly defaultBlock: string
   private readonly maxLength: number
-  private readonly onUpdate: () => void
+  private readonly onApply: () => void
   private readonly config: {
     debounceTimer: number
     shortcuts: { undo: string[]; redo: string[] }
@@ -75,7 +76,7 @@ export class Undo {
   private position = 0
   private initialItem: HistoryItem | null = null
 
-  constructor({ editor, config = {}, onUpdate, maxLength }: UndoOptions) {
+  constructor({ editor, config = {}, onApply, maxLength }: UndoOptions) {
     const { configuration } = editor as unknown as { configuration: EditorConfiguration }
     const { holder, defaultBlock } = configuration
     const shortcuts = { ...DEFAULT_SHORTCUTS, ...config.shortcuts }
@@ -90,7 +91,7 @@ export class Undo {
     this.defaultBlock = defaultBlock
     this.readOnly = configuration.readOnly
     this.maxLength = maxLength ?? DEFAULT_MAX_LENGTH
-    this.onUpdate = onUpdate ?? ((): void => {})
+    this.onApply = onApply ?? ((): void => {})
     this.config = {
       debounceTimer: config.debounceTimer ?? DEFAULT_DEBOUNCE_TIMER,
       shortcuts: {
@@ -134,7 +135,6 @@ export class Undo {
           },
         ]
     this.position = 0
-    this.onUpdate()
   }
 
   canUndo(): boolean {
@@ -215,7 +215,6 @@ export class Undo {
       this.stack.shift()
     }
     this.position = this.stack.length - 1
-    this.onUpdate()
   }
 
   /**
@@ -224,7 +223,6 @@ export class Undo {
    */
   private async applyState(item: HistoryItem): Promise<void> {
     this.applying = true
-    this.onUpdate()
 
     // A render is one block per state entry, so the caret's block keeps its
     // position even when Editor.js hands it a new id. Without a recorded block
@@ -245,6 +243,12 @@ export class Undo {
     } finally {
       this.applying = false
     }
+
+    // Editor.js runs blocks.render() with its own modification observer
+    // disabled, so applying a snapshot fires no onChange. Whatever reads the
+    // editor from outside — the form field Save submits — is caught up here, or
+    // it keeps the content the undo has just taken off the screen.
+    this.onApply()
   }
 
   /**

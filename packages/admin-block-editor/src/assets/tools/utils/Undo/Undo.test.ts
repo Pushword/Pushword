@@ -165,6 +165,48 @@ describe('Undo – applying history', () => {
   })
 })
 
+describe('Undo – reporting what it applied', () => {
+  it('calls back once the snapshot is rendered, so the caller reads the new state', async () => {
+    const stub = newEditor()
+    // What the callback sees: how many renders had happened when it ran.
+    const applied = vi.fn(() => stub.render.mock.calls.length)
+    const undo = new Undo({
+      editor: stub.editor,
+      onApply: applied,
+    }) as unknown as AnyUndo
+
+    undo.initialize({ blocks: [block('a', 'first')] })
+    undo.save([block('a', 'edited')])
+    // Recording a change is not applying one — the editor already holds it.
+    expect(applied).not.toHaveBeenCalled()
+
+    await undo.undo()
+
+    expect(applied).toHaveBeenCalledTimes(1)
+    // Called after the render: a caller saving from here cannot pick up the
+    // state the undo just took off the screen.
+    expect(applied).toHaveReturnedWith(1)
+
+    await undo.redo()
+    expect(applied).toHaveBeenCalledTimes(2)
+  })
+
+  it('stays silent when there is nothing to apply', async () => {
+    const stub = newEditor()
+    const applied = vi.fn()
+    const undo = new Undo({
+      editor: stub.editor,
+      onApply: applied,
+    }) as unknown as AnyUndo
+
+    undo.initialize({ blocks: [block('a', 'first')] })
+    await undo.undo()
+    await undo.redo()
+
+    expect(applied).not.toHaveBeenCalled()
+  })
+})
+
 describe('Undo – shortcut parsing', () => {
   it('maps CMD to the platform modifier and lowercases the letter', () => {
     const stub = newEditor()

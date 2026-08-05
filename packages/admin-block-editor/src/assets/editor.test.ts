@@ -9,9 +9,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const initialize = vi.fn()
 const parseMarkdown = vi.fn()
+const scheduleRefresh = vi.fn()
 
 /** Config the editorJs class handed to Editor.js, captured at construction. */
 let captured: any = null
+/** Options the editorJs class handed to Undo, captured at construction. */
+let undoOptions: any = null
 
 vi.mock('@editorjs/editorjs', () => ({
   default: class {
@@ -27,6 +30,15 @@ vi.mock('editorjs-drag-drop', () => ({ default: class {} }))
 vi.mock('./tools/utils/Undo/Undo', () => ({
   default: class {
     initialize = initialize
+
+    constructor(options: any) {
+      undoOptions = options
+    }
+  },
+}))
+vi.mock('./outline/OutlinePanel', () => ({
+  OutlinePanel: class {
+    scheduleRefresh = scheduleRefresh
   },
 }))
 vi.mock('./tools/Hyperlink/PasteLink', () => ({ default: class {} }))
@@ -46,10 +58,10 @@ function setUpDom(): void {
 }
 
 /** Run the editor bootstrap for a page whose stored content is `content`. */
-function boot(content: string): void {
+function boot(content: string, extraConfig: Record<string, unknown> = {}): void {
   setUpDom()
   captured = null
-  ;(window as any).editorjsConfig = { holder: 'ed', tools: {} }
+  ;(window as any).editorjsConfig = { holder: 'ed', tools: {}, ...extraConfig }
   ;(window as any).pageMainContent = content
   ;(window as any).EditorJsParseMarkdown = class {
     parseMarkdown = parseMarkdown
@@ -104,6 +116,37 @@ describe('editorJs – the undo baseline', () => {
 })
 
 /**
+ * The markdown we export is a normalisation, not the source byte for byte, so
+ * the parse's write-back changes the field on a page nobody has touched. Unsaved
+ * changes recovery (pushword/admin) reads the form on window load, either side
+ * of that write: it needs to know one is still coming, and when it has landed.
+ */
+describe('editorJs – the baseline the form recovers against', () => {
+  it('flags the field it is about to rewrite, and announces the rewrite', async () => {
+    boot('# A page stored as markdown')
+    const input = document.getElementById('inp')!
+    const announced = vi.fn()
+    input.addEventListener('pw:baseline-ready', announced)
+
+    expect(input.getAttribute('data-pw-baseline-pending')).toBe('1')
+
+    captured.onReady()
+    await captured.onChange.call({ holder: 'ed' })
+
+    expect(input.hasAttribute('data-pw-baseline-pending')).toBe(false)
+    expect(announced).toHaveBeenCalledOnce()
+  })
+
+  it('flags nothing when the content came as JSON, which nothing rewrites', () => {
+    boot('{"blocks":[{"type":"paragraph","data":{"text":"Hi"}}]}')
+
+    expect(document.getElementById('inp')!.hasAttribute('data-pw-baseline-pending')).toBe(
+      false,
+    )
+  })
+})
+
+/**
  * The bound field is written by assignment, which fires nothing — so the body of
  * a block-edited page was invisible to anything watching the form, and setting
  * that field back would have left the rendered blocks on the old content.
@@ -118,6 +161,33 @@ describe('editorJs – the field it feeds', () => {
 
     expect(seen).toHaveBeenCalledOnce()
     document.removeEventListener('input', seen)
+  })
+
+  it('is written back after an undo, which Editor.js reports no change for', async () => {
+    boot('# A page stored as markdown')
+    captured.onReady()
+    const seen = vi.fn()
+    document.addEventListener('input', seen)
+
+    // Undo applies a snapshot through blocks.render(), which Editor.js runs
+    // with its change observer disabled: without this hook the field would keep
+    // the content the undo took off the screen, and Save would store it.
+    undoOptions.onApply()
+    await vi.waitFor(() => expect(seen).toHaveBeenCalledOnce())
+
+    document.removeEventListener('input', seen)
+  })
+
+  // Same silence, other reader: the panel lists the headings of a document the
+  // undo has just replaced.
+  it('refreshes the outline after an undo too', () => {
+    boot('# A page stored as markdown', { outline: { labels: {} } })
+    captured.onReady()
+    scheduleRefresh.mockClear()
+
+    undoOptions.onApply()
+
+    expect(scheduleRefresh).toHaveBeenCalledOnce()
   })
 
   it('exposes a write seam that re-parses markdown into the blocks', () => {
