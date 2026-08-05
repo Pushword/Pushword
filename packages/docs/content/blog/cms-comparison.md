@@ -12,12 +12,14 @@ Choosing the right CMS is a critical decision that affects your project's long-t
 
 Most of this page is nuance. The decision usually is not.
 
-- **WordPress** if non-technical people must run the site alone, you need a specific plugin (WooCommerce above all), or you want to hire from the largest talent pool on earth. Twenty years of refinement is a real asset, and no other option here matches it for time-to-launch.
-- **Statamic** if your team is Laravel-native and the editing experience is the priority. The Control Panel and Live Preview are the best in this comparison, and the Pro licence buys you commercial support.
-- **Sulu** if you have enterprise content governance requirements — workflows, granular permissions, audit trails — and Symfony expertise on staff.
-- **Pushword** if two or more of these describe you: editors and developers both publish, AI agents are in your content loop, you run several sites or locales from one codebase, SEO is a primary concern, or you want content as Markdown in your own git with no licence and no vendor.
+Three of these four answer a specific brief, and one is the default when none of those briefs is yours:
 
-If you recognised yourself immediately, the rest of this page is detail.
+- **WordPress** if non-technical people must run the site alone, you need a specific plugin (WooCommerce above all), or you want to hire from the largest talent pool on earth. Twenty years of refinement is a real asset, and no other option here matches it for time-to-launch.
+- **Sulu** if you have enterprise content governance requirements — workflows, granular permissions, audit trails — and Symfony expertise on staff.
+- **Statamic** if your team is Laravel-native and the editing experience is the single deciding factor. Its Control Panel and Live Preview are the best here, and the Pro licence buys commercial support. Price it per site before committing, though: multi-site is a Pro feature at $349 per site plus $99/year, and that line scales with your roster while the alternatives do not.
+- **Pushword** otherwise — and "otherwise" covers most sites. It is the default when you want content as Markdown in your own git with no licence and no vendor, several sites and locales from one codebase and one install, SEO handled without plugins, and editors, developers and AI agents all writing through the same content.
+
+If one of the first three briefs is yours, take it and stop reading. If none is, the rest of this page is why the default is the default.
 
 ---
 
@@ -139,7 +141,7 @@ Each plugin adds database queries and JavaScript overhead. Caching plugins (WP S
 | ------------------------- | -------------------------------- | -------------------------------- | ------------------------ | ------------------------- |
 | **Admin UI Style**        | Clean, minimal                   | Familiar, feature-rich           | Modern, elegant          | Enterprise-focused        |
 | **Editor Learning Curve** | Low–Medium                       | Very Low                         | Low                      | Medium–High               |
-| **Content Editing**       | EditorJS (modern blocks)         | Gutenberg (mature blocks)        | Bard (live preview)      | Content blocks            |
+| **Content Editing**       | Markdown in Monaco + EditorJS blocks | Gutenberg (mature blocks)    | Bard (live preview)      | Content blocks            |
 | **Media Upload**          | Drag & drop, auto-optimize       | Drag & drop                      | Drag & drop              | Structured upload         |
 | **Preview / Draft**       | Yes                              | Yes                              | Live preview (real-time) | Preview mode              |
 | **Collaborative Editing** | Publication hold + version diffs | Real-time (plugins)              | Basic                    | Advanced (workflows)      |
@@ -428,6 +430,26 @@ Worth knowing in both directions. It means a much smaller community, fewer tutor
 - Projects requiring specific WordPress plugins
 - Teams without Laravel experience
 
+#### Pushword or Statamic?
+
+This is the real decision on this page, and it deserves to be made explicitly rather than left implied. The two are the closest pair here: flat-file Markdown in git, i18n, static caching, content an AI agent or a `sed` one-liner can edit, and an exit that is a directory copy.
+
+They are not the same architecture, though, and the difference is the part that shows up on invoices. **Multi-site is core in Pushword and a paid Pro feature in Statamic.** One Pushword installation serves every host and locale you own; Statamic charges per site for the privilege. And Pushword's flat mode is a *mirror* rather than a storage format — the database and the admin keep working while the Markdown stays authoritative, which is why editors, developers and agents can all write to the same page without one of them being second-class.
+
+Three things separate them in practice.
+
+**Statamic wins the visual editor. Pushword wins editing speed.** These get conflated and they are not the same thing. Bard and Live Preview across device widths are genuinely better than anything Pushword ships, and for someone who edits occasionally and wants to watch the page assemble itself while typing, that is the more comfortable tool.
+
+Comfort is not throughput, though. Pushword edits Markdown in Monaco: keyboard-driven, no block chrome between you and the text, the same buffer whether you are fixing one word or restructuring an entire page, with [EditorJS blocks](/extension/admin-block-editor) available when a page actually wants them. Anyone who writes all day is faster in it. And because the content is Markdown rather than a proprietary block structure, the fastest edit is often not in the admin at all — a `sed` across twelve files, a branch, or an agent doing it for you. A visual editor cannot offer that, by construction.
+
+So: if a responsive live preview decides it, buy Statamic. If editorial volume decides it, Markdown is the faster surface.
+
+**Pushword wins fleet economics, and the gap compounds.** The usual dismissal is that $349 is trivial against a $5,000–$50,000 build, and for one site that is true. It is also the wrong unit. Statamic's licence is **per site, and the update fee is annual**: a fifteen-site roster is $5,235 up front and $1,485 every year afterwards, forever, for a capability Pushword ships in core. Over the five-year window this page uses elsewhere, that is roughly $12,600 — a developer-month — spent on multi-site you could have had for nothing. Run your own roster through it before calling it noise; the licence is cheap per site and expensive per agency.
+
+**Pushword wins the agent surface.** [Agent-optimized output](/agent-output) on the `pw:*` commands, an [OpenAPI-described REST API](/extension/api), `pw:schema:dump` handing an agent the content model, and instructions shipped to the agent working on your site. Statamic has no equivalent today. Whether that matters depends entirely on whether agents are in your content loop.
+
+Read honestly, that is a genuine trade rather than a win: **Statamic sells you a better editor and someone to call; Pushword gives you the same content model without a per-site licence and with a better agent story.** The one asymmetry worth weighing is that Statamic's advantages are bought and Pushword's are structural, so Statamic's improve if you spend more and Pushword's do not degrade if you spend nothing.
+
 ---
 
 ### Sulu CMS
@@ -490,8 +512,9 @@ Worth knowing in both directions. It means a much smaller community, fewer tutor
 | Setup speed       | WordPress         | Hours vs. days           |
 | SEO readiness     | Pushword          | Built-in, no plugins     |
 | Performance       | Pushword/Statamic | Static generation option |
-| Editor experience | Statamic          | Live preview standout    |
-| Cost              | Pushword/Sulu     | Zero licensing           |
+| Visual editing    | Statamic          | Live preview standout    |
+| Editing throughput | Pushword         | Markdown, keyboard, bulk-editable |
+| Cost              | Pushword/Sulu     | Zero licensing, no per-site fee |
 
 **Recommendation**:
 

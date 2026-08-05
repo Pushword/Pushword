@@ -18,25 +18,27 @@ opposite starting points. So which one should you choose for your next project, 
 
 ## The short answer
 
-Most of this page is nuance. The decision usually is not.
+Most of this page is nuance. The decision usually is not, and one question settles it:
+**will anyone other than a developer ever need to publish?**
 
-**Pick Astro if** your content is written by developers in the repository, your team lives
-in JavaScript, or you want React/Svelte/Vue components on the page. It is a mature,
-excellently designed tool with an ecosystem Pushword cannot match, and for that shape of
-project it is the better choice.
+**If no** — content is written by developers, in the repository, and that will not change —
+pick Astro and stop reading. It is mature, excellently designed, and has an ecosystem
+Pushword cannot match. Its single authoring surface is simpler than anything here, and
+simpler wins.
 
-**Pick Pushword if two or more of these describe you:**
+**If yes, Pushword is the better default**, because at that moment the honest comparison
+stops being Astro and becomes **Astro plus a headless CMS**: two systems to run, secure and
+upgrade, a second bill, and a preview environment to wire up and keep working.
+[Comparing like for like](#comparing-like-for-like) prices that out properly.
 
-- Someone who is not a developer needs to publish, and you would rather not run a second
-  system to let them
+These do not gate the decision — each one simply widens the gap, and teams that have one
+usually have several:
+
 - Your team already writes PHP or Symfony
 - You run several sites or locales that share templates and code
 - Editors expect a change to be live seconds after saving, not after a CI run
 - AI agents write or maintain part of your content
 - You want content and code in your own git, with no content vendor in the path
-
-If you recognised yourself in that second list, the rest of this page is detail. If you
-recognised yourself in the first, Astro is a genuinely great answer and you can stop here.
 
 ---
 
