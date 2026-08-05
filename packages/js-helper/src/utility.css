@@ -179,9 +179,8 @@ body:has(.bleed, .img-stretched) {
     --horizontal-scroll-fade-start: 0px;
     --horizontal-scroll-fade-end: 0px;
 
-    /* The third animation paints nothing: it turns that same inactive timeline
-       into a flag the dots read, since "does this row overflow" is otherwise
-       not a question CSS can ask. */
+    /* The third animation paints nothing: it turns the same inactive timeline
+       into the overflow flag the dots read. */
     animation:
       horizontal-scroll-fade-in linear both,
       horizontal-scroll-fade-out linear both,

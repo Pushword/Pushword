@@ -119,11 +119,22 @@ describe('horizontal scroller — guards that only a non-Chromium browser would 
  * the animation can say so.
  */
 describe('horizontal scroller — a row that does not overflow', () => {
-  /** Nothing is scrolled past either edge, so neither edge may be faded. */
-  it('declares the unfaded state beside the animation', () => {
+  /**
+   * Nothing is scrolled past either edge, so neither edge may be faded — and
+   * beside the animation is the only place those zeroes may be written. Moved
+   * up into the base rule they would reach the browser that has no scroll-driven
+   * animations too, and there an unfaded mask is a lie: the row scrolls, the
+   * cards past the fold are behind an edge, and nothing else says so.
+   */
+  it('declares the unfaded state beside the animation, and only there', () => {
     const guarded = blockOf('@supports (animation-timeline')
     expect(guarded).toContain('--horizontal-scroll-fade-start: 0px')
     expect(guarded).toContain('--horizontal-scroll-fade-end: 0px')
+
+    // Declared, not merely named: the base rule reads both through the mask.
+    const base = blockOf('.horizontal-scroll {')
+    expect(base).not.toContain('--horizontal-scroll-fade-start:')
+    expect(base).not.toContain('--horizontal-scroll-fade-end:')
   })
 
   /**
@@ -132,16 +143,16 @@ describe('horizontal scroller — a row that does not overflow', () => {
    * flag, which only an active (so: scrollable) timeline raises.
    */
   it('turns the marker group off unless the row scrolls', () => {
-    expect(blockOf('@supports selector(::scroll-marker-group)')).toContain(
-      'scroll-marker-group: var(--horizontal-scroll-markers)',
-    )
+    const dots = blockOf('@supports selector(::scroll-marker-group)')
+    expect(dots).toContain('scroll-marker-group: var(--horizontal-scroll-markers)')
+
     const flagProperty = blockOf('@property --horizontal-scroll-markers')
     expect(flagProperty).toContain('initial-value: none')
 
     // Raised for the whole range, not interpolated across it: the flag says
     // "this row scrolls", which is as true at one end as at the other.
-    const flag = blockOf('@keyframes horizontal-scroll-overflows')
-    expect(flag).toMatch(/from,\s*to\s*{\s*--horizontal-scroll-markers:\s*after/)
+    const flagKeyframes = blockOf('@keyframes horizontal-scroll-overflows')
+    expect(flagKeyframes).toMatch(/from,\s*to\s*{\s*--horizontal-scroll-markers:\s*after/)
 
     // Raised by a scroll timeline, so it lives with the fade animations.
     const guarded = blockOf('@supports (animation-timeline')
