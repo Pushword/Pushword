@@ -178,6 +178,13 @@ var editorjsConfig = {
             name: "groupEnd",
             className: "GroupEnd",
         },
+        {# Before quote: both claim a `> ` chunk on import, and the first match wins. #}
+        notice: {
+            name: "notice",
+            className: "Notice",
+            tunes: ['anchor', 'class'],
+            inlineToolbar: true,
+        },
         quote: {
             name: "quote",
             className: "Quote",

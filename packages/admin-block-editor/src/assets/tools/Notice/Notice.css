@@ -1,0 +1,68 @@
+.cdx-notice {
+  border-left: 4px solid #94a3b8;
+  border-radius: 0 8px 8px 0;
+  background: #f8fafc;
+  padding: 8px 12px;
+}
+
+.cdx-notice__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.cdx-notice__input {
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 2px 4px;
+  color: #475569;
+}
+
+.cdx-notice__level {
+  width: 110px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+}
+
+.cdx-notice__title {
+  flex: 1;
+  font-weight: 700;
+}
+
+.cdx-notice__body:empty::before {
+  content: attr(data-placeholder);
+  color: #94a3b8;
+}
+
+.cdx-notice__body {
+  outline: none;
+}
+
+/* Editor preview of the front palettes — same hues as component/notice.html.twig. */
+.cdx-notice--note {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.cdx-notice--tip {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+
+.cdx-notice--important {
+  border-color: #a855f7;
+  background: #faf5ff;
+}
+
+.cdx-notice--warning {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.cdx-notice--caution {
+  border-color: #ef4444;
+  background: #fef2f2;
+}

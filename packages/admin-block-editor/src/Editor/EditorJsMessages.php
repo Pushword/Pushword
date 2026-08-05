@@ -96,6 +96,7 @@ final readonly class EditorJsMessages
                 'Link' => 'editorLink',
                 'List' => 'editorList',
                 'Marker' => 'editorMarker',
+                'Notice' => 'editorNotice',
                 'Pages List' => 'editorPagesList',
                 'Quiz' => 'editorQuiz',
                 'Quote' => 'editorQuote',
@@ -118,6 +119,11 @@ final readonly class EditorJsMessages
                     'Group' => 'editorGroup',
                 ]),
                 'header' => $this->translate(['Heading' => 'editorHeading']),
+                'notice' => $this->translate([
+                    'Level' => 'editorNoticeLevel',
+                    'Notice' => 'editorNotice',
+                    'Title' => 'editorNoticeTitle',
+                ]),
                 'image' => $this->translate(self::MEDIA),
                 'link' => $this->translate([
                     'Nouvel onglet' => 'editorNewTab',
