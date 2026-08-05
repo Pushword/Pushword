@@ -866,9 +866,12 @@ CSV;
 
         self::assertTrue($imported, 'PDF should be imported');
 
-        // Verify symlink was created in the media cache dir
+        // Verify symlink was created in the media cache dir. It must *resolve*: the
+        // target is relative (so a deploy that moves the project keeps it valid), and
+        // a wrong relative target still satisfies is_link().
         $publicPath = $mediaCacheDir.'/test-symlink.pdf';
         self::assertTrue(is_link($publicPath) || file_exists($publicPath), 'Public symlink should exist for non-image media after flat import');
+        self::assertFileExists($publicPath, 'The symlink resolves to the media file it points at');
 
         // Cleanup
         $media = $em->getRepository(Media::class)->findOneBy(['fileName' => 'test-symlink.pdf']);

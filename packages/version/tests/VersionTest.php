@@ -531,6 +531,43 @@ final class VersionTest extends KernelTestCase
     }
 
     /**
+     * A page's own `title` is TEXT, the journal's copy of it is VARCHAR(255), and
+     * MySQL refuses an over-long row rather than truncating it — so the page write
+     * itself failed. Our upgrade notes, titled with a whole sentence, are what
+     * surfaced it.
+     */
+    public function testALongTitleIsCutToFitTheJournalInsteadOfFailingTheWrite(): void
+    {
+        self::bootKernel();
+
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
+        $repo = $em->getRepository(VersionLog::class);
+
+        $page = new Page();
+        $page->host = 'localhost.dev';
+        $page->slug = 'long-title-'.uniqid();
+        $page->h1 = ''; // empty h1 is what makes the label fall back to the TEXT title
+        $page->title = str_repeat('a', VersionLog::TITLE_MAX_LENGTH + 45);
+
+        $em->persist($page);
+        $em->flush();
+
+        $id = (int) $page->id;
+        $logged = $repo->findOneBy(['type' => 'page', 'entityId' => $id]);
+        self::assertNotNull($logged, 'The page write went through and logged its row');
+        self::assertSame(VersionLog::TITLE_MAX_LENGTH, mb_strlen((string) $logged->title));
+
+        $container->get(Versionner::class)->reset('page', $id);
+        foreach ($repo->findBy(['type' => 'page', 'entityId' => $id]) as $row) {
+            $em->remove($row);
+        }
+
+        $em->remove($page);
+        $em->flush();
+    }
+
+    /**
      * pw:version:log:clear purges the journal: --days keeps recent rows, a bare
      * run wipes everything after confirmation. Snapshots on disk are untouched.
      */
