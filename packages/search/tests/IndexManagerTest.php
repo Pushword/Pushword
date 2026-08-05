@@ -2,6 +2,7 @@
 
 namespace Pushword\Search\Tests;
 
+use Doctrine\DBAL\Exception\DriverException;
 use PDO;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
@@ -46,24 +47,11 @@ final class IndexManagerTest extends KernelTestCase
      */
     public function testAnUnreadableIndexIsResetRatherThanFailingForGood(): void
     {
-        $indexManager = $this->indexManager();
-        $indexManager->replaceAll(self::HOST, [$this->document()]);
-        // Fold the WAL in and drop the sidecars, so the damage below is what a
-        // fresh process actually finds: no log left to recover the header from.
-        $indexManager->checkpoint(self::HOST);
-
-        $indexFile = $indexManager->getIndexFile(self::HOST);
-        self::assertFileExists($indexFile);
-        new Filesystem()->remove([$indexFile.'-wal', $indexFile.'-shm']);
-
-        $handle = fopen($indexFile, 'r+');
-        self::assertNotFalse($handle);
-        fwrite($handle, str_repeat('X', 32));
-        fclose($handle);
+        $this->overwrite($this->buildIndexFile(1), 0, 32);
 
         // A new manager stands in for the next process to open that file.
         $reopened = $this->indexManager();
-        $reopened->replaceAll(self::HOST, [$this->document()]);
+        $reopened->replaceAll(self::HOST, $this->documents(1));
 
         self::assertSame(1, $reopened->getLoupe(self::HOST)->countDocuments());
     }
@@ -76,26 +64,55 @@ final class IndexManagerTest extends KernelTestCase
      */
     public function testAnIndexDamagedPastItsHeadIsRebuiltRatherThanFailingForGood(): void
     {
-        $indexManager = $this->indexManager();
-        $indexManager->replaceAll(self::HOST, $this->documents(20));
-        $indexManager->checkpoint(self::HOST);
-
-        $indexFile = $indexManager->getIndexFile(self::HOST);
-        new Filesystem()->remove([$indexFile.'-wal', $indexFile.'-shm']);
+        $indexFile = $this->buildIndexFile(20);
 
         $size = filesize($indexFile);
         self::assertNotFalse($size);
-        $handle = fopen($indexFile, 'r+');
-        self::assertNotFalse($handle);
         // Halfway in: past the head, inside the pages holding the documents.
-        fseek($handle, intdiv($size, 2));
-        fwrite($handle, str_repeat('X', intdiv($size, 4)));
-        fclose($handle);
+        $this->overwrite($indexFile, intdiv($size, 2), intdiv($size, 4));
 
         $reopened = $this->indexManager();
         $reopened->replaceAll(self::HOST, $this->documents(3));
 
-        self::assertSame(3, $reopened->getLoupe(self::HOST)->countDocuments());
+        // Read the rebuilt index through a manager of its own: the documents have
+        // to be in the file the static export copies, not merely reachable through
+        // the handle that wrote them — one held open on the dropped file would
+        // answer just as well.
+        self::assertSame(3, $this->indexManager()->getLoupe(self::HOST)->countDocuments());
+    }
+
+    /**
+     * Dropping the index is the remedy for a file SQLite cannot read at all. Any
+     * other driver error — a permission, a lock, a full disk — says nothing about
+     * the contents, so it has to surface with the index left where it is.
+     */
+    public function testADriverErrorThatIsNotCorruptionLeavesTheIndexAlone(): void
+    {
+        $indexManager = $this->indexManager();
+
+        // A directory where `loupe.db` belongs: SQLite cannot open it (14), which
+        // is not one of the codes meaning the contents are unreadable.
+        $indexFile = $indexManager->getIndexFile(self::HOST);
+        new Filesystem()->mkdir($indexFile);
+
+        try {
+            $indexManager->replaceAll(self::HOST, $this->documents(1));
+            self::fail('The driver error should have surfaced.');
+        } catch (DriverException $driverException) {
+            self::assertSame(14, $driverException->getCode());
+        }
+
+        self::assertDirectoryExists($indexFile, 'The index was destroyed over an error that was not corruption.');
+    }
+
+    public function testReplaceAllWithoutDocumentsEmptiesTheIndex(): void
+    {
+        $indexManager = $this->indexManager();
+        $indexManager->replaceAll(self::HOST, $this->documents(3));
+
+        $indexManager->replaceAll(self::HOST, []);
+
+        self::assertSame(0, $indexManager->getLoupe(self::HOST)->countDocuments());
     }
 
     /**
@@ -123,6 +140,36 @@ final class IndexManagerTest extends KernelTestCase
         $this->indexManager()->checkpoint(self::HOST);
 
         self::assertFalse($this->indexManager()->exists(self::HOST));
+    }
+
+    /**
+     * Build an index and leave it as a fresh process would find it: the log folded
+     * back in and the sidecars gone, so the damage a test inflicts is all there is
+     * left to go on.
+     *
+     * @return string the index file, ready to be damaged
+     */
+    private function buildIndexFile(int $documents): string
+    {
+        $indexManager = $this->indexManager();
+        $indexManager->replaceAll(self::HOST, $this->documents($documents));
+        $indexManager->checkpoint(self::HOST);
+
+        $indexFile = $indexManager->getIndexFile(self::HOST);
+        self::assertFileExists($indexFile);
+        new Filesystem()->remove([$indexFile.'-wal', $indexFile.'-shm']);
+
+        return $indexFile;
+    }
+
+    /** Overwrite bytes in place, the way an interrupted write leaves them. */
+    private function overwrite(string $indexFile, int $offset, int $length): void
+    {
+        $handle = fopen($indexFile, 'r+');
+        self::assertNotFalse($handle);
+        fseek($handle, $offset);
+        fwrite($handle, str_repeat('X', $length));
+        fclose($handle);
     }
 
     /** @return list<array<string, mixed>> */

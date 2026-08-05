@@ -163,11 +163,11 @@ final class IndexManager
                 'Search: the index of {host} was unreadable and has been reset — run pw:search:index to repopulate it.',
                 ['host' => $host],
             );
+
+            $this->reset($host);
+
+            return $this->createLoupe($host);
         }
-
-        $this->reset($host);
-
-        return $this->createLoupe($host);
     }
 
     /** Drop the unusable file, so the next open builds a fresh index. */
