@@ -54,7 +54,7 @@ final class EditorAutoLinkListenerTest extends TestCase
 
         self::assertStringContainsString('<a title="linkImproverEditorAutoLink" href="/kiwano" data-auto-link>', $content);
         self::assertStringContainsString('<style data-pw-auto-link-editor>', $content);
-        self::assertStringContainsString('a[data-auto-link]{', $content);
+        self::assertStringContainsString('a[data-auto-link][data-auto-link]{', $content);
         self::assertTrue($response->headers->hasCacheControlDirective('no-store'));
         self::assertTrue($response->headers->hasCacheControlDirective('private'));
     }

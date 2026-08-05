@@ -104,12 +104,15 @@ where a single link matters.
 Automatic linking earns its bad reputation when it is invisible. Four surfaces,
 from the page you are reading to the whole site:
 
-- **On the page, logged in as an editor**: every auto link is underlined with a
-  dashed indigo rule and carries a title saying it was inserted, not written.
-  Only a `ROLE_EDITOR` with a session sees this — the public HTML and the shared
-  render cache are untouched, and an annotated response is sent `private,
-  no-store`. The marking is decoration only: nothing is inserted into the text,
-  so the page still reads exactly as a visitor sees it.
+- **On the page, logged in as an editor**: every auto link gets an indigo tint
+  behind it and a title saying it was inserted, not written. Only a `ROLE_EDITOR`
+  with a session sees this — the public HTML and the shared render cache are
+  untouched, and an annotated response is sent `private, no-store`. The marking
+  is a background, not a change to how your theme underlines links: a theme
+  styles its links as it likes (the stock one uses a `border-bottom` and sets
+  `text-decoration: none`), so a decoration-based marking would be invisible on
+  some sites and doubled on others. Nothing is inserted into the text and no
+  word moves, so the page still reads exactly as a visitor sees it.
 - **Per page, in the admin**: the *Auto links* button on the page edit screen
   opens a panel listing what this page gained (anchor → target), the cap it was
   measured against, and the keywords its own name offers to other pages. It

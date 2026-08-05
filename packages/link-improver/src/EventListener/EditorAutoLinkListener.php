@@ -87,16 +87,26 @@ final readonly class EditorAutoLinkListener
         ) ?? $html;
     }
 
+    /**
+     * A tint behind the anchor, not a change to how the link is underlined: a
+     * theme draws its links as it likes — the stock Pushword one uses a
+     * `border-bottom` and sets `text-decoration: none` at a specificity no
+     * injected rule should have to outbid — so anything built on the link's own
+     * decoration is invisible on some sites and doubled on others. Background
+     * and box-shadow are properties a link theme has no reason to claim, and
+     * neither moves a single word.
+     */
     private function style(string $html): string
     {
+        // Doubled attribute: enough specificity to survive a themed `a` rule
+        // without reaching for !important.
+        $selector = 'a['.LinkImprover::ADDED_LINK_ATTRIBUTE.']['.LinkImprover::ADDED_LINK_ATTRIBUTE.']';
+        $tint = static fn (int $percent): string => 'background-color:color-mix(in srgb,'.self::COLOR.' '.$percent.'%,transparent);'
+            .'box-shadow:0 0 0 .12em color-mix(in srgb,'.self::COLOR.' '.$percent.'%,transparent);';
+
         $style = '<style data-pw-auto-link-editor>'
-            .'a['.LinkImprover::ADDED_LINK_ATTRIBUTE.']{'
-            .'text-decoration-line:underline;text-decoration-style:dashed;'
-            .'text-decoration-color:'.self::COLOR.';text-underline-offset:.18em;'
-            .'text-decoration-thickness:from-font;}'
-            .'a['.LinkImprover::ADDED_LINK_ATTRIBUTE.']:hover{'
-            .'background-color:color-mix(in srgb,'.self::COLOR.' 14%,transparent);'
-            .'border-radius:2px;}'
+            .$selector.'{'.$tint(13).'border-radius:.15em;}'
+            .$selector.':hover{'.$tint(28).'}'
             .'</style>';
 
         foreach (['</head>', '</body>'] as $anchor) {
