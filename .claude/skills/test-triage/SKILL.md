@@ -77,6 +77,25 @@ file-cache and the workers did not.
 
 **`PageScanner\Tests\Api\PageScanApiControllerTest`** — occasionally still flaky.
 
+**`PageScanner\Tests\LinkGraphCommandTest::testAnAllHostsScanLeavesEveryHostReadableOnItsOwn`
+— fixed, no longer a flake.** It failed `null is not null` on line 287 a few runs in ten,
+which reads as "the snapshot was not written" and was nothing of the sort.
+`pw:page-scan` abandons the loop past `--limit` findings (**0 means 500, not "no limit",
+whatever the option description says**) and then deliberately writes *no* snapshot, since
+the graph would be missing the edges of every page it never reached. The whole corpus
+scanned at once sits within a couple of findings of that ceiling — 502 on the dev-app
+today — so which side of 500 a run landed on decided the test. It passes `--limit` now
+and asserts the scan did not stop short. Any new test that scans every host at once owes
+the same, and the assertion to write first is `assertStringNotContainsString('stopping
+scan', …)` — not one about the snapshot.
+
+**`StaticGenerator\Tests\Cache\EpochSweepIntegrationTest::testSnippetEditSweepsThePagesThatRenderIt`
+— seen intermittently, undiagnosed.** Twice on 2026-08-05 (P8.5 and MariaDB shards), on
+runs whose other failures were unrelated; the assertion compares a rendered page against
+what the sweep should have re-rendered. Not investigated — it may well be one of the
+stale-cache cases below rather than a race. Confirm against those before treating a fresh
+failure as real.
+
 **`PageLockControllerTest::testPingAcquiresLockForEditor`** — not a flake at all. It fails
 whenever *your own browser* has the admin edit screen for page 1 open, because the test
 kernel and dev app share `packages/dev-app/var/page-locks/`. Check whether `lastPingAt` in
