@@ -126,7 +126,7 @@ if (! file_exists('vendor/phpstan/phpstan/phpstan.phar')) {
 
 // Install php-cs-fixer
 // -------------------
-PostInstall::copy('vendor/pushword/dev-app/.php-cs-fixer.dist.php~', '.php-cs-fixer.dist.php');
+PostInstall::copy('vendor/pushword/dev-app/php-cs-fixer.dist.php.template', '.php-cs-fixer.dist.php');
 exec('composer config --no-plugins scripts.format "vendor/bin/php-cs-fixer fix"');
 if (! file_exists('vendor/friendsofphp/php-cs-fixer/php-cs-fixer')) {
     exec('composer require --no-plugins  --dev friendsofphp/php-cs-fixer:*');

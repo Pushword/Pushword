@@ -1,0 +1,30 @@
+<?php
+
+// Template — `packages/core/install.php` copies this to `.php-cs-fixer.dist.php` at the
+// root of an installed project. Its paths are that project's, not the monorepo's, so it
+// must not be named `*.php`: the monorepo's own php-cs-fixer, PHPStan and Rector all
+// scan `packages/` and would try to load it from here.
+
+use PhpCsFixer\Config;
+use Symfony\Component\Finder\Finder;
+
+$finder = Finder::create()
+    ->in([
+        __DIR__.'/src',
+        __DIR__.'/public',
+        __DIR__.'/config',
+        __DIR__.'/bin',
+    ])
+    ->name('*.php')
+    ->ignoreDotFiles(true)
+    ->ignoreVCS(true)
+    ->append([
+        __DIR__.'/.php-cs-fixer.dist.php',
+    ]);
+
+$rules = require __DIR__.'/vendor/pushword/dev-app/php-cs-fixer-rules.php';
+
+return (new Config())
+    ->setRules($rules)
+    ->setRiskyAllowed(true)
+    ->setFinder($finder);
