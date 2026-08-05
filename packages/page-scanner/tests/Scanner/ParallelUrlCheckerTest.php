@@ -102,8 +102,13 @@ final class ParallelUrlCheckerTest extends KernelTestCase
             self::assertIsInt($expiry);
             $ttl = $expiry - time();
 
+            // The hour is what matters — the success TTL is a day away. The extra second
+            // is the pool's, not the checker's: `expiresAfter()` records a float
+            // `microtime(true) + 3600` and the item is packed as `(int) (0.1 + $expiry)`,
+            // so a write landing in the last tenth of a second reads back a second longer
+            // than it was given.
             self::assertGreaterThan(0, $ttl);
-            self::assertLessThanOrEqual(3600, $ttl, 'A finding must not be held for the success TTL.');
+            self::assertLessThanOrEqual(3601, $ttl, 'A finding must not be held for the success TTL.');
         } finally {
             $cache->deleteItem(ParallelUrlChecker::cacheKey($url));
         }
