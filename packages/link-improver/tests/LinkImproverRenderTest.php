@@ -49,6 +49,13 @@ final class LinkImproverRenderTest extends KernelTestCase
         $site->setCustomProperty('link_improver_max_links', $maxLinks);
     }
 
+    /** @param list<string> $urls */
+    private function ignoreUrls(array $urls): void
+    {
+        self::getContainer()->get(SiteRegistry::class)->get(self::HOST)
+            ->setCustomProperty('link_improver_ignored_urls', $urls);
+    }
+
     private function createTarget(string $slug = 'linkimp-kiwano', string $name = "Kiwano Melano\nhorned melon", string $locale = 'en', string $publishedAt = '-1 hour'): Page
     {
         $target = new Page();
@@ -188,19 +195,21 @@ final class LinkImproverRenderTest extends KernelTestCase
         self::assertFalse(self::getContainer()->get(LinkCollectorService::class)->isSlugRegistered(''));
     }
 
-    public function testTheHomepageIsSparedWhenTheAppAsksForIt(): void
+    public function testAnIgnoredUrlIsNeverATarget(): void
     {
         $this->enable();
-        self::getContainer()->get(SiteRegistry::class)->get(self::HOST)
-            ->setCustomProperty('link_improver_ignore_homepage', true);
+        $this->ignoreUrls(['/', '/linkimp-kiwano']);
         $this->nameTheHomepage('Zorglub Home');
         $this->createTarget();
+        $this->createTarget('linkimp-melon-d-or', "melon d'or");
 
-        $rendered = $this->render('Everything starts at the Zorglub Home, says Kiwano Melano.');
+        $rendered = $this->render("Everything starts at the Zorglub Home, says Kiwano Melano to the melon d'or.");
 
-        // The brand keeps its mention, the topical target still gets its link.
+        // The homepage and the listed page keep their mention as plain text…
         self::assertStringNotContainsString('href="/"', $rendered);
-        self::assertStringContainsString('<a href="/linkimp-kiwano" data-auto-link>Kiwano Melano</a>', $rendered);
+        self::assertStringNotContainsString('href="/linkimp-kiwano"', $rendered);
+        // …while every other target still gets its link.
+        self::assertStringContainsString('<a href="/linkimp-melon-d-or" data-auto-link>melon d\'or</a>', $rendered);
     }
 
     public function testAWildcardNameMatchesItsVariants(): void

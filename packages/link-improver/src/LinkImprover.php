@@ -11,6 +11,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\LinkCollectorService;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\LinkImprover\DependencyInjection\Configuration;
 
 /**
  * Turns the first mention of another page's name into a link to it, in the
@@ -28,15 +29,6 @@ use Pushword\Core\Site\SiteRegistry;
 final readonly class LinkImprover implements FilterInterface
 {
     public const string ADDED_LINK_ATTRIBUTE = 'data-auto-link';
-
-    /**
-     * `< 1` caps the total of in-content links to a ratio of the word count,
-     * `>= 1` is an absolute cap. One link per 50 words stays well under the
-     * density Wikipedia keeps in its running prose (1 per 20 words, measured
-     * over 185k words), while leaving room above what a well linked page
-     * already holds — the cap counts the existing links.
-     */
-    private const float DEFAULT_MAX_LINKS = 0.02;
 
     public function __construct(
         private InternalLinkSources $sources,
@@ -57,10 +49,10 @@ final readonly class LinkImprover implements FilterInterface
             return $content;
         }
 
-        $ignoredUrls = [InternalLinkSources::url($page->slug)]; // a page never links itself
-        if (true === $site->get('link_improver_ignore_homepage')) {
-            $ignoredUrls[] = InternalLinkSources::url('homepage');
-        }
+        $ignoredUrls = [
+            InternalLinkSources::url($page->slug), // a page never links itself
+            ...$site->getStringList('link_improver_ignored_urls'),
+        ];
 
         $rows = array_values(array_filter(
             $this->sources->getRows($page->host, $page->locale),
@@ -79,7 +71,7 @@ final readonly class LinkImprover implements FilterInterface
         $maxLinks = $site->get('link_improver_max_links');
         $content = $engine->improve(
             $linksManager,
-            \is_numeric($maxLinks) ? (float) $maxLinks : self::DEFAULT_MAX_LINKS,
+            \is_numeric($maxLinks) ? (float) $maxLinks : Configuration::DEFAULT_MAX_LINKS,
             self::ADDED_LINK_ATTRIBUTE
         );
 
