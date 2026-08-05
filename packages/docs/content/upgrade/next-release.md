@@ -28,12 +28,7 @@ absorbs needs no note.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** pushword/admin, pushword/admin-block-editor, pushword/advanced-main-image,
-pushword/api, pushword/conversation, pushword/core, pushword/flat, pushword/installer,
-pushword/link-improver, pushword/newsletter, pushword/page-scanner,
-pushword/page-update-notifier, pushword/quiz, pushword/repurpose, pushword/search,
-pushword/snippet, pushword/static-generator, pushword/template-editor, pushword/version,
-@pushword/js-helper
+**Concerns:** `pushword/admin`, `pushword/admin-block-editor`, `pushword/advanced-main-image`, `pushword/api`, `pushword/conversation`, `pushword/core`, `pushword/flat`, `pushword/installer`, `pushword/link-improver`, `pushword/newsletter`, `pushword/page-scanner`, `pushword/page-update-notifier`, `pushword/quiz`, `pushword/repurpose`, `pushword/search`, `pushword/snippet`, `pushword/static-generator`, `pushword/template-editor`, `pushword/version`, `@pushword/js-helper`
 
 ## Bundles register themselves now
 
