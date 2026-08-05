@@ -30,16 +30,16 @@ final class LinkImproverReportCommandTest extends KernelTestCase
         parent::tearDown();
     }
 
-    /** Long enough for the default ratio cap (one link per 100 words) to allow one link. */
+    /** Long enough for the default ratio cap (one link per 50 words) to allow one link. */
     private function filler(): string
     {
         return str_repeat('Filler words to raise the word count of this page well over the ratio cap. ', 10);
     }
 
-    private function createPage(string $slug, string $name, string $mainContent): void
+    private function createPage(string $slug, string $name, string $mainContent, string $host = self::HOST): void
     {
         $page = new Page();
-        $page->host = self::HOST;
+        $page->host = $host;
         $page->slug = $slug;
         $page->name = $name;
         $page->h1 = 'Page '.$slug;
@@ -92,6 +92,34 @@ final class LinkImproverReportCommandTest extends KernelTestCase
 
         self::assertSame(0, $exitCode);
         self::assertStringContainsString('+ "Kiwano Melano" → /linkimp-kiwano', $commandTester->getDisplay());
+    }
+
+    public function testWithoutHostEveryEnabledAppIsReported(): void
+    {
+        $otherHost = 'admin-block-editor.test';
+
+        self::bootKernel();
+        $siteRegistry = self::getContainer()->get(SiteRegistry::class);
+        // The same slugs on both hosts, as a multisite really holds them:
+        // `page` is unique on (slug, host).
+        foreach ([self::HOST, $otherHost] as $host) {
+            $siteRegistry->get($host)->setCustomProperty('link_improver', true);
+            $this->createPage('linkimp-kiwano', 'Kiwano Melano', 'The target page.', $host);
+            $this->createPage('linkimp-source', 'Source', $this->filler().'A page mentioning Kiwano Melano once.', $host);
+        }
+
+        $commandTester = $this->commandTester();
+        $exitCode = $commandTester->execute(['--format' => 'agent']);
+
+        self::assertSame(0, $exitCode);
+        $report = json_decode($commandTester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($report);
+        $links = $report['links'] ?? null;
+        self::assertIsArray($links);
+
+        $hosts = array_column($links, 'host');
+        self::assertContains(self::HOST, $hosts);
+        self::assertContains($otherHost, $hosts);
     }
 
     public function testADisabledHostIsSkippedWithANote(): void
