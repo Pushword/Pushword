@@ -575,3 +575,20 @@ describe('resolveLightboxSources', () => {
     expect(document.body.firstChild).toBe(span)
   })
 })
+
+describe('uncloakLinks', () => {
+  // A .clickable box stretches the link marked .clickable-link over itself, and an
+  // obfuscated title is that span until the first interaction converts it. Lose the
+  // class on the way and the box goes back to following whatever link comes last.
+  it('carries the classes of the cloaked span onto the anchor it becomes', async () => {
+    document.body.innerHTML =
+      '<span class="clickable-link" data-rot="_rknzcyr.pbz">A title</span>'
+
+    await uncloakLinks('data-rot', false)
+
+    const link = document.querySelector('a')
+    expect(link.className).toBe('clickable-link')
+    expect(link.getAttribute('href')).toBe('https://example.com')
+    expect(link.textContent).toBe('A title')
+  })
+})

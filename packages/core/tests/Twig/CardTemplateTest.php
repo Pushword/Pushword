@@ -9,23 +9,33 @@ use Twig\Environment;
 #[Group('integration')]
 final class CardTemplateTest extends KernelTestCase
 {
-    private function getTwig(): Environment
+    /** @param array<string, mixed> $params what the test varies, over a plain linked title */
+    private function renderCard(array $params): string
     {
         self::bootKernel();
 
-        /** @var Environment */
-        return self::getContainer()->get('twig');
+        /** @var Environment $twig */
+        $twig = self::getContainer()->get('twig');
+
+        return $twig->render('@PushwordCore/component/card.html.twig', $params + [
+            'title' => 'A title',
+            'link' => '/the-title-link',
+            // strict_variables is on and the template has no default for it.
+            'image' => null,
+        ]);
     }
 
-    /** @param array<string, mixed> $params */
-    private function renderCard(array $params): string
+    /**
+     * The classes on the card itself — `clickable` reads as a substring of the marker the
+     * title carries, so it has to be looked for in the box's own class list.
+     *
+     * @return string[]
+     */
+    private function cardClasses(string $html): array
     {
-        return $this->getTwig()->render('@PushwordCore/component/card.html.twig', $params + [
-            'image' => null,
-            'buttonLink' => null,
-            'description' => null,
-            'obfuscateLink' => false,
-        ]);
+        self::assertSame(1, preg_match('/<article[^>]*class="([^"]*)"/', $html, $matches));
+
+        return explode(' ', $matches[1]);
     }
 
     /**
@@ -37,14 +47,33 @@ final class CardTemplateTest extends KernelTestCase
     public function testTheClickableCardFollowsItsTitleLinkAndNotTheDescriptionOne(): void
     {
         $html = $this->renderCard([
-            'title' => 'A title',
-            'link' => '/the-title-link',
             'description' => 'Read [the description link](/the-description-link) too.',
+            // The card stays clickable when its button leads where the title does, so the
+            // box then holds a third link: the marker has to stay on the title alone.
+            'buttonLink' => '/the-title-link',
+            'buttonLinkLabel' => 'Read more',
         ]);
 
-        self::assertStringContainsString('clickable', $html);
+        self::assertContains('clickable', $this->cardClasses($html));
         self::assertStringContainsString('class="clickable-link" href="/the-title-link"', $html);
+        self::assertStringContainsString('href="/the-description-link"', $html);
         self::assertSame(1, substr_count($html, 'clickable-link'));
+    }
+
+    /**
+     * A button leading elsewhere than the title makes the card ambiguous, so it is not a
+     * clickable box at all — and the marker, scoped under `.clickable` in the stylesheet,
+     * stretches nothing there.
+     */
+    public function testACardWhoseButtonLeadsElsewhereIsNotAClickableBox(): void
+    {
+        $html = $this->renderCard([
+            'buttonLink' => '/somewhere-else',
+            'buttonLinkLabel' => 'Read more',
+        ]);
+
+        self::assertNotContains('clickable', $this->cardClasses($html));
+        self::assertStringContainsString('link-btn', $html);
     }
 
     /**
@@ -54,11 +83,7 @@ final class CardTemplateTest extends KernelTestCase
      */
     public function testAnObfuscatedTitleCarriesTheMarkerOnTheCloakedSpan(): void
     {
-        $html = $this->renderCard([
-            'title' => 'A title',
-            'link' => '/the-title-link',
-            'obfuscateLink' => true,
-        ]);
+        $html = $this->renderCard(['obfuscateLink' => true]);
 
         self::assertStringContainsString('<span class="clickable-link" data-rot=', $html);
     }
