@@ -110,8 +110,13 @@ are development content and stay on your machine.
 
 The account is created once: the entrypoint then drops a `var/.pushword-seeded` marker.
 A development project is marked by `pw:docker:init` itself, since it was already
-installed on the host. And if you mount a `var/` restored from a backup, the account
-already exists — the entrypoint says so and carries on.
+installed on the host.
+
+A restored backup never gains an account, whatever address its own admin uses. The
+marker alone could not promise that — the backup above copies `app.db` on its own, so a
+restore into a fresh volume arrives without it — so before creating anything the
+entrypoint asks the database whether it holds any user at all, and says so in the logs
+when it does.
 
 ## Worker mode
 

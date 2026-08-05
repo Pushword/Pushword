@@ -156,6 +156,34 @@ if ! curl -sS -m 20 "http://127.0.0.1:$PORT/" | grep -q '<title>'; then
 fi
 echo "  / renders the starter content out of the mounted database"
 
+# --- …and it must not hand that database an account of its own ----------------------
+# The scenario above is the one address that hides the bug: `composer create-project`
+# makes `admin@example.tld`, which is exactly what the entrypoint would try to insert,
+# so the unique constraint over `email` refused it and the seeding looked guarded. Any
+# other address takes the insert, and the volume gains a second ROLE_SUPER_ADMIN on the
+# published default credentials. The marker cannot save it either: the backup documented
+# in docker.md copies `app.db` alone, so a restore arrives without one.
+echo
+echo "=== Booting on a restored backup whose admin is someone else ==="
+docker exec "$CONTAINER" php bin/console dbal:run-sql \
+    "UPDATE user SET email = 'owner@example.org' WHERE email = 'admin@example.tld'" >/dev/null
+docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+rm -f "$CONTEXT_DIR/var-state/.pushword-seeded"
+
+boot -v "$CONTEXT_DIR/var-state:/app/var"
+
+accounts=$(docker exec "$CONTAINER" php bin/console dbal:run-sql 'SELECT email FROM user' 2>&1)
+if echo "$accounts" | grep -q 'admin@example.tld'; then
+    fail 'the entrypoint gave a restored database a super admin on the published default credentials'
+fi
+if ! echo "$accounts" | grep -q 'owner@example.org'; then
+    fail 'the restored account did not survive the boot'
+fi
+if ! docker logs "$CONTAINER" 2>&1 | grep -q 'this database already has one'; then
+    fail 'the entrypoint did not report that it left the accounts alone'
+fi
+echo "  the restored account is the only one, and the log says so"
+
 # --- The development stack, which is what `docker compose up` runs ------------------
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 mv "$CONTEXT_DIR/var-state" "$CONTEXT_DIR/var"
