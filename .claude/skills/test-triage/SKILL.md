@@ -75,6 +75,26 @@ what a child can do. A local CLI with opcache still runs the assertion for real,
 test keeps its teeth. Treat a fresh failure here as real — it means a probe child *did*
 file-cache and the workers did not.
 
+**`Core\Tests\Twig\BlockExtensionTest` — moved to `serial`, no longer a flake.** Its
+gallery cases render real media, and the render *throws* on a variant that is missing at
+that instant (`public/media/xs/piedweb-logo.png not found`, out of `image.html.twig`)
+rather than degrading. `public/media/{filter}/` is the directory that cannot be isolated
+per worker, so a peer generating or optimising the same file was enough. Any test
+rendering real media through the image pipeline belongs in the same group.
+
+**A static-generation worker child segfaults — `Worker N failed (exit 139: Segmentation
+violation): no error output`.** Seen 2026-08-05 on the P8.4 shard, taking
+`StaticGeneratorTest::testIncrementalGeneration` down at
+`assertStringContainsString('success', …)` — the run reports every page it handled, then
+dies without a summary. Nothing about that test is wrong; read past the assertion to the
+worker line. A native crash (peak memory was 218 MB, so not the memory limit), so suspect
+the extensions a render child loads — Imagick above all — not the PHP under test.
+
+**Worth connecting:** the Loupe `file is not a database` entry above says what damaged the
+index "was never caught in the act", and describes exactly a writer killed mid-checkpoint
+with `synchronous = OFF`. A segfaulting worker child is such a writer. Before treating
+these as two problems, check whether a run showing the corruption also shows an exit 139.
+
 **`PageScanner\Tests\Api\PageScanApiControllerTest`** — occasionally still flaky.
 
 **`PageScanner\Tests\LinkGraphCommandTest::testAnAllHostsScanLeavesEveryHostReadableOnItsOwn`
@@ -150,6 +170,13 @@ Shared-`public/media` races need real contention: loop
 `vendor/bin/paratest --processes=8` about ten times. Do **not** use `--processes=auto` on
 a high-core machine — it spreads files too thin to collide. For the duplicate-media
 class of failure, `--processes=2` is the deterministic reproducer.
+
+**To reproduce CI's layout rather than your machine's, `TEST_PROCESSES=4 composer test`.**
+paratest distributes by class, so the worker count decides which classes share a process
+— and that, not the machine, is what most of these failures depend on. A CI runner gives
+`auto` 4; a 24-core desktop gives it 24, which is why a shard-dependent failure reproduces
+nowhere locally. Six clean loops at 4 still proves little: several of the entries above
+were only ever seen on CI.
 
 ## The systemic fix pattern
 
