@@ -43,6 +43,24 @@ paths:
   re-stacks them, scoped to `.form-fieldset` — the marker only a CRUD-form entry emits, so
   plain-entry collections (page redirects, media creators) keep the horizontal layout.
   Entry fields also need explicit `setColumns()`, or EasyAdmin gives each one its own row.
+- **Monaco is fetched on demand, and only where a field needs it.** `admin.js`
+  (`admin.monacoLoader.js`) injects `window.pwMonacoUrl` — published by
+  `DashboardController::configureAssets()` — when the page holds a `textarea[data-editor]`;
+  the block editor injects the same URL for its markdown/JSON modes and shares the
+  in-flight promise through `window.pwMonacoLoading`. The `<script>` in
+  `@pwAdmin/layout.html.twig` covers only the custom tool pages: EasyAdmin CRUD pages do
+  not use that layout, so nothing there loads Monaco on its own. Build order matters —
+  `packages/admin`'s vite build empties `src/Resources/public/`, so
+  `admin-monaco-editor` must be built *after* it or `monaco/` disappears.
+- **Monaco's clipboard events must be caught on `document`, in the capture phase.**
+  Since 0.52 Monaco types through a native `EditContext` div and swallows `paste` on its
+  way down, so a listener on `editor.getDomNode()` never fires even though the event
+  target sits inside it. Filter with `node.contains(event.target)` to tell two editors
+  apart, and register against an `AbortSignal` — `editor.dispose()` does not reach
+  listeners bound outside the editor (same for `ResizeObserver` and window `resize`).
+  Synthetic `new ClipboardEvent('paste', {clipboardData})` is not dispatchable in Chrome:
+  test with `grantPermissions(['clipboard-write'])` + `navigator.clipboard.writeText` +
+  a real `Control+v`.
 - **Rebuild core assets after editing js-helper.** `packages/core/src/Resources/public/app.js`
   is compiled — run `yarn build` in `packages/core` after touching `helpers.js`.
 - **`pw_auth=1` is a ROLE_EDITOR-only hint.** Cookie set, heal, and 403-clear paths must
