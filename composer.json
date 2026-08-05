@@ -27,7 +27,7 @@
     "cocur/slugify": "^4.6",
     "doctrine/doctrine-bundle": "^3.2",
     "doctrine/doctrine-fixtures-bundle": "^4",
-    "doctrine/orm": "^3.5",
+    "doctrine/orm": "^3.5 !=3.6.8",
     "easycorp/easyadmin-bundle": "^5",
     "fortawesome/font-awesome": "^7",
     "imagine/imagine": "^1.3",

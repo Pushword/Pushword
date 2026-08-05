@@ -25,7 +25,7 @@
     "babdev/pagerfanta-bundle": "^4.0",
     "doctrine/doctrine-bundle": "^3.2",
     "doctrine/doctrine-fixtures-bundle": "^4",
-    "doctrine/orm": "^3.5",
+    "doctrine/orm": "^3.5 !=3.6.8",
     "fortawesome/font-awesome": "^7",
     "intervention/image": "^4.0",
     "pagerfanta/twig": "^4.1",
