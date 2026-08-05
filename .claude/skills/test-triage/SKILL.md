@@ -83,27 +83,23 @@ per worker, so a peer generating or optimising the same file was enough. Any tes
 rendering real media through the image pipeline belongs in the same group.
 
 **A static-generation worker child segfaults — `Worker N failed (exit 139: Segmentation
-violation): no error output`. The one CI failure still open as of 2026-08-05.** It takes
-down whichever `StaticGeneratorTest` case was building (`testIncrementalGeneration`,
-`testIncrementalAfterParallelBuildSkipsUnchangedPages`, …) at
-`assertStringContainsString('success', …)`: the run lists every page it handled, then
-dies with no summary. Nothing about the test is wrong — read past the assertion to the
-worker line, and do not "fix" the assertion.
+violation): no error output`. Fixed 2026-08-05 by dropping the workers' opcache file
+cache.** It took down whichever `StaticGeneratorTest` case was building at
+`assertStringContainsString('success', …)`: the run listed every page it handled, then
+died with no summary. Nothing about those tests was wrong — if it returns, read past the
+assertion to the worker line and do not "fix" the assertion.
 
-What is known: 3 of 6 consecutive runs. It has hit `P8.4 - N25` twice and `P8.5 - N25`
-once — so **not a PHP-version bug**, whatever the first two occurrences suggested. The
-only constant across all three is the `N25` half of the matrix, which is a *Node* version
-and has no business touching a PHP child; at n=3 treat that as unexplained rather than as
-the cause. 139 is 128+SIGSEGV. Peak memory was 218 MB, so not the memory limit. Never
-reproduced locally, at `TEST_PROCESSES=4` or otherwise.
+The cause was the flags `StaticAppGenerator` spawned each child with:
+`-d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.file_cache=<dir>`. First seen on
+alt-php 8.4.3 and answered by giving each worker its own cache directory; it came back on
+stock 8.4 *and* 8.5 with the directories already unshared, and on the serial batch where
+only one build runs at a time — so sharing was never the whole of it and the flags
+themselves had to go. It was a production crash CI happened to catch: a real
+`pw:static --workers=N` ran with the same flags.
 
-The lead worth pulling first: `StaticAppGenerator::runParallel()` spawns each child with
-`-d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.file_cache=<per-worker dir> -d
-opcache.validate_timestamps=1`. opcache's file cache is a known segfault surface, those
-flags are a throughput optimisation rather than a correctness requirement, and **a real
-`pw:static` run with workers uses exactly the same ones** — so if this is what it looks
-like, it is a production crash that CI happened to catch, not a test problem. Confirm on a
-PHP 8.4 runner before changing them.
+Two dead ends recorded so they are not re-run: it hit `P8.4 - N25` twice and `P8.5 - N25`
+once, which looks like a Node correlation and is not one; and it never reproduced locally,
+at `TEST_PROCESSES=4` or otherwise. Peak memory was 218 MB, so never the memory limit.
 
 **Worth connecting:** the Loupe `file is not a database` entry above says what damaged the
 index "was never caught in the act", and describes exactly a writer killed mid-checkpoint
