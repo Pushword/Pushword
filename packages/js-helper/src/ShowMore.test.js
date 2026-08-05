@@ -336,6 +336,61 @@ describe('scrollToHash() with a text fragment directive', () => {
     expect(wrapper.dataset.showMoreOpen).toBe('true')
   })
 
+  it('uses the prefix to pick between blocks repeating the start text', () => {
+    const a = makeBlock({ id: 'a' })
+    const b = makeBlock({ id: 'b' })
+    a.content.textContent = 'Anna said: fast and cheap, would order again'
+    b.content.textContent = 'Bob said: fast and cheap, but the box was dented'
+    ShowMore.scrollToHash('#:~:text=Bob%20said-,fast%20and%20cheap,-but')
+    expect(a.wrapper.dataset.showMoreOpen).toBeUndefined()
+    expect(b.wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('ignores a prefix that only appears further along, past the start text', () => {
+    const a = makeBlock({ id: 'a' })
+    const b = makeBlock({ id: 'b' })
+    a.content.textContent = 'fast and cheap, and later on Bob said hello'
+    b.content.textContent = 'Bob said: fast and cheap'
+    ShowMore.scrollToHash('#:~:text=Bob%20said-,fast%20and%20cheap')
+    expect(a.wrapper.dataset.showMoreOpen).toBeUndefined()
+    expect(b.wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('keeps looking past a prefix occurrence the start does not follow', () => {
+    const a = makeBlock({ id: 'a' })
+    const b = makeBlock({ id: 'b' })
+    a.content.textContent = 'fast and cheap, with nobody quoted'
+    b.content.textContent = 'Bob said hello. Bob said: fast and cheap'
+    ShowMore.scrollToHash('#:~:text=Bob%20said-,fast%20and%20cheap')
+    expect(a.wrapper.dataset.showMoreOpen).toBeUndefined()
+    expect(b.wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('reads a comma-separated pair without a trailing dash as start,end', () => {
+    const a = makeBlock({ id: 'a' })
+    const b = makeBlock({ id: 'b' })
+    a.content.textContent = 'the start term lives here'
+    b.content.textContent = 'the end term lives here'
+    ShowMore.scrollToHash('#:~:text=start%20term,end%20term')
+    expect(a.wrapper.dataset.showMoreOpen).toBe('true')
+    expect(b.wrapper.dataset.showMoreOpen).toBeUndefined()
+  })
+
+  it('ignores malformed percent-encoding in the prefix without throwing', () => {
+    const { wrapper, content } = makeBlock()
+    content.textContent = 'some content'
+    expect(() => ShowMore.scrollToHash('#:~:text=%E0%A4%A-,some%20content')).not.toThrow()
+    expect(wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('falls back to the first match when no block satisfies the prefix', () => {
+    const { wrapper, content } = makeBlock()
+    // Chrome takes the prefix from the text preceding the block content.
+    content.textContent = 'fast and cheap delivery'
+    ShowMore.scrollToHash('#:~:text=outside%20the%20block-,fast%20and%20cheap')
+    expect(wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
   it('force-opens even when block is in _userClosed', () => {
     const { wrapper, content } = makeBlock()
     ShowMore._userClosed.add(wrapper)

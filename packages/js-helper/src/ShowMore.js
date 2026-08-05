@@ -19,6 +19,12 @@ const STORAGE_KEY = 'showmore_opened'
 // snap at the end of the close animation.
 const COLLAPSED_MAX_HEIGHT = '16rem'
 
+const normalize = (s) => s.toLowerCase().replace(/\s+/g, ' ').trim()
+// Anything but a letter or a digit separates two terms. \W would not do: it
+// counts accented letters as separators, so "prix" would appear to be followed
+// by "levé" in "prix élevé".
+const BOUNDARY = /[^\p{L}\p{N}]/u
+
 const ShowMore = {
   _initialized: false,
   _userClosed: new WeakSet(), // Track blocks manually closed by user
@@ -225,15 +231,8 @@ const ShowMore = {
    */
   openTextFragment(directive) {
     for (const match of directive.matchAll(/(?:^|&)text=([^&]*)/g)) {
-      const parts = match[1].split(',')
-      // Syntax: text=[prefix-,]start[,end][,-suffix] — only start is searched.
-      let start = parts.length > 1 && parts[0].endsWith('-') ? parts[1] : parts[0]
-      try {
-        start = decodeURIComponent(start)
-      } catch (e) {
-        // Malformed percent-encoding: match on the raw text
-      }
-      const wrapper = this._findBlockContaining(start)
+      const { prefix, start } = this._parseTextDirective(match[1])
+      const wrapper = this._findBlockContaining(start, prefix)
       if (!wrapper) continue
       // Like hash navigation, a text fragment is explicit user intent.
       this._userClosed.delete(wrapper)
@@ -242,20 +241,65 @@ const ShowMore = {
   },
 
   /**
-   * @param {string} text
-   * @returns {?HTMLElement} First .show-more whose content contains the text
+   * Syntax: text=[prefix-,]start[,end][,-suffix]. We search for start; the
+   * prefix is what tells repeated occurrences apart.
+   * @param {string} value - One directive value, still percent-encoded
+   * @returns {{prefix: string, start: string}}
    */
-  _findBlockContaining(text) {
-    const normalize = (s) => s.toLowerCase().replace(/\s+/g, ' ').trim()
-    const needle = normalize(text)
+  _parseTextDirective(value) {
+    const parts = value.split(',')
+    const hasPrefix = parts.length > 1 && parts[0].endsWith('-')
+    return {
+      prefix: hasPrefix ? this._decode(parts[0].slice(0, -1)) : '',
+      start: this._decode(hasPrefix ? parts[1] : parts[0]),
+    }
+  },
+
+  /** @param {string} text @returns {string} Decoded, or raw when malformed */
+  _decode(text) {
+    try {
+      return decodeURIComponent(text)
+    } catch (e) {
+      return text
+    }
+  },
+
+  /**
+   * @param {string} start - Text to look for
+   * @param {string} [prefix] - Text it must follow, when the fragment has one
+   * @returns {?HTMLElement} The .show-more whose content contains the text
+   */
+  _findBlockContaining(start, prefix = '') {
+    const needle = normalize(start)
     if (!needle) return null
+    const before = normalize(prefix)
+    let firstMatch = null
     for (const wrapper of document.querySelectorAll('.show-more')) {
       const content = wrapper.children[1]
-      if (content && normalize(content.textContent).includes(needle)) {
-        return wrapper
-      }
+      if (!content) continue
+      const haystack = normalize(content.textContent)
+      if (!haystack.includes(needle)) continue
+      if (!before || this._followsPrefix(haystack, before, needle)) return wrapper
+      // The prefix may sit outside the block, the start being its opening
+      // words. Keep this block in case no other satisfies the prefix.
+      firstMatch ??= wrapper
     }
-    return null
+    return firstMatch
+  },
+
+  /**
+   * A prefix is anchored to the start text: only boundary characters may sit
+   * between the two.
+   * @param {string} haystack @param {string} prefix @param {string} needle
+   * @returns {boolean} Whether any occurrence of prefix is followed by needle
+   */
+  _followsPrefix(haystack, prefix, needle) {
+    for (let at = haystack.indexOf(prefix); at !== -1; at = haystack.indexOf(prefix, at + 1)) {
+      let from = at + prefix.length
+      while (from < haystack.length && BOUNDARY.test(haystack[from])) from++
+      if (haystack.startsWith(needle, from)) return true
+    }
+    return false
   },
 
   // Browsers with native text-fragment support strip the ':~:…' directive
