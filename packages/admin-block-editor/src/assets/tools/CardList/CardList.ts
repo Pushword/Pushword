@@ -2,7 +2,7 @@ import './CardList.css'
 import make from '../utils/make'
 import ToolboxIcon from './toolbox-icon.svg?raw'
 import { MarkdownUtils } from '../utils/MarkdownUtils'
-import { MediaUtils } from '../utils/media'
+import { beginMediaPick, MediaUtils } from '../utils/media'
 import { API, BlockToolData } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { Suggest } from '../../../../../admin/src/Resources/assets/suggest.js'
@@ -61,7 +61,7 @@ export default class CardList extends BaseTool {
   declare public data: CardListData
   private itemNodes: CardListItemNodes[] = []
   private itemsContainer?: HTMLElement
-  private mediaPickerMessageHandler: ((event: MessageEvent) => void) | null = null
+  private mediaPick: AbortController | null = null
 
   public static toolbox = {
     title: 'Card List',
@@ -542,16 +542,17 @@ export default class CardList extends BaseTool {
     ) as HTMLButtonElement | null
     if (!actionButton) return
 
-    // Clean up any existing handler before adding a new one
-    this.cleanupMediaPickerHandler()
+    // The registry is shared, so this also drops a pick another block abandoned
+    const pick = beginMediaPick()
+    this.mediaPick = pick
 
-    this.mediaPickerMessageHandler = (event: MessageEvent) => {
+    const messageHandler = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return
       const payload = event.data
       if (!payload || payload.type !== 'pw-media-picker-select') return
       if (payload.fieldId !== selectElement.id) return
 
-      this.cleanupMediaPickerHandler()
+      pick.abort()
 
       const media = payload.media
       if (!media) return
@@ -560,19 +561,12 @@ export default class CardList extends BaseTool {
       this.setItemImage(itemIndex, mediaName)
     }
 
-    window.addEventListener('message', this.mediaPickerMessageHandler)
+    window.addEventListener('message', messageHandler, { signal: pick.signal })
     actionButton.click()
   }
 
-  private cleanupMediaPickerHandler(): void {
-    if (this.mediaPickerMessageHandler) {
-      window.removeEventListener('message', this.mediaPickerMessageHandler)
-      this.mediaPickerMessageHandler = null
-    }
-  }
-
   public destroy(): void {
-    this.cleanupMediaPickerHandler()
+    this.mediaPick?.abort()
   }
 
   private setItemImage(itemIndex: number, mediaName: string): void {

@@ -1,5 +1,22 @@
 import { describe, it, expect } from 'vitest'
-import { MediaUtils } from './media'
+import { beginMediaPick, MediaUtils } from './media'
+
+/**
+ * Image blocks, card lists and quizzes all open the one picker modal through the
+ * one hidden <select>, so the pick registry is shared: whoever opens next owns
+ * the answer, and the opener it displaced must already have stopped listening.
+ */
+describe('beginMediaPick', () => {
+  it('drops what the previous pick left listening, whichever tool opened it', () => {
+    const abandoned = beginMediaPick()
+    expect(abandoned.signal.aborted).toBe(false)
+
+    const picking = beginMediaPick()
+
+    expect(abandoned.signal.aborted).toBe(true)
+    expect(picking.signal.aborted).toBe(false)
+  })
+})
 
 describe('MediaUtils.uploadErrorMessage', () => {
   it('returns the server-provided error from the failure body', async () => {

@@ -3,7 +3,7 @@ import make from '../utils/make'
 import ToolboxIcon from './toolbox-icon.svg?raw'
 import SelectIcon from '../Abstract/icon/folder.svg?raw'
 import UploadIcon from '../Abstract/icon/upload.svg?raw'
-import { MediaUtils } from '../utils/media'
+import { beginMediaPick, MediaUtils } from '../utils/media'
 import { API, BlockToolData } from '@editorjs/editorjs'
 import { BaseTool } from '../Abstract/BaseTool'
 
@@ -97,7 +97,7 @@ export default class Quiz extends BaseTool {
   private modeSelect!: HTMLSelectElement
   private mode: QuizMode = 'quiz'
   private pidSeq = 0
-  private mediaPickerMessageHandler: ((event: MessageEvent) => void) | null = null
+  private mediaPick: AbortController | null = null
 
   /**
    * A chip cycles through 1…W_MAX points. Heavier weights stay reachable from
@@ -770,13 +770,16 @@ export default class Quiz extends BaseTool {
       return
     }
 
-    this.cleanupMediaPickerHandler()
-    this.mediaPickerMessageHandler = (event: MessageEvent): void => {
+    // The registry is shared, so this also drops a pick another block abandoned
+    const pick = beginMediaPick()
+    this.mediaPick = pick
+
+    const messageHandler = (event: MessageEvent): void => {
       if (event.origin !== window.location.origin) return
       const payload = event.data
       if (!payload || payload.type !== 'pw-media-picker-select' || payload.fieldId !== picker.id) return
 
-      this.cleanupMediaPickerHandler()
+      pick.abort()
       const media = payload.media
       if (!media) return
 
@@ -785,7 +788,7 @@ export default class Quiz extends BaseTool {
       onSet(mediaName)
     }
 
-    window.addEventListener('message', this.mediaPickerMessageHandler)
+    window.addEventListener('message', messageHandler, { signal: pick.signal })
     chooseButton.click()
   }
 
@@ -821,15 +824,8 @@ export default class Quiz extends BaseTool {
     file.click()
   }
 
-  private cleanupMediaPickerHandler(): void {
-    if (this.mediaPickerMessageHandler) {
-      window.removeEventListener('message', this.mediaPickerMessageHandler)
-      this.mediaPickerMessageHandler = null
-    }
-  }
-
   public destroy(): void {
-    this.cleanupMediaPickerHandler()
+    this.mediaPick?.abort()
   }
 
   private static val(selector: string, scope: Element): string {

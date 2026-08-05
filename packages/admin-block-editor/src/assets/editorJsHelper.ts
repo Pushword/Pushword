@@ -1,5 +1,6 @@
 // import ajax from '@codexteam/ajax'
 import { EditorModeManager } from './EditorModeManager'
+import { beginMediaPick } from './tools/utils/media'
 
 interface ToolWithCallbacks {
   onFileLoading?: () => void
@@ -87,6 +88,8 @@ export class editorJsHelper {
       return
     }
 
+    const pick = beginMediaPick()
+
     // Listen for postMessage from iframe instead of select change
     const messageHandler = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return
@@ -101,7 +104,7 @@ export class editorJsHelper {
       }
 
       // Remove listener after receiving message
-      window.removeEventListener('message', messageHandler)
+      pick.abort()
 
       // Format response to match expected format from /admin/media/block
       // The 'media' field should be the fileName (used as identifier)
@@ -123,7 +126,7 @@ export class editorJsHelper {
     }
 
     // Register message listener before opening modal
-    window.addEventListener('message', messageHandler, { once: false })
+    window.addEventListener('message', messageHandler, { signal: pick.signal })
 
     // Open the media picker modal (iframe)
     actionButton.click()
@@ -158,6 +161,8 @@ export class editorJsHelper {
       return
     }
 
+    const pick = beginMediaPick()
+
     // Listen for multi-select postMessage
     const messageHandler = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return
@@ -167,7 +172,7 @@ export class editorJsHelper {
       const { fieldId, items } = payload
       if (!fieldId || !items || fieldId !== selectElement.id) return
 
-      window.removeEventListener('message', messageHandler)
+      pick.abort()
 
       const mappedItems = items.map((media: any) => ({
         media: media.fileName || String(media.id),
@@ -178,7 +183,7 @@ export class editorJsHelper {
       Tool.onMultiUpload(mappedItems)
     }
 
-    window.addEventListener('message', messageHandler)
+    window.addEventListener('message', messageHandler, { signal: pick.signal })
 
     // Temporarily inject pwMediaPickerMulti=1 into the base URL so the
     // existing "choose" button opens the picker in multi-select mode.

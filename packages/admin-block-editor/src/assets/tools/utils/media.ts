@@ -11,6 +11,27 @@ export type MediaData =
       [key: string]: unknown
     }
 
+/** The pick currently waiting for the picker's message, if any. */
+let pendingMediaPick: AbortController | null = null
+
+/**
+ * Opens a media pick, dropping whatever the previous one left listening.
+ *
+ * The admin holds a single picker modal, and every block reaches it through the
+ * same hidden <select>, so only one pick can be in flight — and the message it
+ * answers with carries that shared select's id, not the block's. An opener
+ * registers its `message` listener against the returned signal and aborts the
+ * controller once the pick lands; a pick the editor abandons (modal closed
+ * without choosing) sends nothing, so without this its listener would stay bound
+ * and the next selection would fill the abandoned block too.
+ */
+export function beginMediaPick(): AbortController {
+  pendingMediaPick?.abort()
+  pendingMediaPick = new AbortController()
+
+  return pendingMediaPick
+}
+
 /**
  * Utilitaires pour la gestion des médias
  */
