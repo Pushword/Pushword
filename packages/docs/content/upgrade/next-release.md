@@ -1,5 +1,5 @@
 ---
-title: "the link panel's style options are named in English so they can be translated; parallel static builds stop segfaulting each other's workers"
+title: "the link panel's style options are named in English so they can be translated; the static build's workers drop the opcache file cache that was killing them"
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -50,13 +50,17 @@ untranslated.
 availableDesigns: { Button: 'link-btn', 'Button outline': 'link-btn-outline', Discreet: 'ninja' },
 ```
 
-## The static workers' opcache cache moved under `var/cache/opcache/{host}/w{n}`
+## `pw:static` workers no longer use an opcache file cache
 
-**Affects sites building more than one host with `pw:static`, in parallel.** Both builds
-took `w0`, and concurrent writers to one opcache file cache kill the workers —
-`Worker N failed (exit 139: Segmentation violation)`, no output, build lost. Nothing to
-configure. Reclaim the disk the old layout still holds:
+**Affects every site building with `pw:static` on more than one worker.** The flags that
+kept compiled scripts across worker lives segfault the worker on some PHP builds, losing
+the build (`Worker N failed (exit 139: Segmentation violation)`). Dropped: a fresh pass is
+now ~18% slower and finishes. Nothing to configure — reclaim the disk the cache still
+holds:
 
 ```shell
-rm -rf var/cache/opcache/w*
+rm -rf var/cache/opcache
 ```
+
+[Opting back in by hand](/extension/static-generator#performance), for a PHP that does not
+crash on it.

@@ -443,24 +443,6 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         // %pw.var_dir%, not projectDir/var: under ParaTest that is the per-worker dir, so
         // two suites building at once stop sharing the scratch below.
         $stateDir = $this->varDir;
-        $filesystem = new Filesystem();
-
-        // CLI opcache is per-process, so each worker recompiles the whole
-        // codebase unless compiled scripts persist on disk (~-18% per fresh
-        // worker pass); the flags are inert when the CLI has no opcache
-        // extension. The cache outlives composer update, so timestamp
-        // validation is forced on: a host ini tuning it off would silently keep
-        // serving entries compiled from the pre-update sources.
-        //
-        // Never a shared directory: concurrent processes writing one file cache
-        // segfault, with no output and exit 139 (alt-php 8.4.3, 6 workers of 8
-        // killed every run; per-worker directories, and either flag alone, never
-        // crashed). Hence per worker index — and per host, because the index is
-        // only unique within one build, so two hosts building at once both took
-        // `w0` and were concurrent writers like any other. Each worker still
-        // warms its own cache once and reuses it across builds; only disk is
-        // traded away, one full cache per worker per host built in parallel.
-        $opcacheDir = $stateDir.'/cache/opcache/'.$host;
 
         $processes = [];
 
@@ -469,26 +451,24 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
                 continue;
             }
 
-            // Host-keyed for the same reason, though these corrupt a build rather
-            // than killing it: two hosts generating at once both wrote
+            // Host-keyed, not just indexed: two hosts generating at once both wrote
             // `.static-worker-0.json`, and each parent read back whichever worker
             // saved last.
             $workerScratch = $stateDir.'/.static-worker-'.$host.'-'.$i;
             $stateFile = $workerScratch.'.json';
             $redirectionsFile = $workerScratch.'-redirections.json';
-            $workerOpcacheDir = $opcacheDir.'/w'.$i;
-            $filesystem->mkdir($workerOpcacheDir);
 
+            // No opcache flags. Workers used to be spawned with `opcache.enable=1
+            // opcache.enable_cli=1 opcache.file_cache=<dir>` to keep compiled
+            // scripts across their short lives (~-18% on a fresh pass), and that
+            // combination kills them: `Worker N failed (exit 139: Segmentation
+            // violation)` with no output, losing the build. It was reported first
+            // on alt-php 8.4.3 and answered by giving each worker its own cache
+            // directory; it came back on stock 8.4 and 8.5 with the directories
+            // already unshared, so the sharing was never the whole of it. A build
+            // that finishes beats a build that is 18% faster when it survives.
             $cmd = [
                 'php',
-                // Both switches, not just the CLI one: a host shipping opcache
-                // disabled (`opcache.enable=0`) still loads the extension, so
-                // `enable_cli` alone leaves it inactive — the file cache stays
-                // empty and every worker recompiles from source, silently.
-                '-d', 'opcache.enable=1',
-                '-d', 'opcache.enable_cli=1',
-                '-d', 'opcache.file_cache='.$workerOpcacheDir,
-                '-d', 'opcache.validate_timestamps=1',
                 'bin/console', 'pw:static:worker', $host,
                 '--slugs='.implode(',', $chunk),
                 '--state-file='.$stateFile,

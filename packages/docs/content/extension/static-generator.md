@@ -141,23 +141,20 @@ starts a background pass and returns a URL to poll. See
 
 ### Performance
 
-Hosts with 10+ pages are rendered by parallel worker processes. Each worker
-keeps a compiled-script cache in `var/cache/opcache/{host}/w{n}` (opcache file
-cache) — its first build fills it, every following build reuses it. Nothing to configure;
-the flags are inert if the CLI PHP has no opcache extension. Because the cache
-outlives `composer update`, the workers force `opcache.validate_timestamps=1`: a
-host ini tuning it off would silently keep serving scripts compiled from the
-pre-update sources.
+Hosts with 10+ pages are rendered by parallel worker processes. Nothing to
+configure.
 
-The caches are per worker, and per host, rather than shared: concurrent
-processes writing one file cache segfault the workers on some PHP builds, and
-two hosts building at once are concurrent processes like any other. Budget the
-disk accordingly: one full compiled-code cache per worker per host you build in
-parallel (a few hundred MB for a typical app across 8 workers). Deleting the
-directory is always safe — the next build refills it.
+The workers used to be spawned with an opcache file cache
+(`opcache.enable=1 opcache.enable_cli=1 opcache.file_cache=…`) so compiled
+scripts survived their short lives — worth about 18% on a fresh pass. They no
+longer are: that combination segfaults the worker on some PHP builds, and a
+worker killed by a signal takes the build with it
+(`Worker N failed (exit 139: Segmentation violation)`, no output). A build that
+finishes beats a build that is faster when it survives.
 
-The parent `pw:static` process (and any sequential build) can opt into the same
-cache manually — keep the validation flag if your ini disables it:
+The parent `pw:static` process (and any sequential build) can still opt into a
+file cache by hand, if your PHP is not one of the affected builds — keep the
+validation flag, since the cache outlives `composer update`:
 
 ```shell
 php -d opcache.enable_cli=1 -d opcache.file_cache=var/cache/opcache -d opcache.validate_timestamps=1 bin/console pw:static

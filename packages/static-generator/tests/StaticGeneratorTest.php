@@ -2,7 +2,6 @@
 
 namespace Pushword\StaticGenerator;
 
-use Composer\Autoload\ClassLoader;
 use DateTime;
 use DateTimeImmutable;
 use Exception;
@@ -37,7 +36,6 @@ use Pushword\StaticGenerator\Generator\RedirectionHtmlGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
 
@@ -1528,74 +1526,6 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertStringContainsString('success', $output);
     }
 
-    #[Group('serial')]
-    public function testParallelWorkersPopulateAnOpcacheFileCache(): void
-    {
-        self::bootKernel();
-        $this->overrideStaticDir();
-        $this->cleanupPidFiles();
-
-        /** @var string $varDir */
-        $varDir = self::getContainer()->getParameter('pw.var_dir');
-        // Per host as well as per worker: two hosts building at once used to share
-        // `w0`, which is the concurrent-writer case that segfaults the workers.
-        $opcacheDir = $varDir.'/cache/opcache/localhost.dev';
-        new Filesystem()->remove($opcacheDir);
-
-        $application = new Application(self::$kernel); // @phpstan-ignore-line
-        $tester = new CommandTester($application->find('pw:static'));
-        $tester->execute(['host' => 'localhost.dev', '--workers' => 2, '--format' => 'text']);
-        self::assertStringContainsString('success', $tester->getDisplay());
-
-        // One cache per worker, never a shared one: concurrent writers into a
-        // single file cache segfault the workers on some PHP builds.
-        self::assertDirectoryExists($opcacheDir.'/w0');
-
-        // The flags are the worker's, so the precondition is the worker's too.
-        // Reading this process says little: opcache can be loaded here and still
-        // cache nothing in a child — built without file-cache support, or with
-        // the ini locked. Probe a child spawned the way the generator spawns
-        // one, and only hold the workers to what that child proved possible.
-        if (! $this->aChildCanFileCache()) {
-            return;
-        }
-
-        self::assertTrue(
-            $this->holdsAFile($opcacheDir.'/w0'),
-            'A child of this process file-caches, so the workers should have written compiled scripts too.',
-        );
-    }
-
-    /**
-     * Whether a child process, given the flags the workers get, actually writes
-     * compiled scripts to disk. `-r` code is never cached — the required file is
-     * what proves the capability.
-     */
-    private function aChildCanFileCache(): bool
-    {
-        $probeDir = sys_get_temp_dir().'/pushword-opcache-probe-'.getmypid();
-        $filesystem = new Filesystem();
-        $filesystem->remove($probeDir);
-        $filesystem->mkdir($probeDir);
-
-        $subject = (string) new ReflectionClass(ClassLoader::class)->getFileName();
-
-        $probe = new Process([
-            'php',
-            '-d', 'opcache.enable=1',
-            '-d', 'opcache.enable_cli=1',
-            '-d', 'opcache.file_cache='.$probeDir,
-            '-d', 'opcache.validate_timestamps=1',
-            '-r', 'require '.var_export($subject, true).';',
-        ]);
-        $probe->run();
-
-        $cached = $this->holdsAFile($probeDir);
-        $filesystem->remove($probeDir);
-
-        return $cached;
-    }
-
     /**
      * A worker killed by a signal writes nothing before dying, so its exit code
      * is everything the parent gets — reported as a bare number, every crash read
@@ -1631,18 +1561,6 @@ final class StaticGeneratorTest extends KernelTestCase
 
         // Stderr also reaches the operator while the build runs, not only after it.
         self::assertStringContainsString('[W1] PHP Fatal error: boom', $output->fetch());
-    }
-
-    private function holdsAFile(string $dir): bool
-    {
-        /** @var SplFileInfo $file */
-        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) {
-            if ($file->isFile()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     public function testStateMergeFromFile(): void
