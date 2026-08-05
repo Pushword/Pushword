@@ -1,0 +1,20 @@
+{# @var level string   lowercased label from `> [!label]` #}
+{# @var title string   the title written after the label, empty when none #}
+{# @var content string the notice body, already rendered #}
+{# @var id string      anchor from an `{#anchor}` line above the notice, empty when none #}
+{# @var class string   classes from a `{.class}` line above the notice, empty when none #}
+
+{% set palettes = {
+  note: 'border-blue-500 bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100',
+  tip: 'border-green-600 bg-green-50 text-green-900 dark:bg-green-950 dark:text-green-100',
+  important: 'border-purple-500 bg-purple-50 text-purple-900 dark:bg-purple-950 dark:text-purple-100',
+  warning: 'border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-100',
+  caution: 'border-red-500 bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-100',
+} %}
+
+{% set palette = palettes[level]|default('border-gray-400 bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100') %}
+
+<aside{% if id %} id="{{ id }}"{% endif %} class="notice notice-{{ level }} my-6 rounded-lg border-l-4 p-4 {{ palette }}{% if class %} {{ class }}{% endif %}">
+  <p class="notice-title mt-0 mb-2 font-bold">{{ title|default(level|capitalize) }}</p>
+  <div class="notice-content [&>:first-child]:mt-0 [&>:last-child]:mb-0">{{ content|raw }}</div>
+</aside>

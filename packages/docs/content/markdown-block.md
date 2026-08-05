@@ -53,6 +53,32 @@ The block editor shows the pair as **Group** markers carrying the anchor and the
 classes; the markers are inserted and deleted together. It only claims a `<div>`
 line whose attributes are `id` and/or `class` — anything richer stays a Raw block.
 
+## Notices
+
+A blockquote whose first line is a `> [!label]` marker renders as a notice — the
+syntax [DocFX](https://dotnet.github.io/docfx/) introduced and GitHub adopted, with
+Obsidian's tolerance: the label is case-insensitive, and a title may follow it on the
+same line.
+
+```markdown
+> [!warning] Version
+>
+> Last updated: August 2026. Corrections welcome via [GitHub issues](/contribute).
+```
+
+- **The label is free.** `note`, `tip`, `important`, `warning` and `caution` ship with
+  a palette; any other label (`sponsored`, `deprecated`…) renders neutral and is yours
+  to style — the wrapper always carries `notice notice-<label>`.
+- **The title is optional.** Without one, the label is displayed instead (`[!note]` →
+  "Note"), so the level never rests on colour alone.
+- **The body is ordinary Markdown** — paragraphs, lists, links, images.
+- An `{#anchor .class}` line placed above the notice applies to it, as for any block.
+- Rendering goes through `/component/notice.html.twig`: override it in your theme to
+  change the palette, add icons, or drop the wrapper entirely.
+
+A blockquote that does not open with a marker stays a plain blockquote, so quoting
+someone is unaffected.
+
 ## Tables
 
 Standard GFM table syntax is supported. You can merge cells horizontally using `->` as the cell content — it merges into the preceding cell via `colspan`.

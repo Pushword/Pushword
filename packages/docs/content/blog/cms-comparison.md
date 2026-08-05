@@ -714,19 +714,14 @@ Before choosing, evaluate your project across these dimensions:
 - **Statamic**: [statamic.com](https://statamic.com)
 - **Sulu**: [sulu.io](https://sulu.io)
 
-<div class="not-prose p-4 mb-8 bg-blue-50 dark:bg-blue-900/30 rounded-lg shadow">
-  <p class="text-sm text-blue-800 dark:text-blue-200">
-    <strong>About this comparison</strong><br>
-    This page is written by the Pushword Original Author (and Claude). I strive for objectivity, but readers should be aware of my perspective. All claims are based on official documentation and hands-on testing as of June 2026. We acknowledge our bias toward modern PHP architecture and provide this comparison to help teams evaluate CMSs based on their specific needs, not just ecosystem size.<br>
-    <span class="text-xs">Found an error? <a href="https://github.com/Pushword/Pushword/issues" class="underline">Let us know on GitHub</a>. We welcome corrections and improvements to this analysis.</span>
-  </p>
-</div>
+> [!note] About this comparison
+>
+> This page is written by the Pushword Original Author (and Claude). I strive for objectivity, but readers should be aware of my perspective. All claims are based on official documentation and hands-on testing as of June 2026. We acknowledge our bias toward modern PHP architecture and provide this comparison to help teams evaluate CMSs based on their specific needs, not just ecosystem size.
+>
+> Found an error? [Let us know on GitHub](https://github.com/Pushword/Pushword/issues). We welcome corrections and improvements to this analysis.
 
 ---
 
-<div class="not-prose p-4 mt-8 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
-  <p class="text-sm text-amber-800 dark:text-amber-200">
-    <strong>Version</strong><br>
-    Last updated: August 2026. Reflects WordPress 7.0 (April 2026) and its PHP 8.3+ requirement, Statamic's May 2026 price revision, Sulu 3.0 (May 2026), and Pushword's publication hold, versioning and REST API. Features and pricing change often — corrections welcome via GitHub issues. See also our <a href="/blog/astro-vs-pushword" class="underline">Astro vs Pushword</a> comparison.
-  </p>
-</div>
+> [!warning] Version
+>
+> Last updated: August 2026. Reflects WordPress 7.0 (April 2026) and its PHP 8.3+ requirement, Statamic's May 2026 price revision, Sulu 3.0 (May 2026), and Pushword's publication hold, versioning and REST API. Features and pricing change often — corrections welcome via GitHub issues. See also our [Astro vs Pushword](/blog/astro-vs-pushword) comparison.

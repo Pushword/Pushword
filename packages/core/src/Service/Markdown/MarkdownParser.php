@@ -14,12 +14,14 @@ use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Service\Markdown\Extension\NoticeExtension;
 use Pushword\Core\Service\Markdown\Extension\PushwordExtension;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Throwable;
 use Twig\Attribute\AsTwigFilter;
+use Twig\Environment as Twig;
 
 class MarkdownParser
 {
@@ -27,7 +29,7 @@ class MarkdownParser
      * Bump when the converter configuration or extensions change in a way that
      * alters output, to invalidate previously cached fragments.
      */
-    private const int CACHE_VERSION = 6;
+    private const int CACHE_VERSION = 7;
 
     private readonly MarkdownConverter $converter;
 
@@ -41,6 +43,7 @@ class MarkdownParser
         LinkProvider $linkProvider,
         MediaExtension $mediaExtension,
         SiteRegistry $apps,
+        Twig $twig,
         #[Autowire(service: 'cache.pushword_markdown')]
         private readonly ?CacheItemPoolInterface $cache = null,
         #[Autowire(service: 'cache.app')]
@@ -60,6 +63,7 @@ class MarkdownParser
         $environment->addExtension(new TableExtension());
         $environment->addExtension(new TaskListExtension());
         $environment->addExtension($this->pushwordExtension);
+        $environment->addExtension(new NoticeExtension($twig, $apps));
 
         $this->converter = new MarkdownConverter($environment);
     }

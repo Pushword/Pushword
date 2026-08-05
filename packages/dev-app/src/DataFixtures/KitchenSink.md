@@ -22,6 +22,22 @@ See **bold** _italic_ `inline code` #[link](/kitchen-sink){target="_blank"} <mar
 > PHP ecosystem is undeniably awesome! With its extensive library of frameworks like Laravel and Symfony, coupled with its flexibility and scalability, PHP empowers developers to build robust and dynamic web applications effortlessly. Its active community constantly contributes to its evolution, ensuring it stays relevant and cutting-edge. Whether it's for small projects or enterprise-level applications, PHP remains a top choice for developers worldwide. In short, PHP rocks!
 > — <cite>Author</cite>
 
+## Notices
+
+> [!note] With a title
+>
+> A notice is a blockquote opened by a `> [!label]` marker. The body is ordinary
+> markdown — **bold**, _italic_, a [link](/kitchen-sink).
+
+> [!warning]
+>
+> Without a title, the label is displayed instead.
+
+> [!sponsored] Unknown label
+>
+> `note`, `tip`, `important`, `warning` and `caution` ship with a palette; any other
+> label renders neutral and carries `notice-sponsored` for the theme to style.
+
 ## Images et Galleries
 
 ### Simple Image

@@ -12,6 +12,7 @@ use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\CacheItem;
+use Twig\Environment as Twig;
 
 /**
  * Guards the markdown render cache: it must be transparent (identical output)
@@ -21,7 +22,7 @@ use Symfony\Component\Cache\CacheItem;
 final class MarkdownParserCacheTest extends KernelTestCase
 {
     /** Mirrors MarkdownParser::CACHE_VERSION, which is bumped whenever render output changes. */
-    private const string PARSER_VERSION = '6';
+    private const string PARSER_VERSION = '7';
 
     private function buildParser(ArrayAdapter $pool, int $mediaVersion = 0): MarkdownParser
     {
@@ -39,6 +40,7 @@ final class MarkdownParserCacheTest extends KernelTestCase
             $container->get(LinkProvider::class),
             $container->get(MediaExtension::class),
             $container->get(SiteRegistry::class),
+            $container->get(Twig::class),
             $pool,
             $versionCache,
         );
