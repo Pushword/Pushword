@@ -57,10 +57,14 @@ final readonly class LinkImprover implements FilterInterface
             return $content;
         }
 
-        $currentUrl = InternalLinkSources::url($page->slug);
+        $ignoredUrls = [InternalLinkSources::url($page->slug)]; // a page never links itself
+        if (true === $site->get('link_improver_ignore_homepage')) {
+            $ignoredUrls[] = InternalLinkSources::url('homepage');
+        }
+
         $rows = array_values(array_filter(
             $this->sources->getRows($page->host, $page->locale),
-            static fn (array $row): bool => $row[0] !== $currentUrl,
+            static fn (array $row): bool => ! \in_array($row[0], $ignoredUrls, true),
         ));
         if ([] === $rows) {
             return $content;

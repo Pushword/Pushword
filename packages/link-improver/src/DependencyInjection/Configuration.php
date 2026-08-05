@@ -10,6 +10,7 @@ class Configuration implements ConfigurationInterface
     final public const array DEFAULT_APP_FALLBACK = [
         'link_improver',
         'link_improver_max_links',
+        'link_improver_ignore_homepage',
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder
@@ -27,6 +28,10 @@ class Configuration implements ConfigurationInterface
             ->floatNode('link_improver_max_links')
               ->defaultValue(0.02)
               ->info('Cap on the TOTAL of in-content links, existing ones included. Below 1 it is a ratio of the word count (0.02 = one link per 50 words); 1 or more is an absolute count.')
+            ->end()
+            ->booleanNode('link_improver_ignore_homepage')
+              ->defaultFalse()
+              ->info('Never link the homepage. Its name is usually the brand, mentioned on nearly every page, and the header already links it.')
             ->end()
         ->end();
 

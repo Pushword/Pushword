@@ -11,6 +11,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkCollectorService;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\LinkImprover\AddedLinksRegistry;
+use Pushword\LinkImprover\InternalLinkSources;
 use Pushword\LinkImprover\LinkImprover;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -80,6 +81,11 @@ final class LinkImproverRenderTest extends KernelTestCase
 
     private function render(string $mainContent, string $slug = 'linkimp-context'): string
     {
+        // localhost.dev caches statically, so persisting a fixture renders it —
+        // and memoizes the keyword map as it stood then. A real request starts
+        // from a fresh map; so does every render here.
+        self::getContainer()->get(InternalLinkSources::class)->reset();
+
         $page = new Page();
         $page->host = self::HOST;
         $page->locale = 'en';
@@ -180,6 +186,21 @@ final class LinkImproverRenderTest extends KernelTestCase
         self::assertStringContainsString('<a href="/" data-auto-link>Zorglub Home</a>', $rendered);
         // The root carries no slug to register for excludeAlreadyLinked.
         self::assertFalse(self::getContainer()->get(LinkCollectorService::class)->isSlugRegistered(''));
+    }
+
+    public function testTheHomepageIsSparedWhenTheAppAsksForIt(): void
+    {
+        $this->enable();
+        self::getContainer()->get(SiteRegistry::class)->get(self::HOST)
+            ->setCustomProperty('link_improver_ignore_homepage', true);
+        $this->nameTheHomepage('Zorglub Home');
+        $this->createTarget();
+
+        $rendered = $this->render('Everything starts at the Zorglub Home, says Kiwano Melano.');
+
+        // The brand keeps its mention, the topical target still gets its link.
+        self::assertStringNotContainsString('href="/"', $rendered);
+        self::assertStringContainsString('<a href="/linkimp-kiwano" data-auto-link>Kiwano Melano</a>', $rendered);
     }
 
     public function testAWildcardNameMatchesItsVariants(): void
