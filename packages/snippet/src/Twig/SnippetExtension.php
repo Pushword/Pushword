@@ -12,6 +12,7 @@ use Pushword\Snippet\Registry\SnippetRegistry;
 use Pushword\Snippet\Repository\SnippetRepository;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment;
+use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
@@ -107,9 +108,12 @@ final readonly class SnippetExtension
                 'snippet' => $snippet,
                 'params' => $params,
             ] + $params);
-        } catch (RuntimeError|SyntaxError $twigError) {
+        } catch (LoaderError|RuntimeError|SyntaxError $twigError) {
             // A malformed snippet must not 500 every page that embeds it: degrade to
             // an invisible marker (scanner reports it, editors see a badge).
+            // LoaderError included: a snippet naming a template — an `{% include %}`, or
+            // `pages_list(view: 'foo')` resolving a bare name by convention — hits this
+            // when the template is renamed, or when the snippet reaches a host without it.
             $this->logger->warning('Twig rendering failed in snippet "{slug}": {message}', [
                 'slug' => $snippet->slug,
                 'message' => $twigError->getRawMessage(),

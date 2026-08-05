@@ -8,6 +8,7 @@ use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\EditorNotice\TwigErrorMarker;
 use Twig\Environment;
+use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
@@ -38,9 +39,12 @@ class Twig implements FilterInterface
 
         try {
             return $this->twig->createTemplate($string)->render(['page' => $page]);
-        } catch (RuntimeError|SyntaxError $twigError) {
+        } catch (LoaderError|RuntimeError|SyntaxError $twigError) {
             // A malformed `{{ … }}` typed by an editor must not 500 the whole page.
             // Degrade to an invisible marker (scanner reports it, editors see a badge).
+            // LoaderError included: `pages_list(view: 'foo')` names a template by
+            // convention, so a renamed variant — or a page flat-synced to a host that
+            // lacks it — reaches here as a missing template, not as a syntax error.
             $this->logger->warning('Twig rendering failed in page content: {message}', [
                 'message' => $twigError->getRawMessage(),
                 'slug' => $page->slug,

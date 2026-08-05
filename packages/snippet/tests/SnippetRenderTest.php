@@ -122,6 +122,38 @@ final class SnippetRenderTest extends KernelTestCase
         $em->flush();
     }
 
+    /**
+     * A snippet naming a template it cannot load — renamed, or never present on the host
+     * the snippet reached — must degrade like a malformed one, not 500 every page that
+     * embeds it.
+     */
+    public function testSnippetNamingAMissingTemplateDegradesToAMarkerInsteadOfThrowing(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+
+        $page = $em->getRepository(Page::class)->findOneBy([]);
+        self::assertInstanceOf(Page::class, $page);
+        $container->get(SiteRegistry::class)->setCurrentPage($page);
+
+        $slug = 'missing-template-'.uniqid();
+        $snippet = new Snippet();
+        $snippet->host = '';
+        $snippet->slug = $slug;
+        $snippet->name = 'Missing template';
+        $snippet->content = "{% include '@Pushword/component/pages_list_gone.html.twig' %}";
+
+        $em->persist($snippet);
+        $em->flush();
+
+        $html = $container->get(SnippetExtension::class)->renderSnippet($slug);
+        self::assertStringContainsString('pushword:twig-error', $html);
+
+        $em->remove($snippet);
+        $em->flush();
+    }
+
     public function testHostSpecificSnippetOverridesGlobalOne(): void
     {
         self::bootKernel();
