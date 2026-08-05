@@ -128,7 +128,7 @@ function offsetsOf(editor) {
  * read again after executeEdits.
  */
 function apply(editor, result) {
-  if (result === null || result === undefined) return
+  if (result === null) return
 
   const model = editor.getModel()
   editor.executeEdits(
@@ -313,8 +313,8 @@ function wirePaste(editor, signal) {
 /**
  * Builds the toolbar and status bar around a markdown editor and binds the
  * shortcuts. Returns the two elements so the caller can place them, plus the
- * signal every listener outside the editor is registered against — disposing the
- * editor does not reach those.
+ * controller every listener outside the editor is registered against — disposing
+ * the editor does not reach those.
  *
  * @param {typeof import('monaco-editor').IStandaloneCodeEditor} editor
  * @param {HTMLElement} wrapper   element carrying the fullscreen class
@@ -339,10 +339,5 @@ export function installMarkdownChrome(editor, wrapper, onResize) {
   wireEnter(editor)
   wirePaste(editor, controller.signal)
 
-  return {
-    toolbar,
-    status: buildStatus(editor),
-    signal: controller.signal,
-    dispose: () => controller.abort(),
-  }
+  return { toolbar, status: buildStatus(editor), controller }
 }

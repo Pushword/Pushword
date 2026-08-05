@@ -142,8 +142,24 @@ describe('toggleLinePrefix', () => {
     expect(applyEdits('  un', toggleLinePrefix('  un', 3, 3, 'ul'))).toBe('  - un')
   })
 
+  it('renumbers nothing on the way out of an ordered list', () => {
+    expect(
+      applyEdits('1. un\n2. deux', toggleLinePrefix('1. un\n2. deux', 0, 13, 'ol')),
+    ).toBe('un\ndeux')
+  })
+
   it('quotes in front of a list marker rather than replacing it', () => {
     expect(applyEdits('- un', toggleLinePrefix('- un', 2, 2, 'quote'))).toBe('> - un')
+  })
+
+  it('unquotes without touching the list marker underneath', () => {
+    expect(applyEdits('> - un', toggleLinePrefix('> - un', 4, 4, 'quote'))).toBe('- un')
+  })
+
+  it('adds the marker when only some of the selected lines have one', () => {
+    expect(applyEdits('- un\ndeux', toggleLinePrefix('- un\ndeux', 0, 9, 'ul'))).toBe(
+      '- un\n- deux',
+    )
   })
 
   it('skips blank lines inside a multi-line selection', () => {
@@ -176,11 +192,22 @@ describe('toggleTask', () => {
     expect(applyEdits('- [ ] a', toggleTask('- [ ] a', 6, 6))).toBe('- [x] a')
     expect(applyEdits('- [x] a', toggleTask('- [x] a', 6, 6))).toBe('- [ ] a')
   })
+
+  // Each line decides on its own: a mixed selection is not forced one way.
+  it('flips every selected line for what it is', () => {
+    expect(
+      applyEdits('- [ ] a\n- [x] b\nc', toggleTask('- [ ] a\n- [x] b\nc', 0, 17)),
+    ).toBe('- [x] a\n- [ ] b\n- [ ] c')
+  })
 })
 
 describe('toggleCode', () => {
   it('uses backticks on one line', () => {
     expect(render('run it', toggleCode('run it', 4, 6))).toBe('run `[it]`')
+  })
+
+  it('takes the word under the cursor when nothing is selected', () => {
+    expect(render('run it', toggleCode('run it', 5, 5))).toBe('run `[it]`')
   })
 
   it('fences a multi-line selection', () => {
@@ -195,6 +222,10 @@ describe('toggleCode', () => {
 describe('links', () => {
   it('parks the caret inside the parentheses', () => {
     expect(render('voir ici', insertLink('voir ici', 5, 8))).toBe('voir [ici](|)')
+  })
+
+  it('leaves an empty pair to fill in when nothing is selected', () => {
+    expect(render('voir ', insertLink('voir ', 5, 5))).toBe('voir [](|)')
   })
 
   it('selects the image placeholder', () => {
@@ -223,6 +254,11 @@ describe('links', () => {
   it('leaves the paste alone when it is not a URL', () => {
     expect(linkifyPaste('voir ici', 5, 8, 'du texte')).toBeNull()
   })
+
+  // A link label cannot span a line break, so replacing is the honest outcome.
+  it('leaves the paste alone over a multi-line selection', () => {
+    expect(linkifyPaste('un\ndeux', 0, 7, 'https://example.com')).toBeNull()
+  })
 })
 
 describe('computeEnter', () => {
@@ -244,6 +280,12 @@ describe('computeEnter', () => {
 
   it('clears an empty item instead of adding one more', () => {
     expect(render('- un\n- ', computeEnter('- un\n- ', 7))).toBe('- un\n|')
+  })
+
+  it('clears an empty task the same way, box included', () => {
+    expect(render('- [x] un\n- [ ] ', computeEnter('- [x] un\n- [ ] ', 15))).toBe(
+      '- [x] un\n|',
+    )
   })
 
   it('carries a blockquote over', () => {

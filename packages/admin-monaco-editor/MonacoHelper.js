@@ -145,26 +145,18 @@ export default class MonacoHelper {
       ...MonacoHelper.markdownSettings,
     })
 
-    if (textarea.hasAttribute('readonly')) {
-      editor.updateOptions({ readOnly: true })
-    }
-
     const monacoHelperInstance = new MonacoHelper(editor)
     const resize = () => monacoHelperInstance.updateHeight(host, minHeight, maxHeight)
 
-    const { toolbar, status, signal, dispose } = installMarkdownChrome(
-      editor,
-      wrapper,
-      resize,
-    )
+    const { toolbar, status, controller } = installMarkdownChrome(editor, wrapper, resize)
     wrapper.prepend(toolbar)
     wrapper.append(status)
 
     editor.onDidContentSizeChange(resize)
-    window.addEventListener('resize', resize, { signal })
+    window.addEventListener('resize', resize, { signal: controller.signal })
     resize()
 
-    MonacoHelper.bindTextarea(editor, textarea, [wrapper], dispose)
+    MonacoHelper.bindTextarea(editor, textarea, [wrapper], () => controller.abort())
 
     return editor
   }
@@ -173,7 +165,7 @@ export default class MonacoHelper {
    * @param {typeof import('monaco-editor').IStandaloneCodeEditor} editor
    * @param {HTMLTextAreaElement} textarea
    * @param {HTMLElement[]} nodes elements to drop when the editor goes away
-   * @param {() => void} [dispose] releases listeners registered outside the editor
+   * @param {() => void} dispose releases listeners registered outside the editor
    */
   static bindTextarea(editor, textarea, nodes, dispose) {
     editor.onDidChangeModelContent(() => {
@@ -200,7 +192,7 @@ export default class MonacoHelper {
     const bound = textarea.pwMonaco
     if (undefined === bound) return
 
-    bound.dispose?.()
+    bound.dispose()
     bound.editor.dispose()
     for (const node of bound.nodes) node.remove()
 

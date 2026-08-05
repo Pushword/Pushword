@@ -192,7 +192,7 @@ function blockResult(text, blockStart, blockEnd, lines, nextLines, start, end) {
 export function toggleLinePrefix(text, start, end, kind) {
   const [blockStart, blockEnd] = selectedLinesRange(text, start, end)
   const lines = text.slice(blockStart, blockEnd).split('\n')
-  const pattern = kind === 'quote' ? QUOTE : kind === 'ol' ? OL : UL
+  const pattern = { ul: UL, ol: OL, quote: QUOTE }[kind]
   const filled = lines.filter((line) => line.trim() !== '')
   const remove = filled.length > 0 && filled.every((line) => pattern.test(line))
 
@@ -292,6 +292,12 @@ export function linkifyPaste(text, start, end, pasted) {
   }
 }
 
+function insertion(offset, text) {
+  const caret = offset + text.length
+
+  return { edits: [{ start: offset, end: offset, text }], selection: [caret, caret] }
+}
+
 /**
  * What Enter should do inside a list or a blockquote. Returns null when Monaco's
  * own handling is right.
@@ -328,10 +334,4 @@ export function computeEnter(text, offset) {
     offset,
     `\n${indent}${nextMarker}${space}${checkbox === undefined ? '' : '[ ] '}`,
   )
-}
-
-function insertion(offset, text) {
-  const caret = offset + text.length
-
-  return { edits: [{ start: offset, end: offset, text }], selection: [caret, caret] }
 }
