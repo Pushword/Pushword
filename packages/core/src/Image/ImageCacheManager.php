@@ -97,12 +97,8 @@ final class ImageCacheManager
     public function getDimensions(Media|string $media): Dimensions
     {
         $path = $this->getFilterPath($media, 'xs');
-        $size = @getimagesize($path);
-
-        if (false === $size) {
-            $source = $this->mediaStorage->getLocalPath($this->fileNameOf($media));
-            $size = @getimagesize($source);
-        }
+        $size = @getimagesize($path)
+            ?: @getimagesize($this->mediaStorage->getLocalPath($this->fileNameOf($media)));
 
         if (false === $size) {
             throw new Exception('`'.$path.'` not found');

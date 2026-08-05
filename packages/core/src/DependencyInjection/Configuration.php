@@ -165,7 +165,7 @@ final class Configuration implements ConfigurationInterface
           ->scalarNode('media_cache_dir')
           ->defaultValue('%pw.public_dir%/%pw.public_media_dir%')
           ->cannotBeEmpty()
-          ->info('Where derivatives are written: image variants, the og/ previews and the symlinks to originals. Serving them as static files means leaving this under public_dir; a miss falls back to the media-cache route either way. Overridden per worker in tests.')
+          ->info('Where derivatives are written: image variants, og/ previews, symlinks to originals. Keep it under public_dir to have them served as static files; a miss is served by the media-cache route either way. Overridden per worker in tests.')
           ->end()
           ->scalarNode('database_url')
           ->defaultValue('sqlite:///%kernel.project_dir%/var/app.db')

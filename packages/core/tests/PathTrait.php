@@ -12,26 +12,27 @@ trait PathTrait
 
     private string $publicMediaDir = 'media';
 
-    private function getMediaDir(): string
+    /**
+     * Both dirs are per worker, and the bootstrap is the one that decides where:
+     * read what it exported rather than rebuilding its layout here. The fallbacks
+     * are the defaults it uses when a run has no id.
+     */
+    private function testDir(string $variable, string $default): string
     {
-        $runId = \is_string($_ENV['TEST_RUN_ID'] ?? null) ? $_ENV['TEST_RUN_ID'] : (\is_string($_SERVER['TEST_RUN_ID'] ?? null) ? $_SERVER['TEST_RUN_ID'] : '');
-        if ('' !== $runId) {
-            return sys_get_temp_dir().'/com.github.pushword.pushword/tests/'.$runId.'/media';
-        }
+        $dir = getenv($variable);
 
-        return __DIR__.'/../../dev-app/media';
+        return \is_string($dir) && '' !== $dir ? $dir : $default;
     }
 
-    /**
-     * Where derivatives are written — per worker under the run dir, so nothing lands
-     * in the dev-app's own public/media. The bootstrap exports it; falling back to
-     * the default layout keeps a kernel-less unit test working.
-     */
+    private function getMediaDir(): string
+    {
+        return $this->testDir('PUSHWORD_TEST_MEDIA_DIR', $this->projectDir.'/media');
+    }
+
+    /** Where derivatives are written, so nothing lands in the dev-app's own public/media. */
     private function getMediaCacheDir(): string
     {
-        $dir = getenv('PUSHWORD_TEST_MEDIA_CACHE_DIR');
-
-        return \is_string($dir) && '' !== $dir ? $dir : $this->publicDir.'/'.$this->publicMediaDir;
+        return $this->testDir('PUSHWORD_TEST_MEDIA_CACHE_DIR', $this->publicDir.'/'.$this->publicMediaDir);
     }
 
     protected function ensureMediaFileExists(string $fileName = 'piedweb-logo.png'): void
