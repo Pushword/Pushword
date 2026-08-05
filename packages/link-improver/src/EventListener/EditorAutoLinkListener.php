@@ -82,7 +82,7 @@ final readonly class EditorAutoLinkListener
             '/<a\b[^>]*\b'.preg_quote(LinkImprover::ADDED_LINK_ATTRIBUTE, '/').'\b[^>]*>/i',
             static fn (array $matches): string => str_contains(strtolower($matches[0]), 'title=')
                 ? $matches[0]
-                : substr_replace($matches[0], ' title="'.$title.'"', 2, 0),
+                : '<a title="'.$title.'"'.substr($matches[0], \strlen('<a')),
             $html,
         ) ?? $html;
     }

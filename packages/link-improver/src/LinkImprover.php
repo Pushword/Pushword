@@ -71,8 +71,7 @@ final readonly class LinkImprover implements FilterInterface
         $existingLinks = \count($engine->getExistingLinks());
         $this->indexNormalizedExistingLinks($engine, $site->getStr('base_url'));
 
-        $maxLinks = $site->get('link_improver_max_links');
-        $maxLinks = \is_numeric($maxLinks) ? (float) $maxLinks : Configuration::DEFAULT_MAX_LINKS;
+        $maxLinks = self::maxLinks($site->get('link_improver_max_links'));
 
         $content = $engine->improve($linksManager, $maxLinks, self::ADDED_LINK_ATTRIBUTE);
 
@@ -80,6 +79,12 @@ final readonly class LinkImprover implements FilterInterface
         $this->registerAddedLinks($engine->getAddedLinks(), $page);
 
         return $content;
+    }
+
+    /** The app's setting, or the default when it is unset or not a number. */
+    public static function maxLinks(mixed $configured): float
+    {
+        return \is_numeric($configured) ? (float) $configured : Configuration::DEFAULT_MAX_LINKS;
     }
 
     /**

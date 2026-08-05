@@ -171,6 +171,51 @@ final class LinkImproverPageControllerTest extends AbstractAdminTestClass
         self::assertStringContainsString('horned melon', $content);
     }
 
+    /** The default cap is a ratio of the word count, and must not read as a fixed count. */
+    public function testTheDefaultCapIsReportedAsARatio(): void
+    {
+        $client = $this->loginAndHold();
+        $this->enableWithDefaultCap();
+
+        $this->createPage('linkimppanel-kiwano', 'Kiwano Melano', 'The target page.');
+        $page = $this->createPage('linkimppanel-ratio', 'Ratio', 'Some words to measure a ratio against.');
+
+        $content = $this->open($client, $page);
+
+        self::assertStringContainsString('Cap:', $content);
+        self::assertStringNotContainsString('fixed count', $content);
+    }
+
+    /**
+     * A page whose host offers no keyword at all never reaches the engine, so it
+     * has no numbers to show — that is a different answer from "nothing matched".
+     */
+    public function testItTellsTheTargetlessCaseApartFromTheEmptyOne(): void
+    {
+        $client = $this->loginAndHold();
+        $this->enable();
+
+        $page = $this->createPage('linkimppanel-alone', 'Alone', 'A page with no named neighbour.');
+
+        $content = $this->open($client, $page);
+
+        self::assertStringContainsString('offers a keyword to link to', $content);
+        self::assertStringNotContainsString('Cap:', $content);
+    }
+
+    public function testItSaysWhenThePageIsExcludedFromBeingATarget(): void
+    {
+        $client = $this->loginAndHold();
+        $this->enable();
+        $this->ignoreUrls(['/linkimppanel-ignored']);
+
+        $page = $this->createPage('linkimppanel-ignored', 'Ignored Page', 'The excluded page.');
+
+        $content = $this->open($client, $page);
+
+        self::assertStringContainsString('link_improver_ignored_urls', $content);
+    }
+
     public function testAnUnknownPageIs404(): void
     {
         $client = $this->loginAndHold();

@@ -9,8 +9,8 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\LinkImprover\AddedLinksRegistry;
-use Pushword\LinkImprover\DependencyInjection\Configuration;
 use Pushword\LinkImprover\InternalLinkSources;
+use Pushword\LinkImprover\LinkImprover;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -69,10 +69,9 @@ final class LinkImproverPageController extends AbstractController
             'ignored' => $ignored,
             'links' => $enabled ? $this->addedLinks->forPage($page) : [],
             'stats' => $enabled ? $this->addedLinks->statsForPage($page) : null,
-            // Same fallback the filter applies, so the panel names the cap the
-            // render actually used rather than the one the app spelled out.
-            'ratio' => (\is_numeric($maxLinks = $site->get('link_improver_max_links'))
-                ? (float) $maxLinks : Configuration::DEFAULT_MAX_LINKS) < 1,
+            // Resolved the way the filter resolves it, so the panel names the cap
+            // the render used rather than the one the app spelled out.
+            'ratio' => LinkImprover::maxLinks($site->get('link_improver_max_links')) < 1,
             'keywords' => InternalLinkSources::keywords($page->name),
         ]);
     }
