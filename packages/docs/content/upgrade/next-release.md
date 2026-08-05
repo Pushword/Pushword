@@ -1,59 +1,29 @@
 ---
-title: 'the Docker account guard and the per-editor unsaved-changes key, described in rc845 but missing from it, are in the entrypoint and the edit form now; a new project installs again'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
 
-**Concerns:** `pushword/admin`, `pushword/core`
+<!--
+The upgrade note for the next release. `.scripts/release` renames this file to
+`upgrade/rc<N>.md`, adds its row to the table in `upgrade.md` and empties it back
+to this scaffold, at the tag.
 
-## rc845 described two fixes it did not ship
+Write here, in the same commit as the change, whenever a release asks something of
+a site that upgrades: a command to run, a config key to set, a template to copy, a
+behaviour that changed under an unchanged call. A change `composer update` fully
+absorbs needs no note.
 
-**Affects sites reading the [rc845 note](/upgrade/rc845) on rc845, rc846 or rc847.** Two
-of its sections describe behaviour whose code was not in the tag. The notes were right
-about what the fix is; they were wrong that you already had it. This release carries the
-code, unchanged from what those sections describe — so read them, not this one, for what
-the fixes do.
+- `title:` — the "What changed" cell of the index table. One line, lower case,
+  written from the site's side ("the newsletter form is fetched, and CSRF-protected")
+  rather than the diff's ("refactor NewsletterFormController"). Required as soon as
+  the note has a section; the release stops if it is still empty.
+- `run:` — the command(s) the release expects, without `php bin/console`. Omit the
+  key when there is none. A list runs in the order given.
+- `**Concerns:**` — first line of the body, listing every package a site has to
+  install to be affected. Alphabetical, full composer names, `@pushword/js-helper`
+  last. Add the packages your change touches to the line, keep the others.
+- One `##` section per change, saying what breaks and what to do about it.
 
-- [Docker: check your instance for an `admin@example.tld` you did not
-  create](/upgrade/rc845#docker-check-your-instance-for-an-adminexampletld-you-did-not-create).
-  The entrypoint kept deciding "this database already has an account" from
-  `pw:user:create` failing, so a restored database whose admin is any other address
-  still gained a second `ROLE_SUPER_ADMIN` on the published default credentials. **Audit
-  the accounts of any instance you booted on a restored volume**, exactly as that section
-  says — through rc847, not just through rc844.
-- [Admin: the unsaved-changes copy is one editor's
-  own](/upgrade/rc845#admin-the-unsaved-changes-copy-is-one-editors-own-and-puts-back-only-their-fields).
-  The recovery engine shipped, but nothing wired it up: the form key stayed
-  `pw:unsaved:page:<id>` with no editor id in it, and the dashboard published no
-  `window.pwLogoutPath`, so on rc845 through rc847 a copy was still offered to whoever
-  signed in next on that browser, and signing out still left it there. On a shared
-  machine, **sign out and clear this site's `localStorage`** once before trusting it.
-
-The other section of rc845 that touches the entrypoint — [dropping a `var/cache` built
-elsewhere](/upgrade/rc845#docker-the-entrypoint-drops-a-varcache-built-elsewhere) — was
-in the same uncommitted state and lands here too.
-
-## A new project installs again
-
-**Affects `composer create-project` and `composer update` on rc843 through rc847.** The
-post-install step copies a php-cs-fixer configuration into the project root, and the file
-it copies had been swept up as an editor backup — its name ended in `~`. Both commands
-died on `Failed to copy "vendor/pushword/dev-app/.php-cs-fixer.dist.php~" because file
-does not exist`, after the install had otherwise finished.
-
-The template is now `vendor/pushword/dev-app/php-cs-fixer.dist.php.template`, a name no
-`*~` rule can claim. The post-install runs again on your next `composer update` and picks
-up where it died, so there is no command to run — but it died a third of the way in, and
-these are the steps that never happened on a project installed or updated in that window:
-
-- `.php-cs-fixer.dist.php` was not written, `composer format` was not registered, and
-  `friendsofphp/php-cs-fixer` was not required;
-- **`.gitignore` never got its Pushword block** — `public/assets`, `public/media`,
-  `public/sw.js`, `static/` and `!/var/installer/`, plus the widening of `/var/` to
-  `/var/*`. Check yours before your next commit: a site that has been committing since is
-  carrying its uploaded media and generated assets in git;
-- the Docker setup was never offered, so `pw:docker:init` was left to run by hand.
-
-`composer update` restores all of it. One thing to know before it does, unchanged by this
-release: that copy overwrites, so anything you had edited into `.php-cs-fixer.dist.php`
-is replaced by the template. Keep a diff if you had tuned it.
+Several changes land here between two tags: append to the file, do not replace it.
+-->
