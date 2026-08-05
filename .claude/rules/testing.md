@@ -32,6 +32,20 @@ real bugs.
   benchmarks run. Missing it on the parallel batch cost `composer test` ~16s (the
   59s `RepositoryBenchmarkTest` plus `StaticGeneratorBenchmarkTest`) while CI, which
   passes the flag, skipped them.
+- **A *new* config file does not invalidate the test container cache.** The test kernel
+  keeps a persistent shared container at `/tmp/com.github.pushword.pushword/container-cache/test`
+  so workers reuse one compile. Editing a file it already tracks invalidates it correctly;
+  *adding* one to a glob-imported dir (e.g. a new `config/packages/test/*.php`) does not —
+  the config silently does not apply, and `debug:config` still reports the new value, so
+  it looks applied. `composer console cache:clear` only clears **dev**. After adding a
+  config file, `rm -rf /tmp/com.github.pushword.pushword/container-cache/test`.
+- **A failed DB build gets cached and poisons every later run.** The doctrine commands in
+  `computeDbCacheHash`'s miss path run through `Application::setAutoExit(false)`, so a
+  failure returns a code nobody reads and the empty `test.db` is copied to the cache
+  anyway. Every later run then hits that 0-byte `.sqlite` and fails with
+  `no such table: user` across the whole suite. If you see that, look for a 0-byte file:
+  `find /tmp/com.github.pushword.pushword/test-db-cache -name '*.sqlite' -size 0 -delete`.
+  The usual trigger is a container that does not compile at the moment a rebuild happens.
 - **Agent output breaks status-quo tests.** The suite itself runs with `CLAUDECODE` set,
   so commands using `AgentOutputTrait` auto-switch to JSON. Any test asserting human
   output must pass `'--format' => 'text'`; add a `'--format' => 'agent'` test for the
