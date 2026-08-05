@@ -83,12 +83,24 @@ per worker, so a peer generating or optimising the same file was enough. Any tes
 rendering real media through the image pipeline belongs in the same group.
 
 **A static-generation worker child segfaults — `Worker N failed (exit 139: Segmentation
-violation): no error output`.** Seen 2026-08-05 on the P8.4 shard, taking
-`StaticGeneratorTest::testIncrementalGeneration` down at
-`assertStringContainsString('success', …)` — the run reports every page it handled, then
-dies without a summary. Nothing about that test is wrong; read past the assertion to the
-worker line. A native crash (peak memory was 218 MB, so not the memory limit), so suspect
-the extensions a render child loads — Imagick above all — not the PHP under test.
+violation): no error output`. The one CI failure still open as of 2026-08-05.** It takes
+down whichever `StaticGeneratorTest` case was building (`testIncrementalGeneration`,
+`testIncrementalAfterParallelBuildSkipsUnchangedPages`, …) at
+`assertStringContainsString('success', …)`: the run lists every page it handled, then
+dies with no summary. Nothing about the test is wrong — read past the assertion to the
+worker line, and do not "fix" the assertion.
+
+What is known: 2 of 5 consecutive runs, **always the `P8.4 - N25 - prefer-stable` shard**,
+never on 8.5 and never on the other 8.4 shard. 139 is 128+SIGSEGV. Peak memory was 218 MB,
+so not the memory limit. Never reproduced locally — the machine here runs 8.5.
+
+The lead worth pulling first: `StaticAppGenerator::runParallel()` spawns each child with
+`-d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.file_cache=<per-worker dir> -d
+opcache.validate_timestamps=1`. opcache's file cache is a known segfault surface, those
+flags are a throughput optimisation rather than a correctness requirement, and **a real
+`pw:static` run with workers uses exactly the same ones** — so if this is what it looks
+like, it is a production crash that CI happened to catch, not a test problem. Confirm on a
+PHP 8.4 runner before changing them.
 
 **Worth connecting:** the Loupe `file is not a database` entry above says what damaged the
 index "was never caught in the act", and describes exactly a writer killed mid-checkpoint
