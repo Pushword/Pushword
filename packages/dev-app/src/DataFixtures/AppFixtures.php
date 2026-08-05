@@ -143,41 +143,8 @@ class AppFixtures extends Fixture
 
         $manager->persist($quizPage);
 
-        // Variant pages demo (localhost.dev): a master stay and a partner variant
-        // that consolidates onto it (canonical → master, link rewriting, exclusions).
         if ('localhost.dev' === $this->apps->getMainHost()) {
-            $variantMaster = new Page();
-            $variantMaster->h1 = 'Mountain Lodge — 3-night stay';
-            $variantMaster->title = 'Mountain Lodge — 3-night stay | Variant pages demo';
-            $variantMaster->slug = 'demo-variant-master';
-            $variantMaster->locale = 'en';
-            $variantMaster->host = 'localhost.dev';
-            $variantMaster->createdAt = new DateTime('1 day ago');
-            $variantMaster->updatedAt = new DateTime('1 day ago');
-            $variantMaster->setTags('mountain-lodge');
-            $variantMaster->mainContent = "This is the **master** page for this stay — the one search engines index.\n\n"
-            .'Several partners resell the same stay with their own wording. See '
-            ."[Partner B's version](/demo-variant-partner): it is a **variant** of this page. "
-            .'In the HTML source that link is rewritten to point here (the master), keeping the '
-            .'variant URL on a `data-variant` hook — so crawlers and no-JS visitors consolidate onto the master.';
-
-            $variantPartner = new Page();
-            $variantPartner->h1 = 'Mountain Lodge getaway, curated by Partner B';
-            $variantPartner->title = 'Mountain Lodge getaway — Partner B | Variant pages demo';
-            $variantPartner->slug = 'demo-variant-partner';
-            $variantPartner->locale = 'en';
-            $variantPartner->host = 'localhost.dev';
-            $variantPartner->createdAt = new DateTime('1 day ago');
-            $variantPartner->updatedAt = new DateTime('1 day ago');
-            $variantPartner->setTags('mountain-lodge');
-            $variantPartner->mainContent = "Partner B's own pitch for the **same** stay: different wording, identical product.\n\n"
-            .'This page renders fully on its own URL but its canonical points to '
-            .'[the master](/demo-variant-master), it emits no hreflang, and it is excluded from the '
-            .'sitemap, the internal search and the menus. Use **Promote to master** in the admin to swap roles.';
-            $variantPartner->variantOf = $variantMaster;
-
-            $manager->persist($variantMaster);
-            $manager->persist($variantPartner);
+            $this->loadVariantDemo($manager, 'localhost.dev');
         }
 
         if (\in_array('admin-block-editor.test', $this->apps->getHosts(), true)) {
@@ -208,6 +175,8 @@ class AppFixtures extends Fixture
             $ksBlockPage->host = 'admin-block-editor.test';
 
             $manager->persist($ksBlockPage);
+
+            $this->loadVariantDemo($manager, 'admin-block-editor.test');
         }
 
         $redirectionPage = new Page();
@@ -309,6 +278,50 @@ class AppFixtures extends Fixture
         $this->loadHorizontalScrollDemo($manager, $media, $scrollerParents);
         $this->loadRepurposeDemo($manager);
         $this->loadNewsletterDemo($manager);
+    }
+
+    /**
+     * A master stay and a partner variant that consolidates onto it: canonical → master,
+     * the link to the variant rewritten to the master in the HTML source, and the variant
+     * kept out of the sitemap, the search and the menus — but not out of content lists,
+     * which is what the kitchen sink's `mountain-lodge` list shows.
+     *
+     * One pair per host serving that kitchen sink, since pages_list is host-scoped.
+     */
+    private function loadVariantDemo(ObjectManager $manager, string $host): void
+    {
+        $master = new Page();
+        $master->h1 = 'Mountain Lodge — 3-night stay';
+        $master->title = 'Mountain Lodge — 3-night stay | Variant pages demo';
+        $master->slug = 'demo-variant-master';
+        $master->locale = 'en';
+        $master->host = $host;
+        $master->createdAt = new DateTime('1 day ago');
+        $master->updatedAt = new DateTime('1 day ago');
+        $master->setTags('mountain-lodge');
+        $master->mainContent = "This is the **master** page for this stay — the one search engines index.\n\n"
+        .'Several partners resell the same stay with their own wording. See '
+        ."[Partner B's version](/demo-variant-partner): it is a **variant** of this page. "
+        .'In the HTML source that link is rewritten to point here (the master), keeping the '
+        .'variant URL on a `data-variant` hook — so crawlers and no-JS visitors consolidate onto the master.';
+
+        $partner = new Page();
+        $partner->h1 = 'Mountain Lodge getaway, curated by Partner B';
+        $partner->title = 'Mountain Lodge getaway — Partner B | Variant pages demo';
+        $partner->slug = 'demo-variant-partner';
+        $partner->locale = 'en';
+        $partner->host = $host;
+        $partner->createdAt = new DateTime('1 day ago');
+        $partner->updatedAt = new DateTime('1 day ago');
+        $partner->setTags('mountain-lodge');
+        $partner->mainContent = "Partner B's own pitch for the **same** stay: different wording, identical product.\n\n"
+        .'This page renders fully on its own URL but its canonical points to '
+        .'[the master](/demo-variant-master), it emits no hreflang, and it is excluded from the '
+        .'sitemap, the internal search and the menus. Use **Promote to master** in the admin to swap roles.';
+        $partner->variantOf = $master;
+
+        $manager->persist($master);
+        $manager->persist($partner);
     }
 
     /**
