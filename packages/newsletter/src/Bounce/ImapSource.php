@@ -5,6 +5,7 @@ namespace Pushword\Newsletter\Bounce;
 use RuntimeException;
 use Throwable;
 use Webklex\PHPIMAP\ClientManager;
+use Webklex\PHPIMAP\Folder;
 use Webklex\PHPIMAP\Header;
 use Webklex\PHPIMAP\Message;
 
@@ -37,6 +38,18 @@ final class ImapSource implements BounceSource
     private const int BATCH = 200;
 
     /**
+     * How many are asked for at a time, which is what a run actually holds.
+     *
+     * `get()` is eager: it fetches the body of every message on the page it was
+     * given before it returns any of them. Asking for {@see BATCH} in one go
+     * therefore builds 200 parsed messages at once — and a bounce carries the
+     * message it failed to deliver, which is not small. A run that exhausts
+     * memory there has flagged nothing, so the next one finds the same `UNSEEN`
+     * messages and goes the same way, and the mailbox never drains.
+     */
+    private const int CHUNK = 25;
+
+    /**
      * What is parsed of each message. IMAP hands back what it was asked for in
      * one piece, so unlike the maildir this bounds the parse and not the
      * transfer — a returned message still crosses the wire whole.
@@ -44,15 +57,15 @@ final class ImapSource implements BounceSource
     private const int READ_BYTES = 65536;
 
     /**
-     * The handles of what has been handed out, so a key can be flagged.
+     * The handle of the message being handed out, so that it can be flagged.
      *
-     * The generator yields one message at a time and the caller marks it read
-     * before asking for the next, so what is held is a run's worth of handles
-     * and never a copy of the mailbox.
-     *
-     * @var array<int|string, Message>
+     * One, not a run's worth: the caller flags a message before asking for the
+     * next, and a handle keeps the body it was fetched with alive, so keeping
+     * them all would undo the chunking above.
      */
-    private array $fetched = [];
+    private ?Message $current = null;
+
+    private ?int $currentKey = null;
 
     public function __construct(
         private readonly string $dsn,
@@ -64,10 +77,15 @@ final class ImapSource implements BounceSource
     {
         foreach ($this->unread() as $message) {
             $uid = $message->getUid();
-            $this->fetched[$uid] = $message;
+
+            $this->current = $message;
+            $this->currentKey = $uid;
 
             yield $uid => mb_strcut($this->raw($message), 0, self::READ_BYTES);
         }
+
+        $this->current = null;
+        $this->currentKey = null;
     }
 
     public function markRead(int|string $key): bool
@@ -76,44 +94,92 @@ final class ImapSource implements BounceSource
             return true;
         }
 
-        $message = $this->fetched[$key] ?? null;
-
-        if (! $message instanceof Message) {
+        // Only what is in hand can be flagged, which is all the caller ever
+        // asks for. Anything else is a key this source never handed out.
+        if ($key !== $this->currentKey || ! $this->current instanceof Message) {
             return false;
         }
 
         try {
-            return $message->setFlag('Seen');
+            return $this->current->setFlag('Seen');
         } catch (Throwable) {
             return false;
         }
     }
 
     /**
-     * The unread messages of the mailbox the DSN names.
+     * The unread messages of the mailbox the DSN names, a chunk at a time.
      *
      * Fetched without marking anything seen — `FT_PEEK` — because being read is
      * what {@see markRead()} says once the message has actually been acted on.
      * A run that dies halfway leaves the rest unread rather than silently
      * consumed.
      *
+     * Every chunk asks for the **first** page again rather than the next one:
+     * what this run has flagged has left the `UNSEEN` set, so a second page
+     * would step over as many messages as the first page removed from it. A
+     * message the server refuses to flag stays in that set and comes back —
+     * hence `$handed`, without which the run would circle on it for ever.
+     *
      * @return iterable<Message>
      */
     private function unread(): iterable
+    {
+        $folder = $this->folder();
+
+        /** @var array<int, true> $handed */
+        $handed = [];
+
+        while (\count($handed) < self::BATCH) {
+            $chunk = $folder->query()
+                ->whereUnseen()
+                ->leaveUnread()
+                ->limit(self::CHUNK)
+                ->get();
+
+            $fresh = false;
+
+            foreach ($chunk as $message) {
+                // `MessageCollection` carries no value type a static analyser
+                // can read, its `@implements` naming a class it does not extend.
+                if (! $message instanceof Message) {
+                    continue;
+                }
+
+                $uid = $message->getUid();
+
+                if (isset($handed[$uid])) {
+                    continue;
+                }
+
+                $handed[$uid] = true;
+                $fresh = true;
+
+                yield $message;
+
+                if (\count($handed) >= self::BATCH) {
+                    return;
+                }
+            }
+
+            // An empty mailbox, or one holding nothing but messages this run
+            // has already been given and could not flag.
+            if (! $fresh) {
+                return;
+            }
+        }
+    }
+
+    private function folder(): Folder
     {
         ['config' => $config, 'folder' => $folderName] = self::parse($this->dsn);
 
         $client = new ClientManager()->make($config);
         $client->connect();
 
-        $folder = $client->getFolder($folderName)
+        // The folder holds the client, so the connection outlives this call.
+        return $client->getFolder($folderName)
             ?? throw new RuntimeException(\sprintf('No folder "%s" in the bounce mailbox.', $folderName));
-
-        return $folder->query()
-            ->whereUnseen()
-            ->leaveUnread()
-            ->limit(self::BATCH)
-            ->get();
     }
 
     /**
