@@ -19,6 +19,11 @@ import { SELECTORS, debugLog } from './admin.constants'
 const WRITE_DEBOUNCE_MS = 800
 const DISMISS_MS = 150
 
+// Start of every recovery key (page/edit.html.twig builds the rest). The key
+// carries the editor's id: localStorage is per browser, and on a shared machine
+// an unqualified one would offer one editor's draft to the next.
+const KEY_PREFIX = 'pw:unsaved:'
+
 /**
  * Controls whose value is worth keeping. Files cannot be restored, and the CSRF
  * token is reissued on every render, so restoring a stale one breaks the save.
@@ -87,6 +92,21 @@ const restore = (form, values) => {
 // Key order comes from form.elements, which is render-stable.
 const isSameState = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
+/**
+ * What the draft actually changed, as {name: [values]}, measured against the
+ * form as the server rendered it when the draft was taken. Restoring writes back
+ * these and nothing else: a draft is one editor's edits, not a picture of the
+ * whole page, and replaying every field would revert what someone saved
+ * meanwhile without ever saying so.
+ *
+ * A copy stored before `was` was recorded counts as changed throughout — which
+ * is what those copies used to do anyway.
+ */
+const changedFields = (values, was) =>
+  Object.fromEntries(
+    Object.entries(values).filter(([name, value]) => !isSameState(value, was?.[name])),
+  )
+
 const MINUTE = 60_000
 const UNITS = [
   ['day', 24 * 60 * MINUTE],
@@ -141,17 +161,8 @@ const clear = (key) => {
   }
 }
 
-/**
- * Initialize unsaved-changes recovery on the edit form. Does nothing on a form
- * that carries no recovery key, which is every screen but a saved page's edit.
- */
-export function initUnsavedChangesRecovery() {
-  const form = document.querySelector(SELECTORS.FORM_AUTOSAVE)
-  if (null === form) return
-
-  const key = form.dataset.pwUnsavedKey
-  if (undefined === key || '' === key) return
-
+/** Watch `form`, storing and offering its unsaved state under `key`. */
+const start = (form, key) => {
   const banner = document.getElementById('pw-unsaved-banner')
   const bannerMessage = document.getElementById('pw-unsaved-message')
   const restoreButton = document.getElementById('pw-unsaved-restore')
@@ -173,14 +184,23 @@ export function initUnsavedChangesRecovery() {
     }, DISMISS_MS)
   }
 
-  const showBanner = (savedAt) => {
+  // `conflicted`: the server re-rendered a field the draft also changed, so
+  // restoring puts the draft's version back over one that was saved. The offer
+  // stands — the draft may well be the wanted one — but it stops being the safe
+  // answer, and the banner has to say which it is.
+  const showBanner = (savedAt, conflicted) => {
     if (null === banner) return
+
+    banner.classList.toggle('pw-unsaved--conflict', conflicted)
 
     if (null !== bannerMessage) {
       const time = relativeTime(savedAt)
-      bannerMessage.textContent =
-        window.pwUnsavedChangesTranslations?.message?.replace('%time%', time) ??
-        `You left unsaved changes here ${time}.`
+      const translations = window.pwUnsavedChangesTranslations
+      bannerMessage.textContent = conflicted
+        ? (translations?.conflict?.replace('%time%', time) ??
+          `You left unsaved changes here ${time}. The page has been saved since, on fields you changed.`)
+        : (translations?.message?.replace('%time%', time) ??
+          `You left unsaved changes here ${time}.`)
       bannerMessage.title = new Date(savedAt).toLocaleString()
     }
 
@@ -200,7 +220,10 @@ export function initUnsavedChangesRecovery() {
       return
     }
 
-    write(key, { values, savedAt: Date.now() })
+    // The baseline travels with the copy: on reopen it is the only way to tell
+    // the fields this editor changed from the ones the page simply holds, and
+    // the only way to notice the page moved underneath them.
+    write(key, { values, baseline, savedAt: Date.now() })
   }
 
   const forget = () => {
@@ -209,19 +232,39 @@ export function initUnsavedChangesRecovery() {
     baseline = serialize(form)
   }
 
-  // The banner, hence both its buttons, only exists for changes worth offering.
+  // The banner, hence both its buttons, only exists for changes worth offering:
+  // edits this editor made that the form does not already show.
   const snapshot = read(key)
-  if (null !== snapshot && !isSameState(snapshot.values, baseline)) {
-    showBanner(snapshot.savedAt)
+  const changes =
+    null === snapshot ? {} : changedFields(snapshot.values, snapshot.baseline)
+  const worthOffering = Object.entries(changes).some(
+    ([name, value]) => !isSameState(value, baseline[name]),
+  )
+
+  if (worthOffering) {
+    // Only a copy that recorded its baseline can tell us the page moved; an
+    // older one says nothing, and claiming a conflict from silence would cry
+    // wolf on every draft written before this shipped.
+    const conflicted =
+      undefined !== snapshot.baseline &&
+      Object.keys(changes).some(
+        (name) => !isSameState(snapshot.baseline[name], baseline[name]),
+      )
+
+    showBanner(snapshot.savedAt, conflicted)
 
     restoreButton?.addEventListener('click', () => {
-      restore(form, snapshot.values)
+      restore(form, changes)
       hideBanner() // the copy stays stored: it is still unsaved
     })
 
     discardButton?.addEventListener('click', forget)
   } else if (null !== snapshot) {
-    clear(key) // saved since, from this tab or another
+    // Nothing left worth offering: the save landed — here, in another tab, or
+    // on the server. A submit clears nothing by itself, since its POST can
+    // still be lost (an expired session has the firewall redirect it and drop
+    // the body), and only what comes back rendered tells the two apart.
+    clear(key)
   }
 
   const scheduleSave = () => {
@@ -232,11 +275,62 @@ export function initUnsavedChangesRecovery() {
   form.addEventListener('input', scheduleSave)
   form.addEventListener('change', scheduleSave)
 
-  // Ctrl+S save: the form stays on screen, so the copy has to go explicitly.
+  // Ctrl+S save: the form stays on screen, so the copy has to go explicitly —
+  // and only on a response that says the save landed.
   form.addEventListener('htmx:after:request', (event) => {
     const status = event?.detail?.ctx?.response?.status ?? 0
     if (status >= 200 && status < 400) forget()
   })
+}
 
-  form.addEventListener('submit', forget)
+/**
+ * Initialize unsaved-changes recovery on the edit form. Does nothing on a form
+ * that carries no recovery key, which is every screen but a saved page's edit.
+ */
+export function initUnsavedChangesRecovery() {
+  const form = document.querySelector(SELECTORS.FORM_AUTOSAVE)
+  if (null === form) return
+
+  const key = form.dataset.pwUnsavedKey
+  if (undefined === key || '' === key) return
+
+  // A rich editor rewrites the field it feeds with its own normalisation of the
+  // content it was handed, and that write lands after this module runs. Until it
+  // does, the form is not what the server rendered: baselining now would book
+  // the normalisation as an edit — a draft nobody typed, stored over the real
+  // one. The editor flags the field and clears the flag when its parse has
+  // landed (admin-block-editor's editor.ts), so a parse already settled by the
+  // time we run needs no event at all.
+  if (null !== form.querySelector('[data-pw-baseline-pending]')) {
+    form.addEventListener('pw:baseline-ready', () => start(form, key), { once: true })
+
+    return
+  }
+
+  start(form, key)
+}
+
+/**
+ * Drop every draft this browser holds when the editor signs out. localStorage is
+ * per origin and outlives the session, so on a shared machine the next person to
+ * sign in would otherwise be offered — and could restore — work that is not
+ * theirs. A session that merely expired is not a sign-out: those copies are the
+ * ones recovery exists for, and they stay.
+ */
+export function initUnsavedChangesSignOutClear() {
+  const logoutPath = window.pwLogoutPath
+  if (undefined === logoutPath) return
+
+  document.addEventListener('click', (event) => {
+    const link = event.target instanceof Element ? event.target.closest('a[href]') : null
+    if (null === link) return
+    if (new URL(link.href, window.location.origin).pathname !== logoutPath) return
+
+    try {
+      for (const key of Object.keys(window.localStorage))
+        if (key.startsWith(KEY_PREFIX)) window.localStorage.removeItem(key)
+    } catch (error) {
+      debugLog('UnsavedChanges', 'could not clear the stored changes', error)
+    }
+  })
 }
