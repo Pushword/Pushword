@@ -29,6 +29,12 @@ use Symfony\Component\Filesystem\Filesystem;
  * staleness class the epoch exists for.
  */
 #[Group('integration')]
+// Serial: the sweep renders real pages, so it reaches `public/media/{filter}/` — the one
+// directory a parallel worker cannot be given its own copy of. A peer writing a variant
+// there makes a render fail, and a render error sets abortGeneration, which skips the
+// state write this test reads. The symptom is a null sweptEpoch, nothing to do with the
+// epoch.
+#[Group('serial')]
 final class EpochSweepIntegrationTest extends KernelTestCase
 {
     private const string HOST = 'localhost.dev';
@@ -121,6 +127,10 @@ final class EpochSweepIntegrationTest extends KernelTestCase
 
         $stateManager->reload();
         $currentEpoch = $renderEpoch->get(self::HOST);
+        // Any render error aborts the state write (`setError()` sets abortGeneration),
+        // so an unrecorded epoch says "something failed to render", not "the epoch was
+        // not recorded". Name it, or the next reader debugs the wrong end.
+        self::assertSame([], $this->getGenerator()->getErrors(), 'the sweep hit a render error');
         self::assertSame($currentEpoch, $stateManager->getSweptEpoch(self::HOST), 'a completed sweep records the sampled epoch');
 
         // Edit the snippet: the page row is untouched (updatedAt frozen), yet its
