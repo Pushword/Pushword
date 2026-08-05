@@ -91,8 +91,13 @@ final class LinkedDocsScannerTest extends KernelTestCase
             self::assertIsInt($expiry);
             $ttl = $expiry - time();
 
+            // The hour is what matters — a day would be an order of magnitude away. The
+            // extra second is the pool's, not the scanner's: `expiresAfter()` records a
+            // float `microtime(true) + 3600` and the item is packed as
+            // `(int) (0.1 + $expiry)`, so a write landing in the last tenth of a second
+            // reads back a second longer than it was given.
             self::assertGreaterThan(0, $ttl);
-            self::assertLessThanOrEqual(3600, $ttl);
+            self::assertLessThanOrEqual(3601, $ttl);
         } finally {
             $cache->delete(ParallelUrlChecker::cacheKey($url));
         }
