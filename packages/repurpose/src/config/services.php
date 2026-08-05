@@ -16,7 +16,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->autowire()
         ->autoconfigure()
         ->bind('$publicDir', '%pw.public_dir%')
-        ->bind('$publicMediaDir', '%pw.public_media_dir%')
+        ->bind('$mediaCacheDir', '%pw.media_cache_dir%')
         ->bind('$fontDir', '%pw.pushword_repurpose.font_dir%')
         ->bind('$chromiumBinary', '%pw.pushword_repurpose.chromium_binary%')
         ->bind('$ffmpegBinary', '%pw.pushword_repurpose.ffmpeg_binary%');

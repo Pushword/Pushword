@@ -218,7 +218,7 @@ final class ImageOptimizerTest extends KernelTestCase
         return new ImageCacheGenerator(
             new ImageReader($mediaStorage),
             new ImageEncoder(),
-            new ImageCacheManager($filterSets, $this->tmpPublicDir, $this->publicMediaDir, $mediaStorage),
+            new ImageCacheManager($filterSets, $this->publicMediaDir, $this->tmpPublicDir.'/'.$this->publicMediaDir, $mediaStorage),
             self::getContainer()->get(BackgroundTaskDispatcherInterface::class),
             $mediaStorage,
         );
@@ -229,7 +229,7 @@ final class ImageOptimizerTest extends KernelTestCase
      */
     private function createCacheManager(array $filterSets): ImageCacheManager
     {
-        return new ImageCacheManager($filterSets, $this->tmpPublicDir, $this->publicMediaDir, $this->createMediaStorageAdapter());
+        return new ImageCacheManager($filterSets, $this->publicMediaDir, $this->tmpPublicDir.'/'.$this->publicMediaDir, $this->createMediaStorageAdapter());
     }
 
     private function createMediaStorageAdapter(): MediaStorageAdapter

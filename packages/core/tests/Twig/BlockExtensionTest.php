@@ -11,16 +11,7 @@ use function Safe\preg_match;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-/**
- * Serial: every gallery case here renders real media through the image pipeline, and
- * `public/media/{filter}/` is the one directory a parallel worker cannot be given its
- * own copy of — `public_dir` is compile-time, the container is shared. A peer
- * generating or optimising a variant of the same file is enough: the render asks for
- * `public/media/xs/piedweb-logo.png` during the window where it does not exist yet,
- * and the whole template throws rather than degrading.
- */
 #[Group('integration')]
-#[Group('serial')]
 final class BlockExtensionTest extends KernelTestCase
 {
     private function getBlockExtension(): BlockExtension

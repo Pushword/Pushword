@@ -59,6 +59,9 @@ function computeDbCacheHash(string $monoRepoBase): string
         $monoRepoBase.'/packages/dev-app/src/DataFixtures/KitchenSink.md',
         $monoRepoBase.'/packages/dev-app/src/DataFixtures/reviews.yaml',
         $monoRepoBase.'/packages/core/src/Resources/config/packages/doctrine.php',
+        // The admin's stored password hash embeds the cost it was created with, so a
+        // change of hasher only takes effect once the cached DB is rebuilt.
+        $monoRepoBase.'/packages/dev-app/config/packages/test/security.php',
         __FILE__,
     ];
 
@@ -120,6 +123,7 @@ if ($useMysql) {
 // Export env vars used by the compiled container (pushword.php test config uses %env(...)%)
 $envVars = [
     'PUSHWORD_TEST_MEDIA_DIR' => '' !== $runId ? $testBaseDir.'/media' : $monoRepoBase.'/packages/dev-app/media',
+    'PUSHWORD_TEST_MEDIA_CACHE_DIR' => '' !== $runId ? $testBaseDir.'/media-cache' : $monoRepoBase.'/packages/dev-app/public/media',
     'PUSHWORD_TEST_DATABASE_URL' => $databaseUrl,
     'PUSHWORD_TEST_FLAT_CONTENT_DIR' => '' !== $runId ? $testBaseDir.'/content/_host_' : $monoRepoBase.'/packages/dev-app/content/_host_',
     'PUSHWORD_TEST_VAR_DIR' => $testBaseDir.'/var',

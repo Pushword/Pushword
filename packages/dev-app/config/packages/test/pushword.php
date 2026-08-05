@@ -10,6 +10,13 @@ return static function (ContainerConfigurator $container): void {
     // Each worker sets these env vars in bootstrap.php to point to its own directories.
     $container->extension('pushword', [
         'media_dir' => '%env(PUSHWORD_TEST_MEDIA_DIR)%',
+        // Per-worker derivative cache. The default sits in the dev-app's own
+        // public/media, which every worker shares: they raced each other's variant
+        // files, and each run left behind the og/ previews and thumbnails of pages
+        // that only ever existed inside a test — which a later `pw:static` then
+        // published as if they were the site's. The browser path is unchanged, so a
+        // miss is still served (and regenerated here) by the media-cache route.
+        'media_cache_dir' => '%env(PUSHWORD_TEST_MEDIA_CACHE_DIR)%',
         'database_url' => '%env(PUSHWORD_TEST_DATABASE_URL)%',
         'enable_password_reset' => true,
         // Per-worker runtime state dir. Without this, parallel workers share

@@ -131,10 +131,10 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
             $this->copyDirectoryContents($mediaDir, $staticMediaDir, $symlink);
         }
 
-        // Copy image cache from public/media (thumbnails, webp versions, etc.)
-        $publicMediaCacheDir = $this->publicDir.'/'.$publicMediaDir;
-        if ($this->filesystem->exists($publicMediaCacheDir)) {
-            $this->copyImageCache($publicMediaCacheDir, $staticMediaDir, $symlink);
+        // Copy the image cache (thumbnails, webp versions, og/ previews, etc.)
+        $mediaCacheDir = $this->params->get('pw.media_cache_dir');
+        if ($this->filesystem->exists($mediaCacheDir)) {
+            $this->copyImageCache($mediaCacheDir, $staticMediaDir, $symlink);
         }
     }
 

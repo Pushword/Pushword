@@ -29,12 +29,6 @@ use Symfony\Component\Filesystem\Filesystem;
  * staleness class the epoch exists for.
  */
 #[Group('integration')]
-// Serial: the sweep renders real pages, so it reaches `public/media/{filter}/` — the one
-// directory a parallel worker cannot be given its own copy of. A peer writing a variant
-// there makes a render fail, and a render error sets abortGeneration, which skips the
-// state write this test reads. The symptom is a null sweptEpoch, nothing to do with the
-// epoch.
-#[Group('serial')]
 final class EpochSweepIntegrationTest extends KernelTestCase
 {
     private const string HOST = 'localhost.dev';

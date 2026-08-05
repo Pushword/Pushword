@@ -21,11 +21,21 @@ real bugs.
   `packages/dev-app/config/packages/test/pushword.php` from `%env(PUSHWORD_TEST_VAR_DIR)%`.
   Prefer this over runtime `getenv()` in service constructors — it keeps test concerns
   out of production code.
-- **`public/media/{filter}/` cannot be isolated per worker** (`public_dir` is a
-  compile-time param, container shared across workers). A test that mutates or reads a
-  shared variant path and flakes belongs in `#[Group('serial')]`, which runs after the
-  parallel batch. Wire changes in **both** `.github/workflows/run-tests.yml` and
-  `.scripts/test` — CI calls paratest directly and does not use the script.
+- **Derivatives are isolated per worker too, since 2026-08-05.** They no longer live at
+  `public_dir`/`public_media_dir` (the second of which *is* compile-time: it is in route
+  paths) but under `pw.media_cache_dir`, overridden from `%env(PUSHWORD_TEST_MEDIA_CACHE_DIR)%`.
+  A variant race between workers is therefore no longer a plausible diagnosis, and the
+  five classes that were in `#[Group('serial')]` for it are back in the parallel batch.
+  The browser path is unchanged, so a worker that finds no derivative on disk still gets
+  one from the media-cache route.
+- **`#[Group('serial')]` is still the answer for a genuinely unisolatable resource**, and
+  it runs after the parallel batch. Wire changes in **both**
+  `.github/workflows/run-tests.yml` and `.scripts/test` — CI calls paratest directly and
+  does not use the script.
+- **A background console task runs in the env that dispatched it** — `BackgroundCommand::pinEnvironment()`
+  appends `--env`, because a child inherits `APP_ENV` and PHPUnit does not export it. Without
+  it those children ran in dev, against the dev database and the dev app's directories, and
+  the test asserting on them was reading someone else's state.
 - **A CLI `--group`/`--exclude-group` discards the whole XML `<groups>` block** — PHPUnit
   replaces that config rather than merging it. `phpunit.xml.dist` excludes `benchmark`,
   so any batch passing a group flag must repeat `--exclude-group=benchmark` or the

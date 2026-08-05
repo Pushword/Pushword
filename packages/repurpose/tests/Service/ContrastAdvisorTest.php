@@ -19,7 +19,7 @@ final class ContrastAdvisorTest extends TestCase
     {
         $this->publicDir = sys_get_temp_dir().'/pw-contrast-'.uniqid();
         mkdir($this->publicDir.'/media/md', 0o777, true);
-        $this->advisor = new ContrastAdvisor(new MediaResolver($this->publicDir, 'media'));
+        $this->advisor = new ContrastAdvisor(new MediaResolver($this->publicDir.'/media'));
     }
 
     protected function tearDown(): void

@@ -16,11 +16,13 @@ final class ImageCacheManager
 {
     /**
      * @param array<string, array<string, mixed>> $filterSets
+     * @param string                              $publicMediaDir the browser path derivatives are served under
+     * @param string                              $mediaCacheDir  the directory they are written to
      */
     public function __construct(
         private array $filterSets,
-        private readonly string $publicDir,
         private readonly string $publicMediaDir,
+        private readonly string $mediaCacheDir,
         private readonly MediaStorageAdapter $mediaStorage,
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
@@ -31,7 +33,7 @@ final class ImageCacheManager
         $media = $media instanceof Media ? $media->getFileName() : Filepath::filename($media);
         $fileName = null === $extension ? $media : Filepath::removeExtension($media).'.'.$extension;
 
-        return ($browserPath ? '' : $this->publicDir).'/'.$this->publicMediaDir.'/'.$filterName.'/'.$fileName;
+        return ($browserPath ? '/'.$this->publicMediaDir : $this->mediaCacheDir).'/'.$filterName.'/'.$fileName;
     }
 
     #[AsTwigFilter('image')]
@@ -114,15 +116,15 @@ final class ImageCacheManager
         $mediaBase = Filepath::removeExtension($mediaFileName);
 
         foreach (array_keys($this->filterSets) as $filterName) {
-            $path = $this->publicDir.'/'.$this->publicMediaDir.'/'.$filterName.'/'.$mediaFileName;
+            $path = $this->mediaCacheDir.'/'.$filterName.'/'.$mediaFileName;
             $this->filesystem->remove($path);
 
-            $webpPath = $this->publicDir.'/'.$this->publicMediaDir.'/'.$filterName.'/'.$mediaBase.'.webp';
+            $webpPath = $this->mediaCacheDir.'/'.$filterName.'/'.$mediaBase.'.webp';
             $this->filesystem->remove($webpPath);
         }
 
         // Remove root-level public symlink (used by non-image files like PDFs)
-        $rootPublicPath = $this->publicDir.'/'.$this->publicMediaDir.'/'.$mediaFileName;
+        $rootPublicPath = $this->mediaCacheDir.'/'.$mediaFileName;
         if (is_link($rootPublicPath)) {
             $this->filesystem->remove($rootPublicPath);
         }
@@ -135,7 +137,7 @@ final class ImageCacheManager
         }
 
         $fileName = $media->getFileName();
-        $publicPath = $this->publicDir.'/'.$this->publicMediaDir.'/'.$fileName;
+        $publicPath = $this->mediaCacheDir.'/'.$fileName;
 
         clearstatcache(true, $publicPath);
 
@@ -143,10 +145,17 @@ final class ImageCacheManager
             return;
         }
 
-        $this->createFilterDir($this->publicDir.'/'.$this->publicMediaDir);
+        $this->createFilterDir($this->mediaCacheDir);
+
+        // Relative, so a deploy that moves the project (releases/<date>/) keeps it valid.
+        // Under the default layout this is the '../../media/' it has always been.
+        $target = $this->filesystem->makePathRelative(
+            \dirname($this->mediaStorage->getLocalPath($fileName)),
+            $this->mediaCacheDir,
+        ).$fileName;
 
         try {
-            $this->filesystem->symlink('../../media/'.$fileName, $publicPath);
+            $this->filesystem->symlink($target, $publicPath);
         } catch (IOException) {
             // Race condition: another process created the symlink between our check and creation
         }
@@ -327,7 +336,7 @@ final class ImageCacheManager
         /** @var string[] $formats */
         $formats = $this->filterSets[$filterName]['formats'] ?? ['original', 'webp'];
 
-        $filterDir = $this->publicDir.'/'.$this->publicMediaDir.'/'.$filterName;
+        $filterDir = $this->mediaCacheDir.'/'.$filterName;
         $this->createFilterDir($filterDir);
 
         foreach ($formats as $format) {

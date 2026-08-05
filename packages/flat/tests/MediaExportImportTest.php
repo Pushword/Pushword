@@ -842,8 +842,9 @@ CSV;
         /** @var string $mediaDir */
         $mediaDir = self::getContainer()->getParameter('pw.media_dir');
 
-        $publicMediaDir = $projectDir.'/public/media';
-        $this->filesystem->mkdir($publicMediaDir);
+        /** @var string $mediaCacheDir */
+        $mediaCacheDir = self::getContainer()->getParameter('pw.media_cache_dir');
+        $this->filesystem->mkdir($mediaCacheDir);
 
         // Create a test PDF file
         $pdfPath = $this->testMediaDir.'/test-symlink.pdf';
@@ -865,8 +866,8 @@ CSV;
 
         self::assertTrue($imported, 'PDF should be imported');
 
-        // Verify symlink was created in public/media/
-        $publicPath = $publicMediaDir.'/test-symlink.pdf';
+        // Verify symlink was created in the media cache dir
+        $publicPath = $mediaCacheDir.'/test-symlink.pdf';
         self::assertTrue(is_link($publicPath) || file_exists($publicPath), 'Public symlink should exist for non-image media after flat import');
 
         // Cleanup

@@ -8,12 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
-/**
- * Optimizing writes the variants under the shared public/media/{filter}/ dir, which
- * cannot be isolated per worker — hence the serial group.
- */
 #[Group('integration')]
-#[Group('serial')]
 final class ImageOptimizerCommandTest extends KernelTestCase
 {
     use PathTrait;

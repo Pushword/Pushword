@@ -42,7 +42,7 @@ final class ImageCacheGeneratorTest extends KernelTestCase
         $mediaStorage = $this->createMediaStorageAdapter();
         $imageReader = new ImageReader($mediaStorage);
         $imageEncoder = new ImageEncoder();
-        $imageCacheManager = new ImageCacheManager($filterSets, $this->tmpPublicDir, $this->publicMediaDir, $mediaStorage);
+        $imageCacheManager = new ImageCacheManager($filterSets, $this->publicMediaDir, $this->tmpPublicDir.'/'.$this->publicMediaDir, $mediaStorage);
 
         $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
 
@@ -54,7 +54,7 @@ final class ImageCacheGeneratorTest extends KernelTestCase
      */
     private function createCacheManager(array $filterSets = []): ImageCacheManager
     {
-        return new ImageCacheManager($filterSets, $this->tmpPublicDir, $this->publicMediaDir, $this->createMediaStorageAdapter());
+        return new ImageCacheManager($filterSets, $this->publicMediaDir, $this->tmpPublicDir.'/'.$this->publicMediaDir, $this->createMediaStorageAdapter());
     }
 
     private function createMediaStorageAdapter(): MediaStorageAdapter

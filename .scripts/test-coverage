@@ -71,7 +71,7 @@ function batch {
 
 step "Warming container cache"
 WARMUP_DIR=$(mktemp -d)
-PUSHWORD_TEST_MEDIA_DIR="$WARMUP_DIR/media" PUSHWORD_TEST_DATABASE_URL="sqlite:///$WARMUP_DIR/warmup.db" PUSHWORD_TEST_FLAT_CONTENT_DIR="$WARMUP_DIR/content" \
+PUSHWORD_TEST_MEDIA_DIR="$WARMUP_DIR/media" PUSHWORD_TEST_MEDIA_CACHE_DIR="$WARMUP_DIR/media-cache" PUSHWORD_TEST_DATABASE_URL="sqlite:///$WARMUP_DIR/warmup.db" PUSHWORD_TEST_FLAT_CONTENT_DIR="$WARMUP_DIR/content" \
     XDEBUG_MODE=off php -dxdebug.mode=off packages/dev-app/bin/console cache:warmup --env=test --quiet 2>/dev/null || true
 rm -rf "$WARMUP_DIR"
 

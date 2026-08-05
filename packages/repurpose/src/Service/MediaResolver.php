@@ -4,15 +4,14 @@ namespace Pushword\Repurpose\Service;
 
 /**
  * Locates a page image's cached derivatives and its source dimensions on disk,
- * reusing core's existing image cache (`{publicDir}/{publicMediaDir}/{filter}/…`).
+ * reusing core's existing image cache (`{mediaCacheDir}/{filter}/…`).
  * The renderer embeds the smallest derivative that covers the slide, so we prefer
  * the modern `.webp` sibling and fall back through the pyramid.
  */
 final readonly class MediaResolver
 {
     public function __construct(
-        private string $publicDir,
-        private string $publicMediaDir,
+        private string $mediaCacheDir,
     ) {
     }
 
@@ -45,7 +44,7 @@ final readonly class MediaResolver
 
     private function rawPath(string $filename, string $filter): ?string
     {
-        $base = $this->publicDir.'/'.$this->publicMediaDir.'/'.$filter.'/';
+        $base = $this->mediaCacheDir.'/'.$filter.'/';
         $webp = $base.$this->withExtension($filename, 'webp');
         if (is_file($webp)) {
             return $webp;

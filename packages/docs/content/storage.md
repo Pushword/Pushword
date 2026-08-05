@@ -110,6 +110,6 @@ See the [Flysystem documentation](https://flysystem.thephpleague.com/docs/) for 
 
 ## Notes
 
-- Image cache (thumbnails, optimized versions) is always stored locally in `public/{public_media_dir}/` for direct browser access
+- Image cache (thumbnails, optimized versions, `og/` previews) is always stored locally, in `media_cache_dir` — `public/{public_media_dir}/` by default, so the browser reads it as a static file. Point it elsewhere and every miss is served by the media-cache route instead, which is what the test suite does to give each worker its own derivatives
 - When using remote storage, original media files are downloaded temporarily for image processing
 - VichUploaderBundle is configured to use Flysystem for uploads

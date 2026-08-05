@@ -18,12 +18,19 @@ final class PageOpenGraphImageGeneratorTest extends KernelTestCase
 {
     private function buildGenerator(?LoggerInterface $logger = null): PageOpenGraphImageGenerator
     {
+        $siteRegistry = self::getContainer()->get(SiteRegistry::class);
+
+        // These tests exercise generation itself, so they have to ask for it: the test
+        // env ships `generated_og_image` off (config/packages/test/og_image.yaml), which
+        // otherwise makes generatePreviewImage() return before doing anything.
+        $siteRegistry->get()->setCustomProperty('generated_og_image', true);
+
         return new PageOpenGraphImageGenerator(
-            self::getContainer()->get(SiteRegistry::class),
+            $siteRegistry,
             self::getContainer()->get('twig'),
             new Filesystem(),
-            sys_get_temp_dir(),
             'media',
+            sys_get_temp_dir().'/media',
             logger: $logger,
         );
     }

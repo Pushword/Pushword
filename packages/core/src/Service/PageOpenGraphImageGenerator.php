@@ -36,8 +36,8 @@ class PageOpenGraphImageGenerator implements ResetInterface
         private readonly SiteRegistry $apps,
         private readonly Twig $twig,
         private readonly Filesystem $filesystem,
-        private readonly string $publicDir,
         private readonly string $publicMediaDir,
+        private readonly string $mediaCacheDir,
         private readonly int $imageHeight = 600,
         private readonly int $imageWidth = 1200,
         private readonly int $marginSize = 60,
@@ -73,7 +73,7 @@ class PageOpenGraphImageGenerator implements ResetInterface
 
     public function getPath(bool $browserPath = false): string
     {
-        return ($browserPath ? '' : $this->publicDir).'/'.$this->publicMediaDir.'/og/'
+        return ($browserPath ? '/'.$this->publicMediaDir : $this->mediaCacheDir).'/og/'
             .str_replace('/', '_', $this->getPage()->slug).'-'
             .substr(sha1($this->getPage()->slug.$this->apps->get()->hosts[0]), 0, 6).'.png';
     }
@@ -99,7 +99,7 @@ class PageOpenGraphImageGenerator implements ResetInterface
             $this->drawLogo($image);
             $this->drawFooter($drawer);
 
-            $this->filesystem->mkdir($this->publicDir.'/'.$this->publicMediaDir.'/og/');
+            $this->filesystem->mkdir($this->mediaCacheDir.'/og/');
 
             $image->save($this->getPath());
         } catch (Throwable $throwable) {

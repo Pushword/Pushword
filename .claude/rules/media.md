@@ -25,5 +25,8 @@ paths:
 - Generalize that shape: any "truncated cache file, non-deterministic, size-correlated,
   silent RC=0" symptom points at an external binary writing in place, not at the primary
   encoder.
-- Variant files live in the **shared** `public/media/{filter}/` directory, which cannot be
-  isolated per test worker — see `.claude/rules/testing.md` for the consequences.
+- **Derivatives are written to `pw.media_cache_dir`, never to `public_dir`/`public_media_dir`.**
+  The default is `public/{public_media_dir}/`, so nothing moves for a site; `public_media_dir`
+  alone stays what the *browser* path is built from. Compute a derivative path from anything
+  else and you reintroduce the leak that made a `pw:static` build ship 17k OG images of pages
+  that only ever existed inside a test.

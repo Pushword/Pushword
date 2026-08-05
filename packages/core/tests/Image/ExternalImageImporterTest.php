@@ -27,7 +27,7 @@ final class ExternalImageImporterTest extends KernelTestCase
         $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
         $imageReader = new ImageReader($mediaStorage);
         $imageEncoder = new ImageEncoder();
-        $imageCacheManager = new ImageCacheManager([], $this->publicDir, $this->publicMediaDir, $mediaStorage);
+        $imageCacheManager = new ImageCacheManager([], $this->publicMediaDir, $this->getMediaCacheDir(), $mediaStorage);
 
         $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
         $imageCacheGenerator = new ImageCacheGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);

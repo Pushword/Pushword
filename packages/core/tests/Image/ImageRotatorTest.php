@@ -131,7 +131,7 @@ final class ImageRotatorTest extends KernelTestCase
         $imageReader = new ImageReader($this->mediaStorage);
         $imageEncoder = new ImageEncoder();
         $filters = ['md' => ['quality' => 80, 'filters' => ['scaleDown' => [300]]]];
-        $imageCacheManager = new ImageCacheManager($filters, $this->tmpPublicDir, 'media', $this->mediaStorage);
+        $imageCacheManager = new ImageCacheManager($filters, 'media', $this->cacheDir, $this->mediaStorage);
 
         $dispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
         $imageCacheGenerator = new ImageCacheGenerator($imageReader, $imageEncoder, $imageCacheManager, $dispatcher, $this->mediaStorage);

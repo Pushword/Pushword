@@ -58,9 +58,10 @@ version regression and is not. Note the matrix is fail-fast, so one flaked shard
 its siblings and the whole run reads red — check `conclusion` on the siblings via
 `gh api repos/:owner/:repo/actions/jobs/<id>` before believing four jobs failed.
 
-Locally the same class throws `Unable to guess
+Locally the same class used to throw `Unable to guess
 "…/public/media/md/2.jpg.<n>.<hash>.tmp" file type` — an image-optimizer temp file caught
-mid-write in the shared `public/media` dir. That one re-runs green and passes in isolation.
+mid-write in the then-shared `public/media` dir. Derivatives are per worker since
+2026-08-05, so a fresh occurrence is real.
 
 **`StaticGeneratorTest::testParallelWorkersPopulateAnOpcacheFileCache` — was never a
 flake.** It failed on the MariaDB job and only there, every run, because that job is the
@@ -75,12 +76,14 @@ what a child can do. A local CLI with opcache still runs the assertion for real,
 test keeps its teeth. Treat a fresh failure here as real — it means a probe child *did*
 file-cache and the workers did not.
 
-**`Core\Tests\Twig\BlockExtensionTest` — moved to `serial`, no longer a flake.** Its
-gallery cases render real media, and the render *throws* on a variant that is missing at
-that instant (`public/media/xs/piedweb-logo.png not found`, out of `image.html.twig`)
-rather than degrading. `public/media/{filter}/` is the directory that cannot be isolated
-per worker, so a peer generating or optimising the same file was enough. Any test
-rendering real media through the image pipeline belongs in the same group.
+**Variant races — fixed at the root 2026-08-05, and the five classes that were in
+`serial` for them are parallel again** (`BlockExtensionTest`, `MediaCacheControllerTest`,
+`ImageOptimizerCommandTest`, `EpochSweepIntegrationTest`, `CacheClearCommandTest`). The
+symptom was a render *throwing* on a variant missing at that instant
+(`public/media/xs/piedweb-logo.png not found`, out of `image.html.twig`) because a peer
+was generating or optimising the same file. Derivatives now go to `pw.media_cache_dir`,
+per worker. If one of these flakes again, check the isolation is still wired
+(`PUSHWORD_TEST_MEDIA_CACHE_DIR` reaching the container) before reaching for `serial`.
 
 **A static-generation worker child segfaults — `Worker N failed (exit 139: Segmentation
 violation): no error output`. Fixed 2026-08-05 by dropping the workers' opcache file
@@ -177,10 +180,11 @@ which reads as a broken tree and is one wrong `.sqlite`.
 
 ## Reproducing contention
 
-Shared-`public/media` races need real contention: loop
+Cross-worker races on a shared directory need real contention: loop
 `vendor/bin/paratest --processes=8` about ten times. Do **not** use `--processes=auto` on
 a high-core machine — it spreads files too thin to collide. For the duplicate-media
-class of failure, `--processes=2` is the deterministic reproducer.
+class of failure, `--processes=2` is the deterministic reproducer. (The media derivative
+dir is no longer one of those directories — see above.)
 
 **To reproduce CI's layout rather than your machine's, `TEST_PROCESSES=4 composer test`.**
 paratest distributes by class, so the worker count decides which classes share a process
@@ -193,8 +197,12 @@ were only ever seen on CI.
 
 Once you have confirmed a flake is a shared-directory race, the fix (a `pw.*` container
 parameter overridden per worker, or `#[Group('serial')]` where isolation is impossible)
-lives in `.claude/rules/testing.md`. Version storage and the page-scan var dir already use
-that mechanism; `public/media/{filter}/` is the case where it cannot work.
+lives in `.claude/rules/testing.md`. Version storage, the page-scan var dir and the media
+derivative dir all use that mechanism. The last of those was documented for months as the
+case where it *cannot* work — the compile-time constraint is real but applies to
+`public_media_dir` (it is in route paths), not to the directory the files are written to,
+which is now its own parameter. Check that distinction before accepting "cannot be
+isolated" about anything else.
 
 ## Environmental, unrelated
 
