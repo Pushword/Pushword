@@ -405,27 +405,22 @@ question is answered — not by our promises, but by your filesystem.
 ## Resources
 
 - **TYPO3**: [typo3.org](https://typo3.org) · [docs.typo3.org](https://docs.typo3.org) · [github.com/TYPO3/typo3](https://github.com/TYPO3/typo3)
-- **Pushword**: [pushword.piedweb.com](https://pushword.piedweb.com) · [github.com/Pushword/Pushword](https://github.com/Pushword/Pushword) · [architecture](/architecture) · [extensions](/extensions)
+- **Pushword**: [pushword.piedweb.com](https://pushword.piedweb.com) · [github.com/Pushword/Pushword](https://github.com/Pushword/Pushword) · [architecture](/architecture) · [extensions](/extensions) · [getting help](/pro)
 - Related: [Astro vs Pushword](/blog/astro-vs-pushword) · [CMS comparison — WordPress, Statamic, Sulu](/blog/cms-comparison)
 
-<div class="not-prose p-4 mb-8 bg-blue-50 dark:bg-blue-900/30 rounded-lg shadow">
-  <p class="text-sm text-blue-800 dark:text-blue-200">
-    <strong>About this comparison</strong><br>
-    Written by the Pushword author (and Claude). We are obviously not neutral, and TYPO3 is
-    a vastly more established project with a governance body, a security team and a
-    commercial ecosystem Pushword does not have. Every TYPO3 figure quoted here was
-    measured directly from the <code>v14.3.5</code> tag (14 July 2026) and is reproducible
-    with <code>find</code> and <code>wc -l</code>; support dates and ELTS pricing come from
-    TYPO3's own announcements. Pushword claims describe shipped features, not roadmap.<br>
-    <span class="text-xs">Found an error, or think we have been unfair to TYPO3? <a href="https://github.com/Pushword/Pushword/issues" class="underline">Open an issue</a> — corrections are welcome.</span>
-  </p>
-</div>
+> [!note] About this comparison
+>
+> Written by the Pushword author (and Claude). We are obviously not neutral, and TYPO3 is
+> a vastly more established project with a governance body, a security team and a
+> commercial ecosystem Pushword does not have. Every TYPO3 figure quoted here was
+> measured directly from the `v14.3.5` tag (14 July 2026) and is reproducible
+> with `find` and `wc -l`; support dates and ELTS pricing come from
+> TYPO3's own announcements. Pushword claims describe shipped features, not roadmap.
+>
+> Found an error, or think we have been unfair to TYPO3? [Open an issue](https://github.com/Pushword/Pushword/issues) — corrections are welcome.
 
-<div class="not-prose p-4 mt-8 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
-  <p class="text-sm text-amber-800 dark:text-amber-200">
-    <strong>Version</strong><br>
-    Last updated: August 2026. Reflects TYPO3 v14.3.5 (v14 LTS, released 21 April 2026,
-    supported until 2029) and Pushword <code>1.0.0-rc</code> as of August 2026. TYPO3 v15
-    is in development with an LTS projected for autumn 2027.
-  </p>
-</div>
+> [!warning] Version
+>
+> Last updated: August 2026. Reflects TYPO3 v14.3.5 (v14 LTS, released 21 April 2026,
+> supported until 2029) and Pushword `1.0.0-rc` as of August 2026. TYPO3 v15
+> is in development with an LTS projected for autumn 2027.

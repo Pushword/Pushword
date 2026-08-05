@@ -470,24 +470,19 @@ content as Markdown on a disk you own — that is what Pushword is for.
 - **Pushword**: [pushword.piedweb.com](https://pushword.piedweb.com) · [github.com/Pushword/Pushword](https://github.com/Pushword/Pushword)
 - Related: [CMS comparison — Pushword vs WordPress, Statamic, Sulu](/blog/cms-comparison)
 
-<div class="not-prose p-4 mb-8 bg-blue-50 dark:bg-blue-900/30 rounded-lg shadow">
-  <p class="text-sm text-blue-800 dark:text-blue-200">
-    <strong>About this comparison</strong><br>
-    Written by the Pushword author (and Claude). We are obviously not neutral, and Astro is
-    a far more widely adopted project with a much larger community than Pushword. Claims
-    about Astro are based on its official documentation and release notes as of August 2026;
-    claims about Pushword are based on shipped features, not roadmap, and its release count
-    and test figures are checkable on Packagist and GitHub. Where Pushword adopted an idea
-    from Astro, we have said so.<br>
-    <span class="text-xs">Found an error, or think we have been unfair to Astro? <a href="https://github.com/Pushword/Pushword/issues" class="underline">Open an issue</a> — corrections are welcome.</span>
-  </p>
-</div>
+> [!note] About this comparison
+>
+> Written by the Pushword author (and Claude). We are obviously not neutral, and Astro is
+> a far more widely adopted project with a much larger community than Pushword. Claims
+> about Astro are based on its official documentation and release notes as of August 2026;
+> claims about Pushword are based on shipped features, not roadmap, and its release count
+> and test figures are checkable on Packagist and GitHub. Where Pushword adopted an idea
+> from Astro, we have said so.
+>
+> Found an error, or think we have been unfair to Astro? [Open an issue](https://github.com/Pushword/Pushword/issues) — corrections are welcome.
 
-<div class="not-prose p-4 mt-8 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
-  <p class="text-sm text-amber-800 dark:text-amber-200">
-    <strong>Version</strong><br>
-    Last updated: August 2026. Reflects Astro 7.0 (22 June 2026) and Pushword's render epoch,
-    declared page properties and view transitions. Both projects move quickly; updates
-    welcome via GitHub issues.
-  </p>
-</div>
+> [!warning] Version
+>
+> Last updated: August 2026. Reflects Astro 7.0 (22 June 2026) and Pushword's render epoch,
+> declared page properties and view transitions. Both projects move quickly; updates
+> welcome via GitHub issues.
