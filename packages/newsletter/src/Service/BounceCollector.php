@@ -27,12 +27,17 @@ use Webklex\PHPIMAP\ClientManager;
  *
  * Left alone, a dead address stays subscribed and is retried by every campaign,
  * which is how a sending reputation is spent.
+ *
+ * That mailbox accepts mail from anywhere, so a report naming an address is
+ * never reason enough to drop it: {@see BounceSignature} has to recognise the
+ * message the report came back about first.
  */
 final readonly class BounceCollector
 {
     public function __construct(
         private ContactRepository $contactRepository,
         private ContactManager $contactManager,
+        private BounceSignature $bounceSignature,
         #[Autowire(param: 'pw.newsletter.bounce_maildir')]
         private ?string $configuredMaildir,
         #[Autowire(param: 'pw.newsletter.bounce_imap_dsn')]
@@ -103,11 +108,11 @@ final readonly class BounceCollector
      * mailbox untouched, which is the only way to look at a bounce mailbox for
      * the first time without committing to what a parser thinks it found.
      *
-     * @return array{scanned: int, failures: int, marked: int, soft: int, foreign: int, unfiled: int, unknown: list<string>}
+     * @return array{scanned: int, failures: int, marked: int, soft: int, foreign: int, unverified: int, unfiled: int, unknown: list<string>}
      */
     public function collect(BounceSource $source, bool $dryRun = false): array
     {
-        $report = ['scanned' => 0, 'failures' => 0, 'marked' => 0, 'soft' => 0, 'foreign' => 0, 'unfiled' => 0, 'unknown' => []];
+        $report = ['scanned' => 0, 'failures' => 0, 'marked' => 0, 'soft' => 0, 'foreign' => 0, 'unverified' => 0, 'unfiled' => 0, 'unknown' => []];
 
         foreach ($source->messages() as $key => $raw) {
             ++$report['scanned'];
@@ -121,6 +126,15 @@ final readonly class BounceCollector
             } else {
                 foreach ($deliveryReport->failures as $failure) {
                     ++$report['failures'];
+
+                    // Unproven, so nothing is looked up and nothing is said
+                    // about the address: it is not this report's to name.
+                    if (! $this->bounceSignature->proves($failure->email, $deliveryReport->messageIds)) {
+                        ++$report['unverified'];
+
+                        continue;
+                    }
+
                     $report['marked'] += $this->markBounced($failure->email, $dryRun, $report['unknown']);
                 }
             }

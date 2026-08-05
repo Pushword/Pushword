@@ -9,9 +9,9 @@ use Pushword\Newsletter\Bounce\MaildirSource;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Service\BounceCollector;
+use Pushword\Newsletter\Service\BounceSignature;
 use Pushword\Newsletter\Service\ContactManager;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
-use Pushword\Newsletter\Tests\Command\BounceFixture;
 use RuntimeException;
 
 /**
@@ -28,8 +28,8 @@ final class RemoteMailboxTest extends AbstractNewsletterTestCase
         $alive = $this->createContact($audience, 'busy@example.tld');
 
         $source = new InMemorySource([
-            101 => BounceFixture::bounce('dead@example.tld', '5.1.1'),
-            102 => BounceFixture::bounce('busy@example.tld', '4.2.2'),
+            101 => $this->bounceFor('dead@example.tld', '5.1.1'),
+            102 => $this->bounceFor('busy@example.tld', '4.2.2'),
             103 => "From: someone@example.tld\r\nSubject: Not a report\r\n\r\nHello.",
         ]);
 
@@ -60,7 +60,7 @@ final class RemoteMailboxTest extends AbstractNewsletterTestCase
         $contact = $this->createContact($audience, 'dead@example.tld');
 
         $source = new InMemorySource(
-            [101 => BounceFixture::bounce('dead@example.tld', '5.1.1')],
+            [101 => $this->bounceFor('dead@example.tld', '5.1.1')],
             unflaggable: [101],
         );
 
@@ -78,7 +78,7 @@ final class RemoteMailboxTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
         $contact = $this->createContact($audience, 'dead@example.tld');
 
-        $source = new InMemorySource([101 => BounceFixture::bounce('dead@example.tld', '5.1.1')]);
+        $source = new InMemorySource([101 => $this->bounceFor('dead@example.tld', '5.1.1')]);
 
         $report = $this->collector()->collect($source, dryRun: true);
 
@@ -117,6 +117,28 @@ final class RemoteMailboxTest extends AbstractNewsletterTestCase
         $this->expectExceptionMessageMatches('/imaps:\/\/user/');
 
         ImapSource::parse('/home/user/mail/bounce');
+    }
+
+    /**
+     * The source holds the one message it has handed out, so that flagging is
+     * bounded to what the caller is actually working on — holding a run's worth
+     * would keep every fetched body alive with them. A key that is not that
+     * message is refused without the mailbox being touched, which is what lets
+     * this run without an IMAP server.
+     */
+    public function testOnlyTheMessageInHandCanBeFlagged(): void
+    {
+        $source = new ImapSource('imaps://user:pass@mail.example.tld/INBOX');
+
+        self::assertFalse($source->markRead(1), 'nothing has been handed out yet');
+    }
+
+    /** A dry run reports the flag it deliberately did not set. */
+    public function testADryRunFlagsNothingAndSaysItDid(): void
+    {
+        $source = new ImapSource('imaps://user:pass@mail.example.tld/INBOX', dryRun: true);
+
+        self::assertTrue($source->markRead(1));
     }
 
     /**
@@ -172,6 +194,7 @@ final class RemoteMailboxTest extends AbstractNewsletterTestCase
         return new BounceCollector(
             self::getContainer()->get(ContactRepository::class),
             self::getContainer()->get(ContactManager::class),
+            self::getContainer()->get(BounceSignature::class),
             $maildir,
             $dsn,
         );

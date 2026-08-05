@@ -120,7 +120,7 @@ final class NewsletterBouncesCommand
      * Zero movement, zero mail — and a dry run never mails at all, since it is
      * the run one performs precisely to decide whether to let it act.
      *
-     * @param array{scanned: int, failures: int, marked: int, soft: int, foreign: int, unfiled: int, unknown: list<string>} $report
+     * @param array{scanned: int, failures: int, marked: int, soft: int, foreign: int, unverified: int, unfiled: int, unknown: list<string>} $report
      *
      * @return bool whether a mail was handed to the transport
      */
@@ -161,7 +161,7 @@ final class NewsletterBouncesCommand
      * The console rendering: the same three sentences, each in the style that
      * says how much it matters.
      *
-     * @param array{soft: int, foreign: int, unfiled: int, unknown: list<string>, ...} $report
+     * @param array{soft: int, foreign: int, unverified: int, unfiled: int, unknown: list<string>, ...} $report
      */
     private function detail(SymfonyStyle $io, array $report): void
     {
@@ -176,6 +176,11 @@ final class NewsletterBouncesCommand
             $io->writeln('<comment>'.$this->ignoredLine($report).'</comment>');
         }
 
+        $unverified = $this->unverifiedLine($report);
+        if (null !== $unverified) {
+            $io->warning($unverified);
+        }
+
         $unfiled = $this->unfiledLine($report);
         if (null !== $unfiled) {
             $io->warning($unfiled);
@@ -185,13 +190,14 @@ final class NewsletterBouncesCommand
     /**
      * The same, for a mail that has no styles to say it with.
      *
-     * @param array{soft: int, foreign: int, unfiled: int, unknown: list<string>, ...} $report
+     * @param array{soft: int, foreign: int, unverified: int, unfiled: int, unknown: list<string>, ...} $report
      */
     private function plainDetail(array $report): string
     {
         $lines = [
             $this->ignoredLine($report),
             $this->unknownLine($report),
+            $this->unverifiedLine($report),
             $this->unfiledLine($report),
         ];
 
@@ -225,6 +231,22 @@ final class NewsletterBouncesCommand
             $report['soft'],
             $report['foreign'],
         );
+    }
+
+    /**
+     * A report nothing proves this install sent, which is either somebody
+     * forging one or a mail server that returns no copy of the message it
+     * failed to deliver. Worth saying out loud both ways: the first is an
+     * attempt on the list, and the second means real bounces are going by
+     * unread and the addresses behind them stay subscribed.
+     *
+     * @param array{unverified: int, ...} $report
+     */
+    private function unverifiedLine(array $report): ?string
+    {
+        return $report['unverified'] > 0
+            ? \sprintf('%d permanent failure(s) named no message this site sent, and were left alone.', $report['unverified'])
+            : null;
     }
 
     /** @param array{unfiled: int, ...} $report */

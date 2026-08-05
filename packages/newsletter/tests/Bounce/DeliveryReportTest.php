@@ -75,7 +75,93 @@ final class DeliveryReportTest extends TestCase
         self::assertCount(1, $report->failures);
     }
 
-    private function bounce(string $status, string $action): string
+    /**
+     * Which message failed is the only thing that ties a report to this install
+     * — see {@see \Pushword\Newsletter\Service\BounceSignature}. Postfix returns
+     * the headers alone.
+     */
+    public function testTheReturnedHeadersNameTheMessageThatFailed(): void
+    {
+        $report = DeliveryReport::fromRaw($this->bounce('5.1.1', 'failed', 'nl.deadbeef.cafe@example.tld'));
+
+        self::assertInstanceOf(DeliveryReport::class, $report);
+        self::assertSame(['nl.deadbeef.cafe@example.tld'], $report->messageIds);
+    }
+
+    /** Others return the whole message. */
+    public function testAWholeReturnedMessageNamesItToo(): void
+    {
+        $raw = str_replace('text/rfc822-headers', 'message/rfc822', $this->bounce('5.1.1', 'failed', 'nl.deadbeef.cafe@example.tld'));
+
+        $report = DeliveryReport::fromRaw($raw);
+
+        self::assertInstanceOf(DeliveryReport::class, $report);
+        self::assertSame(['nl.deadbeef.cafe@example.tld'], $report->messageIds);
+    }
+
+    /**
+     * A `Message-ID:` written into the body of the returned message is not the
+     * header — a forger who cannot sign one would otherwise only have to type it
+     * one blank line lower.
+     */
+    public function testAMessageIdInTheReturnedBodyIsNotTheHeader(): void
+    {
+        $raw = str_replace(
+            "Subject: This week\n",
+            "Subject: This week\n\nMessage-ID: <nl.forged.beef@example.tld>\n",
+            str_replace('text/rfc822-headers', 'message/rfc822', $this->bounce('5.1.1', 'failed', 'nl.deadbeef.cafe@example.tld')),
+        );
+
+        $report = DeliveryReport::fromRaw($raw);
+
+        self::assertInstanceOf(DeliveryReport::class, $report);
+        self::assertSame(['nl.deadbeef.cafe@example.tld'], $report->messageIds);
+    }
+
+    /** RFC 3464 only recommends returning the message, so a report may name none. */
+    public function testAReportReturningNothingNamesNoMessage(): void
+    {
+        $report = DeliveryReport::fromRaw($this->bounce('5.1.1', 'failed'));
+
+        self::assertInstanceOf(DeliveryReport::class, $report);
+        self::assertSame([], $report->messageIds);
+    }
+
+    /** A copy can come back stripped of the one header that identifies it. */
+    public function testAReturnedCopyWithoutAMessageIdNamesNoMessage(): void
+    {
+        $raw = str_replace(
+            "Message-ID: <nl.deadbeef.cafe@example.tld>\n",
+            '',
+            $this->bounce('5.1.1', 'failed', 'nl.deadbeef.cafe@example.tld'),
+        );
+
+        $report = DeliveryReport::fromRaw($raw);
+
+        self::assertInstanceOf(DeliveryReport::class, $report);
+        self::assertCount(1, $report->failures, 'the failure is still read');
+        self::assertSame([], $report->messageIds);
+    }
+
+    private function bounce(string $status, string $action, string $messageId = ''): string
+    {
+        $returned = '' === $messageId ? '' : <<<MAIL
+
+            --BOUNDARY
+            Content-Description: Undelivered Message Headers
+            Content-Type: text/rfc822-headers
+
+            Return-Path: <bounce@example.tld>
+            Message-ID: <{$messageId}>
+            From: News <news@example.tld>
+            To: no-such-user@example.tld
+            Subject: This week
+            MAIL."\n";
+
+        return str_replace('--BOUNDARY--', $returned."\n--BOUNDARY--", $this->report($status, $action));
+    }
+
+    private function report(string $status, string $action): string
     {
         return <<<MAIL
             From: MAILER-DAEMON@relay.example.tld (Mail Delivery System)

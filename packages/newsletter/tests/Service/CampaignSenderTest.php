@@ -8,10 +8,12 @@ use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Enum\RecipientState;
+use Pushword\Newsletter\Service\BounceSignature;
 use Pushword\Newsletter\Service\CampaignSender;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\Header\IdentificationHeader;
 
 #[Group('integration')]
 final class CampaignSenderTest extends AbstractNewsletterTestCase
@@ -95,6 +97,31 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
         self::assertSame('Hello Test', $email->getSubject());
         self::assertStringContainsString('List-Unsubscribe', $email->getHeaders()->toString());
         self::assertStringContainsString('One-Click', $email->getHeaders()->toString());
+    }
+
+    /**
+     * The round trip the bounce reader depends on: a mail leaves carrying an id
+     * that names its recipient, and {@see BounceSignature} recognises it coming
+     * back. Break the stamping and no genuine bounce is ever acted on again —
+     * silently, since an unproven report is only counted.
+     */
+    public function testASentMailCarriesAnIdThatProvesItsRecipient(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'reader@example.tld');
+        $campaign = $this->createCampaign($audience);
+        $this->sender()->arm($campaign);
+        $this->sender()->drain($campaign, 10);
+
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        $header = $email->getHeaders()->get('Message-ID');
+        self::assertInstanceOf(IdentificationHeader::class, $header);
+
+        $signature = self::getContainer()->get(BounceSignature::class);
+
+        self::assertTrue($signature->proves('reader@example.tld', [(string) $header->getId()]));
+        self::assertFalse($signature->proves('victim@example.tld', [(string) $header->getId()]));
     }
 
     /** The first mail goes out alone; the cadence then governs how fast the rest follow. */

@@ -11,6 +11,8 @@ use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Service\BounceSignature;
+use Pushword\Newsletter\Tests\Command\BounceFixture;
 use Pushword\Newsletter\Trigger\Source\ContactTriggerSource;
 use Pushword\Newsletter\Trigger\Source\PageTriggerSource;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -125,6 +127,19 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
         $this->entityManager->flush();
 
         return $contact;
+    }
+
+    /**
+     * A delivery report a mail server could have written, as opposed to one
+     * anybody can post to the bounce mailbox: it returns a copy of a mail this
+     * install really sent, which is what {@see BounceSignature} asks for before
+     * an address is taken off the list.
+     */
+    protected function bounceFor(string $email, string $status): string
+    {
+        $signature = self::getContainer()->get(BounceSignature::class);
+
+        return BounceFixture::bounce($email, $status, $signature->messageId($email, 'news@example.tld'));
     }
 
     /** Somebody the site can only phone: consented, stored, never a recipient. */

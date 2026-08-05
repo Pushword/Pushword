@@ -29,6 +29,7 @@ final readonly class NewsletterMailer
         private LinkGenerator $linkGenerator,
         private SiteRegistry $siteRegistry,
         private TranslatorInterface $translator,
+        private BounceSignature $bounceSignature,
     ) {
     }
 
@@ -148,6 +149,15 @@ final readonly class NewsletterMailer
         $email = new Email()
             ->from(new Address($audience->fromEmail, $audience->fromName))
             ->to(new Address($to, $contact->name));
+
+        // Stamped here rather than per kind of mail, so that everything this
+        // class hands to the transport comes back provable: a bounce on a
+        // confirmation is as good a reason to drop an address as one on a
+        // campaign. Symfony only generates a Message-ID when none is set.
+        $email->getHeaders()->addIdHeader(
+            'Message-ID',
+            $this->bounceSignature->messageId($to, $audience->fromEmail),
+        );
 
         $replyTo = $audience->replyTo;
         if (null !== $replyTo) {
