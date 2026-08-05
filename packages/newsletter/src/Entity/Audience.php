@@ -11,6 +11,7 @@ use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Newsletter\Repository\AudienceRepository;
 use Stringable;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints\Email;
 
 /**
  * A mailing list, and the scope of consent: subscribing to one audience says
@@ -58,13 +59,13 @@ class Audience implements IdInterface, Stringable
     }
 
     #[Assert\NotBlank]
-    #[Assert\Email(mode: 'strict')]
+    #[Email(mode: Email::VALIDATION_MODE_STRICT)]
     #[ORM\Column(type: Types::STRING, length: 180)]
     public string $fromEmail = '' {
         set(string $value) => mb_strtolower(trim($value));
     }
 
-    #[Assert\Email(mode: 'strict')]
+    #[Email(mode: Email::VALIDATION_MODE_STRICT)]
     #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]
     public ?string $replyTo = null {
         set(?string $value) {

@@ -32,7 +32,7 @@ final class MediaBlockController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
-        #[Autowire('%pw.public_media_dir%')]
+        #[Autowire(param: 'pw.public_media_dir')]
         private readonly string $publicMediaDir,
         private readonly ImageCacheManager $imageCacheManager,
         private readonly LoggerInterface $logger,

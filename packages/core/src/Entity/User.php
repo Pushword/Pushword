@@ -14,6 +14,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints\Email;
 
 /**
  * Traits: ExtensiblePropertiesTrait (JSON key-value bag).
@@ -42,7 +43,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     public ?DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::STRING, length: 180, unique: true)]
-    #[Assert\Email(message: 'userEmailInvalid', mode: 'strict')]
+    #[Email(message: 'userEmailInvalid', mode: Email::VALIDATION_MODE_STRICT)]
     public string $email = '';
 
     #[ORM\Column(type: Types::STRING, length: 150, nullable: true)]

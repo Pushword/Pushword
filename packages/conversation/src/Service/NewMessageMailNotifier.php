@@ -34,7 +34,7 @@ class NewMessageMailNotifier
     public function __construct(
         private readonly NotificationEmailSender $emailSender,
         private readonly SiteRegistry $apps,
-        #[Autowire('%kernel.project_dir%')]
+        #[Autowire(param: 'kernel.project_dir')]
         private readonly string $projectDir,
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,

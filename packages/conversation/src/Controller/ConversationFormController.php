@@ -43,7 +43,7 @@ final class ConversationFormController extends AbstractController
         private readonly TokenStorageInterface $tokenStorage,
         private readonly RouterInterface $router,
         private readonly ManagerRegistry $doctrine,
-        #[Autowire('%kernel.environment%')]
+        #[Autowire(param: 'kernel.environment')]
         private readonly string $env,
         private readonly MessageRepository $messageRepo,
         private readonly CacheInterface $cache,

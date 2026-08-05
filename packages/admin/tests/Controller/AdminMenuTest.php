@@ -29,8 +29,7 @@ final class AdminMenuTest extends KernelTestCase
         // SiteRegistry is final, get real instance from container
         $appPool = self::getContainer()->get(SiteRegistry::class);
         $adminContextProvider = self::createStub(AdminContextProviderInterface::class);
-        $requestStack = new RequestStack();
-        $requestStack->push(new Request());
+        $requestStack = new RequestStack([new Request()]);
 
         $this->adminMenu = new AdminMenu(
             $appPool,

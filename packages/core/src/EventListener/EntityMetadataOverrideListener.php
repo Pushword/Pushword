@@ -12,7 +12,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final readonly class EntityMetadataOverrideListener
 {
     public function __construct(
-        #[Autowire('%pw.entity_user%')]
+        #[Autowire(param: 'pw.entity_user')]
         private string $entityUserClass,
     ) {
     }

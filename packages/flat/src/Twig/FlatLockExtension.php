@@ -2,32 +2,17 @@
 
 namespace Pushword\Flat\Twig;
 
-use Override;
 use Pushword\Flat\Service\FlatLockManager;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFunction;
+use Twig\Attribute\AsTwigFunction;
 
 /**
  * Twig extension to expose flat lock status in templates.
  */
-final class FlatLockExtension extends AbstractExtension
+final readonly class FlatLockExtension
 {
     public function __construct(
-        private readonly FlatLockManager $lockManager,
+        private FlatLockManager $lockManager,
     ) {
-    }
-
-    /**
-     * @return TwigFunction[]
-     */
-    #[Override]
-    public function getFunctions(): array
-    {
-        return [
-            new TwigFunction('flat_lock_info', $this->getLockInfo(...)),
-            new TwigFunction('is_webhook_locked', $this->isWebhookLocked(...)),
-            new TwigFunction('is_flat_locked', $this->isLocked(...)),
-        ];
     }
 
     /**
@@ -35,6 +20,7 @@ final class FlatLockExtension extends AbstractExtension
      *
      * @return array{locked: bool, lockedAt: int, lockedBy: string, ttl: int, reason: string, lockedByUser?: string}|null
      */
+    #[AsTwigFunction(name: 'flat_lock_info')]
     public function getLockInfo(?string $host = null): ?array
     {
         if (! $this->lockManager->isLocked($host)) {
@@ -47,6 +33,7 @@ final class FlatLockExtension extends AbstractExtension
     /**
      * Check if the host is locked by a webhook lock.
      */
+    #[AsTwigFunction(name: 'is_webhook_locked')]
     public function isWebhookLocked(?string $host = null): bool
     {
         return $this->lockManager->isWebhookLocked($host);
@@ -55,6 +42,7 @@ final class FlatLockExtension extends AbstractExtension
     /**
      * Check if the host has any active lock.
      */
+    #[AsTwigFunction(name: 'is_flat_locked')]
     public function isLocked(?string $host = null): bool
     {
         return $this->lockManager->isLocked($host);

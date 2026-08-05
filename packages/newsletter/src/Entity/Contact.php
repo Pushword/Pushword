@@ -18,6 +18,7 @@ use Pushword\Newsletter\Repository\ContactRepository;
 use Stringable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints\Email;
 
 /**
  * A person in an audience, and the consent ledger for them: where they opted in,
@@ -101,7 +102,7 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
         public Audience $audience,
         /** Null for somebody the site can only phone. An empty string is one of those, not an address. */
-        #[Assert\Email(mode: 'strict')]
+        #[Email(mode: Email::VALIDATION_MODE_STRICT)]
         #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]
         public ?string $email = null {
             set(?string $value) {

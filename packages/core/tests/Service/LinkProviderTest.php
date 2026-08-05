@@ -29,8 +29,7 @@ final class LinkProviderTest extends TestCase
         $security = $this->createMock(Security::class);
         $security->expects(self::never())->method('isGranted');
 
-        $stack = new RequestStack();
-        $stack->push(Request::create('http://example.com/'));
+        $stack = new RequestStack([Request::create('http://example.com/')]);
 
         $provider = $this->buildProvider($security, $stack);
 
@@ -48,8 +47,7 @@ final class LinkProviderTest extends TestCase
         $request = Request::create('http://example.com/');
         $request->setSession(new Session(new MockArraySessionStorage()));
 
-        $stack = new RequestStack();
-        $stack->push($request);
+        $stack = new RequestStack([$request]);
 
         $provider = $this->buildProvider($security, $stack);
 
@@ -67,8 +65,7 @@ final class LinkProviderTest extends TestCase
         $request = Request::create('http://example.com/');
         $request->setSession(new Session(new MockArraySessionStorage()));
 
-        $stack = new RequestStack();
-        $stack->push($request);
+        $stack = new RequestStack([$request]);
 
         $provider = $this->buildProvider($security, $stack);
 

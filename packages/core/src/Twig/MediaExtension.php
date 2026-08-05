@@ -30,7 +30,7 @@ class MediaExtension
         private readonly SiteRegistry $apps,
         private readonly ImageCacheManager $imageCacheManager,
         private readonly LinkProvider $linkProvider,
-        #[Autowire('%pw.public_media_dir%')]
+        #[Autowire(param: 'pw.public_media_dir')]
         private readonly string $publicMediaDir,
     ) {
     }

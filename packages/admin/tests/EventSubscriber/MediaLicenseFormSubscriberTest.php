@@ -21,8 +21,7 @@ final class MediaLicenseFormSubscriberTest extends TestCase
     private function submit(Media $media, array $submitted): void
     {
         $request = new Request(request: ['Media' => $submitted]);
-        $requestStack = new RequestStack();
-        $requestStack->push($request);
+        $requestStack = new RequestStack([$request]);
 
         new MediaLicenseFormSubscriber($requestStack)
             ->applyLicense(new BeforeEntityUpdatedEvent($media));
@@ -129,8 +128,7 @@ final class MediaLicenseFormSubscriberTest extends TestCase
     {
         $page = new Page();
         $request = new Request(request: ['Page' => [MediaLicense::CREDIT_TEXT => 'Altimood']]);
-        $requestStack = new RequestStack();
-        $requestStack->push($request);
+        $requestStack = new RequestStack([$request]);
 
         new MediaLicenseFormSubscriber($requestStack)
             ->applyLicense(new BeforeEntityUpdatedEvent($page));

@@ -46,10 +46,4 @@ final class ApiTokenType extends AbstractType
     {
         return TextType::class;
     }
-
-    #[Override]
-    public function getBlockPrefix(): string
-    {
-        return 'api_token';
-    }
 }

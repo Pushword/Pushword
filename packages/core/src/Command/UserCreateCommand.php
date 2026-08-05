@@ -21,7 +21,7 @@ final readonly class UserCreateCommand
     public function __construct(
         private EntityManagerInterface $em,
         private UserPasswordHasherInterface $passwordEncoder,
-        #[Autowire('%pw.entity_user%')]
+        #[Autowire(param: 'pw.entity_user')]
         private string $userClass = User::class,
     ) {
     }

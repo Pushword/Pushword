@@ -5,6 +5,7 @@ namespace Pushword\StaticGenerator\Tests\Cache;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Cache\PageCacheSuppressor;
@@ -23,6 +24,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Twig\Environment as Twig;
 use Twig\Loader\FilesystemLoader;
 
+#[AllowMockObjectsWithoutExpectations]
 final class PageCacheInvalidatorTest extends TestCase
 {
     /** @var MessageBusInterface&MockObject */

@@ -26,9 +26,9 @@ final class UserSync
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly EntityManagerInterface $em,
-        #[Autowire('%kernel.project_dir%')]
+        #[Autowire(param: 'kernel.project_dir')]
         private readonly string $projectDir,
-        #[Autowire('%pw.entity_user%')]
+        #[Autowire(param: 'pw.entity_user')]
         private readonly string $userClass = User::class,
         private readonly ?LoggerInterface $logger = null,
     ) {

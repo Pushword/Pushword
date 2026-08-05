@@ -15,7 +15,7 @@ class BlockExtension
         private readonly SiteRegistry $apps,
         public Twig $twig,
         private readonly MediaExtension $mediaExtension,
-        #[Autowire('%pw.public_media_dir%')]
+        #[Autowire(param: 'pw.public_media_dir')]
         private readonly string $publicMediaDir,
     ) {
     }

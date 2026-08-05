@@ -67,7 +67,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         ManagerRegistry $registry,
         #[Autowire(service: 'cache.app')]
         private readonly ?CacheItemPoolInterface $cache = null,
-        #[Autowire('%kernel.debug%')]
+        #[Autowire(param: 'kernel.debug')]
         private readonly bool $debug = false,
     ) {
         parent::__construct($registry, Media::class);
