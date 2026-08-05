@@ -25,12 +25,16 @@
     "pushword/core": "^1.0.0-rc84",
     "pushword/docs": "^1.0.0-rc84",
     "pushword/installer": "^1.0.0-rc84",
-    "pushword/dev-app": "^1.0.0-rc84",
     "pushword/admin": "^1.0.0-rc84",
     "pushword/admin-block-editor": "^1.0.0-rc84",
+    "pushword/advanced-main-image": "^1.0.0-rc84",
+    "pushword/api": "^1.0.0-rc84",
+    "pushword/conversation": "^1.0.0-rc84",
+    "pushword/flat": "^1.0.0-rc84",
     "pushword/page-scanner": "^1.0.0-rc84",
     "pushword/static-generator": "^1.0.0-rc84",
-    "pushword/template-editor": "^1.0.0-rc84"
+    "pushword/template-editor": "^1.0.0-rc84",
+    "pushword/version": "^1.0.0-rc84"
   },
   "require-dev": {
     "symfony/profiler-pack": "*",

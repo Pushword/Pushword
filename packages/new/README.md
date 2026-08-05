@@ -35,7 +35,7 @@ p@ssword
 
 1. **Name your site** — `config/packages/pushword.yaml` holds hosts, locales and
    templates. `php bin/console pw:new` adds another site to it.
-2. **Write a page** — from `/admin`, or as Markdown files if you install
+2. **Write a page** — from `/admin`, or as Markdown files with
    [Flat](https://pushword.piedweb.com/extension/flat).
 3. **Make it yours** — override the Twig views in `templates/`, see
    [themes](https://pushword.piedweb.com/themes).
@@ -47,16 +47,21 @@ p@ssword
 | | |
 |---|---|
 | [Admin](https://pushword.piedweb.com/extension/admin) | Manage pages, media and users |
+| [Advanced Main Image](https://pushword.piedweb.com/extension/advanced-main-image) | Choose each page's main image format, up to a hero |
+| [API](https://pushword.piedweb.com/extension/api) | Token-authenticated REST mirror of the admin, for scripts and agents |
 | [Block editor](https://pushword.piedweb.com/extension/admin-block-editor) | Write in blocks, stored as Markdown |
+| [Conversation](https://pushword.piedweb.com/extension/conversation) | Contact form, comments, any user input |
+| [Flat](https://pushword.piedweb.com/extension/flat) | Write pages as Markdown files, synced with the database |
 | [Page Scanner](https://pushword.piedweb.com/extension/page-scanner) | Find dead links, 404s and redirects |
 | [Static Generator](https://pushword.piedweb.com/extension/static-generator) | Export the site as static files |
 | [Template Editor](https://pushword.piedweb.com/extension/template-editor) | Edit Twig views from the admin |
+| [Version](https://pushword.piedweb.com/extension/version) | Keep every past revision of a page |
 
-Add more as you need them — versioning, search, flat files, comments, newsletter:
+Add more as you need them — search, newsletter, quizzes:
 
 ```shell
-composer req pushword/version
 composer req pushword/search
+composer req pushword/newsletter
 ```
 
 The full list is on [pushword.piedweb.com/extensions](https://pushword.piedweb.com/extensions).

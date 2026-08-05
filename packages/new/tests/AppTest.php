@@ -126,11 +126,60 @@ final class AppTest extends TestCase
         self::assertSame(0, $returnCode, 'bin/console list should exit with code 0. Output: '.implode("\n", $output));
     }
 
-    public function testBundlesContainPushword(): void
+    /**
+     * Pushword has no Flex recipe: a bundle is only in the kernel because its own
+     * install.php put it there. Everything this skeleton requires must be, or the
+     * install ships code the app never loads — and routes pointing at it.
+     */
+    public function testEveryShippedBundleIsRegistered(): void
     {
         $content = file_get_contents(self::$projectDir.'/config/bundles.php');
         self::assertNotFalse($content);
-        self::assertStringContainsString('PushwordCoreBundle', $content);
+
+        foreach ([
+            'Pushword\Core\PushwordCoreBundle',
+            'Pushword\Admin\PushwordAdminBundle',
+            'Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle',
+            'Pushword\AdvancedMainImage\PushwordAdvancedMainImageBundle',
+            'Pushword\Api\PushwordApiBundle',
+            'Pushword\Conversation\PushwordConversationBundle',
+            'Pushword\Flat\PushwordFlatBundle',
+            'Pushword\PageScanner\PushwordPageScannerBundle',
+            'Pushword\StaticGenerator\PushwordStaticGeneratorBundle',
+            'Pushword\TemplateEditor\PushwordTemplateEditorBundle',
+            'Pushword\Version\PushwordVersionBundle',
+        ] as $bundle) {
+            self::assertStringContainsString($bundle, $content);
+        }
+    }
+
+    /**
+     * Core must come first, and its catch-all page route last, or a bundle's own route
+     * never gets a chance to match.
+     */
+    public function testEveryShippedBundleImportsItsRoutes(): void
+    {
+        $content = file_get_contents(self::$projectDir.'/config/routes.yaml');
+        self::assertNotFalse($content);
+
+        foreach ([
+            '@PushwordAdminBundle',
+            '@PushwordAdminBlockEditorBundle',
+            '@PushwordApiBundle',
+            '@PushwordConversationBundle',
+            '@PushwordFlatBundle',
+            '@PushwordPageScannerBundle',
+            '@PushwordStaticGeneratorBundle',
+            '@PushwordTemplateEditorBundle',
+            '@PushwordVersionBundle',
+        ] as $bundle) {
+            self::assertStringContainsString($bundle, $content);
+        }
+
+        self::assertStringEndsWith(
+            "pushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes.yaml'\n",
+            $content
+        );
     }
 
     public function testDefaultTemplateRemoved(): void
