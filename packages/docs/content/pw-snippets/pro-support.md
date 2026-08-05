@@ -4,6 +4,6 @@ tags:
     - cta
 ---
 
-Looking for professional support? Pushword's creator, Robin, may be available to provide custom assistance for advanced installations or bespoke development.
+Stuck beyond what the docs cover? Robin, who wrote Pushword, takes paid work: advanced installations, migrations and bespoke development. First response within two business days.
 
-**First contact:** {{ mail('contact@piedweb.com') }}
+**Ask:** {{ mail('contact@piedweb.com') }} — or read [what paid help covers](/pro).

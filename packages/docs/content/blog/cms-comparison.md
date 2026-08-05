@@ -732,7 +732,7 @@ Before choosing, evaluate your project across these dimensions:
 
 ## Resources
 
-- **Pushword**: [pushword.piedweb.com](https://pushword.piedweb.com)
+- **Pushword**: [pushword.piedweb.com](https://pushword.piedweb.com) · [getting help and paid support](/pro)
 - **WordPress**: [wordpress.org](https://wordpress.org)
 - **Statamic**: [statamic.com](https://statamic.com)
 - **Sulu**: [sulu.io](https://sulu.io)

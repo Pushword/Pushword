@@ -7,6 +7,8 @@ toc: true
 
 Source code is host on #[{{ svg('github') }} github](https://github.com/Pushword/Pushword).
 
+Looking for help with your own site rather than to contribute? See [getting help](/pro).
+
 ## Signal an issue
 
 Use the #[github issue tracker](https://github.com/Pushword/Pushword/issues) to signal an issue.
