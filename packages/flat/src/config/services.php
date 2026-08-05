@@ -122,10 +122,12 @@ return static function (ContainerConfigurator $container): void {
     }
 
     // FlatLockExtension - Twig functions for lock status
+    // Its functions are declared with #[AsTwigFunction]: autoconfigure tags it as an
+    // attribute extension, and `twig.extension` would send it to addExtension(),
+    // which only takes an ExtensionInterface.
     $services->set(FlatLockExtension::class)
         ->autowire()
-        ->autoconfigure()
-        ->tag('twig.extension');
+        ->autoconfigure();
 
     // FlatChangeDetector configuration
     $services->set(FlatChangeDetector::class)
