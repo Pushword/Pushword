@@ -165,16 +165,32 @@ body:has(.bleed, .img-stretched) {
    The @supports guard is load-bearing, not decorative: with an unrecognised
    `animation-timeline` the animation would fall back to the document timeline
    with a zero duration and `both` would snap it straight to its end state —
-   left permanently faded, right never. No support must mean no animation. */
+   left permanently faded, right never. No support must mean no animation.
+
+   The two zeroes are the third state, and the guard is what makes them safe to
+   write: a row that fits has nothing to scroll, so its timeline is *inactive*
+   and an animation on an inactive timeline contributes no value at all. Without
+   them the properties would fall back to their 32px initial value and fade both
+   edges of a row with nothing behind either. Where the timeline is live the
+   animation origin wins over these declarations, so they only ever show through
+   where there is no overflow. */
 @supports (animation-timeline: scroll(self inline)) {
   .horizontal-scroll {
+    --horizontal-scroll-fade-start: 0px;
+    --horizontal-scroll-fade-end: 0px;
+
+    /* The third animation paints nothing: it turns that same inactive timeline
+       into a flag the dots read, since "does this row overflow" is otherwise
+       not a question CSS can ask. */
     animation:
       horizontal-scroll-fade-in linear both,
-      horizontal-scroll-fade-out linear both;
-    animation-timeline: scroll(self inline), scroll(self inline);
+      horizontal-scroll-fade-out linear both,
+      horizontal-scroll-overflows linear both;
+    animation-timeline: scroll(self inline), scroll(self inline), scroll(self inline);
     animation-range:
       0 var(--horizontal-scroll-fade),
-      calc(100% - var(--horizontal-scroll-fade)) 100%;
+      calc(100% - var(--horizontal-scroll-fade)) 100%,
+      normal;
   }
 }
 
@@ -193,6 +209,24 @@ body:has(.bleed, .img-stretched) {
   }
   to {
     --horizontal-scroll-fade-end: 0px;
+  }
+}
+
+/* Does this row overflow? `none` is the answer everywhere the scroll timeline
+   above is inactive — a row whose cards all fit — and the keyframes below hold
+   `after` for every position of a row that does scroll. Read by the dots, which
+   have nothing to indicate on a list you can already see in full; the arrows
+   reach the same end through `:disabled`. */
+@property --horizontal-scroll-markers {
+  syntax: '<custom-ident>';
+  inherits: false;
+  initial-value: none;
+}
+
+@keyframes horizontal-scroll-overflows {
+  from,
+  to {
+    --horizontal-scroll-markers: after;
   }
 }
 
@@ -274,7 +308,11 @@ body:has(.bleed, .img-stretched) {
 
 @supports selector(::scroll-marker-group) {
   .horizontal-scroll-dots .horizontal-scroll {
-    scroll-marker-group: after;
+    /* `after` only while the row overflows; `none` — no marker group and no row
+       of dots below the cards — while it fits. Every browser drawing markers has
+       had scroll-driven animations for twenty releases, so the flag is never
+       stuck at `none` on a row that does scroll. */
+    scroll-marker-group: var(--horizontal-scroll-markers);
   }
 
   .horizontal-scroll-dots .horizontal-scroll::scroll-marker-group {

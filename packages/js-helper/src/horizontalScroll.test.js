@@ -51,7 +51,7 @@ describe('horizontal scroller — guards that only a non-Chromium browser would 
   it('keeps the dots inside their @supports guard', () => {
     const guarded = blockOf('@supports selector(::scroll-marker-group)')
     expect(guarded).not.toBeNull()
-    expect(guarded).toContain('scroll-marker-group: after')
+    expect(guarded).toContain('scroll-marker-group:')
     expect(guarded).toContain('::scroll-marker')
   })
 
@@ -106,5 +106,45 @@ describe('horizontal scroller — guards that only a non-Chromium browser would 
       const property = blockOf(`@property --horizontal-scroll-fade-${side}`)
       expect(property).toContain(`initial-value: ${expected}`)
     }
+  })
+})
+
+/**
+ * The other state no test here can reach: a row whose cards all fit. Its scroll
+ * timeline is inactive, and an animation on an inactive timeline contributes no
+ * value — so everything the scroller draws from one falls back to the property's
+ * initial value, in a browser that supports every feature. Both fallbacks were
+ * written for the *unsupported* browser, where "fade both edges" and "no fill"
+ * are the right answers; here they are wrong, and only a declared value beside
+ * the animation can say so.
+ */
+describe('horizontal scroller — a row that does not overflow', () => {
+  /** Nothing is scrolled past either edge, so neither edge may be faded. */
+  it('declares the unfaded state beside the animation', () => {
+    const guarded = blockOf('@supports (animation-timeline')
+    expect(guarded).toContain('--horizontal-scroll-fade-start: 0px')
+    expect(guarded).toContain('--horizontal-scroll-fade-end: 0px')
+  })
+
+  /**
+   * And no dots: they would indicate a position on a list already visible in
+   * full. The marker group cannot be a constant `after` — it has to hang on the
+   * flag, which only an active (so: scrollable) timeline raises.
+   */
+  it('turns the marker group off unless the row scrolls', () => {
+    expect(blockOf('@supports selector(::scroll-marker-group)')).toContain(
+      'scroll-marker-group: var(--horizontal-scroll-markers)',
+    )
+    const flagProperty = blockOf('@property --horizontal-scroll-markers')
+    expect(flagProperty).toContain('initial-value: none')
+
+    // Raised for the whole range, not interpolated across it: the flag says
+    // "this row scrolls", which is as true at one end as at the other.
+    const flag = blockOf('@keyframes horizontal-scroll-overflows')
+    expect(flag).toMatch(/from,\s*to\s*{\s*--horizontal-scroll-markers:\s*after/)
+
+    // Raised by a scroll timeline, so it lives with the fade animations.
+    const guarded = blockOf('@supports (animation-timeline')
+    expect(guarded).toContain('horizontal-scroll-overflows linear both')
   })
 })

@@ -123,6 +123,12 @@ sharp and only the right edge is faded, and the reverse once you reach the end. 
 half is a scroll-driven animation over the mask, guarded by `@supports`; where it is
 unsupported both edges stay faded, which is what the plain mask does on its own.
 
+Add `horizontal-scroll-dots` to `wrapperClass` for position dots under the row: every
+visible card's dot is filled, half-visible ones half-filled, so clicking the last dot
+and seeing nothing move reads as "you are already there". A row **whose cards all fit**
+draws none of it — no dots, no fade, and no arrows, since there is no position to
+indicate and nothing hidden behind either edge.
+
 The arrows are an enhancement, not the mechanism. They are Chromium-only today, so
 elsewhere they are simply absent and the row is scrolled by trackpad, swipe,
 shift+wheel or the scrollbar. That is why the scroller is `overflow-x: auto` and
