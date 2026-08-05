@@ -101,16 +101,34 @@ where a single link matters.
 
 ## Auditing what was linked
 
-Automatic linking earns its bad reputation when it is invisible. Two surfaces:
+Automatic linking earns its bad reputation when it is invisible. Four surfaces,
+from the page you are reading to the whole site:
 
-- Every inserted link carries a bare `data-auto-link` attribute — auto links
-  stay distinguishable from editorial links in the HTML, to your crawler and to
-  your own eyes (`grep data-auto-link` on a static export).
-- `php bin/console pw:link-improver` renders every published page and reports
-  each inserted link (`page`, anchor, target). `--host example.tld` narrows to
-  one app, `--simulate` renders **as if `link_improver: true` were set** to
-  preview a site before opting in, and `--format` follows the
+- **On the page, logged in as an editor**: every auto link is underlined with a
+  dashed indigo rule and carries a title saying it was inserted, not written.
+  Only a `ROLE_EDITOR` with a session sees this — the public HTML and the shared
+  render cache are untouched, and an annotated response is sent `private,
+  no-store`. The marking is decoration only: nothing is inserted into the text,
+  so the page still reads exactly as a visitor sees it.
+- **Per page, in the admin**: the *Auto links* button on the page edit screen
+  opens a panel listing what this page gained (anchor → target), the cap it was
+  measured against, and the keywords its own name offers to other pages. It
+  renders that one page on request — this is the surface to open when a page
+  gained nothing and you want to know why.
+- **In the HTML**: every inserted link carries a bare `data-auto-link`
+  attribute — auto links stay distinguishable from editorial links to your
+  crawler and to your own eyes (`grep data-auto-link` on a static export).
+- **Site-wide**: `php bin/console pw:link-improver` renders every published page
+  and reports each inserted link (`page`, anchor, target). `--host example.tld`
+  narrows to one app, `--simulate` renders **as if `link_improver: true` were
+  set** to preview a site before opting in, and `--format` follows the
   [agent-output](/agent-output) convention.
+
+The panel deliberately does not list which pages link *to* the one you are
+looking at: that answer needs the rest of the host rendered, and
+[page-scanner](/extension/page-scanner)'s link graph (`pw:link:graph`) already
+reports inbound counts, depth and orphans — auto links included, since the scan
+renders each page.
 
 ## Rendering and cache
 

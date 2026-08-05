@@ -1,0 +1,15 @@
+linkImproverAnchor: Anchor
+linkImproverAutoLinks: 'Auto links'
+linkImproverCap: 'Cap: %cap% link(s) in total, %existing% already written'
+linkImproverCapAbsolute: 'Cap: %cap% link(s) in total (fixed count), %existing% already written'
+linkImproverDisabled: 'link_improver is not enabled for this site. Set <code>link_improver: true</code> on the app to turn it on, or run <code>pw:link-improver --simulate</code> to preview it first.'
+linkImproverEditPage: 'Edit page'
+linkImproverEditorAutoLink: 'Link added automatically by Link Improver — it is not in your content.'
+linkImproverIgnored: 'This URL is in link_improver_ignored_urls: nothing links to it automatically.'
+linkImproverKeywords: 'Keywords linking to this page'
+linkImproverNoKeyword: 'This page has no name, so nothing links to it automatically.'
+linkImproverNoLink: 'No link was added to this page.'
+linkImproverNoTarget: 'No other published page of this site and locale offers a keyword to link to.'
+linkImproverTarget: Target
+linkImproverTitle: 'Auto links'
+linkImproverWords: '%count% words'

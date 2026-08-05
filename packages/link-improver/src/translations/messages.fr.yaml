@@ -1,0 +1,15 @@
+linkImproverAnchor: Ancre
+linkImproverAutoLinks: 'Liens automatiques'
+linkImproverCap: 'Plafond : %cap% lien(s) au total, %existing% déjà écrit(s)'
+linkImproverCapAbsolute: 'Plafond : %cap% lien(s) au total (nombre fixe), %existing% déjà écrit(s)'
+linkImproverDisabled: "link_improver n'est pas activé sur ce site. Ajoutez <code>link_improver: true</code> à l'app pour l'activer, ou lancez <code>pw:link-improver --simulate</code> pour le prévisualiser."
+linkImproverEditPage: 'Éditer la page'
+linkImproverEditorAutoLink: "Lien ajouté automatiquement par Link Improver — il n'est pas dans votre contenu."
+linkImproverIgnored: "Cette URL est dans link_improver_ignored_urls : rien ne pointe vers elle automatiquement."
+linkImproverKeywords: 'Mots-clés liant vers cette page'
+linkImproverNoKeyword: "Cette page n'a pas de nom : rien ne pointe vers elle automatiquement."
+linkImproverNoLink: "Aucun lien n'a été ajouté à cette page."
+linkImproverNoTarget: 'Aucune autre page publiée de ce site et de cette langue ne propose de mot-clé à lier.'
+linkImproverTarget: Cible
+linkImproverTitle: 'Liens automatiques'
+linkImproverWords: '%count% mots'

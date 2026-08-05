@@ -66,18 +66,31 @@ final readonly class LinkImprover implements FilterInterface
         $linksManager->reOrder(true); // longest keyword first: the most specific target wins
 
         $engine = new ImproverEngine($content);
+        // Counted before the normalized forms go in, so the report says how many
+        // links the editor wrote rather than how many strings the engine holds.
+        $existingLinks = \count($engine->getExistingLinks());
         $this->indexNormalizedExistingLinks($engine, $site->getStr('base_url'));
 
         $maxLinks = $site->get('link_improver_max_links');
-        $content = $engine->improve(
-            $linksManager,
-            \is_numeric($maxLinks) ? (float) $maxLinks : Configuration::DEFAULT_MAX_LINKS,
-            self::ADDED_LINK_ATTRIBUTE
-        );
+        $maxLinks = \is_numeric($maxLinks) ? (float) $maxLinks : Configuration::DEFAULT_MAX_LINKS;
 
+        $content = $engine->improve($linksManager, $maxLinks, self::ADDED_LINK_ATTRIBUTE);
+
+        $this->addedLinks->recordRender($page, $engine->getWordCount(), self::cap($maxLinks, $engine->getWordCount()), $existingLinks);
         $this->registerAddedLinks($engine->getAddedLinks(), $page);
 
         return $content;
+    }
+
+    /**
+     * The total of in-content links a page may end with. Below 1 the setting is
+     * a ratio of the word count, at 1 and above an absolute count — and the
+     * engine stops while it still has a whole link of room, so the reachable
+     * total is the floor of the allowance.
+     */
+    public static function cap(float $maxLinks, int $wordCount): int
+    {
+        return (int) floor($maxLinks < 1 ? $wordCount * $maxLinks : $maxLinks);
     }
 
     /**

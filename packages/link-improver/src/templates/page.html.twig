@@ -1,0 +1,80 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block title %}{{ page.slug }} › {{ 'linkImproverTitle'|trans }}{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-secondary" href="{{ path('admin_page_edit', {entityId: page.id}) }}">
+        <i class="fa fa-pen-to-square" aria-hidden="true"></i> {{ 'linkImproverEditPage'|trans }}
+    </a>
+{% endblock %}
+
+{% block content_title %}
+  <div style="line-height: 1;">
+    {{ 'linkImproverTitle'|trans }}<br>
+    <span style="font-size:14px"> › {{ page.slug }}</span>
+  </div>
+{% endblock %}
+
+{% block main %}
+{% if not enabled %}
+    <div class="alert alert-warning">{{ 'linkImproverDisabled'|trans|raw }}</div>
+{% endif %}
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">{{ 'linkImproverAnchor'|trans }}</th>
+                    <th scope="col">{{ 'linkImproverTarget'|trans }}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for link in links %}
+                <tr>
+                    <td>{{ link.anchor }}</td>
+                    <td>
+                        <a class="link-primary" href="{{ link.url }}" target="_blank" rel="noopener">{{ link.url }}</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="2" class="text-center text-muted py-4">
+                        {% if not enabled %}
+                            <span class="opacity-50" aria-hidden="true">·</span>
+                        {% elseif stats is null %}
+                            {{ 'linkImproverNoTarget'|trans }}
+                        {% else %}
+                            {{ 'linkImproverNoLink'|trans }}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if stats is not null %}
+    <p class="text-muted small">
+        {{ (ratio ? 'linkImproverCap' : 'linkImproverCapAbsolute')|trans({'%cap%': stats.cap, '%existing%': stats.existingLinks}) }}
+        · {{ 'linkImproverWords'|trans({'%count%': stats.wordCount}) }}
+    </p>
+{% endif %}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h2 class="h6 mb-2">{{ 'linkImproverKeywords'|trans }}</h2>
+        {% if ignored %}
+            <p class="text-muted small mb-2">
+                <i class="fa fa-ban" aria-hidden="true"></i> {{ 'linkImproverIgnored'|trans }}
+            </p>
+        {% endif %}
+        {% for keyword in keywords %}
+            <span class="badge bg-light text-dark border me-1">{{ keyword }}</span>
+        {% else %}
+            <p class="text-muted small mb-0">{{ 'linkImproverNoKeyword'|trans }}</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

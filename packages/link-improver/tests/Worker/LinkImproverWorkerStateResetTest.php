@@ -71,13 +71,17 @@ final class LinkImproverWorkerStateResetTest extends KernelTestCase
         $page->slug = self::PROBE_SLUG;
 
         $registry->record($page, 'Worker Probe Fruit', $this->probeUrl());
+        $registry->recordRender($page, wordCount: 120, cap: 2, existingLinks: 1);
         self::assertCount(1, $registry->forPage($page));
+        self::assertNotNull($registry->statsForPage($page));
 
         $this->simulateWorkerRequestBoundary();
 
         // A worker serves the next request with a clean report: what pw:link-improver
-        // shows for a page must be what this render inserted, not the previous one.
+        // and the admin panel show for a page must be what this render inserted and
+        // measured, not the previous one.
         self::assertSame([], $registry->forPage($page));
+        self::assertNull($registry->statsForPage($page));
     }
 
     private function probeUrl(): string
