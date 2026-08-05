@@ -90,11 +90,17 @@ the same, and the assertion to write first is `assertStringNotContainsString('st
 scan', …)` — not one about the snapshot.
 
 **`StaticGenerator\Tests\Cache\EpochSweepIntegrationTest::testSnippetEditSweepsThePagesThatRenderIt`
-— seen intermittently, undiagnosed.** Twice on 2026-08-05 (P8.5 and MariaDB shards), on
-runs whose other failures were unrelated; the assertion compares a rendered page against
-what the sweep should have re-rendered. Not investigated — it may well be one of the
-stale-cache cases below rather than a race. Confirm against those before treating a fresh
-failure as real.
+— seen intermittently, undiagnosed.** Three times on 2026-08-05, on P8.5 and MariaDB
+shards, and never locally. It fails at whichever assertion comes first, which is the tell:
+`getSweptEpoch()` null against a sampled epoch, or the regenerated file missing
+`snippet-v2`. Both say the same thing — the sweep the handler was supposed to run did not
+take — so look at `HostCacheRefreshHandler` no-opping, not at the assertion that caught it.
+
+Two shared-directory suspects are already **ruled out**: the static cache dir
+(`StaticAppGenerator::getCacheDir()`, which `tearDown()` deletes wholesale — the obvious
+cross-worker hazard) and the epoch store (`pw.render_epoch_dir`) are both per-worker,
+routed through `PUSHWORD_TEST_VAR_DIR`. Start from the state manager's own file and the
+debounce, and check the stale-cache cases below before treating a fresh failure as real.
 
 **`PageLockControllerTest::testPingAcquiresLockForEditor`** — not a flake at all. It fails
 whenever *your own browser* has the admin edit screen for page 1 open, because the test
