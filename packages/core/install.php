@@ -23,7 +23,9 @@ PostInstall::remove([
     'compose.override.yaml',
 ]);
 
-// Set pushword bundle first to avoid errors
+// Set pushword bundle first to avoid errors. Every other bundle appends itself from its
+// own install.php, so core cannot use PostInstall::registerBundle() here: it needs the
+// head of the list, not the tail.
 PostInstall::replace('config/bundles.php', PushwordCoreBundle::class."::class => ['all' => true],", '');
 PostInstall::replace('config/bundles.php', 'return [', 'return [
     '.PushwordCoreBundle::class."::class => ['all' => true],");
@@ -35,6 +37,7 @@ PostInstall::replace('config/bundles.php', 'return [', 'return [
 @unlink('src/DataFixtures/AppFixtures.php');
 PostInstall::mirror('vendor/pushword/core/starter', 'src/DataFixtures');
 
+// At the end: the catch-all page route must come after every other bundle's.
 echo '~~ Adding Puswhord Routes'.chr(10);
 PostInstall::insertIn(
     'config/routes.yaml',

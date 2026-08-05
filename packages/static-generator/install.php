@@ -1,15 +1,14 @@
 <?php
 
 use Pushword\Installer\PostInstall;
+use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
 
 /**
  * Execute via Pushword\Installer\PostInstall::postUpdateCommand.
  */
-if (! isset($postInstallRunning)) {
-    return;
-}if (! PostInstall::isRoot()) {
+if (! PostInstall::isRoot()) {
     throw new Exception('installer mus be run from root');
 }
 
-echo '~~ Adding Routes'.chr(10);
-PostInstall::insertIn('config/routes.yaml', "static:\n    resource: '@PushwordStaticGeneratorBundle/StaticRoutes.yaml'\n");
+PostInstall::registerBundle(PushwordStaticGeneratorBundle::class);
+PostInstall::importRoutes('static', '@PushwordStaticGeneratorBundle/StaticRoutes.yaml');

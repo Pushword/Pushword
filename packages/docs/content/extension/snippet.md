@@ -30,14 +30,7 @@ Both are invoked the same way, from page content:
 composer require pushword/snippet
 ```
 
-Register the bundle (done automatically by Symfony Flex):
-
-```php
-// config/bundles.php
-Pushword\Snippet\PushwordSnippetBundle::class => ['all' => true],
-```
-
-Create the table:
+The bundle registers itself in `config/bundles.php`. Create the table:
 
 ```shell
 php bin/console doctrine:schema:update --force

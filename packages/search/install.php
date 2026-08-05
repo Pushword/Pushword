@@ -1,7 +1,7 @@
 <?php
 
 use Pushword\Installer\PostInstall;
-use Pushword\Version\PushwordVersionBundle;
+use Pushword\Search\PushwordSearchBundle;
 
 /**
  * Execute via Pushword\Installer\PostInstall::postUpdateCommand.
@@ -10,5 +10,5 @@ if (! PostInstall::isRoot()) {
     throw new Exception('installer mus be run from root');
 }
 
-PostInstall::registerBundle(PushwordVersionBundle::class);
-PostInstall::importRoutes('version', '@PushwordVersionBundle/VersionRoutes.yaml');
+PostInstall::registerBundle(PushwordSearchBundle::class);
+PostInstall::importRoutes('search', '@PushwordSearchBundle/SearchRoutes.yaml');

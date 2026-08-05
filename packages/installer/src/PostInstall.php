@@ -16,6 +16,11 @@ class PostInstall
     {
         $packages = self::scanDir('vendor/pushword');
 
+        // core runs last: it rewrites the DSN, updates the schema, loads the fixtures
+        // and installs the bundle assets — each of which must see every other bundle
+        // already registered in config/bundles.php by that bundle's own install.php.
+        usort($packages, static fn (string $a, string $b): int => ('core' === $a ? 1 : 0) <=> ('core' === $b ? 1 : 0));
+
         foreach ($packages as $package) {
             if (! file_exists('var/installer/'.md5($package)) && file_exists($installer = 'vendor/pushword/'.$package.'/install.php')) {
                 self::dumpFile('var/installer/'.md5($package), 'done');
@@ -98,6 +103,58 @@ class PostInstall
         }
 
         self::dumpFile($file, $content);
+    }
+
+    /**
+     * Register a bundle in config/bundles.php.
+     *
+     * Pushword ships no Flex recipe, so nothing but this used to add a bundle to the
+     * kernel: `composer require pushword/<bundle>` installed code the app never loaded,
+     * while the routes the same install step wrote pointed at it. Every bundle now
+     * registers itself.
+     *
+     * The FQCN is matched anywhere in the file, which covers both the inline form Flex
+     * writes and the imported short form a hand-edited bundles.php uses — the latter
+     * still carries the FQCN in its `use` statement.
+     */
+    public static function registerBundle(string $bundle): void
+    {
+        $file = 'config/bundles.php';
+        $content = (string) @file_get_contents($file);
+        if (str_contains($content, $bundle)) {
+            return;
+        }
+
+        $registered = preg_replace('/\n\];\s*$/', "\n    ".$bundle."::class => ['all' => true],\n];\n", $content, 1);
+        if (null === $registered || $registered === $content) {
+            echo '⚠ Warning: Could not register `'.$bundle.'` in '.$file.'. Add it by hand.'.\chr(10);
+
+            return;
+        }
+
+        echo '~~ Registering '.$bundle.\chr(10);
+        self::dumpFile($file, $registered);
+    }
+
+    /**
+     * Import a bundle's routes in config/routes.yaml.
+     *
+     * insertIn() only recognises the exact block it would write, which a routes.yaml
+     * edited by hand never reproduces — double quotes instead of single, another key,
+     * an attribute import of the controller directory. Matching the bundle reference
+     * instead keeps an upgrade from importing the same resource a second time under a
+     * duplicate YAML key.
+     */
+    public static function importRoutes(string $key, string $resource): void
+    {
+        $file = 'config/routes.yaml';
+        $bundle = strstr($resource, '/', true);
+        if (false !== $bundle && str_contains((string) @file_get_contents($file), $bundle)) {
+            return;
+        }
+
+        echo '~~ Adding '.$key.' routes'.\chr(10);
+        self::insertIn($file, $key.":\n    resource: '".$resource."'\n");
     }
 
     public static function isRoot(): bool

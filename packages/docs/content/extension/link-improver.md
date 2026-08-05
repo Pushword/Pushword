@@ -15,12 +15,7 @@ Markdown — disable the option and every auto link is gone.
 composer require pushword/link-improver
 ```
 
-Register the bundle if your app does not auto-register it, **after** the core
-bundle:
-
-```php
-Pushword\LinkImprover\PushwordLinkImproverBundle::class => ['all' => true],
-```
+The bundle registers itself in `config/bundles.php`, after the core bundle.
 
 Then opt in per app — the filter is wired into every app's `main_content` chain
 (right after `Markdown`) but stays inert until you enable it, because it

@@ -1,5 +1,6 @@
 <?php
 
+use Pushword\Admin\PushwordAdminBundle;
 use Pushword\Installer\PostInstall;
 
 /**
@@ -13,5 +14,5 @@ PostInstall::remove([
     'config/packages/sonata_admin.yaml',
 ]);
 
-echo '~~ Adding Puswhord Admin Routes'.chr(10);
-PostInstall::insertIn('config/routes.yaml', "admin:\n    resource: '@PushwordAdminBundle/AdminRoutes.yaml'\n");
+PostInstall::registerBundle(PushwordAdminBundle::class);
+PostInstall::importRoutes('admin', '@PushwordAdminBundle/AdminRoutes.yaml');

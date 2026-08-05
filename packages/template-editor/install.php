@@ -1,6 +1,7 @@
 <?php
 
 use Pushword\Installer\PostInstall;
+use Pushword\TemplateEditor\PushwordTemplateEditorBundle;
 
 /**
  * Execute via Pushword\Installer\PostInstall::postUpdateCommand.
@@ -9,5 +10,5 @@ if (! PostInstall::isRoot()) {
     throw new Exception('installer mus be run from root');
 }
 
-echo '~~ Adding Routes'.chr(10);
-PostInstall::insertIn('config/routes.yaml', "template_editor:\n    resource: '@PushwordTemplateEditorBundle/TemplateEditorRoutes.yaml'\n");
+PostInstall::registerBundle(PushwordTemplateEditorBundle::class);
+PostInstall::importRoutes('template_editor', '@PushwordTemplateEditorBundle/TemplateEditorRoutes.yaml');

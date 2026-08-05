@@ -1,6 +1,7 @@
 <?php
 
 use Pushword\Installer\PostInstall;
+use Pushword\PageScanner\PushwordPageScannerBundle;
 
 /**
  * Execute via Pushword\Installer\PostInstall::postUpdateCommand.
@@ -9,5 +10,5 @@ if (! PostInstall::isRoot()) {
     throw new Exception('installer mus be run from root');
 }
 
-echo '~~ Adding Routes'.chr(10);
-PostInstall::insertIn('config/routes.yaml', "page_scanner:\n    resource: '@PushwordPageScannerBundle/PageScannerRoutes.yaml'\n");
+PostInstall::registerBundle(PushwordPageScannerBundle::class);
+PostInstall::importRoutes('page_scanner', '@PushwordPageScannerBundle/PageScannerRoutes.yaml');

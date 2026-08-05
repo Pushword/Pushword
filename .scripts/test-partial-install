@@ -33,8 +33,8 @@ declare -A PROFILES=(
     [newsletter]="newsletter"       # newsletter WITHOUT api/admin-block-editor -> Api controllers + block editor excluded
 )
 
-# pushword short name -> bundle FQCN (recipes don't exist yet for new packages,
-# so we register bundles ourselves to guarantee their services.php is loaded).
+# pushword short name -> bundle FQCN, asserted after the install: each bundle registers
+# itself from its own install.php, and this is where that is checked for real.
 declare -A BUNDLES=(
     [api]="Pushword\\Api\\PushwordApiBundle"
     [page-workflow]="Pushword\\PageWorkflow\\PushwordPageWorkflowBundle"
@@ -99,18 +99,14 @@ run_profile() {
     cd "$temp_dir"
     COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction
 
-    # Ensure every installed pushword bundle is registered (recipes may be absent).
+    # Every installed pushword bundle must have registered itself during the install.
     for short in $packages; do
         local fqcn="${BUNDLES[$short]:-}"
         [ -z "$fqcn" ] && continue
-        php -r '
-            $file = $argv[1]; $fqcn = $argv[2];
-            $content = file_get_contents($file);
-            if (str_contains($content, $fqcn)) exit(0);
-            $line = "    ".$fqcn."::class => [\"all\" => true],\n";
-            $content = preg_replace("/\n\];\s*$/", "\n".$line."];\n", $content, 1);
-            file_put_contents($file, $content);
-        ' "$temp_dir/config/bundles.php" "$fqcn"
+        if ! grep -qF "$fqcn" "$temp_dir/config/bundles.php"; then
+            echo "$fqcn is missing from config/bundles.php — its install.php did not register it." >&2
+            exit 1
+        fi
     done
 
     # Smoke: the container must compile with this exact package subset.
