@@ -30,10 +30,15 @@ final class ImageCacheManager
 
     public function getFilterPath(Media|string $media, string $filterName, ?string $extension = null, bool $browserPath = false): string
     {
-        $media = $media instanceof Media ? $media->getFileName() : Filepath::filename($media);
+        $media = $this->fileNameOf($media);
         $fileName = null === $extension ? $media : Filepath::removeExtension($media).'.'.$extension;
 
         return ($browserPath ? '/'.$this->publicMediaDir : $this->mediaCacheDir).'/'.$filterName.'/'.$fileName;
+    }
+
+    private function fileNameOf(Media|string $media): string
+    {
+        return $media instanceof Media ? $media->getFileName() : Filepath::filename($media);
     }
 
     #[AsTwigFilter('image')]
@@ -43,7 +48,7 @@ final class ImageCacheManager
         ?string $extension = null,
         bool $checkFileExists = false,
     ): string {
-        $mediaFileName = $media instanceof Media ? $media->getFileName() : Filepath::filename($media);
+        $mediaFileName = $this->fileNameOf($media);
         if (str_ends_with(strtolower($mediaFileName), '.svg')) {
             return '/'.$this->publicMediaDir.'/'.$mediaFileName;
         }
@@ -82,11 +87,23 @@ final class ImageCacheManager
         return $this->filesystem->exists($path) && 0 < (@filesize($path) ?: 0);
     }
 
+    /**
+     * Only the ratio is wanted here (the template feeds it to width/height when the
+     * media carries no stored dimensions), so the xs derivative answers it cheaply.
+     * A cold cache is not an error though — a fresh deploy has one, and so does a
+     * test worker — so fall back to the source rather than taking the render down.
+     */
     #[AsTwigFunction('image_dimensions')]
     public function getDimensions(Media|string $media): Dimensions
     {
         $path = $this->getFilterPath($media, 'xs');
         $size = @getimagesize($path);
+
+        if (false === $size) {
+            $source = $this->mediaStorage->getLocalPath($this->fileNameOf($media));
+            $size = @getimagesize($source);
+        }
+
         if (false === $size) {
             throw new Exception('`'.$path.'` not found');
         }
@@ -112,7 +129,7 @@ final class ImageCacheManager
 
     public function remove(Media|string $media): void
     {
-        $mediaFileName = $media instanceof Media ? $media->getFileName() : Filepath::filename($media);
+        $mediaFileName = $this->fileNameOf($media);
         $mediaBase = Filepath::removeExtension($mediaFileName);
 
         foreach (array_keys($this->filterSets) as $filterName) {

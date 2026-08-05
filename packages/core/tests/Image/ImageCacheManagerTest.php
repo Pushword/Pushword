@@ -99,6 +99,29 @@ final class ImageCacheManagerTest extends KernelTestCase
         $fs->remove($this->getMediaDir().'/'.$probe);
     }
 
+    public function testDimensionsComeFromTheSourceWhileTheVariantIsNotCachedYet(): void
+    {
+        $fs = new Filesystem();
+
+        // A cold cache is the normal state right after a deploy — and the state every
+        // test worker starts in. Reading dimensions must not take the render down:
+        // `image.html.twig` asks for them whenever a media carries none of its own.
+        $probe = 'cold-cache-probe-'.getmypid().'.jpg';
+        $fs->copy(__DIR__.'/../Service/blank.jpg', $this->getMediaDir().'/'.$probe, true);
+
+        $manager = $this->createManager(['xs' => ['quality' => 85, 'filters' => ['scaleDown' => [576]]]]);
+        $manager->remove($probe);
+
+        $source = getimagesize($this->getMediaDir().'/'.$probe);
+        self::assertNotFalse($source);
+
+        $dimensions = $manager->getDimensions($probe);
+        self::assertSame($source[0], $dimensions->width);
+        self::assertSame($source[1], $dimensions->height);
+
+        $fs->remove($this->getMediaDir().'/'.$probe);
+    }
+
     public function testPreferredModernFormat(): void
     {
         // Test with WebP - should return WebP
