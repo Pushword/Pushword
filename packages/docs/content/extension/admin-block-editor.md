@@ -59,7 +59,8 @@ markers nest their content, and each row offers:
 - click to scroll to the block (highlighted on arrival),
 - a caret to fold or unfold a section,
 - drag handles — headings carry two, one for the heading alone and one for the
-  whole section; keyboard: `Alt+Arrow` moves a block, `Alt+Shift+Arrow` a section,
+  whole section; keyboard: `Alt+Arrow` moves a block one row, `Alt+Shift+Arrow`
+  swaps a section with the neighbouring one, bodies included,
 - delete, for the block or the whole section/group (undo restores everything).
 
 The rail overlays the admin navigation; collapse it (state is remembered) to

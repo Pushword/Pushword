@@ -36,6 +36,9 @@ class StubSource implements OutlineSource {
 
   moveSpan(start: number, end: number, to: number): void {
     this.moved.push([start, end, to])
+    const span = this.list.splice(start, end - start + 1)
+    this.list.splice(to > end ? to - span.length : to, 0, ...span)
+    this.list.forEach((moved, index) => (moved.index = index))
   }
 }
 
@@ -66,6 +69,14 @@ function rows(): HTMLElement[] {
 
 function rowText(row: HTMLElement | undefined): string {
   return row?.querySelector('.pw-outline-text')?.textContent ?? ''
+}
+
+/** Label the focus sits on, empty when it left the rail — as a dropped focus does. */
+function focusedText(): string {
+  const active = document.activeElement
+  return active instanceof HTMLElement && active.classList.contains('pw-outline-label')
+    ? (active.querySelector('.pw-outline-text')?.textContent ?? '')
+    : ''
 }
 
 beforeEach(() => {
@@ -258,16 +269,96 @@ describe('OutlinePanel keyboard', () => {
     expect(source.moved).toEqual([[0, 0, 2]])
   })
 
-  it('moves the whole section with Alt+Shift+Arrow', () => {
+  it('swaps two sections with Alt+Shift+Arrow, bodies included', () => {
+    const list = [
+      entry(0, 'header', 'S', 2),
+      entry(1, 'paragraph', 'body'),
+      entry(2, 'header', 'T', 2),
+      entry(3, 'paragraph', 'other'),
+    ]
+    const source = buildPanel(list)
+
+    pressOnLabel(0, 'ArrowDown', { altKey: true, shiftKey: true })
+
+    expect(source.moved).toEqual([[0, 1, 4]])
+    expect(list.map((moved) => moved.label)).toEqual(['T', 'other', 'S', 'body'])
+  })
+
+  it('moves a section back up over the section above it', () => {
     const source = buildPanel([
       entry(0, 'header', 'S', 2),
       entry(1, 'paragraph', 'body'),
       entry(2, 'header', 'T', 2),
+      entry(3, 'paragraph', 'other'),
     ])
 
-    pressOnLabel(0, 'ArrowDown', { altKey: true, shiftKey: true })
+    pressOnLabel(2, 'ArrowDown', { altKey: true, shiftKey: true })
+    pressOnLabel(2, 'ArrowUp', { altKey: true, shiftKey: true })
 
-    expect(source.moved).toEqual([[0, 1, 3]])
+    // Nothing below to swap with, then back over S.
+    expect(source.moved).toEqual([[2, 3, 0]])
+  })
+
+  it('clears a folded section instead of dropping the block into it', () => {
+    const source = buildPanel([
+      entry(0, 'paragraph', 'a'),
+      entry(1, 'header', 'B', 2),
+      entry(2, 'paragraph', 'body'),
+    ])
+    document.querySelector<HTMLButtonElement>('.pw-outline-caret[aria-expanded]')?.click()
+
+    pressOnLabel(0, 'ArrowDown', { altKey: true })
+
+    expect(source.moved).toEqual([[0, 0, 3]])
+    expect(focusedText()).toBe('a')
+  })
+
+  it('keeps the focus on the row it moved', () => {
+    buildPanel([
+      entry(0, 'paragraph', 'a'),
+      entry(1, 'header', 'B', 2),
+      entry(2, 'paragraph', 'body'),
+    ])
+
+    pressOnLabel(2, 'ArrowUp', { altKey: true })
+
+    expect(rowText(rows()[1])).toBe('body')
+    expect(focusedText()).toBe('body')
+  })
+
+  it('moves a group whole on a plain Alt+Arrow, end marker included', () => {
+    const list = [
+      entry(0, 'groupStart', ''),
+      entry(1, 'paragraph', 'inside'),
+      entry(2, 'groupEnd', ''),
+      entry(3, 'paragraph', 'after'),
+    ]
+    const source = buildPanel(list)
+
+    pressOnLabel(0, 'ArrowDown', { altKey: true })
+
+    expect(source.moved).toEqual([[0, 2, 4]])
+    expect(list.map((moved) => moved.type)).toEqual([
+      'paragraph',
+      'groupStart',
+      'paragraph',
+      'groupEnd',
+    ])
+    expect(focusedText()).toBe('title:groupStart')
+  })
+
+  it('moves a heading alone over its own first block', () => {
+    const list = [
+      entry(0, 'header', 'S', 2),
+      entry(1, 'paragraph', 'a'),
+      entry(2, 'paragraph', 'b'),
+    ]
+    const source = buildPanel(list)
+
+    pressOnLabel(0, 'ArrowDown', { altKey: true })
+
+    expect(source.moved).toEqual([[0, 0, 2]])
+    expect(list.map((moved) => moved.label)).toEqual(['a', 'S', 'b'])
   })
 
   it('never moves past the edges', () => {

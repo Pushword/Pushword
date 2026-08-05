@@ -9,7 +9,7 @@ import {
 import './outline.css'
 import { GroupRegistry } from '../tools/Group/GroupRegistry'
 import { buildOutlineTree, OutlineNode, OutlineSource } from './OutlineModel'
-import { DragSpan, dropIndexFor, isActualMove } from './outlineDnd'
+import { DragSpan, dropIndexFor, isActualMove, keyboardDropIndex } from './outlineDnd'
 
 export interface OutlineToolMeta {
   title: string
@@ -68,6 +68,8 @@ export class OutlinePanel {
   /** Span being dragged from one of the panel handles, if any. */
   private dragging: DragSpan | null = null
   private unitCount = 0
+  /** Tree behind the rows on screen; what a keyboard move reads to find its neighbour. */
+  private tree: OutlineNode[] = []
 
   constructor(options: OutlinePanelOptions) {
     this.holderId = options.holderId
@@ -123,8 +125,8 @@ export class OutlinePanel {
 
     const entries = this.source.entries()
     this.unitCount = entries.length
-    const tree = buildOutlineTree(entries)
-    this.list.replaceChildren(...tree.map((node) => this.renderNode(node, 0)))
+    this.tree = buildOutlineTree(entries)
+    this.list.replaceChildren(...this.tree.map((node) => this.renderNode(node, 0)))
 
     if (focused != null) {
       this.list
@@ -285,26 +287,25 @@ export class OutlinePanel {
     return button
   }
 
-  /** Alt+Arrow moves the block one slot; Alt+Shift+Arrow its section (groups always whole). */
+  /** Alt+Arrow moves the block one row; Alt+Shift+Arrow its section (groups always whole). */
   private moveByKeyboard(event: KeyboardEvent, node: OutlineNode): void {
     if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return
     event.preventDefault()
 
-    const start = node.entry.index
+    const up = event.key === 'ArrowUp'
     const wholeSpan =
       node.entry.type === GroupRegistry.START ||
       (event.shiftKey && node.entry.level !== null)
-    const end = wholeSpan ? node.spanEnd : start
-    const up = event.key === 'ArrowUp'
-    const to = up ? start - 1 : end + 2
-    if (to < 0 || to > this.unitCount) return
+    const span = { start: node.entry.index, end: wholeSpan ? node.spanEnd : node.entry.index }
+    const to = keyboardDropIndex(this.tree, { span, up, wholeSpan }, this.foldedSections)
+    if (to === null) return
 
-    this.source.moveSpan(start, end, to)
+    this.source.moveSpan(span.start, span.end, to)
     this.refresh()
+    // Up, the span lands on its target; down, the units it cleared take its place.
+    const landed = up ? to : to - (span.end - span.start + 1)
     this.list
-      .querySelector<HTMLButtonElement>(
-        `[data-index="${up ? start - 1 : start + 1}"] .pw-outline-label`,
-      )
+      .querySelector<HTMLButtonElement>(`[data-index="${landed}"] .pw-outline-label`)
       ?.focus()
   }
 
