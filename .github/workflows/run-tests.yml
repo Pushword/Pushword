@@ -92,7 +92,10 @@ jobs:
       # Push the `badges` branch (coverage badge data).
       contents: write
     strategy:
-      #fail-fast: true
+      # Off on purpose: with fail-fast, the first leg to hit a flake cancels the
+      # others mid-run — including the one leg that collects coverage and pushes
+      # the README badge data, which then never publishes.
+      fail-fast: false
       matrix:
         os: [ubuntu-latest] #, windows-latest
         php: [8.4, 8.5]
