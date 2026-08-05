@@ -37,4 +37,33 @@ final class TwigErrorDegradationIntegrationTest extends KernelTestCase
         self::assertStringContainsString('Good paragraph.', $html);
         self::assertStringContainsString('Another good paragraph.', $html);
     }
+
+    /**
+     * The editor-reachable case: a bare view name resolves to
+     * /component/pages_list_<name>.html.twig by convention, and the resolver falls back
+     * to @Pushword without checking the file is there. A variant renamed or deleted —
+     * or a page flat-synced to a host that never had it — used to escape as a
+     * LoaderError and 500 the public page.
+     */
+    public function testAPagesListNamingAMissingVariantDegradesToAMarkerInsteadOfThrowing(): void
+    {
+        self::bootKernel();
+
+        /** @var ContentPipelineFactory $factory */
+        $factory = self::getContainer()->get(ContentPipelineFactory::class);
+
+        $page = new Page();
+        $page->host = 'localhost';
+        $page->locale = 'en';
+        $page->slug = 'missing-variant-demo';
+        $page->mainContent = "Good paragraph.\n\n{{ pages_list('slug:homepage', 10, view: 'noSuchVariant') }}\n\nAnother good paragraph.";
+
+        $html = $factory->get($page)->getMainContent();
+
+        self::assertStringContainsString('pushword:twig-error', $html, $html);
+        self::assertNotSame([], TwigErrorMarker::extractMessages($html));
+
+        self::assertStringContainsString('Good paragraph.', $html);
+        self::assertStringContainsString('Another good paragraph.', $html);
+    }
 }
