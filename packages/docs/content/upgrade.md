@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc843](/upgrade/rc843) | `admin` `admin-block-editor` `advanced-main-image` `api` `conversation` `core` `flat` `installer` `link-improver` `newsletter` `page-scanner` `page-update-notifier` `quiz` `repurpose` `search` `snippet` `static-generator` `template-editor` `version` `js-helper` | every bundle registers itself in config/bundles.php and imports its own routes; the markdown body is edited in Monaco instead of EasyMDE |
 | [rc842](/upgrade/rc842) | `admin-block-editor` `core` `link-improver` | card lists and galleries lay themselves out from the wrapper |
 | [rc841](/upgrade/rc841) | `static-generator` | multilingual static sites serve the localized 404 page |
 | [rc840](/upgrade/rc840) | `core` `js-helper` | full-bleed blocks no longer scroll the page sideways |
