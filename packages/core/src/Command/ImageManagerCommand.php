@@ -3,6 +3,7 @@
 namespace Pushword\Core\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Core\BackgroundTask\BackgroundCommand;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
@@ -16,6 +17,7 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Process\Process;
 use Throwable;
@@ -37,6 +39,8 @@ final class ImageManagerCommand
         private readonly ImageReader $imageReader,
         private readonly LockFactory $lockFactory,
         private readonly string $projectDir,
+        #[Autowire(param: 'kernel.environment')]
+        private readonly string $environment,
     ) {
     }
 
@@ -257,7 +261,10 @@ final class ImageManagerCommand
                 ++$chunkIndex;
                 $fileNames = implode(',', array_map(static fn (Media $m): string => $m->getFileName(), $chunk));
 
-                $cmd = ['php', 'bin/console', 'pw:image:cache', $fileNames, '--no-lock'];
+                $cmd = BackgroundCommand::pinEnvironment(
+                    ['php', 'bin/console', 'pw:image:cache', $fileNames, '--no-lock'],
+                    $this->environment,
+                );
                 if ($force) {
                     $cmd[] = '--force';
                 }

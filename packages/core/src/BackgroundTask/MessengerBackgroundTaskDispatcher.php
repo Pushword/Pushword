@@ -3,6 +3,7 @@
 namespace Pushword\Core\BackgroundTask;
 
 use Pushword\Core\Service\BackgroundProcessManager;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 final readonly class MessengerBackgroundTaskDispatcher implements BackgroundTaskDispatcherInterface
@@ -10,6 +11,8 @@ final readonly class MessengerBackgroundTaskDispatcher implements BackgroundTask
     public function __construct(
         private MessageBusInterface $messageBus,
         private BackgroundProcessManager $processManager,
+        #[Autowire(param: 'kernel.environment')]
+        private string $environment,
     ) {
     }
 
@@ -24,6 +27,10 @@ final readonly class MessengerBackgroundTaskDispatcher implements BackgroundTask
             return;
         }
 
-        $this->messageBus->dispatch(new RunCommandMessage($processType, $commandParts, $commandPattern));
+        $this->messageBus->dispatch(new RunCommandMessage(
+            $processType,
+            BackgroundCommand::pinEnvironment($commandParts, $this->environment),
+            $commandPattern,
+        ));
     }
 }

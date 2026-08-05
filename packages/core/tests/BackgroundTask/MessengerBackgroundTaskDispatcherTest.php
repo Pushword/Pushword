@@ -25,11 +25,12 @@ final class MessengerBackgroundTaskDispatcherTest extends TestCase
         $bus->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static fn (RunCommandMessage $msg): bool => 'test-type' === $msg->processType
-                && ['php', 'bin/console', 'pw:image:cache', 'photo.jpg'] === $msg->commandParts
+                // --env=test appended: the child must run in the env that dispatched it.
+                && ['php', 'bin/console', 'pw:image:cache', 'photo.jpg', '--env=test'] === $msg->commandParts
                 && 'pw:image:cache' === $msg->commandPattern))
             ->willReturnCallback(static fn (RunCommandMessage $msg): Envelope => new Envelope($msg));
 
-        $dispatcher = new MessengerBackgroundTaskDispatcher($bus, $manager);
+        $dispatcher = new MessengerBackgroundTaskDispatcher($bus, $manager, 'test');
         $dispatcher->dispatch('test-type', ['php', 'bin/console', 'pw:image:cache', 'photo.jpg'], 'pw:image:cache');
     }
 
@@ -46,7 +47,7 @@ final class MessengerBackgroundTaskDispatcherTest extends TestCase
         $bus = self::createMock(MessageBusInterface::class);
         $bus->expects(self::never())->method('dispatch');
 
-        $dispatcher = new MessengerBackgroundTaskDispatcher($bus, $manager);
+        $dispatcher = new MessengerBackgroundTaskDispatcher($bus, $manager, 'test');
         $dispatcher->dispatch('test-type', ['php', 'bin/console', 'pw:image:cache', 'photo.jpg'], 'pw:image:cache');
     }
 
@@ -68,7 +69,7 @@ final class MessengerBackgroundTaskDispatcherTest extends TestCase
             static fn (RunCommandMessage $msg): Envelope => new Envelope($msg),
         );
 
-        $dispatcher = new MessengerBackgroundTaskDispatcher($bus, $manager);
+        $dispatcher = new MessengerBackgroundTaskDispatcher($bus, $manager, 'test');
         $dispatcher->dispatch('test-type', ['php', 'bin/console', 'test'], 'test');
     }
 }
