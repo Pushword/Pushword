@@ -67,6 +67,10 @@ export class OutlinePanel {
 
   /** Span being dragged from one of the panel handles, if any. */
   private dragging: DragSpan | null = null
+  /** Render the drag started from; a rebuild since has renumbered its span. */
+  private draggingAt = 0
+  /** Bumped by every completed render: what a row's captured indices belong to. */
+  private generation = 0
   private unitCount = 0
   /** Tree behind the rows on screen; what a keyboard move reads to find its neighbour. */
   private tree: OutlineNode[] = []
@@ -109,14 +113,26 @@ export class OutlinePanel {
 
   /** Debounced full re-render; every data change funnels through here. */
   scheduleRefresh(): void {
-    if (this.refreshTimer !== null) window.clearTimeout(this.refreshTimer)
+    this.cancelPendingRefresh()
     this.refreshTimer = window.setTimeout(() => {
       this.refreshTimer = null
       this.refresh()
     }, 300)
   }
 
+  private cancelPendingRefresh(): void {
+    if (this.refreshTimer === null) return
+
+    window.clearTimeout(this.refreshTimer)
+    this.refreshTimer = null
+  }
+
   refresh(): void {
+    // A pending debounce has nothing left to do, and leaving it armed would make
+    // the rows this render replaces look stale to the guard below.
+    this.cancelPendingRefresh()
+    this.generation++
+
     const focused =
       document.activeElement instanceof HTMLElement &&
       this.list.contains(document.activeElement)
@@ -133,6 +149,21 @@ export class OutlinePanel {
         .querySelector<HTMLButtonElement>(`[data-index="${focused}"] .pw-outline-label`)
         ?.focus()
     }
+  }
+
+  /**
+   * Guards every handler that edits through indices captured when its row
+   * rendered. A rebuild since — the row's own previous click, or an edit in the
+   * editor the debounce has not caught up with — renumbered the units, so those
+   * indices name other blocks now: a second click on "delete the section" would
+   * take the section that moved up into its place. Catch the rail up and drop
+   * the action instead of editing by guesswork; the row the user meant is one
+   * click away, correctly numbered.
+   */
+  private actsOnCurrentRender(renderedAt: number): boolean {
+    if (this.refreshTimer !== null) this.refresh()
+
+    return renderedAt === this.generation
   }
 
   private buildHead(): HTMLElement {
@@ -282,15 +313,23 @@ export class OutlinePanel {
     button.className = 'pw-outline-label'
     button.title = meta.title
     button.append(icon, text)
+    const renderedAt = this.generation
     button.addEventListener('click', () => this.source.navigateTo(node.entry))
-    button.addEventListener('keydown', (event) => this.moveByKeyboard(event, node))
+    button.addEventListener('keydown', (event) =>
+      this.moveByKeyboard(event, node, renderedAt),
+    )
     return button
   }
 
   /** Alt+Arrow moves the block one row; Alt+Shift+Arrow its section (groups always whole). */
-  private moveByKeyboard(event: KeyboardEvent, node: OutlineNode): void {
+  private moveByKeyboard(
+    event: KeyboardEvent,
+    node: OutlineNode,
+    renderedAt: number,
+  ): void {
     if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return
     event.preventDefault()
+    if (!this.actsOnCurrentRender(renderedAt)) return
 
     const up = event.key === 'ArrowUp'
     const wholeSpan =
@@ -361,6 +400,7 @@ export class OutlinePanel {
     handle.draggable = true
     handle.addEventListener('dragstart', (event) => {
       this.dragging = span
+      this.draggingAt = this.generation
       const row = handle.closest('.pw-outline-row')
       if (event.dataTransfer && row instanceof HTMLElement) {
         event.dataTransfer.effectAllowed = 'move'
@@ -421,12 +461,14 @@ export class OutlinePanel {
 
   private dropSpan(to: number): void {
     const span = this.dragging
+    const startedAt = this.draggingAt
     this.dragging = null
     this.clearDropIndicator()
-    if (span === null || !isActualMove(span, to)) return
+    if (span === null || !this.actsOnCurrentRender(startedAt)) return
+    if (!isActualMove(span, to)) return
 
     this.source.moveSpan(span.start, span.end, to)
-    this.scheduleRefresh()
+    this.refresh()
   }
 
   private isBelow(event: DragEvent, row: HTMLElement): boolean {
@@ -456,9 +498,12 @@ export class OutlinePanel {
       label,
       'pw-outline-action' + (wholeSpan ? ' pw-outline-action--span' : ''),
     )
+    const renderedAt = this.generation
     button.addEventListener('click', () => {
+      if (!this.actsOnCurrentRender(renderedAt)) return
+
       this.source.deleteSpan(start, end)
-      this.scheduleRefresh()
+      this.refresh()
     })
     return button
   }

@@ -32,6 +32,8 @@ class StubSource implements OutlineSource {
 
   deleteSpan(start: number, end: number): void {
     this.deleted.push([start, end])
+    this.list.splice(start, end - start + 1)
+    this.list.forEach((kept, index) => (kept.index = index))
   }
 
   moveSpan(start: number, end: number, to: number): void {
@@ -51,9 +53,12 @@ function entry(
   return { index, type, label, level }
 }
 
+/** The panel the current test built, for the change notifications an editor sends. */
+let panel: OutlinePanel
+
 function buildPanel(list: OutlineEntry[]): StubSource {
   const source = new StubSource(list)
-  const panel = new OutlinePanel({
+  panel = new OutlinePanel({
     holderId: 'no-such-holder',
     source,
     labels,
@@ -144,27 +149,42 @@ describe('OutlinePanel actions', () => {
     expect(source.deleted).toEqual([[0, 0]])
   })
 
-  it('offers heading and section deletion on a section header', () => {
-    const source = buildPanel([
+  /** A header row offers both; each click gets its own render, as a user's does. */
+  function headerActionsOf(): HTMLButtonElement[] {
+    return [...(rows()[1]?.querySelectorAll<HTMLButtonElement>('.pw-outline-action') ?? [])]
+  }
+
+  function sectionPanel(): StubSource {
+    return buildPanel([
       entry(0, 'paragraph', 'intro'),
       entry(1, 'header', 'Title', 2),
       entry(2, 'paragraph', 'body'),
     ])
+  }
 
-    const headerActions = [
-      ...(rows()[1]?.querySelectorAll<HTMLButtonElement>('.pw-outline-action') ?? []),
-    ]
-    expect(headerActions.map((button) => button.title)).toEqual([
+  it('offers heading and section deletion on a section header', () => {
+    sectionPanel()
+
+    expect(headerActionsOf().map((button) => button.title)).toEqual([
       'Delete the heading',
       'Delete the section',
     ])
+  })
 
-    headerActions[0]?.click()
-    headerActions[1]?.click()
-    expect(source.deleted).toEqual([
-      [1, 1],
-      [1, 2],
-    ])
+  it('deletes the heading alone on the first action', () => {
+    const source = sectionPanel()
+
+    headerActionsOf()[0]?.click()
+
+    expect(source.deleted).toEqual([[1, 1]])
+  })
+
+  it('deletes the whole section on the second action', () => {
+    const source = sectionPanel()
+
+    headerActionsOf()[1]?.click()
+
+    expect(source.deleted).toEqual([[1, 2]])
   })
 
   it('pairs heading and section drag handles on a section header', () => {
@@ -198,6 +218,101 @@ describe('OutlinePanel actions', () => {
 
     groupActions[0]?.click()
     expect(source.deleted).toEqual([[0, 2]])
+  })
+})
+
+describe('OutlinePanel stale rows', () => {
+  function twoSections(): OutlineEntry[] {
+    return [
+      entry(0, 'header', 'A', 2),
+      entry(1, 'paragraph', 'a body'),
+      entry(2, 'header', 'B', 2),
+      entry(3, 'paragraph', 'b body'),
+    ]
+  }
+
+  it('does not let a double-click take the section that moved up', () => {
+    const list = twoSections()
+    const source = buildPanel(list)
+
+    // Both clicks land on the button rendered for section A, as a double-click does.
+    const deleteSection = rows()[0]?.querySelectorAll<HTMLButtonElement>(
+      '.pw-outline-action',
+    )[1]
+    deleteSection?.click()
+    deleteSection?.click()
+
+    expect(source.deleted).toEqual([[0, 1]])
+    expect(list.map((kept) => kept.label)).toEqual(['B', 'b body'])
+  })
+
+  it('rebuilds the rows the click acted on', () => {
+    const source = buildPanel(twoSections())
+
+    rows()[0]?.querySelectorAll<HTMLButtonElement>('.pw-outline-action')[1]?.click()
+
+    expect(source.deleted).toEqual([[0, 1]])
+    expect(rows().map(rowText)).toEqual(['B', 'b body'])
+  })
+
+  it('drops a rail action queued behind an unapplied editor edit', () => {
+    const list = twoSections()
+    const source = buildPanel(list)
+    const deleteSection = rows()[0]?.querySelectorAll<HTMLButtonElement>(
+      '.pw-outline-action',
+    )[1]
+
+    // The editor reports a change; the rebuild is still inside its debounce.
+    list.splice(0, 1)
+    list.forEach((moved, index) => (moved.index = index))
+    panel.scheduleRefresh()
+    deleteSection?.click()
+
+    expect(source.deleted).toEqual([])
+    expect(rows().map(rowText)).toEqual(['a body', 'B', 'b body'])
+  })
+
+  it('refuses a keyboard move from a row the rail has redrawn', () => {
+    const source = buildPanel(twoSections())
+    const label = rows()[1]?.querySelector<HTMLButtonElement>('.pw-outline-label')
+
+    panel.refresh()
+    label?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true }),
+    )
+
+    expect(source.moved).toEqual([])
+  })
+
+  /** The guard must cost nothing in normal use: each new render acts again. */
+  it('acts again on the row that replaced the one just deleted', () => {
+    const list = [
+      entry(0, 'paragraph', 'a'),
+      entry(1, 'paragraph', 'b'),
+      entry(2, 'paragraph', 'c'),
+    ]
+    const source = buildPanel(list)
+
+    rows()[0]?.querySelector<HTMLButtonElement>('.pw-outline-action')?.click()
+    rows()[0]?.querySelector<HTMLButtonElement>('.pw-outline-action')?.click()
+
+    expect(source.deleted).toEqual([
+      [0, 0],
+      [0, 0],
+    ])
+    expect(list.map((kept) => kept.label)).toEqual(['c'])
+  })
+
+  it('refuses a drop whose rows were rebuilt mid-drag', () => {
+    const source = buildPanel(twoSections())
+
+    rows()[1]?.querySelector<HTMLButtonElement>('.pw-outline-handle')?.dispatchEvent(
+      new Event('dragstart'),
+    )
+    panel.refresh()
+    rows()[3]?.dispatchEvent(new MouseEvent('drop', { clientY: -5 }))
+
+    expect(source.moved).toEqual([])
   })
 })
 

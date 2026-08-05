@@ -61,6 +61,41 @@ paths:
   Synthetic `new ClipboardEvent('paste', {clipboardData})` is not dispatchable in Chrome:
   test with `grantPermissions(['clipboard-write'])` + `navigator.clipboard.writeText` +
   a real `Control+v`.
+- **`MarkdownUtils.chunkMarkdown()` is the one splitter — parser, outline rail and
+  clipboard all cut blocks with it, so a rule added on one side must go there, not into
+  the caller.** It splits on blank lines *except inside a fenced code block*: without that
+  exception a fence holding a blank line is cut in two, and the halves are classified
+  independently, so a `## ` line in the code becomes a real heading — the rail then shows
+  a phantom section owning the closing fence, and deleting it opens the fence over the
+  rest of the document. Chunks carry `separatorAfter`, the blank-line run that followed
+  them; rewrite through `MarkdownUtils.joinChunks()` rather than `join('\n\n')`, or every
+  edit normalises spacing across the whole field.
+- **An outline row may only edit through the render it was drawn with.** Rows carry block
+  indices captured at render time, and `scheduleRefresh()` is debounced 300 ms — so
+  between an edit and the rebuild, every button on screen is live and holding numbers the
+  document has moved past. `OutlinePanel` bumps a `generation` on each `refresh()`;
+  handlers capture it and call `actsOnCurrentRender()`, which flushes a pending debounce
+  and drops the action when the numbers are stale. A rail-initiated edit must therefore
+  call `refresh()` (synchronous), never `scheduleRefresh()` — the debounce is for change
+  notifications coming *from* the editor, where a rebuild per keystroke would be waste.
+  Any new rail action owes the same guard, or a double-click deletes twice: once on the
+  row aimed at, once on whatever slid into its place.
+- **`chunkTool()` is order-dependent — feed it one `GroupNesting` per document.** Markdown
+  chunks are classified in document order and the classifier carries state: a lone
+  `</div>` is a `groupEnd` only when the `<div>` it closes was imported as a `groupStart`.
+  Classify a chunk on its own, or share a nesting across two documents, and a `</div>`
+  closing hand-written HTML becomes a marker again — deleting a group then cascades onto
+  the user's own tag. The rule is symmetry: a closing tag is a marker exactly when its
+  opener was, so any new tool claiming a bare closing line owes the same pairing.
+- **An editor that rewrites the field it feeds owes the recovery handshake.** The block
+  editor's initial parse writes its own normalisation into the bound textarea and fires
+  `input`, which unsaved-changes recovery (`admin.unsavedChanges.js`, run on window
+  `load`) reads as typing — a draft nobody typed, stored over the real one, on every open
+  of a page whose markdown does not round-trip. `editor.ts` sets
+  `data-pw-baseline-pending` on the field synchronously and clears it with a bubbling
+  `pw:baseline-ready` at the same point Undo re-baselines; recovery defers its whole init
+  until then, so the flag must be in the DOM before `load` and the event must fire even
+  if nothing changed.
 - **Rebuild core assets after editing js-helper.** `packages/core/src/Resources/public/app.js`
   is compiled — run `yarn build` in `packages/core` after touching `helpers.js`.
 - **`pw_auth=1` is a ROLE_EDITOR-only hint.** Cookie set, heal, and 403-clear paths must
