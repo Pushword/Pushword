@@ -45,8 +45,10 @@
   {% endblock %}
   <{{ title_tag }}
     class="p-4 mt-0 font-bold text-xl leading-tight">
+    {# .clickable-link: the link a clickable card follows, over any other one the
+       description or the button adds. #}
     {{ link
-      ? link(title, link, obfuscateLink)
+      ? link(title, link, {class: 'clickable-link'}, obfuscateLink)
       : title|raw }}
   </{{ title_tag }}>
   {% block card_description %}

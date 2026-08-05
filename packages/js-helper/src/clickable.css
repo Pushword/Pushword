@@ -4,14 +4,27 @@
    the span, whose uncloak listener converts it and replays the click on the <a>;
    the cursor lives on the box because the span state has none of its own.
 
+   Those stretched boxes are coincident, so the hit test lands on the last of them in
+   DOM order: a box holding a second link — a description written in markdown, a button
+   — would be followed to that one from everywhere, its own title included. Mark the
+   link the box follows with .clickable-link and it is the only one to stretch. A box
+   holding a single link needs nothing.
+
    Standalone on purpose: a stylesheet that does not import app.css can
    @import '@pushword/js-helper/src/clickable.css' to get just this behavior. */
 .clickable {
   position: relative;
   cursor: pointer;
 }
-.clickable :is(a, button, span[data-rot])::after {
+.clickable:not(:has(.clickable-link)) :is(a, button, span[data-rot])::after,
+.clickable .clickable-link::after {
   content: '';
   position: absolute;
   inset: 0;
+}
+/* The links the box does not follow keep their own area, above the stretched one
+   whatever the DOM order puts first. */
+.clickable:has(.clickable-link) :is(a, button, span[data-rot]):not(.clickable-link) {
+  position: relative;
+  z-index: 1;
 }
