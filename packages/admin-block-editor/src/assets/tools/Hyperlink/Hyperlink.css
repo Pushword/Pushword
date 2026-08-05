@@ -40,18 +40,16 @@
   display: contents;
 }
 
+/* The switch track is 16px tall, so the label is what makes that row worth
+   aiming at: every label holds the row to the height of a select. */
 .link-options__label,
-.link-options-wrapper .editor-switch > label:not(.label-default) {
-  font-size: 12px;
-  font-weight: 500;
-  color: #707684;
-}
-
-/* The track is 16px tall; the text label is what makes the row worth aiming at. */
 .link-options-wrapper .editor-switch > label:not(.label-default) {
   display: flex;
   align-items: center;
   min-height: 26px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #707684;
 }
 
 /**

@@ -2,7 +2,6 @@ import { BaseTool } from '../Abstract/BaseTool'
 import './switch.css'
 
 export default class make {
-  /** Two tools render a `targetBlank` switch — see switchInput(). */
   private static switchCount = 0
 
   public static element(
@@ -89,7 +88,7 @@ export default class make {
     // The link tool and the link tune both render a `targetBlank` switch: with a
     // shared id, both labels bind to whichever input the document holds first,
     // and clicking one toggles the other.
-    const id = name + '-' + ++make.switchCount
+    const id = `${name}-${++make.switchCount}`
 
     const wrapper = make.element('div', 'editor-switch')
     const checkbox = make.element('input', null, {
