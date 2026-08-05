@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc842](/upgrade/rc842) | `admin-block-editor` `core` `link-improver` | card lists and galleries lay themselves out from the wrapper |
 | [rc841](/upgrade/rc841) | `static-generator` | multilingual static sites serve the localized 404 page |
 | [rc840](/upgrade/rc840) | `core` `js-helper` | full-bleed blocks no longer scroll the page sideways |
 | [rc839](/upgrade/rc839) | `core` `dev-app` `installer` `page-scanner` | Docker is offered at install time; the page scan sees unreachable hosts again |
