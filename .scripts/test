@@ -8,6 +8,12 @@ export LOCK_DSN="flock:///tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}/
 
 JUNIT_XML="/tmp/pushword-test-${TEST_RUN_ID}.xml"
 
+# paratest distributes by class, so the worker count decides which classes share a
+# process — and that is what most of the known flakes actually depend on. CI runners
+# give `auto` 4; a desktop gives it 24, which is why a shard-dependent failure there
+# reproduces nowhere here. `TEST_PROCESSES=4 composer test` reproduces CI's layout.
+TEST_PROCESSES="${TEST_PROCESSES:-auto}"
+
 # php.ini ships memory_limit=-1, so a runaway test grows until the kernel OOM-kills
 # something — on a desktop that is the whole GNOME session, not just the run. A finite
 # limit turns it into an "Allowed memory size exhausted" with the stack trace at the leak.
@@ -230,7 +236,7 @@ else
     if [ -z "$FILTER_ARG" ] && [ $NO_PARALLEL -eq 0 ]; then
         step "Running PHPUnit (parallel)"
         PHPUNIT_START=$(date +%s)
-        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes=auto --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" --passthru-php="$PASSTHRU_PHP" --exclude-group=serial --exclude-group=worker || PHPUNIT_EXIT=$?
+        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes="$TEST_PROCESSES" --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" --passthru-php="$PASSTHRU_PHP" --exclude-group=serial --exclude-group=worker || PHPUNIT_EXIT=$?
         record_step "PHPUnit (parallel)" $(( $(date +%s) - PHPUNIT_START ))
 
         # Serial group: tests needing exclusive access to the shared public/media
