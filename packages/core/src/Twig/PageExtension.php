@@ -284,6 +284,9 @@ final class PageExtension
             'card' === $view => '/component/pages_list_card.html.twig',
             'horizontalScroll' === $view => '/component/pages_list_horizontal.html.twig',
             \in_array($view, ['', 'list'], true) => '/component/pages_list.html.twig',
+            // A bare name is a display variant a site provides by convention as
+            // /component/pages_list_<name>.html.twig; a path passes through as-is.
+            ! str_contains($view, '/') && ! str_contains($view, '.') => '/component/pages_list_'.$view.'.html.twig',
             default => $view,
         };
 

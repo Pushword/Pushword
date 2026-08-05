@@ -83,15 +83,13 @@ view name — from Twig calls and from the block editor alike. It receives the s
 variables as the built-in views: `pages`, `pager`, `pager_route`,
 `pager_route_params`, `id`, `wrapperClass`.
 
-To offer the variant in the block editor's **format** select, list it in the app's
-custom properties:
+To offer the variant in the block editor's **format** select, declare it on the app:
 
 ```yaml
 pushword:
     apps:
         - hosts: [example.tld]
-          custom_properties:
-              pages_list_displays: [smallCard]
+          pages_list_displays: [smallCard]
 ```
 
 A block saved with an undeclared variant keeps working — the select simply shows

@@ -8,9 +8,23 @@
 #}
 
 {% set gallery_id = gallery_id ?? page.uniqueGalleryId ?? random(10, 1000) %}
-{% set grid_cols = grid_cols ?? (images|length < 5 ? images|length : (images|length is odd ? 3 : 4)) %}
-{% set default_gallery_class = default_gallery_class ?? 'my-3 grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-screen-2xl mx-auto' %}
-{# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
+
+{# Default layouts: a few images sit in one centered row at fixed height (native
+   ratios); more flow into masonry columns. An explicit grid_cols keeps the grid. #}
+{% if grid_cols ?? null %}
+  {% set default_gallery_class = default_gallery_class ?? 'my-3 grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-screen-2xl mx-auto' %}
+  {# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
+  {% set default_image_class = 'aspect-square object-cover' %}
+  {% set default_li_opener = '<li>' %}
+{% elseif images|length <= 4 %}
+  {% set default_gallery_class = default_gallery_class ?? 'my-3 flex flex-wrap justify-center gap-1 md:gap-3 list-none not-prose' %}
+  {% set default_image_class = 'h-[250px] w-auto max-w-full' %}
+  {% set default_li_opener = '<li>' %}
+{% else %}
+  {% set default_gallery_class = default_gallery_class ?? 'my-3 columns-2 lg:columns-3 gap-1 md:gap-3 list-none not-prose' %}
+  {% set default_image_class = 'w-full h-auto' %}
+  {% set default_li_opener = '<li class="break-inside-avoid mb-1 md:mb-3">' %}
+{% endif %}
 
 <ul class="{{ gallery_class|default(default_gallery_class) }}">
   {% for media, mediaData in images %}
@@ -33,14 +47,14 @@
       {# A missing gallery image degrades to an invisible marker (page-scan reports it); the rest of the gallery still renders. #}
       {{ broken_image_comment(media) }}
     {% else %}
-      {{ gallery_li_opener|default('<li>')|raw }}
+      {{ gallery_li_opener|default(default_li_opener)|raw }}
 
       {# Render image with proper lazy loading #}
       {% set lazy = not (loop.first and (pos ?? 100) < 3) %}
       {% set img = image(current_media,
         alt: current_media.alt,
         mode: image_filter|default('responsive'),
-        class: (image_otherAttributes ?? {}).class ?? 'aspect-square object-cover',
+        class: (image_otherAttributes ?? {}).class ?? default_image_class,
         attr: (image_otherAttributes ?? {})|filter((v, k) => k != 'class'),
         lazy: lazy) %}
 

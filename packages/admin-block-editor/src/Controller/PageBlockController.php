@@ -31,6 +31,7 @@ final class PageBlockController extends AbstractController
     {
         $id = (int) $id;
         $content = $request->toArray();
+        $content['display'] = $this->displayName($content['display'] ?? '');
 
         $request->attributes->set('_route', 'pushword_page'); // 'custom_host_pushword_page'
 
@@ -52,5 +53,16 @@ final class PageBlockController extends AbstractController
             'success' => 1,
             'content' => $htmlContent,
         ]));
+    }
+
+    /**
+     * The editor posts `display` verbatim and pages_list() turns a bare name into a
+     * view (`/component/pages_list_<name>.html.twig`) — so anything that could read as
+     * a template path instead falls back to the built-in list.
+     */
+    private function displayName(mixed $display): string
+    {
+        return \is_string($display) && 1 === preg_match('/^[a-zA-Z][a-zA-Z0-9_-]*$/', $display)
+            ? $display : 'list';
     }
 }

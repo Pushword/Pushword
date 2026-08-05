@@ -206,6 +206,9 @@ var editorjsConfig = {
             className: "PagesList",
             config: {
                 preview: "/admin/page/block/{{ attr.page_id }}",
+                {# Site display variants (custom property `pages_list_displays`),
+                   rendered by /component/pages_list_<name>.html.twig. #}
+                displays: {{ apps.get(attr.page_host|default('')).get('pages_list_displays')|default([])|json_encode|raw }},
             },
             tunes: ['anchor', 'class']
         },

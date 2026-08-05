@@ -44,6 +44,8 @@ export interface PagesListNodes {
 
 export interface PagesListConfig {
   preview: string
+  /** Site-provided display variants (pages_list_<name>.html.twig), added to the built-ins. */
+  displays?: string[]
 }
 
 export default class PagesList extends BaseTool implements StateBlockToolInterface {
@@ -137,11 +139,16 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
     this.nodes.displaySelect.classList.add('cdx-select')
     this.nodes.displaySelect.classList.add('mr-5px')
     make.option(this.nodes.displaySelect, '', 'format', { disabled: true })
-    make.options(
-      this.nodes.displaySelect,
-      ['list', 'card', 'horizontalScroll'],
+    // The stored display comes last so a variant the site stopped declaring stays
+    // selectable instead of being silently rewritten on the next save.
+    const displays = new Set([
+      'list',
+      'card',
+      'horizontalScroll',
+      ...(this.config.displays ?? []),
       this.data.display,
-    )
+    ])
+    make.options(this.nodes.displaySelect, [...displays], this.data.display)
     this.nodes.displaySelect.value = this.data.display
 
     const detailsWrapper = make.element('div', ['flex'])

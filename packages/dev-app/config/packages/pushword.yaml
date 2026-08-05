@@ -66,6 +66,9 @@ pushword:
       base_url: 'https://admin-block-editor.test'
       page_properties:
         author: { type: string, required: true }
+      # Offered in the PagesList block's format select; rendered by
+      # templates/component/pages_list_testVariant.html.twig.
+      pages_list_displays: [testVariant]
 
 static_generator:
   static_symlink: false

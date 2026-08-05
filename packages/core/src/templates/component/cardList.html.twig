@@ -1,11 +1,15 @@
 
 {% set cardTemplate = cardTemplate|default(view('/component/card.html.twig')) %}
+{% set itemClass = itemClass|default('') %}
 
+{# The columns live on the wrapper alone (grid), so a wrapperClass — or the block
+   editor's class tune — can change the layout without overriding item classes.
+   Items stay class-less unless a caller needs a width there (the scroller does). #}
 <ul
   {% if id is defined and id is not null %}id="{{ id }}"{% endif %}
-  class="{{ wrapperClass|default('not-prose flex flex-row my-5 flex-wrap justify-center mx-auto') }}">
+  class="{{ wrapperClass|default('not-prose grid gap-2 sm:grid-cols-2 md:grid-cols-3 my-5') }}">
   {%- for item in items -%}
-    <li{% if item.id is defined and item.id %} id="{{ item.id }}"{% endif %} class="{{ itemClass|default('w-full px-1 my-1 sm:w-1/2 md:w-1/3') }}">
+    <li{% if item.id is defined and item.id %} id="{{ item.id }}"{% endif %}{% if itemClass %} class="{{ itemClass }}"{% endif %}>
       {{- include(cardTemplate, isInstanceOfPage(item)
       ? {page: item}
       : {

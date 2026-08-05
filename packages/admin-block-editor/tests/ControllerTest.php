@@ -106,6 +106,52 @@ final class ControllerTest extends AbstractAdminTestClass
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
     }
 
+    /**
+     * Any display but the plain list is previewed inside the iframe, so a site's own
+     * variant gets one too (the `card`/`horizontalScroll` allow-list is gone). The
+     * iframe is the whole point: those views bring their own layout.
+     */
+    public function testPageControllerPreviewsNonListDisplaysInAnIframe(): void
+    {
+        $client = $this->loginUser();
+
+        $client->request(
+            Request::METHOD_POST,
+            '/admin/page/block/',
+            [],
+            [],
+            [],
+            json_encode(['kw' => 'content:fun', 'display' => 'card', 'order' => 'weight ↓', 'max' => '', 'maxPages' => ''])
+        );
+
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertStringContainsString('<iframe', (string) $client->getResponse()->getContent());
+    }
+
+    /**
+     * The posted `display` chooses a view — a bare name becomes
+     * /component/pages_list_<name>.html.twig — so a value shaped like a template path
+     * must not reach pages_list(): it falls back to the built-in list.
+     */
+    public function testPageControllerRefusesAPathAsDisplay(): void
+    {
+        $client = $this->loginUser();
+
+        $client->request(
+            Request::METHOD_POST,
+            '/admin/page/block/',
+            [],
+            [],
+            [],
+            json_encode(['kw' => 'content:fun', 'display' => '@PushwordAdmin/../../secret.html.twig', 'order' => 'weight ↓', 'max' => '', 'maxPages' => ''])
+        );
+
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringNotContainsString('<iframe', $content);
+        self::assertStringStartsWith('{"success":1,"content":"<ul><li><ahref=\"', str_replace([' ', '\n'], '', $content));
+    }
+
     public function testMediaController(): void
     {
         $client = $this->loginUser(

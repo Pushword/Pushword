@@ -166,4 +166,69 @@ final class PageExtensionPagesListTest extends KernelTestCase
         self::assertStringContainsString('class="horizontal-scroll-wrap not-prose my-5 bleed"', $rendered);
         self::assertStringContainsString('class="horizontal-scroll"', $rendered);
     }
+
+    /**
+     * The card list's columns live on the wrapper alone (grid), so a single class
+     * string controls the whole layout; items must carry no width class of their
+     * own, or a wrapperClass could never change the column count.
+     */
+    public function testRenderPagesListCardViewPutsTheColumnsOnTheWrapperOnly(): void
+    {
+        $rendered = $this->ext()->renderPagesList(
+            'slug:homepage',
+            10,
+            view: 'card',
+            currentPage: $this->currentPage(),
+        );
+
+        self::assertStringContainsString('grid-cols', $rendered);
+        self::assertDoesNotMatchRegularExpression('/<li[^>]*class=/', $rendered);
+    }
+
+    /** A wrapperClass replaces the default layout entirely — the customization seam. */
+    public function testRenderPagesListCardViewWrapperClassReplacesTheLayout(): void
+    {
+        $rendered = $this->ext()->renderPagesList(
+            'slug:homepage',
+            10,
+            view: 'card',
+            wrapperClass: 'grid gap-4 md:grid-cols-4',
+            currentPage: $this->currentPage(),
+        );
+
+        self::assertStringContainsString('class="grid gap-4 md:grid-cols-4"', $rendered);
+        self::assertStringNotContainsString('md:grid-cols-3', $rendered);
+    }
+
+    /**
+     * A bare view name is a site display variant by convention: it must resolve to
+     * /component/pages_list_<name>.html.twig through the site's template dirs
+     * (fixture in dev-app's templates/component/).
+     */
+    public function testRenderPagesListBareViewNameResolvesToASiteVariantTemplate(): void
+    {
+        $rendered = $this->ext()->renderPagesList(
+            'slug:homepage',
+            10,
+            view: 'testVariant',
+            currentPage: $this->currentPage(),
+        );
+
+        self::assertStringContainsString('data-pages-list-variant="testVariant"', $rendered);
+    }
+
+    /**
+     * A view spelling a path (what a theme's own template needs) must keep passing
+     * through untouched — the bare-name arm must not swallow it into
+     * /component/pages_list_<path>.html.twig.
+     */
+    public function testRenderPagesListViewPathStillPassesThrough(): void
+    {
+        $ext = $this->ext();
+
+        self::assertSame(
+            $ext->renderPagesList('slug:homepage', 10, view: 'list', currentPage: $this->currentPage()),
+            $ext->renderPagesList('slug:homepage', 10, view: '/component/pages_list.html.twig', currentPage: $this->currentPage()),
+        );
+    }
 }

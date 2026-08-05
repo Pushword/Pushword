@@ -1,4 +1,4 @@
-{% if block.data.display in ['card', 'horizontalScroll'] %}
+{% if block.data.display not in ['', 'list'] %}
 {# show preview for a 1024px screen max (else client screen width) #}
 <div style="text-align: center; max-width:100%;overflow-x:auto; overflow-y:hidden">
 <iframe seamless height="auto" style="width:100vw;max-width:1200px; border: none;transform-origin: 0 0;"

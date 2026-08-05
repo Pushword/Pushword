@@ -1,0 +1,5 @@
+{# Demo + test fixture (PageExtensionPagesListTest): a bare view name must resolve
+   to /component/pages_list_<name>.html.twig in the site's template dirs. #}
+<ul data-pages-list-variant="testVariant">
+  {% for page in pages %}<li>{{ pw(page).h1|raw }}</li>{% endfor %}
+</ul>

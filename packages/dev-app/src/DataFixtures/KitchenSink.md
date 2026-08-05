@@ -36,6 +36,10 @@ See **bold** _italic_ `inline code` #[link](/kitchen-sink){target="_blank"} <mar
 
 {{ gallery({'logo.svg': ['SVG Logo', 'https://piedweb.com', {}, false], '1.jpg': '', '2.jpg': '', '3.jpg': ''}, clickable=false) }}
 
+## Masonry gallery (more than four images)
+
+{{ gallery({"1.jpg":"","2.jpg":"","3.jpg":"","piedweb-logo.png":"","logo.svg":"Pushword logo"}) }}
+
 ## Video
 
 {{ video('https://www.youtube.com/watch?v=Nwyylc9GQuQ', '3.jpg', 'SuperVideo') }}

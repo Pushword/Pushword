@@ -125,6 +125,40 @@ final class BlockExtensionTest extends KernelTestCase
         self::assertStringContainsString('data-dwl="/media/default/2.webp"', $html);
     }
 
+    /** A few images sit in one centered row at native ratios, not in a cropped grid. */
+    public function testRenderGalleryLaysOutFewImagesAsACenteredRow(): void
+    {
+        $html = $this->getBlockExtension()->renderGallery(['1.jpg' => 'A', '2.jpg' => 'B']);
+
+        self::assertStringContainsString('flex flex-wrap justify-center', $html);
+        self::assertStringNotContainsString('columns-2', $html);
+        self::assertStringNotContainsString('aspect-square', $html);
+    }
+
+    /** More than four images flow into masonry columns. */
+    public function testRenderGalleryLaysOutManyImagesAsColumns(): void
+    {
+        $html = $this->getBlockExtension()->renderGallery([
+            '1.jpg' => 'A',
+            '2.jpg' => 'B',
+            '3.jpg' => 'C',
+            'piedweb-logo.png' => 'D',
+            'logo.svg' => 'E',
+        ]);
+
+        self::assertStringContainsString('columns-2 lg:columns-3', $html);
+        self::assertStringContainsString('break-inside-avoid', $html);
+    }
+
+    /** An explicit gridCols keeps the historic grid layout, squares included. */
+    public function testRenderGalleryExplicitGridColsKeepsTheGrid(): void
+    {
+        $html = $this->getBlockExtension()->renderGallery(['1.jpg' => 'A', '2.jpg' => 'B'], '3');
+
+        self::assertStringContainsString('grid sm:grid-cols-3', $html);
+        self::assertStringContainsString('aspect-square object-cover', $html);
+    }
+
     /** Components take an optional anchor; an absent one must add no attribute at all. */
     public function testBlockWrapperId(): void
     {
