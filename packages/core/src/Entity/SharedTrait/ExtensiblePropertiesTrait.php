@@ -321,12 +321,14 @@ trait ExtensiblePropertiesTrait
     {
         $value = $this->customProperties[$name] ?? null;
 
-        if (! \is_array($value)) {
+        if (null === $value) {
             throw new LogicException(\gettype($value));
         }
 
+        // `name: pattern` is what YAML gives for a list an editor had only one item
+        // to put in, and what they naturally write. Read it as the list it means.
         $toReturn = [];
-        foreach ($value as $v) {
+        foreach (\is_array($value) ? $value : [$value] as $v) {
             $toReturn[] = \is_string($v) ? $v : throw new Exception();
         }
 

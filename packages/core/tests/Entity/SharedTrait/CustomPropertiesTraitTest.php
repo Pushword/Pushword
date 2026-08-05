@@ -4,6 +4,7 @@ namespace Pushword\Core\Tests\Entity\SharedTrait;
 
 use Error;
 use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Page;
@@ -222,6 +223,26 @@ final class CustomPropertiesTraitTest extends TestCase
         self::assertNull($page->getCustomProperty('old_unmanaged'));
         self::assertSame('new_value', $page->getCustomProperty('kept_unmanaged'));
         self::assertTrue($page->getCustomProperty('brand_new'));
+    }
+
+    /**
+     * `key: value` is what YAML gives for a list an editor had one item to put in.
+     * Reading it as a list is what every caller wants — a page declaring a single
+     * `pageScanLinksToIgnore` used to abort the whole page scan.
+     */
+    public function testAListPropertyReadsASingleValueAsAOneItemList(): void
+    {
+        $page = new Page();
+        $page->setCustomProperty('pageScanLinksToIgnore', 'https://flaky.example.com/*');
+
+        self::assertSame(['https://flaky.example.com/*'], $page->getCustomPropertyList('pageScanLinksToIgnore'));
+    }
+
+    public function testAListPropertyNeverSetThrows(): void
+    {
+        $this->expectException(LogicException::class);
+
+        new Page()->getCustomPropertyList('neverSet');
     }
 
     public function testMergeYamlReturningScalarThrows(): void
