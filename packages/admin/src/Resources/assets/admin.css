@@ -1,14 +1,7 @@
 /* purgecss start ignore */
 
-/*@import '~codemirror/lib/codemirror.css'; //./../../../core/node_modules/
-//@import "~codemirror/lib/codemirror.css";
-//@import "~easymde/src/css/easymde.css";
-*/
-@import 'easymde/dist/easymde.min.css';
-@import 'codemirror-spell-checker/src/css/spell-checker.css';
 @import './admin.mediaMosaic.css';
 @import './adminForm.css';
-@import './admin.easymde-editor.css';
 @import './admin.mediaPicker.css';
 @import './admin.textareaHelper.css';
 @import './admin.tagsField.css';

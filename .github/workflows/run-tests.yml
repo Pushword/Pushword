@@ -80,6 +80,12 @@ jobs:
       - name: Admin unit tests
         run: cd packages/admin && yarn test
 
+      - name: Install admin-monaco-editor dependencies
+        run: cd packages/admin-monaco-editor && yarn install
+
+      - name: Markdown editor unit tests
+        run: cd packages/admin-monaco-editor && yarn test
+
   test:
     runs-on: ${{ matrix.os }}
     permissions:

@@ -269,7 +269,7 @@ describe('initUnsavedChangesRecovery', () => {
     expect(window.localStorage.length).toBe(0)
   })
 
-  // EasyMDE and EditorJS both render beside the field they feed, and both write
+  // Monaco and EditorJS both render beside the field they feed, and both write
   // it without firing an event, so both expose this seam.
   it('writes through the editor seam so a rich editor updates too', () => {
     const setValue = vi.fn()

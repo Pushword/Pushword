@@ -73,7 +73,7 @@ const restore = (form, values) => {
       for (const option of element.options)
         option.selected = stored.includes(option.value)
     } else if (element.pwEditor) {
-      // A rich editor (EasyMDE, EditorJS) renders beside the field it feeds, so
+      // A rich editor (Monaco, EditorJS) renders beside the field it feeds, so
       // assigning .value would leave the visible editor on the old content.
       element.pwEditor.setValue(stored[0])
     } else {

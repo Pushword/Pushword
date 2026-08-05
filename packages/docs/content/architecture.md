@@ -92,7 +92,7 @@ composer console ...
 | flat | Flat-file CMS mode: sync pages/media between database and filesystem | core |
 | installer | Bootstraps a new Pushword project | core |
 | js-helper | Shared JavaScript utilities (Node package) | — |
-| admin-monaco-editor | Monaco code editor for admin (Node package) | — |
+| admin-monaco-editor | Monaco editor for the admin: Twig/YAML/JSON fields, and the markdown body with its toolbar (Node package) | — |
 | new | Meta-package that pulls in core + admin + common extensions | core |
 | newsletter | Audiences, contacts, segmented campaigns and criteria-driven automations | core |
 | page-scanner | Dead link detection, 404/301 checks, TODO scanning | core |

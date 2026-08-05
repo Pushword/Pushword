@@ -60,7 +60,6 @@ Le fichier principal est maintenant beaucoup plus clair :
 
 ```
 admin.js (point d'entrée)
-├── admin.easymde-editor.js (éditeur Markdown)
 ├── admin.filteringParentPage.js (filtrage pages parentes)
 ├── admin.filterImageFormField.js (filtrage images)
 ├── admin.mediaPicker.js (sélecteur de média)

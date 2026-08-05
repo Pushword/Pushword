@@ -28,6 +28,26 @@ You may be intersted by the [block editor](/extension/admin-block-editor).
 
 ## Editing a page
 
+The body is edited in Monaco, with a toolbar above it and a word/line count below.
+Formatting is a toggle: pressing a button a second time removes what it added, and with
+nothing selected it applies to the word under the cursor.
+
+| Key | What it does |
+| --- | --- |
+| `Ctrl+B` / `Ctrl+I` | bold, italic |
+| `Alt+S` | strikethrough |
+| `Ctrl+Shift+]` / `Ctrl+Shift+[` | move the heading level up and down |
+| `Alt+C` | tick or untick a task item, making one if the line is not a task yet |
+| `Ctrl+K` | wrap the selection in a link |
+| `Enter` | carry the list marker over, numbering the next ordered item; on an empty item, end the list |
+| `F1` | every command, by name |
+
+Pasting a URL onto selected text links that text instead of replacing it. The toolbar's
+last two buttons open the editor fullscreen and the [markdown cheatsheet](/editor).
+
+The same editor, toolbar included, backs the markdown mode of
+[admin-block-editor](/extension/admin-block-editor).
+
 Saving is always something you ask for: `Ctrl+S` saves without leaving the form, and the
 *Save and continue editing* button shows the result. There is no timed autosave, on
 purpose — a page save is a publication (it rewrites the flat markdown, regenerates the

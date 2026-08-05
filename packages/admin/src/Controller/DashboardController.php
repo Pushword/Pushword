@@ -56,7 +56,13 @@ class DashboardController extends AbstractDashboardController
             ->addCssFile($this->versionedAsset('/bundles/pushwordadmin/admin.css'))
             ->addJsFile($this->versionedAsset('/bundles/pushwordadmin/admin.js'))
             ->addJsFile($this->versionedAsset('/bundles/pushwordadminblockeditor/admin-block-editor.js'))
-            ->addCssFile($this->versionedAsset('/bundles/pushwordadminblockeditor/style.css'));
+            ->addCssFile($this->versionedAsset('/bundles/pushwordadminblockeditor/style.css'))
+            // Monaco weighs a few megabytes: admin.js fetches it from this URL, and
+            // only on the pages that hold a field it drives.
+            ->addHtmlContentToBody(sprintf(
+                '<script>window.pwMonacoUrl=%s</script>',
+                json_encode($this->versionedAsset('/bundles/pushwordadmin/monaco/app.js'), \JSON_THROW_ON_ERROR)
+            ));
     }
 
     #[Override]

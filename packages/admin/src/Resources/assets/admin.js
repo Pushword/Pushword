@@ -7,7 +7,7 @@ window.htmx = htmx
 installHtmxCompat(htmx)
 
 // Editor modules
-import { easyMDEditor } from './admin.easymde-editor'
+import { initMonacoEditors } from './admin.monacoLoader'
 
 // Filtering modules
 import { filterParentPageFromHost } from './admin.filteringParentPage'
@@ -80,7 +80,7 @@ document.addEventListener('htmx:after:swap', markContentEditableElements)
  */
 window.addEventListener('load', function () {
   // Editors
-  easyMDEditor()
+  initMonacoEditors()
 
   // Form helpers
   showTitlePixelWidth()
@@ -125,7 +125,8 @@ window.addEventListener('load', function () {
   // Auto-save
   initCtrlSAutoSave()
 
-  // Local draft recovery (after the editors, so the body textarea is wired)
+  // Local draft recovery. Monaco loads asynchronously, but restoring only happens
+  // on a click in the banner, by which time the textarea carries its pwEditor.
   initUnsavedChangesRecovery()
 
   // Edit lock

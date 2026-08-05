@@ -17,7 +17,7 @@
 
 {% block body_javascript %}
     {{ parent() }}
-    <script src="/bundles/pushwordadmin/monaco/app.js"></script>
+    <script src="{{ versionedAsset('/bundles/pushwordadmin/monaco/app.js') }}"></script>
     <script src="{{ versionedAsset('/bundles/pushwordadmin/admin.js') }}"></script>
     {% if isInlineWindow %}
         <script>

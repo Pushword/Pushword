@@ -5,7 +5,7 @@ import { logger } from './tools/utils/logger'
  * Gestionnaire des modes d'édition (EditorJS, JSON, Markdown)
  */
 export class EditorModeManager {
-  private static monacoLoaderPromise: Promise<void> | null = null
+  private static monacoLoaderPromise: Promise<unknown> | null = null
   private static readonly MONACO_SCRIPT_URL = '/bundles/pushwordadmin/monaco/app.js'
   private readonly editorId: string
   private monacoInstance: any = null
@@ -86,18 +86,25 @@ export class EditorModeManager {
     this.monacoInstance = instance
   }
 
-  private disposeMonacoInstance(): void {
-    const instance = this.getMonacoInstance()
-    if (instance) {
-      try {
-        instance.dispose()
-        this.setMonacoInstance(null)
-      } catch (error) {
-        logger.error('Erreur lors du nettoyage de Monaco', {
-          editorId: this.editorId,
-          error,
-        })
+  /**
+   * Monaco brings its own DOM along — the markdown mode adds a toolbar and a
+   * status bar around it — so the helper, not this class, knows what to remove.
+   */
+  private disposeMonacoInstance(textarea: HTMLTextAreaElement | null): void {
+    if (!this.getMonacoInstance()) {
+      return
+    }
+
+    try {
+      if (textarea) {
+        window.monacoHelper?.destroy(textarea)
       }
+      this.setMonacoInstance(null)
+    } catch (error) {
+      logger.error('Erreur lors du nettoyage de Monaco', {
+        editorId: this.editorId,
+        error,
+      })
     }
   }
 
@@ -133,16 +140,6 @@ export class EditorModeManager {
     input.name = textarea.name
     input.setAttribute('data-editorjs', textarea.getAttribute('data-editorjs') || '')
     return input
-  }
-
-  /**
-   * Supprime l'éditeur Monaco du DOM
-   */
-  private removeMonacoFromDOM(): void {
-    const monacoEditor = document.querySelector('.monaco-editor')
-    if (monacoEditor && monacoEditor.parentNode) {
-      monacoEditor.parentNode.parentNode?.removeChild(monacoEditor.parentNode)
-    }
   }
 
   /**
@@ -207,11 +204,17 @@ export class EditorModeManager {
       return true
     }
 
+    // pushword/admin fetches the same bundle on any page holding a Monaco field,
+    // and parks its promise here: without sharing it, a form carrying both would
+    // pull those megabytes twice.
+    if (window.pwMonacoLoading) {
+      EditorModeManager.monacoLoaderPromise = window.pwMonacoLoading
+    }
+
     if (!EditorModeManager.monacoLoaderPromise) {
-      EditorModeManager.monacoLoaderPromise = new Promise((resolve, reject) => {
+      EditorModeManager.monacoLoaderPromise = new Promise<void>((resolve, reject) => {
         const script = document.createElement('script')
-        const cacheBuster = Date.now()
-        script.src = `${EditorModeManager.MONACO_SCRIPT_URL}?v=${cacheBuster}`
+        script.src = window.pwMonacoUrl ?? EditorModeManager.MONACO_SCRIPT_URL
         script.dataset.pwMonaco = '1'
         script.async = true
         script.defer = true
@@ -368,8 +371,7 @@ export class EditorModeManager {
         }
 
       //this.getEditorInstance().blocks.render()
-      this.removeMonacoFromDOM()
-      this.disposeMonacoInstance()
+      this.disposeMonacoInstance(textarea)
 
       const hiddenInput = this.createHiddenInput(textarea)
       textarea.parentNode?.replaceChild(hiddenInput, textarea)
@@ -483,8 +485,7 @@ export class EditorModeManager {
     logger.warn('Nettoyage forcé demandé', { editorId: this.editorId })
 
     try {
-      this.removeMonacoFromDOM()
-      this.disposeMonacoInstance()
+      this.disposeMonacoInstance(this.getEditorInput() as HTMLTextAreaElement | null)
       this.toggleEditorJsVisibility(true)
     } catch (error) {
       logger.error('Erreur lors du nettoyage forcé', { editorId: this.editorId, error })
