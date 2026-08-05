@@ -62,10 +62,15 @@ final class PageEditUnsavedRecoveryTest extends AbstractAdminTestClass
 
         // Both wordings ship, or the banner falls back to its English default —
         // silently, and only in the case where a colleague's save is at stake.
-        self::assertMatchesRegularExpression(
-            '#window\.pwUnsavedChangesTranslations\s*=\s*\{[^}]*conflict:\s*"(?!adminPageUnsavedChangesConflict")[^"]+"#s',
+        self::assertStringContainsString(
+            'conflict: "',
             $html,
-            'The edit form must publish a translated conflict wording beside the plain one',
+            'The edit form must publish a conflict wording beside the plain one',
+        );
+        self::assertStringNotContainsString(
+            'conflict: "adminPageUnsavedChangesConflict"',
+            $html,
+            'The conflict wording is untranslated: the banner would show the key itself',
         );
     }
 
