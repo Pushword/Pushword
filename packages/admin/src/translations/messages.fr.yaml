@@ -200,6 +200,7 @@ adminPageTwitterSiteHelp: "<code>@Username</code>, valeur par défaut si régler
 
 adminPageTwitterSiteLabel: 'Twitter Site'
 adminPageUnsavedChanges: "Vous avez laissé ici des modifications non enregistrées %time%, conservées dans ce navigateur."
+adminPageUnsavedChangesConflict: "Vous avez laissé ici des modifications non enregistrées %time%, conservées dans ce navigateur. La page a été enregistrée depuis, sur des champs que vous aviez modifiés : les restaurer écrasera cette version."
 adminPageUnsavedDiscard: 'Ignorer'
 adminPageUnsavedRestore: 'Les restaurer'
 adminPageUpdateNotificationTitle: '[%appName%] Edition en cours'
@@ -264,6 +265,7 @@ md_csLinkToFragment: 'Vers une partie de la page'
 md_csLinkToMail: 'Vers une adresse mail'
 md_csLinkToPhone: 'Vers un n° de téléphone'
 md_csLists: Listes
+md_csNotice: Encadré
 md_csOthers: Autres
 md_csPageH1: 'Aide-Mémoire Markdown'
 md_csPageList: 'Lister des pages'

@@ -30,6 +30,7 @@
 - [{{ 'md_csLists'|trans }}](#lists)
 - [{{ 'md_csParagraph'|trans }}](#p)
 - [{{ 'md_csQuote'|trans }}](#quote)
+- [{{ 'md_csNotice'|trans }}](#notice)
 - [{{ 'md_csImage'|trans }}](#img)
 - [{{ 'md_csVideo'|trans }}](#video)
 - [{{ 'md_csPageList'|trans }}](#pageslist)
@@ -232,6 +233,27 @@ deux espace sont nécessaires.</code></pre>
   </div>
   <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
 > Mon bloc de contenu cité
+</code></pre>
+</figure>
+</section>
+
+<section id="notice" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csNotice'|trans }}</h2>
+
+<figure class="relative mb-8 overflow-hidden">
+  <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
+> [!warning] Mon titre
+>
+> Le contenu de l'encadré, en **markdown**.
+{% endapply %}
+  </div>
+  <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
+> [!warning] Mon titre
+>
+> Le contenu de l'encadré, en **markdown**.
+
+# note, tip, important, warning, caution — le titre est facultatif
 </code></pre>
 </figure>
 </section>

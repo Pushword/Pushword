@@ -198,6 +198,7 @@ adminPageTwitterCreatorLabel: "Twitter Creator"
 adminPageTwitterSiteHelp: "<code>@Username</code>, default value if set in the App."
 adminPageTwitterSiteLabel: "Twitter Site"
 adminPageUnsavedChanges: "You left unsaved changes here %time%, kept in this browser."
+adminPageUnsavedChangesConflict: "You left unsaved changes here %time%, kept in this browser. The page has been saved since, on fields you changed: restoring puts your version back over it."
 adminPageUnsavedDiscard: "Discard"
 adminPageUnsavedRestore: "Restore them"
 adminPageUpdateNotificationTitle: "[%appName%] Editing in progress"
@@ -263,6 +264,7 @@ md_csLinkToFragment: "Link to fragment"
 md_csLinkToMail: "Link to mail"
 md_csLinkToPhone: "Link to a phone number"
 md_csLists: Lists
+md_csNotice: Notice
 md_csOthers: Others
 md_csPageH1: "Editor Hidden Super Power"
 md_csPageList: "List pages"
