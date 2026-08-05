@@ -274,14 +274,32 @@ final class LinkImproverRenderTest extends KernelTestCase
         self::assertStringNotContainsString('data-auto-link', $rendered);
     }
 
-    public function testDisabledByDefaultLeavesContentUntouched(): void
+    /**
+     * The dev-app opts localhost.dev in, so this states the invariant itself
+     * rather than leaning on a demo host's config: an app that has not opted in
+     * gets the content it wrote, whatever the map holds.
+     */
+    public function testAnAppThatHasNotOptedInIsLeftUntouched(): void
     {
         self::bootKernel();
+        self::getContainer()->get(SiteRegistry::class)->get(self::HOST)
+            ->setCustomProperty('link_improver', false);
         $this->createTarget();
 
         $rendered = $this->render('A paragraph mentioning Kiwano Melano in passing.');
 
         self::assertStringNotContainsString('data-auto-link', $rendered);
         self::assertStringNotContainsString('href="/linkimp-kiwano"', $rendered);
+    }
+
+    /** The shipped default is off — an app that never names the key stays inert. */
+    public function testAnAppThatNeverNamesTheKeyIsInert(): void
+    {
+        self::bootKernel();
+
+        self::assertNotSame(
+            true,
+            self::getContainer()->get(SiteRegistry::class)->get('admin-block-editor.test')->get('link_improver'),
+        );
     }
 }

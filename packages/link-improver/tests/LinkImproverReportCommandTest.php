@@ -125,6 +125,10 @@ final class LinkImproverReportCommandTest extends KernelTestCase
     public function testADisabledHostIsSkippedWithANote(): void
     {
         self::bootKernel();
+        // The dev-app opts localhost.dev in, so say what this test is about
+        // instead of borrowing a demo host's config for it.
+        self::getContainer()->get(SiteRegistry::class)->get(self::HOST)
+            ->setCustomProperty('link_improver', false);
 
         $commandTester = $this->commandTester();
         $exitCode = $commandTester->execute(['--host' => self::HOST, '--format' => 'text']);

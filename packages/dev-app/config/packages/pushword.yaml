@@ -18,6 +18,9 @@ pushword:
         eventDate: { type: date }
         highlights: { type: list }
       cache: static
+      # On in the demo so the feature is live to browse; every other app keeps
+      # the shipped default (off), which is what the opt-in tests assert.
+      link_improver: true
       randomTest: 123
       generated_og_image: true
       admin_block_editor: false
