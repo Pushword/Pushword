@@ -55,6 +55,11 @@ export default class GroupEnd implements BlockTool {
     editor.blocks.insert(GroupRegistry.END, {})
   }
 
+  /**
+   * A candidate closer. Whether it really is a marker is settled by
+   * GroupNesting, which only lets it close a `<div>` GroupStart opened —
+   * a `</div>` ending hand-written HTML stays Raw, like its opener.
+   */
   static isItMarkdownExported(markdown: string): boolean {
     return markdown.trim() === '</div>'
   }

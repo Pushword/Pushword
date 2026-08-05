@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import ClipboardManager from './ClipboardManager'
+import GroupStart from '../Group/GroupStart'
+import GroupEnd from '../Group/GroupEnd'
+import Paragraph from '../Paragraph/Paragraph'
+import Raw from '../Raw/Raw'
 
 /**
  * Unit tests for the copy/paste pipeline. The handlers are private, so we reach
@@ -345,18 +349,17 @@ describe('ClipboardManager – handlePaste routing', () => {
   })
 })
 
+type ListEntry = { content: string; checked?: boolean; children?: ListEntry[] }
+
 /** Build a detached @editorjs/list block. */
 function buildListBlock(
   style: 'unordered' | 'ordered' | 'checklist',
-  items: Array<{ content: string; checked?: boolean; children?: string[] }>,
+  items: ListEntry[],
 ): HTMLElement {
   const block = document.createElement('div')
   block.className = 'ce-block'
 
-  const buildList = (
-    listStyle: string,
-    entries: Array<{ content: string; checked?: boolean; children?: string[] }>,
-  ): HTMLElement => {
+  const buildList = (listStyle: string, entries: ListEntry[]): HTMLElement => {
     const list = document.createElement(listStyle === 'ordered' ? 'ol' : 'ul')
     list.className = `cdx-list cdx-list-${listStyle}`
 
@@ -377,10 +380,7 @@ function buildListBlock(
       item.appendChild(content)
 
       if (entry.children) {
-        const children = buildList(
-          listStyle,
-          entry.children.map((c) => ({ content: c })),
-        )
+        const children = buildList(listStyle, entry.children)
         children.classList.add('cdx-list__item-children')
         item.appendChild(children)
       }
@@ -430,20 +430,89 @@ describe('ClipboardManager – copying a list block', () => {
     expect(result.markdown).toBe('- [ ] todo\n- [x] done')
   })
 
+  it('leaves a checklist parent unchecked when only a child is checked', () => {
+    const block = buildListBlock('checklist', [
+      { content: 'Parent', checked: false, children: [{ content: 'Child', checked: true }] },
+    ])
+
+    const result = newManager().extractBlockContent(block)
+
+    expect(result.markdown).toBe('- [ ] Parent\n  - [x] Child')
+  })
+
   it('indents nested items', () => {
     const block = buildListBlock('unordered', [
-      { content: 'Parent', children: ['Child', 'Child 2'] },
+      { content: 'Parent', children: [{ content: 'Child' }, { content: 'Child 2' }] },
       { content: 'Sibling' },
     ])
 
     const result = newManager().extractBlockContent(block)
 
     expect(result.markdown).toBe('- Parent\n  - Child\n  - Child 2\n- Sibling')
+    expect(result.html).toBe(
+      '<ul><li>Parent<ul><li>Child</li><li>Child 2</li></ul></li><li>Sibling</li></ul>',
+    )
+  })
+
+  // Two spaces per level whatever the marker width, the convention
+  // `List._itemsToMarkdown` writes and `List.importFromMarkdown` reads back — so a
+  // copied list pastes at the depth it was cut from.
+  it('restarts numbering inside a nested ordered list', () => {
+    const block = buildListBlock('ordered', [
+      { content: 'One', children: [{ content: 'Nested' }] },
+      { content: 'Two' },
+    ])
+
+    const result = newManager().extractBlockContent(block)
+
+    expect(result.markdown).toBe('1. One\n  1. Nested\n2. Two')
   })
 
   it('reports nothing for an empty list', () => {
     const block = buildListBlock('unordered', [{ content: '' }])
 
     expect(newManager().extractBlockContent(block)).toBeNull()
+  })
+})
+
+describe('ClipboardManager – pasting markdown as blocks', () => {
+  /** Editor stub carrying the tool registry and recording what gets inserted. */
+  function pastingManager(): { cm: AnyCm; inserted: string[] } {
+    const inserted: string[] = []
+    const editor = {
+      tools: {
+        getBlockTools: () => [
+          { name: 'groupStart', constructable: GroupStart },
+          { name: 'groupEnd', constructable: GroupEnd },
+          { name: 'paragraph', constructable: Paragraph },
+          { name: 'raw', constructable: Raw },
+        ],
+      },
+      blocks: {
+        insert: (type: string) => {
+          inserted.push(type)
+          return { id: `b${inserted.length}` }
+        },
+        update: () => {},
+      },
+    }
+
+    return { cm: new ClipboardManager({ editor } as any) as unknown as AnyCm, inserted }
+  }
+
+  it('imports a pasted group as its two markers', () => {
+    const { cm, inserted } = pastingManager()
+
+    cm.insertMarkdownAsBlocks('<div id="faq">\n\ntext\n\n</div>')
+
+    expect(inserted).toEqual(['groupStart', 'paragraph', 'groupEnd'])
+  })
+
+  it('keeps the closer of a pasted hand-written div raw, like its opener', () => {
+    const { cm, inserted } = pastingManager()
+
+    cm.insertMarkdownAsBlocks('<div style="color:red">\n\ntext\n\n</div>')
+
+    expect(inserted).toEqual(['raw', 'paragraph', 'raw'])
   })
 })

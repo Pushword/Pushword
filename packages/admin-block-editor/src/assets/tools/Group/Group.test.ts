@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import GroupStart, { GroupStartData } from './GroupStart'
 import GroupEnd from './GroupEnd'
+import { GroupNesting } from './GroupNesting'
 import { GroupRegistry } from './GroupRegistry'
+import { chunkTool } from '../../EditorJsParseMarkdown'
+import { MarkdownUtils } from '../utils/MarkdownUtils'
+import CodeBlock from '../CodeBlock/CodeBlock'
+import Paragraph from '../Paragraph/Paragraph'
+import Raw from '../Raw/Raw'
 
 /**
  * Editor api stub over a mutable block list, recording deletions and
@@ -135,6 +141,93 @@ describe('GroupEnd markdown round-trip', () => {
 
   it.each(['<div>', '</div> text', '</section>'])('does not claim %s', (markdown) => {
     expect(GroupEnd.isItMarkdownExported(markdown)).toBe(false)
+  })
+})
+
+describe('markerhood is symmetric', () => {
+  /** Real tool classes behind the adapter shape getBlockTools() returns. */
+  const tools = [
+    { name: GroupRegistry.START, constructable: GroupStart },
+    { name: GroupRegistry.END, constructable: GroupEnd },
+    { name: 'codeBlock', constructable: CodeBlock },
+    { name: 'paragraph', constructable: Paragraph },
+    { name: 'raw', constructable: Raw },
+  ] as any[]
+
+  /** Classify a whole document the way the importer does: one nesting, in order. */
+  const classify = (markdown: string): string[] => {
+    const nesting = new GroupNesting()
+    return MarkdownUtils.chunkMarkdown(markdown).map(
+      (chunk) => chunkTool(tools, chunk.text, nesting)?.name ?? 'none',
+    )
+  }
+
+  it('imports a group pair as markers', () => {
+    expect(classify('<div id="faq">\n\ntext\n\n</div>')).toEqual([
+      GroupRegistry.START,
+      'paragraph',
+      GroupRegistry.END,
+    ])
+  })
+
+  it('leaves the closer of a hand-written div Raw, like its opener', () => {
+    expect(classify('<div style="color:red">\n\ntext\n\n</div>')).toEqual([
+      'raw',
+      'paragraph',
+      'raw',
+    ])
+  })
+
+  it('a hand-written div inside a group keeps both its tags Raw', () => {
+    expect(
+      classify('<div id="faq">\n\n<div style="color:red">\n\ntext\n\n</div>\n\n</div>'),
+    ).toEqual([GroupRegistry.START, 'raw', 'paragraph', 'raw', GroupRegistry.END])
+  })
+
+  it('a group inside a hand-written div keeps its own markers', () => {
+    expect(classify('<div style="color:red">\n\n<div>\n\ntext\n\n</div>\n\n</div>')).toEqual([
+      'raw',
+      GroupRegistry.START,
+      'paragraph',
+      GroupRegistry.END,
+      'raw',
+    ])
+  })
+
+  it('counts the divs a multi-line Raw chunk leaves open', () => {
+    expect(classify('<div class="a">\n\n<div style="x">\n<p>text</p>\n\n</div>\n\n</div>')).toEqual([
+      GroupRegistry.START,
+      'raw',
+      'raw',
+      GroupRegistry.END,
+    ])
+  })
+
+  it('leaves a closer with nothing open Raw', () => {
+    expect(classify('</div>\n\ntext')).toEqual(['raw', 'paragraph'])
+  })
+
+  it('ignores a balanced div inside a Raw chunk', () => {
+    expect(classify('<div>\n\n<figure><div>a</div></figure>\n\n</div>')).toEqual([
+      GroupRegistry.START,
+      'raw',
+      GroupRegistry.END,
+    ])
+  })
+
+  it('ignores the divs a fenced code block only talks about', () => {
+    expect(
+      classify('<div id="faq">\n\n```html\n<div style="x">\n```\n\ntext\n\n</div>'),
+    ).toEqual([GroupRegistry.START, 'codeBlock', 'paragraph', GroupRegistry.END])
+  })
+
+  it('a Raw chunk closing more divs than it opens does not eat an outer group', () => {
+    expect(classify('<div>\n\n</div></div>\n\ntext\n\n</div>')).toEqual([
+      GroupRegistry.START,
+      'raw',
+      'paragraph',
+      'raw',
+    ])
   })
 })
 

@@ -1,16 +1,11 @@
 import EditorJS, { API } from '@editorjs/editorjs'
 import he from 'he'
 import { MarkdownUtils } from './MarkdownUtils'
-import { BlockToolAdapter } from '@editorjs/editorjs/types/tools/adapters/block-tool-adapter'
-import { ToolInterface } from '../Abstract/ToolInterface'
+import { BlockToolAdapterWithConstructable, chunkTool } from '../../EditorJsParseMarkdown'
+import { GroupNesting } from '../Group/GroupNesting'
 
 /** GFM delimiter-cell markers per column alignment. */
 const ALIGNMENT_SEPARATORS: Record<string, string> = { left: ':---', center: ':--:', right: '---:' }
-
-interface BlockToolAdapterWithConstructable extends BlockToolAdapter {
-    constructable?: ToolInterface
-    name: string
-}
 
 /**
  * ClipboardManager handles copy/paste operations for EditorJS
@@ -832,7 +827,9 @@ export default class ClipboardManager {
         }
 
         if (list.classList.contains('cdx-list-checklist')) {
-            const checked = item.querySelector('.cdx-list__checkbox--checked') !== null
+            // `:scope >` keeps a checked child from marking its parent: the nested
+            // list lives inside the parent `li`, next to the parent's own checkbox.
+            const checked = item.querySelector(':scope > .cdx-list__checkbox--checked') !== null
 
             return `- [${checked ? 'x' : ' '}]`
         }
@@ -972,9 +969,14 @@ export default class ClipboardManager {
         markdown = this.rejoinTableFragments(markdown)
         const blocks = markdown.split('\n\n')
 
+        // @ts-ignore - accessing internal API
+        const api = this.editor as API
+        const nesting = new GroupNesting()
+
         for (const block of blocks) {
             if (!block.trim()) continue
-            this.importBlock(block)
+            const adapter = chunkTool(this.editorjsTools, block, nesting)
+            adapter?.constructable?.importFromMarkdown(api, block)
         }
     }
 
@@ -1011,53 +1013,6 @@ export default class ClipboardManager {
         }
 
         return result.join('\n')
-    }
-
-    /**
-     * Import a single markdown block using the appropriate tool
-     * Logic adapted from EditorJsParseMarkdown
-     */
-    private importBlock(block: string): void {
-        // @ts-ignore - accessing internal API
-        const api = this.editor as API
-
-        // Try each tool (except paragraph and raw) first
-        for (const tool of this.editorjsTools) {
-            if (['paragraph', 'raw', 'stub'].includes(tool.name)) continue
-
-            const toolClass = tool.constructable
-            if (!toolClass) continue
-
-            if (this.importBlockWithTool(block, toolClass, api)) return
-        }
-
-        // Try paragraph
-        const paragraphTool = this.getToolClass('paragraph')
-        if (paragraphTool && this.importBlockWithTool(block, paragraphTool, api)) return
-
-        // Try raw as fallback
-        const rawTool = this.getToolClass('raw')
-        if (rawTool) this.importBlockWithTool(block, rawTool, api)
-    }
-
-    private importBlockWithTool(markdownBlock: string, toolClass: ToolInterface, api: API): boolean {
-        if (typeof toolClass.isItMarkdownExported !== 'function') {
-            return false
-        }
-
-        const markdownBlockWithoutTunes = MarkdownUtils.retrieveMarkdownWithoutTunes(markdownBlock)
-        if (!toolClass.isItMarkdownExported(markdownBlockWithoutTunes)) return false
-
-        toolClass.importFromMarkdown(api, markdownBlock)
-        return true
-    }
-
-    private getToolClass(blockType: string): ToolInterface | null {
-        const tool = this.editorjsTools.find((t) => t.name === blockType) as
-            | BlockToolAdapterWithConstructable
-            | undefined
-
-        return tool?.constructable || null
     }
 
     private isValidURL(str: string): boolean {
