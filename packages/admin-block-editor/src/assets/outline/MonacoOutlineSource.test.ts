@@ -6,6 +6,7 @@ import GroupStart from '../tools/Group/GroupStart'
 import GroupEnd from '../tools/Group/GroupEnd'
 import Paragraph from '../tools/Paragraph/Paragraph'
 import Raw from '../tools/Raw/Raw'
+import CodeBlock from '../tools/CodeBlock/CodeBlock'
 
 /** Real tool classes behind the same adapter shape getBlockTools() returns. */
 const fakeApi = {
@@ -14,6 +15,7 @@ const fakeApi = {
       { name: 'header', constructable: Header },
       { name: 'groupStart', constructable: GroupStart },
       { name: 'groupEnd', constructable: GroupEnd },
+      { name: 'codeBlock', constructable: CodeBlock },
       { name: 'paragraph', constructable: Paragraph },
       { name: 'raw', constructable: Raw },
     ],
@@ -52,6 +54,18 @@ describe('MarkdownMonacoSource.entries', () => {
       { index: 0, type: 'raw', level: null, label: '<video src="x.mp4"></video>' },
     ])
   })
+
+  it('offers no group row for a div the user wrote by hand', () => {
+    const { source } = markdownSource('<div style="color:red">\n\ninside\n\n</div>')
+
+    // Both tags stay raw: the rail must not offer to delete "the group",
+    // which would take the opening tag and the content with it.
+    expect(source.entries()).toEqual([
+      { index: 0, type: 'raw', level: null, label: '<div style="color:red">' },
+      { index: 1, type: 'paragraph', level: null, label: 'inside' },
+      { index: 2, type: 'raw', level: null, label: '</div>' },
+    ])
+  })
 })
 
 describe('MarkdownMonacoSource edits', () => {
@@ -77,6 +91,58 @@ describe('MarkdownMonacoSource edits', () => {
     source.moveSpan(0, 1, 1)
 
     expect(input.value).toBe('## A\n\na body')
+  })
+
+  it('keeps the blank lines it did not touch', () => {
+    const { source, input } = markdownSource('## A\n\n\n\na body\n\n## B')
+
+    source.deleteSpan(2, 2)
+
+    expect(input.value).toBe('## A\n\n\n\na body')
+  })
+
+  it('keeps a whitespace-only separator line untouched', () => {
+    const { source, input } = markdownSource('a\n \nb\n\nc')
+
+    source.deleteSpan(2, 2)
+
+    expect(input.value).toBe('a\n \nb')
+  })
+})
+
+describe('MarkdownMonacoSource fenced code', () => {
+  const doc = '## Intro\n\n```php\nfoo();\n\n## Step\nbar();\n```\n\n## Real\n\nbody'
+
+  it('shows a fence as one code entry, not a phantom heading', () => {
+    const { source } = markdownSource(doc)
+
+    expect(source.entries()).toEqual([
+      { index: 0, type: 'header', level: 2, label: 'Intro' },
+      {
+        index: 1,
+        type: 'codeBlock',
+        level: null,
+        label: '```php foo(); ## Step bar(); ```',
+      },
+      { index: 2, type: 'header', level: 2, label: 'Real' },
+      { index: 3, type: 'paragraph', level: null, label: 'body' },
+    ])
+  })
+
+  it('deletes the whole fence without orphaning its closing line', () => {
+    const { source, input } = markdownSource(doc)
+
+    source.deleteSpan(1, 1)
+
+    expect(input.value).toBe('## Intro\n\n## Real\n\nbody')
+  })
+
+  it('moves a fence intact', () => {
+    const { source, input } = markdownSource(doc)
+
+    source.moveSpan(1, 1, 0)
+
+    expect(input.value).toBe('```php\nfoo();\n\n## Step\nbar();\n```\n\n## Intro\n\n## Real\n\nbody')
   })
 })
 

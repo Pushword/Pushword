@@ -46,7 +46,11 @@ describe('MarkdownUtils.extractSnippetCall', () => {
 })
 
 describe('MarkdownUtils.chunkMarkdown', () => {
-  /** The rule chunkMarkdown must reproduce byte-for-byte: the parser's historical split. */
+  /**
+   * The rule chunkMarkdown must reproduce byte-for-byte outside fenced code:
+   * the parser's historical split. Fences are the documented exception and are
+   * covered on their own below.
+   */
   function legacyChunks(markdown: string): string[] {
     if (markdown.trim() === '') return []
     return markdown.replace(/\n\s*\n+/g, '\n\n').split('\n\n')
@@ -72,9 +76,9 @@ describe('MarkdownUtils.chunkMarkdown', () => {
     const chunks = MarkdownUtils.chunkMarkdown('# T\n\npara line1\npara line2\n\nlast')
 
     expect(chunks).toEqual([
-      { text: '# T', startLine: 0, endLine: 0 },
-      { text: 'para line1\npara line2', startLine: 2, endLine: 3 },
-      { text: 'last', startLine: 5, endLine: 5 },
+      { text: '# T', startLine: 0, endLine: 0, separatorAfter: '\n\n' },
+      { text: 'para line1\npara line2', startLine: 2, endLine: 3, separatorAfter: '\n\n' },
+      { text: 'last', startLine: 5, endLine: 5, separatorAfter: '' },
     ])
   })
 
@@ -82,15 +86,113 @@ describe('MarkdownUtils.chunkMarkdown', () => {
     const chunks = MarkdownUtils.chunkMarkdown('a\n\n\n\nb')
 
     expect(chunks).toEqual([
-      { text: 'a', startLine: 0, endLine: 0 },
-      { text: 'b', startLine: 4, endLine: 4 },
+      { text: 'a', startLine: 0, endLine: 0, separatorAfter: '\n\n\n\n' },
+      { text: 'b', startLine: 4, endLine: 4, separatorAfter: '' },
     ])
   })
 
   it('anchors an empty leading chunk at line zero', () => {
     expect(MarkdownUtils.chunkMarkdown('\n\na')).toEqual([
-      { text: '', startLine: 0, endLine: 0 },
-      { text: 'a', startLine: 2, endLine: 2 },
+      { text: '', startLine: 0, endLine: 0, separatorAfter: '\n\n' },
+      { text: 'a', startLine: 2, endLine: 2, separatorAfter: '' },
     ])
+  })
+
+  it('reports the whitespace a separator actually held', () => {
+    expect(
+      MarkdownUtils.chunkMarkdown('a\n  \t\nb').map((chunk) => chunk.separatorAfter),
+    ).toEqual(['\n  \t\n', ''])
+  })
+})
+
+describe('MarkdownUtils.chunkMarkdown fenced code', () => {
+  const texts = (markdown: string): string[] =>
+    MarkdownUtils.chunkMarkdown(markdown).map((chunk) => chunk.text)
+
+  it('keeps a fence holding a blank line in one chunk', () => {
+    expect(texts('## Intro\n\n```php\nfoo();\n\nbar();\n```\n\nafter')).toEqual([
+      '## Intro',
+      '```php\nfoo();\n\nbar();\n```',
+      'after',
+    ])
+  })
+
+  it('does not let a code comment become a heading chunk', () => {
+    expect(texts('```php\nfoo();\n\n## Step\nbar();\n```')).toEqual([
+      '```php\nfoo();\n\n## Step\nbar();\n```',
+    ])
+  })
+
+  it('keeps a whitespace-only line inside a fence byte-for-byte', () => {
+    expect(texts('```php\nfoo();\n   \nbar();\n```')).toEqual([
+      '```php\nfoo();\n   \nbar();\n```',
+    ])
+  })
+
+  it('counts the fence lines it did not split on, so later chunks stay findable', () => {
+    expect(
+      MarkdownUtils.chunkMarkdown('## Intro\n\n```php\nfoo();\n\nbar();\n```\n\nafter'),
+    ).toEqual([
+      { text: '## Intro', startLine: 0, endLine: 0, separatorAfter: '\n\n' },
+      {
+        text: '```php\nfoo();\n\nbar();\n```',
+        startLine: 2,
+        endLine: 6,
+        separatorAfter: '\n\n',
+      },
+      { text: 'after', startLine: 8, endLine: 8, separatorAfter: '' },
+    ])
+  })
+
+  it('opens a second fence once the first has closed', () => {
+    expect(texts('```\na\n\nb\n```\n\ntext\n\n```\nc\n\nd\n```')).toEqual([
+      '```\na\n\nb\n```',
+      'text',
+      '```\nc\n\nd\n```',
+    ])
+  })
+
+  it('splits normally around a fence', () => {
+    expect(texts('a\n\n```\ncode\n```\n\nb')).toEqual(['a', '```\ncode\n```', 'b'])
+  })
+
+  it('handles tilde fences and longer closing runs', () => {
+    expect(texts('~~~js\nx\n\ny\n~~~~\n\nafter')).toEqual(['~~~js\nx\n\ny\n~~~~', 'after'])
+  })
+
+  it('does not close a fence on a shorter run', () => {
+    expect(texts('````\na\n\n```\n\nb\n````\n\nafter')).toEqual([
+      '````\na\n\n```\n\nb\n````',
+      'after',
+    ])
+  })
+
+  it('runs an unclosed fence to the end, as the renderer does', () => {
+    expect(texts('intro\n\n```php\nfoo();\n\n## Step')).toEqual([
+      'intro',
+      '```php\nfoo();\n\n## Step',
+    ])
+  })
+
+  it('ignores a backtick fence whose info string holds a backtick', () => {
+    expect(texts('``` a`b\n\nafter')).toEqual(['``` a`b', 'after'])
+  })
+
+  it('treats a four-space indented run as code, not a fence', () => {
+    expect(texts('a\n\n    ```\n\nb')).toEqual(['a', '    ```', 'b'])
+  })
+})
+
+describe('MarkdownUtils.joinChunks', () => {
+  it('puts the source separators back positionally', () => {
+    expect(MarkdownUtils.joinChunks(['a', 'b'], ['\n\n\n\n'])).toBe('a\n\n\n\nb')
+  })
+
+  it('falls back to a blank line when a gap has no separator', () => {
+    expect(MarkdownUtils.joinChunks(['a', 'b'], [])).toBe('a\n\nb')
+  })
+
+  it('returns a single chunk untouched', () => {
+    expect(MarkdownUtils.joinChunks(['only'], [])).toBe('only')
   })
 })

@@ -1,4 +1,5 @@
 import { API } from '@editorjs/editorjs'
+import { GroupNesting } from '../tools/Group/GroupNesting'
 import { GroupRegistry } from '../tools/Group/GroupRegistry'
 import { MarkdownUtils } from '../tools/utils/MarkdownUtils'
 import {
@@ -106,9 +107,10 @@ export class MarkdownMonacoSource extends MonacoSourceBase {
 
   entries(): OutlineEntry[] {
     const tools = this.tools()
+    const nesting = new GroupNesting()
 
     return MarkdownUtils.chunkMarkdown(this.text()).map((chunk, index) => {
-      const type = chunkTool(tools, chunk.text)?.name ?? 'raw'
+      const type = chunkTool(tools, chunk.text, nesting)?.name ?? 'raw'
       const stripped = MarkdownUtils.retrieveMarkdownWithoutTunes(chunk.text)
       return { index, type, ...this.levelAndLabel(type, stripped) }
     })
@@ -120,22 +122,28 @@ export class MarkdownMonacoSource extends MonacoSourceBase {
   }
 
   deleteSpan(start: number, end: number): void {
-    const chunks = this.chunkTexts()
-    chunks.splice(start, end - start + 1)
-    this.replaceText(chunks.join('\n\n'))
+    this.rewriteChunks((texts) => {
+      texts.splice(start, end - start + 1)
+    })
   }
 
   moveSpan(start: number, end: number, to: number): void {
     if (to >= start && to <= end + 1) return
 
-    const chunks = this.chunkTexts()
-    const span = chunks.splice(start, end - start + 1)
-    chunks.splice(to > end ? to - span.length : to, 0, ...span)
-    this.replaceText(chunks.join('\n\n'))
+    this.rewriteChunks((texts) => {
+      const span = texts.splice(start, end - start + 1)
+      texts.splice(to > end ? to - span.length : to, 0, ...span)
+    })
   }
 
-  private chunkTexts(): string[] {
-    return MarkdownUtils.chunkMarkdown(this.text()).map((chunk) => chunk.text)
+  /** Rewrite the field from its chunks, keeping the blank lines the source had. */
+  private rewriteChunks(mutate: (texts: string[]) => void): void {
+    const chunks = MarkdownUtils.chunkMarkdown(this.text())
+    const separators = chunks.slice(0, -1).map((chunk) => chunk.separatorAfter)
+    const texts = chunks.map((chunk) => chunk.text)
+
+    mutate(texts)
+    this.replaceText(MarkdownUtils.joinChunks(texts, separators))
   }
 
   private tools(): BlockToolAdapterWithConstructable[] {

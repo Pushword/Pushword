@@ -15,6 +15,8 @@ export interface MarkdownChunk {
   /** 0-based line range of the chunk in the source, end inclusive. */
   startLine: number
   endLine: number
+  /** The blank-line run that followed the chunk in the source; '' for the last one. */
+  separatorAfter: string
 }
 
 /**
@@ -25,31 +27,100 @@ export class MarkdownUtils {
    * Split markdown into its block chunks — the unit the editor round-trips on.
    * Chunk texts are byte-for-byte what the historical
    * `replace(/\n\s*\n+/g, '\n\n')` + `split('\n\n')` produced (the parser and
-   * the outline panel MUST share this rule), but each chunk keeps its line
-   * range in the source so chunk N maps back to source lines. Whitespace-only
+   * the outline panel MUST share this rule), with one exception: a blank line
+   * inside a fenced code block does NOT split. Splitting there handed the
+   * editor half a fence, and a `## ` comment in the code then read as a real
+   * heading — so the fence is atomic here, as it is to the renderer.
+   *
+   * Each chunk keeps its line range in the source so chunk N maps back to
+   * source lines, and the separator that followed it so a rewrite can put the
+   * author's blank lines back instead of normalising them. Whitespace-only
    * input yields no chunk, mirroring the parser's empty-content guard.
    */
   static chunkMarkdown(markdown: string): MarkdownChunk[] {
     if (markdown.trim() === '') return []
 
+    const fences = MarkdownUtils.fencedRanges(markdown)
+    const insideFence = (index: number): boolean =>
+      fences.some(([from, to]) => index >= from && index < to)
+
     const chunks: MarkdownChunk[] = []
     const separator = /\n\s*\n+/g
     let start = 0
     let startLine = 0
-    const pushChunk = (end: number): void => {
+    const pushChunk = (end: number, separatorAfter: string): void => {
       const text = markdown.slice(start, end)
-      chunks.push({ text, startLine, endLine: startLine + MarkdownUtils.countLines(text) })
+      chunks.push({
+        text,
+        startLine,
+        endLine: startLine + MarkdownUtils.countLines(text),
+        separatorAfter,
+      })
     }
 
     let match: RegExpExecArray | null
     while ((match = separator.exec(markdown)) !== null) {
-      pushChunk(match.index)
+      if (insideFence(match.index)) continue
+
+      pushChunk(match.index, match[0])
       startLine += MarkdownUtils.countLines(markdown.slice(start, separator.lastIndex))
       start = separator.lastIndex
     }
-    pushChunk(markdown.length)
+    pushChunk(markdown.length, '')
 
     return chunks
+  }
+
+  /**
+   * Character ranges covered by fenced code blocks, `[from, to)` — `from` at the
+   * opening fence's first character, `to` at the end of the closing fence line,
+   * its newline excluded so the separator that follows the fence still splits.
+   * An unclosed fence runs to the end of the document, which is what the
+   * renderer does with it too. CommonMark rules: up to three spaces of indent,
+   * a closing run at least as long as the opening one and nothing but space
+   * after it, and no backtick in a backtick fence's info string.
+   */
+  private static fencedRanges(markdown: string): [number, number][] {
+    const fence = /^ {0,3}(`{3,}|~{3,})(.*)$/
+    const ranges: [number, number][] = []
+    let open: { marker: string; from: number } | null = null
+    let offset = 0
+
+    for (const line of markdown.split('\n')) {
+      const match = fence.exec(line)
+      if (match !== null) {
+        const marker = match[1]!
+        const info = match[2]!
+        if (open === null) {
+          if (!(marker.startsWith('`') && info.includes('`'))) {
+            open = { marker, from: offset }
+          }
+        } else if (
+          marker[0] === open.marker[0] &&
+          marker.length >= open.marker.length &&
+          info.trim() === ''
+        ) {
+          ranges.push([open.from, offset + line.length])
+          open = null
+        }
+      }
+      offset += line.length + 1
+    }
+    if (open !== null) ranges.push([open.from, markdown.length])
+
+    return ranges
+  }
+
+  /**
+   * Rejoin chunk texts with the source's own separators, positionally: the Nth
+   * gap keeps the Nth blank-line run the document had. A rail edit then leaves
+   * the spacing it did not touch byte-identical instead of collapsing every
+   * blank-line run to one.
+   */
+  static joinChunks(texts: string[], separators: string[]): string {
+    return texts
+      .map((text, index) => (index === 0 ? text : (separators[index - 1] ?? '\n\n') + text))
+      .join('')
   }
 
   private static countLines(text: string): number {
