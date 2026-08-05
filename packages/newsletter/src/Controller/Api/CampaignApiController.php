@@ -257,7 +257,7 @@ final class CampaignApiController extends AbstractApiController
         }
 
         if (\array_key_exists('translations', $data) && \is_array($data['translations'])) {
-            $campaign->translations = $this->mergedTranslations($campaign, $data['translations']);
+            $campaign->mergeTranslations($data['translations']);
         }
 
         if (\array_key_exists('rateSeconds', $data)) {
@@ -277,43 +277,6 @@ final class CampaignApiController extends AbstractApiController
         }
 
         return null;
-    }
-
-    /**
-     * Merged per locale, the way `customProperties` merges per key: a caller
-     * sending the German translation must not have to resend the other seven.
-     * A locale set to null drops it, which is the only way to take one back.
-     *
-     * @param array<mixed> $written
-     *
-     * @return array<string, array<string, string>>
-     */
-    private function mergedTranslations(Campaign $campaign, array $written): array
-    {
-        $translations = $campaign->translations;
-
-        foreach ($written as $locale => $fields) {
-            if (null === $fields) {
-                unset($translations[(string) $locale]);
-
-                continue;
-            }
-
-            if (! \is_array($fields)) {
-                continue;
-            }
-
-            $kept = [];
-            foreach (['subject', 'preheader', 'bodyMarkdown'] as $field) {
-                if (\is_string($fields[$field] ?? null)) {
-                    $kept[$field] = $fields[$field];
-                }
-            }
-
-            $translations[(string) $locale] = $kept;
-        }
-
-        return $translations;
     }
 
     private function parseDate(?string $value): ?DateTimeImmutable

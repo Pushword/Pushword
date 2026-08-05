@@ -39,6 +39,9 @@ class Campaign implements IdInterface, Stringable
     /** The column holds 128; "YYMMDD-" takes 7 of them. */
     private const int SLUG_MAX_LENGTH = 120;
 
+    /** @var list<string> what a translation may carry, each falling back on its own */
+    private const array TRANSLATED_FIELDS = ['subject', 'preheader', 'bodyMarkdown'];
+
     #[Assert\NotNull]
     #[ORM\ManyToOne(targetEntity: Audience::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
@@ -188,6 +191,49 @@ class Campaign implements IdInterface, Stringable
     }
 
     /**
+     * Merged per field, the way `customProperties` merges per key: a caller
+     * sending the German subject must not have to resend the German body, nor
+     * the seven other languages. A locale set to null drops it, which is the
+     * only way to take one back; a field set to an empty string clears that one
+     * field and makes it fall back again.
+     *
+     * @param array<array-key, mixed> $written whatever the API decoded
+     */
+    public function mergeTranslations(array $written): void
+    {
+        $translations = $this->translations;
+
+        foreach ($written as $locale => $fields) {
+            $locale = $this->normalizeLocale((string) $locale);
+            if ('' === $locale) {
+                continue;
+            }
+
+            if (null === $fields) {
+                unset($translations[$locale]);
+
+                continue;
+            }
+
+            if (! \is_array($fields)) {
+                continue;
+            }
+
+            $merged = $translations[$locale] ?? [];
+            foreach (self::TRANSLATED_FIELDS as $field) {
+                if (\is_string($fields[$field] ?? null)) {
+                    $merged[$field] = $fields[$field];
+                }
+            }
+
+            $translations[$locale] = $merged;
+        }
+
+        // The set hook trims, drops what was blanked and drops a locale left empty.
+        $this->translations = $translations;
+    }
+
+    /**
      * The languages this campaign is written in besides its own text.
      *
      * @return list<string>
@@ -238,7 +284,7 @@ class Campaign implements IdInterface, Stringable
             }
 
             $kept = [];
-            foreach (['subject', 'preheader', 'bodyMarkdown'] as $field) {
+            foreach (self::TRANSLATED_FIELDS as $field) {
                 $value = \is_string($fields[$field] ?? null) ? trim($fields[$field]) : '';
 
                 if ('' !== $value) {

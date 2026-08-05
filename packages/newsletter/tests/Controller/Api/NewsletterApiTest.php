@@ -740,8 +740,8 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertEmailCount(0, null, 'the tick delivers, the API only arms');
     }
 
-    /** A caller sending the German translation must not have to resend the other seven. */
-    public function testTranslationsRoundTripAndMergePerLocale(): void
+    /** A caller sending the German subject must not have to resend the German body. */
+    public function testTranslationsRoundTripAndMergePerField(): void
     {
         $audience = $this->createAudience();
 
@@ -764,19 +764,32 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertIsInt($id);
 
         $patched = $this->request(Request::METHOD_PATCH, '/api/newsletter/campaign/'.$id, [
-            'translations' => ['it' => ['subject' => 'Ciao', 'bodyMarkdown' => 'Leggi questo.']],
+            'translations' => ['it' => ['bodyMarkdown' => 'Leggi questo.']],
         ]);
 
         self::assertSame([
             'de' => ['subject' => 'Hallo', 'bodyMarkdown' => 'Lies das.'],
             'it' => ['subject' => 'Ciao', 'bodyMarkdown' => 'Leggi questo.'],
-        ], $patched['translations'], 'a locale left out is kept');
+        ], $patched['translations'], 'a locale left out is kept, and so is a field left out');
 
-        $dropped = $this->request(Request::METHOD_PATCH, '/api/newsletter/campaign/'.$id, [
-            'translations' => ['de' => null],
+        $cleared = $this->request(Request::METHOD_PATCH, '/api/newsletter/campaign/'.$id, [
+            'translations' => ['de' => ['bodyMarkdown' => '']],
         ]);
 
-        self::assertSame(['it' => ['subject' => 'Ciao', 'bodyMarkdown' => 'Leggi questo.']], $dropped['translations']);
+        self::assertSame([
+            'de' => ['subject' => 'Hallo'],
+            'it' => ['subject' => 'Ciao', 'bodyMarkdown' => 'Leggi questo.'],
+        ], $cleared['translations'], 'a blank field clears that field alone');
+
+        $dropped = $this->request(Request::METHOD_PATCH, '/api/newsletter/campaign/'.$id, [
+            'translations' => ['DE' => null],
+        ]);
+
+        self::assertSame(
+            ['it' => ['subject' => 'Ciao', 'bodyMarkdown' => 'Leggi questo.']],
+            $dropped['translations'],
+            'the drop is keyed the way the store is, not the way it was typed',
+        );
     }
 
     public function testAnArmedCampaignCanNoLongerBeEdited(): void

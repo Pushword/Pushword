@@ -77,6 +77,55 @@ final class CampaignTranslationTest extends TestCase
         self::assertSame(['de-ch', 'fr'], $campaign->translatedLocales());
     }
 
+    /** Writing the German subject alone must not send it over the default body. */
+    public function testMergingWritesOnlyTheFieldsItNames(): void
+    {
+        $campaign = $this->campaign();
+
+        $campaign->mergeTranslations(['de' => ['subject' => 'Hallo!']]);
+
+        self::assertSame(['subject' => 'Hallo!', 'bodyMarkdown' => 'Lies das.'], $campaign->translations['de']);
+        self::assertSame('Lies das.', $campaign->contentFor('de')['bodyMarkdown']);
+        self::assertArrayHasKey('pt', $campaign->translations, 'a locale left out is kept');
+    }
+
+    /** The locale is addressed the way it is stored, not the way it was typed. */
+    public function testMergingNormalisesTheLocaleItAddresses(): void
+    {
+        $campaign = $this->campaign();
+
+        $campaign->mergeTranslations(['DE_ch' => ['subject' => 'Hallo'], 'PT' => ['bodyMarkdown' => 'Leia isto.']]);
+
+        self::assertSame(['subject' => 'Olá', 'bodyMarkdown' => 'Leia isto.'], $campaign->translations['pt']);
+        self::assertSame(['de', 'de-ch', 'pt', 'pt-br'], $campaign->translatedLocales());
+    }
+
+    /** A blank field is how the merge takes one back; null is how it takes a locale back. */
+    public function testMergingClearsABlankedFieldAndDropsANulledLocale(): void
+    {
+        $campaign = $this->campaign();
+
+        $campaign->mergeTranslations(['de' => ['bodyMarkdown' => ''], 'pt-br' => null]);
+
+        self::assertSame(['subject' => 'Hallo'], $campaign->translations['de']);
+        self::assertSame('Read this.', $campaign->contentFor('de')['bodyMarkdown']);
+        self::assertSame(['de', 'pt'], $campaign->translatedLocales());
+
+        $campaign->mergeTranslations(['de' => ['subject' => '  ']]);
+
+        self::assertSame(['pt'], $campaign->translatedLocales(), 'a locale left with no field is dropped');
+    }
+
+    public function testMergingIgnoresWhatIsNeitherAnEntryNorADrop(): void
+    {
+        $campaign = $this->campaign();
+
+        $campaign->mergeTranslations(['de' => 'Hallo', '' => ['subject' => 'Nowhere'], 'it' => ['subject' => 42]]);
+
+        self::assertSame(['subject' => 'Hallo', 'bodyMarkdown' => 'Lies das.'], $campaign->translations['de']);
+        self::assertSame(['de', 'pt', 'pt-br'], $campaign->translatedLocales());
+    }
+
     public function testTheDefaultTextIsWhatAnUntranslatedCampaignSends(): void
     {
         $campaign = new Campaign();
