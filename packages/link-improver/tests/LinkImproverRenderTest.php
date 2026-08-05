@@ -233,6 +233,29 @@ final class LinkImproverRenderTest extends KernelTestCase
         self::assertStringNotContainsString('data-auto-link', $rendered);
     }
 
+    /**
+     * The improver hands the engine a `/slug` spelling of every absolute href so
+     * an absolute link still counts as "already linked". Those spellings are
+     * aliases of links the content already holds, so they must not spend the
+     * budget a second time — before piedweb/linksimprover 0.2.2 they did, and a
+     * page whose editorial links were written absolute reached its cap with half
+     * the links it was allowed.
+     */
+    public function testAbsoluteEditorialLinksDoNotSpendTheBudgetTwice(): void
+    {
+        $this->enable(maxLinks: 3.0);
+        $this->createTarget();
+
+        $rendered = $this->render(
+            'Two editorial links, both absolute: [one](https://localhost.dev/linkimp-elsewhere) '
+            ."and [two](https://localhost.dev/linkimp-other-place).\n\n"
+            .'Then a mention of Kiwano Melano in running prose.'
+        );
+
+        // Two links exist against a cap of three, so the third may still be added.
+        self::assertStringContainsString('<a href="/linkimp-kiwano" data-auto-link>Kiwano Melano</a>', $rendered);
+    }
+
     public function testNoLinkInsideInlineCode(): void
     {
         $this->enable();
@@ -297,8 +320,7 @@ final class LinkImproverRenderTest extends KernelTestCase
     {
         self::bootKernel();
 
-        self::assertNotSame(
-            true,
+        self::assertNotTrue(
             self::getContainer()->get(SiteRegistry::class)->get('admin-block-editor.test')->get('link_improver'),
         );
     }

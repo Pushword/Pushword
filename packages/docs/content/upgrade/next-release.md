@@ -1,5 +1,5 @@
 ---
-title: "the link panel's style options are named in English so they can be translated; the static build's workers drop the opcache file cache that was killing them"
+title: "the link panel's style options are named in English so they can be translated; the static build's workers drop the opcache file cache that was killing them; link-improver counts a page's links once, so a site whose links are written absolute gets the density it configured"
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin-block-editor`, `pushword/static-generator`
+**Concerns:** `pushword/admin-block-editor`, `pushword/link-improver`, `pushword/static-generator`
 
 ## The link tool's style options are named in English
 
@@ -64,3 +64,17 @@ rm -rf var/cache/opcache
 
 [Opting back in by hand](/extension/static-generator#performance), for a PHP that does not
 crash on it.
+
+## Link Improver counts each of a page's links once
+
+The cap counts the links a page already holds. A link written absolute
+(`https://example.tld/page`) or carrying a `#fragment` was counted twice, so a page
+reached its cap with half the links it was allowed — some pages got none at all.
+
+**Affects sites with `link_improver: true` whose content links are written absolute.**
+Those pages will now gain auto links up to the density `link_improver_max_links` names.
+Nothing to configure; review what changed before publishing:
+
+```shell
+php bin/console pw:link-improver --host example.tld
+```

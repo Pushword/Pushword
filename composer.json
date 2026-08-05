@@ -44,7 +44,7 @@
     "pentatrion/vite-bundle": "*",
     "piedweb/curl": "@dev || ^0.1",
     "piedweb/extractor": "@dev || ^0.1.19",
-    "piedweb/linksimprover": "^0.2.1",
+    "piedweb/linksimprover": "^0.2.2",
     "piedweb/render-html-attributes": "^0",
     "sensiolabs/ansi-to-html": "^2.0",
     "spatie/image-optimizer": "^1.3",
