@@ -3,6 +3,14 @@ conversation:
   translation_google_api_key: '%env(default::GOOGLE_API_KEY)%'
   translation_deepl_use_free_api: true
 
+parameters:
+  # Per-app properties cannot be overridden per environment — `apps` is a variableNode,
+  # so a second config file replaces the whole list rather than merging into one app.
+  # Routing this one through a parameter gives the test env a seam: rendering a
+  # 1200x600 Imagick PNG on every page save cost the suite ~36s of CPU, and nothing
+  # in it browses the demo. See config/packages/test/og_image.yaml.
+  pw.demo_generated_og_image: true
+
 pushword:
   entity_user: App\Entity\User
   page_properties:
@@ -22,7 +30,7 @@ pushword:
       # the shipped default (off), which is what the opt-in tests assert.
       link_improver: true
       randomTest: 123
-      generated_og_image: true
+      generated_og_image: '%pw.demo_generated_og_image%'
       admin_block_editor: false
       locales: 'en|fr'
       email: 'contact@localhost.dev'

@@ -1,0 +1,10 @@
+parameters:
+  # The demo turns Open Graph image generation on so the feature is live to browse.
+  # Under test that meant every page save rendered a 1200x600 PNG through Imagick —
+  # 845 renders at ~43ms, ~36s of the suite's CPU — for an image no assertion reads.
+  #
+  # Turning it off here does not remove coverage: PageOpenGraphImageGeneratorTest
+  # drives the generator directly, PageListenerOpenGraphTest builds its own listener
+  # with its own app config, and a page that really is rendered still gets its image
+  # lazily through MediaExtension, which is the same fallback bulk imports rely on.
+  pw.demo_generated_og_image: false
