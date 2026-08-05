@@ -3,6 +3,17 @@
 namespace App\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Pushword\Admin\PushwordAdminBundle;
+use Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle;
+use Pushword\AdvancedMainImage\PushwordAdvancedMainImageBundle;
+use Pushword\Api\PushwordApiBundle;
+use Pushword\Conversation\PushwordConversationBundle;
+use Pushword\Core\PushwordCoreBundle;
+use Pushword\Flat\PushwordFlatBundle;
+use Pushword\PageScanner\PushwordPageScannerBundle;
+use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
+use Pushword\TemplateEditor\PushwordTemplateEditorBundle;
+use Pushword\Version\PushwordVersionBundle;
 use SQLite3;
 
 /**
@@ -137,17 +148,17 @@ final class AppTest extends TestCase
         self::assertNotFalse($content);
 
         foreach ([
-            'Pushword\Core\PushwordCoreBundle',
-            'Pushword\Admin\PushwordAdminBundle',
-            'Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle',
-            'Pushword\AdvancedMainImage\PushwordAdvancedMainImageBundle',
-            'Pushword\Api\PushwordApiBundle',
-            'Pushword\Conversation\PushwordConversationBundle',
-            'Pushword\Flat\PushwordFlatBundle',
-            'Pushword\PageScanner\PushwordPageScannerBundle',
-            'Pushword\StaticGenerator\PushwordStaticGeneratorBundle',
-            'Pushword\TemplateEditor\PushwordTemplateEditorBundle',
-            'Pushword\Version\PushwordVersionBundle',
+            PushwordCoreBundle::class,
+            PushwordAdminBundle::class,
+            PushwordAdminBlockEditorBundle::class,
+            PushwordAdvancedMainImageBundle::class,
+            PushwordApiBundle::class,
+            PushwordConversationBundle::class,
+            PushwordFlatBundle::class,
+            PushwordPageScannerBundle::class,
+            PushwordStaticGeneratorBundle::class,
+            PushwordTemplateEditorBundle::class,
+            PushwordVersionBundle::class,
         ] as $bundle) {
             self::assertStringContainsString($bundle, $content);
         }
