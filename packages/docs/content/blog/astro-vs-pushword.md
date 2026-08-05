@@ -2,6 +2,8 @@
 title: 'Astro vs Pushword - A Build Tool and a CMS Meeting in the Middle'
 h1: 'Astro & Pushword: Two Answers to the Content-Driven Web'
 publishedAt: '2026-08-02 10:00'
+parentPage: blog
+template: /page/blog.html.twig
 toc: true
 ---
 

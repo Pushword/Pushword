@@ -1,0 +1,63 @@
+{% extends view('/page/page_default.html.twig') %}
+
+{#
+  Articles and their hub. No documentation sidebar: a post is read top to bottom,
+  and the docs nav next to it would suggest it is a chapter of the manual.
+  The hub is the only page here without a parent, which is what tells the two apart.
+#}
+{% set isArticle = page.parentPage is not null %}
+
+{% block content %}
+{% set mainContent = mainContentSplit(page) %}
+
+<article class="mx-auto max-w-3xl min-h-[80vh] px-6 pb-16">
+
+  <header class="pt-14 pb-8 {{ isArticle ? 'border-b border-stone-200 dark:border-stone-800' : '' }}">
+    {% if isArticle %}
+      <a href="{{ page('blog') }}" class="inline-block mb-6 text-sm text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100">
+        <span aria-hidden="true">←</span> Blog
+      </a>
+    {% endif %}
+
+    <h1 class="text-3xl md:text-4xl font-semibold tracking-tight leading-tight text-stone-900 dark:text-stone-100">{{ pw(page).h1|raw }}</h1>
+
+    {% if isArticle and page.publishedAt is not null %}
+      <time datetime="{{ page.publishedAt|date('Y-m-d') }}" class="block mt-4 text-sm text-stone-500 dark:text-stone-400">
+        {{ page.publishedAt|format_date('long') }}
+      </time>
+    {% endif %}
+  </header>
+
+  {% set toc = mainContent.toc %}
+
+  <div class="prose dark:prose-light max-w-none">
+    {{ mainContent.chapeau|raw }}
+    {{ mainContent.intro|raw }}
+    {% if toc is empty %}{{ mainContent.content|raw }}{% endif %}
+  </div>
+
+  {% if toc is not empty %}
+    <nav aria-label="Contents" class="my-10 py-6 border-y border-stone-200 dark:border-stone-800">
+      <h2 class="mb-3 text-[11px] font-semibold tracking-wider uppercase text-stone-500 dark:text-stone-400">Contents</h2>
+      {# The TOC is a bare ul/li/a tree, so it is styled here rather than left to prose:
+         a long article's contents read as a list to skim, not as body copy. #}
+      <div class="text-sm sm:columns-2 sm:gap-8 [&_ul]:list-none [&_ul]:m-0 [&_ul]:p-0 [&_li]:my-1 [&_li]:break-inside-avoid [&_ul_ul]:mt-1 [&_ul_ul]:ml-4 [&_a]:text-stone-600 [&_a:hover]:text-[oklch(45%_0.13_35)] dark:[&_a]:text-stone-400 dark:[&_a:hover]:text-[oklch(70%_0.13_35)]">
+        {{ toc|raw }}
+      </div>
+    </nav>
+
+    <div class="prose dark:prose-light max-w-none">
+      {{ mainContent.content|raw }}
+    </div>
+  {% endif %}
+
+  {% if isArticle %}
+    <div class="mt-12 text-sm font-light text-center text-stone-500">
+      {{ link(svg('edit', {class: 'fill-current w-3 inline-block -mt-1'}) ~ '<span class="hidden ml-2 lg:inline-block">Edit via github</span>', 'https://github.com/Pushword/Pushword/edit/main/packages/docs/content/' ~ page.slug ~ '.md', {class: 'hover:text-stone-900 dark:hover:text-stone-100'}) }}
+    </div>
+  {% endif %}
+
+</article>
+{% endblock %}
+
+{% block breadcrumb %} {% endblock %}

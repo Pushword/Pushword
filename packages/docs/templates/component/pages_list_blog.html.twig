@@ -1,0 +1,29 @@
+{#
+  The `blog` display variant: one row per article, date, title and opening
+  paragraph. Text-first, like the rest of the site — the built-in `card` view
+  brings shadows and square thumbnails no other page here uses.
+#}
+{%- if pages is not empty -%}
+<ul{% if id is defined and id %} id="{{ id }}"{% endif %} class="{{ wrapperClass|default('not-prose mt-10 border-t border-stone-200 divide-y divide-stone-200 dark:border-stone-800 dark:divide-stone-800') }}">
+  {%- for post in pages -%}
+    <li class="py-8">
+      {% if post.publishedAt is not null %}
+        <time datetime="{{ post.publishedAt|date('Y-m-d') }}" class="block mb-2 text-sm text-stone-500 dark:text-stone-400">
+          {{ post.publishedAt|format_date('long') }}
+        </time>
+      {% endif %}
+
+      <h2 class="text-xl font-semibold tracking-tight leading-snug">
+        <a href="{{ page(post) }}" class="text-stone-900 hover:text-[oklch(45%_0.13_35)] dark:text-stone-100 dark:hover:text-[oklch(70%_0.13_35)]">{{ pw(post).h1|raw }}</a>
+      </h2>
+
+      {# getParagraphs(true) reaches above the TOC split: on a post with a table of
+         contents, firstParagraph would quote the first paragraph *after* the intro. #}
+      {% set excerpt = post.searchExcerpt|default(mainContentSplit(post).getParagraphs(true)|first) %}
+      {% if excerpt %}
+        <p class="mt-2 leading-relaxed text-stone-600 dark:text-stone-300">{{ excerpt|striptags|u.truncate(220, '…', false) }}</p>
+      {% endif %}
+    </li>
+  {%- endfor -%}
+</ul>
+{%- endif -%}
