@@ -60,11 +60,20 @@ browser's `localStorage`, and reopening the page offers it back:
 > You left unsaved changes here 7 minutes ago, kept in this browser.
 > **Restore them** · **Discard**
 
-It covers the crash, the closed tab and the expired session. *Restore them* refills the
-form (including the markdown body) without saving anything, so you still review before
-publishing; the copy is only dropped once a save succeeds, or when you press *Discard*.
-It never leaves your browser, so it does not follow you to another machine — and it is
-unrelated to the **Draft** toggle, which is a publication state stored in the database.
+It covers the crash, the closed tab and the expired session. *Restore them* puts back the
+fields you had changed (the markdown body included) and nothing else, without saving
+anything, so you still review before publishing; a field you never touched keeps whatever
+the page holds now, even if a colleague saved it meanwhile. Should that colleague have
+saved one of *your* fields, the offer says so before you take it:
+
+> You left unsaved changes here 7 minutes ago, kept in this browser. The page has been
+> saved since, on fields you changed: restoring puts your version back over it.
+
+The copy is only dropped once a save succeeds, or when you press *Discard*. It never
+leaves your browser, so it does not follow you to another machine, and it belongs to the
+account that typed it: it is not offered to anyone else signing in on that browser, and
+signing out takes it along. It is unrelated to the **Draft** toggle, which is a
+publication state stored in the database.
 
 A site overriding `@pwAdmin/page/edit.html.twig` has to carry over the
 `unsaved_changes_banner.html.twig` include and the form's `data-pw-unsaved-key`

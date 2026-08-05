@@ -13,10 +13,13 @@
 {% block edit_form %}
     {% set autosave_event = 'pw-ctrl-s-event' %}
     {# The lock and the local recovery copy are both keyed by id, so neither
-       exists before the page has been saved once. #}
+       exists before the page has been saved once. The recovery key also carries
+       the editor's id: it names a localStorage entry, which is per browser and
+       outlives the session, so an unqualified key would offer one editor's
+       unsaved work to whoever signs in next on a shared machine. #}
     {% set entity_attrs = entity.instance.id is defined and entity.instance.id ? {
         'data-pw-edit-lock-page-id': entity.instance.id,
-        'data-pw-unsaved-key': 'pw:unsaved:page:' ~ entity.instance.id,
+        'data-pw-unsaved-key': 'pw:unsaved:' ~ app.user.id ~ ':page:' ~ entity.instance.id,
     } : {} %}
     {% set autosave_attrs = edit_form.vars.attr|merge(entity_attrs)|merge({
         'data-pw-ctrl-s-form': '1',
@@ -42,7 +45,8 @@
             refreshButton: "{{ 'adminPageEditLockRefresh'|trans|e('js') }}"
         };
         window.pwUnsavedChangesTranslations = {
-            message: "{{ 'adminPageUnsavedChanges'|trans|e('js') }}"
+            message: "{{ 'adminPageUnsavedChanges'|trans|e('js') }}",
+            conflict: "{{ 'adminPageUnsavedChangesConflict'|trans|e('js') }}"
         };
     </script>
 {% endblock %}

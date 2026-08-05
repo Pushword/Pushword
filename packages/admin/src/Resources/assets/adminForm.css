@@ -204,6 +204,15 @@ body.ea-new .content-header {
   display: none;
 }
 
+/* Restoring is no longer the safe answer: the page was saved since, on a field
+   the copy would write over. Still the same offer, so the shape does not move —
+   only the surface warms, as far as a caution goes without becoming an alarm. */
+.pw-unsaved--conflict {
+  border-color: var(--bs-warning-border-subtle);
+  background-color: var(--bs-warning-bg-subtle);
+  color: var(--bs-warning-text-emphasis);
+}
+
 .pw-unsaved__icon {
   flex-shrink: 0;
   inline-size: 1rem;

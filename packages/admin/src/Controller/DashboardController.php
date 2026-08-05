@@ -59,12 +59,20 @@ class DashboardController extends AbstractDashboardController
             \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES,
         );
 
+        // Unsaved page edits are kept in this browser's localStorage, which
+        // outlives the session: admin.js drops them when the editor follows this
+        // link out, from wherever in the admin they do it.
+        $logoutPath = json_encode(
+            $this->generateUrl('pushword_logout'),
+            \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES,
+        );
+
         return Assets::new()
             ->addCssFile($this->versionedAsset('/bundles/pushwordadmin/admin.css'))
             ->addJsFile($this->versionedAsset('/bundles/pushwordadmin/admin.js'))
             ->addJsFile($this->versionedAsset('/bundles/pushwordadminblockeditor/admin-block-editor.js'))
             ->addCssFile($this->versionedAsset('/bundles/pushwordadminblockeditor/style.css'))
-            ->addHtmlContentToBody(sprintf('<script>window.pwMonacoUrl=%s</script>', $monacoUrl));
+            ->addHtmlContentToBody(sprintf('<script>window.pwMonacoUrl=%s;window.pwLogoutPath=%s</script>', $monacoUrl, $logoutPath));
     }
 
     #[Override]

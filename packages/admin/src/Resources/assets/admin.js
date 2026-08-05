@@ -43,7 +43,10 @@ import { copyElementText } from './admin.domUtils'
 
 // Auto-save modules
 import { initCtrlSAutoSave } from './admin.ctrlSAutoSave'
-import { initUnsavedChangesRecovery } from './admin.unsavedChanges'
+import {
+  initUnsavedChangesRecovery,
+  initUnsavedChangesSignOutClear,
+} from './admin.unsavedChanges'
 
 // Edit lock modules
 import { autoInitEditLock } from './admin.editLock'
@@ -128,6 +131,11 @@ window.addEventListener('load', function () {
   // Local draft recovery. Monaco loads asynchronously, but restoring only happens
   // on a click in the banner, by which time the textarea carries its pwEditor.
   initUnsavedChangesRecovery()
+
+  // On every screen, not just the edit form: the drafts live in this browser
+  // until their page is saved, and signing out has to take them along wherever
+  // the editor does it from.
+  initUnsavedChangesSignOutClear()
 
   // Edit lock
   autoInitEditLock()
