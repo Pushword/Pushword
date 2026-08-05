@@ -52,4 +52,49 @@ final class InlineDirectiveTest extends TestCase
     {
         self::assertSame([], InlineDirective::patterns('# Just a title', 'page-scanner-ignore'));
     }
+
+    /**
+     * The scanner's own documentation page shows the syntax. Read from a code sample,
+     * it silenced every finding it illustrates — on that page and on any quoting it.
+     */
+    public function testADirectiveShownInACodeSampleAsksForNothing(): void
+    {
+        $fenced = "# Doc\n\n```markdown\n<!-- page-scanner-ignore: image-alt-missing -->\n```\n";
+
+        self::assertSame([], InlineDirective::patterns($fenced, 'page-scanner-ignore'));
+        self::assertSame([], InlineDirective::patterns('Write `<!-- page-scanner-ignore: link-* -->` in the content.', 'page-scanner-ignore'));
+    }
+
+    /**
+     * A page documenting the syntax may also be using it.
+     */
+    public function testADirectiveOutsideTheSampleStillCounts(): void
+    {
+        $content = "~~~markdown\n<!-- page-scanner-ignore: image-alt-missing -->\n~~~\n\n<!-- page-scanner-ignore: todo-comment -->";
+
+        self::assertSame(['todo-comment'], InlineDirective::patterns($content, 'page-scanner-ignore'));
+    }
+
+    /**
+     * How CommonMark reads it, and the reason worth pinning: a stray opening fence
+     * makes the rest of the page a code sample, directives included.
+     */
+    public function testAnUnclosedFenceRunsToTheEndOfTheContent(): void
+    {
+        self::assertSame([], InlineDirective::patterns("```\n<!-- page-scanner-ignore: link-* -->", 'page-scanner-ignore'));
+    }
+
+    /**
+     * `isWebLink()` accepts commas in a URL, so the pattern naming one has to as well —
+     * a map link carries its coordinates comma-separated.
+     */
+    public function testAnEscapedCommaBelongsToThePattern(): void
+    {
+        $content = '<!-- page-scanner-ignore-link: https://maps.example/@45.1\,4.5*, https://b.example/* -->';
+
+        self::assertSame(
+            ['https://maps.example/@45.1,4.5*', 'https://b.example/*'],
+            InlineDirective::patterns($content, 'page-scanner-ignore-link')
+        );
+    }
 }

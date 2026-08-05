@@ -28,6 +28,7 @@ final class ParallelUrlChecker
         private readonly CacheInterface $externalUrlCache,
         private readonly TranslatorInterface $translator,
         private readonly int $externalUrlCacheTtl = 86400,
+        private readonly int $externalUrlFailureCacheTtl = 3600,
         private readonly int $parallelBatchSize = 50,
         private readonly int $urlCheckTimeoutMs = 10000,
     ) {
@@ -37,16 +38,26 @@ final class ParallelUrlChecker
      * Check multiple URLs in parallel using curl_multi.
      *
      * @param string[] $urls
+     * @param bool     $recheck ask the network again, whatever the pool holds
      *
      * @return array<string, UrlCheckResult> URL => true or the finding it failed with
      */
-    public function checkUrls(array $urls): array
+    public function checkUrls(array $urls, bool $recheck = false): array
     {
         $urls = array_unique($urls);
         $this->results = [];
 
         $uncachedUrls = [];
         foreach ($urls as $url) {
+            if ($recheck) {
+                // Dropped rather than ignored: the write below goes through get(),
+                // which keeps whatever the pool already holds for that key.
+                $this->clearCacheFor($url);
+                $uncachedUrls[] = $url;
+
+                continue;
+            }
+
             // `$save = false` or the probe stores its own miss: the pool then answers
             // every later get() with that null, callback included, and the result of
             // the check below is never written — nothing was ever cached.
@@ -177,14 +188,29 @@ final class ParallelUrlChecker
     private function cacheResult(string $url, true|array $result): void
     {
         $this->externalUrlCache->get(self::cacheKey($url), function (ItemInterface $item) use ($result): true|array {
-            $item->expiresAfter($this->externalUrlCacheTtl);
+            $item->expiresAfter(self::ttlFor($result, $this->externalUrlCacheTtl, $this->externalUrlFailureCacheTtl));
 
             return $result;
         });
     }
 
     /**
-     * Clear an entry from the cache (useful for re-checking specific URLs).
+     * A failure is held for less time than a success: a link fixed this morning should
+     * stop being reported this morning, and a scan run while the network is down would
+     * otherwise report every external URL of the corpus as dead until tomorrow.
+     *
+     * Capped by the success TTL, so that turning the cache off (`0`) turns it off for
+     * findings too.
+     *
+     * @param UrlCheckResult $result
+     */
+    public static function ttlFor(true|array $result, int $successTtl, int $failureTtl): int
+    {
+        return true === $result ? $successTtl : min($successTtl, $failureTtl);
+    }
+
+    /**
+     * Clear an entry from the cache — what `pw:page-scan --recheck` asks for.
      */
     public function clearCacheFor(string $url): void
     {

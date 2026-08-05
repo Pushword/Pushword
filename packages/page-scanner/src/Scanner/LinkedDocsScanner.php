@@ -90,6 +90,7 @@ final class LinkedDocsScanner extends AbstractScanner
         TranslatorInterface $translator,
         private readonly ?CacheInterface $externalUrlCache = null,
         private readonly int $externalUrlCacheTtl = 86400,
+        private readonly int $externalUrlFailureCacheTtl = 3600,
         private readonly bool $skipExternalUrlCheck = false,
     ) {
         parent::__construct($translator);
@@ -577,9 +578,10 @@ final class LinkedDocsScanner extends AbstractScanner
         if (null !== $this->externalUrlCache) {
             /** @var UrlCheckResult $result */
             $result = $this->externalUrlCache->get(ParallelUrlChecker::cacheKey($url), function (ItemInterface $item) use ($url): true|array {
-                $item->expiresAfter($this->externalUrlCacheTtl);
+                $checked = $this->checkUrlViaHttp($url);
+                $item->expiresAfter(ParallelUrlChecker::ttlFor($checked, $this->externalUrlCacheTtl, $this->externalUrlFailureCacheTtl));
 
-                return $this->checkUrlViaHttp($url);
+                return $checked;
             });
 
             return $this->urlExistCache[$url] = $result;

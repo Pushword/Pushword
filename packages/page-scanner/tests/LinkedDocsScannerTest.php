@@ -16,6 +16,7 @@ use Pushword\PageScanner\Scanner\ParallelUrlChecker;
 use function Safe\file_get_contents;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -61,6 +62,37 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
             self::assertCount(1, $errors, 'The cached failure must surface without a request.');
             self::assertSame('link-status', $errors[0]['code']);
+        } finally {
+            $cache->delete(ParallelUrlChecker::cacheKey($url));
+        }
+    }
+
+    /**
+     * And they have to agree on how long it is held. This path writes findings into
+     * the shared pool too, so a 24h entry written here outlives the shorter life the
+     * parallel checker gives the very same finding.
+     */
+    public function testTheSynchronousPathHoldsAFindingForTheShorterTtl(): void
+    {
+        self::bootKernel();
+        $url = 'https://pushword-sync-ttl.invalid/x';
+
+        $cache = self::getContainer()->get('cache.page_scanner');
+        $cache->delete(ParallelUrlChecker::cacheKey($url));
+
+        try {
+            $scanner = $this->createScanner(null, $cache);
+            $scanner->preloadPageCache();
+
+            $errors = $scanner->scan($this->getPage('other-page'), '<a href="'.$url.'">link</a>');
+            self::assertCount(1, $errors, 'An unresolvable host is a finding.');
+
+            $expiry = $cache->getItem(ParallelUrlChecker::cacheKey($url))->getMetadata()[CacheItem::METADATA_EXPIRY];
+            self::assertIsInt($expiry);
+            $ttl = $expiry - time();
+
+            self::assertGreaterThan(0, $ttl);
+            self::assertLessThanOrEqual(3600, $ttl);
         } finally {
             $cache->delete(ParallelUrlChecker::cacheKey($url));
         }
@@ -685,6 +717,23 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
         // pageScanLinksToIgnore is set on the page fixture below
         self::assertSame([], $this->messages($scanner, $this->getPage(), '<a href="ignored-relative">link</a>'));
+    }
+
+    /**
+     * `pageScanLinksToIgnore: ignored-relative` is the natural YAML for a page with
+     * one link to skip, and it used to abort the whole scan on a LogicException —
+     * where `pageScanErrorsToIgnore`, its twin, has always taken the same shape.
+     */
+    public function testTheCustomPropertyAcceptsASinglePattern(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        $page = $this->getPage();
+        $page->setCustomProperty('pageScanLinksToIgnore', 'ignored-relative');
+
+        self::assertSame([], $this->messages($scanner, $page, '<a href="ignored-relative">link</a>'));
     }
 
     /**

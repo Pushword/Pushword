@@ -21,8 +21,14 @@ composer require pushword/page-scanner
 php bin/console pw:page-scan              # scan all hosts
 php bin/console pw:page-scan localhost.dev # scan a specific host
 php bin/console pw:page-scan --skip-external  # skip external URL checks
+php bin/console pw:page-scan --recheck        # re-check every external URL
 php bin/console pw:page-scan --limit=100      # stop after 100 errors
 ```
+
+An external URL is checked once and its verdict cached, so a scan run minutes after
+the previous one reports the same dead links without paying for the requests again.
+`--recheck` drops those cached verdicts and asks the network again — reach for it
+after fixing a batch of links, or after a scan that ran without a working connection.
 
 ### AI agents
 
@@ -336,6 +342,7 @@ By default, the slug is resolved against the current page's host. To reference a
 pushword_page_scanner:
   min_interval_between_scan: 'PT5M'        # minimum interval between scans
   external_url_cache_ttl: 86400            # external URL cache TTL in seconds (24h)
+  external_url_failure_cache_ttl: 3600     # same, for a URL that failed (1h)
   parallel_batch_size: 50                  # URLs checked in parallel per batch
   url_check_timeout_ms: 10000             # timeout per external URL check (ms)
   skip_external_url_check: false           # skip external URL validation
@@ -419,11 +426,17 @@ pageScanErrorsToIgnore:
 
 Both accept the same patterns as the config, minus the route prefix — the page is
 the scope. They are applied while scanning, so they take effect on the next scan.
+A property with a single pattern can be written on one line, `pageScanErrorsToIgnore:
+image-alt-missing`.
 
 A pattern silences every finding of that kind on the page, whichever link or image
 raised it. To pin one, write the pattern against the message instead, which quotes
 the URL: `<!-- page-scanner-ignore: *flaky.example.com* -->`. A URL is not translated,
 so that stays as stable as a code.
+
+A comment inside a code sample — fenced, or between backticks — documents the syntax
+and asks for nothing. That is what lets this page show the comments above without
+silencing its own findings, and it holds for any page quoting them.
 
 ### Skipping a link rather than a finding
 
@@ -438,6 +451,11 @@ surfaces, same `fnmatch` patterns:
 pageScanLinksToIgnore:
     - 'https://flaky.example.com/*'
 ```
+
+In a comment, a comma separates two patterns. To name a URL that contains one — map
+coordinates, mostly — escape it: `<!-- page-scanner-ignore-link:
+https://maps.example/@45.1\,4.5* -->`. The property needs no escaping, YAML already
+holds the list.
 
 Reach for it when the link itself is the problem — a host that times out costs a
 request on every scan, and silencing its finding still pays for that request. The

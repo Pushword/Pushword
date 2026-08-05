@@ -20,6 +20,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->bind('$linksToIgnore', '%pw.pushword_page_scanner.links_to_ignore%')
         ->bind('$externalUrlCache', service('cache.page_scanner'))
         ->bind('$externalUrlCacheTtl', '%pw.pushword_page_scanner.external_url_cache_ttl%')
+        ->bind('$externalUrlFailureCacheTtl', '%pw.pushword_page_scanner.external_url_failure_cache_ttl%')
         ->bind('$parallelBatchSize', '%pw.pushword_page_scanner.parallel_batch_size%')
         ->bind('$urlCheckTimeoutMs', '%pw.pushword_page_scanner.url_check_timeout_ms%')
         ->bind('$skipExternalUrlCheck', '%pw.pushword_page_scanner.skip_external_url_check%')

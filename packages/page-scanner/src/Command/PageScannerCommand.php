@@ -176,7 +176,7 @@ final class PageScannerCommand
             if ($urlCount > 0) {
                 $this->human(\sprintf('Checking %d external URLs in parallel...', $urlCount));
                 $this->stopwatch?->start('external.urls');
-                $urlResults = $this->parallelUrlChecker->checkUrls($externalUrls);
+                $urlResults = $this->parallelUrlChecker->checkUrls($externalUrls, $this->recheck);
                 $this->stopwatch?->stop('external.urls');
                 $this->scanner->linkedDocsScanner->setExternalUrlResults($urlResults);
             }
@@ -203,6 +203,8 @@ final class PageScannerCommand
     private ?OutputInterface $output = null;
 
     private bool $skipExternal = false;
+
+    private bool $recheck = false;
 
     private int $limit = 0;
 
@@ -342,6 +344,8 @@ final class PageScannerCommand
         ?string $host,
         #[Option(description: 'Skip external link checks', name: 'skip-external')]
         bool $skipExternal = false,
+        #[Option(description: 'Re-check every external URL instead of reading the cached verdict', name: 'recheck')]
+        bool $recheck = false,
         #[Option(description: 'Stop after N errors (0 = no limit)', name: 'limit')]
         int $limit = 0,
         #[Option(description: 'Report links pointing to unpublished pages (off by default — those links are hidden at render time)', name: 'check-unpublished')]
@@ -350,6 +354,7 @@ final class PageScannerCommand
         string $format = 'auto',
     ): int {
         $this->skipExternal = $skipExternal;
+        $this->recheck = $recheck;
         $this->limit = $limit;
         $this->agentMode = $this->isAgentFormat($format);
 
