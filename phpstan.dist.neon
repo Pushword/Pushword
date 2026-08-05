@@ -35,6 +35,8 @@ parameters:
         - packages/flat/tests
         - packages/installer/src
         - packages/installer/tests
+        - packages/link-improver/src
+        - packages/link-improver/tests
         - packages/newsletter/src
         - packages/newsletter/tests
         - packages/page-scanner/src

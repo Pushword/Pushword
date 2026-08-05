@@ -22,6 +22,7 @@ jobs:
           - conversation
           - admin
           - flat
+          - link-improver
           - page-scanner
           - page-update-notifier
           - newsletter

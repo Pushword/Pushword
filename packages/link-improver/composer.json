@@ -1,14 +1,14 @@
 {
-  "name": "pushword/page-update-notifier",
+  "name": "pushword/link-improver",
   "type": "symfony-bundle",
-  "description": "Get an email when a Pushword page is created or edited, throttled to a configurable interval.",
-  "keywords": ["notification", "email", "content-change", "cms", "pushword"],
-  "homepage": "https://pushword.piedweb.com",
+  "description": "Automatic internal linking for Pushword CMS: page names become in-content links at render time.",
+  "keywords": ["internal linking", "netlinking", "seo", "links", "cms", "pushword"],
+  "homepage": "https://pushword.piedweb.com/extension/link-improver",
   "license": "MIT",
   "support": {
     "issues": "https://github.com/Pushword/Pushword/issues",
-    "source": "https://github.com/Pushword/Pushword/tree/main/packages/page-update-notifier",
-    "docs": "https://pushword.piedweb.com"
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/link-improver",
+    "docs": "https://pushword.piedweb.com/extension/link-improver"
   },
   "funding": [
     {
@@ -17,6 +17,7 @@
     }
   ],
   "require": {
+    "piedweb/linksimprover": "^0.2.1",
     "pushword/core": "*"
   },
   "suggest": {
@@ -27,16 +28,16 @@
     "pushword/conversation": "Add comments, a contact form or any user input to your website.",
     "pushword/docs": "Pushword documentation, readable offline from vendor/.",
     "pushword/flat": "Turn Pushword into a flat-file CMS: content as Markdown in Git.",
-    "pushword/link-improver": "Automatic internal links: page names become in-content links at render time.",
     "pushword/newsletter": "Audiences, segmented campaigns and criteria-driven automations.",
     "pushword/page-scanner": "Find dead links, 404s, redirects and TODO reminders.",
+    "pushword/page-update-notifier": "Get an email when a page is created or edited.",
     "pushword/quiz": "Interactive client-side quizzes (QCM) and personality tests.",
     "pushword/repurpose": "Turn a page into ready-to-post social carousels (PNG/PDF).",
     "pushword/search": "SQLite-native full-text search via Loupe, zero infrastructure.",
     "pushword/snippet": "Reusable content fragments and dev-registered Twig components.",
     "pushword/static-generator": "Export the whole site as static files (GitHub Pages, Apache, FrankenPHP).",
     "pushword/template-editor": "Edit Twig view files online from the admin.",
-    "pushword/version": "Keep a version history of your pages and compare revisions."
+    "pushword/version": "List, diff and restore previous revisions of your pages."
   },
   "extra": {
     "branch-alias": {
@@ -45,14 +46,14 @@
   },
   "autoload": {
     "psr-4": {
-      "Pushword\\PageUpdateNotifier\\": "src"
+      "Pushword\\LinkImprover\\": "src"
     }
   },
   "authors": [
     {
       "name": "Robin@PiedWeb",
       "email": "contact@piedweb.com",
-      "homepage": "https://piedweb.com"
+      "homepage": "https://en.piedweb.com"
     }
   ],
   "minimum-stability": "dev",

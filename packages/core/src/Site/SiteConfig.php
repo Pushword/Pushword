@@ -21,7 +21,7 @@ final class SiteConfig
 
     public private(set) string $template;
 
-    /** @var array<string, string> */
+    /** @var array<string, string|list<string>> filter chain per property label — a list of filter names/classes, or the same as a comma string (see ContentPipeline::getFilters()) */
     public array $filters = [];
 
     public private(set) bool $entityCanOverrideFilters;

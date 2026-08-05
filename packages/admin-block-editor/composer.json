@@ -27,6 +27,7 @@
     "pushword/conversation": "Add comments, a contact form or any user input to your website.",
     "pushword/docs": "Pushword documentation, readable offline from vendor/.",
     "pushword/flat": "Turn Pushword into a flat-file CMS: content as Markdown in Git.",
+    "pushword/link-improver": "Automatic internal links: page names become in-content links at render time.",
     "pushword/newsletter": "Audiences, segmented campaigns and criteria-driven automations.",
     "pushword/page-scanner": "Find dead links, 404s, redirects and TODO reminders.",
     "pushword/page-update-notifier": "Get an email when a page is created or edited.",

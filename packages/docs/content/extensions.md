@@ -17,6 +17,8 @@ name: Extensions
   Extend your Pushword website with **comments**, a **contact** form or just an **user input**.
 - [Flat](/extension/flat)
   Transform Pushword in a FlatFile CMS.
+- [Link Improver](/extension/link-improver)
+  Automatic internal linking: the first mention of another page's name in your content becomes a link to it, at render time — opt-in, capped, auditable, source content untouched.
 - [Newsletter](/extension/newsletter)
   Audiences, contacts with custom properties, segmented campaigns, and automations that start a sequence of mails when something happens — a contact comes to match a rule, an article is published, or whatever trigger source your own bundle registers. All driven by one cron tick. Double opt-in, one-click unsubscribe, `utm_*` link attribution, no click tracking.
 - [Page Scanner](/extension/page-scanner)
