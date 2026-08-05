@@ -1,3 +1,9 @@
 .cdx-input-full {
     width: 100%;
 }
+
+/* The switch itself carries no margin — the link panel lays its own out on a
+   grid — so the tune spaces the two it stacks under the URL field. */
+.cdx-anchor-tune-wrapper .editor-switch {
+    margin-top: 8px;
+}

@@ -127,6 +127,41 @@ describe('Hyperlink.updateActionValues', () => {
     // the next change would strip the attribute off the link.
     expect(selects(wrapper).rel.value).toBe('me')
   })
+
+  it('keeps a class the design list does not offer, the way it keeps a rel', () => {
+    const { tool } = toolWithActions()
+    const wrapper = tool.renderActions()
+
+    tool.updateActionValues(anchor('<a href="/x" class="badge badge-new">x</a>'))
+
+    expect(selects(wrapper).design.value).toBe('badge badge-new')
+  })
+
+  it('drops the previous link\'s unlisted value instead of stacking options', () => {
+    const { tool } = toolWithActions()
+    const wrapper = tool.renderActions()
+
+    tool.updateActionValues(anchor('<a href="/a" rel="me">a</a>'))
+    tool.updateActionValues(anchor('<a href="/b" rel="nofollow">b</a>'))
+
+    const values = Array.from(selects(wrapper).rel.options).map((option) => option.value)
+    expect(values).not.toContain('me')
+  })
+})
+
+describe('Hyperlink field labels', () => {
+  it('names both selects outside their option list, so the name survives a pick', () => {
+    const wrapper = new Hyperlink({ api: stubApi() }).renderActions()
+
+    const labels = Array.from(
+      wrapper.querySelectorAll<HTMLElement>('.link-options__label'),
+    ).map((label) => label.textContent)
+
+    expect(labels).toEqual(['Rel', 'Style'])
+    // The blank option names the empty value now, not the field.
+    expect(selects(wrapper).rel.options[0]?.text).toBe('None')
+    expect(selects(wrapper).design.options[0]?.text).toBe('Text link')
+  })
 })
 
 describe('Hyperlink.renderActions', () => {

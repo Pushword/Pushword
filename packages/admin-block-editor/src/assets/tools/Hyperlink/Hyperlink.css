@@ -4,12 +4,75 @@
   border-radius: 0 0 4px 4px;
   margin: 0;
   font-size: 13px;
-  padding: 10px;
+  padding: 12px;
   width: 100%;
-  -webkit-box-sizing: border-box;
   box-sizing: border-box;
-  font-weight: 500;
   border-top: 1px solid rgba(201, 201, 204, 0.48);
+}
+
+/* The URL is the field being filled; the three below only qualify it. */
+.link-options__url {
+  font-size: 14px;
+}
+
+/* The field carries no label of its own, so the hint has to stay readable: this
+   is the label grey, 4.5:1 on the panel. */
+.link-options__url::placeholder {
+  color: #707684;
+}
+
+/**
+ * One grid for the three qualifiers, so their controls line up on a single axis
+ * whatever the translated labels measure. The rows are `display: contents` —
+ * their own children are the grid items.
+ */
+.link-options__fields {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 6px;
+  margin-top: 12px;
+}
+
+.link-options__field,
+.link-options-wrapper .editor-switch {
+  display: contents;
+}
+
+.link-options__label,
+.link-options-wrapper .editor-switch > label:not(.label-default) {
+  font-size: 12px;
+  font-weight: 500;
+  color: #707684;
+}
+
+/* The track is 16px tall; the text label is what makes the row worth aiming at. */
+.link-options-wrapper .editor-switch > label:not(.label-default) {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+}
+
+/**
+ * A native select paints itself grey next to the white URL field above it, so
+ * the arrow is ours and the surface is the panel's.
+ */
+.link-options-wrapper .link-options__select {
+  appearance: none;
+  padding: 5px 26px 5px 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #1d202b;
+  cursor: pointer;
+  background: transparent
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23707684' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 8px center;
+  transition: border-color 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.link-options-wrapper .link-options__select:hover {
+  border-color: rgba(138, 145, 160, 0.6);
 }
 
 .ninja {
@@ -50,60 +113,6 @@
 .link-btn-outline:hover {
   color: #fff !important;
   background-color: #3c8dbc;
-}
-
-.editor-switch {
-  padding-left: 4px;
-  padding-right: 10px;
-  margin-bottom: 10px;
-  margin-top: 5px;
-}
-
-.editor-switch > input[type='checkbox'] {
-  display: none;
-}
-
-.editor-switch label {
-  font-weight: normal;
-}
-.editor-switch > .label-default {
-  cursor: pointer;
-  height: 0px;
-  position: relative;
-  width: 30px;
-}
-
-.editor-switch > .label-default::before {
-  background: rgb(0, 0, 0);
-  box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
-  border-radius: 8px;
-  content: '';
-  height: 12px;
-  margin-top: -5px;
-  position: absolute;
-  opacity: 0.3;
-  transition: all 0.4s ease-in-out;
-  width: 20px;
-}
-.editor-switch > .label-default::after {
-  background: rgb(255, 255, 255);
-  border-radius: 16px;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
-  content: '';
-  height: 16px;
-  left: -4px;
-  position: absolute;
-  top: -7px;
-  transition: all 0.3s ease-in-out;
-  width: 16px;
-}
-.editor-switch > input[type='checkbox']:checked + .label-default::before {
-  background: inherit;
-  opacity: 0.5;
-}
-.editor-switch > input[type='checkbox']:checked + .label-default::after {
-  background: inherit;
-  left: 10px;
 }
 
 .plugin-option-input {

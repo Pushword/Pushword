@@ -126,10 +126,15 @@ final readonly class EditorJsMessages
                 ]),
                 'image' => $this->translate(self::MEDIA),
                 'link' => $this->translate([
-                    'Nouvel onglet' => 'editorNewTab',
-                    'Obfusquer' => 'editorObfuscate',
+                    'Button' => 'editorLinkButton',
+                    'Button outline' => 'editorLinkButtonOutline',
+                    'Discreet' => 'editorLinkDiscreet',
+                    'New tab' => 'editorNewTab',
+                    'None' => 'editorNone',
+                    'Obfuscate' => 'editorObfuscate',
+                    'Rel' => 'editorRel',
                     'Style' => 'editorStyle',
-                    'rel' => 'editorRel',
+                    'Text link' => 'editorLinkText',
                 ]),
                 'pages_list' => $this->translate(['No parameters' => 'editorNoParameters']),
                 'snippet' => $this->translate([
@@ -145,6 +150,10 @@ final readonly class EditorJsMessages
                 'anchor' => $this->translate(['Anchor' => 'editorAnchor']),
                 'class' => $this->translate(['Class' => 'editorClass']),
                 'delete' => $this->translate(['Delete' => 'editorDelete']),
+                'linkTune' => $this->translate([
+                    'New tab' => 'editorNewTab',
+                    'Obfuscate' => 'editorObfuscate',
+                ]),
                 'moveDown' => $this->translate(['Move down' => 'editorMoveDown']),
                 'moveUp' => $this->translate(['Move up' => 'editorMoveUp']),
                 'textAlign' => $this->translate([

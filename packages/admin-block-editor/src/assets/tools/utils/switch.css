@@ -1,0 +1,85 @@
+/**
+ * The switch `make.switchInput()` builds — shared by the link tool's inline
+ * panel and by the link tune, so it lives next to the builder rather than in
+ * either tool's stylesheet.
+ */
+
+.editor-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/**
+ * Visually hidden, still focusable: `display: none` drops the switch out of the
+ * tab order and out of the accessibility tree, leaving a mouse click on the
+ * label as the only way to toggle it.
+ */
+.editor-switch > input[type='checkbox'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.editor-switch label {
+  cursor: pointer;
+  font-weight: normal;
+}
+
+.editor-switch > .label-default {
+  flex: none;
+  position: relative;
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  /* 3:1 against the panel — the track is what identifies the control (WCAG 1.4.11). */
+  background: #8a91a0;
+  transition:
+    background-color 0.15s cubic-bezier(0.25, 1, 0.5, 1),
+    box-shadow 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Hovering the text label feeds back on the track, whichever side it sits on. */
+.editor-switch > .label-default:hover,
+.editor-switch > label:not(.label-default):hover ~ .label-default {
+  box-shadow: inset 0 0 0 20px rgba(29, 32, 43, 0.1);
+}
+
+.editor-switch > .label-default::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fbfcfd;
+  box-shadow: 0 1px 2px rgba(35, 44, 72, 0.28);
+  transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* `~`, not `+`: the text label sits between the checkbox and the track. */
+.editor-switch > input[type='checkbox']:checked ~ .label-default {
+  background: var(--editor-accent-color, #0284c7);
+}
+
+.editor-switch > input[type='checkbox']:checked ~ .label-default::after {
+  transform: translateX(12px);
+}
+
+.editor-switch > input[type='checkbox']:focus-visible ~ .label-default {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: 2px;
+}
+
+/* The reduced-motion block in admin.css targets the popover, and transition
+   does not inherit, so the switch owes its own. */
+@media (prefers-reduced-motion: reduce) {
+  .editor-switch > .label-default,
+  .editor-switch > .label-default::after {
+    transition: none;
+  }
+}

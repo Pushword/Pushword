@@ -82,7 +82,21 @@ final class EditorJsMessagesTest extends TestCase
     {
         $messages = $this->messages();
 
-        self::assertSame('Obfusquer', $messages['tools']['link']['Obfusquer']);
-        self::assertArrayHasKey('Nouvel onglet', $messages['tools']['link']);
+        self::assertSame('Obfusquer', $messages['tools']['link']['Obfuscate']);
+        self::assertArrayHasKey('New tab', $messages['tools']['link']);
+        // The link panel's own design labels, the ones the widget declares.
+        self::assertArrayHasKey('Button', $messages['tools']['link']);
+        self::assertArrayHasKey('Button outline', $messages['tools']['link']);
+        self::assertArrayHasKey('Discreet', $messages['tools']['link']);
+    }
+
+    public function testTheLinkTuneGetsTheLabelsItSharesWithTheLinkTool(): void
+    {
+        $messages = $this->messages();
+
+        // api.i18n.t() resolves under blockTunes.linkTune for a tune, so the two
+        // switches the tune renders cannot read the link tool's entries.
+        self::assertSame('Obfusquer', $messages['blockTunes']['linkTune']['Obfuscate']);
+        self::assertArrayHasKey('New tab', $messages['blockTunes']['linkTune']);
     }
 }

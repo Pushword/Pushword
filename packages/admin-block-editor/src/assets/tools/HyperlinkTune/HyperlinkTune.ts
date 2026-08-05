@@ -76,12 +76,12 @@ export default class HyperlinkTune extends BaseTool {
 
     this.nodes.hideForBot = make.switchInput(
       'hideForBot',
-      this.api.i18n.t('Obfusquer'),
+      this.api.i18n.t('Obfuscate'),
       this.data.hideForBot || false,
     )
     this.nodes.targetBlank = make.switchInput(
       'targetBlank',
-      this.api.i18n.t('Nouvel onglet'),
+      this.api.i18n.t('New tab'),
       this.data.targetBlank || false,
     )
 

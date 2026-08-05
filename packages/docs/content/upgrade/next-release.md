@@ -1,5 +1,5 @@
 ---
-title: ''
+title: "the link panel's style options are named in English so they can be translated"
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,18 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin-block-editor`
+
+## The link tool's style options are named in English
+
+`bouton`, `bouton outline` and `discret` are now `Button`, `Button outline` and
+`Discreet` — labels the catalogue can translate, where the French ones showed through
+untranslated.
+
+**Affects sites shipping their own `editorjs_widget.html.twig`.** Rename the
+`availableDesigns` keys in your copy, or its options stay in French:
+
+```js
+availableDesigns: { Button: 'link-btn', 'Button outline': 'link-btn-outline', Discreet: 'ninja' },
+```

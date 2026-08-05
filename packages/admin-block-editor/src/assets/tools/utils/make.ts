@@ -1,6 +1,10 @@
 import { BaseTool } from '../Abstract/BaseTool'
+import './switch.css'
 
 export default class make {
+  /** Two tools render a `targetBlank` switch — see switchInput(). */
+  private static switchCount = 0
+
   public static element(
     tagName: string,
     classNames: string | string[] | null = null,
@@ -82,17 +86,23 @@ export default class make {
     labelText: string,
     checked: boolean = false,
   ): HTMLElement {
+    // The link tool and the link tune both render a `targetBlank` switch: with a
+    // shared id, both labels bind to whichever input the document holds first,
+    // and clicking one toggles the other.
+    const id = name + '-' + ++make.switchCount
+
     const wrapper = make.element('div', 'editor-switch')
     const checkbox = make.element('input', null, {
       type: 'checkbox',
-      id: name,
+      id,
+      role: 'switch',
     }) as HTMLInputElement
-    const switchElement = make.element('label', 'label-default', {
-      for: name,
-    })
-    const label = make.element('label', '', { for: name })
-    label.innerHTML = labelText
-    wrapper.append(checkbox, switchElement, label)
+    const switchElement = make.element('label', 'label-default', { for: id })
+    const label = make.element('label', '', { for: id })
+    label.textContent = labelText
+    // Text first, track second: a settings row reads label then control, and it
+    // lets the link panel drop the pair straight into its own grid columns.
+    wrapper.append(checkbox, label, switchElement)
 
     if (checked) {
       checkbox.checked = checked
