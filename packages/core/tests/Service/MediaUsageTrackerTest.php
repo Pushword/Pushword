@@ -137,6 +137,118 @@ final class MediaUsageTrackerTest extends KernelTestCase
         self::assertSame([], $this->mediaUsageRepository->findSourcesByPageForMedia($mediaId));
     }
 
+    /**
+     * A filename resolves against the media that exist when the page is saved, so the
+     * page written before its image is uploaded has to be answered again at the upload.
+     */
+    public function testAMediaUploadedAfterThePageNamingItStillGetsItsRow(): void
+    {
+        $page = $this->persistPage('Look ![](/media/default/'.self::DISPOSABLE_FILE_NAME.')');
+
+        $media = $this->createDisposableMedia();
+
+        self::assertContains((int) $media->id, $this->mediaUsageRepository->findMediaIdsForPage((int) $page->id));
+    }
+
+    /**
+     * Delete a media and re-upload it corrected under the same name: the pages still
+     * render it, through the filename, under a new id. Without a row, the live image
+     * reads as an orphan to `pw:media:clean-unused --force`.
+     */
+    public function testReuploadingAMediaUnderTheSameNameGivesItTheRowsItsPagesStillEarn(): void
+    {
+        $media = $this->createDisposableMedia();
+        $mediaId = (int) $media->id;
+        $page = $this->persistPage('Look ![](/media/default/'.self::DISPOSABLE_FILE_NAME.')');
+
+        $this->entityManager->remove($media);
+        $this->entityManager->flush();
+        self::assertSame([], $this->mediaUsageRepository->findMediaIdsForPage((int) $page->id));
+
+        $reuploaded = $this->createDisposableMedia();
+
+        self::assertNotSame($mediaId, $reuploaded->id);
+        self::assertContains((int) $reuploaded->id, $this->mediaUsageRepository->findMediaIdsForPage((int) $page->id));
+    }
+
+    /**
+     * Both new in the same flush — an import, a multi-upload alongside its page. The
+     * page is tracked while the media row may not be readable yet; the drain at the
+     * end of the flush is what settles it.
+     */
+    public function testAPageAndTheMediaItNamesArrivingInOneFlushEndUpLinked(): void
+    {
+        $media = $this->newDisposableMedia();
+
+        $page = new Page();
+        $page->slug = self::SLUG;
+        $page->host = self::HOST;
+        $page->h1 = 'Media usage fixture';
+        $page->mainContent = 'Look ![](/media/default/'.self::DISPOSABLE_FILE_NAME.')';
+
+        $this->entityManager->persist($page);
+        $this->entityManager->flush();
+
+        self::assertContains((int) $media->id, $this->mediaUsageRepository->findMediaIdsForPage((int) $page->id));
+    }
+
+    /** A property holds a filename as readily as a body does, and the backfill reads both. */
+    public function testAMediaUploadedAfterAPropertyNamingItGetsAPropertyRow(): void
+    {
+        $page = $this->persistPage('Nothing in this body.');
+        $page->setCustomProperty('cover', self::DISPOSABLE_FILE_NAME);
+
+        $this->entityManager->flush();
+
+        $media = $this->createDisposableMedia();
+
+        self::assertSame(
+            [MediaUsage::SOURCE_PROPERTY],
+            $this->mediaUsageRepository->findSourcesByPageForMedia((int) $media->id)[(int) $page->id] ?? [],
+        );
+    }
+
+    /** The rows the backfill writes carry the derived tags with them, like any other write. */
+    public function testAMediaUploadedAfterATaggedPageInheritsItsTags(): void
+    {
+        $page = $this->persistPage('Look ![](/media/default/'.self::DISPOSABLE_FILE_NAME.')');
+        $page->setTags('mountain');
+
+        $this->entityManager->flush();
+
+        $media = $this->createDisposableMedia();
+
+        self::assertSame(['mountain'], $this->readPageTags($media));
+    }
+
+    /**
+     * The candidate query is a `LIKE`, so this page is one — and extraction is what says
+     * no. The whole superset design rests on that second answer being the one stored.
+     */
+    public function testAPageNamingALongerFilenameIsACandidateAndStillNotAUse(): void
+    {
+        $page = $this->persistPage('Look ![](/media/default/not-the-'.self::DISPOSABLE_FILE_NAME.')');
+
+        $media = $this->createDisposableMedia();
+
+        self::assertSame([], $this->mediaUsageRepository->findSourcesByPageForMedia((int) $media->id));
+        self::assertSame([], $this->mediaUsageRepository->findMediaIdsForPage((int) $page->id));
+    }
+
+    /** A name nobody wrote down costs the scan and nothing else. */
+    public function testUploadingAMediaNoPageNamesRecordsNothing(): void
+    {
+        $page = $this->persistPage('Look ![](/media/default/1.jpg)');
+
+        $media = $this->createDisposableMedia();
+
+        self::assertSame(
+            [(int) $this->media->id],
+            $this->mediaUsageRepository->findMediaIdsForPage((int) $page->id),
+        );
+        self::assertSame([], $this->mediaUsageRepository->findSourcesByPageForMedia((int) $media->id));
+    }
+
     /** The admin's "used on" panel reads this; it used to be a LIKE over mainContent. */
     public function testGetPagesUsingMediaAnswersFromTheStoredRelation(): void
     {
@@ -225,8 +337,16 @@ final class MediaUsageTrackerTest extends KernelTestCase
         return $page;
     }
 
-    /** A media of this test's own, so removing it cannot take a fixture with it. */
     private function createDisposableMedia(): Media
+    {
+        $media = $this->newDisposableMedia();
+        $this->entityManager->flush();
+
+        return $media;
+    }
+
+    /** A media of this test's own, so removing it cannot take a fixture with it. */
+    private function newDisposableMedia(): Media
     {
         /** @var string $projectDir */
         $projectDir = self::getContainer()->getParameter('kernel.project_dir');
@@ -244,7 +364,6 @@ final class MediaUsageTrackerTest extends KernelTestCase
         $media->setHash();
 
         $this->entityManager->persist($media);
-        $this->entityManager->flush();
 
         return $media;
     }

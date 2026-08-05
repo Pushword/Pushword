@@ -8,6 +8,7 @@ use Iterator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\PageRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
@@ -507,5 +508,91 @@ final class PageRepositoryTest extends KernelTestCase
         self::assertSame($homepage->mainImage->id, $batch[0]['mainImageId'], 'the relation comes back as a plain id');
         self::assertSame($homepage->mainContent, $batch[0]['mainContent']);
         self::assertSame($homepage->customProperties, $batch[0]['customProperties'], 'the JSON column arrives decoded');
+    }
+
+    /**
+     * The candidate query behind the media-usage backfill. It may return more than it
+     * should — extraction re-decides each row — so the only thing it may never do is
+     * miss a page naming the file.
+     */
+    public function testFindContentRowsReferencingMissesNoPageNamingTheFile(): void
+    {
+        $pageRepo = $this->pageRepository();
+
+        $expected = [];
+        foreach ($pageRepo->findAll() as $page) {
+            if (str_contains($page->mainContent, '1.jpg')) {
+                $expected[] = $page->id;
+            }
+        }
+
+        sort($expected);
+        self::assertNotSame([], $expected, 'fixtures must provide a page naming 1.jpg');
+
+        $found = array_map(
+            static fn (array $row): int => $row['id'],
+            iterator_to_array($pageRepo->findContentRowsReferencing(['1.jpg']), false),
+        );
+        sort($found);
+
+        self::assertSame($expected, array_values(array_intersect($found, $expected)));
+    }
+
+    /** Naming three of the files asked about is still one page to re-extract. */
+    public function testFindContentRowsReferencingYieldsAPageOnceHoweverManyNamesItHolds(): void
+    {
+        $pageRepo = $this->pageRepository();
+
+        $rows = iterator_to_array($pageRepo->findContentRowsReferencing(['1.jpg', '2.jpg', '3.jpg']), false);
+        $ids = array_map(static fn (array $row): int => $row['id'], $rows);
+
+        self::assertNotSame([], $ids, 'the kitchen-sink fixture names all three');
+        self::assertSame(array_values(array_unique($ids)), $ids);
+    }
+
+    /**
+     * A bulk upload asks about more files than fit in one query, and the chunk that
+     * carries the answer is not the first one.
+     */
+    public function testFindContentRowsReferencingLooksPastTheFirstChunkOfNames(): void
+    {
+        $pageRepo = $this->pageRepository();
+
+        $fileNames = [];
+        for ($i = 0; $i < 150; ++$i) {
+            $fileNames[] = 'no-such-media-'.$i.'.jpg';
+        }
+
+        $fileNames[] = '1.jpg';
+
+        $expected = array_map(
+            static fn (array $row): int => $row['id'],
+            iterator_to_array($pageRepo->findContentRowsReferencing(['1.jpg']), false),
+        );
+
+        $found = array_map(
+            static fn (array $row): int => $row['id'],
+            iterator_to_array($pageRepo->findContentRowsReferencing($fileNames), false),
+        );
+
+        self::assertSame($expected, $found);
+    }
+
+    public function testFindContentRowsReferencingAnUnknownNameFindsNothing(): void
+    {
+        self::assertSame([], iterator_to_array(
+            $this->pageRepository()->findContentRowsReferencing(['nothing-names-this-file.jpg']),
+            false,
+        ));
+    }
+
+    private function pageRepository(): PageRepository
+    {
+        self::bootKernel();
+
+        /** @var PageRepository $pageRepository */
+        $pageRepository = self::getContainer()->get(PageRepository::class);
+
+        return $pageRepository;
     }
 }

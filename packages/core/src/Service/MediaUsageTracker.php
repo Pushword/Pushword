@@ -5,14 +5,15 @@ namespace Pushword\Core\Service;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\MediaUsageRepository;
+use Pushword\Core\Repository\PageRepository;
 
 /**
  * Keeps `media_usage` — and the tags media inherit from it — in step with the pages.
  *
- * One entry point for the two writers that exist: the listener on every page write,
- * and `pw:media:usage:rebuild` for the first run and after a bulk import. Both go
- * through here so the derived tags can never be refreshed by one and forgotten by
- * the other.
+ * One entry point for the writers that exist: the listener, on every page write and
+ * on the media a flush brought in, and `pw:media:usage:rebuild` for the first run and
+ * after a bulk import. All go through here so the derived tags can never be refreshed
+ * by one and forgotten by another.
  *
  * Every write is conditional on something having actually changed. A page saved
  * without its images moving costs one SELECT and stops there, which is what makes
@@ -26,6 +27,7 @@ final readonly class MediaUsageTracker
         private MediaUsageExtractor $extractor,
         private MediaUsageRepository $mediaUsageRepository,
         private MediaRepository $mediaRepository,
+        private PageRepository $pageRepository,
     ) {
     }
 
@@ -45,6 +47,37 @@ final readonly class MediaUsageTracker
         $this->refreshPageTags($touched);
 
         return true;
+    }
+
+    /**
+     * Re-track the pages naming one of these files, for media that have just appeared.
+     *
+     * Extraction answers a filename against the media existing when the page is saved,
+     * so a media created afterwards leaves every page naming it with no row for it —
+     * and `pw:media:clean-unused --force` then reads a live image as an orphan. Two
+     * ordinary flows land there: a page written before its image is uploaded, and a
+     * media deleted and re-uploaded corrected under the same name, which the pages
+     * keep rendering through its filename under a new id.
+     *
+     * A media appearing is the second moment the answer can change, and this asks the
+     * question again then. Batched by the caller rather than run per media: the point
+     * of the usage table is that nothing costs pages × media.
+     *
+     * @param list<string> $fileNames
+     */
+    public function trackPagesReferencing(array $fileNames): void
+    {
+        $touched = [];
+
+        foreach ($this->pageRepository->findContentRowsReferencing($fileNames) as $row) {
+            $usages = $this->extractor->extract($row['mainContent'], $row['customProperties'], $row['mainImageId']);
+
+            foreach ($this->mediaUsageRepository->replaceForPage($row['id'], $usages) as $mediaId) {
+                $touched[$mediaId] = true;
+            }
+        }
+
+        $this->refreshPageTags(array_keys($touched));
     }
 
     /**

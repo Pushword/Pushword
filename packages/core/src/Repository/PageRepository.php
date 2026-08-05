@@ -42,6 +42,12 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 {
     use TagsRepositoryTrait;
 
+    /** Filenames per candidate query. Two bound parameters each, well under SQLite's ceiling. */
+    private const int REFERENCING_NAME_CHUNK = 100;
+
+    /** Candidate pages read at once, so their content is never all in memory together. */
+    private const int REFERENCING_PAGE_BATCH = 200;
+
     /** @var array<string, array<string, Page>> host => [slug => Page] */
     private array $slugCache = [];
 
@@ -710,15 +716,92 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     public function findContentBatchAfter(int $afterId, int $limit): array
     {
         /** @var list<array{id: int, mainContent: string, customProperties: array<mixed>, mainImageId: int|string|null}> $rows */
-        $rows = $this->createQueryBuilder('p')
-            ->select('p.id AS id, p.mainContent AS mainContent, p.customProperties AS customProperties, IDENTITY(p.mainImage) AS mainImageId')
-            ->where('p.id > :afterId')
-            ->setParameter('afterId', $afterId)
-            ->orderBy('p.id', 'ASC')
+        $rows = $this->contentRowsQueryBuilder($afterId)
             ->setMaxResults($limit)
             ->getQuery()
             ->getArrayResult();
 
+        return $this->toContentRows($rows);
+    }
+
+    /**
+     * The pages that might name one of these files, in the same shape, each yielded
+     * once however many of the names it holds.
+     *
+     * A `LIKE` per name, which is a superset on purpose — `_` is a wildcard and a
+     * filename may hold one — because what a candidate really references is decided
+     * by re-extracting it, not by this. Chunked over the names so a bulk upload costs
+     * a scan per chunk rather than a scan per file, and read in keyset batches inside
+     * a chunk so the caller never holds more than one batch of content: a chunk of
+     * common filenames can match most of the corpus.
+     *
+     * @param list<string> $fileNames
+     *
+     * @return iterable<array{id: int, mainContent: string, customProperties: array<mixed>, mainImageId: int|null}>
+     */
+    public function findContentRowsReferencing(array $fileNames): iterable
+    {
+        $yielded = [];
+
+        foreach (array_chunk($fileNames, self::REFERENCING_NAME_CHUNK) as $chunk) {
+            $afterId = 0;
+
+            while ([] !== ($rows = $this->findContentRowsReferencingBatch($chunk, $afterId))) {
+                $afterId = $rows[array_key_last($rows)]['id'];
+
+                foreach ($rows as $row) {
+                    if (isset($yielded[$row['id']])) {
+                        continue;
+                    }
+
+                    $yielded[$row['id']] = true;
+
+                    yield $row;
+                }
+            }
+        }
+    }
+
+    /**
+     * @param list<string> $fileNames
+     *
+     * @return list<array{id: int, mainContent: string, customProperties: array<mixed>, mainImageId: int|null}>
+     */
+    private function findContentRowsReferencingBatch(array $fileNames, int $afterId): array
+    {
+        $queryBuilder = $this->contentRowsQueryBuilder($afterId)
+            ->setMaxResults(self::REFERENCING_PAGE_BATCH);
+
+        $orX = $queryBuilder->expr()->orX();
+        foreach ($fileNames as $i => $fileName) {
+            $orX->add('p.mainContent LIKE :fileName'.$i);
+            $orX->add('p.customProperties LIKE :fileName'.$i);
+            $queryBuilder->setParameter('fileName'.$i, '%'.$fileName.'%');
+        }
+
+        /** @var list<array{id: int, mainContent: string, customProperties: array<mixed>, mainImageId: int|string|null}> $rows */
+        $rows = $queryBuilder->andWhere($orX)->getQuery()->getArrayResult();
+
+        return $this->toContentRows($rows);
+    }
+
+    /** The scalar columns a media-usage scan reads, walked by keyset so it stays linear. */
+    private function contentRowsQueryBuilder(int $afterId): QueryBuilder
+    {
+        return $this->createQueryBuilder('p')
+            ->select('p.id AS id, p.mainContent AS mainContent, p.customProperties AS customProperties, IDENTITY(p.mainImage) AS mainImageId')
+            ->where('p.id > :afterId')
+            ->setParameter('afterId', $afterId)
+            ->orderBy('p.id', 'ASC');
+    }
+
+    /**
+     * @param list<array{id: int, mainContent: string, customProperties: array<mixed>, mainImageId: int|string|null}> $rows
+     *
+     * @return list<array{id: int, mainContent: string, customProperties: array<mixed>, mainImageId: int|null}>
+     */
+    private function toContentRows(array $rows): array
+    {
         return array_map(static fn (array $row): array => [
             'id' => $row['id'],
             'mainContent' => $row['mainContent'],

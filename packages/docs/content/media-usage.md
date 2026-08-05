@@ -33,16 +33,24 @@ anything.
 The table is written on every page write — a page saved, imported, or edited through the
 API updates its own rows, and drops them when it is removed. Nothing to schedule.
 
-It has to be built once, though, and rebuilt whenever rows reached the database without
-a page write to notice:
+A page write is not the only moment a use appears, though. A reference is resolved
+against the media that exist *when the page is saved*, so a page naming a file nobody has
+uploaded yet gets no row for it. **Media appearing are therefore tracked too**: at the end
+of a flush that created media, the pages naming those files go back through extraction.
+Two everyday flows depend on it — a page written before its image is uploaded, and a media
+deleted then re-uploaded corrected under the same name, which the pages keep rendering
+through its filename under a new id.
+
+It has to be built once, though, and rebuilt whenever rows reached the database without a
+write to notice:
 
 ```bash
 php bin/console pw:media:usage:rebuild
 ```
 
-Run it after the upgrade that introduced the table, after restoring a database, and
-after a bulk import that created pages before their media existed. It scans the whole
-corpus in batches and rewrites the table from scratch.
+Run it after the upgrade that introduced the table, and after restoring a database or any
+bulk write that bypassed the listener. It scans the whole corpus in batches and rewrites
+the table from scratch.
 
 The scan resolves a reference by its **filename**, including filenames a media used to
 carry: a page still pointing at a renamed file renders it, so it still uses it. It
