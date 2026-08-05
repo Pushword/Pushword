@@ -468,6 +468,7 @@ final class StaticGeneratorTest extends KernelTestCase
             self::getContainer()->get(PageRepository::class),
             $projectDir,
             self::getContainer()->getParameter('kernel.environment'),
+            self::getContainer()->getParameter('pw.var_dir'),
         );
     }
 
@@ -1534,9 +1535,11 @@ final class StaticGeneratorTest extends KernelTestCase
         $this->overrideStaticDir();
         $this->cleanupPidFiles();
 
-        /** @var string $projectDir */
-        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
-        $opcacheDir = $projectDir.'/var/cache/opcache';
+        /** @var string $varDir */
+        $varDir = self::getContainer()->getParameter('pw.var_dir');
+        // Per host as well as per worker: two hosts building at once used to share
+        // `w0`, which is the concurrent-writer case that segfaults the workers.
+        $opcacheDir = $varDir.'/cache/opcache/localhost.dev';
         new Filesystem()->remove($opcacheDir);
 
         $application = new Application(self::$kernel); // @phpstan-ignore-line

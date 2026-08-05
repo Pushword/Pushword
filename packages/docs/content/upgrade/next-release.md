@@ -1,5 +1,5 @@
 ---
-title: "the link panel's style options are named in English so they can be translated"
+title: "the link panel's style options are named in English so they can be translated; parallel static builds stop segfaulting each other's workers"
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin-block-editor`
+**Concerns:** `pushword/admin-block-editor`, `pushword/static-generator`
 
 ## The link tool's style options are named in English
 
@@ -48,4 +48,15 @@ untranslated.
 
 ```js
 availableDesigns: { Button: 'link-btn', 'Button outline': 'link-btn-outline', Discreet: 'ninja' },
+```
+
+## The static workers' opcache cache moved under `var/cache/opcache/{host}/w{n}`
+
+**Affects sites building more than one host with `pw:static`, in parallel.** Both builds
+took `w0`, and concurrent writers to one opcache file cache kill the workers —
+`Worker N failed (exit 139: Segmentation violation)`, no output, build lost. Nothing to
+configure. Reclaim the disk the old layout still holds:
+
+```shell
+rm -rf var/cache/opcache/w*
 ```

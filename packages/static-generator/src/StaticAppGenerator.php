@@ -60,6 +60,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         private readonly PageRepository $pageRepository,
         private readonly string $projectDir,
         private readonly string $environment,
+        private readonly string $varDir,
     ) {
     }
 
@@ -439,7 +440,9 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             $chunks[$i % $workerCount][] = $slug;
         }
 
-        $stateDir = $this->projectDir.'/var';
+        // %pw.var_dir%, not projectDir/var: under ParaTest that is the per-worker dir, so
+        // two suites building at once stop sharing the scratch below.
+        $stateDir = $this->varDir;
         $filesystem = new Filesystem();
 
         // CLI opcache is per-process, so each worker recompiles the whole
@@ -455,7 +458,14 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         // either flag alone, never crashed). Each worker still warms its own
         // cache once and reuses it across builds, so only the disk cost —
         // roughly one full cache per worker — is traded away.
-        $opcacheDir = $stateDir.'/cache/opcache';
+        //
+        // Per host as well as per worker index, because "one per worker" only
+        // holds within a single build. Two builds running at once — different
+        // hosts on a multi-site install, and every concurrent test suite — both
+        // took `w0`, which is the shared file cache this comment was written
+        // about. It came back as `Worker N failed (exit 139: Segmentation
+        // violation)` with no output, killing whichever build was unlucky.
+        $opcacheDir = $stateDir.'/cache/opcache/'.$host;
 
         $processes = [];
 
@@ -464,8 +474,12 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
                 continue;
             }
 
-            $stateFile = $stateDir.'/.static-worker-'.$i.'.json';
-            $redirectionsFile = $stateDir.'/.static-worker-'.$i.'-redirections.json';
+            // Per host for the same reason as the opcache dir, though this one
+            // corrupts a build rather than killing it: two hosts generating at
+            // once both wrote `.static-worker-0.json`, and each parent read
+            // back whichever worker saved last.
+            $stateFile = $stateDir.'/.static-worker-'.$host.'-'.$i.'.json';
+            $redirectionsFile = $stateDir.'/.static-worker-'.$host.'-'.$i.'-redirections.json';
             $workerOpcacheDir = $opcacheDir.'/w'.$i;
             $filesystem->mkdir($workerOpcacheDir);
 
