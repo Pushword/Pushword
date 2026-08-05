@@ -8,6 +8,8 @@
  * separate runs for isolation reasons, so the merge happens here.
  *
  * Usage: merge-coverage.php <html-dir> <clover-file> <dump.cov>...
+ *
+ * Pass `-` as <html-dir> to skip the HTML report (CI only needs the clover).
  */
 
 use SebastianBergmann\CodeCoverage\Node\Builder;
@@ -27,7 +29,10 @@ $merged = (new Merger())->merge($dumps);
 $report = (new Builder(Registry::analyser(null, false, false)))
     ->build($merged['codeCoverage'], $merged['testResults'], $merged['basePath']);
 
-(new HtmlReport())->process($report, $htmlDir);
+if ('-' !== $htmlDir) {
+    (new HtmlReport())->process($report, $htmlDir);
+}
+
 (new Clover())->process($report, $cloverFile);
 
 echo (new Text(Thresholds::default(), false, true))->process($report, true);

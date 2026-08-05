@@ -82,6 +82,9 @@ jobs:
 
   test:
     runs-on: ${{ matrix.os }}
+    permissions:
+      # Push the `badges` branch (coverage badge data).
+      contents: write
     strategy:
       #fail-fast: true
       matrix:
@@ -94,6 +97,11 @@ jobs:
         #     node: 24
 
     name: P${{ matrix.php }} - N${{ matrix.node }} - ${{ matrix.stability }} - ${{ matrix.os }}
+
+    env:
+      # Exactly one leg collects coverage and publishes the README badge data,
+      # and only for pushes to main; every other leg runs the suite bare.
+      PUBLISH_COVERAGE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.php == '8.4' && matrix.node == '24' }}
 
     steps:
       - name: Checkout code
@@ -110,9 +118,9 @@ jobs:
           php-version: ${{ matrix.php }}
           tools: pecl
           extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
-          # pcov, not xdebug: this job only needs line coverage, and xdebug slows
+          # pcov, not xdebug: the badge only needs line coverage, and xdebug slows
           # the whole suite down several-fold to collect it.
-          coverage: pcov
+          coverage: ${{ env.PUBLISH_COVERAGE == 'true' && 'pcov' || 'none' }}
           ini-values: pcov.directory=${{ github.workspace }}/packages
 
       - name: Setup problem matchers
@@ -140,11 +148,12 @@ jobs:
         # after the parallel batch so concurrent workers can't mutate it underneath them.
         # The 'worker' group runs in its own step below (it shares a cache.app version
         # counter that parallel workers would race).
-        # Every batch emits its own clover file; Codecov merges them. Leaving one out
-        # reports its tests as covering nothing.
+        # Every batch dumps its own coverage; merge-coverage.php folds them. Leaving
+        # one out reports its tests as covering nothing.
         run: |
-          vendor/bin/paratest --processes=auto --coverage-clover coverage-parallel.xml --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker
-          vendor/bin/paratest --processes=1 --coverage-clover coverage-serial.xml --group=serial
+          if [ "$PUBLISH_COVERAGE" = "true" ]; then mkdir cov; COV_PARALLEL="--coverage-php cov/parallel.cov"; COV_SERIAL="--coverage-php cov/serial.cov"; fi
+          vendor/bin/paratest --processes=auto $COV_PARALLEL --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker
+          vendor/bin/paratest --processes=1 $COV_SERIAL --group=serial
         env:
           TEST_RUN_ID: ci-${{ github.run_id }}
 
@@ -153,14 +162,31 @@ jobs:
         # one kernel across requests: asserts the repositories' in-memory caches (slug /
         # redirect maps, media filename index) don't serve stale data after a write in a
         # prior request. A dedicated, named check keeps this non-obvious invariant visible.
-        run: vendor/bin/paratest --processes=1 --coverage-clover coverage-worker.xml --group=worker
+        run: |
+          if [ "$PUBLISH_COVERAGE" = "true" ]; then COV_WORKER="--coverage-php cov/worker.cov"; fi
+          vendor/bin/paratest --processes=1 $COV_WORKER --group=worker
         env:
           TEST_RUN_ID: ci-${{ github.run_id }}
 
-      - name: Send coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: coverage-parallel.xml,coverage-serial.xml,coverage-worker.xml
+      - name: Publish coverage badge data
+        # Merges the three dumps (line-level union — summing per-batch totals would
+        # double-count code hit by more than one batch) and force-pushes a one-commit
+        # `badges` branch holding the shields.io endpoint JSON the README badge reads.
+        # The workflow's own GITHUB_TOKEN is enough: no coverage service, no PAT.
+        if: env.PUBLISH_COVERAGE == 'true'
+        run: |
+          php -d memory_limit=2G .scripts/merge-coverage.php - coverage.xml cov/*.cov
+          mkdir badge
+          php .scripts/coverage-badge.php coverage.xml > badge/coverage.json
+          cd badge
+          git init -q -b badges
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add coverage.json
+          git commit -q -m "chore: coverage badge data [skip ci]"
+          git push -q --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" badges
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
   test-mariadb:
     runs-on: ubuntu-latest
