@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+source "$(dirname "$0")/lib-panther.sh"
+
 START_TIME=$(date +%s)
 
 export TEST_RUN_ID="${TEST_RUN_ID:-$$}"
@@ -89,12 +91,14 @@ function print_summary {
 }
 
 function cleanup {
-    pkill -f chromedriver 2>/dev/null || true
-    pkill -f 'chrome.*headless' 2>/dev/null || true
+    killOwnBrowsers
     rm -rf "/tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}"
     # Clean up paratest worker dirs (e.g. ${TEST_RUN_ID}-w1, ${TEST_RUN_ID}-w2, ...)
     rm -rf /tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}-w*
-    rm -rf "/tmp/panther-chrome-${TEST_RUN_ID}"
+    # Panther appends its own per-worker, per-instance suffix (…-w4-<hash>), so the bare
+    # path matched nothing and every run leaked its Chrome profiles — 3GB of them in /tmp
+    # before this glob.
+    rm -rf /tmp/panther-chrome-${TEST_RUN_ID}*
     rm -rf ".phpunit.cache-${TEST_RUN_ID}"
     rm -f "$JUNIT_XML"
 }

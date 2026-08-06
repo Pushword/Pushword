@@ -14,6 +14,8 @@
 # worker); merge-coverage.php folds their dumps into one report. Dropping a batch
 # would silently under-report it.
 
+source "$(dirname "$0")/lib-panther.sh"
+
 START_TIME=$(date +%s)
 
 export TEST_RUN_ID="${TEST_RUN_ID:-cov-$$}"
@@ -41,11 +43,11 @@ PASSTHRU="'-d' 'pcov.enabled=1' '-d' 'pcov.directory=packages' '-d' 'memory_limi
 EXIT=0
 
 function cleanup {
-    pkill -f chromedriver 2>/dev/null || true
-    pkill -f 'chrome.*headless' 2>/dev/null || true
+    killOwnBrowsers
     rm -rf "/tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}"
     rm -rf /tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}-w*
-    rm -rf "/tmp/panther-chrome-${TEST_RUN_ID}"
+    # Glob: Panther appends a per-worker, per-instance suffix (see .scripts/test).
+    rm -rf /tmp/panther-chrome-${TEST_RUN_ID}*
     rm -rf ".phpunit.cache-${TEST_RUN_ID}"
     rm -rf "$DUMP_DIR"
 }
