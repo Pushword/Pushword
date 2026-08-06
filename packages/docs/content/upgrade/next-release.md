@@ -1,5 +1,5 @@
 ---
-title: ''
+title: "the quiz question list opts out of the host's prose styling"
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,13 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/quiz`
+
+## The quiz question list opts out of prose styling
+
+The question list and its meta line now carry `not-prose`. Inside a `.prose` container
+`@tailwindcss/typography` padded their `ol`, `ul` and `li` past the block's own utilities:
+the list sat right of the text column, each card had uneven side padding, and the answer
+grid was indented again under its own question. Nothing to run, and a local reset you
+added for it can go. The result box keeps prose, its messages being Markdown.

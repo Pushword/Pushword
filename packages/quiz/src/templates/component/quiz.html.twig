@@ -14,7 +14,20 @@
    one are only the look, and each set is a `pwQuiz*Class` Twig global you can
    redefine to restyle that element without forking this template — see
    /extension/quiz. Set them as twig globals: macros do not see a render
-   context, so a variable passed to the block would not reach in here. #}
+   context, so a variable passed to the block would not reach in here.
+
+   `not-prose` on the question list is load-bearing too, and sits outside the
+   override for that reason. A quiz block is rendered inside the host's prose
+   container, and @tailwindcss/typography pads every ol/ul/li it finds there
+   with a rule that out-ranks the utilities below: without it the list lands
+   28px right of the text column, each card gets 8px of padding on one side
+   against 20px on the other, and the answer grid is indented again under its
+   own question. Nothing in this subtree wants prose styling — the question,
+   the answers and the explanation are all plain escaped text, and the media
+   figure is better off without prose's image margins. Keep it off the section
+   root, though: the result box holds rendered Markdown that does want it.
+   Note it does not stop inheritance, so the host's prose line-height still
+   reaches the answers; a theme that cares sets its own. #}
 {% macro qitem(q, idx0, idx, total, prefixes, l) %}
   <li class="pw-quiz-q {{ pwQuizQClass|default('relative rounded-[14px] border border-gray-200 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]') }}" data-q="{{ idx0 }}">
     <span class="pw-quiz-q-num {{ pwQuizQNumClass|default('mb-2 inline-block text-[0.8rem] font-bold tracking-[0.03em] uppercase text-primary') }}" aria-hidden="true">{{ l.question }} {{ idx }}/{{ total }}</span>
@@ -139,14 +152,14 @@
     {% if quiz.title or quiz.difficulty %}
       <header class="pw-quiz-head {{ pwQuizHeadClass|default('mb-5') }}">
         {% if quiz.title %}<h2 class="pw-quiz-title {{ pwQuizTitleClass|default('mt-0 mb-1') }}">{{ quiz.title }}</h2>{% endif %}
-        <p class="pw-quiz-meta {{ pwQuizMetaClass|default('m-0 flex items-center justify-center gap-3 text-[0.9rem] text-gray-500') }}">
+        <p class="pw-quiz-meta not-prose {{ pwQuizMetaClass|default('m-0 flex items-center justify-center gap-3 text-[0.9rem] text-gray-500') }}">
           <span>{{ total }} {{ l.questions }}</span>
           {% if quiz.difficulty %}<span class="pw-quiz-diff {{ pwQuizDiffClass|default('rounded-full bg-primary px-[0.6rem] py-[0.1rem] text-[0.8rem] text-white') }}">{{ quiz.difficulty }}</span>{% endif %}
         </p>
       </header>
     {% endif %}
 
-    <ol class="pw-quiz-questions {{ pwQuizQuestionsClass|default('relative m-0 flex list-none flex-col gap-5 p-0') }}">
+    <ol class="pw-quiz-questions not-prose {{ pwQuizQuestionsClass|default('relative m-0 flex list-none flex-col gap-5 p-0') }}">
       {% for q in quiz.questions %}{{ _self.qitem(q, loop.index0, loop.index, total, prefixes, l) }}{% endfor %}
     </ol>
 
@@ -199,12 +212,12 @@
            aria-labelledby="{{ id }}-tab-{{ loop.index0 }}"{% if not loop.first %} hidden{% endif %}>
         <div class="pw-quiz-level" data-pw-quiz data-slug="{{ lslug }}" data-next-tab="{{ nextTab }}">
           {# Each level keeps its own meta line, spaced off the questions below it. #}
-          <p class="pw-quiz-meta {{ pwQuizLevelMetaClass|default('mt-0 mb-5 flex items-center justify-center gap-3 text-[0.9rem] text-gray-500') }}">
+          <p class="pw-quiz-meta not-prose {{ pwQuizLevelMetaClass|default('mt-0 mb-5 flex items-center justify-center gap-3 text-[0.9rem] text-gray-500') }}">
             <span>{{ ltotal }} {{ l.questions }}</span>
             {% if level.difficulty %}<span class="pw-quiz-diff {{ pwQuizDiffClass|default('rounded-full bg-primary px-[0.6rem] py-[0.1rem] text-[0.8rem] text-white') }}">{{ level.difficulty }}</span>{% endif %}
           </p>
 
-          <ol class="pw-quiz-questions {{ pwQuizQuestionsClass|default('relative m-0 flex list-none flex-col gap-5 p-0') }}">
+          <ol class="pw-quiz-questions not-prose {{ pwQuizQuestionsClass|default('relative m-0 flex list-none flex-col gap-5 p-0') }}">
             {% for q in level.questions %}{{ _self.qitem(q, loop.index0, loop.index, ltotal, prefixes, l) }}{% endfor %}
           </ol>
 
