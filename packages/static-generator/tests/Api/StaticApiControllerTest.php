@@ -283,6 +283,12 @@ final class StaticApiControllerTest extends WebTestCase
             $fs->remove($this->varDir().'/'.$processType.'.pid');
             $this->storage()->clear($processType);
         }
+
+        // The recorded generation time too: status() only reports "idle" while there is
+        // none, and any other class generating in this ParaTest worker leaves one behind —
+        // so testStatusIsIdleWhenNeverGenerated depended on which classes shared its
+        // worker. Filename mirrors GenerationStateManager::STATE_FILE, which is private.
+        $fs->remove($this->varDir().'/.static-generation-state.json');
     }
 
     private function storage(): ProcessOutputStorage

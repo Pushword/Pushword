@@ -40,10 +40,14 @@ final class PdfOptimizerCommandTest extends KernelTestCase
 
         $command = $application->find('pw:pdf:optimize');
         $commandTester = new CommandTester($command);
-        $commandTester->execute(['media' => 'test.pdf']);
+        // A name in no fixture, so "not found" is true by construction. 'test.pdf' was not:
+        // the command resolves the name against the database, and test.pdf is both a row in
+        // docs/content/media.csv and a file the bootstrap mirrors into every worker's media
+        // dir — so any class importing that content (FlatCommandTest, say) creates the Media
+        // row, and this assertion came down to what else ran in the ParaTest worker first.
+        $commandTester->execute(['media' => 'absent-from-the-database.pdf']);
 
         $output = $commandTester->getDisplay();
-        // PDF not in database, should show "PDF not found"
         self::assertStringContainsString('PDF not found', $output);
         self::assertSame(0, $commandTester->getStatusCode());
     }
