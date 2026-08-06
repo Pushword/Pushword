@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc850](/upgrade/rc850) | `admin` `core` `flat` | saving a page in the admin without editing it no longer counts as an edit; a page imported from a flat file gets an author, and editing a page no longer claims its authorship |
 | [rc849](/upgrade/rc849) | `admin-block-editor` `core` `flat` | the link panel's style options are named in English so they can be translated; the static build's workers drop the opcache file cache that was killing them; link-improver counts a page's links once, so a site whose links are written absolute gets the density it configured; a flat file edited in the same second as a sync is no longer lost; SQLite enforces the schema's foreign keys and makes a concurrent writer wait rather than fail |
 | [rc848](/upgrade/rc848) | `admin` `core` | the Docker account guard and the per-editor unsaved-changes key described in rc845 actually ship here; a new project installs again |
 | [rc845](/upgrade/rc845) | `admin` `admin-block-editor` `core` `newsletter` `page-scanner` `snippet` `js-helper` | a forged delivery report can no longer unsubscribe an address; a Docker container no longer seeds a default-credential super admin over a restored database; a missing template degrades instead of 500ing the page; media uploaded after the pages naming them get their usage rows — run `pw:media:usage:rebuild` |
