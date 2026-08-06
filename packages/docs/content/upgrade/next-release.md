@@ -1,5 +1,5 @@
 ---
-title: "the link panel's style options are named in English so they can be translated; the static build's workers drop the opcache file cache that was killing them; link-improver counts a page's links once, so a site whose links are written absolute gets the density it configured"
+title: "the link panel's style options are named in English so they can be translated; the static build's workers drop the opcache file cache that was killing them; link-improver counts a page's links once, so a site whose links are written absolute gets the density it configured; a flat file edited in the same second as a sync is no longer lost"
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,7 +35,14 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin-block-editor`, `pushword/link-improver`, `pushword/static-generator`
+**Concerns:** `pushword/admin-block-editor`, `pushword/flat`,
+`pushword/link-improver`, `pushword/static-generator`
+
+## A flat file edited in the same second as a sync is no longer lost
+
+`filemtime()` resolves to the second, so an edit landing in the second `pw:flat:sync`
+stamped the page tied instead of looking newer, and was skipped for good. Ties are decided
+on content now. Nothing to do — expect `Imported` to count only pages that really changed.
 
 ## The link tool's style options are named in English
 

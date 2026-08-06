@@ -14,6 +14,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Core\Utils\Entity;
 use Pushword\Core\Validator\Constraints\PagePropertiesSchema;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
@@ -66,6 +67,9 @@ final class PageImporter extends AbstractImporter
 
     #[Required]
     public PagePropertySchemaRegistry $schemaRegistry;
+
+    #[Required]
+    public RevisionCalculator $revisions;
 
     /** @var array<string, list<string>> slug => translated violation messages */
     private array $invalidPages = [];
@@ -243,14 +247,18 @@ final class PageImporter extends AbstractImporter
 
         $page = $this->getPageFromSlug($slug);
 
-        if (! $this->newPage && $page->updatedAt >= $lastEditDateTime) {
+        if (! $this->newPage && $page->updatedAt > $lastEditDateTime) {
             ++$this->skippedCount;
 
             return $page; // no update needed
         }
 
-        $this->logger->info('Importing page `'.$slug.'` ('.($this->newPage ? 'new' : $page->id).')');
-        ++$this->importedCount;
+        // Equal timestamps are not proof the file is untouched: filemtime() resolves
+        // to the second and the import stamps updatedAt with it, so an edit landing in
+        // that same second ties instead of looking newer. Handing the tie to the
+        // database made that edit invisible for good — nothing re-reads the file until
+        // its mtime moves again. Hydrate and let the content decide.
+        $revisionBeforeImport = $this->newPage ? null : $this->revisions->compute($page);
 
         // No authenticated user exists in CLI context, so editedBy/createdBy stay
         // null. Record the flat origin in editMessage to keep the edit traceable.
@@ -329,10 +337,17 @@ final class PageImporter extends AbstractImporter
         if ($this->newPage) {
             $this->initDateTimeProperties($page, $lastEditDateTime, $publishedAtExplicitlySet);
             $this->em->persist($page);
+        } elseif ($revisionBeforeImport === $this->revisions->compute($page)) {
+            ++$this->skippedCount;
+
+            return $page; // the file holds what the database already holds
         } else {
             $page->updatedAt = $lastEditDateTime;
             $page->skipAutoTimestamp = true;
         }
+
+        $this->logger->info('Importing page `'.$slug.'` ('.($this->newPage ? 'new' : $page->id).')');
+        ++$this->importedCount;
 
         $this->reportSchemaCompliance($slug, $page);
 
