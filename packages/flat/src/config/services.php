@@ -24,6 +24,7 @@ use Pushword\Flat\Service\FlatApiTokenValidator;
 use Pushword\Flat\Service\FlatChangeDetector;
 use Pushword\Flat\Service\FlatLockManager;
 use Pushword\Flat\Service\GitAutoCommitter;
+use Pushword\Flat\Service\ImportEditorResolver;
 use Pushword\Flat\Sync\ConflictResolver;
 use Pushword\Flat\Sync\ConversationSyncInterface;
 use Pushword\Flat\Sync\PageSync;
@@ -69,6 +70,10 @@ return static function (ContainerConfigurator $container): void {
     // PropertyConverterRegistry - inject ignored properties list
     $services->set(PropertyConverterRegistry::class)
         ->arg('$ignoredProperties', '%pw.pushword_flat.ignored_properties%');
+
+    // ImportEditorResolver - who a page created by import is attributed to
+    $services->set(ImportEditorResolver::class)
+        ->arg('$defaultEditorEmail', '%pw.pushword_flat.default_editor%');
 
     // PageSync configuration
     $services->set(PageSync::class)

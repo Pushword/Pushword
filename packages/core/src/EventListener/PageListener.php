@@ -75,7 +75,7 @@ final class PageListener implements ResetInterface
         $page->initTimestampableProperties();
         $this->setIdAsSlugIfNotDefined($page);
         $this->setLocaleIfNotDefined($page);
-        $this->updatePageEditor($page);
+        $this->updatePageEditor($page, creating: true);
         $this->generateOpenGraphImage($page);
     }
 
@@ -116,7 +116,12 @@ final class PageListener implements ResetInterface
         $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
     }
 
-    private function updatePageEditor(Page $page): void
+    /**
+     * `createdBy` is only ever set at creation: backfilling it on update made whoever
+     * first saved a page authored elsewhere — imported by the flat sync, written through
+     * the API — its recorded creator, a claim nothing else contradicted.
+     */
+    private function updatePageEditor(Page $page, bool $creating = false): void
     {
         if (null === ($user = $this->security->getUser())) {
             return;
@@ -126,7 +131,7 @@ final class PageListener implements ResetInterface
             return;
         }
 
-        if (null === $page->createdBy) {
+        if ($creating && null === $page->createdBy) {
             $page->createdBy = $user;
         }
 

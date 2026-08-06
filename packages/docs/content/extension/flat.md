@@ -43,7 +43,29 @@ flat:
 
   # Custom property names to exclude from flat file export and import (default: [])
   ignored_properties: ['someTransientProp']
+
+  # Who a page created by an import belongs to when its file names no editor
+  # (default: null, meaning the site's first super admin)
+  default_editor: editor@example.tld
 ```
+
+### Who an imported page belongs to
+
+A `pw:flat:sync` run has no authenticated user, so the editor comes from the file. An
+export writes it there as an email:
+
+```yaml
+editedBy: editor@example.tld
+createdBy: editor@example.tld
+```
+
+On import those resolve back to the matching user. An email no user answers to is
+ignored, never stored — the page keeps whichever editor it already had.
+
+A file naming nobody is attributed, **at creation only**, to `default_editor` or failing
+that the site's first super admin. Later syncs of that file leave the editor alone: who
+made an edit outside the admin is unknown, and `editMessage` already records that it came
+from `pw:flat:sync`. With no user to resolve, the page simply stays unattributed.
 
 ## Usage
 

@@ -3,6 +3,7 @@
 namespace Pushword\Admin\Controller;
 
 use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
@@ -288,10 +289,65 @@ class PageCrudController extends AbstractAdminCrudController
     {
         $this->setSubject($entityInstance);
         $this->syncAppContext($entityInstance);
+        $this->keepEditMessageWhenItIsTheOnlyChange($entityManager, $entityInstance);
 
         parent::updateEntity($entityManager, $entityInstance);
 
         $this->refreshPreview($entityInstance);
+    }
+
+    /**
+     * The edit-message box always renders empty ({@see \Pushword\Admin\FormField\PageEditMessageField}), so saving a
+     * page without touching it submits '' over the message the previous edit left. When the
+     * save carries a real edit that is right — the message described the state before it.
+     * On its own it is a write nobody asked for: an UPDATE, a bumped `updatedAt`, and a
+     * version whose whole content is the message going away. Restore it in that case.
+     */
+    private function keepEditMessageWhenItIsTheOnlyChange(EntityManagerInterface $entityManager, Page $page): void
+    {
+        if ('' !== $page->editMessage) {
+            return;
+        }
+
+        $original = $entityManager->getUnitOfWork()->getOriginalEntityData($page);
+        $previous = $original['editMessage'] ?? null;
+
+        if (! \is_string($previous) || '' === $previous) {
+            return;
+        }
+
+        $classMetadata = $entityManager->getClassMetadata(Page::class);
+
+        foreach ($original as $field => $originalValue) {
+            if ('editMessage' === $field) {
+                continue;
+            }
+
+            // Original data also holds raw join columns (`main_image_id`) next to the
+            // association they mirror, and collections Doctrine tracks on their own.
+            if (! $classMetadata->hasField($field) && ! $classMetadata->isSingleValuedAssociation($field)) {
+                continue;
+            }
+
+            if ($this->differsFromOriginal($classMetadata->getFieldValue($page, $field), $originalValue)) {
+                return;
+            }
+        }
+
+        $page->editMessage = $previous;
+    }
+
+    /**
+     * Conservative on purpose: anything this cannot compare counts as a change, leaving
+     * the save to behave as it always did.
+     */
+    private function differsFromOriginal(mixed $current, mixed $original): bool
+    {
+        if ($current instanceof DateTimeInterface && $original instanceof DateTimeInterface) {
+            return $current->getTimestamp() !== $original->getTimestamp();
+        }
+
+        return $current !== $original;
     }
 
     private function getAction(): string

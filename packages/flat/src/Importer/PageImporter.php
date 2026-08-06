@@ -21,6 +21,7 @@ use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Serializer\PageFileSerializer;
+use Pushword\Flat\Service\ImportEditorResolver;
 use Spatie\YamlFrontMatter\Document;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -70,6 +71,9 @@ final class PageImporter extends AbstractImporter
 
     #[Required]
     public RevisionCalculator $revisions;
+
+    #[Required]
+    public ImportEditorResolver $editorResolver;
 
     /** @var array<string, list<string>> slug => translated violation messages */
     private array $invalidPages = [];
@@ -260,8 +264,9 @@ final class PageImporter extends AbstractImporter
         // its mtime moves again. Hydrate and let the content decide.
         $revisionBeforeImport = $this->newPage ? null : $this->revisions->compute($page);
 
-        // No authenticated user exists in CLI context, so editedBy/createdBy stay
-        // null. Record the flat origin in editMessage to keep the edit traceable.
+        // No authenticated user exists in CLI context: the editor comes from the file
+        // (see below) or, for a page being created, from the site's default editor.
+        // Either way editMessage records the flat origin to keep the edit traceable.
         $page->editMessage = 'Imported via pw:flat:sync from '.$relativeFilePath;
 
         $page->customProperties = [];
@@ -278,6 +283,18 @@ final class PageImporter extends AbstractImporter
 
             if (\array_key_exists($camelKey, $this->getObjectRequiredProperties())) {
                 $this->toAddAtTheEnd[$slug] = array_merge($this->toAddAtTheEnd[$slug] ?? [], [$camelKey => $value]);
+
+                continue;
+            }
+
+            if (\in_array($camelKey, ['editedBy', 'createdBy'], true)) {
+                // Exported as the user's email. An email no user answers to keeps whoever
+                // the page already had, rather than becoming a custom property shadowing
+                // the relation in every later export.
+                $user = $this->editorResolver->resolve($value);
+                if (null !== $user) {
+                    $page->{$camelKey} = $user;
+                }
 
                 continue;
             }
@@ -335,6 +352,7 @@ final class PageImporter extends AbstractImporter
         $page->mainContent = $content;
 
         if ($this->newPage) {
+            $this->attributeToDefaultEditor($page);
             $this->initDateTimeProperties($page, $lastEditDateTime, $publishedAtExplicitlySet);
             $this->em->persist($page);
         } elseif ($revisionBeforeImport === $this->revisions->compute($page)) {
@@ -386,6 +404,24 @@ final class PageImporter extends AbstractImporter
             'undeclared' => $this->undeclaredKeys,
             'missing_required' => $this->missingRequired,
         ];
+    }
+
+    /**
+     * A file that named its editor keeps it; one that named nobody is attributed to the
+     * site's editor of record, so a page born from a file is not left for the first admin
+     * save to claim. Only at creation: on a later sync the editor of an edit made outside
+     * the admin is genuinely unknown, and editMessage already records where it came from.
+     */
+    private function attributeToDefaultEditor(Page $page): void
+    {
+        $defaultEditor = $this->editorResolver->getDefaultEditor();
+
+        if (null === $defaultEditor) {
+            return;
+        }
+
+        $page->createdBy ??= $defaultEditor;
+        $page->editedBy ??= $defaultEditor;
     }
 
     private function initDateTimeProperties(Page $page, DateTimeInterface $lastEditDateTime, bool $publishedAtExplicitlySet = false): void

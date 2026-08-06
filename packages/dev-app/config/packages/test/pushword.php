@@ -33,6 +33,12 @@ return static function (ContainerConfigurator $container): void {
 
     $container->extension('pushword_flat', [
         'flat_content_dir' => '%env(PUSHWORD_TEST_FLAT_CONTENT_DIR)%',
+        // Pin who an import attributes a page to. Left unset, it falls back to the first
+        // super admin — a row the admin tests create in the worker's own database, so
+        // whether an imported page comes out attributed would depend on which classes
+        // shared the worker. The address is claimed by ImportEditorAttributionTest for
+        // the length of a test and answers to nobody the rest of the time.
+        'default_editor' => 'flat-import@example.tld',
     ]);
 
     // Per-worker version storage. Without this, parallel workers share

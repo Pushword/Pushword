@@ -69,6 +69,10 @@ class Configuration implements ConfigurationInterface
               ->defaultValue([])
               ->info('Custom property names to exclude from flat file export and import')
             ->end()
+            ->scalarNode('default_editor')
+              ->defaultNull()
+              ->info("Email of the user a page created by import is attributed to when its file names no editor (default: the site's first super admin)")
+            ->end()
         ->end();
 
         return $treeBuilder;
