@@ -11,7 +11,10 @@ converge. Check the failing test against this dossier before investigating your 
 
 ## Triage order
 
-1. Is the failing test named below? If yes, it is almost certainly pre-existing noise.
+1. Is the failing test named below? A live flake is almost certainly pre-existing noise;
+   a fixed one failing afresh is real — read its post-mortem in
+   [references/resolved.md](references/resolved.md) before starting over, the dead ends
+   are recorded there so they are not walked twice.
 2. Re-run that test **in isolation**. Passing in isolation but failing under load means
    pollution, not a portability bug.
 3. Before blaming a cross-worker race, look for the *class* that poisons it and re-run
@@ -19,128 +22,63 @@ converge. Check the failing test against this dossier before investigating your 
    DB, media, var and flat content dir (`$testBaseDir` carries `w<token>`), so a fixture
    another class destroyed and never restored is the likelier cause — and it reads
    exactly like a race, because paratest distributes by class and only some layouts put
-   the two together. That is what
-   `LinkedDocsScannerTest::testRedirectionIsReportedOnEveryPageLinkingIt` turned out to
-   be: `Flat\Tests\PageSyncTest` imported a redirection.csv without the fixtures' own
-   rows, and `import()` deletes what the csv omits.
-4. Confirm the tests *your* change touches pass deterministically — repeat-run locally,
+   the two together. (`LinkedDocsScannerTest`'s redirection failure was exactly this:
+   `PageSyncTest` imported a redirection.csv omitting the fixtures' rows, and `import()`
+   deletes what the csv omits.)
+4. On CI, before believing several jobs failed at once: the matrix is fail-fast, so one
+   flaked shard cancels its siblings and the whole run reads red — check `conclusion` on
+   the siblings via `gh api repos/:owner/:repo/actions/jobs/<id>`.
+5. Confirm the tests *your* change touches pass deterministically — repeat-run locally,
    then `composer test-mariadb`.
 
-## Known flakes
-
-**`Flat\Tests\Command\ConsumePendingTest` — fixed, no longer a flake.** Four flat
-services hardcoded `%kernel.project_dir%/var`, so every worker shared one
-`var/flat-sync/export-pending.json`: any test touching a page wrote the flag this one
-then read. They take `%pw.var_dir%` now. Treat a fresh failure here as real, and check
-whether a new service reintroduced the hardcoded path.
-
-**`StaticGenerator\Tests\StaticGeneratorTest::testParallelGeneration*`** — output ends
-`SQLSTATE[HY000]: General error: 26 file is not a database`. **The amplifier is fixed;
-treat a fresh occurrence as real.** Read the stack before assuming it is the dev-app DB:
-the connection that fails is Loupe's, opened from `IndexManager::getLoupe()` under
-`StaticSearchSubscriber::onPostGenerate` — the file is the per-worker search index,
-`%pw.var_dir%/search/<host>/loupe.db`, not `test.db`.
-
-Why one damaged file used to redden a whole run: Loupe sets `synchronous = OFF`
-(`LoupeFactory::optimizeSQLiteConnection`), so a writer killed mid-checkpoint leaves
-`loupe.db` with a torn header — and SQLITE_NOTADB is **permanent**, so every later
-process that opened that index failed too. Since the index is built on post-generate,
-each failure took the whole build down with it. That is why the first casualty was
-whichever static test ran first (`CacheClearCommandTest::testCacheClearWarmsFiles` in one
-run) and everything after it fell over the same way, and why the serial batch was the
-victim: it reuses `TEST_TOKEN=1`, i.e. parallel worker 1's var dir, because CI runs both
-batches under one `TEST_RUN_ID`. `IndexManager` now resets an unreadable index instead of
-propagating, so the damage no longer cascades. What *damaged* the file in the first place
-was never caught in the act — it did not reproduce in 4 full local batch pairs.
-
-It once hit both PHP 8.5 jobs while all 8.4 and MariaDB jobs passed, which *looks* like a
-version regression and is not. Note the matrix is fail-fast, so one flaked shard cancels
-its siblings and the whole run reads red — check `conclusion` on the siblings via
-`gh api repos/:owner/:repo/actions/jobs/<id>` before believing four jobs failed.
-
-Locally the same class used to throw `Unable to guess
-"…/public/media/md/2.jpg.<n>.<hash>.tmp" file type` — an image-optimizer temp file caught
-mid-write in the then-shared `public/media` dir. Derivatives are per worker since
-2026-08-05, so a fresh occurrence is real.
-
-**`StaticGeneratorTest::testParallelWorkersPopulateAnOpcacheFileCache` — was never a
-flake.** It failed on the MariaDB job and only there, every run, because that job is the
-only one setup-php gives a usable CLI opcache (`coverage: pcov` shadows it on the others,
-so the test early-returned and passed trivially). Adding `opcache.enable=1` next to
-`opcache.enable_cli=1` in the worker spawn was the obvious cure and did not work — the job
-stayed red. A child on that runner writes nothing to an `opcache.file_cache` dir even with
-every flag set, so the capability the test asserted was never observable there. The test
-now spawns its own probe child and returns early when that child caches nothing, which is
-the only honest precondition: `extension_loaded()` in the test process says nothing about
-what a child can do. A local CLI with opcache still runs the assertion for real, so the
-test keeps its teeth. Treat a fresh failure here as real — it means a probe child *did*
-file-cache and the workers did not.
-
-**Variant races — fixed at the root 2026-08-05, and the five classes that were in
-`serial` for them are parallel again** (`BlockExtensionTest`, `MediaCacheControllerTest`,
-`ImageOptimizerCommandTest`, `EpochSweepIntegrationTest`, `CacheClearCommandTest`). The
-symptom was a render *throwing* on a variant missing at that instant
-(`public/media/xs/piedweb-logo.png not found`, out of `image.html.twig`) because a peer
-was generating or optimising the same file. Derivatives now go to `pw.media_cache_dir`,
-per worker. If one of these flakes again, check the isolation is still wired
-(`PUSHWORD_TEST_MEDIA_CACHE_DIR` reaching the container) before reaching for `serial`.
-
-**A static-generation worker child segfaults — `Worker N failed (exit 139: Segmentation
-violation): no error output`. Fixed 2026-08-05 by dropping the workers' opcache file
-cache.** It took down whichever `StaticGeneratorTest` case was building at
-`assertStringContainsString('success', …)`: the run listed every page it handled, then
-died with no summary. Nothing about those tests was wrong — if it returns, read past the
-assertion to the worker line and do not "fix" the assertion.
-
-The cause was the flags `StaticAppGenerator` spawned each child with:
-`-d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.file_cache=<dir>`. First seen on
-alt-php 8.4.3 and answered by giving each worker its own cache directory; it came back on
-stock 8.4 *and* 8.5 with the directories already unshared, and on the serial batch where
-only one build runs at a time — so sharing was never the whole of it and the flags
-themselves had to go. It was a production crash CI happened to catch: a real
-`pw:static --workers=N` ran with the same flags.
-
-Two dead ends recorded so they are not re-run: it hit `P8.4 - N25` twice and `P8.5 - N25`
-once, which looks like a Node correlation and is not one; and it never reproduced locally,
-at `TEST_PROCESSES=4` or otherwise. Peak memory was 218 MB, so never the memory limit.
-
-**Worth connecting:** the Loupe `file is not a database` entry above says what damaged the
-index "was never caught in the act", and describes exactly a writer killed mid-checkpoint
-with `synchronous = OFF`. A segfaulting worker child is such a writer. Before treating
-these as two problems, check whether a run showing the corruption also shows an exit 139.
+## Live flakes
 
 **`PageScanner\Tests\Api\PageScanApiControllerTest`** — occasionally still flaky.
 
-**`PageScanner\Tests\LinkGraphCommandTest::testAnAllHostsScanLeavesEveryHostReadableOnItsOwn`
-— fixed, no longer a flake.** It failed `null is not null` on line 287 a few runs in ten,
-which reads as "the snapshot was not written" and was nothing of the sort.
-`pw:page-scan` abandons the loop past `--limit` findings (**0 means 500, not "no limit",
-whatever the option description says**) and then deliberately writes *no* snapshot, since
-the graph would be missing the edges of every page it never reached. The whole corpus
-scanned at once sits within a couple of findings of that ceiling — 502 on the dev-app
-today — so which side of 500 a run landed on decided the test. It passes `--limit` now
-and asserts the scan did not stop short. Any new test that scans every host at once owes
-the same, and the assertion to write first is `assertStringNotContainsString('stopping
-scan', …)` — not one about the snapshot.
-
 **`StaticGenerator\Tests\Cache\EpochSweepIntegrationTest::testSnippetEditSweepsThePagesThatRenderIt`
 — seen intermittently, undiagnosed.** Three times on 2026-08-05, on P8.5 and MariaDB
-shards, and never locally. It fails at whichever assertion comes first, which is the tell:
-`getSweptEpoch()` null against a sampled epoch, or the regenerated file missing
-`snippet-v2`. Both say the same thing — the sweep the handler was supposed to run did not
-take — so look at `HostCacheRefreshHandler` no-opping, not at the assertion that caught it.
-
-Two shared-directory suspects are already **ruled out**: the static cache dir
-(`StaticAppGenerator::getCacheDir()`, which `tearDown()` deletes wholesale — the obvious
-cross-worker hazard) and the epoch store (`pw.render_epoch_dir`) are both per-worker,
-routed through `PUSHWORD_TEST_VAR_DIR`. Start from the state manager's own file and the
-debounce, and check the stale-cache cases below before treating a fresh failure as real.
+shards, never locally. It fails at whichever assertion comes first — `getSweptEpoch()`
+null, or the regenerated file missing `snippet-v2` — which is the tell: the sweep the
+handler was supposed to run did not take, so look at `HostCacheRefreshHandler` no-opping,
+not at the assertion that caught it. Already **ruled out**: the static cache dir and the
+epoch store, both per-worker via `PUSHWORD_TEST_VAR_DIR`. Start from the state manager's
+own file and the debounce, and check the stale-cache section below first.
 
 **`PageLockControllerTest::testPingAcquiresLockForEditor`** — not a flake at all. It fails
 whenever *your own browser* has the admin edit screen for page 1 open, because the test
 kernel and dev app share `packages/dev-app/var/page-locks/`. Check whether `lastPingAt` in
 `page_1.json` advances a few seconds apart; a live session's lock has `username: "Admin"`
 while a test-created one uses the email. Close the tab; do not delete the file.
+
+**`AdminMediaPickerTest`** — rare Panther/chromedriver "Could not connect to server" on
+port 95xx. Environmental, unrelated.
+
+## Fixed flakes — a fresh failure is real
+
+One line each; the post-mortems and already-walked dead ends are in
+[references/resolved.md](references/resolved.md).
+
+- `Flat\Tests\Command\ConsumePendingTest` — was a worker-shared
+  `var/flat-sync/export-pending.json`; check first whether a new service reintroduced a
+  hardcoded `%kernel.project_dir%/var`.
+- `StaticGeneratorTest::testParallelGeneration*` ending `SQLSTATE[HY000]: General error:
+  26 file is not a database` — the failing connection is Loupe's per-worker search
+  index, not the dev-app DB; the cascade amplifier is fixed.
+- A static-generation worker child dying `Worker N failed (exit 139: Segmentation
+  violation)` — the workers' opcache file cache is gone; read past the assertion to the
+  worker line, do not "fix" the assertion.
+- `StaticGeneratorTest::testParallelWorkersPopulateAnOpcacheFileCache` — never a flake;
+  it now probes what a child can actually cache and self-skips where CLI opcache is
+  unusable.
+- Variant races — a render throwing `public/media/xs/… not found` out of
+  `image.html.twig` (`BlockExtensionTest`, `MediaCacheControllerTest`,
+  `ImageOptimizerCommandTest`, `EpochSweepIntegrationTest`, `CacheClearCommandTest`) —
+  derivatives are per worker now; check `PUSHWORD_TEST_MEDIA_CACHE_DIR` still reaches
+  the container before reaching for `serial`.
+- `LinkGraphCommandTest::testAnAllHostsScanLeavesEveryHostReadableOnItsOwn` — was the
+  scan hitting `--limit` (**0 means 500, not "no limit"**) and deliberately writing no
+  snapshot. Any new all-hosts scan test owes `--limit` too, and its first assertion is
+  `assertStringNotContainsString('stopping scan', …)`.
 
 ## Failures that look like flakes but are stale caches
 
@@ -183,8 +121,7 @@ which reads as a broken tree and is one wrong `.sqlite`.
 Cross-worker races on a shared directory need real contention: loop
 `vendor/bin/paratest --processes=8` about ten times. Do **not** use `--processes=auto` on
 a high-core machine — it spreads files too thin to collide. For the duplicate-media
-class of failure, `--processes=2` is the deterministic reproducer. (The media derivative
-dir is no longer one of those directories — see above.)
+class of failure, `--processes=2` is the deterministic reproducer.
 
 **To reproduce CI's layout rather than your machine's, `TEST_PROCESSES=4 composer test`.**
 paratest distributes by class, so the worker count decides which classes share a process
@@ -203,8 +140,3 @@ case where it *cannot* work — the compile-time constraint is real but applies 
 `public_media_dir` (it is in route paths), not to the directory the files are written to,
 which is now its own parameter. Check that distinction before accepting "cannot be
 isolated" about anything else.
-
-## Environmental, unrelated
-
-`AdminMediaPickerTest` has a rare Panther/chromedriver "Could not connect to server"
-failure on port 95xx. Environmental.
