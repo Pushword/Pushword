@@ -136,6 +136,11 @@ final class StaticGeneratorTest extends KernelTestCase
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
 
+        // No --workers: the one test that runs the command exactly as a user does, so the
+        // default fan-out (WorkerCountResolver::resolve(0, …)) is exercised end to end.
+        // Everywhere else in this class asks for a worker count explicitly — auto resolves
+        // to one subprocess per page, and 16 kernel boots per generation cost more CPU than
+        // the rest of the class put together.
         $commandTester->execute(['host' => 'localhost.dev', '--format' => 'text']);
 
         // the output of the command in the console
@@ -163,7 +168,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
 
-        $commandTester->execute(['host' => 'localhost.dev', '--format' => 'agent']);
+        $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'agent']);
 
         $output = trim($commandTester->getDisplay());
 
@@ -193,7 +198,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $commandTester = new CommandTester($command);
 
         // First full generation
-        $commandTester->execute(['host' => 'localhost.dev', '--format' => 'text']);
+        $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('success', $output);
@@ -221,7 +226,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $commandTester = $this->rebootStaticCommandTester();
 
         // Second generation with incremental flag
-        $commandTester->execute(['host' => 'localhost.dev', '--incremental' => true, '--format' => 'text']);
+        $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--incremental' => true, '--format' => 'text']);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('success', $output);
@@ -332,7 +337,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $commandTester = new CommandTester($application->find('pw:static'));
 
         // First full generation produces index.html for the homepage.
-        $commandTester->execute(['host' => 'localhost.dev']);
+        $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1]);
 
         $indexFile = $staticDir.'/index.html';
         self::assertFileExists($indexFile);
@@ -1170,7 +1175,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $application = new Application(self::$kernel); // @phpstan-ignore-line
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
-        $commandTester->execute(['host' => 'localhost.dev']);
+        $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1]);
 
         self::assertCount(1, $preEvents, 'StaticPreGenerateEvent should be dispatched once per host');
         self::assertCount(1, $postEvents, 'StaticPostGenerateEvent should be dispatched once per host');
@@ -1268,7 +1273,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $application = new Application(self::$kernel); // @phpstan-ignore-line
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
-        $commandTester->execute(['host' => 'localhost.dev']);
+        $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1]);
 
         self::assertDirectoryDoesNotExist($staleTempDir, 'Stale temp dir should be cleaned up');
         self::assertDirectoryDoesNotExist($staleBackupDir, 'Stale backup dir should be cleaned up');
@@ -1384,7 +1389,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $commandTester = new CommandTester($command);
 
         // First run (full)
-        $commandTester->execute(['host' => 'localhost.dev']);
+        $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1]);
 
         $indexFile = $this->getStaticDir().'/index.html';
         self::assertFileExists($indexFile);
@@ -1400,7 +1405,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $commandTester = $this->rebootStaticCommandTester();
 
         // Incremental run — content is unchanged, file should NOT be rewritten
-        $commandTester->execute(['host' => 'localhost.dev', '--incremental' => true]);
+        $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--incremental' => true]);
 
         clearstatcache();
         $newMtime = filemtime($indexFile);
@@ -1496,7 +1501,9 @@ final class StaticGeneratorTest extends KernelTestCase
             self::assertStringContainsString('success', $tester->getDisplay(), 'Parallel build failed: '.$tester->getDisplay());
 
             $this->cleanupPidFiles();
-            $tester->execute(['host' => 'localhost.dev', '--incremental' => true, '--format' => 'text']);
+            // Stays parallel: this is the one place an incremental run reads state that
+            // parallel workers wrote and merged.
+            $tester->execute(['host' => 'localhost.dev', '--workers' => 2, '--incremental' => true, '--format' => 'text']);
 
             $output = $tester->getDisplay();
             self::assertStringContainsString('success', $output, 'Incremental run failed: '.$output);

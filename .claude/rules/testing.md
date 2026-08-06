@@ -36,6 +36,17 @@ real bugs.
   appends `--env`, because a child inherits `APP_ENV` and PHPUnit does not export it. Without
   it those children ran in dev, against the dev database and the dev app's directories, and
   the test asserting on them was reading someone else's state.
+- **The suite is CPU-bound, not schedule-bound.** The parallel batch burns ~450
+  thread-seconds on 24 threads at ~75% occupancy, so its floor is ~19s and the only real
+  win is *less work*, never better packing. Two levers measured and rejected:
+  `--order-by=duration-descending` (PHPUnit compares a suite's `sortId()` against the
+  result cache, which only holds `Class::method` keys — so every class ties, and it
+  reorders only methods *within* a class, breaking tests that carry an intra-class order
+  dependency) and `--functional` (37s, 16GB peak RSS, and splitting a Panther class across
+  processes collides on its web-server port). What to look for instead is a test that fans
+  out to subprocesses: `StaticGeneratorTest` ran `pw:static` with auto workers, i.e. one
+  kernel-booting subprocess per published page, and cost 116 CPU-seconds — a fifth of the
+  whole suite — until those runs asked for `--workers 1`.
 - **A CLI `--group`/`--exclude-group` discards the whole XML `<groups>` block** — PHPUnit
   replaces that config rather than merging it. `phpunit.xml.dist` excludes `benchmark`,
   so any batch passing a group flag must repeat `--exclude-group=benchmark` or the
