@@ -38,12 +38,16 @@ real bugs.
   the test asserting on them was reading someone else's state.
 - **The suite is CPU-bound, not schedule-bound.** The parallel batch burns ~450
   thread-seconds on 24 threads at ~75% occupancy, so its floor is ~19s and the only real
-  win is *less work*, never better packing. Two levers measured and rejected:
+  win is *less work*, never better packing. Three levers measured and rejected:
   `--order-by=duration-descending` (PHPUnit compares a suite's `sortId()` against the
   result cache, which only holds `Class::method` keys — so every class ties, and it
   reorders only methods *within* a class, breaking tests that carry an intra-class order
-  dependency) and `--functional` (37s, 16GB peak RSS, and splitting a Panther class across
-  processes collides on its web-server port). What to look for instead is a test that fans
+  dependency); forcing longest-first by listing the slow packages before the glob in
+  `phpunit.xml.dist` (0.9s, twice — moving a class earlier adds no capacity to an already
+  saturated start, it only changes who waits, and it reshuffles which classes share a
+  worker, this repo's main flake source); and `--functional` (37s, 16GB peak RSS, and
+  splitting a Panther class across processes collides on its web-server port).
+  What to look for instead is a test that fans
   out to subprocesses: `StaticGeneratorTest` ran `pw:static` with auto workers, i.e. one
   kernel-booting subprocess per published page, and cost 116 CPU-seconds — a fifth of the
   whole suite — until those runs asked for `--workers 1`.
