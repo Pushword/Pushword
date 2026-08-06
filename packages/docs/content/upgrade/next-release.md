@@ -1,5 +1,5 @@
 ---
-title: "the link panel's style options are named in English so they can be translated; the static build's workers drop the opcache file cache that was killing them; link-improver counts a page's links once, so a site whose links are written absolute gets the density it configured; a flat file edited in the same second as a sync is no longer lost"
+title: "the link panel's style options are named in English so they can be translated; the static build's workers drop the opcache file cache that was killing them; link-improver counts a page's links once, so a site whose links are written absolute gets the density it configured; a flat file edited in the same second as a sync is no longer lost; SQLite enforces the schema's foreign keys and makes a concurrent writer wait rather than fail"
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,8 +35,23 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin-block-editor`, `pushword/flat`,
+**Concerns:** `pushword/admin-block-editor`, `pushword/core`, `pushword/flat`,
 `pushword/link-improver`, `pushword/static-generator`
+
+## SQLite enforces the schema's foreign keys, and a second writer waits
+
+SQLite opened every connection with `foreign_keys=OFF`, so the `ON DELETE CASCADE` the
+schema declares did nothing: deleting a media or a user left its rows behind. The pragma
+is on now, and `doctrine:schema:update` turns it back off for its table rebuilds. A
+`busy_timeout` of 5 s comes with it, so a background task writing at the same time as a
+request queues instead of failing with `database is locked`.
+
+**Affects every SQLite site.** Rows orphaned before the upgrade stay until you drop them —
+what the check reports is safe to delete:
+
+```shell
+php bin/console dbal:run-sql 'SELECT * FROM pragma_foreign_key_check()'
+```
 
 ## A flat file edited in the same second as a sync is no longer lost
 

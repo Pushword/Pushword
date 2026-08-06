@@ -83,9 +83,12 @@ real bugs.
   returns `false` — the client already consumed the stream.
 - **Status 200 is not an assertion.** A wrong Twig block name renders nothing and still
   returns 200. Assert on the rendered HTML.
-- **MariaDB** (`composer test-mariadb`) is the only way FK-ordering bugs surface — SQLite
-  does not enforce foreign keys. When triaging a MariaDB failure, re-run the test in
-  isolation first; if it passes, it is parallel pollution, not a portability bug.
+- **SQLite enforces foreign keys too, since 2026-08-06** (`SqliteConnectionPragmas`), so
+  an FK-ordering bug now fails the default suite rather than only `composer test-mariadb`.
+  The pragma is lifted for `doctrine:schema:` commands only — SQLite rebuilds a table by
+  dropping it, which would cascade every child row away. When triaging a MariaDB failure,
+  re-run the test in isolation first; if it passes, it is parallel pollution, not a
+  portability bug.
 - **`interface_exists()` guards can never be exercised in-repo.** Every class is PSR-4
   autoloadable regardless of which bundle is registered, and the dev-app boots them all,
   so those guards are always true under PHPUnit. Only the registration-based branch
