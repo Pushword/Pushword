@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+                <title>Upgrade a Pushword installation | Changelog</title>
+        <link>https://pushword.piedweb.com/upgrade</link>
+        <description><![CDATA[]]></description>
+        <atom:link
+            href="https://pushword.piedweb.com/upgrade.xml"
+            rel="self"
+            type="application/rss+xml"
+        />
+                                                            <item>
+                    <title><![CDATA[Upgrade to 1.0.0-rc79]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/rc79</link>
+                    <guid>https://pushword.piedweb.com/upgrade/rc79</guid>
+                    <pubDate>Thu, 28 Aug 2025 12:00:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade to 1.0.0-rc80]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/rc80</link>
+                    <guid>https://pushword.piedweb.com/upgrade/rc80</guid>
+                    <pubDate>Fri, 07 Nov 2025 12:00:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade to 1.0.0-rc247]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/rc247</link>
+                    <guid>https://pushword.piedweb.com/upgrade/rc247</guid>
+                    <pubDate>Thu, 11 Dec 2025 12:00:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade to 1.0.0-rc294]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/rc294</link>
+                    <guid>https://pushword.piedweb.com/upgrade/rc294</guid>
+                    <pubDate>Fri, 12 Dec 2025 12:00:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade to 1.0.0-rc333]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/rc333</link>
+                    <guid>https://pushword.piedweb.com/upgrade/rc333</guid>
+                    <pubDate>Fri, 16 Jan 2026 14:40:00 +0000</pubDate>
+                </item>
+                            
+    </channel>
+</rss>
