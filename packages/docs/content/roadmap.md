@@ -15,7 +15,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 ## Set aside (for now) and known issues
 
 - md/editorjs/media -> audio (no need for know)
--
+
 - **Complex Right System** : Multi-user editor Multi-site but not everybody can edit everything (extension or core ?) ➜ `Plans/scoped-permissions.md`
 
 - [Core] **pagination** : documentée dans `/pages-list`, reste le format d'URL
