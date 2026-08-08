@@ -489,8 +489,10 @@ describe('a collapsible group exports the show-more call', () => {
   })
 
   /** The background is only ever written by hand: losing it on open would be silent. */
-  it('round-trips a background set on the closing call', () => {
-    const source = "{{ endShowMore('via-gray-100 to-gray-100') }}"
+  it.each([
+    "{{ endShowMore('via-gray-100 to-gray-100') }}",
+    "{{ endShowMore(showMoreBackground: 'via-gray-100 to-gray-100') }}",
+  ])('round-trips %s', (source) => {
     const { data } = captureInsert(GroupEnd.importFromMarkdown, source)
 
     expect(GroupEnd.exportToMarkdown(data)).toBe(source)
@@ -500,17 +502,20 @@ describe('a collapsible group exports the show-more call', () => {
     '{{ endShowMore() }}',
     "{{ endShowMore('via-white to-white') }}",
     "{{ endShowMore(null, 'an-id') }}",
+    "{{ endShowMore(id: 'an-id') }}",
     '<!--end-show-more-->',
   ])('claims %s as a closer', (markdown) => {
     expect(GroupEnd.isItMarkdownExported(markdown)).toBe(true)
   })
 
-  it.each(['{{ endShowMore(background) }}', '{{ endShowMoreThing() }}', '{# <!--end-show-more--> #}'])(
-    'leaves %s to other tools',
-    (markdown) => {
-      expect(GroupEnd.isItMarkdownExported(markdown)).toBe(false)
-    },
-  )
+  it.each([
+    '{{ endShowMore(background) }}',
+    "{{ endShowMore(showMoreBg: 'via-white') }}", // not a parameter it has
+    '{{ endShowMoreThing() }}',
+    '{# <!--end-show-more--> #}',
+  ])('leaves %s to other tools', (markdown) => {
+    expect(GroupEnd.isItMarkdownExported(markdown)).toBe(false)
+  })
 })
 
 describe('the legacy comment pair is given back unchanged', () => {
@@ -554,6 +559,9 @@ describe('GroupStart claims the show-more spellings', () => {
   it.each([
     '{{ startShowMore(page.slug) }}', // a variable: we could not write it back
     "{{ startShowMore('a', 'b', 'c') }}",
+    // A name the function does not have. Claiming it would export the call without
+    // that argument, deleting what the author typed to fix a render error.
+    "{{ startShowMore(showMoreExtraClasse: 'mt-8') }}",
     '{{ startShowMoreThing() }}',
     '{# <!--start-show-more--> #}', // an author disabling a block
     '<!--start-show-more--> and more',
@@ -596,6 +604,16 @@ describe('GroupStart claims the show-more spellings', () => {
     )
 
     expect(data).toEqual({ anchor: 'faq', class: 'mt-8', collapsible: true, legacy: false })
+  })
+
+  it.each([
+    "{{ startShowMore('faq') }}",
+    "{{ startShowMore('faq', 'mt-8') }}",
+    "{{ startShowMore(showMoreExtraClass: 'mt-8') }}",
+  ])('round-trips %s', (source) => {
+    const { data } = captureInsert(GroupStart.importFromMarkdown, source)
+
+    expect(GroupStart.exportToMarkdown(data)).toBe(source)
   })
 
   /** A colon inside a quoted class is not an argument name. */

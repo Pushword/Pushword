@@ -19,14 +19,24 @@ export type GroupSyntax = 'div' | 'twig' | 'comment'
 /** A Twig scalar we are willing to read back: no variables, no expressions. */
 const LITERAL = String.raw`(?:null|'[^']*'|"[^"]*")`
 
+/**
+ * The two signatures, in order. A name outside them is not one of ours: the line
+ * stays Raw rather than being claimed and re-exported without it.
+ */
+const START_PARAMETERS = ['id', 'showMoreExtraClass']
+
+const END_PARAMETERS = ['showMoreBackground', 'id']
+
 /** A literal, optionally named — `'mt-8'` or `showMoreExtraClass: 'mt-8'`. */
-const ARGUMENT = String.raw`(?:([a-zA-Z_]\w*)\s*:\s*)?(${LITERAL})`
+const argument = (parameters: string[]): string =>
+  String.raw`(?:(${parameters.join('|')})\s*:\s*)?(${LITERAL})`
 
-/** Up to two arguments, or none. */
-const ARGUMENTS = String.raw`\s*(?:${ARGUMENT}(?:\s*,\s*${ARGUMENT})?\s*)?`
+/** `{{ name(…) }}` taking up to two of its own arguments, or none. */
+const twigCall = (name: string, parameters: string[]): RegExp => {
+  const one = argument(parameters)
 
-const twigCall = (name: string): RegExp =>
-  new RegExp(String.raw`^\{\{\s*${name}\(${ARGUMENTS}\)\s*\}\}$`)
+  return new RegExp(String.raw`^\{\{\s*${name}\(\s*(?:${one}(?:\s*,\s*${one})?\s*)?\)\s*\}\}$`)
+}
 
 /** A lone `<div>` line whose only attributes are id/class; anything richer stays Raw. */
 const DIV_START = /^<div(?:\s+(?:id|class)="[^"]*")*\s*>$/
@@ -37,9 +47,9 @@ const COMMENT_START = /^<!--start-show-more-->$/
 
 const COMMENT_END = /^<!--end-show-more-->$/
 
-const TWIG_START = twigCall('startShowMore')
+const TWIG_START = twigCall('startShowMore', START_PARAMETERS)
 
-const TWIG_END = twigCall('endShowMore')
+const TWIG_END = twigCall('endShowMore', END_PARAMETERS)
 
 /** The spelling of an opening line, or null when no tool should claim it. */
 export function startSyntax(markdown: string): GroupSyntax | null {
@@ -73,26 +83,23 @@ function callBody(markdown: string): string {
 }
 
 /**
- * The arguments of a `{{ name(…) }}` call, placed in the order `parameters` declares
- * them: a named one goes to its own slot, an unnamed one to the next free slot, and a
- * slot nobody filled stays null — as does an explicit `null`.
+ * The arguments of a claimed call, placed in the order `parameters` declares them:
+ * a named one goes to its own slot, an unnamed one to the next free slot, and a slot
+ * nobody filled stays null — as does an explicit `null`.
  */
 function callArguments(markdown: string, parameters: string[]): (string | null)[] {
   const values: (string | null)[] = parameters.map(() => null)
   let next = 0
 
-  for (const [, name, literal] of callBody(markdown).matchAll(new RegExp(ARGUMENT, 'g'))) {
+  for (const [, name, literal] of callBody(markdown).matchAll(
+    new RegExp(argument(parameters), 'g'),
+  )) {
     const at = undefined === name ? next++ : parameters.indexOf(name)
-    if (at < 0 || at >= values.length) continue
-
     values[at] = 'null' === literal ? null : literal.slice(1, -1)
   }
 
   return values
 }
-
-/** `startShowMore`'s own signature, so a named argument lands in the right slot. */
-const START_PARAMETERS = ['id', 'showMoreExtraClass']
 
 /** The anchor and the wrapper class an opening call carries. */
 export function startCallArguments(markdown: string): (string | null)[] {
