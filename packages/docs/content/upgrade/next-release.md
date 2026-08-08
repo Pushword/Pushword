@@ -1,5 +1,5 @@
 ---
-title: 'the show-more calls accept named arguments, and the editor writes them'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,12 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin`, `pushword/admin-block-editor`
-
-## The show-more calls accept named arguments
-
-`{{ startShowMore(showMoreExtraClass: 'mt-8') }}` is read as a collapsible group, and is
-what the editor writes when the group carries a class but no anchor. A call naming an
-argument the function does not have stays a Raw block instead of being re-exported
-without it. Nothing to do.
