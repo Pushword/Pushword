@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc852](/upgrade/rc852) | `admin` `admin-block-editor` `conversation` `core` `js-helper` | a group can be made collapsible from the block editor, and the legacy show-more markers are parsed, paired and convertible |
 | [rc851](/upgrade/rc851) | `quiz` | the quiz question list opts out of the host's prose styling |
 | [rc850](/upgrade/rc850) | `admin` `core` `flat` | saving a page in the admin without editing it no longer counts as an edit; a page imported from a flat file gets an author, and editing a page no longer claims its authorship |
 | [rc849](/upgrade/rc849) | `admin-block-editor` `core` `flat` | the link panel's style options are named in English so they can be translated; the static build's workers drop the opcache file cache that was killing them; link-improver counts a page's links once, so a site whose links are written absolute gets the density it configured; a flat file edited in the same second as a sync is no longer lost; SQLite enforces the schema's foreign keys and makes a concurrent writer wait rather than fail |

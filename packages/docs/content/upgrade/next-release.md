@@ -1,5 +1,5 @@
 ---
-title: 'a group can be made collapsible from the block editor, and the legacy show-more markers are parsed, paired and convertible'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -14,104 +14,23 @@ a site that upgrades: a command to run, a config key to set, a template to copy,
 behaviour that changed under an unchanged call. A change `composer update` fully
 absorbs needs no note.
 
+Keep it short: what changed, and what to do about it. A note is a checklist, not a
+changelog and not a post-mortem — no cause, no code path, no story of the bug. That
+belongs in the feature doc, which you link to instead.
+
 - `title:` — the "What changed" cell of the index table. One line, lower case,
   written from the site's side ("the newsletter form is fetched, and CSRF-protected")
-  rather than the diff's ("refactor NewsletterFormController"). Required as soon as
-  the note has a section; the release stops if it is still empty.
+  rather than the diff's ("refactor NewsletterFormController"). Several changes: one
+  short clause each, semicolon-separated, naming only those that ask something.
+  Required as soon as the note has a section; the release stops if it is still empty.
 - `run:` — the command(s) the release expects, without `php bin/console`. Omit the
   key when there is none. A list runs in the order given.
 - `**Concerns:**` — first line of the body, listing every package a site has to
   install to be affected. Alphabetical, full composer names, `@pushword/js-helper`
   last. Add the packages your change touches to the line, keep the others.
-- One `##` section per change, saying what breaks and what to do about it.
+- One `##` section per change, five lines at most: one sentence for what changed, a
+  bold line for who is affected when only some sites are, then the action — a command,
+  a config key, an edit to make. Nothing to do: say so in the sentence and stop.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-
-**Concerns:** `pushword/admin`, `pushword/admin-block-editor`, `pushword/conversation`, `pushword/core`, `@pushword/js-helper`
-
-## A group can be made collapsible
-
-The block editor's **Group** block gains a **Collapsible** checkbox. Unchecked it is the
-`<div>` wrapper it always was; checked it exports `{{ startShowMore() }}` /
-`{{ endShowMore() }}` — the read-more block — carrying its anchor as the block id and its
-class on the show-more wrapper.
-
-That wrapper holds the toggle, the content and the button, so **layout classes do not
-belong there**: for a collapsible grid, nest a plain group inside a collapsible one. The
-class field says which of the two it is aiming at.
-
-Nothing to do, unless you ship your own `editorjs_widget.html.twig` — there is no new tool
-to declare, `groupStart` and `groupEnd` are the same two.
-
-## The legacy `<!--start-show-more-->` markers show up as blocks
-
-Bodies written before `{{ startShowMore() }}` existed are read as Group blocks with the
-box ticked, and **written back as the comments they were** — opening a page never rewrites
-them. Give one an anchor or a class and it upgrades to the Twig call, the only spelling
-able to carry them.
-
-To convert them deliberately:
-
-```bash
-php bin/console pw:show-more:convert --dry-run   # what would change
-php bin/console pw:show-more:convert
-```
-
-It rewrites paired markers and puts them on lines of their own — a marker glued to the
-paragraph above it is not a block the editor can show. Markers with no partner, or inside
-a fenced code block, are left alone and reported.
-
-## Show-more ids derive from the page, not from its content
-
-They were an MD5 of the wrapped text, so **every edit gave the block a new id** — losing
-the "already opened" memory `ShowMore.js` keeps in `localStorage`, and rewriting the file
-on a static build. They now come from the page slug and a counter, as
-`{{ startShowMore() }}` already did.
-
-Ids therefore change once, on the first render after upgrading. Nothing to do: the
-markdown fragment pool is keyed on the rendered text, so the new ids simply miss it and
-render fresh.
-
-## The review list stops poisoning the markdown cache
-
-`{{ reviews() }}` folded itself past the second review using a copy of the show-more
-markup with an id drawn from `random()`. Since the call is written in page bodies, that
-random id was baked into the block text the fragment pool is keyed on: **every render of
-every page holding it wrote a new entry nothing would ever read back**. One real site had
-grown a 275 MB pool with a 0% hit rate on those pages, and its static build rewrote them
-on every run.
-
-It now calls `startShowMore()`, which resolves your own
-`/component/show_more.html.twig` — the copy hardcoded `@Pushword`, so a site that had
-overridden the component was not getting it here.
-
-Reclaim the space the old entries took, once:
-
-```bash
-rm -rf var/cache/pushword-pools
-```
-
-If you override `conversation/reviewList.html.twig`, apply the same change: drop the
-`{% set id = 'sh-' ~ random(...) %}` and the `{% use %}`, and call `{{ startShowMore() }}`
-/ `{{ endShowMore() }}` where it emitted `{{ block('before') }}` / `{{ block('after') }}`.
-An override already calling the functions has the same fix — drop the id and name the
-argument you do pass, `{{ startShowMore(showMoreExtraClass: '…') }}`, letting
-`endShowMore()` take the id off the open stack. Its first argument is
-the background, not the id: `{{ endShowMore(id) }}` puts that id in the gradient's class
-list, which only goes unnoticed when your `show_more.html.twig` sets the background itself.
-
-## Read-more fixes
-
-- **Nested blocks work.** The comment filter emitted one opening tag and as many closing
-  ones as the body held, and `endShowMore()` kept a single id rather than a stack.
-- **A `<!--end-show-more-->` with no opener no longer collapses the page above it**, and a
-  marker on the very first line of a body is no longer ignored.
-- **Markers inside a fenced code block are left alone**, so a page documenting the syntax
-  reads as written.
-- **Deep links and Ctrl+F open every enclosing block**, not just the innermost one — a
-  target inside a nested block was scrolled to while still hidden.
-- **`Twig\ShowMore` resets between requests.** In worker mode (FrankenPHP) and in one
-  process rendering many pages, the second page numbered its blocks from where the first
-  stopped.
