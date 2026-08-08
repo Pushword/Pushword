@@ -112,10 +112,15 @@ final readonly class EditorJsMessages
                     ...self::MEDIA,
                     'Ce média est déjà présent dans la galerie.' => 'editorMediaAlreadyInGallery',
                 ]),
-                'groupEnd' => $this->translate(['End of group' => 'editorGroupEnd']),
+                'groupEnd' => $this->translate([
+                    'End of collapsible' => 'editorCollapsibleEnd',
+                    'End of group' => 'editorGroupEnd',
+                ]),
                 'groupStart' => $this->translate([
                     'Anchor' => 'editorAnchor',
                     'Class' => 'editorClass',
+                    'Class of the collapsible' => 'editorCollapsibleClass',
+                    'Collapsible' => 'editorCollapsible',
                     'Group' => 'editorGroup',
                 ]),
                 'header' => $this->translate(['Heading' => 'editorHeading']),

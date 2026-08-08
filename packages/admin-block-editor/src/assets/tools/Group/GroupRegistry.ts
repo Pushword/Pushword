@@ -1,4 +1,11 @@
-import { API } from '@editorjs/editorjs'
+import { API, BlockAPI } from '@editorjs/editorjs'
+import { GroupKind } from './GroupSyntax'
+
+interface Marker {
+  id: string
+  name: string
+  kind?: GroupKind
+}
 
 /**
  * Pairs groupStart/groupEnd markers by document order (stack matching, so
@@ -45,26 +52,44 @@ export class GroupRegistry {
     })
   }
 
-  /** Stack-match marker ids in document order; unmatched markers pair with nothing. */
-  static computePairs(markers: { id: string; name: string }[]): Map<string, string> {
+  /**
+   * Push data onto the partner marker. A pair has to be spelled the same on both
+   * sides, and the closing marker is a block of its own: nothing else would tell
+   * it that the group it closes just became collapsible, or stopped being.
+   */
+  static updatePartnerOf(api: API, blockId: string, data: Record<string, unknown>): void {
+    const partnerId = GroupRegistry.pairs.get(blockId)
+    if (partnerId === undefined) return
+
+    void api.blocks.update(partnerId, data)
+  }
+
+  /**
+   * Stack-match marker ids in document order; unmatched markers pair with
+   * nothing. A start only ever pairs with a closer of its own kind: crossed
+   * ranges — a plain group opened inside a collapsible one and closed outside it —
+   * leave both markers unpaired, so deleting one never drags away a marker that
+   * belongs to the other.
+   */
+  static computePairs(markers: Marker[]): Map<string, string> {
     const pairs = new Map<string, string>()
-    const openStarts: string[] = []
+    const openStarts: Marker[] = []
     for (const marker of markers) {
       if (marker.name === GroupRegistry.START) {
-        openStarts.push(marker.id)
+        openStarts.push(marker)
       } else if (marker.name === GroupRegistry.END) {
-        const startId = openStarts.pop()
-        if (startId !== undefined) {
-          pairs.set(startId, marker.id)
-          pairs.set(marker.id, startId)
+        const start = openStarts.pop()
+        if (start !== undefined && (start.kind ?? 'div') === (marker.kind ?? 'div')) {
+          pairs.set(start.id, marker.id)
+          pairs.set(marker.id, start.id)
         }
       }
     }
     return pairs
   }
 
-  private static markerList(api: API): { id: string; name: string }[] {
-    const markers: { id: string; name: string }[] = []
+  private static markerList(api: API): Marker[] {
+    const markers: Marker[] = []
     const count = api.blocks.getBlocksCount()
     for (let i = 0; i < count; i++) {
       const block = api.blocks.getBlockByIndex(i)
@@ -72,10 +97,20 @@ export class GroupRegistry {
         block !== undefined &&
         (block.name === GroupRegistry.START || block.name === GroupRegistry.END)
       ) {
-        markers.push({ id: block.id, name: block.name })
+        markers.push({ id: block.id, name: block.name, kind: GroupRegistry.kindRendered(block) })
       }
     }
     return markers
+  }
+
+  /**
+   * What the marker wraps, read from what it rendered — the block data is not
+   * reachable synchronously, and pairing runs on every edit.
+   */
+  private static kindRendered(block: BlockAPI): GroupKind {
+    const marker = block.holder?.querySelector('.pw-group-start, .pw-group-end')
+
+    return 'showMore' === marker?.getAttribute('data-pw-group-kind') ? 'showMore' : 'div'
   }
 
   /**

@@ -2,20 +2,22 @@
     <!-- <p class="text-sm text-gray-500 italic text-center">{% trans %}conversationReviewEmpty{% endtrans %}</p> -->
 {% endif %}
 
-{% set id = 'sh-' ~ random(1000, 9999) %}
-{% use '@Pushword/component/show_more.html.twig' %}
-
 {% set reviewsLength = reviews|length %}
 <div class="not-prose" id="{{ 'reviewList'|trans() }}">
   {% for message in reviews %}
+    {# Reviews past the second are folded away. startShowMore() resolves the site's
+       own show_more template and derives a stable id from the page, where a local
+       copy of the markup could do neither — and an id drawn at random gave the
+       block a new one on every render, so a page holding {{ reviews() }} never hit
+       the markdown fragment cache and never rendered the same bytes twice. #}
     {% if loop.index == 2 and reviewsLength > 2 %}
-      {{ block('before') }}
+      {{ startShowMore() }}
     {% endif %}
     {% include view('/conversation/review.html.twig', '@PushwordConversation') with {
       review: message,
     } %}
     {% if loop.last and loop.index >= 2 and reviewsLength > 2 %}
-      {{ block('after') }}
+      {{ endShowMore() }}
     {% endif %}
   {% endfor %}
 </div>

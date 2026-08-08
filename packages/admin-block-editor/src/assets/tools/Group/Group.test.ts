@@ -17,6 +17,7 @@ function apiStub(blocks: { id: string; name: string }[]) {
   const list = [...blocks]
   const deleted: string[] = []
   const inserted: { type: string; index: number }[] = []
+  const updated: { id: string; data: unknown }[] = []
   const api = {
     blocks: {
       getBlocksCount: () => list.length,
@@ -31,24 +32,28 @@ function apiStub(blocks: { id: string; name: string }[]) {
         inserted.push({ type, index })
         list.splice(index, 0, { id: `new-${type}-${inserted.length}`, name: type })
       },
+      update: (id: string, data: unknown) => {
+        updated.push({ id, data })
+        return Promise.resolve()
+      },
     },
     i18n: { t: (key: string) => key },
   } as any
-  return { api, list, deleted, inserted }
+  return { api, list, deleted, inserted, updated }
 }
 
 /** Flush the deferred pairing/cascade work (plain setTimeout, no rAF). */
 const tick = () => new Promise((resolve) => setTimeout(resolve, 1))
 
 /** Drive an importFromMarkdown and return what would be inserted. */
-function captureInsert(
+function captureInsert<T = GroupStartData>(
   importer: (editor: any, markdown: string) => void,
   markdown: string,
-): { type: string; data: GroupStartData } {
-  let captured: { type: string; data: GroupStartData } | null = null
+): { type: string; data: T } {
+  let captured: { type: string; data: T } | null = null
   const editor = {
     blocks: {
-      insert: (type: string, data: GroupStartData) => {
+      insert: (type: string, data: T) => {
         captured = { type, data }
         return { id: 'block-id' }
       },
@@ -114,14 +119,14 @@ describe('GroupStart.importFromMarkdown', () => {
     )
 
     expect(type).toBe('groupStart')
-    expect(data).toEqual({ anchor: 'faq', class: 'grid md:grid-cols-2' })
+    expect(data).toEqual({ anchor: 'faq', class: 'grid md:grid-cols-2', collapsible: false, legacy: false })
   })
 
   it('imports a bare wrapper with both keys present', () => {
     const { data } = captureInsert(GroupStart.importFromMarkdown, '<div>')
 
     // keys must be present: empty data means "fresh toolbox insertion"
-    expect(data).toEqual({ anchor: '', class: '' })
+    expect(data).toEqual({ anchor: '', class: '', collapsible: false, legacy: false })
   })
 
   it('round-trips through export', () => {
@@ -402,7 +407,7 @@ describe('GroupStart inputs', () => {
 
     type(element, '.pw-group-anchor', 'My Anchor!')
 
-    expect(tool.save()).toEqual({ anchor: 'MyAnchor', class: 'grid' })
+    expect(tool.save()).toEqual({ anchor: 'MyAnchor', class: 'grid', collapsible: false, legacy: false })
   })
 
   it('strips characters that would escape the class attribute', () => {
@@ -410,7 +415,7 @@ describe('GroupStart inputs', () => {
 
     type(element, '.pw-group-class', 'a" onclick="x')
 
-    expect(tool.save()).toEqual({ anchor: '', class: 'a onclick=x' })
+    expect(tool.save()).toEqual({ anchor: '', class: 'a onclick=x', collapsible: false, legacy: false })
   })
 })
 
@@ -449,5 +454,380 @@ describe('GroupRegistry decoration', () => {
       true,
       false,
     ])
+  })
+})
+
+// ─── the collapsible variant (show-more) ──────────────────────────────────────
+
+describe('a collapsible group exports the show-more call', () => {
+  const collapsible = (data: Partial<GroupStartData>): string =>
+    GroupStart.exportToMarkdown({ anchor: '', class: '', collapsible: true, ...data })
+
+  it('carries the anchor as the block id and the class as the wrapper class', () => {
+    expect(collapsible({})).toBe('{{ startShowMore() }}')
+    expect(collapsible({ anchor: 'faq' })).toBe("{{ startShowMore('faq') }}")
+    expect(collapsible({ anchor: 'faq', class: 'mt-8' })).toBe("{{ startShowMore('faq', 'mt-8') }}")
+  })
+
+  /** `''` is a real id to the Twig signature, and every block would share it. */
+  it('names the class rather than passing an empty id before it', () => {
+    expect(collapsible({ class: 'mt-8' })).toBe("{{ startShowMore(showMoreExtraClass: 'mt-8') }}")
+  })
+
+  it('strips what would close the Twig string literal', () => {
+    // The quotes are gone, so the class can no longer end the literal it sits in.
+    expect(collapsible({ class: "a') }}{{ dump(" })).toBe(
+      "{{ startShowMore(showMoreExtraClass: 'a) }}{{ dump(') }}",
+    )
+  })
+
+  it('closes with endShowMore, keeping arguments the author wrote', () => {
+    expect(GroupEnd.exportToMarkdown({ collapsible: true })).toBe('{{ endShowMore() }}')
+    expect(GroupEnd.exportToMarkdown({ collapsible: true, args: "'via-gray-100 to-gray-100'" })).toBe(
+      "{{ endShowMore('via-gray-100 to-gray-100') }}",
+    )
+  })
+
+  /** The background is only ever written by hand: losing it on open would be silent. */
+  it('round-trips a background set on the closing call', () => {
+    const source = "{{ endShowMore('via-gray-100 to-gray-100') }}"
+    const { data } = captureInsert(GroupEnd.importFromMarkdown, source)
+
+    expect(GroupEnd.exportToMarkdown(data)).toBe(source)
+  })
+
+  it.each([
+    '{{ endShowMore() }}',
+    "{{ endShowMore('via-white to-white') }}",
+    "{{ endShowMore(null, 'an-id') }}",
+    '<!--end-show-more-->',
+  ])('claims %s as a closer', (markdown) => {
+    expect(GroupEnd.isItMarkdownExported(markdown)).toBe(true)
+  })
+
+  it.each(['{{ endShowMore(background) }}', '{{ endShowMoreThing() }}', '{# <!--end-show-more--> #}'])(
+    'leaves %s to other tools',
+    (markdown) => {
+      expect(GroupEnd.isItMarkdownExported(markdown)).toBe(false)
+    },
+  )
+})
+
+describe('the legacy comment pair is given back unchanged', () => {
+  it('exports back as the comment it was read from', () => {
+    expect(
+      GroupStart.exportToMarkdown({ anchor: '', class: '', collapsible: true, legacy: true }),
+    ).toBe('<!--start-show-more-->')
+    expect(GroupEnd.exportToMarkdown({ collapsible: true, legacy: true })).toBe(
+      '<!--end-show-more-->',
+    )
+  })
+
+  /** The comment holds nothing, so anything typed into the fields upgrades the pair. */
+  it('upgrades to the Twig call as soon as it carries an anchor or a class', () => {
+    expect(
+      GroupStart.exportToMarkdown({ anchor: 'faq', class: '', collapsible: true, legacy: true }),
+    ).toBe("{{ startShowMore('faq') }}")
+  })
+
+  it('round-trips an untouched pair byte for byte', () => {
+    const { data } = captureInsert(GroupStart.importFromMarkdown, '<!--start-show-more-->')
+
+    expect(GroupStart.exportToMarkdown(data)).toBe('<!--start-show-more-->')
+  })
+})
+
+describe('GroupStart claims the show-more spellings', () => {
+  it.each([
+    '{{ startShowMore() }}',
+    "{{ startShowMore('faq') }}",
+    "{{ startShowMore('faq', 'mt-8') }}",
+    '{{ startShowMore(null, "mt-8") }}',
+    "{{ startShowMore(showMoreExtraClass: 'mt-8') }}",
+    "{{ startShowMore(id: 'faq') }}",
+    '{{startShowMore()}}',
+    '<!--start-show-more-->',
+  ])('claims %s', (markdown) => {
+    expect(GroupStart.isItMarkdownExported(markdown)).toBe(true)
+  })
+
+  it.each([
+    '{{ startShowMore(page.slug) }}', // a variable: we could not write it back
+    "{{ startShowMore('a', 'b', 'c') }}",
+    '{{ startShowMoreThing() }}',
+    '{# <!--start-show-more--> #}', // an author disabling a block
+    '<!--start-show-more--> and more',
+  ])('leaves %s to other tools', (markdown) => {
+    expect(GroupStart.isItMarkdownExported(markdown)).toBe(false)
+  })
+
+  it('parses the call arguments into the anchor and the class', () => {
+    const { data } = captureInsert(
+      GroupStart.importFromMarkdown,
+      "{{ startShowMore('faq', 'mt-8') }}",
+    )
+
+    expect(data).toEqual({ anchor: 'faq', class: 'mt-8', collapsible: true, legacy: false })
+  })
+
+  it('reads a null id as no anchor', () => {
+    const { data } = captureInsert(
+      GroupStart.importFromMarkdown,
+      "{{ startShowMore(null, 'mt-8') }}",
+    )
+
+    expect(data).toEqual({ anchor: '', class: 'mt-8', collapsible: true, legacy: false })
+  })
+
+  /** A named argument is the readable way to pass the class alone, so it must read back. */
+  it('places a named argument by its name, not by its position', () => {
+    const { data } = captureInsert(
+      GroupStart.importFromMarkdown,
+      "{{ startShowMore(showMoreExtraClass: 'mt-8') }}",
+    )
+
+    expect(data).toEqual({ anchor: '', class: 'mt-8', collapsible: true, legacy: false })
+  })
+
+  it('reads an anchor named out of order', () => {
+    const { data } = captureInsert(
+      GroupStart.importFromMarkdown,
+      "{{ startShowMore(showMoreExtraClass: 'mt-8', id: 'faq') }}",
+    )
+
+    expect(data).toEqual({ anchor: 'faq', class: 'mt-8', collapsible: true, legacy: false })
+  })
+
+  /** A colon inside a quoted class is not an argument name. */
+  it('does not read a colon inside a literal as a name', () => {
+    const { data } = captureInsert(
+      GroupStart.importFromMarkdown,
+      "{{ startShowMore('faq', 'lg:mt-8') }}",
+    )
+
+    expect(data).toEqual({ anchor: 'faq', class: 'lg:mt-8', collapsible: true, legacy: false })
+  })
+})
+
+describe('a group and a collapsible never close each other', () => {
+  const tools = [
+    { name: GroupRegistry.START, constructable: GroupStart },
+    { name: GroupRegistry.END, constructable: GroupEnd },
+    { name: 'codeBlock', constructable: CodeBlock },
+    { name: 'paragraph', constructable: Paragraph },
+    { name: 'raw', constructable: Raw },
+  ] as any[]
+
+  const classify = (markdown: string): string[] => {
+    const nesting = new GroupNesting()
+    return MarkdownUtils.chunkMarkdown(markdown).map(
+      (chunk) => chunkTool(tools, chunk.text, nesting)?.name ?? 'none',
+    )
+  }
+
+  it('imports a comment pair as markers', () => {
+    expect(classify('<!--start-show-more-->\n\ntext\n\n<!--end-show-more-->')).toEqual([
+      GroupRegistry.START,
+      'paragraph',
+      GroupRegistry.END,
+    ])
+  })
+
+  it('imports a Twig pair as markers', () => {
+    expect(classify("{{ startShowMore('faq') }}\n\ntext\n\n{{ endShowMore() }}")).toEqual([
+      GroupRegistry.START,
+      'paragraph',
+      GroupRegistry.END,
+    ])
+  })
+
+  it('leaves a collapsible closer with nothing open Raw', () => {
+    expect(classify('<!--end-show-more-->\n\ntext')).toEqual(['raw', 'paragraph'])
+  })
+
+  /** A `</div>` must not close a collapsible, nor the reverse: both stay Raw. */
+  it('does not let a div closer end a collapsible', () => {
+    expect(classify('<!--start-show-more-->\n\ntext\n\n</div>')).toEqual([
+      GroupRegistry.START,
+      'paragraph',
+      'raw',
+    ])
+  })
+
+  it('does not let a collapsible closer end a group', () => {
+    expect(classify('<div id="faq">\n\ntext\n\n<!--end-show-more-->')).toEqual([
+      GroupRegistry.START,
+      'paragraph',
+      'raw',
+    ])
+  })
+
+  it('nests a group inside a collapsible', () => {
+    expect(
+      classify('<!--start-show-more-->\n\n<div class="grid">\n\ntext\n\n</div>\n\n<!--end-show-more-->'),
+    ).toEqual([
+      GroupRegistry.START,
+      GroupRegistry.START,
+      'paragraph',
+      GroupRegistry.END,
+      GroupRegistry.END,
+    ])
+  })
+
+  it('ignores markers a fenced code block only talks about', () => {
+    expect(
+      classify('text\n\n```markdown\n<!--start-show-more-->\n```\n\ntext'),
+    ).toEqual(['paragraph', 'codeBlock', 'paragraph'])
+  })
+})
+
+describe('GroupRegistry.computePairs across kinds', () => {
+  const start = (id: string, kind: 'div' | 'showMore' = 'div') => ({ id, name: 'groupStart', kind })
+  const end = (id: string, kind: 'div' | 'showMore' = 'div') => ({ id, name: 'groupEnd', kind })
+
+  it('pairs a collapsible nested in a group, each with its own closer', () => {
+    const pairs = GroupRegistry.computePairs([
+      start('d1'),
+      start('s1', 'showMore'),
+      end('e1', 'showMore'),
+      end('e2'),
+    ])
+
+    expect(pairs.get('s1')).toBe('e1')
+    expect(pairs.get('d1')).toBe('e2')
+  })
+
+  /** Crossed ranges are broken content: neither marker gets to drag the other. */
+  it('leaves crossed markers unpaired', () => {
+    const pairs = GroupRegistry.computePairs([
+      start('d1'),
+      start('s1', 'showMore'),
+      end('e1'),
+      end('e2', 'showMore'),
+    ])
+
+    expect(pairs.size).toBe(0)
+  })
+})
+
+describe('the collapsible checkbox', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  function renderedTool(data: GroupStartData) {
+    const stub = apiStub([
+      { id: 'g1', name: 'groupStart' },
+      { id: 'g2', name: 'groupEnd' },
+    ])
+    const tool = new GroupStart({
+      data,
+      api: stub.api,
+      block: { id: 'g1', dispatchChange: vi.fn() },
+      readOnly: false,
+    } as any)
+    return { stub, tool, element: tool.render() }
+  }
+
+  const toggle = (element: HTMLElement): void => {
+    const input = element.querySelector('.pw-group-checkbox') as HTMLInputElement
+    input.checked = !input.checked
+    input.dispatchEvent(new Event('change'))
+  }
+
+  it('flips the block to the show-more spelling', () => {
+    const { tool, element } = renderedTool({ anchor: 'faq', class: '', collapsible: false })
+
+    toggle(element)
+
+    expect(tool.save().collapsible).toBe(true)
+    expect(GroupStart.exportToMarkdown(tool.save())).toBe("{{ startShowMore('faq') }}")
+  })
+
+  /** Pairing reads the kind off the rendered marker, so the DOM has to follow. */
+  it('retags the marker so pairing sees the new kind', () => {
+    const { element } = renderedTool({ anchor: '', class: '', collapsible: false })
+
+    expect(element.dataset.pwGroupKind).toBe('div')
+    toggle(element)
+    expect(element.dataset.pwGroupKind).toBe('showMore')
+  })
+
+  it('tells the closing marker, which is a block of its own', async () => {
+    const { stub, element } = renderedTool({ anchor: '', class: '', collapsible: false })
+    GroupRegistry.schedule(stub.api)
+    await tick()
+
+    toggle(element)
+
+    expect(stub.updated).toEqual([
+      { id: 'g2', data: { collapsible: true, legacy: false, args: '' } },
+    ])
+  })
+
+  it('says which wrapper the class lands on', () => {
+    const { element } = renderedTool({ anchor: '', class: '', collapsible: false })
+    const classInput = element.querySelector('.pw-group-class') as HTMLInputElement
+
+    expect(classInput.placeholder).toBe('Class')
+    toggle(element)
+    expect(classInput.placeholder).toBe('Class of the collapsible')
+  })
+})
+
+describe('pairing reads the kind off the rendered marker', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  /** A block as the editor hands it over: its holder carries what render() drew. */
+  const markerBlock = (id: string, name: string, kind: 'div' | 'showMore') => {
+    const holder = document.createElement('div')
+    const marker = document.createElement('div')
+    marker.className = name === GroupRegistry.START ? 'pw-group-start' : 'pw-group-end'
+    marker.dataset.pwGroupKind = kind
+    holder.appendChild(marker)
+    return { id, name, holder }
+  }
+
+  /**
+   * Crossed ranges: a collapsible opened inside a group and closed outside it.
+   * Read the kinds and nothing pairs; miss them and every marker looks like a
+   * `div`, so deleting the collapsible's opener would take the group's closer.
+   */
+  it('leaves crossed markers unpaired, so deleting one drags nothing', async () => {
+    const stub = apiStub([
+      markerBlock('d1', GroupRegistry.START, 'div'),
+      markerBlock('s1', GroupRegistry.START, 'showMore'),
+      markerBlock('e1', GroupRegistry.END, 'div'),
+      markerBlock('e2', GroupRegistry.END, 'showMore'),
+    ])
+    GroupRegistry.schedule(stub.api)
+    await tick()
+
+    stub.api.blocks.delete(stub.api.blocks.getBlockIndex('s1'))
+    stub.deleted.length = 0
+    GroupRegistry.removePartnerOf(stub.api, 's1')
+    await tick()
+
+    expect(stub.deleted).toEqual([])
+  })
+
+  it('still pairs a collapsible properly nested in a group', async () => {
+    const stub = apiStub([
+      markerBlock('d1', GroupRegistry.START, 'div'),
+      markerBlock('s1', GroupRegistry.START, 'showMore'),
+      markerBlock('e1', GroupRegistry.END, 'showMore'),
+      markerBlock('e2', GroupRegistry.END, 'div'),
+    ])
+    GroupRegistry.schedule(stub.api)
+    await tick()
+
+    stub.api.blocks.delete(stub.api.blocks.getBlockIndex('s1'))
+    stub.deleted.length = 0
+    GroupRegistry.removePartnerOf(stub.api, 's1')
+    await tick()
+
+    expect(stub.deleted).toEqual(['e1'])
   })
 })

@@ -50,6 +50,30 @@
   flex: 1;
 }
 
+.pw-group-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+}
+
+.pw-group-checkbox {
+  cursor: pointer;
+  margin: 0;
+}
+
+/* A collapsible group hides part of its content on the front: say so at a glance. */
+.pw-group-start[data-pw-group-kind='showMore'],
+.pw-group-end[data-pw-group-kind='showMore'] {
+  border-style: solid;
+  border-color: #a5b4fc;
+  color: #4f46e5;
+}
+
 /* Blocks standing inside an open group, tagged by GroupRegistry.decorate() */
 .ce-block[data-pw-in-group] > .ce-block__content {
   border-left: 1px dashed #cbd5e1;

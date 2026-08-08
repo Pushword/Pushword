@@ -3,7 +3,7 @@ import ShowMore from './ShowMore.js'
 
 // Build a minimal .show-more DOM fixture.
 // Returns { wrapper, content, btn, checkbox }
-function makeBlock({ id = 'block1', collapsed = true } = {}) {
+function makeBlock({ id = 'block1', collapsed = true, parent = null } = {}) {
   const wrapper = document.createElement('div')
   wrapper.className = 'show-more'
 
@@ -28,8 +28,15 @@ function makeBlock({ id = 'block1', collapsed = true } = {}) {
   wrapper.scrollIntoView = vi.fn()
   wrapper.appendChild(header)
   wrapper.appendChild(content)
-  document.body.appendChild(wrapper)
+  ;(parent ?? document.body).appendChild(wrapper)
   return { wrapper, content, btn: header, checkbox }
+}
+
+/** An outer block holding an inner one, as nested show-more markers render. */
+function makeNestedBlocks() {
+  const outer = makeBlock({ id: 'outer' })
+  const inner = makeBlock({ id: 'inner', parent: outer.content })
+  return { outer, inner }
 }
 
 function resetShowMore() {
@@ -269,6 +276,34 @@ describe('openContaining()', () => {
     ShowMore.openContaining(content, true)
     expect(wrapper.dataset.showMoreOpen).toBeUndefined()
   })
+
+  it('opens every enclosing block, not only the innermost one', () => {
+    const { outer, inner } = makeNestedBlocks()
+
+    ShowMore.openContaining(inner.content, false)
+
+    expect(inner.wrapper.dataset.showMoreOpen).toBe('true')
+    expect(outer.wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('does nothing for an element outside any block', () => {
+    const { wrapper } = makeBlock()
+    const loose = document.createElement('p')
+    document.body.appendChild(loose)
+
+    ShowMore.openContaining(loose, false)
+
+    expect(wrapper.dataset.showMoreOpen).toBeUndefined()
+  })
+
+  it('opens the outer block itself, not the nested one its button belongs to', () => {
+    const { outer, inner } = makeNestedBlocks()
+
+    ShowMore.openContaining(outer.wrapper, false)
+
+    expect(outer.wrapper.dataset.showMoreOpen).toBe('true')
+    expect(inner.wrapper.dataset.showMoreOpen).toBeUndefined()
+  })
 })
 
 // ─── scrollToHash() ───────────────────────────────────────────────────────────
@@ -292,6 +327,18 @@ describe('scrollToHash()', () => {
     ShowMore.scrollToHash('#review-2')
     expect(ShowMore._userClosed.has(wrapper)).toBe(false)
     expect(wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('opens the whole chain down to a target nested two levels deep', () => {
+    const { outer, inner } = makeNestedBlocks()
+    const target = document.createElement('span')
+    target.id = 'deep'
+    inner.content.appendChild(target)
+
+    ShowMore.scrollToHash('#deep')
+
+    expect(inner.wrapper.dataset.showMoreOpen).toBe('true')
+    expect(outer.wrapper.dataset.showMoreOpen).toBe('true')
   })
 
   it('does nothing for an invalid selector', () => {
@@ -327,6 +374,17 @@ describe('scrollToHash() with a text fragment directive', () => {
     content.appendChild(target)
     ShowMore.scrollToHash('#review-3:~:text=absent%20phrase')
     expect(wrapper.dataset.showMoreOpen).toBe('true')
+  })
+
+  it('descends to the innermost block holding the text, and opens both', () => {
+    const { outer, inner } = makeNestedBlocks()
+    outer.content.insertBefore(document.createTextNode('Outer lede. '), inner.wrapper)
+    inner.content.textContent = 'Long review praising the fast delivery.'
+
+    ShowMore.scrollToHash('#:~:text=fast%20delivery')
+
+    expect(inner.wrapper.dataset.showMoreOpen).toBe('true')
+    expect(outer.wrapper.dataset.showMoreOpen).toBe('true')
   })
 
   it('searches the start term, not the prefix, in prefix-,start,-suffix syntax', () => {

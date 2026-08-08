@@ -69,6 +69,67 @@ final class ShowMoreTest extends KernelTestCase
         self::assertSame($first, $second);
     }
 
+    /**
+     * Worker-mode equivalent of the test above: between two requests the kernel is
+     * not shut down, only reset. Without it the second page served kept numbering
+     * where the first stopped.
+     */
+    public function testResetRestartsTheNumbering(): void
+    {
+        $showMore = $this->getShowMore(new Page());
+
+        $first = $this->idOf($showMore->startShowMore());
+        $showMore->endShowMore();
+        $showMore->reset();
+
+        self::assertSame($first, $this->idOf($showMore->startShowMore()));
+    }
+
+    /**
+     * One process rendering many pages (static build, page scan) never resets in
+     * between: the page each block belongs to has to restart the numbering.
+     */
+    public function testEachPageGetsTheIdsItWouldGetOnItsOwn(): void
+    {
+        $showMore = $this->getShowMore();
+
+        $onFirstPage = $this->idOf($showMore->renderStart(null, '', $this->page('first')));
+        $showMore->renderEnd(null, null, null);
+        $afterAnotherPage = $this->idOf($showMore->renderStart(null, '', $this->page('second')));
+
+        $showMore->reset();
+        $alone = $this->idOf($showMore->renderStart(null, '', $this->page('second')));
+
+        self::assertSame($alone, $afterAnotherPage);
+        self::assertNotSame($onFirstPage, $afterAnotherPage);
+    }
+
+    /**
+     * A body filtered with no page in sight — an excerpt, an API render. Restarting
+     * the numbering there would hand the second block the first one's id, since the
+     * filter and the Twig calls of one body share this counter.
+     */
+    public function testARenderWithNoPageCarriesOnNumbering(): void
+    {
+        $showMore = $this->getShowMore();
+
+        $first = $this->idOf($showMore->renderStart(null, '', null));
+        $showMore->renderEnd(null, null, null);
+        $second = $this->idOf($showMore->renderStart(null, '', null));
+
+        self::assertNotSame('', $first);
+        self::assertNotSame($first, $second);
+    }
+
+    private function page(string $slug): Page
+    {
+        $page = new Page(false);
+        $page->slug = $slug;
+        $page->host = 'localhost';
+
+        return $page;
+    }
+
     private function getShowMore(?Page $currentPage = null): ShowMore
     {
         self::bootKernel();

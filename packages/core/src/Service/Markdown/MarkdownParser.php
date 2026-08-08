@@ -118,6 +118,13 @@ class MarkdownParser
      * contain a Markdown image (see cacheKeyVersion()). date() shortcodes are
      * cached as-is: the slight staleness is acceptable and the fragment refreshes
      * whenever the page is saved or (for image fragments) the media version bumps.
+     *
+     * Baking the rendered output into the key is also why **a Twig function callable
+     * from a page body has to be deterministic**: draw an id from random(), and every
+     * render of every page holding the call writes a fresh entry that nothing will
+     * ever read back. The pool grows without bound, never hits, and a static build
+     * rewrites files whose content did not change. `{{ reviews() }}` did exactly that
+     * until rc852 — {@see \Pushword\Conversation\Tests\Twig\ReviewListDeterminismTest}.
      */
     private function convertCached(MarkdownConverter $converter, string $keyPrefix, string $text): string
     {

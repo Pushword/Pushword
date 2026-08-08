@@ -87,6 +87,22 @@ paths:
   closing hand-written HTML becomes a marker again — deleting a group then cascades onto
   the user's own tag. The rule is symmetry: a closing tag is a marker exactly when its
   opener was, so any new tool claiming a bare closing line owes the same pairing.
+- **A group has a *kind*, and the two kinds never close each other.** `div` wraps in
+  `<div>`; `showMore` wraps in the collapsible block, spelled either
+  `{{ startShowMore(…) }}` or the legacy `<!--start-show-more-->` — one kind, two
+  syntaxes, because both render the same wrapper. `GroupNesting` counts them apart and
+  `computePairs` refuses to pair across kinds, so crossed ranges leave both markers
+  unpaired instead of making one delete the other. All the patterns live in
+  `GroupSyntax.ts`: add a spelling there, never in a tool. Pairing reads the kind off
+  `data-pw-group-kind` in the rendered marker (block data is not reachable
+  synchronously), so a `render()` that forgets the attribute silently pairs as `div` —
+  and toggling the checkbox must push the new kind onto the partner via
+  `GroupRegistry.updatePartnerOf()`, since the closing marker is a block of its own.
+- **A group's `class` field means two different things.** On a plain group it dresses the
+  `<div>` wrapping the blocks; on a collapsible one it dresses the `.show-more` wrapper,
+  whose three children are the toggle, the content and the button — a `grid` there lays
+  those out as cells. The placeholder says which, and layout on a collapsible belongs to
+  a plain group nested inside.
 - **An editor that rewrites the field it feeds owes the recovery handshake.** The block
   editor's initial parse writes its own normalisation into the bound textarea and fires
   `input`, which unsaved-changes recovery (`admin.unsavedChanges.js`, run on window

@@ -175,18 +175,35 @@ const ShowMore = {
   },
 
   /**
+   * Every .show-more the element sits in, outermost first.
+   * @param {HTMLElement} element
+   * @returns {HTMLElement[]}
+   */
+  _wrappersAround(element) {
+    const wrappers = []
+    let wrapper = element.closest('.show-more')
+    while (wrapper) {
+      wrappers.unshift(wrapper)
+      wrapper = wrapper.parentElement?.closest('.show-more') ?? null
+    }
+    return wrappers
+  },
+
+  /**
+   * Open the whole chain, outermost first: a nested block is still invisible
+   * while the block it sits in stays collapsed.
    * @param {HTMLElement} element
    * @param {boolean} auto
    */
   openContaining(element, auto = true) {
     if (!element) return
 
-    const wrapper = element.closest('.show-more')
-    if (!wrapper || this.isOpen(wrapper)) return
-
-    // Use the wrapper itself as fallback if btn not found yet (hidden)
-    const btn = wrapper.querySelector('.show-more-btn') || wrapper
-    this.open(btn, auto)
+    for (const wrapper of this._wrappersAround(element)) {
+      // The wrapper is what open() resolves against, so pass it rather than its
+      // button — querySelector('.show-more-btn') would find a nested block's
+      // button first and open that one instead.
+      if (!this.isOpen(wrapper)) this.open(wrapper, auto)
+    }
   },
 
   /** @param {string} hash */
@@ -210,8 +227,7 @@ const ShowMore = {
         // anchor click), so force-open even if the user previously closed
         // this block — otherwise we'd scroll to invisible content inside a
         // collapsed wrapper.
-        const wrapper = target.closest('.show-more')
-        if (wrapper) this._userClosed.delete(wrapper)
+        this._wrappersAround(target).forEach((wrapper) => this._userClosed.delete(wrapper))
         this.openContaining(target, false)
         setTimeout(() => {
           target.scrollIntoView({ behavior: 'smooth' })
@@ -235,7 +251,7 @@ const ShowMore = {
       const wrapper = this._findBlockContaining(start, prefix)
       if (!wrapper) continue
       // Like hash navigation, a text fragment is explicit user intent.
-      this._userClosed.delete(wrapper)
+      this._wrappersAround(wrapper).forEach((block) => this._userClosed.delete(block))
       this.openContaining(wrapper, false)
     }
   },
@@ -279,12 +295,30 @@ const ShowMore = {
       if (!content) continue
       const haystack = normalize(content.textContent)
       if (!haystack.includes(needle)) continue
-      if (!before || this._followsPrefix(haystack, before, needle)) return wrapper
+      if (!before || this._followsPrefix(haystack, before, needle))
+        return this._innermostHolding(wrapper, needle)
       // The prefix may sit outside the block, the start being its opening
       // words. Keep this block in case no other satisfies the prefix.
       firstMatch ??= wrapper
     }
-    return firstMatch
+    return firstMatch === null ? null : this._innermostHolding(firstMatch, needle)
+  },
+
+  /**
+   * Descend to the deepest block still holding the text. Document order lists a
+   * block before the ones nested in it, so the loop above always lands on the
+   * outermost — and openContaining() opens its ancestors anyway.
+   * @param {HTMLElement} wrapper @param {string} needle - already normalized
+   * @returns {HTMLElement}
+   */
+  _innermostHolding(wrapper, needle) {
+    for (const nested of wrapper.querySelectorAll('.show-more')) {
+      const content = nested.children[1]
+      if (content && normalize(content.textContent).includes(needle)) {
+        return this._innermostHolding(nested, needle)
+      }
+    }
+    return wrapper
   },
 
   /**

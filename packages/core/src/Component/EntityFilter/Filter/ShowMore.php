@@ -4,16 +4,26 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
 use Pushword\Core\Component\EntityFilter\Manager;
+use Pushword\Core\Content\ShowMoreMarkers;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Site\SiteRegistry;
-use Twig\Environment;
+use Pushword\Core\Twig\ShowMore as ShowMoreRenderer;
 
+/**
+ * The legacy `<!--start-show-more-->` / `<!--end-show-more-->` markers, expanded
+ * into the wrapper `{{ startShowMore() }}` produces — same renderer, same ids.
+ * Kept for the bodies written before the Twig call existed; `pw:show-more:convert`
+ * rewrites them.
+ *
+ * Markers are paired on a stack, so nested blocks close in the right order and a
+ * marker left without a partner stays in the body, where it renders as the HTML
+ * comment it is — invisibly. Anything else lets one stray `<!--end-show-more-->`
+ * decide how everything above it is displayed.
+ */
 #[AsFilter]
-class ShowMore implements FilterInterface
+final readonly class ShowMore implements FilterInterface
 {
     public function __construct(
-        private readonly Environment $twig,
-        private readonly SiteRegistry $apps,
+        private ShowMoreRenderer $renderer,
     ) {
     }
 
@@ -21,31 +31,35 @@ class ShowMore implements FilterInterface
     {
         assert(is_scalar($propertyValue));
 
-        return $this->showMore((string) $propertyValue, $page);
+        return $this->expandMarkers((string) $propertyValue, $page);
     }
 
-    private function showMore(string $body, Page $page): string
+    private function expandMarkers(string $body, Page $page): string
     {
-        $afterShowMoreTag = "\n".'<!--end-show-more-->';
-        $bodyParts = explode("\n".'<!--start-show-more-->', $body);
-        $body = '';
-        $app = $this->apps->get($page->host);
-        $templatePath = $app->getView('/component/show_more.html.twig');
-        $template = $this->twig->load($templatePath);
-        foreach ($bodyParts as $bodyPart) {
-            $bodyPart .= "\n";
-            if (! str_contains($bodyPart, $afterShowMoreTag)) {
-                $body .= $bodyPart;
-
-                continue;
-            }
-
-            $id = 'sh-'.substr(md5('sh'.$bodyPart), 0, 4);
-            $replaceWith = "\n".trim($template->renderBlock('after', ['id' => $id]));
-            $body .= trim($template->renderBlock('before', ['id' => $id]))."\n\n"
-                .str_replace($afterShowMoreTag, $replaceWith, $bodyPart);
+        if (! str_contains($body, ShowMoreMarkers::START)) {
+            return $body;
         }
 
-        return $body;
+        // A body documenting the syntax holds the markers inside a fence; the
+        // renderer has no business there.
+        $codeBlockProtector = new MarkdownProtectCodeBlock();
+        $lines = explode("\n", $codeBlockProtector->protect($body));
+
+        $markers = ShowMoreMarkers::pair($lines);
+        if ([] === $markers) {
+            return $body;
+        }
+
+        foreach ($markers as $index => $isStart) {
+            $html = $isStart
+                ? $this->renderer->renderStart(null, '', $page)
+                : $this->renderer->renderEnd(null, null, $page);
+            // Surrounded by blank lines: the wrapper is an HTML block, and with no
+            // blank line after its opening tags CommonMark reads the content it
+            // wraps as raw HTML instead of rendering it.
+            $lines[$index] = "\n".trim($html)."\n";
+        }
+
+        return $codeBlockProtector->restoreString(implode("\n", $lines));
     }
 }

@@ -53,6 +53,37 @@ The block editor shows the pair as **Group** markers carrying the anchor and the
 classes; the markers are inserted and deleted together. It only claims a `<div>`
 line whose attributes are `id` and/or `class` — anything richer stays a Raw block.
 
+## Collapsible blocks (read more)
+
+A group can wrap its blocks in a collapsible block instead of a `<div>` — the
+**Collapsible** checkbox on the Group marker, or the call written by hand:
+
+```markdown
+{{ startShowMore('itinerary', 'mt-8') }}
+
+## Day 1
+
+## Day 2
+
+{{ endShowMore() }}
+```
+
+- **The first argument is the block id**, used to deep-link into it (`#itinerary`) and
+  to remember that the reader opened it. Omitted, it is derived from the page slug, so
+  it stays the same from one render to the next.
+- **The second is a class for the wrapper**, which holds the toggle, the content and
+  the button — spacing and width belong here, layout does not. For a collapsible grid,
+  nest a plain group inside. To pass only a class, name it:
+  `{{ startShowMore(showMoreExtraClass: 'mt-8') }}`.
+- `endShowMore()` takes the gradient classes fading the cut-off text, when the page
+  background is not white: `{{ endShowMore('via-gray-100 to-gray-100') }}`.
+- Blocks nest, and rendering goes through `/component/show_more.html.twig` — override
+  it in your theme to restyle the button or the fade.
+
+An older spelling, `<!--start-show-more-->` / `<!--end-show-more-->`, still renders the
+same and still shows up as a Group in the editor. It carries neither id nor class:
+`pw:show-more:convert` rewrites it to the call above.
+
 ## Notices
 
 A blockquote whose first line is a `> [!label]` marker renders as a notice — the

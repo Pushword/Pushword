@@ -322,7 +322,7 @@ Discover more on {{ link('Advanced Pages Listing', 'https://pushword.piedweb.com
 
 <section id="showmore" class="mb-12">
 <h2 class="mb-4 text-3xl font-bold">Show More</h2>
-<p class="prose dark:prose-light mb-4">Collapse long content blocks with expand/collapse functionality.</p>
+<p class="prose dark:prose-light mb-4">Collapse long content blocks with expand/collapse functionality. In the block editor, ticking <strong>Collapsible</strong> on a Group block writes it for you.</p>
 
 <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
 {{ '{{ startShowMore() }}'|escapeTwig }}
@@ -338,6 +338,16 @@ Your long content here (only first 250px height will be visible base on your tem
 
 # With custom ID (for linking via #hash)
 {{ "{{ startShowMore('my-custom-id') }}"|escapeTwig }}
+...
+{{ '{{ endShowMore() }}'|escapeTwig }}
+
+# With a class on the wrapper (spacing, width — not layout)
+{{ "{{ startShowMore('my-custom-id', 'mt-8 max-w-3xl') }}"|escapeTwig }}
+...
+{{ '{{ endShowMore() }}'|escapeTwig }}
+
+# The class alone, without inventing an ID
+{{ "{{ startShowMore(showMoreExtraClass: 'mt-8 max-w-3xl') }}"|escapeTwig }}
 ...
 {{ '{{ endShowMore() }}'|escapeTwig }}
 </code></pre>

@@ -4,6 +4,8 @@ import { ToolInterface } from './tools/Abstract/ToolInterface'
 import { MarkdownUtils } from './tools/utils/MarkdownUtils'
 import { GroupNesting } from './tools/Group/GroupNesting'
 import { GroupRegistry } from './tools/Group/GroupRegistry'
+import GroupStart from './tools/Group/GroupStart'
+import GroupEnd from './tools/Group/GroupEnd'
 
 // Extended BlockToolAdapter to access the constructable property
 export interface BlockToolAdapterWithConstructable extends BlockToolAdapter {
@@ -47,11 +49,14 @@ export function chunkTool(
   const adapter = claimingTool(blockTools, stripped)
 
   if (adapter?.name === GroupRegistry.START) {
-    nesting.openGroup()
+    nesting.openGroup(GroupStart.kindOf(stripped) ?? 'div')
   } else if (adapter?.name === GroupRegistry.END) {
     // A `</div>` closing a div the user hand-wrote is not a marker: keep it
     // Raw, or deleting a group would cascade onto their tag instead of ours.
-    if (!nesting.closeGroup()) return blockTools.find((tool) => tool.name === 'raw') ?? null
+    // Same for a show-more closer with nothing of its kind open.
+    if (!nesting.closeGroup(GroupEnd.kindOf(stripped) ?? 'div')) {
+      return blockTools.find((tool) => tool.name === 'raw') ?? null
+    }
   } else if (adapter?.name === 'raw') {
     nesting.trackRaw(stripped)
   }
