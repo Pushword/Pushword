@@ -16,6 +16,7 @@ use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mime\Email;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The click-tracking pipeline end to end: links only rewritten behind both
@@ -188,6 +189,32 @@ final class ClickTrackingTest extends AbstractNewsletterTestCase
         self::assertStringNotContainsString('/tracking', $html);
     }
 
+    /** The purpose line is what makes the bare confirm button an informed yes — both parts of the mail carry it. */
+    public function testTheConfirmationMailStatesTheTrackingPurposeInBothParts(): void
+    {
+        $hint = $this->trackingHintOf($this->subscribeToTrackingAudience());
+
+        $email = $this->lastEmail();
+        self::assertStringContainsString($hint, html_entity_decode((string) $email->getHtmlBody(), \ENT_QUOTES | \ENT_HTML5));
+        self::assertStringContainsString($hint, (string) $email->getTextBody());
+    }
+
+    public function testANonTrackingConfirmationMailCarriesNoTrackingHint(): void
+    {
+        $hint = $this->trackingHintOf($this->subscribeToTrackingAudience(audienceTracks: false));
+
+        $email = $this->lastEmail();
+        self::assertStringNotContainsString($hint, html_entity_decode((string) $email->getHtmlBody(), \ENT_QUOTES | \ENT_HTML5));
+        self::assertStringNotContainsString($hint, (string) $email->getTextBody());
+    }
+
+    /** The hint as this contact reads it, whatever locale the subscription resolved to. */
+    private function trackingHintOf(Contact $contact): string
+    {
+        return self::getContainer()->get(TranslatorInterface::class)
+            ->trans('newsletter.confirm.trackingHint', [], null, $contact->locale);
+    }
+
     public function testConfirmingThroughTheTrackingLinkGrantsTheDatedConsent(): void
     {
         $contact = $this->subscribeToTrackingAudience();
@@ -332,12 +359,17 @@ final class ClickTrackingTest extends AbstractNewsletterTestCase
         return $this->entityManager->getRepository(ClickEvent::class)->findBy(['contact' => $contact]);
     }
 
-    private function lastHtml(): string
+    private function lastEmail(): Email
     {
         $messages = self::getMailerMessages();
         $email = end($messages);
         self::assertInstanceOf(Email::class, $email);
 
-        return (string) $email->getHtmlBody();
+        return $email;
+    }
+
+    private function lastHtml(): string
+    {
+        return (string) $this->lastEmail()->getHtmlBody();
     }
 }

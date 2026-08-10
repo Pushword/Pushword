@@ -102,7 +102,7 @@ final readonly class NewsletterMailer
 
         $text = null === $confirmTrackingUrl
             ? $confirmUrl
-            : $trans('buttonTracking').":\n".$confirmTrackingUrl."\n\n".$trans('buttonPlain').":\n".$confirmUrl;
+            : $trans('trackingHint')."\n\n".$trans('buttonTracking').":\n".$confirmTrackingUrl."\n\n".$trans('buttonPlain').":\n".$confirmUrl;
 
         $email = $this->baseEmail($audience, $contact)
             ->subject($subject)

@@ -45,12 +45,12 @@ final class MailRendererTest extends AbstractNewsletterTestCase
         self::getContainer()->get(SiteRegistry::class)->get('localhost.dev')
             ->setCustomProperty('css_var:color_primary', '#92400e');
 
-        self::assertStringContainsString('background:#92400e', $this->confirmation());
+        self::assertStringContainsString('background-color:#92400e', $this->confirmation());
     }
 
     public function testWithoutAPrimaryColorTheConfirmationButtonKeepsItsDefault(): void
     {
-        self::assertStringContainsString('background:#1c1c1c', $this->confirmation());
+        self::assertStringContainsString('background-color:#1c1c1c', $this->confirmation());
     }
 
     private function confirmation(): string

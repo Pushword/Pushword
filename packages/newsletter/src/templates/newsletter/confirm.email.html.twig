@@ -13,28 +13,34 @@
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;">
     <tr>
         <td style="padding:24px 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1c1c1c;">
-            <p style="margin:0 0 20px;">{{ 'newsletter.confirm.body'|trans({'%audience%': audience.name}, null, contact.locale) }}</p>
+            <p style="margin:0 0 24px;">{{ 'newsletter.confirm.body'|trans({'%audience%': audience.name}, null, contact.locale) }}</p>
             {% if confirmTrackingUrl %}
-              <p style="margin:0 0 14px;">
+              <p style="margin:0 0 12px;font-size:14px;color:#555555;">
+                  {{ 'newsletter.confirm.trackingHint'|trans({}, null, contact.locale) }}
+              </p>
+              {# The plain link carries its tap padding (the two answers differ in
+                 consent, so a fat finger aiming at the button must not land on it):
+                 visible gaps come out at 16px inside the pair, 34px after it. #}
+              <p style="margin:0 0 6px;">
                   <a href="{{ confirmTrackingUrl }}"
-                     style="display:inline-block;padding:13px 24px;background:{{ primaryColor }};color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;">
+                     style="display:inline-block;padding:12px 24px;background-color:{{ primaryColor }};color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;">
                       {{ 'newsletter.confirm.buttonTracking'|trans({}, null, contact.locale) }}
                   </a>
               </p>
               <p style="margin:0 0 24px;font-size:14px;">
-                  <a href="{{ confirmUrl }}" style="color:#555555;text-decoration:underline;">
+                  <a href="{{ confirmUrl }}" style="display:inline-block;padding:10px 0;color:#555555;text-decoration:underline;">
                       {{ 'newsletter.confirm.buttonPlain'|trans({}, null, contact.locale) }}
                   </a>
               </p>
             {% else %}
               <p style="margin:0 0 24px;">
                   <a href="{{ confirmUrl }}"
-                     style="display:inline-block;padding:12px 22px;background:{{ primaryColor }};color:#ffffff;text-decoration:none;border-radius:4px;">
+                     style="display:inline-block;padding:12px 24px;background-color:{{ primaryColor }};color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;">
                       {{ 'newsletter.confirm.button'|trans({}, null, contact.locale) }}
                   </a>
               </p>
             {% endif %}
-            <p style="margin:0;font-size:12px;color:#777777;">
+            <p style="margin:0;font-size:12px;color:#6b6b6b;">
                 {{ 'newsletter.confirm.ignore'|trans({}, null, contact.locale) }}
             </p>
         </td>

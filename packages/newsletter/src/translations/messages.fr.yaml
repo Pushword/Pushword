@@ -113,12 +113,13 @@ newsletter:
       invalidJson: Les traductions doivent être un objet JSON indexé par langue.
       invalidLocale: 'La traduction « %locale% » doit être un objet contenant subject, preheader et bodyMarkdown.'
   confirm:
-    body: Merci pour votre inscription ! Pour commencer à recevoir nos mails, cliquez sur le bouton ci-dessous afin de confirmer votre adresse e-mail.
+    body: Merci pour votre inscription ! Pour commencer à recevoir nos mails, confirmez votre adresse e-mail ci-dessous.
     button: Je confirme mon inscription
-    buttonPlain: Je valide mon inscription
-    buttonTracking: Je valide mon inscription et j'accepte les liens suivis pour améliorer le service
-    ignore: Si vous n'êtes pas à l'origine de cette demande, ignorez ce message — rien ne vous sera envoyé.
+    buttonPlain: Je valide (liens anonymisés)
+    buttonTracking: Je valide
+    ignore: 'Si vous n''êtes pas à l''origine de cette demande, ignorez ce message : rien ne vous sera envoyé.'
     subject: '%host% - Confirmez votre inscription'
+    trackingHint: Avec votre accord, nous mesurons les liens ouverts dans nos mails afin d'améliorer nos envois.
   confirmed:
     body: Vous êtes désormais inscrit.
     title: Inscription confirmée

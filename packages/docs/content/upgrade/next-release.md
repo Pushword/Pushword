@@ -1,8 +1,19 @@
 ---
-title: ''
+title: 'the tracking opt-in mail states its purpose in a hint line over a bare confirm button'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
+
+**Concerns:** `pushword/newsletter`
+
+## The consent wording of the double opt-in mail moved out of the button
+
+The confirmation mail of a click-tracking audience now states the purpose in a
+muted line (`newsletter.confirm.trackingHint`) over a bare *confirm* button; the
+no-tracking link reads *confirm (anonymized links)*.
+**Only sites that overrode `confirm.email.html.twig` are affected**: re-copy the
+bundle template (or add the hint line to yours), or the shortened button asks for
+a consent the mail no longer explains.
 
 <!--
 The upgrade note for the next release. `.scripts/release` renames this file to

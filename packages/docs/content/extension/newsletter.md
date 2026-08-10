@@ -846,9 +846,9 @@ and the second is never inferred from the first:
    until their own consent is written, one by one.
 
 The bundle also offers one collection point of its own: **the double opt-in
-mail**. When the audience tracks, the confirmation mail carries two links —
-*confirm and accept tracked links* put forward as the button, plain *confirm*
-one line beneath. Either opens the subscription; only the first also writes the
+mail**. When the audience tracks, the confirmation mail states the purpose in
+one muted line, then carries two links — a bare *confirm* put forward as the
+button, *confirm (anonymized links)* one line beneath. Either opens the subscription; only the first also writes the
 dated consent, and only for a navigation the browser attributes to a person
 (`Sec-Fetch-User`, the same test the unsubscribe link uses), so a mail scanner
 following every link of the mail cannot consent to per-click logging on the
