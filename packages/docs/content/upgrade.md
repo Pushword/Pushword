@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc856](/upgrade/rc856) | `newsletter` | newsletter mails can track clicks, behind a double consent — run `doctrine:schema:update --force` |
 | [rc853](/upgrade/rc853) | `admin` `admin-block-editor` | the show-more calls accept named arguments, and the editor writes them |
 | [rc852](/upgrade/rc852) | `admin` `admin-block-editor` `conversation` `core` `js-helper` | a group can be made collapsible from the block editor, and the legacy show-more markers are parsed, paired and convertible |
 | [rc851](/upgrade/rc851) | `quiz` | the quiz question list opts out of the host's prose styling |
