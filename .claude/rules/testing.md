@@ -96,6 +96,15 @@ real bugs.
 - **Reading a `StreamedResponse` body** in a `WebTestCase`: use
   `$client->getInternalResponse()->getContent()`. `$client->getResponse()->getContent()`
   returns `false` — the client already consumed the stream.
+- **An entity held across two client requests goes stale.** Even with
+  `disableReboot()`, the services resetter clears Doctrine's identity map between
+  requests, so from the second request on the controller loads a *different* instance
+  than the one your test still holds — in-place assertions then read the pre-request
+  state and fail only in multi-request tests (single-request tests share the first
+  request's untouched map, which is why the pattern looks proven). Re-find the entity
+  after each request (`ClickTrackingTest::freshContact()` is the pattern); a helper
+  that clears and re-reads wants `@phpstan-impure`, or PHPStan reuses the first call's
+  narrowed type for the next one.
 - **Status 200 is not an assertion.** A wrong Twig block name renders nothing and still
   returns 200. Assert on the rendered HTML.
 - **SQLite enforces foreign keys too, since 2026-08-06** (`SqliteConnectionPragmas`), so
