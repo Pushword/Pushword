@@ -97,6 +97,17 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     public private(set) ?DateTimeImmutable $bouncedAt = null;
 
+    /**
+     * The contact half of the click-tracking double gate: a dated consent, which
+     * is what has to be produced if the logging is ever questioned. Collecting
+     * it is the calling site's business (a checkbox in its client area); this
+     * field only records it, over the API or in the admin. Writing null back
+     * withdraws it, and the withdrawal purges the contact's {@see ClickEvent}
+     * rows — links already in their inbox keep redirecting, and record nothing.
+     */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    public ?DateTimeImmutable $clickTrackingConsentAt = null;
+
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Audience::class)]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
@@ -180,6 +191,11 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
     public function isMailable(): bool
     {
         return ContactStatus::Subscribed === $this->status && null !== $this->email;
+    }
+
+    public function hasClickTrackingConsent(): bool
+    {
+        return null !== $this->clickTrackingConsentAt;
     }
 
     /**

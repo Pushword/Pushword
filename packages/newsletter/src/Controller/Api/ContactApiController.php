@@ -2,13 +2,16 @@
 
 namespace Pushword\Newsletter\Controller\Api;
 
+use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use InvalidArgumentException;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Repository\AudienceRepository;
+use Pushword\Newsletter\Repository\ClickEventRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
@@ -47,6 +50,7 @@ final class ContactApiController extends AbstractApiController
     public function __construct(
         private readonly ContactRepository $contactRepository,
         private readonly AudienceRepository $audienceRepository,
+        private readonly ClickEventRepository $clickEventRepository,
         private readonly ContactManager $contactManager,
         private readonly ContactMerger $contactMerger,
         private readonly SegmentResolver $segmentResolver,
@@ -164,7 +168,10 @@ final class ContactApiController extends AbstractApiController
             return $this->respond(['error' => $invalidArgumentException->getMessage()], Response::HTTP_CONFLICT);
         }
 
-        $this->apply($contact, $data);
+        $error = $this->apply($contact, $data);
+        if ($error instanceof JsonResponse) {
+            return $error;
+        }
 
         $rejected = $this->rejected($contact);
         if ($rejected instanceof JsonResponse) {
@@ -289,7 +296,12 @@ final class ContactApiController extends AbstractApiController
             }
         }
 
-        $this->apply($contact, $data);
+        $hadClickConsent = $contact->hasClickTrackingConsent();
+
+        $error = $this->apply($contact, $data);
+        if ($error instanceof JsonResponse) {
+            return $error;
+        }
 
         $rejected = $this->rejected($contact);
         if ($rejected instanceof JsonResponse) {
@@ -297,6 +309,13 @@ final class ContactApiController extends AbstractApiController
         }
 
         $this->entityManager->flush();
+
+        // A write clearing the consent is its withdrawal, and the withdrawal
+        // takes the collected clicks with it. Only after the flush: a refused
+        // write must purge nothing.
+        if ($hadClickConsent && ! $contact->hasClickTrackingConsent()) {
+            $this->clickEventRepository->purgeFor($contact);
+        }
 
         return $this->respond($this->toArray($contact));
     }
@@ -390,8 +409,12 @@ final class ContactApiController extends AbstractApiController
         return $this->noContent();
     }
 
-    /** @param array<string, mixed> $data */
-    private function apply(Contact $contact, array $data): void
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return JsonResponse|null the error response, or null when everything applied
+     */
+    private function apply(Contact $contact, array $data): ?JsonResponse
     {
         if (\array_key_exists('name', $data) && \is_string($data['name'])) {
             $contact->name = $data['name'];
@@ -431,6 +454,27 @@ final class ContactApiController extends AbstractApiController
                 $contact->setCustomProperty((string) $key, $value);
             }
         }
+
+        // A dated consent, not a boolean: the date is the evidence. The caller
+        // collected it (a checkbox in its own client area) and writes when;
+        // null withdraws it. An unreadable date must not pass for either.
+        if (\array_key_exists('clickTrackingConsentAt', $data)) {
+            $value = $data['clickTrackingConsentAt'];
+
+            if (null === $value) {
+                $contact->clickTrackingConsentAt = null;
+            } elseif (! \is_string($value)) {
+                return $this->badRequest('Invalid clickTrackingConsentAt');
+            } else {
+                try {
+                    $contact->clickTrackingConsentAt = new DateTimeImmutable($value);
+                } catch (Exception) {
+                    return $this->badRequest('Invalid clickTrackingConsentAt');
+                }
+            }
+        }
+
+        return null;
     }
 
     /** @return array<string, mixed> */
@@ -449,6 +493,7 @@ final class ContactApiController extends AbstractApiController
             'customProperties' => $contact->customProperties,
             'source' => $contact->source,
             'optinHost' => $contact->optinHost,
+            'clickTrackingConsentAt' => $contact->clickTrackingConsentAt?->format(DateTimeInterface::ATOM),
             'createdAt' => $contact->createdAt?->format(DateTimeInterface::ATOM),
             'confirmedAt' => $contact->confirmedAt?->format(DateTimeInterface::ATOM),
             'unsubscribedAt' => $contact->unsubscribedAt?->format(DateTimeInterface::ATOM),
@@ -520,6 +565,7 @@ final class ContactApiController extends AbstractApiController
                             'status' => ['type' => 'string'],
                             'tags' => ['type' => 'array', 'items' => ['type' => 'string']],
                             'customProperties' => ['type' => 'object'],
+                            'clickTrackingConsentAt' => ['type' => 'string', 'format' => 'date-time', 'nullable' => true, 'description' => 'Contact half of the click-tracking double gate — the dated consent the caller collected. Writing null withdraws it and purges the clicks already recorded'],
                         ],
                     ],
                 ],

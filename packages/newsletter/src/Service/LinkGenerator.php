@@ -22,10 +22,17 @@ final readonly class LinkGenerator
     ) {
     }
 
-    public function confirmUrl(Contact $contact): string
+    /**
+     * The double opt-in link — and, asked for, the variant that also grants the
+     * click-tracking consent: one click answers both when the confirmation mail
+     * carries the two buttons side by side.
+     */
+    public function confirmUrl(Contact $contact, bool $withClickTracking = false): string
     {
+        $route = $withClickTracking ? 'pushword_newsletter_confirm_tracking' : 'pushword_newsletter_confirm';
+
         return $this->base($contact->audience)
-            .$this->urlGenerator->generate('pushword_newsletter_confirm', ['token' => $contact->token]);
+            .$this->urlGenerator->generate($route, ['token' => $contact->token]);
     }
 
     public function unsubscribeUrl(Contact $contact): string

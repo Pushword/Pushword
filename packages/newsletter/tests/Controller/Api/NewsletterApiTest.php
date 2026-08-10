@@ -9,6 +9,7 @@ use Pushword\Core\Repository\UserRepository;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
+use Pushword\Newsletter\Entity\ClickEvent;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Enum\ContactStatus;
@@ -98,6 +99,25 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertSame('Robin', $body['fromName']);
         self::assertSame('hello@localhost.dev', $body['replyTo']);
         self::assertFalse($body['requireDoubleOptIn'], 'an already-consenting base is imported without a second ask');
+    }
+
+    public function testClickTrackingIsPerAudienceAndOffByDefault(): void
+    {
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/audience', [
+            'slug' => 'api-'.bin2hex(random_bytes(6)),
+            'mainHost' => 'localhost.dev',
+            'fromEmail' => 'news@localhost.dev',
+        ]);
+
+        $this->trackAudience($this->id($body));
+        self::assertFalse($body['clickTracking'], 'per-link logging is something a site turns on, never a default');
+        $slug = $body['slug'];
+        self::assertIsString($slug);
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/audience/'.$slug, [
+            'clickTracking' => true,
+        ]);
+        self::assertTrue($body['clickTracking']);
     }
 
     public function testAnUnknownAudienceSlugIsNotFound(): void
@@ -1156,6 +1176,76 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
 
         self::assertSame(Response::HTTP_NO_CONTENT, $this->client->getResponse()->getStatusCode());
         self::assertNotNull($this->entityManager->getRepository(Campaign::class)->find($campaign->id));
+    }
+
+    public function testClickTrackingConsentIsWrittenDatedAndItsWithdrawalPurgesTheClicks(): void
+    {
+        $audience = $this->createAudience();
+        $audience->clickTracking = true;
+
+        $contact = $this->createContact($audience, 'clicker@example.tld');
+        $campaign = $this->createCampaign($audience);
+        $this->entityManager->flush();
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/contact/'.$contact->id, [
+            'clickTrackingConsentAt' => '2026-08-01T10:00:00+00:00',
+        ]);
+        self::assertSame('2026-08-01T10:00:00+00:00', $body['clickTrackingConsentAt']);
+
+        $this->entityManager->persist(ClickEvent::onCampaign($contact, $campaign, 'https://localhost.dev/article'));
+        $this->entityManager->flush();
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/contact/'.$contact->id, [
+            'clickTrackingConsentAt' => null,
+        ]);
+        self::assertNull($body['clickTrackingConsentAt']);
+        self::assertCount(
+            0,
+            $this->entityManager->getRepository(ClickEvent::class)->findBy(['contact' => $contact]),
+            'withdrawing the consent purges what was collected under it',
+        );
+    }
+
+    /** Which links pulled, and how many distinct readers each one pulled. */
+    public function testACampaignDetailsItsClicksPerLink(): void
+    {
+        $audience = $this->createAudience();
+        $reader = $this->createContact($audience, 'reader@example.tld');
+        $other = $this->createContact($audience, 'other@example.tld');
+        $campaign = $this->createCampaign($audience);
+
+        foreach ([$reader, $reader, $other] as $contact) {
+            $this->entityManager->persist(ClickEvent::onCampaign($contact, $campaign, 'https://localhost.dev/article'));
+            $campaign->incrementClick();
+        }
+
+        $this->entityManager->persist(ClickEvent::onCampaign($reader, $campaign, 'https://localhost.dev/other'));
+        $campaign->incrementClick();
+        $this->entityManager->flush();
+
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/campaign/'.$campaign->id);
+
+        $stats = $body['stats'] ?? null;
+        self::assertIsArray($stats);
+        self::assertSame(4, $stats['clicks']);
+        self::assertSame([
+            ['url' => 'https://localhost.dev/article', 'clicks' => 3, 'contacts' => 2],
+            ['url' => 'https://localhost.dev/other', 'clicks' => 1, 'contacts' => 1],
+        ], $body['clicksByUrl']);
+    }
+
+    /** Garbage must not pass for a consent — nor for its withdrawal. */
+    public function testAnUnreadableConsentDateIsRefused(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'clicker@example.tld');
+
+        $this->request(Request::METHOD_PATCH, '/api/newsletter/contact/'.$contact->id, [
+            'clickTrackingConsentAt' => 'not-a-date',
+        ]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+        self::assertNull($this->reload($contact)->clickTrackingConsentAt);
     }
 
     /** The occurrences a contact source produces are enrollments, and only those. */

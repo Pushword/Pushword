@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Service;
 
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Pushword\Core\Site\SiteRegistry;
@@ -146,13 +147,22 @@ final readonly class ContactManager
         }
     }
 
-    public function confirm(Contact $contact): void
+    /**
+     * The click-tracking consent rides along when the person chose the
+     * confirmation link that says so. Written even for a contact no longer
+     * pending — clicking that link expresses it either way — and never
+     * overwriting an earlier date: the first consent is the one that dates it.
+     */
+    public function confirm(Contact $contact, bool $clickTrackingConsent = false): void
     {
-        if (! $contact->isPending()) {
-            return;
+        if ($clickTrackingConsent) {
+            $contact->clickTrackingConsentAt ??= new DateTimeImmutable();
         }
 
-        $contact->confirm();
+        if ($contact->isPending()) {
+            $contact->confirm();
+        }
+
         $this->entityManager->flush();
     }
 

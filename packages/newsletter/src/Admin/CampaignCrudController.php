@@ -178,6 +178,7 @@ class CampaignCrudController extends AbstractCrudController
         yield IntegerField::new('failedCount', 'newsletter.campaign.field.failed')->hideOnForm()->hideOnIndex();
         yield IntegerField::new('unsubCount', 'newsletter.campaign.field.unsubscribed')->hideOnForm()->hideOnIndex();
         yield IntegerField::new('bounceCount', 'newsletter.campaign.field.bounced')->hideOnForm()->hideOnIndex();
+        yield IntegerField::new('clickCount', 'newsletter.campaign.field.clicks')->hideOnForm()->hideOnIndex();
         yield TextField::new('sentAt', 'newsletter.campaign.field.sentAt')->onlyOnDetail()->formatValue(
             static fn (mixed $value): string => $value instanceof DateTimeInterface ? $value->format('d M Y H:i') : '—',
         );

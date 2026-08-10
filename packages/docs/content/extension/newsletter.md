@@ -819,11 +819,83 @@ Four things it will not do: touch a link to somebody else's domain, touch a link
 you tagged by hand, touch the unsubscribe link (leaving is not a visit), or tag
 anything at all while the audience has no source set.
 
-This is attribution, not click tracking — see below.
+This is attribution, not click tracking — the difference, and the consent model
+that separates them, is the next section.
 
 Related: a `/slug` link written in a body is made absolute against the site's
 canonical base URL before the mail goes out, because a root-relative link has
 nothing to resolve against in an inbox.
+
+## Click tracking
+
+Off by default, and staying off is the design: attribution answers "which
+campaign brought the traffic" with no redirect and nothing written against a
+person, while click tracking answers "which contact clicked which link" — and
+that answer is personal data. So it only ever happens behind **two consents**,
+and the second is never inferred from the first:
+
+1. **The audience's switch.** `clickTracking` on the audience, false by
+   default, editable in the admin and over the API. It says the site is willing
+   to track, not that anybody agreed to be.
+2. **The contact's own dated consent.** `clickTrackingConsentAt` — a datetime
+   rather than a boolean, because the date is what has to be produced if the
+   logging is ever questioned. Collecting it can stay the site's business: a
+   checkbox in its own client area, worded by its own privacy policy, written
+   over `PATCH /api/newsletter/contact/{id}` or on the contact's admin form.
+   Flipping the audience switch tracks nobody: every contact stays untracked
+   until their own consent is written, one by one.
+
+The bundle also offers one collection point of its own: **the double opt-in
+mail**. When the audience tracks, the confirmation mail carries two links —
+*confirm and accept tracked links* put forward as the button, plain *confirm*
+one line beneath. Either opens the subscription; only the first also writes the
+dated consent, and only for a navigation the browser attributes to a person
+(`Sec-Fetch-User`, the same test the unsubscribe link uses), so a mail scanner
+following every link of the mail cannot consent to per-click logging on the
+reader's behalf — it merely confirms the subscription, exactly as the plain
+link always has. A site that overrode `confirm.email.html.twig` keeps its
+single button until its template renders the new `confirmTrackingUrl` variable
+(null whenever the audience does not track).
+
+Both gates open, and the links of that contact's mails — campaigns and
+automation steps alike — are rewritten through `GET /newsletter/c/{payload}`,
+which records the click (contact, campaign or step, destination, when) and
+answers `302` to the destination. Either gate closed, and the mail keeps
+exactly the links it carries today, `utm_*` tags included: a base where three
+people consented is tracked for three people and nobody else.
+
+What the rewrite touches, and what it never touches:
+
+- **Only the body's `http(s)` links.** The template's own links — the
+  unsubscribe link first among them — are out of reach by construction: the
+  body is rewritten before the template wraps it. Leaving is not a visit, and
+  not a click worth recording either.
+- **The UTM pass runs first**, so the URL recorded and redirected to is the
+  tagged one — the destination's analytics reads exactly what it read before.
+- The plain-text part keeps its links as written: it is the Markdown source,
+  authored to be read raw.
+
+The payload is signed with an HMAC on the kernel secret. The endpoint redirects
+wherever the payload says, so an unsigned payload would be an open redirect
+wearing your domain: a signature that does not recompute is a `404`, never a
+redirect.
+
+**Withdrawal is one write.** Setting `clickTrackingConsentAt` to null — over
+the API or by clearing the field in the admin — purges every click recorded
+for that contact: the rows were collected under a consent and go with it.
+Deleting the contact takes them along the same way. The links already sitting
+in their inbox are not broken by any of it: both gates are asked again at
+click time, so those links keep redirecting and stop recording.
+
+What it reports, where:
+
+- the campaign's click count, next to sent, failed, unsubscribed and bounced —
+  on the campaign's admin page and in the API `stats`;
+- a clicks column on the campaign's **Recipients** ledger, per reader;
+- `GET /api/newsletter/campaign/{id}` details `clicksByUrl`: each link, how
+  many clicks, how many distinct readers;
+- a drip step's clicks are recorded against the automation and the step's
+  position — a drip has no campaign, here as everywhere.
 
 ## Custom properties
 
@@ -1044,7 +1116,7 @@ POST   /api/newsletter/contact/{id}/bounce
 
 GET    /api/newsletter/campaign?audience=&status=
 POST   /api/newsletter/campaign
-GET    /api/newsletter/campaign/{id}    # includes estimatedRecipients while draft
+GET    /api/newsletter/campaign/{id}    # includes estimatedRecipients while draft, clicksByUrl once sent
 PATCH  /api/newsletter/campaign/{id}    # drafts only
 DELETE /api/newsletter/campaign/{id}
 POST   /api/newsletter/campaign/{id}/schedule
@@ -1163,12 +1235,15 @@ action, what the site sells.
 
 ## What it deliberately does not do
 
-- **No click or open tracking.** Per-link personal-data logging is a liability in
-  the EU for what it returns on a content site. The feedback a campaign records
-  is deliveries, failures, unsubscribes and bounces. The `utm_*` parameters above
-  are a different thing: no redirect stands between the reader and the page, and
-  nothing is written against a contact — your site's own analytics reads them,
-  in aggregate.
+- **No open tracking.** The spy pixel is refused by design: an image fetch says
+  "the mail was rendered", not "somebody read it", and there is no way to offer
+  it that a reader can meaningfully refuse. Click tracking exists
+  ([above](#click-tracking)) but never by default and never wholesale — off per
+  audience, and recording nobody whose own dated consent is not written on
+  their row. The feedback every campaign records regardless is deliveries,
+  failures, unsubscribes and bounces; the `utm_*` parameters stay the
+  no-consent path, read by your site's own analytics in aggregate with nothing
+  written against a contact.
 - **No provider webhook ingestion.** A bounce is recorded when the transport
   refuses the mail at send time, when `pw:newsletter:bounces` reads it out of the
   Return-Path mailbox (see [Bounces](#bounces)), or when something posts it to

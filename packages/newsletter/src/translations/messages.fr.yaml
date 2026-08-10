@@ -8,6 +8,8 @@ newsletter:
       rules: Règles
       sender: Expéditeur
     field:
+      clickTracking: Suivi des clics
+      clickTracking.help: Réécrit les liens des mails via une redirection qui enregistre qui a cliqué quoi — mais seulement pour les contacts portant leur propre consentement daté. Désactivé, les mails gardent leurs liens tels quels (balises UTM comprises).
       doubleOptIn: Double opt-in
       doubleOptIn.help: Demander une confirmation avant qu'un contact devienne joignable. À laisser activé sauf import d'une base ayant déjà consenti.
       fromEmail: Adresse d'expédition
@@ -72,6 +74,7 @@ newsletter:
       audience: Audience
       body: Contenu
       bounced: Rejetés
+      clicks: Clics
       failed: Échecs
       preheader: Pré-en-tête
       preheader.help: Courte ligne d'aperçu affichée après l'objet dans la plupart des messageries.
@@ -112,6 +115,8 @@ newsletter:
   confirm:
     body: Merci pour votre inscription ! Pour commencer à recevoir nos mails, cliquez sur le bouton ci-dessous afin de confirmer votre adresse e-mail.
     button: Je confirme mon inscription
+    buttonPlain: Je valide mon inscription
+    buttonTracking: Je valide mon inscription et j'accepte les liens suivis pour améliorer le service
     ignore: Si vous n'êtes pas à l'origine de cette demande, ignorez ce message — rien ne vous sera envoyé.
     subject: '%host% - Confirmez votre inscription'
   confirmed:
@@ -135,6 +140,8 @@ newsletter:
       audience: Audience
       audience.help: La modifier déplace cette inscription vers une autre liste. Pour en ajouter une, utilisez « Ajouter à une autre liste ».
       bouncedAt: Rejeté le
+      clickTrackingConsentAt: Consentement au suivi des clics
+      clickTrackingConsentAt.help: Quand cette personne a consenti à l'enregistrement de ses clics — la preuve datée. Ne le renseignez que pour un consentement que vous pouvez produire ; l'effacer retire le consentement et purge les clics enregistrés.
       confirmedAt: Confirmé le
       customProperties: Propriétés personnalisées
       customProperties.help: Paires clé-valeur en YAML. Les segments les lisent via prop.<clé>.
@@ -233,6 +240,7 @@ newsletter:
       singular: Destinataire
     field:
       campaign: Newsletter
+      clicks: Clics
       contact: Contact
       error: Erreur
       sentAt: Envoyé le

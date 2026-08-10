@@ -5,7 +5,10 @@ namespace Pushword\Newsletter\Service;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlUnpublishedLink;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Newsletter\Click\ClickTracker;
 use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Entity\AutomationStep;
+use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Utm\UtmDecorator;
 use Pushword\Newsletter\Utm\UtmTag;
@@ -26,6 +29,7 @@ final readonly class MailRenderer
         private Twig $twig,
         private SiteRegistry $siteRegistry,
         private UtmDecorator $utmDecorator,
+        private ClickTracker $clickTracker,
     ) {
     }
 
@@ -42,12 +46,20 @@ final readonly class MailRenderer
         ?string $preheader,
         string $unsubscribeUrl,
         ?UtmTag $utmTag,
+        Campaign|AutomationStep|null $trackedMail = null,
     ): string {
         $body = $this->markdownParser->transform($this->personalize($bodyMarkdown, $contact));
         $body = $this->absolutize($body, $audience);
         // Tagging the body and not the rendered mail leaves the template's
         // unsubscribe link alone: leaving is an exit, not a visit.
         $body = $this->utmDecorator->decorate($body, $audience, $utmTag);
+
+        // After the UTM pass, so a recorded click still lands on a tagged URL;
+        // before the template, so its own links stay out of reach. The double
+        // consent gate is the tracker's to keep.
+        if (null !== $trackedMail) {
+            $body = $this->clickTracker->rewrite($body, $audience, $contact, $trackedMail);
+        }
 
         return $this->twig->render($this->view($audience, 'email.html.twig'), [
             'audience' => $audience,
@@ -59,13 +71,15 @@ final readonly class MailRenderer
         ]);
     }
 
-    public function confirmationHtml(Audience $audience, Contact $contact, string $subject, string $confirmUrl): string
+    /** @param string|null $confirmTrackingUrl the confirm-and-accept-tracking variant, when the audience asks for the consent */
+    public function confirmationHtml(Audience $audience, Contact $contact, string $subject, string $confirmUrl, ?string $confirmTrackingUrl = null): string
     {
         return $this->twig->render($this->view($audience, 'confirm.email.html.twig'), [
             'audience' => $audience,
             'contact' => $contact,
             'subject' => $subject,
             'confirmUrl' => $confirmUrl,
+            'confirmTrackingUrl' => $confirmTrackingUrl,
             'primaryColor' => $this->siteRegistry->get($audience->mainHost)
                 ->getStr('css_var:color_primary', '#1c1c1c'),
         ]);

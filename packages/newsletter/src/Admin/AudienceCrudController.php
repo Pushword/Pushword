@@ -63,6 +63,9 @@ class AudienceCrudController extends AbstractCrudController
         yield FormField::addFieldset('newsletter.audience.fieldset.rules')->setIcon('fa fa-sliders');
         yield BooleanField::new('requireDoubleOptIn', 'newsletter.audience.field.doubleOptIn')
             ->setHelp('newsletter.audience.field.doubleOptIn.help');
+        yield BooleanField::new('clickTracking', 'newsletter.audience.field.clickTracking')
+            ->hideOnIndex()
+            ->setHelp('newsletter.audience.field.clickTracking.help');
         yield ArrayField::new('interests', 'newsletter.audience.field.interests')->hideOnIndex()
             ->setHelp('newsletter.audience.field.interests.help');
         yield IntegerField::new('rateSeconds', 'newsletter.audience.field.rateSeconds')->hideOnIndex()

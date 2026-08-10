@@ -172,13 +172,28 @@ final class NewsletterController extends AbstractController
         );
     }
 
+    /**
+     * The `/tracking` variant is the confirmation mail's first button: one click
+     * confirms the subscription *and* grants the click-tracking consent. The
+     * consent half only counts for a navigation a person drove ({@see clicked()},
+     * as on the unsubscribe link): a mail scanner following every link must not
+     * be able to consent to per-click logging on somebody's behalf. A fetch
+     * still confirms the subscription, exactly as the plain link always has —
+     * the conservative loss is one unrecorded consent, never a forged one.
+     */
     #[Route(
         path: '/newsletter/confirm/{token}',
         name: 'pushword_newsletter_confirm',
         requirements: ['token' => '[a-f0-9]{64}'],
         methods: ['GET'],
     )]
-    public function confirm(string $token): Response
+    #[Route(
+        path: '/newsletter/confirm/{token}/tracking',
+        name: 'pushword_newsletter_confirm_tracking',
+        requirements: ['token' => '[a-f0-9]{64}'],
+        methods: ['GET'],
+    )]
+    public function confirm(string $token, Request $request): Response
     {
         $contact = $this->contactRepository->findOneByToken($token);
 
@@ -186,7 +201,10 @@ final class NewsletterController extends AbstractController
             return $this->page('unknown.html.twig', null, Response::HTTP_NOT_FOUND);
         }
 
-        $this->contactManager->confirm($contact);
+        $this->contactManager->confirm(
+            $contact,
+            'pushword_newsletter_confirm_tracking' === $request->attributes->get('_route') && $this->clicked($request),
+        );
 
         return $this->page('confirmed.html.twig', $contact);
     }

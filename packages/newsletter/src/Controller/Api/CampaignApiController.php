@@ -11,6 +11,7 @@ use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Repository\AudienceRepository;
 use Pushword\Newsletter\Repository\CampaignRepository;
+use Pushword\Newsletter\Repository\ClickEventRepository;
 use Pushword\Newsletter\Segment\SegmentCriteria;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
@@ -39,6 +40,7 @@ final class CampaignApiController extends AbstractApiController
     public function __construct(
         private readonly CampaignRepository $campaignRepository,
         private readonly AudienceRepository $audienceRepository,
+        private readonly ClickEventRepository $clickEventRepository,
         private readonly SegmentResolver $segmentResolver,
         private readonly CampaignSender $campaignSender,
         private readonly NewsletterMailer $mailer,
@@ -316,6 +318,7 @@ final class CampaignApiController extends AbstractApiController
                 'failed' => $campaign->failedCount,
                 'unsubscribed' => $campaign->unsubCount,
                 'bounced' => $campaign->bounceCount,
+                'clicks' => $campaign->clickCount,
             ],
         ];
 
@@ -325,6 +328,12 @@ final class CampaignApiController extends AbstractApiController
             } catch (SegmentException) {
                 $payload['estimatedRecipients'] = null;
             }
+        }
+
+        // Which links pulled — item reads only, a list would repeat the group-by
+        // per row for numbers nobody asked the list for.
+        if ($withEstimate) {
+            $payload['clicksByUrl'] = $this->clickEventRepository->byUrl($campaign);
         }
 
         return $payload;
@@ -348,7 +357,7 @@ final class CampaignApiController extends AbstractApiController
                 ],
                 '/api/newsletter/campaign/{id}' => [
                     'parameters' => [['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],
-                    'get' => ['summary' => 'Get a campaign, with the size of its segment while it is a draft', 'responses' => ['200' => ['description' => 'OK']]],
+                    'get' => ['summary' => 'Get a campaign, with the size of its segment while it is a draft and its clicks per link (clicksByUrl) once click tracking recorded any', 'responses' => ['200' => ['description' => 'OK']]],
                     'patch' => ['summary' => 'Update a draft campaign', 'responses' => ['200' => ['description' => 'OK']]],
                     'delete' => ['summary' => 'Delete a campaign', 'responses' => ['204' => ['description' => 'Deleted']]],
                 ],

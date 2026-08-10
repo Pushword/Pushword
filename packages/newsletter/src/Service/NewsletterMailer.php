@@ -50,6 +50,7 @@ final readonly class NewsletterMailer
             $content['bodyMarkdown'],
             $content['preheader'],
             UtmTag::forCampaign($campaign),
+            $campaign,
         );
     }
 
@@ -69,17 +70,25 @@ final readonly class NewsletterMailer
             $bodyMarkdown,
             null,
             null !== $automation ? UtmTag::forStep($automation, $step) : null,
+            $step,
         );
     }
 
     /**
      * The double opt-in mail. It carries no unsubscribe header on purpose: the
      * contact is not subscribed yet, and doing nothing is already the opt-out.
+     *
+     * When the audience tracks clicks, the confirmation is also where the
+     * contact's own consent is asked: two links, confirm-and-accept-tracking
+     * put forward, plain confirm beneath it. One mail, one click, both answers.
      */
     public function sendConfirmation(Contact $contact): void
     {
         $audience = $contact->audience;
         $confirmUrl = $this->linkGenerator->confirmUrl($contact);
+        $confirmTrackingUrl = $audience->clickTracking
+            ? $this->linkGenerator->confirmUrl($contact, withClickTracking: true)
+            : null;
         $trans = fn (string $key): string => $this->translator->trans(
             'newsletter.confirm.'.$key,
             [
@@ -91,10 +100,14 @@ final readonly class NewsletterMailer
         );
         $subject = $trans('subject');
 
+        $text = null === $confirmTrackingUrl
+            ? $confirmUrl
+            : $trans('buttonTracking').":\n".$confirmTrackingUrl."\n\n".$trans('buttonPlain').":\n".$confirmUrl;
+
         $email = $this->baseEmail($audience, $contact)
             ->subject($subject)
-            ->text($trans('body')."\n\n".$confirmUrl."\n\n".$trans('ignore')."\n")
-            ->html($this->renderer->confirmationHtml($audience, $contact, $subject, $confirmUrl));
+            ->text($trans('body')."\n\n".$text."\n\n".$trans('ignore')."\n")
+            ->html($this->renderer->confirmationHtml($audience, $contact, $subject, $confirmUrl, $confirmTrackingUrl));
 
         $this->mailer->send($email);
     }
@@ -124,14 +137,14 @@ final readonly class NewsletterMailer
         $this->mailer->send($email);
     }
 
-    private function send(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader, ?UtmTag $utmTag): void
+    private function send(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader, ?UtmTag $utmTag, Campaign|AutomationStep $trackedMail): void
     {
         $unsubscribeUrl = $this->linkGenerator->unsubscribeUrl($contact);
 
         $email = $this->baseEmail($audience, $contact)
             ->subject($this->renderer->subject($subject, $contact))
             ->text($this->renderer->text($contact, $bodyMarkdown, $unsubscribeUrl))
-            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag));
+            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, $trackedMail));
 
         $headers = $email->getHeaders();
         $headers->addTextHeader('List-Unsubscribe', '<'.$unsubscribeUrl.'>');

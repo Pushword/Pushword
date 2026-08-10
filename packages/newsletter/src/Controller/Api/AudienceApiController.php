@@ -178,6 +178,10 @@ final class AudienceApiController extends AbstractApiController
             $audience->requireDoubleOptIn = $data['requireDoubleOptIn'];
         }
 
+        if (\array_key_exists('clickTracking', $data) && \is_bool($data['clickTracking'])) {
+            $audience->clickTracking = $data['clickTracking'];
+        }
+
         if (\array_key_exists('interests', $data) && \is_array($data['interests'])) {
             $audience->interests = array_values(array_filter($data['interests'], is_string(...)));
         }
@@ -205,6 +209,7 @@ final class AudienceApiController extends AbstractApiController
             'fromEmail' => $audience->fromEmail,
             'replyTo' => $audience->replyTo,
             'requireDoubleOptIn' => $audience->requireDoubleOptIn,
+            'clickTracking' => $audience->clickTracking,
             'interests' => $audience->interests,
             'rateSeconds' => $audience->rateSeconds,
             'utmSource' => $audience->utmSource,
@@ -267,6 +272,7 @@ final class AudienceApiController extends AbstractApiController
                             'fromEmail' => ['type' => 'string'],
                             'replyTo' => ['type' => 'string', 'nullable' => true],
                             'requireDoubleOptIn' => ['type' => 'boolean'],
+                            'clickTracking' => ['type' => 'boolean', 'description' => 'Audience half of the click-tracking double gate, off by default. Links are only rewritten for contacts also carrying clickTrackingConsentAt'],
                             'interests' => ['type' => 'array', 'description' => 'The only interest values the public subscribe form may write', 'items' => ['type' => 'string']],
                             'rateSeconds' => ['type' => 'integer', 'description' => 'Seconds between two mails of this audience'],
                             'utmSource' => ['type' => 'string', 'nullable' => true],

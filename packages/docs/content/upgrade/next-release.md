@@ -1,5 +1,6 @@
 ---
-title: ''
+title: 'newsletter mails can track clicks, behind a double consent'
+run: 'doctrine:schema:update --force'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +35,18 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/newsletter`
+
+## Click tracking, doubly opted in
+
+Campaign and drip links can be rewritten to record which contact clicked which
+link — only when the audience's new `clickTracking` switch is on **and** the
+contact carries a dated `clickTrackingConsentAt`; otherwise mails keep their
+links exactly as before. New table and columns: run the schema update. A site
+that leaves the switch off has nothing else to do — see
+[the consent model](/extension/newsletter#click-tracking).
+
+**Sites overriding `confirm.email.html.twig` that switch tracking on:** the
+consent is asked in the confirmation mail through a second link, carried by the
+new `confirmTrackingUrl` template variable — mirror it or keep a single button.

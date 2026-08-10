@@ -11,11 +11,13 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use Override;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Enum\RecipientState;
+use Pushword\Newsletter\Repository\ClickEventRepository;
 
 /**
  * The send ledger, read-only: who a newsletter went to, one row per contact, and
@@ -35,6 +37,10 @@ use Pushword\Newsletter\Enum\RecipientState;
 #[AdminRoute(path: '/newsletter/campaign-recipient', name: 'newsletter_campaign_recipient')]
 class CampaignRecipientCrudController extends AbstractCrudController
 {
+    public function __construct(private readonly ClickEventRepository $clickEventRepository)
+    {
+    }
+
     public static function getEntityFqcn(): string
     {
         return CampaignRecipient::class;
@@ -87,6 +93,18 @@ class CampaignRecipientCrudController extends AbstractCrudController
                 RecipientState::Bounced->value => 'warning',
             ]);
         yield DateTimeField::new('sentAt', 'newsletter.recipient.field.sentAt');
+        // A virtual field: the count lives in ClickEvent rows, and most
+        // campaigns track nothing — hideNullValues keeps their column silent.
+        yield IntegerField::new('clicks', 'newsletter.recipient.field.clicks')
+            ->formatValue(function (mixed $value, ?CampaignRecipient $campaignRecipient): ?int {
+                if (! $campaignRecipient instanceof CampaignRecipient) {
+                    return null;
+                }
+
+                $clicks = $this->clickEventRepository->countFor($campaignRecipient->campaign, $campaignRecipient->contact);
+
+                return 0 !== $clicks ? $clicks : null;
+            });
         yield TextField::new('error', 'newsletter.recipient.field.error');
     }
 }

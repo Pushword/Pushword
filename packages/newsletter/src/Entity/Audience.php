@@ -100,6 +100,14 @@ class Audience implements IdInterface, Stringable
     }
 
     /**
+     * The audience half of the click-tracking double gate, off by default.
+     * Even switched on, a contact's links are only rewritten once that contact
+     * carries their own {@see Contact::$clickTrackingConsentAt}.
+     */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    public bool $clickTracking = false;
+
+    /**
      * The `utm_source` this audience's links carry. Null leaves them untouched:
      * the parameters are only worth adding where something reads them.
      */

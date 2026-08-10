@@ -24,6 +24,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
             __DIR__.'/../Admin',
             __DIR__.'/../Bounce',
+            __DIR__.'/../Click/ClickPayload.php',
             __DIR__.'/../Content/PageCriteria.php',
             __DIR__.'/../Enum',
             __DIR__.'/../Repository/DQL',

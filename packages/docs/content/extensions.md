@@ -20,7 +20,7 @@ name: Extensions
 - [Link Improver](/extension/link-improver)
   Automatic internal linking: the first mention of another page's name in your content becomes a link to it, at render time — opt-in, capped, auditable, source content untouched.
 - [Newsletter](/extension/newsletter)
-  Audiences, contacts with custom properties, segmented campaigns, and automations that start a sequence of mails when something happens — a contact comes to match a rule, an article is published, or whatever trigger source your own bundle registers. All driven by one cron tick. Double opt-in, one-click unsubscribe, `utm_*` link attribution, no click tracking.
+  Audiences, contacts with custom properties, segmented campaigns, and automations that start a sequence of mails when something happens — a contact comes to match a rule, an article is published, or whatever trigger source your own bundle registers. All driven by one cron tick. Double opt-in, one-click unsubscribe, `utm_*` link attribution; click tracking off by default and only ever behind a per-audience switch plus a per-contact dated consent.
 - [Page Scanner](/extension/page-scanner)
   Find dead links, 404, 301, TODO reminders and more (command line or admin).
 - [Page Update Notifier](/extension/page-update-notifier)

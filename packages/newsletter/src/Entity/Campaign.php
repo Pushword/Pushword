@@ -134,6 +134,10 @@ class Campaign implements IdInterface, Stringable
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
     public private(set) int $bounceCount = 0;
 
+    /** Only ever moves for the recipients the click-tracking double gate covers. */
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    public private(set) int $clickCount = 0;
+
     /**
      * Where this came from, when it was not written by hand. Provenance, and the
      * way back to the subject: during the delay the runner asks the automation's
@@ -548,6 +552,13 @@ class Campaign implements IdInterface, Stringable
     public function incrementBounce(): self
     {
         ++$this->bounceCount;
+
+        return $this;
+    }
+
+    public function incrementClick(): self
+    {
+        ++$this->clickCount;
 
         return $this;
     }

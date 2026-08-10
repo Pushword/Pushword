@@ -2,6 +2,7 @@
 
 namespace Pushword\Newsletter\Tests\Admin;
 
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
@@ -10,6 +11,7 @@ use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
+use Pushword\Newsletter\Entity\ClickEvent;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Service\CampaignSender;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -47,6 +49,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
                 foreach ([
                     // SQLite does not enforce the `ON DELETE CASCADE` the schema
                     // declares, so the ledger is cleared by hand and first.
+                    'DELETE FROM newsletter_click_event WHERE contact_id IN (SELECT id FROM newsletter_contact WHERE audience_id = :id)',
                     'DELETE FROM newsletter_campaign_recipient WHERE campaign_id IN (SELECT id FROM newsletter_campaign WHERE audience_id = :id)',
                     'DELETE FROM newsletter_trigger_log WHERE automation_id IN (SELECT id FROM newsletter_automation WHERE audience_id = :id)',
                     'DELETE FROM newsletter_automation_step WHERE automation_id IN (SELECT id FROM newsletter_automation WHERE audience_id = :id)',
@@ -885,6 +888,41 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contactId.'/resubscribe');
         $client->followRedirect();
         self::assertSame('subscribed', $this->reloadContact($contactId)->getStatusLabel());
+    }
+
+    public function testTheAudienceFormOffersTheClickTrackingSwitch(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/audience/'.$audience->id.'/edit');
+
+        self::assertCount(1, $crawler->filter('input[name="Audience[clickTracking]"]'));
+    }
+
+    /** The consent field is editable on the form, and clearing it purges the clicks it covered. */
+    public function testClearingTheConsentFromTheAdminPurgesTheClicks(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        $contact = new Contact($audience, 'tracked@example.tld');
+        $contact->optIn(false);
+        $contact->clickTrackingConsentAt = new DateTimeImmutable();
+        $this->entityManager()->persist($contact);
+
+        $campaign = $this->campaign($audience, 'Tracked');
+        $this->entityManager()->persist(ClickEvent::onCampaign($contact, $campaign, 'https://localhost.dev/article'));
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contact->id.'/edit');
+        $form = $crawler->filter('form[name="Contact"]')->form();
+        $form['Contact[clickTrackingConsentAt]'] = '';
+        $client->submit($form);
+
+        self::assertTrue($client->getResponse()->isRedirection(), 'the save must go through for the withdrawal to mean anything');
+        self::assertNull($this->reloadContact($contact->id)->clickTrackingConsentAt);
+        self::assertCount(0, $this->entityManager()->getRepository(ClickEvent::class)->findBy(['contact' => $contact]));
     }
 
     /** The detail page carries the same panel — a mistyped template override renders nothing and still returns 200. */

@@ -1,4 +1,7 @@
-{# Double opt-in. It carries one link and nothing else, so the ask is unambiguous. #}
+{# Double opt-in. One link, one unambiguous ask — unless the audience tracks
+   clicks: then the consent is asked here too, as a second way to say yes. The
+   confirm-and-accept button leads, the plain confirm stays one line below,
+   equally able to open the subscription. #}
 <!DOCTYPE html>
 <html lang="{{ contact.locale }}">
 <head>
@@ -11,12 +14,26 @@
     <tr>
         <td style="padding:24px 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1c1c1c;">
             <p style="margin:0 0 20px;">{{ 'newsletter.confirm.body'|trans({'%audience%': audience.name}, null, contact.locale) }}</p>
-            <p style="margin:0 0 24px;">
-                <a href="{{ confirmUrl }}"
-                   style="display:inline-block;padding:12px 22px;background:{{ primaryColor }};color:#ffffff;text-decoration:none;border-radius:4px;">
-                    {{ 'newsletter.confirm.button'|trans({}, null, contact.locale) }}
-                </a>
-            </p>
+            {% if confirmTrackingUrl %}
+              <p style="margin:0 0 14px;">
+                  <a href="{{ confirmTrackingUrl }}"
+                     style="display:inline-block;padding:13px 24px;background:{{ primaryColor }};color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;">
+                      {{ 'newsletter.confirm.buttonTracking'|trans({}, null, contact.locale) }}
+                  </a>
+              </p>
+              <p style="margin:0 0 24px;font-size:14px;">
+                  <a href="{{ confirmUrl }}" style="color:#555555;text-decoration:underline;">
+                      {{ 'newsletter.confirm.buttonPlain'|trans({}, null, contact.locale) }}
+                  </a>
+              </p>
+            {% else %}
+              <p style="margin:0 0 24px;">
+                  <a href="{{ confirmUrl }}"
+                     style="display:inline-block;padding:12px 22px;background:{{ primaryColor }};color:#ffffff;text-decoration:none;border-radius:4px;">
+                      {{ 'newsletter.confirm.button'|trans({}, null, contact.locale) }}
+                  </a>
+              </p>
+            {% endif %}
             <p style="margin:0;font-size:12px;color:#777777;">
                 {{ 'newsletter.confirm.ignore'|trans({}, null, contact.locale) }}
             </p>

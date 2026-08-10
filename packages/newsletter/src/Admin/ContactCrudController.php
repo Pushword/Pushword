@@ -26,6 +26,7 @@ use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Repository\AudienceRepository;
+use Pushword\Newsletter\Repository\ClickEventRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Service\ContactManager;
 use Pushword\Newsletter\Service\ContactMerger;
@@ -49,9 +50,30 @@ class ContactCrudController extends AbstractCrudController
         private readonly ContactMerger $contactMerger,
         private readonly ContactRepository $contactRepository,
         private readonly AudienceRepository $audienceRepository,
+        private readonly ClickEventRepository $clickEventRepository,
         private readonly AdminUrlGenerator $adminUrlGenerator,
         private readonly EntityManagerInterface $entityManager,
     ) {
+    }
+
+    /**
+     * Clearing the click-tracking consent is a withdrawal, and a withdrawal
+     * takes the collected clicks with it — the rows were only kept under it.
+     *
+     * @param Contact $entityInstance
+     */
+    #[Override]
+    public function updateEntity(EntityManagerInterface $entityManager, object $entityInstance): void
+    {
+        if (null === $entityInstance->clickTrackingConsentAt) {
+            $stored = $entityManager->getUnitOfWork()->getOriginalEntityData($entityInstance);
+
+            if (null !== ($stored['clickTrackingConsentAt'] ?? null)) {
+                $this->clickEventRepository->purgeFor($entityInstance);
+            }
+        }
+
+        parent::updateEntity($entityManager, $entityInstance);
     }
 
     public static function getEntityFqcn(): string
@@ -165,6 +187,10 @@ class ContactCrudController extends AbstractCrudController
         yield TextField::new('source', 'newsletter.contact.field.source')->hideOnIndex()->setDisabled();
         yield TextField::new('optinHost', 'newsletter.contact.field.optinHost')->hideOnIndex()->setDisabled();
         yield TextField::new('optinIp', 'newsletter.contact.field.optinIp')->onlyOnDetail();
+        yield DateTimeField::new('clickTrackingConsentAt', 'newsletter.contact.field.clickTrackingConsentAt')
+            ->hideOnIndex()
+            ->setRequired(false)
+            ->setHelp('newsletter.contact.field.clickTrackingConsentAt.help');
         yield DateTimeField::new('createdAt', 'newsletter.contact.field.registeredAt')->hideOnForm();
         yield DateTimeField::new('confirmedAt', 'newsletter.contact.field.confirmedAt')->onlyOnDetail();
         yield DateTimeField::new('unsubscribedAt', 'newsletter.contact.field.unsubscribedAt')->onlyOnDetail();

@@ -8,6 +8,8 @@ newsletter:
       rules: Rules
       sender: Sender
     field:
+      clickTracking: Click tracking
+      clickTracking.help: Rewrite mail links through a redirect that records who clicked what — but only for contacts carrying their own dated consent. Off, mails keep their links exactly as written (UTM tags included).
       doubleOptIn: Double opt-in
       doubleOptIn.help: Ask for a confirmation click before a subscriber becomes mailable. Leave on unless you are importing a base that already consented.
       fromEmail: From address
@@ -72,6 +74,7 @@ newsletter:
       audience: Audience
       body: Body
       bounced: Bounced
+      clicks: Clicks
       failed: Failed
       preheader: Preheader
       preheader.help: Short preview line shown after the subject in most inboxes.
@@ -112,6 +115,8 @@ newsletter:
   confirm:
     body: Thank you for signing up! To start receiving our emails, click the button below to confirm your email address.
     button: Confirm my subscription
+    buttonPlain: Confirm my subscription
+    buttonTracking: Confirm my subscription and accept tracked links, to improve the service
     ignore: If you did not ask for this, ignore this mail — nothing will be sent.
     subject: '%host% - Confirm your subscription'
   confirmed:
@@ -135,6 +140,8 @@ newsletter:
       audience: Audience
       audience.help: Changing it moves this subscription to another list. To add one, use "Add to another list".
       bouncedAt: Bounced at
+      clickTrackingConsentAt: Click-tracking consent
+      clickTrackingConsentAt.help: When this person consented to per-click logging — the dated proof. Only set it for consent you can produce; clearing it withdraws the consent and purges their recorded clicks.
       confirmedAt: Confirmed at
       customProperties: Custom properties
       customProperties.help: YAML key-value pairs. Segments read them as prop.<key>.
@@ -233,6 +240,7 @@ newsletter:
       singular: Recipient
     field:
       campaign: Newsletter
+      clicks: Clicks
       contact: Contact
       error: Error
       sentAt: Sent at
