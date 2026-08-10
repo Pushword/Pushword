@@ -65,6 +65,33 @@ final class CarouselFactoryTest extends TestCase
     }
 
     /**
+     * Free texts hydrate with their fractional-box defaults; entries with no
+     * content are dropped as authoring leftovers.
+     */
+    public function testTextsHydrateAndContentlessEntriesAreDropped(): void
+    {
+        $slide = new CarouselFactory()->fromArray([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['texts' => [
+                ['content' => 'Note', 'x' => 0.5, 'y' => 0.2, 'size' => 0.03, 'font' => 'heading', 'color' => '#ff0000'],
+                ['content' => ''],
+                'not-an-object',
+            ]]],
+        ])->slides[0];
+
+        self::assertCount(1, $slide->texts);
+        $text = $slide->texts[0];
+        self::assertSame('Note', $text->content);
+        self::assertSame(0.5, $text->x);
+        self::assertSame(0.2, $text->y);
+        self::assertSame(0.84, $text->width);
+        self::assertSame(0.03, $text->size);
+        self::assertSame('left', $text->align);
+        self::assertSame('heading', $text->font);
+        self::assertSame('#ff0000', $text->color);
+    }
+
+    /**
      * `creator` may be a config key (kept as string), an inline `{name,…}` object
      * (hydrated to a one-off Creator), or absent/nameless (null → brand byline).
      */

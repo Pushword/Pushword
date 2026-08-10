@@ -72,6 +72,41 @@ final class CarouselValidationTest extends KernelTestCase
         self::assertArrayHasKey('slides[0].overlay', $violations);
     }
 
+    public function testFreeTextAloneMakesASlideNonEmpty(): void
+    {
+        $violations = $this->violations([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['texts' => [['content' => 'Just a note']]]],
+        ]);
+
+        self::assertSame([], $violations);
+    }
+
+    public function testFreeTextBoxMustStayInsideTheFrame(): void
+    {
+        $violations = $this->violations([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['title' => 'Hi', 'texts' => [
+                ['content' => 'Off frame', 'x' => 0.5, 'width' => 0.6],
+                ['content' => 'Too big', 'size' => 0.5],
+            ]]],
+        ]);
+
+        self::assertArrayHasKey('slides[0].texts[0].width', $violations);
+        self::assertArrayHasKey('slides[0].texts[1].size', $violations);
+    }
+
+    public function testHighlightMustBeAHexColour(): void
+    {
+        $violations = $this->violations([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['title' => 'Hi', 'highlight' => 'yellow', 'texts' => [['content' => 'N', 'highlight' => 'red']]]],
+        ]);
+
+        self::assertArrayHasKey('slides[0].highlight', $violations);
+        self::assertArrayHasKey('slides[0].texts[0].highlight', $violations);
+    }
+
     public function testEmptySlideIsRejected(): void
     {
         $violations = $this->violations([

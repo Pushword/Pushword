@@ -47,7 +47,11 @@ Page ──► CarouselDrafter ──► SocialPost ◄──► social-post/{pa
   a flat JSON file through `pw:flat:sync`. Works on a DB-first site and a flat-file
   site alike.
 - **Studio** — an admin page (`/admin/repurpose`) that previews the deck and
-  exports it.
+  exports it. The deck previews at the network's real mobile feed width; a zoom
+  slider under it scales the slides for detail inspection (not persisted — the
+  studio always reopens at 100% so text size is judged at the size a scrolling
+  viewer actually sees). Clicking a text on a slide opens a floating editor in
+  place and reveals that slide's row in the panel.
 
 ## Author with an agent (recommended)
 
@@ -93,6 +97,22 @@ point in the source) and `zoom` (≥ 1). It is applied at **render time** as an 
 clip — never baked into a cached file — so the same numbers stay correct when the
 slide is re-rendered at another format's ratio. A landscape photo in a portrait
 slide is simply a wide image the frame clips.
+
+## Text
+
+The layout stack (`tagline`/`title`/`paragraph`) is anchored by `layout` × `align`
+and auto-fits its size. An explicit `\n` in any field makes a hard line break.
+For text outside the stack — annotations, callouts — a slide takes free text
+boxes in `texts[]`: `content`, a fractional box (`x`, `y`, `width`, with
+`x + width ≤ 1`), `size` (fraction of the frame width), `align`, `font`
+(`body`/`heading`) and an optional `color`. Fractions rather than pixels, so a
+box survives a network/format retarget like the crop does; the stated size is
+honoured unless the box would overflow the slide bottom, in which case it shrinks
+to fit — free placement stays inside the no-overflow guarantee.
+
+A `highlight` colour — on a slide (behind each title line) or on a free text box —
+paints a rounded marker sized from the measured line widths, so it hugs the text
+exactly at any size.
 
 ## Fonts
 

@@ -91,6 +91,19 @@ Key rules (the schema is the source of truth — always fetch it):
   No avatar (or a missing one) renders an initials disc, never a broken image.
 - **Overlay only over an image**; a slide must have at least one text field or an
   image.
+- **Explicit `\n` in any text field makes a hard line break** — the layout wraps
+  the segments independently.
+- **Free text boxes** (`slide.texts[]`) place extra text anywhere:
+  `{"content": "…", "x": 0.1, "y": 0.4, "width": 0.5, "size": 0.05, "align":
+  "left", "font": "body", "color": "#f8fafc"}` — every coordinate a fraction of
+  the frame (retarget-safe), `size` a fraction of the frame width, `x + width ≤ 1`.
+  The stated size shrinks only if the box would overflow the slide bottom. Prefer
+  the layout stack (`tagline`/`title`/`paragraph`) for the main copy; free boxes
+  are for annotations and callouts.
+- **Highlight**: `slide.highlight` (behind each title line) or `texts[].highlight`
+  (behind a free box's lines) paints a rounded marker in that hex colour, sized
+  from the measured line widths. Keep the text colour readable over it — the
+  contrast advisor does not check highlight pairs.
 
 ## Do not
 

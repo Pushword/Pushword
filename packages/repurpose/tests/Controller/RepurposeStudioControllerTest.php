@@ -87,12 +87,16 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertStringContainsString('id="rp-spec"', $html);
         // A rendered slide SVG is embedded in the config blob (tag-escaped for <script>).
         self::assertStringContainsString('\u003Csvg', $html);
-        // The deck previews at the network's mobile-feed width and says so.
-        self::assertStringContainsString('width: 390px', $html);
+        // The deck previews at the network's mobile-feed width (the zoom slider's
+        // CSS variable falls back to it) and says so.
+        self::assertStringContainsString('width: var(--rp-slide-w, 390px)', $html);
         self::assertStringContainsString('linkedin mobile feed width', $html);
         // The byline picker offers the host's configured creators, not a blind
         // free-text key (the test host resolves to the default app's config).
         self::assertStringContainsString('"creators":{"robin":"Robin"}', $html);
+        // The free-text editor's font choices and the zoom slider's base width.
+        self::assertStringContainsString('"textFonts":["body","heading"]', $html);
+        self::assertStringContainsString('feedWidth: 390', $html);
         self::assertStringContainsString('— brand —', $html);
     }
 

@@ -8,6 +8,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Repurpose\Entity\SocialPost;
 use Pushword\Repurpose\Model\Carousel;
 use Pushword\Repurpose\Model\Counter;
+use Pushword\Repurpose\Model\FreeText;
 use Pushword\Repurpose\Model\Slide;
 use Pushword\Repurpose\Repository\SocialPostRepository;
 use Pushword\Repurpose\Service\BackgroundEffectRegistry;
@@ -464,6 +465,7 @@ final class RepurposeStudioController extends AbstractController
             'layouts' => Slide::LAYOUTS,
             'aligns' => Slide::ALIGNS,
             'imageLayouts' => Slide::IMAGE_LAYOUTS,
+            'textFonts' => FreeText::FONTS,
             'statuses' => Carousel::STATUSES,
             'counterStyles' => Counter::STYLES,
             'counterAligns' => Counter::ALIGNS,

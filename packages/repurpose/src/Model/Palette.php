@@ -10,7 +10,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 class Palette
 {
-    private const string HEX = '/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/';
+    public const string HEX = '/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/';
 
     public function __construct(
         #[Assert\Regex(pattern: self::HEX, message: 'repurpose.palette.color.invalid')]

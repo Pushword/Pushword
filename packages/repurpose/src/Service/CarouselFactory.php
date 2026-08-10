@@ -5,6 +5,7 @@ namespace Pushword\Repurpose\Service;
 use Pushword\Repurpose\Model\Carousel;
 use Pushword\Repurpose\Model\Counter;
 use Pushword\Repurpose\Model\Creator;
+use Pushword\Repurpose\Model\FreeText;
 use Pushword\Repurpose\Model\Palette;
 use Pushword\Repurpose\Model\Slide;
 use Pushword\Repurpose\Model\SlideImage;
@@ -63,6 +64,7 @@ final class CarouselFactory
                 tagline: $this->strOrNull($slide['tagline'] ?? null),
                 title: $this->strOrNull($slide['title'] ?? null),
                 paragraph: $this->strOrNull($slide['paragraph'] ?? null),
+                highlight: $this->strOrNull($slide['highlight'] ?? null),
                 swipe: (bool) ($slide['swipe'] ?? false),
                 // An image slide with no stated overlay gets a legibility-safe
                 // one by default; an explicit 0 is honoured (and the contrast
@@ -73,6 +75,7 @@ final class CarouselFactory
                 palette: $this->palette($slide['palette'] ?? null),
                 imageLayout: $this->strOr($slide['imageLayout'] ?? null, 'full'),
                 images: $images,
+                texts: $this->texts($slide['texts'] ?? null),
             );
         }
 
@@ -105,6 +108,46 @@ final class CarouselFactory
         }
 
         return $images;
+    }
+
+    /**
+     * A slide's free text boxes. Entries that are not objects, or carry no
+     * content, are dropped — an empty `{}` slot is an authoring leftover, not a
+     * violation worth surfacing.
+     *
+     * @return list<FreeText>
+     */
+    private function texts(mixed $raw): array
+    {
+        if (! \is_array($raw)) {
+            return [];
+        }
+
+        $texts = [];
+        foreach ($raw as $entry) {
+            if (! \is_array($entry)) {
+                continue;
+            }
+
+            $content = $this->str($entry['content'] ?? null);
+            if ('' === $content) {
+                continue;
+            }
+
+            $texts[] = new FreeText(
+                content: $content,
+                x: $this->float($entry['x'] ?? null, 0.08),
+                y: $this->float($entry['y'] ?? null, 0.08),
+                width: $this->float($entry['width'] ?? null, 0.84),
+                size: $this->float($entry['size'] ?? null, 0.05),
+                align: $this->strOr($entry['align'] ?? null, 'left'),
+                font: $this->strOr($entry['font'] ?? null, 'body'),
+                color: $this->strOrNull($entry['color'] ?? null),
+                highlight: $this->strOrNull($entry['highlight'] ?? null),
+            );
+        }
+
+        return $texts;
     }
 
     private function image(mixed $raw): ?SlideImage

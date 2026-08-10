@@ -150,11 +150,23 @@
     }
     ;(s.slides || []).forEach(function (slide) {
       dropEmptyObject(slide, 'palette')
-      dropEmptyStrings(slide, ['tagline', 'title', 'paragraph'])
+      dropEmptyStrings(slide, ['tagline', 'title', 'paragraph', 'highlight'])
       // '' means "inherit the deck effect" — store nothing; an explicit effect
       // (including 'none') is a real per-slide override and is kept.
       if ('' === slide.background) {
         delete slide.background
+      }
+      // Free texts: contentless boxes are authoring leftovers; per-box defaults
+      // match the factory so a stored spec stays minimal.
+      var texts = (slide.texts || []).filter(function (t) { return t && String(t.content || '').trim() })
+      texts.forEach(function (t) {
+        dropDefaults(t, { x: 0.08, y: 0.08, width: 0.84, size: 0.05, align: 'left', font: 'body' })
+        dropEmptyStrings(t, ['color', 'highlight'])
+      })
+      if (texts.length) {
+        slide.texts = texts
+      } else {
+        delete slide.texts
       }
       // Defaults the factory would apply anyway — keep the stored spec minimal.
       dropDefaults(slide, { layout: 'bottom', align: 'left', textScale: 1, swipe: false })
@@ -193,6 +205,8 @@
       network: cfg.network || '',
       networkUrls: cfg.networkUrls || {},
       filename: cfg.filename || 'carousel',
+      feedWidth: cfg.feedWidth || 390,
+      zoom: 1,
       view: 'visual',
       live: { state: 'ok', text: 'in sync' },
       violations: [],
@@ -203,6 +217,9 @@
       colorPop: { open: false, top: 0, left: 0 },
       _colorObj: null,
       _colorKey: '',
+      textPop: { open: false, top: 0, left: 0, ref: '' },
+      _editObj: null,
+      _editKey: '',
       effectModal: { open: false, target: 'deck', tab: 'All' },
       mediaModal: { open: false, src: '' },
       dirty: false,
@@ -269,6 +286,18 @@
           def(slide, 'overlay', self.slideHasMedia(slide) ? 0.35 : 0)
           def(slide, 'textScale', 1)
           def(slide, 'swipe', false)
+          def(slide, 'highlight', '')
+          slide.texts = Array.isArray(slide.texts) ? slide.texts : []
+          slide.texts.forEach(function (t) {
+            def(t, 'x', 0.08)
+            def(t, 'y', 0.08)
+            def(t, 'width', 0.84)
+            def(t, 'size', 0.05)
+            def(t, 'align', 'left')
+            def(t, 'font', 'body')
+            def(t, 'color', '')
+            def(t, 'highlight', '')
+          })
           self.ensureCells(slide)
           slide.images.forEach(function (img) {
             def(img, 'focusX', 0.5)
@@ -402,8 +431,17 @@
       },
 
       addSlide: function () {
-        this.spec.slides.push({ layout: 'bottom', align: 'left', title: 'New slide', imageLayout: 'full', images: [{ focusX: 0.5, focusY: 0.5, zoom: 1 }], palette: {} })
+        this.spec.slides.push({ layout: 'bottom', align: 'left', title: 'New slide', imageLayout: 'full', images: [{ focusX: 0.5, focusY: 0.5, zoom: 1 }], palette: {}, texts: [] })
         this.slidesOpen.push(true)
+      },
+      addText: function (slide) {
+        if (!Array.isArray(slide.texts)) {
+          slide.texts = []
+        }
+        slide.texts.push({ content: 'Text', x: 0.08, y: 0.08, width: 0.84, size: 0.05, align: 'left', font: 'body', color: '', highlight: '' })
+      },
+      removeText: function (slide, index) {
+        slide.texts.splice(index, 1)
       },
       removeSlide: function (index) {
         this.spec.slides.splice(index, 1)
@@ -537,6 +575,80 @@
         this.closeMediaModal()
       },
 
+      // Inline text editing — a click on a text block in the deck (the renderer
+      // tags each block with data-rp-edit) opens a floating editor over the slide
+      // and reveals the matching slide row in the panel. The editor writes to the
+      // reactive spec, so the live preview re-renders as you type; being a body-
+      // level overlay, it survives the preview swapping the SVG out under it.
+      deckTextClick: function (slideIndex, event) {
+        if ('visual' !== this.view) {
+          return
+        }
+        var block = event.target.closest('[data-rp-edit]')
+        var slide = this.spec.slides[slideIndex]
+        if (!block || !slide) {
+          return
+        }
+        // Keep the click from reaching the popover's own click-outside handler,
+        // which still sees the (not yet re-rendered) open popover and would close
+        // the one this click is opening.
+        event.stopPropagation()
+        var ref = block.getAttribute('data-rp-edit')
+        if (0 === ref.indexOf('texts.')) {
+          var n = parseInt(ref.slice(6), 10)
+          if (!slide.texts || !slide.texts[n]) {
+            return
+          }
+          this._editObj = slide.texts[n]
+          this._editKey = 'content'
+        } else {
+          this._editObj = slide
+          this._editKey = ref
+        }
+        var rect = block.getBoundingClientRect()
+        var width = 304
+        var left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
+        // Flip above the block when the editor would overflow the viewport bottom.
+        var top = rect.bottom + 8 + 160 > window.innerHeight ? Math.max(8, rect.top - 168) : rect.bottom + 8
+        this.textPop = { open: true, top: top, left: left, ref: ref }
+        this.revealSlide(slideIndex)
+        var self = this
+        this.$nextTick(function () {
+          if (self.$refs.textPopField) {
+            self.$refs.textPopField.focus()
+          }
+        })
+      },
+      get textPopLabel() {
+        var ref = this.textPop.ref
+        if (0 === ref.indexOf('texts.')) {
+          return 'Free text ' + (parseInt(ref.slice(6), 10) + 1)
+        }
+
+        return ref.charAt(0).toUpperCase() + ref.slice(1)
+      },
+      get editValue() {
+        return (this._editObj && this._editObj[this._editKey]) || ''
+      },
+      set editValue(value) {
+        if (this._editObj) {
+          this._editObj[this._editKey] = value
+        }
+      },
+      closeTextPop: function () {
+        this.textPop = { open: false, top: 0, left: 0, ref: '' }
+      },
+      // Open the slide's panel row and bring it into view.
+      revealSlide: function (index) {
+        this.slidesOpen[index] = true
+        this.$nextTick(function () {
+          var row = document.getElementById('rp-slide-item-' + index)
+          if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+          }
+        })
+      },
+
       // Colour popover — one shared instance, anchored under the clicked field. It
       // edits a (object, key) pair so any palette field can reuse it; writing back to
       // the reactive spec triggers the same live preview as a plain input would.
@@ -608,6 +720,20 @@
         }
 
         return { ratio: ratio.toFixed(2), pass: ratio >= 4.5, passLarge: ratio >= 3 }
+      },
+
+      // Preview zoom — an inspection tool, deliberately not persisted: the deck
+      // must come back at 100% (= real feed size) so text size keeps being judged
+      // at the scale a scrolling viewer actually sees.
+      get slideWidth() {
+        return Math.round(this.feedWidth * this.zoom)
+      },
+      get deckNote() {
+        if (1 === this.zoom) {
+          return 'Slides at ' + this.feedWidth + 'px — the typical ' + this.network + ' mobile feed width.'
+        }
+
+        return 'Slides at ' + this.slideWidth + 'px — zoom ' + Math.round(100 * this.zoom) + '% of the real ' + this.feedWidth + 'px feed width.'
       },
 
       // Collapse of the Deck panel, remembered across reloads (UI-only, not in the spec).

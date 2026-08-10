@@ -79,6 +79,7 @@ final readonly class SlideRenderer
         $body .= $this->renderImages($slide, $width, $height, $index);
         $body .= $this->renderEffect($effect, $index, $width, $height, $total);
         $body .= $this->renderText($slide, $width, $height, $headingFile, $bodyFile, $text, $accent);
+        $body .= $this->renderFreeTexts($slide, $width, $height, $headingFile, $bodyFile, $text);
         $body .= $this->renderCreator($carousel, $creator, $index, $total, $width, $height, $text, $accent);
         $body .= $this->renderCounter($carousel, $index, $total, $width, $height, $bodyFile, $text, $accent);
         $body .= $this->renderSwipe($slide, $width, $height, $text, $accent);
@@ -186,18 +187,18 @@ final readonly class SlideRenderer
         $areaW = $width - 2 * $marginX;
         $scale = $slide->textScale;
 
-        /** @var list<array{laid: LaidOutText, font: string, color: string, upper: bool}> $blocks */
+        /** @var list<array{laid: LaidOutText, font: string, color: string, upper: bool, field: string, highlight?: string|null}> $blocks */
         $blocks = [];
         if (null !== $slide->tagline) {
-            $blocks[] = ['laid' => $this->textLayout->layout($slide->tagline, $bodyFile, $areaW, $height * 0.15, $width * 0.035 * $scale, $width * 0.025), 'font' => 'rp-body', 'color' => $accent, 'upper' => true];
+            $blocks[] = ['laid' => $this->textLayout->layout($slide->tagline, $bodyFile, $areaW, $height * 0.15, $width * 0.035 * $scale, $width * 0.025), 'font' => 'rp-body', 'color' => $accent, 'upper' => true, 'field' => 'tagline'];
         }
 
         if (null !== $slide->title) {
-            $blocks[] = ['laid' => $this->textLayout->layout($slide->title, $headingFile, $areaW, $height * 0.5, $width * 0.11 * $scale, $width * 0.045), 'font' => 'rp-heading', 'color' => $text, 'upper' => false];
+            $blocks[] = ['laid' => $this->textLayout->layout($slide->title, $headingFile, $areaW, $height * 0.5, $width * 0.11 * $scale, $width * 0.045), 'font' => 'rp-heading', 'color' => $text, 'upper' => false, 'field' => 'title', 'highlight' => $slide->highlight];
         }
 
         if (null !== $slide->paragraph) {
-            $blocks[] = ['laid' => $this->textLayout->layout($slide->paragraph, $bodyFile, $areaW, $height * 0.35, $width * 0.034 * $scale, $width * 0.022), 'font' => 'rp-body', 'color' => $text, 'upper' => false];
+            $blocks[] = ['laid' => $this->textLayout->layout($slide->paragraph, $bodyFile, $areaW, $height * 0.35, $width * 0.034 * $scale, $width * 0.022), 'font' => 'rp-body', 'color' => $text, 'upper' => false, 'field' => 'paragraph'];
         }
 
         if ([] === $blocks) {
@@ -226,20 +227,76 @@ final readonly class SlideRenderer
         $svg = '';
         $y = $startY;
         foreach ($blocks as $block) {
-            $svg .= $this->renderBlock($block['laid'], $anchor, $anchorX, $y, $block['font'], $block['color'], $block['upper']);
+            $svg .= $this->renderBlock($block['laid'], $anchor, $anchorX, $y, $block['font'], $block['color'], $block['upper'], $block['highlight'] ?? null, $block['field']);
             $y += $block['laid']->height() + $gap;
         }
 
         return $svg;
     }
 
-    private function renderBlock(LaidOutText $laid, string $anchor, float $anchorX, float $top, string $font, string $color, bool $upper): string
+    /**
+     * The slide's freely positioned text boxes, each laid out into its own
+     * fractional-coordinate box. The stated size is honoured unless the block
+     * would overflow the frame bottom, in which case it shrinks to fit — free
+     * placement stays inside the no-overflow guarantee.
+     */
+    private function renderFreeTexts(Slide $slide, int $width, int $height, string $headingFile, string $bodyFile, string $text): string
+    {
+        $svg = '';
+        foreach ($slide->texts as $i => $free) {
+            $isHeading = 'heading' === $free->font;
+            $sizePx = $free->size * $width;
+            $laid = $this->textLayout->layout(
+                $free->content,
+                $isHeading ? $headingFile : $bodyFile,
+                $free->width * $width,
+                max(1.0, (1.0 - $free->y) * $height),
+                $sizePx,
+                // Floor capped at the stated size: a floor above it would make
+                // TextLayout lay a tiny text out *larger* than asked.
+                min($sizePx, $width * 0.015),
+            );
+
+            [$anchor, $anchorX] = match ($free->align) {
+                'center' => ['middle', ($free->x + $free->width / 2) * $width],
+                'right' => ['end', ($free->x + $free->width) * $width],
+                default => ['start', $free->x * $width],
+            };
+
+            $svg .= $this->renderBlock($laid, $anchor, $anchorX, $free->y * $height, $isHeading ? 'rp-heading' : 'rp-body', $free->color ?? $text, false, $free->highlight, 'texts.'.$i);
+        }
+
+        return $svg;
+    }
+
+    /**
+     * The whole block is wrapped in a `<g data-rp-edit="…">` naming the spec field
+     * it came from (`title`, `tagline`, `paragraph`, `texts.N`), so the studio can
+     * map a click on the rendered slide back to the field. Inert metadata anywhere
+     * else the SVG travels (API, exports).
+     */
+    private function renderBlock(LaidOutText $laid, string $anchor, float $anchorX, float $top, string $font, string $color, bool $upper, ?string $highlight, string $editRef): string
     {
         $svg = '';
         $y = $top;
         foreach ($laid->lines as $line) {
             $content = $upper ? mb_strtoupper($line->text) : $line->text;
             $baseline = $y + $laid->fontSize * 0.82;
+            if (null !== $highlight) {
+                // A marker behind the line, sized from the measured line width so it
+                // hugs the text exactly (pad ≈ a quarter em each side, cap-to-descender
+                // tall, softly rounded).
+                $pad = $laid->fontSize * 0.24;
+                $lineX = match ($anchor) {
+                    'middle' => $anchorX - $line->width / 2,
+                    'end' => $anchorX - $line->width,
+                    default => $anchorX,
+                };
+                $svg .= '<rect x="'.$this->n($lineX - $pad).'" y="'.$this->n($y + $laid->fontSize * 0.02).'" '
+                    .'width="'.$this->n($line->width + 2 * $pad).'" height="'.$this->n($laid->fontSize * 1.08).'" '
+                    .'rx="'.$this->n($laid->fontSize * 0.14).'" fill="'.$highlight.'"/>';
+            }
+
             $svg .= '<text x="'.$this->n($anchorX).'" y="'.$this->n($baseline).'" '
                 .'font-family="'.$font.'" font-size="'.$this->n($laid->fontSize).'" '
                 .'fill="'.$color.'" text-anchor="'.$anchor.'" '
@@ -249,7 +306,7 @@ final readonly class SlideRenderer
             $y += $laid->lineHeight;
         }
 
-        return $svg;
+        return '' === $svg ? '' : '<g data-rp-edit="'.$editRef.'">'.$svg.'</g>';
     }
 
     private function renderCounter(Carousel $carousel, int $index, int $total, int $width, int $height, string $bodyFile, string $text, string $accent): string

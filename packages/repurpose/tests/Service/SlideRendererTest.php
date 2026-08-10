@@ -43,6 +43,100 @@ final class SlideRendererTest extends KernelTestCase
         // The font is embedded, never linked.
         self::assertStringContainsString('data:font/ttf;base64,', $svg);
         self::assertStringNotContainsString('fonts.googleapis.com', $svg);
+        // Each text block is tagged with the spec field it came from (click-to-edit).
+        self::assertStringContainsString('data-rp-edit="title"', $svg);
+        self::assertStringContainsString('data-rp-edit="paragraph"', $svg);
+    }
+
+    public function testExplicitNewlinesSplitTextLines(): void
+    {
+        $svg = $this->render([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['title' => "Two lines\nwanted"]],
+        ]);
+
+        self::assertStringContainsString('>Two lines</text>', $svg);
+        self::assertStringContainsString('>wanted</text>', $svg);
+    }
+
+    public function testFreeTextBoxRendersAtItsFractionalPosition(): void
+    {
+        $svg = $this->render([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['title' => 'Hi', 'texts' => [
+                ['content' => 'Anywhere', 'x' => 0.1, 'y' => 0.4, 'size' => 0.05, 'color' => '#ff0000'],
+            ]]],
+        ]);
+
+        // Left edge 0.1 × 1080, size 0.05 × 1080, baseline 0.4 × 1350 + 54 × 0.82.
+        self::assertStringContainsString('x="108"', $svg);
+        self::assertStringContainsString('y="584.28"', $svg);
+        self::assertStringContainsString('font-size="54"', $svg);
+        self::assertStringContainsString('fill="#ff0000"', $svg);
+        self::assertStringContainsString('>Anywhere</text>', $svg);
+        self::assertStringContainsString('data-rp-edit="texts.0"', $svg);
+    }
+
+    /**
+     * A tiny stated size must be honoured, not silently *enlarged*: TextLayout's
+     * shrink loop never runs when the start size is below its minimum, and would
+     * lay the text out at the minimum instead — the renderer guards by capping
+     * the minimum at the requested size.
+     */
+    public function testTinyFreeTextSizeIsHonoured(): void
+    {
+        $svg = $this->render([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['texts' => [['content' => 'small print', 'size' => 0.012]]]],
+        ]);
+
+        // 0.012 × 1080 = 12.96px — below the 0.015 × width floor.
+        self::assertStringContainsString('font-size="12.96"', $svg);
+    }
+
+    /**
+     * A box too close to the frame bottom for its stated size shrinks to fit —
+     * free placement never escapes the no-overflow guarantee.
+     */
+    public function testFreeTextShrinksInsteadOfOverflowingTheFrameBottom(): void
+    {
+        $svg = $this->render([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['texts' => [['content' => 'Almost at the very bottom edge', 'y' => 0.97, 'size' => 0.2]]]],
+        ]);
+
+        self::assertStringContainsString('>Almost at the very bottom edge</text>', $svg);
+        self::assertStringNotContainsString('font-size="216"', $svg);
+    }
+
+    public function testFreeTextAlignmentAnchorsInsideItsBox(): void
+    {
+        $svg = $this->render([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['texts' => [['content' => 'Right', 'x' => 0.1, 'width' => 0.5, 'align' => 'right']]]],
+        ]);
+
+        // Anchored at the box's right edge: (0.1 + 0.5) × 1080.
+        self::assertStringContainsString('text-anchor="end"', $svg);
+        self::assertStringContainsString('x="648"', $svg);
+        // No stated colour: the slide's text colour applies.
+        self::assertStringContainsString('fill="#f8fafc"', $svg);
+    }
+
+    public function testHighlightPaintsAMarkerBehindEachLine(): void
+    {
+        $svg = $this->render([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [[
+                'title' => "One\nTwo", 'highlight' => '#fde047',
+                'texts' => [['content' => 'Note', 'highlight' => '#22c55e']],
+            ]],
+        ]);
+
+        // One rounded marker per title line, plus one behind the free text.
+        self::assertSame(2, substr_count($svg, 'fill="#fde047"'));
+        self::assertSame(1, substr_count($svg, 'fill="#22c55e"'));
+        self::assertStringContainsString('rx=', $svg);
     }
 
     public function testRatioAgnosticAcrossFormats(): void

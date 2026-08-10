@@ -48,10 +48,19 @@
     .deck::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
     .slide { flex: 0 0 auto; scroll-snap-align: start; }
     .slide figure { margin: 0; }
-    .slide svg { display: block; width: {{ feedWidth }}px; height: auto; border-radius: 14px; box-shadow: 0 6px 24px #0000001f; border: 1px solid var(--line); transition: transform .18s, box-shadow .18s; }
-    .deck-note { margin: .1rem 0 0 .25rem; font-size: .72rem; color: var(--muted); }
+    .slide svg { display: block; width: var(--rp-slide-w, {{ feedWidth }}px); height: auto; border-radius: 14px; box-shadow: 0 6px 24px #0000001f; border: 1px solid var(--line); transition: transform .18s, box-shadow .18s; }
+    .deck-note { display: flex; align-items: center; gap: .6rem; margin: .1rem 0 0 .25rem; font-size: .72rem; color: var(--muted); }
+    .deck-note span { flex: 1; }
+    .deck-note input[type=range] { width: 8rem; flex: 0 0 auto; }
     .slide figure:hover svg { transform: translateY(-3px); box-shadow: 0 12px 32px #0000002e; }
     .slide figcaption { text-align: center; color: var(--muted); font-size: .72rem; margin-top: .5rem; font-variant-numeric: tabular-nums; }
+    /* Text blocks are click-to-edit (the renderer tags them with data-rp-edit). */
+    .slide svg g[data-rp-edit] { cursor: text; }
+    .slide svg g[data-rp-edit]:hover { opacity: .82; }
+
+    /* Floating inline text editor, opened by clicking a text block on a slide. */
+    .text-pop { position: fixed; z-index: 60; width: 19rem; background: var(--panel); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 12px 40px #00000026; padding: .7rem; display: flex; flex-direction: column; gap: .35rem; }
+    .text-pop label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 
     aside { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 1.1rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 1px 3px #0000000d; }
     .panel-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
@@ -137,6 +146,11 @@
 
     /* Auto-growing textareas (caption, paragraph): grow with content, capped. */
     textarea.autogrow { field-sizing: content; min-height: 3.2rem; max-height: 15rem; resize: none; overflow-y: auto; }
+    /* Single-line start for short fields (title, tagline) that accept explicit line breaks. */
+    textarea.autogrow.one { min-height: 2.1rem; }
+
+    /* One free-text box's controls, separated like image cells. */
+    .free-text { padding-top: .55rem; border-top: 1px dashed var(--line-2); display: flex; flex-direction: column; gap: .55rem; }
 
     /* Collapsible group header (Deck). */
     .group-head { display: flex; align-items: center; gap: .45rem; cursor: pointer; user-select: none; }
@@ -209,6 +223,7 @@
       vocab: {{ vocabJs|raw }},
       backgroundEffects: {{ backgroundEffectsJs|raw }},
       network: {{ carousel.network|json_encode|raw }},
+      feedWidth: {{ feedWidth }},
       networkUrls: {{ networkUrlsJs|raw }},
       urls: {
         preview: {{ path('repurpose_studio_preview', {id: post.id})|json_encode|raw }},
@@ -243,17 +258,21 @@
 
   <div class="layout">
     <div class="deck-wrap">
-      <div class="deck">
+      <div class="deck" :style="'--rp-slide-w:' + slideWidth + 'px'">
         <template x-for="(svg, i) in slides" :key="i">
           <div class="slide">
             <figure>
-              <div x-html="svg"></div>
+              <div x-html="svg" @click="deckTextClick(i, $event)"></div>
               <figcaption>Slide <span x-text="i + 1"></span> / <span x-text="slides.length"></span></figcaption>
             </figure>
           </div>
         </template>
       </div>
-      <p class="deck-note">Slides at {{ feedWidth }}px — the typical {{ carousel.network }} mobile feed width.</p>
+      <p class="deck-note">
+        <span x-text="deckNote">Slides at {{ feedWidth }}px — the typical {{ carousel.network }} mobile feed width.</span>
+        <input type="range" min="0.5" max="3" step="0.05" x-model.number="zoom" aria-label="Preview zoom" title="Preview zoom — inspection only, 100% is the real feed size">
+        <button type="button" class="btn-xs" x-show="1 !== zoom" x-cloak @click="zoom = 1">100&nbsp;%</button>
+      </p>
     </div>
 
     <aside>
@@ -409,14 +428,14 @@
           <h2>Slides · <span x-text="spec.slides.length"></span></h2>
           <div class="slides-list">
             <template x-for="(slide, i) in spec.slides" :key="i">
-              <div class="slide-item"
+              <div class="slide-item" :id="'rp-slide-item-' + i"
                    :class="{ 'open': slidesOpen[i], 'dragging': dragIndex === i, 'drag-over': dropIndex === i && dragIndex !== null && dragIndex !== i }"
                    @dragover.prevent="onDragOver(i)" @drop.prevent="onDrop(i)">
                 <div class="slide-item__head" @click="toggleSlide(i)">
                   <span class="grip" title="Drag to reorder" draggable="true"
                         @click.stop @dragstart="onDragStart(i, $event)" @dragend="onDragEnd()">⠿</span>
                   <span class="chev" x-text="slidesOpen[i] ? '▾' : '▸'"></span>
-                  <span class="slide-item__title" x-text="slide.title || slide.tagline || 'Untitled'"></span>
+                  <span class="slide-item__title" x-text="slide.title || slide.tagline || (slide.texts && slide.texts[0] && slide.texts[0].content) || 'Untitled'"></span>
                   <span class="sp" @click.stop>
                     <button class="icon-btn danger" type="button" title="Remove" @click="removeSlide(i)">✕</button>
                   </span>
@@ -424,10 +443,10 @@
                 <div class="slide-item__body" x-show="slidesOpen[i]" x-cloak>
                   <div class="field">
                     <label>Title</label>
-                    <input type="text" x-model="slide.title">
+                    <textarea class="autogrow one" x-model="slide.title"></textarea>
                   </div>
                   <div class="grid2">
-                    <div class="field"><label>Tagline</label><input type="text" x-model="slide.tagline"></div>
+                    <div class="field"><label>Tagline</label><textarea class="autogrow one" x-model="slide.tagline"></textarea></div>
                     <div class="field"><label>Background effect</label>
                       <button type="button" class="fake-select" @click="openEffect(i)">
                         <span class="thumb" x-html="slideEffectPreview(slide)"></span>
@@ -484,6 +503,14 @@
                         <span class="caret">▾</span>
                       </button>
                     </div>
+                    <div class="field">
+                      <label>Title highlight</label>
+                      <button type="button" class="color-field" @click.stop="openColor(slide, 'highlight', $event)">
+                        <span class="sw" :style="slide.highlight ? ('background:' + slide.highlight) : ''"></span>
+                        <span class="hex" :class="!slide.highlight && 'empty'" x-text="slide.highlight || 'none'"></span>
+                        <span class="caret">▾</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div class="field">
@@ -525,6 +552,60 @@
                       </div>
                     </div>
                   </template>
+
+                  <template x-for="(t, k) in slide.texts" :key="k">
+                    <div class="free-text">
+                      <div class="field">
+                        <label>Free text <span class="sp" @click.stop><button class="icon-btn danger" type="button" title="Remove" @click="removeText(slide, k)">✕</button></span></label>
+                        <textarea class="autogrow one" x-model="t.content"></textarea>
+                      </div>
+                      <div class="grid2">
+                        <div class="field">
+                          <label>X <span class="val" x-text="Number(t.x ?? 0.08).toFixed(2)"></span></label>
+                          <input type="range" min="0" :max="(1 - (t.width ?? 0.84)).toFixed(2)" step="0.01" x-model.number="t.x">
+                        </div>
+                        <div class="field">
+                          <label>Y <span class="val" x-text="Number(t.y ?? 0.08).toFixed(2)"></span></label>
+                          <input type="range" min="0" max="0.95" step="0.01" x-model.number="t.y">
+                        </div>
+                        <div class="field">
+                          <label>Width <span class="val" x-text="Number(t.width ?? 0.84).toFixed(2)"></span></label>
+                          <input type="range" min="0.05" :max="(1 - (t.x ?? 0.08)).toFixed(2)" step="0.01" x-model.number="t.width">
+                        </div>
+                        <div class="field">
+                          <label>Size <span class="val" x-text="(Number(t.size ?? 0.05) * 100).toFixed(1) + '% of slide width'"></span></label>
+                          <input type="range" min="0.01" max="0.3" step="0.005" x-model.number="t.size">
+                        </div>
+                        <div class="field"><label>Align</label>
+                          <select x-model="t.align" x-init="$nextTick(() => $el.value = t.align)">
+                            <template x-for="a in vocab.aligns" :key="a"><option :value="a" x-text="a"></option></template>
+                          </select>
+                        </div>
+                        <div class="field"><label>Font</label>
+                          <select x-model="t.font" x-init="$nextTick(() => $el.value = t.font)">
+                            <template x-for="f in vocab.textFonts" :key="f"><option :value="f" x-text="f"></option></template>
+                          </select>
+                        </div>
+                        <div class="field">
+                          <label>Colour</label>
+                          <button type="button" class="color-field" @click.stop="openColor(t, 'color', $event)">
+                            <span class="sw" :style="t.color ? ('background:' + t.color) : ''"></span>
+                            <span class="hex" :class="!t.color && 'empty'" x-text="t.color || 'inherit'"></span>
+                            <span class="caret">▾</span>
+                          </button>
+                        </div>
+                        <div class="field">
+                          <label>Highlight</label>
+                          <button type="button" class="color-field" @click.stop="openColor(t, 'highlight', $event)">
+                            <span class="sw" :style="t.highlight ? ('background:' + t.highlight) : ''"></span>
+                            <span class="hex" :class="!t.highlight && 'empty'" x-text="t.highlight || 'none'"></span>
+                            <span class="caret">▾</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                  <button class="btn-xs" type="button" @click="addText(slide)">+ Add free text</button>
                 </div>
               </div>
             </template>
@@ -551,6 +632,13 @@
       </div>
       <iframe class="rp-modal__frame" :src="mediaModal.src" title="Media picker"></iframe>
     </div>
+  </div>
+
+  {# ---------- INLINE TEXT EDITOR (opens on click on a slide's text block) ---------- #}
+  <div class="text-pop" x-show="textPop.open" x-cloak :style="'top:' + textPop.top + 'px;left:' + textPop.left + 'px'"
+       @click.outside="closeTextPop()" @keydown.escape.window="closeTextPop()">
+    <label x-text="textPopLabel"></label>
+    <textarea class="autogrow" x-ref="textPopField" x-model="editValue"></textarea>
   </div>
 
   {# ---------- COLOUR POPOVER (shared, anchored under the clicked field) ---------- #}

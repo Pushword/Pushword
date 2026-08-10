@@ -49,6 +49,21 @@ repurpose:
     textScale:
       range: 'textScale doit être entre 0,5 et 2.'
     empty: 'Une slide doit afficher au moins un texte ou une image de fond.'
+  text:
+    content:
+      empty: 'Un texte libre a besoin d''un contenu.'
+    position:
+      range: 'Une position de texte doit être entre 0 et 1.'
+    width:
+      range: 'Une largeur de texte doit être entre 0,05 et 1.'
+    size:
+      range: 'Une taille de texte doit être entre 0,01 et 0,3.'
+    align:
+      invalid: 'L''alignement du texte doit être « left », « center » ou « right ».'
+    font:
+      invalid: 'La police du texte doit être « body » ou « heading ».'
+    box:
+      tooWide: 'La boîte de texte dépasse le bord droit : x + width doit rester ≤ 1.'
   image:
     media:
       empty: 'Une image de slide a besoin d''un nom de fichier média.'

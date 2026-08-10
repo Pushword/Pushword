@@ -9,8 +9,8 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 /**
  * One slide of a carousel. Every text field is optional — a slide may be an image
  * with a title, a title with a paragraph, or a bare cover. The compositing order
- * is: palette bg → image (cropped) → overlay → background effect → text → creator
- * badge → counter.
+ * is: palette bg → image (cropped) → overlay → background effect → text → free
+ * texts → creator badge → counter.
  */
 class Slide
 {
@@ -28,6 +28,7 @@ class Slide
 
     /**
      * @param list<SlideImage> $images
+     * @param list<FreeText>   $texts
      */
     public function __construct(
         #[Assert\Choice(choices: self::LAYOUTS, message: 'repurpose.slide.layout.invalid')]
@@ -37,6 +38,9 @@ class Slide
         public ?string $tagline = null,
         public ?string $title = null,
         public ?string $paragraph = null,
+        /** Paints a rounded marker behind each title line; null draws none. */
+        #[Assert\Regex(pattern: Palette::HEX, message: 'repurpose.palette.color.invalid')]
+        public ?string $highlight = null,
         public bool $swipe = false,
         /** Darkening of the image behind the text, 0 (none) … 1 (opaque). */
         #[Assert\Range(notInRangeMessage: 'repurpose.slide.overlay.range', min: 0, max: 1)]
@@ -53,6 +57,8 @@ class Slide
         public string $imageLayout = 'full',
         #[Assert\Valid]
         public array $images = [],
+        #[Assert\Valid]
+        public array $texts = [],
     ) {
     }
 
@@ -81,7 +87,7 @@ class Slide
     #[Assert\Callback]
     public function validateNotEmpty(ExecutionContextInterface $context): void
     {
-        $hasText = null !== $this->tagline || null !== $this->title || null !== $this->paragraph;
+        $hasText = null !== $this->tagline || null !== $this->title || null !== $this->paragraph || [] !== $this->texts;
         if ($hasText || $this->hasImage()) {
             return;
         }

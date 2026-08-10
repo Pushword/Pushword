@@ -62,13 +62,31 @@
                 "tagline": { "type": ["string", "null"] },
                 "title": { "type": ["string", "null"] },
                 "paragraph": { "type": ["string", "null"] },
+                "highlight": { "$ref": "#/$defs/hex", "description": "Paints a rounded marker in this colour behind each title line; omit for none." },
                 "swipe": { "type": "boolean", "default": false, "description": "Show a swipe indicator." },
                 "overlay": { "type": "number", "minimum": 0, "maximum": 1, "description": "Darken the image behind the text (only valid with an image). Defaults to 0.35 on a slide with an image (0 without) so light text stays readable; set 0 explicitly for no overlay — validate flags low text/background contrast as a warning." },
                 "textScale": { "type": "number", "minimum": 0.5, "maximum": 2, "default": 1 },
                 "background": { "enum": ["none", "dots", "rings", "waves", "scales", "chevron", "hexagon", "triangles", "plus", "diamonds", "memphis", "sketchy", "paper"], "description": "Overrides the deck's background effect for this slide; omit to inherit the deck effect." },
                 "palette": { "$ref": "#/$defs/palette" },
                 "imageLayout": { "enum": ["full", "split-v", "split-h"], "default": "full", "description": "How the slide's images fill the frame: one covering it (full), two stacked vertically (split-v) or side by side (split-h). Split layouts require two images." },
-                "images": { "type": "array", "items": { "$ref": "#/$defs/image" }, "description": "The slide's background image(s): one for `full`, two for a split layout, each with its own focal point and zoom. (The legacy singular `image` key is still accepted and treated as a one-element list.)" }
+                "images": { "type": "array", "items": { "$ref": "#/$defs/image" }, "description": "The slide's background image(s): one for `full`, two for a split layout, each with its own focal point and zoom. (The legacy singular `image` key is still accepted and treated as a one-element list.)" },
+                "texts": { "type": "array", "items": { "$ref": "#/$defs/text" }, "description": "Freely positioned text boxes drawn over the layout stack, placed by fractional coordinates so they survive a format change." }
+            }
+        },
+        "text": {
+            "type": "object",
+            "required": ["content"],
+            "additionalProperties": false,
+            "properties": {
+                "content": { "type": "string", "description": "The text to draw; a \\n makes an explicit line break." },
+                "x": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.08, "description": "Left edge of the box, as a fraction of the slide width. x + width must stay ≤ 1." },
+                "y": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.08, "description": "Top edge of the box, as a fraction of the slide height." },
+                "width": { "type": "number", "minimum": 0.05, "maximum": 1, "default": 0.84, "description": "Wrap width of the box, as a fraction of the slide width." },
+                "size": { "type": "number", "minimum": 0.01, "maximum": 0.3, "default": 0.05, "description": "Font size as a fraction of the slide width (0.05 ≈ 54px on a 1080px slide). The text shrinks below this only when it would overflow the slide bottom." },
+                "align": { "enum": ["left", "center", "right"], "default": "left", "description": "Horizontal alignment inside the box." },
+                "font": { "enum": ["body", "heading"], "default": "body" },
+                "color": { "$ref": "#/$defs/hex", "description": "Overrides the slide's text colour; omit to inherit it." },
+                "highlight": { "$ref": "#/$defs/hex", "description": "Paints a rounded marker in this colour behind each line; omit for none." }
             }
         },
         "image": {
