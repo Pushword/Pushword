@@ -98,6 +98,11 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertStringContainsString('"textFonts":["body","heading"]', $html);
         self::assertStringContainsString('feedWidth: 390', $html);
         self::assertStringContainsString('— brand —', $html);
+        // Deck interactions: drag-to-move free texts, wheel-adjustable sliders,
+        // hover-to-reveal a slide's panel row.
+        self::assertStringContainsString('deckTextDown(i, $event)', $html);
+        self::assertStringContainsString('sliderWheel($event)', $html);
+        self::assertStringContainsString('hoverSlide(i)', $html);
     }
 
     public function testSaveEditedSpecPersistsNewCopy(): void

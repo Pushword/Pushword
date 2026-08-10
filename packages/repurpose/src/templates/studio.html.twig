@@ -57,6 +57,9 @@
     /* Text blocks are click-to-edit (the renderer tags them with data-rp-edit). */
     .slide svg g[data-rp-edit] { cursor: text; }
     .slide svg g[data-rp-edit]:hover { opacity: .82; }
+    /* Free text boxes are also drag-to-move. */
+    .slide svg g[data-rp-edit^="texts."] { cursor: grab; touch-action: none; }
+    .slide svg g[data-rp-edit^="texts."]:active { cursor: grabbing; }
 
     /* Floating inline text editor, opened by clicking a text block on a slide. */
     .text-pop { position: fixed; z-index: 60; width: 19rem; background: var(--panel); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 12px 40px #00000026; padding: .7rem; display: flex; flex-direction: column; gap: .35rem; }
@@ -256,13 +259,13 @@
     <button class="btn primary" type="button" @click="save()" :disabled="saving" x-text="saveLabel">Save</button>
   </header>
 
-  <div class="layout">
-    <div class="deck-wrap">
+  <div class="layout" @wheel="sliderWheel($event)">
+    <div class="deck-wrap" @wheel="deckZoomWheel($event)">
       <div class="deck" :style="'--rp-slide-w:' + slideWidth + 'px'">
         <template x-for="(svg, i) in slides" :key="i">
-          <div class="slide">
+          <div class="slide" @pointerenter="hoverSlide(i)" @pointerleave="hoverSlideLeave()">
             <figure>
-              <div x-html="svg" @click="deckTextClick(i, $event)"></div>
+              <div x-html="svg" @click="deckTextClick(i, $event)" @pointerdown="deckTextDown(i, $event)"></div>
               <figcaption>Slide <span x-text="i + 1"></span> / <span x-text="slides.length"></span></figcaption>
             </figure>
           </div>
@@ -270,7 +273,7 @@
       </div>
       <p class="deck-note">
         <span x-text="deckNote">Slides at {{ feedWidth }}px — the typical {{ carousel.network }} mobile feed width.</span>
-        <input type="range" min="0.5" max="3" step="0.05" x-model.number="zoom" aria-label="Preview zoom" title="Preview zoom — inspection only, 100% is the real feed size">
+        <input type="range" min="0.5" max="3" step="0.05" x-model.number="zoom" aria-label="Preview zoom" title="Preview zoom (or Ctrl+scroll over the deck) — inspection only, 100% is the real feed size">
         <button type="button" class="btn-xs" x-show="1 !== zoom" x-cloak @click="zoom = 1">100&nbsp;%</button>
       </p>
     </div>

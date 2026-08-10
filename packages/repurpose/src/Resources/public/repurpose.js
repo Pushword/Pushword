@@ -14,6 +14,9 @@
  */
 (function () {
   var PREVIEW_DEBOUNCE_MS = 450
+  // A slider drag streams events, so a plain trailing debounce would only render
+  // on release; the ceiling forces a preview at least this often mid-stream.
+  var PREVIEW_MAX_WAIT_MS = 700
 
   // Tailwind's default palette (v3 hexes), one row per hue × these shades, plus a
   // neutral ramp — the swatch suggestions offered by the colour popover.
@@ -235,12 +238,20 @@
       pinLabel: '📌 Pin to Pinterest',
       notice: '',
       _timer: null,
+      _previewQueuedAt: null,
+      _previewSeq: 0,
+      _drag: null,
+      _dragEnded: false,
+      _hoverTimer: null,
       _sourceReady: false,
       _pickSlide: null,
       _pickCell: null,
 
       init: function () {
         this.normalize()
+        this._boundDragMove = this.deckTextMove.bind(this)
+        this._boundDragUp = this.deckTextUp.bind(this)
+        this._boundDragCancel = this.deckTextCancel.bind(this)
         this.deckOpen = '0' !== this._store('rp-studio-deckOpen')
         this.$watch('spec', function () {
           this.dirty = true
@@ -361,11 +372,17 @@
 
       schedulePreview: function () {
         this.live = { state: 'busy', text: 'editing…' }
+        var now = Date.now()
+        if (null === this._previewQueuedAt) {
+          this._previewQueuedAt = now
+        }
         clearTimeout(this._timer)
-        this._timer = setTimeout(this.preview.bind(this), PREVIEW_DEBOUNCE_MS)
+        var wait = Math.min(PREVIEW_DEBOUNCE_MS, this._previewQueuedAt + PREVIEW_MAX_WAIT_MS - now)
+        this._timer = setTimeout(this.preview.bind(this), Math.max(wait, 0))
       },
 
       preview: async function () {
+        this._previewQueuedAt = null
         var spec
         try {
           spec = this.payload()
@@ -374,10 +391,15 @@
           return
         }
 
+        // Mid-drag previews overlap; a response only lands if no newer one started.
+        var seq = ++this._previewSeq
         this.live = { state: 'busy', text: 'rendering…' }
         try {
           var response = await fetch(this.urls.preview, jsonPost(spec))
           var body = await response.json()
+          if (seq !== this._previewSeq) {
+            return
+          }
           if (response.ok && Array.isArray(body.slides)) {
             this.slides = body.slides
             this.violations = []
@@ -389,6 +411,9 @@
             this.live = { state: 'bad', text: (body && body.error) || 'preview failed' }
           }
         } catch (error) {
+          if (seq !== this._previewSeq) {
+            return
+          }
           console.error('[repurpose] preview failed', error)
           this.live = { state: 'bad', text: 'preview failed' }
         }
@@ -432,7 +457,8 @@
 
       addSlide: function () {
         this.spec.slides.push({ layout: 'bottom', align: 'left', title: 'New slide', imageLayout: 'full', images: [{ focusX: 0.5, focusY: 0.5, zoom: 1 }], palette: {}, texts: [] })
-        this.slidesOpen.push(true)
+        this.slidesOpen.push(false)
+        this.revealSlide(this.spec.slides.length - 1)
       },
       addText: function (slide) {
         if (!Array.isArray(slide.texts)) {
@@ -447,8 +473,14 @@
         this.spec.slides.splice(index, 1)
         this.slidesOpen.splice(index, 1)
       },
+      // One panel open at a time: the list stays scannable and the open row is
+      // unambiguously the slide being worked on.
       toggleSlide: function (index) {
-        this.slidesOpen[index] = !this.slidesOpen[index]
+        var wasOpen = this.slidesOpen[index]
+        this.slidesOpen = this.spec.slides.map(function () { return false })
+        if (! wasOpen) {
+          this.slidesOpen[index] = true
+        }
       },
 
       // Drag-to-reorder the slide list (native HTML5 DnD, grabbed from the ⠿ handle).
@@ -581,7 +613,7 @@
       // reactive spec, so the live preview re-renders as you type; being a body-
       // level overlay, it survives the preview swapping the SVG out under it.
       deckTextClick: function (slideIndex, event) {
-        if ('visual' !== this.view) {
+        if (this._dragEnded || 'visual' !== this.view) {
           return
         }
         var block = event.target.closest('[data-rp-edit]')
@@ -638,15 +670,147 @@
       closeTextPop: function () {
         this.textPop = { open: false, top: 0, left: 0, ref: '' }
       },
-      // Open the slide's panel row and bring it into view.
+      // Open the slide's panel row (closing the others) and bring it into view.
       revealSlide: function (index) {
-        this.slidesOpen[index] = true
+        this.slidesOpen = this.spec.slides.map(function (_, i) { return i === index })
         this.$nextTick(function () {
           var row = document.getElementById('rp-slide-item-' + index)
           if (row) {
             row.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
           }
         })
+      },
+      // Dwelling on a slide in the deck syncs the panel to it — long enough that
+      // a mouse merely crossing the deck does not jump the panel around.
+      hoverSlide: function (index) {
+        clearTimeout(this._hoverTimer)
+        if (this._drag || this.textPop.open || this.slidesOpen[index]) {
+          return
+        }
+        var self = this
+        this._hoverTimer = setTimeout(function () { self.revealSlide(index) }, 400)
+      },
+      hoverSlideLeave: function () {
+        clearTimeout(this._hoverTimer)
+      },
+
+      // Free texts are dragged straight on the slide. During the drag the SVG
+      // group is nudged with a local transform (instant, no server round-trip);
+      // the fractional position is committed on release, which re-renders through
+      // the normal preview channel. Clamped to the same bounds as the sliders.
+      deckTextDown: function (slideIndex, event) {
+        if ('visual' !== this.view || 0 !== event.button) {
+          return
+        }
+        var block = event.target.closest('[data-rp-edit^="texts."]')
+        var slide = this.spec.slides[slideIndex]
+        if (!block || !slide) {
+          return
+        }
+        var n = parseInt(block.getAttribute('data-rp-edit').slice('texts.'.length), 10)
+        var t = slide.texts && slide.texts[n]
+        var svg = block.ownerSVGElement
+        if (!t || !svg) {
+          return
+        }
+        event.preventDefault() // no text selection while dragging
+        var box = svg.getBoundingClientRect()
+        this._drag = {
+          t: t,
+          block: block,
+          slideIndex: slideIndex,
+          moved: false,
+          startX: event.clientX,
+          startY: event.clientY,
+          x0: Number(t.x) || 0,
+          y0: Number(t.y) || 0,
+          nx: Number(t.x) || 0,
+          ny: Number(t.y) || 0,
+          box: box,
+          // Screen px → SVG user units, for the live transform while dragging.
+          unit: (svg.viewBox.baseVal.width || box.width) / box.width,
+        }
+        window.addEventListener('pointermove', this._boundDragMove)
+        window.addEventListener('pointerup', this._boundDragUp)
+        window.addEventListener('pointercancel', this._boundDragCancel)
+      },
+      deckTextMove: function (event) {
+        var d = this._drag
+        if (!d) {
+          return
+        }
+        var dx = event.clientX - d.startX
+        var dy = event.clientY - d.startY
+        if (! d.moved) {
+          if (Math.abs(dx) + Math.abs(dy) < 4) {
+            return // still a click, not a drag
+          }
+          d.moved = true
+          this.closeTextPop()
+        }
+        d.nx = Math.min(1 - (Number(d.t.width) || 0.84), Math.max(0, d.x0 + dx / d.box.width))
+        d.ny = Math.min(0.95, Math.max(0, d.y0 + dy / d.box.height))
+        d.block.setAttribute('transform', 'translate('
+          + ((d.nx - d.x0) * d.box.width * d.unit).toFixed(1) + ' '
+          + ((d.ny - d.y0) * d.box.height * d.unit).toFixed(1) + ')')
+      },
+      deckTextUp: function () {
+        var d = this._endDrag()
+        if (!d || ! d.moved) {
+          return
+        }
+        // Swallow the click this release fires, so it does not open the editor.
+        this._dragEnded = true
+        var self = this
+        setTimeout(function () { self._dragEnded = false }, 0)
+        d.t.x = Number(d.nx.toFixed(3))
+        d.t.y = Number(d.ny.toFixed(3))
+        this.revealSlide(d.slideIndex)
+      },
+      deckTextCancel: function () {
+        var d = this._endDrag()
+        if (d && d.moved) {
+          d.block.removeAttribute('transform')
+        }
+      },
+      _endDrag: function () {
+        var d = this._drag
+        this._drag = null
+        window.removeEventListener('pointermove', this._boundDragMove)
+        window.removeEventListener('pointerup', this._boundDragUp)
+        window.removeEventListener('pointercancel', this._boundDragCancel)
+
+        return d
+      },
+
+      // Mouse wheel over any range slider nudges it by one step — delegated from
+      // the layout root so every slider (zoom, overlay, crop, free-text box…)
+      // gets it without per-input wiring. Ctrl+wheel is left to the deck zoom.
+      sliderWheel: function (event) {
+        var input = event.target
+        if (event.ctrlKey || 0 === event.deltaY || !(input instanceof HTMLInputElement) || 'range' !== input.type) {
+          return
+        }
+        event.preventDefault()
+        var step = Number(input.step) || 1
+        var min = '' === input.min ? 0 : Number(input.min)
+        var max = '' === input.max ? 100 : Number(input.max)
+        // Snap to the step grid to dodge float drift (0.15000000000000002).
+        var decimals = (String(step).split('.')[1] || '').length
+        var next = Number(input.value) + (event.deltaY < 0 ? step : -step)
+        input.value = String(Math.min(max, Math.max(min, Number(next.toFixed(decimals)))))
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+      },
+      // Ctrl+wheel (or a trackpad pinch, reported the same way) over the deck
+      // zooms the preview; the factor follows the wheel delta so a pinch stays
+      // smooth and a notched wheel moves in comfortable jumps.
+      deckZoomWheel: function (event) {
+        if (! event.ctrlKey) {
+          return
+        }
+        event.preventDefault()
+        var next = this.zoom * Math.exp(-event.deltaY * 0.002)
+        this.zoom = Math.min(3, Math.max(0.5, Math.round(next * 100) / 100))
       },
 
       // Colour popover — one shared instance, anchored under the clicked field. It

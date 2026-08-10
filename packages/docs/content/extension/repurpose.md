@@ -48,10 +48,13 @@ Page ──► CarouselDrafter ──► SocialPost ◄──► social-post/{pa
   site alike.
 - **Studio** — an admin page (`/admin/repurpose`) that previews the deck and
   exports it. The deck previews at the network's real mobile feed width; a zoom
-  slider under it scales the slides for detail inspection (not persisted — the
-  studio always reopens at 100% so text size is judged at the size a scrolling
-  viewer actually sees). Clicking a text on a slide opens a floating editor in
-  place and reveals that slide's row in the panel.
+  slider under it — or Ctrl+scroll over the deck — scales the slides for detail
+  inspection (not persisted — the studio always reopens at 100% so text size is
+  judged at the size a scrolling viewer actually sees). Clicking a text on a
+  slide opens a floating editor in place, a free text box can be dragged
+  straight on the slide, and hovering a slide reveals its panel row (one row
+  open at a time). Every slider responds to the mouse wheel and previews live
+  mid-drag.
 
 ## Author with an agent (recommended)
 
