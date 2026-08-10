@@ -440,8 +440,11 @@ class AppFixtures extends Fixture
     }
 
     /**
-     * A demo social carousel repurposing the homepage, visible in the admin at
-     * /admin/repurpose and previewed in the studio.
+     * Two demo carousels for the homepage: a realistic LinkedIn one, and an
+     * Instagram sibling touring every rendering feature — one cluster per slide
+     * (layouts, per-slide overrides, highlight, free text boxes, focal crops,
+     * split frames, deck-wide effects). Same page, so the studio's network
+     * switcher hops between them.
      */
     private function loadRepurposeDemo(ObjectManager $manager): void
     {
@@ -449,7 +452,7 @@ class AppFixtures extends Fixture
             return;
         }
 
-        $spec = [
+        $demo = [
             'page' => 'homepage',
             'network' => 'linkedin',
             'format' => 'linkedin-4-5',
@@ -469,11 +472,48 @@ class AppFixtures extends Fixture
             ],
         ];
 
-        $post = new SocialPost();
-        $post->host = 'localhost.dev';
-        $post->spec = $spec;
+        $featureTour = [
+            'page' => 'homepage',
+            'network' => 'instagram',
+            'format' => 'instagram-4-5',
+            'status' => 'draft',
+            'fontPairing' => 'anton-roboto',
+            'palette' => ['bg' => '#1c1917', 'text' => '#fafaf9', 'accent' => '#f59e0b'],
+            'counter' => ['style' => 'bar', 'align' => 'left'],
+            'background' => 'dots',
+            'creator' => 'robin',
+            'creatorOnSlides' => 'intro-outro',
+            'caption' => 'One slide per feature: layouts, palette overrides, highlight, free text boxes, focal crops, split frames, deck-wide effects.',
+            'hashtags' => ['pushword', 'repurpose', 'featuretour'],
+            'slides' => [
+                // Cover: centered stack, explicit line break, swipe hint, byline.
+                ['layout' => 'center', 'align' => 'center', 'tagline' => 'Feature tour', 'title' => "Every feature,\none deck", 'swipe' => true],
+                // Per-slide overrides: own palette, effect switched off, highlighted title.
+                ['layout' => 'top', 'align' => 'left', 'background' => 'none', 'palette' => ['bg' => '#fef3c7', 'text' => '#1c1917', 'accent' => '#b45309'], 'tagline' => 'Slide overrides', 'title' => "Own palette,\nhighlighted title", 'highlight' => '#fbbf24', 'paragraph' => 'This slide overrides the deck palette and switches the background effect off.'],
+                // Free text boxes pinned by fractional coordinates.
+                ['layout' => 'top', 'align' => 'left', 'title' => 'Free text boxes', 'textScale' => 0.8, 'texts' => [
+                    ['content' => "Pinned\nanywhere", 'x' => 0.55, 'y' => 0.3, 'width' => 0.37, 'size' => 0.05, 'align' => 'right', 'font' => 'heading', 'color' => '#1c1917', 'highlight' => '#4ade80'],
+                    ['content' => 'Fractional coordinates survive a format change.', 'x' => 0.08, 'y' => 0.55, 'width' => 0.55, 'size' => 0.03, 'color' => '#f59e0b'],
+                    ['content' => 'tiny footnote at 2% of the slide width', 'x' => 0.08, 'y' => 0.9, 'width' => 0.6, 'size' => 0.02],
+                ]],
+                // Focal crop: focusX/focusY/zoom + legibility overlay.
+                ['layout' => 'bottom', 'align' => 'left', 'tagline' => 'Images', 'title' => 'Focal crop + overlay', 'paragraph' => 'Three numbers — focusX, focusY, zoom — survive any ratio.', 'overlay' => 0.55, 'image' => ['media' => '1.jpg', 'focusX' => 0.5, 'focusY' => 0.35, 'zoom' => 1.6]],
+                // Split frame: two images, each with its own crop.
+                ['layout' => 'center', 'align' => 'center', 'imageLayout' => 'split-v', 'tagline' => 'Two images', 'title' => 'Split frames', 'overlay' => 0.45, 'images' => [['media' => '2.jpg', 'focusY' => 0.4], ['media' => '3.jpg', 'zoom' => 1.3]]],
+                // Deck-wide effect override + bigger type, right-aligned.
+                ['layout' => 'center', 'align' => 'right', 'background' => 'sketchy', 'tagline' => 'Effects', 'title' => 'Doodles slide to slide', 'paragraph' => 'Effects are sliced across the deck — a scrawl continues over a swipe.', 'textScale' => 1.15],
+                // Outro: byline again, the export story.
+                ['layout' => 'bottom', 'align' => 'left', 'tagline' => 'Your move', 'title' => 'Zip, SVG, MP4 — or pin it', 'paragraph' => 'Validate first: overflow and bad crops fail before a pixel is rendered.'],
+            ],
+        ];
 
-        $manager->persist($post);
+        foreach ([$demo, $featureTour] as $spec) {
+            $post = new SocialPost();
+            $post->host = 'localhost.dev';
+            $post->spec = $spec;
+            $manager->persist($post);
+        }
+
         $manager->flush();
     }
 }
