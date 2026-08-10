@@ -101,6 +101,99 @@ final class ReviewApiControllerTest extends WebTestCase
         self::assertSame(3, $this->decode()['rating']);
     }
 
+    public function testCreateWithTranslations(): void
+    {
+        $id = $this->seed([
+            'locale' => 'en',
+            'translations' => ['fr' => ['title' => 'Adoré', 'content' => 'Super produit']],
+        ]);
+
+        $this->request('GET', '/api/review/'.$id);
+        self::assertResponseIsSuccessful();
+        self::assertSame(['fr' => ['title' => 'Adoré', 'content' => 'Super produit']], $this->decode()['translations']);
+    }
+
+    public function testPatchTranslationsOnlyTouchesTheLocalesSent(): void
+    {
+        $id = $this->seed(['translations' => [
+            'fr' => ['title' => 'Titre', 'content' => 'Contenu'],
+            'de' => ['title' => 'Titel', 'content' => 'Inhalt'],
+        ]]);
+
+        $this->request('PATCH', '/api/review/'.$id, [
+            'translations' => ['fr' => ['title' => 'Nouveau titre', 'content' => 'Nouveau contenu']],
+        ]);
+        self::assertResponseIsSuccessful();
+
+        $translations = $this->decode()['translations'];
+        self::assertIsArray($translations);
+        self::assertSame(['title' => 'Nouveau titre', 'content' => 'Nouveau contenu'], $translations['fr']);
+        self::assertSame(['title' => 'Titel', 'content' => 'Inhalt'], $translations['de']);
+    }
+
+    public function testPatchNullTranslationRemovesTheLocale(): void
+    {
+        $id = $this->seed(['translations' => [
+            'fr' => ['title' => 'Titre', 'content' => 'Contenu'],
+            'de' => ['title' => 'Titel', 'content' => 'Inhalt'],
+        ]]);
+
+        $this->request('PATCH', '/api/review/'.$id, ['translations' => ['fr' => null]]);
+        self::assertResponseIsSuccessful();
+
+        $translations = $this->decode()['translations'];
+        self::assertIsArray($translations);
+        self::assertArrayNotHasKey('fr', $translations);
+        self::assertArrayHasKey('de', $translations);
+    }
+
+    public function testTranslationsSurvivePatchingAnotherField(): void
+    {
+        $id = $this->seed(['translations' => ['fr' => ['title' => 'Titre', 'content' => 'Contenu']]]);
+
+        $this->request('PATCH', '/api/review/'.$id, ['rating' => 2]);
+        self::assertResponseIsSuccessful();
+
+        $body = $this->decode();
+        self::assertSame(2, $body['rating']);
+        self::assertSame(['fr' => ['title' => 'Titre', 'content' => 'Contenu']], $body['translations']);
+    }
+
+    public function testPatchPartialTranslationReplacesTheLocalePair(): void
+    {
+        $id = $this->seed(['translations' => ['fr' => ['title' => 'Titre', 'content' => 'Contenu']]]);
+
+        // An entry is the locale's whole pair: the half left out is dropped,
+        // not kept — same contract as Review::setTranslation().
+        $this->request('PATCH', '/api/review/'.$id, ['translations' => ['fr' => ['title' => 'Titre seul']]]);
+        self::assertResponseIsSuccessful();
+
+        self::assertSame(['fr' => ['title' => 'Titre seul']], $this->decode()['translations']);
+    }
+
+    public function testEmptyTranslationsMapChangesNothing(): void
+    {
+        $id = $this->seed(['translations' => ['fr' => ['title' => 'Titre', 'content' => 'Contenu']]]);
+
+        // The map merges, so `{}` says "no locale to write", never "clear them".
+        $this->request('PATCH', '/api/review/'.$id, ['translations' => []]);
+        self::assertResponseIsSuccessful();
+
+        self::assertSame(['fr' => ['title' => 'Titre', 'content' => 'Contenu']], $this->decode()['translations']);
+    }
+
+    public function testMalformedTranslationEntriesAreIgnored(): void
+    {
+        $id = $this->seed(['translations' => ['fr' => ['title' => 'Titre', 'content' => 'Contenu']]]);
+
+        // A scalar where the pair belongs, and a key JSON gave as a number:
+        // both skipped, and neither takes the stored translation down with it.
+        $this->request('PATCH', '/api/review/'.$id, ['translations' => ['fr' => 'Bonjour', '42' => ['title' => 'X']]]);
+        self::assertResponseIsSuccessful();
+
+        self::assertSame(['fr' => ['title' => 'Titre', 'content' => 'Contenu']], $this->decode()['translations']);
+    }
+
     public function testDelete(): void
     {
         $id = $this->seed();

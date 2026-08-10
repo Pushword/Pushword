@@ -148,12 +148,52 @@ final class ReviewApiController extends AbstractApiController
             $review->referring = $data['referring'];
         }
 
+        if (\array_key_exists('translations', $data) && \is_array($data['translations'])) {
+            $this->applyTranslations($review, $data['translations']);
+        }
+
         if (\array_key_exists('publishedAt', $data) && \is_string($data['publishedAt'])) {
             try {
                 $review->publishedAt = new DateTimeImmutable($data['publishedAt']);
             } catch (Exception) {
                 // ignore unparseable
             }
+        }
+    }
+
+    /**
+     * Locale-keyed merge: only the locales carried by the payload are written,
+     * `null` removes one, and the locales left out keep what they had. An entry
+     * replaces that locale's pair, as Review::setTranslation() does.
+     *
+     * @param array<mixed> $translations
+     */
+    private function applyTranslations(Review $review, array $translations): void
+    {
+        foreach ($translations as $locale => $translation) {
+            // A JSON key PHP turned into an int is not a locale.
+            if (! \is_string($locale)) {
+                continue;
+            }
+
+            if (null === $translation) {
+                $review->removeTranslation($locale);
+
+                continue;
+            }
+
+            if (! \is_array($translation)) {
+                continue;
+            }
+
+            $title = $translation['title'] ?? null;
+            $content = $translation['content'] ?? null;
+
+            $review->setTranslation(
+                $locale,
+                \is_string($title) ? $title : null,
+                \is_string($content) ? $content : null,
+            );
         }
     }
 
@@ -192,7 +232,18 @@ final class ReviewApiController extends AbstractApiController
                 'title' => ['type' => 'string'],
                 'content' => ['type' => 'string'],
                 'rating' => ['type' => 'integer', 'nullable' => true],
-                'translations' => ['type' => 'array', 'items' => ['type' => 'object']],
+                'translations' => [
+                    'type' => 'object',
+                    'description' => 'Locale-keyed map. On write, a null entry removes that locale and omitted locales are left untouched.',
+                    'additionalProperties' => [
+                        'type' => 'object',
+                        'nullable' => true,
+                        'properties' => [
+                            'title' => ['type' => 'string'],
+                            'content' => ['type' => 'string'],
+                        ],
+                    ],
+                ],
                 'createdAt' => ['type' => 'string', 'format' => 'date-time'],
             ],
         ];

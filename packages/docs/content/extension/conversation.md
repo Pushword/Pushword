@@ -242,6 +242,21 @@ php bin/console pw:conversation:translate-reviews --locale=fr --dry-run
 
 The command automatically detects the source language of each review. If a review has no locale set, the translation API will detect it and save it for future use.
 
+### Edit translations through the API
+
+`/api/review` returns the translation map and writes it back, so a bad machine translation
+can be fixed without re-running the command:
+
+```bash
+curl -X PATCH -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+     -d '{"translations":{"fr":{"title":"Titre","content":"Contenu"}}}' \
+     https://example.com/api/review/42
+```
+
+Only the locales carried by the payload are written: an entry replaces that locale's
+title/content pair, `"fr": null` removes the locale, and the locales left out keep what
+they had.
+
 ### Display translated reviews
 
 Translations are automatically displayed based on the current page locale. The `review.html.twig` template uses `page.locale` (or `app.request.locale` as fallback) to show the appropriate translation.
