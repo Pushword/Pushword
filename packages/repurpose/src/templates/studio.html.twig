@@ -696,7 +696,11 @@
     </div>
   </div>
 
-  <script defer src="{{ asset('bundles/pushwordrepurpose/repurpose.js') }}"></script>
-  <script defer src="/bundles/pushwordcore/alpine.js"></script>
+  {# Both bundles live at a stable URL served with a long public max-age, so a CDN
+     would keep serving the previous release's studio for days after a deploy.
+     Stamp each with its published file's mtime. #}
+  {% set studioJs = asset('bundles/pushwordrepurpose/repurpose.js') %}
+  <script defer src="{{ studioJs }}{{ '?' in studioJs ? '&' : '?' }}v={{ studioJsVersion }}"></script>
+  <script defer src="/bundles/pushwordcore/alpine.js?v={{ alpineJsVersion }}"></script>
 </body>
 </html>

@@ -103,6 +103,11 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertStringContainsString('deckTextDown(i, $event)', $html);
         self::assertStringContainsString('sliderWheel($event)', $html);
         self::assertStringContainsString('hoverSlide(i)', $html);
+        // Both bundles carry a version query. Without it they sit at a stable URL
+        // under a long public max-age, and a CDN serves the previous release's
+        // studio for days after a deploy.
+        self::assertMatchesRegularExpression('#/bundles/pushwordrepurpose/repurpose\.js\?v=\d+#', $html);
+        self::assertMatchesRegularExpression('#/bundles/pushwordcore/alpine\.js\?v=\d+#', $html);
     }
 
     public function testSaveEditedSpecPersistsNewCopy(): void
