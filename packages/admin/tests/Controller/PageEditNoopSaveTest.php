@@ -26,6 +26,36 @@ use Symfony\Component\HttpFoundation\Request;
 #[Group('integration')]
 final class PageEditNoopSaveTest extends AbstractAdminTestClass
 {
+    /** @var array<string, mixed> The homepage columns this class mutates, as they stood before the test. */
+    private array $originalHomepage = [];
+
+    private int $homepageId = 0;
+
+    /**
+     * Every test here pushes the fixtures' homepage through the real edit form, and
+     * one of them unpublishes it. Left that way, every later class in this worker
+     * that needs a published homepage fails — sitemap hreflang, the link graph,
+     * pages_list. Restore by SQL: a restoration must not cut a version, queue a
+     * flat export or bump updatedAt the way a listener-visible write would.
+     */
+    protected function tearDown(): void
+    {
+        if ([] !== $this->originalHomepage) {
+            self::getContainer()->get(EntityManagerInterface::class)->getConnection()->executeStatement(
+                'UPDATE page SET h1 = ?, published_at = ?, edit_message = ?, updated_at = ? WHERE id = ?',
+                [
+                    $this->originalHomepage['h1'],
+                    $this->originalHomepage['published_at'],
+                    $this->originalHomepage['edit_message'],
+                    $this->originalHomepage['updated_at'],
+                    $this->homepageId,
+                ],
+            );
+        }
+
+        parent::tearDown();
+    }
+
     public function testSavingAnUntouchedPageWritesNothing(): void
     {
         $client = $this->loginUser();
@@ -138,6 +168,23 @@ final class PageEditNoopSaveTest extends AbstractAdminTestClass
         );
     }
 
+    /**
+     * Must stay the last test of this class. testThePageCanStillBeUnpublishedFromTheForm
+     * once left the fixtures' homepage unpublished, and every later class in the
+     * ParaTest worker needing a published homepage failed — sitemap hreflang, the
+     * link graph, pages_list. This pins the tearDown restore.
+     */
+    public function testThisClassLeavesTheHomepagePublished(): void
+    {
+        $this->loginUser();
+        $connection = self::getContainer()->get(EntityManagerInterface::class)->getConnection();
+
+        self::assertIsString(
+            $connection->fetchOne("SELECT published_at FROM page WHERE slug = 'homepage' AND host = 'localhost.dev'"),
+            'A test unpublished (or deleted) the homepage without restoring it',
+        );
+    }
+
     private function getPageId(): int
     {
         /** @var PageRepository $pageRepo */
@@ -145,7 +192,20 @@ final class PageEditNoopSaveTest extends AbstractAdminTestClass
         $page = $pageRepo->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $page);
 
-        return (int) $page->id;
+        $this->homepageId = (int) $page->id;
+
+        // Every test calls this before its first write: snapshot for tearDown's restore.
+        if ([] === $this->originalHomepage) {
+            $connection = self::getContainer()->get(EntityManagerInterface::class)->getConnection();
+            $row = $connection->fetchAssociative(
+                'SELECT h1, published_at, edit_message, updated_at FROM page WHERE id = ?',
+                [$this->homepageId],
+            );
+            self::assertNotFalse($row);
+            $this->originalHomepage = $row;
+        }
+
+        return $this->homepageId;
     }
 
     private function getEditForm(KernelBrowser $client, int $pageId): Form

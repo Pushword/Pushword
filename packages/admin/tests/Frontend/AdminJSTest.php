@@ -165,16 +165,39 @@ final class AdminJSTest extends AbstractPantherAdminTest
         $titleInput->sendKeys('Test Title for Width Measurement');
 
         // The counter is wired on window "load"; under parallel CPU contention that
-        // can fire after the keystrokes, so poll instead of a fixed sleep.
+        // can fire after the keystrokes, so poll instead of a fixed sleep — and give
+        // it timeoutLong: a single admin request can stall a full busy_timeout (5s,
+        // a lock held by a lingering pw:image:* child), which equals the medium
+        // poll budget exactly.
         $widthDisplayed = $this->pollUntilTrue(
             $client,
             'const input = document.querySelector(arguments[0]);
              return input.value.length > 0
                  && (document.getElementById("titleWidth")?.innerText || "") === String(input.value.length)',
             [self::SELECTOR_TITLE_INPUT],
+            self::timeoutLong(),
         );
 
-        self::assertTrue($widthDisplayed, 'Title width should display the title length');
+        // On failure, dump the state the poll saw: loadEventEnd tells whether the
+        // "load" handler (which wires the counter) ever ran, the rest whether it
+        // wired to the right nodes. Distinguishes a starved poll from dead wiring.
+        $diagnostic = '';
+        if (! $widthDisplayed) {
+            $diagnostic = (string) json_encode($client->executeScript(
+                'const input = document.querySelector(arguments[0]);
+                 const counter = document.getElementById("titleWidth");
+                 return {
+                     readyState: document.readyState,
+                     loadEventEnd: performance.getEntriesByType("navigation")[0]?.loadEventEnd ?? null,
+                     valueLength: input ? input.value.length : null,
+                     counterExists: null !== counter,
+                     counterText: counter ? counter.innerText : null,
+                 }',
+                [self::SELECTOR_TITLE_INPUT],
+            ));
+        }
+
+        self::assertTrue($widthDisplayed, 'Title width should display the title length. State: '.$diagnostic);
     }
 
     /**

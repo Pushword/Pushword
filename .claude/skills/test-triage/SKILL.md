@@ -51,7 +51,13 @@ kernel and dev app share `packages/dev-app/var/page-locks/`. Check whether `last
 while a test-created one uses the email. Close the tab; do not delete the file.
 
 **`AdminMediaPickerTest`** — rare Panther/chromedriver "Could not connect to server" on
-port 95xx. Environmental, unrelated.
+port 95xx, and any Panther class erroring "The port 9xxx is already in use" run after
+run. Both are orphans of a *killed* worker (memory pressure can SIGKILL one; exit 137
+in a WorkerCrashedException is the tell): its Panther web server (`php -S 127.0.0.1:9xxx`),
+chromedriver and headless Chromes survive the kill and squat the ports. Cure:
+`pgrep -af 'php -dvariables_order=EGPCS -S 127.0.0.1:9'` and
+`pgrep -af chromedriver` / `pgrep -af 'user-data-dir=/tmp/panther-chrome'`, kill what
+predates the current run.
 
 ## Fixed flakes — a fresh failure is real
 
@@ -79,6 +85,18 @@ One line each; the post-mortems and already-walked dead ends are in
   scan hitting `--limit` (**0 means 500, not "no limit"**) and deliberately writing no
   snapshot. Any new all-hosts scan test owes `--limit` too, and its first assertion is
   `assertStringNotContainsString('stopping scan', …)`.
+- The localhost.dev homepage gone/degraded mid-worker —
+  `PageRepositoryTest::testPreloadTranslations…` ("does not contain 'fr'", or null),
+  sitemap hreflang missing, `LinkGraphCommandTest` missing `localhost.dev/homepage`,
+  `PageExtensionPagesListTest` failing wholesale — was THREE stacked causes:
+  `PageUpdateNotifierTest` deleting every `localhost.dev` page and recreating it from
+  seven saved scalars (cascades the translation join rows away; it backdates timestamps
+  in place now); legit flat-restore renumbering letting `array_find(slug === 'homepage')`
+  pick the *other* fixture host's translation-less homepage (host guard added); and
+  `PageEditNoopSaveTest` unpublishing the homepage through the real edit form and
+  restoring nothing (snapshot + SQL restore in tearDown now). The post-mortem's
+  worker-DB autopsy, `version_log.editor` trick and failure-time crime-scene dump are
+  the way to hunt any future family member.
 
 ## Failures that look like flakes but are stale caches
 

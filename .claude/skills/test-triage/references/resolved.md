@@ -102,3 +102,94 @@ couple of findings of that ceiling — 502 on the dev-app at the time — so whi
 not stop short. Any new test that scans every host at once owes the same, and the
 assertion to write first is `assertStringNotContainsString('stopping scan', …)` — not
 one about the snapshot.
+
+## Homepage translations "vanish" mid-worker — a destructive restore, an ambiguous pick, and a form that unpublishes
+
+The family: `PageRepositoryTest::testPreloadTranslationsInitializesEveryCollectionAtOnce`
+("array does not contain 'fr'", later "null is not Page"), a sitemap run missing the
+homepage's hreflang alternates, `LinkGraphCommandTest::testARedirectionIsNotAGraphNode`
+missing `localhost.dev/homepage`, `PageExtensionPagesListTest` failing all seven tests
+at once (`pages_list('slug:homepage')` rendering the same empty list as a bogus slug) —
+roughly two full local runs in five, never in isolation, never in the pairs that were
+tried. It took **three** fixes, each exposed by the survivor of the previous one.
+
+**Mechanism 1 — real link loss.** `PageUpdateNotifierTest::testRun` needed a page set
+with no recent timestamps, so it saved seven scalar fields of every `localhost.dev`
+page, **deleted them all** (nulling `parentPage`/`variantOf` first for MariaDB's FKs),
+ran its assertions, and recreated the pages from the scalars. The self-referencing
+`translations` ManyToMany join rows die with the delete (`ON DELETE CASCADE` on
+join-table FKs is Doctrine's default), and the restore never rebuilt them — nor
+`mainImage`, `parentPage`, `variantOf`, or the media-usage rows. Every worker that ran
+the class ended poisoned, deterministically. The fix: backdate `createdAt`/`updatedAt`
+in place (`skipAutoTimestamp = true`, or `PageListener::preUpdate` re-touches them) and
+restore the saved timestamps after — no delete, nothing else to restore.
+
+**Mechanism 2 — healthy DB, wrong homepage.** Two fixture hosts own a `homepage` slug,
+and only `localhost.dev`'s carries translations. Several flat tests legitimately
+delete-and-reimport the whole host (`PageSyncTest`'s force-reset among them) — links
+correctly restored, but **rows renumbered**: the localhost.dev homepage moves from id 1
+to id ~250, so the `admin-block-editor.test` homepage (id 6, no translations) now comes
+first in `getPublishedPages('')` (`''` means *no host filter*). The victim's
+`array_find(…, slug === 'homepage')` then picks the wrong host's homepage and reads its
+genuinely empty collection. Fix: guard the find with `host === 'localhost.dev'`. The
+same unguarded pattern — `findOneBy(['slug' => 'homepage'])` — sits in a dozen tests
+that only need *a* page; add the host guard the moment one starts asserting on
+translations, hreflang, or anything host-specific.
+
+**Mechanism 3 — the homepage is there, but unpublished.** With 1 and 2 fixed the victim
+still failed, now as `null`, with every worker DB autopsying healthy and *un-renumbered*
+(homepage id 1). A failure-time dump added to the victim showed the row present with
+`published_at = NULL` — and `getPublishedPages` filters `publishedAt IS NOT NULL`.
+`PageEditNoopSaveTest` drives the fixtures' homepage through the real EasyAdmin edit
+form; `testThePageCanStillBeUnpublishedFromTheForm` submits `Page[publishedAt] = ''`
+and the class restored nothing. It now snapshots the columns it touches on first
+`getPageId()` and restores them by SQL in `tearDown()` (SQL so the restoration cuts no
+version, queues no export, bumps no `updatedAt`).
+
+Dead ends, so they are not walked twice:
+
+- **Pairing the victim with suspects via `composer test-filter 'Suspect|Victim'` proves
+  nothing when the suspect sorts after the victim.** Filtered runs execute in suite
+  order — the `packages/*/tests/` glob — so `core`'s victim ran before `flat`'s and
+  `page-scanner`'s suspects in every pair tried, and the poisoner
+  (`page-update-notifier`, after both) was never even on the suspect list. To exercise
+  poisoner-before-victim, write a scratch phpunit XML listing the two `<file>`s in that
+  order; with it the "flake" reproduced in 1.3s, every time.
+- **Cross-worker theories are wrong by construction here** — each worker owns its DB, so
+  the poisoner always shares the victim's worker, sequentially. Look for a class, not a
+  race.
+- **Worker DBs do not survive `composer test`** (`trap cleanup EXIT` in `.scripts/test`),
+  so a post-mortem needs the parallel batch run directly with a private
+  `TEST_RUN_ID` (`vendor/bin/paratest --processes=auto …`, same flags as the script).
+  The autopsy that cracked it: query every leftover `<runid>-w*/test.db` for the
+  homepage's translation links — a worker can end poisoned even in a green run, so one
+  run usually convicts — then read that worker's `version_log` table, which timestamps
+  every create/update and turns leftover uniqid slugs into a class-by-class timeline.
+- A worker DB whose fixture pages carry high ids **with** their translations intact was
+  first dismissed as "a legit flat restore, not the poisoner's trail" — that dismissal
+  was the expensive mistake. The restore is legit, but the renumbering it leaves behind
+  is exactly what arms mechanism 2. When the victim fails and every worker DB autopsies
+  healthy, don't conclude "in-process bug in the victim" first — ask what *ordering*
+  the healthy-looking DB no longer guarantees.
+- **Grepping for direct mutators finds only direct mutators.** The suspect lists built
+  from `setTranslations|removeTranslation|publishedAt = null` could never contain
+  `PageEditNoopSaveTest`: it mutates through a submitted admin form. The
+  `version_log.editor` column is the way in — fixture pages are written by fixtures and
+  sync imports (editor empty), so an *authenticated* editor on a fixture page row names
+  an admin/API test, and the timestamps place it between its neighbours.
+- **When theories multiply, make the victim dump its own crime scene.** The decisive
+  move for mechanism 3 was a failure-time dump inside the test: connected DB path, file
+  size, raw `SELECT COUNT(*)`, the raw homepage row, and the filtered view's counts.
+  One wild reproduction then separated "row present but publishedAt NULL" from three
+  plausible-sounding theories walked first and exonerated: a background
+  `pw:flat:sync --consume-pending` child (never runs — messenger-inline, then the
+  debounce skips), torn reads from `copy()`-based pristine restores racing lingering
+  `pw:image:*`/`pw:static:worker` children (children are real — the ps-sampler counted
+  hundreds — but no torn state was ever observed), and cross-run interference from a
+  parallel `composer test` (per-run per-worker DBs make it impossible; reproductions
+  ran alone).
+
+The pristine-restore `copy()` over a live SQLite file with detached children still
+holding write connections remains a *plausible* future flake source even though it was
+not this family's cause — an atomic `copy`-to-temp + `rename()` is the cheap hardening
+if something of that shape ever shows.

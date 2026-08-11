@@ -73,35 +73,26 @@ final class PageUpdateNotifierTest extends KernelTestCase
         $this->getApps()->get()->setCustomProperty('page_update_notification_to', 'contact@example.tld');
         $this->getApps()->get()->setCustomProperty('page_update_notification_interval', 'P1D');
 
-        // Clear pages from previous tests that may have recent createdAt timestamps
-        // But save their data first so we can restore them after the test
+        // Pages left by earlier tests would trip the notifier with their recent
+        // createdAt/updatedAt. Backdate them instead of deleting them: deleting
+        // cascades the translation join rows away (and drops parent/variant/image
+        // links), and no restore from saved scalars can rebuild that — every later
+        // test in this worker reading homepage translations would fail.
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $pageRepo = $em->getRepository(Page::class);
         $pages = $pageRepo->findByHost('localhost.dev');
 
-        /** @var array<array{slug: string, h1: string, mainContent: string, locale: string, publishedAt: ?DateTimeInterface, createdAt: ?DateTimeInterface, updatedAt: ?DateTimeInterface}> $savedPagesData */
-        $savedPagesData = [];
+        /** @var array<array{page: Page, createdAt: ?DateTimeInterface, updatedAt: ?DateTimeInterface}> $savedTimestamps */
+        $savedTimestamps = [];
         foreach ($pages as $page) {
-            $savedPagesData[] = [
-                'slug' => $page->slug,
-                'h1' => $page->h1,
-                'mainContent' => $page->mainContent,
-                'locale' => $page->locale,
-                'publishedAt' => $page->publishedAt,
+            $savedTimestamps[] = [
+                'page' => $page,
                 'createdAt' => $page->createdAt,
                 'updatedAt' => $page->updatedAt,
             ];
-            // Break parent and variant links first so MariaDB's parent_page_id
-            // and variant_of_id FKs aren't violated by the non-topological
-            // delete order below.
-            $page->parentPage = null;
-            $page->variantOf = null;
-        }
-
-        $em->flush();
-
-        foreach ($pages as $page) {
-            $em->remove($page);
+            $page->skipAutoTimestamp = true;
+            $page->createdAt = new DateTime('-2 months');
+            $page->updatedAt = new DateTime('-2 months');
         }
 
         $em->flush();
@@ -111,8 +102,8 @@ final class PageUpdateNotifierTest extends KernelTestCase
         FileSystem::delete($notifier->getCacheDir());
         self::assertSame(NotificationStatus::NothingToNotify, $notifier->run($this->getPage()));
 
-        self::getContainer()->get('doctrine.orm.default_entity_manager')->persist($this->getPage());
-        self::getContainer()->get('doctrine.orm.default_entity_manager')->flush();
+        $em->persist($this->getPage());
+        $em->flush();
 
         self::assertSame('Notification sent', $notifier->run($this->getPage()));
 
@@ -123,27 +114,40 @@ final class PageUpdateNotifierTest extends KernelTestCase
         // (e.g. the parallel static-generation comparison).
         $this->removePageIfExists($em, 'page-updater', 'localhost.dev');
 
-        // Restore original pages for other tests
-        foreach ($savedPagesData as $pageData) {
-            $this->removePageIfExists($em, $pageData['slug'], 'localhost.dev');
-
-            $restoredPage = new Page();
-            $restoredPage->slug = $pageData['slug'];
-            $restoredPage->h1 = $pageData['h1'];
-            $restoredPage->mainContent = $pageData['mainContent'];
-            $restoredPage->locale = $pageData['locale'];
-            $restoredPage->host = 'localhost.dev';
-            $restoredPage->createdAt = $pageData['createdAt'];
-            $restoredPage->updatedAt = $pageData['updatedAt'];
-
-            if (null !== $pageData['publishedAt']) {
-                $restoredPage->publishedAt = $pageData['publishedAt'];
-            }
-
-            $em->persist($restoredPage);
+        // Restore the original timestamps (skipAutoTimestamp is still set).
+        foreach ($savedTimestamps as $saved) {
+            $saved['page']->createdAt = $saved['createdAt'];
+            $saved['page']->updatedAt = $saved['updatedAt'];
         }
 
         $em->flush();
+    }
+
+    /**
+     * Must stay the last test of this class. testRun once restored the pages it
+     * cleared by deleting and recreating them from a few saved scalars, which
+     * cascaded the translation join rows away and silently dropped mainImage and
+     * parentPage — poisoning every later class in the ParaTest worker (sitemap
+     * hreflang, the link graph, pages_list). This pins the surviving invariant.
+     */
+    public function testTheFixturePagesSurviveThisClass(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $pageRepo = $em->getRepository(Page::class);
+
+        $homepage = $pageRepo->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev']);
+        self::assertInstanceOf(Page::class, $homepage);
+        $locales = array_map(static fn (Page $page): string => $page->locale, $homepage->translations->toArray());
+        self::assertContains('fr', $locales);
+        self::assertContains('fr-CA', $locales);
+
+        $kitchenSink = $pageRepo->findOneBy(['slug' => 'kitchen-sink', 'host' => 'localhost.dev']);
+        self::assertInstanceOf(Page::class, $kitchenSink);
+        self::assertNotNull($kitchenSink->parentPage, 'kitchen-sink must keep its fixture parent');
+        self::assertNotNull($kitchenSink->getMainImage(), 'kitchen-sink must keep its fixture main image');
     }
 
     private function removePageIfExists(EntityManagerInterface $em, string $slug, string $host): void

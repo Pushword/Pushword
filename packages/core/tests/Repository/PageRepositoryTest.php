@@ -432,9 +432,31 @@ final class PageRepositoryTest extends KernelTestCase
         $em->clear();
 
         $pages = $pageRepo->getPublishedPages('');
-        $homepage = array_find($pages, static fn (Page $page): bool => 'homepage' === $page->slug);
+        // Two fixture hosts own a 'homepage' slug, and only localhost.dev's carries
+        // translations. Same-worker flat restores renumber rows, so without the host
+        // guard whichever homepage got the lower id wins the find.
+        $homepage = array_find($pages, static fn (Page $page): bool => 'homepage' === $page->slug && 'localhost.dev' === $page->host);
 
-        self::assertInstanceOf(Page::class, $homepage);
+        // The homepage has gone missing intermittently under the full parallel
+        // suite; on failure, dump what the connection actually sees so the flake
+        // self-documents: raw row counts vs the published-filtered view, and which
+        // database file this worker is really connected to.
+        if (! $homepage instanceof Page) {
+            $connection = $em->getConnection();
+            $path = $connection->getParams()['path'] ?? null;
+            $dbPath = \is_string($path) ? $path : '?';
+            self::fail('Homepage missing from published set. '.json_encode([
+                'dbPath' => $dbPath,
+                'dbSize' => file_exists($dbPath) ? filesize($dbPath) : null,
+                'rawPageCount' => $connection->fetchOne('SELECT COUNT(*) FROM page'),
+                'rawHomepage' => $connection->fetchAssociative(
+                    "SELECT id, host, slug, published_at FROM page WHERE slug = 'homepage' AND host = 'localhost.dev'"
+                ),
+                'publishedCount' => \count($pages),
+                'hosts' => array_count_values(array_map(static fn (Page $page): string => $page->host, $pages)),
+            ]));
+        }
+
         $fresh = $homepage->translations;
         self::assertInstanceOf(PersistentCollection::class, $fresh);
         self::assertFalse($fresh->isInitialized(), 'A fresh load must not have initialized the collection yet.');
