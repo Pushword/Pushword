@@ -51,10 +51,11 @@ Page ──► CarouselDrafter ──► SocialPost ◄──► social-post/{pa
   slider under it — or Ctrl+scroll over the deck — scales the slides for detail
   inspection (not persisted — the studio always reopens at 100% so text size is
   judged at the size a scrolling viewer actually sees). Clicking a text on a
-  slide opens a floating editor in place, a free text box can be dragged
-  straight on the slide, and hovering a slide reveals its panel row (one row
-  open at a time). Every slider responds to the mouse wheel and previews live
-  mid-drag.
+  slide opens a floating editor in place, any text can be dragged straight on
+  the slide — a free text box moves; a stack field (title, tagline, paragraph)
+  converts into a free text box pinned where it lands — and hovering a slide
+  reveals its panel row (one row open at a time). Every slider responds to the
+  mouse wheel and previews live mid-drag.
 
 ## Author with an agent (recommended)
 
@@ -116,6 +117,14 @@ to fit — free placement stays inside the no-overflow guarantee.
 A `highlight` colour — on a slide (behind each title line) or on a free text box —
 paints a rounded marker sized from the measured line widths, so it hugs the text
 exactly at any size.
+
+In the studio a stack field converts into a free text box keeping its rendered
+look — drag the text on the slide (the box lands where it is dropped) or click
+the "→ free text" button next to the field. The box takes the laid-out font
+size, wrap width, position and colours as rendered; a tagline's uppercase is
+baked into the content, and a title carries its highlight along. The field
+itself empties — from there on the text moves and styles per box, and no longer
+follows the slide's layout, align or text-scale controls.
 
 ## Fonts
 

@@ -643,14 +643,18 @@
   </div>
 
   {# ---------- INLINE TEXT EDITOR (opens on click on a slide's text block) ---------- #}
-  <div class="text-pop" x-show="textPop.open" x-cloak :style="'top:' + textPop.top + 'px;left:' + textPop.left + 'px'"
+  {# Object-syntax :style on purpose: a string binding rewrites the whole style
+     attribute, wiping the display x-show manages — and x-show skips re-applying
+     when its value did not change, so the wipe would stick (ghost popover). #}
+  <div class="text-pop" x-show="textPop.open" x-cloak :style="{ top: textPop.top + 'px', left: textPop.left + 'px' }"
        @click.outside="closeTextPop()" @keydown.escape.window="closeTextPop()">
     <label x-text="textPopLabel"></label>
     <textarea class="autogrow" x-ref="textPopField" x-model="editValue"></textarea>
   </div>
 
   {# ---------- COLOUR POPOVER (shared, anchored under the clicked field) ---------- #}
-  <div class="color-pop" x-show="colorPop.open" x-cloak :style="'top:' + colorPop.top + 'px;left:' + colorPop.left + 'px'"
+  {# Object syntax for the same reason as .text-pop above. #}
+  <div class="color-pop" x-show="colorPop.open" x-cloak :style="{ top: colorPop.top + 'px', left: colorPop.left + 'px' }"
        @click.outside="closeColor()" @keydown.escape.window="closeColor()">
     <div class="color-pop__top">
       <span class="sw" :style="colorValue ? ('background:' + colorValue) : ''"></span>

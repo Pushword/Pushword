@@ -241,7 +241,7 @@
       _previewQueuedAt: null,
       _previewSeq: 0,
       _drag: null,
-      _dragEnded: false,
+      _dragEndedAt: 0,
       _hoverTimer: null,
       _sourceReady: false,
       _pickSlide: null,
@@ -613,7 +613,9 @@
       // reactive spec, so the live preview re-renders as you type; being a body-
       // level overlay, it survives the preview swapping the SVG out under it.
       deckTextClick: function (slideIndex, event) {
-        if (this._dragEnded || 'visual' !== this.view) {
+        // The click a drag release fires must not open the editor; the browser
+        // may run timers before dispatching it, so swallow by time, not flag.
+        if (performance.now() - this._dragEndedAt < 300 || 'visual' !== this.view) {
           return
         }
         var block = event.target.closest('[data-rp-edit]')
@@ -694,38 +696,56 @@
         clearTimeout(this._hoverTimer)
       },
 
-      // Free texts are dragged straight on the slide. During the drag the SVG
-      // group is nudged with a local transform (instant, no server round-trip);
-      // the fractional position is committed on release, which re-renders through
-      // the normal preview channel. Clamped to the same bounds as the sliders.
+      // Any text block is dragged straight on the slide: a free text moves its
+      // box; a stack field (title, tagline, paragraph) converts into a free text
+      // pinned where it lands, keeping its rendered look (_fieldToFreeText).
+      // During the drag the SVG group is nudged with a local transform (instant,
+      // no server round-trip); the spec is only written on release, which
+      // re-renders through the normal preview channel. Clamped to the same
+      // bounds as the sliders.
       deckTextDown: function (slideIndex, event) {
         if ('visual' !== this.view || 0 !== event.button) {
           return
         }
-        var block = event.target.closest('[data-rp-edit^="texts."]')
+        var block = event.target.closest('[data-rp-edit]')
         var slide = this.spec.slides[slideIndex]
-        if (!block || !slide) {
+        var svg = block && block.ownerSVGElement
+        if (!block || !slide || !svg) {
           return
         }
-        var n = parseInt(block.getAttribute('data-rp-edit').slice('texts.'.length), 10)
-        var t = slide.texts && slide.texts[n]
-        var svg = block.ownerSVGElement
-        if (!t || !svg) {
-          return
+        var ref = block.getAttribute('data-rp-edit')
+        var t = null
+        var geom = null
+        if (0 === ref.indexOf('texts.')) {
+          t = slide.texts && slide.texts[parseInt(ref.slice('texts.'.length), 10)]
+          if (!t) {
+            return
+          }
+        } else {
+          geom = this._measureBlock(svg, block, ref)
+          if (!geom) {
+            return
+          }
+          geom.x = this._freeTextX(slide.align, geom.width)
         }
         event.preventDefault() // no text selection while dragging
         var box = svg.getBoundingClientRect()
+        var x0 = t ? Number(t.x) || 0 : geom.x
+        var y0 = t ? Number(t.y) || 0 : geom.y
         this._drag = {
           t: t,
+          field: t ? null : ref,
+          geom: geom,
+          width: t ? Number(t.width) || 0.84 : geom.width,
           block: block,
           slideIndex: slideIndex,
           moved: false,
           startX: event.clientX,
           startY: event.clientY,
-          x0: Number(t.x) || 0,
-          y0: Number(t.y) || 0,
-          nx: Number(t.x) || 0,
-          ny: Number(t.y) || 0,
+          x0: x0,
+          y0: y0,
+          nx: x0,
+          ny: y0,
           box: box,
           // Screen px → SVG user units, for the live transform while dragging.
           unit: (svg.viewBox.baseVal.width || box.width) / box.width,
@@ -748,7 +768,7 @@
           d.moved = true
           this.closeTextPop()
         }
-        d.nx = Math.min(1 - (Number(d.t.width) || 0.84), Math.max(0, d.x0 + dx / d.box.width))
+        d.nx = Math.min(1 - d.width, Math.max(0, d.x0 + dx / d.box.width))
         d.ny = Math.min(0.95, Math.max(0, d.y0 + dy / d.box.height))
         d.block.setAttribute('transform', 'translate('
           + ((d.nx - d.x0) * d.box.width * d.unit).toFixed(1) + ' '
@@ -759,12 +779,13 @@
         if (!d || ! d.moved) {
           return
         }
-        // Swallow the click this release fires, so it does not open the editor.
-        this._dragEnded = true
-        var self = this
-        setTimeout(function () { self._dragEnded = false }, 0)
-        d.t.x = Number(d.nx.toFixed(3))
-        d.t.y = Number(d.ny.toFixed(3))
+        this._dragEndedAt = performance.now()
+        if (d.field) {
+          this._fieldToFreeText(this.spec.slides[d.slideIndex], d.field, d.geom, d.nx, d.ny)
+        } else {
+          d.t.x = Number(d.nx.toFixed(3))
+          d.t.y = Number(d.ny.toFixed(3))
+        }
         this.revealSlide(d.slideIndex)
       },
       deckTextCancel: function () {
@@ -781,6 +802,109 @@
         window.removeEventListener('pointercancel', this._boundDragCancel)
 
         return d
+      },
+
+      // Convert a stack field (title / tagline / paragraph) into a free text box
+      // that renders the same: geometry is read off the rendered SVG block (the
+      // final laid-out font size, measured line widths, resolved colours) rather
+      // than recomputed, so the renderer's shrink-to-fit and palette resolution
+      // stay authoritative. Reached by dragging the block on the slide (the box
+      // is pinned where it lands) or by the field's "→ free text" button.
+      freeTextFromField: function (slideIndex, field) {
+        var slide = this.spec.slides[slideIndex]
+        if (!slide) {
+          return
+        }
+        var svg = document.querySelectorAll('.deck .slide svg')[slideIndex]
+        var block = svg ? svg.querySelector('[data-rp-edit="' + field + '"]') : null
+        var geom = (block ? this._measureBlock(svg, block, field) : null) || this._fallbackGeometry(slide, field)
+        this._fieldToFreeText(slide, field, geom, this._freeTextX(slide.align, geom.width), geom.y)
+      },
+      _measureBlock: function (svg, block, field) {
+        var line = block.querySelector('text')
+        var frameW = svg.viewBox.baseVal.width
+        var frameH = svg.viewBox.baseVal.height
+        var fontSize = line ? Number(line.getAttribute('font-size')) : 0
+        if (!fontSize || !frameW || !frameH) {
+          return null
+        }
+        var maxLine = 0
+        Array.prototype.forEach.call(block.querySelectorAll('text'), function (t) {
+          maxLine = Math.max(maxLine, Number(t.getAttribute('textLength')) || 0)
+        })
+        // The box hugs the widest measured line (plus a hair against rounding),
+        // so the drag range stays wide; the anchor maths in _freeTextX keeps the
+        // text where it rendered. Taglines are measured in original case but
+        // displayed uppercase, which the converted box stores — give them
+        // headroom so the re-measure does not wrap earlier.
+        var width = (maxLine / frameW) * ('tagline' === field ? 1.25 : 1) + 0.005
+
+        return {
+          size: Number((fontSize / frameW).toFixed(4)),
+          // The renderer puts each baseline at top + fontSize × 0.82.
+          y: Number(((Number(line.getAttribute('y')) - fontSize * 0.82) / frameH).toFixed(3)),
+          width: Number(Math.max(0.05, Math.min(0.84, width)).toFixed(3)),
+          // Free texts inherit the slide text colour, which is what the title and
+          // paragraph render in; the tagline's accent must be frozen explicitly.
+          color: 'tagline' === field ? line.getAttribute('fill') || '' : '',
+        }
+      },
+      // Pre-shrink stack sizes and a rough vertical spot, for a field the
+      // preview has not rendered yet (converted before the debounce landed).
+      _fallbackGeometry: function (slide, field) {
+        var scale = Number(slide.textScale) || 1
+        var baseSizes = { title: 0.11, tagline: 0.035, paragraph: 0.034 }
+        var stackTops = { top: 0.09, center: 0.4, bottom: 0.6 }
+
+        return {
+          size: baseSizes[field] * scale,
+          y: stackTops[slide.layout] || 0.6,
+          width: 0.84,
+          color: 'tagline' === field
+            ? slide.palette.accent || (this.spec.palette && this.spec.palette.accent) || '#38bdf8'
+            : '',
+        }
+      },
+      // The stack anchors at an 8% margin; the box left edge that keeps a
+      // narrower (hugging) box's anchor where the stack rendered it.
+      _freeTextX: function (align, width) {
+        var x = 0.08
+        if ('center' === align) {
+          x = 0.5 - width / 2
+        } else if ('right' === align) {
+          x = 0.92 - width
+        }
+
+        return Math.max(0, Math.min(1 - width, x))
+      },
+      _fieldToFreeText: function (slide, field, geom, x, y) {
+        var content = String(slide[field] || '').trim()
+        if ('' === content) {
+          return
+        }
+        if ('tagline' === field) {
+          // The stack renders taglines uppercase; a free text has no case
+          // transform, so bake it into the content.
+          content = content.toUpperCase()
+        }
+        if (!Array.isArray(slide.texts)) {
+          slide.texts = []
+        }
+        slide.texts.push({
+          content: content,
+          x: Number(Math.max(0, Math.min(1 - geom.width, x)).toFixed(3)),
+          y: Number(Math.max(0, Math.min(0.95, y)).toFixed(3)),
+          width: geom.width,
+          size: Number(Math.max(0.01, Math.min(0.3, geom.size)).toFixed(4)),
+          align: slide.align || 'left',
+          font: 'title' === field ? 'heading' : 'body',
+          color: geom.color,
+          highlight: 'title' === field ? slide.highlight || '' : '',
+        })
+        slide[field] = ''
+        if ('title' === field) {
+          slide.highlight = ''
+        }
       },
 
       // Mouse wheel over any range slider nudges it by one step — delegated from

@@ -103,6 +103,16 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertStringContainsString('deckTextDown(i, $event)', $html);
         self::assertStringContainsString('sliderWheel($event)', $html);
         self::assertStringContainsString('hoverSlide(i)', $html);
+        // Each stack field carries a convert-to-free-text button (title, tagline,
+        // paragraph) beside dragging the block on the slide.
+        self::assertSame(3, substr_count($html, '→ free text'));
+        self::assertStringContainsString("freeTextFromField(i, 'title')", $html);
+        // The popovers must position through an object :style: a string binding
+        // rewrites the whole style attribute, wiping the display x-show manages,
+        // and x-show skips re-applying an unchanged value — the popover would
+        // stick open (ghost) after a drag or a blind Escape.
+        self::assertStringContainsString(':style="{ top: textPop.top', $html);
+        self::assertStringContainsString(':style="{ top: colorPop.top', $html);
         // Both bundles carry a version query. Without it they sit at a stable URL
         // under a long public max-age, and a CDN serves the previous release's
         // studio for days after a deploy.
