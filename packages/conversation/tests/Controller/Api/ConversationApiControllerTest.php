@@ -2,9 +2,11 @@
 
 namespace Pushword\Conversation\Tests\Controller\Api;
 
+use DateTime;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Entity\Review;
 use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -146,6 +148,123 @@ final class ConversationApiControllerTest extends WebTestCase
     {
         $response = $this->request('GET', '/api/conversation/9999999');
         self::assertSame(404, $response->getStatusCode());
+    }
+
+    public function testListOnlyReturnsPlainMessagesFromTheSharedTable(): void
+    {
+        $host = 'conv-window-'.uniqid().'.example.com';
+        $olderId = $this->persistMessage($host, new DateTime('-2 minutes'));
+        $reviewId = $this->persistReview($host, new DateTime('-1 minute'));
+        $newerId = $this->persistMessage($host, new DateTime());
+
+        $this->request('GET', '/api/conversation?host='.$host);
+        self::assertResponseIsSuccessful();
+        $body = $this->decode();
+        self::assertSame(2, $body['total']);
+        $ids = $this->listedIds($body);
+        self::assertSame([$newerId, $olderId], $ids);
+        self::assertNotContains($reviewId, $ids);
+    }
+
+    public function testPaginationWindowLandingOnAReviewRow(): void
+    {
+        // Sorted by createdAt DESC the review sits between the two messages:
+        // with the table unrestricted, page 1 looked fine and this window
+        // served the review through the message endpoint.
+        $host = 'conv-window-'.uniqid().'.example.com';
+        $olderId = $this->persistMessage($host, new DateTime('-2 minutes'));
+        $this->persistReview($host, new DateTime('-1 minute'));
+        $this->persistMessage($host, new DateTime());
+
+        $this->request('GET', '/api/conversation?host='.$host.'&per_page=1&page=2');
+        self::assertResponseIsSuccessful();
+        $body = $this->decode();
+        self::assertSame(2, $body['total']);
+        self::assertSame([$olderId], $this->listedIds($body));
+    }
+
+    public function testAReviewIdIs404OnTheMessageEndpoint(): void
+    {
+        $reviewId = $this->persistReview('example.com', new DateTime());
+        $response = $this->request('GET', '/api/conversation/'.$reviewId);
+        self::assertSame(404, $response->getStatusCode());
+    }
+
+    public function testSearchFilterDoesNotLeakReviews(): void
+    {
+        $host = 'conv-q-'.uniqid().'.example.com';
+        $messageId = $this->persistMessage($host, new DateTime('-1 minute'));
+        $this->persistReview($host, new DateTime());
+
+        // 'Windowed' matches both seeded contents: the review must not ride
+        // in through the OR inside the search clause.
+        $this->request('GET', '/api/conversation?host='.$host.'&q=Windowed');
+        self::assertResponseIsSuccessful();
+        $body = $this->decode();
+        self::assertSame(1, $body['total']);
+        self::assertSame([$messageId], $this->listedIds($body));
+    }
+
+    public function testDeleteAReviewViaTheMessageEndpointDoesNotTombstoneIt(): void
+    {
+        $reviewId = $this->persistReview('example.com', new DateTime());
+        $response = $this->request('DELETE', '/api/conversation/'.$reviewId);
+        self::assertSame(404, $response->getStatusCode());
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $review = $em->getRepository(Review::class)->find($reviewId);
+        self::assertInstanceOf(Review::class, $review);
+        self::assertNull($review->deletedAt);
+    }
+
+    private function persistMessage(string $host, DateTime $createdAt): int
+    {
+        $message = new Message();
+        $message->host = $host;
+        $message->setContent('Windowed message '.uniqid());
+        $message->createdAt = $createdAt;
+
+        return $this->persistEntity($message);
+    }
+
+    private function persistReview(string $host, DateTime $createdAt): int
+    {
+        $review = new Review();
+        $review->host = $host;
+        $review->setContent('Windowed review '.uniqid());
+        $review->createdAt = $createdAt;
+
+        return $this->persistEntity($review);
+    }
+
+    private function persistEntity(Message $message): int
+    {
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->persist($message);
+        $em->flush();
+        self::assertIsInt($message->id);
+        $this->createdIds[] = $message->id;
+
+        return $message->id;
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     *
+     * @return list<mixed>
+     */
+    private function listedIds(array $body): array
+    {
+        self::assertIsArray($body['items']);
+        $ids = [];
+        foreach ($body['items'] as $item) {
+            self::assertIsArray($item);
+            $ids[] = $item['id'];
+        }
+
+        return $ids;
     }
 
     /**

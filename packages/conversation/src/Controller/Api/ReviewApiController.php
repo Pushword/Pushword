@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Conversation\Entity\Review;
+use Pushword\Conversation\Repository\ReviewRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,6 +20,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class ReviewApiController extends AbstractApiController
 {
     public function __construct(
+        private readonly ReviewRepository $reviewRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly ValidatorInterface $validator,
     ) {
@@ -28,7 +30,7 @@ final class ReviewApiController extends AbstractApiController
     public function list(Request $request): JsonResponse
     {
         $pagination = $this->paginationParams($request);
-        $qb = $this->entityManager->getRepository(Review::class)->createQueryBuilder('r')
+        $qb = $this->reviewRepository->createQueryBuilder('r')
             ->andWhere('r.deletedAt IS NULL');
 
         if (null !== $request->query->get('host')) {
@@ -68,7 +70,7 @@ final class ReviewApiController extends AbstractApiController
     #[Route('/api/review/{id}', name: 'pushword_api_review_item', requirements: ['id' => '\d+'], methods: ['GET', 'PATCH', 'DELETE'])]
     public function item(int $id, Request $request): JsonResponse
     {
-        $review = $this->entityManager->getRepository(Review::class)->find($id);
+        $review = $this->reviewRepository->find($id);
         // A tombstoned review is gone as far as the API contract goes.
         if (! $review instanceof Review || null !== $review->deletedAt) {
             return $this->notFound('Review not found');

@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Entity\Review;
 use Pushword\Conversation\Repository\MessageRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,6 +32,9 @@ final class ConversationApiController extends AbstractApiController
     {
         $pagination = $this->paginationParams($request);
         $qb = $this->messageRepository->createQueryBuilder('m')
+            // Reviews share the message table (single-table inheritance) but
+            // belong to /api/review.
+            ->andWhere('m NOT INSTANCE OF '.Review::class)
             ->andWhere('m.deletedAt IS NULL');
 
         if (null !== $request->query->get('host')) {
@@ -75,8 +79,9 @@ final class ConversationApiController extends AbstractApiController
     public function item(int $id, Request $request): JsonResponse
     {
         $message = $this->messageRepository->find($id);
-        // A tombstoned message is gone as far as the API contract goes.
-        if (! $message instanceof Message || null !== $message->deletedAt) {
+        // A tombstoned message is gone as far as the API contract goes, and a
+        // review is only reachable through /api/review.
+        if (! $message instanceof Message || $message instanceof Review || null !== $message->deletedAt) {
             return $this->notFound('Message not found');
         }
 

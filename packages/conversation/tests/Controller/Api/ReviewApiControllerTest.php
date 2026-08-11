@@ -2,8 +2,10 @@
 
 namespace Pushword\Conversation\Tests\Controller\Api;
 
+use DateTime;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -50,9 +52,11 @@ final class ReviewApiControllerTest extends WebTestCase
         $container = $this->client->getContainer();
         $em = $container->get('doctrine.orm.default_entity_manager');
         foreach ($this->createdIds as $id) {
-            $review = $em->getRepository(Review::class)->find($id);
-            if ($review instanceof Review) {
-                $em->remove($review);
+            // The Message repository so the plain messages seeded next to
+            // reviews are swept too.
+            $message = $em->getRepository(Message::class)->find($id);
+            if ($message instanceof Message) {
+                $em->remove($message);
             }
         }
 
@@ -222,10 +226,98 @@ final class ReviewApiControllerTest extends WebTestCase
         self::assertGreaterThanOrEqual(1, $this->decode()['total']);
     }
 
+    public function testListOnlyReturnsReviewsFromTheSharedTable(): void
+    {
+        $host = 'review-window-'.uniqid().'.example.com';
+        $olderId = $this->persistReview($host, new DateTime('-2 minutes'));
+        $messageId = $this->persistMessage($host, new DateTime('-1 minute'));
+        $newerId = $this->persistReview($host, new DateTime());
+
+        $this->request('GET', '/api/review?host='.$host);
+        self::assertResponseIsSuccessful();
+        $body = $this->decode();
+        self::assertSame(2, $body['total']);
+        $ids = $this->listedIds($body);
+        self::assertSame([$newerId, $olderId], $ids);
+        self::assertNotContains($messageId, $ids);
+    }
+
+    public function testPaginationWindowLandingOnAMessageRow(): void
+    {
+        // Sorted by createdAt DESC the plain message sits between the two
+        // reviews: with the table unrestricted, page 1 looked fine and this
+        // window crashed hydrating a Message where a Review was expected.
+        $host = 'review-window-'.uniqid().'.example.com';
+        $olderId = $this->persistReview($host, new DateTime('-2 minutes'));
+        $this->persistMessage($host, new DateTime('-1 minute'));
+        $this->persistReview($host, new DateTime());
+
+        $this->request('GET', '/api/review?host='.$host.'&per_page=1&page=2');
+        self::assertResponseIsSuccessful();
+        $body = $this->decode();
+        self::assertSame(2, $body['total']);
+        self::assertSame([$olderId], $this->listedIds($body));
+    }
+
+    public function testAPlainMessageIdIs404OnTheReviewEndpoint(): void
+    {
+        $messageId = $this->persistMessage('example.com', new DateTime());
+        $response = $this->request('GET', '/api/review/'.$messageId);
+        self::assertSame(404, $response->getStatusCode());
+    }
+
     public function testEmptyContentFailsValidation(): void
     {
         $response = $this->request('POST', '/api/review', ['content' => '', 'host' => 'example.com']);
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+    }
+
+    private function persistReview(string $host, DateTime $createdAt): int
+    {
+        $review = new Review();
+        $review->host = $host;
+        $review->setContent('Windowed review '.uniqid());
+        $review->createdAt = $createdAt;
+
+        return $this->persistEntity($review);
+    }
+
+    private function persistMessage(string $host, DateTime $createdAt): int
+    {
+        $message = new Message();
+        $message->host = $host;
+        $message->setContent('Windowed message '.uniqid());
+        $message->createdAt = $createdAt;
+
+        return $this->persistEntity($message);
+    }
+
+    private function persistEntity(Message $message): int
+    {
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->persist($message);
+        $em->flush();
+        self::assertIsInt($message->id);
+        $this->createdIds[] = $message->id;
+
+        return $message->id;
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     *
+     * @return list<mixed>
+     */
+    private function listedIds(array $body): array
+    {
+        self::assertIsArray($body['items']);
+        $ids = [];
+        foreach ($body['items'] as $item) {
+            self::assertIsArray($item);
+            $ids[] = $item['id'];
+        }
+
+        return $ids;
     }
 
     /**

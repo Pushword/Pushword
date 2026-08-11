@@ -3,10 +3,10 @@
 namespace Pushword\Conversation\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Pushword\Conversation\Repository\MessageRepository;
+use Pushword\Conversation\Repository\ReviewRepository;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: MessageRepository::class)]
+#[ORM\Entity(repositoryClass: ReviewRepository::class)]
 #[ORM\Table(name: 'message')]
 class Review extends Message
 {
