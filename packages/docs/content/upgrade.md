@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc864](/upgrade/rc864) | `advanced-main-image` | the main image "∅" format is now labelled None (Aucun in French) |
 | [rc858](/upgrade/rc858) | `api` `conversation` | /api/conversation and /api/review each serve only their own type |
 | [rc857](/upgrade/rc857) | `newsletter` | the tracking opt-in mail states its purpose in a hint line over a bare confirm button |
 | [rc856](/upgrade/rc856) | `newsletter` | newsletter mails can track clicks, behind a double consent — run `doctrine:schema:update --force` |

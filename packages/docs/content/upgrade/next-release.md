@@ -1,5 +1,5 @@
 ---
-title: 'the main image "∅" format is now labelled None (Aucun in French)'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,14 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/advanced-main-image`
-
-## The "∅" main image format is now labelled None
-
-The format that hides the main image shows as *None* (*Aucun* in French) in the
-admin instead of the `∅` symbol, and flat files export `mainImageFormat: None`.
-Files still holding `mainImageFormat: ∅` keep importing as that format, so there
-is nothing to run; the next `pw:flat:sync` export only rewrites those lines. A
-site that overrode `adminPageMainImageFormatNone` in its own translations keeps
-its own label.
