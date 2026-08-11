@@ -12,7 +12,8 @@ use Twig\Environment as Twig;
 
 /**
  * Notices — a blockquote opened by `> [!label]`, rendered through the
- * `component/notice.html.twig` component.
+ * `component/notice/<label>.html.twig` component when the site defines one, and
+ * through the generic `component/notice.html.twig` otherwise.
  *
  * Block-level only: kept out of PushwordExtension so the `markdown_inline`
  * converter, which promises never to parse block syntax, stays untouched.

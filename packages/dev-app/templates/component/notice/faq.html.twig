@@ -1,0 +1,10 @@
+{# Demo + test fixture (NoticeTest): a `> [!faq]` notice resolves to
+   /component/notice/faq.html.twig before falling back to the generic notice.
+   `params` carries the attributes of the `{#anchor}` line other than id/class. #}
+{% set tag = params.tag|default('h3') %}
+<div class="faq{% if class %} {{ class }}{% endif %}" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+  <{{ tag }} itemprop="name"{% if id %} id="{{ id }}"{% endif %}>{{ title }}</{{ tag }}>
+  <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+    <div itemprop="text">{{ content|raw }}</div>
+  </div>
+</div>

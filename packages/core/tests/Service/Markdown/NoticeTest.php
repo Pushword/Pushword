@@ -117,6 +117,69 @@ final class NoticeTest extends KernelTestCase
         self::assertStringContainsString('[!NOTE]', $html);
     }
 
+    public function testLabelOwningAComponentRendersThroughIt(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!faq] Can luggage be carried?\n>\n> Wherever a road serves the night stop.");
+
+        self::assertStringContainsString('https://schema.org/Question', $html);
+        self::assertStringContainsString('<h3 itemprop="name">Can luggage be carried?</h3>', $html);
+        self::assertStringContainsString('<p>Wherever a road serves the night stop.</p>', $html);
+        self::assertStringNotContainsString('notice-faq', $html);
+    }
+
+    public function testLabelWithoutAComponentFallsBackToTheGenericNotice(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!faqq] Typo in the label\n> body");
+
+        self::assertStringContainsString('notice notice-faqq', $html);
+    }
+
+    public function testAttributesOtherThanIdAndClassReachTheComponent(): void
+    {
+        $html = $this->getMarkdownParser()->transform("{#luggage .compact tag=\"h2\"}\n> [!faq] Can luggage be carried?\n> Yes.");
+
+        self::assertStringContainsString('<h2 itemprop="name" id="luggage">', $html);
+        self::assertStringContainsString('class="faq compact"', $html);
+    }
+
+    public function testAttributesClosingTheMarkerLineApply(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!faq] Can luggage be carried? {#luggage}\n> Yes.");
+
+        self::assertStringContainsString('<h3 itemprop="name" id="luggage">Can luggage be carried?</h3>', $html);
+        self::assertStringNotContainsString('{#luggage}', $html);
+    }
+
+    public function testBothAttributeFormsCombine(): void
+    {
+        $html = $this->getMarkdownParser()->transform("{#luggage}\n> [!faq] Can luggage be carried? {.compact tag=\"h2\"}\n> Yes.");
+
+        self::assertStringContainsString('<h2 itemprop="name" id="luggage">', $html);
+        self::assertStringContainsString('class="faq compact"', $html);
+    }
+
+    public function testAMarkerLineCarryingOnlyAttributesKeepsTheLabelAsTitle(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!note] {#anchor}\n> body");
+
+        self::assertStringContainsString('id="anchor"', $html);
+        self::assertStringContainsString('>Note</p>', $html);
+    }
+
+    public function testATwigCommentClosingTheTitleIsNotReadAsAttributes(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!note] Titled {# a comment #}\n> body");
+
+        self::assertStringContainsString('>Titled {# a comment #}</p>', $html);
+    }
+
+    public function testATitleEndingOnBracesThatAreNotAttributesStaysLiteral(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!note] Reading {some placeholder}\n> body");
+
+        self::assertStringContainsString('>Reading {some placeholder}</p>', $html);
+    }
+
     public function testInlineConverterNeverBuildsANotice(): void
     {
         $html = $this->getMarkdownParser()->transformInline('> [!warning] Version');

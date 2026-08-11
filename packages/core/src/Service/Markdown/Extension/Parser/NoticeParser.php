@@ -18,9 +18,16 @@ final class NoticeParser extends AbstractBlockContinueParser
 {
     private readonly Notice $block;
 
-    public function __construct(string $level, string $title)
+    /**
+     * @param array<string, mixed> $attributes written at the end of the marker line
+     */
+    public function __construct(string $level, string $title, array $attributes = [])
     {
         $this->block = new Notice($level, $title);
+
+        // AttributesListener merges an `{#anchor}` line above the notice into
+        // whatever sits here, so both forms can be used on the same notice.
+        $this->block->data->set('attributes', $attributes);
     }
 
     public function getBlock(): Notice

@@ -29,14 +29,32 @@ final readonly class NoticeRenderer implements NodeRendererInterface
         $attributes = $node->data->get('attributes');
 
         return new RawHtml($this->twig->render(
-            $this->apps->get()->getView('/component/notice.html.twig', '@Pushword'),
+            $this->view($node->level),
             [
                 'level' => $node->level,
                 'title' => $node->title,
                 'content' => $content,
                 'id' => $attributes['id'] ?? '',
                 'class' => $attributes['class'] ?? '',
+                'params' => array_diff_key($attributes, ['id' => '', 'class' => '']),
             ]
         ));
+    }
+
+    /**
+     * A label may own a component of its own — `> [!faq]` renders through
+     * `component/notice/faq.html.twig` when the site has one — and every other
+     * label falls back to the generic notice. The label charset (see
+     * {@see \Pushword\Core\Service\Markdown\Extension\Parser\NoticeStartParser})
+     * is `[a-z0-9_-]`, so it cannot walk out of the directory.
+     */
+    private function view(string $level): string
+    {
+        $site = $this->apps->get();
+        $view = $site->getView('/component/notice/'.$level.'.html.twig', '@Pushword');
+
+        return $this->twig->getLoader()->exists($view)
+            ? $view
+            : $site->getView('/component/notice.html.twig', '@Pushword');
     }
 }

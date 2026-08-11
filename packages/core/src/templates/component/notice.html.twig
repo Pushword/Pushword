@@ -3,6 +3,10 @@
 {# @var content string the notice body, already rendered #}
 {# @var id string      anchor from an `{#anchor}` line above the notice, empty when none #}
 {# @var class string   classes from a `{.class}` line above the notice, empty when none #}
+{# @var params array   the other attributes of that line (`{key="value"}`), keyed by name #}
+
+{# Generic fallback: a label owning a `component/notice/<label>.html.twig` is
+   rendered by it instead, with the same variables. #}
 
 {% set palettes = {
   note: 'border-blue-500 bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100',

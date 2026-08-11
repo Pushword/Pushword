@@ -104,11 +104,39 @@ same line.
   "Note"), so the level never rests on colour alone.
 - **The body is ordinary Markdown** — paragraphs, lists, links, images.
 - An `{#anchor .class}` line placed above the notice applies to it, as for any block.
+  It can also close the marker line — `> [!warning] Version {#version}` — the way a
+  heading takes its anchor; write both and they merge.
 - Rendering goes through `/component/notice.html.twig`: override it in your theme to
   change the palette, add icons, or drop the wrapper entirely.
 
 A blockquote that does not open with a marker stays a plain blockquote, so quoting
 someone is unaffected.
+
+### A component per label
+
+A label can own a template of its own: `> [!faq]` renders through
+`/component/notice/faq.html.twig` when the site defines one, and through the generic
+notice otherwise. That turns the marker into the Markdown syntax for any block-level
+component whose content is editorial — a FAQ entry, a definition, a step — without a
+Twig `include` and its quoted parameters in the middle of the page:
+
+```markdown
+> [!faq] Can luggage be carried between night stops? {#carry-luggage}
+>
+> Wherever a road serves the night stop, yes — it works on the Tour du Mont-Blanc.
+>
+> It does not on high-altitude refuges, where you carry what you sleep with.
+```
+
+The template receives the same variables as the generic notice — `title` (the text
+after the label), `content` (the body, already rendered), `id`, `class` — plus
+`params`, the other attributes of the `{…}` line, so `{#carry-luggage tag="h2"}`
+reaches it as `params.tag`. The body being ordinary Markdown is the point: links stay
+`[text](/url)`, paragraphs stay paragraphs, and the text is reviewable in a diff.
+
+Multi-field components (a call-to-action with a title, a button label and a URL) do
+not fit a title-plus-body shape: use a [snippet](/extension/snippet) and its parameter
+schema for those.
 
 ## Tables
 
