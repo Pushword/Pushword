@@ -66,3 +66,50 @@ describe('PagesList – the format select', () => {
     expect(value).toBe('legacyVariant')
   })
 })
+
+/** The values the order select offers, plus the one it shows as selected. */
+function orderSelect(order: string): { options: string[]; value: string } {
+  const tool = new PagesList({
+    data: { kw: 'test', display: 'list', order, max: '9', maxPages: '0' } as PagesListData,
+    api: stubApi(),
+    readOnly: false,
+    config: { preview: '/admin/page/block/1' } as PagesListConfig,
+  })
+
+  const select = tool.createInputs().querySelectorAll('select')[1] as HTMLSelectElement
+
+  return {
+    options: [...select.options].map((option) => option.value).filter((value) => '' !== value),
+    value: select.value,
+  }
+}
+
+describe('PagesList – the order select', () => {
+  it('offers ordering by the search, alone or ahead of a column', () => {
+    const { options } = orderSelect('publishedAt ↓')
+
+    expect(options).toContain('search')
+    expect(options).toContain('search, weight ↓, publishedAt ↓')
+  })
+
+  /**
+   * An order written by hand — a column the list does not offer — used to leave the
+   * select empty, so opening the page and saving it rewrote the block's order.
+   */
+  it('keeps an order it does not offer selectable', () => {
+    const { options, value } = orderSelect('prop.eventDate ↑')
+
+    expect(options).toContain('prop.eventDate ↑')
+    expect(value).toBe('prop.eventDate ↑')
+  })
+
+  it('does not list the stored order twice when it is a known one', () => {
+    expect(orderSelect('search').options).toEqual([
+      'publishedAt ↓',
+      'weight ↓, publishedAt ↓',
+      'publishedAt ↑',
+      'search',
+      'search, weight ↓, publishedAt ↓',
+    ])
+  })
+})

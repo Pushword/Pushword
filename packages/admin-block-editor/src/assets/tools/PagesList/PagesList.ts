@@ -198,9 +198,20 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
     const select = document.createElement('select')
     select.classList.add('cdx-select')
     make.option(select, '', 'orderBy', { disabled: true })
-    make.option(select, 'publishedAt ↓', null, {}, this.data.order)
-    make.option(select, 'weight ↓, publishedAt ↓', null, {}, this.data.order)
-    make.option(select, 'publishedAt ↑', null, {}, this.data.order)
+    // `search` keeps the pages in the order the query names their slugs; on its own,
+    // or ahead of a column that orders whatever the query does not name. As for the
+    // format select, the stored order comes last so one written by hand — any column
+    // this list does not offer — stays selected instead of showing an empty select
+    // and being rewritten on the next save.
+    const orders = new Set([
+      'publishedAt ↓',
+      'weight ↓, publishedAt ↓',
+      'publishedAt ↑',
+      'search',
+      'search, weight ↓, publishedAt ↓',
+      this.data.order,
+    ])
+    make.options(select, [...orders], this.data.order)
     select.value = this.data.order
     this.nodes.orderSelect = select
     return this.nodes.orderSelect

@@ -120,12 +120,26 @@ final class PageExtension
         $excludeCurrent = new Condition('id', '<>', $currentPage->id ?? 0);
         $criteria = null === $criteria ? $excludeCurrent : new Group(Conjunction::All, [$criteria, $excludeCurrent]);
 
+        // As in pages_list(): 'search' keeps the order the slugs are written in. The cut
+        // waits for that order, so the limit cannot be left to the query either.
+        [$order, $orderBySearch] = $this->splitSearchOrder($order);
+        $orderedSlugs = $orderBySearch ? $this->slugsInOrder($criteria) : [];
+
         $order = str_replace('priority', 'weight', $order); // bc
         $order = '' === $order ? 'publishedAt,weight' : $order;
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
             : ['key' => $order[0], 'direction' => $order[1]];
 
-        return $this->pageRepo->getPublishedPages($host ?? $this->apps->getMainHost(), $criteria, $order, $this->getLimit($max), $withRedirection);
+        $limit = $this->getLimit($max);
+        $pages = $this->pageRepo->getPublishedPages($host ?? $this->apps->getMainHost(), $criteria, $order, [] === $orderedSlugs ? $limit : 0, $withRedirection);
+
+        if ([] === $orderedSlugs) {
+            return $pages;
+        }
+
+        $pages = $this->sortBySlugs($pages, $orderedSlugs);
+
+        return $limit > 0 ? \array_slice($pages, 0, $limit) : $pages;
     }
 
     /**
@@ -298,6 +312,13 @@ final class PageExtension
 
         $search = $this->criteria($search, $currentPage) ?? [];
 
+        // `order: 'search'` keeps the pages in the order their slugs are written —
+        // a curated row of cards, which no column can express. Whatever follows it
+        // (`search, weight ↓`) orders the rest, so pages the search does not name
+        // follow in a stable order rather than in whatever the database returns.
+        [$order, $orderBySearch] = $this->splitSearchOrder($order);
+        $orderedSlugs = $orderBySearch ? $this->slugsInOrder($search) : [];
+
         $order = str_replace('priority', 'weight', $order); // bc
         $order = '' === $order ? 'publishedAt,weight' : $order;
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
@@ -309,9 +330,13 @@ final class PageExtension
         // every page the pager may show, or pages 2+ have nothing left to slice.
         $limit = $maxPages > 1 ? $max * $maxPages : $max;
 
+        // Ordering by the search happens on the result, so the cut has to wait for it:
+        // limiting in SQL would drop pages the curated order puts first.
+        $queryLimit = [] === $orderedSlugs ? $limit : 0;
+
         $queryBuilder = $published
-            ? $this->pageRepo->getPublishedPageQueryBuilder($host, $search, $order, $limit)
-            : $this->pageRepo->getUnpublishedPageQueryBuilder($host, $search, $order, $limit);
+            ? $this->pageRepo->getPublishedPageQueryBuilder($host, $search, $order, $queryLimit)
+            : $this->pageRepo->getUnpublishedPageQueryBuilder($host, $search, $order, $queryLimit);
 
         // Always, whatever the search says. A `slug:` used to switch this off, on the
         // assumption that naming a page means wanting that page — but the sniff was a
@@ -343,6 +368,13 @@ final class PageExtension
         /** @var Page[] */
         $pages = $queryBuilder->getQuery()->getResult();
 
+        if ([] !== $orderedSlugs) {
+            $pages = $this->sortBySlugs($pages, $orderedSlugs);
+            if ($limit > 0) {
+                $pages = \array_slice($pages, 0, $limit);
+            }
+        }
+
         if ($maxPages > 1) {
             $pagerfanta = new Pagerfanta(new ArrayAdapter($pages))
                 ->setMaxNbPages($maxPages)
@@ -371,6 +403,73 @@ final class PageExtension
             'id' => $id,
             'wrapperClass' => $wrapperClass,
         ]);
+    }
+
+    /**
+     * Splits a leading `search` off an order expression: `search, weight ↓` means the
+     * slugs first, in the order written, then that column for everything else. Alone,
+     * it leaves an empty expression, which falls back to the default order below.
+     *
+     * @param array<(string|int), string>|string $order
+     *
+     * @return array{array<(string|int), string>|string, bool} the order left to the query,
+     *                                                         and whether the search drives it
+     */
+    private function splitSearchOrder(array|string $order): array
+    {
+        if (! \is_string($order) || 1 !== preg_match('/^search\b\s*,?\s*(.*)$/', trim($order), $matches)) {
+            return [$order, false];
+        }
+
+        return [$matches[1], true];
+    }
+
+    /**
+     * The slugs a search names, in the order it names them.
+     *
+     * `slug:` compiles to a LIKE (`slug:%partial%` is documented), so a pattern
+     * matching more than one page is skipped: it has no single position to hold.
+     *
+     * @param array<mixed>|Condition|Group $criteria
+     *
+     * @return list<string>
+     */
+    private function slugsInOrder(array|Condition|Group $criteria): array
+    {
+        if ($criteria instanceof Group) {
+            $slugs = [];
+            foreach ($criteria->children as $child) {
+                $slugs = [...$slugs, ...$this->slugsInOrder($child)];
+            }
+
+            return $slugs;
+        }
+
+        if (! $criteria instanceof Condition || 'slug' !== $criteria->field) {
+            return [];
+        }
+
+        return \is_string($criteria->value) && ! str_contains($criteria->value, '%')
+            ? [$criteria->value]
+            : [];
+    }
+
+    /**
+     * @param Page[]       $pages
+     * @param list<string> $slugs
+     *
+     * @return Page[]
+     */
+    private function sortBySlugs(array $pages, array $slugs): array
+    {
+        $rank = array_flip($slugs);
+
+        // A page the search does not name — matched by another term of the same
+        // expression — ranks last and, sorting being stable since PHP 8, keeps the
+        // order the query returned it in.
+        usort($pages, static fn (Page $a, Page $b): int => ($rank[$a->slug] ?? \PHP_INT_MAX) <=> ($rank[$b->slug] ?? \PHP_INT_MAX));
+
+        return $pages;
     }
 
     /**

@@ -45,6 +45,22 @@ describe('pages_list markdown round trip', () => {
     },
   )
 
+  /**
+   * An order holding a comma — `search, weight ↓` and the composite the select has
+   * always offered — must survive as one argument: read as two, every later property
+   * shifts and the block comes back with the wrong display and max.
+   */
+  it.each(['search', 'search, weight ↓, publishedAt ↓', 'weight ↓, publishedAt ↓'])(
+    'reads %s back as a single argument',
+    (order) => {
+      const markdown = exportPagesListToMarkdown(data({ order, display: 'card' }))
+      const properties = MarkdownUtils.extractTwigFunctionProperties('pages_list', markdown)
+
+      expect(properties?.[2]).toBe(order)
+      expect(properties?.[3]).toBe('card')
+    },
+  )
+
   it('keeps the display in place when maxPages and tunes are also exported', () => {
     const markdown = exportPagesListToMarkdown(data({
       display: 'horizontalScroll',

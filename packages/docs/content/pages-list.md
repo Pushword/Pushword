@@ -56,6 +56,40 @@ where a term may start: at the beginning, after an operator, or after another
 `(`. Everywhere else it is an ordinary character, so a tag written `foo (bar)`
 still means what it did before parentheses existed.
 
+## Ordering
+
+The third argument sorts the list: any page column, with an optional direction
+(`'weight DESC, publishedAt DESC'`; `↑` and `↓` are accepted), or `prop.<key>` for a
+custom property. It defaults to `publishedAt,weight`.
+
+`order: 'search'` is the exception — it keeps the pages in the order their `slug:` terms
+are written. A curated row of cards, three pages chosen by hand in that sequence, is what
+it is for, and no column can express it:
+
+```twig
+{{ pages_list('slug:tour-du-mont-blanc OR slug:gr54 OR slug:vercors', order: 'search', view: 'card') }}
+```
+
+- Pages the search matches **without naming** — through another term of the same
+  expression — follow the named ones. `slug:tour-du-mont-blanc OR tag:trek` therefore
+  pins one card at the head of a tag list.
+- **What follows `search` orders that tail**: `order: 'search, weight ↓, publishedAt ↓'`.
+  Alone, `search` leaves the default order underneath. `search` must open the
+  expression — it sorts the head, so it cannot come second.
+- `slug:%partial%` matches more than one page, so it holds no single position. A search
+  naming no exact slug simply gets the default order.
+- `max` cuts **after** the reordering, so it keeps the ones written first, not the most
+  recent ones.
+
+`pages()` takes it too, for a template that arranges the entities itself:
+
+```twig
+{% set items = pages(where: 'slug:tour-du-mont-blanc OR slug:gr54', order: 'search') %}
+```
+
+The block editor's PagesList block offers both forms in its order select, and keeps an
+order written by hand selected rather than rewriting it.
+
 ## Choosing How the List Renders
 
 The fourth argument picks the view. Three are built in; any other bare name is a
