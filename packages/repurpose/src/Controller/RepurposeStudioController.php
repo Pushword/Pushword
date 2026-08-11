@@ -96,26 +96,7 @@ final class RepurposeStudioController extends AbstractController
             ], $scriptFlags),
             'networkUrlsJs' => json_encode($networkUrls, $scriptFlags),
             'pageSlugs' => $this->pageSlugsForHost($post->host),
-            'studioJsVersion' => $this->assetVersion('bundles/pushwordrepurpose/repurpose.js'),
-            'alpineJsVersion' => $this->assetVersion('bundles/pushwordcore/alpine.js'),
         ]);
-    }
-
-    /**
-     * Cache-busting stamp for a published bundle asset. Those sit at a stable URL
-     * and front-ends serve them with a long public max-age, so without a version
-     * query a CDN keeps handing out the previous release's bundle for days after
-     * a deploy — the studio then runs old JS against a new spec. Mirrors
-     * pushword/admin's versionedAsset(); time() when the file is missing, so an
-     * asset that assets:install has not published yet never sticks.
-     */
-    private function assetVersion(string $assetPath): string
-    {
-        /** @var string $projectDir */
-        $projectDir = $this->getParameter('kernel.project_dir');
-        $absolutePath = $projectDir.'/public/'.ltrim($assetPath, '/');
-
-        return (string) (\is_file($absolutePath) ? \filemtime($absolutePath) : \time());
     }
 
     /**

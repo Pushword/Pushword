@@ -54,12 +54,11 @@
     .deck-note input[type=range] { width: 8rem; flex: 0 0 auto; }
     .slide figure:hover svg { transform: translateY(-3px); box-shadow: 0 12px 32px #0000002e; }
     .slide figcaption { text-align: center; color: var(--muted); font-size: .72rem; margin-top: .5rem; font-variant-numeric: tabular-nums; }
-    /* Text blocks are click-to-edit (the renderer tags them with data-rp-edit). */
-    .slide svg g[data-rp-edit] { cursor: text; }
+    /* Text blocks are click-to-edit and drag-to-move (the renderer tags them with
+       data-rp-edit); dragging a stack field converts it into a free text box. */
+    .slide svg g[data-rp-edit] { cursor: grab; touch-action: none; }
     .slide svg g[data-rp-edit]:hover { opacity: .82; }
-    /* Free text boxes are also drag-to-move. */
-    .slide svg g[data-rp-edit^="texts."] { cursor: grab; touch-action: none; }
-    .slide svg g[data-rp-edit^="texts."]:active { cursor: grabbing; }
+    .slide svg g[data-rp-edit]:active { cursor: grabbing; }
 
     /* Floating inline text editor, opened by clicking a text block on a slide. */
     .text-pop { position: fixed; z-index: 60; width: 19rem; background: var(--panel); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 12px 40px #00000026; padding: .7rem; display: flex; flex-direction: column; gap: .35rem; }
@@ -445,11 +444,15 @@
                 </div>
                 <div class="slide-item__body" x-show="slidesOpen[i]" x-cloak>
                   <div class="field">
-                    <label>Title</label>
+                    <label>Title
+                      <button type="button" class="btn-xs" x-show="slide.title" x-cloak title="Convert to a free text box — same look, draggable anywhere on the slide" @click="freeTextFromField(i, 'title')">→ free text</button>
+                    </label>
                     <textarea class="autogrow one" x-model="slide.title"></textarea>
                   </div>
                   <div class="grid2">
-                    <div class="field"><label>Tagline</label><textarea class="autogrow one" x-model="slide.tagline"></textarea></div>
+                    <div class="field"><label>Tagline
+                      <button type="button" class="btn-xs" x-show="slide.tagline" x-cloak title="Convert to a free text box — same look, draggable anywhere on the slide" @click="freeTextFromField(i, 'tagline')">→ free text</button>
+                    </label><textarea class="autogrow one" x-model="slide.tagline"></textarea></div>
                     <div class="field"><label>Background effect</label>
                       <button type="button" class="fake-select" @click="openEffect(i)">
                         <span class="thumb" x-html="slideEffectPreview(slide)"></span>
@@ -458,7 +461,9 @@
                       </button>
                     </div>
                   </div>
-                  <div class="field"><label>Paragraph</label><textarea class="autogrow" x-model="slide.paragraph"></textarea></div>
+                  <div class="field"><label>Paragraph
+                    <button type="button" class="btn-xs" x-show="slide.paragraph" x-cloak title="Convert to a free text box — same look, draggable anywhere on the slide" @click="freeTextFromField(i, 'paragraph')">→ free text</button>
+                  </label><textarea class="autogrow" x-model="slide.paragraph"></textarea></div>
                   <div class="grid2">
                     <div class="field"><label>Layout</label>
                       <select x-model="slide.layout" x-init="$nextTick(() => $el.value = slide.layout)">
@@ -696,11 +701,7 @@
     </div>
   </div>
 
-  {# Both bundles live at a stable URL served with a long public max-age, so a CDN
-     would keep serving the previous release's studio for days after a deploy.
-     Stamp each with its published file's mtime. #}
-  {% set studioJs = asset('bundles/pushwordrepurpose/repurpose.js') %}
-  <script defer src="{{ studioJs }}{{ '?' in studioJs ? '&' : '?' }}v={{ studioJsVersion }}"></script>
-  <script defer src="/bundles/pushwordcore/alpine.js?v={{ alpineJsVersion }}"></script>
+  <script defer src="{{ versionedAsset('/bundles/pushwordrepurpose/repurpose.js') }}"></script>
+  <script defer src="{{ versionedAsset('/bundles/pushwordcore/alpine.js') }}"></script>
 </body>
 </html>

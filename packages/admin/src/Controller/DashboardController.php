@@ -10,15 +10,16 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\UserMenu;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
+use Pushword\Core\Twig\AssetExtension;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Twig\Attribute\AsTwigFunction;
 
 #[AdminDashboard(routePath: '/admin', routeName: 'admin')]
 class DashboardController extends AbstractDashboardController
 {
     public function __construct(
         private readonly AdminMenu $adminMenu,
+        private readonly AssetExtension $assetExtension,
     ) {
     }
 
@@ -88,14 +89,8 @@ class DashboardController extends AbstractDashboardController
             ->displayUserName(false);
     }
 
-    #[AsTwigFunction('versionedAsset')]
     private function versionedAsset(string $assetPath): string
     {
-        /** @var string $projectDir */
-        $projectDir = $this->getParameter('kernel.project_dir');
-        $absolutePath = $projectDir.'/public'.$assetPath;
-        $version = \is_file($absolutePath) ? (string) \filemtime($absolutePath) : (string) \time();
-
-        return sprintf('%s?v=%s', $assetPath, $version);
+        return $this->assetExtension->versionedAsset($assetPath);
     }
 }

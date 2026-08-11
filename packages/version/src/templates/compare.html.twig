@@ -7,7 +7,7 @@
 
 {% block head_javascript %}
   {{ parent() }}
-  <script src="/bundles/pushwordadmin/monaco/app.js"></script>
+  <script src="{{ versionedAsset('/bundles/pushwordadmin/monaco/app.js') }}"></script>
 {% endblock %}
 
 {% block page_actions %}

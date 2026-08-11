@@ -3,15 +3,15 @@
 
 {% block head_stylesheets %}
     {{ parent() }}
-    <link rel="stylesheet" href="{{ asset('bundles/pushwordadmin/admin.css') }}">
-    <link rel="stylesheet" href="{{ asset('bundles/pushwordadminblockeditor/style.css') }}">
+    <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordadmin/admin.css') }}">
+    <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordadminblockeditor/style.css') }}">
 {% endblock %}
 
 {% block body_javascript %}
     {{ parent() }}
-    <script src="/bundles/pushwordadmin/monaco/app.js"></script>
-    <script src="{{ asset('/bundles/pushwordadmin/admin.js') }}"></script>
-    <script src="{{ asset('/bundles/pushwordadminblockeditor/admin-block-editor.js') }}"></script>
+    <script src="{{ versionedAsset('/bundles/pushwordadmin/monaco/app.js') }}"></script>
+    <script src="{{ versionedAsset('/bundles/pushwordadmin/admin.js') }}"></script>
+    <script src="{{ versionedAsset('/bundles/pushwordadminblockeditor/admin-block-editor.js') }}"></script>
 {% endblock %}
 
 {% block content_title %}

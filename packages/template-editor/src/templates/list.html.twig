@@ -2,12 +2,12 @@
 
 {% block head_stylesheets %}
     {{ parent() }}
-    <link rel="stylesheet" href="{{ asset('bundles/pushwordadmin/admin.css') }}">
+    <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordadmin/admin.css') }}">
 {% endblock %}
 
 {% block body_javascript %}
     {{ parent() }}
-    <script src="{{ asset('/bundles/pushwordadmin/admin.js') }}"></script>
+    <script src="{{ versionedAsset('/bundles/pushwordadmin/admin.js') }}"></script>
 {% endblock %}
 
 {% block content_title %}{{ 'template_editorTitle'|trans }}{% endblock %}
