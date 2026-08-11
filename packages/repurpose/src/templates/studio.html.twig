@@ -73,9 +73,11 @@
     .live.bad::before { background: var(--bad); box-shadow: 0 0 0 3px #dc354526; }
     @keyframes pulse { 50% { opacity: .35; } }
 
-    section.group { display: flex; flex-direction: column; gap: .7rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
+    /* Sections pull back over the aside's padding and re-apply it, so a separator rule
+       spans the whole panel — as the slide rows further down already do. */
+    section.group { display: flex; flex-direction: column; gap: .7rem; margin: 0 -1.1rem; padding: 1.1rem 1.1rem 0; border-top: 1px solid var(--line); }
     section.group:first-of-type { padding-top: 0; border-top: 0; }
-    section.group > h2 { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; }
+    section.group h2 { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
     .field { display: flex; flex-direction: column; gap: .28rem; min-width: 0; }
     .field > label { font-size: .72rem; color: var(--muted-2); display: flex; justify-content: space-between; gap: .5rem; }
@@ -94,10 +96,13 @@
     .switch { display: inline-flex; align-items: center; gap: .5rem; font-size: .78rem; color: var(--muted-2); cursor: pointer; }
     .switch input { width: 2.2rem; height: 1.2rem; accent-color: var(--accent); }
 
-    .slides-list { display: flex; flex-direction: column; }
-    .slide-item { border-top: 1px solid var(--line); }
+    /* Same trick one level down: the list pulls back over the section's padding and each
+       row re-applies it, so an open slide's tint (and its drop indicator) reach the edges. */
+    .slides-list { display: flex; flex-direction: column; margin: 0 -1.1rem; }
+    .slide-item { border-top: 1px solid var(--line); padding: 0 1.1rem; }
     .slide-item:first-child { border-top: 0; }
-    .slide-item__head { display: flex; align-items: center; gap: .5rem; padding: .6rem .1rem; cursor: pointer; user-select: none; }
+    .slide-item.open { background: var(--panel-2); }
+    .slide-item__head { display: flex; align-items: center; gap: .5rem; padding: .6rem 0; cursor: pointer; user-select: none; }
     .slide-item__head:hover .slide-item__title { color: var(--text); }
     .slide-item .chev { width: .85rem; color: var(--muted); font-size: .7rem; text-align: center; transition: transform .15s; }
     .slide-item__title { flex: 1; min-width: 0; font-size: .78rem; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -155,9 +160,14 @@
     .free-text { padding-top: .55rem; border-top: 1px dashed var(--line-2); display: flex; flex-direction: column; gap: .55rem; }
 
     /* Collapsible group header (Deck). */
-    .group-head { display: flex; align-items: center; gap: .45rem; cursor: pointer; user-select: none; }
+    .group-head { display: flex; align-items: center; gap: .45rem; padding: .6rem 0; cursor: pointer; user-select: none; }
     .group-head .chev { width: .8rem; color: var(--muted); font-size: .7rem; text-align: center; }
     .group-head:hover > h2 { color: var(--muted-2); }
+    /* Open, it tints and bleeds like an open slide. The band carries the head and the
+       several sub-grids the group holds, so it sits on the section itself. */
+    section.group.open { padding-bottom: 1.1rem; background: var(--panel-2); }
+    /* Head and first grid already sit .6rem apart; the group's gap would add to it. */
+    section.group.open > .group-head { padding-bottom: .1rem; }
 
     /* Drag-to-reorder handle + drag states. */
     .grip { cursor: grab; color: var(--line-2); font-size: .95rem; line-height: 1; letter-spacing: -2px; padding-right: .15rem; }
@@ -296,7 +306,7 @@
 
       {# ---------- VISUAL EDITOR ---------- #}
       <div x-show="view === 'visual'" style="display:flex;flex-direction:column;gap:1rem;">
-        <section class="group">
+        <section class="group" :class="{ 'open': deckOpen }">
           <div class="group-head" @click="toggleDeck()">
             <span class="chev" x-text="deckOpen ? '▾' : '▸'"></span>
             <h2>Deck</h2>
