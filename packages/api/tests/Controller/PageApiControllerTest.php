@@ -221,8 +221,9 @@ final class PageApiControllerTest extends WebTestCase
 
     public function testCreatePageAcceptsHumanNamedConverterValue(): void
     {
-        // The None format's label is the symbol "∅"; a client sending the obvious
-        // word "None" must resolve to its integer value (1), not be rejected.
+        // The None format's label is translated per locale; a client sending the
+        // English name "None" must resolve to its integer value (1) whatever the
+        // current locale, not be rejected.
         $host = 'api-test-'.uniqid().'.example.com';
         $slug = 'none-'.uniqid();
         $response = $this->request('POST', '/api/page/'.$host, [

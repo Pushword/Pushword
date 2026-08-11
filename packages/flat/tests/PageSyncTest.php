@@ -1639,8 +1639,8 @@ MD;
 
         $mdContent = file_get_contents($mdFilePath);
 
-        // Should be exported as translated label '∅', not 1
-        self::assertStringContainsString('mainImageFormat: ∅', $mdContent, 'mainImageFormat should be exported as translated label');
+        // Should be exported as translated label 'None', not 1
+        self::assertStringContainsString('mainImageFormat: None', $mdContent, 'mainImageFormat should be exported as translated label');
         self::assertStringNotContainsString('mainImageFormat: 1', $mdContent, 'mainImageFormat should NOT be exported as integer');
 
         // Clear and remove the page
@@ -1699,6 +1699,44 @@ YAML;
 
         // Should be imported as integer 2 (unchanged from legacy format)
         self::assertSame(2, $importedPage->getCustomProperty('mainImageFormat'), 'Legacy integer mainImageFormat should be preserved');
+
+        // Cleanup
+        $this->em->remove($importedPage);
+        $this->em->flush();
+        $this->trackFile($mdFilePath);
+    }
+
+    /**
+     * Test 24 bis: Files exported with the retired "∅" label still import as the None format.
+     */
+    public function testLegacyMainImageFormatRetiredLabelImport(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a .md file holding the label exported before it became "None"
+        $mdFilePath = $contentDir.'/retired-label-format-test.md';
+        $mdContent = <<<'YAML'
+---
+h1: Retired Label Format Test
+mainImageFormat: ∅
+---
+
+Content
+YAML;
+        file_put_contents($mdFilePath, $mdContent);
+        touch($mdFilePath, time() + 10); // Ensure it's newer than any DB entry
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $importedPage = $this->pageRepo->findOneBy(['slug' => 'retired-label-format-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage, 'Page should be imported');
+
+        // Should resolve to the None format instead of being dropped as unresolvable
+        self::assertSame(1, $importedPage->getCustomProperty('mainImageFormat'), 'Retired ∅ label should resolve to the None format');
 
         // Cleanup
         $this->em->remove($importedPage);

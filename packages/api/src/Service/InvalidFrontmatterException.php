@@ -6,7 +6,7 @@ use RuntimeException;
 
 /**
  * Thrown by {@see PageFrontmatterMapper} when a converter-backed frontmatter
- * value cannot be resolved (e.g. `mainImageFormat: "None"` — an unknown label
+ * value cannot be resolved (e.g. `mainImageFormat: "banana"` — an unknown label
  * for an integer-backed property). The controller maps it to a 422 so the
  * client gets a clear error instead of the invalid value being stored and
  * crashing at render time.

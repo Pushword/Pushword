@@ -18,6 +18,14 @@ final readonly class MainImageFormatConverter implements FlatPropertyConverterIn
      */
     private const string TRANSLATION_KEY_PREFIX = 'adminPageMainImageFormat';
 
+    /**
+     * Labels retired from the translations but still written in flat files
+     * exported before, mapped to the format they used to name.
+     *
+     * @var array<string, string>
+     */
+    private const array LEGACY_LABELS = ['∅' => 'adminPageMainImageFormatNone'];
+
     public function __construct(
         private SiteRegistry $apps,
         private TranslatorInterface $translator,
@@ -72,9 +80,9 @@ final readonly class MainImageFormatConverter implements FlatPropertyConverterIn
 
         // Fourth: accept the format's human name — the key suffix after the
         // standard prefix (e.g. "None" for adminPageMainImageFormatNone). This
-        // makes the obvious word work even when the translated label is a symbol
-        // like ∅; without it "None" would be rejected while "Normal" (whose label
-        // happens to be the word) worked, an inconsistency for API/flat clients.
+        // makes the English word work whatever the current locale translates the
+        // label to; without it "None" would be rejected on a French site while
+        // "Normal" worked, an inconsistency for API/flat clients.
         $needle = strtolower($value);
         foreach ($formats as $translationKey => $intValue) {
             if (! str_starts_with($translationKey, self::TRANSLATION_KEY_PREFIX)) {
@@ -85,6 +93,12 @@ final readonly class MainImageFormatConverter implements FlatPropertyConverterIn
             if ('' !== $name && strtolower($name) === $needle) {
                 return $intValue;
             }
+        }
+
+        // Fifth: a label we used to export but no longer translate to.
+        $legacyKey = self::LEGACY_LABELS[$value] ?? null;
+        if (null !== $legacyKey && isset($formats[$legacyKey])) {
+            return $formats[$legacyKey];
         }
 
         // Unresolvable string: this property is integer-backed, so a value that

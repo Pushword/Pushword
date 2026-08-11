@@ -354,12 +354,26 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $page->host = 'example.com';
         $page->slug = 'about';
 
-        // The None format's label is the symbol "∅"; the human name "None" (the
-        // key suffix) must still resolve to its integer value, case-insensitively.
+        // The None format's label is translated per locale; the human name "None"
+        // (the key suffix) must resolve to its integer value, case-insensitively.
         $this->mapper->applyFrontmatter($page, ['mainImageFormat' => 'None']);
         self::assertSame(1, $page->getCustomProperty('mainImageFormat'));
 
         $this->mapper->applyFrontmatter($page, ['mainImageFormat' => 'none']);
+        self::assertSame(1, $page->getCustomProperty('mainImageFormat'));
+    }
+
+    public function testTopLevelConverterManagedPropertyResolvesRetiredLabel(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->slug = 'about';
+
+        // "∅" labelled the None format until it was renamed; a client still
+        // sending the old label (a flat snapshot exported before) must resolve
+        // to 1 instead of being rejected with a 422.
+        $this->mapper->applyFrontmatter($page, ['mainImageFormat' => '∅']);
+
         self::assertSame(1, $page->getCustomProperty('mainImageFormat'));
     }
 
