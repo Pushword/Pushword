@@ -1,5 +1,5 @@
 ---
-title: '/api/conversation and /api/review each serve only their own type'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,13 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/api`, `pushword/conversation`
-
-## `/api/conversation` and `/api/review` each serve only their own type
-
-Reviews no longer appear in `/api/conversation` responses (totals shrink
-accordingly), and a review id on `/api/conversation/{id}` — like a message id on
-`/api/review/{id}` — is now a 404. A client that read reviews through
-`/api/conversation` must read `/api/review` instead; every other site has
-nothing to do.

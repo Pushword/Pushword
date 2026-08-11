@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc858](/upgrade/rc858) | `api` `conversation` | /api/conversation and /api/review each serve only their own type |
 | [rc857](/upgrade/rc857) | `newsletter` | the tracking opt-in mail states its purpose in a hint line over a bare confirm button |
 | [rc856](/upgrade/rc856) | `newsletter` | newsletter mails can track clicks, behind a double consent — run `doctrine:schema:update --force` |
 | [rc853](/upgrade/rc853) | `admin` `admin-block-editor` | the show-more calls accept named arguments, and the editor writes them |
