@@ -25,6 +25,14 @@ composer require pushword/repurpose
 It requires `ext-gd` (text measurement) and `ext-zip` (export). Imagick is **not**
 required — the export PDF is written in pure PHP.
 
+Install it before seeding a fresh site and the demo fixtures add one carousel of
+the `examples` page, each of its ten slides rendering one feature and naming it:
+the text stack, anchors and alignment, per-slide palettes and highlights, free
+text boxes, focal-point crops, split frames, deck-wide effects. The spec is
+`src/DataFixtures/Carousel.json` — the shape this page documents, so it is also
+what you copy from. Open it under **Social posts**, and delete it there once you
+have seen it.
+
 ## How it fits together
 
 ```

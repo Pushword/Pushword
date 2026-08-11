@@ -1,0 +1,141 @@
+{
+    "page": "examples",
+    "network": "instagram",
+    "format": "instagram-4-5",
+    "template": "editorial",
+    "status": "draft",
+    "plannedAt": null,
+    "caption": "What a Pushword carousel can render, one feature per slide: the text stack, anchors and alignment, per-slide palettes, highlighted titles, free text boxes, focal-point crops, split frames and deck-wide background effects.\n\nThe whole deck is a small JSON file. Validate it, then export the images from the studio.",
+    "hashtags": ["pushword", "carousel", "repurpose"],
+    "fontPairing": "dm-serif-display-dm-sans",
+    "palette": { "bg": "#111827", "text": "#f9fafb", "accent": "#34d399" },
+    "counter": { "style": "dots", "align": "right" },
+    "background": "waves",
+    "creator": { "name": "Your name here", "role": "Editor", "type": "personal" },
+    "creatorOrientation": "vertical",
+    "creatorOnSlides": "intro-outro",
+    "slides": [
+        {
+            "layout": "center",
+            "align": "center",
+            "tagline": "Feature tour",
+            "title": "Everything a slide\ncan do",
+            "paragraph": "Ten slides, one feature each.",
+            "swipe": true,
+            "overlay": 0.5,
+            "images": [{ "media": "1.jpg", "focusX": 0.5, "focusY": 0.4 }]
+        },
+        {
+            "layout": "bottom",
+            "align": "left",
+            "tagline": "The text stack",
+            "title": "Three fields, one stack",
+            "paragraph": "A tagline, uppercased in the accent colour. A title, in the heading font. A paragraph, in the body one. Each is optional, and a \\n breaks a line where you want it."
+        },
+        {
+            "layout": "top",
+            "align": "right",
+            "tagline": "layout and align",
+            "title": "Anchored top,\nset right",
+            "paragraph": "layout anchors the stack top, center or bottom; align sets left, center or right. textScale nudges the whole stack — this one sits at 0.9.",
+            "textScale": 0.9
+        },
+        {
+            "layout": "center",
+            "align": "left",
+            "background": "none",
+            "palette": { "bg": "#fef3c7", "text": "#1c1917", "accent": "#b45309" },
+            "tagline": "Slide overrides",
+            "title": "Your own palette,\nper slide",
+            "highlight": "#fbbf24",
+            "paragraph": "This slide overrides the deck palette and switches the background effect off. highlight paints a rounded marker behind each title line."
+        },
+        {
+            "layout": "top",
+            "align": "left",
+            "tagline": "Free text",
+            "title": "Boxes pinned by fraction",
+            "textScale": 0.75,
+            "texts": [
+                {
+                    "content": "x 0.55\ny 0.42",
+                    "x": 0.55,
+                    "y": 0.42,
+                    "width": 0.37,
+                    "size": 0.055,
+                    "align": "right",
+                    "font": "heading",
+                    "color": "#111827",
+                    "highlight": "#34d399"
+                },
+                {
+                    "content": "Every coordinate is a fraction of the frame, so a box lands in the same place at any format.",
+                    "x": 0.08,
+                    "y": 0.62,
+                    "width": 0.55,
+                    "size": 0.028
+                },
+                {
+                    "content": "Small print, at size 0.02: a photo credit, a source, a disclaimer.",
+                    "x": 0.08,
+                    "y": 0.88,
+                    "width": 0.8,
+                    "size": 0.02,
+                    "color": "#34d399"
+                }
+            ]
+        },
+        {
+            "layout": "bottom",
+            "align": "left",
+            "tagline": "Images",
+            "title": "A focal point, not a crop",
+            "paragraph": "focusX, focusY and zoom keep the subject in frame — a landscape photo fills this portrait slide, and the same three numbers still work at any other format.",
+            "overlay": 0.4,
+            "imageLayout": "full",
+            "images": [{ "media": "3.jpg", "focusX": 0.55, "focusY": 0.4, "zoom": 1 }]
+        },
+        {
+            "layout": "center",
+            "align": "center",
+            "tagline": "Split frames",
+            "title": "Two images,\none frame",
+            "paragraph": "split-v gives each photo half the height, and its own focal point.",
+            "overlay": 0.5,
+            "imageLayout": "split-v",
+            "images": [
+                { "media": "2.jpg", "focusY": 0.35 },
+                { "media": "3.jpg", "focusY": 0.5 }
+            ]
+        },
+        {
+            "layout": "bottom",
+            "align": "center",
+            "tagline": "Split frames",
+            "title": "The same pair, turned",
+            "paragraph": "split-h stands them side by side. Text stays bound to the deck margins, so it reads across either split.",
+            "overlay": 0.5,
+            "imageLayout": "split-h",
+            "images": [
+                { "media": "1.jpg", "focusX": 0.6, "zoom": 1.1 },
+                { "media": "2.jpg", "focusX": 0.4 }
+            ]
+        },
+        {
+            "layout": "center",
+            "align": "right",
+            "background": "memphis",
+            "tagline": "Backgrounds",
+            "title": "Thirteen effects,\none canvas",
+            "paragraph": "An effect is drawn once across the whole deck and sliced per slide, so a shape cut by one swipe resumes on the next.",
+            "textScale": 1.1
+        },
+        {
+            "layout": "bottom",
+            "align": "left",
+            "tagline": "Done looking?",
+            "title": "Edit it, then delete it",
+            "paragraph": "Open this deck in the studio, move a slide, export the images. Then remove it from Social posts in the admin — it is the only carousel here."
+        }
+    ]
+}
