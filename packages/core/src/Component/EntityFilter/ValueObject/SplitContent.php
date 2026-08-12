@@ -21,7 +21,7 @@ final readonly class SplitContent implements Stringable
     private const array TOC_CUTOFF_MARKERS = ['stop-toc', 'end-toc'];
 
     /** Bump when fixHeadings()'s output changes (MarkupFixer behaviour, heading extraction). */
-    private const int TOC_CACHE_VERSION = 1;
+    private const int TOC_CACHE_VERSION = 2;
 
     /** Every heading, plus the comments a cutoff marker could hide in, in document order. */
     private const string TOC_NODES_XPATH = '//*[local-name() = "h1" or local-name() = "h2" or local-name() = "h3"'

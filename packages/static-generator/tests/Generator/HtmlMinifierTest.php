@@ -54,6 +54,18 @@ final class HtmlMinifierTest extends TestCase
         self::assertStringContainsString('  code  content  ', $result);
     }
 
+    public function testRemoveExtraWhiteSpacePreservesSvgElementCase(): void
+    {
+        $html = '<!DOCTYPE html><html><body>'
+            .'<svg viewBox="0 0 4 4"><filter id="s"><feDropShadow dx="0" dy="1" stdDeviation="1.5"/></filter></svg>'
+            .'</body></html>';
+
+        $result = HtmlMinifier::removeExtraWhiteSpace($html);
+
+        self::assertStringContainsString('<feDropShadow', $result);
+        self::assertStringContainsString('viewBox=', $result);
+    }
+
     public function testRemoveExtraWhiteSpacePreservesSpaceBeforeInlineTag(): void
     {
         $html = "<!DOCTYPE html><html><body><p>APIDAE :\n      <strong>Structure</strong> d'abord</p></body></html>";

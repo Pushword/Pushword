@@ -5,6 +5,7 @@ namespace Pushword\Core\Service\Toc;
 use DOMDocument;
 use Masterminds\HTML5;
 use Override;
+use Pushword\Core\Utils\Html5SvgCasePatch;
 
 /**
  * Keeps a reference to the last parsed document.
@@ -18,6 +19,12 @@ use Override;
 final class DomCapturingHtml5 extends HTML5
 {
     public ?DOMDocument $lastDocument = null;
+
+    public function __construct()
+    {
+        Html5SvgCasePatch::apply();
+        parent::__construct();
+    }
 
     /**
      * @param string       $string

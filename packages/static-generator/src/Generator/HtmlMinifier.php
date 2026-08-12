@@ -3,6 +3,7 @@
 namespace Pushword\StaticGenerator\Generator;
 
 use Exception;
+use Pushword\Core\Utils\Html5SvgCasePatch;
 use Symfony\Component\DomCrawler\Crawler;
 
 class HtmlMinifier
@@ -41,6 +42,7 @@ class HtmlMinifier
             return $html;
         }
 
+        Html5SvgCasePatch::apply();
         $crawler = new Crawler($html);
         $html = '<!DOCTYPE html>'.$crawler->outerHtml(); // remove useless whitespace in tag attributes (but not in attribute !)
 
