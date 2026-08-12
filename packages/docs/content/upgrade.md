@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc865](/upgrade/rc865) | `admin-block-editor` `core` `flat` | rendered text gets locale-aware typography (smart quotes, non-breaking spaces…); sources stay plain — the editor no longer writes typographic characters and the flat export straightens them |
 | [rc864](/upgrade/rc864) | `advanced-main-image` | the main image "∅" format is now labelled None (Aucun in French) |
 | [rc858](/upgrade/rc858) | `api` `conversation` | /api/conversation and /api/review each serve only their own type |
 | [rc857](/upgrade/rc857) | `newsletter` | the tracking opt-in mail states its purpose in a hint line over a bare confirm button |
