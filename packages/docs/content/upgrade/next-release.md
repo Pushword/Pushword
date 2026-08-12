@@ -1,20 +1,8 @@
 ---
-title: 'the newsletter subscribe token is signed instead of session-bound, so a statically generated site keeps CSRF protection on'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
-
-**Concerns:** `pushword/newsletter`
-
-## CSRF protection now holds on a statically generated site
-
-The token `GET /newsletter/form` issues is signed with the app secret and carries
-its own expiry instead of living in the session, so it no longer needs a cookie
-sent back to be accepted. **Concerns sites that set
-`newsletter_csrf_protection: false`** because a static build is served from
-another domain: drop the line, it defaults to on. `SubscribeForm::CSRF_TOKEN_ID`
-is gone, and a front end posting the endpoint itself no longer carries the form
-response's session cookie with the post.
 
 <!--
 The upgrade note for the next release. `.scripts/release` renames this file to

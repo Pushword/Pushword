@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc868](/upgrade/rc868) | `newsletter` | the newsletter subscribe token is signed instead of session-bound, so a statically generated site keeps CSRF protection on |
 | [rc866](/upgrade/rc866) | `newsletter` | audiences carry a postal address, printed at the foot of every mail; confirmation mails are capped per address, so resubmitting no longer resends at once |
 | [rc865](/upgrade/rc865) | `admin-block-editor` `core` `flat` | rendered text gets locale-aware typography (smart quotes, non-breaking spaces…); sources stay plain — the editor no longer writes typographic characters and the flat export straightens them |
 | [rc864](/upgrade/rc864) | `advanced-main-image` | the main image "∅" format is now labelled None (Aucun in French) |
