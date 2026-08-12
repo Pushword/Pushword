@@ -17,7 +17,6 @@
     }
   ],
   "require": {
-    "jolicode/jolitypo": "^1.4",
     "pushword/core": "*"
   },
   "suggest": {

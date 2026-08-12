@@ -212,9 +212,19 @@ final class ContentPipeline
         return $propertyValue;
     }
 
+    /**
+     * The `filter_<name>` opt-out key for a filter reference: the short class
+     * name lcfirst'ed (`filter_typography`), whether the chain references the
+     * filter by class-string or by short name — same derivation as
+     * {@see FilterRegistry} short-name lookups.
+     */
     private function className(string $name): string
     {
-        $name = substr($name, (int) strrpos($name, '/'));
+        $name = str_replace('/', '\\', $name);
+        $position = strrpos($name, '\\');
+        if (false !== $position) {
+            $name = substr($name, $position + 1);
+        }
 
         return lcfirst($name);
     }

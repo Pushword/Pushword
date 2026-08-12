@@ -36,7 +36,7 @@ import { revealInvalidField } from './admin.revealInvalidField'
 import { showTitlePixelWidth } from './admin.formHelpers'
 
 // State modules
-import { retrieveCurrentPageLocale, retrieveCurrentPageHost } from './admin.pageState'
+import { retrieveCurrentPageHost } from './admin.pageState'
 
 // Utility modules
 import { copyElementText } from './admin.domUtils'
@@ -122,7 +122,6 @@ window.addEventListener('load', function () {
   initCriteriaBuilder()
 
   // Page state
-  retrieveCurrentPageLocale()
   retrieveCurrentPageHost()
 
   // Auto-save

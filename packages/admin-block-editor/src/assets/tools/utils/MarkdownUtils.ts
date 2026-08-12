@@ -1,6 +1,5 @@
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { HyperlinkTuneData } from '../HyperlinkTune/HyperlinkTune'
-import SmartQuotes from './SmartQuotes'
 import he from 'he'
 import { jsonrepair } from 'jsonrepair'
 
@@ -490,14 +489,6 @@ export class MarkdownUtils {
     )
   }
 
-  static fixDash(text: string) {
-    // Replace hyphens between numbers or spaces with en-dash
-    text = text.replace(/(?<=[0-9 ])-(?=[0-9 ]|$)/g, '—')
-
-    // Replace double hyphens with em-dash
-    return text.replace(/ ?-- ?([^-]|$)/gs, '—' + '$1')
-  }
-
   static makeUrlRelative(text: string): string {
     const host = window.pageHost
     const baseUrl = window.location.origin
@@ -518,25 +509,18 @@ export class MarkdownUtils {
     return text
   }
 
+  /**
+   * Structural cleanup of the HTML about to be converted back to markdown.
+   * Typography (smart quotes, ellipsis, non-breaking spaces, ×, ™…) is
+   * applied at render time by core's Typographer so sources stay plain.
+   */
   static fixer(text: string): string {
-    const noBreakSpace = '\u00A0'
     const spaces = '\xE2\x80\xAF|\xC2\xAD|\xC2\xA0|\u00A0|\\s'
 
-    text = MarkdownUtils.fixDash(text)
     text = MarkdownUtils.makeUrlRelative(text)
 
-    if (window.pageLocale) {
-      text = SmartQuotes(text, window.pageLocale)
-    }
-
     text = text
-      .replace(
-        new RegExp(`([\\dº])(${spaces})+([º°%Ω฿₵¢₡$₫֏€ƒ₲₴₭£₤₺₦₨₱៛₹$₪৳₸₮₩¥]{1})`, 'g'), // \\w
-        `$1${noBreakSpace}$3`,
-      )
       .replace(/&nbsp;/gi, ' ')
-      // CurlyQuote
-      .replace(/([a-z])'([a-z])/gim, `$1’$2`)
       // Remove useless last space from inline tag
       .replace(/ <\/([a-z]+)>/gi, '</$1> ')
       // remove empty inline tag
@@ -547,9 +531,6 @@ export class MarkdownUtils {
       .replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,},[${spaces}]{1,}`, 'gmu'), '$1, ')
       // NoSpaceBeforeDot
       .replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,}\\.[${spaces}]{1,}`, 'gmu'), '$1. ')
-
-      // Ellipsis
-      .replace(/\.{3,}/g, '…')
       // Ampersand
       .replace(/ &amp; /gi, ' & ')
       // Remove soft hyphens
@@ -557,28 +538,18 @@ export class MarkdownUtils {
       // Remove double spaces
       .replace(new RegExp(`[${spaces}]{2,}`, 'gmu'), ' ')
 
-      // Dimension, replace 'x' between numbers with multiplication sign
-      .replace(
-        new RegExp(`(\\d+["']?)([${spaces}])?x([${spaces}])?(?=\\d)`, 'g'),
-        '$1$2×$2',
-      )
-      .replace(/\(tm\)/gi, '™')
-      .replace(/\(r\)/gi, '®')
-      .replace(/\(c\)/gi, '©')
-
     return text
   }
 
-  static convertInlineHtmlToMarkdown(html: string, applyTypographyFixes = true): string {
-    if (applyTypographyFixes) {
+  static convertInlineHtmlToMarkdown(html: string, cleanup = true): string {
+    if (cleanup) {
       html = MarkdownUtils.fixer(html)
     }
     // Decode HTML entities first (including numeric ones like &#10140;)
     html = he.decode(html)
-    // Convert non-breaking spaces to regular spaces (unless typography fixes are wanted)
-    if (!applyTypographyFixes) {
-      html = html.replace(/\u00A0/g, ' ')
-    }
+    // Sources stay plain: non-breaking spaces and soft hyphens are
+    // render-time typography, never stored
+    html = html.replace(/[\u00A0\u202F]/g, ' ').replace(/\u00AD/g, '')
 
     return html
       .replace(/<(b|strong|em|i|a[^>]*)> /gi, ' <$1>')

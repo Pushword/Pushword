@@ -187,3 +187,19 @@ This is a paragraph.
 {#mainGallery}
 {{ gallery(['piedweb-logo.png', '1.jpg', '2.jpg', '3.jpg']) }}
 ```
+## Typography
+
+Rendered text gets locale-aware typography — smart quotes (`"…"` becomes
+`« … »` in French, `“…”` in English, `„…“` in German), curly
+apostrophes (`l'ami` → `l’ami`), ellipsis (`...` → `…`), dimensions
+(`30 x 40` → `30 × 40`), `(c)` `(r)` `(tm)`, and the French non-breaking
+spaces before `: ; ! ?`. Dashes are never touched.
+
+The sources stay plain ASCII: the characters above only exist in the rendered
+HTML, applied by the `Typography` entity filter after markdown rendering.
+`pre`, `code`, `script`, `style`, `svg` and comments are left untouched, and
+the flat export straightens any typographic quote or non-breaking space that
+found its way into a page, so `.md` files remain greppable and diff-friendly.
+
+Disable it per page with `filter_typography: 0` in the front matter, or
+per site by overriding the `filters` config key.

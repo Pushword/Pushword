@@ -54,7 +54,7 @@ final class EncodingTest extends KernelTestCase
         }
 
         // Clean up test pages
-        foreach (['utf8-bom-test', 'accented-test', 'cjk-test', 'emoji-test', 'special-yaml-test', 'cafe-creme', 'js-guide-test', 'smart-quotes-test'] as $slug) {
+        foreach (['utf8-bom-test', 'accented-test', 'cjk-test', 'emoji-test', 'special-yaml-test', 'cafe-creme', 'js-guide-test', 'smart-quotes-test', 'nbsp-test'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
@@ -197,6 +197,27 @@ final class EncodingTest extends KernelTestCase
         self::assertStringNotContainsString("\u{201D}", $exported);
         self::assertStringContainsString("L'activit", $exported);
         self::assertStringContainsString('"bonjour"', $exported);
+    }
+
+    public function testNoBreakSpacesNormalizedOnExport(): void
+    {
+        // No-break spaces and soft hyphens are render-time typography
+        // (core's Typographer re-creates them): sources must stay plain.
+        $this->createMd('nbsp-test.md', "---\nh1: \"Prix\u{A0}: 10\u{202F}€\"\n---\n\nOui\u{A0}: c'est ce\u{AD}la\u{202F}!");
+
+        $this->pageSync->import('localhost.dev');
+
+        $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'nbsp-test', 'host' => 'localhost.dev']);
+        self::assertInstanceOf(Page::class, $page);
+
+        $this->pageSync->export('localhost.dev', true, $this->contentDir);
+        $exported = $this->filesystem->readFile($this->contentDir.'/nbsp-test.md');
+
+        self::assertStringNotContainsString("\u{A0}", $exported);
+        self::assertStringNotContainsString("\u{202F}", $exported);
+        self::assertStringNotContainsString("\u{AD}", $exported);
+        self::assertStringContainsString("Oui : c'est cela !", $exported);
+        self::assertStringContainsString('Prix : 10 €', $exported);
     }
 
     public function testNonAsciiSlugFromFileName(): void

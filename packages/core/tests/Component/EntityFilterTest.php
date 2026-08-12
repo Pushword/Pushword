@@ -91,7 +91,7 @@ final class EntityFilterTest extends KernelTestCase
 
         $splitContent = $this->getContentExtension()->mainContentSplit($page);
 
-        self::assertSame('<p>my intro...</p>', trim($splitContent->getIntro()));
+        self::assertSame('<p>my intro…</p>', trim($splitContent->getIntro()));
         $toCheck = '<h2 id="first-title">First Title</h2>';
         self::assertSame($toCheck, substr(trim($splitContent->getContent()), 0, \strlen($toCheck)));
     }

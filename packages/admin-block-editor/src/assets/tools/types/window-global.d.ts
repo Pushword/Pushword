@@ -16,7 +16,6 @@ declare global {
     pagesUriList?: string[]
     monaco?: typeof monaco
     pageMainContent?: string // set in editorjs_widget.html.twig
-    pageLocale?: string // set in ./packages/admin/Resources/assets/admin.js on page init
     pageHost?: string // set in ./packages/admin/Resources/assets/admin.js on page init
     monacoHelper?: typeof MonacoHelper
     pwMonacoUrl?: string // set in Pushword\Admin\Controller\DashboardController

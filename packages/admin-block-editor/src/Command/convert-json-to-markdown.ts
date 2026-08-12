@@ -8,7 +8,6 @@
  *
  * Variables d'environnement optionnelles:
  * - PAGE_HOST: domaine de la page (défaut: '')
- * - PAGE_LOCALE: locale pour les guillemets intelligents (défaut: 'en')
  */
 
 import type { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
@@ -34,7 +33,6 @@ import { exportCardListToMarkdown } from '../assets/tools/CardList/CardListExpor
 declare global {
   var window: {
     pageHost: string
-    pageLocale: string
     location: {
       origin: string
     }
@@ -47,7 +45,6 @@ declare global {
 // @ts-ignore - Mock complet pour Node.js
 globalThis.window = {
   pageHost: process.env.PAGE_HOST || '',
-  pageLocale: process.env.PAGE_LOCALE || 'en',
   // @ts-ignore
   location: {
     origin: process.env.PAGE_ORIGIN || '',

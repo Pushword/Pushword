@@ -208,8 +208,9 @@ final class LinkImproverRenderTest extends KernelTestCase
         // The homepage and the listed page keep their mention as plain text…
         self::assertStringNotContainsString('href="/"', $rendered);
         self::assertStringNotContainsString('href="/linkimp-kiwano"', $rendered);
-        // …while every other target still gets its link.
-        self::assertStringContainsString('<a href="/linkimp-melon-d-or" data-auto-link>melon d\'or</a>', $rendered);
+        // …while every other target still gets its link. The Typography filter
+        // runs after LinkImprover, so the anchor text carries the curly quote.
+        self::assertStringContainsString('<a href="/linkimp-melon-d-or" data-auto-link>melon d’or</a>', $rendered);
     }
 
     public function testAWildcardNameMatchesItsVariants(): void

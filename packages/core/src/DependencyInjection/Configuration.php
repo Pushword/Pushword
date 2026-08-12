@@ -15,6 +15,7 @@ use Pushword\Core\Component\EntityFilter\Filter\Markdown;
 use Pushword\Core\Component\EntityFilter\Filter\Name;
 use Pushword\Core\Component\EntityFilter\Filter\ShowMore;
 use Pushword\Core\Component\EntityFilter\Filter\Twig;
+use Pushword\Core\Component\EntityFilter\Filter\Typography;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
@@ -58,6 +59,7 @@ final class Configuration implements ConfigurationInterface
             ShowMore::class,
             LinkCollector::class,
             Markdown::class,
+            Typography::class,
             HtmlRedirectFromLink::class,
             HtmlLinkMultisite::class,
             HtmlUnpublishedLink::class,
@@ -65,10 +67,10 @@ final class Configuration implements ConfigurationInterface
             HtmlVariantLink::class,
             Extended::class,
         ],
-        'name' => [Twig::class, Date::class, Name::class, Extended::class],
-        'title' => [ElseH1::class, Twig::class, Date::class, Extended::class],
+        'name' => [Twig::class, Date::class, Name::class, Typography::class, Extended::class],
+        'title' => [ElseH1::class, Twig::class, Date::class, Typography::class, Extended::class],
         // fallback for all other properties like title, description, ...
-        'string' => [Twig::class, Date::class, Extended::class],
+        'string' => [Twig::class, Date::class, Typography::class, Extended::class],
     ];
 
     /**

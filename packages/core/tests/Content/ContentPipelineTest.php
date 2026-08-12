@@ -239,8 +239,9 @@ final class ContentPipelineTest extends TestCase
 
         $page = new Page();
         $page->name = 'Original';
-        // ContentPipeline.className() uses substr from last '/' then lcfirst
-        $className = lcfirst(substr($filter::class, (int) strrpos($filter::class, '/')));
+        // ContentPipeline.className() keeps the short class name, lcfirst'ed
+        $parts = explode('\\', str_replace('/', '\\', $filter::class));
+        $className = lcfirst(end($parts));
         $page->setCustomProperty('filter_'.$className, 0);
 
         $pipeline = $this->createPipeline($page, $filterRegistry, ['name' => $filter::class]);
