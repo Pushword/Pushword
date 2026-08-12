@@ -76,13 +76,10 @@
 
 {% if image_fallback_order is defined and image_fallback_order.webp_fallback|length > 0 %}
 	# Image Format Fallback (webp to available format)
-	# WebP fallback: if .webp doesn't exist, try {{ image_fallback_order.webp_fallback|join(', ') }}
-	# The `file` submatcher requires one of the original-format candidates to actually
-	# exist (mirroring the htaccess variant's RewriteCond chain) and records which one
-	# in {http.matchers.file.relative}. Without it, this rule used to rewrite EVERY
-	# missing .webp to a placeholder that resolves empty — the extension vanished, so
-	# downstream handling (a reverse_proxy fallback, handle_errors) received a mangled
-	# URI it could never resolve.
+	# WebP fallback: if .webp doesn't exist, try {{ image_fallback_order.webp_fallback|join(', ') }}.
+	# The `file` submatcher requires an original-format candidate to actually exist and
+	# records which one in {http.matchers.file.relative} — a genuine miss keeps its URI
+	# intact for downstream handling (a reverse_proxy fallback, handle_errors).
 	@webp_fallback {
 		path_regexp webp ^/media/(.+)\.webp$
 		not file {path}
