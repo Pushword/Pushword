@@ -131,7 +131,7 @@ final readonly class NewsletterMailer
 
         $email = $this->baseEmail($audience, $contact)
             ->subject('[TEST] '.$this->renderer->subject($subject, $contact))
-            ->text($this->renderer->text($contact, $bodyMarkdown, $unsubscribeUrl))
+            ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl))
             ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag));
 
         $this->mailer->send($email);
@@ -143,7 +143,7 @@ final readonly class NewsletterMailer
 
         $email = $this->baseEmail($audience, $contact)
             ->subject($this->renderer->subject($subject, $contact))
-            ->text($this->renderer->text($contact, $bodyMarkdown, $unsubscribeUrl))
+            ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl))
             ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, $trackedMail));
 
         $headers = $email->getHeaders();

@@ -11,6 +11,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Override;
 use Pushword\Core\Site\SiteRegistry;
@@ -59,6 +60,10 @@ class AudienceCrudController extends AbstractCrudController
         yield TextField::new('fromName', 'newsletter.audience.field.fromName')->hideOnIndex();
         yield EmailField::new('fromEmail', 'newsletter.audience.field.fromEmail');
         yield EmailField::new('replyTo', 'newsletter.audience.field.replyTo')->hideOnIndex();
+        yield TextareaField::new('postalAddress', 'newsletter.audience.field.postalAddress')->hideOnIndex()
+            ->setRequired(false)
+            ->setNumOfRows(3)
+            ->setHelp('newsletter.audience.field.postalAddress.help');
 
         yield FormField::addFieldset('newsletter.audience.fieldset.rules')->setIcon('fa fa-sliders');
         yield BooleanField::new('requireDoubleOptIn', 'newsletter.audience.field.doubleOptIn')

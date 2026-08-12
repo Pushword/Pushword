@@ -19,6 +19,8 @@ newsletter:
       mainHost: Host
       mainHost.help: Confirm and unsubscribe links are built from this host's live URL, so they work on a statically generated site.
       name: Name
+      postalAddress: Postal address
+      postalAddress.help: The sender's real-world address, printed at the foot of every mail this audience sends. US law (CAN-SPAM) requires one on commercial mail; leave empty on an audience that only carries transactional messages.
       rateSeconds: Cadence (s/mail)
       replyTo: Reply-to
       slug: Reference (slug)

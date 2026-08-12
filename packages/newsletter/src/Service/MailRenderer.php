@@ -85,10 +85,17 @@ final readonly class MailRenderer
         ]);
     }
 
-    /** The Markdown source doubles as the plain-text part: it is already written to be read raw. */
-    public function text(Contact $contact, string $bodyMarkdown, string $unsubscribeUrl): string
+    /**
+     * The Markdown source doubles as the plain-text part: it is already written
+     * to be read raw. It carries the same foot as the HTML one — a reader whose
+     * client shows them the text part is owed the address just as much.
+     */
+    public function text(Audience $audience, Contact $contact, string $bodyMarkdown, string $unsubscribeUrl): string
     {
-        return $this->personalize($bodyMarkdown, $contact)."\n\n---\n".$unsubscribeUrl."\n";
+        $foot = "\n\n---\n".$unsubscribeUrl."\n";
+
+        return $this->personalize($bodyMarkdown, $contact).$foot
+            .(null !== $audience->postalAddress ? "\n".$audience->postalAddress."\n" : '');
     }
 
     /** Resolve a template, letting the site override the bundle's default. */

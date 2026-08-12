@@ -100,6 +100,26 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
     }
 
     /**
+     * A commercial mail owes its reader the sender's real-world address — and
+     * owes it in whichever part their client chooses to show them, so both
+     * carry it, laid out the way it was written.
+     */
+    public function testASentMailCarriesTheAudiencePostalAddress(): void
+    {
+        $audience = $this->createAudience();
+        $audience->postalAddress = "Test Publishing\n12 Baker Street\nLondon W1U 3AA, United Kingdom";
+        $this->createContact($audience, 'reader@example.tld');
+        $campaign = $this->createCampaign($audience);
+        $this->sender()->arm($campaign);
+        $this->sender()->drain($campaign, 10);
+
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertStringContainsString('12 Baker Street', (string) $email->getHtmlBody());
+        self::assertStringContainsString("12 Baker Street\nLondon W1U 3AA", (string) $email->getTextBody());
+    }
+
+    /**
      * The round trip the bounce reader depends on: a mail leaves carrying an id
      * that names its recipient, and {@see BounceSignature} recognises it coming
      * back. Break the stamping and no genuine bounce is ever acted on again —

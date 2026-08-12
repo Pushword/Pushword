@@ -74,6 +74,25 @@ class Audience implements IdInterface, Stringable
         }
     }
 
+    /**
+     * The sender's physical postal address, printed at the foot of every mail
+     * this audience broadcasts.
+     *
+     * A commercial mail owes its reader a real-world address — CAN-SPAM
+     * (15 U.S.C. 7704(a)(5)) makes it a condition of sending, and it is what
+     * tells somebody who they actually heard from. It belongs to the audience
+     * rather than to the site because the sender is the brand, and a brand
+     * spans as many locale hosts as it likes. Left empty nothing is printed:
+     * an audience that only carries transactional mail owes no address.
+     */
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    public ?string $postalAddress = null {
+        set(?string $value) {
+            $postalAddress = trim((string) $value);
+            $this->postalAddress = '' !== $postalAddress ? $postalAddress : null;
+        }
+    }
+
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
     public bool $requireDoubleOptIn = true;
 

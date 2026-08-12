@@ -19,6 +19,8 @@ newsletter:
       mainHost: Hôte
       mainHost.help: Les liens de confirmation et de désinscription sont construits depuis l'URL live de cet hôte, pour fonctionner sur un site généré en statique.
       name: Nom
+      postalAddress: Adresse postale
+      postalAddress.help: L'adresse physique de l'expéditeur, imprimée au pied de chaque mail de cette audience. La loi américaine (CAN-SPAM) l'exige sur les mails commerciaux ; laissez vide pour une audience purement transactionnelle.
       rateSeconds: Cadence (s/mail)
       replyTo: Répondre à
       slug: Référence (slug)

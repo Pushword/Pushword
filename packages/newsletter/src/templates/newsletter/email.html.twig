@@ -23,6 +23,11 @@
         <td style="padding:0 16px 24px;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#6b6b6b;">
             <hr style="border:0;border-top:1px solid #e6e6e6;margin:0 0 16px;">
             <a href="{{ unsubscribeUrl }}" style="color:#6b6b6b;">{{ 'newsletter.email.unsubscribe'|trans({}, null, contact.locale) }} ({{ audience.name }})</a>
+            {# The sender's real-world address, where the law asks for one. Kept
+               as authored — a postal address is laid out line by line. #}
+            {% if audience.postalAddress %}
+                <p style="margin:12px 0 0;white-space:pre-line;">{{ audience.postalAddress }}</p>
+            {% endif %}
         </td>
     </tr>
 </table>
