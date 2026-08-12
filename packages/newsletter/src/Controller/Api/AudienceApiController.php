@@ -174,6 +174,10 @@ final class AudienceApiController extends AbstractApiController
             $audience->replyTo = \is_string($data['replyTo']) ? $data['replyTo'] : null;
         }
 
+        if (\array_key_exists('postalAddress', $data)) {
+            $audience->postalAddress = \is_string($data['postalAddress']) ? $data['postalAddress'] : null;
+        }
+
         if (\array_key_exists('requireDoubleOptIn', $data) && \is_bool($data['requireDoubleOptIn'])) {
             $audience->requireDoubleOptIn = $data['requireDoubleOptIn'];
         }
@@ -208,6 +212,7 @@ final class AudienceApiController extends AbstractApiController
             'fromName' => $audience->fromName,
             'fromEmail' => $audience->fromEmail,
             'replyTo' => $audience->replyTo,
+            'postalAddress' => $audience->postalAddress,
             'requireDoubleOptIn' => $audience->requireDoubleOptIn,
             'clickTracking' => $audience->clickTracking,
             'interests' => $audience->interests,

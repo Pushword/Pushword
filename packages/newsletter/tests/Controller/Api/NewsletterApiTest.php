@@ -120,6 +120,22 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertTrue($body['clickTracking']);
     }
 
+    /** The address printed at the foot of the mails is set where the rest of the sender is. */
+    public function testThePostalAddressRoundTripsThroughTheApi(): void
+    {
+        $audience = $this->createAudience();
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/audience/'.$audience->slug, [
+            'postalAddress' => "Test Publishing\n12 Baker Street\nLondon W1U 3AA, United Kingdom",
+        ]);
+        self::assertSame("Test Publishing\n12 Baker Street\nLondon W1U 3AA, United Kingdom", $body['postalAddress']);
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/audience/'.$audience->slug, [
+            'postalAddress' => null,
+        ]);
+        self::assertNull($body['postalAddress'], 'an audience that stops sending commercial mail can drop it');
+    }
+
     public function testAnUnknownAudienceSlugIsNotFound(): void
     {
         $this->request(Request::METHOD_GET, '/api/newsletter/audience/no-such-audience');
