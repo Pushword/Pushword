@@ -37,19 +37,43 @@ class NewsletterExtension
     #[AsTwigFunction('newsletter_form', isSafe: ['html'])]
     public function renderForm(string|array $audienceSlug, array $interests = [], ?string $source = null): string
     {
+        $url = $this->formUrl($audienceSlug, $interests, $source);
+
+        return null === $url ? '' : $this->subscribeForm->placeholder($url);
+    }
+
+    /**
+     * The same url, for a front end that fetches the form itself instead of
+     * leaving the placeholder to do it.
+     *
+     *     {{ newsletter_form_url('altimood') }}
+     *
+     * What that buys is when: a modal loading its form as it opens costs the
+     * page nothing until someone asks for it, and the token it comes back with
+     * is minted at that moment rather than at build time.
+     *
+     * Null when no slug names an audience, which is what `newsletter_form()`
+     * renders as nothing at all.
+     *
+     * @param string|string[] $audienceSlug
+     * @param string[]        $interests
+     */
+    #[AsTwigFunction('newsletter_form_url')]
+    public function formUrl(string|array $audienceSlug, array $interests = [], ?string $source = null): ?string
+    {
         $audiences = $this->subscribeForm->audiences((array) $audienceSlug);
 
         if ([] === $audiences) {
-            return '';
+            return null;
         }
 
         $page = $this->siteRegistry->getCurrentPage();
 
-        return $this->subscribeForm->placeholder($this->subscribeForm->url(
+        return $this->subscribeForm->url(
             $audiences,
             $this->subscribeForm->declaredInterests($audiences, $interests),
             $page->locale ?? $this->siteRegistry->getLocale(),
             $source ?? $page?->getRealSlug(),
-        ));
+        );
     }
 }

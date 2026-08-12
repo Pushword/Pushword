@@ -86,4 +86,23 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
         self::assertSame('', $this->extension()->renderForm('does-not-exist'));
         self::assertSame('', $this->extension()->renderForm(['does-not-exist', 'neither-does-this']));
     }
+
+    /** What a front end fetching the form itself needs, and nothing around it. */
+    public function testTheAddressIsAvailableOnItsOwn(): void
+    {
+        $audience = $this->createAudience(interests: ['AmTrek']);
+
+        $url = $this->extension()->formUrl($audience->slug, ['AmTrek'], 'footer');
+
+        self::assertStringStartsWith('https://localhost.dev/newsletter/form?', (string) $url);
+        self::assertStringContainsString('audiences='.$audience->slug, (string) $url);
+        self::assertStringContainsString('interests=AmTrek', (string) $url);
+        self::assertStringContainsString('source=footer', (string) $url);
+    }
+
+    /** Null rather than an address to nowhere, which is the `''` the render is. */
+    public function testAnUnknownAudienceHasNoAddress(): void
+    {
+        self::assertNull($this->extension()->formUrl('does-not-exist'));
+    }
 }

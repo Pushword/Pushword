@@ -55,6 +55,18 @@ The third argument names where the form sits, and is kept on the contact as the
 *where* of the opt-in. Left out, it falls back to the slug of the page the form
 was rendered on — so two forms on one page are worth naming apart.
 
+`newsletter_form_url()` takes the same arguments and returns the address alone,
+for a front end that would rather fetch the form itself:
+
+```twig
+{{ newsletter_form_url('altimood', [], 'footer') }}
+```
+
+That is what a modal wants. Left to the placeholder, its form is fetched on every
+page load for a panel most visitors never open; fetched as the modal opens, the
+page pays nothing until someone asks. It returns null when no slug names an
+audience, which is the empty string `newsletter_form()` renders in that case.
+
 Finally, add the clock to the server's crontab:
 
 ```shell
