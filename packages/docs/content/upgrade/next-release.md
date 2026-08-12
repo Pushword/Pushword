@@ -1,16 +1,8 @@
 ---
-title: 'a newsletter form can be fetched by the front end itself, so a modal loads it on open rather than on every page load'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
-
-**Concerns:** `pushword/newsletter`
-
-## `newsletter_form_url()` hands over the form address
-
-The new twig function takes the same arguments as `newsletter_form()` and returns
-the address alone, for a front end fetching the form itself. Nothing changes for
-a page using `newsletter_form()`.
 
 <!--
 The upgrade note for the next release. `.scripts/release` renames this file to
