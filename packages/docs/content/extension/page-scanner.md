@@ -368,6 +368,7 @@ language.
 | `parent-host` | parent page on another host |
 | `image-not-found` | a body image whose media could not be resolved |
 | `image-alt-missing` | a rendered `<img>` with no alternative text |
+| `image-derivative-broken` | a filter derivative (`/media/<filter>/…`) of an existing media, missing from disk or 0-byte |
 | `link-empty` | an empty `href` |
 | `link-relative` | an internal link not starting with `/` |
 | `link-not-found` | the target page, media or file does not exist |

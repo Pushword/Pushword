@@ -1,6 +1,8 @@
 page_scanBrokenImage: 'image not found'
 page_scanCanonical: 'Canonical is different'
 page_scanDateShortcode: 'date shortcode left unresolved: this text is rendered outside the content pipeline'
+page_scanDerivativeEmpty: 'derivative file is empty (0-byte poisoned cache) — delete it, then run pw:image:cache'
+page_scanDerivativeMissing: 'derivative file missing on disk — run pw:image:cache'
 page_scanDifferentHost: 'Parent page has a different host'
 page_scanIsRedirection: redirection
 page_scanMissingAlt: 'image without alternative text'

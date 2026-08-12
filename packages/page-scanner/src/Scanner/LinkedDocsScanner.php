@@ -33,7 +33,7 @@ final class LinkedDocsScanner extends AbstractScanner
 
     public const string INLINE_DIRECTIVE = 'page-scanner-ignore-link';
 
-    /** @var array<string, array{exists: bool, page: ?Page, redirect: bool}> */
+    /** @var array<string, array{exists: bool, page: ?Page, redirect: bool, derivativeError: ?string}> */
     private array $everChecked = [];
 
     /**
@@ -323,7 +323,44 @@ final class LinkedDocsScanner extends AbstractScanner
             }
         }
 
+        foreach ($this->extractSrcsetUris() as $uri) {
+            $this->crawlableLinks[$uri] = true;
+            $linkedDocs[] = $uri;
+        }
+
         return array_unique($linkedDocs);
+    }
+
+    /**
+     * `srcset` never matched the attribute regex above (the alternation's `src`
+     * wants a literal `=` right after), so every URL a `<source srcset>` or
+     * `<img srcset>` points at went unchecked — exactly where the responsive
+     * derivatives live (`lg`/`xl` are what desktop browsers actually load).
+     * A srcset value is a comma-separated list of "URL [descriptor]" entries.
+     *
+     * @return string[]
+     */
+    private function extractSrcsetUris(): array
+    {
+        preg_match_all('/\s(?:srcset|imagesrcset|data-srcset)=(["\'])(.*?)\1/i', $this->stripCodeSamples(), $matches);
+
+        $srcsets = isset($matches[2]) && \is_array($matches[2]) ? $matches[2] : [];
+
+        $uris = [];
+        foreach ($srcsets as $srcset) {
+            if (! \is_string($srcset)) {
+                continue;
+            }
+
+            foreach (explode(',', $srcset) as $entry) {
+                $uri = preg_split('/\s+/', trim($entry))[0] ?? '';
+                if ('' !== $uri && $this->isWebLink($uri)) {
+                    $uris[] = $uri;
+                }
+            }
+        }
+
+        return $uris;
     }
 
     /**
@@ -398,6 +435,8 @@ final class LinkedDocsScanner extends AbstractScanner
 
         if (! $target['exists']) {
             $this->addError(ScanErrorCode::LinkNotFound, '<code>'.$url.'</code> '.$this->trans('page_scanNotFound'));
+        } elseif (null !== $target['derivativeError']) {
+            $this->addError(ScanErrorCode::ImageDerivativeBroken, '<code>'.$url.'</code> '.$this->trans($target['derivativeError']));
         } elseif ($page instanceof Page && ! $page->isPublished()) {
             if ($this->checkUnpublished) {
                 $this->addError(ScanErrorCode::LinkNotPublished, '<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
@@ -637,7 +676,7 @@ final class LinkedDocsScanner extends AbstractScanner
      * downstream needs the page it landed on, so answering with a bare bool
      * silently exempted every page but the first to link a given target.
      *
-     * @return array{exists: bool, page: ?Page, redirect: bool}
+     * @return array{exists: bool, page: ?Page, redirect: bool, derivativeError: ?string}
      */
     private function resolveUri(string $uri, string $host): array
     {
@@ -672,7 +711,39 @@ final class LinkedDocsScanner extends AbstractScanner
             || file_exists($this->publicDir.'/../'.$slug)
             || 'feed.xml' === $slug;
 
-        return $this->everChecked[$cacheKey] = ['exists' => $exists, 'page' => $page, 'redirect' => $redirect];
+        $derivativeError = $exists && $isMedia ? $this->derivativeError(substr($slug, 6)) : null;
+
+        return $this->everChecked[$cacheKey] = ['exists' => $exists, 'page' => $page, 'redirect' => $redirect, 'derivativeError' => $derivativeError];
+    }
+
+    /**
+     * The media row in DB proves the source image exists — but what a
+     * `media/<filter>/<name>` URL serves is a derivative FILE, generated
+     * out-of-band by a background job with silent failure modes. A missing one
+     * 404s wherever nothing regenerates it on demand (a static export), and a
+     * zero-byte one is served as an empty 200 everywhere and never retried
+     * (`pw:image:cache` reads it as already cached). The DB sees neither, so
+     * this is the only check standing between "scan is green" and a broken
+     * image in front of a visitor.
+     *
+     * @return ?string the message key describing how the derivative is broken
+     */
+    private function derivativeError(string $mediaSlug): ?string
+    {
+        if (1 !== substr_count($mediaSlug, '/')) {
+            return null; // not a filter-prefixed URL: originals are not plain files on disk
+        }
+
+        $path = $this->publicDir.'/media/'.$mediaSlug;
+        if (! file_exists($path)) {
+            return 'page_scanDerivativeMissing';
+        }
+
+        if (0 === filesize($path)) {
+            return 'page_scanDerivativeEmpty';
+        }
+
+        return null;
     }
 
     /**

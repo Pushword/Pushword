@@ -166,7 +166,10 @@ final class LinkedDocsScannerTest extends KernelTestCase
     public static function crossHostMediaUrlProvider(): Iterator
     {
         yield 'media' => ['https://localhost.dev/media/1.jpg'];
-        yield 'media behind an image filter' => ['https://localhost.dev/media/xs/1.jpg'];
+        // xs/sm/lg/xl derivatives are webp-only: `media/xs/1.webp`, not `.jpg`. The old
+        // data point `media/xs/1.jpg` was blessed on the DB row alone while the URL
+        // 404s live — exactly the false negative the disk-truth check now closes.
+        yield 'media behind an image filter' => ['https://localhost.dev/media/xs/1.webp'];
         yield 'media converted to another format' => ['https://localhost.dev/media/default/1.webp'];
         yield 'media with a query string' => ['https://localhost.dev/media/1.jpg?v=2'];
     }
@@ -206,6 +209,91 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('https://localhost.dev/media/nonexistent.pdf', $errors[0]);
+    }
+
+    /**
+     * `srcset` URLs were invisible to the attribute regex (`src` wants a literal `=`
+     * right after), so the derivatives desktop browsers actually load — the lg/xl
+     * entries of a `<source srcset>` — were never checked at all.
+     */
+    public function testSrcsetUrlsAreExtractedAndChecked(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        $html = '<picture><source srcset="/media/lg/zzz-unknown-media.webp 1200w, /media/xl/zzz-unknown-media.webp 1600w"><img src="/media/1.jpg" alt="ok"></picture>';
+        $errors = $this->messages($scanner, $this->getPage(), $html);
+
+        self::assertCount(2, $errors);
+        self::assertStringContainsString('/media/lg/zzz-unknown-media.webp', $errors[0]);
+    }
+
+    /**
+     * The DB row proves the source exists; the served bytes are a derivative file.
+     * A media whose derivative is missing from disk — or 0-byte, the poisoned-cache
+     * case served as an empty 200 — must be reported even though the DB is green.
+     */
+    public function testFilterDerivativeMissingFromDiskIsReported(): void
+    {
+        self::bootKernel();
+
+        $publicDir = sys_get_temp_dir().'/pw-scanner-derivative-'.getmypid();
+        $filesystem = new Filesystem();
+        $filesystem->mkdir($publicDir.'/media/lg');
+
+        try {
+            $scanner = $this->createScanner($publicDir);
+            $scanner->preloadPageCache();
+
+            $errors = $this->messages($scanner, $this->getPage(), '<img src="/media/lg/1.webp" alt="x">');
+
+            self::assertCount(1, $errors);
+            self::assertStringContainsString('derivative file missing', $errors[0]);
+        } finally {
+            $filesystem->remove($publicDir);
+        }
+    }
+
+    public function testZeroByteDerivativeIsReported(): void
+    {
+        self::bootKernel();
+
+        $publicDir = sys_get_temp_dir().'/pw-scanner-derivative-'.getmypid();
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($publicDir.'/media/lg/1.webp', '');
+
+        try {
+            $scanner = $this->createScanner($publicDir);
+            $scanner->preloadPageCache();
+
+            $errors = $this->messages($scanner, $this->getPage(), '<img src="/media/lg/1.webp" alt="x">');
+
+            self::assertCount(1, $errors);
+            self::assertStringContainsString('derivative file is empty', $errors[0]);
+        } finally {
+            $filesystem->remove($publicDir);
+        }
+    }
+
+    public function testHealthyDerivativeReportsNothing(): void
+    {
+        self::bootKernel();
+
+        $publicDir = sys_get_temp_dir().'/pw-scanner-derivative-'.getmypid();
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($publicDir.'/media/lg/1.webp', 'RIFFxxxxWEBP');
+
+        try {
+            $scanner = $this->createScanner($publicDir);
+            $scanner->preloadPageCache();
+
+            $errors = $this->messages($scanner, $this->getPage(), '<img src="/media/lg/1.webp" alt="x" srcset="/media/lg/1.webp 1200w">');
+
+            self::assertSame([], $errors);
+        } finally {
+            $filesystem->remove($publicDir);
+        }
     }
 
     /**

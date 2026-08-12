@@ -24,6 +24,7 @@ final class ScanErrorCodeTest extends TestCase
         self::assertSame([
             'date-shortcode',
             'image-alt-missing',
+            'image-derivative-broken',
             'image-not-found',
             'link-anchor',
             'link-empty',

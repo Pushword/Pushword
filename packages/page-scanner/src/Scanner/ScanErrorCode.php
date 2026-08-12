@@ -30,6 +30,9 @@ enum ScanErrorCode: string
 
     case ImageAltMissing = 'image-alt-missing';
 
+    /** A filter derivative of an existing media, missing from disk or zero-byte. */
+    case ImageDerivativeBroken = 'image-derivative-broken';
+
     case LinkEmpty = 'link-empty';
 
     case LinkRelative = 'link-relative';
