@@ -584,6 +584,32 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertStringContainsString('rewrite * /404.html', $caddyfile);
     }
 
+    /**
+     * The webp fallback used to rewrite EVERY missing .webp to a placeholder that
+     * resolves empty ({http.request.uri.path_regexp.1}): /media/sm/x.webp became
+     * /media/sm/x, an URI nothing downstream (a reverse_proxy fallback,
+     * handle_errors) could ever resolve. The rule must only fire when an
+     * original-format candidate actually exists, and rewrite to that candidate.
+     */
+    public function testCaddyfileWebpFallbackOnlyRewritesToAnExistingOriginal(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $this->getGenerator(CaddyfileGenerator::class)->generate('localhost.dev');
+
+        $caddyfile = (string) file_get_contents($this->getStaticDir().'/.Caddyfile');
+
+        self::assertStringContainsString('@webp_fallback', $caddyfile);
+        self::assertStringContainsString('try_files /media/{re.webp.1}.jpg', $caddyfile);
+        self::assertStringContainsString('rewrite @webp_fallback {http.matchers.file.relative}', $caddyfile);
+        self::assertStringNotContainsString(
+            '{http.request.uri.path_regexp',
+            $caddyfile,
+            'The extension-stripping placeholder is the regression this test pins down.',
+        );
+    }
+
     public function testGenerateRedirectionHtml(): void
     {
         self::bootKernel();
