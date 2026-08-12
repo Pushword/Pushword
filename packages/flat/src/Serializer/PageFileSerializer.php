@@ -126,16 +126,29 @@ final class PageFileSerializer
         return YamlFrontMatter::markdownCompatibleParse($content);
     }
 
+    /**
+     * Keep in sync with `MarkdownUtils.fixer()` (admin-block-editor), which
+     * applies the same set on editor saves. Dashes and `×`/`™`/`©` stay: the
+     * render does not re-create every author-typed one, so straightening them
+     * would be lossy.
+     */
     private function normalizeTypography(string $text): string
     {
         return strtr($text, [
             "\u{2018}" => "'", // left single quote
             "\u{2019}" => "'", // right single quote / apostrophe
+            "\u{201A}" => "'", // single low quote
             "\u{201C}" => '"', // left double quote
             "\u{201D}" => '"', // right double quote
+            "\u{201E}" => '"', // double low quote (German opening)
+            "\u{2026}" => '...', // ellipsis
             "\u{202F}" => ' ', // narrow no-break space
+            "\u{2009}" => ' ', // thin space
             "\u{00A0}" => ' ', // no-break space
             "\u{00AD}" => '', // soft hyphen
+            "\u{200B}" => '', // zero-width space
+            "\u{2060}" => '', // word joiner
+            "\u{FEFF}" => '', // zero-width no-break space / stray BOM
         ]);
     }
 

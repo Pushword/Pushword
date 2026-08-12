@@ -5,7 +5,9 @@ namespace Pushword\Core\Tests\Content;
 use Exception;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
+use Pushword\Core\Component\EntityFilter\Filter\Typography;
 use Pushword\Core\Component\EntityFilter\FilterRegistry;
+use Pushword\Core\Service\Typographer;
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Content\ContentPipeline;
 use Pushword\Core\Content\ContentPipelineFactory;
@@ -247,6 +249,41 @@ final class ContentPipelineTest extends TestCase
         $pipeline = $this->createPipeline($page, $filterRegistry, ['name' => $filter::class]);
 
         self::assertSame('Original', $pipeline->getName());
+    }
+
+    /**
+     * The documented per-page opt-out: `filter_typography: 0` in the front
+     * matter must disable the Typography filter referenced by class-string
+     * in the default chains.
+     */
+    public function testTypographyOptOutByCustomProperty(): void
+    {
+        $params = new ParameterBag(['kernel.project_dir' => sys_get_temp_dir()]);
+        $templateResolver = new TemplateResolver(new Twig(new FilesystemLoader()), new ArrayAdapter());
+        $siteRegistry = new SiteRegistry(
+            ['localhost' => [
+                'hosts' => ['localhost'],
+                'base_url' => 'https://localhost',
+                'name' => 'Test',
+                'locale' => 'en',
+                'locales' => ['en'],
+                'template' => '@Pushword',
+            ]],
+            $templateResolver,
+            $params,
+        );
+        $typography = new Typography(new Typographer(), $siteRegistry);
+
+        $page = new Page();
+        $page->host = 'localhost';
+        $page->name = "L'instant...";
+
+        $pipeline = $this->createPipeline($page, new FilterRegistry([$typography]), ['name' => Typography::class]);
+        self::assertSame('L’instant…', $pipeline->getName());
+
+        $page->setCustomProperty('filter_typography', 0);
+        $pipeline = $this->createPipeline($page, new FilterRegistry([$typography]), ['name' => Typography::class]);
+        self::assertSame("L'instant...", $pipeline->getName());
     }
 
     public function testApplyFiltersThrowsWhenFilterNotFound(): void

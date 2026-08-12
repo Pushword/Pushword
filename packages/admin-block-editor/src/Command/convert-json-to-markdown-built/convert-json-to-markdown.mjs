@@ -1400,7 +1400,8 @@ ${markdown}`;
   /**
    * Structural cleanup of the HTML about to be converted back to markdown.
    * Typography (smart quotes, ellipsis, non-breaking spaces, ×, ™…) is
-   * applied at render time by core's Typographer so sources stay plain.
+   * applied at render time by core's Typographer so sources stay plain —
+   * see the post-decode normalization in convertInlineHtmlToMarkdown().
    */
   static fixer(text) {
     const spaces = "â¯|Â­|Â | |\\s";
@@ -1413,7 +1414,7 @@ ${markdown}`;
       html = _MarkdownUtils.fixer(html);
     }
     html = he$2.decode(html);
-    html = html.replace(/[\u00A0\u202F]/g, " ").replace(/\u00AD/g, "");
+    html = html.replace(/[\u2018\u2019\u201A]/g, "'").replace(/[\u201C\u201D\u201E]/g, '"').replace(/\u2026/g, "...").replace(/[\u00A0\u202F\u2009]/g, " ").replace(/[\u00AD\u200B\u2060\uFEFF]/g, "");
     return html.replace(/<(b|strong|em|i|a[^>]*)> /gi, " <$1>").replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, "</$1> ").replace(/<(b|strong)(?: [^>]*)?>(.+?)<\/(b|strong)>/gi, "**$2**").replace(/<(i|em)(?: [^>]*)?>(.+?)<\/(i|em)>/gi, "_$2_").replace(/<code(?: [^>]*)?>(.+?)<\/code>/gi, "`$1`").replace(/<s(?: [^>]*)?>(.+?)<\/s>/gi, "~~$1~~").replace(/<sup(?: [^>]*)?>(.+?)<\/sup>/gi, "^$1^").replace(/<sub(?: [^>]*)?>(.+?)<\/sub>/gi, "~$1~").replace(/<u(?: [^>]*)?>(.+?)<\/u>/gi, "<u>$1</u>").replace(/<small(?: [^>]*)?>(.+?)<\/small>/gi, "<small>$1</small>").replace(/<mark(?: [^>]*)?>(.+?)<\/mark>/gi, "<mark>$1</mark>").replace(
       /<a\s+([^>]+)>(.+?)<\/a>/gi,
       (_match, attrString, text) => _MarkdownUtils.convertAnchorToMarkdown(attrString, text)

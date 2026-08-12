@@ -60,6 +60,43 @@ final class TypographerTest extends TestCase
         self::assertStringContainsString('«'.self::NBSP, $this->typographer->fix('<p>&quot;cité&quot;</p>', 'fr_CA'));
     }
 
+    /**
+     * One case per locale served on a real fleet (altimood): quote style and
+     * spacing must match JoliTypo's LocaleConfig.
+     */
+    public function testAltimoodLocales(): void
+    {
+        $input = '<p>Il dit &quot;oui&quot; la : fin !</p>';
+
+        $guillemets = '<p>Il dit «oui» la: fin!</p>';
+        $double = '<p>Il dit “oui” la: fin!</p>';
+
+        $expectations = [
+            'fr' => '<p>Il dit «'.self::NBSP.'oui'.self::NBSP.'» la'.self::NBSP.': fin'.self::NNBSP.'!</p>',
+            'fr-CH' => '<p>Il dit «'.self::NBSP.'oui'.self::NBSP.'» la'.self::NBSP.': fin'.self::NNBSP.'!</p>',
+            // Canadian French keeps the French quotes but the English spacing
+            'fr-CA' => '<p>Il dit «'.self::NBSP.'oui'.self::NBSP.'» la: fin!</p>',
+            'en' => $double,
+            'en-GB' => $double,
+            'en-IE' => $double,
+            'en-AU' => $double,
+            'en-CA' => $double,
+            'de' => '<p>Il dit „oui“ la: fin!</p>',
+            'de-CH' => '<p>Il dit «'.self::NNBSP.'oui'.self::NNBSP.'» la: fin!</p>',
+            'it' => $guillemets,
+            'it-CH' => $guillemets,
+            'es' => $guillemets,
+            'da-DK' => $guillemets,
+            'nb-NO' => $guillemets,
+            'fi' => '<p>Il dit ”oui” la: fin!</p>',
+            'sv' => '<p>Il dit ”oui” la: fin!</p>',
+        ];
+
+        foreach ($expectations as $locale => $expected) {
+            self::assertSame($expected, $this->typographer->fix($input, $locale), 'Locale '.$locale);
+        }
+    }
+
     public function testPlainQuoteCharacterAlsoHandled(): void
     {
         // Raw template text is not entity-encoded
@@ -85,7 +122,7 @@ final class TypographerTest extends TestCase
 
     public function testProtectedTagsStayUntouched(): void
     {
-        $html = '<pre>l\'a : "ok" !</pre><code>l\'b...</code><svg viewBox="0 0 20 20"><path d="m6 8 4-4"/></svg><script>if (a) { alert("l\'z"); }</script>';
+        $html = '<pre>l\'a : "ok" !</pre><code>l\'b...</code><svg viewBox="0 0 20 20"><path d="m6 8 4-4"/></svg><script>if (a) { alert("l\'z"); }</script><textarea>l\'c...</textarea><math>x'."\u{A0}".'!= y</math>';
 
         self::assertSame($html, $this->typographer->fix($html, 'fr'));
     }

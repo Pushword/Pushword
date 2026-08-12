@@ -512,7 +512,8 @@ export class MarkdownUtils {
   /**
    * Structural cleanup of the HTML about to be converted back to markdown.
    * Typography (smart quotes, ellipsis, non-breaking spaces, ×, ™…) is
-   * applied at render time by core's Typographer so sources stay plain.
+   * applied at render time by core's Typographer so sources stay plain —
+   * see the post-decode normalization in convertInlineHtmlToMarkdown().
    */
   static fixer(text: string): string {
     const spaces = '\xE2\x80\xAF|\xC2\xAD|\xC2\xA0|\u00A0|\\s'
@@ -547,9 +548,16 @@ export class MarkdownUtils {
     }
     // Decode HTML entities first (including numeric ones like &#10140;)
     html = he.decode(html)
-    // Sources stay plain: non-breaking spaces and soft hyphens are
-    // render-time typography, never stored
-    html = html.replace(/[\u00A0\u202F]/g, ' ').replace(/\u00AD/g, '')
+    // Sources stay plain: typography is render-time. Straighten what the
+    // render re-creates — same set as PageFileSerializer::normalizeTypography()
+    // on flat export. Dashes and ×/™/© stay: the render does not re-create
+    // every author-typed one, so straightening them would be lossy.
+    html = html
+      .replace(/[\u2018\u2019\u201A]/g, "'")
+      .replace(/[\u201C\u201D\u201E]/g, '"')
+      .replace(/\u2026/g, '...')
+      .replace(/[\u00A0\u202F\u2009]/g, ' ')
+      .replace(/[\u00AD\u200B\u2060\uFEFF]/g, '')
 
     return html
       .replace(/<(b|strong|em|i|a[^>]*)> /gi, ' <$1>')

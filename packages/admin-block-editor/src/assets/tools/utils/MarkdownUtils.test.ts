@@ -196,3 +196,29 @@ describe('MarkdownUtils.joinChunks', () => {
     expect(MarkdownUtils.joinChunks(['only'], [])).toBe('only')
   })
 })
+
+describe('MarkdownUtils.convertInlineHtmlToMarkdown typography normalization', () => {
+  it('straightens typographic characters so sources stay plain', () => {
+    expect(
+      MarkdownUtils.convertInlineHtmlToMarkdown(
+        'L’ami dit “bonjour”, „hallo“ et ‘salut’…',
+      ),
+    ).toBe('L\'ami dit "bonjour", "hallo" et \'salut\'...')
+  })
+
+  it('replaces no-break spaces and drops zero-width characters', () => {
+    expect(
+      MarkdownUtils.convertInlineHtmlToMarkdown('Prix : 10 € et ce­la​ fin﻿'),
+    ).toBe('Prix : 10 € et cela fin')
+  })
+
+  it('normalizes entity-encoded typography too (post-decode)', () => {
+    expect(MarkdownUtils.convertInlineHtmlToMarkdown('l&rsquo;ami&hellip;&nbsp;!')).toBe(
+      "l'ami... !",
+    )
+  })
+
+  it('applies the same normalization on the cleanup=false path', () => {
+    expect(MarkdownUtils.convertInlineHtmlToMarkdown('l’ami !', false)).toBe("l'ami !")
+  })
+})

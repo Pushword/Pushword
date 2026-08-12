@@ -14,14 +14,14 @@ use Exception;
  * tags. libxml's HTML4 round-trip would lowercase SVG attributes (viewBox),
  * unfold self-closing SVG tags and re-encode UTF-8 as entities.
  */
-class Typographer
+final class Typographer
 {
     private const string NBSP = "\u{00A0}";
 
     private const string NNBSP = "\u{202F}";
 
     /** Every space flavour, for use inside a regex character class (/u). */
-    private const string SPACES = '\x{202F}\x{00AD}\x{00A0}\s';
+    private const string SPACES = '\x{202F}\x{2009}\x{00AD}\x{00A0}\s';
 
     /** Tags whose content must stay untouched. */
     private const array PROTECTED_TAGS = ['pre' => true, 'code' => true, 'script' => true, 'style' => true, 'svg' => true, 'math' => true, 'textarea' => true, 'template' => true];
@@ -35,12 +35,12 @@ class Typographer
         'finnish' => ['”', '', '”', ''],
     ];
 
-    /** Same locale → quote style map as JoliTypo and the former admin SmartQuotes.ts. */
+    /** Same locale → quote style map as JoliTypo's LocaleConfig (language codes, plus two locale overrides). */
     private const array LOCALE_QUOTE_STYLE = [
-        'pt-br' => 'double', 'en' => 'double', 'us' => 'double', 'gb' => 'double', 'af' => 'double', 'ar' => 'double', 'eo' => 'double', 'id' => 'double', 'ga' => 'double', 'ko' => 'double', 'br' => 'double', 'th' => 'double', 'tr' => 'double', 'vi' => 'double',
-        'de-ch' => 'guillemets', 'hy' => 'guillemets', 'az' => 'guillemets', 'hz' => 'guillemets', 'eu' => 'guillemets', 'be' => 'guillemets', 'ca' => 'guillemets', 'el' => 'guillemets', 'it' => 'guillemets', 'no' => 'guillemets', 'fa' => 'guillemets', 'lv' => 'guillemets', 'pt' => 'guillemets', 'ru' => 'guillemets', 'es' => 'guillemets', 'uk' => 'guillemets',
+        'en' => 'double', 'af' => 'double', 'ar' => 'double', 'eo' => 'double', 'id' => 'double', 'ga' => 'double', 'ko' => 'double', 'br' => 'double', 'th' => 'double', 'tr' => 'double', 'vi' => 'double', 'nl' => 'double', 'pt-br' => 'double',
+        'hy' => 'guillemets', 'az' => 'guillemets', 'eu' => 'guillemets', 'be' => 'guillemets', 'ca' => 'guillemets', 'el' => 'guillemets', 'it' => 'guillemets', 'no' => 'guillemets', 'nb' => 'guillemets', 'nn' => 'guillemets', 'fa' => 'guillemets', 'lv' => 'guillemets', 'pt' => 'guillemets', 'ru' => 'guillemets', 'es' => 'guillemets', 'uk' => 'guillemets', 'da' => 'guillemets', 'de-ch' => 'guillemets',
         'fr' => 'guillemetsFr',
-        'de' => 'german', 'ka' => 'german', 'cs' => 'german', 'et' => 'german', 'is' => 'german', 'lt' => 'german', 'mk' => 'german', 'ro' => 'german', 'sk' => 'german', 'sl' => 'german', 'wen' => 'german',
+        'de' => 'german', 'ka' => 'german', 'cs' => 'german', 'et' => 'german', 'is' => 'german', 'lt' => 'german', 'mk' => 'german', 'ro' => 'german', 'sk' => 'german', 'sl' => 'german', 'pl' => 'german', 'hr' => 'german', 'sr' => 'german', 'bg' => 'german', 'hu' => 'german',
         'fi' => 'finnish', 'sv' => 'finnish', 'bs' => 'finnish',
     ];
 
@@ -133,7 +133,8 @@ class Typographer
 
     private function spacing(string $text, string $locale): string
     {
-        if ('fr' === $locale || str_starts_with($locale, 'fr-')) {
+        // Canadian French follows the English convention: no space before punctuation
+        if (('fr' === $locale || str_starts_with($locale, 'fr-')) && 'fr-ca' !== $locale) {
             $text = $this->replace('#['.self::SPACES.']+(:)#mu', self::NBSP.'$1', $text);
             $text = $this->replace('#['.self::SPACES.']+([;!?])#mu', self::NNBSP.'$1', $text);
             $text = $this->replace('#«['.self::SPACES.']?#u', '«'.self::NBSP, $text);

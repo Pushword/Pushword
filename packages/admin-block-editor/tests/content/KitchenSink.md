@@ -1,4 +1,4 @@
-A few example for the editor possibilities. Best to observe this, it’s in admin with split editor (live preview Side By Side).
+A few example for the editor possibilities. Best to observe this, it's in admin with split editor (live preview Side By Side).
 
 ## Inline Tool Demo
 
