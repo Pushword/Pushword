@@ -15,7 +15,6 @@ use Rector\Privatization\Rector\ClassConst\PrivatizeFinalClassConstantRector;
 use Rector\Privatization\Rector\ClassMethod\PrivatizeFinalClassMethodRector;
 use Rector\Privatization\Rector\Property\PrivatizeFinalClassPropertyRector;
 use Rector\Symfony\CodeQuality\Rector\Class_\ControllerMethodInjectionToConstructorRector;
-use Rector\Symfony\Set\SymfonySetList;
 use Rector\TypeDeclaration\Rector\StmtsAwareInterface\SafeDeclareStrictTypesRector;
 
 $paths = [
@@ -57,7 +56,8 @@ return RectorConfig::configure()
         doctrine: true
     )
     ->withSets([
-        SymfonySetList::SYMFONY_80,
+        // Symfony version sets are composer-based since rector 2.6.2
+        // (SymfonySetList::SYMFONY_* constants removed): withComposerBased above.
         DoctrineSetList::TYPED_COLLECTIONS_DOCBLOCKS,
     ])
     ->withRules([

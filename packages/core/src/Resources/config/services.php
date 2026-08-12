@@ -114,7 +114,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // Spatie image optimizer chain (injected into ImageOptimizer so the optimize
     // path can be exercised in tests with a controllable chain).
     $services->set(OptimizerChain::class)
-        ->factory([OptimizerChainFactory::class, 'create']);
+        ->factory(OptimizerChainFactory::create(...));
 
     $services->set(PushwordCoreBundle::class);
     $services->set(StringLoaderExtension::class);

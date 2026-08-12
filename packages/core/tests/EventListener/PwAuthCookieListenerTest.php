@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\EventListener;
 
+use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\EventListener\PwAuthCookieListener;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -80,6 +81,7 @@ final class PwAuthCookieListenerTest extends TestCase
         );
     }
 
+    #[DoesNotPerformAssertions]
     public function testLoginSuccessNoopWhenNoResponse(): void
     {
         $request = Request::create('https://example.com/login');
@@ -87,7 +89,6 @@ final class PwAuthCookieListenerTest extends TestCase
 
         // Should not throw even when response is null
         $this->listener->onLoginSuccess($event);
-        $this->addToAssertionCount(1);
     }
 
     public function testLogoutClearsCookie(): void
@@ -113,6 +114,7 @@ final class PwAuthCookieListenerTest extends TestCase
         );
     }
 
+    #[DoesNotPerformAssertions]
     public function testLogoutNoopWhenNoResponse(): void
     {
         $request = Request::create('https://example.com/logout');
@@ -120,7 +122,6 @@ final class PwAuthCookieListenerTest extends TestCase
 
         // No response set — should not throw
         $this->listener->onLogout($event);
-        $this->addToAssertionCount(1);
     }
 
     /** @param string[] $roles */
