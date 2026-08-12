@@ -36,6 +36,14 @@ final class NewsletterController extends AbstractController
 
     private const int RATE_WINDOW = 3600;
 
+    /** Seconds between two confirmation mails sent to one address for one audience. */
+    private const int ADDRESS_WINDOW = 600;
+
+    /** And however they are spread, this many confirmations to that address in a day. */
+    private const int ADDRESS_DAILY_LIMIT = 5;
+
+    private const int ADDRESS_DAILY_WINDOW = 86400;
+
     public function __construct(
         private readonly AudienceRepository $audienceRepository,
         private readonly ContactRepository $contactRepository,
@@ -144,6 +152,16 @@ final class NewsletterController extends AbstractController
 
         try {
             foreach ($audiences as $audience) {
+                // Already at the ceiling for this address: there is nothing to
+                // send and nothing to say. A confirmation for this list is
+                // sitting in that inbox, which is precisely what the answer
+                // below tells whoever is reading it.
+                if (! $this->mayConfirmAgain($email, $audience)) {
+                    $pending = true;
+
+                    continue;
+                }
+
                 $contact = $this->contactManager->subscribe(
                     $audience,
                     $email,
@@ -155,7 +173,14 @@ final class NewsletterController extends AbstractController
                     $request->getClientIp(),
                 );
 
-                $pending = $pending || $contact->isPending();
+                // A contact left pending is exactly a confirmation mail that has
+                // just gone out — the only event these ceilings count. An
+                // audience without double opt-in, or somebody already on the
+                // list, sends nothing and spends nothing.
+                if ($contact->isPending()) {
+                    $this->recordConfirmation($email, $audience);
+                    $pending = true;
+                }
             }
         } catch (TransportExceptionInterface) {
             // Most often the server refusing the mailbox — a typo in the address.
@@ -392,6 +417,63 @@ final class NewsletterController extends AbstractController
         $this->cache->save($item);
 
         return true;
+    }
+
+    /**
+     * May one more confirmation mail go to this address for this audience?
+     *
+     * The per-IP ceiling above is blind to a list-bombing spread over a botnet:
+     * every request arrives from a different address, each one stays far under
+     * it, and the single mailbox being aimed at receives all of them. This
+     * ceiling belongs to the address instead, so it holds however the requests
+     * are spread — one confirmation per window, and a floor under the day.
+     *
+     * Somebody who genuinely resubscribed inside the window loses nothing they
+     * can see: the mail they are waiting for is already in their inbox.
+     */
+    private function mayConfirmAgain(string $email, Audience $audience): bool
+    {
+        if ($this->cache->getItem($this->addressKey('confirm', $email, $audience))->isHit()) {
+            return false;
+        }
+
+        $item = $this->cache->getItem($this->addressKey('confirmday', $email, $audience));
+        $count = $item->isHit() && \is_int($item->get()) ? $item->get() : 0;
+
+        return $count < self::ADDRESS_DAILY_LIMIT;
+    }
+
+    /**
+     * Count a confirmation that has just been sent, against both ceilings.
+     *
+     * Both windows slide from the last mail rather than the first, as the per-IP
+     * ceiling's already does: an address stays capped until it has been left
+     * alone for a whole window, which is what actually stops a burst that keeps
+     * coming rather than pausing for the reset.
+     */
+    private function recordConfirmation(string $email, Audience $audience): void
+    {
+        $recent = $this->cache->getItem($this->addressKey('confirm', $email, $audience));
+        $recent->set(true);
+        $recent->expiresAfter(self::ADDRESS_WINDOW);
+
+        $this->cache->save($recent);
+
+        $daily = $this->cache->getItem($this->addressKey('confirmday', $email, $audience));
+        $count = $daily->isHit() && \is_int($daily->get()) ? $daily->get() : 0;
+        $daily->set($count + 1);
+        $daily->expiresAfter(self::ADDRESS_DAILY_WINDOW);
+
+        $this->cache->save($daily);
+    }
+
+    /**
+     * The address never reaches the cache store in the clear: what is kept is a
+     * ceiling, and it works just as well on a digest.
+     */
+    private function addressKey(string $ceiling, string $email, Audience $audience): string
+    {
+        return 'pushword_newsletter_'.$ceiling.'_'.md5(mb_strtolower(trim($email)).'|'.$audience->slug);
     }
 
     /**

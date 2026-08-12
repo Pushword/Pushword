@@ -118,7 +118,13 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         self::assertEmailCount(0);
     }
 
-    public function testResubmittingWhilePendingResendsTheConfirmation(): void
+    /**
+     * A pending contact asking again gets the link again — but not immediately.
+     * The address ceiling stands between one confirmation and the next, and the
+     * answer is the one a first submission gets: the mail to click is already
+     * in that inbox, so there is nothing else to say.
+     */
+    public function testResubmittingWhilePendingIsHeldByTheAddressCeiling(): void
     {
         $audience = $this->createAudience();
         $this->post($audience->slug, ['email' => 'again@example.tld']);
@@ -127,8 +133,69 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $this->post($audience->slug, ['email' => 'again@example.tld']);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
-        self::assertEmailCount(1, null, 'a pending contact asking again gets the link again');
+        self::assertEmailCount(0, null, 'the confirmation already sent is the one to click');
+        self::assertStringContainsString(
+            $this->translate('newsletter.subscribe.pending'),
+            (string) $this->client->getResponse()->getContent(),
+        );
         self::assertCount(1, $this->entityManager->getRepository(Contact::class)->findBy(['email' => 'again@example.tld']));
+    }
+
+    /** Once the window is over, somebody the mail never reached can ask for it again. */
+    public function testTheConfirmationGoesOutAgainOnceTheWindowIsOver(): void
+    {
+        $audience = $this->createAudience();
+        $this->post($audience->slug, ['email' => 'lost@example.tld']);
+
+        $this->expireAddressWindow('lost@example.tld', $audience);
+        $this->post($audience->slug, ['email' => 'lost@example.tld']);
+
+        self::assertEmailCount(1);
+        self::assertSame(ContactStatus::Pending, $this->find('lost@example.tld')->status);
+    }
+
+    /**
+     * The per-IP ceiling cannot see a list-bombing spread over a botnet — every
+     * request comes from somewhere new. The day ceiling belongs to the mailbox
+     * being aimed at, so waiting each window out buys nothing.
+     */
+    public function testAnAddressIsCappedForTheDayHoweverLongTheWaitBetweenTries(): void
+    {
+        $audience = $this->createAudience();
+
+        // Five confirmations go out, each one after a quiet window.
+        for ($try = 1; $try <= 5; ++$try) {
+            $this->expireAddressWindow('bombed@example.tld', $audience);
+            $this->post($audience->slug, ['email' => 'bombed@example.tld']);
+            self::assertEmailCount(1, null, 'confirmation '.$try.' of the day');
+        }
+
+        $this->expireAddressWindow('bombed@example.tld', $audience);
+        $this->post($audience->slug, ['email' => 'bombed@example.tld']);
+
+        self::assertEmailCount(0, null, 'the day holds even with every window waited out');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+    }
+
+    /** The ceiling is the address's, on this list — a sibling list is untouched by it. */
+    public function testTheAddressCeilingIsScopedToOneAudience(): void
+    {
+        $letter = $this->createAudience();
+        $promos = $this->createAudience();
+        $this->post($letter->slug, ['email' => 'both@example.tld']);
+
+        $this->post($promos->slug, ['email' => 'both@example.tld']);
+
+        self::assertEmailCount(1);
+        self::assertSame(ContactStatus::Pending, $this->findIn($promos, 'both@example.tld')->status);
+    }
+
+    /** Age the address window out, the way ten quiet minutes would. */
+    private function expireAddressWindow(string $email, Audience $audience): void
+    {
+        self::getContainer()->get('cache.app')->deleteItem(
+            'pushword_newsletter_confirm_'.md5($email.'|'.$audience->slug)
+        );
     }
 
     /** An address already on the list must not receive a fresh confirmation ask. */
