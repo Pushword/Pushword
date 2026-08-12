@@ -95,7 +95,7 @@ function callArguments(markdown: string, parameters: string[]): (string | null)[
     new RegExp(argument(parameters), 'g'),
   )) {
     const at = undefined === name ? next++ : parameters.indexOf(name)
-    values[at] = 'null' === literal ? null : literal.slice(1, -1)
+    values[at] = 'null' === literal ? null : literal!.slice(1, -1)
   }
 
   return values
