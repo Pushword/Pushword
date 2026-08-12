@@ -103,11 +103,25 @@ to brand them.
 
 ## CSRF
 
-On by default. The form endpoint issues a token, and the subscribe endpoint
-answers `403` to a post that does not carry it. Nothing to wire: the placeholder
-fetches the form, the form comes back with its token, js-helper posts it.
+On by default, and there is no deployment that has to turn it off — a statically
+generated site posting to another domain included. The form endpoint issues a
+token, and the subscribe endpoint answers `403` to a post that does not carry
+it. Nothing to wire: the placeholder fetches the form, the form comes back with
+its token, js-helper posts it.
 
-**Turn it off where the token cannot make the round trip**:
+The token is signed with the app secret and carries its own expiry, rather than
+pointing at a session. That is what lets it make the cross-domain round trip: a
+session-bound token would need its cookie back, and from a static build on
+another domain that cookie is a third-party cookie — Safari drops it outright,
+other browsers partition it, and **every subscription would fail with `403`** on
+exactly the deployment that needs the form fetched remotely in the first place.
+
+What the token buys is not the protection of an authenticated action; there is
+none, and the endpoint answers cross-origin on purpose. It is that a post has to
+have fetched a form first, which a script spraying the endpoint has not done.
+
+Turn it off only for a front end that posts the endpoint itself without ever
+fetching a form:
 
 ```yaml
 pushword:
@@ -115,14 +129,6 @@ pushword:
         - hosts: ['example.com']
           newsletter_csrf_protection: false
 ```
-
-The token lives in the session, so the session cookie has to reach the subscribe
-endpoint. It does when the page and `base_live_url` are same-site — the same
-domain, or two subdomains of it. It does not when a static build is served from
-one domain and PHP runs on another: `SameSite=Lax` withholds the cookie, the
-endpoint opens a fresh session per request, and **every subscription fails with
-`403`**. Same story for a front end that posts the endpoint itself without
-fetching a form first.
 
 What a token does and does not buy here: this endpoint is anonymous by design, so
 a forged cross-site post obtains nothing a direct `curl` would not — there is no
@@ -1180,7 +1186,7 @@ POST https://example.com/newsletter/subscribe
 | `locale` | defaults to the current site's |
 | `source` | where the form sits; defaults to the referer's path |
 | `website` | the honeypot — render it hidden, never fill it |
-| `_token` | required unless `newsletter_csrf_protection` is off — read it out of `GET /newsletter/form?audiences=<slug>`, sending that response's session cookie back with the post |
+| `_token` | required unless `newsletter_csrf_protection` is off — read it out of `GET /newsletter/form?audiences=<slug>`. It is self-contained, so there is no cookie to carry back and it works from any origin |
 
 The response is an HTML fragment, not JSON: the built-in form replaces itself
 with it, and it is `alert.html.twig` you override to restyle it. Read the status

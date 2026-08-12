@@ -10,9 +10,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * `newsletter_csrf_protection` is on by default. It can be turned off, which is
- * what a static build served from another domain has to do: the token lives in
- * the session, and that cookie never comes back cross-site.
+ * `newsletter_csrf_protection` is on by default, and stays on everywhere: the
+ * token is signed rather than kept in a session, so a static build served from
+ * another domain — which has no cookie to send back — passes it just the same.
  */
 #[Group('integration')]
 final class SubscribeCsrfTest extends AbstractNewsletterTestCase
@@ -34,10 +34,7 @@ final class SubscribeCsrfTest extends AbstractNewsletterTestCase
         self::getContainer()->get(SiteRegistry::class)->get()->setCustomProperty('newsletter_csrf_protection', $enabled);
     }
 
-    /**
-     * The token only exists inside a session the form endpoint opened, so the
-     * only way to hold a valid one is the round trip a browser makes.
-     */
+    /** The only way to hold a valid token is the round trip a browser makes. */
     private function tokenFromTheForm(string $audienceSlug): string
     {
         $this->client->request(Request::METHOD_POST, '/newsletter/form?audiences='.$audienceSlug);
@@ -97,5 +94,25 @@ final class SubscribeCsrfTest extends AbstractNewsletterTestCase
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
         self::assertInstanceOf(Contact::class, $this->entityManager->getRepository(Contact::class)
             ->findOneBy(['email' => 'valid@example.tld']));
+    }
+
+    /**
+     * The deployment the whole design is for: a page built once on one domain,
+     * fetching its form from the live host on another. Dropping every cookie
+     * between the two requests is what that browser does — Safari refuses the
+     * third-party cookie outright, and the rest partition it away.
+     */
+    public function testTheTokenSurvivesABrowserThatKeepsNoCookie(): void
+    {
+        $audience = $this->createAudience();
+
+        $token = $this->tokenFromTheForm($audience->slug);
+        $this->client->getCookieJar()->clear();
+
+        $this->post($audience->slug, ['email' => 'cookieless@example.tld', '_token' => $token]);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertInstanceOf(Contact::class, $this->entityManager->getRepository(Contact::class)
+            ->findOneBy(['email' => 'cookieless@example.tld']));
     }
 }

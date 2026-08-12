@@ -31,7 +31,7 @@ class Configuration implements ConfigurationInterface
                     ->end()
                     ->booleanNode('newsletter_csrf_protection')
                         ->defaultTrue()
-                        ->info('Require a token issued by the form endpoint before accepting a subscription. The token lives in the session, so it only survives when the page and the live host are same-site — turn this off where a static build is served from another domain, or the session cookie never comes back and every subscription fails.')
+                        ->info('Require a token issued by the form endpoint before accepting a subscription, so a post that never fetched a form is refused. The token is signed rather than kept in the session, which is what lets it survive the cross-domain round trip a statically generated site makes — leave this on there too.')
                     ->end()
                     ->integerNode('send_batch')
                         ->defaultValue(50)

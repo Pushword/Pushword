@@ -6,8 +6,6 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Repository\AudienceRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Security\Csrf\CsrfToken;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Translation\LocaleSwitcher;
 use Twig\Environment as Twig;
 
@@ -22,16 +20,13 @@ use Twig\Environment as Twig;
  */
 final readonly class SubscribeForm
 {
-    /** The id a token is issued and checked under. */
-    public const string CSRF_TOKEN_ID = 'newsletter_subscribe';
-
     public function __construct(
         private AudienceRepository $audienceRepository,
         private SiteRegistry $siteRegistry,
         private LinkGenerator $linkGenerator,
         private UrlGeneratorInterface $urlGenerator,
         private Twig $twig,
-        private CsrfTokenManagerInterface $csrfTokenManager,
+        private SubscribeToken $subscribeToken,
         private LocaleSwitcher $localeSwitcher,
     ) {
     }
@@ -114,9 +109,7 @@ final readonly class SubscribeForm
                 'source' => $source,
                 'action' => $this->linkGenerator->base($audiences[0])
                     .$this->urlGenerator->generate('pushword_newsletter_subscribe'),
-                'csrfToken' => $this->csrfProtected()
-                    ? $this->csrfTokenManager->getToken(self::CSRF_TOKEN_ID)->getValue()
-                    : null,
+                'csrfToken' => $this->csrfProtected() ? $this->subscribeToken->issue() : null,
             ],
         ));
     }
@@ -133,15 +126,13 @@ final readonly class SubscribeForm
             return true;
         }
 
-        return '' !== $token
-            && $this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_TOKEN_ID, $token));
+        return $this->subscribeToken->isValid($token);
     }
 
     /**
-     * On by default. The token lives in the session, so it only survives where
-     * the page and the live host are same-site: a static build served from
-     * another domain never sends the cookie back, and has to turn this off or
-     * every subscription fails.
+     * On by default, and nothing has to turn it off: the token {@see
+     * SubscribeToken} issues carries its own proof rather than pointing at a
+     * session, so it survives the cross-domain round trip a static build makes.
      */
     public function csrfProtected(): bool
     {
