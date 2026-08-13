@@ -127,12 +127,32 @@ final class PageFileSerializer
     }
 
     /**
-     * Keep in sync with `MarkdownUtils.fixer()` (admin-block-editor), which
-     * applies the same set on editor saves. Dashes and `×`/`™`/`©` stay: the
-     * render does not re-create every author-typed one, so straightening them
-     * would be lossy.
+     * Keep in sync with `MarkdownUtils.normalizeTypography()`
+     * (admin-block-editor), which applies the same rules on editor saves.
+     * Dashes and `×`/`™`/`©` stay: the render does not re-create every
+     * author-typed one, so straightening them would be lossy. Code keeps its
+     * bytes for the same reason — the render-time Typographer never touches
+     * `pre`/`code`, so a straightened `…` in a code sample would render
+     * differently forever.
      */
     private function normalizeTypography(string $text): string
+    {
+        if (! str_contains($text, '`') && ! str_contains($text, '~~~')) {
+            return $this->straightenTypography($text);
+        }
+
+        $result = '';
+        $cursor = 0;
+        foreach ($this->codeRanges($text) as [$from, $to]) {
+            $result .= $this->straightenTypography(substr($text, $cursor, $from - $cursor));
+            $result .= substr($text, $from, $to - $from);
+            $cursor = $to;
+        }
+
+        return $result.$this->straightenTypography(substr($text, $cursor));
+    }
+
+    private function straightenTypography(string $text): string
     {
         return strtr($text, [
             "\u{2018}" => "'", // left single quote
@@ -150,6 +170,106 @@ final class PageFileSerializer
             "\u{2060}" => '', // word joiner
             "\u{FEFF}" => '', // zero-width no-break space / stray BOM
         ]);
+    }
+
+    /**
+     * Byte ranges `[from, to)` covered by code: fenced blocks first, then
+     * inline code spans in the prose between them. Ordered, non-overlapping.
+     *
+     * @return list<array{int, int}>
+     */
+    private function codeRanges(string $text): array
+    {
+        $ranges = [];
+        $cursor = 0;
+        foreach ($this->fencedRanges($text) as [$from, $to]) {
+            array_push($ranges, ...$this->inlineCodeSpans($text, $cursor, $from));
+            $ranges[] = [$from, $to];
+            $cursor = $to;
+        }
+
+        array_push($ranges, ...$this->inlineCodeSpans($text, $cursor, \strlen($text)));
+
+        return $ranges;
+    }
+
+    /**
+     * Byte ranges covered by fenced code blocks — the PHP mirror of
+     * `MarkdownUtils.fencedRanges()` (admin-block-editor). CommonMark rules:
+     * up to three spaces of indent, a closing run of the same character at
+     * least as long as the opening one with nothing but space after it, no
+     * backtick in a backtick fence's info string, and an unclosed fence runs
+     * to the end of the document.
+     *
+     * @return list<array{int, int}>
+     */
+    private function fencedRanges(string $text): array
+    {
+        $ranges = [];
+        $open = null; // [fence char, fence length, byte offset]
+        $offset = 0;
+
+        foreach (explode("\n", $text) as $line) {
+            if (1 === preg_match('/^ {0,3}(`{3,}|~{3,})(.*)$/', $line, $match)) {
+                [, $marker, $info] = $match;
+                if (null === $open) {
+                    if ('`' !== $marker[0] || ! str_contains($info, '`')) {
+                        $open = [$marker[0], \strlen($marker), $offset];
+                    }
+                } elseif ($marker[0] === $open[0] && \strlen($marker) >= $open[1] && '' === trim($info)) {
+                    $ranges[] = [$open[2], $offset + \strlen($line)];
+                    $open = null;
+                }
+            }
+
+            $offset += \strlen($line) + 1;
+        }
+
+        if (null !== $open) {
+            $ranges[] = [$open[2], \strlen($text)];
+        }
+
+        return $ranges;
+    }
+
+    /**
+     * Inline code spans in `$text[$from, $to)`: a backtick run closed by the
+     * next run of the same length (CommonMark), never across a blank line.
+     *
+     * @return list<array{int, int}>
+     */
+    private function inlineCodeSpans(string $text, int $from, int $to): array
+    {
+        $segment = substr($text, $from, $to - $from);
+        if (! str_contains($segment, '`')) {
+            return [];
+        }
+
+        preg_match_all('/`+/', $segment, $matches, \PREG_OFFSET_CAPTURE);
+        $runs = $matches[0];
+        $spans = [];
+        $runCount = \count($runs);
+
+        for ($i = 0; $i < $runCount; ++$i) {
+            [$run, $runOffset] = $runs[$i];
+            $length = \strlen($run);
+            for ($j = $i + 1; $j < $runCount; ++$j) {
+                [$closer, $closerOffset] = $runs[$j];
+                $between = substr($segment, $runOffset + $length, $closerOffset - $runOffset - $length);
+                if (1 === preg_match('/\n[ \t]*\n/', $between)) {
+                    break; // the paragraph ended: the run is literal
+                }
+
+                if (\strlen($closer) === $length) {
+                    $spans[] = [$from + $runOffset, $from + $closerOffset + \strlen($closer)];
+                    $i = $j; // runs up to the closer belong to the span
+
+                    continue 2;
+                }
+            }
+        }
+
+        return $spans;
     }
 
     /**

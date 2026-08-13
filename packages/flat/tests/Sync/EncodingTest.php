@@ -54,7 +54,7 @@ final class EncodingTest extends KernelTestCase
         }
 
         // Clean up test pages
-        foreach (['utf8-bom-test', 'accented-test', 'cjk-test', 'emoji-test', 'special-yaml-test', 'cafe-creme', 'js-guide-test', 'smart-quotes-test', 'nbsp-test', 'typo-noise-test'] as $slug) {
+        foreach (['utf8-bom-test', 'accented-test', 'cjk-test', 'emoji-test', 'special-yaml-test', 'cafe-creme', 'js-guide-test', 'smart-quotes-test', 'nbsp-test', 'typo-noise-test', 'code-typo-test'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
@@ -238,6 +238,30 @@ final class EncodingTest extends KernelTestCase
 
         self::assertStringContainsString('Der Weg...', $exported);
         self::assertStringContainsString('"hallo" und \'tschüss\'... vorbei 10 km', $exported);
+    }
+
+    public function testCodeKeepsTypographicBytesOnExport(): void
+    {
+        // The render-time Typographer never touches pre/code, so a code sample
+        // legitimately holding typographic characters must round-trip
+        // byte-identical — while the same characters in prose are straightened.
+        $fence = "```php\n\$label = \"café\u{2026} déjà\u{A0}!\";\n```";
+        $span = "`l\u{2019}exemple\u{2026}`";
+        $body = "Il dit\u{A0}: \u{201C}bonjour\u{2026}\u{201D}\n\n".$fence."\n\nVoir ".$span." et l\u{2019}ami\u{2026}";
+        $this->createMd('code-typo-test.md', "---\nh1: 'Code Typo'\n---\n\n".$body);
+
+        $this->pageSync->import('localhost.dev');
+
+        $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'code-typo-test', 'host' => 'localhost.dev']);
+        self::assertInstanceOf(Page::class, $page);
+
+        $this->pageSync->export('localhost.dev', true, $this->contentDir);
+        $exported = $this->filesystem->readFile($this->contentDir.'/code-typo-test.md');
+
+        self::assertStringContainsString($fence, $exported);
+        self::assertStringContainsString($span, $exported);
+        self::assertStringContainsString('Il dit : "bonjour..."', $exported);
+        self::assertStringContainsString("et l'ami...", $exported);
     }
 
     public function testNonAsciiSlugFromFileName(): void

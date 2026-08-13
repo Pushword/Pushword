@@ -221,4 +221,73 @@ describe('MarkdownUtils.convertInlineHtmlToMarkdown typography normalization', (
   it('applies the same normalization on the cleanup=false path', () => {
     expect(MarkdownUtils.convertInlineHtmlToMarkdown('l’ami !', false)).toBe("l'ami !")
   })
+
+  it('keeps typographic characters inside a <code> element', () => {
+    expect(
+      MarkdownUtils.convertInlineHtmlToMarkdown(
+        'Voir <code class="inline-code">"café… déjà"</code> et l’exemple…',
+      ),
+    ).toBe('Voir `"café… déjà"` et l\'exemple...')
+  })
+
+  it('keeps a no-break space inside a <code> element, raw or entity-encoded', () => {
+    expect(
+      MarkdownUtils.convertInlineHtmlToMarkdown('Un <code>a\u00A0b</code> et un\u00A0autre'),
+    ).toBe('Un `a\u00A0b` et un autre')
+    expect(
+      MarkdownUtils.convertInlineHtmlToMarkdown('Un <code>a&nbsp;b</code> et l&rsquo;autre'),
+    ).toBe("Un `a\u00A0b` et l'autre")
+  })
+
+  it('keeps typographic characters inside literal backticks the author typed', () => {
+    expect(
+      MarkdownUtils.convertInlineHtmlToMarkdown('Tapez `l’exemple…` puis l’autre…'),
+    ).toBe("Tapez `l’exemple…` puis l'autre...")
+  })
+})
+
+describe('MarkdownUtils.normalizeTypography code protection', () => {
+  it('keeps a fenced block byte-identical while straightening the prose around it', () => {
+    expect(
+      MarkdownUtils.normalizeTypography(
+        "L’intro…\n\n```php\n$s = 'café… déjà';\u00A0\n```\n\nL’outro…",
+      ),
+    ).toBe("L'intro...\n\n```php\n$s = 'café… déjà';\u00A0\n```\n\nL'outro...")
+  })
+
+  it('keeps a tilde fence and its info string byte-identical', () => {
+    expect(MarkdownUtils.normalizeTypography('~~~text l’info\ncafé…\n~~~\n\nl’après')).toBe(
+      "~~~text l’info\ncafé…\n~~~\n\nl'après",
+    )
+  })
+
+  it('does not close a fence on a shorter run', () => {
+    expect(
+      MarkdownUtils.normalizeTypography('````\ncafé…\n```\nencore…\n````\n\nl’après…'),
+    ).toBe("````\ncafé…\n```\nencore…\n````\n\nl'après...")
+  })
+
+  it('protects an unclosed fence to the end, as the renderer reads it', () => {
+    expect(MarkdownUtils.normalizeTypography('l’avant\n\n```\ncafé…')).toBe(
+      "l'avant\n\n```\ncafé…",
+    )
+  })
+
+  it('keeps a multi-backtick inline span byte-identical', () => {
+    expect(MarkdownUtils.normalizeTypography('l’un `` l’a `b` … `` et l’autre…')).toBe(
+      "l'un `` l’a `b` … `` et l'autre...",
+    )
+  })
+
+  it('treats a backtick without a same-length closer as literal text', () => {
+    expect(MarkdownUtils.normalizeTypography('un ` seul et l’ami…')).toBe(
+      "un ` seul et l'ami...",
+    )
+  })
+
+  it('never pairs a code span across a blank line', () => {
+    expect(MarkdownUtils.normalizeTypography('un ` deux\n\ntrois ` l’quatre…')).toBe(
+      "un ` deux\n\ntrois ` l'quatre...",
+    )
+  })
 })

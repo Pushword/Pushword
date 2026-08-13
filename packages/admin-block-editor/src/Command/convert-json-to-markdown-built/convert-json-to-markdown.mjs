@@ -1404,21 +1404,96 @@ ${markdown}`;
    * see the post-decode normalization in convertInlineHtmlToMarkdown().
    */
   static fixer(text) {
-    const spaces = "â¯|Â­|Â | |\\s";
     text = _MarkdownUtils.makeUrlRelative(text);
-    text = text.replace(/&nbsp;/gi, " ").replace(/ <\/([a-z]+)>/gi, "</$1> ").replace(/ ?<(b|i|strong|em|span)> ?<\/(b|i|strong|em|span)> ?/gi, " ").replace(/<(b|i|strong|em|span|a)[^>]*><\/(b|i|strong|em|span|a)>/gi, "").replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,},[${spaces}]{1,}`, "gmu"), "$1, ").replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,}\\.[${spaces}]{1,}`, "gmu"), "$1. ").replace(/ &amp; /gi, " & ").replace(/&shy;/g, "").replace(new RegExp(`[${spaces}]{2,}`, "gmu"), " ");
-    return text;
+    return text.split(/(<code(?:\s[^>]*)?>[\s\S]*?<\/code>|<pre(?:\s[^>]*)?>[\s\S]*?<\/pre>)/gi).map((part, index) => index % 2 === 1 ? part : _MarkdownUtils.fixProse(part)).join("");
+  }
+  static fixProse(text) {
+    const spaces = "â¯|Â­|Â | |\\s";
+    return text.replace(/&nbsp;/gi, " ").replace(/ <\/([a-z]+)>/gi, "</$1> ").replace(/ ?<(b|i|strong|em|span)> ?<\/(b|i|strong|em|span)> ?/gi, " ").replace(/<(b|i|strong|em|span|a)[^>]*><\/(b|i|strong|em|span|a)>/gi, "").replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,},[${spaces}]{1,}`, "gmu"), "$1, ").replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,}\\.[${spaces}]{1,}`, "gmu"), "$1. ").replace(/ &amp; /gi, " & ").replace(/&shy;/g, "").replace(new RegExp(`[${spaces}]{2,}`, "gmu"), " ");
   }
   static convertInlineHtmlToMarkdown(html, cleanup = true) {
     if (cleanup) {
       html = _MarkdownUtils.fixer(html);
     }
     html = he$2.decode(html);
-    html = html.replace(/[\u2018\u2019\u201A]/g, "'").replace(/[\u201C\u201D\u201E]/g, '"').replace(/\u2026/g, "...").replace(/[\u00A0\u202F\u2009]/g, " ").replace(/[\u00AD\u200B\u2060\uFEFF]/g, "");
-    return html.replace(/<(b|strong|em|i|a[^>]*)> /gi, " <$1>").replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, "</$1> ").replace(/<(b|strong)(?: [^>]*)?>(.+?)<\/(b|strong)>/gi, "**$2**").replace(/<(i|em)(?: [^>]*)?>(.+?)<\/(i|em)>/gi, "_$2_").replace(/<code(?: [^>]*)?>(.+?)<\/code>/gi, "`$1`").replace(/<s(?: [^>]*)?>(.+?)<\/s>/gi, "~~$1~~").replace(/<sup(?: [^>]*)?>(.+?)<\/sup>/gi, "^$1^").replace(/<sub(?: [^>]*)?>(.+?)<\/sub>/gi, "~$1~").replace(/<u(?: [^>]*)?>(.+?)<\/u>/gi, "<u>$1</u>").replace(/<small(?: [^>]*)?>(.+?)<\/small>/gi, "<small>$1</small>").replace(/<mark(?: [^>]*)?>(.+?)<\/mark>/gi, "<mark>$1</mark>").replace(
+    const markdown = html.replace(/<(b|strong|em|i|a[^>]*)> /gi, " <$1>").replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, "</$1> ").replace(/<(b|strong)(?: [^>]*)?>(.+?)<\/(b|strong)>/gi, "**$2**").replace(/<(i|em)(?: [^>]*)?>(.+?)<\/(i|em)>/gi, "_$2_").replace(/<code(?: [^>]*)?>(.+?)<\/code>/gi, "`$1`").replace(/<s(?: [^>]*)?>(.+?)<\/s>/gi, "~~$1~~").replace(/<sup(?: [^>]*)?>(.+?)<\/sup>/gi, "^$1^").replace(/<sub(?: [^>]*)?>(.+?)<\/sub>/gi, "~$1~").replace(/<u(?: [^>]*)?>(.+?)<\/u>/gi, "<u>$1</u>").replace(/<small(?: [^>]*)?>(.+?)<\/small>/gi, "<small>$1</small>").replace(/<mark(?: [^>]*)?>(.+?)<\/mark>/gi, "<mark>$1</mark>").replace(
       /<a\s+([^>]+)>(.+?)<\/a>/gi,
       (_match, attrString, text) => _MarkdownUtils.convertAnchorToMarkdown(attrString, text)
     ).replace(/<br\s*\/?>/gi, "\n").replace(/<div>/gi, "\n").replace(/<\/div>/gi, "");
+    return _MarkdownUtils.normalizeTypography(markdown);
+  }
+  /**
+   * Straighten typographic quotes, ellipsis and spaces so sources stay
+   * plain: typography is re-created at render time by core's Typographer.
+   * Same rules as PageFileSerializer::normalizeTypography() on flat export;
+   * keep in sync. Dashes and multiplication/trademark/copyright signs stay:
+   * the render does not re-create every author-typed one, so straightening
+   * them would be lossy. Fenced code blocks and inline code spans keep
+   * their bytes for the same reason: the Typographer never touches
+   * pre/code, so a straightened code sample would render differently
+   * forever.
+   */
+  static normalizeTypography(markdown) {
+    const ranges = _MarkdownUtils.codeRanges(markdown);
+    if (ranges.length === 0) return _MarkdownUtils.straightenTypography(markdown);
+    let result = "";
+    let cursor = 0;
+    for (const [from, to] of ranges) {
+      result += _MarkdownUtils.straightenTypography(markdown.slice(cursor, from));
+      result += markdown.slice(from, to);
+      cursor = to;
+    }
+    return result + _MarkdownUtils.straightenTypography(markdown.slice(cursor));
+  }
+  static straightenTypography(text) {
+    return text.replace(/[\u2018\u2019\u201A]/g, "'").replace(/[\u201C\u201D\u201E]/g, '"').replace(/\u2026/g, "...").replace(/[\u00A0\u202F\u2009]/g, " ").replace(/[\u00AD\u200B\u2060\uFEFF]/g, "");
+  }
+  /**
+   * Character ranges covered by code, `[from, to)`: fenced blocks first,
+   * then inline code spans in the prose between them. Ordered,
+   * non-overlapping.
+   */
+  static codeRanges(markdown) {
+    const ranges = [];
+    let cursor = 0;
+    for (const [from, to] of _MarkdownUtils.fencedRanges(markdown)) {
+      ranges.push(..._MarkdownUtils.inlineCodeSpans(markdown, cursor, from));
+      ranges.push([from, to]);
+      cursor = to;
+    }
+    ranges.push(..._MarkdownUtils.inlineCodeSpans(markdown, cursor, markdown.length));
+    return ranges;
+  }
+  /**
+   * Inline code spans in markdown[from, to): a backtick run closed by the
+   * next run of the same length (CommonMark), never across a blank line.
+   */
+  static inlineCodeSpans(markdown, from, to) {
+    const segment = markdown.slice(from, to);
+    if (!segment.includes("`")) return [];
+    const runs = [...segment.matchAll(/`+/g)].map((match) => ({
+      from: match.index,
+      length: match[0].length
+    }));
+    const spans = [];
+    let i = 0;
+    while (i < runs.length) {
+      const run = runs[i];
+      let closed = false;
+      for (let j2 = i + 1; j2 < runs.length; j2++) {
+        const closer = runs[j2];
+        const between = segment.slice(run.from + run.length, closer.from);
+        if (/\n[ \t]*\n/.test(between)) break;
+        if (closer.length === run.length) {
+          spans.push([from + run.from, from + closer.from + closer.length]);
+          i = j2 + 1;
+          closed = true;
+          break;
+        }
+      }
+      if (!closed) i++;
+    }
+    return spans;
   }
   static convertMarkdownToAnchor(markdown) {
     const isObfuscated = markdown.startsWith("#");

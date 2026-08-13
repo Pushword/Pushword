@@ -516,11 +516,20 @@ export class MarkdownUtils {
    * see the post-decode normalization in convertInlineHtmlToMarkdown().
    */
   static fixer(text: string): string {
-    const spaces = '\xE2\x80\xAF|\xC2\xAD|\xC2\xA0|\u00A0|\\s'
-
     text = MarkdownUtils.makeUrlRelative(text)
 
-    text = text
+    // <code>/<pre> content is verbatim: the prose fixes below (&nbsp;,
+    // space-before-punctuation, double-space collapse) would corrupt it.
+    return text
+      .split(/(<code(?:\s[^>]*)?>[\s\S]*?<\/code>|<pre(?:\s[^>]*)?>[\s\S]*?<\/pre>)/gi)
+      .map((part, index) => (index % 2 === 1 ? part : MarkdownUtils.fixProse(part)))
+      .join('')
+  }
+
+  private static fixProse(text: string): string {
+    const spaces = '\xE2\x80\xAF|\xC2\xAD|\xC2\xA0|\u00A0|\\s'
+
+    return text
       .replace(/&nbsp;/gi, ' ')
       // Remove useless last space from inline tag
       .replace(/ <\/([a-z]+)>/gi, '</$1> ')
@@ -538,8 +547,6 @@ export class MarkdownUtils {
       .replace(/&shy;/g, '')
       // Remove double spaces
       .replace(new RegExp(`[${spaces}]{2,}`, 'gmu'), ' ')
-
-    return text
   }
 
   static convertInlineHtmlToMarkdown(html: string, cleanup = true): string {
@@ -548,18 +555,8 @@ export class MarkdownUtils {
     }
     // Decode HTML entities first (including numeric ones like &#10140;)
     html = he.decode(html)
-    // Sources stay plain: typography is render-time. Straighten what the
-    // render re-creates — same set as PageFileSerializer::normalizeTypography()
-    // on flat export. Dashes and ×/™/© stay: the render does not re-create
-    // every author-typed one, so straightening them would be lossy.
-    html = html
-      .replace(/[\u2018\u2019\u201A]/g, "'")
-      .replace(/[\u201C\u201D\u201E]/g, '"')
-      .replace(/\u2026/g, '...')
-      .replace(/[\u00A0\u202F\u2009]/g, ' ')
-      .replace(/[\u00AD\u200B\u2060\uFEFF]/g, '')
 
-    return html
+    const markdown = html
       .replace(/<(b|strong|em|i|a[^>]*)> /gi, ' <$1>')
       .replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, '</$1> ')
       .replace(/<(b|strong)(?: [^>]*)?>(.+?)<\/(b|strong)>/gi, '**$2**')
@@ -577,6 +574,98 @@ export class MarkdownUtils {
       .replace(/<br\s*\/?>/gi, '\n') // Convert <br> to newlines
       .replace(/<div>/gi, '\n') // Convert <div> (line wraps in contenteditable) to newlines
       .replace(/<\/div>/gi, '')
+
+    // Straighten AFTER the <code> conversion so code spans (converted
+    // elements and literal backticks alike) keep their bytes.
+    return MarkdownUtils.normalizeTypography(markdown)
+  }
+
+  /**
+   * Straighten typographic quotes, ellipsis and spaces so sources stay
+   * plain: typography is re-created at render time by core's Typographer.
+   * Same rules as PageFileSerializer::normalizeTypography() on flat export;
+   * keep in sync. Dashes and multiplication/trademark/copyright signs stay:
+   * the render does not re-create every author-typed one, so straightening
+   * them would be lossy. Fenced code blocks and inline code spans keep
+   * their bytes for the same reason: the Typographer never touches
+   * pre/code, so a straightened code sample would render differently
+   * forever.
+   */
+  static normalizeTypography(markdown: string): string {
+    const ranges = MarkdownUtils.codeRanges(markdown)
+    if (ranges.length === 0) return MarkdownUtils.straightenTypography(markdown)
+
+    let result = ''
+    let cursor = 0
+    for (const [from, to] of ranges) {
+      result += MarkdownUtils.straightenTypography(markdown.slice(cursor, from))
+      result += markdown.slice(from, to)
+      cursor = to
+    }
+    return result + MarkdownUtils.straightenTypography(markdown.slice(cursor))
+  }
+
+  private static straightenTypography(text: string): string {
+    return text
+      .replace(/[\u2018\u2019\u201A]/g, "'")
+      .replace(/[\u201C\u201D\u201E]/g, '"')
+      .replace(/\u2026/g, '...')
+      .replace(/[\u00A0\u202F\u2009]/g, ' ')
+      .replace(/[\u00AD\u200B\u2060\uFEFF]/g, '')
+  }
+
+  /**
+   * Character ranges covered by code, `[from, to)`: fenced blocks first,
+   * then inline code spans in the prose between them. Ordered,
+   * non-overlapping.
+   */
+  private static codeRanges(markdown: string): [number, number][] {
+    const ranges: [number, number][] = []
+    let cursor = 0
+    for (const [from, to] of MarkdownUtils.fencedRanges(markdown)) {
+      ranges.push(...MarkdownUtils.inlineCodeSpans(markdown, cursor, from))
+      ranges.push([from, to])
+      cursor = to
+    }
+    ranges.push(...MarkdownUtils.inlineCodeSpans(markdown, cursor, markdown.length))
+    return ranges
+  }
+
+  /**
+   * Inline code spans in markdown[from, to): a backtick run closed by the
+   * next run of the same length (CommonMark), never across a blank line.
+   */
+  private static inlineCodeSpans(
+    markdown: string,
+    from: number,
+    to: number,
+  ): [number, number][] {
+    const segment = markdown.slice(from, to)
+    if (!segment.includes('`')) return []
+
+    const runs = [...segment.matchAll(/`+/g)].map((match) => ({
+      from: match.index!,
+      length: match[0].length,
+    }))
+    const spans: [number, number][] = []
+    let i = 0
+    while (i < runs.length) {
+      const run = runs[i]!
+      let closed = false
+      for (let j = i + 1; j < runs.length; j++) {
+        const closer = runs[j]!
+        const between = segment.slice(run.from + run.length, closer.from)
+        if (/\n[ \t]*\n/.test(between)) break // the paragraph ended: the run is literal
+        if (closer.length === run.length) {
+          spans.push([from + run.from, from + closer.from + closer.length])
+          i = j + 1 // runs up to the closer belong to the span
+          closed = true
+          break
+        }
+      }
+      if (!closed) i++
+    }
+    return spans
   }
 
   private static convertMarkdownToAnchor(markdown: string): string {
