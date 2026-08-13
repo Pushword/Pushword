@@ -95,10 +95,11 @@
 
   {# With a modern <source> in front of it the <img> is reached only by a browser that
      took none of the offered formats, and the ladder does not exist in the source format
-     — xs/sm/lg/xl are webp-only in the default filter set, so every entry would 404. It
-     went out valueless anyway (mergeAttr() renders a `srcset` with no `=`, the macro's
-     Twig\Markup not being a scalar), so nothing is lost by saying it plainly: that
-     browser gets one `src`.
+     — xs/sm/lg/xl are webp-only in the default filter set, so every entry would 404.
+     It used to be emitted and swallowed: mergeAttr() dropped the macro's Twig\Markup as
+     a non-scalar, leaving a valueless `srcset`. piedweb/render-html-attributes v0.1.947
+     stringifies Stringable, so that accident is over and the attribute would now carry
+     the 404 ladder for real. That browser gets one `src`.
      Without a modern <source> the <img> *is* the responsive element and carries the
      ladder itself. #}
   {% if not modern_format %}

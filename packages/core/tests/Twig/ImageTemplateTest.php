@@ -213,8 +213,10 @@ final class ImageTemplateTest extends KernelTestCase
     /**
      * The <img> behind a webp <source> is only reached by a browser that supports none
      * of the offered formats. The ladder does not exist in the source format (xs/sm/lg/xl
-     * are webp-only), so it must not advertise one — it went out as a valueless `srcset`
-     * anyway, mergeAttr() dropping the macro's Twig\Markup as a non-scalar.
+     * are webp-only), so it must not advertise one. It used to be emitted and swallowed —
+     * mergeAttr() dropped the macro's Twig\Markup as a non-scalar — but since
+     * piedweb/render-html-attributes v0.1.947 stringifies Stringable, the same markup
+     * would now ship a srcset of URLs that 404.
      */
     public function testImgFallbackAdvertisesNoSrcsetBehindAModernSource(): void
     {
