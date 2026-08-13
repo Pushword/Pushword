@@ -48,12 +48,15 @@ class MarkdownParser
         private readonly ?CacheItemPoolInterface $cache = null,
         #[Autowire(service: 'cache.app')]
         private readonly ?CacheItemPoolInterface $versionCache = null,
+        #[Autowire(param: 'pw.body_image_sizes')]
+        private readonly ?string $bodyImageSizes = null,
     ) {
         $this->pushwordExtension = new PushwordExtension(
             $linkProvider,
             $mediaExtension,
             $apps,
             new Date($apps),
+            $this->bodyImageSizes,
         );
 
         $environment = new Environment();

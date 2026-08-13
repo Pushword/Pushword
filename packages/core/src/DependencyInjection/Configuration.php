@@ -230,6 +230,12 @@ final class Configuration implements ConfigurationInterface
               'Image driver: auto (vips if available, else imagick, else gd), vips, imagick, or gd',
           )
           ->end()
+          ->scalarNode('body_image_sizes')
+          ->defaultNull()
+          ->info(
+              'Optional sizes attribute for images in markdown body content. Example: "(max-width: 1023px) 100vw, 700px". If not set, defaults to "100vw". Invariant: selected image must cover at least 2x the display width to maintain quality at any DPR.',
+          )
+          ->end()
           ->scalarNode('template')
           ->defaultValue(self::DEFAULT_TEMPLATE)
           ->cannotBeEmpty()

@@ -33,6 +33,7 @@ final readonly class PushwordExtension implements ExtensionInterface
         private MediaExtension $mediaExtension,
         private SiteRegistry $apps,
         private Date $dateFilter,
+        private ?string $bodyImageSizes,
     ) {
     }
 
@@ -61,7 +62,7 @@ final readonly class PushwordExtension implements ExtensionInterface
 
         $environment->addRenderer(
             Image::class,
-            new ImageRenderer($this->mediaExtension),
+            new ImageRenderer($this->mediaExtension, $this->bodyImageSizes),
             10
         );
 

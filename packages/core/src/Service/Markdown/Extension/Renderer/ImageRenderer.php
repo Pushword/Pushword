@@ -19,6 +19,7 @@ final readonly class ImageRenderer implements NodeRendererInterface
 {
     public function __construct(
         private MediaExtension $mediaExtension,
+        private ?string $bodyImageSizes,
     ) {
     }
 
@@ -37,6 +38,7 @@ final readonly class ImageRenderer implements NodeRendererInterface
                 $src,
                 htmlspecialchars($alt),
                 link: ! $node->parent() instanceof Link,
+                sizes: $this->bodyImageSizes,
             ));
         } catch (Throwable) {
             // A body image that can't be resolved (old Drupal name, deleted file,
