@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc876](/upgrade/rc876) | `core` | typography keeps markup carrying a `>` inside an attribute intact, and typographs a `<` that opens no tag |
 | [rc875](/upgrade/rc875) | `flat` | an unchanged `pw:flat:sync` no longer bumps every page's `updatedAt` and `revision:` |
 | [rc874](/upgrade/rc874) | `core` | `pw:image:cache` in parallel no longer dies on a large media library |
 | [rc873](/upgrade/rc873) | `core` `quiz` | `fenced_code_pre_class` works for the first time; quiz images size themselves; body images size themselves inside a quiz |
