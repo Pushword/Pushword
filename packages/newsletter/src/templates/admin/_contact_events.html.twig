@@ -1,0 +1,56 @@
+{# The consent ledger: what actually happened to this subscription, oldest
+   first. The dates in the Consent panel above are the current state — this is
+   what they overwrote, and what an opt-in is defended with.
+
+   The .row > .form-column wrapper is what EasyAdmin's own fieldsets sit in — the
+   panel frame comes from `.form-column .form-fieldset`, not from the fieldset. #}
+{% set badges = {optin: 'success', confirm: 'success', resubscribe: 'success', unsubscribe: 'secondary', bounce: 'danger'} %}
+
+<div class="row">
+  <div class="form-column form-column-no-header col-12">
+    <div class="form-fieldset">
+      <div class="form-fieldset-header">
+        <div class="form-fieldset-title">
+          <span class="not-collapsible form-fieldset-title-content">
+            <i class="fa fa-clock-rotate-left form-fieldset-icon"></i> {{ 'newsletter.contact.events.title'|trans }}
+          </span>
+          <div class="form-fieldset-help">{{ 'newsletter.contact.events.help'|trans }}</div>
+        </div>
+      </div>
+
+      <div class="form-fieldset-body">
+        {% if consentEvents is empty %}
+          <p class="text-muted mb-0">{{ 'newsletter.contact.events.empty'|trans }}</p>
+        {% else %}
+          <table class="table datagrid">
+            <thead>
+              <tr>
+                <th>{{ 'newsletter.contact.events.field.occurredAt'|trans }}</th>
+                <th>{{ 'newsletter.contact.events.field.transition'|trans }}</th>
+                <th>{{ 'newsletter.contact.field.source'|trans }}</th>
+                <th>{{ 'newsletter.contact.events.field.host'|trans }}</th>
+                <th>{{ 'newsletter.contact.events.field.ip'|trans }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in consentEvents %}
+                {% set transition = event.transition.value %}
+                <tr>
+                  <td>{{ event.occurredAt|format_datetime('medium', 'short') }}</td>
+                  <td>
+                    <span class="badge badge-{{ badges[transition] }}">
+                      {{ ('newsletter.contact.events.transition.' ~ transition)|trans }}
+                    </span>
+                  </td>
+                  <td class="text-muted">{{ event.source ?? '—' }}</td>
+                  <td class="text-muted">{{ event.host ?? '—' }}</td>
+                  <td class="text-muted">{{ event.ip ?? '—' }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

@@ -7,6 +7,7 @@ use InvalidArgumentException;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Repository\AutomationDeliveryRepository;
 use Pushword\Newsletter\Repository\CampaignRecipientRepository;
+use Pushword\Newsletter\Repository\ContactEventRepository;
 use Pushword\Newsletter\Repository\EnrollmentRepository;
 
 /**
@@ -31,6 +32,7 @@ final readonly class ContactMerger
         private CampaignRecipientRepository $recipientRepository,
         private EnrollmentRepository $enrollmentRepository,
         private AutomationDeliveryRepository $deliveryRepository,
+        private ContactEventRepository $contactEventRepository,
     ) {
     }
 
@@ -111,9 +113,9 @@ final readonly class ContactMerger
     }
 
     /**
-     * Campaigns sent, drips in progress and steps delivered follow the person,
-     * so a merge costs no history — that is what makes it something other than
-     * deleting one of the two rows.
+     * Campaigns sent, drips in progress, steps delivered and the consent ledger
+     * follow the person, so a merge costs no history — that is what makes it
+     * something other than deleting one of the two rows.
      *
      * A row the keeper already has is dropped instead of moved: both unique keys
      * ({@see CampaignRecipient}'s campaign, {@see Enrollment}'s automation and
@@ -153,6 +155,15 @@ final readonly class ContactMerger
         // resolves its recipient when it sends — so every row moves.
         foreach ($this->deliveryRepository->findBy(['contact' => $absorbed]) as $delivery) {
             $delivery->moveTo($keeper);
+        }
+
+        // The consent history is the person's, not the row's, and both rows were
+        // the same person: dropping the absorbed one's would destroy the very
+        // evidence a merge is supposed to cost nothing. Nothing is forged by the
+        // move — every row still names the moment and the place it was written
+        // with, which is what {@see fill()} refuses to copy between fields.
+        foreach ($this->contactEventRepository->findFor($absorbed) as $contactEvent) {
+            $contactEvent->moveTo($keeper);
         }
     }
 

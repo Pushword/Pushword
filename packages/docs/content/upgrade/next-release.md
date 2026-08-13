@@ -1,5 +1,5 @@
 ---
-title: 'a newsletter audience, campaign or automation can be marked transactional and sent with no unsubscribe link; the static Caddyfile webp fallback needs a rebuild to fire reliably; render typography keeps quote pairs straight and a number with its unit'
+title: 'a newsletter audience, campaign or automation can be marked transactional and sent with no unsubscribe link; newsletter contacts keep a consent ledger of every opt-in, confirmation and unsubscribe; the static Caddyfile webp fallback needs a rebuild to fire reliably; render typography keeps quote pairs straight and a number with its unit'
 run: 'doctrine:schema:update --force'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
@@ -72,3 +72,13 @@ reaches fenced blocks and inline code on flat export or editor save. Nothing to 
 (`pw.media_cache_dir`, not `public_dir/media`) — constructing `LinkedDocsScanner`
 by hand needs the new `$mediaCacheDir` argument; DI sites have nothing to do. And
 the 300-second idle worker kill rc874 announced is now actually enforced.
+
+## Newsletter: a consent ledger behind the contact dates
+
+Every act that moves a subscription — opt-in, confirmation, unsubscribe, undo,
+bounce — now appends a row nobody edits or deletes, with the provenance of that
+moment, readable from *Consent history* on the contact page. The dates on the
+contact keep meaning what they meant. Run
+`php bin/console doctrine:schema:update --force` for the new table; the ledger
+starts empty for subscriptions that predate it. See
+[the newsletter doc](/extension/newsletter#the-consent-ledger).

@@ -40,6 +40,14 @@ final class ContactApiController extends AbstractApiController
      * and this is the caller saying so. The row holding the address survives —
      * it is the one the unsubscribe links are keyed on.
      */
+    /**
+     * What the consent ledger records these acts as, when the caller says
+     * nothing better: an external system, not the person. `source` on a create
+     * is the caller's to name — a shop writing `checkout` says more than this
+     * does, and it is the shop that holds the evidence behind it.
+     */
+    private const string SOURCE = 'api';
+
     private const array MERGE_PARAMETER = [
         'name' => 'merge',
         'in' => 'query',
@@ -154,7 +162,7 @@ final class ContactApiController extends AbstractApiController
                 \is_string($data['name'] ?? null) ? $data['name'] : null,
                 \is_string($data['locale'] ?? null) ? $data['locale'] : null,
                 [],
-                \is_string($data['source'] ?? null) ? $data['source'] : 'api',
+                \is_string($data['source'] ?? null) ? $data['source'] : self::SOURCE,
                 null,
                 null,
                 $requireDoubleOptIn,
@@ -209,7 +217,7 @@ final class ContactApiController extends AbstractApiController
             return $this->notFound('Contact not found');
         }
 
-        $this->contactManager->unsubscribe($contact);
+        $this->contactManager->unsubscribe($contact, self::SOURCE);
 
         return $this->respond($this->toArray($contact));
     }
@@ -222,7 +230,7 @@ final class ContactApiController extends AbstractApiController
             return $this->notFound('Contact not found');
         }
 
-        $this->contactManager->markBounced($contact);
+        $this->contactManager->markBounced($contact, self::SOURCE);
 
         return $this->respond($this->toArray($contact));
     }

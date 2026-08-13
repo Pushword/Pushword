@@ -21,8 +21,15 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\Email;
 
 /**
- * A person in an audience, and the consent ledger for them: where they opted in,
- * from which IP, when they confirmed, when they left.
+ * A person in an audience, and where their consent stands right now: where they
+ * opted in, from which IP, when they confirmed, when they left.
+ *
+ * Right now, and only that. `confirmedAt` keeps the first confirmation,
+ * `unsubscribedAt` and `bouncedAt` the last of each, and {@see optIn()} clears
+ * those two when somebody comes back — so a subscription that was left and
+ * re-opened twice shows one date. What happened, in order and with the
+ * provenance of each moment, is in {@see ContactEvent}: these fields are the
+ * state, that ledger is the evidence.
  *
  * `createdAt` is the registration date segments filter on; `customProperties`
  * holds whatever the site knows about them (`lastBoughtProduct`, …) and is
@@ -206,6 +213,10 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
      * audience asks: pending means waiting for a click on a link sent by mail,
      * and there is no mail. The burden moves to `source`, which records who
      * entered the number — the same evidence a hand-made opt-in already owes.
+     *
+     * The two dates cleared here are what the last withdrawal left; the row
+     * {@see \Pushword\Newsletter\Service\ContactManager::subscribe()} appends
+     * next to this call is what keeps them.
      */
     public function optIn(bool $requireDoubleOptIn): self
     {

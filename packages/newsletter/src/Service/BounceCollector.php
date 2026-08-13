@@ -34,6 +34,9 @@ use Webklex\PHPIMAP\ClientManager;
  */
 final readonly class BounceCollector
 {
+    /** What the consent ledger records a drop from here as: a mail server's refusal, read back. */
+    private const string SOURCE = 'mailbox';
+
     public function __construct(
         private ContactRepository $contactRepository,
         private ContactManager $contactManager,
@@ -182,7 +185,7 @@ final readonly class BounceCollector
             ++$marked;
 
             if (! $dryRun) {
-                $this->contactManager->markBounced($contact);
+                $this->contactManager->markBounced($contact, self::SOURCE);
             }
         }
 

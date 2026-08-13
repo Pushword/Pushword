@@ -142,6 +142,21 @@ newsletter:
       optInAnother: Ajouter à une autre liste
       resubscribe: Réinscrire
       unsubscribe: Désinscrire
+    events:
+      empty: Rien d'enregistré. Cette inscription est antérieure au journal, ou a été écrite directement en base.
+      field:
+        host: Hôte
+        ip: IP
+        occurredAt: Quand
+        transition: Quoi
+      help: Ce qui est réellement arrivé à cette inscription, du plus ancien au plus récent. Rien n'y est jamais modifié ni supprimé. Les dates de Consentement disent où en sont les choses ; ceci dit comment on y est arrivé, et c'est avec ça qu'une inscription se défend.
+      title: Journal de consentement
+      transition:
+        bounce: Rejeté
+        confirm: Confirmé
+        optin: Inscrit
+        resubscribe: Réinscrit
+        unsubscribe: Désinscrit
     fieldset:
       consent: Consentement
       identity: Identité

@@ -142,6 +142,21 @@ newsletter:
       optInAnother: Add to another list
       resubscribe: Put back on the list
       unsubscribe: Unsubscribe
+    events:
+      empty: Nothing recorded. This subscription is older than the ledger, or was written straight into the database.
+      field:
+        host: Host
+        ip: IP
+        occurredAt: When
+        transition: What
+      help: What actually happened to this subscription, oldest first. Nothing here is ever edited or removed. The dates in Consent hold where things stand; this holds how they got there, which is what an opt-in is defended with.
+      title: Consent history
+      transition:
+        bounce: Bounced
+        confirm: Confirmed
+        optin: Opted in
+        resubscribe: Put back
+        unsubscribe: Unsubscribed
     fieldset:
       consent: Consent
       identity: Identity

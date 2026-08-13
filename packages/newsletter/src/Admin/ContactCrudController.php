@@ -27,6 +27,7 @@ use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Repository\AudienceRepository;
 use Pushword\Newsletter\Repository\ClickEventRepository;
+use Pushword\Newsletter\Repository\ContactEventRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Service\ContactManager;
 use Pushword\Newsletter\Service\ContactMerger;
@@ -51,6 +52,7 @@ class ContactCrudController extends AbstractCrudController
         private readonly ContactRepository $contactRepository,
         private readonly AudienceRepository $audienceRepository,
         private readonly ClickEventRepository $clickEventRepository,
+        private readonly ContactEventRepository $contactEventRepository,
         private readonly AdminUrlGenerator $adminUrlGenerator,
         private readonly EntityManagerInterface $entityManager,
     ) {
@@ -197,7 +199,11 @@ class ContactCrudController extends AbstractCrudController
         yield DateTimeField::new('bouncedAt', 'newsletter.contact.field.bouncedAt')->onlyOnDetail();
     }
 
-    /** Every list this address is on, so the edit page shows the person and not only one of their subscriptions. */
+    /**
+     * Every list this address is on, so the edit page shows the person and not
+     * only one of their subscriptions — and the consent ledger of the one being
+     * read, which is the screen an opt-in is defended from.
+     */
     #[Override]
     public function configureResponseParameters(KeyValueStore $responseParameters): KeyValueStore
     {
@@ -206,6 +212,7 @@ class ContactCrudController extends AbstractCrudController
         if ($contact instanceof Contact) {
             $responseParameters->set('subscriptions', $this->subscriptionsOf($contact));
             $responseParameters->set('mergeCandidate', $this->mergeCandidate($contact));
+            $responseParameters->set('consentEvents', $this->contactEventRepository->findFor($contact));
         }
 
         return $responseParameters;
@@ -323,7 +330,7 @@ class ContactCrudController extends AbstractCrudController
         $contact = $this->contact();
 
         if ($contact instanceof Contact) {
-            $this->contactManager->confirm($contact);
+            $this->contactManager->confirm($contact, source: $this->adminSource());
             $this->addFlash('success', 'newsletter.contact.flash.confirmed');
         }
 
@@ -380,7 +387,7 @@ class ContactCrudController extends AbstractCrudController
         $contact = $this->contact();
 
         if ($contact instanceof Contact) {
-            $this->contactManager->unsubscribe($contact);
+            $this->contactManager->unsubscribe($contact, $this->adminSource());
             $this->addFlash('success', 'newsletter.contact.flash.unsubscribed');
         }
 
@@ -393,7 +400,7 @@ class ContactCrudController extends AbstractCrudController
         $contact = $this->contact();
 
         if ($contact instanceof Contact) {
-            $this->contactManager->resubscribe($contact);
+            $this->contactManager->resubscribe($contact, $this->adminSource());
             $this->addFlash('success', 'newsletter.contact.flash.resubscribed');
         }
 
@@ -428,9 +435,7 @@ class ContactCrudController extends AbstractCrudController
             return new RedirectResponse($this->optInUrl($email, $phone));
         }
 
-        // Who added the row is the evidence a hand-made opt-in owes: "admin" alone
-        // says a human did it, not which one.
-        $source = mb_substr('admin:'.($this->getUser()?->getUserIdentifier() ?? ''), 0, 120);
+        $source = $this->adminSource();
 
         try {
             $contact = $this->contactManager->subscribe(
@@ -468,6 +473,19 @@ class ContactCrudController extends AbstractCrudController
             'url' => $this->editUrl($subscription),
             'current' => $subscription->id === $contact->id,
         ], $this->contactRepository->findAllByEmail($contact->email));
+    }
+
+    /**
+     * Who acted, as the consent ledger records it: "admin" alone says a human
+     * did it, not which one — and it is the evidence a hand-made opt-in owes.
+     *
+     * It is all these paths ever record. An editor's own host and IP are theirs,
+     * and writing them where the contact's belong would produce, for anyone
+     * reading the ledger later, a consent given from an office chair.
+     */
+    private function adminSource(): string
+    {
+        return mb_substr('admin:'.($this->getUser()?->getUserIdentifier() ?? ''), 0, 120);
     }
 
     private function contact(): ?Contact

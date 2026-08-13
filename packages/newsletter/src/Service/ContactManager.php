@@ -10,6 +10,7 @@ use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\AutomationDelivery;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Entity\ContactEvent;
 use Pushword\Newsletter\Repository\AutomationDeliveryRepository;
 use Pushword\Newsletter\Repository\CampaignRecipientRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
@@ -21,6 +22,13 @@ use Pushword\Newsletter\Repository\EnrollmentRepository;
  * Subscribing is idempotent: a second submission of an address already on the
  * list updates what it knows about the person and never re-opens a confirmation
  * they already answered. Leaving is terminal until the person opts in again.
+ *
+ * Because it is the single place, it is also where the history is written: every
+ * method below that moves a subscription appends a {@see ContactEvent}, so the
+ * dates on the contact stay the current state and the ledger keeps what they
+ * overwrite. Each takes the provenance of *that* act — the page, the link, the
+ * editor, the API, the bounce mailbox — rather than reusing the opt-in's, which
+ * would date the evidence to the wrong moment.
  */
 final readonly class ContactManager
 {
@@ -104,13 +112,15 @@ final readonly class ContactManager
 
         // Provenance is written on the first opt-in and on any re-opt-in, never
         // on a repeat submission by someone already subscribed: the evidence
-        // must point at the moment consent was actually given.
+        // must point at the moment consent was actually given. Which is also why
+        // a repeat submission appends no row — nothing about the consent moved.
         $reopening = $isNew || ! $contact->isSubscribed();
         if ($reopening) {
             $contact->source = $source;
             $contact->optinHost = $optinHost;
             $contact->optinIp = $optinIp;
             $contact->optIn($requireDoubleOptIn);
+            $this->entityManager->persist(ContactEvent::optIn($contact, $source, $optinHost, $optinIp));
         }
 
         // Send before flushing: a transport refusing the address (a typo most
@@ -153,7 +163,7 @@ final readonly class ContactManager
      * pending — clicking that link expresses it either way — and never
      * overwriting an earlier date: the first consent is the one that dates it.
      */
-    public function confirm(Contact $contact, bool $clickTrackingConsent = false): void
+    public function confirm(Contact $contact, bool $clickTrackingConsent = false, ?string $source = null, ?string $host = null, ?string $ip = null): void
     {
         if ($clickTrackingConsent) {
             $contact->clickTrackingConsentAt ??= new DateTimeImmutable();
@@ -161,18 +171,20 @@ final readonly class ContactManager
 
         if ($contact->isPending()) {
             $contact->confirm();
+            $this->entityManager->persist(ContactEvent::confirmed($contact, $source, $host, $ip));
         }
 
         $this->entityManager->flush();
     }
 
-    public function unsubscribe(Contact $contact): void
+    public function unsubscribe(Contact $contact, ?string $source = null): void
     {
         if (null !== $contact->unsubscribedAt) {
             return;
         }
 
         $contact->unsubscribe();
+        $this->entityManager->persist(ContactEvent::unsubscribed($contact, $source));
         $this->attributeToLastMail($contact, 'unsub');
         $this->stopEnrollments($contact);
         $this->entityManager->flush();
@@ -189,13 +201,14 @@ final readonly class ContactManager
      * A bounced address is not revived this way. The mail server refused it; a
      * click says nothing about that.
      */
-    public function resubscribe(Contact $contact): void
+    public function resubscribe(Contact $contact, ?string $source = null, ?string $host = null, ?string $ip = null): void
     {
         if (null === $contact->unsubscribedAt || null !== $contact->bouncedAt) {
             return;
         }
 
         $contact->optIn(false);
+        $this->entityManager->persist(ContactEvent::resubscribed($contact, $source, $host, $ip));
 
         // The campaign credited with the opt-out gets its count back. It is the
         // same row `unsubscribe()` picked: nothing was sent to them in between —
@@ -210,13 +223,14 @@ final readonly class ContactManager
     }
 
     /** A permanent delivery failure: the address leaves every future segment. */
-    public function markBounced(Contact $contact): void
+    public function markBounced(Contact $contact, ?string $source = null): void
     {
         if (null !== $contact->bouncedAt) {
             return;
         }
 
         $contact->markBounced();
+        $this->entityManager->persist(ContactEvent::bounced($contact, $source));
         $this->attributeToLastMail($contact, 'bounce');
         $this->stopEnrollments($contact);
         $this->entityManager->flush();

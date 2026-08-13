@@ -31,6 +31,14 @@ final class NewsletterController extends AbstractController
     /** A honeypot input real people never see, and never fill. */
     private const string HONEYPOT_FIELD = 'website';
 
+    /**
+     * What the consent ledger records these acts as: the person, through a token
+     * link that reached their mailbox and nowhere else. It is the strongest
+     * provenance the bundle writes, and what tells these rows apart from the
+     * ones an editor or an API client leaves.
+     */
+    private const string LINK_SOURCE = 'link';
+
     /** Subscriptions accepted from one IP per hour. */
     private const int RATE_LIMIT = 10;
 
@@ -229,6 +237,9 @@ final class NewsletterController extends AbstractController
         $this->contactManager->confirm(
             $contact,
             'pushword_newsletter_confirm_tracking' === $request->attributes->get('_route') && $this->clicked($request),
+            self::LINK_SOURCE,
+            $request->getHost(),
+            $request->getClientIp(),
         );
 
         return $this->page('confirmed.html.twig', $contact);
@@ -264,7 +275,7 @@ final class NewsletterController extends AbstractController
             return $this->page('unsubscribe.html.twig', $contact);
         }
 
-        $this->contactManager->unsubscribe($contact);
+        $this->contactManager->unsubscribe($contact, self::LINK_SOURCE);
 
         return $this->unsubscribed($contact);
     }
@@ -302,7 +313,7 @@ final class NewsletterController extends AbstractController
         requirements: ['token' => '[a-f0-9]{64}'],
         methods: ['POST'],
     )]
-    public function resubscribe(string $token): Response
+    public function resubscribe(string $token, Request $request): Response
     {
         $contact = $this->contactRepository->findOneByToken($token);
 
@@ -310,7 +321,7 @@ final class NewsletterController extends AbstractController
             return $this->page('unknown.html.twig', null, Response::HTTP_NOT_FOUND);
         }
 
-        $this->contactManager->resubscribe($contact);
+        $this->contactManager->resubscribe($contact, self::LINK_SOURCE, $request->getHost(), $request->getClientIp());
 
         return $this->page('resubscribed.html.twig', $contact);
     }
@@ -344,7 +355,7 @@ final class NewsletterController extends AbstractController
         // slugs decide nothing, they only pick from what the token may touch.
         foreach ($this->contactRepository->findSubscribedSiblings($contact) as $sibling) {
             if ($all || \in_array($sibling->audience->slug, $submitted, true)) {
-                $this->contactManager->unsubscribe($sibling);
+                $this->contactManager->unsubscribe($sibling, self::LINK_SOURCE);
             }
         }
 

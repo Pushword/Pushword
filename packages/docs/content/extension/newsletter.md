@@ -208,6 +208,37 @@ All public links (confirm, unsubscribe) are built from the audience host's
 `base_live_url`, so they keep working when the site itself is statically
 generated.
 
+### The consent ledger
+
+The dates on a contact say where things stand. `confirmedAt` keeps the first
+confirmation, `unsubscribedAt` and `bouncedAt` the last of each, and a new
+opt-in clears those two — so somebody who subscribed, left, came back and left
+again shows one departure. That is a state, and article 7(1) GDPR asks for
+something else: that the site be able to *demonstrate* consent was given.
+
+Every act that moves a subscription therefore appends a row nobody edits and
+nobody deletes — **opted in**, **confirmed**, **unsubscribed**, **put back**,
+**bounced** — each with when it happened and where it came from. The *Consent
+history* panel on the contact page reads them oldest first; it is what a
+complaint is answered with.
+
+Provenance is that moment's, never the subscription's: the page slug or the
+`source` a caller sent for an opt-in, `link` for anything done through a token
+link in a mail, `admin:<user>` for an editor, `api`, `mailbox` for an address a
+mail server refused. **Only the acts that give consent carry a host and an IP** —
+they are what a disputed opt-in is answered with, and nobody ever asks a site to
+prove somebody left. An editor confirming a contact by hand records neither: the
+IP would be the editor's, and reading it back later as the contact's is worse
+than having none.
+
+Two consequences worth knowing. A **merge** moves the absorbed row's history
+onto the survivor — both rows were the same person, and a merge that dropped
+half the evidence would be a deletion wearing another name. **Deleting a
+contact** takes their ledger with it, which is what an erasure request means.
+
+The ledger starts at the release that introduced it: subscriptions older than
+that show an empty panel, and their contact dates remain all there is.
+
 ### Mail with no way out
 
 Some mail is not a newsletter. An order confirmation, a booking reminder, a
@@ -294,10 +325,11 @@ It keeps its id, its token, its status and its consent dates, and it gains:
   the kept row is not overruled,
 - the tags, added to its own,
 - the custom properties it was missing,
-- every campaign, enrollment and drip step either row was sent. A merge costs no
-  history; that is what makes it something other than deleting a row. Where both
-  rows have a line for the same campaign or the same run of an automation, the
-  kept row's own line stays and the duplicate goes.
+- every campaign, enrollment and drip step either row was sent, and both
+  [consent ledgers](#the-consent-ledger). A merge costs no history; that is what
+  makes it something other than deleting a row. Where both rows have a line for
+  the same campaign or the same run of an automation, the kept row's own line
+  stays and the duplicate goes.
 
 Only an addressed row and a phone-only row can be joined. **Two addresses are two
 people** until somebody says otherwise, and no rule can pick which of the two
