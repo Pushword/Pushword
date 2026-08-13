@@ -35,11 +35,11 @@ function isEditor() {
 }
 
 export function restoreUnpublishedLinks() {
-  const spans = document.querySelectorAll('span[data-status="unpublished"][data-href]')
-  if (spans.length === 0) return
+  // Cookie first: nearly every visit is anonymous, and a string split is cheaper
+  // than walking the document for an attribute selector that will match nothing.
   if (!isEditor()) return
 
-  spans.forEach((span) => {
+  document.querySelectorAll('span[data-status="unpublished"][data-href]').forEach((span) => {
     const a = document.createElement('a')
     a.href = span.dataset.href
     a.innerHTML = span.innerHTML
