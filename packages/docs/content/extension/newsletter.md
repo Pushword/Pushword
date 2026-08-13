@@ -265,6 +265,20 @@ no confirmation of its own to send. Such a contact reaches the second list when
 they answer the first one's — which a listener on the transition to `subscribed`
 handles, not the batch.
 
+Anything else is refused rather than worked around: a contact who is not
+subscribed, and a target that is the list they are already on. Both throw
+`InvalidArgumentException` — the second because, left to the idempotence lookup,
+a mistyped audience would hand back the origin contact itself and read as a
+success.
+
+**A long run owes one re-check.** A batch resolves its subscribed set up front,
+and somebody who leaves while it is still running will throw on their turn.
+That is the right outcome — they just withdrew, and no row should be made for
+them — so test `isSubscribed()` immediately before the call and catch per
+contact, counting what you skipped. A run that reports "18 withdrew mid-pass"
+is worth more than one that dies, and worth much more than one that quietly
+carries them over.
+
 ### Mail with no way out
 
 Some mail is not a newsletter. An order confirmation, a booking reminder, a
