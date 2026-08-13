@@ -42,8 +42,11 @@ class MediaExtension
      * @param string|null           $sizes       the `sizes` attribute, carried by whichever
      *                                           element holds the srcset — the modern <source>,
      *                                           or the <img> when there is none; defaults to
-     *                                           100vw. Passing it through $attr cannot work —
-     *                                           see the note in component/image.html.twig
+     *                                           100vw. A `sizes` spelled inside $attr is
+     *                                           honoured too, for the callers written before
+     *                                           this argument existed, but only this one
+     *                                           reaches the <source> by design — see the note
+     *                                           in component/image.html.twig
      */
     #[AsTwigFunction('image', isSafe: ['html'])]
     public function renderImage(
