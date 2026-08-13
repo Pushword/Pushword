@@ -94,6 +94,23 @@ final class ImageTemplateTest extends KernelTestCase
     }
 
     /**
+     * Every other test here renders the component directly, handing it a `sizes`
+     * variable — which passes even when `image()` itself has no parameter to carry
+     * one. A site upgrading found out the hard way: `Unknown argument "sizes" for
+     * function "image(...)"`, a 500 on every page with an image. This pins the
+     * argument name callers spell, and the wiring down to the attribute.
+     */
+    public function testImageFunctionTakesSizesAsANamedArgument(): void
+    {
+        $twig = $this->getTwig();
+
+        $html = $twig->createTemplate("{{ image(media, sizes: '(max-width: 767px) 100vw, 700px') }}")
+            ->render(['media' => $this->createMedia()]);
+
+        self::assertStringContainsString('sizes="(max-width: 767px) 100vw, 700px"', $html);
+    }
+
+    /**
      * The whole point of `sizes`: every browser that understands webp takes the
      * <source> and never looks at the <img>, so a `sizes` reaching only the <img>
      * is dead on arrival — which is what a caller passing it through image_attr used

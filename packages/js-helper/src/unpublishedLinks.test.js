@@ -72,6 +72,21 @@ describe('restoreUnpublishedLinks', () => {
     document.cookie = 'not_pw_auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
   })
 
+  // A real editor's jar is never a single cookie: the session, the consent choice
+  // and pw_auth sit side by side, so the entry has to be found among the others.
+  it('finds pw_auth among other cookies', () => {
+    makeSpan()
+    document.cookie = 'not_pw_auth=1'
+    document.cookie = 'pw_auth=1'
+    document.cookie = 'consent=all'
+
+    restoreUnpublishedLinks()
+
+    expect(document.querySelector('a')).not.toBeNull()
+    document.cookie = 'not_pw_auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    document.cookie = 'consent=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+  })
+
   it('is a no-op when the page carries no unpublished link', () => {
     document.cookie = 'pw_auth=1'
 
