@@ -1,14 +1,8 @@
 ---
-title: 'an unchanged `pw:flat:sync` no longer bumps every page''s `updatedAt` and `revision:`'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
-
-**Concerns:** `pushword/flat`
-
-## A no-op `pw:flat:sync` leaves pages untouched
-
-Re-importing a file whose dates the database already holds no longer marks the page as updated, so an unchanged sync stops bumping `updatedAt` on every page of the host and rewriting every `.md` with a new `revision:` stamp. Nothing to do — but note that displayed "updated on" dates and JSON-LD `dateModified` stop announcing the last sync's date; past real edit dates, where overwritten, remain in your content files' git history.
 
 <!--
 The upgrade note for the next release. `.scripts/release` renames this file to
