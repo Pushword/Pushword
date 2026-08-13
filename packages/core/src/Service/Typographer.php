@@ -26,6 +26,15 @@ final class Typographer
     /** Tags whose content must stay untouched. */
     private const array PROTECTED_TAGS = ['pre' => true, 'code' => true, 'script' => true, 'style' => true, 'svg' => true, 'math' => true, 'textarea' => true, 'template' => true];
 
+    /**
+     * A comment, or a tag. Quoted attribute values are consumed whole because
+     * they may themselves contain `>` (templates pass entire HTML fragments
+     * through `data-*` attributes); stopping at the first `>` would leak the
+     * rest of the tag into the text stream, where SmartQuotes turns the
+     * remaining attribute delimiters into guillemets and breaks the markup.
+     */
+    private const string MARKUP = '#(<!--.*?-->|<[a-zA-Z/!?][^>"\']*+(?:(?:"[^"]*+"|\'[^\']*+\')[^>"\']*+)*+>)#s';
+
     /** @var array<string, array{string, string, string, string}> opening, opening suffix, closing, closing prefix */
     private const array QUOTE_STYLES = [
         'double' => ['“', '', '”', ''],
@@ -56,12 +65,17 @@ final class Typographer
             return $this->applyRules($text, $locale);
         }
 
-        $parts = preg_split('#(<!--.*?-->|<[^>]*>)#s', $text, -1, \PREG_SPLIT_DELIM_CAPTURE | \PREG_SPLIT_NO_EMPTY) ?: throw new Exception();
+        // Without NO_EMPTY the split alternates strictly text, markup, text…,
+        // so the odd indexes are the captured markup — a `<` opening a text
+        // part (`a < b`, `<3`) must not be mistaken for a tag.
+        $parts = preg_split(self::MARKUP, $text, -1, \PREG_SPLIT_DELIM_CAPTURE) ?: throw new Exception();
         $protectedDepth = 0;
         $fixed = '';
 
-        foreach ($parts as $part) {
-            if ('<' === $part[0]) {
+        foreach ($parts as $i => $part) {
+            $isMarkup = 1 === $i % 2;
+
+            if ($isMarkup) {
                 if (1 === preg_match('#^<(/?)([a-zA-Z0-9-]+)#', $part, $match) && isset(self::PROTECTED_TAGS[strtolower($match[2])])) {
                     if ('/' === $match[1]) {
                         $protectedDepth = max(0, $protectedDepth - 1);

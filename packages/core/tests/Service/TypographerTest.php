@@ -136,10 +136,12 @@ final class TypographerTest extends TestCase
 
     public function testMarkupBytesArePreserved(): void
     {
-        $html = '<div  class="a"><a href="/l\'apostrophe" title="l\'x">l\'y</a><!--break--><img src="/a.jpg"/></div>';
+        // The comment holds a `>` and a pair of quotes: it must be recognised as a
+        // comment, never parsed as a tag
+        $html = '<div  class="a"><a href="/l\'apostrophe" title="l\'x">l\'y</a><!-- a > b "c" --><img src="/a.jpg"/></div>';
         $fixed = $this->typographer->fix($html, 'fr');
 
-        self::assertSame('<div  class="a"><a href="/l\'apostrophe" title="l\'x">l’y</a><!--break--><img src="/a.jpg"/></div>', $fixed);
+        self::assertSame('<div  class="a"><a href="/l\'apostrophe" title="l\'x">l’y</a><!-- a > b "c" --><img src="/a.jpg"/></div>', $fixed);
     }
 
     public function testIdempotent(): void
@@ -148,6 +150,7 @@ final class TypographerTest extends TestCase
             ['fr', "<p>Il a dit &quot;bonjour&quot; a l'ami : vrai ! 30 x 40 (c) 2026...</p>"],
             ['de-CH', '<p>Er sagte &quot;hallo&quot; ! 3x4</p>'],
             ['en', '<p>He said &quot;hi&quot; : yes !...</p>'],
+            ['fr', '<div data-arrow="<div class=\'s\'>x</div>"><p>l\'ete &quot;a&quot;</p></div>'],
         ];
 
         foreach ($inputs as [$locale, $input]) {
@@ -179,5 +182,32 @@ final class TypographerTest extends TestCase
     public function testUnpairedQuoteUntouched(): void
     {
         self::assertSame('<p>a &quot;b</p>', $this->typographer->fix('<p>a &quot;b</p>', 'en'));
+    }
+
+    /** A `data-*` attribute carrying a whole HTML fragment stays one tag. */
+    public function testMarkupInsideAttributeValue(): void
+    {
+        $html = '<div class="prose" data-arrow="<div class=\'s\'>x</div><div class=\'g\'></div>" data-fadeout="<div class=\'f\'></div>">'
+            ."<p>l'ete</p></div>";
+
+        self::assertSame(
+            '<div class="prose" data-arrow="<div class=\'s\'>x</div><div class=\'g\'></div>" data-fadeout="<div class=\'f\'></div>"><p>l’ete</p></div>',
+            $this->typographer->fix($html, 'fr')
+        );
+
+        // Same, with the quote flavours swapped
+        self::assertSame(
+            '<div data-x=\'<p class="a">y</p>\'><p>l’ete</p></div>',
+            $this->typographer->fix('<div data-x=\'<p class="a">y</p>\'>'."<p>l'ete</p></div>", 'fr')
+        );
+    }
+
+    public function testLoneAngleBracketInTextIsStillTypographed(): void
+    {
+        self::assertSame('<p>a < b, l’ete</p>', $this->typographer->fix("<p>a < b, l'ete</p>", 'fr'));
+        self::assertSame(
+            '<p>je <3 les «'.self::NBSP.'chats'.self::NBSP.'»</p>',
+            $this->typographer->fix('<p>je <3 les "chats"</p>', 'fr')
+        );
     }
 }

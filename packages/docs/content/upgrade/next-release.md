@@ -1,8 +1,16 @@
 ---
-title: ''
+title: 'typography keeps markup carrying a `>` inside an attribute intact, and typographs a `<` that opens no tag'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
+
+**Concerns:** `pushword/core`
+
+## Typography no longer breaks tags with a `>` in an attribute
+
+A tag whose attribute value contains a `>` — a `data-*` carrying an HTML fragment, most often — was cut in two by the render-time typographic pass, and the rest of the tag came out as prose, quotes turned into guillemets. It stays intact now. Symmetrically, a `<` that opens no tag (`a < b`, `<3`) is typographed as the prose it is instead of being swallowed as markup.
+
+**Affects any site whose templates or content hold a `>` inside an attribute value, or a bare `<` in prose.** Nothing to install; re-render to pick it up, with `pw:cache:clear` if you run in `cache:static` mode and `pw:static` if you publish statically.
 
 <!--
 The upgrade note for the next release. `.scripts/release` renames this file to
