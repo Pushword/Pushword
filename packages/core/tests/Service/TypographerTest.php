@@ -145,6 +145,23 @@ final class TypographerTest extends TestCase
         );
     }
 
+    public function testRawTextCaseAttributesAndUnclosedForms(): void
+    {
+        // Case-insensitive, attributes crossed, empty body
+        self::assertSame(
+            '<SCRIPT TYPE="module" data-x="a>b">if(i<n)f()</SCRIPT><p>l’un</p>',
+            $this->typographer->fix('<SCRIPT TYPE="module" data-x="a>b">if(i<n)f()</SCRIPT>'."<p>l'un</p>", 'fr')
+        );
+        self::assertSame(
+            '<script src="/a.js"></script><p>l’un</p>',
+            $this->typographer->fix('<script src="/a.js"></script>'."<p>l'un</p>", 'fr')
+        );
+
+        // An unclosed script owns the rest of the document (HTML5 raw text)
+        $unclosed = "<p>l’un</p><script>if(i<n)f(<p>l'x</p>";
+        self::assertSame($unclosed, $this->typographer->fix($unclosed, 'fr'));
+    }
+
     public function testSingleQuotePairStaysStraight(): void
     {
         // No letter follows the closing apostrophe: curling only one side
@@ -154,6 +171,9 @@ final class TypographerTest extends TestCase
             $this->typographer->fix("<p>He said 'hello' to all, rock 'n' roll</p>", 'en')
         );
         self::assertSame("<p>He said 'hello'</p>", $this->typographer->fix("<p>He said 'hello'</p>", 'en'));
+
+        // Only a letter opens an in-word apostrophe (JoliTypo parity)
+        self::assertSame("<p>the 80's</p>", $this->typographer->fix("<p>the 80's</p>", 'en'));
     }
 
     public function testElisionBeforeAnOpeningTagOrQuoteCurls(): void
