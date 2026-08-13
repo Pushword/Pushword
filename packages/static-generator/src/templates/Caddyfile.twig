@@ -77,17 +77,19 @@
 {% if image_fallback_order is defined and image_fallback_order.webp_fallback|length > 0 %}
 	# Image Format Fallback (webp to available format)
 	# WebP fallback: if .webp doesn't exist, try {{ image_fallback_order.webp_fallback|join(', ') }}.
-	# The `file` submatcher requires an original-format candidate to actually exist and
-	# records which one in {http.matchers.file.relative} — a genuine miss keeps its URI
-	# intact for downstream handling (a reverse_proxy fallback, handle_errors).
+	# Caddy evaluates the matchers of one named set in non-deterministic order (a Go map
+	# walk, caddyserver/caddy#6904), so no matcher may read {re.webp.1} from its
+	# path_regexp sibling — the capture-dependent probing lives in the try_files
+	# directive instead, which runs after the whole set has matched, when the capture is
+	# reliably set. A genuine miss falls through to {path}, keeping the URI intact for
+	# downstream handling (a reverse_proxy fallback, handle_errors).
 	@webp_fallback {
 		path_regexp webp ^/media/(.+)\.webp$
 		not file {path}
-		file {
-			try_files /media/{re.webp.1}.jpg /media/{re.webp.1}.jpeg /media/{re.webp.1}.png /media/{re.webp.1}.gif
-		}
 	}
-	rewrite @webp_fallback {http.matchers.file.relative}
+	route @webp_fallback {
+		try_files /media/{re.webp.1}.jpg /media/{re.webp.1}.jpeg /media/{re.webp.1}.png /media/{re.webp.1}.gif {path}
+	}
 {% endif %}
 
 	# Error pages (localized 404.html for URLs under /{locale}/)

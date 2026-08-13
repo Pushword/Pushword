@@ -585,13 +585,15 @@ final class StaticGeneratorTest extends KernelTestCase
     }
 
     /**
-     * The webp fallback used to rewrite EVERY missing .webp to a placeholder that
-     * resolves empty ({http.request.uri.path_regexp.1}): /media/sm/x.webp became
-     * /media/sm/x, an URI nothing downstream (a reverse_proxy fallback,
-     * handle_errors) could ever resolve. The rule must only fire when an
-     * original-format candidate actually exists, and rewrite to that candidate.
+     * Caddy evaluates the matchers of one named set in non-deterministic order (a Go
+     * map walk, caddyserver/caddy#6904), so a `file` submatcher reading {re.webp.1}
+     * from its path_regexp sibling probes garbage (/media/.jpg) on the config loads
+     * where it evaluates first, and the fallback goes silently inert. The
+     * capture-dependent probing must live in a directive guarded by the matcher —
+     * directives run after the whole set has matched, when the capture is reliably
+     * set — and a missing original must keep the URI intact for handle_errors.
      */
-    public function testCaddyfileWebpFallbackOnlyRewritesToAnExistingOriginal(): void
+    public function testCaddyfileWebpFallbackProbesOriginalsOutsideTheMatcherSet(): void
     {
         self::bootKernel();
         $this->overrideStaticDir();
@@ -600,13 +602,26 @@ final class StaticGeneratorTest extends KernelTestCase
 
         $caddyfile = (string) file_get_contents($this->getStaticDir().'/.Caddyfile');
 
-        self::assertStringContainsString('@webp_fallback', $caddyfile);
-        self::assertStringContainsString('try_files /media/{re.webp.1}.jpg', $caddyfile);
-        self::assertStringContainsString('rewrite @webp_fallback {http.matchers.file.relative}', $caddyfile);
+        // The named matcher uses only the request's own placeholders, never a sibling's capture.
+        self::assertStringContainsString(
+            "\t@webp_fallback {\n\t\tpath_regexp webp ^/media/(.+)\\.webp\$\n\t\tnot file {path}\n\t}\n",
+            $caddyfile,
+        );
+        // The probing runs as a try_files directive, ending with {path} so a genuine
+        // miss keeps its .webp URI instead of rewriting to a mangled one.
+        self::assertStringContainsString(
+            "\troute @webp_fallback {\n\t\ttry_files /media/{re.webp.1}.jpg /media/{re.webp.1}.jpeg /media/{re.webp.1}.png /media/{re.webp.1}.gif {path}\n\t}\n",
+            $caddyfile,
+        );
+        self::assertStringNotContainsString(
+            'rewrite @webp_fallback',
+            $caddyfile,
+            'A rewrite reading {http.matchers.file.relative} implies the file submatcher shape this test pins out.',
+        );
         self::assertStringNotContainsString(
             '{http.request.uri.path_regexp',
             $caddyfile,
-            'The extension-stripping placeholder is the regression this test pins down.',
+            'The extension-stripping placeholder is an older regression this test also pins down.',
         );
     }
 
