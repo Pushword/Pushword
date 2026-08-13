@@ -87,6 +87,7 @@ final class LinkedDocsScanner extends AbstractScanner
         private readonly SiteRegistry $siteRegistry,
         private readonly array $linksToIgnore,
         private readonly string $publicDir,
+        private readonly string $mediaCacheDir,
         TranslatorInterface $translator,
         private readonly ?CacheInterface $externalUrlCache = null,
         private readonly int $externalUrlCacheTtl = 86400,
@@ -734,7 +735,9 @@ final class LinkedDocsScanner extends AbstractScanner
             return null; // not a filter-prefixed URL: originals are not plain files on disk
         }
 
-        $path = $this->publicDir.'/media/'.$mediaSlug;
+        // Derivatives are written to pw.media_cache_dir (its default lives under
+        // public_dir, but a site may relocate it): <cache dir>/<filter>/<file>.
+        $path = $this->mediaCacheDir.'/'.$mediaSlug;
         if (! file_exists($path)) {
             return 'page_scanDerivativeMissing';
         }

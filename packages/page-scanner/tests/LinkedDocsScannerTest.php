@@ -24,13 +24,17 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[Group('integration')]
 final class LinkedDocsScannerTest extends KernelTestCase
 {
-    private function createScanner(?string $publicDir = null, ?CacheInterface $externalUrlCache = null): LinkedDocsScanner
+    private function createScanner(?string $publicDir = null, ?CacheInterface $externalUrlCache = null, ?string $mediaCacheDir = null): LinkedDocsScanner
     {
+        $publicDir ??= __DIR__.'/../../dev-app/public';
+
         return new LinkedDocsScanner(
             self::getContainer()->get('doctrine.orm.default_entity_manager'),
             self::getContainer()->get(SiteRegistry::class),
             [],
-            $publicDir ?? __DIR__.'/../../dev-app/public',
+            $publicDir,
+            // Mirrors the pw.media_cache_dir default: %pw.public_dir%/%pw.public_media_dir%
+            $mediaCacheDir ?? $publicDir.'/media',
             self::getContainer()->get('translator'),
             $externalUrlCache,
         );
@@ -329,6 +333,57 @@ final class LinkedDocsScannerTest extends KernelTestCase
             self::assertSame([], $errors);
         } finally {
             $filesystem->remove($publicDir);
+        }
+    }
+
+    /**
+     * Derivatives are written to pw.media_cache_dir, which a site may relocate
+     * outside public_dir. A healthy derivative there must not be reported just
+     * because no media/ folder sits under public_dir.
+     */
+    public function testDerivativeCheckFollowsARelocatedMediaCacheDir(): void
+    {
+        self::bootKernel();
+
+        $base = sys_get_temp_dir().'/pw-scanner-relocated-'.getmypid();
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($base.'/cache/media/lg/1.webp', 'RIFFxxxxWEBP');
+
+        try {
+            $scanner = $this->createScanner($base.'/public', mediaCacheDir: $base.'/cache/media');
+            $scanner->preloadPageCache();
+
+            $errors = $this->messages($scanner, $this->getPage(), '<img src="/media/lg/1.webp" alt="x">');
+
+            self::assertSame([], $errors);
+        } finally {
+            $filesystem->remove($base);
+        }
+    }
+
+    /**
+     * The other direction of the same leak: a stale file under public_dir/media
+     * must not bless a derivative the relocated cache dir does not hold.
+     */
+    public function testRelocatedCacheDirMissingDerivativeIsStillReported(): void
+    {
+        self::bootKernel();
+
+        $base = sys_get_temp_dir().'/pw-scanner-relocated-'.getmypid();
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($base.'/public/media/lg/1.webp', 'RIFFxxxxWEBP');
+        $filesystem->mkdir($base.'/cache/media/lg');
+
+        try {
+            $scanner = $this->createScanner($base.'/public', mediaCacheDir: $base.'/cache/media');
+            $scanner->preloadPageCache();
+
+            $errors = $this->messages($scanner, $this->getPage(), '<img src="/media/lg/1.webp" alt="x">');
+
+            self::assertCount(1, $errors);
+            self::assertStringContainsString('derivative file missing', $errors[0]);
+        } finally {
+            $filesystem->remove($base);
         }
     }
 
