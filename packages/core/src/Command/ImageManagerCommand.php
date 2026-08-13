@@ -45,18 +45,6 @@ final class ImageManagerCommand
      */
     private const int WORKER_IDLE_TIMEOUT = 300;
 
-    /**
-     * Images in one worker batch: the total spread over the workers, but never
-     * more than CHUNK_MAX. The cap is the load-bearing half — division alone has
-     * no upper bound, so the batch grew with the library until argv overflowed.
-     *
-     * @return int<1, max>
-     */
-    private function chunkSize(int $staleCount, int $workers): int
-    {
-        return min(max(1, (int) ceil($staleCount / $workers)), self::CHUNK_MAX);
-    }
-
     private bool $agentMode = false;
 
     public function __construct(
@@ -214,6 +202,16 @@ final class ImageManagerCommand
         }
 
         return [] === $errors ? Command::SUCCESS : Command::FAILURE;
+    }
+
+    /**
+     * Images in one worker batch: the total spread over the workers, capped.
+     *
+     * @return int<1, max>
+     */
+    private function chunkSize(int $staleCount, int $workers): int
+    {
+        return min(max(1, (int) ceil($staleCount / $workers)), self::CHUNK_MAX);
     }
 
     /**
