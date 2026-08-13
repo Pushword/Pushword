@@ -93,6 +93,124 @@ final class ImageTemplateTest extends KernelTestCase
         self::assertStringNotContainsString('1000', $html);
     }
 
+    /**
+     * The whole point of `sizes`: every browser that understands webp takes the
+     * <source> and never looks at the <img>, so a `sizes` reaching only the <img>
+     * is dead on arrival — which is what a caller passing it through image_attr used
+     * to get.
+     */
+    public function testSizesReachesTheModernSource(): void
+    {
+        $twig = $this->getTwig();
+        $html = $twig->render('@PushwordCore/component/image.html.twig', [
+            'image' => $this->createMedia(),
+            'sizes' => '(max-width: 1023px) 100vw, 773px',
+        ]);
+
+        $source = substr($html, (int) strpos($html, '<source'), (int) strpos($html, '<img') - (int) strpos($html, '<source'));
+        self::assertStringContainsString('sizes="(max-width: 1023px) 100vw, 773px"', $source);
+    }
+
+    /**
+     * mergeAttr() concatenates scalars ("a" + "b" => "a b"), so a `sizes` handed over
+     * in image_attr came out welded to the default ladder — a malformed attribute.
+     * It is now read as the parameter and emitted exactly once.
+     */
+    public function testSizesGivenThroughImageAttrIsHonouredOnceAndNotConcatenated(): void
+    {
+        $twig = $this->getTwig();
+        $html = $twig->render('@PushwordCore/component/image.html.twig', [
+            'image' => $this->createMedia(),
+            'image_attr' => ['sizes' => '50vw'],
+        ]);
+
+        self::assertSame(1, substr_count($html, 'sizes='), 'sizes belongs on the <source>, once.');
+        self::assertStringContainsString('sizes="50vw"', $html);
+        self::assertStringNotContainsString('100vw', $html);
+    }
+
+    /**
+     * The default ladder announced the width of the breakpoint, not of the viewport:
+     * "(max-width: 576px) 576px" told a 412 px phone the image was 576 px wide, so at
+     * DPR 1.75 it asked for 1008 px and downloaded the 1200 w candidate for a thumbnail.
+     */
+    public function testDefaultSizesIsTheViewportNotTheBreakpointLadder(): void
+    {
+        $twig = $this->getTwig();
+        $html = $twig->render('@PushwordCore/component/image.html.twig', [
+            'image' => $this->createMedia(),
+        ]);
+
+        self::assertStringContainsString('sizes="100vw"', $html);
+        self::assertStringNotContainsString('(max-width: 576px) 576px', $html);
+    }
+
+    /**
+     * A single-filter srcset used to label every filter `576w`, whatever it downscales
+     * to, so a browser reading it was lied to about every filter but xs.
+     */
+    public function testSingleFilterModeLabelsTheSrcsetWithTheFilterTargetWidth(): void
+    {
+        $twig = $this->getTwig();
+        $html = $twig->render('@PushwordCore/component/image.html.twig', [
+            'image' => $this->createMedia(),
+            'mode' => 'md',
+            'page' => new Page(),
+        ]);
+
+        self::assertStringContainsString('/media/md/test-image.webp 992w', $html);
+        self::assertStringNotContainsString('576w', $html);
+    }
+
+    /**
+     * height_300 caps the height, so no `w` descriptor is truthful. A lone entry without
+     * one is a valid srcset — and `sizes` has nothing to steer, so it is left out.
+     */
+    public function testHeightCappedFilterGetsNoWidthDescriptorAndNoSizes(): void
+    {
+        $twig = $this->getTwig();
+        $html = $twig->render('@PushwordCore/component/image.html.twig', [
+            'image' => $this->createMedia(),
+            'mode' => 'height_300',
+            'page' => new Page(),
+        ]);
+
+        self::assertStringContainsString('srcset="/media/height_300/test-image.webp"', $html);
+        self::assertStringNotContainsString('sizes=', $html);
+    }
+
+    /** One candidate is one choice: `sizes` would steer nothing and is left out. */
+    public function testSingleFilterModeEmitsNoSizes(): void
+    {
+        $twig = $this->getTwig();
+        $html = $twig->render('@PushwordCore/component/image.html.twig', [
+            'image' => $this->createMedia(),
+            'mode' => 'xs',
+            'sizes' => '50vw',
+            'page' => new Page(),
+        ]);
+
+        self::assertStringNotContainsString('sizes=', $html);
+    }
+
+    /**
+     * The <img> behind a webp <source> is only reached by a browser that supports none
+     * of the offered formats. The ladder does not exist in the source format (xs/sm/lg/xl
+     * are webp-only), so it must not advertise one — it went out as a valueless `srcset`
+     * anyway, mergeAttr() dropping the macro's Twig\Markup as a non-scalar.
+     */
+    public function testImgFallbackAdvertisesNoSrcsetBehindAModernSource(): void
+    {
+        $twig = $this->getTwig();
+        $html = $twig->render('@PushwordCore/component/image.html.twig', [
+            'image' => $this->createMedia(),
+        ]);
+
+        $img = substr($html, (int) strpos($html, '<img'));
+        self::assertStringNotContainsString('srcset', $img);
+        self::assertStringContainsString('src="/media/default/test-image.jpg"', $img);
+    }
+
     public function testAltStripsMarkupComingFromATitle(): void
     {
         $twig = $this->getTwig();

@@ -259,7 +259,9 @@ final class LinkedDocsScannerTest extends KernelTestCase
         $scanner = $this->createScanner();
         $scanner->preloadPageCache();
 
-        // The <img srcset=""> fallback shape pushword itself renders inside <picture>.
+        // Third-party markup: an empty srcset offers no candidate, so there is nothing
+        // to check. (Pushword's own <picture> fallback used to render one; the <img>
+        // behind a modern <source> now carries no srcset at all.)
         self::assertSame([], $this->messages($scanner, $this->getPage(), '<img srcset="" alt="x">'));
     }
 

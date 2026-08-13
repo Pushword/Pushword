@@ -29,7 +29,7 @@ class MarkdownParser
      * Bump when the converter configuration or extensions change in a way that
      * alters output, to invalidate previously cached fragments.
      */
-    private const int CACHE_VERSION = 7;
+    private const int CACHE_VERSION = 8;
 
     private readonly MarkdownConverter $converter;
 

@@ -3,6 +3,12 @@
 
   Media    image         Required. Media object to render.
   string   mode          'responsive' (all breakpoints) or filter name (e.g. 'thumb', 'xs'). Default: 'responsive'
+  string   sizes         The `sizes` attribute, carried by whichever element holds the
+                         srcset: the modern <source>, or the <img> when the filter set
+                         offers no modern format. Default: '100vw'. Give it the width the
+                         image really occupies in the layout: the browser picks its
+                         candidate from this declaration and never from the box it ends
+                         up painting.
   string   image_class   default: 'w-full h-auto mb-4'
   array    image_attr    default: {}
   string   image_alt     default: image.alt
@@ -13,6 +19,7 @@
 
 {% set mode = mode ?? 'responsive' %}
 {% set lazy = lazy ?? true %}
+{% set image_attr = image_attr ?? {} %}
 
 {# An alt is plain text. Callers commonly hand over a page title or an h1, which
    carries markup (<br>, <small>, <span class>) and would render as escaped tags
@@ -20,6 +27,14 @@
    welds the two halves of a two-line title together. #}
 {% set image_alt = (image_alt ?? null) is empty ? null
   : image_alt|replace({'<br>': ' ', '<br/>': ' ', '<br />': ' '})|striptags|replace({'  ': ' '})|trim %}
+
+{# `sizes` used to be handed over inside image_attr, where it could never work: image_attr
+   is merged onto the <img> only — every browser that understands webp takes the <source>
+   and never reads it — and mergeAttr() concatenates scalars instead of overriding, so it
+   arrived welded to the default ladder ("…,1600px (max-width: 1024px) 100vw, 63vw", a
+   malformed attribute). Callers that still spell it that way are honoured here, once. #}
+{% set sizes = sizes ?? image_attr.sizes|default(null) %}
+{% set image_attr = image_attr|filter((v, k) => 'sizes' != k) %}
 
 {# SVG files are vector images - render simple img tag without srcset/picture complexity #}
 {% set picture_attr = picture_attr ?? {} %}
@@ -32,7 +47,7 @@
       width: image.width,
       height: image.height,
       alt: image_alt|default(image.alt ?? image.fileName),
-    }, image_attr ?? {}, lazy ? {loading: 'lazy'} : {}) }}>
+    }, image_attr, lazy ? {loading: 'lazy'} : {}) }}>
   </picture>
 {% else %}
 
@@ -42,38 +57,64 @@
     {% set height = image.height ?? image_dimensions(image).height %}
     {% set alt = image_alt|default(image.alt ?? image.fileName) %}
   {% else %}
-    {% set breakpoints = {(mode): 576} %}
+    {# A single candidate, labelled with the filter's own target width. It used to be
+       hardcoded to 576, so a `md` derivative announced itself as 576w and a browser
+       reading the srcset was lied to about every filter but xs. A height-capped filter
+       (height_300) has no width to declare: the entry then goes out with no descriptor,
+       which is precisely what a one-candidate srcset means. #}
+    {% set breakpoints = {(mode): image_filter_width(mode)} %}
     {% set width = image.width %}
     {% set height = image.height %}
     {% set alt = image_alt|default(image.getAltLocalized(page.locale ?? '')) %}
   {% endif %}
 
-  {% set sizes_parts = [] %}
-  {% for name, w in breakpoints %}
-    {% set sizes_parts = sizes_parts|merge(['(max-width: ' ~ w ~ 'px) ' ~ w ~ 'px']) %}
-  {% endfor %}
-  {% set sizes_string = sizes_parts|slice(0, -1)|join(',') ~ (sizes_parts|length > 1 ? ',' : '') ~ breakpoints|last ~ 'px' %}
+  {# The honest default for a component that knows nothing of the caller's layout: the
+     image is at most as wide as the viewport. The ladder it replaces —
+     "(max-width: 576px) 576px, (max-width: 768px) 768px, …, 1600px" — declared the width
+     of the *breakpoint* rather than of the viewport, so a 412 px phone at DPR 1.75 asked
+     for 576 × 1.75 = 1008 px and downloaded the 1200 w candidate for a card thumbnail.
+     100vw over-serves a small element but never under-serves one; callers that know
+     their layout pass a real `sizes` and get the right gabarit instead. #}
+  {% set sizes = sizes ?? '100vw' %}
+  {# `sizes` only steers a choice between candidates, and a single-filter mode offers one.
+     Emitted there it would assert a layout width that changes no outcome. #}
+  {% set sizes = breakpoints|length > 1 ? sizes : null %}
 
   {% set modern_format = preferred_modern_format(breakpoints|keys|first) %}
   {# The <img> is the fallback for browsers that don't support the modern <source>
      (e.g. webp), so it must serve the original source format, not the webp variant. #}
   {% set fallback_format = image.extension|default(null) %}
 
+  {% set img_attr = {
+    src: image|image('default', fallback_format),
+    class: image_class ?? 'w-full h-auto mb-4',
+    width: width,
+    height: height,
+    alt: alt,
+  } %}
+
+  {# With a modern <source> in front of it the <img> is reached only by a browser that
+     took none of the offered formats, and the ladder does not exist in the source format
+     — xs/sm/lg/xl are webp-only in the default filter set, so every entry would 404. It
+     went out valueless anyway (mergeAttr() renders a `srcset` with no `=`, the macro's
+     Twig\Markup not being a scalar), so nothing is lost by saying it plainly: that
+     browser gets one `src`.
+     Without a modern <source> the <img> *is* the responsive element and carries the
+     ladder itself. #}
+  {% if not modern_format %}
+    {% set img_attr = img_attr|merge({
+      srcset: _self.build_srcset(image, breakpoints, fallback_format)|trim,
+      sizes: sizes,
+    }) %}
+  {% endif %}
+
   <picture {{ attr(picture_attr) }}>
   {% if modern_format %}
     <source type="image/{{ modern_format }}"
       srcset="{{ _self.build_srcset(image, breakpoints, modern_format) }}"
-      sizes="{{ sizes_string }}">
+      {%- if sizes %} sizes="{{ sizes }}"{% endif %}>
   {% endif %}
-    <img {{ mergeAttr({
-      srcset: _self.build_srcset(image, breakpoints, fallback_format),
-      sizes: sizes_string,
-      src: image|image('default', fallback_format),
-      class: image_class ?? 'w-full h-auto mb-4',
-      width: width,
-      height: height,
-      alt: alt,
-    }, image_attr ?? {}, lazy ? {loading: 'lazy'} : {}) }}>
+    <img {{ mergeAttr(img_attr, image_attr, lazy ? {loading: 'lazy'} : {}) }}>
   </picture>
 {% endif %}
 
@@ -83,6 +124,6 @@
 
 {% macro build_srcset(image, breakpoints, format) %}
   {%- for name, width in breakpoints -%}
-    {{ image|image(name, format) }} {{ width }}w{{ not loop.last ? ',' }}
+    {{ image|image(name, format) }}{{ null !== width ? ' ' ~ width ~ 'w' }}{{ not loop.last ? ',' }}
   {%- endfor -%}
 {% endmacro %}

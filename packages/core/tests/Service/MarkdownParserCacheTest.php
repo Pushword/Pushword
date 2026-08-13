@@ -22,7 +22,7 @@ use Twig\Environment as Twig;
 final class MarkdownParserCacheTest extends KernelTestCase
 {
     /** Mirrors MarkdownParser::CACHE_VERSION, which is bumped whenever render output changes. */
-    private const string PARSER_VERSION = '7';
+    private const string PARSER_VERSION = '8';
 
     private function buildParser(ArrayAdapter $pool, int $mediaVersion = 0): MarkdownParser
     {

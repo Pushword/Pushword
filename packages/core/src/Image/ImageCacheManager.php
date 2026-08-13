@@ -321,6 +321,12 @@ final class ImageCacheManager
         return true;
     }
 
+    /**
+     * The width a filter downscales to, i.e. the `w` descriptor its derivative deserves
+     * in a srcset. Null when the filter caps the height instead (height_300) or is
+     * unknown: such an entry goes out without a descriptor rather than with a wrong one.
+     */
+    #[AsTwigFunction('image_filter_width')]
     public function getFilterTargetWidth(string $filterName): ?int
     {
         $filterConfig = $this->filterSets[$filterName] ?? null;

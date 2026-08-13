@@ -39,6 +39,11 @@ class MediaExtension
      * @param array<string, mixed>  $attr
      * @param array<string, string> $linkAttr
      * @param array<string, mixed>  $pictureAttr
+     * @param string|null           $sizes       the `sizes` attribute, carried by whichever
+     *                                           element holds the srcset — the modern <source>,
+     *                                           or the <img> when there is none; defaults to
+     *                                           100vw. Passing it through $attr cannot work —
+     *                                           see the note in component/image.html.twig
      */
     #[AsTwigFunction('image', isSafe: ['html'])]
     public function renderImage(
@@ -54,6 +59,7 @@ class MediaExtension
         ?string $wrapper = null,
         ?string $wrapperClass = null,
         array $pictureAttr = [],
+        ?string $sizes = null,
     ): string {
         $mediaObj = $this->transformStringToMedia($media, $alt ?? '');
         $resolvedAlt = $alt ?? $mediaObj->getAltLocalized('');
@@ -68,6 +74,7 @@ class MediaExtension
                 'picture_attr' => $pictureAttr ?: null,
                 'lazy' => $lazy,
                 'mode' => $mode,
+                'sizes' => $sizes,
             ],
         );
 
