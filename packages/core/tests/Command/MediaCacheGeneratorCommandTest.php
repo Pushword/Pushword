@@ -3,7 +3,9 @@
 namespace Pushword\Core\Tests\Command;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Command\ImageManagerCommand;
 use Pushword\Core\Tests\PathTrait;
+use ReflectionMethod;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -160,6 +162,31 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         self::assertContains($decoded['result'], ['passed', 'failed']);
         self::assertArrayHasKey('processed', $decoded);
         self::assertArrayHasKey('errors', $decoded);
+    }
+
+    /**
+     * A batch travels as ONE element of argv, and Linux caps a single argument at
+     * MAX_ARG_STRLEN (128 KiB) however generous ARG_MAX is. Sizing it by
+     * total/workers alone has no upper bound: 11k stale medias over 2 workers put
+     * ~500 KiB in one argument and posix_spawn() refused before the first image.
+     */
+    public function testWorkerBatchCannotOverflowASingleArgvElement(): void
+    {
+        self::bootKernel();
+        $command = self::getContainer()->get(ImageManagerCommand::class);
+        $chunkSize = new ReflectionMethod(ImageManagerCommand::class, 'chunkSize');
+
+        // The prod case that failed, and the pathological one a worker count can reach.
+        foreach ([[11000, 2], [250000, 1]] as [$staleCount, $workers]) {
+            $size = $chunkSize->invoke($command, $staleCount, $workers);
+            self::assertIsInt($size);
+
+            // Even at the longest filename Linux allows, plus its separator.
+            self::assertLessThan(131072, $size * 256, 'a full batch must fit in one argv element');
+        }
+
+        // Small libraries still spread over the workers rather than piling into one.
+        self::assertSame(25, $chunkSize->invoke($command, 50, 2));
     }
 
     private function createCommandTester(): CommandTester

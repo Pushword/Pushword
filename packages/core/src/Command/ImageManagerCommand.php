@@ -29,6 +29,34 @@ final class ImageManagerCommand
 
     private const string PROGRESS_FORMAT = "%current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% \r\n %message%";
 
+    /**
+     * Images per worker batch. Capped, not just divided by the worker count: the
+     * batch travels as ONE element of argv, and Linux limits a single argument to
+     * MAX_ARG_STRLEN (128 KiB), whatever ARG_MAX allows overall. Sized by division
+     * alone it grew with the library — 11k stale medias over 2 workers put ~500 KiB
+     * in one argument and posix_spawn() refused before the first image.
+     */
+    private const int CHUNK_MAX = 200;
+
+    /**
+     * Killed after this long *without output*, not this long in total: a worker
+     * prints DONE: per image, so silence means stuck, while a wall-clock cap would
+     * kill a large batch that is progressing perfectly well.
+     */
+    private const int WORKER_IDLE_TIMEOUT = 300;
+
+    /**
+     * Images in one worker batch: the total spread over the workers, but never
+     * more than CHUNK_MAX. The cap is the load-bearing half — division alone has
+     * no upper bound, so the batch grew with the library until argv overflowed.
+     *
+     * @return int<1, max>
+     */
+    private function chunkSize(int $staleCount, int $workers): int
+    {
+        return min(max(1, (int) ceil($staleCount / $workers)), self::CHUNK_MAX);
+    }
+
     private bool $agentMode = false;
 
     public function __construct(
@@ -242,8 +270,9 @@ final class ImageManagerCommand
             return 0;
         }
 
-        // Batch images per worker to amortize kernel boot cost
-        $chunks = array_chunk($staleMedias, max(1, (int) ceil($staleCount / $workers)));
+        // Batch images per worker to amortize kernel boot cost. More batches than
+        // workers is fine — the scheduling loop below feeds them as slots free up.
+        $chunks = array_chunk($staleMedias, $this->chunkSize($staleCount, $workers));
         if (! $this->agentMode) {
             $io->info(\sprintf('Processing %d image(s) in %d batch(es) with %d worker(s)', $staleCount, \count($chunks), $workers));
         }
@@ -270,7 +299,8 @@ final class ImageManagerCommand
                 }
 
                 $process = new Process($cmd, $this->projectDir);
-                $process->setTimeout(300);
+                $process->setTimeout(null);
+                $process->setIdleTimeout(self::WORKER_IDLE_TIMEOUT);
                 $process->start();
                 $running[] = ['process' => $process, 'count' => \count($chunk), 'reported' => 0];
             }
