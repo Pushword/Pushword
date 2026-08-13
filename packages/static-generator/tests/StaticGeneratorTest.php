@@ -971,14 +971,16 @@ final class StaticGeneratorTest extends KernelTestCase
     }
 
     /**
-     * The image optimizer writes its throwaway next to the derivative it rewrites,
-     * so a build running while any image is optimized meets one. Copying it either
-     * publishes a truncated image or — because the file is unlinked as soon as the
-     * optimizer is done — kills the build with a half-finished copy.
+     * Both image writers put their throwaway next to the file they produce, so a
+     * build running while any image is optimized or encoded meets one. Copying it
+     * either publishes a truncated image or — because the file is renamed away as
+     * soon as the writer is done — kills the build with a half-finished copy. Each
+     * naming form the media tree can hold is seeded here: the optimizer's, the
+     * encoder's, and the writer-less one the encoder wrote before rc865.
      */
     #[Group('serial')]
     #[DataProvider('mediaBuildModeProvider')]
-    public function testDownloadIgnoresImageOptimizerTempFiles(bool $incremental): void
+    public function testDownloadIgnoresImageScratchFiles(bool $incremental): void
     {
         self::bootKernel();
         $this->overrideStaticDir();
@@ -997,6 +999,10 @@ final class StaticGeneratorTest extends KernelTestCase
         $tmpFiles = [
             $publicMediaDir.'/optimizer-race.webp.opt-4242.abcdef123456.tmp',
             $publicMediaDir.'/md/optimizer-race.webp.opt-4242.abcdef123456.tmp',
+            $publicMediaDir.'/encoder-race.webp.enc-4242.abcdef123456.tmp',
+            $publicMediaDir.'/md/encoder-race.webp.enc-4242.abcdef123456.tmp',
+            $publicMediaDir.'/encoder-legacy.webp.4242.abcdef123456.tmp',
+            $publicMediaDir.'/md/encoder-legacy.webp.4242.abcdef123456.tmp',
         ];
 
         foreach ($tmpFiles as $tmpFile) {
@@ -1012,7 +1018,7 @@ final class StaticGeneratorTest extends KernelTestCase
             self::assertFileExists($staticMediaDir);
 
             foreach (glob($staticMediaDir.'/{,*/}*.tmp', \GLOB_BRACE) ?: [] as $leaked) {
-                self::fail('The optimizer temp file reached the build: '.$leaked);
+                self::fail('An image scratch file reached the build: '.$leaked);
             }
         } finally {
             $generator->setIncremental(false);

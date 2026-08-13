@@ -85,7 +85,7 @@ final readonly class ImageEncoder
     {
         $bytes = $this->encodeNonEmpty($encode);
 
-        $tmpPath = $outputPath.'.'.getmypid().'.'.uniqid().'.tmp';
+        $tmpPath = ImageScratchFile::pathFor($outputPath, 'enc');
         $written = @file_put_contents($tmpPath, $bytes);
 
         if (\strlen($bytes) !== $written) {

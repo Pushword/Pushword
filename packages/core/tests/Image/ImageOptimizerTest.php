@@ -11,6 +11,7 @@ use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageEncoder;
 use Pushword\Core\Image\ImageOptimizer;
 use Pushword\Core\Image\ImageReader;
+use Pushword\Core\Image\ImageScratchFile;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use RuntimeException;
@@ -104,13 +105,13 @@ final class ImageOptimizerTest extends KernelTestCase
 
     /**
      * The throwaway sits in the media tree, so readers of that tree have to skip it
-     * — pushword/static-generator does, keyed on isOptimizationTmp(). Nothing else
-     * ties the two ends together: rename the temp and the predicate stops matching,
-     * silently, and a static build starts publishing half-written images again. So
-     * assert against the path optimizeAtomically() really produced, never a copy of
-     * its format.
+     * — pushword/static-generator does, keyed on ImageScratchFile::isScratch().
+     * Nothing else ties the two ends together: name the temp outside the shared
+     * builder and the predicate stops matching, silently, and a static build starts
+     * publishing half-written images again. So assert against the path
+     * optimizeAtomically() really produced, never a copy of its format.
      */
-    public function testIsOptimizationTmpRecognizesThePathItActuallyWrites(): void
+    public function testScratchPredicateRecognizesThePathItActuallyWrites(): void
     {
         $writtenTmpPath = null;
 
@@ -124,15 +125,31 @@ final class ImageOptimizerTest extends KernelTestCase
 
         self::assertIsString($writtenTmpPath);
         self::assertTrue(
-            ImageOptimizer::isOptimizationTmp($writtenTmpPath),
-            'isOptimizationTmp() no longer matches the temp file optimizeAtomically() writes: '.$writtenTmpPath,
+            ImageScratchFile::isScratch($writtenTmpPath),
+            'isScratch() no longer matches the temp file optimizeAtomically() writes: '.$writtenTmpPath,
         );
     }
 
-    public function testIsOptimizationTmpLeavesRealMediaAlone(): void
+    public function testScratchPredicateLeavesRealMediaAlone(): void
     {
         foreach (['photo.webp', 'photo.jpg', 'md/photo.webp', 'report.opt.pdf', 'notes.tmp'] as $fileName) {
-            self::assertFalse(ImageOptimizer::isOptimizationTmp($fileName), $fileName.' is a real file, not a throwaway');
+            self::assertFalse(ImageScratchFile::isScratch($fileName), $fileName.' is a real file, not a throwaway');
+        }
+    }
+
+    /**
+     * The encoder writes its own throwaway, in the same tree, and used to name it
+     * without any writer segment — a form the old glob missed, so a static build
+     * could copy one. Both live forms and that legacy one must be recognized.
+     */
+    public function testScratchPredicateRecognizesEveryWriterForm(): void
+    {
+        foreach ([
+            ImageScratchFile::pathFor('/media/photo.webp', 'opt'),
+            ImageScratchFile::pathFor('/media/photo.webp', 'enc'),
+            '/media/photo.webp.4242.abcdef123456.tmp',
+        ] as $path) {
+            self::assertTrue(ImageScratchFile::isScratch($path), $path.' is a throwaway the media tree can hold');
         }
     }
 

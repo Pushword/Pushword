@@ -4,7 +4,7 @@ namespace Pushword\StaticGenerator\Generator;
 
 use FilesystemIterator;
 use Override;
-use Pushword\Core\Image\ImageOptimizer;
+use Pushword\Core\Image\ImageScratchFile;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\StaticGenerator\IncrementalGeneratorInterface;
 use RecursiveDirectoryIterator;
@@ -38,14 +38,14 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
     }
 
     /**
-     * `.` and `..`, plus the transient files the image optimizer leaves beside the
-     * derivative it rewrites — {@see ImageOptimizer::isOptimizationTmp()}. Copying
-     * one is never right: it is half-written by construction, and it is routinely
-     * gone before the copy ends, which fails the whole build.
+     * `.` and `..`, plus the transient files the image writers leave beside the
+     * derivative they produce — {@see ImageScratchFile}. Copying one is never
+     * right: it is half-written by construction, and it is routinely gone before
+     * the copy ends, which fails the whole build.
      */
     private function skipEntry(string $entry): bool
     {
-        return \in_array($entry, ['.', '..'], true) || ImageOptimizer::isOptimizationTmp($entry);
+        return \in_array($entry, ['.', '..'], true) || fnmatch('*.opt-*.tmp', basename($entry));
     }
 
     /**
@@ -59,7 +59,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
             ->in($sourceDir)
             ->ignoreDotFiles(false)
             ->ignoreVCS(false)
-            ->notName(ImageOptimizer::TMP_GLOB);
+            ->notName(ImageScratchFile::NAME_PATTERN);
     }
 
     private function targetExists(string $targetPath): bool
