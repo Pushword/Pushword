@@ -382,8 +382,9 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         // and not an editor or an API client — it is the whole difference
         // between an opt-out and a removal.
         $ledger = self::getContainer()->get(ContactEventRepository::class)->findFor($left);
-        self::assertSame(ContactTransition::Unsubscribe, $ledger[count($ledger) - 1]->transition);
-        self::assertSame('link', $ledger[count($ledger) - 1]->source);
+        self::assertCount(1, $ledger, 'the fixture subscribes on the entity, so the click is the only act recorded');
+        self::assertSame(ContactTransition::Unsubscribe, $ledger[0]->transition);
+        self::assertSame('link', $ledger[0]->source);
     }
 
     /**

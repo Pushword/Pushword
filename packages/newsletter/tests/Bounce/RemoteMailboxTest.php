@@ -49,7 +49,8 @@ final class RemoteMailboxTest extends AbstractNewsletterTestCase
         // The ledger names the mailbox the refusal was read back from, so a drop
         // made here is told apart from one an API client asked for.
         $ledger = self::getContainer()->get(ContactEventRepository::class)->findFor($dead);
-        self::assertSame('mailbox', $ledger[count($ledger) - 1]->source);
+        self::assertCount(1, $ledger, 'the fixture subscribes on the entity, so the refusal is the only act recorded');
+        self::assertSame('mailbox', $ledger[0]->source);
 
         // Everything read is flagged, the two that were not bounces included, or
         // every run would read them again for ever.

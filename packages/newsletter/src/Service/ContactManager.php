@@ -155,7 +155,13 @@ final readonly class ContactManager
      * *whatever its status*: somebody who left the second list has left it, and
      * a second pass must not raise them from it.
      *
-     * @throws InvalidArgumentException when the subscription being carried is not a live one
+     * A long run owes one thing back: it resolves its subscribed set up front,
+     * so somebody leaving while it is still going will throw on their turn. That
+     * is the right outcome — no row should be made for them — so re-check
+     * {@see Contact::isSubscribed()} just before the call and count the skips.
+     *
+     * @throws InvalidArgumentException when the subscription is not a live one, or when the
+     *                                  target is the list the contact is already on
      */
     public function splitFrom(Contact $origin, Audience $target): Contact
     {
