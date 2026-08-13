@@ -11,6 +11,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
@@ -171,6 +172,8 @@ class CampaignCrudController extends AbstractCrudController
         yield IntegerField::new('rateSeconds', 'newsletter.campaign.field.rateSeconds')->hideOnIndex()
             ->setRequired(false)
             ->setHelp('newsletter.campaign.field.rateSeconds.help');
+        yield BooleanField::new('transactional', 'newsletter.campaign.field.transactional')->hideOnIndex()
+            ->setHelp('newsletter.campaign.field.transactional.help');
 
         yield FormField::addFieldset('newsletter.campaign.fieldset.performance')->setIcon('fa fa-chart-simple')->onlyOnDetail();
         yield IntegerField::new('recipientCount', 'newsletter.campaign.field.recipients')->hideOnForm();
@@ -373,7 +376,7 @@ class CampaignCrudController extends AbstractCrudController
             }
 
             try {
-                $this->mailer->sendTest($audience, $content['subject'], $content['bodyMarkdown'], $content['preheader'], $address, UtmTag::forCampaign($campaign), $locale);
+                $this->mailer->sendTest($audience, $content['subject'], $content['bodyMarkdown'], $content['preheader'], $address, UtmTag::forCampaign($campaign), $locale, $campaign->isTransactional());
                 $sent[] = $address;
             } catch (Throwable $throwable) {
                 $failed[] = $address.' ('.$throwable->getMessage().')';

@@ -44,7 +44,7 @@ final readonly class MailRenderer
         string $subject,
         string $bodyMarkdown,
         ?string $preheader,
-        string $unsubscribeUrl,
+        ?string $unsubscribeUrl,
         ?UtmTag $utmTag,
         Campaign|AutomationStep|null $trackedMail = null,
     ): string {
@@ -89,13 +89,17 @@ final readonly class MailRenderer
      * The Markdown source doubles as the plain-text part: it is already written
      * to be read raw. It carries the same foot as the HTML one — a reader whose
      * client shows them the text part is owed the address just as much.
+     *
+     * A null `$unsubscribeUrl` is a transactional mail, which offers no way off
+     * a list it did not put anybody on; the postal address is unaffected, since
+     * it says who wrote rather than how to leave.
      */
-    public function text(Audience $audience, Contact $contact, string $bodyMarkdown, string $unsubscribeUrl): string
+    public function text(Audience $audience, Contact $contact, string $bodyMarkdown, ?string $unsubscribeUrl): string
     {
-        $foot = "\n\n---\n".$unsubscribeUrl."\n";
+        $foot = array_filter([$unsubscribeUrl, $audience->postalAddress], is_string(...));
 
-        return $this->personalize($bodyMarkdown, $contact).$foot
-            .(null !== $audience->postalAddress ? "\n".$audience->postalAddress."\n" : '');
+        return $this->personalize($bodyMarkdown, $contact)
+            .([] === $foot ? '' : "\n\n---\n".implode("\n\n", $foot)."\n");
     }
 
     /** Resolve a template, letting the site override the bundle's default. */

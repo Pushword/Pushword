@@ -103,6 +103,15 @@ class Campaign implements IdInterface, Stringable
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
     public array $segment = [];
 
+    /**
+     * Sends this one broadcast with no unsubscribe link and no
+     * `List-Unsubscribe` headers. See {@see Audience::$transactional} for what
+     * that is for: an audience carrying it covers every campaign of it, and this
+     * left off cannot take that back.
+     */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    public bool $transactional = false;
+
     #[ORM\Column(type: Types::STRING, length: 20, enumType: CampaignStatus::class)]
     public private(set) CampaignStatus $status = CampaignStatus::Draft;
 
@@ -518,6 +527,15 @@ class Campaign implements IdInterface, Stringable
     public function getEffectiveRateSeconds(): int
     {
         return $this->rateSeconds ?? $this->audience->rateSeconds ?? 30;
+    }
+
+    /**
+     * Whether this goes out with no way off the list. The audience's own flag
+     * covers every campaign of it, and this one cannot take that back.
+     */
+    public function isTransactional(): bool
+    {
+        return $this->transactional || true === $this->audience?->transactional;
     }
 
     public function incrementSent(): self

@@ -95,6 +95,9 @@ class AutomationCrudController extends AbstractCrudController
         yield AssociationField::new('audience', 'newsletter.automation.field.audience');
         yield BooleanField::new('enabled', 'newsletter.automation.field.enabled')
             ->setHelp('newsletter.automation.field.enabled.help');
+        yield BooleanField::new('transactional', 'newsletter.automation.field.transactional')
+            ->hideOnIndex()
+            ->setHelp('newsletter.automation.field.transactional.help');
         yield ChoiceField::new('source', 'newsletter.automation.field.source')
             ->setChoices(array_combine($sources, $sources))
             ->setHelp('newsletter.automation.field.source.help');

@@ -182,6 +182,10 @@ final class AutomationApiController extends AbstractApiController
             $automation->enabled = $data['enabled'];
         }
 
+        if (\array_key_exists('transactional', $data) && \is_bool($data['transactional'])) {
+            $automation->transactional = $data['transactional'];
+        }
+
         // Before the criteria: which vocabulary `triggerWhen` is read in depends
         // on it, so a request changing both has to change the source first.
         if (\array_key_exists('source', $data)) {
@@ -321,6 +325,7 @@ final class AutomationApiController extends AbstractApiController
             'audience' => $audience?->slug,
             'name' => $automation->name,
             'enabled' => $automation->enabled,
+            'transactional' => $automation->isTransactional(),
             'source' => $automation->source,
             'triggerWhen' => $automation->triggerWhen,
             'hosts' => $automation->hosts,
@@ -392,6 +397,7 @@ final class AutomationApiController extends AbstractApiController
                             'audience' => ['type' => 'string'],
                             'name' => ['type' => 'string'],
                             'enabled' => ['type' => 'boolean'],
+                            'transactional' => ['type' => 'boolean', 'description' => 'Sends this sequence with no unsubscribe link and no List-Unsubscribe header. Service messages only. Read back as the effective value, so an audience carrying the flag reports true here whatever was written'],
                             'source' => ['type' => 'string', 'description' => 'What this watches: "contact", "page", or any source a bundle registered'],
                             'triggerWhen' => ['description' => "Criteria in the source's own vocabulary, ANDed; {\"any\": [...]} ORs them instead. Empty matches every subject. A contact source speaks tag, locale, createdAt, confirmedAt, prop.<key>; a page source slug, template, parent, ancestor, tag, prop.<key>", 'oneOf' => [['type' => 'array', 'items' => ['type' => 'object']], ['type' => 'object']]],
                             'hosts' => ['type' => 'array', 'description' => 'Hosts to watch, for the sources scoped to one; empty watches every one', 'items' => ['type' => 'string']],

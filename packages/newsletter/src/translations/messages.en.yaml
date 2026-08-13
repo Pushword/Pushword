@@ -25,6 +25,8 @@ newsletter:
       replyTo: Reply-to
       slug: Reference (slug)
       slug.help: The key the subscribe form and the API use.
+      transactional: Transactional mail
+      transactional.help: Sends every mail of this audience with no unsubscribe link and no List-Unsubscribe header. Only for service messages — an order confirmation, a booking reminder. On a newsletter it is unlawful in the EU and the US, and inboxes treat bulk mail without the header as unattributed.
       utmSource: Analytics source
       utmSource.help: Set it (e.g. newsletter) to tag the links of this audience's mails with utm_source, utm_medium and utm_campaign. Leave empty to send them untouched. Only links to your own sites are tagged.
   automation:
@@ -54,6 +56,8 @@ newsletter:
       steps: Steps
       stopWhen: Stop when
       stopWhen.help: Re-checked before each step of a drip. A match ends the sequence for that contact.
+      transactional: Transactional mail
+      transactional.help: Sends this sequence with no unsubscribe link and no List-Unsubscribe header. Only for service messages — an order confirmation, a booking reminder. The audience setting covers everything it sends and this cannot take it back.
       triggerWhen: Trigger when
       triggerWhen.help: 'Which subjects deserve the sequence — which, not when. No condition matches every one of them, and the fields offered are the source''s own. "Edit as text" gives the stored JSON back, where a page rule may also be written as a pages_list search (ancestor:blog AND tag:featured).'
   campaign:
@@ -93,6 +97,8 @@ newsletter:
       slug.help: Carried as utm_campaign. Derived from the subject when left empty, and prefixed with the send date (YYMMDD) once the newsletter is sent.
       status: Status
       subject: Subject
+      transactional: Transactional mail
+      transactional.help: Sends this one with no unsubscribe link and no List-Unsubscribe header. Only for service messages — an order confirmation, a booking reminder. The audience setting covers everything it sends and this cannot take it back.
       translations: Translations
       translations.help: 'JSON, one entry per locale: {"de": {"subject": "…", "preheader": "…", "bodyMarkdown": "…"}}. A field left out falls back on the text above, so a reader never gets an empty mail. Leave empty to mail everybody the same text.'
       unsubscribed: Unsubscribed

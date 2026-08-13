@@ -208,6 +208,35 @@ All public links (confirm, unsubscribe) are built from the audience host's
 `base_live_url`, so they keep working when the site itself is statically
 generated.
 
+### Mail with no way out
+
+Some mail is not a newsletter. An order confirmation, a booking reminder, a
+password reset — a service message answering something the person did — owes no
+unsubscribe link, and offering one on it is offering to break something they
+asked for.
+
+**Transactional** is a checkbox on the audience, on a campaign and on an
+automation. It drops the unsubscribe link from the HTML foot, from the text foot
+and the `List-Unsubscribe` headers with it — one value governs the three, so a
+mail cannot end up keeping the header and losing the link. The postal address is
+untouched: it says who wrote, not how to leave.
+
+The three levels are one `OR`. The audience's own flag covers everything it
+sends and neither of the other two can take it back; a campaign or an automation
+carrying it claims only itself. A broadcast copies its automation's flag onto
+each campaign it schedules, so the campaign waiting in the admin says what it is
+about to send. **Send test** reflects it too.
+
+Two things it does not change. The recipients are still resolved the ordinary
+way — subscribed, mailable contacts of the audience — so this removes the way
+out of a mail, it does not open a channel to people who left. And it is a claim
+about the mail, not a setting that makes one true: on anything promotional,
+sending without a way out is unlawful under the GDPR and CAN-SPAM alike, and
+inboxes treat bulk mail carrying no `List-Unsubscribe` as unattributed, so it
+costs deliverability on everything else that audience sends. Prefer a separate
+audience for service mail: it is also the only kind allowed to leave the
+audience's postal address empty.
+
 ### Subscribed is not the same as mailable
 
 A contact is keyed on an address **or** on a phone number — a booking taken over

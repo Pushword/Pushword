@@ -20,6 +20,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Every message a subscribed contact receives carries `List-Unsubscribe` and
  * RFC 8058 one-click, so unsubscribing never depends on the recipient finding
  * the link in the body — and inboxes stop treating the mail as unattributed bulk.
+ *
+ * Unless it is declared transactional, which drops the link and the headers
+ * together: the three places the way out is offered are governed by one value,
+ * the unsubscribe URL, and a null one silences all three. A mail keeping the
+ * header and losing the link, or the reverse, is worse than either.
  */
 final readonly class NewsletterMailer
 {
@@ -119,15 +124,16 @@ final readonly class NewsletterMailer
      * the way its readers will receive it — the chassis around the body is
      * translated in it too. Empty means the audience host's own language.
      */
-    public function sendTest(Audience $audience, string $subject, string $bodyMarkdown, ?string $preheader, string $address, ?UtmTag $utmTag, string $locale = ''): void
+    public function sendTest(Audience $audience, string $subject, string $bodyMarkdown, ?string $preheader, string $address, ?UtmTag $utmTag, string $locale = '', bool $transactional = false): void
     {
         $contact = new Contact($audience, $address);
         $contact->name = 'Test';
         $contact->locale = '' !== trim($locale) ? $locale : $this->siteRegistry->get($audience->mainHost)->locale;
 
         // A test recipient has no persisted token, so the unsubscribe link would
-        // 404. Point it at the site instead — the point is to read the body.
-        $unsubscribeUrl = $this->linkGenerator->base($audience).'/';
+        // 404. Point it at the site instead — the point is to read the body. A
+        // transactional mail has no foot to proofread in the first place.
+        $unsubscribeUrl = $transactional ? null : $this->linkGenerator->base($audience).'/';
 
         $email = $this->baseEmail($audience, $contact)
             ->subject('[TEST] '.$this->renderer->subject($subject, $contact))
@@ -139,18 +145,39 @@ final readonly class NewsletterMailer
 
     private function send(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader, ?UtmTag $utmTag, Campaign|AutomationStep $trackedMail): void
     {
-        $unsubscribeUrl = $this->linkGenerator->unsubscribeUrl($contact);
+        $unsubscribeUrl = $this->isTransactional($audience, $trackedMail)
+            ? null
+            : $this->linkGenerator->unsubscribeUrl($contact);
 
         $email = $this->baseEmail($audience, $contact)
             ->subject($this->renderer->subject($subject, $contact))
             ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl))
             ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, $trackedMail));
 
-        $headers = $email->getHeaders();
-        $headers->addTextHeader('List-Unsubscribe', '<'.$unsubscribeUrl.'>');
-        $headers->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+        if (null !== $unsubscribeUrl) {
+            $headers = $email->getHeaders();
+            $headers->addTextHeader('List-Unsubscribe', '<'.$unsubscribeUrl.'>');
+            $headers->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+        }
 
         $this->mailer->send($email);
+    }
+
+    /**
+     * Whether this mail goes out with no way off the list. Asked of the audience
+     * the caller resolved as well as of the mail, because the two differ in the
+     * one case that matters: a mail carrying no audience of its own is sent under
+     * the contact's, and that is then the audience whose rule applies.
+     */
+    private function isTransactional(Audience $audience, Campaign|AutomationStep $mail): bool
+    {
+        if ($audience->transactional) {
+            return true;
+        }
+
+        return $mail instanceof Campaign
+            ? $mail->isTransactional()
+            : true === $mail->automation?->isTransactional();
     }
 
     private function baseEmail(Audience $audience, Contact $contact): Email

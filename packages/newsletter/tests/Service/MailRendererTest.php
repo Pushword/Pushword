@@ -40,6 +40,40 @@ final class MailRendererTest extends AbstractNewsletterTestCase
         self::assertStringContainsString('href="'.self::UNSUBSCRIBE.'"', $html);
     }
 
+    /**
+     * A transactional mail offers no way off a list it did not put anybody on.
+     * The postal address is not part of that: it says who wrote, not how to
+     * leave, so it stays in both parts of the mail.
+     */
+    public function testATransactionalMailCarriesNoUnsubscribeFootButKeepsTheAddress(): void
+    {
+        $audience = $this->createAudience();
+        $audience->postalAddress = "Test Publishing\n12 Baker Street";
+
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $renderer = self::getContainer()->get(MailRenderer::class);
+
+        $html = $renderer->html($audience, $contact, 'Subject', 'Your order is on its way.', null, null, null);
+        $text = $renderer->text($audience, $contact, 'Your order is on its way.', null);
+
+        self::assertStringNotContainsString('Unsubscribe', $html);
+        self::assertStringContainsString('12 Baker Street', $html);
+        self::assertStringContainsString('12 Baker Street', $text);
+    }
+
+    /** An audience with neither has no foot to draw, and no rule to draw it under. */
+    public function testAMailWithNoFootAtAllDrawsNoSeparator(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $renderer = self::getContainer()->get(MailRenderer::class);
+
+        $text = $renderer->text($audience, $contact, 'Your order is on its way.', null);
+
+        self::assertSame('Your order is on its way.', $text);
+        self::assertStringNotContainsString('<hr', $renderer->html($audience, $contact, 'Subject', 'Your order is on its way.', null, null, null));
+    }
+
     public function testTheConfirmationButtonWearsTheHostsPrimaryColor(): void
     {
         self::getContainer()->get(SiteRegistry::class)->get('localhost.dev')

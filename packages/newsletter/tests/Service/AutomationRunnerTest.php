@@ -133,11 +133,31 @@ final class AutomationRunnerTest extends AbstractNewsletterTestCase
         $email = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $email);
         self::assertSame('Welcome', $email->getSubject());
+        self::assertStringContainsString('List-Unsubscribe', $email->getHeaders()->toString());
 
         $enrollment = $this->enrollments($automation)[0];
         self::assertSame(1, $enrollment->position);
         self::assertSame(EnrollmentStatus::Active, $enrollment->status);
         self::assertGreaterThan(new DateTimeImmutable('+2 days'), $enrollment->nextRunAt);
+    }
+
+    /** A drip reads the claim off the automation its step belongs to. */
+    public function testATransactionalAutomationDripsWithNoWayOffTheList(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'new@example.tld');
+        $automation = $this->createAutomation($audience, self::TWO_STEPS);
+        $automation->transactional = true;
+
+        $this->entityManager->flush();
+        $this->enroll($automation);
+
+        self::assertSame(1, $this->runner()->advance(10));
+
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertStringNotContainsString('List-Unsubscribe', $email->getHeaders()->toString());
+        self::assertStringNotContainsString('/newsletter/unsubscribe/', (string) $email->getHtmlBody());
     }
 
     /**

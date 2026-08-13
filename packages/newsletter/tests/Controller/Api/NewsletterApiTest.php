@@ -18,6 +18,7 @@ use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mime\Email;
 
 #[Group('integration')]
 final class NewsletterApiTest extends AbstractNewsletterTestCase
@@ -118,6 +119,55 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
             'clickTracking' => true,
         ]);
         self::assertTrue($body['clickTracking']);
+    }
+
+    /**
+     * The one setting whose effect a caller cannot read back off what it wrote:
+     * a campaign of a transactional audience is transactional whatever it stored,
+     * so the field reports what will happen rather than what was asked for.
+     */
+    public function testTransactionalRoundTripsAndIsReadBackAsTheEffectiveValue(): void
+    {
+        $audience = $this->createAudience();
+        $campaign = $this->createCampaign($audience);
+        $item = '/api/newsletter/campaign/'.$campaign->id;
+
+        $body = $this->request(Request::METHOD_GET, $item);
+        self::assertFalse($body['transactional'], 'a way off the list is what a mail carries unless somebody says otherwise');
+
+        $body = $this->request(Request::METHOD_PATCH, $item, ['transactional' => true]);
+        self::assertTrue($body['transactional']);
+
+        $body = $this->request(Request::METHOD_PATCH, $item, ['transactional' => false]);
+        self::assertFalse($body['transactional'], 'a campaign may be given its way out back');
+
+        $body = $this->request(Request::METHOD_PATCH, '/api/newsletter/audience/'.$audience->slug, ['transactional' => true]);
+        self::assertTrue($body['transactional']);
+
+        $body = $this->request(Request::METHOD_GET, $item);
+        self::assertTrue($body['transactional'], 'the audience covers every campaign of it, and the campaign cannot take it back');
+    }
+
+    /**
+     * A test mail is read to know what the recipients will read. It has to drop
+     * the foot when the campaign does, or the preview lies about the only thing
+     * this flag changes.
+     */
+    public function testATestSendOfATransactionalCampaignCarriesNoUnsubscribeFoot(): void
+    {
+        $audience = $this->createAudience();
+        $campaign = $this->createCampaign($audience);
+        $campaign->transactional = true;
+
+        $this->entityManager->flush();
+
+        $this->request(Request::METHOD_POST, '/api/newsletter/campaign/'.$campaign->id.'/test', [
+            'emails' => ['me@example.tld'],
+        ]);
+
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertStringNotContainsString('Unsubscribe', (string) $email->getHtmlBody());
     }
 
     /** The address printed at the foot of the mails is set where the rest of the sender is. */

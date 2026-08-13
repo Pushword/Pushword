@@ -196,7 +196,7 @@ final class CampaignApiController extends AbstractApiController
             }
 
             try {
-                $this->mailer->sendTest($audience, $content['subject'], $content['bodyMarkdown'], $content['preheader'], $address, UtmTag::forCampaign($campaign), $locale);
+                $this->mailer->sendTest($audience, $content['subject'], $content['bodyMarkdown'], $content['preheader'], $address, UtmTag::forCampaign($campaign), $locale, $campaign->isTransactional());
                 $sent[] = $address;
             } catch (Throwable $throwable) {
                 $failed[] = $address.' ('.$throwable->getMessage().')';
@@ -266,6 +266,10 @@ final class CampaignApiController extends AbstractApiController
             $campaign->rateSeconds = \is_int($data['rateSeconds']) ? $data['rateSeconds'] : null;
         }
 
+        if (\array_key_exists('transactional', $data) && \is_bool($data['transactional'])) {
+            $campaign->transactional = $data['transactional'];
+        }
+
         if (\array_key_exists('segment', $data)) {
             try {
                 SegmentCriteria::validate($data['segment']);
@@ -310,6 +314,7 @@ final class CampaignApiController extends AbstractApiController
             'segment' => $campaign->segment,
             'status' => $campaign->getStatusLabel(),
             'rateSeconds' => $campaign->getEffectiveRateSeconds(),
+            'transactional' => $campaign->isTransactional(),
             'scheduledAt' => $campaign->scheduledAt?->format(DateTimeInterface::ATOM),
             'sentAt' => $campaign->sentAt?->format(DateTimeInterface::ATOM),
             'stats' => [
@@ -398,6 +403,7 @@ final class CampaignApiController extends AbstractApiController
                             ],
                             'segment' => ['description' => 'Contact criteria, ANDed; {"any": [...]} ORs them instead', 'oneOf' => [['type' => 'array', 'items' => ['type' => 'object']], ['type' => 'object']]],
                             'rateSeconds' => ['type' => 'integer'],
+                            'transactional' => ['type' => 'boolean', 'description' => 'Sends this one with no unsubscribe link and no List-Unsubscribe header. Service messages only. Read back as the effective value, so an audience carrying the flag reports true here whatever was written'],
                         ],
                     ],
                 ],

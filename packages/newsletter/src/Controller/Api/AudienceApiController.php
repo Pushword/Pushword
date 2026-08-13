@@ -186,6 +186,10 @@ final class AudienceApiController extends AbstractApiController
             $audience->clickTracking = $data['clickTracking'];
         }
 
+        if (\array_key_exists('transactional', $data) && \is_bool($data['transactional'])) {
+            $audience->transactional = $data['transactional'];
+        }
+
         if (\array_key_exists('interests', $data) && \is_array($data['interests'])) {
             $audience->interests = array_values(array_filter($data['interests'], is_string(...)));
         }
@@ -215,6 +219,7 @@ final class AudienceApiController extends AbstractApiController
             'postalAddress' => $audience->postalAddress,
             'requireDoubleOptIn' => $audience->requireDoubleOptIn,
             'clickTracking' => $audience->clickTracking,
+            'transactional' => $audience->transactional,
             'interests' => $audience->interests,
             'rateSeconds' => $audience->rateSeconds,
             'utmSource' => $audience->utmSource,
@@ -278,6 +283,7 @@ final class AudienceApiController extends AbstractApiController
                             'replyTo' => ['type' => 'string', 'nullable' => true],
                             'requireDoubleOptIn' => ['type' => 'boolean'],
                             'clickTracking' => ['type' => 'boolean', 'description' => 'Audience half of the click-tracking double gate, off by default. Links are only rewritten for contacts also carrying clickTrackingConsentAt'],
+                            'transactional' => ['type' => 'boolean', 'description' => 'Sends every mail of this audience with no unsubscribe link and no List-Unsubscribe header. Service messages only; on a newsletter it is unlawful and costs deliverability'],
                             'interests' => ['type' => 'array', 'description' => 'The only interest values the public subscribe form may write', 'items' => ['type' => 'string']],
                             'rateSeconds' => ['type' => 'integer', 'description' => 'Seconds between two mails of this audience'],
                             'utmSource' => ['type' => 'string', 'nullable' => true],

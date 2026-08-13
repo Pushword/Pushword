@@ -120,6 +120,48 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
     }
 
     /**
+     * Transactional has to mean it in all three places at once — the HTML foot,
+     * the text foot and the headers. A mail keeping one and dropping another is
+     * worse than either.
+     */
+    public function testATransactionalCampaignOffersNoWayOffTheList(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'reader@example.tld');
+        $campaign = $this->createCampaign($audience);
+        $campaign->transactional = true;
+
+        $this->entityManager->flush();
+
+        $this->sender()->arm($campaign);
+        $this->sender()->drain($campaign, 10);
+
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertStringNotContainsString('List-Unsubscribe', $email->getHeaders()->toString());
+        self::assertStringNotContainsString('/newsletter/unsubscribe/', (string) $email->getHtmlBody());
+        self::assertStringNotContainsString('/newsletter/unsubscribe/', (string) $email->getTextBody());
+    }
+
+    /** The audience covers everything it sends, and a campaign cannot take it back. */
+    public function testATransactionalAudienceCoversACampaignThatNeverAskedForIt(): void
+    {
+        $audience = $this->createAudience();
+        $audience->transactional = true;
+        $this->createContact($audience, 'reader@example.tld');
+        $campaign = $this->createCampaign($audience);
+        $this->entityManager->flush();
+
+        $this->sender()->arm($campaign);
+        $this->sender()->drain($campaign, 10);
+
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertFalse($campaign->transactional, 'the campaign itself was never marked');
+        self::assertStringNotContainsString('List-Unsubscribe', $email->getHeaders()->toString());
+    }
+
+    /**
      * The round trip the bounce reader depends on: a mail leaves carrying an id
      * that names its recipient, and {@see BounceSignature} recognises it coming
      * back. Break the stamping and no genuine bounce is ever acted on again —

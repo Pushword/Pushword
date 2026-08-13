@@ -66,6 +66,15 @@ class Automation implements IdInterface, Stringable
     public bool $enabled = true;
 
     /**
+     * Sends this sequence's mails with no unsubscribe link and no
+     * `List-Unsubscribe` headers — see {@see Audience::$transactional}. A
+     * broadcast copies it onto each {@see Campaign} it schedules, so the campaign
+     * waiting in the admin says what it is about to send.
+     */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    public bool $transactional = false;
+
+    /**
      * The {@see TriggerSource} this watches. A name and not an enum: the point of
      * the registry is that a bundle adds one without this package knowing.
      */
@@ -153,6 +162,15 @@ class Automation implements IdInterface, Stringable
     public function __toString(): string
     {
         return '' !== $this->name ? $this->name : 'Automation #'.($this->id ?? '?');
+    }
+
+    /**
+     * Whether this sequence goes out with no way off the list. The audience's own
+     * flag covers everything it sends, and this one cannot take that back.
+     */
+    public function isTransactional(): bool
+    {
+        return $this->transactional || true === $this->audience?->transactional;
     }
 
     /**

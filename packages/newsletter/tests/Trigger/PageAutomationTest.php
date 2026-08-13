@@ -77,6 +77,24 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
         self::assertSame($page->id, $campaign->triggerSubjectId);
     }
 
+    /**
+     * A broadcast's steps go out as campaigns, so the claim has to travel onto
+     * them: the campaign waiting in the admin is what will actually be sent.
+     */
+    public function testATransactionalAutomationMarksTheCampaignsItSchedules(): void
+    {
+        $audience = $this->createAudience();
+        $automation = $this->automation($audience);
+        $automation->transactional = true;
+
+        $this->entityManager->flush();
+
+        $this->createPage('blog/hello', publishedAt: '-10 minutes');
+
+        self::assertSame(1, $this->runTriggers());
+        self::assertTrue($this->onlyCampaignOf($automation)->transactional);
+    }
+
     /** What the merge buys the page side: a sequence, not a single announcement. */
     public function testEveryStepIsScheduledFromTheOneBeforeIt(): void
     {

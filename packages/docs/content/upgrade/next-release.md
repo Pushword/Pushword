@@ -1,5 +1,6 @@
 ---
-title: ''
+title: 'a newsletter audience, campaign or automation can be marked transactional and sent with no unsubscribe link'
+run: 'doctrine:schema:update --force'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +35,14 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/newsletter`
+
+## Transactional mail: no unsubscribe link, no `List-Unsubscribe`
+
+An audience, a campaign and an automation each carry a **Transactional** flag,
+off by default, which sends their mail with no unsubscribe link in either part of
+the body and no `List-Unsubscribe` headers — for service messages only, see
+[the newsletter doc](/extension/newsletter#mail-with-no-way-out). Nothing changes
+for existing mail; the three new columns need
+`php bin/console doctrine:schema:update --force`.

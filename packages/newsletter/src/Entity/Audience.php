@@ -93,6 +93,23 @@ class Audience implements IdInterface, Stringable
         }
     }
 
+    /**
+     * Sends this audience's mail with no way off the list: no unsubscribe link
+     * in either part of the body, and no `List-Unsubscribe` headers.
+     *
+     * Only for an audience that genuinely carries service messages — an order
+     * confirmation, a booking reminder. A commercial mail owes its reader a way
+     * out, and an inbox finding no `List-Unsubscribe` on bulk mail treats it as
+     * unattributed, so switching this on for a newsletter costs deliverability
+     * before it costs anything else. It pairs with {@see self::$postalAddress},
+     * which the same kind of audience is the only one allowed to leave empty.
+     *
+     * A {@see Campaign} or an {@see Automation} may claim it for itself; neither
+     * can take it back once it is set here.
+     */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    public bool $transactional = false;
+
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
     public bool $requireDoubleOptIn = true;
 

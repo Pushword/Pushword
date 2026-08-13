@@ -71,6 +71,9 @@ class AudienceCrudController extends AbstractCrudController
         yield BooleanField::new('clickTracking', 'newsletter.audience.field.clickTracking')
             ->hideOnIndex()
             ->setHelp('newsletter.audience.field.clickTracking.help');
+        yield BooleanField::new('transactional', 'newsletter.audience.field.transactional')
+            ->hideOnIndex()
+            ->setHelp('newsletter.audience.field.transactional.help');
         yield ArrayField::new('interests', 'newsletter.audience.field.interests')->hideOnIndex()
             ->setHelp('newsletter.audience.field.interests.help');
         yield IntegerField::new('rateSeconds', 'newsletter.audience.field.rateSeconds')->hideOnIndex()

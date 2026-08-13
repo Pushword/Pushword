@@ -80,6 +80,26 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         }
     }
 
+    /**
+     * The switch that sends without a way off the list exists at three levels,
+     * and it is worth nothing on a form nobody can reach it from.
+     */
+    public function testTheTransactionalSwitchIsOnAllThreeForms(): void
+    {
+        $client = $this->loginUser();
+        $this->seed();
+
+        foreach (['audience', 'campaign', 'automation'] as $section) {
+            $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section.'/new');
+
+            self::assertMatchesRegularExpression(
+                '/name="[^"]*\[transactional\]"/',
+                (string) $client->getResponse()->getContent(),
+                $section.' form',
+            );
+        }
+    }
+
     public function testTheCampaignFormOffersItsAudienceAndSegment(): void
     {
         $client = $this->loginUser();

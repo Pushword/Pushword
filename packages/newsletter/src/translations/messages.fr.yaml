@@ -25,6 +25,8 @@ newsletter:
       replyTo: Répondre à
       slug: Référence (slug)
       slug.help: La clé utilisée par le formulaire d'inscription et l'API.
+      transactional: Mail transactionnel
+      transactional.help: Envoie tous les mails de cette audience sans lien de désinscription ni en-tête List-Unsubscribe. Réservé aux messages de service — confirmation de commande, rappel de rendez-vous. Sur une newsletter c'est illégal (RGPD, CAN-SPAM), et les messageries considèrent comme non attribué un envoi de masse sans cet en-tête.
       utmSource: Source analytics
       utmSource.help: Renseignez-la (par exemple newsletter) pour ajouter utm_source, utm_medium et utm_campaign aux liens des mails de cette audience. Vide, les liens partent tels quels. Seuls les liens vers vos propres sites sont marqués.
   automation:
@@ -54,6 +56,8 @@ newsletter:
       steps: Étapes
       stopWhen: Arrêter si
       stopWhen.help: Revérifié avant chaque étape d'un scénario. Une correspondance met fin à la séquence pour ce contact.
+      transactional: Mail transactionnel
+      transactional.help: Envoie cette séquence sans lien de désinscription ni en-tête List-Unsubscribe. Réservé aux messages de service — confirmation de commande, rappel de rendez-vous. Le réglage de l'audience couvre tous ses envois et celui-ci ne peut pas l'annuler.
       triggerWhen: Déclencher quand
       triggerWhen.help: 'Quels sujets méritent la séquence — lesquels, pas quand. Sans condition, tous correspondent, et les champs proposés sont ceux de la source. « Éditer en texte » redonne le JSON stocké, où une règle de page peut aussi s''écrire comme une recherche pages_list (ancestor:blog AND tag:featured).'
   campaign:
@@ -93,6 +97,8 @@ newsletter:
       slug.help: Transmis comme utm_campaign. Déduit de l'objet si laissé vide, et préfixé par la date d'envoi (AAMMJJ) au moment de l'envoi.
       status: Statut
       subject: Objet
+      transactional: Mail transactionnel
+      transactional.help: Envoie celui-ci sans lien de désinscription ni en-tête List-Unsubscribe. Réservé aux messages de service — confirmation de commande, rappel de rendez-vous. Le réglage de l'audience couvre tous ses envois et celui-ci ne peut pas l'annuler.
       translations: Traductions
       translations.help: 'JSON, une entrée par langue : {"de": {"subject": "…", "preheader": "…", "bodyMarkdown": "…"}}. Un champ absent reprend le texte ci-dessus, donc un lecteur ne reçoit jamais un mail vide. Laissez vide pour envoyer le même texte à tout le monde.'
       unsubscribed: Désinscrits
