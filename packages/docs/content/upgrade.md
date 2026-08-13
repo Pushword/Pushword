@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc873](/upgrade/rc873) | `core` `quiz` | `fenced_code_pre_class` works for the first time; quiz images size themselves; body images size themselves inside a quiz |
 | [rc872](/upgrade/rc872) | `core` | markdown body images take their `sizes` from `body_image_sizes`, settable per app |
 | [rc871](/upgrade/rc871) | `core` `js-helper` | links to unpublished pages are restored from the pw_auth cookie instead of an auth probe; `image()` takes a `sizes` argument and defaults to `100vw` |
 | [rc869](/upgrade/rc869) | `newsletter` | a newsletter form can be fetched by the front end itself, so a modal loads it on open rather than on every page load |
