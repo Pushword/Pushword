@@ -239,6 +239,32 @@ contact** takes their ledger with it, which is what an erasure request means.
 The ledger starts at the release that introduced it: subscriptions older than
 that show an empty panel, and their contact dates remain all there is.
 
+#### Splitting an audience in two
+
+`ContactManager::splitFrom($contact, $target)` carries a live subscription onto
+a second list — one brand's readers divided in two, a locale given its own
+audience. It is where the two planes have to be told apart, and confusing them
+destroys evidence in one direction or the other:
+
+| | carries | why |
+|---|---|---|
+| **State** — `confirmedAt`, `source`, `optinHost`, `optinIp`, `clickTrackingConsentAt` | the origin's, unchanged | the partition *divides* a consent, it does not renew it. Stamping today's date would erase the only date worth producing. |
+| **Ledger** — one `split:<origin slug>` row | today's date, no host, no IP | the act performed today is the making of a row. Nobody consented to anything, so nothing here is antedated and no place is recorded. |
+
+The target audience must already exist — its host, its sender, its double opt-in
+rule and its vocabulary are editorial decisions, not something a loop improvises.
+Interests come over only where the second list declares them; the new row mints
+its own token, so each list's unsubscribe link governs its own list.
+
+Two rules that matter to a switch-over run as a batch. It is **idempotent** — a
+row already on the target comes back untouched *whatever its status*, so a second
+pass never raises somebody who has since left it. And it carries **only a
+subscribed contact**: a pending one has no consent to divide yet, and copying it
+ahead of its confirmation would make a row that can never become mailable, having
+no confirmation of its own to send. Such a contact reaches the second list when
+they answer the first one's — which a listener on the transition to `subscribed`
+handles, not the batch.
+
 ### Mail with no way out
 
 Some mail is not a newsletter. An order confirmation, a booking reminder, a

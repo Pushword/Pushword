@@ -96,6 +96,19 @@ class ContactEvent implements IdInterface
     }
 
     /**
+     * A row born of a partitioned audience, naming the list it was split from.
+     *
+     * Dated today, because today is when the row came to exist — and carrying no
+     * host and no IP, because a split accords no consent. The consent it lives
+     * under was given to the other list, on the date the new row's `confirmedAt`
+     * still holds; antedating this line would claim an act nobody performed.
+     */
+    public static function split(Contact $contact, string $fromAudienceSlug): self
+    {
+        return new self($contact, ContactTransition::Split, 'split:'.$fromAudienceSlug);
+    }
+
+    /**
      * Follow the person when two rows turn out to be one.
      *
      * The row keeps everything else it says: each one still names the moment,

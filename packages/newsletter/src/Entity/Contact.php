@@ -146,6 +146,37 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
         $this->initTimestampableProperties();
     }
 
+    /**
+     * The same person on a second list, when an audience is partitioned.
+     *
+     * The consent comes over unchanged — its date, its provenance, the
+     * click-tracking consent given before the list was cut in two. Renewing any
+     * of it would erase the date the agreement actually carries, which is a loss
+     * of evidence dressed as scruple: the partition divides a consent, it does
+     * not ask for one. Written here because `confirmedAt` and `status` are
+     * `private(set)`, and a copy made from outside would have to force them.
+     *
+     * The token is not copied — the constructor mints a fresh one. Each row's
+     * unsubscribe link governs its own list, so leaving one leaves that one.
+     *
+     * Tags are left to {@see \Pushword\Newsletter\Service\ContactManager::splitFrom()},
+     * which filters them against what the second list actually declares.
+     */
+    public static function splitFrom(self $origin, Audience $audience): self
+    {
+        $contact = new self($audience, $origin->email, $origin->phone);
+        $contact->name = $origin->name;
+        $contact->locale = $origin->locale;
+        $contact->source = $origin->source;
+        $contact->optinHost = $origin->optinHost;
+        $contact->optinIp = $origin->optinIp;
+        $contact->clickTrackingConsentAt = $origin->clickTrackingConsentAt;
+        $contact->status = $origin->status;
+        $contact->confirmedAt = $origin->confirmedAt;
+
+        return $contact;
+    }
+
     /** Digits and a leading `+`; null for anything left with nothing to dial. */
     public static function normalizePhone(?string $phone): ?string
     {

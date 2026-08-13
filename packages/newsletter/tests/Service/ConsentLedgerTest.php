@@ -2,6 +2,8 @@
 
 namespace Pushword\Newsletter\Tests\Service;
 
+use DateTimeImmutable;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\ContactEvent;
@@ -118,6 +120,94 @@ final class ConsentLedgerTest extends AbstractNewsletterTestCase
 
         $sources = array_map(static fn (ContactEvent $contactEvent): ?string => $contactEvent->source, $this->ledger()->findFor($kept));
         self::assertSame(['form', 'admin:robin'], $sources);
+    }
+
+    /**
+     * A partitioned audience, on both planes at once: the state is the consent
+     * that was already given, the ledger line is today's act of making a row.
+     * Getting either one wrong destroys evidence — an antedated line claims an
+     * act nobody performed, a renewed `confirmedAt` erases the real agreement.
+     */
+    public function testASplitCarriesTheConsentAndDatesOnlyTheRowItMakes(): void
+    {
+        $origin = $this->createAudience(requireDoubleOptIn: false);
+        $target = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->manager()->subscribe($origin, 'split@example.tld', name: 'Robin', locale: 'fr', source: 'homepage', optinHost: 'example.tld', optinIp: '203.0.113.1');
+        $contact->clickTrackingConsentAt = new DateTimeImmutable('-1 month');
+
+        $this->entityManager->flush();
+
+        $carried = $this->manager()->splitFrom($contact, $target);
+
+        self::assertNotSame($contact->id, $carried->id);
+        self::assertSame($contact->confirmedAt, $carried->confirmedAt, 'the partition divides a consent, it does not renew it');
+        self::assertSame('homepage', $carried->source);
+        self::assertSame('203.0.113.1', $carried->optinIp);
+        self::assertEquals($contact->clickTrackingConsentAt, $carried->clickTrackingConsentAt);
+        self::assertSame('Robin', $carried->name);
+        self::assertSame('fr', $carried->locale);
+        self::assertNotSame($contact->token, $carried->token, 'each row governs its own list, so it owns its own links');
+
+        $ledger = $this->ledger()->findFor($carried);
+        self::assertCount(1, $ledger);
+        self::assertSame(ContactTransition::Split, $ledger[0]->transition);
+        self::assertSame('split:'.$origin->slug, $ledger[0]->source);
+        self::assertNull($ledger[0]->ip, 'a split accords no consent, so it records no place');
+        self::assertGreaterThan($contact->confirmedAt, $ledger[0]->occurredAt);
+    }
+
+    /**
+     * A switch-over is re-run — interrupted, resumed, aimed at a subset — and a
+     * second pass must leave the first one's work alone. Above all it must not
+     * raise somebody who left the second list: an existing row closes the door
+     * whatever its status.
+     */
+    public function testASecondSplitReturnsTheExistingRowWithoutRaisingIt(): void
+    {
+        $origin = $this->createAudience(requireDoubleOptIn: false);
+        $target = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->manager()->subscribe($origin, 'again@example.tld');
+
+        $carried = $this->manager()->splitFrom($contact, $target);
+        $this->manager()->unsubscribe($carried, 'link');
+
+        $second = $this->manager()->splitFrom($contact, $target);
+
+        self::assertSame($carried->id, $second->id);
+        self::assertFalse($second->isSubscribed(), 'somebody who left the second list has left it');
+        self::assertSame(
+            [ContactTransition::Split, ContactTransition::Unsubscribe],
+            $this->transitionsOf($second),
+            'a repeat pass writes nothing',
+        );
+    }
+
+    /** A tag says what somebody is on *this* list for; the origin's vocabulary is its own. */
+    public function testASplitCarriesOnlyTheInterestsTheSecondListDeclares(): void
+    {
+        $origin = $this->createAudience(requireDoubleOptIn: false, interests: ['wine', 'cheese']);
+        $target = $this->createAudience(requireDoubleOptIn: false, interests: ['cheese']);
+        $contact = $this->manager()->subscribe($origin, 'tastes@example.tld', interests: ['wine', 'cheese']);
+
+        $carried = $this->manager()->splitFrom($contact, $target);
+
+        self::assertSame(['cheese'], $carried->getTagList());
+    }
+
+    /**
+     * Nothing to carry. A pending contact reaches the second list when they
+     * answer their confirmation, not by being copied ahead of it — that would
+     * make a row for a consent that does not exist yet, and it could never
+     * become mailable, having no confirmation of its own to send.
+     */
+    public function testOnlyALiveSubscriptionCanBeCarried(): void
+    {
+        $origin = $this->createAudience();
+        $target = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->manager()->subscribe($origin, 'waiting@example.tld');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->manager()->splitFrom($contact, $target);
     }
 
     /** An erasure that left the ledger standing would keep the data it was asked to remove. */

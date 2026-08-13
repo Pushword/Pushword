@@ -3,8 +3,8 @@
 namespace Pushword\Newsletter\Enum;
 
 /**
- * What a {@see \Pushword\Newsletter\Entity\ContactEvent} records — the five acts
- * that move a subscription, one per {@see \Pushword\Newsletter\Service\ContactManager}
+ * What a {@see \Pushword\Newsletter\Entity\ContactEvent} records — the acts that
+ * move a subscription, one per {@see \Pushword\Newsletter\Service\ContactManager}
  * method.
  */
 enum ContactTransition: string
@@ -22,4 +22,11 @@ enum ContactTransition: string
 
     /** Not an act of the person's: the mail server refused their address for good. */
     case Bounce = 'bounce';
+
+    /**
+     * A subscription carried onto a second list when an audience was partitioned.
+     * Not a consent — the consent is the one the row was split from, and it keeps
+     * its original date. This records only that the row came to exist, and when.
+     */
+    case Split = 'split';
 }

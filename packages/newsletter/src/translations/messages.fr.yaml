@@ -156,6 +156,7 @@ newsletter:
         confirm: Confirmé
         optin: Inscrit
         resubscribe: Réinscrit
+        split: Issu d'une autre liste
         unsubscribe: Désinscrit
     fieldset:
       consent: Consentement

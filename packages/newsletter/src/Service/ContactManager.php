@@ -135,6 +135,62 @@ final readonly class ContactManager
     }
 
     /**
+     * Carry a live subscription onto a second list, when an audience is split in
+     * two.
+     *
+     * Two planes, and confusing them is how a partition destroys evidence. The
+     * **state** is the origin's: the date the consent was given, where it came
+     * from, the click-tracking consent that went with it. The partition divides
+     * that consent, it does not renew it, and stamping today's date on the new
+     * row would erase the only date worth producing. The **ledger** gets a line
+     * dated today, naming the list it came from — because the act performed
+     * today is the making of a row, and nobody consented to anything.
+     *
+     * `$target` is an audience somebody already created: its name, its host, its
+     * sender, its double opt-in rule and its vocabulary are a dozen editorial
+     * decisions, taken once on a screen and not improvised inside a loop.
+     *
+     * Idempotent, because a switch-over is re-run — interrupted, resumed, aimed
+     * at a subset. A row already on the second list comes back untouched
+     * *whatever its status*: somebody who left the second list has left it, and
+     * a second pass must not raise them from it.
+     *
+     * @throws InvalidArgumentException when the subscription being carried is not a live one
+     */
+    public function splitFrom(Contact $origin, Audience $target): Contact
+    {
+        if (! $origin->isSubscribed()) {
+            throw new InvalidArgumentException(\sprintf('Contact #%s is %s: only a live subscription can be carried to another list.', $origin->id ?? '?', $origin->getStatusLabel()));
+        }
+
+        if ($origin->audience->id === $target->id) {
+            throw new InvalidArgumentException('A contact cannot be split onto the list it is already on.');
+        }
+
+        $existing = null !== $origin->email
+            ? $this->contactRepository->findOneByEmail($target, $origin->email)
+            : $this->contactRepository->findOneByPhone($target, (string) $origin->phone);
+
+        if ($existing instanceof Contact) {
+            return $existing;
+        }
+
+        $contact = Contact::splitFrom($origin, $target);
+
+        // What the second list has a word for, and nothing else: a tag says what
+        // somebody is on *this* list for, and the origin's vocabulary is its own.
+        foreach ($target->filterInterests($origin->getTagList()) as $interest) {
+            $contact->addTag($interest);
+        }
+
+        $this->entityManager->persist($contact);
+        $this->entityManager->persist(ContactEvent::split($contact, $origin->audience->slug));
+        $this->entityManager->flush();
+
+        return $contact;
+    }
+
+    /**
      * A number already held by somebody else in the audience is refused, not
      * moved and not taken over.
      *
