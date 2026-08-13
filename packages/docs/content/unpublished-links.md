@@ -32,9 +32,13 @@ It runs *after* `HtmlLinkMultisite` (links are already resolved to absolute URLs
 
 ## Restoring links for logged-in editors
 
-The shipped `app.js` bundle includes a small restorer that probes `GET /_pushword/auth-check` (204 = authenticated, 401 = anonymous), caches the result in `sessionStorage`, and rewrites each `<span data-status="unpublished" data-href>` back into an `<a>` for authenticated users. Restored links get `data-unpublished="1"` and a `0.6` opacity so editors can spot drafts at a glance.
+The shipped `app.js` bundle includes a small restorer that rewrites each `<span data-status="unpublished" data-href>` back into an `<a>` when the `pw_auth=1` cookie is present. Restored links get `data-unpublished="1"` and a `0.6` opacity so editors can spot drafts at a glance.
 
 This avoids per-user HTML cache invalidation: anonymous and authenticated visitors get the exact same HTML.
+
+`pw_auth` is the editor-only client-side hint core already sets on login and clears on logout (see [Page Cache](/extension/page-cache)); reading it costs no request, so an anonymous visitor makes no network call at all and the restore also survives a prerender. Only `ROLE_EDITOR` carries the cookie, where the probe answered to any fully authenticated user of the firewall covering it — non-editor accounts sharing that firewall no longer get draft links back.
+
+`GET /_pushword/auth-check` (204 = authenticated, 401 = anonymous) is the probe the restorer used before, kept for bundles built earlier. It answers 401 to anonymous visitors and must keep doing so: those bundles key off `response.ok`.
 
 ## Pairing with `pw:page-scan`
 

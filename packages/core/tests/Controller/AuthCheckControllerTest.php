@@ -26,6 +26,10 @@ final class AuthCheckControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_GET, '/_pushword/auth-check');
 
         $response = $this->client->getResponse();
+        // Not merely "not 204": bundles built before the restorer moved to the
+        // pw_auth cookie still probe this route and key off `response.ok`, so any
+        // 2xx here would restore unpublished links for the whole public. The
+        // failure status is the contract, not an implementation detail.
         self::assertSame(Response::HTTP_UNAUTHORIZED, $response->getStatusCode());
         // The endpoint exposes per-visitor auth state, so neither the 401 nor the
         // 204 may ever be stored by a shared cache.

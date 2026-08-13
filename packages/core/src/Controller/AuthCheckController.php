@@ -8,10 +8,21 @@ use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Lightweight endpoint used by the front-end to know whether the visitor is
- * authenticated. Returns 204 when authenticated, 401 otherwise. Used by the
- * unpublished-link-restorer JS to put back <a> tags for editors without
- * needing per-user HTML cache invalidation.
+ * Lightweight endpoint telling the front-end whether the visitor is
+ * authenticated. Returns 204 when authenticated, 401 otherwise.
+ *
+ * Compatibility only. The unpublished-link restorer used to call this on every
+ * page carrying a draft link; it now reads the editor-only `pw_auth` cookie
+ * instead ({@see \Pushword\Core\EventListener\PwAuthCookieListener}), which costs
+ * no request and no console error — the browser's network stack logs any 4xx
+ * resource, and Lighthouse counts it against best-practices.
+ *
+ * The route stays because bundles built before that change are still deployed and
+ * still probe it, and it must keep answering 401 to anonymous visitors for exactly
+ * that reason: those bundles key off `response.ok`, so an always-200 answer would
+ * make every anonymous visitor restore the very draft links this feature hides.
+ * AuthCheckControllerTest guards that. Drop the route once no deployed bundle
+ * probes it.
  */
 final readonly class AuthCheckController
 {
