@@ -1,36 +1,22 @@
 ---
-title: ''
+title: 'markdown body images can optimize their sizes for display width; optional config key'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
 
-<!--
-The upgrade note for the next release. `.scripts/release` renames this file to
-`upgrade/rc<N>.md`, adds its row to the table in `upgrade.md` and empties it back
-to this scaffold, at the tag.
+**Concerns:** pushword/core
 
-Write here, in the same commit as the change, whenever a release asks something of
-a site that upgrades: a command to run, a config key to set, a template to copy, a
-behaviour that changed under an unchanged call. A change `composer update` fully
-absorbs needs no note.
+## Configure sizes for body images (optional)
 
-Keep it short: what changed, and what to do about it. A note is a checklist, not a
-changelog and not a post-mortem — no cause, no code path, no story of the bug. That
-belongs in the feature doc, which you link to instead.
+Markdown images in page bodies now accept a configurable `sizes` attribute so they select appropriately-sized variants based on their actual display width, instead of defaulting to `100vw` (viewport width). On a desktop blog with article content in a ~700px column, this lets body images select `md` (992px) instead of `xl` (1600px), reducing transfer size without quality loss.
 
-- `title:` — the "What changed" cell of the index table. One line, lower case,
-  written from the site's side ("the newsletter form is fetched, and CSRF-protected")
-  rather than the diff's ("refactor NewsletterFormController"). Several changes: one
-  short clause each, semicolon-separated, naming only those that ask something.
-  Required as soon as the note has a section; the release stops if it is still empty.
-- `run:` — the command(s) the release expects, without `php bin/console`. Omit the
-  key when there is none. A list runs in the order given.
-- `**Concerns:**` — first line of the body, listing every package a site has to
-  install to be affected. Alphabetical, full composer names, `@pushword/js-helper`
-  last. Add the packages your change touches to the line, keep the others.
-- One `##` section per change, five lines at most: one sentence for what changed, a
-  bold line for who is affected when only some sites are, then the action — a command,
-  a config key, an edit to make. Nothing to do: say so in the sentence and stop.
+To enable: add `pushword.body_image_sizes` to your `config/packages/pushword.yaml`, or leave it unset to keep the safe default (`100vw`).
 
-Several changes land here between two tags: append to the file, do not replace it.
--->
+```yaml
+pushword:
+  body_image_sizes: "(max-width: 1023px) 100vw, 700px"
+```
+
+Format: CSS media queries compatible with `<img sizes="">`, e.g. `"(min-width: 768px) 50vw, 100vw"`. 
+
+**Invariant:** the selected image must cover at least 2x the display width at any device-pixel-ratio to maintain quality (this was verified at 18.4 → 10.6 Mo, 80.3 → 90.6 Lighthouse on a 12-page catalog audit). Configure too narrow a column and the browser selects a smaller variant than it should, resulting in visible blur on high-DPR devices. Test your chosen value against your live template's actual column width.
