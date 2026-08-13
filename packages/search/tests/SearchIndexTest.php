@@ -241,6 +241,48 @@ final class SearchIndexTest extends KernelTestCase
     }
 
     /**
+     * The index holds what visitors read — post-typography text, so `l’exemple`
+     * with a curly apostrophe — while a visitor types `l'exemple`. Both
+     * spellings must find the page.
+     */
+    public function testStraightApostropheQueryMatchesCurlyIndexedContent(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $searcher = $container->get(Searcher::class);
+
+        $nonce = 'apo'.bin2hex(random_bytes(4));
+        $page = $this->createPage($nonce);
+        $page->mainContent = "Suivez l'aventure{$nonce} sans attendre.";
+        $em->persist($page);
+        $em->flush();
+
+        try {
+            $container->get(Indexer::class)->reindexHost(self::HOST);
+
+            // Premise: the render-time Typographer curled the source
+            // apostrophe before indexing.
+            $hits = $searcher->search(self::HOST, 'l’aventure'.$nonce)['hits'];
+            $hit = array_values(array_filter($hits, static fn (array $h): bool => $h['id'] === $page->id))[0] ?? null;
+            self::assertNotNull($hit, 'Curly-apostrophe query found nothing');
+            self::assertIsArray($hit['_formatted']);
+            self::assertIsString($hit['_formatted']['content']);
+            self::assertStringContainsString('’', $hit['_formatted']['content']);
+
+            // The user-facing property: a plain keyboard apostrophe matches.
+            self::assertContains(
+                $page->id,
+                array_column($searcher->search(self::HOST, "l'aventure".$nonce)['hits'], 'id'),
+                'Straight-apostrophe query missed the curly-indexed page'
+            );
+        } finally {
+            $em->remove($page);
+            $em->flush();
+        }
+    }
+
+    /**
      * Hits carry the cropped highlight snippet but not the full page body — the
      * raw `content` is retrieved only to feed the snippet, then dropped.
      */
