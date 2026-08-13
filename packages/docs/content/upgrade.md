@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc871](/upgrade/rc871) | `core` `js-helper` | links to unpublished pages are restored from the pw_auth cookie instead of an auth probe; `image()` takes a `sizes` argument and defaults to `100vw` |
 | [rc869](/upgrade/rc869) | `newsletter` | a newsletter form can be fetched by the front end itself, so a modal loads it on open rather than on every page load |
 | [rc868](/upgrade/rc868) | `newsletter` | the newsletter subscribe token is signed instead of session-bound, so a statically generated site keeps CSRF protection on |
 | [rc866](/upgrade/rc866) | `newsletter` | audiences carry a postal address, printed at the foot of every mail; confirmation mails are capped per address, so resubmitting no longer resends at once |
