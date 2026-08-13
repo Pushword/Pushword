@@ -19,6 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 use Throwable;
 
@@ -41,9 +42,10 @@ final class ImageManagerCommand
     /**
      * Killed after this long *without output*, not this long in total: a worker
      * prints DONE: per image, so silence means stuck, while a wall-clock cap would
-     * kill a large batch that is progressing perfectly well.
+     * kill a large batch that is progressing perfectly well. Property, not const,
+     * so tests can shrink it through reflection.
      */
-    private const int WORKER_IDLE_TIMEOUT = 300;
+    private float $workerIdleTimeout = 300;
 
     private bool $agentMode = false;
 
@@ -215,6 +217,26 @@ final class ImageManagerCommand
     }
 
     /**
+     * --format=text always: the worker inherits the parent environment, so under
+     * an agent one auto-detection would silence the DONE: lines the idle timeout
+     * reads as liveness, and a healthy long batch would be killed as stuck.
+     *
+     * @return string[]
+     */
+    private function workerCommand(string $fileNames, bool $force): array
+    {
+        $cmd = BackgroundCommand::pinEnvironment(
+            ['php', 'bin/console', 'pw:image:cache', $fileNames, '--no-lock', '--format=text'],
+            $this->environment,
+        );
+        if ($force) {
+            $cmd[] = '--force';
+        }
+
+        return $cmd;
+    }
+
+    /**
      * @param Media[] $medias
      */
     private function executeParallel(array $medias, int $workers, bool $force, SymfonyStyle $io, OutputInterface $output, float $startTime): int
@@ -288,17 +310,9 @@ final class ImageManagerCommand
                 ++$chunkIndex;
                 $fileNames = implode(',', array_map(static fn (Media $m): string => $m->getFileName(), $chunk));
 
-                $cmd = BackgroundCommand::pinEnvironment(
-                    ['php', 'bin/console', 'pw:image:cache', $fileNames, '--no-lock'],
-                    $this->environment,
-                );
-                if ($force) {
-                    $cmd[] = '--force';
-                }
-
-                $process = new Process($cmd, $this->projectDir);
+                $process = new Process($this->workerCommand($fileNames, $force), $this->projectDir);
                 $process->setTimeout(null);
-                $process->setIdleTimeout(self::WORKER_IDLE_TIMEOUT);
+                $process->setIdleTimeout($this->workerIdleTimeout);
                 $process->start();
                 $running[] = ['process' => $process, 'count' => \count($chunk), 'reported' => 0];
             }
@@ -314,6 +328,21 @@ final class ImageManagerCommand
                             $progressBar?->setMessage($m[1]);
                         }
                     }
+                }
+
+                try {
+                    // Process enforces setIdleTimeout() only here — never in isRunning().
+                    $entry['process']->checkTimeout();
+                } catch (ProcessTimedOutException) {
+                    $remaining = $entry['count'] - $entry['reported'];
+                    if ($remaining > 0) {
+                        $progressBar?->advance($remaining);
+                    }
+
+                    $errors[] = \sprintf('batch: worker killed after %gs without output, %d image(s) not processed', $this->workerIdleTimeout, $remaining);
+                    unset($running[$key]);
+
+                    continue;
                 }
 
                 if (! $entry['process']->isRunning()) {

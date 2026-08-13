@@ -6,6 +6,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Command\ImageManagerCommand;
 use Pushword\Core\Tests\PathTrait;
 use ReflectionMethod;
+use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -51,6 +52,47 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
 
         self::assertStringContainsString('100%', $commandTester->getDisplay());
         self::assertStringContainsString('worker(s)', $commandTester->getDisplay());
+    }
+
+    /**
+     * A worker inherits the parent environment: under an agent one (the suite
+     * itself runs with CLAUDECODE set) --format auto-detection would silence the
+     * per-image DONE: lines the idle timeout reads as liveness, and any healthy
+     * batch outlasting the timeout would be killed as stuck.
+     */
+    public function testWorkerCommandPinsTextFormat(): void
+    {
+        self::bootKernel();
+        $command = self::getContainer()->get(ImageManagerCommand::class);
+        $workerCommand = new ReflectionMethod(ImageManagerCommand::class, 'workerCommand');
+
+        self::assertSame(
+            ['php', 'bin/console', 'pw:image:cache', 'a.jpg,b.png', '--no-lock', '--format=text', '--env=test'],
+            $workerCommand->invoke($command, 'a.jpg,b.png', false),
+        );
+        $forcedCmd = $workerCommand->invoke($command, 'a.jpg', true);
+        self::assertIsArray($forcedCmd);
+        self::assertContains('--force', $forcedCmd);
+    }
+
+    /**
+     * Symfony Process enforces setIdleTimeout() only inside checkTimeout(), which
+     * the scheduling loop must keep calling — otherwise a wedged worker spins the
+     * loop forever. A tiny timeout makes any worker "silent" during its kernel
+     * boot, so enforcement shows up as the batch being killed and reported failed.
+     */
+    public function testIdleWorkerIsKilledAndReportedFailed(): void
+    {
+        $commandTester = $this->createCommandTester();
+        $command = self::getContainer()->get(ImageManagerCommand::class);
+        $idleTimeout = new ReflectionProperty(ImageManagerCommand::class, 'workerIdleTimeout');
+        $idleTimeout->setValue($command, 0.05);
+
+        $this->waitForLockRelease();
+        $exitCode = $commandTester->execute(['--parallel' => '2', '--force' => true, '--format' => 'text']);
+
+        self::assertSame(1, $exitCode);
+        self::assertStringContainsString('without output', $commandTester->getDisplay());
     }
 
     public function testForceRegeneration(): void
