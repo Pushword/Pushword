@@ -315,8 +315,18 @@ final class PageImporter extends AbstractImporter
             if ('publishedAt' === $camelKey) {
                 $value = PublishedAtConverter::fromFlatValue($value);
                 $publishedAtExplicitlySet = true;
+                if ($value?->getTimestamp() === $page->publishedAt?->getTimestamp()) {
+                    // Same instant: keep the managed instance. Doctrine's changeset compares
+                    // objects by identity, so a fresh equal DateTime would dirty the page and
+                    // preUpdate would bump updatedAt — churning every revision on a no-op sync.
+                    continue;
+                }
             } elseif (\in_array($camelKey, ['createdAt', 'updatedAt', 'holdPublicationAt'], true) && \is_scalar($value)) {
                 $value = new DateTime((string) $value);
+                $current = $page->{$camelKey};
+                if ($current instanceof DateTimeInterface && $current->getTimestamp() === $value->getTimestamp()) {
+                    continue;
+                }
             }
 
             $setter = 'set'.ucfirst($camelKey);
