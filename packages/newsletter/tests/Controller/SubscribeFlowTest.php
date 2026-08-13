@@ -7,6 +7,8 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Enum\ContactStatus;
+use Pushword\Newsletter\Enum\ContactTransition;
+use Pushword\Newsletter\Repository\ContactEventRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
@@ -375,6 +377,13 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         $left = $this->find('leaving@example.tld');
         self::assertSame(ContactStatus::Unsubscribed, $left->status);
         self::assertNotNull($left->unsubscribedAt);
+
+        // The ledger has to say a person did this through their own token link,
+        // and not an editor or an API client — it is the whole difference
+        // between an opt-out and a removal.
+        $ledger = self::getContainer()->get(ContactEventRepository::class)->findFor($left);
+        self::assertSame(ContactTransition::Unsubscribe, $ledger[count($ledger) - 1]->transition);
+        self::assertSame('link', $ledger[count($ledger) - 1]->source);
     }
 
     /**

@@ -79,6 +79,25 @@ final class ConsentLedgerTest extends AbstractNewsletterTestCase
         self::assertNull($withdrawal->ip);
     }
 
+    /**
+     * The one transition nobody performs. It is recorded with the person's own
+     * acts because it is what took them off the list, and with no place for the
+     * same reason a departure has none: there is nothing here to prove.
+     */
+    public function testAPermanentFailureIsRecordedLikeADeparture(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->manager()->subscribe($audience, 'dead@example.tld', optinIp: '203.0.113.1');
+
+        $this->manager()->markBounced($contact, 'mailbox');
+
+        $bounce = $this->ledger()->findFor($contact)[1];
+        self::assertSame(ContactTransition::Bounce, $bounce->transition);
+        self::assertSame('mailbox', $bounce->source);
+        self::assertNull($bounce->host);
+        self::assertNull($bounce->ip);
+    }
+
     /** Nothing about the consent moved, so there is nothing to record. */
     public function testARepeatSubmissionBySomebodyAlreadySubscribedAppendsNothing(): void
     {
@@ -208,6 +227,35 @@ final class ConsentLedgerTest extends AbstractNewsletterTestCase
 
         $this->expectException(InvalidArgumentException::class);
         $this->manager()->splitFrom($contact, $target);
+    }
+
+    /** Somebody the site only knows a number for is carried on the number. */
+    public function testAPhoneOnlySubscriptionIsCarriedToo(): void
+    {
+        $origin = $this->createAudience(requireDoubleOptIn: false);
+        $target = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->manager()->subscribe($origin, source: 'admin:robin', phone: '0612345678');
+
+        $carried = $this->manager()->splitFrom($contact, $target);
+
+        self::assertSame('0612345678', $carried->phone);
+        self::assertNull($carried->email);
+        self::assertSame($carried->id, $this->manager()->splitFrom($contact, $target)->id, 'found again on the number');
+        self::assertSame([ContactTransition::Split], $this->transitionsOf($carried));
+    }
+
+    /**
+     * Splitting a list onto itself is a typo, and it has to be refused rather
+     * than absorbed: left to the idempotence lookup it would find the origin
+     * contact, hand it back, and read as a successful split.
+     */
+    public function testAListCannotBeSplitOntoItself(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $contact = $this->manager()->subscribe($audience, 'same@example.tld');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->manager()->splitFrom($contact, $audience);
     }
 
     /** An erasure that left the ledger standing would keep the data it was asked to remove. */
