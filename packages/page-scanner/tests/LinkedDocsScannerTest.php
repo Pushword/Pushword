@@ -337,6 +337,35 @@ final class LinkedDocsScannerTest extends KernelTestCase
     }
 
     /**
+     * The cross-host data points above bless a healthy derivative served by another
+     * host of the installation; this is the failure-path counterpart. An absolute
+     * URL resolves through the same branch as a root-relative one, so the DB row
+     * being green must not exempt it from the disk-truth check.
+     */
+    public function testCrossHostDerivativeMissingFromDiskIsReported(): void
+    {
+        self::bootKernel();
+
+        $publicDir = sys_get_temp_dir().'/pw-scanner-derivative-'.getmypid();
+        $filesystem = new Filesystem();
+        $filesystem->mkdir($publicDir.'/media/lg');
+
+        try {
+            $scanner = $this->createScanner($publicDir);
+            $scanner->preloadPageCache();
+
+            $html = '<a href="https://localhost.dev/media/lg/1.webp">doc</a>';
+            $errors = $this->messages($scanner, $this->getPage('other-page', 'pushword.piedweb.com'), $html);
+
+            self::assertCount(1, $errors);
+            self::assertStringContainsString('https://localhost.dev/media/lg/1.webp', $errors[0]);
+            self::assertStringContainsString('derivative file missing', $errors[0]);
+        } finally {
+            $filesystem->remove($publicDir);
+        }
+    }
+
+    /**
      * Derivatives are written to pw.media_cache_dir, which a site may relocate
      * outside public_dir. A healthy derivative there must not be reported just
      * because no media/ folder sits under public_dir.
