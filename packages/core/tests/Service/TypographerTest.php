@@ -127,6 +127,52 @@ final class TypographerTest extends TestCase
         self::assertSame($html, $this->typographer->fix($html, 'fr'));
     }
 
+    public function testRawTextWithAGluedAngleBracketStaysContained(): void
+    {
+        // `i<n` must not open a pseudo-tag swallowing `</script>` — typography
+        // would silently stop for the rest of the document
+        self::assertSame(
+            '<p>l’un</p><script>for(i=0;i<n;i++)f(i)</script><p>l’autre</p>',
+            $this->typographer->fix("<p>l'un</p><script>for(i=0;i<n;i++)f(i)</script><p>l'autre</p>", 'fr')
+        );
+        self::assertSame(
+            '<textarea>if a<b then</textarea><p>l’un</p>',
+            $this->typographer->fix("<textarea>if a<b then</textarea><p>l'un</p>", 'fr')
+        );
+        self::assertSame(
+            '<style>a::before{content:"l\'a"}</style><p>l’un</p>',
+            $this->typographer->fix('<style>a::before{content:"l\'a"}</style>'."<p>l'un</p>", 'fr')
+        );
+    }
+
+    public function testSingleQuotePairStaysStraight(): void
+    {
+        // No letter follows the closing apostrophe: curling only one side
+        // would mismatch the pair
+        self::assertSame(
+            "<p>He said 'hello' to all, rock 'n' roll</p>",
+            $this->typographer->fix("<p>He said 'hello' to all, rock 'n' roll</p>", 'en')
+        );
+        self::assertSame("<p>He said 'hello'</p>", $this->typographer->fix("<p>He said 'hello'</p>", 'en'));
+    }
+
+    public function testElisionBeforeAnOpeningTagOrQuoteCurls(): void
+    {
+        self::assertSame(
+            '<p>l’<em>ete</em> a l’«'.self::NBSP.'ile'.self::NBSP.'»</p>',
+            $this->typographer->fix("<p>l'<em>ete</em> a l'« ile »</p>", 'fr')
+        );
+    }
+
+    public function testNumberNeverBreaksFromItsUnit(): void
+    {
+        self::assertSame(
+            '<p>Prix'.self::NBSP.': 10'.self::NBSP.'€, 50'.self::NBSP.'% et 20'.self::NBSP.'°C</p>',
+            $this->typographer->fix('<p>Prix : 10 €, 50 % et 20 °C</p>', 'fr')
+        );
+        self::assertSame('<p>Up 5'.self::NBSP.'% (10'.self::NBSP.'$)</p>', $this->typographer->fix('<p>Up 5 % (10 $)</p>', 'en'));
+    }
+
     public function testNestedProtectedTags(): void
     {
         $html = "<pre><code>l'a...</code></pre><p>l'b</p>";
@@ -151,6 +197,8 @@ final class TypographerTest extends TestCase
             ['de-CH', '<p>Er sagte &quot;hallo&quot; ! 3x4</p>'],
             ['en', '<p>He said &quot;hi&quot; : yes !...</p>'],
             ['fr', '<div data-arrow="<div class=\'s\'>x</div>"><p>l\'ete &quot;a&quot;</p></div>'],
+            ['fr', "<p>10 € et l'<em>ete</em> 50 %</p>"],
+            ['fr', "<p>l'un</p><script>if(i<n)f()</script><p>l'autre</p>"],
         ];
 
         foreach ($inputs as [$locale, $input]) {

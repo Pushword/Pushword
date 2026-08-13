@@ -27,13 +27,26 @@ final class Typographer
     private const array PROTECTED_TAGS = ['pre' => true, 'code' => true, 'script' => true, 'style' => true, 'svg' => true, 'math' => true, 'textarea' => true, 'template' => true];
 
     /**
-     * A comment, or a tag. Quoted attribute values are consumed whole because
+     * The attribute run of a tag. Quoted values are consumed whole because
      * they may themselves contain `>` (templates pass entire HTML fragments
      * through `data-*` attributes); stopping at the first `>` would leak the
      * rest of the tag into the text stream, where SmartQuotes turns the
      * remaining attribute delimiters into guillemets and breaks the markup.
      */
-    private const string MARKUP = '#(<!--.*?-->|<[a-zA-Z/!?][^>"\']*+(?:(?:"[^"]*+"|\'[^\']*+\')[^>"\']*+)*+>)#s';
+    private const string ATTRS = '[^>"\']*+(?:(?:"[^"]*+"|\'[^\']*+\')[^>"\']*+)*+';
+
+    /**
+     * A comment, a raw-text element consumed whole, or a tag. Script, style
+     * and textarea hold raw text whose `<` is content (`i<n` in an inline
+     * script): each is taken up to its closing tag, otherwise the pseudo-tag
+     * opened by that `<` would swallow the closing tag and leave the rest of
+     * the document protected.
+     */
+    private const string MARKUP = '#(<!--.*?-->'
+        .'|(?i:<script\b'.self::ATTRS.'>.*?</script\s*+>)'
+        .'|(?i:<style\b'.self::ATTRS.'>.*?</style\s*+>)'
+        .'|(?i:<textarea\b'.self::ATTRS.'>.*?</textarea\s*+>)'
+        .'|<[a-zA-Z/!?]'.self::ATTRS.'>)#s';
 
     /** @var array<string, array{string, string, string, string}> opening, opening suffix, closing, closing prefix */
     private const array QUOTE_STYLES = [
@@ -79,7 +92,8 @@ final class Typographer
                 if (1 === preg_match('#^<(/?)([a-zA-Z0-9-]+)#', $part, $match) && isset(self::PROTECTED_TAGS[strtolower($match[2])])) {
                     if ('/' === $match[1]) {
                         $protectedDepth = max(0, $protectedDepth - 1);
-                    } elseif (! str_ends_with($part, '/>')) {
+                    } elseif (! str_ends_with($part, '/>') && 1 !== preg_match('#</'.$match[2].'\s*+>$#i', $part)) {
+                        // A raw-text element consumed whole opens nothing
                         ++$protectedDepth;
                     }
                 }
@@ -89,13 +103,15 @@ final class Typographer
                 continue;
             }
 
-            $fixed .= 0 === $protectedDepth && '' !== trim($part) ? $this->applyRules($part, $locale) : $part;
+            $fixed .= 0 === $protectedDepth && '' !== trim($part)
+                ? $this->applyRules($part, $locale, 1 === preg_match('#^<[a-zA-Z]#', $parts[$i + 1] ?? ''))
+                : $part;
         }
 
         return $fixed;
     }
 
-    private function applyRules(string $text, string $locale): string
+    private function applyRules(string $text, string $locale, bool $beforeOpeningTag = false): string
     {
         $text = $this->replace('#\.{3,}#', '…', $text);
 
@@ -104,8 +120,12 @@ final class Typographer
 
         $text = $this->smartQuotes($text, $locale);
 
-        // CurlyQuote: apostrophe after a letter
-        $text = $this->replace('#(\p{L})\'#u', '$1’', $text);
+        // CurlyQuote: apostrophe between letters (JoliTypo's in-word rule).
+        // A letter-before-only rule would curl just the closing side of a
+        // quotation pair ('hello' → 'hello’). An elision may also run into an
+        // opening quote (l'« île ») or, at the end of a text part, into an
+        // inline tag (l'<em>été</em>).
+        $text = $this->replace('#(\p{L})\'(?=[\p{L}«“„]'.($beforeOpeningTag ? '|$' : '').')#u', '$1’', $text);
 
         $text = $this->trademark($text);
 
@@ -147,6 +167,10 @@ final class Typographer
 
     private function spacing(string $text, string $locale): string
     {
+        // A figure never breaks from its unit or currency symbol (the block
+        // editor's old fixer rule, applied at render for every locale)
+        $text = $this->replace('#([\dº])['.self::SPACES.']+([º°%Ω฿₵¢₡$₫֏€ƒ₲₴₭£₤₺₦₨₱៛₹₪৳₸₮₩¥])#u', '$1'.self::NBSP.'$2', $text);
+
         // Canadian French follows the English convention: no space before punctuation
         if (('fr' === $locale || str_starts_with($locale, 'fr-')) && 'fr-ca' !== $locale) {
             $text = $this->replace('#['.self::SPACES.']+(:)#mu', self::NBSP.'$1', $text);
