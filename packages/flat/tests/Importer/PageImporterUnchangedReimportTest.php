@@ -81,6 +81,63 @@ final class PageImporterUnchangedReimportTest extends KernelTestCase
         self::assertEquals(new DateTime('2024-10-01 09:00'), $this->page()->publishedAt);
     }
 
+    public function testAChangedHoldPublicationAtStillLands(): void
+    {
+        self::bootKernel();
+
+        $this->write("publishedAt: '2024-09-27 14:29'", "holdPublicationAt: '2025-01-01 08:00'");
+        $this->import();
+
+        $this->write("publishedAt: '2024-09-27 14:29'", "holdPublicationAt: '2025-02-02 09:30'");
+        $importer = $this->import();
+
+        self::assertSame(1, $importer->getImportedCount());
+        self::assertEquals(new DateTime('2025-02-02 09:30'), $this->page()->holdPublicationAt);
+    }
+
+    public function testAFileTurnedDraftUnpublishesThePage(): void
+    {
+        self::bootKernel();
+
+        $this->write("publishedAt: '2024-09-27 14:29'");
+        $this->import();
+
+        $this->write('publishedAt: draft');
+        $importer = $this->import();
+
+        self::assertSame(1, $importer->getImportedCount());
+        self::assertNull($this->page()->publishedAt);
+    }
+
+    public function testADraftFileGainingADateIsPublished(): void
+    {
+        self::bootKernel();
+
+        $this->write('publishedAt: draft');
+        $this->import();
+
+        $this->write("publishedAt: '2024-09-27 14:29'");
+        $importer = $this->import();
+
+        self::assertSame(1, $importer->getImportedCount());
+        self::assertEquals(new DateTime('2024-09-27 14:29'), $this->page()->publishedAt);
+    }
+
+    public function testReimportingADraftPageDoesNotUpdateIt(): void
+    {
+        self::bootKernel();
+
+        $this->write('publishedAt: draft');
+        $this->import();
+
+        self::assertNull($this->page()->publishedAt, 'a page created from a draft file is a draft');
+
+        $importer = $this->import();
+
+        self::assertSame(1, $importer->getSkippedCount());
+        self::assertEquals(new DateTime(self::LAST_EDIT), $this->page()->updatedAt);
+    }
+
     private function write(string ...$extraMatter): void
     {
         if ('' === $this->slug) {
