@@ -1,6 +1,5 @@
 ---
-title: 'a newsletter audience, campaign or automation can be marked transactional and sent with no unsubscribe link; newsletter contacts keep a consent ledger of every opt-in, confirmation and unsubscribe; the static Caddyfile webp fallback needs a rebuild to fire reliably; render typography keeps quote pairs straight and a number with its unit'
-run: 'doctrine:schema:update --force'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,50 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin-block-editor`, `pushword/core`, `pushword/flat`, `pushword/newsletter`, `pushword/page-scanner`, `pushword/static-generator`
-
-## Transactional mail: no unsubscribe link, no `List-Unsubscribe`
-
-An audience, a campaign and an automation each carry a **Transactional** flag,
-off by default, which sends their mail with no unsubscribe link in either part of
-the body and no `List-Unsubscribe` headers — for service messages only, see
-[the newsletter doc](/extension/newsletter#mail-with-no-way-out). Nothing changes
-for existing mail; the three new columns need
-`php bin/console doctrine:schema:update --force`.
-
-## The Caddy webp fallback no longer depends on matcher evaluation order
-
-The generated Caddyfile probes the original-image candidates from a `try_files`
-directive instead of a sibling of the `path_regexp` matcher, which Caddy evaluates
-in non-deterministic order — the fallback could be silently inert for a whole
-process. **Caddy-served static sites**: regenerate the build, reload Caddy.
-
-## Render typography: quote pairs, units, inline scripts
-
-A straight single-quote pair stays fully straight (only `letter'letter` curls, as
-the editor rule always had it), a number and its unit or currency keep a no-break
-space again, and typography survives an inline `<script>`/`<style>`/`<textarea>`
-holding a glued `<`. Rendered output changes on unchanged content; nothing to do.
-
-## Code samples survive export byte-identical
-
-Source normalization (straightening quotes, ellipses, no-break spaces) no longer
-reaches fenced blocks and inline code on flat export or editor save. Nothing to do.
-
-## Derivative checks and worker kills do what they said
-
-`pw:page-scan` probes derivatives where `pw:image:cache` writes them
-(`pw.media_cache_dir`, not `public_dir/media`) — constructing `LinkedDocsScanner`
-by hand needs the new `$mediaCacheDir` argument; DI sites have nothing to do. And
-the 300-second idle worker kill rc874 announced is now actually enforced.
-
-## Newsletter: a consent ledger behind the contact dates
-
-Every act that moves a subscription — opt-in, confirmation, unsubscribe, undo,
-bounce — now appends a row nobody edits or deletes, with the provenance of that
-moment, readable from *Consent history* on the contact page. The dates on the
-contact keep meaning what they meant. Run
-`php bin/console doctrine:schema:update --force` for the new table; the ledger
-starts empty for subscriptions that predate it. See
-[the newsletter doc](/extension/newsletter#the-consent-ledger).
