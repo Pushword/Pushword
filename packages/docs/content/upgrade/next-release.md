@@ -1,36 +1,19 @@
 ---
-title: ''
+title: '`fenced_code_pre_class` works for the first time; quiz images size themselves; body images size themselves inside a quiz'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
 
-<!--
-The upgrade note for the next release. `.scripts/release` renames this file to
-`upgrade/rc<N>.md`, adds its row to the table in `upgrade.md` and empties it back
-to this scaffold, at the tag.
+**Concerns:** `pushword/core`, `pushword/quiz`
 
-Write here, in the same commit as the change, whenever a release asks something of
-a site that upgrades: a command to run, a config key to set, a template to copy, a
-behaviour that changed under an unchanged call. A change `composer update` fully
-absorbs needs no note.
+## `fenced_code_pre_class` is applied
 
-Keep it short: what changed, and what to do about it. A note is a checklist, not a
-changelog and not a post-mortem — no cause, no code path, no story of the bug. That
-belongs in the feature doc, which you link to instead.
+The renderer carrying that class was registered at the same priority as CommonMark's own, which is added first and always renders — so the class never reached a single `<pre>`, on any site, since the option shipped. It is registered above it now, and read per render, so each host in a `pw:static` run gets its own.
 
-- `title:` — the "What changed" cell of the index table. One line, lower case,
-  written from the site's side ("the newsletter form is fetched, and CSRF-protected")
-  rather than the diff's ("refactor NewsletterFormController"). Several changes: one
-  short clause each, semicolon-separated, naming only those that ask something.
-  Required as soon as the note has a section; the release stops if it is still empty.
-- `run:` — the command(s) the release expects, without `php bin/console`. Omit the
-  key when there is none. A list runs in the order given.
-- `**Concerns:**` — first line of the body, listing every package a site has to
-  install to be affected. Alphabetical, full composer names, `@pushword/js-helper`
-  last. Add the packages your change touches to the line, keep the others.
-- One `##` section per change, five lines at most: one sentence for what changed, a
-  bold line for who is affected when only some sites are, then the action — a command,
-  a config key, an edit to make. Nothing to do: say so in the sentence and stop.
+**Affects any site setting `fenced_code_pre_class`.** Nothing to do — but expect `<pre class="…">` to appear where it never did, so check the highlighter theme you configured actually looks the way you meant. A site setting nothing is unaffected: the output stays byte-identical to CommonMark's.
 
-Several changes land here between two tags: append to the file, do not replace it.
--->
+## Quiz images announce their real width
+
+A quiz answer thumbnail is a 38px box that was pulling the 1600px candidate; the question and profile illustrations fill the text column, so they now follow the site's `body_image_sizes` like any body image.
+
+**Affects sites using [Quiz](/quiz).** Nothing to do. Set `body_image_sizes` (see rc872) to get the illustrations sized too — the thumbnails improve either way.

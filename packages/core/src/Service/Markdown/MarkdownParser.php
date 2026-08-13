@@ -16,7 +16,7 @@ use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\NoticeExtension;
 use Pushword\Core\Service\Markdown\Extension\PushwordExtension;
-use Pushword\Core\Service\Markdown\Extension\Renderer\ImageRenderer;
+use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -30,7 +30,7 @@ class MarkdownParser
      * Bump when the converter configuration or extensions change in a way that
      * alters output, to invalidate previously cached fragments.
      */
-    private const int CACHE_VERSION = 8;
+    private const int CACHE_VERSION = 9;
 
     private readonly MarkdownConverter $converter;
 
@@ -161,20 +161,28 @@ class MarkdownParser
      * `<img>` HTML (e.g. from gallery shortcodes already expanded by Twig) is
      * emitted verbatim by CommonMark, so it is media-independent here too.
      *
-     * Image-bearing fragments also carry the site's `body_image_sizes`, because
-     * this pool is content-keyed and shared by every host: without it two apps
-     * rendering the same markdown collide on one entry, and editing the value
-     * never invalidates anything — the pool lives beside the cache dir precisely
-     * to survive cache:clear. Appending it only here is what keeps the
-     * invalidation surgical: text with no image is unaffected and stays cached.
+     * A fragment also carries whichever per-site render setting its own syntax can
+     * reach: `body_image_sizes` for an image, `fenced_code_pre_class` for a fenced
+     * block. This pool is content-keyed and shared by every host, so without them
+     * two apps rendering the same markdown collide on one entry, and editing a
+     * value never invalidates anything — the pool lives beside the cache dir
+     * precisely to survive cache:clear. Appending them only where the syntax
+     * appears is what keeps the invalidation surgical, and what lets a fragment
+     * reaching neither still serve every host from one entry.
      */
     private function cacheKeyVersion(string $text): string
     {
-        if (! str_contains($text, '![')) {
-            return (string) self::CACHE_VERSION;
+        $version = (string) self::CACHE_VERSION;
+
+        if (str_contains($text, '![')) {
+            $version = $this->cacheVersion().'s'.$this->apps->get()->getStr(SiteConfig::BODY_IMAGE_SIZES);
         }
 
-        return $this->cacheVersion().'s'.$this->apps->get()->getStr(ImageRenderer::SIZES_CONFIG_KEY);
+        if (str_contains($text, '```') || str_contains($text, '~~~')) {
+            $version .= 'p'.$this->apps->get()->getStr(SiteConfig::FENCED_CODE_PRE_CLASS);
+        }
+
+        return $version;
     }
 
     /**

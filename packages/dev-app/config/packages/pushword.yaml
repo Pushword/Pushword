@@ -80,6 +80,9 @@ pushword:
       # other app leaves it unset and keeps the component default, 100vw — which is
       # what the default-path test asserts.
       body_image_sizes: '(max-width: 1023px) 100vw, 700px'
+      # Same shape as body_image_sizes: a per-site render setting every other app
+      # leaves unset, which is what the default-path tests assert.
+      fenced_code_pre_class: 'microlight'
       page_properties:
         author: { type: string, required: true }
       # Offered in the PagesList block's format select; rendered by

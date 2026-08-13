@@ -67,11 +67,15 @@ final readonly class PushwordExtension implements ExtensionInterface
 
         // Opt-in per site: when `fenced_code_pre_class` is set in the app config,
         // wrap fenced code blocks in <pre class="..."> so a highlighter (microlight,
-        // hljs, prism…) can pick them up. Default = unset = League's default renderer.
-        $preClass = $this->apps->get()->getStr('fenced_code_pre_class');
-        if ('' !== $preClass) {
-            $environment->addRenderer(FencedCode::class, new FencedCodeRenderer($preClass));
-        }
+        // hljs, prism…) can pick them up. Registered unconditionally because the
+        // renderer reads the class per render — this runs once per process, and a
+        // site declaring none gets League's output byte for byte anyway.
+        //
+        // The priority is what makes it run at all: CommonMarkCoreExtension registers
+        // its own FencedCode renderer, is added to the environment first, and always
+        // returns output — so at equal priority ours was never reached. Same reason
+        // the image renderer above takes 10.
+        $environment->addRenderer(FencedCode::class, new FencedCodeRenderer($this->apps), 10);
 
         $environment->addEventListener(DocumentParsedEvent::class, new ColspanProcessor());
 

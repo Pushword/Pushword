@@ -448,13 +448,29 @@ final class MarkdownExtensionTest extends KernelTestCase
     public function testFencedCodeBlockUsesDefaultRendererWhenNoPreClassConfigured(): void
     {
         // The dev-app's `localhost.dev` app does not set `fenced_code_pre_class`,
-        // so the default League renderer is used — no extra class on <pre>.
+        // so the output matches League's default — no extra class on <pre>.
         $parser = $this->getMarkdownParser();
 
         $result = $parser->transform("```js\nconst x = 1;\n```");
 
         self::assertStringContainsString('<pre>', $result);
         self::assertStringNotContainsString('<pre class=', $result);
+    }
+
+    public function testFencedCodePreClassFollowsTheHostBeingRendered(): void
+    {
+        // The class is read per render, so a second host in the same process gets
+        // its own — the Environment is built once and would otherwise freeze the
+        // first host's class onto every other site's code blocks (pw:static).
+        $parser = $this->getMarkdownParser();
+        $markdown = "```js\nconst x = 1;\n```";
+
+        $default = $parser->transform($markdown);
+        self::getContainer()->get(RequestContext::class)->switchSite('admin-block-editor.test');
+        $configured = $parser->transform($markdown);
+
+        self::assertStringContainsString('<pre>', $default);
+        self::assertStringContainsString('<pre class="microlight">', $configured);
     }
 
     // ===== Tests de non-conversion dans le code =====

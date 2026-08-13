@@ -7,6 +7,12 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 final class SiteConfig
 {
+    /** App property holding the `sizes` of the text column. Renderers and the render cache key read it. */
+    public const string BODY_IMAGE_SIZES = 'body_image_sizes';
+
+    /** App property holding the CSS class a highlighter theme picks up on `<pre>`. */
+    public const string FENCED_CODE_PRE_CLASS = 'fenced_code_pre_class';
+
     /** @var string[] */
     public private(set) array $hosts = [];
 
@@ -223,6 +229,22 @@ final class SiteConfig
     public function getCustomProperty(string $key): mixed
     {
         return $this->customProperties[$key] ?? null;
+    }
+
+    /**
+     * The `sizes` an image occupying this site's text column announces, or null
+     * when the site declares none — the image component then keeps its own
+     * default, 100vw, which over-serves anything narrower than the viewport.
+     *
+     * Whoever renders such an image reads it per render, never captures it: one
+     * process serves several hosts (pw:static, worker mode). MarkdownParser mixes
+     * it into the render cache key for the same reason.
+     */
+    public function bodyImageSizes(): ?string
+    {
+        $sizes = $this->getStr(self::BODY_IMAGE_SIZES);
+
+        return '' !== $sizes ? $sizes : null;
     }
 
     /** @return string[] */

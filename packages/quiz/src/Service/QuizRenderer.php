@@ -35,6 +35,9 @@ use Twig\Extension\RuntimeExtensionInterface;
  */
 final class QuizRenderer implements RuntimeExtensionInterface
 {
+    /** Mirrors the fixed 38px box `.pw-quiz-a-img` gets in quiz.css. */
+    private const string ANSWER_THUMBNAIL_SIZES = '38px';
+
     private int $instances = 0;
 
     public function __construct(
@@ -130,6 +133,10 @@ final class QuizRenderer implements RuntimeExtensionInterface
                     class: 'pw-quiz-media-img',
                     mode: 'responsive',
                     lazy: true,
+                    // The quiz declares no width of its own, so it fills the text
+                    // column and its illustration is a body image like any other.
+                    // `max-height: 50vh` can only make it narrower, never wider.
+                    sizes: $this->apps->get()->bodyImageSizes(),
                 );
             } else {
                 return '';
@@ -151,7 +158,9 @@ final class QuizRenderer implements RuntimeExtensionInterface
         }
 
         try {
-            return $this->mediaExtension->renderImage($answer->media, alt: $answer->alt ?? '', class: 'pw-quiz-a-img', lazy: true);
+            // A 38x38 thumbnail (quiz.css), so it says so: left at the 100vw
+            // default it made every answer pull the 1600px candidate.
+            return $this->mediaExtension->renderImage($answer->media, alt: $answer->alt ?? '', class: 'pw-quiz-a-img', lazy: true, sizes: self::ANSWER_THUMBNAIL_SIZES);
         } catch (Throwable) {
             return BrokenImageComment::for($answer->media);
         }
@@ -173,6 +182,8 @@ final class QuizRenderer implements RuntimeExtensionInterface
                 class: 'pw-quiz-profile-img',
                 mode: 'responsive',
                 lazy: true,
+                // `max-width: 100%` of a quiz that fills the text column.
+                sizes: $this->apps->get()->bodyImageSizes(),
             );
         } catch (Throwable) {
             return BrokenImageComment::for($profile->media);
