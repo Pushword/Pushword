@@ -16,6 +16,7 @@ use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\NoticeExtension;
 use Pushword\Core\Service\Markdown\Extension\PushwordExtension;
+use Pushword\Core\Service\Markdown\Extension\Renderer\ImageRenderer;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -42,21 +43,18 @@ class MarkdownParser
     public function __construct(
         LinkProvider $linkProvider,
         MediaExtension $mediaExtension,
-        SiteRegistry $apps,
+        private readonly SiteRegistry $apps,
         Twig $twig,
         #[Autowire(service: 'cache.pushword_markdown')]
         private readonly ?CacheItemPoolInterface $cache = null,
         #[Autowire(service: 'cache.app')]
         private readonly ?CacheItemPoolInterface $versionCache = null,
-        #[Autowire(param: 'pw.body_image_sizes')]
-        private readonly ?string $bodyImageSizes = null,
     ) {
         $this->pushwordExtension = new PushwordExtension(
             $linkProvider,
             $mediaExtension,
             $apps,
             new Date($apps),
-            $this->bodyImageSizes,
         );
 
         $environment = new Environment();
@@ -162,6 +160,13 @@ class MarkdownParser
      * media writes. Only image-bearing fragments mix in the media version. Raw
      * `<img>` HTML (e.g. from gallery shortcodes already expanded by Twig) is
      * emitted verbatim by CommonMark, so it is media-independent here too.
+     *
+     * Image-bearing fragments also carry the site's `body_image_sizes`, because
+     * this pool is content-keyed and shared by every host: without it two apps
+     * rendering the same markdown collide on one entry, and editing the value
+     * never invalidates anything — the pool lives beside the cache dir precisely
+     * to survive cache:clear. Appending it only here is what keeps the
+     * invalidation surgical: text with no image is unaffected and stays cached.
      */
     private function cacheKeyVersion(string $text): string
     {
@@ -169,7 +174,7 @@ class MarkdownParser
             return (string) self::CACHE_VERSION;
         }
 
-        return $this->cacheVersion();
+        return $this->cacheVersion().'s'.$this->apps->get()->getStr(ImageRenderer::SIZES_CONFIG_KEY);
     }
 
     /**

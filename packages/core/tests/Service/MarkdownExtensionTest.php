@@ -5,6 +5,7 @@ namespace Pushword\Core\Tests\Service;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedLink;
 use Pushword\Core\Service\Markdown\MarkdownParser;
+use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Twig\MediaExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -138,6 +139,44 @@ final class MarkdownExtensionTest extends KernelTestCase
         self::assertStringContainsString('data-dwl="/media/default/2.webp"', $result);
         self::assertStringContainsString('data-rot="', $result);
         self::assertStringNotContainsString('href="/media/', $result);
+    }
+
+    public function testBodyImageKeepsTheComponentDefaultWhenNoSizesConfigured(): void
+    {
+        // `localhost.dev` does not set `body_image_sizes`, so the image component
+        // keeps announcing 100vw — honest, and safe by construction.
+        $parser = $this->getMarkdownParser();
+
+        $result = $parser->transform('![Alt text](/media/2.jpg)');
+
+        self::assertStringContainsString('sizes="100vw"', $result);
+    }
+
+    public function testBodyImageAnnouncesTheSizesConfiguredOnItsApp(): void
+    {
+        $parser = $this->getMarkdownParser();
+        self::getContainer()->get(RequestContext::class)->switchSite('admin-block-editor.test');
+
+        $result = $parser->transform('![Alt text](/media/2.jpg)');
+
+        self::assertStringContainsString('sizes="(max-width: 1023px) 100vw, 700px"', $result);
+        self::assertStringNotContainsString('sizes="100vw"', $result);
+    }
+
+    public function testBodyImageSizesIsPartOfTheFragmentCacheKey(): void
+    {
+        // The markdown pool is content-keyed and shared by every host, so the same
+        // markdown rendered under two apps must not collide on one entry — and the
+        // second render must not be served the first one's `sizes`.
+        $parser = $this->getMarkdownParser();
+        $markdown = '![Alt text](/media/2.jpg)';
+
+        $default = $parser->transform($markdown);
+        self::getContainer()->get(RequestContext::class)->switchSite('admin-block-editor.test');
+        $configured = $parser->transform($markdown);
+
+        self::assertStringContainsString('sizes="100vw"', $default);
+        self::assertStringContainsString('sizes="(max-width: 1023px) 100vw, 700px"', $configured);
     }
 
     public function testImageAlreadyInsideALinkIsNotSelfLinked(): void

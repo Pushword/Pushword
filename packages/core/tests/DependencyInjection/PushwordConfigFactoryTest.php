@@ -149,6 +149,28 @@ final class PushwordConfigFactoryTest extends TestCase
         self::assertSame('https://dynamic.example', $container->getParameter('pw.apps')['static.example']['base_live_url']);
     }
 
+    public function testBodyImageSizesFallsBackFromRootAndAnAppOverridesIt(): void
+    {
+        $container = new ContainerBuilder(new ParameterBag([]));
+        $config = new Processor()->processConfiguration(new Configuration(), [[
+            'body_image_sizes' => '(max-width: 1023px) 100vw, 700px',
+            'apps' => [
+                ['hosts' => ['inherits.example']],
+                ['hosts' => ['wider.example'], 'body_image_sizes' => '(max-width: 1023px) 100vw, 1100px'],
+            ],
+        ]]);
+
+        $factory = new PushwordConfigFactory($container, $config, new Configuration());
+        $factory->loadConfigToParams();
+        $factory->loadApps();
+
+        // A fleet declares the column once at the root; the one site whose
+        // template is wider says so and keeps its own value.
+        $apps = $container->getParameter('pw.apps');
+        self::assertSame('(max-width: 1023px) 100vw, 700px', $apps['inherits.example']['body_image_sizes']);
+        self::assertSame('(max-width: 1023px) 100vw, 1100px', $apps['wider.example']['body_image_sizes']);
+    }
+
     private function assertMainHostPlaceholderReplaced(string $staticDir): void
     {
         $container = new ContainerBuilder(new ParameterBag([]));

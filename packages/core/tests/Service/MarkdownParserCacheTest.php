@@ -24,6 +24,16 @@ final class MarkdownParserCacheTest extends KernelTestCase
     /** Mirrors MarkdownParser::CACHE_VERSION, which is bumped whenever render output changes. */
     private const string PARSER_VERSION = '8';
 
+    /**
+     * The key of a fragment holding a Markdown image: parser version, media
+     * version, then the site's `body_image_sizes` — empty here, as the test app
+     * declares none.
+     */
+    private function imageKey(string $prefix, string $markdown, int $mediaVersion): string
+    {
+        return $prefix.hash('xxh3', self::PARSER_VERSION.'m'.$mediaVersion.'s|'.$markdown);
+    }
+
     private function buildParser(ArrayAdapter $pool, int $mediaVersion = 0): MarkdownParser
     {
         self::bootKernel();
@@ -106,8 +116,7 @@ final class MarkdownParserCacheTest extends KernelTestCase
 
         // Prime under media version 0, then poison its entry.
         $this->buildParser($pool, 0)->transform($markdown);
-        $key0 = 'pw_md.'.hash('xxh3', self::PARSER_VERSION.'m0|'.$markdown);
-        $item = $pool->getItem($key0);
+        $item = $pool->getItem($this->imageKey('pw_md.', $markdown, 0));
         self::assertTrue($item->isHit(), 'image fragment is keyed with the media version');
         $item->set('POISONED');
         $pool->save($item);
@@ -146,7 +155,7 @@ final class MarkdownParserCacheTest extends KernelTestCase
 
         $this->buildParser($pool, 4)->transformInline($markdown);
 
-        $key = 'pw_mdi.'.hash('xxh3', self::PARSER_VERSION.'m4|'.$markdown);
+        $key = $this->imageKey('pw_mdi.', $markdown, 4);
         self::assertTrue($pool->getItem($key)->isHit(), 'inline image fragment is keyed with the media version');
     }
 
