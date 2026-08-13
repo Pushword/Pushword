@@ -995,20 +995,30 @@ final class StaticGeneratorTest extends KernelTestCase
             $generator->setIncremental(true);
         }
 
-        $publicMediaDir = $this->getPublicMediaDir();
-        $tmpFiles = [
-            $publicMediaDir.'/optimizer-race.webp.opt-4242.abcdef123456.tmp',
-            $publicMediaDir.'/md/optimizer-race.webp.opt-4242.abcdef123456.tmp',
-            $publicMediaDir.'/encoder-race.webp.enc-4242.abcdef123456.tmp',
-            $publicMediaDir.'/md/encoder-race.webp.enc-4242.abcdef123456.tmp',
-            $publicMediaDir.'/encoder-legacy.webp.4242.abcdef123456.tmp',
-            $publicMediaDir.'/md/encoder-legacy.webp.4242.abcdef123456.tmp',
-        ];
+        // Seed the trees the build actually walks: derivatives under
+        // pw.media_cache_dir, masters under pw.media_dir. Seeding public/media —
+        // where derivatives lived until they were isolated per worker — plants the
+        // files where nothing looks, which is how this test stopped proving anything.
+        $mediaCacheDir = self::getContainer()->getParameter('pw.media_cache_dir');
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+
+        $tmpFiles = [];
+        foreach ([$mediaCacheDir.'/md', $mediaDir] as $sourceDir) {
+            foreach ([
+                'optimizer-race.webp.opt-4242.abcdef123456.tmp',
+                'encoder-race.webp.enc-4242.abcdef123456.tmp',
+                'encoder-legacy.webp.4242.abcdef123456.tmp',
+            ] as $name) {
+                $tmpFiles[] = $sourceDir.'/'.$name;
+            }
+        }
 
         foreach ($tmpFiles as $tmpFile) {
-            if (is_dir(\dirname($tmpFile))) {
-                file_put_contents($tmpFile, 'half-written');
+            if (! is_dir(\dirname($tmpFile))) {
+                mkdir(\dirname($tmpFile), 0o777, true);
             }
+
+            file_put_contents($tmpFile, 'half-written');
         }
 
         try {
@@ -1729,11 +1739,6 @@ final class StaticGeneratorTest extends KernelTestCase
         }
 
         throw new Exception();
-    }
-
-    private function getPublicMediaDir(): string
-    {
-        return realpath(__DIR__.'/../../dev-app/public').'/media';
     }
 
     /**

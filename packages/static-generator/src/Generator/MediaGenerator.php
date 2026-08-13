@@ -45,7 +45,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
      */
     private function skipEntry(string $entry): bool
     {
-        return \in_array($entry, ['.', '..'], true) || fnmatch('*.opt-*.tmp', basename($entry));
+        return \in_array($entry, ['.', '..'], true) || ImageScratchFile::isScratch($entry);
     }
 
     /**
