@@ -205,6 +205,11 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         self::assertContains($decoded['result'], ['passed', 'failed']);
         self::assertArrayHasKey('processed', $decoded);
         self::assertArrayHasKey('errors', $decoded);
+
+        // Emitted on every run, including the ones that sweep nothing: a counter
+        // that appears only when non-zero is a counter nobody can graph.
+        self::assertArrayHasKey('scratch_swept', $decoded);
+        self::assertArrayHasKey('scratch_empty', $decoded);
     }
 
     /**
@@ -218,14 +223,7 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
     {
         $commandTester = $this->createCommandTester();
 
-        $mediaCacheDir = self::getContainer()->getParameter('pw.media_cache_dir');
-        if (! is_dir($mediaCacheDir)) {
-            mkdir($mediaCacheDir, 0o777, true);
-        }
-
-        $stale = $mediaCacheDir.'/swept-by-the-run.webp.enc-4242.abcdef123456.tmp';
-        file_put_contents($stale, '');
-        touch($stale, time() - ImageScratchFile::MAX_AGE - 60);
+        $stale = $this->writeStaleScratch('swept-by-the-run.webp.enc-4242.abcdef123456.tmp', '');
 
         $this->waitForLockRelease();
         $commandTester->execute(['media' => 'piedweb-logo.png', '--format' => 'agent']);
@@ -239,6 +237,28 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
     }
 
     /**
+     * A human is told what was taken, and told nothing when nothing was: this
+     * command runs on every deploy, and a line reporting zero on each of them is
+     * the noise that teaches everyone to stop reading its output.
+     */
+    public function testTextOutputReportsTheSweepOnlyWhenItTookSomething(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['media' => 'piedweb-logo.png', '--format' => 'text']);
+
+        self::assertStringNotContainsString('scratch file', $commandTester->getDisplay(), 'A run with nothing to sweep says nothing');
+
+        $this->writeStaleScratch('reported-in-text.webp.enc-4242.abcdef12345a.tmp', 'half-written');
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['media' => 'piedweb-logo.png', '--format' => 'text']);
+
+        self::assertStringContainsString('Swept 1 stale scratch file(s), 0 empty.', $commandTester->getDisplay());
+    }
+
+    /**
      * A worker must not repeat the walk: it runs with --no-lock, and N workers
      * sweeping the same tree burn it N times over for one run's worth of orphans.
      */
@@ -246,14 +266,7 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
     {
         $commandTester = $this->createCommandTester();
 
-        $mediaCacheDir = self::getContainer()->getParameter('pw.media_cache_dir');
-        if (! is_dir($mediaCacheDir)) {
-            mkdir($mediaCacheDir, 0o777, true);
-        }
-
-        $stale = $mediaCacheDir.'/left-by-the-worker.webp.enc-4242.abcdef123457.tmp';
-        file_put_contents($stale, 'half-written');
-        touch($stale, time() - ImageScratchFile::MAX_AGE - 60);
+        $stale = $this->writeStaleScratch('left-by-the-worker.webp.enc-4242.abcdef123457.tmp', 'half-written');
 
         $commandTester->execute(['media' => 'piedweb-logo.png', '--no-lock' => true, '--format' => 'text']);
 
@@ -300,6 +313,26 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         $application = new Application($kernel);
 
         return new CommandTester($application->find('pw:image:cache'));
+    }
+
+    /**
+     * A scratch file old enough that no live writer could own it, in the tree the
+     * derivatives really live in — per worker under test, hence read from the container.
+     *
+     * @return string its path
+     */
+    private function writeStaleScratch(string $name, string $content): string
+    {
+        $mediaCacheDir = self::getContainer()->getParameter('pw.media_cache_dir');
+        if (! is_dir($mediaCacheDir)) {
+            mkdir($mediaCacheDir, 0o777, true);
+        }
+
+        $path = $mediaCacheDir.'/'.$name;
+        file_put_contents($path, $content);
+        touch($path, time() - ImageScratchFile::MAX_AGE - 60);
+
+        return $path;
     }
 
     private function waitForLockRelease(): void

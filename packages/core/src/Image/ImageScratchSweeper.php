@@ -39,17 +39,7 @@ final readonly class ImageScratchSweeper
         $swept = 0;
         $empty = 0;
 
-        // realpath() so a site pointing both settings at one directory walks it once,
-        // and so a directory it has not created yet drops out rather than throwing.
-        $dirs = [];
-        foreach ([$this->mediaDir, $this->mediaCacheDir] as $configured) {
-            $real = realpath($configured);
-            if (false !== $real && ! \in_array($real, $dirs, true)) {
-                $dirs[] = $real;
-            }
-        }
-
-        foreach ($dirs as $dir) {
+        foreach ($this->resolvedDirectories() as $dir) {
             /** @var SplFileInfo $file */
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) {
                 if (! $file->isFile() || ! ImageScratchFile::isScratch($file->getFilename())) {
@@ -60,19 +50,42 @@ final readonly class ImageScratchSweeper
                     continue;
                 }
 
-                // Counted before the unlink: an empty scratch is the fingerprint of an
+                // Read before the unlink: an empty scratch is the fingerprint of an
                 // encoder returning a blank payload, and the only trace that the
                 // promotion guard caught one. Sweeping silently would erase the
                 // evidence that the guard is doing its job.
                 $isEmpty = 0 === $file->getSize();
 
-                if (@unlink($file->getPathname())) {
-                    ++$swept;
-                    $empty += $isEmpty ? 1 : 0;
+                if (! @unlink($file->getPathname())) {
+                    continue;
+                }
+
+                ++$swept;
+                if ($isEmpty) {
+                    ++$empty;
                 }
             }
         }
 
         return ['swept' => $swept, 'empty' => $empty];
+    }
+
+    /**
+     * realpath() so a site pointing both settings at one directory walks it once,
+     * and so a directory it has not created yet drops out rather than throwing.
+     *
+     * @return string[]
+     */
+    private function resolvedDirectories(): array
+    {
+        $dirs = [];
+        foreach ([$this->mediaDir, $this->mediaCacheDir] as $configured) {
+            $real = realpath($configured);
+            if (false !== $real && ! \in_array($real, $dirs, true)) {
+                $dirs[] = $real;
+            }
+        }
+
+        return $dirs;
     }
 }
