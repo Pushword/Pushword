@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc878](/upgrade/rc878) | `core` | pw:image:cache sweeps the stale image scratch files it finds |
 | [rc877](/upgrade/rc877) | `admin-block-editor` `core` `flat` `newsletter` `page-scanner` `static-generator` | a newsletter audience, campaign or automation can be marked transactional and sent with no unsubscribe link; newsletter contacts keep a consent ledger of every opt-in, confirmation and unsubscribe; the static Caddyfile webp fallback needs a rebuild to fire reliably; render typography keeps quote pairs straight and a number with its unit — run `doctrine:schema:update --force` |
 | [rc876](/upgrade/rc876) | `core` | typography keeps markup carrying a `>` inside an attribute intact, and typographs a `<` that opens no tag |
 | [rc875](/upgrade/rc875) | `flat` | an unchanged `pw:flat:sync` no longer bumps every page's `updatedAt` and `revision:` |
