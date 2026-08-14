@@ -1,5 +1,5 @@
 ---
-title: 'a static generation poll no longer reports the previous generation timestamp under a worker'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,11 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/static-generator`
-
-## `lastGeneratedAt` is re-read at each request
-
-Only under a long-running worker (FrankenPHP, Symfony Runtime). The generation state was read once per worker process and kept, so `GET /api/static/{host}` could answer `completed` carrying the `lastGeneratedAt` of the *previous* generation until that worker recycled.
-
-**Affected:** any client polling that endpoint to decide a generation is done. Nothing to do — a client that worked around it, by ignoring the timestamp or waiting for it to move, can stop.
