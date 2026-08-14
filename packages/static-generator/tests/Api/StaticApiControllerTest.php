@@ -133,6 +133,23 @@ final class StaticApiControllerTest extends WebTestCase
     }
 
     /**
+     * Under `background_task_handler: messenger` a pass can sit in the queue for
+     * hours. Reported as `completed`, it was indistinguishable from one that ran —
+     * same word, same unchanged `lastGeneratedAt` — so a client had nothing to
+     * poll on.
+     */
+    public function testAQueuedPassIsNotReportedAsCompleted(): void
+    {
+        $this->storage()->setStatus('static-generator--'.self::HOST, 'queued');
+
+        $body = $this->request('GET', '/api/static/'.self::HOST);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('queued', $body['status']);
+        self::assertFalse($body['running']);
+    }
+
+    /**
      * The whole point of the synchronous route: the response itself is the proof
      * the file is on disk, so a remote agent never has to poll.
      */

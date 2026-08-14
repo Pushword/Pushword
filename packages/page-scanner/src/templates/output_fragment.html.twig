@@ -1,6 +1,7 @@
 {# Wrapper div that will be swapped on each poll #}
+{% set under_way = status in ['running', 'queued'] %}
 <div id="scanner-output-content"
-     {% if status == 'running' %}
+     {% if under_way %}
        hx-get="{{ path('admin_page_scanner_output') }}?host={{ host|default('') }}&amp;pending={{ pending|default(false) ? '1' : '0' }}&amp;pt={{ outputProcessType|default('') }}"
        hx-trigger="load delay:500ms"
        hx-swap="outerHTML"
@@ -8,7 +9,12 @@
      {% endif %}>
 
   {# Status indicator #}
-  {% if status == 'running' %}
+  {% if status == 'queued' %}
+    <div class="d-flex align-items-center mb-3" id="status-indicator">
+      <i class="fa fa-hourglass-half me-2"></i>
+      <strong>{{ 'page_scannerQueued'|trans }}</strong>
+    </div>
+  {% elseif status == 'running' %}
     <div class="d-flex align-items-center mb-3" id="status-indicator">
       <i class="fa fa-circle-notch fa-spin me-2"></i>
       <strong>{{ 'page_scannerScanning'|trans }}</strong>
@@ -29,7 +35,7 @@
         <pre id="console-output" class="mb-0 bg-black text-white p-3 rounded" style="max-height: 500px; overflow-y: auto;"><code>{{ output|ansi_to_html }}</code></pre>
       </div>
     </div>
-    {% if status == 'running' %}
+    {% if under_way %}
       <script>
         (function() {
           var el = document.getElementById('console-output');

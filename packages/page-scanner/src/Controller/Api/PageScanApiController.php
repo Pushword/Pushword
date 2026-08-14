@@ -55,29 +55,34 @@ final class PageScanApiController extends AbstractApiController
         // Already scanning — never start a second one for the same scope.
         $blocking = $this->coordinator->findBlockingProcess($host);
         if (null !== $blocking) {
-            return $this->running($host, started: false);
+            return $this->accepted($host, 'running', started: false);
         }
 
         $processType = $this->coordinator->getProcessType($host);
         if ($this->coordinator->getProcessInfo($processType)['isRunning']) {
-            return $this->running($host, started: false);
+            return $this->accepted($host, 'running', started: false);
         }
 
         if ($this->coordinator->shouldScan($host, $force)) {
             $this->coordinator->startScan($host);
 
-            return $this->running($host, started: true);
+            return $this->accepted($host, $this->coordinator->readOutput($processType)['status'], started: true);
         }
 
         // Cached result still within the min-interval window: return it as-is.
         return $this->respond(['started' => false] + $this->statusPayload($host));
     }
 
-    private function running(?string $host, bool $started): JsonResponse
+    /**
+     * The scan is under way, but say which way: under `background_task_handler:
+     * messenger` it may only be queued, and a client told `running` would poll for
+     * a console output that stays empty until a consumer gets to it.
+     */
+    private function accepted(?string $host, string $status, bool $started): JsonResponse
     {
         return $this->respond([
             'host' => $host,
-            'status' => 'running',
+            'status' => $status,
             'started' => $started,
             'statusUrl' => $this->generateUrl(
                 'pushword_api_page_scan_status',
@@ -178,7 +183,7 @@ final class PageScanApiController extends AbstractApiController
                 '/api/page-scan' => [
                     'get' => [
                         'summary' => 'Page-scan status, live output and findings',
-                        'description' => 'Returns the current scan status (idle|running|completed|error), the live console output while running, and the cached dead-link/404/301 findings of the last completed scan.',
+                        'description' => 'Returns the current scan status (idle|queued|running|completed|error), the live console output while running, and the cached dead-link/404/301 findings of the last completed scan. `queued` means the scan is waiting on a messenger consumer and has not started — keep polling.',
                         'parameters' => $params,
                         'responses' => [
                             '200' => ['description' => 'OK', 'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/PageScan']]]],
@@ -188,7 +193,7 @@ final class PageScanApiController extends AbstractApiController
                     ],
                     'post' => [
                         'summary' => 'Start a page scan (background)',
-                        'description' => 'Dispatches a background scan and returns 202 with a statusUrl to poll. If a scan is already running, or a cached result is still within the configured min-interval, no new scan starts. Pass `?force=1` to bypass the interval.',
+                        'description' => 'Dispatches a background scan and returns 202 with a statusUrl to poll, plus the `status` it starts from — `queued` when it is waiting on a messenger consumer rather than running. If a scan is already running, or a cached result is still within the configured min-interval, no new scan starts. Pass `?force=1` to bypass the interval.',
                         'parameters' => [...$params, [
                             'name' => 'force',
                             'in' => 'query',
@@ -209,7 +214,7 @@ final class PageScanApiController extends AbstractApiController
                 'type' => 'object',
                 'properties' => [
                     'host' => ['type' => ['string', 'null']],
-                    'status' => ['type' => 'string', 'enum' => ['idle', 'running', 'completed', 'error']],
+                    'status' => ['type' => 'string', 'enum' => ['idle', 'queued', 'running', 'completed', 'error']],
                     'running' => ['type' => 'boolean'],
                     'lastScannedAt' => ['type' => ['string', 'null'], 'format' => 'date-time'],
                     'errorCount' => ['type' => 'integer'],

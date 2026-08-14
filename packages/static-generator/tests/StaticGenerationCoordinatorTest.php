@@ -5,6 +5,7 @@ namespace Pushword\StaticGenerator\Tests;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
+use Pushword\Core\BackgroundTask\MessengerBackgroundTaskDispatcher;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
 use Pushword\Core\Site\SiteRegistry;
@@ -12,6 +13,8 @@ use Pushword\StaticGenerator\GenerationStateManager;
 use Pushword\StaticGenerator\StaticGenerationCoordinator;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 #[Group('integration')]
 final class StaticGenerationCoordinatorTest extends KernelTestCase
@@ -100,6 +103,58 @@ final class StaticGenerationCoordinatorTest extends KernelTestCase
 
         self::assertSame('completed', $state['status']);
         self::assertSame([], $state['errors']);
+    }
+
+    /**
+     * A job still waiting in a messenger queue has no process to find. Deducing
+     * its state from that absence answered `completed` — indistinguishable, for a
+     * site generated at least once before, from a pass that really ran.
+     */
+    public function testReadOutputReportsAQueuedPassAsQueuedRatherThanDone(): void
+    {
+        $this->outputStorage->setStatus('static-generator', 'queued');
+
+        $state = $this->coordinator()->readOutput('static-generator');
+
+        self::assertSame('queued', $state['status']);
+        self::assertFalse($state['isRunning']);
+    }
+
+    /**
+     * The other half of the same distinction: `running` with no live process means
+     * the pass died mid-way, and must not be read as still waiting to start.
+     */
+    public function testReadOutputStillGivesUpOnARunningPassWhoseProcessIsGone(): void
+    {
+        $this->outputStorage->setStatus('static-generator', 'running');
+
+        self::assertSame('completed', $this->coordinator()->readOutput('static-generator')['status']);
+    }
+
+    /**
+     * The incident, end to end: messenger mode, every consumer busy elsewhere, so
+     * the message is accepted and nothing runs. What the poller reads must say so.
+     */
+    public function testAGenerationNoConsumerPicksUpReadsAsQueuedNotCompleted(): void
+    {
+        $bus = self::createStub(MessageBusInterface::class);
+        $bus->method('dispatch')->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
+
+        $processManager = self::createStub(BackgroundProcessManager::class);
+        $processManager->method('getProcessInfo')->willReturn(['isRunning' => false, 'startTime' => null, 'pid' => null]);
+        $processManager->method('getPidFilePath')->willReturn($this->varDir.'/static.pid');
+
+        $coordinator = $this->coordinator(dispatcher: new MessengerBackgroundTaskDispatcher(
+            $bus,
+            $processManager,
+            $this->outputStorage,
+            'test',
+            [],
+        ));
+
+        $coordinator->startGeneration(null);
+
+        self::assertSame('queued', $coordinator->readOutput('static-generator')['status']);
     }
 
     public function testLastGenerationTimeIsReadPerHost(): void

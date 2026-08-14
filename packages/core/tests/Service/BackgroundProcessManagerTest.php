@@ -62,6 +62,21 @@ final class BackgroundProcessManagerTest extends TestCase
         self::assertFalse($info['isRunning']);
     }
 
+    /**
+     * A consumer registering the command it just spawned has to record the child's
+     * PID: liveness matches the pattern against that PID's command line, and the
+     * consumer's own line never names the command it runs.
+     */
+    public function testRegisteringAChildRecordsItsPidRatherThanOurs(): void
+    {
+        $pidFile = $this->manager->getPidFilePath('test-child');
+        $this->manager->registerProcess($pidFile, 'pw:static', 424242);
+
+        self::assertSame(424242, $this->manager->getProcessInfo($pidFile)['pid']);
+
+        $this->manager->unregisterProcess($pidFile);
+    }
+
     public function testNonExistentPidFileReturnsNotRunning(): void
     {
         $info = $this->manager->getProcessInfo($this->varDir.'/nonexistent.pid');

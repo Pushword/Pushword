@@ -26,6 +26,7 @@ page_scannerTableAction: Action
 page_scannerTableErrors: Errors
 page_scannerTablePage: Page
 page_scannerAlreadyRunning: 'A page scan is already in progress.'
+page_scannerQueued: 'Waiting for a worker...'
 page_scannerRefresh: Refresh
 page_scannerScanComplete: 'Scan completed!'
 page_scannerScanning: 'Scanning...'

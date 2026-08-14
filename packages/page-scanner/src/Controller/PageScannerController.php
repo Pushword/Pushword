@@ -114,8 +114,12 @@ final class PageScannerController extends AbstractController
 
         $state = $this->coordinator->readOutput($outputProcessType);
 
+        // A queued scan has not started yet: keep waiting on it exactly as on a
+        // running one, or the screen calls a scan done before it began.
+        $underWay = \in_array($state['status'], ['running', 'queued'], true);
+
         // If pending and process done, auto-redirect to trigger new scan
-        if ($pending && 'running' !== $state['status']) {
+        if ($pending && ! $underWay) {
             $response = new Response('', Response::HTTP_OK);
             $params = null !== $host ? ['host' => $host] : [];
             $params['force'] = 1;

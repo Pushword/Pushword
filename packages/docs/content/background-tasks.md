@@ -68,6 +68,43 @@ php bin/console messenger:consume async
 
 The HTMX-based admin polling UI works identically in both modes since existing commands handle their own PID registration and output writing.
 
+#### One transport per command
+
+Messenger routes by message class, and every background task shares `RunCommandMessage` — so a single transport serves them first-come. Queue a few thousand thumbnails and the next site generation waits behind all of them.
+
+`background_task_transports` gives a command its own lane. Keys are the command as passed by the dispatching code (`pw:static`, `pw:image:cache`, `pw:page-scan`, `pw:pdf:optimize`, `pw:image:optimize`); anything left out follows the routing above.
+
+```yaml
+# config/packages/pushword.yaml
+pushword:
+    background_task_handler: messenger
+    background_task_transports:
+        'pw:static': static
+```
+
+```yaml
+# config/packages/messenger.yaml
+framework:
+    messenger:
+        transports:
+            async: { dsn: 'doctrine://default' }
+            static: { dsn: 'doctrine://default?queue_name=static' }
+        routing:
+            'Pushword\Core\BackgroundTask\RunCommandMessage': async
+```
+
+Then consume the interactive lane with its own worker, so a mass sweep on `async` cannot delay it:
+
+```bash
+php bin/console messenger:consume static
+```
+
+#### `queued` vs `running`
+
+A dispatched task that no consumer has picked up yet is reported as `queued` — by the admin screens and by the `status` field of the static-generation and page-scan APIs. It is distinct from `running`: nothing has started, there is no console output yet, and on a busy queue it can stay that way for a long time. Clients polling a `statusUrl` should treat `queued` and `running` alike and keep waiting.
+
+This state only occurs in messenger mode. In process mode a dispatched task is running by the time the request returns.
+
 ## Locking Behavior
 
 Commands like `pw:image:cache` use per-file locks to prevent duplicate processing of the same image. When a second instance is triggered for the same file while the first is still running, it skips silently.

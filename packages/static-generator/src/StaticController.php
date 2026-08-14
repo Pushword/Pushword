@@ -93,8 +93,12 @@ class StaticController extends AbstractController
         $state = $this->coordinator->readOutput($outputProcessType);
         $status = $state['status'];
 
+        // A queued pass has not started yet: keep waiting on it exactly as on a
+        // running one, or the screen calls a generation done before it began.
+        $underWay = \in_array($status, ['running', 'queued'], true);
+
         // If pending and process done, auto-redirect to trigger new generation
-        if ($pending && 'running' !== $status) {
+        if ($pending && ! $underWay) {
             $response = new Response('', Response::HTTP_OK);
             $params = null !== $host ? ['host' => $host] : [];
             $response->headers->set('HX-Redirect', $this->generateUrl('admin_static_generator', $params));
@@ -112,7 +116,7 @@ class StaticController extends AbstractController
         ]);
 
         // Stop HTMX polling when process is complete
-        if ('running' !== $status) {
+        if (! $underWay) {
             $response->headers->set('HX-Reswap', 'innerHTML');
         }
 

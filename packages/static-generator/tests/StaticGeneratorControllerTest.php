@@ -91,7 +91,7 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $client->catchExceptions(false);
 
-        $this->markProcessFinished('completed');
+        $this->markProcessAbsent('completed');
 
         $client->request(Request::METHOD_GET, '/admin/static-output');
 
@@ -112,7 +112,7 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $client->catchExceptions(false);
 
-        $this->markProcessFinished('completed');
+        $this->markProcessAbsent('completed');
 
         $client->request(Request::METHOD_GET, '/admin/static-output?pending=1');
 
@@ -120,6 +120,39 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
         self::assertSame('', (string) $client->getResponse()->getContent());
         self::assertResponseHasHeader('HX-Redirect');
         self::assertStringContainsString('/admin/static', (string) $client->getResponse()->headers->get('HX-Redirect'));
+    }
+
+    /**
+     * A queued pass has not started. Rendering it like a finished one would drop
+     * the poll trigger, and the screen would sit on an empty console for as long
+     * as the queue takes — reporting success for work nobody has done yet.
+     */
+    public function testQueuedOutputFragmentKeepsPolling(): void
+    {
+        $this->loginUser();
+
+        $fragment = $this->renderOutputFragment('queued');
+
+        self::assertStringContainsString('hx-get=', $fragment);
+        self::assertStringContainsString('hx-trigger="load delay:500ms"', $fragment);
+        // Neither of the two end states: not the success box, not the error one.
+        self::assertStringNotContainsString('alert-success', $fragment);
+        self::assertStringNotContainsString('alert-warning', $fragment);
+    }
+
+    public function testPendingOutputKeepsWaitingWhileThePassIsOnlyQueued(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $this->markProcessAbsent('queued');
+
+        $client->request(Request::METHOD_GET, '/admin/static-output?pending=1');
+
+        self::assertResponseIsSuccessful();
+        // A queued pass must not hand the browser off as if it were over.
+        self::assertResponseNotHasHeader('HX-Redirect');
+        self::assertStringContainsString('hx-get=', (string) $client->getResponse()->getContent());
     }
 
     private function renderOutputFragment(string $status): string
@@ -138,10 +171,11 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
     }
 
     /**
-     * No pid file means no running process, so readOutput() falls back to the
-     * stored status — the state the controller sees once a generation is over.
+     * No pid file means no running process, so readOutput() answers from the
+     * stored word alone — the state the controller sees once a generation is
+     * over, or while one sits in a queue nobody has consumed.
      */
-    private function markProcessFinished(string $status): void
+    private function markProcessAbsent(string $status): void
     {
         /** @var BackgroundProcessManager $processManager */
         $processManager = self::getContainer()->get(BackgroundProcessManager::class);

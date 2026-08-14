@@ -73,6 +73,23 @@ final readonly class ProcessOutputStorage
         return false !== $status ? trim($status) : null;
     }
 
+    /**
+     * Move a status forward, but only for a task someone already follows.
+     *
+     * Most background tasks are nobody's business to poll — there is one per
+     * resized image — and each status file written for them would stay in var/
+     * forever. Writing only over an existing file keeps the vocabulary shared
+     * between dispatcher, handler and command without creating that litter.
+     */
+    public function updateTrackedStatus(string $processType, string $status): void
+    {
+        if (null === $this->getStatus($processType)) {
+            return;
+        }
+
+        $this->setStatus($processType, $status);
+    }
+
     public function getOutputFilePath(string $processType): string
     {
         return $this->varDir.'/'.$processType.'-output.txt';

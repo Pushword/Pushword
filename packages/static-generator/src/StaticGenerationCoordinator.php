@@ -109,6 +109,14 @@ final readonly class StaticGenerationCoordinator
     }
 
     /**
+     * `queued` is read from the stored word rather than deduced: a job waiting in
+     * a messenger queue has no process to find, and answering `completed` for it
+     * — the old default — is indistinguishable from a pass that really ran, since
+     * the last generation time does not move either. A stored `running` with no
+     * live process still degrades to `completed`: that one means the process died
+     * mid-pass, and the two cases are told apart by who wrote the word, not by
+     * guessing here.
+     *
      * @return array{status: string, output: string, isRunning: bool, errors: list<string>}
      */
     public function readOutput(string $processType): array
@@ -121,6 +129,7 @@ final readonly class StaticGenerationCoordinator
         $status = match (true) {
             $isRunning => 'running',
             'error' === $storageStatus || [] !== $errors => 'error',
+            'queued' === $storageStatus => 'queued',
             default => 'completed',
         };
 

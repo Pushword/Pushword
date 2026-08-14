@@ -217,6 +217,7 @@ adminStaticErrors: "Errors detected"
 adminStaticGenerating: Generating...
 adminStaticHost: Host
 adminStaticOutput: "Command output"
+adminStaticQueued: "Waiting for a worker..."
 adminStaticPleaseWait: "Please wait, generation is in progress. This page will refresh automatically."
 adminStaticStartedAt: "Started at"
 adminStaticStarting: "Starting generation..."

@@ -79,6 +79,20 @@ final class PageScanCoordinatorTest extends KernelTestCase
         self::assertContains('localhost.dev', $captured);
     }
 
+    /**
+     * A scan still waiting in a messenger queue has no process to find. Reading
+     * that absence as "over" made a scan nobody had started look completed.
+     */
+    public function testReadOutputReportsAQueuedScanAsQueuedRatherThanDone(): void
+    {
+        $this->outputStorage->setStatus('page-scanner', 'queued');
+
+        $state = $this->coordinator(self::createStub(BackgroundTaskDispatcherInterface::class))->readOutput('page-scanner');
+
+        self::assertSame('queued', $state['status']);
+        self::assertFalse($state['isRunning']);
+    }
+
     public function testReadResultsFiltersIgnoredErrorsAndKeepsTheRest(): void
     {
         $errors = [42 => [

@@ -116,9 +116,10 @@ final class StaticApiController extends AbstractApiController
             return $this->badRequest('Unknown host');
         }
 
-        // Already generating — never start a second pass for the same scope.
+        // Already generating — this scope's own pass, or the one it cross-locks
+        // with. Never start a second.
         if ($this->isGenerationRunning($host)) {
-            return $this->running($host, started: false);
+            return $this->accepted($host, 'running', started: false);
         }
 
         $incremental = $request->query->getBoolean('incremental')
@@ -126,7 +127,7 @@ final class StaticApiController extends AbstractApiController
 
         $this->coordinator->startGeneration($host, $incremental);
 
-        return $this->running($host, started: true);
+        return $this->accepted($host, $this->currentStatus($host), started: true);
     }
 
     #[Route(
@@ -207,11 +208,21 @@ final class StaticApiController extends AbstractApiController
         return $this->coordinator->getProcessInfo($this->coordinator->getProcessType($host))['isRunning'];
     }
 
-    private function running(?string $host, bool $started): JsonResponse
+    private function currentStatus(?string $host): string
+    {
+        return $this->coordinator->readOutput($this->coordinator->getProcessType($host))['status'];
+    }
+
+    /**
+     * The pass is under way, but say which way: under `background_task_handler:
+     * messenger` it may only be queued, and a client told `running` would poll for
+     * a console output that stays empty until a consumer gets to it.
+     */
+    private function accepted(?string $host, string $status, bool $started): JsonResponse
     {
         return $this->respond([
             'host' => $host,
-            'status' => 'running',
+            'status' => $status,
             'started' => $started,
             'statusUrl' => $this->generateUrl(
                 'pushword_api_static_status',
@@ -238,7 +249,7 @@ final class StaticApiController extends AbstractApiController
                 '/api/static/{host}' => [
                     'get' => [
                         'summary' => 'Static generation status for a site',
-                        'description' => 'Returns the current status (idle|running|completed|error), when the site was last generated in full, the live console output while running, and the errors of the last pass. Call `/api/static` for every site at once.',
+                        'description' => 'Returns the current status (idle|queued|running|completed|error), when the site was last generated in full, the live console output while running, and the errors of the last pass. `queued` means the pass is waiting on a messenger consumer and has not started — keep polling. Call `/api/static` for every site at once.',
                         'parameters' => [$hostParam],
                         'responses' => [
                             '200' => ['description' => 'OK', 'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/StaticStatus']]]],
@@ -248,7 +259,7 @@ final class StaticApiController extends AbstractApiController
                     ],
                     'post' => [
                         'summary' => 'Generate a whole site (background)',
-                        'description' => 'Dispatches a background generation and returns 202 with a statusUrl to poll. If one is already running for this scope, no second pass starts. Pass `?incremental=1` to regenerate only the pages that changed. Call `/api/static` to generate every site at once.',
+                        'description' => 'Dispatches a background generation and returns 202 with a statusUrl to poll, plus the `status` it starts from — `queued` when it is waiting on a messenger consumer rather than running. If one is already running for this scope, no second pass starts. Pass `?incremental=1` to regenerate only the pages that changed. Call `/api/static` to generate every site at once.',
                         'parameters' => [$hostParam, [
                             'name' => 'incremental',
                             'in' => 'query',
@@ -290,7 +301,7 @@ final class StaticApiController extends AbstractApiController
                     'type' => 'object',
                     'properties' => [
                         'host' => ['type' => ['string', 'null']],
-                        'status' => ['type' => 'string', 'enum' => ['idle', 'running', 'completed', 'error']],
+                        'status' => ['type' => 'string', 'enum' => ['idle', 'queued', 'running', 'completed', 'error']],
                         'running' => ['type' => 'boolean'],
                         'lastGeneratedAt' => ['type' => ['string', 'null'], 'format' => 'date-time', 'description' => 'Last full generation of this site. Single-page regenerations do not move it.'],
                         'errorCount' => ['type' => 'integer'],

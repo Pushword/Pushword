@@ -210,11 +210,13 @@ readonly class BackgroundProcessManager
     }
 
     /**
-     * Register the current process (for CLI-started processes).
+     * Register the current process (for CLI-started processes), or the child it
+     * just started — liveness matches $commandPattern against the recorded PID's
+     * command line, so the PID has to be the one actually running the command.
      */
-    public function registerProcess(string $pidFile, string $commandPattern): void
+    public function registerProcess(string $pidFile, string $commandPattern, ?int $pid = null): void
     {
-        $this->writePidFile($pidFile, (int) getmypid(), $commandPattern);
+        $this->writePidFile($pidFile, $pid ?? (int) getmypid(), $commandPattern);
     }
 
     private function writePidFile(string $pidFile, int $pid, string $commandPattern): void

@@ -96,7 +96,7 @@ final class PageScannerControllerTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $client->catchExceptions(false);
 
-        $this->markProcessFinished('completed');
+        $this->markProcessAbsent('completed');
 
         $client->request(Request::METHOD_GET, '/admin/scan-output');
 
@@ -116,7 +116,7 @@ final class PageScannerControllerTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $client->catchExceptions(false);
 
-        $this->markProcessFinished('completed');
+        $this->markProcessAbsent('completed');
 
         $client->request(Request::METHOD_GET, '/admin/scan-output?pending=1');
 
@@ -124,6 +124,38 @@ final class PageScannerControllerTest extends AbstractAdminTestClass
         self::assertSame('', (string) $client->getResponse()->getContent());
         self::assertResponseHasHeader('HX-Redirect');
         self::assertStringContainsString('/admin/scan', (string) $client->getResponse()->headers->get('HX-Redirect'));
+    }
+
+    /**
+     * A queued scan has not started. Rendering it like a finished one announced
+     * "scan completed" — with a meta-refresh to the results — for a scan nobody
+     * had run yet.
+     */
+    public function testQueuedOutputFragmentKeepsPolling(): void
+    {
+        $this->loginUser();
+
+        $fragment = $this->renderOutputFragment('queued');
+
+        self::assertStringContainsString('hx-get=', $fragment);
+        self::assertStringContainsString('hx-trigger="load delay:500ms"', $fragment);
+        self::assertStringNotContainsString('alert-success', $fragment);
+        self::assertStringNotContainsString('http-equiv="refresh"', $fragment);
+    }
+
+    public function testPendingOutputKeepsWaitingWhileTheScanIsOnlyQueued(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $this->markProcessAbsent('queued');
+
+        $client->request(Request::METHOD_GET, '/admin/scan-output?pending=1');
+
+        self::assertResponseIsSuccessful();
+        // Redirecting here would force-restart a scan that is already queued.
+        self::assertResponseNotHasHeader('HX-Redirect');
+        self::assertStringContainsString('hx-get=', (string) $client->getResponse()->getContent());
     }
 
     private function renderOutputFragment(string $status): string
@@ -141,10 +173,11 @@ final class PageScannerControllerTest extends AbstractAdminTestClass
     }
 
     /**
-     * No pid file means no running process, so readOutput() falls back to the
-     * stored status — the state the controller sees once a scan is over.
+     * No pid file means no running process, so readOutput() answers from the
+     * stored word alone — the state the controller sees once a scan is over, or
+     * while one sits in a queue nobody has consumed.
      */
-    private function markProcessFinished(string $status): void
+    private function markProcessAbsent(string $status): void
     {
         /** @var BackgroundProcessManager $processManager */
         $processManager = self::getContainer()->get(BackgroundProcessManager::class);

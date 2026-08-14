@@ -277,6 +277,15 @@ final class Configuration implements ConfigurationInterface
               'Background task execution mode: process (nohup+PID, default) or messenger (Symfony Messenger)',
           )
           ->end()
+          ->arrayNode('background_task_transports')
+          ->scalarPrototype()->end()
+          ->defaultValue([])
+          ->info(
+              'Messenger mode only: transport to route a background command to, keyed by command,'
+              .' e.g. {"pw:static": "static"}. Commands left out follow the default routing —'
+              .' give an interactive command its own transport so a mass sweep cannot queue in front of it.',
+          )
+          ->end()
 
           // Scheduled commands
           ->arrayNode('scheduled_commands')
