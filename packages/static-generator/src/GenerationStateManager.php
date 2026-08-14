@@ -5,12 +5,13 @@ namespace Pushword\StaticGenerator;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Manages generation state for incremental static site generation.
  * Tracks last generation timestamps per host to enable incremental updates.
  */
-final class GenerationStateManager
+final class GenerationStateManager implements ResetInterface
 {
     private const string STATE_FILE = '.static-generation-state.json';
 
@@ -68,6 +69,22 @@ final class GenerationStateManager
     {
         $this->loaded = false;
         $this->load();
+    }
+
+    /**
+     * Drop the memoized copy at every request boundary (autoconfigure tags this
+     * `kernel.reset`). Under a long-lived worker the container outlives the
+     * request, so without this each worker kept the copy it read first and served
+     * a stale `lastGeneration` — a poll answering "completed" with the timestamp
+     * of the *previous* generation until the worker recycled.
+     *
+     * A CLI pass keeps its cache: nothing resets services mid-command, and every
+     * mutation is saved inside the same generateHost() call that made it.
+     */
+    public function reset(): void
+    {
+        $this->loaded = false;
+        $this->state = [];
     }
 
     public function save(): void
