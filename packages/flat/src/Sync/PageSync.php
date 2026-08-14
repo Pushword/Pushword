@@ -473,8 +473,27 @@ final class PageSync
 
         $this->output?->writeln(\sprintf('<comment>Resetting %d pages for host %s...</comment>', $count, $host));
 
-        // Break the self-referential parent and variant links first so the deletes
-        // below don't violate the self-referencing foreign keys (enforced by MySQL/MariaDB).
+        $this->breakSelfReferentialLinks($pages);
+
+        foreach ($pages as $page) {
+            $this->entityManager->remove($page);
+            ++$this->deletedCount;
+        }
+
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Break the self-referential parent and variant links, and flush, before any
+     * remove(): the preRemove listener also nulls them, but an UPDATE queued on an
+     * entity that is itself scheduled for deletion is dropped by the unit of work,
+     * so deleting a parent and its child in the same flush would violate the
+     * self-referencing foreign keys.
+     *
+     * @param Page[] $pages
+     */
+    private function breakSelfReferentialLinks(array $pages): void
+    {
         foreach ($pages as $page) {
             if (null !== $page->parentPage) {
                 $page->parentPage = null;
@@ -483,13 +502,6 @@ final class PageSync
             if (null !== $page->variantOf) {
                 $page->variantOf = null;
             }
-        }
-
-        $this->entityManager->flush();
-
-        foreach ($pages as $page) {
-            $this->entityManager->remove($page);
-            ++$this->deletedCount;
         }
 
         $this->entityManager->flush();
@@ -511,6 +523,7 @@ final class PageSync
         $redirectionSlugSet = array_flip($this->redirectionImporter->getImportedSlugs());
         $yamlErrorSlugSet = array_flip($this->yamlErrorSlugs);
 
+        $pagesToDelete = [];
         foreach ($allPages as $page) {
             $slug = $page->slug;
 
@@ -529,8 +542,16 @@ final class PageSync
                 continue;
             }
 
-            $this->logger?->info('Deleting page `'.$slug.'`');
-            $this->output?->writeln(\sprintf('<comment>Deleting page %s</comment>', $slug));
+            $pagesToDelete[] = $page;
+        }
+
+        if ([] !== $pagesToDelete) {
+            $this->breakSelfReferentialLinks($pagesToDelete);
+        }
+
+        foreach ($pagesToDelete as $page) {
+            $this->logger?->info('Deleting page `'.$page->slug.'`');
+            $this->output?->writeln(\sprintf('<comment>Deleting page %s</comment>', $page->slug));
             ++$this->deletedCount;
             $this->entityManager->remove($page);
         }
