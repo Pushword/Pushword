@@ -255,6 +255,7 @@ final class SearchIndexTest extends KernelTestCase
         $nonce = 'apo'.bin2hex(random_bytes(4));
         $page = $this->createPage($nonce);
         $page->mainContent = "Suivez l'aventure{$nonce} sans attendre.";
+
         $em->persist($page);
         $em->flush();
 
