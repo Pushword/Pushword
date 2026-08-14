@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'pw:image:cache sweeps the stale image scratch files it finds'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,13 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`
+
+## `pw:image:cache` sweeps the stale image scratch files it finds
+
+Each run now deletes the `*.tmp` files the image writers left behind when a process
+was killed mid-write — over an hour old only, under `media_dir` and
+`media_cache_dir` — and reports `Swept N stale scratch file(s), M empty.`
+(`scratch_swept` / `scratch_empty` in `--format=agent`). Nothing to run; a site
+sweeping those files from its own deploy or cron script can drop that step.

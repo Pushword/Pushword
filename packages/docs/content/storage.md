@@ -111,5 +111,6 @@ See the [Flysystem documentation](https://flysystem.thephpleague.com/docs/) for 
 ## Notes
 
 - Image cache (thumbnails, optimized versions, `og/` previews) is always stored locally, in `media_cache_dir` — `public/{public_media_dir}/` by default, so the browser reads it as a static file. Point it elsewhere and every miss is served by the media-cache route instead, which is what the test suite does to give each worker its own derivatives
+- Both image writers write to a `.tmp` file beside their target and rename it into place, so a reader never meets a half-written image. A process killed mid-write (OOM, a deploy restart) leaves that file behind; `pw:image:cache` deletes the ones older than an hour on each run, under `media_dir` and `media_cache_dir`, and reports how many it took and how many were empty
 - When using remote storage, original media files are downloaded temporarily for image processing
 - VichUploaderBundle is configured to use Flysystem for uploads

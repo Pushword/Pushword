@@ -8,6 +8,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageReader;
+use Pushword\Core\Image\ImageScratchSweeper;
 use Pushword\Core\Repository\MediaRepository;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -49,12 +50,16 @@ final class ImageManagerCommand
 
     private bool $agentMode = false;
 
+    /** @var array{swept: int, empty: int} */
+    private array $scratch = ['swept' => 0, 'empty' => 0];
+
     public function __construct(
         private readonly MediaRepository $mediaRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageCacheGenerator $imageCacheGenerator,
         private readonly ImageCacheManager $imageCacheManager,
         private readonly ImageReader $imageReader,
+        private readonly ImageScratchSweeper $imageScratchSweeper,
         private readonly LockFactory $lockFactory,
         private readonly string $projectDir,
         #[Autowire(param: 'kernel.environment')]
@@ -99,6 +104,15 @@ final class ImageManagerCommand
                 $io->info('Another instance of pw:image:cache is already running. Skipping.');
 
                 return 0;
+            }
+
+            // Only the lock holder sweeps: the parallel workers run with --no-lock,
+            // and each one repeating the walk would burn the media tree N times over
+            // for nothing. Holding the lock is also what keeps the sweep off another
+            // run's live scratch files, on top of the age bound.
+            $this->scratch = $this->imageScratchSweeper->sweep();
+            if ($this->scratch['swept'] > 0 && ! $this->agentMode) {
+                $io->info(\sprintf('Swept %d stale scratch file(s), %d empty.', $this->scratch['swept'], $this->scratch['empty']));
             }
         }
 
@@ -430,6 +444,11 @@ final class ImageManagerCommand
             'errors' => $errorCount,
             'generated' => $generated,
             'skipped' => $skipped,
+            // Always emitted, including as 0: agents are the population that runs this
+            // command in bulk, and a count that only appears when it is non-zero is a
+            // count nobody can graph.
+            'scratch_swept' => $this->scratch['swept'],
+            'scratch_empty' => $this->scratch['empty'],
             'duration_ms' => (int) round((microtime(true) - $startTime) * 1000),
         ]);
     }

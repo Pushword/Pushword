@@ -23,6 +23,15 @@ final class ImageScratchFile
     public const string NAME_PATTERN = '#\.(?:[a-z]+-)?\d+\.[0-9a-z]+\.tmp$#';
 
     /**
+     * A scratch lives for the length of one write — seconds, even for a large
+     * variant. Anything still carrying the name an hour later is the residue of a
+     * process killed before its cleanup ran, so {@see ImageScratchSweeper} can take
+     * it without ever racing a live writer. Naming, recognizing and expiring a
+     * scratch are three faces of one convention: they belong together.
+     */
+    public const int MAX_AGE = 3600;
+
+    /**
      * $writer tags who left the file behind, which is what makes an orphan (a
      * process killed before its `finally`) traceable to the code that wrote it.
      * PID plus uniqid: two writers racing on one target never share a name.
