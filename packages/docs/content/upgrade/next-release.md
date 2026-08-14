@@ -4,7 +4,7 @@ publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
 
-**Concerns:** pushword/core, pushword/page-scanner, pushword/static-generator
+**Concerns:** `pushword/core`, `pushword/page-scanner`, `pushword/static-generator`
 
 ## `queued` is a new status
 
