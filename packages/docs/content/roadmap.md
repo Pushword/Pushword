@@ -9,6 +9,10 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ### On our way
 
+- [ ] https://github.com/Smaug6739/Alexandrie https://github.com/emdash-cms/emdash
+- [ ] https://dunglas.dev/2024/12/http-compression-in-php-new-symfony-assetmapper-feature/
+- [ ] https://mist.inanimate.tech https://proofeditor.ai/?utm_source=everywebsite
+
 - [ ] npx pushword ai plugin inspired from https://github.com/gsd-build/get-shit-done https://github.com/pbakaus/impeccable and current prompt/cmd/skills on my projects (wip -> ai-skills package)
 - [ ] upgrade skills -> composer req pushword/docs, composer update (retrieve pushword core version upgrade), read vendor/pushword/docs.../upgrade.md, fix local codebase, test (manual composer dev + check few pages) and composer test if available claude --resume b88a1a80-843c-4e8f-994c-23ef98e63f59
 
