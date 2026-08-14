@@ -261,4 +261,41 @@ final class ParentPageSyncTest extends KernelTestCase
         self::assertNotNull($child->parentPage, 'Parent page created in same import cycle should be resolved via deferred resolution');
         self::assertSame('new-parent-deferred', $child->parentPage->slug);
     }
+
+    /**
+     * Both .md files vanish between two syncs, so the delete pass removes a
+     * parent and its child together: neither may survive, and the pass must not
+     * abort on the self-referencing foreign key.
+     *
+     * This locks the outcome, not the mechanism. It passes with and without
+     * breakSelfReferentialLinks(), on SQLite and on MariaDB, because
+     * PageListener::preRemove already nulls the children of a page being
+     * removed. Read it as coverage of the pair being deleted — the foreign-key
+     * ordering that helper guards still has no failing case to its name.
+     */
+    public function testDeletingAParentAndItsChildInTheSamePass(): void
+    {
+        $this->testSlugs = ['parent-both-deleted', 'child-both-deleted'];
+
+        $this->createMd('parent-both-deleted.md', "---\nh1: 'Parent Both'\n---\n\nParent content");
+        $this->createMd('child-both-deleted.md', "---\nh1: 'Child Both'\nparentPage: parent-both-deleted\n---\n\nChild content");
+
+        $this->pageSync->import('localhost.dev');
+
+        $child = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'child-both-deleted', 'host' => 'localhost.dev']);
+        self::assertInstanceOf(Page::class, $child);
+        self::assertNotNull($child->parentPage, 'The pair must be linked, or this deletes two unrelated pages and proves nothing');
+
+        // The pages now exist only in the DB. The rest of the host keeps its
+        // files, so the delete pass still runs instead of short-circuiting.
+        unlink($this->contentDir.'/parent-both-deleted.md');
+        unlink($this->contentDir.'/child-both-deleted.md');
+
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $repository = $this->em->getRepository(Page::class);
+        self::assertNull($repository->findOneBy(['slug' => 'child-both-deleted', 'host' => 'localhost.dev']));
+        self::assertNull($repository->findOneBy(['slug' => 'parent-both-deleted', 'host' => 'localhost.dev']));
+    }
 }
