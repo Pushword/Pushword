@@ -13,10 +13,21 @@ MONOREPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CACHE_BASE="/tmp/com.github.pushword.pushword/installer-cache"
 TEMP_DIR="/tmp/pushword-installer-test-$$"
 
-# Compute content hash of all files that affect the installer outcome
+# Compute content hash of all files that affect the installer outcome.
+#
+# The bundles' services.php are hashed because this install is the only container
+# `composer test` compiles without the monorepo's require-dev: every optional-dependency
+# guard (`interface_exists`) takes its absent side here and nowhere else. While they were
+# out of the hash, a rewiring kept being tested against the install built before it — a
+# `_defaults` binding whose only consumer sits behind the symfony/messenger guard broke
+# every messenger-less install, and this test stayed green on a three-day-old copy of the
+# sources. PushwordCoreBundle.php comes along for the exclude list they all load with.
 HASH_INPUT=$(cat \
     "$MONOREPO_DIR"/packages/*/composer.json \
     "$MONOREPO_DIR"/packages/*/install.php \
+    "$MONOREPO_DIR"/packages/*/src/config/services.php \
+    "$MONOREPO_DIR"/packages/*/src/Resources/config/services.php \
+    "$MONOREPO_DIR"/packages/core/src/PushwordCoreBundle.php \
     "$MONOREPO_DIR"/packages/core/starter/* \
     "$MONOREPO_DIR"/packages/core/src/Command/DockerInitCommand.php \
     "$MONOREPO_DIR"/packages/installer/src/SystemCheck.php \

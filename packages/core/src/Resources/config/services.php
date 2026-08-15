@@ -57,8 +57,11 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->bind('$pdfPreset', '%pw.pdf_preset%')
         ->bind('$pdfLinearize', '%pw.pdf_linearize%')
         ->bind('$enablePasswordReset', '%pw.enable_password_reset%')
-        ->bind('$scheduledCommands', '%pw.scheduled_commands%')
-        ->bind('$backgroundTaskTransports', '%pw.background_task_transports%');
+        ->bind('$scheduledCommands', '%pw.scheduled_commands%');
+    // $backgroundTaskTransports is not bound here: its only consumer exists when
+    // symfony/messenger is installed, and a _defaults binding with no matching
+    // argument makes ResolveBindingsPass fail. It is passed as an explicit
+    // argument below, inside the conditional block.
 
     $services->load('Pushword\Core\\', __DIR__.'/../../../src/*')
         ->exclude([
@@ -141,7 +144,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     // Background task dispatchers - Messenger mode (only when symfony/messenger is installed)
     if (interface_exists(MessageBusInterface::class)) {
-        $services->set(MessengerBackgroundTaskDispatcher::class);
+        $services->set(MessengerBackgroundTaskDispatcher::class)
+            ->arg('$backgroundTaskTransports', '%pw.background_task_transports%');
         $services->set(RunCommandHandler::class);
     }
 
