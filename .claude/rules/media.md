@@ -25,6 +25,20 @@ paths:
 - Generalize that shape: any "truncated cache file, non-deterministic, size-correlated,
   silent RC=0" symptom points at an external binary writing in place, not at the primary
   encoder.
+- **A gd decode counts against `memory_limit`, and overrunning it is a fatal no `catch`
+  reaches.** `ImageReader::read()` asks for width × height × 4 bytes in one allocation —
+  192 MB for a 48 Mpx master — so any decode on a request-side path has to be declined
+  first (`ImageCacheGenerator::decodeFitsIn()`), never wrapped in a `try`. imagick and vips
+  allocate outside the limit, which is why the check is gd-only. Beware when reproducing:
+  whether gd allocations are counted depends on the PHP build (they were under FrankenPHP's
+  8.4, not under the local CLI 8.5), so a local `memory_get_peak_usage()` of 17 MB proves
+  nothing about production — reproduce through the real SAPI.
+- **Filesystem work owed to a media write belongs after the commit, never in `preUpdate`.**
+  `MediaStorageListener` decides a rename in `preUpdate` (so an impossible one still rolls
+  the row back) and moves the file in `postFlush`. A move inside the transaction is
+  destructive by construction: anything throwing later in the same flush rolls back the row
+  and leaves the DB naming a file that was renamed away — the whole site 404s on it. The
+  `preRemove` file delete still has that shape.
 - **Derivatives are written to `pw.media_cache_dir`, never to `public_dir`/`public_media_dir`.**
   The default is `public/{public_media_dir}/`, so nothing moves for a site; `public_media_dir`
   alone stays what the *browser* path is built from. Compute a derivative path from anything
