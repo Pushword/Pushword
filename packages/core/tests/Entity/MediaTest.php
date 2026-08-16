@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Media;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Validator\Validation;
 
 final class MediaTest extends TestCase
 {
@@ -238,5 +239,24 @@ final class MediaTest extends TestCase
 
         $media->licenseState = 'seeded';
         self::assertSame('seeded', $media->licenseState);
+    }
+
+    /**
+     * Replacing the file of an existing media with one bigger than upload_max_filesize:
+     * PHP passes an UploadedFile with an empty path, and reading its mime type fatals.
+     * The user must get a form error instead of a 500.
+     */
+    public function testRejectedUploadIsAViolationNotAnException(): void
+    {
+        $media = new Media();
+        $media->setFileName('cairn.jpg');
+        $media->setMimeType('image/jpeg');
+        $media->setMediaFile(new UploadedFile('', 'too-big.jpg', 'image/jpeg', \UPLOAD_ERR_INI_SIZE, false));
+
+        $violations = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator()->validate($media);
+
+        self::assertCount(1, $violations);
+        self::assertSame('mediaFile', $violations->get(0)->getPropertyPath());
+        self::assertStringContainsString('too large', (string) $violations->get(0)->getMessage());
     }
 }

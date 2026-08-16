@@ -104,6 +104,12 @@ class Media implements IdInterface, Taggable, Stringable
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     public bool $hiddenFromAdmin = false;
 
+    /**
+     * Assert\File turns a rejected upload (over upload_max_filesize, partial POST, no tmp
+     * dir…) into a form error. Without it PHP hands over an UploadedFile whose path is
+     * empty, nothing stops the save, and the first read on that file fatals.
+     */
+    #[Assert\File]
     #[Vich\UploadableField(mapping: 'media_media', fileNameProperty: 'slug', size: 'size', mimeType: 'mimeType', dimensions: 'dimensions')]
     protected UploadedFile|File|null $mediaFile = null;
 
@@ -128,6 +134,11 @@ class Media implements IdInterface, Taggable, Stringable
         }
 
         if (null === $this->mediaFile) {
+            return;
+        }
+
+        // A rejected upload has no readable path; Assert\File already said why.
+        if ($this->mediaFile instanceof UploadedFile && ! $this->mediaFile->isValid()) {
             return;
         }
 
