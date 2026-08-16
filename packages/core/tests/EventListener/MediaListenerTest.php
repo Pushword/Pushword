@@ -98,6 +98,80 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
         }
     }
 
+    /**
+     * A rename already done on disk but not in the DB is what a crashed run leaves behind —
+     * the state production was found in. The next save must adopt it, not fail on it.
+     */
+    public function testARenameAlreadyDoneOnDiskIsAdopted(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $suffix = getmypid().'.png';
+        $old = 'adopted-'.$suffix;
+        $new = 'adopted-target-'.$suffix;
+
+        $media = $this->probeMedia($old, onDisk: true);
+        $em->persist($media);
+        $em->flush();
+
+        rename($this->getMediaDir().'/'.$old, $this->getMediaDir().'/'.$new);
+
+        $media->setFileName($new);
+        $em->flush();
+
+        try {
+            self::assertFileExists($this->getMediaDir().'/'.$new);
+            self::assertSame($new, $em->getConnection()->fetchOne('SELECT media FROM media WHERE id = ?', [$media->id]));
+        } finally {
+            $em->getConnection()->delete('media', ['id' => $media->id]);
+            @unlink($this->getMediaDir().'/'.$new);
+        }
+    }
+
+    /**
+     * The destination is a file no row claims, so the conflict resolver — which only reads
+     * the DB — waves the rename through. Only the disk knows, and it must refuse before the
+     * commit rather than overwrite.
+     */
+    public function testARenameOntoAFileNoRowClaimsIsRefused(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $suffix = getmypid().'.png';
+        $orphan = 'orphan-'.$suffix;
+        imagepng(imagecreatetruecolor(4, 4), $this->getMediaDir().'/'.$orphan);
+
+        $media = $this->probeMedia('claimant-'.$suffix, onDisk: true);
+        $em->persist($media);
+        $em->flush();
+
+        $media->setFileName($orphan);
+
+        try {
+            $em->flush();
+            self::fail('renaming onto an existing file must not be allowed');
+        } catch (Exception) {
+        }
+
+        $connection = $em->getConnection();
+
+        try {
+            self::assertFileExists($this->getMediaDir().'/claimant-'.$suffix);
+            self::assertSame(
+                'claimant-'.$suffix,
+                $connection->fetchOne('SELECT media FROM media WHERE id = ?', [$media->id]),
+            );
+        } finally {
+            $connection->delete('media', ['id' => $media->id]);
+            @unlink($this->getMediaDir().'/claimant-'.$suffix);
+            @unlink($this->getMediaDir().'/'.$orphan);
+        }
+    }
+
     private function probeMedia(string $fileName, bool $onDisk): Media
     {
         if ($onDisk) {
@@ -106,6 +180,8 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
 
         $media = new Media();
         $media->setFileName($fileName);
+        // Unique: MediaConflictResolver renames a media whose alt another one already has.
+        $media->setAlt($fileName);
         $media->setMimeType('image/png');
         $media->setHash(sha1($fileName, true));
 
