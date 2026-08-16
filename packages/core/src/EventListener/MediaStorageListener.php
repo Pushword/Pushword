@@ -62,23 +62,7 @@ final class MediaStorageListener implements ResetInterface
     public function preUpdate(Media $media, PreUpdateEventArgs $preUpdateEventArgs): void
     {
         if ($preUpdateEventArgs->hasChangedField('fileName')) {
-            $this->conflictResolver->resolveConflicts($media);
-
-            if ('' === $media->fileNameBeforeUpdate) {
-                throw new LogicException();
-            }
-
-            $oldFileName = $media->fileNameBeforeUpdate;
-            $newFileName = $media->getFileName();
-
-            $this->pendingRenames[] = [
-                'media' => $media,
-                'oldFileName' => $oldFileName,
-                'newFileName' => $newFileName,
-                'moveFrom' => $this->resolveMoveSource($oldFileName, $newFileName),
-            ];
-
-            $media->setFileNameBeforeUpdate('');
+            $this->planRename($media);
         }
 
         if ($preUpdateEventArgs->hasChangedField('hash')) {
@@ -86,6 +70,26 @@ final class MediaStorageListener implements ResetInterface
             $media->setHash($newHash);
             $preUpdateEventArgs->setNewValue('hash', $newHash);
         }
+    }
+
+    private function planRename(Media $media): void
+    {
+        $this->conflictResolver->resolveConflicts($media);
+
+        if ('' === $media->fileNameBeforeUpdate) {
+            throw new LogicException();
+        }
+
+        $oldFileName = $media->fileNameBeforeUpdate;
+
+        $this->pendingRenames[] = [
+            'media' => $media,
+            'oldFileName' => $oldFileName,
+            'newFileName' => $media->getFileName(),
+            'moveFrom' => $this->resolveMoveSource($oldFileName, $media->getFileName()),
+        ];
+
+        $media->setFileNameBeforeUpdate('');
     }
 
     /**
@@ -149,8 +153,9 @@ final class MediaStorageListener implements ResetInterface
     }
 
     /**
-     * Where the bytes are *now*: until postFlush runs, a media whose row already carries
-     * its new name is still on disk under the old one.
+     * Where the bytes are *now*. Deferring the move split the name the row carries from the
+     * name on disk for the length of a flush, so anything reading the file from inside one —
+     * the hash above — has to ask, not assume.
      */
     private function fileNameOnDisk(Media $media): string
     {
@@ -198,18 +203,20 @@ final class MediaStorageListener implements ResetInterface
     /** @param array{media: Media, oldFileName: string, newFileName: string, moveFrom: string|null} $rename */
     private function applyRename(EntityManagerInterface $entityManager, array $rename): void
     {
+        $media = $rename['media'];
+
         if (null !== $rename['moveFrom']) {
             try {
                 $this->mediaStorage->move($rename['moveFrom'], $rename['newFileName']);
             } catch (Throwable $throwable) {
-                $this->revertFileName($entityManager, $rename['media'], $rename['oldFileName']);
+                $this->revertFileName($entityManager, $media, $rename['oldFileName']);
 
                 throw $throwable;
             }
         }
 
         $this->imageCacheManager->remove($rename['oldFileName']);
-        $this->imageCacheGenerator->generateQuickPreview($rename['media']);
+        $this->imageCacheGenerator->generateQuickPreview($media);
         $this->imageCacheGenerator->runBackgroundCacheGeneration($rename['newFileName']);
     }
 
