@@ -38,7 +38,14 @@ trap cleanup EXIT
 echo "=== Pushword Docker test ==="
 
 # 1. An installed project. test-installer caches it, so this is usually a no-op.
-"$MONOREPO_DIR/.scripts/test-installer" --quiet >/dev/null
+# Its output is held back rather than dropped: when the install is what broke, the exit
+# code is all this job would otherwise print, and the reason stays in the discarded
+# stdout — a container that stopped compiling read here as an unexplained exit 1.
+if ! installer_output=$("$MONOREPO_DIR/.scripts/test-installer" --quiet 2>&1); then
+    echo -e "${RED}Error: .scripts/test-installer failed${NC}"
+    echo "$installer_output"
+    exit 1
+fi
 PROJECT_DIR=$(find "$CACHE_BASE" -mindepth 1 -maxdepth 1 -type d | head -1)
 if [ -z "$PROJECT_DIR" ]; then
     echo -e "${RED}Error: .scripts/test-installer left no project in $CACHE_BASE${NC}"
