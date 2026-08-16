@@ -1,23 +1,36 @@
 ---
-title: 'a media rename moves the file after the row is committed, and skips the preview it cannot decode; pw:image:cache stops counting non-images as processed'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
 
-**Concerns:** `pushword/core`
+<!--
+The upgrade note for the next release. `.scripts/release` renames this file to
+`upgrade/rc<N>.md`, adds its row to the table in `upgrade.md` and empties it back
+to this scaffold, at the tag.
 
-## Renaming a media no longer moves the file inside the flush
+Write here, in the same commit as the change, whenever a release asks something of
+a site that upgrades: a command to run, a config key to set, a template to copy, a
+behaviour that changed under an unchanged call. A change `composer update` fully
+absorbs needs no note.
 
-The move, the cache purge and the preview now run once the row is committed, so a flush that throws afterwards can no longer leave the database naming a file that was already renamed away. Nothing to do.
+Keep it short: what changed, and what to do about it. A note is a checklist, not a
+changelog and not a post-mortem — no cause, no code path, no story of the bug. That
+belongs in the feature doc, which you link to instead.
 
-## A preview too large to decode is skipped instead of overrunning the memory limit
+- `title:` — the "What changed" cell of the index table. One line, lower case,
+  written from the site's side ("the newsletter form is fetched, and CSRF-protected")
+  rather than the diff's ("refactor NewsletterFormController"). Several changes: one
+  short clause each, semicolon-separated, naming only those that ask something.
+  Required as soon as the note has a section; the release stops if it is still empty.
+- `run:` — the command(s) the release expects, without `php bin/console`. Omit the
+  key when there is none. A list runs in the order given.
+- `**Concerns:**` — first line of the body, listing every package a site has to
+  install to be affected. Alphabetical, full composer names, `@pushword/js-helper`
+  last. Add the packages your change touches to the line, keep the others.
+- One `##` section per change, five lines at most: one sentence for what changed, a
+  bold line for who is affected when only some sites are, then the action — a command,
+  a config key, an edit to make. Nothing to do: say so in the sentence and stop.
 
-On the `gd` driver only: a master whose bitmap (width × height × 4 bytes) does not fit in what is left of `memory_limit` no longer gets its dimensions and main color read at rename time — that allocation is a fatal error, not an exception. The background `pw:image:cache` fills them in.
-
-**Affected:** sites on `gd` with masters above ~20 Mpx and a `memory_limit` under 512M. If that background task does not run on your host, run `pw:image:cache` to fill the metadata, or raise `memory_limit`.
-
-## `pw:image:cache` no longer counts your non-images as processed
-
-The sequential run derived its processed count as `total - skipped - errored`, and a non-image media falls in none of those three: it only gets its public symlink, it never reaches the cache generator. Every PDF, GPX, XML and SVG in the library was therefore charged to *processed* on every run — a converged media library reported the same non-zero figure each night while regenerating nothing. The count is now tallied from the derivatives actually generated, in both the human summary and the `--format=agent` JSON (`processed`, `generated`).
-
-**Affected:** nothing to do, but expect the number to drop. If you graph or alert on it, rebaseline: the run that used to say `52 processed` on a stable library now says `0`. The parallel run (`-p` above 1) was already correct and is unchanged.
+Several changes land here between two tags: append to the file, do not replace it.
+-->
