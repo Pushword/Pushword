@@ -120,6 +120,68 @@ final class ImageCacheGeneratorTest extends KernelTestCase
         self::assertMatchesRegularExpression('/^#[0-9a-f]{6}$/i', $media->getMainColor());
     }
 
+    /**
+     * A gd decode is one allocation of width × height × 4 bytes, counted against
+     * memory_limit — overrunning it is a fatal no catch survives, and in production it
+     * killed the flush that had already renamed the file on disk. Anything that does not
+     * fit must be declined before the decode, not after.
+     */
+    public function testDecodeFitsInOnlyAcceptsWhatIsLeftOfTheLimit(): void
+    {
+        // 48 Mpx (the production master) needs ~230 MB with headroom.
+        self::assertFalse(ImageCacheGenerator::decodeFitsIn(9237, 5195, 512 * 1024 ** 2, 420 * 1024 ** 2));
+        self::assertTrue(ImageCacheGenerator::decodeFitsIn(9237, 5195, 512 * 1024 ** 2, 40 * 1024 ** 2));
+
+        // No limit: nothing to overrun.
+        self::assertTrue(ImageCacheGenerator::decodeFitsIn(9237, 5195, null, 420 * 1024 ** 2));
+
+        // The bitmap alone fitting is not enough — the 1.2 headroom decides.
+        self::assertFalse(ImageCacheGenerator::decodeFitsIn(1000, 1000, 4_500_000, 0));
+        self::assertTrue(ImageCacheGenerator::decodeFitsIn(1000, 1000, 5_000_000, 0));
+    }
+
+    public function testMemoryLimitInBytesReadsTheShorthand(): void
+    {
+        $initial = ini_get('memory_limit');
+
+        try {
+            ini_set('memory_limit', '512M');
+            self::assertSame(512 * 1024 ** 2, ImageCacheGenerator::memoryLimitInBytes());
+
+            ini_set('memory_limit', '1G');
+            self::assertSame(1024 ** 3, ImageCacheGenerator::memoryLimitInBytes());
+
+            ini_set('memory_limit', '-1');
+            self::assertNull(ImageCacheGenerator::memoryLimitInBytes());
+        } finally {
+            ini_set('memory_limit', '' === $initial ? '-1' : $initial);
+        }
+    }
+
+    public function testQuickPreviewCopiesTheOriginalAndFillsMetadata(): void
+    {
+        $generator = $this->createGenerator(['md' => ['quality' => 80, 'filters' => ['scaleDown' => [992]]]]);
+        $mediaStorage = $this->createMediaStorageAdapter();
+
+        $probe = 'quick-preview-probe-'.getmypid().'.png';
+        $probePath = $mediaStorage->getLocalPath($probe);
+        $gd = imagecreatetruecolor(40, 20);
+        imagepng($gd, $probePath);
+
+        $media = new Media();
+        $media->setFileName($probe);
+
+        try {
+            self::assertNotNull($generator->generateQuickPreview($media));
+            self::assertFileExists($this->tmpPublicDir.'/'.$this->publicMediaDir.'/md/'.$probe);
+            self::assertSame(40, $media->getWidth());
+            self::assertSame(20, $media->getHeight());
+            self::assertMatchesRegularExpression('/^#[0-9a-f]{6}$/i', (string) $media->getMainColor());
+        } finally {
+            @unlink($probePath);
+        }
+    }
+
     public function testHeightAndCropFiltersDeriveFromSourceNotChain(): void
     {
         // Regression: height-only (height_300) and crop (thumb/coverDown) filters must

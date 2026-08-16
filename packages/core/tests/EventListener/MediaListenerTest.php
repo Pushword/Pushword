@@ -49,6 +49,70 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
     }
 
     /**
+     * A rename moves the file only once the row is committed. It used to move it in
+     * preUpdate: when anything later in the same flush threw, the transaction rolled back
+     * and left the DB naming a file that had already been renamed away — every reference
+     * to it 404ing (production, 2026-08-16). Here the second rename is impossible, so the
+     * flush dies; the first one must have touched nothing.
+     */
+    public function testAFlushThatThrowsMovesNoFile(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $suffix = getmypid().'.png';
+        // Persisted first so Doctrine writes it first: the rename that dies has to come after
+        // one that already "succeeded", the shape that used to leave disk and DB disagreeing.
+        $movable = $this->probeMedia('movable-'.$suffix, onDisk: true);
+        $ghost = $this->probeMedia('ghost-'.$suffix, onDisk: false);
+        $em->persist($movable);
+        $em->persist($ghost);
+        $em->flush();
+
+        $movable->setFileName('movable-renamed-'.$suffix);
+        // No file behind this one: MediaStorageListener refuses the rename, aborting the flush.
+        $ghost->setFileName('ghost-renamed-'.$suffix);
+
+        try {
+            $em->flush();
+            self::fail('the flush must not survive an impossible rename');
+        } catch (Exception) {
+        }
+
+        $connection = $em->getConnection();
+
+        try {
+            self::assertFileExists($this->getMediaDir().'/movable-'.$suffix);
+            self::assertFileDoesNotExist($this->getMediaDir().'/movable-renamed-'.$suffix);
+            self::assertSame(
+                'movable-'.$suffix,
+                $connection->fetchOne('SELECT media FROM media WHERE id = ?', [$movable->id]),
+                'the rolled-back row must still name the file that is on disk',
+            );
+        } finally {
+            $connection->delete('media', ['id' => $movable->id]);
+            $connection->delete('media', ['id' => $ghost->id]);
+            @unlink($this->getMediaDir().'/movable-'.$suffix);
+            @unlink($this->getMediaDir().'/movable-renamed-'.$suffix);
+        }
+    }
+
+    private function probeMedia(string $fileName, bool $onDisk): Media
+    {
+        if ($onDisk) {
+            imagepng(imagecreatetruecolor(4, 4), $this->getMediaDir().'/'.$fileName);
+        }
+
+        $media = new Media();
+        $media->setFileName($fileName);
+        $media->setMimeType('image/png');
+        $media->setHash(sha1($fileName, true));
+
+        return $media;
+    }
+
+    /**
      * // This is not testing MediaListner bug ImageImport (ImageManager Service).
      */
     public function testRenameAndCo(): void

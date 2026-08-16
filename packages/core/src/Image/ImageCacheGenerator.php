@@ -167,11 +167,16 @@ final readonly class ImageCacheGenerator
     /**
      * Generate only a quick preview for admin by copying original file.
      *
-     * @return ImageInterface|null Returns null if image format is not supported by current driver
+     * @return ImageInterface|null null when the current driver cannot read the format, or when
+     *                             decoding it would not fit in memory ({@see self::decodeFitsInMemory()})
      */
     public function generateQuickPreview(Media $media): ?ImageInterface
     {
         $this->copyOriginalToFilter($media, 'md');
+
+        if (! $this->decodeFitsInMemory($media)) {
+            return null;
+        }
 
         try {
             return $this->readAndUpdateMetadata($media);
@@ -219,9 +224,72 @@ final readonly class ImageCacheGenerator
         return $image;
     }
 
+    /**
+     * No clone: `colorAt()` runs an analyzer, which reads the image without touching it.
+     * The defensive copy it replaced cost a second full-size decode buffer — 192 MB for a
+     * 48 Mpx master — for a single pixel, and that was the allocation that hit the limit.
+     */
     private function updateMainColor(Media $media, ImageInterface $image): void
     {
-        $color = (clone $image)->colorAt(0, 0)->toHex(true);
-        $media->setMainColor($color);
+        $media->setMainColor($image->colorAt(0, 0)->toHex(true));
+    }
+
+    /**
+     * A gd decode allocates width × height × 4 bytes through PHP's allocator, so it counts
+     * against memory_limit and overruns it as a *fatal* — uncatchable, killing the request
+     * that asked for the preview. 512 MB and a 48 Mpx master were enough (production, 2026-08-16).
+     * imagick and vips allocate outside the limit, so only gd needs the check.
+     *
+     * Skipping is cheap: the preview copy is already written, and dimensions and main color
+     * are filled by the background `pw:image:cache`, which runs in CLI where the limit is
+     * usually lifted.
+     */
+    private function decodeFitsInMemory(Media $media): bool
+    {
+        if ('gd' !== $this->imageReader->getResolvedDriver()) {
+            return true;
+        }
+
+        $size = @getimagesize($this->mediaStorage->getLocalPath($media->getFileName()));
+        if (false === $size) {
+            return true; // not something getimagesize reads: leave the verdict to read()
+        }
+
+        return self::decodeFitsIn($size[0], $size[1], self::memoryLimitInBytes(), memory_get_usage(true));
+    }
+
+    /**
+     * A gd bitmap is width × height × 4 bytes, asked for in one allocation; 1.2× leaves the
+     * decoder its headroom on top.
+     *
+     * @param int|null $limitBytes null when memory_limit is unlimited
+     */
+    public static function decodeFitsIn(int $width, int $height, ?int $limitBytes, int $usedBytes): bool
+    {
+        if (null === $limitBytes) {
+            return true;
+        }
+
+        return $width * $height * 4 * 1.2 < $limitBytes - $usedBytes;
+    }
+
+    /** @return positive-int|null Bytes, null when unlimited. */
+    public static function memoryLimitInBytes(): ?int
+    {
+        $raw = trim(ini_get('memory_limit'));
+
+        if ('' === $raw || '-1' === $raw) {
+            return null;
+        }
+
+        $bytes = (int) $raw;
+        $bytes *= match (strtolower(substr($raw, -1))) {
+            'g' => 1024 ** 3,
+            'm' => 1024 ** 2,
+            'k' => 1024,
+            default => 1,
+        };
+
+        return $bytes > 0 ? $bytes : null;
     }
 }
