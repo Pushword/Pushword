@@ -1,5 +1,5 @@
 ---
-title: 'a media rename moves the file after the row is committed, and skips the preview it cannot decode'
+title: 'a media rename moves the file after the row is committed, and skips the preview it cannot decode; pw:image:cache stops counting non-images as processed'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -15,3 +15,9 @@ The move, the cache purge and the preview now run once the row is committed, so 
 On the `gd` driver only: a master whose bitmap (width × height × 4 bytes) does not fit in what is left of `memory_limit` no longer gets its dimensions and main color read at rename time — that allocation is a fatal error, not an exception. The background `pw:image:cache` fills them in.
 
 **Affected:** sites on `gd` with masters above ~20 Mpx and a `memory_limit` under 512M. If that background task does not run on your host, run `pw:image:cache` to fill the metadata, or raise `memory_limit`.
+
+## `pw:image:cache` no longer counts your non-images as processed
+
+The sequential run derived its processed count as `total - skipped - errored`, and a non-image media falls in none of those three: it only gets its public symlink, it never reaches the cache generator. Every PDF, GPX, XML and SVG in the library was therefore charged to *processed* on every run — a converged media library reported the same non-zero figure each night while regenerating nothing. The count is now tallied from the derivatives actually generated, in both the human summary and the `--format=agent` JSON (`processed`, `generated`).
+
+**Affected:** nothing to do, but expect the number to drop. If you graph or alert on it, rebaseline: the run that used to say `52 processed` on a stable library now says `0`. The parallel run (`-p` above 1) was already correct and is unchanged.

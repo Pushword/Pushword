@@ -2,8 +2,10 @@
 
 namespace Pushword\Core\Tests\Command;
 
+use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Command\ImageManagerCommand;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageScratchFile;
 use Pushword\Core\Tests\PathTrait;
 use ReflectionMethod;
@@ -11,6 +13,7 @@ use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Lock\LockFactory;
 
 #[Group('integration')]
@@ -18,10 +21,20 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
 {
     use PathTrait;
 
+    /** @var int[] media IDs to clean up after each test */
+    private array $createdMediaIds = [];
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->ensureMediaFileExists();
+        $this->createdMediaIds = [];
+    }
+
+    protected function tearDown(): void
+    {
+        $this->cleanupCreatedMedias();
+        parent::tearDown();
     }
 
     public function testSequentialExecution(): void
@@ -199,8 +212,7 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         self::assertStringNotContainsString('peak memory', $output);
         self::assertStringNotContainsString('100%', $output);
 
-        $decoded = json_decode($output, true, 512, \JSON_THROW_ON_ERROR);
-        self::assertIsArray($decoded);
+        $decoded = $this->decodeAgentOutput($commandTester);
         self::assertSame('pw:image:cache', $decoded['tool']);
         self::assertContains($decoded['result'], ['passed', 'failed']);
         self::assertArrayHasKey('processed', $decoded);
@@ -230,8 +242,7 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
 
         self::assertFileDoesNotExist($stale, 'A stale scratch file must not survive a run');
 
-        $decoded = json_decode(trim($commandTester->getDisplay()), true, 512, \JSON_THROW_ON_ERROR);
-        self::assertIsArray($decoded);
+        $decoded = $this->decodeAgentOutput($commandTester);
         self::assertGreaterThanOrEqual(1, $decoded['scratch_swept']);
         self::assertGreaterThanOrEqual(1, $decoded['scratch_empty']);
     }
@@ -305,6 +316,151 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         self::assertSame(200, $chunkSize->invoke($command, 400, 2), 'the cap is reached exactly');
         self::assertSame(200, $chunkSize->invoke($command, 402, 2), 'and holds past it');
         self::assertSame(199, $chunkSize->invoke($command, 398, 2), 'just under it, division still rules');
+    }
+
+    /**
+     * A non-image is only given its public symlink — it never reaches
+     * generateCache(), so it belongs to none of generated/skipped/errored. The
+     * count was derived as total - skipped - errors, which charged every one of
+     * them to "processed": a converged library reported its whole non-image set
+     * (GPX, XML, PDF, SVG — svg has the image/ prefix but no encoder) as
+     * regenerated work on every nightly run, on both output formats.
+     */
+    public function testNonImageMediaIsNotCountedAsProcessed(): void
+    {
+        $commandTester = $this->createCommandTester();
+        $this->createMedia('cache-count-brochure.pdf', 'application/pdf');
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['media' => 'cache-count-brochure.pdf', '--format' => 'agent']);
+
+        $decoded = $this->decodeAgentOutput($commandTester);
+        self::assertSame(0, $decoded['generated'], 'a non-image generates no derivative');
+        self::assertSame(0, $decoded['skipped']);
+        self::assertSame(0, $decoded['errors']);
+        self::assertSame(0, $decoded['processed']);
+
+        // The human summary is fed by the same expression, so it needs its own pin.
+        $this->waitForLockRelease();
+        $commandTester->execute(['media' => 'cache-count-brochure.pdf', '--format' => 'text']);
+
+        self::assertStringContainsString('0 processed, 0 skipped, 0 errored', $commandTester->getDisplay());
+    }
+
+    /**
+     * The mixed library the count is really taken over, every bucket pinned to an
+     * exact number. The regression above proves a non-image adds nothing; this
+     * proves the image beside it still adds one, because a tally can under-count
+     * as easily as the subtraction over-counted. The two runs separate the
+     * buckets: forced, the pair is one generated; fresh, it is one skipped.
+     */
+    public function testCountsOnlyTheDerivativesItGenerates(): void
+    {
+        $commandTester = $this->createCommandTester();
+        $this->createMedia('cache-count-leaflet.pdf', 'application/pdf');
+        $mediaNames = 'piedweb-logo.png,cache-count-leaflet.pdf';
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['media' => $mediaNames, '--force' => true, '--format' => 'text']);
+
+        self::assertStringContainsString('1 processed, 0 skipped, 0 errored', $commandTester->getDisplay());
+
+        // Agent mode derives its own total as generated + skipped + errors, so the
+        // skipped bucket needs its own pin on that side of the fork.
+        $this->waitForLockRelease();
+        $commandTester->execute(['media' => $mediaNames, '--format' => 'agent']);
+
+        $decoded = $this->decodeAgentOutput($commandTester);
+        self::assertSame(0, $decoded['generated'], 'the cache the forced run just wrote is fresh');
+        self::assertSame(1, $decoded['skipped']);
+        self::assertSame(1, $decoded['processed'], 'the non-image is in neither bucket, so it is not in the total');
+    }
+
+    /**
+     * An image whose master vanished after it was recorded: the read throws, and
+     * it has to land in errored — never in generated, which is the third bucket
+     * the count is now tallied from rather than derived. The parallel path has its
+     * killed-worker test; this is the sequential catch a single-media run takes.
+     */
+    public function testAnImageThatCannotBeReadIsErroredNotGenerated(): void
+    {
+        $commandTester = $this->createCommandTester();
+        $this->createMedia('cache-count-vanished.png', 'image/png');
+        unlink($this->getMediaDir().'/cache-count-vanished.png');
+
+        $this->waitForLockRelease();
+        $exitCode = $commandTester->execute(['media' => 'cache-count-vanished.png', '--force' => true, '--format' => 'agent']);
+
+        self::assertSame(1, $exitCode, 'a run that could not process an image fails');
+
+        $decoded = $this->decodeAgentOutput($commandTester);
+        self::assertSame('failed', $decoded['result']);
+        self::assertSame(1, $decoded['errors']);
+        self::assertSame(0, $decoded['generated'], 'a master that cannot be read produced no derivative');
+        self::assertSame(0, $decoded['skipped']);
+    }
+
+    /**
+     * A copy of the fixture under a new name. Content is irrelevant — isImage()
+     * reads the stored mime type, and the file only has to exist for setHash().
+     */
+    private function createMedia(string $fileName, string $mimeType): void
+    {
+        /** @var string $projectDir */
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+        $mediaDir = $this->getMediaDir();
+
+        new Filesystem()->copy($mediaDir.'/piedweb-logo.png', $mediaDir.'/'.$fileName);
+
+        $media = new Media();
+        $media->setProjectDir($projectDir);
+        $media->setStoreIn($mediaDir);
+        $media->setMimeType($mimeType);
+        $media->setFileName($fileName);
+        $media->setAlt($fileName);
+        $media->setHash();
+
+        $em = $this->getEntityManager();
+        $em->persist($media);
+        $em->flush();
+
+        $this->createdMediaIds[] = (int) $media->id;
+    }
+
+    private function cleanupCreatedMedias(): void
+    {
+        if ([] === $this->createdMediaIds) {
+            return;
+        }
+
+        $em = $this->getEntityManager();
+        $em->clear();
+
+        foreach ($this->createdMediaIds as $mediaId) {
+            $media = $em->find(Media::class, $mediaId);
+            if (null !== $media) {
+                $em->remove($media);
+            }
+        }
+
+        $em->flush();
+    }
+
+    private function getEntityManager(): EntityManager
+    {
+        /** @var EntityManager $em */
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        return $em;
+    }
+
+    /** @return array<mixed, mixed> the one JSON document an agent-format run writes */
+    private function decodeAgentOutput(CommandTester $commandTester): array
+    {
+        $decoded = json_decode(trim($commandTester->getDisplay()), true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+
+        return $decoded;
     }
 
     private function createCommandTester(): CommandTester

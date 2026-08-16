@@ -174,15 +174,17 @@ final class ImageManagerCommand
 
         $errors = [];
         $skipped = 0;
-        $processed = 0;
+        $generated = 0;
+        $seen = 0;
 
         foreach ($medias as $media) {
             if ($media->isImage()) {
                 $progressBar?->setMessage($media->getPath());
 
                 try {
-                    $generated = $this->imageCacheGenerator->generateCache($media, $force);
-                    if (! $generated) {
+                    if ($this->imageCacheGenerator->generateCache($media, $force)) {
+                        ++$generated;
+                    } else {
                         ++$skipped;
                     }
                 } catch (Throwable $exception) {
@@ -193,12 +195,16 @@ final class ImageManagerCommand
                     $output->writeln('DONE:'.$media->getFileName());
                 }
             } else {
+                // A non-image never reaches generateCache(), so it lands in none of the
+                // three buckets — which is why $generated is tallied and not derived.
+                // The old count - skipped - errors charged every one of them to
+                // "processed", and a converged library reported that as work each night.
                 $this->imageCacheManager->ensurePublicSymlink($media);
             }
 
             $progressBar?->advance();
 
-            if (0 === ++$processed % 50) {
+            if (0 === ++$seen % 50) {
                 $this->entityManager->flush();
             }
         }
@@ -207,13 +213,13 @@ final class ImageManagerCommand
         $progressBar?->finish();
 
         if ($this->agentMode) {
-            $this->reportAgentSummary($output, \count($medias) - $skipped - \count($errors), $skipped, $errors, $startTime);
+            $this->reportAgentSummary($output, $generated, $skipped, $errors, $startTime);
 
             return [] === $errors ? Command::SUCCESS : Command::FAILURE;
         }
 
         if (! $isWorker) {
-            $this->reportSummary($io, \count($medias) - $skipped - \count($errors), $skipped, \count($errors), $startTime);
+            $this->reportSummary($io, $generated, $skipped, \count($errors), $startTime);
             $this->reportErrors($errors, $io);
         }
 
