@@ -93,6 +93,15 @@ It is an app fallback property, so a single site can opt out in its own
 `pushword.apps[…]` entry while the others stay absolute. Already generated pages keep the
 absolute URL they were built with — regenerate them before relying on the new one.
 
+⚠ **Check your static host's canonicalisation first.** The generated Caddyfile redirects any
+path ending in `/` to the slash-less one (`@has_slash`, a 301 that also drops the query
+string). `conversation()` builds `referring` as `{type}_{host}/{slug}`, and a **homepage** has
+an empty slug — so its URL ends in `/` and gets rewritten in flight. Whatever reads the
+referring back then sees `{type}_{host}` instead of `{type}_{host}/`. Absolute URLs are served
+by the dynamic host, which has no such rule, which is why the default is `true`. Set it to
+`false` only if the sites concerned have no homepage form, or their canonicalisation exempts
+the proxied paths.
+
 ### Render published comment
 
 ```twig
