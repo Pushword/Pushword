@@ -73,6 +73,26 @@ Without `locale`, the form falls back to the locale of the site matching `host` 
 requested host). The locale is applied early enough to reach the translator and the
 validator, and is carried over to the next step of a multi-step form.
 
+### Cross-origin or same-origin
+
+`conversation()` and `conversationFormBtn()` return an **absolute** URL, built on the
+site's `base_live_url`. That is what makes the form work on a statically generated host:
+those pages have no PHP, so a relative URL would resolve against their own origin and 404.
+The price is a cross-origin request — hence `possible_origins`, and cookies of the visited
+host never reaching the handler.
+
+When the static host proxies `/conversation/*` to PHP itself (a `reverse_proxy` matcher in
+its Caddyfile, say), that price buys nothing: make the URL relative instead.
+
+```yaml
+conversation:
+    conversation_absolute_url: false # default: true
+```
+
+It is an app fallback property, so a single site can opt out in its own
+`pushword.apps[…]` entry while the others stay absolute. Already generated pages keep the
+absolute URL they were built with — regenerate them before relying on the new one.
+
 ### Render published comment
 
 ```twig

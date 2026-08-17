@@ -37,11 +37,17 @@ class AppExtension
             'referring' => ('' !== $referring ? $referring : $type).'_'.$page->host.'/'.$page->getRealSlug(),
         ]);
 
-        // Prefix the page's live host so the URL is absolute. A statically served
-        // page (pw:static, no PHP) must fetch the form from the dynamic host — a
-        // relative route would resolve against its own PHP-less origin and 404.
-        // base_live_url already sends the CORS headers for these origins.
-        return $this->apps->get($page->host)->getStr('base_live_url').$baseUrl.'?'.http_build_query([
+        $site = $this->apps->get($page->host);
+
+        // Absolute by default: a statically served page (pw:static, no PHP) must fetch the
+        // form from the dynamic host — a relative route would resolve against its own
+        // PHP-less origin and 404. base_live_url already sends the CORS headers for these
+        // origins. A site whose static host proxies /conversation/* to PHP itself sets
+        // `conversation_absolute_url: false` and keeps the form same-origin: no CORS
+        // allowlist, and the visitor's cookies reach the handler.
+        $origin = $site->getBoolean('conversation_absolute_url') ? $site->getStr('base_live_url') : '';
+
+        return $origin.$baseUrl.'?'.http_build_query([
             'host' => $page->host,
             'locale' => $page->locale,
         ]);

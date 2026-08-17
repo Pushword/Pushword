@@ -29,6 +29,7 @@ class Configuration implements ConfigurationInterface
         'conversation_form_ms_message',
         'conversation_form_newsletter',
         'possible_origins',
+        'conversation_absolute_url',
         'conversation_review_default_reply_author',
         'translation_deepl_api_key',
         'translation_google_api_key',
@@ -75,6 +76,10 @@ class Configuration implements ConfigurationInterface
                     ->end()
 
                     ->scalarNode('possible_origins')->defaultNull()->end()
+                    ->booleanNode('conversation_absolute_url')
+                        ->defaultTrue()
+                        ->info('Prefix the URL `conversation()` builds with the site base_live_url. Keep it true when statically generated pages are served with nothing able to reach PHP; set it false when the static host proxies /conversation/* to PHP itself, so the form is fetched and posted same-origin (no CORS, no third-party cookie).')
+                    ->end()
                     ->booleanNode('review_enabled')->defaultTrue()->end()
                     ->scalarNode('conversation_review_default_reply_author')
                         ->defaultNull()

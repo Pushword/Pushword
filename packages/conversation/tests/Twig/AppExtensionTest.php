@@ -46,6 +46,26 @@ final class AppExtensionTest extends KernelTestCase
         self::assertStringContainsString('locale=en', $url);
     }
 
+    /**
+     * A static host proxying /conversation/* to PHP itself opts out of the absolute
+     * prefix: the form is then fetched and posted same-origin, so it needs no CORS
+     * allowlist and the visitor's cookies reach the handler.
+     */
+    public function testGetConversationRouteIsRelativeWhenTheSiteOptsOutOfTheAbsoluteUrl(): void
+    {
+        $ext = $this->getExtensionWithPage('localhost.dev', 'test-page');
+        self::getContainer()->get(SiteRegistry::class)->get('localhost.dev')
+            ->setCustomProperty('conversation_absolute_url', false);
+
+        $url = $ext->getConversationRoute('ms-message');
+
+        self::assertStringStartsWith('/conversation/ms-message/', $url);
+        // Everything else the form needs is untouched — only the origin goes away.
+        self::assertStringContainsString('ms-message_localhost.dev/test-page', $url);
+        self::assertStringContainsString('host=localhost.dev', $url);
+        self::assertStringContainsString('locale=en', $url);
+    }
+
     public function testGetConversationRouteCustomReferring(): void
     {
         $ext = $this->getExtensionWithPage('localhost.dev', 'test-page');

@@ -24,6 +24,17 @@ final class ConfigurationTest extends KernelTestCase
         self::assertContains('conversation_review_default_reply_author', $config['app_fallback_properties']);
     }
 
+    public function testConversationUrlIsAbsoluteByDefaultAndIsOverridablePerHost(): void
+    {
+        $config = new Processor()->processConfiguration(new Configuration(), []);
+
+        // Absolute is the safe default: a site statically generated behind nothing able
+        // to reach PHP breaks the moment the form URL becomes relative.
+        self::assertTrue($config['conversation_absolute_url']);
+        self::assertIsArray($config['app_fallback_properties']);
+        self::assertContains('conversation_absolute_url', $config['app_fallback_properties']);
+    }
+
     public function testConf(): void
     {
         self::bootKernel();
