@@ -93,6 +93,9 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     /** @var array<string, true> */
     private array $warmedLightHosts = [];
 
+    /** The dedicated static render kernel reads an immutable corpus during one build. */
+    private bool $lightCachePinned = false;
+
     /** @var array<string, bool> host => whether any variant page exists */
     private array $hasVariantCache = [];
 
@@ -351,6 +354,16 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     }
 
     /**
+     * Preserve the scalar slug/redirect maps across clears in the dedicated static
+     * render kernel. Calling this for a new build drops any map from the previous one.
+     */
+    public function pinLightCache(): void
+    {
+        $this->clearLightCache();
+        $this->lightCachePinned = true;
+    }
+
+    /**
      * Clear all internal slug caches.
      * Called automatically when EntityManager::clear() is invoked.
      */
@@ -359,11 +372,19 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $this->slugCache = [];
         $this->warmedHosts = [];
         $this->resolvedSlugs = [];
+        $this->hasVariantCache = [];
+
+        if (! $this->lightCachePinned) {
+            $this->clearLightCache();
+        }
+    }
+
+    private function clearLightCache(): void
+    {
         $this->slugSets = [];
         $this->redirectMaps = [];
         $this->redirectFromMaps = [];
         $this->warmedLightHosts = [];
-        $this->hasVariantCache = [];
     }
 
     public function create(string $host): Page
@@ -565,6 +586,48 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $this->andHost($queryBuilder, $host);
 
         return $queryBuilder->getQuery()->getResult();
+    }
+
+    /**
+     * Parent ids that own at least one page on the host, including unpublished
+     * children. Static generation uses this single scalar query instead of asking
+     * each EXTRA_LAZY children collection for its own COUNT.
+     *
+     * @return int[]
+     */
+    public function findParentPageIdsWithChildren(string $host): array
+    {
+        /** @var list<int|string> $ids */
+        $ids = $this->createQueryBuilder('p')
+            ->select('DISTINCT IDENTITY(p.parentPage)')
+            ->andWhere('p.host = :host')
+            ->andWhere('p.parentPage IS NOT NULL')
+            ->setParameter('host', $host)
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        return array_map(intval(...), $ids);
+    }
+
+    /**
+     * Published slugs without entity hydration. Static generation needs the full
+     * witness list for worker distribution and deleted-file pruning, not a second
+     * in-memory Page corpus.
+     *
+     * @return string[]
+     */
+    public function findPublishedSlugs(string $host): array
+    {
+        /** @var list<string> $slugs */
+        $slugs = $this->buildPublishedPageQuery('p')
+            ->select('p.slug')
+            ->andWhere('p.host = :slugHost')
+            ->setParameter('slugHost', $host)
+            ->orderBy('p.id', 'ASC')
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        return $slugs;
     }
 
     /**

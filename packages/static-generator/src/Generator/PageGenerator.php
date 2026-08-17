@@ -16,6 +16,9 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 class PageGenerator extends AbstractGenerator
 {
+    /** @var array<int, true>|null */
+    private ?array $parentPageIdsWithChildren = null;
+
     #[Required]
     public RedirectionManager $redirectionManager;
 
@@ -86,13 +89,28 @@ class PageGenerator extends AbstractGenerator
      */
     protected function generateFeedFor(Page $page): void
     {
-        if (! $page->hasChildrenPages()) {
+        if (! $this->hasChildrenPages($page)) {
             return;
         }
 
         $liveUri = $this->generateLivePathFor($page, 'pushword_page_feed');
         $staticFile = preg_replace('/.html$/', '.xml', $this->generateFilePath($page)) ?? throw new Exception();
         $this->saveAsStatic($liveUri, $staticFile, $page);
+    }
+
+    /** @param int[] $parentPageIds */
+    protected function setParentPageIdsWithChildren(array $parentPageIds): void
+    {
+        $this->parentPageIdsWithChildren = array_fill_keys($parentPageIds, true);
+    }
+
+    private function hasChildrenPages(Page $page): bool
+    {
+        if (null === $this->parentPageIdsWithChildren || null === $page->id) {
+            return $page->hasChildrenPages();
+        }
+
+        return isset($this->parentPageIdsWithChildren[$page->id]);
     }
 
     protected function saveAsStatic(string $liveUri, string $destination, ?Page $page = null): void

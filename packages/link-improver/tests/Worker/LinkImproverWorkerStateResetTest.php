@@ -6,8 +6,10 @@ use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\LinkImprover\AddedLinksRegistry;
 use Pushword\LinkImprover\InternalLinkSources;
+use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -50,9 +52,9 @@ final class LinkImproverWorkerStateResetTest extends KernelTestCase
 
         $this->createProbePage();
 
-        // The map is warm but stale: it predates the write. This is what the
-        // reset must fix — and it proves the guard below is not vacuous.
-        self::assertSame($before, $sources->getRows(self::HOST, 'en'));
+        // The shared render epoch invalidates the map immediately, including
+        // across processes where this worker cannot observe the write directly.
+        self::assertContains([$this->probeUrl(), 'Worker Probe Fruit'], $sources->getRows(self::HOST, 'en'));
 
         // --- Between requests: exactly what a FrankenPHP/Runtime worker runs. ---
         $this->simulateWorkerRequestBoundary();
@@ -82,6 +84,26 @@ final class LinkImproverWorkerStateResetTest extends KernelTestCase
         // measured, not the previous one.
         self::assertSame([], $registry->forPage($page));
         self::assertNull($registry->statsForPage($page));
+    }
+
+    public function testStaticRenderKernelKeepsTheKeywordMapAcrossRequests(): void
+    {
+        self::bootKernel();
+        $site = self::getContainer()->get(SiteRegistry::class)->get(self::HOST);
+        $sources = self::getContainer()->get(InternalLinkSources::class);
+        $rows = new ReflectionProperty(InternalLinkSources::class, 'rows');
+
+        try {
+            $site->setStatic(true, pin: true);
+            $rows->setValue($sources, [self::HOST.'|en' => [['/probe', 'Probe']]]);
+
+            $sources->reset();
+
+            self::assertNotSame([], $rows->getValue($sources));
+        } finally {
+            $site->setStatic(false, pin: true);
+            $sources->reset();
+        }
     }
 
     private function probeUrl(): string

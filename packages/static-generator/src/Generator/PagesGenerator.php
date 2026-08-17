@@ -25,8 +25,10 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         parent::generate($host);
 
         $this->preloadMediaCache();
+        $this->pinRenderLightCache();
         $pages = $this->getPageRepository()->getPublishedPages($this->app->getMainHost());
         $this->getPageRepository()->preloadTranslations($pages);
+        $this->preloadParentPageIdsWithChildren();
 
         $stateManager = $this->staticAppGenerator->getStateManager();
         $hostName = $this->app->getMainHost();
@@ -173,11 +175,13 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         parent::generate($host);
 
         $this->preloadMediaCache();
+        $this->pinRenderLightCache();
         $pages = $this->getPageRepository()->getPublishedPages($this->app->getMainHost());
 
         $slugSet = array_flip($slugs);
         $pages = array_filter($pages, static fn (Page $page): bool => isset($slugSet[$page->slug]));
         $this->getPageRepository()->preloadTranslations($pages);
+        $this->preloadParentPageIdsWithChildren();
 
         $hostName = $this->app->getMainHost();
         $epoch = $this->staticAppGenerator->getSampledRenderEpoch($hostName);
@@ -250,5 +254,20 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         }
 
         $this->finishCompression();
+    }
+
+    private function preloadParentPageIdsWithChildren(): void
+    {
+        $this->setParentPageIdsWithChildren(
+            $this->getPageRepository()->findParentPageIdsWithChildren($this->app->getMainHost()),
+        );
+    }
+
+    private function pinRenderLightCache(): void
+    {
+        $renderPageRepository = static::getKernel()->getContainer()
+            ->get('doctrine.orm.entity_manager')
+            ->getRepository(Page::class);
+        $renderPageRepository->pinLightCache();
     }
 }

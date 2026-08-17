@@ -2,7 +2,9 @@
 
 namespace Pushword\LinkImprover;
 
+use Pushword\Core\Cache\RenderEpoch;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
@@ -20,8 +22,13 @@ final class InternalLinkSources implements ResetInterface
     /** @var array<string, list<array{0: string, 1: string}>> */
     private array $rows = [];
 
+    /** @var array<string, string> */
+    private array $epochs = [];
+
     public function __construct(
         private readonly PageRepository $pageRepository,
+        private readonly SiteRegistry $apps,
+        private readonly RenderEpoch $renderEpoch,
     ) {
     }
 
@@ -33,7 +40,14 @@ final class InternalLinkSources implements ResetInterface
      */
     public function getRows(string $host, string $locale): array
     {
-        return $this->rows[$host.'|'.$locale] ??= $this->buildRows($host, $locale);
+        $key = $host.'|'.$locale;
+        $epoch = $this->renderEpoch->get($host);
+        if (($this->epochs[$key] ?? null) !== $epoch) {
+            unset($this->rows[$key]);
+            $this->epochs[$key] = $epoch;
+        }
+
+        return $this->rows[$key] ??= $this->buildRows($host, $locale);
     }
 
     /**
@@ -94,6 +108,13 @@ final class InternalLinkSources implements ResetInterface
 
     public function reset(): void
     {
+        foreach ($this->apps->getAll() as $site) {
+            if ($site->isStatic) {
+                return;
+            }
+        }
+
         $this->rows = [];
+        $this->epochs = [];
     }
 }

@@ -362,10 +362,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     /** @return string[] the published slugs of the host — the witness list for pruning */
     private function runGenerators(SiteConfig $app): array
     {
-        $slugs = array_map(
-            static fn (Page $page): string => $page->slug,
-            $this->pageRepository->getPublishedPages($app->getMainHost()),
-        );
+        $slugs = $this->pageRepository->findPublishedSlugs($app->getMainHost());
         $workerCount = WorkerCountResolver::resolve($this->workers, \count($slugs));
 
         $generators = self::isCacheMode($app)

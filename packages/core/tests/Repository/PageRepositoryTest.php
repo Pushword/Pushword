@@ -608,6 +608,77 @@ final class PageRepositoryTest extends KernelTestCase
         ));
     }
 
+    public function testFindParentPageIdsWithChildrenReturnsDistinctParentsForHost(): void
+    {
+        $pageRepository = $this->pageRepository();
+        $expected = [];
+
+        foreach ($pageRepository->findBy(['host' => 'localhost.dev']) as $page) {
+            if ($page->parentPage instanceof Page && null !== $page->parentPage->id) {
+                $expected[$page->parentPage->id] = true;
+            }
+        }
+
+        $actual = array_fill_keys($pageRepository->findParentPageIdsWithChildren('localhost.dev'), true);
+
+        self::assertNotSame([], $expected, 'fixtures must include at least one parent/child relation');
+        self::assertSame($expected, $actual);
+        self::assertSame([], $pageRepository->findParentPageIdsWithChildren('unknown-host.test'));
+    }
+
+    public function testFindPublishedSlugsReturnsOnlyPublishedPagesForHostInIdOrder(): void
+    {
+        self::bootKernel();
+        $entityManager = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepository = $entityManager->getRepository(Page::class);
+        $host = 'published-slugs.test';
+        $pages = [];
+
+        foreach ([
+            ['scalar-published-a', new DateTime('-2 hours')],
+            ['scalar-draft', null],
+            ['scalar-published-b', new DateTime('-1 hour')],
+        ] as [$slug, $publishedAt]) {
+            $page = new Page();
+            $page->host = $host;
+            $page->locale = 'en';
+            $page->slug = $slug;
+            $page->h1 = $slug;
+            $page->mainContent = 'Scalar slug query test.';
+            $page->publishedAt = $publishedAt;
+            $entityManager->persist($page);
+            $pages[] = $page;
+        }
+
+        $entityManager->flush();
+
+        try {
+            self::assertSame(
+                ['scalar-published-a', 'scalar-published-b'],
+                $pageRepository->findPublishedSlugs($host),
+            );
+        } finally {
+            foreach ($pages as $page) {
+                $entityManager->remove($page);
+            }
+
+            $entityManager->flush();
+        }
+    }
+
+    public function testPinnedLightCacheSurvivesClearAndIsDroppedAtTheNextBuild(): void
+    {
+        $pageRepository = $this->pageRepository();
+        $pageRepository->pinLightCache();
+        $pageRepository->warmupSlugCacheLight('localhost.dev');
+
+        $pageRepository->onClear();
+        self::assertTrue($pageRepository->isHostLightWarmed('localhost.dev'));
+
+        $pageRepository->pinLightCache();
+        self::assertFalse($pageRepository->isHostLightWarmed('localhost.dev'));
+    }
+
     private function pageRepository(): PageRepository
     {
         self::bootKernel();
