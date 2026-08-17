@@ -1,21 +1,8 @@
 ---
-title: 'the conversation form URL can be made relative on a static host that proxies /conversation/* itself'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
-
-**Concerns:** `pushword/conversation`
-
-## `conversation_absolute_url`
-
-`conversation()` and `conversationFormBtn()` still return an absolute URL built on
-`base_live_url`. A site whose static host proxies `/conversation/*` to PHP itself can now
-make it relative and drop the cross-origin round-trip — no CORS `possible_origins`, and
-the visitor's cookies reach the handler.
-
-**Affected:** nobody by default. Opting in: set `conversation_absolute_url: false` (bundle
-or app level), then regenerate the static pages, which carry the URL they were built with.
-See [the conversation doc](/extension/conversation).
 
 <!--
 The upgrade note for the next release. `.scripts/release` renames this file to
