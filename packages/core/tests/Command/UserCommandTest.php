@@ -6,12 +6,21 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[Group('integration')]
 final class UserCommandTest extends KernelTestCase
 {
+    public function testExistsReturnsSuccessWhenTheDatabaseHasAnAccount(): void
+    {
+        $application = new Application(self::createKernel());
+        $commandTester = new CommandTester($application->find('pw:user:exists'));
+
+        self::assertSame(Command::SUCCESS, $commandTester->execute([]));
+    }
+
     public function testExecute(): void
     {
         $kernel = self::createKernel();

@@ -41,7 +41,7 @@ If one of the first three briefs is yours, take it and stop reading. If none is,
 | **PHP Version**     | 8.4+                      | 8.3+ (official minimum)    | 8.2+                         | 8.2–8.5                |
 | **Current version** | 1.0.0-rc (rolling)        | 7.0 (April 2026)           | 6.x                          | 3.0 (May 2026)         |
 | **Framework**       | Symfony 8                 | Custom (legacy)            | Laravel (Laravel-native)     | Symfony 6.4–7.4        |
-| **Database**        | SQLite / MySQL (optional) | MySQL / MariaDB (required) | Flat-file / MySQL (optional) | MySQL / PostgreSQL     |
+| **Database**        | SQLite / PostgreSQL / MariaDB | MySQL / MariaDB (required) | Flat-file / MySQL (optional) | MySQL / PostgreSQL     |
 | **Templating**      | Twig                      | PHP / Blade (themes)       | Antlers / Blade              | Twig                   |
 | **Frontend Stack**  | Tailwind, Alpine.js       | Gutenberg (React)          | Tailwind, Alpine.js          | Custom (flexible)      |
 | **ORM**             | Doctrine 3                | wpdb (custom)              | Eloquent                     | Doctrine               |

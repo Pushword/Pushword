@@ -17,7 +17,7 @@ Read to bootstrap, in order:
 
 Pushword is a modular CMS: a monorepo of Symfony bundles (core + extensions).
 
-- **DB**: SQLite via Doctrine — no migrations, use `bin/console doctrine:schema:update --force`
+- **DB**: SQLite by default; PostgreSQL and MariaDB via Doctrine — no migrations, use `bin/console doctrine:schema:update --force`
 - No deprecated PHP/Symfony/Pushword features.
 
 ## Conventions

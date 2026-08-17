@@ -663,7 +663,7 @@ class Media implements IdInterface, Taggable, Stringable
     // --- Hash ---
 
     /** @var string|resource|null */
-    #[ORM\Column(type: Types::BINARY, length: 20, options: ['default' => ''])]
+    #[ORM\Column(type: Types::BINARY, length: 20)]
     protected $hash;
 
     /** @var string|resource|null */

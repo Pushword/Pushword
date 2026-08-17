@@ -70,7 +70,7 @@ final class ImportEditorResolver implements ResetInterface
         // Roles are a JSON column: LIKE narrows the scan to plausible rows, getRoles()
         // then decides — the pattern would also match a role merely starting with it.
         $candidates = $this->userRepo->createQueryBuilder('u')
-            ->where('u.roles LIKE :role')
+            ->where('JSON_TEXT(u.roles) LIKE :role')
             ->setParameter('role', '%'.User::ROLE_SUPER_ADMIN.'%')
             ->orderBy('u.id', 'ASC')
             ->getQuery()

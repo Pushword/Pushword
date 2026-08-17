@@ -64,7 +64,7 @@ final class ReviewCrudController extends ConversationCrudController
         $queryBuilder = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
 
         $queryBuilder
-            ->andWhere('entity.customProperties LIKE :ratingFilter')
+            ->andWhere('JSON_TEXT(entity.customProperties) LIKE :ratingFilter')
             ->setParameter('ratingFilter', '%"rating":%');
 
         return $queryBuilder;

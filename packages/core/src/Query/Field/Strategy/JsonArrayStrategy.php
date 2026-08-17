@@ -29,7 +29,7 @@ final readonly class JsonArrayStrategy implements FieldStrategy
     {
         return $compilation->bind(
             LikePattern::comparison(
-                $compilation->column($this->column),
+                'JSON_TEXT('.$compilation->column($this->column).')',
                 'has' === $compilation->operator ? 'LIKE' : 'NOT LIKE',
                 $compilation->parameter,
             ),

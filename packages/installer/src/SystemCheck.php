@@ -7,7 +7,7 @@ namespace Pushword\Installer;
  * the two facts `install.php` needs to recommend one over the other.
  *
  * Composer's own platform check does not answer the first: pushword/core only declares
- * ext-gd and ext-sqlite3, so an install resolves and installs happily on a PHP that
+ * ext-gd, so an install resolves and installs happily on a PHP that
  * later fails to boot for want of intl.
  */
 final readonly class SystemCheck
@@ -29,8 +29,6 @@ final readonly class SystemCheck
         'libxml',
         'mbstring',
         'pdo',
-        'pdo_sqlite',
-        'sqlite3',
         'zip',
     ];
 
@@ -43,9 +41,9 @@ final readonly class SystemCheck
     ) {
     }
 
-    public static function probe(): self
+    public static function probe(?string $databaseUrl = null): self
     {
-        return new self(self::missingExtensions(), self::hasWorkingDocker());
+        return new self(self::missingExtensions($databaseUrl), self::hasWorkingDocker());
     }
 
     /**
@@ -78,10 +76,17 @@ final readonly class SystemCheck
     /**
      * @return list<string>
      */
-    private static function missingExtensions(): array
+    private static function missingExtensions(?string $databaseUrl): array
     {
+        $databaseUrl ??= 'sqlite:';
+        $databaseExtensions = match (true) {
+            str_starts_with($databaseUrl, 'postgresql:'), str_starts_with($databaseUrl, 'postgres:') => ['pdo_pgsql'],
+            str_starts_with($databaseUrl, 'mysql:'), str_starts_with($databaseUrl, 'mariadb:') => ['pdo_mysql'],
+            default => ['pdo_sqlite', 'sqlite3'],
+        };
+
         $missing = array_values(array_filter(
-            self::REQUIRED_EXTENSIONS,
+            [...self::REQUIRED_EXTENSIONS, ...$databaseExtensions],
             static fn (string $extension): bool => ! \extension_loaded($extension)
         ));
 

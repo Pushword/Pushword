@@ -10,11 +10,14 @@ use Doctrine\ORM\Query\SqlWalker;
 use Doctrine\ORM\Query\TokenType;
 use Override;
 
-class JsonExtractFunction extends FunctionNode
+/**
+ * `JSON_TEXT(column)` — expose the serialized JSON for LIKE-based compatibility
+ * queries. SQLite and MySQL accept LIKE on their JSON storage directly;
+ * PostgreSQL's native json type requires an explicit text cast.
+ */
+final class JsonTextFunction extends FunctionNode
 {
     private Node|string $column;
-
-    private Node $path;
 
     #[Override]
     public function parse(Parser $parser): void
@@ -23,8 +26,6 @@ class JsonExtractFunction extends FunctionNode
         $parser->match(TokenType::T_OPEN_PARENTHESIS);
 
         $this->column = $parser->ArithmeticPrimary();
-        $parser->match(TokenType::T_COMMA);
-        $this->path = $parser->StringPrimary();
         $parser->match(TokenType::T_CLOSE_PARENTHESIS);
     }
 
@@ -32,16 +33,9 @@ class JsonExtractFunction extends FunctionNode
     public function getSql(SqlWalker $sqlWalker): string
     {
         $column = $this->column instanceof Node ? $this->column->dispatch($sqlWalker) : $this->column;
-        $path = $this->path->dispatch($sqlWalker);
 
-        if ($sqlWalker->getConnection()->getDatabasePlatform() instanceof PostgreSQLPlatform) {
-            return \sprintf(
-                "JSON_EXTRACT_PATH(%s, VARIADIC STRING_TO_ARRAY(SUBSTRING(%s FROM 3), '.'))",
-                $column,
-                $path,
-            );
-        }
-
-        return \sprintf('JSON_EXTRACT(%s, %s)', $column, $path);
+        return $sqlWalker->getConnection()->getDatabasePlatform() instanceof PostgreSQLPlatform
+            ? \sprintf('CAST(%s AS TEXT)', $column)
+            : $column;
     }
 }

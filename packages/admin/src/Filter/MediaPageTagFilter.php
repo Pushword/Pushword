@@ -49,7 +49,7 @@ final class MediaPageTagFilter implements FilterInterface
         foreach ($value as $i => $tag) {
             $param = 'pageTag_'.$i;
             $queryBuilder
-                ->andWhere(\sprintf('%s.pageTags LIKE :%s', $alias, $param))
+                ->andWhere(\sprintf('JSON_TEXT(%s.pageTags) LIKE :%s', $alias, $param))
                 ->setParameter($param, '%"'.$tag.'"%');
         }
     }

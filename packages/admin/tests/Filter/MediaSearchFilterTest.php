@@ -21,8 +21,12 @@ final class MediaSearchFilterTest extends AbstractFilterTestCase
     {
         $dql = $this->applyValue('logo')->getDQL();
 
-        foreach (['fileName', 'fileNameHistory', 'alt', 'altSearch', 'alts', 'tags'] as $column) {
+        foreach (['fileName', 'alt', 'altSearch', 'alts'] as $column) {
             self::assertStringContainsString('entity.'.$column.' LIKE', $dql);
+        }
+
+        foreach (['fileNameHistory', 'tags'] as $column) {
+            self::assertStringContainsString('JSON_TEXT(entity.'.$column.') LIKE', $dql);
         }
     }
 

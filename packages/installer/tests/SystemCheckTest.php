@@ -52,5 +52,7 @@ final class SystemCheckTest extends TestCase
     public function testTheSuitesOwnPhpSatisfiesTheDocumentedRequirements(): void
     {
         self::assertSame([], SystemCheck::probe()->missing);
+        self::assertSame([], SystemCheck::probe('postgresql://localhost/pushword')->missing);
+        self::assertSame([], SystemCheck::probe('mysql://localhost/pushword')->missing);
     }
 }

@@ -50,6 +50,7 @@ final class FlatFileSyncCommand
         private readonly Filesystem $filesystem,
         private readonly DeferredExportProcessor $deferredExportProcessor,
         private readonly GitAutoCommitter $gitAutoCommitter,
+        private readonly string $databaseUrl = 'sqlite:///var/app.db',
     ) {
     }
 
@@ -85,6 +86,18 @@ final class FlatFileSyncCommand
 
         if ([] !== $page) {
             $entity = 'page';
+        }
+
+        $willImport = 'import' === $mode || 'auto' === $mode;
+        if ($willImport && $backup && ! str_starts_with($this->databaseUrl, 'sqlite:')) {
+            $message = 'The --backup option supports SQLite databases only. Back up the database server first, then rerun without --backup.';
+            if ($this->agentMode) {
+                $this->writeAgentJson($output, ['tool' => 'pw:flat:sync', 'result' => 'failed', 'message' => $message]);
+            } else {
+                $output->writeln('<error>'.$message.'</error>');
+            }
+
+            return Command::FAILURE;
         }
 
         // Check for webhook lock - blocks sync during external editing workflow
@@ -154,7 +167,6 @@ final class FlatFileSyncCommand
             $this->flatFileSync->setStopwatch($this->stopWatch);
 
             // Backup database before import (unless disabled)
-            $willImport = 'import' === $mode || 'auto' === $mode;
             if ($willImport && $backup && $this->filesystem->exists('var/app.db')) {
                 $backupFileName = 'var/app.db~'.date('YmdHis');
                 $this->filesystem->copy('var/app.db', $backupFileName);

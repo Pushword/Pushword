@@ -60,11 +60,11 @@ composer stan
 composer test
 ```
 
-The suite runs against SQLite by default. To run it against MariaDB/MySQL (catches
-portability issues SQLite hides, such as foreign-key enforcement):
+The suite runs against SQLite by default. The two server-backed variants are:
 
 ```
 composer test-mariadb
+composer test-postgresql
 ```
 
 This requires a one-time setup of a `pushword` user owning a `pushword_test*` database
@@ -76,7 +76,31 @@ GRANT ALL PRIVILEGES ON `pushword\_test%`.* TO 'pushword'@'%';
 ```
 
 The DSN lives in the `test-mariadb` script (`composer.json`); override it by exporting
-`PUSHWORD_TEST_MYSQL_URL` before running `composer test`.
+`PUSHWORD_TEST_DATABASE_BASE_URL` before running `composer test`. The PostgreSQL role
+must be allowed to create databases because each ParaTest worker gets its own:
+
+```sql
+CREATE ROLE pushword LOGIN PASSWORD 'pushword' CREATEDB;
+```
+
+### Database volume benchmark
+
+With MariaDB and PostgreSQL listening on the test URLs above, compare the three database
+engines over 100, 1,000 and 10,000 pages:
+
+```shell
+composer bench-databases
+```
+
+The benchmark reports write time plus indexed slug lookups, JSON tag filtering, numeric
+JSON filtering and a sorted list. Change the volume ladder or DSNs when needed:
+
+```shell
+PUSHWORD_BENCH_VOLUMES=1000,10000,50000 \
+PUSHWORD_BENCH_MYSQL_URL='mysql://…/pushword_bench?serverVersion=11.8.6-MariaDB' \
+PUSHWORD_BENCH_POSTGRESQL_URL='postgresql://…/pushword_bench?serverVersion=17' \
+  composer bench-databases
+```
 
 ### Coverage
 

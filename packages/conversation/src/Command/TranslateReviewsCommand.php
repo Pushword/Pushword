@@ -232,7 +232,7 @@ final readonly class TranslateReviewsCommand
         $qb = $this->entityManager->createQueryBuilder()
             ->select('r.id')
             ->from(Review::class, 'r')
-            ->andWhere('r.customProperties LIKE :ratingFilter')
+            ->andWhere('JSON_TEXT(r.customProperties) LIKE :ratingFilter')
             ->setParameter('ratingFilter', '%"rating":%');
 
         if (null !== $host && '' !== $host) {

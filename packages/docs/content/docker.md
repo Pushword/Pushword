@@ -28,7 +28,8 @@ To add them later, or to a project created before the question existed:
 php bin/console pw:docker:init
 ```
 
-It writes `Dockerfile`, `compose.yaml`, `compose.prod.yaml`, `.dockerignore` and
+It writes `Dockerfile`, `compose.yaml`, `compose.prod.yaml`,
+`compose.postgresql.yaml`, `.dockerignore` and
 `docker/`, and never overwrites a file you have edited (`--force` if you want it to).
 
 ## Development
@@ -50,6 +51,23 @@ compiled cache, so the host's and the container's cannot be the same directory.
 Everything else in `var/`, **`var/app.db` above all**, stays on the host where you can
 back it up.
 
+### PostgreSQL
+
+The optional overlay replaces the Doctrine database with PostgreSQL while keeping the
+default stack unchanged:
+
+```shell
+POSTGRES_PASSWORD='choose-a-password' \
+  docker compose -f compose.yaml -f compose.postgresql.yaml up --build
+```
+
+The same overlay works in production:
+
+```shell
+POSTGRES_PASSWORD='choose-a-password' \
+  docker compose -f compose.prod.yaml -f compose.postgresql.yaml up -d --build
+```
+
 ## Production
 
 ```shell
@@ -69,8 +87,8 @@ Caddy obtains and renews the TLS certificate itself.
 
 ### What is in a volume, and why
 
-Pushword keeps its state on disk, not in a database server. The production stack puts
-each of those directories in a named volume:
+The default SQLite stack keeps its state on disk. The production stack puts each of
+those directories in a named volume:
 
 | Volume | Path | Holds |
 |---|---|---|
@@ -79,11 +97,19 @@ each of those directories in a named volume:
 | `media_cache` | `/app/public/media` | generated derivatives — regenerable |
 | `static` | `/app/static` | [static-generator](/extension/static-generator) exports |
 | `caddy_data` | `/data` | TLS certificates |
+| `postgres_data` | `/var/lib/postgresql/data` | PostgreSQL data, when the overlay is used |
 
 Delete `var` or `media` and you delete content. Back them up as you would any database:
 
 ```shell
 docker compose -f compose.prod.yaml cp pushword:/app/var/app.db ./app.db.backup
+```
+
+With PostgreSQL, use its native backup tools instead:
+
+```shell
+docker compose -f compose.prod.yaml -f compose.postgresql.yaml \
+  exec -T postgres pg_dump -U pushword -d pushword > pushword.sql
 ```
 
 ### First boot
@@ -104,7 +130,7 @@ Leave them unset and it falls back to the published `admin@example.tld` / `p@ssw
 and says so in the logs. Change them on first login.
 
 It creates **no content**. Production content is yours, and it arrives the way you
-deploy it — a `var/app.db` you restore into the volume, or Markdown files
+deploy it — a database backup you restore, or Markdown files
 [pw:flat:sync](/extension/flat) reads. The demo pages `composer create-project` installs
 are development content and stay on your machine.
 
@@ -113,8 +139,8 @@ A development project is marked by `pw:docker:init` itself, since it was already
 installed on the host.
 
 A restored backup never gains an account, whatever address its own admin uses. The
-marker alone could not promise that — the backup above copies `app.db` on its own, so a
-restore into a fresh volume arrives without it — so before creating anything the
+marker alone could not promise that — a database restore into a fresh volume arrives
+without it — so before creating anything the
 entrypoint asks the database whether it holds any user at all, and says so in the logs
 when it does.
 

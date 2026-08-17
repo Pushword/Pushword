@@ -209,7 +209,7 @@ final class MediaUsageRepository extends ServiceEntityRepository
 
         /** @var list<array{media_id: int|string, tags: string|null}> $rows */
         $rows = $this->getEntityManager()->getConnection()->fetchAllAssociative(
-            'SELECT DISTINCT u.media_id, p.tags FROM media_usage u'
+            'SELECT u.media_id, p.tags FROM media_usage u'
             .' INNER JOIN page p ON p.id = u.page_id'
             .' WHERE u.media_id IN (?)',
             [$mediaIds],

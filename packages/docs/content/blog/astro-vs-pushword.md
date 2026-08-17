@@ -102,7 +102,7 @@ function of the repository, which makes builds reproducible, reviewable in a pul
 and trivially rollback-able. Plenty of teams want exactly that and nothing more.
 
 **Pushword is a CMS that can go static.** There is a database, an admin UI, and an editor
-who has never seen a terminal. Content is stored in SQLite (or MySQL) and mirrored to
+who has never seen a terminal. Content is stored in SQLite, PostgreSQL or MariaDB and mirrored to
 Markdown files with YAML frontmatter — the same shape Astro reads. An editor saves a page
 and that one page re-renders. The files can live in the same git repository as the code, or
 in a separate content repository; the database is a functional mirror, not the source of
@@ -419,7 +419,7 @@ deliberately low, and you can verify every line of this before committing:
 
 - **Content** is Markdown with YAML frontmatter, in your git — the same shape Astro's
   content collections read. Migrating content to Astro is largely a directory copy.
-- **The database** is a SQLite file you own, or your own MySQL. There is no hosted service
+- **The database** is a SQLite file you own, or your own PostgreSQL/MariaDB server. There is no hosted service
   holding anything, no API key, no export request, no egress bill.
 - **Templates** are Twig, and the application is a standard Symfony app. A Symfony
   developer who has never seen Pushword can read, debug and extend it.

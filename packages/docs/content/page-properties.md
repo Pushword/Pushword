@@ -87,7 +87,7 @@ when there is something to say. Informational; the write went through.
 Any custom property supports `=`, `!=`, `isSet`, `isNotSet` in `pages_list`.
 A property declared `int`, `float` or `date` also compares — `< > <= >=` —
 and both compare and sort **numerically on every platform** (SQLite's
-`json_extract` is typed; MySQL/MariaDB gets an explicit cast):
+`json_extract` is typed; PostgreSQL and MySQL/MariaDB get an explicit cast):
 
 ```twig
 {{ pages_list([['prop.price_from', '>', 100]], 'prop.price_from ASC') }}

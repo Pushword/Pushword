@@ -57,7 +57,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->bind('$pdfPreset', '%pw.pdf_preset%')
         ->bind('$pdfLinearize', '%pw.pdf_linearize%')
         ->bind('$enablePasswordReset', '%pw.enable_password_reset%')
-        ->bind('$scheduledCommands', '%pw.scheduled_commands%');
+        ->bind('$scheduledCommands', '%pw.scheduled_commands%')
+        ->bind('$databaseUrl', '%pw.database_url%');
     // $backgroundTaskTransports is not bound here: its only consumer exists when
     // symfony/messenger is installed, and a _defaults binding with no matching
     // argument makes ResolveBindingsPass fail. It is passed as an explicit

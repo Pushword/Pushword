@@ -101,7 +101,7 @@ final class ContactApiController extends AbstractApiController
         }
 
         if (null !== $request->query->get('tag')) {
-            $queryBuilder->andWhere('c.tags LIKE :tag')->setParameter('tag', '%"'.$request->query->getString('tag').'"%');
+            $queryBuilder->andWhere('JSON_TEXT(c.tags) LIKE :tag')->setParameter('tag', '%"'.$request->query->getString('tag').'"%');
         }
 
         if (null !== $request->query->get('q')) {

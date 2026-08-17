@@ -33,13 +33,14 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 	# account and nothing else. No starter content: production content is yours, and it
 	# arrives with the database you restore or the files pw:flat:sync reads.
 	if [ ! -f var/.pushword-seeded ]; then
-		# Ask the database whether it already has an account, rather than letting the
+		# Ask the application whether the configured database already has an account,
+		# rather than naming its physical table here (`user` is reserved by PostgreSQL).
 		# insert decide. `pw:user:create` fails on exactly one thing — the unique
 		# constraint over `email` — so a database whose admin is any other address used
 		# to take the insert happily and end up with a *second* super admin, holding the
 		# published default credentials. The marker cannot stand in for this check: the
 		# documented backup copies `app.db` alone, so a restore arrives without it.
-		if php bin/console dbal:run-sql "SELECT 'PW_HAS_USER' AS marker FROM user LIMIT 1" 2>/dev/null | grep -q PW_HAS_USER; then
+		if php bin/console pw:user:exists -q; then
 			echo '~~ No account created: this database already has one.'
 		elif php bin/console pw:user:create \
 			"${PUSHWORD_ADMIN_EMAIL:-admin@example.tld}" \

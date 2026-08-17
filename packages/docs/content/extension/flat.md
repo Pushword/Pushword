@@ -84,7 +84,7 @@ php bin/console pw:flat:sync [host] [options]
 | `--entity`          | Entity type: `page`, `media`, `conversation`, `all` (default)                   |
 | `--page`            | Slug(s) to sync — repeatable, implies `--entity=page` (see targeted sync below) |
 | `--force`, `-f`     | Force overwrite even if files are newer than DB                                 |
-| `--no-backup`       | Disable automatic database backup before import                                 |
+| `--backup`          | Back up SQLite before import (server databases require their native tools)       |
 | `--consume-pending` | Consume pending export flag and run batched export                              |
 
 **Examples:**
@@ -108,8 +108,8 @@ php bin/console pw:flat:sync example.tld --page=about
 # Sync multiple specific pages
 php bin/console pw:flat:sync example.tld --page=about --page=contact
 
-# Import without creating a database backup
-php bin/console pw:flat:sync --mode=import --no-backup
+# Import after creating an SQLite backup
+php bin/console pw:flat:sync --mode=import --backup
 
 # Re-stamp the `revision:` front matter on every page (see note below)
 php bin/console pw:flat:sync example.tld --mode=export --force
@@ -279,7 +279,7 @@ When `pw:flat:sync` runs, it follows this pipeline:
 
 1. **Webhook lock check** — if a webhook lock is active for the host, sync is blocked entirely
 2. **PID concurrency check** — only one sync process can run at a time (PID file in `var/`)
-3. **Database backup** — before import, `var/app.db` is copied to `var/app.db~YYYYMMDDHHMMSS` (disable with `--no-backup`)
+3. **Optional database backup** — with `--backup`, SQLite's `var/app.db` is copied to `var/app.db~YYYYMMDDHHMMSS`; PostgreSQL/MariaDB stop here and ask for a native backup
 4. **Host resolution** — if no `host` argument, syncs ALL configured hosts sequentially
 5. **Mode dispatch** — `auto` runs freshness detection then delegates to import or export
 
@@ -437,11 +437,13 @@ Running sync twice in a row with no changes produces **zero operations**:
 
 ### Database Backup
 
-Before any import operation, the SQLite database is backed up:
+Pass `--backup` to back up the SQLite database before an import:
 
 - Backup file: `var/app.db~YYYYMMDDHHMMSS`
-- Disable with `--no-backup`
 - To restore: copy the backup file back to `var/app.db`
+
+The option fails before importing when Doctrine uses PostgreSQL or MariaDB. Create a
+backup with the database server's own tools, then run the sync without `--backup`.
 
 ### Multi-Host Sync
 
@@ -463,8 +465,8 @@ wherever you run it:
 vendor/bin/pushword-deploy pull       # prod -> local
 vendor/bin/pushword-deploy push       # full deploy: local prep, rsync, remote build
 vendor/bin/pushword-deploy publish    # content/ + media/ only, no composer/build
-vendor/bin/pushword-deploy pull-db    # fetch prod var/app.db (backs up local first)
-# -n / --dry-run everywhere; --ship-db for the one-time rc802 migration
+vendor/bin/pushword-deploy pull-db    # SQLite only: fetch prod var/app.db (backs up local first)
+# -n / --dry-run everywhere; SQLite only: --ship-db for the one-time rc802 migration
 ```
 
 The push **always** excludes `var/app.db*` and `var/flat-sync/`, whatever the
@@ -473,6 +475,10 @@ newsletter contacts, admin edits between two pulls) and each machine owns its
 sync state. `--ship-db` (confirmation required) sends the database file
 explicitly on top of the tree — only for the documented one-time uuid
 migration.
+
+`pull-db` and `--ship-db` are intentionally SQLite-only. On PostgreSQL or MariaDB,
+`pull`, `push` and `publish` leave the server database untouched; use the database
+server's native dump/restore tools when a database transfer is actually required.
 
 With `DELETE=1`, the push first probes (same excludes, `--dry-run`) what
 `--delete` would remove on production. Files that exist only there are usually

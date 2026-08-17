@@ -46,25 +46,40 @@ PostInstall::insertIn(
 );
 
 echo '~~ Create database'.chr(10);
-// if it's a default symfony installation, switch from postgresql to sqlite
-PostInstall::replace('.env', 'postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=16&charset=utf8', 'sqlite:///%kernel.project_dir%/var/app.db');
+$requestedDatabaseUrl = trim((string) getenv('PUSHWORD_DATABASE_URL'));
+$databaseUrl = '' !== $requestedDatabaseUrl ? $requestedDatabaseUrl : 'sqlite:///%kernel.project_dir%/var/app.db';
+// Symfony's Doctrine recipe starts with this placeholder. Pushword remains SQLite by
+// default; provisioning can opt into PostgreSQL before create-project starts.
+PostInstall::replace('.env', 'postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=16&charset=utf8', $databaseUrl);
 // and define an APP_SECRET
 PostInstall::replace('.env', "APP_SECRET=\n", 'APP_SECRET='.sha1(md5(uniqid())).chr(10));
 // dev-app's media doubles as the test suite's fixtures: take the demo photos, leave the
 // branding and the PDF test artifact behind.
 PostInstall::mirror('vendor/pushword/dev-app/media~', 'media');
 PostInstall::remove(['media/piedweb-logo.png', 'media/logo.svg', 'media/test.pdf']);
-$freshInstall = ! file_exists('var/app.db');
-$commands = 'php bin/console doctrine:schema:update --force -q';
-if ($freshInstall) {
-    $commands .= ' && php bin/console doctrine:fixtures:load --no-interaction -q';
+$serverDatabase = ! str_starts_with($databaseUrl, 'sqlite:');
+$freshInstall = ! $serverDatabase && ! file_exists('var/app.db');
+$runCommand = static function (string $command): void {
+    exec($command, $output, $status);
+    if (0 !== $status) {
+        throw new RuntimeException('Installer command failed: '.$command);
+    }
+};
+
+$runCommand('php bin/console doctrine:schema:update --force -q');
+if ($serverDatabase) {
+    exec('php bin/console pw:user:exists -q', $output, $status);
+    $freshInstall = 0 !== $status;
 }
 
-$commands .= ' && php bin/console pw:image:cache -q';
+if ($freshInstall) {
+    $runCommand('php bin/console doctrine:fixtures:load --no-interaction -q');
+}
+
+exec('php bin/console pw:image:cache -q');
 
 echo '~~ Symlinking assets'.chr(10);
-$commands .= ' && php bin/console assets:install --symlink --relative -q';
-exec($commands);
+exec('php bin/console assets:install --symlink --relative -q');
 PostInstall::dumpFile('public/build/manifest.json', '{}');
 
 if ($freshInstall) {
@@ -163,7 +178,7 @@ static/
 // The recommendation follows the machine — a PHP that already has what Pushword needs
 // is better off without a layer in between; one that does not is better off with the
 // image, which ships them.
-$systemCheck = SystemCheck::probe();
+$systemCheck = SystemCheck::probe($databaseUrl);
 
 if (! $systemCheck->shouldAsk()) {
     if ($systemCheck->recommendsDocker()) {

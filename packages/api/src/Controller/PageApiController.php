@@ -75,7 +75,7 @@ final class PageApiController extends AbstractApiController
                 continue;
             }
 
-            $qb->andWhere('p.tags LIKE :tag'.$i)->setParameter('tag'.$i, '%'.$tag.'%');
+            $qb->andWhere('JSON_TEXT(p.tags) LIKE :tag'.$i)->setParameter('tag'.$i, '%'.$tag.'%');
         }
 
         $totalQb = clone $qb;

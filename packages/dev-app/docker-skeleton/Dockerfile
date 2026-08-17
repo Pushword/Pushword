@@ -32,6 +32,7 @@ RUN install-php-extensions \
 		imagick \
 		intl \
 		opcache \
+		pdo_pgsql \
 		soap \
 		zip
 

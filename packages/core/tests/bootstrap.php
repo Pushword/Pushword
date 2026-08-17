@@ -106,16 +106,21 @@ if (false !== $testToken && '' !== $testToken) {
 $segment = '' !== $runId ? '/'.$runId : '';
 $testBaseDir = sys_get_temp_dir().'/com.github.pushword.pushword/tests'.$segment;
 
-// Optionally run the suite against MariaDB/MySQL instead of SQLite.
-// PUSHWORD_TEST_MYSQL_URL is a base DSN (e.g. mysql://user:pass@127.0.0.1:3306/pushword_test);
+// Optionally run the suite against a server database instead of SQLite.
+// PUSHWORD_TEST_DATABASE_BASE_URL is a base DSN (MySQL/MariaDB or PostgreSQL);
 // each parallel worker gets its own database via a "_w<token>" suffix on the database name.
-$mysqlBaseUrl = getenv('PUSHWORD_TEST_MYSQL_URL');
-$useMysql = false !== $mysqlBaseUrl && '' !== $mysqlBaseUrl;
-if ($useMysql) {
+// Keep the old MySQL-specific variable as a compatibility alias for local tooling.
+$databaseBaseUrl = getenv('PUSHWORD_TEST_DATABASE_BASE_URL');
+if (false === $databaseBaseUrl || '' === $databaseBaseUrl) {
+    $databaseBaseUrl = getenv('PUSHWORD_TEST_MYSQL_URL');
+}
+
+$useServerDatabase = false !== $databaseBaseUrl && '' !== $databaseBaseUrl;
+if ($useServerDatabase) {
     $dbSuffix = (false !== $testToken && '' !== $testToken) ? '_w'.$testToken : '';
-    $databaseUrl = str_contains($mysqlBaseUrl, '?')
-        ? preg_replace('/\?/', $dbSuffix.'?', $mysqlBaseUrl, 1) ?? $mysqlBaseUrl
-        : $mysqlBaseUrl.$dbSuffix;
+    $databaseUrl = str_contains($databaseBaseUrl, '?')
+        ? preg_replace('/\?/', $dbSuffix.'?', $databaseBaseUrl, 1) ?? $databaseBaseUrl
+        : $databaseBaseUrl.$dbSuffix;
 } else {
     $databaseUrl = 'sqlite:///'.$testBaseDir.'/test.db';
 }
@@ -178,16 +183,16 @@ setTestEnv('PUSHWORD_TEST_DB_CACHE_FILE', $cachedDbFile);
 $fs->mkdir($dbCacheDir);
 $fs->mkdir(\dirname($dbTargetPath));
 
-// MariaDB/MySQL can't be served from the sqlite file cache; each run rebuilds its schema.
+// Server databases can't be served from the SQLite file cache; each run rebuilds its schema.
 $lockHandle = false;
-if (! $useMysql) {
+if (! $useServerDatabase) {
     $lockHandle = fopen($lockFile, 'c+');
     if (false !== $lockHandle) {
         flock($lockHandle, \LOCK_EX);
     }
 }
 
-$cacheHit = ! $useMysql && file_exists($cachedDbFile);
+$cacheHit = ! $useServerDatabase && file_exists($cachedDbFile);
 
 if ($cacheHit) {
     // Cache hit: copy pristine DB, skip Doctrine commands
@@ -201,6 +206,13 @@ if ($cacheHit) {
     }
 }
 
+// SQLite creates the database file on first connection. DBAL 4 deliberately does
+// not implement doctrine:database:create/drop for it, so a cache miss starts from
+// a removed file instead of running commands that can only fail.
+if (! $cacheHit && ! $useServerDatabase) {
+    $fs->remove($dbTargetPath);
+}
+
 $kernel = new Kernel('test', true);
 $kernel->boot();
 
@@ -210,11 +222,17 @@ if (! $cacheHit) {
     $application->setAutoExit(false);
 
     $runCommand = static function (string $command, array $args = []) use ($application): void {
-        $application->run(new ArrayInput(['command' => $command] + $args), new ConsoleOutput());
+        $exitCode = $application->run(new ArrayInput(['command' => $command] + $args), new ConsoleOutput());
+        if (0 !== $exitCode) {
+            throw new RuntimeException(\sprintf('Test database bootstrap command `%s` failed with exit code %d.', $command, $exitCode));
+        }
     };
 
-    $runCommand('doctrine:database:drop', ['--no-interaction' => true, '--force' => true, '--if-exists' => true]);
-    $runCommand('doctrine:database:create', ['--no-interaction' => true, '--quiet' => true]);
+    if ($useServerDatabase) {
+        $runCommand('doctrine:database:drop', ['--no-interaction' => true, '--force' => true, '--if-exists' => true]);
+        $runCommand('doctrine:database:create', ['--no-interaction' => true, '--quiet' => true]);
+    }
+
     $runCommand('doctrine:schema:create', ['--quiet' => true]);
     $runCommand('doctrine:fixtures:load', ['--no-interaction' => true, '--append' => false]);
     $runCommand('pw:user:create', ['email' => 'admin@example.tld', 'password' => 'mySecr3tpAssword', 'role' => 'ROLE_SUPER_ADMIN']);
@@ -222,7 +240,7 @@ if (! $cacheHit) {
     unset($runCommand, $application);
 
     // Save pristine DB to cache (sqlite only)
-    if (! $useMysql && file_exists($dbTargetPath)) {
+    if (! $useServerDatabase && file_exists($dbTargetPath)) {
         $fs->copy($dbTargetPath, $cachedDbFile, true);
     }
 

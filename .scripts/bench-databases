@@ -1,0 +1,86 @@
+#!/bin/bash -e
+
+set -o pipefail
+
+MONOREPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+BENCH_VOLUMES="${PUSHWORD_BENCH_VOLUMES:-100,1000,10000}"
+MYSQL_URL="${PUSHWORD_BENCH_MYSQL_URL:-mysql://pushword:pushword@127.0.0.1:3306/pushword_test_bench?serverVersion=11.8.6-MariaDB&charset=utf8mb4}"
+POSTGRESQL_URL="${PUSHWORD_BENCH_POSTGRESQL_URL:-postgresql://pushword:pushword@127.0.0.1:5432/pushword_test_bench?serverVersion=17&charset=utf8}"
+BENCH_TMP_DIR="$(mktemp -d)"
+RESULTS_FILE="$BENCH_TMP_DIR/results.jsonl"
+
+cleanup() {
+    if [ -n "$BENCH_TMP_DIR" ] && [ -d "$BENCH_TMP_DIR" ]; then
+        find "$BENCH_TMP_DIR" -depth -delete
+    fi
+}
+trap cleanup EXIT
+
+cd "$MONOREPO_DIR"
+
+run_benchmark() {
+    local engine="$1"
+    local database_url="$2"
+    local log_file="$BENCH_TMP_DIR/$engine.log"
+
+    echo ""
+    echo "== $engine: $BENCH_VOLUMES pages =="
+
+    if [ -n "$database_url" ]; then
+        TEST_RUN_ID="database-bench-$engine-$$" \
+        PUSHWORD_BENCH_VOLUMES="$BENCH_VOLUMES" \
+        PUSHWORD_TEST_DATABASE_BASE_URL="$database_url" \
+            ./.scripts/test --benchmark DatabaseVolumeBenchmarkTest 2>&1 | tee "$log_file"
+    else
+        env -u PUSHWORD_TEST_DATABASE_BASE_URL -u PUSHWORD_TEST_MYSQL_URL \
+            TEST_RUN_ID="database-bench-$engine-$$" \
+            PUSHWORD_BENCH_VOLUMES="$BENCH_VOLUMES" \
+            ./.scripts/test --benchmark DatabaseVolumeBenchmarkTest 2>&1 | tee "$log_file"
+    fi
+
+    sed -n 's/^\[DATABASE_BENCHMARK\] //p' "$log_file" >> "$RESULTS_FILE"
+}
+
+run_benchmark sqlite ""
+run_benchmark mariadb "$MYSQL_URL"
+run_benchmark postgresql "$POSTGRESQL_URL"
+
+php -r '
+$rows = [];
+foreach (file($argv[1], FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+    $row = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+    $row["read_ms"] = $row["count_ms"] + $row["lookup_ms"] + $row["tag_like_ms"] + $row["json_number_ms"] + $row["list_ms"];
+    $rows[] = $row;
+}
+
+$order = ["sqlite" => 0, "mysql" => 1, "mariadb" => 1, "postgresql" => 2];
+usort($rows, static fn (array $a, array $b): int => [$a["volume"], $order[$a["platform"]] ?? 9] <=> [$b["volume"], $order[$b["platform"]] ?? 9]);
+$sqliteReads = [];
+foreach ($rows as $row) {
+    if ("sqlite" === $row["platform"]) {
+        $sqliteReads[$row["volume"]] = $row["read_ms"];
+    }
+}
+
+echo "\n## Database volume comparison\n\n";
+echo "Medians over five runs. Lower is better.\n\n";
+echo "| Pages | Engine | Write ms | Count ms | Indexed lookups ms | Tag LIKE ms | JSON number ms | List 50 ms | Read batch / SQLite |\n";
+echo "|---:|---|---:|---:|---:|---:|---:|---:|---:|\n";
+foreach ($rows as $row) {
+    $baseline = $sqliteReads[$row["volume"]] ?? 0.0;
+    $ratio = $baseline > 0.0 ? $row["read_ms"] / $baseline : 0.0;
+    printf(
+        "| %s | %s | %.1f | %.2f | %.2f (%d) | %.2f | %.2f | %.2f | %.2fx |\n",
+        number_format($row["volume"], thousands_separator: " "),
+        $row["platform"],
+        $row["write_ms"],
+        $row["count_ms"],
+        $row["lookup_ms"],
+        $row["lookup_queries"],
+        $row["tag_like_ms"],
+        $row["json_number_ms"],
+        $row["list_ms"],
+        $ratio,
+    );
+}
+' "$RESULTS_FILE"

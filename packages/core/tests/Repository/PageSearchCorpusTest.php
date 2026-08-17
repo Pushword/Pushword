@@ -110,21 +110,21 @@ final class PageSearchCorpusTest extends KernelTestCase
     public static function stringCorpus(): iterable
     {
         yield 'an empty search looks for an empty tag' => [
-            '', "p.tags LIKE :w0 ESCAPE '!'", ['w0' => '%""%'],
+            '', "JSON_TEXT(p.tags) LIKE :w0 ESCAPE '!'", ['w0' => '%""%'],
         ];
 
         yield 'a bare word is a tag' => [
-            'blog', "p.tags LIKE :w0 ESCAPE '!'", ['w0' => '%"blog"%'],
+            'blog', "JSON_TEXT(p.tags) LIKE :w0 ESCAPE '!'", ['w0' => '%"blog"%'],
         ];
 
         // A namespaced tag is a production convention (GA carries `type:product`
         // on 1167 pages) and reaches the same fallback as an unknown prefix.
         yield 'a namespaced tag goes through the same fallback' => [
-            'type:product', "p.tags LIKE :w0 ESCAPE '!'", ['w0' => '%"type:product"%'],
+            'type:product', "JSON_TEXT(p.tags) LIKE :w0 ESCAPE '!'", ['w0' => '%"type:product"%'],
         ];
 
         yield 'an unknown prefix is a tag, not an error' => [
-            'tags:blog', "p.tags LIKE :w0 ESCAPE '!'", ['w0' => '%"tags:blog"%'],
+            'tags:blog', "JSON_TEXT(p.tags) LIKE :w0 ESCAPE '!'", ['w0' => '%"tags:blog"%'],
         ];
 
         yield 'children' => [
@@ -208,7 +208,7 @@ final class PageSearchCorpusTest extends KernelTestCase
         // Documented, and preserved: without a value there is no property to
         // read, so the whole term stays a tag.
         yield 'customProperty: without a value stays a tag' => [
-            'customProperty:keyonly', "p.tags LIKE :w0 ESCAPE '!'", ['w0' => '%"customProperty:keyonly"%'],
+            'customProperty:keyonly', "JSON_TEXT(p.tags) LIKE :w0 ESCAPE '!'", ['w0' => '%"customProperty:keyonly"%'],
         ];
 
         yield 'locale: selects on the column' => [
@@ -233,7 +233,7 @@ final class PageSearchCorpusTest extends KernelTestCase
         ];
 
         yield 'OR of a slug and a tag' => [
-            'slug:a OR tmb', "p.slug LIKE :w0 OR p.tags LIKE :w1 ESCAPE '!'", ['w0' => 'a', 'w1' => '%"tmb"%'],
+            'slug:a OR tmb', "p.slug LIKE :w0 OR JSON_TEXT(p.tags) LIKE :w1 ESCAPE '!'", ['w0' => 'a', 'w1' => '%"tmb"%'],
         ];
 
         // The two-level tree the flat newsletter IR cannot represent.
@@ -263,7 +263,7 @@ final class PageSearchCorpusTest extends KernelTestCase
 
         // CHANGED deliberately: parentheses used to be ordinary characters and
         // ended up inside the tag name — `parent_children AND related OR …`
-        // compiled to `p.tags LIKE '%"parent_children AND related"%' OR …`,
+        // compiled to `JSON_TEXT(p.tags) LIKE '%"parent_children AND related"%' OR …`,
         // because the split happened on ` OR ` first and the AND half was never
         // split again. Ungrouped, that search is now refused
         // ({@see \Pushword\Core\Tests\Query\SearchParserTest}); grouped, it is
@@ -290,22 +290,22 @@ final class PageSearchCorpusTest extends KernelTestCase
         ];
 
         yield 'tag: is the explicit form of a bare word' => [
-            'tag:blog', "p.tags LIKE :w0 ESCAPE '!'", ['w0' => '%"blog"%'],
+            'tag:blog', "JSON_TEXT(p.tags) LIKE :w0 ESCAPE '!'", ['w0' => '%"blog"%'],
         ];
 
         // A tag whose name merely contains a parenthesis is not a group: `(` is
         // structural only where a term may start.
         yield 'a parenthesis inside a term stays a character' => [
-            'foo (bar)', "p.tags LIKE :w0 ESCAPE '!'", ['w0' => '%"foo (bar)"%'],
+            'foo (bar)', "JSON_TEXT(p.tags) LIKE :w0 ESCAPE '!'", ['w0' => '%"foo (bar)"%'],
         ];
 
         // Same reason `ORANGE` is not an `OR`: a conjunction is a whole word.
         yield 'a word merely starting with OR is a tag' => [
-            'ORANGE', "p.tags LIKE :w0 ESCAPE '!'", ['w0' => '%"ORANGE"%'],
+            'ORANGE', "JSON_TEXT(p.tags) LIKE :w0 ESCAPE '!'", ['w0' => '%"ORANGE"%'],
         ];
 
         yield 'a lowercase or is a tag, not a conjunction' => [
-            'a or b', "p.tags LIKE :w0 ESCAPE '!'", ['w0' => '%"a or b"%'],
+            'a or b', "JSON_TEXT(p.tags) LIKE :w0 ESCAPE '!'", ['w0' => '%"a or b"%'],
         ];
     }
 

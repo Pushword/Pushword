@@ -261,7 +261,7 @@ jobs:
           vendor/bin/paratest --processes=1 --group=serial
         env:
           TEST_RUN_ID: ci-mariadb-${{ github.run_id }}
-          PUSHWORD_TEST_MYSQL_URL: "mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
+          PUSHWORD_TEST_DATABASE_BASE_URL: "mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
 
       - name: Worker-mode safety guard
         # Same guard as the SQLite job: worker tests share a cache.app version
@@ -269,4 +269,78 @@ jobs:
         run: vendor/bin/paratest --processes=1 --group=worker
         env:
           TEST_RUN_ID: ci-mariadb-${{ github.run_id }}
-          PUSHWORD_TEST_MYSQL_URL: "mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
+          PUSHWORD_TEST_DATABASE_BASE_URL: "mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
+
+  test-postgresql:
+    runs-on: ubuntu-latest
+
+    name: PostgreSQL 17 - P8.4 - N24
+
+    services:
+      postgresql:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: pushword
+          POSTGRES_PASSWORD: pushword
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U pushword -d postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: pecl
+          # SQLite remains available for the independent Loupe search index.
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, pdo_pgsql, pgsql, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
+          coverage: none
+
+      - name: Setup problem matchers
+        run: |
+          echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+          echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction
+
+      - name: Install image optimization tools
+        run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf
+
+      - name: Initialize
+        run: composer reset-dev-app
+
+      - name: Generate Images Cache
+        run: cd packages/dev-app && php bin/console pw:image:cache
+
+      - name: Test PostgreSQL installer
+        run: |
+          PGPASSWORD=pushword createdb -h 127.0.0.1 -U pushword pushword_installer_test
+          PUSHWORD_INSTALLER_TEST_DATABASE_URL='postgresql://pushword:pushword@127.0.0.1:5432/pushword_installer_test?serverVersion=17&charset=utf8' ./.scripts/test-installer --quiet
+
+      - name: Execute tests
+        run: |
+          vendor/bin/paratest --processes=auto --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker
+          vendor/bin/paratest --processes=1 --group=serial
+        env:
+          TEST_RUN_ID: ci-postgresql-${{ github.run_id }}
+          PUSHWORD_TEST_DATABASE_BASE_URL: "postgresql://pushword:pushword@127.0.0.1:5432/pushword_test?serverVersion=17&charset=utf8"
+
+      - name: Worker-mode safety guard
+        run: vendor/bin/paratest --processes=1 --group=worker
+        env:
+          TEST_RUN_ID: ci-postgresql-${{ github.run_id }}
+          PUSHWORD_TEST_DATABASE_BASE_URL: "postgresql://pushword:pushword@127.0.0.1:5432/pushword_test?serverVersion=17&charset=utf8"

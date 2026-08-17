@@ -37,7 +37,7 @@ final class CachingOptimizationsTest extends KernelTestCase
 
         $cacheFile = getenv('PUSHWORD_TEST_DB_CACHE_FILE');
         $dbUrl = getenv('PUSHWORD_TEST_DATABASE_URL');
-        if (false !== $cacheFile && '' !== $cacheFile && false !== $dbUrl && file_exists($cacheFile)) {
+        if (false !== $cacheFile && '' !== $cacheFile && false !== $dbUrl && str_starts_with($dbUrl, 'sqlite:') && file_exists($cacheFile)) {
             $dbPath = preg_replace('#^sqlite:///+#', '/', $dbUrl);
             if (null !== $dbPath && file_exists($dbPath)) {
                 copy($cacheFile, $dbPath);

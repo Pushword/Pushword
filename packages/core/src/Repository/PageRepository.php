@@ -775,7 +775,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $orX = $queryBuilder->expr()->orX();
         foreach ($fileNames as $i => $fileName) {
             $orX->add('p.mainContent LIKE :fileName'.$i);
-            $orX->add('p.customProperties LIKE :fileName'.$i);
+            $orX->add('JSON_TEXT(p.customProperties) LIKE :fileName'.$i);
             $queryBuilder->setParameter('fileName'.$i, '%'.$fileName.'%');
         }
 

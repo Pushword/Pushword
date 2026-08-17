@@ -31,7 +31,7 @@ class MessageRepository extends ServiceEntityRepository
         $queryBuilder = $this->createQueryBuilder('m')
             ->andWhere('m.publishedAt is NOT NULL')
             ->andWhere('m.deletedAt IS NULL')
-            ->andWhere('m.referring =  :referring OR m.tags LIKE :tag')
+            ->andWhere('m.referring =  :referring OR JSON_TEXT(m.tags) LIKE :tag')
             ->setParameter('referring', $referring)
             ->setParameter('tag', '%"'.trim($referring).'"%')
             ->orderBy('m.'.$orderBy[0], $orderBy[1]);
@@ -55,7 +55,7 @@ class MessageRepository extends ServiceEntityRepository
 
         foreach ($tags as $i => $tag) {
             $expr = $queryBuilder->expr();
-            $orConditions->add($expr->like('m.tags', ':tag'.$i));
+            $orConditions->add($expr->like('JSON_TEXT(m.tags)', ':tag'.$i));
             $tagEscaped = '%"'.$this->escapeLikePattern($tag).'"%';
             $queryBuilder->setParameter('tag'.$i, $tagEscaped);
         }
@@ -83,11 +83,11 @@ class MessageRepository extends ServiceEntityRepository
             ->andWhere('m.publishedAt is NOT NULL')
             ->andWhere('m.deletedAt IS NULL')
             // permits to filter only reviews
-            ->andWhere('m.customProperties LIKE :noteFilter')
+            ->andWhere('JSON_TEXT(m.customProperties) LIKE :noteFilter')
             ->setParameter('noteFilter', '%"rating":%');
 
         if ($minRating > 0) {
-            $queryBuilder->andWhere("JSON_EXTRACT(m.customProperties, '$.rating') >= :minRating")
+            $queryBuilder->andWhere("JSON_NUMBER(m.customProperties, '$.rating') >= :minRating")
                 ->setParameter('minRating', $minRating);
         }
 

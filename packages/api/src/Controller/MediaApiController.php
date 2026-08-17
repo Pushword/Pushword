@@ -43,7 +43,7 @@ final class MediaApiController extends AbstractApiController
         }
 
         if (null !== $request->query->get('tag')) {
-            $qb->andWhere('m.tags LIKE :tag')
+            $qb->andWhere('JSON_TEXT(m.tags) LIKE :tag')
                 ->setParameter('tag', '%'.$request->query->getString('tag').'%');
         }
 

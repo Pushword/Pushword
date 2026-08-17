@@ -1,0 +1,29 @@
+# PostgreSQL overlay for either development or production:
+#   docker compose -f compose.yaml -f compose.postgresql.yaml up --build
+#   docker compose -f compose.prod.yaml -f compose.postgresql.yaml up -d --build
+
+services:
+  pushword:
+    environment:
+      DATABASE_URL: postgresql://pushword:${POSTGRES_PASSWORD:-pushword}@postgres:5432/pushword?serverVersion=17&charset=utf8
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pushword
+      POSTGRES_USER: pushword
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pushword}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pushword -d pushword']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

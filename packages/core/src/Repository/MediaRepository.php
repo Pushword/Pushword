@@ -341,7 +341,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     public function isFileNameUsed(string $fileName, ?int $excludeId = null): ?Media
     {
         $qb = $this->createQueryBuilder('m')
-            ->where('m.fileName = :currentName OR m.fileNameHistory LIKE :historyName')
+            ->where('m.fileName = :currentName OR JSON_TEXT(m.fileNameHistory) LIKE :historyName')
             ->setParameter('currentName', $fileName)
             ->setParameter('historyName', '%"'.$fileName.'"%');
 
@@ -566,11 +566,11 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
         return $exp->orX(
             $exp->like($alias.'.fileName', $likeFilterValue),
-            $exp->like($alias.'.fileNameHistory', $likeFilterValue),
+            $exp->like('JSON_TEXT('.$alias.'.fileNameHistory)', $likeFilterValue),
             $exp->like($alias.'.alt', $likeFilterValue),
             $exp->like($alias.'.altSearch', $likeNormalizedFilterValue),
             $exp->like($alias.'.alts', $likeFilterValue),
-            $exp->like($alias.'.tags', $likeFilterValue),
+            $exp->like('JSON_TEXT('.$alias.'.tags)', $likeFilterValue),
         );
     }
 
@@ -589,11 +589,11 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             ->addOrderBy(
                 'CASE'
                 .' WHEN m.fileName LIKE :search THEN 1'
-                .' WHEN m.fileNameHistory LIKE :search THEN 2'
+                .' WHEN JSON_TEXT(m.fileNameHistory) LIKE :search THEN 2'
                 .' WHEN m.alt LIKE :search THEN 3'
                 .' WHEN m.altSearch LIKE :normalizedSearch THEN 4'
                 .' WHEN m.alts LIKE :search THEN 5'
-                .' WHEN m.tags LIKE :search THEN 6'
+                .' WHEN JSON_TEXT(m.tags) LIKE :search THEN 6'
                 .' ELSE 7 END',
             )
             ->setMaxResults(1)

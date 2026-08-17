@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\Service;
 
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
@@ -82,11 +83,20 @@ final class StringToDQLCriteriaTest extends KernelTestCase
         $where = new StringToDQLCriteria('customProperty:productCode:NLDLV0019', null)->retrieve();
         $sql = $pageRepo->getPublishedPageQueryBuilder(where: $where)->getQuery()->getSQL();
         self::assertIsString($sql);
-        self::assertStringContainsString("JSON_EXTRACT(p0_.custom_properties, '$.productCode')", $sql);
+        if ($entityManager->getConnection()->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+            self::assertStringContainsString('JSON_EXTRACT_PATH_TEXT(p0_.custom_properties', $sql);
+        } else {
+            self::assertStringContainsString("JSON_EXTRACT(p0_.custom_properties, '$.productCode')", $sql);
+        }
 
         $where = new StringToDQLCriteria('blog AND europe AND hiking', null)->retrieve();
         $sql = $pageRepo->getPublishedPageQueryBuilder(where: $where)->getQuery()->getSQL();
         self::assertIsString($sql);
-        self::assertStringContainsString("p0_.tags LIKE ? ESCAPE '!'", $sql);
+        self::assertStringContainsString(
+            $entityManager->getConnection()->getDatabasePlatform() instanceof PostgreSQLPlatform
+                ? "CAST(p0_.tags AS TEXT) LIKE ? ESCAPE '!'"
+                : "p0_.tags LIKE ? ESCAPE '!'",
+            $sql,
+        );
     }
 }

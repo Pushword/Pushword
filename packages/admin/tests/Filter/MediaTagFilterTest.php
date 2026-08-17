@@ -31,8 +31,8 @@ final class MediaTagFilterTest extends AbstractFilterTestCase
     {
         $queryBuilder = $this->applyValue(['logo', 'banner']);
 
-        self::assertStringContainsString('entity.tags LIKE :tag_0', $queryBuilder->getDQL());
-        self::assertStringContainsString('entity.tags LIKE :tag_1', $queryBuilder->getDQL());
+        self::assertStringContainsString('JSON_TEXT(entity.tags) LIKE :tag_0', $queryBuilder->getDQL());
+        self::assertStringContainsString('JSON_TEXT(entity.tags) LIKE :tag_1', $queryBuilder->getDQL());
         self::assertSame(['tag_0' => '%logo%', 'tag_1' => '%banner%'], $this->parameters($queryBuilder));
     }
 

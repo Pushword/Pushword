@@ -169,12 +169,14 @@
     }
   },
   "scripts": {
+    "bench-databases": "./.scripts/bench-databases",
     "console": "cd packages/dev-app && php bin/console $2",
     "dev": "cd packages/dev-app && symfony server:start -d --no-tls",
     "stan": "vendor/bin/phpstan",
     "test": "./.scripts/test $*",
     "test-live": "PANTHER_NO_HEADLESS=1 PANTHER_NO_SANDBOX=1 composer test $*",
-    "test-mariadb": "PUSHWORD_TEST_MYSQL_URL='mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4' ./.scripts/test $*",
+    "test-mariadb": "PUSHWORD_TEST_DATABASE_BASE_URL='mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4' ./.scripts/test $*",
+    "test-postgresql": "PUSHWORD_TEST_DATABASE_BASE_URL='postgresql://pushword:pushword@127.0.0.1:5432/pushword_test?serverVersion=17&charset=utf8' ./.scripts/test $*",
     "test-filter": "./.scripts/test --filter $*",
     "test-unit": "XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --exclude-group integration --exclude-group panther",
     "test-coverage": "./.scripts/test-coverage",

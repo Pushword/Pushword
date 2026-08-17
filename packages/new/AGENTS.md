@@ -1,8 +1,8 @@
 # This site
 
 A [Pushword](https://pushword.piedweb.com) site: a modular CMS made of Symfony bundles.
-Content is Markdown + Twig, the database is SQLite, and each feature is its own bundle
-under `vendor/pushword/`.
+Content is Markdown + Twig, the database is SQLite by default (PostgreSQL and MariaDB
+are supported), and each feature is its own bundle under `vendor/pushword/`.
 
 Replace this file's **About this site** section with what is specific to you — the rest is
 a starting point, edit it freely.
@@ -44,7 +44,7 @@ human version. `vendor/pushword/docs/content/agent-output.md` lists which ones.
 | `templates/` | your Twig overrides — see `vendor/pushword/docs/content/override-theme.md` |
 | `assets/` | CSS/JS, built with Vite |
 | `media/` | uploaded files |
-| `var/app.db` | the SQLite database |
+| `var/app.db` | the default SQLite database (server-backed sites use `DATABASE_URL`) |
 | `src/` | your own entities, controllers and services |
 
 ## Working rules

@@ -2,15 +2,41 @@
 
 namespace Pushword\Flat\Tests;
 
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[Group('integration')]
 final class FlatCommandTest extends KernelTestCase
 {
+    public function testBackupOnlyRunsOnSqlite(): void
+    {
+        $application = new Application(self::createKernel());
+        $commandTester = new CommandTester($application->find('pw:flat:sync'));
+        $status = $commandTester->execute([
+            'host' => 'pushword.piedweb.com',
+            '--mode' => 'import',
+            '--backup' => true,
+            '--format' => 'text',
+        ]);
+
+        /** @var Connection $connection */
+        $connection = self::getContainer()->get(Connection::class);
+        if ($connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            self::assertSame(Command::SUCCESS, $status);
+
+            return;
+        }
+
+        self::assertSame(Command::FAILURE, $status);
+        self::assertStringContainsString('supports SQLite databases only', $commandTester->getDisplay());
+    }
+
     public function testSync(): void
     {
         $kernel = self::createKernel();

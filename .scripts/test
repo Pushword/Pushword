@@ -182,9 +182,12 @@ fi
 
 FILTER_ARG=""
 NO_PARALLEL=0
+BENCHMARK=0
 for arg in "$@"; do
     if [ "$arg" = "--no-parallel" ]; then
         NO_PARALLEL=1
+    elif [ "$arg" = "--benchmark" ]; then
+        BENCHMARK=1
     fi
 done
 
@@ -201,7 +204,12 @@ if [ -z "$1" ] || [ "$1" = "full" ] || [ "$1" = "--no-parallel" ]; then
     fi
 fi
 
-if [ "$1" = "--filter" ] && [ -n "$2" ]; then
+if [ "$1" = "--benchmark" ]; then
+    FILTER_ARG="--group benchmark"
+    if [ -n "$2" ]; then
+        FILTER_ARG="$FILTER_ARG --filter $2"
+    fi
+elif [ "$1" = "--filter" ] && [ -n "$2" ]; then
     FILTER_ARG="--filter $2"
 elif [ "$1" != "full" ] && [ "$1" != "--no-parallel" ] && [ -n "$1" ]; then
     FILTER_ARG="--filter $1"
@@ -243,7 +251,7 @@ else
     record_step "Container warmup" $(( $(date +%s) - WARMUP_START ))
 
     PHPUNIT_EXIT=0
-    if [ -z "$FILTER_ARG" ] && [ $NO_PARALLEL -eq 0 ]; then
+    if [ -z "$FILTER_ARG" ] && [ $NO_PARALLEL -eq 0 ] && [ $BENCHMARK -eq 0 ]; then
         step "Running PHPUnit (parallel)"
         PHPUNIT_START=$(date +%s)
         XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes="$TEST_PROCESSES" --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" --passthru-php="$PASSTHRU_PHP" --exclude-group=benchmark --exclude-group=serial --exclude-group=worker || PHPUNIT_EXIT=$?

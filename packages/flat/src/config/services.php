@@ -42,6 +42,7 @@ return static function (ContainerConfigurator $container): void {
             ->autoconfigure()
             ->bind('$projectDir', '%kernel.project_dir%')
             ->bind('$mediaDir', '%pw.media_dir%')
+            ->bind('$databaseUrl', '%pw.database_url%')
     ;
 
     // Tag all implementations of FlatPropertyConverterInterface

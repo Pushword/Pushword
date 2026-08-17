@@ -20,8 +20,8 @@ final class MediaPageTagFilterTest extends AbstractFilterTestCase
 
         $queryBuilder = $this->applyValue(['mountain']);
 
-        self::assertStringContainsString('entity.pageTags LIKE :pageTag_0', $queryBuilder->getDQL());
-        self::assertStringNotContainsString('entity.tags LIKE', $queryBuilder->getDQL());
+        self::assertStringContainsString('JSON_TEXT(entity.pageTags) LIKE :pageTag_0', $queryBuilder->getDQL());
+        self::assertStringNotContainsString('JSON_TEXT(entity.tags) LIKE', $queryBuilder->getDQL());
     }
 
     /** Whole JSON values, so `mountain` cannot answer for `mountain-lodge`. */

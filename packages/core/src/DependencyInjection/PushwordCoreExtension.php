@@ -8,6 +8,7 @@ use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\DQL\JsonExtractFunction;
 use Pushword\Core\Repository\DQL\JsonNumberFunction;
 use Pushword\Core\Repository\DQL\JsonScalarFunction;
+use Pushword\Core\Repository\DQL\JsonTextFunction;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -111,6 +112,7 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
                     'string_functions' => [
                         'JSON_EXTRACT' => JsonExtractFunction::class,
                         'JSON_SCALAR' => JsonScalarFunction::class,
+                        'JSON_TEXT' => JsonTextFunction::class,
                     ],
                     'numeric_functions' => [
                         'JSON_NUMBER' => JsonNumberFunction::class,

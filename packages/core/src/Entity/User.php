@@ -27,7 +27,7 @@ use Symfony\Component\Validator\Constraints\Email;
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity('email', message: 'userEmailAlreadyUsed')]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: 'user')]
+#[ORM\Table(name: '`user`')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringable
 {
     use ExtensiblePropertiesTrait;

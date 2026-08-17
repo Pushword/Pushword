@@ -44,7 +44,7 @@ final class MediaTagFilter implements FilterInterface
         foreach ($value as $i => $tag) {
             $param = 'tag_'.$i;
             $queryBuilder
-                ->andWhere(\sprintf('%s.tags LIKE :%s', $alias, $param))
+                ->andWhere(\sprintf('JSON_TEXT(%s.tags) LIKE :%s', $alias, $param))
                 ->setParameter($param, '%'.$tag.'%');
         }
     }

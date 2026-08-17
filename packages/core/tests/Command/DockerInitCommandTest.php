@@ -32,6 +32,7 @@ final class DockerInitCommandTest extends TestCase
             'Dockerfile',
             'compose.yaml',
             'compose.prod.yaml',
+            'compose.postgresql.yaml',
             '.dockerignore',
             'docker/docker-entrypoint.sh',
             'docker/php.dev.ini',

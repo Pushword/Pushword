@@ -43,7 +43,8 @@ HASH_INPUT=$(cat \
     "$MONOREPO_DIR"/packages/installer/src/PostAutoloadDump.php \
     "$MONOREPO_DIR"/.scripts/test-installer \
     2>/dev/null)
-CACHE_HASH=$(echo "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
+INSTALLER_DATABASE_URL="${PUSHWORD_INSTALLER_TEST_DATABASE_URL:-}"
+CACHE_HASH=$(printf '%s\n%s' "$HASH_INPUT" "$INSTALLER_DATABASE_URL" | sha256sum | cut -d' ' -f1)
 CACHE_DIR="$CACHE_BASE/$CACHE_HASH"
 
 if [ "$QUIET" = false ]; then
@@ -120,9 +121,9 @@ else
     #    then post-update-cmd triggers PostInstall::runPostUpdate -> install.php)
     cd "$TEMP_DIR"
     if [ "$QUIET" = true ]; then
-        COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction > /dev/null 2>&1
+        PUSHWORD_DATABASE_URL="$INSTALLER_DATABASE_URL" COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction > /dev/null 2>&1
     else
-        COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction
+        PUSHWORD_DATABASE_URL="$INSTALLER_DATABASE_URL" COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction
     fi
 
     # 4. Copy enhanced test files

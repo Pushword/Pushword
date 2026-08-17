@@ -2,7 +2,8 @@
 
 namespace App\Tests;
 
-use PHPUnit\Framework\TestCase;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle;
 use Pushword\AdvancedMainImage\PushwordAdvancedMainImageBundle;
@@ -14,19 +15,25 @@ use Pushword\PageScanner\PushwordPageScannerBundle;
 use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
 use Pushword\TemplateEditor\PushwordTemplateEditorBundle;
 use Pushword\Version\PushwordVersionBundle;
-use SQLite3;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
  * Verifies that the Pushword installer correctly sets up a new project.
  * Run via: composer test-installer.
  */
-final class AppTest extends TestCase
+final class AppTest extends KernelTestCase
 {
     private static string $projectDir;
 
+    private static Connection $connection;
+
     public static function setUpBeforeClass(): void
     {
+        parent::setUpBeforeClass();
+
         self::$projectDir = \dirname(__DIR__);
+        self::bootKernel();
+        self::$connection = self::getContainer()->get(Connection::class);
     }
 
     public function testDataFixturesCopied(): void
@@ -36,46 +43,39 @@ final class AppTest extends TestCase
 
     public function testDatabaseExists(): void
     {
-        self::assertFileExists(self::$projectDir.'/var/app.db');
-        self::assertGreaterThan(0, filesize(self::$projectDir.'/var/app.db'));
+        self::assertSame(1, (int) self::$connection->fetchOne('SELECT 1'));
+
+        if (self::$connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            self::assertFileExists(self::$projectDir.'/var/app.db');
+            self::assertGreaterThan(0, filesize(self::$projectDir.'/var/app.db'));
+        }
     }
 
     public function testDatabaseHasData(): void
     {
-        $db = new SQLite3(self::$projectDir.'/var/app.db');
-
-        $pageCount = $db->querySingle('SELECT COUNT(*) FROM page');
+        $pageCount = self::$connection->fetchOne('SELECT COUNT(*) FROM page');
         self::assertGreaterThan(0, $pageCount, 'Page table should have at least one row');
 
-        $mediaCount = $db->querySingle('SELECT COUNT(*) FROM media');
+        $mediaCount = self::$connection->fetchOne('SELECT COUNT(*) FROM media');
         self::assertGreaterThan(0, $mediaCount, 'Media table should have at least one row');
-
-        $db->close();
     }
 
     public function testStarterContentIsTheDemoSetNotTheTestFixtures(): void
     {
-        $db = new SQLite3(self::$projectDir.'/var/app.db');
-
         $slugs = [];
-        $result = $db->query('SELECT slug, tags FROM page ORDER BY slug');
-        self::assertNotFalse($result);
-        while (false !== ($row = $result->fetchArray(\SQLITE3_ASSOC))) {
+        foreach (self::$connection->fetchAllAssociative('SELECT slug, tags FROM page ORDER BY slug') as $row) {
             $slugs[] = $row['slug'];
             self::assertStringContainsString('demo', (string) $row['tags'], $row['slug'].' should be removable with pw:page:delete --tag=demo');
         }
-
-        $db->close();
 
         self::assertSame(['contact', 'examples', 'getting-started', 'homepage'], $slugs);
     }
 
     public function testSuperAdminCreated(): void
     {
-        $db = new SQLite3(self::$projectDir.'/var/app.db');
-
-        $roles = $db->querySingle("SELECT roles FROM user WHERE email = 'admin@example.tld'");
-        $db->close();
+        $roles = self::$connection->fetchOne(
+            'SELECT roles FROM '.self::$connection->quoteIdentifier('user')." WHERE email = 'admin@example.tld'",
+        );
 
         self::assertIsString($roles, 'The installer should create admin@example.tld to log in with.');
         self::assertStringContainsString('ROLE_SUPER_ADMIN', $roles);
@@ -111,11 +111,17 @@ final class AppTest extends TestCase
         self::assertFileExists(self::$projectDir.'/public/build/manifest.json');
     }
 
-    public function testSqliteConfigured(): void
+    public function testRequestedDatabaseConfigured(): void
     {
         $content = file_get_contents(self::$projectDir.'/.env');
         self::assertNotFalse($content);
-        self::assertStringContainsString('sqlite:///%kernel.project_dir%/var/app.db', $content);
+        $requestedDatabaseUrl = getenv('PUSHWORD_INSTALLER_TEST_DATABASE_URL');
+        self::assertStringContainsString(
+            false !== $requestedDatabaseUrl && '' !== $requestedDatabaseUrl
+                ? $requestedDatabaseUrl
+                : 'sqlite:///%kernel.project_dir%/var/app.db',
+            $content,
+        );
     }
 
     public function testAppSecretGenerated(): void

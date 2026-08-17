@@ -381,7 +381,7 @@ configured either in TYPO3, and are paying for both.
    answers a procurement checklist.
 
 Also worth naming plainly rather than hiding in a footnote: **Pushword is still on
-`1.0.0-rc` after 1,174 releases**, English and French only, and targets SQLite and MariaDB
+`1.0.0-rc` after 1,174 releases**, English and French only, and targets SQLite, PostgreSQL and MariaDB
 rather than TYPO3's four database engines. If any of those is a blocker, it is a blocker.
 
 ---

@@ -7,6 +7,7 @@ use Pushword\Core\Command\SimpleBackupCommand;
 
 use function Safe\file_get_contents;
 
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -55,6 +56,14 @@ final class SimpleBackupCommandTest extends TestCase
 
         self::assertStringContainsString('Backup created: var/app.db~', $this->output->fetch());
         self::assertCount(1, $this->backupFiles());
+    }
+
+    public function testServerDatabaseIsRejectedBeforeAFileOperation(): void
+    {
+        $command = new SimpleBackupCommand(new Filesystem(), 'postgresql://localhost/pushword');
+
+        self::assertSame(Command::FAILURE, $command($this->output));
+        self::assertStringContainsString('supports SQLite databases only', $this->output->fetch());
     }
 
     public function testRestoreLastBackupOverwritesTheDatabase(): void

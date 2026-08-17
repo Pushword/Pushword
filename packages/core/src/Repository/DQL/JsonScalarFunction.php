@@ -3,6 +3,7 @@
 namespace Pushword\Core\Repository\DQL;
 
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\ORM\Query\AST\Functions\FunctionNode;
 use Doctrine\ORM\Query\AST\Node;
 use Doctrine\ORM\Query\Parser;
@@ -41,7 +42,17 @@ class JsonScalarFunction extends FunctionNode
     public function getSql(SqlWalker $sqlWalker): string
     {
         $column = $this->column instanceof Node ? $this->column->dispatch($sqlWalker) : $this->column;
-        $extract = \sprintf('JSON_EXTRACT(%s, %s)', $column, $this->path->dispatch($sqlWalker));
+        $path = $this->path->dispatch($sqlWalker);
+
+        if ($sqlWalker->getConnection()->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+            return \sprintf(
+                "JSON_EXTRACT_PATH_TEXT(%s, VARIADIC STRING_TO_ARRAY(SUBSTRING(%s FROM 3), '.'))",
+                $column,
+                $path,
+            );
+        }
+
+        $extract = \sprintf('JSON_EXTRACT(%s, %s)', $column, $path);
 
         if ($sqlWalker->getConnection()->getDatabasePlatform() instanceof AbstractMySQLPlatform) {
             return \sprintf('JSON_UNQUOTE(%s)', $extract);

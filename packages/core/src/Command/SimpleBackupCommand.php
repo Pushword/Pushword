@@ -13,6 +13,7 @@ final readonly class SimpleBackupCommand
 {
     public function __construct(
         private Filesystem $fs,
+        private string $databaseUrl = 'sqlite:///var/app.db',
     ) {
     }
 
@@ -23,6 +24,12 @@ final readonly class SimpleBackupCommand
         #[Option(description: 'Remove old backups, keeping only the most recent ones', name: 'clean')]
         bool $clean = false
     ): int {
+        if (! str_starts_with($this->databaseUrl, 'sqlite:')) {
+            $output->writeln('<error>pw:backup supports SQLite databases only. Use the backup tools provided by your database server.</error>');
+
+            return Command::FAILURE;
+        }
+
         if ($create) {
             $this->createBackup($output);
 
