@@ -6,12 +6,19 @@ use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Command\ImageManagerCommand;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Image\ImageCacheGenerator;
+use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\ImageReader;
 use Pushword\Core\Image\ImageScratchFile;
+use Pushword\Core\Image\ImageScratchSweeper;
+use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Tests\PathTrait;
 use ReflectionMethod;
 use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Lock\LockFactory;
@@ -398,6 +405,101 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         self::assertSame(1, $decoded['errors']);
         self::assertSame(0, $decoded['generated'], 'a master that cannot be read produced no derivative');
         self::assertSame(0, $decoded['skipped']);
+    }
+
+    /**
+     * The parallel count had the same shape the sequential one just lost: processed
+     * was $staleCount - count($errors), deduced from the batch size and never
+     * measured, so a worker that exited having done nothing was credited with its
+     * whole batch minus one. Here every worker dies at boot (a project dir with no
+     * bin/console), so the honest answer is zero — the old expression said N - 2.
+     */
+    public function testParallelCountsWhatTheWorkersReportedNotTheBatchSize(): void
+    {
+        self::bootKernel();
+
+        // More images than batches, or the deduction and the measure would agree.
+        $this->createMedia('cache-count-parallel-a.png', 'image/png');
+        $this->createMedia('cache-count-parallel-b.png', 'image/png');
+        $this->createMedia('cache-count-parallel-c.png', 'image/png');
+
+        $output = new BufferedOutput();
+        $this->waitForLockRelease();
+        $exitCode = $this->commandRunningFrom($this->getMediaDir())(
+            null,
+            new ArrayInput([]),
+            $output,
+            force: true,
+            parallel: 2,
+            format: 'agent',
+        );
+
+        self::assertSame(1, $exitCode, 'no worker ever ran, so the run failed');
+
+        $decoded = json_decode(trim($output->fetch()), true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame(0, $decoded['generated'], 'a worker reporting nothing processed nothing');
+        self::assertSame(0, $decoded['skipped']);
+        self::assertGreaterThanOrEqual(1, $decoded['errors']);
+
+        // And a human is told what went missing, not just that a batch failed.
+        $textOutput = new BufferedOutput();
+        $this->waitForLockRelease();
+        $this->commandRunningFrom($this->getMediaDir())(
+            null,
+            new ArrayInput([]),
+            $textOutput,
+            force: true,
+            parallel: 2,
+            format: 'text',
+        );
+
+        $display = $textOutput->fetch();
+        self::assertStringContainsString('never reported by the worker', $display);
+        self::assertStringContainsString('0 processed', $display);
+    }
+
+    /**
+     * A worker prints no summary, so the only way an image it could not process
+     * reaches the parent is the per-image line. The batch exiting non-zero is then
+     * explained and must not be counted a second time — one image, one error.
+     */
+    public function testParallelSurfacesAWorkerImageFailureByName(): void
+    {
+        $commandTester = $this->createCommandTester();
+        $this->createMedia('cache-count-parallel-vanished.png', 'image/png');
+        unlink($this->getMediaDir().'/cache-count-parallel-vanished.png');
+
+        $this->waitForLockRelease();
+        $exitCode = $commandTester->execute(['--parallel' => '2', '--force' => true, '--format' => 'text']);
+
+        $display = $commandTester->getDisplay();
+        self::assertSame(1, $exitCode);
+        self::assertStringContainsString('cache-count-parallel-vanished.png', $display, 'the failing image is named, not just its batch');
+        self::assertMatchesRegularExpression('/\d+ processed, \d+ skipped, 1 errored/', $display);
+    }
+
+    /**
+     * The same command, wired to another working directory. Its workers are real
+     * subprocesses launched from there, which is the only way to make one exit
+     * without doing its batch.
+     */
+    private function commandRunningFrom(string $projectDir): ImageManagerCommand
+    {
+        /** @var LockFactory $lockFactory */
+        $lockFactory = self::getContainer()->get('lock.factory');
+
+        return new ImageManagerCommand(
+            self::getContainer()->get(MediaRepository::class),
+            $this->getEntityManager(),
+            self::getContainer()->get(ImageCacheGenerator::class),
+            self::getContainer()->get(ImageCacheManager::class),
+            self::getContainer()->get(ImageReader::class),
+            self::getContainer()->get(ImageScratchSweeper::class),
+            $lockFactory,
+            $projectDir,
+            'test',
+        );
     }
 
     /**

@@ -181,6 +181,8 @@ final class ImageManagerCommand
             if ($media->isImage()) {
                 $progressBar?->setMessage($media->getPath());
 
+                $failure = null;
+
                 try {
                     if ($this->imageCacheGenerator->generateCache($media, $force)) {
                         ++$generated;
@@ -188,11 +190,19 @@ final class ImageManagerCommand
                         ++$skipped;
                     }
                 } catch (Throwable $exception) {
-                    $errors[] = $media->getFileName().': '.$exception->getMessage();
+                    // Flattened: the parent reads one image per line, and a multi-line
+                    // message would arrive as several unparsable ones.
+                    $failure = strtr($exception->getMessage(), ["\r" => ' ', "\n" => ' ']);
+                    $errors[] = $media->getFileName().': '.$failure;
                 }
 
                 if ($isWorker && ! $this->agentMode) {
-                    $output->writeln('DONE:'.$media->getFileName());
+                    // One line per image, outcome in the prefix: this is what the parent
+                    // counts instead of deducing its totals from the batch size, and the
+                    // only way a per-image failure reaches it — a worker prints no summary.
+                    $output->writeln(null === $failure
+                        ? 'DONE:'.$media->getFileName()
+                        : 'FAIL:'.$media->getFileName().': '.$failure);
                 }
             } else {
                 // A non-image never reaches generateCache(), so it lands in none of the
@@ -319,9 +329,10 @@ final class ImageManagerCommand
 
         $progressBar = $this->agentMode ? null : $this->createProgressBar($output, $staleCount);
 
-        /** @var array<int, array{process: Process, count: int, reported: int}> $running */
+        /** @var array<int, array{process: Process, count: int, done: int, failed: int, buffer: string}> $running */
         $running = [];
         $errors = [];
+        $processed = 0;
         $chunkIndex = 0;
 
         while ($chunkIndex < \count($chunks) || [] !== $running) {
@@ -334,48 +345,53 @@ final class ImageManagerCommand
                 $process->setTimeout(null);
                 $process->setIdleTimeout($this->workerIdleTimeout);
                 $process->start();
-                $running[] = ['process' => $process, 'count' => \count($chunk), 'reported' => 0];
+                $running[] = ['process' => $process, 'count' => \count($chunk), 'done' => 0, 'failed' => 0, 'buffer' => ''];
             }
 
             foreach ($running as $key => &$entry) {
-                $newOutput = $entry['process']->getIncrementalOutput();
-                if ('' !== $newOutput) {
-                    $lines = substr_count($newOutput, 'DONE:');
-                    if ($lines > 0) {
-                        $progressBar?->advance($lines);
-                        $entry['reported'] += $lines;
-                        if (1 === preg_match('/DONE:(.+)/', $newOutput, $m)) {
-                            $progressBar?->setMessage($m[1]);
-                        }
-                    }
-                }
+                $this->readWorkerLines($entry, $errors, $progressBar, final: false);
 
                 try {
                     // Process enforces setIdleTimeout() only here — never in isRunning().
                     $entry['process']->checkTimeout();
                 } catch (ProcessTimedOutException) {
-                    $remaining = $entry['count'] - $entry['reported'];
-                    if ($remaining > 0) {
-                        $progressBar?->advance($remaining);
-                    }
-
-                    $errors[] = \sprintf('batch: worker killed after %gs without output, %d image(s) not processed', $this->workerIdleTimeout, $remaining);
+                    $unreported = $this->advanceOverUnreported($entry, $progressBar);
+                    $errors[] = \sprintf('batch: worker killed after %gs without output, %d image(s) not processed', $this->workerIdleTimeout, $unreported);
+                    $processed += $entry['done'];
                     unset($running[$key]);
 
                     continue;
                 }
 
                 if (! $entry['process']->isRunning()) {
-                    $remaining = $entry['count'] - $entry['reported'];
-                    if ($remaining > 0) {
-                        $progressBar?->advance($remaining);
-                    }
+                    // The worker may have written its last lines between the read above
+                    // and its exit; they are images it did, so they must be read here.
+                    $this->readWorkerLines($entry, $errors, $progressBar, final: true);
+                    $unreported = $this->advanceOverUnreported($entry, $progressBar);
 
-                    if (! $entry['process']->isSuccessful()) {
+                    // A per-image failure already carries its own message and explains a
+                    // non-zero exit; only an otherwise unexplained one needs a reason.
+                    $reason = null;
+                    if (! $entry['process']->isSuccessful() && 0 === $entry['failed']) {
                         $stderr = trim($entry['process']->getErrorOutput());
-                        $errors[] = 'batch: '.('' !== $stderr ? $stderr : 'exit code '.$entry['process']->getExitCode());
+                        $reason = '' !== $stderr ? $stderr : 'exit code '.$entry['process']->getExitCode();
                     }
 
+                    if ($unreported > 0) {
+                        // Silence is not success. A worker exiting 0 without a line per
+                        // image did none of the missing ones — the batch travels as one
+                        // comma-joined argument, so a name holding a comma resolves to
+                        // nothing and the whole batch used to be counted as done.
+                        $errors[] = \sprintf(
+                            'batch: %d image(s) never reported by the worker%s',
+                            $unreported,
+                            null !== $reason ? ' ('.$reason.')' : '',
+                        );
+                    } elseif (null !== $reason) {
+                        $errors[] = 'batch: '.$reason;
+                    }
+
+                    $processed += $entry['done'];
                     unset($running[$key]);
                 }
             }
@@ -390,15 +406,68 @@ final class ImageManagerCommand
         $progressBar?->finish();
 
         if ($this->agentMode) {
-            $this->reportAgentSummary($output, $staleCount - \count($errors), $preSkipped, $errors, $startTime);
+            $this->reportAgentSummary($output, $processed, $preSkipped, $errors, $startTime);
 
             return [] === $errors ? Command::SUCCESS : Command::FAILURE;
         }
 
-        $this->reportSummary($io, $staleCount - \count($errors), $preSkipped, \count($errors), $startTime);
+        $this->reportSummary($io, $processed, $preSkipped, \count($errors), $startTime);
         $this->reportErrors($errors, $io);
 
         return [] === $errors ? Command::SUCCESS : Command::FAILURE;
+    }
+
+    /**
+     * Consume the complete lines a worker has written since the last read: one per
+     * image it finished, DONE: or FAIL:. A partial line is kept in the buffer —
+     * getIncrementalOutput() cuts wherever the pipe was drained, and counting
+     * markers in the raw chunk loses (or doubles) an image split across two reads.
+     *
+     * @param array{process: Process, count: int, done: int, failed: int, buffer: string} $entry
+     * @param string[]                                                                    $errors
+     */
+    private function readWorkerLines(array &$entry, array &$errors, ?ProgressBar $progressBar, bool $final): void
+    {
+        $entry['buffer'] .= $entry['process']->getIncrementalOutput();
+        if ($final && '' !== $entry['buffer']) {
+            $entry['buffer'] .= "\n"; // the process is over: whatever is left is a whole line
+        }
+
+        $advance = 0;
+        while (false !== ($eol = strpos($entry['buffer'], "\n"))) {
+            $line = rtrim(substr($entry['buffer'], 0, $eol), "\r");
+            $entry['buffer'] = substr($entry['buffer'], $eol + 1);
+
+            if (str_starts_with($line, 'DONE:')) {
+                ++$entry['done'];
+                ++$advance;
+                $progressBar?->setMessage(substr($line, 5));
+            } elseif (str_starts_with($line, 'FAIL:')) {
+                ++$entry['failed'];
+                ++$advance;
+                $errors[] = substr($line, 5);
+            }
+        }
+
+        if ($advance > 0) {
+            $progressBar?->advance($advance);
+        }
+    }
+
+    /**
+     * Images of the batch the worker never accounted for. The progress bar still
+     * has to reach its max, but they are not work anyone did.
+     *
+     * @param array{process: Process, count: int, done: int, failed: int, buffer: string} $entry
+     */
+    private function advanceOverUnreported(array $entry, ?ProgressBar $progressBar): int
+    {
+        $unreported = $entry['count'] - $entry['done'] - $entry['failed'];
+        if ($unreported > 0) {
+            $progressBar?->advance($unreported);
+        }
+
+        return max(0, $unreported);
     }
 
     private function createProgressBar(OutputInterface $output, int $max): ProgressBar
