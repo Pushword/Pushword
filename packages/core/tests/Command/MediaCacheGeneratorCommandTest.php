@@ -22,6 +22,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Process\Process;
 
 #[Group('integration')]
 final class MediaCacheGeneratorCommandTest extends KernelTestCase
@@ -67,12 +68,19 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
     public function testParallelExecution(): void
     {
         $commandTester = $this->createCommandTester();
+        $expected = $this->countImageMedias();
 
         $this->waitForLockRelease();
         $commandTester->execute(['--parallel' => '2', '--force' => true, '--format' => 'text']);
 
-        self::assertStringContainsString('100%', $commandTester->getDisplay());
-        self::assertStringContainsString('worker(s)', $commandTester->getDisplay());
+        $display = $commandTester->getDisplay();
+        self::assertStringContainsString('100%', $display);
+        self::assertStringContainsString('worker(s)', $display);
+
+        // The count is now taken from what the workers report, so it can under-count
+        // as easily as it used to over-count: every image a batch finished has to
+        // survive the read of its closing pipe.
+        self::assertStringContainsString($expected.' processed, 0 skipped, 0 errored', $display);
     }
 
     /**
@@ -477,6 +485,80 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         self::assertSame(1, $exitCode);
         self::assertStringContainsString('cache-count-parallel-vanished.png', $display, 'the failing image is named, not just its batch');
         self::assertMatchesRegularExpression('/\d+ processed, \d+ skipped, 1 errored/', $display);
+    }
+
+    /**
+     * A worker line cut in two by the read. getIncrementalOutput() returns whatever
+     * had reached the pipe, so the parent keeps the tail and counts complete lines
+     * only — counting markers in the raw chunk drops the image whose line was split,
+     * and a dropped image is now reported as never processed: a false alarm on a
+     * batch that did its work. Two finished processes stand in for two reads of one
+     * worker; timing a live one's fragmentation would make this a race.
+     */
+    public function testAWorkerLineSplitAcrossTwoReadsIsCountedOnce(): void
+    {
+        self::bootKernel();
+        $command = self::getContainer()->get(ImageManagerCommand::class);
+
+        $entry = $this->workerEntry($this->finishedProcess('echo "DONE:a.png\nDON";'));
+        $errors = [];
+
+        $this->readOneWorker($command, $entry, $errors, final: false);
+
+        self::assertSame(1, $entry['done'], 'a half-written line is not an image yet');
+        self::assertSame('DON', $entry['buffer'], 'and it is kept for the next read');
+
+        // The rest of the cut line, a failure, and a line that is neither.
+        $entry['process'] = $this->finishedProcess('echo "E:b.png\nFAIL:c.png: boom\nsomething else\n";');
+        $this->readOneWorker($command, $entry, $errors, final: true);
+
+        self::assertSame(2, $entry['done'], 'the line cut in two is one image, counted once');
+        self::assertSame(1, $entry['failed']);
+        self::assertSame(['c.png: boom'], $errors, 'a failure arrives named; anything else is not a count');
+    }
+
+    /** A worker's whole output, ready to be read in one go. */
+    private function finishedProcess(string $phpCode): Process
+    {
+        $process = new Process(['php', '-r', $phpCode]);
+        $process->run();
+
+        return $process;
+    }
+
+    /**
+     * What the scheduling loop tracks per running worker.
+     *
+     * @return array{process: Process, count: int, done: int, failed: int, buffer: string}
+     */
+    private function workerEntry(Process $process): array
+    {
+        return ['process' => $process, 'count' => 3, 'done' => 0, 'failed' => 0, 'buffer' => ''];
+    }
+
+    /**
+     * One read of a worker's pipe, as the scheduling loop does it.
+     *
+     * @param array{process: Process, count: int, done: int, failed: int, buffer: string} $entry
+     * @param string[]                                                                    $errors
+     */
+    private function readOneWorker(ImageManagerCommand $command, array &$entry, array &$errors, bool $final): void
+    {
+        $args = [&$entry, &$errors, null, $final];
+        new ReflectionMethod(ImageManagerCommand::class, 'readWorkerLines')->invokeArgs($command, $args);
+    }
+
+    /** Images in this worker's library — what a forced run has to report as processed. */
+    private function countImageMedias(): int
+    {
+        $images = 0;
+        foreach (self::getContainer()->get(MediaRepository::class)->findAll() as $media) {
+            if ($media->isImage()) {
+                ++$images;
+            }
+        }
+
+        return $images;
     }
 
     /**

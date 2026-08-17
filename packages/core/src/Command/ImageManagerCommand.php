@@ -41,8 +41,17 @@ final class ImageManagerCommand
     private const int CHUNK_MAX = 200;
 
     /**
+     * The line a worker prints per image, and what the parent counts. A worker prints
+     * no summary, so the prefix is also the only way the outcome of a single image
+     * reaches the run.
+     */
+    private const string MARKER_DONE = 'DONE:';
+
+    private const string MARKER_FAIL = 'FAIL:';
+
+    /**
      * Killed after this long *without output*, not this long in total: a worker
-     * prints DONE: per image, so silence means stuck, while a wall-clock cap would
+     * prints a line per image, so silence means stuck, while a wall-clock cap would
      * kill a large batch that is progressing perfectly well. Property, not const,
      * so tests can shrink it through reflection.
      */
@@ -197,12 +206,9 @@ final class ImageManagerCommand
                 }
 
                 if ($isWorker && ! $this->agentMode) {
-                    // One line per image, outcome in the prefix: this is what the parent
-                    // counts instead of deducing its totals from the batch size, and the
-                    // only way a per-image failure reaches it — a worker prints no summary.
                     $output->writeln(null === $failure
-                        ? 'DONE:'.$media->getFileName()
-                        : 'FAIL:'.$media->getFileName().': '.$failure);
+                        ? self::MARKER_DONE.$media->getFileName()
+                        : self::MARKER_FAIL.$media->getFileName().': '.$failure);
                 }
             } else {
                 // A non-image never reaches generateCache(), so it lands in none of the
@@ -368,27 +374,9 @@ final class ImageManagerCommand
                     // and its exit; they are images it did, so they must be read here.
                     $this->readWorkerLines($entry, $errors, $progressBar, final: true);
                     $unreported = $this->advanceOverUnreported($entry, $progressBar);
-
-                    // A per-image failure already carries its own message and explains a
-                    // non-zero exit; only an otherwise unexplained one needs a reason.
-                    $reason = null;
-                    if (! $entry['process']->isSuccessful() && 0 === $entry['failed']) {
-                        $stderr = trim($entry['process']->getErrorOutput());
-                        $reason = '' !== $stderr ? $stderr : 'exit code '.$entry['process']->getExitCode();
-                    }
-
-                    if ($unreported > 0) {
-                        // Silence is not success. A worker exiting 0 without a line per
-                        // image did none of the missing ones — the batch travels as one
-                        // comma-joined argument, so a name holding a comma resolves to
-                        // nothing and the whole batch used to be counted as done.
-                        $errors[] = \sprintf(
-                            'batch: %d image(s) never reported by the worker%s',
-                            $unreported,
-                            null !== $reason ? ' ('.$reason.')' : '',
-                        );
-                    } elseif (null !== $reason) {
-                        $errors[] = 'batch: '.$reason;
+                    $batchError = $this->describeIncompleteBatch($entry, $unreported);
+                    if (null !== $batchError) {
+                        $errors[] = $batchError;
                     }
 
                     $processed += $entry['done'];
@@ -438,20 +426,50 @@ final class ImageManagerCommand
             $line = rtrim(substr($entry['buffer'], 0, $eol), "\r");
             $entry['buffer'] = substr($entry['buffer'], $eol + 1);
 
-            if (str_starts_with($line, 'DONE:')) {
+            if (str_starts_with($line, self::MARKER_DONE)) {
                 ++$entry['done'];
                 ++$advance;
-                $progressBar?->setMessage(substr($line, 5));
-            } elseif (str_starts_with($line, 'FAIL:')) {
+                $progressBar?->setMessage(substr($line, \strlen(self::MARKER_DONE)));
+            } elseif (str_starts_with($line, self::MARKER_FAIL)) {
                 ++$entry['failed'];
                 ++$advance;
-                $errors[] = substr($line, 5);
+                $errors[] = substr($line, \strlen(self::MARKER_FAIL));
             }
         }
 
         if ($advance > 0) {
             $progressBar?->advance($advance);
         }
+    }
+
+    /**
+     * What a finished batch has to answer for, or null when it accounted for every
+     * image and exited clean. Silence is not success: a worker exiting 0 without a
+     * line per image did none of the missing ones — the batch travels as one
+     * comma-joined argument, so a fileName holding a comma resolves to nothing, and
+     * the whole batch used to be counted as done.
+     *
+     * @param array{process: Process, count: int, done: int, failed: int, buffer: string} $entry
+     */
+    private function describeIncompleteBatch(array $entry, int $unreported): ?string
+    {
+        // A per-image failure already carries its own message and explains a non-zero
+        // exit; only an otherwise unexplained one needs a reason.
+        $reason = null;
+        if (! $entry['process']->isSuccessful() && 0 === $entry['failed']) {
+            $stderr = trim($entry['process']->getErrorOutput());
+            $reason = '' !== $stderr ? $stderr : 'exit code '.$entry['process']->getExitCode();
+        }
+
+        if ($unreported > 0) {
+            return \sprintf(
+                'batch: %d image(s) never reported by the worker%s',
+                $unreported,
+                null !== $reason ? ' ('.$reason.')' : '',
+            );
+        }
+
+        return null !== $reason ? 'batch: '.$reason : null;
     }
 
     /**
