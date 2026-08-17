@@ -103,6 +103,10 @@ The benchmark suite is opt-in (excluded from CI via the `benchmark` group):
 vendor/bin/phpunit --group benchmark
 ```
 
+For the database comparison runner, exact methodology and the latest published
+SQLite, MariaDB and PostgreSQL measurements, see [Database and pipeline
+benchmarks](/database-benchmarks).
+
 It covers static generation, repository cache warmup, search reindex, and the
 worker-vs-FPM comparison. The structural query-count guards
 (`packages/core/tests/Perf/`, `packages/admin/tests/Perf/`) run in normal CI and

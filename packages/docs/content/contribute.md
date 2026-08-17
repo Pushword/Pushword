@@ -92,8 +92,33 @@ engines over 100, 1,000 and 10,000 pages:
 composer bench-databases
 ```
 
-The benchmark reports write time plus indexed slug lookups, JSON tag filtering, numeric
-JSON filtering and a sorted list. Change the volume ladder or DSNs when needed:
+See the [benchmark methodology and reference results](/database-benchmarks) for a
+dated SQLite, MariaDB and PostgreSQL comparison.
+
+The benchmark first reports write time plus indexed slug lookups, JSON tag filtering,
+numeric JSON filtering and a sorted list. A second table uses deterministic synthetic
+fixtures for two application workloads:
+
+- a multisite, multilingual editorial corpus with parent and translation relations,
+  repeated page lists, internal-link resolution and content-sized rows;
+- a filterable catalogue with tag dimensions, numeric JSON ranges, sorting, facets and
+  a content-export read pass.
+
+It then runs three end-to-end Pushword pipelines over 100 and 1,000 synthetic pages:
+
+- `pw:page-scan --skip-external` over an internal-link graph;
+- `pw:static --workers=1`, including HTML rendering and filesystem writes;
+- authenticated EasyAdmin list, pagination, search, host filter and sort requests.
+
+Pipeline results include duration, throughput, SQL query count and peak memory. Keep
+the default pipeline ladder short for routine comparisons; opt into 10,000 pages when
+the longer render-and-scan pass is useful:
+
+```shell
+PUSHWORD_BENCH_PIPELINE_VOLUMES=100,1000,10000 composer bench-databases
+```
+
+No production content or configuration is used. Change the volume ladder or DSNs when needed:
 
 ```shell
 PUSHWORD_BENCH_VOLUMES=1000,10000,50000 \

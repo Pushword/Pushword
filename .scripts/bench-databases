@@ -4,10 +4,13 @@ set -o pipefail
 
 MONOREPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BENCH_VOLUMES="${PUSHWORD_BENCH_VOLUMES:-100,1000,10000}"
+PIPELINE_VOLUMES="${PUSHWORD_BENCH_PIPELINE_VOLUMES:-100,1000}"
 MYSQL_URL="${PUSHWORD_BENCH_MYSQL_URL:-mysql://pushword:pushword@127.0.0.1:3306/pushword_test_bench?serverVersion=11.8.6-MariaDB&charset=utf8mb4}"
 POSTGRESQL_URL="${PUSHWORD_BENCH_POSTGRESQL_URL:-postgresql://pushword:pushword@127.0.0.1:5432/pushword_test_bench?serverVersion=17&charset=utf8}"
 BENCH_TMP_DIR="$(mktemp -d)"
-RESULTS_FILE="$BENCH_TMP_DIR/results.jsonl"
+VOLUME_RESULTS_FILE="$BENCH_TMP_DIR/volume-results.jsonl"
+WORKLOAD_RESULTS_FILE="$BENCH_TMP_DIR/workload-results.jsonl"
+PIPELINE_RESULTS_FILE="$BENCH_TMP_DIR/pipeline-results.jsonl"
 
 cleanup() {
     if [ -n "$BENCH_TMP_DIR" ] && [ -d "$BENCH_TMP_DIR" ]; then
@@ -24,21 +27,25 @@ run_benchmark() {
     local log_file="$BENCH_TMP_DIR/$engine.log"
 
     echo ""
-    echo "== $engine: $BENCH_VOLUMES pages =="
+    echo "== $engine: database $BENCH_VOLUMES pages; pipelines $PIPELINE_VOLUMES pages =="
 
     if [ -n "$database_url" ]; then
         TEST_RUN_ID="database-bench-$engine-$$" \
         PUSHWORD_BENCH_VOLUMES="$BENCH_VOLUMES" \
+        PUSHWORD_BENCH_PIPELINE_VOLUMES="$PIPELINE_VOLUMES" \
         PUSHWORD_TEST_DATABASE_BASE_URL="$database_url" \
-            ./.scripts/test --benchmark DatabaseVolumeBenchmarkTest 2>&1 | tee "$log_file"
+            ./.scripts/test --benchmark '(Database(Volume|Workload)BenchmarkTest|PageScannerDatabaseBenchmarkTest|StaticGeneratorBenchmarkTest|AdminDatabaseBenchmarkTest)' 2>&1 | tee "$log_file"
     else
         env -u PUSHWORD_TEST_DATABASE_BASE_URL -u PUSHWORD_TEST_MYSQL_URL \
             TEST_RUN_ID="database-bench-$engine-$$" \
             PUSHWORD_BENCH_VOLUMES="$BENCH_VOLUMES" \
-            ./.scripts/test --benchmark DatabaseVolumeBenchmarkTest 2>&1 | tee "$log_file"
+            PUSHWORD_BENCH_PIPELINE_VOLUMES="$PIPELINE_VOLUMES" \
+            ./.scripts/test --benchmark '(Database(Volume|Workload)BenchmarkTest|PageScannerDatabaseBenchmarkTest|StaticGeneratorBenchmarkTest|AdminDatabaseBenchmarkTest)' 2>&1 | tee "$log_file"
     fi
 
-    sed -n 's/^\[DATABASE_BENCHMARK\] //p' "$log_file" >> "$RESULTS_FILE"
+    sed -n 's/^\[DATABASE_BENCHMARK\] //p' "$log_file" >> "$VOLUME_RESULTS_FILE"
+    sed -n 's/^\[DATABASE_WORKLOAD_BENCHMARK\] //p' "$log_file" >> "$WORKLOAD_RESULTS_FILE"
+    sed -n 's/^\[DATABASE_PIPELINE_BENCHMARK\] //p' "$log_file" >> "$PIPELINE_RESULTS_FILE"
 }
 
 run_benchmark sqlite ""
@@ -83,4 +90,74 @@ foreach ($rows as $row) {
         $ratio,
     );
 }
-' "$RESULTS_FILE"
+' "$VOLUME_RESULTS_FILE"
+
+php -r '
+$rows = [];
+foreach (file($argv[1], FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+    $row = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+    $row["workload_ms"] = $row["editorial_ms"] + $row["catalog_ms"] + $row["facets_ms"] + $row["export_ms"];
+    $rows[] = $row;
+}
+
+$order = ["sqlite" => 0, "mysql" => 1, "mariadb" => 1, "postgresql" => 2];
+usort($rows, static fn (array $a, array $b): int => [$a["volume"], $order[$a["platform"]] ?? 9] <=> [$b["volume"], $order[$b["platform"]] ?? 9]);
+$sqliteWorkloads = [];
+foreach ($rows as $row) {
+    if ("sqlite" === $row["platform"]) {
+        $sqliteWorkloads[$row["volume"]] = $row["workload_ms"];
+    }
+}
+
+echo "\n## Synthetic application workload comparison\n\n";
+echo "Medians over three runs. Lower is better. Fixtures are deterministic and contain no production data.\n\n";
+echo "| Pages | Engine | Rich seed ms | Editorial batch ms | Catalogue filters ms | Facets ms | Content export ms | Workload / SQLite |\n";
+echo "|---:|---|---:|---:|---:|---:|---:|---:|\n";
+foreach ($rows as $row) {
+    $baseline = $sqliteWorkloads[$row["volume"]] ?? 0.0;
+    $ratio = $baseline > 0.0 ? $row["workload_ms"] / $baseline : 0.0;
+    printf(
+        "| %s | %s | %.1f | %.2f (%d q) | %.2f (%d q) | %.2f (%d q) | %.2f | %.2fx |\n",
+        number_format($row["volume"], thousands_separator: " "),
+        $row["platform"],
+        $row["write_ms"],
+        $row["editorial_ms"],
+        $row["editorial_queries"],
+        $row["catalog_ms"],
+        $row["catalog_queries"],
+        $row["facets_ms"],
+        $row["facet_queries"],
+        $row["export_ms"],
+        $ratio,
+    );
+}
+' "$WORKLOAD_RESULTS_FILE"
+
+php -r '
+$rows = [];
+foreach (file($argv[1], FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+    $rows[] = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+}
+
+$scenarioOrder = ["page-scan" => 0, "static" => 1, "easyadmin" => 2];
+$engineOrder = ["sqlite" => 0, "mysql" => 1, "mariadb" => 1, "postgresql" => 2];
+usort($rows, static fn (array $a, array $b): int => [$scenarioOrder[$a["scenario"]] ?? 9, $a["volume"], $engineOrder[$a["platform"]] ?? 9] <=> [$scenarioOrder[$b["scenario"]] ?? 9, $b["volume"], $engineOrder[$b["platform"]] ?? 9]);
+
+echo "\n## End-to-end Pushword pipeline comparison\n\n";
+echo "Real commands and authenticated HTTP requests over deterministic synthetic content. Lower duration is better.\n\n";
+echo "| Scenario | Pages | Engine | Duration ms | Throughput | SQL queries | Peak memory MB |\n";
+echo "|---|---:|---|---:|---:|---:|---:|\n";
+foreach ($rows as $row) {
+    printf(
+        "| %s | %s | %s | %.1f | %.1f %s/s | %d | %.1f |\n",
+        $row["scenario"],
+        number_format($row["volume"], thousands_separator: " "),
+        $row["platform"],
+        $row["duration_ms"],
+        $row["operations_per_second"],
+        $row["operation"],
+        $row["queries"],
+        $row["memory_peak_mb"],
+    );
+}
+' "$PIPELINE_RESULTS_FILE"
