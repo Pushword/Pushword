@@ -4,6 +4,7 @@ namespace Pushword\Core\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Command\SimpleBackupCommand;
+use Pushword\Core\Service\SqliteBackupManager;
 
 use function Safe\file_get_contents;
 
@@ -38,7 +39,7 @@ final class SimpleBackupCommandTest extends TestCase
 
         chdir($this->workingDir);
 
-        $this->command = new SimpleBackupCommand($filesystem);
+        $this->command = new SimpleBackupCommand(new SqliteBackupManager($filesystem));
         $this->output = new BufferedOutput();
     }
 
@@ -58,9 +59,25 @@ final class SimpleBackupCommandTest extends TestCase
         self::assertCount(1, $this->backupFiles());
     }
 
+    public function testCreateAutomaticallyKeepsTheTenMostRecentBackups(): void
+    {
+        foreach (range(0, 9) as $index) {
+            $stamp = \sprintf('200001%02d000000', $index + 1);
+            new Filesystem()->dumpFile($this->workingDir.'/var/app.db~'.$stamp, $stamp);
+        }
+
+        $this->command->createBackup();
+
+        self::assertCount(SqliteBackupManager::AUTOMATIC_RETENTION, $this->backupFiles());
+        self::assertFileDoesNotExist($this->workingDir.'/var/app.db~20000101000000');
+    }
+
     public function testServerDatabaseIsRejectedBeforeAFileOperation(): void
     {
-        $command = new SimpleBackupCommand(new Filesystem(), 'postgresql://localhost/pushword');
+        $command = new SimpleBackupCommand(new SqliteBackupManager(
+            new Filesystem(),
+            databaseUrl: 'postgresql://localhost/pushword',
+        ));
 
         self::assertSame(Command::FAILURE, $command($this->output));
         self::assertStringContainsString('supports SQLite databases only', $this->output->fetch());

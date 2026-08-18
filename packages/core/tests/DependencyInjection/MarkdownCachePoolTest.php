@@ -3,11 +3,13 @@
 namespace Pushword\Core\Tests\DependencyInjection;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Cache\SelfCleaningCachePool;
 use ReflectionProperty;
 
 use function Safe\realpath;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Cache\Adapter\AbstractAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Adapter\TraceableAdapter;
 
@@ -26,13 +28,23 @@ final class MarkdownCachePoolTest extends KernelTestCase
         $pool = self::getContainer()->get('cache.pushword_markdown');
 
         $adapter = $pool;
-        while ($adapter instanceof TraceableAdapter) {
-            $adapter = $adapter->getPool();
+        $selfCleaning = false;
+        while ($adapter instanceof TraceableAdapter || $adapter instanceof SelfCleaningCachePool) {
+            if ($adapter instanceof TraceableAdapter) {
+                $adapter = $adapter->getPool();
+
+                continue;
+            }
+
+            $selfCleaning = true;
+            $adapter = new ReflectionProperty(SelfCleaningCachePool::class, 'pool')->getValue($adapter);
         }
 
+        self::assertTrue($selfCleaning);
         self::assertInstanceOf(FilesystemAdapter::class, $adapter);
         $directory = new ReflectionProperty(FilesystemAdapter::class, 'directory')->getValue($adapter);
         self::assertIsString($directory);
+        self::assertSame(2592000, new ReflectionProperty(AbstractAdapter::class, 'defaultLifetime')->getValue($adapter));
 
         /** @var string $cacheDir */
         $cacheDir = self::getContainer()->getParameter('kernel.cache_dir');

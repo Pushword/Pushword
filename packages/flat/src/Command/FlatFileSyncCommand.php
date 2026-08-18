@@ -6,6 +6,7 @@ use Pushword\Core\Command\AgentOutputTrait;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
 use Pushword\Core\Service\SharedOutputInterface;
+use Pushword\Core\Service\SqliteBackupManager;
 use Pushword\Core\Service\TeeOutput;
 use Pushword\Flat\FlatFileSync;
 use Pushword\Flat\Service\DeferredExportProcessor;
@@ -20,7 +21,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 #[AsCommand(
@@ -47,10 +47,9 @@ final class FlatFileSyncCommand
         private readonly ProcessOutputStorage $outputStorage,
         private readonly FlatLockManager $lockManager,
         private readonly FlatChangeDetector $changeDetector,
-        private readonly Filesystem $filesystem,
+        private readonly SqliteBackupManager $backupManager,
         private readonly DeferredExportProcessor $deferredExportProcessor,
         private readonly GitAutoCommitter $gitAutoCommitter,
-        private readonly string $databaseUrl = 'sqlite:///var/app.db',
     ) {
     }
 
@@ -89,7 +88,7 @@ final class FlatFileSyncCommand
         }
 
         $willImport = 'import' === $mode || 'auto' === $mode;
-        if ($willImport && $backup && ! str_starts_with($this->databaseUrl, 'sqlite:')) {
+        if ($willImport && $backup && ! $this->backupManager->isSupported()) {
             $message = 'The --backup option supports SQLite databases only. Back up the database server first, then rerun without --backup.';
             if ($this->agentMode) {
                 $this->writeAgentJson($output, ['tool' => 'pw:flat:sync', 'result' => 'failed', 'message' => $message]);
@@ -167,9 +166,8 @@ final class FlatFileSyncCommand
             $this->flatFileSync->setStopwatch($this->stopWatch);
 
             // Backup database before import (unless disabled)
-            if ($willImport && $backup && $this->filesystem->exists('var/app.db')) {
-                $backupFileName = 'var/app.db~'.date('YmdHis');
-                $this->filesystem->copy('var/app.db', $backupFileName);
+            if ($willImport && $backup && $this->backupManager->databaseExists()) {
+                $backupFileName = $this->backupManager->create();
                 if (! $this->agentMode) {
                     $teeOutput->writeln(\sprintf('<comment>Database backup created: %s</comment>', $backupFileName));
                 }

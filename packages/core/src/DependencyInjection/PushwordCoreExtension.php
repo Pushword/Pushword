@@ -21,6 +21,8 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
 {
     use ExtensionTrait;
 
+    private const int MARKDOWN_CACHE_LIFETIME = 2592000;
+
     private string $configFolder = __DIR__.'/../Resources/config';
 
     /**
@@ -67,8 +69,9 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
      * Dedicated filesystem pool for cached markdown→HTML fragments. Uses
      * filesystem (not cache.app, which is often APCu) so the cache persists
      * across CLI invocations — e.g. pw:page-scan — as well as web requests.
-     * Fragments never expire on their own; they are keyed on a version token
-     * that changes when the rendering inputs change.
+     * Fragments expire after 30 days and the pool opportunistically prunes itself
+     * once a day, driven by normal reads and writes. They are keyed on a version
+     * token that changes when the rendering inputs change.
      *
      * The backing directory lives NEXT TO kernel.cache_dir, not inside it:
      * cache:clear (and so every deploy) wipes the cache dir, and these
@@ -85,7 +88,7 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
             ->setAbstract(true)
             ->setArguments([
                 '',
-                0,
+                self::MARKDOWN_CACHE_LIFETIME,
                 '%kernel.cache_dir%/../pushword-pools',
                 new Reference('cache.default_marshaller', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
             ])
@@ -97,7 +100,7 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
                 'pools' => [
                     'cache.pushword_markdown' => [
                         'adapter' => 'pushword.cache.adapter.persistent_filesystem',
-                        'default_lifetime' => 0,
+                        'default_lifetime' => self::MARKDOWN_CACHE_LIFETIME,
                     ],
                 ],
             ],

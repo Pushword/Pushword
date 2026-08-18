@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'the Markdown cache expires old fragments; SQLite backups retain ten copies'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,13 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`, `pushword/flat`
+
+## The Markdown cache cleans itself
+
+Cached Markdown and TOC fragments now expire after 30 days and are pruned daily during normal traffic. The first cache access clears legacy fragments that had no expiration. Nothing to do.
+
+## SQLite backup retention is automatic
+
+Creating `var/app.db~…` through `pw:backup --create`, `pw:flat:sync --backup`, or `bulkContentEdit` now keeps the ten newest backups and removes older copies. Nothing to do.

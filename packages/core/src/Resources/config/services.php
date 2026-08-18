@@ -4,6 +4,7 @@ use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use PiedWeb\RenderAttributes\TwigExtension;
 use Pushword\Core\BackgroundTask\MessengerBackgroundTaskDispatcher;
 use Pushword\Core\BackgroundTask\RunCommandHandler;
+use Pushword\Core\Cache\SelfCleaningCachePool;
 use Pushword\Core\Command\SchemaDumpCommand;
 use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
 use Pushword\Core\Component\EntityFilter\FilterRegistry;
@@ -108,6 +109,13 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(ContentPipelineFactory::class)
         ->public();
+
+    $services->set(SelfCleaningCachePool::class)
+        ->decorate('cache.pushword_markdown')
+        ->args([
+            service('.inner'),
+            '%kernel.cache_dir%/../pushword-pools/.maintenance/%kernel.environment%',
+        ]);
 
     $services->set(MediaExtension::class)
         ->public();

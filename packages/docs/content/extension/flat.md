@@ -440,7 +440,10 @@ Running sync twice in a row with no changes produces **zero operations**:
 Pass `--backup` to back up the SQLite database before an import:
 
 - Backup file: `var/app.db~YYYYMMDDHHMMSS`
+- The ten most recent backups are kept automatically; older ones are removed after a successful backup
 - To restore: copy the backup file back to `var/app.db`
+
+`php bin/console pw:backup --clean` remains available when you want to keep only the newest backup immediately.
 
 The option fails before importing when Doctrine uses PostgreSQL or MariaDB. Create a
 backup with the database server's own tools, then run the sync without `--backup`.
