@@ -80,6 +80,21 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         }
     }
 
+    public function testTheCampaignIndexShowsItsAudience(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $this->campaign($audience, 'Audience on index');
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign');
+
+        self::assertSame(200, $client->getResponse()->getStatusCode());
+        $audienceLink = $crawler->filter('td.field-association a[href$="/admin/newsletter/audience/'.$audience->id.'"]');
+        self::assertCount(1, $audienceLink);
+        self::assertSame('Admin test', $audienceLink->text());
+    }
+
     /**
      * The switch that sends without a way off the list exists at three levels,
      * and it is worth nothing on a form nobody can reach it from.

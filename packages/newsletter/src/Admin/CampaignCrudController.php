@@ -163,7 +163,7 @@ class CampaignCrudController extends AbstractCrudController
             ->setHelp('newsletter.campaign.field.translations.help');
 
         yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users');
-        yield AssociationField::new('audience', 'newsletter.campaign.field.audience')->hideOnIndex();
+        yield AssociationField::new('audience', 'newsletter.campaign.field.audience');
         yield CriteriaField::new('segmentAsJson', 'newsletter.campaign.field.segment', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(6)
             ->setHelp('newsletter.campaign.field.segment.help');
