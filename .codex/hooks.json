@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/home/robin/localhost/Pushword/.codex/hooks/guard-git.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}
