@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc888](/upgrade/rc888) | `core` `flat` | the Markdown cache expires old fragments; SQLite backups retain ten copies |
 | [rc884](/upgrade/rc884) | `conversation` | the conversation form URL can be made relative on a static host that proxies /conversation/* itself |
 | [rc883](/upgrade/rc883) | `core` | pw:image:cache counts what its parallel workers reported, and a batch that did nothing fails the run |
 | [rc882](/upgrade/rc882) | `core` | a media rename moves the file after the row is committed, and skips the preview it cannot decode; pw:image:cache stops counting non-images as processed |
