@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+                <title>Pushword Blog - Comparisons, Design Notes and Release Thinking</title>
+        <link>https://pushword.piedweb.com/blog</link>
+        <description><![CDATA[]]></description>
+        <atom:link
+            href="https://pushword.piedweb.com/blog.xml"
+            rel="self"
+            type="application/rss+xml"
+        />
+                                                            <item>
+                    <title><![CDATA[Choosing the Right CMS: Pushword vs WordPress, Statamic &amp; Sulu]]></title>
+                    <link>https://pushword.piedweb.com/blog/cms-comparison</link>
+                    <guid>https://pushword.piedweb.com/blog/cms-comparison</guid>
+                    <pubDate>Sun, 28 Dec 2025 17:25:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Astro &amp; Pushword: Two Answers to the Content-Driven Web]]></title>
+                    <link>https://pushword.piedweb.com/blog/astro-vs-pushword</link>
+                    <guid>https://pushword.piedweb.com/blog/astro-vs-pushword</guid>
+                    <pubDate>Sun, 02 Aug 2026 10:00:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[A TYPO3 Alternative, Explained to TYPO3 People]]></title>
+                    <link>https://pushword.piedweb.com/blog/typo3-alternative</link>
+                    <guid>https://pushword.piedweb.com/blog/typo3-alternative</guid>
+                    <pubDate>Wed, 05 Aug 2026 10:00:00 +0000</pubDate>
+                </item>
+                            
+    </channel>
+</rss>

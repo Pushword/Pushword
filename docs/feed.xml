@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+                <title>Pushword - The Modern CMS for Developers (ready for AI era)</title>
+        <link>https://pushword.piedweb.com/</link>
+        <description><![CDATA[]]></description>
+        <atom:link
+            href="https://pushword.piedweb.com/feed.xml"
+            rel="self"
+            type="application/rss+xml"
+        />
+                                                            <item>
+                    <title><![CDATA[Upgrade to 1.0.0-rc889]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/rc889</link>
+                    <guid>https://pushword.piedweb.com/upgrade/rc889</guid>
+                    <pubDate>Wed, 19 Aug 2026 20:25:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade to 1.0.0-rc888]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/rc888</link>
+                    <guid>https://pushword.piedweb.com/upgrade/rc888</guid>
+                    <pubDate>Tue, 18 Aug 2026 19:01:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Database and pipeline benchmarks]]></title>
+                    <link>https://pushword.piedweb.com/database-benchmarks</link>
+                    <guid>https://pushword.piedweb.com/database-benchmarks</guid>
+                    <pubDate>Mon, 17 Aug 2026 12:00:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade to 1.0.0-rc884]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/rc884</link>
+                    <guid>https://pushword.piedweb.com/upgrade/rc884</guid>
+                    <pubDate>Mon, 17 Aug 2026 10:16:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade to 1.0.0-rc883]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/rc883</link>
+                    <guid>https://pushword.piedweb.com/upgrade/rc883</guid>
+                    <pubDate>Mon, 17 Aug 2026 08:39:00 +0000</pubDate>
+                </item>
+                            
+    </channel>
+</rss>
