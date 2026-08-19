@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc889](/upgrade/rc889) | `core` | the generated media cache can use remote Flysystem storage |
 | [rc888](/upgrade/rc888) | `core` `flat` | the Markdown cache expires old fragments; SQLite backups retain ten copies |
 | [rc884](/upgrade/rc884) | `conversation` | the conversation form URL can be made relative on a static host that proxies /conversation/* itself |
 | [rc883](/upgrade/rc883) | `core` | pw:image:cache counts what its parallel workers reported, and a batch that did nothing fails the run |

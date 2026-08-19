@@ -1,5 +1,5 @@
 ---
-title: 'the generated media cache can use remote Flysystem storage'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,11 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/core`
-
-## Store generated media remotely
-
-Image derivatives and Open Graph previews can now use a remote `pushword.mediaCacheStorage`; existing sites remain local without any change.
-
-**Affected:** sites moving `public/media` to remote storage. Configure the Flysystem storage, set `media_cache_is_local: false`, and optionally set `media_cache_public_url`; see [Storage](/storage#cloudflare-r2-originals-and-image-cache).
