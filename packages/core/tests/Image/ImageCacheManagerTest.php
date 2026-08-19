@@ -2,6 +2,8 @@
 
 namespace Pushword\Core\Tests\Image;
 
+use League\Flysystem\Filesystem as Flysystem;
+use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
@@ -9,6 +11,7 @@ use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageEncoder;
 use Pushword\Core\Image\ImageReader;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -48,6 +51,95 @@ final class ImageCacheManagerTest extends KernelTestCase
         // getFilterPath always returns the requested path (doesn't check file existence)
         self::assertSame($this->getMediaCacheDir().'/default/test.png', $manager->getFilterPath('test.png', 'default'));
         self::assertSame($this->getMediaCacheDir().'/default/test.webp', $manager->getFilterPath('test.png', 'default', 'webp'));
+    }
+
+    public function testRemoteCacheUsesItsPublicUrlAndIsRemovedFromStorage(): void
+    {
+        $storage = new Flysystem(new InMemoryFilesystemAdapter());
+        $remoteCache = new MediaCacheStorageAdapter(
+            $storage,
+            isLocal: false,
+            publicUrl: 'https://media.example.test/cache',
+        );
+        $manager = new ImageCacheManager(
+            ['xs' => ['formats' => ['webp']]],
+            $this->publicMediaDir,
+            $this->getMediaCacheDir(),
+            $this->createMediaStorageAdapter(),
+            mediaCacheStorage: $remoteCache,
+        );
+
+        // A cold cache keeps the application route so its controller can generate
+        // the missing variant instead of sending the browser to an R2 404.
+        self::assertSame('/'.$this->publicMediaDir.'/xs/test.webp', $manager->getBrowserPath('test.jpg', 'xs'));
+
+        $storage->write('xs/test.webp', 'remote-variant');
+        self::assertSame(
+            'https://media.example.test/cache/xs/test.webp',
+            $manager->getBrowserPath('test.jpg', 'xs', checkFileExists: true),
+        );
+
+        $manager->remove('test.jpg');
+        self::assertFalse($storage->fileExists('xs/test.webp'));
+    }
+
+    public function testRemoteDerivativeFreshnessUsesStorageTimestamps(): void
+    {
+        $filesystem = new Filesystem();
+        $fileName = 'remote-freshness-'.getmypid().'.jpg';
+        $sourcePath = $this->getMediaDir().'/'.$fileName;
+        $filesystem->copy(__DIR__.'/../Service/blank.jpg', $sourcePath, true);
+        touch($sourcePath, time() - 10);
+
+        $storage = new Flysystem(new InMemoryFilesystemAdapter());
+        $storage->write('xs/'.pathinfo($fileName, \PATHINFO_FILENAME).'.webp', 'remote-variant');
+
+        $manager = new ImageCacheManager(
+            ['xs' => ['formats' => ['webp']]],
+            $this->publicMediaDir,
+            $this->getMediaCacheDir(),
+            $this->createMediaStorageAdapter(),
+            mediaCacheStorage: new MediaCacheStorageAdapter($storage, isLocal: false),
+        );
+        $media = new Media();
+        $media->setFileName($fileName);
+
+        try {
+            self::assertTrue($manager->isFilterCacheFresh($media, 'xs'));
+
+            touch($sourcePath, time() + 10);
+            clearstatcache(true, $sourcePath);
+            self::assertFalse($manager->isFilterCacheFresh($media, 'xs'));
+        } finally {
+            $filesystem->remove($sourcePath);
+        }
+    }
+
+    public function testSkippedFilterPublishesDefaultVariantToRemoteCache(): void
+    {
+        $filesystem = new Filesystem();
+        $fileName = 'remote-filter-copy-'.getmypid().'.jpg';
+        $defaultPath = $this->getMediaCacheDir().'/default/'.pathinfo($fileName, \PATHINFO_FILENAME).'.webp';
+        $filesystem->dumpFile($defaultPath, 'default-variant');
+        $storage = new Flysystem(new InMemoryFilesystemAdapter());
+        $manager = new ImageCacheManager(
+            ['xs' => ['formats' => ['webp']]],
+            $this->publicMediaDir,
+            $this->getMediaCacheDir(),
+            $this->createMediaStorageAdapter(),
+            mediaCacheStorage: new MediaCacheStorageAdapter($storage, isLocal: false),
+        );
+        $media = new Media();
+        $media->setFileName($fileName);
+
+        try {
+            $manager->symlinkFilterToDefault($media, 'xs');
+
+            self::assertSame('default-variant', $storage->read('xs/'.pathinfo($fileName, \PATHINFO_FILENAME).'.webp'));
+        } finally {
+            $manager->remove($media);
+            $filesystem->remove($defaultPath);
+        }
     }
 
     public function testBrowserPathFirstAvailableFormat(): void

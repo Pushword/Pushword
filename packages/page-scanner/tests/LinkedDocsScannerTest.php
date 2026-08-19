@@ -5,10 +5,13 @@ namespace Pushword\PageScanner;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Iterator;
+use League\Flysystem\Filesystem as Flysystem;
+use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\PageScanner\Scanner\LinkedDocsScanner;
 use Pushword\PageScanner\Scanner\ParallelUrlChecker;
@@ -24,8 +27,12 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[Group('integration')]
 final class LinkedDocsScannerTest extends KernelTestCase
 {
-    private function createScanner(?string $publicDir = null, ?CacheInterface $externalUrlCache = null, ?string $mediaCacheDir = null): LinkedDocsScanner
-    {
+    private function createScanner(
+        ?string $publicDir = null,
+        ?CacheInterface $externalUrlCache = null,
+        ?string $mediaCacheDir = null,
+        ?MediaCacheStorageAdapter $mediaCacheStorage = null,
+    ): LinkedDocsScanner {
         $publicDir ??= __DIR__.'/../../dev-app/public';
 
         return new LinkedDocsScanner(
@@ -37,6 +44,7 @@ final class LinkedDocsScannerTest extends KernelTestCase
             $mediaCacheDir ?? $publicDir.'/media',
             self::getContainer()->get('translator'),
             $externalUrlCache,
+            mediaCacheStorage: $mediaCacheStorage,
         );
     }
 
@@ -334,6 +342,40 @@ final class LinkedDocsScannerTest extends KernelTestCase
         } finally {
             $filesystem->remove($publicDir);
         }
+    }
+
+    #[DataProvider('remoteDerivativeProvider')]
+    public function testRemoteDerivativeStateIsReported(?string $contents, ?string $expectedMessage): void
+    {
+        self::bootKernel();
+        $storage = new Flysystem(new InMemoryFilesystemAdapter());
+        if (null !== $contents) {
+            $storage->write('lg/1.webp', $contents);
+        }
+
+        $scanner = $this->createScanner(
+            mediaCacheStorage: new MediaCacheStorageAdapter($storage, isLocal: false),
+        );
+        $scanner->preloadPageCache();
+
+        $errors = $this->messages($scanner, $this->getPage(), '<img src="/media/lg/1.webp" alt="x">');
+
+        if (null === $expectedMessage) {
+            self::assertSame([], $errors);
+
+            return;
+        }
+
+        self::assertCount(1, $errors);
+        self::assertStringContainsString($expectedMessage, $errors[0]);
+    }
+
+    /** @return Iterator<string, array{?string, ?string}> */
+    public static function remoteDerivativeProvider(): Iterator
+    {
+        yield 'missing' => [null, 'derivative file missing'];
+        yield 'empty' => ['', 'derivative file is empty'];
+        yield 'healthy' => ['RIFFxxxxWEBP', null];
     }
 
     /**

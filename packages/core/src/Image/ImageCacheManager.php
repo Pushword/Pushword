@@ -3,8 +3,10 @@
 namespace Pushword\Core\Image;
 
 use Exception;
+use League\Flysystem\FilesystemException;
 use Pushword\Core\Entity\Dimensions;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Utils\Filepath;
 use Symfony\Component\Filesystem\Exception\IOException;
@@ -25,15 +27,27 @@ final class ImageCacheManager
         private readonly string $mediaCacheDir,
         private readonly MediaStorageAdapter $mediaStorage,
         private readonly Filesystem $filesystem = new Filesystem(),
+        private readonly ?MediaCacheStorageAdapter $mediaCacheStorage = null,
     ) {
     }
 
     public function getFilterPath(Media|string $media, string $filterName, ?string $extension = null, bool $browserPath = false): string
     {
+        $key = $this->getFilterKey($media, $filterName, $extension);
+
+        if ($browserPath) {
+            return $this->mediaCacheStorage?->getPublicUrl($key) ?? '/'.$this->publicMediaDir.'/'.$key;
+        }
+
+        return $this->mediaCacheDir.'/'.$key;
+    }
+
+    public function getFilterKey(Media|string $media, string $filterName, ?string $extension = null): string
+    {
         $media = $this->fileNameOf($media);
         $fileName = null === $extension ? $media : Filepath::removeExtension($media).'.'.$extension;
 
-        return ($browserPath ? '/'.$this->publicMediaDir : $this->mediaCacheDir).'/'.$filterName.'/'.$fileName;
+        return $filterName.'/'.$fileName;
     }
 
     private function fileNameOf(Media|string $media): string
@@ -54,37 +68,62 @@ final class ImageCacheManager
         }
 
         if (null !== $extension) {
-            return $this->getFilterPath($media, $filterName, $extension, true);
+            return $this->getRoutableBrowserPath($media, $filterName, $extension);
         }
 
         /** @var string[] $formats */
         $formats = $this->filterSets[$filterName]['formats'] ?? ['webp', 'original'];
 
         if (\in_array('webp', $formats, true)) {
-            $webpPath = $this->getFilterPath($media, $filterName, 'webp');
-            if (! $checkFileExists || $this->cacheFileIsUsable($webpPath)) {
-                return $this->getFilterPath($media, $filterName, 'webp', true);
+            if (! $checkFileExists || $this->isFilterFileUsable($media, $filterName, 'webp')) {
+                return $this->getRoutableBrowserPath($media, $filterName, 'webp');
             }
         }
 
         if (\in_array('original', $formats, true)) {
-            $originalPath = $this->getFilterPath($media, $filterName);
-            if (! $checkFileExists || $this->cacheFileIsUsable($originalPath)) {
-                return $this->getFilterPath($media, $filterName, null, true);
+            if (! $checkFileExists || $this->isFilterFileUsable($media, $filterName)) {
+                return $this->getRoutableBrowserPath($media, $filterName);
             }
         }
 
-        return $this->getFilterPath($media, $filterName, null, true);
+        return $this->getRoutableBrowserPath($media, $filterName);
     }
 
     /**
      * A cached variant is usable only when it exists AND is non-empty. A 0-byte
      * file (transient encoder failure) must count as missing, so the renderer
      * falls back to a valid variant and the freshness check regenerates it.
+     *
+     * @phpstan-impure The result changes when a generator publishes the variant.
      */
-    private function cacheFileIsUsable(string $path): bool
+    public function isFilterFileUsable(Media|string $media, string $filterName, ?string $extension = null): bool
     {
+        $key = $this->getFilterKey($media, $filterName, $extension);
+        if (null !== $this->mediaCacheStorage) {
+            return $this->mediaCacheStorage->fileExists($key) && 0 < $this->mediaCacheStorage->fileSize($key);
+        }
+
+        $path = $this->getFilterPath($media, $filterName, $extension);
+
         return $this->filesystem->exists($path) && 0 < (@filesize($path) ?: 0);
+    }
+
+    private function getRoutableBrowserPath(Media|string $media, string $filterName, ?string $extension = null): string
+    {
+        $key = $this->getFilterKey($media, $filterName, $extension);
+        $publicUrl = $this->mediaCacheStorage?->getPublicUrl($key);
+
+        if (null !== $publicUrl) {
+            try {
+                if ($this->isFilterFileUsable($media, $filterName, $extension)) {
+                    return $publicUrl;
+                }
+            } catch (FilesystemException) {
+                // The application route remains able to generate or report the miss.
+            }
+        }
+
+        return '/'.$this->publicMediaDir.'/'.$key;
     }
 
     /**
@@ -131,9 +170,11 @@ final class ImageCacheManager
         foreach (array_keys($this->filterSets) as $filterName) {
             $path = $this->mediaCacheDir.'/'.$filterName.'/'.$mediaFileName;
             $this->filesystem->remove($path);
+            $this->removeStored($filterName.'/'.$mediaFileName);
 
             $webpPath = $this->mediaCacheDir.'/'.$filterName.'/'.$mediaBase.'.webp';
             $this->filesystem->remove($webpPath);
+            $this->removeStored($filterName.'/'.$mediaBase.'.webp');
         }
 
         // Remove root-level public symlink (used by non-image files like PDFs)
@@ -176,29 +217,26 @@ final class ImageCacheManager
 
     public function isFilterCacheFresh(Media $media, string $filterName): bool
     {
-        $sourcePath = $this->mediaStorage->getLocalPath($media->getFileName());
-        if (! $this->filesystem->exists($sourcePath)) {
+        if (! $this->mediaStorage->fileExists($media->getFileName())) {
             return false;
         }
 
-        $sourceTime = filemtime($sourcePath);
-        if (false === $sourceTime) {
-            return false;
-        }
+        $sourceTime = $this->mediaStorage->lastModified($media->getFileName());
 
         /** @var string[] $formats */
         $formats = $this->filterSets[$filterName]['formats'] ?? ['original', 'webp'];
 
         foreach ($formats as $format) {
-            $cachePath = 'original' === $format
-                ? $this->getFilterPath($media, $filterName)
-                : $this->getFilterPath($media, $filterName, $format);
+            $extension = 'original' === $format ? null : $format;
 
-            if (! $this->cacheFileIsUsable($cachePath)) {
+            if (! $this->isFilterFileUsable($media, $filterName, $extension)) {
                 return false;
             }
 
-            $cacheTime = filemtime($cachePath);
+            $key = $this->getFilterKey($media, $filterName, $extension);
+            $cacheTime = null !== $this->mediaCacheStorage
+                ? $this->mediaCacheStorage->lastModified($key)
+                : filemtime($this->getFilterPath($media, $filterName, $extension));
             if (false === $cacheTime || $cacheTime < $sourceTime) {
                 return false;
             }
@@ -239,6 +277,16 @@ final class ImageCacheManager
     public function createFilterDir(string $path): void
     {
         $this->filesystem->mkdir($path);
+    }
+
+    public function publishFilter(Media|string $media, string $filterName, ?string $extension = null): void
+    {
+        if (null === $this->mediaCacheStorage) {
+            return;
+        }
+
+        $key = $this->getFilterKey($media, $filterName, $extension);
+        $this->mediaCacheStorage->publish($key, $this->getFilterPath($media, $filterName, $extension));
     }
 
     /**
@@ -365,6 +413,14 @@ final class ImageCacheManager
 
             $this->filesystem->remove($cachePath);
             $this->filesystem->symlink($defaultRelative, $cachePath);
+            $this->publishFilter($media, $filterName, $extension);
+        }
+    }
+
+    private function removeStored(string $path): void
+    {
+        if (null !== $this->mediaCacheStorage && ! $this->mediaCacheStorage->isLocal()) {
+            $this->mediaCacheStorage->delete($path);
         }
     }
 }

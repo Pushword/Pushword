@@ -150,7 +150,7 @@ class MediaExtension
     {
         $this->pageOpenGraphImageGenerator->page = $page;
 
-        if (! file_exists($this->pageOpenGraphImageGenerator->getPath())) {
+        if (! $this->pageOpenGraphImageGenerator->exists()) {
             return null;
         }
 

@@ -11,6 +11,7 @@ use Imagine\Image\Palette\Color\ColorInterface;
 use Imagine\Image\Palette\RGB;
 use Imagine\Image\Point;
 use Imagine\Imagick\Imagine;
+use League\Flysystem\FilesystemException;
 use LogicException;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Page;
@@ -42,6 +43,7 @@ class PageOpenGraphImageGenerator implements ResetInterface
         private readonly int $imageWidth = 1200,
         private readonly int $marginSize = 60,
         private readonly ?LoggerInterface $logger = null,
+        private readonly ?MediaCacheStorageAdapter $mediaCacheStorage = null,
     ) {
     }
 
@@ -73,9 +75,26 @@ class PageOpenGraphImageGenerator implements ResetInterface
 
     public function getPath(bool $browserPath = false): string
     {
-        return ($browserPath ? '/'.$this->publicMediaDir : $this->mediaCacheDir).'/og/'
-            .str_replace('/', '_', $this->getPage()->slug).'-'
-            .substr(sha1($this->getPage()->slug.$this->apps->get()->hosts[0]), 0, 6).'.png';
+        $key = $this->getKey();
+
+        if ($browserPath) {
+            return $this->mediaCacheStorage?->getPublicUrl($key) ?? '/'.$this->publicMediaDir.'/'.$key;
+        }
+
+        return $this->mediaCacheDir.'/'.$key;
+    }
+
+    public function exists(): bool
+    {
+        if (null !== $this->mediaCacheStorage) {
+            try {
+                return $this->mediaCacheStorage->fileExists($this->getKey());
+            } catch (FilesystemException) {
+                return false;
+            }
+        }
+
+        return file_exists($this->getPath());
     }
 
     public function generatePreviewImage(): void
@@ -102,12 +121,19 @@ class PageOpenGraphImageGenerator implements ResetInterface
             $this->filesystem->mkdir($this->mediaCacheDir.'/og/');
 
             $image->save($this->getPath());
+            $this->mediaCacheStorage?->publish($this->getKey(), $this->getPath());
         } catch (Throwable $throwable) {
             $this->logger?->error('OG image generation failed for page "{slug}": {message}', [
                 'slug' => $this->getPage()->slug,
                 'message' => $throwable->getMessage(),
             ]);
         }
+    }
+
+    private function getKey(): string
+    {
+        return 'og/'.str_replace('/', '_', $this->getPage()->slug).'-'
+            .substr(sha1($this->getPage()->slug.$this->apps->get()->hosts[0]), 0, 6).'.png';
     }
 
     private function drawTitle(DrawerInterface $drawer): void

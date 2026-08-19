@@ -40,8 +40,7 @@ composer require league/flysystem-aws-s3-v3
 flysystem:
   storages:
     pushword.mediaStorage:
-      adapter: 'aws'
-      options:
+      aws:
         client: 'aws_client_service'
         bucket: 'your-bucket-name'
         prefix: 'media'
@@ -63,13 +62,81 @@ composer require league/flysystem-ftp
 flysystem:
   storages:
     pushword.mediaStorage:
-      adapter: 'ftp'
-      options:
+      ftp:
         host: 'ftp.example.com'
         username: '%env(FTP_USERNAME)%'
         password: '%env(FTP_PASSWORD)%'
         root: '/path/to/media'
 ```
+
+## Cloudflare R2 originals and image cache
+
+R2 exposes an S3-compatible API, so it uses the same Flysystem adapter. Install it first:
+
+```bash
+composer require league/flysystem-aws-s3-v3
+```
+
+Register the R2 client in `config/services.php`:
+
+```php
+use Aws\S3\S3Client;
+
+$services->set('app.r2_client', S3Client::class)
+    ->args([[
+        'version' => 'latest',
+        'region' => 'auto',
+        'endpoint' => '%env(R2_ENDPOINT)%',
+        'credentials' => [
+            'key' => '%env(R2_ACCESS_KEY_ID)%',
+            'secret' => '%env(R2_SECRET_ACCESS_KEY)%',
+        ],
+    ]]);
+```
+
+Then configure both stores in `config/packages/flysystem.yaml`. They may use the same bucket because their prefixes do not overlap:
+
+```yaml
+flysystem:
+  storages:
+    pushword.mediaStorage:
+      aws:
+        client: app.r2_client
+        bucket: '%env(R2_BUCKET)%'
+        prefix: originals
+
+    pushword.mediaCacheStorage:
+      aws:
+        client: app.r2_client
+        bucket: '%env(R2_BUCKET)%'
+        prefix: cache
+```
+
+Tell Pushword that both stores are remote in `config/packages/pushword.yaml` and in `config/services.php`:
+
+```yaml
+pushword:
+  media_cache_is_local: false
+  # Include the Flysystem prefix when the custom domain exposes the bucket root.
+  media_cache_public_url: 'https://media.example.com/cache'
+```
+
+```php
+use Pushword\Core\Service\MediaStorageAdapter;
+
+use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
+
+$services->set(MediaStorageAdapter::class)
+    ->args([
+        '$storage' => service('pushword.mediaStorage'),
+        '$mediaDir' => '%pw.media_dir%',
+        '$isLocal' => false,
+    ]);
+```
+
+`media_cache_public_url` is optional. With it, rendered pages reference R2 directly and legacy `/media/<filter>/<file>` requests redirect there. Without it, Symfony streams cached files from R2. The R2 custom domain must be public when a public URL is configured; the S3 API endpoint and credentials remain private.
+
+Image processing still happens on local temporary files. Pushword uploads a derivative only after its local atomic write completes, then republishes the optimized result. `media_cache_dir` therefore remains a local working directory even when R2 is the authoritative cache.
 
 ## Advanced: Custom MediaStorageAdapter
 
@@ -110,7 +177,7 @@ See the [Flysystem documentation](https://flysystem.thephpleague.com/docs/) for 
 
 ## Notes
 
-- Image cache (thumbnails, optimized versions, `og/` previews) is always stored locally, in `media_cache_dir` — `public/{public_media_dir}/` by default, so the browser reads it as a static file. Point it elsewhere and every miss is served by the media-cache route instead, which is what the test suite does to give each worker its own derivatives
+- Image cache (thumbnails, optimized versions, `og/` previews) uses `pushword.mediaCacheStorage`. It is local by default, in `media_cache_dir` — `public/{public_media_dir}/` by default — and may be moved to remote Flysystem storage
 - Both image writers write to a `.tmp` file beside their target and rename it into place, so a reader never meets a half-written image. A process killed mid-write (OOM, a deploy restart) leaves that file behind; `pw:image:cache` deletes the ones older than an hour on each run, under `media_dir` and `media_cache_dir`, and reports how many it took and how many were empty
 - When using remote storage, original media files are downloaded temporarily for image processing
 - VichUploaderBundle is configured to use Flysystem for uploads

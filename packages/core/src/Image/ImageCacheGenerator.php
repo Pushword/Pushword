@@ -151,6 +151,7 @@ final readonly class ImageCacheGenerator
         if (\in_array('original', $formats, true)) {
             $outputPath = $this->imageCacheManager->getFilterPath($media, $filterName);
             $this->imageEncoder->encodeOriginal($image, $outputPath, $quality, $media);
+            $this->imageCacheManager->publishFilter($media, $filterName);
         }
 
         if (\in_array('webp', $formats, true)) {
@@ -159,6 +160,7 @@ final readonly class ImageCacheGenerator
                 $this->imageCacheManager->getFilterPath($media, $filterName, 'webp'),
                 $quality,
             );
+            $this->imageCacheManager->publishFilter($media, $filterName, 'webp');
         }
 
         return $image;
@@ -212,6 +214,7 @@ final readonly class ImageCacheGenerator
 
         if (file_exists($sourcePath)) {
             copy($sourcePath, $destPath);
+            $this->imageCacheManager->publishFilter($media, $filterName);
         }
     }
 

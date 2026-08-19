@@ -2,14 +2,23 @@
 
 namespace Pushword\Core\Tests\Controller;
 
+use League\Flysystem\Filesystem as Flysystem;
+use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Controller\MediaCacheController;
+use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
+use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Group('integration')]
 final class MediaCacheControllerTest extends WebTestCase
@@ -87,6 +96,34 @@ final class MediaCacheControllerTest extends WebTestCase
         self::assertGreaterThan(0, (int) filesize($webpPath), 'The empty variant must be regenerated, not served');
     }
 
+    public function testRemoteVariantRedirectsToConfiguredPublicUrl(): void
+    {
+        $storage = new Flysystem(new InMemoryFilesystemAdapter());
+        $storage->write('md/piedweb-logo.webp', 'remote-variant');
+
+        $controller = $this->createRemoteController($storage, 'https://media.example.test/cache');
+
+        $response = $controller->generate('md', 'piedweb-logo.webp');
+
+        self::assertInstanceOf(RedirectResponse::class, $response);
+        self::assertSame('https://media.example.test/cache/md/piedweb-logo.webp', $response->getTargetUrl());
+    }
+
+    public function testRemoteVariantIsStreamedWithoutPublicUrl(): void
+    {
+        $storage = new Flysystem(new InMemoryFilesystemAdapter());
+        $storage->write('md/piedweb-logo.webp', 'remote-variant');
+
+        $controller = $this->createRemoteController($storage);
+
+        $response = $controller->generate('md', 'piedweb-logo.webp');
+
+        self::assertInstanceOf(StreamedResponse::class, $response);
+        ob_start();
+        $response->sendContent();
+        self::assertSame('remote-variant', ob_get_clean());
+    }
+
     public function testUnknownFilterReturns404(): void
     {
         $this->client->request(Request::METHOD_GET, '/media/notafilter/piedweb-logo.webp');
@@ -97,5 +134,24 @@ final class MediaCacheControllerTest extends WebTestCase
     {
         $this->client->request(Request::METHOD_GET, '/media/md/definitely-missing-xyz.webp');
         self::assertResponseStatusCodeSame(404);
+    }
+
+    private function createRemoteController(Flysystem $storage, string $publicUrl = ''): MediaCacheController
+    {
+        $remoteCache = new MediaCacheStorageAdapter($storage, isLocal: false, publicUrl: $publicUrl);
+        $cacheManager = new ImageCacheManager(
+            ['md' => ['formats' => ['webp']]],
+            $this->publicMediaDir,
+            $this->getMediaCacheDir(),
+            self::getContainer()->get(MediaStorageAdapter::class),
+            mediaCacheStorage: $remoteCache,
+        );
+
+        return new MediaCacheController(
+            self::getContainer()->get(MediaRepository::class),
+            $cacheManager,
+            self::getContainer()->get(ImageCacheGenerator::class),
+            $remoteCache,
+        );
     }
 }

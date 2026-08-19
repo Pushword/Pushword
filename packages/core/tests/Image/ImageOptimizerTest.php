@@ -2,6 +2,8 @@
 
 namespace Pushword\Core\Tests\Image;
 
+use League\Flysystem\Filesystem as Flysystem;
+use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
@@ -12,6 +14,7 @@ use Pushword\Core\Image\ImageEncoder;
 use Pushword\Core\Image\ImageOptimizer;
 use Pushword\Core\Image\ImageReader;
 use Pushword\Core\Image\ImageScratchFile;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use RuntimeException;
@@ -101,6 +104,44 @@ final class ImageOptimizerTest extends KernelTestCase
         self::assertIsArray($size);
         self::assertSame(40, $size[0], 'A successful optimize must replace the derivative with its output');
         $this->assertNoLeftoverTempFile($webpPath);
+    }
+
+    public function testSuccessfulOptimizationRepublishesRemoteVariant(): void
+    {
+        self::bootKernel();
+        $source = $this->tmpPublicDir.'/remote-optimizer-src-'.getmypid().'.png';
+        imagepng(imagecreatetruecolor(200, 100), $source);
+        $storage = new Flysystem(new InMemoryFilesystemAdapter());
+        $mediaStorage = $this->createMediaStorageAdapter();
+        $cacheDir = $this->tmpPublicDir.'/'.$this->publicMediaDir;
+        $cacheManager = new ImageCacheManager(
+            self::MD_FILTER,
+            $this->publicMediaDir,
+            $cacheDir,
+            $mediaStorage,
+            mediaCacheStorage: new MediaCacheStorageAdapter($storage, isLocal: false),
+        );
+        $generator = new ImageCacheGenerator(
+            new ImageReader($mediaStorage),
+            new ImageEncoder(),
+            $cacheManager,
+            self::getContainer()->get(BackgroundTaskDispatcherInterface::class),
+            $mediaStorage,
+        );
+        $generator->generateFilteredCache($source, self::MD_FILTER);
+
+        $media = new Media();
+        $media->setFileName(basename($source));
+
+        $generator->generateFilteredCache($source, ['probe' => ['quality' => 80, 'filters' => ['scaleDown' => [40]], 'formats' => ['webp']]]);
+        $optimizedBytes = (string) file_get_contents($cacheManager->getFilterPath($media, 'probe', 'webp'));
+        $optimizer = new ImageOptimizer($cacheManager, $generator, $this->chain(static function (string $in, ?string $out) use ($optimizedBytes): void {
+            file_put_contents((string) $out, $optimizedBytes);
+        }));
+
+        $optimizer->optimizeFilter($media, 'md');
+
+        self::assertSame($optimizedBytes, $storage->read('md/'.pathinfo($source, \PATHINFO_FILENAME).'.webp'));
     }
 
     /**

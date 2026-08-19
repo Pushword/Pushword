@@ -13,6 +13,8 @@ final class ConfigurationTest extends TestCase
         $config = $this->process([]);
 
         self::assertSame('%kernel.default_locale%', $config['locale']);
+        self::assertTrue($config['media_cache_is_local']);
+        self::assertSame('', $config['media_cache_public_url']);
     }
 
     /**

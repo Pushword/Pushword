@@ -46,6 +46,7 @@ final readonly class ImageOptimizer
             $path = $this->imageCacheManager->getFilterPath($media, $filterName, $extension);
             if ($this->isUsable($path)) {
                 $this->optimizeAtomically($path);
+                $this->imageCacheManager->publishFilter($media, $filterName, $extension);
             }
         }
     }

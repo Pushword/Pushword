@@ -7,6 +7,8 @@ use DateTimeImmutable;
 use Exception;
 use FilesystemIterator;
 use Iterator;
+use League\Flysystem\Filesystem as Flysystem;
+use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -16,6 +18,7 @@ use Pushword\Core\Cache\RenderEpoch;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\Event\StaticPostGenerateEvent;
 use Pushword\StaticGenerator\Event\StaticPreGenerateEvent;
@@ -983,6 +986,28 @@ final class StaticGeneratorTest extends KernelTestCase
 
         // Verify media files are readable (not broken symlinks)
         $this->assertMediaFilesAccessible($mediaDir);
+    }
+
+    public function testDownloadCopiesRemoteMediaCache(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $storage = new Flysystem(new InMemoryFilesystemAdapter());
+        $storage->write('md/remote-only.webp', 'remote-variant');
+
+        $generator = $this->getGenerator(MediaGenerator::class);
+        self::assertInstanceOf(MediaGenerator::class, $generator);
+        $defaultCache = self::getContainer()->get(MediaCacheStorageAdapter::class);
+        $generator->setMediaCacheStorage(new MediaCacheStorageAdapter($storage, isLocal: false));
+
+        try {
+            $generator->generate('localhost.dev');
+
+            self::assertSame('remote-variant', file_get_contents($this->getStaticDir().'/media/md/remote-only.webp'));
+        } finally {
+            $generator->setMediaCacheStorage($defaultCache);
+        }
     }
 
     /**

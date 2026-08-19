@@ -2,6 +2,8 @@
 
 namespace Pushword\Core\Tests\Image;
 
+use League\Flysystem\Filesystem as Flysystem;
+use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
@@ -9,6 +11,7 @@ use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageEncoder;
 use Pushword\Core\Image\ImageReader;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -94,6 +97,36 @@ final class ImageCacheGeneratorTest extends KernelTestCase
         $cacheManager = $this->createCacheManager($filters);
         $cacheManager->remove($image);
         self::assertFileDoesNotExist($this->tmpPublicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
+    }
+
+    public function testGeneratedVariantsArePublishedToRemoteCache(): void
+    {
+        self::bootKernel();
+        $storage = new Flysystem(new InMemoryFilesystemAdapter());
+        $mediaStorage = $this->createMediaStorageAdapter();
+        $filters = ['xl' => ['quality' => 80, 'filters' => ['scaleDown' => [1600]]]];
+        $cacheDir = $this->tmpPublicDir.'/'.$this->publicMediaDir;
+        $cacheManager = new ImageCacheManager(
+            $filters,
+            $this->publicMediaDir,
+            $cacheDir,
+            $mediaStorage,
+            mediaCacheStorage: new MediaCacheStorageAdapter($storage, isLocal: false),
+        );
+        $generator = new ImageCacheGenerator(
+            new ImageReader($mediaStorage),
+            new ImageEncoder(),
+            $cacheManager,
+            self::getContainer()->get(BackgroundTaskDispatcherInterface::class),
+            $mediaStorage,
+        );
+
+        $generator->generateFilteredCache(__DIR__.'/../Service/blank.jpg', $filters);
+
+        self::assertTrue($storage->fileExists('xl/blank.jpg'));
+        self::assertTrue($storage->fileExists('xl/blank.webp'));
+        self::assertGreaterThan(0, $storage->fileSize('xl/blank.jpg'));
+        self::assertGreaterThan(0, $storage->fileSize('xl/blank.webp'));
     }
 
     public function testMainColorExtraction(): void

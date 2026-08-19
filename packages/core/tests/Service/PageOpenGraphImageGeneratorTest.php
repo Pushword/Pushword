@@ -3,10 +3,13 @@
 namespace Pushword\Core\Tests\Service;
 
 use Imagine\Image\ImagineInterface;
+use League\Flysystem\Filesystem as Flysystem;
+use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Site\SiteRegistry;
 use RuntimeException;
@@ -16,8 +19,11 @@ use Symfony\Component\Filesystem\Filesystem;
 #[Group('integration')]
 final class PageOpenGraphImageGeneratorTest extends KernelTestCase
 {
-    private function buildGenerator(?LoggerInterface $logger = null, ?string $mediaCacheDir = null): PageOpenGraphImageGenerator
-    {
+    private function buildGenerator(
+        ?LoggerInterface $logger = null,
+        ?string $mediaCacheDir = null,
+        ?MediaCacheStorageAdapter $mediaCacheStorage = null,
+    ): PageOpenGraphImageGenerator {
         $siteRegistry = self::getContainer()->get(SiteRegistry::class);
 
         // These tests exercise generation itself, so they have to ask for it: the test
@@ -32,6 +38,7 @@ final class PageOpenGraphImageGeneratorTest extends KernelTestCase
             'media',
             $mediaCacheDir ?? sys_get_temp_dir().'/media',
             logger: $logger,
+            mediaCacheStorage: $mediaCacheStorage,
         );
     }
 
@@ -51,7 +58,14 @@ final class PageOpenGraphImageGeneratorTest extends KernelTestCase
         $filesystem = new Filesystem();
         $filesystem->remove($mediaCacheDir);
 
-        $generator = $this->buildGenerator(mediaCacheDir: $mediaCacheDir);
+        $remoteStorage = new Flysystem(new InMemoryFilesystemAdapter());
+        $remoteCache = new MediaCacheStorageAdapter(
+            $remoteStorage,
+            isLocal: false,
+            publicUrl: 'https://media.example.test/cache',
+        );
+
+        $generator = $this->buildGenerator(mediaCacheDir: $mediaCacheDir, mediaCacheStorage: $remoteCache);
 
         $page = new Page();
         $page->slug = 'og-real-render';
@@ -65,6 +79,8 @@ final class PageOpenGraphImageGeneratorTest extends KernelTestCase
         $size = getimagesize($path);
         self::assertNotFalse($size);
         self::assertSame([1200, 600, \IMAGETYPE_PNG], [$size[0], $size[1], $size[2]]);
+        self::assertTrue($remoteStorage->fileExists('og/'.basename($path)));
+        self::assertSame('https://media.example.test/cache/og/'.basename($path), $generator->getPath(true));
 
         $filesystem->remove($mediaCacheDir);
     }

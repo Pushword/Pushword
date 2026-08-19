@@ -2,12 +2,17 @@
 
 namespace Pushword\Core\Controller;
 
+use League\Flysystem\FilesystemException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
@@ -28,6 +33,7 @@ final class MediaCacheController extends AbstractController
         private readonly MediaRepository $mediaRepository,
         private readonly ImageCacheManager $imageCacheManager,
         private readonly ImageCacheGenerator $imageCacheGenerator,
+        private readonly MediaCacheStorageAdapter $mediaCacheStorage,
     ) {
     }
 
@@ -38,7 +44,7 @@ final class MediaCacheController extends AbstractController
         methods: ['GET', 'HEAD'],
         priority: 10,
     )]
-    public function generate(string $filter, string $fileName): BinaryFileResponse
+    public function generate(string $filter, string $fileName): BinaryFileResponse|RedirectResponse|StreamedResponse
     {
         if (! \array_key_exists($filter, $this->imageCacheManager->getFilterSets())) {
             throw $this->createNotFoundException();
@@ -50,37 +56,57 @@ final class MediaCacheController extends AbstractController
         }
 
         $extension = strtolower(pathinfo($fileName, \PATHINFO_EXTENSION));
-        $filePath = $this->imageCacheManager->getFilterPath($media, $filter, 'webp' === $extension ? 'webp' : null);
+        $format = 'webp' === $extension ? 'webp' : null;
+        $key = $this->imageCacheManager->getFilterKey($media, $filter, $format);
+        $filePath = $this->imageCacheManager->getFilterPath($media, $filter, $format);
 
         // Already produced by the background job (or a concurrent request): serve it —
         // but only when it is a real, non-empty file. A 0-byte variant (a poisoned cache
         // entry left by a failed encode/optimize) must be treated as missing and rebuilt,
         // never served as HTTP 200 with Content-Length: 0 (a broken <img> the CDN caches).
-        if ($this->isUsable($filePath)) {
-            return new BinaryFileResponse($filePath);
+        if ($this->imageCacheManager->isFilterFileUsable($media, $filter, $format)) {
+            return $this->serve($key, $filePath);
         }
 
         // Build it now and persist it next to the other variants, so later requests
         // are served statically by the web server.
         $this->imageCacheGenerator->generateFilteredCache($media, $filter);
 
-        if (! $this->isUsable($filePath)) {
+        if (! $this->imageCacheManager->isFilterFileUsable($media, $filter, $format)) {
             throw $this->createNotFoundException();
         }
 
-        return new BinaryFileResponse($filePath);
+        return $this->serve($key, $filePath);
     }
 
-    /**
-     * A cached variant is usable only when it exists AND is non-empty. A 0-byte file
-     * counts as missing so it is regenerated instead of served broken.
-     *
-     * @phpstan-impure Reads the filesystem: the same path flips from empty to usable
-     *                 once generateFilteredCache() has written the variant.
-     */
-    private function isUsable(string $path): bool
+    private function serve(string $key, string $localPath): BinaryFileResponse|RedirectResponse|StreamedResponse
     {
-        return is_file($path) && 0 < (@filesize($path) ?: 0);
+        if ($this->mediaCacheStorage->isLocal()) {
+            return new BinaryFileResponse($localPath);
+        }
+
+        $publicUrl = $this->mediaCacheStorage->getPublicUrl($key);
+        if (null !== $publicUrl) {
+            return new RedirectResponse($publicUrl);
+        }
+
+        try {
+            $mimeType = $this->mediaCacheStorage->mimeType($key);
+        } catch (FilesystemException) {
+            $mimeType = 'application/octet-stream';
+        }
+
+        $storage = $this->mediaCacheStorage;
+
+        return new StreamedResponse(
+            static function () use ($storage, $key): void {
+                $stream = $storage->readStream($key);
+                fpassthru($stream);
+                fclose($stream);
+            },
+            Response::HTTP_OK,
+            ['Content-Type' => $mimeType],
+        );
     }
 
     /**

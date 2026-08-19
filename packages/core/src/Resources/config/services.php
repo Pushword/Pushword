@@ -16,6 +16,7 @@ use Pushword\Core\Repository\UserRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Scheduler\CronScheduleProvider;
 use Pushword\Core\Service\Email\NotificationEmailSender;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Service\VichUploadPropertyNamer;
 use Pushword\Core\Site\RequestContext;
@@ -144,6 +145,13 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             '$storage' => service('pushword.mediaStorage'),
             '$mediaDir' => '%pw.media_dir%',
             '$isLocal' => true,
+        ]);
+
+    $services->set(MediaCacheStorageAdapter::class)
+        ->args([
+            '$storage' => service('pushword.mediaCacheStorage'),
+            '$isLocal' => '%pw.media_cache_is_local%',
+            '$publicUrl' => '%pw.media_cache_public_url%',
         ]);
 
     // Notification Email Sender - unified service for all notification emails

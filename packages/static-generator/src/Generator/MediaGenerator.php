@@ -5,22 +5,33 @@ namespace Pushword\StaticGenerator\Generator;
 use FilesystemIterator;
 use Override;
 use Pushword\Core\Image\ImageScratchFile;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\StaticGenerator\IncrementalGeneratorInterface;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 use Symfony\Component\Finder\Finder;
+use Symfony\Contracts\Service\Attribute\Required;
 
 class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorInterface
 {
     private ?MediaStorageAdapter $mediaStorage = null;
 
+    private ?MediaCacheStorageAdapter $mediaCacheStorage = null;
+
     private bool $incremental = false;
 
+    #[Required]
     public function setMediaStorage(MediaStorageAdapter $mediaStorage): void
     {
         $this->mediaStorage = $mediaStorage;
+    }
+
+    #[Required]
+    public function setMediaCacheStorage(MediaCacheStorageAdapter $mediaCacheStorage): void
+    {
+        $this->mediaCacheStorage = $mediaCacheStorage;
     }
 
     public function setIncremental(bool $incremental): void
@@ -124,16 +135,17 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
         }
 
         // Copy original media files from storage
-        if (null !== $this->mediaStorage) {
-            $this->copyFromStorage($staticMediaDir, $symlink, $mediaDir);
+        if (null !== $this->mediaStorage && ! $this->mediaStorage->isLocal()) {
+            $this->copyFilesFromRemoteStorage($staticMediaDir);
         } else {
-            // Fallback for local-only (backward compatibility)
             $this->copyDirectoryContents($mediaDir, $staticMediaDir, $symlink);
         }
 
         // Copy the image cache (thumbnails, webp versions, og/ previews, etc.)
         $mediaCacheDir = $this->params->get('pw.media_cache_dir');
-        if ($this->filesystem->exists($mediaCacheDir)) {
+        if (null !== $this->mediaCacheStorage && ! $this->mediaCacheStorage->isLocal()) {
+            $this->copyRemoteCache($staticMediaDir);
+        } elseif ($this->filesystem->exists($mediaCacheDir)) {
             $this->copyImageCache($mediaCacheDir, $staticMediaDir, $symlink);
         }
     }
@@ -306,36 +318,6 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
         }
     }
 
-    private function copyFromStorage(string $staticMediaDir, bool $symlink, string $mediaDir): void
-    {
-        if (null === $this->mediaStorage) {
-            return;
-        }
-
-        // For local storage with symlink, we can still symlink
-        if ($symlink && $this->mediaStorage->isLocal()) {
-            foreach ($this->mediaStorage->listContents('') as $item) {
-                if (! $item->isFile()) {
-                    continue;
-                }
-
-                $fileName = $item->path();
-                $targetPath = $staticMediaDir.'/'.$fileName;
-
-                if ($this->targetExists($targetPath)) {
-                    continue;
-                }
-
-                $this->relativeSymlink($mediaDir.'/'.$fileName, $targetPath);
-            }
-
-            return;
-        }
-
-        // Copy from storage to static directory
-        $this->copyFilesFromRemoteStorage($staticMediaDir);
-    }
-
     private function copyFilesFromRemoteStorage(string $staticMediaDir): void
     {
         if (null === $this->mediaStorage) {
@@ -350,6 +332,10 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
             }
 
             $fileName = $item->path();
+            if (ImageScratchFile::isScratch(basename($fileName))) {
+                continue;
+            }
+
             $targetPath = $staticMediaDir.'/'.$fileName;
 
             if ($this->targetExists($targetPath)) {
@@ -385,6 +371,37 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
             // Write all files
             foreach ($streams as $target => $stream) {
                 $this->filesystem->dumpFile($target, $stream);
+                fclose($stream);
+            }
+        }
+    }
+
+    private function copyRemoteCache(string $staticMediaDir): void
+    {
+        if (null === $this->mediaCacheStorage) {
+            return;
+        }
+
+        foreach ($this->mediaCacheStorage->listContents('', true) as $item) {
+            $path = $item->path();
+            if (! $item->isFile() || ImageScratchFile::isScratch(basename($path))) {
+                continue;
+            }
+
+            $target = $staticMediaDir.'/'.$path;
+            if ($this->incremental && $this->targetExists($target)) {
+                $targetTime = filemtime($target);
+                if (false !== $targetTime && $this->mediaCacheStorage->lastModified($path) <= $targetTime) {
+                    continue;
+                }
+            }
+
+            $this->filesystem->mkdir(\dirname($target));
+            $stream = $this->mediaCacheStorage->readStream($path);
+
+            try {
+                $this->filesystem->dumpFile($target, $stream);
+            } finally {
                 fclose($stream);
             }
         }

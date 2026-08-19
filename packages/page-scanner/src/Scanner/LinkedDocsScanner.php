@@ -10,6 +10,7 @@ use PiedWeb\Curl\Helper;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\PageScanner\Service\ErrorIgnoreRules;
 use Pushword\PageScanner\Service\InlineDirective;
@@ -93,6 +94,7 @@ final class LinkedDocsScanner extends AbstractScanner
         private readonly int $externalUrlCacheTtl = 86400,
         private readonly int $externalUrlFailureCacheTtl = 3600,
         private readonly bool $skipExternalUrlCheck = false,
+        private readonly ?MediaCacheStorageAdapter $mediaCacheStorage = null,
     ) {
         parent::__construct($translator);
     }
@@ -735,8 +737,14 @@ final class LinkedDocsScanner extends AbstractScanner
             return null; // not a filter-prefixed URL: originals are not plain files on disk
         }
 
-        // Derivatives are written to pw.media_cache_dir (its default lives under
-        // public_dir, but a site may relocate it): <cache dir>/<filter>/<file>.
+        if (null !== $this->mediaCacheStorage) {
+            if (! $this->mediaCacheStorage->fileExists($mediaSlug)) {
+                return 'page_scanDerivativeMissing';
+            }
+
+            return 0 === $this->mediaCacheStorage->fileSize($mediaSlug) ? 'page_scanDerivativeEmpty' : null;
+        }
+
         $path = $this->mediaCacheDir.'/'.$mediaSlug;
         if (! file_exists($path)) {
             return 'page_scanDerivativeMissing';

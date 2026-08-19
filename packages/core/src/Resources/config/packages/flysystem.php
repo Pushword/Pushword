@@ -10,6 +10,11 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                     'directory' => '%pw.media_dir%',
                 ],
             ],
+            'pushword.mediaCacheStorage' => [
+                'local' => [
+                    'directory' => '%pw.media_cache_dir%',
+                ],
+            ],
         ],
     ]);
 };
