@@ -36,7 +36,7 @@ if [ "$event" = "PostToolUse" ]; then
       git_head > "$state_file"
       rm -f "$commit_file"
       ;;
-    Bash|exec_command)
+    *)
       command=$(printf '%s' "$input" | jq -r \
         '.tool_input.command // .tool_input.cmd // empty' 2>/dev/null || true)
 

@@ -33,7 +33,7 @@ post_terminal_command() {
   fi
 
   jq -nc --arg command "$2" --arg cwd "$test_repo" --arg session_id "$session_id" \
-    '{hook_event_name: "PostToolUse", tool_name: "exec_command", session_id: $session_id, cwd: $cwd, tool_input: {cmd: $command}}' | \
+    '{hook_event_name: "PostToolUse", tool_name: "unknown_terminal_tool", session_id: $session_id, cwd: $cwd, tool_input: {cmd: $command}}' | \
     "$hook_path"
 }
 
@@ -63,7 +63,7 @@ post_write
 
 printf '%s\n' 'changed' > "$test_repo/tracked.txt"
 git -C "$test_repo" commit --only -qm 'test' -- tracked.txt
-post_terminal_command exec_command 'git commit --only -m test -- tracked.txt'
+post_terminal_command unknown_terminal_tool 'git commit --only -m test -- tracked.txt'
 test -f "$commit_file"
 
 first_commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
