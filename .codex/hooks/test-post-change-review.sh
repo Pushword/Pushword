@@ -24,9 +24,9 @@ post_write() {
     "$hook_path"
 }
 
-post_commit() {
-  jq -nc --arg cwd "$test_repo" --arg session_id "$session_id" \
-    '{hook_event_name: "PostToolUse", tool_name: "Bash", session_id: $session_id, cwd: $cwd, tool_input: {command: "git commit --only -m test -- tracked.txt"}}' | \
+post_bash_command() {
+  jq -nc --arg command "$1" --arg cwd "$test_repo" --arg session_id "$session_id" \
+    '{hook_event_name: "PostToolUse", tool_name: "Bash", session_id: $session_id, cwd: $cwd, tool_input: {command: $command}}' | \
     "$hook_path"
 }
 
@@ -48,9 +48,15 @@ test -f "$state_file"
 block_output=$(stop_with_message 'Post-change review: is-it-well-tested complete; code-simplifier complete; committed deadbee')
 printf '%s' "$block_output" | jq -e '.decision == "block"' >/dev/null
 
+printf '%s\n' 'unsafe change' > "$test_repo/tracked.txt"
+git -C "$test_repo" commit -am 'unsafe' -q
+post_bash_command 'git commit -m unsafe'
+test ! -e "$commit_file"
+post_write
+
 printf '%s\n' 'changed' > "$test_repo/tracked.txt"
 git -C "$test_repo" commit --only -qm 'test' -- tracked.txt
-post_commit
+post_bash_command 'git commit --only -m test -- tracked.txt'
 test -f "$commit_file"
 
 first_commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
@@ -62,7 +68,7 @@ printf '%s' "$block_output" | jq -e '.decision == "block"' >/dev/null
 
 printf '%s\n' 'changed again' > "$test_repo/tracked.txt"
 git -C "$test_repo" commit --only -qm 'test again' -- tracked.txt
-post_commit
+post_bash_command 'git commit --only -m "test again" -- tracked.txt'
 
 commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
 stop_with_message "Post-change review: is-it-well-tested complete; code-simplifier complete; committed $commit_hash"
