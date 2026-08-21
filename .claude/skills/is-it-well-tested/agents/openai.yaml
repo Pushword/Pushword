@@ -1,0 +1,7 @@
+interface:
+  display_name: "Is It Well Tested?"
+  short_description: "Audit Pushword changes and add missing tests"
+  default_prompt: "Audit the current Pushword changes, add clear missing tests, and run the relevant targeted tests."
+
+policy:
+  allow_implicit_invocation: true

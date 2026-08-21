@@ -47,6 +47,36 @@ composer reset-dev-app                # reset demo
 - Clear cache after each change: `composer console cache:clear`.
 - Comments and docs in English only.
 
+### Mandatory post-change review
+
+For every task that creates, modifies, or deletes code, tests, configuration,
+templates, styles, assets, or documentation:
+
+1. After completing the implementation and before sending the final response, invoke
+   `$is-it-well-tested`.
+2. Apply every no-brainer test it identifies. If it requires confirmation for a
+   non-obvious test, ask the user and do not present the task as complete.
+3. Then invoke `$code-simplifier`, scoped strictly to files changed during the current
+   conversation.
+4. If either skill modifies files, rerun the relevant tests and quality gates, including
+   `composer console cache:clear`.
+5. Inspect the final diff and status, then commit only the files changed for the current
+   task. Add new files with a scoped `git add <path>` immediately before committing, and
+   use `git commit --only -m "type(scope): subject" -- <paths>`.
+6. Verify that the commit exists and that no file belonging to the current task remains
+   uncommitted. Never include unrelated user or peer changes in the commit.
+7. Do not send the final response until both skills, the relevant checks, and the scoped
+   commit have completed successfully.
+8. End the final response with exactly the following status, replacing `<commit-sha>`
+   with the actual commit hash:
+   `Post-change review: is-it-well-tested complete; code-simplifier complete; committed <commit-sha>`
+
+For a read-only analysis, explanation, or status request, do not run this review. Changes
+made by these two skills do not recursively trigger another review; rerun only the
+relevant verification commands. If `is-it-well-tested` requires user input, end the
+response with exactly:
+`Post-change review: awaiting user confirmation from is-it-well-tested`
+
 ### Deprecations
 
 ```bash

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Code Simplifier"
+  short_description: "Simplify current Pushword changes safely"
+  default_prompt: "Refine only the current Pushword task's changed code for clarity without altering behaviour."
+
+policy:
+  allow_implicit_invocation: true

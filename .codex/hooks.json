@@ -10,6 +10,27 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch|Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/home/robin/localhost/Pushword/.codex/hooks/post-change-review.sh'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/home/robin/localhost/Pushword/.codex/hooks/post-change-review.sh'"
+          }
+        ]
+      }
     ]
   }
 }
