@@ -1,12 +1,8 @@
-## Quick orientation
+## Task routing
 
-Read to bootstrap, in order:
-1. This file — coding rules and project shape
-2. `packages/docs/content/architecture.md` — bundle map and dev environment
-3. `packages/docs/content/extensions.md` — what each extension does
-4. `packages/core/src/Entity/Page.php` — main entity (10 traits in `SharedTrait/` and `PageTrait/`)
-5. `packages/core/src/Entity/Media.php` — media entity
-6. `packages/core/src/Event/PushwordEvents.php` — event constants
+Start in the package named by the task; search its `src/` and `tests/` before widening scope. Read only when relevant: `packages/docs/content/architecture.md` for repository-wide architecture, `extensions.md` for extension discovery, `Page.php` or `Media.php` for those entities, and `PushwordEvents.php` for legacy event constants.
+
+Keep search output bounded. For PHP, use `--glob '*.php'`. For frontend code, search `Resources/assets` first and inspect `Resources/public` only to verify built output. When generated files may appear, use `rg --max-columns 240 --max-columns-preview` so a minified line cannot consume the context.
 
 ## Working principles
 
