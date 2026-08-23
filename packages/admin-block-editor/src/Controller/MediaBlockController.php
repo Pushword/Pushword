@@ -24,6 +24,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Throwable;
 
@@ -95,7 +96,7 @@ final class MediaBlockController extends AbstractController
         ]));
     }
 
-    #[Route('/admin/media/resolve/{fileName}', name: 'admin_media_resolve', requirements: ['fileName' => '.+'], methods: ['GET'])]
+    #[Route('/admin/media/resolve/{fileName}', name: 'admin_media_resolve', requirements: ['fileName' => Requirement::CATCH_ALL], methods: ['GET'])]
     public function resolve(string $fileName): JsonResponse
     {
         $fileName = urldecode($fileName);

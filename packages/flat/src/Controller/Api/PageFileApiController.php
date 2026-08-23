@@ -13,6 +13,7 @@ use Pushword\Flat\Serializer\PageFileSerializer;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Yaml\Exception\ParseException;
 
@@ -67,7 +68,7 @@ final class PageFileApiController extends AbstractApiController
     ) {
     }
 
-    #[Route('/api/content/page/{host}/{slug}', name: 'pushword_api_content_page_file_update', requirements: ['slug' => '.+'], methods: ['PUT'])]
+    #[Route('/api/content/page/{host}/{slug}', name: 'pushword_api_content_page_file_update', requirements: ['slug' => Requirement::CATCH_ALL], methods: ['PUT'])]
     public function update(string $host, string $slug, Request $request): Response
     {
         $page = $this->findPage($host, $slug);
@@ -97,7 +98,7 @@ final class PageFileApiController extends AbstractApiController
         return $this->write($page, $frontmatter, $body, Response::HTTP_OK, update: true);
     }
 
-    #[Route('/api/content/page/{host}/{slug}', name: 'pushword_api_content_page_file_create', requirements: ['slug' => '.+'], methods: ['POST'])]
+    #[Route('/api/content/page/{host}/{slug}', name: 'pushword_api_content_page_file_create', requirements: ['slug' => Requirement::CATCH_ALL], methods: ['POST'])]
     public function create(string $host, string $slug, Request $request): Response
     {
         $existing = $this->findPage($host, $slug);

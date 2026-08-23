@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_EDITOR')]
@@ -192,7 +193,7 @@ final class PageApiController extends AbstractApiController
         return $edits;
     }
 
-    #[Route('/api/page/{host}/{slug}', name: 'pushword_api_page_item', requirements: ['slug' => '.+'], methods: ['GET', 'PUT', 'PATCH', 'DELETE'])]
+    #[Route('/api/page/{host}/{slug}', name: 'pushword_api_page_item', requirements: ['slug' => Requirement::CATCH_ALL], methods: ['GET', 'PUT', 'PATCH', 'DELETE'])]
     public function item(string $host, string $slug, Request $request): JsonResponse
     {
         $page = $this->findPage($host, $slug);

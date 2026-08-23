@@ -23,6 +23,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -95,7 +96,7 @@ final class RepurposeApiController extends AbstractApiController
         ]);
     }
 
-    #[Route(path: '/api/repurpose/{host}/{network}/{page}', name: 'pushword_api_repurpose_get', requirements: ['host' => '[^/]+', 'network' => '[a-z]+', 'page' => '.+'], methods: ['GET'])]
+    #[Route(path: '/api/repurpose/{host}/{network}/{page}', name: 'pushword_api_repurpose_get', requirements: ['host' => '[^/]+', 'network' => '[a-z]+', 'page' => Requirement::CATCH_ALL], methods: ['GET'])]
     public function get(string $host, string $network, string $page): JsonResponse
     {
         $post = $this->repository->findOneByKey($host, $page, $network);
@@ -106,7 +107,7 @@ final class RepurposeApiController extends AbstractApiController
         return $this->respond($this->payload($post));
     }
 
-    #[Route(path: '/api/repurpose/{host}/{network}/{page}', name: 'pushword_api_repurpose_put', requirements: ['host' => '[^/]+', 'network' => '[a-z]+', 'page' => '.+'], methods: ['PUT', 'PATCH'])]
+    #[Route(path: '/api/repurpose/{host}/{network}/{page}', name: 'pushword_api_repurpose_put', requirements: ['host' => '[^/]+', 'network' => '[a-z]+', 'page' => Requirement::CATCH_ALL], methods: ['PUT', 'PATCH'])]
     public function upsert(Request $request, string $host, string $network, string $page): JsonResponse
     {
         $spec = $this->decodeJson($request);
@@ -146,7 +147,7 @@ final class RepurposeApiController extends AbstractApiController
         );
     }
 
-    #[Route(path: '/api/repurpose/{host}/{network}/{page}', name: 'pushword_api_repurpose_delete', requirements: ['host' => '[^/]+', 'network' => '[a-z]+', 'page' => '.+'], methods: ['DELETE'])]
+    #[Route(path: '/api/repurpose/{host}/{network}/{page}', name: 'pushword_api_repurpose_delete', requirements: ['host' => '[^/]+', 'network' => '[a-z]+', 'page' => Requirement::CATCH_ALL], methods: ['DELETE'])]
     public function delete(string $host, string $network, string $page): JsonResponse
     {
         $post = $this->repository->findOneByKey($host, $page, $network);

@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_EDITOR')]
@@ -82,7 +83,7 @@ final class PageRedirectionApiController extends AbstractApiController
         return $this->respond($this->toArray($page), Response::HTTP_CREATED);
     }
 
-    #[Route('/api/redirection/{host}/{slug}', name: 'pushword_api_redirection_item', requirements: ['slug' => '.+'], methods: ['GET', 'PUT', 'DELETE'])]
+    #[Route('/api/redirection/{host}/{slug}', name: 'pushword_api_redirection_item', requirements: ['slug' => Requirement::CATCH_ALL], methods: ['GET', 'PUT', 'DELETE'])]
     public function item(string $host, string $slug, Request $request): JsonResponse
     {
         $page = $this->pageRepository->findOneBy(['host' => $host, 'slug' => Page::normalizeSlug($slug)]);

@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Throwable;
 
@@ -51,7 +52,7 @@ final class StaticApiController extends AbstractApiController
     #[Route(
         '/api/static/{host}/{slug}',
         name: 'pushword_api_static_page',
-        requirements: ['host' => '[^/]+', 'slug' => '.+'],
+        requirements: ['host' => '[^/]+', 'slug' => Requirement::CATCH_ALL],
         methods: ['POST'],
     )]
     public function page(string $host, string $slug): JsonResponse
