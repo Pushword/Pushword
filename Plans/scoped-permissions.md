@@ -25,6 +25,8 @@ interfaces. In particular:
 - API reads, creates, updates, deletes and operational actions for another host are
   denied;
 - changing an allowed entity's `host` to a forbidden host is denied before flush;
+- the editor can browse and use the entire media library and upload new media, but
+  cannot mutate a media referenced by a Page on a forbidden host;
 - the bearer token needs no separate scope configuration because it resolves the
   same `User` as the admin login;
 - existing unrestricted editors and administrators keep their current access.
@@ -172,6 +174,69 @@ In `pushword/admin`:
 The index predicate is not a substitute for `setEntityPermission()`: EasyAdmin
 loads edit/detail/delete entities by ID without using the index query.
 
+### Media: authorize mutations from tracked usage
+
+Do not add a host column to `Media`. Media is a shared library, and Pushword already
+tracks its Page references in `media_usage`. Add a query such as
+`MediaUsageRepository::findHostsForMedia()` that selects the distinct `Page.host`
+values for a media.
+
+For a scoped editor, define:
+
+```text
+usageHosts(media) = distinct hosts of Pages in media_usage
+canMutate(media) = usageHosts(media) is a subset of user.allowedHosts
+```
+
+Consequently:
+
+- every editor can list, search, inspect, resolve and select every media in the
+  shared library;
+- every editor can upload/create a media through the Media CRUD, multi-upload,
+  block editor and Media API;
+- an unreferenced media has no forbidden usage and can be modified or deleted;
+- a media used only on allowed hosts can be renamed, replaced, rotated, have its
+  metadata changed or be deleted;
+- a media used on both an allowed and a forbidden host cannot be modified or
+  deleted;
+- a media used only on forbidden hosts remains visible and selectable, but is
+  read-only for that editor;
+- administrators and unrestricted editors keep full mutation access.
+
+Put this rule in one `MediaUsageScope`/mutation-guard service used by admin and API.
+The guard returns the sorted list of blocking hosts rather than only a boolean. The
+admin must display an explicit translated message such as "This media is used on
+hosts you cannot access: example.com. It cannot be modified or deleted." The API
+returns `403` with a stable shape such as:
+
+```json
+{
+  "error": "media_used_outside_scope",
+  "blockingHosts": ["example.com"]
+}
+```
+
+Check the guard before every side effect: EasyAdmin update/delete, file replacement,
+rename, rotate, inline metadata/license update, multi-delete and API metadata
+POST/PATCH or DELETE. Upload remains allowed; when deduplication returns an existing
+Media it must not silently mutate that existing row.
+
+The media detail "used on" panel must show full Page details only for allowed hosts.
+For forbidden usages it shows the blocking host names needed to explain the denial,
+not off-scope Page titles or slugs.
+
+`MediaMultiUploadController` is currently class-gated by `ROLE_PUSHWORD_ADMIN`.
+Change its coarse requirement to `ROLE_EDITOR`, then protect its mutation routes with
+the same usage guard. This makes upload available without making inline update or
+delete unconditional.
+
+The existing tracker covers Page main images, Markdown body references and Page
+custom properties. It deliberately does not scan Twig templates, so template-only
+references cannot participate in this host decision. Keep that limitation explicit:
+"no tracked Page usage" does not mean "safe to delete from every possible runtime
+consumer". Rebuilding `media_usage` is a deployment prerequisite before enabling
+scoped permissions.
+
 ### Other editor-visible admin resources
 
 Every admin resource reachable by `ROLE_EDITOR` must be classified during this
@@ -184,7 +249,7 @@ change; leaving it unchanged would preserve a cross-host escape.
 | QuizResult | Filter list and detail by host |
 | AdminNotification | Filter list and authorize detail/delete by its `host` field |
 | SocialPost / Repurpose | Filter/authorize host-owned rows; also guard studio and export routes that load by ID |
-| Media | Deny and hide; Media has no host ownership model |
+| Media | Show the complete library and allow upload; authorize update/delete from tracked Page usage hosts |
 | Newsletter Audience | Filter and authorize by canonical `mainHost` |
 | Other Newsletter resources | Deny and hide; contacts, campaigns, automations, deliveries and recipients have indirect or multi-host ownership |
 | User management and site-wide tools | Keep their existing admin-only role requirement; scope does not grant access |
@@ -220,6 +285,7 @@ scope inside every data or operational endpoint.
 | Static generation | optional route | Restricted users must supply one allowed host before status reads, rendering or dispatch |
 | Page scan and link graph | optional/required query | Require one allowed host for restricted users before reading results or dispatching work |
 | Newsletter Audience | query, body `mainHost` or loaded entity | Filter and authorize by canonical `mainHost` |
+| Media | loaded Media plus tracked Page usages | Keep list/GET/upload available; guard metadata POST/PATCH and DELETE from the distinct usage hosts |
 
 For collection queries, apply the host predicate before cloning the count query so
 pagination metadata cannot reveal off-host row counts.
@@ -240,10 +306,8 @@ means unrestricted, so a token client can discover its effective scope.
 
 ### Unrestricted-only endpoints in v1
 
-Deny these entire areas to a scoped editor until they have a reliable ownership
-model:
+Deny these areas to a scoped editor until they have a reliable ownership model:
 
-- Media API: Media is shared and has no host column;
 - newsletter Contact, Campaign and Automation APIs: contacts can belong to multiple
   audiences, campaigns own an audience indirectly, and automations can watch several
   hosts or all hosts.
@@ -288,6 +352,7 @@ to run:
 
 ```bash
 bin/console doctrine:schema:update --force
+bin/console pw:media:usage:rebuild
 ```
 
 ## Tests
@@ -308,6 +373,10 @@ bin/console doctrine:schema:update --force
 - direct edit/detail/delete and every custom Page route reject an off-host Page;
 - a crafted create/update POST cannot submit a forbidden destination host;
 - block preview, page lock and frontend admin fragment reject an off-host Page;
+- the full media library and every upload path remain available to a scoped editor;
+- media update, rotate, rename and delete allow no usage or allowed-host-only usage,
+  but reject mixed/off-host usage with the explicit blocking-host message;
+- a denied media action does not expose off-host Page titles or slugs;
 - one representative test for each adapted extension CRUD proves both list filtering
   and direct-item denial;
 - global/unowned admin areas are hidden and deny direct access;
@@ -324,8 +393,11 @@ bin/console doctrine:schema:update --force
   including ID-addressed resources;
 - all-host snapshot/scan/static/stats calls are rejected for a scoped user unless an
   allowed host is explicit;
-- Media and complex newsletter APIs reject a scoped user and still allow an
-  unrestricted editor;
+- Media API list, GET and upload remain available; metadata POST/PATCH and DELETE
+  allow unreferenced and allowed-host-only media, but reject mixed/off-host usage with
+  `media_used_outside_scope` and sorted `blockingHosts`;
+- complex newsletter APIs reject a scoped user and still allow an unrestricted
+  editor;
 - `/api/whoami` reports the effective scope;
 - the API action-classification architecture test covers all controllers contributed
   by installed optional bundles;
@@ -337,6 +409,8 @@ bin/console doctrine:schema:update --force
 - `UserSync` creates, updates, clears and preserves scopes according to the YAML
   contract and rejects unknown hosts;
 - existing users with `allowedHosts = null` keep current admin and API behaviour;
+- the media guard uses one distinct-host query, handles duplicate usage rows and is
+  covered after `pw:media:usage:rebuild`;
 - targeted SQLite tests plus the existing MariaDB-capable suite cover the JSON
   mapping and `IN` predicates.
 
@@ -356,6 +430,7 @@ Document:
 - the nullable `allowedHosts` semantics and `users.yaml` example;
 - how admin login and bearer-token API access share the same scope;
 - the scoped, neutral and unrestricted-only API areas;
+- the shared-library media rule, explicit denial message and Page-tracking limit;
 - the host-scope contract for extension admin/API controllers;
 - the schema update command in `packages/docs/content/upgrade/next-release.md`.
 
@@ -368,11 +443,13 @@ using camelCase keys in alphabetical order.
 2. Add User admin/sync configuration and expose the scope through `/api/whoami`.
 3. Secure Page/redirection admin CRUD and every Page-specific custom route.
 4. Secure Page/redirection/raw-file API routes, including destination-host checks.
-5. Adapt the remaining simple host-owned admin and API resources from the tables
+5. Add the usage-based Media mutation guard and secure every admin/API media write
+   path while preserving full-library reads and uploads.
+6. Adapt the remaining simple host-owned admin and API resources from the tables
    above.
-6. Deny scoped access to global/ambiguous resources and add the action-classification
+7. Deny scoped access to global/ambiguous resources and add the action-classification
    test.
-7. Add documentation and the upgrade note, run all quality gates, then perform a
+8. Add documentation and the upgrade note, run all quality gates, then perform a
    manual browser check with a one-host editor.
 
 Do not expose `allowedHosts` in a release until all admin and API enforcement steps
@@ -385,8 +462,8 @@ signal.
   efficient collection filtering needs a path column or recursive query design.
 - Per-page ACLs, per-field permissions, permission inheritance matrices and a new
   audit database.
-- Assigning ownership to shared Media. That requires a separate product decision
-  about copies, cross-host reuse and existing files.
+- Adding ownership or a host column to shared Media. Media authorization derives
+  from tracked Page usages instead.
 - Fine-grained newsletter ownership across contacts, audiences, campaigns and
   multi-host automations.
 - Restricting CLI, Messenger or trusted filesystem sync by the interactive User
