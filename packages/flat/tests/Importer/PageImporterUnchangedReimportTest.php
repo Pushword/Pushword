@@ -81,6 +81,21 @@ final class PageImporterUnchangedReimportTest extends KernelTestCase
         self::assertEquals(new DateTime('2024-10-01 09:00'), $this->page()->publishedAt);
     }
 
+    public function testRemovingPublishedAtKeepsExistingValue(): void
+    {
+        self::bootKernel();
+
+        $this->write("publishedAt: '2024-09-27 14:29'");
+        $this->import();
+
+        $this->write();
+        $importer = $this->import();
+
+        self::assertSame(0, $importer->getImportedCount());
+        self::assertSame(1, $importer->getSkippedCount());
+        self::assertEquals(new DateTime('2024-09-27 14:29'), $this->page()->publishedAt);
+    }
+
     public function testAChangedHoldPublicationAtStillLands(): void
     {
         self::bootKernel();
