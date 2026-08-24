@@ -76,8 +76,12 @@ final readonly class LinkProvider
         }
 
         $class = $attr['class'] ?? '';
-        if ($this->currentUserIsAdmin() && ! str_contains($class, 'glightbox')) {
-            // facilite le debug
+        if (
+            ! $this->getApp()->isStatic
+            && $this->currentUserIsAdmin()
+            && ! str_contains($class, 'glightbox')
+        ) {
+            // Helps admins identify obfuscated links while browsing the live site.
             $attr['title'] = (isset($attr['title']) ? $attr['title'].' - ' : '').'obf';
         }
 
