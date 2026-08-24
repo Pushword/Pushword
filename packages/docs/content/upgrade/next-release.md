@@ -1,5 +1,5 @@
 ---
-title: 'flat page imports reset omitted frontmatter properties'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,9 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/flat`
-
-## Flat page files now apply removed properties
-
-`pw:flat:sync` now resets a canonical page property when its line is removed from frontmatter; the documented explicit syntax for `publishedAt` and `translations` is unchanged. Nothing to do.
