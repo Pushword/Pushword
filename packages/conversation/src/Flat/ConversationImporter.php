@@ -13,6 +13,7 @@ use Pushword\Core\Repository\MediaRepository;
 use Pushword\Flat\Service\AdminNotificationService;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Throwable;
 
@@ -491,6 +492,7 @@ final class ConversationImporter
 
                 $options[AbstractNormalizer::IGNORED_ATTRIBUTES] = $ignoredAttributes;
                 $options[AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES] = true;
+                $options[AbstractObjectNormalizer::DISABLE_TYPE_ENFORCEMENT] = true;
 
                 try {
                     /** @var Message $normalizedMessage */
