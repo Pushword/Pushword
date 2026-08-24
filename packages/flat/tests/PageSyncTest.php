@@ -1598,6 +1598,66 @@ MD;
         @unlink($mediaDir.'/heal-me.png');
     }
 
+    public function testRemovingMainImageResetsIt(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        /** @var string $mediaDir */
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+
+        /** @var string $projectDir */
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+
+        $imageName = 'main-image-reset-test.png';
+        $imagePath = $mediaDir.'/'.$imageName;
+        $this->createPng($imagePath);
+
+        $media = new Media();
+        $media->setProjectDir($projectDir);
+        $media->setFileName($imageName);
+        $media->setMimeType('image/png');
+        $media->size = 100;
+        $media->setStoreIn($mediaDir);
+        $media->setDimensions([100, 100]);
+
+        $this->em->persist($media);
+        $this->em->flush();
+
+        $mdFilePath = $contentDir.'/main-image-reset-test.md';
+        file_put_contents($mdFilePath, "---\nh1: Main Image Reset Test\nmainImage: ".$imageName."\n---\n\nBody content.\n");
+        $this->trackFile($mdFilePath);
+
+        $this->pageSync->import('localhost.dev');
+        $this->em->clear();
+
+        $page = $this->pageRepo->findOneBy(['slug' => 'main-image-reset-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($page);
+        self::assertSame($imageName, $page->mainImage?->getFileName());
+
+        $content = preg_replace('/^mainImage:.*\n/m', '', file_get_contents($mdFilePath));
+        self::assertIsString($content);
+        file_put_contents($mdFilePath, $content);
+        touch($mdFilePath, time() + 10);
+
+        $this->pageSync->import('localhost.dev');
+        $this->em->clear();
+
+        $page = $this->pageRepo->findOneBy(['slug' => 'main-image-reset-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($page);
+        self::assertNull($page->mainImage);
+
+        $this->em->remove($page);
+        $media = $this->em->getRepository(Media::class)->findOneBy(['fileName' => $imageName]);
+        if ($media instanceof Media) {
+            $this->em->remove($media);
+        }
+
+        $this->em->flush();
+        @unlink($imagePath);
+    }
+
     private function createPng(string $path): void
     {
         $img = imagecreatetruecolor(1, 1);

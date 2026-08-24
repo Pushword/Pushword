@@ -315,6 +315,7 @@ Non-`.md` files (`.txt`, `.csv`, etc.) do NOT influence page auto-detection. Onl
 - `index.csv` is **read-only during import** — editing it has no effect; `.md` files are the source of truth
 - Backup files (`*.md~`) are **ignored** during import
 - With `--force` (without `--page`), ALL host pages are **deleted before importing** (fresh start); combined with `--page`, only the targeted pages are re-imported without resetting others
+- A page file is a complete document: removing a canonical frontmatter property resets it to its default value, and removing a custom property deletes it. `publishedAt` and `translations` keep their explicit reset syntax described here.
 - `publishedAt: draft` in frontmatter maps to `null` (unpublished)
 
 #### Export (database to flat)

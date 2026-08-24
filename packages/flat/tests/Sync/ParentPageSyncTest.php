@@ -219,7 +219,7 @@ final class ParentPageSyncTest extends KernelTestCase
         self::assertSame('grandparent-test', $parentPage->parentPage->slug);
     }
 
-    public function testParentPageRemovedWhenExplicitlyNulled(): void
+    public function testParentPageRemovedWhenOmitted(): void
     {
         $this->testSlugs = ['parent-remove-test', 'child-remove-test'];
 
@@ -233,17 +233,16 @@ final class ParentPageSyncTest extends KernelTestCase
         self::assertInstanceOf(Page::class, $child);
         self::assertNotNull($child->parentPage);
 
-        // Update child .md with parentPage explicitly set to empty
-        $this->createMd('child-remove-test.md', "---\nh1: 'Child Remove'\nparentPage: ''\n---\n\nChild without parent");
+        // Removing a canonical front-matter property resets it instead of keeping
+        // the database value from the preceding import.
+        $this->createMd('child-remove-test.md', "---\nh1: 'Child Remove'\n---\n\nChild without parent");
 
         $this->pageSync->import('localhost.dev');
 
         $this->em->clear();
         $child = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'child-remove-test', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $child);
-        // Note: parentPage removal depends on whether the importer explicitly nulls absent properties
-        // With parentPage: '' the importer may or may not clear the parent
-        self::assertSame('Child Remove', $child->h1, 'Child page should be re-imported with updated content');
+        self::assertNull($child->parentPage);
     }
 
     public function testParentPageCreatedInSameImportCycle(): void

@@ -95,6 +95,36 @@ final class PageImporterUnchangedReimportTest extends KernelTestCase
         self::assertEquals(new DateTime('2025-02-02 09:30'), $this->page()->holdPublicationAt);
     }
 
+    public function testRemovingMetaRobotsResetsIt(): void
+    {
+        self::bootKernel();
+
+        $this->write('metaRobots: noindex');
+        $this->import();
+
+        self::assertSame('noindex', $this->page()->metaRobots);
+
+        $this->write();
+        $importer = $this->import();
+
+        self::assertSame(1, $importer->getImportedCount());
+        self::assertSame('', $this->page()->metaRobots);
+    }
+
+    public function testSnakeCasePropertyIsNotTreatedAsMissing(): void
+    {
+        self::bootKernel();
+
+        $this->write('metaRobots: noindex');
+        $this->import();
+
+        $this->write('meta_robots: nofollow');
+        $importer = $this->import();
+
+        self::assertSame(1, $importer->getImportedCount());
+        self::assertSame('nofollow', $this->page()->metaRobots);
+    }
+
     public function testAFileTurnedDraftUnpublishesThePage(): void
     {
         self::bootKernel();

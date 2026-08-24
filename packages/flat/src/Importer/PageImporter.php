@@ -263,6 +263,9 @@ final class PageImporter extends AbstractImporter
         // database made that edit invisible for good — nothing re-reads the file until
         // its mtime moves again. Hydrate and let the content decide.
         $revisionBeforeImport = $this->newPage ? null : $this->revisions->compute($page);
+        if (! $this->newPage) {
+            $data = $this->withMissingPropertyResets($page, $data);
+        }
 
         // No authenticated user exists in CLI context: the editor comes from the file
         // (see below) or, for a page being created, from the site's default editor.
@@ -458,6 +461,49 @@ final class PageImporter extends AbstractImporter
         return $propertyName;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private function withMissingPropertyResets(Page $page, array $data): array
+    {
+        $temporaryKeys = [];
+        foreach (array_keys($data) as $key) {
+            $canonicalKey = self::underscoreToCamelCase($this->normalizePropertyName($key));
+            if ($canonicalKey === $key || \array_key_exists($canonicalKey, $data)) {
+                continue;
+            }
+
+            $data[$canonicalKey] = $data[$key];
+            $temporaryKeys[] = $canonicalKey;
+        }
+
+        if (! \array_key_exists('editMessage', $data)) {
+            $data['editMessage'] = $page->editMessage;
+            $temporaryKeys[] = 'editMessage';
+        }
+
+        // These two properties keep their established explicit syntax: `draft`
+        // unpublishes a page, while `translations: []` removes every translation.
+        foreach (['publishedAt', 'translations'] as $property) {
+            if (\array_key_exists($property, $data)) {
+                continue;
+            }
+
+            $data[$property] = null;
+            $temporaryKeys[] = $property;
+        }
+
+        $data = $this->pageFileSerializer->withMissingPropertyResets($page, $data);
+
+        foreach ($temporaryKeys as $temporaryKey) {
+            unset($data[$temporaryKey]);
+        }
+
+        return $data;
+    }
+
     private function toAddAtTheEnd(): void
     {
         foreach ($this->toAddAtTheEnd as $slug => $data) {
@@ -474,6 +520,12 @@ final class PageImporter extends AbstractImporter
                 $object = $this->getObjectRequiredProperty($property);
 
                 if (Page::class === $object) {
+                    if (null === $value || '' === $value) {
+                        $page->{$property} = null; // @phpstan-ignore property.dynamicName
+
+                        continue;
+                    }
+
                     if (! \is_string($value)) {
                         throw new LogicException(\sprintf('Property "%s" in page "%s" must be a slug string, got %s (%s)', $property, $slug, get_debug_type($value), var_export($value, true)));
                     }
@@ -484,6 +536,12 @@ final class PageImporter extends AbstractImporter
                 }
 
                 if (Media::class === $object) {
+                    if (null === $value || '' === $value) {
+                        $page->setMainImage(null);
+
+                        continue;
+                    }
+
                     if (! \is_string($value)) {
                         throw new LogicException(\sprintf('Expected string value for media property "%s", got %s', $property, get_debug_type($value)));
                     }

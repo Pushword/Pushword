@@ -8,7 +8,6 @@ use Pushword\Api\Service\PageWriter;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\RevisionCalculator;
-use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Serializer\PageFileSerializer;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -34,37 +33,11 @@ use Symfony\Component\Yaml\Exception\ParseException;
 #[IsGranted('ROLE_EDITOR')]
 final class PageFileApiController extends AbstractApiController
 {
-    /**
-     * Reset values for canonical front-matter columns removed from an uploaded
-     * file, shaped so they pass through PageFrontmatterMapper's type guards.
-     */
-    private const array COLUMN_RESETS = [
-        'title' => null,
-        'h1' => null,
-        'name' => null,
-        'metaRobots' => null,
-        'template' => null,
-        'customCanonical' => null,
-        'editMessage' => '',
-        'weight' => 0,
-        'tags' => [],
-        'redirectFrom' => [],
-        'translations' => [],
-        'publishedAt' => null,
-        'holdPublication' => false,
-        'holdPublicationAt' => null,
-        'mainImage' => null,
-        'parentPage' => null,
-        'variantOf' => null,
-        'extendedPage' => null,
-    ];
-
     public function __construct(
         private readonly PageRepository $pageRepository,
         private readonly PageFileSerializer $serializer,
         private readonly PageWriter $pageWriter,
         private readonly RevisionCalculator $revisions,
-        private readonly SiteRegistry $apps,
     ) {
     }
 
@@ -93,7 +66,7 @@ final class PageFileApiController extends AbstractApiController
         }
 
         [$frontmatter, $body] = $parsed;
-        $frontmatter = $this->withResets($page, $frontmatter);
+        $frontmatter = $this->serializer->withMissingPropertyResets($page, $frontmatter);
 
         return $this->write($page, $frontmatter, $body, Response::HTTP_OK, update: true);
     }
@@ -172,44 +145,6 @@ final class PageFileApiController extends AbstractApiController
         unset($frontmatter['revision']); // export-only stamp; If-Match carries the revision
 
         return [$frontmatter, $document->body()];
-    }
-
-    /**
-     * Replace semantics for the file intake: a key present in the current
-     * canonical export but absent from the upload was deleted by the editor.
-     * Columns get an explicit reset value the mapper accepts; a vanished custom
-     * property is removed outright; a non-default locale falls back to the
-     * site locale (the exporter omits the default one).
-     *
-     * @param array<string, mixed> $frontmatter
-     *
-     * @return array<string, mixed>
-     */
-    private function withResets(Page $page, array $frontmatter): array
-    {
-        $currentMatter = $this->serializer->parse($this->serializer->serialize($page))->matter();
-        if (! \is_array($currentMatter)) {
-            return $frontmatter;
-        }
-
-        unset($currentMatter['revision']);
-
-        foreach (array_keys($currentMatter) as $key) {
-            $key = (string) $key;
-            if (\array_key_exists($key, $frontmatter)) {
-                continue;
-            }
-
-            if (\array_key_exists($key, self::COLUMN_RESETS)) {
-                $frontmatter[$key] = self::COLUMN_RESETS[$key];
-            } elseif ('locale' === $key) {
-                $frontmatter['locale'] = $this->apps->get($page->host)->locale;
-            } elseif ($page->hasCustomProperty($key)) {
-                $page->removeCustomProperty($key);
-            }
-        }
-
-        return $frontmatter;
     }
 
     private function markdownResponse(Page $page, int $status): Response

@@ -24,6 +24,28 @@ use Symfony\Component\Yaml\Yaml;
  */
 final class PageFileSerializer
 {
+    /** Reset values for canonical front-matter properties omitted from an edited file. */
+    private const array PROPERTY_RESETS = [
+        'title' => null,
+        'h1' => null,
+        'name' => null,
+        'metaRobots' => null,
+        'template' => null,
+        'customCanonical' => null,
+        'editMessage' => '',
+        'weight' => 0,
+        'tags' => [],
+        'redirectFrom' => [],
+        'translations' => [],
+        'publishedAt' => null,
+        'holdPublication' => false,
+        'holdPublicationAt' => null,
+        'mainImage' => null,
+        'parentPage' => null,
+        'variantOf' => null,
+        'extendedPage' => null,
+    ];
+
     private readonly ExporterDefaultValueHelper $defaultValue;
 
     /** @var string[]|null Cached entity properties (same for all Page instances) */
@@ -124,6 +146,41 @@ final class PageFileSerializer
         }
 
         return YamlFrontMatter::markdownCompatibleParse($content);
+    }
+
+    /**
+     * A page file is a complete document, not a patch: reset canonical properties
+     * removed from its front matter and drop custom properties that disappeared.
+     *
+     * @param array<string, mixed> $frontmatter
+     *
+     * @return array<string, mixed>
+     */
+    public function withMissingPropertyResets(Page $page, array $frontmatter): array
+    {
+        $currentMatter = $this->parse($this->serialize($page))->matter();
+        if (! \is_array($currentMatter)) {
+            return $frontmatter;
+        }
+
+        unset($currentMatter['revision']);
+
+        foreach (array_keys($currentMatter) as $key) {
+            $key = (string) $key;
+            if (\array_key_exists($key, $frontmatter)) {
+                continue;
+            }
+
+            if (\array_key_exists($key, self::PROPERTY_RESETS)) {
+                $frontmatter[$key] = self::PROPERTY_RESETS[$key];
+            } elseif ('locale' === $key) {
+                $frontmatter['locale'] = $this->apps->get($page->host)->locale;
+            } elseif ($page->hasCustomProperty($key)) {
+                $page->removeCustomProperty($key);
+            }
+        }
+
+        return $frontmatter;
     }
 
     /**
