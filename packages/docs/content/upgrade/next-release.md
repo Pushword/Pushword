@@ -1,5 +1,5 @@
 ---
-title: 'the Docker image uses patched OS and Go dependencies'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,12 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/core`, `pushword/dev-app`
-
-## Refresh the Docker base
-
-New Docker builds pin FrankenPHP 1.12.7, rebuild its binary with patched Go
-dependencies and install current Debian security updates. Sites that already copied the
-Docker skeleton should merge `Dockerfile`, or rerun `pw:docker:init --force` only if
-their Docker files have not been customised.

@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.0](/upgrade/1.0.0) | `core` `dev-app` | the Docker image uses patched OS and Go dependencies |
 | [rc897](/upgrade/rc897) | `admin` `core` `dev-app` `flat` `page-scanner` `repurpose` `static-generator` | production credentials are one-time; authenticated, generated and network surfaces are hardened — run `pw:image:cache` |
 | [rc896](/upgrade/rc896) | `admin` `admin-block-editor` `api` `conversation` `core` `newsletter` `quiz` `static-generator` `version` `js-helper` | admin mutations require POST and CSRF; uploads are allow-listed; static quiz results are signed; HTTP headers are hardened |
 | [rc895](/upgrade/rc895) | `repurpose` | Pinterest repurpose drafts become single-image Pins with required captions |
