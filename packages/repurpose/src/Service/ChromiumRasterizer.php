@@ -86,11 +86,9 @@ final class ChromiumRasterizer
 
     private function binary(): ?string
     {
-        if (null === $this->binary) {
-            $this->binary = $this->chromiumBinary
-                ?? $this->autodetect()
-                ?? false;
-        }
+        $this->binary ??= $this->chromiumBinary
+            ?? $this->autodetect()
+            ?? false;
 
         return false === $this->binary ? null : $this->binary;
     }

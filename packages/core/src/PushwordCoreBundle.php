@@ -21,9 +21,7 @@ final class PushwordCoreBundle extends Bundle
     #[Override]
     public function getContainerExtension(): ?ExtensionInterface
     {
-        if (null === $this->extension) {
-            $this->extension = new PushwordCoreExtension();
-        }
+        $this->extension ??= new PushwordCoreExtension();
 
         return false === $this->extension ? null : $this->extension;
     }

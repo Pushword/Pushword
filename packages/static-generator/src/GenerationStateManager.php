@@ -112,9 +112,7 @@ final class GenerationStateManager implements ResetInterface
 
         $time ??= new DateTimeImmutable();
 
-        if (! isset($this->state[$host])) {
-            $this->state[$host] = ['lastGeneration' => '', 'pages' => []];
-        }
+        $this->state[$host] ??= ['lastGeneration' => '', 'pages' => []];
 
         $this->state[$host]['lastGeneration'] = $time->format(DateTimeInterface::ATOM);
     }
@@ -134,9 +132,7 @@ final class GenerationStateManager implements ResetInterface
     {
         $this->load();
 
-        if (! isset($this->state[$host])) {
-            $this->state[$host] = ['lastGeneration' => '', 'pages' => []];
-        }
+        $this->state[$host] ??= ['lastGeneration' => '', 'pages' => []];
 
         $now = new DateTimeImmutable();
         $this->state[$host]['pages'][$slug] = [
@@ -183,9 +179,7 @@ final class GenerationStateManager implements ResetInterface
     {
         $this->load();
 
-        if (! isset($this->state[$host])) {
-            $this->state[$host] = ['lastGeneration' => '', 'pages' => []];
-        }
+        $this->state[$host] ??= ['lastGeneration' => '', 'pages' => []];
 
         $this->state[$host]['sweptEpoch'] = $epoch;
     }
@@ -248,9 +242,7 @@ final class GenerationStateManager implements ResetInterface
         $workerState = json_decode((string) file_get_contents($workerStateFile), true) ?? [];
 
         foreach ($workerState as $host => $hostData) {
-            if (! isset($this->state[$host])) {
-                $this->state[$host] = ['lastGeneration' => '', 'pages' => []];
-            }
+            $this->state[$host] ??= ['lastGeneration' => '', 'pages' => []];
 
             foreach ($hostData['pages'] as $slug => $pageState) {
                 $this->state[$host]['pages'][$slug] = $pageState;

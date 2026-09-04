@@ -209,10 +209,7 @@ final class PushwordConfigFactoryTest extends TestCase
             ],
         ];
 
-        // Add custom test property
-        if (! isset($extensionConfig['apps'][0]['custom_properties'])) {
-            $extensionConfig['apps'][0]['custom_properties'] = [];
-        }
+        $extensionConfig['apps'][0]['custom_properties'] ??= [];
 
         $extensionConfig['apps'][0]['custom_properties'] = array_merge($extensionConfig['apps'][0]['custom_properties'], ['firstCP' => 'blabla']);
 

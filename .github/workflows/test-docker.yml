@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # .scripts/test-docker installs the project on the runner before building the
       # image from it, so the host needs the same PHP as the installer job.

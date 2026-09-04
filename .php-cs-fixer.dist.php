@@ -24,4 +24,5 @@ $rules = require __DIR__.'/packages/dev-app/php-cs-fixer-rules.php';
 return new Config()
     ->setRules($rules)
     ->setRiskyAllowed(true)
+    ->setUnsupportedPhpVersionAllowed(true)
     ->setFinder($finder);

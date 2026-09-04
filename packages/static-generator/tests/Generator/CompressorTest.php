@@ -31,7 +31,6 @@ final class CompressorTest extends TestCase
     {
         $compressor = new Compressor();
 
-        // Vérifie que seuls les compresseurs valides sont détectés
         foreach ($compressor->availableCompressors as $algorithm) {
             self::assertContains($algorithm, CompressionAlgorithm::cases());
         }
@@ -54,40 +53,30 @@ final class CompressorTest extends TestCase
 
     public function testCompressCreatesCompressedFile(): void
     {
-        $compressor = new Compressor();
+        $compressor = $this->compressorWithAvailableAlgorithm();
 
-        if ([] === $compressor->availableCompressors) {
-            self::markTestSkipped('Aucun compresseur disponible sur ce système');
-        }
-
-        // Créer un fichier de test avec du contenu répétitif (compresse mieux)
+        // Repeated content makes the compression result deterministic.
         $testFile = $this->tempDir.'/test.html';
         $content = str_repeat('<p>Test content for compression</p>', 100);
         $this->filesystem->dumpFile($testFile, $content);
 
-        // Tester chaque compresseur disponible
         foreach ($compressor->availableCompressors as $algorithm) {
             $compressor->compress($testFile, $algorithm);
             $compressor->waitForCompressionToFinish();
 
             $compressedFile = $testFile.$algorithm->getExtension();
-            self::assertFileExists($compressedFile, \sprintf('Le fichier compressé avec %s devrait exister', $algorithm->value));
-            self::assertGreaterThan(0, filesize($compressedFile), \sprintf('Le fichier compressé avec %s ne devrait pas être vide', $algorithm->value));
+            self::assertFileExists($compressedFile, \sprintf('The file compressed with %s should exist', $algorithm->value));
+            self::assertGreaterThan(0, filesize($compressedFile), \sprintf('The file compressed with %s should not be empty', $algorithm->value));
 
-            // Nettoyer le fichier compressé pour le prochain test
             $this->filesystem->remove($compressedFile);
         }
     }
 
     public function testCompressedFileIsSmallerThanOriginal(): void
     {
-        $compressor = new Compressor();
+        $compressor = $this->compressorWithAvailableAlgorithm();
 
-        if ([] === $compressor->availableCompressors) {
-            self::markTestSkipped('Aucun compresseur disponible sur ce système');
-        }
-
-        // Créer un fichier HTML avec beaucoup de contenu répétitif
+        // Repeated HTML should always become smaller.
         $testFile = $this->tempDir.'/large-test.html';
         $content = '<!DOCTYPE html><html><head><title>Test</title></head><body>';
         $content .= str_repeat('<div class="content"><p>This is a test paragraph with repeated content.</p></div>', 500);
@@ -106,23 +95,18 @@ final class CompressorTest extends TestCase
             self::assertLessThan(
                 $originalSize,
                 $compressedSize,
-                \sprintf("Le fichier compressé avec %s devrait être plus petit que l'original", $algorithm->value)
+                \sprintf('The file compressed with %s should be smaller than the original', $algorithm->value)
             );
 
-            // Nettoyer
             $this->filesystem->remove($compressedFile);
         }
     }
 
     public function testMultipleCompressionProcessesRunInParallel(): void
     {
-        $compressor = new Compressor();
+        $compressor = $this->compressorWithAvailableAlgorithm();
 
-        if ([] === $compressor->availableCompressors) {
-            self::markTestSkipped('Aucun compresseur disponible sur ce système');
-        }
-
-        // Créer plusieurs fichiers de test
+        // Create several inputs so the processes overlap.
         $files = [];
         for ($i = 1; $i <= 3; ++$i) {
             $testFile = $this->tempDir.\sprintf('/test%d.html', $i);
@@ -131,16 +115,14 @@ final class CompressorTest extends TestCase
             $files[] = $testFile;
         }
 
-        // Lancer plusieurs compressions sans attendre
+        // Start every compression before waiting for any of them.
         $algorithm = $compressor->availableCompressors[0];
         foreach ($files as $file) {
             $compressor->compress($file, $algorithm);
         }
 
-        // Attendre que toutes les compressions se terminent
         $compressor->waitForCompressionToFinish();
 
-        // Vérifier que tous les fichiers compressés existent
         foreach ($files as $file) {
             self::assertFileExists($file.$algorithm->getExtension());
         }
@@ -148,24 +130,19 @@ final class CompressorTest extends TestCase
 
     public function testDestructorWaitsForCompressionToFinish(): void
     {
-        if ([] === (new Compressor())->availableCompressors) {
-            self::markTestSkipped('Aucun compresseur disponible sur ce système');
-        }
+        $compressor = $this->compressorWithAvailableAlgorithm();
 
-        // Créer un fichier de test
         $testFile = $this->tempDir.'/destructor-test.html';
         $content = str_repeat('<p>Test content</p>', 100);
         $this->filesystem->dumpFile($testFile, $content);
 
-        $compressor = new Compressor();
         $algorithm = $compressor->availableCompressors[0];
 
         $compressor->compress($testFile, $algorithm);
 
-        // Forcer la destruction explicite du compressor pour invoquer le destructeur
+        // Destroy the compressor explicitly to invoke its destructor.
         unset($compressor);
 
-        // Vérifier que le fichier compressé existe après la destruction
         self::assertFileExists($testFile.$algorithm->getExtension());
     }
 
@@ -192,11 +169,7 @@ final class CompressorTest extends TestCase
 
     public function testWaitForCompressionCanBeCalledMultipleTimes(): void
     {
-        $compressor = new Compressor();
-
-        if ([] === $compressor->availableCompressors) {
-            self::markTestSkipped('Aucun compresseur disponible sur ce système');
-        }
+        $compressor = $this->compressorWithAvailableAlgorithm();
 
         $testFile = $this->tempDir.'/test.html';
         $content = str_repeat('<p>Test</p>', 50);
@@ -205,11 +178,21 @@ final class CompressorTest extends TestCase
         $algorithm = $compressor->availableCompressors[0];
         $compressor->compress($testFile, $algorithm);
 
-        // Appeler waitForCompressionToFinish plusieurs fois ne devrait pas poser de problème
         $compressor->waitForCompressionToFinish();
         $compressor->waitForCompressionToFinish();
         $compressor->waitForCompressionToFinish();
 
         self::assertFileExists($testFile.$algorithm->getExtension());
+    }
+
+    private function compressorWithAvailableAlgorithm(): Compressor
+    {
+        $compressor = new Compressor();
+        self::assertNotEmpty(
+            $compressor->availableCompressors,
+            'The test environment must provide at least one supported compression algorithm.',
+        );
+
+        return $compressor;
     }
 }

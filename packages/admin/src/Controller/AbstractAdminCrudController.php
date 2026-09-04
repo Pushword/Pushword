@@ -215,9 +215,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
     {
         $modelClass = $this->getModelClass();
 
-        if (null === $subject) {
-            $subject = new $modelClass();
-        }
+        $subject ??= new $modelClass();
 
         if (! $subject instanceof $modelClass) {
             throw new InvalidArgumentException(sprintf('Expected subject of type "%s", "%s" given.', $modelClass, $subject::class));

@@ -610,20 +610,56 @@ final class PageRepositoryTest extends KernelTestCase
 
     public function testFindParentPageIdsWithChildrenReturnsDistinctParentsForHost(): void
     {
-        $pageRepository = $this->pageRepository();
-        $expected = [];
+        self::bootKernel();
 
-        foreach ($pageRepository->findBy(['host' => 'localhost.dev']) as $page) {
-            if ($page->parentPage instanceof Page && null !== $page->parentPage->id) {
-                $expected[$page->parentPage->id] = true;
-            }
+        $entityManager = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepository = $entityManager->getRepository(Page::class);
+        $host = 'parent-page-ids.test';
+
+        $newPage = static function (string $slug, ?Page $parentPage = null) use ($host): Page {
+            $page = new Page();
+            $page->host = $host;
+            $page->locale = 'en';
+            $page->slug = $slug;
+            $page->h1 = $slug;
+            $page->mainContent = 'Parent id query test.';
+            $page->parentPage = $parentPage;
+
+            return $page;
+        };
+
+        $parents = [$newPage('parent-a'), $newPage('parent-b')];
+        $children = [
+            $newPage('child-a-1', $parents[0]),
+            $newPage('child-a-2', $parents[0]),
+            $newPage('child-b', $parents[1]),
+        ];
+
+        foreach ([...$parents, ...$children] as $page) {
+            $entityManager->persist($page);
         }
 
-        $actual = array_fill_keys($pageRepository->findParentPageIdsWithChildren('localhost.dev'), true);
+        $entityManager->flush();
 
-        self::assertNotSame([], $expected, 'fixtures must include at least one parent/child relation');
-        self::assertSame($expected, $actual);
-        self::assertSame([], $pageRepository->findParentPageIdsWithChildren('unknown-host.test'));
+        try {
+            $expected = array_fill_keys([$parents[0]->id, $parents[1]->id], true);
+            $actual = array_fill_keys($pageRepository->findParentPageIdsWithChildren($host), true);
+
+            self::assertSame($expected, $actual);
+            self::assertSame([], $pageRepository->findParentPageIdsWithChildren('unknown-host.test'));
+        } finally {
+            foreach ($children as $child) {
+                $entityManager->remove($child);
+            }
+
+            $entityManager->flush();
+
+            foreach ($parents as $parent) {
+                $entityManager->remove($parent);
+            }
+
+            $entityManager->flush();
+        }
     }
 
     public function testFindPublishedSlugsReturnsOnlyPublishedPagesForHostInIdOrder(): void

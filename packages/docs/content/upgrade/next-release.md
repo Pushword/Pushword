@@ -1,13 +1,13 @@
 ---
-title: ''
+title: 'the Docker image uses patched OS and Go dependencies'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
 
 <!--
 The upgrade note for the next release. `.scripts/release` renames this file to
-`upgrade/rc<N>.md`, adds its row to the table in `upgrade.md` and empties it back
-to this scaffold, at the tag.
+`upgrade/<version>.md`, adds its row to the table in `upgrade.md` and empties it
+back to this scaffold, at the tag.
 
 Write here, in the same commit as the change, whenever a release asks something of
 a site that upgrades: a command to run, a config key to set, a template to copy, a
@@ -34,3 +34,12 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`, `pushword/dev-app`
+
+## Refresh the Docker base
+
+New Docker builds pin FrankenPHP 1.12.7, rebuild its binary with patched Go
+dependencies and install current Debian security updates. Sites that already copied the
+Docker skeleton should merge `Dockerfile`, or rerun `pw:docker:init --force` only if
+their Docker files have not been customised.

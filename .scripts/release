@@ -15,16 +15,32 @@ if ! command -v gh &> /dev/null; then
     exit 1
 fi
 
-# Get latest tag and bump RC number
+# Get the previous RC. By default, release the next RC; passing 1.0.0 promotes
+# the current tree to the first stable release.
 LATEST_TAG=$(git tag -l '1.0.0-rc*' | sort -V | tail -1)
 if [ -z "$LATEST_TAG" ]; then
     echo -e "${RED}Error: No 1.0.0-rc* tag found${NC}"
     exit 1
 fi
 
-CURRENT_RC=$(echo "$LATEST_TAG" | sed 's/1.0.0-rc//')
-NEXT_RC=$((CURRENT_RC + 1))
-NEW_TAG="1.0.0-rc$NEXT_RC"
+if [ -n "${1:-}" ]; then
+    if [ "$1" != "1.0.0" ]; then
+        echo -e "${RED}Usage: .scripts/release [1.0.0]${NC}"
+        exit 1
+    fi
+    NEW_TAG="$1"
+    NOTE_SLUG="$NEW_TAG"
+else
+    CURRENT_RC=$(echo "$LATEST_TAG" | sed 's/1.0.0-rc//')
+    NEXT_RC=$((CURRENT_RC + 1))
+    NEW_TAG="1.0.0-rc$NEXT_RC"
+    NOTE_SLUG="rc$NEXT_RC"
+fi
+
+if git rev-parse --verify --quiet "refs/tags/$NEW_TAG" >/dev/null; then
+    echo -e "${RED}Error: Tag $NEW_TAG already exists${NC}"
+    exit 1
+fi
 
 echo -e "${GREEN}Creating release $NEW_TAG (previous: $LATEST_TAG)${NC}"
 
@@ -46,7 +62,7 @@ php ./.scripts/release-upgrade-note "$NEW_TAG"
 NOTE_STATUS=$?
 set -e
 if [ "$NOTE_STATUS" -eq 10 ]; then
-    NOTE="packages/docs/content/upgrade/rc$NEXT_RC.md"
+    NOTE="packages/docs/content/upgrade/$NOTE_SLUG.md"
     git add "$NOTE"
     git commit --only -m "docs: upgrade note for $NEW_TAG" -- \
         "$NOTE" packages/docs/content/upgrade/next-release.md packages/docs/content/upgrade.md
@@ -65,7 +81,11 @@ if [ -z "$NOTES" ]; then
     NOTES="No changes"
 fi
 
-# Create GitHub Release
-gh release create "$NEW_TAG" --title "$NEW_TAG" --notes "$NOTES"
+# Create GitHub Release. RCs must not appear as the latest stable release.
+RELEASE_FLAGS=()
+if [[ "$NEW_TAG" == *-rc* ]]; then
+    RELEASE_FLAGS+=(--prerelease)
+fi
+gh release create "$NEW_TAG" --title "$NEW_TAG" --notes "$NOTES" "${RELEASE_FLAGS[@]}"
 
 echo -e "${GREEN}Release $NEW_TAG created: $(gh release view "$NEW_TAG" --json url -q .url)${NC}"

@@ -24,7 +24,7 @@ final class PwAuthCookieHealListenerUnitTest extends TestCase
 {
     public function testSetsCookieForAuthenticatedMainRequestWithoutCookie(): void
     {
-        $security = $this->createMock(Security::class);
+        $security = self::createStub(Security::class);
         $security->method('getUser')->willReturn(new InMemoryUser('u', null));
         $security->method('isGranted')->willReturn(true);
 
@@ -38,7 +38,7 @@ final class PwAuthCookieHealListenerUnitTest extends TestCase
 
     public function testSkipsAuthenticatedNonEditor(): void
     {
-        $security = $this->createMock(Security::class);
+        $security = self::createStub(Security::class);
         $security->method('getUser')->willReturn(new InMemoryUser('u', null));
         $security->method('isGranted')->willReturn(false);
 

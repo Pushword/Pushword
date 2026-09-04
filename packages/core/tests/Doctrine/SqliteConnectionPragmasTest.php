@@ -64,6 +64,7 @@ final class SqliteConnectionPragmasTest extends KernelTestCase
      * it. With no timeout the second one does not queue behind the first, it fails
      * with `database is locked`.
      */
+    #[Group('sqlite')]
     public function testAWriterWaitsForALockInsteadOfFailingOnTheSpot(): void
     {
         self::bootKernel();
@@ -78,6 +79,7 @@ final class SqliteConnectionPragmasTest extends KernelTestCase
      * takes every cascading child row with it — so `doctrine:schema:update`, the
      * upgrade path here, must run with the pragma back off.
      */
+    #[Group('sqlite')]
     public function testASchemaCommandRunsWithForeignKeysOff(): void
     {
         self::bootKernel();
@@ -99,6 +101,7 @@ final class SqliteConnectionPragmasTest extends KernelTestCase
     }
 
     /** Every other command keeps the enforcement — a looser name match would drop it for all of them. */
+    #[Group('sqlite')]
     public function testAnyOtherCommandKeepsForeignKeysOn(): void
     {
         self::bootKernel();
@@ -116,9 +119,7 @@ final class SqliteConnectionPragmasTest extends KernelTestCase
     private function sqliteConnection(): Connection
     {
         $connection = self::getContainer()->get(Connection::class);
-        if (! $connection->getDatabasePlatform() instanceof SQLitePlatform) {
-            self::markTestSkipped('Pragmas only exist on SQLite.');
-        }
+        self::assertInstanceOf(SQLitePlatform::class, $connection->getDatabasePlatform());
 
         return $connection;
     }

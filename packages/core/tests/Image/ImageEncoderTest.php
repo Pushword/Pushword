@@ -18,10 +18,10 @@ final class ImageEncoderTest extends TestCase
      */
     public function testRefusesToWriteEmptyEncode(): void
     {
-        $encoded = $this->createMock(EncodedImageInterface::class);
+        $encoded = self::createStub(EncodedImageInterface::class);
         $encoded->method('toString')->willReturn('');
 
-        $image = $this->createMock(ImageInterface::class);
+        $image = self::createStub(ImageInterface::class);
         $image->method('encodeUsingFormat')->willReturn($encoded);
 
         $output = sys_get_temp_dir().'/pw-encoder-empty-'.getmypid().'.webp';
@@ -42,13 +42,13 @@ final class ImageEncoderTest extends TestCase
 
     public function testWritesNonEmptyEncodeIntoPlace(): void
     {
-        $encoded = $this->createMock(EncodedImageInterface::class);
+        $encoded = self::createStub(EncodedImageInterface::class);
         $encoded->method('toString')->willReturn('WEBP-BYTES');
         $encoded->method('save')->willReturnCallback(static function (string $path): void {
             file_put_contents($path, 'WEBP-BYTES');
         });
 
-        $image = $this->createMock(ImageInterface::class);
+        $image = self::createStub(ImageInterface::class);
         $image->method('encodeUsingFormat')->willReturn($encoded);
 
         $output = sys_get_temp_dir().'/pw-encoder-ok-'.getmypid().'.webp';
@@ -69,10 +69,10 @@ final class ImageEncoderTest extends TestCase
      */
     public function testEncodeOriginalToStringRefusesEmpty(): void
     {
-        $encoded = $this->createMock(EncodedImageInterface::class);
+        $encoded = self::createStub(EncodedImageInterface::class);
         $encoded->method('toString')->willReturn('');
 
-        $image = $this->createMock(ImageInterface::class);
+        $image = self::createStub(ImageInterface::class);
         $image->method('encode')->willReturn($encoded);
 
         $this->expectException(RuntimeException::class);
@@ -81,10 +81,10 @@ final class ImageEncoderTest extends TestCase
 
     public function testEncodeOriginalToStringReturnsBytes(): void
     {
-        $encoded = $this->createMock(EncodedImageInterface::class);
+        $encoded = self::createStub(EncodedImageInterface::class);
         $encoded->method('toString')->willReturn('JPG-BYTES');
 
-        $image = $this->createMock(ImageInterface::class);
+        $image = self::createStub(ImageInterface::class);
         $image->method('encode')->willReturn($encoded);
 
         self::assertSame('JPG-BYTES', new ImageEncoder()->encodeOriginalToString($image, 90, 'foo.jpg'));
@@ -96,9 +96,9 @@ final class ImageEncoderTest extends TestCase
      */
     public function testRetriesTransientEmptyEncode(): void
     {
-        $empty = $this->createMock(EncodedImageInterface::class);
+        $empty = self::createStub(EncodedImageInterface::class);
         $empty->method('toString')->willReturn('');
-        $full = $this->createMock(EncodedImageInterface::class);
+        $full = self::createStub(EncodedImageInterface::class);
         $full->method('toString')->willReturn('WEBP-RECOVERED');
 
         $image = $this->createMock(ImageInterface::class);
@@ -124,10 +124,10 @@ final class ImageEncoderTest extends TestCase
      */
     public function testThrowsWhenWriteFails(): void
     {
-        $encoded = $this->createMock(EncodedImageInterface::class);
+        $encoded = self::createStub(EncodedImageInterface::class);
         $encoded->method('toString')->willReturn('WEBP-BYTES');
 
-        $image = $this->createMock(ImageInterface::class);
+        $image = self::createStub(ImageInterface::class);
         $image->method('encodeUsingFormat')->willReturn($encoded);
 
         $output = sys_get_temp_dir().'/pw-encoder-missing-dir-'.getmypid().'/out.webp';

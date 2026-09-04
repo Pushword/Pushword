@@ -12,9 +12,7 @@ class PushwordPageUpdateNotifierBundle extends Bundle
     #[Override]
     public function getContainerExtension(): ?ExtensionInterface
     {
-        if (null === $this->extension) {
-            $this->extension = new PageUpdateNotifierExtension();
-        }
+        $this->extension ??= new PageUpdateNotifierExtension();
 
         return false === $this->extension ? null : $this->extension;
     }

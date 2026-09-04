@@ -272,10 +272,7 @@ final class EncodingTest extends KernelTestCase
 
         // Slug should be normalized from the filename
         $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'cafe-creme', 'host' => 'localhost.dev']);
-        if (null === $page) {
-            // The slug might keep the accents depending on normalizer
-            $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'café-crème', 'host' => 'localhost.dev']);
-        }
+        $page ??= $this->em->getRepository(Page::class)->findOneBy(['slug' => 'café-crème', 'host' => 'localhost.dev']);
 
         self::assertInstanceOf(Page::class, $page, 'Page from non-ASCII filename should be imported');
         self::assertSame('Café Crème', $page->h1);

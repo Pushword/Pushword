@@ -64,7 +64,7 @@ final class PageScanCoordinatorTest extends KernelTestCase
     public function testStartScanForcesTextFormat(): void
     {
         $captured = [];
-        $dispatcher = self::createMock(BackgroundTaskDispatcherInterface::class);
+        $dispatcher = self::createStub(BackgroundTaskDispatcherInterface::class);
         $dispatcher->method('dispatch')->willReturnCallback(
             static function (string $processType, array $commandParts) use (&$captured): void {
                 $captured = $commandParts;

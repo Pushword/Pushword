@@ -218,6 +218,7 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
         $file = __DIR__.'/media/2.jpg';
         $client = $this->loginUser();
         $client->catchExceptions(false);
+
         $crawler = $this->requestMediaCreateForm($client);
         $fileInput = $crawler->filter('[type="file"]');
         $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line

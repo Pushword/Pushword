@@ -5,7 +5,7 @@ namespace Pushword\Core\Tests\Entity\SharedTrait;
 use Error;
 use InvalidArgumentException;
 use LogicException;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Page;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -254,21 +254,21 @@ final class CustomPropertiesTraitTest extends TestCase
         $page->setUnmanagedPropertiesFromYaml('just a string', true);
     }
 
-    protected function getExceptionContextInterface(): ExecutionContextInterface&MockObject
+    protected function getExceptionContextInterface(): ExecutionContextInterface&Stub
     {
-        $mockConstraintViolationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
-        $mockConstraintViolationBuilder->method('atPath')->willReturnSelf();
-        $mockConstraintViolationBuilder->method('addViolation')->willReturnSelf();
+        $constraintViolationBuilder = self::createStub(ConstraintViolationBuilderInterface::class);
+        $constraintViolationBuilder->method('atPath')->willReturnSelf();
+        $constraintViolationBuilder->method('addViolation')->willReturnSelf();
 
-        $mock = $this->createMock(ExecutionContextInterface::class);
-        $mock->method('buildViolation')->willReturnCallback(static function (string $arg) use ($mockConstraintViolationBuilder): MockObject {
+        $context = self::createStub(ExecutionContextInterface::class);
+        $context->method('buildViolation')->willReturnCallback(static function (string $arg) use ($constraintViolationBuilder): ConstraintViolationBuilderInterface {
             if (\in_array($arg, ['pageCustomPropertiesMalformed', 'pageCustomPropertiesNotStandAlone'], true)) {
                 throw new Error();
             }
 
-            return $mockConstraintViolationBuilder;
+            return $constraintViolationBuilder;
         });
 
-        return $mock;
+        return $context;
     }
 }

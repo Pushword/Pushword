@@ -4,13 +4,31 @@
 # The layout follows dunglas/symfony-docker; what differs is documented inline, and in
 # https://pushword.piedweb.com/docker
 
-FROM dunglas/frankenphp:1-php8.4 AS pushword_base
+# FrankenPHP 1.12.7 still embeds vulnerable Go dependencies. Rebuild the same immutable
+# stable revision with patched dependencies until the next release includes them. Both
+# digests are multi-platform image indexes for that release.
+FROM dunglas/frankenphp:1.12.7-builder-php8.4@sha256:4936ac46f73695ad7994d4cfd9eac7ce1e0a4666c0da3834d601ed90b36e8bb3 AS frankenphp_builder
+
+ARG FRANKENPHP_VERSION=1.12.7
+
+WORKDIR /go/src/app/caddy
+RUN go get \
+		github.com/getkin/kin-openapi@v0.144.0 \
+		golang.org/x/crypto@v0.55.0 \
+		google.golang.org/grpc@v1.83.1
+
+WORKDIR /go/src/app/caddy/frankenphp
+RUN GOBIN=/patched ../../go.sh install -buildvcs=false -ldflags "-w -s -X 'github.com/caddyserver/caddy/v2.CustomVersion=FrankenPHP $FRANKENPHP_VERSION PHP $PHP_VERSION Caddy' -X 'github.com/caddyserver/caddy/v2.CustomBinaryName=frankenphp' -X 'github.com/caddyserver/caddy/v2/modules/caddyhttp.ServerHeader=FrankenPHP Caddy'"
+
+FROM dunglas/frankenphp:1.12.7-php8.4@sha256:77bc2d40a58ace3a9425e4cbb0c40d044188dfd850e44a943ed043d743625df3 AS pushword_base
+
+COPY --from=frankenphp_builder /patched/frankenphp /usr/local/bin/frankenphp
 
 WORKDIR /app
 
 # git: pushword/flat commits content. brotli: the static generator shells out to it.
 # The four image binaries: spatie/image-optimizer's chain, used on every derivative.
-RUN apt-get update && apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get upgrade -y && apt-get install --no-install-recommends -y \
 		brotli \
 		gifsicle \
 		git \
@@ -18,7 +36,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 		optipng \
 		pngquant \
 		webp \
-	&& rm -rf /var/lib/apt/lists/*
+	&& rm -rf /var/lib/apt/lists/* \
+	&& setcap cap_net_bind_service=+ep /usr/local/bin/frankenphp
 
 # curl, dom, fileinfo, iconv, libxml, mbstring, pdo, pdo_sqlite and sqlite3 already ship
 # with the base image; this is the rest of what /installation asks for. imagick makes

@@ -3,10 +3,11 @@
 
 /**
  * Turns packages/docs/content/upgrade/next-release.md into the released note
- * upgrade/rc<N>.md, adds its row to the table in upgrade.md, and resets the
- * draft. Called by .scripts/release before the tag is cut.
+ * upgrade/<version>.md, adds its row to the table in upgrade.md, and resets
+ * the draft. Called by .scripts/release before the tag is cut.
  *
  * Usage: release-upgrade-note 1.0.0-rc823
+ *        release-upgrade-note 1.0.0
  *        release-upgrade-note --reset
  *
  * Exit codes: 0 nothing drafted, 10 note released, 1 the draft is unusable.
@@ -31,8 +32,8 @@ const SCAFFOLD = <<<'MD'
 
     <!--
     The upgrade note for the next release. `.scripts/release` renames this file to
-    `upgrade/rc<N>.md`, adds its row to the table in `upgrade.md` and empties it back
-    to this scaffold, at the tag.
+    `upgrade/<version>.md`, adds its row to the table in `upgrade.md` and empties it
+    back to this scaffold, at the tag.
 
     Write here, in the same commit as the change, whenever a release asks something of
     a site that upgrades: a command to run, a config key to set, a template to copy, a
@@ -131,12 +132,12 @@ if ('--reset' === $argument) {
     exit(NOTHING_DRAFTED);
 }
 
-if (1 !== preg_match('/^1\.0\.0-(rc\d+)$/', $argument, $version)) {
-    fwrite(\STDERR, "usage: release-upgrade-note <1.0.0-rcN>|--reset\n");
+if (1 !== preg_match('/^(1\.0\.0)(?:-(rc\d+))?$/', $argument, $version)) {
+    fwrite(\STDERR, "usage: release-upgrade-note <1.0.0-rcN|1.0.0>|--reset\n");
     exit(UNUSABLE);
 }
 
-$slug = $version[1];
+$slug = $version[2] ?? $version[1];
 [$frontmatter, $body] = splitNote((string) file_get_contents(DRAFT));
 $body = trim((string) preg_replace('/<!--.*?-->/s', '', $body));
 
@@ -154,8 +155,8 @@ $run = $frontmatter['run'] ?? [];
 $commands = array_values(array_filter(array_map('trim', (array) $run)));
 
 $released = "---\n"
-    ."title: 'Upgrade to 1.0.0-".$slug.': '.str_replace("'", "''", $title)."'\n"
-    ."h1: 'Upgrade to 1.0.0-".$slug."'\n"
+    ."title: 'Upgrade to ".$argument.': '.str_replace("'", "''", $title)."'\n"
+    ."h1: 'Upgrade to ".$argument."'\n"
     ."publishedAt: '".date('Y-m-d H:i')."'\n"
     ."parentPage: upgrade\n"
     .(substr_count($body, "\n## ") >= 2 ? "toc: true\n" : '')

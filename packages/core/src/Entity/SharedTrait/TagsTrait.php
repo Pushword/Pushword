@@ -43,9 +43,7 @@ trait TagsTrait
     /** @param string[]|string|null $tags */
     public function setTags(array|string|null $tags): self
     {
-        if (null === $tags) {
-            $tags = [];
-        }
+        $tags ??= [];
 
         if (\is_string($tags)) {
             $tags = $this->manageTagsString($tags);

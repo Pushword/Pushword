@@ -23,11 +23,11 @@ final class EditorNoticeListenerTest extends TestCase
         int $requestType = HttpKernelInterface::MAIN_REQUEST,
         string $contentType = 'text/html; charset=UTF-8',
     ): Response {
-        $security = $this->createMock(Security::class);
-        $security->method('getToken')->willReturn($authenticated ? $this->createMock(TokenInterface::class) : null);
+        $security = self::createStub(Security::class);
+        $security->method('getToken')->willReturn($authenticated ? self::createStub(TokenInterface::class) : null);
         $security->method('isGranted')->willReturn($isEditor);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = self::createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnArgument(0);
 
         $response = new Response($html);

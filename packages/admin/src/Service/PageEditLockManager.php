@@ -64,10 +64,7 @@ final readonly class PageEditLockManager
             return null;
         }
 
-        // Ensure tabId key exists for backwards compatibility
-        if (! isset($data['tabId'])) {
-            $data['tabId'] = null;
-        }
+        $data['tabId'] ??= null;
 
         /** @var array{pageId: int, userId: int, userEmail: string, username: string, tabId: string|null, lockedAt: int, lastPingAt: int, lastSavedAt: int|null} $data */
         return $data;

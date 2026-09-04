@@ -12,9 +12,7 @@ class PushwordSearchBundle extends Bundle
     #[Override]
     public function getContainerExtension(): ?ExtensionInterface
     {
-        if (null === $this->extension) {
-            $this->extension = new SearchExtension();
-        }
+        $this->extension ??= new SearchExtension();
 
         return false === $this->extension ? null : $this->extension;
     }

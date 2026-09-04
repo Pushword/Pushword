@@ -12,10 +12,10 @@ paths:
 triggers on **tag pushes only** (`on: push: tags: ["*"]`), so one release produces exactly
 one race-free split run.
 
-- **Every release must be a new rc number.** The split action hard-fails on
+- **Every release must use a new version.** The split action hard-fails on
   `git tag X` when `X` already exists, with no `--force`. `.scripts/release` (what
   `composer release` and `/tagAndPush` delegate to) auto-bumps from the latest
-  `1.0.0-rc*`.
+  `1.0.0-rc*`; pass `1.0.0` explicitly to cut the stable release.
 - **A matrix entry needs both a `packages/<pkg>` directory and an existing mirror repo.**
   `admin-monaco-editor` and `ai-skills` have source dirs but no mirror and are
   deliberately absent; adding them would 404 at clone.

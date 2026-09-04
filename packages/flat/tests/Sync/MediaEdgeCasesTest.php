@@ -345,9 +345,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         // Create an oversized test image (3000x2000)
         $imgPath = $mediaDir.'/edge-oversized.png';
         $img = imagecreatetruecolor(3000, 2000);
-        if (false === $img) {
-            self::markTestSkipped('GD extension not available');
-        }
+        self::assertNotFalse($img, 'The required GD extension must create the test image.');
 
         imagepng($img, $imgPath);
         unset($img); // frees the 23 MB buffer before the import resizes it (imagedestroy() never did)

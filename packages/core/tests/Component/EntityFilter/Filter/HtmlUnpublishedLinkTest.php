@@ -221,7 +221,7 @@ final class HtmlUnpublishedLinkTest extends TestCase
         /** @var array<string, list<string>> $warmed host => slugs */
         $warmed = [];
 
-        $repo = $this->createMock(PageRepository::class);
+        $repo = self::createStub(PageRepository::class);
         $repo->method('warmupSlugCacheFor')->willReturnCallback(
             static function (array $slugs, string $host) use (&$warmed): void {
                 // Each host must be warmed exactly once (the whole point of batching).
@@ -287,7 +287,7 @@ final class HtmlUnpublishedLinkTest extends TestCase
         /** @var array<string, list<string>> $warmed host => slugs */
         $warmed = [];
 
-        $repo = $this->createMock(PageRepository::class);
+        $repo = self::createStub(PageRepository::class);
         $repo->method('warmupSlugCacheFor')->willReturnCallback(
             static function (array $slugs, string $host) use (&$warmed): void {
                 $warmed[$host] = $slugs;

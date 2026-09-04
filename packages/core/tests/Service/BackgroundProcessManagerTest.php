@@ -32,9 +32,7 @@ final class BackgroundProcessManagerTest extends TestCase
 
     public function testParentProcessPidIsNotAlive(): void
     {
-        if (! \function_exists('posix_getppid')) {
-            self::markTestSkipped('posix_getppid not available');
-        }
+        self::assertTrue(\function_exists('posix_getppid'), 'The process tests require the POSIX extension.');
 
         $ppid = posix_getppid();
         self::assertFalse($this->manager->isProcessAlive($ppid, ''));

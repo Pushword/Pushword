@@ -25,9 +25,7 @@ class PushwordFlatBundle extends Bundle
     #[Override]
     public function getContainerExtension(): ?ExtensionInterface
     {
-        if (null === $this->extension) {
-            $this->extension = new PushwordFlatExtension();
-        }
+        $this->extension ??= new PushwordFlatExtension();
 
         return false === $this->extension ? null : $this->extension;
     }

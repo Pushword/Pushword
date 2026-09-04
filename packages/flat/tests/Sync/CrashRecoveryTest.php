@@ -3,6 +3,7 @@
 namespace Pushword\Flat\Tests\Sync;
 
 use DateTime;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManager;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
@@ -193,15 +194,13 @@ final class CrashRecoveryTest extends KernelTestCase
         $this->stateManager->resetState($isolatedHost);
     }
 
+    #[Group('sqlite')]
     public function testDatabaseBackupIsRestorable(): void
     {
-        /** @var string $projectDir */
-        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
-        $dbPath = $projectDir.'/var/app.db';
-
-        if (! file_exists($dbPath)) {
-            self::markTestSkipped('SQLite database not found');
-        }
+        $params = self::getContainer()->get(Connection::class)->getParams();
+        $dbPath = $params['path'] ?? null;
+        self::assertIsString($dbPath, 'The SQLite test connection must expose its database path.');
+        self::assertFileExists($dbPath);
 
         // Create backup
         $backupPath = $dbPath.'~test-backup';

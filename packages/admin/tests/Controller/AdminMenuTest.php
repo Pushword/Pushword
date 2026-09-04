@@ -174,7 +174,7 @@ final class AdminMenuTest extends KernelTestCase
             $this->eventDispatcher,
             $security,
         );
-        $this->eventDispatcher->method('dispatch')->willReturnArgument(0);
+        $this->eventDispatcher->expects(self::once())->method('dispatch')->willReturnArgument(0);
 
         $labels = array_map(
             static function (MenuItemInterface $item): string {

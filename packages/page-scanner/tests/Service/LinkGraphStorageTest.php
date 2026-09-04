@@ -33,7 +33,7 @@ final class LinkGraphStorageTest extends TestCase
      */
     private function storage(array $currentCorpus = self::CORPUS): LinkGraphStorage
     {
-        $pageRepo = $this->createMock(PageRepository::class);
+        $pageRepo = self::createStub(PageRepository::class);
         $pageRepo->method('getPublishedCorpusState')->willReturn($currentCorpus);
 
         return new LinkGraphStorage(new Filesystem(), $pageRepo, $this->varDir);

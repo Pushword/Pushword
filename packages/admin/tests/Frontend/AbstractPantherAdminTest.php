@@ -115,10 +115,7 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
             putenv('PANTHER_CHROME_ARGUMENTS='.$chromeArguments);
         }
 
-        // Assign unique web server port per class so parallel workers don't conflict
-        if (! isset($_SERVER['PANTHER_WEB_SERVER_PORT'])) {
-            $_SERVER['PANTHER_WEB_SERVER_PORT'] = (string) (9080 + (abs(crc32(static::class)) % 100));
-        }
+        $_SERVER['PANTHER_WEB_SERVER_PORT'] ??= (string) (9080 + (abs(crc32(static::class)) % 100));
 
         /** @var string $webServerPort */
         $webServerPort = $_SERVER['PANTHER_WEB_SERVER_PORT'];

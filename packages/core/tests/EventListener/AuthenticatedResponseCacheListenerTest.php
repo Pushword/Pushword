@@ -16,7 +16,7 @@ final class AuthenticatedResponseCacheListenerTest extends TestCase
 {
     public function testAuthenticatedResponseCannotBeStoredByTheBrowser(): void
     {
-        $security = $this->createMock(Security::class);
+        $security = self::createStub(Security::class);
         $security->method('getUser')->willReturn(new InMemoryUser('editor', null));
 
         $response = new Response();
@@ -36,7 +36,7 @@ final class AuthenticatedResponseCacheListenerTest extends TestCase
 
     public function testAnonymousResponseKeepsItsCachePolicy(): void
     {
-        $security = $this->createMock(Security::class);
+        $security = self::createStub(Security::class);
         $security->method('getUser')->willReturn(null);
 
         $response = new Response(headers: ['Cache-Control' => 'public, max-age=3600']);

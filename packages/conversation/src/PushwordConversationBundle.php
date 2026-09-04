@@ -12,9 +12,7 @@ class PushwordConversationBundle extends Bundle
     #[Override]
     public function getContainerExtension(): ?ExtensionInterface
     {
-        if (null === $this->extension) {
-            $this->extension = new PushwordConversationExtension();
-        }
+        $this->extension ??= new PushwordConversationExtension();
 
         return false === $this->extension ? null : $this->extension;
     }

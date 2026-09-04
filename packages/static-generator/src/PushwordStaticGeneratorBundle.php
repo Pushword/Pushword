@@ -12,9 +12,7 @@ class PushwordStaticGeneratorBundle extends Bundle
     #[Override]
     public function getContainerExtension(): ?ExtensionInterface
     {
-        if (null === $this->extension) {
-            $this->extension = new StaticGeneratorExtension();
-        }
+        $this->extension ??= new StaticGeneratorExtension();
 
         return false === $this->extension ? null : $this->extension;
     }

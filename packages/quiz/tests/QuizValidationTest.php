@@ -163,7 +163,7 @@ final class QuizValidationTest extends KernelTestCase
 
         // Simulate the pushword_quiz_result route being absent (partial install /
         // custom routing): generating it must not blank out the whole quiz.
-        $router = $this->createMock(RouterInterface::class);
+        $router = self::createStub(RouterInterface::class);
         $router->method('generate')->willThrowException(new RouteNotFoundException('missing'));
 
         $renderer = new QuizRenderer(
