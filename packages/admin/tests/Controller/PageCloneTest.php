@@ -2,9 +2,7 @@
 
 namespace Pushword\Admin\Tests\Controller;
 
-use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use PHPUnit\Framework\Attributes\Group;
-use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,28 +14,24 @@ final class PageCloneTest extends AbstractAdminTestClass
     public function testClonePage(): void
     {
         $client = $this->loginUser();
-        $client->catchExceptions(false);
 
         /** @var PageRepository $pageRepo */
         $pageRepo = self::getContainer()->get(PageRepository::class);
-        $page = $pageRepo->findOneBy(['slug' => 'homepage']);
+        $page = $pageRepo->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev']);
         self::assertNotNull($page, 'Fixture page "homepage" must exist');
 
-        /** @var AdminUrlGenerator $urlGenerator */
-        $urlGenerator = clone self::getContainer()->get(AdminUrlGenerator::class);
-        $cloneUrl = $urlGenerator
-            ->unsetAll()
-            ->setController(PageCrudController::class)
-            ->setAction('clonePage')
-            ->setEntityId($page->id)
-            ->generateUrl();
-
-        // Parse path+query only (AdminUrlGenerator may include the host)
-        $parsed = parse_url($cloneUrl);
-        $query = $parsed['query'] ?? '';
-        $path = ($parsed['path'] ?? '/').('' !== $query ? '?'.$query : '');
+        $path = self::getContainer()->get('router')->generate('admin_page_clone_page', ['entityId' => $page->id]);
+        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
+        $token = $crawler->filter('form[action$="'.$path.'"] input[name="_token"]')->attr('value');
+        self::assertNotNull($token);
 
         $client->request(Request::METHOD_GET, $path);
+        self::assertContains($client->getResponse()->getStatusCode(), [Response::HTTP_NOT_FOUND, Response::HTTP_METHOD_NOT_ALLOWED]);
+
+        $client->request(Request::METHOD_POST, $path, ['_token' => 'invalid']);
+        self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+
+        $client->request(Request::METHOD_POST, $path, ['_token' => $token]);
 
         $location = $client->getResponse()->headers->get('Location') ?? '';
         self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), 'Location: '.$location.' | Body: '.$client->getResponse()->getContent());

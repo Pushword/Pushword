@@ -11,6 +11,7 @@ use Pushword\Admin\Controller\AdminMenu;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -30,12 +31,15 @@ final class AdminMenuTest extends KernelTestCase
         $appPool = self::getContainer()->get(SiteRegistry::class);
         $adminContextProvider = self::createStub(AdminContextProviderInterface::class);
         $requestStack = new RequestStack([new Request()]);
+        $security = self::createStub(Security::class);
+        $security->method('isGranted')->willReturn(true);
 
         $this->adminMenu = new AdminMenu(
             $appPool,
             $adminContextProvider,
             $requestStack,
             $this->eventDispatcher,
+            $security,
         );
     }
 
@@ -157,5 +161,30 @@ final class AdminMenuTest extends KernelTestCase
             });
 
         iterator_to_array($this->adminMenu->configureMenuItems());
+    }
+
+    public function testUserMenuIsHiddenWithoutSuperAdminRole(): void
+    {
+        $security = self::createStub(Security::class);
+        $security->method('isGranted')->willReturn(false);
+        $menu = new AdminMenu(
+            self::getContainer()->get(SiteRegistry::class),
+            self::createStub(AdminContextProviderInterface::class),
+            new RequestStack([new Request()]),
+            $this->eventDispatcher,
+            $security,
+        );
+        $this->eventDispatcher->method('dispatch')->willReturnArgument(0);
+
+        $labels = array_map(
+            static function (MenuItemInterface $item): string {
+                $label = $item->getAsDto()->getLabel();
+
+                return \is_string($label) ? $label : '';
+            },
+            iterator_to_array($menu->configureMenuItems()),
+        );
+
+        self::assertNotContains('adminLabelUsers', $labels);
     }
 }

@@ -13,9 +13,11 @@ use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageEncoder;
 use Pushword\Core\Image\ImageReader;
 use Pushword\Core\Service\MediaStorageAdapter;
+use Pushword\Core\Service\SafeRemoteFileFetcher;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -195,12 +197,15 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
     {
         self::bootKernel();
 
-        $mediaEntity = $this->getImporter()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
+        $url = 'https://fixture.invalid/media-listener-2.jpg';
+        new Filesystem()->copy(__DIR__.'/media/2.jpg', sys_get_temp_dir().'/pushword-safe-image-'.sha1($url), true);
+
+        $mediaEntity = $this->getImporter()->importExternal($url, '1', '', false);
         // $em->persist($mediaEntity);
         self::assertFileExists($this->getMediaDir().'/1-2.jpg');
 
         // If import twice, return the existing one and not create a new copy
-        $mediaEntity = $this->getImporter()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
+        $mediaEntity = $this->getImporter()->importExternal($url, '1', '', false);
         self::assertFileDoesNotExist($this->getMediaDir().'/1-3.jpg');
         self::assertSame('1-2.jpg', $mediaEntity->getFileName());
         unlink($this->getMediaDir().'/1-2.jpg');
@@ -210,62 +215,55 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
     // 1. A new image is properly renamed when another image with the same name already exists (no overwrite)
     public function testRenameNewMediaIfAnotherMediaHasSameName(): void
     {
-        $files = [
-            __DIR__.'/media/2.jpg',
-            __DIR__.'/media/2',
-            // __DIR__.'/media/2.withoutMimeType.jpg', //=> this will create 1
-        ];
+        $file = __DIR__.'/media/2.jpg';
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+        $crawler = $this->requestMediaCreateForm($client);
+        $fileInput = $crawler->filter('[type="file"]');
+        $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
+        $form = $crawler->filter('form[method="post"]')->form([
+            $formId.'[mediaFile]' => $file,
+        ]);
+        $client->submit($form);
+        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertFileExists($this->getMediaDir().'/2-2.jpg');
 
-        foreach ($files as $file) {
-            $client = $this->loginUser();
-            $client->catchExceptions(false);
-            $crawler = $this->requestMediaCreateForm($client);
-            $fileInput = $crawler->filter('[type="file"]');
-            $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
-            $form = $crawler->filter('form[method="post"]')->form([
-                $formId.'[mediaFile]' => $file,
-            ]);
-            $client->submit($form);
-            self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
-            self::assertFileExists($this->getMediaDir().'/2-2.jpg');
+        $crawler = $this->requestMediaCreateForm($client);
+        $fileInput = $crawler->filter('[type="file"]');
+        $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
+        $form = $crawler->filter('form[method="post"]')->form([
+            $formId.'[mediaFile]' => $file,
+            $formId.'[alt]' => '1',
+        ]);
 
-            $crawler = $this->requestMediaCreateForm($client);
-            $fileInput = $crawler->filter('[type="file"]');
-            $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
-            $form = $crawler->filter('form[method="post"]')->form([
-                $formId.'[mediaFile]' => $file,
-                $formId.'[alt]' => '1',
-            ]);
+        $client->submit($form);
+        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertFileExists($this->getMediaDir().'/1-2.jpg');
 
-            $client->submit($form);
-            self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
-            self::assertFileExists($this->getMediaDir().'/1-2.jpg');
+        $crawler = $this->requestMediaCreateForm($client);
+        $fileInput = $crawler->filter('[type="file"]');
+        $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
+        $form = $crawler->filter('form[method="post"]')->form([
+            $formId.'[mediaFile]' => $file,
+            $formId.'[slugForce]' => '1',
+        ]);
 
-            $crawler = $this->requestMediaCreateForm($client);
-            $fileInput = $crawler->filter('[type="file"]');
-            $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
-            $form = $crawler->filter('form[method="post"]')->form([
-                $formId.'[mediaFile]' => $file,
-                $formId.'[slugForce]' => '1',
-            ]);
+        $client->submit($form);
+        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertFileExists($this->getMediaDir().'/1-3.jpg');
 
-            $client->submit($form);
-            self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
-            self::assertFileExists($this->getMediaDir().'/1-3.jpg');
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
-            $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $mediaRepo = $em->getRepository(Media::class);
 
-            $mediaRepo = $em->getRepository(Media::class);
-
-            $medias = $mediaRepo->findBy([], ['id' => 'DESC'], 3, 0);
-            foreach ($medias as $m) {
-                $em->remove($m);
-            }
-
-            $em->flush();
-            self::assertFileDoesNotExist($this->getMediaDir().'/1-4.jpg');
-            self::assertFileDoesNotExist($this->getMediaDir().'/1-3.jpg');
+        $medias = $mediaRepo->findBy([], ['id' => 'DESC'], 3, 0);
+        foreach ($medias as $m) {
+            $em->remove($m);
         }
+
+        $em->flush();
+        self::assertFileDoesNotExist($this->getMediaDir().'/1-4.jpg');
+        self::assertFileDoesNotExist($this->getMediaDir().'/1-3.jpg');
     }
 
     // Todo
@@ -289,7 +287,13 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
         $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
         $imageCacheGenerator = new ImageCacheGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);
 
-        return $this->importer = new ExternalImageImporter($mediaStorage, $imageCacheGenerator, $this->getMediaDir(), $this->projectDir);
+        return $this->importer = new ExternalImageImporter(
+            $mediaStorage,
+            $imageCacheGenerator,
+            $this->getMediaDir(),
+            $this->projectDir,
+            self::getContainer()->get(SafeRemoteFileFetcher::class),
+        );
     }
 
     private function requestMediaCreateForm(KernelBrowser $client): Crawler

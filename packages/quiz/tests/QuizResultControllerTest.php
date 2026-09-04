@@ -3,6 +3,7 @@
 namespace Pushword\Quiz\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Quiz\Service\QuizResultSigner;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -38,6 +39,30 @@ final class QuizResultControllerTest extends WebTestCase
 
         $this->post($client, ['score' => 50]); // missing quiz
         self::assertSame(Response::HTTP_BAD_REQUEST, $client->getResponse()->getStatusCode());
+    }
+
+    public function testRejectsAnUnsignedOrForgedQuizKey(): void
+    {
+        $client = self::createClient();
+
+        $this->post($client, ['quiz' => 'invented-storage-key', 'score' => 50, 'signature' => 'forged']);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $client->getResponse()->getStatusCode());
+    }
+
+    public function testRateLimitsAnonymousAttempts(): void
+    {
+        $client = self::createClient();
+
+        for ($attempt = 1; $attempt <= 21; ++$attempt) {
+            $this->post(
+                $client,
+                ['quiz' => 'rate-limited-quiz', 'score' => 50],
+                clientIp: '192.0.2.61',
+            );
+        }
+
+        self::assertSame(Response::HTTP_TOO_MANY_REQUESTS, $client->getResponse()->getStatusCode());
     }
 
     public function testRecordsProfileAttemptsAndComputesShare(): void
@@ -112,11 +137,22 @@ final class QuizResultControllerTest extends WebTestCase
      *
      * @return array<array-key, mixed>
      */
-    private function post(KernelBrowser $client, array $payload, ?string $origin = null): array
+    private function post(KernelBrowser $client, array $payload, ?string $origin = null, ?string $clientIp = null): array
     {
         $server = ['CONTENT_TYPE' => 'application/json'];
         if (null !== $origin) {
             $server['HTTP_ORIGIN'] = $origin;
+        }
+
+        if (null !== $clientIp) {
+            $server['REMOTE_ADDR'] = $clientIp;
+        }
+
+        $quiz = $payload['quiz'] ?? null;
+        if (\is_string($quiz) && ! array_key_exists('signature', $payload)) {
+            $host = null !== $origin ? parse_url($origin, \PHP_URL_HOST) : 'localhost';
+            self::assertIsString($host);
+            $payload['signature'] = self::getContainer()->get(QuizResultSigner::class)->sign($host, $quiz);
         }
 
         $client->request(

@@ -17,7 +17,8 @@
         }
     ],
     "require": {
-        "pushword/core": "*"
+        "pushword/core": "*",
+        "symfony/rate-limiter": "^8.0"
     },
     "suggest": {
         "pushword/admin": "Manage pages, media and users from an EasyAdmin-based back-office.",

@@ -56,11 +56,12 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $firewalls['main'] = [
         'lazy' => true,
         'provider' => 'pushword_user_provider',
-        'http_basic' => [
-            'realm' => 'Secured Area',
-        ],
         'custom_authenticators' => $authenticators,
         'entry_point' => LoginFormAuthenticator::class,
+        'login_throttling' => [
+            'max_attempts' => 5,
+            'interval' => '15 minutes',
+        ],
         'logout' => [
             'path' => 'pushword_logout',
         ],

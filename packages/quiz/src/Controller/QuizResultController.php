@@ -6,14 +6,18 @@ use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Quiz\Entity\QuizResult;
 use Pushword\Quiz\Event\QuizCompletedEvent;
 use Pushword\Quiz\Repository\QuizResultRepository;
+use Pushword\Quiz\Service\QuizResultSigner;
 
 use function Safe\json_decode;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
@@ -27,6 +31,9 @@ final class QuizResultController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly QuizResultRepository $repository,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly QuizResultSigner $resultSigner,
+        #[Autowire(service: 'limiter.anonymous_content')]
+        private readonly RateLimiterFactory $anonymousContentLimiter,
     ) {
     }
 
@@ -62,6 +69,19 @@ final class QuizResultController extends AbstractController
         }
 
         $host = $this->resolveHost($request);
+        $signature = \is_string($data['signature'] ?? null) ? $data['signature'] : '';
+        if (! $this->resultSigner->isValid($signature, $host, $quiz)) {
+            return $this->json(['error' => 'Invalid signature'], Response::HTTP_FORBIDDEN);
+        }
+
+        $limit = $this->anonymousContentLimiter
+            ->create(($request->getClientIp() ?? 'unknown').':'.$host.':quiz')
+            ->consume();
+        if (! $limit->isAccepted()) {
+            $retryAfter = max(1, $limit->getRetryAfter()->getTimestamp() - time());
+
+            throw new TooManyRequestsHttpException($retryAfter, 'Too many submissions. Please try again later.');
+        }
 
         // Chosen answers ride the event only — never persisted on the anonymous
         // QuizResult. A listener may keep them against a known (logged-in) visitor.

@@ -10,6 +10,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
 use Pushword\Core\Site\SiteRegistry;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -23,6 +24,7 @@ final readonly class AdminMenu
         private AdminContextProviderInterface $adminContextProvider,
         private RequestStack $requestStack,
         private EventDispatcherInterface $eventDispatcher,
+        private Security $security,
     ) {
     }
 
@@ -57,14 +59,16 @@ final readonly class AdminMenu
             'item' => $this->buildCheatSheetMenu(),
         ];
 
-        yield [
-            'weight' => 700,
-            'item' => MenuItem::linkTo(
-                UserCrudController::class,
-                'adminLabelUsers',
-                'fas fa-users',
-            ),
-        ];
+        if ($this->security->isGranted('ROLE_SUPER_ADMIN')) {
+            yield [
+                'weight' => 700,
+                'item' => MenuItem::linkTo(
+                    UserCrudController::class,
+                    'adminLabelUsers',
+                    'fas fa-users',
+                ),
+            ];
+        }
 
         yield [
             'weight' => 500,

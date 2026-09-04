@@ -27,6 +27,9 @@
 
 (security) {
 	header {
+		Content-Security-Policy "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' {$CADDY_LIVE_ORIGIN:}"
+		Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=(), usb=()"
+		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options nosniff
 		X-Frame-Options SAMEORIGIN
 		Referrer-Policy strict-origin-when-cross-origin

@@ -8,6 +8,7 @@ use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
 final class MediaCrudControllerTest extends AbstractAdminTestClass
@@ -21,7 +22,6 @@ final class MediaCrudControllerTest extends AbstractAdminTestClass
     public function testRotateActionRotatesImage(): void
     {
         $client = $this->loginUser();
-        $client->catchExceptions(false);
 
         /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.entity_manager');
@@ -48,7 +48,15 @@ final class MediaCrudControllerTest extends AbstractAdminTestClass
         $id = $media->id;
 
         $router = self::getContainer()->get('router');
-        $client->request(Request::METHOD_GET, $router->generate('admin_media_rotate_right', ['entityId' => $id]));
+        $url = $router->generate('admin_media_rotate_right', ['entityId' => $id]);
+        $token = $this->csrfToken($client, 'admin_action_rotateRight_'.$id);
+        $client->request(Request::METHOD_GET, $url);
+        self::assertContains($client->getResponse()->getStatusCode(), [Response::HTTP_NOT_FOUND, Response::HTTP_METHOD_NOT_ALLOWED]);
+
+        $client->request(Request::METHOD_POST, $url, ['_token' => 'invalid']);
+        self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+
+        $client->request(Request::METHOD_POST, $url, ['_token' => $token]);
         self::assertResponseRedirects();
 
         /** @var EntityManager $em */
@@ -68,7 +76,6 @@ final class MediaCrudControllerTest extends AbstractAdminTestClass
     public function testHiddenFromAdminIsExcludedFromIndex(): void
     {
         $client = $this->loginUser();
-        $client->catchExceptions(false);
 
         /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.entity_manager');

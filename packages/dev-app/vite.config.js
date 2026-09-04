@@ -57,7 +57,7 @@ export default defineConfig({
     assetsDir: '.',
     emptyOutDir: true,
     manifest: true,
-    sourcemap: true,
+    sourcemap: false,
   },
   //   resolve: {
   //     alias: {

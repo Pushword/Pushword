@@ -68,6 +68,7 @@ class CampaignCrudController extends AbstractCrudController
             ->setEntityLabelInSingular('newsletter.campaign.label.singular')
             ->setEntityLabelInPlural('newsletter.campaign.label.plural')
             ->setDefaultSort(['id' => 'DESC'])
+            ->showEntityActionsInlined()
             ->setSearchFields(['subject']);
 
         if (class_exists(EditorjsType::class)) {
@@ -88,16 +89,19 @@ class CampaignCrudController extends AbstractCrudController
     {
         $send = Action::new('send', 'newsletter.campaign.action.send', 'fa fa-paper-plane')
             ->linkToCrudAction('send')
+            ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
             ->displayIf(static fn (Campaign $campaign): bool => $campaign->isDraft())
             ->setCssClass('btn btn-success');
 
         $schedule = Action::new('schedule', 'newsletter.campaign.action.schedule', 'fa fa-clock')
             ->linkToCrudAction('schedule')
+            ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
             ->displayIf(static fn (Campaign $campaign): bool => $campaign->isDraft())
             ->setCssClass('btn btn-primary');
 
         $cancelSchedule = Action::new('cancelSchedule', 'newsletter.campaign.action.cancelSchedule', 'fa fa-ban')
             ->linkToCrudAction('cancelSchedule')
+            ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
             ->displayIf(static fn (Campaign $campaign): bool => $campaign->isScheduled())
             ->setCssClass('btn btn-outline-warning');
 
@@ -228,14 +232,16 @@ class CampaignCrudController extends AbstractCrudController
         );
     }
 
-    #[AdminRoute(path: '/{entityId}/send', name: 'send')]
-    public function send(): RedirectResponse
+    #[AdminRoute(path: '/{entityId}/send', name: 'send', options: ['methods' => ['POST']])]
+    public function send(Request $request): RedirectResponse
     {
         $campaign = $this->campaign();
 
         if (! $campaign instanceof Campaign) {
             return new RedirectResponse($this->indexUrl());
         }
+
+        $this->assertActionToken($request, 'send', (int) $campaign->id);
 
         if (! $campaign->isDraft()) {
             $this->addFlash('warning', 'newsletter.campaign.flash.notDraft');
@@ -253,14 +259,16 @@ class CampaignCrudController extends AbstractCrudController
         return new RedirectResponse($this->indexUrl());
     }
 
-    #[AdminRoute(path: '/{entityId}/schedule', name: 'schedule')]
-    public function schedule(): RedirectResponse
+    #[AdminRoute(path: '/{entityId}/schedule', name: 'schedule', options: ['methods' => ['POST']])]
+    public function schedule(Request $request): RedirectResponse
     {
         $campaign = $this->campaign();
 
         if (! $campaign instanceof Campaign) {
             return new RedirectResponse($this->indexUrl());
         }
+
+        $this->assertActionToken($request, 'schedule', (int) $campaign->id);
 
         $when = $campaign->scheduledAt;
 
@@ -277,10 +285,14 @@ class CampaignCrudController extends AbstractCrudController
         return new RedirectResponse($this->indexUrl());
     }
 
-    #[AdminRoute(path: '/{entityId}/cancel-schedule', name: 'cancel_schedule')]
-    public function cancelSchedule(): RedirectResponse
+    #[AdminRoute(path: '/{entityId}/cancel-schedule', name: 'cancel_schedule', options: ['methods' => ['POST']])]
+    public function cancelSchedule(Request $request): RedirectResponse
     {
         $campaign = $this->campaign();
+
+        if ($campaign instanceof Campaign) {
+            $this->assertActionToken($request, 'cancelSchedule', (int) $campaign->id);
+        }
 
         if ($campaign instanceof Campaign && $campaign->isScheduled()) {
             $campaign->revertToDraft();
@@ -289,6 +301,13 @@ class CampaignCrudController extends AbstractCrudController
         }
 
         return new RedirectResponse($this->indexUrl());
+    }
+
+    private function assertActionToken(Request $request, string $action, int $id): void
+    {
+        if (! $this->isCsrfTokenValid('admin_action_'.$action.'_'.$id, $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
     }
 
     /** How many contacts the segment reaches right now — a segment you cannot count is one you will not trust. */

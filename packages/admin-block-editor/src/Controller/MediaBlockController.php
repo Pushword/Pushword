@@ -8,12 +8,13 @@ use LogicException;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Service\MediaUploadValidator;
+use Pushword\Core\Service\SafeRemoteFileFetcher;
 use Pushword\Core\Utils\Entity;
 
 use function Safe\json_decode;
 use function Safe\json_encode;
 use function Safe\mime_content_type;
-use function Safe\preg_match;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -36,6 +37,8 @@ final class MediaBlockController extends AbstractController
         #[Autowire(param: 'pw.public_media_dir')]
         private readonly string $publicMediaDir,
         private readonly ImageCacheManager $imageCacheManager,
+        private readonly MediaUploadValidator $mediaUploadValidator,
+        private readonly SafeRemoteFileFetcher $remoteFileFetcher,
         private readonly LoggerInterface $logger,
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
@@ -75,6 +78,7 @@ final class MediaBlockController extends AbstractController
         if ($mediaFile instanceof Media) {
             $media = $mediaFile;
         } else {
+            $this->mediaUploadValidator->validate($mediaFile);
             $media = new Media();
             $media->setMediaFile($mediaFile);
 
@@ -176,19 +180,19 @@ final class MediaBlockController extends AbstractController
      */
     private function getMediaFileFromUrl(string $url): UploadedFile
     {
-        if (0 === preg_match('#/([^/]*)$#', $url, $matches)) {
+        $path = parse_url($url, \PHP_URL_PATH);
+        if (! \is_string($path) || '' === basename($path)) {
             throw new LogicException("URL doesn't contain file name");
         }
 
-        /** @var array<int, string> $matches */
-        $fileContent = file_get_contents($url);
-        if (false === $fileContent) {
-            throw new LogicException('Could not download file from URL: '.$url);
+        $fileContent = $this->remoteFileFetcher->fetch($url);
+
+        $originalName = rawurldecode(basename($path));
+        $filePath = tempnam(sys_get_temp_dir(), 'pushword-media-');
+        if (false === $filePath) {
+            throw new LogicException('Could not create a temporary upload file.');
         }
 
-        $originalName = $matches[1];
-        $filename = md5($originalName);
-        $filePath = sys_get_temp_dir().'/'.$filename;
         $this->filesystem->dumpFile($filePath, $fileContent);
 
         $mimeType = mime_content_type($filePath);

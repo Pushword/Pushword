@@ -1,4 +1,7 @@
 import './admin.css'
+import { initPasswordVisibility } from '@pushword/js-helper/src/passwordVisibility.js'
+
+initPasswordVisibility()
 
 // HTMX for Ctrl+S auto-save
 import htmx from 'htmx.org'

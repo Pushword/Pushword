@@ -12,9 +12,12 @@ use Pushword\Core\Repository\UserRepository;
 use Pushword\Core\Security\MagicLinkAuthenticator;
 use Pushword\Core\Service\MagicLinkMailer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
@@ -29,6 +32,10 @@ final class UserController extends AbstractController
         private readonly LoginTokenRepository $tokenRepo,
         private readonly UserAuthenticatorInterface $userAuthenticator,
         private readonly MagicLinkAuthenticator $authenticator,
+        #[Autowire(service: 'limiter.login_email')]
+        private readonly RateLimiterFactory $loginEmailLimiter,
+        #[Autowire(service: 'limiter.login_address')]
+        private readonly RateLimiterFactory $loginAddressLimiter,
         private readonly bool $enablePasswordReset = false,
     ) {
     }
@@ -70,7 +77,7 @@ final class UserController extends AbstractController
     }
 
     #[Route('/login/check-email', name: 'pushword_login_check_email', methods: ['POST'])]
-    public function checkEmail(Request $request): Response
+    public function checkEmail(Request $request): RedirectResponse
     {
         $email = $request->request->getString('email');
         $csrfToken = $request->request->getString('_csrf_token');
@@ -81,28 +88,18 @@ final class UserController extends AbstractController
             return $this->redirectToRoute('pushword_login');
         }
 
-        $user = $this->userRepository->findOneBy(['email' => $email]);
+        $this->consumeEmailLimit($request, $email);
 
-        if (! $user instanceof User) {
-            $this->addFlash('error', 'securityLoginEmailNotFound');
-
-            return $this->redirectToRoute('pushword_login');
-        }
-
-        // Store email in session for the login form
+        // Keep the response identical for known and unknown addresses. Existing
+        // users receive a magic link in parallel, without disclosing existence.
         $request->getSession()->set('_security.last_username', $email);
 
-        // Check if user has a password
-        if (null !== $user->getPassword() && '' !== $user->getPassword()) {
-            return $this->redirectToRoute('pushword_login', ['step' => 'password']);
+        $user = $this->userRepository->findOneBy(['email' => $email]);
+        if ($user instanceof User) {
+            $this->magicLinkMailer->sendMagicLink($user);
         }
 
-        // User has no password - send magic link
-        $this->magicLinkMailer->sendMagicLink($user);
-
-        return $this->render('@Pushword/user/login_magic_sent.html.twig', [
-            'email' => $email,
-        ]);
+        return $this->redirectToRoute('pushword_login', ['step' => 'password']);
     }
 
     #[Route('/login/magic/{token}', name: 'pushword_login_magic')]
@@ -223,6 +220,7 @@ final class UserController extends AbstractController
             }
 
             $email = $request->request->getString('email');
+            $this->consumeEmailLimit($request, $email);
             $user = $this->userRepository->findOneBy(['email' => $email]);
 
             if ($user instanceof User) {
@@ -264,5 +262,24 @@ final class UserController extends AbstractController
     public function logout(): never
     {
         throw new LogicException('This method can be blank');
+    }
+
+    private function consumeEmailLimit(Request $request, string $email): void
+    {
+        $limiters = [
+            $this->loginEmailLimiter->create($request->getClientIp() ?? 'unknown'),
+            $this->loginAddressLimiter->create(hash('sha256', strtolower(trim($email)))),
+        ];
+
+        foreach ($limiters as $limiter) {
+            $limit = $limiter->consume();
+            if ($limit->isAccepted()) {
+                continue;
+            }
+
+            $retryAfter = max(1, $limit->getRetryAfter()->getTimestamp() - time());
+
+            throw new TooManyRequestsHttpException($retryAfter, 'Too many login attempts. Please try again later.');
+        }
     }
 }

@@ -6,12 +6,16 @@ use Cocur\Slugify\Slugify;
 use Exception;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\MediaStorageAdapter;
+use Pushword\Core\Service\SafeRemoteFileFetcher;
 use Pushword\Core\Utils\Filepath;
 use Pushword\Core\Utils\MediaRenamer;
 use Symfony\Component\Filesystem\Filesystem;
+use Throwable;
 
 final readonly class ExternalImageImporter
 {
+    private const string CACHE_PREFIX = 'pushword-safe-image-';
+
     private MediaRenamer $renamer;
 
     public function __construct(
@@ -19,6 +23,7 @@ final readonly class ExternalImageImporter
         private ImageCacheGenerator $imageCacheGenerator,
         private string $mediaDir,
         private string $projectDir,
+        private SafeRemoteFileFetcher $remoteFileFetcher,
         private Filesystem $filesystem = new Filesystem(),
     ) {
         $this->renamer = new MediaRenamer();
@@ -60,22 +65,27 @@ final readonly class ExternalImageImporter
      */
     public function cacheExternalImage(string $src): false|string
     {
-        $filePath = sys_get_temp_dir().'/'.sha1($src);
+        $url = parse_url($src);
+        if (
+            false === $url
+            || ! isset($url['scheme'], $url['host'])
+            || ! \in_array(strtolower($url['scheme']), ['http', 'https'], true)
+            || isset($url['user'])
+            || isset($url['pass'])
+        ) {
+            return false;
+        }
+
+        // The namespace deliberately differs from the legacy cache, which could
+        // contain entries fetched before private-network and local-file checks.
+        $filePath = sys_get_temp_dir().'/'.self::CACHE_PREFIX.sha1($src);
         if ($this->filesystem->exists($filePath)) {
             return $filePath;
         }
 
-        if (! is_readable($src) && \function_exists('curl_init')) {
-            $curl = curl_init($src);
-            curl_setopt($curl, \CURLOPT_RETURNTRANSFER, true);
-            /** @var false|string $content */
-            $content = curl_exec($curl);
-            unset($curl);
-        } else {
-            $content = file_get_contents($src);
-        }
-
-        if (false === $content) {
+        try {
+            $content = $this->remoteFileFetcher->fetch($src);
+        } catch (Throwable) {
             return false;
         }
 

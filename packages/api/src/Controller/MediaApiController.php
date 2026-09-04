@@ -3,10 +3,12 @@
 namespace Pushword\Api\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
 use Pushword\Core\Controller\RoutePatterns;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageRotator;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\MediaUploadValidator;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +24,7 @@ final class MediaApiController extends AbstractApiController
         private readonly MediaRepository $mediaRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageRotator $imageRotator,
+        private readonly MediaUploadValidator $mediaUploadValidator,
     ) {
     }
 
@@ -116,6 +119,12 @@ final class MediaApiController extends AbstractApiController
             return $this->badRequest($file->getErrorMessage());
         }
 
+        try {
+            $this->mediaUploadValidator->validate($file);
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            return $this->badRequest($invalidArgumentException->getMessage());
+        }
+
         $hash = sha1_file($file->getPathname(), true);
         if (false !== $hash) {
             $existing = $this->mediaRepository->findOneBy(['hash' => $hash]);
@@ -128,8 +137,10 @@ final class MediaApiController extends AbstractApiController
         }
 
         $media = new Media();
-        $media->setFileName($filename);
         $media->setMediaFile($file);
+
+        $safeBaseName = str_replace('.', '-', pathinfo(basename($filename), \PATHINFO_FILENAME)) ?: 'media';
+        $media->setFileName($media->getMediaFromFilename($safeBaseName));
 
         $this->applyMetadata($media, $this->extractMultipartMetadata($request));
 

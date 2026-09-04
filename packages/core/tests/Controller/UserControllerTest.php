@@ -6,10 +6,12 @@ use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\LoginToken;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Repository\LoginTokenRepository;
 use Pushword\Core\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
 final class UserControllerTest extends WebTestCase
@@ -29,6 +31,17 @@ final class UserControllerTest extends WebTestCase
         self::assertSelectorExists('input[name="email"]');
     }
 
+    public function testHttpBasicCannotBypassTheLoginForm(): void
+    {
+        $credentials = base64_encode('admin@example.tld:mySecr3tpAssword');
+        $this->client->request(Request::METHOD_GET, '/admin', server: [
+            'HTTP_AUTHORIZATION' => 'Basic '.$credentials,
+        ]);
+
+        self::assertResponseRedirects('http://localhost/login');
+        self::assertFalse($this->client->getResponse()->headers->has('WWW-Authenticate'));
+    }
+
     public function testCheckEmailWithUnknownUser(): void
     {
         $this->client->request(Request::METHOD_GET, '/login');
@@ -37,12 +50,14 @@ final class UserControllerTest extends WebTestCase
         $form['email'] = 'unknown-user@example.tld';
         $this->client->submit($form);
 
-        self::assertResponseRedirects('/login');
+        self::assertResponseRedirects('/login?step=password');
+        $this->client->followRedirect();
+        self::assertSelectorExists('input[name="password"][type="password"]');
     }
 
     public function testCheckEmailWithUserHavingPassword(): void
     {
-        $this->createTestUser('password-user@example.tld', 'testPassword123');
+        $user = $this->createTestUser('password-user@example.tld', 'testPassword123');
 
         $this->client->request(Request::METHOD_GET, '/login');
         $crawler = $this->client->getCrawler();
@@ -53,13 +68,14 @@ final class UserControllerTest extends WebTestCase
         self::assertResponseRedirects('/login?step=password');
         $this->client->followRedirect();
 
-        // Should now show password field
-        self::assertSelectorExists('input[name="password"]');
+        self::assertSelectorExists('input[name="password"][type="password"]');
+        self::assertSelectorExists('[data-password-toggle][aria-controls="inputPassword"]');
+        self::assertCount(2, self::getContainer()->get(LoginTokenRepository::class)->findBy(['user' => $user]));
     }
 
     public function testCheckEmailWithUserWithoutPassword(): void
     {
-        $this->createTestUser('no-password-user@example.tld', null);
+        $user = $this->createTestUser('no-password-user@example.tld', null);
 
         $this->client->request(Request::METHOD_GET, '/login');
         $crawler = $this->client->getCrawler();
@@ -67,9 +83,27 @@ final class UserControllerTest extends WebTestCase
         $form['email'] = 'no-password-user@example.tld';
         $this->client->submit($form);
 
-        // Should show magic link sent page
-        self::assertResponseIsSuccessful();
-        self::assertSelectorExists('.bg-green-100');
+        self::assertResponseRedirects('/login?step=password');
+        $this->client->followRedirect();
+        self::assertSelectorExists('input[name="password"][type="password"]');
+        self::assertCount(2, self::getContainer()->get(LoginTokenRepository::class)->findBy(['user' => $user]));
+    }
+
+    public function testEmailStepIsRateLimitedPerAddress(): void
+    {
+        $server = ['REMOTE_ADDR' => '192.0.2.42'];
+
+        for ($attempt = 1; $attempt <= 6; ++$attempt) {
+            $crawler = $this->client->request(Request::METHOD_GET, '/login', server: $server);
+            $form = $crawler->filter('form')->form();
+            $form['email'] = 'rate-limited@example.tld';
+            $this->client->submit($form, serverParameters: $server);
+
+            self::assertSame(
+                6 === $attempt ? Response::HTTP_TOO_MANY_REQUESTS : Response::HTTP_FOUND,
+                $this->client->getResponse()->getStatusCode(),
+            );
+        }
     }
 
     public function testMagicLoginWithInvalidToken(): void
@@ -102,8 +136,9 @@ final class UserControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_GET, '/login/set-password/'.$urlToken);
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('input[name="password"]');
-        self::assertSelectorExists('input[name="password_confirm"]');
+        self::assertSelectorExists('input[name="password"][type="password"]');
+        self::assertSelectorExists('input[name="password_confirm"][type="password"]');
+        self::assertSelectorCount(2, '[data-password-toggle]');
     }
 
     public function testSetPasswordWithMismatchedPasswords(): void

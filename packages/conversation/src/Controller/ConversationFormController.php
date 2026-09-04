@@ -19,6 +19,8 @@ use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -47,6 +49,8 @@ final class ConversationFormController extends AbstractController
         private readonly string $env,
         private readonly MessageRepository $messageRepo,
         private readonly CacheInterface $cache,
+        #[Autowire(service: 'limiter.anonymous_content')]
+        private readonly RateLimiterFactory $anonymousContentLimiter,
     ) {
     }
 
@@ -182,6 +186,17 @@ final class ConversationFormController extends AbstractController
 
         $host = $request->query->getString('host') ?: $request->getHost();
         $this->apps->switchSite($host);
+
+        if ($request->isMethod(Request::METHOD_POST)) {
+            $limit = $this->anonymousContentLimiter
+                ->create(($request->getClientIp() ?? 'unknown').':'.$this->apps->get()->getMainHost())
+                ->consume();
+            if (! $limit->isAccepted()) {
+                $retryAfter = max(1, $limit->getRetryAfter()->getTimestamp() - time());
+
+                throw new TooManyRequestsHttpException($retryAfter, 'Too many submissions. Please try again later.');
+            }
+        }
 
         // The locale is resolved by ConversationLocaleListener, early enough for the
         // translator and the validator to pick it up.

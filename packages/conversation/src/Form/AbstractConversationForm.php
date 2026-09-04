@@ -48,6 +48,8 @@ abstract class AbstractConversationForm implements ConversationFormInterface
 
     protected ?int $messageId = null;
 
+    private ?string $workflowToken = null;
+
     protected Message $message;
 
     protected SiteConfig $app;
@@ -81,12 +83,9 @@ abstract class AbstractConversationForm implements ConversationFormInterface
             $this->message->referring = $this->getReferring();
             $this->message->host = $this->app->getMainHost();
         } else {
+            $this->loadWorkflow();
             $this->message = $this->messageRepo->find($this->getId())
                 ?? throw new NotFoundHttpException('An error occured during the validation ('.$this->getId().')');
-
-            // add a security check ? Comparing current IP and previous one
-            // IPUtils::checkIp($request->getClientIp()), $this->message->getAuthorIpRaw())
-            // sinon, passer l'id dans la session plutôt que dans la requête
         }
 
         $form = $this->formFactory->createBuilder(FormType::class, $this->message, ['csrf_protection' => false]); // ['csrf_protection' => false]
@@ -100,7 +99,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
             'host' => $this->app->getMainHost(),
             // Carry the locale the current step renders in, so the next step keeps it.
             'locale' => $this->request->getLocale(),
-            'id' => $this->getId(),
+            'token' => $this->getWorkflowToken(),
             'step' => $this->getStep(),
         ]);
 
@@ -160,17 +159,19 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         if ($form->isValid()) {
             $this->sanitizeConversation();
 
-            $cacheKey = 'conversation_dedup_'.md5($this->message->getContent().$this->message->authorEmail);
-            $isFirstSubmit = false;
-            $this->cache->get($cacheKey, static function (ItemInterface $item) use (&$isFirstSubmit): bool {
-                $item->expiresAfter(600);
-                $isFirstSubmit = true;
+            if (1 === $this->getStep()) {
+                $cacheKey = 'conversation_dedup_'.md5($this->message->getContent().$this->message->authorEmail);
+                $isFirstSubmit = false;
+                $this->cache->get($cacheKey, static function (ItemInterface $item) use (&$isFirstSubmit): bool {
+                    $item->expiresAfter(600);
+                    $isFirstSubmit = true;
 
-                return true;
-            });
+                    return true;
+                });
 
-            if (! $isFirstSubmit) {
-                return $this->showSuccess();
+                if (! $isFirstSubmit) {
+                    return $this->showSuccess();
+                }
             }
 
             $this->getDoctrine()->getManager()->persist($this->message);
@@ -179,17 +180,12 @@ abstract class AbstractConversationForm implements ConversationFormInterface
 
             if (false !== $this->getNextStepFunctionName()) {
                 $this->incrementStep();
+                $this->storeWorkflow();
 
                 return $this->showForm($this->getCurrentStep()->getForm());
-                /*
-                return $this->redirectToRoute('pushword_conversation', [
-                    'type' => $this->getType(),
-                    'id' => $this->message->id,
-                    'step' => $this->getStep() + 1,
-                ]);*/
             }
 
-            // $form = $form->createView();
+            $this->deleteWorkflow();
 
             return $this->showSuccess();
         }
@@ -273,7 +269,83 @@ abstract class AbstractConversationForm implements ConversationFormInterface
 
     protected function getId(): int
     {
-        return $this->messageId ?? $this->request->query->getInt('id', 0);
+        return $this->messageId ?? 0;
+    }
+
+    private function getWorkflowToken(): string
+    {
+        if (null !== $this->workflowToken) {
+            return $this->workflowToken;
+        }
+
+        $token = $this->request->query->getString('token');
+        if (1 !== preg_match('/^[a-f0-9]{64}$/', $token)) {
+            if (1 !== $this->getStep()) {
+                throw new NotFoundHttpException('Conversation workflow not found.');
+            }
+
+            $token = bin2hex(random_bytes(32));
+        }
+
+        return $this->workflowToken = $token;
+    }
+
+    private function workflowCacheKey(): string
+    {
+        return 'conversation_workflow_'.hash('sha256', $this->getWorkflowToken());
+    }
+
+    private function storeWorkflow(): void
+    {
+        $key = $this->workflowCacheKey();
+        $this->cache->delete($key);
+        $state = [
+            'id' => $this->getId(),
+            'step' => $this->getStep(),
+            'type' => $this->getType(),
+            'referring' => $this->getReferring(),
+            'host' => $this->app->getMainHost(),
+        ];
+
+        $this->cache->get($key, static function (ItemInterface $item) use ($state): array {
+            $item->expiresAfter(3600);
+
+            return $state;
+        });
+    }
+
+    private function loadWorkflow(): void
+    {
+        $state = $this->readWorkflowState();
+
+        if (
+            ! \is_array($state)
+            || ($state['step'] ?? null) !== $this->getStep()
+            || ($state['type'] ?? null) !== $this->getType()
+            || ($state['referring'] ?? null) !== $this->getReferring()
+            || ($state['host'] ?? null) !== $this->app->getMainHost()
+            || ! \is_int($state['id'] ?? null)
+        ) {
+            throw new NotFoundHttpException('Conversation workflow not found.');
+        }
+
+        $this->messageId = $state['id'];
+    }
+
+    private function readWorkflowState(): mixed
+    {
+        return $this->cache->get($this->workflowCacheKey(), static function (ItemInterface $item): null {
+            $item->expiresAfter(1);
+
+            return null;
+        });
+    }
+
+    private function deleteWorkflow(): void
+    {
+        if (null !== $this->workflowToken) {
+            $this->cache->delete($this->workflowCacheKey());
+        }
     }
 
     private function get(string $key): string

@@ -128,7 +128,7 @@ final class AppTest extends KernelTestCase
     {
         $content = file_get_contents(self::$projectDir.'/.env');
         self::assertNotFalse($content);
-        self::assertDoesNotMatchRegularExpression('/^APP_SECRET=$/m', $content);
+        self::assertMatchesRegularExpression('/^APP_SECRET=[a-f0-9]{64}$/m', $content);
     }
 
     public function testSymfonyKernelBoots(): void

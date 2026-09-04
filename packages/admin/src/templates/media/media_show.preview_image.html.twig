@@ -9,8 +9,12 @@
         </a>
         {% if rotate_left_url is defined %}
         <div class="d-flex gap-2 justify-content-center" style="margin-top: 8px;">
-            <a href="{{ rotate_left_url }}" class="btn btn-sm btn-outline-secondary" title="{{ 'adminMediaRotateLeftLabel'|trans }}" aria-label="{{ 'adminMediaRotateLeftLabel'|trans }}"><i class="fa fa-rotate-left" aria-hidden="true"></i></a>
-            <a href="{{ rotate_right_url }}" class="btn btn-sm btn-outline-secondary" title="{{ 'adminMediaRotateRightLabel'|trans }}" aria-label="{{ 'adminMediaRotateRightLabel'|trans }}"><i class="fa fa-rotate-right" aria-hidden="true"></i></a>
+            <button type="submit" formmethod="post" formaction="{{ rotate_left_url }}" formnovalidate name="_token" value="{{ csrf_token('admin_action_rotateLeft_' ~ media.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ 'adminMediaRotateLeftLabel'|trans }}" aria-label="{{ 'adminMediaRotateLeftLabel'|trans }}">
+                <i class="fa fa-rotate-left" aria-hidden="true"></i>
+            </button>
+            <button type="submit" formmethod="post" formaction="{{ rotate_right_url }}" formnovalidate name="_token" value="{{ csrf_token('admin_action_rotateRight_' ~ media.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ 'adminMediaRotateRightLabel'|trans }}" aria-label="{{ 'adminMediaRotateRightLabel'|trans }}">
+                <i class="fa fa-rotate-right" aria-hidden="true"></i>
+            </button>
         </div>
         {% endif %}
     </div>

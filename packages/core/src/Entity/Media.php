@@ -109,7 +109,10 @@ class Media implements IdInterface, Taggable, Stringable
      * dir…) into a form error. Without it PHP hands over an UploadedFile whose path is
      * empty, nothing stops the save, and the first read on that file fatals.
      */
-    #[Assert\File]
+    #[Assert\File(
+        extensions: SafeMediaMimeType::EXTENSIONS,
+        extensionsMessage: 'This file format is not allowed.',
+    )]
     #[Vich\UploadableField(mapping: 'media_media', fileNameProperty: 'slug', size: 'size', mimeType: 'mimeType', dimensions: 'dimensions')]
     protected UploadedFile|File|null $mediaFile = null;
 

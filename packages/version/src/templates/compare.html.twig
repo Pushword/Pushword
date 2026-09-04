@@ -14,9 +14,12 @@
   <a class="btn btn-outline-secondary" href="{{ path('admin_version_list', {type: type, id: entity.id}) }}">
     <i class="fa fa-arrow-left me-1" aria-hidden="true" aria-label="{{ 'versionBackToList'|trans }}"></i>
   </a>
-  <a class="btn btn-warning" id="restore-version-btn" href="{{ path('admin_version_load', {type: type, id: entity.id, version: versionLeft}) }}">
-    <i class="fa fa-undo me-1" aria-hidden="true"></i> {{ 'versionRestoreFull'|trans }}
-  </a>
+  <form method="post" id="restore-version-form" action="{{ path('admin_version_load', {type: type, id: entity.id, version: versionLeft}) }}" class="d-inline">
+    <input type="hidden" name="_token" value="{{ csrf_token('version_load_' ~ type ~ '_' ~ entity.id) }}">
+    <button type="submit" class="btn btn-warning">
+      <i class="fa fa-undo me-1" aria-hidden="true"></i> {{ 'versionRestoreFull'|trans }}
+    </button>
+  </form>
   <button type="button" class="btn btn-primary" id="save-changes-btn">
     <i class="fa fa-save me-1" aria-hidden="true"></i> {{ 'versionSaveChanges'|trans }}
   </button>
@@ -88,7 +91,7 @@
 </div>
 
 <form id="save-form" method="POST" action="{{ path('admin_version_save_compare', {type: type, id: entity.id}) }}">
-  <input type="hidden" name="_token" value="{{ csrf_token('version_save') }}">
+  <input type="hidden" name="_token" value="{{ csrf_token('version_save_' ~ type ~ '_' ~ entity.id) }}">
   <textarea name="{{ contentField }}" id="{{ contentField }}-hidden" style="display: none;"></textarea>
   {% for field in fieldNames|filter(f => f != contentField) %}
     <input type="hidden" name="{{ field }}" id="{{ field }}-hidden">
@@ -194,7 +197,7 @@
   // Live scrubbing: fetch a version's fields as JSON and feed them to the
   // existing Monaco models, so the diff updates in place without a reload.
   const dataBase = loadBase + 'data/';
-  const restoreBtn = document.getElementById('restore-version-btn');
+  const restoreForm = document.getElementById('restore-version-form');
   const versionCache = {};
 
   function inputId(side, field) {
@@ -260,7 +263,7 @@
     if (null !== scrubTimer) clearTimeout(scrubTimer);
     scrubTimer = setTimeout(function() {
       const version = allVersions[slider.value];
-      restoreBtn.href = loadBase + version;
+      restoreForm.action = loadBase + version;
       syncUrl();
       fetchVersion(version).then(function(data) { applySide(data, 'left'); }).catch(function() {});
     }, 250);

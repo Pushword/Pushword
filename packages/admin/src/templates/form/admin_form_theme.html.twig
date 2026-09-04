@@ -27,6 +27,22 @@
     {% endif %}
 {% endblock %}
 
+{% block password_widget %}
+    {% set type = 'password' %}
+    <div class="input-group">
+        {{ block('form_widget_simple') }}
+        <button type="button"
+                class="btn btn-outline-secondary"
+                aria-label="{{ 'securityLoginTogglePassword'|trans }}"
+                aria-controls="{{ id }}"
+                aria-pressed="false"
+                data-password-toggle>
+            <i class="fa-solid fa-eye" data-password-hidden-icon aria-hidden="true"></i>
+            <i class="fa-solid fa-eye-slash" data-password-visible-icon aria-hidden="true" hidden></i>
+        </button>
+    </div>
+{% endblock %}
+
 {% block ea_form_fieldset_open_row %}
     {% set fieldset_has_header = form.vars.label or ea_icon or ea_help %}
     {% set css_class = ea_css_class ?? '' %}

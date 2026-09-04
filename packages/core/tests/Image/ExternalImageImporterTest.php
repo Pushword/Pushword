@@ -10,6 +10,7 @@ use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageEncoder;
 use Pushword\Core\Image\ImageReader;
 use Pushword\Core\Service\MediaStorageAdapter;
+use Pushword\Core\Service\SafeRemoteFileFetcher;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -32,7 +33,13 @@ final class ExternalImageImporterTest extends KernelTestCase
         $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
         $imageCacheGenerator = new ImageCacheGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);
 
-        return new ExternalImageImporter($mediaStorage, $imageCacheGenerator, $this->getMediaDir(), $this->projectDir);
+        return new ExternalImageImporter(
+            $mediaStorage,
+            $imageCacheGenerator,
+            $this->getMediaDir(),
+            $this->projectDir,
+            self::getContainer()->get(SafeRemoteFileFetcher::class),
+        );
     }
 
     public function testImportExternal(): void
@@ -43,7 +50,7 @@ final class ExternalImageImporterTest extends KernelTestCase
         // Pre-seed the importer's local cache from a fixture so the test never hits
         // the network (the live fetch was a recurring source of CI flakiness). The
         // cache key derives from the URL, so the expected filenames stay unchanged.
-        new Filesystem()->copy(__DIR__.'/fixtures/favicon-32x32.png', sys_get_temp_dir().'/'.sha1($url), true);
+        new Filesystem()->copy(__DIR__.'/fixtures/favicon-32x32.png', sys_get_temp_dir().'/pushword-safe-image-'.sha1($url), true);
 
         $media = $importer->importExternal($url, 'favicon', 'favicon');
         self::assertSame('favicon', $media->getAlt());
@@ -62,5 +69,13 @@ final class ExternalImageImporterTest extends KernelTestCase
         @unlink($this->getMediaDir().'/favicon-dd93.png');
         @unlink($this->getMediaDir().'/favicon.png');
         @unlink($this->getMediaDir().'/favicon-from-pied-web-dd93.png');
+    }
+
+    public function testLocalPathsAndFileUrlsAreRejected(): void
+    {
+        $importer = $this->createImporter();
+
+        self::assertFalse($importer->cacheExternalImage(__DIR__.'/fixtures/favicon-32x32.png'));
+        self::assertFalse($importer->cacheExternalImage('file://'.__DIR__.'/fixtures/favicon-32x32.png'));
     }
 }

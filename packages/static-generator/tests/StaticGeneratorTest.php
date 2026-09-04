@@ -538,6 +538,9 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertStringContainsString('max-age=10800', $htaccess);
         self::assertStringContainsString('stale-while-revalidate=3600', $htaccess);
         self::assertStringContainsString('ErrorDocument 404 /404', $htaccess);
+        self::assertStringContainsString("form-action 'self' https://localhost.dev", $htaccess);
+        self::assertStringContainsString('Permissions-Policy', $htaccess);
+        self::assertStringContainsString('Strict-Transport-Security', $htaccess);
 
         // localhost.dev is en|fr: the fr folder overrides the root ErrorDocument
         // so /fr/… errors serve the localized 404 dumped by ErrorPageGenerator.
@@ -568,6 +571,9 @@ final class StaticGeneratorTest extends KernelTestCase
         $caddyfile = (string) file_get_contents($this->getStaticDir().'/.Caddyfile');
         self::assertStringNotContainsString('@error_', $caddyfile);
         self::assertStringContainsString('rewrite * /404.html', $caddyfile);
+        self::assertStringContainsString("form-action 'self' https://admin-block-editor.test", $caddyfile);
+        self::assertStringContainsString('Permissions-Policy', $caddyfile);
+        self::assertStringContainsString('Strict-Transport-Security', $caddyfile);
     }
 
     public function testGenerateCaddyfile(): void

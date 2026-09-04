@@ -103,6 +103,7 @@ final class PageControllerTest extends KernelTestCase
     {
         $response = $this->getFeedController()->showMain(Request::create('/feed.xml'));
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
+        self::assertSame('application/rss+xml; charset=UTF-8', $response->headers->get('Content-Type'));
     }
 
     /**
@@ -134,10 +135,10 @@ final class PageControllerTest extends KernelTestCase
         $em->clear();
 
         try {
-            $content = (string) $this->getFeedController()
-                ->show(Request::create('/feed-parent.xml'), 'feed-parent')
-                ->getContent();
+            $response = $this->getFeedController()->show(Request::create('/feed-parent.xml'), 'feed-parent');
+            $content = (string) $response->getContent();
 
+            self::assertSame('application/rss+xml; charset=UTF-8', $response->headers->get('Content-Type'));
             self::assertStringContainsString('Listed Child', $content);
             self::assertStringNotContainsString('Hidden Child', $content);
         } finally {

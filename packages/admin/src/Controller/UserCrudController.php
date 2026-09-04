@@ -14,8 +14,10 @@ use LogicException;
 use Override;
 use Pushword\Core\Entity\EntityClassRegistry;
 use Pushword\Core\Entity\User;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /** @extends AbstractAdminCrudController<User> */
+#[IsGranted('ROLE_SUPER_ADMIN')]
 class UserCrudController extends AbstractAdminCrudController
 {
     public const string MESSAGE_PREFIX = 'admin.user';
@@ -34,6 +36,7 @@ class UserCrudController extends AbstractAdminCrudController
             ->setEntityLabelInSingular('adminLabelUser')
             ->setEntityLabelInPlural('adminLabelUsers')
             ->setDefaultSort(['createdAt' => 'DESC'])
+            ->addFormTheme('@pwAdmin/form/admin_form_theme.html.twig')
             ->addFormTheme('@pwAdmin/form/api_token_theme.html.twig');
     }
 

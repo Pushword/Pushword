@@ -68,10 +68,11 @@ class VersionController extends AbstractController
         $this->adminContextProvider = $adminContextProvider;
     }
 
-    #[AdminRoute(path: '/version/{type}/{id}/reset', name: 'version_reset')]
+    #[AdminRoute(path: '/version/{type}/{id}/reset', name: 'version_reset', options: ['methods' => ['POST']])]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function resetVersioning(Request $request, string $type, int $id): RedirectResponse
     {
+        $this->assertCsrfToken($request, 'version_reset_'.$type.'_'.$id);
         $this->versionner->reset($type, $id);
 
         $this->getFlashBagFromRequest($request)->add('success', $this->translator->trans('versionResetHistory'));
@@ -131,6 +132,7 @@ class VersionController extends AbstractController
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function saveCompare(Request $request, string $type, int $id): RedirectResponse
     {
+        $this->assertCsrfToken($request, 'version_save_'.$type.'_'.$id);
         $entity = $this->versionner->find($type, $id);
         $accessor = PropertyAccess::createPropertyAccessor();
 
@@ -207,10 +209,11 @@ class VersionController extends AbstractController
         ]);
     }
 
-    #[AdminRoute(path: '/version/{type}/{id}/{version}', name: 'version_load')]
+    #[AdminRoute(path: '/version/{type}/{id}/{version}', name: 'version_load', options: ['methods' => ['POST']])]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
-    public function loadVersion(string $type, string $id, string $version): RedirectResponse
+    public function loadVersion(Request $request, string $type, string $id, string $version): RedirectResponse
     {
+        $this->assertCsrfToken($request, 'version_load_'.$type.'_'.$id);
         $this->versionner->loadVersion($type, $id, $version);
 
         // Restores don't write a new snapshot, so record the action explicitly
@@ -243,6 +246,13 @@ class VersionController extends AbstractController
         }
 
         throw new Exception();
+    }
+
+    private function assertCsrfToken(Request $request, string $tokenId): void
+    {
+        if (! $this->isCsrfTokenValid($tokenId, $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
     }
 
     /**

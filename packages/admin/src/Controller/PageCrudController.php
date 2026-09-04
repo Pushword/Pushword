@@ -80,6 +80,7 @@ class PageCrudController extends AbstractAdminCrudController
         return $crud
             ->setDefaultSort(['updatedAt' => 'DESC'])
             ->setPaginatorPageSize($this->getRequestedPageSize())
+            ->showEntityActionsInlined()
             ->addFormTheme('@pwAdmin/form/admin_form_theme.html.twig')
             ->addFormTheme('@PushwordAdminBlockEditor/editorjs_widget.html.twig')
             ->overrideTemplates([
@@ -92,12 +93,14 @@ class PageCrudController extends AbstractAdminCrudController
     public function configureActions(Actions $actions): Actions
     {
         $cloneAction = Action::new('clonePage', 'adminPageCloneLabel', 'fa fa-copy')
-            ->linkToCrudAction('clonePage');
+            ->linkToCrudAction('clonePage')
+            ->setTemplatePath('@pwAdmin/crud/action_post.html.twig');
 
         $actions->add(Crud::PAGE_INDEX, $cloneAction);
 
         $promoteVariantAction = Action::new('promoteVariant', 'adminPagePromoteVariantLabel', 'fa fa-arrow-up')
             ->linkToCrudAction('promoteVariant')
+            ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
             ->displayIf(static fn (Page $page): bool => $page->isVariant());
 
         $actions->add(Crud::PAGE_INDEX, $promoteVariantAction);
@@ -111,11 +114,15 @@ class PageCrudController extends AbstractAdminCrudController
     }
 
     /** @param AdminContext<Page> $context */
-    #[AdminRoute('/clone/{entityId}', name: 'clone_page', options: ['methods' => ['GET']])]
-    public function clonePage(AdminContext $context): Response
+    #[AdminRoute('/clone/{entityId}', name: 'clone_page', options: ['methods' => ['POST']])]
+    public function clonePage(AdminContext $context, Request $request): Response
     {
         $page = $context->getEntity()->getInstance();
         assert($page instanceof Page);
+
+        if (! $this->isCsrfTokenValid('admin_action_clonePage_'.$page->id, $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
 
         $clone = clone $page;
         $clone->slug = $page->slug.'-copy';
@@ -136,11 +143,15 @@ class PageCrudController extends AbstractAdminCrudController
     }
 
     /** @param AdminContext<Page> $context */
-    #[AdminRoute('/promote-variant/{entityId}', name: 'promote_variant', options: ['methods' => ['GET']])]
-    public function promoteVariant(AdminContext $context): Response
+    #[AdminRoute('/promote-variant/{entityId}', name: 'promote_variant', options: ['methods' => ['POST']])]
+    public function promoteVariant(AdminContext $context, Request $request): Response
     {
         $page = $context->getEntity()->getInstance();
         assert($page instanceof Page);
+
+        if (! $this->isCsrfTokenValid('admin_action_promoteVariant_'.$page->id, $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
 
         if ($page->isVariant()) {
             new VariantManager($this->getEntityManager())->promote($page);

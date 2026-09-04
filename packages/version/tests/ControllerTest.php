@@ -11,6 +11,7 @@ use Pushword\Snippet\Entity\Snippet;
 use Pushword\Version\Versionner;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -60,6 +61,8 @@ final class ControllerTest extends AbstractAdminTestClass
         $pageVersions = $versionner->getVersions('page', $pageId);
         self::assertNotEmpty($pageVersions, 'Page should have at least one version');
         $version = $pageVersions[0];
+        $loadToken = $this->csrfToken($client, 'version_load_page_'.$pageId);
+        $resetToken = $this->csrfToken($client, 'version_reset_page_'.$pageId);
 
         // Test admin routes (these require EasyAdmin context via admin dashboard)
         $listUrl = $router->generate('admin_version_list', ['type' => 'page', 'id' => $pageId]);
@@ -74,10 +77,14 @@ final class ControllerTest extends AbstractAdminTestClass
 
         $loadUrl = $router->generate('admin_version_load', ['type' => 'page', 'id' => $pageId, 'version' => $version]);
         $client->request(Request::METHOD_GET, $loadUrl);
+        self::assertContains($client->getResponse()->getStatusCode(), [Response::HTTP_NOT_FOUND, Response::HTTP_METHOD_NOT_ALLOWED]);
+        $client->request(Request::METHOD_POST, $loadUrl, ['_token' => $loadToken]);
         self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
         $resetUrl = $router->generate('admin_version_reset', ['type' => 'page', 'id' => $pageId]);
         $client->request(Request::METHOD_GET, $resetUrl);
+        self::assertContains($client->getResponse()->getStatusCode(), [Response::HTTP_NOT_FOUND, Response::HTTP_METHOD_NOT_ALLOWED]);
+        $client->request(Request::METHOD_POST, $resetUrl, ['_token' => $resetToken]);
         self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
     }
 
@@ -196,6 +203,7 @@ final class ControllerTest extends AbstractAdminTestClass
 
         $versions = $versionner->getVersions('snippet', (int) $snippet->id);
         self::assertNotEmpty($versions, 'Snippet should have at least one version');
+        $token = $this->csrfToken($client, 'version_load_snippet_'.$snippet->id);
 
         $listUrl = $router->generate('admin_version_list', ['type' => 'snippet', 'id' => $snippet->id]);
         $client->request(Request::METHOD_GET, $listUrl);
@@ -221,7 +229,7 @@ final class ControllerTest extends AbstractAdminTestClass
         self::assertSame('second', $currentPayload['content'], 'version_data with `current` returns the live entity content');
 
         $loadUrl = $router->generate('admin_version_load', ['type' => 'snippet', 'id' => $snippet->id, 'version' => $versions[0]]);
-        $client->request(Request::METHOD_GET, $loadUrl);
+        $client->request(Request::METHOD_POST, $loadUrl, ['_token' => $token]);
         self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
         $versionner->reset('snippet', (int) $snippet->id);
@@ -249,6 +257,7 @@ final class ControllerTest extends AbstractAdminTestClass
 
         $saveUrl = $router->generate('admin_version_save_compare', ['type' => 'snippet', 'id' => $snippet->id]);
         $client->request(Request::METHOD_POST, $saveUrl, [
+            '_token' => $this->csrfToken($client, 'version_save_snippet_'.$snippet->id),
             'content' => 'after content',
             'name' => 'After',
             'slug' => $snippet->slug,
@@ -298,6 +307,7 @@ final class ControllerTest extends AbstractAdminTestClass
         // Saving from the compare view merges the edited YAML back into customProperties.
         $saveUrl = $router->generate('admin_version_save_compare', ['type' => 'snippet', 'id' => $snippet->id]);
         $client->request(Request::METHOD_POST, $saveUrl, [
+            '_token' => $this->csrfToken($client, 'version_save_snippet_'.$snippet->id),
             'content' => 'content',
             'name' => 'CP',
             'slug' => $snippet->slug,

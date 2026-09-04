@@ -11,6 +11,23 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class MediaMultiUploadTest extends AbstractAdminTestClass
 {
+    public function testRejectsExecutableContentDisguisedAsAnImage(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/multi-upload');
+        $csrfToken = $crawler->filter('#pw-multi-upload')->attr('data-csrf-token');
+        $path = tempnam(sys_get_temp_dir(), 'pushword-shell-');
+        self::assertIsString($path);
+        file_put_contents($path, '<?php echo "owned";');
+
+        $client->request(Request::METHOD_POST, '/admin/multi-upload/upload', [
+            '_token' => $csrfToken,
+            'originalHash' => sha1_file($path),
+        ], ['file' => new UploadedFile($path, 'shell.png', 'image/png', null, true)]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $client->getResponse()->getStatusCode());
+    }
+
     public function testDuplicateJpgIsSkipped(): void
     {
         $this->assertDuplicateIsSkipped('test-dup.jpg', 'image/jpeg');

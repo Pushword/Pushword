@@ -17,6 +17,7 @@ use Pushword\Newsletter\Service\CampaignSender;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
 final class NewsletterAdminTest extends AbstractAdminTestClass
@@ -324,6 +325,31 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
 
         self::assertSame(200, $client->getResponse()->getStatusCode());
         self::assertCount(0, $crawler->filter('a[href*="campaign-recipient"]'));
+    }
+
+    public function testCampaignMutationsRequirePostAndAValidToken(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $campaign = $this->campaign($audience, 'Protected mutation');
+        $this->entityManager()->flush();
+        $id = (int) $campaign->id;
+        $url = '/admin/newsletter/campaign/'.$id.'/schedule';
+        $token = $this->adminActionToken('schedule', $id);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$id);
+        self::assertCount(1, $crawler->filter('form[method="post"][action*="/schedule"]'));
+
+        $client->request(Request::METHOD_GET, $url);
+        self::assertContains($client->getResponse()->getStatusCode(), [Response::HTTP_NOT_FOUND, Response::HTTP_METHOD_NOT_ALLOWED]);
+
+        $client->request(Request::METHOD_POST, $url, ['_token' => 'invalid']);
+        self::assertSame(Response::HTTP_FORBIDDEN, $client->getResponse()->getStatusCode());
+
+        $client->request(Request::METHOD_POST, $url, [
+            '_token' => $token,
+        ]);
+        self::assertTrue($client->getResponse()->isRedirect());
     }
 
     /** A row records a send that happened: editing it would make the ledger lie. */
@@ -662,7 +688,9 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
             ->findOneBy(['audience' => $audience, 'email' => 'ledger@example.tld']);
         self::assertInstanceOf(Contact::class, $contact);
 
-        $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contact->id.'/unsubscribe');
+        $client->request(Request::METHOD_POST, '/admin/newsletter/contact/'.$contact->id.'/unsubscribe', [
+            '_token' => $this->adminActionToken('unsubscribe', (int) $contact->id),
+        ]);
 
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contact->id);
         $panel = $crawler->filter('.form-fieldset')->reduce(
@@ -951,12 +979,28 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $this->entityManager()->persist($contact);
         $this->entityManager()->flush();
         $contactId = $contact->id;
+        self::assertIsInt($contactId);
+        $unsubscribeToken = $this->adminActionToken('unsubscribe', $contactId);
+        $resubscribeToken = $this->adminActionToken('resubscribe', $contactId);
 
-        $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contactId.'/unsubscribe');
+        $unsubscribeUrl = '/admin/newsletter/contact/'.$contactId.'/unsubscribe';
+        $client->request(Request::METHOD_GET, $unsubscribeUrl);
+        self::assertContains($client->getResponse()->getStatusCode(), [Response::HTTP_NOT_FOUND, Response::HTTP_METHOD_NOT_ALLOWED]);
+        self::assertSame('subscribed', $this->reloadContact($contactId)->getStatusLabel());
+
+        $client->request(Request::METHOD_POST, $unsubscribeUrl, ['_token' => 'invalid']);
+        self::assertSame(Response::HTTP_FORBIDDEN, $client->getResponse()->getStatusCode());
+        self::assertSame('subscribed', $this->reloadContact($contactId)->getStatusLabel());
+
+        $client->request(Request::METHOD_POST, $unsubscribeUrl, [
+            '_token' => $unsubscribeToken,
+        ]);
         $client->followRedirect();
         self::assertSame('unsubscribed', $this->reloadContact($contactId)->getStatusLabel());
 
-        $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contactId.'/resubscribe');
+        $client->request(Request::METHOD_POST, '/admin/newsletter/contact/'.$contactId.'/resubscribe', [
+            '_token' => $resubscribeToken,
+        ]);
         $client->followRedirect();
         self::assertSame('subscribed', $this->reloadContact($contactId)->getStatusLabel());
     }
@@ -1025,7 +1069,9 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $this->entityManager()->persist($contact);
         $this->entityManager()->flush();
 
-        $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contact->id.'/confirm');
+        $client->request(Request::METHOD_POST, '/admin/newsletter/contact/'.$contact->id.'/confirm', [
+            '_token' => $this->adminActionToken('confirm', (int) $contact->id),
+        ]);
         $client->followRedirect();
 
         $confirmed = $this->entityManager()->getRepository(Contact::class)
@@ -1072,6 +1118,13 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertIsArray($decoded);
 
         return $decoded;
+    }
+
+    private function adminActionToken(string $action, int $id): string
+    {
+        self::assertInstanceOf(KernelBrowser::class, $this->client);
+
+        return $this->csrfToken($this->client, 'admin_action_'.$action.'_'.$id);
     }
 
     /**

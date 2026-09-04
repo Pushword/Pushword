@@ -12,6 +12,7 @@ use Pushword\Core\Twig\VideoExtension;
 use Pushword\Quiz\Model\Answer;
 use Pushword\Quiz\Model\Profile;
 use Pushword\Quiz\Model\Question;
+use Pushword\Quiz\Model\Quiz;
 
 use function Safe\json_decode;
 
@@ -50,6 +51,7 @@ final class QuizRenderer implements RuntimeExtensionInterface
         private readonly VideoExtension $videoExtension,
         private readonly RouterInterface $router,
         private readonly LoggerInterface $logger,
+        private readonly QuizResultSigner $resultSigner,
     ) {
     }
 
@@ -79,15 +81,22 @@ final class QuizRenderer implements RuntimeExtensionInterface
             return $this->renderError($messages);
         }
 
-        $template = $this->apps->get()->getView('/component/quiz.html.twig', '@PushwordQuiz');
+        $app = $this->apps->get();
+        $template = $app->getView('/component/quiz.html.twig', '@PushwordQuiz');
+        $page = $this->apps->getCurrentPage();
+        $baseSlug = '';
+        if (null !== $page) {
+            $baseSlug = $page->slug;
+        }
 
         try {
             return $this->twig->render($template, [
                 'quiz' => $quiz,
-                'page' => $this->apps->getCurrentPage(),
+                'page' => $page,
                 'id' => 'pw-quiz-'.(++$this->instances),
                 'conversationAvailable' => class_exists(AppExtension::class),
                 'resultEndpoint' => $this->resolveResultEndpoint(),
+                'resultSignatures' => $this->resultSignatures($quiz, $app->getMainHost(), $baseSlug),
             ]);
         } catch (Throwable $throwable) {
             // Last-resort guard: a broken template must never 500 the page.
@@ -114,6 +123,18 @@ final class QuizRenderer implements RuntimeExtensionInterface
 
             return '';
         }
+    }
+
+    /** @return array<string, string> */
+    private function resultSignatures(Quiz $quiz, string $host, string $baseSlug): array
+    {
+        $signatures = [$baseSlug => $this->resultSigner->sign($host, $baseSlug)];
+        foreach (array_keys($quiz->levels) as $index) {
+            $slug = $baseSlug.'.'.$index;
+            $signatures[$slug] = $this->resultSigner->sign($host, $slug);
+        }
+
+        return $signatures;
     }
 
     /**

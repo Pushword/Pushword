@@ -36,6 +36,7 @@ use Pushword\Core\Repository\MediaUsageRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Utils\FlashBag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /** @extends AbstractAdminCrudController<Media> */
@@ -123,35 +124,34 @@ class MediaCrudController extends AbstractAdminCrudController
     }
 
     /** @param AdminContext<Media> $context */
-    #[AdminRoute('/rotate-left/{entityId}', name: 'rotate_left', options: ['methods' => ['GET']])]
-    public function rotateLeft(AdminContext $context): Response
+    #[AdminRoute('/rotate-left/{entityId}', name: 'rotate_left', options: ['methods' => ['POST']])]
+    public function rotateLeft(AdminContext $context, Request $request): Response
     {
-        return $this->rotate($context, 270);
+        return $this->rotate($context, $request, 270, 'rotateLeft');
     }
 
     /** @param AdminContext<Media> $context */
-    #[AdminRoute('/rotate-right/{entityId}', name: 'rotate_right', options: ['methods' => ['GET']])]
-    public function rotateRight(AdminContext $context): Response
+    #[AdminRoute('/rotate-right/{entityId}', name: 'rotate_right', options: ['methods' => ['POST']])]
+    public function rotateRight(AdminContext $context, Request $request): Response
     {
-        return $this->rotate($context, 90);
+        return $this->rotate($context, $request, 90, 'rotateRight');
     }
 
     /** @param AdminContext<Media> $context */
-    private function rotate(AdminContext $context, int $degrees): Response
+    private function rotate(AdminContext $context, Request $request, int $degrees, string $action): Response
     {
         $media = $context->getEntity()->getInstance();
         assert($media instanceof Media);
+
+        if (! $this->isCsrfTokenValid('admin_action_'.$action.'_'.$media->id, $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
 
         if ($media->isImage()) {
             $this->imageRotator->rotate($media, $degrees);
             $this->getEntityManager()->flush();
 
             FlashBag::get($this->getRequest())?->add('success', $this->getTranslator()->trans('adminMediaRotateSuccess'));
-        }
-
-        $referrer = $this->getRequest()?->query->get('referrer');
-        if (\is_string($referrer) && '' !== $referrer) {
-            return $this->redirect($referrer);
         }
 
         $editUrl = clone $this->adminUrlGenerator;

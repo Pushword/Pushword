@@ -52,7 +52,7 @@ $databaseUrl = '' !== $requestedDatabaseUrl ? $requestedDatabaseUrl : 'sqlite://
 // default; provisioning can opt into PostgreSQL before create-project starts.
 PostInstall::replace('.env', 'postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=16&charset=utf8', $databaseUrl);
 // and define an APP_SECRET
-PostInstall::replace('.env', "APP_SECRET=\n", 'APP_SECRET='.sha1(md5(uniqid())).chr(10));
+PostInstall::replace('.env', "APP_SECRET=\n", 'APP_SECRET='.bin2hex(random_bytes(32)).chr(10));
 // dev-app's media doubles as the test suite's fixtures: take the demo photos, leave the
 // branding and the PDF test artifact behind.
 PostInstall::mirror('vendor/pushword/dev-app/media~', 'media');

@@ -11,6 +11,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Panther\Client;
 use Symfony\Component\Panther\PantherTestCase;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 abstract class AbstractAdminTestClass extends PantherTestCase
 {
@@ -37,17 +38,9 @@ abstract class AbstractAdminTestClass extends PantherTestCase
             $options['webServerDir'] = $publicDir;
         }
 
-        // Use Chrome instead of Firefox
-        if (! isset($options['browser'])) {
-            $options['browser'] = static::CHROME;
-        }
+        $options['browser'] ??= static::CHROME;
 
-        // Pass critical env vars to the web server process.
-        // PHPUnit's <server> directive only sets $_SERVER, not $_ENV/putenv,
-        // so Panther's Process won't inherit them automatically.
-        if (! isset($options['env'])) {
-            $options['env'] = [];
-        }
+        $options['env'] ??= [];
 
         $options['env'] = (array) $options['env'] + array_filter([
             'APP_ENV' => $_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? 'test',
@@ -69,6 +62,14 @@ abstract class AbstractAdminTestClass extends PantherTestCase
         $this->client = $client;
 
         self::createUser();
+
+        // Admin tests deliberately open a fresh session for each scenario. Keep
+        // those independent logins from exhausting the production account/IP
+        // throttles shared by this ParaTest worker.
+        $addressLimiter = static::getContainer()->get('limiter.login_address');
+        $emailLimiter = static::getContainer()->get('limiter.login_email');
+        $addressLimiter->create(hash('sha256', 'admin@example.tld'))->reset();
+        $emailLimiter->create('127.0.0.1')->reset();
 
         // The two-step HTTP login flow is flaky under parallel test load (intermittent
         // CSRF/session redirect → step 1 page rendered again → "Unreachable field 'password'").
@@ -119,6 +120,23 @@ abstract class AbstractAdminTestClass extends PantherTestCase
         }
 
         return $path;
+    }
+
+    protected function csrfToken(KernelBrowser $client, string $tokenId): string
+    {
+        $requestStack = static::getContainer()->get('request_stack');
+        $requestStack->push($client->getRequest());
+
+        try {
+            $token = static::getContainer()->get(CsrfTokenManagerInterface::class)
+                ->getToken($tokenId)
+                ->getValue();
+            $client->getRequest()->getSession()->save();
+
+            return $token;
+        } finally {
+            $requestStack->pop();
+        }
     }
 
     protected static function createUser(): void

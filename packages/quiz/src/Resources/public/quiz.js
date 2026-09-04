@@ -390,7 +390,7 @@
     // reads the raw JSON body regardless.
     fetch(resultEndpoint(config), {
       method: 'POST',
-      body: JSON.stringify({ quiz: slug, score: pct, answers: answers || [] }),
+      body: JSON.stringify({ quiz: slug, score: pct, answers: answers || [], signature: config.resultSignature }),
     })
       .then(function (r) {
         return r.ok ? r.json() : null
@@ -411,7 +411,7 @@
 
     fetch(resultEndpoint(config), {
       method: 'POST',
-      body: JSON.stringify({ quiz: slug, result: result, answers: answers || [] }),
+      body: JSON.stringify({ quiz: slug, result: result, answers: answers || [], signature: config.resultSignature }),
     })
       .then(function (r) {
         return r.ok ? r.json() : null

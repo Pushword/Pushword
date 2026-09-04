@@ -137,6 +137,9 @@ RewriteRule ^\.Caddyfile$ - [F]
 # Security Headers
 #---
 <IfModule mod_headers.c>
+    Header set Content-Security-Policy "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' {{ live_origin }}"
+    Header set Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=(), usb=()"
+    Header set Strict-Transport-Security "max-age=31536000"
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set Referrer-Policy "strict-origin-when-cross-origin"

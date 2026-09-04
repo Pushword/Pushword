@@ -5,10 +5,12 @@ namespace Pushword\Admin\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
+use InvalidArgumentException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\MediaUploadValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -29,6 +31,7 @@ final class MediaMultiUploadController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly ImageCacheManager $imageCacheManager,
         private readonly MediaRepository $mediaRepo,
+        private readonly MediaUploadValidator $mediaUploadValidator,
     ) {
     }
 
@@ -62,6 +65,12 @@ final class MediaMultiUploadController extends AbstractController
 
         if (! $file->isValid()) {
             return new JsonResponse(['error' => $file->getErrorMessage()], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $this->mediaUploadValidator->validate($file);
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            return new JsonResponse(['error' => $invalidArgumentException->getMessage()], Response::HTTP_BAD_REQUEST);
         }
 
         $originalHash = hex2bin((string) $request->request->get('originalHash', '')) ?: null;

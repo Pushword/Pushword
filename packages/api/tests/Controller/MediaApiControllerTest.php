@@ -10,6 +10,7 @@ use Pushword\Core\Entity\User;
 use Pushword\Core\Image\License\MediaLicense;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
@@ -86,6 +87,19 @@ final class MediaApiControllerTest extends WebTestCase
         $filenames = array_column($data['items'], 'filename');
         sort($filenames);
         self::assertSame(['zz-needle-'.$marker.'.jpg', 'zz-other-'.$marker.'.jpg'], $filenames);
+    }
+
+    public function testUploadRejectsExecutableContentDisguisedAsAnImage(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'pushword-shell-');
+        self::assertIsString($path);
+        file_put_contents($path, '<?php echo "owned";');
+
+        $this->client->request('POST', '/api/media/shell.png', [], [
+            'file' => new UploadedFile($path, 'shell.png', 'image/png', null, true),
+        ], ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
     }
 
     public function testListAcceptsSearchAsAliasForQ(): void

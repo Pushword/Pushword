@@ -44,9 +44,13 @@ final class FeedController extends AbstractPushwordController
             'feedUri' => ($this->params->get('kernel.default_locale') === $locale ? '' : $locale.'/').'feed.xml',
         ];
 
+        $response = new Response();
+        $response->headers->set('Content-Type', 'application/rss+xml; charset=UTF-8');
+
         return $this->render(
             $this->getView('/page/rss.xml.twig'),
-            [...$params, ...$this->apps->getApp()->getParamsForRendering()]
+            [...$params, ...$this->apps->getApp()->getParamsForRendering()],
+            $response,
         );
     }
 
@@ -62,7 +66,7 @@ final class FeedController extends AbstractPushwordController
             ?? throw $this->createNotFoundException();
 
         $response = new Response();
-        $response->headers->set('Content-Type', 'text/xml');
+        $response->headers->set('Content-Type', 'application/rss+xml; charset=UTF-8');
 
         if (! $page->hasChildrenPages()) {
             throw $this->createNotFoundException();

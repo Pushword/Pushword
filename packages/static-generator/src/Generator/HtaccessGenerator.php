@@ -17,6 +17,7 @@ class HtaccessGenerator extends PageGenerator
             'image_fallback_order' => $this->getImageFallbackOrder(),
             'html_max_age' => $this->app->get('static_html_max_age') ?? 10800,
             'html_swr' => $this->app->get('static_html_stale_while_revalidate') ?? 3600,
+            'live_origin' => rtrim($this->app->getStr('base_live_url'), '/'),
         ]);
         $this->filesystem->dumpFile($this->getStaticDir().'/.htaccess', $htaccess);
 

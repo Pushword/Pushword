@@ -378,6 +378,7 @@ describe('quiz runtime — result submission endpoint', () => {
     document.body.innerHTML = resultQuiz('qe', 'endpoint', {
       feedback: 'immediate',
       resultEndpoint: 'https://live.example/quiz/result',
+      resultSignature: 'signed-page-capability',
     })
     bootRuntime()
 
@@ -389,6 +390,7 @@ describe('quiz runtime — result submission endpoint', () => {
     expect(calls[0].url).toBe('https://live.example/quiz/result')
     // No headers → CORS "simple request", no preflight the static host can't answer.
     expect(calls[0].opts.headers).toBeUndefined()
+    expect(JSON.parse(calls[0].opts.body).signature).toBe('signed-page-capability')
   })
 
   it('falls back to the relative endpoint when config omits it (pre-change static HTML)', () => {

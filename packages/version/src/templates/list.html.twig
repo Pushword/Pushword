@@ -66,9 +66,12 @@
                         <a href="{{ path('admin_version_compare', {type: type, id: entity.id, versionLeft: version, versionRight: 'current'}) }}" class="btn btn-outline-primary btn-sm px-2 me-1" title="{{ 'versionCompare'|trans }}">
                             <i class="fa fa-code-compare" aria-hidden="true"></i> {{ 'versionCompare'|trans }}
                         </a>
-                        <a href="{{ path('admin_version_load', {type: type, id: entity.id, version: version}) }}" class="btn btn-outline-secondary btn-sm px-2">
-                            <i class="fa fa-edit me-2" aria-hidden="true"></i> {{ 'versionSwitch'|trans }}
-                        </a>
+                        <form method="post" action="{{ path('admin_version_load', {type: type, id: entity.id, version: version}) }}" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('version_load_' ~ type ~ '_' ~ entity.id) }}">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm px-2">
+                                <i class="fa fa-edit me-2" aria-hidden="true"></i> {{ 'versionSwitch'|trans }}
+                            </button>
+                        </form>
                     </td>
                 </tr>
             {% else %}

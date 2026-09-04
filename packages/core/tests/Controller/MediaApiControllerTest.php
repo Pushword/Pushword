@@ -459,6 +459,32 @@ final class MediaApiControllerTest extends WebTestCase
         self::assertSame($created['filename'], $this->decodeResponse()['filename']);
     }
 
+    public function testUploadCannotKeepAnExecutableRouteExtension(): void
+    {
+        $file = new UploadedFile(
+            $this->createTempImage('safe-image-'.uniqid().'.jpg', uniqueSeed: random_int(1, 0xFFFFFF)),
+            'safe-image.jpg',
+            'image/jpeg',
+            null,
+            true,
+        );
+
+        $this->client->request(
+            Request::METHOD_POST,
+            '/api/media/attempted-shell.php',
+            [],
+            ['file' => $file],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken],
+        );
+
+        self::assertResponseStatusCodeSame(201);
+        $created = $this->decodeResponse();
+        self::assertIsString($created['filename']);
+        self::assertStringEndsWith('.jpg', $created['filename']);
+        self::assertStringNotContainsString('.php', $created['filename']);
+        $this->trackCreatedMedia($created['filename']);
+    }
+
     public function testDeleteRequiresAuthentication(): void
     {
         $this->client->request(Request::METHOD_DELETE, '/api/media/piedweb-logo.png');

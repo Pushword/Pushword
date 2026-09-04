@@ -16,6 +16,7 @@ use Pushword\Core\Twig\VideoExtension;
 use Pushword\Quiz\Editor\QuizEditorToolProvider;
 use Pushword\Quiz\Service\QuizFactory;
 use Pushword\Quiz\Service\QuizRenderer;
+use Pushword\Quiz\Service\QuizResultSigner;
 use Pushword\Quiz\Twig\QuizExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
@@ -151,6 +152,7 @@ final class QuizValidationTest extends KernelTestCase
         // so a statically served page (no PHP on its own origin) still reaches it.
         self::assertStringContainsString('"resultEndpoint":"http', $output);
         self::assertStringContainsString('\/quiz\/result"', $output);
+        self::assertMatchesRegularExpression('/"resultSignature":"[a-f0-9]{64}"/', $output);
     }
 
     public function testRenderSurvivesUnregisteredResultRoute(): void
@@ -174,6 +176,7 @@ final class QuizValidationTest extends KernelTestCase
             $container->get(VideoExtension::class),
             $router,
             new NullLogger(),
+            $container->get(QuizResultSigner::class),
         );
 
         $html = $renderer->render('{"questions":[{"q":"Capital of France?",'

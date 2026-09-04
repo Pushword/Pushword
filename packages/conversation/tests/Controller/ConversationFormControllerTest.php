@@ -75,6 +75,52 @@ final class ConversationFormControllerTest extends WebTestCase
         self::assertCount(1, $messages, 'Duplicate message should not be persisted');
     }
 
+    public function testMultiStepMessageUsesAnOpaqueOneTimeWorkflow(): void
+    {
+        $client = self::createClient();
+        $server = [
+            'HTTP_ORIGIN' => 'https://localhost.dev',
+            'REMOTE_ADDR' => '192.0.2.51',
+        ];
+        $email = 'workflow-'.uniqid().'@example.tld';
+
+        $crawler = $client->request(Request::METHOD_GET, '/conversation/newsletter/test?host=localhost.dev', server: $server);
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        $firstForm = $crawler->filter('[name="form"]')->form([
+            'form[authorEmail]' => $email,
+        ]);
+        $firstAction = $firstForm->getUri();
+        self::assertStringContainsString('token=', $firstAction);
+        self::assertStringNotContainsString('id=', $firstAction);
+
+        $crawler = $client->submit($firstForm, serverParameters: $server);
+        self::assertResponseIsSuccessful();
+        $secondForm = $crawler->filter('[name="form"]')->form([
+            'form[authorName]' => 'Workflow Owner',
+        ]);
+        $secondAction = $secondForm->getUri();
+        self::assertStringContainsString('step=2', $secondAction);
+
+        $client->request(
+            Request::METHOD_GET,
+            '/conversation/newsletter/test?host=localhost.dev&step=2&token='.str_repeat('a', 64),
+            server: $server,
+        );
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+
+        $client->submit($secondForm, serverParameters: $server);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Thank you', (string) $client->getResponse()->getContent());
+
+        $message = self::getContainer()->get('doctrine')->getRepository(Message::class)
+            ->findOneBy(['authorEmail' => $email]);
+        self::assertInstanceOf(Message::class, $message);
+        self::assertSame('Workflow Owner', $message->authorName);
+
+        $client->request(Request::METHOD_GET, $secondAction, server: $server);
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+    }
+
     public function testNewsletterFormWithQueryParams(): void
     {
         $client = self::createClient();

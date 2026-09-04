@@ -37,10 +37,9 @@ final readonly class MagicLinkMailer
 
         $urlToken = base64_encode($user->id.':'.$plainToken);
 
-        $resetUrl = $this->urlGenerator->generate(
+        $resetUrl = $this->generateLiveUrl(
             'pushword_login_set_password',
             ['token' => $urlToken],
-            UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
         $appName = $this->apps->get()->getStr('name') ?: $this->apps->get()->getMainHost();
@@ -85,16 +84,14 @@ final readonly class MagicLinkMailer
         $loginUrlToken = base64_encode($user->id.':'.$loginPlainToken);
         $setPasswordUrlToken = base64_encode($user->id.':'.$setPasswordPlainToken);
 
-        $loginUrl = $this->urlGenerator->generate(
+        $loginUrl = $this->generateLiveUrl(
             'pushword_login_magic',
             ['token' => $loginUrlToken],
-            UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
-        $setPasswordUrl = $this->urlGenerator->generate(
+        $setPasswordUrl = $this->generateLiveUrl(
             'pushword_login_set_password',
             ['token' => $setPasswordUrlToken],
-            UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
         $appName = $this->apps->get()->getStr('name') ?: $this->apps->get()->getMainHost();
@@ -115,5 +112,13 @@ final readonly class MagicLinkMailer
                 'expiresInMinutes' => LoginToken::TTL_SECONDS / 60,
             ],
         );
+    }
+
+    /** @param array<string, string> $parameters */
+    private function generateLiveUrl(string $route, array $parameters): string
+    {
+        $path = $this->urlGenerator->generate($route, $parameters, UrlGeneratorInterface::ABSOLUTE_PATH);
+
+        return rtrim($this->apps->get()->getStr('base_live_url'), '/').$path;
     }
 }

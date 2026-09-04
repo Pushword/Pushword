@@ -12,12 +12,14 @@ import {
 import { initShowMore } from './ShowMore.js'
 import { restoreUnpublishedLinks } from './unpublishedLinks.js'
 import { initVariantLinks } from './variantLinks.js'
+import { initPasswordVisibility } from './passwordVisibility.js'
 
 // Initialize ShowMore (exposes window.ShowMore and sets up event listeners)
 initShowMore()
 
 // Opt-in progressive enhancement for variant links (delegated, wired once).
 initVariantLinks()
+initPasswordVisibility()
 
 let lightbox
 function onDomChanged() {

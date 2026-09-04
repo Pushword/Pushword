@@ -4,9 +4,7 @@ namespace Pushword\Admin\Tests\Controller;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
-use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use PHPUnit\Framework\Attributes\Group;
-use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
@@ -66,7 +64,11 @@ final class PageEditAttributionTest extends AbstractAdminTestClass
         self::assertInstanceOf(Page::class, $page);
 
         // Cloning is the cheapest page creation that runs through a logged-in request.
-        $client->request(Request::METHOD_GET, $this->buildClonePath((int) $page->id));
+        $pageId = (int) $page->id;
+        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
+        $token = $crawler->filter('form[action$="'.$this->buildClonePath($pageId).'"] input[name="_token"]')->attr('value');
+        self::assertNotNull($token);
+        $client->request(Request::METHOD_POST, $this->buildClonePath($pageId), ['_token' => $token]);
 
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $entityManager->clear();
@@ -93,18 +95,6 @@ final class PageEditAttributionTest extends AbstractAdminTestClass
     /** The clone action has no alias route, so this one is still built by hand. */
     private function buildClonePath(int $pageId): string
     {
-        /** @var AdminUrlGenerator $urlGenerator */
-        $urlGenerator = clone self::getContainer()->get(AdminUrlGenerator::class);
-        $url = $urlGenerator
-            ->unsetAll()
-            ->setController(PageCrudController::class)
-            ->setAction('clonePage')
-            ->setEntityId($pageId)
-            ->generateUrl();
-
-        $parsed = parse_url($url);
-        $query = $parsed['query'] ?? '';
-
-        return ($parsed['path'] ?? '/').('' !== $query ? '?'.$query : '');
+        return self::getContainer()->get('router')->generate('admin_page_clone_page', ['entityId' => $pageId]);
     }
 }

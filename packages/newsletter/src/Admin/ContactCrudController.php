@@ -129,16 +129,19 @@ class ContactCrudController extends AbstractCrudController
 
         $confirm = Action::new('confirm', 'newsletter.contact.action.confirm', 'fa fa-check')
             ->linkToCrudAction('confirm')
+            ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
             ->displayIf(static fn (Contact $contact): bool => $contact->isPending())
             ->setCssClass('btn btn-outline-success');
 
         $unsubscribe = Action::new('unsubscribe', 'newsletter.contact.action.unsubscribe', 'fa fa-user-slash')
             ->linkToCrudAction('unsubscribe')
+            ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
             ->displayIf(static fn (Contact $contact): bool => null === $contact->unsubscribedAt && null === $contact->bouncedAt)
             ->setCssClass('btn btn-outline-warning');
 
         $resubscribe = Action::new('resubscribe', 'newsletter.contact.action.resubscribe', 'fa fa-rotate-left')
             ->linkToCrudAction('resubscribe')
+            ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
             ->displayIf(static fn (Contact $contact): bool => null !== $contact->unsubscribedAt && null === $contact->bouncedAt)
             ->setCssClass('btn btn-outline-success');
 
@@ -324,12 +327,13 @@ class ContactCrudController extends AbstractCrudController
     }
 
     /** Turn a pending opt-in into a subscription without waiting for the click — the consent was given elsewhere. */
-    #[AdminRoute(path: '/{entityId}/confirm', name: 'confirm')]
-    public function confirm(): RedirectResponse
+    #[AdminRoute(path: '/{entityId}/confirm', name: 'confirm', options: ['methods' => ['POST']])]
+    public function confirm(Request $request): RedirectResponse
     {
         $contact = $this->contact();
 
         if ($contact instanceof Contact) {
+            $this->assertActionToken($request, 'confirm', (int) $contact->id);
             $this->contactManager->confirm($contact, source: $this->adminSource());
             $this->addFlash('success', 'newsletter.contact.flash.confirmed');
         }
@@ -381,12 +385,13 @@ class ContactCrudController extends AbstractCrudController
         return new RedirectResponse($this->editUrl($kept));
     }
 
-    #[AdminRoute(path: '/{entityId}/unsubscribe', name: 'unsubscribe')]
-    public function unsubscribe(): RedirectResponse
+    #[AdminRoute(path: '/{entityId}/unsubscribe', name: 'unsubscribe', options: ['methods' => ['POST']])]
+    public function unsubscribe(Request $request): RedirectResponse
     {
         $contact = $this->contact();
 
         if ($contact instanceof Contact) {
+            $this->assertActionToken($request, 'unsubscribe', (int) $contact->id);
             $this->contactManager->unsubscribe($contact, $this->adminSource());
             $this->addFlash('success', 'newsletter.contact.flash.unsubscribed');
         }
@@ -394,17 +399,25 @@ class ContactCrudController extends AbstractCrudController
         return new RedirectResponse($this->editUrl($contact));
     }
 
-    #[AdminRoute(path: '/{entityId}/resubscribe', name: 'resubscribe')]
-    public function resubscribe(): RedirectResponse
+    #[AdminRoute(path: '/{entityId}/resubscribe', name: 'resubscribe', options: ['methods' => ['POST']])]
+    public function resubscribe(Request $request): RedirectResponse
     {
         $contact = $this->contact();
 
         if ($contact instanceof Contact) {
+            $this->assertActionToken($request, 'resubscribe', (int) $contact->id);
             $this->contactManager->resubscribe($contact, $this->adminSource());
             $this->addFlash('success', 'newsletter.contact.flash.resubscribed');
         }
 
         return new RedirectResponse($this->editUrl($contact));
+    }
+
+    private function assertActionToken(Request $request, string $action, int $id): void
+    {
+        if (! $this->isCsrfTokenValid('admin_action_'.$action.'_'.$id, $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
     }
 
     private function doOptIn(Request $request): RedirectResponse

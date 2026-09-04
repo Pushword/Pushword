@@ -92,7 +92,7 @@
 {# resultEndpoint is an absolute live-host URL (resolved + guarded in QuizRenderer)
    so a statically served page, with no PHP on its own origin, still reaches the
    dynamic host to record its attempt; empty when the route is unavailable. #}
-{% macro configScript(quiz, l, resultEndpoint) %}
+{% macro configScript(quiz, l, resultEndpoint, resultSignature) %}
   <script type="application/json" class="pw-quiz-config">{{ {
     mode: quiz.mode,
     feedback: quiz.feedback,
@@ -100,6 +100,7 @@
     results: quiz.results|map(b => {min: b.min, msg: b.msg|markdown}),
     labels: {score: l.score, better: l.better, nextLevel: l.nextLevel, profile: l.profile, share: l.share, restart: l.restart},
     resultEndpoint: resultEndpoint,
+    resultSignature: resultSignature,
   }|json_encode(constant('JSON_HEX_TAG'))|raw }}</script>
 {% endmacro %}
 
@@ -164,7 +165,7 @@
     </ol>
 
     {{ _self.resultBox(quiz, baseSlug, conversationAvailable) }}
-    {{ _self.configScript(quiz, l, resultEndpoint) }}
+    {{ _self.configScript(quiz, l, resultEndpoint, resultSignatures[baseSlug]) }}
   </section>
 
   {# A personality test has no accepted answer, so the schema.org/Quiz markup would be misleading. #}
@@ -222,7 +223,7 @@
           </ol>
 
           {{ _self.resultBox(level, lslug, conversationAvailable) }}
-          {{ _self.configScript(level, l, resultEndpoint) }}
+          {{ _self.configScript(level, l, resultEndpoint, resultSignatures[lslug]) }}
         </div>
       </div>
     {% endfor %}

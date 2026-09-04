@@ -18,6 +18,16 @@ use Symfony\Component\HttpFoundation\Response;
 #[Group('integration')]
 final class ControllerTest extends AbstractAdminTestClass
 {
+    public function testProductionBundleHasNoExternalSourceMap(): void
+    {
+        $publicDir = __DIR__.'/../src/Resources/public';
+        self::assertFileDoesNotExist($publicDir.'/admin-block-editor.js.map');
+        self::assertStringNotContainsString(
+            'sourceMappingURL=admin-block-editor.js.map',
+            file_get_contents($publicDir.'/admin-block-editor.js'),
+        );
+    }
+
     public function testBasics(): void
     {
         $client = $this->loginUser(
@@ -200,6 +210,38 @@ final class ControllerTest extends AbstractAdminTestClass
         $response = json_decode((string) $client->getResponse()->getContent(), true);
         self::assertSame(0, $response['success']);
         self::assertNotSame('', $response['error']);
+    }
+
+    public function testMediaControllerRejectsExecutableContentDisguisedAsAnImage(): void
+    {
+        $client = $this->loginUser();
+        $path = tempnam(sys_get_temp_dir(), 'pushword-shell-');
+        self::assertIsString($path);
+        file_put_contents($path, '<?php echo "owned";');
+
+        $client->request(
+            Request::METHOD_POST,
+            '/admin/media/block',
+            files: ['image' => new UploadedFile($path, 'shell.png', 'image/png', null, true)],
+        );
+
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $client->getResponse()->getStatusCode());
+    }
+
+    public function testMediaControllerRejectsLocalAndPrivateUrls(): void
+    {
+        $client = $this->loginUser();
+
+        foreach (['file:///etc/passwd', 'http://127.0.0.1/private.png'] as $url) {
+            $client->request(
+                Request::METHOD_POST,
+                '/admin/media/block',
+                server: ['CONTENT_TYPE' => 'application/json'],
+                content: json_encode(['url' => $url]),
+            );
+
+            self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $client->getResponse()->getStatusCode());
+        }
     }
 
     public function testMediaResolveController(): void

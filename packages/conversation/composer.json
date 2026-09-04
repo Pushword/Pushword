@@ -19,7 +19,8 @@
   "require": {
     "pushword/core": "*",
     "pushword/flat": "*",
-    "symfony/http-client": "^7.3 || ^8.0"
+    "symfony/http-client": "^8.0",
+    "symfony/rate-limiter": "^8.0"
   },
   "suggest": {
     "pushword/admin": "Manage pages, media and users from an EasyAdmin-based back-office.",
