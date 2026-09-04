@@ -5,6 +5,7 @@ namespace Pushword\Flat\Service;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 
 /**
  * Validates API tokens for webhook lock/unlock operations.
@@ -14,6 +15,7 @@ final readonly class FlatApiTokenValidator
 {
     public function __construct(
         private UserRepository $userRepository,
+        private RoleHierarchyInterface $roleHierarchy,
     ) {
     }
 
@@ -26,7 +28,14 @@ final readonly class FlatApiTokenValidator
             return null;
         }
 
-        return $this->userRepository->findOneBy(['apiToken' => $token]);
+        $user = $this->userRepository->findOneBy(['apiToken' => $token]);
+        if (! $user instanceof User) {
+            return null;
+        }
+
+        return \in_array('ROLE_EDITOR', $this->roleHierarchy->getReachableRoleNames($user->getRoles()), true)
+            ? $user
+            : null;
     }
 
     /**

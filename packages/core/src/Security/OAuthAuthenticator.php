@@ -5,6 +5,7 @@ namespace Pushword\Core\Security;
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use KnpU\OAuth2ClientBundle\Security\Authenticator\OAuth2Authenticator;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -88,6 +89,10 @@ final class OAuthAuthenticator extends OAuth2Authenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): RedirectResponse
     {
+        if (($user = $token->getUser()) instanceof User && $user->requiresPasswordChange()) {
+            return new RedirectResponse($this->router->generate('pushword_login_change_password'));
+        }
+
         /** @var string $targetUrl */
         $targetUrl = $request->getSession()->get('_security.main.target_path')
             ?? $this->router->generate('pushword_admin');

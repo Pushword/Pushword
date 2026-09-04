@@ -144,6 +144,10 @@ RewriteRule ^\.Caddyfile$ - [F]
     Header set X-Frame-Options "SAMEORIGIN"
     Header set Referrer-Policy "strict-origin-when-cross-origin"
     Header unset Server
+
+    <FilesMatch "\.svg$">
+        Header set Content-Security-Policy "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:"
+    </FilesMatch>
 </IfModule>
 
 #---

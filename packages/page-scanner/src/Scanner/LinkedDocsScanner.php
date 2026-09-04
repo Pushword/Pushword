@@ -5,8 +5,6 @@ namespace Pushword\PageScanner\Scanner;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Override;
-use PiedWeb\Curl\ExtendedClient;
-use PiedWeb\Curl\Helper;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
@@ -90,6 +88,7 @@ final class LinkedDocsScanner extends AbstractScanner
         private readonly string $publicDir,
         private readonly string $mediaCacheDir,
         TranslatorInterface $translator,
+        private readonly ParallelUrlChecker $parallelUrlChecker,
         private readonly ?CacheInterface $externalUrlCache = null,
         private readonly int $externalUrlCacheTtl = 86400,
         private readonly int $externalUrlFailureCacheTtl = 3600,
@@ -637,41 +636,7 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     private function checkUrlViaHttp(string $url): true|array
     {
-        $client = new ExtendedClient($url);
-        $client
-            ->setDefaultSpeedOptions()
-            ->fakeBrowserHeader()
-            ->setNoFollowRedirection()
-            ->setMaximumResponseSize()
-            ->setDownloadOnlyIf(Helper::checkStatusCode(...))
-            ->setMobileUserAgent();
-        $client->request();
-
-        if (in_array($client->getCurlInfo(\CURLINFO_HTTP_CODE), [403, 410], true)) {
-            return true;
-        }
-
-        if (200 !== $client->getCurlInfo(\CURLINFO_HTTP_CODE) && 0 !== $client->getCurlInfo(\CURLINFO_HTTP_CODE)) {
-            /** @var string */
-            $httpCode = $client->getCurlInfo(\CURLINFO_HTTP_CODE);
-
-            return [
-                'code' => ScanErrorCode::LinkStatus->value,
-                'message' => $this->trans('page_scanStatusCode').' ('.$httpCode.')',
-            ];
-        }
-
-        if ($client->getError() > 0) {
-            return [
-                'code' => ScanErrorCode::LinkUnreachable->value,
-                'message' => $this->trans(
-                    'page_scanUnreachable',
-                    92832 === $client->getError() ? [' - errorMessage' => ''] : ['errorMessage' => $client->getErrorMessage()]
-                ),
-            ];
-        }
-
-        return true;
+        return $this->parallelUrlChecker->checkUrlUncached($url);
     }
 
     /**

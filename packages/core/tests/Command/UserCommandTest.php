@@ -70,4 +70,21 @@ final class UserCommandTest extends KernelTestCase
         self::assertNotNull($user);
         self::assertContains('ROLE_SUPER_ADMIN', $user->getRoles());
     }
+
+    public function testTemporaryPasswordOptionRestrictsCreatedAccount(): void
+    {
+        $application = new Application(self::createKernel());
+        $commandTester = new CommandTester($application->find('pw:user:create'));
+
+        $commandTester->execute([
+            'email' => 'temporary-password@example.tld',
+            'password' => 'temporarySecret123',
+            'role' => 'ROLE_SUPER_ADMIN',
+            '--require-password-change' => true,
+        ]);
+
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'temporary-password@example.tld']);
+        self::assertNotNull($user);
+        self::assertTrue($user->requiresPasswordChange());
+    }
 }

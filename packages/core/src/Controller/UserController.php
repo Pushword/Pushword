@@ -43,7 +43,11 @@ final class UserController extends AbstractController
     #[Route('/login', name: 'pushword_login')]
     public function login(Request $request): Response
     {
-        if (null !== $this->getUser()) {
+        if (($user = $this->getUser()) instanceof User) {
+            if ($user->requiresPasswordChange()) {
+                return $this->redirectToRoute('pushword_login_change_password');
+            }
+
             return $this->redirectToRoute('pushword_admin');
         }
 
@@ -190,6 +194,7 @@ final class UserController extends AbstractController
 
             // Set password (UserListener will hash it on flush)
             $user->setPlainPassword($password);
+            $user->completePasswordChange();
             $loginToken->markUsed();
             $this->em->flush();
 
@@ -200,6 +205,48 @@ final class UserController extends AbstractController
         return $this->render('@Pushword/user/set_password.html.twig', [
             'token' => $token,
             'error' => null,
+        ]);
+    }
+
+    #[Route('/login/change-password', name: 'pushword_login_change_password', methods: ['GET', 'POST'])]
+    public function changePassword(Request $request): Response
+    {
+        $user = $this->getUser();
+        if (! $user instanceof User) {
+            return $this->redirectToRoute('pushword_login');
+        }
+
+        if (! $user->requiresPasswordChange()) {
+            return $this->redirectToRoute('pushword_admin');
+        }
+
+        $error = null;
+        if ($request->isMethod('POST')) {
+            if (! $this->isCsrfTokenValid('change_password', $request->request->getString('_csrf_token'))) {
+                $error = 'securityLoginCsrfError';
+            } else {
+                $password = $request->request->getString('password');
+                $passwordConfirm = $request->request->getString('password_confirm');
+
+                if ($password !== $passwordConfirm) {
+                    $error = 'passwordsMustMatch';
+                } elseif (\strlen($password) < 7) {
+                    $error = 'userPasswordShort';
+                } else {
+                    $user->setPlainPassword($password);
+                    $user->completePasswordChange();
+                    $this->em->flush();
+
+                    return $this->userAuthenticator->authenticateUser($user, $this->authenticator, $request)
+                        ?? $this->redirectToRoute('pushword_admin');
+                }
+            }
+        }
+
+        return $this->render('@Pushword/user/set_password.html.twig', [
+            'csrf_intention' => 'change_password',
+            'error' => $error,
+            'password_change_required' => true,
         ]);
     }
 

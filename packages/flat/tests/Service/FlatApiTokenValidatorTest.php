@@ -71,6 +71,14 @@ final class FlatApiTokenValidatorTest extends KernelTestCase
         self::assertSame($this->testUser->id, $result->id);
     }
 
+    public function testValidateTokenRejectsUserWithoutEditorRole(): void
+    {
+        $token = bin2hex(random_bytes(32));
+        $this->testUser = $this->createUserWithToken($token, [User::ROLE_DEFAULT]);
+
+        self::assertNull($this->validator->validateToken($token));
+    }
+
     public function testExtractTokenFromRequestReturnsNullWithoutHeader(): void
     {
         $request = Request::create('/api/test');
@@ -135,13 +143,15 @@ final class FlatApiTokenValidatorTest extends KernelTestCase
         self::assertSame($this->testUser->id, $result->id);
     }
 
-    private function createUserWithToken(string $token): User
+    /** @param string[] $roles */
+    private function createUserWithToken(string $token, array $roles = ['ROLE_EDITOR']): User
     {
         /** @var class-string<User> $userClass */
         $userClass = self::getContainer()->getParameter('pw.entity_user');
         $user = new $userClass();
         $user->email = 'test-api-'.uniqid().'@example.com';
         $user->setPassword('hashed-password');
+        $user->setRoles($roles);
         $user->apiToken = $token;
 
         $this->em->persist($user);

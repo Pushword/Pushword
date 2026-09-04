@@ -13,7 +13,7 @@
     "monaco-editor-webpack-plugin": "^7.1",
     "monaco-yaml": "^5.4",
     "style-loader": "^4",
-    "vitest": "^3",
+    "vitest": "^3.2.6",
     "webpack": "^5.65",
     "webpack-cli": "^6.0"
   }

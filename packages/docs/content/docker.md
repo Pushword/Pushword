@@ -126,8 +126,10 @@ PUSHWORD_ADMIN_EMAIL=you@example.com
 PUSHWORD_ADMIN_PASSWORD=…
 ```
 
-Leave them unset and it falls back to the published `admin@example.tld` / `p@ssword`,
-and says so in the logs. Change them on first login.
+Leave them unset and the entrypoint generates a random temporary password, prints it
+once in the first-boot logs, and requires it to be changed before administration can
+be accessed. Set `PUSHWORD_ADMIN_PASSWORD` when a provisioning system already owns
+secret generation and delivery.
 
 It creates **no content**. Production content is yours, and it arrives the way you
 deploy it — a database backup you restore, or Markdown files
@@ -177,3 +179,5 @@ paths follow.
   `docker compose -f compose.prod.yaml build`, or add a Node stage to the `Dockerfile`.
 - `svgo` is not installed, so SVGs pass through unoptimized. Every other optimizer in the
   chain (`cjpeg`, `pngquant`, `optipng`, `gifsicle`, `cwebp`) is there.
+- Both supplied PHP configurations set `expose_php=Off`, so PHP does not emit an
+  `X-Powered-By` version header.

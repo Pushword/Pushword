@@ -9,6 +9,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Utils\PathGuard;
 use Pushword\StaticGenerator\Cache\PageCacheGeneratorInterface;
 use Pushword\StaticGenerator\DependencyInjection\Configuration;
 use Pushword\StaticGenerator\Event\StaticPostGenerateEvent;
@@ -320,9 +321,9 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
             foreach ($bases as $base) {
                 foreach (CompressionAlgorithm::fileSuffixes() as $suffix) {
-                    $source = $originalStaticDir.'/'.$base.$suffix;
+                    $source = PathGuard::joinUnder($originalStaticDir, $base.$suffix);
                     if ($filesystem->exists($source)) {
-                        $filesystem->copy($source, $tempDir.'/'.$base.$suffix, true);
+                        $filesystem->copy($source, PathGuard::joinUnder($tempDir, $base.$suffix), true);
                     }
                 }
             }
@@ -414,7 +415,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
             foreach ($bases as $base) {
                 foreach (CompressionAlgorithm::fileSuffixes() as $suffix) {
-                    $filesystem->remove($staticDir.'/'.$base.$suffix);
+                    $filesystem->remove(PathGuard::joinUnder($staticDir, $base.$suffix));
                 }
             }
 

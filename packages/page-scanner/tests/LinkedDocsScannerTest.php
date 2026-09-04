@@ -42,8 +42,9 @@ final class LinkedDocsScannerTest extends KernelTestCase
             $publicDir,
             // Mirrors the pw.media_cache_dir default: %pw.public_dir%/%pw.public_media_dir%
             $mediaCacheDir ?? $publicDir.'/media',
-            self::getContainer()->get('translator'),
-            $externalUrlCache,
+            translator: self::getContainer()->get('translator'),
+            parallelUrlChecker: self::getContainer()->get(ParallelUrlChecker::class),
+            externalUrlCache: $externalUrlCache,
             mediaCacheStorage: $mediaCacheStorage,
         );
     }

@@ -5,6 +5,7 @@ namespace Pushword\Repurpose\Tests\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Repurpose\Entity\SocialPost;
 use Pushword\Repurpose\Service\VideoBuilder;
@@ -184,9 +185,15 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
     public function testCreateStandaloneDraftOpensTheStudio(): void
     {
+        $before = $this->em->getRepository(SocialPost::class)->count([]);
         $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/new');
 
-        self::assertSame(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode());
+        self::assertResponseIsSuccessful();
+        self::assertSame($before, $this->em->getRepository(SocialPost::class)->count([]));
+
+        $this->client->submitForm('Create carousel');
+
+        self::assertResponseRedirects();
         $location = (string) $this->client->getResponse()->headers->get('Location');
         self::assertMatchesRegularExpression('#/admin/repurpose/studio/\d+#', $location);
 
@@ -198,6 +205,29 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $this->em->remove($created); // created on the default host, outside tearDown's HOST scope
         $this->em->flush();
+    }
+
+    public function testRepurposeFromPageGetDoesNotCreateCarousel(): void
+    {
+        $page = new Page();
+        $page->host = self::HOST;
+        $page->slug = 'repurpose-from-page-test';
+        $page->h1 = 'Repurpose source';
+
+        $this->em->persist($page);
+        $this->em->flush();
+        self::assertNotNull($page->id);
+        $before = $this->em->getRepository(SocialPost::class)->count([]);
+
+        try {
+            $this->client->request(Request::METHOD_GET, '/admin/repurpose/from-page/'.$page->id);
+
+            self::assertResponseIsSuccessful();
+            self::assertSame($before, $this->em->getRepository(SocialPost::class)->count([]));
+        } finally {
+            $this->em->remove($page);
+            $this->em->flush();
+        }
     }
 
     public function testSavingAStandaloneCarouselKeepsItsGeneratedSlug(): void
@@ -282,7 +312,13 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id.'/network/instagram');
 
-        self::assertSame(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode());
+        self::assertResponseIsSuccessful();
+        self::assertNull($this->em->getRepository(SocialPost::class)
+            ->findOneBy(['host' => self::HOST, 'page' => 'blog/studio-article', 'network' => 'instagram']));
+
+        $this->client->submitForm('Create version');
+
+        self::assertResponseRedirects();
 
         $sibling = $this->em->getRepository(SocialPost::class)
             ->findOneBy(['host' => self::HOST, 'page' => 'blog/studio-article', 'network' => 'instagram']);
@@ -309,7 +345,9 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id.'/network/pinterest');
 
-        self::assertSame(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode());
+        self::assertResponseIsSuccessful();
+        $this->client->submitForm('Create version');
+        self::assertResponseRedirects();
         $sibling = $this->em->getRepository(SocialPost::class)
             ->findOneBy(['host' => self::HOST, 'page' => 'blog/studio-article', 'network' => 'pinterest']);
         self::assertInstanceOf(SocialPost::class, $sibling);

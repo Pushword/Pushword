@@ -7,14 +7,18 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Controller\FeedController;
 use Pushword\Core\Controller\PageController;
+use Pushword\Core\Controller\PageResolver;
 use Pushword\Core\Controller\RobotsTxtController;
 use Pushword\Core\Controller\SitemapController;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 #[Group('integration')]
 final class PageControllerTest extends KernelTestCase
@@ -42,6 +46,36 @@ final class PageControllerTest extends KernelTestCase
         $this->expectException(NotFoundHttpException::class);
         $response = $this->getPageController()->show(Request::create('/en/'.$slug), '/en/'.$slug);
         self::assertSame(404, $response->getStatusCode());
+    }
+
+    public function testDraftIsVisibleOnlyToEditors(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $page = $this->createFeedPage('private-draft', 'Private draft');
+        $page->publishedAt = null;
+
+        $em->persist($page);
+        $em->flush();
+
+        $tokenStorage = self::getContainer()->get(TokenStorageInterface::class);
+
+        try {
+            $resolver = self::getContainer()->get(PageResolver::class);
+            $anonymousPage = $resolver->findPageOr404(Request::create('/private-draft'), 'private-draft');
+            self::assertNull($anonymousPage);
+
+            $editor = new User()->setRoles(['ROLE_EDITOR']);
+            $editor->email = 'draft-editor@example.tld';
+            $tokenStorage->setToken(new UsernamePasswordToken($editor, 'main', $editor->getRoles()));
+
+            $resolvedPage = $resolver->findPageOr404(Request::create('/private-draft'), 'private-draft');
+            self::assertInstanceOf(Page::class, $resolvedPage);
+            self::assertSame($page->id, $resolvedPage->id);
+        } finally {
+            $tokenStorage->setToken(null);
+            $em->remove($page);
+            $em->flush();
+        }
     }
 
     public function testCustomHostRouteWithUnknownHostReturns404(): void

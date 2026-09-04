@@ -4,6 +4,7 @@ pagePageRendering: "An error occurred in your content... impossible to generate 
 pagePropertyInvalid: 'Property {{ property }}: {{ message }}'
 pagePropertyTypeMismatch: 'Property {{ property }} must be of type {{ type }}.'
 pageSlugAlreadyUsed: 'A page already uses this URL identifier'
+pageSlugPathSegment: 'The URL identifier cannot contain . or .. path segments.'
 userEmailAlreadyUsed: 'An account is already associated with this email address.'
 userEmailInvalid: "The email address is invalid."
 userPasswordShort: 'The password is too short (7 characters min.).'

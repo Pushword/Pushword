@@ -187,6 +187,8 @@ final class ImageManagerCommand
         $seen = 0;
 
         foreach ($medias as $media) {
+            $this->imageCacheManager->ensurePublicSymlink($media);
+
             if ($media->isImage()) {
                 $progressBar?->setMessage($media->getPath());
 
@@ -210,12 +212,6 @@ final class ImageManagerCommand
                         ? self::MARKER_DONE.$media->getFileName()
                         : self::MARKER_FAIL.$media->getFileName().': '.$failure);
                 }
-            } else {
-                // A non-image never reaches generateCache(), so it lands in none of the
-                // three buckets — which is why $generated is tallied and not derived.
-                // The old count - skipped - errors charged every one of them to
-                // "processed", and a converged library reported that as work each night.
-                $this->imageCacheManager->ensurePublicSymlink($media);
             }
 
             $progressBar?->advance();
@@ -279,10 +275,10 @@ final class ImageManagerCommand
     {
         $imageMedias = [];
         foreach ($medias as $media) {
+            $this->imageCacheManager->ensurePublicSymlink($media);
+
             if ($media->isImage()) {
                 $imageMedias[] = $media;
-            } else {
-                $this->imageCacheManager->ensurePublicSymlink($media);
             }
         }
 

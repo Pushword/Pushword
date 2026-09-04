@@ -51,6 +51,8 @@ oauthOrContinueWith: "Ou continuer avec"
 oauthUnsupportedProvider: "Fournisseur OAuth non supporté."
 oauthUserNotFound: "Aucun compte trouvé avec cet email. Veuillez contacter un administrateur."
 passwordsMustMatch: "Les mots de passe doivent correspondre."
+passwordChangeRequiredButton: 'Changer le mot de passe et continuer'
+passwordChangeRequiredIntro: "Ce mot de passe temporaire doit être remplacé avant de pouvoir utiliser le compte."
 securityLoginChangeEmail: "Changer d'email"
 securityLoginContinue: "Continuer"
 securityLoginCsrfError: "Votre session a expiré. Veuillez réessayer."

@@ -10,6 +10,7 @@ use Pushword\Core\Repository\LoginTokenRepository;
 use Pushword\Core\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -312,6 +313,55 @@ final class UserControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_GET, '/login');
 
         self::assertResponseRedirects();
+    }
+
+    public function testUncheckedRememberMeDoesNotCreatePersistentCookie(): void
+    {
+        $email = 'no-remember-me@example.tld';
+        $this->createTestUser($email, 'testPassword123');
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/login');
+        $form = $crawler->filter('form')->form();
+        $form['email'] = $email;
+        $this->client->submit($form);
+
+        $crawler = $this->client->followRedirect();
+        $form = $crawler->filter('form')->form();
+        $form['email'] = $email;
+        $form['password'] = 'testPassword123';
+        $rememberMe = $form['_remember_me'];
+        self::assertInstanceOf(ChoiceFormField::class, $rememberMe);
+        $rememberMe->untick();
+        $this->client->submit($form);
+
+        self::assertResponseRedirects();
+        self::assertNull($this->client->getCookieJar()->get('REMEMBERME'));
+    }
+
+    public function testTemporaryPasswordMustBeChangedBeforeAdminAccess(): void
+    {
+        $user = $this->createTestUser('temporary-login@example.tld', 'temporarySecret123');
+        $user->requirePasswordChange();
+        self::getContainer()->get('doctrine.orm.entity_manager')->flush();
+        $this->client->loginUser($user);
+
+        $this->client->request(Request::METHOD_GET, '/admin');
+        self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/login/change-password');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('input[name="_csrf_token"]');
+
+        $form = $crawler->filter('form')->form();
+        $form['password'] = 'replacementSecret123';
+        $form['password_confirm'] = 'replacementSecret123';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects();
+
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'temporary-login@example.tld']);
+        self::assertInstanceOf(User::class, $user);
+        self::assertFalse($user->requiresPasswordChange());
     }
 
     private function createTestUser(string $email, ?string $password): User

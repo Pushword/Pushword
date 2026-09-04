@@ -193,6 +193,14 @@ final class ImageCacheManager
         $fileName = $media->getFileName();
         $publicPath = $this->mediaCacheDir.'/'.$fileName;
 
+        if (str_ends_with(strtolower($fileName), '.svg')) {
+            if (is_link($publicPath)) {
+                $this->filesystem->remove($publicPath);
+            }
+
+            return;
+        }
+
         clearstatcache(true, $publicPath);
 
         if (is_link($publicPath) || $this->filesystem->exists($publicPath)) {

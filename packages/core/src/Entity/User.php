@@ -32,7 +32,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
 {
     use ExtensiblePropertiesTrait;
 
+    public const string PASSWORD_CHANGE_REQUIRED = 'passwordChangeRequired';
+
     public const string ROLE_DEFAULT = 'ROLE_USER';
+
+    public const string ROLE_PASSWORD_CHANGE = 'ROLE_PASSWORD_CHANGE';
 
     public const string ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN';
 
@@ -86,6 +90,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
 
     public function setPlainPassword(?string $password): self
     {
+        if (null === $password || '' === $password) {
+            $this->plainPassword = null;
+
+            return $this;
+        }
+
         $this->plainPassword = $password;
         $this->password = '';
 
@@ -100,6 +110,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     /** @return string[] */
     public function getRoles(): array
     {
+        if ($this->requiresPasswordChange()) {
+            return [self::ROLE_PASSWORD_CHANGE];
+        }
+
         $roles = $this->roles;
         $roles[] = self::ROLE_DEFAULT;
 
@@ -112,6 +126,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         $this->roles = $roles;
 
         return $this;
+    }
+
+    /** @return string[] */
+    public function getManagedPropertyKeys(): array
+    {
+        return [self::PASSWORD_CHANGE_REQUIRED, ...array_keys($this->runtimeManagedKeys)];
+    }
+
+    public function requirePasswordChange(): self
+    {
+        $this->customProperties[self::PASSWORD_CHANGE_REQUIRED] = true;
+
+        return $this;
+    }
+
+    public function completePasswordChange(): self
+    {
+        unset($this->customProperties[self::PASSWORD_CHANGE_REQUIRED]);
+
+        return $this;
+    }
+
+    public function requiresPasswordChange(): bool
+    {
+        return true === ($this->customProperties[self::PASSWORD_CHANGE_REQUIRED] ?? false);
     }
 
     public function getRolesForListing(): string
@@ -152,7 +191,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
 
     public function getUserIdentifier(): string
     {
-        return $this->getUsername() ?:
-            throw new Exception();
+        return $this->email ?: throw new Exception();
     }
 }

@@ -3,6 +3,7 @@
 namespace Pushword\Core\Security;
 
 use LogicException;
+use Pushword\Core\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -41,6 +42,10 @@ class MagicLinkAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
+        if (($user = $token->getUser()) instanceof User && $user->requiresPasswordChange()) {
+            return new RedirectResponse($this->urlGenerator->generate('pushword_login_change_password'));
+        }
+
         if (($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) !== null) {
             return new RedirectResponse($targetPath);
         }

@@ -10,7 +10,8 @@ use Pushword\Repurpose\Entity\SocialPost;
 use Pushword\Repurpose\Repository\SocialPostRepository;
 use Pushword\Repurpose\Service\CarouselDrafter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -31,8 +32,8 @@ final class RepurposeFromPageController extends AbstractController
     ) {
     }
 
-    #[AdminRoute(path: '/repurpose/from-page/{id}', name: 'repurpose_from_page', options: ['requirements' => ['id' => '\d+']])]
-    public function fromPage(int $id): RedirectResponse
+    #[AdminRoute(path: '/repurpose/from-page/{id}', name: 'repurpose_from_page', options: ['requirements' => ['id' => '\d+'], 'methods' => ['GET', 'POST']])]
+    public function fromPage(int $id, Request $request): Response
     {
         $page = $this->pageRepository->find($id) ?? throw new NotFoundHttpException('Page not found.');
         $host = $page->host;
@@ -46,6 +47,20 @@ final class RepurposeFromPageController extends AbstractController
                     ->set('query', $slug)
                     ->generateUrl(),
             );
+        }
+
+        $csrfId = 'repurpose_from_page_'.$id;
+        if (! $request->isMethod('POST')) {
+            return $this->render('@PushwordRepurpose/action_confirmation.html.twig', [
+                'button' => 'Create carousel',
+                'csrfId' => $csrfId,
+                'message' => 'Create a carousel draft from this page?',
+                'title' => 'Repurpose page',
+            ]);
+        }
+
+        if (! $this->isCsrfTokenValid($csrfId, $request->request->getString('_csrf_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
 
         $post = new SocialPost();

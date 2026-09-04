@@ -3,6 +3,7 @@
 namespace Pushword\Repurpose\Tests\Sync;
 
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
@@ -113,6 +114,24 @@ final class SocialPostSyncTest extends KernelTestCase
         // Pretty-printed: the deep spec stays multi-line and diffable, not one blob.
         self::assertGreaterThan(15, substr_count($content, "\n"));
         self::assertSame($this->spec(), json_decode($content, true, flags: \JSON_THROW_ON_ERROR));
+    }
+
+    public function testExportRejectsPagePathOutsideSocialPostDirectory(): void
+    {
+        $post = new SocialPost();
+        $post->host = self::HOST;
+        $post->spec = [...$this->spec(), 'page' => '../../../outside'];
+        $this->persist($post);
+
+        try {
+            $this->sync->export(self::HOST);
+            self::fail('The escaping path should have been rejected.');
+        } catch (InvalidArgumentException) {
+            self::assertFileDoesNotExist($this->contentDir.'/outside.json');
+        } finally {
+            $this->em->remove($post);
+            $this->em->flush();
+        }
     }
 
     public function testImportUpdatesTheDatabaseFromTheFile(): void

@@ -1,0 +1,15 @@
+{% extends view('/base.html.twig') %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block body %}
+    <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordcore/style.css') }}">
+    <main class="max-w-xl p-8 mx-auto prose">
+        <h1>{{ title }}</h1>
+        <p>{{ message }}</p>
+        <form method="post">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfId) }}">
+            <button type="submit">{{ button }}</button>
+        </form>
+    </main>
+{% endblock %}

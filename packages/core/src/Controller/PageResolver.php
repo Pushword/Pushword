@@ -43,7 +43,7 @@ final readonly class PageResolver
             $page->locale = $this->requestContext->currentSite->locale;
         }
 
-        if ($page->createdAt > new DateTime() && ! $this->security->isGranted('ROLE_EDITOR')) {
+        if ((! $page->isPublished() || $page->createdAt > new DateTime()) && ! $this->security->isGranted('ROLE_EDITOR')) {
             return null;
         }
 

@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Utils\PathGuard;
 use Pushword\Flat\Serializer\PageFileSerializer;
 use Pushword\Flat\Sync\SnippetSync;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -113,7 +114,7 @@ final class PageExporter
         // Delete .md files for pages that have become redirections
         $redirectionPages = array_filter($pages, static fn (Page $page): bool => $page->hasRedirection());
         foreach ($redirectionPages as $page) {
-            $mdFilePath = $this->exportDir.'/'.$page->slug.'.md';
+            $mdFilePath = PathGuard::joinUnder($this->exportDir, $page->slug.'.md');
             if ($this->filesystem->exists($mdFilePath)) {
                 $this->filesystem->remove($mdFilePath);
                 $this->output?->writeln(\sprintf('Deleted %s.md (now a redirection)', $page->slug));
@@ -425,7 +426,7 @@ final class PageExporter
 
     private function exportPage(Page $page, bool $force = false): bool
     {
-        $exportFilePath = $this->exportDir.'/'.$page->slug.'.md';
+        $exportFilePath = PathGuard::joinUnder($this->exportDir, $page->slug.'.md');
 
         // Fast path: skip if file is newer than DB and not forced (avoids expensive content generation)
         if (

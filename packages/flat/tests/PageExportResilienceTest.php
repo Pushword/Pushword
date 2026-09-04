@@ -80,6 +80,24 @@ final class PageExportResilienceTest extends KernelTestCase
         self::assertFileDoesNotExist($this->testContentDir.'/broken-export-page.md');
     }
 
+    public function testEscapingPageSlugCannotWriteOutsideExportDirectory(): void
+    {
+        $page = new Page();
+        $page->slug = '../../pushword-flat-escape-attempt';
+        $page->host = 'localhost.dev';
+
+        /** @var PageExporter $exporter */
+        $exporter = self::getContainer()->get(PageExporter::class);
+        $exporter->exportDir = $this->testContentDir;
+
+        $outsidePath = dirname($this->testContentDir, 2).'/pushword-flat-escape-attempt.md';
+        $this->filesystem->remove($outsidePath);
+
+        $exporter->exportPagesSubset([$page->slug], [$page]);
+
+        self::assertFileDoesNotExist($outsidePath);
+    }
+
     /**
      * Regression: a typographic apostrophe (U+2019) in a front-matter value
      * must produce valid YAML. Yaml::dump() wraps the value in a single-quoted

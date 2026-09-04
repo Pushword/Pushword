@@ -574,6 +574,12 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertStringContainsString("form-action 'self' https://admin-block-editor.test", $caddyfile);
         self::assertStringContainsString('Permissions-Policy', $caddyfile);
         self::assertStringContainsString('Strict-Transport-Security', $caddyfile);
+        self::assertStringContainsString('@svg path *.svg', $caddyfile);
+        self::assertStringContainsString("header @svg Content-Security-Policy \"sandbox; default-src 'none'", $caddyfile);
+
+        $htaccess = (string) file_get_contents($this->getStaticDir().'/.htaccess');
+        self::assertStringContainsString('<FilesMatch "\.svg$">', $htaccess);
+        self::assertStringContainsString("Header set Content-Security-Policy \"sandbox; default-src 'none'", $htaccess);
     }
 
     public function testGenerateCaddyfile(): void
@@ -612,14 +618,14 @@ final class StaticGeneratorTest extends KernelTestCase
         $caddyfile = (string) file_get_contents($this->getStaticDir().'/.Caddyfile');
 
         // The named matcher uses only the request's own placeholders, never a sibling's capture.
-        self::assertStringContainsString(
-            "\t@webp_fallback {\n\t\tpath_regexp webp ^/media/(.+)\\.webp\$\n\t\tnot file {path}\n\t}\n",
+        self::assertMatchesRegularExpression(
+            '/@webp_fallback\s*\{\s*path_regexp webp \^\/media\/\(\.\+\)\\\.webp\$\s*not file \{path\}\s*\}/',
             $caddyfile,
         );
         // The probing runs as a try_files directive, ending with {path} so a genuine
         // miss keeps its .webp URI instead of rewriting to a mangled one.
-        self::assertStringContainsString(
-            "\troute @webp_fallback {\n\t\ttry_files /media/{re.webp.1}.jpg /media/{re.webp.1}.jpeg /media/{re.webp.1}.png /media/{re.webp.1}.gif {path}\n\t}\n",
+        self::assertMatchesRegularExpression(
+            '/route @webp_fallback\s*\{\s*try_files \/media\/\{re\.webp\.1\}\.jpg \/media\/\{re\.webp\.1\}\.jpeg \/media\/\{re\.webp\.1\}\.png \/media\/\{re\.webp\.1\}\.gif \{path\}\s*\}/',
             $caddyfile,
         );
         self::assertStringNotContainsString(
@@ -755,6 +761,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $probe->h1 = 'Worker reset probe';
         $probe->mainContent = 'Probe body.';
         $probe->createdAt = new DateTime('2 days ago');
+        $probe->publishedAt = new DateTime('2 days ago');
 
         $em->persist($probe);
         $em->flush();

@@ -35,9 +35,8 @@ final class MediaController extends AbstractController
             $pathToFile = $this->mediaStorage->getLocalPath($mediaPath);
             $binaryFileResponse = new BinaryFileResponse($pathToFile);
 
-            // temporary hack until I dig why svg+xml file are return with this mimeType...
-            if ('image/svg' === $binaryFileResponse->getFile()->getMimeType()) {
-                $binaryFileResponse->headers->set('content-type', 'image/svg+xml');
+            if ($this->isSvgMimeType($binaryFileResponse->getFile()->getMimeType())) {
+                $this->secureSvgResponse($binaryFileResponse);
             }
 
             return $binaryFileResponse;
@@ -50,14 +49,9 @@ final class MediaController extends AbstractController
             $mimeType = 'application/octet-stream';
         }
 
-        // Fix for SVG mime type
-        if ('image/svg' === $mimeType) {
-            $mimeType = 'image/svg+xml';
-        }
-
         $storage = $this->mediaStorage;
 
-        return new StreamedResponse(
+        $response = new StreamedResponse(
             static function () use ($storage, $mediaPath): void {
                 $stream = $storage->readStream($mediaPath);
                 fpassthru($stream);
@@ -66,5 +60,23 @@ final class MediaController extends AbstractController
             Response::HTTP_OK,
             ['Content-Type' => $mimeType]
         );
+
+        if ($this->isSvgMimeType($mimeType)) {
+            $this->secureSvgResponse($response);
+        }
+
+        return $response;
+    }
+
+    private function isSvgMimeType(?string $mimeType): bool
+    {
+        return \in_array($mimeType, ['image/svg', 'image/svg+xml'], true);
+    }
+
+    private function secureSvgResponse(Response $response): void
+    {
+        $response->headers->set('Content-Type', 'image/svg+xml');
+        $response->headers->set('Content-Security-Policy', "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:");
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
     }
 }

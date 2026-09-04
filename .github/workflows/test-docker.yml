@@ -21,6 +21,9 @@ on:
       - '.scripts/test-docker'
       - '.scripts/test-installer'
       - '.github/workflows/test-docker.yml'
+  schedule:
+    - cron: '47 4 * * 1'
+  workflow_dispatch:
 
 jobs:
   docker:
@@ -46,3 +49,12 @@ jobs:
 
       - name: Build the image and boot it
         run: ./.scripts/test-docker
+
+      - name: Scan the production image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: pushword-docker-test
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1

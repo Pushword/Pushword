@@ -1,0 +1,15 @@
+{% extends view('/base.html.twig') %}
+
+{% block title %}{{ 'adminLabelCheatsheet'|trans }}{% endblock %}
+
+{% block body %}
+    <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordcore/style.css') }}">
+    <main class="max-w-xl p-8 mx-auto prose">
+        <h1>{{ block('title') }}</h1>
+        <p>This site does not have an editorial cheatsheet yet.</p>
+        <form method="post">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('create_cheatsheet') }}">
+            <button type="submit">Create cheatsheet</button>
+        </form>
+    </main>
+{% endblock %}

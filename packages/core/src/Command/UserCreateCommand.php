@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\User;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -26,13 +27,21 @@ final readonly class UserCreateCommand
     ) {
     }
 
-    private function createUser(string $email, string $password, string $role, ?string $username = null): User
-    {
+    private function createUser(
+        string $email,
+        string $password,
+        string $role,
+        ?string $username = null,
+        bool $requirePasswordChange = false,
+    ): User {
         $user = new ($this->userClass)();
         $user->email = $email;
         $user->username = $username;
         $user->setPassword($this->passwordEncoder->hashPassword($user, $password));
         $user->setRoles([$role]);
+        if ($requirePasswordChange) {
+            $user->requirePasswordChange();
+        }
 
         // Auto-generate API token for super admins
         if (User::ROLE_SUPER_ADMIN === $role) {
@@ -56,13 +65,15 @@ final readonly class UserCreateCommand
         ?string $username,
         InputInterface $input,
         OutputInterface $output,
+        #[Option(description: 'Restrict the account until its temporary password is changed', name: 'require-password-change')]
+        bool $requirePasswordChange = false,
     ): int {
         $email = $this->getOrAskIfNotSetted($input, $output, 'email', currentValue: $email);
         $password = $this->getOrAskIfNotSetted($input, $output, 'password', currentValue: $password);
         $role = $this->getOrAskIfNotSetted($input, $output, 'role', 'ROLE_SUPER_ADMIN', currentValue: $role);
         $username = $this->getOrAskIfNotSetted($input, $output, 'username', null, allowEmpty: true, currentValue: $username);
 
-        $user = $this->createUser($email, $password, $role, $username ?: null);
+        $user = $this->createUser($email, $password, $role, $username ?: null, $requirePasswordChange);
 
         $output->writeln('<info>User `'.$email.'` created with success.</info>');
 

@@ -45,6 +45,7 @@ final class FlatLockApiControllerTest extends WebTestCase
         $this->testUser = new $userClass();
         $this->testUser->email = 'api-test-'.uniqid().'@example.com';
         $this->testUser->setPassword('hashed-password');
+        $this->testUser->setRoles(['ROLE_EDITOR']);
         $this->testUser->apiToken = $this->testToken;
 
         $this->em->persist($this->testUser);
@@ -104,6 +105,20 @@ final class FlatLockApiControllerTest extends WebTestCase
         self::assertArrayHasKey('lockInfo', $response);
         self::assertIsArray($response['lockInfo']);
         self::assertTrue($response['lockInfo']['locked']);
+    }
+
+    public function testLockRejectsTokenWithoutEditorRole(): void
+    {
+        self::assertNotNull($this->testUser);
+        $this->testUser->setRoles([User::ROLE_DEFAULT]);
+        $this->em->flush();
+
+        $this->client->request(Request::METHOD_POST, '/api/flat/lock', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+        ], (string) json_encode(['host' => 'test.example.com']));
+
+        self::assertResponseStatusCodeSame(401);
     }
 
     public function testLockConflictWhenAlreadyLocked(): void

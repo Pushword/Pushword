@@ -47,9 +47,10 @@ For an existing project, set `DATABASE_URL` in `.env.local`, then run
 it does not transfer data from an existing SQLite database.
 
 Run unattended (CI, a provisioning script, `composer --no-interaction`), it cannot
-ask, so it falls back to a super admin with **published credentials**:
-**`admin@example.tld` / `p@ssword`**. Change them on first login, or create your own
-account with `php bin/console pw:user:create`.
+ask. In production it creates `admin@example.tld` with a random temporary password,
+prints that password once, and requires it to be changed before the account can access
+administration. A development install keeps the convenient
+`admin@example.tld` / `p@ssword` login; never expose those credentials in production.
 
 That's it ! You can still configure an app or directly launch a PHP Server :
 
@@ -152,6 +153,7 @@ GD is the fallback driver, bundled with PHP (`php-gd`). No extra installation ne
 
 ## Next
 
+- Review the [security model and production checklist](/security).
 - Configure [authentication](/authentication) (OAuth with Google/Microsoft, magic links, user management)
 - Configure the [colors and display](/themes) (also see [automatic tailwind run after page update](/manage-assets)).
 - Supercharge Pushword with [extensions](/extensions) or **custom development**

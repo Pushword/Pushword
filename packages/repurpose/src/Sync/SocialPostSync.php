@@ -4,6 +4,7 @@ namespace Pushword\Repurpose\Sync;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Utils\PathGuard;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\FlatSyncInterface;
 use Pushword\Repurpose\Entity\SocialPost;
@@ -135,7 +136,7 @@ final readonly class SocialPostSync implements FlatSyncInterface
 
     private function pathFor(string $dir, string $page, string $network): string
     {
-        return $dir.'/'.trim($page, '/').'/'.$network.'.json';
+        return PathGuard::joinUnder($dir, trim($page, '/'), $network.'.json');
     }
 
     /**

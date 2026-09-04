@@ -542,12 +542,8 @@ describe('COLLAPSED_MAX_HEIGHT', () => {
     const { btn, content } = makeBlock({ collapsed: false })
     content.style.maxHeight = 'none'
     ShowMore.close(btn)
-    // After snap, rAF fires the collapsed value
+    // Fake timers flush both animation frames to the collapsed value.
     vi.runAllTimers()
-    // jsdom doesn't auto-run rAF; call it manually to flush
-    // We verify the snap step (before rAF) as the constant alignment test
-    // The 16rem constant is indirectly verified: close() must have accepted
-    // the snap value (400px) without throwing
-    expect(content.style.maxHeight).toBe('400px') // snap, before rAF flushes
+    expect(content.style.maxHeight).toBe('16rem')
   })
 })

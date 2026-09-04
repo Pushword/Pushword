@@ -350,6 +350,24 @@ final class ImageCacheManagerTest extends KernelTestCase
         self::assertFalse(is_link($symlinkPath), 'Root public symlink should be removed');
     }
 
+    public function testSvgIsNeverPublishedAsAStaticSymlink(): void
+    {
+        $manager = $this->createManager();
+        $publicMediaPath = $this->getMediaCacheDir();
+        new Filesystem()->mkdir($publicMediaPath);
+
+        $symlinkPath = $publicMediaPath.'/active.svg';
+        symlink('../../media/active.svg', $symlinkPath);
+        self::assertTrue(is_link($symlinkPath));
+
+        $media = new Media();
+        $media->setFileName('active.svg');
+
+        $manager->ensurePublicSymlink($media);
+
+        self::assertFalse(is_link($symlinkPath));
+    }
+
     public function testSymlinkFilterToDefault(): void
     {
         $filters = [

@@ -7,6 +7,7 @@ use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Utils\PathGuard;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Snippet\Entity\Snippet;
 use Pushword\Snippet\Repository\SnippetRepository;
@@ -193,7 +194,7 @@ final class SnippetSync
 
         $keepFiles = [];
         foreach ($this->snippetRepository->findByHost($host) as $snippet) {
-            $path = $dir.'/'.$snippet->slug.'.md';
+            $path = PathGuard::joinUnder($dir, $snippet->slug.'.md');
             $keepFiles[$path] = true;
             $content = $this->generateContent($snippet);
 

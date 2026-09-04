@@ -2,7 +2,11 @@
 
 namespace Pushword\Admin\Tests;
 
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Admin\Controller\PageCheatSheetCrudController;
+use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\PageRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -55,8 +59,42 @@ final class AdminTest extends AbstractAdminTestClass
         self::assertResponseIsSuccessful();
 
         $client->request(Request::METHOD_GET, '/admin/cheatsheet');
+        if ($client->getResponse()->isSuccessful()) {
+            $client->submitForm('Create cheatsheet');
+        }
+
         self::assertTrue($client->getResponse()->isRedirection(), (string) $client->getResponse()->getContent());
         $client->followRedirect();
         self::assertResponseIsSuccessful();
+    }
+
+    public function testCheatsheetGetDoesNotCreatePage(): void
+    {
+        $client = $this->loginUser();
+        $client->disableReboot();
+
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $repository = self::getContainer()->get(PageRepository::class);
+        $em->getConnection()->beginTransaction();
+
+        try {
+            $existing = $repository->findOneBy(['slug' => PageCheatSheetCrudController::CHEATSHEET_SLUG]);
+            if ($existing instanceof Page) {
+                $em->remove($existing);
+                $em->flush();
+            }
+
+            $client->request(Request::METHOD_GET, '/admin/cheatsheet');
+
+            self::assertResponseIsSuccessful();
+            self::assertNull($repository->findOneBy(['slug' => PageCheatSheetCrudController::CHEATSHEET_SLUG]));
+
+            $client->submitForm('Create cheatsheet');
+            self::assertResponseRedirects();
+            self::assertNotNull($repository->findOneBy(['slug' => PageCheatSheetCrudController::CHEATSHEET_SLUG]));
+        } finally {
+            $em->getConnection()->rollBack();
+            $em->clear();
+        }
     }
 }

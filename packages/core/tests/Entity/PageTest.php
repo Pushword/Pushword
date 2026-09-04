@@ -7,6 +7,7 @@ use LogicException;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Symfony\Component\Validator\Validation;
 
 final class PageTest extends TestCase
 {
@@ -20,6 +21,19 @@ final class PageTest extends TestCase
 
         $page->slug = 'hello you';
         self::assertSame('hello-you', $page->slug);
+    }
+
+    public function testSlugRejectsPathTraversalSegments(): void
+    {
+        $page = new Page();
+        $page->slug = '../../outside';
+
+        $violations = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator()->validateProperty($page, 'slug');
+
+        self::assertCount(1, $violations);
+        $violation = $violations[0] ?? null;
+        self::assertNotNull($violation);
+        self::assertSame('pageSlugPathSegment', $violation->getMessage());
     }
 
     public function testHoldPublication(): void

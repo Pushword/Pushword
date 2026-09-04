@@ -16,8 +16,12 @@
 }
 
 (security_{{ domain_snake }}) {
+	@svg path *.svg
+	@not_svg not path *.svg
+	header @svg Content-Security-Policy "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:"
+	header @not_svg Content-Security-Policy "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' {{ live_origin }}"
+
 	header {
-		Content-Security-Policy "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' {{ live_origin }}"
 		Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=(), usb=()"
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options nosniff

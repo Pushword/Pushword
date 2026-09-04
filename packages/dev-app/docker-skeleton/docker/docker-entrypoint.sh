@@ -42,20 +42,25 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 		# documented backup copies `app.db` alone, so a restore arrives without it.
 		if php bin/console pw:user:exists -q; then
 			echo '~~ No account created: this database already has one.'
-		elif php bin/console pw:user:create \
-			"${PUSHWORD_ADMIN_EMAIL:-admin@example.tld}" \
-			"${PUSHWORD_ADMIN_PASSWORD:-p@ssword}" \
-			ROLE_SUPER_ADMIN -q
-		then
-			echo "~~ Super admin created: ${PUSHWORD_ADMIN_EMAIL:-admin@example.tld}"
-			if [ -z "${PUSHWORD_ADMIN_PASSWORD}" ]; then
-				echo '~~ Its password is the published default, p@ssword. Log in on /admin'
-				echo '~~ and change it, or set PUSHWORD_ADMIN_PASSWORD and start from an'
-				echo '~~ empty volume.'
-			fi
 		else
-			echo '~~ Warning: no account exists and none could be created. Make one with'
-			echo '~~ `docker compose exec pushword php bin/console pw:user:create`.'
+			admin_email="${PUSHWORD_ADMIN_EMAIL:-admin@example.tld}"
+			admin_password="${PUSHWORD_ADMIN_PASSWORD:-}"
+			require_change=''
+			if [ -z "$admin_password" ]; then
+				admin_password="$(php -r 'echo bin2hex(random_bytes(16));')"
+				require_change='--require-password-change'
+			fi
+
+			if php bin/console pw:user:create "$admin_email" "$admin_password" ROLE_SUPER_ADMIN $require_change -q; then
+				echo "~~ Super admin created: $admin_email"
+				if [ -n "$require_change" ]; then
+					echo "~~ One-time temporary password: $admin_password"
+					echo '~~ It must be changed on first login and will not be displayed again.'
+				fi
+			else
+				echo '~~ Warning: no account exists and none could be created. Make one with'
+				echo '~~ `docker compose exec pushword php bin/console pw:user:create`.'
+			fi
 		fi
 
 		touch var/.pushword-seeded

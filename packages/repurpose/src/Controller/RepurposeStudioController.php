@@ -27,7 +27,6 @@ use Pushword\Repurpose\Service\VideoBuilder;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -106,9 +105,17 @@ final class RepurposeStudioController extends AbstractController
      * uniqueness and flat-file sync all keep working unchanged; the studio can later
      * link it to a real page (or detach it again).
      */
-    #[Route('/admin/repurpose/studio/new', name: 'repurpose_studio_new', methods: ['GET'])]
-    public function create(): RedirectResponse
+    #[Route('/admin/repurpose/studio/new', name: 'repurpose_studio_new', methods: ['GET', 'POST'])]
+    public function create(Request $request): Response
     {
+        if (! $request->isMethod('POST')) {
+            return $this->renderConfirmation('Create a carousel', 'Create a standalone carousel draft?', 'Create carousel', 'repurpose_create');
+        }
+
+        if (! $this->isCsrfTokenValid('repurpose_create', $request->request->getString('_csrf_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
         $post = new SocialPost();
         $post->host = $this->siteRegistry->getHosts()[0] ?? '';
         $post->spec = [
@@ -132,8 +139,8 @@ final class RepurposeStudioController extends AbstractController
      * from one starting point. A carousel's own network is fixed — this navigates
      * to a *sibling* post, it never re-keys the current one.
      */
-    #[Route('/admin/repurpose/studio/{id}/network/{network}', name: 'repurpose_studio_network', requirements: ['id' => '\d+', 'network' => '[a-z]+'], methods: ['GET'])]
-    public function switchNetwork(int $id, string $network): RedirectResponse
+    #[Route('/admin/repurpose/studio/{id}/network/{network}', name: 'repurpose_studio_network', requirements: ['id' => '\d+', 'network' => '[a-z]+'], methods: ['GET', 'POST'])]
+    public function switchNetwork(int $id, string $network, Request $request): Response
     {
         $post = $this->loadPost($id);
 
@@ -145,8 +152,26 @@ final class RepurposeStudioController extends AbstractController
             return $this->redirectToRoute('repurpose_studio', ['id' => $id]);
         }
 
-        $sibling = $this->repository->findOneBy(['host' => $post->host, 'page' => $post->page, 'network' => $network])
-            ?? $this->createSiblingForNetwork($post, $network);
+        $sibling = $this->repository->findOneBy(['host' => $post->host, 'page' => $post->page, 'network' => $network]);
+        if (null !== $sibling) {
+            return $this->redirectToRoute('repurpose_studio', ['id' => $sibling->id]);
+        }
+
+        $csrfId = 'repurpose_network_'.$id.'_'.$network;
+        if (! $request->isMethod('POST')) {
+            return $this->renderConfirmation(
+                'Create a '.$network.' carousel',
+                'No '.$network.' version exists yet. Create one from this carousel?',
+                'Create version',
+                $csrfId,
+            );
+        }
+
+        if (! $this->isCsrfTokenValid($csrfId, $request->request->getString('_csrf_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $sibling = $this->createSiblingForNetwork($post, $network);
 
         return $this->redirectToRoute('repurpose_studio', ['id' => $sibling->id]);
     }
@@ -260,6 +285,16 @@ final class RepurposeStudioController extends AbstractController
         return new Response($zip, Response::HTTP_OK, [
             'Content-Type' => 'application/zip',
             'Content-Disposition' => 'attachment; filename="'.$filename.'.zip"',
+        ]);
+    }
+
+    private function renderConfirmation(string $title, string $message, string $button, string $csrfId): Response
+    {
+        return $this->render('@PushwordRepurpose/action_confirmation.html.twig', [
+            'button' => $button,
+            'csrfId' => $csrfId,
+            'message' => $message,
+            'title' => $title,
         ]);
     }
 

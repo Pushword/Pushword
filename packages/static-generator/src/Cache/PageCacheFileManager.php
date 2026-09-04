@@ -4,6 +4,7 @@ namespace Pushword\StaticGenerator\Cache;
 
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Utils\PathGuard;
 use Pushword\StaticGenerator\Generator\CompressionAlgorithm;
 use Pushword\StaticGenerator\StaticAppGenerator;
 use Symfony\Component\Filesystem\Filesystem;
@@ -67,9 +68,9 @@ readonly class PageCacheFileManager
         $cacheDir = $this->staticAppGenerator->getCacheDir($app);
 
         if (str_ends_with($slug, '.json') || str_ends_with($slug, '.xml')) {
-            return $cacheDir.'/'.$slug;
+            return PathGuard::joinUnder($cacheDir, $slug);
         }
 
-        return $cacheDir.'/'.$slug.'.html';
+        return PathGuard::joinUnder($cacheDir, $slug.'.html');
     }
 }

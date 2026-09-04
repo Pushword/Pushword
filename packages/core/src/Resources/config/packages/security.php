@@ -64,10 +64,11 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ],
         'logout' => [
             'path' => 'pushword_logout',
+            'clear_site_data' => ['cache'],
         ],
         'remember_me' => [
             'lifetime' => 31_536_000,
-            'always_remember_me' => true,
+            'always_remember_me' => false,
             'secret' => '%kernel.secret%',
         ],
     ];

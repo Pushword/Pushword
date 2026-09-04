@@ -1,0 +1,126 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sast:
+    name: JavaScript SAST
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+
+  php-sast:
+    name: PHP SAST
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:1.176.0
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Analyze PHP
+        run: semgrep scan --config p/php --error --metrics=off packages
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer:v2
+          coverage: none
+
+      - name: Audit Composer lock
+        run: composer audit --locked --abandoned=report
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Yarn
+        run: corepack enable
+
+      - name: Audit JavaScript packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          for directory in packages/admin packages/admin-block-editor packages/admin-monaco-editor packages/dev-app packages/js-helper packages/quiz; do
+            report="$RUNNER_TEMP/$(basename "$directory")-audit.json"
+            (
+              cd "$directory"
+              yarn install --ignore-scripts --non-interactive
+              yarn audit --json > "$report" || true
+            )
+            if ! jq -e 'select(.type == "auditSummary")' "$report" >/dev/null; then
+              cat "$report"
+              exit 1
+            fi
+            if jq -e 'select(.type == "auditAdvisory") | .data.advisory.severity | select(. == "high" or . == "critical")' "$report" >/dev/null; then
+              jq -c 'select(.type == "auditAdvisory") | {module: .data.advisory.module_name, severity: .data.advisory.severity, title: .data.advisory.title}' "$report"
+              exit 1
+            fi
+          done
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan repository for secrets
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: secret
+          exit-code: 1
+
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate SPDX SBOM
+        uses: anchore/sbom-action@v0.24.2
+        with:
+          path: .
+          format: spdx-json
+          output-file: pushword.spdx.json
+          upload-artifact-retention: 14

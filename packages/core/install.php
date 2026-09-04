@@ -84,8 +84,8 @@ PostInstall::dumpFile('public/build/manifest.json', '{}');
 
 if ($freshInstall) {
     // Asking beats seeding a password that ships in the documentation — but only when
-    // someone is there to answer. Run from CI, a script or `composer --no-interaction`,
-    // this falls back to the demo account so the install still completes unattended.
+    // someone is there to answer. Unattended development installs keep the documented
+    // demo login; unattended production installs receive a one-time random secret.
     $userCreated = false;
     if (PostInstall::isInteractive()) {
         echo '~~ Create the account you will log in with:'.chr(10);
@@ -96,9 +96,14 @@ if ($freshInstall) {
     }
 
     if (! $userCreated) {
-        exec('php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN -q');
-        echo '~~ Super admin created: admin@example.tld / p@ssword'.chr(10);
-        echo '~~ Log in on /admin and change these credentials.'.chr(10);
+        $production = 'prod' === (getenv('APP_ENV') ?: 'dev');
+        $password = $production ? bin2hex(random_bytes(16)) : 'p@ssword';
+        $requireChange = $production ? ' --require-password-change' : '';
+        $runCommand('php bin/console pw:user:create admin@example.tld '.escapeshellarg($password).' ROLE_SUPER_ADMIN'.$requireChange.' -q');
+        echo '~~ Super admin created: admin@example.tld / '.$password.chr(10);
+        echo $production
+            ? '~~ This one-time temporary password must be changed at first login and will not be displayed again.'.chr(10)
+            : '~~ Development credential only. Do not use it in production.'.chr(10);
     }
 }
 
@@ -117,10 +122,14 @@ $defaultConfig = 'pushword:'.chr(10)
 
 PostInstall::dumpFile('config/packages/pushword.yaml', $defaultConfig);
 
-// pushword/new ships AGENTS.md; Claude Code reads CLAUDE.md. Symlink one to the other,
-// as the monorepo does, so both agents get the same file. Composer's zip extraction does
-// not preserve symlinks, hence creating it here rather than shipping it.
-if (file_exists('AGENTS.md') && ! file_exists('CLAUDE.md')) {
+// pushword/new ships AGENTS.md; Claude Code reads CLAUDE.md. Symfony Flex may have
+// already created its equivalent two-line pointer, which is safe to replace. Preserve
+// any other site-owned CLAUDE.md.
+$claudePointer = "# CLAUDE.md\n\n@AGENTS.md";
+$replaceableClaudeFile = ! file_exists('CLAUDE.md')
+    || (is_file('CLAUDE.md') && $claudePointer === trim((string) file_get_contents('CLAUDE.md')));
+if (file_exists('AGENTS.md') && $replaceableClaudeFile) {
+    @unlink('CLAUDE.md');
     symlink('AGENTS.md', 'CLAUDE.md');
 }
 

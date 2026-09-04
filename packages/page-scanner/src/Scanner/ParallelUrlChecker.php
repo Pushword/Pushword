@@ -2,10 +2,12 @@
 
 namespace Pushword\PageScanner\Scanner;
 
-use CurlHandle;
-use RuntimeException;
+use Symfony\Component\HttpClient\NoPrivateNetworkHttpClient;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -24,18 +26,22 @@ final class ParallelUrlChecker
     /** @var array<string, UrlCheckResult> */
     private array $results = [];
 
+    private readonly HttpClientInterface $httpClient;
+
     public function __construct(
         private readonly CacheInterface $externalUrlCache,
         private readonly TranslatorInterface $translator,
+        HttpClientInterface $httpClient,
         private readonly int $externalUrlCacheTtl = 86400,
         private readonly int $externalUrlFailureCacheTtl = 3600,
         private readonly int $parallelBatchSize = 50,
         private readonly int $urlCheckTimeoutMs = 10000,
     ) {
+        $this->httpClient = new NoPrivateNetworkHttpClient($httpClient);
     }
 
     /**
-     * Check multiple URLs in parallel using curl_multi.
+     * Check multiple URLs in parallel using lazy HTTP responses.
      *
      * @param string[] $urls
      * @param bool     $recheck ask the network again, whatever the pool holds
@@ -88,98 +94,69 @@ final class ParallelUrlChecker
      */
     private function checkBatch(array $urls): void
     {
-        $multiHandle = curl_multi_init();
-        /** @var array<string, CurlHandle> $handles */
-        $handles = [];
-
-        foreach ($urls as $url) {
-            $ch = $this->createCurlHandle($url);
-            curl_multi_add_handle($multiHandle, $ch);
-            $handles[$url] = $ch;
-        }
-
-        $running = null;
-        do {
-            curl_multi_exec($multiHandle, $running);
-            curl_multi_select($multiHandle);
-        } while ($running > 0);
-
-        // A transfer run through curl_multi reports its failure here and nowhere else:
-        // curl_errno() stays 0 and curl_error() empty on the handle itself. Reading it
-        // from the handle is what made every unresolvable host read as reachable.
-        $transferErrors = [];
-        while (false !== ($info = curl_multi_info_read($multiHandle))) {
-            // The stub types this array as untyped: `handle` is the CurlHandle the
-            // message is about, `result` its CURLE_* code.
-            if ($info['handle'] instanceof CurlHandle && \is_int($info['result'])) {
-                $transferErrors[spl_object_id($info['handle'])] = $info['result'];
-            }
-        }
-
-        foreach ($handles as $url => $ch) {
-            $httpCode = curl_getinfo($ch, \CURLINFO_HTTP_CODE);
-            $error = $transferErrors[spl_object_id($ch)] ?? \CURLE_OK;
-
-            $result = $this->interpretResult($httpCode, $error, \CURLE_OK === $error ? '' : (string) curl_strerror($error));
+        foreach ($this->probe($urls) as $url => $result) {
             $this->results[$url] = $result;
-
             $this->cacheResult($url, $result);
-
-            curl_multi_remove_handle($multiHandle, $ch);
-            unset($ch);
         }
-
-        curl_multi_close($multiHandle);
     }
 
-    private function createCurlHandle(string $url): CurlHandle
+    /** @return UrlCheckResult */
+    public function checkUrlUncached(string $url): true|array
     {
-        $ch = curl_init($url);
-        if (false === $ch) {
-            throw new RuntimeException('Failed to initialize curl handle');
-        }
-
-        curl_setopt_array($ch, [
-            \CURLOPT_RETURNTRANSFER => true,
-            \CURLOPT_HEADER => true,
-            \CURLOPT_NOBODY => true,
-            \CURLOPT_FOLLOWLOCATION => false,
-            \CURLOPT_MAXREDIRS => 0,
-            \CURLOPT_CONNECTTIMEOUT_MS => 5000,
-            \CURLOPT_TIMEOUT_MS => $this->urlCheckTimeoutMs,
-            \CURLOPT_SSL_VERIFYHOST => 0,
-            \CURLOPT_SSL_VERIFYPEER => false,
-            \CURLOPT_USERAGENT => self::DEFAULT_USER_AGENT,
-            \CURLOPT_ENCODING => 'gzip, deflate',
-        ]);
-
-        return $ch;
+        return $this->probe([$url])[$url];
     }
 
     /**
-     * @return UrlCheckResult
+     * @param string[] $urls
+     *
+     * @return array<string, UrlCheckResult>
      */
-    private function interpretResult(int $httpCode, int $error, string $errorMessage): true|array
+    private function probe(array $urls): array
     {
-        if (in_array($httpCode, [200, 206, 403, 410], true)) {
-            return true;
+        /** @var array<string, ResponseInterface> $responses */
+        $responses = [];
+        $results = [];
+
+        foreach ($urls as $url) {
+            try {
+                $responses[$url] = $this->httpClient->request('HEAD', $url, [
+                    'headers' => ['User-Agent' => self::DEFAULT_USER_AGENT],
+                    'max_duration' => $this->urlCheckTimeoutMs / 1000,
+                    'max_redirects' => 0,
+                    'no_proxy' => '*',
+                    'timeout' => min(5, $this->urlCheckTimeoutMs / 1000),
+                ]);
+            } catch (TransportExceptionInterface $exception) {
+                $results[$url] = $this->unreachable($exception->getMessage());
+            }
         }
 
-        if ($httpCode > 0) {
-            return [
-                'code' => ScanErrorCode::LinkStatus->value,
-                'message' => $this->translator->trans('page_scanStatusCode').' ('.$httpCode.')',
-            ];
+        foreach ($responses as $url => $response) {
+            try {
+                $httpCode = $response->getStatusCode();
+                $results[$url] = \in_array($httpCode, [200, 206, 403, 410], true)
+                    ? true
+                    : [
+                        'code' => ScanErrorCode::LinkStatus->value,
+                        'message' => $this->translator->trans('page_scanStatusCode').' ('.$httpCode.')',
+                    ];
+            } catch (TransportExceptionInterface $exception) {
+                $results[$url] = $this->unreachable($exception->getMessage());
+            } finally {
+                $response->cancel();
+            }
         }
 
-        if ($error > 0) {
-            return [
-                'code' => ScanErrorCode::LinkUnreachable->value,
-                'message' => $this->translator->trans('page_scanUnreachable', ['errorMessage' => $errorMessage]),
-            ];
-        }
+        return $results;
+    }
 
-        return true;
+    /** @return array{code: string, message: string} */
+    private function unreachable(string $message): array
+    {
+        return [
+            'code' => ScanErrorCode::LinkUnreachable->value,
+            'message' => $this->translator->trans('page_scanUnreachable', ['errorMessage' => $message]),
+        ];
     }
 
     /**

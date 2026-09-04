@@ -31,6 +31,7 @@ use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Validator\Constraints\PagePropertiesSchema;
 use Stringable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Traits: IdTrait (PK), HostTrait (multi-site key), TimestampableTrait (createdAt/updatedAt),
@@ -140,6 +141,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     // --- Core page properties ---
 
     #[ORM\Column(type: Types::STRING, length: 150)]
+    #[Assert\Regex(pattern: '#(?:^|/)\.{1,2}(?:/|$)#', message: 'pageSlugPathSegment', match: false)]
     public string $slug = '' {
         get => '' === $this->slug ? (string) $this->id : $this->slug;
         set(?string $value) {

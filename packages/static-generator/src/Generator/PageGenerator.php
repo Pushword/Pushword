@@ -7,6 +7,7 @@ use Override;
 use Psr\Log\LoggerInterface;
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Utils\PathGuard;
 
 use function Safe\preg_match;
 
@@ -70,17 +71,16 @@ class PageGenerator extends AbstractGenerator
         $slug = '' === $page->getRealSlug() ? 'index' : $page->getRealSlug();
 
         if (preg_match('/.+\.(json|xml)$/i', $page->getRealSlug()) >= 1) {
-            return $this->getStaticDir().'/'.$slug;
+            return PathGuard::joinUnder($this->getStaticDir(), $slug);
         }
 
-        $filePath = $this->getStaticDir().'/';
         if ($pager >= 1) {
-            $filePath .= 'index' === $slug ? '' : rtrim($slug, '/');
+            $filePath = 'index' === $slug ? '' : rtrim($slug, '/');
 
-            return $filePath.'/'.$pager.'.html';
+            return PathGuard::joinUnder($this->getStaticDir(), $filePath, $pager.'.html');
         }
 
-        return $filePath.$slug.'.html';
+        return PathGuard::joinUnder($this->getStaticDir(), $slug.'.html');
     }
 
     /**

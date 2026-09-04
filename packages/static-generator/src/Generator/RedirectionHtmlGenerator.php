@@ -3,6 +3,7 @@
 namespace Pushword\StaticGenerator\Generator;
 
 use Override;
+use Pushword\Core\Utils\PathGuard;
 
 /**
  * Emit per-path HTML redirect stubs (meta-refresh + canonical link) for static
@@ -54,6 +55,6 @@ class RedirectionHtmlGenerator extends PageGenerator
 
         $relative = str_ends_with($slug, '/') ? $slug.'index.html' : $slug.'.html';
 
-        return $this->getStaticDir().'/'.$relative;
+        return PathGuard::joinUnder($this->getStaticDir(), $relative);
     }
 }

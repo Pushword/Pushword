@@ -136,7 +136,16 @@ fi
 if ! docker exec "$CONTAINER" php bin/console dbal:run-sql 'SELECT email FROM user' 2>&1 | grep -q 'admin@example.tld'; then
     fail 'the entrypoint did not create the super admin on an empty volume'
 fi
-echo "  /admin serves the login screen, and the super admin exists"
+temporary_password=$(docker logs "$CONTAINER" 2>&1 | sed -n 's/^~~ One-time temporary password: //p')
+if [ "$(printf '%s\n' "$temporary_password" | wc -l)" -ne 1 ] \
+    || ! printf '%s\n' "$temporary_password" | grep -Eq '^[0-9a-f]{32}$'
+then
+    fail 'the entrypoint did not print exactly one random temporary password'
+fi
+if curl -sSI -m 20 "http://127.0.0.1:$PORT/admin" | grep -qi '^X-Powered-By:'; then
+    fail 'PHP disclosed its version through X-Powered-By'
+fi
+echo "  /admin serves the login screen, the temporary account exists, and PHP hides its version"
 
 # Caddy has to be able to write its own state, or automatic HTTPS silently has nowhere
 # to keep a certificate.

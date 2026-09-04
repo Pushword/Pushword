@@ -38,6 +38,20 @@ final class ParallelUrlCheckerTest extends KernelTestCase
         }
     }
 
+    public function testPrivateNetworkUrlIsBlocked(): void
+    {
+        self::bootKernel();
+        $url = 'http://127.0.0.1:8001/admin';
+
+        /** @var ParallelUrlChecker $checker */
+        $checker = self::getContainer()->get(ParallelUrlChecker::class);
+        $result = $checker->checkUrls([$url], true);
+
+        self::assertIsArray($result[$url]);
+        self::assertSame('link-unreachable', $result[$url]['code']);
+        self::assertStringContainsString('blocked', $result[$url]['message']);
+    }
+
     /**
      * Regression: the miss-probe used to save its own null, so the pool answered every
      * later get() — the storing one included — with it, and nothing was ever cached.
