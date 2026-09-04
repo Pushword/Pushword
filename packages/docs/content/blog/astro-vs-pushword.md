@@ -52,7 +52,7 @@ usually have several:
 | **Content authored by**     | Developers, in the repo (or an external CMS via a loader)         | Developers, editors, and AI agents — all three at once                         |
 | **To run an editable site** | Astro **plus** a headless CMS — two systems                       | One install                                                                    |
 | **First public release**    | 2021                                                              | December 2020                                                                  |
-| **Current major**           | Astro 7.0, June 2026; used by Unilever, Visa, NBC News            | 1.0.0-rc, continuous since 2020                                                |
+| **Current major**           | Astro 7.0, June 2026; used by Unilever, Visa, NBC News            | 1.0, stable since September 2026                                               |
 | **Track record**            | 7 majors since August 2022; very fast iteration                   | 800+ releases, 24 bundles, ~2,600 tests; runs its authors' production sites    |
 | **Ecosystem**               | Very large; ~61k GitHub stars, ~2.7M weekly npm downloads         | Small itself, on top of Symfony, Doctrine and Twig — a large, LTS-backed stack |
 | **Licence & hosting**       | MIT; deploy anywhere, CMS licensed separately                     | MIT, self-hosted, no vendor in the content path                                |
@@ -355,7 +355,7 @@ wrong — they are different bets about where complexity should live.
 | Installed by             | Click-install in admin, often auto-updating    | `package.json`, reviewed in a pull request    | `composer require`, versioned together       |
 | Extensions run           | At runtime, on every request                   | Mostly at build time                          | At runtime, but shipped and tested as a set  |
 | A broken extension means | A broken live site, sometimes a security hole  | A failed build, caught in CI                  | A failed test or a failed deploy             |
-| Core breaking changes    | Almost never                                   | 7 majors since August 2022                    | Rolling `1.0.0-rc`, Symfony LTS underneath   |
+| Core breaking changes    | Almost never                                   | 7 majors since August 2022                    | Stable `1.x`, Symfony LTS underneath         |
 | Therefore the risk is    | **Entropy** — nothing forces you to update     | **Churn** — you cannot stand still            | **Concentration** — a small team, less choice |
 
 ### WordPress: entropy
@@ -436,7 +436,7 @@ through the part that matters most to you — the admin UI, the flat-file round 
 API:
 
 ```shell
-composer create-project pushword/new pushword "^1.0.0-rc"
+composer create-project pushword/new pushword "^1.0"
 ```
 
 ---

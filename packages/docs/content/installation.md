@@ -22,14 +22,12 @@ _Facultative_ :
 ## Automatic installer via composer
 
 ```shell
-composer create-project pushword/new pushword "^1.0.0-rc"
+composer create-project pushword/new pushword "^1.0"
 cd pushword
 ```
 
-The `"^1.0.0-rc"` is required: Pushword is still tagged as release candidates, and
-`create-project` picks the newest *stable* version by default — which, for
-`pushword/new`, is a long-abandoned 0.x tag. Without the constraint you get a 2024
-template that installs the wrong Symfony and a mismatched set of Pushword packages.
+The `"^1.0"` constraint keeps the project on Pushword's stable 1.x line instead of
+silently crossing a future major version.
 
 The installer creates the database and the demo content, then asks for the account
 you will log in with — email, password, role (`ROLE_SUPER_ADMIN` by default).
@@ -39,7 +37,7 @@ database first and pass its URL to the installer:
 
 ```shell
 PUSHWORD_DATABASE_URL='postgresql://pushword:secret@127.0.0.1:5432/pushword?serverVersion=17&charset=utf8' \
-  composer create-project pushword/new pushword "^1.0.0-rc"
+  composer create-project pushword/new pushword "^1.0"
 ```
 
 For an existing project, set `DATABASE_URL` in `.env.local`, then run

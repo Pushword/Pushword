@@ -253,7 +253,7 @@ Read the API reference
 
 <section class="py-24 border-t border-stone-200 dark:border-stone-800">
   <h2 class="text-3xl md:text-4xl font-semibold tracking-tight mb-8 text-stone-900 dark:text-stone-100">Ready to build something good?</h2>
-  <pre class="font-mono text-sm bg-stone-900 text-stone-100 rounded-md p-5 mb-6 overflow-x-auto">composer create-project pushword/new my-project "^1.0.0-rc"</pre>
+  <pre class="font-mono text-sm bg-stone-900 text-stone-100 rounded-md p-5 mb-6 overflow-x-auto">composer create-project pushword/new my-project "^1.0"</pre>
   <div class="flex flex-wrap gap-3">
     <a href="/installation" class="inline-flex items-center px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-md hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300">
       Start building

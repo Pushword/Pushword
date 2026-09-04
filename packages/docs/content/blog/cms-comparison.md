@@ -39,7 +39,7 @@ If one of the first three briefs is yours, take it and stop reading. If none is,
 | Aspect              | Pushword                  | WordPress                  | Statamic                     | Sulu                   |
 | ------------------- | ------------------------- | -------------------------- | ---------------------------- | ---------------------- |
 | **PHP Version**     | 8.4+                      | 8.3+ (official minimum)    | 8.2+                         | 8.2–8.5                |
-| **Current version** | 1.0.0-rc (rolling)        | 7.0 (April 2026)           | 6.x                          | 3.0 (May 2026)         |
+| **Current version** | 1.0                        | 7.0 (April 2026)           | 6.x                          | 3.0 (May 2026)         |
 | **Framework**       | Symfony 8                 | Custom (legacy)            | Laravel (Laravel-native)     | Symfony 6.4–7.4        |
 | **Database**        | SQLite / PostgreSQL / MariaDB | MySQL / MariaDB (required) | Flat-file / MySQL (optional) | MySQL / PostgreSQL     |
 | **Templating**      | Twig                      | PHP / Blade (themes)       | Antlers / Blade              | Twig                   |
@@ -695,7 +695,7 @@ For Pushword specifically: templates are Twig, the app is a standard Symfony app
 The reasonable way to test any of this is an afternoon with a real page:
 
 ```shell
-composer create-project pushword/new pushword "^1.0.0-rc"
+composer create-project pushword/new pushword "^1.0"
 ```
 
 ---

@@ -2,11 +2,9 @@
 
 # Verify the install command the docs advertise actually resolves to a current release.
 #
-# `composer create-project` selects the newest *stable* version when given no constraint.
-# pushword/new still carries hundreds of abandoned 0.x stable tags on Packagist, and RC
-# versions rank below stable — so the bare command installs 0.1.9980 (Feb 2024), which
-# pins Symfony ^7.0 and pulls a mismatched Pushword set. That is why the documented
-# command must carry "^1.0.0-rc" until a stable 1.0.0 is tagged.
+# Keep every documented command on the current stable major. Besides preventing an
+# unreviewed future major upgrade, the explicit constraint protects old Packagist
+# metadata from ever selecting one of pushword/new's abandoned 0.x tags.
 #
 # `.scripts/test-installer` cannot catch this: it resolves against local path
 # repositories with every pushword/* rewritten to @dev, so it never consults Packagist.
@@ -76,9 +74,9 @@ fi
 echo "  pushword/new -> $SELECTED"
 
 case "$SELECTED" in
-    1.0.0-rc*) ;;
+    1.*) ;;
     *)
-        echo -e "${RED}Error: resolved to '$SELECTED', not a 1.0.0-rc release.${NC}"
+        echo -e "${RED}Error: resolved to '$SELECTED', not a stable 1.x release.${NC}"
         echo "The documented command is installing an abandoned version."
         exit 1
         ;;
@@ -90,12 +88,6 @@ FLEX_SYMFONY=$(php -r '
     echo $j["flex-require"]["symfony/framework-bundle"] ?? "";
 ' "$TEMP_DIR/app/composer.json")
 echo "  symfony/framework-bundle -> ${FLEX_SYMFONY:-<none>}"
-
-# Informational: a local tag ahead of Packagist just means the split has not synced yet.
-LATEST_TAG=$(git tag -l '1.0.0-rc*' | sort -V | tail -1)
-if [ -n "$LATEST_TAG" ] && [ "$SELECTED" != "$LATEST_TAG" ]; then
-    echo "  note: latest local tag is $LATEST_TAG (Packagist may still be syncing)"
-fi
 
 echo
 echo -e "${GREEN}=== create-project test passed ===${NC}"

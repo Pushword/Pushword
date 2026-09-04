@@ -380,8 +380,8 @@ configured either in TYPO3, and are paying for both.
    certified-partner network exist for exactly this, and no amount of engineering argument
    answers a procurement checklist.
 
-Also worth naming plainly rather than hiding in a footnote: **Pushword is still on
-`1.0.0-rc` after 1,174 releases**, English and French only, and targets SQLite, PostgreSQL and MariaDB
+Also worth naming plainly rather than hiding in a footnote: **Pushword only reached
+stable `1.0` after 1,174 releases**, is English and French only, and targets SQLite, PostgreSQL and MariaDB
 rather than TYPO3's four database engines. If any of those is a blocker, it is a blocker.
 
 ---
@@ -392,7 +392,7 @@ The reasonable test is an afternoon, on a real site rather than a demo, ideally 
 you currently maintain on TYPO3 and resent invoicing for:
 
 ```shell
-composer create-project pushword/new pushword "^1.0.0-rc"
+composer create-project pushword/new pushword "^1.0"
 ```
 
 Then check the exit before you commit to the entrance. Import a few pages, run
@@ -421,6 +421,6 @@ question is answered — not by our promises, but by your filesystem.
 
 > [!warning] Version
 >
-> Last updated: August 2026. Reflects TYPO3 v14.3.5 (v14 LTS, released 21 April 2026,
-> supported until 2029) and Pushword `1.0.0-rc` as of August 2026. TYPO3 v15
+> Last updated: September 2026. Reflects TYPO3 v14.3.5 (v14 LTS, released 21 April 2026,
+> supported until 2029) and Pushword `1.0` as of September 2026. TYPO3 v15
 > is in development with an LTS projected for autumn 2027.
