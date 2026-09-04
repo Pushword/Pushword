@@ -151,14 +151,42 @@ final class CarouselValidationTest extends KernelTestCase
 
     public function testTooManySlidesForNetworkIsRejected(): void
     {
-        // Pinterest's hard cap is 5 slides.
-        $slides = array_fill(0, 6, ['title' => 'Hi', 'image' => ['media' => 'p.jpg']]);
+        // An organic Pinterest image Pin contains one visual.
+        $slides = array_fill(0, 2, ['title' => 'Hi', 'image' => ['media' => 'p.jpg']]);
         $violations = $this->violations([
             'page' => 'x', 'network' => 'pinterest', 'format' => 'pinterest-2-3',
+            'caption' => 'A useful Pin description.',
             'slides' => $slides,
         ]);
 
         self::assertArrayHasKey('slides', $violations);
+    }
+
+    public function testPinterestRequiresANonEmptyCaption(): void
+    {
+        foreach ([null, '', '   '] as $caption) {
+            $violations = $this->violations([
+                'page' => 'x', 'network' => 'pinterest', 'format' => 'pinterest-2-3',
+                'caption' => $caption,
+                'slides' => [['title' => 'Hi']],
+            ]);
+
+            self::assertArrayHasKey('caption', $violations);
+            self::assertStringContainsString('needs a caption', $violations['caption']);
+        }
+    }
+
+    public function testCaptionLimitIncludesHashtags(): void
+    {
+        $violations = $this->violations([
+            'page' => 'x', 'network' => 'pinterest', 'format' => 'pinterest-2-3',
+            'caption' => str_repeat('a', 490),
+            'hashtags' => ['walkingholiday'],
+            'slides' => [['title' => 'Hi']],
+        ]);
+
+        self::assertArrayHasKey('caption', $violations);
+        self::assertStringContainsString('500-character limit', $violations['caption']);
     }
 
     public function testGuidanceDoesNotFailValidation(): void

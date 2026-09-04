@@ -20,7 +20,10 @@ final class PinterestShare
     /** Pinterest truncates pin descriptions at 500 characters. */
     private const int MAX_DESCRIPTION = 500;
 
-    public function pinUrl(string $mediaUrl, ?string $pageUrl, ?string $description): string
+    /**
+     * @param list<string> $hashtags
+     */
+    public function pinUrl(string $mediaUrl, ?string $pageUrl, ?string $caption, array $hashtags = []): string
     {
         $params = ['media' => $mediaUrl];
 
@@ -28,7 +31,8 @@ final class PinterestShare
             $params['url'] = $pageUrl;
         }
 
-        if (null !== $description && '' !== $description) {
+        $description = CaptionFormatter::format($caption, $hashtags);
+        if ('' !== $description) {
             $params['description'] = mb_substr($description, 0, self::MAX_DESCRIPTION);
         }
 

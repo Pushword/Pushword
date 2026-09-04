@@ -100,6 +100,19 @@ final class CarouselDrafterTest extends TestCase
         self::assertSame('linkedin-4-5', $carousel->format);
     }
 
+    public function testDraftsPinterestAsOneCaptionedImagePin(): void
+    {
+        $carousel = $this->draftCarousel($this->page(), 'pinterest');
+
+        self::assertSame('pinterest-2-3', $carousel->format);
+        self::assertCount(1, $carousel->slides);
+        self::assertFalse($carousel->slides[0]->swipe);
+        self::assertSame(
+            "How to repurpose your content\n\nAn intro paragraph that is not a section.",
+            $carousel->caption,
+        );
+    }
+
     public function testCtaSlideFollowsThePageLocale(): void
     {
         $english = $this->draftCarousel($this->page());

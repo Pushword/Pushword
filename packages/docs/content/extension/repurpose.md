@@ -6,8 +6,8 @@ parentPage: extensions
 toc: true
 ---
 
-Turn any Pushword page into ready-to-post social carousels (LinkedIn, Instagram,
-Facebook, Pinterest, Threads). A carousel is a small JSON **spec**; the package
+Turn any Pushword page into ready-to-post social posts and carousels (LinkedIn,
+Instagram, Facebook, Pinterest, Threads). A post is a small JSON **spec**; the package
 renders it to **self-contained SVG slides** server-side — font and image embedded
 as `data:` URIs — so a slide is one portable file that rasterises to a pixel-exact
 PNG in any browser.
@@ -74,6 +74,8 @@ schema and validates it — free, with whatever model you already use.
 2. `GET /api/repurpose/networks` — formats (ratio/pixels), per-network **hard
    limits** (errors) vs **guidance** (advice), and font pairings — each with an
    `installed` flag; only pick installed ones (the rest fall back to Roboto).
+   Pinterest models an organic image Pin: it requires exactly one 2:3 slide and
+   a non-empty caption. Multiple frames belong in a video Pin or paid carousel ad.
 3. `POST /api/repurpose/validate` — validate a spec, get precise
    `{path, message}` violations (overflow, out-of-bounds crop, disallowed format…)
    plus non-blocking `warnings` (e.g. text/background contrast below WCAG AA).
@@ -194,5 +196,6 @@ hosting and the FrankenPHP static binary.
 
 Platform specs drift, so formats are editable data with a provenance note, and the
 validator enforces only **hard limits** (LinkedIn ≤300 pages / ≤100 MB / all pages
-one size; Instagram ≤20 slides), never engagement opinions. Fetch the live table
-from `GET /api/repurpose/networks`.
+one size; Instagram ≤20 slides; Pinterest = one organic image Pin with a caption),
+never engagement opinions. Caption limits include the hashtags appended at export.
+Fetch the live table from `GET /api/repurpose/networks`.

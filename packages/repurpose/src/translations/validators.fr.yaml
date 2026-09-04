@@ -19,6 +19,7 @@ repurpose:
   background:
     invalid: 'Effet de fond inconnu.'
   caption:
+    required: 'Une épingle Pinterest a besoin d’une légende.'
     max: 'La légende dépasse la limite de %max% caractères pour ce réseau.'
   slides:
     min: 'Un carrousel a besoin d''au moins une slide.'

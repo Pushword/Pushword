@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://pushword.piedweb.com/schema/carousel.json",
     "title": "Pushword Repurpose Carousel",
-    "description": "A social-media carousel derived from a Pushword page, stored as one JSON file per (page, network) and rendered to self-contained SVG slides. The Symfony Validator on the Carousel model is the source of truth; this schema mirrors it as an authoring aid. Cross-field rules it enforces but this schema only hints at: `format` must be one the `network` accepts (see /api/repurpose/networks); slide count and caption length must stay within the network's hard limits; each slide must show at least one text field or a background image; a text overlay only applies over an image. Colours and fonts left unset inherit the site's own design tokens.",
+    "description": "A social-media post derived from a Pushword page, stored as one JSON file per (page, network) and rendered to self-contained SVG slides. The Symfony Validator on the Carousel model is the source of truth; this schema mirrors it as an authoring aid. Cross-field rules it enforces but this schema only hints at: `format` must be one the `network` accepts (see /api/repurpose/networks); slide count and published caption length (caption plus hashtags) must stay within the network's hard limits; Pinterest requires one slide and a non-empty caption; each slide must show at least one text field or a background image; a text overlay only applies over an image. Colours and fonts left unset inherit the site's own design tokens.",
     "type": "object",
     "required": ["page", "network", "format", "slides"],
     "additionalProperties": false,
@@ -13,7 +13,7 @@
         "template": { "enum": ["editorial"], "default": "editorial", "description": "Slide template family." },
         "status": { "enum": ["draft", "planned", "posted"], "default": "draft" },
         "plannedAt": { "type": ["string", "null"], "description": "Parseable date-time when the post is scheduled, or null." },
-        "caption": { "type": ["string", "null"], "description": "The post caption; length capped per network." },
+        "caption": { "type": ["string", "null"], "description": "The post caption. Its published length, including hashtags, is capped per network; Pinterest requires a non-empty caption." },
         "hashtags": { "type": "array", "items": { "type": "string" } },
         "palette": { "$ref": "#/$defs/palette", "description": "Deck-level colour override; any slide may override again." },
         "fontPairing": { "type": ["string", "null"], "description": "A key from the font-pairing registry (see /api/repurpose/networks, fontPairings). Only pick a pairing whose `installed` is true — an uninstalled one silently falls back to Roboto; `pw:repurpose:fonts <pairing>` installs the missing TTFs. Null inherits site typography." },
@@ -35,6 +35,18 @@
         "creatorOnSlides": { "enum": ["all", "intro-outro", "first", "none"], "default": "intro-outro" },
         "slides": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/slide" } }
     },
+    "allOf": [
+        {
+            "if": { "properties": { "network": { "const": "pinterest" } }, "required": ["network"] },
+            "then": {
+                "required": ["caption"],
+                "properties": {
+                    "caption": { "type": "string", "minLength": 1 },
+                    "slides": { "maxItems": 1 }
+                }
+            }
+        }
+    ],
     "$defs": {
         "palette": {
             "type": "object",

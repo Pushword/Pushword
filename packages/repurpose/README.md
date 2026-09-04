@@ -1,7 +1,8 @@
 # Pushword Repurpose
 
 Turn a [Pushword](https://pushword.piedweb.com) page into ready-to-post social
-carousels (LinkedIn, Instagram, Facebook, Pinterest, …).
+posts and carousels (LinkedIn, Instagram, Facebook, Pinterest, …). Pinterest is
+modelled as an organic image Pin: one 2:3 visual with a required caption.
 
 - **Agent-authored JSON spec** — a carousel is a small JSON document (slides,
   text, focal-point crop, palette, font pairing, background effect, status). An AI

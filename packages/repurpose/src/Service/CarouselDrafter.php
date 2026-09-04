@@ -33,14 +33,33 @@ final readonly class CarouselDrafter
      */
     public function draft(Page $page, string $network = 'linkedin', string $format = 'linkedin-4-5'): array
     {
-        if (null === $this->formats->get($format)) {
+        $networkFormats = NetworkRegistry::formatsFor($network);
+        if ([] !== $networkFormats && ! \in_array($format, $networkFormats, true)) {
+            $format = $networkFormats[0];
+        } elseif (null === $this->formats->get($format)) {
             $format = 'linkedin-4-5';
         }
 
         $content = $page->mainContent;
         $mainImage = $page->getMainImage()?->getFileName();
 
-        $slides = [$this->coverSlide($page, $mainImage)];
+        $cover = $this->coverSlide($page, $mainImage);
+        if ('pinterest' === $network) {
+            $cover['swipe'] = false;
+
+            return [
+                'page' => $page->slug,
+                'network' => $network,
+                'format' => $format,
+                'status' => 'draft',
+                'caption' => $this->pinterestCaption($page),
+                'counter' => ['style' => 'none'],
+                'background' => 'dots',
+                'slides' => [$cover],
+            ];
+        }
+
+        $slides = [$cover];
         foreach ($this->sections($content) as $section) {
             if (\count($slides) > self::MAX_BODY_SLIDES) {
                 break;
@@ -60,6 +79,19 @@ final readonly class CarouselDrafter
             'background' => 'dots',
             'slides' => $slides,
         ];
+    }
+
+    private function pinterestCaption(Page $page): string
+    {
+        $title = $this->clean($page->h1);
+        $lead = $this->leadSentence($page->mainContent);
+        $caption = implode("\n\n", array_values(array_filter([$title, $lead], static fn (string $part): bool => '' !== $part)));
+
+        if ('' === $caption) {
+            $caption = $this->translator->trans('repurpose.draft.ctaTitle', [], 'messages', '' === $page->locale ? null : $page->locale);
+        }
+
+        return mb_substr($caption, 0, 500);
     }
 
     /**

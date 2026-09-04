@@ -53,8 +53,8 @@ final class NetworkRegistry
             'formats' => ['pinterest-2-3'],
             'export' => 'images',
             'feedMobile' => 186,
-            'limits' => ['maxSlides' => 5, 'caption' => 500],
-            'guidance' => ['Pinterest carousels allow 2–5 images.', 'Pins are browsed in a ~186px two-column mobile grid — oversize the text.'],
+            'limits' => ['maxSlides' => 1, 'caption' => 500],
+            'guidance' => ['An organic image Pin contains one image; use a video Pin or paid carousel ad for multiple frames.', 'Pins are browsed in a ~186px two-column mobile grid — oversize the text.'],
         ],
         'threads' => [
             'formats' => ['threads-4-5'],

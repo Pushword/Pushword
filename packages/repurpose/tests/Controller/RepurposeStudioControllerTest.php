@@ -296,6 +296,32 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertStringContainsString('/admin/repurpose/studio/'.$sibling->id, (string) $this->client->getResponse()->headers->get('Location'));
     }
 
+    public function testSwitchNetworkRecutsPinterestAsOneCaptionedPin(): void
+    {
+        $post = $this->persistPost();
+        $spec = $this->validSpec();
+        $spec['slides'] = [
+            ['title' => 'Original headline', 'image' => ['media' => 'photo.jpg']],
+            ['title' => 'Second idea'],
+        ];
+        $post->spec = $spec;
+        $this->em->flush();
+
+        $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id.'/network/pinterest');
+
+        self::assertSame(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode());
+        $sibling = $this->em->getRepository(SocialPost::class)
+            ->findOneBy(['host' => self::HOST, 'page' => 'blog/studio-article', 'network' => 'pinterest']);
+        self::assertInstanceOf(SocialPost::class, $sibling);
+        self::assertSame('pinterest-2-3', $sibling->format);
+        self::assertSame('Original headline', $sibling->spec['caption'] ?? null);
+        $slides = $sibling->spec['slides'] ?? null;
+        self::assertIsArray($slides);
+        self::assertCount(1, $slides);
+        self::assertIsArray($slides[0] ?? null);
+        self::assertFalse($slides[0]['swipe'] ?? true);
+    }
+
     public function testSwitchNetworkReusesAnExistingSibling(): void
     {
         $post = $this->persistPost();
@@ -447,6 +473,42 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $file = $publicDir.'/repurpose-pin/'.$post->id.'.png';
         self::assertFileExists($file);
         @unlink($file);
+    }
+
+    public function testPinImageUsesTheCurrentStudioCaptionAndHashtags(): void
+    {
+        $post = $this->persistPinterestPost();
+        $spec = $post->spec;
+        $spec['caption'] = 'The caption currently shown in the studio';
+        $spec['hashtags'] = ['hiking', '#alps'];
+
+        $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/pin-image', [
+            'png' => $this->pngDataUrl(),
+            'spec' => $spec,
+        ]);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertIsString($body['pinUrl'] ?? null);
+        parse_str((string) parse_url($body['pinUrl'], \PHP_URL_QUERY), $query);
+        self::assertSame("The caption currently shown in the studio\n\n#hiking #alps", $query['description'] ?? null);
+
+        $publicDir = self::getContainer()->getParameter('pw.public_dir');
+        @unlink($publicDir.'/repurpose-pin/'.$post->id.'.png');
+    }
+
+    public function testPinImageRejectsACurrentSpecWithoutCaption(): void
+    {
+        $post = $this->persistPinterestPost();
+        $spec = $post->spec;
+        unset($spec['caption']);
+
+        $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/pin-image', [
+            'png' => $this->pngDataUrl(),
+            'spec' => $spec,
+        ]);
+
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
+        self::assertNotEmpty($body['violations'] ?? []);
     }
 
     public function testPinImageRejectsANonPinterestNetwork(): void

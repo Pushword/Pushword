@@ -4,6 +4,7 @@ namespace Pushword\Repurpose\Model;
 
 use DateTimeImmutable;
 use Pushword\Repurpose\Service\BackgroundEffectRegistry;
+use Pushword\Repurpose\Service\CaptionFormatter;
 use Pushword\Repurpose\Service\FontPairingRegistry;
 use Pushword\Repurpose\Service\FormatRegistry;
 use Pushword\Repurpose\Service\NetworkRegistry;
@@ -113,13 +114,22 @@ class Carousel
     }
 
     /**
-     * Caption length against the network's hard character cap.
+     * Caption requirements and the hard character cap of the text as published,
+     * including hashtags.
      */
     #[Assert\Callback]
     public function validateCaption(ExecutionContextInterface $context): void
     {
+        if ('pinterest' === $this->network && (null === $this->caption || '' === trim($this->caption))) {
+            $context->buildViolation('repurpose.caption.required')
+                ->atPath('caption')
+                ->addViolation();
+
+            return;
+        }
+
         $max = NetworkRegistry::NETWORKS[$this->network]['limits']['caption'] ?? null;
-        if (null === $max || null === $this->caption || mb_strlen($this->caption) <= $max) {
+        if (null === $max || mb_strlen(CaptionFormatter::format($this->caption, array_values($this->hashtags))) <= $max) {
             return;
         }
 

@@ -1283,7 +1283,7 @@
         this.pinLabel = 'Preparing…'
         try {
           var png = await svgToPng(svgs[0])
-          var response = await fetch(this.urls.pinImage, jsonPost({ png: png }))
+          var response = await fetch(this.urls.pinImage, jsonPost({ png: png, spec: this.payload() }))
           if (!response.ok) {
             throw new Error('Pin failed (' + response.status + ')')
           }

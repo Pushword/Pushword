@@ -11,13 +11,13 @@ final class PinterestShareTest extends TestCase
 {
     public function testBuildsTheCreatePinUrlWithMediaPageAndDescription(): void
     {
-        $url = new PinterestShare()->pinUrl('https://ex.com/repurpose-pin/7.png', 'https://ex.com/blog/mon-article', 'Look at this');
+        $url = new PinterestShare()->pinUrl('https://ex.com/repurpose-pin/7.png', 'https://ex.com/blog/mon-article', 'Look at this', ['walking', '#alps']);
 
         self::assertStringStartsWith('https://www.pinterest.com/pin/create/button/?', $url);
         parse_str((string) parse_url($url, \PHP_URL_QUERY), $query);
         self::assertSame('https://ex.com/repurpose-pin/7.png', $query['media']);
         self::assertSame('https://ex.com/blog/mon-article', $query['url']);
-        self::assertSame('Look at this', $query['description']);
+        self::assertSame("Look at this\n\n#walking #alps", $query['description']);
     }
 
     public function testOmitsThePageUrlAndDescriptionWhenAbsent(): void

@@ -332,22 +332,37 @@ final class RepurposeStudioController extends AbstractController
      * Stores the browser-rasterised cover slide as a public PNG and returns the
      * Pinterest "create pin" URL pre-filled with it (plus the page URL and caption).
      * The studio opens that URL so the user finishes the pin in Pinterest itself —
-     * only Pinterest carousels get this, since the widget takes one image.
+     * only Pinterest image Pins get this, since the widget takes one image.
      */
     #[Route('/admin/repurpose/studio/{id}/pin-image', name: 'repurpose_studio_pin_image', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function pinImage(int $id, Request $request): JsonResponse
     {
         $post = $this->loadPost($id);
-        $carousel = $this->factory->fromArray($post->spec);
-
-        if ('pinterest' !== $carousel->network) {
+        if ('pinterest' !== $post->network) {
             return new JsonResponse(['error' => 'Direct pinning is only available for Pinterest carousels.'], Response::HTTP_BAD_REQUEST);
         }
 
         $data = json_decode($request->getContent(), true);
-        $dataUrl = \is_array($data) ? ($data['png'] ?? null) : null;
+        if (! \is_array($data)) {
+            return new JsonResponse(['error' => 'Expected {png: dataURL, spec?: carousel}.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $dataUrl = $data['png'] ?? null;
         if (! \is_string($dataUrl)) {
-            return new JsonResponse(['error' => 'Expected {png: dataURL}.'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'Expected {png: dataURL, spec?: carousel}.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $spec = array_key_exists('spec', $data) ? $this->stringKeyedArray($data['spec']) : $post->spec;
+        if (null === $spec) {
+            return new JsonResponse(['error' => 'The current carousel spec is invalid.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $spec['page'] = $post->page;
+        $spec['network'] = $post->network;
+        $carousel = $this->factory->fromArray($spec);
+        $violations = $this->violations($carousel);
+        if ([] !== $violations) {
+            return new JsonResponse(['violations' => $violations], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $png = base64_decode((string) preg_replace('#^data:image/\w+;base64,#', '', $dataUrl), true);
@@ -356,7 +371,7 @@ final class RepurposeStudioController extends AbstractController
         }
 
         $mediaUrl = $request->getSchemeAndHttpHost().$this->pinImageStore->save($id, $png);
-        $pinUrl = $this->pinterestShare->pinUrl($mediaUrl, $this->pageUrl($post), $carousel->caption);
+        $pinUrl = $this->pinterestShare->pinUrl($mediaUrl, $this->pageUrl($post), $carousel->caption, array_values($carousel->hashtags));
 
         return new JsonResponse(['url' => $mediaUrl, 'pinUrl' => $pinUrl]);
     }
@@ -421,6 +436,16 @@ final class RepurposeStudioController extends AbstractController
             $spec['format'] = $formats[0];
         }
 
+        if ('pinterest' === $network) {
+            $slides = \is_array($spec['slides'] ?? null) ? array_values($spec['slides']) : [];
+            $firstSlide = $this->stringKeyedArray($slides[0] ?? null) ?? [];
+            $firstSlide['swipe'] = false;
+            $spec['slides'] = [$firstSlide];
+            if (! \is_string($spec['caption'] ?? null) || '' === trim($spec['caption'])) {
+                $spec['caption'] = $this->captionFromFirstSlide($firstSlide, $post->page);
+            }
+        }
+
         $sibling = new SocialPost();
         $sibling->host = $post->host;
         $sibling->spec = $spec;
@@ -429,6 +454,44 @@ final class RepurposeStudioController extends AbstractController
         $this->entityManager->flush();
 
         return $sibling;
+    }
+
+    /**
+     * @param array<string, mixed> $slide
+     */
+    private function captionFromFirstSlide(array $slide, string $page): string
+    {
+        $parts = [];
+        foreach (['title', 'paragraph'] as $field) {
+            if (\is_string($slide[$field] ?? null) && '' !== trim($slide[$field])) {
+                $parts[] = trim($slide[$field]);
+            }
+        }
+
+        $caption = implode("\n\n", $parts);
+
+        return '' !== $caption ? mb_substr($caption, 0, 500) : str_replace(['/', '-'], ' ', $page);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function stringKeyedArray(mixed $value): ?array
+    {
+        if (! \is_array($value)) {
+            return null;
+        }
+
+        $array = [];
+        foreach ($value as $key => $item) {
+            if (! \is_string($key)) {
+                return null;
+            }
+
+            $array[$key] = $item;
+        }
+
+        return $array;
     }
 
     /**

@@ -94,12 +94,7 @@ final class ExportBuilder
      */
     private function captionFile(string $caption, array $hashtags): string
     {
-        $out = $caption;
-        if ([] !== $hashtags) {
-            $out .= "\n\n".implode(' ', array_map(static fn (string $h): string => '#'.ltrim($h, '#'), $hashtags));
-        }
-
-        return $out."\n";
+        return CaptionFormatter::format($caption, $hashtags)."\n";
     }
 
     /**
