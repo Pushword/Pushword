@@ -17,7 +17,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Throwable;
 
 /**
@@ -34,13 +33,13 @@ use Throwable;
  * {@see FlatFileContentDirFinder}, the same source of truth used by the
  * exporters and `pw:flat:sync`.
  */
-#[IsGranted('ROLE_EDITOR')]
 final class ContentSnapshotApiController extends AbstractApiController
 {
     public function __construct(
         private readonly SiteRegistry $siteRegistry,
         private readonly FlatFileContentDirFinder $contentDirFinder,
         private readonly FlatFileSync $flatSync,
+        private readonly ?string $contentSnapshotKey,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -48,6 +47,13 @@ final class ContentSnapshotApiController extends AbstractApiController
     #[Route('/api/content/snapshot.tar.gz', name: 'pushword_api_content_snapshot', methods: ['GET'])]
     public function snapshot(Request $request): Response
     {
+        if (! $this->isGranted('ROLE_EDITOR') && ! $this->hasValidSnapshotKey($request)) {
+            return $this->respond([
+                'error' => 'unauthenticated',
+                'message' => 'Missing or invalid snapshot key',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
         $host = $request->query->getString('host');
 
         // Validate the host against the configured sites before touching the
@@ -90,6 +96,17 @@ final class ContentSnapshotApiController extends AbstractApiController
         );
 
         return $response;
+    }
+
+    private function hasValidSnapshotKey(Request $request): bool
+    {
+        if (null === $this->contentSnapshotKey || '' === $this->contentSnapshotKey) {
+            return false;
+        }
+
+        $providedKey = $request->headers->get('X-Pushword-Snapshot-Key');
+
+        return null !== $providedKey && hash_equals($this->contentSnapshotKey, $providedKey);
     }
 
     /**
@@ -178,7 +195,11 @@ final class ContentSnapshotApiController extends AbstractApiController
                 '/api/content/snapshot.tar.gz' => [
                     'get' => [
                         'summary' => 'Download the flat content directory as a gzipped tarball',
-                        'description' => 'Re-exports then streams the DB → flat mirror of a host (or every host when `host` is omitted) as application/gzip, so each .md carries a current revision.',
+                        'description' => 'Re-exports then streams the DB → flat mirror of a host (or every host when `host` is omitted) as application/gzip, so each .md carries a current revision. Authenticate with an editor Bearer token or the read-only snapshot key.',
+                        'security' => [
+                            ['bearerAuth' => []],
+                            ['snapshotKey' => []],
+                        ],
                         'parameters' => [
                             [
                                 'name' => 'host',
@@ -197,6 +218,15 @@ final class ContentSnapshotApiController extends AbstractApiController
                             '401' => ['description' => 'Missing or invalid Bearer token'],
                             '404' => ['description' => 'No content available'],
                         ],
+                    ],
+                ],
+            ],
+            'components' => [
+                'securitySchemes' => [
+                    'snapshotKey' => [
+                        'type' => 'apiKey',
+                        'in' => 'header',
+                        'name' => 'X-Pushword-Snapshot-Key',
                     ],
                 ],
             ],

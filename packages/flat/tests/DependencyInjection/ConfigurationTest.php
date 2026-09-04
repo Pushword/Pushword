@@ -4,11 +4,20 @@ namespace Pushword\Flat\Tests\DependencyInjection;
 
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Flat\DependencyInjection\Configuration;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Config\Definition\Processor;
 
 #[Group('integration')]
 final class ConfigurationTest extends KernelTestCase
 {
+    public function testContentSnapshotKeyIsDisabledByDefault(): void
+    {
+        $config = new Processor()->processConfiguration(new Configuration(), []);
+
+        self::assertNull($config['content_snapshot_key']);
+    }
+
     public function testConf(): void
     {
         self::bootKernel();
@@ -16,6 +25,7 @@ final class ConfigurationTest extends KernelTestCase
         $flatContentDir = self::getContainer()->get(SiteRegistry::class)->get()->get('flat_content_dir');
         self::assertIsString($flatContentDir);
         self::assertStringEndsWith('/content/_host_', $flatContentDir);
+        self::assertSame('test-content-snapshot-key', self::getContainer()->getParameter('pw.pushword_flat.content_snapshot_key'));
 
         $piedwebContentDir = self::getContainer()->get(SiteRegistry::class)->get('pushword.piedweb.com')->get('flat_content_dir');
         self::assertIsString($piedwebContentDir);

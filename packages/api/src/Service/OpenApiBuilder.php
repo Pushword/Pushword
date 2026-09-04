@@ -35,6 +35,8 @@ final readonly class OpenApiBuilder
         $paths = [];
         /** @var array<string, array<string, mixed>> $schemas */
         $schemas = [];
+        /** @var array<string, array<string, mixed>> $securitySchemes */
+        $securitySchemes = [];
 
         foreach ($this->controllers as $controller) {
             $fragment = $controller::describe();
@@ -57,7 +59,11 @@ final readonly class OpenApiBuilder
             }
 
             $components = $fragment['components'] ?? null;
-            if (\is_array($components) && isset($components['schemas']) && \is_array($components['schemas'])) {
+            if (! \is_array($components)) {
+                continue;
+            }
+
+            if (isset($components['schemas']) && \is_array($components['schemas'])) {
                 foreach ($components['schemas'] as $name => $schema) {
                     if (! \is_string($name)) {
                         continue;
@@ -71,10 +77,19 @@ final readonly class OpenApiBuilder
                     $schemas[$name] = $schema;
                 }
             }
+
+            if (isset($components['securitySchemes']) && \is_array($components['securitySchemes'])) {
+                foreach ($components['securitySchemes'] as $name => $securityScheme) {
+                    if (\is_string($name) && \is_array($securityScheme)) {
+                        $securitySchemes[$name] = $securityScheme;
+                    }
+                }
+            }
         }
 
         ksort($paths);
         ksort($schemas);
+        ksort($securitySchemes);
 
         // Vendor extension: the per-host declared page properties, in the
         // `page_properties` config shape, so an agent reading /api/docs knows
@@ -100,6 +115,7 @@ final readonly class OpenApiBuilder
             'components' => [
                 'securitySchemes' => [
                     'bearerAuth' => ['type' => 'http', 'scheme' => 'bearer', 'bearerFormat' => 'opaque'],
+                    ...$securitySchemes,
                 ],
                 'schemas' => $schemas,
             ],

@@ -33,6 +33,7 @@ return static function (ContainerConfigurator $container): void {
 
     $container->extension('pushword_flat', [
         'flat_content_dir' => '%env(PUSHWORD_TEST_FLAT_CONTENT_DIR)%',
+        'content_snapshot_key' => 'test-content-snapshot-key',
         // Pin who an import attributes a page to. Left unset, it falls back to the first
         // super admin — a row the admin tests create in the worker's own database, so
         // whether an imported page comes out attributed would depend on which classes

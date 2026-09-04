@@ -6,6 +6,7 @@ use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Api\Security\ApiTokenAuthenticator;
 use Pushword\Core\Security\LoginFormAuthenticator;
 use Pushword\Core\Security\OAuthAuthenticator;
+use Pushword\Flat\Controller\Api\ContentSnapshotApiController;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -45,6 +46,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ];
         $accessControl[] = ['path' => '^/api/docs', 'roles' => 'PUBLIC_ACCESS'];
         $accessControl[] = ['path' => '^/api/flat/(lock|unlock|status)', 'roles' => 'PUBLIC_ACCESS'];
+        if (class_exists(ContentSnapshotApiController::class)) {
+            $accessControl[] = ['path' => '^/api/content/snapshot\\.tar\\.gz$', 'roles' => 'PUBLIC_ACCESS'];
+        }
+
         $accessControl[] = ['path' => '^/api/', 'roles' => 'ROLE_EDITOR'];
     }
 

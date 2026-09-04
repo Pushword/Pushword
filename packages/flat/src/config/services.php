@@ -112,6 +112,7 @@ return static function (ContainerConfigurator $container): void {
 
         $services->set(ContentSnapshotApiController::class)
             ->autowire()
+            ->arg('$contentSnapshotKey', '%pw.pushword_flat.content_snapshot_key%')
             ->tag('controller.service_arguments')
             ->tag('pushword.api.controller');
 

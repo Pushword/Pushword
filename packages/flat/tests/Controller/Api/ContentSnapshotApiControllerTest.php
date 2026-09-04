@@ -22,6 +22,8 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
 {
     private const string HOST = 'localhost.dev';
 
+    private const string SNAPSHOT_KEY = 'test-content-snapshot-key';
+
     /** Deterministic DB pages exported by the snapshot refresh, independent of dev-app fixtures. */
     private const string ROOT_SLUG = 'snapshot-fixture';
 
@@ -120,12 +122,32 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         self::assertSame(401, $this->client->getResponse()->getStatusCode());
     }
 
-    public function testInvalidTokenReturns401(): void
+    public function testInvalidSnapshotKeyReturns401(): void
     {
         $this->client->request(Request::METHOD_GET, '/api/content/snapshot.tar.gz?host='.self::HOST, [], [], [
-            'HTTP_AUTHORIZATION' => 'Bearer not-a-real-token',
+            'HTTP_X_PUSHWORD_SNAPSHOT_KEY' => 'not-the-snapshot-key',
         ]);
         self::assertSame(401, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testSnapshotKeyDoesNotAuthenticateOtherApiEndpoints(): void
+    {
+        $this->client->request(Request::METHOD_GET, '/api/whoami', [], [], [
+            'HTTP_X_PUSHWORD_SNAPSHOT_KEY' => self::SNAPSHOT_KEY,
+        ]);
+
+        self::assertSame(401, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testEditorBearerTokenStillDownloadsSnapshot(): void
+    {
+        $this->populateContentDir();
+
+        $this->client->request(Request::METHOD_GET, '/api/content/snapshot.tar.gz?host='.self::HOST, [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+        ]);
+
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
     }
 
     public function testUnknownHostReturns400(): void
@@ -273,7 +295,7 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
     private function request(string $url): Response
     {
         $this->client->request(Request::METHOD_GET, $url, [], [], [
-            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+            'HTTP_X_PUSHWORD_SNAPSHOT_KEY' => self::SNAPSHOT_KEY,
         ]);
 
         return $this->client->getResponse();

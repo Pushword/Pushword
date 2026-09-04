@@ -1,8 +1,16 @@
 ---
-title: ''
+title: 'content snapshots accept a dedicated read-only key'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
+
+**Concerns:** pushword/flat
+
+## Configure read-only snapshot access
+
+Content snapshots can now be downloaded without a Pushword user. Sites that need this
+access should set `pushword_flat.content_snapshot_key` to an environment-backed secret;
+existing editor Bearer tokens continue to work. See the [Flat documentation](../extension/flat.md#read-only-content-snapshot).
 
 <!--
 The upgrade note for the next release. `.scripts/release` renames this file to

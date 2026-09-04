@@ -47,6 +47,26 @@ final class DocsApiControllerTest extends WebTestCase
         self::assertArrayHasKey('Page', $doc['components']['schemas']);
         self::assertArrayHasKey('Media', $doc['components']['schemas']);
 
+        $securitySchemes = $doc['components']['securitySchemes'] ?? null;
+        self::assertIsArray($securitySchemes);
+        self::assertSame(
+            [
+                'type' => 'apiKey',
+                'in' => 'header',
+                'name' => 'X-Pushword-Snapshot-Key',
+            ],
+            $securitySchemes['snapshotKey'] ?? null,
+        );
+
+        $snapshotPath = $doc['paths']['/api/content/snapshot.tar.gz'] ?? null;
+        self::assertIsArray($snapshotPath);
+        $snapshotGet = $snapshotPath['get'] ?? null;
+        self::assertIsArray($snapshotGet);
+        self::assertSame(
+            [['bearerAuth' => []], ['snapshotKey' => []]],
+            $snapshotGet['security'] ?? null,
+        );
+
         // Declared page properties are exposed per host so an agent knows the
         // valid frontmatter keys before writing a page.
         self::assertArrayHasKey('x-pushword-page-properties', $doc);

@@ -15,13 +15,16 @@ composer require pushword/flat
 
 ## Configure (if needed)
 
-Globally under `flat:` (in `config/packages/flat.yaml`).
+Globally under `pushword_flat:` (in `config/packages/flat.yaml`).
 
 Or for _multi-sites_ in `config/packages/pushword.yaml` under the app configuration.
 
 ```yaml
-flat:
+pushword_flat:
   flat_content_dir: content # default value
+
+  # Optional shared secret for read-only snapshot downloads
+  content_snapshot_key: '%env(CONTENT_SNAPSHOT_KEY)%'
 
   # Change detection cache TTL in seconds (default: 300 = 5 minutes)
   change_detection_cache_ttl: 300
@@ -68,6 +71,22 @@ made an edit outside the admin is unknown, and `editMessage` already records tha
 from `pw:flat:sync`. With no user to resolve, the page simply stays unattributed.
 
 ## Usage
+
+### Read-only content snapshot
+
+Set `content_snapshot_key` to let an automated client download the current Markdown
+mirror without creating a Pushword user. Keep the secret in an environment variable,
+then send it in the dedicated header:
+
+```bash
+curl -H "X-Pushword-Snapshot-Key: $CONTENT_SNAPSHOT_KEY" \
+  "https://example.com/api/content/snapshot.tar.gz?host=example.com" \
+  --output snapshot.tar.gz
+```
+
+Omit `host` to download every configured site. This key is accepted only by
+`GET /api/content/snapshot.tar.gz`; it cannot authenticate any other API route or write
+content. Existing editor Bearer tokens remain accepted by the snapshot endpoint.
 
 ### Sync with DB (import / export)
 
