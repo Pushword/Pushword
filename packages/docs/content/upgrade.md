@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc896](/upgrade/rc896) | `admin` `admin-block-editor` `api` `conversation` `core` `newsletter` `quiz` `static-generator` `version` `js-helper` | admin mutations require POST and CSRF; uploads are allow-listed; static quiz results are signed; HTTP headers are hardened |
 | [rc895](/upgrade/rc895) | `repurpose` | Pinterest repurpose drafts become single-image Pins with required captions |
 | [rc894](/upgrade/rc894) | `flat` | content snapshots accept a dedicated read-only key |
 | [rc892](/upgrade/rc892) | `flat` | flat page imports reset omitted frontmatter properties |
