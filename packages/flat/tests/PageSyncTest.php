@@ -2927,8 +2927,7 @@ YAML;
         self::assertSame('parent_template.html.twig', $child->getTemplate());
         self::assertSame('wide', $child->getCustomProperty('mainImageFormat'));
 
-        // Export
-        $this->pageSync->sync();
+        $this->pageSync->export('localhost.dev', true, $contentDir);
 
         // Read exported child .md file
         $childMdPath = $contentDir.'/inherit-child.md';

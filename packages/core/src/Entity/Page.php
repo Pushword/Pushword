@@ -100,6 +100,8 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     {
         $this->id = null;
         $this->translations = new ArrayCollection();
+        $this->childrenPages = new ArrayCollection();
+        $this->variants = new ArrayCollection();
         $this->holdPublicationAt = null;
     }
 

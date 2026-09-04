@@ -257,8 +257,8 @@ jobs:
       - name: Execute tests
         # Serial and worker groups run after the parallel batch — see the SQLite job above.
         run: |
-          vendor/bin/paratest --processes=auto --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker
-          vendor/bin/paratest --processes=1 --group=serial
+          vendor/bin/paratest --processes=auto --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker --exclude-group=sqlite
+          vendor/bin/paratest --processes=1 --group=serial --exclude-group=sqlite
         env:
           TEST_RUN_ID: ci-mariadb-${{ github.run_id }}
           PUSHWORD_TEST_DATABASE_BASE_URL: "mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
@@ -266,7 +266,7 @@ jobs:
       - name: Worker-mode safety guard
         # Same guard as the SQLite job: worker tests share a cache.app version
         # counter that parallel workers would race, so they run alone.
-        run: vendor/bin/paratest --processes=1 --group=worker
+        run: vendor/bin/paratest --processes=1 --group=worker --exclude-group=sqlite
         env:
           TEST_RUN_ID: ci-mariadb-${{ github.run_id }}
           PUSHWORD_TEST_DATABASE_BASE_URL: "mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
@@ -333,14 +333,14 @@ jobs:
 
       - name: Execute tests
         run: |
-          vendor/bin/paratest --processes=auto --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker
-          vendor/bin/paratest --processes=1 --group=serial
+          vendor/bin/paratest --processes=auto --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker --exclude-group=sqlite
+          vendor/bin/paratest --processes=1 --group=serial --exclude-group=sqlite
         env:
           TEST_RUN_ID: ci-postgresql-${{ github.run_id }}
           PUSHWORD_TEST_DATABASE_BASE_URL: "postgresql://pushword:pushword@127.0.0.1:5432/pushword_test?serverVersion=17&charset=utf8"
 
       - name: Worker-mode safety guard
-        run: vendor/bin/paratest --processes=1 --group=worker
+        run: vendor/bin/paratest --processes=1 --group=worker --exclude-group=sqlite
         env:
           TEST_RUN_ID: ci-postgresql-${{ github.run_id }}
           PUSHWORD_TEST_DATABASE_BASE_URL: "postgresql://pushword:pushword@127.0.0.1:5432/pushword_test?serverVersion=17&charset=utf8"

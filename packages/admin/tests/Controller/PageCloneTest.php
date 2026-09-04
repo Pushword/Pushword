@@ -51,5 +51,11 @@ final class PageCloneTest extends AbstractAdminTestClass
         // Clean up so the test is repeatable
         $em->remove($clone);
         $em->flush();
+
+        $em->clear();
+
+        $kitchenSink = $pageRepo->findOneBy(['slug' => 'kitchen-sink', 'host' => 'localhost.dev']);
+        self::assertNotNull($kitchenSink);
+        self::assertSame('homepage', $kitchenSink->parentPage?->slug, 'Removing the clone must not detach the original page children');
     }
 }

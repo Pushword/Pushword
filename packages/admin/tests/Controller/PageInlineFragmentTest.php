@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin\Tests\Controller;
 
+use DateTime;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
@@ -22,6 +23,24 @@ use Symfony\Component\HttpFoundation\Response;
 #[Group('integration')]
 final class PageInlineFragmentTest extends AbstractAdminTestClass
 {
+    /** @var list<int> */
+    private array $createdPageIds = [];
+
+    protected function tearDown(): void
+    {
+        $entityManager = $this->getEntityManager();
+        foreach ($this->createdPageIds as $pageId) {
+            $page = $entityManager->getRepository(Page::class)->find($pageId);
+            if ($page instanceof Page) {
+                $entityManager->remove($page);
+            }
+        }
+
+        $entityManager->flush();
+
+        parent::tearDown();
+    }
+
     public function testPageListRendersTheInlineFragmentGrammar(): void
     {
         $client = $this->loginUser();
@@ -245,8 +264,8 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
     }
 
     /**
-     * The list sorts on updatedAt DESC, so a freshly created page is on top of
-     * the first paginated screen whatever the fixture set looks like.
+     * The list sorts on updatedAt DESC, so a future timestamp keeps this page on
+     * the first paginated screen even when a previous test left newer rows behind.
      */
     private function createPage(): int
     {
@@ -256,12 +275,14 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
         $page->slug = 'inline-fragment-'.uniqid();
         $page->h1 = 'Inline fragment fixture';
         $page->mainContent = 'Fixture body.';
+        $page->updatedAt = new DateTime('2999-12-31 23:59:59');
 
         $entityManager = $this->getEntityManager();
         $entityManager->persist($page);
         $entityManager->flush();
 
         self::assertNotNull($page->id);
+        $this->createdPageIds[] = $page->id;
 
         return $page->id;
     }

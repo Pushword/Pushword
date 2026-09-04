@@ -69,6 +69,20 @@ final class PageTest extends TestCase
         self::assertFalse((clone $page)->isHoldPublication());
     }
 
+    public function testCloneDropsInverseRelations(): void
+    {
+        $page = new Page();
+        $page->childrenPages->add(new Page());
+        $page->variants->add(new Page());
+
+        $clone = clone $page;
+
+        self::assertCount(1, $page->childrenPages);
+        self::assertCount(1, $page->variants);
+        self::assertCount(0, $clone->childrenPages);
+        self::assertCount(0, $clone->variants);
+    }
+
     public function testAPublishedPageIsIndexable(): void
     {
         self::assertTrue(new Page()->isIndexable());

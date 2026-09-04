@@ -149,7 +149,7 @@ final class CachingOptimizationsTest extends KernelTestCase
 
         // Modify a page in DB so content differs, and backdate the file
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        $page = $em->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev']);
+        $page = $em->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev', 'slug' => 'homepage']);
         self::assertInstanceOf(Page::class, $page);
 
         $filePath = $this->contentDir.'/'.$page->slug.'.md';
@@ -173,7 +173,7 @@ final class CachingOptimizationsTest extends KernelTestCase
 
         // Corrupt a file's content but keep the same mtime as page.updatedAt
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        $page = $em->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev']);
+        $page = $em->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev', 'slug' => 'homepage']);
         self::assertInstanceOf(Page::class, $page);
 
         $filePath = $this->contentDir.'/'.$page->slug.'.md';

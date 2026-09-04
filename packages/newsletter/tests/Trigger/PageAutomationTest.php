@@ -147,10 +147,12 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
             static fn (Campaign $campaign): array => $campaign->segment,
             $this->campaignsOf($automation),
         );
+        // The database does not promise the order in which equally dated pages are processed.
+        sort($segments);
 
         self::assertSame([
-            [['field' => 'locale', 'op' => '=', 'value' => 'fr']],
             [['field' => 'locale', 'op' => '=', 'value' => 'de']],
+            [['field' => 'locale', 'op' => '=', 'value' => 'fr']],
         ], $segments);
 
         // What the readers actually get: one mail each. Unnarrowed, the two
