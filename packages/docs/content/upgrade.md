@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [rc895](/upgrade/rc895) | `repurpose` | Pinterest repurpose drafts become single-image Pins with required captions |
 | [rc894](/upgrade/rc894) | `flat` | content snapshots accept a dedicated read-only key |
 | [rc892](/upgrade/rc892) | `flat` | flat page imports reset omitted frontmatter properties |
 | [rc889](/upgrade/rc889) | `core` | the generated media cache can use remote Flysystem storage |

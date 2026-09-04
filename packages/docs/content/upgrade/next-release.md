@@ -1,5 +1,5 @@
 ---
-title: 'Pinterest repurpose drafts become single-image Pins with required captions'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,11 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/repurpose`
-
-## Review existing Pinterest drafts
-
-Pinterest specs now represent an organic image Pin: exactly one slide and a
-non-empty caption whose 500-character limit includes hashtags. Existing
-multi-slide or caption-less drafts must be recut before their next save or direct Pin.
