@@ -59,8 +59,10 @@ jobs:
           tools: composer:v2
           coverage: none
 
-      - name: Audit Composer lock
-        run: composer audit --locked --abandoned=report
+      - name: Resolve and audit Composer dependencies
+        run: |
+          composer update --no-install --no-interaction --no-progress --no-scripts
+          composer audit --locked --abandoned=report
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
