@@ -29,6 +29,9 @@ cd pushword
 The `"^1.0"` constraint keeps the project on Pushword's stable 1.x line instead of
 silently crossing a future major version.
 
+Existing applications should likewise constrain every `pushword/*` dependency,
+including `pushword/installer`, to `^1`.
+
 The installer creates the database and the demo content, then asks for the account
 you will log in with — email, password, role (`ROLE_SUPER_ADMIN` by default).
 
