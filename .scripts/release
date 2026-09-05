@@ -15,23 +15,39 @@ if ! command -v gh &> /dev/null; then
     exit 1
 fi
 
-# Get the previous RC. By default, release the next RC; passing 1.0.0 promotes
-# the current tree to the first stable release.
-LATEST_TAG=$(git tag -l '1.0.0-rc*' | sort -V | tail -1)
-if [ -z "$LATEST_TAG" ]; then
-    echo -e "${RED}Error: No 1.0.0-rc* tag found${NC}"
-    exit 1
-fi
+# Before 1.0.0, release the next RC by default and accept 1.0.0 to promote the
+# current tree. Once stable releases exist, default to the next patch release.
+LATEST_RC_TAG=$(git tag -l '1.0.0-rc*' | sort -V | tail -1)
+LATEST_STABLE_TAG=$(git tag -l '1.0.*' | grep -E '^1\.0\.[0-9]+$' | sort -V | tail -1)
 
 if [ -n "${1:-}" ]; then
     if [ "$1" != "1.0.0" ]; then
         echo -e "${RED}Usage: .scripts/release [1.0.0]${NC}"
         exit 1
     fi
+
+    if [ -z "$LATEST_RC_TAG" ]; then
+        echo -e "${RED}Error: No 1.0.0-rc* tag found${NC}"
+        exit 1
+    fi
+
+    LATEST_TAG="$LATEST_RC_TAG"
     NEW_TAG="$1"
     NOTE_SLUG="$NEW_TAG"
+elif [ -n "$LATEST_STABLE_TAG" ]; then
+    LATEST_TAG="$LATEST_STABLE_TAG"
+    CURRENT_PATCH=${LATEST_STABLE_TAG##*.}
+    NEXT_PATCH=$((CURRENT_PATCH + 1))
+    NEW_TAG="1.0.$NEXT_PATCH"
+    NOTE_SLUG="$NEW_TAG"
 else
-    CURRENT_RC=$(echo "$LATEST_TAG" | sed 's/1.0.0-rc//')
+    if [ -z "$LATEST_RC_TAG" ]; then
+        echo -e "${RED}Error: No 1.0.0-rc* tag found${NC}"
+        exit 1
+    fi
+
+    LATEST_TAG="$LATEST_RC_TAG"
+    CURRENT_RC=${LATEST_RC_TAG#1.0.0-rc}
     NEXT_RC=$((CURRENT_RC + 1))
     NEW_TAG="1.0.0-rc$NEXT_RC"
     NOTE_SLUG="rc$NEXT_RC"

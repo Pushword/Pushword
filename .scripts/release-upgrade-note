@@ -7,7 +7,7 @@
  * the draft. Called by .scripts/release before the tag is cut.
  *
  * Usage: release-upgrade-note 1.0.0-rc823
- *        release-upgrade-note 1.0.0
+ *        release-upgrade-note 1.0.1
  *        release-upgrade-note --reset
  *
  * Exit codes: 0 nothing drafted, 10 note released, 1 the draft is unusable.
@@ -132,8 +132,8 @@ if ('--reset' === $argument) {
     exit(NOTHING_DRAFTED);
 }
 
-if (1 !== preg_match('/^(1\.0\.0)(?:-(rc\d+))?$/', $argument, $version)) {
-    fwrite(\STDERR, "usage: release-upgrade-note <1.0.0-rcN|1.0.0>|--reset\n");
+if (1 !== preg_match('/^(?:(1\.0\.\d+)|1\.0\.0-(rc\d+))$/', $argument, $version)) {
+    fwrite(\STDERR, "usage: release-upgrade-note <1.0.0-rcN|1.0.x>|--reset\n");
     exit(UNUSABLE);
 }
 

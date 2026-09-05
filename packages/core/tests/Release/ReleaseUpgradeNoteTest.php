@@ -59,6 +59,7 @@ final class ReleaseUpgradeNoteTest extends TestCase
     {
         yield 'release candidate' => ['1.0.0-rc899', 'rc899'];
         yield 'stable release' => ['1.0.0', '1.0.0'];
+        yield 'patch release' => ['1.0.1', '1.0.1'];
     }
 
     #[DataProvider('releaseVersions')]
