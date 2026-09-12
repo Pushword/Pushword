@@ -10,21 +10,22 @@ for shared hosting: installing, editing, previewing and publishing must not
 require Cargo, a native executable, FFI, a PHP extension or a background daemon.
 Using Hugo or Zola as a replacement publisher is outside this direction.
 
-The first opt-in integration is HTML minification in `pushword/static-generator`.
-It defaults to PHP. The Rust backend is experimental: build and test it on the
+Opt-in integrations cover HTML minification in `pushword/static-generator` and
+aggregate `SplitContent` analysis in `pushword/core`. Both default to PHP.
+The Rust backends are experimental: build and test them on the
 deployment platform before enabling it. No native binaries are downloaded by Composer.
 
 ## Organization decision
 
-Keep the first port in **`packages/static-generator/rust/`**, alongside its PHP
-owner. Its source, protocol, differential corpus and build commands are versioned
-in the Pushword monorepo and travel with the static-generator package.
+Keep domain implementations in **`packages/<owner>/rust/`**, alongside their PHP
+owners. Source, protocols, differential corpora and build commands travel with
+the owning Composer package. Share only the PHP worker transport in core.
 
 | Organization | Benefit | Cost and decision |
 |---|---|---|
-| A new Composer package `pushword/rust` immediately | One place for native distribution and shared IPC | With one operation it adds a release/dependency boundary and gives a language, rather than a feature, ownership of behavior. Defer. |
-| Rust directory inside each affected package | PHP and Rust behavior can change in one package release; optional packages stay optional | Chosen for the first port. Do not copy the worker transport into a second package. |
-| Shared Cargo workspace with domain crates | A later executable can combine operations without duplicating parsers or IPC | Introduce when a second measured port needs it. Keep domain crates and parity tests with their PHP packages; extract only shared transport/build code then. |
+| A new Composer package `pushword/rust` | One place for native distribution | Adds a release/dependency boundary and gives a language, rather than a feature, ownership of behavior. Not needed for the current integrations. |
+| Rust directory inside each affected package | PHP and Rust behavior change in one package release; optional packages stay optional | Chosen. `Core\Service\NativeWorker` shares bounded process transport without duplicating it. |
+| Shared Cargo workspace with domain crates | A later executable can combine operations | Defer until a combined executable has a measured benefit. Current binaries have different parsers and independent activation. |
 
 `HtmlMinifier` remains the PHP reference API. The injected `HtmlMinification`
 service chooses the backend; normal pages, pagination and localized error pages
@@ -115,10 +116,45 @@ crate-local unsafe code and a weekly RustSec dependency audit. This supplements
 the PHP parity, protocol failure and shared-hosting tests. Miri, sanitizers and
 continuous fuzzing have not been run; the crate README records the exact scope.
 
-## Measured follow-up exploration
+## Second implemented port: aggregate content analysis
 
-`packages/core/rust/` contains a standalone content-processing probe. It is not
-a runtime dependency and does not enable Rust for Markdown. Its README and
+`ContentSplitter` integrates `packages/core/rust/` with the existing Twig
+`mainContentSplit(page)` function. One native HTML parse prepares heading slots,
+TOC labels and both paragraph views. `splitMany` sends all uncached documents in
+one request. PHP retains exact ICU slugging and Knp menu output; validated
+aggregate results are cached. The indexed slugger also improves the PHP backend.
+
+Build `vendor/pushword/core/rust`, deploy `target/release/pushword-content-analyzer`,
+then configure:
+
+```yaml
+pushword:
+    native_content_analyzer: '/opt/pushword/bin/pushword-content-analyzer'
+    native_content_analyzer_timeout: 5.0
+```
+
+Clear the Symfony container cache in the rendering environment. Leave this unset
+on PHP-only hosting. No existing Markdown, Twig or block-marker syntax changes.
+
+The native implementation accepts canonical HTML with supported elements and
+declines ambiguous or unsupported documents before using their output. Declines
+fall back per document; worker/protocol failures fall back for the whole batch.
+The shared-hosting test disables `proc_open`. Differential tests compare all
+accessors, including menu hierarchy, on 34 HTML cases, 59 rendered Markdown cases
+and 160 generated supported documents. Of the 59 rendered Markdown cases, 49 use
+native analysis and 10 use PHP. This is functioning hybrid acceleration, not a
+claim that every possible document or the entire CMS is implemented in Rust.
+
+`packages/core/rust/README.md` documents the supported boundary, protocol, build
+and checks. `benchmarks/2026-09-13-split.json` records the full split measurement,
+including native IPC and PHP assembly, against the improved PHP implementation.
+The benchmark checks every output before reporting performance. Public requests,
+admin forms, SQL and complete static builds are outside that measurement.
+
+## Markdown and other follow-up exploration
+
+The separate `pushword-content-probe` executable does not enable Rust for Markdown.
+Its README and
 committed raw samples document the measurements and compatibility gaps.
 
 - A synthetic 9.8 KB CommonMark subset takes about 8.09 ms per document in the
@@ -129,9 +165,9 @@ committed raw samples document the measurements and compatibility gaps.
   Attributes, dynamic links, media/notices, Unicode IDs and table edge cases
   remain explicit gaps before any activation. Generic CommonMark is not a
   replacement.
-- TOC preparation on 800 unique headings takes about 59 ms; 800 identical
-  headings take 230 ms. The current slugger repeatedly searches a list of used
-  IDs. Isolate that algorithmic cost before deciding which HTML work to port.
+- The earlier TOC probe exposed repeated list scans for duplicate IDs. The new
+  indexed PHP slugger removes repeated suffix searches; the separate aggregate
+  split benchmark measures native parsing against that improved baseline.
 - Search text extraction takes about 0.234 ms on the article. A native standalone
   operation must beat that plus transport; investigate shared HTML parsing only
   where consumers actually process the same content.
@@ -139,10 +175,11 @@ committed raw samples document the measurements and compatibility gaps.
 These are single-CPU component probes, not public/admin request benchmarks.
 The optional Tempest benchmark uses the same corpus and workloads. Tempest
 1.2.2 has no `parseMany()` method; [PR #24](https://github.com/tempestphp/markdown/pull/24)
-proposes named chunks split by `<!-- next -->` markers. This is a useful model
-for a future explicit Markdown block collection, but Pushword currently splits
-rendered HTML after Twig, so adopting that marker would be a separate,
-backward-compatible format decision.
+proposes named chunks split by `<!-- next -->` markers. Pushword takes the idea
+of an aggregate result, without introducing those markers. Existing
+`<!--break-->` behavior remains intact. Tempest parses Markdown rather than
+already rendered HTML, so it remains a benchmark candidate for a separate
+Markdown compatibility effort and is not a backend for this split operation.
 The next candidate is a compatible native Markdown parse stage, measuring the
 cost of passing parser events back to PHP before choosing whether to keep
 Pushword-aware renderers there or port them with explicit resolved inputs.
@@ -166,5 +203,5 @@ Before enabling a port in production, require representative downstream-site
 parity, meaningful end-to-end savings, bounded memory use, the PHP-only test path,
 and a distribution/update strategy for supported native platforms. The opt-in
 integration does not yet provide cross-platform release binaries or compatibility
-certification across all PHP/libxml versions. Public dynamic rendering, Markdown,
-search and admin form processing still use their existing PHP implementations.
+certification across all PHP/libxml versions. PHP still orchestrates dynamic
+rendering, Markdown, search and admin forms; only the selected operations use Rust.

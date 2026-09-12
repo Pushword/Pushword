@@ -32,6 +32,7 @@ parameters:
         - packages/core/src
         - packages/core/tests
         - packages/core/rust/tests
+        - packages/core/rust/benchmarks/split.php
         - packages/flat/src
         - packages/flat/tests
         - packages/installer/src

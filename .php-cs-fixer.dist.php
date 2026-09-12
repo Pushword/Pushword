@@ -10,6 +10,7 @@ $finder = Finder::create()
         __DIR__.'/packages',
     ])
     ->name('*.php')
+    ->exclude('rust/target')
     ->ignoreDotFiles(true)
     ->ignoreVCS(true)
     ->append([

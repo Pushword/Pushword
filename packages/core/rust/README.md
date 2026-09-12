@@ -1,15 +1,87 @@
-# Content processing exploration
+# Pushword content analysis and Markdown exploration
 
-This crate is a measurement probe, **not an enabled Pushword backend**. It uses
-[Comrak 0.55](https://github.com/kivikakk/comrak), with a custom formatter for
-the tested Pushword subset, to measure the potential of native Markdown
-parsing. No production PHP class depends on it.
-Installing Pushword or using shared hosting still needs only PHP.
+This crate contains two separate executables, owned by `pushword/core`:
 
-The code lives with its prospective domain owner, `pushword/core`. No production
-transport was duplicated: the test driver invokes this standalone probe in
-batches. A shared Cargo workspace/transport should be extracted only when a
-second production operation is ready, not merely because this experiment exists.
+- `pushword-content-analyzer`: opt-in HTML analysis used by `ContentSplitter`.
+  It prepares heading slots, labels and paragraph views in one HTML parse.
+- `pushword-content-probe`: standalone [Comrak](https://github.com/kivikakk/comrak)
+  Markdown compatibility and performance research. It never renders site content.
+
+PHP remains the default and complete backend, including on shared hosting.
+The native HTML path is hybrid: PHP retains ICU slugging and Knp menu rendering.
+It declines unsupported HTML and uses the existing PHP implementation for it.
+Passing the differential corpus does not prove parity for arbitrary documents.
+
+The domain code and tests stay inside `pushword/core`; the shared PHP process
+transport is `Service/NativeWorker.php`, also used by the static generator's
+minifier. Separate executables keep their deployment and dependencies optional.
+No new Composer package or operation registry is needed.
+
+## Enable native content analysis
+
+Build on the deployment platform or a compatible machine:
+
+```sh
+make -C vendor/pushword/core/rust build
+```
+
+Copy `target/release/pushword-content-analyzer` to a trusted executable path:
+
+```yaml
+pushword:
+    native_content_analyzer: '/opt/pushword/bin/pushword-content-analyzer'
+    native_content_analyzer_timeout: 5.0
+```
+
+Clear the Symfony container cache in the rendering environment. Leave the path
+unset or null on PHP-only hosting. Composer does not install a native binary.
+The existing Twig `mainContentSplit(page)` function now uses this service;
+public rendering, previews and static generation benefit wherever they use it.
+Markdown, Twig functions, media resolution and authorization remain in PHP.
+
+`ContentSplitter::split($html, $page)` returns the existing `SplitContent` object.
+`splitMany([['html' => $html, 'page' => $page], ...])` sends all uncached documents
+in one request, preserving order and independent heading-ID scopes. Inputs are
+already rendered HTML. The existing `<!--break-->`, `<!--stop-toc-->` and
+`<!--end-toc-->` behavior is preserved; there is no new block-marker syntax.
+String, paragraph and menu accessors keep their PHP results and return types.
+
+## Contract and fallback
+
+The child process accepts newline-delimited JSON frames:
+
+```json
+{"version":1,"id":1,"operation":"split_content","documents":[{"html":"<h2>Title</h2><p>Text.</p>","toc":true}]}
+```
+
+The response repeats `version` and `id`, with an ordered `documents` list. Each
+entry is null (declined) or an analysis containing `chapeau`, `segments`,
+`headings`, `paragraphs` and `paragraphs_with_chapeau`. Headings carry `seed`,
+`label`, `level` and `listed`. Segments surround complete heading-ID attribute
+slots, so no artificial marker needs to be inserted into HTML. PHP validates
+the whole response before using or caching any computed result.
+
+Rust uses scraper/html5ever, accepts only balanced canonical fragments whose
+serialization is byte-identical, and bounds traversal depth at 128. Common
+paragraphs, root headings, lists, inline formatting, figures and explicit table
+sections are supported. Foreign elements, scripts, templates, repaired markup,
+nested headings/breaks and ambiguous literal split markers fall back to PHP.
+This is a deliberate eligibility check, not HTML sanitization. In the current
+59-case rendered Markdown corpus, 49 documents use native analysis; all 59
+produce the same complete result through the hybrid service.
+
+Request and response frames, including their newline, are limited to 16 MiB.
+Oversized responses are rejected before writing. The worker is reused until
+Symfony resets the service. Missing executables, disabled `proc_open`, timeout
+or invalid responses cause whole-batch PHP fallback and one warning, with no
+retry until reset. A declined document alone does not disable the worker.
+
+Validated aggregate results (including HTML TOC) and declines are cached in
+`cache.pushword_markdown`, keyed by HTML, TOC presence and protocol cache version.
+Menu objects are rebuilt per call to preserve their independent mutable state.
+Cache failures cannot prevent rendering. The PHP backend also uses an indexed
+unique slugger, avoiding repeated suffix searches while preserving ICU output
+and PHP's numeric-string collision rules.
 
 ## Reproduce
 
@@ -21,19 +93,58 @@ make -C packages/core/rust test
 make -C packages/core/rust audit
 ```
 
-The tests exercise actual Pushword Markdown renderers and compare a 59-case
-corpus byte for byte. They record the unsupported cases and time cached and
-uncached PHP Markdown, the Comrak batch, PHP TOC preparation and search text
-extraction. There is no timing threshold in CI: shared-runner timing is noisy.
-The Markdown probe never supplies rendered content to the site.
+The native analyzer tests compare every accessor and the recursive Knp menu on
+34 fixed HTML cases, the 59 rendered Markdown cases and 160 generated documents.
+Generated supported documents must actually use Rust, so fallback cannot hide
+a native failure. Tests cover batch/cache/reset behavior, malformed and oversized
+protocol frames, large pipe responses, the Markdown/Twig pipeline and a PHP
+subprocess with `proc_open` disabled. The Comrak probe separately records its
+compatibility gaps and measures Markdown, TOC and search extraction.
 
 For comparable timings, pin `composer test-native-core` to one available CPU.
 The test writes `target/content-probe-comrak.json`. The original
 `benchmarks/2026-09-12.json` remains a pulldown-cmark baseline; the current
 Comrak and Tempest measurements are in
 `benchmarks/2026-09-12-comrak-tempest.json`.
-Rust checks run in debug and release, with Clippy/rustfmt/rustdoc and forbidden
-crate-local unsafe code. The weekly repository security job audits the lockfile.
+Rust checks run in debug and release, including two property tests with 512
+cases each, Clippy/rustfmt/rustdoc and forbidden crate-local unsafe code. The
+weekly security job audits the lockfile. PHPStan includes the adapters, tests
+and split benchmark. Continuous fuzzing, Miri and sanitizers have not been run.
+There is no timing threshold in CI: shared-runner timing is noisy.
+
+## Complete split benchmark
+
+```sh
+taskset -c 2 php packages/core/rust/benchmarks/split.php
+```
+
+Choose an available CPU. The committed `benchmarks/2026-09-13-split.json` records
+five shuffled samples of five documents, runtime versions, CPU affinity and
+input/binary/lockfile hashes. Every timed output is checked against PHP. This
+measures the complete string/list result, including HTML TOC and both paragraph
+views, with a reused worker and PHP assembly included. It excludes Markdown,
+Twig, SQL, HTTP and publication. The PHP baseline already uses the improved
+slugger. Cache hits use an in-memory ArrayAdapter and the two backends cache
+different amounts of work; they are not a filesystem-cache latency benchmark.
+
+The older TOC-only table below has a narrower accessor set and the previous
+slugger. Do not compare its timings directly with the aggregate benchmark.
+
+Local medians in milliseconds per document, PHP 8.5.9/ICU 77.1, CPU 2:
+
+| HTML workload | PHP, uncached | Rust, uncached | Rust, batch of 5 | PHP TOC cache hit | Rust aggregate cache hit |
+|---|---:|---:|---:|---:|---:|
+| Short, 421 B | 0.400 | 0.066 | 0.035 | 0.173 | 0.006 |
+| Article, 15.9 KB | 10.756 | 0.944 | 0.934 | 5.020 | 0.015 |
+| Long, 160 KB | 109.097 | 11.631 | 11.605 | 52.447 | 0.077 |
+| 800 identical headings, 161 KB | 108.618 | 10.116 | 10.716 | 53.022 | 0.081 |
+
+On these synthetic inputs the uncached aggregate is about 6–11 times faster.
+The separate slugging microbenchmark drops from 153.7 ms to 0.081 ms for 800
+identical headings; this gain also applies on PHP-only hosting. Neither ratio
+is a whole-page or whole-site speedup.
+
+## Optional Tempest comparison
 
 Tempest is an optional PHP comparison. It is deliberately kept out of the
 Pushword dependency graph because the package currently requires PHP 8.5 and
@@ -99,15 +210,15 @@ different output (for example, heading IDs and attribute serialization) is why
 its corpus score is intentionally reported rather than folded into the
 Pushword-compatible result.
 
-### TOC: investigate the algorithm before replacing the language
+### TOC: algorithmic improvement applies to PHP too
 
 `TOC\UniqueSlugger::makeSlug()` restarts a numeric suffix search for every heading
 and uses `in_array()` over all previously used slugs. Repeated headings amplify
-that work. The controlled unique/repeated comparison separates this effect
-from HTML parsing. A collision-indexed slugger and then a compatible HTML
-transformation are worth testing; preserve existing IDs, numeric-prefix rules,
-transliteration, duplicate handling and stop/end-TOC markers. This turn makes
-no change to that algorithm and does not claim a Rust TOC implementation.
+that work. `IndexedUniqueSlugger` now caches ICU base slugs and indexes used
+suffixes in both backends. A 2,000-assertion comparison with the upstream slugger
+covers collisions, numeric strings, Unicode, empty slugs and reset. The aggregate
+benchmark includes a separate 800-identical-heading slugging measurement to
+distinguish this PHP algorithmic gain from native HTML analysis.
 
 ### Search/scanning and admin
 
@@ -117,7 +228,7 @@ needs to beat that plus transport. Parsing HTML once for headings, links and
 search text could be useful where those consumers really share an input, but
 must preserve their different exclusion and normalization rules.
 
-Admin preview and static generation can share future content acceleration.
+Admin preview and static generation share native analysis when using `mainContentSplit`.
 Admin list/search/forms, SQL, permissions and Twig remain separate workloads;
 these measurements establish no improvement for them or for cached public hits.
 
@@ -125,9 +236,10 @@ these measurements establish no improvement for them or for cached public hits.
 
 The proposed `parseMany()` API in [Tempest Markdown](https://github.com/tempestphp/markdown)
 splits one source document on `<!-- next -->` or `<!-- next: name -->`, parses
-each chunk independently and exposes a named collection. That is a useful
-model for an explicit `MarkdownDocument` to `MarkdownBlock[]` boundary. It is
-not yet in the stable 1.2.2 package, and Pushword currently has no such marker
-syntax: Twig runs first and `SplitContent` operates on rendered HTML. A future
-block format would need an opt-in syntax and a compatibility decision before it
-could affect public content, previews or static generation.
+each chunk independently and exposes a named collection. Pushword adopts the
+idea of one aggregate result, **not these markers or independent Markdown
+chunk parsing**. Its `SplitContent` boundary receives HTML after Markdown/Twig;
+the new `splitMany` batches that operation without changing authors' documents.
+Tempest is therefore retained as a Markdown benchmark, not added as another HTML
+analyzer. Its configurable rules could support a future separate compatibility
+effort, but its measured generic output is not a drop-in Pushword replacement.

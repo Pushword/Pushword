@@ -13,6 +13,7 @@ use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Service\ContentSplitter;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\ContentExtension;
@@ -85,6 +86,7 @@ final class EntityFilterTest extends KernelTestCase
             ->getValue($this->getContentExtension());
 
         self::assertNotNull($tocCache);
+        self::assertInstanceOf(ContentSplitter::class, new ReflectionProperty(ContentExtension::class, 'splitter')->getValue($this->getContentExtension()));
     }
 
     public function testToc(): void

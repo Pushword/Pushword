@@ -1,5 +1,5 @@
 ---
-title: 'PHP files use strict types; optional Rust HTML minification'
+title: 'PHP files use strict types; optional Rust minification and content analysis'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -48,3 +48,9 @@ If you use the provided Rector configuration, copy `vendor/pushword/dev-app/rect
 Static generation can use an experimental Rust minifier; PHP remains the default and requires no new tool.
 **Sites opting into Rust:** build the executable, set `static_generator.native_html_minifier` to its trusted path, then clear the Symfony container cache in the generation environment.
 See [native acceleration](../native-acceleration.md) for installation, fallback and measured limits.
+
+## Optional native content analysis
+
+Content splitting can use Rust while retaining PHP fallback and existing block markers; PHP remains the default.
+**Sites opting into Rust:** build `vendor/pushword/core/rust`, deploy `pushword-content-analyzer`, set `pushword.native_content_analyzer` to its trusted path, then clear the Symfony container cache.
+See [native acceleration](../native-acceleration.md) for the supported HTML boundary and checks.

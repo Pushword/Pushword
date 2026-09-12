@@ -12,6 +12,7 @@ use Masterminds\HTML5;
 use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\Toc\DomCapturingHtml5;
+use Pushword\Core\Service\Toc\IndexedUniqueSlugger;
 use Stringable;
 use Throwable;
 use TOC\MarkupFixer;
@@ -43,14 +44,16 @@ final readonly class SplitContent implements Stringable
     /** @var string[] */
     private array $contentParts;
 
-    public function __construct(string $mainContent, Page $page, private ?CacheItemPoolInterface $cache = null)
+    public function __construct(string $mainContent, Page $page, private ?CacheItemPoolInterface $cache = null, private ?PreparedSplitContent $prepared = null)
     {
-        $content = $mainContent;
-
-        $parsedContent = explode('<!--break-->', $content, 2);
-
-        $this->chapeau = isset($parsedContent[1]) ? $parsedContent[0] : '';
-        $content = $parsedContent[1] ?? $parsedContent[0];
+        if (null !== $this->prepared) {
+            $this->chapeau = $this->prepared->chapeau;
+            $content = $this->prepared->body;
+        } else {
+            $parsedContent = explode('<!--break-->', $mainContent, 2);
+            $this->chapeau = isset($parsedContent[1]) ? $parsedContent[0] : '';
+            $content = $parsedContent[1] ?? $parsedContent[0];
+        }
 
         if (null !== $page->getCustomProperty('toc') || null !== $page->getCustomProperty('tocTitle')) {
             [$content, $intro, $originalContent, $tocHeadings] = $this->parseToc($content);
@@ -71,7 +74,9 @@ final readonly class SplitContent implements Stringable
      */
     private function parseToc(string $content): array
     {
-        [$content, $tocHeadings] = $this->fixHeadings($content);
+        [$content, $tocHeadings] = null === $this->prepared
+            ? $this->fixHeadings($content)
+            : [$content, ''];
 
         // this is a bit crazy
         // Because if there is a wrapper, it will make shit ?!
@@ -128,7 +133,7 @@ final readonly class SplitContent implements Stringable
     private function doFixHeadings(string $content): array
     {
         $html5 = new DomCapturingHtml5();
-        $content = new MarkupFixer($html5)->fix($content); // this work only on good html
+        $content = new MarkupFixer($html5, new IndexedUniqueSlugger())->fix($content);
 
         // MarkupFixer just parsed the whole document to inject the heading ids;
         // harvest the headings from that same DOM so getToc() does not have to
@@ -237,6 +242,10 @@ final readonly class SplitContent implements Stringable
      */
     public function getParagraphs(bool $withChapeau = false): array
     {
+        if (null !== $this->prepared) {
+            return $withChapeau ? $this->prepared->paragraphsWithChapeau : $this->prepared->paragraphs;
+        }
+
         return $this->paragraphsIn($withChapeau ? $this->getBody(true) : $this->content);
     }
 
@@ -274,6 +283,10 @@ final readonly class SplitContent implements Stringable
     {
         if ('' === $this->originalContent) {
             return '';
+        }
+
+        if (null !== $this->prepared) {
+            return $html ? $this->prepared->getToc() : $this->prepared->getMenu();
         }
 
         return $html ? new TocGenerator()->getHtmlMenu($this->tocHeadings, 2)

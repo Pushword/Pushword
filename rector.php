@@ -68,6 +68,7 @@ return RectorConfig::configure()
         PrivatizeFinalClassConstantRector::class,
     ])
     ->withSkip([
+        __DIR__.'/packages/*/rust/target/*',
         'packages/core/src/Twig/AppExtension.php',
         'packages/dev-app/src/Kernel.php',
         'packages/core/src/Site/SiteConfig.php',

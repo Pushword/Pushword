@@ -10,15 +10,16 @@ without `proc_open`, Cargo, FFI or a native executable. No Hugo or Zola dependen
   legacy libxml serialization rules used by PHP after HTML5 parsing.
 - `src/main.rs`: a private stdin/stdout worker; no HTTP server, filesystem writes,
   database access or publication policy.
-- `../src/Generator/HtmlMinification.php`: PHP selection, transport and fallback.
+- `../src/Generator/HtmlMinification.php`: PHP selection and fallback; bounded
+  process transport is shared with content analysis in `Core\Service\NativeWorker`.
 - `tests/corpus.json`: 233 fixed and seeded examples shared by differential tests.
 - `tests/`: the explicit native suite, including actual static publication.
 - `../tests/Generator/HtmlMinificationTest.php`: PHP-only transport/failure tests
   using a small fake executable; normal Pushword tests require no Rust build.
 
-Keep behavioral changes and regressions in this package. If another package
-needs native execution, consider a Cargo workspace and shared transport then;
-do not duplicate this service or create a generic operation registry in advance.
+Keep behavioral changes and regressions in this package. The shared PHP worker
+does not require a combined executable or a generic operation registry; core
+content analysis and static minification remain independently configurable.
 The older `PoC/` is a frozen research history, not required for any command here.
 
 ## Automated Rust checks

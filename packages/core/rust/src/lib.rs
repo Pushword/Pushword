@@ -1,4 +1,5 @@
-//! Experimental Comrak rendering with a tested subset of Pushword's PHP rules.
+//! Optional HTML analysis and experimental Comrak rendering of Pushword content.
+pub mod split;
 use comrak::{
     Arena, Options,
     html::{self, ChildRendering, Context},
