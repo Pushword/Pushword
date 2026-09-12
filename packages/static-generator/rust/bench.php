@@ -20,7 +20,7 @@ $logger = new class extends AbstractLogger {
         throw new RuntimeException('Benchmark refused PHP fallback: '.$message);
     }
 };
-$binary = __DIR__.'/target/release/pushword-html-minifier';
+$binary = getenv('PUSHWORD_BENCH_BINARY') ?: __DIR__.'/target/release/pushword-html-minifier';
 $report = [
     'php' => \PHP_VERSION,
     'libxml' => \LIBXML_DOTTED_VERSION,

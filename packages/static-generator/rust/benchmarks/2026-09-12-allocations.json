@@ -1,0 +1,108 @@
+{
+  "methodology": "One CPU, 1000 documents repeating supplied HTML; 9 interleaved samples. Wall time includes startup, stdin, native work and stdout collection. No PHP adapter. Every output compared byte for byte.",
+  "binary_sha256": {
+    "before": "1589184858685e20f8d6e846ae2c5ff88b38051a77ad5f1486c140896635dfdc",
+    "candidate": "e2ec62eacd18a43c5f5d42a8b9ef56d32cd81f8a721fad8e443f06cf82195c97"
+  },
+  "input_sha256": [
+    "e678cf2d429dcf9ff54643715d124c939fdab4836d36d9844217aaa94cd22992",
+    "a06ed48526621ed3965c59e308c0754f1c112e21f69327353d3cf30d9e24a0de"
+  ],
+  "request_bytes": 14445067,
+  "samples": [
+    {
+      "mode": "candidate",
+      "repeat": 0,
+      "ms": 237.3292929987656
+    },
+    {
+      "mode": "before",
+      "repeat": 0,
+      "ms": 240.428740002244
+    },
+    {
+      "mode": "candidate",
+      "repeat": 1,
+      "ms": 234.54713500177604
+    },
+    {
+      "mode": "before",
+      "repeat": 1,
+      "ms": 242.2045759994944
+    },
+    {
+      "mode": "before",
+      "repeat": 2,
+      "ms": 240.14341899965075
+    },
+    {
+      "mode": "candidate",
+      "repeat": 2,
+      "ms": 235.76959899946814
+    },
+    {
+      "mode": "candidate",
+      "repeat": 3,
+      "ms": 237.38856199997826
+    },
+    {
+      "mode": "before",
+      "repeat": 3,
+      "ms": 239.8731069988571
+    },
+    {
+      "mode": "before",
+      "repeat": 4,
+      "ms": 251.0615079991112
+    },
+    {
+      "mode": "candidate",
+      "repeat": 4,
+      "ms": 240.3268800007936
+    },
+    {
+      "mode": "before",
+      "repeat": 5,
+      "ms": 247.3479270011012
+    },
+    {
+      "mode": "candidate",
+      "repeat": 5,
+      "ms": 237.57930699866847
+    },
+    {
+      "mode": "before",
+      "repeat": 6,
+      "ms": 238.8060499979474
+    },
+    {
+      "mode": "candidate",
+      "repeat": 6,
+      "ms": 234.93024799972773
+    },
+    {
+      "mode": "candidate",
+      "repeat": 7,
+      "ms": 235.72317299840506
+    },
+    {
+      "mode": "before",
+      "repeat": 7,
+      "ms": 243.44713800019235
+    },
+    {
+      "mode": "before",
+      "repeat": 8,
+      "ms": 242.55113000253914
+    },
+    {
+      "mode": "candidate",
+      "repeat": 8,
+      "ms": 243.94220899921493
+    }
+  ],
+  "date": "2026-09-12",
+  "source_base_commit": "ef8e6563954dcbf20afde9c2371bf3ce3c47da7d",
+  "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+  "cpu_model": "AMD Ryzen AI 9 HX 370 w/ Radeon 890M"
+}

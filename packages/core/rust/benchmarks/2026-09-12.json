@@ -1,0 +1,931 @@
+{
+  "php": "8.5.9",
+  "libxml": "2.12.10",
+  "compatibility": {
+    "plain": {
+      "equal": true,
+      "php": "<h1>Caf\u00e9 \ud83e\udd80</h1>\n<p>Hello <strong>world</strong> and <a href=\"/docs\">docs</a>.</p>\n",
+      "rust": "<h1>Caf\u00e9 \ud83e\udd80</h1>\n<p>Hello <strong>world</strong> and <a href=\"/docs\">docs</a>.</p>\n"
+    },
+    "lists": {
+      "equal": true,
+      "php": "<ul>\n<li>first</li>\n<li>second</li>\n</ul>\n<blockquote>\n<p>quoted <strong>text</strong></p>\n</blockquote>\n",
+      "rust": "<ul>\n<li>first</li>\n<li>second</li>\n</ul>\n<blockquote>\n<p>quoted <strong>text</strong></p>\n</blockquote>\n"
+    },
+    "raw_html": {
+      "equal": false,
+      "php": "<section><p>Raw <em>HTML</em>.</p></section>\n",
+      "rust": "<section><p>Raw <em>HTML</em>.</p></section>"
+    },
+    "table": {
+      "equal": false,
+      "php": "<table>\n<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>one</td>\n<td>two</td>\n</tr>\n</tbody>\n</table>\n",
+      "rust": "<table><thead><tr><th>A</th><th>B</th></tr></thead><tbody>\n<tr><td>one</td><td>two</td></tr>\n</tbody></table>\n"
+    },
+    "task_list": {
+      "equal": false,
+      "php": "<ul>\n<li><input checked=\"\" disabled=\"\" type=\"checkbox\"> Done</li>\n<li><input disabled=\"\" type=\"checkbox\"> Pending</li>\n</ul>\n",
+      "rust": "<ul>\n<li><input disabled=\"\" type=\"checkbox\" checked=\"\"/>\nDone</li>\n<li><input disabled=\"\" type=\"checkbox\"/>\nPending</li>\n</ul>\n"
+    },
+    "attributes": {
+      "equal": false,
+      "php": "<p><a class=\"button\" id=\"docs\" href=\"/docs\">link</a></p>\n",
+      "rust": "<p><a href=\"/docs\">link</a>{.button #docs}</p>\n"
+    },
+    "obfuscated_link": {
+      "equal": false,
+      "php": "<p><span data-rot=\"_rknzcyr.pbz\">hidden</span></p>\n",
+      "rust": "<p>#<a href=\"https://example.com\">hidden</a></p>\n"
+    },
+    "email": {
+      "equal": true,
+      "php": "<p><a href=\"mailto:contact@example.com\">contact@example.com</a></p>\n",
+      "rust": "<p><a href=\"mailto:contact@example.com\">contact@example.com</a></p>\n"
+    },
+    "phone": {
+      "equal": true,
+      "php": "<p><a href=\"tel:+33123456789\">tel:+33123456789</a></p>\n",
+      "rust": "<p><a href=\"tel:+33123456789\">tel:+33123456789</a></p>\n"
+    },
+    "image": {
+      "equal": false,
+      "php": "<p><span class=\"glightbox\" data-type=\"image\" data-dwl=\"/media/default/2.webp\" data-rot=\"/zrqvn/qrsnhyg/2.jroc\">\n\n\n\n\n\n                    \n        \n      \n  \n    \n  <picture >\n      <source type=\"image/webp\"\n      srcset=\"/media/xs/2.webp 576w,/media/sm/2.webp 768w,/media/md/2.webp 992w,/media/lg/2.webp 1200w,/media/xl/2.webp 1600w\" sizes=\"100vw\">\n      <img  src=\"/media/default/2.jpg\" class=\"w-full h-auto mb-4\" width=\"1000\" height=\"1000\" alt=\"Demo\" loading=\"lazy\">\n  </picture>\n\n\n\n</span></p>\n",
+      "rust": "<p><img src=\"/media/2.jpg\" alt=\"Demo\" /></p>\n"
+    },
+    "fenced_code": {
+      "equal": true,
+      "php": "<pre><code class=\"language-php\">echo 'hello';\n</code></pre>\n",
+      "rust": "<pre><code class=\"language-php\">echo 'hello';\n</code></pre>\n"
+    }
+  },
+  "samples": [
+    {
+      "size": "short",
+      "mode": "search_text_php",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 0.137566
+    },
+    {
+      "size": "short",
+      "mode": "markdown_rust_batch",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 2.048693
+    },
+    {
+      "size": "short",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 0.025157
+    },
+    {
+      "size": "short",
+      "mode": "markdown_php_uncached",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 6.268545
+    },
+    {
+      "size": "short",
+      "mode": "toc_php_cache_hit",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 0.0377
+    },
+    {
+      "size": "short",
+      "mode": "toc_php_uncached",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 4.264917
+    },
+    {
+      "size": "short",
+      "mode": "toc_php_cache_hit",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 0.029104
+    },
+    {
+      "size": "short",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 0.011983
+    },
+    {
+      "size": "short",
+      "mode": "markdown_php_uncached",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 5.807779
+    },
+    {
+      "size": "short",
+      "mode": "toc_php_uncached",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 4.055187
+    },
+    {
+      "size": "short",
+      "mode": "search_text_php",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 0.127758
+    },
+    {
+      "size": "short",
+      "mode": "markdown_rust_batch",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 2.419012
+    },
+    {
+      "size": "short",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 0.017142
+    },
+    {
+      "size": "short",
+      "mode": "toc_php_uncached",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 4.135977
+    },
+    {
+      "size": "short",
+      "mode": "toc_php_cache_hit",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 0.031198
+    },
+    {
+      "size": "short",
+      "mode": "markdown_php_uncached",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 6.038277
+    },
+    {
+      "size": "short",
+      "mode": "search_text_php",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 0.130192
+    },
+    {
+      "size": "short",
+      "mode": "markdown_rust_batch",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 2.269273
+    },
+    {
+      "size": "short",
+      "mode": "markdown_php_uncached",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 8.064488
+    },
+    {
+      "size": "short",
+      "mode": "toc_php_uncached",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 6.810714
+    },
+    {
+      "size": "short",
+      "mode": "toc_php_cache_hit",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 0.056345
+    },
+    {
+      "size": "short",
+      "mode": "search_text_php",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 0.210802
+    },
+    {
+      "size": "short",
+      "mode": "markdown_rust_batch",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 2.585311
+    },
+    {
+      "size": "short",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 0.03215
+    },
+    {
+      "size": "short",
+      "mode": "toc_php_cache_hit",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 0.044062
+    },
+    {
+      "size": "short",
+      "mode": "markdown_rust_batch",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 2.163035
+    },
+    {
+      "size": "short",
+      "mode": "toc_php_uncached",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 4.130316
+    },
+    {
+      "size": "short",
+      "mode": "search_text_php",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 0.12873
+    },
+    {
+      "size": "short",
+      "mode": "markdown_php_uncached",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 6.124267
+    },
+    {
+      "size": "short",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 0.024024
+    },
+    {
+      "size": "article",
+      "mode": "toc_php_uncached",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 125.480467
+    },
+    {
+      "size": "article",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 0.055103
+    },
+    {
+      "size": "article",
+      "mode": "toc_php_cache_hit",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 0.207236
+    },
+    {
+      "size": "article",
+      "mode": "markdown_php_uncached",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 212.761525
+    },
+    {
+      "size": "article",
+      "mode": "markdown_rust_batch",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 4.936627
+    },
+    {
+      "size": "article",
+      "mode": "search_text_php",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 6.714936
+    },
+    {
+      "size": "article",
+      "mode": "markdown_php_uncached",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 303.806747
+    },
+    {
+      "size": "article",
+      "mode": "toc_php_uncached",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 135.055505
+    },
+    {
+      "size": "article",
+      "mode": "toc_php_cache_hit",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 0.212916
+    },
+    {
+      "size": "article",
+      "mode": "markdown_rust_batch",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 6.171785
+    },
+    {
+      "size": "article",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 0.093865
+    },
+    {
+      "size": "article",
+      "mode": "search_text_php",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 5.084943
+    },
+    {
+      "size": "article",
+      "mode": "markdown_php_uncached",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 185.643819
+    },
+    {
+      "size": "article",
+      "mode": "toc_php_cache_hit",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 0.206775
+    },
+    {
+      "size": "article",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 0.039344
+    },
+    {
+      "size": "article",
+      "mode": "search_text_php",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 4.678096
+    },
+    {
+      "size": "article",
+      "mode": "toc_php_uncached",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 126.478434
+    },
+    {
+      "size": "article",
+      "mode": "markdown_rust_batch",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 4.90615
+    },
+    {
+      "size": "article",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 0.047879
+    },
+    {
+      "size": "article",
+      "mode": "search_text_php",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 4.642991
+    },
+    {
+      "size": "article",
+      "mode": "markdown_rust_batch",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 4.75039
+    },
+    {
+      "size": "article",
+      "mode": "markdown_php_uncached",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 184.589597
+    },
+    {
+      "size": "article",
+      "mode": "toc_php_cache_hit",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 0.200613
+    },
+    {
+      "size": "article",
+      "mode": "toc_php_uncached",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 121.332607
+    },
+    {
+      "size": "article",
+      "mode": "toc_php_cache_hit",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 0.207897
+    },
+    {
+      "size": "article",
+      "mode": "search_text_php",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 4.569734
+    },
+    {
+      "size": "article",
+      "mode": "markdown_rust_batch",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 4.91647
+    },
+    {
+      "size": "article",
+      "mode": "markdown_php_uncached",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 177.267481
+    },
+    {
+      "size": "article",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 0.0481
+    },
+    {
+      "size": "article",
+      "mode": "toc_php_uncached",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 120.488006
+    },
+    {
+      "size": "long",
+      "mode": "search_text_php",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 47.234362
+    },
+    {
+      "size": "long",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 0.31699
+    },
+    {
+      "size": "long",
+      "mode": "toc_php_uncached",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 1189.359452
+    },
+    {
+      "size": "long",
+      "mode": "markdown_php_uncached",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 1877.805034
+    },
+    {
+      "size": "long",
+      "mode": "markdown_rust_batch",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 34.398705
+    },
+    {
+      "size": "long",
+      "mode": "toc_php_cache_hit",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 1.896409
+    },
+    {
+      "size": "long",
+      "mode": "search_text_php",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 45.655063
+    },
+    {
+      "size": "long",
+      "mode": "toc_php_cache_hit",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 1.885639
+    },
+    {
+      "size": "long",
+      "mode": "markdown_rust_batch",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 35.534279
+    },
+    {
+      "size": "long",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 0.390206
+    },
+    {
+      "size": "long",
+      "mode": "toc_php_uncached",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 1180.120138
+    },
+    {
+      "size": "long",
+      "mode": "markdown_php_uncached",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 1909.469021
+    },
+    {
+      "size": "long",
+      "mode": "toc_php_uncached",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 1177.907299
+    },
+    {
+      "size": "long",
+      "mode": "markdown_php_uncached",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 1853.80403
+    },
+    {
+      "size": "long",
+      "mode": "markdown_rust_batch",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 34.27254
+    },
+    {
+      "size": "long",
+      "mode": "search_text_php",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 45.768274
+    },
+    {
+      "size": "long",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 0.291262
+    },
+    {
+      "size": "long",
+      "mode": "toc_php_cache_hit",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 1.933108
+    },
+    {
+      "size": "long",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 0.31189
+    },
+    {
+      "size": "long",
+      "mode": "markdown_php_uncached",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 1884.336069
+    },
+    {
+      "size": "long",
+      "mode": "search_text_php",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 45.633934
+    },
+    {
+      "size": "long",
+      "mode": "markdown_rust_batch",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 35.654923
+    },
+    {
+      "size": "long",
+      "mode": "toc_php_cache_hit",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 1.850594
+    },
+    {
+      "size": "long",
+      "mode": "toc_php_uncached",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 1170.542164
+    },
+    {
+      "size": "long",
+      "mode": "toc_php_uncached",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 1172.798863
+    },
+    {
+      "size": "long",
+      "mode": "search_text_php",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 45.408675
+    },
+    {
+      "size": "long",
+      "mode": "toc_php_cache_hit",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 1.787596
+    },
+    {
+      "size": "long",
+      "mode": "markdown_rust_batch",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 32.578168
+    },
+    {
+      "size": "long",
+      "mode": "markdown_php_uncached",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 1962.509237
+    },
+    {
+      "size": "long",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 0.391258
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 0.275743
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "toc_php_uncached",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 4590.158937
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_rust_batch",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 34.510022
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_php_uncached",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 1830.221283
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "search_text_php",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 44.87917
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "toc_php_cache_hit",
+      "repeat": 0,
+      "documents": 20,
+      "ms": 2.190346
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "search_text_php",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 44.618805
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_rust_batch",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 35.449871
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 0.331087
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_php_uncached",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 1851.979634
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "toc_php_cache_hit",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 2.196508
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "toc_php_uncached",
+      "repeat": 1,
+      "documents": 20,
+      "ms": 4463.050301
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_rust_batch",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 40.52736
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 0.434839
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "toc_php_cache_hit",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 2.027713
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "search_text_php",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 53.14948
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_php_uncached",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 2007.280025
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "toc_php_uncached",
+      "repeat": 2,
+      "documents": 20,
+      "ms": 4517.062416
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "toc_php_cache_hit",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 1.797004
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 0.266686
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "search_text_php",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 44.975048
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "toc_php_uncached",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 4616.255883
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_php_uncached",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 1903.89598
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_rust_batch",
+      "repeat": 3,
+      "documents": 20,
+      "ms": 31.383284
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "search_text_php",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 45.154361
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "toc_php_uncached",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 4602.05218
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_php_uncached",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 1900.100145
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_php_cache_hit",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 0.283668
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "toc_php_cache_hit",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 1.753413
+    },
+    {
+      "size": "duplicate_headings",
+      "mode": "markdown_rust_batch",
+      "repeat": 4,
+      "documents": 20,
+      "ms": 34.085883
+    }
+  ],
+  "inputs": {
+    "short": {
+      "markdown_bytes": 244,
+      "html_bytes": 398,
+      "markdown_sha256": "4a74a00a13ccfbf77e9bfc1b3666a29d23bedb49ab14d1dc3dab0d81e450a2b2"
+    },
+    "article": {
+      "markdown_bytes": 9830,
+      "html_bytes": 15990,
+      "markdown_sha256": "3e8f134e6a628bab9b42f592a7f76677a2d5479aada178d5d53308a66f276200"
+    },
+    "long": {
+      "markdown_bytes": 99090,
+      "html_bytes": 160690,
+      "markdown_sha256": "73c8932fda6651becfb30c8de40527b2d89b81ebe5e073bbc2108adbe2b0a83f"
+    },
+    "duplicate_headings": {
+      "markdown_bytes": 97600,
+      "html_bytes": 159200,
+      "markdown_sha256": "467bfdca8842b58b8dc44f29b36a9e6a12e816416777efc116f6d17542e51a0b"
+    }
+  },
+  "date": "2026-09-12",
+  "source_base_commit": "ef8e6563954dcbf20afde9c2371bf3ce3c47da7d",
+  "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+  "binary_sha256": "1052c110e294965d32d8fd34d4ebce32edcce66d9360750dfc309440a9eeddca",
+  "cpu_model": "AMD Ryzen AI 9 HX 370 w/ Radeon 890M",
+  "methodology": "One CPU affinity; 5 shuffled samples of 20 documents per mode/input. Synthetic CommonMark subset with exact PHP/Rust parity. Converters preconstructed, PHP uncached vs warmed ArrayAdapter; Rust starts once per batch including JSON/validation. TOC SplitContent preparation/getBody only. Excludes fixture setup, Twig, database queries, final TOC menu, HTTP, writes, full indexing. Unique and duplicate heading cases separated. No CI timing threshold."
+}

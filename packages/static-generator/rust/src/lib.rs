@@ -2,7 +2,7 @@
 use ego_tree::NodeRef;
 use regex::Regex;
 use scraper::{ElementRef, Html, Node, Selector};
-use std::sync::LazyLock;
+use std::{borrow::Cow, sync::LazyLock};
 
 static COMMENTS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?s)<!--(.*?)-->").unwrap());
 static NEWLINES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[ \t]*\n[ \t\r\n\x0c]*").unwrap());
@@ -20,9 +20,30 @@ static PROTECTED: LazyLock<Vec<(&str, Selector)>> = LazyLock::new(|| {
 });
 
 fn escape_text(text: &str) -> String {
-    text.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
+    let mut output = String::with_capacity(text.len());
+    append_escaped_text(text, &mut output);
+    output
+}
+
+fn append_escaped_text(mut text: &str, output: &mut String) {
+    while let Some(index) = text.find(['&', '<', '>']) {
+        output.push_str(&text[..index]);
+        output.push_str(match text.as_bytes()[index] {
+            b'&' => "&amp;",
+            b'<' => "&lt;",
+            _ => "&gt;",
+        });
+        // Matched ASCII characters always sit on UTF-8 character boundaries.
+        text = &text[index + 1..];
+    }
+    output.push_str(text);
+}
+
+fn replace_whitespace(regex: &Regex, html: String, replacement: &str) -> String {
+    match regex.replace_all(&html, replacement) {
+        Cow::Borrowed(_) => html,
+        Cow::Owned(replaced) => replaced,
+    }
 }
 
 fn escape_uri(value: &str) -> String {
@@ -128,7 +149,7 @@ fn append_children(parent: NodeRef<'_, Node>, raw_text: bool, output: &mut Strin
                 if raw_text {
                     output.push_str(text);
                 } else {
-                    output.push_str(&escape_text(text));
+                    append_escaped_text(text, output);
                 }
             }
             Node::Comment(comment) => {
@@ -154,7 +175,8 @@ pub fn minify(html: &str) -> String {
     }
 
     let document = Html::parse_document(&stripped);
-    let mut output = String::from("<!DOCTYPE html>");
+    let mut output = String::with_capacity(stripped.len());
+    output.push_str("<!DOCTYPE html>");
     serialize(document.root_element(), &mut output);
     let mut protected = Vec::new();
     // Keep PHP's replacement order, including nested tags and repeated markup.
@@ -167,10 +189,10 @@ pub fn minify(html: &str) -> String {
         }
     }
 
-    output = NEWLINES.replace_all(&output, " ").into_owned();
-    output = HORIZONTAL.replace_all(&output, " ").into_owned();
-    output = BEFORE_BLOCK.replace_all(&output, "$1").into_owned();
-    output = AFTER_BLOCK.replace_all(&output, "$1").into_owned();
+    output = replace_whitespace(&NEWLINES, output, " ");
+    output = replace_whitespace(&HORIZONTAL, output, " ");
+    output = replace_whitespace(&BEFORE_BLOCK, output, "$1");
+    output = replace_whitespace(&AFTER_BLOCK, output, "$1");
     for (placeholder, original) in protected {
         output = output.replace(&placeholder, &original);
     }
@@ -179,7 +201,18 @@ pub fn minify(html: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::minify;
+    use super::{escape_text, minify};
+    use proptest::prelude::*;
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(512))]
+
+        #[test]
+        fn streaming_escape_matches_the_original_replacements(text in ".{0,2048}") {
+            let expected = text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+            prop_assert_eq!(escape_text(&text), expected);
+        }
+    }
 
     #[test]
     fn fragments_only_lose_comments() {

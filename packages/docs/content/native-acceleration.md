@@ -90,7 +90,7 @@ serialization compatibility rules. It uses an HTML parser library, not a
 complete external site generator.
 
 Tests compare exact PHP/Rust outputs for fixed and generated cases and two real
-development-site generation. They cover UTF-8, inline spacing, namespaces, URI
+development-site builds. They cover UTF-8, inline spacing, namespaces, URI
 attributes, code blocks, templates and native failure handling. Testing PHP with
 `proc_open` disabled verifies the shared-hosting path. The adapter and Rust binary
 are experimental; regular PHP tests require no Rust tooling. The separate native
@@ -108,6 +108,37 @@ Even a large gain on that component therefore saves only a fraction of the full
 build. Whole-operation measurements must include PHP serialization, native
 startup, processing and result validation. The PoC records these costs instead
 of reporting only a Rust inner-loop timing.
+
+Rust checks now include debug/release tests, three property tests with 512 cases
+per profile, Clippy and rustdoc with warnings denied, rustfmt, forbidden
+crate-local unsafe code and a weekly RustSec dependency audit. This supplements
+the PHP parity, protocol failure and shared-hosting tests. Miri, sanitizers and
+continuous fuzzing have not been run; the crate README records the exact scope.
+
+## Measured follow-up exploration
+
+`packages/core/rust/` contains a standalone content-processing probe. It is not
+a runtime dependency and does not enable Rust for Markdown. Its README and
+committed raw samples document the measurements and compatibility gaps.
+
+- A synthetic 9.8 KB CommonMark subset takes about 9.28 ms per document in the
+  existing uncached PHP converter versus 0.246 ms in a Rust batch, including
+  startup/JSON/validation. The in-memory PHP cache hit takes 0.0024 ms: keep the
+  cache and investigate acceleration of misses.
+- Only 5 of 11 broader Markdown examples are byte-identical. Attributes,
+  obfuscated links, media rendering and other extension behaviors must be
+  preserved before any activation. Generic CommonMark is not a replacement.
+- TOC preparation on 800 unique headings takes about 59 ms; 800 identical
+  headings take 230 ms. The current slugger repeatedly searches a list of used
+  IDs. Isolate that algorithmic cost before deciding which HTML work to port.
+- Search text extraction takes about 0.234 ms on the article. A native standalone
+  operation must beat that plus transport; investigate shared HTML parsing only
+  where consumers actually process the same content.
+
+These are single-CPU component probes, not public/admin request benchmarks.
+The next candidate is a compatible native Markdown parse stage, measuring the
+cost of passing parser events back to PHP before choosing whether to keep
+Pushword-aware renderers there or port them with explicit resolved inputs.
 
 ## Subsequent port candidates
 

@@ -15,3 +15,9 @@ serde_json = "1"
 
 [profile.release]
 lto = "thin"
+
+[dev-dependencies]
+proptest = "1.11"
+
+[lints.rust]
+unsafe_code = "forbid"

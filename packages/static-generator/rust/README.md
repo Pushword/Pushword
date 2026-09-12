@@ -21,6 +21,31 @@ needs native execution, consider a Cargo workspace and shared transport then;
 do not duplicate this service or create a generic operation registry in advance.
 The older `PoC/` is a frozen research history, not required for any command here.
 
+## Automated Rust checks
+
+`make test` runs debug **and release** tests, Clippy on all targets with warnings
+denied, rustfmt, and documentation generation with warnings denied. Crate-local
+`unsafe` code is forbidden by Cargo lint configuration (this does not forbid
+unsafe implementations inside third-party dependencies).
+
+Three property tests run 512 generated cases each per profile: protected Unicode
+code/whitespace, malformed markup assembled from tags and arbitrary text, and
+the optimized HTML escape against the original replacement rules. Proptest
+shrinks failures and records a replay seed. This supplements the PHP differential
+corpus and publication tests; it is not continuous fuzzing or a coverage target.
+
+`make audit` runs [cargo-audit](https://github.com/rustsec/rustsec/tree/main/cargo-audit)
+against the pinned lockfile with warnings denied. Install its checked tool version
+with `cargo install cargo-audit --version 0.22.2 --locked`. The repository security
+workflow audits both Rust crates on pushes, pull requests and its weekly schedule;
+an unavailable advisory database or a reported warning fails the job. The check
+identifies known dependency advisories, not all possible defects.
+
+On 2026-09-12, both lockfiles passed against advisory DB commit
+`b50980aad8b8f14f77e25a97b32dd94bf008b0af` (1,243 advisories), without suppressions.
+No Miri, sanitizer run, continuous fuzzing or cross-platform binary validation
+has been performed. These remain separate checks before widening distribution.
+
 ## Build and enable
 
 From a Pushword checkout with Composer dependencies installed:
@@ -116,3 +141,23 @@ a 38% reduction would save around 4.6% of total time if other costs stayed equal
 No gain is established for single-page requests, dynamic page rendering or admin
 forms. Test representative downstream HTML and measure whole builds before
 enabling the experiment on a production deployment.
+
+## Allocation experiment
+
+The serializer now appends escaped text directly to its destination and reserves
+the initial HTML buffer. Whitespace passes reuse the owned input when a regex
+finds no replacement. These changes preserve the PHP serialization contract.
+The generated escape test also compares with the original three replacements.
+
+An interleaved experiment on the same two pages (1,000 documents, one CPU,
+nine samples per binary) measured 242.20 ms before and 237.33 ms after: about
+2.0% less time in the native process, with eight of nine paired samples faster.
+This includes native startup and stdin/stdout collection, but excludes the PHP
+adapter. Separate PHP-adapter runs did not establish a reliable additional gain;
+do not treat this as a further whole-build speedup.
+
+See `benchmarks/2026-09-12-allocations.json` for raw samples and binary hashes.
+Reproduce the native-only comparison on Linux with
+`python3 packages/static-generator/rust/compare.py baseline-binary candidate-binary page.html another.html`.
+To compare a previously built binary through the PHP adapter, set
+`PUSHWORD_BENCH_BINARY=/path/to/baseline` when invoking `bench.php`.

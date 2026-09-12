@@ -161,6 +161,10 @@ jobs:
         if: matrix.node == 24
         run: make -C packages/static-generator/rust test
 
+      - name: Check Rust content exploration and PHP compatibility boundaries
+        if: matrix.node == 24
+        run: make -C packages/core/rust test
+
       - name: Execute tests
         # The 'serial' group holds tests that need exclusive access to the shared
         # public/media variant dir (not per-worker isolatable); run them sequentially

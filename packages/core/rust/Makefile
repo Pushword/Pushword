@@ -9,8 +9,7 @@ test: build
 	cargo clippy --locked --all-targets -- -D warnings
 	cargo fmt --check
 	RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps
-	cd ../../.. && composer test-native-static-generator
-	php -d disable_functions=proc_open tests/shared-hosting.php
+	cd ../../.. && composer test-native-core
 
 audit:
 	cargo audit --deny warnings

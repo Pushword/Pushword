@@ -12,6 +12,22 @@ permissions:
   contents: read
 
 jobs:
+  rust-dependency-audit:
+    name: Rust dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Install dependency auditor
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          cargo install cargo-audit --version 0.22.2 --locked
+      - name: Audit all Rust lockfiles
+        run: |
+          make -C packages/static-generator/rust audit
+          make -C packages/core/rust audit
+
   sast:
     name: JavaScript SAST
     runs-on: ubuntu-latest

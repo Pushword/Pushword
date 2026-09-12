@@ -31,6 +31,7 @@ parameters:
         - packages/conversation/tests
         - packages/core/src
         - packages/core/tests
+        - packages/core/rust/tests
         - packages/flat/src
         - packages/flat/tests
         - packages/installer/src
