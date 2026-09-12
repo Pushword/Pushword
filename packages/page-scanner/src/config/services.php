@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Pushword\Api\Controller\ApiControllerInterface;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\PageScanner\Controller\Api\LinkGraphApiController;

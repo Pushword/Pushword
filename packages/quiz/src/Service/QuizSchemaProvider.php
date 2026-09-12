@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Quiz\Service;
 
 use function Safe\file_get_contents;

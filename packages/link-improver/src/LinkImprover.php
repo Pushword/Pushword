@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\LinkImprover;
 
 use Piedweb\LinksImprover\LinksImprover as ImproverEngine;

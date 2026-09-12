@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\PageScanner\Controller;
 
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;

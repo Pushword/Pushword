@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Newsletter\Utm;
 
 use Pushword\Core\Component\EntityFilter\Filter\HtmlUnpublishedLink;

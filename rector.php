@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUselessReturnTagRector;
@@ -10,12 +12,11 @@ use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
 use Rector\PHPUnit\CodeQuality\Rector\Class_\PreferPHPUnitThisCallRector;
 use Rector\PHPUnit\CodeQuality\Rector\FuncCall\AssertFuncCallToPHPUnitAssertRector;
 use Rector\PHPUnit\CodeQuality\Rector\MethodCall\StringCastAssertStringContainsStringRector;
-use Rector\PHPUnit\CodeQuality\Rector\StmtsAwareInterface\DeclareStrictTypesTestsRector;
 use Rector\Privatization\Rector\ClassConst\PrivatizeFinalClassConstantRector;
 use Rector\Privatization\Rector\ClassMethod\PrivatizeFinalClassMethodRector;
 use Rector\Privatization\Rector\Property\PrivatizeFinalClassPropertyRector;
 use Rector\Symfony\CodeQuality\Rector\Class_\ControllerMethodInjectionToConstructorRector;
-use Rector\TypeDeclaration\Rector\StmtsAwareInterface\SafeDeclareStrictTypesRector;
+use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
 
 $paths = [
     __DIR__.'/packages',
@@ -61,6 +62,7 @@ return RectorConfig::configure()
         DoctrineSetList::TYPED_COLLECTIONS_DOCBLOCKS,
     ])
     ->withRules([
+        DeclareStrictTypesRector::class,
         PrivatizeFinalClassPropertyRector::class,
         PrivatizeFinalClassMethodRector::class,
         PrivatizeFinalClassConstantRector::class,
@@ -73,8 +75,6 @@ return RectorConfig::configure()
         FlipTypeControlToUseExclusiveTypeRector::class,
         RemoveUselessReturnTagRector::class,
         RemoveNonExistingVarAnnotationRector::class,
-        SafeDeclareStrictTypesRector::class,
-        DeclareStrictTypesTestsRector::class,
         PreferPHPUnitThisCallRector::class,
         AssertFuncCallToPHPUnitAssertRector::class,
         StringCastAssertStringContainsStringRector::class,

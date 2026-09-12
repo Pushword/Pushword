@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\AdminBlockEditor\DependencyInjection;
 
 use Pushword\Core\DependencyInjection\ExtensionTrait;

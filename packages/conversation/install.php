@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Pushword\Conversation\PushwordConversationBundle;
 use Pushword\Installer\PostInstall;
 

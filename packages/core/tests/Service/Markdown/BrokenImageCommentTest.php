@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Tests\Service\Markdown;
 
 use PHPUnit\Framework\TestCase;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Conversation\Tests\Translation;
 
 use Pushword\Conversation\Translation\TranslationException;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Twig;
 
 use Psr\Cache\CacheItemPoolInterface;

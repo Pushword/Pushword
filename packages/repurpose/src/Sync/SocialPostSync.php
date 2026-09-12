@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Repurpose\Sync;
 
 use Doctrine\ORM\EntityManagerInterface;

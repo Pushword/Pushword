@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Repository\DQL;
 
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;

@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'PHP files use strict types'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`, `pushword/dev-app`
+
+## PHP strict types
+
+Pushword PHP files now declare strict types, and the shared PHP-CS-Fixer rules preserve existing declarations.
+**Sites with custom PHP extensions:** run your tests and correct scalar type mismatches in overrides, callbacks, and service integrations.
+If you use the provided Rector configuration, copy `vendor/pushword/dev-app/rector.php` into your project, preserving local customizations, to enable strict-type declarations.

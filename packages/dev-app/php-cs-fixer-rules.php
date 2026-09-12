@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     '@PER-CS2.0:risky' => true,
     '@PSR2' => true,
     '@DoctrineAnnotation' => true,
     '@Symfony' => true,
     '@Symfony:risky' => true,
+    'declare_strict_types' => false,
     'array_syntax' => ['syntax' => 'short'],
     'array_indentation' => true,
     'trim_array_spaces' => true,

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\LinkImprover\Tests;
 
 use PHPUnit\Framework\Attributes\DataProvider;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\AdminBlockEditor\Twig;
 
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;

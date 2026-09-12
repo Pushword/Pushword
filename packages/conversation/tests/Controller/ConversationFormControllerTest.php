@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Conversation\Tests\Controller;
 
 use PHPUnit\Framework\Attributes\Group;

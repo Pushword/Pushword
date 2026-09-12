@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Flat\Messenger;
 
 use Psr\Log\LoggerInterface;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Quiz\Tests\Controller\Api;
 
 use Doctrine\ORM\EntityManagerInterface;

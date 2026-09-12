@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Search\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;

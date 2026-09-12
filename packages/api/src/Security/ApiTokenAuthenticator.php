@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Api\Security;
 
 use Pushword\Core\Repository\UserRepository;

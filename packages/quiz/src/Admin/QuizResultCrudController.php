@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Quiz\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Admin\Tests\Form\Type;
 
 use PHPUnit\Framework\TestCase;

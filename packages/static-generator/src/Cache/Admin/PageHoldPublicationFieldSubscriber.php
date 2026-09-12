@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\StaticGenerator\Cache\Admin;
 
 use Pushword\Admin\Controller\PageCrudController;

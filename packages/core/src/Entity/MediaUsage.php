@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Entity;
 
 use Doctrine\DBAL\Types\Types;

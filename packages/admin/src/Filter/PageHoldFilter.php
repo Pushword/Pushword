@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Admin\Filter;
 
 use Doctrine\ORM\QueryBuilder;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Image\License;
 
 use Pushword\Core\Entity\Media;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Query\Search;
 
 use Pushword\Core\Query\Condition;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Quiz\Twig\TokenParser;
 
 use Pushword\Quiz\Twig\Node\QuizNode;

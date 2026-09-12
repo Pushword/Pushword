@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Newsletter\Trigger;
 
 use Pushword\Newsletter\Entity\Automation;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\AdminBlockEditor\Editor;
 
 use Symfony\Contracts\Translation\TranslatorInterface;

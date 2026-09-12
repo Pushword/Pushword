@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Newsletter\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;

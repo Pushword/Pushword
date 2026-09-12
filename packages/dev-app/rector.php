@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUselessReturnTagRector;
 use Rector\DeadCode\Rector\Node\RemoveNonExistingVarAnnotationRector;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
+use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
 
 $paths = [
     __DIR__.'/src',
@@ -41,6 +44,9 @@ return RectorConfig::configure()
         doctrine: true,
         phpunit: true,
     )
+    ->withRules([
+        DeclareStrictTypesRector::class,
+    ])
     ->withSkip([
         NullToStrictStringFuncCallArgRector::class,
         FlipTypeControlToUseExclusiveTypeRector::class,

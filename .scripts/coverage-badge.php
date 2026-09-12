@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Emits shields.io endpoint JSON for the line coverage of a clover report.
  * CI pushes the output to the `badges` branch; the README badge reads it via

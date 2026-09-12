@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Provider\AdminContextProvider;
 use Pushword\Admin\Controller\AdminMenu;

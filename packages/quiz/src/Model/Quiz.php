@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Quiz\Model;
 
 use Symfony\Component\Validator\Constraints as Assert;

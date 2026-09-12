@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Flat\Tests\DependencyInjection;
 
 use PHPUnit\Framework\Attributes\Group;

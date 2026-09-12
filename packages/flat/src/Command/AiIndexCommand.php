@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Flat\Command;
 
 use League\Csv\Writer as CsvWriter;

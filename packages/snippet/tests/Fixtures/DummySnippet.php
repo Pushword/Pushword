@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Snippet\Tests\Fixtures;
 
 use Pushword\Snippet\Attribute\AsSnippet;

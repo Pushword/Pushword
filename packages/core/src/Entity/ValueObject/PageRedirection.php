@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Entity\ValueObject;
 
 use function Safe\preg_match;

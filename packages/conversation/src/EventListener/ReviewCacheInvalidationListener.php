@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Conversation\EventListener;
 
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;

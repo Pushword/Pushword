@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Snippet\Editor;
 
 use Pushword\AdminBlockEditor\Editor\EditorJsToolProviderInterface;

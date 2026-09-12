@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Admin\Tests\Filter;
 
 use PHPUnit\Framework\Attributes\Group;

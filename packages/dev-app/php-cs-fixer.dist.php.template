@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 // Template — `packages/core/install.php` copies this to `.php-cs-fixer.dist.php` at the
 // root of an installed project. Its paths are that project's, not the monorepo's, so it
 // must not be named `*.php`: the monorepo's own php-cs-fixer, PHPStan and Rector all

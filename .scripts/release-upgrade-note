@@ -1,6 +1,8 @@
 #!/usr/bin/env php
 <?php
 
+declare(strict_types=1);
+
 /**
  * Turns packages/docs/content/upgrade/next-release.md into the released note
  * upgrade/<version>.md, adds its row to the table in upgrade.md, and resets

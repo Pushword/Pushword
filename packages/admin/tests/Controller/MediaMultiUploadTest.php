@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Admin\Tests\Controller;
 
 use Pushword\Admin\Tests\AbstractAdminTestClass;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use Pushword\AdminBlockEditor\Editor\EditorJsToolProviderInterface;
 use Pushword\Api\Controller\ApiControllerInterface;

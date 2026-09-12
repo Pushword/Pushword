@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * FrankenPHP with Caddy Manager Script
  * Usage: php Caddy.php [start|stop|restart|status].

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Tests\Image;
 
 use League\Flysystem\Filesystem as Flysystem;

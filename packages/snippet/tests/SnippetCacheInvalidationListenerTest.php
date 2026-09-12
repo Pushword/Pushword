@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Snippet\Tests;
 
 use PHPUnit\Framework\MockObject\MockObject;

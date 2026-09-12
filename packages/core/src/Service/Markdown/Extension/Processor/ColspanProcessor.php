@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Service\Markdown\Extension\Processor;
 
 use League\CommonMark\Event\DocumentParsedEvent;

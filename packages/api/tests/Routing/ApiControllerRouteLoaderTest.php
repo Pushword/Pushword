@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Api\Tests\Routing;
 
 use PHPUnit\Framework\TestCase;

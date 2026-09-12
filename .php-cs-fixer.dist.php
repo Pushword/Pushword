@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use PhpCsFixer\Config;
 use Symfony\Component\Finder\Finder;
 

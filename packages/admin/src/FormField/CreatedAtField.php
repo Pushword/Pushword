@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Admin\FormField;
 
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;

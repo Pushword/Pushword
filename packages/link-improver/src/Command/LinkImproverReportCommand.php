@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\LinkImprover\Command;
 
 use Pushword\Core\Command\AgentOutputTrait;

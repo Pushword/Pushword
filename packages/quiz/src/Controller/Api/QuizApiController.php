@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Quiz\Controller\Api;
 
 use Pushword\Api\Controller\AbstractApiController;

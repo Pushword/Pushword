@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Quiz\Command;
 
 use Pushword\Quiz\Service\QuizSchemaProvider;

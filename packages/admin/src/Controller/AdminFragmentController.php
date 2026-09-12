@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Admin\Controller;
 
 use Pushword\Core\Entity\Page;

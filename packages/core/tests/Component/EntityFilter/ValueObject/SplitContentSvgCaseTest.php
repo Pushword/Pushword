@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Tests\Component\EntityFilter\ValueObject;
 
 use PHPUnit\Framework\TestCase;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Scheduler;
 
 use Symfony\Component\Console\Messenger\RunCommandMessage;

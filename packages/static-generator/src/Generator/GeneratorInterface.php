@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\StaticGenerator\Generator;
 
 use Pushword\StaticGenerator\StaticAppGenerator;

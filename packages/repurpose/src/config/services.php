@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use Pushword\Api\Controller\ApiControllerInterface;
 use Pushword\Core\PushwordCoreBundle;

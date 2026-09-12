@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Tests\Image\License;
 
 use Pushword\Core\Image\License\Bytes;

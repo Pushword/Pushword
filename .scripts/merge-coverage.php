@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Folds the --coverage-php dumps written by .scripts/test-coverage's three
  * batches into a single HTML + clover report.

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\LinkImprover\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
