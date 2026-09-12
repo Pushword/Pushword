@@ -18,6 +18,7 @@ packages/admin-monaco-editor/dist
 *.*~
 
 # dev tool
+/PoC/
 .twigstan
 .phpunit.result.cache
 .php_cs.cache
