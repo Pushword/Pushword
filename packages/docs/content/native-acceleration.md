@@ -121,13 +121,14 @@ continuous fuzzing have not been run; the crate README records the exact scope.
 a runtime dependency and does not enable Rust for Markdown. Its README and
 committed raw samples document the measurements and compatibility gaps.
 
-- A synthetic 9.8 KB CommonMark subset takes about 9.28 ms per document in the
-  existing uncached PHP converter versus 0.246 ms in a Rust batch, including
-  startup/JSON/validation. The in-memory PHP cache hit takes 0.0024 ms: keep the
-  cache and investigate acceleration of misses.
-- Only 5 of 11 broader Markdown examples are byte-identical. Attributes,
-  obfuscated links, media rendering and other extension behaviors must be
-  preserved before any activation. Generic CommonMark is not a replacement.
+- A synthetic 9.8 KB CommonMark subset takes about 8.09 ms per document in the
+  existing uncached PHP converter versus 0.408 ms in the Comrak batch, including
+  startup/JSON/validation. The in-memory PHP cache hit takes 0.0026 ms: keep
+  the cache and investigate acceleration of misses.
+- The current Comrak formatter is byte-identical on 49 of 59 corpus cases.
+  Attributes, dynamic links, media/notices, Unicode IDs and table edge cases
+  remain explicit gaps before any activation. Generic CommonMark is not a
+  replacement.
 - TOC preparation on 800 unique headings takes about 59 ms; 800 identical
   headings take 230 ms. The current slugger repeatedly searches a list of used
   IDs. Isolate that algorithmic cost before deciding which HTML work to port.
@@ -136,6 +137,12 @@ committed raw samples document the measurements and compatibility gaps.
   where consumers actually process the same content.
 
 These are single-CPU component probes, not public/admin request benchmarks.
+The optional Tempest benchmark uses the same corpus and workloads. Tempest
+1.2.2 has no `parseMany()` method; [PR #24](https://github.com/tempestphp/markdown/pull/24)
+proposes named chunks split by `<!-- next -->` markers. This is a useful model
+for a future explicit Markdown block collection, but Pushword currently splits
+rendered HTML after Twig, so adopting that marker would be a separate,
+backward-compatible format decision.
 The next candidate is a compatible native Markdown parse stage, measuring the
 cost of passing parser events back to PHP before choosing whether to keep
 Pushword-aware renderers there or port them with explicit resolved inputs.

@@ -7,7 +7,7 @@ license = "MIT"
 description = "Non-production probe of native Pushword content processing"
 
 [dependencies]
-pulldown-cmark = "0.13"
+comrak = { version = "0.55", default-features = false, features = ["attributes"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

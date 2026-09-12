@@ -8,6 +8,7 @@ use Pushword\Core\Component\EntityFilter\ValueObject\SplitContent;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\MarkdownParser;
+use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\Search\Service\TextExtractor;
@@ -22,7 +23,7 @@ final class ContentProbeTest extends KernelTestCase
     public function testProbeProtocolBoundaries(): void
     {
         self::assertSame([], $this->native([]));
-        foreach (['not JSON', "\xff", '{"documents":[null]}', '{"documents":[],"unknown":true}', str_repeat('x', 16 * 1024 * 1024 + 1)] as $input) {
+        foreach (['not JSON', "\xff", '{"documents":[null]}', '{"documents":[],"unknown":true}', '{"documents":[],"fenced_code_pre_class":null}', '{"documents":[],"fenced_code_pre_class":[]}', str_repeat('x', 16 * 1024 * 1024 + 1)] as $input) {
             $process = new Process([__DIR__.'/../target/release/pushword-content-probe'], input: $input);
             $process->run();
             self::assertFalse($process->isSuccessful());
@@ -41,29 +42,28 @@ final class ContentProbeTest extends KernelTestCase
         $parser = new MarkdownParser($container->get(LinkProvider::class), $container->get(MediaExtension::class), $sites, $container->get(Environment::class));
         $cached = new MarkdownParser($container->get(LinkProvider::class), $container->get(MediaExtension::class), $sites, $container->get(Environment::class), new ArrayAdapter());
 
-        $cases = [
-            'plain' => "# Café 🦀\n\nHello **world** and [docs](/docs).",
-            'lists' => "- first\n- second\n\n> quoted **text**",
-            'raw_html' => '<section><p>Raw <em>HTML</em>.</p></section>',
-            'table' => "| A | B |\n|---|---|\n| one | two |",
-            'task_list' => "- [x] Done\n- [ ] Pending",
-            'attributes' => '[link](/docs){.button #docs}',
-            'obfuscated_link' => '#[hidden](https://example.com)',
-            'email' => '<contact@example.com>',
-            'phone' => '<tel:+33123456789>',
-            'image' => '![Demo](/media/2.jpg)',
-            'fenced_code' => "```php\necho 'hello';\n```",
-        ];
-        $native = $this->native(array_values($cases));
-        $report = ['php' => \PHP_VERSION, 'libxml' => \LIBXML_DOTTED_VERSION, 'compatibility' => [], 'samples' => []];
-        foreach (array_keys($cases) as $index => $feature) {
-            $php = $parser->transform($cases[$feature]);
-            $report['compatibility'][$feature] = ['equal' => $php === $native[$index], 'php' => $php, 'rust' => $native[$index]];
+        $json = file_get_contents(__DIR__.'/markdown.json');
+        self::assertIsString($json);
+        $cases = json_decode($json, true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($cases);
+        $report = ['engine' => 'comrak', 'php' => \PHP_VERSION, 'libxml' => \LIBXML_DOTTED_VERSION, 'compatibility' => [], 'samples' => []];
+        $preClass = $sites->get()->getStr(SiteConfig::FENCED_CODE_PRE_CLASS);
+        foreach ($cases as $case) {
+            self::assertIsArray($case);
+            self::assertIsString($case['name']);
+            self::assertIsString($case['markdown']);
+            self::assertIsString($case['php']);
+            self::assertIsString($case['pre_class']);
+            self::assertIsBool($case['compatible']);
+            $sites->get()->setCustomProperty(SiteConfig::FENCED_CODE_PRE_CLASS, $case['pre_class']);
+            $php = $parser->transform($case['markdown']);
+            self::assertSame($case['php'], $php, 'PHP reference drift: '.$case['name']);
+            $native = $this->native([$case['markdown']], $case['pre_class'])[0];
+            self::assertSame($case['compatible'], $php === $native, 'Compatibility changed: '.$case['name']);
+            $report['compatibility'][$case['name']] = ['equal' => $php === $native, 'pre_class' => $case['pre_class'], 'php' => $php, 'rust' => $native];
         }
 
-        self::assertTrue($report['compatibility']['plain']['equal']);
-        self::assertFalse($report['compatibility']['obfuscated_link']['equal'], 'Generic CommonMark must not be enabled as a Pushword replacement');
-        self::assertFalse($report['compatibility']['image']['equal']);
+        $sites->get()->setCustomProperty(SiteConfig::FENCED_CODE_PRE_CLASS, $preClass);
 
         $paragraph = "## A heading\n\nA paragraph with **bold**, *emphasis*, [a link](/docs), café 🦀 and `code`.\n\n- First item\n- Second item\n\n";
         $page = new Page();
@@ -114,7 +114,7 @@ final class ContentProbeTest extends KernelTestCase
             }
         }
 
-        file_put_contents(__DIR__.'/../target/content-probe.json', json_encode($report, \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR)."\n");
+        file_put_contents(__DIR__.'/../target/content-probe-comrak.json', json_encode($report, \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR)."\n");
     }
 
     /**
@@ -122,13 +122,14 @@ final class ContentProbeTest extends KernelTestCase
      *
      * @return list<string>
      */
-    private function native(array $documents): array
+    private function native(array $documents, string $preClass = ''): array
     {
-        $process = new Process([__DIR__.'/../target/release/pushword-content-probe'], input: json_encode(['documents' => $documents], \JSON_THROW_ON_ERROR));
+        $process = new Process([__DIR__.'/../target/release/pushword-content-probe'], input: json_encode(['documents' => $documents, 'fenced_code_pre_class' => $preClass], \JSON_THROW_ON_ERROR));
         $process->mustRun();
 
         $output = json_decode($process->getOutput(), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($output);
+        self::assertTrue(array_is_list($output));
         self::assertCount(\count($documents), $output);
         $validated = [];
         foreach ($output as $html) {

@@ -1,0 +1,415 @@
+[
+    {
+        "name": "empty",
+        "markdown": "",
+        "pre_class": "",
+        "compatible": true,
+        "php": ""
+    },
+    {
+        "name": "plain",
+        "markdown": "# Café 🦀\n\nHello **world** and [docs](/docs).",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<h1>Café 🦀</h1>\n<p>Hello <strong>world</strong> and <a href=\"/docs\">docs</a>.</p>\n"
+    },
+    {
+        "name": "lists",
+        "markdown": "- first\n- second\n\n> quoted **text**",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<ul>\n<li>first</li>\n<li>second</li>\n</ul>\n<blockquote>\n<p>quoted <strong>text</strong></p>\n</blockquote>\n"
+    },
+    {
+        "name": "raw_html",
+        "markdown": "<section><p>Raw <em>HTML</em>.</p></section>",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<section><p>Raw <em>HTML</em>.</p></section>\n"
+    },
+    {
+        "name": "raw_script",
+        "markdown": "<script>const html = \"<b>é</b>\";</script>",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<script>const html = \"<b>é</b>\";</script>\n"
+    },
+    {
+        "name": "raw_checkbox",
+        "markdown": "<input type=\"checkbox\" disabled=\"\" />",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<input type=\"checkbox\" disabled=\"\" />\n"
+    },
+    {
+        "name": "table",
+        "markdown": "| A | B |\n|---|---|\n| one | two |",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<table>\n<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>one</td>\n<td>two</td>\n</tr>\n</tbody>\n</table>\n"
+    },
+    {
+        "name": "table_alignment",
+        "markdown": "| A | B | C |\n|:---|:---:|---:|\n| one | two | three |",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<table>\n<thead>\n<tr>\n<th align=\"left\">A</th>\n<th align=\"center\">B</th>\n<th align=\"right\">C</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td align=\"left\">one</td>\n<td align=\"center\">two</td>\n<td align=\"right\">three</td>\n</tr>\n</tbody>\n</table>\n"
+    },
+    {
+        "name": "task_list",
+        "markdown": "- [x] Done\n- [ ] Pending",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<ul>\n<li><input checked=\"\" disabled=\"\" type=\"checkbox\"> Done</li>\n<li><input disabled=\"\" type=\"checkbox\"> Pending</li>\n</ul>\n"
+    },
+    {
+        "name": "task_loose",
+        "markdown": "- [x] Done\n\n- [ ] Pending",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<ul>\n<li>\n<p><input checked=\"\" disabled=\"\" type=\"checkbox\"> Done</p>\n</li>\n<li>\n<p><input disabled=\"\" type=\"checkbox\"> Pending</p>\n</li>\n</ul>\n"
+    },
+    {
+        "name": "task_nested",
+        "markdown": "- [ ] parent\n  - [X] **child**\n  - regular",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<ul>\n<li><input disabled=\"\" type=\"checkbox\"> parent\n<ul>\n<li><input checked=\"\" disabled=\"\" type=\"checkbox\"> <strong>child</strong></li>\n<li>regular</li>\n</ul>\n</li>\n</ul>\n"
+    },
+    {
+        "name": "attributes",
+        "markdown": "[link](/docs){.button #docs}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a class=\"button\" id=\"docs\" href=\"/docs\">link</a></p>\n"
+    },
+    {
+        "name": "attribute_order",
+        "markdown": "[link](/docs){#docs .button}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a class=\"button\" id=\"docs\" href=\"/docs\">link</a></p>\n"
+    },
+    {
+        "name": "attribute_escape",
+        "markdown": "[*Café*](/docs \"a & b\"){data-x=\"a&b\" .button #docs}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a class=\"button\" data-x=\"a&amp;b\" id=\"docs\" href=\"/docs\" title=\"a &amp; b\"><em>Café</em></a></p>\n"
+    },
+    {
+        "name": "attribute_event_handler",
+        "markdown": "[link](/docs){OnClick=\"bad\" onfocus=\"bad\" data-safe=\"yes\"}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a data-safe=\"yes\" href=\"/docs\">link</a></p>\n"
+    },
+    {
+        "name": "attribute_target",
+        "markdown": "[link](/docs){target=\"_blank\"}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a target=\"_blank\" href=\"/docs\" rel=\"noopener noreferrer\">link</a></p>\n"
+    },
+    {
+        "name": "attribute_rel",
+        "markdown": "[link](/docs){target=\"_blank\" rel=\"nofollow\"}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a target=\"_blank\" rel=\"nofollow\" href=\"/docs\">link</a></p>\n"
+    },
+    {
+        "name": "attribute_override_href",
+        "markdown": "[link](/docs){href=\"wrong\" id=\"ok\"}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a href=\"/docs\" id=\"ok\">link</a></p>\n"
+    },
+    {
+        "name": "attribute_duplicate_id",
+        "markdown": "[link](/docs){#first #last}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a id=\"last\" href=\"/docs\">link</a></p>\n"
+    },
+    {
+        "name": "attribute_duplicate_pair",
+        "markdown": "[link](/docs){data-x=\"first\" data-x=\"last\"}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a data-x=\"last\" href=\"/docs\">link</a></p>\n"
+    },
+    {
+        "name": "heading_attributes",
+        "markdown": "## Hi {.a #b}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<h2 class=\"a\" id=\"b\">Hi</h2>\n"
+    },
+    {
+        "name": "setext_attributes",
+        "markdown": "Hi {.a #b}\n------",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<h2 class=\"a\" id=\"b\">Hi</h2>\n"
+    },
+    {
+        "name": "code_attributes",
+        "markdown": "`<&>`{.foo #bar}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><code class=\"foo\" id=\"bar\">&lt;&amp;&gt;</code></p>\n"
+    },
+    {
+        "name": "code_empty_class",
+        "markdown": "`x`{class=\"\"}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><code>x</code></p>\n"
+    },
+    {
+        "name": "code_protected_markers",
+        "markdown": "`[link](/docs){.button}`",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><code>[link](/docs){.button}</code></p>\n"
+    },
+    {
+        "name": "email",
+        "markdown": "<contact@example.com>",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a href=\"mailto:contact@example.com\">contact@example.com</a></p>\n"
+    },
+    {
+        "name": "phone",
+        "markdown": "<tel:+33123456789>",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a href=\"tel:+33123456789\">tel:+33123456789</a></p>\n"
+    },
+    {
+        "name": "unicode_link",
+        "markdown": "[Café](/café?q=a&x=b)",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a href=\"/caf%C3%A9?q=a&amp;x=b\">Café</a></p>\n"
+    },
+    {
+        "name": "quoted_link",
+        "markdown": "[apostrophe](</a'b> \"A ' B\")",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a href=\"/a'b\" title=\"A ' B\">apostrophe</a></p>\n"
+    },
+    {
+        "name": "unsafe_link",
+        "markdown": "[authored](javascript:alert)",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a href=\"javascript:alert\">authored</a></p>\n"
+    },
+    {
+        "name": "fenced_code",
+        "markdown": "```php\necho \"hello\";\n```",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<pre><code class=\"language-php\">echo &quot;hello&quot;;\n</code></pre>\n"
+    },
+    {
+        "name": "fenced_prefix",
+        "markdown": "```language-php\n<b>&\n```",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<pre><code class=\"language-php\">&lt;b&gt;&amp;\n</code></pre>\n"
+    },
+    {
+        "name": "fenced_no_language",
+        "markdown": "```\nx\n```",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<pre><code>x\n</code></pre>\n"
+    },
+    {
+        "name": "fenced_info_attributes_ignored",
+        "markdown": "```php {.foo #bar}\nx\n```",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<pre><code class=\"language-php\">x\n</code></pre>\n"
+    },
+    {
+        "name": "indented_code",
+        "markdown": "    <b>&\n",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<pre><code>&lt;b&gt;&amp;\n</code></pre>\n"
+    },
+    {
+        "name": "code_nesting",
+        "markdown": "> ```php\n> <b>&\n> ```",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<blockquote>\n<pre><code class=\"language-php\">&lt;b&gt;&amp;\n</code></pre>\n</blockquote>\n"
+    },
+    {
+        "name": "code_followed_paragraph",
+        "markdown": "```php\nx\n```\n\nNext.",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<pre><code class=\"language-php\">x\n</code></pre>\n<p>Next.</p>\n"
+    },
+    {
+        "name": "strikethrough",
+        "markdown": "~~deleted~~ and ~single~",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><del>deleted</del> and <del>single</del></p>\n"
+    },
+    {
+        "name": "entities",
+        "markdown": "&copy; &amp; &#x1F980;",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p>© &amp; 🦀</p>\n"
+    },
+    {
+        "name": "breaks",
+        "markdown": "line  \nnext\nsoft",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p>line<br />\nnext\nsoft</p>\n"
+    },
+    {
+        "name": "obfuscated_link",
+        "markdown": "#[hidden](https://example.com)",
+        "pre_class": "",
+        "compatible": false,
+        "php": "<p><span data-rot=\"_rknzcyr.pbz\">hidden</span></p>\n"
+    },
+    {
+        "name": "image",
+        "markdown": "![Demo](/media/2.jpg)",
+        "pre_class": "",
+        "compatible": false,
+        "php": "<p><span class=\"glightbox\" data-type=\"image\" data-dwl=\"/media/default/2.webp\" data-rot=\"/zrqvn/qrsnhyg/2.jroc\">\n\n\n\n\n\n                    \n        \n      \n  \n    \n  <picture >\n      <source type=\"image/webp\"\n      srcset=\"/media/xs/2.webp 576w,/media/sm/2.webp 768w,/media/md/2.webp 992w,/media/lg/2.webp 1200w,/media/xl/2.webp 1600w\" sizes=\"100vw\">\n      <img  src=\"/media/default/2.jpg\" class=\"w-full h-auto mb-4\" width=\"1000\" height=\"1000\" alt=\"Demo\" loading=\"lazy\">\n  </picture>\n\n\n\n</span></p>\n"
+    },
+    {
+        "name": "notice",
+        "markdown": "> [!warning] Title\n> Body",
+        "pre_class": "",
+        "compatible": false,
+        "php": "\n\n\n\n<aside class=\"notice notice-warning my-6 rounded-lg border-l-4 p-4 border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-100\">\n  <p class=\"notice-title mt-0 mb-2 font-bold\">Title</p>\n  <div class=\"notice-content [&>:first-child]:mt-0 [&>:last-child]:mb-0\"><p>Body</p></div>\n</aside>\n\n"
+    },
+    {
+        "name": "block_attributes",
+        "markdown": "{#intro .lead}\n\nA paragraph.",
+        "pre_class": "",
+        "compatible": false,
+        "php": "<p>A paragraph.</p>\n"
+    },
+    {
+        "name": "bare_attribute_literal",
+        "markdown": "[link](/docs){download}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a href=\"/docs\">link</a>{download}</p>\n"
+    },
+    {
+        "name": "single_quoted_attributes",
+        "markdown": "[link](/docs){title='a b'}",
+        "pre_class": "",
+        "compatible": false,
+        "php": "<p><a title=\"a b\" href=\"/docs\">link</a></p>\n"
+    },
+    {
+        "name": "unicode_id",
+        "markdown": "[link](/docs){#café}",
+        "pre_class": "",
+        "compatible": false,
+        "php": "<p><a id=\"café\" href=\"/docs\">link</a></p>\n"
+    },
+    {
+        "name": "mixed_classes",
+        "markdown": "[link](/docs){.first class=\"middle\" .last}",
+        "pre_class": "",
+        "compatible": false,
+        "php": "<p><a class=\"first middle last\" href=\"/docs\">link</a></p>\n"
+    },
+    {
+        "name": "empty_table_head",
+        "markdown": "| | |\n|---|---|\n| one | two |",
+        "pre_class": "",
+        "compatible": false,
+        "php": "<table>\n<tbody>\n<tr>\n<td>one</td>\n<td>two</td>\n</tr>\n</tbody>\n</table>\n"
+    },
+    {
+        "name": "colspan",
+        "markdown": "| A | B |\n|---|---|\n| spanning | -> |",
+        "pre_class": "",
+        "compatible": false,
+        "php": "<table>\n<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td colspan=\"2\">spanning</td>\n</tr>\n</tbody>\n</table>\n"
+    },
+    {
+        "name": "fenced_site_class",
+        "markdown": "```php\nx\n```",
+        "pre_class": "microlight",
+        "compatible": true,
+        "php": "<pre class=\"microlight\"><code class=\"language-php\">x\n</code></pre>\n"
+    },
+    {
+        "name": "fenced_class_escaped",
+        "markdown": "```php\nx\n```",
+        "pre_class": "light\"&",
+        "compatible": true,
+        "php": "<pre class=\"light&quot;&amp;\"><code class=\"language-php\">x\n</code></pre>\n"
+    },
+    {
+        "name": "indented_no_site_class",
+        "markdown": "    <b>&\n",
+        "pre_class": "microlight",
+        "compatible": true,
+        "php": "<pre><code>&lt;b&gt;&amp;\n</code></pre>\n"
+    },
+    {
+        "name": "attribute_id_order",
+        "markdown": "[link](/docs){#docs target=\"_blank\"}",
+        "pre_class": "",
+        "compatible": false,
+        "php": "<p><a id=\"docs\" target=\"_blank\" href=\"/docs\" rel=\"noopener noreferrer\">link</a></p>\n"
+    },
+    {
+        "name": "url_percent",
+        "markdown": "[link](</bad%zz/good%2f?q=100%>)",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a href=\"/bad%25zz/good%2f?q=100%25\">link</a></p>\n"
+    },
+    {
+        "name": "url_spaces",
+        "markdown": "[link](</a b/[c]>)",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a href=\"/a%20b/%5Bc%5D\">link</a></p>\n"
+    },
+    {
+        "name": "url_cjk",
+        "markdown": "[链接](/中文/🦀)",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a href=\"/%E4%B8%AD%E6%96%87/%F0%9F%A6%80\">链接</a></p>\n"
+    },
+    {
+        "name": "loose_task_continuation",
+        "markdown": "- [x] First\n\n  Second paragraph.\n\n- [ ] Last",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<ul>\n<li>\n<p><input checked=\"\" disabled=\"\" type=\"checkbox\"> First</p>\n<p>Second paragraph.</p>\n</li>\n<li>\n<p><input disabled=\"\" type=\"checkbox\"> Last</p>\n</li>\n</ul>\n"
+    },
+    {
+        "name": "attribute_entity",
+        "markdown": "[link](/docs){data-label=\"a &amp; b\"}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><a data-label=\"a &amp;amp; b\" href=\"/docs\">link</a></p>\n"
+    }
+]

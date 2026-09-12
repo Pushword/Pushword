@@ -1,0 +1,62 @@
+{
+    "date": "2026-09-12",
+    "environment": {
+        "php": "8.5.9",
+        "rust": "1.98.0",
+        "comrak": "0.55.0",
+        "tempest_markdown": "1.2.2",
+        "pulldown_cmark_reference": "0.13.4",
+        "markdown_rs_reference": "1.0.0"
+    },
+    "methodology": {
+        "pushword_probe": "Five shuffled samples of 20 documents; native values include process startup, JSON and validation.",
+        "tempest": "Nine samples of 50 in-process parse calls after one warm-up; Markdown is parsed with Markdown(null), without code highlighting.",
+        "inputs": "The same four deterministic workloads and the 59-case PHP differential corpus are used for every available engine.",
+        "scope": "Component measurements on one development machine, not end-to-end public, admin or static-generation latency."
+    },
+    "corpus": {
+        "cases": 59,
+        "comrak_equal_to_pushword_php": 49,
+        "tempest_1_2_2_equal_to_pushword_php": 1,
+        "tempest_parse_many": {
+            "stable_available": false,
+            "pull_request": "https://github.com/tempestphp/markdown/pull/24",
+            "branch_available": true,
+            "marker": "<!-- next -->",
+            "named_marker": "<!-- next: name -->"
+        }
+    },
+    "milliseconds_per_document": {
+        "short_244_bytes": {
+            "pushword_php_uncached": 0.400389,
+            "comrak_batch": 0.058184,
+            "tempest_1_2_2": 0.036613
+        },
+        "article_9830_bytes": {
+            "pushword_php_uncached": 8.086350,
+            "comrak_batch": 0.408143,
+            "tempest_1_2_2": 1.436107
+        },
+        "long_99090_bytes": {
+            "pushword_php_uncached": 89.506956,
+            "comrak_batch": 2.968343,
+            "tempest_1_2_2": 14.308754
+        },
+        "duplicate_headings_97600_bytes": {
+            "pushword_php_uncached": 89.718423,
+            "comrak_batch": 2.810495,
+            "tempest_1_2_2": 14.573716
+        }
+    },
+    "parse_many_pr_branch": {
+        "revision": "f4859559ce4f9cc25c2c8274d4bf112423712d8f",
+        "chunks": 20,
+        "median_milliseconds_per_call": 0.405979,
+        "note": "This measures one parseMany call containing 20 chunks; it is not a stable package release."
+    },
+    "notes": [
+        "Comrak uses a custom formatter for the compatible Pushword subset; ten corpus gaps remain intentional and are recorded by the Rust test.",
+        "Tempest output is not folded into the compatibility score because its heading IDs, attributes and other serialization rules differ from Pushword.",
+        "The pulldown-cmark and markdown-rs values remain historical parser references from the earlier exploration; they are not part of the current PHP probe."
+    ]
+}
