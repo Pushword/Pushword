@@ -39,6 +39,38 @@
   --bs-btn-active-bg: var(--button-hover-bg, var(--sky-600));
   --bs-btn-active-border-color: var(--button-hover-border-color, var(--sky-700));
 }
+
+@media (max-width: 767px) {
+  body.ea-index-Page table.datagrid:not(.datagrid-empty) tr:not(.empty-row) td.actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ea-sp-4);
+  }
+
+  body.ea-index-Page .datagrid td.actions > form {
+    display: block;
+    margin: 0;
+    min-width: 0;
+  }
+
+  body.ea-index-Page .datagrid td.actions > a {
+    margin: 0;
+  }
+
+  body.ea-index-Page .datagrid td.actions > a,
+  body.ea-index-Page .datagrid td.actions > form > button {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    justify-content: center;
+    white-space: normal;
+  }
+
+  body.ea-index-Page .datagrid td.actions > a.action-delete:last-child {
+    grid-column: 2;
+  }
+}
+
 /* Column Expanding */
 .mainFields,
 .columnFields {
