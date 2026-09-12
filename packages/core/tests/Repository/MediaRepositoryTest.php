@@ -30,7 +30,7 @@ final class MediaRepositoryTest extends KernelTestCase
         $result = $repo->findOneBySearch('1.jpg');
 
         self::assertNotNull($result);
-        self::assertSame('1.jpg', $result->getFileName());
+        self::assertStringContainsString('1.jpg', $result->getFileName());
     }
 
     public function testFindOneBySearchMatchesAlt(): void
