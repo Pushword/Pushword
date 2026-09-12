@@ -6,14 +6,14 @@
 
 {% if ea().crud.currentPage == 'edit' %}
     {# EasyAdmin's edit form is the valid form owner; nesting another form would be invalid HTML. #}
-    <button type="submit" formmethod="post" formaction="{{ action.linkUrl }}" formnovalidate name="_token" value="{{ token }}" class="{{ action.cssClass }}"{% for name, value in action.htmlAttributes %} {{ name }}="{{ value }}"{% endfor %}>
+    <button type="submit" formmethod="post" formaction="{{ action.linkUrl }}" formnovalidate name="_token" value="{{ token }}" class="btn btn-secondary {{ action.cssClass }}"{% for name, value in action.htmlAttributes %} {{ name }}="{{ value }}"{% endfor %}>
         {% if action.icon %}<i class="{{ action.icon }}" aria-hidden="true"></i>{% endif %}
         {% if action_label is not empty %}<span class="action-label">{{ action_label|raw }}</span>{% endif %}
     </button>
 {% else %}
     <form action="{{ action.linkUrl }}" method="post" class="d-inline">
         <input type="hidden" name="_token" value="{{ token }}">
-        <button type="submit" class="{{ action.cssClass }}"{% for name, value in action.htmlAttributes %} {{ name }}="{{ value }}"{% endfor %}>
+        <button type="submit" class="btn btn-secondary {{ action.cssClass }}"{% for name, value in action.htmlAttributes %} {{ name }}="{{ value }}"{% endfor %}>
             {% if action.icon %}<i class="{{ action.icon }}" aria-hidden="true"></i>{% endif %}
             {% if action_label is not empty %}<span class="action-label">{{ action_label|raw }}</span>{% endif %}
         </button>
