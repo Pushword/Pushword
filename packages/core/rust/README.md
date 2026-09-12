@@ -3,7 +3,7 @@
 This crate contains two separate executables, owned by `pushword/core`:
 
 - `pushword-content-analyzer`: opt-in HTML analysis used by `ContentSplitter`.
-  It prepares heading slots, labels and paragraph views in one HTML parse.
+  It prepares heading slots, labels and paragraph views in one worker request.
 - `pushword-content-probe`: standalone [Comrak](https://github.com/kivikakk/comrak)
   Markdown compatibility and performance research. It never renders site content.
 
@@ -61,14 +61,22 @@ entry is null (declined) or an analysis containing `chapeau`, `segments`,
 slots, so no artificial marker needs to be inserted into HTML. PHP validates
 the whole response before using or caching any computed result.
 
-Rust uses scraper/html5ever, accepts only balanced canonical fragments whose
-serialization is byte-identical, and bounds traversal depth at 128. Common
-paragraphs, root headings, lists, inline formatting, figures and explicit table
-sections are supported. Foreign elements, scripts, templates, repaired markup,
-nested headings/breaks and ambiguous literal split markers fall back to PHP.
-This is a deliberate eligibility check, not HTML sanitization. In the current
-59-case rendered Markdown corpus, 49 documents use native analysis; all 59
-produce the same complete result through the hybrid service.
+Rust uses scraper/html5ever and serializes headings and HTML with the rules used
+by the PHP HTML5 path. It handles picture/source, SVG, raw-text elements, nested
+headings and breaks, empty attributes, common HTML repairs and unterminated
+`&nbsp`. Paragraph fragments are parsed separately to preserve PHP's top-level
+paragraph semantics. Traversal is bounded at depth 128. Ambiguous split markers
+or heading text inside attributes, unterminated `&nbsp` in raw text, qualified
+XLink attributes and controls that the parsers normalize differently still fall
+back to PHP. This is an eligibility check, not HTML sanitization. The
+`diagnose_split` worker operation reports a decline reason per document;
+normal rendering uses `split_content`.
+
+On the current 59-case rendered Markdown corpus, all 59 documents use native
+analysis and match PHP across every accessor. On a read-only snapshot of the
+Altimood database, 1,474/1,474 rendered pages are accepted and match PHP,
+including all 825 pages with a TOC. That establishes 100% coverage **for this
+snapshot**, not for arbitrary HTML or future content.
 
 Request and response frames, including their newline, are limited to 16 MiB.
 Oversized responses are rejected before writing. The worker is reused until
@@ -94,7 +102,7 @@ make -C packages/core/rust audit
 ```
 
 The native analyzer tests compare every accessor and the recursive Knp menu on
-34 fixed HTML cases, the 59 rendered Markdown cases and 160 generated documents.
+42 fixed HTML cases, the 59 rendered Markdown cases and 160 generated documents.
 Generated supported documents must actually use Rust, so fallback cannot hide
 a native failure. Tests cover batch/cache/reset behavior, malformed and oversized
 protocol frames, large pipe responses, the Markdown/Twig pipeline and a PHP
@@ -111,6 +119,26 @@ cases each, Clippy/rustfmt/rustdoc and forbidden crate-local unsafe code. The
 weekly security job audits the lockfile. PHPStan includes the adapters, tests
 and split benchmark. Continuous fuzzing, Miri and sanitizers have not been run.
 There is no timing threshold in CI: shared-runner timing is noisy.
+
+## Reproduce on downstream content
+
+With a local downstream site and its test database available, render the actual
+database pages into a private file outside the repository, then check every
+`SplitContent` accessor against PHP:
+
+```sh
+php packages/core/rust/benchmarks/render-downstream.php ../altimood /tmp/pushword-altimood.ndjson
+php packages/core/rust/benchmarks/check-downstream.php /tmp/pushword-altimood.ndjson
+taskset -c 2 php packages/core/rust/benchmarks/time-downstream.php /tmp/pushword-altimood.ndjson
+```
+
+The first script boots the downstream test kernel and reads Doctrine pages;
+it does not synchronize Markdown or change site content. The output can contain
+private page text, so keep it outside the repository. `check-downstream.php`
+fails on any native decline, exception or field mismatch. The committed
+`benchmarks/2026-09-13-altimood.json` contains aggregate counts, hashes and three
+timing passes, without page content. Regenerate the snapshot when the site data
+or rendering pipeline changes.
 
 ## Complete split benchmark
 
@@ -134,15 +162,21 @@ Local medians in milliseconds per document, PHP 8.5.9/ICU 77.1, CPU 2:
 
 | HTML workload | PHP, uncached | Rust, uncached | Rust, batch of 5 | PHP TOC cache hit | Rust aggregate cache hit |
 |---|---:|---:|---:|---:|---:|
-| Short, 421 B | 0.400 | 0.066 | 0.035 | 0.173 | 0.006 |
-| Article, 15.9 KB | 10.756 | 0.944 | 0.934 | 5.020 | 0.015 |
-| Long, 160 KB | 109.097 | 11.631 | 11.605 | 52.447 | 0.077 |
-| 800 identical headings, 161 KB | 108.618 | 10.116 | 10.716 | 53.022 | 0.081 |
+| Short, 421 B | 0.379 | 0.081 | 0.060 | 0.170 | 0.005 |
+| Article, 15.9 KB | 10.620 | 1.529 | 1.523 | 4.934 | 0.015 |
+| Long, 160 KB | 107.540 | 17.583 | 17.714 | 52.011 | 0.074 |
+| 800 identical headings, 161 KB | 106.130 | 16.592 | 16.782 | 51.525 | 0.087 |
 
-On these synthetic inputs the uncached aggregate is about 6–11 times faster.
-The separate slugging microbenchmark drops from 153.7 ms to 0.081 ms for 800
+On these synthetic inputs the uncached aggregate is about 5–7 times faster.
+The separate slugging microbenchmark drops from 152.3 ms to 0.081 ms for 800
 identical headings; this gain also applies on PHP-only hosting. Neither ratio
 is a whole-page or whole-site speedup.
+
+On the Altimood snapshot, three uncached passes on one CPU have a median sum of
+6.53 s in PHP versus 2.02 s with the native worker (3.23×). TOC pages have
+median per-page time 5.83 ms versus 1.69 ms; pages without TOC, 0.82 ms versus
+0.40 ms. These figures include PHP assembly and reused-worker IPC, but exclude
+Markdown, Twig, SQL, HTTP, filesystem caching and complete page rendering.
 
 ## Optional Tempest comparison
 

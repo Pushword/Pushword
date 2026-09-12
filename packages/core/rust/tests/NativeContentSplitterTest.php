@@ -46,6 +46,8 @@ final class NativeContentSplitterTest extends KernelTestCase
                 $raw = $worker->request('split_content', [['html' => $case['html'], 'toc' => $toc]])[0];
                 if ($toc) {
                     self::assertSame($case['native'], null !== $raw, $case['name'].' native eligibility');
+                } elseif ('crlf' === $case['name']) {
+                    self::assertNotNull($raw, 'Line endings without TOC retain the original HTML');
                 }
 
                 $expected = $this->snapshot(new SplitContent($case['html'], $page));
@@ -88,21 +90,35 @@ final class NativeContentSplitterTest extends KernelTestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('warning');
         $splitter = new ContentSplitter(self::BINARY, logger: $logger);
+        $worker = new NativeWorker(self::BINARY);
+        $documents = [];
+        $names = [];
+        foreach ($cases as $case) {
+            self::assertIsArray($case);
+            self::assertIsString($case['php']);
+            self::assertIsString($case['name']);
+            $documents[] = ['html' => $case['php'], 'toc' => true];
+            $names[] = $case['name'];
+        }
+
+        foreach ($worker->request('split_content', $documents) as $index => $result) {
+            self::assertNotNull($result, $names[$index].' must run in Rust');
+        }
+
         foreach ([true, false] as $toc) {
             $page = new Page();
             if ($toc) {
                 $page->setCustomProperty('toc', true);
             }
 
-            foreach ($cases as $case) {
-                self::assertIsArray($case);
-                self::assertIsString($case['php']);
-                self::assertIsString($case['name']);
-                self::assertSame($this->snapshot(new SplitContent($case['php'], $page)), $this->snapshot($splitter->split($case['php'], $page)), $case['name'].' toc='.(int) $toc);
+            foreach ($documents as $index => $document) {
+                $html = $document['html'];
+                self::assertSame($this->snapshot(new SplitContent($html, $page)), $this->snapshot($splitter->split($html, $page)), $names[$index].' toc='.(int) $toc);
             }
         }
 
         $splitter->reset();
+        $worker->reset();
     }
 
     public function testGeneratedSupportedDocumentsMatchEveryAccessor(): void
@@ -185,6 +201,12 @@ final class NativeContentSplitterTest extends KernelTestCase
         self::assertStringContainsString('oversized response', $process->getErrorOutput());
         $worker = new NativeWorker(self::BINARY);
         self::assertSame([], $worker->request('split_content', []));
+        self::assertSame([null, 'ambiguous_heading', 'unsupported_attribute', 'normalized_control'], $worker->request('diagnose_split', [
+            ['html' => '<h2>Title</h2>', 'toc' => true],
+            ['html' => '<p data-html="<h2>">Text.</p>', 'toc' => true],
+            ['html' => '<svg><use xlink:href="#a"></use></svg>', 'toc' => true],
+            ['html' => "<h2>Title</h2>\r\n", 'toc' => true],
+        ]));
         $html = str_repeat('<p>é 🦀</p>', 10000);
         self::assertNotNull($worker->request('split_content', [['html' => $html, 'toc' => false]])[0]);
         self::assertSame([], $worker->request('split_content', []));

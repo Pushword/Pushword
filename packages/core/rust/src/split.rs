@@ -1,10 +1,13 @@
-//! Analyse canonical HTML fragments without changing PHP's slugging rules.
+//! Prepare split content from rendered HTML while retaining PHP's slug rules.
 //!
-//! Unsupported or repaired markup is explicitly declined. PHP remains the
-//! reference for those documents, rather than accepting a different DOM tree.
+//! The serializer matches the Masterminds output used by TOC\MarkupFixer for
+//! supported structures. Ambiguous markers and qualified XLink attributes
+//! are declined so the PHP reference handles them.
 use ego_tree::NodeRef;
 use scraper::{ElementRef, Html, Node};
 use serde::{Deserialize, Serialize};
+
+const BREAK_MARKER: &str = "<!--break-->";
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -31,14 +34,23 @@ pub struct Analysis {
     pub paragraphs_with_chapeau: Vec<String>,
 }
 
+#[derive(Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DeclineReason {
+    NormalizedControl,
+    ParseError,
+    DepthLimit,
+    UnsupportedAttribute,
+    AmbiguousBreak,
+    AmbiguousHeading,
+}
+
 #[derive(Default)]
 struct Walker {
     html: String,
     slots: Vec<(usize, usize)>,
     headings: Vec<Heading>,
-    paragraphs: Vec<(usize, String)>,
-    breaks: Vec<usize>,
-    heading_starts: Vec<usize>,
+    breaks: usize,
     cutoff: bool,
 }
 
@@ -68,29 +80,200 @@ fn paragraph_text(element: ElementRef<'_>) -> String {
         .join(" ")
 }
 
+fn paragraphs(html: &str) -> Vec<String> {
+    Html::parse_fragment(&legacy_entities(html))
+        .root_element()
+        .children()
+        .filter_map(ElementRef::wrap)
+        .filter(|element| element.value().name() == "p")
+        .map(paragraph_text)
+        .filter(|text| !text.is_empty())
+        .collect()
+}
+
+fn legacy_entities(html: &str) -> String {
+    // Masterminds leaves an unterminated &nbsp in text untouched, while
+    // html5ever accepts it as a non-breaking space.
+    let mut output = String::with_capacity(html.len());
+    let mut remaining = html;
+    while let Some(index) = remaining.find("&nbsp") {
+        output.push_str(&remaining[..index]);
+        remaining = &remaining[index + 5..];
+        output.push_str(if remaining.starts_with(';') {
+            "&nbsp"
+        } else {
+            "&amp;nbsp"
+        });
+    }
+    output.push_str(remaining);
+    output
+}
+
+fn first_break_in_attribute(html: &str) -> bool {
+    let Some(marker) = html.find(BREAK_MARKER) else {
+        return false;
+    };
+    let bytes = html.as_bytes();
+    let mut tag = false;
+    let mut quote = 0;
+    let mut i = 0;
+    while i < marker {
+        if quote != 0 {
+            if bytes[i] == quote {
+                quote = 0;
+            }
+        } else if bytes[i..].starts_with(b"<!--") {
+            if let Some(end) = html[i + 4..marker].find("-->") {
+                i += end + 7;
+                continue;
+            }
+        } else {
+            match bytes[i] {
+                b'<' => tag = true,
+                b'>' => tag = false,
+                b'"' | b'\'' if tag => quote = bytes[i],
+                _ => {}
+            }
+        }
+        i += 1;
+    }
+    quote != 0
+}
+
+fn non_boolean_attribute(name: &str, html_namespace: bool) -> bool {
+    html_namespace
+        && (name.starts_with("data-")
+            || matches!(
+                name,
+                "href"
+                    | "hreflang"
+                    | "http-equiv"
+                    | "icon"
+                    | "id"
+                    | "keytype"
+                    | "kind"
+                    | "label"
+                    | "lang"
+                    | "language"
+                    | "list"
+                    | "maxlength"
+                    | "media"
+                    | "method"
+                    | "name"
+                    | "placeholder"
+                    | "rel"
+                    | "rows"
+                    | "rowspan"
+                    | "sandbox"
+                    | "spellcheck"
+                    | "scope"
+                    | "seamless"
+                    | "shape"
+                    | "size"
+                    | "sizes"
+                    | "span"
+                    | "src"
+                    | "srcdoc"
+                    | "srclang"
+                    | "srcset"
+                    | "start"
+                    | "step"
+                    | "style"
+                    | "summary"
+                    | "tabindex"
+                    | "target"
+                    | "title"
+                    | "type"
+                    | "value"
+                    | "width"
+                    | "border"
+                    | "charset"
+                    | "cite"
+                    | "class"
+                    | "code"
+                    | "codebase"
+                    | "color"
+                    | "cols"
+                    | "colspan"
+                    | "content"
+                    | "coords"
+                    | "data"
+                    | "datetime"
+                    | "default"
+                    | "dir"
+                    | "dirname"
+                    | "enctype"
+                    | "for"
+                    | "form"
+                    | "formaction"
+                    | "headers"
+                    | "height"
+                    | "accept"
+                    | "accept-charset"
+                    | "accesskey"
+                    | "action"
+                    | "align"
+                    | "alt"
+                    | "bgcolor"
+            ))
+}
+
+fn void_element(tag: &str) -> bool {
+    matches!(
+        tag,
+        "area"
+            | "base"
+            | "br"
+            | "col"
+            | "command"
+            | "embed"
+            | "hr"
+            | "img"
+            | "input"
+            | "keygen"
+            | "link"
+            | "meta"
+            | "param"
+            | "source"
+            | "track"
+            | "wbr"
+    )
+}
+
 impl Walker {
-    fn visit(&mut self, node: NodeRef<'_, Node>, depth: usize, body_start: usize) -> Option<()> {
+    fn visit(&mut self, node: NodeRef<'_, Node>, depth: usize) -> Result<(), DeclineReason> {
         if depth > 128 {
-            return None;
+            return Err(DeclineReason::DepthLimit);
         }
         match node.value() {
-            Node::Text(text) => self.html.push_str(&escape(text, false)),
-            Node::Comment(comment) => {
-                if comment.contains(['<', '>']) || comment.contains("--") {
-                    return None;
-                }
-                if &**comment == "break" {
-                    if depth != 0 {
-                        return None;
+            Node::Text(text) => {
+                let raw = node
+                    .parent()
+                    .and_then(ElementRef::wrap)
+                    .is_some_and(|parent| {
+                        matches!(
+                            parent.value().name(),
+                            "script" | "style" | "xmp" | "iframe" | "noembed" | "noframes"
+                        )
+                    });
+                if raw {
+                    // The unterminated-entity rewrite is only valid in parsed text.
+                    if text.contains("&amp;nbsp") {
+                        return Err(DeclineReason::ParseError);
                     }
-                    self.breaks.push(self.html.len());
+                    self.html.push_str(text);
+                } else {
+                    self.html.push_str(&escape(text, false));
                 }
-                if self.html.len() >= body_start
-                    && matches!(
-                        comment.trim_matches([' ', '\t', '\r', '\n', '\0', '\x0b']),
-                        "stop-toc" | "end-toc"
-                    )
-                {
+            }
+            Node::Comment(comment) => {
+                if &**comment == "break" {
+                    self.breaks += 1;
+                }
+                if matches!(
+                    comment.trim_matches([' ', '\t', '\r', '\n', '\0', '\x0b']),
+                    "stop-toc" | "end-toc"
+                ) {
                     self.cutoff = true;
                 }
                 self.html.push_str("<!--");
@@ -98,82 +281,54 @@ impl Walker {
                 self.html.push_str("-->");
             }
             Node::Element(_) => {
-                let element = ElementRef::wrap(node)?;
+                let element = ElementRef::wrap(node).ok_or(DeclineReason::ParseError)?;
                 let tag = element.value().name();
-                // These HTML elements have the same explicit, balanced tree in
-                // Masterminds and html5ever. Foreign/raw/template content falls back.
-                if !matches!(
-                    tag,
-                    "h1" | "h2"
-                        | "h3"
-                        | "h4"
-                        | "h5"
-                        | "h6"
-                        | "p"
-                        | "div"
-                        | "section"
-                        | "article"
-                        | "aside"
-                        | "span"
-                        | "a"
-                        | "em"
-                        | "strong"
-                        | "b"
-                        | "i"
-                        | "s"
-                        | "del"
-                        | "code"
-                        | "pre"
-                        | "blockquote"
-                        | "ul"
-                        | "ol"
-                        | "li"
-                        | "br"
-                        | "hr"
-                        | "img"
-                        | "figure"
-                        | "figcaption"
-                        | "table"
-                        | "thead"
-                        | "tbody"
-                        | "tfoot"
-                        | "tr"
-                        | "th"
-                        | "td"
-                ) {
-                    return None;
+                let heading = tag.len() == 2
+                    && tag.starts_with('h')
+                    && matches!(tag.as_bytes()[1], b'1'..=b'6');
+                let html_namespace =
+                    element.value().name.ns.as_ref() == "http://www.w3.org/1999/xhtml";
+                if element.value().attrs.keys().any(|name| {
+                    name.prefix
+                        .as_ref()
+                        .is_some_and(|prefix| prefix.as_ref() == "xlink")
+                }) {
+                    return Err(DeclineReason::UnsupportedAttribute);
                 }
-                let heading =
-                    tag.len() == 2 && tag.starts_with('h') && tag.as_bytes()[1].is_ascii_digit();
-                if heading && depth != 0 {
-                    return None;
-                }
-                let start = self.html.len();
-                if tag.starts_with('h') && depth == 0 {
-                    self.heading_starts.push(start);
-                }
-                let in_body = start >= body_start;
                 self.html.push('<');
                 self.html.push_str(tag);
                 let mut slot = None;
                 for (name, value) in element.value().attrs() {
-                    // Empty attributes have library-specific boolean rules.
-                    if value.is_empty() || name.contains(':') || name == "xmlns" {
-                        return None;
+                    if value.contains("<h") {
+                        return Err(DeclineReason::AmbiguousHeading);
+                    }
+                    if value.contains(BREAK_MARKER) {
+                        return Err(DeclineReason::AmbiguousBreak);
+                    }
+                    if name == "xmlns"
+                        && matches!(
+                            value,
+                            "http://www.w3.org/2000/svg" | "http://www.w3.org/1998/Math/MathML"
+                        )
+                    {
+                        continue;
                     }
                     let start = self.html.len();
                     self.html.push(' ');
                     self.html.push_str(name);
-                    self.html.push_str("=\"");
-                    self.html.push_str(&escape(value, true));
-                    self.html.push('"');
-                    if heading && in_body && name == "id" {
+                    if !value.is_empty() || non_boolean_attribute(name, html_namespace) {
+                        self.html.push_str("=\"");
+                        self.html.push_str(&escape(value, true));
+                        self.html.push('"');
+                    }
+                    if heading && name == "id" {
                         slot = Some((start, self.html.len()));
                     }
                 }
                 let insert = self.html.len();
-                self.html.push('>');
-                if heading && in_body {
+                let foreign_empty = !html_namespace && node.children().next().is_none();
+                self.html.push_str(if foreign_empty { " />" } else { ">" });
+                if heading {
                     self.slots.push(slot.unwrap_or((insert, insert)));
                     let text = element.text().collect::<String>();
                     // PHP's ?: treats the string "0" as false.
@@ -186,112 +341,99 @@ impl Walker {
                         listed: !self.cutoff,
                     });
                 }
-                if tag == "p" && depth == 0 {
-                    let text = paragraph_text(element);
-                    if !text.is_empty() {
-                        self.paragraphs.push((start, text));
-                    }
-                }
                 for child in node.children() {
-                    self.visit(child, depth + 1, body_start)?;
+                    self.visit(child, depth + 1)?;
                 }
-                if !matches!(tag, "br" | "hr" | "img") {
+                if !foreign_empty && !(html_namespace && void_element(tag)) {
                     self.html.push_str("</");
                     self.html.push_str(tag);
                     self.html.push('>');
                 }
             }
-            _ => return None,
+            _ => return Err(DeclineReason::ParseError),
         }
-        Some(())
+        Ok(())
     }
 }
 
 pub fn analyze(document: &Document) -> Option<Analysis> {
+    diagnose(document).ok()
+}
+
+pub fn diagnose(document: &Document) -> Result<Analysis, DeclineReason> {
+    if first_break_in_attribute(&document.html) {
+        return Err(DeclineReason::AmbiguousBreak);
+    }
     // CR/NUL and form feed are normalized differently by the two HTML parsers.
-    if document.html.contains(['\r', '\0', '\x0b', '\x0c']) {
-        return None;
+    if document.toc && document.html.contains(['\r', '\0', '\x0b', '\x0c']) {
+        return Err(DeclineReason::NormalizedControl);
     }
-    let body_start = document.html.find("<!--break-->").map_or(0, |i| i + 12);
-    let parsed = Html::parse_fragment(&document.html);
-    if !parsed.errors.is_empty() {
-        return None;
-    }
+    let body_start = document
+        .html
+        .find(BREAK_MARKER)
+        .map_or(0, |i| i + BREAK_MARKER.len());
+    let chapeau = if body_start == 0 {
+        ""
+    } else {
+        &document.html[..body_start - BREAK_MARKER.len()]
+    };
+    let source_body = &document.html[body_start..];
+    let parsed = Html::parse_fragment(&legacy_entities(source_body));
     let mut walker = Walker::default();
     for node in parsed.root_element().children() {
-        walker.visit(node, 0, body_start)?;
+        walker.visit(node, 0)?;
     }
-    // This declines implicit end tags, foster parenting, duplicate attributes,
-    // unknown entity spelling, quote changes and all other serialization drift.
-    if walker.html != document.html {
-        return None;
+    if source_body.matches(BREAK_MARKER).count() != walker.breaks {
+        return Err(DeclineReason::AmbiguousBreak);
     }
-    if !document
-        .html
-        .match_indices("<!--break-->")
-        .map(|(i, _)| i)
-        .eq(walker.breaks.iter().copied())
-    {
-        return None;
-    }
-    let body = &document.html[body_start..];
-    let intro_end = if document.toc {
-        body.find("<h").map_or(body_start, |i| body_start + i)
+    let body = if document.toc {
+        &walker.html
     } else {
-        body_start
+        source_body
     };
-    if document.toc && body.contains("<h") && !walker.heading_starts.contains(&intro_end) {
-        return None;
-    }
-    let primary_end = walker
-        .breaks
-        .iter()
-        .copied()
-        .find(|&i| i >= intro_end)
-        .unwrap_or(document.html.len());
-    // A break immediately before the first heading belongs to the intro under
-    // the legacy split rules. Leave this unusual layout to PHP.
-    if document.toc
-        && body[..intro_end - body_start]
-            .trim_end()
-            .ends_with("<!--break-->")
-    {
-        return None;
-    }
-    let paragraphs = walker
-        .paragraphs
-        .iter()
-        .filter(|(i, _)| *i >= intro_end && *i < primary_end)
-        .map(|(_, text)| text.clone())
-        .collect();
-    let paragraphs_with_chapeau = walker
-        .paragraphs
-        .into_iter()
-        .filter(|(i, _)| *i < primary_end)
-        .map(|(_, text)| text)
-        .collect();
+    let intro_end = if document.toc {
+        body.find("<h").unwrap_or(0)
+    } else {
+        0
+    };
+    let intro = if intro_end == 0 {
+        ""
+    } else {
+        &body[..intro_end]
+    };
+    let content = if intro_end == 0 {
+        body
+    } else {
+        &body[intro_end..]
+    };
+    let content = if intro.trim().ends_with(BREAK_MARKER) {
+        format!("{BREAK_MARKER}{content}")
+    } else {
+        content.to_owned()
+    };
+    let main = content
+        .split_once(BREAK_MARKER)
+        .map_or(content.as_str(), |(first, _)| first);
+    let paragraph_values = paragraphs(main);
+    let paragraphs_with_chapeau = paragraphs(&format!("{chapeau}{intro}{main}"));
     let mut segments = Vec::new();
-    let mut previous = body_start;
+    let mut previous = 0;
     if document.toc {
         for (start, end) in walker.slots {
-            segments.push(document.html[previous..start].to_owned());
+            segments.push(body[previous..start].to_owned());
             previous = end;
         }
     }
-    segments.push(document.html[previous..].to_owned());
-    Some(Analysis {
-        chapeau: if body_start == 0 {
-            String::new()
-        } else {
-            document.html[..body_start - 12].to_owned()
-        },
+    segments.push(body[previous..].to_owned());
+    Ok(Analysis {
+        chapeau: chapeau.to_owned(),
         segments,
         headings: if document.toc {
             walker.headings
         } else {
             Vec::new()
         },
-        paragraphs,
+        paragraphs: paragraph_values,
         paragraphs_with_chapeau,
     })
 }

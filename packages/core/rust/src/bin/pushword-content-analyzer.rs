@@ -1,4 +1,4 @@
-use pushword_content_probe::split::{Analysis, Document, analyze};
+use pushword_content_probe::split::{Document, analyze, diagnose};
 use serde::{Deserialize, Serialize};
 use std::io::{self, BufRead, Read, Write};
 
@@ -14,10 +14,10 @@ struct Request {
 }
 
 #[derive(Serialize)]
-struct Response {
+struct Response<T: Serialize> {
     version: u32,
     id: u64,
-    documents: Vec<Option<Analysis>>,
+    documents: Vec<T>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -37,15 +37,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err("oversized or incomplete request".into());
         }
         let request: Request = serde_json::from_str(&frame)?;
-        if request.version != 1 || request.operation != "split_content" {
+        if request.version != 1 {
             return Err("unsupported version or operation".into());
         }
-        let response = Response {
-            version: 1,
-            id: request.id,
-            documents: request.documents.iter().map(analyze).collect(),
+        let mut frame = match request.operation.as_str() {
+            "split_content" => serde_json::to_vec(&Response {
+                version: 1,
+                id: request.id,
+                documents: request.documents.iter().map(analyze).collect(),
+            })?,
+            "diagnose_split" => serde_json::to_vec(&Response {
+                version: 1,
+                id: request.id,
+                documents: request
+                    .documents
+                    .iter()
+                    .map(|document| diagnose(document).err())
+                    .collect(),
+            })?,
+            _ => return Err("unsupported version or operation".into()),
         };
-        let mut frame = serde_json::to_vec(&response)?;
         frame.push(b'\n');
         if frame.len() as u64 > MAX_FRAME_BYTES {
             return Err("oversized response".into());

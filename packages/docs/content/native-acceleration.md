@@ -119,7 +119,7 @@ continuous fuzzing have not been run; the crate README records the exact scope.
 ## Second implemented port: aggregate content analysis
 
 `ContentSplitter` integrates `packages/core/rust/` with the existing Twig
-`mainContentSplit(page)` function. One native HTML parse prepares heading slots,
+`mainContentSplit(page)` function. One native worker request prepares heading slots,
 TOC labels and both paragraph views. `splitMany` sends all uncached documents in
 one request. PHP retains exact ICU slugging and Knp menu output; validated
 aggregate results are cached. The indexed slugger also improves the PHP backend.
@@ -136,20 +136,28 @@ pushword:
 Clear the Symfony container cache in the rendering environment. Leave this unset
 on PHP-only hosting. No existing Markdown, Twig or block-marker syntax changes.
 
-The native implementation accepts canonical HTML with supported elements and
-declines ambiguous or unsupported documents before using their output. Declines
+The native implementation handles the HTML structures found in a rendered
+Altimood database snapshot, including SVG, picture/source, raw text and repaired
+markup. It declines ambiguous documents before using their output. Declines
 fall back per document; worker/protocol failures fall back for the whole batch.
 The shared-hosting test disables `proc_open`. Differential tests compare all
-accessors, including menu hierarchy, on 34 HTML cases, 59 rendered Markdown cases
-and 160 generated supported documents. Of the 59 rendered Markdown cases, 49 use
-native analysis and 10 use PHP. This is functioning hybrid acceleration, not a
-claim that every possible document or the entire CMS is implemented in Rust.
+accessors, including menu hierarchy, on 42 HTML cases, 59 rendered Markdown cases
+and 160 generated supported documents. All 59 rendered Markdown cases now use
+native analysis. On 1,474 actual database pages rendered through Altimood's PHP
+pipeline, all 1,474 are accepted and byte-identical to PHP across the complete
+`SplitContent` result. The original conservative analyzer declined 1,191 pages
+(80.8%), principally due to its element whitelist, empty or SVG attributes and
+normal HTML repairs. The corpus result is 100% for that snapshot, not a claim of
+universal HTML compatibility or an entire CMS port.
 
 `packages/core/rust/README.md` documents the supported boundary, protocol, build
 and checks. `benchmarks/2026-09-13-split.json` records the full split measurement,
 including native IPC and PHP assembly, against the improved PHP implementation.
-The benchmark checks every output before reporting performance. Public requests,
-admin forms, SQL and complete static builds are outside that measurement.
+The benchmark checks every output before reporting performance. Three uncached
+passes over the Altimood snapshot take a median 6.53 s in PHP and 2.02 s with
+Rust (3.23×) on one CPU. Public requests, admin forms, SQL and complete static
+builds are outside those measurements. The downstream check and timing scripts
+and aggregate report live beside the synthetic benchmark.
 
 ## Markdown and other follow-up exploration
 

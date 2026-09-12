@@ -18,7 +18,7 @@ use Throwable;
 final class ContentSplitter implements ResetInterface
 {
     /** Bump when native analysis or document eligibility changes. */
-    private const int CACHE_VERSION = 1;
+    private const int CACHE_VERSION = 2;
 
     private readonly NativeWorker $worker;
 
