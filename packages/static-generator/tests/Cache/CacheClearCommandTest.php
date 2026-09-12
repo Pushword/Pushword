@@ -65,7 +65,7 @@ final class CacheClearCommandTest extends KernelTestCase
         self::assertStringContainsString('Clearing cache', $output);
         self::assertStringContainsString('Warming cache for localhost.dev', $output);
 
-        self::assertFileExists($this->cacheDir.'/index.html');
+        self::assertFileExists($this->cacheDir.'/index.html', $output);
         self::assertFileExists($this->cacheDir.'/index.html.gz');
         self::assertFileExists($this->cacheDir.'/index.html.br');
     }

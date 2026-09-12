@@ -8,7 +8,10 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\DependencyInjection\Configuration;
 use Pushword\StaticGenerator\Generator\CaddyfileGenerator;
+use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
 use Pushword\StaticGenerator\Generator\HtaccessGenerator;
+use Pushword\StaticGenerator\Generator\HtmlMinification;
+use Pushword\StaticGenerator\Generator\PageGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RobotsGenerator;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -17,6 +20,34 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 #[Group('integration')]
 final class ConfigurationTest extends KernelTestCase
 {
+    public function testNativeMinificationIsSharedAndDisabledByDefault(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $minifier = $container->get(HtmlMinification::class);
+        self::assertSame($minifier, $container->get(PageGenerator::class)->htmlMinification);
+        self::assertSame($minifier, $container->get(PagesGenerator::class)->htmlMinification);
+        self::assertSame($minifier, $container->get(ErrorPageGenerator::class)->htmlMinification);
+    }
+
+    public function testNativeMinifierConfiguration(): void
+    {
+        $tree = new Configuration()->getConfigTreeBuilder()->buildTree();
+        $defaults = $tree->finalize($tree->normalize([]));
+        self::assertIsArray($defaults);
+        self::assertNull($defaults['native_html_minifier']);
+        $config = $tree->finalize($tree->normalize([
+            'native_html_minifier' => '/opt/pushword/html-minifier',
+            'native_html_minifier_timeout' => 0.5,
+        ]));
+        self::assertIsArray($config);
+        self::assertSame('/opt/pushword/html-minifier', $config['native_html_minifier']);
+        self::assertSame(0.5, $config['native_html_minifier_timeout']);
+        self::assertNotContains('native_html_minifier', Configuration::DEFAULT_APP_FALLBACK);
+        $this->expectException(InvalidConfigurationException::class);
+        $tree->finalize($tree->normalize(['native_html_minifier_timeout' => 0]));
+    }
+
     public function testConf(): void
     {
         self::bootKernel();

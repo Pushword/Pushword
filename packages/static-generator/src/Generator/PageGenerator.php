@@ -28,6 +28,9 @@ class PageGenerator extends AbstractGenerator
     #[Required]
     public LoggerInterface $logger;
 
+    #[Required]
+    public HtmlMinification $htmlMinification;
+
     #[Override]
     public function generate(?string $host = null): void
     {
@@ -273,6 +276,6 @@ class PageGenerator extends AbstractGenerator
 
     protected function compress(string $html): string
     {
-        return HtmlMinifier::compress($html);
+        return $this->htmlMinification->compress($html);
     }
 }

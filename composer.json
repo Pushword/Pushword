@@ -180,6 +180,7 @@
     "test-mariadb": "PUSHWORD_TEST_DATABASE_BASE_URL='mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4' ./.scripts/test $*",
     "test-postgresql": "PUSHWORD_TEST_DATABASE_BASE_URL='postgresql://pushword:pushword@127.0.0.1:5432/pushword_test?serverVersion=17&charset=utf8' ./.scripts/test $*",
     "test-filter": "./.scripts/test --filter $*",
+    "test-native-static-generator": "XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit packages/static-generator/rust/tests",
     "test-unit": "XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --exclude-group integration --exclude-group panther",
     "test-coverage": "./.scripts/test-coverage",
     "rector": "vendor/bin/rector process && composer format",

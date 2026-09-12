@@ -1,0 +1,17 @@
+[package]
+name = "pushword-html-minifier"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "MIT"
+description = "Optional HTML minification worker for Pushword static-generator"
+
+[dependencies]
+ego-tree = "0.11"
+regex = "1.13"
+scraper = { version = "0.27", features = ["deterministic"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+lto = "thin"

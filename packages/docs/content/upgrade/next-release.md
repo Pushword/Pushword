@@ -1,5 +1,5 @@
 ---
-title: 'PHP files use strict types'
+title: 'PHP files use strict types; optional Rust HTML minification'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,10 +35,16 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/core`, `pushword/dev-app`
+**Concerns:** `pushword/core`, `pushword/dev-app`, `pushword/static-generator`
 
 ## PHP strict types
 
 Pushword PHP files now declare strict types, and the shared PHP-CS-Fixer rules preserve existing declarations.
 **Sites with custom PHP extensions:** run your tests and correct scalar type mismatches in overrides, callbacks, and service integrations.
 If you use the provided Rector configuration, copy `vendor/pushword/dev-app/rector.php` into your project, preserving local customizations, to enable strict-type declarations.
+
+## Optional native HTML minification
+
+Static generation can use an experimental Rust minifier; PHP remains the default and requires no new tool.
+**Sites opting into Rust:** build the executable, set `static_generator.native_html_minifier` to its trusted path, then clear the Symfony container cache in the generation environment.
+See [native acceleration](../native-acceleration.md) for installation, fallback and measured limits.

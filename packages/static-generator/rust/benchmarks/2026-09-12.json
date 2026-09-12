@@ -1,0 +1,290 @@
+{
+  "php": "8.5.9",
+  "libxml": "2.12.10",
+  "binary_sha256": "1589184858685e20f8d6e846ae2c5ff88b38051a77ad5f1486c140896635dfdc",
+  "input_bytes": [
+    14051,
+    13627
+  ],
+  "input_sha256": [
+    "e678cf2d429dcf9ff54643715d124c939fdab4836d36d9844217aaa94cd22992",
+    "a06ed48526621ed3965c59e308c0754f1c112e21f69327353d3cf30d9e24a0de"
+  ],
+  "samples": [
+    {
+      "mode": "php",
+      "pages": 1,
+      "repeat": 0,
+      "ms": 0.636124
+    },
+    {
+      "mode": "rust-single",
+      "pages": 1,
+      "repeat": 0,
+      "ms": 4.30415
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 1,
+      "repeat": 0,
+      "ms": 1.660791
+    },
+    {
+      "mode": "rust-single",
+      "pages": 1,
+      "repeat": 1,
+      "ms": 1.565985
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 1,
+      "repeat": 1,
+      "ms": 1.485755
+    },
+    {
+      "mode": "php",
+      "pages": 1,
+      "repeat": 1,
+      "ms": 0.689553
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 1,
+      "repeat": 2,
+      "ms": 1.631155
+    },
+    {
+      "mode": "rust-single",
+      "pages": 1,
+      "repeat": 2,
+      "ms": 1.471699
+    },
+    {
+      "mode": "php",
+      "pages": 1,
+      "repeat": 2,
+      "ms": 0.879367
+    },
+    {
+      "mode": "rust-single",
+      "pages": 1,
+      "repeat": 3,
+      "ms": 1.48309
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 1,
+      "repeat": 3,
+      "ms": 1.446311
+    },
+    {
+      "mode": "php",
+      "pages": 1,
+      "repeat": 3,
+      "ms": 0.615545
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 1,
+      "repeat": 4,
+      "ms": 1.463604
+    },
+    {
+      "mode": "rust-single",
+      "pages": 1,
+      "repeat": 4,
+      "ms": 1.443617
+    },
+    {
+      "mode": "php",
+      "pages": 1,
+      "repeat": 4,
+      "ms": 0.610597
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 100,
+      "repeat": 0,
+      "ms": 27.86436
+    },
+    {
+      "mode": "php",
+      "pages": 100,
+      "repeat": 0,
+      "ms": 47.822614
+    },
+    {
+      "mode": "rust-single",
+      "pages": 100,
+      "repeat": 0,
+      "ms": 31.940345
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 100,
+      "repeat": 1,
+      "ms": 26.608242
+    },
+    {
+      "mode": "php",
+      "pages": 100,
+      "repeat": 1,
+      "ms": 48.169069
+    },
+    {
+      "mode": "rust-single",
+      "pages": 100,
+      "repeat": 1,
+      "ms": 32.577231
+    },
+    {
+      "mode": "php",
+      "pages": 100,
+      "repeat": 2,
+      "ms": 48.484105
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 100,
+      "repeat": 2,
+      "ms": 30.741624
+    },
+    {
+      "mode": "rust-single",
+      "pages": 100,
+      "repeat": 2,
+      "ms": 31.24989
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 100,
+      "repeat": 3,
+      "ms": 26.596549
+    },
+    {
+      "mode": "php",
+      "pages": 100,
+      "repeat": 3,
+      "ms": 47.647198
+    },
+    {
+      "mode": "rust-single",
+      "pages": 100,
+      "repeat": 3,
+      "ms": 32.305384
+    },
+    {
+      "mode": "rust-single",
+      "pages": 100,
+      "repeat": 4,
+      "ms": 31.079604
+    },
+    {
+      "mode": "php",
+      "pages": 100,
+      "repeat": 4,
+      "ms": 47.882125
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 100,
+      "repeat": 4,
+      "ms": 27.448175
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 1000,
+      "repeat": 0,
+      "ms": 267.094328
+    },
+    {
+      "mode": "php",
+      "pages": 1000,
+      "repeat": 0,
+      "ms": 481.332424
+    },
+    {
+      "mode": "rust-single",
+      "pages": 1000,
+      "repeat": 0,
+      "ms": 299.352775
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 1000,
+      "repeat": 1,
+      "ms": 262.504837
+    },
+    {
+      "mode": "rust-single",
+      "pages": 1000,
+      "repeat": 1,
+      "ms": 291.263891
+    },
+    {
+      "mode": "php",
+      "pages": 1000,
+      "repeat": 1,
+      "ms": 474.77505
+    },
+    {
+      "mode": "php",
+      "pages": 1000,
+      "repeat": 2,
+      "ms": 470.04628
+    },
+    {
+      "mode": "rust-single",
+      "pages": 1000,
+      "repeat": 2,
+      "ms": 292.996516
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 1000,
+      "repeat": 2,
+      "ms": 257.070823
+    },
+    {
+      "mode": "rust-single",
+      "pages": 1000,
+      "repeat": 3,
+      "ms": 283.644531
+    },
+    {
+      "mode": "php",
+      "pages": 1000,
+      "repeat": 3,
+      "ms": 468.916667
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 1000,
+      "repeat": 3,
+      "ms": 252.117023
+    },
+    {
+      "mode": "php",
+      "pages": 1000,
+      "repeat": 4,
+      "ms": 470.223569
+    },
+    {
+      "mode": "rust-batch",
+      "pages": 1000,
+      "repeat": 4,
+      "ms": 253.690542
+    },
+    {
+      "mode": "rust-single",
+      "pages": 1000,
+      "repeat": 4,
+      "ms": 281.76906
+    }
+  ],
+  "date": "2026-09-12",
+  "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+  "source_base_commit": "c67862f0dfcd521d9439cec311c64d75138e4b04",
+  "cpu_model": "AMD Ryzen AI 9 HX 370 w/ Radeon 890M",
+  "methodology": "One CPU affinity. Five samples per volume/mode with shuffled order. Two already rendered dev pages repeated. PHP reference warmed before samples; fresh Rust worker per sample, reused per page in rust-single. Includes JSON, startup, processing and validation. Excludes input loading, equality checks, shutdown, rendering, writes, sidecars, network. No whole-build or RSS measurement."
+}

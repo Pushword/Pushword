@@ -112,6 +112,15 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('static_generator');
         $treeBuilder->getRootNode()->children()
+            ->stringNode('native_html_minifier')
+                ->info('Optional trusted executable path. Null keeps PHP HTML minification; never resolved from site content.')
+                ->defaultNull()
+            ->end()
+            ->floatNode('native_html_minifier_timeout')
+                ->info('Maximum seconds per native HTML request, including IPC. Failure falls back to PHP.')
+                ->min(0.001)
+                ->defaultValue(5.0)
+            ->end()
             ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
             ->variableNode('static_symlink')
                 ->info("true/false for all, or array of ['media', 'assets'] to symlink selectively. GitHub pages forces copy.")

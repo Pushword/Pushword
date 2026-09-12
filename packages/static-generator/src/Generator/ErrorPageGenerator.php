@@ -12,12 +12,16 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\LocaleAwareInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
 
 class ErrorPageGenerator extends AbstractGenerator
 {
+    #[Required]
+    public HtmlMinification $htmlMinification;
+
     public function __construct(
         PageRepository $pageRepository,
         Twig $twig,
@@ -77,7 +81,7 @@ class ErrorPageGenerator extends AbstractGenerator
 
         try {
             $html = $this->twig->render('@Twig/Exception/error.html.twig');
-            $dump = HtmlMinifier::compress($html);
+            $dump = $this->htmlMinification->compress($html);
             $this->filesystem->dumpFile($filepath, $dump);
         } finally {
             foreach ($this->apps->getAll() as $site) {

@@ -55,6 +55,8 @@ parameters:
         - packages/dev-app/tests
         - packages/static-generator/src
         - packages/static-generator/tests
+        - packages/static-generator/rust/tests
+        - packages/static-generator/rust/bench.php
         - packages/template-editor/src
         - packages/template-editor/tests
         - packages/version/src
