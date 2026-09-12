@@ -40,34 +40,64 @@
   --bs-btn-active-border-color: var(--button-hover-border-color, var(--sky-700));
 }
 
-@media (max-width: 767px) {
-  body.ea-index-Page table.datagrid:not(.datagrid-empty) tr:not(.empty-row) td.actions {
+@media (max-width: 1599px) {
+  body.ea-index-Page .datagrid td.actions .pw-page-actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: var(--ea-sp-4);
   }
 
-  body.ea-index-Page .datagrid td.actions > form {
-    display: block;
+  body.ea-index-Page .datagrid td.actions .pw-page-actions > form {
     margin: 0;
     min-width: 0;
   }
 
-  body.ea-index-Page .datagrid td.actions > a {
+  body.ea-index-Page .datagrid td.actions .pw-page-actions > a {
     margin: 0;
   }
 
-  body.ea-index-Page .datagrid td.actions > a,
-  body.ea-index-Page .datagrid td.actions > form > button {
+  body.ea-index-Page .datagrid td.actions .pw-page-actions > a,
+  body.ea-index-Page .datagrid td.actions .pw-page-actions > form > button {
     width: 100%;
     min-width: 0;
-    min-height: 44px;
+    min-height: 36px;
     justify-content: center;
     white-space: normal;
   }
 
-  body.ea-index-Page .datagrid td.actions > a.action-delete:last-child {
-    grid-column: 2;
+  body.ea-index-Page .datagrid td.actions .pw-page-actions > a.action-delete:last-child {
+    grid-column: -2 / -1;
+  }
+}
+
+@media (max-width: 767px) {
+  body.ea-index-Page .datagrid td.actions .pw-page-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.ea-index-Page .datagrid td.actions .pw-page-actions > a,
+  body.ea-index-Page .datagrid td.actions .pw-page-actions > form > button {
+    min-height: 44px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  body.ea-index-Page .datagrid td.actions .pw-page-actions {
+    min-width: 160px;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  body.ea-index-Page .datagrid td.actions .pw-page-actions {
+    min-width: 280px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1400px) and (max-width: 1599px) {
+  body.ea-index-Page .datagrid td.actions .pw-page-actions {
+    min-width: 420px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

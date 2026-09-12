@@ -22,7 +22,7 @@ final class PageCloneTest extends AbstractAdminTestClass
 
         $path = self::getContainer()->get('router')->generate('admin_page_clone_page', ['entityId' => $page->id]);
         $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
-        self::assertCount(1, $crawler->filter('form[action$="'.$path.'"] button.btn.btn-secondary'));
+        self::assertCount(1, $crawler->filter('.pw-page-actions form[action$="'.$path.'"] button.btn.btn-secondary'));
         $token = $crawler->filter('form[action$="'.$path.'"] input[name="_token"]')->attr('value');
         self::assertNotNull($token);
 

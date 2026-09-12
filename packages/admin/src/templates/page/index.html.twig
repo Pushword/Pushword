@@ -1,1 +1,15 @@
 {% extends '@pwAdmin/crud/index.html.twig' %}
+
+{% block entity_actions %}
+  <td class="actions">
+    <div class="pw-page-actions">
+      {% for action in entity.actions %}
+        {% if action.isActionGroup %}
+          {{ include(action.templatePath, {group: action, entity: entity}, with_context: false) }}
+        {% else %}
+          {{ include(action.templatePath, {action: action, entity: entity, isIncludedInDropdown: false}, with_context: false) }}
+        {% endif %}
+      {% endfor %}
+    </div>
+  </td>
+{% endblock %}
