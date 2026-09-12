@@ -31,6 +31,10 @@ The core code follows as much as it can the #[symfony good practices](https://sy
 
 Each extension is optional.
 
+The experimental [Rust acceleration design](/native-acceleration) describes how
+selected Pushword operations could gain an optional native implementation while
+the complete PHP path remains available on shared hosting.
+
 Keeping all these extensions in one repository permits testing that everything works easily, understanding the code faster and refactoring much quicker.
 
 The [dev-app](https://github.com/Pushword/Pushword/tree/main/packages/dev-app) isn't a copy-and-install starter (it was formerly, and misleadingly, named `skeleton`).
