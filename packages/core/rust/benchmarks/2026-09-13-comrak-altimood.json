@@ -1,0 +1,35 @@
+{
+  "date": "2026-09-13",
+  "workload": "Markdown blocks after Pushword ShowMore, LinkCollector, prepareText and Twig expansion",
+  "site": "../altimood",
+  "site_pushword_core": "1.0.0-rc890 (a3458d8de27b2dd6f3dfffb3a547ca132677814c)",
+  "site_database_sha256": "a1fb60751f0e05fb95a7ff63fec825f872cad599580a8f9cb5de9151188b68fe",
+  "site_composer_lock_sha256": "7426767134b9f21d51ce0a81912312005f32284a505f7a6c7654eb3646a35cf6",
+  "private_snapshot_sha256": "538e6619ebaf6506131a7f18877fe85399a3d487181de75eef9966c773064d9e",
+  "probe_sha256": "101dc729e9e57a555c9da2ae4cb0303ee64fd5aca8a28746365b8b68bb55c50e",
+  "cargo_lock_sha256": "6bfe4500d2a8f75eda4dba77524224edc8f7cf9b8e129bd5afe2739d94424007",
+  "php": "8.5.9",
+  "rustc": "1.98.0",
+  "pages_total": 1474,
+  "pages_with_markdown_blocks": 1455,
+  "pages_exact": 401,
+  "blocks_total": 64509,
+  "blocks_exact": 58997,
+  "blocks_mismatched": 5512,
+  "mismatches_with_site_features": 5512,
+  "mismatch_features_overlapping": {
+    "obfuscated_link": 2823,
+    "notice": 1930,
+    "image": 155,
+    "phone": 408,
+    "email": 273,
+    "date": 457,
+    "attributes": 1910
+  },
+  "limits": [
+    "Feature counts overlap and are pattern-based, not parser diagnostics.",
+    "This compares against the site's installed Pushword version, not the monorepo working tree.",
+    "The probe does not replace the PHP renderer and these are parity counts, not performance timings.",
+    "Private Markdown and rendered HTML are excluded from the repository."
+  ]
+}

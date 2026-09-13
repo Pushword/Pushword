@@ -141,8 +141,8 @@ Altimood database snapshot, including SVG, picture/source, raw text and repaired
 markup. It declines ambiguous documents before using their output. Declines
 fall back per document; worker/protocol failures fall back for the whole batch.
 The shared-hosting test disables `proc_open`. Differential tests compare all
-accessors, including menu hierarchy, on 42 HTML cases, 59 rendered Markdown cases
-and 160 generated supported documents. All 59 rendered Markdown cases now use
+accessors, including menu hierarchy, on 42 HTML cases, 70 rendered Markdown cases
+and 160 generated supported documents. All 70 rendered Markdown cases now use
 native analysis. On 1,474 actual database pages rendered through Altimood's PHP
 pipeline, all 1,474 are accepted and byte-identical to PHP across the complete
 `SplitContent` result. The original conservative analyzer declined 1,191 pages
@@ -169,10 +169,12 @@ committed raw samples document the measurements and compatibility gaps.
   existing uncached PHP converter versus 0.408 ms in the Comrak batch, including
   startup/JSON/validation. The in-memory PHP cache hit takes 0.0026 ms: keep
   the cache and investigate acceleration of misses.
-- The current Comrak formatter is byte-identical on 49 of 59 corpus cases.
-  Attributes, dynamic links, media/notices, Unicode IDs and table edge cases
-  remain explicit gaps before any activation. Generic CommonMark is not a
-  replacement.
+- The current Comrak formatter is byte-identical on 67 of 70 corpus cases.
+  Link, block and list-item attributes, Unicode IDs and table edge cases match
+  PHP. Obfuscated links, media and notices still need Pushword's site services.
+  On the Altimood snapshot, 58,997/64,509 post-Twig blocks match, but only
+  401/1,455 pages with Markdown blocks have complete parity. This remains an
+  experimental parser, not a production Markdown backend.
 - The earlier TOC probe exposed repeated list scans for duplicate IDs. The new
   indexed PHP slugger removes repeated suffix searches; the separate aggregate
   split benchmark measures native parsing against that improved baseline.

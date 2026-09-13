@@ -304,7 +304,7 @@
         "name": "block_attributes",
         "markdown": "{#intro .lead}\n\nA paragraph.",
         "pre_class": "",
-        "compatible": false,
+        "compatible": true,
         "php": "<p>A paragraph.</p>\n"
     },
     {
@@ -318,35 +318,35 @@
         "name": "single_quoted_attributes",
         "markdown": "[link](/docs){title='a b'}",
         "pre_class": "",
-        "compatible": false,
+        "compatible": true,
         "php": "<p><a title=\"a b\" href=\"/docs\">link</a></p>\n"
     },
     {
         "name": "unicode_id",
         "markdown": "[link](/docs){#café}",
         "pre_class": "",
-        "compatible": false,
+        "compatible": true,
         "php": "<p><a id=\"café\" href=\"/docs\">link</a></p>\n"
     },
     {
         "name": "mixed_classes",
         "markdown": "[link](/docs){.first class=\"middle\" .last}",
         "pre_class": "",
-        "compatible": false,
+        "compatible": true,
         "php": "<p><a class=\"first middle last\" href=\"/docs\">link</a></p>\n"
     },
     {
         "name": "empty_table_head",
         "markdown": "| | |\n|---|---|\n| one | two |",
         "pre_class": "",
-        "compatible": false,
+        "compatible": true,
         "php": "<table>\n<tbody>\n<tr>\n<td>one</td>\n<td>two</td>\n</tr>\n</tbody>\n</table>\n"
     },
     {
         "name": "colspan",
         "markdown": "| A | B |\n|---|---|\n| spanning | -> |",
         "pre_class": "",
-        "compatible": false,
+        "compatible": true,
         "php": "<table>\n<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td colspan=\"2\">spanning</td>\n</tr>\n</tbody>\n</table>\n"
     },
     {
@@ -374,7 +374,7 @@
         "name": "attribute_id_order",
         "markdown": "[link](/docs){#docs target=\"_blank\"}",
         "pre_class": "",
-        "compatible": false,
+        "compatible": true,
         "php": "<p><a id=\"docs\" target=\"_blank\" href=\"/docs\" rel=\"noopener noreferrer\">link</a></p>\n"
     },
     {
@@ -411,5 +411,82 @@
         "pre_class": "",
         "compatible": true,
         "php": "<p><a data-label=\"a &amp;amp; b\" href=\"/docs\">link</a></p>\n"
+    },
+    {
+        "name": "paragraph_trailing_class",
+        "markdown": "Text {.lead}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p class=\"lead\">Text</p>\n"
+    },
+    {
+        "name": "paragraph_trailing_class_after_emphasis",
+        "markdown": "An *important* message {.lead}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p class=\"lead\">An <em>important</em> message</p>\n"
+    },
+    {
+        "name": "heading_prefix_id",
+        "markdown": "{#intro}\n## Heading",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<h2 id=\"intro\">Heading</h2>\n"
+    },
+    {
+        "name": "list_prefix_id",
+        "markdown": "{id=links}\n- First\n- Second",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<ul id=\"links\">\n<li>First</li>\n<li>Second</li>\n</ul>\n"
+    },
+    {
+        "name": "list_prefix_id_blank",
+        "markdown": "{id=links}\n\n- First\n- Second",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<ul>\n<li>First</li>\n<li>Second</li>\n</ul>\n"
+    },
+    {
+        "name": "paragraph_prefix_class",
+        "markdown": "{.lead}\nA paragraph.",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p class=\"lead\">A paragraph.</p>\n"
+    },
+    {
+        "name": "heading_suffix_class",
+        "markdown": "## Heading\n{.lead}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<h2 class=\"lead\">Heading</h2>\n"
+    },
+    {
+        "name": "code_literal_attribute",
+        "markdown": "`{.lead}`",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p><code>{.lead}</code></p>\n"
+    },
+    {
+        "name": "list_item_attribute",
+        "markdown": "- {.ico-mountain} Alpine **walk**",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<ul>\n<li class=\"ico-mountain\">Alpine <strong>walk</strong></li>\n</ul>\n"
+    },
+    {
+        "name": "invalid_class_literal",
+        "markdown": "{.!text-lg}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p>{.!text-lg}</p>\n"
+    },
+    {
+        "name": "invalid_class_before_heading",
+        "markdown": "{.!text-lg}\n## Heading",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p>{.!text-lg}</p>\n<h2>Heading</h2>\n"
     }
 ]

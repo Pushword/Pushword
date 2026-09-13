@@ -72,7 +72,7 @@ back to PHP. This is an eligibility check, not HTML sanitization. The
 `diagnose_split` worker operation reports a decline reason per document;
 normal rendering uses `split_content`.
 
-On the current 59-case rendered Markdown corpus, all 59 documents use native
+On the current 70-case rendered Markdown corpus, all 70 documents use native
 analysis and match PHP across every accessor. On a read-only snapshot of the
 Altimood database, 1,474/1,474 rendered pages are accepted and match PHP,
 including all 825 pages with a TOC. That establishes 100% coverage **for this
@@ -102,7 +102,7 @@ make -C packages/core/rust audit
 ```
 
 The native analyzer tests compare every accessor and the recursive Knp menu on
-42 fixed HTML cases, the 59 rendered Markdown cases and 160 generated documents.
+42 fixed HTML cases, the 70 rendered Markdown cases and 160 generated documents.
 Generated supported documents must actually use Rust, so fallback cannot hide
 a native failure. Tests cover batch/cache/reset behavior, malformed and oversized
 protocol frames, large pipe responses, the Markdown/Twig pipeline and a PHP
@@ -224,18 +224,41 @@ including heading-ID injection, not the final `getToc()` menu render.
 
 ### Markdown: large opportunity on cache misses, incomplete compatibility
 
-The timed subset is byte-identical. The current corpus is 49/59 byte-identical
-with the custom Comrak formatter. The ten recorded gaps cover Pushword-specific
-dynamic links, media/notices, block attributes, Unicode IDs, table edge cases
-and other extension details. The corpus is a compatibility map, not a promise
-that a generic CommonMark converter can replace Pushword's renderer.
+The timed subset is byte-identical. The current corpus is 67/70 byte-identical
+with the custom Comrak formatter. Link, block and list-item attributes, Unicode
+IDs, empty table heads and colspan markers now match the PHP reference. The
+three recorded gaps are obfuscated links, images and notices, whose output uses
+Pushword's site configuration, Twig templates or media data. The older
+`2026-09-12-comrak-tempest.json` is a historical 49/59 measurement; it has not
+been rewritten as a current benchmark.
+
+On the read-only Altimood snapshot, 58,997 of 64,509 post-Twig Markdown blocks
+(91.46%) are byte-identical. Of 1,455 pages containing such blocks, 401 have
+every block identical. The other 5,512 blocks all contain at least one known
+site-dependent feature: obfuscated links, notices, images, phone or email
+autolinks, or date shortcodes. Feature counts overlap. The downstream site has
+its own installed Pushword version, so this is a site compatibility audit, not
+a proof of parity against the current monorepo PHP renderer. Full aggregate
+counts and hashes are in `benchmarks/2026-09-13-comrak-altimood.json`.
 
 The Comrak ratio on the 9.8 KB subset is a parsing opportunity, not a drop-in
 CMS speedup. Preserve the existing content cache. The next useful prototype is
-a Rust parse stage with PHP retaining Pushword-aware rendering, or a complete
-port of those renderers with explicit resolved dependencies. Measure the cost
-of returning parser events/AST to PHP before choosing that split. Do not enable
-a generic converter based only on these numbers.
+a typed batch of deferred rendering operations from Rust: PHP would resolve
+links, phone numbers, email, dates, notices and media through its existing
+services and templates. Measure the PHP callback/serialization cost and exact
+site parity before deciding whether to enable a native Markdown backend.
+
+To reproduce the downstream audit without committing private page content:
+
+```sh
+php packages/core/rust/benchmarks/render-markdown-downstream.php ../altimood /tmp/pushword-markdown.ndjson
+python3 packages/core/rust/benchmarks/check-markdown-downstream.py /tmp/pushword-markdown.ndjson packages/core/rust/target/release/pushword-content-probe
+```
+
+The first command writes a mode-0600 snapshot and refuses to overwrite one.
+The second reports only aggregate counts and hashes. It measures compatibility,
+not speed. Both commands use the downstream test kernel and its installed
+Pushword version.
 
 Tempest 1.2.2 renders the same article in about 1.5 ms per document in the
 standalone PHP benchmark, versus the native Comrak batch measured by the probe;
