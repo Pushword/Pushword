@@ -1,3 +1,4 @@
 /target/
 /benchmarks/local/
 /benchmarks/local-*/
+/benchmarks/__pycache__/

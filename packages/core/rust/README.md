@@ -252,17 +252,23 @@ including heading-ID injection, not the final `getToc()` menu render.
 
 ### Three-way Markdown conversion
 
-The default benchmark generates 24,000 deterministic Markdown blocks from 12
-patterns and uses the repository's demo test kernel. It calculates CommonMark's
+The default benchmark generates 24,000 deterministic Markdown blocks from 15
+patterns and uses the repository's demo test kernel. Three patterns cover date
+shortcodes in plain text, link labels and alongside inline code; the runner
+requires Rust to accept each of those blocks. It calculates CommonMark's
 reference HTML once, outside the timed passes. No external site or corpus is
 needed. The raw snapshot is temporary; the detailed report can stay in the
 ignored local benchmark directory:
 
 ```sh
 mkdir -p packages/core/rust/benchmarks/local
-python3 packages/core/rust/benchmarks/three-way-markdown.py --cpu 2 --runs 3 \
+python3 packages/core/rust/benchmarks/three-way-markdown.py --cpu 2 --runs 3 --require-native-dates \
   > packages/core/rust/benchmarks/local/synthetic-result.json
 ```
+
+The input Markdown is fixed. The generated reference snapshot changes when a
+date shortcode's value changes, so compare the snapshot hash recorded in each
+report before comparing periodic runs.
 
 The following medians come from three alternating passes on CPU 2 with the
 24,000-block corpus on 13 September 2026 (PHP 8.5.10). All three paths produced
@@ -270,19 +276,21 @@ byte-identical HTML.
 
 | Renderer | Conversion time | Relative speed | Sampled peak process-tree RSS | Directly rendered blocks |
 |---|---:|---:|---:|---:|
-| CommonMark PHP | 1.381 s | 1.00× | 92.3 MiB | 24,000 |
-| Tempest compatibility renderer | 0.390 s | 3.54× | 90.6 MiB | 24,000 |
-| Rust hybrid with PHP fallback | 0.166 s | 8.34× | 98.5 MiB | 22,000; 2,000 PHP fallbacks |
+| CommonMark PHP | 1.439 s | 1.00× | 97.6 MiB | 24,000 |
+| Tempest compatibility renderer | 0.551 s | 2.61× | 97.3 MiB | 22,400; 1,600 PHP fallbacks |
+| Rust hybrid with PHP fallback | 0.230 s | 6.26× | 103.7 MiB | 22,400; 1,600 PHP fallbacks |
 
 The generated input is fixed and synthetic, so these ratios are useful for
 repeatable component comparisons, not predictions of a site's throughput.
-Conversion is uncached. Rust time includes persistent-worker IPC and the PHP
-fallback; the RSS figure includes the Rust child. Snapshot decoding, site
-switching, kernel startup, Twig and complete page rendering are excluded from
-the timed conversion calls. The synthetic corpus SHA-256 is
-`2d03bf7a6a532bfd5b84f828cceed90d1d1c18db5dcb2eacad2df916338ad3eb`;
+Conversion is uncached. Rust time includes PHP preparation of date shortcode
+values, persistent-worker IPC and the PHP fallback; the RSS figure includes the
+Rust child. Snapshot decoding, site switching, kernel startup, Twig and
+complete page rendering are excluded from the timed conversion calls. The
+synthetic corpus SHA-256 is
+`43883e3beb7727c800e09b40d36894642e31cb98183ec05f125cdefbd0a79bc5`;
 the analyzer binary SHA-256 is
-`a34055c2a1dcb299fb872dd06d4863ab556ec7a1366f9e79f400120f7f30e660`.
+`22f25562e422f3fb6a7c91f28e8b6c4fbfd9ec6215fbc00b72afaa97cdfbb154`.
+All 4,800 synthetic date blocks were accepted by Rust with byte-identical HTML.
 
 An installed downstream site can be measured with the same runner. Its private
 snapshot and result remain in the ignored local directory:
@@ -293,14 +301,18 @@ php packages/core/rust/benchmarks/render-markdown-downstream.php \
 python3 packages/core/rust/benchmarks/three-way-markdown.py \
   --site /path/to/site \
   --snapshot packages/core/rust/benchmarks/local/site.ndjson \
-  --cpu 2 --runs 3 \
+  --cpu 2 --runs 3 --require-native-dates \
   > packages/core/rust/benchmarks/local/site-result.json
 ```
 
 For site snapshots, the PHP baseline uses the site's installed CommonMark
 converter. Tempest uses the current monorepo renderer and the site's services.
 The runner verifies every output against the snapshot and checks the digest
-across all samples. The snapshot writer refuses to overwrite an existing file.
+across all samples. Its `dates` report field shows total, native and fallback
+date blocks. `--require-native-dates` also fails when the snapshot has no date
+blocks or any date block falls back to PHP; omit it if the site intentionally
+uses date syntax that Rust declines. The snapshot writer refuses to overwrite
+an existing file.
 
 ### TOC: algorithmic improvement applies to PHP too
 

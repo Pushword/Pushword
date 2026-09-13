@@ -14,6 +14,11 @@ import time
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 MODES = ('php', 'tempest', 'rust')
+DATE_PATTERNS = (
+    'Réservation date(Y), été date(S), hiver date(W) pour l’étape {n}.',
+    'Voir [le programme date(Y+1)](/programme) en date(M).',
+    'Le code `date(Y)` reste littéral, texte date(Y) pour l’étape {n}.',
+)
 SYNTHETIC = (
     'Parcours {n} dans les collines.',
     '## Étape {n} **facile**',
@@ -27,7 +32,7 @@ SYNTHETIC = (
     'Une _petite marche_ avant l’étape {n}.',
     'Le numéro 01 23 45 67 89 pour l’étape {n}.',
     '> [!faq] Question {n}\n>\n> Une réponse courte.',
-)
+) + DATE_PATTERNS
 
 
 def rss_kib(pid):
@@ -91,18 +96,21 @@ def synthetic_snapshot(path, blocks, site, binary, env):
     raw = path.with_name('raw.ndjson')
     with open(raw, 'w', encoding='utf-8') as stream:
         for index in range(blocks):
+            pattern = SYNTHETIC[index % len(SYNTHETIC)]
             record = {
                 'page': 'localhost.dev/benchmark',
                 'block': index,
-                'markdown': SYNTHETIC[index % len(SYNTHETIC)].format(n=index),
+                'markdown': pattern.format(n=index),
                 'pre_class': '',
             }
+            if pattern in DATE_PATTERNS:
+                record['native_expected'] = True
             stream.write(json.dumps(record, ensure_ascii=False) + '\n')
     with open(path, 'w', encoding='utf-8') as stream:
         subprocess.run(worker_command('prepare', site, raw, binary), cwd=ROOT, env=env, stdout=stream, check=True)
 
 
-def run(site, snapshot, binary, cpu, runs, corpus, env=None):
+def run(site, snapshot, binary, cpu, runs, corpus, require_native_dates=False, env=None):
     samples = []
     for round_number in range(runs):
         offset = round_number % len(MODES)
@@ -113,6 +121,11 @@ def run(site, snapshot, binary, cpu, runs, corpus, env=None):
 
     if len({result['digest'] for result in samples}) != 1 or len({result['blocks'] for result in samples}) != 1 or any(result['different'] for result in samples):
         raise RuntimeError('Output parity failed')
+    rust_samples = [result for result in samples if result['mode'] == 'rust']
+    if any(result['dates']['expected_mismatches'] for result in rust_samples):
+        raise RuntimeError('Native acceptance differs from the snapshot expectation')
+    if require_native_dates and any(result['dates']['blocks'] == 0 or result['dates']['fallback'] for result in rust_samples):
+        raise RuntimeError('A date block fell back to PHP (or the snapshot contains no dates)')
 
     medians = {
         mode: {
@@ -131,6 +144,7 @@ def run(site, snapshot, binary, cpu, runs, corpus, env=None):
         'cpu_affinity': cpu,
         'passes': runs,
         'output_sha256': samples[0]['digest'],
+        'dates': rust_samples[0]['dates'],
         'samples': samples,
         'medians': medians,
     }
@@ -144,6 +158,7 @@ def main():
     parser.add_argument('--binary', type=Path, default=ROOT / 'packages/core/rust/target/release/pushword-content-analyzer')
     parser.add_argument('--cpu', type=int)
     parser.add_argument('--runs', type=int, default=3)
+    parser.add_argument('--require-native-dates', action='store_true', help='fail if any date block falls back to PHP')
     args = parser.parse_args()
     if (args.site is None) != (args.snapshot is None):
         parser.error('--site and --snapshot must be supplied together')
@@ -154,7 +169,7 @@ def main():
     if args.site is not None:
         site = args.site.resolve()
         snapshot = args.snapshot.resolve()
-        report = run(site, snapshot, binary, args.cpu, args.runs, 'site snapshot')
+        report = run(site, snapshot, binary, args.cpu, args.runs, 'site snapshot', require_native_dates=args.require_native_dates)
     else:
         site = ROOT / 'packages/dev-app'
         with tempfile.TemporaryDirectory(prefix='pushword-markdown-bench-') as directory:
@@ -173,7 +188,7 @@ def main():
             })
             snapshot = Path(directory) / 'synthetic.ndjson'
             synthetic_snapshot(snapshot, args.blocks, site, binary, env)
-            report = run(site, snapshot, binary, args.cpu, args.runs, f'synthetic {args.blocks} blocks / {len(SYNTHETIC)} patterns', env)
+            report = run(site, snapshot, binary, args.cpu, args.runs, f'synthetic {args.blocks} blocks / {len(SYNTHETIC)} patterns', require_native_dates=args.require_native_dates, env=env)
     print(json.dumps(report, indent=2))
 
 
