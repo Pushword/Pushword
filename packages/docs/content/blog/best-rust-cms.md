@@ -7,7 +7,7 @@ template: /page/blog.html.twig
 toc: true
 ---
 
-What is the best Rust CMS? First decide what you want Rust to do. A headless API
+The best Rust CMS depends on what you want Rust to do. A headless API
 written in Rust, a Markdown site running on WebAssembly, and a PHP CMS
 that uses Rust for selected expensive operations solve different problems. The
 language alone does not tell you who can edit, how a draft becomes public, or
@@ -28,26 +28,6 @@ This is Pushword's blog, so our interest in the first option is obvious. We
 checked the projects' own documentation in September 2026; this is a guide to
 their stated architecture and current scope, **not** an independent benchmark
 or a certification of production readiness.
-
-## The options at a glance
-
-- **[Pushword](/native-acceleration):** a PHP 8.5 / Symfony 8 CMS for editors
-  and developers, with optional Rust workers.
-- **[NUR CMS](https://github.com/jb-alvarado/nur-cms):** a Rust headless API
-  with PostgreSQL and a Vue admin; bring your own site frontend.
-- **[RaisFast](https://github.com/RaisFast/raisfast):** an all-in-one Rust
-  backend with an embedded admin; its README labels it **early alpha**.
-- **[Bartholomew](https://developer.fermyon.com/bartholomew/index):** a
-  Markdown micro-CMS compiled to Wasm for Spin, without a conventional admin.
-- **[Zola](https://www.getzola.org/documentation/getting-started/overview/):**
-  a Rust static site generator for repository-authored Markdown.
-- **[Hugo](https://gohugo.io/documentation/):** a Go static site generator
-  with extensive content, image, multilingual, and asset-building features;
-  included as a useful comparison, not as a Rust CMS.
-- **[My Rust CMS](https://github.com/space-bacon/my_rust_cms):** a Rust and
-  Yew/Wasm visual builder whose extensive claims should be tested firsthand.
-- **[derived-cms](https://docs.rs/crate/derived-cms/latest):** a code-first
-  crate that generates CMS interfaces from Rust types, not an editorial app.
 
 There is no fair single speed ranking across these products: they do not run
 the same workload, and their public documentation does not provide a controlled
@@ -185,8 +165,8 @@ from those types. It fits a developer who wants to own the application model in
 code. It is a crate to build with, rather than a CMS that an editorial team can
 install and use without Rust development.
 
-[AvoRed Rust CMS](https://github.com/avored/avored-rust-cms) is also worth
-watching. Its current README describes Axum, SurrealDB, and a React admin, but
+[AvoRed Rust CMS](https://github.com/avored/avored-rust-cms) describes Axum,
+SurrealDB, and a React admin in its README, but
 says many admin pages are still being redone and lists REST and GraphQL APIs on
 the roadmap. On that evidence, we would validate the exact API and admin
 features needed before selecting it as a headless production CMS.
@@ -200,8 +180,8 @@ content, and a search index can all be produced by the build. Its
 [draft flag](https://www.getzola.org/documentation/content/page/) keeps pages
 out of normal builds, but it does not approve a draft or deploy the result.
 
-[Hugo](https://gohugo.io/documentation/) is the important **Go** comparator.
-It also builds a static site from content files, but gives developers a broader
+[Hugo](https://gohugo.io/documentation/) is a **Go** static site generator. It
+builds from content files and gives developers a broader
 set of built-in composition tools: content archetypes, page bundles, custom
 taxonomies, shortcodes, multilingual configurations, image transformations,
 modules, and the Hugo Pipes asset pipeline. Its
@@ -230,9 +210,7 @@ RaisFast for a broad backend pilot, or Bartholomew for Spin. If you only need a
 **Git-authored static site**, compare Rust-based Zola with Go-based Hugo on the
 site features above; Hugo belongs in that decision even though it does not
 qualify as a Rust CMS. If your priority is **an editorial CMS with optional
-native acceleration**, start with Pushword. The best choice is the one whose
-authoring and deployment model you would still choose if the language name
-were removed from the homepage.
+native acceleration**, start with Pushword.
 
 ## Sources
 
