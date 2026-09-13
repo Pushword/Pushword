@@ -66,6 +66,9 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      */
     private ?array $fileNameToId = null;
 
+    /** @var array<string, int>|null First matching owner of each former filename. */
+    private ?array $historicalFileNameToId = null;
+
     private bool $warmedLight = false;
 
     /** @var array<array-key, Media[]> */
@@ -152,6 +155,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         $this->indexVersion = $version;
         $this->warmedLight = true;
         $this->fileNameToId = null;
+        $this->historicalFileNameToId = null;
     }
 
     /**
@@ -257,6 +261,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         $this->indexVersion = null;
         $this->warmedLight = false;
         $this->fileNameToId = null;
+        $this->historicalFileNameToId = null;
     }
 
     public function isWarmedLight(): bool
@@ -316,13 +321,18 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             return $this->resolveIndexedId($entry['id'], $fileName);
         }
 
-        foreach ($this->fileNameIndexLight ?? [] as $candidate) {
-            if (\in_array($fileName, $candidate['fileNameHistory'], true)) {
-                return $this->find($candidate['id']);
+        if (null === $this->historicalFileNameToId) {
+            $this->historicalFileNameToId = [];
+            foreach ($this->fileNameIndexLight ?? [] as $candidate) {
+                foreach ($candidate['fileNameHistory'] as $oldName) {
+                    $this->historicalFileNameToId[$oldName] ??= $candidate['id'];
+                }
             }
         }
 
-        return null;
+        $id = $this->historicalFileNameToId[$fileName] ?? null;
+
+        return null === $id ? null : $this->find($id);
     }
 
     /**

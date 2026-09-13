@@ -204,6 +204,42 @@ final class MediaRepositoryTest extends KernelTestCase
         );
     }
 
+    public function testHistoricalLookupKeepsFirstMatchAndRebuildsAfterVersionChange(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $registry = self::getContainer()->get(ManagerRegistry::class);
+        $first = $em->getRepository(Media::class)->findOneByFileName('1.jpg');
+        $second = $em->getRepository(Media::class)->findOneByFileName('piedweb-logo.png');
+        self::assertNotNull($first);
+        self::assertNotNull($second);
+
+        $cache = new ArrayAdapter();
+        $index = $cache->getItem(MediaRepository::INDEX_CACHE_KEY_PREFIX.'0');
+        $index->set([
+            'first.jpg' => ['id' => $first->id, 'fileName' => 'first.jpg', 'fileNameHistory' => ['former.jpg']],
+            'second.jpg' => ['id' => $second->id, 'fileName' => 'second.jpg', 'fileNameHistory' => ['former.jpg']],
+        ]);
+        $cache->save($index);
+
+        $repo = new MediaRepository($registry, $cache, debug: false);
+        self::assertSame($first->id, $repo->findOneByFileNameOrHistory('former.jpg')?->id);
+        self::assertSame($first->id, $repo->findOneByFileNameOrHistory('former.jpg')?->id);
+
+        $nextIndex = $cache->getItem(MediaRepository::INDEX_CACHE_KEY_PREFIX.'1');
+        $nextIndex->set([
+            'second.jpg' => ['id' => $second->id, 'fileName' => 'second.jpg', 'fileNameHistory' => ['former.jpg']],
+        ]);
+        $cache->save($nextIndex);
+        $version = $cache->getItem(MediaRepository::VERSION_CACHE_KEY);
+        $version->set(1);
+
+        $cache->save($version);
+
+        $repo->onClear();
+        self::assertSame($second->id, $repo->findOneByFileNameOrHistory('former.jpg')?->id);
+    }
+
     /**
      * The point of keeping the index across a clear: an unchanged version must
      * not cost a rebuild. Guards the pw:static win, which no other test would
