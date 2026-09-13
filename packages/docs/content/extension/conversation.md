@@ -51,7 +51,7 @@ you may have a look inside `vendor/pushword/admin/install.php`.
 
 Activate the `data-live` element with [@pushword/js-helper](https://github.com/Pushword/js-helper) :
 
-````
+```
 import { liveForm } from "@pushword/js-helper/src/helpers";
 
 // on dom changed and on page loaded :

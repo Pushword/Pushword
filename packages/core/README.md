@@ -14,7 +14,7 @@ A **Symfony CMS** to rapidly create, manage and maintain your websites — from 
 
 - **Multi-site & multi-language** from a single install — the `host` field drives each site and locale.
 - **Page, Media and User** entities with a Markdown + Twig rendering pipeline.
-- **Pluggable** EntityFilter pipeline, CommonMark extensions and a rich event system (`PushwordEvents`).
+- **Pluggable** EntityFilter pipeline and a rich event system (`PushwordEvents`).
 - **SQLite by default** — zero infrastructure, no migrations required.
 - **Extensible** through the official bundles listed below.
 

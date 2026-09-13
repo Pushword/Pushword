@@ -7,8 +7,7 @@ name: Theme
 
 To customize your website theme, you may be insterested in :
 
-- [configure the default assets (js, css, favicon) in default template](/configuration#assets) (css and javascript)
-- [customize the assets](/manage-assets) (css and javascript)
+- [configure and customize the assets](/manage-assets) (CSS and JavaScript)
 - [customize template file](/override-theme) wich are rendering Pushword pages
 - [animate navigations](/view-transitions) with the native View Transition API (on by default)
 - edit template file for [admin](/extension/admin) with the extension [template-editor](/extension/template-editor)

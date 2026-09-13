@@ -48,5 +48,4 @@ Add your own extension #[editing this file on github](https://github.com/Pushwor
 
 - **Events:** See constants in `Pushword\Core\Event\PushwordEvents`. Usage examples: [Admin Menu](/extension/admin-menu), [Pages List Search](/pages-list).
 - **Entity filters:** Implement `Pushword\Core\Component\EntityFilter\Filter\FilterInterface`, auto-tagged as `pushword.entity_filter`.
-- **Markdown extensions:** Extend the CommonMark environment via `PushwordExtension`.
 - **Newsletter trigger sources:** Implement `Pushword\Newsletter\Trigger\TriggerSource` and tag it `pushword.newsletter.trigger_source` to start a mail sequence from anything your app watches — see [Newsletter](/extension/newsletter#custom-trigger-sources).

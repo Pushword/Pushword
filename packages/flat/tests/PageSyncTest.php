@@ -534,6 +534,33 @@ MD;
         self::assertSame($originalH1, $homepage->h1, 'Homepage h1 should NOT be changed by index.csv modifications');
     }
 
+    public function testImportAddsNewPagesToIndexesWithoutDroppingExistingPages(): void
+    {
+        $contentDir = self::getContainer()->get(FlatFileContentDirFinder::class)->get('localhost.dev');
+        foreach (['published' => '2025-01-01 00:00', 'draft' => '2099-01-01 00:00'] as $kind => $publishedAt) {
+            $file = $contentDir.'/page-sync-new-'.$kind.'.md';
+            file_put_contents($file, "---\nh1: New $kind page\npublishedAt: '$publishedAt'\n---\n\nNew page.\n");
+            $this->trackFile($file);
+        }
+
+        $this->pageSync->import('localhost.dev');
+
+        $index = file_get_contents($contentDir.'/index.csv');
+        $draftIndex = file_get_contents($contentDir.'/index.draft.csv');
+        self::assertStringContainsString('page-sync-new-published', $index);
+        self::assertStringContainsString('page-sync-new-draft', $draftIndex);
+        self::assertStringContainsString('homepage', $index);
+
+        $this->em->clear();
+        foreach (['published', 'draft'] as $kind) {
+            $page = $this->pageRepo->findOneBy(['slug' => 'page-sync-new-'.$kind, 'host' => 'localhost.dev']);
+            self::assertNotNull($page);
+            $this->em->remove($page);
+        }
+
+        $this->em->flush();
+    }
+
     /**
      * Test 7: Draft pages (unpublished) go to index.draft.csv.
      */

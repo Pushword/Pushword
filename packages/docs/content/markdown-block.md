@@ -7,7 +7,7 @@ toc: true
 
 Which Markdown specification is used in Pushword — _CommonMark_, _GFM_, or _something else_?
 
-The default Markdown implementation in **Pushword** is based on **CommonMark**, with a few customizations designed to make it easy to switch between Markdown and a WYSIWYG block editor.
+**Pushword** renders CommonMark-style Markdown with Tempest and custom rules designed to make it easy to switch between Markdown and a WYSIWYG block editor.
 
 ## For users
 
@@ -37,7 +37,7 @@ Both filters mark their output HTML-safe and pass raw inline HTML through as-is.
 
 Consecutive blocks can be wrapped in a single `<div>` by placing an opening and a
 closing tag as blocks of their own (blank-line separated). The markdown between the
-two lines is rendered normally — CommonMark passes the wrapper through as-is:
+two lines is rendered normally — the renderer passes the wrapper through as-is:
 
 ```markdown
 <div id="pricing" class="grid md:grid-cols-2">

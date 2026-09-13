@@ -143,4 +143,4 @@ pushword_admin:
 
 You can directly edit this default list or customize them by editing this list on the fly with the `pushword.admin.load_field` event (see [admin-block-editor extension](/extension/admin-block-editor) for an example).
 
-You can customize fields on [app](/configuration#configuration-types) level, but when we create a new page, we don't know yet in wich app we are, we will use first app configuration (or global).
+You can customize fields per site, but when creating a new page, Pushword does not yet know its site and uses the first site's configuration (or the global configuration).

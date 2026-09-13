@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'flat imports include new pages in the generated index'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,9 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/flat`
+
+## Flat page index
+
+`pw:flat:sync --mode=import` now includes newly created pages in `index.csv` and `index.draft.csv` on the first run. Nothing to do.

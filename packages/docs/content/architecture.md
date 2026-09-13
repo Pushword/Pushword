@@ -43,7 +43,7 @@ It's used for testing, demo, generating the docs, and a few classes from it are 
 
 ## On top of Symfony
 
-Each package (except _dev-app_, _installer_ and _js-helper_) is built as a [symfony bundle](https://symfony.com/doc/current/bundles.html).
+The core and feature packages are built as [Symfony bundles](https://symfony.com/doc/current/bundles.html). The installer, project template, documentation and Node tooling packages are not bundles.
 
 The `core` package requires a Symfony app installed to be functional.
 

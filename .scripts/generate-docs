@@ -1,80 +1,46 @@
 #!/bin/bash -e
 
-# Check that all code is committed before running the script
-check_git_status() {
-    # Check for uncommitted changes
-    if ! git diff-index --quiet HEAD --; then
-        echo "❌ Error: There are uncommitted changes in your repository."
-        echo "Please commit all your changes before running generate-docs."
-        echo ""
-        echo "Modified files:"
-        git diff --name-status
-        exit 1
-    fi
+if ! git diff-index --quiet HEAD -- || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+    echo 'Commit all changes before running composer docs.' >&2
+    exit 1
+fi
 
-    # Check for untracked files (excluding those ignored by .gitignore)
-    if [ -n "$(git ls-files --others --exclude-standard)" ]; then
-        echo "❌ Error: There are untracked files in your repository."
-        echo "Please add and commit all necessary files before running generate-docs."
-        echo ""
-        echo "Untracked files:"
-        git ls-files --others --exclude-standard
-        exit 1
-    fi
+revision=$(git rev-parse HEAD)
+remote=$(git remote get-url origin)
+repo_root=$(pwd)
+build_root=$(mktemp -d)
 
-    echo "✅ All files are committed. Generating documentation..."
+cleanup() {
+    cd "$repo_root"
+    git worktree remove --force "$build_root/source" 2>/dev/null || true
+    rm -rf "$build_root"
 }
+trap cleanup EXIT
 
-check_git_status
+git worktree add --detach "$build_root/source" "$revision"
+cp -a vendor "$build_root/source/vendor"
 
-#composer reset-dev-app
+cd "$build_root/source"
+composer reset-dev-app >/dev/null
 
-# function restoreData {
-#     echo "restore data..."
-#      if [[ $CURRENT_DIR = 'packages/dev-app' ]]
-#     then
-#         cd ../../
-#     fi
-#     #bash ./.scripts/data-restore no-docs
-# }
-# trap restoreData EXIT
-#bash ./.scripts/data-preserve no-docs
-
-php ./.scripts/generate-docs-assets
-
-
-CURRENT_DIR='packages/dev-app'
 cd packages/dev-app
+php bin/console pw:flat:sync pushword.piedweb.com --mode=import --format=text
+php bin/console pw:static pushword.piedweb.com --format=text
+cd ../..
 
-php bin/console pw:flat:sync pushword.piedweb.com --mode=import && php bin/console pw:static pushword.piedweb.com
+test -f docs/index.html
+test -f docs/404.html
+grep -qx 'pushword.piedweb.com' docs/CNAME
+pages=$(find docs -name '*.html' | wc -l)
+echo "$pages pages generated"
+[ "$pages" -ge 100 ]
 
-cd ../../
-# Syncing with docs branch and sending to dist
-
-git branch -D docs || true
-
-git checkout --orphan docs
-
-git rm -rf .
-
-# Remove everything except docs and .git directories
-find . -mindepth 1 -maxdepth 1 ! -name 'docs' ! -name '.git' -exec rm -rf {} +
-rm -rf .git-hooks 2>/dev/null || true
-rm -rf .github 2>/dev/null || true
-rm -rf .scripts 2>/dev/null || true
-rm -rf .phpunit.cache 2>/dev/null || true
-rm -rf .vscode 2>/dev/null || true
-rm -f .gitignore 2>/dev/null || true
-find . -mindepth 1 -maxdepth 1 -name '.*' -type f -exec rm -f {} + 2>/dev/null || true
-
-git add docs/*
-
-git commit -m 'update docs'
-
-git push origin docs --force
-
-git checkout main
-
-git stash || true
-
-composer update -q && composer reset
+publish_dir="$build_root/publish"
+mkdir -p "$publish_dir/docs"
+cp -a docs/. "$publish_dir/docs/"
+git -C "$publish_dir" init -q -b docs
+git -C "$publish_dir" config user.name "$(git config user.name)"
+git -C "$publish_dir" config user.email "$(git config user.email)"
+git -C "$publish_dir" add docs
+git -C "$publish_dir" commit -q -m "docs: build $revision"
+git -C "$publish_dir" push --force "$remote" docs

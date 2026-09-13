@@ -35,7 +35,7 @@ The sections below explain where those choices differ.
 
 | Aspect              | Pushword                  | WordPress                  | Statamic                     | Sulu                   |
 | ------------------- | ------------------------- | -------------------------- | ---------------------------- | ---------------------- |
-| **PHP Version**     | 8.4+                      | 8.3+ recommended; 7.4+ still runs | 8.2+                  | 8.2 to 8.5            |
+| **PHP Version**     | 8.5                       | 8.3+ recommended; 7.4+ still runs | 8.2+                  | 8.2 to 8.5            |
 | **Current version** | 1.0                       | 7.1 (August 2026)          | 6.x                          | 3.0.x                  |
 | **Framework**       | Symfony 8                 | Custom                     | Laravel (Laravel-native)     | Symfony 6.4 / 7.x / 8  |
 | **Database**        | SQLite / PostgreSQL / MariaDB | MySQL / MariaDB (required) | Flat-file / SQL (optional)   | Doctrine-supported DB  |
@@ -46,7 +46,7 @@ The sections below explain where those choices differ.
 
 ### Hosting and framework choices
 
-**Pushword** requires PHP 8.4+ and uses Symfony 8 with Doctrine 3. That permits property hooks and asymmetric visibility, but limits older hosting environments.
+**Pushword** requires PHP 8.5 and uses Symfony 8 with Doctrine 3. That permits property hooks and asymmetric visibility, but limits older hosting environments.
 
 **WordPress** maintains broad backward compatibility. Its [hosting recommendations](https://wordpress.org/about/requirements/) are PHP 8.3+, MariaDB 10.11+ or MySQL 8.0+, and HTTPS; the same page says WordPress still runs on PHP 7.4+ and MySQL 5.5.5+, although those old versions are end-of-life and should not be a new site's target. [WordPress 7.1](https://wordpress.org/news/2026/08/mary-lou/) shipped in August 2026. Broad hosting compatibility remains a real advantage.
 
@@ -152,13 +152,13 @@ Plugins can add maintenance work and, depending on their implementation, runtime
 | **CLI Tools**          | Symfony Console            | WP-CLI                         | Artisan                    | Symfony Console          |
 | **Testing**            | PHPUnit, PHPStan           | PHPUnit                        | Pest / PHPUnit             | PHPUnit                  |
 | **API**                | REST API (token + OpenAPI) | REST (core) / GraphQL (plugin) | REST + GraphQL (Pro)       | REST (GraphQL ready)     |
-| **Type Safety**        | Strong (PHP 8.4+ strict)   | Weak (legacy PHP)              | Good (Laravel types)       | Good (Symfony types)     |
+| **Type Safety**        | Strong (strict types)     | Weak (legacy PHP)              | Good (Laravel types)       | Good (Symfony types)     |
 | **Code Quality Tools** | PHPStan, Rector            | Basic                          | Pint, Larastan             | PHPStan, Rector          |
 | **Framework Maturity** | Symfony 8                 | Custom (legacy)                | Laravel 11+ (mature)       | Symfony 6+ (stable)      |
 
 ### Working in each codebase
 
-**Pushword** uses Symfony dependency injection and events. Its first-party extensions share a monorepo and run through CI together. PHPStan checks types, Rector supports refactoring, and PHP 8.4+ provides property hooks and asymmetric visibility. A token-authenticated REST API covers Page, Media and redirections, with OpenAPI documentation and revision guards for scripted editing.
+**Pushword** uses Symfony dependency injection and events. Its first-party extensions share a monorepo and run through CI together. PHPStan checks types, Rector supports refactoring, and PHP 8.5 provides property hooks and asymmetric visibility. A token-authenticated REST API covers Page, Media and redirections, with OpenAPI documentation and revision guards for scripted editing.
 
 Trade-off: Requires Symfony knowledge. Developers from WordPress/custom PHP backgrounds face moderate learning curve.
 
@@ -216,7 +216,7 @@ With Flat enabled, an AI coding assistant can edit content files alongside code.
 | **Extension risk model**     | First-party concentration | Third-party maintenance     | Paid-addon trade-offs      | Bundle compatibility     |
 | **Commercial Support**       | Consulting (small team) | Thousands of agencies         | Official support available | Professional services    |
 | **License**                  | MIT (open-source)       | GPL v2 (open-source)          | Core free, Pro paid        | MIT (open-source)        |
-| **Hosting Options**          | PHP 8.4+ host           | Broad PHP hosting support     | Compatible Laravel host    | Compatible Symfony host  |
+| **Hosting Options**          | PHP 8.5 host           | Broad PHP hosting support     | Compatible Laravel host    | Compatible Symfony host  |
 | **Job Market**               | Minimal                 | Huge (highest demand)         | Growing                    | Niche (enterprise)       |
 | **Third-party Integrations** | Symfony ecosystem       | Native integrations + plugins | Laravel ecosystem          | Symfony ecosystem        |
 
@@ -246,7 +246,7 @@ The smaller audience means fewer tutorials and fewer people to call for help. It
 
 **Strengths**:
 
-- Modern PHP 8.4+ / Symfony 8 stack
+- Modern PHP 8.5 / Symfony 8 stack
 - **Flat-file AI editing**: With the Flat extension, AI tools can edit Markdown files directly and sync them to the database
 - **Bulk operations for power users**: grep, sed and find/replace across content files without opening the admin
 - Native multi-site and i18n without plugins
@@ -265,7 +265,7 @@ The smaller audience means fewer tutorials and fewer people to call for help. It
 - Fewer ready-made themes/extensions
 - Requires Symfony knowledge for deep customization
 - Less beginner-friendly than WordPress
-- PHP 8.4+ requirement limits shared hosting options (requires modern infrastructure)
+- PHP 8.5 requirement limits shared hosting options (requires modern infrastructure)
 - Documentation still growing
 
 **Ideal for**:
@@ -514,7 +514,7 @@ Statamic offers visual editing and commercial support. Pushword offers built-in 
 
 ### Choose Pushword when:
 
-- Modern PHP (8.4+) and Symfony 8 architecture appeal to you
+- Modern PHP (8.5) and Symfony 8 architecture appeal to you
 - Flat-file / Git-based workflows matter for your team
 - **AI-assisted editing is important**: Your team uses Cursor, Claude Code, Copilot or similar tools to edit content files directly
 - **Bulk content operations are needed**: Mass find/replace, scripted updates, CLI-based content management

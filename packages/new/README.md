@@ -20,16 +20,17 @@ runs Pushword in worker mode.
 
 Open `/admin` with the account the installer asked you for.
 
-If it ran unattended — CI, a script, `composer --no-interaction` — it could not ask,
-and fell back to a demo account whose credentials are published:
+If it ran unattended in development — CI, a script, `composer --no-interaction` —
+it uses this demo account:
 
 ```
 admin@example.tld
 p@ssword
 ```
 
-**Change it right away** — from the admin, or with
-`php bin/console pw:user:create you@example.com 'your-password' ROLE_SUPER_ADMIN`.
+Change the development password before exposing the site. An unattended production
+install instead prints a random temporary password once and requires you to change
+it at first login.
 
 ## First steps
 

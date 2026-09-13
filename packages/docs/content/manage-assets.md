@@ -10,7 +10,7 @@ revision: 608434c860c8c6e116cb3df1af02070eb1f95a3c # read only
 
 The default installer copy/paste a skeleton for a website stylized with Tailwind CSS.
 
-To update it, just edit `app.js`, `app.css`, directly the [tailwind configuration](https://tailwindcss.com/docs/configuration) or the `vite.config.js`.
+To update it, edit `app.js`, `app.css` (including Tailwind v4's CSS-based configuration), or `vite.config.js`.
 
 Then run the build:
 

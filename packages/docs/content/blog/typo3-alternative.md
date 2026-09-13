@@ -84,7 +84,7 @@ as its packages and tests evolve. They describe codebase size, not reliability o
 | ------------------------ | ---------------------------------------------------------------------- | --------------------------------------------------------------- |
 | **What it is**           | A complete enterprise CMS platform                                     | A CMS assembled from Symfony bundles                            |
 | **First release**        | 1998                                                                   | December 2020 (first commit 2018)                               |
-| **PHP / framework**      | PHP 8.2+, Symfony **7.4 LTS** components, Doctrine **DBAL**            | PHP 8.4+, Symfony **8**, Doctrine **ORM**                       |
+| **PHP / framework**      | PHP 8.2+, Symfony **7.4 LTS** components, Doctrine **DBAL**            | PHP 8.5, Symfony **8**, Doctrine **ORM**                       |
 | **Source size**          | About **593,000 lines** across 36 sysexts at v14.3.5                   | About **90,000 lines** across 25 packages (18 bundles)         |
 | **Core alone**           | About 212,000 lines (`core`) + 110,000 (`backend`)                      | About 30,000 lines                                              |
 | **Templating**           | Fluid (147 ViewHelpers, 714 templates) + TypoScript                    | Twig                                                            |

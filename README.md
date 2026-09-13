@@ -16,14 +16,14 @@ A **Symfony CMS** to rapidly create, manage and maintain your websites — from 
 - **SQLite by default.** No database server to provision — and no migrations to run.
 - **Database or flat files.** With [Flat](https://pushword.piedweb.com/extension/flat), content lives as Markdown in Git and the admin stays usable.
 - **Deployable as a static site.** [Static Generator](https://pushword.piedweb.com/extension/static-generator) exports the whole site for GitHub Pages, Apache or FrankenPHP.
-- **Extensible where it matters** — events, entity filters, CommonMark extensions and Twig components, all documented.
+- **Extensible where it matters** — events, entity filters and Twig components, all documented.
 
 ## Installation
 
 ```shell
 composer create-project pushword/new pushword "^1.0"
 
-cd pushword && php bin/console pw:user:create
+cd pushword
 php -S 127.0.0.1:8004 -t public/
 ```
 

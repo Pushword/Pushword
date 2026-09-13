@@ -225,7 +225,7 @@ When both admin and flat files are modified, conflicts are resolved automaticall
 find content/ -name "*~conflict-*"
 
 # Clear all conflict files after review
-php bin/console pw:flat:conflicts:clear --dry-run
+php bin/console pw:flat:conflicts:clear --dry
 php bin/console pw:flat:conflicts:clear
 ```
 

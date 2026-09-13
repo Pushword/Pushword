@@ -40,7 +40,7 @@ Other reasons to consider Pushword:
 |                             | Astro                                                             | Pushword                                                                       |
 | --------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | **What it is**              | A build tool for content-driven websites                          | A complete CMS built on Symfony bundles                                        |
-| **Language**                | JavaScript / TypeScript (Node 22.12+)                             | PHP 8.4+ / Symfony 8                                                           |
+| **Language**                | JavaScript / TypeScript (Node 22.12+)                             | PHP 8.5 / Symfony 8                                                           |
 | **Best for**                | Teams who live in the JS ecosystem and author content in the repo | Teams who need editors, multi-site, or AI agents in the content loop           |
 | **Content authored by**     | Developers, in the repo (or an external CMS via a loader)         | Developers, editors and AI agents in one CMS                                    |
 | **To run an editable site** | Astro **plus** an editor/CMS integration                          | Admin included in one install                                                  |

@@ -164,29 +164,17 @@ Ceci est le reste de mon contenu...
 {% apply markdown %}
 1. premier élément d'une liste ordonnée
 2. second
-    * sous-liste
+   - sous-liste
 1. Le chiffre n'a pas d'importance
-    1. sous-liste ordordonnée
 4. un dernier élement
-
-* Liste avec un astérisque
-- ou un moins
-    1. sous-liste ordonnée
-+ Ou un plus
 {% endapply %}
   </div>
   <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
 1. premier élément d'une liste ordonnée
 2. second
-    * sous-liste
+   - sous-liste
 1. Le chiffre n'a pas d'importance
-    1. sous-liste ordordonnée
 4. un dernier élement
-
-* Liste avec un astérisque
-- ou un moins
-    1. sous-liste ordonnée
-+ Ou un plus
 </code></pre>
 </figure>
 </section>
@@ -246,7 +234,7 @@ deux espace sont nécessaires.</code></pre>
 > [!warning] Mon titre
 >
 > Le contenu de l'encadré, en **markdown**.
-{% endapply %}
+{%- endapply %}
   </div>
   <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
 > [!warning] Mon titre

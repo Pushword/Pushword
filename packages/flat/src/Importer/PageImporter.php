@@ -789,10 +789,6 @@ final class PageImporter extends AbstractImporter
      */
     public function getLoadedPages(): ?array
     {
-        if (null !== $this->pages) {
-            return $this->pages;
-        }
-
         return [] !== $this->slugIndex ? array_values($this->slugIndex) : null;
     }
 

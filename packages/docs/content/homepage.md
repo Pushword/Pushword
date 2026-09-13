@@ -277,7 +277,7 @@ Read the API reference
     <a href="/installation" class="inline-flex items-center px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-md hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300">
       Start building
     </a>
-    <a href="/configuration" class="inline-flex items-center px-5 py-2.5 text-sm font-medium text-stone-900 border border-stone-300 rounded-md hover:border-stone-500 dark:text-stone-100 dark:border-stone-700 dark:hover:border-stone-500">
+    <a href="/architecture" class="inline-flex items-center px-5 py-2.5 text-sm font-medium text-stone-900 border border-stone-300 rounded-md hover:border-stone-500 dark:text-stone-100 dark:border-stone-700 dark:hover:border-stone-500">
       Read the docs
     </a>
   </div>
