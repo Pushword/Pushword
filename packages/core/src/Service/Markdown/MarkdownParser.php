@@ -29,7 +29,7 @@ class MarkdownParser implements ResetInterface
      */
     private const int CACHE_VERSION = 21;
 
-    private const int NATIVE_CACHE_VERSION = 2;
+    private const int NATIVE_CACHE_VERSION = 3;
 
     private readonly Date $dateFilter;
 

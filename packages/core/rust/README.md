@@ -62,12 +62,15 @@ warning until the service is reset. PHP-only hosting needs no binary or new
 configuration.
 
 The eligibility check conservatively declines notices, Markdown images, date
-shortcodes and obfuscated e-mail links. Ordinary obfuscated links, e-mail
-autolinks and French phone numbers use the core markup; the worker receives the
-current locale and whether an admin is browsing a dynamic site. Conservative
-false positives cost PHP conversion; unseen syntax or parser differences can
-still cause a mismatch. Treat this backend as experimental until complete
-downstream page rendering is differential-tested.
+shortcodes without PHP-provided values and obfuscated e-mail links. It also
+declines inline code inside tables and a top-level fenced block immediately
+following a paragraph, where the current PHP and Rust renderers differ.
+Ordinary obfuscated links, e-mail autolinks and French phone numbers use the
+core markup; the worker receives the current locale and whether an admin is
+browsing a dynamic site. Conservative false positives cost PHP conversion;
+unseen syntax or parser differences can still cause a mismatch. Treat this
+backend as experimental until complete downstream page rendering is
+differential-tested.
 
 `ContentSplitter::split($html, $page)` returns the existing `SplitContent` object.
 `splitMany([['html' => $html, 'page' => $page], ...])` sends all uncached documents
@@ -330,6 +333,23 @@ date blocks. `--require-native-dates` also fails when the snapshot has no date
 blocks or any date block falls back to PHP; omit it if the site intentionally
 uses date syntax that Rust declines. The snapshot writer refuses to overwrite
 an existing file.
+
+A September 13, 2026 check used the installed site code and content snapshots
+from Altimood and GrandAngle. Three serial passes on CPU 2 measured uncached
+conversion, including Rust transport and PHP fallbacks but excluding page
+templates, database reads and output comparison:
+
+| Site | Blocks | Directly rendered by Rust | PHP median | Rust median | Rust byte differences |
+|---|---:|---:|---:|---:|---:|
+| Altimood | 64,509 | 62,108 | 5.19 s | 1.21 s | 0 |
+| GrandAngle | 154,988 | 149,674 | 12.17 s | 2.86 s | 0 |
+
+The Altimood three-way runner passed. The GrandAngle three-way runner failed
+because the current Tempest renderer differed semantically from the installed
+CommonMark reference on 20 blocks with ambiguous Markdown; direct PHP and Rust
+mode checks had identical digests, and Rust had zero byte differences. The
+Tempest differences remain a separate rendering compatibility issue. These
+figures measure block conversion, not the full `pw:page-scan` command.
 
 ### TOC: algorithmic improvement applies to PHP too
 
