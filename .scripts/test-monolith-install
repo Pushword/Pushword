@@ -1,0 +1,110 @@
+#!/bin/bash -e
+
+# Install a site from the split packages, then replace them with the monorepo
+# package. Path repositories use the current source with a release-like version.
+
+MONOREPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+TEMP_DIR="$(mktemp -d /tmp/pushword-monolith-install.XXXXXX)"
+FRESH_DIR="$(mktemp -d /tmp/pushword-monolith-fresh.XXXXXX)"
+trap 'rm -rf "$TEMP_DIR" "$FRESH_DIR"' EXIT
+
+cp -a "$MONOREPO_DIR/packages/new/." "$TEMP_DIR/"
+
+php -r '
+    $root = $argv[1];
+    $project = $argv[2];
+    $json = json_decode(file_get_contents($project."/composer.json"), true);
+    $repos = [];
+    foreach (glob($root."/packages/*/composer.json") as $file) {
+        $package = json_decode(file_get_contents($file), true);
+        if ("pushword/new" === $package["name"]) {
+            continue;
+        }
+        $repos[] = [
+            "type" => "path",
+            "url" => dirname($file),
+            "options" => ["symlink" => true, "versions" => [$package["name"] => "1.0.3"]],
+        ];
+    }
+    $json["repositories"] = $repos;
+    file_put_contents($project."/composer.json", json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
+' "$MONOREPO_DIR" "$TEMP_DIR"
+
+cd "$TEMP_DIR"
+if ! COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction --no-progress > split.log 2>&1; then
+    tail -n 70 split.log
+    exit 1
+fi
+
+php -r '
+    $file = $argv[1];
+    $root = $argv[2];
+    $json = json_decode(file_get_contents($file), true);
+    array_unshift($json["repositories"], [
+        "type" => "path",
+        "url" => $root,
+        "options" => ["symlink" => true, "versions" => ["pushword/pushword" => "1.0.3"]],
+    ]);
+    $json["require"]["pushword/pushword"] = "^1.0";
+    file_put_contents($file, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
+' "$TEMP_DIR/composer.json" "$MONOREPO_DIR"
+
+if ! COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction --no-progress > monolith.log 2>&1; then
+    tail -n 70 monolith.log
+    exit 1
+fi
+
+if rg -n '⚠ Warning:|Warning: Could not|Could not add lines to file' split.log monolith.log; then
+    exit 1
+fi
+
+verify_aggregate_install() {
+    php -r '
+    $installed = json_decode(file_get_contents("vendor/composer/installed.json"), true)["packages"];
+    $names = array_column($installed, "name");
+    foreach (["pushword/pushword", "pushword/dev-app", "pushword/docs"] as $name) {
+        if (!in_array($name, $names, true)) {
+            throw new RuntimeException($name." was not installed");
+        }
+    }
+    foreach ($names as $name) {
+        if (str_starts_with($name, "pushword/") && !in_array($name, ["pushword/pushword", "pushword/dev-app", "pushword/docs"], true)) {
+            throw new RuntimeException($name." was not replaced");
+        }
+    }
+    '
+
+    for bundle in admin admin-block-editor advanced-main-image api conversation core flat link-improver newsletter page-scanner page-update-notifier quiz repurpose search snippet static-generator template-editor version; do
+        test -f "vendor/pushword/pushword/packages/$bundle/install.php"
+        test -f "var/installer/$(php -r 'echo md5($argv[1]);' "$bundle")"
+    done
+
+    php -r '
+    $bundles = require "config/bundles.php";
+    $pushword = array_filter(array_keys($bundles), fn(string $name): bool => str_starts_with($name, "Pushword\\"));
+    if (18 !== count($pushword) || Pushword\Core\PushwordCoreBundle::class !== reset($pushword)) {
+        throw new RuntimeException("The aggregate package did not register all bundles with core first.");
+    }
+    '
+
+    php bin/console cache:clear --env=dev --no-debug > /dev/null
+    php bin/console debug:container --parameter=pw.package_dir --no-debug | rg -q 'vendor/pushword/pushword/packages'
+    php bin/console debug:router --no-debug > /dev/null
+}
+
+verify_aggregate_install
+
+cp -a "$MONOREPO_DIR/packages/new/." "$FRESH_DIR/"
+cp "$TEMP_DIR/composer.json" "$FRESH_DIR/composer.json"
+cd "$FRESH_DIR"
+if ! COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction --no-progress > fresh.log 2>&1; then
+    tail -n 70 fresh.log
+    exit 1
+fi
+if rg -n '⚠ Warning:|Warning: Could not|Could not add lines to file' fresh.log; then
+    exit 1
+fi
+
+verify_aggregate_install
+
+echo "Fresh monolith install and split-package upgrade passed."

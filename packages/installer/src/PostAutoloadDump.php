@@ -25,19 +25,23 @@ class PostAutoloadDump extends PostInstall
         }
 
         $packages = self::scanDir($pushwordDir);
+        if (is_dir($pushwordDir.'/pushword/packages')) {
+            $packages = array_merge($packages, self::scanDir($pushwordDir.'/pushword/packages'));
+        }
 
         foreach ($packages as $package) {
-            self::runUpdate($pushwordDir, $package);
+            $monorepoPath = $pushwordDir.'/pushword/packages/'.$package;
+            self::runUpdate(is_dir($monorepoPath) ? $monorepoPath : $pushwordDir.'/'.$package, $package);
         }
     }
 
-    private static function runUpdate(string $pushwordDir, string $package): void
+    private static function runUpdate(string $packageDir, string $package): void
     {
-        if (! file_exists($pushwordDir.'/'.$package.'/src/Installer')) {
+        if (! file_exists($packageDir.'/src/Installer')) {
             return;
         }
 
-        $scriptsToRun = self::scanDir($pushwordDir.'/'.$package.'/src/Installer');
+        $scriptsToRun = self::scanDir($packageDir.'/src/Installer');
         foreach ($scriptsToRun as $i => $script) {
             if (! file_exists($isInstalledFile = 'var/installer/'.md5($package.$script)) && ! str_ends_with($script, '~')) {
                 self::getKernel();

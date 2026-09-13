@@ -113,6 +113,15 @@ composer req pushword/page-update-notifier # email alert when a page changes
 ```
 
 Each one registers its own routes and config on install — nothing to wire by hand.
+
+To install all maintained Pushword bundles in an existing site instead, run:
+
+```shell
+composer require "pushword/pushword:^1.0"
+```
+
+This is the combined bundle package; use `pushword/new` above to create a site.
+
 The Search extension keeps its own rebuildable SQLite index even when Doctrine uses
 PostgreSQL, so it still requires `pdo_sqlite`.
 

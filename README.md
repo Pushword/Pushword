@@ -46,6 +46,14 @@ Officially maintained bundles, installable one by one:
 
 See [all extensions](https://pushword.piedweb.com/extensions) for the rest — block editor, snippets, quizzes, comments and more.
 
+To add every maintained bundle to an existing Pushword site in one package:
+
+```shell
+composer require "pushword/pushword:^1.0"
+```
+
+The `pushword/new` project above remains the way to create a new site.
+
 ## Documentation
 
 Visit [pushword.piedweb.com](https://pushword.piedweb.com)

@@ -6,6 +6,7 @@ namespace Pushword\Installer;
 
 use Exception;
 use LogicException;
+use Pushword\Core\PushwordCoreBundle;
 use Symfony\Component\Filesystem\Filesystem;
 
 if (! class_exists(Filesystem::class)) {
@@ -17,6 +18,11 @@ class PostInstall
     public static function runPostUpdate(): void // Event $event
     {
         $packages = self::scanDir('vendor/pushword');
+        $monorepoPackages = [];
+        if (is_dir('vendor/pushword/pushword/packages')) {
+            $monorepoPackages = self::scanDir('vendor/pushword/pushword/packages');
+            $packages = array_merge($packages, $monorepoPackages);
+        }
 
         // core runs last: it rewrites the DSN, updates the schema, loads the fixtures
         // and installs the bundle assets — each of which must see every other bundle
@@ -24,12 +30,45 @@ class PostInstall
         usort($packages, static fn (string $a, string $b): int => ('core' === $a ? 1 : 0) <=> ('core' === $b ? 1 : 0));
 
         foreach ($packages as $package) {
-            if (! file_exists('var/installer/'.md5($package)) && file_exists($installer = 'vendor/pushword/'.$package.'/install.php')) {
+            if (! file_exists('var/installer/'.md5($package)) && file_exists($installer = self::packagePath($package).'/install.php')) {
                 self::dumpFile('var/installer/'.md5($package), 'done');
                 echo '~ Executing '.$package.' install action.'.\chr(10);
                 include $installer;
             }
         }
+
+        if ([] !== $monorepoPackages) {
+            self::restoreMonorepoBundles($monorepoPackages);
+            self::remove('var/cache');
+        }
+    }
+
+    /** @param list<string> $packages */
+    private static function restoreMonorepoBundles(array $packages): void
+    {
+        // Flex removes the split packages' bundle entries when the monorepo replaces
+        // them. Their install markers remain, so restore the entries without rerunning
+        // the install scripts (especially core's database and fixture setup).
+        $bundlesFile = (string) file_get_contents('config/bundles.php');
+        if (! str_contains($bundlesFile, PushwordCoreBundle::class)) {
+            self::replace('config/bundles.php', 'return [', 'return ['."\n    ".PushwordCoreBundle::class."::class => ['all' => true],");
+        }
+
+        foreach ($packages as $package) {
+            if ('core' === $package || ! file_exists(self::packagePath($package).'/install.php')) {
+                continue;
+            }
+
+            $shortName = str_replace('-', '', ucwords($package, '-'));
+            self::registerBundle('Pushword\\'.$shortName.'\\Pushword'.$shortName.'Bundle');
+        }
+    }
+
+    public static function packagePath(string $package): string
+    {
+        $monorepoPath = 'vendor/pushword/pushword/packages/'.$package;
+
+        return is_dir($monorepoPath) ? $monorepoPath : 'vendor/pushword/'.$package;
     }
 
     /**

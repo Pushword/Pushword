@@ -3,13 +3,16 @@ name: Test installer
 on:
   push:
     paths:
+      - 'composer.json'
       - 'packages/core/install.php'
+      - 'packages/core/src/DependencyInjection/PushwordCoreExtension.php'
       - 'packages/*/install.php'
       - 'packages/installer/**'
       - 'packages/new/**'
       - 'packages/*/src/config/services.php'
       - 'packages/*/src/Resources/config/services.php'
       - '.scripts/test-installer'
+      - '.scripts/test-monolith-install'
       - '.scripts/test-partial-install'
       - '.scripts/test-create-project'
       - '.github/workflows/test-installer.yml'
@@ -18,13 +21,16 @@ on:
       - 'packages/docs/content/homepage.md'
   pull_request:
     paths:
+      - 'composer.json'
       - 'packages/core/install.php'
+      - 'packages/core/src/DependencyInjection/PushwordCoreExtension.php'
       - 'packages/*/install.php'
       - 'packages/installer/**'
       - 'packages/new/**'
       - 'packages/*/src/config/services.php'
       - 'packages/*/src/Resources/config/services.php'
       - '.scripts/test-partial-install'
+      - '.scripts/test-monolith-install'
       - '.scripts/test-create-project'
       - 'README.md'
       - 'packages/docs/content/installation.md'
@@ -61,6 +67,9 @@ jobs:
 
       - name: Run installer test
         run: ./.scripts/test-installer
+
+      - name: Run monolith install test
+        run: ./.scripts/test-monolith-install
 
   partial-install:
     runs-on: ubuntu-latest
