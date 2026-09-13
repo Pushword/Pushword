@@ -35,7 +35,11 @@ if [ "$event" = "PostToolUse" ]; then
     apply_patch|Edit|Write|MultiEdit)
       if [ "$tool_name" = "apply_patch" ]; then
         write_paths=$(printf '%s' "$input" | jq -r \
-          '.tool_input.patch // .tool_input.input // empty' 2>/dev/null | \
+          'if (.tool_input | type) == "string" then
+             .tool_input
+           else
+             .tool_input.patch // .tool_input.input // empty
+           end' 2>/dev/null | \
           sed -n 's/^\*\*\* \(Add\|Update\|Delete\) File: //p')
       else
         write_paths=$(printf '%s' "$input" | jq -r \

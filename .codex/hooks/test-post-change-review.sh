@@ -36,6 +36,12 @@ post_apply_patch() {
     "$hook_path"
 }
 
+post_apply_patch_raw() {
+  jq -nc --arg cwd "$test_repo" --arg session_id "$session_id" --arg patch "$1" \
+    '{hook_event_name: "PostToolUse", tool_name: "apply_patch", session_id: $session_id, cwd: $cwd, tool_input: $patch}' | \
+    "$hook_path"
+}
+
 post_terminal_command() {
   if [ "$1" = "Bash" ]; then
     jq -nc --arg command "$2" --arg cwd "$test_repo" --arg session_id "$session_id" \
@@ -64,6 +70,10 @@ stop_with_message() {
 post_write_path "$test_tmp_dir/personal/SKILL.md"
 test ! -e "$state_file"
 post_apply_patch "*** Begin Patch
+*** Add File: $test_tmp_dir/personal/SKILL.md
+*** End Patch"
+test ! -e "$state_file"
+post_apply_patch_raw "*** Begin Patch
 *** Add File: $test_tmp_dir/personal/SKILL.md
 *** End Patch"
 test ! -e "$state_file"
