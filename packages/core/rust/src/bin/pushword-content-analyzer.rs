@@ -1,5 +1,5 @@
 use pushword_content_probe::{
-    markdown_if_supported,
+    markdown_if_supported_with_context,
     split::{Document, analyze, diagnose},
 };
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -22,6 +22,8 @@ struct Request {
 struct MarkdownDocument {
     markdown: String,
     fenced_code_pre_class: String,
+    locale: Option<String>,
+    allow_obfuscated_links: Option<bool>,
 }
 
 #[derive(Serialize)]
@@ -80,7 +82,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 documents: parse_documents::<MarkdownDocument>(request.documents)?
                     .iter()
                     .map(|document| {
-                        markdown_if_supported(&document.markdown, &document.fenced_code_pre_class)
+                        if document.allow_obfuscated_links.is_none()
+                            && document.markdown.contains('@')
+                        {
+                            return None;
+                        }
+
+                        markdown_if_supported_with_context(
+                            &document.markdown,
+                            &document.fenced_code_pre_class,
+                            document.locale.as_deref(),
+                            document.allow_obfuscated_links.unwrap_or(false),
+                        )
                     })
                     .collect(),
             })?,

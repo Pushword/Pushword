@@ -1,5 +1,5 @@
 ---
-title: 'PHP 8.5 required; PHP files use strict types; optional Rust minification, content analysis and Markdown; admin links restrict URLs'
+title: 'PHP 8.5 required; PHP files use strict types; optional Rust minification, content analysis and Markdown; contact markup uses core templates; admin links restrict URLs'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -65,6 +65,11 @@ See [native acceleration](../native-acceleration.md) for the supported HTML boun
 Markdown can use the same Rust analyzer for eligible blocks, with PHP fallback; PHP remains the default.
 **Sites opting into experimental Rust Markdown:** set `pushword.native_markdown_renderer` to the deployed `pushword-content-analyzer` path, then clear the Symfony container cache.
 See [native acceleration](../native-acceleration.md) for the measured conversion boundary and compatibility limits.
+
+## Contact markup
+
+Obfuscated links, encoded e-mails and telephone links now use Pushword's core component templates.
+**Sites overriding `component/link_js.html.twig`, `component/encoded_mail.html.twig` or `component/phone_number.html.twig`:** move styling to the `class` argument or site CSS; those template overrides are no longer used.
 
 ## Admin link URLs
 

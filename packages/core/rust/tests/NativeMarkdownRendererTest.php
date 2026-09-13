@@ -56,7 +56,11 @@ final class NativeMarkdownRendererTest extends KernelTestCase
             '![alt](/image.jpg)',
             '> [!note] Notice',
             'Call 01 23 45 67 89',
+            'Call +33 1 23 45 67 89',
+            'Call 01&nbsp;23&nbsp;45&nbsp;67&nbsp;89',
+            "Call 01\u{a0}23\u{a0}45\u{a0}67\u{a0}89",
             'contact@example.com',
+            'Before <span>contact@example.com</span> after',
             'date(Y)',
         ];
         $result = $parser->renderNativeMany($sources);
@@ -67,8 +71,36 @@ final class NativeMarkdownRendererTest extends KernelTestCase
             }
         }
 
-        self::assertSame([false, false, false, false, true, true, true, true, true], array_map(static fn (?string $html): bool => null === $html, $result));
+        self::assertSame([false, false, false, false, true, true, false, false, false, true, false, false, true], array_map(static fn (?string $html): bool => null === $html, $result));
         $parser->reset();
+    }
+
+    public function testPhoneLocaleUsesDistinctNativeCacheEntries(): void
+    {
+        self::bootKernel();
+        $sites = self::getContainer()->get(SiteRegistry::class);
+        $page = new Page();
+        $page->host = 'localhost.dev';
+
+        $sites->switchSite($page);
+        $pool = new ArrayAdapter();
+        $native = $this->parser(self::BINARY, $pool);
+        $php = $this->parser();
+        $source = 'Call +33 1 23 45 67 89';
+
+        $page->locale = 'fr';
+        $french = $native->renderNativeMany([$source]);
+        self::assertSame([$php->transform($source)], $french);
+
+        $page->locale = 'en';
+        $english = $native->renderNativeMany([$source]);
+        self::assertSame([$php->transform($source)], $english);
+        self::assertNotSame($french, $english);
+        foreach (['fr', 'en'] as $locale) {
+            self::assertTrue($pool->getItem('pw_mdn2.'.hash('xxh3', '10a1l'.$locale.'|'.$source))->isHit());
+        }
+
+        $native->reset();
     }
 
     public function testSharedMarkdownCorpusUsesNativeOnlyForExactResults(): void
@@ -125,7 +157,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $source = 'A **cached** paragraph.';
         self::assertSame([$this->parser()->transform($source)], $parser->renderNativeMany([$source]));
 
-        $key = 'pw_mdn1.'.hash('xxh3', '9|'.$source);
+        $key = 'pw_mdn2.'.hash('xxh3', '10|'.$source);
         $item = $pool->getItem($key);
         self::assertTrue($item->isHit());
         $item->set('FROM CACHE');
@@ -164,6 +196,22 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         }
     }
 
+    public function testOlderWorkerRequestsDeclineContactMarkup(): void
+    {
+        $documents = array_map(static fn (string $source): array => [
+            'markdown' => $source,
+            'fenced_code_pre_class' => '',
+        ], ['contact@example.com', 'Call 01 23 45 67 89', '#[private](/path)', 'Plain text']);
+        $frame = json_encode(['version' => 1, 'id' => 1, 'operation' => 'render_markdown', 'documents' => $documents], \JSON_THROW_ON_ERROR)."\n";
+        $process = new Process([self::BINARY], input: $frame);
+        $process->mustRun();
+
+        $response = json_decode($process->getOutput(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($response);
+
+        self::assertSame([null, null, null, "<p>Plain text</p>\n"], $response['documents']);
+    }
+
     public function testFilterBatchesAndMatchesPhpForMixedContent(): void
     {
         self::bootKernel();
@@ -182,7 +230,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $native = new Markdown($nativeParser, $linkProvider);
 
         self::assertSame($php->apply($source, $page, $manager), $native->apply($source, $page, $manager));
-        self::assertTrue($pool->getItem('pw_mdn1.'.hash('xxh3', '9|A **bold** paragraph.'))->isHit());
+        self::assertTrue($pool->getItem('pw_mdn2.'.hash('xxh3', '10|A **bold** paragraph.'))->isHit());
         $nativeParser->reset();
     }
 

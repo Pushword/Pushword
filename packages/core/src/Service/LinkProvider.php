@@ -45,8 +45,7 @@ final readonly class LinkProvider
     {
         $site = $this->getApp();
 
-        return ('@Pushword/component/link_js.html.twig' === $site->getView('/component/link_js.html.twig'))
-            && ($site->isStatic || ! $this->currentUserIsAdmin());
+        return $site->isStatic || ! $this->currentUserIsAdmin();
     }
 
     /**
@@ -104,7 +103,7 @@ final readonly class LinkProvider
             }
 
             $attr['data-rot'] = self::obfuscate($path);
-            $template = $this->getApp()->getView('/component/link_js.html.twig');
+            $template = '@Pushword/component/link_js.html.twig';
 
             return trim($this->twig->render($template, ['anchor' => $anchor, 'attr' => $attr]));
         }
@@ -159,7 +158,7 @@ final readonly class LinkProvider
     public function renderEncodedMail(string $mail = '', string $class = ''): string
     {
         // LINK packages/core/src/templates/component/encoded_mail.html.twig
-        $template = $this->getApp()->getView('/component/encoded_mail.html.twig');
+        $template = '@Pushword/component/encoded_mail.html.twig';
         $mail = trim($mail) ?: $this->getApp()->getStr('email');
 
         return trim(
@@ -193,7 +192,7 @@ final readonly class LinkProvider
     public function renderPhoneNumber(string $number = '', string $class = ''): string
     {
         $number = $number ?: $this->getApp()->getStr('phoneNumber');
-        $template = $this->getApp()->getView('/component/phone_number.html.twig');
+        $template = '@Pushword/component/phone_number.html.twig';
         $locale = $this->apps->getLocale();
 
         // For French locale, replace +33 with 0; otherwise keep international format

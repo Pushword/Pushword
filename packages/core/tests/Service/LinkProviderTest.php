@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Template\TemplateResolver;
 use ReflectionMethod;
@@ -21,7 +22,6 @@ use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Symfony\Component\Routing\RouterInterface;
 use Twig\Environment as Twig;
-use Twig\Error\LoaderError;
 
 #[AllowMockObjectsWithoutExpectations]
 final class LinkProviderTest extends TestCase
@@ -84,7 +84,7 @@ final class LinkProviderTest extends TestCase
         self::assertFalse($this->invokeCurrentUserIsAdmin($provider));
     }
 
-    public function testNativeObfuscatedMarkdownLinksRequireTheDefaultTemplateAndNoLiveAdmin(): void
+    public function testNativeObfuscatedMarkdownLinksExcludeLiveAdmins(): void
     {
         $security = self::createStub(Security::class);
         $security->method('isGranted')->willReturn(true);
@@ -93,7 +93,7 @@ final class LinkProviderTest extends TestCase
 
         $stack = new RequestStack([$request]);
 
-        $site = $this->buildSiteRegistry('@Pushword', __DIR__.'/missing-templates');
+        $site = $this->buildSiteRegistry();
         $provider = $this->buildProvider($security, $stack, $site);
         self::assertFalse($provider->canRenderObfuscatedMarkdownLinkNatively());
 
@@ -102,7 +102,31 @@ final class LinkProviderTest extends TestCase
 
         $customSite = $this->buildSiteRegistry('@Custom');
         $customSite->get()->setStatic(true);
-        self::assertFalse($this->buildProvider($security, $stack, $customSite)->canRenderObfuscatedMarkdownLinkNatively());
+        self::assertTrue($this->buildProvider($security, $stack, $customSite)->canRenderObfuscatedMarkdownLinkNatively());
+    }
+
+    public function testContactMarkupUsesOnlyCoreTemplates(): void
+    {
+        $rendered = [];
+        $twig = self::createStub(Twig::class);
+        $twig->method('render')->willReturnCallback(static function (string $template, array $context) use (&$rendered): string {
+            $rendered[] = [$template, $context];
+
+            return '<span>contact</span>';
+        });
+        $provider = $this->buildProvider(self::createStub(Security::class), new RequestStack(), $this->buildSiteRegistry('@Custom'), $twig);
+
+        $provider->renderLink('Contact', '/contact');
+        $provider->renderEncodedMail('contact@example.com', 'mail-style');
+        $provider->renderPhoneNumber('01 23 45 67 89', 'phone-style');
+
+        self::assertSame([
+            '@Pushword/component/link_js.html.twig',
+            '@Pushword/component/encoded_mail.html.twig',
+            '@Pushword/component/phone_number.html.twig',
+        ], array_column($rendered, 0));
+        self::assertSame('mail-style', $rendered[1][1]['class']);
+        self::assertSame('phone-style', $rendered[2][1]['class']);
     }
 
     #[DataProvider('provideObfuscationDebugTitleCases')]
@@ -123,7 +147,7 @@ final class LinkProviderTest extends TestCase
         $twig->expects(self::once())
             ->method('render')
             ->with(
-                '/component/link_js.html.twig',
+                '@Pushword/component/link_js.html.twig',
                 self::callback(static function (array $context) use ($expectedTitle): bool {
                     self::assertArrayHasKey('attr', $context);
                     self::assertIsArray($context['attr']);
@@ -175,20 +199,20 @@ final class LinkProviderTest extends TestCase
         return (bool) $method->invoke($provider);
     }
 
-    private function buildSiteRegistry(string $template = '@Pushword', ?string $templateDir = null): SiteRegistry
+    private function buildSiteRegistry(string $template = '@Pushword'): SiteRegistry
     {
-        $twig = self::createStub(Twig::class);
-        $twig->method('load')->willThrowException(new LoaderError('missing template'));
-
-        return new SiteRegistry(
+        $sites = new SiteRegistry(
             ['example.com' => [
                 'hosts' => ['example.com'],
                 'locale' => 'en',
                 'template' => $template,
-                'template_dir' => $templateDir ?? \dirname(__DIR__, 2).'/src/templates',
+                'template_dir' => \dirname(__DIR__, 2).'/src/templates',
             ]],
-            new TemplateResolver($twig, new ArrayAdapter()),
+            new TemplateResolver(self::createStub(Twig::class), new ArrayAdapter()),
             new ParameterBag(),
         );
+        $sites->setRequestContext(new RequestContext($sites));
+
+        return $sites;
     }
 }

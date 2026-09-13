@@ -8,6 +8,7 @@ description = "Optional Pushword content analysis and Markdown compatibility pro
 
 [dependencies]
 comrak = { version = "0.55", default-features = false, features = ["attributes"] }
+regex = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 scraper = { version = "0.27", default-features = false, features = ["deterministic", "errors"] }

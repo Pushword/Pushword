@@ -61,12 +61,13 @@ timeouts, bad responses and oversized batches fall back to PHP and log one
 warning until the service is reset. PHP-only hosting needs no binary or new
 configuration.
 
-The eligibility check conservatively declines obfuscated links, notices,
-Markdown images, date shortcodes, email addresses and French phone numbers.
-These depend on PHP link/media services, site templates, locale or current
-time. Conservative false positives cost PHP conversion; unseen syntax or
-parser differences can still cause a mismatch. Treat this backend as
-experimental until complete downstream page rendering is differential-tested.
+The eligibility check conservatively declines notices, Markdown images, date
+shortcodes and obfuscated e-mail links. Ordinary obfuscated links, e-mail
+autolinks and French phone numbers use the core markup; the worker receives the
+current locale and whether an admin is browsing a dynamic site. Conservative
+false positives cost PHP conversion; unseen syntax or parser differences can
+still cause a mismatch. Treat this backend as experimental until complete
+downstream page rendering is differential-tested.
 
 `ContentSplitter::split($html, $page)` returns the existing `SplitContent` object.
 `splitMany([['html' => $html, 'page' => $page], ...])` sends all uncached documents
@@ -102,8 +103,9 @@ back to PHP. This is an eligibility check, not HTML sanitization. The
 normal rendering uses `split_content`.
 
 `render_markdown` uses the same frame envelope, with ordered documents of
-`{"markdown":"...","fenced_code_pre_class":"..."}`. Each response entry is
-HTML or null (declined). PHP validates every entry before using the batch.
+`{"markdown":"...","fenced_code_pre_class":"...","locale":"fr","allow_obfuscated_links":true}`.
+Each response entry is HTML or null (declined). PHP validates every entry
+before using the batch.
 
 On the current 70-case rendered Markdown corpus, all 70 documents use native
 analysis and match PHP across every accessor. On a read-only snapshot of the
@@ -259,11 +261,10 @@ including heading-ID injection, not the final `getToc()` menu render.
 
 ### Markdown: large opportunity on cache misses, incomplete compatibility
 
-The timed subset is byte-identical. The current corpus is 67/70 byte-identical
-with the custom Comrak formatter. Link, block and list-item attributes, Unicode
-IDs, empty table heads and colspan markers now match the PHP reference. The
-three recorded gaps are obfuscated links, images and notices, whose output uses
-Pushword's site configuration, Twig templates or media data. The older
+The timed subset is byte-identical. The original 70-case corpus scored 67/70
+with the custom Comrak formatter before the obfuscated-link and contact ports.
+Link, block and list-item attributes, Unicode IDs, empty table heads and
+colspan markers matched the PHP reference then. The older
 `2026-09-12-comrak-tempest.json` is a historical 49/59 measurement; it has not
 been rewritten as a current benchmark.
 
@@ -277,10 +278,20 @@ a proof of parity against the current monorepo PHP renderer. Full aggregate
 counts and hashes are in `benchmarks/2026-09-13-comrak-altimood.json`.
 
 The raw Comrak ratio on the 9.8 KB subset remains a parsing opportunity, not
-a whole-site speedup. The opt-in hybrid path now declines these dynamic blocks
-to the PHP converter. A future typed batch of deferred rendering operations
-could reduce the fallback share while PHP continues resolving links, phone
-numbers, email, dates, notices and media through its existing services.
+a whole-site speedup. The opt-in hybrid path declines unsupported blocks to
+the PHP converter. A future typed batch of deferred rendering operations
+could reduce the remaining notice and media fallbacks.
+
+The subsequent obfuscated-link and contact-markup ports keep the PHP templates
+for e-mail, telephone and obfuscated links fixed to Pushword's core components.
+The 64,509-block Altimood snapshot remains byte-identical with PHP fallback:
+61,967 blocks are accepted natively and 2,542 return to PHP. Locale is sent per
+block so French telephone display matches the PHP renderer. This is a
+post-Twig conversion check; full page and request parity remain unmeasured.
+Three pinned single-CPU passes took a median 4.207 s with uncached PHP and
+0.770 s with the hybrid path (5.47× directional conversion speedup). The
+aggregate report is `benchmarks/2026-09-13-comrak-contact-altimood.json`;
+Markdown memory was not measured.
 
 To reproduce the downstream audit without committing private page content:
 

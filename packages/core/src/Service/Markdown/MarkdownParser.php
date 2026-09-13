@@ -37,9 +37,9 @@ class MarkdownParser implements ResetInterface
      * Bump when the converter configuration or extensions change in a way that
      * alters output, to invalidate previously cached fragments.
      */
-    private const int CACHE_VERSION = 9;
+    private const int CACHE_VERSION = 10;
 
-    private const int NATIVE_CACHE_VERSION = 1;
+    private const int NATIVE_CACHE_VERSION = 2;
 
     private readonly MarkdownConverter $converter;
 
@@ -56,7 +56,7 @@ class MarkdownParser implements ResetInterface
     private bool $nativeFailed = false;
 
     public function __construct(
-        LinkProvider $linkProvider,
+        private readonly LinkProvider $linkProvider,
         MediaExtension $mediaExtension,
         private readonly SiteRegistry $apps,
         Twig $twig,
@@ -73,7 +73,7 @@ class MarkdownParser implements ResetInterface
         $this->nativeWorker = null !== $nativeBinary && '' !== $nativeBinary ? new NativeWorker($nativeBinary, $nativeTimeout) : null;
         $this->tempestRenderer = new TempestMarkdownRenderer();
         $this->pushwordExtension = new PushwordExtension(
-            $linkProvider,
+            $this->linkProvider,
             $mediaExtension,
             $apps,
             new Date($apps),
@@ -143,6 +143,8 @@ class MarkdownParser implements ResetInterface
             $pending[$index] = [
                 'markdown' => $text,
                 'fenced_code_pre_class' => $this->apps->get()->getStr(SiteConfig::FENCED_CODE_PRE_CLASS),
+                'locale' => $this->apps->getLocale(),
+                'allow_obfuscated_links' => $this->linkProvider->canRenderObfuscatedMarkdownLinkNatively(),
             ];
         }
 
@@ -307,6 +309,16 @@ class MarkdownParser implements ResetInterface
 
         if (str_contains($text, '```') || str_contains($text, '~~~')) {
             $version .= 'p'.$this->apps->get()->getStr(SiteConfig::FENCED_CODE_PRE_CLASS);
+        }
+
+        $phone = (str_contains($text, '0') || str_contains($text, '+33'))
+            && 1 === preg_match('/(?:(?:\+|00)33|0)(?:\s|&nbsp;|\xC2\xA0)*[1-9](?:(?:[\s.-]|&nbsp;|\xC2\xA0)*\d{2}){4}/u', $text);
+        if (str_contains($text, '#[') || $phone) {
+            $version .= 'a'.(int) $this->linkProvider->canRenderObfuscatedMarkdownLinkNatively();
+        }
+
+        if ($phone) {
+            $version .= 'l'.$this->apps->getLocale();
         }
 
         return $version;

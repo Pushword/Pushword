@@ -7,13 +7,16 @@ use comrak::{
     options::Plugins,
     parse_document,
 };
+use regex::Regex;
 use std::borrow::Cow;
 use std::fmt::{self, Write};
+use std::sync::OnceLock;
 
 struct RenderSettings<'a> {
     source: &'a str,
     line_starts: Vec<usize>,
     fenced_code_pre_class: &'a str,
+    locale: Option<&'a str>,
 }
 
 impl RenderSettings<'_> {
@@ -32,16 +35,32 @@ impl RenderSettings<'_> {
 /// The check is deliberately conservative: false positives cost PHP work,
 /// whereas a false negative would change the rendered page.
 pub fn markdown_if_supported(source: &str, fenced_code_pre_class: &str) -> Option<String> {
+    markdown_if_supported_with_context(source, fenced_code_pre_class, None, true)
+}
+
+pub fn markdown_if_supported_with_context(
+    source: &str,
+    fenced_code_pre_class: &str,
+    locale: Option<&str>,
+    allow_obfuscated_links: bool,
+) -> Option<String> {
     if source.contains("[!")
         || source.contains("![")
         || source.contains("date(")
-        || source.contains('@')
-        || contains_phone(source)
+        || (source.contains("#[") && source.contains("mailto:") && source.contains('@'))
     {
         return None;
     }
 
-    Some(markdown(source, fenced_code_pre_class))
+    let phone = contains_phone(source);
+    // PHP leaves literal non-breaking spaces in phone numbers as plain text.
+    if (phone && (locale.is_none() || source.contains('\u{a0}')))
+        || (!allow_obfuscated_links && (source.contains("#[") || phone))
+    {
+        return None;
+    }
+
+    Some(markdown_with_context(source, fenced_code_pre_class, locale))
 }
 
 fn contains_phone(source: &str) -> bool {
@@ -104,6 +123,14 @@ fn skip_phone_separators(bytes: &[u8], position: &mut usize) {
 
 /// Convert the supported Markdown subset. This is not a complete PHP replacement.
 pub fn markdown(source: &str, fenced_code_pre_class: &str) -> String {
+    markdown_with_context(source, fenced_code_pre_class, None)
+}
+
+fn markdown_with_context(
+    source: &str,
+    fenced_code_pre_class: &str,
+    locale: Option<&str>,
+) -> String {
     let mut options = Options::default();
     options.extension.strikethrough = true;
     options.extension.table = true;
@@ -126,6 +153,7 @@ pub fn markdown(source: &str, fenced_code_pre_class: &str) -> String {
             .chain(source.match_indices('\n').map(|(index, _)| index + 1))
             .collect(),
         fenced_code_pre_class,
+        locale,
     };
     html::format_document_with_formatter(
         root,
@@ -470,6 +498,119 @@ fn write_link_attributes(output: &mut dyn Write, attrs: &[(String, String)]) -> 
     Ok(())
 }
 
+fn email_pattern() -> &'static Regex {
+    static PATTERN: OnceLock<Regex> = OnceLock::new();
+    PATTERN.get_or_init(|| {
+        Regex::new(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+            .expect("the e-mail pattern is valid")
+    })
+}
+
+fn phone_pattern() -> &'static Regex {
+    static PATTERN: OnceLock<Regex> = OnceLock::new();
+    PATTERN.get_or_init(|| {
+        Regex::new(r"(?:(?:\+|00)33|0)(?:\s|&nbsp;)*[1-9](?:(?:[\s.-]|&nbsp;)*[0-9]{2}){4}")
+            .expect("the phone pattern is valid")
+    })
+}
+
+fn email_boundary(text: &str, start: usize, end: usize) -> bool {
+    let bytes = text.as_bytes();
+    let previous = start.checked_sub(1).and_then(|index| bytes.get(index));
+    let next = bytes.get(end);
+    !previous.is_some_and(|byte| byte.is_ascii_alphanumeric() || b"._+-\"'>".contains(byte))
+        && next.is_none_or(|byte| b" \t\n.,!? )>\x0b\x0c\x0d</".contains(byte))
+}
+
+fn phone_boundary(text: &str, start: usize, end: usize) -> bool {
+    let bytes = text.as_bytes();
+    (start == 0 || bytes[start - 1] != b'>')
+        && bytes
+            .get(end)
+            .is_none_or(|byte| b" \t\n.,!?)>\x0b\x0c\x0d</;".contains(byte))
+}
+
+fn write_encoded_email(output: &mut dyn Write, email: &str) -> fmt::Result {
+    let (local, domain) = email.split_once('@').expect("matched e-mail has an @ sign");
+    write!(
+        output,
+        "<span class=nojs>{local}{}{domain}</span> <span class=\"cea hidden\">{}</span>",
+        include_str!("email-at.svg").trim_end(),
+        rot13_link(email)
+    )
+}
+
+fn write_phone(
+    output: &mut dyn Write,
+    number: &str,
+    locale: &str,
+    encoded_nbsp: bool,
+) -> fmt::Result {
+    let number = if encoded_nbsp {
+        Cow::Owned(number.replace('\u{a0}', "&nbsp;"))
+    } else {
+        Cow::Borrowed(number)
+    };
+    let readable = if locale == "fr" && number.starts_with("+33") {
+        format!("0{}", number[3..].strip_prefix(' ').unwrap_or(&number[3..]))
+    } else {
+        number.to_string()
+    };
+    let target = format!(
+        "tel:{}",
+        number.replace([' ', '.'], "").replace("&nbsp;", "")
+    );
+    write!(
+        output,
+        "<span data-rot=\"{}\">{}</span>",
+        rot13_link(&target),
+        readable.replace(' ', "&nbsp;")
+    )
+}
+
+fn render_contact_text(
+    output: &mut Context<&RenderSettings<'_>>,
+    text: &str,
+    follows_html: bool,
+) -> fmt::Result {
+    let mut candidates = email_pattern()
+        .find_iter(text)
+        .map(|candidate| (candidate.start(), candidate.end(), false))
+        .collect::<Vec<_>>();
+    if output.user.locale.is_some() {
+        candidates.extend(
+            phone_pattern()
+                .find_iter(text)
+                .map(|candidate| (candidate.start(), candidate.end(), true)),
+        );
+    }
+    candidates.sort_by_key(|candidate| candidate.0);
+    let mut cursor = 0;
+    for (start, end, is_phone) in candidates {
+        if start < cursor || (follows_html && start == 0) {
+            continue;
+        }
+        let valid = if is_phone {
+            phone_boundary(text, start, end)
+        } else {
+            email_boundary(text, start, end)
+        };
+        if !valid {
+            continue;
+        }
+        output.escape(&text[cursor..start])?;
+        if is_phone {
+            let locale = output.user.locale.expect("phone has locale");
+            let encoded_nbsp = output.user.source.contains("&nbsp;");
+            write_phone(output, &text[start..end], locale, encoded_nbsp)?;
+        } else {
+            write_encoded_email(output, &text[start..end])?;
+        }
+        cursor = end;
+    }
+    output.escape(&text[cursor..])
+}
+
 fn loose_task(node: Node<'_>) -> bool {
     matches!(node.data().value, NodeValue::TaskItem(_))
         && node.parent().is_some_and(
@@ -552,14 +693,30 @@ fn render(
 ) -> Result<ChildRendering, fmt::Error> {
     let ast = node.data();
     match &ast.value {
-        NodeValue::Text(text)
-            if entering
-                && text.ends_with('#')
+        NodeValue::Text(text) if entering => {
+            let text = if text.ends_with('#')
                 && node
                     .next_sibling()
-                    .is_some_and(|next| matches!(next.data().value, NodeValue::Link(_))) =>
-        {
-            context.escape(&text[..text.len() - 1])?;
+                    .is_some_and(|next| matches!(next.data().value, NodeValue::Link(_)))
+            {
+                &text[..text.len() - 1]
+            } else {
+                text
+            };
+            if node
+                .ancestors()
+                .any(|ancestor| matches!(ancestor.data().value, NodeValue::Link(_)))
+            {
+                context.escape(text)?;
+            } else {
+                render_contact_text(
+                    context,
+                    text,
+                    node.previous_sibling().is_some_and(|previous| {
+                        matches!(previous.data().value, NodeValue::HtmlInline(_))
+                    }),
+                )?;
+            }
         }
         NodeValue::Link(link) => {
             if obfuscated_link(node) {
@@ -732,7 +889,7 @@ fn render(
 
 #[cfg(test)]
 mod tests {
-    use super::{markdown, markdown_if_supported};
+    use super::{markdown, markdown_if_supported, markdown_if_supported_with_context};
     use proptest::prelude::*;
     use serde::Deserialize;
 
@@ -821,7 +978,6 @@ mod tests {
             "> [!note] Notice",
             "![alt](/image.jpg)",
             "date(Y)",
-            "contact@example.com",
             "#[contact](mailto:contact@example.com)",
             "Call +33 1 23 45 67 89",
             "Call 01&nbsp;23&nbsp;45&nbsp;67&nbsp;89",
@@ -836,6 +992,53 @@ mod tests {
         assert_eq!(
             markdown_if_supported("#[hidden](/path)", ""),
             Some("<p><span data-rot=\"/cngu\">hidden</span></p>\n".into())
+        );
+        assert!(
+            markdown_if_supported("contact@example.com", "")
+                .is_some_and(|html| html.contains("class=\"cea hidden\""))
+        );
+    }
+
+    #[test]
+    fn phone_links_use_the_requested_locale() {
+        assert_eq!(
+            markdown_if_supported_with_context("Call +33 1 23 45 67 89", "", Some("fr"), true),
+            Some("<p>Call <span data-rot=\"gry:+33123456789\">01&nbsp;23&nbsp;45&nbsp;67&nbsp;89</span></p>\n".into())
+        );
+        assert_eq!(
+            markdown_if_supported_with_context("Call +33 1 23 45 67 89", "", Some("en"), true),
+            Some("<p>Call <span data-rot=\"gry:+33123456789\">+33&nbsp;1&nbsp;23&nbsp;45&nbsp;67&nbsp;89</span></p>\n".into())
+        );
+        assert_eq!(
+            markdown_if_supported_with_context("Call 01 23 45 67 89", "", Some("fr"), false),
+            None
+        );
+        assert_eq!(
+            markdown_if_supported_with_context(
+                "Call 01&nbsp;23&nbsp;45&nbsp;67&nbsp;89",
+                "",
+                Some("fr"),
+                true
+            ),
+            Some("<p>Call <span data-rot=\"gry:0123456789\">01&nbsp;23&nbsp;45&nbsp;67&nbsp;89</span></p>\n".into())
+        );
+        assert_eq!(
+            markdown_if_supported_with_context(
+                "Call 01&nbsp;23&nbsp;45&nbsp;67&nbsp;89 and \u{a0}",
+                "",
+                Some("fr"),
+                true
+            ),
+            None
+        );
+        assert_eq!(
+            markdown_if_supported_with_context(
+                "Call 01\u{a0}23\u{a0}45\u{a0}67\u{a0}89",
+                "",
+                Some("fr"),
+                true
+            ),
+            None
         );
     }
 

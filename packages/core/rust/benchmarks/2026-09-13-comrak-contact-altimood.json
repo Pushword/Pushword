@@ -1,0 +1,29 @@
+{
+  "date": "2026-09-13",
+  "workload": "64,509 post-Twig Altimood Markdown blocks; Comrak via persistent NativeWorker with PHP fallback",
+  "snapshot_sha256": "538e6619ebaf6506131a7f18877fe85399a3d487181de75eef9966c773064d9e",
+  "site_revision": "3a292ed8e3d223b0c533a8d308773e9c31867e2d",
+  "analyzer_sha256": "a34055c2a1dcb299fb872dd06d4863ab556ec7a1366f9e79f400120f7f30e660",
+  "cpu_affinity": "2",
+  "passes": 3,
+  "blocks": 64509,
+  "accepted_native": 61967,
+  "declined_to_php": 2542,
+  "additional_native_since_obfuscated_link_report": 667,
+  "exact_hybrid_blocks": 64509,
+  "samples_seconds": [
+    {"php": 4.280498307, "native_worker": 0.267018484, "php_fallback": 0.502544931, "hybrid": 0.769563415},
+    {"php": 4.207112151, "native_worker": 0.292937178, "php_fallback": 0.529489229, "hybrid": 0.822426407},
+    {"php": 4.047391906, "native_worker": 0.259075851, "php_fallback": 0.497684178, "hybrid": 0.756760029}
+  ],
+  "median_seconds": {"php": 4.207112151, "hybrid": 0.769563415},
+  "directional_conversion_speedup": 5.466881700710784,
+  "method": "Three separate uncached PHP workers on one CPU. PHP baseline times transform() only. Hybrid times reused-worker requests and PHP transform() for declined blocks. Every produced block is compared byte-for-byte with the private snapshot and the aggregate digest matches the downstream PHP baseline.",
+  "limits": [
+    "The downstream site has its own installed Pushword version; this does not prove parity with the current monorepo PHP parser.",
+    "Post-Twig block parity does not prove complete page, admin preview, static build or HTTP parity.",
+    "Kernel startup, Twig expansion, snapshot decoding, SQL, cache hits and complete page assembly are outside these timings.",
+    "No memory comparison was recorded for this Markdown workload.",
+    "The benchmark is a separate run from the obfuscated-link report, so the speedup difference must not be attributed solely to the contact port."
+  ]
+}
