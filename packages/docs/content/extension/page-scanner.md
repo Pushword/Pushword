@@ -354,8 +354,8 @@ pushword_page_scanner:
   errors_to_ignore: []                     # findings to suppress, see below
 ```
 
-The native worker is experimental and opt-in. It extracts facts from the rendered
-HTML for link, image-alt and same-page anchor checks; the PHP scanners remain the
+The native worker is experimental and opt-in. It extracts link and responsive-image
+candidates, image-alt labels and anchors from rendered HTML; the PHP scanners remain the
 fallback. See [optional Rust acceleration](/native-acceleration) for build and
 deployment instructions.
 

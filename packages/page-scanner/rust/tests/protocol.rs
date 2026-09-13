@@ -25,6 +25,10 @@ fn serves_multiple_requests_without_mixing_responses() {
     assert_eq!(lines.len(), 2);
     assert_eq!(lines[0]["id"], 4);
     assert_eq!(lines[0]["documents"][0]["hrefs"][0], "/one");
+    assert_eq!(
+        lines[0]["documents"][0]["linked_attributes"][0]["value"],
+        "/one"
+    );
     assert_eq!(lines[1]["id"], 5);
     assert_eq!(lines[1]["documents"][0]["missing_alt"][0], "/x");
 }

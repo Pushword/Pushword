@@ -18,7 +18,7 @@ if (! is_executable($binary)) {
     throw new RuntimeException('Build the release worker with cargo build --release --manifest-path packages/page-scanner/rust/Cargo.toml');
 }
 
-/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>} */
+/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>, linked_attributes: list<array{name: string, value: string}>, srcsets: list<string>} */
 function phpFacts(string $html): array
 {
     preg_match_all('/<a\s[^>]*?href=(["\'])(?P<href>[^"\']*)\1/i', $html, $links);
@@ -58,7 +58,25 @@ function phpFacts(string $html): array
     $anchors = array_map(strval(...), array_keys($anchors));
     sort($anchors, \SORT_STRING);
 
-    return ['hrefs' => $links['href'], 'missing_alt' => $missingAlt, 'anchors' => $anchors];
+    $searchable = preg_replace('#<(code|pre)\b[^>]*>.*?</\1>#is', '', $html) ?? $html;
+    preg_match_all('/ (href|data\-rot|src|data\-img|data\-bg)=((["\'])([^\3]+)\3|([^\s>]+)[\s>])/iU', $searchable, $attributes);
+    $linkedAttributes = [];
+    foreach ($attributes[0] as $index => $_) {
+        $linkedAttributes[] = [
+            'name' => $attributes[1][$index],
+            'value' => '' !== $attributes[4][$index] ? $attributes[4][$index] : $attributes[5][$index],
+        ];
+    }
+
+    preg_match_all('/\s(?:srcset|imagesrcset|data-srcset)=(["\'])(.*?)\1/i', $searchable, $srcsets);
+
+    return [
+        'hrefs' => $links['href'],
+        'missing_alt' => $missingAlt,
+        'anchors' => $anchors,
+        'linked_attributes' => $linkedAttributes,
+        'srcsets' => $srcsets[2],
+    ];
 }
 
 function phpAttribute(string $tag, string $pattern): string
@@ -70,10 +88,10 @@ function phpAttribute(string $tag, string $pattern): string
     return trim(($match[1] ?? '').($match[2] ?? '').($match[3] ?? ''));
 }
 
-/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>} */
+/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>, linked_attributes: list<array{name: string, value: string}>, srcsets: list<string>} */
 function nativeFacts(mixed $raw): array
 {
-    if (! $raw instanceof stdClass || ! isset($raw->hrefs, $raw->missing_alt, $raw->anchors)
+    if (! $raw instanceof stdClass || ! isset($raw->hrefs, $raw->missing_alt, $raw->anchors, $raw->linked_attributes, $raw->srcsets)
     ) {
         throw new RuntimeException('Invalid native facts');
     }
@@ -82,7 +100,28 @@ function nativeFacts(mixed $raw): array
         'hrefs' => stringList($raw->hrefs),
         'missing_alt' => stringList($raw->missing_alt),
         'anchors' => stringList($raw->anchors),
+        'linked_attributes' => linkedAttributes($raw->linked_attributes),
+        'srcsets' => stringList($raw->srcsets),
     ];
+}
+
+/** @return list<array{name: string, value: string}> */
+function linkedAttributes(mixed $raw): array
+{
+    if (! is_array($raw) || ! array_is_list($raw)) {
+        throw new RuntimeException('Invalid native linked attributes');
+    }
+
+    $values = [];
+    foreach ($raw as $value) {
+        if (! $value instanceof stdClass || ! is_string($value->name ?? null) || ! is_string($value->value ?? null)) {
+            throw new RuntimeException('Invalid native linked attribute');
+        }
+
+        $values[] = ['name' => $value->name, 'value' => $value->value];
+    }
+
+    return $values;
 }
 
 /** @return list<string> */
@@ -149,12 +188,18 @@ foreach (array_slice($arguments, 1) as $path) {
             $actual = nativeFacts($singleWorker->request('scan_rendered_html', [$html])[0]);
             $singleNs += hrtime(true) - $start;
             if ($actual !== $expected[$index]) {
-                foreach (['hrefs', 'missing_alt', 'anchors'] as $field) {
+                foreach (['hrefs', 'missing_alt', 'anchors', 'linked_attributes', 'srcsets'] as $field) {
                     if ($actual[$field] !== $expected[$index][$field]) {
-                        $phpSample = json_encode(array_slice($expected[$index][$field], 0, 8), \JSON_UNESCAPED_UNICODE);
-                        $rustSample = json_encode(array_slice($actual[$field], 0, 8), \JSON_UNESCAPED_UNICODE);
+                        $mismatch = 0;
+                        while (isset($expected[$index][$field][$mismatch], $actual[$field][$mismatch])
+                            && $expected[$index][$field][$mismatch] === $actual[$field][$mismatch]) {
+                            ++$mismatch;
+                        }
 
-                        throw new RuntimeException(sprintf('PHP/Rust %s differ for %s: PHP %s, Rust %s', $field, $chunk[$index], $phpSample, $rustSample));
+                        $phpSample = json_encode(array_slice($expected[$index][$field], $mismatch, 3), \JSON_UNESCAPED_UNICODE);
+                        $rustSample = json_encode(array_slice($actual[$field], $mismatch, 3), \JSON_UNESCAPED_UNICODE);
+
+                        throw new RuntimeException(sprintf('PHP/Rust %s differ at %d for %s: PHP %s, Rust %s', $field, $mismatch, $chunk[$index], substr((string) $phpSample, 0, 200), substr((string) $rustSample, 0, 200)));
                     }
                 }
             }

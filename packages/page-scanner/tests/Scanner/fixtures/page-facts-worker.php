@@ -10,7 +10,13 @@ while (false !== ($line = fgets(\STDIN))) {
     }
     $mode = trim((string) file_get_contents(__FILE__.'.mode'));
     $documents = array_map(
-        static fn (): array => ['hrefs' => ['/one'], 'missing_alt' => ['/lake.jpg'], 'anchors' => ['section']],
+        static fn (): array => [
+            'hrefs' => ['/one'],
+            'missing_alt' => ['/lake.jpg'],
+            'anchors' => ['section'],
+            'linked_attributes' => [['name' => 'href', 'value' => '/one']],
+            'srcsets' => ['/lake.jpg 1x'],
+        ],
         $request->documents,
     );
     if ('missing-field' === $mode) {
@@ -19,6 +25,10 @@ while (false !== ($line = fgets(\STDIN))) {
         $documents[0]['hrefs'] = ['key' => '/one'];
     } elseif ('invalid-value' === $mode) {
         $documents[0]['missing_alt'] = [123];
+    } elseif ('invalid-attribute' === $mode) {
+        $documents[0]['linked_attributes'] = [['name' => 123, 'value' => '/one']];
+    } elseif ('invalid-attribute-list' === $mode) {
+        $documents[0]['linked_attributes'] = ['key' => ['name' => 'href', 'value' => '/one']];
     }
 
     echo json_encode(['version' => 1, 'id' => $request->id, 'documents' => $documents], \JSON_THROW_ON_ERROR)."\n";

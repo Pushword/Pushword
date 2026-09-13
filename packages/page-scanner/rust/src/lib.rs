@@ -23,12 +23,32 @@ static DECORATIVE: LazyLock<Regex> = LazyLock::new(|| {
 });
 static ANCHORED: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("[id], [name]").expect("valid anchor selector"));
+static CODE_SAMPLE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?is)<code\b[^>]*>.*?</code>|<pre\b[^>]*>.*?</pre>")
+        .expect("valid code sample regex")
+});
+static LINKED_ATTRIBUTE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?is) (href|data-rot|src|data-img|data-bg)=(?:"(.+?)"|'(.+?)'|([^\s>]+)[\s>])"#)
+        .expect("valid linked attribute regex")
+});
+static SRCSET: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?i)\s(?:srcset|imagesrcset|data-srcset)=(?:"([^"\n]*)"|'([^'\n]*)')"#)
+        .expect("valid srcset regex")
+});
+
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct LinkedAttribute {
+    pub name: String,
+    pub value: String,
+}
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct Facts {
     pub hrefs: Vec<String>,
     pub missing_alt: Vec<String>,
     pub anchors: Vec<String>,
+    pub linked_attributes: Vec<LinkedAttribute>,
+    pub srcsets: Vec<String>,
 }
 
 fn attribute(tag: &str, pattern: &Regex) -> String {
@@ -81,16 +101,42 @@ pub fn extract(html: &str) -> Facts {
     let mut anchors: Vec<String> = anchors.into_iter().collect();
     anchors.sort();
 
+    let searchable = CODE_SAMPLE.replace_all(html, "");
+    let linked_attributes = LINKED_ATTRIBUTE
+        .captures_iter(&searchable)
+        .map(|capture| LinkedAttribute {
+            name: capture.get(1).expect("attribute name").as_str().to_owned(),
+            value: (2..=4)
+                .find_map(|index| capture.get(index))
+                .expect("attribute value")
+                .as_str()
+                .to_owned(),
+        })
+        .collect();
+    let srcsets = SRCSET
+        .captures_iter(&searchable)
+        .map(|capture| {
+            capture
+                .get(1)
+                .or_else(|| capture.get(2))
+                .expect("quoted srcset")
+                .as_str()
+                .to_owned()
+        })
+        .collect();
+
     Facts {
         hrefs,
         missing_alt,
         anchors,
+        linked_attributes,
+        srcsets,
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Facts, extract};
+    use super::{Facts, LinkedAttribute, extract};
 
     #[test]
     fn extracts_in_order_and_deduplicates_missing_alt_by_source() {
@@ -102,6 +148,33 @@ mod tests {
                 hrefs: vec!["/one".into(), "/two".into()],
                 missing_alt: vec!["/x".into()],
                 anchors: vec![],
+                linked_attributes: vec![
+                    LinkedAttribute {
+                        name: "href".into(),
+                        value: "/one".into()
+                    },
+                    LinkedAttribute {
+                        name: "href".into(),
+                        value: "/two".into()
+                    },
+                    LinkedAttribute {
+                        name: "src".into(),
+                        value: "/x".into()
+                    },
+                    LinkedAttribute {
+                        name: "src".into(),
+                        value: "/x".into()
+                    },
+                    LinkedAttribute {
+                        name: "src".into(),
+                        value: "/y".into()
+                    },
+                    LinkedAttribute {
+                        name: "src".into(),
+                        value: "/z".into()
+                    },
+                ],
+                srcsets: vec![],
             }
         );
     }
@@ -114,6 +187,8 @@ mod tests {
                 hrefs: vec![],
                 missing_alt: vec!["<img width=8>".into()],
                 anchors: vec![],
+                linked_attributes: vec![],
+                srcsets: vec![],
             }
         );
     }
@@ -134,7 +209,59 @@ mod tests {
                 hrefs: vec![],
                 missing_alt: vec![],
                 anchors: vec![],
+                linked_attributes: vec![],
+                srcsets: vec![],
             }
         );
+    }
+
+    #[test]
+    fn collects_scanner_links_and_srcsets_outside_code_samples() {
+        let facts = extract(
+            "<code><a href='/ignore'>x</a></code><a href='/one'>x</a><img src='/one' data-img='/two' srcset='/three 1x, /four 2x'><pre><img src='/ignore'></pre>",
+        );
+
+        assert_eq!(
+            facts.linked_attributes,
+            vec![
+                LinkedAttribute {
+                    name: "href".into(),
+                    value: "/one".into(),
+                },
+                LinkedAttribute {
+                    name: "src".into(),
+                    value: "/one".into(),
+                },
+                LinkedAttribute {
+                    name: "data-img".into(),
+                    value: "/two".into(),
+                },
+            ]
+        );
+        assert_eq!(facts.srcsets, vec!["/three 1x, /four 2x"]);
+    }
+
+    #[test]
+    fn preserves_the_php_scanners_empty_quoted_attribute_match() {
+        assert_eq!(
+            extract("<a href=\"\"></a><a href=\"/next\">").linked_attributes,
+            vec![LinkedAttribute {
+                name: "href".into(),
+                value: "\"></a><a href=".into(),
+            }]
+        );
+    }
+
+    #[test]
+    fn preserves_unquoted_attribute_separator_and_empty_srcset() {
+        let facts = extract("<img src=/one data-img='/two' srcset=\"\">");
+        assert_eq!(
+            facts.linked_attributes,
+            vec![LinkedAttribute {
+                name: "src".into(),
+                value: "/one".into(),
+            }]
+        );
+        assert_eq!(facts.srcsets, vec![""]);
     }
 }

@@ -68,7 +68,7 @@ See [native acceleration](../native-acceleration.md) for the measured conversion
 
 ## Optional native page-scan extraction
 
-Page scans can extract rendered links, missing-alt image labels and same-page anchors with Rust; PHP remains the default.
+Page scans can extract rendered link and responsive-image candidates, missing-alt labels and same-page anchors with Rust; PHP remains the default.
 **Sites opting into Rust:** build `vendor/pushword/page-scanner/rust`, deploy `pushword-page-facts`, set `pushword_page_scanner.native_page_facts` to its path, then clear the Symfony container cache.
 See [native acceleration](../native-acceleration.md) for the supported scope and measurement limits.
 

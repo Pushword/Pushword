@@ -53,6 +53,8 @@ final class LinkedDocsScanner extends AbstractScanner
     /** @var array<string, true>|null */
     private ?array $nativeAnchors = null;
 
+    private ?RenderedPageFacts $nativeFacts = null;
+
     /** @var string[] */
     private array $toIgnore = [];
 
@@ -302,22 +304,33 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     private function getLinkedDocs(): array
     {
-        $urlInAttributes = ' '.$this->prepareForRegex(['href', 'data-rot', 'src', 'data-img', 'data-bg']);
-        $regex = '/'.$urlInAttributes.'=((["\'])([^\3]+)\3|([^\s>]+)[\s>])/iU';
-        preg_match_all($regex, $this->stripCodeSamples(), $matches);
+        $matches = [];
+        if (null === $this->nativeFacts) {
+            $urlInAttributes = ' '.$this->prepareForRegex(['href', 'data-rot', 'src', 'data-img', 'data-bg']);
+            $regex = '/'.$urlInAttributes.'=((["\'])([^\3]+)\3|([^\s>]+)[\s>])/iU';
+            preg_match_all($regex, $this->stripCodeSamples(), $matches);
+        }
 
         if (null === $matches) {
             throw new Exception();
         }
 
         $linkedDocs = [];
-        $matchesCount = is_countable($matches[0]) ? \count($matches[0]) : 0;
+        $matchesCount = null === $this->nativeFacts
+            ? (is_countable($matches[0] ?? null) ? \count($matches[0]) : 0)
+            : \count($this->nativeFacts->linkedAttributes);
         for ($k = 0; $k < $matchesCount; ++$k) {
-            // an unmatched group is an empty string, never unset: the quoted
-            // value (4) is empty when the attribute value came unquoted (5).
-            /** @var string */
-            $uri = '' !== $matches[4][$k] ? $matches[4][$k] : $matches[5][$k]; // @phpstan-ignore-line
-            $isDataRotAttribute = 'data-rot' === $matches[1][$k]; // @phpstan-ignore-line
+            if (null !== $this->nativeFacts) {
+                $uri = $this->nativeFacts->linkedAttributes[$k]['value'];
+                $isDataRotAttribute = 'data-rot' === $this->nativeFacts->linkedAttributes[$k]['name'];
+            } else {
+                // An unmatched group is empty, never unset: the quoted value
+                // (4) is empty when the attribute came unquoted (5).
+                /** @var string */
+                $uri = '' !== $matches[4][$k] ? $matches[4][$k] : $matches[5][$k]; // @phpstan-ignore-line
+                $isDataRotAttribute = 'data-rot' === $matches[1][$k]; // @phpstan-ignore-line
+            }
+
             $uri = $isDataRotAttribute ? LinkProvider::decrypt($uri) : $uri;
             if ($this->isMailtoOrTelLink($uri) && ! $isDataRotAttribute) {
                 $this->addError(ScanErrorCode::LinkMailto, '<code>'.$uri.'</code> '.$this->trans('page_scanObfuscateMail'));
@@ -349,9 +362,12 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     private function extractSrcsetUris(): array
     {
-        preg_match_all('/\s(?:srcset|imagesrcset|data-srcset)=(["\'])(.*?)\1/i', $this->stripCodeSamples(), $matches);
-
-        $srcsets = isset($matches[2]) && \is_array($matches[2]) ? $matches[2] : [];
+        if (null === $this->nativeFacts) {
+            preg_match_all('/\s(?:srcset|imagesrcset|data-srcset)=(["\'])(.*?)\1/i', $this->stripCodeSamples(), $matches);
+            $srcsets = isset($matches[2]) && \is_array($matches[2]) ? $matches[2] : [];
+        } else {
+            $srcsets = $this->nativeFacts->srcsets;
+        }
 
         $uris = [];
         foreach ($srcsets as $srcset) {
@@ -592,12 +608,14 @@ final class LinkedDocsScanner extends AbstractScanner
     public function scan(Page $page, string $pageHtml, ?RenderedPageFacts $facts = null): array
     {
         $this->nativeAnchors = null === $facts ? null : array_fill_keys($facts->anchors, true);
+        $this->nativeFacts = $facts;
         $this->domPage = null === $facts ? new DomCrawler($pageHtml) : null;
 
         try {
             return parent::scan($page, $pageHtml);
         } finally {
             $this->nativeAnchors = null;
+            $this->nativeFacts = null;
             $this->domPage = null;
         }
     }

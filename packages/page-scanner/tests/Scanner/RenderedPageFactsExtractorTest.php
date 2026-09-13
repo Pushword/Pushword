@@ -43,7 +43,13 @@ final class RenderedPageFactsExtractorTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('warning');
         $this->extractor = new RenderedPageFactsExtractor($this->worker('valid'), logger: $logger);
-        $expected = new RenderedPageFacts(['/one'], ['/lake.jpg'], ['section']);
+        $expected = new RenderedPageFacts(
+            ['/one'],
+            ['/lake.jpg'],
+            ['section'],
+            [['name' => 'href', 'value' => '/one']],
+            ['/lake.jpg 1x'],
+        );
 
         self::assertEquals($expected, $this->extractor->extract('<p>first</p>'));
         self::assertEquals($expected, $this->extractor->extract('<p>second</p>'));
@@ -61,7 +67,13 @@ final class RenderedPageFactsExtractorTest extends TestCase
         file_put_contents($binary.'.mode', 'valid');
         self::assertNull($this->extractor->extract('<p>second</p>'));
         $this->extractor->reset();
-        self::assertEquals(new RenderedPageFacts(['/one'], ['/lake.jpg'], ['section']), $this->extractor->extract('<p>third</p>'));
+        self::assertEquals(new RenderedPageFacts(
+            ['/one'],
+            ['/lake.jpg'],
+            ['section'],
+            [['name' => 'href', 'value' => '/one']],
+            ['/lake.jpg 1x'],
+        ), $this->extractor->extract('<p>third</p>'));
     }
 
     /** @return iterable<string, array{string}> */
@@ -70,6 +82,8 @@ final class RenderedPageFactsExtractorTest extends TestCase
         yield 'missing field' => ['missing-field'];
         yield 'non-list' => ['invalid-list'];
         yield 'non-string' => ['invalid-value'];
+        yield 'invalid linked attribute' => ['invalid-attribute'];
+        yield 'non-list linked attributes' => ['invalid-attribute-list'];
     }
 
     public function testUnavailableWorkerFallsBackOnce(): void

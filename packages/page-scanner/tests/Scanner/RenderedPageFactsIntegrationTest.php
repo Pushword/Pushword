@@ -6,6 +6,7 @@ namespace Pushword\PageScanner\Tests\Scanner;
 
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\LinkProvider;
 use Pushword\PageScanner\Scanner\LinkedDocsScanner;
 use Pushword\PageScanner\Scanner\LinkGraphScanner;
 use Pushword\PageScanner\Scanner\MissingAltScanner;
@@ -23,9 +24,26 @@ final class RenderedPageFactsIntegrationTest extends KernelTestCase
         $page->slug = 'source';
         $page->locale = 'en';
 
+        $obfuscated = LinkProvider::obfuscate('/hidden');
         $html = '<div id="found"></div><a href="#found">yes</a><a href="#missing">no</a>'
-            .'<a href="/other">other</a><img src="/lake.jpg"><img src="/lake.jpg">';
-        $facts = new RenderedPageFacts(['#found', '#missing', '/other'], ['/lake.jpg'], ['found']);
+            .'<a href="/other">other</a><img src="/lake.jpg"><img src="/lake.jpg" srcset="/other.jpg 1x">'
+            .'<span data-rot="'.$obfuscated.'">hidden</span><div data-bg="/background.jpg"></div>'
+            .'<code>&lt;a href="/example-only"&gt;example&lt;/a&gt;</code>';
+        $facts = new RenderedPageFacts(
+            ['#found', '#missing', '/other'],
+            ['/lake.jpg'],
+            ['found'],
+            [
+                ['name' => 'href', 'value' => '#found'],
+                ['name' => 'href', 'value' => '#missing'],
+                ['name' => 'href', 'value' => '/other'],
+                ['name' => 'src', 'value' => '/lake.jpg'],
+                ['name' => 'src', 'value' => '/lake.jpg'],
+                ['name' => 'data-rot', 'value' => $obfuscated],
+                ['name' => 'data-bg', 'value' => '/background.jpg'],
+            ],
+            ['/other.jpg 1x'],
+        );
 
         /** @var LinkedDocsScanner $links */
         $links = self::getContainer()->get(LinkedDocsScanner::class);
