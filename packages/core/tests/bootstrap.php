@@ -98,6 +98,7 @@ new Dotenv()->loadEnv(__DIR__.'/.env');
 // Some reset here
 $fs = new Filesystem();
 $runId = getenv('TEST_RUN_ID') ?: '';
+$suiteRunId = $runId;
 // Paratest sets TEST_TOKEN per worker — append it for isolation
 $testToken = getenv('TEST_TOKEN');
 if (false !== $testToken && '' !== $testToken) {
@@ -110,7 +111,8 @@ $testBaseDir = sys_get_temp_dir().'/com.github.pushword.pushword/tests'.$segment
 
 // Optionally run the suite against a server database instead of SQLite.
 // PUSHWORD_TEST_DATABASE_BASE_URL is a base DSN (MySQL/MariaDB or PostgreSQL);
-// each parallel worker gets its own database via a "_w<token>" suffix on the database name.
+// each test run and parallel worker gets its own database. Worker tokens repeat
+// across runs, which otherwise lets two simultaneous suites drop each other's schema.
 // Keep the old MySQL-specific variable as a compatibility alias for local tooling.
 $databaseBaseUrl = getenv('PUSHWORD_TEST_DATABASE_BASE_URL');
 if (false === $databaseBaseUrl || '' === $databaseBaseUrl) {
@@ -119,7 +121,8 @@ if (false === $databaseBaseUrl || '' === $databaseBaseUrl) {
 
 $useServerDatabase = false !== $databaseBaseUrl && '' !== $databaseBaseUrl;
 if ($useServerDatabase) {
-    $dbSuffix = (false !== $testToken && '' !== $testToken) ? '_w'.$testToken : '';
+    $dbSuffix = '' !== $suiteRunId ? '_r'.substr(hash('sha256', $suiteRunId), 0, 12) : '';
+    $dbSuffix .= (false !== $testToken && '' !== $testToken) ? '_w'.$testToken : '';
     $databaseUrl = str_contains($databaseBaseUrl, '?')
         ? preg_replace('/\?/', $dbSuffix.'?', $databaseBaseUrl, 1) ?? $databaseBaseUrl
         : $databaseBaseUrl.$dbSuffix;

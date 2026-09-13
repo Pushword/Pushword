@@ -14,6 +14,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[Group('integration')]
+#[Group('serial')]
 final class FlatCommandTest extends KernelTestCase
 {
     public function testBackupOnlyRunsOnSqlite(): void

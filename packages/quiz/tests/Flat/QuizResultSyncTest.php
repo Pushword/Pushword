@@ -14,6 +14,7 @@ use Pushword\Quiz\Repository\QuizResultRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
+#[Group('serial')]
 final class QuizResultSyncTest extends KernelTestCase
 {
     private EntityManagerInterface $entityManager;

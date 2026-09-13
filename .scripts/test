@@ -99,6 +99,9 @@ function print_summary {
 
 function cleanup {
     killOwnBrowsers
+    if [ -n "${PUSHWORD_TEST_DATABASE_BASE_URL:-${PUSHWORD_TEST_MYSQL_URL:-}}" ]; then
+        php .scripts/cleanup-test-databases.php || true
+    fi
     rm -rf "/tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}"
     # Clean up paratest worker dirs (e.g. ${TEST_RUN_ID}-w1, ${TEST_RUN_ID}-w2, ...)
     rm -rf /tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}-w*
