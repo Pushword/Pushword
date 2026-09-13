@@ -9,6 +9,7 @@ use comrak::{
 };
 use regex::Regex;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fmt::{self, Write};
 use std::sync::OnceLock;
 
@@ -17,6 +18,7 @@ struct RenderSettings<'a> {
     line_starts: Vec<usize>,
     fenced_code_pre_class: &'a str,
     locale: Option<&'a str>,
+    date_values: Option<&'a HashMap<String, String>>,
 }
 
 impl RenderSettings<'_> {
@@ -44,9 +46,25 @@ pub fn markdown_if_supported_with_context(
     locale: Option<&str>,
     allow_obfuscated_links: bool,
 ) -> Option<String> {
+    markdown_if_supported_with_dates(
+        source,
+        fenced_code_pre_class,
+        locale,
+        allow_obfuscated_links,
+        None,
+    )
+}
+
+pub fn markdown_if_supported_with_dates(
+    source: &str,
+    fenced_code_pre_class: &str,
+    locale: Option<&str>,
+    allow_obfuscated_links: bool,
+    date_values: Option<&HashMap<String, String>>,
+) -> Option<String> {
     if source.contains("[!")
         || source.contains("![")
-        || source.contains("date(")
+        || (source.contains("date(") && date_values.is_none())
         || (source.contains("#[") && source.contains("mailto:") && source.contains('@'))
     {
         return None;
@@ -60,7 +78,7 @@ pub fn markdown_if_supported_with_context(
         return None;
     }
 
-    Some(markdown_with_context(source, fenced_code_pre_class, locale))
+    markdown_with_context(source, fenced_code_pre_class, locale, date_values)
 }
 
 fn contains_phone(source: &str) -> bool {
@@ -123,14 +141,16 @@ fn skip_phone_separators(bytes: &[u8], position: &mut usize) {
 
 /// Convert the supported Markdown subset. This is not a complete PHP replacement.
 pub fn markdown(source: &str, fenced_code_pre_class: &str) -> String {
-    markdown_with_context(source, fenced_code_pre_class, None)
+    markdown_with_context(source, fenced_code_pre_class, None, None)
+        .expect("Markdown without date values cannot be declined")
 }
 
 fn markdown_with_context(
     source: &str,
     fenced_code_pre_class: &str,
     locale: Option<&str>,
-) -> String {
+    date_values: Option<&HashMap<String, String>>,
+) -> Option<String> {
     let mut options = Options::default();
     options.extension.strikethrough = true;
     options.extension.table = true;
@@ -154,7 +174,25 @@ fn markdown_with_context(
             .collect(),
         fenced_code_pre_class,
         locale,
+        date_values,
     };
+    if let Some(values) = date_values {
+        for node in root.descendants() {
+            match &node.data().value {
+                NodeValue::Text(text) if !date_text_supported(node, text, &settings, values) => {
+                    return None;
+                }
+                NodeValue::Link(link)
+                    if link.url.contains("date(") || link.title.contains("date(") =>
+                {
+                    return None;
+                }
+                NodeValue::HtmlInline(html) if html.contains("date(") => return None,
+                NodeValue::HtmlBlock(html) if html.literal.contains("date(") => return None,
+                _ => {}
+            }
+        }
+    }
     html::format_document_with_formatter(
         root,
         &options,
@@ -164,7 +202,42 @@ fn markdown_with_context(
         &settings,
     )
     .expect("writing HTML to a String cannot fail");
-    output
+    Some(output)
+}
+
+fn date_pattern() -> &'static Regex {
+    static PATTERN: OnceLock<Regex> = OnceLock::new();
+    PATTERN.get_or_init(|| Regex::new(r"date\([^)]+\)").expect("valid date pattern"))
+}
+
+fn date_text_supported(
+    node: Node<'_>,
+    text: &str,
+    settings: &RenderSettings<'_>,
+    values: &HashMap<String, String>,
+) -> bool {
+    let rendered = date_pattern()
+        .find_iter(text)
+        .map(|found| found.as_str())
+        .collect::<Vec<_>>();
+    if rendered.is_empty() {
+        return true;
+    }
+    let Some(raw) = settings.source_span(node.data().sourcepos) else {
+        return false;
+    };
+    let source = date_pattern().find_iter(raw).collect::<Vec<_>>();
+    rendered.len() == source.len()
+        && rendered.iter().zip(source).all(|(token, found)| {
+            let escaped = raw[..found.start()]
+                .bytes()
+                .rev()
+                .take_while(|byte| *byte == b'\\')
+                .count()
+                % 2
+                == 1;
+            !escaped && *token == found.as_str() && values.contains_key(*token)
+        })
 }
 
 fn attributes(attrs: Option<&Attributes>) -> Vec<(String, String)> {
@@ -703,6 +776,15 @@ fn render(
             } else {
                 text
             };
+            let replaced = context.user.date_values.map(|values| {
+                date_pattern().replace_all(text, |capture: &regex::Captures<'_>| {
+                    values
+                        .get(&capture[0])
+                        .cloned()
+                        .unwrap_or_else(|| capture[0].to_owned())
+                })
+            });
+            let text = replaced.as_deref().unwrap_or(text);
             if node
                 .ancestors()
                 .any(|ancestor| matches!(ancestor.data().value, NodeValue::Link(_)))
@@ -889,9 +971,13 @@ fn render(
 
 #[cfg(test)]
 mod tests {
-    use super::{markdown, markdown_if_supported, markdown_if_supported_with_context};
+    use super::{
+        markdown, markdown_if_supported, markdown_if_supported_with_context,
+        markdown_if_supported_with_dates,
+    };
     use proptest::prelude::*;
     use serde::Deserialize;
+    use std::collections::HashMap;
 
     #[derive(Deserialize)]
     struct Case {
@@ -996,6 +1082,40 @@ mod tests {
         assert!(
             markdown_if_supported("contact@example.com", "")
                 .is_some_and(|html| html.contains("class=\"cea hidden\""))
+        );
+    }
+
+    #[test]
+    fn date_values_only_replace_unescaped_markdown_text() {
+        let values = HashMap::from([("date(Y)".to_owned(), "2026".to_owned())]);
+        let render =
+            |source| markdown_if_supported_with_dates(source, "", Some("fr"), true, Some(&values));
+        assert_eq!(render("Café date(Y)"), Some("<p>Café 2026</p>\n".into()));
+        assert_eq!(
+            render("[date(Y)](/archive)"),
+            Some("<p><a href=\"/archive\">2026</a></p>\n".into())
+        );
+        assert_eq!(
+            render("`date(Y)` and date(Y)"),
+            Some("<p><code>date(Y)</code> and 2026</p>\n".into())
+        );
+        assert_eq!(render("[date(Y)](/archive/date(Y))"), None);
+        assert_eq!(render("<span title=\"date(Y)\">date(Y)</span>"), None);
+        assert_eq!(render("\\date(Y)"), None);
+        assert_eq!(render("date(Y) and d&#97;te(Y)"), None);
+        assert_eq!(
+            markdown_if_supported_with_dates(
+                "date(Y)",
+                "",
+                Some("fr"),
+                true,
+                Some(&HashMap::new())
+            ),
+            None
+        );
+        assert_eq!(
+            markdown_if_supported_with_context("date(Y)", "", Some("fr"), true),
+            None
         );
     }
 

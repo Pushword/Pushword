@@ -47,6 +47,8 @@ class MarkdownParser implements ResetInterface
 
     private readonly PushwordExtension $pushwordExtension;
 
+    private readonly Date $dateFilter;
+
     private readonly TempestMarkdownRenderer $tempestRenderer;
 
     private ?string $cacheVersion = null;
@@ -72,11 +74,12 @@ class MarkdownParser implements ResetInterface
     ) {
         $this->nativeWorker = null !== $nativeBinary && '' !== $nativeBinary ? new NativeWorker($nativeBinary, $nativeTimeout) : null;
         $this->tempestRenderer = new TempestMarkdownRenderer($this->linkProvider, $apps, $twig, $mediaExtension);
+        $this->dateFilter = new Date($apps);
         $this->pushwordExtension = new PushwordExtension(
             $this->linkProvider,
             $mediaExtension,
             $apps,
-            new Date($apps),
+            $this->dateFilter,
         );
 
         $environment = new Environment();
@@ -146,6 +149,12 @@ class MarkdownParser implements ResetInterface
                 'locale' => $this->apps->getLocale(),
                 'allow_obfuscated_links' => $this->linkProvider->canRenderObfuscatedMarkdownLinkNatively(),
             ];
+            if (str_contains($text, 'date(')) {
+                $dateValues = $this->dateValues($text);
+                if ([] !== $dateValues) {
+                    $pending[$index]['date_values'] = $dateValues;
+                }
+            }
         }
 
         if ([] === $pending) {
@@ -186,6 +195,18 @@ class MarkdownParser implements ResetInterface
         }
 
         return array_values($results);
+    }
+
+    /** @return array<string, string> */
+    private function dateValues(string $text): array
+    {
+        preg_match_all('/date\([^)]+\)/', $text, $matches);
+        $values = [];
+        foreach (array_unique($matches[0]) as $shortcode) {
+            $values[$shortcode] = $this->dateFilter->convertDateShortCode($shortcode, $this->apps->get()->locale);
+        }
+
+        return $values;
     }
 
     public function reset(): void

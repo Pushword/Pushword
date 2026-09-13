@@ -71,8 +71,37 @@ final class NativeMarkdownRendererTest extends KernelTestCase
             }
         }
 
-        self::assertSame([false, false, false, false, true, true, false, false, false, true, false, false, true], array_map(static fn (?string $html): bool => null === $html, $result));
+        self::assertSame([false, false, false, false, true, true, false, false, false, true, false, false, false], array_map(static fn (?string $html): bool => null === $html, $result));
         $parser->reset();
+    }
+
+    public function testDateShortcodesUsePhpValuesAndDeclineAmbiguousSyntax(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(SiteRegistry::class)->switchSite('localhost.dev');
+        $native = $this->parser(self::BINARY);
+        $php = $this->parser();
+        $sources = [
+            'Copyright date(Y) / date(Y+1) / date(Y-1)',
+            'Seasons date(S) and date(W)',
+            'Today date(M), date(B), date(A), date(e)',
+            'Quoted date("%Y") and unknown date(Q)',
+            '[Article date(Y)](/archive)',
+            '[Article date(Y)](/archive/date(Y))',
+            '`date(Y)` and date(Y)',
+            '<span title="date(Y)">date(Y)</span>',
+            '\\date(Y)',
+        ];
+
+        $results = $native->renderNativeMany($sources);
+        foreach ($sources as $index => $source) {
+            if (null !== $results[$index]) {
+                self::assertSame($php->transform($source), $results[$index], $source);
+            }
+        }
+
+        self::assertSame([false, false, false, false, false, true, false, true, true], array_map(static fn (?string $html): bool => null === $html, $results));
+        $native->reset();
     }
 
     public function testPhoneLocaleUsesDistinctNativeCacheEntries(): void

@@ -1,9 +1,10 @@
 use pushword_content_probe::{
-    markdown_if_supported_with_context,
+    markdown_if_supported_with_dates,
     split::{Document, analyze, diagnose},
 };
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::Value;
+use std::collections::HashMap;
 use std::io::{self, BufRead, Read, Write};
 
 const MAX_FRAME_BYTES: u64 = 16 * 1024 * 1024;
@@ -24,6 +25,7 @@ struct MarkdownDocument {
     fenced_code_pre_class: String,
     locale: Option<String>,
     allow_obfuscated_links: Option<bool>,
+    date_values: Option<HashMap<String, String>>,
 }
 
 #[derive(Serialize)]
@@ -88,11 +90,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             return None;
                         }
 
-                        markdown_if_supported_with_context(
+                        markdown_if_supported_with_dates(
                             &document.markdown,
                             &document.fenced_code_pre_class,
                             document.locale.as_deref(),
                             document.allow_obfuscated_links.unwrap_or(false),
+                            document.date_values.as_ref(),
                         )
                     })
                     .collect(),
