@@ -44,7 +44,8 @@ final readonly class TempestMarkdownRenderer
             null !== $listStart => 'ol',
             default => null,
         };
-        $table = 1 === preg_match('/^\|[^\n]+\|\n\|[\s|:-]+\|\n(?:\|[^\n]+\|\n?)+$/D', $source)
+        $table = 1 === preg_match('/^\|[^\n]+\|\n\|([\s|:-]+)\|\n(?:\|[^\n]+\|\n?)+$/D', $source, $tableMatches)
+            && ! str_contains($tableMatches[1], ':')
             && 1 === preg_match('/^\|(?:\s*[^|\s][^|]*\|)+\n/', $source)
             && false === strpbrk($source, '<>&~[]{}');
         $attribute = null;

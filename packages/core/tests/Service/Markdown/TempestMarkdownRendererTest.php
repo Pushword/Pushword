@@ -58,6 +58,7 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'attributed list' => ["{id=programme}\n- Etape", null];
         yield 'nested list uses CommonMark' => ["- Une marche\n  - Un voyage", null];
         yield 'simple table' => ["| A | B |\n|---|---|\n| x | y |", "<table>\n<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>x</td>\n<td>y</td>\n</tr>\n</tbody>\n</table>\n"];
+        yield 'aligned table uses CommonMark' => ["| A | B | C |\n| :--- | :--: | ---: |\n| 1 | 2 | 3 |", null];
         yield 'empty table heading uses CommonMark' => ["| | B |\n|---|---|\n| x | y |", null];
         yield 'indented code' => ['    code', null];
         yield 'html' => ['<span>texte</span>', null];
