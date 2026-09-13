@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "projectRoots": ["."],
+  "kernel": "App\\Kernel",
+  "phpCommand": ["php", "-d", "auto_prepend_file=packages/dev-app/bin/lsp-bootstrap.php"],
+  "excludePaths": ["packages/dev-app/config/packages/test/**"]
+}

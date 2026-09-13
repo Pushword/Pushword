@@ -60,8 +60,9 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
             return;
         }
 
-        $containerBuilder->setParameter('vendor_dir', '%kernel.project_dir%/../../vendor');
-        $containerBuilder->setParameter('pw.package_dir', '%kernel.project_dir%/..');
+        $projectDir = $containerBuilder->getParameter('kernel.project_dir');
+        $containerBuilder->setParameter('vendor_dir', \dirname($projectDir, 2).'/vendor');
+        $containerBuilder->setParameter('pw.package_dir', \dirname($projectDir));
     }
 
     #[Override]

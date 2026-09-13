@@ -19,6 +19,7 @@ packages/admin-monaco-editor/dist
 
 # dev tool
 /PoC/
+/var/symfony-lsp/
 .twigstan
 .phpunit.result.cache
 .php_cs.cache
