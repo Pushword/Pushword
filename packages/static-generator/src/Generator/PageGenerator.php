@@ -16,6 +16,7 @@ use function Safe\preg_match;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\Service\Attribute\Required;
+use Throwable;
 
 class PageGenerator extends AbstractGenerator
 {
@@ -100,7 +101,7 @@ class PageGenerator extends AbstractGenerator
 
         $liveUri = $this->generateLivePathFor($page, 'pushword_page_feed');
         $staticFile = preg_replace('/.html$/', '.xml', $this->generateFilePath($page)) ?? throw new Exception();
-        $this->saveAsStatic($liveUri, $staticFile, $page);
+        $this->saveAsStatic($liveUri, $staticFile, $page, feed: true);
     }
 
     /** @param int[] $parentPageIds */
@@ -118,18 +119,33 @@ class PageGenerator extends AbstractGenerator
         return isset($this->parentPageIdsWithChildren[$page->id]);
     }
 
-    protected function saveAsStatic(string $liveUri, string $destination, ?Page $page = null): void
+    protected function saveAsStatic(string $liveUri, string $destination, ?Page $page = null, bool $feed = false): void
     {
         $stopwatch = $this->staticAppGenerator->getStopwatch();
 
         $request = Request::create($liveUri);
+        $renderKernel = static::getKernel();
         if (null !== $page) {
             $request->attributes->set('_pushword_page', $page);
-        }
+            $stopwatch?->start('page.render');
 
-        $stopwatch?->start('kernel.handle');
-        $response = static::getKernel()->handle($request);
-        $stopwatch?->stop('kernel.handle');
+            try {
+                $renderKernel->getContainer()->get('services_resetter')->reset();
+                /** @var StaticPageRenderer $renderer */
+                $renderer = $renderKernel->getContainer()->get(StaticPageRenderer::class);
+                $response = $renderer->render($request, $page, $feed);
+            } catch (Throwable) {
+                // Keep the HTTP error response and its debug detail for failed renders.
+                $renderKernel->getContainer()->get('services_resetter')->reset();
+                $response = $renderKernel->handle($request);
+            } finally {
+                $stopwatch?->stop('page.render');
+            }
+        } else {
+            $stopwatch?->start('kernel.handle');
+            $response = $renderKernel->handle($request);
+            $stopwatch?->stop('kernel.handle');
+        }
 
         if ($response->isRedirect()) {
             $location = $response->headers->get('location');

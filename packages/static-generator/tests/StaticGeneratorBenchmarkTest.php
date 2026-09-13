@@ -208,7 +208,7 @@ final class StaticGeneratorBenchmarkTest extends KernelTestCase
         $timings = [];
         foreach ($stopwatch->getSections() as $section) {
             foreach ($section->getEvents() as $name => $event) {
-                if (! \in_array($name, ['kernel.handle', 'html.compress', 'file.write', 'generatePage'], true)) {
+                if (! \in_array($name, ['kernel.handle', 'page.render', 'html.compress', 'file.write', 'generatePage'], true)) {
                     continue;
                 }
 

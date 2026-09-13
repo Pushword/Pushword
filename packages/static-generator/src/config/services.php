@@ -11,6 +11,7 @@ use Pushword\StaticGenerator\Cache\MessageHandler\PageCacheRefreshHandler;
 use Pushword\StaticGenerator\Cache\PageCacheInvalidator;
 use Pushword\StaticGenerator\Controller\Api\StaticApiController;
 use Pushword\StaticGenerator\Generator\HtmlMinification;
+use Pushword\StaticGenerator\Generator\StaticPageRenderer;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -53,6 +54,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(HtmlMinification::class)
         ->arg('$binary', '%pw.static_generator.native_html_minifier%')
         ->arg('$timeout', '%pw.static_generator.native_html_minifier_timeout%');
+
+    $services->set(StaticPageRenderer::class)->public();
 
     if ($apiAvailable) {
         $services->set(StaticApiController::class)

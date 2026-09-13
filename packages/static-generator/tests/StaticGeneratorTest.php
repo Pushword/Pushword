@@ -986,6 +986,23 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertStringContainsString('Twig error: variable not found', $errors[0]);
     }
 
+    public function testNonPageRouteFallsBackToHttpRendering(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $generator = $this->getGenerator(PagesGenerator::class);
+        new ReflectionMethod(AbstractGenerator::class, 'init')->invoke($generator, 'localhost.dev');
+        $page = self::getContainer()->get(PageRepository::class)->getPage('homepage', 'localhost.dev');
+        self::assertInstanceOf(Page::class, $page);
+
+        $destination = $this->getStaticDir().'/route-fallback.txt';
+        new ReflectionMethod(PageGenerator::class, 'saveAsStatic')
+            ->invoke($generator, '/localhost.dev/robots.txt', $destination, $page);
+
+        self::assertFileExists($destination);
+        self::assertStringContainsString('Sitemap: https://localhost.dev/sitemap.xml', (string) file_get_contents($destination));
+    }
+
     #[Group('serial')]
     public function testDownload(): void
     {

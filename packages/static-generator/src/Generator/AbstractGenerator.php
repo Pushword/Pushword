@@ -62,22 +62,17 @@ abstract class AbstractGenerator implements GeneratorInterface
         static::loadKernel($kernel);
         $this->kernel = $kernel;
 
-        // The sub-kernel renders the page HTML itself (saveAsStatic → getKernel()->handle());
-        // its own router must likewise drop the prefix. Distinct instance, not a duplicate.
-        // PINNED, because a plain set cannot survive rendering: each handle() marks
-        // services for reset, so from the second render on, the kernel's boot() runs
-        // the services_resetter — inside handle(), after any pre-render re-assert —
-        // and reset() would restore the /{host}/ prefix. Only the first page each
-        // process rendered came out host-less; every later one linked to
-        // /{host}/{slug}, which a brand static host serves as a 404. This kernel
-        // never serves live traffic, so pinning is safe.
+        // The sub-kernel renders pages directly, and other routes or HTTP error
+        // responses through handle().
+        // Its own router must likewise drop the prefix. Pin the flag because
+        // direct page renders reset services before each page, while handle()
+        // resets them between HTTP requests. This kernel never serves live traffic.
         $this->renderRouter = static::getKernel()->getContainer()->get(PushwordRouteGenerator::class);
         $this->renderRouter->setUseCustomHostPath(false, pin: true);
 
         // Same split as the routers above: the render kernel renders every exported
-        // page, so its sites are static for good — PINNED, because each handle()
-        // marks services for reset and SiteRegistry::reset() would otherwise clear
-        // the flag from the second page on. This kernel's sites are NOT touched:
+        // page, so its sites are static for good. Pin the flag across service
+        // resets. This kernel's sites are NOT touched:
         // they are shared, process-global objects, and an in-process generation
         // (cache mode, admin route) would leave every later request of a
         // FrankenPHP worker believing it is being exported. The one live render
