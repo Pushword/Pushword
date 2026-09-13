@@ -1,4 +1,5 @@
 import EditorJS from '@editorjs/editorjs'
+import { isSafeLinkUrl } from './safeLinkUrl'
 
 export default class PasteLink {
   private editor: EditorJS
@@ -42,16 +43,19 @@ export default class PasteLink {
 
         // Do we have an URL in the clipboard to create a link ?
         const text = this.getClipboardText(event)
-        if (!this.isValidURL(text) && !this.isValidRelativeURI(text)) return
+        if (!isSafeLinkUrl(text)) return
 
         event.preventDefault()
         event.stopPropagation()
 
+        const anchor = document.createElement('a')
+        anchor.href = text
+        anchor.textContent = textSelected.trim()
         document.execCommand(
           'insertHTML',
           false,
           (textSelected.startsWith(' ') ? ' ' : '') +
-            `<a href="${text}">${textSelected.trim()}</a>` +
+            anchor.outerHTML +
             (textSelected.endsWith(' ') ? ' ' : ''),
         )
       },
@@ -65,19 +69,5 @@ export default class PasteLink {
 
     // const text = await window.navigator.clipboard.readText()
     // return text
-  }
-
-  private isValidRelativeURI(uri: string): boolean {
-    const regex = /^\/[^\s]*$/
-    return regex.test(uri)
-  }
-
-  private isValidURL(str: string): boolean {
-    try {
-      new URL(str)
-      return true
-    } catch (_) {
-      return false
-    }
   }
 }

@@ -164,6 +164,33 @@ describe('Hyperlink field labels', () => {
   })
 })
 
+describe('Hyperlink URL safety', () => {
+  it('drops a script URL entered in the link field', () => {
+    const { tool, input } = toolWithActions()
+    const link = anchor('<a href="/safe">Safe</a>')
+    ;(tool as any).anchorTag = link
+    input.value = 'javascript:alert(1)'
+
+    tool.updateLink()
+
+    expect(link.hasAttribute('href')).toBe(false)
+  })
+
+  it('keeps relative and mailto links', () => {
+    const { tool, input } = toolWithActions()
+    const link = anchor('<a>Safe</a>')
+    ;(tool as any).anchorTag = link
+
+    input.value = '/contact'
+    tool.updateLink()
+    expect(link.getAttribute('href')).toBe('/contact')
+
+    input.value = 'mailto:hello@example.com'
+    tool.updateLink()
+    expect(link.getAttribute('href')).toBe('mailto:hello@example.com')
+  })
+})
+
 describe('Hyperlink.renderActions', () => {
   it('offers the rels the site declares instead of the built-in ones', () => {
     const tool = new Hyperlink({

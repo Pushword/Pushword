@@ -152,9 +152,19 @@ export function ensureModal(config) {
  * @param {string} url - URL to load in the iframe
  * @param {Object} [options] - Additional options
  * @param {Function} [options.onHide] - Callback when modal is hidden
- * @returns {boolean} - True if modal was opened, false if fallback to window.open
+ * @returns {boolean} - True if modal was opened, false for a rejected URL or window.open fallback
  */
 export function openModal(config, url, options = {}) {
+  let target
+  try {
+    target = new URL(url, window.location.href)
+  } catch {
+    return false
+  }
+  if (target.origin !== window.location.origin || !['http:', 'https:'].includes(target.protocol)) {
+    return false
+  }
+
   const { modal, iframe } = ensureModal(config)
 
   if (!iframe) {
@@ -216,7 +226,6 @@ export function openModal(config, url, options = {}) {
   window.open(url, '_blank', 'noopener')
   return false
 }
-
 /**
  * Closes a modal by its ID.
  *
@@ -327,5 +336,3 @@ export function normalizeUrl(url, params = {}) {
     return url
   }
 }
-
-

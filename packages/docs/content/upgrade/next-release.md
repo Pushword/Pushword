@@ -1,5 +1,5 @@
 ---
-title: 'PHP files use strict types; optional Rust minification, content analysis and Markdown'
+title: 'PHP files use strict types; optional Rust minification, content analysis and Markdown; admin links restrict URLs'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/core`, `pushword/dev-app`, `pushword/static-generator`
+**Concerns:** `pushword/admin`, `pushword/admin-block-editor`, `pushword/core`, `pushword/dev-app`, `pushword/static-generator`
 
 ## PHP strict types
 
@@ -60,3 +60,8 @@ See [native acceleration](../native-acceleration.md) for the supported HTML boun
 Markdown can use the same Rust analyzer for eligible blocks, with PHP fallback; PHP remains the default.
 **Sites opting into experimental Rust Markdown:** set `pushword.native_markdown_renderer` to the deployed `pushword-content-analyzer` path, then clear the Symfony container cache.
 See [native acceleration](../native-acceleration.md) for the measured conversion boundary and compatibility limits.
+
+## Admin link URLs
+
+Editor links accept relative, HTTP(S), mailto and tel URLs; inline admin modals load only same-origin HTTP(S) URLs.
+**Sites with custom link schemes or cross-origin inline-edit URLs:** update those links or provide a same-origin admin route.

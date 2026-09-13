@@ -18,6 +18,7 @@
     "autoprefixer": "^10.4",
     "editorjs-drag-drop": "^1.1",
     "happy-dom": "^20.9.0",
+    "jsdom": "^29.1.1",
     "monaco-editor": "^0.54",
     "postcss": "^8.4",
     "postcss-nested": "^7.0",
@@ -37,6 +38,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "dompurify": "^3.4.15",
     "he": "^1.2.0",
     "jsonrepair": "^3.13.1",
     "prettier": "^3.6"

@@ -25,9 +25,8 @@ export function showTitlePixelWidth(toMeasure = 'title', maxLength = 70) {
   function updateTitleWidth() {
     resultWrapper.style =
       'font-size:20px;margin:0;padding:0;border:0;font-weight:400;display:inline-block;font-family:arial,sans-serif;line-height: 1.3;'
-    resultWrapper.innerHTML = input.value
     const titleLength = input.value.length
-    resultWrapper.innerHTML = titleLength
+    resultWrapper.textContent = titleLength
     resultWrapper.style = titleLength > maxLength ? 'color:#B0413E' : 'color:#4F805D'
   }
 

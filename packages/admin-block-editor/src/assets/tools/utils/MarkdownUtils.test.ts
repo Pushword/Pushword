@@ -1,6 +1,19 @@
 import { describe, it, expect } from 'vitest'
 import { MarkdownUtils } from './MarkdownUtils'
 
+describe('MarkdownUtils.wrapInQuotes', () => {
+  it('escapes every quote and backslash in a Twig string', () => {
+    expect(MarkdownUtils.wrapInQuotes('a\'b"c"\\d')).toBe('"a\'b\\"c\\"\\\\d"')
+  })
+})
+
+describe('MarkdownUtils.fixer', () => {
+  it('does not mistake iframe for an empty inline formatting tag', () => {
+    const html = '<iframe src="/video"></iframe>'
+    expect(MarkdownUtils.fixer(html)).toBe(html)
+  })
+})
+
 describe('MarkdownUtils.extractSnippetCall', () => {
   it('extracts the name from a single-quoted call', () => {
     expect(MarkdownUtils.extractSnippetCall("{{ snippet('hero') }}")).toEqual({

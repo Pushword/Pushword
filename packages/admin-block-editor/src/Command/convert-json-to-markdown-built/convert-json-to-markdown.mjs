@@ -1409,7 +1409,7 @@ ${markdown}`;
   }
   static fixProse(text) {
     const spaces = "â¯|Â­|Â | |\\s";
-    return text.replace(/&nbsp;/gi, " ").replace(/ <\/([a-z]+)>/gi, "</$1> ").replace(/ ?<(b|i|strong|em|span)> ?<\/(b|i|strong|em|span)> ?/gi, " ").replace(/<(b|i|strong|em|span|a)[^>]*><\/(b|i|strong|em|span|a)>/gi, "").replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,},[${spaces}]{1,}`, "gmu"), "$1, ").replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,}\\.[${spaces}]{1,}`, "gmu"), "$1. ").replace(/ &amp; /gi, " & ").replace(/&shy;/g, "").replace(new RegExp(`[${spaces}]{2,}`, "gmu"), " ");
+    return text.replace(/&nbsp;/gi, " ").replace(/ <\/([a-z]+)>/gi, "</$1> ").replace(/ ?<(b|i|strong|em|span)> ?<\/(b|i|strong|em|span)> ?/gi, " ").replace(/<(b|i|strong|em|span|a)\b[^>]*><\/\1>/gi, "").replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,},[${spaces}]{1,}`, "gmu"), "$1, ").replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,}\\.[${spaces}]{1,}`, "gmu"), "$1. ").replace(/ &amp; /gi, " & ").replace(/&shy;/g, "").replace(new RegExp(`[${spaces}]{2,}`, "gmu"), " ");
   }
   static convertInlineHtmlToMarkdown(html, cleanup = true) {
     if (cleanup) {
@@ -1572,9 +1572,9 @@ ${markdown}`;
     }
   }
   static wrapInQuotes(text) {
-    if (!text.includes("'")) return "'" + text + "'";
-    const escaped = text.replace('"', '\\"');
-    return `"${escaped}"`;
+    const escaped = text.replace(/\\/g, "\\\\");
+    if (!text.includes("'")) return "'" + escaped + "'";
+    return `"${escaped.replace(/"/g, '\\"')}"`;
   }
 };
 _MarkdownUtils.prettierPromise = null;
@@ -2022,7 +2022,7 @@ class Paragraph extends n$1 {
   // TODO : à revoir pour voir qui est le défault, raw ou paragraph
   static isItMarkdownExported(markdown) {
     const trimmed = markdown.trim();
-    const isProbablyNotMarkdown = /^(<|{|-->|#})/.test(trimmed);
+    const isProbablyNotMarkdown = ["<", "{", "-->", "#}"].some((prefix) => trimmed.startsWith(prefix));
     return !isProbablyNotMarkdown;
   }
 }
@@ -8065,7 +8065,8 @@ const _TableBlock = class _TableBlock {
     const formattedMarkdown = await MarkdownUtils.formatMarkdownWithPrettier(markdown);
     let out = MarkdownUtils.addAttributes(formattedMarkdown, tunes);
     if (data.stickyHeadings && !out.includes(_TableBlock.STICKY_CLASS)) {
-      out = out.startsWith("{") ? out.replace("}", ` .${_TableBlock.STICKY_CLASS}}`) : `{.${_TableBlock.STICKY_CLASS}}
+      const attributeEnd = out.startsWith("{") ? out.indexOf("}") : -1;
+      out = attributeEnd !== -1 ? `${out.slice(0, attributeEnd)} .${_TableBlock.STICKY_CLASS}${out.slice(attributeEnd)}` : `{.${_TableBlock.STICKY_CLASS}}
 ${out}`;
     }
     return out;

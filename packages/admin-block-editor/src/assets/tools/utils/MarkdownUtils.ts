@@ -536,7 +536,7 @@ export class MarkdownUtils {
       // remove empty inline tag
       .replace(/ ?<(b|i|strong|em|span)> ?<\/(b|i|strong|em|span)> ?/gi, ' ')
       // remove empty inline tag
-      .replace(/<(b|i|strong|em|span|a)[^>]*><\/(b|i|strong|em|span|a)>/gi, '')
+      .replace(/<(b|i|strong|em|span|a)\b[^>]*><\/\1>/gi, '')
       // NoSpaceBeforeComma
       .replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,},[${spaces}]{1,}`, 'gmu'), '$1, ')
       // NoSpaceBeforeDot
@@ -771,10 +771,10 @@ export class MarkdownUtils {
   }
 
   public static wrapInQuotes(text: string): string {
-    if (!text.includes("'")) return "'" + text + "'"
+    const escaped = text.replace(/\\/g, '\\\\')
+    if (!text.includes("'")) return "'" + escaped + "'"
 
-    const escaped = text.replace('"', '\\' + '"')
-    return `"${escaped}"`
+    return `"${escaped.replace(/"/g, '\\"')}"`
   }
 }
 

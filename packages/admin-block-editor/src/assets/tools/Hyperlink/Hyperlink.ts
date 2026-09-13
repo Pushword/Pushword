@@ -5,6 +5,7 @@ import { API } from '@editorjs/editorjs'
 import './Hyperlink.css'
 
 import { Suggest } from '../../../../../admin/src/Resources/assets/suggest.js'
+import { isSafeLinkUrl } from './safeLinkUrl'
 
 interface HyperlinkNodes {
   wrapper: HTMLElement | null
@@ -330,7 +331,11 @@ export default class Hyperlink {
     if (!this.anchorTag) return null
 
     const href = this.nodes.input!.value.trim() || ''
-    this.anchorTag.setAttribute('href', href)
+    if (href && isSafeLinkUrl(href)) {
+      this.anchorTag.setAttribute('href', href)
+    } else {
+      this.anchorTag.removeAttribute('href')
+    }
 
     const target = this.nodes.targetBlank!.querySelector('input')!.checked ? '_blank' : ''
     if (target) {

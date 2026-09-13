@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import ClipboardManager from './ClipboardManager'
 import GroupStart from '../Group/GroupStart'
@@ -117,6 +118,15 @@ describe('ClipboardManager – pure helpers', () => {
       )
       expect(result).toContain('colspan="2"')
     })
+
+    it('removes executable markup from an external table before preserving it', () => {
+      const result = cm.convertHtmlToMarkdown(
+        '<table onmouseover="alert(1)"><tr><td><a href="javascript:alert(1)">x</a><img src="x" onerror="alert(1)"></td></tr></table>',
+      )
+
+      expect(result).toContain('<table')
+      expect(result).not.toMatch(/onmouseover|onerror|javascript:/)
+    })
   })
 })
 
@@ -151,6 +161,13 @@ describe('ClipboardManager – table extraction', () => {
     const block = buildTableBlock({ rows: [['a | b', 'c'], ['d', 'e']], heading: true })
     const result = cm.extractBlockContent(block)
     expect(result.markdown.split('\n')[0]).toBe('| a \\| b | c |')
+  })
+
+  it('keeps a pipe escaped when the cell already contains a backslash', () => {
+    const block = buildTableBlock({ rows: [['a\\|b', 'c']], heading: true })
+    const result = cm.extractBlockContent(block)
+
+    expect(result.markdown.split('\n')[0]).toBe('| a\\\\\\|b | c |')
   })
 })
 

@@ -55,7 +55,7 @@ export default class Paragraph extends ParagraphTool {
     // starts with '{' = probably twig function
     // starts with '-->' = probably a hack to comment close a previously opened comment
     // starts with '#}' = same
-    const isProbablyNotMarkdown = /^(<|{|-->|#})/.test(trimmed)
+    const isProbablyNotMarkdown = ['<', '{', '-->', '#}'].some((prefix) => trimmed.startsWith(prefix))
 
     // Return true only if it doesn't start with those patterns
     return !isProbablyNotMarkdown

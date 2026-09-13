@@ -1,5 +1,6 @@
 import EditorJS, { API } from '@editorjs/editorjs'
 import he from 'he'
+import DOMPurify from 'dompurify'
 import { MarkdownUtils } from './MarkdownUtils'
 import { BlockToolAdapterWithConstructable, chunkTool } from '../../EditorJsParseMarkdown'
 import { GroupNesting } from '../Group/GroupNesting'
@@ -643,9 +644,9 @@ export default class ClipboardManager {
      * Convert HTML from rich text sources to markdown
      */
     private convertHtmlToMarkdown(html: string): string {
-        // Create a temporary container to parse HTML
+        // Sanitize external clipboard HTML before parsing or preserving tables.
         const container = document.createElement('div')
-        container.innerHTML = html
+        container.innerHTML = DOMPurify.sanitize(html)
 
         // Remove Google Docs specific wrapper elements
         container.querySelectorAll('[id^="docs-internal-guid"]').forEach(el => {
@@ -892,7 +893,7 @@ export default class ClipboardManager {
 
         const matrix = rows.map(row =>
             Array.from(row.querySelectorAll('.tc-cell')).map(cell =>
-                he.decode((cell as HTMLElement).innerHTML).trim().replace(/\|/g, '\\|'),
+                he.decode((cell as HTMLElement).innerHTML).trim().replace(/\\/g, '\\\\').replace(/\|/g, '\\|'),
             ),
         )
         const colCount = Math.max(...matrix.map(row => row.length))

@@ -281,7 +281,7 @@ export class editorJsHelper {
     }
 
     if (editorJsInput && replaceElement instanceof HTMLTextAreaElement) {
-      replaceElement.innerHTML = editorJsInput.value
+      replaceElement.value = editorJsInput.value
       replaceElement.classList.add('form-control')
       replaceElement.style.border = '0'
     }

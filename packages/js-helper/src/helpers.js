@@ -457,11 +457,12 @@ export async function uncloakLinks(
 
   var convertLinkOnEvent = async function (event) {
     // convert them all if it's an image (thanks this bug), permit to use gallery (baguetteBox)
+    let element
     if (event.target.tagName == 'IMG') {
       await convertAll(attribute)
-      var element = event.target
+      element = event.target
     } else {
-      var element = convertLink(event.target)
+      element = convertLink(event.target)
     }
     if (element) fireEventLinksBuilt(element, event)
   }
@@ -558,7 +559,10 @@ export function readableEmail(selector) {
   document.querySelectorAll(selector).forEach(function (item) {
     var mail = rot13ToText(item.textContent).trim()
     item.classList.remove('hidden')
-    item.innerHTML = '<a href="mailto:' + mail + '">' + mail + '</a>'
+    const link = document.createElement('a')
+    link.href = 'mailto:' + mail
+    link.textContent = mail
+    item.replaceChildren(link)
     if (selector.charAt(0) == '.') {
       item.classList.remove(selector.substring(1))
     }

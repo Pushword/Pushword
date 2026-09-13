@@ -65,6 +65,15 @@ describe('TableBlock inline Markdown in cells', () => {
     )
   })
 
+  it('adds sticky heading class inside an existing attribute line', async () => {
+    const markdown = await TableBlock.exportToMarkdown(
+      { content: [['Heading']], withHeadings: true, stickyHeadings: true },
+      { class: 'custom' } as any,
+    )
+
+    expect(markdown.startsWith('{.custom .table-sticky-header}\n')).toBe(true)
+  })
+
   it('imports inline Markdown as the HTML a cell renders', () => {
     const { editor, updates } = fakeEditor()
 

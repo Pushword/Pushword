@@ -1,6 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { editorJsHelper } from './editorJsHelper'
 
+describe('editorJsHelper.toggleEditorJs', () => {
+  it('keeps editor content as text when switching to a textarea', () => {
+    document.body.innerHTML = '<input data-editorjs>'
+    const original = document.querySelector('input')!
+    original.value = '<img src=x onerror=alert(1)>'
+
+    new editorJsHelper().toggleEditorJs('editor')
+
+    const textarea = document.querySelector('textarea')!
+    expect(textarea.value).toBe(original.value)
+    expect(textarea.querySelector('img')).toBeNull()
+  })
+})
+
 /**
  * The inline uploader replaces the media picker's upload button, which opened
  * the media form in a modal iframe. Here the file dialog is the whole flow.

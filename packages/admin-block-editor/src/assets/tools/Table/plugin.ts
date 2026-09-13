@@ -413,8 +413,9 @@ export default class TableBlock {
     // Sticky heading round-trips as the `{.table-sticky-header}` block attribute,
     // injected independently of the (multi-class-fragile) class tune machinery.
     if (data.stickyHeadings && !out.includes(TableBlock.STICKY_CLASS)) {
-      out = out.startsWith('{')
-        ? out.replace('}', ` .${TableBlock.STICKY_CLASS}}`)
+      const attributeEnd = out.startsWith('{') ? out.indexOf('}') : -1;
+      out = attributeEnd !== -1
+        ? `${out.slice(0, attributeEnd)} .${TableBlock.STICKY_CLASS}${out.slice(attributeEnd)}`
         : `{.${TableBlock.STICKY_CLASS}}\n${out}`;
     }
 

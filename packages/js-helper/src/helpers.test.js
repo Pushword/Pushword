@@ -4,7 +4,27 @@ import {
   addClassForNormalUser,
   resolveLightboxSources,
   uncloakLinks,
+  readableEmail,
 } from './helpers.js'
+
+describe('readableEmail', () => {
+  it('renders decoded mail as text and does not interpret markup', () => {
+    document.body.innerHTML = '<span class="cea"></span>'
+    const item = document.querySelector('.cea')
+    item.textContent = rot13ForTest('<img src=x onerror=alert(1)>@example.com')
+
+    readableEmail('.cea')
+
+    expect(item.querySelector('img')).toBeNull()
+    expect(item.querySelector('a').textContent).toBe('<img src=x onerror=alert(1)>@example.com')
+  })
+})
+
+function rot13ForTest(value) {
+  return value.replace(/[a-zA-Z]/g, (char) =>
+    String.fromCharCode(char.charCodeAt(0) + (char.toLowerCase() <= 'm' ? 13 : -13)),
+  )
+}
 
 // Helpers to build minimal DOM fixtures
 function makeLiveBlockEl(url) {

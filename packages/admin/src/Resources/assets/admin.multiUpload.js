@@ -185,7 +185,7 @@ export function initMultiUpload() {
   function populateRow(row, data) {
     const editUrl = editUrlTemplate.replace('__ID__', data.id)
     const thumbInner = data.thumbnailUrl
-      ? `<img src="${escapeHtml(data.thumbnailUrl)}" class="pw-thumb" alt="" data-full-src="${escapeAttr(data.thumbnailUrl)}">`
+      ? `<img src="${escapeAttr(data.thumbnailUrl)}" class="pw-thumb" alt="" data-full-src="${escapeAttr(data.thumbnailUrl)}">`
       : `<i class="fas fa-file"></i>`
     const thumbHtml = data.thumbnailUrl ? thumbInner : `<a href="${escapeAttr(editUrl)}">${thumbInner}</a>`
 
@@ -197,7 +197,7 @@ export function initMultiUpload() {
       <td>${thumbHtml}</td>
       <td class="pw-filename-cell"><input type="text" value="${escapeAttr(slug)}" data-field="slug" data-id="${data.id}"><span class="pw-ext text-muted">${escapeHtml(ext)}</span></td>
       <td><input type="text" value="${escapeAttr(data.alt)}" data-field="alt" data-id="${data.id}"></td>
-      <td><input type="text" value="${escapeAttr(data.tags)}" data-field="tags" data-id="${data.id}" data-tags='${escapeAttr(allTags)}' data-delimiter=" "><div class="textSuggester" style="display:none;"></div></td>
+      <td><input type="text" value="${escapeAttr(data.tags)}" data-field="tags" data-id="${data.id}" data-tags="${escapeAttr(allTags)}" data-delimiter=" "><div class="textSuggester" style="display:none;"></div></td>
       <td><textarea data-field="alts" data-id="${data.id}">${escapeHtml(data.alts)}</textarea></td>
       <td><small>${escapeHtml(size)}</small></td>
       <td><small>${escapeHtml(dims)}</small></td>
