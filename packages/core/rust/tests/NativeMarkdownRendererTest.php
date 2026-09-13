@@ -126,7 +126,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         self::assertSame([$php->transform($source)], $english);
         self::assertNotSame($french, $english);
         foreach (['fr', 'en'] as $locale) {
-            self::assertTrue($pool->getItem('pw_mdn2.'.hash('xxh3', '10a1l'.$locale.'|'.$source))->isHit());
+            self::assertTrue($pool->getItem('pw_mdn2.'.hash('xxh3', '14a1l'.$locale.'|'.$source))->isHit());
         }
 
         $native->reset();
@@ -186,7 +186,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $source = 'A **cached** paragraph.';
         self::assertSame([$this->parser()->transform($source)], $parser->renderNativeMany([$source]));
 
-        $key = 'pw_mdn2.'.hash('xxh3', '10|'.$source);
+        $key = 'pw_mdn2.'.hash('xxh3', '14|'.$source);
         $item = $pool->getItem($key);
         self::assertTrue($item->isHit());
         $item->set('FROM CACHE');
@@ -259,7 +259,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $native = new Markdown($nativeParser, $linkProvider);
 
         self::assertSame($php->apply($source, $page, $manager), $native->apply($source, $page, $manager));
-        self::assertTrue($pool->getItem('pw_mdn2.'.hash('xxh3', '10|A **bold** paragraph.'))->isHit());
+        self::assertTrue($pool->getItem('pw_mdn2.'.hash('xxh3', '14|A **bold** paragraph.'))->isHit());
         $nativeParser->reset();
     }
 

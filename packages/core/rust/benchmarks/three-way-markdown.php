@@ -9,7 +9,9 @@ use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Service\Markdown\TempestMarkdownRenderer;
 use Pushword\Core\Service\NativeWorker;
+use Pushword\Core\Service\Typographer;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Tests\Support\HtmlEquivalence;
 use Pushword\Core\Twig\MediaExtension;
 use Symfony\Component\Dotenv\Dotenv;
 use Twig\Environment;
@@ -42,6 +44,7 @@ require_once $repoRoot.'/vendor/autoload.php';
 $tempest = 'tempest' === $mode ? new TempestMarkdownRenderer($links, $sites, $twig, $media) : null;
 $worker = 'rust' === $mode ? new NativeWorker($binary) : null;
 $dateFilter = new Date($sites);
+$typographer = new Typographer();
 $stream = fopen($snapshot, 'r');
 if (false === $stream) {
     throw new RuntimeException('Cannot open snapshot.');
@@ -73,27 +76,35 @@ $blocks = 0;
 $accepted = 0;
 $fallback = 0;
 $different = 0;
+$byteDifferent = 0;
 $dateStats = ['blocks' => 0, 'accepted' => 0, 'fallback' => 0, 'expected_mismatches' => 0];
 $currentHost = null;
 
 /**
  * @param array<string, mixed> $record
  */
-function checkOutput(array $record, string $output, HashContext $digest, int &$blocks, int &$different): void
+function checkOutput(array $record, string $output, HashContext $digest, SiteRegistry $sites, Typographer $typographer, int &$blocks, int &$different, int &$byteDifferent): void
 {
     ++$blocks;
     if ($output !== $record['php']) {
+        ++$byteDifferent;
+    }
+
+    $locale = $sites->get(explode('/', $record['page'], 2)[0])->locale;
+    $expected = HtmlEquivalence::structure($typographer->fix($record['php'], $locale));
+    $actual = HtmlEquivalence::structure($typographer->fix($output, $locale));
+    if ($actual !== $expected) {
         ++$different;
     }
 
-    hash_update($digest, $output);
+    hash_update($digest, json_encode($actual, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE)."\n");
 }
 
 /**
  * @param mixed[][]                                                                  $batch
  * @param array{blocks: int, accepted: int, fallback: int, expected_mismatches: int} $dateStats
  */
-function runRustBatch(array $batch, NativeWorker $worker, SiteRegistry $sites, Date $dateFilter, MarkdownConverter $converter, HashContext $digest, int &$nanoseconds, int &$blocks, int &$accepted, int &$fallback, int &$different, array &$dateStats, ?string &$currentHost): void
+function runRustBatch(array $batch, NativeWorker $worker, SiteRegistry $sites, Date $dateFilter, MarkdownConverter $converter, Typographer $typographer, HashContext $digest, int &$nanoseconds, int &$blocks, int &$accepted, int &$fallback, int &$different, int &$byteDifferent, array &$dateStats, ?string &$currentHost): void
 {
     $start = hrtime(true);
     $request = array_map(static function (array $record) use ($sites, $dateFilter): array {
@@ -145,7 +156,7 @@ function runRustBatch(array $batch, NativeWorker $worker, SiteRegistry $sites, D
             ++$accepted;
         }
 
-        checkOutput($record, $output, $digest, $blocks, $different);
+        checkOutput($record, $output, $digest, $sites, $typographer, $blocks, $different, $byteDifferent);
     }
 }
 
@@ -156,7 +167,7 @@ if ('rust' === $mode) {
         $record = json_decode($line, true, flags: \JSON_THROW_ON_ERROR);
         $size = strlen($record['markdown']);
         if ([] !== $batch && (count($batch) >= 250 || $batchBytes + $size > 4_000_000 || $record['pre_class'] !== $batch[0]['pre_class'])) {
-            runRustBatch($batch, $worker, $sites, $dateFilter, $converter, $digest, $nanoseconds, $blocks, $accepted, $fallback, $different, $dateStats, $currentHost);
+            runRustBatch($batch, $worker, $sites, $dateFilter, $converter, $typographer, $digest, $nanoseconds, $blocks, $accepted, $fallback, $different, $byteDifferent, $dateStats, $currentHost);
             $batch = [];
             $batchBytes = 0;
         }
@@ -166,7 +177,7 @@ if ('rust' === $mode) {
     }
 
     if ([] !== $batch) {
-        runRustBatch($batch, $worker, $sites, $dateFilter, $converter, $digest, $nanoseconds, $blocks, $accepted, $fallback, $different, $dateStats, $currentHost);
+        runRustBatch($batch, $worker, $sites, $dateFilter, $converter, $typographer, $digest, $nanoseconds, $blocks, $accepted, $fallback, $different, $byteDifferent, $dateStats, $currentHost);
     }
 
     $worker->reset();
@@ -191,7 +202,7 @@ if ('rust' === $mode) {
             ++$accepted;
         }
 
-        checkOutput($record, $output, $digest, $blocks, $different);
+        checkOutput($record, $output, $digest, $sites, $typographer, $blocks, $different, $byteDifferent);
     }
 }
 
@@ -203,6 +214,7 @@ echo json_encode([
     'accepted' => $accepted,
     'fallback' => $fallback,
     'different' => $different,
+    'byte_different' => $byteDifferent,
     'dates' => $dateStats,
     'conversion_seconds' => $nanoseconds / 1e9,
     'zend_peak_bytes' => memory_get_peak_usage(true),

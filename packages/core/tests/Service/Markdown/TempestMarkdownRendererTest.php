@@ -7,6 +7,7 @@ namespace Pushword\Core\Tests\Service\Markdown;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Service\Markdown\TempestMarkdownRenderer;
+use Pushword\Core\Tests\Support\HtmlEquivalence;
 
 final class TempestMarkdownRendererTest extends TestCase
 {
@@ -27,10 +28,12 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'leading paragraph id' => ["{id=programme}\nUne marche facile", "<p id=\"programme\">Une marche facile</p>\n"];
         yield 'paragraph class' => ['Ce que ça demande {.pp-kicker}', "<p class=\"pp-kicker\">Ce que ça demande</p>\n"];
         yield 'heading class' => ['## Une marche {.pp-kicker}', "<h2 class=\"pp-kicker\">Une marche</h2>\n"];
-        yield 'heading class and id' => ["{id=rdv .ico-location}\n## Rendez-vous", "<h2 class=\"ico-location\" id=\"rdv\">Rendez-vous</h2>\n"];
+        yield 'heading class and id uses CommonMark' => ["{id=rdv .ico-location}\n## Rendez-vous", null];
+        yield 'inline heading class and id uses CommonMark' => ['## Hi {.a #b}', null];
         yield 'link class' => ['Voir [la marche](/marche){.ninja}.', "<p>Voir <a class=\"ninja\" href=\"/marche\">la marche</a>.</p>\n"];
         yield 'mixed link classes' => ['[A](/a){.ninja} et [B](/b).', "<p><a class=\"ninja\" href=\"/a\">A</a> et <a href=\"/b\">B</a>.</p>\n"];
         yield 'unordered list' => ["- Une marche\n- Un voyage", "<ul>\n<li>Une marche</li>\n<li>Un voyage</li>\n</ul>\n"];
+        yield 'task list uses CommonMark checkboxes' => ["- [x] Done\n- [ ] Pending", null];
         yield 'list with link class' => ["- [Une marche](/marche){.ninja}\n- Un voyage", "<ul>\n<li><a class=\"ninja\" href=\"/marche\">Une marche</a></li>\n<li>Un voyage</li>\n</ul>\n"];
         yield 'ordered list' => ['1. Etape', "<ol>\n<li>Etape</li>\n</ol>\n"];
         yield 'ordered list start' => ['2. Etape', "<ol start=\"2\">\n<li>Etape</li>\n</ol>\n"];
@@ -47,7 +50,7 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'malformed marker before an ordered list uses CommonMark' => ["1)Départ\n2) Retour", null];
         yield 'ambiguous bold around escaped stars uses CommonMark' => ['pain**, mais les** horaires\\*\\*', null];
         yield 'ambiguous underscore across hard break uses CommonMark' => ["word_.  \nNext._", null];
-        yield 'intraword underscores use CommonMark' => ['a_b_c', null];
+        yield 'intraword underscores stay literal' => ['a_b_c', "<p>a_b_c</p>\n"];
         yield 'strikethrough' => ['~~marche~~', "<p><del>marche</del></p>\n"];
         yield 'trailing space in emphasis stays literal' => ['_Une marche _', "<p>_Une marche _</p>\n"];
         yield 'trailing space in bold stays literal' => ['**Une marche **', "<p>**Une marche **</p>\n"];
@@ -56,9 +59,12 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'image in custom star list uses CommonMark' => ["* Départ\n* ![](carte.jpg)", null];
         yield 'unicode link destination is encoded' => ['[marche](école)', "<p><a href=\"%C3%A9cole\">marche</a></p>\n"];
         yield 'space in link destination stays literal' => ['[marche](a b)', "<p>[marche](a b)</p>\n"];
-        yield 'apostrophe in inline code uses CommonMark' => ["Un `x'y` code.", null];
+        yield 'apostrophe in inline code keeps the same code text' => ["Un `x'y` code.", "<p>Un <code>x'y</code> code.</p>\n"];
         yield 'named link class' => ['[la marche](/marche){class="ninja"}', "<p><a class=\"ninja\" href=\"/marche\">la marche</a></p>\n"];
+        yield 'link with class and id uses CommonMark' => ['[link](/docs){.button #docs}', null];
         yield 'obfuscated link uses CommonMark' => ['#[la marche](/marche)', null];
+        yield 'obfuscated link with two attributes uses CommonMark' => ['#[*Café*](https://example.com/café){.button target="_blank"}', null];
+        yield 'obfuscated link with id uses CommonMark' => ['#[docs](/docs){#main-link}', null];
         yield 'email without extension stays literal' => ['contact@example.com', "<p>contact@example.com</p>\n"];
         yield 'phone uses Pushword' => ['01 23 45 67 89', null];
         yield 'international phone uses Pushword' => ['+33 7 81 32 36 55', null];
@@ -70,12 +76,21 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'empty table heading' => ["| | B |\n|---|---|\n| x | y |", "<table>\n<thead>\n<tr>\n<th></th>\n<th>B</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>x</td>\n<td>y</td>\n</tr>\n</tbody>\n</table>\n"];
         yield 'indented code' => ['    code', null];
         yield 'html' => ['<span>texte</span>', "<p><span>texte</span></p>\n"];
+        yield 'raw input uses CommonMark' => ['<input type="checkbox" disabled="" />', null];
         yield 'entity' => ['A & B', "<p>A &amp; B</p>\n"];
     }
 
     #[DataProvider('cases')]
     public function testOnlyMatchingSubsetUsesTempest(string $source, ?string $expected): void
     {
-        self::assertSame($expected, new TempestMarkdownRenderer()->render($source));
+        $actual = new TempestMarkdownRenderer()->render($source);
+        if (null === $expected) {
+            self::assertNull($actual);
+
+            return;
+        }
+
+        self::assertNotNull($actual);
+        self::assertSame(HtmlEquivalence::structure($expected), HtmlEquivalence::structure($actual));
     }
 }

@@ -1,5 +1,5 @@
 ---
-title: 'PHP 8.5 required; PHP files use strict types; optional Rust minification, content analysis and Markdown; contact markup uses core templates; admin links restrict URLs; MariaDB connections use read committed isolation'
+title: 'PHP 8.5 required; PHP files use strict types; optional Rust minification, content analysis and Markdown; Markdown HTML serialization may differ; contact markup uses core templates; admin links restrict URLs; MariaDB connections use read committed isolation'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -65,6 +65,10 @@ See [native acceleration](../native-acceleration.md) for the supported HTML boun
 Markdown can use the same Rust analyzer for eligible blocks, with PHP fallback; PHP remains the default.
 **Sites opting into experimental Rust Markdown:** set `pushword.native_markdown_renderer` to the deployed `pushword-content-analyzer` path, then clear the Symfony container cache.
 See [native acceleration](../native-acceleration.md) for the measured conversion boundary and compatibility limits.
+
+## Markdown HTML serialization
+
+Markdown may emit equivalent HTML with different attribute order, entity spelling or table tag spacing. Sites comparing raw rendered HTML strings should compare the parsed result instead; normal page rendering needs no action.
 
 ## Optional native page-scan extraction
 

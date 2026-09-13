@@ -75,7 +75,7 @@ function workerCommand(string $mode, string $site, string $snapshot, string $bin
 /**
  * @param array<string, string> $env
  *
- * @return array{mode: string, blocks: int, accepted: int, fallback: int, different: int, dates: array{blocks: int, accepted: int, fallback: int, expected_mismatches: int}, conversion_seconds: float, zend_peak_bytes: int, digest: string, parent_peak_kib: int, child_peak_kib: int, tree_peak_kib: int}
+ * @return array{mode: string, blocks: int, accepted: int, fallback: int, different: int, byte_different: int, dates: array{blocks: int, accepted: int, fallback: int, expected_mismatches: int}, conversion_seconds: float, zend_peak_bytes: int, digest: string, parent_peak_kib: int, child_peak_kib: int, tree_peak_kib: int}
  */
 function sample(string $mode, string $site, string $snapshot, string $binary, ?int $cpu, array $env = []): array
 {
@@ -113,7 +113,7 @@ function sample(string $mode, string $site, string $snapshot, string $binary, ?i
     $dates = is_array($decoded) ? ($decoded['dates'] ?? null) : null;
     if (! is_array($decoded) || ! is_string($decoded['mode'] ?? null)
         || ! is_int($decoded['blocks'] ?? null) || ! is_int($decoded['accepted'] ?? null)
-        || ! is_int($decoded['fallback'] ?? null) || ! is_int($decoded['different'] ?? null)
+        || ! is_int($decoded['fallback'] ?? null) || ! is_int($decoded['different'] ?? null) || ! is_int($decoded['byte_different'] ?? null)
         || ! is_float($decoded['conversion_seconds'] ?? null) || ! is_int($decoded['zend_peak_bytes'] ?? null)
         || ! is_string($decoded['digest'] ?? null) || ! is_array($dates)
         || ! is_int($dates['blocks'] ?? null) || ! is_int($dates['accepted'] ?? null)
@@ -127,6 +127,7 @@ function sample(string $mode, string $site, string $snapshot, string $binary, ?i
         'accepted' => $decoded['accepted'],
         'fallback' => $decoded['fallback'],
         'different' => $decoded['different'],
+        'byte_different' => $decoded['byte_different'],
         'dates' => [
             'blocks' => $dates['blocks'],
             'accepted' => $dates['accepted'],

@@ -8,8 +8,10 @@ use Pushword\Core\Component\EntityFilter\ValueObject\SplitContent;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\MarkdownParser;
+use Pushword\Core\Service\Typographer;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Tests\Support\HtmlEquivalence;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\Search\Service\TextExtractor;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -41,12 +43,16 @@ final class ContentProbeTest extends KernelTestCase
 
         $parser = new MarkdownParser($container->get(LinkProvider::class), $container->get(MediaExtension::class), $sites, $container->get(Environment::class));
         $cached = new MarkdownParser($container->get(LinkProvider::class), $container->get(MediaExtension::class), $sites, $container->get(Environment::class), new ArrayAdapter());
+        $typographer = new Typographer();
+        $structure = static fn (string $html): array => HtmlEquivalence::structure($typographer->fix($html, $sites->getLocale()));
 
         $json = file_get_contents(__DIR__.'/markdown.json');
         self::assertIsString($json);
         $cases = json_decode($json, true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($cases);
         $report = ['engine' => 'comrak', 'php' => \PHP_VERSION, 'libxml' => \LIBXML_DOTTED_VERSION, 'compatibility' => [], 'samples' => []];
+        $referenceDrift = [];
+        $compatibilityDrift = [];
         $preClass = $sites->get()->getStr(SiteConfig::FENCED_CODE_PRE_CLASS);
         foreach ($cases as $case) {
             self::assertIsArray($case);
@@ -57,11 +63,22 @@ final class ContentProbeTest extends KernelTestCase
             self::assertIsBool($case['compatible']);
             $sites->get()->setCustomProperty(SiteConfig::FENCED_CODE_PRE_CLASS, $case['pre_class']);
             $php = $parser->transform($case['markdown']);
-            self::assertSame($case['php'], $php, 'PHP reference drift: '.$case['name']);
+            $rendered = $structure($php);
+            if ($structure($case['php']) !== $rendered) {
+                $referenceDrift[] = $case['name'];
+            }
+
             $native = $this->native([$case['markdown']], $case['pre_class'])[0];
-            self::assertSame($case['compatible'], $php === $native, 'Compatibility changed: '.$case['name']);
-            $report['compatibility'][$case['name']] = ['equal' => $php === $native, 'pre_class' => $case['pre_class'], 'php' => $php, 'rust' => $native];
+            $equal = $rendered === $structure($native);
+            if ($case['compatible'] && ! $equal) {
+                $compatibilityDrift[] = $case['name'];
+            }
+
+            $report['compatibility'][$case['name']] = ['equal' => $equal, 'pre_class' => $case['pre_class'], 'php' => $php, 'rust' => $native];
         }
+
+        self::assertSame([], $referenceDrift, 'PHP reference drift');
+        self::assertSame([], $compatibilityDrift, 'Compatibility changed');
 
         $sites->get()->setCustomProperty(SiteConfig::FENCED_CODE_PRE_CLASS, $preClass);
 
@@ -76,7 +93,8 @@ final class ContentProbeTest extends KernelTestCase
             }
 
             $html = $parser->transform($markdown);
-            self::assertSame([$html], $this->native([$markdown]), 'Timed Markdown subset must have exact parity');
+            $expected = $structure($html);
+            self::assertSame($expected, $structure($this->native([$markdown])[0]), 'Timed Markdown subset must have equivalent HTML');
             $cached->transform($markdown);
             $tocCache = new ArrayAdapter();
             $fixed = new SplitContent($html, $page)->getBody();
@@ -106,7 +124,9 @@ final class ContentProbeTest extends KernelTestCase
 
                     $elapsed = (hrtime(true) - $start) / 1e6;
                     if (str_starts_with($mode, 'markdown_')) {
-                        self::assertSame(array_fill(0, 20, $html), $actual);
+                        foreach ($actual as $rendered) {
+                            self::assertSame($expected, $structure($rendered));
+                        }
                     }
 
                     $report['samples'][] = ['size' => $size, 'mode' => $mode, 'repeat' => $repeat, 'documents' => 20, 'ms' => $elapsed];

@@ -7,10 +7,16 @@ namespace Pushword\Core\Tests\Service\Markdown;
 use League\CommonMark\MarkdownConverter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Component\EntityFilter\FilterRegistry;
+use Pushword\Core\Content\ContentPipelineFactory;
+use Pushword\Core\DependencyInjection\Configuration;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Service\Markdown\TempestMarkdownRenderer;
+use Pushword\Core\Service\Typographer;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Tests\Support\HtmlEquivalence;
 use Pushword\Core\Twig\MediaExtension;
 use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -118,6 +124,45 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         $converter = new ReflectionProperty(MarkdownParser::class, 'converter')->getValue($container->get(MarkdownParser::class));
         self::assertInstanceOf(MarkdownConverter::class, $converter);
 
-        self::assertSame($converter->convert($source)->__toString(), $renderer->render($source));
+        $actual = $renderer->render($source);
+        self::assertNotNull($actual);
+        $locale = $container->get(SiteRegistry::class)->getLocale();
+        $typographer = new Typographer();
+        self::assertSame(
+            HtmlEquivalence::structure($typographer->fix($converter->convert($source)->__toString(), $locale)),
+            HtmlEquivalence::structure($typographer->fix($actual, $locale)),
+        );
+    }
+
+    public function testAttributeOrderIsIrrelevantAfterTheContentFilters(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $page = new Page();
+        $page->host = 'localhost.dev';
+        $page->locale = 'fr';
+
+        $manager = $container->get(ContentPipelineFactory::class)->get($page)->getLegacyManager();
+        $filters = $container->get(FilterRegistry::class);
+
+        $render = static function (string $html) use ($filters, $manager, $page): string {
+            foreach (\array_slice(Configuration::DEFAULT_FILTERS['main_content'], 3) as $name) {
+                $filter = $filters->getFilter($name);
+                self::assertNotNull($filter);
+                $html = $filter->apply($html, $page, $manager, 'MainContent');
+                self::assertIsString($html);
+            }
+
+            return $html;
+        };
+
+        self::assertSame(
+            HtmlEquivalence::structure($render('<p>l\'histoire <a class="guide" href="/marche">marche</a>.</p>')),
+            HtmlEquivalence::structure($render('<p>l\'histoire <a href="/marche" class="guide">marche</a>.</p>')),
+        );
+        self::assertNotSame(
+            HtmlEquivalence::structure($render("<p>l'histoire</p>")),
+            HtmlEquivalence::structure($render('<p>l&#x27;histoire</p>')),
+        );
     }
 }

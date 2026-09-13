@@ -295,6 +295,20 @@ the analyzer binary SHA-256 is
 `9c99ad74044e890732bdefae7ef250c233b878e01236e4d0e21f9c6f669c583e`.
 All 2,571 synthetic date blocks were accepted by Rust with byte-identical HTML.
 
+New comparison runs also report `byte_different` separately from `different`.
+`different` compares parsed HTML after Pushword's typography step: text,
+elements, attributes, comments and raw script/style content must match.
+Attribute order, entity spelling and whitespace between table structure tags
+do not matter. This comparison does not erase text whitespace or skip the
+typography step; an encoded apostrophe can prevent French curly-quote conversion.
+The conversion timings still exclude comparison work. The direct renderer
+integration test also checks attribute-order differences through the remaining
+main-content filters. A semantic match is not proof that every site template or
+external HTML consumer behaves identically.
+In a 24,000-block synthetic comparison, Tempest produced 2,571 byte differences
+and no differences under this contract; Rust produced neither. This count is
+specific to that corpus and does not establish universal compatibility.
+
 An installed downstream site can be measured with the same runner. Its private
 snapshot and result remain in the ignored local directory:
 
