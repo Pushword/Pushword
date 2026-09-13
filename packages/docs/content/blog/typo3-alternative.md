@@ -339,7 +339,7 @@ The reasonable test is an afternoon, on a real site rather than a demo, ideally 
 you currently maintain on TYPO3 and resent invoicing for:
 
 ```shell
-composer create-project pushword/new pushword
+composer create-project pushword/new pushword "^1.0"
 ```
 
 Then check the exit before you commit to the entrance. Import a few pages, run

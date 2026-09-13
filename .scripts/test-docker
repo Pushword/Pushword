@@ -90,7 +90,16 @@ sed -i 's#^RUN composer install --no-cache#COPY --link _packages ./_packages\nRU
 
 echo
 echo "=== Building the production image ==="
-docker build --target pushword_prod -t "$IMAGE" "$CONTEXT_DIR"
+for attempt in 1 2 3; do
+    if docker build --target pushword_prod -t "$IMAGE" "$CONTEXT_DIR"; then
+        break
+    fi
+    if [ "$attempt" -eq 3 ]; then
+        exit 1
+    fi
+    echo "Build failed; retrying ($attempt/3)."
+    sleep 5
+done
 
 fail() {
     echo -e "${RED}Error: $1${NC}"

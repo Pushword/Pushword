@@ -54,7 +54,7 @@ if ! COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction --no-progress >
     exit 1
 fi
 
-if rg -n '⚠ Warning:|Warning: Could not|Could not add lines to file' split.log monolith.log; then
+if grep -nE '⚠ Warning:|Warning: Could not|Could not add lines to file' split.log monolith.log; then
     exit 1
 fi
 
@@ -88,7 +88,7 @@ verify_aggregate_install() {
     '
 
     php bin/console cache:clear --env=dev --no-debug > /dev/null
-    php bin/console debug:container --parameter=pw.package_dir --no-debug | rg -q 'vendor/pushword/pushword/packages'
+    php bin/console debug:container --parameter=pw.package_dir --no-debug | grep -q 'vendor/pushword/pushword/packages'
     php bin/console debug:router --no-debug > /dev/null
 }
 
@@ -101,7 +101,7 @@ if ! COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction --no-progress >
     tail -n 70 fresh.log
     exit 1
 fi
-if rg -n '⚠ Warning:|Warning: Could not|Could not add lines to file' fresh.log; then
+if grep -nE '⚠ Warning:|Warning: Could not|Could not add lines to file' fresh.log; then
     exit 1
 fi
 

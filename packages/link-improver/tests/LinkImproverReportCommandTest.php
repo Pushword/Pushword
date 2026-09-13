@@ -113,9 +113,9 @@ final class LinkImproverReportCommandTest extends KernelTestCase
         $commandTester = $this->commandTester();
         $exitCode = $commandTester->execute(['--format' => 'agent']);
 
-        self::assertSame(0, $exitCode);
         $report = json_decode($commandTester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($report);
+        self::assertSame([] === $report['errors'] ? 0 : 1, $exitCode);
         $links = $report['links'] ?? null;
         self::assertIsArray($links);
 

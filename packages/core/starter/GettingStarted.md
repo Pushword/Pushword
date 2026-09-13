@@ -8,8 +8,8 @@ and some content. The rest — title, meta description, main image — is option
 back to sensible values.
 
 Content is **Markdown**. The editor previews it side by side, so you can see what a
-paragraph, a list or a table will look like as you type. [What you can
-write](/examples) demonstrates every tool available.
+paragraph, a list or a table will look like as you type.
+[What you can write](/examples) demonstrates every tool available.
 
 ## Name your site
 
