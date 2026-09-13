@@ -26,9 +26,10 @@ pick Astro and stop reading. It is mature, excellently designed, and has an ecos
 Pushword cannot match. Its single authoring surface is simpler than anything here, and
 simpler wins.
 
-**If yes, Pushword is the better default**, because at that moment the honest comparison
-stops being Astro and becomes **Astro plus a headless CMS**: two systems to run, secure and
-upgrade, a second bill, and a preview environment to wire up and keep working.
+**If yes, Pushword is the better default for a team that wants the editor built in**,
+because the comparison becomes **Astro plus an editing system** against one integrated
+CMS. That second system may be free or paid, self-hosted or managed; either way, someone
+must integrate its publishing and preview workflow.
 [Comparing like for like](#comparing-like-for-like) prices that out properly.
 
 These do not gate the decision — each one simply widens the gap, and teams that have one
@@ -47,15 +48,15 @@ usually have several:
 |                             | Astro                                                             | Pushword                                                                       |
 | --------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | **What it is**              | A build tool for content-driven websites                          | A complete CMS built on Symfony bundles                                        |
-| **Language**                | JavaScript / TypeScript (Node 22+)                                | PHP 8.4+ / Symfony 8                                                           |
+| **Language**                | JavaScript / TypeScript (Node 22.12+)                             | PHP 8.4+ / Symfony 8                                                           |
 | **Best for**                | Teams who live in the JS ecosystem and author content in the repo | Teams who need editors, multi-site, or AI agents in the content loop           |
 | **Content authored by**     | Developers, in the repo (or an external CMS via a loader)         | Developers, editors, and AI agents — all three at once                         |
-| **To run an editable site** | Astro **plus** a headless CMS — two systems                       | One install                                                                    |
+| **To run an editable site** | Astro **plus** an editor/CMS integration                          | Admin included in one install                                                  |
 | **First public release**    | 2021                                                              | December 2020                                                                  |
-| **Current major**           | Astro 7.0, June 2026; used by Unilever, Visa, NBC News            | 1.0, stable since September 2026                                               |
-| **Track record**            | 7 majors since August 2022; very fast iteration                   | 800+ releases, 24 bundles, ~2,600 tests; runs its authors' production sites    |
-| **Ecosystem**               | Very large; ~61k GitHub stars, ~2.7M weekly npm downloads         | Small itself, on top of Symfony, Doctrine and Twig — a large, LTS-backed stack |
-| **Licence & hosting**       | MIT; deploy anywhere, CMS licensed separately                     | MIT, self-hosted, no vendor in the content path                                |
+| **Current version**         | [Astro 7.3.2](https://github.com/withastro/astro/releases/tag/astro%407.3.2), September 2026 | Pushword 1.0, stable since September 2026                      |
+| **Track record**            | 7 majors since August 2022; fast iteration                        | 25 packages (18 bundles), over 3,000 test methods; production use since 2020  |
+| **Ecosystem**               | Large integration and developer community                         | Smaller project built on Symfony, Doctrine and Twig                            |
+| **Licence & hosting**       | MIT; deploy to supported hosts; CMS terms vary                    | MIT, self-hosted, no hosted content vendor required                            |
 
 Astro's ecosystem advantage is real and worth weighing. Hundreds of integrations, a large
 community, extensive documentation, and now a well-resourced corporate steward committed
@@ -65,13 +66,14 @@ Sentry.
 Two counterweights, though, because "smaller" is often misread as "newer" or "unproven".
 
 **Pushword is not new.** Its first release on Packagist predates Astro's public launch,
-and it has shipped continuously since — 800+ tagged releases, 24 bundles, around 2,600
-tests running in CI. It is small in _audience_, not in age or in maturity.
+and it has shipped continuously since. It now has 25 packages (18 Symfony bundles) and
+over 3,000 test methods. It is small in _audience_, not in age.
 
-**Nor is the stack under it small.** Symfony, Doctrine and Twig have a decade of
-documentation, an enormous hiring pool and a published LTS cadence. Most questions you hit
-at 2am on a Pushword site are Symfony questions with a well-indexed answer, and a developer
-you hire needs Symfony experience, not Pushword experience.
+**Nor is the stack under it small.** Symfony, Doctrine and Twig have extensive
+documentation and large developer communities. Pushword 1.0 uses Symfony 8, not a
+Symfony LTS branch; check [Symfony's support schedule](https://symfony.com/releases)
+when planning upgrades. Symfony experience helps, though developers must still learn
+Pushword's own content and extension model.
 
 ### "So why haven't I heard of it?"
 
@@ -94,35 +96,33 @@ Not PHP versus JavaScript, and not static versus dynamic. Both projects ship sta
 and both let you go dynamic when you need to. The real difference is **who owns the
 content and when the site is assembled**.
 
-**Astro is a build tool that renders content it is given.** It has no database and no
-admin interface by design. Content lives in your repository as Markdown or MDX, or it
-arrives from somewhere else through a loader. You change a word, you commit, CI builds,
-the site deploys. This is a coherent and deliberate design: the whole site is a pure
-function of the repository, which makes builds reproducible, reviewable in a pull request,
-and trivially rollback-able. Plenty of teams want exactly that and nothing more.
+**Astro is a web framework that renders content it is given.** It has no built-in CMS
+database or admin interface. A static project can keep Markdown or MDX in the repository:
+change a word, commit, rebuild and deploy. [Live content collections](https://docs.astro.build/en/guides/content-collections/#live-content-collections)
+and [on-demand rendering](https://docs.astro.build/en/guides/on-demand-rendering/) can
+instead fetch content at request time without rebuilding the whole site.
+Both are deliberate workflows; teams should choose which one they need.
 
 **Pushword is a CMS that can go static.** There is a database, an admin UI, and an editor
-who has never seen a terminal. Content is stored in SQLite, PostgreSQL or MariaDB and mirrored to
-Markdown files with YAML frontmatter — the same shape Astro reads. An editor saves a page
-and that one page re-renders. The files can live in the same git repository as the code, or
-in a separate content repository; the database is a functional mirror, not the source of
-truth.
+who has never seen a terminal. Content is served from SQLite, PostgreSQL or MariaDB and
+can be synchronized with Markdown files through the Flat extension. An editor saves a
+page and the page cache can re-render it. The files can live in the same git repository
+as the code, or in a separate content repository. Flat reconciles changes in either
+direction; the files are not unconditionally the source of truth.
 
 The consequence worth internalising:
 
 |                                   | Astro                     | Pushword                                           |
 | --------------------------------- | ------------------------- | -------------------------------------------------- |
-| Changing one word on one page     | Full rebuild, then deploy | That page re-renders                               |
+| Changing one word on one page     | Static route: rebuild and deploy; live route: fetch at request time | The cached page can re-render |
 | Reviewing a content change        | A pull request, natively  | A git diff on the exported file                    |
-| Rolling back content              | `git revert`, rebuild     | `git revert`, re-import — or the version extension |
+| Rolling back content              | Depends on content source | `git revert`, re-import — or the version extension |
 | Onboarding a non-technical editor | Add a headless CMS        | Already done                                       |
 
-Astro's full rebuild is not a weakness in itself — it is fast (a 100-post Markdown site
-loads its content in roughly 200ms) and it eliminates an entire category of stale-cache
-bugs by construction. Worth noting what the editor actually waits for, though: not the
-build step, but commit → CI queue → build → deploy, which is minutes rather than
-milliseconds. That gap is felt on every typo fix, at any site size, and it grows with the
-page count.
+For a static Astro route, the editor waits for commit → CI queue → build → deploy.
+That is a good trade when content changes are reviewed in git; it can feel slow for small
+corrections. A live route removes that rebuild, but needs a server adapter, content source
+and cache policy. Pushword includes the editing and rendering workflow in the CMS.
 
 ---
 
@@ -131,13 +131,14 @@ page count.
 This is where the projects diverge most, and it is the honest reason to pick one over the
 other.
 
-Astro has one authoring surface: a developer with a text editor and commit access. When a
-project needs more, the ecosystem's answer is to pair Astro with a headless CMS —
+Astro itself ships no editorial admin; repository-based authoring uses a text editor and
+commit access. When a project needs more, the ecosystem's answer is to pair Astro with a
+CMS —
 **Storyblok** has the most mature Astro integration and a visual editor that renders the
 live site; **Sanity**, **Contentful** and **Strapi** are all common; **Decap** and
 **TinaCMS** sit at the git-based end. These are good products and the integrations are
-well-trodden. It does mean a second system, a second bill, and a second set of
-credentials.
+well-trodden. It does mean another integration and often another set of credentials, but
+not necessarily a second bill.
 
 Pushword has three surfaces writing the same content through different doors:
 
@@ -145,9 +146,10 @@ Pushword has three surfaces writing the same content through different doors:
 - **Editors**, in the admin UI, who never touch git
 - **AI agents**, through the [REST API](/extension/api) or by writing flat files directly
 
-The [flat](/extension/flat) package reconciles all three. An agent can rewrite a page's
-frontmatter, an editor can fix a typo in the admin, and a developer can restructure the
-content directory — and the three changes converge rather than collide.
+The [flat](/extension/flat) package syncs file and database edits. An agent can rewrite a
+page's frontmatter, an editor can fix a typo in the admin, and a developer can restructure
+the content directory. Simultaneous edits can still conflict; Flat records a losing
+version for review rather than making conflicts impossible.
 
 If developers are the only people who will ever touch the content, Astro's single surface
 is simpler, and that simplicity is worth having.
@@ -156,27 +158,25 @@ is simpler, and that simplicity is worth having.
 
 ## Comparing like for like
 
-Astro against Pushword is not quite the right comparison. Astro is a rendering layer, and
-it is excellent at that. But the moment someone other than a developer needs to publish,
-the honest comparison becomes **Astro plus a headless CMS** against **Pushword on its
-own**.
+Astro against Pushword is not quite the right comparison. Astro is a rendering framework,
+and it is excellent at that. But when someone other than a developer needs to publish,
+compare **Astro plus an editing system** with **Pushword on its own**.
 
 That changes the arithmetic:
 
-|                                    | Astro + headless CMS                              | Pushword                                        |
+|                                    | Astro + editing system                            | Pushword                                        |
 | ---------------------------------- | ------------------------------------------------- | ----------------------------------------------- |
 | Systems to run, upgrade and secure | Two                                               | One                                             |
-| Where content lives                | The CMS's store, reached over HTTP at build time  | Your database, mirrored to Markdown in your git |
+| Where content lives                | Git or the CMS's store; loaded at build or request time | Your database, optionally synced to Markdown in git |
 | Cost as the team grows             | Per-seat / per-API-call on the commercial options | Server cost                                     |
-| Editor preview                     | A preview environment to wire up and keep working | The site itself                                 |
-| Publish → visible                  | Webhook → CI rebuild → deploy                     | The page re-renders                             |
-| If the vendor changes terms        | Export and migrate                                | Nothing to migrate; it is already your Markdown |
+| Editor preview                     | Depends on the editor/CMS integration             | The site itself                                 |
+| Publish → visible                  | Static: rebuild/deploy; live: next request or cache refresh | The page cache re-renders               |
+| If a hosted vendor changes terms   | Export and migrate; self-hosted options differ    | No hosted content vendor required               |
 
-To be fair to the alternatives: **Decap** and **TinaCMS** are open source and store content
-in your git, so they avoid the vendor and cost rows entirely — at the price of a thinner
-editing experience than the commercial options. And free tiers on Storyblok, Sanity and
-Contentful are genuinely usable; the bill arrives with growth, which is exactly when it is
-hardest to leave.
+To be fair to the alternatives: **Decap** and **TinaCMS** can store content in git and
+avoid a hosted content vendor, though they still need integration. Storyblok, Sanity and
+Contentful have free tiers and paid plans; compare their limits and terms with your actual
+publishing needs.
 
 None of this makes the pairing a bad choice. Plenty of teams run it happily and the
 integrations are mature. It is simply the comparison that should be made, because "Astro
@@ -267,12 +267,11 @@ nothing to offer, and their version still does things ours cannot.
 Here the influence was inverted: we looked at Astro's approach, found it did not solve our
 problem, and that clarified the design.
 
-Astro rebuilds everything, and incremental *builds* remain an open roadmap discussion. For
-deployed HTML the answer is delegated to the CDN: Astro 7 stabilised a platform-agnostic
-route-caching API, which is a real improvement on the older per-adapter approach (ISR on
-Vercel, cache tags on Netlify) — the app now expresses caching once and providers honour
-it. This is a perfectly reasonable division of labour for a build tool, and full rebuilds
-are wonderfully hard to get wrong.
+Astro's prerendered routes are rebuilt for new static output. Its live collections and
+on-demand routes can instead serve updated content without a full-site rebuild. Astro 7
+also stabilised [route caching](https://docs.astro.build/en/guides/caching/) for on-demand
+responses, with providers for supported deployments. This is a different division of
+labour from Pushword's page cache, not an absence of incremental publishing.
 
 Pushword needed something else, because a page save must not trigger a full-site render.
 Each host now carries a **render epoch** — an opaque token bumped by any change that can
@@ -282,17 +281,16 @@ epoch they rendered under, and a mismatch means stale. Sweeps are debounced and
 incremental, and a re-render whose HTML is byte-identical skips the write entirely. See
 [page-cache](/extension/page-cache) for the full model.
 
-Pushword is in an easier position than Astro here, not a smarter one: we render through PHP
-services we own, so collecting render dependencies is a normal service concern. Astro would
-have to instrument its bundler.
+Pushword controls the CMS write path and PHP rendering services, so it can invalidate
+cached pages when content changes. Astro can use request-time rendering and caching when
+the content source lives outside its build.
 
 ---
 
 ## Where Pushword is the better choice
 
 - **Anyone other than a developer publishes.** You get an admin UI, media management,
-  versioning and publication holds in the box, with no second system to run, secure,
-  upgrade or pay for.
+  versioning and publication holds in the box, without integrating a separate editor.
 - **You want the whole site in one deliverable.** Admin, media with image variants,
   [versioning](/extension/version), [search](/extension/search),
   [forms](/extension/conversation), [newsletter](/extension/newsletter),
@@ -300,19 +298,20 @@ have to instrument its bundler.
   [REST API](/extension/api) and static export ship as maintained bundles of one project,
   tested together. Assembling the same set from integrations and SaaS is work you do once
   and then maintain forever.
-- **Publishing should be instant.** An editor saves and that page is live — no commit, no
-  CI queue, no rebuild. This is an everyday workflow difference, not just a
-  large-site optimisation.
-- **You run a fleet.** One installation serves many hosts and locales, sharing templates,
-  media and code. The alternative is N projects, N builds and N deploys.
+- **Publishing should be direct from the CMS.** An editor saves without a commit or CI
+  deployment. Astro can also publish without a rebuild when configured with live content;
+  the difference is whether that workflow ships as part of the CMS.
+- **You run a fleet.** One Pushword installation serves many hosts and locales with one
+  admin. Astro also supports multiple locales and locale-specific domains in one project;
+  compare administration and deployment needs, not project count alone.
 - **AI agents are in your content loop.** Both projects now court agents — Astro 7 added
   agent detection, a background dev server and JSON logging, and Pushword has
-  [agent-optimized command output](/agent-output). The difference is what an agent can
-  reach: in Astro it writes files and commits; in Pushword the [REST API](/extension/api),
-  the flat-file round trip and `pw:schema:dump` let it read the content model and write
-  through the same validated path an editor uses.
-- **You want no vendor in the content path.** MIT, self-hosted, content as Markdown in
-  your own git and a SQLite file you can copy. Nothing to export if terms change.
+  [agent-optimized command output](/agent-output). Astro agents can write files or use
+  whatever API its content source provides. Pushword adds a documented
+  [REST API](/extension/api), the flat-file round trip and `pw:schema:dump` for reading
+  the content model and writing through the CMS.
+- **You want no hosted content vendor.** Pushword is MIT-licensed and self-hosted; Flat
+  can keep a Markdown copy in your git alongside a database you control.
 - **Your team writes PHP.** Symfony, Doctrine and Twig are the whole stack, with no Node
   build step in the critical path.
 
@@ -351,11 +350,11 @@ wrong — they are different bets about where complexity should live.
 
 |                          | WordPress                                      | Astro                                        | Pushword                                    |
 | ------------------------ | ---------------------------------------------- | --------------------------------------------- | -------------------------------------------- |
-| Extensions come from     | ~61,000 plugins in the .org directory          | ~14 official, hundreds community-published    | 24 bundles, one project                      |
+| Extensions come from     | [71,000+ free plugins](https://wordpress.org/plugins/) | Official and community integrations | 18 bundles in 25 packages |
 | Installed by             | Click-install in admin, often auto-updating    | `package.json`, reviewed in a pull request    | `composer require`, versioned together       |
-| Extensions run           | At runtime, on every request                   | Mostly at build time                          | At runtime, but shipped and tested as a set  |
-| A broken extension means | A broken live site, sometimes a security hole  | A failed build, caught in CI                  | A failed test or a failed deploy             |
-| Core breaking changes    | Almost never                                   | 7 majors since August 2022                    | Stable `1.x`, Symfony LTS underneath         |
+| Extensions run           | At runtime or in the admin                     | At build time or request time                 | At runtime, shipped and tested as a set      |
+| A broken extension means | A failed request, admin action or update       | A failed build or runtime feature             | A failed test, deploy or runtime feature     |
+| Core breaking changes    | Rare                                          | 7 majors since August 2022                    | Stable `1.x`, using Symfony 8                |
 | Therefore the risk is    | **Entropy** — nothing forces you to update     | **Churn** — you cannot stand still            | **Concentration** — a small team, less choice |
 
 ### WordPress: entropy
@@ -368,11 +367,10 @@ and abandoned plugins are risky both to keep and to remove.
 
 ### Astro: churn, but loud and early
 
-Astro will not reproduce that, and the architecture is the reason. Integrations run at
-build time, they are pinned in `package.json` and reviewed in a pull request, and they do
-not share a mutable request lifecycle. When one breaks, the build fails in CI rather than
-the site failing for visitors. That is a much healthier failure mode, and it is the honest
-answer to "is this the next plugin nightmare?" — no, structurally it is not.
+Astro integrations are commonly pinned in `package.json` and reviewed in pull requests.
+Build-time failures can be caught in CI, a useful difference from a runtime plugin failure.
+But on-demand routes and integrations can fail at request time too; Astro is not immune to
+runtime dependency risk.
 
 The cost sits elsewhere. Astro has shipped seven majors since August 2022, with v6 in March
 2026 and v7 three months later, and provides security fixes for only one previous major. v7
@@ -392,10 +390,10 @@ most teams should prefer — as long as they budget for it.
 
 ### Pushword: concentration
 
-Pushword avoids both failure modes by not having a third-party extension ecosystem at all.
-The 24 bundles are versioned, released and tested together, so "does the newsletter package
-work with this version of the admin?" is a question CI answers rather than you. Symfony's
-LTS cadence sits underneath, and the surface that can break is small.
+Pushword's 18 Symfony bundles in 25 packages are versioned, released and tested together,
+so "does the newsletter package work with this version of the admin?" is a question CI
+checks. Its Symfony 8 dependency is a standard-support branch, not an LTS guarantee;
+upgrading that dependency is part of the maintenance plan.
 
 The honest cost is the mirror image: far less choice than either alternative, a much
 smaller community, and a bus factor that is not a large company. If a capability is missing,
@@ -414,22 +412,22 @@ concentration is the point rather than a limitation.
 
 ## What it costs to be wrong
 
-Adopting a smaller project should be judged on its exit cost, not on a feeling. Ours is
-deliberately low, and you can verify every line of this before committing:
+Adopting a smaller project should include an exit-cost assessment. Here are the parts of
+Pushword that make an exit possible, and the parts that still require work:
 
-- **Content** is Markdown with YAML frontmatter, in your git — the same shape Astro's
-  content collections read. Migrating content to Astro is largely a directory copy.
+- **Content** can be synced to Markdown with YAML frontmatter in your git using Flat.
+  Astro can read those files, but routes, relations, custom properties and templates
+  still need mapping.
 - **The database** is a SQLite file you own, or your own PostgreSQL/MariaDB server. There is no hosted service
   holding anything, no API key, no export request, no egress bill.
-- **Templates** are Twig, and the application is a standard Symfony app. A Symfony
-  developer who has never seen Pushword can read, debug and extend it.
+- **Templates** are Twig, and the application uses Symfony. A Symfony developer has a
+  familiar starting point, but still needs to learn Pushword-specific behavior.
 - **Media** are ordinary files on disk in a directory you control.
 - **The licence** is MIT, and the whole monorepo is public. If the project stopped
-  tomorrow, you would be maintaining a Symfony bundle set, which is an ordinary thing for
-  a PHP team to do.
+  tomorrow, you could maintain it, but would own its security fixes and upgrades.
 
-Compare that honestly against the exit cost of a hosted headless CMS, where the content
-lives in someone else's database under terms they can revise.
+Compare that with the exit cost of whichever Astro editing system you would actually use:
+a hosted CMS, a self-hosted CMS or a git-backed editor have different risks.
 
 The reasonable way to test the claim is to spend an afternoon on it and put a real page
 through the part that matters most to you — the admin UI, the flat-file round trip, or the
@@ -453,14 +451,14 @@ The questions that actually decide it:
 3. **How many systems do you want to own in three years?** One that does everything, or a
    renderer plus a content service chosen and maintained separately.
 4. **Do you need React, Svelte or Vue components?** Astro, without hesitation.
-5. **How fast must a published change appear?** Seconds → Pushword. A CI run is acceptable
-   → either.
-6. **One site or a fleet?** Many hosts and locales from a single codebase is Pushword's
-   default; in Astro it is N projects, N builds, N deploys.
+5. **How fast must a published change appear?** Pushword publishes from its admin; Astro
+   can serve live CMS content without a rebuild or deploy static changes after CI.
+6. **One site or a fleet?** Both can share code and locales; Pushword includes one admin
+   across hosts, while Astro's publishing setup depends on the editor/CMS integration.
 
 If you would rather pair Astro with a CMS than adopt one, that is a legitimate answer and
-the integrations are mature. If you would rather have the CMS built in — and keep your
-content as Markdown on a disk you own — that is what Pushword is for.
+the integrations are mature. If you would rather have the CMS built in — and optionally
+sync content to Markdown on a disk you own — that is what Pushword is for.
 
 ---
 
@@ -474,15 +472,15 @@ content as Markdown on a disk you own — that is what Pushword is for.
 >
 > Written by the Pushword author (and Claude). We are obviously not neutral, and Astro is
 > a far more widely adopted project with a much larger community than Pushword. Claims
-> about Astro are based on its official documentation and release notes as of August 2026;
-> claims about Pushword are based on shipped features, not roadmap, and its release count
-> and test figures are checkable on Packagist and GitHub. Where Pushword adopted an idea
+> about Astro are based on its official documentation and release notes as of September 2026;
+> claims about Pushword are based on shipped features, not roadmap, and its package and
+> test figures are checkable in this repository. Where Pushword adopted an idea
 > from Astro, we have said so.
 >
 > Found an error, or think we have been unfair to Astro? [Open an issue](https://github.com/Pushword/Pushword/issues) — corrections are welcome.
 
 > [!warning] Version
 >
-> Last updated: August 2026. Reflects Astro 7.0 (22 June 2026) and Pushword's render epoch,
+> Last updated: September 2026. Reflects Astro 7.3.2 and Pushword's render epoch,
 > declared page properties and view transitions. Both projects move quickly; updates
 > welcome via GitHub issues.
