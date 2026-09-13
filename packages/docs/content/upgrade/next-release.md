@@ -1,5 +1,5 @@
 ---
-title: 'PHP 8.5 required; PHP files use strict types; optional Rust minification, content analysis and Markdown; contact markup uses core templates; admin links restrict URLs'
+title: 'PHP 8.5 required; PHP files use strict types; optional Rust minification, content analysis and Markdown; contact markup uses core templates; admin links restrict URLs; MariaDB connections use read committed isolation'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -75,3 +75,7 @@ Obfuscated links, encoded e-mails and telephone links now use Pushword's core co
 
 Editor links accept relative, HTTP(S), mailto and tel URLs; inline admin modals load only same-origin HTTP(S) URLs.
 **Sites with custom link schemes or cross-origin inline-edit URLs:** update those links or provide a same-origin admin route.
+
+## MariaDB transaction isolation
+
+Pushword connections to MariaDB now use `READ COMMITTED` isolation so concurrent page and media writes can complete without stale-snapshot foreign-key errors. No action is needed.
