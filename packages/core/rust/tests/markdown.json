@@ -283,7 +283,7 @@
         "name": "obfuscated_link",
         "markdown": "#[hidden](https://example.com)",
         "pre_class": "",
-        "compatible": false,
+        "compatible": true,
         "php": "<p><span data-rot=\"_rknzcyr.pbz\">hidden</span></p>\n"
     },
     {

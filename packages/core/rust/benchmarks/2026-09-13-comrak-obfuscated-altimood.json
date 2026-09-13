@@ -1,0 +1,29 @@
+{
+  "date": "2026-09-13",
+  "workload": "64,509 post-Twig Altimood Markdown blocks; Comrak via persistent NativeWorker with PHP fallback",
+  "snapshot_sha256": "538e6619ebaf6506131a7f18877fe85399a3d487181de75eef9966c773064d9e",
+  "site_revision": "3a292ed8e3d223b0c533a8d308773e9c31867e2d",
+  "analyzer_sha256": "1904520cfe92c0b14a961c592ca029cbd7290f52a56622ba61240c4c3567e43e",
+  "cpu_affinity": "2",
+  "passes": 3,
+  "blocks": 64509,
+  "accepted_native": 61300,
+  "declined_to_php": 3209,
+  "additional_native_since_previous_report": 2542,
+  "exact_hybrid_blocks": 64509,
+  "samples_seconds": [
+    {"php": 4.13233027, "native_worker": 0.226115888, "php_fallback": 0.604050516, "hybrid": 0.830166404},
+    {"php": 4.466479696, "native_worker": 0.221867363, "php_fallback": 0.589163626, "hybrid": 0.811030989},
+    {"php": 15.56746608, "native_worker": 0.41263828, "php_fallback": 1.048042254, "hybrid": 1.460680534}
+  ],
+  "median_seconds": {"php": 4.466479696, "hybrid": 0.830166404},
+  "directional_conversion_speedup": 5.380222175312217,
+  "method": "Three separate uncached PHP workers on one CPU. PHP baseline times transform() only. Hybrid times reused-worker requests and PHP transform() for declined blocks. Every produced block is compared byte-for-byte with the private snapshot and the aggregate digest matches the downstream PHP baseline.",
+  "limits": [
+    "The native link markup matches the default Pushword component; the PHP Markdown filter uses PHP for custom link templates and admin-specific title changes, which are not represented in the worker request.",
+    "The downstream site has its own installed Pushword version; this does not prove parity with the current monorepo PHP parser.",
+    "Post-Twig block parity does not prove complete page, admin preview, static build or HTTP parity.",
+    "Kernel startup, Twig expansion, snapshot decoding, SQL, cache hits and complete page assembly are outside these timings.",
+    "One run had a large timing outlier. The earlier benchmark was a separate run, so a change in measured speedup alone should not be attributed to the link port."
+  ]
+}

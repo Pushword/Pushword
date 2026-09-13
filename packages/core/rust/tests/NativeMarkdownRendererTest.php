@@ -51,6 +51,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $sources = [
             'First **bold** paragraph.',
             '#[private](/path)',
+            '#[*Café*](https://example.com/café){.button target="_blank"}',
             'A [normal link](/path).',
             '![alt](/image.jpg)',
             '> [!note] Notice',
@@ -66,7 +67,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
             }
         }
 
-        self::assertSame([false, true, false, true, true, true, true, true], array_map(static fn (?string $html): bool => null === $html, $result));
+        self::assertSame([false, false, false, false, true, true, true, true, true], array_map(static fn (?string $html): bool => null === $html, $result));
         $parser->reset();
     }
 
@@ -172,11 +173,13 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $page->host = 'localhost.dev';
 
         $manager = $container->get(ContentPipelineFactory::class)->getLegacyManager($page);
-        $source = "## A title\n\nA **bold** paragraph.\n\n![alt](/missing.jpg)\n\n> [!note] Notice\n\nA [normal link](/path).";
+        $source = "## A title\n\nA **bold** paragraph.\n\n#[private](/path)\n\n![alt](/missing.jpg)\n\n> [!note] Notice\n\nA [normal link](/path).";
         $php = new Markdown($this->parser());
         $pool = new ArrayAdapter();
         $nativeParser = $this->parser(self::BINARY, $pool);
-        $native = new Markdown($nativeParser);
+        $linkProvider = $container->get(LinkProvider::class);
+        self::assertTrue($linkProvider->canRenderObfuscatedMarkdownLinkNatively());
+        $native = new Markdown($nativeParser, $linkProvider);
 
         self::assertSame($php->apply($source, $page, $manager), $native->apply($source, $page, $manager));
         self::assertTrue($pool->getItem('pw_mdn1.'.hash('xxh3', '9|A **bold** paragraph.'))->isHit());

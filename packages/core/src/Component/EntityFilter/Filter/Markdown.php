@@ -8,6 +8,7 @@ use Exception;
 use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Utils\MarkdownUtils;
 
@@ -21,6 +22,7 @@ class Markdown implements FilterInterface
 {
     public function __construct(
         private readonly MarkdownParser $markdownParser,
+        private readonly ?LinkProvider $linkProvider = null,
     ) {
     }
 
@@ -76,6 +78,14 @@ class Markdown implements FilterInterface
         }
 
         $native = $this->markdownParser->renderNativeMany($markdown);
+        if (null === $this->linkProvider || ! $this->linkProvider->canRenderObfuscatedMarkdownLinkNatively()) {
+            foreach ($markdown as $index => $source) {
+                if (str_contains($source, '#[')) {
+                    $native[$index] = null;
+                }
+            }
+        }
+
         $markdownIndex = 0;
         $filteredText = '';
         foreach ($prepared as $index => [$content, $needsMarkdown]) {

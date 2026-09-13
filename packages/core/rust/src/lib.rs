@@ -32,8 +32,7 @@ impl RenderSettings<'_> {
 /// The check is deliberately conservative: false positives cost PHP work,
 /// whereas a false negative would change the rendered page.
 pub fn markdown_if_supported(source: &str, fenced_code_pre_class: &str) -> Option<String> {
-    if source.contains("#[")
-        || source.contains("[!")
+    if source.contains("[!")
         || source.contains("![")
         || source.contains("date(")
         || source.contains('@')
@@ -421,6 +420,56 @@ fn encode_url(url: &str) -> String {
     output
 }
 
+fn obfuscated_link(node: Node<'_>) -> bool {
+    node.previous_sibling().is_some_and(
+        |previous| matches!(&previous.data().value, NodeValue::Text(text) if text.ends_with('#')),
+    )
+}
+
+fn obfuscated_link_attributes(
+    node: Node<'_>,
+    settings: &RenderSettings<'_>,
+) -> Vec<(String, String)> {
+    let mut attrs = link_attributes(node, settings);
+    for name in ["class", "id"] {
+        if let Some(index) = attrs.iter().position(|(key, _)| key == name) {
+            let attribute = attrs.remove(index);
+            attrs.push(attribute);
+        }
+    }
+    attrs
+}
+
+fn rot13_link(url: &str) -> String {
+    let url = url
+        .strip_prefix("http://")
+        .map(|path| format!("-{path}"))
+        .or_else(|| url.strip_prefix("https://").map(|path| format!("_{path}")))
+        .or_else(|| url.strip_prefix("mailto:").map(|path| format!("@{path}")))
+        .unwrap_or_else(|| url.to_owned());
+    url.chars()
+        .map(|character| match character {
+            'a'..='z' => char::from(b'a' + (character as u8 - b'a' + 13) % 26),
+            'A'..='Z' => char::from(b'A' + (character as u8 - b'A' + 13) % 26),
+            _ => character,
+        })
+        .collect::<String>()
+        .replace("&nzc;", "&")
+}
+
+fn write_link_attributes(output: &mut dyn Write, attrs: &[(String, String)]) -> fmt::Result {
+    for (name, value) in attrs {
+        if value.is_empty() {
+            if name != "class" && name != "style" {
+                write!(output, " {name}")?;
+            }
+        } else {
+            write!(output, " {name}=\"{}\"", value.replace('"', "&quot;"))?;
+        }
+    }
+    Ok(())
+}
+
 fn loose_task(node: Node<'_>) -> bool {
     matches!(node.data().value, NodeValue::TaskItem(_))
         && node.parent().is_some_and(
@@ -503,7 +552,28 @@ fn render(
 ) -> Result<ChildRendering, fmt::Error> {
     let ast = node.data();
     match &ast.value {
+        NodeValue::Text(text)
+            if entering
+                && text.ends_with('#')
+                && node
+                    .next_sibling()
+                    .is_some_and(|next| matches!(next.data().value, NodeValue::Link(_))) =>
+        {
+            context.escape(&text[..text.len() - 1])?;
+        }
         NodeValue::Link(link) => {
+            if obfuscated_link(node) {
+                if entering {
+                    let mut attrs = obfuscated_link_attributes(node, context.user);
+                    set_attribute(&mut attrs, "data-rot", &rot13_link(&encode_url(&link.url)));
+                    context.write_str("<span")?;
+                    write_link_attributes(context, &attrs)?;
+                    context.write_char('>')?;
+                } else {
+                    context.write_str("</span>")?;
+                }
+                return Ok(ChildRendering::HTML);
+            }
             if entering {
                 let mut attrs = link_attributes(node, context.user);
                 set_attribute(&mut attrs, "href", &encode_url(&link.url));
@@ -727,21 +797,32 @@ mod tests {
     }
 
     #[test]
-    fn dynamic_pushword_extensions_are_still_unsupported() {
+    fn obfuscated_links_match_the_default_php_component() {
         assert_eq!(
             markdown("#[hidden](/path)", ""),
-            "<p>#<a href=\"/path\">hidden</a></p>\n"
+            "<p><span data-rot=\"/cngu\">hidden</span></p>\n"
+        );
+        assert_eq!(
+            markdown(
+                "#[*Café*](https://example.com/café){.button target=\"_blank\"}",
+                ""
+            ),
+            "<p><span target=\"_blank\" class=\"button\" data-rot=\"_rknzcyr.pbz/pns%P3%N9\"><em>Café</em></span></p>\n"
+        );
+        assert_eq!(
+            markdown("`#[literal](/path)`", ""),
+            "<p><code>#[literal](/path)</code></p>\n"
         );
     }
 
     #[test]
     fn site_dependent_markdown_is_declined() {
         for source in [
-            "#[hidden](/path)",
             "> [!note] Notice",
             "![alt](/image.jpg)",
             "date(Y)",
             "contact@example.com",
+            "#[contact](mailto:contact@example.com)",
             "Call +33 1 23 45 67 89",
             "Call 01&nbsp;23&nbsp;45&nbsp;67&nbsp;89",
             "Call 01\u{a0}23\u{a0}45\u{a0}67\u{a0}89",
@@ -751,6 +832,10 @@ mod tests {
         assert_eq!(
             markdown_if_supported("A **simple** paragraph", ""),
             Some("<p>A <strong>simple</strong> paragraph</p>\n".into())
+        );
+        assert_eq!(
+            markdown_if_supported("#[hidden](/path)", ""),
+            Some("<p><span data-rot=\"/cngu\">hidden</span></p>\n".into())
         );
     }
 

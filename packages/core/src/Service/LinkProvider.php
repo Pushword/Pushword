@@ -41,6 +41,14 @@ final readonly class LinkProvider
         return $this->security->isGranted('ROLE_ADMIN');
     }
 
+    public function canRenderObfuscatedMarkdownLinkNatively(): bool
+    {
+        $site = $this->getApp();
+
+        return ('@Pushword/component/link_js.html.twig' === $site->getView('/component/link_js.html.twig'))
+            && ($site->isStatic || ! $this->currentUserIsAdmin());
+    }
+
     /**
      * @param array<string, string>|string|Page $path
      * @param array<string, string>|bool|string $attr

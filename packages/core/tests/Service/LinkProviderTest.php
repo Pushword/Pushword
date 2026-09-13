@@ -21,6 +21,7 @@ use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Symfony\Component\Routing\RouterInterface;
 use Twig\Environment as Twig;
+use Twig\Error\LoaderError;
 
 #[AllowMockObjectsWithoutExpectations]
 final class LinkProviderTest extends TestCase
@@ -81,6 +82,27 @@ final class LinkProviderTest extends TestCase
         $provider = $this->buildProvider($security, $stack);
 
         self::assertFalse($this->invokeCurrentUserIsAdmin($provider));
+    }
+
+    public function testNativeObfuscatedMarkdownLinksRequireTheDefaultTemplateAndNoLiveAdmin(): void
+    {
+        $security = self::createStub(Security::class);
+        $security->method('isGranted')->willReturn(true);
+        $request = Request::create('http://example.com/');
+        $request->setSession(new Session(new MockArraySessionStorage()));
+
+        $stack = new RequestStack([$request]);
+
+        $site = $this->buildSiteRegistry('@Pushword', __DIR__.'/missing-templates');
+        $provider = $this->buildProvider($security, $stack, $site);
+        self::assertFalse($provider->canRenderObfuscatedMarkdownLinkNatively());
+
+        $site->get()->setStatic(true);
+        self::assertTrue($provider->canRenderObfuscatedMarkdownLinkNatively());
+
+        $customSite = $this->buildSiteRegistry('@Custom');
+        $customSite->get()->setStatic(true);
+        self::assertFalse($this->buildProvider($security, $stack, $customSite)->canRenderObfuscatedMarkdownLinkNatively());
     }
 
     #[DataProvider('provideObfuscationDebugTitleCases')]
@@ -153,16 +175,19 @@ final class LinkProviderTest extends TestCase
         return (bool) $method->invoke($provider);
     }
 
-    private function buildSiteRegistry(): SiteRegistry
+    private function buildSiteRegistry(string $template = '@Pushword', ?string $templateDir = null): SiteRegistry
     {
+        $twig = self::createStub(Twig::class);
+        $twig->method('load')->willThrowException(new LoaderError('missing template'));
+
         return new SiteRegistry(
             ['example.com' => [
                 'hosts' => ['example.com'],
                 'locale' => 'en',
-                'template' => '@Pushword',
-                'template_dir' => \dirname(__DIR__, 2).'/src/templates',
+                'template' => $template,
+                'template_dir' => $templateDir ?? \dirname(__DIR__, 2).'/src/templates',
             ]],
-            new TemplateResolver(self::createStub(Twig::class), new ArrayAdapter()),
+            new TemplateResolver($twig, new ArrayAdapter()),
             new ParameterBag(),
         );
     }
