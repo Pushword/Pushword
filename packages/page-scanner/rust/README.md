@@ -102,3 +102,35 @@ malformed cases and 10,000 reproducible mixed-markup documents. On the
 development app's 32 pages, a warmed `pw:page-scan --skip-external` took
 0.25–0.27 s with either worker; this small command-level sample shows no
 stable end-to-end gain.
+
+## Whole-site PHP phase profile
+
+On September 13, 2026, the installed PHP scanners on Altimood and GrandAngle
+were instrumented during full `pw:page-scan --skip-external` runs across all
+hosts. Both sites had cached Symfony containers and warm application caches;
+GrandAngle's stale dev container was cleared before measuring. These installed
+scanner versions predate the native facts adapter, so this is a workload profile,
+not a PHP-versus-Rust command benchmark. External HTTP checks were excluded.
+
+| Site | Pages | Rendered HTML | Total | Render | Link scan | DOM construction | Link extraction | Link validation |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Altimood | 1,458 | 139.1 MB | 24.0 s | 11.8 s | 11.3 s | 3.1 s | 2.8 s | 5.3 s |
+| GrandAngle | 2,479 | 702.2 MB | 133.1 s | 89.0 s | 41.1 s | 16.8 s | 16.6 s | 7.5 s |
+
+DOM construction, extraction and validation are parts of the link-scan column,
+not additional time. Internal target resolution took only 0.54 s on Altimood
+and 1.20 s on GrandAngle; media lookups within that took 0.11 s and 0.65 s.
+The DOM plus link extraction consumed roughly one quarter of each warm scan.
+That fraction is an upper bound on the possible command gain from replacing
+those PHP steps, before paying for native transport and parsing. Rendering
+accounted for 49% of Altimood's warm run and 67% of GrandAngle's. Altimood's
+first cold run took 41.3 s, primarily because rendering took 28.9 s rather
+than 11.8 s.
+
+The instrumented and normal Altimood scans reported identical findings. On
+GrandAngle, only broken-derivative findings varied between repeated runs as
+image-cache files were generated; the other finding counts were stable. The
+next command-level experiment is to update each site's installed scanner,
+then alternate PHP and native runs with warm caches and compare both reports
+and median durations. If rendering remains dominant, profile `showPage()`
+before expanding the Rust scanner into PHP-owned URL resolution or reporting.
