@@ -42,26 +42,26 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'triple emphasis uses CommonMark' => ['***marche***', null];
         yield 'intraword underscores use CommonMark' => ['a_b_c', null];
         yield 'strikethrough uses CommonMark' => ['~~marche~~', null];
-        yield 'trailing space in emphasis uses CommonMark' => ['_Une marche _', null];
-        yield 'trailing space in bold uses CommonMark' => ['**Une marche **', null];
-        yield 'literal brackets use CommonMark' => ['Voir [LIEN_AFFILIATION] ici.', null];
+        yield 'trailing space in emphasis stays literal' => ['_Une marche _', "<p>_Une marche _</p>\n"];
+        yield 'trailing space in bold stays literal' => ['**Une marche **', "<p>**Une marche **</p>\n"];
+        yield 'literal brackets stay literal' => ['Voir [LIEN_AFFILIATION] ici.', "<p>Voir [LIEN_AFFILIATION] ici.</p>\n"];
         yield 'quoted link destination uses CommonMark' => ['[marche](a"b)', null];
-        yield 'unicode link destination uses CommonMark' => ['[marche](école)', null];
-        yield 'space in link destination uses CommonMark' => ['[marche](a b)', null];
+        yield 'unicode link destination is encoded' => ['[marche](école)', "<p><a href=\"%C3%A9cole\">marche</a></p>\n"];
+        yield 'space in link destination stays literal' => ['[marche](a b)', "<p>[marche](a b)</p>\n"];
         yield 'apostrophe in inline code uses CommonMark' => ["Un `x'y` code.", null];
         yield 'named link class' => ['[la marche](/marche){class="ninja"}', "<p><a class=\"ninja\" href=\"/marche\">la marche</a></p>\n"];
         yield 'obfuscated link uses CommonMark' => ['#[la marche](/marche)', null];
-        yield 'email uses Pushword' => ['contact@example.com', null];
+        yield 'email without extension stays literal' => ['contact@example.com', "<p>contact@example.com</p>\n"];
         yield 'phone uses Pushword' => ['01 23 45 67 89', null];
         yield 'international phone uses Pushword' => ['+33 7 81 32 36 55', null];
         yield 'date uses Pushword' => ['date(Y)', null];
-        yield 'attributed list' => ["{id=programme}\n- Etape", null];
-        yield 'nested list uses CommonMark' => ["- Une marche\n  - Un voyage", null];
+        yield 'attributed list' => ["{id=programme}\n- Etape", "<ul id=\"programme\">\n<li>Etape</li>\n</ul>\n"];
+        yield 'nested list' => ["- Une marche\n  - Un voyage", "<ul>\n<li>Une marche\n<ul>\n<li>Un voyage</li>\n</ul>\n</li>\n</ul>\n"];
         yield 'simple table' => ["| A | B |\n|---|---|\n| x | y |", "<table>\n<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>x</td>\n<td>y</td>\n</tr>\n</tbody>\n</table>\n"];
-        yield 'empty table heading uses CommonMark' => ["| | B |\n|---|---|\n| x | y |", null];
+        yield 'empty table heading' => ["| | B |\n|---|---|\n| x | y |", "<table>\n<thead>\n<tr>\n<th></th>\n<th>B</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>x</td>\n<td>y</td>\n</tr>\n</tbody>\n</table>\n"];
         yield 'indented code' => ['    code', null];
-        yield 'html' => ['<span>texte</span>', null];
-        yield 'entity' => ['A & B', null];
+        yield 'html' => ['<span>texte</span>', "<p><span>texte</span></p>\n"];
+        yield 'entity' => ['A & B', "<p>A &amp; B</p>\n"];
     }
 
     #[DataProvider('cases')]

@@ -171,6 +171,12 @@
       "Pushword\\Search\\Tests\\": "packages/search/tests"
     }
   },
+  "repositories": {
+    "tempest-markdown-fork": {
+      "type": "vcs",
+      "url": "https://github.com/RobinDev/markdown"
+    }
+  },
   "scripts": {
     "bench-databases": "./.scripts/bench-databases",
     "console": "cd packages/dev-app && php bin/console $2",
