@@ -49,11 +49,11 @@ final class HtmlMinificationTest extends TestCase
         $binary = $this->worker('normal');
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('warning');
-        $this->minifier = new HtmlMinification($binary, 0.3, $logger);
+        $this->minifier = new HtmlMinification($binary, 2.0, $logger);
         $first = $this->minifier->compress('first');
         $pid = explode(':', $first)[1];
         self::assertSame('native:'.$pid.':first', $first);
-        usleep(350000);
+        usleep(2100000);
         self::assertSame(['native:'.$pid.':second', 'native:'.$pid.':third'], $this->minifier->compressMany(['second', 'third']));
         $this->minifier->reset();
         self::assertNotSame('native:'.$pid.':first', $this->minifier->compress('first'));
