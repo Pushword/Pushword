@@ -577,16 +577,16 @@ CSV;
         $memStorage->write('test-license.png', (string) file_get_contents($mediaDir.'/test-license.png'));
 
         $license = [
-            MediaLicense::LICENSE => 'https://altimood.test/mentions-legales',
-            MediaLicense::ACQUIRE_LICENSE_PAGE => 'https://altimood.test/contact',
-            MediaLicense::CREDIT_TEXT => 'Altimood',
+            MediaLicense::LICENSE => 'https://example.test/mentions-legales',
+            MediaLicense::ACQUIRE_LICENSE_PAGE => 'https://example.test/contact',
+            MediaLicense::CREDIT_TEXT => 'ExampleCreditText',
             // Nested rows, not a flat list: the CSV has to carry each creator's own
             // type through YAML and back.
             MediaLicense::CREATOR => [
                 ['name' => 'Dominique VIVARES', 'type' => 'Person'],
-                ['name' => 'Altimood', 'type' => 'Organization'],
+                ['name' => 'ExampleCreator', 'type' => 'Organization'],
             ],
-            MediaLicense::COPYRIGHT_NOTICE => '© Altimood',
+            MediaLicense::COPYRIGHT_NOTICE => '© ExampleCreator',
             MediaLicense::DIGITAL_SOURCE_TYPE => MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.'digitalCapture',
         ];
 

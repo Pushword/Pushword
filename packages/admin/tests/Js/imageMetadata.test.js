@@ -53,13 +53,13 @@ describe('JPEG', () => {
       app1Exif(
         tiff([
           { tag: EXIF_ARTIST, value: 'Enrico Romanzi\0' },
-          { tag: EXIF_COPYRIGHT, value: '(c) Altimood\0' },
+          { tag: EXIF_COPYRIGHT, value: '(c) ExampleCreditText\0' },
         ]),
       ),
     ])
 
     await expect(decoded(bytes, 'image/jpeg', 'artist')).resolves.toBe('Enrico Romanzi\0')
-    await expect(decoded(bytes, 'image/jpeg', 'copyright')).resolves.toBe('(c) Altimood\0')
+    await expect(decoded(bytes, 'image/jpeg', 'copyright')).resolves.toBe('(c) ExampleCreditText\0')
   })
 
   it('reads an EXIF value short enough to sit inside its own entry', async () => {
@@ -81,8 +81,8 @@ describe('JPEG', () => {
   it('collects every source present in one file', async () => {
     const bytes = jpeg([
       app1Xmp(CREATOR_XMP),
-      app1Exif(tiff([{ tag: EXIF_COPYRIGHT, value: '(c) Altimood\0' }])),
-      app13Iim([[110, 'Altimood']]),
+      app1Exif(tiff([{ tag: EXIF_COPYRIGHT, value: '(c) ExampleCreditText\0' }])),
+      app13Iim([[110, 'ExampleCreditText']]),
       app11('jumb bytes'),
     ])
 

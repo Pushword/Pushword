@@ -383,16 +383,16 @@ final class EmbeddedRightsReaderTest extends TestCase
         $rights = $this->reader->readSupplied($this->supplied([
             'xmp' => ImageMetadataFixture::packet(
                 '<rdf:Description rdf:about="" xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/">'
-                .'<photoshop:Credit>Altimood</photoshop:Credit></rdf:Description>',
+                .'<photoshop:Credit>ExampleCreditText</photoshop:Credit></rdf:Description>',
             ),
             'iptc' => ImageMetadataFixture::iimPayload(['2#080' => 'Enrico Romanzi']),
-            'copyright' => '(c) Altimood',
+            'copyright' => '(c) ExampleCreator',
             'c2pa' => ImageMetadataFixture::c2paActions(MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.MediaLicense::TRAINED_ALGORITHMIC_MEDIA),
         ]));
 
-        self::assertSame('Altimood', $rights->creditText);
+        self::assertSame('ExampleCreditText', $rights->creditText);
         self::assertSame(['Enrico Romanzi'], $rights->creator);
-        self::assertSame('(c) Altimood', $rights->copyrightNotice);
+        self::assertSame('(c) ExampleCreator', $rights->copyrightNotice);
         self::assertSame(
             MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.MediaLicense::TRAINED_ALGORITHMIC_MEDIA,
             $rights->digitalSourceType,

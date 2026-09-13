@@ -24,9 +24,9 @@ use Symfony\Component\Console\Tester\CommandTester;
 final class MediaLicenseCommandTest extends KernelTestCase
 {
     private const array SEED = [
-        'license' => 'https://altimood.test/mentions-legales',
-        'creditText' => 'Altimood',
-        'creator' => [['name' => 'Altimood', 'type' => 'Organization']],
+        'license' => 'https://example.test/mentions-legales',
+        'creditText' => 'ExampleCreditText',
+        'creator' => [['name' => 'ExampleCreator', 'type' => 'Organization']],
     ];
 
     private EntityManagerInterface $em;
@@ -151,7 +151,7 @@ final class MediaLicenseCommandTest extends KernelTestCase
         $this->em->refresh($thirdParty);
 
         self::assertSame(MediaLicense::STATE_SEEDED, $owned->licenseState);
-        self::assertSame('Altimood', $owned->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertSame('ExampleCreditText', $owned->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
 
         self::assertSame(MediaLicense::STATE_THIRD_PARTY, $thirdParty->licenseState);
         self::assertSame([['name' => 'Enrico Romanzi', 'type' => 'Person']], MediaLicense::creators($thirdParty));
@@ -188,8 +188,8 @@ final class MediaLicenseCommandTest extends KernelTestCase
         $this->em->refresh($media);
 
         self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
-        self::assertSame('https://altimood.test/mentions-legales', $media->getCustomPropertyScalar(MediaLicense::LICENSE));
-        self::assertSame([['name' => 'Altimood', 'type' => 'Organization']], MediaLicense::creators($media));
+        self::assertSame('https://example.test/mentions-legales', $media->getCustomPropertyScalar(MediaLicense::LICENSE));
+        self::assertSame([['name' => 'ExampleCreator', 'type' => 'Organization']], MediaLicense::creators($media));
     }
 
     /** A second pass must not undo what the first decided. */

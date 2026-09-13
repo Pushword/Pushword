@@ -89,7 +89,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
     {
         $body = $this->request(Request::METHOD_POST, '/api/newsletter/audience', [
             'slug' => 'api-'.bin2hex(random_bytes(6)),
-            'name' => 'Altimood',
+            'name' => 'Example Audience',
             'mainHost' => 'localhost.dev',
             'fromName' => 'Robin',
             'fromEmail' => 'news@localhost.dev',
@@ -98,7 +98,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         ]);
 
         $this->trackAudience($this->id($body));
-        self::assertSame('Altimood', $body['name']);
+        self::assertSame('Example Audience', $body['name']);
         self::assertSame('Robin', $body['fromName']);
         self::assertSame('hello@localhost.dev', $body['replyTo']);
         self::assertFalse($body['requireDoubleOptIn'], 'an already-consenting base is imported without a second ask');

@@ -99,14 +99,14 @@ final class RemoteMailboxTest extends AbstractNewsletterTestCase
 
     public function testADsnIsReadIntoAConnection(): void
     {
-        ['config' => $config, 'folder' => $folder] = ImapSource::parse('imaps://np%40altimood.com:p%40ss%2Fword@node212-eu.n0c.com:993/Bounces');
+        ['config' => $config, 'folder' => $folder] = ImapSource::parse('imaps://news%40example.test:p%40ss%2Fword@mail.example.test:993/Bounces');
 
-        self::assertSame('node212-eu.n0c.com', $config['host']);
+        self::assertSame('mail.example.test', $config['host']);
         self::assertSame(993, $config['port']);
         self::assertSame('ssl', $config['encryption']);
         // A generated password holds `@` and `/` often enough that not decoding
         // them would authenticate as somebody else, or not at all.
-        self::assertSame('np@altimood.com', $config['username']);
+        self::assertSame('news@example.test', $config['username']);
         self::assertSame('p@ss/word', $config['password']);
         self::assertSame('Bounces', $folder);
     }

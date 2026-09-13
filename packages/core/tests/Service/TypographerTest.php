@@ -62,11 +62,8 @@ final class TypographerTest extends TestCase
         self::assertStringContainsString('«'.self::NBSP, $this->typographer->fix('<p>&quot;cité&quot;</p>', 'fr_CA'));
     }
 
-    /**
-     * One case per locale served on a real fleet (altimood): quote style and
-     * spacing must match JoliTypo's LocaleConfig.
-     */
-    public function testAltimoodLocales(): void
+    /** Quote style and spacing must match JoliTypo's LocaleConfig for each supported locale. */
+    public function testSupportedLocales(): void
     {
         $input = '<p>Il dit &quot;oui&quot; la : fin !</p>';
 

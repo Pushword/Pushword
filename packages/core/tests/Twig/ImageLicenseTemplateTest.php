@@ -61,9 +61,9 @@ final class ImageLicenseTemplateTest extends KernelTestCase
     public function testALicensedMediaEmitsAnImageObjectNextToItsPicture(): void
     {
         $html = $this->renderImage([
-            MediaLicense::CREDIT_TEXT => 'Altimood',
-            MediaLicense::LICENSE => 'https://altimood.test/mentions-legales',
-            MediaLicense::ACQUIRE_LICENSE_PAGE => 'https://altimood.test/contact',
+            MediaLicense::CREDIT_TEXT => 'ExampleCreditText',
+            MediaLicense::LICENSE => 'https://example.test/mentions-legales',
+            MediaLicense::ACQUIRE_LICENSE_PAGE => 'https://example.test/contact',
         ]);
 
         self::assertStringContainsString('application/ld+json', $html);
@@ -79,7 +79,7 @@ final class ImageLicenseTemplateTest extends KernelTestCase
      */
     public function testContentUrlIsExactlyTheImgSrc(): void
     {
-        $html = $this->renderImage([MediaLicense::CREDIT_TEXT => 'Altimood']);
+        $html = $this->renderImage([MediaLicense::CREDIT_TEXT => 'ExampleCreditText']);
 
         self::assertSame(1, preg_match('#<img [^>]*\bsrc="([^"]+)"#', $html, $src));
         self::assertSame(1, preg_match('#"contentUrl":"([^"]+)"#', $html, $contentUrl));
@@ -90,7 +90,7 @@ final class ImageLicenseTemplateTest extends KernelTestCase
     /** Google asks for one node per rendered instance, not one per page. */
     public function testTheSameImageTwiceOnAPageEmitsTwoNodes(): void
     {
-        $license = [MediaLicense::CREDIT_TEXT => 'Altimood'];
+        $license = [MediaLicense::CREDIT_TEXT => 'ExampleCreditText'];
         $html = $this->renderImage($license).$this->renderImage($license);
 
         self::assertSame(2, substr_count($html, 'application/ld+json'));
@@ -105,8 +105,8 @@ final class ImageLicenseTemplateTest extends KernelTestCase
         $mediaExtension = self::getContainer()->get(MediaExtension::class);
 
         $html = $mediaExtension->renderImage(
-            $this->media([MediaLicense::CREDIT_TEXT => 'Altimood']),
-            link: 'https://altimood.test/page',
+            $this->media([MediaLicense::CREDIT_TEXT => 'ExampleCreditText']),
+            link: 'https://example.test/page',
             obfuscate: false,
         );
 
@@ -117,7 +117,7 @@ final class ImageLicenseTemplateTest extends KernelTestCase
     /** The template returns early for an SVG; Media::isImage() excludes it too. */
     public function testAnSvgRendersWithoutJsonLd(): void
     {
-        $html = $this->renderImage([MediaLicense::CREDIT_TEXT => 'Altimood'], 'logo.svg');
+        $html = $this->renderImage([MediaLicense::CREDIT_TEXT => 'ExampleCreditText'], 'logo.svg');
 
         self::assertStringContainsString('<picture', $html);
         self::assertStringNotContainsString('application/ld+json', $html);

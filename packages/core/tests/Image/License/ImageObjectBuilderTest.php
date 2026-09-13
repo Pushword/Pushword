@@ -126,12 +126,12 @@ final class ImageObjectBuilderTest extends KernelTestCase
         $creators = $this->arrayValue($this->builder->build($this->media([
             MediaLicense::CREATOR => [
                 ['name' => 'Enrico Romanzi', 'type' => 'Person'],
-                ['name' => 'Altimood', 'type' => 'Organization'],
+                ['name' => 'ExampleCreator', 'type' => 'Organization'],
             ],
         ])), 'creator');
 
         self::assertSame(['@type' => 'Person', 'name' => 'Enrico Romanzi'], $this->arrayValue($creators, 0));
-        self::assertSame(['@type' => 'Organization', 'name' => 'Altimood'], $this->arrayValue($creators, 1));
+        self::assertSame(['@type' => 'Organization', 'name' => 'ExampleCreator'], $this->arrayValue($creators, 1));
     }
 
     public function testAnEmptyCreatorTypeFallsBackRatherThanEmittingAnEmptyType(): void
@@ -169,7 +169,7 @@ final class ImageObjectBuilderTest extends KernelTestCase
     public function testDigitalSourceTypeIsNeverEmitted(): void
     {
         $imageObject = $this->builder->build($this->media([
-            MediaLicense::CREDIT_TEXT => 'Altimood',
+            MediaLicense::CREDIT_TEXT => 'ExampleCreditText',
             MediaLicense::DIGITAL_SOURCE_TYPE => MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.'trainedAlgorithmicMedia',
         ]));
 
@@ -179,7 +179,7 @@ final class ImageObjectBuilderTest extends KernelTestCase
 
     public function testContentUrlIsAbsolute(): void
     {
-        $imageObject = $this->builder->build($this->media([MediaLicense::CREDIT_TEXT => 'Altimood']));
+        $imageObject = $this->builder->build($this->media([MediaLicense::CREDIT_TEXT => 'ExampleCreditText']));
 
         $contentUrl = $this->stringValue($imageObject, 'contentUrl');
         self::assertMatchesRegularExpression('#^https?://[^/]+/#', $contentUrl);
@@ -195,7 +195,7 @@ final class ImageObjectBuilderTest extends KernelTestCase
     public function testContentUrlIsTheDefaultFilterInTheSourceFormat(): void
     {
         $contentUrl = $this->stringValue(
-            $this->builder->build($this->media([MediaLicense::CREDIT_TEXT => 'Altimood'])),
+            $this->builder->build($this->media([MediaLicense::CREDIT_TEXT => 'ExampleCreditText'])),
             'contentUrl',
         );
 
@@ -205,7 +205,7 @@ final class ImageObjectBuilderTest extends KernelTestCase
     /** A webp source has no separate original: both the src and contentUrl are the webp. */
     public function testAWebpSourceKeepsItsOwnExtension(): void
     {
-        $media = $this->media([MediaLicense::CREDIT_TEXT => 'Altimood'], 'photo.webp');
+        $media = $this->media([MediaLicense::CREDIT_TEXT => 'ExampleCreditText'], 'photo.webp');
         $media->setMimeType('image/webp');
 
         self::assertStringEndsWith(
@@ -216,7 +216,7 @@ final class ImageObjectBuilderTest extends KernelTestCase
 
     public function testANonImageMediaNeverEmits(): void
     {
-        $media = $this->media([MediaLicense::CREDIT_TEXT => 'Altimood'], 'doc.pdf');
+        $media = $this->media([MediaLicense::CREDIT_TEXT => 'ExampleCreditText'], 'doc.pdf');
         $media->setMimeType('application/pdf');
 
         self::assertSame([], $this->builder->build($media));
@@ -229,7 +229,7 @@ final class ImageObjectBuilderTest extends KernelTestCase
      */
     public function testAnSvgDoesNotEmit(): void
     {
-        $media = $this->media([MediaLicense::CREDIT_TEXT => 'Altimood'], 'logo.svg');
+        $media = $this->media([MediaLicense::CREDIT_TEXT => 'ExampleCreditText'], 'logo.svg');
         $media->setMimeType('image/svg+xml');
 
         self::assertFalse($media->isImage());

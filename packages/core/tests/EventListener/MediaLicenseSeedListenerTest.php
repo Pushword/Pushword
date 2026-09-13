@@ -29,10 +29,10 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 final class MediaLicenseSeedListenerTest extends KernelTestCase
 {
     private const array SEED = [
-        'license' => 'https://altimood.test/mentions-legales',
-        'acquireLicensePage' => 'https://altimood.test/contact',
-        'creditText' => 'Altimood',
-        'creator' => [['name' => 'Altimood', 'type' => 'Organization']],
+        'license' => 'https://example.test/mentions-legales',
+        'acquireLicensePage' => 'https://example.test/contact',
+        'creditText' => 'ExampleCreditText',
+        'creator' => [['name' => 'ExampleCreator', 'type' => 'Organization']],
     ];
 
     private EntityManagerInterface $em;
@@ -129,8 +129,8 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $media = $this->upload('plain');
 
         self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
-        self::assertSame('Altimood', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
-        self::assertSame([['name' => 'Altimood', 'type' => 'Organization']], MediaLicense::creators($media));
+        self::assertSame('ExampleCreditText', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertSame([['name' => 'ExampleCreator', 'type' => 'Organization']], MediaLicense::creators($media));
     }
 
     public function testWithoutAConfiguredSeedNothingIsWritten(): void
@@ -185,7 +185,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         );
 
         self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
-        self::assertSame('Altimood', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertSame('ExampleCreditText', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
         self::assertSame(
             MediaLicense::DIGITAL_SOURCE_TYPE_PREFIX.'trainedAlgorithmicMedia',
             $media->getCustomPropertyScalar(MediaLicense::DIGITAL_SOURCE_TYPE),
@@ -236,14 +236,14 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     public function testChangingTheSeedDoesNotReachExistingMedia(): void
     {
         $media = $this->upload('before-config-change');
-        self::assertSame('Altimood', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertSame('ExampleCreditText', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
 
         $this->configureSeed(['creditText' => 'Someone Else'] + self::SEED);
 
         $this->em->clear();
         $reloaded = $this->em->getRepository(Media::class)->find($media->id);
         self::assertInstanceOf(Media::class, $reloaded);
-        self::assertSame('Altimood', $reloaded->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertSame('ExampleCreditText', $reloaded->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
 
         $this->created = [$reloaded];
     }
@@ -258,7 +258,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $this->replaceFile($media, 'swap-out');
 
         self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
-        self::assertSame([['name' => 'Altimood', 'type' => 'Organization']], MediaLicense::creators($media));
+        self::assertSame([['name' => 'ExampleCreator', 'type' => 'Organization']], MediaLicense::creators($media));
     }
 
     /** The dangerous direction: the site's own licensing must not survive onto a stranger's photo. */
@@ -332,7 +332,7 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
         $media->setMediaFile(new UploadedFile($truncated, 'truncated.jpg', 'image/jpeg', null, true));
         $this->em->flush();
 
-        self::assertSame([['name' => 'Altimood', 'type' => 'Organization']], MediaLicense::creators($media));
+        self::assertSame([['name' => 'ExampleCreator', 'type' => 'Organization']], MediaLicense::creators($media));
         self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
     }
 

@@ -293,8 +293,8 @@ final class MediaLicense
      * carrying its own type, because that is what schema.org emits per node.
      *
      * Accepts what each source can actually hand over:
-     *   'Robin, Altimood (Organization)'              a single text input (inline row, config)
-     *   ['Robin', 'Altimood']                         bare names, as read from a file
+     *   'Robin, ExampleCreator (Organization)'           a single text input (inline row, config)
+     *   ['Robin', 'ExampleCreator']                        bare names, as read from a file
      *   [['name' => 'Robin', 'type' => 'Person'], …]  the stored shape
      *
      * @return list<array{name: string, type: string}>
@@ -359,7 +359,7 @@ final class MediaLicense
         $name = trim((string) $entry);
         $type = '';
 
-        // "Altimood (Organization)". Only stripped when the trailing parenthetical
+        // "ExampleCreator (Organization)". Only stripped when the trailing parenthetical
         // really names a type — otherwise "Jean (Jean-Pierre)" would lose half its name.
         $open = str_ends_with($name, ')') ? strrpos($name, '(') : false;
         if (false !== $open && self::isCreatorType($candidate = substr($name, $open + 1, -1))) {

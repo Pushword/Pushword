@@ -20,9 +20,9 @@ use Symfony\Component\HttpFoundation\Request;
 final class MediaLicenseAdminTest extends AbstractAdminTestClass
 {
     private const array SEED = [
-        'license' => 'https://altimood.test/mentions-legales',
-        'creditText' => 'Altimood',
-        'creator' => [['name' => 'Altimood', 'type' => 'Organization']],
+        'license' => 'https://example.test/mentions-legales',
+        'creditText' => 'ExampleCreditText',
+        'creator' => [['name' => 'ExampleCreator', 'type' => 'Organization']],
     ];
 
     /** @param array<string, mixed> $license */
@@ -113,7 +113,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
 
     public function testTheEditFormExposesEveryLicenseField(): void
     {
-        $media = $this->createMedia([MediaLicense::CREDIT_TEXT => 'Altimood']);
+        $media = $this->createMedia([MediaLicense::CREDIT_TEXT => 'ExampleCreditText']);
 
         $crawler = $this->editCrawler($media);
 
@@ -135,7 +135,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
     public function testLicenseKeysStayOutOfTheCustomPropertiesTextarea(): void
     {
         $media = $this->createMedia([
-            MediaLicense::CREDIT_TEXT => 'Altimood',
+            MediaLicense::CREDIT_TEXT => 'ExampleCreditText',
             'unrelatedKey' => 'kept',
         ]);
 
@@ -160,12 +160,12 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         $crawler = $this->editCrawler($media);
         $field = $crawler->filter('[data-pw-license-field="'.MediaLicense::LICENSE.'"]');
 
-        self::assertSame('https://altimood.test/mentions-legales', $field->attr('data-pw-license-seed-license'));
-        self::assertSame('Altimood', $field->attr('data-pw-license-seed-credittext'));
+        self::assertSame('https://example.test/mentions-legales', $field->attr('data-pw-license-seed-license'));
+        self::assertSame('ExampleCreditText', $field->attr('data-pw-license-seed-credittext'));
         // Creators go over as JSON: applying the seed adds one collection row per name,
         // each with its own type.
         self::assertSame(
-            '[{"name":"Altimood","type":"Organization"}]',
+            '[{"name":"ExampleCreator","type":"Organization"}]',
             $field->attr('data-pw-license-seed-creator'),
         );
 
@@ -204,11 +204,11 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         // The creator collection is compound, so the rows go in through the raw
         // payload — which is also what the browser posts.
         $this->submitLicense($form, [
-            MediaLicense::CREDIT_TEXT => 'Altimood',
-            MediaLicense::LICENSE => 'altimood.test/terms',
+            MediaLicense::CREDIT_TEXT => 'ExampleCreditText',
+            MediaLicense::LICENSE => 'example.test/terms',
             MediaLicense::CREATOR => [
                 ['name' => 'Robin', 'type' => 'Person'],
-                ['name' => 'Altimood', 'type' => 'Organization'],
+                ['name' => 'ExampleCreator', 'type' => 'Organization'],
             ],
         ]);
 
@@ -219,14 +219,14 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         $saved = $em->getRepository(Media::class)->find($mediaId);
         self::assertInstanceOf(Media::class, $saved);
 
-        self::assertSame('Altimood', $saved->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertSame('ExampleCreditText', $saved->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
         // Each row keeps its own type all the way to storage.
         self::assertSame([
             ['name' => 'Robin', 'type' => 'Person'],
-            ['name' => 'Altimood', 'type' => 'Organization'],
+            ['name' => 'ExampleCreator', 'type' => 'Organization'],
         ], MediaLicense::creators($saved));
         // A bare hostname would fail the UrlField's own validation on the next save.
-        self::assertSame('https://altimood.test/terms', $saved->getCustomPropertyScalar(MediaLicense::LICENSE));
+        self::assertSame('https://example.test/terms', $saved->getCustomPropertyScalar(MediaLicense::LICENSE));
         self::assertSame(MediaLicense::STATE_OVERRIDDEN, $saved->licenseState);
 
         $this->remove($saved);
@@ -236,7 +236,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
     public function testSubmittingEmptyFieldsClearsTheLicense(): void
     {
         $media = $this->createMedia([
-            MediaLicense::CREDIT_TEXT => 'Altimood',
+            MediaLicense::CREDIT_TEXT => 'ExampleCreditText',
             MediaLicense::CREATOR => ['Robin'],
         ]);
         $media->licenseState = MediaLicense::STATE_SEEDED;
@@ -374,7 +374,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
 
     public function testTheIndexOffersALicenseStateFilter(): void
     {
-        $media = $this->createMedia([MediaLicense::CREDIT_TEXT => 'Altimood']);
+        $media = $this->createMedia([MediaLicense::CREDIT_TEXT => 'ExampleCreditText']);
 
         $client = $this->loginUser();
         $client->catchExceptions(false);

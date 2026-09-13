@@ -178,20 +178,20 @@ final class MediaApiControllerTest extends WebTestCase
     {
         $fileName = 'zz-license-'.uniqid().'.jpg';
         $media = $this->createMedia($fileName, 'Refuge');
-        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Altimood');
-        $media->setCustomProperty(MediaLicense::CREATOR, [['name' => 'Altimood', 'type' => 'Organization']]);
+        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'ExampleCreditText');
+        $media->setCustomProperty(MediaLicense::CREATOR, [['name' => 'ExampleCreator', 'type' => 'Organization']]);
 
         $this->em->flush();
 
         $response = $this->requestJson('PATCH', '/api/media/'.$fileName, [
-            'customProperties' => [MediaLicense::LICENSE => 'https://altimood.test/terms'],
+            'customProperties' => [MediaLicense::LICENSE => 'https://example.test/terms'],
         ]);
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
 
         $data = $this->decode();
         self::assertIsArray($data['customProperties']);
-        self::assertSame('https://altimood.test/terms', $data['customProperties'][MediaLicense::LICENSE]);
-        self::assertSame('Altimood', $data['customProperties'][MediaLicense::CREDIT_TEXT]);
+        self::assertSame('https://example.test/terms', $data['customProperties'][MediaLicense::LICENSE]);
+        self::assertSame('ExampleCreditText', $data['customProperties'][MediaLicense::CREDIT_TEXT]);
         self::assertSame(MediaLicense::STATE_OVERRIDDEN, $data['licenseState']);
     }
 
@@ -200,7 +200,7 @@ final class MediaApiControllerTest extends WebTestCase
     {
         $fileName = 'zz-license-clear-'.uniqid().'.jpg';
         $media = $this->createMedia($fileName, 'Refuge');
-        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Altimood');
+        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'ExampleCreditText');
         $media->licenseState = MediaLicense::STATE_SEEDED;
 
         $this->em->flush();

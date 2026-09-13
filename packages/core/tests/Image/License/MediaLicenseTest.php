@@ -131,7 +131,7 @@ final class MediaLicenseTest extends TestCase
     {
         $seed = MediaLicense::normalizeSeed([
             'license' => 'example.tld/terms',
-            'creator' => [['name' => 'Altimood', 'type' => 'Organization']],
+            'creator' => [['name' => 'ExampleCreator', 'type' => 'Organization']],
             'creditText' => '  ',
             'digitalSourceType' => 'trainedAlgorithmicMedia',
             'unknownKey' => 'ignored',
@@ -139,7 +139,7 @@ final class MediaLicenseTest extends TestCase
 
         self::assertSame([
             'license' => 'https://example.tld/terms',
-            'creator' => [['name' => 'Altimood', 'type' => 'Organization']],
+            'creator' => [['name' => 'ExampleCreator', 'type' => 'Organization']],
         ], $seed);
     }
 
@@ -147,8 +147,8 @@ final class MediaLicenseTest extends TestCase
     public function testASeededCreatorMayBeAPlainName(): void
     {
         self::assertSame(
-            ['creator' => [['name' => 'Altimood', 'type' => 'Person']]],
-            MediaLicense::normalizeSeed(['creator' => 'Altimood']),
+            ['creator' => [['name' => 'ExampleCreator', 'type' => 'Person']]],
+            MediaLicense::normalizeSeed(['creator' => 'ExampleCreator']),
         );
     }
 
@@ -160,22 +160,22 @@ final class MediaLicenseTest extends TestCase
     {
         self::assertSame([
             ['name' => 'Robin', 'type' => 'Person'],
-            ['name' => 'Altimood', 'type' => 'Organization'],
+            ['name' => 'ExampleCreator', 'type' => 'Organization'],
         ], MediaLicense::normalizeCreators([
             ['name' => 'Robin', 'type' => 'Person'],
-            ['name' => 'Altimood', 'type' => 'Organization'],
+            ['name' => 'ExampleCreator', 'type' => 'Organization'],
         ]));
     }
 
     public function testTheCompactTextFormRoundTrips(): void
     {
-        $creators = MediaLicense::normalizeCreators('Robin (Person), Altimood (Organization)');
+        $creators = MediaLicense::normalizeCreators('Robin (Person), ExampleCreator (Organization)');
 
         self::assertSame([
             ['name' => 'Robin', 'type' => 'Person'],
-            ['name' => 'Altimood', 'type' => 'Organization'],
+            ['name' => 'ExampleCreator', 'type' => 'Organization'],
         ], $creators);
-        self::assertSame('Robin (Person), Altimood (Organization)', MediaLicense::formatCreators($creators));
+        self::assertSame('Robin (Person), ExampleCreator (Organization)', MediaLicense::formatCreators($creators));
     }
 
     /** Bare names are what a file gives; Person is the fallback, never a rejection. */
@@ -190,8 +190,8 @@ final class MediaLicenseTest extends TestCase
     public function testAnUnknownTypeFallsBackToPerson(): void
     {
         self::assertSame(
-            [['name' => 'Altimood', 'type' => 'Person']],
-            MediaLicense::normalizeCreators([['name' => 'Altimood', 'type' => 'Robot']]),
+            [['name' => 'ExampleCreator', 'type' => 'Person']],
+            MediaLicense::normalizeCreators([['name' => 'ExampleCreator', 'type' => 'Robot']]),
         );
     }
 

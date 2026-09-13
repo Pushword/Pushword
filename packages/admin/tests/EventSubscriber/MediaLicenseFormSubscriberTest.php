@@ -32,9 +32,9 @@ final class MediaLicenseFormSubscriberTest extends TestCase
     public function testASubmittedValueIsStored(): void
     {
         $media = new Media();
-        $this->submit($media, [MediaLicense::CREDIT_TEXT => 'Altimood']);
+        $this->submit($media, [MediaLicense::CREDIT_TEXT => 'ExampleCreditText']);
 
-        self::assertSame('Altimood', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertSame('ExampleCreditText', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
     }
 
     /** The collection editor submits one row per creator, each with its own type. */
@@ -43,13 +43,13 @@ final class MediaLicenseFormSubscriberTest extends TestCase
         $media = new Media();
         $this->submit($media, [MediaLicense::CREATOR => [
             ['name' => ' Robin ', 'type' => 'Person'],
-            ['name' => 'Altimood', 'type' => 'Organization'],
+            ['name' => 'ExampleCreator', 'type' => 'Organization'],
             ['name' => '', 'type' => 'Person'],
         ]]);
 
         self::assertSame([
             ['name' => 'Robin', 'type' => 'Person'],
-            ['name' => 'Altimood', 'type' => 'Organization'],
+            ['name' => 'ExampleCreator', 'type' => 'Organization'],
         ], MediaLicense::creators($media));
     }
 
@@ -83,16 +83,16 @@ final class MediaLicenseFormSubscriberTest extends TestCase
     public function testUrlsAreNormalized(): void
     {
         $media = new Media();
-        $this->submit($media, [MediaLicense::LICENSE => 'altimood.test/terms']);
+        $this->submit($media, [MediaLicense::LICENSE => 'example.test/terms']);
 
-        self::assertSame('https://altimood.test/terms', $media->getCustomPropertyScalar(MediaLicense::LICENSE));
+        self::assertSame('https://example.test/terms', $media->getCustomPropertyScalar(MediaLicense::LICENSE));
     }
 
     /** Submitted but empty is how the "clear" button makes a media stop emitting. */
     public function testAnEmptySubmittedFieldRemovesTheKey(): void
     {
         $media = new Media();
-        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Altimood');
+        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'ExampleCreditText');
         $media->setCustomProperty(MediaLicense::CREATOR, [['name' => 'Robin', 'type' => 'Person']]);
 
         $this->submit($media, [MediaLicense::CREDIT_TEXT => '', MediaLicense::CREATOR => '  ']);
@@ -108,28 +108,28 @@ final class MediaLicenseFormSubscriberTest extends TestCase
     public function testAnAbsentFieldLeavesItsValueAlone(): void
     {
         $media = new Media();
-        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Altimood');
+        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'ExampleCreditText');
 
-        $this->submit($media, [MediaLicense::LICENSE => 'https://altimood.test/terms']);
+        $this->submit($media, [MediaLicense::LICENSE => 'https://example.test/terms']);
 
-        self::assertSame('Altimood', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertSame('ExampleCreditText', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
     }
 
     /** Every EasyAdmin save goes through this subscriber, including the page form. */
     public function testARequestWithoutAnyLicenseFieldIsANoOp(): void
     {
         $media = new Media();
-        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Altimood');
+        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'ExampleCreditText');
 
         $this->submit($media, ['alt' => 'Refuge', 'tags' => 'montagne']);
 
-        self::assertSame('Altimood', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertSame('ExampleCreditText', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
     }
 
     public function testANonMediaEntityIsIgnored(): void
     {
         $page = new Page();
-        $request = new Request(request: ['Page' => [MediaLicense::CREDIT_TEXT => 'Altimood']]);
+        $request = new Request(request: ['Page' => [MediaLicense::CREDIT_TEXT => 'ExampleCreditText']]);
         $requestStack = new RequestStack([$request]);
 
         new MediaLicenseFormSubscriber($requestStack)

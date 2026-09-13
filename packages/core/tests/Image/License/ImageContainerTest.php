@@ -136,21 +136,21 @@ final class ImageContainerTest extends TestCase
     public function testStandaloneJpegMarkersCarryNoLength(): void
     {
         $xmp = ImageMetadataFixture::packet('<rdf:Description rdf:about=""'
-            .' xmlns:dc="http://purl.org/dc/elements/1.1/" dc:rights="Altimood"/>');
+            .' xmlns:dc="http://purl.org/dc/elements/1.1/" dc:rights="ExampleCreditText"/>');
         $signature = "http://ns.adobe.com/xap/1.0/\0";
         $app1 = "\xFF\xE1".pack('n', \strlen($signature.$xmp) + 2).$signature.$xmp;
 
         // TEM and a restart marker ahead of the segment that matters.
         $jpeg = "\xFF\xD8\xFF\x01\xFF\xD0".$app1."\xFF\xD9";
 
-        self::assertStringContainsString('Altimood', ImageContainer::read($this->write('standalone.jpg', $jpeg))->xmp);
+        self::assertStringContainsString('ExampleCreditText', ImageContainer::read($this->write('standalone.jpg', $jpeg))->xmp);
     }
 
     /** Both payloads can sit in one file, and finding one must not stop the walk. */
     public function testXmpAndC2paAreBothCollectedFromTheSameFile(): void
     {
         $xmp = ImageMetadataFixture::packet('<rdf:Description rdf:about=""'
-            .' xmlns:dc="http://purl.org/dc/elements/1.1/" dc:rights="Altimood"/>');
+            .' xmlns:dc="http://purl.org/dc/elements/1.1/" dc:rights="ExampleCreditText"/>');
         $manifest = ImageMetadataFixture::c2paActions('http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture');
 
         foreach ([
@@ -160,7 +160,7 @@ final class ImageContainerTest extends TestCase
         ] as $format => $path) {
             $container = ImageContainer::read($path);
 
-            self::assertStringContainsString('Altimood', $container->xmp, $format);
+            self::assertStringContainsString('ExampleCreditText', $container->xmp, $format);
             self::assertNotSame('', $container->c2pa, $format);
         }
     }
@@ -171,9 +171,9 @@ final class ImageContainerTest extends TestCase
         $path = ImageMetadataFixture::write(
             $this->dir.'/scan.jpg',
             ImageMetadataFixture::packet('<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/"'
-                .' dc:rights="Altimood"/>'),
+                .' dc:rights="ExampleCreditText"/>'),
         );
 
-        self::assertStringContainsString('Altimood', ImageContainer::read($path)->xmp);
+        self::assertStringContainsString('ExampleCreditText', ImageContainer::read($path)->xmp);
     }
 }
