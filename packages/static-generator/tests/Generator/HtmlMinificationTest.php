@@ -65,7 +65,7 @@ final class HtmlMinificationTest extends TestCase
         $binary = $this->worker($mode);
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('warning');
-        $this->minifier = new HtmlMinification($binary, 'timeout' === $mode ? 0.1 : 5.0, $logger);
+        $this->minifier = new HtmlMinification($binary, 'timeout' === $mode ? 0.5 : 5.0, $logger);
         $documents = [$this->html(), '<p> fragment </p><!-- comment -->'];
         $expected = array_map(HtmlMinifier::compress(...), $documents);
         self::assertSame($expected, $this->minifier->compressMany($documents));
