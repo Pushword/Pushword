@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pushword\StaticGenerator\Tests\Generator;
 
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use Pushword\StaticGenerator\Generator\HtmlMinification;
 use Pushword\StaticGenerator\Generator\HtmlMinifier;
 use Symfony\Component\Process\Process;
@@ -19,9 +18,7 @@ final class NativeHtmlMinificationTest extends TestCase
         self::assertIsString($json);
         $documents = json_decode($json, true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($documents);
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::never())->method('warning');
-        $minifier = new HtmlMinification($this->binary(), logger: $logger);
+        $minifier = new HtmlMinification($this->binary());
 
         try {
             foreach ($documents as $index => $html) {

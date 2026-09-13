@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pushword\StaticGenerator\Tests\Generator;
 
-use Psr\Log\LoggerInterface;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\Generator\AbstractGenerator;
 use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
@@ -20,19 +19,31 @@ final class NativeStaticGeneratorTest extends KernelTestCase
     public function testRealPublicationMatchesPhpIncludingLocalizedErrorPages(): void
     {
         $directory = sys_get_temp_dir().'/pushword-native-build-'.bin2hex(random_bytes(8));
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::never())->method('warning');
-        $native = new HtmlMinification(__DIR__.'/../target/release/pushword-html-minifier', logger: $logger);
+        $native = new HtmlMinification(__DIR__.'/../target/release/pushword-html-minifier');
 
         try {
+            // The first publication warms render caches; compare minifiers on the same content.
+            $this->build($directory.'/warmup', new HtmlMinification());
             $expected = $this->build($directory.'/php', new HtmlMinification());
             $actual = $this->build($directory.'/rust', $native);
             self::assertArrayHasKey('index.html', $expected);
+            self::assertStringContainsString('not-prose lg:-mx-40', $expected['index.html']);
             self::assertArrayHasKey('404.html', $expected);
             self::assertArrayHasKey('fr/404.html', $expected);
             self::assertSame(array_keys($expected), array_keys($actual));
             foreach ($expected as $path => $html) {
-                self::assertSame(hash('sha256', $html), hash('sha256', $actual[$path]), $path);
+                if ($html !== $actual[$path]) {
+                    $offset = 0;
+                    $limit = min(strlen($html), strlen($actual[$path]));
+                    while ($offset < $limit && $html[$offset] === $actual[$path][$offset]) {
+                        ++$offset;
+                    }
+
+                    $start = max(0, $offset - 80);
+                    self::fail($path.' differs at byte '.$offset."\nPHP: ".substr($html, $start, 160)."\nRust: ".substr($actual[$path], $start, 160));
+                }
+
+                self::assertSame($html, $actual[$path], $path);
             }
         } finally {
             $native->reset();

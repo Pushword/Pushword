@@ -31,9 +31,19 @@ while (false !== $line = fgets(\STDIN)) {
             'count' => [],
             'type' => [null, []],
             'object' => (object) ['0' => 'first', '1' => 'second'],
-            default => array_map(static function (mixed $html): string {
+            default => array_map(static function (mixed $html) use ($mode): string {
                 if (! is_string($html)) {
                     throw new RuntimeException('Expected HTML from the adapter');
+                }
+
+                if (str_contains($html, '/?x=&quot;[\\]^`{|}')) {
+                    if ('mismatch' === $mode) {
+                        return 'different';
+                    }
+
+                    require_once getcwd().'/vendor/autoload.php';
+
+                    return Pushword\StaticGenerator\Generator\HtmlMinifier::compress($html);
                 }
 
                 return 'native:'.getmypid().':'.$html;

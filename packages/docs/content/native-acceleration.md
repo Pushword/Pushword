@@ -90,8 +90,11 @@ The static-generator package contains a Rust port of
 protected `pre`/`code`/`script`/`textarea` handling, whitespace reduction and
 serialization compatibility rules. It uses an HTML parser library, not a
 complete external site generator.
+The adapter checks a URI serialization sample against the running PHP/libxml
+version before using native output. If it differs, that service uses PHP until
+reset so libxml's URI escaping does not change the published output.
 
-Tests compare exact PHP/Rust outputs for fixed and generated cases and two real
+Tests compare exact PHP/Rust outputs for fixed and generated cases and warmed
 development-site builds. They cover UTF-8, inline spacing, namespaces, URI
 attributes, code blocks, templates and native failure handling. Testing PHP with
 `proc_open` disabled verifies the shared-hosting path. The adapter and Rust binary
