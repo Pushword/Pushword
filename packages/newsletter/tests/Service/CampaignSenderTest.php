@@ -30,9 +30,9 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
     public function testArmingFreezesTheSegmentIntoRecipients(): void
     {
         $audience = $this->createAudience();
-        $this->createContact($audience, 'trek@example.tld', ['AmTrek']);
+        $this->createContact($audience, 'trek@example.tld', ['Hiking']);
         $this->createContact($audience, 'other@example.tld');
-        $campaign = $this->createCampaign($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']]);
+        $campaign = $this->createCampaign($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'Hiking']]);
 
         $count = $this->sender()->arm($campaign);
 

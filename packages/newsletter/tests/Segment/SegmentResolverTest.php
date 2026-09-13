@@ -62,14 +62,14 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
     public function testTagHasAndHasNot(): void
     {
         $audience = $this->createAudience();
-        $this->createContact($audience, 'trek@example.tld', ['AmTrek', 'AmClient']);
-        $this->createContact($audience, 'other@example.tld', ['AmBivouac']);
+        $this->createContact($audience, 'trek@example.tld', ['Hiking', 'Customer']);
+        $this->createContact($audience, 'other@example.tld', ['Camping']);
 
-        $has = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']]);
+        $has = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'Hiking']]);
         self::assertCount(1, $has);
         self::assertSame('trek@example.tld', $has[0]->email);
 
-        $hasNot = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'hasNot', 'value' => 'AmTrek']]);
+        $hasNot = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'hasNot', 'value' => 'Hiking']]);
         self::assertCount(1, $hasNot);
         self::assertSame('other@example.tld', $hasNot[0]->email);
     }
@@ -78,26 +78,26 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
     public function testTagMatchingIsExact(): void
     {
         $audience = $this->createAudience();
-        $this->createContact($audience, 'trek@example.tld', ['AmTrek']);
+        $this->createContact($audience, 'trek@example.tld', ['Hiking']);
 
-        self::assertSame(0, $this->resolver()->count($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'Am']]));
-        self::assertSame(1, $this->resolver()->count($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']]));
+        self::assertSame(0, $this->resolver()->count($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'Hik']]));
+        self::assertSame(1, $this->resolver()->count($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'Hiking']]));
     }
 
     /**
      * `_` and `%` are LIKE wildcards and legal tag characters at once. Without an
-     * escape they widen the pattern instead of failing, so `AmTrek_2026` would
-     * reach `AmTrek-2026` and a segment would silently mail the wrong people.
+     * escape they widen the pattern instead of failing, so `Hiking_2026` would
+     * reach `Hiking-2026` and a segment would silently mail the wrong people.
      */
     public function testATagHoldingLikeWildcardsMatchesItselfOnly(): void
     {
         $audience = $this->createAudience();
-        $this->createContact($audience, 'underscore@example.tld', ['AmTrek_2026']);
-        $this->createContact($audience, 'dash@example.tld', ['AmTrek-2026']);
+        $this->createContact($audience, 'underscore@example.tld', ['Hiking_2026']);
+        $this->createContact($audience, 'dash@example.tld', ['Hiking-2026']);
         $this->createContact($audience, 'percent@example.tld', ['100%Trek']);
         $this->createContact($audience, 'literal@example.tld', ['100Trek']);
 
-        $underscore = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek_2026']]);
+        $underscore = $this->resolver()->contacts($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'Hiking_2026']]);
         self::assertCount(1, $underscore);
         self::assertSame('underscore@example.tld', $underscore[0]->email);
 
@@ -106,7 +106,7 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
         self::assertSame('percent@example.tld', $percent[0]->email);
 
         // And the escape character itself is not a way back out of the escaping.
-        self::assertSame(0, $this->resolver()->count($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek!_2026']]));
+        self::assertSame(0, $this->resolver()->count($audience, [['field' => 'tag', 'op' => 'has', 'value' => 'Hiking!_2026']]));
     }
 
     /**
@@ -117,16 +117,16 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
     public function testAGroupMayBeNestedInsideAnAndedRule(): void
     {
         $audience = $this->createAudience();
-        $this->createContact($audience, 'vip@example.tld', ['AmTrek'], ['lastBoughtProduct' => 'tmb']);
-        $this->createContact($audience, 'pinned@example.tld', ['AmBivouac'], ['lastBoughtProduct' => 'gr54']);
-        $this->createContact($audience, 'browsing@example.tld', ['AmTrek']);
-        $this->createContact($audience, 'other@example.tld', ['AmOther'], ['lastBoughtProduct' => 'tmb']);
+        $this->createContact($audience, 'vip@example.tld', ['Hiking'], ['lastBoughtProduct' => 'tmb']);
+        $this->createContact($audience, 'pinned@example.tld', ['Camping'], ['lastBoughtProduct' => 'gr54']);
+        $this->createContact($audience, 'browsing@example.tld', ['Hiking']);
+        $this->createContact($audience, 'other@example.tld', ['Other'], ['lastBoughtProduct' => 'tmb']);
 
         $contacts = $this->resolver()->contacts($audience, [
             ['field' => 'prop.lastBoughtProduct', 'op' => 'isSet'],
             ['any' => [
-                ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
-                ['field' => 'tag', 'op' => 'has', 'value' => 'AmBivouac'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'Camping'],
             ]],
         ]);
 
@@ -145,18 +145,18 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
         $other = $this->createAudience();
-        $this->createContact($audience, 'mine@example.tld', ['AmTrek']);
-        $this->createContact($other, 'theirs@example.tld', ['AmTrek']);
+        $this->createContact($audience, 'mine@example.tld', ['Hiking']);
+        $this->createContact($other, 'theirs@example.tld', ['Hiking']);
 
-        $gone = $this->createContact($audience, 'gone@example.tld', ['AmTrek']);
+        $gone = $this->createContact($audience, 'gone@example.tld', ['Hiking']);
         $gone->unsubscribe();
 
         $this->entityManager->flush();
 
         $contacts = $this->resolver()->contacts($audience, ['any' => [
-            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'],
             ['any' => [
-                ['field' => 'tag', 'op' => 'has', 'value' => 'AmBivouac'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'Camping'],
                 ['field' => 'locale', 'op' => '!=', 'value' => 'zz'],
             ]],
         ]]);
@@ -295,12 +295,12 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
     public function testConditionsAreAnded(): void
     {
         $audience = $this->createAudience();
-        $this->createContact($audience, 'both@example.tld', ['AmTrek'], ['lastBoughtProduct' => 'tmb']);
-        $this->createContact($audience, 'tagOnly@example.tld', ['AmTrek']);
+        $this->createContact($audience, 'both@example.tld', ['Hiking'], ['lastBoughtProduct' => 'tmb']);
+        $this->createContact($audience, 'tagOnly@example.tld', ['Hiking']);
         $this->createContact($audience, 'propOnly@example.tld', [], ['lastBoughtProduct' => 'tmb']);
 
         $match = $this->resolver()->contacts($audience, [
-            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'],
             ['field' => 'prop.lastBoughtProduct', 'op' => '=', 'value' => 'tmb'],
         ]);
 
@@ -315,13 +315,13 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
     public function testAnAnyGroupTakesEitherConditionAndCountsNobodyTwice(): void
     {
         $audience = $this->createAudience();
-        $this->createContact($audience, 'trek@example.tld', ['AmTrek']);
+        $this->createContact($audience, 'trek@example.tld', ['Hiking']);
         $this->createContact($audience, 'vip@example.tld', ['VIP']);
-        $this->createContact($audience, 'both@example.tld', ['AmTrek', 'VIP']);
+        $this->createContact($audience, 'both@example.tld', ['Hiking', 'VIP']);
         $this->createContact($audience, 'neither@example.tld');
 
         $criteria = ['any' => [
-            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'],
             ['field' => 'tag', 'op' => 'has', 'value' => 'VIP'],
         ]];
 
@@ -332,14 +332,14 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
     public function testAnAnyGroupNeverWidensPastTheGuards(): void
     {
         $audience = $this->createAudience();
-        $this->createContact($audience, 'subscribed@example.tld', ['AmTrek']);
-        $this->createContact($this->createAudience(), 'elsewhere@example.tld', ['AmTrek']);
+        $this->createContact($audience, 'subscribed@example.tld', ['Hiking']);
+        $this->createContact($this->createAudience(), 'elsewhere@example.tld', ['Hiking']);
 
-        $this->createContact($audience, 'gone@example.tld', ['AmTrek'])->unsubscribe();
+        $this->createContact($audience, 'gone@example.tld', ['Hiking'])->unsubscribe();
         $this->entityManager->flush();
 
         $match = $this->resolver()->contacts($audience, ['any' => [
-            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'],
             ['field' => 'tag', 'op' => 'has', 'value' => 'VIP'],
         ]]);
 
@@ -383,9 +383,9 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
     public function testMatchesAgreesWithTheListForOneContact(): void
     {
         $audience = $this->createAudience();
-        $trekker = $this->createContact($audience, 'trek@example.tld', ['AmTrek']);
+        $trekker = $this->createContact($audience, 'trek@example.tld', ['Hiking']);
         $other = $this->createContact($audience, 'other@example.tld');
-        $criteria = [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']];
+        $criteria = [['field' => 'tag', 'op' => 'has', 'value' => 'Hiking']];
 
         self::assertTrue($this->resolver()->matches($trekker, $criteria));
         self::assertFalse($this->resolver()->matches($other, $criteria));
@@ -394,12 +394,12 @@ final class SegmentResolverTest extends AbstractNewsletterTestCase
     public function testMatchesIsFalseForAnUnsubscribedContact(): void
     {
         $audience = $this->createAudience();
-        $contact = $this->createContact($audience, 'gone@example.tld', ['AmTrek']);
+        $contact = $this->createContact($audience, 'gone@example.tld', ['Hiking']);
         $contact->unsubscribe();
 
         $this->entityManager->flush();
 
-        self::assertFalse($this->resolver()->matches($contact, [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']]));
+        self::assertFalse($this->resolver()->matches($contact, [['field' => 'tag', 'op' => 'has', 'value' => 'Hiking']]));
     }
 
     public function testLocaleFilter(): void

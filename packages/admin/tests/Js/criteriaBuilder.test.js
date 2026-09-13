@@ -6,9 +6,9 @@ const roundTrip = (text) => serializeRule(parseRule(text))
 
 describe('parseRule', () => {
   it('reads a bare list as an "all"', () => {
-    expect(parseRule('[{"field":"tag","op":"has","value":"AmTrek"}]')).toEqual({
+    expect(parseRule('[{"field":"tag","op":"has","value":"Hiking"}]')).toEqual({
       any: false,
-      children: [{ field: 'tag', op: 'has', value: 'AmTrek' }],
+      children: [{ field: 'tag', op: 'has', value: 'Hiking' }],
     })
   })
 
@@ -113,7 +113,7 @@ describe('pruneGroup', () => {
 
 describe('the round trip', () => {
   it.each([
-    '[{"field":"tag","op":"has","value":"AmTrek"}]',
+    '[{"field":"tag","op":"has","value":"Hiking"}]',
     '{"any":[{"field":"tag","op":"has","value":"a"},{"field":"tag","op":"has","value":"b"}]}',
     '{"any":[{"field":"ancestor","op":"=","value":"blog"},{"all":[{"field":"template","op":"=","value":"article.html.twig"}]}]}',
     '[{"field":"createdAt","op":"olderThan","value":"7d"},{"field":"prop.lastSeenAt","op":"isNotSet"}]',

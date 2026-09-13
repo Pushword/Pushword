@@ -215,12 +215,12 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $form = $crawler->filter('form[name="Campaign"]')->form();
         $form['Campaign[subject]'] = 'Good segment';
         $form['Campaign[audience]'] = (string) $audience->id;
-        $form['Campaign[segmentAsJson]'] = '[{"field":"tag","op":"has","value":"AmTrek"}]';
+        $form['Campaign[segmentAsJson]'] = '[{"field":"tag","op":"has","value":"Hiking"}]';
         $client->submit($form);
 
         $campaign = $this->entityManager()->getRepository(Campaign::class)->findOneBy(['subject' => 'Good segment']);
         self::assertInstanceOf(Campaign::class, $campaign);
-        self::assertSame([['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']], $campaign->segment);
+        self::assertSame([['field' => 'tag', 'op' => 'has', 'value' => 'Hiking']], $campaign->segment);
     }
 
     /** The counters say how many; the ledger says which, and why a mail did not leave. */
@@ -490,7 +490,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $this->seed();
 
         $contactFields = $this->subArray($this->vocabulary($client, 'contact', ''), 'fields');
-        self::assertContains('AmTrek', $this->subArray($this->subArray($contactFields, 'tag'), 'suggestions'));
+        self::assertContains('Hiking', $this->subArray($this->subArray($contactFields, 'tag'), 'suggestions'));
 
         // `parent` and `ancestor` take a slug that has pages under it, which is
         // the only set of slugs short enough to offer. The section is created
@@ -594,7 +594,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $preview = $this->preview($client, [
             'side' => 'contact',
             'audience' => $audience->id,
-            'rule' => '[{"field":"tag","op":"has","value":"AmTrek"}]',
+            'rule' => '[{"field":"tag","op":"has","value":"Hiking"}]',
         ]);
 
         self::assertSame(1, $preview['count']);
@@ -1273,12 +1273,12 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $audience->name = 'Admin test';
         $audience->mainHost = 'localhost.dev';
         $audience->fromEmail = 'newsletter@localhost.dev';
-        $audience->interests = ['AmTrek'];
+        $audience->interests = ['Hiking'];
 
         $entityManager->persist($audience);
 
         $contact = new Contact($audience, 'admin-contact@example.tld');
-        $contact->setTags(['AmTrek'])->optIn(false);
+        $contact->setTags(['Hiking'])->optIn(false);
         $entityManager->persist($contact);
         $entityManager->flush();
 

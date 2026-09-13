@@ -27,14 +27,14 @@ final class UtmTagTest extends TestCase
     public function testAStepIsNumberedFromOneUnderItsAutomationName(): void
     {
         $automation = new Automation();
-        $automation->name = 'Bienvenue AmTrek';
+        $automation->name = 'Bienvenue randonneurs';
 
         $step = new AutomationStep();
         $step->position = 1;
 
         $tag = UtmTag::forStep($automation, $step);
 
-        self::assertSame('bienvenue-amtrek', $tag->campaign);
+        self::assertSame('bienvenue-randonneurs', $tag->campaign);
         self::assertSame('step-2', $tag->content);
     }
 }

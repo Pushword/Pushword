@@ -31,7 +31,7 @@ final class SegmentCriteriaTest extends TestCase
     public function testNormalizeReadsTheThreeSupportedShapes(): void
     {
         $rule = SegmentCriteria::normalize([
-            ['field' => ' tag ', 'op' => 'has', 'value' => 'AmTrek'],
+            ['field' => ' tag ', 'op' => 'has', 'value' => 'Hiking'],
             ['field' => 'createdAt', 'op' => 'olderThan', 'value' => '7d'],
             ['field' => 'prop.lastBoughtProduct', 'op' => '=', 'value' => 'tmb'],
         ]);
@@ -40,15 +40,15 @@ final class SegmentCriteriaTest extends TestCase
         self::assertInstanceOf(Group::class, $rule);
         $first = $rule->children[0];
         self::assertInstanceOf(Condition::class, $first);
-        self::assertSame('AmTrek', $first->value);
+        self::assertSame('Hiking', $first->value);
     }
 
     /** A bare list is ANDed; `any` is the one thing a rule has to say out loud. */
     public function testAGroupCarriesItsOperator(): void
     {
         $conditions = [
-            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
-            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek-VIP'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking-VIP'],
         ];
 
         self::assertSame('OR(tag,tag)', $this->shape(SegmentCriteria::normalize(['any' => $conditions])));
@@ -65,8 +65,8 @@ final class SegmentCriteriaTest extends TestCase
         $rule = SegmentCriteria::normalize([
             ['field' => 'prop.lastBoughtProduct', 'op' => 'isSet'],
             ['any' => [
-                ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
-                ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek-VIP'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking-VIP'],
             ]],
         ]);
 
@@ -80,14 +80,14 @@ final class SegmentCriteriaTest extends TestCase
      */
     public function testTheJsonRoundTripKeepsEveryOperator(): void
     {
-        $rule = ['any' => [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']]];
+        $rule = ['any' => [['field' => 'tag', 'op' => 'has', 'value' => 'Hiking']]];
         self::assertSame($rule, SegmentCriteria::fromJson(SegmentCriteria::toJson($rule)));
 
         $nested = [
             ['field' => 'prop.lastBoughtProduct', 'op' => 'isSet', 'value' => ''],
             ['any' => [
-                ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
-                ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek-VIP'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking-VIP'],
             ]],
         ];
         self::assertSame($nested, SegmentCriteria::fromJson(SegmentCriteria::toJson($nested)));
@@ -98,7 +98,7 @@ final class SegmentCriteriaTest extends TestCase
         $this->expectException(SegmentException::class);
         $this->expectExceptionMessageMatches('/must hold a list of conditions/');
 
-        SegmentCriteria::normalize(['any' => 'AmTrek']);
+        SegmentCriteria::normalize(['any' => 'Hiking']);
     }
 
     public function testARuleCannotBeBothAnyAndAll(): void
@@ -191,7 +191,7 @@ final class SegmentCriteriaTest extends TestCase
 
     public function testJsonRoundTrip(): void
     {
-        $criteria = [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']];
+        $criteria = [['field' => 'tag', 'op' => 'has', 'value' => 'Hiking']];
 
         self::assertSame($criteria, SegmentCriteria::fromJson(SegmentCriteria::toJson($criteria)));
     }
@@ -221,14 +221,14 @@ final class SegmentCriteriaTest extends TestCase
         $this->expectException(SegmentException::class);
         $this->expectExceptionMessageMatches('/must be a JSON list/');
 
-        SegmentCriteria::fromJson('tag:AmTrek AND locale:fr');
+        SegmentCriteria::fromJson('tag:Hiking AND locale:fr');
     }
 
     public function testValidateRejectsANonList(): void
     {
         $this->expectException(SegmentException::class);
 
-        SegmentCriteria::validate('tag has AmTrek');
+        SegmentCriteria::validate('tag has Hiking');
     }
 
     public function testPropertyDetection(): void
@@ -245,8 +245,8 @@ final class SegmentCriteriaTest extends TestCase
     public function testNarrowingARule(): void
     {
         $locale = ['field' => 'locale', 'op' => '=', 'value' => 'fr'];
-        $tag = ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'];
-        $vip = ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek-VIP'];
+        $tag = ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'];
+        $vip = ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking-VIP'];
 
         self::assertSame([$locale], CriteriaGroup::and([], $locale), 'an empty rule becomes the condition');
         self::assertSame([$tag, $locale], CriteriaGroup::and([$tag], $locale), 'a bare list is appended to');
@@ -265,7 +265,7 @@ final class SegmentCriteriaTest extends TestCase
     public function testANarrowedRuleStillNormalises(): void
     {
         $narrowed = CriteriaGroup::and(
-            ['any' => [['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek']]],
+            ['any' => [['field' => 'tag', 'op' => 'has', 'value' => 'Hiking']]],
             ['field' => 'locale', 'op' => '=', 'value' => 'fr'],
         );
 

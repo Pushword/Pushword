@@ -20,16 +20,16 @@ final class LikePatternTest extends TestCase
     /** @return iterable<string, array{string, string}> */
     public static function values(): iterable
     {
-        yield 'an ordinary value is untouched' => ['AmTrek', 'AmTrek'];
+        yield 'an ordinary value is untouched' => ['Hiking', 'Hiking'];
 
-        yield 'an underscore is a wildcard and a legal character' => ['AmTrek_2026', 'AmTrek!_2026'];
+        yield 'an underscore is a wildcard and a legal character' => ['Hiking_2026', 'Hiking!_2026'];
 
         yield 'so is a percent' => ['100%Trek', '100!%Trek'];
 
         // Without this the escape character would be a way back out of the
-        // escaping: `AmTrek!_x` would arrive as a pattern meaning `AmTrek` + any
+        // escaping: `Hiking!_x` would arrive as a pattern meaning `Hiking` + any
         // character + `x`.
-        yield 'the escape character escapes itself' => ['AmTrek!_x', 'AmTrek!!!_x'];
+        yield 'the escape character escapes itself' => ['Hiking!_x', 'Hiking!!!_x'];
 
         yield 'every occurrence, not just the first' => ['a_b_c', 'a!_b!_c'];
 

@@ -170,8 +170,8 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
         $this->createContact($audience, 'fr@example.tld', locale: 'fr');
         $this->createContact($audience, 'de@example.tld', locale: 'de');
         $automation = $this->automation($audience, recipientWhen: ['any' => [
-            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
-            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek-VIP'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking-VIP'],
         ]]);
 
         $this->createPage('blog/bonjour', publishedAt: '-10 minutes', locale: 'fr');
@@ -180,8 +180,8 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
 
         self::assertSame([
             ['any' => [
-                ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
-                ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek-VIP'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'],
+                ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking-VIP'],
             ]],
             ['field' => 'locale', 'op' => '=', 'value' => 'fr'],
         ], $this->onlyCampaignOf($automation)->segment);
@@ -433,9 +433,9 @@ final class PageAutomationTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience();
         $this->createContact($audience, 'reader@example.tld');
-        $this->createContact($audience, 'subscriber@example.tld', tags: ['AmTrek']);
+        $this->createContact($audience, 'subscriber@example.tld', tags: ['Hiking']);
         $this->automation($audience, recipientWhen: [
-            ['field' => 'tag', 'op' => 'has', 'value' => 'AmTrek'],
+            ['field' => 'tag', 'op' => 'has', 'value' => 'Hiking'],
         ], steps: [['delay' => 0, 'subject' => 'New article: {{ page.h1 }}']]);
         $this->createPage('blog/hello', publishedAt: '-10 minutes');
 

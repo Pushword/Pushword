@@ -43,23 +43,23 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
 
     public function testOnlyDeclaredInterestsReachTheAddress(): void
     {
-        $audience = $this->createAudience(interests: ['AmTrek']);
+        $audience = $this->createAudience(interests: ['Hiking']);
 
-        $html = $this->extension()->renderForm($audience->slug, ['AmTrek', 'Undeclared']);
+        $html = $this->extension()->renderForm($audience->slug, ['Hiking', 'Undeclared']);
 
-        self::assertStringContainsString('interests=AmTrek', $html);
+        self::assertStringContainsString('interests=Hiking', $html);
         self::assertStringNotContainsString('Undeclared', $html);
     }
 
     /** An interest one list declares must not be posted as if the other one knew it. */
     public function testInterestsSurviveWhenAnyOfferedAudienceDeclaresThem(): void
     {
-        $withInterest = $this->createAudience(interests: ['AmTrek']);
+        $withInterest = $this->createAudience(interests: ['Hiking']);
         $without = $this->createAudience();
 
-        $html = $this->extension()->renderForm([$without->slug, $withInterest->slug], ['AmTrek', 'Undeclared']);
+        $html = $this->extension()->renderForm([$without->slug, $withInterest->slug], ['Hiking', 'Undeclared']);
 
-        self::assertStringContainsString('interests=AmTrek', $html);
+        self::assertStringContainsString('interests=Hiking', $html);
         self::assertStringNotContainsString('Undeclared', $html);
     }
 
@@ -92,13 +92,13 @@ final class NewsletterExtensionTest extends AbstractNewsletterTestCase
     /** What a front end fetching the form itself needs, and nothing around it. */
     public function testTheAddressIsAvailableOnItsOwn(): void
     {
-        $audience = $this->createAudience(interests: ['AmTrek']);
+        $audience = $this->createAudience(interests: ['Hiking']);
 
-        $url = $this->extension()->formUrl($audience->slug, ['AmTrek'], 'footer');
+        $url = $this->extension()->formUrl($audience->slug, ['Hiking'], 'footer');
 
         self::assertStringStartsWith('https://localhost.dev/newsletter/form?', (string) $url);
         self::assertStringContainsString('audiences='.$audience->slug, (string) $url);
-        self::assertStringContainsString('interests=AmTrek', (string) $url);
+        self::assertStringContainsString('interests=Hiking', (string) $url);
         self::assertStringContainsString('source=footer', (string) $url);
     }
 
