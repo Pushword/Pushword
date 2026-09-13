@@ -29,22 +29,16 @@ final class RenderedPageFactsIntegrationTest extends KernelTestCase
         $html = '<div id="found"></div><a href="#found">yes</a><a href="#missing">no</a>'
             .'<a href="/other">other</a><img src="/lake.jpg"><img src="/lake.jpg" srcset="/other.jpg 1x">'
             .'<span data-rot="'.$obfuscated.'">hidden</span><div data-bg="/background.jpg"></div>'
+            .'<a href="mailto:editor@example.tld">email</a>'
             .'<code>&lt;a href="/example-only"&gt;example&lt;/a&gt; date(M)</code>'
             .'<meta name="description" content="date(Y)">';
         $facts = new RenderedPageFacts(
-            ['#found', '#missing', '/other'],
+            ['#found', '#missing', '/other', 'mailto:editor@example.tld'],
             ['/lake.jpg'],
             ['found'],
-            [
-                ['name' => 'href', 'value' => '#found'],
-                ['name' => 'href', 'value' => '#missing'],
-                ['name' => 'href', 'value' => '/other'],
-                ['name' => 'src', 'value' => '/lake.jpg'],
-                ['name' => 'src', 'value' => '/lake.jpg'],
-                ['name' => 'data-rot', 'value' => $obfuscated],
-                ['name' => 'data-bg', 'value' => '/background.jpg'],
-            ],
-            ['/other.jpg 1x'],
+            ['#found', '#missing', '/other', '/lake.jpg', '/hidden', '/background.jpg', '/other.jpg'],
+            ['#found', '#missing', '/other', '/lake.jpg', '/background.jpg', '/other.jpg'],
+            ['mailto:editor@example.tld'],
             ['date(Y)'],
         );
 
@@ -66,7 +60,7 @@ final class RenderedPageFactsIntegrationTest extends KernelTestCase
         self::assertSame($expectedLinks, $links->scan($page, $html, $facts));
         self::assertSame($expectedImages, $images->scan($page, $html, $facts));
         self::assertSame($expectedDates, $dates->scan($page, $html, $facts));
-        $withoutDates = new RenderedPageFacts($facts->hrefs, $facts->missingAlt, $facts->anchors, $facts->linkedAttributes, $facts->srcsets, []);
+        $withoutDates = new RenderedPageFacts($facts->hrefs, $facts->missingAlt, $facts->anchors, $facts->linkedDocs, $facts->crawlableLinks, $facts->mailtoLinks, []);
         self::assertSame([], $dates->scan($page, $html, $withoutDates));
         $graph->reset();
         $graph->scan($page, $html, $facts);

@@ -17,6 +17,7 @@ use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\PageScanner\Scanner\LinkedDocsScanner;
 use Pushword\PageScanner\Scanner\ParallelUrlChecker;
+use Pushword\PageScanner\Scanner\RenderedPageFacts;
 
 use function Safe\file_get_contents;
 
@@ -683,6 +684,22 @@ final class LinkedDocsScannerTest extends KernelTestCase
         });
     }
 
+    public function testNativePreparedLinksPreserveCrawlability(): void
+    {
+        $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
+            $page = $this->getPage('scan-linking-page', 'localhost.dev');
+            $html = '<a href="/noindex-target">link</a>';
+            $obfuscated = new RenderedPageFacts([], [], [], ['/noindex-target'], [], [], []);
+            $crawlable = new RenderedPageFacts([], [], [], ['/noindex-target'], ['/noindex-target'], [], []);
+
+            self::assertSame([], $this->messages($scanner, $page, $html, $obfuscated));
+            self::assertSame(
+                ['<code>/noindex-target</code> '.$this->transNoindex()],
+                $this->messages($scanner, $page, $html, $crawlable),
+            );
+        });
+    }
+
     public function testIndexablePageIsNotReported(): void
     {
         $this->withNoindexPage(function (LinkedDocsScanner $scanner): void {
@@ -1068,9 +1085,9 @@ final class LinkedDocsScannerTest extends KernelTestCase
      *
      * @return string[]
      */
-    private function messages(LinkedDocsScanner $scanner, Page $page, string $pageHtml): array
+    private function messages(LinkedDocsScanner $scanner, Page $page, string $pageHtml, ?RenderedPageFacts $facts = null): array
     {
-        return array_column($scanner->scan($page, $pageHtml), 'message');
+        return array_column($scanner->scan($page, $pageHtml, $facts), 'message');
     }
 
     private function getPage(string $slug = 'homepage', string $host = ''): Page

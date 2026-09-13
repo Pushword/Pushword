@@ -21,11 +21,11 @@ For page scans, build `vendor/pushword/page-scanner/rust`, deploy its
 `pushword-page-facts` executable, and set
 `pushword_page_scanner.native_page_facts` to that path. The optional
 `native_page_facts_timeout` defaults to five seconds. Clear the Symfony
-container cache after changing the setting. The worker extracts link candidates,
-responsive-image URLs, missing-alt labels, same-page anchors and unresolved date
-shortcodes from rendered HTML; PHP still does URL checks, database lookups and
-report formatting. The page-scanner Rust README records the protocol, corpus parity checks and
-measurement limits.
+container cache after changing the setting. The worker prepares links from rendered
+HTML, including `data-rot` decoding, responsive-image URLs and crawlability. It also
+extracts missing-alt labels, same-page anchors and unresolved date shortcodes. PHP
+still does URL checks, database lookups and report formatting. The page-scanner Rust
+README records the protocol, corpus parity checks and measurement limits.
 
 ## Organization decision
 

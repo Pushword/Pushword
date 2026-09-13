@@ -8,19 +8,21 @@ namespace Pushword\PageScanner\Scanner;
 final readonly class RenderedPageFacts
 {
     /**
-     * @param list<string>                             $hrefs
-     * @param list<string>                             $missingAlt
-     * @param list<string>                             $anchors
-     * @param list<array{name: string, value: string}> $linkedAttributes
-     * @param list<string>                             $srcsets
-     * @param list<string>                             $dateShortcodes
+     * @param list<string> $hrefs
+     * @param list<string> $missingAlt
+     * @param list<string> $anchors
+     * @param list<string> $linkedDocs
+     * @param list<string> $crawlableLinks
+     * @param list<string> $mailtoLinks
+     * @param list<string> $dateShortcodes
      */
     public function __construct(
         public array $hrefs,
         public array $missingAlt,
         public array $anchors,
-        public array $linkedAttributes,
-        public array $srcsets,
+        public array $linkedDocs,
+        public array $crawlableLinks,
+        public array $mailtoLinks,
         public array $dateShortcodes,
     ) {
     }

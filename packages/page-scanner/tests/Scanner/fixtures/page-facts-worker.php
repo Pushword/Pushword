@@ -14,8 +14,9 @@ while (false !== ($line = fgets(\STDIN))) {
             'hrefs' => ['/one'],
             'missing_alt' => ['/lake.jpg'],
             'anchors' => ['section'],
-            'linked_attributes' => [['name' => 'href', 'value' => '/one']],
-            'srcsets' => ['/lake.jpg 1x'],
+            'linked_docs' => ['/one', '/lake.jpg'],
+            'crawlable_links' => ['/one', '/lake.jpg'],
+            'mailto_links' => ['mailto:editor@example.tld'],
             'date_shortcodes' => ['date(Y)'],
         ],
         $request->documents,
@@ -26,12 +27,12 @@ while (false !== ($line = fgets(\STDIN))) {
         $documents[0]['hrefs'] = ['key' => '/one'];
     } elseif ('invalid-value' === $mode) {
         $documents[0]['missing_alt'] = [123];
-    } elseif ('invalid-attribute' === $mode) {
-        $documents[0]['linked_attributes'] = [['name' => 123, 'value' => '/one']];
-    } elseif ('invalid-attribute-list' === $mode) {
-        $documents[0]['linked_attributes'] = ['key' => ['name' => 'href', 'value' => '/one']];
-    } elseif ('missing-date' === $mode) {
-        unset($documents[0]['date_shortcodes']);
+    } elseif ('invalid-link' === $mode) {
+        $documents[0]['linked_docs'] = [123];
+    } elseif ('invalid-crawlable-list' === $mode) {
+        $documents[0]['crawlable_links'] = ['key' => '/one'];
+    } elseif ('missing-links' === $mode) {
+        unset($documents[0]['linked_docs']);
     } elseif ('invalid-date' === $mode) {
         $documents[0]['date_shortcodes'] = [123];
     }

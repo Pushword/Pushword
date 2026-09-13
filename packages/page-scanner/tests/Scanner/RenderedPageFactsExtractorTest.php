@@ -47,8 +47,9 @@ final class RenderedPageFactsExtractorTest extends TestCase
             ['/one'],
             ['/lake.jpg'],
             ['section'],
-            [['name' => 'href', 'value' => '/one']],
-            ['/lake.jpg 1x'],
+            ['/one', '/lake.jpg'],
+            ['/one', '/lake.jpg'],
+            ['mailto:editor@example.tld'],
             ['date(Y)'],
         );
 
@@ -72,8 +73,9 @@ final class RenderedPageFactsExtractorTest extends TestCase
             ['/one'],
             ['/lake.jpg'],
             ['section'],
-            [['name' => 'href', 'value' => '/one']],
-            ['/lake.jpg 1x'],
+            ['/one', '/lake.jpg'],
+            ['/one', '/lake.jpg'],
+            ['mailto:editor@example.tld'],
             ['date(Y)'],
         ), $this->extractor->extract('<p>third</p>'));
     }
@@ -84,9 +86,9 @@ final class RenderedPageFactsExtractorTest extends TestCase
         yield 'missing field' => ['missing-field'];
         yield 'non-list' => ['invalid-list'];
         yield 'non-string' => ['invalid-value'];
-        yield 'invalid linked attribute' => ['invalid-attribute'];
-        yield 'non-list linked attributes' => ['invalid-attribute-list'];
-        yield 'old worker without date shortcodes' => ['missing-date'];
+        yield 'invalid linked document' => ['invalid-link'];
+        yield 'non-list crawlable links' => ['invalid-crawlable-list'];
+        yield 'old worker without prepared links' => ['missing-links'];
         yield 'non-string date shortcode' => ['invalid-date'];
     }
 

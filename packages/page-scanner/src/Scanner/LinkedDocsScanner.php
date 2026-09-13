@@ -304,32 +304,33 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     private function getLinkedDocs(): array
     {
-        $matches = [];
-        if (null === $this->nativeFacts) {
-            $urlInAttributes = ' '.$this->prepareForRegex(['href', 'data-rot', 'src', 'data-img', 'data-bg']);
-            $regex = '/'.$urlInAttributes.'=((["\'])([^\3]+)\3|([^\s>]+)[\s>])/iU';
-            preg_match_all($regex, $this->stripCodeSamples(), $matches);
+        if (null !== $this->nativeFacts) {
+            foreach ($this->nativeFacts->mailtoLinks as $uri) {
+                $this->addError(ScanErrorCode::LinkMailto, '<code>'.$uri.'</code> '.$this->trans('page_scanObfuscateMail'));
+            }
+
+            $this->crawlableLinks = array_fill_keys($this->nativeFacts->crawlableLinks, true);
+
+            return $this->nativeFacts->linkedDocs;
         }
+
+        $matches = [];
+        $urlInAttributes = ' '.$this->prepareForRegex(['href', 'data-rot', 'src', 'data-img', 'data-bg']);
+        $regex = '/'.$urlInAttributes.'=((["\'])([^\3]+)\3|([^\s>]+)[\s>])/iU';
+        preg_match_all($regex, $this->stripCodeSamples(), $matches);
 
         if (null === $matches) {
             throw new Exception();
         }
 
         $linkedDocs = [];
-        $matchesCount = null === $this->nativeFacts
-            ? (is_countable($matches[0] ?? null) ? \count($matches[0]) : 0)
-            : \count($this->nativeFacts->linkedAttributes);
+        $matchesCount = is_countable($matches[0] ?? null) ? \count($matches[0]) : 0;
         for ($k = 0; $k < $matchesCount; ++$k) {
-            if (null !== $this->nativeFacts) {
-                $uri = $this->nativeFacts->linkedAttributes[$k]['value'];
-                $isDataRotAttribute = 'data-rot' === $this->nativeFacts->linkedAttributes[$k]['name'];
-            } else {
-                // An unmatched group is empty, never unset: the quoted value
-                // (4) is empty when the attribute came unquoted (5).
-                /** @var string */
-                $uri = '' !== $matches[4][$k] ? $matches[4][$k] : $matches[5][$k]; // @phpstan-ignore-line
-                $isDataRotAttribute = 'data-rot' === $matches[1][$k]; // @phpstan-ignore-line
-            }
+            // An unmatched group is empty, never unset: the quoted value
+            // (4) is empty when the attribute came unquoted (5).
+            /** @var string */
+            $uri = '' !== $matches[4][$k] ? $matches[4][$k] : $matches[5][$k]; // @phpstan-ignore-line
+            $isDataRotAttribute = 'data-rot' === $matches[1][$k]; // @phpstan-ignore-line
 
             $uri = $isDataRotAttribute ? LinkProvider::decrypt($uri) : $uri;
             if ($this->isMailtoOrTelLink($uri) && ! $isDataRotAttribute) {
@@ -362,12 +363,8 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     private function extractSrcsetUris(): array
     {
-        if (null === $this->nativeFacts) {
-            preg_match_all('/\s(?:srcset|imagesrcset|data-srcset)=(["\'])(.*?)\1/i', $this->stripCodeSamples(), $matches);
-            $srcsets = isset($matches[2]) && \is_array($matches[2]) ? $matches[2] : [];
-        } else {
-            $srcsets = $this->nativeFacts->srcsets;
-        }
+        preg_match_all('/\s(?:srcset|imagesrcset|data-srcset)=(["\'])(.*?)\1/i', $this->stripCodeSamples(), $matches);
+        $srcsets = isset($matches[2]) && \is_array($matches[2]) ? $matches[2] : [];
 
         $uris = [];
         foreach ($srcsets as $srcset) {

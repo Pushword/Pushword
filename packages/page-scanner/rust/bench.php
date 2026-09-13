@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\NativeWorker;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Finder\Finder;
@@ -18,7 +19,7 @@ if (! is_executable($binary)) {
     throw new RuntimeException('Build the release worker with cargo build --release --manifest-path packages/page-scanner/rust/Cargo.toml');
 }
 
-/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>, linked_attributes: list<array{name: string, value: string}>, srcsets: list<string>, date_shortcodes: list<string>} */
+/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>, linked_docs: list<string>, crawlable_links: list<string>, mailto_links: list<string>, date_shortcodes: list<string>} */
 function phpFacts(string $html): array
 {
     preg_match_all('/<a\s[^>]*?href=(["\'])(?P<href>[^"\']*)\1/i', $html, $links);
@@ -60,15 +61,35 @@ function phpFacts(string $html): array
 
     $searchable = preg_replace('#<(code|pre)\b[^>]*>.*?</\1>#is', '', $html) ?? $html;
     preg_match_all('/ (href|data\-rot|src|data\-img|data\-bg)=((["\'])([^\3]+)\3|([^\s>]+)[\s>])/iU', $searchable, $attributes);
-    $linkedAttributes = [];
+    $linkedDocs = [];
+    $crawlableLinks = [];
+    $mailtoLinks = [];
     foreach ($attributes[0] as $index => $_) {
-        $linkedAttributes[] = [
-            'name' => $attributes[1][$index],
-            'value' => '' !== $attributes[4][$index] ? $attributes[4][$index] : $attributes[5][$index],
-        ];
+        $obfuscated = 'data-rot' === $attributes[1][$index];
+        $uri = '' !== $attributes[4][$index] ? $attributes[4][$index] : $attributes[5][$index];
+        $uri = $obfuscated ? LinkProvider::decrypt($uri) : $uri;
+        if (! $obfuscated && (str_contains($uri, 'mailto:') || str_contains($uri, 'tel:'))) {
+            $mailtoLinks[] = $uri;
+        } elseif ('' !== $uri && phpWebLink($uri)) {
+            if (! $obfuscated) {
+                $crawlableLinks[$uri] = true;
+            }
+
+            $linkedDocs[] = $uri;
+        }
     }
 
     preg_match_all('/\s(?:srcset|imagesrcset|data-srcset)=(["\'])(.*?)\1/i', $searchable, $srcsets);
+    foreach ($srcsets[2] as $srcset) {
+        foreach (explode(',', $srcset) as $entry) {
+            $uri = preg_split('/\s+/', trim($entry))[0] ?? '';
+            if ('' !== $uri && phpWebLink($uri)) {
+                $crawlableLinks[$uri] = true;
+                $linkedDocs[] = $uri;
+            }
+        }
+    }
+
     $withoutLiterals = preg_replace('#<(code|pre|script|style)\b[^>]*>.*?</\1>#is', '', $html) ?? $html;
     preg_match_all('/\bdate\([\'"]?%?(?:Y[-+]1|[YSWBMAe])[\'"]?\)/i', $withoutLiterals, $dates);
 
@@ -76,10 +97,22 @@ function phpFacts(string $html): array
         'hrefs' => $links['href'],
         'missing_alt' => $missingAlt,
         'anchors' => $anchors,
-        'linked_attributes' => $linkedAttributes,
-        'srcsets' => $srcsets[2],
+        'linked_docs' => array_values(array_unique($linkedDocs)),
+        'crawlable_links' => array_map(strval(...), array_keys($crawlableLinks)),
+        'mailto_links' => $mailtoLinks,
         'date_shortcodes' => array_values(array_unique($dates[0])),
     ];
+}
+
+function phpWebLink(string $uri): bool
+{
+    foreach (['https://wa.me/', 'https://maps.app.goo.gl', 'https://goo.gl/', 'https://g.page/', 'https://www.tripadvisor.fr/', 'https://www.facebook.com/'] as $ignored) {
+        if (str_starts_with($uri, $ignored)) {
+            return false;
+        }
+    }
+
+    return 1 === preg_match('@^((?:(http:|https:)//([\wà-üÀ-Ü-]+\.)+[\w-]+){0,1}(/?[\wà-üÀ-Ü~,;\-\./?%&+#=]*))$@', $uri);
 }
 
 function phpAttribute(string $tag, string $pattern): string
@@ -91,10 +124,10 @@ function phpAttribute(string $tag, string $pattern): string
     return trim(($match[1] ?? '').($match[2] ?? '').($match[3] ?? ''));
 }
 
-/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>, linked_attributes: list<array{name: string, value: string}>, srcsets: list<string>, date_shortcodes: list<string>} */
+/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>, linked_docs: list<string>, crawlable_links: list<string>, mailto_links: list<string>, date_shortcodes: list<string>} */
 function nativeFacts(mixed $raw): array
 {
-    if (! $raw instanceof stdClass || ! isset($raw->hrefs, $raw->missing_alt, $raw->anchors, $raw->linked_attributes, $raw->srcsets, $raw->date_shortcodes)
+    if (! $raw instanceof stdClass || ! isset($raw->hrefs, $raw->missing_alt, $raw->anchors, $raw->linked_docs, $raw->crawlable_links, $raw->mailto_links, $raw->date_shortcodes)
     ) {
         throw new RuntimeException('Invalid native facts');
     }
@@ -103,29 +136,11 @@ function nativeFacts(mixed $raw): array
         'hrefs' => stringList($raw->hrefs),
         'missing_alt' => stringList($raw->missing_alt),
         'anchors' => stringList($raw->anchors),
-        'linked_attributes' => linkedAttributes($raw->linked_attributes),
-        'srcsets' => stringList($raw->srcsets),
+        'linked_docs' => stringList($raw->linked_docs),
+        'crawlable_links' => stringList($raw->crawlable_links),
+        'mailto_links' => stringList($raw->mailto_links),
         'date_shortcodes' => stringList($raw->date_shortcodes),
     ];
-}
-
-/** @return list<array{name: string, value: string}> */
-function linkedAttributes(mixed $raw): array
-{
-    if (! is_array($raw) || ! array_is_list($raw)) {
-        throw new RuntimeException('Invalid native linked attributes');
-    }
-
-    $values = [];
-    foreach ($raw as $value) {
-        if (! $value instanceof stdClass || ! is_string($value->name ?? null) || ! is_string($value->value ?? null)) {
-            throw new RuntimeException('Invalid native linked attribute');
-        }
-
-        $values[] = ['name' => $value->name, 'value' => $value->value];
-    }
-
-    return $values;
 }
 
 /** @return list<string> */
@@ -192,7 +207,7 @@ foreach (array_slice($arguments, 1) as $path) {
             $actual = nativeFacts($singleWorker->request('scan_rendered_html', [$html])[0]);
             $singleNs += hrtime(true) - $start;
             if ($actual !== $expected[$index]) {
-                foreach (['hrefs', 'missing_alt', 'anchors', 'linked_attributes', 'srcsets', 'date_shortcodes'] as $field) {
+                foreach (['hrefs', 'missing_alt', 'anchors', 'linked_docs', 'crawlable_links', 'mailto_links', 'date_shortcodes'] as $field) {
                     if ($actual[$field] !== $expected[$index][$field]) {
                         $mismatch = 0;
                         while (isset($expected[$index][$field][$mismatch], $actual[$field][$mismatch])

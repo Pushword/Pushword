@@ -68,8 +68,9 @@ See [native acceleration](../native-acceleration.md) for the measured conversion
 
 ## Optional native page-scan extraction
 
-Page scans can extract rendered link and responsive-image candidates, missing-alt labels, same-page anchors and unresolved date shortcodes with Rust; PHP remains the default.
+Page scans can prepare rendered link and responsive-image candidates, including obfuscated URLs and crawlability, and extract missing-alt labels, same-page anchors and unresolved date shortcodes with Rust; PHP remains the default.
 **Sites opting into Rust:** build `vendor/pushword/page-scanner/rust`, deploy `pushword-page-facts`, set `pushword_page_scanner.native_page_facts` to its path, then clear the Symfony container cache.
+**Sites already using Rust page scans:** rebuild and deploy the worker with this release; an older worker lacks the prepared-link fields and the scanner falls back to PHP.
 See [native acceleration](../native-acceleration.md) for the supported scope and measurement limits.
 
 ## Contact markup

@@ -35,7 +35,7 @@ final class RenderedPageFactsExtractor implements ResetInterface
 
         try {
             $result = $this->worker->request('scan_rendered_html', [$html])[0];
-            if (! $result instanceof stdClass || ! isset($result->hrefs, $result->missing_alt, $result->anchors, $result->linked_attributes, $result->srcsets, $result->date_shortcodes)) {
+            if (! $result instanceof stdClass || ! isset($result->hrefs, $result->missing_alt, $result->anchors, $result->linked_docs, $result->crawlable_links, $result->mailto_links, $result->date_shortcodes)) {
                 throw new RuntimeException('Invalid native page facts');
             }
 
@@ -43,8 +43,9 @@ final class RenderedPageFactsExtractor implements ResetInterface
                 $this->stringList($result->hrefs),
                 $this->stringList($result->missing_alt),
                 $this->stringList($result->anchors),
-                $this->linkedAttributes($result->linked_attributes),
-                $this->stringList($result->srcsets),
+                $this->stringList($result->linked_docs),
+                $this->stringList($result->crawlable_links),
+                $this->stringList($result->mailto_links),
                 $this->stringList($result->date_shortcodes),
             );
         } catch (Throwable $throwable) {
@@ -76,24 +77,5 @@ final class RenderedPageFactsExtractor implements ResetInterface
         }
 
         return $values;
-    }
-
-    /** @return list<array{name: string, value: string}> */
-    private function linkedAttributes(mixed $values): array
-    {
-        if (! \is_array($values) || ! array_is_list($values)) {
-            throw new RuntimeException('Invalid native linked attributes');
-        }
-
-        $attributes = [];
-        foreach ($values as $value) {
-            if (! $value instanceof stdClass || ! \is_string($value->name ?? null) || ! \is_string($value->value ?? null)) {
-                throw new RuntimeException('Invalid native linked attribute');
-            }
-
-            $attributes[] = ['name' => $value->name, 'value' => $value->value];
-        }
-
-        return $attributes;
     }
 }
