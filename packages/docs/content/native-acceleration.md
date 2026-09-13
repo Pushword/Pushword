@@ -12,9 +12,19 @@ Using Hugo or Zola as a replacement publisher is outside this direction.
 
 Opt-in integrations cover HTML minification in `pushword/static-generator`,
 aggregate `SplitContent` analysis and experimental Markdown conversion in
-`pushword/core`. All default to PHP.
+`pushword/core`, and rendered-page fact extraction in `pushword/page-scanner`.
+All default to PHP.
 The Rust backends are experimental: build and test them on the
 deployment platform before enabling it. No native binaries are downloaded by Composer.
+
+For page scans, build `vendor/pushword/page-scanner/rust`, deploy its
+`pushword-page-facts` executable, and set
+`pushword_page_scanner.native_page_facts` to that path. The optional
+`native_page_facts_timeout` defaults to five seconds. Clear the Symfony
+container cache after changing the setting. The worker extracts links,
+missing-alt image labels and same-page anchors from rendered HTML; PHP still
+does URL checks, database lookups and report formatting. The page-scanner Rust
+README records the protocol, corpus parity checks and measurement limits.
 
 ## Organization decision
 

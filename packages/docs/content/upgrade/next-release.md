@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin`, `pushword/admin-block-editor`, `pushword/core`, `pushword/dev-app`, `pushword/new`, `pushword/repurpose`, `pushword/static-generator`
+**Concerns:** `pushword/admin`, `pushword/admin-block-editor`, `pushword/core`, `pushword/dev-app`, `pushword/new`, `pushword/page-scanner`, `pushword/repurpose`, `pushword/static-generator`
 
 ## PHP 8.5 required
 
@@ -65,6 +65,12 @@ See [native acceleration](../native-acceleration.md) for the supported HTML boun
 Markdown can use the same Rust analyzer for eligible blocks, with PHP fallback; PHP remains the default.
 **Sites opting into experimental Rust Markdown:** set `pushword.native_markdown_renderer` to the deployed `pushword-content-analyzer` path, then clear the Symfony container cache.
 See [native acceleration](../native-acceleration.md) for the measured conversion boundary and compatibility limits.
+
+## Optional native page-scan extraction
+
+Page scans can extract rendered links, missing-alt image labels and same-page anchors with Rust; PHP remains the default.
+**Sites opting into Rust:** build `vendor/pushword/page-scanner/rust`, deploy `pushword-page-facts`, set `pushword_page_scanner.native_page_facts` to its path, then clear the Symfony container cache.
+See [native acceleration](../native-acceleration.md) for the supported scope and measurement limits.
 
 ## Contact markup
 

@@ -1,7 +1,7 @@
-# Rendered-page scanner prototype
+# Native rendered-page scanning
 
-This is a measurement prototype, not a configured page-scanner backend. Normal
-`pw:page-scan` still uses PHP. The worker accepts already rendered HTML and returns
+This is an experimental, opt-in page-scanner backend. Normal `pw:page-scan`
+still uses PHP. The worker accepts already rendered HTML and returns
 three kinds of facts the scanner currently extracts separately:
 
 - `<a href>` values for the link graph;
@@ -9,10 +9,26 @@ three kinds of facts the scanner currently extracts separately:
 - `id` and `name` attribute values for same-page anchor checks.
 
 The first two follow the existing regex rules; the third uses an HTML5 parser.
+The scanner uses the facts for same-page targets, image-alt findings and link-graph
+edges. PHP still handles all other checks. If the worker or protocol fails, the
+scanner uses its PHP implementations for the remainder of the service lifetime.
 The benchmark compares the complete fact arrays against the PHP scanner rules
 on every page it reads. PHP still owns URL resolution, database lookups, external
 requests, translations, ignore rules, and report formatting. No site content or
 static output is changed by the benchmark.
+
+To enable the worker after building it, configure the page-scanner bundle and
+clear the Symfony container cache:
+
+```yaml
+pushword_page_scanner:
+    native_page_facts: '/opt/pushword/bin/pushword-page-facts'
+    native_page_facts_timeout: 5.0
+```
+
+Deploy the executable at that path on a compatible platform. Leave the option
+unset on PHP-only hosting. A missing or failing binary logs one warning and
+falls back to PHP; `ResetInterface::reset()` permits a later retry.
 
 ## Build and measure
 
@@ -43,6 +59,9 @@ All returned facts matched on both corpora. These are component timings, not a
 database, and may make network requests. Static HTML is representative output,
 but the scanner may render different pages at another time. The PHP reference
 collects all anchor attributes in one DOM query; the current scanner performs
-queries per anchor target, so its exact cost can differ. The next decision is
-whether an opt-in scanner adapter saves meaningful end-to-end time on a full
-scan with external requests disabled. Keep the PHP path for shared hosting.
+queries per anchor target, so its exact cost can differ. On a local run of the
+development app's 16 published pages, a warmed scan service with external checks
+disabled took 0.020 s with PHP and 0.020 s with the native worker (median of four
+alternating rounds, full reports and link graph equal). This small corpus shows no
+meaningful whole-scan gain; it does not predict results for larger sites or
+network-bound scans.

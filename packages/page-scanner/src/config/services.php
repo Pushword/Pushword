@@ -27,6 +27,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->bind('$parallelBatchSize', '%pw.pushword_page_scanner.parallel_batch_size%')
         ->bind('$urlCheckTimeoutMs', '%pw.pushword_page_scanner.url_check_timeout_ms%')
         ->bind('$skipExternalUrlCheck', '%pw.pushword_page_scanner.skip_external_url_check%')
+        ->bind('$nativePageFacts', '%pw.pushword_page_scanner.native_page_facts%')
+        ->bind('$nativePageFactsTimeout', '%pw.pushword_page_scanner.native_page_facts_timeout%')
         ->bind('$errorsToIgnore', '%pw.pushword_page_scanner.errors_to_ignore%');
 
     // The JSON API controller requires the optional pushword/api package.

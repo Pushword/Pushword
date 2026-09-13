@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\PageScanner\Scanner;
 
 use Override;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\preg_match_all;
@@ -35,11 +36,26 @@ final class LinkGraphScanner extends AbstractScanner implements ResetInterface
     /** @var array<string, list<string>> */
     private array $edges = [];
 
+    /** @var list<string>|null */
+    private ?array $nativeHrefs = null;
+
     public function __construct(
         private readonly SiteRegistry $siteRegistry,
         TranslatorInterface $translator,
     ) {
         parent::__construct($translator);
+    }
+
+    #[Override]
+    public function scan(Page $page, string $pageHtml, ?RenderedPageFacts $facts = null): array
+    {
+        $this->nativeHrefs = $facts?->hrefs;
+
+        try {
+            return parent::scan($page, $pageHtml);
+        } finally {
+            $this->nativeHrefs = null;
+        }
     }
 
     /**
@@ -91,6 +107,10 @@ final class LinkGraphScanner extends AbstractScanner implements ResetInterface
     /** @return list<string> */
     private function extractHrefs(): array
     {
+        if (null !== $this->nativeHrefs) {
+            return $this->nativeHrefs;
+        }
+
         preg_match_all(self::HREF_REGEX, $this->pageHtml, $matches);
 
         /** @var list<string> */

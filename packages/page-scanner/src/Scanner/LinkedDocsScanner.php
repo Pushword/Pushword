@@ -50,6 +50,9 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private ?DomCrawler $domPage = null;
 
+    /** @var array<string, true>|null */
+    private ?array $nativeAnchors = null;
+
     /** @var string[] */
     private array $toIgnore = [];
 
@@ -586,12 +589,17 @@ final class LinkedDocsScanner extends AbstractScanner
     }
 
     #[Override]
-    public function scan(Page $page, string $pageHtml): array
+    public function scan(Page $page, string $pageHtml, ?RenderedPageFacts $facts = null): array
     {
-        /** @return string[] */
-        $this->domPage = new DomCrawler($pageHtml);
+        $this->nativeAnchors = null === $facts ? null : array_fill_keys($facts->anchors, true);
+        $this->domPage = null === $facts ? new DomCrawler($pageHtml) : null;
 
-        return parent::scan($page, $pageHtml);
+        try {
+            return parent::scan($page, $pageHtml);
+        } finally {
+            $this->nativeAnchors = null;
+            $this->domPage = null;
+        }
     }
 
     private function getDomPage(): DomCrawler
@@ -601,6 +609,10 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function targetExist(string $target): bool
     {
+        if (null !== $this->nativeAnchors) {
+            return isset($this->nativeAnchors[$target]);
+        }
+
         $node = $this->getDomPage()->filter('[name="'.$target.'"]')->getNode(0)
             ?? $this->getDomPage()->filter('[id="'.$target.'"]')->getNode(0);
 

@@ -70,6 +70,7 @@ final class PageScannerService
         private readonly TwigErrorExtractor $errorExtractor,
         private readonly MediaExtension $mediaExtension,
         private readonly RequestContext $requestContext,
+        private readonly RenderedPageFactsExtractor $renderedPageFactsExtractor,
         TranslatorInterface $translator,
     ) {
         if (! $translator instanceof DataCollectorTranslator && ! $translator instanceof Translator) {
@@ -99,19 +100,20 @@ final class PageScannerService
         $this->pageIgnorePatterns = ErrorIgnoreRules::forPage($page);
 
         $pageHtml = $page->hasRedirection() ? '' : $this->getHtml($page);
+        $facts = $this->renderedPageFactsExtractor->extract($pageHtml);
 
-        $this->addErrors($page, $this->linkedDocsScanner->scan($page, $pageHtml));
+        $this->addErrors($page, $this->linkedDocsScanner->scan($page, $pageHtml, $facts));
         $this->addErrors($page, $this->parentPageScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->todoScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->brokenImageScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->twigErrorScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->dateShortcodeScanner->scan($page, $pageHtml));
-        $this->addErrors($page, $this->missingAltScanner->scan($page, $pageHtml));
+        $this->addErrors($page, $this->missingAltScanner->scan($page, $pageHtml, $facts));
         $this->addErrors($page, $this->translationLocaleScanner->scan($page, $pageHtml));
 
         // Reports nothing: it only rides the loop to collect the link graph from
         // the HTML we just rendered. Call reset() before scanning a page set.
-        $this->linkGraphScanner->scan($page, $pageHtml);
+        $this->linkGraphScanner->scan($page, $pageHtml, $facts);
 
         return [] === $this->errors ? true : $this->errors;
     }
