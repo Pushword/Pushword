@@ -64,11 +64,12 @@ foreach ($samples as $category => $modes) {
     $report[$category] = [];
     foreach ($modes as $name => $values) {
         sort($values, \SORT_NUMERIC);
+        $documents = count($values);
         $report[$category][$name] = [
-            'documents' => count($values),
+            'documents' => $documents,
             'sum_ms' => array_sum($values),
-            'p50_ms' => $values[intdiv(count($values), 2)],
-            'p95_ms' => $values[(int) (count($values) * .95)],
+            'p50_ms' => $documents > 0 ? $values[intdiv($documents, 2)] : null,
+            'p95_ms' => $documents > 0 ? $values[(int) ($documents * .95)] : null,
         ];
     }
 }
