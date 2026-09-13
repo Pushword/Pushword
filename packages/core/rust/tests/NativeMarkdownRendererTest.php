@@ -178,6 +178,42 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $parser->reset();
     }
 
+    public function testDocsExportRegressionCasesMatchPhpOrDecline(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(SiteRegistry::class)->switchSite('localhost.dev');
+
+        $sources = [
+            'namespaced class in list code' => '- **Events:** See `Pushword\\Core\\Event\\PushwordEvents`.',
+            'wrapped link label in list' => "- The [ELTS\n  price](/pricing) increased.",
+            'separate code spans with braces' => 'A `collection` of `{name, type}` values.',
+            'table with code braces' => "| Key | Value |\n|---|---|\n| `source` | `{host}/{slug}` |",
+            'indented closing fence' => "```bash\n  echo hello\n  ```",
+            'paragraph before a fence' => "**Before:**\n```twig\n<div class=\"example\">\n```",
+            'numbered item with a fence' => "5. **Unlock**: Release the lock\n   ```bash\n   echo hello\n   ```",
+            'fence closed with more backticks' => "```twig\n{{ example }}\n````",
+            'fenced item among numbered items' => "1. Check spam\n2. Configure mailer\n   ```bash\n   MAILER_DSN=smtp://example.com\n   ```\n3. Check logs",
+            'indented paragraph continuation' => "A sentence\n   continued here.",
+            'heading containing only code' => '### `media/index.html.twig`',
+            'ordered list with child bullets' => "1. **Step 1**: Begin\n2. **Step 2**: Choose\n   - Yes\n   - No",
+            'task list with a continued item' => "- [ ] First\n      Continued\n- [ ] Second",
+        ];
+        $declines = ['table with code braces', 'paragraph before a fence'];
+        $native = $this->parser(self::BINARY);
+        $php = $this->parser();
+        $results = $native->renderNativeMany(array_values($sources));
+
+        foreach (array_keys($sources) as $index => $name) {
+            if (\in_array($name, $declines, true)) {
+                self::assertNull($results[$index], $name);
+            } else {
+                self::assertSame($php->transform($sources[$name]), $results[$index], $name);
+            }
+        }
+
+        $native->reset();
+    }
+
     public function testNativeBatchUsesExistingMarkdownCache(): void
     {
         self::bootKernel();

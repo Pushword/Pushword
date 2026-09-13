@@ -86,7 +86,7 @@ pub fn markdown_if_supported_with_dates(
         return None;
     }
 
-    markdown_with_context(source, fenced_code_pre_class, locale, date_values)
+    markdown_with_context(source, fenced_code_pre_class, locale, date_values, true)
 }
 
 fn dotted_date_range_pattern() -> &'static Regex {
@@ -156,7 +156,7 @@ fn skip_phone_separators(bytes: &[u8], position: &mut usize) {
 
 /// Convert the supported Markdown subset. This is not a complete PHP replacement.
 pub fn markdown(source: &str, fenced_code_pre_class: &str) -> String {
-    markdown_with_context(source, fenced_code_pre_class, None, None)
+    markdown_with_context(source, fenced_code_pre_class, None, None, false)
         .expect("Markdown without date values cannot be declined")
 }
 
@@ -165,6 +165,7 @@ fn markdown_with_context(
     fenced_code_pre_class: &str,
     locale: Option<&str>,
     date_values: Option<&HashMap<String, String>>,
+    supported_only: bool,
 ) -> Option<String> {
     let mut options = Options::default();
     options.extension.strikethrough = true;
@@ -179,6 +180,26 @@ fn markdown_with_context(
 
     let arena = Arena::new();
     let root = parse_document(&arena, source, &options);
+    if supported_only
+        && root.descendants().any(|node| match &node.data().value {
+            NodeValue::Code(_) => node
+                .ancestors()
+                .any(|parent| matches!(parent.data().value, NodeValue::Table(_))),
+            NodeValue::CodeBlock(code) if code.fenced => {
+                node.parent()
+                    .is_some_and(|parent| matches!(parent.data().value, NodeValue::Document))
+                    && node.previous_sibling().is_some_and(|previous| {
+                        matches!(previous.data().value, NodeValue::Paragraph)
+                            && previous.data().sourcepos.end.line + 1
+                                == node.data().sourcepos.start.line
+                    })
+            }
+            _ => false,
+        })
+    {
+        return None;
+    }
+
     apply_block_attributes(root);
     apply_list_item_attributes(root);
     let mut output = String::with_capacity(source.len());
@@ -1028,6 +1049,28 @@ mod tests {
             "<h2>Café 🦀</h2>\n<p>Hello <strong>world</strong>.</p>\n"
         );
         assert_eq!(markdown("", ""), "");
+    }
+
+    #[test]
+    fn docs_regression_layouts_decline_only_when_php_output_differs() {
+        assert!(
+            markdown_if_supported(
+                "| Key | Value |\n|---|---|\n| `source` | `{host}/{slug}` |",
+                ""
+            )
+            .is_none()
+        );
+        assert!(
+            markdown_if_supported("**Before:**\n```twig\n<div class=\"example\">\n```", "")
+                .is_none()
+        );
+        assert!(
+            markdown_if_supported("| Key | Value |\n|---|---|\n| source | value |", "").is_some()
+        );
+        assert!(
+            markdown_if_supported("**Before:**\n\n```twig\n<div class=\"example\">\n```", "")
+                .is_some()
+        );
     }
 
     #[test]
