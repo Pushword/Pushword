@@ -58,10 +58,10 @@ download a Rust binary. [The architecture and setup are documented here](/native
 
 This is useful when the team wants a CMS now, already knows PHP, or deploys to
 hosting where a native executable may not be possible. It is **not** a pure Rust
-CMS. The adapters require a build and parity check on the target platform
-before use. Pushword's published timings measure particular
-content operations; they are not a promise that every public request or whole
-site becomes several times faster.
+CMS. Both native test suites run in CI and compare supported results with PHP.
+Pushword's published timings measure particular content operations; they are
+not a promise that every public request or whole site becomes several times
+faster.
 
 ## NUR CMS: Rust-first headless content
 
