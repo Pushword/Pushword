@@ -29,7 +29,7 @@ or a certification of production readiness.
 ## The options at a glance
 
 - **[Pushword](/native-acceleration):** a PHP 8.5 / Symfony 8 CMS for editors
-  and developers, with experimental Rust workers you can opt into.
+  and developers, with optional Rust workers.
 - **[NUR CMS](https://github.com/jb-alvarado/nur-cms):** a Rust headless API
   with PostgreSQL and a Vue admin; bring your own site frontend.
 - **[RaisFast](https://github.com/RaisFast/raisfast):** an all-in-one Rust
@@ -58,8 +58,8 @@ download a Rust binary. [The architecture and setup are documented here](/native
 
 This is useful when the team wants a CMS now, already knows PHP, or deploys to
 hosting where a native executable may not be possible. It is **not** a pure Rust
-CMS. The adapters are experimental and require a build and parity check on the
-target platform before use. Pushword's published timings measure particular
+CMS. The adapters require a build and parity check on the target platform
+before use. Pushword's published timings measure particular
 content operations; they are not a promise that every public request or whole
 site becomes several times faster.
 
