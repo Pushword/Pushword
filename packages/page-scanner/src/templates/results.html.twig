@@ -49,7 +49,7 @@
                                 {% set object = errorsBypage.0.page %}
                                 <tr>
                                     <td>
-                                        <a href="{{ path('admin_page_edit', {id: object.id}) }}" class="text-decoration-none">
+                                        <a href="{{ path('admin_page_edit', {entityId: object.id}) }}" class="text-decoration-none">
                                             {% if object.metaRobots != '' %}
                                                 <span class="badge bg-secondary me-2" title="{{ object.metaRobots }}"><i class="fa fa-eye-slash"></i></span>
                                             {% endif %}
@@ -70,7 +70,7 @@
                                         </ul>
                                     </td>
                                     <td class="text-end">
-                                        <a href="{{ path('admin_page_show', {id: object.id}) }}" target="_blank" class="btn btn-sm btn-outline-secondary px-2">
+                                        <a href="{{ path('admin_page_detail', {entityId: object.id}) }}" target="_blank" class="btn btn-sm btn-outline-secondary px-2">
                                             <i class="fa fa-eye me-1" aria-hidden="true"></i> {{ 'page_scannerView'|trans }}
                                         </a>
                                     </td>

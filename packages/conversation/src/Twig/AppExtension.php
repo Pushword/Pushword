@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pushword\Conversation\Twig;
 
 use Exception;
+use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Entity\Review;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
@@ -15,6 +17,7 @@ use function Safe\json_encode;
 
 use Symfony\Component\Routing\RouterInterface;
 use Twig\Attribute\AsTwigFunction;
+use Twig\Attribute\AsTwigTest;
 use Twig\Environment as Twig;
 
 class AppExtension
@@ -27,6 +30,12 @@ class AppExtension
         private readonly MessageRepository $messageRepo
     ) {
         $this->app = $apps->get();
+    }
+
+    #[AsTwigTest('conversation_review')]
+    public function isReview(Message $message): bool
+    {
+        return $message instanceof Review;
     }
 
     #[AsTwigFunction('conversation')]
