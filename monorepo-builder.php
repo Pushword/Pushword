@@ -16,6 +16,7 @@ return static function (MBConfig $mbConfig): void {
     $mbConfig->packageDirectories([
         __DIR__.'/packages',
     ]);
+    $mbConfig->packageDirectoriesExcludes(['target']);
     $mbConfig->workers([
         UpdateReplaceReleaseWorker::class,
         SetCurrentMutualDependenciesReleaseWorker::class,

@@ -7,7 +7,7 @@ toc: true
 
 ## Requirements
 
-- **PHP** >=8.4
+- **PHP** 8.5
 - **PHP extensions** : dom, curl, libxml, mbstring, zip, pdo, bcmath, intl, gd (or imagick), exif, iconv, fileinfo; plus `sqlite` and `pdo_sqlite` for SQLite, or `pdo_pgsql` for PostgreSQL
 - **Composer** - [how to install composer](https://getcomposer.org/download/)
 

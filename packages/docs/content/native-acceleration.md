@@ -96,7 +96,7 @@ development-site builds. They cover UTF-8, inline spacing, namespaces, URI
 attributes, code blocks, templates and native failure handling. Testing PHP with
 `proc_open` disabled verifies the shared-hosting path. The adapter and Rust binary
 are experimental; regular PHP tests require no Rust tooling. The separate native
-suite fails if its binary is absent and is run in the PHP 8.4/8.5 CI jobs on Node 24.
+suite fails if its binary is absent and is run in the PHP 8.5 CI jobs on Node 24.
 
 A local run on PHP 8.5.9/libxml 2.12.10 and Rust 1.98.0 measured 470 ms for PHP
 versus 291 ms for a reused Rust worker across 1,000 calls (about 38% less time).

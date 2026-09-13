@@ -60,7 +60,7 @@ raw: 1
       <span class="font-mono text-2xl font-light tabular-nums text-[oklch(45%_0.13_35)] leading-none pt-1">02</span>
       <div>
         <dt class="text-lg font-semibold mb-2 text-stone-900 dark:text-stone-100">Cutting-edge stack</dt>
-        <dd class="text-stone-600 dark:text-stone-300">PHP 8.4, Symfony 8, Doctrine 3, Tailwind 4. Modern features, PHPStan enforced.</dd>
+        <dd class="text-stone-600 dark:text-stone-300">PHP 8.5, Symfony 8, Doctrine 3, Tailwind 4. Modern features, PHPStan enforced.</dd>
       </div>
     </div>
 

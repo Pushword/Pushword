@@ -17,7 +17,7 @@
     }
   ],
   "require": {
-    "php": ">=8.4",
+    "php": "~8.5.0",
     "ext-gd": "*",
     "ext-zip": "*",
     "pushword/core": "*"

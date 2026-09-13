@@ -17,7 +17,7 @@
     }
   ],
   "require": {
-    "php": ">=8.4",
+    "php": "~8.5.0",
     "ext-gd": "*",
     "caseyamcl/toc": "^4.0",
     "cocur/slugify": "^4.6",
@@ -65,6 +65,7 @@
     "vich/uploader-bundle": "^2.9",
     "villfa/invert-color": "^0.5",
     "league/commonmark": "^2.7",
+    "tempest/markdown": "^1.2.2",
     "league/flysystem-bundle": "^3.6",
     "sensiolabs/ansi-to-html": "^2.0",
     "twig/extra-bundle": "^3",

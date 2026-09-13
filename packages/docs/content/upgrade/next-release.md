@@ -1,5 +1,5 @@
 ---
-title: 'PHP files use strict types; optional Rust minification, content analysis and Markdown; admin links restrict URLs'
+title: 'PHP 8.5 required; PHP files use strict types; optional Rust minification, content analysis and Markdown; admin links restrict URLs'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,7 +35,12 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin`, `pushword/admin-block-editor`, `pushword/core`, `pushword/dev-app`, `pushword/static-generator`
+**Concerns:** `pushword/admin`, `pushword/admin-block-editor`, `pushword/core`, `pushword/dev-app`, `pushword/new`, `pushword/repurpose`, `pushword/static-generator`
+
+## PHP 8.5 required
+
+Pushword now requires PHP 8.5 because Markdown rendering uses Tempest for compatible text and headings, with CommonMark handling other syntax.
+**Sites running PHP 8.4:** upgrade the PHP runtime before updating Pushword. If you copied the Dockerfile, update its FrankenPHP base images to the PHP 8.5 variants.
 
 ## PHP strict types
 

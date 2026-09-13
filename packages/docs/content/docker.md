@@ -7,11 +7,11 @@ parentPage: installation
 toc: true
 ---
 
-Pushword ships a Docker setup built on [FrankenPHP](https://frankenphp.dev/): PHP 8.4
+Pushword ships a Docker setup built on [FrankenPHP](https://frankenphp.dev/): PHP 8.5
 with every extension Pushword needs, Caddy in front, and the image tooling the media
 pipeline shells out to.
 
-It is **optional**. A machine that already runs PHP 8.4 with the
+It is **optional**. A machine that already runs PHP 8.5 with the
 [required extensions](/installation) runs Pushword faster and more directly without it —
 `bin/console`, the profiler and Xdebug are all one command away. Docker earns its place
 when installing those extensions is the hard part.

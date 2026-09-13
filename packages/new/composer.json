@@ -11,7 +11,7 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-    "php": ">=8.4",
+    "php": "~8.5.0",
     "ext-ctype": "*",
     "ext-iconv": "*",
     "symfony/flex": "^2.9"

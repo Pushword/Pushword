@@ -7,7 +7,7 @@
 # FrankenPHP 1.12.7 still embeds vulnerable Go dependencies. Rebuild the same immutable
 # stable revision with patched dependencies until the next release includes them. Both
 # digests are multi-platform image indexes for that release.
-FROM dunglas/frankenphp:1.12.7-builder-php8.4@sha256:4936ac46f73695ad7994d4cfd9eac7ce1e0a4666c0da3834d601ed90b36e8bb3 AS frankenphp_builder
+FROM dunglas/frankenphp:1.12.7-builder-php8.5@sha256:684962b7a0741398e6107f97fe8534224fcfeeb71c91372b90ff24911c07d9fe AS frankenphp_builder
 
 ARG FRANKENPHP_VERSION=1.12.7
 
@@ -20,7 +20,7 @@ RUN go get \
 WORKDIR /go/src/app/caddy/frankenphp
 RUN GOBIN=/patched ../../go.sh install -buildvcs=false -ldflags "-w -s -X 'github.com/caddyserver/caddy/v2.CustomVersion=FrankenPHP $FRANKENPHP_VERSION PHP $PHP_VERSION Caddy' -X 'github.com/caddyserver/caddy/v2.CustomBinaryName=frankenphp' -X 'github.com/caddyserver/caddy/v2/modules/caddyhttp.ServerHeader=FrankenPHP Caddy'"
 
-FROM dunglas/frankenphp:1.12.7-php8.4@sha256:77bc2d40a58ace3a9425e4cbb0c40d044188dfd850e44a943ed043d743625df3 AS pushword_base
+FROM dunglas/frankenphp:1.12.7-php8.5@sha256:f92d81eb3fe4fd18b35d3d58192b7cc3acc8943817bbf39f2fcf0be02a3916dc AS pushword_base
 
 COPY --from=frankenphp_builder /patched/frankenphp /usr/local/bin/frankenphp
 

@@ -21,7 +21,7 @@
   "description": "Monorepo for pushword CMS and officially maintained extensions.",
   "license": "MIT",
   "require": {
-    "php": ">=8.4",
+    "php": "~8.5.0",
     "babdev/pagerfanta-bundle": "^4.0",
     "caseyamcl/toc": "^4.0",
     "cocur/slugify": "^4.6",
@@ -76,6 +76,7 @@
     "symfony/webpack-encore-bundle": "^2.0",
     "symfony/workflow": "^8.0",
     "symfony/yaml": "^8.0",
+    "tempest/markdown": "^1.2.2",
     "thecodingmachine/safe": "^3.4",
     "thenetworg/oauth2-azure": "^2.2",
     "twig/extra-bundle": "^3",

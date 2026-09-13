@@ -47,6 +47,8 @@ class MarkdownParser implements ResetInterface
 
     private readonly PushwordExtension $pushwordExtension;
 
+    private readonly TempestMarkdownRenderer $tempestRenderer;
+
     private ?string $cacheVersion = null;
 
     private readonly ?NativeWorker $nativeWorker;
@@ -69,6 +71,7 @@ class MarkdownParser implements ResetInterface
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
         $this->nativeWorker = null !== $nativeBinary && '' !== $nativeBinary ? new NativeWorker($nativeBinary, $nativeTimeout) : null;
+        $this->tempestRenderer = new TempestMarkdownRenderer();
         $this->pushwordExtension = new PushwordExtension(
             $linkProvider,
             $mediaExtension,
@@ -242,7 +245,7 @@ class MarkdownParser implements ResetInterface
     private function convertCached(MarkdownConverter $converter, string $keyPrefix, string $text): string
     {
         if (null === $this->cache) {
-            return $converter->convert($text)->__toString();
+            return $this->convert($converter, $text);
         }
 
         try {
@@ -252,15 +255,27 @@ class MarkdownParser implements ResetInterface
                 return $item->get();
             }
 
-            $html = $converter->convert($text)->__toString();
+            $html = $this->convert($converter, $text);
             $item->set($html);
             $this->cache->save($item);
 
             return $html;
         } catch (Throwable) {
             // A cache backend hiccup must never break rendering.
-            return $converter->convert($text)->__toString();
+            return $this->convert($converter, $text);
         }
+    }
+
+    private function convert(MarkdownConverter $converter, string $text): string
+    {
+        if ($converter === $this->converter) {
+            $html = $this->tempestRenderer->render($text);
+            if (null !== $html) {
+                return $html;
+            }
+        }
+
+        return $converter->convert($text)->__toString();
     }
 
     /**

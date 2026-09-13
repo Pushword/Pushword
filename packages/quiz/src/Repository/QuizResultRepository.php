@@ -101,7 +101,7 @@ class QuizResultRepository extends ServiceEntityRepository
 
             if (null === $row['result']) {
                 $stats[$key]['knowledgeAttempts'] = $attempts;
-                $stats[$key]['averageScore'] = round($row['averageScore'], 1);
+                $stats[$key]['averageScore'] = round($this->averageAsFloat($row['averageScore']), 1);
 
                 continue;
             }
@@ -110,6 +110,12 @@ class QuizResultRepository extends ServiceEntityRepository
         }
 
         return array_values($stats);
+    }
+
+    /** MariaDB returns AVG() as a numeric string; SQLite returns a float. */
+    private function averageAsFloat(float|string $average): float
+    {
+        return (float) $average;
     }
 
     /**
