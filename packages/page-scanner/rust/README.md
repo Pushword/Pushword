@@ -130,7 +130,44 @@ than 11.8 s.
 The instrumented and normal Altimood scans reported identical findings. On
 GrandAngle, only broken-derivative findings varied between repeated runs as
 image-cache files were generated; the other finding counts were stable. The
-next command-level experiment is to update each site's installed scanner,
-then alternate PHP and native runs with warm caches and compare both reports
-and median durations. If rendering remains dominant, profile `showPage()`
-before expanding the Rust scanner into PHP-owned URL resolution or reporting.
+following A/B experiment uses the current scanner source in disposable site
+copies.
+
+## Whole-site PHP/Rust A/B
+
+On September 13, 2026, copy-on-write snapshots of both sites received this
+package's current `src/` tree and `Core\Service\NativeWorker`; the original site trees
+were not changed. The snapshots kept their other installed packages, so this
+measures the current scanner in those sites, not a complete Composer upgrade.
+An environment variable selected either the PHP fallback or the release worker.
+Each site had a full PHP warm-up, then three alternating PHP/Rust pairs, run
+serially on CPU 22 with `--skip-external --limit=100000 --format=agent --no-debug`.
+The figures below are medians of the three command runs, with timing counters
+inside the scanner and user-plus-system CPU time from `/usr/bin/time`:
+
+| Site | PHP command | Rust command | Command gain | PHP CPU | Rust CPU | PHP link scan | Rust facts + link scan |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Altimood | 34.9 s | 22.8 s | 34.7% | 35.0 s | 23.2 s | 16.4 s | 3.4 + 1.9 s |
+| GrandAngle | 166.5 s | 129.1 s | 22.5% | 99.3 s | 63.0 s | 52.4 s | 14.1 + 4.5 s |
+
+Altimood's PHP command varied from 32.4 to 48.5 s, while its Rust command
+ranged from 21.5 to 24.0 s; the median is more useful than one paired result.
+GrandAngle was steadier: 165.7–167.1 s in PHP and 128.9–129.6 s with Rust.
+Rendering still took a median 16.7 s on Altimood and 108.7 s on GrandAngle
+with Rust. Native facts were returned for 1,202 and 2,399 pages respectively.
+
+All six Altimood reports had identical findings. All six GrandAngle reports
+matched after excluding `image-derivative-broken` findings, whose count moved
+between runs as cache files were generated; every other error code and message
+matched. Rendered HTML size was identical across Altimood runs and varied by
+less than 0.01% across GrandAngle runs. The worker process was observed during
+the Rust scans.
+
+Median PHP-process peak RSS from `/usr/bin/time` was about 495 MiB on Altimood
+and 566 MiB on GrandAngle. A separate Rust run sampled the combined PHP and
+worker RSS every 20 ms at about 498 MiB and 565 MiB respectively, with the
+worker itself peaking near 8 MiB. These are different RSS measurements, and
+summed RSS can count shared pages twice; they show no material memory change,
+not an exact physical-memory saving. The next deployment check is a complete
+compatible package upgrade on staging, followed by the same parity and timing
+comparison. After that, profile page rendering, which is now the larger cost.
