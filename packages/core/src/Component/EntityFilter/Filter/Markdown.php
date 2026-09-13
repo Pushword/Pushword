@@ -138,16 +138,20 @@ class Markdown implements FilterInterface
 
         $textFiltered = null;
         if (! MarkdownUtils::isItCodeBlock($blockText)) {
-            $codeBlockProtector = new MarkdownProtectCodeBlock();
-            $inlineCodeProtector = new MarkdownProtectInlineCode();
-            $textFiltered = $codeBlockProtector->protect($blockText);
-            $textFiltered = $inlineCodeProtector->protect($textFiltered);
-            $textFiltered = preg_replace('/\{#([a-zA-Z0-9_-]+)\}/', '{id=$1}', $textFiltered);
-            assert(\is_string($textFiltered));
-            $textFiltered = $manager->applyFilters($textFiltered, ['twig']);
-            assert(is_string($textFiltered));
-            $textFiltered = $inlineCodeProtector->restore($textFiltered);
-            $textFiltered = $codeBlockProtector->restoreString($textFiltered);
+            $textFiltered = $blockText;
+            // Braces may start Twig or an attribute; code delimiters must stay protected.
+            if (str_contains($blockText, '{') || str_contains($blockText, '`') || str_contains($blockText, '<pre')) {
+                $codeBlockProtector = new MarkdownProtectCodeBlock();
+                $inlineCodeProtector = new MarkdownProtectInlineCode();
+                $textFiltered = $codeBlockProtector->protect($blockText);
+                $textFiltered = $inlineCodeProtector->protect($textFiltered);
+                $textFiltered = preg_replace('/\{#([a-zA-Z0-9_-]+)\}/', '{id=$1}', $textFiltered);
+                assert(\is_string($textFiltered));
+                $textFiltered = $manager->applyFilters($textFiltered, ['twig']);
+                assert(is_string($textFiltered));
+                $textFiltered = $inlineCodeProtector->restore($textFiltered);
+                $textFiltered = $codeBlockProtector->restoreString($textFiltered);
+            }
         }
 
         if (null !== $textFiltered) {
