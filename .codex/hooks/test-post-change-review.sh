@@ -24,6 +24,18 @@ post_write() {
     "$hook_path"
 }
 
+post_write_path() {
+  jq -nc --arg cwd "$test_repo" --arg session_id "$session_id" --arg path "$1" \
+    '{hook_event_name: "PostToolUse", tool_name: "Write", session_id: $session_id, cwd: $cwd, tool_input: {file_path: $path}}' | \
+    "$hook_path"
+}
+
+post_apply_patch() {
+  jq -nc --arg cwd "$test_repo" --arg session_id "$session_id" --arg patch "$1" \
+    '{hook_event_name: "PostToolUse", tool_name: "apply_patch", session_id: $session_id, cwd: $cwd, tool_input: {patch: $patch}}' | \
+    "$hook_path"
+}
+
 post_terminal_command() {
   if [ "$1" = "Bash" ]; then
     jq -nc --arg command "$2" --arg cwd "$test_repo" --arg session_id "$session_id" \
@@ -49,6 +61,19 @@ stop_with_message() {
     "$hook_path"
 }
 
+post_write_path "$test_tmp_dir/personal/SKILL.md"
+test ! -e "$state_file"
+post_apply_patch "*** Begin Patch
+*** Add File: $test_tmp_dir/personal/SKILL.md
+*** End Patch"
+test ! -e "$state_file"
+post_apply_patch "*** Begin Patch
+*** Add File: $test_tmp_dir/personal/SKILL.md
+*** Update File: tracked.txt
+*** End Patch"
+test -f "$state_file"
+post_write_path "$test_repo/tracked.txt"
+test -f "$state_file"
 post_write
 test -f "$state_file"
 test ! -e "$commit_file"

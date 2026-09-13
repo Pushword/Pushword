@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # PostToolUse/Stop gate for the mandatory post-change review and scoped commit.
 #
-# A write tool records the current HEAD and invalidates any earlier commit. A successful
-# scoped commit advances HEAD and unlocks completion after both review skills are reported.
+# A write within this repository records the current HEAD and invalidates any earlier
+# commit. A successful scoped commit advances HEAD and unlocks completion after both
+# review skills are reported.
 
 input=$(cat)
 event=$(printf '%s' "$input" | jq -r '.hook_event_name // empty' 2>/dev/null || true)
@@ -32,6 +33,30 @@ git_head() {
 if [ "$event" = "PostToolUse" ]; then
   case "$tool_name" in
     apply_patch|Edit|Write|MultiEdit)
+      if [ "$tool_name" = "apply_patch" ]; then
+        write_paths=$(printf '%s' "$input" | jq -r \
+          '.tool_input.patch // .tool_input.input // empty' 2>/dev/null | \
+          sed -n 's/^\*\*\* \(Add\|Update\|Delete\) File: //p')
+      else
+        write_paths=$(printf '%s' "$input" | jq -r \
+          '.tool_input.file_path // .tool_input.path // empty' 2>/dev/null)
+      fi
+
+      repo_root=$(git -C "$working_directory" rev-parse --show-toplevel 2>/dev/null || true)
+      if [ -n "$write_paths" ] && [ -n "$repo_root" ]; then
+        touches_repo=false
+        while IFS= read -r write_path; do
+          case "$write_path" in
+            /*) absolute_path=$(realpath -m "$write_path") ;;
+            *) absolute_path=$(realpath -m "$working_directory/$write_path") ;;
+          esac
+          case "$absolute_path" in
+            "$repo_root"|"$repo_root"/*) touches_repo=true ;;
+          esac
+        done <<< "$write_paths"
+        [ "$touches_repo" = false ] && exit 0
+      fi
+
       mkdir -p "$state_dir"
       git_head > "$state_file"
       rm -f "$commit_file"
