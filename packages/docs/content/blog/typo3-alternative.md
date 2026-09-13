@@ -7,22 +7,18 @@ template: /page/blog.html.twig
 toc: true
 ---
 
-TYPO3 is one of the few content management systems that genuinely deserves the word
-"enterprise", and this page starts by saying so. It has been shipping since 1998, it runs
-Deutsche Telekom, Mercedes-Benz, Lufthansa and the FAO, it has a published security
-process, an 18-month LTS cadence and a funded association behind it. Almost nothing else in
-PHP can say all of that at once.
+TYPO3 has shipped since 1998 and runs sites for Deutsche Telekom, Mercedes-Benz,
+Lufthansa and the FAO. It has a published security process, an 18-month LTS cadence and a
+funded association behind it.
 
-This page is written for someone who already knows what TCA is and has debugged a
-TypoScript object path at 11pm. It does not argue that TYPO3 is bad.
-It argues something narrower and, if you run small-to-medium sites, more useful: **TYPO3 is
-sized for a particular kind of organisation, and if you are not that organisation, the
-sustainability argument you think protects you is pointing the other way.**
+This page is for someone who knows TCA and has debugged a TypoScript object path at 11pm.
+It asks whether a small or medium-sized site needs TYPO3's governance and content model,
+or whether Pushword's simpler workflow would serve it better.
 
 ## The short answer
 
-For most sites below the enterprise line — a few editors, a few thousand pages, no
-workspace approval chain — **Pushword is the better default.** Two reasons, and the first
+For sites with a few editors, a few thousand pages and no workspace approval chain,
+**Pushword is the better default.** Two reasons, and the first
 one matters more than the second.
 
 **It may be simpler to work in, every day.** An editor can publish without a deployment
@@ -63,29 +59,20 @@ migration or maintenance work, but a small maintainer base remains a real risk. 
 governance and paid extended support reduce different risks. Budget for the failure mode
 your organisation is better equipped to handle.
 
-### "An exit is not a reason to choose an entrance"
+### Daily use before exit cost
 
-Correct, and worth stating plainly because it is the strongest objection to everything
-above. Portability is not a feature you enjoy on a Tuesday. Nobody buys a CMS for how
-gracefully it can be abandoned.
+Portability does not help an editor publish on a Tuesday. Daily work comes first.
 
-So read the two arguments in the right order. **The daily-work case is the reason to
-choose Pushword. The portability case is only the answer to why choosing it is not
-reckless.** If the first paragraph of this section did not describe something you want,
-none of the durability arithmetic should persuade you — go back to TYPO3 with our respect.
+**Daily work is the reason to choose Pushword.** Portability limits the risk if you later
+leave it. If the workflow above does not suit your team, TYPO3's governance may be worth
+its additional complexity.
 
-The related objection deserves the same directness: *if leaving is easier, are you not
-just selling me Symfony?* Partly, yes — deliberately. What sits on top is roughly 90,000
-lines of CMS: the admin, media handling with image variants,
-multi-site routing, versioning, search, forms, newsletter, the flat-file round trip, static
-export. The claim is not that this layer is worthless. It is that Flat can give you a
-readable copy of the content outside the database.
+Pushword's roughly 90,000 lines of CMS include the admin, media handling with image
+variants, multi-site routing, versioning, search, forms, newsletter, the flat-file round
+trip and static export. Flat can give you a readable copy of the content outside the
+database.
 
-Four situations genuinely reverse this, and they are listed honestly in
-[the exceptions](#the-four-exceptions) near the end. If none of them describe you, the rest
-of this page is the detail.
-
----
+Four situations favor TYPO3. [The exceptions](#the-four-exceptions) list them near the end.
 
 ## Quick overview
 
@@ -101,30 +88,24 @@ as its packages and tests evolve. They describe codebase size, not reliability o
 | **Source size**          | About **593,000 lines** across 36 sysexts at v14.3.5                   | About **90,000 lines** across 25 packages (18 bundles)         |
 | **Core alone**           | About 212,000 lines (`core`) + 110,000 (`backend`)                      | About 30,000 lines                                              |
 | **Templating**           | Fluid (147 ViewHelpers, 714 templates) + TypoScript                    | Twig                                                            |
-| **Content model**        | TCA — 279 files, `pages` alone is 1,012 lines                          | One Doctrine entity + Markdown + declared properties            |
-| **Write path**           | `DataHandler` — one class, **9,737 lines**                             | Doctrine, EasyAdmin, REST API, or flat files                    |
+| **Content model**        | TCA: 279 files, `pages` alone is 1,012 lines                          | One Doctrine entity + Markdown + declared properties            |
+| **Write path**           | `DataHandler`: one class, **9,737 lines**                             | Doctrine, EasyAdmin, REST API, or flat files                    |
 | **Content portability**  | Import/Export exists; another CMS needs content mapping                | Markdown sync via Flat; another CMS still needs mapping         |
 | **Tests**                | 1,481 test files at v14.3.5                                            | More than 400 test files and 3,000 test methods                 |
 | **Support model**        | Free LTS to 2029; optional paid ELTS after that                         | No SLA; self-maintenance is possible under the MIT licence      |
 | **Ecosystem**            | Large TER extension marketplace                                        | 25 first-party packages, on the Symfony commons                 |
 | **Upgrade unit**         | Core **and** every TER extension, every ~18 months                     | One monorepo, released and tested together                      |
 
-TYPO3's ecosystem is genuinely larger, and that row is
+TYPO3's extension directory is larger, and that row is
 the real argument for staying. Read the next section before deciding how much it is worth
 to you, because ecosystem size is not purely an asset.
 
----
+## The sustainability question
 
-## The sustainability question, asked properly
+Project survival matters, but it does not tell you what leaving a platform would cost.
 
-Everyone asks "which project is more likely to still be here in five years?" It is the
-wrong question, and it is the reason people end up on platforms they cannot afford to
-leave.
-
-The right question is: if this goes wrong, what does it cost me to get out? Because
-"going wrong" is not only "the project dies". Far more commonly it is the project thriving
-in a direction that no longer includes you: a major you cannot afford, or an extension that
-never got ported.
+Exit cost matters if a major upgrade becomes unaffordable or an extension stops receiving
+updates, even when the CMS itself survives.
 
 ### What TYPO3's guarantee actually guarantees
 
@@ -143,27 +124,24 @@ TYPO3 provides upgrade wizards and an Extension Scanner that flags removed API c
 extensions. That is valuable tooling Pushword does not match. Its presence reflects
 TYPO3's wider API and long upgrade history; it does not mean every TYPO3 upgrade is hard.
 
-### The extension ecosystem, read honestly
+### Extension upgrade risk
 
-A large ecosystem is an asset when you are building and a liability when you are upgrading.
-Every third-party extension you install has its own compatibility schedule. An
-unmaintained extension can delay an upgrade; maintained extensions and TYPO3's upgrade
-tooling reduce that risk.
+An extension can save development time, but each third-party package has its own
+compatibility schedule. An unmaintained extension can delay an upgrade. Maintained
+extensions and TYPO3's upgrade tooling reduce that risk.
 
-There is a second thing worth noticing here, because it reframes the objection people
-usually raise about small projects. **A large ecosystem does not remove maintainer risk
-from every extension.** A TYPO3 site with third-party extensions depends on their upgrade
-schedules. That is worth auditing, but it does not make TYPO3's well-funded core support
-equivalent to Pushword's smaller maintainer base.
+**A large extension directory does not remove maintainer risk.** A TYPO3 site with
+third-party extensions depends on their upgrade schedules. That is worth auditing, but it
+does not make TYPO3's funded core support equivalent to Pushword's smaller maintainer base.
 
 Pushword's 18 bundles are versioned, released and tested together in one monorepo. "Does
 the newsletter package work with this version of the admin?" is a question CI checks.
 There is far less choice, and one principal maintainer affects all first-party bundles;
 that concentration is a real cost, even though dependency compatibility is simpler.
 
-### What actually protects you
+### Five portability factors
 
-Five concrete properties, none of which is a vendor's promise:
+Five properties affect the cost of maintaining or leaving Pushword:
 
 1. **Your content can be exported in a familiar format.** With [Flat](/extension/flat)
    enabled and synchronized, pages are Markdown files with YAML frontmatter in your git.
@@ -191,23 +169,20 @@ libraries and on application-specific code. TYPO3 owns more of its CMS-specific 
 has an association to support them; Pushword builds more directly on Symfony components
 but has a much smaller project team.
 
-### The honest counterweight
+### Maintainer risk
 
-Pushword has one principal maintainer. We are not going to dress that up: there is no
+Pushword has one principal maintainer. There is no
 association, no SLA, no certification programme and no second phone number. If you need a
 contract with a company on it, TYPO3 has one and this page cannot give you one.
 
-What we will push back on is the leap from that fact to "therefore it is always the wrong
-choice". MIT licensing, a familiar stack and optional Markdown sync can make the risk
+That does not make it the wrong choice for every site. MIT licensing, a familiar stack and
+optional Markdown sync can make the risk
 easier to manage, but cannot quantify or cap it. TYPO3's governance and support offer a
 different kind of protection. Which matters more depends on your site and team.
 
----
-
 ## The structural difference: records versus documents
 
-Both projects sit on Symfony components, so this is not a modern-versus-legacy story. The
-real divergence is **what a page is**.
+Both projects use Symfony components. They differ in **what a page is**.
 
 **In TYPO3, a page is a graph of typed records.** A `pages` row, a tree of `tt_content`
 rows, `sys_file_reference` rows into FAL, translation rows, version rows. Every field is
@@ -224,20 +199,18 @@ That choice helps explain the difference in scope, though line counts alone cann
 measure complexity or quality. TYPO3 models fine-grained records and permissions;
 Pushword centres on a page document that can also be represented as a file through Flat.
 
----
-
 ## What actually disappears
 
-The honest pitch to a TYPO3 developer is **subtraction**.
+For a TYPO3 developer, Pushword replaces several CMS-specific systems with Symfony and Twig.
 
 | TYPO3 concept                                          | In Pushword                                                    |
 | ------------------------------------------------------ | -------------------------------------------------------------- |
-| **TCA** — 279 files of nested arrays                   | A Doctrine entity, plus YAML for custom properties             |
-| **TypoScript** — 45 `ContentObject` classes            | Symfony configuration and Twig templates                       |
-| **Fluid** — 147 ViewHelpers, 714 templates             | Twig, the one you already use in every other Symfony project   |
-| **Extbase** — 31,730 lines of CMS-specific MVC         | Symfony controllers and services                               |
-| **DataHandler** — 9,737 lines                          | Doctrine-backed services, REST API or Flat sync                |
-| **FAL** — drivers, storages, `sys_file_reference`      | Flysystem plus a `Media` entity                                |
+| **TCA**: 279 files of nested arrays                   | A Doctrine entity, plus YAML for custom properties             |
+| **TypoScript**: 45 `ContentObject` classes            | Symfony configuration and Twig templates                       |
+| **Fluid**: 147 ViewHelpers, 714 templates             | Twig, the one you already use in every other Symfony project   |
+| **Extbase**: 31,730 lines of CMS-specific MVC         | Symfony controllers and services                               |
+| **DataHandler**: 9,737 lines                          | Doctrine-backed services, REST API or Flat sync                |
+| **FAL**: drivers, storages, `sys_file_reference`      | Flysystem plus a `Media` entity                                |
 | **Install Tool + 22 upgrade wizards**                  | `doctrine:schema:update --force`                               |
 | **`ext_localconf.php` / `ext_tables.php`**             | A standard Symfony bundle                                      |
 
@@ -267,19 +240,15 @@ compile time, and `pw:schema:dump` exposes the model to `/api/docs` and to AI ag
 field is then readable in Twig, writable through the admin, the API and the flat files, and
 it round-trips through front matter. See [declared page properties](/page-properties).
 
-The trade is visible in the example: TCA can express things this cannot — inline relations,
+The trade is visible in the example: TCA can express inline relations,
 per-field permissions, workspace-aware translation behaviour, custom form elements. If you
 need those, you need TCA, and TCA is 279 files for a reason.
 
----
-
 ## What you gain, beyond subtraction
 
-This is the section that should decide it, so here it is with specifics rather than
-adjectives. Since it is also the section you have least reason to take on trust from a
-vendor, every claim below is one you can falsify in an afternoon on your own machine rather
-than believe. [Trying it](#trying-it) at the end is the short version: install, import a few
-real pages, and check whether the workflow described here is the one you get.
+You can test the workflow below on a small site. [Trying it](#trying-it) covers the
+installation and a sample import; the editing and publishing steps show what your team
+would use day to day.
 
 Consider a change that arrives on a Tuesday: a client wants a paragraph reworded on twelve
 pages across three locales. TYPO3 offers backend edits or a scripted change through its
@@ -303,7 +272,7 @@ audit changes.
 - **One installation, many hosts and locales.** A fleet of client sites sharing templates,
   media and code from one codebase and one admin.
 - **AI agents are first-class clients.** Many `pw:*` commands detect an agent and emit a
-  single compact JSON line instead of progress bars — see
+  single compact JSON line instead of progress bars. See
   [agent-optimized output](/agent-output). The [REST API](/extension/api) is
   OpenAPI-described, `pw:schema:dump` hands an agent the content model, and
   `vendor/pushword/docs/CLAUDE.md` ships instructions for the agent working on *your* site.
@@ -314,15 +283,12 @@ audit changes.
   [search](/extension/search) (Loupe, no search server),
   [forms and comments](/extension/conversation), [newsletter](/extension/newsletter),
   [dead-link scanning](/extension/page-scanner), [redirections](/extension/flat),
-  [snippets](/extension/snippet), [REST API](/extension/api) — versioned and tested
+  [snippets](/extension/snippet), [REST API](/extension/api). They are versioned and tested
   together.
 
----
+## Shared design choices
 
-## Where the two agree more than you would expect
-
-Both projects arrived independently at several of the same conclusions, which usually means
-the conclusions are right.
+Both projects use Symfony components, server-rendered HTML and schema-driven content.
 
 | Idea                                   | TYPO3 v14                                       | Pushword                                             |
 | -------------------------------------- | ------------------------------------------------ | ---------------------------------------------------- |
@@ -333,24 +299,20 @@ the conclusions are right.
 | Server-rendered HTML, JS opt-in        | Fluid, no mandatory frontend framework          | Twig, JS opt-in per component                        |
 | Structured content over a WYSIWYG blob | Content elements                                | Markdown + declared properties + [snippets](/extension/snippet) |
 
-The PSR-14 convergence deserves a footnote in TYPO3's favour and against it at once: 287
-event classes is real modernisation work, and **42 files still read
+TYPO3 has 287 PSR-14 event classes, and **42 files still read
 `$GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']`**. A decade into that migration, the old hook
 system is still load-bearing. That is what backward compatibility costs at TYPO3's scale,
 and it is a compatibility cost a smaller project may face differently.
-
----
 
 ## The four exceptions
 
 Four situations can favor TYPO3. If one is yours, weigh it before switching.
 
-Size them honestly before you assume one applies, though, because "enterprise CMS"
-vocabulary makes them sound more universal than they are. A staged approval chain is a
+The need for these controls depends on how your team publishes. A staged approval chain is a
 feature of organisations with a compliance function or a legal review step, not of
-organisations with editors. Per-record permissions matter when different editors must be
-prevented from touching each other's sections — not when three colleagues all edit the
-whole site and trust each other. Check which controls your team actually uses.
+organisations with editors. Per-record permissions matter when editors need separate
+sections. A team of three colleagues editing the same site may not need them. Check which
+controls your team actually uses.
 
 1. **You need workspaces or a staged publishing workflow.** 10,344 lines of sysext
    implementing draft workspaces, preview links, staged publishing and record dependency
@@ -360,18 +322,16 @@ whole site and trust each other. Check which controls your team actually uses.
    lines: page-tree mounts, per-table and per-field access, group inheritance. Pushword has
    five flat roles. Multi-editor scoping is on the roadmap; today it is a gap, not a
    difference.
-3. **You depend on specific TER extensions.** Count them honestly. Even two or three that
+3. **You depend on specific TER extensions.** Check which are installed. Even two or three that
    solve a real problem can decide this outright.
 4. **A contract requires an SLA, a certification, or named-year support.** ELTS and the
    certified-partner network exist for exactly this, and no amount of engineering argument
    answers a procurement checklist.
 
-Also worth naming plainly rather than hiding in a footnote: **Pushword only recently reached
+**Pushword only recently reached
 stable `1.0`**, has English and French admin translations, and targets SQLite, PostgreSQL
 and MariaDB rather than TYPO3's four database engines. If any of those is a blocker, it is
 a blocker.
-
----
 
 ## Trying it
 
@@ -387,13 +347,11 @@ Then check the exit before you commit to the entrance. Import a few pages, run
 routes, media and custom data would still need migration; the filesystem answers part of
 the sustainability question, not all of it.
 
----
-
 ## Resources
 
 - **TYPO3**: [typo3.org](https://typo3.org) · [docs.typo3.org](https://docs.typo3.org) · [github.com/TYPO3/typo3](https://github.com/TYPO3/typo3)
 - **Pushword**: [pushword.piedweb.com](https://pushword.piedweb.com) · [github.com/Pushword/Pushword](https://github.com/Pushword/Pushword) · [architecture](/architecture) · [extensions](/extensions) · [getting help](/pro)
-- Related: [Astro vs Pushword](/blog/astro-vs-pushword) · [CMS comparison — WordPress, Statamic, Sulu](/blog/cms-comparison)
+- Related: [Astro vs Pushword](/blog/astro-vs-pushword) · [CMS comparison: WordPress, Statamic, Sulu](/blog/cms-comparison)
 
 > [!note] About this comparison
 >
@@ -403,7 +361,7 @@ the sustainability question, not all of it.
 > from the `v14.3.5` tag (14 July 2026), not the latest patch; support dates and ELTS
 > pricing come from TYPO3's own announcements. Pushword code counts are approximate.
 >
-> Found an error, or think we have been unfair to TYPO3? [Open an issue](https://github.com/Pushword/Pushword/issues) — corrections are welcome.
+> Found an error, or think we have been unfair to TYPO3? [Open an issue](https://github.com/Pushword/Pushword/issues); corrections are welcome.
 
 > [!warning] Version
 >
