@@ -378,6 +378,48 @@ figure is a sampled process-tree RSS peak, not PHP's Zend allocation counter.
 Repeated results are meaningful only with the same snapshot hash, site version,
 CPU affinity and binary.
 
+### Whole-page Altimood rendering
+
+The separate end-to-end runner compares the **current monorepo PHP source** with
+the same source plus Rust Markdown and split analysis. It backs up Altimood's
+SQLite database into temporary PHP/Rust site copies, snapshots the two Pushword
+source trees and native binary, and leaves the original site untouched. Each
+case checks HTTP 200 and byte-identical complete HTML after a cleared fragment
+cache and again with warm fragments. Rust runs must start an observed child
+process. The site copies add the OAuth and Snippet bundles required by the
+current monorepo, since Altimood's installed packages are older.
+
+```sh
+python3 packages/core/rust/benchmarks/e2e-altimood.py --site ../altimood --cpu 5 --runs 3 \
+  --url https://altimood.com/ \
+  --url https://altimood.com/refuges-tour-du-mont-blanc \
+  --url https://altimood.com/tour-du-mont-blanc \
+  --url https://altimood.com/blog/randonnees-hautes-alpes \
+  --url https://altimood.com/quiz-montagne-france \
+  --url https://us.altimood.com/tour-du-mont-blanc-mountain-huts \
+  > packages/core/rust/benchmarks/local-altimood/e2e-result.json
+```
+
+The 13 September 2026 aggregate report is
+`benchmarks/2026-09-13-altimood-e2e.json`: six pages, three render paths,
+three rounds, **108/108 exact HTTP 200 HTML pairs**. The sums below add the six
+per-page medians; RSS is the median sampled peak of the PHP process plus child.
+
+| Path | Fragment-cold PHP → Rust | Warm PHP → Rust | Tree RSS PHP → Rust |
+|---|---:|---:|---:|
+| Public request | 2,657.4 → 2,515.7 ms (1.06×) | 224.9 → 247.4 ms (0.91×) | 130.1 → 136.7 MiB |
+| Preview `showPage()` | 1,433.2 → 1,175.6 ms (1.22×) | 27.2 → 21.8 ms (1.25×) | 123.4 → 131.7 MiB |
+| Static page render | 1,314.4 → 1,169.4 ms (1.12×) | 25.8 → 22.1 ms (1.17×) | 123.5 → 131.9 MiB |
+
+The long Markdown pages improve; the homepage and quiz do not. The public warm
+path is slower with Rust on this sample. These are directional measurements in
+a Symfony test kernel with debug disabled, not production HTTP measurements.
+Preview measures the `showPage()` call used by admin editing, not the whole
+authenticated admin request. Static render uses `StaticPageRenderer`, but does
+not include file writes, minification, feeds or other export work. The sampled
+RSS includes kernel boot and the native worker. The report records source,
+binary and site hashes so later PHP changes can be compared on the same data.
+
 ### TOC: algorithmic improvement applies to PHP too
 
 `TOC\UniqueSlugger::makeSlug()` restarts a numeric suffix search for every heading

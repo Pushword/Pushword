@@ -1,0 +1,275 @@
+{
+  "workload": "Altimood snapshot, current Pushword PHP source; Rust Markdown and SplitContent enabled together",
+  "environment": "Symfony test kernel without debug, copied SQLite database and templates, one pinned CPU",
+  "pushword_revision": "1151600369d6487f7df1ace970f2526bfa219ac9",
+  "source_snapshot_sha256": "6d25db34ee3864d7f1a3cb9793a9dc33375126288b9f3c24e8730cb6410c4397",
+  "altimood_revision": "3a292ed8e3d223b0c533a8d308773e9c31867e2d",
+  "binary_sha256": "a34055c2a1dcb299fb872dd06d4863ab556ec7a1366f9e79f400120f7f30e660",
+  "cpu": 5,
+  "runs_per_case": 3,
+  "pages": 6,
+  "cases": 18,
+  "exact_http_200_html_pairs": 108,
+  "rust_child_observed_in_all_samples": true,
+  "paths": {
+    "public": {
+      "fragment_cold_ms": {
+        "php": 2657.42,
+        "rust": 2515.68,
+        "php_over_rust": 1.056
+      },
+      "warm_ms": {
+        "php": 224.89,
+        "rust": 247.39,
+        "php_over_rust": 0.909
+      },
+      "php_median_sampled_peak_tree_rss_mib": 130.1,
+      "php_median_sampled_peak_child_rss_mib": 0.0,
+      "rust_median_sampled_peak_tree_rss_mib": 136.7,
+      "rust_median_sampled_peak_child_rss_mib": 11.8,
+      "per_page": [
+        {
+          "url": "https://altimood.com/",
+          "fragment_cold_ms": {
+            "php": 409.99,
+            "rust": 410.66
+          },
+          "warm_ms": {
+            "php": 32.48,
+            "rust": 35.28
+          }
+        },
+        {
+          "url": "https://altimood.com/refuges-tour-du-mont-blanc",
+          "fragment_cold_ms": {
+            "php": 474.68,
+            "rust": 426.4
+          },
+          "warm_ms": {
+            "php": 42.63,
+            "rust": 43.52
+          }
+        },
+        {
+          "url": "https://altimood.com/tour-du-mont-blanc",
+          "fragment_cold_ms": {
+            "php": 453.27,
+            "rust": 422.98
+          },
+          "warm_ms": {
+            "php": 38.17,
+            "rust": 41.11
+          }
+        },
+        {
+          "url": "https://altimood.com/blog/randonnees-hautes-alpes",
+          "fragment_cold_ms": {
+            "php": 465.76,
+            "rust": 428.67
+          },
+          "warm_ms": {
+            "php": 43.26,
+            "rust": 44.7
+          }
+        },
+        {
+          "url": "https://altimood.com/quiz-montagne-france",
+          "fragment_cold_ms": {
+            "php": 388.36,
+            "rust": 406.43
+          },
+          "warm_ms": {
+            "php": 29.73,
+            "rust": 42.9
+          }
+        },
+        {
+          "url": "https://us.altimood.com/tour-du-mont-blanc-mountain-huts",
+          "fragment_cold_ms": {
+            "php": 465.37,
+            "rust": 420.55
+          },
+          "warm_ms": {
+            "php": 38.62,
+            "rust": 39.89
+          }
+        }
+      ]
+    },
+    "preview": {
+      "fragment_cold_ms": {
+        "php": 1433.19,
+        "rust": 1175.59,
+        "php_over_rust": 1.219
+      },
+      "warm_ms": {
+        "php": 27.17,
+        "rust": 21.79,
+        "php_over_rust": 1.247
+      },
+      "php_median_sampled_peak_tree_rss_mib": 123.4,
+      "php_median_sampled_peak_child_rss_mib": 0.0,
+      "rust_median_sampled_peak_tree_rss_mib": 131.7,
+      "rust_median_sampled_peak_child_rss_mib": 11.8,
+      "per_page": [
+        {
+          "url": "https://altimood.com/",
+          "fragment_cold_ms": {
+            "php": 176.02,
+            "rust": 172.97
+          },
+          "warm_ms": {
+            "php": 2.72,
+            "rust": 2.8
+          }
+        },
+        {
+          "url": "https://altimood.com/refuges-tour-du-mont-blanc",
+          "fragment_cold_ms": {
+            "php": 249.38,
+            "rust": 206.25
+          },
+          "warm_ms": {
+            "php": 5.09,
+            "rust": 3.94
+          }
+        },
+        {
+          "url": "https://altimood.com/tour-du-mont-blanc",
+          "fragment_cold_ms": {
+            "php": 237.37,
+            "rust": 210.42
+          },
+          "warm_ms": {
+            "php": 4.57,
+            "rust": 3.95
+          }
+        },
+        {
+          "url": "https://altimood.com/blog/randonnees-hautes-alpes",
+          "fragment_cold_ms": {
+            "php": 237.57,
+            "rust": 202.18
+          },
+          "warm_ms": {
+            "php": 4.58,
+            "rust": 3.67
+          }
+        },
+        {
+          "url": "https://altimood.com/quiz-montagne-france",
+          "fragment_cold_ms": {
+            "php": 171.34,
+            "rust": 184.74
+          },
+          "warm_ms": {
+            "php": 3.8,
+            "rust": 3.79
+          }
+        },
+        {
+          "url": "https://us.altimood.com/tour-du-mont-blanc-mountain-huts",
+          "fragment_cold_ms": {
+            "php": 361.51,
+            "rust": 199.02
+          },
+          "warm_ms": {
+            "php": 6.41,
+            "rust": 3.64
+          }
+        }
+      ]
+    },
+    "static-render": {
+      "fragment_cold_ms": {
+        "php": 1314.35,
+        "rust": 1169.38,
+        "php_over_rust": 1.124
+      },
+      "warm_ms": {
+        "php": 25.78,
+        "rust": 22.1,
+        "php_over_rust": 1.167
+      },
+      "php_median_sampled_peak_tree_rss_mib": 123.5,
+      "php_median_sampled_peak_child_rss_mib": 0.0,
+      "rust_median_sampled_peak_tree_rss_mib": 131.9,
+      "rust_median_sampled_peak_child_rss_mib": 11.7,
+      "per_page": [
+        {
+          "url": "https://altimood.com/",
+          "fragment_cold_ms": {
+            "php": 179.0,
+            "rust": 172.76
+          },
+          "warm_ms": {
+            "php": 2.75,
+            "rust": 2.82
+          }
+        },
+        {
+          "url": "https://altimood.com/refuges-tour-du-mont-blanc",
+          "fragment_cold_ms": {
+            "php": 248.03,
+            "rust": 203.97
+          },
+          "warm_ms": {
+            "php": 5.07,
+            "rust": 4.02
+          }
+        },
+        {
+          "url": "https://altimood.com/tour-du-mont-blanc",
+          "fragment_cold_ms": {
+            "php": 231.54,
+            "rust": 198.49
+          },
+          "warm_ms": {
+            "php": 4.67,
+            "rust": 3.93
+          }
+        },
+        {
+          "url": "https://altimood.com/blog/randonnees-hautes-alpes",
+          "fragment_cold_ms": {
+            "php": 241.61,
+            "rust": 206.51
+          },
+          "warm_ms": {
+            "php": 4.68,
+            "rust": 3.78
+          }
+        },
+        {
+          "url": "https://altimood.com/quiz-montagne-france",
+          "fragment_cold_ms": {
+            "php": 172.09,
+            "rust": 188.28
+          },
+          "warm_ms": {
+            "php": 3.95,
+            "rust": 3.88
+          }
+        },
+        {
+          "url": "https://us.altimood.com/tour-du-mont-blanc-mountain-huts",
+          "fragment_cold_ms": {
+            "php": 242.09,
+            "rust": 199.36
+          },
+          "warm_ms": {
+            "php": 4.67,
+            "rust": 3.68
+          }
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Public path uses a test kernel rather than production HTTP infrastructure.",
+    "Preview times showPage, not the entire authenticated admin request.",
+    "Static render times exclude file writing, minification, feeds and other generator work.",
+    "Timing sums are directional; concurrent host load and site-specific work affect them.",
+    "Sampled process-tree RSS includes kernel boot and the native worker."
+  ]
+}
