@@ -71,7 +71,7 @@ class MarkdownParser implements ResetInterface
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
         $this->nativeWorker = null !== $nativeBinary && '' !== $nativeBinary ? new NativeWorker($nativeBinary, $nativeTimeout) : null;
-        $this->tempestRenderer = new TempestMarkdownRenderer();
+        $this->tempestRenderer = new TempestMarkdownRenderer($this->linkProvider, $apps, $twig);
         $this->pushwordExtension = new PushwordExtension(
             $this->linkProvider,
             $mediaExtension,
