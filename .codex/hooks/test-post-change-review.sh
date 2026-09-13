@@ -83,6 +83,24 @@ test ! -e "$state_file"
 test ! -e "$commit_file"
 
 post_write
+printf '%s\n' 'global git option' > "$test_repo/tracked.txt"
+git -C "$test_repo" commit --only -qm 'global option' -- tracked.txt
+post_terminal_command Bash "GIT_WORK_TREE=$test_repo git -c core.hooksPath=/dev/null commit --only -m test -- tracked.txt"
+test -f "$commit_file"
+commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
+stop_with_message "Post-change review: is-it-well-tested complete; code-simplifier complete; committed $commit_hash"
+test ! -e "$state_file"
+
+post_write
+printf '%s\n' 'combined git options' > "$test_repo/tracked.txt"
+git -C "$test_repo" commit --only -qm 'combined options' -- tracked.txt
+post_terminal_command Bash "git -C $test_repo -c core.hooksPath=/dev/null commit --only -m test -- tracked.txt"
+test -f "$commit_file"
+commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
+stop_with_message "Post-change review: is-it-well-tested complete; code-simplifier complete; committed $commit_hash"
+test ! -e "$state_file"
+
+post_write
 stop_with_message 'Post-change review: awaiting user confirmation from is-it-well-tested'
 test ! -e "$state_file"
 test ! -e "$commit_file"

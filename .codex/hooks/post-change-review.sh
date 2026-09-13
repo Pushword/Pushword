@@ -40,8 +40,9 @@ if [ "$event" = "PostToolUse" ]; then
       command=$(printf '%s' "$input" | jq -r \
         '.tool_input.command // .tool_input.cmd // empty' 2>/dev/null || true)
 
+      # Git's global -C and -c options may precede a scoped commit.
       if [ -f "$state_file" ] && printf '%s' "$command" | grep -Eq \
-        '(^|[;&|[:space:]])git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+commit[[:space:]][^;&|]*--only([[:space:]]|$)'; then
+        '(^|[;&|[:space:]])git([[:space:]]+(-C[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+))*[[:space:]]+commit[[:space:]][^;&|]*--only([[:space:]]|$)'; then
         previous_head=$(cat "$state_file")
         current_head=$(git_head)
 
