@@ -39,7 +39,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     private const int INDEX_CACHE_TTL = 86400;
 
-    private const int SEARCH_RESULT_CACHE_SIZE = 16;
+    private const int SEARCH_RESULT_CACHE_SIZE = 256;
 
     #[Required]
     public PageRepository $pageRepository;

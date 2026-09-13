@@ -312,6 +312,12 @@ final class PerformanceRegressionTest extends KernelTestCase
             $this->mediaRepo->findBySearch('missing-search-'.$index);
         }
 
+        self::assertSame(0, $this->countQueries(fn (): array => $this->mediaRepo->findBySearch('1.jpg')));
+
+        for ($index = 16; $index < 256; ++$index) {
+            $this->mediaRepo->findBySearch('missing-search-'.$index);
+        }
+
         self::assertSame(1, $this->countQueries(fn (): array => $this->mediaRepo->findBySearch('1.jpg')));
     }
 

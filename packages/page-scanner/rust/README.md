@@ -170,4 +170,19 @@ worker itself peaking near 8 MiB. These are different RSS measurements, and
 summed RSS can count shared pages twice; they show no material memory change,
 not an exact physical-memory saving. The next deployment check is a complete
 compatible package upgrade on staging, followed by the same parity and timing
-comparison. After that, profile page rendering, which is now the larger cost.
+comparison.
+
+## Rendering follow-up
+
+A sampled render of all 2,479 GrandAngle pages, with the current core media
+repository loaded into the installed site, still spent about one third of its
+template samples in `MediaRepository::findBySearch()`. The repository already
+caches repeated search terms, but its 16-entry bound evicted product codes that
+recurred later in the corpus. Raising that bound to 256 reduced template time
+from 52.4 to 50.0 seconds in one serial, CPU-pinned A/B pair without sampling;
+the sampled pair independently showed a 2.5-second reduction. Both variants
+peaked at 304 MiB of PHP memory in the unsampled pair. This is a rendering
+component measurement, not an additional measured `pw:page-scan` gain.
+Whole-page hashes differed between repeated site runs, so the experiment does
+not establish output parity; the repository's cached query results are covered
+by regression tests.
