@@ -27,6 +27,7 @@ final class MariaDbReadCommittedTest extends KernelTestCase
     {
         self::bootKernel();
         $connection = self::getContainer()->get(Connection::class);
+        self::assertContains($connection->fetchOne('SELECT 1'), [1, '1']);
 
         if (! $connection->getDatabasePlatform() instanceof MariaDBPlatform) {
             return;
