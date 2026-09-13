@@ -39,6 +39,10 @@ class Markdown implements FilterInterface
 
         $textPartList = MarkdownUtils::prepareText($text);
 
+        if ($this->markdownParser->hasNativeMarkdown()) {
+            return $this->renderNativeBatch(array_values($textPartList), $manager);
+        }
+
         // must take care of code block
 
         $filteredText = '';
@@ -46,11 +50,54 @@ class Markdown implements FilterInterface
             try {
                 $filteredText .= $this->transformPart($textPart, $manager)."\n\n";
             } catch (Exception $e) {
-                throw new Exception(\sprintf('Error in markdown block #%d: "%s" — %s', $index + 1, mb_substr(trim($textPart), 0, 100), $e->getMessage()), 0, $e);
+                throw $this->blockError($index, $textPart, $e);
             }
         }
 
         return $filteredText;
+    }
+
+    /** @param list<string> $parts */
+    private function renderNativeBatch(array $parts, Manager $manager): string
+    {
+        $prepared = [];
+        $markdown = [];
+        foreach ($parts as $index => $part) {
+            try {
+                [$content, $needsMarkdown] = $this->preparePart($part, $manager);
+            } catch (Exception $e) {
+                throw $this->blockError($index, $part, $e);
+            }
+
+            $prepared[] = [$content, $needsMarkdown];
+            if ($needsMarkdown) {
+                $markdown[] = $content;
+            }
+        }
+
+        $native = $this->markdownParser->renderNativeMany($markdown);
+        $markdownIndex = 0;
+        $filteredText = '';
+        foreach ($prepared as $index => [$content, $needsMarkdown]) {
+            if ($needsMarkdown) {
+                try {
+                    $content = $native[$markdownIndex] ?? $this->parseMarkdown($content);
+                } catch (Exception $e) {
+                    throw $this->blockError($index, $parts[$index], $e);
+                }
+
+                ++$markdownIndex;
+            }
+
+            $filteredText .= $content."\n\n";
+        }
+
+        return $filteredText;
+    }
+
+    private function blockError(int $index, string $part, Exception $error): Exception
+    {
+        return new Exception(\sprintf('Error in markdown block #%d: "%s" — %s', $index + 1, mb_substr(trim($part), 0, 100), $error->getMessage()), 0, $error);
     }
 
     private function parseMarkdown(string $text): string
@@ -59,6 +106,14 @@ class Markdown implements FilterInterface
     }
 
     private function transformPart(string $text, Manager $manager): string
+    {
+        [$content, $needsMarkdown] = $this->preparePart($text, $manager);
+
+        return $needsMarkdown ? $this->parseMarkdown($content) : $content;
+    }
+
+    /** @return array{string, bool} */
+    private function preparePart(string $text, Manager $manager): array
     {
         // dump($text);
         $lines = explode("\n", $text);
@@ -87,7 +142,7 @@ class Markdown implements FilterInterface
 
         if (null !== $textFiltered) {
             if (MarkdownUtils::isItRawBlock($blockText)) {
-                return $textFiltered;
+                return [$textFiltered, false];
             }
 
             $textFiltered = trim($textFiltered);
@@ -97,7 +152,7 @@ class Markdown implements FilterInterface
 
         $blockText = $this->fixTypo($blockText);
 
-        return $this->parseMarkdown(trim($attribute."\n".$blockText));
+        return [trim($attribute."\n".$blockText), true];
     }
 
     private function fixTypo(string $text): string

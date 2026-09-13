@@ -10,8 +10,9 @@ for shared hosting: installing, editing, previewing and publishing must not
 require Cargo, a native executable, FFI, a PHP extension or a background daemon.
 Using Hugo or Zola as a replacement publisher is outside this direction.
 
-Opt-in integrations cover HTML minification in `pushword/static-generator` and
-aggregate `SplitContent` analysis in `pushword/core`. Both default to PHP.
+Opt-in integrations cover HTML minification in `pushword/static-generator`,
+aggregate `SplitContent` analysis and experimental Markdown conversion in
+`pushword/core`. All default to PHP.
 The Rust backends are experimental: build and test them on the
 deployment platform before enabling it. No native binaries are downloaded by Composer.
 
@@ -161,9 +162,10 @@ and aggregate report live beside the synthetic benchmark.
 
 ## Markdown and other follow-up exploration
 
-The separate `pushword-content-probe` executable does not enable Rust for Markdown.
-Its README and
-committed raw samples document the measurements and compatibility gaps.
+The standalone `pushword-content-probe` remains a research tool. The optional
+`pushword-content-analyzer` now batches eligible Markdown blocks and returns
+the rest to PHP. Its README and committed aggregate reports document the
+conversion boundary and compatibility gaps.
 
 - A synthetic 9.8 KB CommonMark subset takes about 8.09 ms per document in the
   existing uncached PHP converter versus 0.408 ms in the Comrak batch, including
@@ -172,9 +174,11 @@ committed raw samples document the measurements and compatibility gaps.
 - The current Comrak formatter is byte-identical on 67 of 70 corpus cases.
   Link, block and list-item attributes, Unicode IDs and table edge cases match
   PHP. Obfuscated links, media and notices still need Pushword's site services.
-  On the Altimood snapshot, 58,997/64,509 post-Twig blocks match, but only
-  401/1,455 pages with Markdown blocks have complete parity. This remains an
-  experimental parser, not a production Markdown backend.
+  Raw Comrak output matches 58,997/64,509 post-Twig blocks. A conservative
+  hybrid path accepts 58,758, declines 5,751 to PHP and matches all 64,509
+  blocks on that snapshot. Its uncached conversion median is 4.031 s in PHP
+  versus 1.034 s hybrid (3.90×), including worker IPC and PHP fallback.
+  Complete page and request parity remain unmeasured.
 - The earlier TOC probe exposed repeated list scans for duplicate IDs. The new
   indexed PHP slugger removes repeated suffix searches; the separate aggregate
   split benchmark measures native parsing against that improved baseline.
@@ -190,15 +194,15 @@ of an aggregate result, without introducing those markers. Existing
 `<!--break-->` behavior remains intact. Tempest parses Markdown rather than
 already rendered HTML, so it remains a benchmark candidate for a separate
 Markdown compatibility effort and is not a backend for this split operation.
-The next candidate is a compatible native Markdown parse stage, measuring the
-cost of passing parser events back to PHP before choosing whether to keep
-Pushword-aware renderers there or port them with explicit resolved inputs.
+The next Markdown step is to differential-test full page rendering and measure
+the opt-in filter in the actual site pipeline. A typed batch of parser events
+for PHP-owned rendering could later reduce whole-block fallbacks.
 
 ## Subsequent port candidates
 
 | Area | Candidate boundary | PHP behavior that must be preserved |
 |---|---|---|
-| Public rendering, editor preview, static builds and search ingestion | Markdown conversion after Twig evaluation; later fuse adjacent pure content passes | Pushword attributes, links, media rendering, notices, code handling and cache versioning; a generic CommonMark converter is insufficient |
+| Public rendering, editor preview, static builds and search ingestion | Resolve declined Markdown constructs through typed Rust/PHP batches after Twig evaluation; later fuse adjacent pure content passes | Pushword attributes, links, media rendering, notices, code handling and cache versioning must remain identical |
 | Public rendering, editor preview and static builds | Investigate Twig template rendering through [Tera](https://github.com/Keats/tera) or [Askama](https://github.com/askama-rs/askama), starting with representative site templates and measured cache misses | Template inheritance, includes, escaping, filters, functions, extension hooks, localization and site-defined templates must match before enabling a native path; retain PHP for shared hosting |
 | Static publication | Batched minification, asset metadata and incremental output planning | URL mapping, published snapshots, removals, redirects and atomic file replacement |
 | Scanning and indexing | Extract links, headings and searchable text from rendered content in one pass | Exclusions, anchor rules, index fields and host/locale separation; external network checks are another workload |

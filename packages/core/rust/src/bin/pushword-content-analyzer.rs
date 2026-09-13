@@ -1,5 +1,9 @@
-use pushword_content_probe::split::{Document, analyze, diagnose};
-use serde::{Deserialize, Serialize};
+use pushword_content_probe::{
+    markdown_if_supported,
+    split::{Document, analyze, diagnose},
+};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde_json::Value;
 use std::io::{self, BufRead, Read, Write};
 
 const MAX_FRAME_BYTES: u64 = 16 * 1024 * 1024;
@@ -10,7 +14,14 @@ struct Request {
     version: u32,
     id: u64,
     operation: String,
-    documents: Vec<Document>,
+    documents: Vec<Value>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct MarkdownDocument {
+    markdown: String,
+    fenced_code_pre_class: String,
 }
 
 #[derive(Serialize)]
@@ -18,6 +29,12 @@ struct Response<T: Serialize> {
     version: u32,
     id: u64,
     documents: Vec<T>,
+}
+
+fn parse_documents<T: DeserializeOwned>(
+    documents: Vec<Value>,
+) -> Result<Vec<T>, serde_json::Error> {
+    documents.into_iter().map(serde_json::from_value).collect()
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -44,15 +61,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "split_content" => serde_json::to_vec(&Response {
                 version: 1,
                 id: request.id,
-                documents: request.documents.iter().map(analyze).collect(),
+                documents: parse_documents::<Document>(request.documents)?
+                    .iter()
+                    .map(analyze)
+                    .collect(),
             })?,
             "diagnose_split" => serde_json::to_vec(&Response {
                 version: 1,
                 id: request.id,
-                documents: request
-                    .documents
+                documents: parse_documents::<Document>(request.documents)?
                     .iter()
                     .map(|document| diagnose(document).err())
+                    .collect(),
+            })?,
+            "render_markdown" => serde_json::to_vec(&Response {
+                version: 1,
+                id: request.id,
+                documents: parse_documents::<MarkdownDocument>(request.documents)?
+                    .iter()
+                    .map(|document| {
+                        markdown_if_supported(&document.markdown, &document.fenced_code_pre_class)
+                    })
                     .collect(),
             })?,
             _ => return Err("unsupported version or operation".into()),

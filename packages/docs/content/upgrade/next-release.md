@@ -1,5 +1,5 @@
 ---
-title: 'PHP files use strict types; optional Rust minification and content analysis'
+title: 'PHP files use strict types; optional Rust minification, content analysis and Markdown'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -54,3 +54,9 @@ See [native acceleration](../native-acceleration.md) for installation, fallback 
 Content splitting can use Rust while retaining PHP fallback and existing block markers; PHP remains the default.
 **Sites opting into Rust:** build `vendor/pushword/core/rust`, deploy `pushword-content-analyzer`, set `pushword.native_content_analyzer` to its trusted path, then clear the Symfony container cache.
 See [native acceleration](../native-acceleration.md) for the supported HTML boundary and checks.
+
+## Optional native Markdown conversion
+
+Markdown can use the same Rust analyzer for eligible blocks, with PHP fallback; PHP remains the default.
+**Sites opting into experimental Rust Markdown:** set `pushword.native_markdown_renderer` to the deployed `pushword-content-analyzer` path, then clear the Symfony container cache.
+See [native acceleration](../native-acceleration.md) for the measured conversion boundary and compatibility limits.

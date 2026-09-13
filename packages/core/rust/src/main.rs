@@ -1,5 +1,5 @@
 //! Measurement probe only: this is not the Pushword Markdown backend.
-use pushword_content_probe::markdown;
+use pushword_content_probe::{markdown, markdown_if_supported};
 use serde::Deserialize;
 use std::io::{self, Read, Write};
 
@@ -9,6 +9,8 @@ struct Request {
     documents: Vec<String>,
     #[serde(default)]
     fenced_code_pre_class: String,
+    #[serde(default)]
+    supported_only: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -20,10 +22,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("probe input exceeds 16 MiB".into());
     }
     let request: Request = serde_json::from_str(&input)?;
-    let documents: Vec<String> = request
+    let documents: Vec<Option<String>> = request
         .documents
         .iter()
-        .map(|source| markdown(source, &request.fenced_code_pre_class))
+        .map(|source| {
+            if request.supported_only {
+                markdown_if_supported(source, &request.fenced_code_pre_class)
+            } else {
+                Some(markdown(source, &request.fenced_code_pre_class))
+            }
+        })
         .collect();
     let mut stdout = io::stdout().lock();
     serde_json::to_writer(&mut stdout, &documents)?;

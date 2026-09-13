@@ -13,26 +13,33 @@ use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\Extension\TaskList\TaskListExtension;
 use League\CommonMark\MarkdownConverter;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\NoticeExtension;
 use Pushword\Core\Service\Markdown\Extension\PushwordExtension;
+use Pushword\Core\Service\NativeWorker;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Contracts\Service\ResetInterface;
 use Throwable;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Environment as Twig;
 
-class MarkdownParser
+class MarkdownParser implements ResetInterface
 {
     /**
      * Bump when the converter configuration or extensions change in a way that
      * alters output, to invalidate previously cached fragments.
      */
     private const int CACHE_VERSION = 9;
+
+    private const int NATIVE_CACHE_VERSION = 1;
 
     private readonly MarkdownConverter $converter;
 
@@ -41,6 +48,10 @@ class MarkdownParser
     private readonly PushwordExtension $pushwordExtension;
 
     private ?string $cacheVersion = null;
+
+    private readonly ?NativeWorker $nativeWorker;
+
+    private bool $nativeFailed = false;
 
     public function __construct(
         LinkProvider $linkProvider,
@@ -51,7 +62,13 @@ class MarkdownParser
         private readonly ?CacheItemPoolInterface $cache = null,
         #[Autowire(service: 'cache.app')]
         private readonly ?CacheItemPoolInterface $versionCache = null,
+        #[Autowire(param: 'pw.native_markdown_renderer')]
+        ?string $nativeBinary = null,
+        #[Autowire(param: 'pw.native_content_analyzer_timeout')]
+        float $nativeTimeout = 5.0,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
+        $this->nativeWorker = null !== $nativeBinary && '' !== $nativeBinary ? new NativeWorker($nativeBinary, $nativeTimeout) : null;
         $this->pushwordExtension = new PushwordExtension(
             $linkProvider,
             $mediaExtension,
@@ -78,6 +95,99 @@ class MarkdownParser
     public function transform(string $text): string
     {
         return $this->convertCached($this->converter, 'pw_md.', $text);
+    }
+
+    public function hasNativeMarkdown(): bool
+    {
+        return null !== $this->nativeWorker && ! $this->nativeFailed;
+    }
+
+    /**
+     * Probe already-prepared Markdown blocks in one request. Cache hits and
+     * accepted native results are strings; declines are left to the PHP caller.
+     *
+     * @param list<string> $texts
+     *
+     * @return list<?string>
+     */
+    public function renderNativeMany(array $texts): array
+    {
+        $results = array_fill(0, \count($texts), null);
+        $worker = $this->nativeWorker;
+        if ([] === $texts || null === $worker || $this->nativeFailed) {
+            return $results;
+        }
+
+        $pending = [];
+        $keys = [];
+        foreach ($texts as $index => $text) {
+            $hash = hash('xxh3', $this->cacheKeyVersion($text).'|'.$text);
+            $keys[$index] = 'pw_mdn'.self::NATIVE_CACHE_VERSION.'.'.$hash;
+
+            try {
+                foreach (['pw_md.'.$hash, $keys[$index]] as $key) {
+                    $item = $this->cache?->getItem($key);
+                    if (null !== $item && $item->isHit() && \is_string($item->get())) {
+                        $results[$index] = $item->get();
+
+                        continue 2;
+                    }
+                }
+            } catch (Throwable) {
+                // Cache availability does not affect rendering.
+            }
+
+            $pending[$index] = [
+                'markdown' => $text,
+                'fenced_code_pre_class' => $this->apps->get()->getStr(SiteConfig::FENCED_CODE_PRE_CLASS),
+            ];
+        }
+
+        if ([] === $pending) {
+            return array_values($results);
+        }
+
+        try {
+            $response = $worker->request('render_markdown', array_values($pending));
+            foreach ($response as $html) {
+                if (null !== $html && ! \is_string($html)) {
+                    throw new RuntimeException('Invalid native Markdown response.');
+                }
+            }
+        } catch (Throwable $throwable) {
+            $worker->reset();
+            $this->nativeFailed = true;
+            $this->logger->warning('Native Markdown rendering failed; using PHP until the service is reset.', ['exception' => $throwable]);
+
+            return array_values($results);
+        }
+
+        foreach (array_keys($pending) as $offset => $index) {
+            $html = $response[$offset];
+            $results[$index] = $html;
+            if (null === $html) {
+                continue;
+            }
+
+            try {
+                $item = $this->cache?->getItem($keys[$index]);
+                if (null !== $item) {
+                    $item->set($html);
+                    $this->cache->save($item);
+                }
+            } catch (Throwable) {
+                // The computed result remains usable without a cache write.
+            }
+        }
+
+        return array_values($results);
+    }
+
+    public function reset(): void
+    {
+        $this->nativeWorker?->reset();
+        $this->nativeFailed = false;
+        $this->cacheVersion = null;
     }
 
     /**

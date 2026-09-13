@@ -69,6 +69,7 @@ return RectorConfig::configure()
     ])
     ->withSkip([
         __DIR__.'/packages/*/rust/target/*',
+        __DIR__.'/packages/core/rust/benchmarks/local-altimood/*',
         'packages/core/src/Twig/AppExtension.php',
         'packages/dev-app/src/Kernel.php',
         'packages/core/src/Site/SiteConfig.php',

@@ -2,10 +2,10 @@
 
 This crate contains two separate executables, owned by `pushword/core`:
 
-- `pushword-content-analyzer`: opt-in HTML analysis used by `ContentSplitter`.
-  It prepares heading slots, labels and paragraph views in one worker request.
+- `pushword-content-analyzer`: opt-in HTML analysis used by `ContentSplitter`
+  and experimental Markdown conversion in a reused worker process.
 - `pushword-content-probe`: standalone [Comrak](https://github.com/kivikakk/comrak)
-  Markdown compatibility and performance research. It never renders site content.
+  Markdown compatibility and performance research. It is not a runtime backend.
 
 PHP remains the default and complete backend, including on shared hosting.
 The native HTML path is hybrid: PHP retains ICU slugging and Knp menu rendering.
@@ -37,7 +37,36 @@ Clear the Symfony container cache in the rendering environment. Leave the path
 unset or null on PHP-only hosting. Composer does not install a native binary.
 The existing Twig `mainContentSplit(page)` function now uses this service;
 public rendering, previews and static generation benefit wherever they use it.
-Markdown, Twig functions, media resolution and authorization remain in PHP.
+Twig functions, media resolution and authorization remain in PHP. Markdown
+conversion can also use Rust explicitly, with PHP handling site-dependent blocks.
+
+## Enable native Markdown conversion
+
+Build and deploy `pushword-content-analyzer` as above, then opt in separately:
+
+```yaml
+pushword:
+    native_markdown_renderer: '/opt/pushword/bin/pushword-content-analyzer'
+```
+
+The default is null, including when native content analysis is enabled. Clear
+the Symfony container cache after changing this path. The `Markdown` filter
+prepares and expands blocks through the existing PHP/Twig pipeline, requests
+uncached blocks as one Rust batch, then sends declined blocks to the existing
+PHP converter. Inline Markdown remains PHP. The existing persistent Markdown
+pool is shared, but native results have a separate versioned key namespace,
+so disabling Rust cannot serve an old native result. Existing PHP cache hits
+also bypass the worker. Missing or invalid executables,
+timeouts, bad responses and oversized batches fall back to PHP and log one
+warning until the service is reset. PHP-only hosting needs no binary or new
+configuration.
+
+The eligibility check conservatively declines obfuscated links, notices,
+Markdown images, date shortcodes, email addresses and French phone numbers.
+These depend on PHP link/media services, site templates, locale or current
+time. Conservative false positives cost PHP conversion; unseen syntax or
+parser differences can still cause a mismatch. Treat this backend as
+experimental until complete downstream page rendering is differential-tested.
 
 `ContentSplitter::split($html, $page)` returns the existing `SplitContent` object.
 `splitMany([['html' => $html, 'page' => $page], ...])` sends all uncached documents
@@ -71,6 +100,10 @@ XLink attributes and controls that the parsers normalize differently still fall
 back to PHP. This is an eligibility check, not HTML sanitization. The
 `diagnose_split` worker operation reports a decline reason per document;
 normal rendering uses `split_content`.
+
+`render_markdown` uses the same frame envelope, with ordered documents of
+`{"markdown":"...","fenced_code_pre_class":"..."}`. Each response entry is
+HTML or null (declined). PHP validates every entry before using the batch.
 
 On the current 70-case rendered Markdown corpus, all 70 documents use native
 analysis and match PHP across every accessor. On a read-only snapshot of the
@@ -106,8 +139,10 @@ The native analyzer tests compare every accessor and the recursive Knp menu on
 Generated supported documents must actually use Rust, so fallback cannot hide
 a native failure. Tests cover batch/cache/reset behavior, malformed and oversized
 protocol frames, large pipe responses, the Markdown/Twig pipeline and a PHP
-subprocess with `proc_open` disabled. The Comrak probe separately records its
-compatibility gaps and measures Markdown, TOC and search extraction.
+subprocess with `proc_open` disabled. Native Markdown tests cover mixed batch
+results, cache hits, missing-worker fallback and the PHP filter. The Comrak
+probe separately records raw compatibility gaps and measures Markdown, TOC
+and search extraction.
 
 For comparable timings, pin `composer test-native-core` to one available CPU.
 The test writes `target/content-probe-comrak.json`. The original
@@ -241,24 +276,35 @@ its own installed Pushword version, so this is a site compatibility audit, not
 a proof of parity against the current monorepo PHP renderer. Full aggregate
 counts and hashes are in `benchmarks/2026-09-13-comrak-altimood.json`.
 
-The Comrak ratio on the 9.8 KB subset is a parsing opportunity, not a drop-in
-CMS speedup. Preserve the existing content cache. The next useful prototype is
-a typed batch of deferred rendering operations from Rust: PHP would resolve
-links, phone numbers, email, dates, notices and media through its existing
-services and templates. Measure the PHP callback/serialization cost and exact
-site parity before deciding whether to enable a native Markdown backend.
+The raw Comrak ratio on the 9.8 KB subset remains a parsing opportunity, not
+a whole-site speedup. The opt-in hybrid path now declines these dynamic blocks
+to the PHP converter. A future typed batch of deferred rendering operations
+could reduce the fallback share while PHP continues resolving links, phone
+numbers, email, dates, notices and media through its existing services.
 
 To reproduce the downstream audit without committing private page content:
 
 ```sh
 php packages/core/rust/benchmarks/render-markdown-downstream.php ../altimood /tmp/pushword-markdown.ndjson
 python3 packages/core/rust/benchmarks/check-markdown-downstream.py /tmp/pushword-markdown.ndjson packages/core/rust/target/release/pushword-content-probe
+python3 packages/core/rust/benchmarks/check-markdown-downstream.py /tmp/pushword-markdown.ndjson packages/core/rust/target/release/pushword-content-probe --supported-only
 ```
 
 The first command writes a mode-0600 snapshot and refuses to overwrite one.
 The second reports only aggregate counts and hashes. It measures compatibility,
 not speed. Both commands use the downstream test kernel and its installed
 Pushword version.
+
+With `--supported-only`, the probe declines dynamic blocks and the audit
+counts them as PHP fallbacks against the snapshot. On the current Altimood
+snapshot, it accepts 58,758/64,509 blocks and declines 5,751; accepted Rust
+output is byte-identical, and the PHP fallback makes all 1,455 pages with
+Markdown blocks exact **at this conversion boundary**. The private local
+runner also times the persistent PHP/Rust worker bridge on three CPU-2 passes:
+4.031 s for uncached PHP conversion versus 1.034 s hybrid (3.90×), including
+worker IPC and PHP fallback conversions. These are post-Twig block times, not
+complete page or HTTP timings. Aggregate hashes and samples are in
+`benchmarks/2026-09-13-comrak-hybrid-altimood.json`.
 
 Tempest 1.2.2 renders the same article in about 1.5 ms per document in the
 standalone PHP benchmark, versus the native Comrak batch measured by the probe;
@@ -283,6 +329,7 @@ php packages/core/rust/benchmarks/render-downstream.php ../altimood "$PWD/packag
 php packages/core/rust/benchmarks/render-markdown-downstream.php ../altimood "$PWD/packages/core/rust/benchmarks/local-altimood/markdown.ndjson"
 python3 packages/core/rust/benchmarks/local-altimood/run.py split --cpu 2 > packages/core/rust/benchmarks/local-altimood/split-result.json
 python3 packages/core/rust/benchmarks/local-altimood/run.py markdown --cpu 2 > packages/core/rust/benchmarks/local-altimood/markdown-result.json
+python3 packages/core/rust/benchmarks/local-altimood/run.py hybrid --cpu 2 > packages/core/rust/benchmarks/local-altimood/hybrid-result.json
 ```
 
 Choose an available CPU or omit `--cpu`. Each runner performs three passes
@@ -303,19 +350,22 @@ On the 13 September 2026 local snapshots, with three passes pinned to CPU 2:
 | Complete split, 1,474 pages | 6.903 s | 2.164 s | 3.19× | 1,474/1,474 exact | Sampled tree peak 66.0 vs 73.2 MiB (+10.9%) |
 | Markdown, all 64,509 blocks | 4.072 s | 0.420 s | 9.70× | 58,997/64,509 blocks exact | Not measured |
 | Markdown, 58,997 matching blocks only | 3.173 s | 0.364 s | 8.71× | Exact blocks on this snapshot | Not measured |
+| Markdown hybrid, 64,509 blocks | 4.031 s | 1.034 s | 3.90× | 64,509/64,509 blocks exact | Not measured |
 
 The split snapshot SHA-256 is `3858ceac4e22b84479f3387730ec2359261aeb1b9984314b595c7d36bbc6ba6c`;
 the Markdown snapshot SHA-256 is `538e6619ebaf6506131a7f18877fe85399a3d487181de75eef9966c773064d9e`.
 
 The Markdown ratios are **component-level trends, not validated site gains**.
-The full output differs for 5,512 blocks, and only 401/1,455 pages with
-Markdown blocks have complete block parity. The matching subset does not
-establish whole-page equivalence or include the PHP callback work needed for
-site-dependent features. PHP timing excludes downstream kernel startup and
-snapshot decoding; Rust timing includes probe startup, IPC and JSON decoding
-per batch. The split memory figure is a sampled process-tree RSS peak, not
-PHP's Zend allocation counter. Repeated results are meaningful only with the
-same snapshot hash, site version, CPU affinity and binary.
+Raw Comrak differs for 5,512 blocks and only 401/1,455 pages have complete
+raw block parity. The hybrid route returns those blocks and 239 other
+conservative declines to PHP, so its post-Twig block output is fully exact on
+this snapshot. It does not establish whole-page equivalence. PHP timing
+excludes downstream kernel startup and snapshot decoding; the raw Rust timing
+includes probe startup, IPC and JSON decoding per batch, while the hybrid
+timing uses the reused `NativeWorker` plus PHP fallback calls. The split memory
+figure is a sampled process-tree RSS peak, not PHP's Zend allocation counter.
+Repeated results are meaningful only with the same snapshot hash, site version,
+CPU affinity and binary.
 
 ### TOC: algorithmic improvement applies to PHP too
 

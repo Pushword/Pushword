@@ -28,6 +28,81 @@ impl RenderSettings<'_> {
     }
 }
 
+/// Decline Markdown whose rendering depends on Pushword's site services.
+/// The check is deliberately conservative: false positives cost PHP work,
+/// whereas a false negative would change the rendered page.
+pub fn markdown_if_supported(source: &str, fenced_code_pre_class: &str) -> Option<String> {
+    if source.contains("#[")
+        || source.contains("[!")
+        || source.contains("![")
+        || source.contains("date(")
+        || source.contains('@')
+        || contains_phone(source)
+    {
+        return None;
+    }
+
+    Some(markdown(source, fenced_code_pre_class))
+}
+
+fn contains_phone(source: &str) -> bool {
+    let bytes = source.as_bytes();
+    for start in 0..bytes.len() {
+        let prefix = if bytes[start..].starts_with(b"+33") {
+            3
+        } else if bytes[start..].starts_with(b"0033") {
+            4
+        } else if bytes[start] == b'0' {
+            1
+        } else {
+            continue;
+        };
+        let mut position = start + prefix;
+        skip_phone_separators(bytes, &mut position);
+        if !bytes
+            .get(position)
+            .is_some_and(|digit| (b'1'..=b'9').contains(digit))
+        {
+            continue;
+        }
+        position += 1;
+        let mut pairs = 0;
+        while pairs < 4 {
+            skip_phone_separators(bytes, &mut position);
+            if bytes.get(position).is_some_and(u8::is_ascii_digit)
+                && bytes.get(position + 1).is_some_and(u8::is_ascii_digit)
+            {
+                position += 2;
+                pairs += 1;
+            } else {
+                break;
+            }
+        }
+        if pairs == 4 {
+            return true;
+        }
+    }
+    false
+}
+
+fn skip_phone_separators(bytes: &[u8], position: &mut usize) {
+    loop {
+        let remaining = &bytes[*position..];
+        if remaining.starts_with(b"&nbsp;") {
+            *position += 6;
+        } else if remaining.starts_with(&[0xc2, 0xa0]) {
+            *position += 2;
+        } else if remaining
+            .first()
+            .is_some_and(|byte| byte.is_ascii_whitespace() || matches!(byte, b'.' | b'-'))
+        {
+            *position += 1;
+        } else {
+            return;
+        }
+    }
+}
+
 /// Convert the supported Markdown subset. This is not a complete PHP replacement.
 pub fn markdown(source: &str, fenced_code_pre_class: &str) -> String {
     let mut options = Options::default();
@@ -587,7 +662,7 @@ fn render(
 
 #[cfg(test)]
 mod tests {
-    use super::markdown;
+    use super::{markdown, markdown_if_supported};
     use proptest::prelude::*;
     use serde::Deserialize;
 
@@ -656,6 +731,26 @@ mod tests {
         assert_eq!(
             markdown("#[hidden](/path)", ""),
             "<p>#<a href=\"/path\">hidden</a></p>\n"
+        );
+    }
+
+    #[test]
+    fn site_dependent_markdown_is_declined() {
+        for source in [
+            "#[hidden](/path)",
+            "> [!note] Notice",
+            "![alt](/image.jpg)",
+            "date(Y)",
+            "contact@example.com",
+            "Call +33 1 23 45 67 89",
+            "Call 01&nbsp;23&nbsp;45&nbsp;67&nbsp;89",
+            "Call 01\u{a0}23\u{a0}45\u{a0}67\u{a0}89",
+        ] {
+            assert_eq!(markdown_if_supported(source, ""), None, "{source}");
+        }
+        assert_eq!(
+            markdown_if_supported("A **simple** paragraph", ""),
+            Some("<p>A <strong>simple</strong> paragraph</p>\n".into())
         );
     }
 
