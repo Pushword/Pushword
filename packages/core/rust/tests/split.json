@@ -40,5 +40,8 @@
     {"name":"heading_in_attribute","html":"<p data-html=\"<h2>\">Intro.</p><h2>Title</h2><p>Text.</p>","native":false},
     {"name":"break_in_attribute","html":"<p data-html=\"<!--break-->\">Text.</p><h2>Title</h2>","native":false},
     {"name":"nested_hr","html":"<div><hr><p>Text.</p></div>","native":true},
-    {"name":"later_break_in_attribute","html":"<p>Lede.</p><!--break--><h2>Title</h2><p data-html=\"<!--break-->\">Text.</p>","native":false}
+    {"name":"later_break_in_attribute","html":"<p>Lede.</p><!--break--><h2>Title</h2><p data-html=\"<!--break-->\">Text.</p>","native":false},
+    {"name":"explicit_empty_paragraph","html":"<h2>Title</h2><p></p><p>Text.</p>","native":true},
+    {"name":"orphan_paragraph_closing_tag_in_list","html":"<h2>Title</h2><ol><li>Text:</p><pre><code>code</code></pre></li></ol>","native":false},
+    {"name":"orphan_paragraph_after_explicit_empty_paragraph","html":"<h2>Title</h2><p></p><ol><li>Text:</p><pre><code>code</code></pre></li></ol>","native":false}
 ]

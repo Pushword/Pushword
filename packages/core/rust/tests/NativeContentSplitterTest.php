@@ -201,11 +201,12 @@ final class NativeContentSplitterTest extends KernelTestCase
         self::assertStringContainsString('oversized response', $process->getErrorOutput());
         $worker = new NativeWorker(self::BINARY);
         self::assertSame([], $worker->request('split_content', []));
-        self::assertSame([null, 'ambiguous_heading', 'unsupported_attribute', 'normalized_control'], $worker->request('diagnose_split', [
+        self::assertSame([null, 'ambiguous_heading', 'unsupported_attribute', 'normalized_control', 'ambiguous_paragraph'], $worker->request('diagnose_split', [
             ['html' => '<h2>Title</h2>', 'toc' => true],
             ['html' => '<p data-html="<h2>">Text.</p>', 'toc' => true],
             ['html' => '<svg><use xlink:href="#a"></use></svg>', 'toc' => true],
             ['html' => "<h2>Title</h2>\r\n", 'toc' => true],
+            ['html' => '<h2>Title</h2><ol><li>Text:</p><pre><code>code</code></pre></li></ol>', 'toc' => true],
         ]));
         $html = str_repeat('<p>é 🦀</p>', 10000);
         self::assertNotNull($worker->request('split_content', [['html' => $html, 'toc' => false]])[0]);

@@ -43,6 +43,7 @@ pub enum DeclineReason {
     UnsupportedAttribute,
     AmbiguousBreak,
     AmbiguousHeading,
+    AmbiguousParagraph,
 }
 
 #[derive(Default)]
@@ -385,6 +386,13 @@ pub fn diagnose(document: &Document) -> Result<Analysis, DeclineReason> {
     }
     if source_body.matches(BREAK_MARKER).count() != walker.breaks {
         return Err(DeclineReason::AmbiguousBreak);
+    }
+    // html5ever inserts an empty paragraph for an orphan </p>; Masterminds drops it.
+    if document.toc
+        && walker.html.contains("<p></p>")
+        && walker.html.matches("<p></p>").count() > source_body.matches("<p></p>").count()
+    {
+        return Err(DeclineReason::AmbiguousParagraph);
     }
     let body = if document.toc {
         &walker.html
