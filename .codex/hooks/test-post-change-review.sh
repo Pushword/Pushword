@@ -37,6 +37,12 @@ post_terminal_command() {
     "$hook_path"
 }
 
+post_functions_exec() {
+  jq -nc --arg code "$1" --arg cwd "$test_repo" --arg session_id "$session_id" \
+    '{hook_event_name: "PostToolUse", tool_name: "functions.exec", session_id: $session_id, cwd: $cwd, tool_input: {code: $code}}' | \
+    "$hook_path"
+}
+
 stop_with_message() {
   jq -nc --arg message "$1" --arg cwd "$test_repo" --arg session_id "$session_id" \
     '{hook_event_name: "Stop", session_id: $session_id, cwd: $cwd, last_assistant_message: $message}' | \
@@ -69,6 +75,10 @@ test -f "$commit_file"
 first_commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
 post_write
 test ! -e "$commit_file"
+post_functions_exec 'text("git commit --only")'
+test ! -e "$commit_file"
+post_functions_exec 'await tools.exec_command({cmd:"git commit -m unsafe"})'
+test ! -e "$commit_file"
 
 block_output=$(stop_with_message "Post-change review: is-it-well-tested complete; code-simplifier complete; committed $first_commit_hash")
 printf '%s' "$block_output" | jq -e '.decision == "block"' >/dev/null
@@ -95,6 +105,15 @@ post_write
 printf '%s\n' 'combined git options' > "$test_repo/tracked.txt"
 git -C "$test_repo" commit --only -qm 'combined options' -- tracked.txt
 post_terminal_command Bash "git -C $test_repo -c core.hooksPath=/dev/null commit --only -m test -- tracked.txt"
+test -f "$commit_file"
+commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
+stop_with_message "Post-change review: is-it-well-tested complete; code-simplifier complete; committed $commit_hash"
+test ! -e "$state_file"
+
+post_write
+printf '%s\n' 'wrapped command' > "$test_repo/tracked.txt"
+git -C "$test_repo" commit --only -qm 'wrapped command' -- tracked.txt
+post_functions_exec 'const result = await tools.exec_command({cmd:"git -c core.hooksPath=/dev/null commit --only -m wrapped -- tracked.txt"}); text(result)'
 test -f "$commit_file"
 commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
 stop_with_message "Post-change review: is-it-well-tested complete; code-simplifier complete; committed $commit_hash"

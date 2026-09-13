@@ -40,9 +40,16 @@ if [ "$event" = "PostToolUse" ]; then
       command=$(printf '%s' "$input" | jq -r \
         '.tool_input.command // .tool_input.cmd // empty' 2>/dev/null || true)
 
+      if [ "$tool_name" = "functions.exec" ] && [ -z "$command" ]; then
+        code=$(printf '%s' "$input" | jq -r '.tool_input.code // empty' 2>/dev/null || true)
+        if printf '%s' "$code" | grep -Eq 'tools[.]exec_command[[:space:]]*[(]'; then
+          command="$code"
+        fi
+      fi
+
       # Git's global -C and -c options may precede a scoped commit.
-      if [ -f "$state_file" ] && printf '%s' "$command" | grep -Eq \
-        '(^|[;&|[:space:]])git([[:space:]]+(-C[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+))*[[:space:]]+commit[[:space:]][^;&|]*--only([[:space:]]|$)'; then
+      scoped_commit_pattern="(^|[;&|[:space:]\"'])git([[:space:]]+(-C[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+))*[[:space:]]+commit[[:space:]][^;&|]*--only([[:space:]\"']|$)"
+      if [ -f "$state_file" ] && printf '%s' "$command" | grep -Eq "$scoped_commit_pattern"; then
         previous_head=$(cat "$state_file")
         current_head=$(git_head)
 
