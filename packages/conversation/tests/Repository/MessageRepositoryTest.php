@@ -10,12 +10,15 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Conversation\Repository\MessageRepository;
+use Pushword\Core\Tests\Perf\QueryCountingTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
 
 #[Group('integration')]
 final class MessageRepositoryTest extends KernelTestCase
 {
+    use QueryCountingTrait;
+
     private EntityManagerInterface $entityManager;
 
     private MessageRepository $messageRepository;
@@ -193,6 +196,57 @@ final class MessageRepositoryTest extends KernelTestCase
         $filteredTest = array_values($filteredTest);
         self::assertCount(1, $filteredTest);
         self::assertSame('5 star review', $filteredTest[0]->getContent());
+    }
+
+    public function testPublishedReviewSearchReusesQueriesAndInvalidatesAfterWritesOrClear(): void
+    {
+        $tag = 'review-search-cache-test';
+        $first = $this->createTestReview('First cached review', 2);
+        $first->referring = $tag;
+
+        $this->entityManager->persist($first);
+        $this->entityManager->flush();
+        $this->trackCreatedMessage($first);
+
+        $this->startCountingQueries($this->entityManager->getConnection());
+        $search = fn (): array => $this->messageRepository->getPublishedReviewsByTag([$tag]);
+        $missingSearch = fn (): array => $this->messageRepository->getPublishedReviewsByTag([$tag.'-missing']);
+
+        try {
+            self::assertSame([], $missingSearch());
+            self::assertSame(0, $this->countQueries($missingSearch));
+
+            self::assertSame(1, $this->countQueries($search));
+            self::assertSame(0, $this->countQueries($search));
+
+            $second = $this->createTestReview('Second cached review', 1, 3);
+            $second->referring = $tag;
+            $this->entityManager->persist($second);
+            $this->entityManager->flush();
+            $this->trackCreatedMessage($second);
+
+            self::assertSame(1, $this->countQueries($search));
+            self::assertCount(2, $search());
+            self::assertCount(1, $this->messageRepository->getPublishedReviewsByTag([$tag], 1));
+            self::assertCount(1, $this->messageRepository->getPublishedReviewsByTag([$tag], 0, 4));
+
+            $first->setContent('Updated cached review');
+            $this->entityManager->flush();
+            self::assertSame(1, $this->countQueries($search));
+
+            $this->entityManager->remove($second);
+            $this->entityManager->flush();
+            self::assertSame(1, $this->countQueries($search));
+            self::assertCount(1, $search());
+
+            $this->entityManager->clear();
+            self::assertSame(1, $this->countQueries($search));
+
+            $this->messageRepository->reset();
+            self::assertSame(1, $this->countQueries($search));
+        } finally {
+            $this->stopCountingQueries();
+        }
     }
 
     public function testPublishedQueriesExcludeTombstonedMessages(): void

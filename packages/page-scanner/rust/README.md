@@ -191,3 +191,15 @@ additional measured `pw:page-scan` gains.
 Whole-page hashes differed between repeated site runs, so the experiment does
 not establish output parity; the repository's cached query results are covered
 by regression tests.
+
+The next GrandAngle render profile found `MessageRepository::getPublishedReviewsByTag()`
+executing 2,986 times for 1,691 distinct argument sets. Those queries took
+11.6 seconds in total; 1,295 calls repeated an earlier search. A repository-local
+result cache, cleared on message writes, Doctrine clear and service reset, reduced
+the same 2,479-page render from 57.5 seconds without the cache to 54.8 and 55.9
+seconds in two CPU-pinned runs with it. Peak PHP memory moved from 304 to 306 MiB.
+Altimood's 1,458-page render stayed at 16.1–16.2 seconds and 306 MiB, with an
+identical whole-page hash in the two runs. GrandAngle's whole-page hashes varied
+between runs even without the change, so the benchmark alone does not establish
+output parity there. These timings cover content and template rendering, not a
+complete `pw:page-scan` command.

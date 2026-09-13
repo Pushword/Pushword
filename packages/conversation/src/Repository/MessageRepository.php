@@ -4,23 +4,49 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\Repository;
 
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Events;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Core\Repository\TagsRepositoryTrait;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @extends ServiceEntityRepository<Message>
  */
-class MessageRepository extends ServiceEntityRepository
+#[AsDoctrineListener(event: Events::onClear)]
+#[AsEntityListener(event: Events::postPersist, method: 'onMessageWrite', entity: Message::class)]
+#[AsEntityListener(event: Events::postUpdate, method: 'onMessageWrite', entity: Message::class)]
+#[AsEntityListener(event: Events::postRemove, method: 'onMessageWrite', entity: Message::class)]
+class MessageRepository extends ServiceEntityRepository implements ResetInterface
 {
     use TagsRepositoryTrait;
+
+    /** @var array<string, Message[]> */
+    private array $publishedReviewResults = [];
 
     public function __construct(
         ManagerRegistry $registry,
     ) {
         parent::__construct($registry, Message::class);
+    }
+
+    public function reset(): void
+    {
+        $this->publishedReviewResults = [];
+    }
+
+    public function onClear(): void
+    {
+        $this->reset();
+    }
+
+    public function onMessageWrite(Message $message): void
+    {
+        $this->reset();
     }
 
     /**
@@ -81,6 +107,11 @@ class MessageRepository extends ServiceEntityRepository
      */
     public function getPublishedReviewsByTag(array $tags, int $limit = 0, int $minRating = 0): array
     {
+        $key = hash('xxh3', serialize([$tags, $limit, $minRating]));
+        if (isset($this->publishedReviewResults[$key])) {
+            return $this->publishedReviewResults[$key];
+        }
+
         $queryBuilder = $this->createQueryBuilder('m')
             ->andWhere('m.publishedAt is NOT NULL')
             ->andWhere('m.deletedAt IS NULL')
@@ -105,7 +136,7 @@ class MessageRepository extends ServiceEntityRepository
             $queryBuilder->setMaxResults($limit);
         }
 
-        return $queryBuilder->getQuery()->getResult();
+        return $this->publishedReviewResults[$key] = $queryBuilder->getQuery()->getResult();
     }
 
     /**
