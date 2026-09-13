@@ -39,8 +39,6 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     private const int INDEX_CACHE_TTL = 86400;
 
-    private const int SEARCH_RESULT_CACHE_SIZE = 256;
-
     #[Required]
     public PageRepository $pageRepository;
 
@@ -641,10 +639,6 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             ->where($exp)
             ->getQuery()
             ->getResult();
-
-        if (\count($this->searchResults) >= self::SEARCH_RESULT_CACHE_SIZE) {
-            unset($this->searchResults[array_key_first($this->searchResults)]);
-        }
 
         return $this->searchResults[$search] = $results;
     }

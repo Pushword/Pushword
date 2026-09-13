@@ -300,7 +300,7 @@ final class PerformanceRegressionTest extends KernelTestCase
         self::assertSame(1, $this->countQueries(fn (): array => $this->mediaRepo->findBySearch('1.jpg')));
     }
 
-    public function testMediaSearchCachesEmptyResultsAndEvictsOlderQueries(): void
+    public function testMediaSearchRetainsResultsAcrossManySearches(): void
     {
         $this->em->clear();
         $this->mediaRepo->findBySearch('1.jpg');
@@ -308,17 +308,11 @@ final class PerformanceRegressionTest extends KernelTestCase
         self::assertSame([], $this->mediaRepo->findBySearch('missing-search-0'));
         self::assertSame(0, $this->countQueries(fn (): array => $this->mediaRepo->findBySearch('missing-search-0')));
 
-        for ($index = 1; $index < 16; ++$index) {
+        for ($index = 1; $index < 1024; ++$index) {
             $this->mediaRepo->findBySearch('missing-search-'.$index);
         }
 
         self::assertSame(0, $this->countQueries(fn (): array => $this->mediaRepo->findBySearch('1.jpg')));
-
-        for ($index = 16; $index < 256; ++$index) {
-            $this->mediaRepo->findBySearch('missing-search-'.$index);
-        }
-
-        self::assertSame(1, $this->countQueries(fn (): array => $this->mediaRepo->findBySearch('1.jpg')));
     }
 
     public function testFindOneByFileNameOrHistoryDoesNotDoLikeQuery(): void

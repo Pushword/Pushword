@@ -179,10 +179,15 @@ repository loaded into the installed site, still spent about one third of its
 template samples in `MediaRepository::findBySearch()`. The repository already
 caches repeated search terms, but its 16-entry bound evicted product codes that
 recurred later in the corpus. Raising that bound to 256 reduced template time
-from 52.4 to 50.0 seconds in one serial, CPU-pinned A/B pair without sampling;
-the sampled pair independently showed a 2.5-second reduction. Both variants
-peaked at 304 MiB of PHP memory in the unsampled pair. This is a rendering
-component measurement, not an additional measured `pw:page-scan` gain.
+from 52.4 to 50.0 seconds in one serial, CPU-pinned A/B pair without sampling.
+A further comparison measured 48.0 seconds at 256, 40.1 seconds at 1,024 and
+40.9 seconds at 10,000 entries. The latter two retained all 598 search terms
+seen in the corpus; 256 retained only its maximum. Peak PHP memory was
+302–304 MiB across these runs. The repository now retains results until its
+existing reset, `EntityManager::clear()` or media-version bump. Since the run
+used only 598 terms, the 10,000-entry variant also represents the unbounded
+path for this corpus. These are rendering component measurements, not
+additional measured `pw:page-scan` gains.
 Whole-page hashes differed between repeated site runs, so the experiment does
 not establish output parity; the repository's cached query results are covered
 by regression tests.
