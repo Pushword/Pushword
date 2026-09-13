@@ -19,7 +19,10 @@ full PHP/Symfony CMS with optional Rust acceleration; evaluate
 try [RaisFast](https://github.com/RaisFast/raisfast) if you want an ambitious
 single-binary backend and can accept an early alpha; and choose
 [Bartholomew](https://developer.fermyon.com/bartholomew/index) when the target
-is a Markdown site on Spin.
+is a Markdown site on Spin. For a Git-authored static site, compare the Rust
+generator [Zola](https://www.getzola.org/documentation/getting-started/overview/)
+with [Hugo](https://gohugo.io/documentation/), which is written in **Go**, not
+Rust. Neither is a multi-user editorial CMS on its own.
 
 This is Pushword's blog, so our interest in the first option is obvious. We
 checked the projects' own documentation in September 2026; this is a guide to
@@ -36,6 +39,11 @@ or a certification of production readiness.
   backend with an embedded admin; its README labels it **early alpha**.
 - **[Bartholomew](https://developer.fermyon.com/bartholomew/index):** a
   Markdown micro-CMS compiled to Wasm for Spin, without a conventional admin.
+- **[Zola](https://www.getzola.org/documentation/getting-started/overview/):**
+  a Rust static site generator for repository-authored Markdown.
+- **[Hugo](https://gohugo.io/documentation/):** a Go static site generator
+  with extensive content, image, multilingual, and asset-building features;
+  included as a useful comparison, not as a Rust CMS.
 - **[My Rust CMS](https://github.com/space-bacon/my_rust_cms):** a Rust and
   Yew/Wasm visual builder whose extensive claims should be tested firsthand.
 - **[derived-cms](https://docs.rs/crate/derived-cms/latest):** a code-first
@@ -44,6 +52,65 @@ or a certification of production readiness.
 There is no fair single speed ranking across these products: they do not run
 the same workload, and their public documentation does not provide a controlled
 head-to-head test.
+
+## Feature differences that change the decision
+
+| Product | How content is edited and stored | What visitors receive | Product boundary |
+| --- | --- | --- | --- |
+| [Pushword](/extension/admin) | Browser admin; database, with optional [flat-file sync](/extension/flat) | Dynamic pages or [static export](/extension/static-generator) | Editing, users, media and an optional [write API](/extension/api) live in the CMS; Rust workers accelerate selected operations |
+| [NUR CMS](https://github.com/jb-alvarado/nur-cms) | Vue admin; PostgreSQL | Rust REST API in Markdown, HTML or AST form | Headless content and media; the public website is yours to build |
+| [RaisFast](https://github.com/RaisFast/raisfast) | Embedded React admin; SQLite, PostgreSQL or MySQL | Rust API and built-in blog/backend modules | Broadest claimed backend scope here, with an explicit early-alpha warning |
+| [Bartholomew](https://developer.fermyon.com/bartholomew/index) | Markdown files with TOML headers and a CLI | Pages rendered by a Wasm component on Spin | Templates and content serving; no conventional multi-user admin |
+| [Zola](https://www.getzola.org/documentation/getting-started/overview/) | Markdown files in a site repository | Static files produced by a Rust build | Site generation, not a content-editing service |
+| [Hugo](https://gohugo.io/documentation/) | Content files in a site repository | Static files produced by a Go build | Site generation, not a content-editing service or a Rust project |
+
+**Editing and publication.** An admin form is a practical difference, not a
+cosmetic one. Pushword exposes page and media editing in its
+[admin](/extension/admin), a [token-authenticated REST API](/extension/api),
+and optional [page history](/extension/version). NUR documents a Vue admin and
+REST output; RaisFast lists an embedded admin, roles, and workflow modules, but
+still calls itself early alpha. By contrast, Hugo has
+[draft, publication and expiry dates](https://gohugo.io/content-management/front-matter/)
+in front matter, and Zola has a
+[draft flag](https://www.getzola.org/documentation/content/page/). These
+control what a *build* includes. Neither ships integrated editor accounts,
+approvals, or deployment workflows. Bartholomew also supports unpublished
+content and a documented
+[preview mode](https://developer.fermyon.com/bartholomew/contributing-bartholomew),
+but its documented editing path is Markdown files and the `bart` CLI.
+
+**Content model and presentation.** NUR is explicitly headless: its
+[README](https://github.com/jb-alvarado/nur-cms) lists Markdown, rendered HTML,
+and AST output, so a separate frontend decides how to display it. Pushword
+renders through Twig but can also expose content through its API. RaisFast
+advertises dynamic schemas and automatic CRUD APIs; validate the particular
+schema and permissions you need before treating those claims as equivalent to
+an established editorial workflow. Hugo's
+[content types](https://gohugo.io/content-management/types/),
+[taxonomies](https://gohugo.io/content-management/taxonomies/), and
+[page bundles](https://gohugo.io/content-management/page-bundles/) organize
+files at build time. Its "headless bundles" expose unpublished content and
+resources to templates, **not a live headless CMS API**; a JSON output format is
+still generated during the build. Zola likewise offers
+[sections and taxonomies](https://www.getzola.org/documentation/content/taxonomies/)
+for static pages. Bartholomew renders Markdown with Handlebars on requests to
+Spin, a different delivery model from either generator.
+
+**Media, languages, and extension points.** Hugo can transform
+[page-bundle images](https://gohugo.io/content-management/image-processing/),
+build [multilingual sites](https://gohugo.io/content-management/multilingual/),
+and compose [modules](https://gohugo.io/hugo-modules/use-modules/) and an
+[asset pipeline](https://gohugo.io/hugo-pipes/). Zola has
+[image resizing](https://www.getzola.org/documentation/content/image-processing/),
+[multilingual content](https://www.getzola.org/documentation/content/multilingual/),
+Sass and a [build-time search index](https://www.getzola.org/documentation/content/search/),
+though the search interface is left to the site. Those are substantial site
+features: calling either generator "just Markdown" understates it. NUR's
+documented media upload/processing and Wasmtime plugins belong to a running
+CMS, while RaisFast advertises several plugin engines. Pushword's media library
+and Symfony bundles address the same needs through its PHP application. The
+overlap in feature names does not erase the difference between generating an
+asset during a build and letting an editor upload it in an authenticated admin.
 
 ## Pushword: a CMS with optional Rust on the hot path
 
@@ -124,14 +191,31 @@ says many admin pages are still being redone and lists REST and GraphQL APIs on
 the roadmap. On that evidence, we would validate the exact API and admin
 features needed before selecting it as a headless production CMS.
 
-## What about Zola?
+## Zola and Hugo: the static-site alternatives
 
-[Zola](https://www.getzola.org/documentation/) is an excellent Rust **static
-site generator**, not an editor or content API. A Git-backed editor such as
-[Decap CMS](https://decapcms.org/docs/) can be paired with a static-site
-workflow, but that leaves you to configure authentication, preview, and builds
-across two products. Choose that route when a repository and a build pipeline
-are the editorial system you want; do not count it as a single Rust CMS.
+[Zola](https://www.getzola.org/documentation/getting-started/overview/) is
+written in Rust and uses Tera templates. It is a strong fit for a code-owned
+blog or documentation site: Markdown, taxonomies, image resizing, multilingual
+content, and a search index can all be produced by the build. Its
+[draft flag](https://www.getzola.org/documentation/content/page/) keeps pages
+out of normal builds, but it does not approve a draft or deploy the result.
+
+[Hugo](https://gohugo.io/documentation/) is the important **Go** comparator.
+It also builds a static site from content files, but gives developers a broader
+set of built-in composition tools: content archetypes, page bundles, custom
+taxonomies, shortcodes, multilingual configurations, image transformations,
+modules, and the Hugo Pipes asset pipeline. Its
+[front matter](https://gohugo.io/content-management/front-matter/) handles
+drafts and future or expired pages. These are real advantages if the team wants
+to assemble a complex static site without operating an application server.
+Hugo is not a Rust CMS, however, and its build-time JSON output or "headless"
+page bundle should not be mistaken for an authenticated content API.
+
+Both generators shift publication to the repository and deployment pipeline.
+Adding a Git-backed editor such as [Decap CMS](https://decapcms.org/docs/) is
+possible, but authentication, preview, review policy and build deployment then
+span more than one product. A simple site may benefit from that separation; a
+busy editorial team should test the complete workflow, not the generator alone.
 
 ## How to choose
 
@@ -142,7 +226,27 @@ media processing, publication, or public requests. A Rust implementation of one
 component does not by itself establish a faster whole-site experience.
 
 If your priority is **all-Rust ownership**, start with NUR for headless content,
-RaisFast for a broad backend pilot, or Bartholomew for Spin. If your priority is
-**a working editorial CMS with optional native acceleration**, start with
-Pushword. The best Rust CMS is the one whose authoring and deployment model you
-would still choose if the language name were removed from the homepage.
+RaisFast for a broad backend pilot, or Bartholomew for Spin. If you only need a
+**Git-authored static site**, compare Rust-based Zola with Go-based Hugo on the
+site features above; Hugo belongs in that decision even though it does not
+qualify as a Rust CMS. If your priority is **an editorial CMS with optional
+native acceleration**, start with Pushword. The best choice is the one whose
+authoring and deployment model you would still choose if the language name
+were removed from the homepage.
+
+## Sources
+
+The feature descriptions above come from project documentation and repositories,
+not a hands-on acceptance test of every editing flow.
+
+- Pushword: [admin](/extension/admin), [API](/extension/api),
+  [static generator](/extension/static-generator), and [native acceleration](/native-acceleration).
+- NUR CMS: [project README](https://github.com/jb-alvarado/nur-cms).
+- RaisFast: [project README and alpha notice](https://github.com/RaisFast/raisfast).
+- Bartholomew: [Fermyon overview](https://developer.fermyon.com/bartholomew/index)
+  and [quickstart](https://developer.fermyon.com/bartholomew/quickstart).
+- Zola: [overview](https://www.getzola.org/documentation/getting-started/overview/)
+  and [content documentation](https://www.getzola.org/documentation/content/overview/).
+- Hugo: [documentation](https://gohugo.io/documentation/),
+  [front matter](https://gohugo.io/content-management/front-matter/), and
+  [image processing](https://gohugo.io/content-management/image-processing/).
