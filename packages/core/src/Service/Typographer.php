@@ -115,21 +115,31 @@ final class Typographer
 
     private function applyRules(string $text, string $locale, bool $beforeOpeningTag = false): string
     {
-        $text = $this->replace('#\.{3,}#', '…', $text);
+        if (str_contains($text, '.')) {
+            $text = $this->replace('#\.{3,}#', '…', $text);
+        }
 
         // Dimension: 3x4 → 3×4
-        $text = $this->replace('#(\d+(?:["\']|&quot;)?)(['.self::SPACES.'])?x(['.self::SPACES.'])?(?=\d)#u', '$1$2×$2', $text);
+        if (str_contains($text, 'x')) {
+            $text = $this->replace('#(\d+(?:["\']|&quot;)?)(['.self::SPACES.'])?x(['.self::SPACES.'])?(?=\d)#u', '$1$2×$2', $text);
+        }
 
-        $text = $this->smartQuotes($text, $locale);
+        if (str_contains($text, '"') || str_contains($text, '&quot;')) {
+            $text = $this->smartQuotes($text, $locale);
+        }
 
         // CurlyQuote: apostrophe between letters (JoliTypo's in-word rule).
         // A letter-before-only rule would curl just the closing side of a
         // quotation pair ('hello' → 'hello’). An elision may also run into an
         // opening quote (l'« île ») or, at the end of a text part, into an
         // inline tag (l'<em>été</em>).
-        $text = $this->replace('#(\p{L})\'(?=[\p{L}«“„]'.($beforeOpeningTag ? '|$' : '').')#u', '$1’', $text);
+        if (str_contains($text, "'")) {
+            $text = $this->replace('#(\p{L})\'(?=[\p{L}«“„]'.($beforeOpeningTag ? '|$' : '').')#u', '$1’', $text);
+        }
 
-        $text = $this->trademark($text);
+        if (str_contains($text, '(')) {
+            $text = $this->trademark($text);
+        }
 
         return $this->spacing($text, $locale);
     }
@@ -171,27 +181,52 @@ final class Typographer
     {
         // A figure never breaks from its unit or currency symbol (the block
         // editor's old fixer rule, applied at render for every locale)
-        $text = $this->replace('#([\dº])['.self::SPACES.']+([º°%Ω฿₵¢₡$₫֏€ƒ₲₴₭£₤₺₦₨₱៛₹₪৳₸₮₩¥])#u', '$1'.self::NBSP.'$2', $text);
+        if (false !== strpbrk($text, '0123456789º')) {
+            $text = $this->replace('#([\dº])['.self::SPACES.']+([º°%Ω฿₵¢₡$₫֏€ƒ₲₴₭£₤₺₦₨₱៛₹₪৳₸₮₩¥])#u', '$1'.self::NBSP.'$2', $text);
+        }
 
         // Canadian French follows the English convention: no space before punctuation
         if (('fr' === $locale || str_starts_with($locale, 'fr-')) && 'fr-ca' !== $locale) {
-            $text = $this->replace('#['.self::SPACES.']+(:)#mu', self::NBSP.'$1', $text);
-            $text = $this->replace('#['.self::SPACES.']+([;!?])#mu', self::NNBSP.'$1', $text);
-            $text = $this->replace('#«['.self::SPACES.']?#u', '«'.self::NBSP, $text);
+            if (str_contains($text, ':')) {
+                $text = $this->replace('#['.self::SPACES.']+(:)#mu', self::NBSP.'$1', $text);
+            }
 
-            return $this->replace('#['.self::SPACES.']?»#u', self::NBSP.'»', $text);
+            if (false !== strpbrk($text, ';!?')) {
+                $text = $this->replace('#['.self::SPACES.']+([;!?])#mu', self::NNBSP.'$1', $text);
+            }
+
+            if (str_contains($text, '«')) {
+                $text = $this->replace('#«['.self::SPACES.']?#u', '«'.self::NBSP, $text);
+            }
+
+            if (str_contains($text, '»')) {
+                return $this->replace('#['.self::SPACES.']?»#u', self::NBSP.'»', $text);
+            }
+
+            return $text;
         }
 
         if ('de-ch' === $locale) {
-            $text = $this->replace('#«['.self::SPACES.']?#u', '«'.self::NNBSP, $text);
-            $text = $this->replace('#['.self::SPACES.']?»#u', self::NNBSP.'»', $text);
+            if (str_contains($text, '«')) {
+                $text = $this->replace('#«['.self::SPACES.']?#u', '«'.self::NNBSP, $text);
+            }
+
+            if (str_contains($text, '»')) {
+                $text = $this->replace('#['.self::SPACES.']?»#u', self::NNBSP.'»', $text);
+            }
         }
 
         // Everyone else: no space before high punctuation (":" spared when
         // starting a URL or a time)
-        $text = $this->replace('#([^'.self::SPACES.':])['.self::SPACES.']+(:)(?![/\d])#mu', '$1$2', $text);
+        if (str_contains($text, ':')) {
+            $text = $this->replace('#([^'.self::SPACES.':])['.self::SPACES.']+(:)(?![/\d])#mu', '$1$2', $text);
+        }
 
-        return $this->replace('#([^'.self::SPACES.'])['.self::SPACES.']+([;!?])#mu', '$1$2', $text);
+        if (false !== strpbrk($text, ';!?')) {
+            return $this->replace('#([^'.self::SPACES.'])['.self::SPACES.']+([;!?])#mu', '$1$2', $text);
+        }
+
+        return $text;
     }
 
     private function replace(string $pattern, string $replacement, string $subject): string
