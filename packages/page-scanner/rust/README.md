@@ -80,3 +80,23 @@ checks disabled took 0.019–0.020 s with PHP and 0.012–0.013 s with the nativ
 small service-level sample,
 not a `pw:page-scan` command measurement, and does not predict results for larger
 or network-bound sites.
+
+## Next measured bottleneck
+
+A temporary release build replaced anchor collection with an empty list while
+keeping every other extraction step. Its output is intentionally incorrect; the
+comparison measures an upper bound for removing the current full HTML5 DOM parse,
+not a deployable speedup. Three same-process runs over 200 sampled pages per site,
+including worker transport, gave:
+
+| Corpus | Current worker | Without anchor parser |
+|---|---:|---:|
+| altimood | 0.301–0.335 s | 0.194–0.210 s |
+| GrandAngle | 0.997–1.027 s | 0.543–0.552 s |
+
+The next experiment is a streaming HTML5 anchor extractor that preserves the
+current `id` and `name` results. It must match the existing worker on both full
+corpora and malformed-HTML cases before replacing the DOM path; then measure the
+complete `pw:page-scan` command. Merely skipping the parser when no same-page
+`href="#` occurs has limited reach: the pattern appears in 939 of 1,219 altimood
+pages and all 1,731 GrandAngle pages.
