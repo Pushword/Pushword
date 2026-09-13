@@ -274,6 +274,47 @@ final class PerformanceRegressionTest extends KernelTestCase
         self::assertSame(1, $count, 'findOneByFileName must emit exactly one PK find() query');
     }
 
+    public function testRepeatedMediaSearchReusesOneQueryAndInvalidatesOnClearOrVersionBump(): void
+    {
+        $this->em->clear();
+
+        $first = [];
+        self::assertSame(1, $this->countQueries(function () use (&$first): void {
+            $first = $this->mediaRepo->findBySearch('1.jpg');
+        }));
+        self::assertNotEmpty($first);
+
+        $second = [];
+        self::assertSame(0, $this->countQueries(function () use (&$second): void {
+            $second = $this->mediaRepo->findBySearch('1.jpg');
+        }));
+        self::assertSame($first, $second);
+
+        $this->em->clear();
+        self::assertSame(1, $this->countQueries(fn (): array => $this->mediaRepo->findBySearch('1.jpg')));
+
+        $this->mediaRepo->bumpVersion();
+        self::assertSame(1, $this->countQueries(fn (): array => $this->mediaRepo->findBySearch('1.jpg')));
+
+        $this->mediaRepo->reset();
+        self::assertSame(1, $this->countQueries(fn (): array => $this->mediaRepo->findBySearch('1.jpg')));
+    }
+
+    public function testMediaSearchCachesEmptyResultsAndEvictsOlderQueries(): void
+    {
+        $this->em->clear();
+        $this->mediaRepo->findBySearch('1.jpg');
+
+        self::assertSame([], $this->mediaRepo->findBySearch('missing-search-0'));
+        self::assertSame(0, $this->countQueries(fn (): array => $this->mediaRepo->findBySearch('missing-search-0')));
+
+        for ($index = 1; $index < 16; ++$index) {
+            $this->mediaRepo->findBySearch('missing-search-'.$index);
+        }
+
+        self::assertSame(1, $this->countQueries(fn (): array => $this->mediaRepo->findBySearch('1.jpg')));
+    }
+
     public function testFindOneByFileNameOrHistoryDoesNotDoLikeQuery(): void
     {
         $this->touchMediaFile('history-probe-current.png');

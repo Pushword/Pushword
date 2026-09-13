@@ -18,6 +18,7 @@ use Pushword\Core\Entity\MediaUsage;
 use Pushword\Core\Utils\SearchNormalizer;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Service\Attribute\Required;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @extends ServiceEntityRepository<Media>
@@ -28,7 +29,7 @@ use Symfony\Contracts\Service\Attribute\Required;
  * @method Media[] findAll()
  */
 #[AsDoctrineListener(event: Events::onClear)]
-class MediaRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
+class MediaRepository extends ServiceEntityRepository implements ObjectRepository, Selectable, ResetInterface
 {
     use TagsRepositoryTrait;
 
@@ -37,6 +38,8 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     public const string INDEX_CACHE_KEY_PREFIX = 'pw.media.filename_index.v';
 
     private const int INDEX_CACHE_TTL = 86400;
+
+    private const int SEARCH_RESULT_CACHE_SIZE = 16;
 
     #[Required]
     public PageRepository $pageRepository;
@@ -64,6 +67,9 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     private ?array $fileNameToId = null;
 
     private bool $warmedLight = false;
+
+    /** @var array<array-key, Media[]> */
+    private array $searchResults = [];
 
     public function __construct(
         ManagerRegistry $registry,
@@ -246,6 +252,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     public function resetFileNameIndexLight(): void
     {
+        $this->reset();
         $this->fileNameIndexLight = null;
         $this->indexVersion = null;
         $this->warmedLight = false;
@@ -266,7 +273,13 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      */
     public function onClear(): void
     {
+        $this->reset();
         $this->warmedLight = false;
+    }
+
+    public function reset(): void
+    {
+        $this->searchResults = [];
     }
 
     public function loadMedias(): void
@@ -608,12 +621,22 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      */
     public function findBySearch(string $search): array
     {
+        if (isset($this->searchResults[$search])) {
+            return $this->searchResults[$search];
+        }
+
         $exp = $this->getExprToFilterMedia('m', $search);
 
-        return $this->createQueryBuilder('m')
+        $results = $this->createQueryBuilder('m')
             ->where($exp)
             ->getQuery()
             ->getResult();
+
+        if (\count($this->searchResults) >= self::SEARCH_RESULT_CACHE_SIZE) {
+            unset($this->searchResults[array_key_first($this->searchResults)]);
+        }
+
+        return $this->searchResults[$search] = $results;
     }
 
     /**
