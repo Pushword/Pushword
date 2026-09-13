@@ -107,7 +107,7 @@ final class PageScannerService
         $this->addErrors($page, $this->todoScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->brokenImageScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->twigErrorScanner->scan($page, $pageHtml));
-        $this->addErrors($page, $this->dateShortcodeScanner->scan($page, $pageHtml));
+        $this->addErrors($page, $this->dateShortcodeScanner->scan($page, $pageHtml, $facts));
         $this->addErrors($page, $this->missingAltScanner->scan($page, $pageHtml, $facts));
         $this->addErrors($page, $this->translationLocaleScanner->scan($page, $pageHtml));
 

@@ -35,6 +35,14 @@ static SRCSET: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"(?i)\s(?:srcset|imagesrcset|data-srcset)=(?:"([^"\n]*)"|'([^'\n]*)')"#)
         .expect("valid srcset regex")
 });
+static LITERAL_BLOCK: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?is)<code\b[^>]*>.*?</code>|<pre\b[^>]*>.*?</pre>|<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>")
+        .expect("valid literal block regex")
+});
+static DATE_SHORTCODE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?i)\bdate\(['"]?%?(?:Y[-+]1|[YSWBMAe])['"]?\)"#)
+        .expect("valid date shortcode regex")
+});
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct LinkedAttribute {
@@ -49,6 +57,7 @@ pub struct Facts {
     pub anchors: Vec<String>,
     pub linked_attributes: Vec<LinkedAttribute>,
     pub srcsets: Vec<String>,
+    pub date_shortcodes: Vec<String>,
 }
 
 fn attribute(tag: &str, pattern: &Regex) -> String {
@@ -125,12 +134,23 @@ pub fn extract(html: &str) -> Facts {
         })
         .collect();
 
+    let without_literals = LITERAL_BLOCK.replace_all(html, "");
+    let mut seen_dates = HashSet::new();
+    let date_shortcodes = DATE_SHORTCODE
+        .find_iter(&without_literals)
+        .filter_map(|value| {
+            let shortcode = value.as_str();
+            seen_dates.insert(shortcode).then(|| shortcode.to_owned())
+        })
+        .collect();
+
     Facts {
         hrefs,
         missing_alt,
         anchors,
         linked_attributes,
         srcsets,
+        date_shortcodes,
     }
 }
 
@@ -175,6 +195,7 @@ mod tests {
                     },
                 ],
                 srcsets: vec![],
+                date_shortcodes: vec![],
             }
         );
     }
@@ -189,6 +210,7 @@ mod tests {
                 anchors: vec![],
                 linked_attributes: vec![],
                 srcsets: vec![],
+                date_shortcodes: vec![],
             }
         );
     }
@@ -211,6 +233,7 @@ mod tests {
                 anchors: vec![],
                 linked_attributes: vec![],
                 srcsets: vec![],
+                date_shortcodes: vec![],
             }
         );
     }
@@ -263,5 +286,13 @@ mod tests {
             }]
         );
         assert_eq!(facts.srcsets, vec![""]);
+    }
+
+    #[test]
+    fn collects_distinct_date_shortcodes_outside_literal_blocks() {
+        let facts = extract(
+            "date(Y) date(Y) DATE(Y) date(M) <code>date(S)</code><pre>date(W)</pre><script>date(B)</script><style>date(A)</style>",
+        );
+        assert_eq!(facts.date_shortcodes, vec!["date(Y)", "DATE(Y)", "date(M)"]);
     }
 }

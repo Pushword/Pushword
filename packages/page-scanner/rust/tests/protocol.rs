@@ -11,7 +11,7 @@ fn serves_multiple_requests_without_mixing_responses() {
         .expect("start worker");
     let stdin = child.stdin.as_mut().expect("worker stdin");
     stdin
-        .write_all(b"{\"version\":1,\"id\":4,\"operation\":\"scan_rendered_html\",\"documents\":[\"<a href='/one'>1</a>\"]}\n{\"version\":1,\"id\":5,\"operation\":\"scan_rendered_html\",\"documents\":[\"<img src=/x>\"]}\n")
+        .write_all(b"{\"version\":1,\"id\":4,\"operation\":\"scan_rendered_html\",\"documents\":[\"<a href='/one'>date(Y)</a>\"]}\n{\"version\":1,\"id\":5,\"operation\":\"scan_rendered_html\",\"documents\":[\"<img src=/x>\"]}\n")
         .expect("send requests");
     let output = child.wait_with_output().expect("worker output");
     assert!(output.status.success());
@@ -29,8 +29,16 @@ fn serves_multiple_requests_without_mixing_responses() {
         lines[0]["documents"][0]["linked_attributes"][0]["value"],
         "/one"
     );
+    assert_eq!(
+        lines[0]["documents"][0]["date_shortcodes"],
+        serde_json::json!(["date(Y)"])
+    );
     assert_eq!(lines[1]["id"], 5);
     assert_eq!(lines[1]["documents"][0]["missing_alt"][0], "/x");
+    assert_eq!(
+        lines[1]["documents"][0]["date_shortcodes"],
+        serde_json::json!([])
+    );
 }
 
 #[test]

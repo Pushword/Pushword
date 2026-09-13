@@ -18,7 +18,7 @@ if (! is_executable($binary)) {
     throw new RuntimeException('Build the release worker with cargo build --release --manifest-path packages/page-scanner/rust/Cargo.toml');
 }
 
-/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>, linked_attributes: list<array{name: string, value: string}>, srcsets: list<string>} */
+/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>, linked_attributes: list<array{name: string, value: string}>, srcsets: list<string>, date_shortcodes: list<string>} */
 function phpFacts(string $html): array
 {
     preg_match_all('/<a\s[^>]*?href=(["\'])(?P<href>[^"\']*)\1/i', $html, $links);
@@ -69,6 +69,8 @@ function phpFacts(string $html): array
     }
 
     preg_match_all('/\s(?:srcset|imagesrcset|data-srcset)=(["\'])(.*?)\1/i', $searchable, $srcsets);
+    $withoutLiterals = preg_replace('#<(code|pre|script|style)\b[^>]*>.*?</\1>#is', '', $html) ?? $html;
+    preg_match_all('/\bdate\([\'"]?%?(?:Y[-+]1|[YSWBMAe])[\'"]?\)/i', $withoutLiterals, $dates);
 
     return [
         'hrefs' => $links['href'],
@@ -76,6 +78,7 @@ function phpFacts(string $html): array
         'anchors' => $anchors,
         'linked_attributes' => $linkedAttributes,
         'srcsets' => $srcsets[2],
+        'date_shortcodes' => array_values(array_unique($dates[0])),
     ];
 }
 
@@ -88,10 +91,10 @@ function phpAttribute(string $tag, string $pattern): string
     return trim(($match[1] ?? '').($match[2] ?? '').($match[3] ?? ''));
 }
 
-/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>, linked_attributes: list<array{name: string, value: string}>, srcsets: list<string>} */
+/** @return array{hrefs: list<string>, missing_alt: list<string>, anchors: list<string>, linked_attributes: list<array{name: string, value: string}>, srcsets: list<string>, date_shortcodes: list<string>} */
 function nativeFacts(mixed $raw): array
 {
-    if (! $raw instanceof stdClass || ! isset($raw->hrefs, $raw->missing_alt, $raw->anchors, $raw->linked_attributes, $raw->srcsets)
+    if (! $raw instanceof stdClass || ! isset($raw->hrefs, $raw->missing_alt, $raw->anchors, $raw->linked_attributes, $raw->srcsets, $raw->date_shortcodes)
     ) {
         throw new RuntimeException('Invalid native facts');
     }
@@ -102,6 +105,7 @@ function nativeFacts(mixed $raw): array
         'anchors' => stringList($raw->anchors),
         'linked_attributes' => linkedAttributes($raw->linked_attributes),
         'srcsets' => stringList($raw->srcsets),
+        'date_shortcodes' => stringList($raw->date_shortcodes),
     ];
 }
 
@@ -188,7 +192,7 @@ foreach (array_slice($arguments, 1) as $path) {
             $actual = nativeFacts($singleWorker->request('scan_rendered_html', [$html])[0]);
             $singleNs += hrtime(true) - $start;
             if ($actual !== $expected[$index]) {
-                foreach (['hrefs', 'missing_alt', 'anchors', 'linked_attributes', 'srcsets'] as $field) {
+                foreach (['hrefs', 'missing_alt', 'anchors', 'linked_attributes', 'srcsets', 'date_shortcodes'] as $field) {
                     if ($actual[$field] !== $expected[$index][$field]) {
                         $mismatch = 0;
                         while (isset($expected[$index][$field][$mismatch], $actual[$field][$mismatch])

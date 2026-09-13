@@ -16,6 +16,7 @@ while (false !== ($line = fgets(\STDIN))) {
             'anchors' => ['section'],
             'linked_attributes' => [['name' => 'href', 'value' => '/one']],
             'srcsets' => ['/lake.jpg 1x'],
+            'date_shortcodes' => ['date(Y)'],
         ],
         $request->documents,
     );
@@ -29,6 +30,10 @@ while (false !== ($line = fgets(\STDIN))) {
         $documents[0]['linked_attributes'] = [['name' => 123, 'value' => '/one']];
     } elseif ('invalid-attribute-list' === $mode) {
         $documents[0]['linked_attributes'] = ['key' => ['name' => 'href', 'value' => '/one']];
+    } elseif ('missing-date' === $mode) {
+        unset($documents[0]['date_shortcodes']);
+    } elseif ('invalid-date' === $mode) {
+        $documents[0]['date_shortcodes'] = [123];
     }
 
     echo json_encode(['version' => 1, 'id' => $request->id, 'documents' => $documents], \JSON_THROW_ON_ERROR)."\n";

@@ -35,7 +35,7 @@ final class RenderedPageFactsExtractor implements ResetInterface
 
         try {
             $result = $this->worker->request('scan_rendered_html', [$html])[0];
-            if (! $result instanceof stdClass || ! isset($result->hrefs, $result->missing_alt, $result->anchors, $result->linked_attributes, $result->srcsets)) {
+            if (! $result instanceof stdClass || ! isset($result->hrefs, $result->missing_alt, $result->anchors, $result->linked_attributes, $result->srcsets, $result->date_shortcodes)) {
                 throw new RuntimeException('Invalid native page facts');
             }
 
@@ -45,6 +45,7 @@ final class RenderedPageFactsExtractor implements ResetInterface
                 $this->stringList($result->anchors),
                 $this->linkedAttributes($result->linked_attributes),
                 $this->stringList($result->srcsets),
+                $this->stringList($result->date_shortcodes),
             );
         } catch (Throwable $throwable) {
             $this->worker->reset();

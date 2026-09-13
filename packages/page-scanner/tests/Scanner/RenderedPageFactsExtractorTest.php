@@ -49,6 +49,7 @@ final class RenderedPageFactsExtractorTest extends TestCase
             ['section'],
             [['name' => 'href', 'value' => '/one']],
             ['/lake.jpg 1x'],
+            ['date(Y)'],
         );
 
         self::assertEquals($expected, $this->extractor->extract('<p>first</p>'));
@@ -73,6 +74,7 @@ final class RenderedPageFactsExtractorTest extends TestCase
             ['section'],
             [['name' => 'href', 'value' => '/one']],
             ['/lake.jpg 1x'],
+            ['date(Y)'],
         ), $this->extractor->extract('<p>third</p>'));
     }
 
@@ -84,6 +86,8 @@ final class RenderedPageFactsExtractorTest extends TestCase
         yield 'non-string' => ['invalid-value'];
         yield 'invalid linked attribute' => ['invalid-attribute'];
         yield 'non-list linked attributes' => ['invalid-attribute-list'];
+        yield 'old worker without date shortcodes' => ['missing-date'];
+        yield 'non-string date shortcode' => ['invalid-date'];
     }
 
     public function testUnavailableWorkerFallsBackOnce(): void

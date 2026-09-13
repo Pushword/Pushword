@@ -355,9 +355,9 @@ pushword_page_scanner:
 ```
 
 The native worker is experimental and opt-in. It extracts link and responsive-image
-candidates, image-alt labels and anchors from rendered HTML; the PHP scanners remain the
-fallback. See [optional Rust acceleration](/native-acceleration) for build and
-deployment instructions.
+candidates, image-alt labels, anchors and unresolved date shortcodes from rendered
+HTML; the PHP scanners remain the fallback. See
+[optional Rust acceleration](/native-acceleration) for build and deployment instructions.
 
 ## Ignoring a finding
 
