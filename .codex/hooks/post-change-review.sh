@@ -46,20 +46,23 @@ if [ "$event" = "PostToolUse" ]; then
           '.tool_input.file_path // .tool_input.path // empty' 2>/dev/null)
       fi
 
+      # A pathless edit cannot be attributed to this repository.
+      [ -z "$write_paths" ] && exit 0
+
       repo_root=$(git -C "$working_directory" rev-parse --show-toplevel 2>/dev/null || true)
-      if [ -n "$write_paths" ] && [ -n "$repo_root" ]; then
-        touches_repo=false
-        while IFS= read -r write_path; do
-          case "$write_path" in
-            /*) absolute_path=$(realpath -m "$write_path") ;;
-            *) absolute_path=$(realpath -m "$working_directory/$write_path") ;;
-          esac
-          case "$absolute_path" in
-            "$repo_root"|"$repo_root"/*) touches_repo=true ;;
-          esac
-        done <<< "$write_paths"
-        [ "$touches_repo" = false ] && exit 0
-      fi
+      [ -z "$repo_root" ] && exit 0
+
+      touches_repo=false
+      while IFS= read -r write_path; do
+        case "$write_path" in
+          /*) absolute_path=$(realpath -m "$write_path") ;;
+          *) absolute_path=$(realpath -m "$working_directory/$write_path") ;;
+        esac
+        case "$absolute_path" in
+          "$repo_root"|"$repo_root"/*) touches_repo=true ;;
+        esac
+      done <<< "$write_paths"
+      [ "$touches_repo" = false ] && exit 0
 
       mkdir -p "$state_dir"
       git_head > "$state_file"

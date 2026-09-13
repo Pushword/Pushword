@@ -77,6 +77,10 @@ post_apply_patch_raw "*** Begin Patch
 *** Add File: $test_tmp_dir/personal/SKILL.md
 *** End Patch"
 test ! -e "$state_file"
+post_write
+test ! -e "$state_file"
+post_write_path ''
+test ! -e "$state_file"
 post_apply_patch "*** Begin Patch
 *** Add File: $test_tmp_dir/personal/SKILL.md
 *** Update File: tracked.txt
@@ -100,15 +104,17 @@ printf '%s\n' 'unsafe change' > "$test_repo/tracked.txt"
 git -C "$test_repo" commit -am 'unsafe' -q
 post_terminal_command Bash 'git commit -m unsafe'
 test ! -e "$commit_file"
-post_write
+post_write_path "$test_repo/tracked.txt"
 
 printf '%s\n' 'changed' > "$test_repo/tracked.txt"
 git -C "$test_repo" commit --only -qm 'test' -- tracked.txt
 post_terminal_command unknown_terminal_tool 'git commit --only -m test -- tracked.txt'
 test -f "$commit_file"
+post_write
+test -f "$commit_file"
 
 first_commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
-post_write
+post_write_path "$test_repo/tracked.txt"
 test ! -e "$commit_file"
 post_functions_exec 'text("git commit --only")'
 test ! -e "$commit_file"
@@ -127,7 +133,7 @@ stop_with_message "Post-change review: is-it-well-tested complete; code-simplifi
 test ! -e "$state_file"
 test ! -e "$commit_file"
 
-post_write
+post_write_path "$test_repo/tracked.txt"
 printf '%s\n' 'global git option' > "$test_repo/tracked.txt"
 git -C "$test_repo" commit --only -qm 'global option' -- tracked.txt
 post_terminal_command Bash "GIT_WORK_TREE=$test_repo git -c core.hooksPath=/dev/null commit --only -m test -- tracked.txt"
@@ -136,7 +142,7 @@ commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
 stop_with_message "Post-change review: is-it-well-tested complete; code-simplifier complete; committed $commit_hash"
 test ! -e "$state_file"
 
-post_write
+post_write_path "$test_repo/tracked.txt"
 printf '%s\n' 'combined git options' > "$test_repo/tracked.txt"
 git -C "$test_repo" commit --only -qm 'combined options' -- tracked.txt
 post_terminal_command Bash "git -C $test_repo -c core.hooksPath=/dev/null commit --only -m test -- tracked.txt"
@@ -145,7 +151,7 @@ commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
 stop_with_message "Post-change review: is-it-well-tested complete; code-simplifier complete; committed $commit_hash"
 test ! -e "$state_file"
 
-post_write
+post_write_path "$test_repo/tracked.txt"
 printf '%s\n' 'wrapped command' > "$test_repo/tracked.txt"
 git -C "$test_repo" commit --only -qm 'wrapped command' -- tracked.txt
 post_functions_exec 'const result = await tools.exec_command({cmd:"git -c core.hooksPath=/dev/null commit --only -m wrapped -- tracked.txt"}); text(result)'
@@ -154,7 +160,7 @@ commit_hash=$(git -C "$test_repo" rev-parse --short HEAD)
 stop_with_message "Post-change review: is-it-well-tested complete; code-simplifier complete; committed $commit_hash"
 test ! -e "$state_file"
 
-post_write
+post_write_path "$test_repo/tracked.txt"
 stop_with_message 'Post-change review: awaiting user confirmation from is-it-well-tested'
 test ! -e "$state_file"
 test ! -e "$commit_file"
