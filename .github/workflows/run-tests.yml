@@ -191,11 +191,10 @@ jobs:
         env:
           TEST_RUN_ID: ci-${{ github.run_id }}
 
-      - name: Publish coverage badge data
+      - name: Generate coverage badge data
         # Merges the three dumps (line-level union — summing per-batch totals would
-        # double-count code hit by more than one batch) and force-pushes a one-commit
+        # double-count code hit by more than one batch) and prepares a one-commit
         # `badges` branch holding the shields.io endpoint JSON the README badge reads.
-        # The workflow's own GITHUB_TOKEN is enough: no coverage service, no PAT.
         if: env.PUBLISH_COVERAGE == 'true'
         run: |
           php -d memory_limit=2G .scripts/merge-coverage.php - coverage.xml cov/*.cov
@@ -207,7 +206,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add coverage.json
           git commit -q -m "chore: coverage badge data [skip ci]"
-          git push -q --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" badges
+
+      - name: Publish coverage badge data
+        if: env.PUBLISH_COVERAGE == 'true'
+        run: |
+          cd badge
+          for attempt in 1 2 3; do
+            if git push -q --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" badges; then exit 0; fi
+            sleep 5
+          done
+          echo "::warning::Coverage badge publication failed; test results remain valid."
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
