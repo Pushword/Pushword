@@ -252,13 +252,15 @@ including heading-ID injection, not the final `getToc()` menu render.
 
 ### Three-way Markdown conversion
 
-The default benchmark generates 24,000 deterministic Markdown blocks from 15
-patterns and uses the repository's demo test kernel. Three patterns cover date
-shortcodes in plain text, link labels and alongside inline code; the runner
-requires Rust to accept each of those blocks. It calculates CommonMark's
-reference HTML once, outside the timed passes. No external site or corpus is
-needed. The raw snapshot is temporary; the detailed report can stay in the
-ignored local benchmark directory:
+The default benchmark generates 24,000 deterministic Markdown blocks from 25
+patterns and uses the repository's demo test kernel. The patterns include titled
+links, colspan and short table rows, three-level lists, escaped brackets,
+approximate quantities, ratings, phone numbers, and indented table syntax.
+Three patterns cover date shortcodes in plain text, link labels and alongside
+inline code; the runner requires Rust to accept each of those blocks. It
+calculates CommonMark's reference HTML once, outside the timed passes. No
+external site or corpus is needed. The raw snapshot is temporary; the detailed
+report can stay in the ignored local benchmark directory:
 
 ```sh
 mkdir -p packages/core/rust/benchmarks/local
@@ -276,9 +278,9 @@ byte-identical HTML.
 
 | Renderer | Conversion time | Relative speed | Sampled peak process-tree RSS | Directly rendered blocks |
 |---|---:|---:|---:|---:|
-| CommonMark PHP | 1.439 s | 1.00× | 97.6 MiB | 24,000 |
-| Tempest compatibility renderer | 0.551 s | 2.61× | 97.3 MiB | 22,400; 1,600 PHP fallbacks |
-| Rust hybrid with PHP fallback | 0.230 s | 6.26× | 103.7 MiB | 22,400; 1,600 PHP fallbacks |
+| CommonMark PHP | 1.514 s | 1.00× | 97.7 MiB | 24,000 |
+| Tempest compatibility renderer | 0.859 s | 1.76× | 97.7 MiB | 21,120; 2,880 PHP fallbacks |
+| Rust hybrid with PHP fallback | 0.315 s | 4.81× | 104.0 MiB | 21,120; 2,880 PHP fallbacks |
 
 The generated input is fixed and synthetic, so these ratios are useful for
 repeatable component comparisons, not predictions of a site's throughput.
@@ -287,10 +289,10 @@ values, persistent-worker IPC and the PHP fallback; the RSS figure includes the
 Rust child. Snapshot decoding, site switching, kernel startup, Twig and
 complete page rendering are excluded from the timed conversion calls. The
 synthetic corpus SHA-256 is
-`43883e3beb7727c800e09b40d36894642e31cb98183ec05f125cdefbd0a79bc5`;
+`39fcd82ab7c98a632fec85123736c5e0dd8e0ee7ba6697bf8833c0e110f47359`;
 the analyzer binary SHA-256 is
-`22f25562e422f3fb6a7c91f28e8b6c4fbfd9ec6215fbc00b72afaa97cdfbb154`.
-All 4,800 synthetic date blocks were accepted by Rust with byte-identical HTML.
+`9c99ad74044e890732bdefae7ef250c233b878e01236e4d0e21f9c6f669c583e`.
+All 2,880 synthetic date blocks were accepted by Rust with byte-identical HTML.
 
 An installed downstream site can be measured with the same runner. Its private
 snapshot and result remain in the ignored local directory:

@@ -32,6 +32,16 @@ SYNTHETIC = (
     'Une _petite marche_ avant l’étape {n}.',
     'Le numéro 01 23 45 67 89 pour l’étape {n}.',
     '> [!faq] Question {n}\n>\n> Une réponse courte.',
+    'Voir [la carte](/carte "Carte du trajet {n}").',
+    '| Offre | Deux | Trois |\n| --- | --- | --- |\n| Location {n} | 25 € | -> |\n| Assurance | 10 € |',
+    '- Parent {n}\n    - Enfant\n        - Détail\n- Retour',
+    'Hôtel 3*/4* pour le trajet {n}.',
+    'Lisez _\\[note\\]_ avant le départ {n}.',
+    'Réduction ~30€~ pour le trajet {n}.',
+    'Distance ~170 km et dénivelé ~10 000 m pour l’étape {n}.',
+    'Voir [la carte](/carte ) pour l’étape {n}.',
+    'Appelez **04 76 95 23 00** pour l’étape {n}.',
+    '| A | B |\n    | --- | --- |\n    | {n} | 2 |',
 ) + DATE_PATTERNS
 
 

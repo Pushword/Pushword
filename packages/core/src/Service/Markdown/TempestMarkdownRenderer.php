@@ -31,6 +31,16 @@ final readonly class TempestMarkdownRenderer
 
     public function render(string $source): ?string
     {
+        // Ambiguous delimiter runs do not have the same binding in Tempest and CommonMark.
+        if (str_contains($source, '__')
+            || str_contains($source, '\\*\\*')
+            || str_contains($source, '\\"')
+            || 1 === preg_match('/[\p{L}\p{N}]_\x27[^\s_]+_|_[\p{L}]_[\p{L}]|\b[A-Z]_[a-z]|_\x{200B}_|\b\p{L}\*\*[\x27\x{2019}]|\*\*\(|_[^_\n]+\(_|\*\*,[^*\n]{0,40}\*\*/u', $source)
+            || 1 === preg_match('/^_[^\n]*\*\*|#\[[^]]+@|`<[^`]+>`|^\* .*_[0-9]/m', $source)
+        ) {
+            return null;
+        }
+
         if (1 === preg_match('/\A\{[^\n]+\}\n(<!--[\s\S]*-->)\z/D', $source, $block)) {
             return $this->render($block[1]);
         }
@@ -65,6 +75,10 @@ final readonly class TempestMarkdownRenderer
         }
 
         if (str_starts_with($source, '![') && 1 === preg_match('/^!\[([^\]\n]*)\]\(([^()\n]+)\)$/D', $source, $image)) {
+            if (str_contains($image[2], ' ') || str_contains($image[1], '_')) {
+                return null;
+            }
+
             if (null === $this->mediaExtension || null === $this->apps || ! str_contains($this->markdown->parse($source)->html, '<img ')) {
                 return null;
             }
@@ -101,6 +115,13 @@ final readonly class TempestMarkdownRenderer
             return null === $content ? null : $content.$blocks[2]."\n";
         }
 
+        if (1 === preg_match('/\A([^\n|]+)\n(\|[^\n]+\|\n\|[\s|:-]+\|\n[\s\S]+)\z/D', $source, $blocks)) {
+            $before = $this->render($blocks[1]);
+            $table = $this->render($blocks[2]);
+
+            return null === $before || null === $table ? null : $before.$table;
+        }
+
         if (1 === preg_match('/\A(<\/?div\b[^\n]*>)\n(.+)\z/sD', $source, $blocks)) {
             $content = $this->render($blocks[2]);
 
@@ -131,7 +152,7 @@ final readonly class TempestMarkdownRenderer
         }
 
         if (! str_starts_with($source, '- ') && 1 === preg_match('/\A(.+?)\n((?:- [^\n]+(?:\n|$))+?)\z/sD', $source, $blocks)) {
-            $intro = $this->render($blocks[1]);
+            $intro = $this->render(rtrim($blocks[1]));
             $list = $this->render($blocks[2]);
 
             return null === $intro || null === $list ? null : $intro.$list;
@@ -160,48 +181,22 @@ final readonly class TempestMarkdownRenderer
 
         if (1 === preg_match('/(?m)^ {2,}[-*] +/', $source)) {
             $items = [];
-            $children = [];
             foreach (explode("\n", rtrim($source, "\n")) as $line) {
                 if (1 !== preg_match('/^( *)(?:[-*]) +(.+)$/D', $line, $match)) {
                     return null;
                 }
 
-                if ('' === $match[1]) {
-                    $items[] = $match[2];
-                    $children[] = [];
-                } elseif ([] !== $items) {
-                    $children[array_key_last($children)][] = $match[2];
-                } else {
-                    return null;
-                }
+                $items[] = ['indent' => \strlen($match[1]), 'text' => rtrim($match[2])];
             }
 
-            $html = "<ul>\n";
-            foreach ($items as $index => $item) {
-                $content = $this->render($item);
-                if (null === $content || ! str_starts_with($content, '<p>') || ! str_ends_with($content, "</p>\n")) {
-                    return null;
-                }
-
-                $html .= '<li>'.substr($content, 3, -5);
-                if ([] !== $children[$index]) {
-                    $html .= "\n<ul>\n";
-                    foreach ($children[$index] as $child) {
-                        $content = $this->render($child);
-                        if (null === $content || ! str_starts_with($content, '<p>') || ! str_ends_with($content, "</p>\n")) {
-                            return null;
-                        }
-
-                        $html .= '<li>'.substr($content, 3, -5)."</li>\n";
-                    }
-
-                    $html .= "</ul>\n";
-                }
-
-                $html .= "</li>\n";
+            if (0 !== $items[0]['indent']) {
+                return null;
             }
 
-            return $html."</ul>\n";
+            $position = 0;
+            $html = $this->renderNestedList($items, $position, 0);
+
+            return \count($items) === $position ? $html : null;
         }
 
         if (1 === preg_match('/^[0-9]+\. /', $source) && str_contains($source, "\n   ")) {
@@ -313,6 +308,10 @@ final readonly class TempestMarkdownRenderer
         $table = 1 === preg_match('/^\|[^\n]+\|\n\|([\s|:-]+)\|\n(?:\|[^\n]+\|[ \t]*\n?)+$/D', $source, $tableMatches)
             && ! str_contains($tableMatches[1], ':')
             && ! str_contains($source, '{');
+        if ($table && 1 === preg_match('/\d_\d/', $source)) {
+            return null;
+        }
+
         if ($table) {
             $source = preg_replace('/[ \t]+$/m', '', $source);
             if (null === $source) {
@@ -320,7 +319,7 @@ final readonly class TempestMarkdownRenderer
             }
         }
 
-        $emptyTableHeader = $table && 1 === preg_match('/^\|[ |]*\|\n/', $source);
+        $emptyTableHeader = $table && 1 === preg_match('/^\|(?:[ \t]*(?:->)?[ \t]*\|)+\n/', $source);
         $attribute = null;
         if (null === $listTag && 1 === preg_match('/^\{(?:id=([A-Za-z0-9_-]+)(?: \.([\p{L}\p{N}_-]+))?|\.([\p{L}\p{N}_-]+))\}\n([^\r\n]+)$/Du', $source, $attributes)) {
             $class = $attributes[2] ?: $attributes[3];
@@ -388,6 +387,21 @@ final readonly class TempestMarkdownRenderer
             if (null === $source) {
                 return null;
             }
+        }
+
+        $linkTitles = [];
+        $source = preg_replace_callback('/(?<!#)\[([^][\r\n]+)\]\(([^()\s<>]+) "([^"\r\n]*)"\)/u', static function (array $match) use (&$linkTitles): string {
+            $linkTitles[] = $match[3];
+
+            return '['.$match[1].']('.$match[2].'PWTITLE'.(\count($linkTitles) - 1).'TOKEN)';
+        }, $source);
+        if (null === $source) {
+            return null;
+        }
+
+        $source = preg_replace('/(\[[^][\r\n]+\]\([^()\s]+)[ \t]+\)/', '$1)', $source);
+        if (null === $source) {
+            return null;
         }
 
         $literalLinks = [];
@@ -465,7 +479,17 @@ final readonly class TempestMarkdownRenderer
             }
         }
 
-        $source = str_replace('\\*', "\u{E018}", $source);
+        $source = str_replace(['\\*', '\\[', '\\]', '\\+', '\\-', '_,_'], ["\u{E018}", "\u{E027}", "\u{E028}", "\u{E029}", "\u{E030}", "\u{E032}"], $source);
+        $source = preg_replace('/(?<=[\p{L}\p{N}_])_\._/u', "\u{E031}", $source);
+        if (null === $source) {
+            return null;
+        }
+
+        $source = preg_replace('/(?<=\d)\*(?=\/\d)/', "\u{E018}", $source);
+        if (null === $source) {
+            return null;
+        }
+
         if (1 === preg_match('/^_[^\n]+ _$/D', $source)) {
             $source = str_replace('_', "\u{E020}", $source);
         }
@@ -498,7 +522,11 @@ final readonly class TempestMarkdownRenderer
                 return null;
             }
 
-            $source = str_replace('~', "\u{E002}", $source);
+            if (1 === preg_match('/~[^\s~]+~/', $source)) {
+                $literalTilde = false;
+            } else {
+                $source = str_replace('~', "\u{E002}", $source);
+            }
         }
 
         if (null !== $listTag) {
@@ -552,6 +580,20 @@ final readonly class TempestMarkdownRenderer
 
         if ($table) {
             if (! str_starts_with($html, '<table><thead><tr>') || ! str_ends_with($html, '</tbody></table>')) {
+                return null;
+            }
+
+            $html = $this->normalizeTable($html);
+            if (null === $html) {
+                return null;
+            }
+
+            $html = preg_replace_callback('/<td>(.*?)<\/td>/s', static function (array $cell): string {
+                $content = preg_replace('/~([^\s~<>]+)~/', '<del>$1</del>', $cell[1]);
+
+                return '<td>'.($content ?? $cell[1]).'</td>';
+            }, $html);
+            if (null === $html) {
                 return null;
             }
 
@@ -670,7 +712,7 @@ final readonly class TempestMarkdownRenderer
             }
         }
 
-        $html = implode('', $parts);
+        $html = str_replace(['<s>', '</s>'], ['<del>', '</del>'], implode('', $parts));
         foreach ($contacts as $index => $contact) {
             $html = str_replace("\u{E000}".$index."\u{E001}", $contact, $html);
         }
@@ -695,9 +737,21 @@ final readonly class TempestMarkdownRenderer
             $html = str_replace("\u{E022}".$index."\u{E023}", str_replace(['&', '"', '>'], ['&amp;', '&quot;', '&gt;'], $link), $html);
         }
 
+        foreach ($linkTitles as $index => $title) {
+            $marker = 'PWTITLE'.$index.'TOKEN';
+            if (! str_contains($html, $marker)) {
+                return null;
+            }
+
+            $html = str_replace($marker, '" title="'.htmlspecialchars($title, \ENT_COMPAT | \ENT_SUBSTITUTE), $html);
+        }
+
         $html = str_replace("\u{E009}", '_', $html);
         $html = str_replace("\u{E013}", '&lt;', $html);
         $html = str_replace(["\u{E018}", "\u{E019}"], ['*', '**'], $html);
+        $html = str_replace(["\u{E027}", "\u{E028}"], ['[', ']'], $html);
+        $html = str_replace(["\u{E029}", "\u{E030}"], ['+', '-'], $html);
+        $html = str_replace(["\u{E031}", "\u{E032}"], ['_._', '_,_'], $html);
         $html = str_replace("\u{E020}", '_', $html);
         $html = str_replace("\u{E026}", '.', $html);
         $html = str_replace(["\u{E010}", "\u{E011}"], ['[', ']'], $html);
@@ -706,6 +760,84 @@ final readonly class TempestMarkdownRenderer
         }
 
         return rtrim($html)."\n";
+    }
+
+    private function normalizeTable(string $html): ?string
+    {
+        if (1 !== preg_match('/<thead><tr>(.*?)<\/tr>/s', $html, $header)) {
+            return null;
+        }
+
+        $columns = substr_count($header[1], '</th>');
+
+        return preg_replace_callback('/<tr>(.*?)<\/tr>/s', static function (array $row) use ($columns): string {
+            preg_match_all('/<(th|td)>(.*?)<\/\1>/s', $row[1], $matches, \PREG_SET_ORDER);
+            $normalized = '';
+            $tag = null;
+            $content = '';
+            $span = 1;
+            foreach (\array_slice($matches, 0, $columns) as $match) {
+                if (\in_array($match[2], ['->', '-&gt;'], true) && null !== $tag) {
+                    ++$span;
+
+                    continue;
+                }
+
+                if (null !== $tag) {
+                    $normalized .= self::renderTableCell($tag, $content, $span);
+                }
+
+                $tag = $match[1];
+                $content = $match[2];
+                $span = 1;
+            }
+
+            if (null !== $tag) {
+                $normalized .= self::renderTableCell($tag, $content, $span);
+            }
+
+            for ($index = \count($matches); $index < $columns; ++$index) {
+                $normalized .= '<td></td>';
+            }
+
+            return '<tr>'.$normalized.'</tr>';
+        }, $html);
+    }
+
+    private static function renderTableCell(string $tag, string $content, int $span): string
+    {
+        $colspan = 1 === $span ? '' : ' colspan="'.$span.'"';
+
+        return '<'.$tag.$colspan.'>'.$content.'</'.$tag.'>';
+    }
+
+    /**
+     * @param list<array{indent: int, text: string}> $items
+     */
+    private function renderNestedList(array $items, int &$position, int $indent): ?string
+    {
+        $html = "<ul>\n";
+        while (isset($items[$position]) && $items[$position]['indent'] === $indent) {
+            $content = $this->render($items[$position]['text']);
+            if (null === $content || ! str_starts_with($content, '<p>') || ! str_ends_with($content, "</p>\n")) {
+                return null;
+            }
+
+            $html .= '<li>'.substr($content, 3, -5);
+            ++$position;
+            if (isset($items[$position]) && $items[$position]['indent'] > $indent) {
+                $nested = $this->renderNestedList($items, $position, $items[$position]['indent']);
+                if (null === $nested) {
+                    return null;
+                }
+
+                $html .= "\n".$nested;
+            }
+
+            $html .= "</li>\n";
+        }
+
+        return $html."</ul>\n";
     }
 
     private function renderNotice(string $source): ?string
@@ -796,7 +928,7 @@ final readonly class TempestMarkdownRenderer
             return false;
         }
 
-        if (false !== strpbrk($source, "\r\n\t{}<\\~") || 1 === preg_match('/[\x00-\x1F\x7F]/', $source)) {
+        if (false !== strpbrk($source, "\r\n\t{}<\\") || 1 === preg_match('/[\x00-\x1F\x7F]/', $source)) {
             return false;
         }
 

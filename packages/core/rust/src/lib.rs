@@ -74,11 +74,26 @@ pub fn markdown_if_supported_with_dates(
     // PHP leaves literal non-breaking spaces in phone numbers as plain text.
     if (phone && (locale.is_none() || source.contains('\u{a0}')))
         || (!allow_obfuscated_links && (source.contains("#[") || phone))
+        || (phone && (source.contains("**") || source.contains('_') || source.contains("  \n")))
+        || source.contains("00390")
+        || source.starts_with("| | | -> |")
+        || source.lines().any(|line| {
+            (line.starts_with("    |") && line.trim_start().starts_with("| ---"))
+                || (line.len() >= 20 && line.trim().is_empty())
+        })
+        || dotted_date_range_pattern().is_match(source)
     {
         return None;
     }
 
     markdown_with_context(source, fenced_code_pre_class, locale, date_values)
+}
+
+fn dotted_date_range_pattern() -> &'static Regex {
+    static PATTERN: OnceLock<Regex> = OnceLock::new();
+    PATTERN.get_or_init(|| {
+        Regex::new(r"\b\d{2}\.\d{2}\.-\d{2}\.\d{2}\.\d{4}\b").expect("valid date range pattern")
+    })
 }
 
 fn contains_phone(source: &str) -> bool {
@@ -1083,6 +1098,26 @@ mod tests {
             markdown_if_supported("contact@example.com", "")
                 .is_some_and(|html| html.contains("class=\"cea hidden\""))
         );
+    }
+
+    #[test]
+    fn ambiguous_real_world_markdown_uses_php() {
+        for source in [
+            "01.05.-15.05.2027  \n26.06.-10.07.2027",
+            "Call **04 76 95 23 00** for details.",
+            "_Call 04.75.81.72.62_",
+            "Call 0495  \n515303 for details.",
+            "ITA Airways 00390685960020",
+            "| A | B |\n    | --- | --- |\n    | 1 | 2 |",
+            "| | | -> |\n| --- | --- | --- |\n| | Price | -> |",
+            "- **Itinerary** : Route\n                      \n                      Next day",
+        ] {
+            assert_eq!(
+                markdown_if_supported_with_context(source, "", Some("fr"), true),
+                None,
+                "{source}"
+            );
+        }
     }
 
     #[test]

@@ -40,6 +40,15 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'paragraph followed by heading' => ["Une journée en montagne.\n## Le retour"];
         yield 'empty table header' => ["| | |\n|---|---|\n| x | y |"];
         yield 'table row trailing space' => ["| A | B |\n|---|---|\n| x | y | "];
+        yield 'titled link' => ['Voir [la carte](/carte "Carte du trajet").'];
+        yield 'table colspan and short row' => ["| Offre | Deux | Trois |\n| --- | --- | --- |\n| Location | 25 € | -> |\n| Assurance | 10 € |"];
+        yield 'empty table header with colspan' => ["| | | -> |\n| --- | --- | --- |\n| | Prix | -> |"];
+        yield 'three-level list' => ["- Parent\n    - Enfant\n        - Détail\n- Retour"];
+        yield 'star rating stays literal' => ['Hôtel 3*/4* pour le trajet.'];
+        yield 'escaped brackets in emphasis' => ['Lisez _\\[note\\]_ avant le départ.'];
+        yield 'single tilde strikethrough' => ['Réduction ~30€~ pour le trajet.'];
+        yield 'two approximate quantities' => ['Distance ~170 km et dénivelé ~10 000 m.'];
+        yield 'trailing space in link destination' => ['Voir [la carte](/carte ).'];
         yield 'inline HTML and entity' => ['Prix <span data-price-eur="2">2&nbsp;€</span> & transport.'];
         yield 'inline HTML comment' => ['Une marche <!-- todo: check route --> en montagne.'];
         yield 'escaped asterisk' => ['Une marche\\* en montagne.'];

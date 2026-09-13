@@ -40,6 +40,7 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'tilde in emphasis' => ['_~11 km_', "<p><em>~11 km</em></p>\n"];
         yield 'empty input' => ['', null];
         yield 'triple emphasis uses CommonMark' => ['***marche***', null];
+        yield 'ambiguous underscores use CommonMark' => ['Le texte __important__ reste compatible.', null];
         yield 'intraword underscores use CommonMark' => ['a_b_c', null];
         yield 'strikethrough uses CommonMark' => ['~~marche~~', null];
         yield 'trailing space in emphasis stays literal' => ['_Une marche _', "<p>_Une marche _</p>\n"];
