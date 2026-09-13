@@ -29,7 +29,18 @@ final class NativeStaticGeneratorTest extends KernelTestCase
             self::assertArrayHasKey('fr/404.html', $expected);
             self::assertSame(array_keys($expected), array_keys($actual));
             foreach ($expected as $path => $html) {
-                self::assertSame(hash('sha256', $html), hash('sha256', $actual[$path]), $path);
+                if ($html !== $actual[$path]) {
+                    $offset = 0;
+                    $limit = min(strlen($html), strlen($actual[$path]));
+                    while ($offset < $limit && $html[$offset] === $actual[$path][$offset]) {
+                        ++$offset;
+                    }
+
+                    $start = max(0, $offset - 80);
+                    self::fail($path.' differs at byte '.$offset."\nPHP: ".substr($html, $start, 160)."\nRust: ".substr($actual[$path], $start, 160));
+                }
+
+                self::assertSame($html, $actual[$path], $path);
             }
         } finally {
             $native->reset();
