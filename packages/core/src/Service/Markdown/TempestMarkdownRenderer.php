@@ -41,6 +41,13 @@ final readonly class TempestMarkdownRenderer
             return '<h'.$level.'>'.htmlspecialchars(trim($plainHeading[2]), \ENT_QUOTES | \ENT_SUBSTITUTE).'</h'.$level.">\n";
         }
 
+        if (1 === preg_match('/\A[^\r\n]+\r?\n {0,3}(?:=+|-+)[ \t]*\z/D', $source)) {
+            $html = $this->markdown->parse($source)->html;
+            $html = preg_replace('/^(<h[12]) id="[^"]*"/', '$1', $html, 1, $replacements);
+
+            return null !== $html && 1 === $replacements ? $html."\n" : null;
+        }
+
         if (1 === preg_match('/^(?:\*[ \t]*){3,}$/D', $source)) {
             return "<hr />\n";
         }
@@ -292,8 +299,8 @@ final readonly class TempestMarkdownRenderer
             return $html."</ul>\n";
         }
 
-        if (str_starts_with($source, '* ')) {
-            $source = preg_replace('/(?m)^\* {2,3}(?=\S)/', '* ', $source);
+        if (str_starts_with($source, '* ') || str_starts_with($source, '- ')) {
+            $source = preg_replace('/(?m)^([*-]) {2,3}(?=\S)/', '$1 ', $source);
             if (null === $source) {
                 return null;
             }
@@ -305,11 +312,33 @@ final readonly class TempestMarkdownRenderer
             }
 
             $items = [];
+            $loose = false;
+            $blank = false;
             foreach (explode("\n", rtrim($source, "\n")) as $line) {
-                if (str_starts_with($line, '* ') || str_starts_with($line, '- ')) {
+                if ('' === trim($line)) {
+                    $blank = true;
+
+                    continue;
+                }
+
+                $itemStart = '*' === $line || '-' === $line || str_starts_with($line, '* ') || str_starts_with($line, '- ');
+                if ($blank) {
+                    if (! $itemStart) {
+                        return null;
+                    }
+
+                    $loose = true;
+                    $blank = false;
+                }
+
+                if ('*' === $line || '-' === $line) {
+                    $items[] = '';
+                } elseif (str_starts_with($line, '* ') || str_starts_with($line, '- ')) {
                     $items[] = substr($line, 2);
                 } elseif ([] !== $items && 1 === preg_match('/^ {2,4}(\S.*)$/D', $line, $continuation)) {
                     $items[array_key_last($items)] .= "\n".$continuation[1];
+                } elseif ([] !== $items && $line === ltrim($line) && 1 !== preg_match('/^(?:#{1,6}[ \t]|[0-9]+[.)] |>|`{3}|~{3})/', $line)) {
+                    $items[array_key_last($items)] .= "\n".$line;
                 } else {
                     return null;
                 }
@@ -317,12 +346,18 @@ final readonly class TempestMarkdownRenderer
 
             $html = "<ul>\n";
             foreach ($items as $item) {
-                $content = $this->render($item);
+                if ('' === $item) {
+                    $html .= "<li></li>\n";
+
+                    continue;
+                }
+
+                $content = $this->render(rtrim($item));
                 if (null === $content || ! str_starts_with($content, '<p>') || ! str_ends_with($content, "</p>\n")) {
                     return null;
                 }
 
-                $html .= '<li>'.substr($content, 3, -5)."</li>\n";
+                $html .= $loose ? "<li>\n".$content."</li>\n" : '<li>'.substr($content, 3, -5)."</li>\n";
             }
 
             return $html."</ul>\n";
@@ -562,7 +597,7 @@ final readonly class TempestMarkdownRenderer
             }
         }
 
-        $source = str_replace(['\\*', '\\[', '\\]', '\\+', '\\-', '\\_', '\\.', '_,_'], ["\u{E018}", "\u{E027}", "\u{E028}", "\u{E029}", "\u{E030}", "\u{E009}", "\u{E036}", "\u{E032}"], $source);
+        $source = str_replace(['\\*', '\\[', '\\]', '\\+', '\\-', '\\_', '\\.', '\\>', '_,_'], ["\u{E018}", "\u{E027}", "\u{E028}", "\u{E029}", "\u{E030}", "\u{E009}", "\u{E036}", "\u{E014}", "\u{E032}"], $source);
         $source = preg_replace('/(?<=[\p{L}\p{N}_])_\._/u', "\u{E031}", $source);
         if (null === $source) {
             return null;
@@ -574,6 +609,15 @@ final readonly class TempestMarkdownRenderer
         }
 
         $source = preg_replace_callback('/\b(?:hôtel|hotel)\s+[1-5]\*{1,4}(?:\s*(?:\/|ou|à|et)\s*[1-5]\*{1,4})?/iu', static fn (array $match): string => str_replace('*', "\u{E018}", $match[0]), $source);
+        if (null === $source) {
+            return null;
+        }
+
+        $source = preg_replace_callback('/\b[1-5]\*(?=\s|$)/m', static function (array $match) use ($source): string {
+            $before = substr($source, 0, $match[0][1]);
+
+            return 0 === substr_count($before, '*') % 2 ? substr($match[0][0], 0, -1)."\u{E018}" : $match[0][0];
+        }, $source, flags: \PREG_OFFSET_CAPTURE);
         if (null === $source) {
             return null;
         }
@@ -872,6 +916,7 @@ final readonly class TempestMarkdownRenderer
         $html = str_replace("\u{E033}\n", "<br />\n", $html);
         $html = str_replace("\u{E020}", '_', $html);
         $html = str_replace(["\u{E026}", "\u{E036}"], '.', $html);
+        $html = str_replace("\u{E014}", '&gt;', $html);
         $html = str_replace(["\u{E010}", "\u{E011}"], ['[', ']'], $html);
         if ($literalLeadingHash) {
             $html = str_replace("\u{E012}", '#', $html);
@@ -1060,7 +1105,7 @@ final readonly class TempestMarkdownRenderer
 
         $withoutLinks = $source;
         if (str_contains($source, '[')) {
-            $linkPattern = '/\[[^][]+\]\((<[^>\r\n]+>|[^()\r\n]*)\)/';
+            $linkPattern = '/\[[^][]*\]\((<[^>\r\n]+>|(?:[^()\r\n]|\([^()\r\n]*\))*)\)/';
             preg_match_all($linkPattern, $source, $links);
             foreach ($links[1] as $destination) {
                 if (1 === preg_match('/[\s\"]/', $destination)) {

@@ -37,6 +37,8 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'list item classes' => ["- {.ico-mountain} Une marche\n- Un voyage"];
         yield 'blockquote with lazy continuation' => ["> Un voyage ensemble\n>, Et un retour"];
         yield 'heading followed by paragraph' => ["## Une marche\nUne journée en montagne."];
+        yield 'setext heading' => ["Prix 2026\n-------------"];
+        yield 'setext level-one heading' => ["Prix 2026\n============="];
         yield 'paragraph followed by heading' => ["Une journée en montagne.\n## Le retour"];
         yield 'empty table header' => ["| | |\n|---|---|\n| x | y |"];
         yield 'table row trailing space' => ["| A | B |\n|---|---|\n| x | y | "];
@@ -55,6 +57,13 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'escaped dot in heading' => ['## 1\\. La première étape'];
         yield 'ordered list with extra marker spaces' => ["1.  Départ\n2.  Retour"];
         yield 'list continuation with four spaces' => ["* Départ :  \n    Rendez-vous à 8 h\n* Retour"];
+        yield 'star list lazy continuation' => ["* Départ\nRendez-vous à 8 h\n* Retour"];
+        yield 'empty star list item' => ["* Départ\n*"];
+        yield 'loose list with spaced markers' => ["-   Départ  \n    \n-   Retour"];
+        yield 'empty link' => ['Voir []() pour les conditions.'];
+        yield 'link destination with parentheses' => ['Voir [Naxos]((/cyclades)) et [la Crète](/crete).'];
+        yield 'escaped blockquote marker in paragraph' => ['Départ \\> arrivée.'];
+        yield 'hotel ratings following emphasis' => ['- **Accommodation** : 2* or 3* hotel'];
         yield 'escaped brackets in emphasis' => ['Lisez _\\[note\\]_ avant le départ.'];
         yield 'single tilde strikethrough' => ['Réduction ~30€~ pour le trajet.'];
         yield 'two approximate quantities' => ['Distance ~170 km et dénivelé ~10 000 m.'];
