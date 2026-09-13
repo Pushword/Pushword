@@ -23,6 +23,11 @@ final class NativeStaticGeneratorTest extends KernelTestCase
 
         try {
             $expected = $this->build($directory.'/php', new HtmlMinification());
+            $repeated = $this->build($directory.'/php-repeated', new HtmlMinification());
+            foreach ($expected as $path => $html) {
+                self::assertSame(hash('sha256', $html), hash('sha256', $repeated[$path]), 'Repeated PHP '.$path);
+            }
+
             $actual = $this->build($directory.'/rust', $native);
             self::assertArrayHasKey('index.html', $expected);
             self::assertArrayHasKey('404.html', $expected);
