@@ -103,4 +103,9 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
 
         self::assertSame($converter->convert($source)->__toString(), $renderer->render($source));
     }
+
+    public function testIncompleteLinkFallsBack(): void
+    {
+        self::assertNull(new TempestMarkdownRenderer()->render('Voir [guide](/incomplete'));
+    }
 }
