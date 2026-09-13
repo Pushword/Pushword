@@ -199,6 +199,7 @@ Pushword-aware renderers there or port them with explicit resolved inputs.
 | Area | Candidate boundary | PHP behavior that must be preserved |
 |---|---|---|
 | Public rendering, editor preview, static builds and search ingestion | Markdown conversion after Twig evaluation; later fuse adjacent pure content passes | Pushword attributes, links, media rendering, notices, code handling and cache versioning; a generic CommonMark converter is insufficient |
+| Public rendering, editor preview and static builds | Investigate Twig template rendering through [Tera](https://github.com/Keats/tera) or [Askama](https://github.com/askama-rs/askama), starting with representative site templates and measured cache misses | Template inheritance, includes, escaping, filters, functions, extension hooks, localization and site-defined templates must match before enabling a native path; retain PHP for shared hosting |
 | Static publication | Batched minification, asset metadata and incremental output planning | URL mapping, published snapshots, removals, redirects and atomic file replacement |
 | Scanning and indexing | Extract links, headings and searchable text from rendered content in one pass | Exclusions, anchor rules, index fields and host/locale separation; external network checks are another workload |
 | Flat-file processing | Parsing and comparison of input batches | Validation, revisions, relations, conflict handling and transaction ownership remain with the CMS |

@@ -267,6 +267,56 @@ different output (for example, heading IDs and attribute serialization) is why
 its corpus score is intentionally reported rather than folded into the
 Pushword-compatible result.
 
+### Local Altimood speed and memory trend
+
+The private, workspace-only benchmark lives in the ignored
+`benchmarks/local-altimood/` directory. Its two NDJSON snapshots, scripts,
+parity mask and result files stay out of Git. After building the release
+binaries, refresh the snapshots when site data or the installed Pushword PHP
+implementation changes. The snapshot writers refuse to overwrite existing
+files, so preserve old results and remove or rename the old private snapshots
+before refreshing them. Run these commands from the monorepo root:
+
+```sh
+mkdir -p packages/core/rust/benchmarks/local-altimood
+php packages/core/rust/benchmarks/render-downstream.php ../altimood "$PWD/packages/core/rust/benchmarks/local-altimood/split.ndjson"
+php packages/core/rust/benchmarks/render-markdown-downstream.php ../altimood "$PWD/packages/core/rust/benchmarks/local-altimood/markdown.ndjson"
+python3 packages/core/rust/benchmarks/local-altimood/run.py split --cpu 2 > packages/core/rust/benchmarks/local-altimood/split-result.json
+python3 packages/core/rust/benchmarks/local-altimood/run.py markdown --cpu 2 > packages/core/rust/benchmarks/local-altimood/markdown-result.json
+```
+
+Choose an available CPU or omit `--cpu`. Each runner performs three passes
+and records snapshot, binary and revision hashes. `split` checks the SHA-256
+digest of every complete PHP and Rust result, then samples peak RSS for the
+PHP process and its child. `markdown` measures uncached downstream PHP
+`transform()` calls and Comrak probe batches on post-Twig blocks. It reports
+the full corpus and the subset that matched the snapshot PHP output byte for
+byte; it also detects drift in the current PHP output. Its timings cover only
+conversion: neither route runs the complete page renderer. The PHP source is
+the version installed in `../altimood/vendor`, so update that dependency when
+comparing changes to Pushword PHP itself.
+
+On the 13 September 2026 local snapshots, with three passes pinned to CPU 2:
+
+| Workload | PHP median | Rust median | Directional ratio | Output parity | Memory |
+|---|---:|---:|---:|---|---|
+| Complete split, 1,474 pages | 6.903 s | 2.164 s | 3.19× | 1,474/1,474 exact | Sampled tree peak 66.0 vs 73.2 MiB (+10.9%) |
+| Markdown, all 64,509 blocks | 4.072 s | 0.420 s | 9.70× | 58,997/64,509 blocks exact | Not measured |
+| Markdown, 58,997 matching blocks only | 3.173 s | 0.364 s | 8.71× | Exact blocks on this snapshot | Not measured |
+
+The split snapshot SHA-256 is `3858ceac4e22b84479f3387730ec2359261aeb1b9984314b595c7d36bbc6ba6c`;
+the Markdown snapshot SHA-256 is `538e6619ebaf6506131a7f18877fe85399a3d487181de75eef9966c773064d9e`.
+
+The Markdown ratios are **component-level trends, not validated site gains**.
+The full output differs for 5,512 blocks, and only 401/1,455 pages with
+Markdown blocks have complete block parity. The matching subset does not
+establish whole-page equivalence or include the PHP callback work needed for
+site-dependent features. PHP timing excludes downstream kernel startup and
+snapshot decoding; Rust timing includes probe startup, IPC and JSON decoding
+per batch. The split memory figure is a sampled process-tree RSS peak, not
+PHP's Zend allocation counter. Repeated results are meaningful only with the
+same snapshot hash, site version, CPU affinity and binary.
+
 ### TOC: algorithmic improvement applies to PHP too
 
 `TOC\UniqueSlugger::makeSlug()` restarts a numeric suffix search for every heading
