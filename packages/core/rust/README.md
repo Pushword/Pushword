@@ -108,10 +108,8 @@ Each response entry is HTML or null (declined). PHP validates every entry
 before using the batch.
 
 On the current 70-case rendered Markdown corpus, all 70 documents use native
-analysis and match PHP across every accessor. On a read-only snapshot of the
-Altimood database, 1,474/1,474 rendered pages are accepted and match PHP,
-including all 825 pages with a TOC. That establishes 100% coverage **for this
-snapshot**, not for arbitrary HTML or future content.
+analysis and match PHP across every accessor. This is a test of that corpus,
+not a claim of universal HTML compatibility.
 
 Request and response frames, including their newline, are limited to 16 MiB.
 Oversized responses are rejected before writing. The worker is reused until
@@ -164,18 +162,16 @@ database pages into a private file outside the repository, then check every
 `SplitContent` accessor against PHP:
 
 ```sh
-php packages/core/rust/benchmarks/render-downstream.php ../altimood /tmp/pushword-altimood.ndjson
-php packages/core/rust/benchmarks/check-downstream.php /tmp/pushword-altimood.ndjson
-taskset -c 2 php packages/core/rust/benchmarks/time-downstream.php /tmp/pushword-altimood.ndjson
+php packages/core/rust/benchmarks/render-downstream.php /path/to/site /tmp/pushword-downstream.ndjson
+php packages/core/rust/benchmarks/check-downstream.php /tmp/pushword-downstream.ndjson
+taskset -c 2 php packages/core/rust/benchmarks/time-downstream.php /tmp/pushword-downstream.ndjson
 ```
 
 The first script boots the downstream test kernel and reads Doctrine pages;
 it does not synchronize Markdown or change site content. The output can contain
 private page text, so keep it outside the repository. `check-downstream.php`
-fails on any native decline, exception or field mismatch. The committed
-`benchmarks/2026-09-13-altimood.json` contains aggregate counts, hashes and three
-timing passes, without page content. Regenerate the snapshot when the site data
-or rendering pipeline changes.
+fails on any native decline, exception or field mismatch. Regenerate the
+snapshot when the site data or rendering pipeline changes.
 
 ## Complete split benchmark
 
@@ -209,17 +205,12 @@ The separate slugging microbenchmark drops from 152.3 ms to 0.081 ms for 800
 identical headings; this gain also applies on PHP-only hosting. Neither ratio
 is a whole-page or whole-site speedup.
 
-On the Altimood snapshot, three uncached passes on one CPU have a median sum of
-6.53 s in PHP versus 2.02 s with the native worker (3.23×). TOC pages have
-median per-page time 5.83 ms versus 1.69 ms; pages without TOC, 0.82 ms versus
-0.40 ms. These figures include PHP assembly and reused-worker IPC, but exclude
-Markdown, Twig, SQL, HTTP, filesystem caching and complete page rendering.
-
 ## Optional Tempest comparison
 
-Tempest is an optional PHP comparison. It is deliberately kept out of the
-Pushword dependency graph because the package currently requires PHP 8.5 and
-is still evolving. Install it in the ignored benchmark directory, then run:
+The historical standalone Tempest comparison used 1.2.2 in an isolated
+directory. Current Pushword uses PHP 8.5 and a temporary 1.2.3 fork for its
+compatible renderer. To reproduce the older parser-only comparison, install
+the historical version in the ignored benchmark directory:
 
 ```sh
 mkdir -p packages/core/rust/target/tempest
@@ -259,166 +250,57 @@ Doctrine queries, page rendering, HTTP, file publication and search indexing
 are outside these timings. TOC measures `SplitContent` preparation/getBody(),
 including heading-ID injection, not the final `getToc()` menu render.
 
-### Markdown: large opportunity on cache misses, incomplete compatibility
+### Three-way Markdown conversion
 
-The timed subset is byte-identical. The original 70-case corpus scored 67/70
-with the custom Comrak formatter before the obfuscated-link and contact ports.
-Link, block and list-item attributes, Unicode IDs, empty table heads and
-colspan markers matched the PHP reference then. The older
-`2026-09-12-comrak-tempest.json` is a historical 49/59 measurement; it has not
-been rewritten as a current benchmark.
-
-On the read-only Altimood snapshot, 58,997 of 64,509 post-Twig Markdown blocks
-(91.46%) are byte-identical. Of 1,455 pages containing such blocks, 401 have
-every block identical. The other 5,512 blocks all contain at least one known
-site-dependent feature: obfuscated links, notices, images, phone or email
-autolinks, or date shortcodes. Feature counts overlap. The downstream site has
-its own installed Pushword version, so this is a site compatibility audit, not
-a proof of parity against the current monorepo PHP renderer. Full aggregate
-counts and hashes are in `benchmarks/2026-09-13-comrak-altimood.json`.
-
-The raw Comrak ratio on the 9.8 KB subset remains a parsing opportunity, not
-a whole-site speedup. The opt-in hybrid path declines unsupported blocks to
-the PHP converter. A future typed batch of deferred rendering operations
-could reduce the remaining notice and media fallbacks.
-
-The subsequent obfuscated-link and contact-markup ports keep the PHP templates
-for e-mail, telephone and obfuscated links fixed to Pushword's core components.
-The 64,509-block Altimood snapshot remains byte-identical with PHP fallback:
-61,967 blocks are accepted natively and 2,542 return to PHP. Locale is sent per
-block so French telephone display matches the PHP renderer. This is a
-post-Twig conversion check; full page and request parity remain unmeasured.
-Three pinned single-CPU passes took a median 4.207 s with uncached PHP and
-0.770 s with the hybrid path (5.47× directional conversion speedup). The
-aggregate report is `benchmarks/2026-09-13-comrak-contact-altimood.json`;
-Markdown memory was not measured.
-
-To reproduce the downstream audit without committing private page content:
+The default benchmark generates 24,000 deterministic Markdown blocks from 12
+patterns and uses the repository's demo test kernel. It calculates CommonMark's
+reference HTML once, outside the timed passes. No external site or corpus is
+needed. The raw snapshot is temporary; the detailed report can stay in the
+ignored local benchmark directory:
 
 ```sh
-php packages/core/rust/benchmarks/render-markdown-downstream.php ../altimood /tmp/pushword-markdown.ndjson
-python3 packages/core/rust/benchmarks/check-markdown-downstream.py /tmp/pushword-markdown.ndjson packages/core/rust/target/release/pushword-content-probe
-python3 packages/core/rust/benchmarks/check-markdown-downstream.py /tmp/pushword-markdown.ndjson packages/core/rust/target/release/pushword-content-probe --supported-only
+mkdir -p packages/core/rust/benchmarks/local
+python3 packages/core/rust/benchmarks/three-way-markdown.py --cpu 2 --runs 3 \
+  > packages/core/rust/benchmarks/local/synthetic-result.json
 ```
 
-The first command writes a mode-0600 snapshot and refuses to overwrite one.
-The second reports only aggregate counts and hashes. It measures compatibility,
-not speed. Both commands use the downstream test kernel and its installed
-Pushword version.
+The following medians come from three alternating passes on CPU 2 with the
+24,000-block corpus on 13 September 2026 (PHP 8.5.10). All three paths produced
+byte-identical HTML.
 
-With `--supported-only`, the probe declines dynamic blocks and the audit
-counts them as PHP fallbacks against the snapshot. On the current Altimood
-snapshot, it accepts 58,758/64,509 blocks and declines 5,751; accepted Rust
-output is byte-identical, and the PHP fallback makes all 1,455 pages with
-Markdown blocks exact **at this conversion boundary**. The private local
-runner also times the persistent PHP/Rust worker bridge on three CPU-2 passes:
-4.031 s for uncached PHP conversion versus 1.034 s hybrid (3.90×), including
-worker IPC and PHP fallback conversions. These are post-Twig block times, not
-complete page or HTTP timings. Aggregate hashes and samples are in
-`benchmarks/2026-09-13-comrak-hybrid-altimood.json`.
+| Renderer | Conversion time | Relative speed | Sampled peak process-tree RSS | Directly rendered blocks |
+|---|---:|---:|---:|---:|
+| CommonMark PHP | 1.381 s | 1.00× | 92.3 MiB | 24,000 |
+| Tempest compatibility renderer | 0.390 s | 3.54× | 90.6 MiB | 24,000 |
+| Rust hybrid with PHP fallback | 0.166 s | 8.34× | 98.5 MiB | 22,000; 2,000 PHP fallbacks |
 
-Tempest 1.2.2 renders the same article in about 1.5 ms per document in the
-standalone PHP benchmark, versus the native Comrak batch measured by the probe;
-the exact samples and environment are committed in the raw report. Tempest's
-different output (for example, heading IDs and attribute serialization) is why
-its corpus score is intentionally reported rather than folded into the
-Pushword-compatible result.
+The generated input is fixed and synthetic, so these ratios are useful for
+repeatable component comparisons, not predictions of a site's throughput.
+Conversion is uncached. Rust time includes persistent-worker IPC and the PHP
+fallback; the RSS figure includes the Rust child. Snapshot decoding, site
+switching, kernel startup, Twig and complete page rendering are excluded from
+the timed conversion calls. The synthetic corpus SHA-256 is
+`2d03bf7a6a532bfd5b84f828cceed90d1d1c18db5dcb2eacad2df916338ad3eb`;
+the analyzer binary SHA-256 is
+`a34055c2a1dcb299fb872dd06d4863ab556ec7a1366f9e79f400120f7f30e660`.
 
-### Local Altimood speed and memory trend
-
-The private, workspace-only benchmark lives in the ignored
-`benchmarks/local-altimood/` directory. Its two NDJSON snapshots, scripts,
-parity mask and result files stay out of Git. After building the release
-binaries, refresh the snapshots when site data or the installed Pushword PHP
-implementation changes. The snapshot writers refuse to overwrite existing
-files, so preserve old results and remove or rename the old private snapshots
-before refreshing them. Run these commands from the monorepo root:
+An installed downstream site can be measured with the same runner. Its private
+snapshot and result remain in the ignored local directory:
 
 ```sh
-mkdir -p packages/core/rust/benchmarks/local-altimood
-php packages/core/rust/benchmarks/render-downstream.php ../altimood "$PWD/packages/core/rust/benchmarks/local-altimood/split.ndjson"
-php packages/core/rust/benchmarks/render-markdown-downstream.php ../altimood "$PWD/packages/core/rust/benchmarks/local-altimood/markdown.ndjson"
-python3 packages/core/rust/benchmarks/local-altimood/run.py split --cpu 2 > packages/core/rust/benchmarks/local-altimood/split-result.json
-python3 packages/core/rust/benchmarks/local-altimood/run.py markdown --cpu 2 > packages/core/rust/benchmarks/local-altimood/markdown-result.json
-python3 packages/core/rust/benchmarks/local-altimood/run.py hybrid --cpu 2 > packages/core/rust/benchmarks/local-altimood/hybrid-result.json
+php packages/core/rust/benchmarks/render-markdown-downstream.php \
+  /path/to/site packages/core/rust/benchmarks/local/site.ndjson
+python3 packages/core/rust/benchmarks/three-way-markdown.py \
+  --site /path/to/site \
+  --snapshot packages/core/rust/benchmarks/local/site.ndjson \
+  --cpu 2 --runs 3 \
+  > packages/core/rust/benchmarks/local/site-result.json
 ```
 
-Choose an available CPU or omit `--cpu`. Each runner performs three passes
-and records snapshot, binary and revision hashes. `split` checks the SHA-256
-digest of every complete PHP and Rust result, then samples peak RSS for the
-PHP process and its child. `markdown` measures uncached downstream PHP
-`transform()` calls and Comrak probe batches on post-Twig blocks. It reports
-the full corpus and the subset that matched the snapshot PHP output byte for
-byte; it also detects drift in the current PHP output. Its timings cover only
-conversion: neither route runs the complete page renderer. The PHP source is
-the version installed in `../altimood/vendor`, so update that dependency when
-comparing changes to Pushword PHP itself.
-
-On the 13 September 2026 local snapshots, with three passes pinned to CPU 2:
-
-| Workload | PHP median | Rust median | Directional ratio | Output parity | Memory |
-|---|---:|---:|---:|---|---|
-| Complete split, 1,474 pages | 6.903 s | 2.164 s | 3.19× | 1,474/1,474 exact | Sampled tree peak 66.0 vs 73.2 MiB (+10.9%) |
-| Markdown, all 64,509 blocks | 4.072 s | 0.420 s | 9.70× | 58,997/64,509 blocks exact | Not measured |
-| Markdown, 58,997 matching blocks only | 3.173 s | 0.364 s | 8.71× | Exact blocks on this snapshot | Not measured |
-| Markdown hybrid, 64,509 blocks | 4.031 s | 1.034 s | 3.90× | 64,509/64,509 blocks exact | Not measured |
-
-The split snapshot SHA-256 is `3858ceac4e22b84479f3387730ec2359261aeb1b9984314b595c7d36bbc6ba6c`;
-the Markdown snapshot SHA-256 is `538e6619ebaf6506131a7f18877fe85399a3d487181de75eef9966c773064d9e`.
-
-The Markdown ratios are **component-level trends, not validated site gains**.
-Raw Comrak differs for 5,512 blocks and only 401/1,455 pages have complete
-raw block parity. The hybrid route returns those blocks and 239 other
-conservative declines to PHP, so its post-Twig block output is fully exact on
-this snapshot. It does not establish whole-page equivalence. PHP timing
-excludes downstream kernel startup and snapshot decoding; the raw Rust timing
-includes probe startup, IPC and JSON decoding per batch, while the hybrid
-timing uses the reused `NativeWorker` plus PHP fallback calls. The split memory
-figure is a sampled process-tree RSS peak, not PHP's Zend allocation counter.
-Repeated results are meaningful only with the same snapshot hash, site version,
-CPU affinity and binary.
-
-### Whole-page Altimood rendering
-
-The separate end-to-end runner compares the **current monorepo PHP source** with
-the same source plus Rust Markdown and split analysis. It backs up Altimood's
-SQLite database into temporary PHP/Rust site copies, snapshots the two Pushword
-source trees and native binary, and leaves the original site untouched. Each
-case checks HTTP 200 and byte-identical complete HTML after a cleared fragment
-cache and again with warm fragments. Rust runs must start an observed child
-process. The site copies add the OAuth and Snippet bundles required by the
-current monorepo, since Altimood's installed packages are older.
-
-```sh
-python3 packages/core/rust/benchmarks/e2e-altimood.py --site ../altimood --cpu 5 --runs 3 \
-  --url https://altimood.com/ \
-  --url https://altimood.com/refuges-tour-du-mont-blanc \
-  --url https://altimood.com/tour-du-mont-blanc \
-  --url https://altimood.com/blog/randonnees-hautes-alpes \
-  --url https://altimood.com/quiz-montagne-france \
-  --url https://us.altimood.com/tour-du-mont-blanc-mountain-huts \
-  > packages/core/rust/benchmarks/local-altimood/e2e-result.json
-```
-
-The 13 September 2026 aggregate report is
-`benchmarks/2026-09-13-altimood-e2e.json`: six pages, three render paths,
-three rounds, **108/108 exact HTTP 200 HTML pairs**. The sums below add the six
-per-page medians; RSS is the median sampled peak of the PHP process plus child.
-
-| Path | Fragment-cold PHP → Rust | Warm PHP → Rust | Tree RSS PHP → Rust |
-|---|---:|---:|---:|
-| Public request | 2,657.4 → 2,515.7 ms (1.06×) | 224.9 → 247.4 ms (0.91×) | 130.1 → 136.7 MiB |
-| Preview `showPage()` | 1,433.2 → 1,175.6 ms (1.22×) | 27.2 → 21.8 ms (1.25×) | 123.4 → 131.7 MiB |
-| Static page render | 1,314.4 → 1,169.4 ms (1.12×) | 25.8 → 22.1 ms (1.17×) | 123.5 → 131.9 MiB |
-
-The long Markdown pages improve; the homepage and quiz do not. The public warm
-path is slower with Rust on this sample. These are directional measurements in
-a Symfony test kernel with debug disabled, not production HTTP measurements.
-Preview measures the `showPage()` call used by admin editing, not the whole
-authenticated admin request. Static render uses `StaticPageRenderer`, but does
-not include file writes, minification, feeds or other export work. The sampled
-RSS includes kernel boot and the native worker. The report records source,
-binary and site hashes so later PHP changes can be compared on the same data.
+For site snapshots, the PHP baseline uses the site's installed CommonMark
+converter. Tempest uses the current monorepo renderer and the site's services.
+The runner verifies every output against the snapshot and checks the digest
+across all samples. The snapshot writer refuses to overwrite an existing file.
 
 ### TOC: algorithmic improvement applies to PHP too
 
@@ -450,6 +332,7 @@ each chunk independently and exposes a named collection. Pushword adopts the
 idea of one aggregate result, **not these markers or independent Markdown
 chunk parsing**. Its `SplitContent` boundary receives HTML after Markdown/Twig;
 the new `splitMany` batches that operation without changing authors' documents.
-Tempest is therefore retained as a Markdown benchmark, not added as another HTML
-analyzer. Its configurable rules could support a future separate compatibility
-effort, but its measured generic output is not a drop-in Pushword replacement.
+Tempest now renders the compatible Markdown path in Pushword; it is not a backend
+for HTML `SplitContent`. The raw Tempest output still differs from Pushword's
+serialization, so the compatibility renderer owns the required adaptation.
+Full-page parity and latency remain separate checks from this component benchmark.

@@ -140,49 +140,37 @@ pushword:
 Clear the Symfony container cache in the rendering environment. Leave this unset
 on PHP-only hosting. No existing Markdown, Twig or block-marker syntax changes.
 
-The native implementation handles the HTML structures found in a rendered
-Altimood database snapshot, including SVG, picture/source, raw text and repaired
+The native implementation handles SVG, picture/source, raw text and repaired
 markup. It declines ambiguous documents before using their output. Declines
 fall back per document; worker/protocol failures fall back for the whole batch.
 The shared-hosting test disables `proc_open`. Differential tests compare all
 accessors, including menu hierarchy, on 42 HTML cases, 70 rendered Markdown cases
 and 160 generated supported documents. All 70 rendered Markdown cases now use
-native analysis. On 1,474 actual database pages rendered through Altimood's PHP
-pipeline, all 1,474 are accepted and byte-identical to PHP across the complete
-`SplitContent` result. The original conservative analyzer declined 1,191 pages
-(80.8%), principally due to its element whitelist, empty or SVG attributes and
-normal HTML repairs. The corpus result is 100% for that snapshot, not a claim of
-universal HTML compatibility or an entire CMS port.
+native analysis. These tests do not claim universal HTML compatibility.
 
 `packages/core/rust/README.md` documents the supported boundary, protocol, build
 and checks. `benchmarks/2026-09-13-split.json` records the full split measurement,
 including native IPC and PHP assembly, against the improved PHP implementation.
-The benchmark checks every output before reporting performance. Three uncached
-passes over the Altimood snapshot take a median 6.53 s in PHP and 2.02 s with
-Rust (3.23×) on one CPU. Public requests, admin forms, SQL and complete static
-builds are outside those measurements. The downstream check and timing scripts
-and aggregate report live beside the synthetic benchmark.
+The benchmark checks every output before reporting performance. Public requests,
+admin forms, SQL and complete static builds are outside those measurements.
 
 ## Markdown and other follow-up exploration
 
 The standalone `pushword-content-probe` remains a research tool. The optional
 `pushword-content-analyzer` now batches eligible Markdown blocks and returns
-the rest to PHP. Its README and committed aggregate reports document the
-conversion boundary and compatibility gaps.
+the rest to PHP. Its README documents the conversion boundary and the synthetic
+three-way benchmark.
 
 - A synthetic 9.8 KB CommonMark subset takes about 8.09 ms per document in the
   existing uncached PHP converter versus 0.408 ms in the Comrak batch, including
   startup/JSON/validation. The in-memory PHP cache hit takes 0.0026 ms: keep
   the cache and investigate acceleration of misses.
-- The Comrak formatter supports ordinary obfuscated links, e-mail autolinks
-  and French phone numbers using fixed core markup and the current locale.
-  Media, notices, date shortcodes and obfuscated e-mail links still return to
-  PHP. On 64,509 post-Twig Altimood blocks, 61,967 use Rust and 2,542 use PHP;
-  all rendered blocks match the downstream PHP snapshot byte-for-byte. Three
-  single-CPU passes have an uncached conversion median of 4.207 s in PHP versus
-  0.770 s hybrid (5.47×), including worker IPC and PHP fallback. The aggregate
-  report is in `packages/core/rust/benchmarks/2026-09-13-comrak-contact-altimood.json`.
-  Complete page and request parity remain unmeasured.
+- On a deterministic 24,000-block synthetic corpus, CommonMark takes 1.381 s,
+  the current Tempest compatibility renderer 0.390 s and Rust with PHP fallback
+  0.166 s in median uncached conversion time on one CPU. All three produce
+  byte-identical HTML; Rust accepts 22,000 blocks and falls back for 2,000.
+  The Rust time includes worker IPC and PHP fallback. Complete page and request
+  parity remain unmeasured by this benchmark.
 - The earlier TOC probe exposed repeated list scans for duplicate IDs. The new
   indexed PHP slugger removes repeated suffix searches; the separate aggregate
   split benchmark measures native parsing against that improved baseline.
@@ -191,7 +179,7 @@ conversion boundary and compatibility gaps.
   where consumers actually process the same content.
 
 These are single-CPU component probes, not public/admin request benchmarks.
-The optional Tempest benchmark uses the same corpus and workloads. Tempest
+The historical standalone Tempest benchmark uses a separate corpus. Tempest
 1.2.2 has no `parseMany()` method; [PR #24](https://github.com/tempestphp/markdown/pull/24)
 proposes named chunks split by `<!-- next -->` markers. Pushword takes the idea
 of an aggregate result, without introducing those markers. Existing
