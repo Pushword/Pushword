@@ -46,6 +46,15 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'three-level list' => ["- Parent\n    - Enfant\n        - Détail\n- Retour"];
         yield 'list with three spaces after marker' => ["-   Départ\n-   Retour"];
         yield 'star rating stays literal' => ['Hôtel 3*/4* pour le trajet.'];
+        yield 'spaced star rating stays literal' => ['Hôtel 3* / 4* pour le trajet.'];
+        yield 'star rating range stays literal' => ['Hôtel 2* à 4* selon la disponibilité.'];
+        yield 'stars after hotel name stay literal' => ["- Nuit en hôtel***\n- Retour le matin"];
+        yield 'four stars after hotel rating stay literal' => ['Nuit en hôtel 4****.'];
+        yield 'emphasis ending in a digit' => ['La *Via 1* reste ouverte.'];
+        yield 'emphasis ending in a digit after hotel' => ['L’hôtel est proche de la *Via 1* et du départ.'];
+        yield 'escaped dot in heading' => ['## 1\\. La première étape'];
+        yield 'ordered list with extra marker spaces' => ["1.  Départ\n2.  Retour"];
+        yield 'list continuation with four spaces' => ["* Départ :  \n    Rendez-vous à 8 h\n* Retour"];
         yield 'escaped brackets in emphasis' => ['Lisez _\\[note\\]_ avant le départ.'];
         yield 'single tilde strikethrough' => ['Réduction ~30€~ pour le trajet.'];
         yield 'two approximate quantities' => ['Distance ~170 km et dénivelé ~10 000 m.'];
@@ -56,7 +65,22 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'inline HTML and entity' => ['Prix <span data-price-eur="2">2&nbsp;€</span> & transport.'];
         yield 'inline HTML comment' => ['Une marche <!-- todo: check route --> en montagne.'];
         yield 'escaped asterisk' => ['Une marche\\* en montagne.'];
+        yield 'escaped underscore' => ['La clé axeptio\\_cookies reste littérale.'];
+        yield 'escaped star rating' => ['Hôtel 3\\*\\* pour le trajet.'];
         yield 'missing image' => ['![carte](/media/no-such-image.jpg)'];
+        yield 'missing image with underscores in filename' => ['![carte](/media/no_such_image.jpg)'];
+        yield 'missing image in a sentence' => ['Voir ![carte](/media/no_such_image.jpg) avant le départ.'];
+        yield 'empty alt image in a sentence' => ['Voir ![](/media/no_such_image.jpg) avant le départ.'];
+        yield 'image with parentheses in filename' => ['Voir ![carte](/media/no_such_image(2).jpg) avant le départ.'];
+        yield 'full image with underscores in alt' => ['![carte_du_trajet](/media/no_such_image.jpg)'];
+        yield 'missing image in a link' => ['[![carte](/media/no_such_image.jpg)](/carte)'];
+        yield 'missing image in a titled link' => ['[![carte](/media/no_such_image.jpg)](/carte "Carte du trajet")'];
+        yield 'linked image with underscore alt' => ['[![carte_du_trajet](/media/no_such_image.jpg)](/carte)'];
+        yield 'obfuscated mail link with phone' => ['Appelez le 07 69 44 78 66 ou écrivez à #[bonjour@example.com](mailto:bonjour@example.com).'];
+        yield 'obfuscated mail link' => ['Écrivez à #[bonjour@example.com](mailto:bonjour@example.com).'];
+        yield 'obfuscated link and plain email' => ['Voir #[notre équipe](/equipe) ou écrire à bonjour@example.com.'];
+        yield 'emphasis followed by bold' => ['_Note_ : Une **marche facile**.'];
+        yield 'underscore in attributed link destination' => ['#[Le guide](https://example.com/page?menu_13000_kcal){target="_blank"}'];
     }
 
     #[DataProvider('compatibleDynamicSources')]

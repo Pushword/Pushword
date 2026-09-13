@@ -45,18 +45,6 @@ final readonly class TempestMarkdownRenderer
             return "<hr />\n";
         }
 
-        // Ambiguous delimiter runs do not have the same binding in Tempest and CommonMark.
-        if (str_contains($source, '__')
-            || str_contains($source, '\\*\\*')
-            || str_contains($source, '\\"')
-            || 1 === preg_match('/\d_[^_\n]+_/', $source)
-            || 1 === preg_match('/[\p{L}\p{N}]_[.!?] {2,}\n[^\n]*_/u', $source)
-            || 1 === preg_match('/[\p{L}\p{N}]_\x27[^\s_]+_|_[\p{L}]_[\p{L}]|\b[A-Z]_[a-z]|_\x{200B}_|\b\p{L}\*\*[\x27\x{2019}]|\*\*\(|_[^_\n]+\(_|\*\*,[^*\n]{0,40}\*\*/u', $source)
-            || 1 === preg_match('/^_[^\n]*\*\*|#\[[^]]+@|`<[^`]+>`|^\* .*_[0-9]/m', $source)
-        ) {
-            return null;
-        }
-
         if (1 === preg_match('/\A\{[^\n]+\}\n(<!--[\s\S]*-->)\z/D', $source, $block)) {
             return $this->render($block[1]);
         }
@@ -91,7 +79,7 @@ final readonly class TempestMarkdownRenderer
         }
 
         if (str_starts_with($source, '![') && 1 === preg_match('/^!\[([^\]\n]*)\]\(([^()\n]+)\)$/D', $source, $image)) {
-            if (str_contains($image[2], ' ') || str_contains($image[1], '_')) {
+            if (str_contains($image[2], ' ') || 1 === preg_match('/_-_[^\n]*_-_/', $image[1])) {
                 return null;
             }
 
@@ -106,6 +94,45 @@ final readonly class TempestMarkdownRenderer
             }
 
             return '<p>'.$html."</p>\n";
+        }
+
+        $inlineImages = [];
+        if (str_contains($source, '![')) {
+            if (null === $this->mediaExtension || null === $this->apps) {
+                return null;
+            }
+
+            $source = preg_replace_callback('/\[!\[([^\]\n*]*)\]\(((?:[^()\s\n]|\([^()\n]*\))+?)\)\]\(([^()\s\n]+)(?: "([^"\n]*)")?\)/', static function (array $match) use (&$inlineImages): string {
+                $marker = "\u{E034}".\count($inlineImages)."\u{E035}";
+                $inlineImages[] = ['src' => $match[2], 'alt' => $match[1], 'linked' => true];
+
+                return '['.$marker.']('.$match[3].(isset($match[4]) ? ' "'.$match[4].'"' : '').')';
+            }, $source);
+            if (null === $source) {
+                return null;
+            }
+
+            $source = preg_replace_callback('/!\[([^\]\n*]*)\]\(((?:[^()\s\n]|\([^()\n]*\))+?)\)/', static function (array $match) use (&$inlineImages): string {
+                $marker = "\u{E034}".\count($inlineImages)."\u{E035}";
+                $inlineImages[] = ['src' => $match[2], 'alt' => $match[1], 'linked' => false];
+
+                return $marker;
+            }, $source);
+            if (null === $source || str_contains($source, '![')) {
+                return null;
+            }
+        }
+
+        // Ambiguous delimiter runs do not have the same binding in Tempest and CommonMark.
+        if (str_contains($source, '__')
+            || str_contains($source, '\\"')
+            || (str_contains($source, '\\*\\*') && 1 === preg_match('/\*\*,[^*\n]{0,40}\*\*/', $source))
+            || 1 === preg_match('/\d_[^_\n(){}]+_/', $source)
+            || 1 === preg_match('/[\p{L}\p{N}]_[.!?] {2,}\n[^\n]*_/u', $source)
+            || 1 === preg_match('/[\p{L}\p{N}]_\x27[^\s_]+_|_[\p{L}]_[\p{L}]|\b[A-Z]_[a-z]|_\x{200B}_|\b\p{L}\*\*[\x27\x{2019}]|\*\*\(|_[^_\n]+\(_/u', $source)
+            || 1 === preg_match('/^_[^_\n]*\*\*|`<[^`]+>`|^\* .*_[0-9]/m', $source)
+        ) {
+            return null;
         }
 
         if (1 === preg_match('/^<!--[\s\S]*-->$/D', $source)) {
@@ -265,13 +292,24 @@ final readonly class TempestMarkdownRenderer
             return $html."</ul>\n";
         }
 
+        if (str_starts_with($source, '* ')) {
+            $source = preg_replace('/(?m)^\* {2,3}(?=\S)/', '* ', $source);
+            if (null === $source) {
+                return null;
+            }
+        }
+
         if ((str_starts_with($source, '* ') || str_starts_with($source, '- ')) && (str_starts_with($source, '* ') || str_contains($source, "\n  "))) {
+            if ([] !== $inlineImages) {
+                return null;
+            }
+
             $items = [];
             foreach (explode("\n", rtrim($source, "\n")) as $line) {
                 if (str_starts_with($line, '* ') || str_starts_with($line, '- ')) {
                     $items[] = substr($line, 2);
-                } elseif ([] !== $items && str_starts_with($line, '  ')) {
-                    $items[array_key_last($items)] .= "\n".substr($line, 2);
+                } elseif ([] !== $items && 1 === preg_match('/^ {2,4}(\S.*)$/D', $line, $continuation)) {
+                    $items[array_key_last($items)] .= "\n".$continuation[1];
                 } else {
                     return null;
                 }
@@ -292,6 +330,11 @@ final readonly class TempestMarkdownRenderer
 
         if (1 === preg_match('/^-{3,}\n?$/D', $source)) {
             return str_replace('<hr/>', '<hr />', rtrim($this->markdownWithoutFrontMatter->parse($source)->html))."\n";
+        }
+
+        $source = preg_replace('/(?m)^([0-9]{1,9})\. {2,3}(?=\S)/', '$1. ', $source);
+        if (null === $source) {
+            return null;
         }
 
         $listStart = 1 === preg_match('/^([0-9]{1,9})\. /', $source, $listMatches) ? (int) $listMatches[1] : null;
@@ -392,10 +435,24 @@ final readonly class TempestMarkdownRenderer
             }
         }
 
+        $obfuscatedLinks = [];
+        if (str_contains($source, '#[')) {
+            $source = preg_replace_callback('/#\[[^][]+\]\([^()\r\n]*\)/', static function (array $match) use (&$obfuscatedLinks): string {
+                $obfuscatedLinks[] = $match[0];
+
+                return "\u{E037}".(\count($obfuscatedLinks) - 1)."\u{E038}";
+            }, $source);
+            if (null === $source) {
+                return null;
+            }
+        }
+
         $contacts = [];
         if (null !== $this->linkProvider && ! str_contains($source, '`') && ! str_contains($source, '<') && ! str_contains($source, "\u{E000}")) {
             try {
-                $source = preg_replace_callback('/(?<![A-Za-z0-9._+-])(?<email>[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})(?=$|[ \t\n.,!?)>\/])|(?<phone>(?:(?:\+|00)33|0)(?:\s|&nbsp;|\xC2\xA0)*[1-9](?:(?:[\s.-]|&nbsp;|\xC2\xA0)*\d{2}){4})(?=$|[ \t\n.,!?);>\/<])/i', function (array $match) use (&$contacts): string {
+                $emailPattern = '(?<![A-Za-z0-9._+-])(?<email>[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})(?=$|[ \t\n.,!?)>\/])';
+                $phonePattern = '(?<phone>(?:(?:\+|00)33|0)(?:\s|&nbsp;|\xC2\xA0)*[1-9](?:(?:[\s.-]|&nbsp;|\xC2\xA0)*\d{2}){4})(?=$|[ \t\n.,!?);>\/<])';
+                $source = preg_replace_callback('/'.$emailPattern.'|'.$phonePattern.'/i', function (array $match) use (&$contacts): string {
                     $contacts[] = '' !== $match['email']
                         ? $this->linkProvider->renderEncodedMail($match['email'])
                         : $this->linkProvider->renderPhoneNumber(trim($match['phone']));
@@ -409,6 +466,10 @@ final readonly class TempestMarkdownRenderer
             if (null === $source) {
                 return null;
             }
+        }
+
+        foreach ($obfuscatedLinks as $index => $link) {
+            $source = str_replace("\u{E037}".$index."\u{E038}", $link, $source);
         }
 
         $linkTitles = [];
@@ -501,13 +562,23 @@ final readonly class TempestMarkdownRenderer
             }
         }
 
-        $source = str_replace(['\\*', '\\[', '\\]', '\\+', '\\-', '_,_'], ["\u{E018}", "\u{E027}", "\u{E028}", "\u{E029}", "\u{E030}", "\u{E032}"], $source);
+        $source = str_replace(['\\*', '\\[', '\\]', '\\+', '\\-', '\\_', '\\.', '_,_'], ["\u{E018}", "\u{E027}", "\u{E028}", "\u{E029}", "\u{E030}", "\u{E009}", "\u{E036}", "\u{E032}"], $source);
         $source = preg_replace('/(?<=[\p{L}\p{N}_])_\._/u', "\u{E031}", $source);
         if (null === $source) {
             return null;
         }
 
         $source = preg_replace('/(?<=\d)\*(?=\/\d)/', "\u{E018}", $source);
+        if (null === $source) {
+            return null;
+        }
+
+        $source = preg_replace_callback('/\b(?:hôtel|hotel)\s+[1-5]\*{1,4}(?:\s*(?:\/|ou|à|et)\s*[1-5]\*{1,4})?/iu', static fn (array $match): string => str_replace('*', "\u{E018}", $match[0]), $source);
+        if (null === $source) {
+            return null;
+        }
+
+        $source = preg_replace_callback('/(?<=[\p{L}\p{N}])\*{3,4}(?=\s|$)/u', static fn (array $match): string => str_replace('*', "\u{E018}", $match[0]), $source);
         if (null === $source) {
             return null;
         }
@@ -773,6 +844,25 @@ final readonly class TempestMarkdownRenderer
             $html = str_replace($marker, '" title="'.htmlspecialchars($title, \ENT_COMPAT | \ENT_SUBSTITUTE), $html);
         }
 
+        foreach ($inlineImages as $index => $image) {
+            if (null === $this->mediaExtension || null === $this->apps) {
+                return null;
+            }
+
+            $marker = "\u{E034}".$index."\u{E035}";
+            if (! str_contains($html, $marker)) {
+                return null;
+            }
+
+            try {
+                $imageHtml = $this->mediaExtension->renderImage($image['src'], htmlspecialchars($image['alt']), link: ! $image['linked'], sizes: $this->apps->get()->bodyImageSizes());
+            } catch (Throwable) {
+                $imageHtml = BrokenImageComment::for($image['src']);
+            }
+
+            $html = str_replace($marker, $imageHtml, $html);
+        }
+
         $html = str_replace("\u{E009}", '_', $html);
         $html = str_replace("\u{E013}", '&lt;', $html);
         $html = str_replace(["\u{E018}", "\u{E019}"], ['*', '**'], $html);
@@ -781,7 +871,7 @@ final readonly class TempestMarkdownRenderer
         $html = str_replace(["\u{E031}", "\u{E032}"], ['_._', '_,_'], $html);
         $html = str_replace("\u{E033}\n", "<br />\n", $html);
         $html = str_replace("\u{E020}", '_', $html);
-        $html = str_replace("\u{E026}", '.', $html);
+        $html = str_replace(["\u{E026}", "\u{E036}"], '.', $html);
         $html = str_replace(["\u{E010}", "\u{E011}"], ['[', ']'], $html);
         if ($literalLeadingHash) {
             $html = str_replace("\u{E012}", '#', $html);
@@ -964,7 +1054,7 @@ final readonly class TempestMarkdownRenderer
             return false;
         }
 
-        if (str_contains($source, '***') || str_contains($source, '___') || 1 === preg_match("/`[^`]*'[^`]*`/", $source)) {
+        if (str_contains($source, '___') || 1 === preg_match('/(^|\s)\*{3}\S/', $source) || 1 === preg_match("/`[^`]*'[^`]*`/", $source)) {
             return false;
         }
 

@@ -44,6 +44,7 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'triple emphasis uses CommonMark' => ['***marche***', null];
         yield 'ambiguous underscores use CommonMark' => ['Le texte __important__ reste compatible.', null];
         yield 'ambiguous numbered underscores use CommonMark' => ['3_h de marche._', null];
+        yield 'ambiguous bold around escaped stars uses CommonMark' => ['pain**, mais les** horaires\\*\\*', null];
         yield 'ambiguous underscore across hard break uses CommonMark' => ["word_.  \nNext._", null];
         yield 'intraword underscores use CommonMark' => ['a_b_c', null];
         yield 'strikethrough uses CommonMark' => ['~~marche~~', null];
@@ -51,6 +52,7 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'trailing space in bold stays literal' => ['**Une marche **', "<p>**Une marche **</p>\n"];
         yield 'literal brackets stay literal' => ['Voir [LIEN_AFFILIATION] ici.', "<p>Voir [LIEN_AFFILIATION] ici.</p>\n"];
         yield 'quoted link destination uses CommonMark' => ['[marche](a"b)', null];
+        yield 'image in custom star list uses CommonMark' => ["* Départ\n* ![](carte.jpg)", null];
         yield 'unicode link destination is encoded' => ['[marche](école)', "<p><a href=\"%C3%A9cole\">marche</a></p>\n"];
         yield 'space in link destination stays literal' => ['[marche](a b)', "<p>[marche](a b)</p>\n"];
         yield 'apostrophe in inline code uses CommonMark' => ["Un `x'y` code.", null];
