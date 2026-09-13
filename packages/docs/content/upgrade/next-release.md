@@ -1,5 +1,5 @@
 ---
-title: 'PHP 8.5 required; PHP files use strict types; optional Rust minification, content analysis and Markdown; Markdown HTML serialization may differ; contact markup uses core templates; admin links restrict URLs; MariaDB connections use read committed isolation'
+title: 'PHP 8.5 required; PHP files use strict types; optional Rust minification, content analysis and Markdown; Tempest renders Markdown by default; contact markup uses core templates; admin links restrict URLs; MariaDB connections use read committed isolation'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -39,7 +39,7 @@ Several changes land here between two tags: append to the file, do not replace i
 
 ## PHP 8.5 required
 
-Pushword now requires PHP 8.5 because Markdown rendering uses Tempest for compatible text and headings, with CommonMark handling other syntax.
+Pushword now requires PHP 8.5 because Markdown rendering uses Tempest.
 **Sites running PHP 8.4:** upgrade the PHP runtime before updating Pushword. If you copied the Dockerfile, update its FrankenPHP base images to the PHP 8.5 variants.
 
 ## PHP strict types
@@ -68,7 +68,7 @@ See [native acceleration](../native-acceleration.md) for the measured conversion
 
 ## Markdown HTML serialization
 
-Markdown may emit equivalent HTML with different attribute order, entity spelling or table tag spacing. Sites comparing raw rendered HTML strings should compare the parsed result instead; normal page rendering needs no action.
+Tempest now renders block and inline Markdown without CommonMark delegation. Attribute order, entity spelling, table tag spacing and malformed emphasis can change while links, attributes, IDs, code content and raw HTML remain compatible. Sites with custom Markdown syntax should test it before updating: unsupported syntax now raises a render error instead of delegating to CommonMark.
 
 ## Optional native page-scan extraction
 

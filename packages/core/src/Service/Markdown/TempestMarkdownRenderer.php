@@ -6,6 +6,7 @@ namespace Pushword\Core\Service\Markdown;
 
 use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
 use Tempest\Markdown\Markdown;
@@ -13,21 +14,17 @@ use Tempest\Markdown\Rules\FrontMatterRule;
 use Throwable;
 use Twig\Environment as Twig;
 
-/** Uses Tempest when the rendered HTML preserves Pushword's document structure. */
+/** Renders Markdown with Tempest and Pushword's link, media, notice and attribute rules. */
 final readonly class TempestMarkdownRenderer
 {
-    /** Syntax for which Tempest changes the parsed document, not just its serialization. */
-    private const array COMMONMARK_ONLY_PATTERNS = [
-        '/\A\{(?!id=)[^}\n]+\}\n/',
-        '/(?<!#)\[[^\]\n]+\]\(mailto:/',
+    /** Syntax that still needs a dedicated Pushword renderer. */
+    private const array UNSUPPORTED_PATTERNS = [
         '/\A<(?:input|hr|br|img)\b/i',
-        '/\A<(?:[^<>\s]+@[^<>\s]+|tel:[^<>\s]+)>/',
         '/^ {0,3}(?:[-*+]|\d+[.)]) \[[xX ]\] /m',
         '/`[^`\n]+`\{[^}\n]+\}/',
         '/\{#[^}\n]*[^\x00-\x7F][^}\n]*\}/',
-        '/\[[^\]\n]+\]\([^\n)]+\)\{#/',
         '/^#{1,6} [^\n]+\n\{[.#][^}\n]+\}$/m',
-        '/\{(?:[.#]|[a-z][a-z0-9_-]*=)[^}\n]*\s+[^}\n]*\}/i',
+        '/(?!\A)\{(?:[.#]|[a-z][a-z0-9_-]*=)[^}\n]*\s+[^}\n]*\}/i',
     ];
 
     private Markdown $markdown;
@@ -49,11 +46,290 @@ final readonly class TempestMarkdownRenderer
             return '';
         }
 
-        if (str_contains($source, '](<')) {
-            return null;
+        if (1 === preg_match('/\A\{([^{}\n]+)\}\n(> \[![\s\S]+)\z/D', $source, $attributedNotice)) {
+            $attributes = $this->parseNoticeAttributes($attributedNotice[1]);
+
+            return null === $attributes ? null : $this->renderNotice($attributedNotice[2], $attributes);
         }
 
-        foreach (self::COMMONMARK_ONLY_PATTERNS as $pattern) {
+        if (1 === preg_match('/\A(#{1,6} [^\n]+) \{\.([A-Za-z0-9_-]+) #([A-Za-z0-9_-]+)\}\z/D', $source, $headingAttributes)) {
+            $heading = $this->render($headingAttributes[1]);
+            if (null === $heading) {
+                return null;
+            }
+
+            $tag = 'h'.strspn($headingAttributes[1], '#');
+
+            return str_replace('<'.$tag.'>', '<'.$tag.' class="'.$headingAttributes[2].'" id="'.$headingAttributes[3].'">', $heading);
+        }
+
+        if (1 === preg_match('/\A\{#([A-Za-z0-9_-]+)\}\n(#{1,6} [^\n]+)\z/D', $source, $leadingHeadingId)) {
+            $heading = $this->render($leadingHeadingId[2]);
+            $tag = 'h'.strspn($leadingHeadingId[2], '#');
+
+            return null === $heading ? null : str_replace('<'.$tag.'>', '<'.$tag.' id="'.$leadingHeadingId[1].'">', $heading);
+        }
+
+        if (1 === preg_match('/\A(#{1,6} [^\n]+)\n\{\.([A-Za-z0-9_-]+)\}\z/D', $source, $trailingHeadingClass)) {
+            return $this->render($trailingHeadingClass[1].' {.'.$trailingHeadingClass[2].'}');
+        }
+
+        if (1 === preg_match('/\A([^\n]+) \{\.([A-Za-z0-9_-]+) #([A-Za-z0-9_-]+)\}\n-{3,}\z/D', $source, $setextAttributes)) {
+            return $this->render('## '.$setextAttributes[1].' {.'.$setextAttributes[2].' #'.$setextAttributes[3].'}');
+        }
+
+        if (1 === preg_match('/\A\{id=[A-Za-z0-9_-]+\}\n\n([\s\S]+)\z/D', $source, $separatedAttribute)) {
+            return $this->render($separatedAttribute[1]);
+        }
+
+        if (1 === preg_match('/\A\{[.#][^{}\n]+\}\n\n([\s\S]+)\z/D', $source, $separatedAttribute)) {
+            return $this->render($separatedAttribute[1]);
+        }
+
+        if (1 === preg_match('/\A<([^<>\s]+@[^<>\s]+|tel:[^<>\s]+)>\z/D', $source, $autoLink)) {
+            $url = str_starts_with($autoLink[1], 'tel:') ? $autoLink[1] : 'mailto:'.$autoLink[1];
+
+            return '<p><a href="'.htmlspecialchars($url, \ENT_QUOTES | \ENT_SUBSTITUTE).'">'.htmlspecialchars($autoLink[1], \ENT_QUOTES | \ENT_SUBSTITUTE)."</a></p>\n";
+        }
+
+        if (1 === preg_match('/\A`([^`\n]+)`(?:\{([^{}\n]+)\})?\z/D', $source, $attributedCode)) {
+            $attributes = [];
+            if (isset($attributedCode[2])) {
+                preg_match_all('/\.[A-Za-z0-9_-]+|#[A-Za-z0-9_-]+|class="[^"]*"/', $attributedCode[2], $tokens);
+                if (implode(' ', $tokens[0]) !== $attributedCode[2]) {
+                    return null;
+                }
+
+                foreach ($tokens[0] as $token) {
+                    if ('.' === $token[0]) {
+                        $attributes['class'] = substr($token, 1);
+                    } elseif ('#' === $token[0]) {
+                        $attributes['id'] = substr($token, 1);
+                    } elseif ('class=""' === $token) {
+                        unset($attributes['class']);
+                    }
+                }
+            }
+
+            $opening = '<code';
+            foreach ($attributes as $name => $value) {
+                $opening .= ' '.$name.'="'.$value.'"';
+            }
+
+            return '<p>'.$opening.'>'.htmlspecialchars($attributedCode[1], \ENT_NOQUOTES | \ENT_SUBSTITUTE)."</code></p>\n";
+        }
+
+        if (1 === preg_match('/\A(#?)\[([^\]\n]+)\]\(([^()\s\n]+)\)\{([^{}\n]+)\}\z/D', $source, $attributedLink)
+            && (str_contains($attributedLink[4], ' ') || str_starts_with($attributedLink[4], '#'))
+            && ! str_contains($attributedLink[4], "'")
+            && 1 !== preg_match('/[^\x00-\x7F]/', $attributedLink[4])) {
+            preg_match_all('/\.[A-Za-z0-9_-]+|#[A-Za-z0-9_-]+|[a-z][a-z0-9_-]*="[^"]*"/i', $attributedLink[4], $tokens);
+            if (implode(' ', $tokens[0]) !== $attributedLink[4]) {
+                return null;
+            }
+
+            $attributes = [];
+            foreach ($tokens[0] as $token) {
+                if ('.' === $token[0]) {
+                    $attributes['class'] = trim(($attributes['class'] ?? '').' '.substr($token, 1));
+                } elseif ('#' === $token[0]) {
+                    $attributes['id'] = substr($token, 1);
+                } else {
+                    [$name, $value] = explode('=', $token, 2);
+                    if ('class' === $name) {
+                        $attributes['class'] = trim(($attributes['class'] ?? '').' '.trim($value, '"'));
+                    } elseif ('href' !== $name && ! str_starts_with(strtolower($name), 'on')) {
+                        $attributes[$name] = trim($value, '"');
+                    }
+                }
+            }
+
+            $link = $this->render('['.$attributedLink[2].']('.$attributedLink[3].')');
+            if (null === $link || 1 !== preg_match('/\A<p><a href="([^"]*)">(.*)<\/a><\/p>\n\z/sD', $link, $parsed)) {
+                return null;
+            }
+
+            if ('#' === $attributedLink[1]) {
+                return null === $this->linkProvider ? null : '<p>'.$this->linkProvider->renderLink($parsed[2], $parsed[1], $attributes, true)."</p>\n";
+            }
+
+            if ('_blank' === ($attributes['target'] ?? null) && ! isset($attributes['rel'])) {
+                $attributes['rel'] = 'noopener noreferrer';
+            }
+
+            $opening = '<a';
+            foreach ($attributes as $name => $value) {
+                $opening .= ' '.$name.'="'.htmlspecialchars($value, \ENT_QUOTES | \ENT_SUBSTITUTE).'"';
+            }
+
+            return '<p>'.$opening.' href="'.$parsed[1].'">'.$parsed[2]."</a></p>\n";
+        }
+
+        if (1 === preg_match('/\A(\[[^\]\n]+\]\([^()\n]+\))\{(?:title=\'([^\'\n]*)\'|#([\p{L}\p{N}_-]+))\}\z/uD', $source, $singleAttribute)) {
+            $html = $this->render($singleAttribute[1]);
+            if (null === $html || ! str_starts_with($html, '<p><a href=')) {
+                return null;
+            }
+
+            $name = isset($singleAttribute[3]) ? 'id' : 'title';
+            $value = $singleAttribute[3] ?? $singleAttribute[2] ?? '';
+
+            return str_replace('<a href=', '<a '.$name.'="'.htmlspecialchars($value, \ENT_QUOTES | \ENT_SUBSTITUTE).'" href=', $html);
+        }
+
+        if (1 === preg_match('/\A(\[[^\]\n]+\]\([^()\n]+ "[^"\n]+"\))\{(data-[a-z-]+="[^"]+"(?: [.#][A-Za-z0-9_-]+)+)\}\z/D', $source, $titledAttributedLink)) {
+            $html = $this->render($titledAttributedLink[1]);
+            if (null === $html || ! str_starts_with($html, '<p><a ')) {
+                return null;
+            }
+
+            preg_match_all('/data-[a-z-]+="[^"]+"|[.#][A-Za-z0-9_-]+/', $titledAttributedLink[2], $tokens);
+            $attributes = [];
+            foreach ($tokens[0] as $token) {
+                if ('.' === $token[0]) {
+                    $attributes['class'] = substr($token, 1);
+                } elseif ('#' === $token[0]) {
+                    $attributes['id'] = substr($token, 1);
+                } else {
+                    [$name, $value] = explode('=', $token, 2);
+                    $attributes[$name] = trim($value, '"');
+                }
+            }
+
+            $opening = '<a';
+            foreach ($attributes as $name => $value) {
+                $opening .= ' '.$name.'="'.htmlspecialchars($value, \ENT_QUOTES | \ENT_SUBSTITUTE).'"';
+            }
+
+            return str_replace('<a ', $opening.' ', $html);
+        }
+
+        if (1 === preg_match('/\A\[([^\]\n]+)\]\(([^()\s\n]*"[^()\s\n]*)\)\z/D', $source, $quotedDestination)) {
+            return $this->render('['.$quotedDestination[1].']('.str_replace('"', '%22', $quotedDestination[2]).')');
+        }
+
+        if (1 === preg_match('/\A\[([^\]\n]+)\]\(<([^<>\n]+)>(?: "([^"\n]*)")?\)\z/D', $source, $angleDestination)) {
+            $url = preg_replace_callback('/%(?![0-9A-Fa-f]{2})|[ \[\]]/', static fn (array $match): string => rawurlencode($match[0]), $angleDestination[2]);
+            if (null === $url) {
+                return null;
+            }
+
+            return $this->render('['.$angleDestination[1].']('.$url.(isset($angleDestination[3]) ? ' "'.$angleDestination[3].'"' : '').')');
+        }
+
+        if (1 === preg_match('/\A<(?:input|hr|br|img)\b[^>]*>\z/iD', $source)) {
+            return $source."\n";
+        }
+
+        if (1 === preg_match('/\A<(section|script|style)\b[^>]*>[\s\S]*<\/\1>\z/iD', $source)) {
+            return $source."\n";
+        }
+
+        if (1 === preg_match('/\A(`{3,}|~{3,})([^\r\n]*)\r?\n([\s\S]*?)\r?\n\1[ \t]*(?:\r?\n(?:\r?\n)?([\s\S]*))?\z/D', $source, $fence)) {
+            $language = strtok(trim($fence[2]), " \t");
+            $codeAttribute = false === $language ? '' : ' class="'.htmlspecialchars(str_starts_with($language, 'language-') ? $language : 'language-'.$language, \ENT_QUOTES | \ENT_SUBSTITUTE).'"';
+            $preClass = $this->apps?->get()->getStr(SiteConfig::FENCED_CODE_PRE_CLASS) ?? '';
+            $preAttribute = '' === $preClass ? '' : ' class="'.htmlspecialchars($preClass, \ENT_QUOTES | \ENT_SUBSTITUTE).'"';
+            $html = '<pre'.$preAttribute.'><code'.$codeAttribute.'>'.htmlspecialchars($fence[3]."\n", \ENT_NOQUOTES | \ENT_SUBSTITUTE)."</code></pre>\n";
+            $following = isset($fence[4]) && '' !== $fence[4] ? $this->render($fence[4]) : '';
+
+            return null === $following ? null : $html.$following;
+        }
+
+        if (1 === preg_match('/\A(?: {4}[^\n]*(?:\n|\z))+\z/D', $source)) {
+            $code = preg_replace('/(?m)^ {4}/', '', rtrim($source, "\n"));
+
+            return null === $code ? null : '<pre><code>'.htmlspecialchars($code, \ENT_NOQUOTES | \ENT_SUBSTITUTE)."\n</code></pre>\n";
+        }
+
+        if (1 === preg_match('/\A[-*+] \[([xX ])\] ([^\n]+)\n((?:  [-*+] [^\n]+(?:\n|\z))+)\z/D', $source, $nestedTasks)) {
+            $parent = $this->renderInline($nestedTasks[2]);
+            if (null === $parent) {
+                return null;
+            }
+
+            $html = "<ul>\n<li>".$this->taskCheckbox($nestedTasks[1]).' '.$parent."\n<ul>\n";
+            foreach (explode("\n", rtrim($nestedTasks[3], "\n")) as $line) {
+                if (1 !== preg_match('/^  [-*+] (?:\[([xX ])\] )?(.*)$/D', $line, $child)) {
+                    return null;
+                }
+
+                $text = $this->renderInline($child[2]);
+                if (null === $text) {
+                    return null;
+                }
+
+                $html .= '<li>'.('' !== $child[1] ? $this->taskCheckbox($child[1]).' ' : '').$text."</li>\n";
+            }
+
+            return $html."</ul>\n</li>\n</ul>\n";
+        }
+
+        if (1 === preg_match('/\A[-*+] \[([xX ])\] ([^\n]+)\n\n  ([^\n]+)\n\n[-*+] \[([xX ])\] ([^\n]+)\z/D', $source, $continuedTasks)) {
+            $first = $this->renderInline($continuedTasks[2]);
+            $continuation = $this->renderInline($continuedTasks[3]);
+            $last = $this->renderInline($continuedTasks[5]);
+            if (in_array(null, [$first, $continuation, $last], true)) {
+                return null;
+            }
+
+            return "<ul>\n<li>\n<p>".$this->taskCheckbox($continuedTasks[1]).' '.$first."</p>\n<p>".$continuation."</p>\n</li>\n<li>\n<p>".$this->taskCheckbox($continuedTasks[4]).' '.$last."</p>\n</li>\n</ul>\n";
+        }
+
+        if (1 === preg_match('/\A(?:[-*+] \[[xX ]\] [^\n]+)(?:\n(?:\n)?[-*+] \[[xX ]\] [^\n]+)*\z/D', $source)) {
+            $loose = str_contains($source, "\n\n");
+            $html = "<ul>\n";
+            foreach (preg_split('/\n\n?/', $source) ?: [] as $line) {
+                $text = $this->render(substr($line, 6));
+                if (null === $text || ! str_starts_with($text, '<p>') || ! str_ends_with($text, "</p>\n")) {
+                    return null;
+                }
+
+                $input = $this->taskCheckbox($line[3]);
+                $item = $input.' '.substr($text, 3, -5);
+                $html .= $loose ? "<li>\n<p>".$item."</p>\n</li>\n" : '<li>'.$item."</li>\n";
+            }
+
+            return $html."</ul>\n";
+        }
+
+        if (1 === preg_match('/\A(\|[^\n]+\|)\n(\|[ :|\-]+\|)\n((?:\|[^\n]+\|(?:\n|\z))+)/D', $source, $alignedTable)
+            && str_contains($alignedTable[2], ':')) {
+            $separators = explode('|', trim($alignedTable[2], '|'));
+            $alignments = [];
+            foreach ($separators as $separator) {
+                $separator = trim($separator);
+                $alignments[] = match (true) {
+                    str_starts_with($separator, ':') && str_ends_with($separator, ':') => 'center',
+                    str_starts_with($separator, ':') => 'left',
+                    str_ends_with($separator, ':') => 'right',
+                    default => null,
+                };
+            }
+
+            $plain = $alignedTable[1]."\n|".implode('|', array_fill(0, \count($alignments), '---'))."|\n".$alignedTable[3];
+            $html = $this->render($plain);
+            if (null === $html || ! str_starts_with($html, '<table>')) {
+                return null;
+            }
+
+            return preg_replace_callback('/<tr>(.*?)<\/tr>/s', static function (array $row) use ($alignments): string {
+                $column = 0;
+                $cells = preg_replace_callback('/<(th|td)([^>]*)>/', static function (array $cell) use ($alignments, &$column): string {
+                    $align = $alignments[$column++] ?? null;
+
+                    return '<'.$cell[1].$cell[2].(null === $align ? '' : ' align="'.$align.'"').'>';
+                }, $row[1]);
+
+                return '<tr>'.$cells.'</tr>';
+            }, $html);
+        }
+
+        if (1 === preg_match('/^> \[![a-z][a-z0-9_-]*\](?: |\r?\n|$)/i', $source)) {
+            return $this->renderNotice($source);
+        }
+
+        foreach (self::UNSUPPORTED_PATTERNS as $pattern) {
             if (1 === preg_match($pattern, $source)) {
                 return null;
             }
@@ -76,6 +352,30 @@ final readonly class TempestMarkdownRenderer
             }
 
             return $html;
+        }
+
+        if (1 === preg_match('/\A((?:[-*+] [^\n]+\n)*[-*+] [^\n]+)\n\n(> [\s\S]+)\z/D', $source, $listAndQuote)) {
+            $list = $this->render($listAndQuote[1]);
+            $quote = $this->render($listAndQuote[2]);
+
+            return null === $list || null === $quote ? null : $list.$quote;
+        }
+
+        if (1 !== preg_match('/^(?:[-*+] |[0-9]+[.)] |>|`{3}|~{3})/', $source) && 1 === preg_match('/\n#{1,6} /', $source)) {
+            $blocks = preg_split('/\n(?=#{1,6} )/', $source);
+            if (false !== $blocks && \count($blocks) >= 3) {
+                $html = '';
+                foreach ($blocks as $block) {
+                    $part = $this->render($block);
+                    if (null === $part) {
+                        return null;
+                    }
+
+                    $html .= $part;
+                }
+
+                return $html;
+            }
         }
 
         $firstLine = strstr($source, "\n", true);
@@ -122,13 +422,25 @@ final readonly class TempestMarkdownRenderer
             return null === $following ? null : $literal.$following;
         }
 
+        if (1 === preg_match('/\A\{\.([A-Za-z0-9_-]+)\}\n(\|[^\n]+\|\n\|[\s|:-]+\|\n[\s\S]+)\z/D', $source, $block)) {
+            $table = $this->render($block[2]);
+
+            return null !== $table && str_starts_with($table, '<table>')
+                ? str_replace('<table>', '<table class="'.$block[1].'">', $table)
+                : null;
+        }
+
         if (1 === preg_match('/\A\{id=([A-Za-z0-9_-]+)\}\n(.+)\z/sD', $source, $block)) {
+            if (1 === preg_match('/^<!--[\s\S]*-->$/D', $block[2])) {
+                return rtrim($block[2])."\n";
+            }
+
             $html = $this->render($block[2]);
             if (null === $html) {
                 return null;
             }
 
-            $html = preg_replace('/^<(h[1-6]|p|ul|ol)>/', '<$1 id="'.$block[1].'">', $html, 1, $count);
+            $html = preg_replace('/^<(h[1-6]|p|ul|ol|blockquote)>/', '<$1 id="'.$block[1].'">', $html, 1, $count);
 
             return 1 === $count ? $html : null;
         }
@@ -206,18 +518,6 @@ final readonly class TempestMarkdownRenderer
             }
         }
 
-        // Ambiguous delimiter runs do not have the same binding in Tempest and CommonMark.
-        if (1 === preg_match('/(?<=\d)__(?=\p{L})|"__/', $source)
-            || 1 === preg_match('/\*\*\(\*\*(?!\[)/', $source)
-            || str_contains($source, '\\"')
-            || (str_contains($source, '\\*\\*') && 1 === preg_match('/\*\*,[^*\n]{0,40}\*\*/', $source))
-            || 1 === preg_match('/[\p{L}\p{N}]_[.!?] {2,}\n(?!_)[^\n]*_/u', $source)
-            || 1 === preg_match('/[\p{L}\p{N}]_\x27[^\s_]+_|_\p{Lu}_\p{L}|\b[A-Z]_[a-z]|_\x{200B}_|(?<![\p{L}\p{N}])_[^_\n]+\(_/u', $source)
-            || 1 === preg_match('/^_[^_*\s\n]+\*\*|`<[^`]+>`|^\* .*_[0-9][^_\n]*_[\p{L}]/mu', $source)
-        ) {
-            return null;
-        }
-
         if (1 === preg_match('/^<!--[\s\S]*-->$/D', $source)) {
             return rtrim($source)."\n";
         }
@@ -252,10 +552,6 @@ final readonly class TempestMarkdownRenderer
             $content = $this->render($blocks[2]);
 
             return null === $content ? null : $blocks[1]."\n".$content;
-        }
-
-        if (str_starts_with($source, '> [!')) {
-            return $this->renderNotice($source);
         }
 
         if (str_starts_with($source, '> ')) {
@@ -308,7 +604,10 @@ final readonly class TempestMarkdownRenderer
         if (1 === preg_match('/(?m)^([0-9]{1,9})\) /', $source, $firstItem, \PREG_OFFSET_CAPTURE)) {
             if (1 === preg_match('/(?m)^[0-9]{1,9}\)\S/', $source, $malformed, \PREG_OFFSET_CAPTURE)
                 && $malformed[0][1] < $firstItem[0][1]) {
-                return null;
+                $literal = preg_replace('/(?m)^([0-9]{1,9})\) /', '$1'."\u{E045}".' ', $source);
+                $html = null === $literal ? null : $this->render($literal);
+
+                return null === $html ? null : str_replace("\u{E045}", ')', $html);
             }
 
             if (0 !== $firstItem[0][1] && '1' !== $firstItem[1][0]) {
@@ -490,10 +789,6 @@ final readonly class TempestMarkdownRenderer
         }
 
         if ((str_starts_with($source, '* ') || str_starts_with($source, '- ')) && (str_starts_with($source, '* ') || str_contains($source, "\n  ") || 1 === preg_match('/\n(?!- )\S/', $source))) {
-            if ([] !== $inlineImages) {
-                return null;
-            }
-
             $items = [];
             $codeBlocks = [];
             $loose = false;
@@ -510,8 +805,9 @@ final readonly class TempestMarkdownRenderer
                 }
 
                 $itemStart = '*' === $line || '-' === $line || str_starts_with($line, '* ') || str_starts_with($line, '- ');
+                $hadBlank = $blank;
                 if ($blank) {
-                    if (! $itemStart && ([] === $items || 1 !== preg_match('/^ {6,}\S/', $line))) {
+                    if (! $itemStart && ([] === $items || 1 !== preg_match('/^ {4,}\S/', $line))) {
                         return null;
                     }
 
@@ -530,7 +826,7 @@ final readonly class TempestMarkdownRenderer
                     $items[] = substr($line, 2);
                     $codeBlankLines = 0;
                 } elseif ([] !== $items && 1 === preg_match('/^ {2,4}(\S.*)$/D', $line, $continuation)) {
-                    $items[array_key_last($items)] .= "\n".$continuation[1];
+                    $items[array_key_last($items)] .= ($hadBlank ? "\n\n" : "\n").$continuation[1];
                 } elseif ([] !== $items && $line === ltrim($line) && 1 !== preg_match('/^(?:#{1,6}[ \t]|[0-9]+[.)] |>|`{3}|~{3})/', $line)) {
                     $items[array_key_last($items)] .= "\n".$line;
                 } else {
@@ -555,7 +851,7 @@ final readonly class TempestMarkdownRenderer
                 $html .= $loose ? "<li>\n".$content.$code."</li>\n" : '<li>'.substr($content, 3, -5)."</li>\n";
             }
 
-            return $html."</ul>\n";
+            return $this->restoreInlineImages($html."</ul>\n", $inlineImages);
         }
 
         if (1 === preg_match('/^-{3,}\n?$/D', $source)) {
@@ -629,14 +925,65 @@ final readonly class TempestMarkdownRenderer
             $source = $attributes[1];
         }
 
+        $inlineCode = [];
+        if (str_contains($source, '`') && (str_contains($source, 'date(') || str_contains($source, '@') || 1 === preg_match('/\b0[1-9](?:[ .-]?\d{2}){4}\b/', $source))) {
+            $source = preg_replace_callback('/`+[^`\r\n]*`+/', static function (array $match) use (&$inlineCode): string {
+                $inlineCode[] = $match[0];
+
+                return "\u{E058}".(\count($inlineCode) - 1)."\u{E059}";
+            }, $source);
+            if (null === $source) {
+                return null;
+            }
+        }
+
         if (str_contains($source, 'date(')) {
-            if (null === $this->dateFilter || str_contains($source, '`')) {
+            if (null === $this->dateFilter) {
                 return null;
             }
 
             try {
                 $source = $this->dateFilter->convertDateShortCode($source, $this->apps?->get()->locale);
             } catch (Throwable) {
+                return null;
+            }
+        }
+
+        $mailtoLinks = [];
+        if (str_contains($source, '](mailto:')) {
+            $source = preg_replace_callback('/\[[^][\r\n]+\]\(mailto:[^()\r\n]+\)/', static function (array $match) use (&$mailtoLinks): string {
+                $mailtoLinks[] = $match[0];
+
+                return "\u{E060}".(\count($mailtoLinks) - 1)."\u{E061}";
+            }, $source);
+            if (null === $source) {
+                return null;
+            }
+        }
+
+        $tripleEmphasis = [];
+        $source = preg_replace_callback('/\*{3}([^*\[\]`\n]+)\*{3}/', function (array $match) use (&$tripleEmphasis): string {
+            $inner = $this->render($match[1]);
+            if (null === $inner || ! str_starts_with($inner, '<p>') || ! str_ends_with($inner, "</p>\n")) {
+                return $match[0];
+            }
+
+            $tripleEmphasis[] = '<strong><em>'.substr($inner, 3, -5).'</em></strong>';
+
+            return "\u{E058}".(\count($tripleEmphasis) - 1)."\u{E059}";
+        }, $source);
+        if (null === $source) {
+            return null;
+        }
+
+        $strongCode = [];
+        if (! str_contains($source, '```') && ! str_contains($source, '~~~')) {
+            $source = preg_replace_callback('/\*\*`([^`\n]+)`\*\*/', static function (array $match) use (&$strongCode): string {
+                $strongCode[] = '<strong><code>'.htmlspecialchars($match[1], \ENT_NOQUOTES | \ENT_SUBSTITUTE).'</code></strong>';
+
+                return "\u{E054}".(\count($strongCode) - 1)."\u{E055}";
+            }, $source);
+            if (null === $source) {
                 return null;
             }
         }
@@ -698,13 +1045,59 @@ final readonly class TempestMarkdownRenderer
             }
         }
 
+        foreach ($inlineCode as $index => $code) {
+            $source = str_replace("\u{E058}".$index."\u{E059}", $code, $source);
+        }
+
+        foreach ($mailtoLinks as $index => $link) {
+            $source = str_replace("\u{E060}".$index."\u{E061}", $link, $source);
+        }
+
         foreach ($obfuscatedLinks as $index => $link) {
             $source = str_replace("\u{E037}".$index."\u{E038}", $link, $source);
         }
 
+        $angleLinks = [];
+        if (null !== $this->linkProvider && str_contains($source, '](<')) {
+            $source = preg_replace_callback('/#\[([^\]\n]+)\]\(<([^<>\n]+)>\)/', function (array $match) use (&$angleLinks): string {
+                $label = $this->render($match[1]);
+                if (null === $label || ! str_starts_with($label, '<p>') || ! str_ends_with($label, "</p>\n")) {
+                    return $match[0];
+                }
+
+                $angleLinks[] = $this->linkProvider->renderLink(substr($label, 3, -5), $match[2], [], true);
+
+                return "\u{E050}".(\count($angleLinks) - 1)."\u{E051}";
+            }, $source);
+            if (null === $source) {
+                return null;
+            }
+        }
+
+        if (str_contains($source, '](<')) {
+            return null;
+        }
+
+        $emphasisLinks = [];
+        if (str_contains($source, '_ [')) {
+            $source = preg_replace_callback('/(?<![!#])\[_[^\]\n]+_\]\([^()\s\n]+\)(?!\{)/', function (array $match) use (&$emphasisLinks): string {
+                $rendered = $this->render($match[0]);
+                if (null === $rendered || ! str_starts_with($rendered, '<p><a ') || ! str_ends_with($rendered, "</a></p>\n")) {
+                    return $match[0];
+                }
+
+                $emphasisLinks[] = substr($rendered, 3, -5);
+
+                return "\u{E056}".(\count($emphasisLinks) - 1)."\u{E057}";
+            }, $source);
+            if (null === $source) {
+                return null;
+            }
+        }
+
         $linkTitles = [];
-        $source = preg_replace_callback('/(?<!#)\[([^][\r\n]+)\]\(((?:[^()\s<>]|\\\\[()])+) "([^"\r\n]*)"\)/u', static function (array $match) use (&$linkTitles): string {
-            $linkTitles[] = $match[3];
+        $source = preg_replace_callback('/(?<!#)\[([^][\r\n]+)\]\(((?:[^()\s<>]|\\\\[()])+) "((?:[^"\\\\\r\n]|\\\\.)*)"\)/u', static function (array $match) use (&$linkTitles): string {
+            $linkTitles[] = str_replace('\\"', '"', $match[3]);
 
             return '['.$match[1].']('.$match[2].'PWTITLE'.(\count($linkTitles) - 1).'TOKEN)';
         }, $source);
@@ -742,7 +1135,7 @@ final readonly class TempestMarkdownRenderer
                 return null;
             }
 
-            $source = preg_replace_callback('/(#?)(\[[^][]+\]\((<[^>\r\n]+>|(?:[^()\r\n]|\\\\[()])*)\))(?:\{(?:\.([A-Za-z0-9_-]+)|class="([A-Za-z0-9_-]+)"|target="([^"]+)"|rel="([A-Za-z0-9_-]+)")\})?/', static function (array $match) use (&$links): string {
+            $source = preg_replace_callback('/(#?)(\[[^][]+\]\((<[^>\r\n]+>|(?:[^()\r\n]|\\\\[()])*)\))(?:\{(?:\.([A-Za-z0-9_-]+)|class="([A-Za-z0-9_-]+)"|target="([^"]+)"|rel="([A-Za-z0-9_-]+)"|#([A-Za-z0-9_-]+))\})?/', static function (array $match) use (&$links): string {
                 $attributes = [];
                 $dotClass = $match[4] ?? '';
                 $namedClass = $match[5] ?? '';
@@ -752,6 +1145,8 @@ final readonly class TempestMarkdownRenderer
                     $attributes['target'] = $match[6];
                 } elseif ('' !== ($match[7] ?? '')) {
                     $attributes['rel'] = $match[7];
+                } elseif ('' !== ($match[8] ?? '')) {
+                    $attributes['id'] = $match[8];
                 }
 
                 $links[] = ['obfuscated' => '#' === $match[1], 'url' => trim($match[3], '<>'), 'attributes' => $attributes];
@@ -774,7 +1169,11 @@ final readonly class TempestMarkdownRenderer
                 return null;
             }
 
-            $source = preg_replace_callback('/<[^>]+>/', static function (array $match) use (&$rawTags): string {
+            $source = preg_replace_callback('/`[^`\n]+`|<[^>]+>/', static function (array $match) use (&$rawTags): string {
+                if (str_starts_with($match[0], '`')) {
+                    return str_replace(['<', '>'], ["\u{E052}", "\u{E053}"], $match[0]);
+                }
+
                 $rawTags[] = $match[0];
 
                 return "\u{E004}".(\count($rawTags) - 1)."\u{E005}";
@@ -1084,10 +1483,6 @@ final readonly class TempestMarkdownRenderer
             }
         }
 
-        if (1 === preg_match('/(?:<strong>|<em>)[ \t]|[ \t]<\/(?:strong|em)>/', $html)) {
-            return null;
-        }
-
         // Tempest leaves quotes in text nodes unescaped, unlike CommonMark.
         $parts = preg_split('/(<[^>]+>)/', $html, -1, \PREG_SPLIT_DELIM_CAPTURE);
         if (false === $parts) {
@@ -1118,6 +1513,8 @@ final readonly class TempestMarkdownRenderer
             $html = str_replace("\u{E004}".$index."\u{E005}", $tag, $html);
         }
 
+        $html = str_replace(["\u{E052}", "\u{E053}"], ['&lt;', '&gt;'], $html);
+
         foreach ($rawSpans as $index => $span) {
             $html = str_replace("\u{E007}".$index."\u{E008}", $span, $html);
         }
@@ -1139,23 +1536,9 @@ final readonly class TempestMarkdownRenderer
             $html = str_replace($marker, '" title="'.htmlspecialchars($title, \ENT_COMPAT | \ENT_SUBSTITUTE), $html);
         }
 
-        foreach ($inlineImages as $index => $image) {
-            if (null === $this->mediaExtension || null === $this->apps) {
-                return null;
-            }
-
-            $marker = "\u{E034}".$index."\u{E035}";
-            if (! str_contains($html, $marker)) {
-                return null;
-            }
-
-            try {
-                $imageHtml = $this->mediaExtension->renderImage($image['src'], htmlspecialchars($image['alt']), link: ! $image['linked'], sizes: $this->apps->get()->bodyImageSizes());
-            } catch (Throwable) {
-                $imageHtml = BrokenImageComment::for($image['src']);
-            }
-
-            $html = str_replace($marker, $imageHtml, $html);
+        $html = $this->restoreInlineImages($html, $inlineImages);
+        if (null === $html) {
+            return null;
         }
 
         if (str_contains($html, "\u{E015}") || str_contains($html, "\u{E016}")) {
@@ -1194,7 +1577,79 @@ final readonly class TempestMarkdownRenderer
             $html = str_replace("\u{E012}", '#', $html);
         }
 
+        foreach ($angleLinks as $index => $link) {
+            $html = str_replace("\u{E050}".$index."\u{E051}", $link, $html);
+        }
+
+        foreach ($emphasisLinks as $index => $link) {
+            $html = str_replace("\u{E056}".$index."\u{E057}", $link, $html);
+        }
+
+        foreach ($strongCode as $index => $code) {
+            $html = str_replace("\u{E054}".$index."\u{E055}", $code, $html);
+        }
+
+        foreach ($tripleEmphasis as $index => $emphasis) {
+            $html = str_replace("\u{E058}".$index."\u{E059}", $emphasis, $html);
+        }
+
         return rtrim($html)."\n";
+    }
+
+    public function renderInline(string $source): ?string
+    {
+        $source = preg_replace('/[ \t]*\r?\n[ \t]*/', ' ', trim($source));
+        if (null === $source) {
+            return null;
+        }
+
+        if ('' === $source) {
+            return '';
+        }
+
+        $literalPrefix = '';
+        if (1 === preg_match('/^((?:#{1,6}|[-+*]|\d+[.)]|>)\s+)/', $source, $marker)) {
+            $literalPrefix = $marker[1];
+            $source = substr($source, \strlen($literalPrefix));
+        }
+
+        $html = $this->render($source);
+
+        if (null === $html || ! str_starts_with($html, '<p>') || ! str_ends_with($html, "</p>\n")) {
+            return null;
+        }
+
+        return htmlspecialchars($literalPrefix, \ENT_QUOTES | \ENT_SUBSTITUTE).substr($html, 3, -5);
+    }
+
+    private function taskCheckbox(string $marker): string
+    {
+        return ' ' === $marker ? '<input disabled="" type="checkbox">' : '<input checked="" disabled="" type="checkbox">';
+    }
+
+    /** @param list<array{src: string, alt: string, linked: bool}> $images */
+    private function restoreInlineImages(string $html, array $images): ?string
+    {
+        foreach ($images as $index => $image) {
+            if (null === $this->mediaExtension || null === $this->apps) {
+                return null;
+            }
+
+            $marker = "\u{E034}".$index."\u{E035}";
+            if (! str_contains($html, $marker)) {
+                return null;
+            }
+
+            try {
+                $imageHtml = $this->mediaExtension->renderImage($image['src'], htmlspecialchars($image['alt']), link: ! $image['linked'], sizes: $this->apps->get()->bodyImageSizes());
+            } catch (Throwable) {
+                $imageHtml = BrokenImageComment::for($image['src']);
+            }
+
+            $html = str_replace($marker, $imageHtml, $html);
+        }
+
+        return $html;
     }
 
     private function normalizeTable(string $html): ?string
@@ -1282,12 +1737,24 @@ final readonly class TempestMarkdownRenderer
         return $html."</ul>\n";
     }
 
-    private function renderNotice(string $source): ?string
+    /** @param array<string, string> $attributes */
+    private function renderNotice(string $source, array $attributes = []): ?string
     {
         $lines = explode("\n", $source);
-        if (null === $this->twig || null === $this->apps || 1 !== preg_match('/^> \[!([a-z][a-z0-9_-]*)\] ([^\r\n{}]+?)(?: \{id=([A-Za-z0-9_-]+)\})?$/iD', array_shift($lines), $matches)) {
+        if (null === $this->twig || null === $this->apps || 1 !== preg_match('/^> \[!([a-z][a-z0-9_-]*)\](?: ([^\r\n]*))?$/iD', array_shift($lines), $matches)) {
             return null;
         }
+
+        $title = $matches[2] ?? '';
+        if (1 === preg_match('/^(.*?)(?: )?\{([^{}]+)\}$/D', $title, $trailing)) {
+            $inlineAttributes = $this->parseNoticeAttributes($trailing[2]);
+            if (null !== $inlineAttributes) {
+                $title = $trailing[1];
+                $attributes = array_replace($attributes, $inlineAttributes);
+            }
+        }
+
+        $title = '' === $title ? ucfirst(strtolower($matches[1])) : $title;
 
         $body = [];
         foreach ($lines as $line) {
@@ -1353,15 +1820,40 @@ final readonly class TempestMarkdownRenderer
 
             return $this->twig->render($view, [
                 'level' => $level,
-                'title' => $matches[2],
+                'title' => $title,
                 'content' => implode("\n", $content),
-                'id' => $matches[3] ?? '',
-                'class' => '',
-                'params' => [],
+                'id' => $attributes['id'] ?? '',
+                'class' => $attributes['class'] ?? '',
+                'params' => array_diff_key($attributes, ['id' => '', 'class' => '']),
             ])."\n";
         } catch (Throwable) {
             return null;
         }
+    }
+
+    /** @return ?array<string, string> */
+    private function parseNoticeAttributes(string $literal): ?array
+    {
+        preg_match_all('/#[A-Za-z0-9_-]+|\.[A-Za-z0-9_-]+|[a-z][a-z0-9_-]*="[^"]*"|id=[A-Za-z0-9_-]+/i', $literal, $matches);
+        if (implode(' ', $matches[0]) !== $literal) {
+            return null;
+        }
+
+        $attributes = [];
+        foreach ($matches[0] as $token) {
+            if ('#' === $token[0]) {
+                $attributes['id'] = substr($token, 1);
+            } elseif ('.' === $token[0]) {
+                $attributes['class'] = trim(($attributes['class'] ?? '').' '.substr($token, 1));
+            } elseif (str_starts_with($token, 'id=')) {
+                $attributes['id'] = substr($token, 3);
+            } else {
+                [$name, $value] = explode('=', $token, 2);
+                $attributes[$name] = trim($value, '"');
+            }
+        }
+
+        return $attributes;
     }
 
     private function isCompatibleSingleLine(string $source, bool $heading): bool
@@ -1378,7 +1870,7 @@ final readonly class TempestMarkdownRenderer
             return false;
         }
 
-        if (str_contains($source, '___') || 1 === preg_match('/(^|\s)\*{3}\S/', $source)) {
+        if (1 === preg_match('/\*{3}\S[^\n]*\*{3}/', $source)) {
             return false;
         }
 
@@ -1402,7 +1894,8 @@ final readonly class TempestMarkdownRenderer
             return false;
         }
 
-        if (1 === preg_match('/(?:date\(|^[-=]{3,}\s*$)/i', $source)) {
+        $withoutCode = preg_replace('/`+[^`\r\n]*`+/', '', $source) ?? $source;
+        if (1 === preg_match('/^[-=]{3,}\s*$/', $withoutCode)) {
             return false;
         }
 

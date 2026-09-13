@@ -4,22 +4,12 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Service\Markdown;
 
-use League\CommonMark\Environment\Environment;
-use League\CommonMark\Extension\Attributes\AttributesExtension;
-use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
-use League\CommonMark\Extension\InlinesOnly\InlinesOnlyExtension;
-use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
-use League\CommonMark\Extension\Table\TableExtension;
-use League\CommonMark\Extension\TaskList\TaskListExtension;
-use League\CommonMark\MarkdownConverter;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\LinkProvider;
-use Pushword\Core\Service\Markdown\Extension\NoticeExtension;
-use Pushword\Core\Service\Markdown\Extension\PushwordExtension;
 use Pushword\Core\Service\NativeWorker;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
@@ -34,18 +24,12 @@ use Twig\Environment as Twig;
 class MarkdownParser implements ResetInterface
 {
     /**
-     * Bump when the converter configuration or extensions change in a way that
+     * Bump when the renderer configuration changes in a way that
      * alters output, to invalidate previously cached fragments.
      */
-    private const int CACHE_VERSION = 14;
+    private const int CACHE_VERSION = 21;
 
     private const int NATIVE_CACHE_VERSION = 2;
-
-    private readonly MarkdownConverter $converter;
-
-    private ?MarkdownConverter $inlineConverter = null;
-
-    private readonly PushwordExtension $pushwordExtension;
 
     private readonly Date $dateFilter;
 
@@ -75,23 +59,6 @@ class MarkdownParser implements ResetInterface
         $this->nativeWorker = null !== $nativeBinary && '' !== $nativeBinary ? new NativeWorker($nativeBinary, $nativeTimeout) : null;
         $this->tempestRenderer = new TempestMarkdownRenderer($this->linkProvider, $apps, $twig, $mediaExtension);
         $this->dateFilter = new Date($apps);
-        $this->pushwordExtension = new PushwordExtension(
-            $this->linkProvider,
-            $mediaExtension,
-            $apps,
-            $this->dateFilter,
-        );
-
-        $environment = new Environment();
-        $environment->addExtension(new CommonMarkCoreExtension());
-        $environment->addExtension(new AttributesExtension());
-        $environment->addExtension(new StrikethroughExtension());
-        $environment->addExtension(new TableExtension());
-        $environment->addExtension(new TaskListExtension());
-        $environment->addExtension($this->pushwordExtension);
-        $environment->addExtension(new NoticeExtension($twig, $apps));
-
-        $this->converter = new MarkdownConverter($environment);
     }
 
     /**
@@ -100,7 +67,7 @@ class MarkdownParser implements ResetInterface
     #[AsTwigFilter('markdown', isSafe: ['html'])]
     public function transform(string $text): string
     {
-        return $this->convertCached($this->converter, 'pw_md.', $text);
+        return $this->convertCached('pw_md.', $text, false);
     }
 
     public function hasNativeMarkdown(): bool
@@ -228,25 +195,7 @@ class MarkdownParser implements ResetInterface
     #[AsTwigFilter('markdown_inline', isSafe: ['html'])]
     public function transformInline(string $text): string
     {
-        return trim($this->convertCached($this->inlineConverter(), 'pw_mdi.', $text));
-    }
-
-    private function inlineConverter(): MarkdownConverter
-    {
-        if (null !== $this->inlineConverter) {
-            return $this->inlineConverter;
-        }
-
-        $environment = new Environment();
-        $environment->addExtension(new InlinesOnlyExtension());
-        $environment->addExtension(new AttributesExtension());
-        $environment->addExtension(new StrikethroughExtension());
-        // PushwordExtension's ImageRenderer (priority 10) overrides InlinesOnly's,
-        // so `![](…)` stays media-rendered and cacheKeyVersion()'s image
-        // detection applies to inline fragments too.
-        $environment->addExtension($this->pushwordExtension);
-
-        return $this->inlineConverter = new MarkdownConverter($environment);
+        return trim($this->convertCached('pw_mdi.', $text, true));
     }
 
     /**
@@ -265,10 +214,10 @@ class MarkdownParser implements ResetInterface
      * rewrites files whose content did not change. `{{ reviews() }}` did exactly that
      * until rc852 — {@see \Pushword\Conversation\Tests\Twig\ReviewListDeterminismTest}.
      */
-    private function convertCached(MarkdownConverter $converter, string $keyPrefix, string $text): string
+    private function convertCached(string $keyPrefix, string $text, bool $inline): string
     {
         if (null === $this->cache) {
-            return $this->convert($converter, $text);
+            return $this->convert($text, $inline);
         }
 
         try {
@@ -277,28 +226,31 @@ class MarkdownParser implements ResetInterface
                 /** @var string */
                 return $item->get();
             }
-
-            $html = $this->convert($converter, $text);
-            $item->set($html);
-            $this->cache->save($item);
-
-            return $html;
         } catch (Throwable) {
             // A cache backend hiccup must never break rendering.
-            return $this->convert($converter, $text);
+            return $this->convert($text, $inline);
         }
+
+        $html = $this->convert($text, $inline);
+
+        try {
+            $item->set($html);
+            $this->cache->save($item);
+        } catch (Throwable) {
+            // Rendering succeeded even if the cache write did not.
+        }
+
+        return $html;
     }
 
-    private function convert(MarkdownConverter $converter, string $text): string
+    private function convert(string $text, bool $inline): string
     {
-        if ($converter === $this->converter) {
-            $html = $this->tempestRenderer->render($text);
-            if (null !== $html) {
-                return $html;
-            }
+        $html = $inline ? $this->tempestRenderer->renderInline($text) : $this->tempestRenderer->render($text);
+        if (null === $html) {
+            throw new RuntimeException('Tempest cannot render Markdown: '.json_encode(mb_substr($text, 0, 160), \JSON_INVALID_UTF8_SUBSTITUTE));
         }
 
-        return $converter->convert($text)->__toString();
+        return $html;
     }
 
     /**
@@ -309,7 +261,7 @@ class MarkdownParser implements ResetInterface
      * media-independent: it keeps the bare parser version and stays cached across
      * media writes. Only image-bearing fragments mix in the media version. Raw
      * `<img>` HTML (e.g. from gallery shortcodes already expanded by Twig) is
-     * emitted verbatim by CommonMark, so it is media-independent here too.
+     * emitted verbatim by the Markdown renderer, so it is media-independent here too.
      *
      * A fragment also carries whichever per-site render setting its own syntax can
      * reach: `body_image_sizes` for an image, `fenced_code_pre_class` for a fenced

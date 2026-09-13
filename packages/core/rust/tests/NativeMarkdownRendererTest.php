@@ -13,6 +13,7 @@ use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Tests\Support\HtmlEquivalence;
 use Pushword\Core\Twig\MediaExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -67,7 +68,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $php = $this->parser();
         foreach ($sources as $index => $source) {
             if (null !== $result[$index]) {
-                self::assertSame($php->transform($source), $result[$index], $source);
+                self::assertSame(HtmlEquivalence::structure($php->transform($source)), HtmlEquivalence::structure($result[$index]), $source);
             }
         }
 
@@ -96,7 +97,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $results = $native->renderNativeMany($sources);
         foreach ($sources as $index => $source) {
             if (null !== $results[$index]) {
-                self::assertSame($php->transform($source), $results[$index], $source);
+                self::assertSame(HtmlEquivalence::structure($php->transform($source)), HtmlEquivalence::structure($results[$index]), $source);
             }
         }
 
@@ -126,7 +127,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         self::assertSame([$php->transform($source)], $english);
         self::assertNotSame($french, $english);
         foreach (['fr', 'en'] as $locale) {
-            self::assertTrue($pool->getItem('pw_mdn2.'.hash('xxh3', '14a1l'.$locale.'|'.$source))->isHit());
+            self::assertTrue($pool->getItem('pw_mdn2.'.hash('xxh3', '21a1l'.$locale.'|'.$source))->isHit());
         }
 
         $native->reset();
@@ -186,7 +187,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $source = 'A **cached** paragraph.';
         self::assertSame([$this->parser()->transform($source)], $parser->renderNativeMany([$source]));
 
-        $key = 'pw_mdn2.'.hash('xxh3', '14|'.$source);
+        $key = 'pw_mdn2.'.hash('xxh3', '21|'.$source);
         $item = $pool->getItem($key);
         self::assertTrue($item->isHit());
         $item->set('FROM CACHE');
@@ -259,7 +260,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $native = new Markdown($nativeParser, $linkProvider);
 
         self::assertSame($php->apply($source, $page, $manager), $native->apply($source, $page, $manager));
-        self::assertTrue($pool->getItem('pw_mdn2.'.hash('xxh3', '14|A **bold** paragraph.'))->isHit());
+        self::assertTrue($pool->getItem('pw_mdn2.'.hash('xxh3', '21|A **bold** paragraph.'))->isHit());
         $nativeParser->reset();
     }
 

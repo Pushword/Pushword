@@ -194,12 +194,10 @@ The historical standalone Tempest benchmark uses a separate corpus. Tempest
 1.2.2 has no `parseMany()` method; [PR #24](https://github.com/tempestphp/markdown/pull/24)
 proposes named chunks split by `<!-- next -->` markers. Pushword takes the idea
 of an aggregate result, without introducing those markers. Existing
-`<!--break-->` behavior remains intact. Tempest parses Markdown rather than
-already rendered HTML, so it remains a benchmark candidate for a separate
-Markdown compatibility effort and is not a backend for this split operation.
-The next Markdown step is to differential-test full page rendering and measure
-the opt-in filter in the actual site pipeline. A typed batch of parser events
-for PHP-owned rendering could later reduce whole-block fallbacks.
+`<!--break-->` behavior remains intact. Tempest is now Pushword's default PHP
+Markdown renderer, while the Rust Markdown batch remains optional. It is not a
+backend for the rendered-HTML split operation. Complete page and request
+performance should be measured separately from these component benchmarks.
 
 ## Subsequent port candidates
 

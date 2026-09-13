@@ -30,6 +30,11 @@ final class MarkdownInlineTest extends KernelTestCase
         );
     }
 
+    public function testEmptyInlineSource(): void
+    {
+        self::assertSame('', $this->getMarkdownParser()->transformInline(''));
+    }
+
     public function testEmphasisAndCode(): void
     {
         self::assertSame(

@@ -4,21 +4,29 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\Service\Markdown;
 
+use League\CommonMark\Environment\Environment;
+use League\CommonMark\Extension\Attributes\AttributesExtension;
+use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
+use League\CommonMark\Extension\Table\TableExtension;
+use League\CommonMark\Extension\TaskList\TaskListExtension;
 use League\CommonMark\MarkdownConverter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Component\EntityFilter\FilterRegistry;
 use Pushword\Core\Content\ContentPipelineFactory;
 use Pushword\Core\DependencyInjection\Configuration;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Service\Markdown\Extension\NoticeExtension;
+use Pushword\Core\Service\Markdown\Extension\PushwordExtension;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Service\Markdown\TempestMarkdownRenderer;
 use Pushword\Core\Service\Typographer;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Tests\Support\HtmlEquivalence;
 use Pushword\Core\Twig\MediaExtension;
-use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Twig\Environment as Twig;
 
@@ -30,10 +38,53 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
     {
         yield 'obfuscated link' => ['Voir #[le départ](/#depart).'];
         yield 'obfuscated link with class' => ['#[Voir le départ](/#depart){.ninja}'];
+        yield 'obfuscated link with id' => ['#[docs](/docs){#main-link}'];
+        yield 'obfuscated link with class and target' => ['#[*Café*](https://example.com/café){.button target="_blank"}'];
+        yield 'obfuscated link with angle destination' => ['#[Voir la carte](<https://example.com/carte?c=1,2&z=3>) près du départ.'];
+        yield 'obfuscated angle link after a blank line' => ["Départ.\n\n#[Voir la carte](<https://example.com/carte?c=1,2&z=3>)"];
+        yield 'link title with quoted text' => ['[**Loire Valley**](https://example.com/france "Loire by Bike - \\"Loire à vélo\\"")'];
+        yield 'code with an angle tag in a list' => ["- Départ avec `<ele>` dans le GPX\n  Retour le soir"];
+        yield 'leading heading class and id' => ["{id=rdv .ico-location}\n## Rendez-vous"];
+        yield 'inline heading class and id' => ['## Hi {.a #b}'];
+        yield 'leading heading class only' => ["{.ico-star}\n## Avis"];
+        yield 'leading table class' => ["{.table-sticky-header}\n| A | B |\n|---|---|\n| 1 | 2 |"];
+        yield 'aligned table' => ["| A | B | C |\n| :--- | :--: | ---: |\n| 1 | 2 | 3 |"];
+        yield 'task list' => ["- [x] Done\n- [ ] Pending"];
+        yield 'loose task list' => ["- [x] Done\n\n- [ ] Pending"];
+        yield 'nested task list' => ["- [ ] parent\n  - [X] **child**\n  - regular"];
+        yield 'loose task list with continuation' => ["- [x] First\n\n  Second paragraph.\n\n- [ ] Last"];
+        yield 'raw input' => ['<input type="checkbox" disabled="" />'];
+        yield 'raw section' => ['<section><p>Raw <em>HTML</em>.</p></section>'];
+        yield 'raw script' => ['<script>const html = "<b>é</b>";</script>'];
+        yield 'email autolink' => ['<contact@example.com>'];
+        yield 'telephone autolink' => ['<tel:+33123456789>'];
+        yield 'code attributes' => ['`<&>`{.foo #bar}'];
+        yield 'code with protected link markers' => ['`[link](/docs){.button}`'];
+        yield 'angle link with invalid percent' => ['[link](</bad%zz/good%2f?q=100%>)'];
+        yield 'angle link with spaces and brackets' => ['[link](</a b/[c]>)'];
+        yield 'angle link with title' => ["[apostrophe](</a'b> \"A ' B\")"];
+        yield 'single-quoted link attribute' => ["[link](/docs){title='a b'}"];
+        yield 'unicode link id' => ['[link](/docs){#café}'];
+        yield 'filtered link event attributes' => ['[link](/docs){OnClick="bad" onfocus="bad" data-safe="yes"}'];
+        yield 'link destination overrides href attribute' => ['[link](/docs){href="wrong" id="ok"}'];
+        yield 'three link classes' => ['[link](/docs){.first class="middle" .last}'];
+        yield 'titled link with attributes' => ['[*Café*](/docs "a & b"){data-x="a&b" .button #docs}'];
+        yield 'indented code block' => ['    code'];
+        yield 'quoted link destination' => ['[marche](a"b)'];
+        yield 'link with class and id' => ['[link](/docs){.button #docs}'];
+        yield 'image in a star list' => ["* Départ\n* ![](/media/no_such_image.jpg)"];
+        yield 'id before a raw comment' => ["{id=signal}\n<!-- pushword:twig-error -->"];
+        yield 'id before a blockquote' => ["{id=citation}\n> A long quotation.\n> — <cite>Author</cite>"];
+        yield 'blank line after block attributes' => ["{#intro .lead}\n\nA paragraph."];
         yield 'encoded email' => ['Écrivez à bonjour@example.com.'];
         yield 'phone' => ['Appelez le 07 69 44 78 66.'];
         yield 'date shortcode' => ['Rendez-vous en date(Y).'];
         yield 'short notice' => ["> [!faq] Une question ?\n>\n> Une réponse courte."];
+        yield 'leading notice attributes' => ["{#disclosure .text-sm}\n> [!note] Titled\n> body"];
+        yield 'notice without title' => ["> [!note]\n> body"];
+        yield 'notice marker with id' => ["> [!faq] A question? {#luggage}\n> Yes."];
+        yield 'notice with component attributes' => ["{#luggage .compact tag=\"h2\"}\n> [!faq] A question?\n> Yes."];
+        yield 'notice with attributes in both positions' => ["{#luggage}\n> [!faq] A question? {.compact tag=\"h2\"}\n> Yes."];
         yield 'notice with anchor and paragraphs' => ["> [!infoTrip] Rendez-vous {id=rdv}\n>\n> Une première réponse.\n>\n> Une seconde réponse."];
         yield 'notice with a list' => ["> [!infoTrip] Équipement\n>\n> - Une veste\n> - Un sac"];
         yield 'notice with a loose list' => ["> [!faq] Équipement\n>\n> - Une veste\n>\n> - Un sac"];
@@ -45,6 +96,7 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'heading followed by paragraph' => ["## Une marche\nUne journée en montagne."];
         yield 'setext heading' => ["Prix 2026\n-------------"];
         yield 'setext level-one heading' => ["Prix 2026\n============="];
+        yield 'setext heading attributes' => ["Hi {.a #b}\n------"];
         yield 'ordered list with parenthesis markers' => ["Étapes :\n1) Départ\n2) Retour"];
         yield 'malformed marker continues an ordered list item' => ["1) Départ\n2)(Conseillé) Retour"];
         yield 'ordered list with lazy continuation' => ["2. Départ\nSuite du parcours"];
@@ -73,6 +125,7 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'loose list with spaced markers' => ["-   Départ  \n    \n-   Retour"];
         yield 'list with indented code block' => ["- Départ\n    \n      chemin A\n      chemin B\n- Retour"];
         yield 'list with blank lines inside indented code' => ["- Départ\n    \n      chemin A\n      \n      chemin B\n- Retour"];
+        yield 'loose list with image paragraph and caption' => ["-   Un départ\n    \n    ![carte](/media/no_such_image.jpg)\n    \n    Une légende\n    \n-   Un retour"];
         yield 'empty link' => ['Voir []() pour les conditions.'];
         yield 'incomplete link stays literal' => ['Voir [la carte](/incomplete'];
         yield 'link destination with parentheses' => ['Voir [Naxos]((/cyclades)) et [la Crète](/crete).'];
@@ -121,8 +174,16 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         self::bootKernel();
         $container = self::getContainer();
         $renderer = new TempestMarkdownRenderer($container->get(LinkProvider::class), $container->get(SiteRegistry::class), $container->get(Twig::class), $container->get(MediaExtension::class));
-        $converter = new ReflectionProperty(MarkdownParser::class, 'converter')->getValue($container->get(MarkdownParser::class));
-        self::assertInstanceOf(MarkdownConverter::class, $converter);
+        $environment = new Environment();
+        $environment->addExtension(new CommonMarkCoreExtension());
+        $environment->addExtension(new AttributesExtension());
+        $environment->addExtension(new StrikethroughExtension());
+        $environment->addExtension(new TableExtension());
+        $environment->addExtension(new TaskListExtension());
+        $environment->addExtension(new PushwordExtension($container->get(LinkProvider::class), $container->get(MediaExtension::class), $container->get(SiteRegistry::class), new Date($container->get(SiteRegistry::class))));
+        $environment->addExtension(new NoticeExtension($container->get(Twig::class), $container->get(SiteRegistry::class)));
+
+        $converter = new MarkdownConverter($environment);
 
         $actual = $renderer->render($source);
         self::assertNotNull($actual);
@@ -164,5 +225,14 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
             HtmlEquivalence::structure($render("<p>l'histoire</p>")),
             HtmlEquivalence::structure($render('<p>l&#x27;histoire</p>')),
         );
+    }
+
+    public function testDefaultParserUsesTempestForMalformedEmphasis(): void
+    {
+        self::bootKernel();
+
+        $html = self::getContainer()->get(MarkdownParser::class)->transform('pain**, mais les** horaires');
+
+        self::assertSame('<p>pain<strong>, mais les</strong> horaires</p>', trim($html));
     }
 }
