@@ -36,6 +36,8 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'unordered list' => ["- Une marche\n- Un voyage", "<ul>\n<li>Une marche</li>\n<li>Un voyage</li>\n</ul>\n"];
         yield 'task list checkboxes' => ["- [x] Done\n- [ ] Pending", "<ul>\n<li><input checked=\"\" disabled=\"\" type=\"checkbox\"> Done</li>\n<li><input disabled=\"\" type=\"checkbox\"> Pending</li>\n</ul>\n"];
         yield 'list with link class' => ["- [Une marche](/marche){.ninja}\n- Un voyage", "<ul>\n<li><a class=\"ninja\" href=\"/marche\">Une marche</a></li>\n<li>Un voyage</li>\n</ul>\n"];
+        yield 'namespaced PHP class in list code' => ['- **Events:** See `Pushword\\Core\\Event\\PushwordEvents`.', "<ul>\n<li><strong>Events:</strong> See <code>Pushword\\Core\\Event\\PushwordEvents</code>.</li>\n</ul>\n"];
+        yield 'wrapped link label in list' => ["- The [ELTS\n  price](/pricing) increased.", "<ul>\n<li>The <a href=\"/pricing\">ELTS\nprice</a> increased.</li>\n</ul>\n"];
         yield 'ordered list' => ['1. Etape', "<ol>\n<li>Etape</li>\n</ol>\n"];
         yield 'ordered list start' => ['2. Etape', "<ol start=\"2\">\n<li>Etape</li>\n</ol>\n"];
         yield 'soft break' => ["Une ligne\nDeux lignes", "<p>Une ligne\nDeux lignes</p>\n"];

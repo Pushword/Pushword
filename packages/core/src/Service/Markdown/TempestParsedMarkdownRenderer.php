@@ -54,6 +54,13 @@ final readonly class TempestParsedMarkdownRenderer
             }
         }
 
+        // A soft wrap inside a link label is still one link. Keep its newline in
+        // the rendered label while the line-by-line compatibility checks run.
+        $source = preg_replace_callback('/\[([^\[\]]*\n[^\[\]]*)\]\(([^()\s\r\n]+)\)/', static fn (array $match): string => '['.preg_replace('/\n[ \t]*/', "\u{E063}", $match[1]).']('.$match[2].')', $source);
+        if (null === $source) {
+            return null;
+        }
+
         $literalLeadingHash = 1 === preg_match('/^#+[^#\s\[]/', $source);
         if ($literalLeadingHash) {
             $source = "\u{E012}".substr($source, 1);
@@ -528,6 +535,10 @@ final readonly class TempestParsedMarkdownRenderer
                 }
 
                 $source = str_replace(" \n", "\n", $source);
+                $source = preg_replace('/(?m)^ {1,3}(?=\S)/', '', $source);
+                if (null === $source) {
+                    return null;
+                }
 
                 foreach (explode("\n", rtrim($source, "\n")) as $line) {
                     if ($line !== rtrim($line) || ! $this->isCompatibleSingleLine($line, false)) {
@@ -579,7 +590,7 @@ final readonly class TempestParsedMarkdownRenderer
 
         if (1 === $heading) {
             $html = preg_replace('/^(<h[1-6]) id="[^"]*"/', '$1', $html, 1, $replacements);
-            if (null === $html || 1 !== $replacements) {
+            if (null === $html || (0 === $replacements && 1 !== preg_match('/^<h[1-6]>/', $html))) {
                 return null;
             }
         }
@@ -747,6 +758,7 @@ final readonly class TempestParsedMarkdownRenderer
         $html = str_replace(["\u{E040}", "\u{E041}"], ['[', ']'], $html);
         $html = str_replace("\u{E044}", '!', $html);
         $html = str_replace("\u{E046}", '\\', $html);
+        $html = str_replace("\u{E063}", "\n", $html);
         $html = str_replace(["\u{E047}", "\u{E048}"], ['{', '}'], $html);
         if ($literalLeadingHash) {
             $html = str_replace("\u{E012}", '#', $html);

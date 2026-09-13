@@ -20,6 +20,69 @@ final readonly class TempestBlockRenderer
 
     public function render(string $source): ?string
     {
+        if (1 === preg_match('/^[0-9]+\. /', $source) && 1 === preg_match('/\n {3}(?:`{3,}|~{3,})/', $source)) {
+            $texts = [];
+            $codes = [];
+            $fence = null;
+            $start = null;
+            foreach (explode("\n", rtrim($source, "\n")) as $line) {
+                if (null !== $fence) {
+                    if (! str_starts_with($line, '   ')) {
+                        return null;
+                    }
+
+                    $codeLine = substr($line, 3);
+                    $codes[\count($codes) - 1][] = $codeLine;
+                    if (1 === preg_match('/^(`{3,}|~{3,})[ \t]*$/D', $codeLine, $closing)
+                        && $closing[1][0] === $fence[0] && \strlen($closing[1]) >= \strlen($fence)) {
+                        $fence = null;
+                    }
+                } elseif (1 === preg_match('/^([0-9]+)\. (.+)$/D', $line, $item)) {
+                    $start ??= (int) $item[1];
+                    $texts[] = $item[2];
+                    $codes[] = [];
+                } elseif ([] !== $texts && 1 === preg_match('/^ {3}(`{3,}|~{3,})[^\n]*$/D', $line, $opening)) {
+                    $fence = $opening[1];
+                    $codes[\count($codes) - 1][] = substr($line, 3);
+                } else {
+                    return null;
+                }
+            }
+
+            if (null !== $fence) {
+                return null;
+            }
+
+            $html = 1 === $start ? "<ol>\n" : '<ol start="'.$start.'">'."\n";
+            foreach ($texts as $index => $itemText) {
+                $text = ($this->renderMarkdown)($itemText);
+                if (null === $text || ! str_starts_with($text, '<p>') || ! str_ends_with($text, "</p>\n")) {
+                    return null;
+                }
+
+                $html .= '<li>'.substr($text, 3, -5);
+                if ([] !== $codes[$index]) {
+                    $code = ($this->renderMarkdown)(implode("\n", $codes[$index]));
+                    if (null === $code || ! str_starts_with($code, '<pre')) {
+                        return null;
+                    }
+
+                    $html .= "\n".$code;
+                }
+
+                $html .= "</li>\n";
+            }
+
+            return $html."</ol>\n";
+        }
+
+        if (1 === preg_match('/\A([^\n]+)\n((?:`{3,}|~{3,})[^\n]*\n[\s\S]+)\z/D', $source, $introducedFence)) {
+            $intro = ($this->renderMarkdown)($introducedFence[1]);
+            $code = ($this->renderMarkdown)($introducedFence[2]);
+
+            return null === $intro || null === $code || ! str_starts_with($code, '<pre') ? null : $intro.$code;
+        }
+
         if (1 === preg_match('/\n[ \t]*\n/', $source) && 1 !== preg_match('/^(?:[-*+] |[0-9]+[.)] |>|`{3}|~{3}|\{id=)/', $source)) {
             $blocks = preg_split('/\n[ \t]*\n+/', trim($source, "\n"));
             if (false === $blocks) {
@@ -340,7 +403,7 @@ final readonly class TempestBlockRenderer
             return $html."</ol>\n";
         }
 
-        if (1 === preg_match('/(?m)^ {2,}[-*] +/', $source)) {
+        if (1 !== preg_match('/^[0-9]+\. /', $source) && 1 === preg_match('/(?m)^ {2,}[-*] +/', $source)) {
             $items = [];
             $loose = false;
             $trailingRule = false;
@@ -372,6 +435,45 @@ final readonly class TempestBlockRenderer
             }
 
             return \count($items) === $position ? $html : null;
+        }
+
+        if (1 === preg_match('/^[0-9]+\. /', $source) && 1 === preg_match('/\n {3,4}- /', $source)) {
+            $texts = [];
+            $childLists = [];
+            $start = null;
+            foreach (explode("\n", rtrim($source, "\n")) as $line) {
+                if (1 === preg_match('/^([0-9]+)\. (.+)$/D', $line, $item)) {
+                    $start ??= (int) $item[1];
+                    $texts[] = $item[2];
+                    $childLists[] = [];
+                } elseif ([] !== $texts && 1 === preg_match('/^ {3,4}- (.+)$/D', $line, $child)) {
+                    $childLists[\count($childLists) - 1][] = $child[1];
+                } else {
+                    return null;
+                }
+            }
+
+            $html = 1 === $start ? "<ol>\n" : '<ol start="'.$start.'">'."\n";
+            foreach ($texts as $index => $itemText) {
+                $text = ($this->renderMarkdown)($itemText);
+                if (null === $text || ! str_starts_with($text, '<p>') || ! str_ends_with($text, "</p>\n")) {
+                    return null;
+                }
+
+                $html .= '<li>'.substr($text, 3, -5);
+                if ([] !== $childLists[$index]) {
+                    $children = ($this->renderMarkdown)('- '.implode("\n- ", $childLists[$index]));
+                    if (null === $children || ! str_starts_with($children, '<ul>')) {
+                        return null;
+                    }
+
+                    $html .= "\n".$children;
+                }
+
+                $html .= "</li>\n";
+            }
+
+            return $html."</ol>\n";
         }
 
         if (1 === preg_match('/^[0-9]+\. /', $source) && (str_contains($source, "\n   ") || 1 === preg_match('/\n(?![0-9]+\. )\S/', $source))) {

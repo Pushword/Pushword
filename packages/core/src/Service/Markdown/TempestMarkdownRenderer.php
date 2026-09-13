@@ -17,7 +17,6 @@ final readonly class TempestMarkdownRenderer
     private const array UNSUPPORTED_PATTERNS = [
         '/\A<(?:input|hr|br|img)\b/i',
         '/^ {0,3}(?:[-*+]|\d+[.)]) \[[xX ]\] /m',
-        '/`[^`\n]+`\{[^}\n]+\}/',
         '/\{#[^}\n]*[^\x00-\x7F][^}\n]*\}/',
         '/^#{1,6} [^\n]+\n\{[.#][^}\n]+\}$/m',
         '/(?!\A)\{(?:[.#]|[a-z][a-z0-9_-]*=)[^}\n]*\s+[^}\n]*\}/i',
@@ -48,13 +47,44 @@ final readonly class TempestMarkdownRenderer
             return $standalone;
         }
 
+        preg_match_all('/(`+)([^`\r\n]+)\1/', $source, $codeSpans, \PREG_OFFSET_CAPTURE);
+        foreach ($codeSpans[0] as [$span, $offset]) {
+            if (1 === preg_match('/^\{[^}\n]+\}/', substr($source, $offset + \strlen($span)))) {
+                return null;
+            }
+        }
+
+        $literalCode = [];
+        $source = preg_replace_callback('/(`+)([^`\r\n]+)\1/', static function (array $match) use (&$literalCode): string {
+            $code = $match[2];
+            if (str_starts_with($code, ' ') && str_ends_with($code, ' ') && '' !== trim($code)) {
+                $code = substr($code, 1, -1);
+            }
+
+            $literalCode[] = '<code>'.htmlspecialchars($code, \ENT_NOQUOTES | \ENT_SUBSTITUTE).'</code>';
+
+            return "\u{E064}".(\count($literalCode) - 1)."\u{E065}";
+        }, $source);
+        if (null === $source) {
+            return null;
+        }
+
         foreach (self::UNSUPPORTED_PATTERNS as $pattern) {
             if (1 === preg_match($pattern, $source)) {
                 return null;
             }
         }
 
-        return $this->blocks->render($source);
+        $html = $this->blocks->render($source);
+        if (null === $html) {
+            return null;
+        }
+
+        foreach ($literalCode as $index => $code) {
+            $html = str_replace("\u{E064}".$index."\u{E065}", $code, $html);
+        }
+
+        return $html;
     }
 
     public function renderInline(string $source): ?string

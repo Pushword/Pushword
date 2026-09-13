@@ -202,13 +202,17 @@ final readonly class TempestStandaloneRenderer
             return $source."\n";
         }
 
-        if (1 === preg_match('/\A(`{3,}|~{3,})([^\r\n]*)\r?\n([\s\S]*?)\r?\n\1[ \t]*(?:\r?\n(?:\r?\n)?([\s\S]*))?\z/D', $source, $fence)) {
+        if (1 === preg_match('/\A(`{3,}|~{3,})([^\r\n]*)\r?\n([\s\S]*?)\r?\n {0,3}(`{3,}|~{3,})[ \t]*(?:\r?\n(?:\r?\n)?([\s\S]*))?\z/D', $source, $fence)) {
+            if ($fence[1][0] !== $fence[4][0] || \strlen($fence[4]) < \strlen($fence[1])) {
+                return null;
+            }
+
             $language = strtok(trim($fence[2]), " \t");
             $codeAttribute = false === $language ? '' : ' class="'.htmlspecialchars(str_starts_with($language, 'language-') ? $language : 'language-'.$language, \ENT_QUOTES | \ENT_SUBSTITUTE).'"';
             $preClass = $this->apps?->get()->getStr(SiteConfig::FENCED_CODE_PRE_CLASS) ?? '';
             $preAttribute = '' === $preClass ? '' : ' class="'.htmlspecialchars($preClass, \ENT_QUOTES | \ENT_SUBSTITUTE).'"';
             $html = '<pre'.$preAttribute.'><code'.$codeAttribute.'>'.htmlspecialchars($fence[3]."\n", \ENT_NOQUOTES | \ENT_SUBSTITUTE)."</code></pre>\n";
-            $following = isset($fence[4]) && '' !== $fence[4] ? ($this->renderMarkdown)($fence[4]) : '';
+            $following = isset($fence[5]) && '' !== $fence[5] ? ($this->renderMarkdown)($fence[5]) : '';
 
             return null === $following ? null : $html.$following;
         }
@@ -251,6 +255,31 @@ final readonly class TempestStandaloneRenderer
             }
 
             return "<ul>\n<li>\n<p>".$this->taskCheckbox($continuedTasks[1]).' '.$first."</p>\n<p>".$continuation."</p>\n</li>\n<li>\n<p>".$this->taskCheckbox($continuedTasks[4]).' '.$last."</p>\n</li>\n</ul>\n";
+        }
+
+        if (1 === preg_match('/^[-*+] \[[xX ]\] /', $source) && 1 === preg_match('/\n {6,}\S/', $source)) {
+            $items = [];
+            foreach (explode("\n", rtrim($source, "\n")) as $line) {
+                if (1 === preg_match('/^[-*+] \[([xX ])\] (.+)$/D', $line, $item)) {
+                    $items[] = ['checked' => $item[1], 'text' => $item[2]];
+                } elseif ([] !== $items && 1 === preg_match('/^ {6,}(\S.*)$/D', $line, $continuation)) {
+                    $items[array_key_last($items)]['text'] .= "\n".$continuation[1];
+                } else {
+                    return null;
+                }
+            }
+
+            $html = "<ul>\n";
+            foreach ($items as $item) {
+                $text = ($this->renderMarkdown)($item['text']);
+                if (null === $text || ! str_starts_with($text, '<p>') || ! str_ends_with($text, "</p>\n")) {
+                    return null;
+                }
+
+                $html .= '<li>'.$this->taskCheckbox($item['checked']).' '.substr($text, 3, -5)."</li>\n";
+            }
+
+            return $html."</ul>\n";
         }
 
         if (1 === preg_match('/\A(?:[-*+] \[[xX ]\] [^\n]+)(?:\n(?:\n)?[-*+] \[[xX ]\] [^\n]+)*\z/D', $source)) {
