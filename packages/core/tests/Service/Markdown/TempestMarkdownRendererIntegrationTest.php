@@ -39,6 +39,9 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'heading followed by paragraph' => ["## Une marche\nUne journée en montagne."];
         yield 'setext heading' => ["Prix 2026\n-------------"];
         yield 'setext level-one heading' => ["Prix 2026\n============="];
+        yield 'ordered list with parenthesis markers' => ["Étapes :\n1) Départ\n2) Retour"];
+        yield 'malformed marker continues an ordered list item' => ["1) Départ\n2)(Conseillé) Retour"];
+        yield 'ordered list with lazy continuation' => ["2. Départ\nSuite du parcours"];
         yield 'paragraph followed by heading' => ["Une journée en montagne.\n## Le retour"];
         yield 'empty table header' => ["| | |\n|---|---|\n| x | y |"];
         yield 'table row trailing space' => ["| A | B |\n|---|---|\n| x | y | "];
@@ -46,6 +49,8 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'table colspan and short row' => ["| Offre | Deux | Trois |\n| --- | --- | --- |\n| Location | 25 € | -> |\n| Assurance | 10 € |"];
         yield 'empty table header with colspan' => ["| | | -> |\n| --- | --- | --- |\n| | Prix | -> |"];
         yield 'three-level list' => ["- Parent\n    - Enfant\n        - Détail\n- Retour"];
+        yield 'nested list with a hard break in a continuation' => ["* Parent :  \n    Suite\n    * Enfant\n* Retour"];
+        yield 'star marker inside a star list item' => ["* Départ\n* * Étape imbriquée"];
         yield 'list with three spaces after marker' => ["-   Départ\n-   Retour"];
         yield 'star rating stays literal' => ['Hôtel 3*/4* pour le trajet.'];
         yield 'spaced star rating stays literal' => ['Hôtel 3* / 4* pour le trajet.'];
@@ -60,15 +65,27 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'star list lazy continuation' => ["* Départ\nRendez-vous à 8 h\n* Retour"];
         yield 'empty star list item' => ["* Départ\n*"];
         yield 'loose list with spaced markers' => ["-   Départ  \n    \n-   Retour"];
+        yield 'list with indented code block' => ["- Départ\n    \n      chemin A\n      chemin B\n- Retour"];
+        yield 'list with blank lines inside indented code' => ["- Départ\n    \n      chemin A\n      \n      chemin B\n- Retour"];
         yield 'empty link' => ['Voir []() pour les conditions.'];
+        yield 'incomplete link stays literal' => ['Voir [la carte](/incomplete'];
         yield 'link destination with parentheses' => ['Voir [Naxos]((/cyclades)) et [la Crète](/crete).'];
+        yield 'link destination with escaped parentheses' => ['Voir [la carte](/carte\\(2\\)).'];
+        yield 'phone number as link label' => ['Contactez le [04 76 95 23 09](/contact).'];
+        yield 'literal less-than followed by space' => ['Distance < 10 km.'];
         yield 'escaped blockquote marker in paragraph' => ['Départ \\> arrivée.'];
         yield 'hotel ratings following emphasis' => ['- **Accommodation** : 2* or 3* hotel'];
+        yield 'literal spaced triple stars in a list' => ["- Un hébergement *** familial\n- Un retour"];
+        yield 'numeric underscore stays literal' => ['Étape de 5_h de marche, 15km, +/-450m. Temps de transfert: 1h_'];
+        yield 'table with a struck-through price' => ["| Offre | Prix |\n| --- | --- |\n| Départ | ~~200 EUR~~ 150 EUR |"];
+        yield 'incomplete image after a complete image' => ['![](missing.jpg)![](incomplete'];
+        yield 'image destination with spaces stays literal' => ['![carte](ATR MEMBRE - COULEUR.png)'];
         yield 'escaped brackets in emphasis' => ['Lisez _\\[note\\]_ avant le départ.'];
         yield 'single tilde strikethrough' => ['Réduction ~30€~ pour le trajet.'];
         yield 'two approximate quantities' => ['Distance ~170 km et dénivelé ~10 000 m.'];
         yield 'hard line breaks' => ["Première ligne  \nDeuxième ligne  \nTroisième ligne."];
         yield 'heading with extra spaces' => ['##  Conseils pratiques'];
+        yield 'heading with an inline span' => ['## <span id="cookies">Cookies</span>'];
         yield 'empty heading' => ["##   \nLa suite du texte."];
         yield 'trailing space in link destination' => ['Voir [la carte](/carte ).'];
         yield 'inline HTML and entity' => ['Prix <span data-price-eur="2">2&nbsp;€</span> & transport.'];
@@ -102,10 +119,5 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         self::assertInstanceOf(MarkdownConverter::class, $converter);
 
         self::assertSame($converter->convert($source)->__toString(), $renderer->render($source));
-    }
-
-    public function testIncompleteLinkFallsBack(): void
-    {
-        self::assertNull(new TempestMarkdownRenderer()->render('Voir [guide](/incomplete'));
     }
 }

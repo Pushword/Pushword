@@ -42,12 +42,13 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'simple fourth-level heading' => ['#### Fin', "<h4>Fin</h4>\n"];
         yield 'spaced asterisk rule' => ['* * *', "<hr />\n"];
         yield 'triple emphasis uses CommonMark' => ['***marche***', null];
-        yield 'ambiguous underscores use CommonMark' => ['Le texte __important__ reste compatible.', null];
-        yield 'ambiguous numbered underscores use CommonMark' => ['3_h de marche._', null];
+        yield 'ordinary double underscores' => ['Le texte __important__ reste compatible.', "<p>Le texte <strong>important</strong> reste compatible.</p>\n"];
+        yield 'numbered underscore stays literal' => ['3_h de marche._', "<p>3_h de marche._</p>\n"];
+        yield 'malformed marker before an ordered list uses CommonMark' => ["1)Départ\n2) Retour", null];
         yield 'ambiguous bold around escaped stars uses CommonMark' => ['pain**, mais les** horaires\\*\\*', null];
         yield 'ambiguous underscore across hard break uses CommonMark' => ["word_.  \nNext._", null];
         yield 'intraword underscores use CommonMark' => ['a_b_c', null];
-        yield 'strikethrough uses CommonMark' => ['~~marche~~', null];
+        yield 'strikethrough' => ['~~marche~~', "<p><del>marche</del></p>\n"];
         yield 'trailing space in emphasis stays literal' => ['_Une marche _', "<p>_Une marche _</p>\n"];
         yield 'trailing space in bold stays literal' => ['**Une marche **', "<p>**Une marche **</p>\n"];
         yield 'literal brackets stay literal' => ['Voir [LIEN_AFFILIATION] ici.', "<p>Voir [LIEN_AFFILIATION] ici.</p>\n"];
