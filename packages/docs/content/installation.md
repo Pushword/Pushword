@@ -22,7 +22,7 @@ _Facultative_ :
 ## Automatic installer via composer
 
 ```shell
-composer create-project pushword/new pushword "^1.0"
+composer create-project pushword/new pushword
 cd pushword
 ```
 
@@ -40,7 +40,7 @@ database first and pass its URL to the installer:
 
 ```shell
 PUSHWORD_DATABASE_URL='postgresql://pushword:secret@127.0.0.1:5432/pushword?serverVersion=17&charset=utf8' \
-  composer create-project pushword/new pushword "^1.0"
+  composer create-project pushword/new pushword
 ```
 
 For an existing project, set `DATABASE_URL` in `.env.local`, then run

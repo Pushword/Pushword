@@ -9,12 +9,12 @@ Example:
 
 ```yaml
 users:
-  - email: editor@altimood.com
+  - email: editor@example.com
     roles: [ROLE_EDITOR]
-    allowedHosts: [altimood.com]
+    allowedHosts: [example.com]
 ```
 
-For this user, `altimood.com` is the only editable and visible host in both
+For this user, `example.com` is the only editable and visible host in both
 interfaces. In particular:
 
 - admin lists, filters, menus, form choices and association pickers do not expose

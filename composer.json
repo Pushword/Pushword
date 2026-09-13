@@ -21,9 +21,28 @@
     "pushword/template-editor": "self.version",
     "pushword/version": "self.version"
   },
-  "description": "Pushword CMS core and all maintained extensions in one package. For a new site, use composer create-project pushword/new.",
-  "keywords": ["cms", "symfony", "php-cms", "markdown", "twig", "pushword"],
+  "description": "Pushword is a Symfony CMS for Markdown and Twig websites. This package includes the core and all official extensions; create a new site with pushword/new.",
+  "keywords": ["cms", "symfony", "php-cms", "markdown", "twig", "multisite", "content-management", "seo", "flat-file-cms", "static-site-generator", "pushword"],
+  "homepage": "https://pushword.piedweb.com",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/Pushword",
+    "docs": "https://pushword.piedweb.com"
+  },
+  "funding": [
+    {
+      "type": "liberapay",
+      "url": "https://liberapay.com/RobinPiedWeb"
+    }
+  ],
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
   "require": {
     "php": "~8.5.0",
     "ext-gd": "*",

@@ -394,7 +394,7 @@ through the part that matters most to you: the admin UI, the flat-file round tri
 API:
 
 ```shell
-composer create-project pushword/new pushword "^1.0"
+composer create-project pushword/new pushword
 ```
 
 ## Choosing
