@@ -271,6 +271,7 @@ dependencies = [
 name = "pushword-page-facts"
 version = "0.1.0"
 dependencies = [
+ "html5ever",
  "regex",
  "scraper",
  "serde",

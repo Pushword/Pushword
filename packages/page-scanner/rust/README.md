@@ -14,9 +14,12 @@ seven kinds of facts the scanner currently extracts or prepares separately:
 - clear `mailto:` and `tel:` links that need an obfuscation warning;
 - distinct unresolved `date(...)` shortcodes outside literal HTML blocks.
 
-All but anchor collection follow the existing regex rules; anchors use an HTML5
-parser. The scanner uses the facts for same-page targets, image-alt findings,
-link-graph edges, prepared link candidates and unresolved date-shortcode findings.
+All but anchor collection follow the existing regex rules; anchors use the
+`html5ever` tokenizer without building a DOM for ordinary pages. Ambiguous
+structures such as duplicate document tags, orphan table tags and framesets
+fall back to the existing HTML5 DOM parser. The scanner uses the facts for
+same-page targets, image-alt findings, link-graph edges, prepared link
+candidates and unresolved date-shortcode findings.
 If the worker or protocol fails, the scanner uses its PHP implementations for the
 remainder of the service lifetime.
 The linked-attribute extractor preserves the current PHP regex's unusual handling
@@ -60,8 +63,8 @@ One local run on PHP 8.5.10 and Rust 1.98.0:
 
 | Corpus | HTML | Bytes | PHP | Rust, one page/request | Rust, eight pages/request |
 |---|---:|---:|---:|---:|---:|
-| altimood | 1,219 | 93.7 MiB | 3.258 s | 2.066 s | 1.950 s |
-| GrandAngle | 1,731 | 452.6 MiB | 14.601 s | 9.154 s | 9.647 s |
+| altimood | 1,219 | 93.7 MiB | 3.273 s | 1.788 s | 1.712 s |
+| GrandAngle | 1,731 | 452.6 MiB | 14.375 s | 7.465 s | 8.199 s |
 
 All returned facts matched on both corpora. A separate same-process comparison
 on 200 sampled pages per site measured the previous Rust worker plus PHP link
@@ -81,22 +84,21 @@ small service-level sample,
 not a `pw:page-scan` command measurement, and does not predict results for larger
 or network-bound sites.
 
-## Next measured bottleneck
+## Streaming anchor extraction
 
-A temporary release build replaced anchor collection with an empty list while
-keeping every other extraction step. Its output is intentionally incorrect; the
-comparison measures an upper bound for removing the current full HTML5 DOM parse,
-not a deployable speedup. Three same-process runs over 200 sampled pages per site,
-including worker transport, gave:
+A same-process comparison of the previous full-DOM worker and the streaming
+worker ran four alternating rounds over 200 sampled pages per site. Inputs were
+preloaded; the timings cover all Rust fact extraction but exclude JSON transport.
+All fact arrays were identical:
 
-| Corpus | Current worker | Without anchor parser |
+| Corpus | Full DOM, median | Streaming anchors, median |
 |---|---:|---:|
-| altimood | 0.301–0.335 s | 0.194–0.210 s |
-| GrandAngle | 0.997–1.027 s | 0.543–0.552 s |
+| altimood | 0.245 s | 0.200 s |
+| GrandAngle | 0.828 s | 0.678 s |
 
-The next experiment is a streaming HTML5 anchor extractor that preserves the
-current `id` and `name` results. It must match the existing worker on both full
-corpora and malformed-HTML cases before replacing the DOM path; then measure the
-complete `pw:page-scan` command. Merely skipping the parser when no same-page
-`href="#` occurs has limited reach: the pattern appears in 939 of 1,219 altimood
-pages and all 1,731 GrandAngle pages.
+The full-corpus harness also found exact PHP/Rust parity for all 2,950 HTML
+files. Unit tests compare anchor extraction with the previous DOM path on
+malformed cases and 10,000 reproducible mixed-markup documents. On the
+development app's 32 pages, a warmed `pw:page-scan --skip-external` took
+0.25–0.27 s with either worker; this small command-level sample shows no
+stable end-to-end gain.

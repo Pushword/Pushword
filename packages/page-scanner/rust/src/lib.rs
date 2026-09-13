@@ -1,8 +1,14 @@
 #![forbid(unsafe_code)]
 
+use html5ever::tendril::StrTendril;
+use html5ever::tokenizer::states::RawKind;
+use html5ever::tokenizer::{
+    BufferQueue, TagKind, Token, TokenSink, TokenSinkResult, Tokenizer, TokenizerOpts,
+};
 use regex::Regex;
 use scraper::{Html, Selector};
 use serde::Serialize;
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::sync::LazyLock;
 
@@ -59,6 +65,146 @@ pub struct Facts {
     pub crawlable_links: Vec<String>,
     pub mailto_links: Vec<String>,
     pub date_shortcodes: Vec<String>,
+}
+
+#[derive(Default)]
+struct AnchorSink {
+    state: RefCell<AnchorState>,
+}
+
+#[derive(Default)]
+struct AnchorState {
+    anchors: HashSet<String>,
+    seen_html: bool,
+    seen_head: bool,
+    seen_body: bool,
+    seen_regular_tag: bool,
+    template_depth: usize,
+    table_depth: usize,
+    select_depth: usize,
+    foreign_stack: Vec<&'static str>,
+    requires_dom: bool,
+}
+
+impl TokenSink for AnchorSink {
+    type Handle = ();
+
+    fn process_token(&self, token: Token, _line_number: u64) -> TokenSinkResult<Self::Handle> {
+        let Token::TagToken(tag) = token else {
+            return TokenSinkResult::Continue;
+        };
+        let name: &str = tag.name.as_ref();
+        let mut state = self.state.borrow_mut();
+        if tag.kind == TagKind::EndTag {
+            state.seen_regular_tag = true;
+            match name {
+                "template" => state.template_depth = state.template_depth.saturating_sub(1),
+                "table" => state.table_depth = state.table_depth.saturating_sub(1),
+                "select" => state.select_depth = state.select_depth.saturating_sub(1),
+                "svg" | "math" => {
+                    state.requires_dom |= state.foreign_stack.pop() != Some(name);
+                }
+                _ => {}
+            }
+            return TokenSinkResult::Continue;
+        }
+
+        // The HTML5 tree builder can discard or merge tags the tokenizer emits.
+        match name {
+            "html" => {
+                state.requires_dom |= state.seen_html;
+                state.seen_html = true;
+            }
+            "body" => {
+                state.requires_dom |= state.seen_body;
+                state.seen_body = true;
+            }
+            "head" => {
+                state.requires_dom |= state.seen_head || state.seen_regular_tag;
+                state.seen_head = true;
+            }
+            "template" => state.template_depth += 1,
+            "table" => {
+                state.requires_dom |= state.table_depth > 0;
+                state.table_depth += 1;
+            }
+            "select" => state.select_depth += 1,
+            "svg" => state.foreign_stack.push("svg"),
+            "math" => state.foreign_stack.push("math"),
+            "frameset" => state.requires_dom = true,
+            "script" | "style" | "title" | "textarea" | "noscript" | "plaintext"
+                if !state.foreign_stack.is_empty() =>
+            {
+                state.requires_dom = true;
+            }
+            "tr" | "td" | "th" | "tbody" | "thead" | "tfoot" | "caption" | "colgroup" | "col"
+                if state.table_depth == 0 || state.select_depth > 0 =>
+            {
+                state.requires_dom = true;
+            }
+            _ => {}
+        }
+        if name != "html" && name != "head" {
+            state.seen_regular_tag = true;
+        }
+        if state.template_depth > 0 && (name == "html" || name == "body") {
+            state.requires_dom = true;
+        }
+
+        for attribute in &tag.attrs {
+            if attribute.name.local.as_ref() == "id" || attribute.name.local.as_ref() == "name" {
+                state.anchors.insert(attribute.value.to_string());
+            }
+        }
+
+        if name == "plaintext" {
+            return TokenSinkResult::Plaintext;
+        }
+        let raw = match name {
+            "title" | "textarea" => Some(RawKind::Rcdata),
+            "style" | "xmp" | "iframe" | "noembed" | "noframes" | "noscript" => {
+                Some(RawKind::Rawtext)
+            }
+            "script" => Some(RawKind::ScriptData),
+            _ => None,
+        };
+        raw.map_or(TokenSinkResult::Continue, TokenSinkResult::RawData)
+    }
+}
+
+fn extract_anchors(html: &str) -> Vec<String> {
+    let input = BufferQueue::default();
+    input.push_back(StrTendril::from_slice(html));
+    let tokenizer = Tokenizer::new(AnchorSink::default(), TokenizerOpts::default());
+    assert!(matches!(
+        tokenizer.feed(&input),
+        html5ever::TokenizerResult::Done
+    ));
+    tokenizer.end();
+
+    let state = tokenizer.sink.state.into_inner();
+    if state.requires_dom {
+        return dom_anchors(html);
+    }
+
+    let mut anchors: Vec<String> = state.anchors.into_iter().collect();
+    anchors.sort();
+    anchors
+}
+
+fn dom_anchors(html: &str) -> Vec<String> {
+    let document = Html::parse_document(html);
+    let mut anchors = HashSet::new();
+    for node in document.select(&ANCHORED) {
+        for attribute in ["id", "name"] {
+            if let Some(value) = node.value().attr(attribute) {
+                anchors.insert(value.to_owned());
+            }
+        }
+    }
+    let mut anchors: Vec<String> = anchors.into_iter().collect();
+    anchors.sort();
+    anchors
 }
 
 fn decrypt(value: &str) -> String {
@@ -139,18 +285,7 @@ pub fn extract(html: &str) -> Facts {
         }
     }
 
-    let document = Html::parse_document(html);
-    let mut anchors = HashSet::new();
-    for node in document.select(&ANCHORED) {
-        if let Some(value) = node.value().attr("id") {
-            anchors.insert(value.to_owned());
-        }
-        if let Some(value) = node.value().attr("name") {
-            anchors.insert(value.to_owned());
-        }
-    }
-    let mut anchors: Vec<String> = anchors.into_iter().collect();
-    anchors.sort();
+    let anchors = extract_anchors(html);
 
     let searchable = CODE_SAMPLE.replace_all(html, "");
     let mut linked_docs = Vec::new();
@@ -229,7 +364,24 @@ pub fn extract(html: &str) -> Facts {
 
 #[cfg(test)]
 mod tests {
-    use super::{Facts, extract};
+    use super::{Facts, extract, extract_anchors};
+    use scraper::{Html, Selector};
+    use std::collections::HashSet;
+
+    fn reference_anchors(html: &str) -> Vec<String> {
+        let selector = Selector::parse("[id], [name]").expect("valid selector");
+        let mut anchors = HashSet::new();
+        for node in Html::parse_document(html).select(&selector) {
+            for attribute in ["id", "name"] {
+                if let Some(value) = node.value().attr(attribute) {
+                    anchors.insert(value.to_owned());
+                }
+            }
+        }
+        let mut anchors: Vec<String> = anchors.into_iter().collect();
+        anchors.sort();
+        anchors
+    }
 
     #[test]
     fn extracts_in_order_and_deduplicates_missing_alt_by_source() {
@@ -283,6 +435,91 @@ mod tests {
             extract("<a id='one' name='old'></a><div id='one'></div>").anchors,
             vec!["old", "one"]
         );
+    }
+
+    #[test]
+    fn anchor_tokenizer_matches_the_html5_dom_on_malformed_markup() {
+        let cases = [
+            "<!-- <div id='comment'> --><div id=ok name='old'></div>",
+            "<div id='a&amp;b' name='&#x41;'></div><div id='a&amp;b'></div>",
+            "<div ID='first' id='second' NAME=third></div>",
+            "<script>const x = \"<div id='fake'>\";</script><div id='real'>",
+            "<style><div id='fake'></style><div id='real'>",
+            "<textarea><div id='fake'></textarea><div id='real'>",
+            "<title><div id='fake'></title><div id='real'>",
+            "<select><div id='ignored'></div><option id='real'>x</option></select>",
+            "<table><div id='fostered'></div><tr><td id='cell'></td></tr></table>",
+            "<template><div id='inside'></div></template><div id='outside'>",
+            "<noscript><div id='inside'></div></noscript><div id='outside'>",
+            "<svg><g id='graphic'></g></svg><div id='outside'>",
+            "<math><mi id='math'></mi></math><div id='outside'>",
+            "<head><div id='body'></div><meta name='description'>",
+            "<html id='first'><html id='second'><body id='third'><body id='fourth'>",
+            "<html><html id='merged'><body><body name='merged-body'>",
+            "<frameset id='frame'><div id='ignored'></div><frame name='child'></frameset>",
+            "<select><optgroup><option><div id='after-select'></div></select>",
+            "<table><tr><td><select><div id='after-select'></div></select></td></tr></table>",
+            "<svg><foreignObject><div id='foreign'></div></foreignObject></svg>",
+            "<svg><script><div id='script'></div></script></svg>",
+            "<math><script><div id='math-script'></div></script></math>",
+            "<template><html id='nested'><body id='nested-body'></template>",
+            "<table><tr id='row'></tr><td id='orphan'></td></table>",
+            "<plaintext><div id='fake'></div>",
+        ];
+
+        for html in cases {
+            assert_eq!(extract_anchors(html), reference_anchors(html), "{html}");
+        }
+    }
+
+    #[test]
+    fn anchor_tokenizer_matches_the_html5_dom_on_short_mixed_markup() {
+        let fragments = [
+            "<div id='a'>",
+            "</div>",
+            "<p name='b'>",
+            "</p>",
+            "<a id='c'>",
+            "</a>",
+            "<table id='d'>",
+            "</table>",
+            "<tr id='e'>",
+            "</tr>",
+            "<select id='f'>",
+            "</select>",
+            "<option id='g'>",
+            "</option>",
+            "<template id='h'>",
+            "</template>",
+            "<svg id='i'>",
+            "</svg>",
+            "<math id='p'>",
+            "</math>",
+            "<script id='j'>",
+            "</script>",
+            "<textarea id='r'>",
+            "</textarea>",
+            "<title id='s'>",
+            "</title>",
+            "<head id='k'>",
+            "</head>",
+            "<body id='l'>",
+            "</body>",
+            "<noscript id='m'>",
+            "</noscript>",
+            "<plaintext id='n'>",
+            "<span id='o'>",
+            "<!-- <i id='q'> -->",
+        ];
+        let mut seed = 0x5eed_u64;
+        for _ in 0..10_000 {
+            let mut html = String::new();
+            for _ in 0..8 {
+                seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+                html.push_str(fragments[(seed >> 32) as usize % fragments.len()]);
+            }
+            assert_eq!(extract_anchors(&html), reference_anchors(&html), "{html}");
+        }
     }
 
     #[test]

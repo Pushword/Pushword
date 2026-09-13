@@ -7,6 +7,7 @@ license = "MIT"
 description = "Prototype rendered HTML fact extractor for Pushword page scanning"
 
 [dependencies]
+html5ever = "0.39"
 regex = "1.13"
 scraper = { version = "0.27", default-features = false, features = ["deterministic"] }
 serde = { version = "1", features = ["derive"] }
