@@ -21,7 +21,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           coverage: none
-          tools: composer:v2
+          tools: composer:v2, symfony-cli:5.20.0
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3
@@ -39,6 +39,9 @@ jobs:
 
       - name: Twig CS
         run: vendor/bin/twig-cs-fixer lint --report=github
+
+      - name: Symfony LSP
+        run: symfony lsp:check --format=github
 
   js-quality:
     runs-on: ubuntu-latest
