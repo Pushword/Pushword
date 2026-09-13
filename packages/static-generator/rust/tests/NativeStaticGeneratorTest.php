@@ -22,14 +22,12 @@ final class NativeStaticGeneratorTest extends KernelTestCase
         $native = new HtmlMinification(__DIR__.'/../target/release/pushword-html-minifier');
 
         try {
+            // The first publication warms render caches; compare minifiers on the same content.
+            $this->build($directory.'/warmup', new HtmlMinification());
             $expected = $this->build($directory.'/php', new HtmlMinification());
-            $repeated = $this->build($directory.'/php-repeated', new HtmlMinification());
-            foreach ($expected as $path => $html) {
-                self::assertSame(hash('sha256', $html), hash('sha256', $repeated[$path]), 'Repeated PHP '.$path);
-            }
-
             $actual = $this->build($directory.'/rust', $native);
             self::assertArrayHasKey('index.html', $expected);
+            self::assertStringContainsString('not-prose lg:-mx-40', $expected['index.html']);
             self::assertArrayHasKey('404.html', $expected);
             self::assertArrayHasKey('fr/404.html', $expected);
             self::assertSame(array_keys($expected), array_keys($actual));

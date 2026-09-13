@@ -94,7 +94,7 @@ The adapter checks a URI serialization sample against the running PHP/libxml
 version before using native output. If it differs, that service uses PHP until
 reset so libxml's URI escaping does not change the published output.
 
-Tests compare exact PHP/Rust outputs for fixed and generated cases and two real
+Tests compare exact PHP/Rust outputs for fixed and generated cases and warmed
 development-site builds. They cover UTF-8, inline spacing, namespaces, URI
 attributes, code blocks, templates and native failure handling. Testing PHP with
 `proc_open` disabled verifies the shared-hosting path. The adapter and Rust binary
@@ -179,8 +179,8 @@ conversion boundary and compatibility gaps.
   Media, notices, date shortcodes and obfuscated e-mail links still return to
   PHP. On 64,509 post-Twig Altimood blocks, 61,967 use Rust and 2,542 use PHP;
   all rendered blocks match the downstream PHP snapshot byte-for-byte. Three
-  single-CPU passes have an uncached conversion median of 4.044 s in PHP versus
-  0.741 s hybrid (5.46×), including worker IPC and PHP fallback. The aggregate
+  single-CPU passes have an uncached conversion median of 4.207 s in PHP versus
+  0.770 s hybrid (5.47×), including worker IPC and PHP fallback. The aggregate
   report is in `packages/core/rust/benchmarks/2026-09-13-comrak-contact-altimood.json`.
   Complete page and request parity remain unmeasured.
 - The earlier TOC probe exposed repeated list scans for duplicate IDs. The new
