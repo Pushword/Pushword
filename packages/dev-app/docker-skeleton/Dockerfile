@@ -15,7 +15,7 @@ WORKDIR /go/src/app/caddy
 RUN go get \
 		github.com/getkin/kin-openapi@v0.144.0 \
 		golang.org/x/crypto@v0.55.0 \
-		google.golang.org/grpc@v1.83.1
+		google.golang.org/grpc@v1.83.2
 
 WORKDIR /go/src/app/caddy/frankenphp
 RUN GOBIN=/patched ../../go.sh install -buildvcs=false -ldflags "-w -s -X 'github.com/caddyserver/caddy/v2.CustomVersion=FrankenPHP $FRANKENPHP_VERSION PHP $PHP_VERSION Caddy' -X 'github.com/caddyserver/caddy/v2.CustomBinaryName=frankenphp' -X 'github.com/caddyserver/caddy/v2/modules/caddyhttp.ServerHeader=FrankenPHP Caddy'"
