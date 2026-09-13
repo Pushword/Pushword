@@ -31,10 +31,26 @@ final readonly class TempestMarkdownRenderer
 
     public function render(string $source): ?string
     {
+        if ('' === $source) {
+            return '';
+        }
+
+        if (1 === preg_match('/^(#{1,6}) ([\p{L}\p{N} -]+)$/Du', $source, $plainHeading)) {
+            $level = \strlen($plainHeading[1]);
+
+            return '<h'.$level.'>'.htmlspecialchars(trim($plainHeading[2]), \ENT_QUOTES | \ENT_SUBSTITUTE).'</h'.$level.">\n";
+        }
+
+        if (1 === preg_match('/^(?:\*[ \t]*){3,}$/D', $source)) {
+            return "<hr />\n";
+        }
+
         // Ambiguous delimiter runs do not have the same binding in Tempest and CommonMark.
         if (str_contains($source, '__')
             || str_contains($source, '\\*\\*')
             || str_contains($source, '\\"')
+            || 1 === preg_match('/\d_[^_\n]+_/', $source)
+            || 1 === preg_match('/[\p{L}\p{N}]_[.!?] {2,}\n[^\n]*_/u', $source)
             || 1 === preg_match('/[\p{L}\p{N}]_\x27[^\s_]+_|_[\p{L}]_[\p{L}]|\b[A-Z]_[a-z]|_\x{200B}_|\b\p{L}\*\*[\x27\x{2019}]|\*\*\(|_[^_\n]+\(_|\*\*,[^*\n]{0,40}\*\*/u', $source)
             || 1 === preg_match('/^_[^\n]*\*\*|#\[[^]]+@|`<[^`]+>`|^\* .*_[0-9]/m', $source)
         ) {
@@ -286,6 +302,12 @@ final readonly class TempestMarkdownRenderer
         };
         if (null !== $listTag) {
             $source = implode("\n", array_map(rtrim(...), explode("\n", $source)));
+            if ('ul' === $listTag) {
+                $source = preg_replace('/(?m)^- {2,3}(?=\S)/', '- ', $source);
+                if (null === $source) {
+                    return null;
+                }
+            }
         }
 
         $literalLeadingHash = 1 === preg_match('/^#+[^#\s\[]/', $source);
@@ -558,7 +580,12 @@ final readonly class TempestMarkdownRenderer
                     return null;
                 }
 
-                foreach (explode("\n", rtrim($content, "\n")) as $line) {
+                $source = preg_replace('/ {2,}\n/', "\u{E033}\n", $source);
+                if (null === $source) {
+                    return null;
+                }
+
+                foreach (explode("\n", rtrim($source, "\n")) as $line) {
                     if ($line !== rtrim($line) || ! $this->isCompatibleSingleLine($line, false)) {
                         return null;
                     }
@@ -752,6 +779,7 @@ final readonly class TempestMarkdownRenderer
         $html = str_replace(["\u{E027}", "\u{E028}"], ['[', ']'], $html);
         $html = str_replace(["\u{E029}", "\u{E030}"], ['+', '-'], $html);
         $html = str_replace(["\u{E031}", "\u{E032}"], ['_._', '_,_'], $html);
+        $html = str_replace("\u{E033}\n", "<br />\n", $html);
         $html = str_replace("\u{E020}", '_', $html);
         $html = str_replace("\u{E026}", '.', $html);
         $html = str_replace(["\u{E010}", "\u{E011}"], ['[', ']'], $html);

@@ -38,9 +38,13 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'horizontal rule despite Tempest front matter' => ['---', "<hr />\n"];
         yield 'literal tilde' => ['Environ ~800 m.', "<p>Environ ~800 m.</p>\n"];
         yield 'tilde in emphasis' => ['_~11 km_', "<p><em>~11 km</em></p>\n"];
-        yield 'empty input' => ['', null];
+        yield 'empty input' => ['', ''];
+        yield 'simple fourth-level heading' => ['#### Fin', "<h4>Fin</h4>\n"];
+        yield 'spaced asterisk rule' => ['* * *', "<hr />\n"];
         yield 'triple emphasis uses CommonMark' => ['***marche***', null];
         yield 'ambiguous underscores use CommonMark' => ['Le texte __important__ reste compatible.', null];
+        yield 'ambiguous numbered underscores use CommonMark' => ['3_h de marche._', null];
+        yield 'ambiguous underscore across hard break uses CommonMark' => ["word_.  \nNext._", null];
         yield 'intraword underscores use CommonMark' => ['a_b_c', null];
         yield 'strikethrough uses CommonMark' => ['~~marche~~', null];
         yield 'trailing space in emphasis stays literal' => ['_Une marche _', "<p>_Une marche _</p>\n"];

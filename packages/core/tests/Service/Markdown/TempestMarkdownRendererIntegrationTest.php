@@ -44,10 +44,14 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'table colspan and short row' => ["| Offre | Deux | Trois |\n| --- | --- | --- |\n| Location | 25 € | -> |\n| Assurance | 10 € |"];
         yield 'empty table header with colspan' => ["| | | -> |\n| --- | --- | --- |\n| | Prix | -> |"];
         yield 'three-level list' => ["- Parent\n    - Enfant\n        - Détail\n- Retour"];
+        yield 'list with three spaces after marker' => ["-   Départ\n-   Retour"];
         yield 'star rating stays literal' => ['Hôtel 3*/4* pour le trajet.'];
         yield 'escaped brackets in emphasis' => ['Lisez _\\[note\\]_ avant le départ.'];
         yield 'single tilde strikethrough' => ['Réduction ~30€~ pour le trajet.'];
         yield 'two approximate quantities' => ['Distance ~170 km et dénivelé ~10 000 m.'];
+        yield 'hard line breaks' => ["Première ligne  \nDeuxième ligne  \nTroisième ligne."];
+        yield 'heading with extra spaces' => ['##  Conseils pratiques'];
+        yield 'empty heading' => ["##   \nLa suite du texte."];
         yield 'trailing space in link destination' => ['Voir [la carte](/carte ).'];
         yield 'inline HTML and entity' => ['Prix <span data-price-eur="2">2&nbsp;€</span> & transport.'];
         yield 'inline HTML comment' => ['Une marche <!-- todo: check route --> en montagne.'];

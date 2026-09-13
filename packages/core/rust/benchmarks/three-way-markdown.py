@@ -42,6 +42,9 @@ SYNTHETIC = (
     'Voir [la carte](/carte ) pour l’étape {n}.',
     'Appelez **04 76 95 23 00** pour l’étape {n}.',
     '| A | B |\n    | --- | --- |\n    | {n} | 2 |',
+    'Départ {n}  \nArrivée après une courte marche.',
+    '#### Fin de l’étape {n}',
+    '* * *',
 ) + DATE_PATTERNS
 
 
