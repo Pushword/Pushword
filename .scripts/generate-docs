@@ -9,6 +9,8 @@ revision=$(git rev-parse HEAD)
 remote=$(git remote get-url origin)
 repo_root=$(pwd)
 build_root=$(mktemp -d)
+mkdir -p "$build_root/tmp"
+export TMPDIR="$build_root/tmp"
 
 cleanup() {
     cd "$repo_root"
@@ -30,6 +32,7 @@ cd ../..
 
 test -f docs/index.html
 test -f docs/404.html
+grep -q '<section id="title"' docs/editor.html
 grep -qx 'pushword.piedweb.com' docs/CNAME
 pages=$(find docs -name '*.html' | wc -l)
 echo "$pages pages generated"
