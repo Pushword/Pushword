@@ -17,7 +17,7 @@ raw: 1
     Finally, a CMS that gets out of your way.
   </h1>
   <p class="text-xl leading-relaxed text-stone-600 dark:text-stone-300 max-w-2xl mb-10">
-    Modern PHP. Flat-file flexibility. Ready for the AI era. <span class="text-stone-900 dark:text-stone-100 font-medium">No plugin headache.</span>
+    Modern PHP, with <span class="text-stone-900 dark:text-stone-100 font-medium">optional Rust acceleration.</span> Flat-file flexibility. Ready for the AI era.
   </p>
   <div class="flex flex-wrap gap-3 items-center">
     <a href="/installation" class="inline-flex items-center px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-md hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300">
