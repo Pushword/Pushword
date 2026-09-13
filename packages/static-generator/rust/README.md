@@ -159,6 +159,6 @@ do not treat this as a further whole-build speedup.
 
 See `benchmarks/2026-09-12-allocations.json` for raw samples and binary hashes.
 Reproduce the native-only comparison on Linux with
-`python3 packages/static-generator/rust/compare.py baseline-binary candidate-binary page.html another.html`.
+`php packages/static-generator/rust/compare.php baseline-binary candidate-binary page.html another.html`.
 To compare a previously built binary through the PHP adapter, set
 `PUSHWORD_BENCH_BINARY=/path/to/baseline` when invoking `bench.php`.

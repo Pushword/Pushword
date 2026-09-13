@@ -265,7 +265,7 @@ report can stay in the ignored local benchmark directory:
 
 ```sh
 mkdir -p packages/core/rust/benchmarks/local
-python3 packages/core/rust/benchmarks/three-way-markdown.py --cpu 2 --runs 3 --require-native-dates \
+php packages/core/rust/benchmarks/three-way-markdown-runner.php --cpu 2 --runs 3 --require-native-dates \
   > packages/core/rust/benchmarks/local/synthetic-result.json
 ```
 
@@ -301,7 +301,7 @@ snapshot and result remain in the ignored local directory:
 ```sh
 php packages/core/rust/benchmarks/render-markdown-downstream.php \
   /path/to/site packages/core/rust/benchmarks/local/site.ndjson
-python3 packages/core/rust/benchmarks/three-way-markdown.py \
+php packages/core/rust/benchmarks/three-way-markdown-runner.php \
   --site /path/to/site \
   --snapshot packages/core/rust/benchmarks/local/site.ndjson \
   --cpu 2 --runs 3 --require-native-dates \
