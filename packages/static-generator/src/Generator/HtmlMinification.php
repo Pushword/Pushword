@@ -14,9 +14,13 @@ use Throwable;
 /** PHP is the default; the optional worker only receives already rendered HTML. */
 final class HtmlMinification implements ResetInterface
 {
+    private const string PARITY_PROBE = '<!DOCTYPE html><html><body><a href="/?x=&quot;[\\]^`{|}">x</a></body></html>';
+
     private readonly NativeWorker $worker;
 
     private bool $failed = false;
+
+    private bool $parityChecked = false;
 
     public function __construct(
         private readonly ?string $binary = null,
@@ -44,6 +48,17 @@ final class HtmlMinification implements ResetInterface
 
         if (null !== $this->binary && '' !== $this->binary && ! $this->failed) {
             try {
+                if (! $this->parityChecked) {
+                    $result = $this->compressNative([self::PARITY_PROBE, ...$documents]);
+                    if (array_shift($result) !== HtmlMinifier::compress(self::PARITY_PROBE)) {
+                        throw new RuntimeException('Native HTML serialization differs from PHP');
+                    }
+
+                    $this->parityChecked = true;
+
+                    return $result;
+                }
+
                 return $this->compressNative($documents);
             } catch (Throwable $error) {
                 $this->reset();
@@ -60,6 +75,7 @@ final class HtmlMinification implements ResetInterface
     {
         $this->worker->reset();
         $this->failed = false;
+        $this->parityChecked = false;
     }
 
     /**

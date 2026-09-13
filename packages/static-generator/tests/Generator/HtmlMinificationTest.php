@@ -79,7 +79,7 @@ final class HtmlMinificationTest extends TestCase
     /** @return iterable<string, array{string}> */
     public static function failures(): iterable
     {
-        foreach (['crash', 'json', 'version', 'id', 'count', 'type', 'object', 'incomplete', 'timeout', 'overflow', 'stderr'] as $mode) {
+        foreach (['crash', 'json', 'version', 'id', 'count', 'type', 'object', 'incomplete', 'timeout', 'overflow', 'stderr', 'mismatch'] as $mode) {
             yield $mode => [$mode];
         }
     }

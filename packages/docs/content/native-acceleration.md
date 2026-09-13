@@ -90,6 +90,9 @@ The static-generator package contains a Rust port of
 protected `pre`/`code`/`script`/`textarea` handling, whitespace reduction and
 serialization compatibility rules. It uses an HTML parser library, not a
 complete external site generator.
+The adapter checks a URI serialization sample against the running PHP/libxml
+version before using native output. If it differs, that service uses PHP until
+reset so libxml's URI escaping does not change the published output.
 
 Tests compare exact PHP/Rust outputs for fixed and generated cases and two real
 development-site builds. They cover UTF-8, inline spacing, namespaces, URI
@@ -171,13 +174,14 @@ conversion boundary and compatibility gaps.
   existing uncached PHP converter versus 0.408 ms in the Comrak batch, including
   startup/JSON/validation. The in-memory PHP cache hit takes 0.0026 ms: keep
   the cache and investigate acceleration of misses.
-- The current Comrak formatter is byte-identical on 67 of 70 corpus cases.
-  Link, block and list-item attributes, Unicode IDs and table edge cases match
-  PHP. Obfuscated links, media and notices still need Pushword's site services.
-  Raw Comrak output matches 58,997/64,509 post-Twig blocks. A conservative
-  hybrid path accepts 58,758, declines 5,751 to PHP and matches all 64,509
-  blocks on that snapshot. Its uncached conversion median is 4.031 s in PHP
-  versus 1.034 s hybrid (3.90×), including worker IPC and PHP fallback.
+- The Comrak formatter supports ordinary obfuscated links, e-mail autolinks
+  and French phone numbers using fixed core markup and the current locale.
+  Media, notices, date shortcodes and obfuscated e-mail links still return to
+  PHP. On 64,509 post-Twig Altimood blocks, 61,967 use Rust and 2,542 use PHP;
+  all rendered blocks match the downstream PHP snapshot byte-for-byte. Three
+  single-CPU passes have an uncached conversion median of 4.044 s in PHP versus
+  0.741 s hybrid (5.46×), including worker IPC and PHP fallback. The aggregate
+  report is in `packages/core/rust/benchmarks/2026-09-13-comrak-contact-altimood.json`.
   Complete page and request parity remain unmeasured.
 - The earlier TOC probe exposed repeated list scans for duplicate IDs. The new
   indexed PHP slugger removes repeated suffix searches; the separate aggregate

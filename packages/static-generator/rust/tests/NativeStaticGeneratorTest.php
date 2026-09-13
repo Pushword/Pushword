@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pushword\StaticGenerator\Tests\Generator;
 
-use Psr\Log\LoggerInterface;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\Generator\AbstractGenerator;
 use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
@@ -20,9 +19,7 @@ final class NativeStaticGeneratorTest extends KernelTestCase
     public function testRealPublicationMatchesPhpIncludingLocalizedErrorPages(): void
     {
         $directory = sys_get_temp_dir().'/pushword-native-build-'.bin2hex(random_bytes(8));
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::never())->method('warning');
-        $native = new HtmlMinification(__DIR__.'/../target/release/pushword-html-minifier', logger: $logger);
+        $native = new HtmlMinification(__DIR__.'/../target/release/pushword-html-minifier');
 
         try {
             $expected = $this->build($directory.'/php', new HtmlMinification());
