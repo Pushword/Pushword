@@ -94,7 +94,7 @@ final readonly class TempestParsedMarkdownRenderer
 
         $emptyTableHeader = $table && 1 === preg_match('/^\|(?:[ \t]*(?:->)?[ \t]*\|)+\n/', $source);
         $attribute = null;
-        if (null === $listTag && 1 === preg_match('/^\{(?:id=([A-Za-z0-9_-]+)(?: \.([\p{L}\p{N}_-]+))?|\.([\p{L}\p{N}_-]+))\}\n([^\r\n]+)$/Du', $source, $attributes)) {
+        if (null === $listTag && 1 === preg_match('/^\{(?:(?:id=|#)([A-Za-z0-9_-]+)(?: \.([\p{L}\p{N}_-]+))?|\.([\p{L}\p{N}_-]+))\}\n([^\r\n]+)$/Du', $source, $attributes)) {
             $class = $attributes[2] ?: $attributes[3];
             $attribute = '' !== $class ? 'class="'.$class.'"' : '';
             if ('' !== $attributes[1]) {

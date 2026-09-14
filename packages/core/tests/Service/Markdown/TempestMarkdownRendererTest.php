@@ -75,6 +75,11 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'international phone uses Pushword' => ['+33 7 81 32 36 55', null];
         yield 'date uses Pushword' => ['date(Y)', null];
         yield 'attributed list' => ["{id=programme}\n- Etape", "<ul id=\"programme\">\n<li>Etape</li>\n</ul>\n"];
+        yield 'leading hash heading id' => ["{#programme}\n## Une marche facile", "<h2 id=\"programme\">Une marche facile</h2>\n"];
+        yield 'leading hash paragraph id' => ["{#programme}\nUne marche facile", "<p id=\"programme\">Une marche facile</p>\n"];
+        yield 'leading hash heading class and id' => ["{#rdv .ico-location}\n## Rendez-vous", "<h2 class=\"ico-location\" id=\"rdv\">Rendez-vous</h2>\n"];
+        yield 'leading hash attributed list' => ["{#programme}\n- Etape", "<ul id=\"programme\">\n<li>Etape</li>\n</ul>\n"];
+        yield 'leading hash attributed blockquote' => ["{#citation}\n> Une longue citation.", "<blockquote id=\"citation\">\n<p>Une longue citation.</p>\n</blockquote>\n"];
         yield 'nested list' => ["- Une marche\n  - Un voyage", "<ul>\n<li>Une marche\n<ul>\n<li>Un voyage</li>\n</ul>\n</li>\n</ul>\n"];
         yield 'simple table' => ["| A | B |\n|---|---|\n| x | y |", "<table>\n<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>x</td>\n<td>y</td>\n</tr>\n</tbody>\n</table>\n"];
         yield 'aligned table' => ["| A | B | C |\n| :--- | :--: | ---: |\n| 1 | 2 | 3 |", "<table>\n<thead>\n<tr>\n<th align=\"left\">A</th>\n<th align=\"center\">B</th>\n<th align=\"right\">C</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td align=\"left\">1</td>\n<td align=\"center\">2</td>\n<td align=\"right\">3</td>\n</tr>\n</tbody>\n</table>\n"];

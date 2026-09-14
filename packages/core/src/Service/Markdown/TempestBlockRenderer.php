@@ -83,7 +83,7 @@ final readonly class TempestBlockRenderer
             return null === $intro || null === $code || ! str_starts_with($code, '<pre') ? null : $intro.$code;
         }
 
-        if (1 === preg_match('/\n[ \t]*\n/', $source) && 1 !== preg_match('/^(?:[-*+] |[0-9]+[.)] |>|`{3}|~{3}|\{id=)/', $source)) {
+        if (1 === preg_match('/\n[ \t]*\n/', $source) && 1 !== preg_match('/^(?:[-*+] |[0-9]+[.)] |>|`{3}|~{3}|\{(?:id=|#))/', $source)) {
             $blocks = preg_split('/\n[ \t]*\n+/', trim($source, "\n"));
             if (false === $blocks) {
                 return null;
@@ -131,7 +131,7 @@ final readonly class TempestBlockRenderer
             $source = preg_replace('/(?m)^ {4}(?=\S)/', '', $source) ?? $source;
         }
 
-        if (1 !== preg_match('/^(?:[-*+] |[0-9]+[.)] |>|\{id=)/', $source) && 1 === preg_match('/\A(.+?)\n((?:- |1[.)] )[^\n]+[\s\S]*)\z/sD', $source, $mixedBlocks)) {
+        if (1 !== preg_match('/^(?:[-*+] |[0-9]+[.)] |>|\{(?:id=|#))/', $source) && 1 === preg_match('/\A(.+?)\n((?:- |1[.)] )[^\n]+[\s\S]*)\z/sD', $source, $mixedBlocks)) {
             $before = ($this->renderMarkdown)(rtrim($mixedBlocks[1]));
             $after = ($this->renderMarkdown)($mixedBlocks[2]);
 
@@ -178,7 +178,7 @@ final readonly class TempestBlockRenderer
                 : null;
         }
 
-        if (1 === preg_match('/\A\{id=([A-Za-z0-9_-]+)\}\n(.+)\z/sD', $source, $block)) {
+        if (1 === preg_match('/\A\{(?:id=|#)([A-Za-z0-9_-]+)\}\n(.+)\z/sD', $source, $block)) {
             if (1 === preg_match('/^<!--[\s\S]*-->$/D', $block[2])) {
                 return rtrim($block[2])."\n";
             }

@@ -1,5 +1,5 @@
 ---
-title: 'flat imports include new pages in the generated index'
+title: 'flat imports include new pages in the generated index; `{#id}` block attributes apply before any block, not only headings'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,8 +35,12 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/flat`
+**Concerns:** `pushword/core`, `pushword/flat`
 
 ## Flat page index
 
 `pw:flat:sync --mode=import` now includes newly created pages in `index.csv` and `index.draft.csv` on the first run. Nothing to do.
+
+## `{#id}` block attributes
+
+`{#id}` and `{#id .class}` on the line before a block now apply to it, like `{id=…}` already did and like CommonMark's attributes extension. They only worked before a heading until now. Check pages where a line starting with `{#` precedes a paragraph or a list and was meant to stay visible.
