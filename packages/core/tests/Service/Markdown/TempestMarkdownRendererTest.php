@@ -58,6 +58,8 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'trailing space in emphasis stays literal' => ['_Une marche _', "<p>_Une marche _</p>\n"];
         yield 'trailing space in bold stays literal' => ['**Une marche **', "<p>**Une marche **</p>\n"];
         yield 'literal brackets stay literal' => ['Voir [LIEN_AFFILIATION] ici.', "<p>Voir [LIEN_AFFILIATION] ici.</p>\n"];
+        yield 'social handles stay literal' => ['Suivez {x:example}, {gh:example} et {bsky:example}.', "<p>Suivez {x:example}, {gh:example} et {bsky:example}.</p>\n"];
+        yield 'social handle in a list stays literal' => ['- {gh:example}', "<ul>\n<li>{gh:example}</li>\n</ul>\n"];
         yield 'quoted link destination' => ['[marche](a"b)', "<p><a href=\"a%22b\">marche</a></p>\n"];
         yield 'image in custom star list uses CommonMark' => ["* Départ\n* ![](carte.jpg)", null];
         yield 'unicode link destination is encoded' => ['[marche](école)', "<p><a href=\"%C3%A9cole\">marche</a></p>\n"];
