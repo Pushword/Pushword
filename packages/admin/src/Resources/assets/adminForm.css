@@ -75,12 +75,21 @@ body.ea-new .content-header {
   */
 }
 
+/* Ten of these stack in the edit form's right column, and a border plus a fill plus
+   a shadow is three separators doing one job. A recessed fill alone is enough to
+   bound a closed panel, which frees raised-and-white to mean "this is the one you
+   have open" — the only hierarchy the column had was none. */
 .columnFields .form-fieldset.pw-settings-accordion {
-  background-color: var(--sidebar-bg, #f9fafb);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background-color: #f1f5f9; /* slate-100, recessed below the white page */
+  border: 0;
   border-radius: var(--pw-radius-md);
   margin-bottom: 1rem;
-  box-shadow: var(--pw-elevation-1); /* shadow-sm */
+  box-shadow: none; /* EasyAdmin draws .form-fieldset's hairline as an inset ring */
+}
+
+.columnFields .form-fieldset.pw-settings-accordion.pw-settings-open {
+  background-color: #fff;
+  box-shadow: var(--pw-elevation-2);
 }
 
 .pw-settings-toggle {
