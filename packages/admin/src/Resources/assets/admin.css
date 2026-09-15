@@ -40,65 +40,31 @@
   --bs-btn-active-border-color: var(--button-hover-border-color, var(--sky-700));
 }
 
-@media (max-width: 1599px) {
-  body.ea-index-Page .datagrid td.actions .pw-page-actions {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--ea-sp-4);
-  }
-
-  body.ea-index-Page .datagrid td.actions .pw-page-actions > form {
-    margin: 0;
-    min-width: 0;
-  }
-
-  body.ea-index-Page .datagrid td.actions .pw-page-actions > a {
-    margin: 0;
-  }
-
-  body.ea-index-Page .datagrid td.actions .pw-page-actions > a,
-  body.ea-index-Page .datagrid td.actions .pw-page-actions > form > button {
-    width: 100%;
-    min-width: 0;
-    min-height: 36px;
-    justify-content: center;
-    white-space: normal;
-  }
-
-  body.ea-index-Page .datagrid td.actions .pw-page-actions > a.action-delete:last-child {
-    grid-column: -2 / -1;
-  }
+/* Page list: the row's content is the title, not its toolbar. */
+.pw-page-title {
+  display: inline-block;
+  padding-block: var(--ea-sp-4);
+  color: var(--bs-gray-900);
+  font-size: 110%;
+  font-weight: 600;
+  text-decoration: none;
 }
 
-@media (max-width: 767px) {
-  body.ea-index-Page .datagrid td.actions .pw-page-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  body.ea-index-Page .datagrid td.actions .pw-page-actions > a,
-  body.ea-index-Page .datagrid td.actions .pw-page-actions > form > button {
-    min-height: 44px;
-  }
+.pw-page-title:hover,
+.pw-page-title:focus-visible {
+  color: var(--color-primary);
+  text-decoration: underline;
 }
 
-@media (min-width: 768px) and (max-width: 1199px) {
-  body.ea-index-Page .datagrid td.actions .pw-page-actions {
-    min-width: 160px;
-  }
+/* The row toolbar stays quiet until the row is hovered or the menu is reached. */
+.pw-page-actions .dropdown-toggle {
+  color: var(--text-muted);
 }
 
-@media (min-width: 1200px) and (max-width: 1399px) {
-  body.ea-index-Page .datagrid td.actions .pw-page-actions {
-    min-width: 280px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1400px) and (max-width: 1599px) {
-  body.ea-index-Page .datagrid td.actions .pw-page-actions {
-    min-width: 420px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+.datagrid tr:hover .pw-page-actions .dropdown-toggle,
+.pw-page-actions .dropdown-toggle:focus-visible,
+.pw-page-actions .dropdown-toggle[aria-expanded='true'] {
+  color: var(--bs-gray-900);
 }
 
 /* Column Expanding */

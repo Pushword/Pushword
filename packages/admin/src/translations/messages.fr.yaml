@@ -110,6 +110,7 @@ adminMediaViewMosaic: 'Vue mosaïque'
 adminMediaViewSelectAll: 'Tout sélectionner'
 adminMediaViewTable: 'Vue liste'
 adminPaginationRatioLabelLabel: Ratio
+adminPageActionsLabel: Actions
 adminPageAuthorLabel: Auteur
 adminPageBrokenImageWarning: "Cette page référence des image(s) introuvable(s). Elles sont ignorées à l'affichage de la page :"
 adminPageCloneLabel: Dupliquer

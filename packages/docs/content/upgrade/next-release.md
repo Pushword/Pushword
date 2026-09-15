@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'page list row actions moved into a dropdown'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,17 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin`
+
+## Page list row actions moved into a dropdown
+
+Each row of the page list now shows a single `⋯` menu instead of a row of Edit / Clone /
+Delete buttons, and page titles are no longer rendered in the link colour.
+
+**Affects sites that override `@pwAdmin/page/index.html.twig` or style
+`.pw-page-actions > a` / `.pw-page-actions > form > button`.** Those selectors are gone;
+target `.pw-page-actions .dropdown-menu .dropdown-item` instead. A custom page-list action
+that posts through `@pwAdmin/crud/action_post.html.twig` must now also call
+`->renderAsForm()`, or it renders through EasyAdmin's token-less menu item and its CSRF
+check rejects the request.

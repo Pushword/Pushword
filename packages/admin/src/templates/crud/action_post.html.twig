@@ -10,6 +10,14 @@
         {% if action.icon %}<i class="{{ action.icon }}" aria-hidden="true"></i>{% endif %}
         {% if action_label is not empty %}<span class="action-label">{{ action_label|raw }}</span>{% endif %}
     </button>
+{% elseif isIncludedInDropdown|default(false) %}
+    <form action="{{ action.linkUrl }}" method="post">
+        <input type="hidden" name="_token" value="{{ token }}">
+        <button type="submit" class="dropdown-item {{ action.cssClass }} dropdown-item-variant-{{ action.variant.value }}"{% for name, value in action.htmlAttributes %} {{ name }}="{{ value }}"{% endfor %}>
+            {% if action.icon %}<twig:ea:Icon name="{{ action.icon }}" class="action-icon" />{% endif %}
+            {% if action_label is not empty %}<span class="action-label">{{ action_label|raw }}</span>{% endif %}
+        </button>
+    </form>
 {% else %}
     <form action="{{ action.linkUrl }}" method="post" class="d-inline">
         <input type="hidden" name="_token" value="{{ token }}">

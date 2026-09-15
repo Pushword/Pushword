@@ -111,6 +111,7 @@ adminMediaPickerTitle: "Media library"
 adminMediaPickerUpload: Upload
 adminPaginationRatioLabelLabel: Ratio
 adminPaginationPerPage: "Per page"
+adminPageActionsLabel: Actions
 adminPageAuthorLabel: Author
 adminPageBrokenImageWarning: "This page references image(s) that no longer exist. They are skipped when the page is displayed:"
 adminPageCloneLabel: Clone

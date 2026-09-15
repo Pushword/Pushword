@@ -1,15 +1,44 @@
 {% extends '@pwAdmin/crud/index.html.twig' %}
 
 {% block entity_actions %}
-  <td class="actions">
-    <div class="pw-page-actions">
-      {% for action in entity.actions %}
-        {% if action.isActionGroup %}
-          {{ include(action.templatePath, {group: action, entity: entity}, with_context: false) }}
-        {% else %}
-          {{ include(action.templatePath, {action: action, entity: entity, isIncludedInDropdown: false}, with_context: false) }}
-        {% endif %}
-      {% endfor %}
-    </div>
+  <td class="actions actions-as-dropdown">
+    {% if entity.actions.count > 0 %}
+      {% set hasAnyActionWithIcon = entity.actions|filter(item => item.isActionGroup ? false : item.icon is not null)|length > 0 %}
+      <twig:ea:ActionMenu class="dropdown-actions pw-page-actions">
+        <twig:ea:ActionMenu:Button withoutDropdownToggleMarker aria-label="{{ 'adminPageActionsLabel'|trans }}">
+          <twig:ea:Icon name="internal:dots-horizontal" />
+        </twig:ea:ActionMenu:Button>
+
+        <twig:ea:ActionMenu:Overlay>
+          <twig:ea:ActionMenu:ActionList hasSubmenus="{{ entity.actions|filter(item => item.isActionGroup)|length > 0 }}">
+            {% for item in entity.actions %}
+              {% if item.isActionGroup %}
+                <twig:ea:ActionMenu:ActionList:ItemGroup
+                  group="{{ item }}"
+                  showBlankIcons="{{ hasAnyActionWithIcon }}"
+                  entity="{{ entity }}" />
+              {% elseif item.isRenderedAsForm %}
+                {# ActionList:Item posts through a token-less form; these actions validate a CSRF token,
+                   so they render from their own template instead. #}
+                <li>
+                  {{ include(item.templatePath, {action: item, entity: entity, isIncludedInDropdown: true}, with_context: false) }}
+                </li>
+              {% else %}
+                <twig:ea:ActionMenu:ActionList:Item
+                  class="{{ item.cssClass }} dropdown-item-variant-{{ item.variant.value }}"
+                  url="{{ item.linkUrl }}"
+                  icon="{{ item.icon }}"
+                  icon:class="action-icon"
+                  htmlAttributes="{{ item.htmlAttributes|ea_html_attrs }}"
+                  label="{{ item.label|trans }}"
+                  label:class="action-label"
+                  renderLabelRaw
+                  showBlankIcons="{{ hasAnyActionWithIcon }}" />
+              {% endif %}
+            {% endfor %}
+          </twig:ea:ActionMenu:ActionList>
+        </twig:ea:ActionMenu:Overlay>
+      </twig:ea:ActionMenu>
+    {% endif %}
   </td>
 {% endblock %}

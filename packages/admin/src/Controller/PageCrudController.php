@@ -82,7 +82,6 @@ class PageCrudController extends AbstractAdminCrudController
         return $crud
             ->setDefaultSort(['updatedAt' => 'DESC'])
             ->setPaginatorPageSize($this->getRequestedPageSize())
-            ->showEntityActionsInlined()
             ->addFormTheme('@pwAdmin/form/admin_form_theme.html.twig')
             ->addFormTheme('@PushwordAdminBlockEditor/editorjs_widget.html.twig')
             ->overrideTemplates([
@@ -96,13 +95,15 @@ class PageCrudController extends AbstractAdminCrudController
     {
         $cloneAction = Action::new('clonePage', 'adminPageCloneLabel', 'fa fa-copy')
             ->linkToCrudAction('clonePage')
-            ->setTemplatePath('@pwAdmin/crud/action_post.html.twig');
+            ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
+            ->renderAsForm();
 
         $actions->add(Crud::PAGE_INDEX, $cloneAction);
 
         $promoteVariantAction = Action::new('promoteVariant', 'adminPagePromoteVariantLabel', 'fa fa-arrow-up')
             ->linkToCrudAction('promoteVariant')
             ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
+            ->renderAsForm()
             ->displayIf(static fn (Page $page): bool => $page->isVariant());
 
         $actions->add(Crud::PAGE_INDEX, $promoteVariantAction);

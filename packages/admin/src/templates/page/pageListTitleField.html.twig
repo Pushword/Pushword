@@ -20,10 +20,7 @@
         <span class="badge" title="{{ page.metaRobots }}"><i class="fa fa-eye-slash"></i></span>
       {% endif %}
 
-      <a
-        href="{{ editUrl }}"
-        class="py-2"
-        style="display: inline-block; text-decoration: none; font-size:110%;font-weight:600">
+      <a href="{{ editUrl }}" class="pw-page-title">
         {{ page.h1 is empty ? page.title : page.h1|striptags }}
       </a>
       <br>
