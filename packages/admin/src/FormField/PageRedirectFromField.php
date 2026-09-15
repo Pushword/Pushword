@@ -26,11 +26,33 @@ class PageRedirectFromField extends AbstractField
             ->onlyOnForms()
             ->setEntryType(RedirectFromRowType::class)
             ->setEntryIsComplex()
+            ->setEntryToStringMethod($this->rowLabel(...))
             ->allowAdd()
             ->allowDelete()
             ->setHelp('adminPageRedirectFromHelp')
             ->setFormTypeOption('help_html', true)
             ->setFormTypeOption('by_reference', false)
             ->setFormTypeOption('required', false);
+    }
+
+    /**
+     * Collapsed label for one row. Rows are plain arrays, and EasyAdmin's default
+     * stringifier renders any array as "Array (2 items)".
+     */
+    private function rowLabel(mixed $row): string
+    {
+        if (! \is_array($row)) {
+            return '…';
+        }
+
+        $from = \is_string($row['from'] ?? null) ? trim($row['from']) : '';
+
+        if ('' === $from) {
+            return '…';
+        }
+
+        $code = $row['code'] ?? null;
+
+        return $from.' → '.(is_numeric($code) ? (int) $code : 301);
     }
 }
