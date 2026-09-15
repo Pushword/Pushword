@@ -218,9 +218,12 @@
   opacity: 1;
 }
 
-body.pw-admin-popup-modal .sidebar,
-body.pw-admin-popup-modal header.navbar,
+/* EasyAdmin 5 renamed the menu column: the menu lives in .sidebar-wrapper and there
+   is no top navbar anymore. Batch selection means nothing while picking one media,
+   so the per-card checkboxes and the select-all that commands them go too. */
+body.pw-admin-popup-modal .sidebar-wrapper,
 body.pw-admin-popup-modal .user-menu-wrapper,
+body.pw-admin-popup-modal .media-mosaic__select-all,
 body.pw-admin-popup-modal .media-mosaic__checkbox {
   display: none !important;
 }
@@ -249,8 +252,10 @@ body.pw-admin-popup-modal.ea-edit .content-top {
   display: none !important;
 }
 
+/* .wrapper is a two-column grid (menu, content); with the menu column gone the
+   content has to take the whole width instead of landing in the menu column. */
 body.pw-admin-popup-modal .wrapper {
-  --sidebar-max-width: 0;
+  grid-template-columns: auto;
 }
 
 body.pw-admin-popup-modal .modal-backdrop {

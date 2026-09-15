@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Admin\Tests\Frontend;
 
+use Facebook\WebDriver\WebDriverBy;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\Panther\Client;
 
@@ -207,6 +208,70 @@ final class AdminMediaPickerTest extends AbstractPantherAdminTest
         self::assertGreaterThan($minWidth, $result['dialogWidth'], 'Modal dialog should span the viewport width');
         self::assertGreaterThan($minHeight, $result['dialogHeight'], 'Modal dialog should span the viewport height');
         self::assertGreaterThan($minWidth, $result['iframeWidth'], 'Modal iframe should span the viewport width');
+
+        $this->closeMediaPickerModal($client);
+    }
+
+    /**
+     * The iframe embeds a whole admin page, whose menu has to make room for the media
+     * grid. EasyAdmin 5 renders that menu in .sidebar-wrapper (the .sidebar of version 4
+     * is gone) and lays .wrapper out as a two-column grid, so hiding the menu is not
+     * enough: its column has to collapse too, otherwise the library stays squeezed into
+     * an empty column while the menu paints over it.
+     */
+    public function testMediaPickerModalHidesAdminMenu(): void
+    {
+        $client = $this->createPantherClientWithLogin();
+        $this->navigateToPageEdit($client);
+        $this->ensureMediaPickerReady($client);
+
+        $this->scrollAndClick($client, self::SELECTOR_MEDIA_PICKER_CHOOSE);
+
+        $client->waitFor(self::SELECTOR_MEDIA_PICKER_MODAL, self::timeoutMedium());
+
+        $this->pollUntilTrue(
+            $client,
+            'const m = document.querySelector(arguments[0]); return m && m.classList.contains("show") && getComputedStyle(m).display !== "none"',
+            [self::SELECTOR_MEDIA_PICKER_MODAL],
+            self::timeoutShort(),
+        );
+
+        $iframe = $client->findElement(WebDriverBy::cssSelector(self::SELECTOR_MEDIA_PICKER_MODAL.' '.self::SELECTOR_MEDIA_PICKER_IFRAME));
+        $client->switchTo()->frame($iframe);
+
+        try {
+            $isEmbedded = $this->pollUntilTrue(
+                $client,
+                'return document.readyState === "complete" && document.body.classList.contains("pw-admin-popup-modal")',
+                [],
+                self::timeoutMedium(),
+            );
+
+            $result = $client->executeScript('
+                const menu = document.querySelector(".sidebar-wrapper");
+                const main = document.querySelector(".main-content");
+                return {
+                    hasMenu: menu !== null,
+                    menuDisplay: menu === null ? "" : getComputedStyle(menu).display,
+                    mainWidth: Math.round(main?.getBoundingClientRect().width ?? 0),
+                    viewportWidth: window.innerWidth
+                };
+            ');
+        } finally {
+            $client->switchTo()->defaultContent();
+        }
+
+        self::assertTrue($isEmbedded, 'The embedded media library should flag its body as a picker popup');
+        self::assertIsArray($result);
+
+        /** @var array{hasMenu: bool, menuDisplay: string, mainWidth: int, viewportWidth: int} $result */
+        self::assertTrue($result['hasMenu'], 'EasyAdmin no longer renders its menu in .sidebar-wrapper: update the picker CSS');
+        self::assertSame('none', $result['menuDisplay'], 'The admin menu should be hidden inside the picker');
+        self::assertGreaterThan(
+            $result['viewportWidth'] * 0.9,
+            $result['mainWidth'],
+            'The media library should span the picker width, not the menu column it replaces',
+        );
 
         $this->closeMediaPickerModal($client);
     }
