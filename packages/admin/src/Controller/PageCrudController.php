@@ -15,6 +15,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Option\TextAlign;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
@@ -529,6 +530,7 @@ class PageCrudController extends AbstractAdminCrudController
         if ($this->holdIsAvailable()) {
             yield DateTimeField::new('holdPublicationAt', 'adminPageHoldLabel')
                 ->setSortable(true)
+                ->setTextAlign(TextAlign::CENTER)
                 ->setTemplatePath('@pwAdmin/components/hold_toggle.html.twig');
         }
 

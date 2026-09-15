@@ -47,7 +47,9 @@ final class PageListActionsTest extends AbstractAdminTestClass
 
         // The hold switch owns a cell now; it no longer sits above the tag input.
         self::assertCount(0, $crawler->filter('.pw-inline-tags-wrapper .pw-hold'));
-        self::assertGreaterThan(0, $crawler->filter('td[data-column="holdPublicationAt"] .pw-hold')->count());
+        $holdCells = $crawler->filter('td[data-column="holdPublicationAt"]');
+        self::assertGreaterThan(0, $holdCells->filter('.pw-hold')->count());
+        self::assertStringContainsString('text-center', (string) $holdCells->first()->attr('class'));
     }
 
     public function testViewActionOpensEachPageOnItsOwnHost(): void
