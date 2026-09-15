@@ -15,10 +15,11 @@
   background-color: transparent;
 }
 
-/* The title is hidden, so nothing holds the buttons at the end of the row any more */
+/* The title is hidden, so nothing holds the buttons at the end of the row any more.
+   The backdrop is painted by .content-header::before, not here: a background on this
+   element only covers the buttons, leaving the rest of the sticky band see-through. */
 .ea-edit .page-actions,
 .ea-new .page-actions {
-  background-color: rgba(255, 255, 255, 0.5);
   padding: 5px;
   margin-top: -10px;
   margin-right: -5px;
@@ -41,7 +42,19 @@
   white-space: nowrap;
 }
 
-/* Have sticky save button even on mobile */
+/* Have sticky save button even on mobile.
+   The band needs its own opaque backdrop or the page scrolls visibly through it.
+   It is drawn by a pseudo-element rather than background-color because .page-actions
+   is pulled 10px above the header box and would otherwise stick out of the paint. */
+body.ea-edit .content-header::before,
+body.ea-new .content-header::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--ea-sp-8) * -1) 0;
+  z-index: -1;
+  background-color: var(--bs-body-bg, #fff);
+}
+
 body.ea-edit .content-header,
 body.ea-new .content-header {
   inset-block-start: 0px !important;
