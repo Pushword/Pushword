@@ -287,12 +287,32 @@
                 <td class="pw-m-date">{% if media.updatedAt %}<span title="{{ media.updatedAt|format_datetime }}">{{ media.updatedAt|format_date('short') }}</span>{% endif %}</td>
                 <td class="pw-row-actions">
                   <span class="pw-row-status d-inline"></span>
-                  <a href="{{ editUrl }}" class="btn btn-outline-secondary btn-sm" title="{{ 'adminMediaPickerEdit'|trans }}">
-                    <i class="fas fa-pencil-alt"></i>
-                  </a>
-                  <button type="button" class="btn btn-outline-danger btn-sm pw-delete-btn" data-id="{{ media.id }}" data-confirm="{{ 'delete.confirm'|trans({}, 'EasyAdminBundle') }}" title="{{ 'action.delete'|trans({}, 'EasyAdminBundle') }}">
-                    <i class="fas fa-trash"></i>
-                  </button>
+                  {# Same row menu as the page list: one quiet toggle, delete behind it
+                     rather than a red button standing at full strength on every row. #}
+                  <twig:ea:ActionMenu class="dropdown-actions pw-row-menu">
+                    <twig:ea:ActionMenu:Button withoutDropdownToggleMarker aria-label="{{ 'adminPageActionsLabel'|trans }}">
+                      <twig:ea:Icon name="internal:dots-horizontal" />
+                    </twig:ea:ActionMenu:Button>
+                    <twig:ea:ActionMenu:Overlay>
+                      <twig:ea:ActionMenu:ActionList>
+                        <li>
+                          <a class="dropdown-item action-edit dropdown-item-variant-default" href="{{ editUrl }}">
+                            <span class="icon action-icon"><i class="fas fa-pencil-alt"></i></span>
+                            <span class="action-label">{{ 'adminMediaPickerEdit'|trans }}</span>
+                          </a>
+                        </li>
+                        <li>
+                          <button type="button"
+                            class="dropdown-item action-delete dropdown-item-variant-danger pw-delete-btn"
+                            data-id="{{ media.id }}"
+                            data-confirm="{{ 'delete.confirm'|trans({}, 'EasyAdminBundle') }}">
+                            <span class="icon action-icon"><i class="fas fa-trash"></i></span>
+                            <span class="action-label">{{ 'action.delete'|trans({}, 'EasyAdminBundle') }}</span>
+                          </button>
+                        </li>
+                      </twig:ea:ActionMenu:ActionList>
+                    </twig:ea:ActionMenu:Overlay>
+                  </twig:ea:ActionMenu>
                 </td>
               </tr>
             {% endfor %}
@@ -401,7 +421,6 @@
     .pw-m-altsinput:focus { min-height: 56px; overflow: auto; }
 
     .pw-media-table .pw-row-actions { white-space: nowrap; text-align: right; }
-    .pw-media-table .pw-row-actions .btn { padding: 2px 6px; font-size: 12px; }
     .pw-status-ok { color: #198754; }
     .pw-status-err { color: #dc3545; }
     .pw-status-spin { display: inline-block; width: 16px; height: 16px; border: 2px solid #ccc; border-top-color: #0d6efd; border-radius: 50%; animation: pw-spin .6s linear infinite; }

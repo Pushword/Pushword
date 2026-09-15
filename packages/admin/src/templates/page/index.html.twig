@@ -4,7 +4,7 @@
   <td class="actions actions-as-dropdown">
     {% if entity.actions.count > 0 %}
       {% set hasAnyActionWithIcon = entity.actions|filter(item => item.isActionGroup ? false : item.icon is not null)|length > 0 %}
-      <twig:ea:ActionMenu class="dropdown-actions pw-page-actions">
+      <twig:ea:ActionMenu class="dropdown-actions pw-page-actions pw-row-menu">
         <twig:ea:ActionMenu:Button withoutDropdownToggleMarker aria-label="{{ 'adminPageActionsLabel'|trans }}">
           <twig:ea:Icon name="internal:dots-horizontal" />
         </twig:ea:ActionMenu:Button>

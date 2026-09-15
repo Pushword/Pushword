@@ -56,14 +56,16 @@
   text-decoration: underline;
 }
 
-/* The row toolbar stays quiet until the row is hovered or the menu is reached. */
-.pw-page-actions .dropdown-toggle {
+/* The per-row action menu, shared by the page list and the media list: quiet until
+   the row is hovered or the menu is reached. Not scoped to .datagrid — the media
+   list is a hand-rolled table. */
+.pw-row-menu .dropdown-toggle {
   color: var(--text-muted);
 }
 
-.datagrid tr:hover .pw-page-actions .dropdown-toggle,
-.pw-page-actions .dropdown-toggle:focus-visible,
-.pw-page-actions .dropdown-toggle[aria-expanded='true'] {
+tr:hover .pw-row-menu .dropdown-toggle,
+.pw-row-menu .dropdown-toggle:focus-visible,
+.pw-row-menu .dropdown-toggle[aria-expanded='true'] {
   color: var(--bs-gray-900);
 }
 
