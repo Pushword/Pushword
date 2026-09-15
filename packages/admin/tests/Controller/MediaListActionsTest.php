@@ -57,7 +57,9 @@ final class MediaListActionsTest extends AbstractAdminTestClass
     {
         $client = $this->loginUser();
 
-        // The list only renders row actions when it has a row.
+        // Upload rather than lean on the media fixtures: they are known to go missing
+        // when a worker is slowed (see MediaUsageTrackerTest), and a row is the whole
+        // point of this class.
         $crawler = $client->request(Request::METHOD_GET, '/admin/multi-upload');
         $csrfToken = $crawler->filter('#pw-multi-upload')->attr('data-csrf-token');
 

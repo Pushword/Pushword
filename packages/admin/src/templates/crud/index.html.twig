@@ -18,9 +18,8 @@
    most needs direction, so say which of the two situations they are in and offer the
    way out of it. #}
 {% block table_body_empty %}
-  {% set searchQuery = ea.search.query|default('')|trim %}
-  {% set isFiltered = searchQuery is not empty or app.request.query.all('filters') is not empty %}
-  {% set newAction = global_actions|filter(action => 'new' == action.name)|first|default(null) %}
+  {% set isFiltered = ea.search.query|default('')|trim is not empty or app.request.query.all('filters') is not empty %}
+  {% set newAction = global_actions|filter(action => 'new' == action.name)|first %}
 
   <tr class="no-results">
     <td colspan="100">
@@ -37,7 +36,7 @@
           <a class="btn btn-secondary" href="{{ ea_url().set('query', null).set('filters', null).set('page', 1) }}">
             {{ 'adminEmptyStateClearSearch'|trans }}
           </a>
-        {% elseif newAction is not null %}
+        {% elseif newAction %}
           <a class="btn btn-primary" href="{{ newAction.linkUrl }}">{{ newAction.label|trans }}</a>
         {% endif %}
       </div>
