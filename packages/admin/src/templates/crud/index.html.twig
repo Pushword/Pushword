@@ -12,3 +12,35 @@
 
   {{ parent() }}
 {% endblock %}
+
+{# EasyAdmin answers an empty list with one line of text between two hairlines, plus
+   14 skeleton rows that admin.css then has to hide. An empty list is where a user
+   most needs direction, so say which of the two situations they are in and offer the
+   way out of it. #}
+{% block table_body_empty %}
+  {% set searchQuery = ea.search.query|default('')|trim %}
+  {% set isFiltered = searchQuery is not empty or app.request.query.all('filters') is not empty %}
+  {% set newAction = global_actions|filter(action => 'new' == action.name)|first|default(null) %}
+
+  <tr class="no-results">
+    <td colspan="100">
+      <div class="pw-empty-state">
+        <i class="fa {{ isFiltered ? 'fa-search' : 'fa-inbox' }} pw-empty-state__icon" aria-hidden="true"></i>
+        <p class="pw-empty-state__title">
+          {{ (isFiltered ? 'adminEmptyStateFilteredTitle' : 'adminEmptyStateTitle')|trans }}
+        </p>
+        <p class="pw-empty-state__hint">
+          {{ (isFiltered ? 'adminEmptyStateFilteredHint' : 'adminEmptyStateHint')|trans }}
+        </p>
+
+        {% if isFiltered %}
+          <a class="btn btn-secondary" href="{{ ea_url().set('query', null).set('filters', null).set('page', 1) }}">
+            {{ 'adminEmptyStateClearSearch'|trans }}
+          </a>
+        {% elseif newAction is not null %}
+          <a class="btn btn-primary" href="{{ newAction.linkUrl }}">{{ newAction.label|trans }}</a>
+        {% endif %}
+      </div>
+    </td>
+  </tr>
+{% endblock %}

@@ -8,6 +8,11 @@ adminDraft: Draft
 adminEdit: Edit
 adminEdition: Edition
 adminElementDeleted: "Element deleted."
+adminEmptyStateClearSearch: "Clear search and filters"
+adminEmptyStateFilteredHint: "No entry matches your search or filters. Try a broader search, or clear them to see everything."
+adminEmptyStateFilteredTitle: "No result"
+adminEmptyStateHint: "This list is empty. Add the first entry to get started."
+adminEmptyStateTitle: "Nothing here yet"
 adminLabelCheatsheet: Cheatsheet
 adminLabelCheckContent: "Content scan"
 adminLabelContent: Pages

@@ -428,9 +428,33 @@ textarea:focus:not(:focus-visible) {
   outline-offset: var(--focus-ring-offset);
 }
 
-/* Fix EasyAdmin empty-state: hide skeleton rows when "No results" is shown */
-.datagrid tbody:has(.no-results) .empty-row {
-  display: none;
+/* An empty list is the moment a user most needs direction, so it gets room, an icon,
+   a sentence naming which of the two situations they are in, and the way out. */
+.pw-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ea-sp-4);
+  padding: var(--ea-sp-16) var(--ea-sp-8);
+  text-align: center;
+}
+
+.pw-empty-state__icon {
+  font-size: var(--pw-text-xl);
+  color: #cbd5e1; /* slate-300 */
+}
+
+.pw-empty-state__title {
+  margin: 0;
+  color: var(--bs-gray-900);
+  font-size: var(--pw-text-md);
+  font-weight: 600;
+}
+
+.pw-empty-state__hint {
+  max-width: 44ch;
+  margin: 0;
+  color: var(--text-muted);
 }
 
 /* purgecss end ignore */

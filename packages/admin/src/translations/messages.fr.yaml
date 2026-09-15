@@ -8,6 +8,11 @@ adminDraft: Brouillon
 adminEdit: Editer
 adminEdition: Edition
 adminElementDeleted: 'Elément supprimé.'
+adminEmptyStateClearSearch: 'Effacer la recherche et les filtres'
+adminEmptyStateFilteredHint: "Aucune entrée ne correspond à votre recherche ou à vos filtres. Élargissez la recherche, ou effacez-les pour tout revoir."
+adminEmptyStateFilteredTitle: 'Aucun résultat'
+adminEmptyStateHint: 'Cette liste est vide. Ajoutez la première entrée pour démarrer.'
+adminEmptyStateTitle: "Rien ici pour l'instant"
 adminLabelCheatsheet: Aide-mémoire
 adminLabelCheckContent: 'Scan du contenu'
 adminLabelContent: Pages
