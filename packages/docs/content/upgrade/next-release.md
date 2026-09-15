@@ -1,5 +1,5 @@
 ---
-title: 'flat imports include new pages in the generated index; `{#id}` block attributes apply before any block, not only headings; `> [!question]` notices fold their answer'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,20 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/core`, `pushword/flat`
-
-## Flat page index
-
-`pw:flat:sync --mode=import` now includes newly created pages in `index.csv` and `index.draft.csv` on the first run. Nothing to do.
-
-## `{#id}` block attributes
-
-`{#id}` and `{#id .class}` on the line before a block now apply to it, like `{id=…}` already did and like CommonMark's attributes extension. They only worked before a heading until now. Check pages where a line starting with `{#` precedes a paragraph or a list and was meant to stay visible.
-
-## `> [!question]` notices
-
-A `> [!question]` blockquote now renders as a folded `<details>` carrying schema.org
-`Question` microdata, instead of the generic notice box. Pages using `question` as a
-plain label and wanting the box back rename it. The Markdown fragment cache version was
-bumped, so the first render after the upgrade rebuilds it — nothing to run.

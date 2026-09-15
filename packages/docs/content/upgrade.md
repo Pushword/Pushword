@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.6](/upgrade/1.0.6) | `core` `flat` | flat imports include new pages in the generated index; `{#id}` block attributes apply before any block, not only headings; `> [!question]` notices fold their answer |
 | [1.0.4](/upgrade/1.0.4) | `admin` `admin-block-editor` `core` `dev-app` `new` `page-scanner` `repurpose` `static-generator` | PHP 8.5 required; PHP files use strict types; optional Rust minification, content analysis and Markdown; Tempest renders Markdown by default; contact markup uses core templates; admin links restrict URLs; MariaDB connections use read committed isolation |
 | [1.0.0](/upgrade/1.0.0) | `core` `dev-app` | the Docker image uses patched OS and Go dependencies |
 | [rc897](/upgrade/rc897) | `admin` `core` `dev-app` `flat` `page-scanner` `repurpose` `static-generator` | production credentials are one-time; authenticated, generated and network surfaces are hardened — run `pw:image:cache` |
