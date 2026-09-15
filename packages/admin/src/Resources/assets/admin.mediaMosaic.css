@@ -14,7 +14,7 @@
 
 .media-mosaic__card {
   border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border-radius: var(--pw-radius-lg);
   background-color: #fff;
   display: flex;
   flex-direction: column;
@@ -161,7 +161,7 @@
   text-align: center;
   padding: 2rem;
   border: 1px dashed #cbd5f5;
-  border-radius: 0.75rem;
+  border-radius: var(--pw-radius-lg);
   color: #94a3b8;
   background-color: #f8fafc;
 }

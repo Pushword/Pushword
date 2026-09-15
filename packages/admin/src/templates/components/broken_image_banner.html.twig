@@ -3,7 +3,7 @@
   {% set brokenImages = pw_broken_images(entity.instance) %}
   {% if brokenImages is not empty %}
     <div class="pw-broken-image-banner"
-         style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 1px solid #ef4444; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.12);"
+         style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 1px solid #ef4444; border-radius: var(--pw-radius-md); padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.12);"
          role="alert">
       <div style="display: flex; align-items: flex-start; gap: 12px;">
         <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #ef4444; border-radius: 50%; flex-shrink: 0;">

@@ -22,7 +22,7 @@
    as one condition of it rather than as a second list. */
 .pw-criteria-group[data-depth='1'] {
   border-left: 3px solid var(--bs-border-color, #dee2e6);
-  border-radius: 0.25rem;
+  border-radius: var(--pw-radius-sm);
   padding: 0.5rem 0 0.5rem 0.75rem;
 }
 

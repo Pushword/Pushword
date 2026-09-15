@@ -1,6 +1,6 @@
 <div id="pw-edit-lock-banner"
      class="hidden"
-     style="display: none; position: sticky; top: 0; z-index: 1000; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-bottom: 2px solid #f59e0b; padding: 12px 20px; margin-bottom: 16px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);"
+     style="display: none; position: sticky; top: 0; z-index: 1000; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-bottom: 2px solid #f59e0b; padding: 12px 20px; margin-bottom: 16px; border-radius: 0 0 var(--pw-radius-md) var(--pw-radius-md); box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);"
      role="alert">
   <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
     <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #f59e0b; border-radius: 50%; flex-shrink: 0;">
@@ -11,7 +11,7 @@
     <span id="pw-edit-lock-message" style="flex-grow: 1; font-size: var(--pw-text-sm); font-weight: 500; color: #92400e;"></span>
     <button id="pw-edit-lock-refresh"
             type="button"
-            style="display: none; align-items: center; gap: 6px; padding: 8px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: var(--pw-text-sm); font-weight: 600; cursor: pointer; transition: background 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"
+            style="display: none; align-items: center; gap: 6px; padding: 8px 16px; background: #f59e0b; color: white; border: none; border-radius: var(--pw-radius-md); font-size: var(--pw-text-sm); font-weight: 600; cursor: pointer; transition: background 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"
             onmouseover="this.style.background='#d97706'"
             onmouseout="this.style.background='#f59e0b'"
             onclick="window.location.reload()">

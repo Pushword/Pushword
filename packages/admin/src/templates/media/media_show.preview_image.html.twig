@@ -21,17 +21,17 @@
     <div class="col-md-6">
         <div style="margin-bottom: 15px;">
             <strong>{{ 'adminMediaPreviewPath'|trans }}</strong>
-            <code style="display: block; margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;">{{ media.fileName }}</code>
+            <code style="display: block; margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: var(--pw-radius-sm);">{{ media.fileName }}</code>
         </div>
 
         <div style="margin-bottom: 15px;">
             <strong>{{ 'adminMediaPreviewMarkdown'|trans }}</strong>
-            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>![{{ media.alt|replace({'[': '', ']': ''}) }}]({{ media.fileName }})</code></pre>
+            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: var(--pw-radius-sm);"><code>![{{ media.alt|replace({'[': '', ']': ''}) }}]({{ media.fileName }})</code></pre>
         </div>
 
         <div style="margin-bottom: 15px;">
             <strong>{{ 'adminMediaPreviewJson'|trans }}</strong>
-            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>{
+            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: var(--pw-radius-sm);"><code>{
   "{{ media.fileName }}": "{{ media.alt|replace({'"': '\\"'}) }}"
 }</code></pre>
         </div>
@@ -39,14 +39,14 @@
         {% if media.getMainColor %}
         <div style="margin-bottom: 15px;">
             <strong>{{ 'adminMediaPreviewDominantColor'|trans }}</strong>
-            <pre style="margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background-color: {{ media.getMainColor }}; color: {{ media.mainColorOpposite }};">{{ media.getMainColor }}</pre>
+            <pre style="margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: var(--pw-radius-sm); background-color: {{ media.getMainColor }}; color: {{ media.mainColorOpposite }};">{{ media.getMainColor }}</pre>
         </div>
         {% endif %}
 
         {% if media.fileNameHistory is not empty %}
         <div style="margin-bottom: 15px;">
             <strong>{{ 'adminMediaPreviewHistory'|trans }}</strong>
-            <ul style="margin-top: 5px; padding: 8px 8px 8px 28px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; list-style: disc;">
+            <ul style="margin-top: 5px; padding: 8px 8px 8px 28px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: var(--pw-radius-sm); list-style: disc;">
               {% for oldName in media.fileNameHistory %}
                 <li><code>{{ oldName }}</code></li>
               {% endfor %}

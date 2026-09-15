@@ -29,7 +29,7 @@
 }
 
 .pw-media-picker {
-  border-radius: 0.75rem;
+  border-radius: var(--pw-radius-lg);
   padding: 0.5rem 0.75rem;
   background: transparent;
   display: flex;
@@ -50,7 +50,7 @@
 
 .pw-media-picker__thumb {
   width: 140px;
-  border-radius: 0.5rem;
+  border-radius: var(--pw-radius-md);
   overflow: hidden;
   flex-shrink: 0;
   background: #f3f3f3;
@@ -194,7 +194,7 @@
   flex: 1;
   /*
   height: 90%;
-  border-radius: 0.75rem;
+  border-radius: var(--pw-radius-lg);
   */
   height: 100%;
   border: 0;
@@ -314,7 +314,7 @@ body.pw-admin-popup-modal .modal-backdrop {
 .pw-media-picker-multi .media-mosaic__card.pw-multi-selected {
   outline: 3px solid var(--color-primary, #0284c7);
   outline-offset: 3px;
-  border-radius: 8px;
+  border-radius: var(--pw-radius-md);
 }
 
 .pw-multi-select-bar {
@@ -342,7 +342,7 @@ body.pw-admin-popup-modal .modal-backdrop {
   background: var(--color-primary, #0284c7);
   color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--pw-radius-md);
   font-weight: 600;
   font-size: var(--pw-text-sm);
   cursor: pointer;
@@ -357,7 +357,7 @@ body.pw-admin-popup-modal .modal-backdrop {
   background: transparent;
   color: #94a3b8;
   border: 1px solid #475569;
-  border-radius: 6px;
+  border-radius: var(--pw-radius-md);
   font-size: var(--pw-text-sm);
   cursor: pointer;
 }

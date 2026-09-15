@@ -78,7 +78,7 @@ body.ea-new .content-header {
 .columnFields .form-fieldset.pw-settings-accordion {
   background-color: var(--sidebar-bg, #f9fafb);
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 0.5rem;
+  border-radius: var(--pw-radius-md);
   margin-bottom: 1rem;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
 }
@@ -207,7 +207,7 @@ body.ea-new .content-header {
   margin-block-end: 1rem;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--bs-border-color);
-  border-radius: var(--bs-border-radius);
+  border-radius: var(--pw-radius-md);
   background-color: var(--bs-tertiary-bg);
   color: var(--bs-body-color);
   font-size: var(--pw-text-sm);
