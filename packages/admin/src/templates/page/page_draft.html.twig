@@ -21,6 +21,10 @@
 (function() {
   'use strict';
 
+  {# The admin is translated; formatting dates against a hardcoded locale showed
+     French dates to every other language. #}
+  const adminLocale = '{{ app.request.locale|e('js') }}';
+
   const toggleSwitch = document.getElementById('pw-draft-toggle-switch');
   const toggleWrapper = document.getElementById('pw-draft-toggle-wrapper');
   const targetInputSelector = toggleSwitch?.getAttribute('data-target-input');
@@ -70,7 +74,7 @@
 
     if (statusText) {
       statusText.textContent = hasValue
-        ? new Date(targetInput.value).toLocaleString('fr-FR', {
+        ? new Date(targetInput.value).toLocaleString(adminLocale, {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
