@@ -7,7 +7,9 @@
 
 {% block global_actions %}
   {{ parent() }}
-  <a href="{{ path('admin_media_multi_upload') }}" class="btn btn-primary ms-2">
+  {# Secondary: "Add Media" is the primary action of this screen, and two filled
+     buttons side by side leave the eye no way to tell which one is the default. #}
+  <a href="{{ path('admin_media_multi_upload') }}" class="btn btn-secondary ms-2">
     <i class="fas fa-upload" aria-hidden="true"></i>
     <span class="d-none d-sm-inline ms-1">{{ 'adminMediaMultiUpload'|trans }}</span>
   </a>
