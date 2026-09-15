@@ -1,5 +1,5 @@
 ---
-title: 'page list row actions moved into a dropdown; the hold switch became a column and `pw_page_holdable()` is gone; the admin has a type scale and `<small>` no longer compounds'
+title: 'page list row actions moved into a dropdown; the hold switch became a column and `pw_page_holdable()` is gone; the admin has a type scale, corner-radius and elevation tokens, and `<small>` no longer compounds'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -67,3 +67,9 @@ of a mix of `rem`, `px`, `em` and `%` that computed to values like 11.375px and 
 **Affects sites that style admin text or rely on `<small>` inside the admin.** `small` and
 `.small` are now pinned to `--pw-text-xs` rather than Bootstrap's `0.875em`, so they no
 longer shrink relative to their container. Use the custom properties in your own admin CSS.
+
+## Corner radius and elevation are tokens too
+
+`--pw-radius-sm|md|lg` (4/8/12px) replace the eight radii the admin used to declare, and
+`--pw-elevation-1|2|3|4` replace ten ad-hoc shadows written in three notations. Nothing to
+do — reuse the properties instead of hard-coding values in your own admin CSS.

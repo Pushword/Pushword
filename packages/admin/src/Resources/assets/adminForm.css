@@ -68,7 +68,7 @@ body.ea-new .content-header {
   @keyframes stuck-styles {
     to {
       background: pink;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--pw-elevation-2);
       padding-bottom: 2rem;
     }
   }
@@ -80,7 +80,7 @@ body.ea-new .content-header {
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: var(--pw-radius-md);
   margin-bottom: 1rem;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
+  box-shadow: var(--pw-elevation-1); /* shadow-sm */
 }
 
 .pw-settings-toggle {
@@ -153,7 +153,7 @@ body.ea-new .content-header {
 
 .form-column .form-fieldset-header {
   padding: calc(var(--bs-gutter-x) / 4) var(--bs-gutter-x) calc(var(--bs-gutter-x) / 4);
-  box-shadow: 0 1px 2px #0000000d;
+  box-shadow: var(--pw-elevation-1);
 }
 
 /* A collection entry rendered by useEntryCrudForm() carries the entry CRUD's own

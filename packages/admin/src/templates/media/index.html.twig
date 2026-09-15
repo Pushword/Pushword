@@ -363,7 +363,7 @@
       overflow: hidden;
       border-radius: var(--pw-radius-md);
       border: 1px solid #dee2e6;
-      box-shadow: 0 1px 4px rgba(0,0,0,.12);
+      box-shadow: var(--pw-elevation-1);
       background-color: #f1f5f9;
     }
     .pw-m-thumb::before {
@@ -428,7 +428,7 @@
     .pw-status-spin { display: inline-block; width: 16px; height: 16px; border: 2px solid #ccc; border-top-color: #0d6efd; border-radius: 50%; animation: pw-spin .6s linear infinite; }
     @keyframes pw-spin { to { transform: rotate(360deg); } }
     .pw-lightbox { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
-    .pw-lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: var(--pw-radius-md); box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+    .pw-lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: var(--pw-radius-md); box-shadow: var(--pw-elevation-4); }
   </style>
 {% endblock %}
 

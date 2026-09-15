@@ -24,7 +24,7 @@
 #Review_mediaList .accordion-item {
   background-color: var(--sidebar-bg, #f9fafb);
   border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 1px 2px #0000000d;
+  box-shadow: var(--pw-elevation-1);
   border-radius: 0;
 }
 
@@ -199,7 +199,7 @@
   height: 100%;
   border: 0;
   display: block;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--pw-elevation-4);
 }
 
 @media (min-width: 992px) {
@@ -308,7 +308,7 @@ body.pw-admin-popup-modal .modal-backdrop {
   font-size: var(--pw-text-md);
   font-weight: 700;
   z-index: 10;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  box-shadow: var(--pw-elevation-2);
 }
 
 .pw-media-picker-multi .media-mosaic__card.pw-multi-selected {
@@ -330,7 +330,7 @@ body.pw-admin-popup-modal .modal-backdrop {
   padding: 14px 20px;
   background: rgba(30,41,59,0.95);
   backdrop-filter: blur(8px);
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 -8px 20px rgb(15 23 42 / 0.18);
 }
 
 .sf-toolbar ~ .pw-multi-select-bar {
