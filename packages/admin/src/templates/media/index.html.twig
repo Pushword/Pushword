@@ -141,7 +141,7 @@
                               url="{{ item.linkUrl }}"
                               icon="{{ item.icon }}"
                               icon:class="action-icon"
-                              htmlAttributes="{{ item.htmlAttributes }}"
+                              htmlAttributes="{{ item.htmlAttributes|ea_html_attrs }}"
                               renderAsForm="{{ item.isRenderedAsForm }}"
                               label="{{ item.label|trans }}"
                               label:class="action-label"
