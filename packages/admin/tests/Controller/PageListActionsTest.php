@@ -100,4 +100,22 @@ final class PageListActionsTest extends AbstractAdminTestClass
         self::assertStringContainsString('/edit', (string) $title->attr('href'));
         self::assertNull($title->attr('style'), 'Title styling belongs to .pw-page-title, not to an inline style');
     }
+
+    public function testTitleCellTextKeepsTheTableFontSize(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
+
+        // Hierarchy inside the cell is carried by weight and colour. A percentage
+        // size here compounds against the cell and lands off any type scale
+        // (110% of 14px = 15.4px), so the text lines declare no size at all.
+        $cell = $crawler->filter('.datagrid tbody tr[data-id] .pw-page-inline')->first();
+        self::assertCount(1, $cell);
+
+        foreach (['a.pw-page-title', 'a[target="_blank"]', '.pw-inline-tags-wrapper > span'] as $selector) {
+            $node = $cell->filter($selector)->first();
+            self::assertCount(1, $node, $selector.' should exist in the title cell');
+            self::assertStringNotContainsString('font-size', (string) $node->attr('style'), $selector.' must not set a font size');
+        }
+    }
 }

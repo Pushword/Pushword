@@ -40,12 +40,12 @@
   --bs-btn-active-border-color: var(--button-hover-border-color, var(--sky-700));
 }
 
-/* Page list: the row's content is the title, not its toolbar. */
+/* Page list: the row's content is the title, not its toolbar. Weight and colour
+   carry the hierarchy inside the cell, so every line keeps the table's own size. */
 .pw-page-title {
   display: inline-block;
   padding-block: var(--ea-sp-4);
   color: var(--bs-gray-900);
-  font-size: 110%;
   font-weight: 600;
   text-decoration: none;
 }
