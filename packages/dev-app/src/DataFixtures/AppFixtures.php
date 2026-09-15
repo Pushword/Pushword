@@ -62,11 +62,15 @@ class AppFixtures extends Fixture
             ->setProjectDir($this->params->get('kernel.project_dir'))
             ->setStoreIn($this->params->get('pw.media_dir'))
             ->setMimeType($data['mime'])
-            ->setSize(2)
             ->setDimensions([1000, 1000])
             ->setFileName($data['file'])
             ->setAlt($name)
             ->setHash();
+
+            // Needs the file name, hence set after the chain. A constant made the
+            // media list show "2 B" next to every file, whatever its real weight.
+            $path = $media[$name]->getPath();
+            $media[$name]->setSize(is_file($path) ? (int) filesize($path) : 0);
 
             $manager->persist($media[$name]);
         }

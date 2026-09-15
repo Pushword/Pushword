@@ -39,15 +39,21 @@ class AppFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         foreach (['Demo 1' => '1.jpg', 'Demo 2' => '2.jpg', 'Demo 3' => '3.jpg'] as $alt => $fileName) {
-            $manager->persist(new Media()
+            $media = new Media()
                 ->setProjectDir((string) $this->params->get('kernel.project_dir'))
                 ->setStoreIn((string) $this->params->get('pw.media_dir'))
                 ->setMimeType('image/jpeg')
-                ->setSize(2)
                 ->setDimensions([1000, 1000])
                 ->setFileName($fileName)
                 ->setAlt($alt)
-                ->setHash());
+                ->setHash();
+
+            // Needs the file name, hence set after the chain. A constant made the
+            // media list show "2 B" next to every file, whatever its real weight.
+            $path = $media->getPath();
+            $media->setSize(is_file($path) ? (int) filesize($path) : 0);
+
+            $manager->persist($media);
         }
 
         $locale = (string) $this->params->get('kernel.default_locale');
