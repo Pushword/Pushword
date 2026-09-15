@@ -12,8 +12,8 @@
           </svg>
         </div>
         <div style="flex-grow: 1;">
-          <div style="font-size: 14px; font-weight: 600; color: #991b1b;">{{ 'adminPageBrokenImageWarning'|trans }}</div>
-          <ul style="margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: #7f1d1d;">
+          <div style="font-size: var(--pw-text-sm); font-weight: 600; color: #991b1b;">{{ 'adminPageBrokenImageWarning'|trans }}</div>
+          <ul style="margin: 6px 0 0; padding-left: 18px; font-size: var(--pw-text-sm); color: #7f1d1d;">
             {% for src in brokenImages %}
               <li><code>{{ src }}</code></li>
             {% endfor %}

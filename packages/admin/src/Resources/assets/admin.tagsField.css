@@ -20,7 +20,7 @@
   top: 27%;
   z-index: 2;
   color: #9ca3af; /* WCAG AA: gray-400 for adequate contrast */
-  font-size: 2em;
+  font-size: var(--pw-text-xl);
 }
 
 .tagsFieldWrapper input.form-control {

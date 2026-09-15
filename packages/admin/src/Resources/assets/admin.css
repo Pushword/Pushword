@@ -22,10 +22,25 @@
   --button-primary-hover-bg: linear-gradient(180deg, var(--sky-600), var(--sky-700));
   --button-primary-active-bg: linear-gradient(180deg, var(--sky-500), var(--sky-400));
   --resize-handler-hover-bg: var(--sky-600);
+  /* Type scale. Five steps, no fractional values and no em/% units: a relative size
+     compounds against whatever context a component lands in, which is how the admin
+     ended up rendering text at 11.375px, 12.8px, 13.6px and 15.2px. */
+  --pw-text-xs: 0.75rem; /* 12px */
+  --pw-text-sm: 0.875rem; /* 14px */
+  --pw-text-md: 1rem; /* 16px */
+  --pw-text-lg: 1.25rem; /* 20px */
+  --pw-text-xl: 1.75rem; /* 28px */
   /* Accessibility: Focus styles */
   --focus-ring-color: var(--sky-600);
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
+}
+
+/* Bootstrap sizes <small> in em, so it compounds with its context: the publication
+   date next to the draft switch was rendering at 11.375px. Pin it to the scale. */
+small,
+.small {
+  font-size: var(--pw-text-xs);
 }
 
 .btn-outline-secondary,
@@ -149,7 +164,7 @@ tr:hover .pw-row-menu .dropdown-toggle,
   border: 2px solid #fff;
   border-radius: 50%;
   color: #fff;
-  font-size: 9px;
+  font-size: 9px; /* glyph sized to the 20px badge, not body text: off the scale on purpose */
   line-height: 1;
   background: rgba(15, 23, 42, 0.62); /* slate-900 scrim, calm at rest */
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
@@ -236,7 +251,7 @@ tr:hover .pw-row-menu .dropdown-toggle,
   padding: 5px 9px;
   border: 1px solid #cbd5e1; /* slate-300 */
   border-radius: 5px;
-  font-size: 0.85rem;
+  font-size: var(--pw-text-sm);
   background: #fff;
 }
 

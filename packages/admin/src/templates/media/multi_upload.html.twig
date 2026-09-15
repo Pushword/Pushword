@@ -97,15 +97,15 @@
     @keyframes pw-spin { to { transform: rotate(360deg); } }
     #pw-upload-table td { vertical-align: middle; }
     .pw-row-actions { white-space: nowrap; }
-    .pw-row-actions .btn { padding: 2px 6px; font-size: 12px; }
+    .pw-row-actions .btn { padding: 2px 6px; font-size: var(--pw-text-xs); }
     .pw-filename-cell { white-space: nowrap; }
-    .pw-filename-cell input { display: inline-block; width: auto; max-width: calc(100% - 30px); font-family: monospace; font-size: 13px; }
-    .pw-ext { font-size: 12px; vertical-align: middle; font-family: monospace; }
+    .pw-filename-cell input { display: inline-block; width: auto; max-width: calc(100% - 30px); font-family: monospace; font-size: var(--pw-text-sm); }
+    .pw-ext { font-size: var(--pw-text-xs); vertical-align: middle; font-family: monospace; }
     .pw-license-row td { background: rgba(255,193,7,.08); }
-    .pw-license-row summary { cursor: pointer; font-size: 13px; color: #664d03; }
+    .pw-license-row summary { cursor: pointer; font-size: var(--pw-text-sm); color: #664d03; }
     .pw-license-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-top: 8px; }
-    .pw-license-input { display: flex; flex-direction: column; font-size: 11px; color: #6c757d; }
-    .pw-license-input input { border: 1px solid #dee2e6; background: #fff; font-size: 13px; }
+    .pw-license-input { display: flex; flex-direction: column; font-size: var(--pw-text-xs); color: #6c757d; }
+    .pw-license-input input { border: 1px solid #dee2e6; background: #fff; font-size: var(--pw-text-sm); }
     .pw-lightbox { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; cursor: pointer; }
     .pw-lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,.4); }
   </style>

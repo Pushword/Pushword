@@ -1,5 +1,5 @@
 ---
-title: 'page list row actions moved into a dropdown; the hold switch became a column and `pw_page_holdable()` is gone'
+title: 'page list row actions moved into a dropdown; the hold switch became a column and `pw_page_holdable()` is gone; the admin has a type scale and `<small>` no longer compounds'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -57,3 +57,13 @@ and Weight, and the list gained a "View" row action. Nothing to do.
 **Affects templates calling `pw_page_holdable()`.** That Twig function is removed — it
 ignored its `$host` argument and only reported whether `pushword/static-generator` was
 installed. Test for the bundle directly, or drop the call.
+
+## The admin CSS has a type scale
+
+Admin font sizes come from five custom properties — `--pw-text-xs` (12px), `--pw-text-sm`
+(14px), `--pw-text-md` (16px), `--pw-text-lg` (20px) and `--pw-text-xl` (28px) — instead
+of a mix of `rem`, `px`, `em` and `%` that computed to values like 11.375px and 15.2px.
+
+**Affects sites that style admin text or rely on `<small>` inside the admin.** `small` and
+`.small` are now pinned to `--pw-text-xs` rather than Bootstrap's `0.875em`, so they no
+longer shrink relative to their container. Use the custom properties in your own admin CSS.

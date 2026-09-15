@@ -99,7 +99,7 @@
 /* The answer to "what does this catch", so it stays legible next to the buttons
    that changed it. */
 .pw-criteria-count {
-  font-size: 0.875rem;
+  font-size: var(--pw-text-sm);
   opacity: 0.85;
 }
 

@@ -35,7 +35,7 @@
   bottom: 0.75rem;
   left: 0.75rem;
   z-index: 2;
-  font-size: 0.75rem;
+  font-size: var(--pw-text-xs);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   pointer-events: none;
@@ -95,7 +95,7 @@
 
 .media-mosaic__title {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--pw-text-md);
   font-weight: 600;
   line-height: 1.2;
 }
@@ -111,7 +111,7 @@
 
 .media-mosaic__filename {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--pw-text-sm);
   color: #94a3b8;
 }
 
@@ -120,7 +120,7 @@
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.125rem 0.5rem;
-  font-size: 0.85rem;
+  font-size: var(--pw-text-sm);
 }
 
 .media-mosaic__meta dt {
@@ -143,7 +143,7 @@
 .media-mosaic__footer {
   display: flex;
   justify-content: space-between;
-  font-size: 0.8rem;
+  font-size: var(--pw-text-xs);
   color: #94a3b8;
   margin-top: auto;
 }
