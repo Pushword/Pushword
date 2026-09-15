@@ -127,6 +127,63 @@ final class NoticeTest extends KernelTestCase
         self::assertStringContainsString('<h3 itemprop="name">Can luggage be carried?</h3>', $html);
         self::assertStringContainsString('<p>Wherever a road serves the night stop.</p>', $html);
         self::assertStringNotContainsString('notice-faq', $html);
+        self::assertStringNotContainsString('mainEntity', $html);
+    }
+
+    public function testQuestionCarriesItsMicrodata(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!question] Can luggage be carried?\n>\n> Wherever a road serves the night stop.");
+
+        self::assertStringContainsString('notice notice-question', $html);
+        self::assertStringContainsString('itemtype="https://schema.org/Question"', $html);
+        self::assertStringContainsString('itemprop="name">Can luggage be carried?</summary>', $html);
+        self::assertStringContainsString('itemprop="acceptedAnswer" itemtype="https://schema.org/Answer"', $html);
+        self::assertStringContainsString('<div itemprop="text"', $html);
+        self::assertStringContainsString('<p>Wherever a road serves the night stop.</p>', $html);
+    }
+
+    /** Find-in-page and crawlers read the answer, so the fold never hides it. */
+    public function testQuestionAnswerStaysInTheDomWhileFolded(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!question] Folded?\n> The answer.");
+
+        self::assertStringContainsString('<details', $html);
+        self::assertStringNotContainsString('<details open', $html);
+        self::assertStringContainsString('The answer.', $html);
+    }
+
+    /**
+     * Without an `itemprop` the Question stays a top-level microdata item, which is
+     * what makes it extractable on a page that is not a schema.org FAQPage.
+     */
+    public function testQuestionIsATopLevelMicrodataItem(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!question] Extractable?\n> Yes.");
+
+        self::assertStringNotContainsString('mainEntity', $html);
+    }
+
+    public function testQuestionTitleIsEscaped(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!question] <script>alert(1)</script>\n> body");
+
+        self::assertStringNotContainsString('<script>', $html);
+        self::assertStringContainsString('&lt;script&gt;', $html);
+    }
+
+    public function testQuestionWithoutATitleFallsBackToTheLabel(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!question]\n> Answered anyway.");
+
+        self::assertStringContainsString('itemprop="name">Question</summary>', $html);
+    }
+
+    public function testQuestionTakesTheAnchorOfItsAttributesLine(): void
+    {
+        $html = $this->getMarkdownParser()->transform("> [!question] Can luggage be carried? {#carry-luggage .compact}\n> Yes.");
+
+        self::assertStringContainsString('<details id="carry-luggage"', $html);
+        self::assertStringContainsString('compact', $html);
     }
 
     public function testLabelWithoutAComponentFallsBackToTheGenericNotice(): void

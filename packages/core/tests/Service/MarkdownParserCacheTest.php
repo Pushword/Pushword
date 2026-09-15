@@ -24,7 +24,7 @@ use Twig\Environment as Twig;
 final class MarkdownParserCacheTest extends KernelTestCase
 {
     /** Mirrors MarkdownParser::CACHE_VERSION, which is bumped whenever render output changes. */
-    private const string PARSER_VERSION = '21';
+    private const string PARSER_VERSION = '22';
 
     /**
      * The key of a fragment holding a Markdown image: parser version, media

@@ -1,0 +1,20 @@
+{# @var level string   always `question` here #}
+{# @var title string   the question written after the label, empty when none #}
+{# @var content string the answer, already rendered #}
+{# @var id string      anchor from an `{#anchor}` line above the notice, empty when none #}
+{# @var class string   classes from a `{.class}` line above the notice, empty when none #}
+
+{# The answer is folded but stays in the DOM: browsers open a `<details>` on
+   find-in-page, and a crawler reads it either way.
+
+   The Question carries no `itemprop`, which keeps it a top-level microdata item
+   wherever it lands. Making it the `mainEntity` of a `FAQPage` would tie the notice
+   to the page showing it, and notices are rendered into a cache keyed by content
+   alone, shared by every page. #}
+
+<details{% if id %} id="{{ id }}"{% endif %} class="notice notice-question my-6 rounded-lg border-l-4 border-gray-400 bg-gray-50 p-4 text-gray-900 dark:bg-gray-900 dark:text-gray-100{% if class %} {{ class }}{% endif %}" itemscope itemtype="https://schema.org/Question">
+  <summary class="notice-title cursor-pointer font-bold" itemprop="name">{{ title|default(level|capitalize) }}</summary>
+  <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+    <div itemprop="text" class="notice-content mt-2 [&>:first-child]:mt-0 [&>:last-child]:mb-0">{{ content|raw }}</div>
+  </div>
+</details>

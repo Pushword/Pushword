@@ -38,6 +38,11 @@ See **bold** _italic_ `inline code` #[link](/kitchen-sink){target="_blank"} <mar
 > `note`, `tip`, `important`, `warning` and `caution` ship with a palette; any other
 > label renders neutral and carries `notice-sponsored` for the theme to style.
 
+> [!question] Can luggage be carried between night stops?
+>
+> Folded into a `<details>` and marked up as a schema.org `Question` — find-in-page
+> still reaches this answer.
+
 ## Images et Galleries
 
 ### Simple Image
