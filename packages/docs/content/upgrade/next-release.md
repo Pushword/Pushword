@@ -1,5 +1,5 @@
 ---
-title: 'page list row actions moved into a dropdown'
+title: 'page list row actions moved into a dropdown; the hold switch became a column and `pw_page_holdable()` is gone'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -48,3 +48,12 @@ target `.pw-page-actions .dropdown-menu .dropdown-item` instead. A custom page-l
 that posts through `@pwAdmin/crud/action_post.html.twig` must now also call
 `->renderAsForm()`, or it renders through EasyAdmin's token-less menu item and its CSRF
 check rejects the request.
+
+## The hold switch is a page list column
+
+"Hold publication" left the title cell for a sortable column of its own, between Title
+and Weight, and the list gained a "View" row action. Nothing to do.
+
+**Affects templates calling `pw_page_holdable()`.** That Twig function is removed — it
+ignored its `$host` argument and only reported whether `pushword/static-generator` was
+installed. Test for the bundle directly, or drop the call.

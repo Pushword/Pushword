@@ -60,9 +60,9 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
         self::assertSame('outerHTML', $tags->attr('hx-swap'));
         self::assertSame('#pw-page-inline-'.$pageId, $tags->attr('hx-target'));
 
-        // The hold toggle rides inside the title cell; published and weight are
-        // columns of their own, so they are looked up by their own target id.
-        $hold = $row->filter('input[hx-vals*="hold"]');
+        // Hold, published and weight are columns of their own, so each is looked
+        // up by its own target id rather than inside the title cell.
+        $hold = $crawler->filter('#pw-hold-'.$pageId.' input[hx-vals*="hold"]');
         self::assertCount(1, $hold, 'The row should expose a hold toggle.');
         self::assertSame('change', $hold->attr('hx-trigger'));
         self::assertSame('#pw-hold-'.$pageId, $hold->attr('hx-target'));
@@ -226,8 +226,11 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
         $client->catchExceptions(false);
 
         $pageId = $this->createPage();
-        $row = $this->inlineRow($client->request(Request::METHOD_GET, '/admin/page'), $pageId);
-        $token = $this->extractToken((string) $row->filter('input[hx-vals*="hold"]')->attr('hx-vals'));
+        $crawler = $client->request(Request::METHOD_GET, '/admin/page');
+        self::assertResponseIsSuccessful();
+        $hold = $crawler->filter('#pw-hold-'.$pageId.' input[hx-vals*="hold"]');
+        self::assertCount(1, $hold, 'The created page should own a hold toggle on the first list screen.');
+        $token = $this->extractToken((string) $hold->attr('hx-vals'));
 
         $client->request(Request::METHOD_POST, '/admin/page/'.$pageId.'/toggle-hold', [
             'hold' => '1',

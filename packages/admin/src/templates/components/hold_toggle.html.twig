@@ -1,5 +1,5 @@
-{# Inline "hold publication" switch for the page list.
-   Only included for pages whose host runs in static/cache mode.
+{# "Hold publication" switch, one page list column.
+   Only yielded when the static generator is installed.
    @var page \Pushword\Core\Entity\Page #}
 {% set page = entity.instance %}
 {% set held = page.holdPublicationAt is not null %}
@@ -9,7 +9,7 @@
 
 <span
   id="{{ target }}"
-  class="pw-hold d-inline-flex align-items-center me-2{{ held ? ' pw-hold-on' : '' }}"
+  class="pw-hold d-inline-flex align-items-center{{ held ? ' pw-hold-on' : '' }}"
   title="{{ 'adminPageHoldToggleHelp'|trans }}">
   <span class="ea-switch">
     <input

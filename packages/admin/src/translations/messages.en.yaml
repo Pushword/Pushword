@@ -137,6 +137,7 @@ adminPageH1Help: "<small>The <em>H1</em> is visible on your pages while the <cod
 adminPageH1Label: Title
 adminPageHoldBadge: On hold
 adminPageHoldFilterLabel: Hold publication
+adminPageHoldLabel: Hold publication
 adminPageHoldOnlyHeld: On hold
 adminPageHoldOnlyLive: Live
 adminPageHoldToggleHelp: "Hold publication: keep the published static version online while editing; the change goes live once released."
@@ -209,6 +210,7 @@ adminPageUpdatedAtLabel: "Updated on"
 adminPageVariantLabel: Variant
 adminPageVariantOfHelp: "<small>Make this page a variant of a master page: it consolidates onto the master for SEO (canonical → master) and is excluded from sitemap, search and menus.</small>"
 adminPageVariantOfLabel: "Variant of (master page)"
+adminPageViewLabel: View
 adminPageWeightHelp: "Allows sorting pages. Higher values appear first."
 adminPageWeightLabel: Weight
 adminPageTwitterCardHelp: '<a href="https://developer.twitter.com/en/docs/twitter-for-websites/cards/guides/getting-started" target=_blanks>Learn more</a>'

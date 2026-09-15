@@ -6,6 +6,7 @@ namespace Pushword\Admin\Tests\Controller;
 
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
 
 #[Group('integration')]
@@ -29,6 +30,48 @@ final class PageListActionsTest extends AbstractAdminTestClass
         $menu = $crawler->filter('.pw-page-actions .dropdown-menu')->first();
         self::assertGreaterThan(1, $menu->filter('.dropdown-item')->count());
         self::assertCount(0, $menu->filter('.btn'));
+    }
+
+    public function testColumnsAreOrderedTitleThenHoldThenWeight(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
+
+        $headers = $crawler->filter('.datagrid thead th')->each(static fn (Crawler $th): string => trim($th->text()));
+        $headers = array_values(array_filter($headers, static fn (string $h): bool => '' !== $h));
+
+        self::assertSame(
+            ['Published at', 'Title', 'Hold publication', 'Weight', 'Updated on', 'Actions'],
+            $headers,
+        );
+
+        // The hold switch owns a cell now; it no longer sits above the tag input.
+        self::assertCount(0, $crawler->filter('.pw-inline-tags-wrapper .pw-hold'));
+        self::assertGreaterThan(0, $crawler->filter('td[data-column="holdPublicationAt"] .pw-hold')->count());
+    }
+
+    public function testViewActionOpensEachPageOnItsOwnHost(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
+
+        $rows = $crawler->filter('.datagrid tbody tr[data-id]');
+        self::assertGreaterThan(0, $rows->count(), 'Fixtures must provide at least one page');
+
+        $rows->each(static function (Crawler $row): void {
+            // The title cell prints "<host> › <slug>"; the action must target that host.
+            $host = trim(explode('›', $row->filter('.pw-page-inline a[target="_blank"]')->text())[0]);
+            self::assertNotSame('', $host);
+
+            $view = $row->filter('.dropdown-menu .action-viewPage');
+            self::assertCount(1, $view, 'Every row offers the view action');
+            self::assertSame('_blank', $view->attr('target'));
+            self::assertSame('noopener', $view->attr('rel'));
+            // Absolute and on the page's own host — a relative URL would open the
+            // admin host instead of the site the page belongs to.
+            self::assertStringStartsWith('http', (string) $view->attr('href'));
+            self::assertStringContainsString($host, (string) $view->attr('href'));
+        });
     }
 
     public function testDeleteKeepsItsConfirmationAttributesInsideTheDropdown(): void

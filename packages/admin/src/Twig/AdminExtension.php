@@ -7,7 +7,6 @@ namespace Pushword\Admin\Twig;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Twig\MediaExtension;
-use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
 
 use function Safe\json_encode;
 
@@ -41,17 +40,6 @@ class AdminExtension implements ResetInterface
         $key = $host ?? '';
 
         return $this->cache[$key] ??= json_encode($this->pageRepository->getAllTags($host));
-    }
-
-    /**
-     * Whether a page can be "held": meaningful whenever the static-generator
-     * bundle is installed, since both the full static export (`pw:static`) and
-     * `cache: static` mode keep the previously generated file while a hold is set.
-     */
-    #[AsTwigFunction('pw_page_holdable')]
-    public function isHoldable(?string $host = null): bool
-    {
-        return class_exists(PushwordStaticGeneratorBundle::class);
     }
 
     /**
