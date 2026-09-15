@@ -13,13 +13,13 @@
   </a>
   <div class="btn-group ms-2 media-view-switch" role="group" aria-label="{{ 'adminMediaViewLabel'|trans }}">
     <a href="{{ ea_url().set('view', null) }}"
-       class="btn  btn-secondary btn-outline-default {{ isTableView ? 'active' }}"
+       class="btn btn-secondary {{ isTableView ? 'active' }}"
        aria-pressed="{{ isTableView ? 'true' : 'false' }}">
       <i class="fa fa-list" aria-hidden="true"></i>
       <span class="d-none d-sm-inline ms-1">{{ 'adminMediaViewTable'|trans }}</span>
     </a>
     <a href="{{ ea_url().set('view', 'mosaic') }}"
-       class="btn btn-secondary btn-outline-Save  {{ mosaicActive ? 'active' }}"
+       class="btn btn-secondary {{ mosaicActive ? 'active' }}"
        aria-pressed="{{ mosaicActive ? 'true' : 'false' }}">
       <i class="fa fa-th-large" aria-hidden="true"></i>
       <span class="d-none d-sm-inline ms-1">{{ 'adminMediaViewMosaic'|trans }}</span>
