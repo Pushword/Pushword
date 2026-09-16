@@ -10,7 +10,8 @@
 
 /** Add some space between the Admin Header and the panel under */
 .content-header {
-  margin-bottom: 30px;
+  margin-bottom: 12px;
+  margin-top: 12px;
   padding: 0;
   background-color: transparent;
 }
