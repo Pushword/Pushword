@@ -50,7 +50,9 @@ final readonly class ImageObjectBuilder
      * Exposed beside the JSON-LD rather than on MediaExtension because the two are the
      * same statement told twice: identical properties, one rendered for a machine and
      * one for a person. A template that emits one and forgets the other is the bug this
-     * adjacency is meant to prevent.
+     * adjacency is meant to prevent. They part company only where the node cannot
+     * follow: a media Media::isImage() rejects — an SVG, anything but jpg/png/gif/webp
+     * — still credits its author, it just has no ImageObject to do it in.
      */
     #[AsTwigFunction('imageCredit')]
     public function creditLine(Media $media): string

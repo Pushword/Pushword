@@ -167,9 +167,10 @@ final class MediaLicense
      * This is what belongs in an `<img title>`, and what does NOT belong in the alt:
      * an alt describes what the photo shows to someone who cannot see it, and the
      * photographer's name is not part of what the photo shows. Carried as a title it
-     * stays in reach all the same — a tooltip for a sighted visitor, the accessible
-     * *description* for a screen reader, announced after the alt instead of welded
-     * into the middle of it.
+     * stays in reach all the same — a tooltip on hover, and the image's accessible
+     * *description*, read out beside the alt instead of welded into the middle of it.
+     * Screen readers announce a description only when asked to, so a licence whose
+     * attribution has to be *visible* wants a caption rather than this.
      *
      * The licence is named whenever it is one of the Creative Commons deeds, because
      * those require it to be: "© Zde / Wikimedia" alone does not satisfy BY-SA,

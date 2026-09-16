@@ -42,12 +42,22 @@ final class ImageLicenseTemplateTest extends KernelTestCase
         return self::getContainer()->get('twig');
     }
 
-    /** @param array<string, mixed> $license */
-    private function renderImage(array $license, string $fileName = 'test-image.jpg'): string
+    /**
+     * @param array<string, mixed> $license
+     * @param array<string, mixed> $attr    what a caller hands to image(attr: …)
+     */
+    private function renderImage(array $license, string $fileName = 'test-image.jpg', array $attr = []): string
     {
         return $this->twig()->render('@PushwordCore/component/image.html.twig', [
             'image' => $this->media($license, $fileName),
+            'image_attr' => $attr,
         ]);
+    }
+
+    /** The value of an attribute on the rendered <img>, or null when it carries none. */
+    private function imgAttr(string $html, string $name): ?string
+    {
+        return 1 === preg_match('#<img [^>]*\b'.$name.'="([^"]*)"#', $html, $matches) ? $matches[1] : null;
     }
 
     public function testAMediaWithoutLicenseEmitsNoScriptAtAll(): void
@@ -146,8 +156,7 @@ final class ImageLicenseTemplateTest extends KernelTestCase
     {
         $html = $this->renderImage([MediaLicense::CREDIT_TEXT => 'Wilfrid Valette']);
 
-        self::assertSame(1, preg_match('#<img [^>]*\balt="([^"]*)"#', $html, $alt));
-        self::assertSame('Refuge du Gioberney', $alt[1]);
+        self::assertSame('Refuge du Gioberney', $this->imgAttr($html, 'alt'));
     }
 
     public function testAMediaWithoutACreditGetsNoTitleAtAll(): void
@@ -156,19 +165,17 @@ final class ImageLicenseTemplateTest extends KernelTestCase
     }
 
     /**
-     * mergeAttr() concatenates scalars instead of overriding them, so a caller's title
-     * and ours would come out welded into one malformed attribute. The caller wins,
-     * and nothing is appended to it.
+     * image_attr is merged after ours, and mergeAttr() replaces scalars, so the caller's
+     * title survives whole — nothing of the credit is appended to it.
      */
     public function testACallerTitleIsLeftAloneRatherThanConcatenated(): void
     {
-        $html = $this->twig()->render('@PushwordCore/component/image.html.twig', [
-            'image' => $this->media([MediaLicense::CREDIT_TEXT => 'Wilfrid Valette']),
-            'image_attr' => ['title' => 'Le refuge au petit matin'],
-        ]);
+        $html = $this->renderImage(
+            [MediaLicense::CREDIT_TEXT => 'Wilfrid Valette'],
+            attr: ['title' => 'Le refuge au petit matin'],
+        );
 
-        self::assertSame(1, preg_match('#<img [^>]*\\btitle="([^"]*)"#', $html, $title));
-        self::assertSame('Le refuge au petit matin', $title[1]);
+        self::assertSame('Le refuge au petit matin', $this->imgAttr($html, 'title'));
 
         // The JSON-LD still carries the creditText — the caller overrode the tooltip,
         // not the media's own claim.
@@ -181,6 +188,14 @@ final class ImageLicenseTemplateTest extends KernelTestCase
         $html = $this->renderImage([MediaLicense::CREDIT_TEXT => 'ExampleCreator'], 'logo.svg');
 
         self::assertStringContainsString('title="© ExampleCreator"', $html);
+    }
+
+    /** That branch merges in a place of its own, so it owes the same precedence. */
+    public function testACallerTitleWinsOnTheSvgBranchToo(): void
+    {
+        $html = $this->renderImage([MediaLicense::CREDIT_TEXT => 'ExampleCreator'], 'logo.svg', ['title' => 'Le logo']);
+
+        self::assertSame('Le logo', $this->imgAttr($html, 'title'));
     }
 
     /**

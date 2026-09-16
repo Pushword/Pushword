@@ -131,9 +131,9 @@ final class ImageTemplateTest extends KernelTestCase
     }
 
     /**
-     * mergeAttr() concatenates scalars ("a" + "b" => "a b"), so a `sizes` handed over
-     * in image_attr came out welded to the default ladder — a malformed attribute.
-     * It is now read as the parameter and emitted exactly once.
+     * mergeAttr() concatenated scalars back then ("a" + "b" => "a b"), so a `sizes`
+     * handed over in image_attr came out welded to the default ladder — a malformed
+     * attribute. It is now read as the parameter and emitted exactly once.
      */
     public function testSizesGivenThroughImageAttrIsHonouredOnceAndNotConcatenated(): void
     {

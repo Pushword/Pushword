@@ -177,6 +177,52 @@ for editorial and compliance use.
 `licenseState` is a derived, read-only column: `` (none), `seeded`, `overridden` (a human
 asserted it) or `thirdParty`. The media list filters and sorts on it.
 
+{id=on-the-page}
+## What the page renders
+
+`component/image.html.twig` emits two things from the same properties: the `ImageObject`
+script a crawler reads, and a credit a visitor can read, in the `<img title>`.
+
+```html
+<img src="…" alt="Refuge du Gioberney" title="© Zde / Wikimedia (CC BY-SA 4.0)">
+```
+
+The credit line takes `copyrightNotice` verbatim when there is one — the rights holder's
+own wording may already carry a symbol, a year or an *all rights reserved* that is not
+ours to re-punctuate — otherwise `creditText`, otherwise the `creator` names joined by a
+comma. A `©` is prefixed unless the value already opens with one.
+
+The licence is named beside the author only when it is a Creative Commons deed, because
+those require it to be: *© Zde / Wikimedia* alone does not satisfy BY-SA, *© Zde /
+Wikimedia (CC BY-SA 4.0)* does.
+
+| `license` | appended to the line |
+| --- | --- |
+| `creativecommons.org/licenses/by-sa/4.0/` | `(CC BY-SA 4.0)` |
+| `creativecommons.org/publicdomain/zero/1.0/` | `(CC0 1.0)` |
+| `creativecommons.org/publicdomain/mark/1.0/` | `(Public Domain Mark 1.0)` |
+| anything else — a stock platform's terms page | nothing |
+
+A stock platform's licence page is a URL and nothing more: labelling it *Adobe Stock*
+would assert terms nobody here has read. A deed with nobody to attribute still renders on
+its own (`CC0 1.0`), since it tells a visitor what they may do with the file.
+
+The credit never goes in the `alt`: an alt describes what the photo shows to someone who
+cannot see it, and the photographer's name is not part of what the photo shows. As a
+`title` it is a tooltip on hover and the image's accessible description, read out beside
+the alt instead of welded into the middle of it — but screen readers announce a
+description only when asked to, so a licence whose attribution has to be *visible* wants
+a caption rather than this.
+
+Three consequences worth knowing:
+
+- a media declaring none of these properties renders exactly the markup it did before;
+- a caller passing its own title keeps it — `image(media, attr: {title: 'Le refuge au
+  petit matin'})` — and the `ImageObject` still carries the credit, because the caller
+  overrode the tooltip, not the media's claim;
+- an SVG gets the title but no `ImageObject`: the node describes the files
+  `Media::isImage()` accepts (jpg, png, gif, webp).
+
 {id=admin}
 ## In the admin
 
@@ -239,6 +285,6 @@ nothing for search while adding an invalidation path and a dozen writes per medi
 The cache variants carry no rights metadata either, and never will: the webp encoder
 drops every profile, and `cjpeg` re-encodes a JPEG from scratch, so whatever the source
 file said about its rights does not reach the served derivative. The `ImageObject` is the
-only licensing signal on the page — which is why its `contentUrl` is built exactly like
+only licensing signal a crawler gets from the page — which is why its `contentUrl` is built exactly like
 the `<img src>` in `component/image.html.twig`: the `default` filter in the *source*
 format, not the webp variant, so Google associates the node with the image it crawled.

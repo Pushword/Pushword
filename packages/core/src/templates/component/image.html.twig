@@ -30,22 +30,21 @@
 
 {# `sizes` used to be handed over inside image_attr, where it could never work: image_attr
    is merged onto the <img> only — every browser that understands webp takes the <source>
-   and never reads it — and mergeAttr() concatenates scalars instead of overriding, so it
-   arrived welded to the default ladder ("…,1600px (max-width: 1024px) 100vw, 63vw", a
-   malformed attribute). Callers that still spell it that way are honoured here, once. #}
+   and never reads it — and mergeAttr() concatenated scalars back then instead of
+   replacing them, so it arrived welded to the default ladder ("…,1600px (max-width:
+   1024px) 100vw, 63vw", a malformed attribute). Callers that still spell it that way
+   are honoured here, once. #}
 {% set sizes = sizes ?? image_attr.sizes|default(null) %}
 {% set image_attr = image_attr|filter((v, k) => 'sizes' != k) %}
 
 {# The credit rides in `title`, never in `alt`. An alt describes what the photo shows
    to someone who cannot see it, and the photographer's name is not part of what the
-   photo shows; as a title it stays in reach all the same — a tooltip for a sighted
-   visitor, the accessible description for a screen reader, announced after the alt
-   instead of welded into the middle of it. Empty unless the media declares a credit,
-   so a library carrying none renders exactly as before.
-   A caller's own title wins outright: mergeAttr() concatenates scalars rather than
-   overriding them (see the `sizes` note above), so adding ours on top of one would
-   weld the two into a single malformed attribute. #}
-{% set image_credit = image_attr.title is defined ? '' : imageCredit(image) %}
+   photo shows; as a title it is the image's accessible description instead, read out
+   beside the alt rather than welded into the middle of it. Empty unless the media
+   declares a credit, so a library carrying none renders exactly as before.
+   A caller's own title wins without a guard here: image_attr is merged after ours and
+   mergeAttr() replaces scalars — only class, rel and the aria-*edby pair concatenate. #}
+{% set image_credit = imageCredit(image) %}
 {% set credit_attr = image_credit is empty ? {} : {title: image_credit} %}
 
 {# SVG files are vector images - render simple img tag without srcset/picture complexity #}
