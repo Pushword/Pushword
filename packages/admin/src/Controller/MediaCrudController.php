@@ -382,24 +382,30 @@ class MediaCrudController extends AbstractAdminCrudController
      */
     private function resolveMediaView(?Request $request): string
     {
-        if (! $request instanceof Request || ! $request->hasSession()) {
+        if (null === $request || ! $request->hasSession()) {
             return self::VIEW_MOSAIC;
         }
 
         $session = $request->getSession();
         $requested = $request->query->get('view');
 
-        if (! \is_string($requested) || '' === $requested) {
-            return self::VIEW_TABLE === $session->get(self::VIEW_SESSION_KEY) ? self::VIEW_TABLE : self::VIEW_MOSAIC;
+        if (null === $requested || '' === $requested) {
+            return $this->normalizeMediaView($session->get(self::VIEW_SESSION_KEY));
         }
 
-        $view = self::VIEW_TABLE === $requested ? self::VIEW_TABLE : self::VIEW_MOSAIC;
+        $view = $this->normalizeMediaView($requested);
 
         if (! $request->query->getBoolean('pwMediaPicker')) {
             $session->set(self::VIEW_SESSION_KEY, $view);
         }
 
         return $view;
+    }
+
+    /** There are two layouts; anything else — a stale session value, a hand-typed URL — is mosaic. */
+    private function normalizeMediaView(mixed $value): string
+    {
+        return self::VIEW_TABLE === $value ? self::VIEW_TABLE : self::VIEW_MOSAIC;
     }
 
     #[Override]

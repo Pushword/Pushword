@@ -57,6 +57,31 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         return $media;
     }
 
+    private function createThirdPartyMedia(): Media
+    {
+        $media = $this->createMedia([MediaLicense::CREATOR => ['Enrico Romanzi']]);
+        $media->licenseState = MediaLicense::STATE_THIRD_PARTY;
+
+        /** @var EntityManager $em */
+        $em = self::getContainer()->get('doctrine.orm.entity_manager');
+        $em->flush();
+
+        return $media;
+    }
+
+    /** @param array<string, string> $query */
+    private function browseIndexFilteredOnTestMedia(array $query = []): Crawler
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $router = self::getContainer()->get('router');
+
+        return $client->request(Request::METHOD_GET, $router->generate('admin_media_index', [
+            'query' => '__license_admin_test__',
+        ] + $query));
+    }
+
     private function remove(Media $media): void
     {
         /** @var EntityManager $em */
@@ -398,22 +423,10 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
      */
     public function testTheTableViewShowsTheLicenseStateOfEachMedia(): void
     {
-        $media = $this->createMedia([MediaLicense::CREATOR => ['Enrico Romanzi']]);
-        $media->licenseState = MediaLicense::STATE_THIRD_PARTY;
+        $media = $this->createThirdPartyMedia();
 
-        /** @var EntityManager $em */
-        $em = self::getContainer()->get('doctrine.orm.entity_manager');
-        $em->flush();
-
-        $client = $this->loginUser();
-        $client->catchExceptions(false);
-
-        $router = self::getContainer()->get('router');
-        // The badge lives in the table view; the index now defaults to mosaic.
-        $crawler = $client->request(Request::METHOD_GET, $router->generate('admin_media_index', [
-            'query' => '__license_admin_test__',
-            'view' => 'table',
-        ]));
+        // The index defaults to the mosaic, so ask for the table explicitly.
+        $crawler = $this->browseIndexFilteredOnTestMedia(['view' => 'table']);
 
         self::assertStringContainsString(
             self::getContainer()->get('translator')->trans('adminMediaLicenseStateThirdParty'),
@@ -425,22 +438,11 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
 
     public function testTheMosaicShowsTheLicenseStateOfEachMedia(): void
     {
-        $media = $this->createMedia([MediaLicense::CREATOR => ['Enrico Romanzi']]);
-        $media->licenseState = MediaLicense::STATE_THIRD_PARTY;
-
-        /** @var EntityManager $em */
-        $em = self::getContainer()->get('doctrine.orm.entity_manager');
-        $em->flush();
-
-        $client = $this->loginUser();
-        $client->catchExceptions(false);
+        $media = $this->createThirdPartyMedia();
 
         // No view parameter: the mosaic is the default, so the badge has to live there
         // too or the licence state is invisible unless you switch layouts.
-        $router = self::getContainer()->get('router');
-        $crawler = $client->request(Request::METHOD_GET, $router->generate('admin_media_index', [
-            'query' => '__license_admin_test__',
-        ]));
+        $crawler = $this->browseIndexFilteredOnTestMedia();
 
         self::assertCount(1, $crawler->filter('.media-mosaic-wrapper'), 'The default layout is the mosaic');
 
@@ -460,13 +462,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         // reading "nothing was decided" on every card is noise, not information.
         $media = $this->createMedia();
 
-        $client = $this->loginUser();
-        $client->catchExceptions(false);
-
-        $router = self::getContainer()->get('router');
-        $crawler = $client->request(Request::METHOD_GET, $router->generate('admin_media_index', [
-            'query' => '__license_admin_test__',
-        ]));
+        $crawler = $this->browseIndexFilteredOnTestMedia();
 
         self::assertSame('', $media->licenseState);
         self::assertCount(1, $crawler->filter('.media-mosaic__card'));
