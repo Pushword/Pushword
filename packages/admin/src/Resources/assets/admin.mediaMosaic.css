@@ -16,6 +16,18 @@
   background-color: #e0f2fe; /* sky-100 */
 }
 
+/* Delete sits on every card of what is now the default view. A destructive action
+   used once in a while should not be the loudest thing in a grid of thumbnails, so
+   it stays slate at rest and turns red only when the pointer or keyboard reaches it. */
+.media-mosaic__actions a.action-delete {
+  color: var(--text-muted);
+}
+
+.media-mosaic__actions a.action-delete:hover,
+.media-mosaic__actions a.action-delete:focus-visible {
+  color: var(--bs-danger);
+}
+
 .media-mosaic-wrapper {
   margin-top: 1rem;
 }
