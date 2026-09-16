@@ -101,6 +101,22 @@ final class PageListActionsTest extends AbstractAdminTestClass
         self::assertNull($title->attr('style'), 'Title styling belongs to .pw-page-title, not to an inline style');
     }
 
+    public function testThePageUrlIsOneLineKeepingItsEnd(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
+
+        $url = $crawler->filter('.datagrid tbody tr[data-id] a.pw-page-url')->first();
+        self::assertCount(1, $url);
+
+        // A deep slug is cut at its start, which takes both spans: the outer one flips
+        // direction so the ellipsis lands on the left, the inner one reads the path back
+        // left to right. The whole URL stays reachable as the title.
+        $slug = $url->filter('.pw-page-url__slug > span');
+        self::assertCount(1, $slug);
+        self::assertStringContainsString($slug->text(), (string) $url->attr('title'));
+    }
+
     public function testTitleCellTextKeepsTheTableFontSize(): void
     {
         $client = $this->loginUser();

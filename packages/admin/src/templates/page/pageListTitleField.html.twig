@@ -23,15 +23,15 @@
       <a href="{{ editUrl }}" class="pw-page-title">
         {{ page.h1 is empty ? page.title : page.h1|striptags }}
       </a>
-      <br>
       <a
         href="{{ page(page) }}"
         target="_blank"
         rel="noopener"
-        class="me-2 align-items-center"
-        style="text-decoration: none; color:#475569; font-weight:500; word-break:break-word;">
-        <i class="fa fa-external-link" style="opacity:0.7; color:#475569; font-size:75%; padding-right:3px"></i>
-        {{ page.host ? page.host ~ ' › ' : '' }}{{ page.slug }}
+        class="pw-page-url"
+        title="{{ page.host ? page.host ~ ' › ' : '' }}{{ page.slug }}">
+        <i class="fa fa-external-link"></i>
+        {% if page.host %}<span class="pw-page-url__host">{{ page.host }} ›</span>{% endif %}
+        <span class="pw-page-url__slug"><span>{{ page.slug }}</span></span>
       </a>
     </div>
 

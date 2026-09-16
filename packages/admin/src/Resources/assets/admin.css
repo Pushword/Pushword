@@ -37,13 +37,15 @@
   --pw-radius-sm: 4px;
   --pw-radius-md: 8px;
   --pw-radius-lg: 12px;
-  /* Elevation. Three levels, all cast in slate-900 so every shadow reads as the same
-     light source — the admin previously mixed pure black and slate at eight opacities,
-     in three notations, with the same shadow spelled two different ways. Focus rings,
-     inset hairlines and the tinted banner glows are not elevation and stay literal. */
-  --pw-elevation-1: 0 1px 2px rgb(15 23 42 / 0.08); /* resting surface */
-  --pw-elevation-2: 0 8px 20px rgb(15 23 42 / 0.18); /* dropdown, popover */
-  --pw-elevation-3: 0 20px 50px rgb(15 23 42 / 0.32); /* modal, lightbox */
+  /* Elevation. Four levels — the admin previously mixed pure black and slate at eight
+     opacities, in three notations, with the same shadow spelled two different ways.
+     Focus rings, inset hairlines and the tinted banner glows are not elevation and stay
+     literal. Levels 1, 3 and 4 are cast in slate-900 so they read as one light source;
+     level 2 keeps the two-layer card shadow verbatim, the only step a card wears. */
+  --pw-elevation-1: 0 1px 2px rgb(15 23 42 / 0.08); /* hairline: thumbnails, inputs */
+  --pw-elevation-2: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); /* card */
+  --pw-elevation-3: 0 8px 20px rgb(15 23 42 / 0.18); /* dropdown, popover */
+  --pw-elevation-4: 0 20px 50px rgb(15 23 42 / 0.32); /* modal, lightbox */
   /* Accessibility: Focus styles */
   --focus-ring-color: var(--sky-600);
   --focus-ring-width: 2px;
@@ -69,6 +71,13 @@ small,
   --bs-btn-active-border-color: var(--button-hover-border-color, var(--sky-700));
 }
 
+/* A card is the one surface that rests a step above the page, everywhere in the admin
+   and in the extension panels. Here rather than on a Bootstrap .shadow-sm each template
+   repeats: that utility is the framework's value, not ours, and it is !important. */
+.card {
+  box-shadow: var(--pw-elevation-2);
+}
+
 /* Page list: the row's content is the title, not its toolbar. Weight and colour
    carry the hierarchy inside the cell, so every line keeps the table's own size. */
 .pw-page-title {
@@ -83,6 +92,47 @@ small,
 .pw-page-title:focus-visible {
   color: var(--color-primary);
   text-decoration: underline;
+}
+
+/* The public URL under the title. A deep slug used to wrap over three lines and set the
+   height of the whole row; it stays on one line and loses its beginning instead — the
+   end of a path names the page, the start only names the sections it hangs under. */
+.pw-page-url {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  color: #475569; /* slate-600 */
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.pw-page-url .fa-external-link {
+  flex: 0 0 auto;
+  font-size: 75%;
+  opacity: 0.7;
+}
+
+.pw-page-url__host {
+  flex: 0 0 auto;
+}
+
+/* Ellipsis at the start: the direction flip moves the clipped end to the left, and the
+   inner span, reading its own direction from its first letter, keeps the path itself
+   left to right. The cap is what an auto-layout table needs to shrink the column at
+   all — without it the cell simply asks for the whole slug. */
+.pw-page-url__slug {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 48ch;
+  overflow: hidden;
+  direction: rtl;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pw-page-url__slug > span {
+  unicode-bidi: plaintext;
 }
 
 /* The per-row action menu, shared by the page list and the media list: quiet until
@@ -163,7 +213,7 @@ tr:hover .pw-row-menu .dropdown-toggle,
 }
 .pw-message-media__item:hover .pw-message-media__thumb,
 .pw-message-media__item:hover .pw-message-media__file {
-  box-shadow: var(--pw-elevation-1);
+  box-shadow: var(--pw-elevation-2);
 }
 .pw-message-media__remove {
   position: absolute;

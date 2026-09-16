@@ -199,7 +199,7 @@
   height: 100%;
   border: 0;
   display: block;
-  box-shadow: var(--pw-elevation-3);
+  box-shadow: var(--pw-elevation-4);
 }
 
 @media (min-width: 992px) {
@@ -313,7 +313,7 @@ body.pw-admin-popup-modal .modal-backdrop {
   font-size: var(--pw-text-md);
   font-weight: 700;
   z-index: 10;
-  box-shadow: var(--pw-elevation-1);
+  box-shadow: var(--pw-elevation-2);
 }
 
 .pw-media-picker-multi .media-mosaic__card.pw-multi-selected {

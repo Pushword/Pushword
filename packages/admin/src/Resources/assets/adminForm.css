@@ -90,7 +90,7 @@ body.ea-new .content-header {
 
 .columnFields .form-fieldset.pw-settings-accordion.pw-settings-open {
   background-color: #fff;
-  box-shadow: var(--pw-elevation-1);
+  box-shadow: var(--pw-elevation-2);
 }
 
 .pw-settings-toggle {

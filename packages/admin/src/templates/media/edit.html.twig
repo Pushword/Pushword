@@ -15,14 +15,14 @@
   {% set mediaRelatedPagesHtml = media_related_pages_html ?? null %}
 
   {% if mediaPreviewHtml %}
-    <section class="card shadow-sm col-12 mb-4" style="background: var(--sidebar-bg);">
+    <section class="card col-12 mb-4" style="background: var(--sidebar-bg);">
       <div class="card-body">
         {{ mediaPreviewHtml|raw }}
       </div>
     </section>
 
     {% if mediaRelatedPagesHtml %}
-    <section class="card shadow-sm col-12 mb-4" style="background: var(--sidebar-bg);">
+    <section class="card col-12 mb-4" style="background: var(--sidebar-bg);">
       <div class="card-body">
         <h4 class="content-title mt-2 mb-3">
           {{ 'adminMediaRelatedLabel'|trans }}

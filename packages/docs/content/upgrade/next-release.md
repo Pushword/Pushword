@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'the admin elevation ramp is back to four levels, `--pw-elevation-3` now meaning dropdown rather than modal'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,14 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin`
+
+## The admin elevation ramp has four levels again
+
+`--pw-elevation-2` is the card shadow, and the two deep steps moved up one: dropdowns and
+popovers are `--pw-elevation-3`, modals and lightboxes `--pw-elevation-4`.
+
+**Affects sites using the elevation properties in their own admin CSS.** A rule written
+against `--pw-elevation-3` for a modal now casts the dropdown shadow — shift it to
+`--pw-elevation-4`.

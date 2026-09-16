@@ -67,13 +67,20 @@
   pointer-events: none;
 }
 
+/* The credit the media claims, over the thumbnail. Capped short of the checkbox in the
+   opposite corner and cut with an ellipsis: a credit line runs as long as its rights
+   holder wants it to. It keeps its pointer events — unlike the ratio label, it has a
+   title worth hovering, holding the words the ellipsis ate. */
 .mosaic-license-label {
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
   z-index: 2;
+  max-width: calc(100% - 4rem);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: var(--pw-text-xs);
-  pointer-events: none;
 }
 
 .mosaic-inner-box-default {

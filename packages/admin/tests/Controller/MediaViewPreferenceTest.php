@@ -57,6 +57,19 @@ final class MediaViewPreferenceTest extends AbstractAdminTestClass
         self::assertCount(1, $crawler->filter('#pw-media-table'), 'Opening the picker must not reset the list preference');
     }
 
+    public function testMosaicCardsWearTheAdminsOwnElevation(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_media_list'));
+
+        $cards = $crawler->filter('.media-mosaic__card.card');
+        self::assertGreaterThan(0, $cards->count(), 'A mosaic card is a card');
+
+        // Bootstrap's .shadow-sm is !important, so carrying it means the admin's own
+        // --pw-elevation-2 never reaches the card.
+        self::assertCount(0, $crawler->filter('.media-mosaic__card.shadow-sm'));
+    }
+
     public function testTheActiveHalfOfTheSwitchIsMarked(): void
     {
         $client = $this->loginUser();

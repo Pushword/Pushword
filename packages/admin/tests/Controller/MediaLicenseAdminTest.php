@@ -57,9 +57,10 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         return $media;
     }
 
-    private function createThirdPartyMedia(): Media
+    /** @param array<string, mixed> $license */
+    private function createThirdPartyMedia(array $license = [MediaLicense::CREATOR => ['Enrico Romanzi']]): Media
     {
-        $media = $this->createMedia([MediaLicense::CREATOR => ['Enrico Romanzi']]);
+        $media = $this->createMedia($license);
         $media->licenseState = MediaLicense::STATE_THIRD_PARTY;
 
         /** @var EntityManager $em */
@@ -421,7 +422,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
      * Creating a media redirects here, which makes this row the editor's first look at
      * what the upload decided.
      */
-    public function testTheTableViewShowsTheLicenseStateOfEachMedia(): void
+    public function testTheTableViewCreditsEachMedia(): void
     {
         $media = $this->createThirdPartyMedia();
 
@@ -429,24 +430,47 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         $crawler = $this->browseIndexFilteredOnTestMedia(['view' => 'table']);
 
         self::assertStringContainsString(
-            self::getContainer()->get('translator')->trans('adminMediaLicenseStateThirdParty'),
-            $crawler->filter('.pw-media-table')->html(),
+            'Enrico Romanzi',
+            $crawler->filter('.pw-media-table .pw-m-license')->text(),
         );
 
         $this->remove($media);
     }
 
-    public function testTheMosaicShowsTheLicenseStateOfEachMedia(): void
+    public function testTheMosaicCreditsEachMedia(): void
     {
         $media = $this->createThirdPartyMedia();
 
         // No view parameter: the mosaic is the default, so the badge has to live there
-        // too or the licence state is invisible unless you switch layouts.
+        // too or the licence is invisible unless you switch layouts.
         $crawler = $this->browseIndexFilteredOnTestMedia();
 
         self::assertCount(1, $crawler->filter('.media-mosaic-wrapper'), 'The default layout is the mosaic');
 
         $badge = $crawler->filter('.media-mosaic__card .mosaic-license-label');
+        self::assertCount(1, $badge);
+        // The badge says what the media claims; how the claim got there is the title.
+        self::assertStringContainsString('Enrico Romanzi', $badge->text());
+        // The symbol is the icon's job: a credit line opening with one must not repeat it.
+        self::assertStringNotContainsString('©', $badge->text());
+        self::assertStringContainsString(
+            self::getContainer()->get('translator')->trans('adminMediaLicenseStateThirdParty'),
+            (string) $badge->attr('title'),
+        );
+
+        $this->remove($media);
+    }
+
+    /**
+     * A file may declare rights without naming anybody — an acquireLicensePage on its
+     * own. There is no credit to print, so the state is what the badge has left to say.
+     */
+    public function testALicensedMediaWithNobodyToCreditShowsItsState(): void
+    {
+        $media = $this->createThirdPartyMedia([MediaLicense::ACQUIRE_LICENSE_PAGE => 'https://example.test/licence']);
+
+        $badge = $this->browseIndexFilteredOnTestMedia()->filter('.media-mosaic__card .mosaic-license-label');
+
         self::assertCount(1, $badge);
         self::assertStringContainsString(
             self::getContainer()->get('translator')->trans('adminMediaLicenseStateThirdParty'),
