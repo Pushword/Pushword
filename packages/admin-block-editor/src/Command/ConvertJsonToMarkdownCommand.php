@@ -166,7 +166,7 @@ final readonly class ConvertJsonToMarkdownCommand
     private function convertJsonToMarkdown(string $jsonContent): string
     {
         // Chemin vers le script Node.js (relatif à ce fichier)
-        $scriptPath = \dirname(__DIR__).'/Command/convert-json-to-markdown-built/convert-json-to-markdown.mjs';
+        $scriptPath = __DIR__.'/../Command/convert-json-to-markdown-built/convert-json-to-markdown.mjs';
 
         if (! $this->filesystem->exists($scriptPath)) {
             throw new RuntimeException(\sprintf("Le script de conversion n'existe pas : %s", $scriptPath));
