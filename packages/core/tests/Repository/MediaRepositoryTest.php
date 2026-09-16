@@ -4,16 +4,155 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\Controller;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Tests\Perf\QueryCountingTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 #[Group('integration')]
 final class MediaRepositoryTest extends KernelTestCase
 {
+    use QueryCountingTrait;
+
+    /** Media whose tags this test wrote straight to the column, to put back. */
+    private ?string $taggedFileName = null;
+
+    protected function tearDown(): void
+    {
+        $this->stopCountingQueries();
+        $this->restoreTags();
+        parent::tearDown();
+    }
+
+    /**
+     * The admin media index asks for each tag list several times per request,
+     * and every ask is a full scan of the media table. On a real one (11.6k
+     * rows) that was 3 s of the page's TTFB.
+     */
+    public function testTagListsAreQueriedOncePerRequest(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $repo = $em->getRepository(Media::class);
+        $this->startCountingQueries($em->getConnection());
+
+        $queries = $this->countQueries(static function () use ($repo): void {
+            // What MediaCrudController::configureFilters() and
+            // configureResponseParameters() do between them.
+            $repo->getMediaTags();
+            $repo->getMediaPageTags();
+            $repo->getMediaTags();
+            $repo->getMediaPageTags();
+            $repo->getAllTags();
+        });
+
+        // One scan for m.tags, one for m.pageTags, one for the page tags getAllTags() merges in.
+        self::assertSame(3, $queries, 'each tag list must be scanned once per request');
+    }
+
+    /**
+     * Worker mode: the memo is request-scoped, so a tag added by another
+     * request must not be missing from the next one's filter choices.
+     */
+    public function testTagMemosDropAtResetBoundary(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $repo = $em->getRepository(Media::class);
+
+        self::assertNotContains('addedElsewhere', $repo->getMediaTags());
+        self::assertNotContains('inheritedElsewhere', $repo->getMediaPageTags());
+
+        $this->writeTagsOutOfBand('1.jpg', 'tags', ['addedElsewhere']);
+        $this->writeTagsOutOfBand('1.jpg', 'page_tags', ['inheritedElsewhere']);
+
+        self::assertNotContains(
+            'addedElsewhere',
+            $repo->getMediaTags(),
+            'within one request the memoized list is reused',
+        );
+        self::assertNotContains('inheritedElsewhere', $repo->getMediaPageTags());
+
+        self::getContainer()->get('services_resetter')->reset();
+
+        self::assertContains('addedElsewhere', $repo->getMediaTags());
+        self::assertContains('inheritedElsewhere', $repo->getMediaPageTags());
+    }
+
+    /**
+     * The memo is only safe because every media write invalidates it: a request
+     * that saves a media and then renders the tag filter must see the new tag.
+     */
+    public function testAMediaWriteInvalidatesTheTagMemo(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $repo = $em->getRepository(Media::class);
+
+        self::assertNotContains('savedInRequest', $repo->getMediaTags()); // warms the memo
+
+        /** @var string $mediaDir */
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+        $fileName = '_tag-memo-test.jpg';
+        $path = rtrim($mediaDir, '/').'/'.$fileName;
+        file_put_contents($path, 'test');
+
+        $media = new Media();
+        $media->setProjectDir(self::getContainer()->getParameter('kernel.project_dir'))
+            ->setStoreIn($mediaDir)
+            ->setFileName($fileName)
+            ->setMimeType('image/jpeg')
+            ->setTags(['savedInRequest'])
+            ->size = 1;
+        $em->persist($media);
+        $em->flush();
+
+        try {
+            self::assertContains('savedInRequest', $repo->getMediaTags());
+        } finally {
+            $em->remove($media);
+            $em->flush();
+            if (file_exists($path)) {
+                unlink($path);
+            }
+        }
+    }
+
+    /**
+     * Straight to the column, no ORM: this stands in for the write another
+     * request made, which nothing in this process can have invalidated.
+     *
+     * @param string[] $tags
+     */
+    private function writeTagsOutOfBand(string $fileName, string $column, array $tags): void
+    {
+        $this->taggedFileName = $fileName;
+        self::getContainer()->get(EntityManagerInterface::class)->getConnection()->update(
+            'media',
+            [$column => json_encode($tags, \JSON_THROW_ON_ERROR)],
+            ['media' => $fileName], // the fileName column, named 'media' for BC
+        );
+    }
+
+    private function restoreTags(): void
+    {
+        if (null === $this->taggedFileName) {
+            return;
+        }
+
+        self::getContainer()->get(EntityManagerInterface::class)->getConnection()->update(
+            'media',
+            ['tags' => '[]', 'page_tags' => '[]'],
+            ['media' => $this->taggedFileName],
+        );
+
+        $this->taggedFileName = null;
+    }
+
     public function testFindDuplicate(): void
     {
         $repo = $this->getMediaRepository();

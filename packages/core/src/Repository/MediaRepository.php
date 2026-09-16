@@ -72,6 +72,20 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     /** @var array<array-key, Media[]> */
     private array $searchResults = [];
 
+    /**
+     * The admin media index asks for the tag list three times in one request
+     * (the filter's emptiness guard, the filter's choices, then getAllTags()
+     * for the template) and for the page tags twice. Each one is a full scan of
+     * the media table, so they are answered once per request and dropped at
+     * every reset boundary.
+     *
+     * @var string[]|null
+     */
+    private ?array $mediaTags = null;
+
+    /** @var string[]|null */
+    private ?array $mediaPageTags = null;
+
     public function __construct(
         ManagerRegistry $registry,
         #[Autowire(service: 'cache.app')]
@@ -280,9 +294,16 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         $this->warmedLight = false;
     }
 
+    /**
+     * Worker-mode safety (kernel.reset): the memos below are request-scoped, so
+     * a tag added in one request must not be missing from the next one's filter.
+     * Also reached through bumpVersion() on every media write.
+     */
     public function reset(): void
     {
         $this->searchResults = [];
+        $this->mediaTags = null;
+        $this->mediaPageTags = null;
     }
 
     public function loadMedias(): void
@@ -540,6 +561,10 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      */
     public function getMediaTags(): array
     {
+        if (null !== $this->mediaTags) {
+            return $this->mediaTags;
+        }
+
         $queryBuilder = $this->createQueryBuilder('m')
             ->select('m.tags')
             ->setMaxResults(30000);
@@ -547,7 +572,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         /** @var array{tags: string[]}[] */
         $mediaTags = $queryBuilder->getQuery()->getResult();
 
-        return $this->flattenTags($mediaTags);
+        return $this->mediaTags = $this->flattenTags($mediaTags);
     }
 
     /**
@@ -558,6 +583,10 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      */
     public function getMediaPageTags(): array
     {
+        if (null !== $this->mediaPageTags) {
+            return $this->mediaPageTags;
+        }
+
         $queryBuilder = $this->createQueryBuilder('m')
             ->select('m.pageTags AS tags')
             ->setMaxResults(30000);
@@ -565,7 +594,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         /** @var array{tags: string[]}[] */
         $pageTags = $queryBuilder->getQuery()->getResult();
 
-        return $this->flattenTags($pageTags);
+        return $this->mediaPageTags = $this->flattenTags($pageTags);
     }
 
     /**
