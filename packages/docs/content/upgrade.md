@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.10](/upgrade/1.0.10) | `admin` | the admin elevation ramp is back to four levels, `--pw-elevation-3` now meaning dropdown rather than modal |
 | [1.0.9](/upgrade/1.0.9) | `core` | VichUploaderBundle moves to 3.0, widening the custom namer signature; body images cached before 1.0.7 pick up their credit `title` |
 | [1.0.8](/upgrade/1.0.8) | `conversation` | a conversation form with three steps or more can drive its own step transition |
 | [1.0.7](/upgrade/1.0.7) | `admin` `core` | page list row actions moved into a dropdown; the hold switch became a column and `pw_page_holdable()` is gone; the admin has a type scale, corner-radius and elevation tokens, and `<small>` no longer compounds; the media list opens in mosaic and remembers the view you picked; an image that declares a credit now renders it in a `title` attribute |
