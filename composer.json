@@ -114,7 +114,7 @@
     "twig/extra-bundle": "^3",
     "twig/intl-extra": "^3.2",
     "twig/string-extra": "^3.23",
-    "vich/uploader-bundle": "^2.9",
+    "vich/uploader-bundle": "^3.0",
     "villfa/invert-color": "^0.5"
   },
   "require-dev": {

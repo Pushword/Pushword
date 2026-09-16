@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'VichUploaderBundle moves to 3.0, widening the custom namer signature'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,15 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`
+
+## VichUploaderBundle 3.0
+
+Pushword requires VichUploaderBundle 3.0; `composer update` absorbs it unless the site
+extends Vich itself.
+
+**Affects sites with a custom namer or directory namer.** Widen the first parameter of
+`name()` / `directoryName()` from `object` to `object|array`, type-hint the mapping as
+`PropertyMappingInterface` (`PropertyMapping` is final now), and replace the removed
+`Vich\UploaderBundle\Mapping\Annotation` namespace with `Mapping\Attribute`.
