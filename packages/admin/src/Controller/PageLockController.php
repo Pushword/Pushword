@@ -39,8 +39,15 @@ final class PageLockController extends AbstractController
         }
 
         // This endpoint only refreshes a file-based lock and never writes the session.
-        // Release the session lock early so the 3s polling pings don't serialize against
-        // other requests in the same session (notably the page save) under PHP's file handler.
+        // Releasing early hands PHP's session file lock back for the rest of this
+        // request, so a 3s ping cannot make the next request of the same session wait
+        // on it.
+        //
+        // Not the other way round, though: the firewall read the session at
+        // kernel.request, so this ping already queued behind any slow request of the
+        // same session before reaching here. The production log shows exactly that —
+        // pings ending in the same second as a 4s admin render — and no session
+        // handling fixes it, only a faster render does.
         if ($request->hasSession() && $request->getSession()->isStarted()) {
             $request->getSession()->save();
         }
