@@ -171,9 +171,15 @@ function wait_for_background_tasks {
 
 trap cleanup EXIT
 
-# Install nodejs dependencies (root + js-helper, whose node_modules holds vitest)
+# Every package holding a vitest suite. Each carries its own node_modules (that is
+# where vitest lives), so it is installed and run from its own directory.
+JS_TEST_PACKAGES="js-helper admin admin-block-editor admin-monaco-editor quiz"
+
+# Install nodejs dependencies (root + each JS test package)
 [ -d "node_modules" ] || yarn
-[ -d "packages/js-helper/node_modules" ] || (cd packages/js-helper && yarn)
+for js_package in $JS_TEST_PACKAGES; do
+    [ -d "packages/$js_package/node_modules" ] || (cd "packages/$js_package" && yarn)
+done
 
 # Ensure chromedriver is installed and matches the installed Chrome.
 # Only invokes bdi when the driver is missing or its major drifts from Chrome's,
@@ -206,7 +212,10 @@ if [ -z "$1" ] || [ "$1" = "full" ] || [ "$1" = "--no-parallel" ]; then
     step "Running JS tests (yarn test)"
     JS_TEST_START=$(date +%s)
     JS_TEST_EXIT=0
-    (cd packages/js-helper && yarn test) || JS_TEST_EXIT=$?
+    # Run them all before bailing, so one red suite does not hide the others.
+    for js_package in $JS_TEST_PACKAGES; do
+        (cd "packages/$js_package" && yarn test) || JS_TEST_EXIT=$?
+    done
     record_step "JS tests" $(( $(date +%s) - JS_TEST_START ))
     if [ $JS_TEST_EXIT -ne 0 ]; then
         print_summary
