@@ -69,7 +69,7 @@ body.ea-new .content-header {
   @keyframes stuck-styles {
     to {
       background: pink;
-      box-shadow: var(--pw-elevation-2);
+      box-shadow: var(--pw-elevation-1);
       padding-bottom: 2rem;
     }
   }
@@ -90,7 +90,7 @@ body.ea-new .content-header {
 
 .columnFields .form-fieldset.pw-settings-accordion.pw-settings-open {
   background-color: #fff;
-  box-shadow: var(--pw-elevation-2);
+  box-shadow: var(--pw-elevation-1);
 }
 
 .pw-settings-toggle {

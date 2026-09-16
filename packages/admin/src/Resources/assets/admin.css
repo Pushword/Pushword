@@ -37,14 +37,13 @@
   --pw-radius-sm: 4px;
   --pw-radius-md: 8px;
   --pw-radius-lg: 12px;
-  /* Elevation. Four levels, all cast in slate-900 so every shadow reads as the same
+  /* Elevation. Three levels, all cast in slate-900 so every shadow reads as the same
      light source — the admin previously mixed pure black and slate at eight opacities,
      in three notations, with the same shadow spelled two different ways. Focus rings,
      inset hairlines and the tinted banner glows are not elevation and stay literal. */
-  --pw-elevation-1: 0 1px 2px rgb(15 23 42 / 0.08);
-  --pw-elevation-2: 0 2px 8px rgb(15 23 42 / 0.14);
-  --pw-elevation-3: 0 8px 20px rgb(15 23 42 / 0.18);
-  --pw-elevation-4: 0 20px 50px rgb(15 23 42 / 0.32);
+  --pw-elevation-1: 0 1px 2px rgb(15 23 42 / 0.08); /* resting surface */
+  --pw-elevation-2: 0 8px 20px rgb(15 23 42 / 0.18); /* dropdown, popover */
+  --pw-elevation-3: 0 20px 50px rgb(15 23 42 / 0.32); /* modal, lightbox */
   /* Accessibility: Focus styles */
   --focus-ring-color: var(--sky-600);
   --focus-ring-width: 2px;
@@ -164,7 +163,7 @@ tr:hover .pw-row-menu .dropdown-toggle,
 }
 .pw-message-media__item:hover .pw-message-media__thumb,
 .pw-message-media__item:hover .pw-message-media__file {
-  box-shadow: var(--pw-elevation-2);
+  box-shadow: var(--pw-elevation-1);
 }
 .pw-message-media__remove {
   position: absolute;

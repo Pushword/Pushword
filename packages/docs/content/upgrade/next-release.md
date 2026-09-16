@@ -71,7 +71,7 @@ longer shrink relative to their container. Use the custom properties in your own
 ## Corner radius and elevation are tokens too
 
 `--pw-radius-sm|md|lg` (4/8/12px) replace the eight radii the admin used to declare, and
-`--pw-elevation-1|2|3|4` replace ten ad-hoc shadows written in three notations. Nothing to
+`--pw-elevation-1|2|3` replace ten ad-hoc shadows written in three notations. Nothing to
 do — reuse the properties instead of hard-coding values in your own admin CSS.
 
 ## The media list opens in mosaic and remembers your choice
