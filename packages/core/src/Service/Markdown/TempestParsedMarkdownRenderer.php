@@ -588,11 +588,8 @@ final readonly class TempestParsedMarkdownRenderer
             }
         }
 
-        if (1 === $heading) {
-            $html = preg_replace('/^(<h[1-6]) id="[^"]*"/', '$1', $html, 1, $replacements);
-            if (null === $html || (0 === $replacements && 1 !== preg_match('/^<h[1-6]>/', $html))) {
-                return null;
-            }
+        if (1 === $heading && 1 !== preg_match('/^<h[1-6]>/', $html)) {
+            return null;
         }
 
         if (null !== $attribute) {

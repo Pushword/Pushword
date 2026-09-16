@@ -17,6 +17,9 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'plain text' => ['Une marche en montagne.', "<p>Une marche en montagne.</p>\n"];
         yield 'escaped quote' => ['Une « marche » dite "facile".', "<p>Une « marche » dite &quot;facile&quot;.</p>\n"];
         yield 'heading without Tempest id' => ['## Une marche facile', "<h2>Une marche facile</h2>\n"];
+        yield 'heading with a Tempest trailing id' => ['## Une marche ## facile', "<h2>Une marche</h2>\n"];
+        yield 'heading with a bare trailing marker' => ['## Une marche ##', "<h2>Une marche</h2>\n"];
+        yield 'heading with an accent keeps no id' => ['## Étape à Prébois', "<h2>Étape à Prébois</h2>\n"];
         yield 'heading quote' => ['### La "montagne"', "<h3>La &quot;montagne&quot;</h3>\n"];
         yield 'numbered heading with emphasis' => ['### 1. Etape **facile**', "<h3>1. Etape <strong>facile</strong></h3>\n"];
         yield 'emphasis' => ['Une **marche** et _un voyage_.', "<p>Une <strong>marche</strong> et <em>un voyage</em>.</p>\n"];

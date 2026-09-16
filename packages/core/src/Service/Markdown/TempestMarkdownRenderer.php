@@ -8,6 +8,7 @@ use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
 use Tempest\Markdown\Markdown;
+use Tempest\Markdown\Rules\HeadingRule;
 use Twig\Environment as Twig;
 
 /** Routes standalone syntax, block composition and Tempest parsing in precedence order. */
@@ -29,6 +30,7 @@ final readonly class TempestMarkdownRenderer
     public function __construct(?LinkProvider $linkProvider = null, ?SiteRegistry $apps = null, ?Twig $twig = null, ?MediaExtension $mediaExtension = null)
     {
         $markdown = new Markdown(null);
+        $markdown->removeRules(HeadingRule::class)->prependRules(new HeadingWithoutIdRule());
         $images = new TempestImageRestorer($mediaExtension, $apps);
         $parsed = new TempestParsedMarkdownRenderer($markdown, $linkProvider, $apps, $images, $this->render(...));
         $notices = new TempestNoticeRenderer($twig, $apps, $this->render(...));
