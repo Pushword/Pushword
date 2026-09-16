@@ -44,4 +44,5 @@ every candidate page; they search as you type, through EasyAdmin's autocomplete
 endpoint. Nothing to do — but a site that replaced one of those three fields must add
 `->setCrudController(PageCrudController::class)->autocomplete()` to keep the gain, and
 any field of its own that filters on the edited page needs
-`Pushword\Admin\FormField\PageFormSubjectTrait` to still see it.
+`Pushword\Admin\FormField\PageFormSubjectTrait` to still see it — see
+[writing a page form field](/extension/admin).

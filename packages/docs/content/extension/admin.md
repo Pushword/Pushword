@@ -144,3 +144,42 @@ pushword_admin:
 You can directly edit this default list or customize them by editing this list on the fly with the `pushword.admin.load_field` event (see [admin-block-editor extension](/extension/admin-block-editor) for an example).
 
 You can customize fields per site, but when creating a new page, Pushword does not yet know its site and uses the first site's configuration (or the global configuration).
+
+### Writing a page form field
+
+A field is a class extending `Pushword\Admin\FormField\AbstractField`, whose
+`getEasyAdminField()` returns the EasyAdmin field to render. The three association
+fields — parent page, variant of, translations — are autocompletes: their candidates
+come from EasyAdmin's autocomplete endpoint as you type.
+
+If your own field filters its candidates on the page being edited ("not myself", "same
+host"), read that page with `Pushword\Admin\FormField\PageFormSubjectTrait`, not with
+`$this->admin->getSubject()`. EasyAdmin answers an autocomplete request by rebuilding
+the fields against an *empty* subject, so a query builder reading the subject directly
+filters on nothing — the list would offer the page itself, and every host's pages.
+
+```php
+use Pushword\Admin\FormField\PageFormSubjectTrait;
+
+class MyPageField extends AbstractField
+{
+    use PageFormSubjectTrait;
+
+    public function getEasyAdminField(): ?FieldInterface
+    {
+        $page = $this->pageFormSubject();
+
+        return AssociationField::new('myAssociation')
+            ->onlyOnForms()
+            ->setCrudController(PageCrudController::class)
+            ->autocomplete()
+            ->setQueryBuilder(fn (QueryBuilder $qb): QueryBuilder => $qb
+                ->andWhere('entity.host = :host')
+                ->setParameter('host', $page->host));
+    }
+}
+```
+
+`->setCrudController(PageCrudController::class)->autocomplete()` is what makes the
+field fetch on demand; without it every candidate page is hydrated whole, `mainContent`
+included, to build a `<select>`.
