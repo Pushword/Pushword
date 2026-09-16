@@ -7,6 +7,7 @@ namespace Pushword\Admin\FormField;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Core\Entity\Page;
 
 /**
@@ -14,6 +15,8 @@ use Pushword\Core\Entity\Page;
  */
 class PageTranslationsField extends AbstractField
 {
+    use PageFormSubjectTrait;
+
     private function configureQueryBuilder(QueryBuilder $qb, Page $page): QueryBuilder
     {
         // TODO change isSaved by a js function wich retrieve value from input[name$="[locale]"]
@@ -36,17 +39,21 @@ class PageTranslationsField extends AbstractField
 
     public function getEasyAdminField(): ?FieldInterface
     {
-        /** @var Page $page */
-        $page = $this->admin->getSubject();
+        $page = $this->pageFormSubject();
+        $label = static fn (Page $entity): string => $entity->locale.' ('.$entity->slug.')';
 
         return AssociationField::new('translations', 'adminPageTranslationsLabel')
             ->onlyOnForms()
+            // Deliberately not host-filtered: a multilingual site may serve each
+            // locale from its own domain, so a translation lives on another host.
+            ->setCrudController(PageCrudController::class)
+            ->autocomplete(callback: $label)
             ->setHelp('adminPageTranslationsHelp')
             ->setFormTypeOption('help_html', true)
             ->setFormTypeOption('multiple', true)
             ->setFormTypeOption('required', false)
             ->setFormTypeOption('by_reference', false)
-            ->setFormTypeOption('choice_label', static fn (Page $entity): string => $entity->locale.' ('.$entity->slug.')')
+            ->setFormTypeOption('choice_label', $label)
             ->setQueryBuilder(fn (QueryBuilder $qb): QueryBuilder => $this->configureQueryBuilder($qb, $page));
     }
 }

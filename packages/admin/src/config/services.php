@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
+use EasyCorp\Bundle\EasyAdminBundle\DependencyInjection\EasyAdminExtension;
 use EasyCorp\Bundle\EasyAdminBundle\Provider\AdminContextProvider;
 use Pushword\Admin\Controller\AdminMenu;
+use Pushword\Admin\FormField\AutocompleteSubjectConfigurator;
 use Pushword\Admin\Service\PageEditLockManager;
 use Pushword\Core\PushwordCoreBundle;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -31,6 +33,14 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // don't collide with each other or with a running dev app.
     $services->set(PageEditLockManager::class)
         ->arg('$varDir', '%pw.var_dir%');
+
+    // Appends to the URL EasyAdmin's own AssociationConfigurator generates, so it
+    // has to run after it: a negative priority, and autoconfiguration off so the
+    // interface tag is not added a second time without one.
+    $services->set(AutocompleteSubjectConfigurator::class)
+        ->autowire()
+        ->autoconfigure(false)
+        ->tag(EasyAdminExtension::TAG_FIELD_CONFIGURATOR, ['priority' => -100]);
 
     $services->alias(AdminContextProviderInterface::class, AdminContextProvider::class);
 };

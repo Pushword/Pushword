@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'the page form fetches its parent, variant and translation choices on demand'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,14 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin`
+
+## The page form's association fields are autocompletes
+
+Parent page, variant of, and translations are no longer `<select>` elements holding
+every candidate page; they search as you type, through EasyAdmin's autocomplete
+endpoint. Nothing to do — but a site that replaced one of those three fields must add
+`->setCrudController(PageCrudController::class)->autocomplete()` to keep the gain, and
+any field of its own that filters on the edited page needs
+`Pushword\Admin\FormField\PageFormSubjectTrait` to still see it.

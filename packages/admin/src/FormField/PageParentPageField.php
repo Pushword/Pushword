@@ -7,6 +7,7 @@ namespace Pushword\Admin\FormField;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Core\Entity\Page;
 
 /**
@@ -14,6 +15,8 @@ use Pushword\Core\Entity\Page;
  */
 class PageParentPageField extends AbstractField
 {
+    use PageFormSubjectTrait;
+
     private function configureQueryBuilder(QueryBuilder $qb, Page $page): QueryBuilder
     {
         $alias = $qb->getRootAliases()[0] ?? 'entity';
@@ -31,11 +34,14 @@ class PageParentPageField extends AbstractField
 
     public function getEasyAdminField(): ?FieldInterface
     {
-        /** @var Page $page */
-        $page = $this->admin->getSubject();
+        $page = $this->pageFormSubject();
 
         return AssociationField::new('parentPage', 'adminPageParentPageLabel')
             ->onlyOnForms()
+            // Fetched on demand: every candidate used to be hydrated whole — with its
+            // mainContent — to render an <option> nobody reads.
+            ->setCrudController(PageCrudController::class)
+            ->autocomplete()
             ->setFormTypeOption('required', false)
             ->setQueryBuilder(fn (QueryBuilder $qb): QueryBuilder => $this->configureQueryBuilder($qb, $page));
     }
