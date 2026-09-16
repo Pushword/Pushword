@@ -216,7 +216,7 @@ final class MediaLicenseTest extends TestCase
     /**
      * @param array<string, mixed> $properties
      */
-    private static function mediaWith(array $properties): Media
+    private function mediaWith(array $properties): Media
     {
         $media = new Media();
 
@@ -229,13 +229,13 @@ final class MediaLicenseTest extends TestCase
 
     public function testAMediaClaimingNothingHasNoCreditLine(): void
     {
-        self::assertSame('', MediaLicense::creditLine(self::mediaWith([])));
+        self::assertSame('', MediaLicense::creditLine($this->mediaWith([])));
     }
 
     public function testACreditTextBecomesASignedLine(): void
     {
         self::assertSame('© Wilfrid Valette', MediaLicense::creditLine(
-            self::mediaWith([MediaLicense::CREDIT_TEXT => 'Wilfrid Valette']),
+            $this->mediaWith([MediaLicense::CREDIT_TEXT => 'Wilfrid Valette']),
         ));
     }
 
@@ -246,7 +246,7 @@ final class MediaLicenseTest extends TestCase
     public function testACreativeCommonsDeedIsNamedBesideTheAuthor(): void
     {
         self::assertSame('© Zde / Wikimedia (CC BY-SA 4.0)', MediaLicense::creditLine(
-            self::mediaWith([
+            $this->mediaWith([
                 MediaLicense::CREDIT_TEXT => 'Zde / Wikimedia',
                 MediaLicense::LICENSE => 'https://creativecommons.org/licenses/by-sa/4.0/',
             ]),
@@ -257,7 +257,7 @@ final class MediaLicenseTest extends TestCase
     public function testAnUnlabellableLicenceAddsNothingToTheLine(): void
     {
         self::assertSame('© Pixabay', MediaLicense::creditLine(
-            self::mediaWith([
+            $this->mediaWith([
                 MediaLicense::CREDIT_TEXT => 'Pixabay',
                 MediaLicense::LICENSE => 'https://pixabay.com/service/license/',
             ]),
@@ -268,7 +268,7 @@ final class MediaLicenseTest extends TestCase
     public function testACopyrightNoticeIsUsedVerbatimAndOutranksTheCreditText(): void
     {
         self::assertSame('Copyright 1998 Grand Angle, all rights reserved', MediaLicense::creditLine(
-            self::mediaWith([
+            $this->mediaWith([
                 MediaLicense::COPYRIGHT_NOTICE => 'Copyright 1998 Grand Angle, all rights reserved',
                 MediaLicense::CREDIT_TEXT => 'Grand Angle',
             ]),
@@ -279,14 +279,14 @@ final class MediaLicenseTest extends TestCase
     public function testASymbolAlreadyInTheCreditIsNotDoubled(): void
     {
         self::assertSame('© Thomas Praire', MediaLicense::creditLine(
-            self::mediaWith([MediaLicense::CREDIT_TEXT => '© Thomas Praire']),
+            $this->mediaWith([MediaLicense::CREDIT_TEXT => '© Thomas Praire']),
         ));
     }
 
     public function testCreatorsAreUsedWhenNoCreditTextWasWritten(): void
     {
         self::assertSame('© Thomas Praire, Grand Angle', MediaLicense::creditLine(
-            self::mediaWith([MediaLicense::CREATOR => [
+            $this->mediaWith([MediaLicense::CREATOR => [
                 ['name' => 'Thomas Praire', 'type' => MediaLicense::CREATOR_TYPE_PERSON],
                 ['name' => 'Grand Angle', 'type' => MediaLicense::CREATOR_TYPE_ORGANIZATION],
             ]]),
@@ -300,7 +300,7 @@ final class MediaLicenseTest extends TestCase
     public function testADeedWithoutAnAuthorStandsAlone(): void
     {
         self::assertSame('CC0 1.0', MediaLicense::creditLine(
-            self::mediaWith([MediaLicense::LICENSE => 'https://creativecommons.org/publicdomain/zero/1.0/']),
+            $this->mediaWith([MediaLicense::LICENSE => 'https://creativecommons.org/publicdomain/zero/1.0/']),
         ));
     }
 
