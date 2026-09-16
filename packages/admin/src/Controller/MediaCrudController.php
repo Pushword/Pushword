@@ -46,6 +46,12 @@ class MediaCrudController extends AbstractAdminCrudController
 {
     public const string MESSAGE_PREFIX = 'admin.media';
 
+    private const string VIEW_TABLE = 'table';
+
+    private const string VIEW_MOSAIC = 'mosaic';
+
+    private const string VIEW_SESSION_KEY = 'pw_media_view';
+
     public function __construct(
         private readonly ImageCacheManager $imageCacheManager,
         private readonly MediaRepository $mediaRepo,
@@ -191,6 +197,7 @@ class MediaCrudController extends AbstractAdminCrudController
 
         if (Crud::PAGE_INDEX === $context->getCrud()?->getCurrentPage()) {
             $responseParameters->set('all_tags', $this->mediaRepo->getAllTags());
+            $responseParameters->set('mediaView', $this->resolveMediaView($context->getRequest()));
 
             return $responseParameters;
         }
@@ -363,6 +370,36 @@ class MediaCrudController extends AbstractAdminCrudController
         $choices = array_combine($values, $values);
 
         return $choices;
+    }
+
+    /**
+     * Which layout the media list renders in. Mosaic is the default — media is what you
+     * scan, not what you read — and an explicit choice sticks for the rest of the session,
+     * so walking away from the list and back does not silently reset it.
+     *
+     * The picker embeds this list and always asks for mosaic, so it must not overwrite
+     * the preference the editor set for themselves.
+     */
+    private function resolveMediaView(?Request $request): string
+    {
+        if (! $request instanceof Request || ! $request->hasSession()) {
+            return self::VIEW_MOSAIC;
+        }
+
+        $session = $request->getSession();
+        $requested = $request->query->get('view');
+
+        if (! \is_string($requested) || '' === $requested) {
+            return self::VIEW_TABLE === $session->get(self::VIEW_SESSION_KEY) ? self::VIEW_TABLE : self::VIEW_MOSAIC;
+        }
+
+        $view = self::VIEW_TABLE === $requested ? self::VIEW_TABLE : self::VIEW_MOSAIC;
+
+        if (! $request->query->getBoolean('pwMediaPicker')) {
+            $session->set(self::VIEW_SESSION_KEY, $view);
+        }
+
+        return $view;
     }
 
     #[Override]

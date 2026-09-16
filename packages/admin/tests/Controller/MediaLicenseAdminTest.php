@@ -396,7 +396,7 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
      * Creating a media redirects here, which makes this row the editor's first look at
      * what the upload decided.
      */
-    public function testTheIndexShowsTheLicenseStateOfEachMedia(): void
+    public function testTheTableViewShowsTheLicenseStateOfEachMedia(): void
     {
         $media = $this->createMedia([MediaLicense::CREATOR => ['Enrico Romanzi']]);
         $media->licenseState = MediaLicense::STATE_THIRD_PARTY;
@@ -409,8 +409,10 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
         $client->catchExceptions(false);
 
         $router = self::getContainer()->get('router');
+        // The badge lives in the table view; the index now defaults to mosaic.
         $crawler = $client->request(Request::METHOD_GET, $router->generate('admin_media_index', [
             'query' => '__license_admin_test__',
+            'view' => 'table',
         ]));
 
         self::assertStringContainsString(

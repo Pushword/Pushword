@@ -1,7 +1,8 @@
 {% extends '@EasyAdmin/crud/index.html.twig' %}
 
-{% set pwMediaView = app.request.query.get('view') ?? '' %}
-{% set mosaicActive = pwMediaView == 'mosaic' %}
+{# MediaCrudController resolves this: the query parameter when there is one, otherwise
+   the choice remembered for the session, otherwise mosaic. #}
+{% set mosaicActive = mediaView|default('mosaic') != 'table' %}
 {% set isTableView = not mosaicActive %}
 {% set mediaFallbackThumb = constant('Pushword\\Admin\\Utils\\Thumb::PLACEHOLDER_DATA_URI') %}
 
@@ -14,7 +15,7 @@
     <span class="d-none d-sm-inline ms-1">{{ 'adminMediaMultiUpload'|trans }}</span>
   </a>
   <div class="btn-group ms-2 media-view-switch" role="group" aria-label="{{ 'adminMediaViewLabel'|trans }}">
-    <a href="{{ ea_url().set('view', null) }}"
+    <a href="{{ ea_url().set('view', 'table') }}"
        class="btn btn-secondary {{ isTableView ? 'active' }}"
        aria-pressed="{{ isTableView ? 'true' : 'false' }}">
       <i class="fa fa-list" aria-hidden="true"></i>

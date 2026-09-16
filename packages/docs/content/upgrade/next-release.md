@@ -1,5 +1,5 @@
 ---
-title: 'page list row actions moved into a dropdown; the hold switch became a column and `pw_page_holdable()` is gone; the admin has a type scale, corner-radius and elevation tokens, and `<small>` no longer compounds'
+title: 'page list row actions moved into a dropdown; the hold switch became a column and `pw_page_holdable()` is gone; the admin has a type scale, corner-radius and elevation tokens, and `<small>` no longer compounds; the media list opens in mosaic and remembers the view you picked'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -73,3 +73,11 @@ longer shrink relative to their container. Use the custom properties in your own
 `--pw-radius-sm|md|lg` (4/8/12px) replace the eight radii the admin used to declare, and
 `--pw-elevation-1|2|3|4` replace ten ad-hoc shadows written in three notations. Nothing to
 do — reuse the properties instead of hard-coding values in your own admin CSS.
+
+## The media list opens in mosaic and remembers your choice
+
+The media index now defaults to the mosaic layout, and an explicit switch between List and
+Mosaic sticks for the rest of the session instead of resetting on the next visit.
+
+**Affects links and tests that opened the media list expecting the table.** A URL without a
+`view` parameter now renders the mosaic; pass `?view=table` to force the table layout.
