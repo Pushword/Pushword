@@ -453,4 +453,25 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
 
         $this->remove($media);
     }
+
+    public function testAnUndecidedMediaCarriesNoLicenceBadge(): void
+    {
+        // An undecided media ('') is deliberately absent from the label map: a badge
+        // reading "nothing was decided" on every card is noise, not information.
+        $media = $this->createMedia();
+
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $router = self::getContainer()->get('router');
+        $crawler = $client->request(Request::METHOD_GET, $router->generate('admin_media_index', [
+            'query' => '__license_admin_test__',
+        ]));
+
+        self::assertSame('', $media->licenseState);
+        self::assertCount(1, $crawler->filter('.media-mosaic__card'));
+        self::assertCount(0, $crawler->filter('.media-mosaic__card .mosaic-license-label'));
+
+        $this->remove($media);
+    }
 }
