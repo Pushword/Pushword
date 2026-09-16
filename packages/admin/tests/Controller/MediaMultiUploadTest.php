@@ -13,6 +13,22 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class MediaMultiUploadTest extends AbstractAdminTestClass
 {
+    public function testTheTagBarUsesTheAdminsOwnControlStyles(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/multi-upload');
+        self::assertResponseIsSuccessful();
+
+        $bar = $crawler->filter('#pw-tag-all-bar');
+        self::assertCount(1, $bar);
+
+        // It was the only blue-outline button in the admin, and the only bold form label.
+        $button = $bar->filter('#pw-tag-all-btn');
+        self::assertStringContainsString('btn-secondary', (string) $button->attr('class'));
+        self::assertStringNotContainsString('btn-outline-primary', (string) $button->attr('class'));
+        self::assertCount(0, $bar->filter('label strong'));
+    }
+
     public function testRejectsExecutableContentDisguisedAsAnImage(): void
     {
         $client = $this->loginUser();
