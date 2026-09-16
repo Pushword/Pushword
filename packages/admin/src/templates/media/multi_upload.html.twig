@@ -33,7 +33,7 @@
          shorter than the field it sits next to. #}
       <label for="pw-tag-all" class="mb-0 text-nowrap">{{ 'adminMediaMultiUploadTagAll'|trans }}</label>
       <div style="position:relative; flex:1; max-width:420px;">
-        <input type="text" id="pw-tag-all" class="form-control form-control-sm" data-tags="{{ all_tags|json_encode }}" data-delimiter=" " autocomplete="off">
+        <input type="text" id="pw-tag-all" class="form-control form-control-sm" data-tags data-delimiter=" " autocomplete="off">
         <div class="textSuggester" style="display:none;"></div>
       </div>
       <button type="button" id="pw-tag-all-btn" class="btn btn-secondary text-nowrap">{{ 'adminMediaMultiUploadTagAllApply'|trans }}</button>

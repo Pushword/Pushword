@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Pushword\Admin\Tests\Controller;
 
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
+use Pushword\Core\Tests\Perf\QueryCountingTrait;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,6 +16,14 @@ use Symfony\Component\HttpFoundation\Response;
 #[Group('integration')]
 final class MediaListActionsTest extends AbstractAdminTestClass
 {
+    use QueryCountingTrait;
+
+    protected function tearDown(): void
+    {
+        $this->stopCountingQueries();
+        parent::tearDown();
+    }
+
     public function testRowActionsLiveInASingleDropdown(): void
     {
         $crawler = $this->mediaListCrawler();
@@ -51,6 +61,61 @@ final class MediaListActionsTest extends AbstractAdminTestClass
             ->each(static fn (Crawler $node): string => trim($node->text()));
 
         self::assertCount(1, $primaries, 'Two filled buttons leave no way to tell which action is the default');
+    }
+
+    /**
+     * The suggester's candidate list belongs to the table, not to each of its rows:
+     * on a real media table (4.2k tags) repeating it cost ~77 KB of JSON per row.
+     */
+    public function testTheTagListIsEmittedOnceForTheWholeTable(): void
+    {
+        $crawler = $this->mediaListCrawler();
+
+        $rows = $crawler->filter('#pw-media-table tbody tr[data-id]')->count();
+        self::assertGreaterThan(0, $rows, 'At least one media must render a row');
+
+        self::assertJson(
+            (string) $crawler->filter('#pw-media-table')->attr('data-all-tags'),
+            'the container carries the candidate list admin.tagsField.js reads',
+        );
+
+        $tagInputs = $crawler->filter('#pw-media-table .pw-m-tagsinput');
+        self::assertCount($rows, $tagInputs, 'every row keeps its tag input');
+        self::assertSame(
+            array_fill(0, $rows, ''),
+            $tagInputs->extract(['data-tags']),
+            'data-tags stays as the marker, without the payload',
+        );
+    }
+
+    /**
+     * Mosaic is the default layout and has no tag input, so the list must cost
+     * nothing there — it used to be computed on every media index.
+     */
+    public function testTheMosaicDefaultCarriesNoTagList(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/media?view=mosaic');
+        self::assertResponseIsSuccessful();
+
+        self::assertCount(0, $crawler->filter('[data-all-tags]'));
+        self::assertCount(0, $crawler->filter('[data-tags]'));
+    }
+
+    public function testTheMosaicDefaultSkipsTheTagQueries(): void
+    {
+        $client = $this->loginUser();
+        $client->disableReboot();
+        $this->startCountingQueries(self::getContainer()->get(EntityManagerInterface::class)->getConnection());
+
+        $mosaic = $this->countQueries(static function () use ($client): void {
+            $client->request(Request::METHOD_GET, '/admin/media?view=mosaic');
+        });
+        $table = $this->countQueries(static function () use ($client): void {
+            $client->request(Request::METHOD_GET, '/admin/media?view=table');
+        });
+
+        self::assertLessThan($table, $mosaic, 'the default layout must not pay for the tag list it never renders');
     }
 
     private function mediaListCrawler(): Crawler

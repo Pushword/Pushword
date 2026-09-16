@@ -56,7 +56,14 @@ export function suggestTags() {
     // Skip if already initialized
     if (tagsInput.dataset.suggestInitialized) return
 
-    const list = JSON.parse(tagsInput.getAttribute('data-tags'))
+    // `data-tags` marks an input as taking tag suggestions; the candidate list
+    // itself may live on an ancestor, so a table of them carries it once instead
+    // of repeating it (4k tags is ~77 KB) in every row.
+    const own = tagsInput.getAttribute('data-tags')
+    const shared = tagsInput
+      .closest('[data-all-tags]')
+      ?.getAttribute('data-all-tags')
+    const list = JSON.parse(own || shared || 'null')
     const suggester = tagsInput.parentElement?.querySelector('.textSuggester')
     const options = {
       highlight: true,

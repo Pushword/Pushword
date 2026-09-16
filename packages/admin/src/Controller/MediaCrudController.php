@@ -196,8 +196,15 @@ class MediaCrudController extends AbstractAdminCrudController
         }
 
         if (Crud::PAGE_INDEX === $context->getCrud()?->getCurrentPage()) {
-            $responseParameters->set('all_tags', $this->mediaRepo->getAllTags());
-            $responseParameters->set('mediaView', $this->resolveMediaView($context->getRequest()));
+            $mediaView = $this->resolveMediaView($context->getRequest());
+            $responseParameters->set('mediaView', $mediaView);
+
+            // Only the table layout has inline tag inputs to suggest into. The
+            // mosaic is the default, so computing the list unconditionally meant
+            // scanning every media on the request that had no use for it.
+            if (self::VIEW_TABLE === $mediaView) {
+                $responseParameters->set('all_tags', $this->mediaRepo->getAllTags());
+            }
 
             return $responseParameters;
         }

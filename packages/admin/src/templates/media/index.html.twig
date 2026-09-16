@@ -218,6 +218,7 @@
 
     {% if num_results > 0 %}
       <div id="pw-media-table"
+           data-all-tags="{{ all_tags|default([])|json_encode }}"
            data-inline-update-url="{{ path('admin_media_multi_inline_update', {id: '__ID__'}) }}"
            data-delete-url="{{ path('admin_media_multi_delete', {id: '__ID__'}) }}"
            data-csrf-token="{{ csrf_token('media_multi_upload') }}">
@@ -267,7 +268,7 @@
                       </div>
                       <div class="pw-m-tags">
                         <span class="pw-hash">#</span>
-                        <input class="pw-m-tagsinput" type="text" value="{{ media.tags }}" data-field="tags" data-id="{{ media.id }}" data-tags="{{ all_tags|default([])|json_encode }}" data-delimiter=" " autocomplete="off" placeholder="{{ 'adminMediaTagsLabel'|trans }}" aria-label="{{ 'adminMediaTagsLabel'|trans }}">
+                        <input class="pw-m-tagsinput" type="text" value="{{ media.tags }}" data-field="tags" data-id="{{ media.id }}" data-tags data-delimiter=" " autocomplete="off" placeholder="{{ 'adminMediaTagsLabel'|trans }}" aria-label="{{ 'adminMediaTagsLabel'|trans }}">
                         <div class="textSuggester" style="display:none;"></div>
                       </div>
                       <div class="pw-m-alts">

@@ -58,7 +58,6 @@ export function initMultiUpload() {
   const uploadUrl = container.dataset.uploadUrl
   const editUrlTemplate = container.dataset.editUrl
   const csrfToken = container.dataset.csrfToken
-  const allTags = container.dataset.allTags
   const licenseLabels = JSON.parse(container.dataset.licenseLabels ?? '{}')
   const ctx = {
     inlineUpdateUrl: container.dataset.inlineUpdateUrl,
@@ -197,7 +196,7 @@ export function initMultiUpload() {
       <td>${thumbHtml}</td>
       <td class="pw-filename-cell"><input type="text" value="${escapeAttr(slug)}" data-field="slug" data-id="${data.id}"><span class="pw-ext text-muted">${escapeHtml(ext)}</span></td>
       <td><input type="text" value="${escapeAttr(data.alt)}" data-field="alt" data-id="${data.id}"></td>
-      <td><input type="text" value="${escapeAttr(data.tags)}" data-field="tags" data-id="${data.id}" data-tags="${escapeAttr(allTags)}" data-delimiter=" "><div class="textSuggester" style="display:none;"></div></td>
+      <td><input type="text" value="${escapeAttr(data.tags)}" data-field="tags" data-id="${data.id}" data-tags data-delimiter=" "><div class="textSuggester" style="display:none;"></div></td>
       <td><textarea data-field="alts" data-id="${data.id}">${escapeHtml(data.alts)}</textarea></td>
       <td><small>${escapeHtml(size)}</small></td>
       <td><small>${escapeHtml(dims)}</small></td>
