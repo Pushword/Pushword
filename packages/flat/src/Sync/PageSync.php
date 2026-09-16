@@ -261,6 +261,21 @@ final class PageSync
         $this->stateManager->recordExport('page', $app->getMainHost());
     }
 
+    /**
+     * Whether the flat mirror already reflects the database, so an export would
+     * rewrite nothing. The counterpart of {@see self::mustImport()} for callers that
+     * export defensively — a snapshot download, say — rather than on a known change.
+     */
+    public function isMirrorCurrent(?string $host = null): bool
+    {
+        $app = $this->resolveApp($host);
+        $targetDir = $this->contentDirFinder->get($app->getMainHost());
+
+        // Both halves of what export() writes: the pages, and redirection.csv.
+        return $this->pageExporter->isMirrorCurrent($targetDir)
+            && $this->redirectionExporter->isMirrorCurrent($targetDir);
+    }
+
     public function mustImport(?string $host = null): bool
     {
         $app = $this->resolveApp($host);

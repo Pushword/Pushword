@@ -29,9 +29,10 @@ use Throwable;
  * Before streaming, it re-exports the DB → flat mirror for the snapshot scope
  * so every shipped `.md` carries an up-to-date `revision:` front-matter stamp,
  * even when the on-disk mirror was left stale (older exporter, or a file
- * written out-of-band). The page exporter is incremental — unchanged files are
- * skipped after a cheap mtime check — so freshening an up-to-date mirror is
- * near free. The flat directory path is resolved through
+ * written out-of-band). A host whose mirror is already current is skipped
+ * outright: the exporter does skip unchanged files, but only after hydrating
+ * every Page to find that out, which cost this endpoint ~1.5s per call on a
+ * fleet-sized site. The flat directory path is resolved through
  * {@see FlatFileContentDirFinder}, the same source of truth used by the
  * exporters and `pw:flat:sync`.
  */
@@ -125,6 +126,10 @@ final class ContentSnapshotApiController extends AbstractApiController
             )));
 
         foreach ($hosts as $h) {
+            if ($this->flatSync->isPageMirrorCurrent($h)) {
+                continue;
+            }
+
             $this->flatSync->export($h, entity: 'page');
         }
     }

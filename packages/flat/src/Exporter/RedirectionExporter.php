@@ -23,6 +23,32 @@ final class RedirectionExporter
     ) {
     }
 
+    /**
+     * Whether `redirection.csv` already reflects the host's redirection pages.
+     *
+     * Unlike the page export, {@see self::exportRedirections()} rewrites the file
+     * every time it runs, so its mtime is when it was last written — and a
+     * redirection changed since then is exactly a redirection newer than the file.
+     * A host with no redirection writes nothing, so nothing can be out of date.
+     *
+     * Strictly newer, where the page side can accept equality: there an mtime is
+     * *set* from updatedAt, so equal means mirrored, while here equal only means
+     * "written in the same second as the edit", which proves nothing at mtime's
+     * one-second resolution.
+     */
+    public function isMirrorCurrent(string $dir): bool
+    {
+        $latest = $this->pageRepo->findLatestRedirectionUpdate($this->apps->get()->getMainHost());
+
+        if (0 === $latest) {
+            return true;
+        }
+
+        $csvFilePath = $dir.'/'.self::INDEX_FILE;
+
+        return is_file($csvFilePath) && (int) filemtime($csvFilePath) > $latest;
+    }
+
     public function exportRedirections(): void
     {
         $pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());

@@ -31,6 +31,9 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
 
     private const string NESTED_SLUG = 'snapshot-fixture/leaf';
 
+    /** Seeded by a single test, so it is cleaned up with the other two. */
+    private const string ADDED_SLUG = 'snapshot-fixture-added';
+
     private KernelBrowser $client;
 
     private Filesystem $filesystem;
@@ -99,7 +102,7 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         $em = $container->get('doctrine.orm.default_entity_manager');
 
         $pageRepository = $em->getRepository(Page::class);
-        foreach ([self::ROOT_SLUG, self::NESTED_SLUG] as $slug) {
+        foreach ([self::ROOT_SLUG, self::NESTED_SLUG, self::ADDED_SLUG] as $slug) {
             $page = $pageRepository->findOneBy(['slug' => $slug, 'host' => self::HOST]);
             if (null !== $page) {
                 $em->remove($page);
@@ -292,6 +295,131 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
             $this->entriesContainSuffix($entries, self::ROOT_SLUG.'.md'),
             'The existing mirror must still be streamed despite the refresh failure',
         );
+    }
+
+    /**
+     * The endpoint re-exports so the snapshot ships current `revision:` stamps, and
+     * that ran on every one of 160 calls — 1.5s each, because the exporter has to
+     * hydrate every Page before it can decide it has nothing to write.
+     *
+     * Observed through the sync state file, which only a real export writes.
+     */
+    public function testAnUpToDateMirrorIsNotExportedAgain(): void
+    {
+        $this->exportOnceIntoAFreshMirror();
+
+        // Control: a mirror dated back is stale, so the export runs and records it.
+        $this->filesystem->remove($this->syncStatePath());
+        $this->filesystem->touch($this->contentDir.'/'.self::ROOT_SLUG.'.md', 1);
+        $this->request('/api/content/snapshot.tar.gz?host='.self::HOST);
+        self::assertFileExists($this->syncStatePath(), 'a stale mirror must still be exported');
+
+        // The export just aligned every mtime, so nothing is left to write.
+        $this->filesystem->remove($this->syncStatePath());
+        $this->request('/api/content/snapshot.tar.gz?host='.self::HOST);
+
+        self::assertFileDoesNotExist(
+            $this->syncStatePath(),
+            'a mirror that needs nothing must not be exported',
+        );
+    }
+
+    /** A deleted page leaves no trace in updatedAt, so the guard compares slug sets. */
+    public function testAnOrphanedMirrorFileStillTriggersAnExport(): void
+    {
+        $this->exportOnceIntoAFreshMirror();
+
+        // What a page deleted since the last export leaves behind — and dated now,
+        // so nothing but the slug set can tell it apart from a current file.
+        $orphan = $this->contentDir.'/snapshot-fixture-orphan.md';
+        $this->filesystem->dumpFile($orphan, "---\nslug: snapshot-fixture-orphan\n---\nGone");
+
+        self::assertSame(200, $this->request('/api/content/snapshot.tar.gz?host='.self::HOST)->getStatusCode());
+
+        self::assertFileDoesNotExist($orphan, 'the export must still run and sweep the orphan');
+    }
+
+    /**
+     * A page added since the last export has no file, and a file left behind has no
+     * page. One of each keeps the two counts equal, so only comparing them as sets
+     * tells this mirror from a current one.
+     */
+    public function testAnAddedPageAndAStrayFileStillTriggerAnExport(): void
+    {
+        $this->exportOnceIntoAFreshMirror();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $this->seedPage($em, self::ADDED_SLUG);
+        $em->flush();
+
+        $stray = $this->contentDir.'/snapshot-fixture-stray.md';
+        $this->filesystem->dumpFile($stray, "---\nslug: snapshot-fixture-stray\n---\nStray");
+
+        self::assertSame(200, $this->request('/api/content/snapshot.tar.gz?host='.self::HOST)->getStatusCode());
+
+        self::assertFileExists($this->contentDir.'/'.self::ADDED_SLUG.'.md', 'the added page must be exported');
+        self::assertFileDoesNotExist($stray, 'and the stray file swept');
+    }
+
+    /**
+     * Redirections have no `.md`, so the page side of the guard cannot see them
+     * change — and exportRedirections() rewrites its CSV unconditionally.
+     */
+    public function testAChangedRedirectionStillRewritesItsCsv(): void
+    {
+        $this->exportOnceIntoAFreshMirror();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $redirection = new Page();
+        $redirection->slug = 'snapshot-fixture-redirect';
+        $redirection->h1 = 'Snapshot redirect';
+        $redirection->host = self::HOST;
+        $redirection->locale = 'en';
+        $redirection->createdAt = new DateTime('2 days ago');
+        $redirection->updatedAt = new DateTime('now');
+        $redirection->mainContent = 'Location: https://example.com/moved';
+
+        $em->persist($redirection);
+        $em->flush();
+
+        $redirectionId = (int) $redirection->id;
+
+        try {
+            self::assertSame(200, $this->request('/api/content/snapshot.tar.gz?host='.self::HOST)->getStatusCode());
+
+            $csv = $this->contentDir.'/redirection.csv';
+            self::assertFileExists($csv);
+            self::assertStringContainsString('https://example.com/moved', (string) file_get_contents($csv));
+        } finally {
+            $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+            $stored = $em->getRepository(Page::class)->find($redirectionId);
+            if (null !== $stored) {
+                $em->remove($stored);
+                $em->flush();
+            }
+        }
+    }
+
+    /** Written by SyncStateManager::recordExport(), i.e. only when an export ran. */
+    private function syncStatePath(): string
+    {
+        /** @var string $varDir */
+        $varDir = self::getContainer()->getParameter('pw.var_dir');
+
+        return $varDir.'/flat-sync/'.preg_replace('/[^a-zA-Z0-9_-]/', '_', self::HOST).'.json';
+    }
+
+    /**
+     * The endpoint 404s on an empty directory before it ever exports, so the mirror
+     * needs one file to exist; this leaves it holding exactly the seeded pages, and
+     * current — which is the state the guard is about.
+     */
+    private function exportOnceIntoAFreshMirror(): void
+    {
+        $this->filesystem->dumpFile($this->contentDir.'/'.self::ROOT_SLUG.'.md', "---\nslug: ".self::ROOT_SLUG."\n---\nseed");
+        $this->filesystem->touch($this->contentDir.'/'.self::ROOT_SLUG.'.md', 1);
+
+        self::assertSame(200, $this->request('/api/content/snapshot.tar.gz?host='.self::HOST)->getStatusCode());
     }
 
     private function request(string $url): Response

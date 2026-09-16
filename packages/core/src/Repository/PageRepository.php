@@ -576,6 +576,69 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     }
 
     /**
+     * `slug => updatedAt` for the pages a flat export writes a `.md` for.
+     *
+     * Scalar rows on purpose: the caller is deciding whether it has to export at
+     * all, and hydrating every Page — each with its mainContent — to answer that
+     * is the cost it is trying to avoid.
+     *
+     * Redirections are excluded by content prefix, the way the admin index excludes
+     * them. That is a wider net than PageRedirection::fromContent(), which also
+     * validates the URL, so a page whose `Location:` is not a real redirection is
+     * missing from this list; a caller comparing it against the mirror then reads
+     * "stale" and exports. Erring that way costs an export, never a stale mirror.
+     *
+     * @return array<string, int>
+     */
+    public function findSlugUpdatedAtForExport(string $host): array
+    {
+        $queryBuilder = $this->createQueryBuilder('p')
+            ->select('p.slug AS slug, p.updatedAt AS updatedAt')
+            ->andWhere('p.mainContent NOT LIKE :redirectionPrefix')
+            ->setParameter('redirectionPrefix', 'Location:%');
+        $this->andHost($queryBuilder, $host);
+
+        /** @var list<array{slug: string, updatedAt: DateTimeInterface|null}> $rows */
+        $rows = $queryBuilder->getQuery()->getArrayResult();
+
+        $toReturn = [];
+        foreach ($rows as $row) {
+            // No updatedAt means nothing can prove the file current, so report the
+            // epoch and let the comparison fail.
+            $toReturn[$row['slug']] = $row['updatedAt']?->getTimestamp() ?? 0;
+        }
+
+        return $toReturn;
+    }
+
+    /**
+     * The newest updatedAt among the host's redirection pages, 0 when it has none.
+     *
+     * Same prefix test as {@see self::findSlugUpdatedAtForExport()} and the same
+     * bias: a page whose `Location:` is not a real redirection raises this bar
+     * rather than lowering it, so a caller errs toward exporting.
+     */
+    public function findLatestRedirectionUpdate(string $host): int
+    {
+        $queryBuilder = $this->createQueryBuilder('p')
+            ->select('MAX(p.updatedAt)')
+            ->andWhere('p.mainContent LIKE :redirectionPrefix')
+            ->setParameter('redirectionPrefix', 'Location:%');
+        $this->andHost($queryBuilder, $host);
+
+        $latest = $queryBuilder->getQuery()->getSingleScalarResult();
+
+        if (! \is_string($latest)) {
+            return 0;
+        }
+
+        // A datetime this PHP cannot read must not come back as 0 — that is the
+        // "no redirection here" answer, which would read as nothing to export.
+        // Pushword runs on three databases; the unreadable one errs toward exporting.
+        return strtotime($latest) ?: \PHP_INT_MAX;
+    }
+
+    /**
      * @param string|string[] $host
      *
      * @return Page[]

@@ -161,6 +161,15 @@ final class FlatFileSync
         }
     }
 
+    /**
+     * Whether exporting pages for this host would rewrite nothing.
+     * {@see PageSync::isMirrorCurrent()}.
+     */
+    public function isPageMirrorCurrent(?string $host = null): bool
+    {
+        return $this->pageSync->isMirrorCurrent($host);
+    }
+
     /** @return string[] */
     public function getHosts(): array
     {

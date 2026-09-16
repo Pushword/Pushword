@@ -60,6 +60,40 @@ final class PageExporter
         $this->output = $output;
     }
 
+    /**
+     * Whether every `.md` in $dir is already at least as new as the page it mirrors,
+     * so a caller that only wants current `revision:` stamps can skip exporting.
+     *
+     * Exact, not a guess: {@see self::exportPage()} touches each file to its page's
+     * updatedAt and skips on `filemtime >= updatedAt`, so this asks the very same
+     * question of the very same pairs — it just reads slugs and timestamps instead of
+     * hydrating every Page to find out nothing has to be written. A page with no file,
+     * or a file with no page, is a slug set mismatch and reads as stale, which is what
+     * makes a creation, a deletion and a rename all land on the export path.
+     */
+    public function isMirrorCurrent(string $dir): bool
+    {
+        $updatedAt = $this->pageRepo->findSlugUpdatedAtForExport($this->apps->get()->getMainHost());
+
+        $mirrored = [];
+        foreach ($this->collectExportedMarkdownFiles($dir) as $filePath) {
+            $mirrored[$this->fileToSlug($filePath)] = (int) filemtime($filePath);
+        }
+
+        // As sets: equal sizes and no page missing its file means the two name the
+        // same slugs, whatever order the query and the directory walk produced.
+        if (\count($updatedAt) !== \count($mirrored) || [] !== array_diff_key($updatedAt, $mirrored)) {
+            return false;
+        }
+
+        // `filemtime >= updatedAt` is exportPage()'s own skip condition; a page that
+        // reports no updatedAt at all (0) can never be shown current.
+        return array_all(
+            $updatedAt,
+            static fn (int $timestamp, string $slug): bool => 0 !== $timestamp && $mirrored[$slug] >= $timestamp,
+        );
+    }
+
     public function exportPages(bool $force = false): void
     {
         $this->exportedCount = 0;
@@ -447,6 +481,11 @@ final class PageExporter
         if ($this->filesystem->exists($exportFilePath)) {
             $existingContent = $this->filesystem->readFile($exportFilePath);
             if ($newContent === $existingContent) {
+                // Align the mtime anyway: leaving it behind updatedAt means the fast
+                // path above can never skip this page again, so every later export
+                // regenerates its content to discover the same equality — and
+                // isMirrorCurrent() reads the file as permanently stale.
+                $this->filesystem->touch($exportFilePath, $page->updatedAt->getTimestamp()); // @phpstan-ignore method.nonObject
                 ++$this->skippedCount;
 
                 return false;
