@@ -1,5 +1,5 @@
 ---
-title: 'page list row actions moved into a dropdown; the hold switch became a column and `pw_page_holdable()` is gone; the admin has a type scale, corner-radius and elevation tokens, and `<small>` no longer compounds; the media list opens in mosaic and remembers the view you picked'
+title: 'page list row actions moved into a dropdown; the hold switch became a column and `pw_page_holdable()` is gone; the admin has a type scale, corner-radius and elevation tokens, and `<small>` no longer compounds; the media list opens in mosaic and remembers the view you picked; an image that declares a credit now renders it in a `title` attribute'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin`
+**Concerns:** `pushword/admin`, `pushword/core`
 
 ## Page list row actions moved into a dropdown
 
@@ -82,3 +82,12 @@ Mosaic sticks for the rest of the session instead of resetting on the next visit
 **Affects links and tests that opened the media list expecting the table.** A URL without a
 `view` parameter now renders the mosaic; pass `?view=table` to force the table layout. The
 licence-state badge, previously table-only, is rendered in both layouts.
+
+## Images carry their credit in a `title` attribute
+
+`component/image.html.twig` now renders a `title` from the same media properties that feed
+the JSON-LD `ImageObject`, so every image with a credit — body images, galleries, sliders —
+names its author, with the Creative Commons deed appended when the licence is one.
+
+**Affects sites whose tests, CSS or scripts key on the rendered `<img>` markup.** A media
+declaring no credit renders as before, and a caller passing its own `title` keeps it.
