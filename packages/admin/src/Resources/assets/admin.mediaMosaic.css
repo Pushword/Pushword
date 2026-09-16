@@ -1,5 +1,19 @@
-.media-view-switch .btn.active {
-  color: #475569;
+/* Segmented control. The current half used to differ only by text colour — and by the
+   lighter of the two, so it read as the disabled one. It wins by fill instead, reusing
+   the sky-100 the sidebar already uses to mean "this is where you are". */
+.media-view-switch .btn {
+  color: var(--text-muted);
+}
+
+.media-view-switch .btn.active,
+.media-view-switch .btn.active:hover,
+.media-view-switch .btn.active:focus-visible {
+  position: relative; /* draw this segment's border over its neighbour's */
+  z-index: 1;
+  border-color: #7dd3fc; /* sky-300 */
+  color: var(--color-primary);
+  font-weight: 600;
+  background-color: #e0f2fe; /* sky-100 */
 }
 
 .media-mosaic-wrapper {
