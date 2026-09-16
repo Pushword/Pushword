@@ -80,4 +80,5 @@ The media index now defaults to the mosaic layout, and an explicit switch betwee
 Mosaic sticks for the rest of the session instead of resetting on the next visit.
 
 **Affects links and tests that opened the media list expecting the table.** A URL without a
-`view` parameter now renders the mosaic; pass `?view=table` to force the table layout.
+`view` parameter now renders the mosaic; pass `?view=table` to force the table layout. The
+licence-state badge, previously table-only, is rendered in both layouts.

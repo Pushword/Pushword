@@ -67,6 +67,15 @@
   pointer-events: none;
 }
 
+.mosaic-license-label {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  font-size: var(--pw-text-xs);
+  pointer-events: none;
+}
+
 .mosaic-inner-box-default {
   position: relative;
 }

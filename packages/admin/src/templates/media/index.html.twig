@@ -5,6 +5,13 @@
 {% set mosaicActive = mediaView|default('mosaic') != 'table' %}
 {% set isTableView = not mosaicActive %}
 {% set mediaFallbackThumb = constant('Pushword\\Admin\\Utils\\Thumb::PLACEHOLDER_DATA_URI') %}
+{# Shared by both layouts. An undecided media ('') has nothing to show, so it is
+   deliberately absent here. #}
+{% set licenseStateLabels = {
+  seeded: 'adminMediaLicenseStateSeeded',
+  thirdParty: 'adminMediaLicenseStateThirdParty',
+  overridden: 'adminMediaLicenseStateOverridden',
+} %}
 
 {% block global_actions %}
   {{ parent() }}
@@ -87,6 +94,14 @@
             >
               {% if media.ratioLabel %}
                 <span class="mosaic-box-label badge bg-black text-white">{{ media.ratioLabel }}</span>
+              {% endif %}
+              {# The checkbox owns the top-left and the ratio the bottom-left, so the
+                 licence state takes the one free corner. #}
+              {% if licenseStateLabels[media.licenseState] is defined %}
+                <span class="mosaic-license-label badge {{ media.licenseState == 'thirdParty' ? 'bg-warning text-dark' : 'bg-light text-body' }}"
+                  title="{{ 'adminMediaLicenseStateLabel'|trans }}">
+                  <i class="fa fa-copyright"></i> {{ licenseStateLabels[media.licenseState]|trans }}
+                </span>
               {% endif %}
               <span class="media-mosaic__preview">
                 <img src="{{ thumbnail }}" alt="{{ media.alt ?: media.fileName }}" loading="lazy">
@@ -205,12 +220,6 @@
     {% set num_results = visible_entities|length %}
     {% set some_results_are_hidden = num_results != entities|length %}
     {% set currentSort = app.request.query.all('sort') %}
-    {# An undecided media ('') has nothing to show, so it is deliberately absent here. #}
-    {% set licenseStateLabels = {
-      seeded: 'adminMediaLicenseStateSeeded',
-      thirdParty: 'adminMediaLicenseStateThirdParty',
-      overridden: 'adminMediaLicenseStateOverridden',
-    } %}
 
     {% if num_results > 0 %}
       <div id="pw-media-table"
