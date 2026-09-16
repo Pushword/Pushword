@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'a conversation form with three steps or more can drive its own step transition'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,15 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/conversation`
+
+## A conversation form can drive its own step transition
+
+`AbstractConversationForm` exposes `advanceStep()` (move to the next step *and* store
+the workflow) and `deleteWorkflow()` to subclasses. Both halves of the transition used
+to be private, so a form overriding `validStepN()` could advance but not store.
+
+**Affects forms with three steps or more that override a step validator.** They answered
+the next POST with a 404 "Conversation workflow not found". Replace a bare
+`incrementStep()` with `advanceStep()`; see [the conversation doc](/extension/conversation).

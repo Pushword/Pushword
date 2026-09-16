@@ -132,6 +132,34 @@ Per default, there are 4 form types: `newsletter`, `message`, `ms_message` and `
 
 Add a new class in bundle config `pushword_conversation.conversation_form.myNewType: myNewFormClass` or at the app level config `pushword.apps[...].conversation_form: [...]`
 
+### Driving the steps yourself
+
+A form only has to declare `getStepOne()`, `getStepTwo()`, … and let
+`defaultStepValidator()` move between them. When a step needs its own transition —
+calling an external API before advancing, for instance — override its
+`validStepN()` and use the two seams the base class exposes:
+
+- `advanceStep()` moves to the next step **and** stores the workflow. The next POST
+  arrives on `?step=N+1` carrying only the token, and is refused unless the stored
+  state matches that step, so advancing without storing answers it with
+  "Conversation workflow not found". Never call `incrementStep()` on its own.
+- `deleteWorkflow()` burns the token; call it before `showSuccess()` so the last
+  step cannot be replayed.
+
+```php
+protected function validStepTwo(FormInterface $form): string
+{
+    if (! $form->isValid()) {
+        return $this->showForm($form);
+    }
+
+    $this->subscribeToNewsletter($this->message);
+    $this->advanceStep();
+
+    return $this->showForm($this->getCurrentStep()->getForm());
+}
+```
+
 ## Flat sync integration
 
 When the [Flat extension](/extension/flat) is enabled, every `pw:flat:sync` run also synchronizes

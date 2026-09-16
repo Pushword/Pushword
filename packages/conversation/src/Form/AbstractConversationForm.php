@@ -181,8 +181,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
             $this->messageId = (int) $this->message->id;
 
             if (false !== $this->getNextStepFunctionName()) {
-                $this->incrementStep();
-                $this->storeWorkflow();
+                $this->advanceStep();
 
                 return $this->showForm($this->getCurrentStep()->getForm());
             }
@@ -269,6 +268,21 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         $this->currentStep = $currentStep + 1;
     }
 
+    /**
+     * Move to the next step and persist the workflow behind the current token.
+     *
+     * The two belong together: the next POST arrives on `?step=N+1` and initForm()
+     * reads the stored state, which loadWorkflow() rejects unless its step matches.
+     * A subclass driving its own advance calls this rather than incrementStep(),
+     * which alone leaves the workflow one step behind and answers the next request
+     * with "Conversation workflow not found".
+     */
+    protected function advanceStep(): void
+    {
+        $this->incrementStep();
+        $this->storeWorkflow();
+    }
+
     protected function getId(): int
     {
         return $this->messageId ?? 0;
@@ -343,7 +357,11 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         });
     }
 
-    private function deleteWorkflow(): void
+    /**
+     * Drop the workflow. A subclass ending the conversation on its own terms calls
+     * this before showSuccess(), so the token cannot be replayed.
+     */
+    protected function deleteWorkflow(): void
     {
         if (null !== $this->workflowToken) {
             $this->cache->delete($this->workflowCacheKey());
