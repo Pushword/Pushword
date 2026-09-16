@@ -122,4 +122,85 @@ final class ImageLicenseTemplateTest extends KernelTestCase
         self::assertStringContainsString('<picture', $html);
         self::assertStringNotContainsString('application/ld+json', $html);
     }
+
+    /**
+     * The credit has to reach the markup as well as the JSON-LD, or it is published
+     * for machines and hidden from the people the licence asks us to inform.
+     */
+    public function testACreditedMediaCarriesItsAttributionInTheTitle(): void
+    {
+        $html = $this->renderImage([
+            MediaLicense::CREDIT_TEXT => 'Zde / Wikimedia',
+            MediaLicense::LICENSE => 'https://creativecommons.org/licenses/by-sa/4.0/',
+        ]);
+
+        self::assertStringContainsString('title="© Zde / Wikimedia (CC BY-SA 4.0)"', $html);
+    }
+
+    /**
+     * The whole reason the credit moved out of the alt: the alt is the description a
+     * screen reader reads in place of the image, and a photographer's name is not
+     * part of what the photo shows.
+     */
+    public function testTheAltStaysADescriptionAndNeverGainsTheCredit(): void
+    {
+        $html = $this->renderImage([MediaLicense::CREDIT_TEXT => 'Wilfrid Valette']);
+
+        self::assertSame(1, preg_match('#<img [^>]*\balt="([^"]*)"#', $html, $alt));
+        self::assertSame('Refuge du Gioberney', $alt[1]);
+    }
+
+    public function testAMediaWithoutACreditGetsNoTitleAtAll(): void
+    {
+        self::assertStringNotContainsString('title=', $this->renderImage([]));
+    }
+
+    /**
+     * mergeAttr() concatenates scalars instead of overriding them, so a caller's title
+     * and ours would come out welded into one malformed attribute. The caller wins,
+     * and nothing is appended to it.
+     */
+    public function testACallerTitleIsLeftAloneRatherThanConcatenated(): void
+    {
+        $html = $this->twig()->render('@PushwordCore/component/image.html.twig', [
+            'image' => $this->media([MediaLicense::CREDIT_TEXT => 'Wilfrid Valette']),
+            'image_attr' => ['title' => 'Le refuge au petit matin'],
+        ]);
+
+        self::assertSame(1, preg_match('#<img [^>]*\\btitle="([^"]*)"#', $html, $title));
+        self::assertSame('Le refuge au petit matin', $title[1]);
+
+        // The JSON-LD still carries the creditText — the caller overrode the tooltip,
+        // not the media's own claim.
+        self::assertStringContainsString('"creditText":"Wilfrid Valette"', $html);
+    }
+
+    /** The SVG branch returns before the srcset work and used to miss every addition. */
+    public function testAnSvgCarriesItsCreditToo(): void
+    {
+        $html = $this->renderImage([MediaLicense::CREDIT_TEXT => 'ExampleCreator'], 'logo.svg');
+
+        self::assertStringContainsString('title="© ExampleCreator"', $html);
+    }
+
+    /**
+     * A body image written as `![alt](photo.jpg)` renders through the same component,
+     * with the markdown's own alt passed in. The credit must still ride along — that
+     * path is how the bulk of an imported library is displayed.
+     */
+    public function testABodyImageWithItsOwnAltStillCarriesTheCredit(): void
+    {
+        self::bootKernel();
+
+        /** @var MediaExtension $mediaExtension */
+        $mediaExtension = self::getContainer()->get(MediaExtension::class);
+
+        $html = $mediaExtension->renderImage(
+            $this->media([MediaLicense::CREDIT_TEXT => 'Thomas Praire']),
+            alt: 'Descente vers le lac',
+        );
+
+        self::assertStringContainsString('alt="Descente vers le lac"', $html);
+        self::assertStringContainsString('title="© Thomas Praire"', $html);
+    }
 }

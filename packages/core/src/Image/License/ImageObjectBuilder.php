@@ -45,6 +45,20 @@ final readonly class ImageObjectBuilder
     }
 
     /**
+     * The attribution a template puts in `<img title>` — see MediaLicense::creditLine().
+     *
+     * Exposed beside the JSON-LD rather than on MediaExtension because the two are the
+     * same statement told twice: identical properties, one rendered for a machine and
+     * one for a person. A template that emits one and forgets the other is the bug this
+     * adjacency is meant to prevent.
+     */
+    #[AsTwigFunction('imageCredit')]
+    public function creditLine(Media $media): string
+    {
+        return MediaLicense::creditLine($media);
+    }
+
+    /**
      * @return array<string, mixed> empty when the media cannot qualify
      */
     public function build(Media $media): array

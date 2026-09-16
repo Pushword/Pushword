@@ -162,6 +162,94 @@ final class MediaLicense
     }
 
     /**
+     * A one-line attribution meant for a human, or '' when the media claims nothing.
+     *
+     * This is what belongs in an `<img title>`, and what does NOT belong in the alt:
+     * an alt describes what the photo shows to someone who cannot see it, and the
+     * photographer's name is not part of what the photo shows. Carried as a title it
+     * stays in reach all the same — a tooltip for a sighted visitor, the accessible
+     * *description* for a screen reader, announced after the alt instead of welded
+     * into the middle of it.
+     *
+     * The licence is named whenever it is one of the Creative Commons deeds, because
+     * those require it to be: "© Zde / Wikimedia" alone does not satisfy BY-SA,
+     * "© Zde / Wikimedia (CC BY-SA 4.0)" does.
+     */
+    public static function creditLine(Media $media): string
+    {
+        $values = self::extract($media);
+
+        $attribution = self::attribution($values);
+        $license = self::licenseLabel(\is_string($values[self::LICENSE] ?? null) ? $values[self::LICENSE] : '');
+
+        if ('' === $attribution) {
+            // A deed with nobody to attribute still tells a visitor what they may do.
+            return $license;
+        }
+
+        return '' === $license ? $attribution : $attribution.' ('.$license.')';
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     */
+    private static function attribution(array $values): string
+    {
+        $notice = $values[self::COPYRIGHT_NOTICE] ?? null;
+        if (\is_string($notice) && '' !== $notice) {
+            // The rights holder's own wording, verbatim: it may already carry a symbol,
+            // a year or an "All rights reserved" that is not ours to rewrite.
+            return $notice;
+        }
+
+        $credit = $values[self::CREDIT_TEXT] ?? null;
+
+        if (! \is_string($credit) || '' === $credit) {
+            /** @var list<array{name: string, type: string}> $creators */
+            $creators = $values[self::CREATOR] ?? [];
+            $credit = implode(', ', array_column($creators, 'name'));
+        }
+
+        if ('' === $credit) {
+            return '';
+        }
+
+        // A credit already opening with the symbol is left alone — libraries imported
+        // from an older convention carry both shapes, and "© © Name" is the one
+        // outcome nobody wants.
+        return str_starts_with($credit, '©') ? $credit : '© '.$credit;
+    }
+
+    /**
+     * The short name of a Creative Commons deed, or '' for any other URL.
+     *
+     * Only the CC deeds get a label, because only they have one that a visitor
+     * recognises and that states the terms. A stock platform's licence page is a URL
+     * and nothing more: labelling it "Adobe Stock" in an attribution would assert
+     * terms nobody here has read.
+     */
+    public static function licenseLabel(string $url): string
+    {
+        // Native preg_match, not the Safe\ import this file uses elsewhere: only the
+        // native signature lets static analysis read the capture groups off the pattern
+        // and know they exist. A literal pattern cannot fail to compile, so the `false`
+        // the Safe wrapper exists to catch is already excluded by comparing against 1.
+        if (1 === \preg_match('#^https?://(?:www\.)?creativecommons\.org/licenses/([a-z-]+)/(\d+\.\d+)#i', $url, $matches)) {
+            return 'CC '.strtoupper($matches[1]).' '.$matches[2];
+        }
+
+        if (1 === \preg_match('#^https?://(?:www\.)?creativecommons\.org/publicdomain/zero/(\d+\.\d+)#i', $url, $matches)) {
+            return 'CC0 '.$matches[1];
+        }
+
+        if (1 === \preg_match('#^https?://(?:www\.)?creativecommons\.org/publicdomain/mark/(\d+\.\d+)#i', $url, $matches)) {
+            return 'Public Domain Mark '.$matches[1];
+        }
+
+        return '';
+    }
+
+    /**
      * @return list<array{name: string, type: string}>
      */
     public static function creators(Media $media): array

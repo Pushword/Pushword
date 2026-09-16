@@ -6,6 +6,7 @@ namespace Pushword\Core\Tests\Image\License;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\License\EmbeddedRights;
 use Pushword\Core\Image\License\MediaLicense;
 
@@ -210,5 +211,118 @@ final class MediaLicenseTest extends TestCase
             ['Dominique VIVARES', 'Jean Dupont'],
             MediaLicense::normalizeNameList(' Dominique VIVARES , Jean Dupont , , Jean Dupont '),
         );
+    }
+
+    /**
+     * @param array<string, mixed> $properties
+     */
+    private static function mediaWith(array $properties): Media
+    {
+        $media = new Media();
+
+        foreach ($properties as $key => $value) {
+            $media->setCustomProperty($key, $value);
+        }
+
+        return $media;
+    }
+
+    public function testAMediaClaimingNothingHasNoCreditLine(): void
+    {
+        self::assertSame('', MediaLicense::creditLine(self::mediaWith([])));
+    }
+
+    public function testACreditTextBecomesASignedLine(): void
+    {
+        self::assertSame('© Wilfrid Valette', MediaLicense::creditLine(
+            self::mediaWith([MediaLicense::CREDIT_TEXT => 'Wilfrid Valette']),
+        ));
+    }
+
+    /**
+     * The one case that makes the whole line worth rendering: BY-SA is not satisfied
+     * by naming the author alone, the deed has to be named with them.
+     */
+    public function testACreativeCommonsDeedIsNamedBesideTheAuthor(): void
+    {
+        self::assertSame('© Zde / Wikimedia (CC BY-SA 4.0)', MediaLicense::creditLine(
+            self::mediaWith([
+                MediaLicense::CREDIT_TEXT => 'Zde / Wikimedia',
+                MediaLicense::LICENSE => 'https://creativecommons.org/licenses/by-sa/4.0/',
+            ]),
+        ));
+    }
+
+    /** A stock platform's terms page has no name a visitor could act on. */
+    public function testAnUnlabellableLicenceAddsNothingToTheLine(): void
+    {
+        self::assertSame('© Pixabay', MediaLicense::creditLine(
+            self::mediaWith([
+                MediaLicense::CREDIT_TEXT => 'Pixabay',
+                MediaLicense::LICENSE => 'https://pixabay.com/service/license/',
+            ]),
+        ));
+    }
+
+    /** The rights holder's own wording is not ours to re-punctuate. */
+    public function testACopyrightNoticeIsUsedVerbatimAndOutranksTheCreditText(): void
+    {
+        self::assertSame('Copyright 1998 Grand Angle, all rights reserved', MediaLicense::creditLine(
+            self::mediaWith([
+                MediaLicense::COPYRIGHT_NOTICE => 'Copyright 1998 Grand Angle, all rights reserved',
+                MediaLicense::CREDIT_TEXT => 'Grand Angle',
+            ]),
+        ));
+    }
+
+    /** Libraries imported from an older convention carry the symbol inside the credit. */
+    public function testASymbolAlreadyInTheCreditIsNotDoubled(): void
+    {
+        self::assertSame('© Thomas Praire', MediaLicense::creditLine(
+            self::mediaWith([MediaLicense::CREDIT_TEXT => '© Thomas Praire']),
+        ));
+    }
+
+    public function testCreatorsAreUsedWhenNoCreditTextWasWritten(): void
+    {
+        self::assertSame('© Thomas Praire, Grand Angle', MediaLicense::creditLine(
+            self::mediaWith([MediaLicense::CREATOR => [
+                ['name' => 'Thomas Praire', 'type' => MediaLicense::CREATOR_TYPE_PERSON],
+                ['name' => 'Grand Angle', 'type' => MediaLicense::CREATOR_TYPE_ORGANIZATION],
+            ]]),
+        ));
+    }
+
+    /**
+     * A deed with nobody to attribute still states what a visitor may do with the
+     * file, so it is worth a line — but it must not invent a "©" over an empty name.
+     */
+    public function testADeedWithoutAnAuthorStandsAlone(): void
+    {
+        self::assertSame('CC0 1.0', MediaLicense::creditLine(
+            self::mediaWith([MediaLicense::LICENSE => 'https://creativecommons.org/publicdomain/zero/1.0/']),
+        ));
+    }
+
+    #[DataProvider('licenseLabelProvider')]
+    public function testLicenceLabelling(string $url, string $expected): void
+    {
+        self::assertSame($expected, MediaLicense::licenseLabel($url));
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function licenseLabelProvider(): iterable
+    {
+        yield 'attribution' => ['https://creativecommons.org/licenses/by/4.0/', 'CC BY 4.0'];
+        yield 'share alike' => ['https://creativecommons.org/licenses/by-sa/4.0/', 'CC BY-SA 4.0'];
+        yield 'three clauses' => ['https://creativecommons.org/licenses/by-nc-nd/3.0/', 'CC BY-NC-ND 3.0'];
+        yield 'a ported deed keeps the version, not the jurisdiction' => ['https://creativecommons.org/licenses/by-sa/2.0/fr/', 'CC BY-SA 2.0'];
+        yield 'http' => ['http://creativecommons.org/licenses/by/2.5/', 'CC BY 2.5'];
+        yield 'www' => ['https://www.creativecommons.org/licenses/by/4.0/', 'CC BY 4.0'];
+        yield 'public domain dedication' => ['https://creativecommons.org/publicdomain/zero/1.0/', 'CC0 1.0'];
+        yield 'public domain mark' => ['https://creativecommons.org/publicdomain/mark/1.0/', 'Public Domain Mark 1.0'];
+        yield 'a stock platform is not labelled' => ['https://pixabay.com/service/license/', ''];
+        yield 'a lookalike host is not creative commons' => ['https://creativecommons.org.example.test/licenses/by/4.0/', ''];
+        yield 'empty' => ['', ''];
     }
 }

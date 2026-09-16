@@ -36,6 +36,18 @@
 {% set sizes = sizes ?? image_attr.sizes|default(null) %}
 {% set image_attr = image_attr|filter((v, k) => 'sizes' != k) %}
 
+{# The credit rides in `title`, never in `alt`. An alt describes what the photo shows
+   to someone who cannot see it, and the photographer's name is not part of what the
+   photo shows; as a title it stays in reach all the same — a tooltip for a sighted
+   visitor, the accessible description for a screen reader, announced after the alt
+   instead of welded into the middle of it. Empty unless the media declares a credit,
+   so a library carrying none renders exactly as before.
+   A caller's own title wins outright: mergeAttr() concatenates scalars rather than
+   overriding them (see the `sizes` note above), so adding ours on top of one would
+   weld the two into a single malformed attribute. #}
+{% set image_credit = image_attr.title is defined ? '' : imageCredit(image) %}
+{% set credit_attr = image_credit is empty ? {} : {title: image_credit} %}
+
 {# SVG files are vector images - render simple img tag without srcset/picture complexity #}
 {% set picture_attr = picture_attr ?? {} %}
 
@@ -47,7 +59,7 @@
       width: image.width,
       height: image.height,
       alt: image_alt|default(image.alt ?? image.fileName),
-    }, image_attr, lazy ? {loading: 'lazy'} : {}) }}>
+    }|merge(credit_attr), image_attr, lazy ? {loading: 'lazy'} : {}) }}>
   </picture>
 {% else %}
 
@@ -91,7 +103,7 @@
     width: width,
     height: height,
     alt: alt,
-  } %}
+  }|merge(credit_attr) %}
 
   {# With a modern <source> in front of it the <img> is reached only by a browser that
      took none of the offered formats, and the ladder does not exist in the source format
