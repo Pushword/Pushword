@@ -85,6 +85,18 @@ One line each; the post-mortems and already-walked dead ends are in
   scan hitting `--limit` (**0 means 500, not "no limit"**) and deliberately writing no
   snapshot. Any new all-hosts scan test owes `--limit` too, and its first assertion is
   `assertStringNotContainsString('stopping scan', …)`.
+- `StaticGeneratorTest::testError` asserting a 404 page that renders a *content* page
+  ("Numeric Slug YAML Test") — was `PageSyncTest` leaving `404.md` behind: the importer
+  renames the file after the slug it read, and only the name the test wrote was tracked.
+  Any later import in the worker resurrects the slug-`404` page, which
+  `error.html.twig` renders through `p('404')` in place of the error template. Both
+  layers matter on a recurrence: this class's "restore pristine DB" is a SQLite file
+  copy, so on MariaDB/PostgreSQL it is a no-op and the class inherits the worker's state.
+- `LinkGraphCommandTest::testEditingAPageStalesTheGraph` — `updatedAt` resolves to the
+  second (MariaDB and PostgreSQL round into it), so an edit landing in the same second
+  the seeded snapshot recorded left the corpus state identical and read as fresh. Any
+  class editing a `localhost.dev` page moments earlier put that second right there. The
+  test waits the second out now; the reproducer is one extra page edit before `seed()`.
 - The localhost.dev homepage gone/degraded mid-worker —
   `PageRepositoryTest::testPreloadTranslations…` ("does not contain 'fr'", or null),
   sitemap hreflang missing, `LinkGraphCommandTest` missing `localhost.dev/homepage`,

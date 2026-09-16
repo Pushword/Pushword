@@ -291,7 +291,7 @@
         "markdown": "![Demo](/media/2.jpg)",
         "pre_class": "",
         "compatible": false,
-        "php": "<p><span class=\"glightbox\" data-type=\"image\" data-dwl=\"/media/default/2.webp\" data-rot=\"/zrqvn/qrsnhyg/2.jroc\">\n\n\n\n\n\n                    \n        \n      \n  \n    \n  <picture >\n      <source type=\"image/webp\"\n      srcset=\"/media/xs/2.webp 576w,/media/sm/2.webp 768w,/media/md/2.webp 992w,/media/lg/2.webp 1200w,/media/xl/2.webp 1600w\" sizes=\"100vw\">\n      <img  src=\"/media/default/2.jpg\" class=\"w-full h-auto mb-4\" width=\"1000\" height=\"1000\" alt=\"Demo\" loading=\"lazy\">\n  </picture>\n\n\n\n</span></p>\n"
+        "php": "<p><span class=\"glightbox\" data-type=\"image\" data-dwl=\"/media/default/2.webp\" data-rot=\"/zrqvn/qrsnhyg/2.jroc\">\n\n\n\n\n\n\n                    \n        \n      \n  \n    \n  <picture >\n      <source type=\"image/webp\"\n      srcset=\"/media/xs/2.webp 576w,/media/sm/2.webp 768w,/media/md/2.webp 992w,/media/lg/2.webp 1200w,/media/xl/2.webp 1600w\" sizes=\"100vw\">\n      <img  src=\"/media/default/2.jpg\" class=\"w-full h-auto mb-4\" width=\"1000\" height=\"1000\" alt=\"Demo\" loading=\"lazy\">\n  </picture>\n\n\n\n</span></p>\n"
     },
     {
         "name": "notice",

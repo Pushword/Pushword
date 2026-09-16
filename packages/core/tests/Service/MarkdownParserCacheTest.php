@@ -9,6 +9,7 @@ use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Tests\Support\MarkdownCacheVersion;
 use Pushword\Core\Twig\MediaExtension;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -23,9 +24,6 @@ use Twig\Environment as Twig;
 #[Group('integration')]
 final class MarkdownParserCacheTest extends KernelTestCase
 {
-    /** Mirrors MarkdownParser::CACHE_VERSION, which is bumped whenever render output changes. */
-    private const string PARSER_VERSION = '23';
-
     /**
      * The key of a fragment holding a Markdown image: parser version, media
      * version, then the site's `body_image_sizes` — empty here, as the test app
@@ -33,7 +31,7 @@ final class MarkdownParserCacheTest extends KernelTestCase
      */
     private function imageKey(string $prefix, string $markdown, int $mediaVersion): string
     {
-        return $prefix.hash('xxh3', self::PARSER_VERSION.'m'.$mediaVersion.'s|'.$markdown);
+        return $prefix.hash('xxh3', MarkdownCacheVersion::get().'m'.$mediaVersion.'s|'.$markdown);
     }
 
     private function buildParser(ArrayAdapter $pool, int $mediaVersion = 0): MarkdownParser
@@ -83,7 +81,7 @@ final class MarkdownParserCacheTest extends KernelTestCase
         // Prime the cache, then poison the stored value: a cache hit must return it.
         $parser->transform($markdown);
         // Image-free fragment: bare parser version, no media token.
-        $key = 'pw_md.'.hash('xxh3', self::PARSER_VERSION.'|'.$markdown);
+        $key = 'pw_md.'.hash('xxh3', MarkdownCacheVersion::get().'|'.$markdown);
         $item = $pool->getItem($key);
         self::assertTrue($item->isHit(), 'fragment should be cached under the expected key');
         $item->set('POISONED');
@@ -102,7 +100,7 @@ final class MarkdownParserCacheTest extends KernelTestCase
 
         // A media write bumped the version. The image-free fragment must NOT be
         // re-keyed: a parser seeing version 7 still serves the primed entry.
-        $key = 'pw_md.'.hash('xxh3', self::PARSER_VERSION.'|'.$markdown);
+        $key = 'pw_md.'.hash('xxh3', MarkdownCacheVersion::get().'|'.$markdown);
         $item = $pool->getItem($key);
         self::assertTrue($item->isHit(), 'image-free fragment is keyed without the media version');
         $item->set('POISONED');
@@ -138,7 +136,7 @@ final class MarkdownParserCacheTest extends KernelTestCase
 
         // Prime the inline cache, then poison the stored value: a hit must return it.
         $parser->transformInline($markdown);
-        $key = 'pw_mdi.'.hash('xxh3', self::PARSER_VERSION.'|'.$markdown);
+        $key = 'pw_mdi.'.hash('xxh3', MarkdownCacheVersion::get().'|'.$markdown);
         $item = $pool->getItem($key);
         self::assertTrue($item->isHit(), 'inline fragment should be cached under the pw_mdi. namespace');
         $item->set('POISONED');

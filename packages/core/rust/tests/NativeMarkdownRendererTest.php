@@ -14,6 +14,7 @@ use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Tests\Support\HtmlEquivalence;
+use Pushword\Core\Tests\Support\MarkdownCacheVersion;
 use Pushword\Core\Twig\MediaExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -127,7 +128,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         self::assertSame([$php->transform($source)], $english);
         self::assertNotSame($french, $english);
         foreach (['fr', 'en'] as $locale) {
-            self::assertTrue($pool->getItem('pw_mdn3.'.hash('xxh3', '21a1l'.$locale.'|'.$source))->isHit());
+            self::assertTrue($pool->getItem('pw_mdn3.'.hash('xxh3', MarkdownCacheVersion::get().'a1l'.$locale.'|'.$source))->isHit());
         }
 
         $native->reset();
@@ -224,13 +225,13 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         self::assertSame([$this->parser()->transform($source)], $parser->renderNativeMany([$source]));
 
         $declined = "| Key | Value |\n|---|---|\n| `source` | `{host}/{slug}` |";
-        $oldItem = $pool->getItem('pw_mdn2.'.hash('xxh3', '21|'.$declined));
+        $oldItem = $pool->getItem('pw_mdn2.'.hash('xxh3', MarkdownCacheVersion::get().'|'.$declined));
         $oldItem->set('OLD INCORRECT HTML');
 
         $pool->save($oldItem);
         self::assertSame([null], $parser->renderNativeMany([$declined]));
 
-        $key = 'pw_mdn3.'.hash('xxh3', '21|'.$source);
+        $key = 'pw_mdn3.'.hash('xxh3', MarkdownCacheVersion::get().'|'.$source);
         $item = $pool->getItem($key);
         self::assertTrue($item->isHit());
         $item->set('FROM CACHE');
@@ -303,7 +304,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $native = new Markdown($nativeParser, $linkProvider);
 
         self::assertSame($php->apply($source, $page, $manager), $native->apply($source, $page, $manager));
-        self::assertTrue($pool->getItem('pw_mdn3.'.hash('xxh3', '21|A **bold** paragraph.'))->isHit());
+        self::assertTrue($pool->getItem('pw_mdn3.'.hash('xxh3', MarkdownCacheVersion::get().'|A **bold** paragraph.'))->isHit());
         $nativeParser->reset();
     }
 

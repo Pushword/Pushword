@@ -18,6 +18,9 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpKernel\KernelInterface;
 
+/**
+ * @phpstan-import-type CorpusState from PageRepository
+ */
 #[Group('integration')]
 final class LinkGraphCommandTest extends KernelTestCase
 {
@@ -56,15 +59,15 @@ final class LinkGraphCommandTest extends KernelTestCase
      *
      * @param list<string>                $nodes
      * @param array<string, list<string>> $edges
+     *
+     * @return CorpusState the state it was stamped with
      */
-    private function seed(array $nodes, array $edges): void
+    private function seed(array $nodes, array $edges): array
     {
-        self::getContainer()->get(LinkGraphStorage::class)->write(
-            self::HOST,
-            $nodes,
-            $edges,
-            self::getContainer()->get(PageRepository::class)->getPublishedCorpusState(self::HOST),
-        );
+        $corpus = self::getContainer()->get(PageRepository::class)->getPublishedCorpusState(self::HOST);
+        self::getContainer()->get(LinkGraphStorage::class)->write(self::HOST, $nodes, $edges, $corpus);
+
+        return $corpus;
     }
 
     /**
@@ -259,11 +262,20 @@ final class LinkGraphCommandTest extends KernelTestCase
 
     public function testEditingAPageStalesTheGraph(): void
     {
-        $this->seed([self::HOST.'/homepage'], []);
+        $corpus = $this->seed([self::HOST.'/homepage'], []);
 
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $page = self::getContainer()->get(PageRepository::class)->findOneBy(['host' => self::HOST, 'slug' => 'kitchen-sink']);
         self::assertInstanceOf(Page::class, $page);
+
+        // updatedAt resolves to the second — and MariaDB/PostgreSQL round into it —
+        // so an edit landing in the second the snapshot already recorded leaves the
+        // corpus state identical and reads as fresh. Any page another class edited
+        // moments earlier puts that second right here, which is why this only ever
+        // failed under a full parallel run. Wait it out rather than race it.
+        while (time() <= ($corpus['lastEditAt'] ?? 0)) {
+            usleep(20_000);
+        }
 
         // preUpdate stamps updatedAt: the very thing the corpus state watches.
         $page->h1 .= ' (edited)';

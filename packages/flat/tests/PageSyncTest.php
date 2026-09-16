@@ -2564,10 +2564,18 @@ MD);
         // With our fix, it should be "404" since we cast numeric YAML values to string
         self::assertSame('404', $importedPage->slug, 'Numeric YAML slug should be cast to string');
 
+        // The import writes the page back under the slug it read, leaving a second
+        // file the name above does not cover. Asserted rather than assumed, because
+        // a slug-404 page any later import resurrects from it turns error.html.twig
+        // (`p('404')`) into that page for the rest of the worker.
+        $slugFilePath = $contentDir.'/404.md';
+        self::assertFileExists($slugFilePath, 'the import names its own file after the slug it read');
+
         // Cleanup
         $this->em->remove($importedPage);
         $this->em->flush();
         $this->trackFile($mdFilePath);
+        $this->trackFile($slugFilePath);
     }
 
     /**

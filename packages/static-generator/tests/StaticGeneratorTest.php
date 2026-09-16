@@ -71,6 +71,10 @@ final class StaticGeneratorTest extends KernelTestCase
 
         // Restore pristine DB: other tests in the same ParaTest worker may have
         // deleted fixture media, causing page rendering to fail on missing media.
+        // The cache is a SQLite file, so on a server database this is a no-op and
+        // this class runs on whatever the worker left behind — which is why the
+        // pollution it shields against only ever turns the MariaDB and PostgreSQL
+        // jobs red.
         $cacheFile = getenv('PUSHWORD_TEST_DB_CACHE_FILE');
         $dbUrl = getenv('PUSHWORD_TEST_DATABASE_URL');
         if (false !== $cacheFile && '' !== $cacheFile && false !== $dbUrl && file_exists($cacheFile)) {
