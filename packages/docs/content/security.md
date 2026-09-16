@@ -33,8 +33,9 @@ served with a sandboxed Content Security Policy and MIME sniffing disabled.
 - Remember-me is opt-in. When selected, its maximum lifetime remains one year; this is
   an accepted convenience trade-off. Revoking the account or changing the application
   secret invalidates it.
-- Authenticated responses use `Cache-Control: private, no-store`, and logout asks the
-  browser to clear its HTTP cache.
+- Session-authenticated responses use `Cache-Control: private, no-store`, and logout asks
+  the browser to clear its HTTP cache. Routes declared `stateless` are skipped — reading the
+  user there would touch the session — so they keep the headers their controller set.
 - Logout remains callable with GET. This permits logout CSRF, whose only effect is to
   end the current session; Pushword accepts that availability trade-off.
 - There is no last-super-administrator deletion or demotion guard. This avoids special

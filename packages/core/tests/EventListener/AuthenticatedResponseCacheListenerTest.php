@@ -22,14 +22,9 @@ final class AuthenticatedResponseCacheListenerTest extends TestCase
         $security->method('getUser')->willReturn(new InMemoryUser('editor', null));
 
         $response = new Response();
-        $event = new ResponseEvent(
-            self::createStub(HttpKernelInterface::class),
-            Request::create('/admin/user'),
-            HttpKernelInterface::MAIN_REQUEST,
-            $response,
+        new AuthenticatedResponseCacheListener($security)(
+            $this->event(Request::create('/admin/user'), $response),
         );
-
-        new AuthenticatedResponseCacheListener($security)($event);
 
         self::assertTrue($response->headers->hasCacheControlDirective('private'));
         self::assertTrue($response->headers->hasCacheControlDirective('no-store'));
@@ -41,17 +36,57 @@ final class AuthenticatedResponseCacheListenerTest extends TestCase
         $security = self::createStub(Security::class);
         $security->method('getUser')->willReturn(null);
 
-        $response = new Response(headers: ['Cache-Control' => 'public, max-age=3600']);
-        $event = new ResponseEvent(
-            self::createStub(HttpKernelInterface::class),
-            Request::create('/'),
-            HttpKernelInterface::MAIN_REQUEST,
-            $response,
+        $response = $this->cacheableResponse();
+        new AuthenticatedResponseCacheListener($security)(
+            $this->event(Request::create('/'), $response),
         );
-
-        new AuthenticatedResponseCacheListener($security)($event);
 
         self::assertTrue($response->headers->hasCacheControlDirective('public'));
         self::assertSame('3600', $response->headers->getCacheControlDirective('max-age'));
+    }
+
+    /**
+     * Reading the user touches the session, which Symfony forbids on a request
+     * declared stateless — the guard must come before that read.
+     */
+    public function testStatelessRequestIsLeftAlone(): void
+    {
+        $security = $this->createMock(Security::class);
+        $security->expects(self::never())->method('getUser');
+
+        $request = Request::create('/api/pages');
+        $request->attributes->set('_stateless', true);
+
+        $response = $this->cacheableResponse();
+        new AuthenticatedResponseCacheListener($security)($this->event($request, $response));
+
+        self::assertTrue($response->headers->hasCacheControlDirective('public'));
+        self::assertFalse($response->headers->has(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER));
+    }
+
+    public function testSubRequestIsLeftAlone(): void
+    {
+        $security = $this->createMock(Security::class);
+        $security->expects(self::never())->method('getUser');
+
+        $response = $this->cacheableResponse();
+        new AuthenticatedResponseCacheListener($security)(
+            $this->event(Request::create('/'), $response, HttpKernelInterface::SUB_REQUEST),
+        );
+
+        self::assertTrue($response->headers->hasCacheControlDirective('public'));
+    }
+
+    private function cacheableResponse(): Response
+    {
+        return new Response(headers: ['Cache-Control' => 'public, max-age=3600']);
+    }
+
+    private function event(
+        Request $request,
+        Response $response,
+        int $type = HttpKernelInterface::MAIN_REQUEST,
+    ): ResponseEvent {
+        return new ResponseEvent(self::createStub(HttpKernelInterface::class), $request, $type, $response);
     }
 }

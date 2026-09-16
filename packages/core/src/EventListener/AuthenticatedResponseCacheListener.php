@@ -9,6 +9,18 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 
+/**
+ * Keeps an authenticated response out of every cache — the browser back button,
+ * a shared proxy, and the auto cache-control Symfony would otherwise apply.
+ *
+ * Stateless requests are skipped, as in {@see PwAuthCookieHealListener}.
+ * {@see Security::getUser()} reads the token through UsageTrackingTokenStorage,
+ * which increments the session usage index; {@see AbstractSessionListener} then
+ * sees a used session on a request declared stateless and throws an
+ * UnexpectedSessionUsageException (debug) or logs a warning (prod). Nothing is
+ * lost: that auto cache-control is gated on the same usage index, so a stateless
+ * response never had it to opt out of.
+ */
 final readonly class AuthenticatedResponseCacheListener
 {
     public function __construct(private Security $security)
@@ -18,7 +30,11 @@ final readonly class AuthenticatedResponseCacheListener
     #[AsEventListener(event: ResponseEvent::class, priority: -100)]
     public function __invoke(ResponseEvent $event): void
     {
-        if (! $event->isMainRequest() || null === $this->security->getUser()) {
+        if (! $event->isMainRequest() || $event->getRequest()->attributes->getBoolean('_stateless')) {
+            return;
+        }
+
+        if (null === $this->security->getUser()) {
             return;
         }
 
