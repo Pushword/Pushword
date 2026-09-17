@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'the static export keeps the listings of its later pages; regenerate once'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,12 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/static-generator`
+
+## Regenerate the whole export once
+
+Every page exported after the first could come back with its
+`pages_list(excludeAlreadyLinked)` and `exclude_linked()` listings empty — see
+[link collector](/link-collector). Upgrading fixes the render, not the HTML already on
+disk: run `pw:static` once without `--incremental`.
