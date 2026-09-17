@@ -104,16 +104,20 @@ final class StaticPageRendererTest extends KernelTestCase
         $renderer = $renderKernel->getContainer()->get(StaticPageRenderer::class);
 
         $linking = $this->syntheticPage('static-link-collector-source', '<a href="/'.self::PROBE_SLUG.'">probe</a>');
-        $listing = $this->syntheticPage('static-link-collector-listing', '{{ linked_slugs()|join(",") }}');
+        $listing = $this->syntheticPage('static-link-collector-listing', 'collected[{{ linked_slugs()|join(",") }}]');
 
         $renderKernel->getContainer()->get('services_resetter')->reset();
-        $renderer->render(Request::create('/localhost.dev/'.$linking->slug), $linking);
+        $first = $renderer->render(Request::create('/localhost.dev/'.$linking->slug), $linking);
+        self::assertStringContainsString(self::PROBE_SLUG, (string) $first->getContent(), 'the first page must link the probe slug');
 
         // Exactly what PageGenerator::saveAsStatic() runs between two exported pages.
         $renderKernel->getContainer()->get('services_resetter')->reset();
         $response = $renderer->render(Request::create('/localhost.dev/'.$listing->slug), $listing);
 
-        self::assertStringNotContainsString(self::PROBE_SLUG, (string) $response->getContent());
+        // A measured empty, not an absent one: the marker proves linked_slugs() ran
+        // on the second page, and the capture proves it came back with nothing.
+        self::assertSame(1, preg_match('/collected\[(.*)]/', (string) $response->getContent(), $collected), 'the marker must render');
+        self::assertSame('', $collected[1], 'the second exported page must inherit no link from the first');
     }
 
     private function syntheticPage(string $slug, string $mainContent): Page
