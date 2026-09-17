@@ -64,6 +64,14 @@ real bugs.
   the config silently does not apply, and `debug:config` still reports the new value, so
   it looks applied. `composer console cache:clear` only clears **dev**. After adding a
   config file, `rm -rf /tmp/com.github.pushword.pushword/container-cache/test`.
+- **The render sub-kernel's container is never invalidated at all.** `KernelTrait` boots a
+  second kernel with `debug=false` (`App_KernelTestContainer.php`, same dir), and a
+  non-debug `ConfigCache` only checks that the file exists — no source is tracked. Every
+  static-generator test renders through it, so editing `packages/core/src/**` and rerunning
+  keeps the *previous* compile: a service you just made resettable still is not, or still
+  is. That makes "I verified this test red without the fix" meaningless locally. CI starts
+  from an empty `/tmp`, so it only bites here. Before trusting a red/green verdict on a
+  static-generator test, `rm -f /tmp/com.github.pushword.pushword/container-cache/test/App_KernelTestContainer*`.
 - **A failed DB build gets cached and poisons every later run.** The doctrine commands in
   `computeDbCacheHash`'s miss path run through `Application::setAutoExit(false)`, so a
   failure returns a code nobody reads and the empty `test.db` is copied to the cache
