@@ -49,8 +49,9 @@ describe('MonacoHelper.updateHeight', () => {
   })
 })
 
-describe('Raw monaco height wiring', () => {
+describe('Raw Monaco integration', () => {
   afterEach(() => {
+    vi.restoreAllMocks()
     delete (window as any).monaco
     delete (window as any).monacoHelper
   })
@@ -75,5 +76,30 @@ describe('Raw monaco height wiring', () => {
     contentHeight = 40
     listeners.contentSize!()
     expect(wrapper.style.height).toBe('60px')
+  })
+
+  it('saves an intentionally emptied Monaco value once ready', async () => {
+    const { editor } = makeFakeEditor(() => 20)
+    ;(window as any).monaco = { editor: { create: () => editor } }
+    ;(window as any).monacoHelper = MonacoHelper
+    const raw = new Raw({ data: { html: '<p>x</p>' }, api: {} as any, readOnly: false })
+
+    raw.render()
+    await flush()
+
+    expect(raw.save()).toEqual({ html: '' })
+  })
+
+  it('preserves its content when saved before Monaco is ready', () => {
+    vi.spyOn(document.head, 'appendChild').mockImplementation((node) => node)
+    const raw = new Raw({
+      data: { html: '{{ destinations() }}' },
+      api: {} as any,
+      readOnly: false,
+    })
+
+    raw.render()
+
+    expect(raw.save()).toEqual({ html: '{{ destinations() }}' })
   })
 })

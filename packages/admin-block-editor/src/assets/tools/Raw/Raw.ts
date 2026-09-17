@@ -170,7 +170,10 @@ export default class Raw extends BaseTool {
   }
 
   save(): RawData {
-    this.data.html = this.editorInstance?.getValue() || ''
+    if (this.editorInstance) {
+      this.data.html = this.editorInstance.getValue()
+    }
+
     return this.data
   }
 
