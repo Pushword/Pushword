@@ -215,7 +215,7 @@ This pairs well with our [Premium Case](/accessories/premium-case).
 
 - The LinkCollector filter runs **once** per page render, before Twig processing; excluding lists then add their own rendered cards as Twig executes
 - Link detection uses optimized regex patterns with minimal overhead
-- The collector is automatically reset on each HTTP request
+- The collector is automatically reset on each HTTP request, and between two pages of a static export
 - No database queries are made for link collection
 
 ## Backward Compatibility

@@ -17,6 +17,7 @@ use Pushword\Core\EventListener\PageListener;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Service\LinkCollectorService;
 use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\ContentExtension;
@@ -299,6 +300,31 @@ final class WorkerModeStateResetTest extends KernelTestCase
             $manager,
             $managerPool->getManager($page),
             'worker mode: the legacy filter manager must not be memoized across requests',
+        );
+    }
+
+    /**
+     * The collected slugs are what `pages_list(excludeAlreadyLinked)`,
+     * `exclude_linked()` and every card row built on them filter against, so one
+     * render's links surviving the boundary silently empties the next page's
+     * listings. LinkCollectorResetListener covers the HTTP path, but the static
+     * generator renders every exported page in-process without dispatching
+     * kernel.request: there, this reset is the only one a whole export run gets.
+     */
+    public function testCollectedLinksDoNotSurviveTheWorkerBoundary(): void
+    {
+        self::bootKernel();
+
+        $linkCollector = self::getContainer()->get(LinkCollectorService::class);
+        $linkCollector->registerSlug(self::PROBE_SLUG);
+        self::assertTrue($linkCollector->isSlugRegistered(self::PROBE_SLUG));
+
+        // --- The worker boundary. ---
+        $this->simulateWorkerRequestBoundary();
+
+        self::assertFalse(
+            $linkCollector->isSlugRegistered(self::PROBE_SLUG),
+            "worker mode: links collected by one render must not filter the next render's listings",
         );
     }
 

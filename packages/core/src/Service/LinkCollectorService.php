@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Pushword\Core\Service;
 
 use Pushword\Core\Entity\Page;
+use Symfony\Contracts\Service\ResetInterface;
 
-final class LinkCollectorService
+final class LinkCollectorService implements ResetInterface
 {
     /** @var array<string, true> */
     private array $registeredSlugs = [];
@@ -62,6 +63,13 @@ final class LinkCollectorService
         ));
     }
 
+    /**
+     * Worker-mode safety (kernel.reset): the collected slugs are request-scoped, so
+     * one render's links must never filter the next one's listings. The static
+     * generator renders every exported page in-process, without dispatching
+     * kernel.request, so {@see \Pushword\Core\EventListener\LinkCollectorResetListener}
+     * never fires there and this is the only reset a whole export run gets.
+     */
     public function reset(): void
     {
         $this->registeredSlugs = [];
