@@ -1,5 +1,6 @@
 ---
-title: 'the static export keeps the listings of its later pages; regenerate once'
+title: 'the static export no longer empties the listings of its later pages'
+run: pw:static
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
