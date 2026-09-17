@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+                <title>Pushword - The Modern CMS for Developers (ready for AI era)</title>
+        <link>https://pushword.piedweb.com/</link>
+        <description><![CDATA[]]></description>
+        <atom:link
+            href="https://pushword.piedweb.com/feed.xml"
+            rel="self"
+            type="application/rss+xml"
+        />
+                                                            <item>
+                    <title><![CDATA[Upgrade to 1.0.12]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/1.0.12</link>
+                    <guid>https://pushword.piedweb.com/upgrade/1.0.12</guid>
+                    <pubDate>Thu, 17 Sep 2026 06:54:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade to 1.0.11]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/1.0.11</link>
+                    <guid>https://pushword.piedweb.com/upgrade/1.0.11</guid>
+                    <pubDate>Wed, 16 Sep 2026 21:10:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade to 1.0.10]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/1.0.10</link>
+                    <guid>https://pushword.piedweb.com/upgrade/1.0.10</guid>
+                    <pubDate>Wed, 16 Sep 2026 19:30:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade to 1.0.9]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/1.0.9</link>
+                    <guid>https://pushword.piedweb.com/upgrade/1.0.9</guid>
+                    <pubDate>Wed, 16 Sep 2026 17:31:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade to 1.0.8]]></title>
+                    <link>https://pushword.piedweb.com/upgrade/1.0.8</link>
+                    <guid>https://pushword.piedweb.com/upgrade/1.0.8</guid>
+                    <pubDate>Wed, 16 Sep 2026 14:09:00 +0000</pubDate>
+                </item>
+                            
+    </channel>
+</rss>
