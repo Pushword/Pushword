@@ -1,5 +1,5 @@
 ---
-title: 'agent instructions use AGENTS.md without a CLAUDE.md symlink'
+title: 'agent instructions use AGENTS.md without a CLAUDE.md symlink; colon-containing Markdown link classes render correctly'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -42,3 +42,8 @@ Several changes land here between two tags: append to the file, do not replace i
 `vendor/pushword/docs/CLAUDE.md` moved to `vendor/pushword/docs/AGENTS.md`, and new
 projects no longer create a root `CLAUDE.md` symlink. Update that path in your root
 `AGENTS.md`; if `CLAUDE.md` is a symlink to it, remove the symlink.
+
+## Colon-containing Markdown link classes render correctly
+
+Inline link attributes such as `{.hover:underline}` now render the complete class;
+no action is required.

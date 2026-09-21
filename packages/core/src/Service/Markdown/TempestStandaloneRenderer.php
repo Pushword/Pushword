@@ -100,7 +100,7 @@ final readonly class TempestStandaloneRenderer
             && (str_contains($attributedLink[4], ' ') || str_starts_with($attributedLink[4], '#'))
             && ! str_contains($attributedLink[4], "'")
             && 1 !== preg_match('/[^\x00-\x7F]/', $attributedLink[4])) {
-            preg_match_all('/\.[A-Za-z0-9_-]+|#[A-Za-z0-9_-]+|[a-z][a-z0-9_-]*="[^"]*"/i', $attributedLink[4], $tokens);
+            preg_match_all('/\.[A-Za-z0-9_:-]+|#[A-Za-z0-9_-]+|[a-z][a-z0-9_-]*="[^"]*"/i', $attributedLink[4], $tokens);
             if (implode(' ', $tokens[0]) !== $attributedLink[4]) {
                 return null;
             }

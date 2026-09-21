@@ -35,6 +35,7 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'heading class and id' => ["{id=rdv .ico-location}\n## Rendez-vous", "<h2 class=\"ico-location\" id=\"rdv\">Rendez-vous</h2>\n"];
         yield 'inline heading class and id' => ['## Hi {.a #b}', "<h2 class=\"a\" id=\"b\">Hi</h2>\n"];
         yield 'link class' => ['Voir [la marche](/marche){.ninja}.', "<p>Voir <a class=\"ninja\" href=\"/marche\">la marche</a>.</p>\n"];
+        yield 'link class containing a colon' => ['[CTA](/europe){.block .hover:underline}', "<p><a class=\"block hover:underline\" href=\"/europe\">CTA</a></p>\n"];
         yield 'mixed link classes' => ['[A](/a){.ninja} et [B](/b).', "<p><a class=\"ninja\" href=\"/a\">A</a> et <a href=\"/b\">B</a>.</p>\n"];
         yield 'unordered list' => ["- Une marche\n- Un voyage", "<ul>\n<li>Une marche</li>\n<li>Un voyage</li>\n</ul>\n"];
         yield 'task list checkboxes' => ["- [x] Done\n- [ ] Pending", "<ul>\n<li><input checked=\"\" disabled=\"\" type=\"checkbox\"> Done</li>\n<li><input disabled=\"\" type=\"checkbox\"> Pending</li>\n</ul>\n"];
