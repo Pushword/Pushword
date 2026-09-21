@@ -1,6 +1,6 @@
 ## Pushword — AI agent reference
 
-This file ships to your project via `vendor/pushword/docs/CLAUDE.md`. Reference it from your project's CLAUDE.md instead of duplicating Pushword knowledge.
+This file ships to your project via `vendor/pushword/docs/AGENTS.md`. Reference it from your project's AGENTS.md instead of duplicating Pushword knowledge.
 
 ### Coding principles
 
@@ -27,7 +27,7 @@ Entity class docblocks list traits, fields, and relations.
 
 Pushword uses the `host` field for multi-site/multi-locale. Each locale is a separate host. Pages link across locales via the `translations` relation (a `ManyToMany` on `Page`, defined in `PageTrait/PageI18nTrait.php`), not a custom property. Slugs should be localized per language.
 
-### What your project's CLAUDE.md should cover
+### What your project's AGENTS.md should cover
 
 Project purpose/stack, hosts/locales table, common commands, deployment workflow, editorial rules (in `.rules/` or `docs/`), framework-unenforced invariants, and a pointer to `vendor/pushword/docs/content/`.
 

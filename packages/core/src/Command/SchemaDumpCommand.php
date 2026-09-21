@@ -19,7 +19,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * Dumps, per host, everything a page author (human or agent) may write:
  * the declared custom properties, the keys managed by dedicated admin
  * fields, and the core columns the frontmatter accepts. Replaces the
- * hand-maintained property lists in per-site CLAUDE.md files.
+ * hand-maintained property lists in per-site AGENTS.md files.
  */
 #[AsCommand(name: 'pw:schema:dump', description: 'Dump declared page properties and accepted frontmatter keys per host')]
 final class SchemaDumpCommand

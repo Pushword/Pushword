@@ -275,7 +275,7 @@ audit changes.
   single compact JSON line instead of progress bars. See
   [agent-optimized output](/agent-output). The [REST API](/extension/api) is
   OpenAPI-described, `pw:schema:dump` hands an agent the content model, and
-  `vendor/pushword/docs/CLAUDE.md` ships instructions for the agent working on *your* site.
+  `vendor/pushword/docs/AGENTS.md` ships instructions for the agent working on *your* site.
   TYPO3 can also be automated; compare the available APIs and editorial workflows.
 - **No separate database server by default.** SQLite is the default, and a site does not
   require a cache server. You still need PHP hosting and a deployment plan.

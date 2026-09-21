@@ -115,4 +115,4 @@ UI/templates/CSS: consult `packages/core/DesignGuidelines.md` (Tailwind, public 
 
 ## For AI agents on a downstream Pushword site
 
-See `packages/docs/CLAUDE.md` — the file that ships as `vendor/pushword/docs/CLAUDE.md`.
+See `packages/docs/AGENTS.md` — the file that ships as `vendor/pushword/docs/AGENTS.md`.

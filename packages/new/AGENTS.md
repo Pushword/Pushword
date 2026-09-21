@@ -11,7 +11,7 @@ a starting point, edit it freely.
 
 Pushword ships its own reference for AI agents. Read it before changing anything:
 
-- `vendor/pushword/docs/CLAUDE.md` — conventions, content model, commands
+- `vendor/pushword/docs/AGENTS.md` — conventions, content model, commands
 - `vendor/pushword/docs/content/` — one `.md` per topic; `architecture.md` and
   `extensions.md` are the two that orient you fastest
 - `vendor/pushword/core/src/Entity/Page.php` — the main entity; its docblock lists the

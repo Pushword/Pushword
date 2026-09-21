@@ -2364,7 +2364,7 @@ YAML;
     }
 
     /**
-     * Test: Excluded files (CLAUDE.md, README.md) are ignored during import.
+     * Test: Agent instructions and README.md are ignored during import.
      */
     public function testExcludedFilesIgnored(): void
     {
@@ -2376,8 +2376,12 @@ YAML;
         $this->pageSync->export('localhost.dev', true, $contentDir);
 
         // Create excluded files that should be ignored
+        $agentsMd = $contentDir.'/AGENTS.md';
+        file_put_contents($agentsMd, "---\nh1: Agent Instructions\n---\n\nThis is not a page.");
+        $this->trackFile($agentsMd);
+
         $claudeMd = $contentDir.'/CLAUDE.md';
-        file_put_contents($claudeMd, "---\nh1: Claude Instructions\n---\n\nThis is not a page.");
+        file_put_contents($claudeMd, "---\nh1: Legacy Claude Instructions\n---\n\nThis is not a page.");
         $this->trackFile($claudeMd);
 
         $readmeMd = $contentDir.'/README.md';
@@ -2389,6 +2393,9 @@ YAML;
 
         // Verify excluded files were NOT imported as pages
         $this->em->clear();
+        $agentsPage = $this->pageRepo->findOneBy(['slug' => 'AGENTS', 'host' => 'localhost.dev']);
+        self::assertNull($agentsPage, 'AGENTS.md should not be imported as a page');
+
         $claudePage = $this->pageRepo->findOneBy(['slug' => 'CLAUDE', 'host' => 'localhost.dev']);
         self::assertNull($claudePage, 'CLAUDE.md should not be imported as a page');
 
@@ -2398,7 +2405,8 @@ YAML;
         // Export and verify excluded files are preserved on disk
         $this->pageSync->export('localhost.dev', true, $contentDir);
 
-        self::assertFileExists($claudeMd, 'CLAUDE.md should survive export');
+        self::assertFileExists($agentsMd, 'AGENTS.md should survive export');
+        self::assertFileExists($claudeMd, 'Legacy CLAUDE.md should survive export');
         self::assertFileExists($readmeMd, 'README.md should survive export');
     }
 

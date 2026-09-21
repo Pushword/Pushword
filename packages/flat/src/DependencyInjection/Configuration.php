@@ -58,7 +58,7 @@ class Configuration implements ConfigurationInterface
             ->end()
             ->arrayNode('exclude_files')
               ->scalarPrototype()->end()
-              ->defaultValue(['CLAUDE.md', 'README.md'])
+              ->defaultValue(['AGENTS.md', 'CLAUDE.md', 'README.md'])
               ->info('File basenames to exclude from flat sync import')
             ->end()
             ->arrayNode('notification_email_recipients')

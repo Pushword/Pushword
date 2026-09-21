@@ -82,7 +82,7 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$excludeFiles', '%pw.pushword_flat.exclude_files%');
 
     // PageExporter needs the same exclude list so orphan cleanup never removes
-    // excluded files (CLAUDE.md, README.md, …) that happen to end in .md.
+    // excluded files (AGENTS.md, README.md, …) that happen to end in .md.
     $services->set(PageExporter::class)
         ->arg('$excludeFiles', '%pw.pushword_flat.exclude_files%');
 

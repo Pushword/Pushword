@@ -28,9 +28,9 @@ latest one.
 This is the rung most CMS projects cannot offer, so it is worth being specific about why
 it works here.
 
-- Every install carries `vendor/pushword/docs/CLAUDE.md`: entity map, content structure,
-  commands, conventions, quality gates. Point your project's `CLAUDE.md` or `AGENTS.md` at
-  that file and an agent starts oriented instead of guessing.
+- Every install carries `vendor/pushword/docs/AGENTS.md`: entity map, content structure,
+  commands, conventions, quality gates. Point your project's `AGENTS.md` at that file and
+  an agent starts oriented instead of guessing.
 - The `pw:*` commands detect when an agent is running them and emit one compact JSON line
   instead of progress bars and colours. See [agent output](/agent-output).
 - Content is Markdown with YAML front matter and templates are plain Twig, so an agent

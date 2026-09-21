@@ -124,15 +124,11 @@ $defaultConfig = 'pushword:'.chr(10)
 
 PostInstall::dumpFile('config/packages/pushword.yaml', $defaultConfig);
 
-// pushword/new ships AGENTS.md; Claude Code reads CLAUDE.md. Symfony Flex may have
-// already created its equivalent two-line pointer, which is safe to replace. Preserve
-// any other site-owned CLAUDE.md.
+// Symfony Flex may create this compatibility pointer. Claude Code now reads AGENTS.md
+// directly when CLAUDE.md is absent, so remove only the generated file.
 $claudePointer = "# CLAUDE.md\n\n@AGENTS.md";
-$replaceableClaudeFile = ! file_exists('CLAUDE.md')
-    || (is_file('CLAUDE.md') && $claudePointer === trim((string) file_get_contents('CLAUDE.md')));
-if (file_exists('AGENTS.md') && $replaceableClaudeFile) {
-    @unlink('CLAUDE.md');
-    symlink('AGENTS.md', 'CLAUDE.md');
+if (is_file('CLAUDE.md') && $claudePointer === trim((string) file_get_contents('CLAUDE.md'))) {
+    unlink('CLAUDE.md');
 }
 
 // Install phpstan

@@ -69,9 +69,9 @@ The full list is on [pushword.piedweb.com/extensions](https://pushword.piedweb.c
 
 ## Working with an AI agent
 
-`AGENTS.md` at the root (symlinked as `CLAUDE.md`) tells an agent how this project is laid
-out and points it at `vendor/pushword/docs/CLAUDE.md`, Pushword's own reference. Fill in
-its *About this site* section — that is the part no agent can infer from the code.
+`AGENTS.md` at the root tells an agent how this project is laid out and points it at
+`vendor/pushword/docs/AGENTS.md`, Pushword's own reference. Fill in its *About this site*
+section — that is the part no agent can infer from the code.
 
 ## Update
 

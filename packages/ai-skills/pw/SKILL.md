@@ -58,5 +58,5 @@ you reach for a path.
 These references encode the *package's* rules (schemas, limits, gotchas) — never a
 project's editorial voice. For any copywriting, read the project's own brand/voice
 files first (e.g. `content/.rules/brands/*.md`, `.rules/ContentGuidelines.md`, or
-the site's CLAUDE.md) and follow them. The package publishes what only it knows;
+the site's AGENTS.md) and follow them. The package publishes what only it knows;
 you bring what the project knows.

@@ -45,7 +45,7 @@ final class PageExporter
         private readonly PageRepository $pageRepo,
         private readonly PageFileSerializer $serializer,
         array $pageIndexColumns = [],
-        /** @var string[] Filenames excluded from sync (e.g. CLAUDE.md, README.md) */
+        /** @var string[] Filenames excluded from sync (e.g. AGENTS.md, README.md) */
         private readonly array $excludeFiles = [],
         private readonly ?LoggerInterface $logger = null,
     ) {
@@ -225,7 +225,7 @@ final class PageExporter
                 continue;
             }
 
-            // Excluded files (CLAUDE.md, README.md, …) are not page files.
+            // Excluded files (AGENTS.md, README.md, …) are not page files.
             if (\in_array($entry, $this->excludeFiles, true)) {
                 continue;
             }

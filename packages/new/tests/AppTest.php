@@ -83,14 +83,14 @@ final class AppTest extends KernelTestCase
         self::assertStringContainsString('ROLE_SUPER_ADMIN', $roles);
     }
 
-    public function testAgentsMdShipsAndClaudeMdSymlinksToIt(): void
+    public function testAgentsMdShipsWithoutClaudeMd(): void
     {
         self::assertFileExists(self::$projectDir.'/AGENTS.md');
-        self::assertSame('AGENTS.md', readlink(self::$projectDir.'/CLAUDE.md'));
+        self::assertFileDoesNotExist(self::$projectDir.'/CLAUDE.md');
 
         $content = file_get_contents(self::$projectDir.'/AGENTS.md');
         self::assertNotFalse($content);
-        self::assertStringContainsString('vendor/pushword/docs/CLAUDE.md', $content);
+        self::assertStringContainsString('vendor/pushword/docs/AGENTS.md', $content);
     }
 
     public function testRoutesConfigured(): void
