@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.14](/upgrade/1.0.14) | `core` `docs` `new` | agent instructions use AGENTS.md without a CLAUDE.md symlink; colon-containing Markdown link classes render correctly |
 | [1.0.12](/upgrade/1.0.12) | `static-generator` | the static export no longer empties the listings of its later pages — run `pw:static` |
 | [1.0.11](/upgrade/1.0.11) | `admin` | the page form fetches its parent, variant and translation choices on demand |
 | [1.0.10](/upgrade/1.0.10) | `admin` | the admin elevation ramp is back to four levels, `--pw-elevation-3` now meaning dropdown rather than modal |

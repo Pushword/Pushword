@@ -1,5 +1,5 @@
 ---
-title: 'agent instructions use AGENTS.md without a CLAUDE.md symlink; colon-containing Markdown link classes render correctly'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,16 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/core`, `pushword/docs`, `pushword/new`
-
-## Agent instructions now use `AGENTS.md`
-
-`vendor/pushword/docs/CLAUDE.md` moved to `vendor/pushword/docs/AGENTS.md`, and new
-projects no longer create a root `CLAUDE.md` symlink. Update that path in your root
-`AGENTS.md`; if `CLAUDE.md` is a symlink to it, remove the symlink.
-
-## Colon-containing Markdown link classes render correctly
-
-Inline link attributes such as `{.hover:underline}` now render the complete class;
-no action is required.
