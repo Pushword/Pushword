@@ -214,12 +214,13 @@ final class AdminMediaPickerTest extends AbstractPantherAdminTest
 
     /**
      * The iframe embeds a whole admin page, whose menu has to make room for the media
-     * grid. EasyAdmin 5 renders that menu in .sidebar-wrapper (the .sidebar of version 4
-     * is gone) and lays .wrapper out as a two-column grid, so hiding the menu is not
-     * enough: its column has to collapse too, otherwise the library stays squeezed into
-     * an empty column while the menu paints over it.
+     * grid and whose search input should use the freed space. EasyAdmin 5 renders that
+     * menu in .sidebar-wrapper (the .sidebar of version 4 is gone) and lays .wrapper
+     * out as a two-column grid, so hiding the menu is not enough: its column has to
+     * collapse too, otherwise the library stays squeezed into an empty column while
+     * the menu paints over it.
      */
-    public function testMediaPickerModalHidesAdminMenu(): void
+    public function testEmbeddedMediaLibraryUsesAvailableWidth(): void
     {
         $client = $this->createPantherClientWithLogin();
         $this->navigateToPageEdit($client);
@@ -247,6 +248,15 @@ final class AdminMediaPickerTest extends AbstractPantherAdminTest
                 self::timeoutMedium(),
             );
 
+            $isSearchExpanded = $this->pollUntilTrue(
+                $client,
+                'const search = document.querySelector(".content-search")?.getBoundingClientRect();
+                 const input = document.querySelector("input[type=search][name=query]")?.getBoundingClientRect();
+                 return search && input && input.width > search.width * 0.9;',
+                [],
+                self::timeoutShort(),
+            );
+
             $result = $client->executeScript('
                 const menu = document.querySelector(".sidebar-wrapper");
                 const main = document.querySelector(".main-content");
@@ -262,6 +272,7 @@ final class AdminMediaPickerTest extends AbstractPantherAdminTest
         }
 
         self::assertTrue($isEmbedded, 'The embedded media library should flag its body as a picker popup');
+        self::assertTrue($isSearchExpanded, 'The media search input should expand after the picker is laid out');
         self::assertIsArray($result);
 
         /** @var array{hasMenu: bool, menuDisplay: string, mainWidth: int, viewportWidth: int} $result */

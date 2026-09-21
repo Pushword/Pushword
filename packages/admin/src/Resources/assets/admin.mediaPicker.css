@@ -245,6 +245,23 @@ body.pw-admin-popup-modal.ea-index .page-actions {
   display: none !important;
 }
 
+/* EasyAdmin keeps a blank desktop search at 300px and only grows it with its text.
+   In the full-width picker, use the available header space as the click target. */
+body.pw-admin-popup-modal .content-top .content-search .form-widget {
+  display: flex;
+}
+
+body.pw-admin-popup-modal .content-top .content-search .content-search-label {
+  flex: 1;
+  min-inline-size: 0;
+  max-inline-size: none;
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+body.pw-admin-popup-modal .content-top .content-search input[type='search'][name='query'] {
+  inline-size: 100%;
+}
+
 /* Upload/edit form: keep the save button (rendered in .page-actions) visible and
    hide the search box, which is meaningless on a form. */
 body.pw-admin-popup-modal.ea-new .content-top,
