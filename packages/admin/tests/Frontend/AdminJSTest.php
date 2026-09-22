@@ -44,6 +44,7 @@ final class AdminJSTest extends AbstractPantherAdminTest
              const hitTarget = document.elementFromPoint(icon.x + icon.width / 2, icon.y + icon.height / 2);
              return inputRect.width > search.width * 0.9
                  && inputRect.height >= 48
+                 && Math.abs(inputRect.left - header.left) < 1
                  && Math.abs(inputRect.top - header.top) < 1
                  && Math.abs(inputRect.bottom - header.bottom) < 1
                  && hitTarget === input;';
@@ -64,6 +65,14 @@ final class AdminJSTest extends AbstractPantherAdminTest
         );
 
         self::assertTrue($inputIsFocused, 'Clicking the magnifier should focus the list search input');
+        self::assertTrue(
+            $client->executeScript(
+                'const input = document.querySelector("input[type=search][name=query]");
+                 const style = getComputedStyle(input);
+                 return style.outlineStyle === "none" && style.boxShadow.includes("inset");'
+            ),
+            'The list search focus indicator should be drawn inside the input',
+        );
 
         $originalWindowSize = $webDriver->manage()->window()->getSize();
 
