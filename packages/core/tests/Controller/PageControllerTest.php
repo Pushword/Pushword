@@ -15,6 +15,7 @@ use Pushword\Core\Controller\SitemapController;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Site\RequestContext;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -208,6 +209,28 @@ final class PageControllerTest extends KernelTestCase
     {
         $response = $this->getSitemapController()->show(Request::create('/sitemap.xml'), 'xml');
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
+    }
+
+    public function testSitemapUsesTheCurrentSiteLocaleWhenTheRouteHasNoLocale(): void
+    {
+        $request = Request::create('/sitemap.xml');
+        self::assertSame('en', $request->getLocale());
+
+        $content = $this->renderSitemapForSiteLocale($request, 'fr');
+
+        self::assertStringContainsString('<loc>https://localhost.dev/fr/homepage</loc>', $content);
+        self::assertStringNotContainsString('<loc>https://localhost.dev/</loc>', $content);
+    }
+
+    public function testSitemapUsesTheLocaleSpecifiedByTheRoute(): void
+    {
+        $request = Request::create('/en/sitemap.xml');
+        $request->attributes->set('_locale', 'en/');
+
+        $content = $this->renderSitemapForSiteLocale($request, 'fr');
+
+        self::assertStringContainsString('<loc>https://localhost.dev/</loc>', $content);
+        self::assertStringNotContainsString('<loc>https://localhost.dev/fr/homepage</loc>', $content);
     }
 
     /**
@@ -468,5 +491,18 @@ final class PageControllerTest extends KernelTestCase
     public function getSitemapController(): SitemapController
     {
         return self::getContainer()->get(SitemapController::class);
+    }
+
+    private function renderSitemapForSiteLocale(Request $request, string $locale): string
+    {
+        $site = self::getContainer()->get(RequestContext::class)->currentSite;
+        $previousLocale = $site->locale;
+        $site->setCustomProperty('locale', $locale);
+
+        try {
+            return (string) $this->getSitemapController()->show($request, 'xml')->getContent();
+        } finally {
+            $site->setCustomProperty('locale', $previousLocale);
+        }
     }
 }
