@@ -53,8 +53,12 @@
 }
 
 /* EasyAdmin grows the desktop search from 300px according to its value, which leaves
-   most list headers outside the click target. Fill the available space instead and
-   place the magnifier over the input so clicking it naturally focuses the field. */
+   most list headers outside the click target. Fill the available space instead, let
+   the field absorb the header's vertical padding, and include the magnifier in it. */
+.content-top .content-search .form-group {
+  padding-block: 0;
+}
+
 .content-top .content-search .form-widget {
   position: relative;
   display: flex;
@@ -73,12 +77,24 @@
   flex: 1;
   min-inline-size: 0;
   max-inline-size: none;
+  margin-block: calc(-1 * var(--ea-sp-2));
   grid-template-columns: 0 minmax(0, 1fr);
 }
 
 .content-top .content-search input[type='search'][name='query'] {
   inline-size: 100%;
+  block-size: var(--ea-sp-24);
   padding-inline-start: var(--ea-sp-16);
+}
+
+@media (min-width: 992px) {
+  .content-top .content-search .content-search-label {
+    margin-block: calc(-1 * var(--ea-sp-6));
+  }
+
+  .content-top .content-search input[type='search'][name='query'] {
+    block-size: var(--ea-sp-28);
+  }
 }
 
 /* Bootstrap sizes <small> in em, so it compounds with its context: the publication
