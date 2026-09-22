@@ -52,6 +52,35 @@
   --focus-ring-offset: 2px;
 }
 
+/* EasyAdmin grows the desktop search from 300px according to its value, which leaves
+   most list headers outside the click target. Fill the available space instead and
+   place the magnifier over the input so clicking it naturally focuses the field. */
+.content-top .content-search .form-widget {
+  position: relative;
+  display: flex;
+}
+
+.content-top .content-search .content-search-icon {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: 50%;
+  inset-inline-start: var(--ea-sp-4);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.content-top .content-search .content-search-label {
+  flex: 1;
+  min-inline-size: 0;
+  max-inline-size: none;
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+.content-top .content-search input[type='search'][name='query'] {
+  inline-size: 100%;
+  padding-inline-start: var(--ea-sp-16);
+}
+
 /* Bootstrap sizes <small> in em, so it compounds with its context: the publication
    date next to the draft switch was rendering at 11.375px. Pin it to the scale. */
 small,

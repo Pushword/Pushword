@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Pushword\Admin\Tests\Frontend;
 
+use Facebook\WebDriver\Interactions\WebDriverActions;
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverHasInputDevices;
 use PHPUnit\Framework\Attributes\Group;
 
 /**
@@ -23,6 +25,43 @@ final class AdminJSTest extends AbstractPantherAdminTest
     private const string SELECTOR_TITLE_INPUT = '.titleToMeasure';
 
     private const string SELECTOR_HOST_SELECT = 'select[name$="[host]"]';
+
+    /**
+     * The search field fills list headers and includes the magnifier in its hit area.
+     */
+    public function testListSearchUsesAvailableWidth(): void
+    {
+        $client = $this->createPantherClientWithLogin();
+        $client->request('GET', $this->generateAdminUrl('admin_page_list'));
+
+        $this->waitForElement($client, 'input[type="search"][name="query"]', 'No list search input found');
+
+        $layoutReady = $this->pollUntilTrue(
+            $client,
+            'const search = document.querySelector(".content-search")?.getBoundingClientRect();
+             const input = document.querySelector("input[type=search][name=query]");
+             const icon = document.querySelector(".content-search-icon")?.getBoundingClientRect();
+             if (!search || !input || !icon) return false;
+             const hitTarget = document.elementFromPoint(icon.x + icon.width / 2, icon.y + icon.height / 2);
+             return input.getBoundingClientRect().width > search.width * 0.9 && hitTarget === input;',
+            [],
+            self::timeoutShort(),
+        );
+
+        self::assertTrue($layoutReady, 'The list search should fill its header and include the magnifier in its hit area');
+
+        $client->executeScript('document.activeElement?.blur()');
+        $icon = $client->findElement(WebDriverBy::cssSelector('.content-search-icon'));
+        $webDriver = $client->getWebDriver();
+        self::assertInstanceOf(WebDriverHasInputDevices::class, $webDriver);
+        new WebDriverActions($webDriver)->moveToElement($icon)->click()->perform();
+
+        $inputIsFocused = $client->executeScript(
+            'return document.activeElement === document.querySelector("input[type=search][name=query]")'
+        );
+
+        self::assertTrue($inputIsFocused, 'Clicking the magnifier should focus the list search input');
+    }
 
     /**
      * Test panel open state memorization.
