@@ -7,8 +7,9 @@ namespace Pushword\Conversation\Translation;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Conversation\Entity\TranslationUsage;
+use Symfony\Contracts\Service\ResetInterface;
 
-final class TranslationUsageTracker
+final class TranslationUsageTracker implements ResetInterface
 {
     /** @var array<string, TranslationUsage> */
     private array $cache = [];
@@ -48,6 +49,11 @@ final class TranslationUsageTracker
         }
 
         return max(0, $limit - $this->getCurrentMonthUsage($service));
+    }
+
+    public function reset(): void
+    {
+        $this->cache = [];
     }
 
     private function getOrCreateUsage(string $service): TranslationUsage
