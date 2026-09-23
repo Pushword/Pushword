@@ -18,14 +18,14 @@
     "fuzzysearch": "^1.0.3",
     "glightbox": "^3.3",
     "tailwindcss-animated": "^2",
-    "vite": "^7.3.6",
+    "vite": "^8.3.0",
     "vite-plugin-compression2": "^2.3.1",
-    "vite-plugin-static-copy": "^3.1",
+    "vite-plugin-static-copy": "^4.1.1",
     "vite-plugin-symfony": "^8.2"
   },
   "devDependencies": {
-    "jsdom": "^25.0.0",
-    "vitest": "^3.2.6"
+    "jsdom": "^29.1.1",
+    "vitest": "^5.0.1"
   },
   "repository": {
     "type": "git",

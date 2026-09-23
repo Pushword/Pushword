@@ -90,3 +90,33 @@ describe('Table colspan (`->`) spanning', () => {
     expect(cellsOf(table, 1)[1]!.style.gridColumnEnd).toBe('span 2')
   })
 })
+
+describe('Table.addColumn', () => {
+  function newAlignedTable(): AnyTable {
+    const api = { i18n: { t: (key: string) => key } }
+    return new Table(
+      true,
+      api,
+      { content: [['a', 'b'], ['c', 'd']], columnAlignments: ['left', 'right'] },
+      {},
+    ) as AnyTable
+  }
+
+  it('inserts an empty cell before the given column in every row', () => {
+    const table = newAlignedTable()
+    table.addColumn(2)
+
+    expect(table.numberOfColumns).toBe(3)
+    expect(table.getData()).toEqual([['a', '', 'b'], ['c', '', 'd']])
+    expect(table.getColumnAlignments()).toEqual(['left', '', 'right'])
+  })
+
+  it('appends an empty cell to every row when no column is given', () => {
+    const table = newAlignedTable()
+    table.addColumn()
+
+    expect(table.numberOfColumns).toBe(3)
+    expect(table.getData()).toEqual([['a', 'b', ''], ['c', 'd', '']])
+    expect(table.getColumnAlignments()).toEqual(['left', 'right', ''])
+  })
+})

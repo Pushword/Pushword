@@ -1,6 +1,7 @@
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import globals from 'globals'
+import { defineConfig } from 'eslint/config'
 
 // Common ignore patterns
 const ignorePatterns = [
@@ -26,7 +27,7 @@ const commonGlobals = {
   ...globals.es2021,
 }
 
-export default tseslint.config(
+export default defineConfig(
   js.configs.recommended,
   ...tseslint.configs.recommended,
 

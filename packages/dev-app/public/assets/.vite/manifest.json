@@ -1,12 +1,12 @@
 {
   "app.css": {
     "file": "tw.css",
-    "src": "app.css",
-    "isEntry": true,
     "name": "tw",
     "names": [
       "tw.css"
-    ]
+    ],
+    "src": "app.css",
+    "isEntry": true
   },
   "app.js": {
     "file": "app.js",

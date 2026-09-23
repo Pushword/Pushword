@@ -105,6 +105,6 @@ document.addEventListener('DOMChanged', onDomChanged)
 
 function initHighlight() {
   document.querySelectorAll('pre code').forEach((block) => {
-    hljs.highlightBlock(block)
+    hljs.highlightElement(block)
   })
 }

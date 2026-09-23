@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 import symfonyPlugin from 'vite-plugin-symfony'
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
-import viteCopyPlugin from 'vite-plugin-static-copy'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 const filesToCopy = [
   {
@@ -14,27 +14,28 @@ const filesToCopy = [
 ]
 
 const input = {
-  app: resolve(__dirname, '../js-helper/src/app.js'),
-  alpine: resolve(__dirname, '../js-helper/src/alpine.js'),
-  style: resolve(__dirname, '../js-helper/src/app.css'),
+  app: resolve(import.meta.dirname, '../js-helper/src/app.js'),
+  alpine: resolve(import.meta.dirname, '../js-helper/src/alpine.js'),
+  style: resolve(import.meta.dirname, '../js-helper/src/app.css'),
 }
 
 export default defineConfig({
   plugins: [
     symfonyPlugin(),
     tailwindcss(),
-    viteCopyPlugin.viteStaticCopy({
+    viteStaticCopy({
       targets: filesToCopy.map((copy) => ({
         src: copy.from,
         dest: copy.to || '',
+        rename: { stripBase: true },
       })),
     }),
   ],
   resolve: {
-    modules: [resolve(__dirname, '../js-helper/node_modules'), 'node_modules'],
+    modules: [resolve(import.meta.dirname, '../js-helper/node_modules'), 'node_modules'],
   },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       input: input,
       output: {
         entryFileNames: '[name].js',
@@ -44,7 +45,7 @@ export default defineConfig({
         // their top-level declarations otherwise share one global lexical scope:
         // the minifier named a const in app.js and a function in alpine.js `_e`
         // alike, and whichever parsed second threw on the duplicate — leaving
-        // Alpine dead on every page. Rollup refuses iife for a multi-entry
+        // Alpine dead on every page. Rolldown refuses iife for a multi-entry
         // build, so the wrap is done here.
         banner: '(function(){',
         footer: '})();',

@@ -3,6 +3,11 @@ declare module '*.css' {
   export default content
 }
 
+declare module '*.pcss' {
+  const content: any
+  export default content
+}
+
 declare module '*.svg?raw' {
   const content: string
   export default content

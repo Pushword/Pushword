@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'front assets build with Vite 8: add `stripBase` to static-copy targets or favicons land in a subdirectory'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `@pushword/js-helper`
+
+## Front assets build with Vite 8
+
+`@pushword/js-helper` now brings Vite 8 and `vite-plugin-static-copy` 4, which keeps each copied file's source directory: left as is, your config puts favicons in `public/assets/assets/favicons/`.
+**Affects sites building front assets with their own `vite.config.js`.** Add `rename: { stripBase: true }` to each copy target, set `"vite": "^8.3.0"` in `package.json`, then run `yarn upgrade && yarn build`.
+Vite also warns about its future `configLoader: 'native'` default. To silence it, align with `vendor/pushword/dev-app/`: `"type": "module"` in `package.json` (rename any CommonJS config to `.cjs` first), `import { viteStaticCopy }` by name, `import.meta.dirname` for `__dirname`, `build.rolldownOptions` for `build.rollupOptions`.

@@ -19,20 +19,20 @@
     "editorjs-drag-drop": "^1.1",
     "happy-dom": "^20.9.0",
     "jsdom": "^29.1.1",
-    "monaco-editor": "^0.54",
+    "monaco-editor": "~0.55.1",
     "postcss": "^8.4",
-    "postcss-nested": "^7.0",
+    "postcss-nested": "^8.0.1",
     "postcss-nested-ancestors": "^3.0",
     "terser": "^5.24",
-    "typescript": "^5.7.2",
-    "vite": "^7.3.6",
-    "vitest": "^3.2.6"
+    "typescript": "^6.0.3",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
   },
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "build": "vite build",
-    "build:converter": "vite build --config vite.config.converter.js && rm src/Command/convert-json-to-markdown-built/style.css",
+    "build:converter": "vite build --config vite.config.converter.mjs && rm src/Command/convert-json-to-markdown-built/style.css",
     "watch": "vite build --watch",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -41,6 +41,6 @@
     "dompurify": "^3.4.15",
     "he": "^1.2.0",
     "jsonrepair": "^3.13.1",
-    "prettier": "^3.6"
+    "prettier": "^3.9.9"
   }
 }

@@ -9,12 +9,13 @@
   "devDependencies": {
     "css-loader": "^7",
     "file-loader": "^6.2.0",
-    "monaco-editor": "^0.54",
+    "monaco-editor": "~0.55.1",
     "monaco-editor-webpack-plugin": "^7.1",
     "monaco-yaml": "^5.4",
     "style-loader": "^4",
-    "vitest": "^3.2.6",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1",
     "webpack": "^5.65",
-    "webpack-cli": "^6.0"
+    "webpack-cli": "^7.2.3"
   }
 }

@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import symfonyPlugin from 'vite-plugin-symfony'
 import { resolve } from 'path'
-import viteCopyPlugin from 'vite-plugin-static-copy'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 const filesToCopy = [
   {
@@ -11,21 +11,22 @@ const filesToCopy = [
 ]
 
 const input = {
-  admin: resolve(__dirname, 'src/Resources/assets/admin.js'),
+  admin: resolve(import.meta.dirname, 'src/Resources/assets/admin.js'),
 }
 
 export default defineConfig({
   plugins: [
     symfonyPlugin(),
-    viteCopyPlugin.viteStaticCopy({
+    viteStaticCopy({
       targets: filesToCopy.map((copy) => ({
         src: copy.from,
         dest: copy.to || '',
+        rename: { stripBase: true },
       })),
     }),
   ],
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       input: input,
       output: {
         entryFileNames: '[name].js',

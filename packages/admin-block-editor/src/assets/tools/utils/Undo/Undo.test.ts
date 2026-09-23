@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import Undo from './Undo'
 
 /**
@@ -10,8 +10,8 @@ type AnyUndo = Record<string, any>
 
 interface StubEditor {
   editor: any
-  render: ReturnType<typeof vi.fn>
-  setToBlock: ReturnType<typeof vi.fn>
+  render: Mock
+  setToBlock: Mock
   /** Blocks the editor renders but save() omits, e.g. an empty paragraph */
   extraDomBlocks: number
 }

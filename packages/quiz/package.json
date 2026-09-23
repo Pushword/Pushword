@@ -9,7 +9,8 @@
     "test": "node node_modules/vitest/dist/cli.js run"
   },
   "devDependencies": {
-    "jsdom": "^25.0.0",
-    "vitest": "^3.2.6"
+    "jsdom": "^29.1.1",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
   }
 }

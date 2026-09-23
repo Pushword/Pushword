@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
@@ -8,6 +9,6 @@
   },
   "dependencies": {
     "@pushword/js-helper": "file:../../js-helper",
-    "highlight.js": "^10.6.0"
+    "highlight.js": "^11.12.0"
   }
 }

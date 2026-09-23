@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
-import viteCopyPlugin from 'vite-plugin-static-copy'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 import { resolve } from 'path'
 
 const filesToCopy = [
@@ -15,22 +15,23 @@ const filesToCopy = [
 ]
 
 const input = {
-  app: resolve(__dirname, 'app.js'),
-  tw: resolve(__dirname, 'app.css'),
+  app: resolve(import.meta.dirname, 'app.js'),
+  tw: resolve(import.meta.dirname, 'app.css'),
 }
 
 export default defineConfig({
   plugins: [
     tailwindcss(),
-    viteCopyPlugin.viteStaticCopy({
+    viteStaticCopy({
       targets: filesToCopy.map((copy) => ({
         src: copy.from,
         dest: copy.to || '',
+        rename: { stripBase: true },
       })),
     }),
   ],
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       input: input,
       output: {
         entryFileNames: '[name].js',

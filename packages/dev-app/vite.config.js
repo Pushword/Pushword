@@ -5,7 +5,7 @@ import symfonyPlugin from 'vite-plugin-symfony'
 import { resolve } from 'path'
 import { existsSync } from 'fs'
 import tailwindcss from '@tailwindcss/vite'
-import viteCopyPlugin from 'vite-plugin-static-copy'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 import { compression } from 'vite-plugin-compression2'
 
 const filesToCopy = [
@@ -15,10 +15,10 @@ const filesToCopy = [
   },
 ]
 
-const input = existsSync(resolve(__dirname, '../js-helper/src/app.js'))
+const input = existsSync(resolve(import.meta.dirname, '../js-helper/src/app.js'))
   ? {
-      app: resolve(__dirname, '../js-helper/src/app.js'),
-      theme: resolve(__dirname, '../js-helper/src/app.css'),
+      app: resolve(import.meta.dirname, '../js-helper/src/app.js'),
+      theme: resolve(import.meta.dirname, '../js-helper/src/app.css'),
     }
   : {
       app: 'node_modules/@pushword/js-helper/src/app.js',
@@ -32,10 +32,11 @@ export default defineConfig({
     }),
     symfonyPlugin(),
     tailwindcss(),
-    viteCopyPlugin.viteStaticCopy({
+    viteStaticCopy({
       targets: filesToCopy.map((copy) => ({
         src: copy.from,
         dest: copy.to || '',
+        rename: { stripBase: true },
       })),
     }),
   ],
@@ -50,7 +51,7 @@ export default defineConfig({
   //   },
   build: {
     base: '/assets/',
-    rollupOptions: {
+    rolldownOptions: {
       input: input,
     },
     outDir: 'public/assets',
@@ -61,7 +62,7 @@ export default defineConfig({
   },
   //   resolve: {
   //     alias: {
-  //       '@': resolve(__dirname, 'assets'),
+  //       '@': resolve(import.meta.dirname, 'assets'),
   //     },
   //   },
 })

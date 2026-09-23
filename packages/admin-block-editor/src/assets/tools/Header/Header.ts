@@ -304,7 +304,7 @@ export default class Header {
   }
 
   static importFromMarkdown(editor: API, markdown: string): void {
-    let tunes: BlockTuneData = {}
+    let tunes: BlockTuneData
     let markdownWithoutTunes = markdown.trim()
 
     const inlineAttrMatch = markdownWithoutTunes.match(/^(#{2,6}\s.+?)\s+\{([^}]+)\}\s*$/)

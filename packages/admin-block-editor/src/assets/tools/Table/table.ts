@@ -440,15 +440,12 @@ export default class Table {
      * Iterate all rows and add a new cell to them for creating a column
      */
     for (let rowIndex = 1; rowIndex <= this.numberOfRows; rowIndex++) {
-      let cell;
       const cellElem = this.createCell();
 
       if (columnIndex! > 0 && columnIndex! <= numberOfColumns) {
-        cell = this.getCell(rowIndex, columnIndex!);
-
-        $.insertBefore(cellElem, cell);
+        $.insertBefore(cellElem, this.getCell(rowIndex, columnIndex!));
       } else {
-        cell = this.getRow(rowIndex).appendChild(cellElem);
+        this.getRow(rowIndex).appendChild(cellElem);
       }
 
       /**

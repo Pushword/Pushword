@@ -123,7 +123,7 @@ async function convertBlock(block: BlockData): Promise<string> {
  * Fonction principale
  */
 async function main() {
-  let jsonContent = ''
+  let jsonContent: string
 
   // Lire depuis les arguments ou stdin
   if (process.argv[2]) {
