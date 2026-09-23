@@ -697,6 +697,7 @@ export class MarkdownUtils {
     const held: string[] = []
     const hold = (html: string): string => `\u0000${held.push(html) - 1}\u0000`
     const restore = (text: string): string =>
+      // eslint-disable-next-line no-control-regex -- NUL is the delimiter hold() writes, chosen because page text does not contain it.
       text.replace(/\u0000(\d+)\u0000/g, (_match, index: string) => restore(held[Number(index)] ?? ''))
 
     // Images before code spans: backticks in an alt stay text, and a code span

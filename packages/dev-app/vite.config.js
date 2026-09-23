@@ -26,6 +26,7 @@ const input = existsSync(resolve(import.meta.dirname, '../js-helper/src/app.js')
     }
 
 export default defineConfig({
+  base: '/assets/',
   plugins: [
     compression({
       algorithms: ['zstd', 'gzip', 'brotliCompress'], // todo compare deflate and gzip usage with caddy
@@ -50,7 +51,6 @@ export default defineConfig({
   //     },
   //   },
   build: {
-    base: '/assets/',
     rolldownOptions: {
       input: input,
     },
