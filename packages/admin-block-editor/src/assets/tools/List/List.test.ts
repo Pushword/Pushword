@@ -114,4 +114,29 @@ describe('List.exportToMarkdown', () => {
     expect(unordered.trim()).toBe('- one')
     expect(ordered.trim()).toBe('1. one')
   })
+
+  it('keeps nested items indented under their parent', async () => {
+    const markdown = await List.exportToMarkdown({
+      style: 'unordered',
+      meta: {},
+      items: [
+        {
+          content: 'Parent',
+          meta: {},
+          items: [
+            {
+              content: 'Child',
+              meta: {},
+              items: [{ content: 'Grandchild', meta: {}, items: [] }],
+            },
+          ],
+        },
+        { content: 'Sibling', meta: {}, items: [] },
+      ],
+    })
+
+    expect(markdown.trim()).toBe(
+      ['- Parent', '  - Child', '    - Grandchild', '- Sibling'].join('\n'),
+    )
+  })
 })

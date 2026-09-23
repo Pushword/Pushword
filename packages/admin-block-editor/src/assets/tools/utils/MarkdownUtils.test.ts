@@ -12,6 +12,35 @@ describe('MarkdownUtils.fixer', () => {
     const html = '<iframe src="/video"></iframe>'
     expect(MarkdownUtils.fixer(html)).toBe(html)
   })
+
+  it('keeps a word-initial â or Â and a pipe after a space', () => {
+    const text = 'Le Moyen Âge, les âges | la suite'
+    expect(MarkdownUtils.fixer(text)).toBe(text)
+  })
+
+  it('keeps the two trailing spaces of a hard line break', () => {
+    const text = 'Transfert au bateau.  \nVers 18h : cocktail'
+    expect(MarkdownUtils.fixer(text)).toBe(text)
+  })
+
+  it('still collapses a run of spaces inside a line', () => {
+    expect(MarkdownUtils.fixer('un   deux\u00A0 trois')).toBe('un deux trois')
+  })
+
+  it('trims a longer trailing run to a two-space hard break', () => {
+    expect(MarkdownUtils.fixer('fin    \nsuite')).toBe('fin  \nsuite')
+  })
+
+  it('moves the space from before a comma or a dot to after it', () => {
+    expect(MarkdownUtils.fixer('mot\u00A0, suite et fin . Suite')).toBe(
+      'mot, suite et fin. Suite',
+    )
+  })
+
+  it('does not pull a line break into the space-before-punctuation fix', () => {
+    const text = '- un ,\n- deux .\n- trois'
+    expect(MarkdownUtils.fixer(text)).toBe(text)
+  })
 })
 
 describe('MarkdownUtils.extractSnippetCall', () => {

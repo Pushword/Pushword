@@ -527,7 +527,9 @@ export class MarkdownUtils {
   }
 
   private static fixProse(text: string): string {
-    const spaces = '\xE2\x80\xAF|\xC2\xAD|\xC2\xA0|\u00A0|\\s'
+    // Horizontal whitespace or soft hyphen. Line breaks stay out: the input
+    // carries markdown hard breaks ("  \n") and nested list indentation.
+    const space = '(?:[^\\S\\r\\n]|\\u00AD)'
 
     return text
       .replace(/&nbsp;/gi, ' ')
@@ -538,15 +540,15 @@ export class MarkdownUtils {
       // remove empty inline tag
       .replace(/<(b|i|strong|em|span|a)\b[^>]*><\/\1>/gi, '')
       // NoSpaceBeforeComma
-      .replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,},[${spaces}]{1,}`, 'gmu'), '$1, ')
+      .replace(new RegExp(`([^\\d\\s]+)${space}+,${space}+`, 'gmu'), '$1, ')
       // NoSpaceBeforeDot
-      .replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,}\\.[${spaces}]{1,}`, 'gmu'), '$1. ')
+      .replace(new RegExp(`([^\\d\\s]+)${space}+\\.${space}+`, 'gmu'), '$1. ')
       // Ampersand
       .replace(/ &amp; /gi, ' & ')
       // Remove soft hyphens
       .replace(/&shy;/g, '')
-      // Remove double spaces
-      .replace(new RegExp(`[${spaces}]{2,}`, 'gmu'), ' ')
+      // Remove double spaces, except a line's indentation and a hard break
+      .replace(new RegExp(`(\\S)${space}{2,}(?!\\n)`, 'gmu'), '$1 ')
   }
 
   static convertInlineHtmlToMarkdown(html: string, cleanup = true): string {
