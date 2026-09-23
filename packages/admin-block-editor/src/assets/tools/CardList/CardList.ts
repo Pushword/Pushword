@@ -400,9 +400,10 @@ export default class CardList extends BaseTool {
         'data-placeholder': label,
       },
     )
-    // Convert markdown to HTML for editing
+    // Convert markdown to HTML for editing; a newline in a description is a
+    // line break, which is how the export writes a <br> back.
     if (value) {
-      editable.innerHTML = MarkdownUtils.convertInlineMarkdownToHtml(value)
+      editable.innerHTML = MarkdownUtils.convertInlineMarkdownToHtml(value.replace(/\n/g, '<br>'))
     }
 
     // Prevent Editor.js from intercepting paste events in this field

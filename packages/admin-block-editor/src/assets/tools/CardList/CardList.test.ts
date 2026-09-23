@@ -27,3 +27,14 @@ describe('CardList title HTML', () => {
     expect(field.querySelector('a')?.textContent).toBe('Read')
   })
 })
+
+describe('CardList description', () => {
+  it('still shows a newline as a line break, as the export writes a <br>', () => {
+    const tool = new CardList({ data: { items: [] }, api: {} as API, readOnly: false })
+    const field = (tool as any).createContentEditableField(
+      'Description', 'description', '**un**\ndeux',
+    ) as HTMLElement
+
+    expect(field.querySelector('[contenteditable]')!.innerHTML).toBe('<b>un</b><br>deux')
+  })
+})

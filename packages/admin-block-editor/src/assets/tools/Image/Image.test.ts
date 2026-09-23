@@ -70,3 +70,46 @@ describe('Image – the inline uploader', () => {
     expect(imageWith('').uploadAccept).toBe('image/*')
   })
 })
+
+describe('Image – an upload', () => {
+  it('fills the block even when the answer carries no name', () => {
+    const tool = imageWith('')
+    const wrapper = tool.render()
+
+    tool.onUpload({ success: true, file: { media: 'photo.jpg' } })
+
+    expect(wrapper.querySelector('img')?.getAttribute('src')).toBe('/media/md/photo.jpg')
+    expect(tool.save(wrapper)).toEqual({ media: 'photo.jpg', caption: 'A caption' })
+  })
+})
+
+describe('Image – markdown', () => {
+  it('writes the media name, not the editor preview path', () => {
+    expect(Image.exportToMarkdown({ media: 'photo.jpg', caption: 'Alt' })).toBe('![Alt](photo.jpg)')
+  })
+
+  it('claims a chunk that is the image alone', () => {
+    expect(Image.isItMarkdownExported('![Alt](photo.jpg)')).toBe(true)
+    expect(Image.isItMarkdownExported('[![Alt](photo.jpg)](/page){target="_blank"}')).toBe(true)
+  })
+
+  it('claims an image without alt text', () => {
+    expect(Image.isItMarkdownExported('![](photo.jpg)')).toBe(true)
+  })
+
+  it.each([
+    [{ url: '/page', targetBlank: false, hideForBot: false }],
+    [{ url: '/page', targetBlank: true, hideForBot: false }],
+    [{ url: '/page', targetBlank: false, hideForBot: true }],
+    [{ url: '/page', targetBlank: true, hideForBot: true }],
+  ])('claims back the linked image it writes for %o', (linkTune) => {
+    const markdown = Image.exportToMarkdown({ media: 'photo.jpg', caption: 'Alt' }, { linkTune } as any)
+
+    expect(Image.isItMarkdownExported(markdown)).toBe(true)
+  })
+
+  it('leaves an image with text around it to the paragraph', () => {
+    expect(Image.isItMarkdownExported('![Alt](photo.jpg) du texte après')).toBe(false)
+    expect(Image.isItMarkdownExported('Avant ![Alt](photo.jpg)')).toBe(false)
+  })
+})

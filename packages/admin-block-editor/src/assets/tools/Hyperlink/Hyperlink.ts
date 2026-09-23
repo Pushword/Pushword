@@ -279,6 +279,7 @@ export default class Hyperlink {
     return {
       a: {
         href: true,
+        title: true,
         target: true,
         rel: true,
         class: true,

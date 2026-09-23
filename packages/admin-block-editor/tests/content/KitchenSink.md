@@ -24,7 +24,7 @@ See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block){target="_bl
 
 ### Simple Image
 
-![Demo 3](/media/md/3.jpg)
+![Demo 3](3.jpg)
 
 ### Gallery
 
@@ -100,7 +100,7 @@ Texte avec <u>soulignement</u>, **gras**, _italique_, <mark>surlignage</mark> et
 
 ## Image avec Lien (linkTune)
 
-[![Image cliquable vers la documentation](/media/md/2.jpg)](https://pushword.piedweb.com)
+[![Image cliquable vers la documentation](2.jpg)](https://pushword.piedweb.com)
 
 ## Inline Tool
 

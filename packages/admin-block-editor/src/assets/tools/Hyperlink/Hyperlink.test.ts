@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { API } from '@editorjs/editorjs'
 import Hyperlink from './Hyperlink'
+import { MarkdownUtils } from '../utils/MarkdownUtils'
 
 /**
  * Regression guard for codex-team/editor.js#2821.
@@ -229,5 +230,20 @@ describe('Hyperlink.updateLink', () => {
     tool.updateLink()
 
     expect(link.hasAttribute('rel')).toBe(false)
+  })
+})
+
+describe('Hyperlink sanitize rules', () => {
+  it('allow every attribute the markdown import writes on a link', () => {
+    // Editor.js cleans a paragraph with these rules on save: an attribute the
+    // import writes but the rules omit is lost, and with it its markdown.
+    const holder = document.createElement('div')
+    holder.innerHTML = MarkdownUtils.convertInlineMarkdownToHtml(
+      '#[a](/b "T"){target="_blank" class="link-btn"}',
+    )
+    const attributes = holder.querySelector('a')!.getAttributeNames()
+
+    expect(attributes).toEqual(['href', 'title', 'rel', 'target', 'class'])
+    attributes.forEach((name) => expect(Hyperlink.sanitize.a).toHaveProperty(name, true))
   })
 })

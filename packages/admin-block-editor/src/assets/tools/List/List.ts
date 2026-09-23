@@ -12,7 +12,18 @@ export interface ListData extends BlockToolData {
   items?: any[]
 }
 
+/** Two trailing spaces or a backslash: the line ends with a hard break. */
+const HARD_BREAK_END = /(?: {2,}|\\)$/
+
 export default class List extends ListTool {
+  /**
+   * @editorjs/list declares no rule of its own, so Editor.js would clean every
+   * item with the inline tools' rules alone and strip the <br> of a Shift+Enter.
+   */
+  static get sanitize() {
+    return { items: { br: true } }
+  }
+
   static async exportToMarkdown(data: ListData, tunes?: BlockTuneData): Promise<string> {
     if (!data || !data.items) {
       return ''
@@ -43,14 +54,21 @@ export default class List extends ListTool {
     let markdown = ''
 
     items.forEach((item, index) => {
-      markdown += `${indent}${List._marker(style, item, index)} ${item.content || item}\n`
+      const marker = List._marker(style, item, index)
+      const content: string = typeof item === 'string' ? item : (item.content ?? '')
+      // A <br> is a hard break; a newline kept from the source stays soft.
+      // Either way the next line sits under the item's text.
+      const text = MarkdownUtils.convertInlineHtmlToMarkdown(
+        content.replace(/<br\s*\/?>/gi, '  \n'),
+      )
+      const textIndent = indent + ' '.repeat(marker.length + 1)
+      markdown += `${indent}${marker} ${text.replace(/\n/g, '\n' + textIndent)}\n`
 
       if (item.items && item.items.length > 0) {
         markdown += List._itemsToMarkdown(item.items, style, depth + 1)
       }
     })
 
-    markdown = MarkdownUtils.convertInlineHtmlToMarkdown(markdown)
     return markdown
   }
 
@@ -85,7 +103,7 @@ export default class List extends ListTool {
     let isOrdered: boolean | null = null
     let hasCheckbox = false
 
-    for (const line of lines) {
+    for (const [index, line] of lines.entries()) {
       const trimmedLine = line.trim()
 
       if (!trimmedLine) {
@@ -103,9 +121,14 @@ export default class List extends ListTool {
         if (currentItem === null) {
           throw new Error('isItMarkdownExported not worked as expected')
         }
-        // This is a continuation of the current item
+        // A continuation of the current item. The line break before it is a
+        // <br> only when hard; a soft one stays a newline, shown and rendered
+        // as a space.
+        const hardBreak = HARD_BREAK_END.test(lines[index - 1] ?? '')
+        if (hardBreak) currentItem.content = currentItem.content.replace(/\\$/, '')
         currentItem.content +=
-          '<br>' + MarkdownUtils.convertInlineMarkdownToHtml(trimmedLine)
+          (hardBreak ? '<br>' : '\n') +
+          MarkdownUtils.convertInlineMarkdownToHtml(trimmedLine)
         continue
       }
 

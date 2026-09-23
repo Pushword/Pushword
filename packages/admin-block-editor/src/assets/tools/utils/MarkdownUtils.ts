@@ -482,11 +482,10 @@ export class MarkdownUtils {
     } else if (attrs.rel) extras.push(`rel="${attrs.rel}"`)
     if (attrs.target) extras.push(`target="${attrs.target}"`)
     if (attrs.class) extras.push(`class="${attrs.class}"`)
+    const destination = attrs.title ? `${href} "${attrs.title}"` : href
+    const attributeBlock = extras.length ? `{${extras.join(' ')}}` : ''
 
-    return (
-      (obfuscate ? '#' : '') +
-      (extras.length ? `[${text}](${href}){${extras.join(' ')}}` : `[${text}](${href})`)
-    )
+    return (obfuscate ? '#' : '') + `[${text}](${destination})${attributeBlock}`
   }
 
   static makeUrlRelative(text: string): string {
@@ -558,19 +557,20 @@ export class MarkdownUtils {
     // Decode HTML entities first (including numeric ones like &#10140;)
     html = he.decode(html)
 
+    // [\s\S]: a soft line break kept from the source may sit inside a tag.
     const markdown = html
       .replace(/<(b|strong|em|i|a[^>]*)> /gi, ' <$1>')
       .replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, '</$1> ')
-      .replace(/<(b|strong)(?: [^>]*)?>(.+?)<\/(b|strong)>/gi, '**$2**')
-      .replace(/<(i|em)(?: [^>]*)?>(.+?)<\/(i|em)>/gi, '_$2_')
+      .replace(/<(b|strong)(?: [^>]*)?>([\s\S]+?)<\/(b|strong)>/gi, '**$2**')
+      .replace(/<(i|em)(?: [^>]*)?>([\s\S]+?)<\/(i|em)>/gi, '_$2_')
       .replace(/<code(?: [^>]*)?>(.+?)<\/code>/gi, '`$1`')
-      .replace(/<s(?: [^>]*)?>(.+?)<\/s>/gi, '~~$1~~')
-      .replace(/<sup(?: [^>]*)?>(.+?)<\/sup>/gi, '^$1^')
-      .replace(/<sub(?: [^>]*)?>(.+?)<\/sub>/gi, '~$1~')
-      .replace(/<u(?: [^>]*)?>(.+?)<\/u>/gi, '<u>$1</u>')
-      .replace(/<small(?: [^>]*)?>(.+?)<\/small>/gi, '<small>$1</small>')
-      .replace(/<mark(?: [^>]*)?>(.+?)<\/mark>/gi, '<mark>$1</mark>')
-      .replace(/<a\s+([^>]+)>(.+?)<\/a>/gi, (_match, attrString, text) =>
+      .replace(/<s(?: [^>]*)?>([\s\S]+?)<\/s>/gi, '~~$1~~')
+      .replace(/<sup(?: [^>]*)?>([\s\S]+?)<\/sup>/gi, '^$1^')
+      .replace(/<sub(?: [^>]*)?>([\s\S]+?)<\/sub>/gi, '~$1~')
+      .replace(/<u(?: [^>]*)?>([\s\S]+?)<\/u>/gi, '<u>$1</u>')
+      .replace(/<small(?: [^>]*)?>([\s\S]+?)<\/small>/gi, '<small>$1</small>')
+      .replace(/<mark(?: [^>]*)?>([\s\S]+?)<\/mark>/gi, '<mark>$1</mark>')
+      .replace(/<a\s+([^>]+)>([\s\S]+?)<\/a>/gi, (_match, attrString, text) =>
         MarkdownUtils.convertAnchorToMarkdown(attrString, text),
       )
       .replace(/<br\s*\/?>/gi, '\n') // Convert <br> to newlines
@@ -670,48 +670,51 @@ export class MarkdownUtils {
     return spans
   }
 
-  private static convertMarkdownToAnchor(markdown: string): string {
-    const isObfuscated = markdown.startsWith('#')
-    const linkText = isObfuscated ? markdown.substring(1) : markdown
+  private static anchorOpeningTag(
+    href: string,
+    title: string | undefined,
+    attrsString: string | undefined,
+    isObfuscated: boolean,
+  ): string {
+    const attributes = [`href="${href}"`]
+    if (title !== undefined) attributes.push(`title="${title}"`)
+    if (isObfuscated) attributes.push('rel="obfuscate"')
+    if (attrsString) attributes.push(attrsString)
 
-    // Match markdown link with optional attributes: [text](url{attrs})
-    const linkWithAttrsRegex = /\[([^\]]+)\]\(([^){]+)\)\{([^}]+)\}/
-    const simpleLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/
-
-    let match = linkText.match(linkWithAttrsRegex)
-    let text: string
-    let href: string
-    let attrsString = ''
-
-    if (match) {
-      text = match[1] ?? ''
-      href = match[2] ?? ''
-      attrsString = match[3] ?? ''
-    } else {
-      match = linkText.match(simpleLinkRegex)
-      if (!match) return markdown
-      text = match[1] ?? ''
-      href = match[2] ?? ''
-    }
-
-    if (isObfuscated) {
-      attrsString = attrsString ? `rel="obfuscate" ${attrsString}` : 'rel="obfuscate"'
-    }
-
-    const attrs = attrsString ? ' ' + attrsString : ''
-    return `<a href="${href}"${attrs}>${text}</a>`
+    return `<a ${attributes.join(' ')}>`
   }
 
+  /**
+   * Code spans, images and link tags are held out while emphasis is converted:
+   * an underscore in a URL, an alt or a code span must not open an <i>. An
+   * image stays markdown text: the Image block owns images, and a paragraph
+   * that carries one keeps it byte for byte. As in CommonMark, `_` only opens
+   * or closes emphasis at a word boundary, and a line break is soft (a space,
+   * kept as a newline) unless two trailing spaces or a backslash make it a
+   * hard break (<br>).
+   */
   static convertInlineMarkdownToHtml(markdown: string): string {
-    return markdown
-      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
-      .replace(/_(.+?)_/g, '<i>$1</i>')
-      .replace(/`(.+?)`/g, '<code class="inline-code">$1</code>')
-      .replace(/~~(.+?)~~/g, '<s class="cdx-strikethrough">$1</s>')
-      .replace(/#?\[([^\]]+)\]\(([^){]+)\)(?:\{([^}]+)\})?/g, (match) =>
-        MarkdownUtils.convertMarkdownToAnchor(match),
+    const held: string[] = []
+    const hold = (html: string): string => `\u0000${held.push(html) - 1}\u0000`
+    const restore = (text: string): string =>
+      text.replace(/\u0000(\d+)\u0000/g, (_match, index: string) => restore(held[Number(index)] ?? ''))
+
+    // Images before code spans: backticks in an alt stay text, and a code span
+    // around an image still gets it back because restore() recurses.
+    const html = markdown
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, (image) => hold(image))
+      .replace(/`(.+?)`/g, (_match, code: string) => hold(`<code class="inline-code">${code}</code>`))
+      .replace(
+        /(#?)\[([^\]]+)\]\(([^){]+?)(?:\s+"([^"]*)")?\)(?:\{([^}]+)\})?/g,
+        (_match, hash: string, text: string, href: string, title?: string, attrs?: string) =>
+          hold(MarkdownUtils.anchorOpeningTag(href, title, attrs, hash === '#')) + text + hold('</a>'),
       )
-      .replace(/\n/g, '<br>') // Convert newlines to <br>
+      .replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>')
+      .replace(/(?<![\p{L}\p{N}_])_(?!\s)([\s\S]+?)(?<!\s)_(?![\p{L}\p{N}_])/gu, '<i>$1</i>')
+      .replace(/~~([\s\S]+?)~~/g, '<s class="cdx-strikethrough">$1</s>')
+      .replace(/(?: {2,}|\\)\n/g, '<br>')
+
+    return restore(html)
   }
 
   /**

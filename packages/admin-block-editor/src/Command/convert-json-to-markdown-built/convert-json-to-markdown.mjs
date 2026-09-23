@@ -1379,7 +1379,9 @@ ${markdown}`;
     } else if (attrs.rel) extras.push(`rel="${attrs.rel}"`);
     if (attrs.target) extras.push(`target="${attrs.target}"`);
     if (attrs.class) extras.push(`class="${attrs.class}"`);
-    return (obfuscate ? "#" : "") + (extras.length ? `[${text}](${href}){${extras.join(" ")}}` : `[${text}](${href})`);
+    const destination = attrs.title ? `${href} "${attrs.title}"` : href;
+    const attributeBlock = extras.length ? `{${extras.join(" ")}}` : "";
+    return (obfuscate ? "#" : "") + `[${text}](${destination})${attributeBlock}`;
   }
   static makeUrlRelative(text) {
     const host = globalThis.window.pageHost;
@@ -1408,16 +1410,16 @@ ${markdown}`;
     return text.split(/(<code(?:\s[^>]*)?>[\s\S]*?<\/code>|<pre(?:\s[^>]*)?>[\s\S]*?<\/pre>)/gi).map((part, index) => index % 2 === 1 ? part : _MarkdownUtils.fixProse(part)).join("");
   }
   static fixProse(text) {
-    const spaces = "â¯|Â­|Â | |\\s";
-    return text.replace(/&nbsp;/gi, " ").replace(/ <\/([a-z]+)>/gi, "</$1> ").replace(/ ?<(b|i|strong|em|span)> ?<\/(b|i|strong|em|span)> ?/gi, " ").replace(/<(b|i|strong|em|span|a)\b[^>]*><\/\1>/gi, "").replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,},[${spaces}]{1,}`, "gmu"), "$1, ").replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,}\\.[${spaces}]{1,}`, "gmu"), "$1. ").replace(/ &amp; /gi, " & ").replace(/&shy;/g, "").replace(new RegExp(`[${spaces}]{2,}`, "gmu"), " ");
+    const space = "(?:[^\\S\\r\\n]|\\u00AD)";
+    return text.replace(/&nbsp;/gi, " ").replace(/ <\/([a-z]+)>/gi, "</$1> ").replace(/ ?<(b|i|strong|em|span)> ?<\/(b|i|strong|em|span)> ?/gi, " ").replace(/<(b|i|strong|em|span|a)\b[^>]*><\/\1>/gi, "").replace(new RegExp(`([^\\d\\s]+)${space}+,${space}+`, "gmu"), "$1, ").replace(new RegExp(`([^\\d\\s]+)${space}+\\.${space}+`, "gmu"), "$1. ").replace(/ &amp; /gi, " & ").replace(/&shy;/g, "").replace(new RegExp(`(\\S)${space}{2,}(?!\\n)`, "gmu"), "$1 ");
   }
   static convertInlineHtmlToMarkdown(html, cleanup = true) {
     if (cleanup) {
       html = _MarkdownUtils.fixer(html);
     }
     html = he$2.decode(html);
-    const markdown = html.replace(/<(b|strong|em|i|a[^>]*)> /gi, " <$1>").replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, "</$1> ").replace(/<(b|strong)(?: [^>]*)?>(.+?)<\/(b|strong)>/gi, "**$2**").replace(/<(i|em)(?: [^>]*)?>(.+?)<\/(i|em)>/gi, "_$2_").replace(/<code(?: [^>]*)?>(.+?)<\/code>/gi, "`$1`").replace(/<s(?: [^>]*)?>(.+?)<\/s>/gi, "~~$1~~").replace(/<sup(?: [^>]*)?>(.+?)<\/sup>/gi, "^$1^").replace(/<sub(?: [^>]*)?>(.+?)<\/sub>/gi, "~$1~").replace(/<u(?: [^>]*)?>(.+?)<\/u>/gi, "<u>$1</u>").replace(/<small(?: [^>]*)?>(.+?)<\/small>/gi, "<small>$1</small>").replace(/<mark(?: [^>]*)?>(.+?)<\/mark>/gi, "<mark>$1</mark>").replace(
-      /<a\s+([^>]+)>(.+?)<\/a>/gi,
+    const markdown = html.replace(/<(b|strong|em|i|a[^>]*)> /gi, " <$1>").replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, "</$1> ").replace(/<(b|strong)(?: [^>]*)?>([\s\S]+?)<\/(b|strong)>/gi, "**$2**").replace(/<(i|em)(?: [^>]*)?>([\s\S]+?)<\/(i|em)>/gi, "_$2_").replace(/<code(?: [^>]*)?>(.+?)<\/code>/gi, "`$1`").replace(/<s(?: [^>]*)?>([\s\S]+?)<\/s>/gi, "~~$1~~").replace(/<sup(?: [^>]*)?>([\s\S]+?)<\/sup>/gi, "^$1^").replace(/<sub(?: [^>]*)?>([\s\S]+?)<\/sub>/gi, "~$1~").replace(/<u(?: [^>]*)?>([\s\S]+?)<\/u>/gi, "<u>$1</u>").replace(/<small(?: [^>]*)?>([\s\S]+?)<\/small>/gi, "<small>$1</small>").replace(/<mark(?: [^>]*)?>([\s\S]+?)<\/mark>/gi, "<mark>$1</mark>").replace(
+      /<a\s+([^>]+)>([\s\S]+?)<\/a>/gi,
       (_match, attrString, text) => _MarkdownUtils.convertAnchorToMarkdown(attrString, text)
     ).replace(/<br\s*\/?>/gi, "\n").replace(/<div>/gi, "\n").replace(/<\/div>/gi, "");
     return _MarkdownUtils.normalizeTypography(markdown);
@@ -1495,36 +1497,31 @@ ${markdown}`;
     }
     return spans;
   }
-  static convertMarkdownToAnchor(markdown) {
-    const isObfuscated = markdown.startsWith("#");
-    const linkText = isObfuscated ? markdown.substring(1) : markdown;
-    const linkWithAttrsRegex = /\[([^\]]+)\]\(([^){]+)\)\{([^}]+)\}/;
-    const simpleLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/;
-    let match = linkText.match(linkWithAttrsRegex);
-    let text;
-    let href;
-    let attrsString = "";
-    if (match) {
-      text = match[1] ?? "";
-      href = match[2] ?? "";
-      attrsString = match[3] ?? "";
-    } else {
-      match = linkText.match(simpleLinkRegex);
-      if (!match) return markdown;
-      text = match[1] ?? "";
-      href = match[2] ?? "";
-    }
-    if (isObfuscated) {
-      attrsString = attrsString ? `rel="obfuscate" ${attrsString}` : 'rel="obfuscate"';
-    }
-    const attrs = attrsString ? " " + attrsString : "";
-    return `<a href="${href}"${attrs}>${text}</a>`;
+  static anchorOpeningTag(href, title, attrsString, isObfuscated) {
+    const attributes = [`href="${href}"`];
+    if (title !== void 0) attributes.push(`title="${title}"`);
+    if (isObfuscated) attributes.push('rel="obfuscate"');
+    if (attrsString) attributes.push(attrsString);
+    return `<a ${attributes.join(" ")}>`;
   }
+  /**
+   * Code spans, images and link tags are held out while emphasis is converted:
+   * an underscore in a URL, an alt or a code span must not open an <i>. An
+   * image stays markdown text: the Image block owns images, and a paragraph
+   * that carries one keeps it byte for byte. As in CommonMark, `_` only opens
+   * or closes emphasis at a word boundary, and a line break is soft (a space,
+   * kept as a newline) unless two trailing spaces or a backslash make it a
+   * hard break (<br>).
+   */
   static convertInlineMarkdownToHtml(markdown) {
-    return markdown.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/_(.+?)_/g, "<i>$1</i>").replace(/`(.+?)`/g, '<code class="inline-code">$1</code>').replace(/~~(.+?)~~/g, '<s class="cdx-strikethrough">$1</s>').replace(
-      /#?\[([^\]]+)\]\(([^){]+)\)(?:\{([^}]+)\})?/g,
-      (match) => _MarkdownUtils.convertMarkdownToAnchor(match)
-    ).replace(/\n/g, "<br>");
+    const held = [];
+    const hold = (html2) => `\0${held.push(html2) - 1}\0`;
+    const restore = (text) => text.replace(/\u0000(\d+)\u0000/g, (_match, index) => restore(held[Number(index)] ?? ""));
+    const html = markdown.replace(/!\[[^\]]*\]\([^)]*\)/g, (image) => hold(image)).replace(/`(.+?)`/g, (_match, code) => hold(`<code class="inline-code">${code}</code>`)).replace(
+      /(#?)\[([^\]]+)\]\(([^){]+?)(?:\s+"([^"]*)")?\)(?:\{([^}]+)\})?/g,
+      (_match, hash, text, href, title, attrs) => hold(_MarkdownUtils.anchorOpeningTag(href, title, attrs, hash === "#")) + text + hold("</a>")
+    ).replace(/\*\*([\s\S]+?)\*\*/g, "<b>$1</b>").replace(new RegExp("(?<![\\p{L}\\p{N}_])_(?!\\s)([\\s\\S]+?)(?<!\\s)_(?![\\p{L}\\p{N}_])", "gu"), "<i>$1</i>").replace(/~~([\s\S]+?)~~/g, '<s class="cdx-strikethrough">$1</s>').replace(/(?: {2,}|\\)\n/g, "<br>");
+    return restore(html);
   }
   static loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -2007,14 +2004,11 @@ class Paragraph extends n$1 {
   static importFromMarkdown(editor, markdown) {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown);
     const tunes = result.tunes;
-    let markdownWithoutTunes = result.markdown;
-    markdownWithoutTunes = markdownWithoutTunes.split("\n").join("<br>").replace(/<br>$/, "");
-    markdownWithoutTunes = MarkdownUtils.convertInlineMarkdownToHtml(markdownWithoutTunes);
     const block = editor.blocks.insert("paragraph");
     editor.blocks.update(
       block.id,
       {
-        text: markdownWithoutTunes
+        text: MarkdownUtils.convertInlineMarkdownToHtml(result.markdown)
       },
       tunes
     );
@@ -4314,7 +4308,9 @@ const _Raw = class _Raw extends BaseTool {
     return typeof globalThis.window.monaco !== "undefined" && typeof globalThis.window.monacoHelper !== "undefined";
   }
   save() {
-    this.data.html = this.editorInstance?.getValue() || "";
+    if (this.editorInstance) {
+      this.data.html = this.editorInstance.getValue();
+    }
     return this.data;
   }
   static get conversionConfig() {
@@ -4351,7 +4347,15 @@ _Raw.monacoLoaderPromise = null;
 _Raw.MONACO_SCRIPT_URL = "/bundles/pushwordadmin/monaco/app.js";
 _Raw.enableLineBreaks = true;
 let Raw = _Raw;
+const HARD_BREAK_END = /(?: {2,}|\\)$/;
 class List extends G$1 {
+  /**
+   * @editorjs/list declares no rule of its own, so Editor.js would clean every
+   * item with the inline tools' rules alone and strip the <br> of a Shift+Enter.
+   */
+  static get sanitize() {
+    return { items: { br: true } };
+  }
   static async exportToMarkdown(data, tunes) {
     if (!data || !data.items) {
       return "";
@@ -4377,13 +4381,18 @@ class List extends G$1 {
     const indent = "  ".repeat(depth);
     let markdown = "";
     items.forEach((item, index) => {
-      markdown += `${indent}${List._marker(style, item, index)} ${item.content || item}
+      const marker = List._marker(style, item, index);
+      const content = typeof item === "string" ? item : item.content ?? "";
+      const text = MarkdownUtils.convertInlineHtmlToMarkdown(
+        content.replace(/<br\s*\/?>/gi, "  \n")
+      );
+      const textIndent = indent + " ".repeat(marker.length + 1);
+      markdown += `${indent}${marker} ${text.replace(/\n/g, "\n" + textIndent)}
 `;
       if (item.items && item.items.length > 0) {
         markdown += List._itemsToMarkdown(item.items, style, depth + 1);
       }
     });
-    markdown = MarkdownUtils.convertInlineHtmlToMarkdown(markdown);
     return markdown;
   }
   static _style(hasCheckbox, isOrdered) {
@@ -4404,7 +4413,7 @@ class List extends G$1 {
     let currentItem = null;
     let isOrdered = null;
     let hasCheckbox = false;
-    for (const line of lines) {
+    for (const [index, line] of lines.entries()) {
       const trimmedLine = line.trim();
       if (!trimmedLine) {
         if (currentItem !== null) {
@@ -4418,7 +4427,9 @@ class List extends G$1 {
         if (currentItem === null) {
           throw new Error("isItMarkdownExported not worked as expected");
         }
-        currentItem.content += "<br>" + MarkdownUtils.convertInlineMarkdownToHtml(trimmedLine);
+        const hardBreak = HARD_BREAK_END.test(lines[index - 1] ?? "");
+        if (hardBreak) currentItem.content = currentItem.content.replace(/\\$/, "");
+        currentItem.content += (hardBreak ? "<br>" : "\n") + MarkdownUtils.convertInlineMarkdownToHtml(trimmedLine);
         continue;
       }
       const isCurrentOrdered = orderedMatch !== null;
@@ -5992,8 +6003,7 @@ class Image extends AbstractMediaTool {
       return this.handleUploadError("incorrect response: " + JSON.stringify(response));
     }
     this.data.media = response.file.media;
-    if (!response.file.name) return;
-    this.data.caption = response.file.name;
+    if (response.file.name) this.data.caption = response.file.name;
     this.fillImage();
   }
   fillImage() {
@@ -6054,15 +6064,18 @@ class Image extends AbstractMediaTool {
     if (!data.media) {
       return "";
     }
-    const imgSrc = MediaUtils.buildFullUrl(data.media);
-    let markdown = `![${data.caption || ""}](${imgSrc})`;
+    let markdown = `![${data.caption || ""}](${data.media})`;
     if (tunes?.linkTune) {
       markdown = MarkdownUtils.wrapWithLink(markdown, tunes);
     }
     return tunes ? MarkdownUtils.addAttributes(markdown, tunes) : markdown;
   }
+  /** Only a chunk that is the image alone: text around it would be dropped on import. */
   static isItMarkdownExported(markdown) {
-    return markdown.trim().match(/!\[.*\]\(.+\)/) !== null || markdown.trim().match(/#?\[!\[.*\]\(.+\)\]\(.+\)/) !== null;
+    const chunk = markdown.trim();
+    const image = /^!\[[^\]]*\]\([^)]+\)$/;
+    const linkedImage = /^#?\[!\[[^\]]*\]\([^)]+\)\]\([^)]+\)(?:\{target="_blank"\})?$/;
+    return image.test(chunk) || linkedImage.test(chunk);
   }
   static importFromMarkdown(editor, markdown) {
     let media = "";

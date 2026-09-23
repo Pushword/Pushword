@@ -77,6 +77,23 @@ describe('List.importFromMarkdown', () => {
     expect(data.items.map((i) => i.meta.checked)).toEqual([false, true])
   })
 
+  it('joins a continuation line as a newline after a soft line break', () => {
+    const data = importList('- Déjeuner :\n  80 €')
+
+    expect(data.items[0].content).toBe('Déjeuner :\n80 €')
+  })
+
+  it('joins a continuation line with a <br> after a trailing backslash, dropping it', () => {
+    const data = importList('- Déjeuner :\\\n  80 €')
+
+    expect(data.items[0].content).toBe('Déjeuner :<br>80 €')
+  })
+
+  it('declares <br> to the sanitizer, which would strip a hard break otherwise', () => {
+    expect(importList('- Déjeuner :  \n  80 €').items[0].content).toContain('<br>')
+    expect(List.sanitize.items).toHaveProperty('br', true)
+  })
+
   it('leaves a link at the start of an item alone', () => {
     const data = importList('- [x](#anchor) and more')
 
@@ -113,6 +130,32 @@ describe('List.exportToMarkdown', () => {
 
     expect(unordered.trim()).toBe('- one')
     expect(ordered.trim()).toBe('1. one')
+  })
+
+  it('writes legacy string items', async () => {
+    const markdown = await List.exportToMarkdown({ style: 'unordered', meta: {}, items: ['one', 'two'] })
+
+    expect(markdown.trim()).toBe('- one\n- two')
+  })
+
+  it('writes an item without content as an empty item', async () => {
+    const markdown = await List.exportToMarkdown({
+      style: 'unordered',
+      meta: {},
+      items: [{ meta: {}, items: [] }, { content: 'two', meta: {}, items: [] }],
+    })
+
+    expect(markdown.trim().split('\n').map((line) => line.trimEnd())).toEqual(['-', '- two'])
+  })
+
+  it('indents a hard break under the text of an ordered item', async () => {
+    const markdown = await List.exportToMarkdown({
+      style: 'ordered',
+      meta: {},
+      items: [{ content: 'Déjeuner :<br>80 €', meta: {}, items: [] }],
+    })
+
+    expect(markdown.trim()).toBe('1. Déjeuner :  \n   80 €')
   })
 
   it('keeps nested items indented under their parent', async () => {

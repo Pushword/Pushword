@@ -119,7 +119,7 @@ describe('TableBlock inline Markdown in cells', () => {
     // editor.js cleans each cell string with this map on save, so a tag the
     // import can produce but the map omits loses its Markdown marker on save.
     const converted = MarkdownUtils.convertInlineMarkdownToHtml(
-      '**b** _i_ `c` ~~s~~ [t](/u)\nbr',
+      '**b** _i_ `c` ~~s~~ [t](/u)  \nbr',
     )
     const tags = [...converted.matchAll(/<([a-z]+)[\s>]/g)].map((match) => match[1]!)
 

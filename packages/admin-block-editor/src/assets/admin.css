@@ -47,6 +47,13 @@ a[rel='encrypt']:not(.link-btn) {
   border-top: 1px solid #00000017;
 }
 
+/* @editorjs/list sets pre-wrap: a soft line break kept from the markdown
+   would show as a break the site renders as a space, and Shift+Enter would
+   type a newline instead of the <br> a paragraph gets. */
+.codex-editor .cdx-list__item-content {
+  white-space: normal;
+}
+
 /* Disable convertTo */
 
 div[data-item-name='convert-to'] {

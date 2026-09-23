@@ -19,7 +19,7 @@ export default class Paragraph extends ParagraphTool {
     let markdown = data.text
       .replace(/(&nbsp;| |\u00A0)+ */g, ' ')
       .split('<br>')
-      .join('  \n') // 2 spaces = <br> in markdown
+      .join('  \n') // 2 spaces = <br> in markdown; a bare newline stays soft
     markdown = MarkdownUtils.convertInlineHtmlToMarkdown(markdown)
     const formattedMarkdown = await MarkdownUtils.formatMarkdownWithPrettier(markdown)
     return MarkdownUtils.addAttributes(formattedMarkdown, tunes)
@@ -28,20 +28,14 @@ export default class Paragraph extends ParagraphTool {
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
     const tunes: BlockTuneData = result.tunes
-    let markdownWithoutTunes = result.markdown
 
-    markdownWithoutTunes = markdownWithoutTunes
-      .split('\n')
-      .join('<br>')
-      .replace(/<br>$/, '')
-
-    markdownWithoutTunes = MarkdownUtils.convertInlineMarkdownToHtml(markdownWithoutTunes)
-
+    // A soft line break stays a newline: shown as the space the site renders,
+    // and written back as the line break it was.
     const block = editor.blocks.insert('paragraph')
     editor.blocks.update(
       block.id,
       {
-        text: markdownWithoutTunes,
+        text: MarkdownUtils.convertInlineMarkdownToHtml(result.markdown),
       },
       tunes,
     )

@@ -1,6 +1,7 @@
 import { BlockToolAdapter } from '@editorjs/editorjs/types/tools/adapters/block-tool-adapter'
 import { OutputData, API } from '@editorjs/editorjs'
 import { ToolInterface } from './tools/Abstract/ToolInterface'
+import { BlockSources } from './BlockSources'
 
 // Extended BlockToolAdapter to access the constructable property
 interface BlockToolAdapterWithConstructable extends BlockToolAdapter {
@@ -10,11 +11,13 @@ interface BlockToolAdapterWithConstructable extends BlockToolAdapter {
 export class EditorJsExportMarkdown {
   private editorjsTools: ToolInterface[]
   private editorData: OutputData
+  private sources: BlockSources | undefined
 
   constructor(editorJsInstance: API, editorData: OutputData) {
     // @ts-ignore TODO : to remove when ToolInterface is compatible with BlockToolConstructable
     this.editorjsTools = editorJsInstance.tools.getBlockTools()
     this.editorData = editorData
+    this.sources = BlockSources.of(editorJsInstance)
   }
 
   /**
@@ -34,7 +37,8 @@ export class EditorJsExportMarkdown {
       this.editorData.blocks.map(async (block) => {
         const toolClass = this.getToolClass(block.type)
         // @ts-ignore
-        return await toolClass.exportToMarkdown(block.data, block.tunes)
+        const markdown: string = await toolClass.exportToMarkdown(block.data, block.tunes)
+        return this.sources?.resolve(block.id, markdown) ?? markdown
       }),
     ).then((blocks) => blocks.filter((content) => content !== ''))
 

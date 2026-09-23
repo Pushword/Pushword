@@ -2,6 +2,7 @@ import { BlockToolAdapter } from '@editorjs/editorjs/types/tools/adapters/block-
 import { API } from '@editorjs/editorjs'
 import { ToolInterface } from './tools/Abstract/ToolInterface'
 import { MarkdownUtils } from './tools/utils/MarkdownUtils'
+import { BlockSources } from './BlockSources'
 import { GroupNesting } from './tools/Group/GroupNesting'
 import { GroupRegistry } from './tools/Group/GroupRegistry'
 import GroupStart from './tools/Group/GroupStart'
@@ -77,12 +78,22 @@ export class EditorJsParseMarkdown {
   }
 
   parseMarkdown(): void {
-    this.editorJsInstance.blocks.clear()
+    const blocks = this.editorJsInstance.blocks
+    blocks.clear()
 
+    const sources = BlockSources.reset(this.editorJsInstance)
     const nesting = new GroupNesting()
     for (const chunk of MarkdownUtils.chunkMarkdown(this.markdown)) {
       const adapter = chunkTool(this.editorjsTools, chunk.text, nesting)
+      const countBefore = blocks.getBlocksCount()
       adapter?.constructable?.importFromMarkdown(this.editorJsInstance, chunk.text)
+
+      // A chunk read into exactly one block can be written back as it came;
+      // insert() leaves the new block current.
+      if (blocks.getBlocksCount() === countBefore + 1) {
+        const block = blocks.getBlockByIndex(blocks.getCurrentBlockIndex())
+        if (block !== undefined) sources.record(block.id, chunk.text)
+      }
     }
   }
 }

@@ -43,6 +43,92 @@ describe('MarkdownUtils.fixer', () => {
   })
 })
 
+describe('MarkdownUtils.convertInlineMarkdownToHtml', () => {
+  const convert = (markdown: string) => MarkdownUtils.convertInlineMarkdownToHtml(markdown)
+
+  it('does not pair an underscore in a word or a URL with one in a link text', () => {
+    expect(convert('le mot_clé, [a](https://x.fr/a_b) puis [_Alpinstore_](https://x.fr)')).toBe(
+      'le mot_clé, <a href="https://x.fr/a_b">a</a> puis <a href="https://x.fr"><i>Alpinstore</i></a>',
+    )
+  })
+
+  it('leaves the underscores of a code span and of link attributes alone', () => {
+    expect(convert('`snake_case_name` [a](/b){target="_blank"} et _c_')).toBe(
+      '<code class="inline-code">snake_case_name</code> <a href="/b" target="_blank">a</a> et <i>c</i>',
+    )
+  })
+
+  it('carries a link title into the anchor', () => {
+    expect(convert('[le site](https://x.fr "Le titre")')).toBe(
+      '<a href="https://x.fr" title="Le titre">le site</a>',
+    )
+  })
+
+  it('keeps an image as markdown text', () => {
+    expect(convert('![a_b](x_y.png) texte')).toBe('![a_b](x_y.png) texte')
+  })
+
+  it('keeps an image as text even with a code span in its alt, and inside a code span', () => {
+    expect(convert('![`a_b`](x.png)')).toBe('![`a_b`](x.png)')
+    expect(convert('`![a](x.png)`')).toBe('<code class="inline-code">![a](x.png)</code>')
+  })
+
+  it('opens emphasis only at a word boundary', () => {
+    expect(convert('un snake_case_name et déjà_vu_là')).toBe('un snake_case_name et déjà_vu_là')
+    expect(convert('2 _ 3 _ 4')).toBe('2 _ 3 _ 4')
+    expect(convert('(_ici_), _là_.')).toBe('(<i>ici</i>), <i>là</i>.')
+  })
+
+  it('marks an obfuscated link, before its other attributes', () => {
+    expect(convert('#[a](/b)')).toBe('<a href="/b" rel="obfuscate">a</a>')
+    expect(convert('#[a](/b){target="_blank"}')).toBe(
+      '<a href="/b" rel="obfuscate" target="_blank">a</a>',
+    )
+  })
+
+  it('carries a link title next to the link attributes', () => {
+    expect(convert('[a](/b "T"){target="_blank"}')).toBe(
+      '<a href="/b" title="T" target="_blank">a</a>',
+    )
+  })
+
+  it('keeps an image inside a link as markdown text in the anchor', () => {
+    expect(convert('Voir [![a_b](x_y.png)](/page) ici')).toBe(
+      'Voir <a href="/page">![a_b](x_y.png)</a> ici',
+    )
+  })
+
+  it('converts emphasis and code inside a link text', () => {
+    expect(convert('[**gras** `x_y`](/b)')).toBe(
+      '<a href="/b"><b>gras</b> <code class="inline-code">x_y</code></a>',
+    )
+  })
+
+  it('returns an empty string as is', () => {
+    expect(convert('')).toBe('')
+  })
+
+  it('turns only a hard line break into a <br>', () => {
+    expect(convert('un\ndeux')).toBe('un\ndeux')
+    expect(convert('un  \ndeux')).toBe('un<br>deux')
+    expect(convert('un\\\ndeux')).toBe('un<br>deux')
+  })
+})
+
+describe('MarkdownUtils.convertInlineHtmlToMarkdown links', () => {
+  it('writes a link title back into the destination', () => {
+    expect(
+      MarkdownUtils.convertInlineHtmlToMarkdown('<a href="https://x.fr" title="Le titre">le site</a>'),
+    ).toBe('[le site](https://x.fr "Le titre")')
+  })
+
+  it('writes a link title before the attribute block', () => {
+    expect(
+      MarkdownUtils.convertInlineHtmlToMarkdown('<a href="/b" title="T" target="_blank">a</a>'),
+    ).toBe('[a](/b "T"){target="_blank"}')
+  })
+})
+
 describe('MarkdownUtils.extractSnippetCall', () => {
   it('extracts the name from a single-quoted call', () => {
     expect(MarkdownUtils.extractSnippetCall("{{ snippet('hero') }}")).toEqual({

@@ -98,8 +98,7 @@ export default class Image extends AbstractMediaTool {
       return this.handleUploadError('incorrect response: ' + JSON.stringify(response))
     }
     this.data.media = response.file.media
-    if (!response.file.name) return
-    this.data.caption = response.file.name
+    if (response.file.name) this.data.caption = response.file.name
     this.fillImage()
     // this.block.dispatchChange()
   }
@@ -198,8 +197,9 @@ export default class Image extends AbstractMediaTool {
       return ''
     }
 
-    const imgSrc = MediaUtils.buildFullUrl(data.media)
-    let markdown = `![${data.caption || ''}](${imgSrc})`
+    // The media name as the block holds it: the renderer resolves a bare name,
+    // and /media/md/ is only the editor's preview size.
+    let markdown = `![${data.caption || ''}](${data.media})`
 
     // todo manage link
     if (tunes?.linkTune) {
@@ -211,11 +211,13 @@ export default class Image extends AbstractMediaTool {
       : markdown
   }
 
+  /** Only a chunk that is the image alone: text around it would be dropped on import. */
   static isItMarkdownExported(markdown: string): boolean {
-    return (
-      markdown.trim().match(/!\[.*\]\(.+\)/) !== null ||
-      markdown.trim().match(/#?\[!\[.*\]\(.+\)\]\(.+\)/) !== null
-    )
+    const chunk = markdown.trim()
+    const image = /^!\[[^\]]*\]\([^)]+\)$/
+    const linkedImage = /^#?\[!\[[^\]]*\]\([^)]+\)\]\([^)]+\)(?:\{target="_blank"\})?$/
+
+    return image.test(chunk) || linkedImage.test(chunk)
   }
 
   static importFromMarkdown(editor: API, markdown: string): void {
