@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.19](/upgrade/1.0.19) | `js-helper` | front assets build with Vite 8: add `stripBase` to static-copy targets or favicons land in a subdirectory; `base` moves to the top of `vite.config.js` |
 | [1.0.18](/upgrade/1.0.18) | `page-scanner` | a page scan no longer stops at 500 errors |
 | [1.0.14](/upgrade/1.0.14) | `core` `docs` `new` | agent instructions use AGENTS.md without a CLAUDE.md symlink; colon-containing Markdown link classes render correctly |
 | [1.0.12](/upgrade/1.0.12) | `static-generator` | the static export no longer empties the listings of its later pages — run `pw:static` |
