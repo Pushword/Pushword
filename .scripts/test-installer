@@ -31,20 +31,30 @@ HASH_INPUT=$(cat \
     "$MONOREPO_DIR"/packages/core/starter/* \
     "$MONOREPO_DIR"/packages/core/src/Command/DockerInitCommand.php \
     "$MONOREPO_DIR"/packages/installer/src/SystemCheck.php \
-    "$MONOREPO_DIR"/packages/dev-app/Caddyfile \
     "$MONOREPO_DIR"/packages/dev-app/docker-skeleton/Dockerfile \
     "$MONOREPO_DIR"/packages/dev-app/docker-skeleton/compose*.yaml \
     "$MONOREPO_DIR"/packages/dev-app/docker-skeleton/.dockerignore \
     "$MONOREPO_DIR"/packages/dev-app/docker-skeleton/docker/* \
-    "$MONOREPO_DIR"/packages/new/tests/AppTest.php \
-    "$MONOREPO_DIR"/packages/new/tests/bootstrap.php \
-    "$MONOREPO_DIR"/packages/new/phpunit.xml.dist \
     "$MONOREPO_DIR"/packages/installer/src/PostInstall.php \
     "$MONOREPO_DIR"/packages/installer/src/PostAutoloadDump.php \
     "$MONOREPO_DIR"/.scripts/test-installer \
     2>/dev/null)
+
+# Every file the install copies into the site: packages/new is the project base, and
+# core's install.php copies the dev-app paths below out of vendor/pushword/dev-app
+# (packages/core/tests/InstallerCacheKeyTest.php fails when the two lists drift). While
+# only the Caddyfile was hashed, a vite.config.js or media fixture change kept being
+# tested against the install built before it. Hashed per file rather than concatenated:
+# the media are binary, and $(...) drops their NUL bytes.
+COPIED_FILES=$(cd "$MONOREPO_DIR/packages" && find new \
+    dev-app/assets 'dev-app/media~' \
+    dev-app/vite.config.js dev-app/package.json dev-app/Caddyfile \
+    dev-app/phpstan.dist.neon dev-app/php-cs-fixer.dist.php.template \
+    dev-app/bin/console-test.php dev-app/bin/object-test.php \
+    -type f -print0 | sort -z | xargs -0 sha256sum)
+
 INSTALLER_DATABASE_URL="${PUSHWORD_INSTALLER_TEST_DATABASE_URL:-}"
-CACHE_HASH=$(printf '%s\n%s' "$HASH_INPUT" "$INSTALLER_DATABASE_URL" | sha256sum | cut -d' ' -f1)
+CACHE_HASH=$(printf '%s\n%s\n%s' "$HASH_INPUT" "$COPIED_FILES" "$INSTALLER_DATABASE_URL" | sha256sum | cut -d' ' -f1)
 CACHE_DIR="$CACHE_BASE/$CACHE_HASH"
 
 if [ "$QUIET" = false ]; then
