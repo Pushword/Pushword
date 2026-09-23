@@ -25,6 +25,9 @@ php bin/console pw:page-scan --recheck        # re-check every external URL
 php bin/console pw:page-scan --limit=100      # stop after 100 errors
 ```
 
+A scan runs to the end unless `--limit` says otherwise — the admin and the API never
+pass it. An [ignored](#ignoring-a-finding) error does not count toward the limit.
+
 An external URL is checked once and its verdict cached, so a scan run minutes after
 the previous one reports the same dead links without paying for the requests again.
 `--recheck` drops those cached verdicts and asks the network again — reach for it
@@ -253,6 +256,9 @@ empty alt and declares itself as such, which the scanner then skips:
 <img src="/media/default/separator.svg" alt="" role="presentation">
 <img src="/media/default/separator.svg" alt="" aria-hidden="true">
 ```
+
+An image inside a `<template>` is not reported: that markup is inert until a script
+clones it, and the alt is the script's job.
 
 ## Translations
 

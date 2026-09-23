@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'a page scan no longer stops at 500 errors'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/page-scanner`
+
+## A page scan runs to the end
+
+`pw:page-scan` used to stop after 500 errors when `--limit` was absent, which is how the
+admin and the API always ran it; it now scans every page, and `--limit` counts only the
+errors `errors_to_ignore` does not silence. No site change is required.

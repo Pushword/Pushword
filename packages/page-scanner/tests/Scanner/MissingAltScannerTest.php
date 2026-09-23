@@ -55,6 +55,32 @@ final class MissingAltScannerTest extends KernelTestCase
         yield 'decorative by aria-hidden' => ['<img src="/a.jpg" alt="" aria-hidden="true">'];
     }
 
+    /**
+     * A `<template>` holds inert markup a script completes before it reaches the
+     * page, so only the image outside it is reported.
+     */
+    public function testIgnoresAnImageInsideATemplate(): void
+    {
+        $errors = $this->scan('<template id="card"><img src="/inside.jpg"></template><img src="/outside.jpg">');
+
+        self::assertCount(1, $errors);
+        self::assertStringContainsString('/outside.jpg', $errors[0]);
+    }
+
+    /** Each template ends at its own closing tag, so an image between two is on the page. */
+    public function testReportsAnImageBetweenTwoTemplates(): void
+    {
+        $errors = $this->scan('<template><img src="/a.jpg"></template><img src="/between.jpg"><template><img src="/b.jpg"></template>');
+
+        self::assertCount(1, $errors);
+        self::assertStringContainsString('/between.jpg', $errors[0]);
+    }
+
+    public function testIgnoresAnImageInsideAnUppercaseMultilineTemplate(): void
+    {
+        self::assertSame([], $this->scan("<TEMPLATE id=\"card\">\n<img src=\"/inside.jpg\">\n</TEMPLATE>"));
+    }
+
     public function testReportsEachSourceOnce(): void
     {
         $html = '<img src="/a.jpg"><img src="/a.jpg"><img src="/b.jpg">';

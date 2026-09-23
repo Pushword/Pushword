@@ -4,7 +4,17 @@ declare(strict_types=1);
 
 namespace Pushword\PageScanner\Tests;
 
+use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\BackgroundProcessManager;
+use Pushword\Core\Service\ProcessOutputStorage;
+use Pushword\PageScanner\Command\PageScannerCommand;
+use Pushword\PageScanner\Scanner\PageScannerService;
+use Pushword\PageScanner\Scanner\ParallelUrlChecker;
+use Pushword\PageScanner\Service\LinkGraphStorage;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Command\Command;
@@ -29,17 +39,76 @@ final class PageScannerCommandTest extends KernelTestCase
         self::assertStringContainsString('done...', $output);
     }
 
-    public function testPageScannerCommandWithLimit(): void
+    public function testWithoutALimitTheScanRunsPastFiveHundredErrors(): void
     {
-        $kernel = self::createKernel();
-        $application = new Application($kernel);
+        // Regression: `--limit 0` read as "no limit" but meant 500, and the admin and
+        // the API never pass `--limit`, so every scan they started stopped there.
+        $kernel = self::bootKernel();
+        $page = $this->persistPageWithBrokenLinks(501);
 
-        $command = $application->find('pw:page-scan');
-        $commandTester = new CommandTester($command);
-        $commandTester->execute(['localhost.dev', '--limit' => 1, '--format' => 'text']);
+        try {
+            $commandTester = new CommandTester(new Application($kernel)->find('pw:page-scan'));
+            $commandTester->execute(['localhost.dev', '--format' => 'text', '--skip-external' => true]);
+            $display = $commandTester->getDisplay();
 
-        $output = $commandTester->getDisplay();
-        self::assertTrue(str_contains($output, 'Too many errors (>1), stopping scan...') || str_contains($output, 'done...'));
+            self::assertStringNotContainsString('stopping scan', $display);
+            self::assertStringContainsString('done...', $display);
+        } finally {
+            $this->remove($page);
+        }
+    }
+
+    public function testTheLimitStopsTheScan(): void
+    {
+        $kernel = self::bootKernel();
+        $page = $this->persistPageWithBrokenLinks(2);
+
+        try {
+            $commandTester = new CommandTester(new Application($kernel)->find('pw:page-scan'));
+            $commandTester->execute(['localhost.dev', '--limit' => 1, '--format' => 'text', '--skip-external' => true]);
+
+            self::assertStringContainsString('Too many errors (>1), stopping scan...', $commandTester->getDisplay());
+        } finally {
+            $this->remove($page);
+        }
+    }
+
+    public function testIgnoredErrorsDoNotCountTowardTheLimit(): void
+    {
+        self::bootKernel();
+        $page = $this->persistPageWithBrokenLinks(2);
+
+        try {
+            // The same scan testTheLimitStopsTheScan() stops, with every finding ignored.
+            $commandTester = new CommandTester(new Command(null, $this->commandIgnoring(['*'])));
+            $commandTester->execute(['host' => 'localhost.dev', '--limit' => 1, '--format' => 'text', '--skip-external' => true]);
+            $display = $commandTester->getDisplay();
+
+            self::assertStringNotContainsString('stopping scan', $display);
+            self::assertStringContainsString('done...', $display);
+            // A page whose every finding is ignored prints nothing, not even its route.
+            self::assertStringNotContainsString('localhost.dev/limit-probe', $display);
+        } finally {
+            $this->remove($page);
+        }
+    }
+
+    public function testAnIgnoredErrorIsNotPrintedNextToAVisibleOne(): void
+    {
+        self::bootKernel();
+        $page = $this->persistPageWithBrokenLinks(2);
+
+        try {
+            $commandTester = new CommandTester(new Command(null, $this->commandIgnoring(['localhost.dev/limit-probe: */limit-probe-missing-1 *'])));
+            $commandTester->execute(['host' => 'localhost.dev', '--format' => 'text', '--skip-external' => true]);
+            $display = $commandTester->getDisplay();
+
+            self::assertStringContainsString("\nlocalhost.dev/limit-probe\n", $display);
+            self::assertStringContainsString('/limit-probe-missing-2', $display);
+            self::assertStringNotContainsString('/limit-probe-missing-1', $display);
+        } finally {
+            $this->remove($page);
+        }
     }
 
     public function testADirectoryOnTheCachePathFailsFastInsteadOfLosingTheScan(): void
@@ -107,5 +176,53 @@ final class PageScannerCommandTest extends KernelTestCase
                 self::assertArrayHasKey('message', $error);
             }
         }
+    }
+
+    /**
+     * @param string[] $errorsToIgnore
+     */
+    private function commandIgnoring(array $errorsToIgnore): PageScannerCommand
+    {
+        $container = self::getContainer();
+        /** @var string $varDir */
+        $varDir = $container->getParameter('pw.var_dir');
+
+        return new PageScannerCommand(
+            $container->get(PageScannerService::class),
+            new Filesystem(),
+            $container->get(PageRepository::class),
+            $container->get(ParallelUrlChecker::class),
+            $container->get(BackgroundProcessManager::class),
+            $container->get(ProcessOutputStorage::class),
+            $container->get(LinkGraphStorage::class),
+            $errorsToIgnore,
+            $varDir,
+        );
+    }
+
+    /** A page whose every link is a distinct `link-not-found` finding. */
+    private function persistPageWithBrokenLinks(int $count): Page
+    {
+        $page = new Page();
+        $page->h1 = 'Limit probe';
+        $page->slug = 'limit-probe';
+        $page->locale = 'en';
+        $page->host = 'localhost.dev';
+        $page->createdAt = new DateTime();
+        $page->updatedAt = new DateTime();
+        $page->mainContent = implode(' ', array_map(static fn (int $i): string => '[link](/limit-probe-missing-'.$i.')', range(1, $count)));
+
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $entityManager->persist($page);
+        $entityManager->flush();
+
+        return $page;
+    }
+
+    private function remove(Page $page): void
+    {
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $entityManager->remove($page);
+        $entityManager->flush();
     }
 }

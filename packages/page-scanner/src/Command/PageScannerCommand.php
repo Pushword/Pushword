@@ -93,7 +93,6 @@ final class PageScannerCommand
         $errorNbr = 0;
         $currentPage = 0;
         $lastLineWasError = false;
-        $maxErrors = $this->limit > 0 ? $this->limit : 500;
 
         foreach ($pages as $page) {
             ++$currentPage;
@@ -135,30 +134,23 @@ final class PageScannerCommand
             if (true !== $scan) {
                 $pageId = (int) $page->id;
                 $errors[$pageId] = $scan;
+                $visibleErrors = array_filter($scan, fn (array $error): bool => ! $this->mustIgnoreError($error));
 
-                if (! $this->agentMode) {
-                    $hasVisibleErrors = false;
-                    foreach ($scan as $s) {
-                        if (! $this->mustIgnoreError($s)) {
-                            if (! $hasVisibleErrors) {
-                                $this->output?->writeln("\n".$pageHost.'/'.$pageSlug);
-                                $hasVisibleErrors = true;
-                            }
-
-                            $this->output?->writeln('  <error>➜ '.$this->formatErrorForCli($s['message']).'</error> <comment>['.$s['code'].']</comment>');
-                        }
+                if (! $this->agentMode && [] !== $visibleErrors) {
+                    $this->output?->writeln("\n".$pageHost.'/'.$pageSlug);
+                    foreach ($visibleErrors as $error) {
+                        $this->output?->writeln('  <error>➜ '.$this->formatErrorForCli($error['message']).'</error> <comment>['.$error['code'].']</comment>');
                     }
 
-                    if ($hasVisibleErrors) {
-                        $lastLineWasError = true;
-                    }
+                    $lastLineWasError = true;
                 }
 
-                $errorNbr += \count($errors[$pageId]);
+                // An ignored error is one the site already decided to live with.
+                $errorNbr += \count($visibleErrors);
             }
 
-            if ($errorNbr > $maxErrors) {
-                $this->human("\n".\sprintf('Too many errors (>%d), stopping scan...', $maxErrors));
+            if ($this->limit > 0 && $errorNbr > $this->limit) {
+                $this->human("\n".\sprintf('Too many errors (>%d), stopping scan...', $this->limit));
                 $this->scanCompleted = false;
 
                 break;

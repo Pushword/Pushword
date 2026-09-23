@@ -291,19 +291,8 @@ final class LinkGraphCommandTest extends KernelTestCase
     {
         // The point of writeAll(): scanning everything then reporting one site
         // must not re-render. A single combined snapshot would force a rescan.
-        //
-        // `--limit` lifts the error ceiling, which has nothing to do with what is
-        // under test and everything to do with why this used to flake: the whole
-        // corpus sits within a couple of findings of the default 500, and a scan
-        // that stops there writes no snapshot at all.
-        $scan = new CommandTester(new Application($this->bootedKernel)->find('pw:page-scan'));
-        $scan->execute(['--format' => 'text', '--skip-external' => true, '--limit' => 100_000]);
-
-        self::assertStringNotContainsString(
-            'stopping scan',
-            $scan->getDisplay(),
-            'The scan stopped short, so it wrote no snapshot: the assertions below cannot mean anything.',
-        );
+        new CommandTester(new Application($this->bootedKernel)->find('pw:page-scan'))
+            ->execute(['--format' => 'text', '--skip-external' => true]);
 
         $storage = self::getContainer()->get(LinkGraphStorage::class);
         $scanned = $storage->read(self::HOST);

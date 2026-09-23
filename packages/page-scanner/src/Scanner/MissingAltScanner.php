@@ -14,9 +14,14 @@ use Pushword\Core\Entity\Page;
  * reported on its own — only together with the `role`/`aria-hidden` an assistive
  * technology actually reads. Without one of those, an empty alt is indistinguishable
  * from a media whose alt was never filled in, which is what this looks for.
+ *
+ * An image inside a `<template>` is not on the page: it is inert markup a script
+ * clones and completes, alt included, so it is not reported.
  */
 final class MissingAltScanner extends AbstractScanner
 {
+    private const string TEMPLATE_PATTERN = '#<template\b[^>]*>.*?</template>#is';
+
     private const string IMG_PATTERN = '/<img\s[^>]*>/i';
 
     private const string ALT_PATTERN = '/\salt\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))/i';
@@ -54,7 +59,8 @@ final class MissingAltScanner extends AbstractScanner
             return;
         }
 
-        if (false === preg_match_all(self::IMG_PATTERN, $this->pageHtml, $matches)) {
+        $html = preg_replace(self::TEMPLATE_PATTERN, '', $this->pageHtml) ?? $this->pageHtml;
+        if (false === preg_match_all(self::IMG_PATTERN, $html, $matches)) {
             return;
         }
 

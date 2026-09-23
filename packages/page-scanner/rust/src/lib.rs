@@ -15,6 +15,9 @@ use std::sync::LazyLock;
 static HREF: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"(?i)<a\s[^>]*?href=(?:"([^"']*)"|'([^"']*)')"#).expect("valid href regex")
 });
+static TEMPLATE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?is)<template\b[^>]*>.*?</template>").expect("valid template regex")
+});
 static IMAGE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)<img\s[^>]*>").expect("valid image regex"));
 static ALT: LazyLock<Regex> = LazyLock::new(|| {
@@ -273,7 +276,8 @@ pub fn extract(html: &str) -> Facts {
 
     let mut seen = HashSet::new();
     let mut missing_alt = Vec::new();
-    for image in IMAGE.find_iter(html) {
+    let outside_templates = TEMPLATE.replace_all(html, "");
+    for image in IMAGE.find_iter(&outside_templates) {
         let tag = image.as_str();
         if DECORATIVE.is_match(tag) || !attribute(tag, &ALT).is_empty() {
             continue;
@@ -426,6 +430,32 @@ mod tests {
                 mailto_links: vec![],
                 date_shortcodes: vec![],
             }
+        );
+    }
+
+    #[test]
+    fn skips_images_inside_templates() {
+        assert_eq!(
+            extract("<template id=card><img src=/inside></template><img src=/outside>").missing_alt,
+            vec!["/outside"]
+        );
+    }
+
+    #[test]
+    fn reports_images_between_templates() {
+        assert_eq!(
+            extract("<template><img src=/a></template><img src=/between><template><img src=/b></template>")
+                .missing_alt,
+            vec!["/between"]
+        );
+    }
+
+    #[test]
+    fn skips_images_inside_uppercase_multiline_templates() {
+        assert!(
+            extract("<TEMPLATE id=card>\n<img src=/inside>\n</TEMPLATE>")
+                .missing_alt
+                .is_empty()
         );
     }
 
