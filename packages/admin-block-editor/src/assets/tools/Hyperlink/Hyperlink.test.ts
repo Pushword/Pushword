@@ -247,3 +247,64 @@ describe('Hyperlink sanitize rules', () => {
     attributes.forEach((name) => expect(Hyperlink.sanitize.a).toHaveProperty(name, true))
   })
 })
+
+describe('Hyperlink options: false', () => {
+  /** Opens a link the way checkState() does: remember it, then load its attributes. */
+  function startEditing(tool: Hyperlink, link: HTMLElement): void {
+    ;(tool as unknown as { anchorTag: HTMLElement }).anchorTag = link
+    tool.updateActionValues(link)
+  }
+
+  function toolWithoutOptions(): { tool: Hyperlink; wrapper: HTMLElement } {
+    const tool = new Hyperlink({ api: stubApi(), config: { options: false } })
+
+    return { tool, wrapper: tool.renderActions() }
+  }
+
+  it('shows the address field alone', () => {
+    const { wrapper } = toolWithoutOptions()
+
+    expect(urlInputOf(wrapper)).toBeTruthy()
+    expect(wrapper.querySelector('.link-options__fields')).toBeNull()
+    expect(wrapper.querySelectorAll('select, input[type="checkbox"]')).toHaveLength(0)
+  })
+
+  it('keeps the target, rel and class a link already carries when its address changes', () => {
+    const { tool, wrapper } = toolWithoutOptions()
+    const link = anchor(
+      '<a href="/old" rel="nofollow" target="_blank" class="link-btn">x</a>',
+    )
+    startEditing(tool, link)
+
+    urlInputOf(wrapper).value = '/new'
+    tool.updateLink()
+
+    expect(link.getAttribute('href')).toBe('/new')
+    expect(link.getAttribute('rel')).toBe('nofollow')
+    expect(link.getAttribute('target')).toBe('_blank')
+    expect(link.getAttribute('class')).toBe('link-btn')
+  })
+
+  it('keeps a rel and class the hidden lists do not offer when the address changes', () => {
+    const { tool, wrapper } = toolWithoutOptions()
+    const link = anchor('<a href="/old" rel="me" class="badge badge-new">x</a>')
+    startEditing(tool, link)
+
+    urlInputOf(wrapper).value = '/new'
+    tool.updateLink()
+
+    expect(link.getAttribute('rel')).toBe('me')
+    expect(link.getAttribute('class')).toBe('badge badge-new')
+  })
+
+  it('writes a new link as a plain one', () => {
+    const { tool, wrapper } = toolWithoutOptions()
+    const link = anchor('<a>new</a>')
+    startEditing(tool, link)
+
+    urlInputOf(wrapper).value = '/page'
+    tool.updateLink()
+
+    expect(link.outerHTML).toBe('<a href="/page">new</a>')
+  })
+})

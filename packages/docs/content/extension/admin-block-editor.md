@@ -44,6 +44,18 @@ You want to add a custom block ? This is the path to follow :
 
 I recommend you to import `@PushwordAdminBlockEditor/editorjs_widget.html`.twig and to create only the block **editorjs_block_to_add_new_plugin**
 
+### Link tool
+
+The link tool's config (`link` in `editorjsConfig.tools`) takes three keys:
+
+- `availableDesigns` — label => class, the *Style* list (defaults: button, button
+  outline, discreet);
+- `availableRels` — label => rel value, the *Rel* list (defaults: obfuscate,
+  nofollow, nofollow sponsored, nofollow ugc);
+- `options` — `false` shows the address field alone, without the *New tab* switch,
+  *Rel* or *Style* (default: `true`). An existing link keeps the target, rel and
+  class it already carries when only its address is edited.
+
 ## Storage Format
 
 Content is stored as **markdown** in the database. The editor converts EditorJS blocks to markdown on save, and converts markdown back to EditorJS blocks when loading the editor.

@@ -49,6 +49,7 @@ export default class Hyperlink {
   private api: API
   private availableDesigns: Record<string, string>
   private availableRels: Record<string, string>
+  private showOptions: boolean
 
   private nodes: HyperlinkNodes = {
     wrapper: null,
@@ -73,11 +74,14 @@ export default class Hyperlink {
     config?: {
       availableDesigns?: Record<string, string>
       availableRels?: Record<string, string>
+      /** false shows the address field alone: no new-tab switch, rel or style. */
+      options?: boolean
     }
   }) {
     this.api = api
     this.availableDesigns = config?.availableDesigns ?? Hyperlink.defaultDesigns
     this.availableRels = config?.availableRels ?? Hyperlink.defaultRels
+    this.showOptions = config?.options ?? true
     this.selection = new SelectionUtils()
   }
 
@@ -116,7 +120,12 @@ export default class Hyperlink {
     )
 
     this.nodes.wrapper = make.element('div', 'link-options-wrapper')
-    this.nodes.wrapper.append(this.nodes.input, this.nodes.suggester!, fields)
+    this.nodes.wrapper.append(this.nodes.input, this.nodes.suggester!)
+    // Built even when hidden: the fields mirror the edited link's target, rel and
+    // class, so a link keeps them when only its address changes.
+    if (this.showOptions) {
+      this.nodes.wrapper.append(fields)
+    }
 
     this.nodes.wrapper.addEventListener('change', () => {
       this.updateLink()
