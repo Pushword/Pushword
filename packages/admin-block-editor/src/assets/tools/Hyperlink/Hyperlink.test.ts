@@ -163,6 +163,13 @@ describe('Hyperlink field labels', () => {
     expect(selects(wrapper).rel.options[0]?.text).toBe('None')
     expect(selects(wrapper).design.options[0]?.text).toBe('Text link')
   })
+
+  it('opens both selects on their empty option', () => {
+    const wrapper = new Hyperlink({ api: stubApi() }).renderActions()
+
+    expect(selects(wrapper).rel.value).toBe('')
+    expect(selects(wrapper).design.value).toBe('')
+  })
 })
 
 describe('Hyperlink URL safety', () => {

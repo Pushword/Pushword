@@ -106,12 +106,9 @@ export default class List extends ListTool {
     for (const [index, line] of lines.entries()) {
       const trimmedLine = line.trim()
 
-      if (!trimmedLine) {
-        if (currentItem !== null) {
-          currentItem.content += '<br>'
-        }
-        continue
-      }
+      // Blank lines between items only make the list "loose", not a line break
+      // in the item before; a continuation line after one reads it below.
+      if (!trimmedLine) continue
 
       const orderedMatch = trimmedLine.match(/^(\d+)\.\s+(.*)/)
       const unorderedMatch = trimmedLine.match(/^[-*+]\s+(.*)/)
@@ -121,10 +118,12 @@ export default class List extends ListTool {
         if (currentItem === null) {
           throw new Error('isItMarkdownExported not worked as expected')
         }
-        // A continuation of the current item. The line break before it is a
-        // <br> only when hard; a soft one stays a newline, shown and rendered
-        // as a space.
-        const hardBreak = HARD_BREAK_END.test(lines[index - 1] ?? '')
+        // A continuation of the current item: after a blank line, a paragraph of
+        // its own. The line break before it is a <br> only when hard; a soft
+        // one stays a newline, shown and rendered as a space.
+        const previousLine = lines[index - 1] ?? ''
+        if (previousLine.trim() === '') currentItem.content += '<br>'
+        const hardBreak = HARD_BREAK_END.test(previousLine)
         if (hardBreak) currentItem.content = currentItem.content.replace(/\\$/, '')
         currentItem.content +=
           (hardBreak ? '<br>' : '\n') +

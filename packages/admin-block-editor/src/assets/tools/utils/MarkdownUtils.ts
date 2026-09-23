@@ -26,10 +26,12 @@ export class MarkdownUtils {
    * Split markdown into its block chunks — the unit the editor round-trips on.
    * Chunk texts are byte-for-byte what the historical
    * `replace(/\n\s*\n+/g, '\n\n')` + `split('\n\n')` produced (the parser and
-   * the outline panel MUST share this rule), with one exception: a blank line
-   * inside a fenced code block does NOT split. Splitting there handed the
+   * the outline panel MUST share this rule), with two exceptions. A blank line
+   * inside a fenced code block does NOT split: splitting there handed the
    * editor half a fence, and a `## ` comment in the code then read as a real
-   * heading — so the fence is atomic here, as it is to the renderer.
+   * heading — so the fence is atomic here, as it is to the renderer. Nor does
+   * one followed by a line that still belongs to a list item (see
+   * continuesListItem()).
    *
    * Each chunk keeps its line range in the source so chunk N maps back to
    * source lines, and the separator that followed it so a rewrite can put the
@@ -60,6 +62,9 @@ export class MarkdownUtils {
     let match: RegExpExecArray | null
     while ((match = separator.exec(markdown)) !== null) {
       if (insideFence(match.index)) continue
+      const chunk = markdown.slice(start, match.index)
+      const rest = markdown.slice(separator.lastIndex)
+      if (MarkdownUtils.continuesListItem(chunk, rest)) continue
 
       pushChunk(match.index, match[0])
       startLine += MarkdownUtils.countLines(markdown.slice(start, separator.lastIndex))
@@ -68,6 +73,27 @@ export class MarkdownUtils {
     pushChunk(markdown.length, '')
 
     return chunks
+  }
+
+  /**
+   * Whether the text after a blank-line run still belongs to the list the chunk
+   * opens: a line indented at least as deep as the first item's text continues
+   * that list's items, whatever blank lines precede it — a sub-list of a "loose"
+   * list, or a second paragraph in an item. Cut there, each indented item would
+   * become a list of its own and, once edited, export back at the top level.
+   */
+  private static continuesListItem(chunk: string, rest: string): boolean {
+    // The first item may sit under a block-attribute line.
+    const [first = '', second = ''] = chunk.split('\n', 2)
+    const itemLine = MarkdownUtils.startWithAttribute(first) ? second : first
+    const item = /^( *)([-*+]|\d{1,9}[.)])( +)\S/.exec(itemLine)
+    if (item === null) return false
+
+    // Its text starts past the indent, the marker and the spaces after it.
+    const textColumn = item[1]!.length + item[2]!.length + item[3]!.length
+    const nextIndent = /^( *)\S/.exec(rest)?.[1]
+
+    return nextIndent !== undefined && nextIndent.length >= textColumn
   }
 
   /**

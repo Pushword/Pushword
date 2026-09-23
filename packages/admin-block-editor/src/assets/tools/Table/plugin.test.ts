@@ -92,6 +92,7 @@ describe('TableBlock inline Markdown in cells', () => {
   it('keeps a cell line break inside its pipe row', async () => {
     const markdown = await TableBlock.exportToMarkdown({
       content: [['one<br>two', 'b']],
+      withHeadings: true,
     })
 
     expect(markdown.split('\n')[0]).toBe('| one<br>two | b |')
@@ -100,6 +101,7 @@ describe('TableBlock inline Markdown in cells', () => {
   it('leaves a `->` colspan marker alone', async () => {
     const markdown = await TableBlock.exportToMarkdown({
       content: [['spanned', '-&gt;']],
+      withHeadings: true,
     })
 
     expect(markdown.split('\n')[0]).toBe('| spanned | -> |')
@@ -107,12 +109,12 @@ describe('TableBlock inline Markdown in cells', () => {
 
   it('gives back every marker it was imported with', async () => {
     const { editor, updates } = fakeEditor()
-    const source = '| **b** | _i_ | `c` | ~~s~~ | [t](/u) |'
+    const source = '| **b** | _i_ | `c` | ~~s~~ | [t](/u) |\n| --- | --- | --- | --- | --- |'
 
     TableBlock.importFromMarkdown(editor, source)
     const markdown = await TableBlock.exportToMarkdown(updates[0].data)
 
-    expect(markdown.split('\n')[0]).toBe(source)
+    expect(markdown).toBe(source)
   })
 
   it('allows every tag the inline converter emits through the sanitizer', () => {
@@ -130,9 +132,82 @@ describe('TableBlock inline Markdown in cells', () => {
   })
 })
 
+describe('TableBlock without headings', () => {
+  beforeEach(() => {
+    vi.spyOn(MarkdownUtils, 'formatMarkdownWithPrettier').mockImplementation(
+      async (markdown: string) => markdown.trim(),
+    )
+  })
+
+  it('exports under an empty header, since CommonMark reads no table without one', async () => {
+    const markdown = await TableBlock.exportToMarkdown({
+      content: [['a', 'b'], ['c', 'd']],
+      withHeadings: false,
+    })
+
+    expect(markdown).toBe('|  |  |\n| --- | --- |\n| a | b |\n| c | d |')
+  })
+
+  it('writes its column alignments on the delimiter row', async () => {
+    const markdown = await TableBlock.exportToMarkdown({
+      content: [['a', 'b']],
+      columnAlignments: ['center', 'right'],
+    })
+
+    expect(markdown.split('\n')[1]).toBe('| :--: | ---: |')
+  })
+
+  it('reads the empty header back as no headings, alignments kept', () => {
+    const { editor, updates } = fakeEditor()
+
+    TableBlock.importFromMarkdown(editor, '|  |  |\n| :--: | --- |\n| a | b |')
+
+    expect(updates[0].data.withHeadings).toBe(false)
+    expect(updates[0].data.content).toEqual([['a', 'b']])
+    expect(updates[0].data.columnAlignments).toEqual(['center', ''])
+  })
+
+  it('repairs a table saved without a delimiter row by the export before this one', async () => {
+    const { editor, updates } = fakeEditor()
+
+    TableBlock.importFromMarkdown(editor, '| a | b |\n| c | d |')
+
+    expect(updates[0].data.withHeadings).toBe(false)
+    expect(await TableBlock.exportToMarkdown(updates[0].data)).toBe(
+      '|  |  |\n| --- | --- |\n| a | b |\n| c | d |',
+    )
+  })
+
+  it('keeps a header with a single filled cell as headings', () => {
+    const { editor, updates } = fakeEditor()
+
+    TableBlock.importFromMarkdown(editor, '|  | B |\n| --- | --- |\n| a | b |')
+
+    expect(updates[0].data.withHeadings).toBe(true)
+    expect(updates[0].data.content).toEqual([['', 'B'], ['a', 'b']])
+  })
+
+  it('exports a headerless HTML table under the empty header', async () => {
+    const { editor, updates } = fakeEditor()
+
+    TableBlock.importFromMarkdown(editor, '<table><tr><td>a</td><td>b</td></tr></table>')
+
+    expect(await TableBlock.exportToMarkdown(updates[0].data)).toBe('|  |  |\n| --- | --- |\n| a | b |')
+  })
+
+  it('keeps an empty header that has no row under it', () => {
+    const { editor, updates } = fakeEditor()
+
+    TableBlock.importFromMarkdown(editor, '|  |  |\n| --- | --- |')
+
+    expect(updates[0].data.withHeadings).toBe(true)
+    expect(updates[0].data.content).toEqual([['', '']])
+  })
+})
+
 describe('TableBlock.importFromMarkdown (HTML table)', () => {
 
-  it('imports a headerless HTML table with an empty header row', () => {
+  it('imports a headerless HTML table as a table without headings', () => {
     const { editor, updates } = fakeEditor()
 
     TableBlock.importFromMarkdown(
@@ -141,9 +216,8 @@ describe('TableBlock.importFromMarkdown (HTML table)', () => {
     )
 
     expect(updates).toHaveLength(1)
-    expect(updates[0].data.withHeadings).toBe(true)
-    expect(updates[0].data.content[0]).toEqual(['', ''])
-    expect(updates[0].data.content[1]).toEqual(['<strong>En bref</strong>', 'desc'])
+    expect(updates[0].data.withHeadings).toBe(false)
+    expect(updates[0].data.content).toEqual([['<strong>En bref</strong>', 'desc']])
   })
 
   it('imports a headed HTML table without injecting an empty row', () => {
@@ -168,7 +242,7 @@ describe('TableBlock.importFromMarkdown (HTML table)', () => {
       '{#specs}\n<table><tr><td>a</td><td>b</td></tr></table>',
     )
 
-    expect(updates[0].data.content[1]).toEqual(['a', 'b'])
+    expect(updates[0].data.content).toEqual([['a', 'b']])
     expect(updates[0].tunes.anchor).toBe('specs')
   })
 })

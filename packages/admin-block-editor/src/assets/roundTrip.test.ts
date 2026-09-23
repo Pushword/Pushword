@@ -9,6 +9,7 @@ import Paragraph from './tools/Paragraph/Paragraph'
 import Image from './tools/Image/Image'
 import Raw from './tools/Raw/Raw'
 import Quiz from './tools/Quiz/Quiz'
+import Table from './tools/Table/plugin'
 
 /**
  * Markdown the editor opens must save back unchanged: every loss below went
@@ -46,43 +47,54 @@ function reserialize(value: unknown): unknown {
   return value
 }
 
-/** Just enough of Editor.js for the parser: blocks append, and the new one is current. */
+/**
+ * Just enough of Editor.js for the parser: clear() leaves one empty paragraph
+ * once it settles, and insert() goes after the current block — or in place of
+ * the one at `index` — and makes the new one current.
+ */
 function fakeEditor(): { editor: API; blocks: FakeBlock[] } {
   const blocks: FakeBlock[] = []
   let current = -1
-  const tools = { list: List, paragraph: Paragraph, image: Image, quiz: Quiz, raw: Raw }
+  let nextId = 0
+  const block = (type: string): FakeBlock => ({ id: `b${nextId++}`, type, data: {}, tunes: {} })
+  const tools = { list: List, table: Table, paragraph: Paragraph, image: Image, quiz: Quiz, raw: Raw }
   const editor = {
     tools: {
       getBlockTools: () =>
         Object.entries(tools).map(([name, constructable]) => ({ name, constructable })),
     },
     blocks: {
-      clear: () => {
-        blocks.length = 0
-        current = -1
+      clear: async () => {
+        blocks.splice(0, blocks.length, block('paragraph'))
+        current = 0
       },
-      insert: (type: string) => {
-        blocks.push({ id: `b${blocks.length}`, type, data: {}, tunes: {} })
-        current = blocks.length - 1
-        return { id: blocks[current]!.id }
+      insert: (
+        type: string,
+        _data?: unknown,
+        _config?: unknown,
+        index = current + 1,
+        _needToFocus?: boolean,
+        replace = false,
+      ) => {
+        const inserted = block(type)
+        blocks.splice(index, replace ? 1 : 0, inserted)
+        current = index
+        return { id: inserted.id }
       },
       update: (id: string, data: any, tunes: any) => {
         const block = blocks.find((candidate) => candidate.id === id)!
         block.data = ['paragraph', 'list'].includes(block.type) ? reserialize(data) : data
         block.tunes = tunes ?? {}
       },
-      getBlocksCount: () => blocks.length,
-      getCurrentBlockIndex: () => current,
-      getBlockByIndex: (index: number) => blocks[index],
     },
   } as unknown as API
 
   return { editor, blocks }
 }
 
-function parse(markdown: string): { editor: API; blocks: FakeBlock[] } {
+async function parse(markdown: string): Promise<{ editor: API; blocks: FakeBlock[] }> {
   const fake = fakeEditor()
-  new EditorJsParseMarkdown(fake.editor, markdown).parseMarkdown()
+  await new EditorJsParseMarkdown(fake.editor, markdown).parseMarkdown()
 
   return fake
 }
@@ -93,7 +105,7 @@ function save(editor: API, blocks: FakeBlock[]): Promise<string> {
 
 /** Import then export through the tools alone: another editor has no source to fall back on. */
 async function roundTrip(markdown: string): Promise<string> {
-  return save(fakeEditor().editor, parse(markdown).blocks)
+  return save(fakeEditor().editor, (await parse(markdown)).blocks)
 }
 
 describe('import → export', () => {
@@ -122,7 +134,17 @@ describe('import → export', () => {
     ['a list item with a hard line break', '- Déjeuner :  \n  80 €\n- Suite'],
     ['an ordered list item with a hard line break', '1. Déjeuner :  \n   80 €\n2. Suite'],
     ['a nested list item with a hard line break', '- Parent\n  - Déjeuner :  \n    80 €'],
+    ['a second paragraph in a list item', '- Déjeuner :\n\n  80 €'],
   ])('keeps %s', async (_case, markdown) => {
+    expect(await roundTrip(markdown)).toBe(markdown)
+  })
+
+  it('keeps a table without headings under the empty header CommonMark needs', async () => {
+    const markdown = '|     |     |\n| --- | --- |\n| a   | b   |\n| c   | d   |'
+    const { blocks } = await parse(markdown)
+
+    expect(blocks[0]!.data.withHeadings).toBe(false)
+    expect(blocks[0]!.data.content).toEqual([['a', 'b'], ['c', 'd']])
     expect(await roundTrip(markdown)).toBe(markdown)
   })
 
@@ -140,7 +162,7 @@ describe('import → export', () => {
 describe('untouched blocks', () => {
   it('are written back as they were parsed, not as the editor would write them', async () => {
     const markdown = '* one\n* two\n\n![alt](/media/default/photo.jpg)'
-    const { editor, blocks } = parse(markdown)
+    const { editor, blocks } = await parse(markdown)
 
     expect(await save(editor, blocks)).toBe(markdown)
   })
@@ -148,14 +170,14 @@ describe('untouched blocks', () => {
   it('keep their own source when the next chunk yields no block', async () => {
     // An unreadable quiz inserts nothing, so the list stays the current block:
     // recording the chunk against it would save the list as the quiz call.
-    const { editor, blocks } = parse("* one\n* two\n\n{{ quiz('not json') }}")
+    const { editor, blocks } = await parse("* one\n* two\n\n{{ quiz('not json') }}")
 
     expect(blocks).toHaveLength(1)
     expect(await save(editor, blocks)).toBe('* one\n* two')
   })
 
   it('leave an edited block to its export', async () => {
-    const { editor, blocks } = parse('* one\n* two\n\nSome text')
+    const { editor, blocks } = await parse('* one\n* two\n\nSome text')
     await save(editor, blocks) // the save the parse triggers sets the baseline
 
     blocks[1]!.data = { text: 'Other text' }
@@ -164,7 +186,7 @@ describe('untouched blocks', () => {
   })
 
   it('get their source back once the edit is undone', async () => {
-    const { editor, blocks } = parse('* one\n* two')
+    const { editor, blocks } = await parse('* one\n* two')
     await save(editor, blocks)
 
     const parsed = blocks[0]!.data
@@ -173,5 +195,53 @@ describe('untouched blocks', () => {
 
     blocks[0]!.data = parsed
     expect(await save(editor, blocks)).toBe('* one\n* two')
+  })
+})
+
+describe('parsing into the editor', () => {
+  it('puts the first block in place of the empty paragraph clear() leaves', async () => {
+    const { blocks } = await parse('* one\n\nSome text')
+
+    expect(blocks.map((block) => block.type)).toEqual(['list', 'paragraph'])
+  })
+
+  it('still replaces it when the first chunk yields no block', async () => {
+    // The unreadable quiz inserts nothing, so the list is the first block in.
+    const { blocks } = await parse("{{ quiz('not json') }}\n\n* one")
+
+    expect(blocks.map((block) => block.type)).toEqual(['list'])
+  })
+
+  it('leaves that paragraph to a page with no content', async () => {
+    const { blocks } = await parse('')
+
+    expect(blocks.map((block) => block.type)).toEqual(['paragraph'])
+  })
+})
+
+describe('a loose list', () => {
+  const markdown =
+    '* Vélos\n\n    - Location de VTC : 120 €\n\n    - Location de VAE : 315 €\n\nSome text'
+
+  it('is one block, its indented items nested under the one they belong to', async () => {
+    const { blocks } = await parse(markdown)
+
+    expect(blocks.map((block) => block.type)).toEqual(['list', 'paragraph'])
+    expect(blocks[0]!.data.items[0].content).toBe('Vélos')
+    expect(blocks[0]!.data.items[0].items.map((item: any) => item.content)).toEqual([
+      'Location de VTC : 120 €',
+      'Location de VAE : 315 €',
+    ])
+  })
+
+  it('keeps an edited sub-item indented', async () => {
+    const { editor, blocks } = await parse(markdown)
+    await save(editor, blocks)
+
+    blocks[0]!.data.items[0].items[1].content = 'Location de VAE : 320 €'
+
+    expect(await save(editor, blocks)).toBe(
+      '- Vélos\n  - Location de VTC : 120 €\n  - Location de VAE : 320 €\n\nSome text',
+    )
   })
 })

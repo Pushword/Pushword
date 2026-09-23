@@ -171,6 +171,9 @@ export default class Hyperlink {
     for (const [label, value] of Object.entries(choices)) {
       make.option(select, value, this.api.i18n.t(label))
     }
+    // happy-dom opens a fresh select on its first real option, browsers on the
+    // empty one: say which, or a new link picks up a rel and a style.
+    select.value = ''
 
     return select
   }

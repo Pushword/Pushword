@@ -1,5 +1,5 @@
 import { BlockToolAdapter } from '@editorjs/editorjs/types/tools/adapters/block-tool-adapter'
-import { API } from '@editorjs/editorjs'
+import { API, BlockAPI } from '@editorjs/editorjs'
 import { ToolInterface } from './tools/Abstract/ToolInterface'
 import { MarkdownUtils } from './tools/utils/MarkdownUtils'
 import { BlockSources } from './BlockSources'
@@ -77,24 +77,56 @@ export class EditorJsParseMarkdown {
     this.markdown = markdown
   }
 
-  parseMarkdown(): void {
-    const blocks = this.editorJsInstance.blocks
-    blocks.clear()
+  async parseMarkdown(): Promise<void> {
+    // The old blocks go, and one empty paragraph comes, only once this settles.
+    await this.editorJsInstance.blocks.clear()
 
+    const inserted: BlockAPI[] = []
+    const editor = this.importApi(inserted)
     const sources = BlockSources.reset(this.editorJsInstance)
     const nesting = new GroupNesting()
     for (const chunk of MarkdownUtils.chunkMarkdown(this.markdown)) {
       const adapter = chunkTool(this.editorjsTools, chunk.text, nesting)
-      const countBefore = blocks.getBlocksCount()
-      adapter?.constructable?.importFromMarkdown(this.editorJsInstance, chunk.text)
+      const countBefore = inserted.length
+      adapter?.constructable?.importFromMarkdown(editor, chunk.text)
 
-      // A chunk read into exactly one block can be written back as it came;
-      // insert() leaves the new block current.
-      if (blocks.getBlocksCount() === countBefore + 1) {
-        const block = blocks.getBlockByIndex(blocks.getCurrentBlockIndex())
-        if (block !== undefined) sources.record(block.id, chunk.text)
+      // A chunk read into exactly one block can be written back as it came.
+      if (inserted.length === countBefore + 1) {
+        sources.record(inserted[countBefore]!.id, chunk.text)
       }
     }
+  }
+
+  /**
+   * The API the tools import through. It notes each block they insert, and puts
+   * the first one in place of the empty paragraph `blocks.clear()` leaves — or
+   * every page opens on a blank line above its content. Deleting that paragraph
+   * afterwards would not do: `blocks.delete()` moves the caret into the editor,
+   * and the page scrolls to it.
+   */
+  private importApi(inserted: BlockAPI[]): API {
+    const blocks = this.editorJsInstance.blocks
+    const insert: API['blocks']['insert'] = (
+      type,
+      data,
+      config,
+      index,
+      needToFocus,
+      replace,
+      id,
+    ) => {
+      const block =
+        inserted.length === 0
+          ? blocks.insert(type, data, config, 0, needToFocus, true, id)
+          : blocks.insert(type, data, config, index, needToFocus, replace, id)
+      inserted.push(block)
+
+      return block
+    }
+
+    return Object.create(this.editorJsInstance, {
+      blocks: { value: Object.create(blocks, { insert: { value: insert } }) },
+    })
   }
 }
 

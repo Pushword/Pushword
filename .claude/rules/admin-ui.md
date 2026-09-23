@@ -67,9 +67,12 @@ paths:
   exception a fence holding a blank line is cut in two, and the halves are classified
   independently, so a `## ` line in the code becomes a real heading — the rail then shows
   a phantom section owning the closing fence, and deleting it opens the fence over the
-  rest of the document. Chunks carry `separatorAfter`, the blank-line run that followed
-  them; rewrite through `MarkdownUtils.joinChunks()` rather than `join('\n\n')`, or every
-  edit normalises spacing across the whole field.
+  rest of the document. Nor does it split a list chunk before a line indented at least as
+  deep as the first item's text (a "loose" list's sub-items, a second paragraph in an
+  item): cut there, each indented item becomes a list block of its own, and once edited
+  it exports back at the top level. Chunks carry `separatorAfter`, the blank-line run
+  that followed them; rewrite through `MarkdownUtils.joinChunks()` rather than
+  `join('\n\n')`, or every edit normalises spacing across the whole field.
 - **An outline row may only edit through the render it was drawn with.** Rows carry block
   indices captured at render time, and `scheduleRefresh()` is debounced 300 ms — so
   between an edit and the rebuild, every button on screen is live and holding numbers the
@@ -122,8 +125,10 @@ paths:
 - **`liveBlock()` must drop `data-live` on a failed fetch** — it re-runs on every
   DOMChanged, so a retained attribute means an infinite re-fetch loop.
 - **Headerless tables need an empty header row.** CommonMark only renders a table when a
-  delimiter (hence a header) is present, so a headerless source table is stored as
-  `withHeadings=true` with an empty first row; the front's `EmptyTableHeadProcessor` drops
-  the all-empty `<thead>` at render. Simple `<table>` HTML converts to a Table block;
-  complex tables (colspan/rowspan, nested, block-level cells, non-rectangular) stay Raw.
+  delimiter (hence a header) is present, so the Table tool exports `withHeadings=false`
+  under an empty header row and its import reads an all-empty header back as
+  `withHeadings=false`; the front's `EmptyTableHeadProcessor` drops the all-empty
+  `<thead>` at render. The clipboard's `extractTableMarkdown()` mirrors the export and
+  owes the same header. Simple `<table>` HTML converts to a Table block; complex tables
+  (colspan/rowspan, nested, block-level cells, non-rectangular) stay Raw.
 - Changing render output means bumping `MarkdownParser::CACHE_VERSION`.

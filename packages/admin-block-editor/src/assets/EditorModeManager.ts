@@ -323,7 +323,7 @@ export class EditorModeManager {
   /**
    * Passe de Markdown à EditorJS
    */
-  private switchFrom(format: string = 'markdown'): void {
+  private async switchFrom(format: string = 'markdown'): Promise<void> {
     try {
       const textarea = this.getEditorInput() as HTMLTextAreaElement
       if (!textarea) {
@@ -345,7 +345,8 @@ export class EditorModeManager {
 
       if (format === 'markdown')
         try {
-          new window.EditorJsParseMarkdown(
+          // Awaited so that a parse which throws leaves Monaco, and the markdown, in place.
+          await new window.EditorJsParseMarkdown(
             this.getEditorInstance(),
             textareaContent,
           ).parseMarkdown()
@@ -416,7 +417,7 @@ export class EditorModeManager {
 
     // Toggle entre EditorJS et JSON
     if (currentMode === this.EDITOR_MODES.JSON) {
-      this.switchFrom('json')
+      void this.switchFrom('json')
     } else {
       this.showOrHideBtn(false, 'markdown')
       this.switchTo('json')
@@ -435,7 +436,7 @@ export class EditorModeManager {
 
     // Toggle entre EditorJS et Markdown
     if (currentMode === this.EDITOR_MODES.MARKDOWN) {
-      this.switchFrom('markdown')
+      void this.switchFrom('markdown')
     } else {
       this.showOrHideBtn(false, 'json')
       this.switchTo('markdown')

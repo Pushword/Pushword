@@ -905,16 +905,17 @@ export default class ClipboardManager {
             alignments.push(firstRowCell?.style.textAlign || '')
         }
 
-        const lines: string[] = []
-        matrix.forEach((row, rowIndex) => {
+        matrix.forEach(row => {
             while (row.length < colCount) {
                 row.push('')
             }
-            lines.push('| ' + row.join(' | ') + ' |')
-            if (rowIndex === 0 && withHeadings) {
-                lines.push('| ' + alignments.map(a => ALIGNMENT_SEPARATORS[a] ?? '---').join(' | ') + ' |')
-            }
         })
+
+        // A table without headings goes out under an empty header, as the tool's export does.
+        const header = withHeadings ? matrix[0]! : new Array(colCount).fill('')
+        const body = withHeadings ? matrix.slice(1) : matrix
+        const separators = alignments.map(a => ALIGNMENT_SEPARATORS[a] ?? '---')
+        const lines = [header, separators, ...body].map(row => '| ' + row.join(' | ') + ' |')
 
         let markdown = lines.join('\n')
         // The sticky class lives on the tool's block container (the parent of .tc-wrap).

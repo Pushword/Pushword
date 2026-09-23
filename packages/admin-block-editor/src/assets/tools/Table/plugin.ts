@@ -383,28 +383,29 @@ export default class TableBlock {
       return '';
     }
 
-    let markdown = '';
-    const withHeadings = data.withHeadings ?? false;
     const alignments = data.columnAlignments ?? [];
-
-    rows.forEach((row, rowIndex) => {
-      // Cells are stored as innerHTML, so their inline tags go back to Markdown:
-      // a bold cell must export as `**x**`, not `<b>x</b>`. The converter also
-      // decodes entities, which is what keeps a `-&gt;` colspan marker readable.
-      // Typography fixes stay off — they would rewrite dashes and quotes in every
-      // cell on every save — and the newlines the converter emits go back to
-      // `<br>`, the only line break a pipe row can hold.
-      const cells = row.map((cell) =>
+    const pipeRow = (cells: string[]): string => '| ' + cells.join(' | ') + ' |\n';
+    // Cells are stored as innerHTML, so their inline tags go back to Markdown:
+    // a bold cell must export as `**x**`, not `<b>x</b>`. The converter also
+    // decodes entities, which is what keeps a `-&gt;` colspan marker readable.
+    // Typography fixes stay off — they would rewrite dashes and quotes in every
+    // cell on every save — and the newlines the converter emits go back to
+    // `<br>`, the only line break a pipe row can hold.
+    const toMarkdown = (row: string[]): string[] =>
+      row.map((cell) =>
         MarkdownUtils.convertInlineHtmlToMarkdown(cell, false).replace(/\n/g, '<br>').trim(),
       );
-      markdown += '| ' + cells.join(' | ') + ' |\n';
 
-      // The GFM delimiter row carries per-column alignment (`:---`, `:--:`, `---:`).
-      if (withHeadings && rowIndex === 0) {
-        const separators = cells.map((_, i) => ALIGNMENT_SEPARATORS[alignments[i] ?? ''] ?? '---');
-        markdown += '| ' + separators.join(' | ') + ' |\n';
-      }
-    });
+    // CommonMark reads pipes as a table only under a header and its delimiter
+    // row, so a table without headings goes out under an empty header — the
+    // front's EmptyTableHeadProcessor drops it at render, and the import reads
+    // it back as a table without headings.
+    const header = data.withHeadings ? toMarkdown(rows[0]!) : rows[0]!.map(() => '');
+    const body = data.withHeadings ? rows.slice(1) : rows;
+    // The GFM delimiter row carries per-column alignment (`:---`, `:--:`, `---:`).
+    const separators = header.map((_, i) => ALIGNMENT_SEPARATORS[alignments[i] ?? ''] ?? '---');
+
+    const markdown = [header, separators, ...body.map(toMarkdown)].map(pipeRow).join('');
 
     const formattedMarkdown = await MarkdownUtils.formatMarkdownWithPrettier(markdown);
 
@@ -497,6 +498,12 @@ export default class TableBlock {
         break;
       }
       i++;
+    }
+
+    // The empty header the export writes above a table without headings.
+    if (withHeadings && content.length > 1 && content[0]!.every((cell) => cell === '')) {
+      withHeadings = false;
+      content.shift();
     }
 
     const block = editor.blocks.insert('table');

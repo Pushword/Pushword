@@ -74,7 +74,7 @@ describe('HtmlTableUtils.isSimpleTable', () => {
 })
 
 describe('HtmlTableUtils.parse', () => {
-  it('injects an empty header row for a headerless table', () => {
+  it('reads a table without a header row as one without headings', () => {
     const parsed = HtmlTableUtils.parse(
       table(
         '<table><tbody>' +
@@ -84,10 +84,9 @@ describe('HtmlTableUtils.parse', () => {
       ),
     )
 
-    expect(parsed.withHeadings).toBe(true)
-    expect(parsed.content[0]).toEqual(['', ''])
-    expect(parsed.content[1]).toEqual(['<strong>En bref</strong>', 'desc'])
-    expect(parsed.content).toHaveLength(3)
+    expect(parsed.withHeadings).toBe(false)
+    expect(parsed.content[0]).toEqual(['<strong>En bref</strong>', 'desc'])
+    expect(parsed.content).toHaveLength(2)
   })
 
   it('uses a real <thead> row as the header', () => {

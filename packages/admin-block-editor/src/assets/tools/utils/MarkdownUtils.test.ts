@@ -233,6 +233,54 @@ describe('MarkdownUtils.chunkMarkdown', () => {
   })
 })
 
+describe('MarkdownUtils.chunkMarkdown loose lists', () => {
+  const texts = (markdown: string): string[] =>
+    MarkdownUtils.chunkMarkdown(markdown).map((chunk) => chunk.text)
+
+  it('keeps an indented sub-list in the chunk of the item it belongs to', () => {
+    const list = '* Vélos\n\n    - VTC : 120 €\n\n    - VAE : 315 €'
+
+    expect(texts(`${list}\n\nSome text`)).toEqual([list, 'Some text'])
+  })
+
+  it('keeps a second paragraph of an item with its item', () => {
+    expect(texts('- one\n\n  more on one\n- two')).toEqual(['- one\n\n  more on one\n- two'])
+  })
+
+  it('reads `+` and `1)` markers as list items too', () => {
+    expect(texts('+ one\n\n  - sub')).toEqual(['+ one\n\n  - sub'])
+    expect(texts('1) one\n\n   more')).toEqual(['1) one\n\n   more'])
+  })
+
+  it('measures against the first item, so a return to a shallower sub-item stays in', () => {
+    const list = '- a\n\n  - b\n\n    - c\n\n  - d'
+
+    expect(texts(`${list}\n\nafter`)).toEqual([list, 'after'])
+  })
+
+  it('still cuts before a line indented less than the item text', () => {
+    // `1. ` puts the text three columns in: two spaces start a paragraph after the list.
+    expect(texts('1. one\n\n  after')).toEqual(['1. one', '  after'])
+  })
+
+  it('reads the item under a block-attribute line', () => {
+    expect(texts('{.tight}\n- one\n\n  - sub')).toEqual(['{.tight}\n- one\n\n  - sub'])
+  })
+
+  it('cuts an indented line after a paragraph, which is code', () => {
+    expect(texts('para\n\n    code')).toEqual(['para', '    code'])
+  })
+
+  it('counts the lines it kept together, so the next chunk stays findable', () => {
+    expect(MarkdownUtils.chunkMarkdown('- one\n\n  - sub\n\nnext')[1]).toEqual({
+      text: 'next',
+      startLine: 4,
+      endLine: 4,
+      separatorAfter: '',
+    })
+  })
+})
+
 describe('MarkdownUtils.chunkMarkdown fenced code', () => {
   const texts = (markdown: string): string[] =>
     MarkdownUtils.chunkMarkdown(markdown).map((chunk) => chunk.text)

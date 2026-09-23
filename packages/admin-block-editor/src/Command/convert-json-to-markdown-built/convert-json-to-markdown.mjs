@@ -4887,10 +4887,12 @@ var MarkdownUtils = class MarkdownUtils {
 	* Split markdown into its block chunks — the unit the editor round-trips on.
 	* Chunk texts are byte-for-byte what the historical
 	* `replace(/\n\s*\n+/g, '\n\n')` + `split('\n\n')` produced (the parser and
-	* the outline panel MUST share this rule), with one exception: a blank line
-	* inside a fenced code block does NOT split. Splitting there handed the
+	* the outline panel MUST share this rule), with two exceptions. A blank line
+	* inside a fenced code block does NOT split: splitting there handed the
 	* editor half a fence, and a `## ` comment in the code then read as a real
-	* heading — so the fence is atomic here, as it is to the renderer.
+	* heading — so the fence is atomic here, as it is to the renderer. Nor does
+	* one followed by a line that still belongs to a list item (see
+	* continuesListItem()).
 	*
 	* Each chunk keeps its line range in the source so chunk N maps back to
 	* source lines, and the separator that followed it so a rewrite can put the
@@ -4917,12 +4919,31 @@ var MarkdownUtils = class MarkdownUtils {
 		let match;
 		while ((match = separator.exec(markdown)) !== null) {
 			if (insideFence(match.index)) continue;
+			const chunk = markdown.slice(start, match.index);
+			const rest = markdown.slice(separator.lastIndex);
+			if (MarkdownUtils.continuesListItem(chunk, rest)) continue;
 			pushChunk(match.index, match[0]);
 			startLine += MarkdownUtils.countLines(markdown.slice(start, separator.lastIndex));
 			start = separator.lastIndex;
 		}
 		pushChunk(markdown.length, "");
 		return chunks;
+	}
+	/**
+	* Whether the text after a blank-line run still belongs to the list the chunk
+	* opens: a line indented at least as deep as the first item's text continues
+	* that list's items, whatever blank lines precede it — a sub-list of a "loose"
+	* list, or a second paragraph in an item. Cut there, each indented item would
+	* become a list of its own and, once edited, export back at the top level.
+	*/
+	static continuesListItem(chunk, rest) {
+		const [first = "", second = ""] = chunk.split("\n", 2);
+		const itemLine = MarkdownUtils.startWithAttribute(first) ? second : first;
+		const item = /^( *)([-*+]|\d{1,9}[.)])( +)\S/.exec(itemLine);
+		if (item === null) return false;
+		const textColumn = item[1].length + item[2].length + item[3].length;
+		const nextIndent = /^( *)\S/.exec(rest)?.[1];
+		return nextIndent !== void 0 && nextIndent.length >= textColumn;
 	}
 	/**
 	* Character ranges covered by fenced code blocks, `[from, to)` — `from` at the
@@ -8324,15 +8345,14 @@ var List = class List extends G$1 {
 		let hasCheckbox = false;
 		for (const [index, line] of lines.entries()) {
 			const trimmedLine = line.trim();
-			if (!trimmedLine) {
-				if (currentItem !== null) currentItem.content += "<br>";
-				continue;
-			}
+			if (!trimmedLine) continue;
 			const orderedMatch = trimmedLine.match(/^(\d+)\.\s+(.*)/);
 			const unorderedMatch = trimmedLine.match(/^[-*+]\s+(.*)/);
 			if (!orderedMatch && !unorderedMatch) {
 				if (currentItem === null) throw new Error("isItMarkdownExported not worked as expected");
-				const hardBreak = HARD_BREAK_END.test(lines[index - 1] ?? "");
+				const previousLine = lines[index - 1] ?? "";
+				if (previousLine.trim() === "") currentItem.content += "<br>";
+				const hardBreak = HARD_BREAK_END.test(previousLine);
 				if (hardBreak) currentItem.content = currentItem.content.replace(/\\$/, "");
 				currentItem.content += (hardBreak ? "<br>" : "\n") + MarkdownUtils.convertInlineMarkdownToHtml(trimmedLine);
 				continue;
@@ -11699,9 +11719,9 @@ var Table = class {
 * hold merged cells (colspan/rowspan) or block-level cell content. `isSimpleTable`
 * gates on exactly that, so complex tables are left untouched (the caller routes
 * them to a Raw HTML block) while simple ones become editable Table blocks that
-* round-trip losslessly to GFM. A table without a header row gets an empty header
-* prepended — GFM needs a delimiter (hence a header) to render — which the front
-* strips again when it is all-empty (see core EmptyTableHeadProcessor).
+* round-trip losslessly to GFM. A table without a header row becomes one without
+* headings, which the Table tool exports under an empty header (see its
+* exportToMarkdown).
 */
 var HtmlTableUtils = class HtmlTableUtils {
 	static {
@@ -11747,10 +11767,9 @@ var HtmlTableUtils = class HtmlTableUtils {
 		const content = rows.map((row) => Array.from(row.querySelectorAll("th,td")).map((cell) => HtmlTableUtils.cellContent(cell)));
 		const columns = Math.max(...content.map((row) => row.length));
 		const headerRow = HtmlTableUtils.headerRow(table, rows);
-		if (headerRow === null) content.unshift(new Array(columns).fill(""));
 		return {
 			content,
-			withHeadings: true,
+			withHeadings: headerRow !== null,
 			columnAlignments: HtmlTableUtils.alignments(headerRow ?? rows[0], columns)
 		};
 	}
@@ -12049,17 +12068,16 @@ var Table_default = class TableBlock {
 		if (!data || !data.content) return "";
 		const rows = data.content;
 		if (rows.length === 0) return "";
-		let markdown = "";
-		const withHeadings = data.withHeadings ?? false;
 		const alignments = data.columnAlignments ?? [];
-		rows.forEach((row, rowIndex) => {
-			const cells = row.map((cell) => MarkdownUtils.convertInlineHtmlToMarkdown(cell, false).replace(/\n/g, "<br>").trim());
-			markdown += "| " + cells.join(" | ") + " |\n";
-			if (withHeadings && rowIndex === 0) {
-				const separators = cells.map((_, i) => ALIGNMENT_SEPARATORS[alignments[i] ?? ""] ?? "---");
-				markdown += "| " + separators.join(" | ") + " |\n";
-			}
-		});
+		const pipeRow = (cells) => "| " + cells.join(" | ") + " |\n";
+		const toMarkdown = (row) => row.map((cell) => MarkdownUtils.convertInlineHtmlToMarkdown(cell, false).replace(/\n/g, "<br>").trim());
+		const header = data.withHeadings ? toMarkdown(rows[0]) : rows[0].map(() => "");
+		const body = data.withHeadings ? rows.slice(1) : rows;
+		const markdown = [
+			header,
+			header.map((_, i) => ALIGNMENT_SEPARATORS[alignments[i] ?? ""] ?? "---"),
+			...body.map(toMarkdown)
+		].map(pipeRow).join("");
 		const formattedMarkdown = await MarkdownUtils.formatMarkdownWithPrettier(markdown);
 		let out = MarkdownUtils.addAttributes(formattedMarkdown, tunes);
 		if (data.stickyHeadings && !out.includes(TableBlock.STICKY_CLASS)) {
@@ -12113,6 +12131,10 @@ var Table_default = class TableBlock {
 				}
 			} else break;
 			i++;
+		}
+		if (withHeadings && content.length > 1 && content[0].every((cell) => cell === "")) {
+			withHeadings = false;
+			content.shift();
 		}
 		const block = editor.blocks.insert("table");
 		editor.blocks.update(block.id, {

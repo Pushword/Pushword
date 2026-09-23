@@ -89,6 +89,24 @@ describe('List.importFromMarkdown', () => {
     expect(data.items[0].content).toBe('Déjeuner :<br>80 €')
   })
 
+  it('reads blank lines between items as a loose list, not as line breaks', () => {
+    const data = importList('* Vélos\n\n    - VTC\n\n    - VAE')
+
+    expect(data.items[0].content).toBe('Vélos')
+    expect(data.items[0].items.map((i: any) => i.content)).toEqual(['VTC', 'VAE'])
+  })
+
+  it('opens a paragraph in the item for a continuation after a blank line', () => {
+    expect(importList('- one\n\n  more').items[0].content).toBe('one<br>\nmore')
+  })
+
+  it('opens that paragraph in the sub-item it follows', () => {
+    const data = importList('- a\n  - b\n\n    more')
+
+    expect(data.items[0].content).toBe('a')
+    expect(data.items[0].items[0].content).toBe('b<br>\nmore')
+  })
+
   it('declares <br> to the sanitizer, which would strip a hard break otherwise', () => {
     expect(importList('- Déjeuner :  \n  80 €').items[0].content).toContain('<br>')
     expect(List.sanitize.items).toHaveProperty('br', true)

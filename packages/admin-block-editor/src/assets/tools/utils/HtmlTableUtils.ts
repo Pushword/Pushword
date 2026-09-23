@@ -13,9 +13,9 @@ export interface ParsedHtmlTable {
  * hold merged cells (colspan/rowspan) or block-level cell content. `isSimpleTable`
  * gates on exactly that, so complex tables are left untouched (the caller routes
  * them to a Raw HTML block) while simple ones become editable Table blocks that
- * round-trip losslessly to GFM. A table without a header row gets an empty header
- * prepended — GFM needs a delimiter (hence a header) to render — which the front
- * strips again when it is all-empty (see core EmptyTableHeadProcessor).
+ * round-trip losslessly to GFM. A table without a header row becomes one without
+ * headings, which the Table tool exports under an empty header (see its
+ * exportToMarkdown).
  */
 export class HtmlTableUtils {
   /** Block-level tags a Table cell (an inline string) cannot represent. */
@@ -72,15 +72,9 @@ export class HtmlTableUtils {
     const columns = Math.max(...content.map((row) => row.length))
     const headerRow = HtmlTableUtils.headerRow(table, rows)
 
-    if (headerRow === null) {
-      // Headerless table: prepend an empty header so it stays a GFM table; the
-      // front drops the empty <thead> and renders the original <tbody>-only look.
-      content.unshift(new Array(columns).fill(''))
-    }
-
     return {
       content,
-      withHeadings: true,
+      withHeadings: headerRow !== null,
       columnAlignments: HtmlTableUtils.alignments(headerRow ?? rows[0]!, columns),
     }
   }

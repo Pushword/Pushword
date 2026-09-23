@@ -213,7 +213,7 @@ export class editorJs {
           if (markdownContent) {
             undoAwaitsParsedBaseline = true
             // @ts-ignore
-            new window.EditorJsParseMarkdown(editor, markdownContent).parseMarkdown()
+            void new window.EditorJsParseMarkdown(editor, markdownContent).parseMarkdown()
           }
 
           // Content loaded from JSON data never fires onChange, so seed the panel here.
@@ -232,7 +232,7 @@ export class editorJs {
       boundInput.pwEditor = {
         setValue: (markdown: string) => {
           // @ts-ignore same window global the initial parse above goes through
-          new window.EditorJsParseMarkdown(editor, markdown).parseMarkdown()
+          void new window.EditorJsParseMarkdown(editor, markdown).parseMarkdown()
         },
       }
     }

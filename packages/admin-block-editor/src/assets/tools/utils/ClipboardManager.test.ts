@@ -147,6 +147,18 @@ describe('ClipboardManager – table extraction', () => {
     expect(result.markdown).toBe('| A | B | C |\n| :--- | :--: | ---: |\n| 1 | 2 | 3 |')
   })
 
+  it('copies a table without headings under an empty header', () => {
+    const block = buildTableBlock({ rows: [['a', 'b'], ['c', 'd']], alignments: ['center'] })
+    const result = cm.extractBlockContent(block)
+    expect(result.markdown).toBe('|  |  |\n| :--: | --- |\n| a | b |\n| c | d |')
+  })
+
+  it('makes the empty header as wide as the widest row', () => {
+    const block = buildTableBlock({ rows: [['a'], ['b', 'c', 'd']] })
+    const result = cm.extractBlockContent(block)
+    expect(result.markdown).toBe('|  |  |  |\n| --- | --- | --- |\n| a |  |  |\n| b | c | d |')
+  })
+
   it('prefixes a sticky table with the block attribute', () => {
     const block = buildTableBlock({
       rows: [['A', 'B'], ['1', '2']],
