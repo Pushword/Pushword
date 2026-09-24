@@ -299,9 +299,20 @@ export default class Hyperlink {
     }
   }
 
+  /**
+   * Editor.js calls this each time the inline toolbar closes: a click elsewhere,
+   * Escape, or closeActions(). surround() wraps the selection in an anchor before
+   * any address is typed, so an anchor still without an href by now was given up
+   * on: unwrap it, or it saves as a bare `<a>` styled as a link to nowhere.
+   * Unwrapped in the DOM alone: unlink() would pull the caret back.
+   */
   clear(): void {
     if (this.anchorTag) this.anchorTag.style = ''
     this.selection.removeFakeBackground()
+
+    if (this.anchorTag && !this.anchorTag.hasAttribute('href')) {
+      this.anchorTag.replaceWith(...this.anchorTag.childNodes)
+    }
   }
 
   toggleActions(): void {

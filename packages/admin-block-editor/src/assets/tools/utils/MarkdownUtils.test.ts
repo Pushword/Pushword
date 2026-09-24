@@ -116,6 +116,38 @@ describe('MarkdownUtils.convertInlineMarkdownToHtml', () => {
 })
 
 describe('MarkdownUtils.convertInlineHtmlToMarkdown links', () => {
+  it('keeps only the text of an anchor without attributes, which leads nowhere', () => {
+    expect(MarkdownUtils.convertInlineHtmlToMarkdown('Texte <a>de <b>dépa</b></a>rt')).toBe(
+      'Texte de **dépa**rt',
+    )
+  })
+
+  it('unwraps only the bare anchor when a real link follows it', () => {
+    // The bare-anchor match must stop at its own </a>, not run on to the link's.
+    expect(
+      MarkdownUtils.convertInlineHtmlToMarkdown('<a>voir</a> ou <a href="/velo">le vélo</a>'),
+    ).toBe('voir ou [le vélo](/velo)')
+  })
+
+  it('keeps the space a selection took into a bare anchor', () => {
+    expect(MarkdownUtils.convertInlineHtmlToMarkdown('Texte <a>de </a>départ')).toBe(
+      'Texte de départ',
+    )
+  })
+
+  it('drops an empty bare anchor even without the fixer', () => {
+    expect(MarkdownUtils.convertInlineHtmlToMarkdown('Texte<a></a> départ', false)).toBe(
+      'Texte départ',
+    )
+  })
+
+  it('still writes an anchor with attributes but no href as a link', () => {
+    // Only the attribute-less anchor is dropped; a rel alone keeps the link form.
+    expect(MarkdownUtils.convertInlineHtmlToMarkdown('<a rel="nofollow">x</a>')).toBe(
+      '[x](#){rel="nofollow"}',
+    )
+  })
+
   it('writes a link title back into the destination', () => {
     expect(
       MarkdownUtils.convertInlineHtmlToMarkdown('<a href="https://x.fr" title="Le titre">le site</a>'),

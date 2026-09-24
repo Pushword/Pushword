@@ -240,6 +240,64 @@ describe('Hyperlink.updateLink', () => {
   })
 })
 
+describe('Hyperlink.clear', () => {
+  /** A paragraph holding the anchor surround() wrapped the selection in. */
+  function openedOn(html: string): { tool: Hyperlink; paragraph: HTMLElement } {
+    const { tool } = toolWithActions()
+    const paragraph = document.createElement('p')
+    paragraph.innerHTML = html
+    ;(tool as unknown as { anchorTag: HTMLElement }).anchorTag = paragraph.querySelector('a')!
+
+    return { tool, paragraph }
+  }
+
+  it('drops the anchor of a link closed without an address, keeping its text', () => {
+    const { tool, paragraph } = openedOn('Texte <a><b>de</b> dépa</a>rt')
+
+    tool.clear()
+
+    expect(paragraph.innerHTML).toBe('Texte <b>de</b> départ')
+  })
+
+  it('keeps a link that has its address', () => {
+    const { tool, paragraph } = openedOn('Texte <a href="/velo">de dépa</a>rt')
+
+    tool.clear()
+
+    expect(paragraph.querySelector('a')?.getAttribute('href')).toBe('/velo')
+    expect(paragraph.querySelector('a')?.textContent).toBe('de dépa')
+  })
+
+  it('drops an anchor given options but no address, since it still leads nowhere', () => {
+    // A rel or new-tab switch picked, then the panel abandoned: updateLink()
+    // wrote those, but without an href there is no link to keep.
+    const { tool, paragraph } = openedOn('Texte <a rel="nofollow" target="_blank">de dépa</a>rt')
+
+    tool.clear()
+
+    expect(paragraph.innerHTML).toBe('Texte de départ')
+  })
+
+  it('does nothing when the toolbar closes on a selection that was never linked', () => {
+    // Every inline-toolbar close calls clear(), most of them with no anchor at all.
+    const { tool } = toolWithActions()
+
+    expect(() => tool.clear()).not.toThrow()
+  })
+
+  it('leaves the paragraph alone when closeActions() already detached the anchor', () => {
+    // closeActions() unlinks an empty-address anchor, then closes the toolbar,
+    // which calls clear() on that anchor, now out of the document.
+    const { tool, paragraph } = openedOn('Texte <a>de dépa</a>rt')
+    const detached = paragraph.querySelector('a')!
+    detached.replaceWith(...detached.childNodes)
+
+    expect(() => tool.clear()).not.toThrow()
+    expect(paragraph.innerHTML).toBe('Texte de départ')
+    expect(detached.parentNode).toBeNull()
+  })
+})
+
 describe('Hyperlink sanitize rules', () => {
   it('allow every attribute the markdown import writes on a link', () => {
     // Editor.js cleans a paragraph with these rules on save: an attribute the

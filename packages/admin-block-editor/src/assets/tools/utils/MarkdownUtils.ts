@@ -596,6 +596,10 @@ export class MarkdownUtils {
       .replace(/<u(?: [^>]*)?>([\s\S]+?)<\/u>/gi, '<u>$1</u>')
       .replace(/<small(?: [^>]*)?>([\s\S]+?)<\/small>/gi, '<small>$1</small>')
       .replace(/<mark(?: [^>]*)?>([\s\S]+?)<\/mark>/gi, '<mark>$1</mark>')
+      // An anchor without attributes leads nowhere, whether pasted or left by a
+      // link abandoned before Hyperlink.clear() unwrapped them: keep its text.
+      // Ahead of the link rule, whose lazy match would end at a nested one's </a>.
+      .replace(/<a>([\s\S]*?)<\/a>/gi, '$1')
       .replace(/<a\s+([^>]+)>([\s\S]+?)<\/a>/gi, (_match, attrString, text) =>
         MarkdownUtils.convertAnchorToMarkdown(attrString, text),
       )
