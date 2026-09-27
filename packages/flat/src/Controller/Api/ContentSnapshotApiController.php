@@ -80,13 +80,18 @@ final class ContentSnapshotApiController extends AbstractApiController
         // still short-circuits without touching the DB. A refresh failure must not
         // sink the whole snapshot: log it and stream the existing (slightly stale)
         // mirror rather than returning a 500.
-        try {
-            $this->refreshMirror($host);
-        } catch (Throwable $throwable) {
-            $this->logger?->error('Snapshot mirror refresh failed for host {host}, streaming stale mirror: {message}', [
-                'host' => $host ?: 'all',
-                'message' => $throwable->getMessage(),
-            ]);
+        //
+        // A HEAD ships no body, so there is nothing to freshen: a client probing its
+        // key gets GET's status and headers without a DB round-trip per host.
+        if (! $request->isMethod(Request::METHOD_HEAD)) {
+            try {
+                $this->refreshMirror($host);
+            } catch (Throwable $throwable) {
+                $this->logger?->error('Snapshot mirror refresh failed for host {host}, streaming stale mirror: {message}', [
+                    'host' => $host ?: 'all',
+                    'message' => $throwable->getMessage(),
+                ]);
+            }
         }
 
         $filename = \sprintf('snapshot-%s-%s.tar.gz', $host ?: 'all', date('Y-m-d'));
@@ -202,7 +207,7 @@ final class ContentSnapshotApiController extends AbstractApiController
                 '/api/content/snapshot.tar.gz' => [
                     'get' => [
                         'summary' => 'Download the flat content directory as a gzipped tarball',
-                        'description' => 'Re-exports then streams the DB → flat mirror of a host (or every host when `host` is omitted) as application/gzip, so each .md carries a current revision. Authenticate with an editor Bearer token or the read-only snapshot key.',
+                        'description' => 'Re-exports then streams the DB → flat mirror of a host (or every host when `host` is omitted) as application/gzip, so each .md carries a current revision. Authenticate with an editor Bearer token or the read-only snapshot key. A HEAD request answers with the same status and headers without re-exporting, to check a key cheaply.',
                         'security' => [
                             ['bearerAuth' => []],
                             ['snapshotKey' => []],

@@ -88,6 +88,10 @@ Omit `host` to download every configured site. This key is accepted only by
 `GET /api/content/snapshot.tar.gz`; it cannot authenticate any other API route or write
 content. Existing editor Bearer tokens remain accepted by the snapshot endpoint.
 
+To check a key without downloading anything, send a `HEAD` request (`curl -I`). It
+returns the same status as `GET` but does not re-export the mirror, so it costs no
+database query.
+
 ### Sync with DB (import / export)
 
 ```bash

@@ -400,6 +400,61 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         }
     }
 
+    /**
+     * A credential probe sends HEAD without a host: it wants the status, not the
+     * archive, and used to pay the re-export of every site for it.
+     */
+    public function testHeadChecksTheKeyWithoutExporting(): void
+    {
+        $stale = $this->contentDir.'/'.self::ROOT_SLUG.'.md';
+        $this->filesystem->dumpFile($stale, "---\nslug: ".self::ROOT_SLUG."\n---\nstale body");
+        $this->filesystem->touch($stale, 1);
+        $this->filesystem->remove($this->syncStatePath());
+
+        $this->client->request(Request::METHOD_HEAD, '/api/content/snapshot.tar.gz', [], [], [
+            'HTTP_X_PUSHWORD_SNAPSHOT_KEY' => 'not-the-snapshot-key',
+        ]);
+        self::assertSame(401, $this->client->getResponse()->getStatusCode());
+
+        $response = $this->request('/api/content/snapshot.tar.gz', Request::METHOD_HEAD);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('application/gzip', $response->headers->get('Content-Type'));
+        self::assertSame('', $this->captureStream(), 'a HEAD must not stream the tarball');
+        self::assertStringContainsString('stale body', (string) file_get_contents($stale), 'nor re-export the mirror');
+        self::assertFileDoesNotExist($this->syncStatePath());
+    }
+
+    /** Skipping the refresh must not skip the checks in front of it: HEAD answers what GET would. */
+    public function testHeadWithAnUnknownHostReturns400(): void
+    {
+        $response = $this->request('/api/content/snapshot.tar.gz?host=nope.invalid.example', Request::METHOD_HEAD);
+        self::assertSame(400, $response->getStatusCode());
+    }
+
+    public function testHeadOnAnEmptyContentDirReturns404(): void
+    {
+        $response = $this->request('/api/content/snapshot.tar.gz?host='.self::HOST, Request::METHOD_HEAD);
+        self::assertSame(404, $response->getStatusCode());
+    }
+
+    public function testHeadForOneHostSkipsTheExportButKeepsTheGetHeaders(): void
+    {
+        $stale = $this->contentDir.'/'.self::ROOT_SLUG.'.md';
+        $this->filesystem->dumpFile($stale, "---\nslug: ".self::ROOT_SLUG."\n---\nstale body");
+        $this->filesystem->touch($stale, 1);
+        $this->filesystem->remove($this->syncStatePath());
+
+        $response = $this->request('/api/content/snapshot.tar.gz?host='.self::HOST, Request::METHOD_HEAD);
+
+        self::assertSame(200, $response->getStatusCode());
+        $disposition = (string) $response->headers->get('Content-Disposition');
+        self::assertStringContainsString('attachment', $disposition);
+        self::assertStringContainsString('snapshot-'.self::HOST.'-', $disposition);
+        self::assertStringContainsString('stale body', (string) file_get_contents($stale));
+        self::assertFileDoesNotExist($this->syncStatePath());
+    }
+
     /** Written by SyncStateManager::recordExport(), i.e. only when an export ran. */
     private function syncStatePath(): string
     {
@@ -422,9 +477,9 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         self::assertSame(200, $this->request('/api/content/snapshot.tar.gz?host='.self::HOST)->getStatusCode());
     }
 
-    private function request(string $url): Response
+    private function request(string $url, string $method = Request::METHOD_GET): Response
     {
-        $this->client->request(Request::METHOD_GET, $url, [], [], [
+        $this->client->request($method, $url, [], [], [
             'HTTP_X_PUSHWORD_SNAPSHOT_KEY' => self::SNAPSHOT_KEY,
         ]);
 
