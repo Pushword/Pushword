@@ -57,6 +57,9 @@ final class SitemapController extends AbstractPushwordController
             '' !== $requestedLocale ? $requestedLocale : $this->requestContext->currentSite->locale,
             $limit
         )
+        // sitemap.xml.twig reads every page's translations (hreflang): fetch
+        // them with the pages instead of one lazy query per page.
+        ->leftJoin('p.translations', 't')->addSelect('t')
         ->orderBy('p.publishedAt', 'DESC')
         ->getQuery()->getResult();
     }

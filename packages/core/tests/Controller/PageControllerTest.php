@@ -7,6 +7,7 @@ namespace Pushword\Core\Tests\Controller;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Controller\FeedController;
 use Pushword\Core\Controller\PageController;
 use Pushword\Core\Controller\PageResolver;
@@ -312,6 +313,74 @@ final class PageControllerTest extends KernelTestCase
                 $em->flush();
             }
         }
+    }
+
+    /**
+     * The sitemap fetch-joins translations, so a page with several of them comes back
+     * as several SQL rows: it must still be one <url> carrying every hreflang.
+     * Fixtures: homepage (en) ↔ fr/homepage (fr) ↔ fr-ca/homepage (fr-CA).
+     */
+    public function testSitemapListsAPageWithSeveralTranslationsOnceWithAllItsHreflangLinks(): void
+    {
+        $content = (string) $this->getSitemapController()->show(Request::create('/sitemap.xml'), 'xml')->getContent();
+
+        self::assertSame(1, substr_count($content, '<loc>https://localhost.dev/</loc>'), $content);
+        self::assertSame(1, preg_match('#<loc>https://localhost\.dev/</loc>(.*?)</url>#s', $content, $homepageUrl));
+        self::assertStringContainsString('hreflang="fr" href="https://localhost.dev/fr/homepage"', $homepageUrl[1]);
+        self::assertStringContainsString('hreflang="fr-CA" href="https://localhost.dev/fr-ca/homepage"', $homepageUrl[1]);
+    }
+
+    /**
+     * sitemap.txt goes through the same fetch-joined query: newest first, one line per
+     * page however many translations it has. Pages are inserted out of date order so
+     * an id-ordered result cannot pass.
+     */
+    public function testSitemapTxtListsEachPageOnceNewestFirst(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $em->beginTransaction();
+
+        try {
+            self::getContainer()->get(PageCacheSuppressor::class)->suppress(function () use ($em): void {
+                $mid = $this->createFeedPage('sitemap-order-mid', 'Mid');
+                $mid->publishedAt = new DateTime('2 days ago');
+
+                $em->persist($mid);
+
+                foreach (['fr', 'de'] as $locale) {
+                    $translation = $this->createFeedPage('sitemap-order-mid-'.$locale, 'Mid '.$locale);
+                    $translation->locale = $locale;
+                    $mid->addTranslation($translation);
+                    $em->persist($translation);
+                }
+
+                $old = $this->createFeedPage('sitemap-order-old', 'Old');
+                $old->publishedAt = new DateTime('3 days ago');
+
+                $em->persist($old);
+
+                $new = $this->createFeedPage('sitemap-order-new', 'New');
+                $new->publishedAt = new DateTime('1 day ago');
+
+                $em->persist($new);
+
+                $em->flush();
+            });
+
+            $content = (string) $this->getSitemapController()->show(Request::create('/sitemap.txt'), 'txt')->getContent();
+        } finally {
+            $em->rollback();
+        }
+
+        $lines = array_map(trim(...), explode("\n", $content));
+
+        self::assertSame(
+            ['https://localhost.dev/sitemap-order-new', 'https://localhost.dev/sitemap-order-mid', 'https://localhost.dev/sitemap-order-old'],
+            array_values(array_filter($lines, static fn (string $line): bool => str_contains($line, '/sitemap-order-'))),
+            $content,
+        );
+        // The fixture homepage has two translations.
+        self::assertSame(1, array_count_values($lines)['https://localhost.dev/'] ?? 0, $content);
     }
 
     public function testShowRobotsTxt(): void
