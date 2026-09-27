@@ -746,13 +746,20 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      * the already-managed instances, so the collections stay initialized even
      * after a later EntityManager::clear().
      *
+     * The page side is read as its id only (PARTIAL): a full select would send
+     * every page row, mainContent included, once per translation. That is only
+     * safe for a page Doctrine has already hydrated in its identity map, which
+     * it keeps as is. Detached pages and uninitialized proxies are skipped,
+     * because Doctrine would otherwise build or initialize them from the id alone.
+     *
      * @param Page[] $pages
      */
     public function preloadTranslations(array $pages): void
     {
+        $entityManager = $this->getEntityManager();
         $ids = [];
         foreach ($pages as $page) {
-            if (null !== $page->id) {
+            if (null !== $page->id && $entityManager->contains($page) && ! $entityManager->isUninitializedObject($page)) {
                 $ids[] = $page->id;
             }
         }
@@ -762,7 +769,8 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         }
 
         $this->createQueryBuilder('p')
-            ->leftJoin('p.translations', 't')->addSelect('t')
+            ->select('PARTIAL p.{id}', 't')
+            ->leftJoin('p.translations', 't')
             ->andWhere('p.id IN (:ids)')->setParameter('ids', $ids)
             ->getQuery()
             ->getResult();

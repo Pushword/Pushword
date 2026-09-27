@@ -486,6 +486,98 @@ final class PageRepositoryTest extends KernelTestCase
     }
 
     /**
+     * The preload reads the page side as its id only. On an uninitialized proxy
+     * Doctrine would mark it initialized and hydrate it with that id alone, so a
+     * later read of the reference would see an empty h1 and mainContent.
+     */
+    public function testPreloadTranslationsLeavesAnUninitializedReferenceIntact(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        $homepage = $pageRepo->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev']);
+        self::assertInstanceOf(Page::class, $homepage);
+        self::assertNotSame('', $homepage->h1);
+        self::assertNotSame('', $homepage->mainContent);
+        $id = (int) $homepage->id;
+        $h1 = $homepage->h1;
+        $mainContent = $homepage->mainContent;
+        $em->clear();
+
+        $reference = $em->getReference(Page::class, $id);
+        self::assertInstanceOf(Page::class, $reference);
+        self::assertTrue($em->isUninitializedObject($reference));
+
+        $pageRepo->preloadTranslations([$reference]);
+
+        self::assertTrue($em->isUninitializedObject($reference), 'A reference must be skipped, not initialized from its id.');
+        self::assertSame($h1, $reference->h1);
+        self::assertSame($mainContent, $reference->mainContent);
+        self::assertSame('homepage', $reference->slug);
+    }
+
+    /**
+     * A detached page's id would make Doctrine register a new, id-only instance in
+     * the identity map, which the next find() would then hand out.
+     */
+    public function testPreloadTranslationsSkipsADetachedPage(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        $detached = $pageRepo->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev']);
+        self::assertInstanceOf(Page::class, $detached);
+        $id = (int) $detached->id;
+        $em->clear();
+
+        $pageRepo->preloadTranslations([$detached]);
+
+        self::assertFalse($em->getUnitOfWork()->tryGetById($id, Page::class), 'A detached page must not be loaded back into the identity map.');
+
+        $fresh = $em->find(Page::class, $id);
+        self::assertInstanceOf(Page::class, $fresh);
+        self::assertNotSame($detached, $fresh);
+        self::assertSame($detached->h1, $fresh->h1);
+        self::assertSame($detached->mainContent, $fresh->mainContent);
+    }
+
+    /**
+     * The id-only select relies on Doctrine keeping an already-hydrated page as
+     * is: neither its fields nor its change-tracking snapshot may be rewritten.
+     */
+    public function testPreloadTranslationsKeepsAHydratedPageAsIs(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+        $em->clear();
+
+        $homepage = $pageRepo->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev']);
+        $untouched = $pageRepo->findOneBy(['slug' => 'kitchen-sink', 'host' => 'localhost.dev']);
+        self::assertInstanceOf(Page::class, $homepage);
+        self::assertInstanceOf(Page::class, $untouched);
+        $originalH1 = $homepage->h1;
+        $mainContent = $homepage->mainContent;
+        self::assertNotSame('', $mainContent);
+
+        $homepage->h1 = 'Unflushed h1';
+        $pageRepo->preloadTranslations([$homepage, $untouched]);
+
+        self::assertSame('Unflushed h1', $homepage->h1);
+        self::assertSame($mainContent, $homepage->mainContent);
+
+        $uow = $em->getUnitOfWork();
+        $uow->computeChangeSets();
+        self::assertSame(['h1' => [$originalH1, 'Unflushed h1']], $uow->getEntityChangeSet($homepage));
+        self::assertFalse($uow->isScheduledForUpdate($untouched));
+    }
+
+    /**
      * The rebuild walks the corpus by keyset, not offset. A batch smaller than the
      * corpus is where that either walks the whole thing or silently truncates it.
      */

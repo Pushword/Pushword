@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Controller;
 
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
@@ -32,7 +33,7 @@ final class SitemapController extends AbstractPushwordController
     {
         $pages = $this->getPages($request);
 
-        if (! \is_array($pages) || ! isset($pages[0])) {
+        if ([] === $pages) {
             throw $this->createNotFoundException();
         }
 
@@ -46,21 +47,24 @@ final class SitemapController extends AbstractPushwordController
     }
 
     /**
-     * @return mixed //array<Page>
+     * @return list<Page>
      */
-    private function getPages(Request $request, ?int $limit = null): mixed
+    private function getPages(Request $request, ?int $limit = null): array
     {
         $requestedLocale = rtrim($request->attributes->getString('_locale'), '/');
 
-        return $this->pageRepository->getIndexablePagesQuery(
+        /** @var list<Page> $pages */
+        $pages = $this->pageRepository->getIndexablePagesQuery(
             $this->apps->getMainHost(),
             '' !== $requestedLocale ? $requestedLocale : $this->requestContext->currentSite->locale,
             $limit
         )
-        // sitemap.xml.twig reads every page's translations (hreflang): fetch
-        // them with the pages instead of one lazy query per page.
-        ->leftJoin('p.translations', 't')->addSelect('t')
         ->orderBy('p.publishedAt', 'DESC')
         ->getQuery()->getResult();
+
+        // sitemap.xml.twig reads every page's translations (hreflang).
+        $this->pageRepository->preloadTranslations($pages);
+
+        return $pages;
     }
 }

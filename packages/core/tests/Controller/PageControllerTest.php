@@ -212,6 +212,15 @@ final class PageControllerTest extends KernelTestCase
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
+    public function testSitemapForALocaleWithoutPagesIsNotFound(): void
+    {
+        $request = Request::create('/de/sitemap.xml');
+        $request->attributes->set('_locale', 'de/');
+
+        $this->expectException(NotFoundHttpException::class);
+        $this->getSitemapController()->show($request, 'xml');
+    }
+
     public function testSitemapUsesTheCurrentSiteLocaleWhenTheRouteHasNoLocale(): void
     {
         $request = Request::create('/sitemap.xml');
@@ -316,8 +325,8 @@ final class PageControllerTest extends KernelTestCase
     }
 
     /**
-     * The sitemap fetch-joins translations, so a page with several of them comes back
-     * as several SQL rows: it must still be one <url> carrying every hreflang.
+     * The sitemap preloads translations in a joined query that returns one row per
+     * translation: a page with several must still be one <url> carrying every hreflang.
      * Fixtures: homepage (en) ↔ fr/homepage (fr) ↔ fr-ca/homepage (fr-CA).
      */
     public function testSitemapListsAPageWithSeveralTranslationsOnceWithAllItsHreflangLinks(): void
@@ -331,9 +340,9 @@ final class PageControllerTest extends KernelTestCase
     }
 
     /**
-     * sitemap.txt goes through the same fetch-joined query: newest first, one line per
-     * page however many translations it has. Pages are inserted out of date order so
-     * an id-ordered result cannot pass.
+     * sitemap.txt goes through the same query and translations preload: newest first,
+     * one line per page however many translations it has. Pages are inserted out of
+     * date order so an id-ordered result cannot pass.
      */
     public function testSitemapTxtListsEachPageOnceNewestFirst(): void
     {
