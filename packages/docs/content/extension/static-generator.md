@@ -5,7 +5,8 @@ publishedAt: '2025-12-21 21:55'
 toc: true
 ---
 
-Generate a static website serve by github pages, apaches with one command or via the [admin](https://pushword.piedweb.com/extension/admin).
+Export a site for GitHub Pages, Apache, FrankenPHP or Caddy with one command or
+from the [admin](/extension/admin).
 
 ## Install
 
@@ -13,8 +14,8 @@ Generate a static website serve by github pages, apaches with one command or via
 composer require pushword/static-generator
 ```
 
-That's it ! If you have a custom installation (not used the [default installer](/installation)),
-you may have a look inside `vendor/pushword/admin/install.php`.
+Custom installations can use `vendor/pushword/static-generator/install.php` as a
+reference. The [default installer](/installation) wires the bundle automatically.
 
 ## Configure
 
@@ -24,8 +25,8 @@ Add in your current `config/packages/pushword.yaml` for an App or globally under
 # In pushword.yaml under your app config:
 pushword:
   apps:
-    - host: example.tld
-      static_generators: [Pushword\StaticGenerator\Generator\PagesGenerator, ...]
+    - hosts: [example.tld]
+      static_generators: apache
       static_symlink: true
       static_dir: '%kernel.project_dir%/static/{main_host}'
       static_assets: ['assets', 'bundles'] # files/folders from public/ to copy

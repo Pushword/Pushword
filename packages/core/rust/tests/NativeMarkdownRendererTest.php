@@ -235,6 +235,7 @@ final class NativeMarkdownRendererTest extends KernelTestCase
             'event handler is dropped' => '[link](/docs){OnClick="bad" data-safe="yes"}',
             'link destination takes precedence over href' => '[link](/docs){href="wrong" id="ok"}',
             'table row without its closing pipe' => "| Tool | Audience |\n| --- | --- |\n| [One](https://example.com/) | Everyone\n| [Two](https://example.org/) | Members |",
+            'two tables with rows without closing pipes' => "| A | B |\n| --- | --- |\n| one | two\n\nBetween.\n\n| C | D |\n| --- | --- |\n| three | four",
             'ordered list with star children' => "1. First\n2. Second:\n   * Child one\n   * Child two\n3. Third",
             'ordered list with plus children' => "1. First\n2. Second:\n   + Child one\n   + Child two\n3. Third",
             'ordered list with mixed child bullets' => "1. Parent\n   - First\n   * Second",

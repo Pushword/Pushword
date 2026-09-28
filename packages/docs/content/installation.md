@@ -8,14 +8,12 @@ toc: true
 ## Requirements
 
 - **PHP** 8.5
-- **PHP extensions** : dom, curl, libxml, mbstring, zip, pdo, bcmath, intl, gd (or imagick), exif, iconv, fileinfo; plus `sqlite` and `pdo_sqlite` for SQLite, or `pdo_pgsql` for PostgreSQL
-- **Composer** - [how to install composer](https://getcomposer.org/download/)
+- **PHP extensions**: dom, curl, libxml, mbstring, zip, pdo, bcmath, intl, gd, exif, iconv, fileinfo; plus `sqlite` and `pdo_sqlite` for SQLite, or `pdo_pgsql` for PostgreSQL
+- **Composer** — [installation instructions](https://getcomposer.org/download/)
 
-_Facultative_ :
+Optional:
 
-- **Node** (>= 24 - only tested with v24, see [nvm to easily install a node version up to date](https://github.com/nvm-sh/nvm))
-- **yarn** - [how to install yarn](https://classic.yarnpkg.com/lang/en/docs/install/#debian-stable) or _pnpm_, _npm_
-  **Node** and **Yarn** are not required if you have your custom logic to manage assets.
+- **Node 24+** and npm, pnpm or Yarn, only when building frontend assets
 - **libvips** (recommended) or **imagick** — see [Image Processing](#image-processing) below
 - **brotli**
 
@@ -53,33 +51,27 @@ prints that password once, and requires it to be changed before the account can 
 administration. A development install keeps the convenient
 `admin@example.tld` / `p@ssword` login; never expose those credentials in production.
 
-That's it ! You can still configure an app or directly launch a PHP Server :
+Add another site or start a development server:
 
 ```shell
 php bin/console pw:new
 php -S 127.0.0.1:8004 -t public/
-# OR symfony server:start -d
+# or: symfony server:start -d
 ```
 
-### Run Pushword with Franken PHP
+### Run Pushword with FrankenPHP
 
-1. get the last bin from [frankenphp's repositories](https://github.com/dunglas/frankenphp)
-2. Create your own Caddyfile, or just [copy this one](https://github.com/Pushword/Pushword/blob/main/packages/dev-app/Caddyfile)
-3. run it ➜ `php Caddy.php` or `frankenphp run --config Caddyfile`
+The installer writes the project's `Caddyfile`. Install
+[FrankenPHP](https://frankenphp.dev/docs/) and run:
+
+```shell
+frankenphp run --config Caddyfile
+```
 
 The first available port will be used automatically (like `symfony server:start`).
 
 FrankenPHP can also run in **worker mode** (a long-running kernel). Pushword is safe
 to run this way — see [Performance](/performance) for how to enable it and why.
-
-#### Available commands:
-
-```shell
-php Caddy.php start    # Start the server
-php Caddy.php stop     # Stop the server
-php Caddy.php restart  # Restart the server
-php Caddy.php status   # Show server status
-```
 
 ### Run Pushword with Docker
 
@@ -96,19 +88,18 @@ php bin/console pw:docker:init   # if you said no, or want them added later
 docker compose up --build
 ```
 
-## _Recommended Extensions_ to get Pushword Classic
+## Installed and optional extensions
 
-`composer create-project` already gives you the **classic** set: `admin`,
-`admin-block-editor`, `page-scanner`, `static-generator` and `template-editor`.
+`composer create-project` installs `admin`, `admin-block-editor`,
+`advanced-main-image`, `api`, `conversation`, `flat`, `page-scanner`,
+`static-generator`, `template-editor` and `version`.
 
-Add the rest as you need them:
+Add other extensions as needed:
 
 ```shell
-composer req pushword/version              # page history and diffs
 composer req pushword/search               # SQLite full-text search
-composer req pushword/flat                 # content as Markdown files in Git
-composer req pushword/conversation         # comments, contact & newsletter forms
-composer req pushword/advanced-main-image  # hero images
+composer req pushword/newsletter           # campaigns and automations
+composer req pushword/quiz                 # interactive quizzes
 composer req pushword/page-update-notifier # email alert when a page changes
 ```
 
@@ -159,24 +150,26 @@ sudo apt install php-imagick  # Debian/Ubuntu
 
 ### GD
 
-GD is the fallback driver, bundled with PHP (`php-gd`). No extra installation needed.
+GD is the required fallback driver. Install the `php-gd` package when your PHP build
+does not already include it.
 
 ## Next
 
 - Review the [security model and production checklist](/security).
-- Configure [authentication](/authentication) (OAuth with Google/Microsoft, magic links, user management)
+- Configure [authentication](/authentication) (OAuth with Google/Microsoft, magic links, user management).
 - Configure the [colors and display](/themes) (also see [automatic tailwind run after page update](/manage-assets)).
-- Supercharge Pushword with [extensions](/extensions) or **custom development**
+- Add [extensions](/extensions) or custom development.
 
 {{ snippet('pro-support') }}
 
 ## Manual installation
 
-You can use `composer require pushword/core` in an existing Symfony Project. Have a look into `vendor/pushword/core/install.php` to finish manually the installation.
+Run `composer require pushword/core` in an existing Symfony project, then use
+`vendor/pushword/core/install.php` as the integration reference.
 
 ## Update
 
-Stay up to date with only one command :
+Update dependencies with:
 
 ```shell
 composer update

@@ -43,7 +43,7 @@ Then open <http://localhost:8080> (`HTTP_PORT` changes the port).
 The project is bind-mounted, so your editor stays the source of truth:
 
 ```shell
-docker compose exec pushword php bin/console pw:page:list
+docker compose exec pushword php bin/console pw:page-scan --skip-external
 ```
 
 Only `var/cache` is kept inside the container — Symfony bakes absolute paths into its

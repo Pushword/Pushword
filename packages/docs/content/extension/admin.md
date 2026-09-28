@@ -13,18 +13,18 @@ Create, edit, delete Page, Media, User with an interface built on top of EasyAdm
 composer require pushword/admin
 ```
 
-That's it ! If you have a custom installation (not used the [default installer](/installation)),
-you may have a look inside `vendor/pushword/admin/install.php`.
+The [default installer](/installation) wires the bundle automatically. Custom
+installations can use `vendor/pushword/admin/install.php` as a reference.
 
-Admin is now accessible via <small>https://mydomain.tld</small>`/admin/`.
+The admin is available at `https://example.com/admin/`.
 
-Don't forget to create an user with **ROLE_SUPER_ADMIN** to access to the just installed admin :
+Create a user with `ROLE_SUPER_ADMIN` if the project does not have one:
 
 ```shell
 php bin/console pw:user:create
 ```
 
-You may be intersted by the [block editor](/extension/admin-block-editor).
+For block-based editing, install the [Admin Block Editor](/extension/admin-block-editor).
 
 ## Editing a page
 
@@ -81,67 +81,21 @@ attribute, or the recovery has nowhere to render.
 
 ## Customize the admin
 
-Admin is built on top of EasyAdmin with one more feature : the ability to manage displayed form fields from the configuration ([not yet for list fields and search fields](/roadmap)).
+Admin is built on EasyAdmin. Page, redirection, media and user form fields are
+configuration-driven; list and search fields are not.
 
 You can also [customize the admin menu](/extension/admin-menu) to add, remove or reorder menu items.
 
-So, in your configuration, your default configuration is :
+Inspect the effective configuration instead of copying defaults that may change:
 
-```
-pushword_admin:
-    app_fallback_properties:
-        - admin_page_form_fields
-        - admin_user_form_fields
-    admin_page_form_fields:
-        -
-            - Pushword\Admin\FormField\PageH1Field
-            - Pushword\Admin\FormField\PageMainContentField
-        -
-            admin.page.state.label:
-                - Pushword\Admin\FormField\PagePublishedAtField
-                - Pushword\Admin\FormField\PageMetaRobotsField
-            admin.page.permanlien.label:
-                - Pushword\Admin\FormField\HostField
-                - Pushword\Admin\FormField\PageSlugField
-            admin.page.mainImage.label:
-                - Pushword\Admin\FormField\PageMainImageField
-            admin.page.parentPage.label:
-                - Pushword\Admin\FormField\PageParentPageField
-            admin.page.search.label:
-                expand:              1
-                fields:
-                    - Pushword\Admin\FormField\PageTitleField
-                    - Pushword\Admin\FormField\PageNameField
-                    - Pushword\Admin\FormField\PageSearchExcreptField
-                    - Pushword\Admin\FormField\WeightField
-            admin.page.translations.label:
-                - Pushword\Admin\FormField\PageLocaleField
-                - Pushword\Admin\FormField\PageTranslationsField
-            admin.page.customProperties.label:
-                expand:              1
-                fields:
-                    - Pushword\Admin\FormField\CustomPropertiesField
-            admin.page.og.label:
-                expand:              1
-                fields:
-                    - Pushword\Admin\FormField\OgTitleField
-                    - Pushword\Admin\FormField\OgDescriptionField
-                    - Pushword\Admin\FormField\OgImageField
-                    - Pushword\Admin\FormField\OgTwitterCardField
-                    - Pushword\Admin\FormField\OgTwitterSiteField
-                    - Pushword\Admin\FormField\OgTwitterCreatorField
-    admin_user_form_fields:
-        -
-            - Pushword\Admin\FormField\UserEmailField
-            - Pushword\Admin\FormField\UserUsernameField
-            - Pushword\Admin\FormField\UserPasswordField
-            - Pushword\Admin\FormField\CreatedAtField
-        -
-            admin.user.label.security:
-                - Pushword\Admin\FormField\UserRolesField
+```shell
+php bin/console debug:config pushword_admin
 ```
 
-You can directly edit this default list or customize them by editing this list on the fly with the `pushword.admin.load_field` event (see [admin-block-editor extension](/extension/admin-block-editor) for an example).
+Override `admin_page_form_fields`, `admin_redirection_form_fields`,
+`admin_media_form_fields` or `admin_user_form_fields` in `pushword_admin`. Bundles can
+alter the resolved lists with the `pushword.admin.load_field` event; the
+[Admin Block Editor](/extension/admin-block-editor) is an example.
 
 You can customize fields per site, but when creating a new page, Pushword does not yet know its site and uses the first site's configuration (or the global configuration).
 

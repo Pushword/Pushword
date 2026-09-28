@@ -6,43 +6,43 @@ name: Extensions
 ---
 
 - [Admin](/extension/admin)
-  Create, edit, delete Page, Media, User with an interface built on top of EasyAdmin.
+  Manage pages, media and users through an EasyAdmin interface.
 - [API](/extension/api)
-  Token-authenticated REST API mirroring the admin (Pages, redirections), with a self-describing OpenAPI endpoint and token-efficient partial edits for scripts and LLM agents.
+  Manage pages and redirections through a token-authenticated API with an OpenAPI schema.
 - [Admin Block Editor](/extension/admin-block-editor)
-  Supercharge default admin with a rich text editor which managed blocks.
+  Edit rich content as blocks while storing Markdown.
 - [Advanced Main Image](/extension/advanced-main-image)
-  Supercharge the Pushword Admin with a new admin form field to customize the main image format from not visible to HERO + default template files.
+  Choose how each page's main image is rendered, from hidden to a full hero.
 - [Conversation](/extension/conversation)
-  Extend your Pushword website with **comments**, a **contact** form or just an **user input**.
+  Add comments, contact forms and other user input.
 - [Flat](/extension/flat)
-  Transform Pushword in a FlatFile CMS.
+  Sync pages and media between the database and flat files.
 - [Link Improver](/extension/link-improver)
-  Automatic internal linking: the first mention of another page's name in your content becomes a link to it, at render time — opt-in, capped, auditable, source content untouched.
+  Add bounded, auditable internal links at render time without changing source content.
 - [Newsletter](/extension/newsletter)
-  Audiences, contacts with custom properties, segmented campaigns, and automations that start a sequence of mails when something happens — a contact comes to match a rule, an article is published, or whatever trigger source your own bundle registers. All driven by one cron tick. Double opt-in, one-click unsubscribe, `utm_*` link attribution; click tracking off by default and only ever behind a per-audience switch plus a per-contact dated consent.
+  Manage consent, audiences, segmented campaigns and event-driven mail sequences.
 - [Page Scanner](/extension/page-scanner)
-  Find dead links, 404, 301, TODO reminders and more (command line or admin).
+  Find broken links, redirects and TODO reminders from the command line or admin.
 - [Page Update Notifier](/extension/page-update-notifier)
-  Get mail notification when your pushword content (page) is edited.
+  Send an email when a page changes.
 - [Quiz](/extension/quiz)
-  Interactive client-side QCM declared inline with a `{% quiz %}` block, rendered server-side for SEO, with an anonymous percentile and an optional end-of-quiz conversion form. A `mode: profile` variant turns it into a personality test ("Which X are you?").
+  Build SEO-rendered quizzes and personality tests with an optional conversion form.
 - [Repurpose](/extension/repurpose)
-  Turn a page into ready-to-post social carousels (LinkedIn, Instagram, …): an agent-authored JSON spec rendered to self-contained SVG slides, with server-side text layout so overflow and bad crops are validation errors, focal-point cropping, and PNG/PDF export.
+  Render validated social carousel specs as SVG, PNG or PDF.
 - [Search](/extension/search)
-  Optional SQLite-native full-text search (typo tolerance, ranking) via Loupe — zero infra, ships with the static build.
+  Add typo-tolerant full-text search backed by a rebuildable SQLite index.
 - [Snippet](/extension/snippet)
-  Reusable content fragments and dev-registered components, called with `{{ snippet('name', {params}) }}`.
+  Render reusable content fragments and developer-registered components.
 - [Static Generator](/extension/static-generator)
-  Generate a static website serve by github pages, apaches with one command or via the [admin](https://pushword.piedweb.com/extension/admin).
+  Export a site for GitHub Pages, Apache, FrankenPHP or Caddy.
 - [Page Cache](/extension/page-cache)
-  Pre-render pages so the web server (Caddy, Apache, FrankenPHP) serves them as static files while the app stays behind for dynamic routes (ships with Static Generator).
+  Pre-render pages for the web server while keeping dynamic routes in the app.
 - [Template Editor](/extension/template-editor)
-  Edit view file online in the [admin](https://pushword.piedweb.com/extension/admin).
+  Edit Twig templates from the admin.
 - [Version](/extension/version)
-  Versioning pages with Pushword CMS.
+  Keep, compare and restore page revisions.
 
-Add your own extension #[editing this file on github](https://github.com/Pushword/Pushword/edit/main/packages/docs/content/extensions.md).
+To list a maintained third-party extension, [edit this page on GitHub](https://github.com/Pushword/Pushword/edit/main/packages/docs/content/extensions.md).
 
 ## Extension points
 

@@ -61,7 +61,7 @@ JSON unconditionally.
 
 ### PHP conventions
 
-- PHP 8.4+
+- PHP 8.5
 - `camelCase` methods/variables, `SCREAMING_SNAKE_CASE` constants
 - Fast returns, trailing commas, 4-space indent
 - PHPDoc only when necessary (Collection generics)

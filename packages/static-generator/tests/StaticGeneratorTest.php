@@ -619,11 +619,13 @@ final class StaticGeneratorTest extends KernelTestCase
     /** @return iterable<string, array{string, string, list<string>, list<string>}> */
     public static function provideHtaccessRedirectionPaths(): iterable
     {
+        $metacharacters = '/regex/\\.+*?[]^$(){}|';
+
         yield 'plain path' => ['/tools', '^/tools/?$', ['/tools', '/tools/'], ['/tools/x', '/toolsx', '/other/tools']];
         yield 'trailing slash' => ['/guides/', '^/guides/?$', ['/guides', '/guides/'], ['/guides/x']];
         yield 'homepage' => ['/', '^/?$', ['/'], ['/x']];
         yield 'dot' => ['/old-page.html', '^/old-page\.html/?$', ['/old-page.html'], ['/old-pagexhtml']];
-        yield 'other metacharacters' => ['/c++/a|b', '^/c\+\+/a\|b/?$', ['/c++/a|b'], ['/c/a', '/b']];
+        yield 'regex metacharacters' => [$metacharacters, '^'.preg_quote($metacharacters, '~').'/?$', [$metacharacters], ['/regex/plain']];
     }
 
     public function testLocaleErrorRoutingSkippedOnSingleLocaleSite(): void

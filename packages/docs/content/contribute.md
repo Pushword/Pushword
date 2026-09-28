@@ -1,29 +1,22 @@
 ---
-title: 'Contribute to Pushword : Documention, Core or Extension'
+title: 'Contribute to Pushword documentation, core or extensions'
 h1: Contribute
 publishedAt: '2025-12-21 21:55'
 toc: true
 ---
 
-Source code is host on #[{{ svg('github') }} github](https://github.com/Pushword/Pushword).
+The source code is on [GitHub](https://github.com/Pushword/Pushword).
 
 Looking for help with your own site rather than to contribute? See [getting help](/pro).
 
-## Signal an issue
+## Report an issue
 
-Use the #[github issue tracker](https://github.com/Pushword/Pushword/issues) to signal an issue.
-
-> This project is open source, and as such, the maintainers give their free time to build and maintain the source code
-> held within. They make the code freely available in the hope that it will be of use to other developers. It would be
-> extremely unfair for them to suffer abuse or anger for their hard work.
+Use the [issue tracker](https://github.com/Pushword/Pushword/issues).
 
 ## Contribute
 
-Contributions are **welcome**.
-
-Please, send your contribution via a #[github pull request](https://github.com/Pushword/Pushword/pulls) on #[Pushword/Pushword](https://github.com/Pushword/Pushword).
-
-The code is mainly organised in a mono-repo, learn more about the [code architecture](/architecture)
+Send contributions as [pull requests](https://github.com/Pushword/Pushword/pulls). See
+[Code architecture](/architecture) for the monorepo setup.
 
 ## Setting up a PHP development environment to contribute
 
@@ -31,23 +24,23 @@ See [Code Architecture > Development environment](/architecture#development-envi
 
 ## Contribute to the documentation
 
-The docs is inside the main repo, you will find write in markdown in #[packages/docs/content](https://github.com/Pushword/Pushword/tree/main/packages/docs/content).
+Documentation is Markdown under
+[`packages/docs/content`](https://github.com/Pushword/Pushword/tree/main/packages/docs/content).
 
-On each push to `main`, a github action compiles the docs and publishes it on [pushword.piedweb.com](/). Nothing to run by hand: what fails the build (a page that does not render) fails the action, and nothing is published.
+On each push to `main`, GitHub Actions builds and publishes the documentation on
+[pushword.piedweb.com](/). A rendering failure stops publication.
 
 ## Pull Requests
 
 ### New Features
 
-When requesting or submitting new features, first consider to create a dedicated extension.
-
-If your extension reply to an important community need, you can create a pull request to merge it in this Mono Repo. It will permit to maintain easily it compatibility in next Pushword update. Moreover, extension will be tested at each commit on one of Pushword's package.
-
-Else, consider create it own git repo and create a Pull Request on the doc to add a link to this fresh extension. The link will be accepted if your extension is well tested and fully functionnal.
+Prefer a dedicated extension for a self-contained feature. Propose it for the monorepo
+when it serves a broad need and benefits from cross-package testing; otherwise maintain
+it separately and submit a documentation link once it is tested and usable.
 
 ### Coding standards
 
-This project respect PSR-12 Coding standard. Before your pull-request, run `php-cs-fixer` and `phpstan`.
+Before opening a pull request, run the formatter, Rector and PHPStan:
 
 ```
 composer rector
@@ -85,47 +78,14 @@ CREATE ROLE pushword LOGIN PASSWORD 'pushword' CREATEDB;
 
 ### Database volume benchmark
 
-With MariaDB and PostgreSQL listening on the test URLs above, compare the three database
-engines over 100, 1,000 and 10,000 pages:
+With MariaDB and PostgreSQL listening on the test URLs above, run:
 
 ```shell
 composer bench-databases
 ```
 
-See the [benchmark methodology and reference results](/database-benchmarks) for a
-dated SQLite, MariaDB and PostgreSQL comparison.
-
-The benchmark first reports write time plus indexed slug lookups, JSON tag filtering,
-numeric JSON filtering and a sorted list. A second table uses deterministic synthetic
-fixtures for two application workloads:
-
-- a multisite, multilingual editorial corpus with parent and translation relations,
-  repeated page lists, internal-link resolution and content-sized rows;
-- a filterable catalogue with tag dimensions, numeric JSON ranges, sorting, facets and
-  a content-export read pass.
-
-It then runs three end-to-end Pushword pipelines over 100 and 1,000 synthetic pages:
-
-- `pw:page-scan --skip-external` over an internal-link graph;
-- `pw:static --workers=1`, including HTML rendering and filesystem writes;
-- authenticated EasyAdmin list, pagination, search, host filter and sort requests.
-
-Pipeline results include duration, throughput, SQL query count and peak memory. Keep
-the default pipeline ladder short for routine comparisons; opt into 10,000 pages when
-the longer render-and-scan pass is useful:
-
-```shell
-PUSHWORD_BENCH_PIPELINE_VOLUMES=100,1000,10000 composer bench-databases
-```
-
-No production content or configuration is used. Change the volume ladder or DSNs when needed:
-
-```shell
-PUSHWORD_BENCH_VOLUMES=1000,10000,50000 \
-PUSHWORD_BENCH_MYSQL_URL='mysql://…/pushword_bench?serverVersion=11.8.6-MariaDB' \
-PUSHWORD_BENCH_POSTGRESQL_URL='postgresql://…/pushword_bench?serverVersion=17' \
-  composer bench-databases
-```
+See [Database and pipeline benchmarks](/database-benchmarks) for the workloads,
+environment variables, methodology and dated reference results.
 
 ### Coverage
 
@@ -139,16 +99,8 @@ script enables it per run, so no php.ini change is required. Like CI, it runs th
 in three batches — parallel, serial, worker — and merges their reports, so a batch left
 out never silently reads as uncovered.
 
-### Other Requirements
+### Pull request scope
 
-This attention would be nice :
-
-- **Add tests**
-
-- **Document any change in behaviour** - Make sure the [documentation](https://github.com/Pushword/Pushword/tree/main/packages/docs/content) are kept up-to-date.
-
-- **Consider our release cycle** - We try to follow [SemVer v2.0.0](https://semver.org/). Randomly breaking public APIs is not an option.
-
-- **One pull request per feature** - If you want to do more than one thing, send multiple pull requests.
-
-**Happy coding**!
+- Add tests for changed behavior.
+- Update the documentation and upgrade note when required.
+- Preserve [semantic versioning](https://semver.org/) and avoid unrelated changes.
