@@ -81,6 +81,8 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'attributed list' => ["{id=programme}\n- Etape", "<ul id=\"programme\">\n<li>Etape</li>\n</ul>\n"];
         yield 'leading hash heading id' => ["{#programme}\n## Une marche facile", "<h2 id=\"programme\">Une marche facile</h2>\n"];
         yield 'leading hash paragraph id' => ["{#programme}\nUne marche facile", "<p id=\"programme\">Une marche facile</p>\n"];
+        yield 'same-line leading paragraph class uses CommonMark' => ['{.ico-tip} Les **photos**.', null];
+        yield 'same-line leading paragraph attributes use CommonMark' => ['{.note #more} Les **détails**.', null];
         yield 'leading hash heading class and id' => ["{#rdv .ico-location}\n## Rendez-vous", "<h2 class=\"ico-location\" id=\"rdv\">Rendez-vous</h2>\n"];
         yield 'leading hash attributed list' => ["{#programme}\n- Etape", "<ul id=\"programme\">\n<li>Etape</li>\n</ul>\n"];
         yield 'leading hash attributed blockquote' => ["{#citation}\n> Une longue citation.", "<blockquote id=\"citation\">\n<p>Une longue citation.</p>\n</blockquote>\n"];

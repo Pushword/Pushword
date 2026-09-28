@@ -44,6 +44,10 @@ final readonly class TempestMarkdownRenderer
             return '';
         }
 
+        if (1 === preg_match('/\A\{(?:[.#]|[a-z][a-z0-9_-]*=)[^{}\r\n]+\}[ \t]+\S/i', $source)) {
+            return null;
+        }
+
         $standalone = $this->standalone->tryRender($source);
         if (false !== $standalone) {
             return $standalone;

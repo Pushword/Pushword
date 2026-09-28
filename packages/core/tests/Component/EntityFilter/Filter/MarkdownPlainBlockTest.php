@@ -65,4 +65,28 @@ final class MarkdownPlainBlockTest extends KernelTestCase
         self::assertStringContainsString('<pre>{{ 3 + 3 }}</pre>', $html);
         self::assertStringContainsString('id="heading"', $html);
     }
+
+    public function testSameLineBlockAttributesRenderMarkdown(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $factory = $container->get(ContentPipelineFactory::class);
+        $filter = $container->get(FilterRegistry::class)->getFilter('markdown');
+        self::assertInstanceOf(Markdown::class, $filter);
+
+        $page = new Page();
+        $page->host = 'localhost';
+        $page->locale = 'fr';
+
+        $html = $filter->apply("{.ico-tip} N’hésitez pas à voir les **photos**.\n\n{#photo-tip} Regardez les *images*.\n\n{.note #more} Les **détails**.\n\n{data-role=\"note\"} Un *conseil*.", $page, $factory->getLegacyManager($page));
+
+        self::assertIsString($html);
+        self::assertStringContainsString('<p class="ico-tip">N’hésitez pas à voir les <strong>photos</strong>.</p>', $html);
+        self::assertStringContainsString('<p id="photo-tip">Regardez les <em>images</em>.</p>', $html);
+        self::assertStringContainsString('<p class="note" id="more">Les <strong>détails</strong>.</p>', $html);
+        self::assertStringContainsString('<p data-role="note">Un <em>conseil</em>.</p>', $html);
+
+        $raw = $filter->apply('{literal} **unparsed**', $page, $factory->getLegacyManager($page));
+        self::assertSame("{literal} **unparsed**\n\n", $raw);
+    }
 }

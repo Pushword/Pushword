@@ -62,7 +62,8 @@ pub fn markdown_if_supported_with_dates(
     allow_obfuscated_links: bool,
     date_values: Option<&HashMap<String, String>>,
 ) -> Option<String> {
-    if source.contains("[!")
+    if same_line_block_attribute_pattern().is_match(source)
+        || source.contains("[!")
         || source.contains("![")
         || (source.contains("date(") && date_values.is_none())
         || (source.contains("#[") && source.contains("mailto:") && source.contains('@'))
@@ -87,6 +88,14 @@ pub fn markdown_if_supported_with_dates(
     }
 
     markdown_with_context(source, fenced_code_pre_class, locale, date_values, true)
+}
+
+fn same_line_block_attribute_pattern() -> &'static Regex {
+    static PATTERN: OnceLock<Regex> = OnceLock::new();
+    PATTERN.get_or_init(|| {
+        Regex::new(r"(?i)^\{(?:[.#]|[a-z][a-z0-9_-]*=)[^{}\r\n]+\}[ \t]+\S")
+            .expect("valid block attribute pattern")
+    })
 }
 
 fn dotted_date_range_pattern() -> &'static Regex {
@@ -1126,6 +1135,22 @@ mod tests {
             "<h2>Café 🦀</h2>\n<p>Hello <strong>world</strong>.</p>\n"
         );
         assert_eq!(markdown("", ""), "");
+    }
+
+    #[test]
+    fn same_line_block_attributes_decline_to_php() {
+        assert_eq!(
+            markdown_if_supported("{.ico-tip} See the **photos**.", ""),
+            None
+        );
+        assert_eq!(
+            markdown_if_supported("{data-role=\"note\"} A *tip*.", ""),
+            None
+        );
+        assert_eq!(
+            markdown_if_supported("{.ico-tip}\nSee the **photos**.", ""),
+            Some("<p class=\"ico-tip\">See the <strong>photos</strong>.</p>\n".into())
+        );
     }
 
     #[test]

@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'paragraph attributes on the same line render as markdown'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,9 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`
+
+## Paragraph attributes on the same line
+
+Paragraphs beginning with `{.class} Text` now apply the class and render inline Markdown. No action is needed.

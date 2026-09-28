@@ -125,7 +125,9 @@ class Markdown implements FilterInterface
     /** @return array{string, bool} */
     private function preparePart(string $text, Manager $manager): array
     {
-        // dump($text);
+        $sameLineAttribute = 1 === preg_match('/^(\{(?:[.#]|[a-z][a-z0-9_-]*=)[^{}\n]+\})[ \t]+(?=\S)/i', $text, $leadingAttribute)
+            && MarkdownUtils::startWithAttribute($leadingAttribute[1]);
+
         $lines = explode("\n", $text);
         $attribute = '';
         if (MarkdownUtils::startWithAttribute($lines[0])) {
@@ -155,7 +157,7 @@ class Markdown implements FilterInterface
         }
 
         if (null !== $textFiltered) {
-            if (MarkdownUtils::isItRawBlock($blockText)) {
+            if (MarkdownUtils::isItRawBlock($blockText) && ! $sameLineAttribute) {
                 return [$textFiltered, false];
             }
 
