@@ -238,7 +238,27 @@ fn markdown_with_context(
         &settings,
     )
     .expect("writing HTML to a String cannot fail");
+    if source
+        .lines()
+        .any(|line| line.starts_with('|') && !line.trim_end().ends_with('|'))
+    {
+        compact_table_markup(&mut output);
+    }
     Some(output)
+}
+
+fn compact_table_markup(output: &mut String) {
+    let mut search_from = 0;
+    while let Some(relative_start) = output[search_from..].find("<table>") {
+        let start = search_from + relative_start;
+        let Some(relative_end) = output[start..].find("</table>") else {
+            return;
+        };
+        let end = start + relative_end + "</table>".len();
+        let compact = output[start..end].replace(">\n<", "><");
+        output.replace_range(start..end, &compact);
+        search_from = start + compact.len();
+    }
 }
 
 fn date_pattern() -> &'static Regex {
@@ -304,12 +324,33 @@ fn set_attribute(attrs: &mut Vec<(String, String)>, name: &str, value: &str) {
     }
 }
 
-fn parse_link_attributes(input: &str) -> Option<(Vec<(String, String)>, usize)> {
+fn add_classes(attrs: &mut Vec<(String, String)>, value: &str, preserve_invalid_classes: bool) {
+    let valid = value.split_whitespace().filter(|class| {
+        preserve_invalid_classes
+            || class
+                .strip_prefix('-')
+                .unwrap_or(class)
+                .starts_with(|first: char| first == '_' || first.is_ascii_alphabetic())
+    });
+    for class in valid {
+        if let Some((_, classes)) = attrs.iter_mut().find(|(key, _)| key == "class") {
+            classes.push(' ');
+            classes.push_str(class);
+        } else {
+            attrs.push(("class".into(), class.into()));
+        }
+    }
+}
+
+fn parse_link_attributes(
+    input: &str,
+    preserve_invalid_classes: bool,
+) -> Option<(Vec<(String, String)>, usize)> {
     if !input.starts_with('{') {
         return None;
     }
     let mut attributes = Vec::new();
-    let mut classes = Vec::new();
+    let mut parsed_attribute = false;
     let mut index = 1;
     while index < input.len() {
         let remaining = &input[index..];
@@ -319,10 +360,7 @@ fn parse_link_attributes(input: &str) -> Option<(Vec<(String, String)>, usize)> 
             continue;
         }
         if character == '}' {
-            if !classes.is_empty() {
-                attributes.insert(0, ("class".into(), classes.join(" ")));
-            }
-            return (!attributes.is_empty()).then_some((attributes, index + 1));
+            return parsed_attribute.then_some((attributes, index + 1));
         }
         let shorthand = matches!(character, '#' | '.');
         if shorthand {
@@ -341,12 +379,13 @@ fn parse_link_attributes(input: &str) -> Option<(Vec<(String, String)>, usize)> 
         }
         let name = &input[start..index];
         if shorthand {
+            parsed_attribute = true;
             if character == '.' {
                 let class = name.strip_prefix('-').unwrap_or(name);
                 if !class.starts_with(|first: char| first == '_' || first.is_ascii_alphabetic()) {
                     return None;
                 }
-                classes.push(name.to_owned());
+                add_classes(&mut attributes, name, preserve_invalid_classes);
             } else {
                 set_attribute(&mut attributes, "id", name);
             }
@@ -377,8 +416,9 @@ fn parse_link_attributes(input: &str) -> Option<(Vec<(String, String)>, usize)> 
             }
             &input[start..index]
         };
+        parsed_attribute = true;
         if name.eq_ignore_ascii_case("class") {
-            classes.extend(value.split_whitespace().map(str::to_owned));
+            add_classes(&mut attributes, value, preserve_invalid_classes);
         } else if !name.to_ascii_lowercase().starts_with("on") {
             set_attribute(&mut attributes, name, value);
         }
@@ -386,7 +426,16 @@ fn parse_link_attributes(input: &str) -> Option<(Vec<(String, String)>, usize)> 
     None
 }
 
-fn link_attributes(node: Node<'_>, settings: &RenderSettings<'_>) -> Vec<(String, String)> {
+fn without_link_destination(mut attributes: Vec<(String, String)>) -> Vec<(String, String)> {
+    attributes.retain(|(name, _)| name != "href");
+    attributes
+}
+
+fn link_attributes(
+    node: Node<'_>,
+    settings: &RenderSettings<'_>,
+    preserve_invalid_classes: bool,
+) -> Vec<(String, String)> {
     let ast = node.data();
     let fallback = attributes(ast.attrs.as_deref());
     let source = settings.source_span(ast.sourcepos);
@@ -394,21 +443,22 @@ fn link_attributes(node: Node<'_>, settings: &RenderSettings<'_>) -> Vec<(String
     if let Some(source) = source
         && source.ends_with('}')
         && let Some(start) = source.rfind('{')
-        && let Some((attrs, consumed)) = parse_link_attributes(&source[start..])
+        && let Some((attrs, consumed)) =
+            parse_link_attributes(&source[start..], preserve_invalid_classes)
         && consumed == source.len() - start
     {
-        return attrs;
+        return without_link_destination(attrs);
     }
     if let Some(next) = node.next_sibling() {
         let mut ast = next.data_mut();
         if let NodeValue::Text(text) = &mut ast.value
-            && let Some((attrs, consumed)) = parse_link_attributes(text)
+            && let Some((attrs, consumed)) = parse_link_attributes(text, preserve_invalid_classes)
         {
             *text = Cow::Owned(text[consumed..].to_owned());
-            return attrs;
+            return without_link_destination(attrs);
         }
     }
-    fallback
+    without_link_destination(fallback)
 }
 
 fn apply_attributes(node: Node<'_>, values: Vec<(String, String)>) {
@@ -443,7 +493,7 @@ fn apply_block_attributes(root: Node<'_>) {
                 let ast = last.data();
                 if let NodeValue::Text(text) = &ast.value {
                     text.rfind(" {").and_then(|start| {
-                        parse_link_attributes(&text[start + 1..])
+                        parse_link_attributes(&text[start + 1..], false)
                             .filter(|(_, consumed)| *consumed == text.len() - start - 1)
                             .map(|(attrs, _)| (attrs, start))
                     })
@@ -464,7 +514,7 @@ fn apply_block_attributes(root: Node<'_>) {
         let attributes = {
             let ast = first.data();
             match &ast.value {
-                NodeValue::Text(text) => parse_link_attributes(text)
+                NodeValue::Text(text) => parse_link_attributes(text, false)
                     .filter(|(_, consumed)| *consumed == text.len())
                     .map(|(attrs, _)| attrs),
                 _ => None,
@@ -518,7 +568,7 @@ fn apply_list_item_attributes(root: Node<'_>) {
         let parsed = {
             let ast = first.data();
             match &ast.value {
-                NodeValue::Text(text) => parse_link_attributes(text),
+                NodeValue::Text(text) => parse_link_attributes(text, false),
                 _ => None,
             }
         };
@@ -567,7 +617,10 @@ fn obfuscated_link_attributes(
     node: Node<'_>,
     settings: &RenderSettings<'_>,
 ) -> Vec<(String, String)> {
-    let mut attrs = link_attributes(node, settings);
+    let preserve_invalid_classes = settings
+        .source_span(node.data().sourcepos)
+        .is_none_or(|source| !source.contains("](<"));
+    let mut attrs = link_attributes(node, settings, preserve_invalid_classes);
     for name in ["class", "id"] {
         if let Some(index) = attrs.iter().position(|(key, _)| key == name) {
             let attribute = attrs.remove(index);
@@ -795,6 +848,16 @@ fn render_spanning_cell(
     Ok(())
 }
 
+fn triple_emphasis(node: Node<'_>, settings: &RenderSettings<'_>) -> bool {
+    matches!(node.data().value, NodeValue::Emph)
+        && node
+            .first_child()
+            .is_some_and(|child| matches!(child.data().value, NodeValue::Strong))
+        && settings
+            .source_span(node.data().sourcepos)
+            .is_some_and(|source| source.starts_with("***") && source.ends_with("***"))
+}
+
 fn render(
     context: &mut Context<&RenderSettings<'_>>,
     node: Node<'_>,
@@ -850,7 +913,10 @@ fn render(
                 return Ok(ChildRendering::HTML);
             }
             if entering {
-                let mut attrs = link_attributes(node, context.user);
+                let mut attrs = link_attributes(node, context.user, false);
+                if !link.title.is_empty() {
+                    attrs.retain(|(key, _)| key != "title");
+                }
                 set_attribute(&mut attrs, "href", &encode_url(&link.url));
                 if !link.title.is_empty() {
                     set_attribute(&mut attrs, "title", &link.title);
@@ -912,6 +978,17 @@ fn render(
                 context.write_str("</code></pre>\n")?;
             }
         }
+        NodeValue::Emph if triple_emphasis(node, context.user) => {
+            context.write_str(if entering {
+                "<strong><em>"
+            } else {
+                "</em></strong>"
+            })?;
+        }
+        NodeValue::Strong
+            if node
+                .parent()
+                .is_some_and(|parent| triple_emphasis(parent, context.user)) => {}
         NodeValue::TaskItem(task) => {
             let list_item = node
                 .parent()

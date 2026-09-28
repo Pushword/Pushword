@@ -215,6 +215,46 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $native->reset();
     }
 
+    public function testTempestEdgeCasesMatchPhpNatively(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(SiteRegistry::class)->switchSite('localhost.dev');
+
+        $sources = [
+            'link title takes precedence over a title attribute' => '[link](/docs "original"){title="override"}',
+            'several attributes on links in a sentence' => '[twitter](/twitter){rel="encrypt" class="0"} and [mail](mailto:contact@piedweb.com){rel="encrypt" class="ninja"}',
+            'several link classes retain their source position' => '[link](/docs){.first rel="external" class="middle" .last}',
+            'link class and id retain their source position' => '[link](/docs){#docs .button}',
+            'obfuscated link with target and class' => '#[Farm](https://example.com/){target="\_blank" class="0"}',
+            'obfuscated link destination takes precedence over href' => '#[Farm](/real){href="/wrong" id="farm"}',
+            'obfuscated angle link with attributes' => '#[Stay](<https://example.com/form?start=2025—05—01&room=Dorm(s)>){target="\_blank" class="0"}',
+            'bold line ending with a multi-attribute link' => '**- Website: [example.com](http://www.example.com/){rel="encrypt" target="\_blank" class="0"}**',
+            'link attributes inside parentheses in a list' => '- Address ([map](https://maps.example.com/x){rel="encrypt" class="0"})',
+            'class zero is dropped' => '[week-end](/week-end){class="0"}',
+            'empty link followed by attributes' => '[](/trail){class="0"}The trail is open.',
+            'event handler is dropped' => '[link](/docs){OnClick="bad" data-safe="yes"}',
+            'link destination takes precedence over href' => '[link](/docs){href="wrong" id="ok"}',
+            'table row without its closing pipe' => "| Tool | Audience |\n| --- | --- |\n| [One](https://example.com/) | Everyone\n| [Two](https://example.org/) | Members |",
+            'ordered list with star children' => "1. First\n2. Second:\n   * Child one\n   * Child two\n3. Third",
+            'ordered list with plus children' => "1. First\n2. Second:\n   + Child one\n   + Child two\n3. Third",
+            'ordered list with mixed child bullets' => "1. Parent\n   - First\n   * Second",
+            'triple emphasis around a leading dash' => '***- First.- Second.***',
+            'triple emphasis glued after punctuation, with a link' => 'Follow it?***Our answer, [a trail](/trail).***',
+            'triple emphasis in list items' => "- ***Bring a map.***\n- ***Join a [club](/club).***",
+            'bold arrows before an empty link' => '**>> Dossier : [Préparation](/dossier){class="0"}** [](/dossier)',
+            'spaced triple stars after a hotel rating stay literal' => "- Le confort des hôtels 3*** et 4****\n- La gastronomie sarde",
+        ];
+        $native = $this->parser(self::BINARY);
+        $php = $this->parser();
+        $results = $native->renderNativeMany(array_values($sources));
+
+        foreach (array_keys($sources) as $index => $name) {
+            self::assertSame($php->transform($sources[$name]), $results[$index], $name);
+        }
+
+        $native->reset();
+    }
+
     public function testNativeBatchUsesExistingMarkdownCache(): void
     {
         self::bootKernel();

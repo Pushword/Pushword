@@ -88,14 +88,14 @@
         "markdown": "[link](/docs){#docs .button}",
         "pre_class": "",
         "compatible": true,
-        "php": "<p><a class=\"button\" id=\"docs\" href=\"/docs\">link</a></p>\n"
+        "php": "<p><a id=\"docs\" class=\"button\" href=\"/docs\">link</a></p>\n"
     },
     {
         "name": "attribute_escape",
         "markdown": "[*Café*](/docs \"a & b\"){data-x=\"a&b\" .button #docs}",
         "pre_class": "",
         "compatible": true,
-        "php": "<p><a class=\"button\" data-x=\"a&amp;b\" id=\"docs\" href=\"/docs\" title=\"a &amp; b\"><em>Café</em></a></p>\n"
+        "php": "<p><a data-x=\"a&amp;b\" class=\"button\" id=\"docs\" href=\"/docs\" title=\"a &amp; b\"><em>Café</em></a></p>\n"
     },
     {
         "name": "attribute_event_handler",
@@ -123,7 +123,7 @@
         "markdown": "[link](/docs){href=\"wrong\" id=\"ok\"}",
         "pre_class": "",
         "compatible": true,
-        "php": "<p><a href=\"/docs\" id=\"ok\">link</a></p>\n"
+        "php": "<p><a id=\"ok\" href=\"/docs\">link</a></p>\n"
     },
     {
         "name": "attribute_duplicate_id",
