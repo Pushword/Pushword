@@ -7,7 +7,7 @@ toc: true
 
 Which Markdown specification is used in Pushword — _CommonMark_, _GFM_, or _something else_?
 
-**Pushword** renders CommonMark-style Markdown with Tempest and custom rules designed to make it easy to switch between Markdown and a WYSIWYG block editor.
+**Pushword** renders CommonMark-style Markdown with Tempest and custom rules designed to make it easy to switch between Markdown and a WYSIWYG block editor. Syntax Tempest cannot render faithfully falls back to CommonMark.
 
 ## For users
 

@@ -4,12 +4,22 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Service\Markdown;
 
+use League\CommonMark\Environment\Environment;
+use League\CommonMark\Extension\Attributes\AttributesExtension;
+use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\InlinesOnly\InlinesOnlyExtension;
+use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
+use League\CommonMark\Extension\Table\TableExtension;
+use League\CommonMark\Extension\TaskList\TaskListExtension;
+use League\CommonMark\MarkdownConverter;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Service\Markdown\Extension\NoticeExtension;
+use Pushword\Core\Service\Markdown\Extension\PushwordExtension;
 use Pushword\Core\Service\NativeWorker;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
@@ -41,11 +51,17 @@ class MarkdownParser implements ResetInterface
 
     private bool $nativeFailed = false;
 
+    private ?MarkdownConverter $converter = null;
+
+    private ?MarkdownConverter $inlineConverter = null;
+
+    private ?PushwordExtension $pushwordExtension = null;
+
     public function __construct(
         private readonly LinkProvider $linkProvider,
-        MediaExtension $mediaExtension,
+        private readonly MediaExtension $mediaExtension,
         private readonly SiteRegistry $apps,
-        Twig $twig,
+        private readonly Twig $twig,
         #[Autowire(service: 'cache.pushword_markdown')]
         private readonly ?CacheItemPoolInterface $cache = null,
         #[Autowire(service: 'cache.app')]
@@ -181,6 +197,9 @@ class MarkdownParser implements ResetInterface
         $this->nativeWorker?->reset();
         $this->nativeFailed = false;
         $this->cacheVersion = null;
+        // Built on first fallback, they keep that site's locale for date().
+        $this->converter = null;
+        $this->inlineConverter = null;
     }
 
     /**
@@ -243,14 +262,62 @@ class MarkdownParser implements ResetInterface
         return $html;
     }
 
+    /**
+     * Tempest declines the syntax it cannot render faithfully (multi-attribute
+     * `{…}`, ambiguous emphasis…); CommonMark renders those fragments, so a page
+     * never fails on Markdown that rendered before Tempest.
+     */
     private function convert(string $text, bool $inline): string
     {
         $html = $inline ? $this->tempestRenderer->renderInline($text) : $this->tempestRenderer->render($text);
-        if (null === $html) {
-            throw new RuntimeException('Tempest cannot render Markdown: '.json_encode(mb_substr($text, 0, 160), \JSON_INVALID_UTF8_SUBSTITUTE));
+        if (null !== $html) {
+            return $html;
         }
 
-        return $html;
+        $this->logger->notice('Markdown rendered by CommonMark: Tempest declined it.', ['markdown' => mb_substr($text, 0, 160)]);
+
+        return ($inline ? $this->inlineConverter() : $this->converter())->convert($text)->getContent();
+    }
+
+    private function converter(): MarkdownConverter
+    {
+        if (null !== $this->converter) {
+            return $this->converter;
+        }
+
+        $environment = new Environment();
+        $environment->addExtension(new CommonMarkCoreExtension());
+        $environment->addExtension(new AttributesExtension());
+        $environment->addExtension(new StrikethroughExtension());
+        $environment->addExtension(new TableExtension());
+        $environment->addExtension(new TaskListExtension());
+        $environment->addExtension($this->pushwordExtension());
+        $environment->addExtension(new NoticeExtension($this->twig, $this->apps));
+
+        return $this->converter = new MarkdownConverter($environment);
+    }
+
+    private function inlineConverter(): MarkdownConverter
+    {
+        if (null !== $this->inlineConverter) {
+            return $this->inlineConverter;
+        }
+
+        $environment = new Environment();
+        $environment->addExtension(new InlinesOnlyExtension());
+        $environment->addExtension(new AttributesExtension());
+        $environment->addExtension(new StrikethroughExtension());
+        // PushwordExtension's ImageRenderer (priority 10) overrides InlinesOnly's,
+        // so `![](…)` stays media-rendered and cacheKeyVersion()'s image
+        // detection applies to inline fragments too.
+        $environment->addExtension($this->pushwordExtension());
+
+        return $this->inlineConverter = new MarkdownConverter($environment);
+    }
+
+    private function pushwordExtension(): PushwordExtension
+    {
+        return $this->pushwordExtension ??= new PushwordExtension($this->linkProvider, $this->mediaExtension, $this->apps, $this->dateFilter);
     }
 
     /**

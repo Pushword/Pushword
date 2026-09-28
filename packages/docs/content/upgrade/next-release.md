@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'markdown Tempest cannot render uses CommonMark again instead of a 500; a page failing in a parallel `pw:static` worker fails the build; static `.htaccess` redirects match the exact path'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,19 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`, `pushword/static-generator`
+
+## Markdown Tempest cannot render uses CommonMark again
+
+Syntax Tempest declines, such as `[link](/url){rel="encrypt" class="x"}`, renders with CommonMark again instead of failing the page with a 500. Nothing to do.
+
+## A failed page fails a parallel `pw:static`
+
+A page that fails to render in a parallel worker now fails the build with exit code 1 and keeps the previous export in place, as a sequential build already did.
+**Affects sites whose build reported success while pages were missing.** Fix the page the error names, then rerun `pw:static`.
+
+## Static `.htaccess` redirects match the exact path
+
+Redirections are written as `RedirectMatch 301 ^/old/?$ /new`: `/old` no longer redirects `/old/child` to `/new/child`.
+**Affects sites relying on one redirect to move a whole section.** Add that rule to your `htaccess.twig` override, in the `before_rules` block.

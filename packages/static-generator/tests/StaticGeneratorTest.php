@@ -558,6 +558,74 @@ final class StaticGeneratorTest extends KernelTestCase
         );
     }
 
+    /** @param list<array{string, string, int}> $redirections from, to, code */
+    private function generateHtaccessWith(array $redirections): string
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        /** @var RedirectionManager $redirectionManager */
+        $redirectionManager = $this->getGeneratorBag()->get(RedirectionManager::class);
+        $redirectionManager->reset();
+        foreach ($redirections as [$from, $to, $code]) {
+            $redirectionManager->add($from, $to, $code);
+        }
+
+        try {
+            $this->getGenerator(HtaccessGenerator::class)->generate('localhost.dev');
+        } finally {
+            $redirectionManager->reset();
+        }
+
+        return (string) file_get_contents($this->getStaticDir().'/.htaccess');
+    }
+
+    /** Apache's `Redirect` matches a path prefix: /tools would also send /tools/x to /free-tools/x. */
+    public function testHtaccessRedirectionsMatchTheExactPath(): void
+    {
+        $htaccess = $this->generateHtaccessWith([
+            ['/tools', '/free-tools', 301],
+            ['/old-page.html', 'https://example.com/new', 308],
+        ]);
+
+        self::assertStringContainsString('RedirectMatch 301 ^/tools/?$ /free-tools'.\PHP_EOL, $htaccess);
+        self::assertStringContainsString('RedirectMatch 308 ^/old-page\.html/?$ https://example.com/new'.\PHP_EOL, $htaccess);
+        self::assertDoesNotMatchRegularExpression('/^Redirect /m', $htaccess);
+    }
+
+    /**
+     * Apache runs RedirectMatch through PCRE, as preg_match does: the rule takes
+     * the path with or without its trailing slash, and nothing longer.
+     *
+     * @param list<string> $redirected
+     * @param list<string> $untouched
+     */
+    #[DataProvider('provideHtaccessRedirectionPaths')]
+    public function testHtaccessRedirectionPatternMatchesOnlyItsPath(string $from, string $pattern, array $redirected, array $untouched): void
+    {
+        $htaccess = $this->generateHtaccessWith([[$from, '/target', 301]]);
+
+        self::assertStringContainsString('RedirectMatch 301 '.$pattern.' /target'.\PHP_EOL, $htaccess);
+
+        foreach ($redirected as $path) {
+            self::assertMatchesRegularExpression('~'.$pattern.'~', $path);
+        }
+
+        foreach ($untouched as $path) {
+            self::assertDoesNotMatchRegularExpression('~'.$pattern.'~', $path);
+        }
+    }
+
+    /** @return iterable<string, array{string, string, list<string>, list<string>}> */
+    public static function provideHtaccessRedirectionPaths(): iterable
+    {
+        yield 'plain path' => ['/tools', '^/tools/?$', ['/tools', '/tools/'], ['/tools/x', '/toolsx', '/other/tools']];
+        yield 'trailing slash' => ['/guides/', '^/guides/?$', ['/guides', '/guides/'], ['/guides/x']];
+        yield 'homepage' => ['/', '^/?$', ['/'], ['/x']];
+        yield 'dot' => ['/old-page.html', '^/old-page\.html/?$', ['/old-page.html'], ['/old-pagexhtml']];
+        yield 'other metacharacters' => ['/c++/a|b', '^/c\+\+/a\|b/?$', ['/c++/a|b'], ['/c/a', '/b']];
+    }
+
     public function testLocaleErrorRoutingSkippedOnSingleLocaleSite(): void
     {
         self::bootKernel();
@@ -1686,6 +1754,97 @@ final class StaticGeneratorTest extends KernelTestCase
 
         // Stderr also reaches the operator while the build runs, not only after it.
         self::assertStringContainsString('[W1] PHP Fatal error: boom', $output->fetch());
+    }
+
+    /**
+     * A page that fails to render is an error the worker records in its own
+     * process. Unless the worker hands it back, the parent swaps the incomplete
+     * export into place and reports success.
+     */
+    #[Group('serial')]
+    public function testAPageFailingInAWorkerFailsTheBuild(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $staticDir = $this->getStaticDir();
+
+        $probe = $this->makeProbePage('worker-failure-probe');
+        $probe->template = '/page/no-such-template.html.twig';
+
+        $em->persist($probe);
+        $em->flush();
+
+        try {
+            $commandTester = $this->rebootStaticCommandTester();
+            $commandTester->execute(['host' => 'localhost.dev', '--workers' => 2, '--format' => 'text']);
+
+            $display = $commandTester->getDisplay();
+            self::assertSame(1, $commandTester->getStatusCode(), $display);
+            self::assertMatchesRegularExpression('#Worker \d failed \(exit 1: [^)]+\): An error occured when generating \[\S*/worker-failure-probe\]#', $display);
+            self::assertStringNotContainsString('generated with success', $display);
+            self::assertFileDoesNotExist($staticDir.'/index.html', 'an incomplete export must not be swapped into place');
+        } finally {
+            new Filesystem()->remove($staticDir.'~'); // aborted swap leaves the temp dir
+
+            $resetEm = self::getContainer()->get('doctrine.orm.default_entity_manager');
+            $planted = self::getContainer()->get(PageRepository::class)
+                ->findOneBy(['host' => 'localhost.dev', 'slug' => 'worker-failure-probe']);
+            if (null !== $planted) {
+                $resetEm->remove($planted);
+                $resetEm->flush();
+            }
+        }
+    }
+
+    /**
+     * A page that throws, rather than rendering a 500, is caught inside the
+     * worker's chunk loop. That catch used to echo the message to stdout, which
+     * the parent only relays, so the build still reported success.
+     */
+    public function testAPageThrowingInAWorkerChunkIsABuildError(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        // `..` survives slug normalization, so this page's output path escapes the
+        // static dir and PathGuard throws.
+        $probe = $this->makeProbePage('../worker-throw-probe');
+        self::assertSame('../worker-throw-probe', $probe->slug, 'slug normalization changed: pick another way to throw');
+        $em->persist($probe);
+        $em->flush();
+
+        $scratch = sys_get_temp_dir().'/pushword-worker-throw-'.getmypid();
+        $staticAppGenerator = $this->getStaticAppGenerator();
+
+        try {
+            /** @var PagesGenerator $pagesGenerator */
+            $pagesGenerator = $this->getGenerator(PagesGenerator::class);
+            ob_start();
+
+            try {
+                $pagesGenerator->generateSlugs([$probe->slug], $scratch.'.json', $scratch.'-redirections.json', 'localhost.dev');
+            } finally {
+                $stdout = (string) ob_get_clean();
+            }
+
+            self::assertSame(
+                ['Failed to generate localhost.dev/../worker-throw-probe: The resolved path escapes its configured directory.'],
+                $staticAppGenerator->getErrors(),
+            );
+            self::assertStringNotContainsString('[ERROR]', $stdout);
+        } finally {
+            new Filesystem()->remove([$scratch.'.json', $scratch.'-redirections.json']);
+
+            $resetEm = self::getContainer()->get('doctrine.orm.default_entity_manager');
+            $planted = self::getContainer()->get(PageRepository::class)
+                ->findOneBy(['host' => 'localhost.dev', 'slug' => '../worker-throw-probe']);
+            if (null !== $planted) {
+                $resetEm->remove($planted);
+                $resetEm->flush();
+            }
+        }
     }
 
     public function testStateMergeFromFile(): void

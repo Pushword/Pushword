@@ -218,7 +218,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
                     'epoch' => $epoch,
                 ];
             } catch (Throwable $e) {
-                echo \sprintf("[ERROR] %s/%s: %s\n", $hostName, $slug, $e->getMessage());
+                $this->setError(\sprintf('Failed to generate %s/%s: %s', $hostName, $slug, $e->getMessage()));
             }
 
             if (0 === $currentPage % 2) {

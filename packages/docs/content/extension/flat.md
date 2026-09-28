@@ -366,7 +366,8 @@ redirectFrom:
 - The value is a `{ oldPath: httpCode }` map. A Jekyll-style bare list (`- cms-comparison`)
   is accepted on import and treated as `301`. Paths are host-scoped (same host as the page).
 - Served at runtime and by the static generator (`.htaccess`, `Caddyfile`, and the HTML
-  meta-refresh stub for GitHub Pages), exactly like `redirection.csv` entries.
+  meta-refresh stub for GitHub Pages), exactly like `redirection.csv` entries. Each one
+  matches its exact path, trailing slash optional: `old` never redirects `old/child`.
 - A slug rename now appends the old slug to the destination page's `redirectFrom` (no phantom
   redirect page is created).
 - Internal links to an old path are rewritten at render to the current slug

@@ -5,15 +5,24 @@ declare(strict_types=1);
 namespace Pushword\Core\Tests\Service;
 
 use PHPUnit\Framework\Attributes\Group;
+use Psr\Log\LogLevel;
+use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedLink;
 use Pushword\Core\Service\Markdown\MarkdownParser;
+use Pushword\Core\Service\Markdown\TempestMarkdownRenderer;
 use Pushword\Core\Site\RequestContext;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\ErrorHandler\BufferingLogger;
+use Twig\Environment as Twig;
 
 #[Group('integration')]
 final class MarkdownExtensionTest extends KernelTestCase
 {
+    /** Markdown Tempest declines: a multi-attribute `{…}` block. */
+    private const string TEMPEST_DECLINED = 'See [the site](/twitter){rel="encrypt" class="ninja"}.';
+
     private function getMarkdownParser(): MarkdownParser
     {
         self::bootKernel();
@@ -518,5 +527,74 @@ MD;
 
         // La date devrait être remplacée hors du code (2025) mais pas dans le code (date(Y))
         self::assertStringContainsString(date('Y'), $result);
+    }
+
+    // ===== Syntax Tempest declines =====
+
+    public function testSyntaxTempestDeclinesIsRenderedByCommonMark(): void
+    {
+        self::assertNull(new TempestMarkdownRenderer()->render(self::TEMPEST_DECLINED), 'Tempest renders this now: pick syntax it still declines.');
+
+        self::assertSame(
+            "<p>See <a class=\"ninja\" rel=\"encrypt\" href=\"/twitter\">the site</a>.</p>\n",
+            $this->getMarkdownParser()->transform(self::TEMPEST_DECLINED),
+        );
+    }
+
+    public function testInlineSyntaxTempestDeclinesIsRenderedByCommonMark(): void
+    {
+        self::assertNull(new TempestMarkdownRenderer()->renderInline(self::TEMPEST_DECLINED), 'Tempest renders this now: pick syntax it still declines.');
+
+        self::assertSame(
+            'See <a class="ninja" rel="encrypt" href="/twitter">the site</a>.',
+            $this->getMarkdownParser()->transformInline(self::TEMPEST_DECLINED),
+        );
+    }
+
+    /** Uncached, so every call reaches convert(). */
+    private function parserLoggingTo(BufferingLogger $logger): MarkdownParser
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+
+        return new MarkdownParser(
+            $container->get(LinkProvider::class),
+            $container->get(MediaExtension::class),
+            $container->get(SiteRegistry::class),
+            $container->get(Twig::class),
+            logger: $logger,
+        );
+    }
+
+    public function testTempestDecliningIsLoggedAsANotice(): void
+    {
+        $logger = new BufferingLogger();
+        $parser = $this->parserLoggingTo($logger);
+
+        $parser->transform('Plain **Markdown**.');
+        self::assertSame([], $logger->cleanLogs(), 'Markdown Tempest renders must not be logged');
+
+        $parser->transformInline(self::TEMPEST_DECLINED);
+        self::assertSame(
+            [[LogLevel::NOTICE, 'Markdown rendered by CommonMark: Tempest declined it.', ['markdown' => self::TEMPEST_DECLINED]]],
+            $logger->cleanLogs(),
+        );
+    }
+
+    /** The CommonMark fallback keeps images media-rendered, inline fragments included. */
+    public function testImageInSyntaxTempestDeclinesStaysMediaRendered(): void
+    {
+        $markdown = '![Alt text](/media/2.jpg) '.self::TEMPEST_DECLINED;
+        $logger = new BufferingLogger();
+        $parser = $this->parserLoggingTo($logger);
+
+        $block = $parser->transform($markdown);
+        $inline = $parser->transformInline($markdown);
+
+        self::assertCount(2, $logger->cleanLogs(), 'Tempest rendered it: this no longer exercises the fallback.');
+        foreach ([$block, $inline] as $html) {
+            self::assertStringContainsString('<picture', $html);
+            self::assertStringContainsString('class="ninja"', $html);
+        }
     }
 }

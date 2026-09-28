@@ -9,6 +9,7 @@ use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
@@ -58,6 +59,14 @@ final readonly class StaticWorkerCommand
 
         $pagesGenerator->generateSlugs($slugList, $stateFile, $redirectionsFile, $host);
 
-        return Command::SUCCESS;
+        // The parent sees only this process's exit code and stderr: an error kept
+        // in this process's generator would let the build report success.
+        $errors = $this->staticAppGenerator->getErrors();
+        $errorOutput = $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output;
+        foreach ($errors as $error) {
+            $errorOutput->writeln($error, OutputInterface::OUTPUT_RAW);
+        }
+
+        return [] === $errors ? Command::SUCCESS : Command::FAILURE;
     }
 }

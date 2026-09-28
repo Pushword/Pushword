@@ -49,12 +49,17 @@ class HtaccessGenerator extends PageGenerator
     /**
      * The function cache redirection found during generatePages and
      * format in self::$redirection the content for the .htaccess.
+     *
+     * RedirectMatch, not Redirect: Redirect matches a path prefix, so
+     * `Redirect 301 /tools /free-tools` also sent /tools/x to /free-tools/x.
+     * Only the regex metacharacters are escaped, so the rule stays readable.
      */
     protected function getRedirections(): string
     {
         $return = '';
         foreach ($this->redirectionManager->get() as $r) {
-            $return .= 'Redirect '.$r[2].' '.$r[0].' '.$r[1].\PHP_EOL;
+            $pattern = '^'.addcslashes(rtrim($r[0], '/'), '\\.+*?[]^$(){}|').'/?$';
+            $return .= 'RedirectMatch '.$r[2].' '.$pattern.' '.$r[1].\PHP_EOL;
         }
 
         return $return;
