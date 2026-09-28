@@ -224,18 +224,20 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             // Restore original staticDir before atomic swap
             $app->setCustomProperty('static_dir', $originalStaticDir);
 
-            // Lint BEFORE the swap: a poisoned export must never replace the
+            // Held pages are skipped by the generators, so the temp dir lacks
+            // their output. Carry them over before linting so the guard checks
+            // the exact tree that would be published.
+            if (! $this->abortGeneration) {
+                $this->carryOverHeldPages($originalStaticDir, $tempDir, $app, $filesystem);
+            }
+
+            // Lint before the swap: a poisoned export must never replace the
             // last good one (a lint error aborts, so the site keeps serving it).
             if (! $this->abortGeneration) {
                 $this->lintGeneratedOutput($tempDir);
             }
 
             if (! $this->abortGeneration) {
-                // Held pages are skipped by the generators, so the temp dir lacks
-                // their output. Carry the previously published files over so the
-                // atomic swap keeps serving the held version instead of dropping it.
-                $this->carryOverHeldPages($originalStaticDir, $tempDir, $app, $filesystem);
-
                 $backupDir = $originalStaticDir.'~~';
                 $filesystem->remove($backupDir);
 

@@ -40,3 +40,9 @@ Several changes land here between two tags: append to the file, do not replace i
 ## Typography output is more precise
 
 Typography now preserves line breaks around dimensions, units, copyright and punctuation, formats nested quotations by locale, and normalizes prose to Unicode NFC. No action is required.
+
+**Concerns:** pushword/static-generator
+
+## Static generation rejects invalid UTF-8
+
+Static generation now refuses to overwrite a valid page with malformed UTF-8 and checks the complete output tree before an atomic swap. If an incremental generation reports invalid UTF-8 from an older static file, run a full `pw:static` generation once to replace it.

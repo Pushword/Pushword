@@ -184,7 +184,14 @@ class PageGenerator extends AbstractGenerator
             return;
         }
 
-        if ($this->responseIsHtml($response) && null !== $page) {
+        $isHtml = $this->responseIsHtml($response);
+        if ($isHtml && ! mb_check_encoding($content, 'UTF-8')) {
+            $this->setErrorFor($liveUri, $page, 'invalid UTF-8 before minification');
+
+            return;
+        }
+
+        if ($isHtml && null !== $page) {
             if (str_contains($content, '<!-- pager:')) {
                 $this->extractPager($page, $content);
             }
@@ -192,6 +199,12 @@ class PageGenerator extends AbstractGenerator
             $stopwatch?->start('html.compress');
             $content = $this->compress($content);
             $stopwatch?->stop('html.compress');
+        }
+
+        if ($isHtml && ! mb_check_encoding($content, 'UTF-8')) {
+            $this->setErrorFor($liveUri, $page, 'invalid UTF-8 after minification');
+
+            return;
         }
 
         // Skip write+compression if content is identical (useful in incremental mode)
@@ -204,7 +217,7 @@ class PageGenerator extends AbstractGenerator
         $stopwatch?->stop('file.write');
 
         // Generate compressed sidecars for static content
-        if ($this->responseIsHtml($response) || str_contains($destination, '.xml')) {
+        if ($isHtml || str_contains($destination, '.xml')) {
             $this->generateCompressedSidecars($destination);
         }
     }

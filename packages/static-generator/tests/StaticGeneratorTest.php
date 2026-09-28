@@ -385,7 +385,20 @@ final class StaticGeneratorTest extends KernelTestCase
                 (string) file_get_contents($indexFile),
                 'Held page must keep serving its previously published version',
             );
+
+            // The carried-over files become part of the candidate tree, so they
+            // must be linted before that tree replaces the published one.
+            $invalidContent = "<!DOCTYPE html><html><body>caf\xA9</body></html>";
+            file_put_contents($indexFile, $invalidContent);
+            $commandTester = $this->rebootStaticCommandTester();
+            $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
+
+            self::assertSame(1, $commandTester->getStatusCode());
+            self::assertStringContainsString('Invalid UTF-8 in index.html', $commandTester->getDisplay());
+            self::assertSame($invalidContent, file_get_contents($indexFile), 'a rejected candidate tree must never be swapped in');
         } finally {
+            new Filesystem()->remove($staticDir.'~');
+
             // Restore pristine state for the shared worker DB.
             $resetEm = self::getContainer()->get('doctrine.orm.default_entity_manager');
             $reloaded = self::getContainer()->get(PageRepository::class)
@@ -1058,6 +1071,35 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertCount(1, $errors);
         self::assertStringContainsString('status code 500', $errors[0]);
         self::assertStringContainsString('Twig error: variable not found', $errors[0]);
+    }
+
+    public function testInvalidUtf8ResponseNeverReplacesStaticFile(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $generator = $this->getGenerator(PagesGenerator::class);
+        $kernel = self::createStub(KernelInterface::class);
+        $kernel->method('handle')->willReturn(
+            new Response("<!DOCTYPE html><html><body>caf\xA9</body></html>", Response::HTTP_OK, ['Content-Type' => 'text/html']),
+        );
+
+        $originalAppKernel = AbstractGenerator::$appKernel;
+        AbstractGenerator::$appKernel = $kernel;
+        $destination = $this->getStaticDir().'/invalid-utf8.html';
+        new Filesystem()->mkdir($this->getStaticDir());
+        file_put_contents($destination, '<!DOCTYPE html><html><body>last good</body></html>');
+
+        try {
+            new ReflectionMethod(AbstractGenerator::class, 'init')->invoke($generator, 'localhost.dev');
+            new ReflectionMethod(PageGenerator::class, 'saveAsStatic')
+                ->invoke($generator, '/invalid-utf8', $destination, null);
+        } finally {
+            AbstractGenerator::$appKernel = $originalAppKernel;
+        }
+
+        self::assertSame('<!DOCTYPE html><html><body>last good</body></html>', file_get_contents($destination));
+        self::assertStringContainsString('invalid UTF-8 before minification', implode(' | ', $this->getStaticAppGenerator()->getErrors()));
     }
 
     public function testNonPageRouteFallsBackToHttpRendering(): void
