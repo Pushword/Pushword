@@ -1,5 +1,5 @@
 ---
-title: 'static exports retain the published homepage'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,11 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/static-generator`.
-
-## Static exports retain the published homepage
-
-`pw:static` now fails if a rebuild would remove an existing `index.html` or a
-worker cannot load every assigned page. No action is needed for normal rebuilds;
-remove the old `index.html` first if deleting the homepage is intentional.
