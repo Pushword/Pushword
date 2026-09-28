@@ -145,6 +145,11 @@ starts a background pass and returns a URL to poll. See
 Hosts with 10+ pages are rendered by parallel worker processes. Nothing to
 configure.
 
+Each worker must find every published slug assigned to it. A missing page fails
+the build instead of publishing a partial export. A full build also keeps the
+current site if it has an `index.html` and the new export does not. If removing
+the homepage is intentional, remove the old `index.html` before regenerating.
+
 The workers used to be spawned with an opcache file cache
 (`opcache.enable=1 opcache.enable_cli=1 opcache.file_cache=…`) so compiled
 scripts survived their short lives — worth about 18% on a fresh pass. They no

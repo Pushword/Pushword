@@ -197,6 +197,11 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
         $originalStaticDir = $app->getStr('static_dir');
         $filesystem = new Filesystem();
+        $hasExistingHomePage = is_file($originalStaticDir.'/index.html');
+
+        if ($hasExistingHomePage && [] === $this->pageRepository->findPublishedSlugs($host)) {
+            throw new RuntimeException('No published pages found; keeping the last published site.');
+        }
 
         $this->cleanupStaleTempDirs($originalStaticDir, $filesystem);
 
@@ -229,6 +234,10 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             // the exact tree that would be published.
             if (! $this->abortGeneration) {
                 $this->carryOverHeldPages($originalStaticDir, $tempDir, $app, $filesystem);
+            }
+
+            if (! $this->abortGeneration && $hasExistingHomePage && ! is_file($tempDir.'/index.html')) {
+                $this->setError('Generated site is missing index.html; keeping the last published site.');
             }
 
             // Lint before the swap: a poisoned export must never replace the

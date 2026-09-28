@@ -10,6 +10,7 @@ use Override;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\StaticGenerator\IncrementalGeneratorInterface;
+use RuntimeException;
 use Throwable;
 
 class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterface
@@ -180,8 +181,14 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         $this->pinRenderLightCache();
         $pages = $this->getPageRepository()->getPublishedPages($this->app->getMainHost());
 
-        $slugSet = array_flip($slugs);
-        $pages = array_filter($pages, static fn (Page $page): bool => isset($slugSet[$page->slug]));
+        $requestedSlugs = array_flip($slugs);
+        $pages = array_filter($pages, static fn (Page $page): bool => isset($requestedSlugs[$page->slug]));
+        $loadedSlugs = array_fill_keys(array_map(static fn (Page $page): string => $page->slug, $pages), true);
+        $missingSlugs = array_keys(array_diff_key($requestedSlugs, $loadedSlugs));
+        if ([] !== $missingSlugs) {
+            throw new RuntimeException(\sprintf('Worker could not load %d published page(s), including %s; refusing an incomplete static export.', \count($missingSlugs), implode(', ', array_slice($missingSlugs, 0, 3))));
+        }
+
         $this->getPageRepository()->preloadTranslations($pages);
         $this->preloadParentPageIdsWithChildren();
 

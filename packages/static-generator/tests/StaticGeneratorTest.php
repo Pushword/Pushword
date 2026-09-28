@@ -43,6 +43,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionMethod;
 use ReflectionProperty;
+use RuntimeException;
 
 use function Safe\realpath;
 
@@ -970,6 +971,94 @@ final class StaticGeneratorTest extends KernelTestCase
                 $resetEm->flush();
             }
         }
+    }
+
+    #[Group('serial')]
+    public function testFullBuildKeepsPublishedSiteWhenTheNewExportHasNoHomePage(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $site = self::getContainer()->get(SiteRegistry::class)->switchSite('localhost.dev')->get();
+        $generators = $site->getArray('static_generators');
+        $staticDir = $this->getStaticDir();
+
+        $tester = new CommandTester(new Application(self::$kernel)->find('pw:static')); // @phpstan-ignore-line
+        $tester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
+        self::assertSame(0, $tester->getStatusCode(), $tester->getDisplay());
+        $publishedHomeContent = (string) file_get_contents($staticDir.'/index.html');
+
+        try {
+            // A misconfigured generator list can produce assets and an error page
+            // without any content pages, which must not replace the live site.
+            $site->setCustomProperty('static_generators', array_values(array_filter(
+                $generators,
+                static fn (mixed $generator): bool => PagesGenerator::class !== $generator,
+            )));
+
+            $tester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
+
+            self::assertSame(1, $tester->getStatusCode(), $tester->getDisplay());
+            self::assertStringContainsString('missing index.html', $tester->getDisplay());
+            self::assertSame($publishedHomeContent, file_get_contents($staticDir.'/index.html'));
+        } finally {
+            $site->setCustomProperty('static_generators', $generators);
+            new Filesystem()->remove($staticDir.'~');
+        }
+    }
+
+    #[Group('serial')]
+    public function testFullBuildRefusesToReplacePublishedSiteWhenAllPagesAreUnpublished(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $pageRepository = self::getContainer()->get(PageRepository::class);
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $staticDir = $this->getStaticDir();
+        $staticAppGenerator = $this->getStaticAppGenerator();
+
+        $staticAppGenerator->generate('localhost.dev');
+
+        $indexFile = $staticDir.'/index.html';
+        self::assertFileExists($indexFile);
+        $publishedHomeContent = (string) file_get_contents($indexFile);
+
+        $publishedPages = $pageRepository->getPublishedPages('localhost.dev');
+        self::assertNotEmpty($publishedPages);
+        $publishedAt = [];
+        foreach ($publishedPages as $page) {
+            $publishedAt[spl_object_id($page)] = $page->publishedAt;
+            $page->publishedAt = null;
+        }
+
+        $em->flush();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageIsOrContains('No published pages found; keeping the last published site.');
+
+        try {
+            $staticAppGenerator->generate('localhost.dev');
+        } finally {
+            foreach ($publishedPages as $page) {
+                $page->publishedAt = $publishedAt[spl_object_id($page)];
+            }
+
+            $em->flush();
+
+            self::assertSame($publishedHomeContent, file_get_contents($indexFile));
+        }
+    }
+
+    public function testWorkerRejectsMissingPublishedSlugs(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $generator = $this->getGenerator(PagesGenerator::class);
+        self::assertInstanceOf(PagesGenerator::class, $generator);
+        $scratch = sys_get_temp_dir().'/pushword-missing-slug-'.getmypid();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageIsOrContains('Worker could not load 1 published page(s), including missing-page');
+        $generator->generateSlugs(['missing-page'], $scratch.'.json', $scratch.'-redirections.json', 'localhost.dev');
     }
 
     public function testGenerateCNAME(): void
