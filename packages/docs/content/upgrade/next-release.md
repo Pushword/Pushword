@@ -1,5 +1,5 @@
 ---
-title: 'typography preserves line breaks and supports nested quotations'
+title: 'typography preserves line breaks and supports nested quotations; static generation rejects invalid UTF-8'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,13 +35,11 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** pushword/admin-block-editor, pushword/core, pushword/flat
+**Concerns:** `pushword/admin-block-editor`, `pushword/core`, `pushword/flat`, `pushword/static-generator`
 
 ## Typography output is more precise
 
 Typography now preserves line breaks around dimensions, units, copyright and punctuation, formats nested quotations by locale, and normalizes prose to Unicode NFC. No action is required.
-
-**Concerns:** pushword/static-generator
 
 ## Static generation rejects invalid UTF-8
 
