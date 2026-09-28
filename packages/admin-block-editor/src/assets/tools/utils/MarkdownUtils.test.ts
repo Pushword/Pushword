@@ -37,9 +37,27 @@ describe('MarkdownUtils.fixer', () => {
     )
   })
 
-  it('does not pull a line break into the space-before-punctuation fix', () => {
+  it('adds the missing space after a prose comma', () => {
+    expect(MarkdownUtils.fixer('mot ,suite puis autre,suite')).toBe(
+      'mot, suite puis autre, suite',
+    )
+    expect(MarkdownUtils.fixer('1,7 million')).toBe('1,7 million')
+  })
+
+  it('does not clean punctuation or whitespace inside markup attributes', () => {
+    expect(
+      MarkdownUtils.fixer(
+        '<span data-html="<b>a,b</b>" class="x  y">mot,suite et <em>fin,</em></span>',
+      ),
+    ).toBe('<span data-html="<b>a,b</b>" class="x  y">mot, suite et <em>fin,</em></span>')
+    expect(MarkdownUtils.fixer('Voir example.com et fichier.php')).toBe(
+      'Voir example.com et fichier.php',
+    )
+  })
+
+  it('removes a space before punctuation without pulling in a line break', () => {
     const text = '- un ,\n- deux .\n- trois'
-    expect(MarkdownUtils.fixer(text)).toBe(text)
+    expect(MarkdownUtils.fixer(text)).toBe('- un,\n- deux .\n- trois')
   })
 })
 
@@ -409,9 +427,15 @@ describe('MarkdownUtils.convertInlineHtmlToMarkdown typography normalization', (
   it('straightens typographic characters so sources stay plain', () => {
     expect(
       MarkdownUtils.convertInlineHtmlToMarkdown(
-        'L’ami dit “bonjour”, „hallo“ et ‘salut’…',
+        'L’ami dit “bonjour”, „hallo“, «cité», ‘salut’ et ‹bis›…',
       ),
-    ).toBe('L\'ami dit "bonjour", "hallo" et \'salut\'...')
+    ).toBe('L\'ami dit "bonjour", "hallo", "cité", \'salut\' et \'bis\'...')
+  })
+
+  it('normalizes decomposed Unicode in prose', () => {
+    expect(
+      MarkdownUtils.convertInlineHtmlToMarkdown('Cafe\u0301 et e\u0301te\u0301'),
+    ).toBe('Café et été')
   })
 
   it('replaces no-break spaces and drops zero-width characters', () => {
@@ -455,6 +479,12 @@ describe('MarkdownUtils.convertInlineHtmlToMarkdown typography normalization', (
 })
 
 describe('MarkdownUtils.normalizeTypography code protection', () => {
+  it('keeps decomposed Unicode in code while normalizing prose to NFC', () => {
+    expect(MarkdownUtils.normalizeTypography('e\u0301crit `e\u0301crit`')).toBe(
+      'écrit `e\u0301crit`',
+    )
+  })
+
   it('keeps a fenced block byte-identical while straightening the prose around it', () => {
     expect(
       MarkdownUtils.normalizeTypography(

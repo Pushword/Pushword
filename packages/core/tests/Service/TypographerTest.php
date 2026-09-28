@@ -108,6 +108,19 @@ final class TypographerTest extends TestCase
             '<p>Photo 30 × 40, ©'.self::NBSP.'2026 Pushword™®</p>',
             $this->typographer->fix('<p>Photo 30 x 40, (c) 2026 Pushword(tm)(r)</p>', 'en')
         );
+        self::assertSame('<p>3× 4 et 5 ×6</p>', $this->typographer->fix('<p>3x 4 et 5 x6</p>', 'fr'));
+    }
+
+    public function testLineBreaksAreNotTypographySpaces(): void
+    {
+        self::assertSame("<p>3 x\n4</p>", $this->typographer->fix("<p>3 x\n4</p>", 'fr'));
+        self::assertSame("<p>10\n€</p>", $this->typographer->fix("<p>10\n€</p>", 'fr'));
+        self::assertSame("<p>©\n2026</p>", $this->typographer->fix("<p>(c)\n2026</p>", 'fr'));
+        self::assertSame("<p>Bonjour\n!</p>", $this->typographer->fix("<p>Bonjour\n!</p>", 'fr'));
+        self::assertSame("<p>Bonjour\n: suite</p>", $this->typographer->fix("<p>Bonjour\n: suite</p>", 'fr'));
+
+        self::assertSame("<p>3\t×\t4</p>", $this->typographer->fix("<p>3\tx\t4</p>", 'fr'));
+        self::assertSame('<p>10'.self::NBSP.'€</p>', $this->typographer->fix("<p>10\t€</p>", 'fr'));
     }
 
     public function testNoDashRule(): void
@@ -161,18 +174,85 @@ final class TypographerTest extends TestCase
         self::assertSame($unclosed, $this->typographer->fix($unclosed, 'fr'));
     }
 
-    public function testSingleQuotePairStaysStraight(): void
+    public function testNestedSingleQuotesAndApostrophes(): void
     {
-        // No letter follows the closing apostrophe: curling only one side
-        // would mismatch the pair
         self::assertSame(
-            "<p>He said 'hello' to all, rock 'n' roll</p>",
+            '<p>He said ‘hello’ to all, rock ‘n’ roll</p>',
             $this->typographer->fix("<p>He said 'hello' to all, rock 'n' roll</p>", 'en')
         );
-        self::assertSame("<p>He said 'hello'</p>", $this->typographer->fix("<p>He said 'hello'</p>", 'en'));
+        self::assertSame('<p>“This ‘magic’ piece”</p>', $this->typographer->fix('<p>"This \'magic\' piece"</p>', 'en'));
+        self::assertSame(
+            '<p>“This ‘doesn’t fail’ either”</p>',
+            $this->typographer->fix('<p>"This \'doesn\'t fail\' either"</p>', 'en')
+        );
+        self::assertSame('<p>«'.self::NBSP.'Il dit “oui”'.self::NBSP.'»</p>', $this->typographer->fix("<p>&quot;Il dit 'oui'&quot;</p>", 'fr'));
 
-        // Only a letter opens an in-word apostrophe (JoliTypo parity)
+        // Apostrophes and measurement marks are not quotation pairs.
+        self::assertSame('<p>It’s 6\' 10" in the 80\'s</p>', $this->typographer->fix('<p>It\'s 6\' 10" in the 80\'s</p>', 'en'));
         self::assertSame("<p>the 80's</p>", $this->typographer->fix("<p>the 80's</p>", 'en'));
+    }
+
+    public function testNestedQuoteStylesFollowLocale(): void
+    {
+        $expectations = [
+            'de' => '<p>„Außen ‚innen‘“</p>',
+            'de-CH' => '<p>«'.self::NNBSP.'Außen ‹innen›'.self::NNBSP.'»</p>',
+            'es' => '<p>«Außen “innen”»</p>',
+            'ru' => '<p>«Außen „innen“»</p>',
+            'pl' => '<p>„Außen «innen»“</p>',
+            'sv' => '<p>”Außen ’innen’”</p>',
+        ];
+
+        foreach ($expectations as $locale => $expected) {
+            self::assertSame($expected, $this->typographer->fix('<p>"Außen \'innen\'"</p>', $locale), 'Locale '.$locale);
+        }
+    }
+
+    public function testSmartQuotesDistinguishMeasurements(): void
+    {
+        self::assertSame(
+            '<p>“The man was 5\'6" and 120 lbs.”</p>',
+            $this->typographer->fix('<p>"The man was 5\'6" and 120 lbs."</p>', 'en')
+        );
+        self::assertSame(
+            '<p>He said “hi” beside the 27" monitor.</p>',
+            $this->typographer->fix('<p>He said "hi" beside the 27" monitor.</p>', 'en')
+        );
+        self::assertSame(
+            '<p>“The man was 5\'6&quot; and 120 lbs.”</p>',
+            $this->typographer->fix("<p>&quot;The man was 5'6&quot; and 120 lbs.&quot;</p>", 'en')
+        );
+    }
+
+    public function testQuotesCrossInlineMarkupButNotBlockBoundaries(): void
+    {
+        self::assertSame(
+            '<p>“hello <em>world</em>”.</p>',
+            $this->typographer->fix('<p>"hello <em>world</em>".</p>', 'en')
+        );
+        self::assertSame(
+            '<p>“hello <em>world</em>”.</p>',
+            $this->typographer->fix('<p>&quot;hello <em>world</em>&quot;.</p>', 'en')
+        );
+        self::assertSame(
+            '<p>He said ‘hello <b>world</b>’ and left.</p>',
+            $this->typographer->fix("<p>He said 'hello <b>world</b>' and left.</p>", 'en')
+        );
+        self::assertSame(
+            '<p>Hello<br>“world”</p>',
+            $this->typographer->fix('<p>Hello<br>"world"</p>', 'en')
+        );
+
+        $unpaired = '<p>"unpaired</p><p>other"</p>';
+        self::assertSame($unpaired, $this->typographer->fix($unpaired, 'en'));
+    }
+
+    public function testUnicodeIsNormalizedOutsideProtectedTags(): void
+    {
+        self::assertSame(
+            '<p>élémentaire</p><code>élémentaire</code>',
+            $this->typographer->fix("<p>e\u{0301}le\u{0301}mentaire</p><code>e\u{0301}le\u{0301}mentaire</code>", 'fr')
+        );
     }
 
     public function testElisionBeforeAnOpeningTagOrQuoteCurls(): void

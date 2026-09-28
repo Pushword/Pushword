@@ -78,12 +78,12 @@ final class PageFileSerializerTest extends KernelTestCase
         $fence = "```php\n\$label = \"café\u{2026} déjà\u{A0}!\";\n```";
         $span = "`l\u{2019}exemple\u{2026}`";
         $serialized = $this->serializeBody(
-            "Il dit\u{A0}: \u{201C}bonjour\u{2026}\u{201D}\n\n".$fence."\n\nVoir ".$span." et l\u{2019}ami\u{2026}"
+            "Il dit\u{A0}: \u{201C}bonjour\u{2026}\u{201D}, \u{AB}cité\u{BB} et \u{2039}bis\u{203A}\n\n".$fence."\n\nVoir ".$span." et l\u{2019}ami\u{2026}"
         );
 
         self::assertStringContainsString($fence, $serialized);
         self::assertStringContainsString($span, $serialized);
-        self::assertStringContainsString('Il dit : "bonjour..."', $serialized);
+        self::assertStringContainsString('Il dit : "bonjour...", "cité" et \'bis\'', $serialized);
         self::assertStringContainsString("et l'ami...", $serialized);
     }
 
@@ -94,6 +94,14 @@ final class PageFileSerializerTest extends KernelTestCase
 
         self::assertStringContainsString($fence, $serialized);
         self::assertStringContainsString("l'après...", $serialized);
+    }
+
+    public function testSerializeNormalizesUnicodeCompositionOutsideCode(): void
+    {
+        $decomposed = "e\u{0301}crit";
+        $serialized = $this->serializeBody($decomposed.' `'.$decomposed.'`');
+
+        self::assertStringContainsString('écrit `'.$decomposed.'`', $serialized);
     }
 
     public function testSerializeDoesNotCloseFenceOnShorterRun(): void

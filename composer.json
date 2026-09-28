@@ -89,6 +89,7 @@
     "symfony/mailer": "^8.0",
     "symfony/messenger": "^8.0",
     "symfony/monolog-bundle": "^3.7 || ^4.0",
+    "symfony/polyfill-intl-normalizer": "^1.32",
     "symfony/process": "^7.3 || ^8.0",
     "symfony/rate-limiter": "^8.0",
     "symfony/routing": "^8.0",

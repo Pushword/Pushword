@@ -6,6 +6,7 @@ namespace Pushword\Flat\Serializer;
 
 use DateTimeInterface;
 use Doctrine\Common\Collections\Collection;
+use Normalizer;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Core\Site\SiteRegistry;
@@ -187,7 +188,8 @@ final class PageFileSerializer
 
     /**
      * Keep in sync with `MarkdownUtils.normalizeTypography()`
-     * (admin-block-editor), which applies the same rules on editor saves.
+     * (admin-block-editor), which applies the same Unicode normalization and
+     * typography rules on editor saves.
      * Dashes and `×`/`™`/`©` stay: the render does not re-create every
      * author-typed one, so straightening them would be lossy. Code keeps its
      * bytes for the same reason — the render-time Typographer never touches
@@ -213,10 +215,19 @@ final class PageFileSerializer
 
     private function straightenTypography(string $text): string
     {
+        $normalized = Normalizer::normalize($text, Normalizer::FORM_C);
+        if (is_string($normalized)) {
+            $text = $normalized;
+        }
+
         return strtr($text, [
             "\u{2018}" => "'", // left single quote
             "\u{2019}" => "'", // right single quote / apostrophe
             "\u{201A}" => "'", // single low quote
+            "\u{2039}" => "'", // left single guillemet
+            "\u{203A}" => "'", // right single guillemet
+            "\u{00AB}" => '"', // left guillemet
+            "\u{00BB}" => '"', // right guillemet
             "\u{201C}" => '"', // left double quote
             "\u{201D}" => '"', // right double quote
             "\u{201E}" => '"', // double low quote (German opening)

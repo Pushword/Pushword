@@ -45,6 +45,7 @@
     "symfony/http-client": "^8.0",
     "symfony/lock": "^8.0",
     "symfony/mailer": "^8.0",
+    "symfony/polyfill-intl-normalizer": "^1.32",
     "symfony/process": "^7.3 || ^8.0",
     "symfony/rate-limiter": "^8.0",
     "symfony/security-bundle": "^8.0",

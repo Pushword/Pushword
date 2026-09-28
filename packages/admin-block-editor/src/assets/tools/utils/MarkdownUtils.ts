@@ -556,7 +556,7 @@ export class MarkdownUtils {
     // carries markdown hard breaks ("  \n") and nested list indentation.
     const space = '(?:[^\\S\\r\\n]|\\u00AD)'
 
-    return text
+    text = text
       .replace(/&nbsp;/gi, ' ')
       // Remove useless last space from inline tag
       .replace(/ <\/([a-z]+)>/gi, '</$1> ')
@@ -564,16 +564,34 @@ export class MarkdownUtils {
       .replace(/ ?<(b|i|strong|em|span)> ?<\/(b|i|strong|em|span)> ?/gi, ' ')
       // remove empty inline tag
       .replace(/<(b|i|strong|em|span|a)\b[^>]*><\/\1>/gi, '')
-      // NoSpaceBeforeComma
-      .replace(new RegExp(`([^\\d\\s]+)${space}+,${space}+`, 'gmu'), '$1, ')
-      // NoSpaceBeforeDot
-      .replace(new RegExp(`([^\\d\\s]+)${space}+\\.${space}+`, 'gmu'), '$1. ')
-      // Ampersand
-      .replace(/ &amp; /gi, ' & ')
-      // Remove soft hyphens
-      .replace(/&shy;/g, '')
-      // Remove double spaces, except a line's indentation and a hard break
-      .replace(new RegExp(`(\\S)${space}{2,}(?!\\n)`, 'gmu'), '$1 ')
+
+    return MarkdownUtils.mapHtmlText(text, (prose) =>
+      prose
+        // NoSpaceBeforeComma: remove spaces before it, then ensure one after
+        // it when more prose follows on the same line.
+        .replace(new RegExp(`([^\\d\\s]+)${space}+,`, 'gmu'), '$1,')
+        .replace(new RegExp(`([^\\d\\s]),${space}*(?=[^\\r\\n])`, 'gmu'), '$1, ')
+        // NoSpaceBeforeDot. Requiring an existing following space avoids
+        // changing domains, file names and abbreviations.
+        .replace(new RegExp(`([^\\d\\s]+)${space}+\\.(?=${space})`, 'gmu'), '$1.')
+        .replace(new RegExp(`([^\\d\\s])\\.${space}+(?=[^\\r\\n])`, 'gmu'), '$1. ')
+        // Ampersand
+        .replace(/ &amp; /gi, ' & ')
+        // Remove soft hyphens
+        .replace(/&shy;/g, '')
+        // Remove double spaces, except a line's indentation and a hard break
+        .replace(new RegExp(`(\\S)${space}{2,}(?!\\n)`, 'gmu'), '$1 '),
+    )
+  }
+
+  private static mapHtmlText(text: string, transform: (prose: string) => string): string {
+    const markup =
+      /(<!--[\s\S]*?-->|<[a-zA-Z/!?][^>"']*(?:(?:"[^"]*"|'[^']*')[^>"']*)*>)/g
+
+    return text
+      .split(markup)
+      .map((part, index) => (index % 2 === 1 ? part : transform(part)))
+      .join('')
   }
 
   static convertInlineHtmlToMarkdown(html: string, cleanup = true): string {
@@ -613,8 +631,9 @@ export class MarkdownUtils {
   }
 
   /**
-   * Straighten typographic quotes, ellipsis and spaces so sources stay
-   * plain: typography is re-created at render time by core's Typographer.
+   * Normalize Unicode composition and straighten typographic quotes,
+   * ellipsis and spaces so sources stay plain: typography is re-created at
+   * render time by core's Typographer.
    * Same rules as PageFileSerializer::normalizeTypography() on flat export;
    * keep in sync. Dashes and multiplication/trademark/copyright signs stay:
    * the render does not re-create every author-typed one, so straightening
@@ -639,8 +658,9 @@ export class MarkdownUtils {
 
   private static straightenTypography(text: string): string {
     return text
-      .replace(/[\u2018\u2019\u201A]/g, "'")
-      .replace(/[\u201C\u201D\u201E]/g, '"')
+      .normalize('NFC')
+      .replace(/[\u2018\u2019\u201A\u2039\u203A]/g, "'")
+      .replace(/[\u00AB\u00BB\u201C\u201D\u201E]/g, '"')
       .replace(/\u2026/g, '...')
       .replace(/[\u00A0\u202F\u2009]/g, ' ')
       .replace(/[\u00AD\u200B\u2060\uFEFF]/g, '')

@@ -5268,7 +5268,11 @@ var MarkdownUtils = class MarkdownUtils {
 	}
 	static fixProse(text) {
 		const space = "(?:[^\\S\\r\\n]|\\u00AD)";
-		return text.replace(/&nbsp;/gi, " ").replace(/ <\/([a-z]+)>/gi, "</$1> ").replace(/ ?<(b|i|strong|em|span)> ?<\/(b|i|strong|em|span)> ?/gi, " ").replace(/<(b|i|strong|em|span|a)\b[^>]*><\/\1>/gi, "").replace(new RegExp(`([^\\d\\s]+)${space}+,${space}+`, "gmu"), "$1, ").replace(new RegExp(`([^\\d\\s]+)${space}+\\.${space}+`, "gmu"), "$1. ").replace(/ &amp; /gi, " & ").replace(/&shy;/g, "").replace(new RegExp(`(\\S)${space}{2,}(?!\\n)`, "gmu"), "$1 ");
+		text = text.replace(/&nbsp;/gi, " ").replace(/ <\/([a-z]+)>/gi, "</$1> ").replace(/ ?<(b|i|strong|em|span)> ?<\/(b|i|strong|em|span)> ?/gi, " ").replace(/<(b|i|strong|em|span|a)\b[^>]*><\/\1>/gi, "");
+		return MarkdownUtils.mapHtmlText(text, (prose) => prose.replace(new RegExp(`([^\\d\\s]+)${space}+,`, "gmu"), "$1,").replace(new RegExp(`([^\\d\\s]),${space}*(?=[^\\r\\n])`, "gmu"), "$1, ").replace(new RegExp(`([^\\d\\s]+)${space}+\\.(?=${space})`, "gmu"), "$1.").replace(new RegExp(`([^\\d\\s])\\.${space}+(?=[^\\r\\n])`, "gmu"), "$1. ").replace(/ &amp; /gi, " & ").replace(/&shy;/g, "").replace(new RegExp(`(\\S)${space}{2,}(?!\\n)`, "gmu"), "$1 "));
+	}
+	static mapHtmlText(text, transform) {
+		return text.split(/(<!--[\s\S]*?-->|<[a-zA-Z/!?][^>"']*(?:(?:"[^"]*"|'[^']*')[^>"']*)*>)/g).map((part, index) => index % 2 === 1 ? part : transform(part)).join("");
 	}
 	static convertInlineHtmlToMarkdown(html, cleanup = true) {
 		if (cleanup) html = MarkdownUtils.fixer(html);
@@ -5277,8 +5281,9 @@ var MarkdownUtils = class MarkdownUtils {
 		return MarkdownUtils.normalizeTypography(markdown);
 	}
 	/**
-	* Straighten typographic quotes, ellipsis and spaces so sources stay
-	* plain: typography is re-created at render time by core's Typographer.
+	* Normalize Unicode composition and straighten typographic quotes,
+	* ellipsis and spaces so sources stay plain: typography is re-created at
+	* render time by core's Typographer.
 	* Same rules as PageFileSerializer::normalizeTypography() on flat export;
 	* keep in sync. Dashes and multiplication/trademark/copyright signs stay:
 	* the render does not re-create every author-typed one, so straightening
@@ -5300,7 +5305,7 @@ var MarkdownUtils = class MarkdownUtils {
 		return result + MarkdownUtils.straightenTypography(markdown.slice(cursor));
 	}
 	static straightenTypography(text) {
-		return text.replace(/[\u2018\u2019\u201A]/g, "'").replace(/[\u201C\u201D\u201E]/g, "\"").replace(/\u2026/g, "...").replace(/[\u00A0\u202F\u2009]/g, " ").replace(/[\u00AD\u200B\u2060\uFEFF]/g, "");
+		return text.normalize("NFC").replace(/[\u2018\u2019\u201A\u2039\u203A]/g, "'").replace(/[\u00AB\u00BB\u201C\u201D\u201E]/g, "\"").replace(/\u2026/g, "...").replace(/[\u00A0\u202F\u2009]/g, " ").replace(/[\u00AD\u200B\u2060\uFEFF]/g, "");
 	}
 	/**
 	* Character ranges covered by code, `[from, to)`: fenced blocks first,
