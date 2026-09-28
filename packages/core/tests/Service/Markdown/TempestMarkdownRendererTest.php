@@ -92,6 +92,11 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'html' => ['<span>texte</span>', "<p><span>texte</span></p>\n"];
         yield 'raw input' => ['<input type="checkbox" disabled="" />', "<input type=\"checkbox\" disabled=\"\" />\n"];
         yield 'entity' => ['A & B', "<p>A &amp; B</p>\n"];
+        yield 'triple emphasis around a leading dash' => ['***- Si la chaussure est usée.- Si l\'usure est répartie.***', "<p><strong><em>- Si la chaussure est usée.- Si l'usure est répartie.</em></strong></p>\n"];
+        yield 'triple emphasis glued after punctuation, with a link' => ['Le suivre ?***Notre réponse, [un tapis](/tapis).***', "<p>Le suivre ?<strong><em>Notre réponse, <a href=\"/tapis\">un tapis</a>.</em></strong></p>\n"];
+        yield 'triple emphasis in list items' => ["- ***Pensez à la carte.***\n- ***Rejoignez un [club](/orientation).***", "<ul>\n<li><strong><em>Pensez à la carte.</em></strong></li>\n<li><strong><em>Rejoignez un <a href=\"/orientation\">club</a>.</em></strong></li>\n</ul>\n"];
+        yield 'bold arrows before an empty link' => ['**>> Dossier : [Préparation](/dossier){class="0"}** [](/dossier)', "<p><strong>&gt;&gt; Dossier : <a href=\"/dossier\">Préparation</a></strong> <a href=\"/dossier\"></a></p>\n"];
+        yield 'different nested bullet markers use CommonMark' => ["1. Parent\n   - First\n   * Second", null];
     }
 
     #[DataProvider('cases')]

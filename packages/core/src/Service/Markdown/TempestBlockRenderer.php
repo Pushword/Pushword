@@ -437,17 +437,24 @@ final readonly class TempestBlockRenderer
             return \count($items) === $position ? $html : null;
         }
 
-        if (1 === preg_match('/^[0-9]+\. /', $source) && 1 === preg_match('/\n {3,4}- /', $source)) {
+        if (1 === preg_match('/^[0-9]+\. /', $source) && 1 === preg_match('/\n {3,4}[-*+] /', $source)) {
             $texts = [];
             $childLists = [];
+            $childMarker = null;
             $start = null;
             foreach (explode("\n", rtrim($source, "\n")) as $line) {
                 if (1 === preg_match('/^([0-9]+)\. (.+)$/D', $line, $item)) {
                     $start ??= (int) $item[1];
                     $texts[] = $item[2];
                     $childLists[] = [];
-                } elseif ([] !== $texts && 1 === preg_match('/^ {3,4}- (.+)$/D', $line, $child)) {
-                    $childLists[\count($childLists) - 1][] = $child[1];
+                } elseif ([] !== $texts && 1 === preg_match('/^ {3,4}([-*+]) (.+)$/D', $line, $child)) {
+                    // CommonMark starts another child list when the bullet character changes.
+                    if (null !== $childMarker && $childMarker !== $child[1]) {
+                        return null;
+                    }
+
+                    $childLists[\count($childLists) - 1][] = $child[2];
+                    $childMarker = $child[1];
                 } else {
                     return null;
                 }

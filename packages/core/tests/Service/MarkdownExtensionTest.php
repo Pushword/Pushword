@@ -20,8 +20,8 @@ use Twig\Environment as Twig;
 #[Group('integration')]
 final class MarkdownExtensionTest extends KernelTestCase
 {
-    /** Markdown Tempest declines: a multi-attribute `{…}` block. */
-    private const string TEMPEST_DECLINED = 'See [the site](/twitter){rel="encrypt" class="ninja"}.';
+    /** Markdown Tempest declines: attributes on emphasis. */
+    private const string TEMPEST_DECLINED = 'See **bold**{.a .b} here.';
 
     private function getMarkdownParser(): MarkdownParser
     {
@@ -536,7 +536,7 @@ MD;
         self::assertNull(new TempestMarkdownRenderer()->render(self::TEMPEST_DECLINED), 'Tempest renders this now: pick syntax it still declines.');
 
         self::assertSame(
-            "<p>See <a class=\"ninja\" rel=\"encrypt\" href=\"/twitter\">the site</a>.</p>\n",
+            "<p>See <strong class=\"a b\">bold</strong> here.</p>\n",
             $this->getMarkdownParser()->transform(self::TEMPEST_DECLINED),
         );
     }
@@ -546,7 +546,7 @@ MD;
         self::assertNull(new TempestMarkdownRenderer()->renderInline(self::TEMPEST_DECLINED), 'Tempest renders this now: pick syntax it still declines.');
 
         self::assertSame(
-            'See <a class="ninja" rel="encrypt" href="/twitter">the site</a>.',
+            'See <strong class="a b">bold</strong> here.',
             $this->getMarkdownParser()->transformInline(self::TEMPEST_DECLINED),
         );
     }
@@ -594,7 +594,7 @@ MD;
         self::assertCount(2, $logger->cleanLogs(), 'Tempest rendered it: this no longer exercises the fallback.');
         foreach ([$block, $inline] as $html) {
             self::assertStringContainsString('<picture', $html);
-            self::assertStringContainsString('class="ninja"', $html);
+            self::assertStringContainsString('<strong class="a b">', $html);
         }
     }
 }

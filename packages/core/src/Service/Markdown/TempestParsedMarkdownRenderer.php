@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pushword\Core\Service\Markdown;
 
 use Closure;
+use League\CommonMark\Extension\Attributes\Util\AttributesHelper;
+use League\CommonMark\Parser\Cursor;
 use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Site\SiteRegistry;
@@ -19,8 +21,11 @@ final readonly class TempestParsedMarkdownRenderer
 
     private ?Date $dateFilter;
 
-    /** @param Closure(string): ?string $renderMarkdown */
-    public function __construct(private Markdown $markdown, private ?LinkProvider $linkProvider, private ?SiteRegistry $apps, private TempestImageRestorer $images, private Closure $renderMarkdown)
+    /**
+     * @param Closure(string): ?string $renderMarkdown
+     * @param Closure(string): ?string $renderInline
+     */
+    public function __construct(private Markdown $markdown, private ?LinkProvider $linkProvider, private ?SiteRegistry $apps, private TempestImageRestorer $images, private Closure $renderMarkdown, private Closure $renderInline)
     {
         $this->markdownWithoutFrontMatter = new Markdown(null)->removeRules(FrontMatterRule::class);
         $this->dateFilter = null === $apps ? null : new Date($apps);
@@ -78,8 +83,12 @@ final readonly class TempestParsedMarkdownRenderer
             }
         }
 
-        if (1 === preg_match('/^\|[^\n]+\|\n\|[\s|:-]+\|\n/', $source) && ! str_ends_with(rtrim($source), '|')) {
-            $source = rtrim($source).'|';
+        if (1 === preg_match('/^\|[^\n]+\|\n\|[\s|:-]+\|\n/', $source)) {
+            // GFM makes the closing pipe of a row optional.
+            $source = preg_replace('/^(\|.*[^|\s])[ \t]*$/m', '$1|', rtrim($source));
+            if (null === $source) {
+                return null;
+            }
         }
 
         $table = 1 === preg_match('/^\|[^\n]+\|\n\|([\s|:-]+)\|\n(?:\|[^\n]+\|[ \t]*\n?)+$/D', $source, $tableMatches)
@@ -144,13 +153,14 @@ final readonly class TempestParsedMarkdownRenderer
         }
 
         $tripleEmphasis = [];
-        $source = preg_replace_callback('/\*{3}([^*\[\]`\n]+)\*{3}/', function (array $match) use (&$tripleEmphasis): string {
-            $inner = ($this->renderMarkdown)($match[1]);
-            if (null === $inner || ! str_starts_with($inner, '<p>') || ! str_ends_with($inner, "</p>\n")) {
+        // Inline content: a leading `- ` inside the delimiters is text, not a list.
+        $source = preg_replace_callback('/\*{3}(?!\s)((?:[^*\[\]`\n]|\[[^\[\]\n]*\]\([^()\s]*\))+)(?<!\s)\*{3}/', function (array $match) use (&$tripleEmphasis): string {
+            $inner = ($this->renderInline)($match[1]);
+            if (null === $inner) {
                 return $match[0];
             }
 
-            $tripleEmphasis[] = '<strong><em>'.substr($inner, 3, -5).'</em></strong>';
+            $tripleEmphasis[] = '<strong><em>'.$inner.'</em></strong>';
 
             return "\u{E058}".(\count($tripleEmphasis) - 1)."\u{E059}";
         }, $source);
@@ -241,13 +251,15 @@ final readonly class TempestParsedMarkdownRenderer
 
         $angleLinks = [];
         if (null !== $this->linkProvider && str_contains($source, '](<')) {
-            $source = preg_replace_callback('/#\[([^\]\n]+)\]\(<([^<>\n]+)>\)/', function (array $match) use (&$angleLinks): string {
+            $source = preg_replace_callback('/#\[([^\]\n]+)\]\(<([^<>\n]+)>\)(\{[^{}\n]*\})?/', function (array $match) use (&$angleLinks): string {
                 $label = ($this->renderMarkdown)($match[1]);
-                if (null === $label || ! str_starts_with($label, '<p>') || ! str_ends_with($label, "</p>\n")) {
+                $attributes = isset($match[3]) ? self::linkAttributes($match[3]) : [];
+                if (null === $label || null === $attributes || ! str_starts_with($label, '<p>') || ! str_ends_with($label, "</p>\n")) {
                     return $match[0];
                 }
 
-                $angleLinks[] = $this->linkProvider->renderLink(substr($label, 3, -5), $match[2], [], true);
+                $url = preg_replace_callback('/[^\x21-\x7E]/u', static fn (array $character): string => rawurlencode($character[0]), $match[2]);
+                $angleLinks[] = $this->linkProvider->renderLink(substr($label, 3, -5), $url ?? $match[2], $attributes, true);
 
                 return "\u{E050}".(\count($angleLinks) - 1)."\u{E051}";
             }, $source);
@@ -317,25 +329,16 @@ final readonly class TempestParsedMarkdownRenderer
                 return null;
             }
 
-            $source = preg_replace_callback('/(#?)(\[[^][]+\]\((<[^>\r\n]+>|(?:[^()\r\n]|\\\\[()])*)\))(?:\{(?:\.([A-Za-z0-9_-]+)|class="([A-Za-z0-9_-]+)"|target="([^"]+)"|rel="([A-Za-z0-9_-]+)"|#([A-Za-z0-9_-]+))\})?/', static function (array $match) use (&$links): string {
-                $attributes = [];
-                $dotClass = $match[4] ?? '';
-                $namedClass = $match[5] ?? '';
-                if ('' !== $dotClass || '' !== $namedClass) {
-                    $attributes['class'] = '' !== $dotClass ? $dotClass : $namedClass;
-                } elseif ('' !== ($match[6] ?? '')) {
-                    $attributes['target'] = $match[6];
-                } elseif ('' !== ($match[7] ?? '')) {
-                    $attributes['rel'] = $match[7];
-                } elseif ('' !== ($match[8] ?? '')) {
-                    $attributes['id'] = $match[8];
-                }
-
-                $links[] = ['obfuscated' => '#' === $match[1], 'url' => trim($match[3], '<>'), 'attributes' => $attributes];
+            $invalidAttributes = false;
+            $source = preg_replace_callback('/(#?)(\[[^][]*\]\((<[^>\r\n]+>|(?:[^()\r\n]|\\\\[()])*)\))(\{[^{}\n]*\})?/', static function (array $match) use (&$links, &$invalidAttributes): string {
+                $attributes = isset($match[4]) ? self::linkAttributes($match[4]) : [];
+                $invalidAttributes = $invalidAttributes || null === $attributes;
+                $links[] = ['obfuscated' => '#' === $match[1], 'url' => trim($match[3], '<>'), 'attributes' => $attributes ?? []];
 
                 return $match[2];
             }, $source);
-            if (null === $source) {
+            // A brace block left after a link is one the pattern above could not reach.
+            if (null === $source || $invalidAttributes || str_contains($source, '){')) {
                 return null;
             }
         }
@@ -616,18 +619,27 @@ final readonly class TempestParsedMarkdownRenderer
                         return $this->linkProvider?->renderLink($match[2], $url ?? $rawUrl, $link['attributes'], true) ?? $match[0];
                     }
 
-                    if ([] === $link['attributes']) {
+                    $attributes = $link['attributes'];
+                    // CommonMark keeps the Markdown title over a `title` link attribute.
+                    if (str_contains($match[1], 'PWTITLE')) {
+                        unset($attributes['title']);
+                    }
+
+                    if ([] === $attributes) {
                         return $match[0];
                     }
 
-                    $name = array_key_first($link['attributes']);
-                    $value = $link['attributes'][$name];
-                    $openingTag = str_replace('<a ', '<a '.$name.'="'.htmlspecialchars($value, \ENT_QUOTES).'" ', $match[1]);
-                    if ('target' === $name && '_blank' === $value) {
-                        $openingTag = substr($openingTag, 0, -1).' rel="noopener noreferrer">';
+                    $opening = '<a';
+                    foreach ($attributes as $name => $value) {
+                        $opening .= ' '.$name.'="'.htmlspecialchars($value, \ENT_QUOTES).'"';
                     }
 
-                    return $openingTag.$match[2].'</a>';
+                    $opening .= substr($match[1], 2);
+                    if ('_blank' === ($attributes['target'] ?? null) && ! isset($attributes['rel'])) {
+                        $opening = substr($opening, 0, -1).' rel="noopener noreferrer">';
+                    }
+
+                    return $opening.$match[2].'</a>';
                 }, $html);
             } catch (Throwable) {
                 return null;
@@ -778,6 +790,32 @@ final readonly class TempestParsedMarkdownRenderer
         }
 
         return rtrim($html)."\n";
+    }
+
+    /**
+     * Reads a `{…}` block after a link the way CommonMark's attributes extension does,
+     * so `class="0"` vanishes there too. Null when CommonMark would leave it as text.
+     *
+     * @return array<string, string>|null
+     */
+    private static function linkAttributes(string $block): ?array
+    {
+        $cursor = new Cursor($block);
+        $attributes = AttributesHelper::parseAttributes($cursor);
+        if (! $cursor->isAtEnd()) {
+            return null;
+        }
+
+        $attributes = AttributesHelper::filterAttributes($attributes, [], true);
+        unset($attributes['href']);
+        foreach ($attributes as $value) {
+            if (! \is_string($value)) {
+                return null;
+            }
+        }
+
+        /** @var array<string, string> $attributes */
+        return $attributes;
     }
 
     private function normalizeTable(string $html): ?string

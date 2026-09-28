@@ -32,7 +32,7 @@ final readonly class TempestMarkdownRenderer
         $markdown = new Markdown(null);
         $markdown->removeRules(HeadingRule::class)->prependRules(new HeadingWithoutIdRule());
         $images = new TempestImageRestorer($mediaExtension, $apps);
-        $parsed = new TempestParsedMarkdownRenderer($markdown, $linkProvider, $apps, $images, $this->render(...));
+        $parsed = new TempestParsedMarkdownRenderer($markdown, $linkProvider, $apps, $images, $this->render(...), $this->renderInline(...));
         $notices = new TempestNoticeRenderer($twig, $apps, $this->render(...));
         $this->standalone = new TempestStandaloneRenderer($linkProvider, $apps, $notices, $this->render(...), $this->renderInline(...));
         $this->blocks = new TempestBlockRenderer($markdown, $apps, $mediaExtension, $images, $parsed, $this->render(...));
@@ -71,8 +71,10 @@ final readonly class TempestMarkdownRenderer
             return null;
         }
 
+        // CommonMark accepts several attributes in a `{…}` block after a link.
+        $sourceWithoutLinkAttributes = preg_replace('/(?<!!)(\[[^\[\]\n]*\]\((?:<[^<>\n]*>|[^()\s]*)\))\{[^{}\n]*\}/', '$1', $source) ?? $source;
         foreach (self::UNSUPPORTED_PATTERNS as $pattern) {
-            if (1 === preg_match($pattern, $source)) {
+            if (1 === preg_match($pattern, $sourceWithoutLinkAttributes)) {
                 return null;
             }
         }

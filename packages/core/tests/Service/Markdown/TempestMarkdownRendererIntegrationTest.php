@@ -82,6 +82,7 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'link destination overrides href attribute' => ['[link](/docs){href="wrong" id="ok"}'];
         yield 'three link classes' => ['[link](/docs){.first class="middle" .last}'];
         yield 'titled link with attributes' => ['[*Café*](/docs "a & b"){data-x="a&b" .button #docs}'];
+        yield 'link title takes precedence over a title attribute' => ['[link](/docs "original"){title="override"}'];
         yield 'indented code block' => ['    code'];
         yield 'quoted link destination' => ['[marche](a"b)'];
         yield 'link with class and id' => ['[link](/docs){.button #docs}'];
@@ -179,6 +180,17 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'obfuscated link and plain email' => ['Voir #[notre équipe](/equipe) ou écrire à bonjour@example.com.'];
         yield 'emphasis followed by bold' => ['_Note_ : Une **marche facile**.'];
         yield 'underscore in attributed link destination' => ['#[Le guide](https://example.com/page?menu_13000_kcal){target="_blank"}'];
+        yield 'several attributes on links in a sentence' => ['Partage sur [twitter](/twitter){rel="encrypt" class="0"} ou par [mail](mailto:contact@piedweb.com){rel="encrypt" class="ninja"}.'];
+        yield 'obfuscated link with target and class in a sentence' => ['Rendez-vous à la #[Ferme des 4 Chemins](https://www.lesquatrechemins.com/){target="\_blank" class="0"}, Chichilianne.'];
+        yield 'obfuscated angle links with attributes in a list' => ["- #[Séjour du 1er mai](<https://example.com/form?debut=2025—05—01&hebergement=Dortoir(s)>){target=\"\\_blank\" class=\"0\"}\n- #[Séjour du 29 mai](<https://example.com/form?debut=2025—05—29>){target=\"\\_blank\"}"];
+        yield 'bold line ending with a multi-attribute link' => ["David Padaré, diététicien\n**- Accéder à son site : [nuteoconsult.com](http://www.nuteoconsult.com/){rel=\"encrypt\" target=\"\\_blank\" class=\"0\"}**"];
+        yield 'link attributes inside parentheses in a list' => ["- Téléphone : <span data-rot=\"gry:0767036696\">07&nbsp;67</span>\n- Adresse : Forest-Saint-Julien ([voir la carte](https://maps.app.goo.gl/x){rel=\"encrypt\" class=\"0\"})"];
+        yield 'class zero is dropped' => ['Un [week-end à cheval](/week-end){class="0"} comme de Lyon.'];
+        yield 'empty link followed by attributes' => ['[](/trail-blanc){class="0"}Le tapis est salutaire.'];
+        yield 'table row without its closing pipe' => ["| Outil | Pour qui ? |\n| --- | --- |\n| [HaloScan](https://www.haloscan.com/) |  Plus de fonctions\n|  [Oseox](https://tool.oseox.fr) | Surveiller le site |"];
+        yield 'ordered list with star children' => ["1. Accueil\n2. Randonnée :\n   * Relais des élèves\n   * Pauses pédagogiques\n3. Bilan"];
+        yield 'ordered list with plus children' => ["1. Accueil\n2. Randonnée :\n   + Relais des élèves\n   + Pauses pédagogiques\n3. Bilan"];
+        yield 'spaced triple stars after a hotel rating stay literal' => ["- Le confort des hôtels 3*** et 4****\n- La gastronomie sarde"];
     }
 
     #[DataProvider('compatibleDynamicSources')]
