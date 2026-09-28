@@ -62,8 +62,7 @@ pub fn markdown_if_supported_with_dates(
     allow_obfuscated_links: bool,
     date_values: Option<&HashMap<String, String>>,
 ) -> Option<String> {
-    if same_line_block_attribute_pattern().is_match(source)
-        || source.contains("[!")
+    if source.contains("[!")
         || source.contains("![")
         || (source.contains("date(") && date_values.is_none())
         || (source.contains("#[") && source.contains("mailto:") && source.contains('@'))
@@ -88,14 +87,6 @@ pub fn markdown_if_supported_with_dates(
     }
 
     markdown_with_context(source, fenced_code_pre_class, locale, date_values, true)
-}
-
-fn same_line_block_attribute_pattern() -> &'static Regex {
-    static PATTERN: OnceLock<Regex> = OnceLock::new();
-    PATTERN.get_or_init(|| {
-        Regex::new(r"(?i)^\{(?:[.#]|[a-z][a-z0-9_-]*=)[^{}\r\n]+\}[ \t]+\S")
-            .expect("valid block attribute pattern")
-    })
 }
 
 fn dotted_date_range_pattern() -> &'static Regex {
@@ -520,6 +511,41 @@ fn apply_block_attributes(root: Node<'_>) {
         let Some(first) = paragraph.first_child() else {
             continue;
         };
+        let same_line_attributes = {
+            let ast = first.data();
+            if let NodeValue::Text(text) = &ast.value {
+                parse_link_attributes(text, false).and_then(|(attrs, consumed)| {
+                    let following = &text[consumed..];
+                    let content = following.trim_start_matches([' ', '\t']);
+                    (content.len() < following.len()
+                        && (!content.is_empty() || first.next_sibling().is_some()))
+                    .then(|| (attrs, content.to_owned()))
+                })
+            } else {
+                None
+            }
+        };
+        if let Some((attributes, content)) = same_line_attributes
+            && !paragraph
+                .parent()
+                .is_some_and(|parent| matches!(parent.data().value, NodeValue::Item(_)))
+        {
+            if content.is_empty() {
+                if let Some(next) = first.next_sibling()
+                    && matches!(
+                        next.data().value,
+                        NodeValue::SoftBreak | NodeValue::LineBreak
+                    )
+                {
+                    next.detach();
+                }
+                first.detach();
+            } else if let NodeValue::Text(text) = &mut first.data_mut().value {
+                *text = Cow::Owned(content);
+            }
+            apply_attributes(paragraph, attributes);
+            continue;
+        }
         let attributes = {
             let ast = first.data();
             match &ast.value {
@@ -1138,14 +1164,33 @@ mod tests {
     }
 
     #[test]
-    fn same_line_block_attributes_decline_to_php() {
+    fn same_line_block_attributes_render_directly() {
         assert_eq!(
             markdown_if_supported("{.ico-tip} See the **photos**.", ""),
-            None
+            Some("<p class=\"ico-tip\">See the <strong>photos</strong>.</p>\n".into())
         );
         assert_eq!(
             markdown_if_supported("{data-role=\"note\"} A *tip*.", ""),
-            None
+            Some("<p data-role=\"note\">A <em>tip</em>.</p>\n".into())
+        );
+        assert_eq!(
+            markdown_if_supported("{.tip #more} The **details**.", ""),
+            Some("<p class=\"tip\" id=\"more\">The <strong>details</strong>.</p>\n".into())
+        );
+        assert_eq!(
+            markdown_if_supported("{.ico-tip} **photos**", ""),
+            Some("<p class=\"ico-tip\"><strong>photos</strong></p>\n".into())
+        );
+        assert_eq!(
+            markdown_if_supported("{.ico-tip} Les **photos**.\nEncore *plus*.", ""),
+            Some(
+                "<p class=\"ico-tip\">Les <strong>photos</strong>.\nEncore <em>plus</em>.</p>\n"
+                    .into()
+            )
+        );
+        assert_eq!(
+            markdown_if_supported("{.ico-tip} # Titre", ""),
+            Some("<p class=\"ico-tip\"># Titre</p>\n".into())
         );
         assert_eq!(
             markdown_if_supported("{.ico-tip}\nSee the **photos**.", ""),

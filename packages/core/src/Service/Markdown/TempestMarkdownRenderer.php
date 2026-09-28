@@ -45,6 +45,15 @@ final readonly class TempestMarkdownRenderer
         }
 
         if (1 === preg_match('/\A\{(?:[.#]|[a-z][a-z0-9_-]*=)[^{}\r\n]+\}[ \t]+\S/i', $source)) {
+            if (1 === preg_match('/\A\{(?<type>\.|#|id=)(?<value>[\p{L}\p{N}_-]+)\}[ \t]+(?<text>\S[\s\S]*)\z/Du', $source, $attribute)) {
+                $html = $this->render($attribute['text']);
+                if (null !== $html && str_starts_with($html, '<p>')) {
+                    $name = '.' === $attribute['type'] ? 'class' : 'id';
+
+                    return '<p '.$name.'="'.htmlspecialchars($attribute['value'], \ENT_QUOTES | \ENT_SUBSTITUTE).'">'.substr($html, 3);
+                }
+            }
+
             return null;
         }
 
