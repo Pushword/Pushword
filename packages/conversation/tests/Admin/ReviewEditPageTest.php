@@ -58,6 +58,37 @@ final class ReviewEditPageTest extends AbstractAdminTestClass
         self::assertStringNotContainsString('__PW_PUBLISH_LABELS__', $content, 'The labels placeholder should be replaced.');
     }
 
+    /**
+     * An imported review has no author IP, so the IP field is writable and submits
+     * empty: saving it must neither fail nor invent an IP.
+     */
+    public function testEditFormSavesReviewWithoutAuthorIp(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $reviewId = $this->createReview();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/review/'.$reviewId.'/edit');
+        self::assertResponseIsSuccessful();
+
+        $form = $crawler->filter('button[value="saveAndReturn"]')->form();
+        $formName = $form->getName();
+        // getValues() skips disabled fields: the IP field is writable and empty.
+        self::assertSame('', $form->getValues()[$formName.'[authorIpRaw]']);
+
+        $client->submit($form, [$formName.'[content]' => 'Edited without an author IP']);
+        self::assertResponseRedirects();
+
+        $entityManager = $this->getEntityManager();
+        $entityManager->clear();
+
+        $review = $entityManager->find(Review::class, $reviewId);
+        self::assertInstanceOf(Review::class, $review);
+        self::assertSame('Edited without an author IP', $review->getContent());
+        self::assertNull($review->authorIp);
+    }
+
     private function createReview(): int
     {
         $review = new Review();

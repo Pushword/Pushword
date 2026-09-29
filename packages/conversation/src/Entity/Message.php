@@ -127,10 +127,11 @@ class Message implements Stringable, Taggable, IdInterface
 
     /**
      * Anonymize an untrusted client IP (IPv4 or IPv6) before storing it.
+     * The admin form submits its empty IP field as null: the IP stays unknown.
      */
-    public function setAuthorIpRaw(string $authorIp): self
+    public function setAuthorIpRaw(?string $authorIp): self
     {
-        $trimmed = trim($authorIp);
+        $trimmed = trim($authorIp ?? '');
         if (false === filter_var($trimmed, \FILTER_VALIDATE_IP)) {
             return $this;
         }

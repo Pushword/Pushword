@@ -70,9 +70,11 @@ final class MessageAuthorIpTest extends KernelTestCase
         self::assertSame('176.190.1.0', $message->authorIp);
     }
 
-    /** @return Iterator<string, array{string}> */
+    /** @return Iterator<string, array{?string}> */
     public static function unsupportedIpProvider(): Iterator
     {
+        // What the admin form submits for its empty IP field.
+        yield 'null' => [null];
         yield 'empty string' => [''];
         yield 'blank string' => ['   '];
         yield 'not an ip' => ['not-an-ip'];
@@ -81,7 +83,7 @@ final class MessageAuthorIpTest extends KernelTestCase
     }
 
     #[DataProvider('unsupportedIpProvider')]
-    public function testUnsupportedIpIsDiscarded(string $ip): void
+    public function testUnsupportedIpIsDiscarded(?string $ip): void
     {
         $message = new Message();
         $message->setAuthorIpRaw($ip);
@@ -100,6 +102,15 @@ final class MessageAuthorIpTest extends KernelTestCase
         $message = new Message();
         $message->setAuthorIpRaw('176.190.1.42');
         $message->authorIp = null;
+
+        self::assertSame('176.190.1.0', $message->authorIp);
+    }
+
+    public function testSetAuthorIpRawIgnoresNull(): void
+    {
+        $message = new Message();
+        $message->setAuthorIpRaw('176.190.1.42');
+        $message->setAuthorIpRaw(null);
 
         self::assertSame('176.190.1.0', $message->authorIp);
     }
