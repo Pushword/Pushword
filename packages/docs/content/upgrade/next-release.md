@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin`, `pushword/conversation`, `pushword/core`
+**Concerns:** `pushword/admin`, `pushword/conversation`, `pushword/core`, `pushword/static-generator`
 
 ## Log in as an editor
 
@@ -48,3 +48,7 @@ Super administrators can now [browse the admin as an editor](/authentication#imp
 The review list filters ignore case on every database, and the `referring` filter is now labelled like its form field ("Referring") instead of "Trip code".
 
 **Sites that call `referring` something else.** Override `adminConversationReferringLabel` in your translations; it renames the filter and the form field together.
+
+## A host with no published page no longer stops `pw:static`
+
+Without a host argument, `pw:static` now skips a host that has an `index.html` but no published page left instead of stopping there: that host keeps its published site, the error names it, the other hosts are built, and the command still exits non-zero. Nothing to do.

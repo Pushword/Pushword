@@ -10,7 +10,6 @@ use Override;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\StaticGenerator\IncrementalGeneratorInterface;
-use RuntimeException;
 use Throwable;
 
 class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterface
@@ -179,20 +178,27 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
 
         $this->preloadMediaCache();
         $this->pinRenderLightCache();
-        $pages = $this->getPageRepository()->getPublishedPages($this->app->getMainHost());
+        $hostName = $this->app->getMainHost();
+        $pages = $this->getPageRepository()->getPublishedPages($hostName);
 
         $requestedSlugs = array_flip($slugs);
         $pages = array_filter($pages, static fn (Page $page): bool => isset($requestedSlugs[$page->slug]));
         $loadedSlugs = array_flip(array_map(static fn (Page $page): string => $page->slug, $pages));
         $missingSlugs = array_keys(array_diff_key($requestedSlugs, $loadedSlugs));
         if ([] !== $missingSlugs) {
-            throw new RuntimeException(\sprintf('Worker could not load %d published page(s), including %s; refusing an incomplete static export.', \count($missingSlugs), implode(', ', \array_slice($missingSlugs, 0, 3))));
+            $this->setError(\sprintf(
+                'Worker could not load %d published page(s) of %s, including %s; refusing an incomplete static export.',
+                \count($missingSlugs),
+                $hostName,
+                implode(', ', \array_slice($missingSlugs, 0, 3)),
+            ));
+
+            return;
         }
 
         $this->getPageRepository()->preloadTranslations($pages);
         $this->preloadParentPageIdsWithChildren();
 
-        $hostName = $this->app->getMainHost();
         $epoch = $this->staticAppGenerator->getSampledRenderEpoch($hostName);
         $totalPages = \count($pages);
         $currentPage = 0;

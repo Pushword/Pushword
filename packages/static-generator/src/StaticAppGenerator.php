@@ -200,7 +200,11 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         $hasExistingHomePage = is_file($originalStaticDir.'/index.html');
 
         if ($hasExistingHomePage && [] === $this->pageRepository->findPublishedSlugs($host)) {
-            throw new RuntimeException('No published pages found; keeping the last published site.');
+            $this->setError(\sprintf('No published pages found for %s; keeping the last published site.', $host));
+            // The abort is per host: the next host must still build.
+            $this->abortGeneration = false;
+
+            return;
         }
 
         $this->cleanupStaleTempDirs($originalStaticDir, $filesystem);
@@ -237,7 +241,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             }
 
             if (! $this->abortGeneration && $hasExistingHomePage && ! is_file($tempDir.'/index.html')) {
-                $this->setError('Generated site is missing index.html; keeping the last published site.');
+                $this->setError(\sprintf('Generated site for %s is missing index.html; keeping the last published site.', $host));
             }
 
             // Lint before the swap: a poisoned export must never replace the

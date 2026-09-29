@@ -149,6 +149,14 @@ Each worker must find every published slug assigned to it. A missing page fails
 the build instead of publishing a partial export. A full build also keeps the
 current site if it has an `index.html` and the new export does not. If removing
 the homepage is intentional, remove the old `index.html` before regenerating.
+A homepage that becomes a redirect (`/` → `/en/`) generates no `index.html`
+either, so every full build fails until the old one is deleted from `static_dir`
+by hand.
+
+A host with no published page left but an `index.html` in its `static_dir` is
+skipped on full and `--incremental` builds alike: its published site stays as it
+is, the error names the host, the other hosts are still built, and `pw:static`
+exits non-zero.
 
 The workers used to be spawned with an opcache file cache
 (`opcache.enable=1 opcache.enable_cli=1 opcache.file_cache=…`) so compiled
