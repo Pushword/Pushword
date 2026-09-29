@@ -30,6 +30,68 @@ final class ConversationAdminTest extends AbstractAdminTestClass
         }
     }
 
+    public function testReviewIndexExposesEmailAndTripCodeFilters(): void
+    {
+        $client = $this->loginUser();
+
+        $client->request(Request::METHOD_GET, '/admin/review/render-filters');
+        self::assertResponseIsSuccessful();
+
+        $html = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('filters[authorEmail][value]', $html);
+        self::assertStringContainsString('filters[referring][value]', $html);
+        self::assertStringContainsString('Email', $html);
+        self::assertStringContainsString('Trip code', $html);
+    }
+
+    public function testReviewFiltersFindAnEmailAndTripCode(): void
+    {
+        $client = $this->loginUser();
+        $entityManager = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $persistedReviews = [];
+        foreach ([
+            ['filter-alice@example.test', 'FRAB1234', 'Alice review filter marker'],
+            ['filter-alice@example.test', 'DECD5678', 'Other trip filter marker'],
+            ['filter-bob@example.test', 'FRAB1234', 'Other email filter marker'],
+        ] as [$email, $referring, $content]) {
+            $review = new Review();
+            $review->host = 'localhost.dev';
+            $review->authorEmail = $email;
+            $review->referring = $referring;
+            $review->setContent($content);
+            $review->setRating(4);
+            $entityManager->persist($review);
+            $persistedReviews[] = $review;
+        }
+
+        $entityManager->flush();
+
+        try {
+            $client->request(Request::METHOD_GET, '/admin/review?'.http_build_query([
+                'filters' => [
+                    'authorEmail' => ['comparison' => 'like', 'value' => 'filter-alice@example.test'],
+                    'referring' => ['comparison' => 'like', 'value' => 'FRAB1234'],
+                ],
+            ]));
+            self::assertResponseIsSuccessful();
+
+            $html = (string) $client->getResponse()->getContent();
+            self::assertStringContainsString('Alice review filter marker', $html);
+            self::assertStringNotContainsString('Other trip filter marker', $html);
+            self::assertStringNotContainsString('Other email filter marker', $html);
+        } finally {
+            foreach ($persistedReviews as $review) {
+                $stored = $entityManager->find(Review::class, $review->id);
+                if (null !== $stored) {
+                    $entityManager->remove($stored);
+                }
+            }
+
+            $entityManager->flush();
+        }
+    }
+
     public function testAdminDeleteCreatesTombstone(): void
     {
         $client = $this->loginUser();

@@ -38,6 +38,7 @@ adminReviewReplyLabel: Réponse
 adminReviewReplyPlaceholder: "Répondre à cet avis…"
 adminReviewTitleHelp: "Courte accroche décrivant l'avis"
 adminReviewTitleLabel: Titre
+adminReviewTripCodeLabel: Code séjour
 adminReviewTranslationsHelp: "Traductions générées par IA"
 adminReviewTranslationsLabel: Traductions
 conversationContentPlaceholder: Message

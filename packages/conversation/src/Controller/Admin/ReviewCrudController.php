@@ -8,6 +8,7 @@ use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
@@ -16,6 +17,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 
 use function is_numeric;
 
@@ -42,6 +44,14 @@ final class ReviewCrudController extends ConversationCrudController
             ->setEntityLabelInPlural('adminLabelReview')
             ->setDefaultSort(['createdAt' => 'DESC'])
             ->addFormTheme('@PushwordConversation/admin/review_form_theme.html.twig');
+    }
+
+    #[Override]
+    public function configureFilters(Filters $filters): Filters
+    {
+        return parent::configureFilters($filters)
+            ->add(TextFilter::new('authorEmail', 'adminConversationAuthorEmailLabel'))
+            ->add(TextFilter::new('referring', 'adminReviewTripCodeLabel'));
     }
 
     #[Override]
