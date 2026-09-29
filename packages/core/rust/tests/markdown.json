@@ -488,5 +488,180 @@
         "pre_class": "",
         "compatible": true,
         "php": "<p>{.!text-lg}</p>\n<h2>Heading</h2>\n"
+    },
+    {
+        "name": "same_line_paragraph_class",
+        "markdown": "{.ico-tip} See the **photos**.",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p class=\"ico-tip\">See the <strong>photos</strong>.</p>\n"
+    },
+    {
+        "name": "same_line_paragraph_id",
+        "markdown": "{#photos} The images.",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p id=\"photos\">The images.</p>\n"
+    },
+    {
+        "name": "same_line_unicode_id",
+        "markdown": "{#café} The images.",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p id=\"café\">The images.</p>\n"
+    },
+    {
+        "name": "same_line_several_attributes",
+        "markdown": "{#more .note} The details.",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p class=\"note\" id=\"more\">The details.</p>\n"
+    },
+    {
+        "name": "same_line_invalid_class_literal",
+        "markdown": "{.1abc} Text",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p>{.1abc} Text</p>\n"
+    },
+    {
+        "name": "same_line_dash_digit_class_literal",
+        "markdown": "{.-1} Text",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p>{.-1} Text</p>\n"
+    },
+    {
+        "name": "same_line_escaped_class_literal",
+        "markdown": "\\{.ico-tip} Text",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p>{.ico-tip} Text</p>\n"
+    },
+    {
+        "name": "same_line_escaped_id_literal",
+        "markdown": "\\{#photos} Text",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p>{#photos} Text</p>\n"
+    },
+    {
+        "name": "escaped_prefix_class_literal",
+        "markdown": "\\{.a}\nText",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p>{.a}\nText</p>\n"
+    },
+    {
+        "name": "escaped_trailing_class_literal",
+        "markdown": "Text \\{.a}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p>Text {.a}</p>\n"
+    },
+    {
+        "name": "same_line_and_trailing_class_order",
+        "markdown": "{.a} Text {.b}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p class=\"a b\">Text</p>\n"
+    },
+    {
+        "name": "prefix_class_then_same_line_class",
+        "markdown": "{.x}\n{.a} Text",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p class=\"x a\">Text</p>\n"
+    },
+    {
+        "name": "blockquote_same_line_class",
+        "markdown": "> {.a} Quoted",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<blockquote>\n<p class=\"a\">Quoted</p>\n</blockquote>\n"
+    },
+    {
+        "name": "blockquote_trailing_class",
+        "markdown": "> Quoted {.a}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<blockquote>\n<p class=\"a\">Quoted</p>\n</blockquote>\n"
+    },
+    {
+        "name": "blockquote_prefix_class",
+        "markdown": "> {.a}\n> Quoted",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<blockquote>\n<p class=\"a\">Quoted</p>\n</blockquote>\n"
+    },
+    {
+        "name": "same_line_underscore_class",
+        "markdown": "{._a} Text",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p class=\"_a\">Text</p>\n"
+    },
+    {
+        "name": "same_line_digit_id",
+        "markdown": "{#1abc} Text",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p id=\"1abc\">Text</p>\n"
+    },
+    {
+        "name": "nested_blockquote_same_line_class",
+        "markdown": "> > {.a} Quoted",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<blockquote>\n<blockquote>\n<p class=\"a\">Quoted</p>\n</blockquote>\n</blockquote>\n"
+    },
+    {
+        "name": "blockquote_same_line_and_trailing_class_order",
+        "markdown": "> {.a} Quoted {.b}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<blockquote>\n<p class=\"a b\">Quoted</p>\n</blockquote>\n"
+    },
+    {
+        "name": "blockquote_prefix_then_same_line_class",
+        "markdown": "> {.x}\n> {.a} Quoted",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<blockquote>\n<p class=\"x a\">Quoted</p>\n</blockquote>\n"
+    },
+    {
+        "name": "blockquote_escaped_trailing_class_literal",
+        "markdown": "> Quoted \\{.a}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<blockquote>\n<p>Quoted {.a}</p>\n</blockquote>\n"
+    },
+    {
+        "name": "escaped_lone_marker_keeps_next_block",
+        "markdown": "\\{.a}\n\nNext",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p>{.a}</p>\n<p>Next</p>\n"
+    },
+    {
+        "name": "same_line_then_escaped_trailing_literal",
+        "markdown": "{.a} Text \\{.b}",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p class=\"a\">Text {.b}</p>\n"
+    },
+    {
+        "name": "prefix_class_then_escaped_same_line_literal",
+        "markdown": "{.a}\n\\{.b} Text",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p class=\"a\">{.b} Text</p>\n"
+    },
+    {
+        "name": "prefix_class_then_same_line_attributes",
+        "markdown": "{.x}\n{#more .note} Text",
+        "pre_class": "",
+        "compatible": true,
+        "php": "<p class=\"x note\" id=\"more\">Text</p>\n"
     }
 ]

@@ -18,7 +18,7 @@ The difference is almost invisible — your usual Markdown syntax will continue 
 Markdown content is **parsed block by block**, rather than as a single document.
 Blocks are **separated by two blank lines**.
 
-**Attributes** can be defined using the syntax `{#attribute-name}`, placed on a separate line just **before** the Markdown block it applies to. For a paragraph, `{.ico-tip} Text with **emphasis**` also works on one line. _The separate-line form is conflicting with Prettier Markdown._
+**Attributes** can be defined using the syntax `{#attribute-name}`, placed on a separate line just **before** the Markdown block it applies to. For a paragraph, `{.ico-tip} Text with **emphasis**` also works on one line, with an id or several attributes too (`{#tip .note} Text`), and inside a blockquote (`> {.ico-tip} Text`). Escape the brace to keep it as text: `\{.ico-tip} Text`. _The separate-line form is conflicting with Prettier Markdown._
 
 Advanced content types such as **galleries**, **attachments**, or **page lists** are supported through **Twig functions**.
 

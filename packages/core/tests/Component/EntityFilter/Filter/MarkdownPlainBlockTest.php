@@ -123,4 +123,48 @@ final class MarkdownPlainBlockTest extends KernelTestCase
         self::assertStringContainsString('<p><code>{.a}</code> Texte</p>', $render('`{.a}` Texte'));
         self::assertStringContainsString('<p>{.a} Texte</p>', $render('\\{.a} Texte'));
     }
+
+    public function testSameLineAttributeIsKeptOutOfTwig(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $factory = $container->get(ContentPipelineFactory::class);
+        $filter = $container->get(FilterRegistry::class)->getFilter('markdown');
+        self::assertInstanceOf(Markdown::class, $filter);
+
+        $page = new Page();
+        $page->host = 'localhost';
+        $page->locale = 'fr';
+
+        $render = static function (string $source) use ($filter, $page, $factory): string {
+            $html = $filter->apply($source, $page, $factory->getLegacyManager($page));
+            self::assertIsString($html);
+
+            return $html;
+        };
+
+        // `{#` would open a Twig comment: the prefix keeps every attribute, and Twig still runs on the text.
+        self::assertSame("<p class=\"note\" id=\"more\">Texte</p>\n\n\n", $render('{#more .note} Texte'));
+        self::assertSame("<p id=\"café\">Texte</p>\n\n\n", $render('{#café} Texte'));
+        self::assertSame("<p id=\"a.b\">Texte</p>\n\n\n", $render('{#a.b} Texte'));
+        self::assertSame("<p id=\"x\">Twig évalué</p>\n\n\n", $render("{#x} {{ 'Twig' }} {# commentaire #}évalué"));
+    }
+
+    public function testAttributeLineBeforeSameLineAttributeKeepsBoth(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $factory = $container->get(ContentPipelineFactory::class);
+        $filter = $container->get(FilterRegistry::class)->getFilter('markdown');
+        self::assertInstanceOf(Markdown::class, $filter);
+
+        $page = new Page();
+        $page->host = 'localhost';
+        $page->locale = 'fr';
+
+        // CommonMark applies both, in source order.
+        self::assertSame("<p class=\"x a\">Texte</p>\n\n\n", $filter->apply("{.x}\n{.a} Texte", $page, $factory->getLegacyManager($page)));
+        // A same-line `{#…}` after an attribute line is kept out of Twig too.
+        self::assertSame("<p class=\"x note\" id=\"more\">Texte</p>\n\n\n", $filter->apply("{.x}\n{#more .note} Texte", $page, $factory->getLegacyManager($page)));
+    }
 }

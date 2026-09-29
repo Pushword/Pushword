@@ -349,6 +349,26 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $nativeParser->reset();
     }
 
+    public function testFilterMatchesPhpForSameLineAttributes(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $container->get(SiteRegistry::class)->switchSite('localhost.dev');
+        $page = new Page();
+        $page->host = 'localhost.dev';
+
+        $manager = $container->get(ContentPipelineFactory::class)->getLegacyManager($page);
+        $source = "{#more .note} Details.\n\n{#café} Café.\n\n{.x}\n{.a} Stacked.\n\n{.a} Ordered {.b}\n\n> {.a} Quoted\n\n\\{.a} Escaped\n\n{.1abc} Literal";
+        $pool = new ArrayAdapter();
+        $native = new Markdown($this->parser(self::BINARY, $pool), $container->get(LinkProvider::class))->apply($source, $page, $manager);
+
+        self::assertSame(new Markdown($this->parser())->apply($source, $page, $manager), $native);
+        self::assertIsString($native);
+        self::assertStringContainsString('<p class="note" id="more">Details.</p>', $native);
+        self::assertStringContainsString('<p class="x a">Stacked.</p>', $native);
+        self::assertTrue($pool->getItem('pw_mdn3.'.hash('xxh3', MarkdownCacheVersion::get().'|{#more .note} Details.'))->isHit());
+    }
+
     public function testFilterUsesPhpWhenWorkerIsUnavailable(): void
     {
         self::bootKernel();

@@ -21,6 +21,8 @@ final readonly class TempestMarkdownRenderer
         '/\{#[^}\n]*[^\x00-\x7F][^}\n]*\}/',
         '/^#{1,6} [^\n]+\n\{[.#][^}\n]+\}$/m',
         '/(?!\A)\{(?:[.#]|[a-z][a-z0-9_-]*=)[^}\n]*\s+[^}\n]*\}/i',
+        // An attribute line followed by a line opening with `{`: CommonMark may apply both to the block.
+        '/^\{[^{}\n]+\}\n\{/m',
     ];
 
     private TempestStandaloneRenderer $standalone;
@@ -121,10 +123,18 @@ final readonly class TempestMarkdownRenderer
         return htmlspecialchars($literalPrefix, \ENT_QUOTES | \ENT_SUBSTITUTE).substr($html, 3, -5);
     }
 
-    /** Only a single `{.class}` or `{#id}` on a paragraph is rendered here; anything else is left to CommonMark. */
+    /**
+     * Renders a paragraph opened by a single `{.class}` or `{#id}`; anything else is left to CommonMark.
+     * The class must start like a CommonMark class name, `-?[_a-zA-Z]`: CommonMark keeps any other marker as text.
+     */
     private function renderSameLineAttribute(string $source): ?string
     {
-        if (1 !== preg_match('/\A\{(?<type>\.|#|id=)(?<value>[\p{L}\p{N}_-]+)\}[ \t]+(?<text>\S[\s\S]*)\z/Du', $source, $attribute)) {
+        if (1 !== preg_match('/\A\{(?<type>\.(?=-?[_a-zA-Z])|#|id=)(?<value>[\p{L}\p{N}_-]+)\}[ \t]+(?<text>\S[\s\S]*)\z/Du', $source, $attribute)) {
+            return null;
+        }
+
+        // CommonMark would also apply to the paragraph any other attribute opening a line or following a space.
+        if (1 === preg_match('/(?:^|[ \t])\{:?(?:[.#]|[a-z_:][\w.:-]*=)[^{}\n]*\}/im', $attribute['text'])) {
             return null;
         }
 

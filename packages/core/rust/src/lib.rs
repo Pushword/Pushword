@@ -31,6 +31,13 @@ impl RenderSettings<'_> {
             line_start + position.start.column.checked_sub(1)?..line_start + position.end.column,
         )
     }
+
+    /// The part of a node's first line that precedes the node.
+    fn line_before(&self, position: Sourcepos) -> Option<&str> {
+        let line_start = *self.line_starts.get(position.start.line.checked_sub(1)?)?;
+        self.source
+            .get(line_start..line_start + position.start.column.checked_sub(1)?)
+    }
 }
 
 /// Decline Markdown whose rendering depends on Pushword's site services.
@@ -200,9 +207,6 @@ fn markdown_with_context(
         return None;
     }
 
-    apply_block_attributes(root);
-    apply_list_item_attributes(root);
-    let mut output = String::with_capacity(source.len());
     let settings = RenderSettings {
         source,
         line_starts: std::iter::once(0)
@@ -212,6 +216,9 @@ fn markdown_with_context(
         locale,
         date_values,
     };
+    apply_block_attributes(root, &settings);
+    apply_list_item_attributes(root, &settings);
+    let mut output = String::with_capacity(source.len());
     if let Some(values) = date_values {
         for node in root.descendants() {
             match &node.data().value {
@@ -479,15 +486,52 @@ fn apply_attributes(node: Node<'_>, values: Vec<(String, String)>) {
     node.data_mut().attrs = Some(Box::new(attributes));
 }
 
+/// Whether a text node's source opens with `{` itself: PHP keeps `\{` and `&#123;` as text.
+/// Comrak starts the text of an escape after its backslash, so the backslash precedes the node.
+fn opens_with_literal_brace(node: Node<'_>, settings: &RenderSettings<'_>) -> bool {
+    let position = node.data().sourcepos;
+    settings
+        .source_span(position)
+        .is_some_and(|source| source.starts_with('{'))
+        && settings
+            .line_before(position)
+            .is_some_and(|before| !before.ends_with('\\'))
+}
+
+/// Whether a text node's source ends with `marker` itself, its brace neither escaped nor an entity.
+fn ends_with_literal(node: Node<'_>, marker: &str, settings: &RenderSettings<'_>) -> bool {
+    settings
+        .source_span(node.data().sourcepos)
+        .is_some_and(|source| {
+            source
+                .trim_end()
+                .strip_suffix(marker)
+                .is_some_and(|before| !before.ends_with('\\'))
+        })
+}
+
+/// Whether PHP writes a paragraph's attributes: only at the top level or in a blockquote.
+fn takes_block_attributes(paragraph: Node<'_>) -> bool {
+    paragraph.parent().is_some_and(|parent| {
+        matches!(
+            parent.data().value,
+            NodeValue::Document | NodeValue::BlockQuote
+        )
+    })
+}
+
 /// Split a leading `{.class} Text` marker into its attributes and the text that follows it.
-fn same_line_block_attributes(first: Node<'_>) -> Option<(Vec<(String, String)>, String)> {
+fn same_line_block_attributes(
+    first: Node<'_>,
+    settings: &RenderSettings<'_>,
+) -> Option<(Vec<(String, String)>, String)> {
     let ast = first.data();
     let NodeValue::Text(text) = &ast.value else {
         return None;
     };
     let (attributes, consumed) = parse_link_attributes(text, false)?;
     let following = &text[consumed..];
-    if !following.starts_with([' ', '\t']) {
+    if !following.starts_with([' ', '\t']) || !opens_with_literal_brace(first, settings) {
         return None;
     }
     let content = following.trim_start_matches([' ', '\t']);
@@ -497,42 +541,27 @@ fn same_line_block_attributes(first: Node<'_>) -> Option<(Vec<(String, String)>,
     Some((attributes, content.to_owned()))
 }
 
-fn apply_block_attributes(root: Node<'_>) {
+fn apply_block_attributes(root: Node<'_>, settings: &RenderSettings<'_>) {
     for paragraph in root.descendants().collect::<Vec<_>>() {
         if !matches!(paragraph.data().value, NodeValue::Paragraph) {
             continue;
         }
-        if paragraph
-            .parent()
-            .is_some_and(|parent| matches!(parent.data().value, NodeValue::Document))
-            && let Some(last) = paragraph.last_child()
-        {
-            let suffix = {
-                let ast = last.data();
-                if let NodeValue::Text(text) = &ast.value {
-                    text.rfind(" {").and_then(|start| {
-                        parse_link_attributes(&text[start + 1..], false)
-                            .filter(|(_, consumed)| *consumed == text.len() - start - 1)
-                            .map(|(attrs, _)| (attrs, start))
-                    })
-                } else {
-                    None
-                }
-            };
-            if let Some((attrs, start)) = suffix {
-                if let NodeValue::Text(text) = &mut last.data_mut().value {
-                    *text = Cow::Owned(text[..start].to_owned());
-                }
-                apply_attributes(paragraph, attrs);
-            }
-        }
-        let Some(first) = paragraph.first_child() else {
-            continue;
-        };
-        if let Some((attributes, content)) = same_line_block_attributes(first)
-            && !paragraph
-                .parent()
-                .is_some_and(|parent| matches!(parent.data().value, NodeValue::Item(_)))
+        // Leading markers before the trailing one, so classes keep their source order, as in PHP.
+        apply_leading_block_attributes(paragraph, settings);
+        apply_trailing_block_attributes(paragraph, settings);
+    }
+}
+
+/// Apply the `{…}` lines opening a paragraph, then a `{…}` sharing the line with its text.
+/// A paragraph that is a lone `{…}` line gives its attributes to the adjacent block and is removed.
+fn apply_leading_block_attributes(paragraph: Node<'_>, settings: &RenderSettings<'_>) {
+    let in_list_item = paragraph
+        .parent()
+        .is_some_and(|parent| matches!(parent.data().value, NodeValue::Item(_)));
+    let mut applied = false;
+    while let Some(first) = paragraph.first_child() {
+        if !in_list_item
+            && let Some((attributes, content)) = same_line_block_attributes(first, settings)
         {
             if content.is_empty() {
                 if let Some(next) = first.next_sibling()
@@ -548,19 +577,21 @@ fn apply_block_attributes(root: Node<'_>) {
                 *text = Cow::Owned(content);
             }
             apply_attributes(paragraph, attributes);
-            continue;
+            return;
         }
         let attributes = {
             let ast = first.data();
             match &ast.value {
                 NodeValue::Text(text) => parse_link_attributes(text, false)
-                    .filter(|(_, consumed)| *consumed == text.len())
+                    .filter(|(_, consumed)| {
+                        *consumed == text.len() && opens_with_literal_brace(first, settings)
+                    })
                     .map(|(attrs, _)| attrs),
                 _ => None,
             }
         };
         let Some(attributes) = attributes else {
-            continue;
+            return;
         };
         if let Some(next) = first.next_sibling()
             && matches!(
@@ -571,10 +602,12 @@ fn apply_block_attributes(root: Node<'_>) {
             next.detach();
             first.detach();
             apply_attributes(paragraph, attributes);
+            applied = true;
             continue;
         }
-        if first.next_sibling().is_some() {
-            continue;
+        // Only a paragraph that is nothing but one `{…}` line hands it to the adjacent block.
+        if applied || first.next_sibling().is_some() {
+            return;
         }
         let marker_line = paragraph.data().sourcepos.start.line;
         if let Some(next) = paragraph.next_sibling()
@@ -587,10 +620,42 @@ fn apply_block_attributes(root: Node<'_>) {
             apply_attributes(previous, attributes);
         }
         paragraph.detach();
+        return;
     }
 }
 
-fn apply_list_item_attributes(root: Node<'_>) {
+/// Apply a ` {…}` ending a paragraph's text.
+fn apply_trailing_block_attributes(paragraph: Node<'_>, settings: &RenderSettings<'_>) {
+    if !takes_block_attributes(paragraph) {
+        return;
+    }
+    let Some(last) = paragraph.last_child() else {
+        return;
+    };
+    let suffix = {
+        let ast = last.data();
+        if let NodeValue::Text(text) = &ast.value {
+            text.rfind(" {").and_then(|start| {
+                let marker = &text[start + 1..];
+                parse_link_attributes(marker, false)
+                    .filter(|(_, consumed)| {
+                        *consumed == marker.len() && ends_with_literal(last, marker, settings)
+                    })
+                    .map(|(attrs, _)| (attrs, start))
+            })
+        } else {
+            None
+        }
+    };
+    if let Some((attrs, start)) = suffix {
+        if let NodeValue::Text(text) = &mut last.data_mut().value {
+            *text = Cow::Owned(text[..start].to_owned());
+        }
+        apply_attributes(paragraph, attrs);
+    }
+}
+
+fn apply_list_item_attributes(root: Node<'_>, settings: &RenderSettings<'_>) {
     for item in root.descendants() {
         if !matches!(item.data().value, NodeValue::Item(_)) {
             continue;
@@ -607,7 +672,9 @@ fn apply_list_item_attributes(root: Node<'_>) {
         let parsed = {
             let ast = first.data();
             match &ast.value {
-                NodeValue::Text(text) => parse_link_attributes(text, false),
+                NodeValue::Text(text) if opens_with_literal_brace(first, settings) => {
+                    parse_link_attributes(text, false)
+                }
                 _ => None,
             }
         };
@@ -1045,10 +1112,7 @@ fn render(
             }
         }
         NodeValue::Paragraph => {
-            let block_attributes = node
-                .parent()
-                .is_some_and(|parent| matches!(parent.data().value, NodeValue::Document))
-                && ast.attrs.is_some();
+            let block_attributes = takes_block_attributes(node) && ast.attrs.is_some();
             if block_attributes {
                 if entering {
                     context.cr()?;
@@ -1230,6 +1294,57 @@ mod tests {
             ("`{.ico-tip}` Text", "<p><code>{.ico-tip}</code> Text</p>\n"),
             ("{x:example} text", "<p>{x:example} text</p>\n"),
             ("{.1abc} Text", "<p>{.1abc} Text</p>\n"),
+        ] {
+            assert_eq!(
+                markdown_if_supported(source, ""),
+                Some(expected.into()),
+                "{source}"
+            );
+        }
+    }
+
+    #[test]
+    fn paragraph_attributes_apply_inside_blockquotes() {
+        for source in ["> {.a} Quoted", "> Quoted {.a}", "> {.a}\n> Quoted"] {
+            assert_eq!(
+                markdown_if_supported(source, ""),
+                Some("<blockquote>\n<p class=\"a\">Quoted</p>\n</blockquote>\n".into()),
+                "{source}"
+            );
+        }
+    }
+
+    #[test]
+    fn escaped_attribute_braces_stay_literal() {
+        for (source, expected) in [
+            ("\\{.ico-tip} Text", "<p>{.ico-tip} Text</p>\n"),
+            ("\\{#photos} Text", "<p>{#photos} Text</p>\n"),
+            ("\\{.a}\nText", "<p>{.a}\nText</p>\n"),
+            ("Text \\{.a}", "<p>Text {.a}</p>\n"),
+            ("&#123;.a} Text", "<p>{.a} Text</p>\n"),
+            ("Text &#123;.a}", "<p>Text {.a}</p>\n"),
+            (
+                "> \\{.a} Quoted",
+                "<blockquote>\n<p>{.a} Quoted</p>\n</blockquote>\n",
+            ),
+            ("- \\{.a} Item", "<ul>\n<li>{.a} Item</li>\n</ul>\n"),
+        ] {
+            assert_eq!(
+                markdown_if_supported(source, ""),
+                Some(expected.into()),
+                "{source}"
+            );
+        }
+    }
+
+    #[test]
+    fn block_attributes_keep_source_order() {
+        for (source, expected) in [
+            ("{.a} Text {.b}", "<p class=\"a b\">Text</p>\n"),
+            ("{.b}\nText {.a}", "<p class=\"b a\">Text</p>\n"),
+            ("{#a} Text {#b}", "<p id=\"b\">Text</p>\n"),
+            ("{.x}\n{.a} Text", "<p class=\"x a\">Text</p>\n"),
+            ("{.x}\n{.a}\nText", "<p class=\"x a\">Text</p>\n"),
         ] {
             assert_eq!(
                 markdown_if_supported(source, ""),

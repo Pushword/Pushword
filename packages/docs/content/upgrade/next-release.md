@@ -1,5 +1,5 @@
 ---
-title: 'super administrators can log in as an editor; custom admin pages extending the EasyAdmin layout miss its banner; the review filter on `referring` is labelled like its form field'
+title: 'super administrators can log in as an editor; custom admin pages extending the EasyAdmin layout miss its banner; the review filter on `referring` is labelled like its form field; a same-line class starting with a digit or an accent stays literal text'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -52,3 +52,9 @@ The review list filters ignore case on every database, and the `referring` filte
 ## A host with no published page no longer stops `pw:static`
 
 Without a host argument, `pw:static` now skips a host that has an `index.html` but no published page left instead of stopping there: that host keeps its published site, the error names it, the other hosts are built, and the command still exits non-zero. Nothing to do.
+
+## Same-line block attributes
+
+`{#id} Text` and several attributes on one line (`{#tip .note} Text`) now render instead of failing with a Twig error, inside blockquotes too; `\{.class} Text` stays text.
+
+**Pages with a same-line class starting with a digit, a dash and a digit, or an accent (`{.1abc} Text`).** The marker now stays literal text, as in CommonMark: rename the class to start with a letter or `_`.
