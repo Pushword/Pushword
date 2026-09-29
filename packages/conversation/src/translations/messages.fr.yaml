@@ -38,9 +38,9 @@ adminReviewReplyLabel: Réponse
 adminReviewReplyPlaceholder: "Répondre à cet avis…"
 adminReviewTitleHelp: "Courte accroche décrivant l'avis"
 adminReviewTitleLabel: Titre
-adminReviewTripCodeLabel: Code séjour
 adminReviewTranslationsHelp: "Traductions générées par IA"
 adminReviewTranslationsLabel: Traductions
+adminReviewTripCodeLabel: Code séjour
 conversationContentPlaceholder: Message
 conversationEmailInvalid: "Adresse email invalide"
 conversationEmailOrPhonePlaceholder: "Email ou Téléphone"

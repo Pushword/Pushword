@@ -479,6 +479,24 @@ fn apply_attributes(node: Node<'_>, values: Vec<(String, String)>) {
     node.data_mut().attrs = Some(Box::new(attributes));
 }
 
+/// Split a leading `{.class} Text` marker into its attributes and the text that follows it.
+fn same_line_block_attributes(first: Node<'_>) -> Option<(Vec<(String, String)>, String)> {
+    let ast = first.data();
+    let NodeValue::Text(text) = &ast.value else {
+        return None;
+    };
+    let (attributes, consumed) = parse_link_attributes(text, false)?;
+    let following = &text[consumed..];
+    if !following.starts_with([' ', '\t']) {
+        return None;
+    }
+    let content = following.trim_start_matches([' ', '\t']);
+    if content.is_empty() && first.next_sibling().is_none() {
+        return None;
+    }
+    Some((attributes, content.to_owned()))
+}
+
 fn apply_block_attributes(root: Node<'_>) {
     for paragraph in root.descendants().collect::<Vec<_>>() {
         if !matches!(paragraph.data().value, NodeValue::Paragraph) {
@@ -511,21 +529,7 @@ fn apply_block_attributes(root: Node<'_>) {
         let Some(first) = paragraph.first_child() else {
             continue;
         };
-        let same_line_attributes = {
-            let ast = first.data();
-            if let NodeValue::Text(text) = &ast.value {
-                parse_link_attributes(text, false).and_then(|(attrs, consumed)| {
-                    let following = &text[consumed..];
-                    let content = following.trim_start_matches([' ', '\t']);
-                    (content.len() < following.len()
-                        && (!content.is_empty() || first.next_sibling().is_some()))
-                    .then(|| (attrs, content.to_owned()))
-                })
-            } else {
-                None
-            }
-        };
-        if let Some((attributes, content)) = same_line_attributes
+        if let Some((attributes, content)) = same_line_block_attributes(first)
             && !paragraph
                 .parent()
                 .is_some_and(|parent| matches!(parent.data().value, NodeValue::Item(_)))
@@ -1196,6 +1200,43 @@ mod tests {
             markdown_if_supported("{.ico-tip}\nSee the **photos**.", ""),
             Some("<p class=\"ico-tip\">See the <strong>photos</strong>.</p>\n".into())
         );
+    }
+
+    #[test]
+    fn same_line_block_attributes_match_php_edge_cases() {
+        for (source, expected) in [
+            (
+                "{#photos} The images.",
+                "<p id=\"photos\">The images.</p>\n",
+            ),
+            (
+                "{id=photos} The images.",
+                "<p id=\"photos\">The images.</p>\n",
+            ),
+            (
+                "{.ico-tip}\tThe photos.",
+                "<p class=\"ico-tip\">The photos.</p>\n",
+            ),
+            (
+                "{.ico-tip} The photos.\n## Next",
+                "<p class=\"ico-tip\">The photos.</p>\n<h2>Next</h2>\n",
+            ),
+            (
+                "Intro\n\n{.a} Second paragraph.",
+                "<p>Intro</p>\n<p class=\"a\">Second paragraph.</p>\n",
+            ),
+            ("- {.a} Item", "<ul>\n<li class=\"a\">Item</li>\n</ul>\n"),
+            ("{onclick=\"x\"} Text", "<p>Text</p>\n"),
+            ("`{.ico-tip}` Text", "<p><code>{.ico-tip}</code> Text</p>\n"),
+            ("{x:example} text", "<p>{x:example} text</p>\n"),
+            ("{.1abc} Text", "<p>{.1abc} Text</p>\n"),
+        ] {
+            assert_eq!(
+                markdown_if_supported(source, ""),
+                Some(expected.into()),
+                "{source}"
+            );
+        }
     }
 
     #[test]

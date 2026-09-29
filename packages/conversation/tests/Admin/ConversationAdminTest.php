@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\conversation\Tests\Admin;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Conversation\Entity\Message;
@@ -44,16 +45,64 @@ final class ConversationAdminTest extends AbstractAdminTestClass
         self::assertStringContainsString('Trip code', $html);
     }
 
-    public function testReviewFiltersFindAnEmailAndTripCode(): void
+    /**
+     * @return iterable<string, array{array<string, array{comparison: string, value: string}>, list<string>, list<string>}>
+     */
+    public static function provideReviewFilters(): iterable
+    {
+        $aliceFrab1234 = 'Alice FRAB1234 filter marker';
+        $aliceDecd5678 = 'Alice DECD5678 filter marker';
+        $bobFrab1234 = 'Bob FRAB1234 filter marker';
+        $bobFrab = 'Bob FRAB filter marker';
+        $anonymous = 'Anonymous filter marker';
+
+        yield 'email and trip code combine' => [
+            [
+                'authorEmail' => ['comparison' => 'like', 'value' => 'filter-alice@example.test'],
+                'referring' => ['comparison' => 'like', 'value' => 'FRAB1234'],
+            ],
+            [$aliceFrab1234],
+            [$aliceDecd5678, $bobFrab1234, $bobFrab, $anonymous],
+        ];
+
+        // "contains" is the default comparison; a review without email never matches it.
+        yield 'email contains a fragment' => [
+            ['authorEmail' => ['comparison' => 'like', 'value' => 'alice']],
+            [$aliceFrab1234, $aliceDecd5678],
+            [$bobFrab1234, $bobFrab, $anonymous],
+        ];
+
+        yield 'trip code contains a fragment' => [
+            ['referring' => ['comparison' => 'like', 'value' => 'FRAB']],
+            [$aliceFrab1234, $bobFrab1234, $bobFrab],
+            [$aliceDecd5678, $anonymous],
+        ];
+
+        yield 'trip code equals the whole code only' => [
+            ['referring' => ['comparison' => '=', 'value' => 'FRAB']],
+            [$bobFrab],
+            [$aliceFrab1234, $aliceDecd5678, $bobFrab1234, $anonymous],
+        ];
+    }
+
+    /**
+     * @param array<string, array{comparison: string, value: string}> $filters
+     * @param list<string>                                            $shown
+     * @param list<string>                                            $hidden
+     */
+    #[DataProvider('provideReviewFilters')]
+    public function testReviewFiltersNarrowTheList(array $filters, array $shown, array $hidden): void
     {
         $client = $this->loginUser();
         $entityManager = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
         $persistedReviews = [];
         foreach ([
-            ['filter-alice@example.test', 'FRAB1234', 'Alice review filter marker'],
-            ['filter-alice@example.test', 'DECD5678', 'Other trip filter marker'],
-            ['filter-bob@example.test', 'FRAB1234', 'Other email filter marker'],
+            ['filter-alice@example.test', 'FRAB1234', 'Alice FRAB1234 filter marker'],
+            ['filter-alice@example.test', 'DECD5678', 'Alice DECD5678 filter marker'],
+            ['filter-bob@example.test', 'FRAB1234', 'Bob FRAB1234 filter marker'],
+            ['filter-bob@example.test', 'FRAB', 'Bob FRAB filter marker'],
+            [null, '', 'Anonymous filter marker'],
         ] as [$email, $referring, $content]) {
             $review = new Review();
             $review->host = 'localhost.dev';
@@ -68,18 +117,17 @@ final class ConversationAdminTest extends AbstractAdminTestClass
         $entityManager->flush();
 
         try {
-            $client->request(Request::METHOD_GET, '/admin/review?'.http_build_query([
-                'filters' => [
-                    'authorEmail' => ['comparison' => 'like', 'value' => 'filter-alice@example.test'],
-                    'referring' => ['comparison' => 'like', 'value' => 'FRAB1234'],
-                ],
-            ]));
+            $client->request(Request::METHOD_GET, '/admin/review?'.http_build_query(['filters' => $filters]));
             self::assertResponseIsSuccessful();
 
             $html = (string) $client->getResponse()->getContent();
-            self::assertStringContainsString('Alice review filter marker', $html);
-            self::assertStringNotContainsString('Other trip filter marker', $html);
-            self::assertStringNotContainsString('Other email filter marker', $html);
+            foreach ($shown as $marker) {
+                self::assertStringContainsString($marker, $html);
+            }
+
+            foreach ($hidden as $marker) {
+                self::assertStringNotContainsString($marker, $html);
+            }
         } finally {
             foreach ($persistedReviews as $review) {
                 $stored = $entityManager->find(Review::class, $review->id);

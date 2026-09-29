@@ -38,9 +38,9 @@ adminReviewReplyLabel: Reply
 adminReviewReplyPlaceholder: 'Reply to this review…'
 adminReviewTitleHelp: 'Short headline describing the review'
 adminReviewTitleLabel: Title
-adminReviewTripCodeLabel: Trip code
 adminReviewTranslationsHelp: 'AI-generated translations'
 adminReviewTranslationsLabel: Translations
+adminReviewTripCodeLabel: Trip code
 conversationContentPlaceholder: Message
 conversationEmailInvalid: 'Invalid email address'
 conversationEmailOrPhonePlaceholder: 'Email or Phone'

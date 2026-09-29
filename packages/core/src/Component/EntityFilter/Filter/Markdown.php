@@ -125,9 +125,6 @@ class Markdown implements FilterInterface
     /** @return array{string, bool} */
     private function preparePart(string $text, Manager $manager): array
     {
-        $sameLineAttribute = 1 === preg_match('/^(\{(?:[.#]|[a-z][a-z0-9_-]*=)[^{}\n]+\})[ \t]+(?=\S)/i', $text, $leadingAttribute)
-            && MarkdownUtils::startWithAttribute($leadingAttribute[1]);
-
         $lines = explode("\n", $text);
         $attribute = '';
         if (MarkdownUtils::startWithAttribute($lines[0])) {
@@ -157,7 +154,7 @@ class Markdown implements FilterInterface
         }
 
         if (null !== $textFiltered) {
-            if (MarkdownUtils::isItRawBlock($blockText) && ! $sameLineAttribute) {
+            if (MarkdownUtils::isItRawBlock($blockText) && ! $this->startsWithSameLineAttribute($text)) {
                 return [$textFiltered, false];
             }
 
@@ -169,6 +166,13 @@ class Markdown implements FilterInterface
         $blockText = $this->fixTypo($blockText);
 
         return [trim($attribute."\n".$blockText), true];
+    }
+
+    /** `{.class} text` starts with a brace, yet it is a Markdown paragraph, not a raw block. */
+    private function startsWithSameLineAttribute(string $text): bool
+    {
+        return 1 === preg_match('/^(\{(?:[.#]|[a-z][a-z0-9_-]*=)[^{}\n]+\})[ \t]+(?=\S)/i', $text, $leadingAttribute)
+            && MarkdownUtils::startWithAttribute($leadingAttribute[1]);
     }
 
     private function fixTypo(string $text): string

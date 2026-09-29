@@ -376,6 +376,9 @@ final class StaticGeneratorTest extends KernelTestCase
             // mirrors the in-process guard this test drives.
             $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
 
+            // The generators write no index.html for a held homepage: the
+            // missing-homepage guard must see the carried-over copy, not fail.
+            self::assertSame(0, $commandTester->getStatusCode(), $commandTester->getDisplay());
             self::assertStringContainsString('Held', $commandTester->getDisplay());
 
             clearstatcache();
@@ -986,20 +989,34 @@ final class StaticGeneratorTest extends KernelTestCase
         $tester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
         self::assertSame(0, $tester->getStatusCode(), $tester->getDisplay());
         $publishedHomeContent = (string) file_get_contents($staticDir.'/index.html');
+        $withoutPagesGenerator = array_values(array_filter(
+            $generators,
+            static fn (mixed $generator): bool => PagesGenerator::class !== $generator,
+        ));
 
         try {
             // A misconfigured generator list can produce assets and an error page
             // without any content pages, which must not replace the live site.
-            $site->setCustomProperty('static_generators', array_values(array_filter(
-                $generators,
-                static fn (mixed $generator): bool => PagesGenerator::class !== $generator,
-            )));
+            $site->setCustomProperty('static_generators', $withoutPagesGenerator);
 
             $tester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
 
             self::assertSame(1, $tester->getStatusCode(), $tester->getDisplay());
             self::assertStringContainsString('missing index.html', $tester->getDisplay());
             self::assertSame($publishedHomeContent, file_get_contents($staticDir.'/index.html'));
+            self::assertFileExists($staticDir.'/kitchen-sink.html');
+
+            // The documented escape hatch: once the old index.html is gone, a
+            // homepage-less export is intended and must be swapped in. Rebooted
+            // like a separate run: the generator service keeps its errors.
+            new Filesystem()->remove($staticDir.'/index.html');
+            $tester = $this->rebootStaticCommandTester();
+            $site = self::getContainer()->get(SiteRegistry::class)->switchSite('localhost.dev')->get();
+            $site->setCustomProperty('static_generators', $withoutPagesGenerator);
+            $tester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
+
+            self::assertSame(0, $tester->getStatusCode(), $tester->getDisplay());
+            self::assertFileDoesNotExist($staticDir.'/kitchen-sink.html', 'the new export must replace the old one');
         } finally {
             $site->setCustomProperty('static_generators', $generators);
             new Filesystem()->remove($staticDir.'~');
@@ -1048,6 +1065,63 @@ final class StaticGeneratorTest extends KernelTestCase
         }
     }
 
+    /**
+     * An incremental build writes in place, so the missing-index.html check (full
+     * build only) never runs: with nothing published, its prune would delete every
+     * page file. The no-published-pages pre-check is its only guard.
+     */
+    #[Group('serial')]
+    public function testIncrementalBuildRefusesToPruneTheSiteWhenAllPagesAreUnpublished(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $staticDir = $this->getStaticDir();
+
+        $tester = new CommandTester(new Application(self::$kernel)->find('pw:static')); // @phpstan-ignore-line
+        $tester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
+        self::assertSame(0, $tester->getStatusCode(), $tester->getDisplay());
+        $publishedHomeContent = (string) file_get_contents($staticDir.'/index.html');
+        self::assertFileExists($staticDir.'/kitchen-sink.html');
+
+        $publishedAt = [];
+        foreach (self::getContainer()->get(PageRepository::class)->getPublishedPages('localhost.dev') as $page) {
+            $publishedAt[(int) $page->id] = $page->publishedAt;
+            $page->publishedAt = null;
+        }
+
+        self::getContainer()->get('doctrine.orm.default_entity_manager')->flush();
+
+        try {
+            $tester = $this->rebootStaticCommandTester();
+            $tester->execute(['host' => 'localhost.dev', '--incremental' => true, '--workers' => 1, '--format' => 'text']);
+
+            self::assertSame(1, $tester->getStatusCode(), $tester->getDisplay());
+            self::assertStringContainsString('No published pages found; keeping the last published site.', $tester->getDisplay());
+            self::assertSame($publishedHomeContent, file_get_contents($staticDir.'/index.html'));
+            self::assertFileExists($staticDir.'/kitchen-sink.html');
+
+            // The documented escape hatch: without the old index.html, emptying
+            // the site is taken as intended.
+            new Filesystem()->remove($staticDir.'/index.html');
+            $tester = $this->rebootStaticCommandTester();
+            $tester->execute(['host' => 'localhost.dev', '--incremental' => true, '--workers' => 1, '--format' => 'text']);
+
+            self::assertSame(0, $tester->getStatusCode(), $tester->getDisplay());
+            self::assertFileDoesNotExist($staticDir.'/kitchen-sink.html');
+        } finally {
+            // Restore pristine state for the shared worker DB.
+            $pageRepository = self::getContainer()->get(PageRepository::class);
+            foreach ($publishedAt as $id => $date) {
+                $page = $pageRepository->find($id);
+                if (null !== $page) {
+                    $page->publishedAt = $date;
+                }
+            }
+
+            self::getContainer()->get('doctrine.orm.default_entity_manager')->flush();
+        }
+    }
+
     public function testWorkerRejectsMissingPublishedSlugs(): void
     {
         self::bootKernel();
@@ -1056,9 +1130,11 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertInstanceOf(PagesGenerator::class, $generator);
         $scratch = sys_get_temp_dir().'/pushword-missing-slug-'.getmypid();
 
+        // homepage is published, so it is neither counted nor named; the other
+        // four are counted, and the message names only the first three.
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageIsOrContains('Worker could not load 1 published page(s), including missing-page');
-        $generator->generateSlugs(['missing-page'], $scratch.'.json', $scratch.'-redirections.json', 'localhost.dev');
+        $this->expectExceptionMessageIsOrContains('Worker could not load 4 published page(s), including missing-1, missing-2, missing-3; refusing an incomplete static export.');
+        $generator->generateSlugs(['homepage', 'missing-1', 'missing-2', 'missing-3', 'missing-4'], $scratch.'.json', $scratch.'-redirections.json', 'localhost.dev');
     }
 
     public function testGenerateCNAME(): void

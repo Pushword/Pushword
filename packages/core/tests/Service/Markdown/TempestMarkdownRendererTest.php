@@ -88,6 +88,16 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'same-line attribute before literal heading marker uses CommonMark' => ['{.ico-tip} # Titre', null];
         yield 'same-line leading paragraph attributes use CommonMark' => ['{.note #more} Les **détails**.', null];
         yield 'same-line named attribute uses CommonMark' => ['{data-role="note"} Un *conseil*.', null];
+        yield 'same-line leading paragraph named id' => ['{id=photos} Les images.', "<p id=\"photos\">Les images.</p>\n"];
+        yield 'same-line class after a tab' => ["{.ico-tip}\tLes photos.", "<p class=\"ico-tip\">Les photos.</p>\n"];
+        yield 'same-line class before inline code' => ['{.ico-tip} `code` après', "<p class=\"ico-tip\"><code>code</code> après</p>\n"];
+        yield 'same-line class stays on the paragraph before a heading' => ["{.ico-tip} Les photos.\n## Suite", "<p class=\"ico-tip\">Les photos.</p>\n<h2>Suite</h2>\n"];
+        yield 'same-line class in a blockquote' => ['> {.a} Une citation.', "<blockquote>\n<p class=\"a\">Une citation.</p>\n</blockquote>\n"];
+        yield 'attribute inside inline code stays literal' => ['`{.ico-tip}` Les photos.', "<p><code>{.ico-tip}</code> Les photos.</p>\n"];
+        yield 'escaped same-line attribute uses CommonMark' => ['\\{.ico-tip} Les photos.', null];
+        yield 'same-line attribute before a list marker uses CommonMark' => ['{.ico-tip} - Etape', null];
+        yield 'same-line and trailing attributes use CommonMark' => ['{.a} Les photos {.b}', null];
+        yield 'same-line event handler uses CommonMark' => ['{onclick="x"} Les photos.', null];
         yield 'leading hash heading class and id' => ["{#rdv .ico-location}\n## Rendez-vous", "<h2 class=\"ico-location\" id=\"rdv\">Rendez-vous</h2>\n"];
         yield 'leading hash attributed list' => ["{#programme}\n- Etape", "<ul id=\"programme\">\n<li>Etape</li>\n</ul>\n"];
         yield 'leading hash attributed blockquote' => ["{#citation}\n> Une longue citation.", "<blockquote id=\"citation\">\n<p>Une longue citation.</p>\n</blockquote>\n"];

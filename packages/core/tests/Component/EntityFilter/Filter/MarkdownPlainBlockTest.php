@@ -89,4 +89,38 @@ final class MarkdownPlainBlockTest extends KernelTestCase
         $raw = $filter->apply('{literal} **unparsed**', $page, $factory->getLegacyManager($page));
         self::assertSame("{literal} **unparsed**\n\n", $raw);
     }
+
+    public function testSameLineAttributeDetectionSparesTwigAndLiteralBraces(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $factory = $container->get(ContentPipelineFactory::class);
+        $filter = $container->get(FilterRegistry::class)->getFilter('markdown');
+        self::assertInstanceOf(Markdown::class, $filter);
+
+        $page = new Page();
+        $page->host = 'localhost';
+        $page->locale = 'fr';
+
+        $render = static function (string $source) use ($filter, $page, $factory): string {
+            $html = $filter->apply($source, $page, $factory->getLegacyManager($page));
+            self::assertIsString($html);
+
+            return $html;
+        };
+
+        // A block opening on a Twig tag or a social handle is not attributed: it stays raw.
+        self::assertSame(" Texte\n\n", $render('{# commentaire #} Texte'));
+        self::assertSame("x texte\n\n", $render("{{ 'x' }} texte"));
+        self::assertSame("oui texte\n\n", $render('{% if true %}oui{% endif %} texte'));
+        self::assertSame("{x:example} texte\n\n", $render('{x:example} texte'));
+
+        self::assertStringContainsString('<p class="a">Twig évalué</p>', $render("{.a} {{ 'Twig' }} évalué"));
+        self::assertStringContainsString('<p class="a">Texte</p>', $render("{.a}\tTexte"));
+        self::assertStringContainsString("<blockquote>\n<p class=\"a\">Citation</p>\n</blockquote>", $render('> {.a} Citation'));
+        self::assertStringContainsString('<p class="a"># Titre</p>', $render('{.a} # Titre'));
+
+        self::assertStringContainsString('<p><code>{.a}</code> Texte</p>', $render('`{.a}` Texte'));
+        self::assertStringContainsString('<p>{.a} Texte</p>', $render('\\{.a} Texte'));
+    }
 }

@@ -45,16 +45,7 @@ final readonly class TempestMarkdownRenderer
         }
 
         if (1 === preg_match('/\A\{(?:[.#]|[a-z][a-z0-9_-]*=)[^{}\r\n]+\}[ \t]+\S/i', $source)) {
-            if (1 === preg_match('/\A\{(?<type>\.|#|id=)(?<value>[\p{L}\p{N}_-]+)\}[ \t]+(?<text>\S[\s\S]*)\z/Du', $source, $attribute)) {
-                $html = $this->render($attribute['text']);
-                if (null !== $html && str_starts_with($html, '<p>')) {
-                    $name = '.' === $attribute['type'] ? 'class' : 'id';
-
-                    return '<p '.$name.'="'.htmlspecialchars($attribute['value'], \ENT_QUOTES | \ENT_SUBSTITUTE).'">'.substr($html, 3);
-                }
-            }
-
-            return null;
+            return $this->renderSameLineAttribute($source);
         }
 
         $standalone = $this->standalone->tryRender($source);
@@ -128,5 +119,22 @@ final readonly class TempestMarkdownRenderer
         }
 
         return htmlspecialchars($literalPrefix, \ENT_QUOTES | \ENT_SUBSTITUTE).substr($html, 3, -5);
+    }
+
+    /** Only a single `{.class}` or `{#id}` on a paragraph is rendered here; anything else is left to CommonMark. */
+    private function renderSameLineAttribute(string $source): ?string
+    {
+        if (1 !== preg_match('/\A\{(?<type>\.|#|id=)(?<value>[\p{L}\p{N}_-]+)\}[ \t]+(?<text>\S[\s\S]*)\z/Du', $source, $attribute)) {
+            return null;
+        }
+
+        $html = $this->render($attribute['text']);
+        if (null === $html || ! str_starts_with($html, '<p>')) {
+            return null;
+        }
+
+        $name = '.' === $attribute['type'] ? 'class' : 'id';
+
+        return '<p '.$name.'="'.htmlspecialchars($attribute['value'], \ENT_QUOTES | \ENT_SUBSTITUTE).'">'.substr($html, 3);
     }
 }
