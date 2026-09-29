@@ -532,6 +532,61 @@ textarea:focus:not(:focus-visible) {
   outline-offset: var(--focus-ring-offset);
 }
 
+/* ============================================
+   Impersonation banner
+   ============================================ */
+
+/* Spans the viewport above the sidebar: while it shows, every change is recorded under
+   someone else's name, so it reads as a state of the whole session, not of one page. */
+.pw-impersonation-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 20px;
+  background: var(--amber-400);
+  border-bottom: 1px solid var(--amber-500);
+  color: var(--amber-900);
+  font-size: var(--pw-text-sm);
+}
+
+.pw-impersonation-banner__icon {
+  font-size: var(--pw-text-md);
+}
+
+.pw-impersonation-banner__text {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  margin: 0;
+}
+
+.pw-impersonation-banner__hint {
+  color: var(--amber-800);
+}
+
+.pw-impersonation-banner__exit {
+  padding: 6px 14px;
+  border-radius: var(--pw-radius-md);
+  background: var(--amber-900);
+  color: white;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.pw-impersonation-banner__exit:hover,
+.pw-impersonation-banner__exit:focus-visible {
+  background: #451a03; /* amber-950, which EasyAdmin's palette stops short of */
+  color: white;
+}
+
+.pw-impersonation-banner__exit:focus-visible {
+  outline: var(--focus-ring-width) solid var(--amber-900);
+  outline-offset: var(--focus-ring-offset);
+}
+
 /* An empty list is the moment a user most needs direction, so it gets room, an icon,
    a sentence naming which of the two situations they are in, and the way out. */
 .pw-empty-state {

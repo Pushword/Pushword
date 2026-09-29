@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'super administrators can log in as an editor; custom admin pages extending the EasyAdmin layout miss its banner'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin`, `pushword/core`
+
+## Log in as an editor
+
+Super administrators can now [browse the admin as an editor](/authentication#impersonation) from the user list, under an amber banner on every admin page.
+
+**Sites with custom admin templates extending `@EasyAdmin/layout.html.twig`.** Extend `ea().templatePath('layout')` instead, or those pages show no banner.

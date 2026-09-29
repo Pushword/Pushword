@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\User;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
@@ -668,6 +669,33 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertInstanceOf(Contact::class, $contact);
         self::assertTrue($contact->isSubscribed());
         self::assertStringStartsWith('admin:', (string) $contact->source);
+    }
+
+    /** The pages the custom actions render extend the dashboard layout, so a super admin browsing as an editor keeps the way back. */
+    public function testTheCustomActionPagesShowTheImpersonationBanner(): void
+    {
+        $client = $this->loginUser();
+        $campaign = $this->campaign($this->seed(), 'Impersonated test send');
+        $this->entityManager()->flush();
+
+        /** @var class-string<User> $userClass */
+        $userClass = $client->getContainer()->getParameter('pw.entity_user');
+        $editor = new $userClass();
+        $editor->email = 'newsletter-editor-'.uniqid().'@example.tld';
+        $editor->setRoles(['ROLE_EDITOR']);
+        $this->entityManager()->persist($editor);
+        $this->entityManager()->flush();
+
+        $client->request(Request::METHOD_GET, '/admin?_switch_user='.urlencode($editor->email));
+        self::assertResponseRedirects('/admin');
+
+        $client->request(Request::METHOD_GET, '/admin/newsletter/contact/opt-in');
+        self::assertSelectorExists('form[method=post] [name=audience]');
+        self::assertSelectorTextContains('.pw-impersonation-banner', $editor->email);
+
+        $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$campaign->id.'/send-test');
+        self::assertSelectorTextContains('h1', 'Impersonated test send');
+        self::assertSelectorTextContains('.pw-impersonation-banner', $editor->email);
     }
 
     /**

@@ -237,6 +237,10 @@ adminUserDateOfBirthLabel: 'Date de naissance'
 adminUserEmailLabel: 'Adresse mail'
 adminUserEnabledLabel: 'Compte activé'
 adminUserFirstnameLabel: Prénom
+adminUserImpersonate: 'Se connecter en tant que'
+adminUserImpersonationBanner: 'Vous naviguez en tant que <strong>%user%</strong>.'
+adminUserImpersonationExit: 'Revenir à mon compte'
+adminUserImpersonationHint: 'Toute modification est enregistrée au nom de ce compte.'
 adminUserLabelApi: Accès API
 adminUserLabelId: Identifiants
 adminUserLabelProfile: Profil

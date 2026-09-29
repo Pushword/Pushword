@@ -236,6 +236,10 @@ adminUserDateOfBirthLabel: "Date of birth"
 adminUserEmailLabel: "Email address"
 adminUserEnabledLabel: "Account enabled"
 adminUserFirstnameLabel: "First name"
+adminUserImpersonate: "Log in as"
+adminUserImpersonationBanner: "You are browsing as <strong>%user%</strong>."
+adminUserImpersonationExit: "Back to my account"
+adminUserImpersonationHint: "Every change is saved under this account."
 adminUserLabelApi: API Access
 adminUserLabelId: Identifiers
 adminUserLabelProfile: Profile

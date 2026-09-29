@@ -73,6 +73,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             'always_remember_me' => false,
             'secret' => '%kernel.secret%',
         ],
+        // `?_switch_user=<email>` lets ROLE_ALLOWED_TO_SWITCH (super admins) browse as
+        // another account; `?_switch_user=_exit` returns to their own.
+        'switch_user' => true,
     ];
 
     $accessControl[] = [

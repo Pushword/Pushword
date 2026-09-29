@@ -38,6 +38,10 @@ served with a sandboxed Content Security Policy and MIME sniffing disabled.
   user there would touch the session — so they keep the headers their controller set.
 - Logout remains callable with GET. This permits logout CSRF, whose only effect is to
   end the current session; Pushword accepts that availability trade-off.
+- [Impersonation](/authentication#impersonation) is also switched with GET, so a link
+  followed from a third-party page can switch a super administrator to another account.
+  It grants nothing the super administrator did not already hold, but changes made
+  before noticing the banner are recorded under the other account's name.
 - There is no last-super-administrator deletion or demotion guard. This avoids special
   persistence rules around administrators. Recover locally with
   `php bin/console pw:user:create` if every administrator has been removed.

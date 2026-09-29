@@ -225,6 +225,14 @@ symfony server:ca:install
 symfony server:start
 ```
 
+## Log In as Another User {id=impersonation}
+
+A super administrator can browse the admin as any account that reaches `ROLE_EDITOR`, from **Log in as** in the row menu of the user list. An amber banner then stays at the top of every admin page until its **Back to my account** button returns you to the user list under your own session.
+
+Every change made meanwhile is saved under the borrowed account: a page's `editedBy` names that editor, not you.
+
+This is Symfony's [`switch_user`](https://symfony.com/doc/current/security/impersonating_user.html): `?_switch_user=<email>` starts it and `?_switch_user=_exit` ends it, on any URL. Only `ROLE_ALLOWED_TO_SWITCH` may switch, and `ROLE_SUPER_ADMIN` is the only role that inherits it.
+
 ## Security Best Practices
 
 1. **Never commit OAuth secrets** to version control. Use `.env.local` or environment variables.

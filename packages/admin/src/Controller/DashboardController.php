@@ -48,6 +48,7 @@ class DashboardController extends AbstractDashboardController
     {
         return Crud::new()
             ->overrideTemplates([
+                'layout' => '@pwAdmin/easyadmin_layout.html.twig',
                 'crud/index' => '@pwAdmin/crud/index.html.twig',
             ]);
     }

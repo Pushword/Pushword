@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Admin\Controller;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
@@ -16,6 +17,7 @@ use LogicException;
 use Override;
 use Pushword\Core\Entity\EntityClassRegistry;
 use Pushword\Core\Entity\User;
+use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /** @extends AbstractAdminCrudController<User> */
@@ -25,6 +27,11 @@ class UserCrudController extends AbstractAdminCrudController
     public const string MESSAGE_PREFIX = 'admin.user';
 
     private ?AdminUrlGenerator $adminUrlGenerator = null;
+
+    public function __construct(
+        private readonly RoleHierarchyInterface $roleHierarchy,
+    ) {
+    }
 
     public static function getEntityFqcn(): string
     {
@@ -40,6 +47,18 @@ class UserCrudController extends AbstractAdminCrudController
             ->setDefaultSort(['createdAt' => 'DESC'])
             ->addFormTheme('@pwAdmin/form/admin_form_theme.html.twig')
             ->addFormTheme('@pwAdmin/form/api_token_theme.html.twig');
+    }
+
+    #[Override]
+    public function configureActions(Actions $actions): Actions
+    {
+        // The switch listener strips the parameter and redirects to the same URL, so the
+        // impersonated editor lands on the dashboard rather than on this super-admin list.
+        $impersonate = Action::new('impersonate', 'adminUserImpersonate', 'fa fa-user-secret')
+            ->linkToUrl(fn (User $user): string => $this->generateUrl('admin', ['_switch_user' => $user->getUserIdentifier()]))
+            ->displayIf(fn (User $user): bool => $this->canImpersonate($user));
+
+        return $actions->add(Crud::PAGE_INDEX, $impersonate);
     }
 
     #[Override]
@@ -99,6 +118,16 @@ class UserCrudController extends AbstractAdminCrudController
             ->setSortable(false);
         yield DateTimeField::new('createdAt', 'adminUserCreatedAtLabel')
             ->setSortable(true);
+    }
+
+    /**
+     * Only accounts that reach the admin: any other would land on a 403 page, which has
+     * no banner to switch back from.
+     */
+    private function canImpersonate(User $user): bool
+    {
+        return $user->getUserIdentifier() !== $this->getUser()?->getUserIdentifier()
+            && \in_array('ROLE_EDITOR', $this->roleHierarchy->getReachableRoleNames($user->getRoles()), true);
     }
 
     private function formatUsernameColumn(User $user): string

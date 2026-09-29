@@ -1,0 +1,17 @@
+{% extends '@EasyAdmin/layout.html.twig' %}
+
+{% block wrapper_wrapper %}
+    {% if is_granted('IS_IMPERSONATOR') %}
+        <div class="pw-impersonation-banner" role="status">
+            <i class="fa fa-user-secret pw-impersonation-banner__icon" aria-hidden="true"></i>
+            <p class="pw-impersonation-banner__text">
+                <span>{{ 'adminUserImpersonationBanner'|trans({'%user%': app.user.userIdentifier|e})|raw }}</span>
+                <span class="pw-impersonation-banner__hint">{{ 'adminUserImpersonationHint'|trans }}</span>
+            </p>
+            <a class="pw-impersonation-banner__exit" href="{{ impersonation_exit_path(path('admin_user_index')) }}">
+                {{ 'adminUserImpersonationExit'|trans }}
+            </a>
+        </div>
+    {% endif %}
+    {{ parent() }}
+{% endblock %}
