@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.27](/upgrade/1.0.27) | `admin-block-editor` `core` `flat` | paragraph attributes on the same line render as markdown; the flat export keeps typographic quotes inside Twig tags |
 | [1.0.26](/upgrade/1.0.26) | `static-generator` | static exports retain the published homepage |
 | [1.0.25](/upgrade/1.0.25) | `admin-block-editor` `core` `flat` `static-generator` | typography preserves line breaks and supports nested quotations; static generation rejects invalid UTF-8 |
 | [1.0.23](/upgrade/1.0.23) | `core` `static-generator` | markdown Tempest cannot render uses CommonMark again instead of a 500; a page failing in a parallel `pw:static` worker fails the build; static `.htaccess` redirects match the exact path |
