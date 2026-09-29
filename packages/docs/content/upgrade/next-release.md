@@ -1,5 +1,5 @@
 ---
-title: 'super administrators can log in as an editor; custom admin pages extending the EasyAdmin layout miss its banner'
+title: 'super administrators can log in as an editor; custom admin pages extending the EasyAdmin layout miss its banner; the review filter on `referring` is labelled like its form field'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,10 +35,16 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin`, `pushword/core`
+**Concerns:** `pushword/admin`, `pushword/conversation`, `pushword/core`
 
 ## Log in as an editor
 
 Super administrators can now [browse the admin as an editor](/authentication#impersonation) from the user list, under an amber banner on every admin page.
 
 **Sites with custom admin templates extending `@EasyAdmin/layout.html.twig`.** Extend `ea().templatePath('layout')` instead, or those pages show no banner.
+
+## Review filters
+
+The review list filters ignore case on every database, and the `referring` filter is now labelled like its form field ("Referring") instead of "Trip code".
+
+**Sites that call `referring` something else.** Override `adminConversationReferringLabel` in your translations; it renames the filter and the form field together.

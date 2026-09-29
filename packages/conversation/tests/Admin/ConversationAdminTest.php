@@ -31,7 +31,7 @@ final class ConversationAdminTest extends AbstractAdminTestClass
         }
     }
 
-    public function testReviewIndexExposesEmailAndTripCodeFilters(): void
+    public function testReviewIndexExposesEmailAndReferringFilters(): void
     {
         $client = $this->loginUser();
 
@@ -42,7 +42,7 @@ final class ConversationAdminTest extends AbstractAdminTestClass
         self::assertStringContainsString('filters[authorEmail][value]', $html);
         self::assertStringContainsString('filters[referring][value]', $html);
         self::assertStringContainsString('Email', $html);
-        self::assertStringContainsString('Trip code', $html);
+        self::assertStringContainsString('Referring', $html);
     }
 
     /**
@@ -82,6 +82,29 @@ final class ConversationAdminTest extends AbstractAdminTestClass
             ['referring' => ['comparison' => '=', 'value' => 'FRAB']],
             [$bobFrab],
             [$aliceFrab1234, $aliceDecd5678, $bobFrab1234, $anonymous],
+        ];
+
+        // SQLite compares `=` case-sensitively, so this case fails without the lowering.
+        yield 'filters ignore case' => [
+            [
+                'authorEmail' => ['comparison' => '=', 'value' => 'FILTER-BOB@EXAMPLE.TEST'],
+                'referring' => ['comparison' => '=', 'value' => 'frab'],
+            ],
+            [$bobFrab],
+            [$aliceFrab1234, $aliceDecd5678, $bobFrab1234, $anonymous],
+        ];
+
+        // Fails on SQLite too without the lowering: 'FRAB1234' != 'frab1234' holds.
+        yield 'not exactly ignores case' => [
+            ['referring' => ['comparison' => '!=', 'value' => 'frab1234']],
+            [$aliceDecd5678, $bobFrab, $anonymous],
+            [$aliceFrab1234, $bobFrab1234],
+        ];
+
+        yield 'not contains ignores case' => [
+            ['referring' => ['comparison' => 'not like', 'value' => 'frab']],
+            [$aliceDecd5678, $anonymous],
+            [$aliceFrab1234, $bobFrab1234, $bobFrab],
         ];
     }
 

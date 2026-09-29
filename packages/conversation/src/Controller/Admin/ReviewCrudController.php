@@ -17,7 +17,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
-use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 
 use function is_numeric;
 
@@ -50,8 +49,8 @@ final class ReviewCrudController extends ConversationCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return parent::configureFilters($filters)
-            ->add(TextFilter::new('authorEmail', 'adminConversationAuthorEmailLabel'))
-            ->add(TextFilter::new('referring', 'adminReviewTripCodeLabel'));
+            ->add(CaseInsensitiveTextFilter::new('authorEmail', 'adminConversationAuthorEmailLabel'))
+            ->add(CaseInsensitiveTextFilter::new('referring', 'adminConversationReferringLabel'));
     }
 
     #[Override]

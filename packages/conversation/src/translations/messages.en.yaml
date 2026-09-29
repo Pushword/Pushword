@@ -40,7 +40,6 @@ adminReviewTitleHelp: 'Short headline describing the review'
 adminReviewTitleLabel: Title
 adminReviewTranslationsHelp: 'AI-generated translations'
 adminReviewTranslationsLabel: Translations
-adminReviewTripCodeLabel: Trip code
 conversationContentPlaceholder: Message
 conversationEmailInvalid: 'Invalid email address'
 conversationEmailOrPhonePlaceholder: 'Email or Phone'
