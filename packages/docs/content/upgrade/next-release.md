@@ -1,5 +1,5 @@
 ---
-title: 'paragraph attributes on the same line render as markdown'
+title: 'paragraph attributes on the same line render as markdown; the flat export keeps typographic quotes inside Twig tags'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,8 +35,14 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/core`
+**Concerns:** `pushword/admin-block-editor`, `pushword/core`, `pushword/flat`
 
 ## Paragraph attributes on the same line
 
 Paragraphs beginning with `{.class} Text` now apply the class and render inline Markdown. No action is needed.
+
+## Typographic quotes inside Twig tags
+
+The flat export and the editor no longer straighten quotes inside `{{ }}` and `{% %}`. An earlier export could turn `'l’été'` into `'l'été'`, which breaks the Twig block: the page renders without it.
+
+**Sites with flat content that ran an export since rc865.** Run `pw:page-scan --skip-external` and restore the `’` in the Twig tags of every page it flags `twig-error`.

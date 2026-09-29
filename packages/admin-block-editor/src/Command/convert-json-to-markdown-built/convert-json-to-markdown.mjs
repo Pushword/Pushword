@@ -5290,10 +5290,11 @@ var MarkdownUtils = class MarkdownUtils {
 	* them would be lossy. Fenced code blocks and inline code spans keep
 	* their bytes for the same reason: the Typographer never touches
 	* pre/code, so a straightened code sample would render differently
-	* forever.
+	* forever. Twig tags keep theirs too: Twig runs on page bodies, and a
+	* straightened apostrophe inside a single-quoted Twig string closes it.
 	*/
 	static normalizeTypography(markdown) {
-		const ranges = MarkdownUtils.codeRanges(markdown);
+		const ranges = MarkdownUtils.protectedRanges(markdown);
 		if (ranges.length === 0) return MarkdownUtils.straightenTypography(markdown);
 		let result = "";
 		let cursor = 0;
@@ -5306,6 +5307,58 @@ var MarkdownUtils = class MarkdownUtils {
 	}
 	static straightenTypography(text) {
 		return text.normalize("NFC").replace(/[\u2018\u2019\u201A\u2039\u203A]/g, "'").replace(/[\u00AB\u00BB\u201C\u201D\u201E]/g, "\"").replace(/\u2026/g, "...").replace(/[\u00A0\u202F\u2009]/g, " ").replace(/[\u00AD\u200B\u2060\uFEFF]/g, "");
+	}
+	/**
+	* Character ranges `[from, to)` that keep their bytes: code, then the Twig
+	* tags in the prose between code ranges. Ordered, non-overlapping.
+	*/
+	static protectedRanges(markdown) {
+		const ranges = [];
+		let cursor = 0;
+		for (const [from, to] of MarkdownUtils.codeRanges(markdown)) {
+			ranges.push(...MarkdownUtils.twigTags(markdown, cursor, from));
+			ranges.push([from, to]);
+			cursor = to;
+		}
+		ranges.push(...MarkdownUtils.twigTags(markdown, cursor, markdown.length));
+		return ranges;
+	}
+	/**
+	* Twig `{{ }}` and `{% %}` tags in markdown[from, to). As in Twig's lexer,
+	* a tag closes only outside string literals and brackets, so
+	* `{{ f({a: {b: 1}}) }}` stays whole. An unclosed tag is prose; a tag
+	* opening inside it still counts. Comments are left out: straightening one
+	* changes nothing, and `{#id}` is a markdown attribute.
+	*/
+	static twigTags(markdown, from, to) {
+		const tags = [];
+		const opener = /\{[{%]/g;
+		opener.lastIndex = from;
+		let match;
+		while ((match = opener.exec(markdown)) !== null && match.index < to) {
+			const start = match.index;
+			const end = MarkdownUtils.twigTagEnd(markdown, start, to);
+			if (end === null) {
+				opener.lastIndex = start + 1;
+				continue;
+			}
+			tags.push([start, end]);
+			opener.lastIndex = end;
+		}
+		return tags;
+	}
+	static twigTagEnd(markdown, start, to) {
+		const closer = markdown[start + 1] === "{" ? "}}" : "%}";
+		let depth = 0;
+		for (let i = start + 2; i < to; i++) {
+			const char = markdown[i];
+			if (char === "'" || char === "\"") {
+				for (i++; i < to && markdown[i] !== char; i++) if (markdown[i] === "\\") i++;
+			} else if (depth === 0 && i + 2 <= to && markdown.startsWith(closer, i)) return i + 2;
+			else if ("([{".includes(char)) depth++;
+			else if (")]}".includes(char)) depth--;
+		}
+		return null;
 	}
 	/**
 	* Character ranges covered by code, `[from, to)`: fenced blocks first,

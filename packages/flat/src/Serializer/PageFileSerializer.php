@@ -194,17 +194,18 @@ final class PageFileSerializer
      * author-typed one, so straightening them would be lossy. Code keeps its
      * bytes for the same reason — the render-time Typographer never touches
      * `pre`/`code`, so a straightened `…` in a code sample would render
-     * differently forever.
+     * differently forever. Twig tags keep theirs too: Twig runs on page bodies,
+     * and a straightened `’` inside a single-quoted Twig string closes it.
      */
     private function normalizeTypography(string $text): string
     {
-        if (! str_contains($text, '`') && ! str_contains($text, '~~~')) {
+        if (! str_contains($text, '`') && ! str_contains($text, '~~~') && ! str_contains($text, '{')) {
             return $this->straightenTypography($text);
         }
 
         $result = '';
         $cursor = 0;
-        foreach ($this->codeRanges($text) as [$from, $to]) {
+        foreach ($this->protectedRanges($text) as [$from, $to]) {
             $result .= $this->straightenTypography(substr($text, $cursor, $from - $cursor));
             $result .= substr($text, $from, $to - $from);
             $cursor = $to;
@@ -240,6 +241,80 @@ final class PageFileSerializer
             "\u{2060}" => '', // word joiner
             "\u{FEFF}" => '', // zero-width no-break space / stray BOM
         ]);
+    }
+
+    /**
+     * Byte ranges `[from, to)` that keep their bytes: code, then the Twig tags
+     * in the prose between code ranges. Ordered, non-overlapping.
+     *
+     * @return list<array{int, int}>
+     */
+    private function protectedRanges(string $text): array
+    {
+        $ranges = [];
+        $cursor = 0;
+        foreach ($this->codeRanges($text) as [$from, $to]) {
+            array_push($ranges, ...$this->twigTags($text, $cursor, $from));
+            $ranges[] = [$from, $to];
+            $cursor = $to;
+        }
+
+        array_push($ranges, ...$this->twigTags($text, $cursor, \strlen($text)));
+
+        return $ranges;
+    }
+
+    /**
+     * Twig `{{ }}` and `{% %}` tags in `$text[$from, $to)`. As in Twig's lexer,
+     * a tag closes only outside string literals and brackets, so
+     * `{{ f({a: {b: 1}}) }}` stays whole. An unclosed tag is prose; a tag
+     * opening inside it still counts. Comments are left out: straightening one
+     * changes nothing, and `{#id}` is a markdown attribute.
+     *
+     * @return list<array{int, int}>
+     */
+    private function twigTags(string $text, int $from, int $to): array
+    {
+        $tags = [];
+        $offset = $from;
+        while (1 === preg_match('/\{[{%]/', $text, $match, \PREG_OFFSET_CAPTURE, $offset) && $match[0][1] < $to) {
+            $start = $match[0][1];
+            $end = $this->twigTagEnd($text, $start, $to);
+            if (null === $end) {
+                $offset = $start + 1;
+
+                continue;
+            }
+
+            $tags[] = [$start, $end];
+            $offset = $end;
+        }
+
+        return $tags;
+    }
+
+    private function twigTagEnd(string $text, int $start, int $to): ?int
+    {
+        $closer = '{' === $text[$start + 1] ? '}}' : '%}';
+        $depth = 0;
+        for ($i = $start + 2; $i < $to; ++$i) {
+            $char = $text[$i];
+            if ("'" === $char || '"' === $char) {
+                for (++$i; $i < $to && $char !== $text[$i]; ++$i) {
+                    if ('\\' === $text[$i]) {
+                        ++$i;
+                    }
+                }
+            } elseif (0 === $depth && $i + 2 <= $to && $closer === substr($text, $i, 2)) {
+                return $i + 2;
+            } elseif (str_contains('([{', $char)) {
+                ++$depth;
+            } elseif (str_contains(')]}', $char)) {
+                --$depth;
+            }
+        }
+
+        return null;
     }
 
     /**

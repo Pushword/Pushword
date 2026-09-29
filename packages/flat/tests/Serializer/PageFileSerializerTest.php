@@ -135,4 +135,62 @@ final class PageFileSerializerTest extends KernelTestCase
 
         self::assertStringContainsString("un ` deux\n\ntrois ` l'quatre...", $serialized);
     }
+
+    /**
+     * Twig runs on page bodies: a straightened apostrophe inside a
+     * single-quoted Twig string closes it, and the block fails to render.
+     */
+    public function testSerializeKeepsTwigTagBytesWhileStraighteningProse(): void
+    {
+        $include = "{% include 'component/home.html.twig' with {\n  expertise: {\n    title: 'De l\u{2019}acquisition\u{2026}',\n    items: [{title: 'Être choisi'}],\n  },\n} only %}";
+        $print = "{{ tel('l\u{2019}accueil') }}";
+        $serialized = $this->serializeBody($include."\n\nAppelez l\u{2019}accueil au ".$print." ou l\u{2019}après\u{2026}");
+
+        self::assertStringContainsString($include, $serialized);
+        self::assertStringContainsString("Appelez l'accueil au ".$print." ou l'après...", $serialized);
+    }
+
+    public function testSerializeClosesTwigTagOutsideBracketsAndStrings(): void
+    {
+        $nested = "{{ gallery({'a.jpg': {alt: 'l\u{2019}été'}}) }}";
+        $quoted = "{{ 'fin }} l\u{2019}été' }}";
+        $serialized = $this->serializeBody($nested." l\u{2019}un ".$quoted." l\u{2019}autre");
+
+        self::assertStringContainsString($nested." l'un ".$quoted." l'autre", $serialized);
+    }
+
+    public function testSerializeStraightensUnclosedTwigTagAndComment(): void
+    {
+        $serialized = $this->serializeBody("{# l\u{2019}ami #} et {{ l\u{2019}autre");
+
+        self::assertStringContainsString("{# l'ami #} et {{ l'autre", $serialized);
+    }
+
+    public function testSerializeSkipsEscapedQuotesInsideTwigStrings(): void
+    {
+        $single = "{{ 'l\\'été }} l\u{2019}un' }}";
+        $double = "{{ \"dit \\\"}}\\\" l\u{2019}autre\" }}";
+        $serialized = $this->serializeBody($single.' '.$double." l\u{2019}après");
+
+        self::assertStringContainsString($single.' '.$double." l'après", $serialized);
+    }
+
+    public function testSerializeKeepsTwigTagsAroundCodeRanges(): void
+    {
+        $body = "{{ a('l\u{2019}x') }}`{{ 'l\u{2019}y' }}` l\u{2019}z {% set b = 'l\u{2019}w' %}\n\n```\nl\u{2019}v\u{2026}\n```\n\n{{ c('l\u{2019}u') }} l\u{2019}t\u{2026}";
+        $serialized = $this->serializeBody($body);
+
+        self::assertStringContainsString(
+            "{{ a('l\u{2019}x') }}`{{ 'l\u{2019}y' }}` l'z {% set b = 'l\u{2019}w' %}\n\n```\nl\u{2019}v\u{2026}\n```\n\n{{ c('l\u{2019}u') }} l't...",
+            $serialized,
+        );
+    }
+
+    public function testSerializeUnclosedTwigTagDoesNotHideALaterOne(): void
+    {
+        $print = "{{ tel('l\u{2019}accueil') }}";
+        $serialized = $this->serializeBody("{{ l\u{2019}un puis ".$print." et l\u{2019}autre");
+
+        self::assertStringContainsString("{{ l'un puis ".$print." et l'autre", $serialized);
+    }
 }

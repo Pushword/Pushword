@@ -529,3 +529,53 @@ describe('MarkdownUtils.normalizeTypography code protection', () => {
     )
   })
 })
+
+describe('MarkdownUtils.normalizeTypography Twig protection', () => {
+  it('keeps Twig tags byte-identical while straightening the prose around them', () => {
+    const include =
+      "{% include 'component/home.html.twig' with {\n  expertise: {\n    title: 'De l’acquisition…',\n    items: [{title: 'Être choisi'}],\n  },\n} only %}"
+    const print = "{{ tel('l’accueil') }}"
+    expect(
+      MarkdownUtils.normalizeTypography(`${include}\n\nAppelez l’accueil au ${print} ou l’après…`),
+    ).toBe(`${include}\n\nAppelez l'accueil au ${print} ou l'après...`)
+  })
+
+  it('closes a Twig tag only outside brackets and strings', () => {
+    const nested = "{{ gallery({'a.jpg': {alt: 'l’été'}}) }}"
+    const quoted = "{{ 'fin }} l’été' }}"
+    expect(MarkdownUtils.normalizeTypography(`${nested} l’un ${quoted} l’autre`)).toBe(
+      `${nested} l'un ${quoted} l'autre`,
+    )
+  })
+
+  it('straightens an unclosed Twig tag and a Twig comment', () => {
+    expect(MarkdownUtils.normalizeTypography('{# l’ami #} et {{ l’autre')).toBe(
+      "{# l'ami #} et {{ l'autre",
+    )
+  })
+
+  it('skips escaped quotes inside Twig strings', () => {
+    const single = "{{ 'l\\'été }} l’un' }}"
+    const double = '{{ "dit \\"}}\\" l’autre" }}'
+    expect(MarkdownUtils.normalizeTypography(`${single} ${double} l’après`)).toBe(
+      `${single} ${double} l'après`,
+    )
+  })
+
+  it('keeps Twig tags before, between and after code ranges', () => {
+    expect(
+      MarkdownUtils.normalizeTypography(
+        "{{ a('l’x') }}`{{ 'l’y' }}` l’z {% set b = 'l’w' %}\n\n```\nl’v…\n```\n\n{{ c('l’u') }} l’t…",
+      ),
+    ).toBe(
+      "{{ a('l’x') }}`{{ 'l’y' }}` l'z {% set b = 'l’w' %}\n\n```\nl’v…\n```\n\n{{ c('l’u') }} l't...",
+    )
+  })
+
+  it('does not let an unclosed Twig tag hide a later one', () => {
+    const print = "{{ tel('l’accueil') }}"
+    expect(MarkdownUtils.normalizeTypography(`{{ l’un puis ${print} et l’autre`)).toBe(
+      `{{ l'un puis ${print} et l'autre`,
+    )
+  })
+})

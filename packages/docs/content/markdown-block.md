@@ -223,6 +223,8 @@ HTML, applied by the `Typography` entity filter after markdown rendering.
 `pre`, `code`, `script`, `style`, `svg` and comments are left untouched, and
 the flat export straightens any typographic quote or non-breaking space that
 found its way into a page, so `.md` files remain greppable and diff-friendly.
+Code and Twig tags (`{{ }}`, `{% %}`) keep their bytes: a straightened `’`
+would close a single-quoted Twig string.
 
 Disable it per page with `filter_typography: 0` in the front matter, or
 per site by overriding the `filters` config key.
