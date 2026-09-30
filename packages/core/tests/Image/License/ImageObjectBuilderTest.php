@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\License\ImageObjectBuilder;
 use Pushword\Core\Image\License\MediaLicense;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
@@ -38,6 +39,14 @@ final class ImageObjectBuilderTest extends KernelTestCase
         }
 
         return $media;
+    }
+
+    private function siteRegistry(): SiteRegistry
+    {
+        /** @var SiteRegistry $apps */
+        $apps = self::getContainer()->get(SiteRegistry::class);
+
+        return $apps;
     }
 
     public function testAMediaWithoutLicensePropertiesEmitsNothing(): void
@@ -184,6 +193,51 @@ final class ImageObjectBuilderTest extends KernelTestCase
         $contentUrl = $this->stringValue($imageObject, 'contentUrl');
         self::assertMatchesRegularExpression('#^https?://[^/]+/#', $contentUrl);
         self::assertStringContainsString('photo', $contentUrl);
+    }
+
+    /**
+     * On a static/dynamic split, base_live_url is the PHP origin: the page, and the
+     * image Google crawled on it, are on base_url.
+     */
+    public function testContentUrlIsOnThePublicHostNotThePhpOrigin(): void
+    {
+        $app = $this->siteRegistry()->get();
+        $app->setCustomProperty('base_live_url', 'https://php-origin.example');
+
+        $contentUrl = $this->stringValue(
+            $this->builder->build($this->media([MediaLicense::CREDIT_TEXT => 'ExampleCreditText'])),
+            'contentUrl',
+        );
+
+        self::assertStringStartsWith(rtrim($app->baseUrl, '/').'/', $contentUrl);
+        self::assertStringNotContainsString('php-origin.example', $contentUrl);
+    }
+
+    /** The builder is a shared service: the host comes from the site being rendered, not the default one. */
+    public function testContentUrlFollowsTheCurrentSite(): void
+    {
+        $this->siteRegistry()->switchSite('pushword.piedweb.com');
+
+        $contentUrl = $this->stringValue(
+            $this->builder->build($this->media([MediaLicense::CREDIT_TEXT => 'ExampleCreditText'])),
+            'contentUrl',
+        );
+
+        self::assertStringStartsWith('https://pushword.piedweb.com/', $contentUrl);
+        self::assertStringEndsWith('/default/photo.jpg', $contentUrl);
+    }
+
+    public function testATrailingSlashOnBaseUrlIsNotDoubled(): void
+    {
+        $this->siteRegistry()->get()->setCustomProperty('base_url', 'https://public.example/');
+
+        $contentUrl = $this->stringValue(
+            $this->builder->build($this->media([MediaLicense::CREDIT_TEXT => 'ExampleCreditText'])),
+            'contentUrl',
+        );
+
+        self::assertStringStartsWith('https://public.example/', $contentUrl);
+        self::assertStringNotContainsString('public.example//', $contentUrl);
     }
 
     /**

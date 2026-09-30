@@ -288,3 +288,5 @@ file said about its rights does not reach the served derivative. The `ImageObjec
 only licensing signal a crawler gets from the page — which is why its `contentUrl` is built exactly like
 the `<img src>` in `component/image.html.twig`: the `default` filter in the *source*
 format, not the webp variant, so Google associates the node with the image it crawled.
+For the same reason it sits on the site's `base_url`, the host the page is served from,
+and never on `base_live_url`, which on a statically generated site is the PHP origin.

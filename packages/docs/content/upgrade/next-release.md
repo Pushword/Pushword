@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'the licensable image JSON-LD points `contentUrl` at the page host, not at `base_live_url`'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`
+
+## Image `contentUrl` on the page host
+
+The `ImageObject` that `imageLicenseJsonLd()` emits now builds `contentUrl` from the site's `base_url` instead of `base_live_url`, so a static host no longer points Google at its PHP origin.
+
+**Sites whose `base_live_url` differs from `base_url`.** Regenerate the static pages (`pw:static`) to publish the corrected URLs; a template override of `imageLicenseJsonLd()` written to work around this can go.

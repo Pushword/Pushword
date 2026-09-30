@@ -138,12 +138,9 @@ final readonly class ImageObjectBuilder
 
     private function contentUrl(Media $media): string
     {
-        $app = $this->apps->get();
-        $base = $app->getStr('base_live_url');
-
-        if ('' === $base) {
-            $base = $app->baseUrl;
-        }
+        // base_url, not base_live_url: on a static/dynamic split the latter is the PHP
+        // origin, and the image Google crawled is the one on the public host's page.
+        $base = $this->apps->get()->baseUrl;
 
         // The source format, not the preferred modern one: `default/photo.webp` is
         // offered nowhere in the markup (the <source srcset> lists the breakpoint
