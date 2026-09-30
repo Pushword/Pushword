@@ -41,6 +41,11 @@ final readonly class EditorialTimezone
         return $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
     }
 
+    public function format(DateTimeInterface $date, string $format = self::FORMAT): string
+    {
+        return DateTimeImmutable::createFromInterface($date)->setTimezone($this->timezone)->format($format);
+    }
+
     /**
      * The autumn DST change shows a wall-clock hour twice (02:30 on 2026-10-25 in
      * Paris): take the first, as java.time and Python do, rather than PHP's pick,
@@ -48,9 +53,10 @@ final readonly class EditorialTimezone
      */
     private function firstOccurrence(DateTime $date): DateTime
     {
+        $timestamp = $date->getTimestamp();
         $wallClock = $date->format('Y-m-d H:i:s');
-        $wallClockSeconds = $date->getTimestamp() + $date->getOffset();
-        foreach ($this->timezone->getTransitions($date->getTimestamp() - 86400, $date->getTimestamp()) as $transition) {
+        $wallClockSeconds = $timestamp + $date->getOffset();
+        foreach ($this->timezone->getTransitions($timestamp - 86400, $timestamp) as $transition) {
             $candidate = new DateTime('@'.($wallClockSeconds - $transition['offset']))->setTimezone($this->timezone);
             if ($candidate < $date && $candidate->format('Y-m-d H:i:s') === $wallClock) {
                 $date = $candidate;
@@ -58,10 +64,5 @@ final readonly class EditorialTimezone
         }
 
         return $date;
-    }
-
-    public function format(DateTimeInterface $date, string $format = self::FORMAT): string
-    {
-        return DateTimeImmutable::createFromInterface($date)->setTimezone($this->timezone)->format($format);
     }
 }

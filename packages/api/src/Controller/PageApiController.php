@@ -152,7 +152,7 @@ final class PageApiController extends AbstractApiController
         return $this->writeResponse(
             $request,
             ['slug' => $page->slug] + $this->buildMinimalPayload($page),
-            fn (): array => $this->buildPagePayload($page) + $this->schedule($page),
+            fn (): array => $this->buildPagePayload($page) + $this->scheduledNotice($page),
             $this->revisions->compute($page),
             Response::HTTP_CREATED,
         );
@@ -285,7 +285,7 @@ final class PageApiController extends AbstractApiController
         return $this->writeResponse(
             $request,
             $this->buildMinimalPayload($page),
-            fn (): array => $this->buildPagePayload($page) + $this->schedule($page),
+            fn (): array => $this->buildPagePayload($page) + $this->scheduledNotice($page),
             $this->revisions->compute($page),
         );
     }
@@ -361,7 +361,7 @@ final class PageApiController extends AbstractApiController
         return [
             'revision' => $this->revisions->compute($page),
             'updatedAt' => $page->updatedAt?->format(DateTimeInterface::ATOM),
-        ] + $this->schedule($page) + $this->schemaWarnings($page);
+        ] + $this->scheduledNotice($page) + $this->schemaWarnings($page);
     }
 
     /**
@@ -370,13 +370,16 @@ final class PageApiController extends AbstractApiController
      *
      * @return array{}|array{scheduled: true, publishedAt: string}
      */
-    private function schedule(Page $page): array
+    private function scheduledNotice(Page $page): array
     {
         if (null === $page->publishedAt || $page->isPublished()) {
             return [];
         }
 
-        return ['scheduled' => true, 'publishedAt' => $this->editorialTimezone->format($page->publishedAt, DateTimeInterface::ATOM)];
+        return [
+            'scheduled' => true,
+            'publishedAt' => $this->editorialTimezone->format($page->publishedAt, DateTimeInterface::ATOM),
+        ];
     }
 
     /**

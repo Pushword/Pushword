@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Tests\Serializer;
 
+use DateTime;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\Serializer\PageFileSerializer;
@@ -28,6 +29,17 @@ final class PageFileSerializerTest extends KernelTestCase
         $page->mainContent = $mainContent;
 
         return $this->serializer->serialize($page);
+    }
+
+    /** Dates other than publishedAt (holdPublicationAt) take the same editorial format, offset included. */
+    public function testSerializeWritesOtherDatesWithTheirOffset(): void
+    {
+        $page = new Page(false);
+        $page->slug = 'held-page';
+        $page->host = 'localhost.dev';
+        $page->holdPublicationAt = new DateTime('2026-10-01 07:00:45 UTC');
+
+        self::assertStringContainsString("holdPublicationAt: '2026-10-01 07:00+00:00'", $this->serializer->serialize($page));
     }
 
     public function testParsePreservesBodyBytesAroundPaddedRule(): void

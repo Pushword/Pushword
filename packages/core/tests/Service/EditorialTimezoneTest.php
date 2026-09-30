@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\Service;
 
+use DateMalformedStringException;
 use DateTime;
+use DateTimeInterface;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Service\EditorialTimezone;
 
@@ -64,6 +66,40 @@ final class EditorialTimezoneTest extends TestCase
 
         self::assertSame('2026-09-30 16:00+02:00', new EditorialTimezone('Europe/Paris')->format($utc));
         self::assertSame('2026-09-30 14:00+00:00', new EditorialTimezone('UTC')->format($utc));
+    }
+
+    public function testFormatTakesAnotherFormat(): void
+    {
+        self::assertSame(
+            '2026-09-30T16:00:00+02:00',
+            new EditorialTimezone('Europe/Paris')->format(new DateTime('2026-09-30 14:00:00 UTC'), DateTimeInterface::ATOM),
+        );
+    }
+
+    /** The date is often an entity's managed DateTime: shifting it in place would change the page. */
+    public function testFormatLeavesTheGivenDateUntouched(): void
+    {
+        $date = new DateTime('2026-09-30 14:00:00 UTC');
+
+        new EditorialTimezone('Europe/Paris')->format($date);
+
+        self::assertSame('2026-09-30 14:00:00 UTC', $date->format('Y-m-d H:i:s T'));
+    }
+
+    public function testAZuluSuffixIsAnOffsetToo(): void
+    {
+        // What JavaScript's toISOString() sends.
+        self::assertSame(
+            new DateTime('2026-09-30 12:00:00 UTC')->getTimestamp(),
+            new EditorialTimezone('Europe/Paris')->parse('2026-09-30T12:00:00.000Z')->getTimestamp(),
+        );
+    }
+
+    public function testAnUnreadableValueThrows(): void
+    {
+        // The API turns this into a 422 and the flat import into a reported error.
+        $this->expectException(DateMalformedStringException::class);
+        new EditorialTimezone('Europe/Paris')->parse('not-a-date');
     }
 
     public function testUnsetFallsBackToTheServerTimezone(): void

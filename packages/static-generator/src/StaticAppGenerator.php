@@ -301,9 +301,10 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
         foreach ($pages as $page) {
             \assert(null !== $page->publishedAt);
+            $path = $host.'/'.$page->slug;
             $publishedAt = $this->editorialTimezone->format($page->publishedAt);
-            $this->scheduledPages[] = ['page' => $host.'/'.$page->slug, 'publishedAt' => $publishedAt];
-            $this->writeln(\sprintf('<comment>Scheduled</comment> %s/%s (not generated before %s)', $host, $page->slug, $publishedAt));
+            $this->scheduledPages[] = ['page' => $path, 'publishedAt' => $publishedAt];
+            $this->writeln(\sprintf('<comment>Scheduled</comment> %s (not generated before %s)', $path, $publishedAt));
         }
     }
 

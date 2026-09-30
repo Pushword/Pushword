@@ -33,6 +33,8 @@ final class ConfigurationTest extends TestCase
     {
         self::assertNull($this->process([])['editorial_timezone']);
         self::assertSame('Europe/Paris', $this->process([['editorial_timezone' => 'Europe/Paris']])['editorial_timezone']);
+        // A backward-compatible alias, renamed Europe/Kyiv by tzdata, still reads.
+        self::assertSame('Europe/Kiev', $this->process([['editorial_timezone' => 'Europe/Kiev']])['editorial_timezone']);
 
         $this->expectException(InvalidConfigurationException::class);
         $this->process([['editorial_timezone' => 'Paris']]);

@@ -194,6 +194,7 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertArrayHasKey('errors_count', $decoded);
         self::assertArrayHasKey('errors', $decoded);
         self::assertArrayHasKey('duration_ms', $decoded);
+        self::assertArrayNotHasKey('scheduled', $decoded, 'nothing is scheduled on the fixture host');
     }
 
     public function testStaticCommandNamesTheScheduledPagesItSkips(): void
@@ -202,8 +203,12 @@ final class StaticGeneratorTest extends KernelTestCase
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $scheduled = $this->makeProbePage('scheduled-probe');
         $scheduled->publishedAt = new DateTime('2099-01-01 10:00:00');
+        // Unpublished too, but with no date to announce.
+        $draft = $this->makeProbePage('scheduled-draft-probe');
+        $draft->publishedAt = null;
 
         $em->persist($scheduled);
+        $em->persist($draft);
         $em->flush();
 
         try {
@@ -226,12 +231,15 @@ final class StaticGeneratorTest extends KernelTestCase
             self::assertContains(['page' => 'localhost.dev/scheduled-probe', 'publishedAt' => '2099-01-01 10:00+00:00'], $decoded['scheduled']);
         } finally {
             $resetEm = self::getContainer()->get('doctrine.orm.default_entity_manager');
-            $planted = self::getContainer()->get(PageRepository::class)
-                ->findOneBy(['host' => 'localhost.dev', 'slug' => 'scheduled-probe']);
-            if (null !== $planted) {
-                $resetEm->remove($planted);
-                $resetEm->flush();
+            $pageRepository = self::getContainer()->get(PageRepository::class);
+            foreach (['scheduled-probe', 'scheduled-draft-probe'] as $slug) {
+                $planted = $pageRepository->findOneBy(['host' => 'localhost.dev', 'slug' => $slug]);
+                if (null !== $planted) {
+                    $resetEm->remove($planted);
+                }
             }
+
+            $resetEm->flush();
         }
     }
 
