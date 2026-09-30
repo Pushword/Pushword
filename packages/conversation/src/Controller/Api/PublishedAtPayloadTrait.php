@@ -10,6 +10,9 @@ use Pushword\Conversation\Entity\Message;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 
+/**
+ * The using controller provides `$editorialTimezone`.
+ */
 trait PublishedAtPayloadTrait
 {
     /**
@@ -26,7 +29,7 @@ trait PublishedAtPayloadTrait
             return new ConstraintViolationList();
         }
 
-        $publishedAt = \is_string($value) ? self::parseDateTime($value) : null;
+        $publishedAt = \is_string($value) ? $this->parseDateTime($value) : null;
         if (null !== $publishedAt) {
             $message->publishedAt = $publishedAt;
 
@@ -44,10 +47,12 @@ trait PublishedAtPayloadTrait
     }
 
     /**
-     * Mutable on purpose: the column is DATETIME_MUTABLE, and Doctrine rejects a
-     * DateTimeImmutable at flush.
+     * An offset is kept to the instant, a date without one is read in the
+     * editorial timezone: Doctrine drops the offset, so it must not reach the
+     * column. Mutable on purpose: the column is DATETIME_MUTABLE, and Doctrine
+     * rejects a DateTimeImmutable at flush.
      */
-    private static function parseDateTime(string $value): ?DateTime
+    private function parseDateTime(string $value): ?DateTime
     {
         // PHP reads a blank string as "now": a client clearing the field would
         // publish at the time of the call.
@@ -56,7 +61,7 @@ trait PublishedAtPayloadTrait
         }
 
         try {
-            return new DateTime($value);
+            return $this->editorialTimezone->parse($value);
         } catch (DateMalformedStringException) {
             return null;
         }

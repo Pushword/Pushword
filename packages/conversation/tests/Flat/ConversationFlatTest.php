@@ -16,6 +16,7 @@ use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Conversation\Service\ImportContext;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -72,6 +73,7 @@ final class ConversationFlatTest extends KernelTestCase
             $denormalizer,
             $this->mediaRepository,
             new ImportContext(),
+            new EditorialTimezone(),
         );
         $this->importer->initConversationContext(
             $appPool,
@@ -558,6 +560,36 @@ final class ConversationFlatTest extends KernelTestCase
 
         self::assertInstanceOf(Message::class, $message);
         self::assertSame('external@example.com', $message->authorEmail);
+
+        if (null !== $message->id) {
+            $this->createdMessageIds[] = $message->id;
+        }
+    }
+
+    public function testImportStoresAnOffsetDateAtItsInstant(): void
+    {
+        $csvPath = $this->createCsvFile([
+            [
+                'content' => 'Offset external message',
+                'authorEmail' => 'offset@example.com',
+                'authorName' => 'Offset User',
+                'referring' => '/offset',
+                'host' => $this->testHost,
+                'publishedAt' => '2026-04-09T12:00:00+02:00',
+            ],
+        ]);
+
+        $this->importer->importExternal($csvPath);
+        // Read the row back: the managed instance still holds the offset Doctrine dropped.
+        $this->entityManager->clear();
+
+        $message = $this->messageRepository->findOneBy([
+            'host' => $this->testHost,
+            'content' => 'Offset external message',
+        ]);
+
+        self::assertInstanceOf(Message::class, $message);
+        self::assertSame(new DateTime('2026-04-09 10:00:00 UTC')->getTimestamp(), $message->publishedAt?->getTimestamp());
 
         if (null !== $message->id) {
             $this->createdMessageIds[] = $message->id;

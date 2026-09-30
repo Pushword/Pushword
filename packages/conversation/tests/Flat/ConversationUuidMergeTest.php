@@ -13,6 +13,7 @@ use Pushword\Conversation\Flat\ConversationSync;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Conversation\Service\ImportContext;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Entity\AdminNotification;
 use Pushword\Flat\FlatFileContentDirFinder;
@@ -63,6 +64,7 @@ final class ConversationUuidMergeTest extends KernelTestCase
             self::getContainer()->get('serializer'),
             self::getContainer()->get(MediaRepository::class),
             new ImportContext(),
+            new EditorialTimezone(),
             self::getContainer()->get(AdminNotificationService::class),
         );
         $this->importer->initConversationContext($appPool, $contentDirFinder, $this->messageRepository);

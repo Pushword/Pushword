@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\Tests\Flat;
 
+use DateTime;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\Conversation\Flat\ConversationCsvHelper;
+use Pushword\Core\Service\EditorialTimezone;
 
 final class ConversationCsvHelperTest extends TestCase
 {
@@ -25,30 +27,39 @@ final class ConversationCsvHelperTest extends TestCase
 
     public function testParseDateWithNull(): void
     {
-        self::assertNull(ConversationCsvHelper::parseDate(null));
+        self::assertNull(ConversationCsvHelper::parseDate(null, new EditorialTimezone()));
     }
 
     public function testParseDateWithEmptyString(): void
     {
-        self::assertNull(ConversationCsvHelper::parseDate(''));
+        self::assertNull(ConversationCsvHelper::parseDate('', new EditorialTimezone()));
     }
 
     public function testParseDateWithWhitespace(): void
     {
-        self::assertNull(ConversationCsvHelper::parseDate('   '));
+        self::assertNull(ConversationCsvHelper::parseDate('   ', new EditorialTimezone()));
     }
 
     public function testParseDateWithValidDate(): void
     {
-        $result = ConversationCsvHelper::parseDate('2024-06-15T10:30:00+00:00');
+        $result = ConversationCsvHelper::parseDate('2024-06-15T10:30:00+00:00', new EditorialTimezone());
 
-        self::assertInstanceOf(DateTimeImmutable::class, $result);
+        // Mutable: the DATETIME_MUTABLE columns reject an immutable at flush.
+        self::assertInstanceOf(DateTime::class, $result);
         self::assertSame('2024-06-15', $result->format('Y-m-d'));
+    }
+
+    public function testParseDateKeepsTheInstantOfAnOffsetAndReadsTheRestInTheEditorialTimezone(): void
+    {
+        $paris = new EditorialTimezone('Europe/Paris');
+
+        self::assertSame(new DateTime('2026-04-09 10:00:00 UTC')->getTimestamp(), ConversationCsvHelper::parseDate('2026-04-09T12:00:00+02:00', $paris)?->getTimestamp());
+        self::assertSame(new DateTime('2026-04-09 10:00:00 UTC')->getTimestamp(), ConversationCsvHelper::parseDate('2026-04-09 12:00', $paris)?->getTimestamp());
     }
 
     public function testParseDateWithInvalidDate(): void
     {
-        self::assertNull(ConversationCsvHelper::parseDate('not-a-date'));
+        self::assertNull(ConversationCsvHelper::parseDate('not-a-date', new EditorialTimezone()));
     }
 
     #[DataProvider('provideDecodeValue')]

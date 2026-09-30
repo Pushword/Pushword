@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Conversation\Repository\ReviewRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,6 +27,7 @@ final class ReviewApiController extends AbstractApiController
         private readonly ReviewRepository $reviewRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly ValidatorInterface $validator,
+        private readonly EditorialTimezone $editorialTimezone,
     ) {
     }
 

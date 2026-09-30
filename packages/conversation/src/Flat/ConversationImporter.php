@@ -12,6 +12,7 @@ use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Service\ImportContext;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Flat\Service\AdminNotificationService;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
@@ -45,6 +46,7 @@ final class ConversationImporter
         private readonly DenormalizerInterface $denormalizer,
         private readonly MediaRepository $mediaRepository,
         private readonly ImportContext $importContext,
+        private readonly EditorialTimezone $editorialTimezone,
         private readonly ?AdminNotificationService $notificationService = null,
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
@@ -352,9 +354,9 @@ final class ConversationImporter
                 continue;
             }
 
-            $parsed = ConversationCsvHelper::parseDate($value);
+            $parsed = ConversationCsvHelper::parseDate($value, $this->editorialTimezone);
             if (null !== $parsed) {
-                $dates[$field] = DateTime::createFromInterface($parsed);
+                $dates[$field] = $parsed;
             }
         }
 
@@ -549,7 +551,7 @@ final class ConversationImporter
      */
     private function keepNewerDbMessage(Message $message, array $row): bool
     {
-        $rowUpdatedAt = ConversationCsvHelper::parseDate($row['updatedAt'] ?? null);
+        $rowUpdatedAt = ConversationCsvHelper::parseDate($row['updatedAt'] ?? null, $this->editorialTimezone);
         // Compare at second precision — all the CSV can express; the in-memory
         // entity may carry microseconds the exported value never had.
         if (null === $rowUpdatedAt

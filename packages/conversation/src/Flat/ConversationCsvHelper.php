@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\Flat;
 
-use DateTimeImmutable;
+use DateTime;
 use DateTimeInterface;
 use Exception;
 use JsonException;
+use Pushword\Core\Service\EditorialTimezone;
 
 final class ConversationCsvHelper
 {
@@ -34,7 +35,11 @@ final class ConversationCsvHelper
         return null === $date ? null : $date->format(DateTimeInterface::ATOM);
     }
 
-    public static function parseDate(?string $value): ?DateTimeImmutable
+    /**
+     * An offset is kept to the instant; a date without one is read in the
+     * editorial timezone. Mutable, as the DATETIME_MUTABLE columns require.
+     */
+    public static function parseDate(?string $value, EditorialTimezone $editorialTimezone): ?DateTime
     {
         $value = null === $value ? '' : trim($value);
         if ('' === $value) {
@@ -42,7 +47,7 @@ final class ConversationCsvHelper
         }
 
         try {
-            return new DateTimeImmutable($value);
+            return $editorialTimezone->parse($value);
         } catch (Exception) {
             return null;
         }

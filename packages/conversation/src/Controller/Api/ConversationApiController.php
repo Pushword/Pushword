@@ -10,6 +10,7 @@ use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Conversation\Repository\MessageRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,6 +28,7 @@ final class ConversationApiController extends AbstractApiController
         private readonly MessageRepository $messageRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly ValidatorInterface $validator,
+        private readonly EditorialTimezone $editorialTimezone,
     ) {
     }
 

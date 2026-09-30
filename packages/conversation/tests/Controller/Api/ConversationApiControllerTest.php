@@ -134,6 +134,22 @@ final class ConversationApiControllerTest extends WebTestCase
         self::assertSame('2026-09-15 10:00:00', $message->publishedAt?->format('Y-m-d H:i:s'));
     }
 
+    public function testAnOffsetPublishedAtIsStoredAtItsInstant(): void
+    {
+        $id = $this->seed();
+
+        // Doctrine writes the wall clock and drops the offset: 12:00+02:00 used to land at 12:00 server time.
+        $this->request('PATCH', '/api/conversation/'.$id, ['publishedAt' => '2026-09-15T12:00:00+02:00']);
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $message = $em->getRepository(Message::class)->find($id);
+        self::assertInstanceOf(Message::class, $message);
+        self::assertSame(new DateTime('2026-09-15 10:00:00 UTC')->getTimestamp(), $message->publishedAt?->getTimestamp());
+    }
+
     public function testCreateWithPublishedAt(): void
     {
         // Same DATETIME_MUTABLE column, reached through the insert this time.

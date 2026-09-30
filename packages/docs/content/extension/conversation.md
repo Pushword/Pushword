@@ -167,6 +167,7 @@ conversation messages with a CSV file.
 
 - **Export** : each message is written with its core fields (content, author, tags, dates, …) and one column per custom property.
 - **Import** : editing the CSV lets you re-import messages, including any custom properties (arrays are encoded as JSON in their dedicated column).
+- **Dates** : exported as ISO 8601 with their offset. On import, and through the API, an offset is kept to the instant and a date without one is read in the [editorial timezone](/extension/flat#dates-and-time-zones).
 
 This allows you to backup or edit conversations alongside pages and medias without needing a database access.
 

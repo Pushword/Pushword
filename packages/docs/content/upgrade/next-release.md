@@ -35,13 +35,13 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/api`, `pushword/core`, `pushword/flat`, `pushword/static-generator`
+**Concerns:** `pushword/api`, `pushword/conversation`, `pushword/core`, `pushword/flat`, `pushword/static-generator`
 
 ## Dates keep their offset
 
-Exported page files now write `publishedAt` and `holdPublicationAt` with an offset, `'2026-09-30 14:00+00:00'`; a file gains it on its next export. A date written with an offset, in a file or through the API, is now stored at that instant, where `14:00+02:00` used to land at 14:00 server time.
+Exported page files now write `publishedAt` and `holdPublicationAt` with an offset, `'2026-09-30 14:00+00:00'`; a file gains it on its next export. A date written with an offset, in a file or through the API, is now stored at that instant, where `14:00+02:00` used to land at 14:00 server time. Messages and reviews, from `conversation.csv` or the conversation API, too.
 
-**Sites that wrote dates with an offset.** Those pages still hold the shifted time: correct and save them again.
+**Sites that wrote dates with an offset.** Those pages and messages still hold the shifted time: correct and save them again.
 
 ## Dates without an offset follow `editorial_timezone`
 
