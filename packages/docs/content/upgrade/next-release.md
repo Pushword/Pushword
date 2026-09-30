@@ -1,5 +1,5 @@
 ---
-title: 'super administrators can log in as an editor; custom admin pages extending the EasyAdmin layout miss its banner; the review filter on `referring` is labelled like its form field; a same-line class starting with a digit or an accent stays literal text'
+title: 'super administrators can log in as an editor; custom admin pages extending the EasyAdmin layout miss its banner; the review filter on `referring` is labelled like its form field; a same-line class starting with a digit or an accent stays literal text; the message and review API rejects an unreadable `publishedAt` with a 422'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -58,3 +58,9 @@ Without a host argument, `pw:static` now skips a host that has an `index.html` b
 `{#id} Text` and several attributes on one line (`{#tip .note} Text`) now render instead of failing with a Twig error, inside blockquotes too; `\{.class} Text` stays text.
 
 **Pages with a same-line class starting with a digit, a dash and a digit, or an accent (`{.1abc} Text`).** The marker now stays literal text, as in CommonMark: rename the class to start with a letter or `_`.
+
+## Message and review API: unreadable dates are rejected
+
+`/api/conversation` and `/api/review` now answer a `publishedAt` they cannot read as a date (`"15/09/2026"`, `""`, a number) with a 422 naming the field, instead of a 200 that wrote nothing (the current time, for `""`).
+
+**API clients that send such dates.** Send an ISO 8601 date-time, e.g. `2026-09-15T10:00:00+02:00`.

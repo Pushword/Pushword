@@ -185,6 +185,63 @@ final class ReviewApiControllerTest extends WebTestCase
         self::assertFalse($review->hasCustomProperty('replyAuthor'));
     }
 
+    public function testOmittedReplyIsKeptAndNullRemovesIt(): void
+    {
+        $id = $this->seed(['reply' => 'Merci pour votre avis', 'replyAuthor' => 'Robin']);
+
+        $this->request('PATCH', '/api/review/'.$id, ['rating' => 2]);
+        self::assertResponseIsSuccessful();
+        $body = $this->decode();
+        self::assertSame('Merci pour votre avis', $body['reply']);
+        self::assertSame('Robin', $body['replyAuthor']);
+
+        $this->request('PATCH', '/api/review/'.$id, ['reply' => null, 'replyAuthor' => null]);
+        self::assertResponseIsSuccessful();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $review = $em->getRepository(Review::class)->find($id);
+        self::assertInstanceOf(Review::class, $review);
+        self::assertFalse($review->hasCustomProperty('reply'));
+        self::assertFalse($review->hasCustomProperty('replyAuthor'));
+    }
+
+    public function testUnreadablePublishedAtIs422AndWritesNothing(): void
+    {
+        $id = $this->seed();
+
+        $response = $this->request('PATCH', '/api/review/'.$id, ['reply' => 'Jamais écrite', 'publishedAt' => '15/09/2026']);
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $body = $this->decode();
+        self::assertSame('validation', $body['error']);
+        self::assertSame([[
+            'path' => 'publishedAt',
+            'message' => 'Unreadable date "15/09/2026": send an ISO 8601 date-time, e.g. "2026-09-15T10:00:00+02:00".',
+        ]], $body['violations']);
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $review = $em->getRepository(Review::class)->find($id);
+        self::assertInstanceOf(Review::class, $review);
+        self::assertSame('', $review->getReply());
+        self::assertNull($review->publishedAt);
+    }
+
+    public function testUnreadablePublishedAtOnCreateIsReportedWithTheEntityViolations(): void
+    {
+        $content = 'Unreadable date '.uniqid();
+        $response = $this->request('POST', '/api/review', ['content' => $content, 'rating' => 9, 'host' => 'example.com', 'publishedAt' => '15/09/2026']);
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $violations = $this->decode()['violations'];
+        self::assertIsArray($violations);
+        self::assertSame(['publishedAt', 'rating'], array_column($violations, 'path'));
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        self::assertNull($em->getRepository(Review::class)->findOneBy(['content' => $content]));
+    }
+
     public function testCreateWithTranslations(): void
     {
         $id = $this->seed([

@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\Controller\Api;
 
-use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Conversation\Repository\ReviewRepository;
@@ -16,11 +14,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[IsGranted('ROLE_EDITOR')]
 final class ReviewApiController extends AbstractApiController
 {
+    use PublishedAtPayloadTrait;
+
     public function __construct(
         private readonly ReviewRepository $reviewRepository,
         private readonly EntityManagerInterface $entityManager,
@@ -56,9 +57,8 @@ final class ReviewApiController extends AbstractApiController
     {
         $data = $this->decodeJson($request);
         $review = new Review();
-        $this->apply($review, $data);
-
-        $violations = $this->validator->validate($review);
+        $violations = $this->apply($review, $data);
+        $violations->addAll($this->validator->validate($review));
         if (\count($violations) > 0) {
             return $this->validationErrors($violations);
         }
@@ -88,8 +88,8 @@ final class ReviewApiController extends AbstractApiController
 
     private function doUpdate(Review $review, Request $request): JsonResponse
     {
-        $this->apply($review, $this->decodeJson($request));
-        $violations = $this->validator->validate($review);
+        $violations = $this->apply($review, $this->decodeJson($request));
+        $violations->addAll($this->validator->validate($review));
         if (\count($violations) > 0) {
             return $this->validationErrors($violations);
         }
@@ -111,15 +111,11 @@ final class ReviewApiController extends AbstractApiController
 
     /**
      * @param array<string, mixed> $data
+     *
+     * @return ConstraintViolationList the payload values that could not be read
      */
-    private function apply(Review $review, array $data): void
+    private function apply(Review $review, array $data): ConstraintViolationList
     {
-        // Review::setTitle / setRating route into customProperties; the validation
-        // Callback wipes any unregistered customProperty key. Mirror the admin form
-        // by registering them as managed before validation runs.
-        $review->registerManagedPropertyKey('title');
-        $review->registerManagedPropertyKey('rating');
-
         if (\array_key_exists('content', $data) && \is_string($data['content'])) {
             $review->setContent($data['content']);
         }
@@ -132,11 +128,12 @@ final class ReviewApiController extends AbstractApiController
             $review->setRating($data['rating']);
         }
 
-        if (\array_key_exists('reply', $data) && \is_string($data['reply'])) {
+        // Omitted keeps the stored value; null or an empty string removes it.
+        if (\array_key_exists('reply', $data) && (null === $data['reply'] || \is_string($data['reply']))) {
             $review->setReply($data['reply']);
         }
 
-        if (\array_key_exists('replyAuthor', $data) && \is_string($data['replyAuthor'])) {
+        if (\array_key_exists('replyAuthor', $data) && (null === $data['replyAuthor'] || \is_string($data['replyAuthor']))) {
             $review->setReplyAuthor($data['replyAuthor']);
         }
 
@@ -164,13 +161,7 @@ final class ReviewApiController extends AbstractApiController
             $this->applyTranslations($review, $data['translations']);
         }
 
-        if (\array_key_exists('publishedAt', $data) && \is_string($data['publishedAt'])) {
-            try {
-                $review->publishedAt = new DateTime($data['publishedAt']);
-            } catch (Exception) {
-                // ignore unparseable
-            }
-        }
+        return $this->applyPublishedAt($review, $data);
     }
 
     /**
@@ -246,8 +237,16 @@ final class ReviewApiController extends AbstractApiController
                 'title' => ['type' => 'string'],
                 'content' => ['type' => 'string'],
                 'rating' => ['type' => 'integer', 'nullable' => true],
-                'reply' => ['type' => 'string', 'description' => 'Owner reply. On write, an empty string removes it.'],
-                'replyAuthor' => ['type' => 'string', 'description' => "When empty, the front shows the host's default reply author."],
+                'reply' => [
+                    'type' => 'string',
+                    'nullable' => true,
+                    'description' => 'Owner reply, an empty string when there is none. On write, omitting the key keeps the stored reply as is, while null or an empty string removes it.',
+                ],
+                'replyAuthor' => [
+                    'type' => 'string',
+                    'nullable' => true,
+                    'description' => "Name signing the reply; when empty, the front shows the host's default reply author. On write, omitting the key keeps it, while null or an empty string removes it.",
+                ],
                 'translations' => [
                     'type' => 'object',
                     'description' => 'Locale-keyed map. On write, a null entry removes that locale and omitted locales are left untouched.',
@@ -260,6 +259,12 @@ final class ReviewApiController extends AbstractApiController
                         ],
                     ],
                 ],
+                'publishedAt' => [
+                    'type' => 'string',
+                    'format' => 'date-time',
+                    'nullable' => true,
+                    'description' => 'On write, omitted or null leaves it unchanged, and a value that is not a readable date is a 422.',
+                ],
                 'createdAt' => ['type' => 'string', 'format' => 'date-time'],
             ],
         ];
@@ -268,12 +273,12 @@ final class ReviewApiController extends AbstractApiController
             'paths' => [
                 '/api/review' => [
                     'get' => ['summary' => 'List reviews', 'responses' => ['200' => ['description' => 'OK']]],
-                    'post' => ['summary' => 'Create a review', 'responses' => ['201' => ['description' => 'Created']]],
+                    'post' => ['summary' => 'Create a review', 'responses' => ['201' => ['description' => 'Created'], '422' => ['description' => 'Validation failed']]],
                 ],
                 '/api/review/{id}' => [
                     'parameters' => [['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],
                     'get' => ['summary' => 'Get a review', 'responses' => ['200' => ['description' => 'OK']]],
-                    'patch' => ['summary' => 'Update a review', 'responses' => ['200' => ['description' => 'OK']]],
+                    'patch' => ['summary' => 'Update a review', 'responses' => ['200' => ['description' => 'OK'], '422' => ['description' => 'Validation failed']]],
                     'delete' => ['summary' => 'Delete a review', 'responses' => ['204' => ['description' => 'Deleted']]],
                 ],
             ],

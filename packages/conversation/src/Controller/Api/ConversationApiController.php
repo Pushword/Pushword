@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\Controller\Api;
 
-use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
@@ -17,11 +15,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[IsGranted('ROLE_EDITOR')]
 final class ConversationApiController extends AbstractApiController
 {
+    use PublishedAtPayloadTrait;
+
     public function __construct(
         private readonly MessageRepository $messageRepository,
         private readonly EntityManagerInterface $entityManager,
@@ -64,9 +65,8 @@ final class ConversationApiController extends AbstractApiController
         $data = $this->decodeJson($request);
 
         $message = new Message();
-        $this->apply($message, $data);
-
-        $violations = $this->validator->validate($message);
+        $violations = $this->apply($message, $data);
+        $violations->addAll($this->validator->validate($message));
         if (\count($violations) > 0) {
             return $this->validationErrors($violations);
         }
@@ -97,8 +97,8 @@ final class ConversationApiController extends AbstractApiController
 
     private function doUpdate(Message $message, Request $request): JsonResponse
     {
-        $this->apply($message, $this->decodeJson($request));
-        $violations = $this->validator->validate($message);
+        $violations = $this->apply($message, $this->decodeJson($request));
+        $violations->addAll($this->validator->validate($message));
         if (\count($violations) > 0) {
             return $this->validationErrors($violations);
         }
@@ -120,8 +120,10 @@ final class ConversationApiController extends AbstractApiController
 
     /**
      * @param array<string, mixed> $data
+     *
+     * @return ConstraintViolationList the payload values that could not be read
      */
-    private function apply(Message $message, array $data): void
+    private function apply(Message $message, array $data): ConstraintViolationList
     {
         if (\array_key_exists('content', $data) && \is_string($data['content'])) {
             $message->setContent($data['content']);
@@ -147,19 +149,13 @@ final class ConversationApiController extends AbstractApiController
             $message->host = $data['host'];
         }
 
-        if (\array_key_exists('publishedAt', $data) && \is_string($data['publishedAt'])) {
-            try {
-                $message->publishedAt = new DateTime($data['publishedAt']);
-            } catch (Exception) {
-                // ignore unparseable date
-            }
-        }
-
         if (\array_key_exists('tags', $data) && \is_array($data['tags'])) {
             /** @var list<string> $tags */
             $tags = array_values(array_filter($data['tags'], is_string(...)));
             $message->setTags($tags);
         }
+
+        return $this->applyPublishedAt($message, $data);
     }
 
     /**
@@ -198,7 +194,12 @@ final class ConversationApiController extends AbstractApiController
                 'content' => ['type' => 'string'],
                 'referring' => ['type' => 'string'],
                 'tags' => ['type' => 'array', 'items' => ['type' => 'string']],
-                'publishedAt' => ['type' => 'string', 'format' => 'date-time', 'nullable' => true],
+                'publishedAt' => [
+                    'type' => 'string',
+                    'format' => 'date-time',
+                    'nullable' => true,
+                    'description' => 'On write, omitted or null leaves it unchanged, and a value that is not a readable date is a 422.',
+                ],
                 'createdAt' => ['type' => 'string', 'format' => 'date-time'],
                 'updatedAt' => ['type' => 'string', 'format' => 'date-time'],
             ],
@@ -208,12 +209,12 @@ final class ConversationApiController extends AbstractApiController
             'paths' => [
                 '/api/conversation' => [
                     'get' => ['summary' => 'List messages', 'responses' => ['200' => ['description' => 'OK']]],
-                    'post' => ['summary' => 'Create a message', 'responses' => ['201' => ['description' => 'Created']]],
+                    'post' => ['summary' => 'Create a message', 'responses' => ['201' => ['description' => 'Created'], '422' => ['description' => 'Validation failed']]],
                 ],
                 '/api/conversation/{id}' => [
                     'parameters' => [['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],
                     'get' => ['summary' => 'Get a message', 'responses' => ['200' => ['description' => 'OK'], '404' => ['description' => 'Not found']]],
-                    'patch' => ['summary' => 'Update a message', 'responses' => ['200' => ['description' => 'OK']]],
+                    'patch' => ['summary' => 'Update a message', 'responses' => ['200' => ['description' => 'OK'], '422' => ['description' => 'Validation failed']]],
                     'delete' => ['summary' => 'Delete a message', 'responses' => ['204' => ['description' => 'Deleted']]],
                 ],
             ],

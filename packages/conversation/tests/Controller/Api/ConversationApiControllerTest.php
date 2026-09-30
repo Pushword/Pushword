@@ -148,6 +148,83 @@ final class ConversationApiControllerTest extends WebTestCase
         self::assertSame('2026-09-15 10:00:00', $message->publishedAt?->format('Y-m-d H:i:s'));
     }
 
+    public function testUnreadablePublishedAtIs422AndWritesNothing(): void
+    {
+        $id = $this->seed();
+
+        $response = $this->request('PATCH', '/api/conversation/'.$id, ['authorName' => 'Never written', 'publishedAt' => 'pas une date']);
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $body = $this->decode();
+        self::assertSame('validation', $body['error']);
+        self::assertSame([[
+            'path' => 'publishedAt',
+            'message' => 'Unreadable date "pas une date": send an ISO 8601 date-time, e.g. "2026-09-15T10:00:00+02:00".',
+        ]], $body['violations']);
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $message = $em->getRepository(Message::class)->find($id);
+        self::assertInstanceOf(Message::class, $message);
+        self::assertSame('Seed', $message->authorName);
+        self::assertNull($message->publishedAt);
+    }
+
+    public function testNonStringPublishedAtIs422AndCreatesNothing(): void
+    {
+        $content = 'Timestamp date '.uniqid();
+        $response = $this->request('POST', '/api/conversation', ['content' => $content, 'host' => 'example.com', 'publishedAt' => 1726394400]);
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        self::assertSame([[
+            'path' => 'publishedAt',
+            'message' => 'Unreadable date 1726394400: send an ISO 8601 date-time, e.g. "2026-09-15T10:00:00+02:00".',
+        ]], $this->decode()['violations']);
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        self::assertNull($em->getRepository(Message::class)->findOneBy(['content' => $content]));
+    }
+
+    public function testDateAndEntityViolationsAreReportedTogether(): void
+    {
+        $id = $this->seed();
+
+        $response = $this->request('PATCH', '/api/conversation/'.$id, ['content' => '', 'publishedAt' => 'pas une date']);
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+        $violations = $this->decode()['violations'];
+        self::assertIsArray($violations);
+        $paths = array_column($violations, 'path');
+        self::assertSame('publishedAt', $paths[0]);
+        self::assertContains('content', $paths);
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $message = $em->getRepository(Message::class)->find($id);
+        self::assertInstanceOf(Message::class, $message);
+        self::assertStringStartsWith('Seed ', $message->getContent());
+    }
+
+    public function testNullPublishedAtLeavesTheDateUnchanged(): void
+    {
+        $id = $this->seed(['publishedAt' => '2026-09-15T10:00:00+00:00']);
+
+        $this->request('PATCH', '/api/conversation/'.$id, ['publishedAt' => null]);
+        self::assertResponseIsSuccessful();
+        self::assertSame('2026-09-15T10:00:00+00:00', $this->decode()['publishedAt']);
+    }
+
+    public function testBlankPublishedAtIs422InsteadOfPublishingNow(): void
+    {
+        $id = $this->seed(['publishedAt' => '2026-09-15T10:00:00+00:00']);
+
+        // PHP reads a blank string as "now".
+        $response = $this->request('PATCH', '/api/conversation/'.$id, ['publishedAt' => ' ']);
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+
+        $this->request('GET', '/api/conversation/'.$id);
+        self::assertSame('2026-09-15T10:00:00+00:00', $this->decode()['publishedAt']);
+    }
+
     public function testDeleteRemovesMessage(): void
     {
         $id = $this->seed();
