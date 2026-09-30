@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\Controller\Api;
 
-use DateTimeImmutable;
+use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -149,7 +149,7 @@ final class ConversationApiController extends AbstractApiController
 
         if (\array_key_exists('publishedAt', $data) && \is_string($data['publishedAt'])) {
             try {
-                $message->publishedAt = new DateTimeImmutable($data['publishedAt']);
+                $message->publishedAt = new DateTime($data['publishedAt']);
             } catch (Exception) {
                 // ignore unparseable date
             }

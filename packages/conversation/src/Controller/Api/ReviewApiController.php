@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\Controller\Api;
 
-use DateTimeImmutable;
+use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -132,6 +132,14 @@ final class ReviewApiController extends AbstractApiController
             $review->setRating($data['rating']);
         }
 
+        if (\array_key_exists('reply', $data) && \is_string($data['reply'])) {
+            $review->setReply($data['reply']);
+        }
+
+        if (\array_key_exists('replyAuthor', $data) && \is_string($data['replyAuthor'])) {
+            $review->setReplyAuthor($data['replyAuthor']);
+        }
+
         if (\array_key_exists('authorName', $data) && \is_string($data['authorName'])) {
             $review->authorName = $data['authorName'];
         }
@@ -158,7 +166,7 @@ final class ReviewApiController extends AbstractApiController
 
         if (\array_key_exists('publishedAt', $data) && \is_string($data['publishedAt'])) {
             try {
-                $review->publishedAt = new DateTimeImmutable($data['publishedAt']);
+                $review->publishedAt = new DateTime($data['publishedAt']);
             } catch (Exception) {
                 // ignore unparseable
             }
@@ -215,6 +223,8 @@ final class ReviewApiController extends AbstractApiController
             'title' => $review->getTitle(),
             'content' => $review->getContent(),
             'rating' => $review->getRating(),
+            'reply' => $review->getReply(),
+            'replyAuthor' => $review->getReplyAuthor(),
             'referring' => $review->referring,
             'translations' => $review->getTranslations(),
             'publishedAt' => $review->publishedAt?->format(DateTimeInterface::ATOM),
@@ -236,6 +246,8 @@ final class ReviewApiController extends AbstractApiController
                 'title' => ['type' => 'string'],
                 'content' => ['type' => 'string'],
                 'rating' => ['type' => 'integer', 'nullable' => true],
+                'reply' => ['type' => 'string', 'description' => 'Owner reply. On write, an empty string removes it.'],
+                'replyAuthor' => ['type' => 'string', 'description' => "When empty, the front shows the host's default reply author."],
                 'translations' => [
                     'type' => 'object',
                     'description' => 'Locale-keyed map. On write, a null entry removes that locale and omitted locales are left untouched.',

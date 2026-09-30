@@ -117,6 +117,37 @@ final class ConversationApiControllerTest extends WebTestCase
         self::assertSame('Updated', $this->decode()['authorName']);
     }
 
+    public function testPatchPublishedAtIsWritten(): void
+    {
+        $id = $this->seed();
+
+        // The column is DATETIME_MUTABLE: an immutable date made the flush throw.
+        $response = $this->request('PATCH', '/api/conversation/'.$id, ['publishedAt' => '2026-09-15T10:00:00+00:00']);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('2026-09-15T10:00:00+00:00', $this->decode()['publishedAt']);
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $message = $em->getRepository(Message::class)->find($id);
+        self::assertInstanceOf(Message::class, $message);
+        self::assertSame('2026-09-15 10:00:00', $message->publishedAt?->format('Y-m-d H:i:s'));
+    }
+
+    public function testCreateWithPublishedAt(): void
+    {
+        // Same DATETIME_MUTABLE column, reached through the insert this time.
+        $id = $this->seed(['publishedAt' => '2026-09-15T10:00:00+00:00']);
+        self::assertSame('2026-09-15T10:00:00+00:00', $this->decode()['publishedAt']);
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $message = $em->getRepository(Message::class)->find($id);
+        self::assertInstanceOf(Message::class, $message);
+        self::assertSame('2026-09-15 10:00:00', $message->publishedAt?->format('Y-m-d H:i:s'));
+    }
+
     public function testDeleteRemovesMessage(): void
     {
         $id = $this->seed();

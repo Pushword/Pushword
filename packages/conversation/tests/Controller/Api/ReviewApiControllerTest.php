@@ -107,6 +107,84 @@ final class ReviewApiControllerTest extends WebTestCase
         self::assertSame(3, $this->decode()['rating']);
     }
 
+    public function testPatchPublishedAtIsWritten(): void
+    {
+        $id = $this->seed();
+
+        // The column is DATETIME_MUTABLE: an immutable date made the flush throw.
+        $response = $this->request('PATCH', '/api/review/'.$id, ['publishedAt' => '2026-09-15T10:00:00+00:00']);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('2026-09-15T10:00:00+00:00', $this->decode()['publishedAt']);
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $review = $em->getRepository(Review::class)->find($id);
+        self::assertInstanceOf(Review::class, $review);
+        self::assertSame('2026-09-15 10:00:00', $review->publishedAt?->format('Y-m-d H:i:s'));
+    }
+
+    public function testReplyIsWrittenAndCleared(): void
+    {
+        $id = $this->seed(['reply' => 'Merci pour votre avis', 'replyAuthor' => 'L’équipe']);
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $review = $em->getRepository(Review::class)->find($id);
+        self::assertInstanceOf(Review::class, $review);
+        self::assertSame('Merci pour votre avis', $review->getReply());
+        self::assertSame('L’équipe', $review->getReplyAuthor());
+
+        $this->request('PATCH', '/api/review/'.$id, ['reply' => 'Réponse corrigée']);
+        self::assertResponseIsSuccessful();
+        $body = $this->decode();
+        self::assertSame('Réponse corrigée', $body['reply']);
+        self::assertSame('L’équipe', $body['replyAuthor']);
+
+        // An empty reply removes it, as the admin does.
+        $this->request('PATCH', '/api/review/'.$id, ['reply' => '']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('', $this->decode()['reply']);
+    }
+
+    public function testCreateWithPublishedAt(): void
+    {
+        // Same DATETIME_MUTABLE column, reached through the insert this time.
+        $id = $this->seed(['publishedAt' => '2026-09-15T10:00:00+00:00']);
+        self::assertSame('2026-09-15T10:00:00+00:00', $this->decode()['publishedAt']);
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $review = $em->getRepository(Review::class)->find($id);
+        self::assertInstanceOf(Review::class, $review);
+        self::assertSame('2026-09-15 10:00:00', $review->publishedAt?->format('Y-m-d H:i:s'));
+    }
+
+    public function testReplyAuthorIsPatchedAloneAndEmptyValuesRemoveTheStoredKeys(): void
+    {
+        $id = $this->seed(['reply' => 'Merci pour votre avis']);
+
+        $this->request('PATCH', '/api/review/'.$id, ['replyAuthor' => 'Robin']);
+        self::assertResponseIsSuccessful();
+        $body = $this->decode();
+        self::assertSame('Robin', $body['replyAuthor']);
+        self::assertSame('Merci pour votre avis', $body['reply']);
+
+        $this->request('PATCH', '/api/review/'.$id, ['reply' => '', 'replyAuthor' => '']);
+        self::assertResponseIsSuccessful();
+
+        // Removed from storage, not saved as empty strings.
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $review = $em->getRepository(Review::class)->find($id);
+        self::assertInstanceOf(Review::class, $review);
+        self::assertFalse($review->hasCustomProperty('reply'));
+        self::assertFalse($review->hasCustomProperty('replyAuthor'));
+    }
+
     public function testCreateWithTranslations(): void
     {
         $id = $this->seed([
