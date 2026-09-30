@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use Pushword\Core\Cache\RenderEpoch;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\PathGuard;
@@ -50,6 +51,9 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     /** @var array<string, string> */
     private array $sampledEpochs = [];
 
+    /** @var list<array{page: string, publishedAt: string}> */
+    private array $scheduledPages = [];
+
     private ?LockFactory $lockFactory = null;
 
     public function __construct(
@@ -61,6 +65,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         private readonly RenderEpoch $renderEpoch,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly PageRepository $pageRepository,
+        private readonly EditorialTimezone $editorialTimezone,
         private readonly string $projectDir,
         private readonly string $environment,
         private readonly string $varDir,
@@ -116,6 +121,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         // from a previous sweep would stamp post-bump renders with a pre-bump
         // epoch and the debounce would loop forever.
         $this->sampledEpochs = [];
+        $this->scheduledPages = [];
         $i = 0;
         foreach ($this->apps->getHosts() as $host) {
             if (null !== $hostToGenerate && $hostToGenerate !== $host) {
@@ -188,6 +194,8 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         // Sample before any rendering: pages must never be stamped with an epoch
         // newer than the content they were rendered from.
         $sampledEpoch = $this->getSampledRenderEpoch($app->getMainHost());
+
+        $this->reportScheduledPages($app->getMainHost());
 
         if (self::isCacheMode($app)) {
             $this->generateHostInCacheMode($app);
@@ -278,6 +286,25 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         );
 
         $this->abortGeneration = false;
+    }
+
+    /**
+     * Pages dated in the future are not published yet, so no generator sees them:
+     * name them, or the build reads as complete while they are missing from it.
+     */
+    private function reportScheduledPages(string $host): void
+    {
+        /** @var Page[] $pages */
+        $pages = $this->pageRepository
+            ->getUnpublishedPageQueryBuilder($host, [['publishedAt', 'IS NOT', null]], ['publishedAt ASC'])
+            ->getQuery()->getResult();
+
+        foreach ($pages as $page) {
+            \assert(null !== $page->publishedAt);
+            $publishedAt = $this->editorialTimezone->format($page->publishedAt);
+            $this->scheduledPages[] = ['page' => $host.'/'.$page->slug, 'publishedAt' => $publishedAt];
+            $this->writeln(\sprintf('<comment>Scheduled</comment> %s/%s (not generated before %s)', $host, $page->slug, $publishedAt));
+        }
     }
 
     /**
@@ -597,6 +624,12 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     public function getErrors(): array
     {
         return $this->errors;
+    }
+
+    /** @return list<array{page: string, publishedAt: string}> */
+    public function getScheduledPages(): array
+    {
+        return $this->scheduledPages;
     }
 
     public function isIncremental(): bool

@@ -105,6 +105,13 @@ php bin/console pw:static $host $slug
 php bin/console pw:static $host --incremental
 ```
 
+A page dated in the future is not generated until that date. The command lists each one
+it leaves out, with its date in the
+[editorial timezone](/extension/flat#dates-and-time-zones):
+`Scheduled localhost.dev/launch (not generated before 2026-09-30 16:00+02:00)`. The
+agent JSON carries them under `scheduled`. A [scheduled command](/background-tasks#scheduled-commands)
+on `publish` regenerates them once the date passes.
+
 ### Incremental generation
 
 `--incremental` skips a page when neither its `updatedAt` nor the host's

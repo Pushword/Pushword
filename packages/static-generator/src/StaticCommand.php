@@ -131,13 +131,14 @@ final class StaticCommand
             $errors = $this->staticAppGenerator->getErrors();
 
             if ($this->agentMode) {
+                $scheduled = $this->staticAppGenerator->getScheduledPages();
                 $this->writeAgentJson($teeOutput, [
                     'tool' => 'pw:static',
                     'result' => [] !== $errors ? 'failed' : 'passed',
                     'errors_count' => \count($errors),
                     'errors' => array_values($errors),
                     'duration_ms' => (int) $duration,
-                ]);
+                ] + ([] !== $scheduled ? ['scheduled' => $scheduled] : []));
             } else {
                 $this->printStatus($teeOutput, $msg.' ('.$this->formatDuration($duration).').');
 

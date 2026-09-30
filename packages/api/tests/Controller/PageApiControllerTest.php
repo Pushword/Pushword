@@ -100,6 +100,40 @@ final class PageApiControllerTest extends WebTestCase
         $this->createdPageIds[] = $this->lookupPageId($host, $body['slug']);
     }
 
+    public function testAWriteDatedInTheFutureSaysThePageIsScheduled(): void
+    {
+        $host = 'api-test-'.uniqid().'.example.com';
+        $this->request('POST', '/api/page/'.$host, [
+            'frontmatter' => ['slug' => 'later-'.uniqid(), 'h1' => 'Later', 'locale' => 'en', 'publishedAt' => '2099-01-01 10:00'],
+            'body' => '# Later',
+        ]);
+        $created = $this->decode();
+        self::assertIsString($created['slug']);
+        $this->createdPageIds[] = $this->lookupPageId($host, $created['slug']);
+
+        self::assertTrue($created['scheduled']);
+        // On the editors' clock, the server's in this app.
+        self::assertSame('2099-01-01T10:00:00+00:00', $created['publishedAt']);
+
+        $url = '/api/page/'.$host.'/'.$created['slug'];
+        $this->request('PATCH', $url.'?return=full', [
+            'frontmatter' => ['publishedAt' => '2099-02-01T10:00:00+01:00'],
+        ], ['HTTP_IF_MATCH' => $this->currentRevision($host, $created['slug'])]);
+        $full = $this->decode();
+        self::assertTrue($full['scheduled']);
+        self::assertSame('2099-02-01T09:00:00+00:00', $full['publishedAt']);
+
+        $this->request('PATCH', $url, [
+            'frontmatter' => ['publishedAt' => '2020-01-01 10:00'],
+        ], ['HTTP_IF_MATCH' => $this->currentRevision($host, $created['slug'])]);
+        self::assertArrayNotHasKey('scheduled', $this->decode(), 'a past date is a publication');
+
+        $this->request('PATCH', $url, [
+            'frontmatter' => ['publishedAt' => 'draft'],
+        ], ['HTTP_IF_MATCH' => $this->currentRevision($host, $created['slug'])]);
+        self::assertArrayNotHasKey('scheduled', $this->decode(), 'a draft has no date to announce');
+    }
+
     public function testCreatePageWithReturnFullEchoesCompletePayload(): void
     {
         $host = 'api-test-'.uniqid().'.example.com';

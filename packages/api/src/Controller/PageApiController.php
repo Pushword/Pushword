@@ -15,6 +15,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\ValueObject\PageRedirection;
 use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Service\RevisionCalculator;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,6 +37,7 @@ final class PageApiController extends AbstractApiController
         private readonly MarkdownParser $markdownParser,
         private readonly BodyPatcher $bodyPatcher,
         private readonly PagePropertySchemaRegistry $schemaRegistry,
+        private readonly EditorialTimezone $editorialTimezone,
         private readonly string $deleteStrategy = 'hard',
     ) {
     }
@@ -150,7 +152,7 @@ final class PageApiController extends AbstractApiController
         return $this->writeResponse(
             $request,
             ['slug' => $page->slug] + $this->buildMinimalPayload($page),
-            fn (): array => $this->buildPagePayload($page),
+            fn (): array => $this->buildPagePayload($page) + $this->schedule($page),
             $this->revisions->compute($page),
             Response::HTTP_CREATED,
         );
@@ -283,7 +285,7 @@ final class PageApiController extends AbstractApiController
         return $this->writeResponse(
             $request,
             $this->buildMinimalPayload($page),
-            fn (): array => $this->buildPagePayload($page),
+            fn (): array => $this->buildPagePayload($page) + $this->schedule($page),
             $this->revisions->compute($page),
         );
     }
@@ -359,7 +361,22 @@ final class PageApiController extends AbstractApiController
         return [
             'revision' => $this->revisions->compute($page),
             'updatedAt' => $page->updatedAt?->format(DateTimeInterface::ATOM),
-        ] + $this->schemaWarnings($page);
+        ] + $this->schedule($page) + $this->schemaWarnings($page);
+    }
+
+    /**
+     * A write that dates the page in the future leaves it offline until then: say so,
+     * on the editors' clock, so it cannot pass for a publication.
+     *
+     * @return array{}|array{scheduled: true, publishedAt: string}
+     */
+    private function schedule(Page $page): array
+    {
+        if (null === $page->publishedAt || $page->isPublished()) {
+            return [];
+        }
+
+        return ['scheduled' => true, 'publishedAt' => $this->editorialTimezone->format($page->publishedAt, DateTimeInterface::ATOM)];
     }
 
     /**
@@ -413,6 +430,10 @@ final class PageApiController extends AbstractApiController
                 'body' => ['type' => 'string', 'description' => 'Page mainContent (Markdown)'],
                 'updatedBy' => ['type' => 'string', 'nullable' => true],
                 'updatedAt' => ['type' => 'string', 'format' => 'date-time'],
+                'scheduled' => [
+                    'type' => 'boolean',
+                    'description' => 'Only on write responses, only when publishedAt is in the future: the page stays offline until then. publishedAt then comes along in the editorial timezone.',
+                ],
                 'warnings' => [
                     'type' => 'object',
                     'description' => 'Only on write responses, only when non-empty: undeclared (custom property keys the host schema does not know) and missingRequired (declared-required keys the page lacks). Informational — the write succeeded. See x-pushword-page-properties for the schema.',
@@ -443,7 +464,7 @@ final class PageApiController extends AbstractApiController
             'name' => 'return',
             'in' => 'query',
             'schema' => ['type' => 'string', 'enum' => ['minimal', 'full'], 'default' => 'minimal'],
-            'description' => 'Write responses return {revision, updatedAt} by default (create also echoes the normalized slug); use `full` for the complete Page payload.',
+            'description' => 'Write responses return {revision, updatedAt} by default (create also echoes the normalized slug, a future publishedAt adds scheduled: true and publishedAt); use `full` for the complete Page payload.',
         ];
 
         return [

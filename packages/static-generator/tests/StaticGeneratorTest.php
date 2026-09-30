@@ -20,6 +20,7 @@ use Pushword\Core\Cache\RenderEpoch;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\Event\StaticPostGenerateEvent;
@@ -193,6 +194,45 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertArrayHasKey('errors_count', $decoded);
         self::assertArrayHasKey('errors', $decoded);
         self::assertArrayHasKey('duration_ms', $decoded);
+    }
+
+    public function testStaticCommandNamesTheScheduledPagesItSkips(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $scheduled = $this->makeProbePage('scheduled-probe');
+        $scheduled->publishedAt = new DateTime('2099-01-01 10:00:00');
+
+        $em->persist($scheduled);
+        $em->flush();
+
+        try {
+            $commandTester = $this->rebootStaticCommandTester();
+            $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
+
+            self::assertSame(0, $commandTester->getStatusCode(), $commandTester->getDisplay());
+            self::assertStringContainsString(
+                'Scheduled localhost.dev/scheduled-probe (not generated before 2099-01-01 10:00+00:00)',
+                $commandTester->getDisplay(),
+            );
+            self::assertFileDoesNotExist($this->getStaticDir().'/scheduled-probe.html');
+
+            $commandTester = $this->rebootStaticCommandTester();
+            $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'agent']);
+
+            $decoded = json_decode(trim($commandTester->getDisplay()), true, 512, \JSON_THROW_ON_ERROR);
+            self::assertIsArray($decoded);
+            self::assertIsArray($decoded['scheduled']);
+            self::assertContains(['page' => 'localhost.dev/scheduled-probe', 'publishedAt' => '2099-01-01 10:00+00:00'], $decoded['scheduled']);
+        } finally {
+            $resetEm = self::getContainer()->get('doctrine.orm.default_entity_manager');
+            $planted = self::getContainer()->get(PageRepository::class)
+                ->findOneBy(['host' => 'localhost.dev', 'slug' => 'scheduled-probe']);
+            if (null !== $planted) {
+                $resetEm->remove($planted);
+                $resetEm->flush();
+            }
+        }
     }
 
     public function testIncrementalGeneration(): void
@@ -494,6 +534,7 @@ final class StaticGeneratorTest extends KernelTestCase
             self::getContainer()->get(RenderEpoch::class),
             self::getContainer()->get(EventDispatcherInterface::class),
             self::getContainer()->get(PageRepository::class),
+            new EditorialTimezone(),
             $projectDir,
             self::getContainer()->getParameter('kernel.environment'),
             self::getContainer()->getParameter('pw.var_dir'),

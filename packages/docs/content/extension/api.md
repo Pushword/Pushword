@@ -278,6 +278,13 @@ been normalized (e.g. `"Qui Sommes-Nous"` → `"qui-sommes-nous"`).
 The new `revision` is also in the `ETag` header. Add `?return=full` to get the complete
 page payload (same shape as `GET`) instead.
 
+A write that leaves `publishedAt` in the future says the page is not online yet, with the
+date in the [editorial timezone](/extension/flat#dates-and-time-zones), in both shapes:
+
+```json
+{ "revision": "9f1c…", "updatedAt": "…", "scheduled": true, "publishedAt": "2026-09-30T16:00:00+02:00" }
+```
+
 When the host declares [page properties](/page-properties), a successful write may also
 carry a `warnings` object — `undeclared` (custom property keys the schema does not know,
 the net that catches a `toc_titel` typo) and `missingRequired`. Informational only: the
