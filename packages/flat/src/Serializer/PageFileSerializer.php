@@ -16,7 +16,6 @@ use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
 use Pushword\Flat\Exporter\ExporterDefaultValueHelper;
 use Spatie\YamlFrontMatter\Document;
-use Spatie\YamlFrontMatter\YamlFrontMatter;
 use Stringable;
 use Symfony\Component\Yaml\Yaml;
 
@@ -138,7 +137,8 @@ final class PageFileSerializer
      * complex parser only takes the first two `---` lines as delimiters, which
      * is only safe when the document actually opens with front matter — hence
      * the starts-with gate; without it two body rules would be misread as a
-     * front-matter block.
+     * front-matter block. {@see FrontMatterParser} extends it to read unquoted
+     * dates as written.
      */
     public function parse(string $content): Document
     {
@@ -151,7 +151,7 @@ final class PageFileSerializer
             return new Document([], $content);
         }
 
-        return YamlFrontMatter::markdownCompatibleParse($content);
+        return new FrontMatterParser($content)->parse();
     }
 
     /**

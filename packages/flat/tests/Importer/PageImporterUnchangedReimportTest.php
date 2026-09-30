@@ -90,6 +90,23 @@ final class PageImporterUnchangedReimportTest extends KernelTestCase
         self::assertEquals(new DateTime(self::LAST_EDIT), $this->page()->updatedAt);
     }
 
+    /**
+     * YAML reads an unquoted timestamp as a Unix timestamp taken in UTC: `2026-09-30`
+     * reached the date parser as 1790726400, which it cannot read, and the import failed.
+     */
+    public function testUnquotedDatesAreReadAsWritten(): void
+    {
+        self::bootKernel();
+
+        $this->write('publishedAt: 2026-09-30', 'holdPublicationAt: 2026-10-01 09:00:00+02:00');
+        $importer = $this->import();
+
+        self::assertSame(1, $importer->getImportedCount());
+        $page = $this->page();
+        self::assertSame(new DateTime('2026-09-30 00:00:00 UTC')->getTimestamp(), $page->publishedAt?->getTimestamp());
+        self::assertSame(new DateTime('2026-10-01 07:00:00 UTC')->getTimestamp(), $page->holdPublicationAt?->getTimestamp());
+    }
+
     public function testAChangedPublishedAtStillLands(): void
     {
         self::bootKernel();

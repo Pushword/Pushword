@@ -638,6 +638,7 @@ its offset: `publishedAt: '2026-09-30 16:00+02:00'`. The offset pins the instant
 file that goes out and comes back never shifts.
 
 - A date with an offset is stored at that exact instant.
+- Quotes are optional: `publishedAt: 2026-09-30` reads like `publishedAt: '2026-09-30'`.
 - A date without one is read in the editorial timezone. The hour the autumn change shows
   twice (`2026-10-25 02:30` in Paris) is its first occurrence, summer time: add `+01:00`
   for the second. An hour the spring change skips moves forward by an hour.
