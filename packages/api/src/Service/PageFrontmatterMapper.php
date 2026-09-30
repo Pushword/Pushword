@@ -66,7 +66,6 @@ final readonly class PageFrontmatterMapper
             'weight' => $page->weight,
             'tags' => $page->getTagList(),
             'redirectFrom' => $page->redirectFrom,
-            // On the editors' clock, like the flat files: the offset keeps the instant.
             'publishedAt' => $this->formatDate($page->publishedAt),
             'holdPublication' => $page->isHoldPublication(),
             'holdPublicationAt' => $this->formatDate($page->holdPublicationAt),
@@ -269,6 +268,9 @@ final readonly class PageFrontmatterMapper
         }
     }
 
+    /**
+     * On the editors' clock, like the flat files: the offset keeps the instant.
+     */
     private function formatDate(?DateTimeInterface $date): ?string
     {
         return null === $date ? null : $this->editorialTimezone->format($date, DateTimeInterface::ATOM);
