@@ -19,6 +19,45 @@ final class EditorialTimezoneTest extends TestCase
         self::assertSame(date_default_timezone_get(), $parsed->getTimezone()->getName());
     }
 
+    public function testADateWithoutOffsetIsReadInTheEditorialTimezone(): void
+    {
+        self::assertSame(
+            new DateTime('2026-09-30 12:00:00 UTC')->getTimestamp(),
+            new EditorialTimezone('Europe/Paris')->parse('2026-09-30 14:00')->getTimestamp(),
+        );
+        self::assertSame(
+            new DateTime('2026-09-30 14:00:00 UTC')->getTimestamp(),
+            new EditorialTimezone('UTC')->parse('2026-09-30 14:00')->getTimestamp(),
+        );
+    }
+
+    public function testAnHourTheAutumnChangeRepeatsResolvesToItsFirstOccurrence(): void
+    {
+        $paris = new EditorialTimezone('Europe/Paris');
+
+        // 02:30 happens at 00:30 UTC (summer time), then again at 01:30 UTC.
+        self::assertSame(new DateTime('2026-10-25 00:30:00 UTC')->getTimestamp(), $paris->parse('2026-10-25 02:30')->getTimestamp());
+        self::assertSame(new DateTime('2026-10-25 01:30:00 UTC')->getTimestamp(), $paris->parse('2026-10-25 02:30+01:00')->getTimestamp());
+        // Either side of the repeated hour is unambiguous and left as is.
+        self::assertSame(new DateTime('2026-10-24 23:30:00 UTC')->getTimestamp(), $paris->parse('2026-10-25 01:30')->getTimestamp());
+        self::assertSame(new DateTime('2026-10-25 02:30:00 UTC')->getTimestamp(), $paris->parse('2026-10-25 03:30')->getTimestamp());
+    }
+
+    public function testAnHourTheSpringChangeSkipsMovesForward(): void
+    {
+        self::assertSame('2026-03-29 03:30+02:00', new EditorialTimezone('Europe/Paris')->format(new EditorialTimezone('Europe/Paris')->parse('2026-03-29 02:30')));
+    }
+
+    public function testBothOccurrencesOfTheRepeatedHourRoundTrip(): void
+    {
+        $paris = new EditorialTimezone('Europe/Paris');
+
+        foreach (['2026-10-25 00:30:00 UTC' => '2026-10-25 02:30+02:00', '2026-10-25 01:30:00 UTC' => '2026-10-25 02:30+01:00'] as $instant => $exported) {
+            self::assertSame($exported, $paris->format(new DateTime($instant)));
+            self::assertSame(new DateTime($instant)->getTimestamp(), $paris->parse($exported)->getTimestamp());
+        }
+    }
+
     public function testFormatWritesTheEditorialWallClockWithItsOffset(): void
     {
         $utc = new DateTime('2026-09-30 14:00:00 UTC');

@@ -1,5 +1,5 @@
 ---
-title: 'page files write dates with their offset, and a date with an offset is stored at that instant'
+title: 'page files write dates with their offset, and a date with an offset is stored at that instant; dates without one follow the new `editorial_timezone`, to set only after a forced export'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -41,4 +41,10 @@ Several changes land here between two tags: append to the file, do not replace i
 
 Exported page files now write `publishedAt` and `holdPublicationAt` with an offset, `'2026-09-30 14:00+00:00'`; a file gains it on its next export. A date written with an offset, in a file or through the API, is now stored at that instant, where `14:00+02:00` used to land at 14:00 server time.
 
-**Sites that wrote dates with an offset.** Those pages still hold the shifted time: correct and save them again. To write dates on your editors' clock, set [`editorial_timezone`](/extension/flat#dates-and-time-zones).
+**Sites that wrote dates with an offset.** Those pages still hold the shifted time: correct and save them again.
+
+## Dates without an offset follow `editorial_timezone`
+
+A date written without an offset, in a file or through the API, is now read in the new [`editorial_timezone`](/extension/flat#dates-and-time-zones). Unset, it is the server timezone and nothing changes.
+
+**Sites setting `editorial_timezone`.** Set it last, or a file exported before this release shifts on its next import: `pw:flat:sync` to take in pending file edits, `pw:flat:sync --mode=export --force` to write every date with its offset, then the key.

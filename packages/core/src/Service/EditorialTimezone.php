@@ -27,12 +27,37 @@ final readonly class EditorialTimezone
     }
 
     /**
-     * An offset in the value is kept to the instant. The result is in the server
-     * timezone, the only one Doctrine stores without shifting it.
+     * An offset in the value is kept to the instant; a value without one is read in
+     * the editorial timezone. The result is in the server timezone, the only one
+     * Doctrine stores without shifting it.
      */
     public function parse(string $value): DateTime
     {
-        return new DateTime($value)->setTimezone(new DateTimeZone(date_default_timezone_get()));
+        $date = new DateTime($value, $this->timezone);
+        if ($date->getTimezone()->getName() === $this->timezone->getName()) {
+            $date = $this->firstOccurrence($date);
+        }
+
+        return $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+    }
+
+    /**
+     * The autumn DST change shows a wall-clock hour twice (02:30 on 2026-10-25 in
+     * Paris): take the first, as java.time and Python do, rather than PHP's pick,
+     * which is the second. A time the spring change skips moves forward by the gap.
+     */
+    private function firstOccurrence(DateTime $date): DateTime
+    {
+        $wallClock = $date->format('Y-m-d H:i:s');
+        $wallClockSeconds = $date->getTimestamp() + $date->getOffset();
+        foreach ($this->timezone->getTransitions($date->getTimestamp() - 86400, $date->getTimestamp()) as $transition) {
+            $candidate = new DateTime('@'.($wallClockSeconds - $transition['offset']))->setTimezone($this->timezone);
+            if ($candidate < $date && $candidate->format('Y-m-d H:i:s') === $wallClock) {
+                $date = $candidate;
+            }
+        }
+
+        return $date;
     }
 
     public function format(DateTimeInterface $date, string $format = self::FORMAT): string

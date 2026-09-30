@@ -37,6 +37,9 @@ curl -H "Authorization: Bearer $TOKEN" https://example.com/api/page/search
 - **Frontmatter + body.** A page is split into `frontmatter` (all metadata: `h1`, `title`,
   `locale`, `tags`, `parentPage`, `translations`, `mainImage`, `customProperties`, …) and
   `body` (the `mainContent` Markdown), mirroring the flat-file format.
+- **Dates.** `publishedAt` and `holdPublicationAt` take ISO 8601 or the flat
+  `2026-09-30 16:00`. An offset is kept to the instant; a date without one is read in the
+  [editorial timezone](/extension/flat#dates-and-time-zones).
 - **Optimistic concurrency.** Each page carries an opaque `revision` (also sent as the
   `ETag` header). Writes must send `If-Match: <revision>`; a stale value yields `409`.
 - **Token-efficient responses.** Writes return a minimal body by default; reads return the

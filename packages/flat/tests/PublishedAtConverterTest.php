@@ -48,6 +48,13 @@ final class PublishedAtConverterTest extends TestCase
         self::assertSame(new DateTime('2026-09-30 14:00:00 UTC')->getTimestamp(), $result->getTimestamp());
     }
 
+    public function testFromFlatValueReadsADateWithoutOffsetInTheEditorialTimezone(): void
+    {
+        $result = $this->converter->fromFlatValue('2026-09-30 16:00');
+
+        self::assertSame(new DateTime('2026-09-30 14:00:00 UTC')->getTimestamp(), $result?->getTimestamp());
+    }
+
     public function testFromFlatValueReturnsDateTimeInterfaceAsIs(): void
     {
         $date = new DateTime('2024-06-15 14:30:00');
