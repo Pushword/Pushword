@@ -16,6 +16,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Core\Utils\Entity;
 use Pushword\Core\Validator\Constraints\PagePropertiesSchema;
@@ -76,6 +77,12 @@ final class PageImporter extends AbstractImporter
 
     #[Required]
     public ImportEditorResolver $editorResolver;
+
+    #[Required]
+    public PublishedAtConverter $publishedAtConverter;
+
+    #[Required]
+    public EditorialTimezone $editorialTimezone;
 
     /** @var array<string, list<string>> slug => translated violation messages */
     private array $invalidPages = [];
@@ -318,7 +325,7 @@ final class PageImporter extends AbstractImporter
             }
 
             if ('publishedAt' === $camelKey) {
-                $value = PublishedAtConverter::fromFlatValue($value);
+                $value = $this->publishedAtConverter->fromFlatValue($value);
                 $publishedAtExplicitlySet = true;
                 if ($value?->getTimestamp() === $page->publishedAt?->getTimestamp()) {
                     // Same instant: keep the managed instance. Doctrine's changeset compares
@@ -327,7 +334,7 @@ final class PageImporter extends AbstractImporter
                     continue;
                 }
             } elseif (\in_array($camelKey, ['createdAt', 'updatedAt', 'holdPublicationAt'], true) && \is_scalar($value)) {
-                $value = new DateTime((string) $value);
+                $value = $this->editorialTimezone->parse((string) $value);
                 $current = $page->{$camelKey};
                 if ($current instanceof DateTimeInterface && $current->getTimestamp() === $value->getTimestamp()) {
                     continue;

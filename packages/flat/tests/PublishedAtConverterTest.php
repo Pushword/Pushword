@@ -7,70 +7,76 @@ namespace Pushword\Flat\Tests;
 use DateTime;
 use DateTimeInterface;
 use PHPUnit\Framework\TestCase;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Flat\Converter\PublishedAtConverter;
 
 final class PublishedAtConverterTest extends TestCase
 {
-    public function testToFlatValueReturnsDateFormatted(): void
-    {
-        $date = new DateTime('2024-06-15 14:30:00');
-        $result = PublishedAtConverter::toFlatValue($date);
+    private PublishedAtConverter $converter;
 
-        self::assertSame('2024-06-15 14:30', $result);
+    protected function setUp(): void
+    {
+        $this->converter = new PublishedAtConverter(new EditorialTimezone('Europe/Paris'));
+    }
+
+    public function testToFlatValueWritesTheEditorialTimeWithItsOffset(): void
+    {
+        $result = $this->converter->toFlatValue(new DateTime('2026-09-30 14:00:00 UTC'));
+
+        self::assertSame('2026-09-30 16:00+02:00', $result);
     }
 
     public function testToFlatValueReturnsDraftForNull(): void
     {
-        $result = PublishedAtConverter::toFlatValue(null);
+        $result = $this->converter->toFlatValue(null);
 
         self::assertSame('draft', $result);
     }
 
     public function testFromFlatValueReturnsNullForDraft(): void
     {
-        $result = PublishedAtConverter::fromFlatValue('draft');
+        $result = $this->converter->fromFlatValue('draft');
 
         self::assertNull($result);
     }
 
-    public function testFromFlatValueReturnsDateTimeForValidString(): void
+    public function testFromFlatValueKeepsTheInstantOfAnOffset(): void
     {
-        $result = PublishedAtConverter::fromFlatValue('2024-06-15 14:30');
+        $result = $this->converter->fromFlatValue('2026-09-30 16:00+02:00');
 
         self::assertInstanceOf(DateTimeInterface::class, $result);
-        self::assertSame('2024-06-15 14:30', $result->format('Y-m-d H:i'));
+        self::assertSame(new DateTime('2026-09-30 14:00:00 UTC')->getTimestamp(), $result->getTimestamp());
     }
 
     public function testFromFlatValueReturnsDateTimeInterfaceAsIs(): void
     {
         $date = new DateTime('2024-06-15 14:30:00');
-        $result = PublishedAtConverter::fromFlatValue($date);
+        $result = $this->converter->fromFlatValue($date);
 
         self::assertSame($date, $result);
     }
 
     public function testFromFlatValueReturnsNullForNonScalar(): void
     {
-        $result = PublishedAtConverter::fromFlatValue(['invalid']);
+        $result = $this->converter->fromFlatValue(['invalid']);
 
         self::assertNull($result);
     }
 
-    public function testRoundTripWithDate(): void
+    public function testRoundTripKeepsTheTimestamp(): void
     {
-        $original = new DateTime('2024-06-15 14:30:00');
+        $original = new DateTime('2026-09-30 14:00:00 UTC');
 
-        $exported = PublishedAtConverter::toFlatValue($original);
-        $imported = PublishedAtConverter::fromFlatValue($exported);
+        $imported = $this->converter->fromFlatValue($this->converter->toFlatValue($original));
 
         self::assertInstanceOf(DateTimeInterface::class, $imported);
-        self::assertSame($original->format('Y-m-d H:i'), $imported->format('Y-m-d H:i'));
+        self::assertSame($original->getTimestamp(), $imported->getTimestamp());
     }
 
     public function testRoundTripWithNull(): void
     {
-        $exported = PublishedAtConverter::toFlatValue(null);
-        $imported = PublishedAtConverter::fromFlatValue($exported);
+        $exported = $this->converter->toFlatValue(null);
+        $imported = $this->converter->fromFlatValue($exported);
 
         self::assertNull($imported);
     }

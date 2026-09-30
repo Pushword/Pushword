@@ -4,31 +4,36 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Converter;
 
-use DateTime;
 use DateTimeInterface;
+use Pushword\Core\Service\EditorialTimezone;
 
-final class PublishedAtConverter
+final readonly class PublishedAtConverter
 {
     public const string DRAFT_VALUE = 'draft';
 
+    public function __construct(
+        private EditorialTimezone $editorialTimezone,
+    ) {
+    }
+
     /**
      * Convert publishedAt value for export (to flat file).
-     * Returns 'draft' if publishedAt is null, otherwise returns formatted date.
+     * Returns 'draft' if publishedAt is null, otherwise the date in the editorial timezone, with its offset.
      */
-    public static function toFlatValue(?DateTimeInterface $publishedAt): string
+    public function toFlatValue(?DateTimeInterface $publishedAt): string
     {
         if (null === $publishedAt) {
             return self::DRAFT_VALUE;
         }
 
-        return $publishedAt->format('Y-m-d H:i');
+        return $this->editorialTimezone->format($publishedAt);
     }
 
     /**
      * Convert publishedAt value from import (from flat file).
      * Returns null if value is 'draft', otherwise returns DateTime.
      */
-    public static function fromFlatValue(mixed $value): ?DateTimeInterface
+    public function fromFlatValue(mixed $value): ?DateTimeInterface
     {
         if (self::DRAFT_VALUE === $value) {
             return null;
@@ -39,7 +44,7 @@ final class PublishedAtConverter
         }
 
         if (\is_scalar($value)) {
-            return new DateTime((string) $value);
+            return $this->editorialTimezone->parse((string) $value);
         }
 
         return null;

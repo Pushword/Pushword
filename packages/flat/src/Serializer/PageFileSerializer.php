@@ -8,6 +8,7 @@ use DateTimeInterface;
 use Doctrine\Common\Collections\Collection;
 use Normalizer;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\Entity;
@@ -58,6 +59,8 @@ final class PageFileSerializer
         private readonly SiteRegistry $apps,
         private readonly PropertyConverterRegistry $converterRegistry,
         private readonly RevisionCalculator $revisions,
+        private readonly PublishedAtConverter $publishedAtConverter,
+        private readonly EditorialTimezone $editorialTimezone,
     ) {
         $this->defaultValue = new ExporterDefaultValueHelper();
     }
@@ -463,7 +466,7 @@ final class PageFileSerializer
         if ('publishedAt' === $property) {
             assert(null === $value || $value instanceof DateTimeInterface);
 
-            return PublishedAtConverter::toFlatValue($value);
+            return $this->publishedAtConverter->toFlatValue($value);
         }
 
         if ($value instanceof Page) {
@@ -530,7 +533,7 @@ final class PageFileSerializer
         }
 
         if ($value instanceof DateTimeInterface) {
-            $value = $value->format('Y-m-d H:i');
+            $value = $this->editorialTimezone->format($value);
         }
 
         if (! is_scalar($value)) {

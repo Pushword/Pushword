@@ -631,6 +631,24 @@ My Page content Yeah !
 - Unknown properties are stored in `customProperties`
 - `mainImage` references a media filename (not a path)
 
+### Dates and time zones
+
+The export writes `publishedAt` and `holdPublicationAt` in the editorial timezone, with
+its offset: `publishedAt: '2026-09-30 16:00+02:00'`. The offset pins the instant, so a
+file that goes out and comes back never shifts.
+
+- A date with an offset is stored at that exact instant.
+- A date without one is read in the server timezone (PHP's `date.timezone`, UTC on most hosts).
+
+The editorial timezone defaults to the server's. Set it to write dates on your editors' clock:
+
+```yaml
+pushword:
+    editorial_timezone: Europe/Paris
+```
+
+The database stays in the server timezone: leave `date.timezone` alone.
+
 ### Translations (hreflang) Sync
 
 The `translations` property handles the bidirectional many-to-many relationship between pages for internationalization (hreflang).

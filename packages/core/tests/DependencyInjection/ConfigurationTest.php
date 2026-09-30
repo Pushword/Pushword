@@ -6,6 +6,7 @@ namespace Pushword\Core\Tests\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\DependencyInjection\Configuration;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 
 final class ConfigurationTest extends TestCase
@@ -28,8 +29,17 @@ final class ConfigurationTest extends TestCase
         self::assertSame(2.5, $config['native_content_analyzer_timeout']);
     }
 
+    public function testEditorialTimezoneDefaultsToServerAndRejectsUnknownZones(): void
+    {
+        self::assertNull($this->process([])['editorial_timezone']);
+        self::assertSame('Europe/Paris', $this->process([['editorial_timezone' => 'Europe/Paris']])['editorial_timezone']);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->process([['editorial_timezone' => 'Paris']]);
+    }
+
     /**
-     * @param array<int, array<string, bool>> $configs
+     * @param array<int, array<string, bool|string>> $configs
      */
     protected function process(array $configs): array // @phpstan-ignore-line
     {

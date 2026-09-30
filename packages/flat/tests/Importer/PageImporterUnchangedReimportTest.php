@@ -69,6 +69,27 @@ final class PageImporterUnchangedReimportTest extends KernelTestCase
         self::assertEquals(new DateTime(self::LAST_EDIT), $this->page()->updatedAt, 're-importing an unchanged file must not touch the page row');
     }
 
+    /**
+     * Doctrine stores the wall clock without its offset: `14:00+02:00` used to land as
+     * 14:00 server time, two hours late, and never matched its file again.
+     */
+    public function testAnOffsetDateIsStoredAtItsInstantAndReimportsUnchanged(): void
+    {
+        self::bootKernel();
+
+        $this->write("publishedAt: '2026-09-30 14:00+02:00'", "holdPublicationAt: '2026-10-01 09:00+02:00'");
+        $this->import();
+
+        $page = $this->page();
+        self::assertSame(new DateTime('2026-09-30 12:00:00 UTC')->getTimestamp(), $page->publishedAt?->getTimestamp());
+        self::assertSame(new DateTime('2026-10-01 07:00:00 UTC')->getTimestamp(), $page->holdPublicationAt?->getTimestamp());
+
+        $importer = $this->import();
+
+        self::assertSame(0, $importer->getImportedCount());
+        self::assertEquals(new DateTime(self::LAST_EDIT), $this->page()->updatedAt);
+    }
+
     public function testAChangedPublishedAtStillLands(): void
     {
         self::bootKernel();

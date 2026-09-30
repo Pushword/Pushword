@@ -295,7 +295,7 @@ final class PageFileApiControllerTest extends WebTestCase
         });
 
         $exported = $this->serializer->serialize($page);
-        $edited = str_replace("publishedAt: '2025-06-01 10:30'", 'publishedAt: not-a-date', $exported);
+        $edited = str_replace("publishedAt: '2025-06-01 10:30+00:00'", 'publishedAt: not-a-date', $exported);
         self::assertNotSame($exported, $edited, 'fixture must carry the published date');
 
         $response = $this->putFile($page->host, $page->slug, $edited, $this->revisionOf($exported));

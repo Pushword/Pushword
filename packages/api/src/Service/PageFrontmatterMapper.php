@@ -41,6 +41,7 @@ final readonly class PageFrontmatterMapper
         private PageRepository $pageRepository,
         private MediaRepository $mediaRepository,
         private SiteRegistry $siteRegistry,
+        private PublishedAtConverter $publishedAtConverter,
         private ?PropertyConverterRegistry $converterRegistry = null,
     ) {
     }
@@ -278,7 +279,7 @@ final readonly class PageFrontmatterMapper
         try {
             // Reuse the flat sync's parser so the API accepts the same date
             // formats and `draft` sentinel as the on-disk frontmatter.
-            $parsed = PublishedAtConverter::fromFlatValue($value);
+            $parsed = $this->publishedAtConverter->fromFlatValue($value);
         } catch (Exception) {
             // A typo'd date must 422, not silently null the column: for
             // publishedAt a swallowed error would unpublish the page.

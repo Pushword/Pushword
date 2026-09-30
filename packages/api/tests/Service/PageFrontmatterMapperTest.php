@@ -497,6 +497,9 @@ final class PageFrontmatterMapperTest extends KernelTestCase
     {
         yield 'flat Y-m-d H:i' => ['2026-04-09 10:00'];
         yield 'iso 8601' => ['2026-04-09T10:00:00+00:00'];
+        // Stored as the server wall clock of the same instant, since Doctrine drops the offset.
+        yield 'iso 8601 with an offset' => ['2026-04-09T12:00:00+02:00'];
+        yield 'flat export with an offset' => ['2026-04-09 12:00+02:00'];
     }
 
     #[DataProvider('publishedAtFormatProvider')]

@@ -875,7 +875,7 @@ MD;
     }
 
     /**
-     * Test 15: publishedAt exports in exact YAML format 'Y-m-d H:i'.
+     * Test 15: publishedAt exports in exact YAML format 'Y-m-d H:iP'.
      */
     public function testPublishedAtYamlFormat(): void
     {
@@ -907,8 +907,8 @@ MD;
         $matchCount = preg_match('/^---\n(.+?)\n---/s', $mdContent, $matches);
         self::assertSame(1, $matchCount, 'YAML front matter should exist');
 
-        // Verify exact format: 'publishedAt: 2024-12-25 14:30' (no seconds, no quotes needed for this format)
-        self::assertStringContainsString("publishedAt: '2024-12-25 14:30'", $matches[1], 'publishedAt should be in Y-m-d H:i format with YAML string quoting');
+        // No seconds, and the offset of the editorial timezone (the server's by default)
+        self::assertStringContainsString("publishedAt: '2024-12-25 14:30+00:00'", $matches[1], 'publishedAt should be in Y-m-d H:iP format with YAML string quoting');
 
         // Cleanup
         $this->em->remove($page);

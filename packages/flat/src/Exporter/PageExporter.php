@@ -10,6 +10,7 @@ use League\Csv\Writer;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\PathGuard;
 use Pushword\Flat\Serializer\PageFileSerializer;
@@ -44,6 +45,7 @@ final class PageExporter
         private readonly SiteRegistry $apps,
         private readonly PageRepository $pageRepo,
         private readonly PageFileSerializer $serializer,
+        private readonly EditorialTimezone $editorialTimezone,
         array $pageIndexColumns = [],
         /** @var string[] Filenames excluded from sync (e.g. AGENTS.md, README.md) */
         private readonly array $excludeFiles = [],
@@ -448,7 +450,7 @@ final class PageExporter
         return [
             'slug' => $page->slug,
             'h1' => '' !== $h1 ? $h1 : $page->title,
-            'publishedAt' => null !== $page->publishedAt ? $page->publishedAt->format('Y-m-d H:i') : '',
+            'publishedAt' => null !== $page->publishedAt ? $this->editorialTimezone->format($page->publishedAt) : '',
             'locale' => $page->locale,
             'parentPage' => null !== $page->parentPage ? $page->parentPage->slug : '',
             'tags' => trim($page->getTags()),

@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'page files write dates with their offset, and a date with an offset is stored at that instant'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/api`, `pushword/core`, `pushword/flat`
+
+## Dates keep their offset
+
+Exported page files now write `publishedAt` and `holdPublicationAt` with an offset, `'2026-09-30 14:00+00:00'`; a file gains it on its next export. A date written with an offset, in a file or through the API, is now stored at that instant, where `14:00+02:00` used to land at 14:00 server time.
+
+**Sites that wrote dates with an offset.** Those pages still hold the shifted time: correct and save them again. To write dates on your editors' clock, set [`editorial_timezone`](/extension/flat#dates-and-time-zones).

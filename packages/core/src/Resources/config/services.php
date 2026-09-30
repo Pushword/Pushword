@@ -17,6 +17,7 @@ use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\UserRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Scheduler\CronScheduleProvider;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Service\Email\NotificationEmailSender;
 use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Service\MediaStorageAdapter;
@@ -91,6 +92,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(SchemaDumpCommand::class)
         ->arg('$pageClass', '%pw.entity_page%');
+
+    $services->set(EditorialTimezone::class)
+        ->arg('$editorialTimezone', '%pw.editorial_timezone%');
 
     // # todo limit to test https://stackoverflow.com/questions/54466158/symfony-4-2-how-to-do-a-service-public-only-for-tests
     $services->set(PushwordRouteGenerator::class)

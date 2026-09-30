@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\DependencyInjection;
 
+use DateTimeZone;
 use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Component\EntityFilter\Filter\ElseH1;
 use Pushword\Core\Component\EntityFilter\Filter\Extended;
@@ -198,6 +199,14 @@ final class Configuration implements ConfigurationInterface
           ->scalarNode('entity_user')
           ->defaultValue(User::class)
           ->cannotBeEmpty()
+          ->end()
+          ->scalarNode('editorial_timezone')
+          ->defaultNull()
+          ->info('Timezone editors read and write dates in (flat files, API), eg Europe/Paris. Unset: the server timezone. The database stays in the server timezone.')
+          ->validate()
+          ->ifTrue(static fn (mixed $timezone): bool => null !== $timezone && ! \in_array($timezone, DateTimeZone::listIdentifiers(DateTimeZone::ALL_WITH_BC), true))
+          ->thenInvalid('%s is not a timezone identifier (eg Europe/Paris).')
+          ->end()
           ->end()
 
           // default app value
