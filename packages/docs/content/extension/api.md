@@ -39,7 +39,8 @@ curl -H "Authorization: Bearer $TOKEN" https://example.com/api/page/search
   `body` (the `mainContent` Markdown), mirroring the flat-file format.
 - **Dates.** `publishedAt` and `holdPublicationAt` take ISO 8601 or the flat
   `2026-09-30 16:00`. An offset is kept to the instant; a date without one is read in the
-  [editorial timezone](/extension/flat#dates-and-time-zones).
+  [editorial timezone](/extension/flat#dates-and-time-zones). Reads return both on that
+  clock, offset included: `2026-09-30T16:00:00+02:00`.
 - **Optimistic concurrency.** Each page carries an opaque `revision` (also sent as the
   `ETag` header). Writes must send `If-Match: <revision>`; a stale value yields `409`.
 - **Token-efficient responses.** Writes return a minimal body by default; reads return the

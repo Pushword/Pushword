@@ -14,6 +14,10 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Api\Service\InvalidFrontmatterException;
 use Pushword\Api\Service\PageFrontmatterMapper;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\EditorialTimezone;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -600,6 +604,37 @@ final class PageFrontmatterMapperTest extends KernelTestCase
 
         $this->mapper->applyFrontmatter($page, ['extendedPage' => null]);
         self::assertNull($page->extendedPage);
+    }
+
+    public function testDatesAreReturnedOnTheEditorialClockAndReadBackToTheSameInstant(): void
+    {
+        $paris = new EditorialTimezone('Europe/Paris');
+        $mapper = new PageFrontmatterMapper(
+            self::getContainer()->get(PageRepository::class),
+            self::getContainer()->get(MediaRepository::class),
+            self::getContainer()->get(SiteRegistry::class),
+            new PublishedAtConverter($paris),
+            $paris,
+        );
+
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->slug = 'clock';
+        $page->publishedAt = new DateTime('2026-09-30 14:00:00 UTC');
+        // The second 02:30 of the autumn change: only the offset tells it apart.
+        $page->holdPublicationAt = new DateTime('2026-10-25 01:30:00 UTC');
+
+        $frontmatter = $mapper->toArray($page)['frontmatter'];
+        self::assertSame('2026-09-30T16:00:00+02:00', $frontmatter['publishedAt']);
+        self::assertSame('2026-10-25T02:30:00+01:00', $frontmatter['holdPublicationAt']);
+
+        $copy = new Page();
+        $copy->host = 'example.com';
+        $copy->slug = 'clock-copy';
+
+        $mapper->applyFrontmatter($copy, ['publishedAt' => $frontmatter['publishedAt'], 'holdPublicationAt' => $frontmatter['holdPublicationAt']]);
+        self::assertSame($page->publishedAt->getTimestamp(), $copy->publishedAt?->getTimestamp());
+        self::assertSame($page->holdPublicationAt->getTimestamp(), $copy->holdPublicationAt?->getTimestamp());
     }
 
     public function testHoldPublicationAtAppliesAndRejectsGarbage(): void

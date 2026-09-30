@@ -12,6 +12,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
@@ -42,6 +43,7 @@ final readonly class PageFrontmatterMapper
         private MediaRepository $mediaRepository,
         private SiteRegistry $siteRegistry,
         private PublishedAtConverter $publishedAtConverter,
+        private EditorialTimezone $editorialTimezone,
         private ?PropertyConverterRegistry $converterRegistry = null,
     ) {
     }
@@ -64,9 +66,10 @@ final readonly class PageFrontmatterMapper
             'weight' => $page->weight,
             'tags' => $page->getTagList(),
             'redirectFrom' => $page->redirectFrom,
-            'publishedAt' => $page->publishedAt?->format(DateTimeInterface::ATOM),
+            // On the editors' clock, like the flat files: the offset keeps the instant.
+            'publishedAt' => $this->formatDate($page->publishedAt),
             'holdPublication' => $page->isHoldPublication(),
-            'holdPublicationAt' => $page->holdPublicationAt?->format(DateTimeInterface::ATOM),
+            'holdPublicationAt' => $this->formatDate($page->holdPublicationAt),
             'mainImage' => $page->getMainImage()?->getFileName(),
             'parentPage' => $page->parentPage?->slug,
             'variantOf' => $page->variantOf?->slug,
@@ -264,6 +267,11 @@ final readonly class PageFrontmatterMapper
             $page->setCustomProperty($key, $value);
             $page->preserveCustomProperty($key);
         }
+    }
+
+    private function formatDate(?DateTimeInterface $date): ?string
+    {
+        return null === $date ? null : $this->editorialTimezone->format($date, DateTimeInterface::ATOM);
     }
 
     private function parseDateTime(mixed $value, string $key): ?DateTimeInterface
