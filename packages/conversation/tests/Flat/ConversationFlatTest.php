@@ -596,6 +596,49 @@ final class ConversationFlatTest extends KernelTestCase
         }
     }
 
+    public function testImportReadsADateWithoutOffsetInTheEditorialTimezone(): void
+    {
+        // The test app runs on UTC with no editorial timezone: a Paris importer shows whether the injected one is used.
+        $importer = new ConversationImporter(
+            $this->entityManager,
+            self::getContainer()->get('serializer'),
+            $this->mediaRepository,
+            new ImportContext(),
+            new EditorialTimezone('Europe/Paris'),
+        );
+        $importer->initConversationContext(
+            self::getContainer()->get(SiteRegistry::class),
+            self::getContainer()->get(FlatFileContentDirFinder::class),
+            $this->messageRepository,
+        );
+
+        $csvPath = $this->createCsvFile([
+            [
+                'content' => 'Editorial clock external message',
+                'authorEmail' => 'editorial@example.com',
+                'authorName' => 'Editorial User',
+                'referring' => '/editorial',
+                'host' => $this->testHost,
+                'publishedAt' => '2026-04-09 12:00',
+            ],
+        ]);
+
+        $importer->importExternal($csvPath);
+        $this->entityManager->clear();
+
+        $message = $this->messageRepository->findOneBy([
+            'host' => $this->testHost,
+            'content' => 'Editorial clock external message',
+        ]);
+
+        self::assertInstanceOf(Message::class, $message);
+        self::assertSame(new DateTime('2026-04-09 10:00:00 UTC')->getTimestamp(), $message->publishedAt?->getTimestamp());
+
+        if (null !== $message->id) {
+            $this->createdMessageIds[] = $message->id;
+        }
+    }
+
     public function testImportParsesFlatDateAndStoresMutableDateTime(): void
     {
         $csvPath = $this->createCsvFile([

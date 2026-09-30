@@ -100,6 +100,7 @@
   }
 
   function handleScheduleClick() {
+    // Tomorrow 09:00 on the editorial calendar, counted in UTC so no browser DST change shifts the day.
     const tomorrow = new Date(editorialDateTimeLocal(new Date()).slice(0, 10) + 'T00:00:00Z');
     tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
     targetInput.value = tomorrow.toISOString().slice(0, 10) + 'T09:00';

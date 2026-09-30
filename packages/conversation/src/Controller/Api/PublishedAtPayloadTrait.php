@@ -47,8 +47,8 @@ trait PublishedAtPayloadTrait
     }
 
     /**
-     * An offset is kept to the instant, a date without one is read in the
-     * editorial timezone: Doctrine drops the offset, so it must not reach the
+     * An offset is kept to the instant; a date without one is read in the
+     * editorial timezone. Doctrine drops the offset, so it must not reach the
      * column. Mutable on purpose: the column is DATETIME_MUTABLE, and Doctrine
      * rejects a DateTimeImmutable at flush.
      */

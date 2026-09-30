@@ -40,9 +40,10 @@ final class FrontMatterParser extends ComplexMarkdownParser
             return $document;
         }
 
+        /** @var array<mixed> $dates */
         $dates = Yaml::parse($this->getFrontMatter(), Yaml::PARSE_DATETIME);
         foreach ($timestampKeys as $key) {
-            $date = \is_array($dates) ? $dates[$key] ?? null : null;
+            $date = $dates[$key] ?? null;
             if (! $date instanceof DateTimeInterface) {
                 continue; // a plain number, not a timestamp YAML converted
             }

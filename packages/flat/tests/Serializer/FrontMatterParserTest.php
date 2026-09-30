@@ -27,6 +27,20 @@ final class FrontMatterParserTest extends TestCase
         self::assertSame('Body.', $document->body());
     }
 
+    public function testUnquotedDatesWithFractionalSecondsAreHandedOnAsWritten(): void
+    {
+        // YAML turns these into floats, not ints: the same timestamps, down another branch.
+        $document = new FrontMatterParser(<<<'MD'
+            ---
+            publishedAt: 2026-09-30 14:00:00.5
+            updated_at: 2026-09-30T14:00:00.25+02:00
+            ---
+            MD)->parse();
+
+        self::assertSame('2026-09-30 14:00:00', $document->matter('publishedAt'));
+        self::assertSame('2026-09-30 14:00:00+02:00', $document->matter('updated_at'));
+    }
+
     public function testOtherValuesKeepWhatYamlGivesThem(): void
     {
         $document = new FrontMatterParser(<<<'MD'
