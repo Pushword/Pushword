@@ -1090,7 +1090,11 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         return $queryBuilder
             ->andWhere($alias.'.metaRobots IS NULL OR ('.$metaRobots.' NOT LIKE :noindexNeedle AND '.$metaRobots.' NOT LIKE :noneNeedle)')
             ->setParameter('noindexNeedle', '%noindex%')
-            ->setParameter('noneNeedle', '%none%');
+            ->setParameter('noneNeedle', '%none%')
+            // …and {@see Page::isErrorPage()}: `404`, or `404` under the page's own locale prefix.
+            ->andWhere($alias.'.slug <> :errorPageSlug AND '.$alias.'.slug <> LOWER(CONCAT('.$alias.'.locale, :errorPageSuffix))')
+            ->setParameter('errorPageSlug', '404')
+            ->setParameter('errorPageSuffix', '/404');
     }
 
     public function andNotRedirection(QueryBuilder $queryBuilder): QueryBuilder

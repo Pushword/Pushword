@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Pushword\StaticGenerator\Tests\Cache;
 
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\StaticAppGenerator;
@@ -81,5 +83,28 @@ final class PageCacheGenerationTest extends KernelTestCase
 
         self::assertFileExists($this->cacheDir.'/index.html');
         self::assertStringContainsString('<html', (string) file_get_contents($this->cacheDir.'/index.html'));
+    }
+
+    /** Left to PHP, which answers it with its 404 status where a cached file would say 200. */
+    public function testTheErrorPageIsNotWrittenIntoTheCacheDir(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $page = new Page();
+        $page->host = 'localhost.dev';
+        $page->slug = '404';
+        $page->h1 = 'Not found';
+        $page->locale = 'en';
+
+        $em->persist($page);
+        $em->flush();
+
+        try {
+            $this->getGenerator()->generatePage('localhost.dev', '404');
+
+            self::assertFileDoesNotExist($this->cacheDir.'/404.html');
+        } finally {
+            $em->remove($page);
+            $em->flush();
+        }
     }
 }

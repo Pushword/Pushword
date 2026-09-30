@@ -19,10 +19,12 @@ use Pushword\Core\Entity\User;
 use Pushword\Core\Site\RequestContext;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Twig\Environment;
 
 #[Group('integration')]
 final class PageControllerTest extends KernelTestCase
@@ -502,10 +504,65 @@ final class PageControllerTest extends KernelTestCase
     }
 
     /**
+     * Visited at its own URL, the error page answers with the status it carries for
+     * a missing one, and stays out of the index with an empty robots field.
+     */
+    public function testTheErrorPageAnswersNotFoundAtItsOwnUrl(): void
+    {
+        $page = $this->persistPage('404');
+
+        try {
+            $response = $this->getPageController()->show(Request::create('/404'), '404');
+            $content = (string) $response->getContent();
+
+            self::assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+            self::assertStringContainsString('Head of 404', $content);
+            self::assertStringContainsString('<meta name="robots" content="noindex">', $content);
+            self::assertStringNotContainsString('rel="canonical"', $content);
+            self::assertStringNotContainsString('hreflang=', $content);
+        } finally {
+            $this->removePage($page);
+        }
+    }
+
+    /**
+     * error.html.twig embeds the error page through render(controller(showPage)),
+     * and Symfony's fragment handler throws on a non-2xx sub-response: the status a
+     * direct visit gets must stay out of that path.
+     */
+    public function testAMissingUrlStillRendersTheErrorPage(): void
+    {
+        $page = $this->persistPage('404');
+        $requestStack = self::getContainer()->get(RequestStack::class);
+        $requestStack->push(Request::create('/missing-page'));
+
+        try {
+            $content = self::getContainer()->get(Environment::class)->render('@Twig/Exception/error.html.twig');
+
+            self::assertStringContainsString('Head of 404', $content);
+            self::assertStringContainsString('<meta name="robots" content="noindex">', $content);
+        } finally {
+            $requestStack->pop();
+            $this->removePage($page);
+        }
+    }
+
+    /**
      * What the head holds is dictated by the page's own properties, so each case
      * renders the page it is about, then drops it.
      */
     private function renderPage(string $slug, string $metaRobots = '', ?string $customCanonical = null): string
+    {
+        $page = $this->persistPage($slug, $metaRobots, $customCanonical);
+
+        try {
+            return (string) $this->getPageController()->show(Request::create('/'.$slug), $slug)->getContent();
+        } finally {
+            $this->removePage($page);
+        }
+    }
+
+    private function persistPage(string $slug, string $metaRobots = '', ?string $customCanonical = null): Page
     {
         $em = self::getContainer()->get(EntityManagerInterface::class);
 
@@ -523,12 +580,14 @@ final class PageControllerTest extends KernelTestCase
         $em->persist($page);
         $em->flush();
 
-        try {
-            return (string) $this->getPageController()->show(Request::create('/'.$slug), $slug)->getContent();
-        } finally {
-            $em->remove($page);
-            $em->flush();
-        }
+        return $page;
+    }
+
+    private function removePage(Page $page): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $em->remove($page);
+        $em->flush();
     }
 
     /**

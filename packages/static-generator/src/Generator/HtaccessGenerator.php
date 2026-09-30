@@ -16,6 +16,7 @@ class HtaccessGenerator extends PageGenerator
         $htaccess = $this->twig->render($this->apps->get()->getView('/htaccess.twig', '@PushwordStatic'), [
             'domain' => $this->app->getMainHost(),
             'redirections' => $this->getRedirections(),
+            'extra_locales' => $this->getExtraLocales(),
             'image_fallback_order' => $this->getImageFallbackOrder(),
             'html_max_age' => $this->app->get('static_html_max_age') ?? 10800,
             'html_swr' => $this->app->get('static_html_stale_while_revalidate') ?? 3600,

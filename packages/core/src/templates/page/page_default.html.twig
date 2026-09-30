@@ -12,8 +12,8 @@
   {% if page.searchExcerpt is defined and page.searchExcerpt is not null %}
     <meta name="description" content="{{ page.searchExcerpt|date_shortcode|escape }}">
   {% endif %}
-  {% if page.metaRobots %}
-    <meta name="robots" content="{{ page.metaRobots }}">
+  {% if page.metaRobotsContent %}
+    <meta name="robots" content="{{ page.metaRobotsContent }}">
   {% endif %}
   {% if page.variantOf %}
     <link rel="canonical" href="{{ page(page.variantOf, true) }}">

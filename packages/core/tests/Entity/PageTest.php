@@ -169,6 +169,61 @@ final class PageTest extends TestCase
         self::assertTrue($page->isIndexable());
     }
 
+    /**
+     * What a missing URL renders is "not found", not content: noindex whatever its
+     * robots field says. Slugs are stored lowercase, so `fr-CA` pages live under
+     * `fr-ca/`.
+     */
+    public function testTheErrorPageIsNotIndexableWhateverItsRobotsField(): void
+    {
+        foreach ([['404', 'en'], ['fr/404', 'fr'], ['fr-ca/404', 'fr-CA']] as [$slug, $locale]) {
+            $page = new Page();
+            $page->slug = $slug;
+            $page->locale = $locale;
+            $page->metaRobots = 'index, follow';
+
+            self::assertTrue($page->isErrorPage(), $slug);
+            self::assertTrue($page->hasNoindex(), $slug);
+            self::assertFalse($page->isIndexable(), $slug);
+        }
+
+        // A `404` deeper in the tree, or under another locale's prefix, is an
+        // ordinary page: an article about 404 errors must stay indexable.
+        foreach ([['seo/404', 'en'], ['fr/404', 'en'], ['4040', 'en']] as [$slug, $locale]) {
+            $page = new Page();
+            $page->slug = $slug;
+            $page->locale = $locale;
+
+            self::assertFalse($page->isErrorPage(), $slug.' ('.$locale.')');
+            self::assertTrue($page->isIndexable(), $slug.' ('.$locale.')');
+        }
+    }
+
+    public function testTheErrorPageRobotsContentCarriesNoindexOnce(): void
+    {
+        $page = new Page();
+        $page->slug = '404';
+
+        self::assertSame('noindex', $page->getMetaRobotsContent());
+
+        $page->metaRobots = 'nofollow';
+        self::assertSame('noindex, nofollow', $page->getMetaRobotsContent());
+
+        // Already noindex (the admin form's choice): written as is, not doubled.
+        $page->metaRobots = 'noindex';
+        self::assertSame('noindex', $page->getMetaRobotsContent());
+
+        $page->metaRobots = 'none';
+        self::assertSame('none', $page->getMetaRobotsContent());
+
+        $ordinary = new Page();
+        $ordinary->slug = 'about';
+        self::assertSame('', $ordinary->getMetaRobotsContent());
+
+        $ordinary->metaRobots = 'nofollow';
+        self::assertSame('nofollow', $ordinary->getMetaRobotsContent());
+    }
+
     public function testAPageCannotBeItsOwnParent(): void
     {
         $page = new Page();

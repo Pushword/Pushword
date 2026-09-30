@@ -35,12 +35,13 @@ class Configuration implements ConfigurationInterface
 
     /**
      * Generators used in `cache: static` mode — we only want HTML + media, nothing web-server-global.
+     * No ErrorPageGenerator: PHP stays behind the cache and renders the error page itself,
+     * with its 404 status, where a cached 404.html would answer /404 with a 200.
      *
      * @var array<class-string<GeneratorInterface>>
      */
     final public const array DEFAULT_GENERATOR_CACHE = [
         PagesGenerator::class,
-        ErrorPageGenerator::class,
         MediaGenerator::class,
         PagesCompressor::class,
     ];

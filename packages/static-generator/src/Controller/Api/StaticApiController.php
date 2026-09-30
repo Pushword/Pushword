@@ -195,6 +195,10 @@ final class StaticApiController extends AbstractApiController
             return 'cache_disabled_for_page';
         }
 
+        if ($page->isErrorPage() && StaticAppGenerator::isCacheMode($this->siteRegistry->get($page->host))) {
+            return 'error_page_not_cached';
+        }
+
         return null;
     }
 
@@ -293,7 +297,7 @@ final class StaticApiController extends AbstractApiController
                             '400' => ['description' => 'Unknown host'],
                             '401' => ['description' => 'Missing or invalid Bearer token'],
                             '404' => ['description' => 'Page not found'],
-                            '409' => ['description' => 'Nothing to write for this page (`page_not_published`, `publication_on_hold`, `page_is_a_redirection`, `cache_disabled_for_page`) or a whole-site generation is running (`generation_running`)'],
+                            '409' => ['description' => 'Nothing to write for this page (`page_not_published`, `publication_on_hold`, `page_is_a_redirection`, `cache_disabled_for_page`, `error_page_not_cached`) or a whole-site generation is running (`generation_running`)'],
                             '500' => ['description' => 'The page failed to render; `errors` says why'],
                         ],
                     ],

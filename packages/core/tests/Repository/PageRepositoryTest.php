@@ -133,6 +133,55 @@ final class PageRepositoryTest extends KernelTestCase
         }
     }
 
+    /**
+     * The SQL twin of {@see Page::isErrorPage()}: left out of the sitemap, the feeds
+     * and the search index whatever its robots field says — while a `404` elsewhere
+     * in the tree, or under another locale's prefix, stays in.
+     */
+    public function testIndexableQueryExcludesTheErrorPage(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $pages = [];
+        foreach ([['404', 'en'], ['fr/404', 'fr'], ['fr-ca/404', 'fr-CA'], ['seo/404', 'en'], ['de/404', 'en']] as [$slug, $locale]) {
+            $page = new Page();
+            $page->h1 = 'Error page candidate';
+            $page->slug = $slug;
+            $page->locale = $locale;
+            $page->host = 'localhost.dev';
+            $page->createdAt = new DateTime();
+            $page->updatedAt = new DateTime();
+            $page->mainContent = 'content';
+            $em->persist($page);
+            $pages[] = $page;
+        }
+
+        $em->flush();
+
+        try {
+            /** @var Page[] $indexable */
+            $indexable = $em->getRepository(Page::class)
+                ->getIndexablePagesQuery('localhost.dev', '')
+                ->getQuery()->getResult();
+
+            $slugs = array_map(static fn (Page $indexablePage): string => $indexablePage->slug, $indexable);
+
+            self::assertNotContains('404', $slugs);
+            self::assertNotContains('fr/404', $slugs);
+            self::assertNotContains('fr-ca/404', $slugs);
+            self::assertContains('seo/404', $slugs);
+            self::assertContains('de/404', $slugs);
+        } finally {
+            foreach ($pages as $page) {
+                $em->remove($page);
+            }
+
+            $em->flush();
+        }
+    }
+
     public function testNumericSlugDoesNotFallbackToId(): void
     {
         self::bootKernel();

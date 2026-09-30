@@ -77,6 +77,11 @@
 	}
 	rewrite @no_ext {path}.html
 
+	# The error page answers 404 at its own URL too, as it does for a missing one.
+	# Caddy runs `error` after `rewrite`, so /404 already reads /404.html here.
+	@not_found_page path /404.html{{ extra_locales|map(locale => ' /' ~ locale ~ '/404.html')|join }}
+	error @not_found_page 404
+
 	# Permit to redirect slug.html to slug
 	@html_ext path_regexp ^(.+)\.html$
 	redir @html_ext {re.1} 301

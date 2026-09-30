@@ -1,5 +1,5 @@
 ---
-title: 'page files write dates with their offset, and a date with an offset is stored at that instant; dates without one follow the new `editorial_timezone`, to set only after a forced export'
+title: 'page files write dates with their offset, and a date with an offset is stored at that instant; dates without one follow the new `editorial_timezone`, to set only after a forced export; the 404 page is noindex and answers 404 at its own URL'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/api`, `pushword/core`, `pushword/flat`
+**Concerns:** `pushword/api`, `pushword/core`, `pushword/flat`, `pushword/static-generator`
 
 ## Dates keep their offset
 
@@ -48,3 +48,9 @@ Exported page files now write `publishedAt` and `holdPublicationAt` with an offs
 A date written without an offset, in a file or through the API, is now read in the new [`editorial_timezone`](/extension/flat#dates-and-time-zones). Unset, it is the server timezone and nothing changes.
 
 **Sites setting `editorial_timezone`.** Set it last, or a file exported before this release shifts on its next import: `pw:flat:sync` to take in pending file edits, `pw:flat:sync --mode=export --force` to write every date with its offset, then the key.
+
+## The 404 page stays out of the index
+
+The `404` page, and its `<locale>/404` translation, now carries `noindex` whatever its robots field says, leaves the sitemap, the feeds, the search index and `pages_list()`, and answers `404` at its own URL: in the app, in the generated `.htaccess` and `.Caddyfile`, and in [cache mode](/extension/page-cache), which no longer caches it.
+
+**Static sites:** regenerate with `pw:static` to get the new server rules. **Cache-mode sites:** `pw:cache:clear` drops the `404.html` already cached. **Themes overriding the `robots` block:** print `page.metaRobotsContent`, not `page.metaRobots`.

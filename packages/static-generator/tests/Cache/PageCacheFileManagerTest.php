@@ -25,4 +25,19 @@ final class PageCacheFileManagerTest extends KernelTestCase
 
         self::getContainer()->get(PageCacheFileManager::class)->delete($page);
     }
+
+    /** Cached, /404 would answer 200: PHP serves it with its 404 status instead. */
+    public function testTheErrorPageIsNeverCacheable(): void
+    {
+        self::bootKernel();
+        $fileManager = self::getContainer()->get(PageCacheFileManager::class);
+
+        $page = new Page();
+        $page->host = 'localhost.dev';
+        $page->slug = 'about';
+        self::assertTrue($fileManager->isCacheable($page));
+
+        $page->slug = '404';
+        self::assertFalse($fileManager->isCacheable($page));
+    }
 }

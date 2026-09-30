@@ -17,7 +17,14 @@ final class PageCacheField extends AbstractField
 {
     public function getEasyAdminField(): ?FieldInterface
     {
-        $host = $this->admin->getSubject()->host;
+        $page = $this->admin->getSubject();
+
+        // Never cached (see PageCacheFileManager::isCacheable()): a checkbox would be ignored.
+        if ($page->isErrorPage()) {
+            return null;
+        }
+
+        $host = $page->host;
         $app = '' !== $host
             ? $this->formFieldManager->apps->findByHost($host)
             : $this->formFieldManager->apps->getDefault();

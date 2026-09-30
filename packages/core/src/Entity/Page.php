@@ -292,6 +292,42 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     }
 
     /**
+     * The error page is noindex whatever its `metaRobots` says: it is what a missing
+     * URL renders, so a robot listing it would list "not found" as content.
+     *
+     * Its SQL twin is {@see PageRepository::andIndexable()} — the two have to stay
+     * in step.
+     */
+    public function hasNoindex(): bool
+    {
+        return $this->isErrorPage() || $this->metaRobotsHasNoindex();
+    }
+
+    /**
+     * The page a missing URL renders (`p('404')` in error.html.twig), or its
+     * translation under the locale prefix (`fr/404`), which the static export
+     * serves for missing URLs under /fr/. A `404` page elsewhere in the tree
+     * (`seo/404`) is an ordinary page.
+     */
+    public function isErrorPage(): bool
+    {
+        return '404' === $this->slug || strtolower($this->locale).'/404' === $this->slug;
+    }
+
+    /**
+     * The `content` of `<meta name="robots">`: `metaRobots` as written, plus the
+     * `noindex` the error page carries when its editor did not write one.
+     */
+    public function getMetaRobotsContent(): string
+    {
+        if (! $this->isErrorPage() || $this->metaRobotsHasNoindex()) {
+            return $this->metaRobots;
+        }
+
+        return '' === $this->metaRobots ? 'noindex' : 'noindex, '.$this->metaRobots;
+    }
+
+    /**
      * Substring and case-insensitive, because `metaRobots` is a free-text list of
      * directives: `noindex` travels with the others (`noindex, noarchive`), and the
      * value is written by hand in a flat file or over the API, where nothing
@@ -304,9 +340,9 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
      * other directive (`nosnippet`, `notranslate`, `noimageindex`, …) contains it.
      *
      * Its SQL twin is the pair of `LOWER(...) NOT LIKE` in
-     * {@see PageRepository::andIndexable()} — the two have to stay in step.
+     * {@see PageRepository::andIndexable()}.
      */
-    public function hasNoindex(): bool
+    private function metaRobotsHasNoindex(): bool
     {
         return false !== stripos($this->metaRobots, 'noindex')
             || false !== stripos($this->metaRobots, 'none');

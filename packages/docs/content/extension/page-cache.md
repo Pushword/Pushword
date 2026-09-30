@@ -201,7 +201,7 @@ Example Caddyfile snippet. The `@cached` matcher excludes admin/profiler routes 
 }
 ```
 
-PHP never boots for anonymous GETs on cacheable paths. Pages that don't have a cache file (dynamic ones, or freshly created pages whose Messenger job hasn't run) fall through to `php_server`.
+PHP never boots for anonymous GETs on cacheable paths. Pages that don't have a cache file (dynamic ones, freshly created pages whose Messenger job hasn't run, and the `404` page, never cached so PHP answers it with its 404 status) fall through to `php_server`.
 
 ## Verifying it works
 

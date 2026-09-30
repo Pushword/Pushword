@@ -212,6 +212,48 @@ final class StaticApiControllerTest extends WebTestCase
     }
 
     /**
+     * localhost.dev runs `cache: static`, where the error page is left to PHP so it
+     * answers 404: the endpoint must not report a file it never writes.
+     */
+    public function testTheErrorPageIsRefusedInCacheMode(): void
+    {
+        $this->assertRefusesToGenerate(
+            'error_page_not_cached',
+            static function (Page $page): void { $page->slug = '404'; },
+        );
+    }
+
+    /** The refusal is cache mode's alone: a full export has no PHP to leave the error page to. */
+    public function testTheErrorPageIsGeneratedOutsideCacheMode(): void
+    {
+        $staticDir = sys_get_temp_dir().'/pushword-static-api-test-'.getmypid();
+        self::getContainer()->get(SiteRegistry::class)->get(self::HOST)
+            ->setCustomProperty('cache', 'none')
+            ->setCustomProperty('static_dir', $staticDir);
+
+        $page = new Page();
+        $page->host = self::HOST;
+        $page->slug = '404';
+        $page->h1 = 'Static API error page';
+        $page->publishedAt = new DateTime('-1 day');
+
+        $this->em->persist($page);
+        $this->em->flush();
+
+        try {
+            $body = $this->request('POST', '/api/static/'.self::HOST.'/404');
+
+            self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode(), (string) json_encode($body));
+            self::assertTrue($body['generated']);
+            self::assertStringContainsString('Static API error page', (string) file_get_contents($staticDir.'/404.html'));
+        } finally {
+            $this->em->remove($page);
+            $this->em->flush();
+            new Filesystem()->remove($staticDir);
+        }
+    }
+
+    /**
      * Build a throwaway page in the state $makeUnexportable puts it in, and assert
      * the endpoint names that state instead of writing a file.
      *
@@ -224,10 +266,9 @@ final class StaticApiControllerTest extends WebTestCase
      */
     private function assertRefusesToGenerate(string $expectedError, callable $makeUnexportable): void
     {
-        $slug = 'static-api-'.uniqid();
         $page = new Page();
         $page->host = self::HOST;
-        $page->slug = $slug;
+        $page->slug = 'static-api-'.uniqid();
         $page->h1 = 'Static API test';
         $page->publishedAt = new DateTime('-1 day');
         $makeUnexportable($page);
@@ -236,11 +277,11 @@ final class StaticApiControllerTest extends WebTestCase
         $this->em->flush();
 
         try {
-            $body = $this->request('POST', '/api/static/'.self::HOST.'/'.$slug);
+            $body = $this->request('POST', '/api/static/'.self::HOST.'/'.$page->slug);
 
             self::assertSame(Response::HTTP_CONFLICT, $this->client->getResponse()->getStatusCode());
             self::assertSame($expectedError, $body['error']);
-            self::assertFileDoesNotExist($this->cacheDir.'/'.$slug.'.html');
+            self::assertFileDoesNotExist($this->cacheDir.'/'.$page->slug.'.html');
         } finally {
             $this->em->remove($page);
             $this->em->flush();

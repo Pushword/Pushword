@@ -40,6 +40,11 @@ readonly class PageCacheFileManager
             return false;
         }
 
+        // PHP renders it with its 404 status; a cached file would answer 200.
+        if ($page->isErrorPage()) {
+            return false;
+        }
+
         return false !== $page->getCustomProperty('cache');
     }
 

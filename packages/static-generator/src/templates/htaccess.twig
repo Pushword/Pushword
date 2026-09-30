@@ -39,6 +39,14 @@ RewriteRule ^media/(small_thumb|height_300|xs|sm|md|lg|xl|default)/media(.*)$ /m
 {% endif %}
 
 #---
+# The error page answers 404 at its own URL too, as it does for a missing one.
+# REDIRECT_STATUS is empty on the visitor's request only: the ErrorDocument
+# internal redirect this rule triggers must go on to serve 404.html, not loop.
+#---
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteRule ^{% if extra_locales is not empty %}(?:(?:{{ extra_locales|join('|') }})/)?{% endif %}404$ - [NC,R=404]
+
+#---
 # Fix linking behavior
 #---
 

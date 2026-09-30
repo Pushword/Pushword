@@ -152,5 +152,7 @@ final class ConfigurationTest extends KernelTestCase
         self::assertNotContains(HtaccessGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
         self::assertNotContains(CaddyfileGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
         self::assertNotContains(RobotsGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
+        // PHP renders the error page with its 404 status; a cached 404.html would answer 200.
+        self::assertNotContains(ErrorPageGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
     }
 }

@@ -96,7 +96,16 @@ final class PageController extends AbstractPushwordController
         $request->setLocale($page->locale);
         $this->translator->setLocale($page->locale);
 
-        return $this->showPage($page);
+        $response = $this->showPage($page);
+
+        // Visited at its own URL, the error page answers with the status it carries
+        // for a missing one. Not in showPage(): error.html.twig embeds that through
+        // render(controller()), which throws on a non-2xx fragment.
+        if ($page->isErrorPage()) {
+            $response->setStatusCode(Response::HTTP_NOT_FOUND);
+        }
+
+        return $response;
     }
 
     public function showPage(Page $page): Response

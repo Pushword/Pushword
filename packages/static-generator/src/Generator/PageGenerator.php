@@ -60,9 +60,10 @@ class PageGenerator extends AbstractGenerator
             $this->redirectionManager->addRedirectFrom($page);
         }
 
-        // In cache mode, honour per-page opt-out via customProperties[cache] = false.
+        // In cache mode, honour per-page opt-out via customProperties[cache] = false,
+        // and leave the error page to PHP: cached, /404 would answer 200, not 404.
         if ('static' === $this->app->getStr('cache', 'none')
-            && false === $page->getCustomProperty('cache')
+            && (false === $page->getCustomProperty('cache') || $page->isErrorPage())
         ) {
             return;
         }

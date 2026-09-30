@@ -33,7 +33,9 @@ Create a page with the slug `404` in the admin to customize your error page. Pus
 
 If no `404` page exists, Pushword falls back to a generic error template displaying translated messages (`errorTitle`, `errorDescription`).
 
-For **static sites** (using [static-generator](/extension/static-generator)), a `404.html` file is generated automatically from the same mechanism — one per configured locale. The generated server configs route errors to the right one by URL prefix: `/fr/…` serves `/fr/404.html` (via a small `fr/.htaccess` on Apache, a matcher in `handle_errors` on Caddy), everything else serves the root `404.html`.
+For **static sites** (using [static-generator](/extension/static-generator)), a `404.html` file is generated automatically from the same mechanism — one per configured locale. The generated server configs route errors to the right one by URL prefix: `/fr/…` serves `/fr/404.html` (via a small `fr/.htaccess` on Apache, a matcher in `handle_errors` on Caddy), everything else serves the root `404.html`. A `fr/404` page, when it exists, is the one written there.
+
+The `404` page, and a `<locale>/404` one, stays out of the index whatever its robots field says: it renders `noindex` with no canonical, and is left out of the sitemap, the feeds, the search index and `pages_list()`. Visited at its own URL, it answers `404` too — in the app, in the generated `.htaccess` and `.Caddyfile`, and in [cache mode](/extension/page-cache), which never caches it so PHP can.
 
 ---
 

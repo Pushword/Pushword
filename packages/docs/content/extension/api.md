@@ -480,6 +480,7 @@ skips on purpose:
 | `publication_on_hold`    | `holdPublicationAt` keeps the current file in place     |
 | `page_is_a_redirection`  | It is an entry in the host-wide redirect map, not a file |
 | `cache_disabled_for_page`| The page opted out with `cache: false`                  |
+| `error_page_not_cached`  | In cache mode, PHP serves the error page with its 404 status |
 | `generation_running`     | A whole-site pass is running — poll its `statusUrl` first |
 
 A page that fails to render answers `500` with the reason in `errors`.
