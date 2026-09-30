@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/api`, `pushword/conversation`, `pushword/core`, `pushword/flat`, `pushword/static-generator`
+**Concerns:** `pushword/admin`, `pushword/api`, `pushword/conversation`, `pushword/core`, `pushword/flat`, `pushword/static-generator`
 
 ## Dates keep their offset
 
@@ -45,7 +45,7 @@ Exported page files now write `publishedAt` and `holdPublicationAt` with an offs
 
 ## Dates without an offset follow `editorial_timezone`
 
-A date written without an offset, in a file or through the API, is now read in the new [`editorial_timezone`](/extension/flat#dates-and-time-zones). Unset, it is the server timezone and nothing changes.
+A date written without an offset, in a file or through the API, is now read in the new [`editorial_timezone`](/extension/flat#dates-and-time-zones), and the admin shows and edits dates on that clock. Unset, it is the server timezone and nothing changes.
 
 **Sites setting `editorial_timezone`.** Set it last, or a file exported before this release shifts on its next import: `pw:flat:sync` to take in pending file edits, `pw:flat:sync --mode=export --force` to write every date with its offset, then the key.
 

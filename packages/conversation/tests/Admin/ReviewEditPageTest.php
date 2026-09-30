@@ -56,6 +56,8 @@ final class ReviewEditPageTest extends AbstractAdminTestClass
         self::assertStringContainsString('pw-publish-switch', $content, 'The publish toggle script should be injected on the edit page.');
         self::assertStringContainsString('var labels = {', $content, 'The toggle labels should be injected into the script.');
         self::assertStringNotContainsString('__PW_PUBLISH_LABELS__', $content, 'The labels placeholder should be replaced.');
+        // "Now" is taken on the editorial clock the input is read in (the server's in this app).
+        self::assertStringContainsString('var editorialTimezone = "'.date_default_timezone_get().'";', $content);
     }
 
     /**

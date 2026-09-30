@@ -15,7 +15,7 @@
 
     <div style="flex: 1;">
       {% if page.isPublished == 0 %}
-        <span class="badge badge-info" title="{{ page.publishedAt ? page.publishedAt|format_datetime : 'adminDraft'|trans }}">{{ (page.publishedAt ? 'admin.planified' : 'adminDraft')|trans }}</span>
+        <span class="badge badge-info" title="{{ page.publishedAt ? page.publishedAt|format_datetime(timezone: editorial_timezone.timezone) : 'adminDraft'|trans }}">{{ (page.publishedAt ? 'admin.planified' : 'adminDraft')|trans }}</span>
       {% elseif page.metaRobots != '' %}
         <span class="badge" title="{{ page.metaRobots }}"><i class="fa fa-eye-slash"></i></span>
       {% endif %}

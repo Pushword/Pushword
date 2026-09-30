@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\UserMenu;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Twig\AssetExtension;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -22,6 +23,7 @@ class DashboardController extends AbstractDashboardController
     public function __construct(
         private readonly AdminMenu $adminMenu,
         private readonly AssetExtension $assetExtension,
+        private readonly EditorialTimezone $editorialTimezone,
     ) {
     }
 
@@ -47,6 +49,8 @@ class DashboardController extends AbstractDashboardController
     public function configureCrud(): Crud
     {
         return Crud::new()
+            // Date columns across the admin read on the editors' clock.
+            ->setTimezone($this->editorialTimezone->timezone->getName())
             ->overrideTemplates([
                 'layout' => '@pwAdmin/easyadmin_layout.html.twig',
                 'crud/index' => '@pwAdmin/crud/index.html.twig',

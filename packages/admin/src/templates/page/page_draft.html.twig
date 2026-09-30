@@ -24,6 +24,8 @@
   {# The admin is translated; formatting dates against a hardcoded locale showed
      French dates to every other language. #}
   const adminLocale = '{{ app.request.locale|e('js') }}';
+  {# The input holds the editorial clock (the form's view_timezone), not the browser's. #}
+  const editorialTimezone = '{{ editorial_timezone.timezone.name|e('js') }}';
 
   const toggleSwitch = document.getElementById('pw-draft-toggle-switch');
   const toggleWrapper = document.getElementById('pw-draft-toggle-wrapper');
@@ -38,15 +40,20 @@
   const statusText = document.getElementById('pw-draft-toggle-status');
 
   /**
-   * Format a Date object to datetime-local format (YYYY-MM-DDTHH:mm)
+   * A moment on the editorial clock, in datetime-local format (YYYY-MM-DDTHH:mm)
    */
-  function formatDateTimeLocal(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  function editorialDateTimeLocal(date) {
+    const parts = {};
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: editorialTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23'
+    }).formatToParts(date).forEach((part) => { parts[part.type] = part.value; });
+    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
   }
 
   /**
@@ -59,9 +66,8 @@
 
     if (!toggleSwitch.checked) return;
 
-    const date = new Date(targetInput.value);
-    const now = new Date();
-    if (date > now) {
+    // Both sides are editorial wall clocks in the same format: they compare as strings.
+    if (targetInput.value > editorialDateTimeLocal(new Date())) {
       toggleWrapper.classList.add('ea-switch-warning');
     } else {
       toggleWrapper.classList.add('ea-switch-success');
@@ -88,16 +94,15 @@
   }
 
   function handleToggleChange() {
-    targetInput.value = toggleSwitch.checked ? formatDateTimeLocal(new Date()) : '';
+    targetInput.value = toggleSwitch.checked ? editorialDateTimeLocal(new Date()) : '';
     updateToggleState();
     targetInput.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   function handleScheduleClick() {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
-    targetInput.value = formatDateTimeLocal(tomorrow);
+    const tomorrow = new Date(editorialDateTimeLocal(new Date()).slice(0, 10) + 'T00:00:00Z');
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    targetInput.value = tomorrow.toISOString().slice(0, 10) + 'T09:00';
     updateToggleState();
     targetInput.focus();
     targetInput.dispatchEvent(new Event('change', { bubbles: true }));

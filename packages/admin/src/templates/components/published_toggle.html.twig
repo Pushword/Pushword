@@ -44,7 +44,7 @@
             <span class="ea-switch-track" aria-hidden="true"><span class="ea-switch-thumb"></span></span>
         </span>
         <small class="text-muted mb-0">
-            {{ publishedAt ? publishedAt|format_date('short') : '—' }}
+            {{ publishedAt ? publishedAt|format_date('short', timezone: editorial_timezone.timezone) : '—' }}
         </small>
     </div>
 {% endif %}

@@ -32,6 +32,8 @@ final class PageEditDraftToggleTest extends AbstractAdminTestClass
         // shown 15/09/2026 next to the draft switch.
         self::assertStringNotContainsString("'fr-FR'", $html);
         self::assertStringContainsString("const adminLocale = '".$locale."'", $html);
+        // "Now" and "tomorrow 9:00" are taken on the editorial clock the input is read in (the server's in this app).
+        self::assertStringContainsString("const editorialTimezone = '".date_default_timezone_get()."'", $html);
 
         self::assertCount(1, $crawler->filter('#pw-draft-toggle-status'));
     }

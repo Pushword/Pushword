@@ -14,6 +14,7 @@ use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -36,6 +37,7 @@ class AdminFormFieldManager
         public readonly MediaRepository $mediaRepo,
         public readonly AdminUrlGenerator $adminUrlGenerator,
         public readonly PagePropertySchemaRegistry $schemaRegistry,
+        public readonly EditorialTimezone $editorialTimezone,
     ) {
     }
 

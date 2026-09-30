@@ -98,7 +98,10 @@ class ConversationCrudController extends AbstractAdminCrudController
             'off' => $this->translator->trans('adminConversationPublishedToggleOffLabel'),
         ], \JSON_THROW_ON_ERROR);
 
-        $script = str_replace('__PW_PUBLISH_LABELS__', $labels, <<<'HTML'
+        // The input holds the editorial clock (the field's view_timezone), not the browser's.
+        $timezone = json_encode($this->adminFormFieldManager->editorialTimezone->timezone->getName(), \JSON_THROW_ON_ERROR);
+
+        $script = str_replace(['__PW_PUBLISH_LABELS__', '__PW_EDITORIAL_TIMEZONE__'], [$labels, $timezone], <<<'HTML'
             <script>
             (function () {
                 function init() {
@@ -109,12 +112,22 @@ class ConversationCrudController extends AbstractAdminCrudController
                     input.dataset.pwPublishToggle = '1';
 
                     var labels = __PW_PUBLISH_LABELS__;
+                    var editorialTimezone = __PW_EDITORIAL_TIMEZONE__;
 
                     function nowLocal() {
-                        var now = new Date();
-                        now.setSeconds(0, 0);
-                        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                        return now.toISOString().slice(0, 16);
+                        var parts = {};
+                        new Intl.DateTimeFormat('en-CA', {
+                            timeZone: editorialTimezone,
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hourCycle: 'h23'
+                        }).formatToParts(new Date()).forEach(function (part) {
+                            parts[part.type] = part.value;
+                        });
+                        return parts.year + '-' + parts.month + '-' + parts.day + 'T' + parts.hour + ':' + parts.minute;
                     }
 
                     var lastValue = '' !== input.value ? input.value : nowLocal();
@@ -300,6 +313,7 @@ class ConversationCrudController extends AbstractAdminCrudController
         yield DateTimeField::new('publishedAt', 'adminConversationLabelPublishedAt')
             ->setFormTypeOption('html5', true)
             ->setFormTypeOption('widget', 'single_text')
+            ->setFormTypeOption('view_timezone', $this->adminFormFieldManager->editorialTimezone->timezone->getName())
             ->setFormTypeOption('required', false);
         yield IntegerField::new('weight', 'adminConversationWeightLabel')
             ->setFormTypeOption('required', false)

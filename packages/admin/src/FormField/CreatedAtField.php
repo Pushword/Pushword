@@ -21,6 +21,7 @@ class CreatedAtField extends AbstractField
             'with_seconds' => false,
             'label' => 'adminPageCreatedAtLabel',
             'html5' => true,
+            'view_timezone' => $this->formFieldManager->editorialTimezone->timezone->getName(),
         ]);
     }
 }

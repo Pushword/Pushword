@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -18,6 +19,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ],
         'globals' => [
             'apps' => ['type' => 'service', 'id' => SiteRegistry::class],
+            'editorial_timezone' => ['type' => 'service', 'id' => EditorialTimezone::class],
             'twig' => ['type' => 'service', 'id' => 'twig'],
             'unprose' => ['value' => 'not-prose lg:-mx-40 my-6 md:-mx-20'],
         ],

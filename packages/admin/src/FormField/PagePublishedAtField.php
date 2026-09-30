@@ -22,6 +22,7 @@ class PagePublishedAtField extends AbstractField
             'widget' => 'single_text',
             'with_seconds' => false,
             'html5' => true,
+            'view_timezone' => $this->formFieldManager->editorialTimezone->timezone->getName(),
             'setter' => static function (?object &$viewData, mixed $submittedValue, FormInterface $form): void {
                 if (! $viewData instanceof Page) {
                     return;

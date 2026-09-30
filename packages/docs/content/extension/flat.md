@@ -644,7 +644,8 @@ file that goes out and comes back never shifts.
   for the second. An hour the spring change skips moves forward by an hour.
 
 The editorial timezone defaults to the server's (PHP's `date.timezone`, UTC on most hosts).
-Set it to read and write dates on your editors' clock:
+Set it to read and write dates on your editors' clock — the admin's date fields, its
+publish-now and schedule buttons and its list columns follow it too:
 
 ```yaml
 pushword:
