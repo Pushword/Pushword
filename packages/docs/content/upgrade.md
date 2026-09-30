@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.32](/upgrade/1.0.32) | `admin` `api` `conversation` `core` `flat` `static-generator` | page files write dates with their offset, and a date with an offset is stored at that instant; dates without one follow the new `editorial_timezone`, to set only after a forced export; the 404 page is noindex and answers 404 at its own URL |
 | [1.0.31](/upgrade/1.0.31) | `core` | the licensable image JSON-LD points `contentUrl` at the page host, not at `base_live_url` |
 | [1.0.30](/upgrade/1.0.30) | `admin` `conversation` `core` `static-generator` | super administrators can log in as an editor; custom admin pages extending the EasyAdmin layout miss its banner; the review filter on `referring` is labelled like its form field; a same-line class starting with a digit or an accent stays literal text; the message and review API rejects an unreadable `publishedAt` with a 422 |
 | [1.0.27](/upgrade/1.0.27) | `admin-block-editor` `core` `flat` | paragraph attributes on the same line render as markdown; the flat export keeps typographic quotes inside Twig tags |
