@@ -221,31 +221,35 @@ final class AdminJSTest extends AbstractPantherAdminTest
 
         $this->waitForElement($client, self::SELECTOR_TITLE_INPUT, 'No title measurement field found on this page');
 
+        // TagsField renders an inline setTimeout(500) that focuses the H1. Under suite
+        // load it fires after navigation returns, in the middle of sendKeys, and the
+        // rest of the keystrokes land in the H1 instead of the title. Let it fire first.
+        self::assertTrue(
+            $this->pollUntilTrue($client, 'return document.activeElement.matches("[id$=_h1]")'),
+            'The edit form should move focus to the H1 once loaded',
+        );
+
         $titleInput = $client->findElement(
             WebDriverBy::cssSelector(self::SELECTOR_TITLE_INPUT)
         );
 
-        // Change the value
+        $typedTitle = 'Test Title for Width Measurement';
         $titleInput->clear();
-        $titleInput->sendKeys('Test Title for Width Measurement');
+        $titleInput->sendKeys($typedTitle);
 
-        // The counter is wired on window "load"; under parallel CPU contention that
-        // can fire after the keystrokes, so poll instead of a fixed sleep — and give
-        // it timeoutLong: a single admin request can stall a full busy_timeout (5s,
-        // a lock held by a lingering pw:image:* child), which equals the medium
-        // poll budget exactly.
+        // Compare with the whole typed string: a focus steal mid-sendKeys leaves a
+        // prefix in the title, which a mere non-empty check would accept.
         $widthDisplayed = $this->pollUntilTrue(
             $client,
             'const input = document.querySelector(arguments[0]);
-             return input.value.length > 0
+             return input.value === arguments[1]
                  && (document.getElementById("titleWidth")?.innerText || "") === String(input.value.length)',
-            [self::SELECTOR_TITLE_INPUT],
-            self::timeoutLong(),
+            [self::SELECTOR_TITLE_INPUT, $typedTitle],
         );
 
         // On failure, dump the state the poll saw: loadEventEnd tells whether the
-        // "load" handler (which wires the counter) ever ran, the rest whether it
-        // wired to the right nodes. Distinguishes a starved poll from dead wiring.
+        // "load" handler (which wires the counter) ever ran, activeElement where the
+        // keystrokes went, and the rest whether the counter is wired to the right nodes.
         $diagnostic = '';
         if (! $widthDisplayed) {
             $diagnostic = (string) json_encode($client->executeScript(
@@ -257,12 +261,13 @@ final class AdminJSTest extends AbstractPantherAdminTest
                      valueLength: input ? input.value.length : null,
                      counterExists: null !== counter,
                      counterText: counter ? counter.innerText : null,
+                     activeElement: document.activeElement.id,
                  }',
                 [self::SELECTOR_TITLE_INPUT],
             ));
         }
 
-        self::assertTrue($widthDisplayed, 'Title width should display the title length. State: '.$diagnostic);
+        self::assertTrue($widthDisplayed, 'The title should hold the typed text and its width counter its length. State: '.$diagnostic);
     }
 
     /**

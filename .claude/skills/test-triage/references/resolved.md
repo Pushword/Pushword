@@ -243,3 +243,28 @@ It reproduces in one run, deterministically, by editing any published page immed
 before `seed()`. The fix is in the test: `seed()` returns the state it stamped, and the
 test waits until `time()` is strictly past its `lastEditAt` before editing — at most one
 second, and zero whenever the fixtures' last edit is old, which is the normal case.
+
+## `AdminJSTest::testShowTitlePixelWidth` — keystrokes typed into the H1
+
+Failed only in `composer test` (about 3 runs in 4 on a 24-thread desktop), never in
+isolation, never in a bare paratest batch. The background test-installer and
+monorepo validation add the CPU pressure that makes it happen. The dump always read
+`valueLength: 0, counterText: "0"`: the title was empty, and the counter was correct
+for it.
+
+Two earlier readings were wrong. 7be6afe04 blamed the counter's `load` handler for
+firing after the keystrokes; 479d47aef then blamed a 5s SQLite `busy_timeout` and
+raised the poll to `timeoutLong`. But `WebDriver::get()` returns only after `load`,
+and the poll never reaches the server. Worker pollution did not fit either: replaying the failing
+worker's class list in one process passed.
+
+What caught it was a capture-phase `focusin` listener that recorded `new Error().stack`,
+installed before `clear()`. Chromedriver focused `#Page_title`, and 140 ms later an
+inline script focused `#Page_h1`. That script is the help text `TagsField` renders: a
+`setTimeout(500)` that focuses the H1 of an existing page (the tags input on a new one).
+Its timer starts at parse time. Under load it fires after navigation has returned, in
+the middle of `sendKeys`, and the H1 ended up as `"Welcome to Pushword !Test Title for
+Width Measurement"`. The test now waits for the H1 to take focus before typing.
+
+The same race exists for a real editor who clicks into another field before that timer
+fires. `TagsField` was left as is.

@@ -109,6 +109,10 @@ One line each; the post-mortems and already-walked dead ends are in
   restoring nothing (snapshot + SQL restore in tearDown now). The post-mortem's
   worker-DB autopsy, `version_log.editor` trick and failure-time crime-scene dump are
   the way to hunt any future family member.
+- `AdminJSTest::testShowTitlePixelWidth` with `valueLength: 0` — not a slow `load`, not a
+  stalled request: `TagsField`'s inline `setTimeout(500)` moved focus to the H1
+  mid-`sendKeys`, so the keystrokes landed there. Any new Panther test typing into the page
+  edit form owes the same wait for H1 focus first.
 
 ## Failures that look like flakes but are stale caches
 
