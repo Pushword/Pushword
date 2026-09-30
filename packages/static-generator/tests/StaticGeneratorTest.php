@@ -221,6 +221,7 @@ final class StaticGeneratorTest extends KernelTestCase
                 $commandTester->getDisplay(),
             );
             self::assertFileDoesNotExist($this->getStaticDir().'/scheduled-probe.html');
+            self::assertStringNotContainsString('scheduled-draft-probe', $commandTester->getDisplay(), 'a draft is not scheduled');
 
             $commandTester = $this->rebootStaticCommandTester();
             $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'agent']);
