@@ -10,8 +10,14 @@ use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Command\CronCommand;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Template\TemplateResolver;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\NullOutput;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Twig\Environment;
+use Twig\Loader\ArrayLoader;
 
 final class CronCommandTest extends TestCase
 {
@@ -43,7 +49,10 @@ final class CronCommandTest extends TestCase
 
     public function testFirstRunInitializesTimestamp(): void
     {
-        $command = $this->makeCommand([], [['command' => 'pw:static -i', 'on' => 'publish']]);
+        $dispatcher = $this->createMock(BackgroundTaskDispatcherInterface::class);
+        $dispatcher->expects(self::never())->method('dispatch');
+
+        $command = $this->makeCommand([], [['command' => 'pw:static {host} -i', 'on' => 'publish']], $dispatcher);
         $result = $command(new NullOutput());
 
         self::assertSame(Command::SUCCESS, $result);
@@ -58,10 +67,106 @@ final class CronCommandTest extends TestCase
         $dispatcher = $this->createMock(BackgroundTaskDispatcherInterface::class);
         $dispatcher->expects(self::never())->method('dispatch');
 
-        $command = $this->makeCommand([], [['command' => 'pw:static -i', 'on' => 'publish']], $dispatcher);
+        $command = $this->makeCommand([], [['command' => 'pw:static {host} -i', 'on' => 'publish']], $dispatcher);
         $result = $command(new NullOutput());
 
         self::assertSame(Command::SUCCESS, $result);
+    }
+
+    public function testHostPlaceholderDispatchesOncePerSite(): void
+    {
+        touch($this->varDir.'/pw-cron-last-run', new DateTime('-1 hour')->getTimestamp());
+
+        $pages = [];
+        foreach (['example.tld', 'www.example.tld', '', 'other.tld', 'other.tld'] as $host) {
+            $page = new Page();
+            $page->host = $host;
+            $pages[] = $page;
+        }
+
+        $calls = [];
+        $dispatcher = $this->createMock(BackgroundTaskDispatcherInterface::class);
+        $dispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
+            static function (string $processType, array $commandParts, string $commandPattern) use (&$calls): void {
+                $calls[] = [$processType, $commandParts, $commandPattern];
+            },
+        );
+
+        $command = $this->makeCommand($pages, [['command' => 'pw:static {host} -i', 'on' => 'publish']], $dispatcher);
+
+        self::assertSame(Command::SUCCESS, $command(new NullOutput()));
+        self::assertSame([
+            ['cron-publish--pw:static--example.tld', ['php', 'bin/console', 'pw:static', 'example.tld', '-i'], 'pw:static'],
+            ['cron-publish--pw:static--other.tld', ['php', 'bin/console', 'pw:static', 'other.tld', '-i'], 'pw:static'],
+        ], $calls);
+    }
+
+    public function testHostPlaceholderPreservesQuotedArguments(): void
+    {
+        touch($this->varDir.'/pw-cron-last-run', new DateTime('-1 hour')->getTimestamp());
+
+        $page = new Page();
+        $page->host = 'other.tld';
+
+        $dispatcher = $this->createMock(BackgroundTaskDispatcherInterface::class);
+        $dispatcher->expects(self::once())->method('dispatch')->with(
+            'cron-publish--app:publish--other.tld',
+            ['php', 'bin/console', 'app:publish', '--host=other.tld', '--message=A new page'],
+            'app:publish',
+        );
+
+        $command = $this->makeCommand([$page], [
+            ['command' => 'app:publish --host="{host}" --message="A new page"', 'on' => 'publish'],
+        ], $dispatcher);
+
+        self::assertSame(Command::SUCCESS, $command(new NullOutput()));
+    }
+
+    public function testExplicitHostIsPreserved(): void
+    {
+        touch($this->varDir.'/pw-cron-last-run', new DateTime('-1 hour')->getTimestamp());
+
+        $page = new Page();
+        $page->host = 'example.tld';
+
+        $dispatcher = $this->createMock(BackgroundTaskDispatcherInterface::class);
+        $dispatcher->expects(self::once())->method('dispatch')->with(
+            'cron-publish',
+            ['php', 'bin/console', 'pw:static', 'other.tld', '-i'],
+            'pw:static other.tld -i',
+        );
+
+        $command = $this->makeCommand([$page], [['command' => 'pw:static other.tld -i', 'on' => 'publish']], $dispatcher);
+
+        self::assertSame(Command::SUCCESS, $command(new NullOutput()));
+    }
+
+    public function testMultipleHostCommandsUseDistinctProcessTypes(): void
+    {
+        touch($this->varDir.'/pw-cron-last-run', new DateTime('-1 hour')->getTimestamp());
+
+        $page = new Page();
+        $page->host = 'example.tld';
+
+        $calls = [];
+        $dispatcher = $this->createMock(BackgroundTaskDispatcherInterface::class);
+        $dispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
+            static function (string $processType, array $commandParts, string $commandPattern) use (&$calls): void {
+                $calls[] = [$processType, $commandParts, $commandPattern];
+            },
+        );
+
+        $command = $this->makeCommand([$page], [
+            ['command' => 'pw:static {host}', 'on' => 'publish'],
+            ['command' => 'app:sitemap {host}', 'on' => 'publish'],
+            ['command' => 'pw:static', 'on' => 'cron: 0 4 * * *'],
+        ], $dispatcher);
+
+        self::assertSame(Command::SUCCESS, $command(new NullOutput()));
+        self::assertSame([
+            ['cron-publish--pw:static--example.tld', ['php', 'bin/console', 'pw:static', 'example.tld'], 'pw:static'],
+            ['cron-publish--app:sitemap--example.tld', ['php', 'bin/console', 'app:sitemap', 'example.tld'], 'app:sitemap'],
+        ], $calls);
     }
 
     public function testNewlyPublishedPageDispatchesCommands(): void
@@ -111,6 +216,14 @@ final class CronCommandTest extends TestCase
             $dispatcher ?? self::createStub(BackgroundTaskDispatcherInterface::class),
             $this->varDir,
             $scheduledCommands,
+            new SiteRegistry(
+                [
+                    'example.tld' => ['hosts' => ['example.tld', 'www.example.tld'], 'locale' => 'en'],
+                    'other.tld' => ['hosts' => ['other.tld'], 'locale' => 'en'],
+                ],
+                new TemplateResolver(new Environment(new ArrayLoader()), new ArrayAdapter()),
+                new ParameterBag(),
+            ),
         );
     }
 }

@@ -131,13 +131,17 @@ Configure commands that run automatically on specific triggers: when a scheduled
 # config/packages/pushword.yaml
 pushword:
     scheduled_commands:
-        - { command: 'pw:static -i', on: 'publish' }
+        - { command: 'pw:static {host}', on: 'publish' }
         - { command: 'pw:static', on: 'cron: 0 4 * * *' }
 ```
 
 Triggers:
 - `publish` — runs when a page with a future `publishedAt` date becomes published
 - `cron: <expression>` — runs on a cron schedule (e.g., `cron: 0 4 * * *` for daily at 4am)
+
+For `on: publish`, `{host}` is replaced with each affected site's main host. Each site runs once per check, even if several of its pages become published together; aliases and pages with an empty host resolve to their site's main host. For example, `pw:static {host}` regenerates only the sites whose pages became published. Options are preserved, so `pw:static {host} -i` enables incremental generation. Commands without `{host}` keep their existing scope and run once per check.
+
+The first `pw:cron` run initializes its timestamp without dispatching commands. Run it when enabling the trigger, before the next scheduled publication. Subsequent checks look for pages that became published since the previous run.
 
 ### With Messenger + Scheduler (recommended)
 
@@ -152,6 +156,8 @@ Then consume the Pushword schedule alongside your async transport:
 ```bash
 php bin/console messenger:consume async scheduler_pushword
 ```
+
+The Pushword schedule checks for publications every five minutes. `scheduler_default` only consumes Symfony's default schedule; it does not consume `scheduler_pushword`. If your worker already consumes `async scheduler_default`, add `scheduler_pushword` to its command and restart the worker. In Messenger mode, also consume the transport used by the dispatched background command (`async`, or its `background_task_transports` override).
 
 ### Without Messenger (process mode)
 

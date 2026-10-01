@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'publication commands can target affected sites'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`, `pushword/static-generator`
+
+## Publication commands per site
+
+`on: publish` commands now support `{host}` to run once per affected site; existing commands keep their scope.
+To limit static generation to those sites, use `command: 'pw:static {host}'` in `scheduled_commands`.
+See [Scheduled Commands](../background-tasks#scheduled-commands) for worker setup and initialization.
