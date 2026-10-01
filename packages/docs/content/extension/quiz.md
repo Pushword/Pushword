@@ -59,6 +59,11 @@ author a flat file by hand, prefer the `{% quiz %}` block and lint it with
 A missing or unknown media file no longer 500s the page: the illustration is
 skipped (admins see an inline warning) and the rest of the quiz still renders.
 
+Visitors select an answer, can change their selection, then choose **Confirm answer**
+to validate it and advance. Validation locks that question and reveals its feedback
+according to `feedback`; a completed attempt can be played again with **Restart the
+quiz**. The same confirmation step applies to personality tests and difficulty levels.
+
 ### Question & answer fields
 
 | Field | Where | Notes |
@@ -78,8 +83,8 @@ skipped (admins see an inline warning) and the rest of the quiz still renders.
 - `mode` — `quiz` (default, scored on `correct` answers) or `profile` (a
   personality test scored on answer `weights`; see below).
 - `title`, `difficulty` — header.
-- `feedback` — `immediate` (reveal each answer at once, default) or `end`. Forced
-  to `end` in `mode: profile` (no correct answer to reveal).
+- `feedback` — `immediate` (reveal the answer on confirmation, default) or `end`.
+  Forced to `end` in `mode: profile` (no correct answer to reveal).
 - `profiles` — personality-test outcomes `{key, title, msg?, media?, alt?}`; used
   only in `mode: profile`.
 - `results` — score bands `{min, msg}`; the highest matched `min` wins.
@@ -92,8 +97,8 @@ skipped (admins see an inline warning) and the rest of the quiz still renders.
 - `pass` — the score (in %) at or above which a difficulty level counts as
   passed and offers the next one (default `50`). Only meaningful with `levels`.
 - `labels` — overrides for the UI words, which otherwise default to the site
-  locale: `question`, `questions`, `explanation`, `score`, `better` (use `{p}`
-  as the percentile placeholder), `level`, `nextLevel`, `profile` and `share`
+  locale: `question`, `questions`, `explanation`, `confirm`, `restart`, `score`,
+  `better` (use `{p}` as the percentile placeholder), `level`, `nextLevel`, `profile` and `share`
   (personality mode; `{p}` = the share). Set these only to force a specific wording.
 - `levels` — turn the quiz into several difficulty levels (see below).
 

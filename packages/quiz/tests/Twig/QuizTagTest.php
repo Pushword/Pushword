@@ -53,6 +53,29 @@ final class QuizTagTest extends KernelTestCase
         self::assertNotSame('', trim($html));
     }
 
+    public function testConfirmationLabelIsPassedToTheRuntime(): void
+    {
+        $payload = '{"labels":{"confirm":"Validate selection"},'
+            .substr(self::QUESTION, 1);
+        $html = $this->render('{% quiz %}'.$payload.'{% endquiz %}');
+
+        self::assertStringContainsString('"confirm":"Validate selection"', $html);
+        // The runtime adds the control; the readable no-JS quiz needs no button.
+        self::assertStringNotContainsString('pw-quiz-confirm', $html);
+    }
+
+    public function testLevelsInheritAndOverrideTheConfirmationLabel(): void
+    {
+        $level = '{"labels":{"confirm":"Validate level"},'
+            .substr(self::QUESTION, 1);
+        $payload = '{"labels":{"confirm":"Validate selection"},"levels":['
+            .self::QUESTION.','.$level.']}';
+        $html = $this->render('{% quiz %}'.$payload.'{% endquiz %}');
+
+        self::assertStringContainsString('"confirm":"Validate selection"', $html);
+        self::assertStringContainsString('"confirm":"Validate level"', $html);
+    }
+
     private function render(string $template): string
     {
         self::bootKernel();

@@ -14,6 +14,11 @@ function bootRuntime() {
   document.dispatchEvent(new Event('DOMContentLoaded'))
 }
 
+function confirmAnswer(button) {
+  button.click()
+  button.closest('.pw-quiz-q').querySelector('.pw-quiz-confirm').click()
+}
+
 function answersHtml() {
   return (
     '<ul class="pw-quiz-answers">' +
@@ -171,6 +176,111 @@ function profileQuiz() {
   )
 }
 
+describe('quiz runtime — answer confirmation', () => {
+  const realFetch = window.fetch
+  afterEach(() => {
+    window.fetch = realFetch
+  })
+
+  it.each([
+    ['immediate feedback', singleQuiz],
+    ['end feedback', () => singleQuiz().replace('"immediate"', '"end"')],
+    ['difficulty level', leveledQuiz],
+    ['personality test', profileQuiz],
+  ])('allows changing the selection before confirming (%s)', (_mode, html) => {
+    const calls = mockFetch()
+    document.body.innerHTML = html()
+    bootRuntime()
+    const storageKey = 'pwQuizDone:' + document.querySelector('[data-pw-quiz]').dataset.slug
+    const questions = document.querySelectorAll('.pw-quiz-q')
+    const buttons = questions[0].querySelectorAll('.pw-quiz-a')
+    const confirm = questions[0].querySelector('.pw-quiz-confirm')
+
+    expect(confirm.disabled).toBe(true)
+    confirm.click()
+    expect(questions[0].hasAttribute('data-answered')).toBe(false)
+
+    buttons[0].click()
+    buttons[0].click()
+    buttons[1].click()
+    expect(buttons[0].getAttribute('aria-pressed')).toBe('false')
+    expect(buttons[0].classList.contains('pw-quiz-a--selected')).toBe(false)
+    expect(buttons[1].getAttribute('aria-pressed')).toBe('true')
+    expect(buttons[1].classList.contains('pw-quiz-a--selected')).toBe(true)
+    expect(Array.from(buttons).every((button) => !button.disabled)).toBe(true)
+    expect(questions[0].hasAttribute('data-answered')).toBe(false)
+    expect(questions[1].hasAttribute('data-locked')).toBe(true)
+    expect(document.querySelector('.pw-quiz-result').hidden).toBe(true)
+    expect(calls).toHaveLength(0)
+    expect(window.localStorage.getItem(storageKey)).toBeNull()
+    expect(document.querySelector('.pw-quiz-a--correct')).toBeNull()
+
+    // Hidden future questions cannot be selected or confirmed out of order.
+    confirmAnswer(questions[1].querySelector('.pw-quiz-a'))
+    expect(questions[1].hasAttribute('data-answered')).toBe(false)
+
+    confirm.click()
+    confirm.click()
+    buttons[0].click()
+    expect(confirm.hidden).toBe(true)
+    expect(Array.from(buttons).every((button) => button.disabled)).toBe(true)
+    expect(buttons[1].getAttribute('aria-pressed')).toBe('true')
+    expect(buttons[1].classList.contains('pw-quiz-a--selected')).toBe(false)
+    expect(questions[1].hasAttribute('data-locked')).toBe(false)
+    expect(document.activeElement).toBe(questions[1].querySelector('.pw-quiz-a'))
+
+    confirmAnswer(questions[1].querySelector('.pw-quiz-a'))
+    expect(calls).toHaveLength(1)
+    const payload = JSON.parse(calls[0].opts.body)
+    if (payload.result) {
+      // Only the confirmed weights count: builder (2) beats explorer (1).
+      expect(payload.result).toBe('builder')
+      expect(payload.answers[0].a).toBe('B')
+    } else {
+      expect(payload.score).toBe(50)
+      expect(payload.answers[0].a).toBe('Wrong')
+    }
+    expect(JSON.parse(window.localStorage.getItem(storageKey)).a).toEqual([1, 0])
+    expect(document.activeElement).toBe(document.querySelector('.pw-quiz-result'))
+  })
+
+  it('uses the configured confirmation label and initializes only once', () => {
+    document.body.innerHTML = resultQuiz('qc', 'confirm', {
+      labels: { confirm: 'Valider ma réponse' },
+    })
+    bootRuntime()
+    bootRuntime()
+
+    const buttons = document.querySelectorAll('.pw-quiz-confirm')
+    expect(buttons).toHaveLength(1)
+    expect(buttons[0].textContent).toBe('Valider ma réponse')
+  })
+
+  it('records a one-question quiz only when its final selection is confirmed', () => {
+    const calls = mockFetch()
+    document.body.innerHTML = resultQuiz('qc', 'confirm', { feedback: 'immediate' })
+    bootRuntime()
+    const answers = document.querySelectorAll('.pw-quiz-a')
+    answers[1].click()
+    answers[0].click()
+    answers[1].click()
+    expect(calls).toHaveLength(0)
+    expect(document.querySelector('.pw-quiz-result').hidden).toBe(true)
+    expect(window.localStorage.getItem('pwQuizDone:confirm')).toBeNull()
+
+    const confirm = document.querySelector('.pw-quiz-confirm')
+    confirm.click()
+    confirm.click()
+    expect(calls).toHaveLength(1)
+    expect(JSON.parse(calls[0].opts.body)).toMatchObject({
+      score: 0,
+      answers: [{ q: 'Q0', a: 'Wrong' }],
+    })
+    expect(JSON.parse(window.localStorage.getItem('pwQuizDone:confirm')).a).toEqual([1])
+    expect(document.querySelector('.pw-quiz-result').hidden).toBe(false)
+  })
+})
+
 describe('quiz runtime — personality test (profile mode)', () => {
   it('reveals the highest-tallied profile and never flags a correct answer', () => {
     document.body.innerHTML = profileQuiz()
@@ -178,8 +288,8 @@ describe('quiz runtime — personality test (profile mode)', () => {
 
     const answers = document.querySelectorAll('.pw-quiz-a')
     // Pick the "explorer" answer on both questions (indices 0 and 2).
-    answers[0].click()
-    answers[2].click()
+    confirmAnswer(answers[0])
+    confirmAnswer(answers[2])
 
     const cards = document.querySelectorAll('.pw-quiz-profile')
     const explorer = document.querySelector('.pw-quiz-profile[data-profile-key="explorer"]')
@@ -212,7 +322,7 @@ describe('quiz runtime — personality test (profile mode)', () => {
       '</section>'
     bootRuntime()
 
-    document.querySelector('.pw-quiz-a').click()
+    confirmAnswer(document.querySelector('.pw-quiz-a'))
 
     expect(document.querySelector('.pw-quiz-profile[data-profile-key="explorer"]').hidden).toBe(false)
     expect(document.querySelector('.pw-quiz-profile[data-profile-key="builder"]').hidden).toBe(true)
@@ -243,8 +353,8 @@ describe('quiz runtime — score band (Markdown)', () => {
 
     const questions = document.querySelectorAll('.pw-quiz-q')
     // Answer both questions to finish the quiz and render the score box.
-    questions[0].querySelector('.pw-quiz-a').click()
-    questions[1].querySelector('.pw-quiz-a').click()
+    confirmAnswer(questions[0].querySelector('.pw-quiz-a'))
+    confirmAnswer(questions[1].querySelector('.pw-quiz-a'))
 
     const band = document.querySelector('.pw-quiz-band')
     expect(band).not.toBeNull()
@@ -266,7 +376,7 @@ function mockFetch() {
   return calls
 }
 
-// A one-question quiz that finishes on the first click, carrying `config`.
+// A one-question quiz that finishes on confirmation, carrying `config`.
 function resultQuiz(id, slug, config) {
   return (
     '<section class="pw-quiz" id="' +
@@ -289,8 +399,8 @@ describe('quiz runtime — finished-attempt persistence', () => {
 
     const q = document.querySelectorAll('.pw-quiz-q')
     // Q0 answered correctly (first button), Q1 answered wrong (second button).
-    q[0].querySelectorAll('.pw-quiz-a')[0].click()
-    q[1].querySelectorAll('.pw-quiz-a')[1].click()
+    confirmAnswer(q[0].querySelectorAll('.pw-quiz-a')[0])
+    confirmAnswer(q[1].querySelectorAll('.pw-quiz-a')[1])
 
     // The finished attempt is stored under the quiz slug.
     expect(window.localStorage.getItem('pwQuizDone:single')).not.toBeNull()
@@ -309,6 +419,7 @@ describe('quiz runtime — finished-attempt persistence', () => {
     // The result box is revealed and a restart button is offered.
     expect(document.querySelector('.pw-quiz-result').hidden).toBe(false)
     expect(document.querySelector('.pw-quiz-restart')).not.toBeNull()
+    expect(Array.from(document.querySelectorAll('.pw-quiz-confirm')).every((button) => button.hidden)).toBe(true)
   })
 
   it('replays a completed personality test, revealing the same winning profile', () => {
@@ -316,8 +427,8 @@ describe('quiz runtime — finished-attempt persistence', () => {
     bootRuntime()
 
     const answers = document.querySelectorAll('.pw-quiz-a')
-    answers[0].click() // explorer on Q0
-    answers[2].click() // explorer on Q1
+    confirmAnswer(answers[0]) // explorer on Q0
+    confirmAnswer(answers[2]) // explorer on Q1
     expect(window.localStorage.getItem('pwQuizDone:perso')).not.toBeNull()
 
     // Reload: the winning card comes back revealed, the rest hidden.
@@ -346,8 +457,8 @@ describe('quiz runtime — finished-attempt persistence', () => {
     document.body.innerHTML = singleQuiz()
     bootRuntime()
     const q = document.querySelectorAll('.pw-quiz-q')
-    q[0].querySelectorAll('.pw-quiz-a')[0].click()
-    q[1].querySelectorAll('.pw-quiz-a')[1].click()
+    confirmAnswer(q[0].querySelectorAll('.pw-quiz-a')[0])
+    confirmAnswer(q[1].querySelectorAll('.pw-quiz-a')[1])
 
     // Reload → restored state, then hit restart.
     document.body.innerHTML = singleQuiz()
@@ -364,6 +475,15 @@ describe('quiz runtime — finished-attempt persistence', () => {
     const buttons = r[0].querySelectorAll('.pw-quiz-a')
     expect(buttons[0].disabled).toBe(false)
     expect(buttons[0].getAttribute('aria-pressed')).toBe('false')
+    const confirm = r[0].querySelector('.pw-quiz-confirm')
+    expect(confirm.hidden).toBe(false)
+    expect(confirm.disabled).toBe(true)
+    buttons[1].click()
+    expect(confirm.disabled).toBe(false)
+    expect(buttons[1].classList.contains('pw-quiz-a--selected')).toBe(true)
+    confirm.click()
+    expect(r[0].classList.contains('pw-quiz-q--wrong')).toBe(true)
+    expect(r[1].hasAttribute('data-locked')).toBe(false)
   })
 })
 
@@ -383,7 +503,7 @@ describe('quiz runtime — result submission endpoint', () => {
     bootRuntime()
 
     // Answering the only question finishes the quiz and submits the result.
-    document.querySelector('.pw-quiz-a[data-correct]').click()
+    confirmAnswer(document.querySelector('.pw-quiz-a[data-correct]'))
 
     expect(calls.length).toBe(1)
     // Absolute URL to the live host, so a PHP-less static origin still reaches it.
@@ -398,7 +518,7 @@ describe('quiz runtime — result submission endpoint', () => {
     document.body.innerHTML = resultQuiz('qf', 'legacy', { feedback: 'immediate' })
     bootRuntime()
 
-    document.querySelector('.pw-quiz-a[data-correct]').click()
+    confirmAnswer(document.querySelector('.pw-quiz-a[data-correct]'))
 
     expect(calls.length).toBe(1)
     expect(calls[0].url).toBe('/quiz/result')
@@ -414,7 +534,7 @@ describe('quiz runtime — result submission endpoint', () => {
 
     document.body.innerHTML = html()
     bootRuntime()
-    document.querySelector('.pw-quiz-a[data-correct]').click()
+    confirmAnswer(document.querySelector('.pw-quiz-a[data-correct]'))
     expect(calls.length).toBe(1) // the live finish records the attempt once
 
     // Reload: the stored attempt is replayed, but the stat must not be recorded again.

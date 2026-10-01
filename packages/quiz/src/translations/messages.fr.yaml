@@ -1,6 +1,7 @@
 quiz:
   label:
     better: 'Mieux que {p}% des participants'
+    confirm: 'Valider ma réponse'
     explanation: 'Explication'
     level: 'Niveau'
     nextLevel: 'Niveau suivant'

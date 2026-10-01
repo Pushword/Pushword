@@ -111,11 +111,27 @@
     questions.forEach(function (q, idx) {
       if (idx > 0) q.setAttribute('data-locked', '1')
       var buttons = Array.prototype.slice.call(q.querySelectorAll('.pw-quiz-a'))
+      var confirm = document.createElement('button')
+      confirm.type = 'button'
+      confirm.className = 'pw-quiz-confirm'
+      confirm.textContent = (config.labels && config.labels.confirm) || 'Confirm answer'
+      confirm.disabled = true
+      q.appendChild(confirm)
+
       buttons.forEach(function (btn) {
         btn.addEventListener('click', function () {
           if (q.hasAttribute('data-answered') || q.hasAttribute('data-locked')) return
-          answer(q, idx, btn, buttons)
+          buttons.forEach(function (a) {
+            a.setAttribute('aria-pressed', a === btn ? 'true' : 'false')
+            a.classList.toggle('pw-quiz-a--selected', a === btn)
+          })
+          confirm.disabled = false
         })
+      })
+      confirm.addEventListener('click', function () {
+        if (q.hasAttribute('data-answered') || q.hasAttribute('data-locked')) return
+        var chosen = q.querySelector('.pw-quiz-a[aria-pressed="true"]')
+        if (chosen) answer(q, idx, chosen, buttons)
       })
     })
 
@@ -152,8 +168,10 @@
       buttons.forEach(function (btn) {
         btn.disabled = true
         btn.setAttribute('aria-disabled', 'true')
+        btn.classList.remove('pw-quiz-a--selected')
         if (immediate && btn.hasAttribute('data-correct')) btn.classList.add('pw-quiz-a--correct')
       })
+      q.querySelector('.pw-quiz-confirm').hidden = true
       chosen.setAttribute('aria-pressed', 'true')
       if (profileMode) chosen.classList.add('pw-quiz-a--chosen')
       else chosen.classList.add(isCorrect ? 'pw-quiz-a--chosen-correct' : 'pw-quiz-a--chosen-wrong')
@@ -173,6 +191,7 @@
       if (next) {
         next.removeAttribute('data-locked')
         softScroll(next)
+        next.querySelector('.pw-quiz-a').focus({ preventScroll: true })
       }
     }
 
@@ -191,7 +210,13 @@
     function finish(restored) {
       root.classList.add('pw-quiz--done')
       var resultBox = root.querySelector('.pw-quiz-result')
-      if (resultBox) resultBox.hidden = false
+      if (resultBox) {
+        resultBox.hidden = false
+        if (!restored) {
+          resultBox.tabIndex = -1
+          resultBox.focus({ preventScroll: true })
+        }
+      }
 
       if (profileMode) finishProfile(resultBox, restored)
       else finishScore(resultBox, restored)
@@ -270,13 +295,22 @@
         q.classList.remove('pw-quiz-q--answered', 'pw-quiz-q--correct', 'pw-quiz-q--wrong')
         if (idx > 0) q.setAttribute('data-locked', '1')
         else q.removeAttribute('data-locked')
+        var confirm = q.querySelector('.pw-quiz-confirm')
+        confirm.hidden = false
+        confirm.disabled = true
 
         var buttons = Array.prototype.slice.call(q.querySelectorAll('.pw-quiz-a'))
         buttons.forEach(function (btn) {
           btn.disabled = false
           btn.removeAttribute('aria-disabled')
           btn.setAttribute('aria-pressed', 'false')
-          btn.classList.remove('pw-quiz-a--correct', 'pw-quiz-a--chosen', 'pw-quiz-a--chosen-correct', 'pw-quiz-a--chosen-wrong')
+          btn.classList.remove(
+            'pw-quiz-a--selected',
+            'pw-quiz-a--correct',
+            'pw-quiz-a--chosen',
+            'pw-quiz-a--chosen-correct',
+            'pw-quiz-a--chosen-wrong',
+          )
         })
       })
 

@@ -51,6 +51,18 @@
   border-color: var(--pw-quiz-accent);
   background: color-mix(in oklch, var(--pw-quiz-accent) 6%, #fff);
 }
+.pw-quiz--js .pw-quiz-a--selected {
+  border-color: var(--pw-quiz-accent);
+  background: color-mix(in oklch, var(--pw-quiz-accent) 10%, #fff);
+}
+.pw-quiz--js .pw-quiz-a--selected .pw-quiz-a-mark::after {
+  content: "\25CF"; /* ● */
+  color: var(--pw-quiz-accent);
+}
+.pw-quiz-a:focus-visible {
+  outline: 2px solid var(--pw-quiz-accent);
+  outline-offset: 2px;
+}
 /* Hide the explanation until its question has been answered. */
 .pw-quiz--js .pw-quiz-q:not(.pw-quiz-q--answered) .pw-quiz-explanation {
   display: none;
@@ -76,7 +88,7 @@
 }
 /* Personality mode: an answer is a preference, not right or wrong — just mark
    the chosen one and drop the ✓/✗ affordance. */
-.pw-quiz--profile .pw-quiz-a-mark {
+.pw-quiz--profile .pw-quiz-a:not(.pw-quiz-a--selected) .pw-quiz-a-mark {
   display: none;
 }
 .pw-quiz--js.pw-quiz--profile .pw-quiz-a--chosen {
@@ -170,7 +182,8 @@
   outline-offset: 2px;
 }
 
-/* "Next level →" nudge, shown once a level is passed. */
+/* Primary actions: confirm the current answer or move to the next level. */
+.pw-quiz-confirm,
 .pw-quiz-next {
   font: inherit;
   font-weight: 600;
@@ -183,12 +196,18 @@
   cursor: pointer;
   transition: filter 0.15s;
 }
+.pw-quiz-confirm:not(:disabled):hover,
 .pw-quiz-next:hover {
   filter: brightness(1.08);
 }
+.pw-quiz-confirm:focus-visible,
 .pw-quiz-next:focus-visible {
   outline: 2px solid var(--pw-quiz-accent);
   outline-offset: 2px;
+}
+.pw-quiz-confirm:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* ===========================================================================
@@ -227,6 +246,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .pw-quiz-confirm,
   .pw-quiz-donut-fg {
     transition: none;
   }

@@ -5,6 +5,7 @@
   "author": "Robin@PiedWeb <contact@piedweb.com>",
   "license": "MIT",
   "private": true,
+  "type": "module",
   "scripts": {
     "test": "node node_modules/vitest/dist/cli.js run"
   },
