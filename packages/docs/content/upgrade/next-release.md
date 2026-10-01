@@ -1,6 +1,5 @@
 ---
-title: 'quiz answers require confirmation'
-run: 'assets:install'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,12 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/quiz`
-
-## Quiz answer confirmation
-
-Visitors can change their selection until they choose **Confirm answer**.
-Refresh the quiz assets with `assets:install` and regenerate static quiz pages
-to include the translated confirmation label; custom wording uses `labels.confirm`.
-See [Quiz](/extension/quiz) for the interaction.

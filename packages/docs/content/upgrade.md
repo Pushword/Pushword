@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.35](/upgrade/1.0.35) | `quiz` | quiz answers require confirmation — run `assets:install` |
 | [1.0.34](/upgrade/1.0.34) | `core` `static-generator` | publication commands can target affected sites |
 | [1.0.32](/upgrade/1.0.32) | `admin` `api` `conversation` `core` `flat` `static-generator` | page files write dates with their offset, and a date with an offset is stored at that instant; dates without one follow the new `editorial_timezone`, to set only after a forced export; the 404 page is noindex and answers 404 at its own URL |
 | [1.0.31](/upgrade/1.0.31) | `core` | the licensable image JSON-LD points `contentUrl` at the page host, not at `base_live_url` |
