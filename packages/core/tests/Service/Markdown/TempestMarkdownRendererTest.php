@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\Service\Markdown;
 
+use League\CommonMark\Environment\Environment;
+use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\Table\TableExtension;
+use League\CommonMark\MarkdownConverter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Service\Markdown\TempestMarkdownRenderer;
@@ -142,6 +146,81 @@ final class TempestMarkdownRendererTest extends TestCase
         }
 
         self::assertNotNull($actual);
+        self::assertSame(HtmlEquivalence::structure($expected), HtmlEquivalence::structure($actual));
+    }
+
+    /**
+     * The code span examples of the CommonMark spec (0.31.2, 328–349), then code spans meeting
+     * block and inline structure. Tempest either renders a source as CommonMark does or declines it.
+     *
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function codeSpans(): iterable
+    {
+        yield 'spec 328' => ['`foo`', true];
+        yield 'spec 329: a shorter run is code text' => ['`` foo ` bar ``', true];
+        yield 'spec 330' => ['` `` `', true];
+        yield 'spec 331' => ['`  ``  `', true];
+        yield 'spec 332' => ['` a`', true];
+        yield 'spec 333: non-breaking spaces are not stripped' => ["`\u{A0}b\u{A0}`", true];
+        yield 'spec 334' => ["` `\n`  `", true];
+        yield 'padding stripped when the span is the whole source' => ['` foo `', true];
+        yield 'spec 335: a span over several lines' => ["``\nfoo\nbar  \nbaz\n``", false];
+        yield 'spec 336' => ["``\nfoo \n``", false];
+        yield 'spec 337' => ["`foo   bar \nbaz`", false];
+        yield 'spec 338: no backslash escape in code' => ['`foo\`bar`', false];
+        yield 'spec 339' => ['``foo`bar``', true];
+        yield 'spec 340' => ['` foo `` bar `', true];
+        yield 'spec 341' => ['*foo`*`', true];
+        yield 'spec 342' => ['[not a `link](/foo`)', true];
+        yield 'spec 343: an unclosed run stays literal' => ['`<a href="`">`', false];
+        yield 'spec 344: an HTML tag wins' => ['<a href="`">`', false];
+        yield 'spec 345' => ['`<https://foo.bar.`baz>`', false];
+        yield 'spec 346: an autolink wins' => ['<https://foo.bar.`baz>`', false];
+        yield 'spec 347: runs of different lengths' => ['```foo``', false];
+        yield 'spec 348: a lone backtick' => ['`foo', false];
+        yield 'spec 349' => ['`foo``bar``', false];
+        yield 'fenced code after a paragraph line keeps its backticks' => ["intro\n```\n`y`\n```", true];
+        yield 'fenced code after a blank line keeps its backticks' => ["text `x`\n\n```php\n\$a = `ls`;\n```\n\nafter `z`", true];
+        yield 'fenced code in a numbered item keeps its backticks' => ["1. Step `one`\n   ```bash\n   echo `date`\n   ```\n2. Two `x`", true];
+        yield 'indented code' => ["para\n\n    `x`", false];
+        yield 'unclosed run across list items' => ["- `a\n- b`", false];
+        yield 'unclosed run across paragraphs' => ["`a\n\nb`", false];
+        yield 'backticks in a link destination' => ['[link](/foo`bar`)', false];
+        yield 'pipe in code inside a table cell' => ["| a | b |\n|---|---|\n| `x` | `y|z` |", false];
+        yield 'pipe in code outside a table' => ['Run `a | b` now.', true];
+        yield 'tilde fence keeps its backticks' => ["intro\n~~~\n`` a`b ``\n~~~\nafter `z`", true];
+        yield 'backtick line does not close a tilde fence' => ["intro\n~~~\n```\n`` a`b ``\n~~~\nafter `z`", true];
+        yield 'shorter fence line does not close the fence' => ["intro\n````\n```\n`` a`b ``\n````\nafter `z`", true];
+        yield 'indented line inside a fence keeps its backticks' => ["intro\n```\n    \$a = `ls`;\n```\nafter `z`", true];
+        yield 'backtick in the info string makes no fence' => ['``` a`b ```', true];
+        yield 'backticks in an HTML attribute' => ['<span title="`a`">x</span>', false];
+        yield 'span after a closed HTML tag' => ['a <b>x</b> `c`', true];
+        yield 'angle bracket inside a span opens no tag' => ['Use `<div` then `x`', true];
+        yield 'span inside a link label' => ['[`render()`](/api)', true];
+        yield 'span after a link' => ['[a](/b) and `c`', true];
+        yield 'attributes after a mid-sentence span' => ['Use `x`{.y} here', false];
+        yield 'tab is not a stripped space' => ["x ` \t ` y", true];
+    }
+
+    #[DataProvider('codeSpans')]
+    public function testCodeSpansRenderAsCommonMarkOrDecline(string $source, bool $rendersWithTempest): void
+    {
+        $actual = new TempestMarkdownRenderer()->render($source);
+        if (! $rendersWithTempest) {
+            self::assertNull($actual, 'Tempest renders this now: check it against CommonMark and flip the case.');
+
+            return;
+        }
+
+        self::assertNotNull($actual);
+
+        $environment = new Environment();
+        $environment->addExtension(new CommonMarkCoreExtension());
+        $environment->addExtension(new TableExtension());
+
+        $expected = new MarkdownConverter($environment)->convert($source)->getContent();
+
         self::assertSame(HtmlEquivalence::structure($expected), HtmlEquivalence::structure($actual));
     }
 

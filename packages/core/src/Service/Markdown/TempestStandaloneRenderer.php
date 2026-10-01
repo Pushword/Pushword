@@ -69,7 +69,8 @@ final readonly class TempestStandaloneRenderer
             return '<p><a href="'.htmlspecialchars($url, \ENT_QUOTES | \ENT_SUBSTITUTE).'">'.htmlspecialchars($autoLink[1], \ENT_QUOTES | \ENT_SUBSTITUTE)."</a></p>\n";
         }
 
-        if (1 === preg_match('/\A`([^`\n]+)`(?:\{([^{}\n]+)\})?\z/D', $source, $attributedCode)) {
+        // Code padded on both sides goes on to the general path, which strips the padding as CommonMark does.
+        if (1 === preg_match('/\A`(?! [^`\n]* `)([^`\n]+)`(?:\{([^{}\n]+)\})?\z/D', $source, $attributedCode)) {
             $attributes = [];
             if (isset($attributedCode[2])) {
                 preg_match_all('/\.[A-Za-z0-9_-]+|#[A-Za-z0-9_-]+|class="[^"]*"/', $attributedCode[2], $tokens);

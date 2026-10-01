@@ -55,27 +55,12 @@ final readonly class TempestMarkdownRenderer
             return $standalone;
         }
 
-        preg_match_all('/(`+)([^`\r\n]+)\1/', $source, $codeSpans, \PREG_OFFSET_CAPTURE);
-        foreach ($codeSpans[0] as [$span, $offset]) {
-            if (1 === preg_match('/^\{[^}\n]+\}/', substr($source, $offset + \strlen($span)))) {
-                return null;
-            }
-        }
-
-        $literalCode = [];
-        $source = preg_replace_callback('/(`+)([^`\r\n]+)\1/', static function (array $match) use (&$literalCode): string {
-            $code = $match[2];
-            if (str_starts_with($code, ' ') && str_ends_with($code, ' ') && '' !== trim($code)) {
-                $code = substr($code, 1, -1);
-            }
-
-            $literalCode[] = '<code>'.htmlspecialchars($code, \ENT_NOQUOTES | \ENT_SUBSTITUTE).'</code>';
-
-            return "\u{E064}".(\count($literalCode) - 1)."\u{E065}";
-        }, $source);
-        if (null === $source) {
+        $codeSpans = $this->extractCodeSpans($source);
+        if (null === $codeSpans) {
             return null;
         }
+
+        [$source, $literalCode] = $codeSpans;
 
         // CommonMark accepts several attributes in a `{…}` block after a link.
         $sourceWithoutLinkAttributes = preg_replace('/(?<!!)(\[[^\[\]\n]*\]\((?:<[^<>\n]*>|[^()\s]*)\))\{[^{}\n]*\}/', '$1', $source) ?? $source;
@@ -121,6 +106,89 @@ final readonly class TempestMarkdownRenderer
         }
 
         return htmlspecialchars($literalPrefix, \ENT_QUOTES | \ENT_SUBSTITUTE).substr($html, 3, -5);
+    }
+
+    /**
+     * Sets code spans aside the way CommonMark reads them: a backtick run closes on the next run of
+     * the same length, so backticks of another length are code text. Fenced code stays as written.
+     * Declines what one line cannot settle: an unclosed run (a literal backtick, or a span going on
+     * to the next line), an escaped backtick, a span that may sit in an HTML tag, an autolink, a link
+     * destination or a table cell, a span carrying `{…}` attributes, and backticks in what may be an
+     * indented code block.
+     *
+     * @return ?array{string, list<string>}
+     */
+    private function extractCodeSpans(string $source): ?array
+    {
+        if (! str_contains($source, '`')) {
+            return [$source, []];
+        }
+
+        $literalCode = [];
+        $fence = null;
+        $lines = explode("\n", $source);
+        foreach ($lines as $index => $line) {
+            if (null !== $fence) {
+                if (1 === preg_match('/^ {0,3}'.$fence[0].'{'.\strlen($fence).',}[ \t]*\r?$/D', $line)) {
+                    $fence = null;
+                }
+
+                continue;
+            }
+
+            if (1 === preg_match('/^ {0,3}(`{3,}(?=[^`]*$)|~{3,})/D', $line, $opening)) {
+                $fence = $opening[1];
+
+                continue;
+            }
+
+            if (! str_contains($line, '`')) {
+                continue;
+            }
+
+            if (1 === preg_match('/^(?: {4}| {0,3}\t)/', $line)) {
+                return null;
+            }
+
+            $textOutsideCode = '';
+            $rendered = '';
+            $offset = 0;
+            while (1 === preg_match('/`+/', $line, $run, \PREG_OFFSET_CAPTURE, $offset)) {
+                [$ticks, $start] = $run[0];
+                $before = substr($line, $offset, $start - $offset);
+                $textOutsideCode .= $before;
+                if (str_ends_with($textOutsideCode, '\\') || 1 === preg_match('/<[^>]*$|\]\([^)]*$/D', $textOutsideCode)) {
+                    return null;
+                }
+
+                $codeStart = $start + \strlen($ticks);
+                if (1 !== preg_match('/(?<!`)'.$ticks.'(?!`)/', $line, $closing, \PREG_OFFSET_CAPTURE, $codeStart)) {
+                    return null;
+                }
+
+                $codeEnd = $closing[0][1];
+                $code = substr($line, $codeStart, $codeEnd - $codeStart);
+                $offset = $codeEnd + \strlen($ticks);
+                if (1 === preg_match('/^\{[^}\n]+\}/', substr($line, $offset))) {
+                    return null;
+                }
+
+                if (str_contains($code, '|') && substr_count($line, '|') > substr_count($code, '|')) {
+                    return null;
+                }
+
+                if (str_starts_with($code, ' ') && str_ends_with($code, ' ') && '' !== trim($code, ' ')) {
+                    $code = substr($code, 1, -1);
+                }
+
+                $literalCode[] = '<code>'.htmlspecialchars($code, \ENT_NOQUOTES | \ENT_SUBSTITUTE).'</code>';
+                $rendered .= $before."\u{E064}".(\count($literalCode) - 1)."\u{E065}";
+            }
+
+            $lines[$index] = $rendered.substr($line, $offset);
+        }
+
+        return [implode("\n", $lines), $literalCode];
     }
 
     /**
