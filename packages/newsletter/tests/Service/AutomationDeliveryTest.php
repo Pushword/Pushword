@@ -10,9 +10,12 @@ use LogicException;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\AutomationDelivery;
+use Pushword\Newsletter\Entity\ClickEvent;
+use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\Enrollment;
 use Pushword\Newsletter\Enum\EnrollmentStatus;
 use Pushword\Newsletter\Enum\RecipientState;
@@ -132,7 +135,9 @@ final class AutomationDeliveryTest extends AbstractNewsletterTestCase
         $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Visit {{ subject.name }} {{ subject.resumeUrl }}']]);
         $automation->getOrderedSteps()[0]->bodyMarkdown = '[Resume]({{ subject.resumeUrl }}) [Article](/article)';
         $this->entityManager->flush();
-        $context = new SendContext('admin-block-editor.test', 'newsletter@example.de', 'Other brand', 'help@example.de', 'Other postal address', '[Legal](https://admin-block-editor.test/legal)', 'Other preferences');
+        self::getContainer()->get(SiteRegistry::class)->get('admin-block-editor.test')
+            ->setCustomProperty('base_live_url', 'https://central.example.test');
+        $context = new SendContext('admin-block-editor.test', 'newsletter@example.de', 'Other brand', 'help@example.de', 'Other postal address', '[Legal](https://admin-block-editor.test/legal)', 'Other preferences', systemLinkBaseUrl: 'https://admin-block-editor.test/');
         $occurrence = new TriggerOccurrence(123, new DateTimeImmutable('-1 minute'), ['subject.name' => 'A trip'], $contact, locale: $locale, sendContext: $context);
         $source = self::createStub(TriggerSource::class);
         $source->method('name')->willReturn('contact');
@@ -175,6 +180,9 @@ final class AutomationDeliveryTest extends AbstractNewsletterTestCase
         self::assertStringContainsString('https://admin-block-editor.test/newsletter/c/', $html);
         self::assertStringContainsString($url, (string) $email->getTextBody());
         self::assertStringContainsString('Other postal address', (string) $email->getTextBody());
+        self::assertStringContainsString('https://admin-block-editor.test/newsletter/unsubscribe/'.$enrollment->contact->token, $html);
+        self::assertStringContainsString('https://admin-block-editor.test/newsletter/unsubscribe/'.$enrollment->contact->token, (string) $email->getTextBody());
+        self::assertStringNotContainsString('central.example.test', $email->toString());
         self::assertStringContainsString('https://admin-block-editor.test/newsletter/unsubscribe/'.$enrollment->contact->token, $email->getHeaders()->toString());
         self::assertStringContainsString('List-Unsubscribe-Post: List-Unsubscribe=One-Click', $email->getHeaders()->toString());
         self::assertSame('fr', $enrollment->contact->locale);
@@ -184,10 +192,21 @@ final class AutomationDeliveryTest extends AbstractNewsletterTestCase
         self::assertStringNotContainsString('secret', $this->deliveries($automation)[0]->subject);
         $row = $this->entityManager->getConnection()->fetchAssociative('SELECT * FROM newsletter_enrollment WHERE id = ?', [$enrollment->id]);
         self::assertStringNotContainsString('secret', json_encode($row, \JSON_THROW_ON_ERROR));
+        self::assertSame(1, preg_match('#href="(https://admin-block-editor\.test/newsletter/c/[^"]+)"#', $html, $matches));
+        $this->client->request('GET', html_entity_decode($matches[1], \ENT_QUOTES | \ENT_HTML5));
+        self::assertSame(302, $this->client->getResponse()->getStatusCode());
+        self::assertStringStartsWith(
+            'https://admin-block-editor.test/article?utm_source=shared-audience',
+            $this->client->getResponse()->headers->get('Location') ?? ''
+        );
+        $clicks = $this->entityManager->getRepository(ClickEvent::class)->findBy(['contact' => $enrollment->contact]);
+        self::assertCount(1, $clicks);
+        self::assertSame($automation->id, $clicks[0]->automation?->id);
         // The occurrence host must still unsubscribe the original consent row.
         $this->client->request('POST', 'https://admin-block-editor.test/newsletter/unsubscribe/'.$enrollment->contact->token);
-        $this->entityManager->refresh($enrollment->contact);
-        self::assertFalse($enrollment->contact->isSubscribed());
+        $unsubscribed = $this->entityManager->find(Contact::class, $enrollment->contact->id);
+        self::assertInstanceOf(Contact::class, $unsubscribed);
+        self::assertFalse($unsubscribed->isSubscribed());
     }
 
     public function testAFailedPreparationCannotLeakOrRetryAClaimedSubject(): void

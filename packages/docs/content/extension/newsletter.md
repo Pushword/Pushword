@@ -904,6 +904,7 @@ new TriggerOccurrence(
         postalAddress: "Example Reisen\n12 Example Street",
         footerMarkdown: '[Legal information](https://www.example.de/legal)',
         audienceName: 'Example Reisen',
+        systemLinkBaseUrl: 'https://www.example.de',
     ),
 );
 ```
@@ -914,9 +915,18 @@ omitted locale snapshots the contact's locale. Legacy enrollments with no snapsh
 fall back to their current audience/contact. One step per host needs no step
 translations. Contexts apply to contact drips; broadcast segmentation is unchanged.
 
-`mainHost` selects the site's template and canonical base for relative body links,
-and its `base_live_url` for unsubscribe and tracked-click endpoints. The unsubscribe
-token still belongs to the original contact and therefore leaves the original
+`mainHost` selects the site's template and canonical base for relative body links.
+`systemLinkBaseUrl` is an optional explicit absolute HTTP(S) base for unsubscribe
+and tracked-click endpoints, including `List-Unsubscribe` and the HTML/text foot.
+It overrides `base_live_url` without changing other newsletters. Include any public
+path prefix when needed; trailing slashes are removed before adding the route.
+When omitted, the selected site's `base_live_url` remains the default. A central
+backend setting therefore still applies unless this explicit base is provided.
+The application must serve `/newsletter/unsubscribe/*` and, when click tracking is
+enabled, `/newsletter/c/*` on the chosen origin. This setting does not add routes,
+proxies or aliases. Existing snapshots from 1.0.36 remain readable and retain the
+default until replaced by new occurrences with an explicit base.
+The unsubscribe token still belongs to the original contact and therefore leaves the original
 consent audience. That audience and the automation still decide transactional
 status, UTM source and tracking consent; presentation cannot enable tracking or
 remove unsubscribe. Footer Markdown should carry absolute links.

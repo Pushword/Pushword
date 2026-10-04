@@ -158,7 +158,7 @@ final readonly class NewsletterMailer
     {
         $unsubscribeUrl = $this->isTransactional($audience, $trackedMail)
             ? null
-            : $this->linkGenerator->unsubscribeUrl($contact, $sendContext?->mainHost);
+            : $this->linkGenerator->unsubscribeUrl($contact, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl);
 
         $email = $this->baseEmail($audience, $contact, $sendContext)
             ->subject($this->renderer->subject($subject, $contact))

@@ -12,9 +12,9 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 /**
  * Absolute URLs for the links a newsletter carries.
  *
- * They are always built from the audience host's `base_live_url` — the origin
- * where PHP actually runs — never from the canonical base URL, so confirm and
- * unsubscribe keep working when the site itself is a static build.
+ * By default they use the audience host's `base_live_url`, where PHP runs on
+ * static sites. An occurrence may explicitly choose a different system-link
+ * base without changing that default for other newsletters.
  */
 final readonly class LinkGenerator
 {
@@ -37,14 +37,18 @@ final readonly class LinkGenerator
             .$this->urlGenerator->generate($route, ['token' => $contact->token]);
     }
 
-    public function unsubscribeUrl(Contact $contact, ?string $mainHost = null): string
+    public function unsubscribeUrl(Contact $contact, ?string $mainHost = null, ?string $systemLinkBaseUrl = null): string
     {
-        return $this->base($contact->audience, $mainHost)
+        return $this->base($contact->audience, $mainHost, $systemLinkBaseUrl)
             .$this->urlGenerator->generate('pushword_newsletter_unsubscribe', ['token' => $contact->token], UrlGeneratorInterface::ABSOLUTE_PATH);
     }
 
-    public function base(Audience $audience, ?string $mainHost = null): string
+    public function base(Audience $audience, ?string $mainHost = null, ?string $systemLinkBaseUrl = null): string
     {
+        if (null !== $systemLinkBaseUrl) {
+            return rtrim($systemLinkBaseUrl, '/');
+        }
+
         $site = $this->siteRegistry->get($mainHost ?? $audience->mainHost);
         $base = $site->getStr('base_live_url');
 

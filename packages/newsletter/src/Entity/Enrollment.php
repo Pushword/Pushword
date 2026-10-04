@@ -44,7 +44,7 @@ class Enrollment implements IdInterface
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     public private(set) ?string $stopReason = null;
 
-    /** @var array{mainHost: string, fromEmail: string, fromName: string, replyTo: ?string, postalAddress: ?string, footerMarkdown: string, audienceName: ?string}|null */
+    /** @var array{mainHost: string, fromEmail: string, fromName: string, replyTo: ?string, postalAddress: ?string, footerMarkdown: string, audienceName: ?string, systemLinkBaseUrl?: ?string}|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $sendContextData;
 

@@ -65,7 +65,7 @@ final readonly class MailRenderer
         // before the template, so its own links stay out of reach. The double
         // consent gate is the tracker's to keep.
         if (null !== $trackedMail) {
-            $body = $this->clickTracker->rewrite($body, $audience, $contact, $trackedMail, $untrackedUrls, $sendContext?->mainHost);
+            $body = $this->clickTracker->rewrite($body, $audience, $contact, $trackedMail, $untrackedUrls, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl);
         }
 
         return $this->twig->render($this->view($audience, 'email.html.twig', $sendContext), [

@@ -44,7 +44,7 @@ final readonly class ClickTracker
     }
 
     /** @param list<string> $untrackedUrls */
-    public function rewrite(string $html, Audience $audience, Contact $contact, Campaign|AutomationStep $mail, array $untrackedUrls = [], ?string $mainHost = null): string
+    public function rewrite(string $html, Audience $audience, Contact $contact, Campaign|AutomationStep $mail, array $untrackedUrls = [], ?string $mainHost = null, ?string $systemLinkBaseUrl = null): string
     {
         if (! $audience->clickTracking || ! $contact->hasClickTrackingConsent() || ! str_contains($html, '<a ')) {
             return $html;
@@ -54,13 +54,13 @@ final readonly class ClickTracker
             HtmlUnpublishedLink::HTML_REGEX,
             fn (array $match): string => \in_array(html_entity_decode($match['href'], \ENT_QUOTES | \ENT_HTML5), $untrackedUrls, true)
                 ? $match[0]
-                : $this->trackLink($match, $audience, $contact, $mail, $mainHost),
+                : $this->trackLink($match, $audience, $contact, $mail, $mainHost, $systemLinkBaseUrl),
             $html
         ) ?? $html;
     }
 
     /** @param array<int|string, string> $match */
-    private function trackLink(array $match, Audience $audience, Contact $contact, Campaign|AutomationStep $mail, ?string $mainHost): string
+    private function trackLink(array $match, Audience $audience, Contact $contact, Campaign|AutomationStep $mail, ?string $mainHost, ?string $systemLinkBaseUrl): string
     {
         $url = html_entity_decode($match['href'], \ENT_QUOTES | \ENT_HTML5);
         $parts = parse_url($url);
@@ -72,10 +72,10 @@ final readonly class ClickTracker
             return $match[0];
         }
 
-        // Built from base_live_url like every link the bundle serves itself, so
-        // the endpoint answers even when the site is a static build.
-        $tracked = $this->linkGenerator->base($audience, $mainHost)
-            .$this->urlGenerator->generate('pushword_newsletter_click', ['payload' => $this->payload($contact, $mail, $url)]);
+        // Use the occurrence's explicit system origin when provided; otherwise
+        // preserve the live backend origin used by statically generated sites.
+        $tracked = $this->linkGenerator->base($audience, $mainHost, $systemLinkBaseUrl)
+            .$this->urlGenerator->generate('pushword_newsletter_click', ['payload' => $this->payload($contact, $mail, $url)], UrlGeneratorInterface::ABSOLUTE_PATH);
 
         $quote = $match['quote'];
 

@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'newsletter occurrences can select their public system-link origin'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/newsletter`
+
+## Explicit newsletter system-link origin
+
+**Sites using occurrence sender contexts with a central `base_live_url`:** set `SendContext(systemLinkBaseUrl: 'https://your-public-host')` when creating occurrences. Serve `/newsletter/unsubscribe/*` there, and `/newsletter/c/*` when click tracking is enabled.
+The explicit base controls unsubscribe headers, the HTML/text foot and click redirects; omitted values retain existing defaults. No schema update is needed.
+Existing enrollment snapshots retain their original/default base; new occurrences snapshot the explicit value. See [sending context](../extension/newsletter#sending-in-an-occurrences-site-and-language).
