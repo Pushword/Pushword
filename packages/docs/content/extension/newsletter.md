@@ -534,6 +534,26 @@ which the ledger records as `skipped` rather than as a failure.
 subject prefix, touching no contact and no counter. Once the campaign carries
 translations it also asks which language to proofread.
 
+### Email Markdown
+
+The body and occurrence footer use an email-specific CommonMark renderer. Bare
+email addresses, `<address@example.com>` and Markdown `mailto:` links stay readable
+and clickable without JavaScript. Web page email obfuscation remains unchanged.
+
+Supply images as `![Descriptive alt text](https://your-public-host/photo.jpg)` with
+an absolute public image URL. They render as plain `<img>` elements, with inline
+`width:100%;max-width:100%;height:auto` styling and no lightbox, `<picture>`, lazy
+loading or media lookup. The image URL is kept as supplied. An optional placeholder
+may contain a complete Markdown image or an empty string, followed by a blank line
+before the greeting; an empty value emits no image or empty paragraph. The same
+rendering applies to `SendContext.footerMarkdown`.
+
+Standard Markdown, attributes, tables, strikethrough, task lists and authored HTML
+are supported. Pushword web shortcodes and web media references are not expanded:
+use ordinary Markdown links, absolute image URLs and email-compatible authored HTML.
+The body still follows the existing UTM and click-tracking consent pipeline; put
+sensitive authentication URLs in preparation's `untrackedUrls` to keep them direct.
+
 ### Languages
 
 One campaign carries one body per locale, so an audience spanning several locale

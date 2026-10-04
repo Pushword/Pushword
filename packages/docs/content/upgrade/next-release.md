@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'newsletter markdown renders readable emails and plain responsive images'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,10 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/newsletter`
+
+## Email Markdown
+
+Newsletter bodies and occurrence footers now render readable `mailto:` links and plain responsive images; web page obfuscation is unchanged. No configuration or schema update is needed.
+**Sites using web shortcodes or media references in newsletter Markdown:** replace them with ordinary Markdown links, absolute public image URLs or email-compatible authored HTML. See [email Markdown](../extension/newsletter#email-markdown).

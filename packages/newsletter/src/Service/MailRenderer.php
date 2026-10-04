@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pushword\Newsletter\Service;
 
 use Pushword\Core\Component\EntityFilter\Filter\HtmlUnpublishedLink;
-use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Click\ClickTracker;
 use Pushword\Newsletter\Delivery\SendContext;
@@ -28,7 +27,7 @@ use Twig\Environment as Twig;
 final readonly class MailRenderer
 {
     public function __construct(
-        private MarkdownParser $markdownParser,
+        private EmailMarkdownRenderer $markdownParser,
         private Twig $twig,
         private SiteRegistry $siteRegistry,
         private UtmDecorator $utmDecorator,
