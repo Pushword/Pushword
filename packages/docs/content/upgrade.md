@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.38](/upgrade/1.0.38) | `newsletter` | newsletter markdown renders readable emails and plain responsive images |
 | [1.0.37](/upgrade/1.0.37) | `newsletter` | newsletter occurrences can select their public system-link origin |
 | [1.0.36](/upgrade/1.0.36) | `newsletter` | newsletter drips deliver synchronously with source guards and occurrence context — run `doctrine:schema:update --force` |
 | [1.0.35](/upgrade/1.0.35) | `quiz` | quiz answers require confirmation — run `assets:install` |
