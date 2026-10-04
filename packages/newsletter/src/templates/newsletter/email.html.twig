@@ -3,7 +3,7 @@
   purpose: mail clients strip <style> blocks and ignore modern layout.
 #}
 <!DOCTYPE html>
-<html lang="{{ contact.locale }}">
+<html lang="{{ locale }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,19 +19,21 @@
             {{ body|raw }}
         </td>
     </tr>
-    {# A transactional mail carries no unsubscribeUrl, and then has no foot at
-       all unless the audience prints an address. #}
-    {% if unsubscribeUrl or audience.postalAddress %}
+    {# Transactional mails retain public sender information without an unsubscribe link. #}
+    {% if unsubscribeUrl or postalAddress or footer %}
         <tr>
             <td style="padding:0 16px 24px;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#6b6b6b;">
                 <hr style="border:0;border-top:1px solid #e6e6e6;margin:0 0 16px;">
                 {% if unsubscribeUrl %}
-                    <a href="{{ unsubscribeUrl }}" style="color:#6b6b6b;">{{ 'newsletter.email.unsubscribe'|trans({}, null, contact.locale) }} ({{ audience.name }})</a>
+                    <a href="{{ unsubscribeUrl }}" style="color:#6b6b6b;">{{ 'newsletter.email.unsubscribe'|trans({}, null, locale) }} ({{ audienceName }})</a>
                 {% endif %}
                 {# The sender's real-world address, where the law asks for one. Kept
                    as authored — a postal address is laid out line by line. #}
-                {% if audience.postalAddress %}
-                    <p style="margin:12px 0 0;white-space:pre-line;">{{ audience.postalAddress }}</p>
+                {% if postalAddress %}
+                    <p style="margin:12px 0 0;white-space:pre-line;">{{ postalAddress }}</p>
+                {% endif %}
+                {% if footer %}
+                    {{ footer|raw }}
                 {% endif %}
             </td>
         </tr>

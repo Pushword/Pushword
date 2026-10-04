@@ -9,6 +9,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
+use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Enum\EnrollmentStatus;
 use Pushword\Newsletter\Repository\EnrollmentRepository;
 
@@ -40,6 +41,13 @@ class Enrollment implements IdInterface
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     public private(set) DateTimeImmutable $enrolledAt;
 
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    public private(set) ?string $stopReason = null;
+
+    /** @var array{mainHost: string, fromEmail: string, fromName: string, replyTo: ?string, postalAddress: ?string, footerMarkdown: string, audienceName: ?string}|null */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $sendContextData;
+
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Contact::class)]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
@@ -61,8 +69,17 @@ class Enrollment implements IdInterface
          */
         #[ORM\Column(type: Types::JSON, options: ['default' => '{}'])]
         public private(set) array $placeholders = [],
+        #[ORM\Column(type: Types::STRING, length: 20, nullable: true)]
+        public private(set) ?string $locale = null,
+        ?SendContext $sendContext = null,
     ) {
         $this->enrolledAt = new DateTimeImmutable();
+        $this->sendContextData = $sendContext?->toArray();
+    }
+
+    public function getSendContext(): ?SendContext
+    {
+        return null !== $this->sendContextData ? SendContext::fromArray($this->sendContextData) : null;
     }
 
     public function getStatusLabel(): string
@@ -102,9 +119,10 @@ class Enrollment implements IdInterface
         return $this;
     }
 
-    public function stop(): self
+    public function stop(?string $reason = null): self
     {
         $this->status = EnrollmentStatus::Stopped;
+        $this->stopReason = null !== $reason ? mb_substr($reason, 0, 255) : null;
 
         return $this;
     }

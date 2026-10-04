@@ -29,6 +29,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             __DIR__.'/../Click/ClickPayload.php',
             __DIR__.'/../Content/PageCriteria.php',
             __DIR__.'/../Enum',
+            __DIR__.'/../Delivery/SendContext.php',
+            __DIR__.'/../Event',
             __DIR__.'/../Repository/DQL',
             __DIR__.'/../Segment/SegmentCriteria.php',
             __DIR__.'/../Segment/SegmentException.php',

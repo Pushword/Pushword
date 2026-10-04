@@ -363,11 +363,10 @@ final class AutomationRunnerTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
         $this->createContact($audience, 'new@example.tld');
         $automation = $this->createAutomation($audience, self::TWO_STEPS);
-        $this->enroll($automation);
-
-        // An unusable sender identity: the mail can never be built.
+        // An unusable sender identity, frozen at enrollment: the mail cannot be built.
         $audience->fromEmail = 'not a valid address';
         $this->entityManager->flush();
+        $this->enroll($automation);
 
         self::assertSame(0, $this->runner()->advance(10));
 
@@ -416,6 +415,57 @@ final class AutomationRunnerTest extends AbstractNewsletterTestCase
         $this->runner()->advance(10);
 
         self::assertSame([], $this->deliveries($automation));
+    }
+
+    public function testAdvanceOneSendsOnlyTheTargetAndFlushesItsProgress(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'first@example.tld');
+        $this->createContact($audience, 'other@example.tld');
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
+        $this->enroll($automation);
+        [$target, $other] = $this->enrollments($automation);
+
+        self::assertTrue($this->runner()->advanceOne($target));
+        self::assertEmailCount(1);
+        self::assertSame(EnrollmentStatus::Active, $other->status);
+        self::assertSame(0, $other->position);
+        self::assertSame('done', $this->entityManager->getConnection()->fetchOne(
+            'SELECT status FROM newsletter_enrollment WHERE id = ?',
+            [$target->id]
+        ));
+        self::assertFalse($this->runner()->advanceOne($target));
+        self::assertEmailCount(1);
+    }
+
+    public function testAdvanceOneWaitsForTheDueDateAndAcceptsTheExactBoundary(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'reader@example.tld');
+        $automation = $this->createAutomation($audience, [['delay' => 60, 'subject' => 'Welcome']]);
+        $this->enroll($automation);
+        $target = $this->enrollments($automation)[0];
+        self::assertFalse($this->runner()->advanceOne($target, $target->nextRunAt->modify('-1 second')));
+        self::assertEmailCount(0);
+        self::assertTrue($this->runner()->advanceOne($target, $target->nextRunAt));
+        self::assertEmailCount(1);
+    }
+
+    public function testAdvanceOneAppliesMailabilityAndDoesNotRestartAStoppedRun(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
+        $this->enroll($automation);
+        $target = $this->enrollments($automation)[0];
+        $contact->unsubscribe();
+        $this->entityManager->flush();
+        self::assertFalse($this->runner()->advanceOne($target));
+        self::assertSame('contact_not_mailable', $target->stopReason);
+        $contact->optIn(false);
+        $this->entityManager->flush();
+        self::assertFalse($this->runner()->advanceOne($target));
+        self::assertEmailCount(0);
     }
 
     /** @return list<AutomationDelivery> */

@@ -43,7 +43,8 @@ final readonly class ClickTracker
     ) {
     }
 
-    public function rewrite(string $html, Audience $audience, Contact $contact, Campaign|AutomationStep $mail): string
+    /** @param list<string> $untrackedUrls */
+    public function rewrite(string $html, Audience $audience, Contact $contact, Campaign|AutomationStep $mail, array $untrackedUrls = [], ?string $mainHost = null): string
     {
         if (! $audience->clickTracking || ! $contact->hasClickTrackingConsent() || ! str_contains($html, '<a ')) {
             return $html;
@@ -51,13 +52,15 @@ final readonly class ClickTracker
 
         return preg_replace_callback(
             HtmlUnpublishedLink::HTML_REGEX,
-            fn (array $match): string => $this->trackLink($match, $audience, $contact, $mail),
+            fn (array $match): string => \in_array(html_entity_decode($match['href'], \ENT_QUOTES | \ENT_HTML5), $untrackedUrls, true)
+                ? $match[0]
+                : $this->trackLink($match, $audience, $contact, $mail, $mainHost),
             $html
         ) ?? $html;
     }
 
     /** @param array<int|string, string> $match */
-    private function trackLink(array $match, Audience $audience, Contact $contact, Campaign|AutomationStep $mail): string
+    private function trackLink(array $match, Audience $audience, Contact $contact, Campaign|AutomationStep $mail, ?string $mainHost): string
     {
         $url = html_entity_decode($match['href'], \ENT_QUOTES | \ENT_HTML5);
         $parts = parse_url($url);
@@ -71,7 +74,7 @@ final readonly class ClickTracker
 
         // Built from base_live_url like every link the bundle serves itself, so
         // the endpoint answers even when the site is a static build.
-        $tracked = $this->linkGenerator->base($audience)
+        $tracked = $this->linkGenerator->base($audience, $mainHost)
             .$this->urlGenerator->generate('pushword_newsletter_click', ['payload' => $this->payload($contact, $mail, $url)]);
 
         $quote = $match['quote'];

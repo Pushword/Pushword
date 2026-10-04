@@ -8,6 +8,7 @@ use Pushword\Core\Component\EntityFilter\Filter\HtmlUnpublishedLink;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Click\ClickTracker;
+use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Entity\Campaign;
@@ -40,6 +41,7 @@ final readonly class MailRenderer
         return $this->personalize($subject, $contact);
     }
 
+    /** @param list<string> $untrackedUrls */
     public function html(
         Audience $audience,
         Contact $contact,
@@ -49,23 +51,31 @@ final readonly class MailRenderer
         ?string $unsubscribeUrl,
         ?UtmTag $utmTag,
         Campaign|AutomationStep|null $trackedMail = null,
+        ?SendContext $sendContext = null,
+        ?string $locale = null,
+        array $untrackedUrls = [],
     ): string {
         $body = $this->markdownParser->transform($this->personalize($bodyMarkdown, $contact));
-        $body = $this->absolutize($body, $audience);
+        $body = $this->absolutize($body, $sendContext->mainHost ?? $audience->mainHost);
         // Tagging the body and not the rendered mail leaves the template's
         // unsubscribe link alone: leaving is an exit, not a visit.
-        $body = $this->utmDecorator->decorate($body, $audience, $utmTag);
+        $body = $this->utmDecorator->decorate($body, $audience, $utmTag, $untrackedUrls);
 
         // After the UTM pass, so a recorded click still lands on a tagged URL;
         // before the template, so its own links stay out of reach. The double
         // consent gate is the tracker's to keep.
         if (null !== $trackedMail) {
-            $body = $this->clickTracker->rewrite($body, $audience, $contact, $trackedMail);
+            $body = $this->clickTracker->rewrite($body, $audience, $contact, $trackedMail, $untrackedUrls, $sendContext?->mainHost);
         }
 
-        return $this->twig->render($this->view($audience, 'email.html.twig'), [
+        return $this->twig->render($this->view($audience, 'email.html.twig', $sendContext), [
             'audience' => $audience,
             'contact' => $contact,
+            'sendContext' => $sendContext,
+            'locale' => $locale ?? $contact->locale,
+            'audienceName' => $sendContext->audienceName ?? $audience->name,
+            'postalAddress' => null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress,
+            'footer' => $this->markdownParser->transform($sendContext->footerMarkdown ?? ''),
             'subject' => $this->personalize($subject, $contact),
             'preheader' => null !== $preheader ? $this->personalize($preheader, $contact) : null,
             'body' => $body,
@@ -96,18 +106,19 @@ final readonly class MailRenderer
      * a list it did not put anybody on; the postal address is unaffected, since
      * it says who wrote rather than how to leave.
      */
-    public function text(Audience $audience, Contact $contact, string $bodyMarkdown, ?string $unsubscribeUrl): string
+    public function text(Audience $audience, Contact $contact, string $bodyMarkdown, ?string $unsubscribeUrl, ?SendContext $sendContext = null): string
     {
-        $foot = array_filter([$unsubscribeUrl, $audience->postalAddress], is_string(...));
+        $postalAddress = null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress;
+        $foot = array_filter([$unsubscribeUrl, $postalAddress, $sendContext?->footerMarkdown], static fn (?string $value): bool => null !== $value && '' !== $value);
 
         return $this->personalize($bodyMarkdown, $contact)
             .([] === $foot ? '' : "\n\n---\n".implode("\n\n", $foot)."\n");
     }
 
     /** Resolve a template, letting the site override the bundle's default. */
-    public function view(Audience $audience, string $template): string
+    public function view(Audience $audience, string $template, ?SendContext $sendContext = null): string
     {
-        return $this->siteRegistry->get($audience->mainHost)
+        return $this->siteRegistry->get($sendContext->mainHost ?? $audience->mainHost)
             ->getView('/newsletter/'.$template, '@PushwordNewsletter');
     }
 
@@ -117,13 +128,13 @@ final readonly class MailRenderer
      * live origin — the reader should land on the published page, not on the
      * machine the mail happened to leave from.
      */
-    private function absolutize(string $html, Audience $audience): string
+    private function absolutize(string $html, string $mainHost): string
     {
         if (! str_contains($html, '<a ')) {
             return $html;
         }
 
-        $base = rtrim($this->siteRegistry->get($audience->mainHost)->baseUrl, '/');
+        $base = rtrim($this->siteRegistry->get($mainHost)->baseUrl, '/');
 
         return preg_replace_callback(
             HtmlUnpublishedLink::HTML_REGEX,

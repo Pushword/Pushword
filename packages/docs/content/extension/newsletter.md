@@ -799,6 +799,135 @@ marked on its own row and no campaign is charged for it — a campaign's counter
 mean "caused by this send", and a send somebody had already read something else
 after did not cause anything.
 
+### Preparing a drip at delivery
+
+Drips run synchronously in `pw:newsletter:tick` (cron/CLI), through Symfony's
+configured `TransportInterface`. They bypass `MailerInterface`'s Messenger bus,
+including a `SendEmailMessage` route to `async`. The same DSN, transport listeners,
+envelope sender and failover configuration apply. Campaigns, confirmations and
+test mails still use the usual mailer. Do not call the drip runner from HTTP.
+A result means the transport accepted the submission, not inbox delivery.
+
+For a targeted CLI rehearsal, use
+`AutomationRunner::advanceOne(Enrollment $enrollment, ?DateTimeImmutable $now = null): bool`.
+It processes only that managed enrollment, checks active status and `nextRunAt <= now`,
+applies the same source/contact guards and delivery hooks, and flushes the result.
+It never triggers occurrences or advances other enrollments. `now` defaults to the
+current time and controls this enrollment's due check and next-step scheduling;
+it does not change the source's application clock or bypass its eligibility rules.
+The returned boolean means transport acceptance; paused, stopped, completed,
+not-yet-due or vetoed runs return false. This is a CLI operation, outside HTTP.
+
+Before **every** step, the runner checks mailability, `stopWhen`, and the source's
+`stillMatches(subjectId)`. A false answer stops the enrollment with
+`stopReason = subject_no_longer_matches`; a missing source stops it with
+`source_unavailable`. A disabled automation pauses as before. Trigger logs remain,
+so a stopped subject is not automatically enrolled again.
+
+Subscribe to `Pushword\Newsletter\Event\PrepareAutomationDelivery` with Symfony's
+`#[AsEventListener]`. It exposes `enrollment`, `automation`, `step`, `contact` and
+`subjectId`. It runs only during actual synchronous delivery, never during count,
+preview or enrollment. Higher priority listeners run first; place validation
+before the listener that reserves a subject and issues sensitive credentials.
+
+```php
+#[AsEventListener]
+public function prepare(PrepareAutomationDelivery $event): void
+{
+    if ($event->automation->source !== 'your_source') {
+        return;
+    }
+
+    // Re-read application facts and consent; reserve with an atomic conditional
+    // update in your own short transaction. Commit before returning, never SMTP
+    // under that transaction. A previously reserved subject must veto forever.
+    if (! $this->reserve($event->subjectId, $event->contact)) {
+        $event->veto('subject_already_reserved');
+
+        return;
+    }
+
+    $url = $this->issueLink($event->subjectId);
+    $event->placeholders['subject.resumeUrl'] = $url;
+    $event->untrackedUrls[] = $url;
+}
+```
+
+`veto(reason)` stops propagation and stops the enrollment; the reason is retained
+in `Enrollment::stopReason` (255 characters). Reasons must be stable codes, never
+credentials. A veto creates no delivery row and no result event. The application
+owns consent, subject eligibility and cross-automation reservations.
+
+Late placeholders override frozen values **only in the body**. They never enter
+Enrollment, the subject, a delivery row or a queue. Escape Markdown/HTML values
+in the producer; placeholders are literal substitution, not Twig. Supply absolute
+URLs to `untrackedUrls`: exact matches after HTML entity decoding bypass both UTM
+and click rewriting, even when both tracking consents are present. Rendered mail
+and URLs are not passed to result listeners or logged by the runner. Exception
+messages are deliberately omitted from its logs and ledger; only their class is
+retained because their text can contain credentials.
+
+Subscribe to `Pushword\Newsletter\Event\AutomationDeliveryResult` for the outcome.
+`enrollment` still points to the attempted step; `delivery` exposes automation,
+contact, subjectId, position, `state` (`Sent`/`Failed`) and `error` (exception class).
+This event runs before advancement and before the runner flushes its ledger.
+Use `Sent` to record transport acceptance in the application. A result-listener
+exception stops the enrollment with `result_notification_failed` without changing
+the transport outcome or retrying it. A preparation/render/transport exception
+records `Failed` and advances past the attempted step as before.
+
+There is no SMTP retry by the runner and no drip `SendEmailMessage` for Messenger
+to retry. A process crash can still occur between application reservation, SMTP
+acceptance and ledger flush: **at most one authorized submission**, with possible
+loss or an uncertain result, requires the application's durable reservation.
+Never clear that reservation automatically on failure. Transport failover/retry
+policies remain those of the site's configured transport; use a single transport
+if ambiguous failures must never trigger a second provider submission.
+
+### Sending in an occurrence's site and language
+
+An occurrence addressed to a contact may provide `locale` and
+`Pushword\Newsletter\Delivery\SendContext`:
+
+```php
+new TriggerOccurrence(
+    subjectId: $subjectId,
+    occurredAt: $occurredAt,
+    placeholders: $safeValues,
+    contact: $contact,
+    locale: 'de',
+    sendContext: new SendContext(
+        mainHost: 'www.example.de',
+        fromEmail: 'newsletter@example.de',
+        fromName: 'Example Reisen',
+        replyTo: 'info@example.de',
+        postalAddress: "Example Reisen\n12 Example Street",
+        footerMarkdown: '[Legal information](https://www.example.de/legal)',
+        audienceName: 'Example Reisen',
+    ),
+);
+```
+
+The runner snapshots these values in Enrollment, without changing `Contact.locale`
+or the contact's audience. Omitted context snapshots the automation audience;
+omitted locale snapshots the contact's locale. Legacy enrollments with no snapshot
+fall back to their current audience/contact. One step per host needs no step
+translations. Contexts apply to contact drips; broadcast segmentation is unchanged.
+
+`mainHost` selects the site's template and canonical base for relative body links,
+and its `base_live_url` for unsubscribe and tracked-click endpoints. The unsubscribe
+token still belongs to the original contact and therefore leaves the original
+consent audience. That audience and the automation still decide transactional
+status, UTM source and tracking consent; presentation cannot enable tracking or
+remove unsubscribe. Footer Markdown should carry absolute links.
+
+The default template receives the original `audience` and `contact`, plus `locale`,
+`sendContext`, `audienceName`, `postalAddress` and rendered `footer`. Site overrides
+must use these presentation variables for occurrence context to take effect.
+The default unsubscribe label includes English, French, German, Dutch and Italian;
+applications can override translations as usual. Snapshot only public identity and
+safe content: no authentication URLs in context or frozen placeholders.
+
 ### What a broadcast produces
 
 **Ordinary campaigns**, one per step, scheduled at `occurredAt + delay` and sent

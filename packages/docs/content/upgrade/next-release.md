@@ -1,5 +1,6 @@
 ---
-title: ''
+title: 'newsletter drips deliver synchronously with source guards and occurrence context'
+run: 'doctrine:schema:update --force'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +35,12 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/newsletter`
+
+## Newsletter drip delivery
+
+Drips now use the configured transport synchronously in the cron tick and revalidate their source before every step; ordinary mails retain their mailer routing.
+Run `doctrine:schema:update --force` for enrollment locale, send context and stop reason columns.
+**Sites overriding `/newsletter/email.html.twig`:** use `locale`, `audienceName`, `postalAddress` and `footer` for occurrence presentation.
+See [drip preparation and delivery contracts](../extension/newsletter#preparing-a-drip-at-delivery); keep the runner outside HTTP and retain application claims after failures.

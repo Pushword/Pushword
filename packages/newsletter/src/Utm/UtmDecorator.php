@@ -26,7 +26,8 @@ final readonly class UtmDecorator
     ) {
     }
 
-    public function decorate(string $html, Audience $audience, ?UtmTag $utmTag): string
+    /** @param list<string> $untrackedUrls */
+    public function decorate(string $html, Audience $audience, ?UtmTag $utmTag, array $untrackedUrls = []): string
     {
         $source = $audience->utmSource;
 
@@ -36,7 +37,9 @@ final readonly class UtmDecorator
 
         return preg_replace_callback(
             HtmlUnpublishedLink::HTML_REGEX,
-            fn (array $match): string => $this->tagLink($match, $source, $utmTag),
+            fn (array $match): string => \in_array(html_entity_decode($match['href'], \ENT_QUOTES | \ENT_HTML5), $untrackedUrls, true)
+                ? $match[0]
+                : $this->tagLink($match, $source, $utmTag),
             $html
         ) ?? $html;
     }

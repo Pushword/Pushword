@@ -7,10 +7,13 @@ namespace Pushword\Newsletter\Service;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\AutomationDelivery;
 use Pushword\Newsletter\Entity\Enrollment;
 use Pushword\Newsletter\Entity\TriggerLog;
+use Pushword\Newsletter\Event\AutomationDeliveryResult;
+use Pushword\Newsletter\Event\PrepareAutomationDelivery;
 use Pushword\Newsletter\Repository\AutomationRepository;
 use Pushword\Newsletter\Repository\CampaignRepository;
 use Pushword\Newsletter\Repository\EnrollmentRepository;
@@ -20,6 +23,7 @@ use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Trigger\BroadcastScheduler;
 use Pushword\Newsletter\Trigger\PlaceholderRenderer;
 use Pushword\Newsletter\Trigger\TriggerSourceRegistry;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
 /**
@@ -45,6 +49,7 @@ final readonly class AutomationRunner
         private EntityManagerInterface $entityManager,
         private NewsletterMailer $mailer,
         private LoggerInterface $logger,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -106,6 +111,8 @@ final readonly class AutomationRunner
                     $occurrence->occurredAt->modify('+'.$automation->delayToStep(0).' minutes'),
                     $occurrence->subjectId,
                     $occurrence->placeholders,
+                    $occurrence->locale ?? $occurrence->contact->locale,
+                    $occurrence->sendContext ?? SendContext::fromAudience($automation->audience),
                 ));
                 ++$enrolled;
             } else {
@@ -205,6 +212,20 @@ final readonly class AutomationRunner
         return $sent;
     }
 
+    /** Deliver only this active, due enrollment, using the same guards as a tick. */
+    public function advanceOne(Enrollment $enrollment, ?DateTimeImmutable $now = null): bool
+    {
+        $now ??= new DateTimeImmutable();
+        if (! $enrollment->isActive() || $enrollment->nextRunAt > $now) {
+            return false;
+        }
+
+        $sent = $this->send($enrollment, $now);
+        $this->entityManager->flush();
+
+        return $sent;
+    }
+
     /** @return bool whether a mail was actually handed to the transport */
     private function send(Enrollment $enrollment, DateTimeImmutable $now): bool
     {
@@ -217,14 +238,14 @@ final readonly class AutomationRunner
         }
 
         if (! $contact->isMailable()) {
-            $enrollment->stop();
+            $enrollment->stop('contact_not_mailable');
 
             return false;
         }
 
         $stopWhen = $automation->stopWhen;
         if ([] !== $stopWhen && $this->segmentResolver->matches($contact, $stopWhen)) {
-            $enrollment->stop();
+            $enrollment->stop('stop_condition_matched');
 
             return false;
         }
@@ -236,35 +257,72 @@ final readonly class AutomationRunner
             return false;
         }
 
-        $placeholders = $enrollment->placeholders;
-        $subject = $this->renderer->renderSubject($step->subject, $placeholders);
+        // Late values are body-only: the ledger records the frozen subject and
+        // must never retain an authentication URL supplied during preparation.
+        $subject = $this->renderer->renderSubject($step->subject, $enrollment->placeholders);
         $error = null;
 
         try {
+            $source = $this->sources->for($automation);
+            if (null === $source) {
+                $enrollment->stop('source_unavailable');
+
+                return false;
+            }
+
+            if (! $source->stillMatches($enrollment->subjectId)) {
+                $enrollment->stop('subject_no_longer_matches');
+
+                return false;
+            }
+
+            $preparation = new PrepareAutomationDelivery($enrollment, $step);
+            $this->eventDispatcher->dispatch($preparation);
+            if (null !== $preparation->vetoReason) {
+                $enrollment->stop($preparation->vetoReason);
+
+                return false;
+            }
+
             $this->mailer->sendStep(
                 $step,
                 $contact,
                 $subject,
-                $this->renderer->render($step->bodyMarkdown, $placeholders),
+                $this->renderer->render($step->bodyMarkdown, array_replace($enrollment->placeholders, $preparation->placeholders)),
+                $enrollment->getSendContext(),
+                $enrollment->locale,
+                $preparation->untrackedUrls,
             );
         } catch (Throwable $throwable) {
-            // The sequence moves on rather than retrying: a permanent failure
-            // would otherwise block this contact's drip at the same step forever.
-            // The loss is one step, and the delivery row below is what says so.
-            $this->logger->error('Newsletter step could not be sent.', [
+            // Exceptions may contain the rendered mail or a sensitive URL. Keep
+            // only the type; the application owns any private diagnostic detail.
+            $error = $throwable::class;
+            $this->logger->error('Newsletter step could not be delivered.', [
                 'automation' => $automation->id,
                 'step' => $step->position,
                 'contact' => $contact->id,
-                'error' => $throwable->getMessage(),
+                'error' => $error,
             ]);
-            $error = $throwable->getMessage();
         }
 
-        // Written before the enrollment advances: the row belongs to the step
-        // that was just attempted, not to the one it is about to wait for.
-        $this->entityManager->persist(null === $error
+        $delivery = null === $error
             ? AutomationDelivery::sent($enrollment, $subject)
-            : AutomationDelivery::failed($enrollment, $subject, $error));
+            : AutomationDelivery::failed($enrollment, $subject, $error);
+        $this->entityManager->persist($delivery);
+
+        // A failing observer cannot turn an accepted transport submission into
+        // a failed send or cause it to be resubmitted on the next tick.
+        try {
+            $this->eventDispatcher->dispatch(new AutomationDeliveryResult($enrollment, $delivery));
+        } catch (Throwable $throwable) {
+            $enrollment->stop('result_notification_failed');
+            $this->logger->error('Newsletter delivery result could not be recorded by an observer.', [
+                'automation' => $automation->id,
+                'error' => $throwable::class,
+            ]);
+
+            return null === $error;
+        }
 
         $next = $automation->getStep($enrollment->position + 1);
         $enrollment->advance($now->modify('+'.($next->delayMinutes ?? 0).' minutes'));

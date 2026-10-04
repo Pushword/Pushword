@@ -64,7 +64,7 @@ interface TriggerSource
 
     /**
      * Does this subject still deserve the mail waiting for it? Asked during the
-     * delay, once per tick, about subjects whose campaigns have not been armed:
+     * delay for pending broadcasts, and immediately before every drip delivery:
      * a page unpublished the evening it was announced answers no, and the mail
      * is dropped before anyone receives it.
      *

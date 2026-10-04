@@ -6,12 +6,14 @@ namespace Pushword\Newsletter\Service;
 
 use LogicException;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Utm\UtmTag;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -37,6 +39,7 @@ final readonly class NewsletterMailer
         private SiteRegistry $siteRegistry,
         private TranslatorInterface $translator,
         private BounceSignature $bounceSignature,
+        private TransportInterface $transport,
     ) {
     }
 
@@ -64,9 +67,11 @@ final readonly class NewsletterMailer
     /**
      * The subject and the body arrive already rendered: what a step quotes comes
      * from the occurrence that enrolled this contact, which the caller holds and
-     * this does not.
+     * this does not. Drips use the transport synchronously, bypassing Messenger.
+     *
+     * @param list<string> $untrackedUrls
      */
-    public function sendStep(AutomationStep $step, Contact $contact, string $subject, string $bodyMarkdown): void
+    public function sendStep(AutomationStep $step, Contact $contact, string $subject, string $bodyMarkdown, ?SendContext $sendContext = null, ?string $locale = null, array $untrackedUrls = []): void
     {
         $automation = $step->automation;
 
@@ -78,6 +83,9 @@ final readonly class NewsletterMailer
             null,
             null !== $automation ? UtmTag::forStep($automation, $step) : null,
             $step,
+            $sendContext,
+            $locale,
+            $untrackedUrls,
         );
     }
 
@@ -145,21 +153,33 @@ final readonly class NewsletterMailer
         $this->mailer->send($email);
     }
 
-    private function send(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader, ?UtmTag $utmTag, Campaign|AutomationStep $trackedMail): void
+    /** @param list<string> $untrackedUrls */
+    private function send(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader, ?UtmTag $utmTag, Campaign|AutomationStep $trackedMail, ?SendContext $sendContext = null, ?string $locale = null, array $untrackedUrls = []): void
     {
         $unsubscribeUrl = $this->isTransactional($audience, $trackedMail)
             ? null
-            : $this->linkGenerator->unsubscribeUrl($contact);
+            : $this->linkGenerator->unsubscribeUrl($contact, $sendContext?->mainHost);
 
-        $email = $this->baseEmail($audience, $contact)
+        $email = $this->baseEmail($audience, $contact, $sendContext)
             ->subject($this->renderer->subject($subject, $contact))
-            ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl))
-            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, $trackedMail));
+            ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl, $sendContext))
+            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, $trackedMail, $sendContext, $locale, $untrackedUrls));
 
         if (null !== $unsubscribeUrl) {
             $headers = $email->getHeaders();
             $headers->addTextHeader('List-Unsubscribe', '<'.$unsubscribeUrl.'>');
             $headers->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+        }
+
+        if ($trackedMail instanceof AutomationStep) {
+            // The configured transport retains its listeners, envelope and DSN,
+            // but bypasses Mailer's Messenger bus. A guard must not precede a
+            // queue wait, and a success must mean transport acceptance.
+            if (null === $this->transport->send($email)) {
+                throw new LogicException('The newsletter transport rejected the message.');
+            }
+
+            return;
         }
 
         $this->mailer->send($email);
@@ -182,14 +202,14 @@ final readonly class NewsletterMailer
             : true === $mail->automation?->isTransactional();
     }
 
-    private function baseEmail(Audience $audience, Contact $contact): Email
+    private function baseEmail(Audience $audience, Contact $contact, ?SendContext $sendContext = null): Email
     {
         // Whoever got here already asked `isMailable()`; saying which contact
         // slipped through beats a TypeError on a null address.
         $to = $contact->email ?? throw new LogicException('Contact #'.($contact->id ?? '?').' has no email address.');
 
         $email = new Email()
-            ->from(new Address($audience->fromEmail, $audience->fromName))
+            ->from(new Address($sendContext->fromEmail ?? $audience->fromEmail, $sendContext->fromName ?? $audience->fromName))
             ->to(new Address($to, $contact->name));
 
         // Stamped here rather than per kind of mail, so that everything this
@@ -198,10 +218,10 @@ final readonly class NewsletterMailer
         // campaign. Symfony only generates a Message-ID when none is set.
         $email->getHeaders()->addIdHeader(
             'Message-ID',
-            $this->bounceSignature->messageId($to, $audience->fromEmail),
+            $this->bounceSignature->messageId($to, $sendContext->fromEmail ?? $audience->fromEmail),
         );
 
-        $replyTo = $audience->replyTo;
+        $replyTo = null !== $sendContext ? $sendContext->replyTo : $audience->replyTo;
         if (null !== $replyTo) {
             $email->replyTo($replyTo);
         }

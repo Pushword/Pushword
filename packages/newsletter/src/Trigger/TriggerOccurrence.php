@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Newsletter\Trigger;
 
 use DateTimeImmutable;
+use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Contact;
 
 /**
@@ -13,7 +14,7 @@ use Pushword\Newsletter\Entity\Contact;
  *
  * What a source produces, and the only thing the rest of the newsletter knows
  * about the world a source watches. Everything downstream — the delay, the
- * steps, the templates — reads these five values and never the subject itself,
+ * steps, the templates — reads these values and never the subject itself,
  * which is what lets a bundle add a source without adding a column.
  *
  * {@see self::$contact} is what picks the delivery. Set, the occurrence concerns
@@ -41,6 +42,8 @@ final readonly class TriggerOccurrence
      *                                            one — seventeen locale versions of an article are
      *                                            seventeen occurrences, and each concerns the
      *                                            readers of its own language
+     * @param SendContext|null      $sendContext  public sender and site identity for a contact drip;
+     *                                            never credentials or authentication URLs
      */
     public function __construct(
         public int $subjectId,
@@ -49,6 +52,7 @@ final readonly class TriggerOccurrence
         public ?Contact $contact = null,
         public ?string $slug = null,
         public ?string $locale = null,
+        public ?SendContext $sendContext = null,
     ) {
     }
 }

@@ -37,15 +37,15 @@ final readonly class LinkGenerator
             .$this->urlGenerator->generate($route, ['token' => $contact->token]);
     }
 
-    public function unsubscribeUrl(Contact $contact): string
+    public function unsubscribeUrl(Contact $contact, ?string $mainHost = null): string
     {
-        return $this->base($contact->audience)
-            .$this->urlGenerator->generate('pushword_newsletter_unsubscribe', ['token' => $contact->token]);
+        return $this->base($contact->audience, $mainHost)
+            .$this->urlGenerator->generate('pushword_newsletter_unsubscribe', ['token' => $contact->token], UrlGeneratorInterface::ABSOLUTE_PATH);
     }
 
-    public function base(Audience $audience): string
+    public function base(Audience $audience, ?string $mainHost = null): string
     {
-        $site = $this->siteRegistry->get($audience->mainHost);
+        $site = $this->siteRegistry->get($mainHost ?? $audience->mainHost);
         $base = $site->getStr('base_live_url');
 
         return rtrim('' !== $base ? $base : $site->baseUrl, '/');
