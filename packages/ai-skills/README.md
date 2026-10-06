@@ -13,8 +13,7 @@ quiz to this page").
 | Command | What it does |
 | --- | --- |
 | `quiz [topic]` | Author, embed and validate an interactive QCM quiz (`{% quiz %}` block). |
-
-More commands will follow.
+| `carousel [page]` | Repurpose a page into a social carousel ([repurpose](https://pushword.piedweb.com/extension/repurpose)). |
 
 ## Install
 

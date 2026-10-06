@@ -23,6 +23,6 @@ modelled as an organic image Pin: one 2:3 visual with a required caption.
 composer require pushword/repurpose
 ```
 
-## Status
+## Documentation
 
-Work in progress. See [the plan](https://pushword.piedweb.com/extension/repurpose).
+Visit [pushword.piedweb.com/extension/repurpose](https://pushword.piedweb.com/extension/repurpose).

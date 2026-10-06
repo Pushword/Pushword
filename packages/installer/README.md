@@ -24,14 +24,8 @@ super admin, routes, assets and default config.
 `pushword/installer` remains installed afterwards so later `composer require` calls get the
 same treatment.
 
-### The `src/installer` bash script is obsolete
-
-It hung off `post-install-cmd`, which `composer create-project` never fires — so it never ran
-on the documented install path, while `install.php` quietly did the same work. It did fire on
-a later `composer install`, where it truncated `config/routes.yaml` and blocked on a prompt.
-
-Since rc828 it is a no-op that removes itself from `post-install-cmd`. Projects created
-before then clean up on their next `composer install`; nothing to do by hand.
+The old `src/installer` bash script (`post-install-cmd`) is a no-op since rc828 and removes
+itself on the next `composer install`.
 
 ## Manual Installation
 
@@ -62,12 +56,16 @@ Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the 
 - [pushword/version](https://github.com/Pushword/version) — Page & snippet versioning.
 - [pushword/page-update-notifier](https://github.com/Pushword/page-update-notifier) — Email alerts on content changes.
 - [pushword/conversation](https://github.com/Pushword/conversation) — Comments, contact & newsletter forms.
+- [pushword/newsletter](https://github.com/Pushword/newsletter) — Audiences, segmented campaigns & automations.
+- [pushword/quiz](https://github.com/Pushword/quiz) — Interactive quizzes & personality tests.
 
 **Publishing & performance**
 - [pushword/static-generator](https://github.com/Pushword/static-generator) — Export a static website (GitHub Pages, Apache, FrankenPHP).
 - [pushword/search](https://github.com/Pushword/search) — SQLite full-text search (Loupe), zero infra.
 - [pushword/page-scanner](https://github.com/Pushword/page-scanner) — Find dead links, 404s, redirects & TODOs.
 - [pushword/api](https://github.com/Pushword/api) — Token-authenticated REST API.
+- [pushword/link-improver](https://github.com/Pushword/link-improver) — Automatic internal linking.
+- [pushword/repurpose](https://github.com/Pushword/repurpose) — Turn pages into social carousels.
 
 **Tooling**
 - **pushword/installer** — Project & package installer. *(this package)*

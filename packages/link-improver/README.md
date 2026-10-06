@@ -26,7 +26,7 @@ pushword:
   apps:
     - hosts: [example.tld]
       link_improver: true
-      # link_improver_max_links: 0.01
+      # link_improver_max_links: 0.02 # the default
 ```
 
 ## Documentation

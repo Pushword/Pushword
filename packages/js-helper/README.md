@@ -12,7 +12,7 @@ Front-end **JavaScript helpers** for Pushword themes — live forms, lightbox, c
 
 ## Features
 
-- **Live forms / live blocks** (`liveForm`) for [Conversation](https://github.com/Pushword/conversation).
+- **Live blocks and forms** (`liveBlock`) for [Conversation](https://github.com/Pushword/conversation).
 - **Client-side search** (`PushwordSimpleSearch`) and **lightbox** (GLightbox).
 - **Scroll enhancers**, show-more, unpublished-link helpers. Clickable blocks are
   pure CSS: `.clickable` in `src/clickable.css` (imported by `app.css`, importable
@@ -49,12 +49,16 @@ Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the 
 - [pushword/version](https://github.com/Pushword/version) — Page & snippet versioning.
 - [pushword/page-update-notifier](https://github.com/Pushword/page-update-notifier) — Email alerts on content changes.
 - [pushword/conversation](https://github.com/Pushword/conversation) — Comments, contact & newsletter forms.
+- [pushword/newsletter](https://github.com/Pushword/newsletter) — Audiences, segmented campaigns & automations.
+- [pushword/quiz](https://github.com/Pushword/quiz) — Interactive quizzes & personality tests.
 
 **Publishing & performance**
 - [pushword/static-generator](https://github.com/Pushword/static-generator) — Export a static website (GitHub Pages, Apache, FrankenPHP).
 - [pushword/search](https://github.com/Pushword/search) — SQLite full-text search (Loupe), zero infra.
 - [pushword/page-scanner](https://github.com/Pushword/page-scanner) — Find dead links, 404s, redirects & TODOs.
 - [pushword/api](https://github.com/Pushword/api) — Token-authenticated REST API.
+- [pushword/link-improver](https://github.com/Pushword/link-improver) — Automatic internal linking.
+- [pushword/repurpose](https://github.com/Pushword/repurpose) — Turn pages into social carousels.
 
 **Tooling**
 - [pushword/installer](https://github.com/Pushword/installer) — Project & package installer.

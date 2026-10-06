@@ -12,10 +12,9 @@ Get an **email** when your Pushword content is edited, throttled to a configurab
 
 ## Features
 
-- **Email notification** on page create/update.
-- **Configurable** from/to and notification interval (PHP `DateInterval`).
-- Lists pages edited in the **last 30 minutes**.
-- **Zero maintenance** — works via an event subscriber.
+- **Email digest** on page create/update, at most once per interval (PHP `DateInterval`).
+- Lists the pages edited **since the previous notification**.
+- Configurable sender and recipient, per site or globally.
 
 ## Installation
 
@@ -46,12 +45,16 @@ Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the 
 - [pushword/version](https://github.com/Pushword/version) — Page & snippet versioning.
 - **pushword/page-update-notifier** — Email alerts on content changes. *(this package)*
 - [pushword/conversation](https://github.com/Pushword/conversation) — Comments, contact & newsletter forms.
+- [pushword/newsletter](https://github.com/Pushword/newsletter) — Audiences, segmented campaigns & automations.
+- [pushword/quiz](https://github.com/Pushword/quiz) — Interactive quizzes & personality tests.
 
 **Publishing & performance**
 - [pushword/static-generator](https://github.com/Pushword/static-generator) — Export a static website (GitHub Pages, Apache, FrankenPHP).
 - [pushword/search](https://github.com/Pushword/search) — SQLite full-text search (Loupe), zero infra.
 - [pushword/page-scanner](https://github.com/Pushword/page-scanner) — Find dead links, 404s, redirects & TODOs.
 - [pushword/api](https://github.com/Pushword/api) — Token-authenticated REST API.
+- [pushword/link-improver](https://github.com/Pushword/link-improver) — Automatic internal linking.
+- [pushword/repurpose](https://github.com/Pushword/repurpose) — Turn pages into social carousels.
 
 **Tooling**
 - [pushword/installer](https://github.com/Pushword/installer) — Project & package installer.

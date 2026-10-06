@@ -18,27 +18,12 @@ Demo and test application for Pushword — used for testing, demoing and by the 
 
 ## Build it
 
+From the monorepo root:
+
 ```bash
-cd packages/dev-app;
-
-rm -rf media && cp -r media~ media
-
-php bin/console doctrine:schema:update --force
-php bin/console doctrine:fixtures:load
-
-# Add an admin user :
-read -p 'Email: ' emailvar
-read -sp 'Password: ' passvar
-php bin/console pw:user:create $emailvar $passvar ROLE_SUPER_ADMIN
-#php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN
-
-# Install Bundle Assets
-php bin/console assets:install
-# `yarn build` Should not be runned because it's erasing the documentation assets.
-# the files are there only to help final user on a new installation
-
-# Launch Server and Play
-symfony server:start -d
+composer reset-dev-app   # fresh database, fixtures and media; admin@example.tld / p@ssword
+composer assets          # build assets
+composer dev             # start the server
 ```
 
 ## Documentation
@@ -64,12 +49,16 @@ Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the 
 - [pushword/version](https://github.com/Pushword/version) — Page & snippet versioning.
 - [pushword/page-update-notifier](https://github.com/Pushword/page-update-notifier) — Email alerts on content changes.
 - [pushword/conversation](https://github.com/Pushword/conversation) — Comments, contact & newsletter forms.
+- [pushword/newsletter](https://github.com/Pushword/newsletter) — Audiences, segmented campaigns & automations.
+- [pushword/quiz](https://github.com/Pushword/quiz) — Interactive quizzes & personality tests.
 
 **Publishing & performance**
 - [pushword/static-generator](https://github.com/Pushword/static-generator) — Export a static website (GitHub Pages, Apache, FrankenPHP).
 - [pushword/search](https://github.com/Pushword/search) — SQLite full-text search (Loupe), zero infra.
 - [pushword/page-scanner](https://github.com/Pushword/page-scanner) — Find dead links, 404s, redirects & TODOs.
 - [pushword/api](https://github.com/Pushword/api) — Token-authenticated REST API.
+- [pushword/link-improver](https://github.com/Pushword/link-improver) — Automatic internal linking.
+- [pushword/repurpose](https://github.com/Pushword/repurpose) — Turn pages into social carousels.
 
 **Tooling**
 - [pushword/installer](https://github.com/Pushword/installer) — Project & package installer.
