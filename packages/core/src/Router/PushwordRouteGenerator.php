@@ -87,7 +87,7 @@ final class PushwordRouteGenerator implements ResetInterface
         }
 
         if ($canonical && (null !== $page || null !== $host)) {
-            $baseUrl = $this->apps->get(null !== $page ? $page->host : $host)->getStr('baseUrl', '');
+            $baseUrl = $this->apps->get($page->host ?? $host)->getStr('baseUrl', '');
         } else {
             $baseUrl = '';
         }

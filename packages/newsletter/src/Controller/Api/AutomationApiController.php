@@ -352,7 +352,7 @@ final class AutomationApiController extends AbstractApiController
         $source = $this->sources->for($automation);
 
         try {
-            $payload['waiting'] = null !== $source ? $source->count($automation, new DateTimeImmutable()) : null;
+            $payload['waiting'] = $source?->count($automation, new DateTimeImmutable());
         } catch (SegmentException) {
             $payload['waiting'] = null;
         }

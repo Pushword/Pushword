@@ -452,7 +452,7 @@ final class PageExporter
             'h1' => '' !== $h1 ? $h1 : $page->title,
             'publishedAt' => null !== $page->publishedAt ? $this->editorialTimezone->format($page->publishedAt) : '',
             'locale' => $page->locale,
-            'parentPage' => null !== $page->parentPage ? $page->parentPage->slug : '',
+            'parentPage' => $page->parentPage->slug ?? '',
             'tags' => trim($page->getTags()),
         ];
     }

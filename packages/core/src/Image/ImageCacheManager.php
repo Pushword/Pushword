@@ -244,9 +244,8 @@ final class ImageCacheManager
             }
 
             $key = $this->getFilterKey($media, $filterName, $extension);
-            $cacheTime = null !== $this->mediaCacheStorage
-                ? $this->mediaCacheStorage->lastModified($key)
-                : filemtime($this->getFilterPath($media, $filterName, $extension));
+            $cacheTime = $this->mediaCacheStorage?->lastModified($key)
+                ?? filemtime($this->getFilterPath($media, $filterName, $extension));
             if (false === $cacheTime || $cacheTime < $sourceTime) {
                 return false;
             }

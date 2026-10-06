@@ -51,6 +51,27 @@ final class RouterTest extends KernelTestCase
         self::assertSame('/', $twig->createTemplate('{{ page("homepage") }}', null)->render());
     }
 
+    public function testCanonicalBaseUrlComesFromThePageHostElseFromTheGivenHost(): void
+    {
+        self::bootKernel();
+        $router = $this->makeRouter();
+
+        self::assertSame(
+            'https://pushword.piedweb.com/some-slug',
+            $router->generate('some-slug', canonical: true, host: 'pushword.piedweb.com'),
+        );
+
+        $page = new Page();
+        $page->host = 'admin-block-editor.test';
+        $page->slug = 'some-slug';
+
+        self::assertSame(
+            'https://admin-block-editor.test/some-slug',
+            $router->generate($page, canonical: true, host: 'pushword.piedweb.com'),
+            'the page host wins over the host argument',
+        );
+    }
+
     public function testMayUseCustomPathReturnsFalseForDefaultHost(): void
     {
         self::bootKernel();

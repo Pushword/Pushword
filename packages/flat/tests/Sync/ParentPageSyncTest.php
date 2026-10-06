@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Flat\Tests\Sync;
 
 use Doctrine\ORM\EntityManager;
+use League\Csv\Reader;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
@@ -120,6 +121,18 @@ final class ParentPageSyncTest extends KernelTestCase
         self::assertStringContainsString('parentPage: parent-export-test', $content);
         $this->createdFiles[] = $childMdPath;
         $this->createdFiles[] = $this->contentDir.'/parent-export-test.md';
+    }
+
+    public function testIndexCsvListsTheParentSlugOfAChildPage(): void
+    {
+        // setUp() exported the host; drop the "do not edit" comment line above the header.
+        $csv = (string) preg_replace('/^#.*\n/', '', $this->filesystem->readFile($this->contentDir.'/index.csv'));
+        $rows = Reader::fromString($csv)->setHeaderOffset(0)->getRecords();
+        $parentBySlug = array_column(iterator_to_array($rows, false), 'parentPage', 'slug');
+
+        // Fixture pair: kitchen-sink is a child of the localhost.dev homepage.
+        self::assertArrayHasKey('kitchen-sink', $parentBySlug);
+        self::assertSame('homepage', $parentBySlug['kitchen-sink']);
     }
 
     public function testParentPageImportedFromFrontmatter(): void

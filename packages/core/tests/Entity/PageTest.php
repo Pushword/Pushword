@@ -138,6 +138,31 @@ final class PageTest extends TestCase
         self::assertFalse($page->hasRedirection());
     }
 
+    public function testRedirectionAccessorsReadTheParsedLocation(): void
+    {
+        $page = new Page();
+        $page->mainContent = 'Location: https://example.tld 302';
+
+        self::assertSame('https://example.tld', $page->getRedirectionUrl());
+        self::assertSame(302, $page->getRedirectionCode());
+    }
+
+    public function testRedirectionUrlOfAPageThatDoesNotRedirectThrows(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageIsOrContains('getRedirectionUrl()');
+
+        new Page()->getRedirectionUrl();
+    }
+
+    public function testRedirectionCodeOfAPageThatDoesNotRedirectThrows(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageIsOrContains('getRedirectionCode()');
+
+        new Page()->getRedirectionCode();
+    }
+
     public function testANoindexPageIsNotIndexable(): void
     {
         $page = new Page();

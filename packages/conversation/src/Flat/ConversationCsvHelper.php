@@ -32,7 +32,7 @@ final class ConversationCsvHelper
 
     public static function formatDate(?DateTimeInterface $date): ?string
     {
-        return null === $date ? null : $date->format(DateTimeInterface::ATOM);
+        return $date?->format(DateTimeInterface::ATOM);
     }
 
     /**

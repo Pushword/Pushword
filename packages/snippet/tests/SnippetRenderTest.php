@@ -156,6 +156,34 @@ final class SnippetRenderTest extends KernelTestCase
         $em->flush();
     }
 
+    public function testWithoutACurrentPageTheMainHostSnippetRenders(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $registry = $container->get(SiteRegistry::class);
+        self::assertNull($registry->getCurrentPage());
+
+        $mainHost = $registry->getMainHost();
+        self::assertNotSame('', $mainHost, 'a host-less snippet would render through the global fallback');
+
+        $slug = 'main-host-'.uniqid();
+        $snippet = new Snippet();
+        $snippet->host = $mainHost;
+        $snippet->slug = $slug;
+        $snippet->name = 'Main host';
+        $snippet->content = 'main host body';
+
+        $em->persist($snippet);
+        $em->flush();
+
+        $html = $container->get(SnippetExtension::class)->renderSnippet($slug);
+        self::assertStringContainsString('main host body', $html);
+
+        $em->remove($snippet);
+        $em->flush();
+    }
+
     public function testHostSpecificSnippetOverridesGlobalOne(): void
     {
         self::bootKernel();

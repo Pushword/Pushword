@@ -910,9 +910,9 @@ MD;
         // No seconds, and the offset of the editorial timezone (the server's by default)
         self::assertStringContainsString("publishedAt: '2024-12-25 14:30+00:00'", $matches[1], 'publishedAt should be in Y-m-d H:iP format with YAML string quoting');
         self::assertStringContainsString(
-            'yaml-format-test,"YAML Format Test","2024-12-25 14:30+00:00",',
+            'yaml-format-test,"YAML Format Test","2024-12-25 14:30+00:00",en,,',
             file_get_contents($contentDir.'/index.csv'),
-            'index.csv should date the page like its file',
+            'index.csv should date the page like its file, and leave parentPage empty for a root page',
         );
 
         // Cleanup

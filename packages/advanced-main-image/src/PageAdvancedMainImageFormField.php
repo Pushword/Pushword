@@ -58,7 +58,7 @@ class PageAdvancedMainImageFormField extends PageMainImageField
      */
     private function resolveMainImageFormats(?Page $page): array
     {
-        $host = null !== $page ? $page->host : null;
+        $host = $page?->host;
         $app = $this->formFieldManager->apps->get($host);
 
         /** @var array<string, int> $formats */

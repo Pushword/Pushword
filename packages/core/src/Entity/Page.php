@@ -505,14 +505,14 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     {
         $redirection = $this->getRedirection();
 
-        return null !== $redirection ? $redirection->url : throw new LogicException('Check hasRedirection() before calling getRedirectionUrl()');
+        return $redirection->url ?? throw new LogicException('Check hasRedirection() before calling getRedirectionUrl()');
     }
 
     public function getRedirectionCode(): int
     {
         $redirection = $this->getRedirection();
 
-        return null !== $redirection ? $redirection->code : throw new LogicException('Check hasRedirection() before calling getRedirectionCode()');
+        return $redirection->code ?? throw new LogicException('Check hasRedirection() before calling getRedirectionCode()');
     }
 
     // --- Managed property keys (OG/Twitter fields are managed by dedicated form fields) ---

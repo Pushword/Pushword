@@ -1193,6 +1193,22 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertStringStartsWith('recipientWhen:', $error);
     }
 
+    /** A source removed with its bundle leaves the automation readable, with no waiting count. */
+    public function testAnAutomationWhoseSourceIsGoneReportsNoWaitingCount(): void
+    {
+        $audience = $this->createAudience();
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
+        $automation->source = 'a-bundle-that-left';
+
+        $this->entityManager->flush();
+
+        $body = $this->request(Request::METHOD_GET, '/api/newsletter/automation/'.$automation->id);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertArrayHasKey('waiting', $body);
+        self::assertNull($body['waiting']);
+    }
+
     public function testAnAutomationNeedsAName(): void
     {
         $audience = $this->createAudience();
