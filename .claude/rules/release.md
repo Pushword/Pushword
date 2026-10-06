@@ -14,8 +14,8 @@ one race-free split run.
 
 - **Every release must use a new version.** The split action hard-fails on
   `git tag X` when `X` already exists, with no `--force`. `.scripts/release` (what
-  `composer release` and `/tagAndPush` delegate to) auto-bumps from the latest
-  `1.0.0-rc*`; pass `1.0.0` explicitly to cut the stable release.
+  `composer release` and `/tag-and-push` delegate to) bumps the patch of the latest
+  `1.0.N` tag.
 - **A matrix entry needs both a `packages/<pkg>` directory and an existing mirror repo.**
   `admin-monaco-editor` and `ai-skills` have source dirs but no mirror and are
   deliberately absent; adding them would 404 at clone.
@@ -35,11 +35,12 @@ one race-free split run.
   downstream `composer require` resolves.
 - **A workflow fix only takes effect if the tagged commit contains it** — `.scripts/release`
   pushes commits before tagging the same HEAD, so it does.
-- **`next-release.md` must be committed before releasing.** The note is promoted from the
-  working tree, so an uncommitted draft ships into `rc<N>.md` describing code the tag does
-  not contain — exactly what happens when a parallel agent is mid-change. `.scripts/release`
-  aborts on a dirty draft. If it ever slips through, move the offending sections back
-  into `next-release.md` and fix both the `rc<N>.md` title and its row in `upgrade.md`.
+- **`next-release.md` must be committed before releasing.** `.scripts/release-upgrade-note`
+  promotes it from the working tree to `upgrade/<version>.md` (e.g. `upgrade/1.0.42.md`), so
+  an uncommitted draft ships a note describing code the tag does not contain — exactly what
+  happens when a parallel agent is mid-change. `.scripts/release` aborts on a dirty draft.
+  If it ever slips through, move the offending sections back into `next-release.md` and
+  fix both the `<version>.md` title and its row in `upgrade.md`.
   **The guard cannot see the case that actually bites:** a peer committing
   `next-release.md` scoped sweeps in whatever another agent has drafted in that same file,
   and the draft then reads clean. `next-release.md` is the one file where a scoped commit
