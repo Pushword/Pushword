@@ -600,6 +600,9 @@ export class MarkdownUtils {
     }
     // Decode HTML entities first (including numeric ones like &#10140;)
     html = he.decode(html)
+    // Protect code before escaping literal stars in the editor's text nodes.
+    html = html.replace(/<code(?: [^>]*)?>(.+?)<\/code>/gi, '`$1`')
+    html = MarkdownUtils.escapeLiteralMarkdownText(html)
 
     // [\s\S]: a soft line break kept from the source may sit inside a tag.
     const markdown = html
@@ -607,7 +610,6 @@ export class MarkdownUtils {
       .replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, '</$1> ')
       .replace(/<(b|strong)(?: [^>]*)?>([\s\S]+?)<\/(b|strong)>/gi, '**$2**')
       .replace(/<(i|em)(?: [^>]*)?>([\s\S]+?)<\/(i|em)>/gi, '_$2_')
-      .replace(/<code(?: [^>]*)?>(.+?)<\/code>/gi, '`$1`')
       .replace(/<s(?: [^>]*)?>([\s\S]+?)<\/s>/gi, '~~$1~~')
       .replace(/<sup(?: [^>]*)?>([\s\S]+?)<\/sup>/gi, '^$1^')
       .replace(/<sub(?: [^>]*)?>([\s\S]+?)<\/sub>/gi, '~$1~')
@@ -628,6 +630,25 @@ export class MarkdownUtils {
     // Straighten AFTER the <code> conversion so code spans (converted
     // elements and literal backticks alike) keep their bytes.
     return MarkdownUtils.normalizeTypography(markdown)
+  }
+
+  private static escapeLiteralMarkdownText(html: string): string {
+    const escapeTextNodes = (text: string): string =>
+      MarkdownUtils.mapHtmlText(text, (prose) =>
+        prose.replace(
+          /(!\[[^\]]*\]\([^)]*\))|([\\*])/g,
+          (match, image: string | undefined) => image ?? '\\' + match,
+        ),
+      )
+
+    let result = ''
+    let cursor = 0
+    for (const [start, end] of MarkdownUtils.protectedRanges(html)) {
+      result += escapeTextNodes(html.slice(cursor, start)) + html.slice(start, end)
+      cursor = end
+    }
+
+    return result + escapeTextNodes(html.slice(cursor))
   }
 
   /**
@@ -817,6 +838,9 @@ export class MarkdownUtils {
     const html = markdown
       .replace(/!\[[^\]]*\]\([^)]*\)/g, (image) => hold(image))
       .replace(/`(.+?)`/g, (_match, code: string) => hold(`<code class="inline-code">${code}</code>`))
+      // A literal star must stay out of the emphasis rules; paired backslashes
+      // consume each other so only an odd backslash run escapes the star.
+      .replace(/\\([\\*])/g, (_match, literal: string) => hold(literal))
       .replace(
         /(#?)\[([^\]]+)\]\(([^){]+?)(?:\s+"([^"]*)")?\)(?:\{([^}]+)\})?/g,
         (_match, hash: string, text: string, href: string, title?: string, attrs?: string) =>

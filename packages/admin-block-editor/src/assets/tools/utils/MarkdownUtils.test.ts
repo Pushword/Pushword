@@ -64,6 +64,60 @@ describe('MarkdownUtils.fixer', () => {
 describe('MarkdownUtils.convertInlineMarkdownToHtml', () => {
   const convert = (markdown: string) => MarkdownUtils.convertInlineMarkdownToHtml(markdown)
 
+  it('displays escaped hotel stars without their Markdown backslashes', () => {
+    expect(convert(String.raw`Nuit en hôtel 2\* ou 3\* en B&B à Moissac.`)).toBe(
+      'Nuit en hôtel 2* ou 3* en B&B à Moissac.',
+    )
+  })
+
+  it('keeps escaped stars literal next to real bold text', () => {
+    expect(convert(String.raw`\*\*littéral\*\* et **gras**`)).toBe('**littéral** et <b>gras</b>')
+  })
+
+  it('leaves star escapes inside code and images alone', () => {
+    expect(convert('`2\\*` ![2\\*](hotel.png)')).toBe(
+      '<code class="inline-code">2\\*</code> ![2\\*](hotel.png)',
+    )
+  })
+
+  it('preserves literal stars and bold after editing and reimporting a paragraph', () => {
+    const html = convert(String.raw`\*\*littéral\*\* et **gras** en hôtel 2\*`)
+    const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(`${html} corrigé`)
+    expect(convert(markdown)).toBe('**littéral** et <b>gras</b> en hôtel 2* corrigé')
+  })
+
+  it('round-trips literal hotel stars from a paragraph DOM innerHTML', () => {
+    const paragraph = document.createElement('p')
+    paragraph.textContent = 'Nuit en hôtel 2* ou 3* en B&B à Moissac.'
+
+    const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(paragraph.innerHTML)
+
+    expect(markdown).toBe(String.raw`Nuit en hôtel 2\* ou 3\* en B&B à Moissac.`)
+    expect(convert(markdown)).toBe(paragraph.textContent)
+  })
+
+  it.each([0, 1, 2, 3])(
+    'round-trips a literal star preceded by %i backslashes',
+    (backslashCount) => {
+      const htmlText = `avant ${'\\'.repeat(backslashCount)}* après`
+      const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(htmlText)
+
+      expect(markdown).toBe(`avant ${'\\'.repeat(backslashCount * 2 + 1)}* après`)
+      expect(convert(markdown)).toBe(htmlText)
+    },
+  )
+
+  it('escapes link text stars while preserving link attributes and code contents', () => {
+    const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(
+      String.raw`<a href="/hotel*">Hôtel 2*</a> et <code>2*\\suite</code>`,
+    )
+
+    expect(markdown).toBe('[Hôtel 2\\*](/hotel*) et `2*\\\\suite`')
+    expect(convert(markdown)).toBe(
+      String.raw`<a href="/hotel*">Hôtel 2*</a> et <code class="inline-code">2*\\suite</code>`,
+    )
+  })
+
   it('does not pair an underscore in a word or a URL with one in a link text', () => {
     expect(convert('le mot_clé, [a](https://x.fr/a_b) puis [_Alpinstore_](https://x.fr)')).toBe(
       'le mot_clé, <a href="https://x.fr/a_b">a</a> puis <a href="https://x.fr"><i>Alpinstore</i></a>',

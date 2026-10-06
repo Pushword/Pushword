@@ -5277,8 +5277,20 @@ var MarkdownUtils = class MarkdownUtils {
 	static convertInlineHtmlToMarkdown(html, cleanup = true) {
 		if (cleanup) html = MarkdownUtils.fixer(html);
 		html = import_he.default.decode(html);
-		const markdown = html.replace(/<(b|strong|em|i|a[^>]*)> /gi, " <$1>").replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, "</$1> ").replace(/<(b|strong)(?: [^>]*)?>([\s\S]+?)<\/(b|strong)>/gi, "**$2**").replace(/<(i|em)(?: [^>]*)?>([\s\S]+?)<\/(i|em)>/gi, "_$2_").replace(/<code(?: [^>]*)?>(.+?)<\/code>/gi, "`$1`").replace(/<s(?: [^>]*)?>([\s\S]+?)<\/s>/gi, "~~$1~~").replace(/<sup(?: [^>]*)?>([\s\S]+?)<\/sup>/gi, "^$1^").replace(/<sub(?: [^>]*)?>([\s\S]+?)<\/sub>/gi, "~$1~").replace(/<u(?: [^>]*)?>([\s\S]+?)<\/u>/gi, "<u>$1</u>").replace(/<small(?: [^>]*)?>([\s\S]+?)<\/small>/gi, "<small>$1</small>").replace(/<mark(?: [^>]*)?>([\s\S]+?)<\/mark>/gi, "<mark>$1</mark>").replace(/<a>([\s\S]*?)<\/a>/gi, "$1").replace(/<a\s+([^>]+)>([\s\S]+?)<\/a>/gi, (_match, attrString, text) => MarkdownUtils.convertAnchorToMarkdown(attrString, text)).replace(/<br\s*\/?>/gi, "\n").replace(/<div>/gi, "\n").replace(/<\/div>/gi, "");
+		html = html.replace(/<code(?: [^>]*)?>(.+?)<\/code>/gi, "`$1`");
+		html = MarkdownUtils.escapeLiteralMarkdownText(html);
+		const markdown = html.replace(/<(b|strong|em|i|a[^>]*)> /gi, " <$1>").replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, "</$1> ").replace(/<(b|strong)(?: [^>]*)?>([\s\S]+?)<\/(b|strong)>/gi, "**$2**").replace(/<(i|em)(?: [^>]*)?>([\s\S]+?)<\/(i|em)>/gi, "_$2_").replace(/<s(?: [^>]*)?>([\s\S]+?)<\/s>/gi, "~~$1~~").replace(/<sup(?: [^>]*)?>([\s\S]+?)<\/sup>/gi, "^$1^").replace(/<sub(?: [^>]*)?>([\s\S]+?)<\/sub>/gi, "~$1~").replace(/<u(?: [^>]*)?>([\s\S]+?)<\/u>/gi, "<u>$1</u>").replace(/<small(?: [^>]*)?>([\s\S]+?)<\/small>/gi, "<small>$1</small>").replace(/<mark(?: [^>]*)?>([\s\S]+?)<\/mark>/gi, "<mark>$1</mark>").replace(/<a>([\s\S]*?)<\/a>/gi, "$1").replace(/<a\s+([^>]+)>([\s\S]+?)<\/a>/gi, (_match, attrString, text) => MarkdownUtils.convertAnchorToMarkdown(attrString, text)).replace(/<br\s*\/?>/gi, "\n").replace(/<div>/gi, "\n").replace(/<\/div>/gi, "");
 		return MarkdownUtils.normalizeTypography(markdown);
+	}
+	static escapeLiteralMarkdownText(html) {
+		const escapeTextNodes = (text) => MarkdownUtils.mapHtmlText(text, (prose) => prose.replace(/(!\[[^\]]*\]\([^)]*\))|([\\*])/g, (match, image) => image ?? "\\" + match));
+		let result = "";
+		let cursor = 0;
+		for (const [start, end] of MarkdownUtils.protectedRanges(html)) {
+			result += escapeTextNodes(html.slice(cursor, start)) + html.slice(start, end);
+			cursor = end;
+		}
+		return result + escapeTextNodes(html.slice(cursor));
 	}
 	/**
 	* Normalize Unicode composition and straighten typographic quotes,
@@ -5427,7 +5439,7 @@ var MarkdownUtils = class MarkdownUtils {
 		const held = [];
 		const hold = (html) => `\u0000${held.push(html) - 1}\u0000`;
 		const restore = (text) => text.replace(/\u0000(\d+)\u0000/g, (_match, index) => restore(held[Number(index)] ?? ""));
-		return restore(markdown.replace(/!\[[^\]]*\]\([^)]*\)/g, (image) => hold(image)).replace(/`(.+?)`/g, (_match, code) => hold(`<code class="inline-code">${code}</code>`)).replace(/(#?)\[([^\]]+)\]\(([^){]+?)(?:\s+"([^"]*)")?\)(?:\{([^}]+)\})?/g, (_match, hash, text, href, title, attrs) => hold(MarkdownUtils.anchorOpeningTag(href, title, attrs, hash === "#")) + text + hold("</a>")).replace(/\*\*([\s\S]+?)\*\*/g, "<b>$1</b>").replace(/(?<![\p{L}\p{N}_])_(?!\s)([\s\S]+?)(?<!\s)_(?![\p{L}\p{N}_])/gu, "<i>$1</i>").replace(/~~([\s\S]+?)~~/g, "<s class=\"cdx-strikethrough\">$1</s>").replace(/(?: {2,}|\\)\n/g, "<br>"));
+		return restore(markdown.replace(/!\[[^\]]*\]\([^)]*\)/g, (image) => hold(image)).replace(/`(.+?)`/g, (_match, code) => hold(`<code class="inline-code">${code}</code>`)).replace(/\\([\\*])/g, (_match, literal) => hold(literal)).replace(/(#?)\[([^\]]+)\]\(([^){]+?)(?:\s+"([^"]*)")?\)(?:\{([^}]+)\})?/g, (_match, hash, text, href, title, attrs) => hold(MarkdownUtils.anchorOpeningTag(href, title, attrs, hash === "#")) + text + hold("</a>")).replace(/\*\*([\s\S]+?)\*\*/g, "<b>$1</b>").replace(/(?<![\p{L}\p{N}_])_(?!\s)([\s\S]+?)(?<!\s)_(?![\p{L}\p{N}_])/gu, "<i>$1</i>").replace(/~~([\s\S]+?)~~/g, "<s class=\"cdx-strikethrough\">$1</s>").replace(/(?: {2,}|\\)\n/g, "<br>"));
 	}
 	static {
 		this.prettierPromise = null;

@@ -512,11 +512,16 @@ final readonly class TempestParsedMarkdownRenderer
             }
 
             foreach (explode("\n", rtrim($source, "\n")) as $item) {
-                if ('ol' === $listTag && 1 !== preg_match('/^[0-9]{1,9}\. (.+)$/D', $item, $matches)) {
-                    return null;
+                if ('ol' === $listTag) {
+                    if (1 !== preg_match('/^[0-9]{1,9}\. (.+)$/D', $item, $listItemMatches)) {
+                        return null;
+                    }
+
+                    $content = $listItemMatches[1];
+                } else {
+                    $content = substr($item, 2);
                 }
 
-                $content = 'ul' === $listTag ? substr($item, 2) : $matches[1];
                 if (! $this->isCompatibleSingleLine($content, false)) {
                     return null;
                 }
