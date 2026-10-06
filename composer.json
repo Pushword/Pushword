@@ -145,7 +145,6 @@
     "symfony/profiler-pack": "*",
     "symfony/stimulus-bundle": "^2.23 || ^3.0",
     "tomasvotruba/type-coverage": "^2.2",
-    "tomasvotruba/unused-public": "^2.0",
     "vincentlanglet/twig-cs-fixer": "*",
     "webklex/php-imap": "^6.2"
   },

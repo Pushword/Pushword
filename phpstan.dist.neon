@@ -7,7 +7,6 @@ includes:
     - vendor/phpstan/phpstan-strict-rules/rules.neon
     - vendor/phpstan/phpstan-symfony/extension.neon
     - vendor/phpstan/phpstan-symfony/rules.neon
-    - vendor/tomasvotruba/unused-public/config/extension.neon
     - vendor/tomasvotruba/type-coverage/config/extension.neon
 
 parameters:
@@ -74,10 +73,6 @@ parameters:
         consoleApplicationLoader: packages/dev-app/bin/console-test.php
     doctrine:
         objectManagerLoader: packages/dev-app/bin/object-test.php
-    unused_public:
-        methods: false
-        properties: false
-        constants: false
     ignoreErrors:
         - '#Short ternary operator is not allowed#'
         # MediaStorageAdapter wraps Flysystem stream methods: `resource` has no native PHP type hint,
