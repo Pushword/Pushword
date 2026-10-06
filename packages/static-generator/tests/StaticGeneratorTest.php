@@ -760,6 +760,35 @@ final class StaticGeneratorTest extends KernelTestCase
     }
 
     /**
+     * Both server configs have to offer the brotli sidecar before the zstd one: brotli
+     * is written at quality 11 and zstd at its default level, so brotli is consistently
+     * the smaller file (pinned by CompressorTest).
+     *
+     * Caddy negotiates on the order of `encode`, not on the order of `precompressed`,
+     * which only declares which variants exist on disk. Apache stops at the first
+     * matching `RewriteRule`, so there the order of the rules is what decides.
+     */
+    public function testGeneratedServerConfigsPreferBrotliOverZstd(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $this->getGenerator(CaddyfileGenerator::class)->generate('localhost.dev');
+        $this->getGenerator(HtaccessGenerator::class)->generate('localhost.dev');
+
+        $caddyfile = (string) file_get_contents($this->getStaticDir().'/.Caddyfile');
+        self::assertStringContainsString('encode br zstd gzip', $caddyfile);
+        self::assertStringContainsString('precompressed br zstd gzip', $caddyfile);
+
+        $htaccess = (string) file_get_contents($this->getStaticDir().'/.htaccess');
+        self::assertMatchesRegularExpression(
+            '/\$1\.br \[L\].*\$1\.zst \[L\]/s',
+            $htaccess,
+            'Apache stops at the first matching rewrite, so the brotli rule has to come first.',
+        );
+    }
+
+    /**
      * Caddy evaluates the matchers of one named set in non-deterministic order (a Go
      * map walk, caddyserver/caddy#6904), so a `file` submatcher reading {re.webp.1}
      * from its path_regexp sibling probes garbage (/media/.jpg) on the config loads

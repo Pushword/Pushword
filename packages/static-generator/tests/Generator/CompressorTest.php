@@ -78,13 +78,7 @@ final class CompressorTest extends TestCase
     {
         $compressor = $this->compressorWithAvailableAlgorithm();
 
-        // Repeated HTML should always become smaller.
-        $testFile = $this->tempDir.'/large-test.html';
-        $content = '<!DOCTYPE html><html><head><title>Test</title></head><body>';
-        $content .= str_repeat('<div class="content"><p>This is a test paragraph with repeated content.</p></div>', 500);
-        $content .= '</body></html>';
-        $this->filesystem->dumpFile($testFile, $content);
-
+        $testFile = $this->dumpRepeatedHtmlPage('large-test.html');
         $originalSize = filesize($testFile);
 
         foreach ($compressor->availableCompressors as $algorithm) {
@@ -102,6 +96,35 @@ final class CompressorTest extends TestCase
 
             $this->filesystem->remove($compressedFile);
         }
+    }
+
+    /**
+     * The generated server configs offer brotli before zstd, which only pays off while
+     * the brotli sidecar stays the smaller of the two. They are not written at comparable
+     * effort: brotli runs at its CLI default quality 11, zstd at its default level 3
+     * (`--zstd=wlog=23` only caps the window). Lowering the brotli quality or raising the
+     * zstd level inverts that premise, and the configs then serve the larger variant to
+     * every client advertising zstd.
+     */
+    public function testBrotliSidecarIsNotLargerThanTheZstdOne(): void
+    {
+        $compressor = $this->compressorWithAvailableAlgorithm();
+        $page = $this->dumpRepeatedHtmlPage('negotiation-order.html');
+
+        $brotliSize = $this->compressAndMeasureSidecar($compressor, $page, CompressionAlgorithm::Brotli);
+        $zstdSize = $this->compressAndMeasureSidecar($compressor, $page, CompressionAlgorithm::Zstd);
+
+        if (null === $brotliSize || null === $zstdSize) {
+            // Only one of the two binaries is installed here, so there is nothing to
+            // compare; the sidecar that was written is already measured above.
+            return;
+        }
+
+        self::assertLessThanOrEqual(
+            $zstdSize,
+            $brotliSize,
+            'Brotli is offered first (`encode br zstd gzip`), so its sidecar has to stay the smaller one.',
+        );
     }
 
     public function testMultipleCompressionProcessesRunInParallel(): void
@@ -185,6 +208,49 @@ final class CompressorTest extends TestCase
         $compressor->waitForCompressionToFinish();
 
         self::assertFileExists($testFile.$algorithm->getExtension());
+    }
+
+    /**
+     * Compresses the page and asserts the sidecar is smaller than it.
+     *
+     * @return int|null the sidecar's size, or null when that compressor is not
+     *                  installed on this host
+     */
+    private function compressAndMeasureSidecar(Compressor $compressor, string $page, CompressionAlgorithm $algorithm): ?int
+    {
+        if (! \in_array($algorithm, $compressor->availableCompressors, true)) {
+            return null;
+        }
+
+        $compressor->compress($page, $algorithm);
+        $compressor->waitForCompressionToFinish();
+
+        $size = (int) filesize($page.$algorithm->getExtension());
+        self::assertLessThan(
+            (int) filesize($page),
+            $size,
+            \sprintf('The %s sidecar should be smaller than the page it compresses.', $algorithm->value),
+        );
+
+        return $size;
+    }
+
+    /**
+     * Dumps a page made of repeated HTML, so it always compresses well and every
+     * algorithm gets the same redundancy to work with.
+     *
+     * @return string the path of the dumped page
+     */
+    private function dumpRepeatedHtmlPage(string $fileName): string
+    {
+        $content = '<!DOCTYPE html><html><head><title>Test</title></head><body>';
+        $content .= str_repeat('<div class="content"><p>This is a test paragraph with repeated content.</p></div>', 500);
+        $content .= '</body></html>';
+
+        $page = $this->tempDir.'/'.$fileName;
+        $this->filesystem->dumpFile($page, $content);
+
+        return $page;
     }
 
     private function compressorWithAvailableAlgorithm(): Compressor

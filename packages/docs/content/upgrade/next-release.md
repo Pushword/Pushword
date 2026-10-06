@@ -1,5 +1,6 @@
 ---
-title: ''
+title: 'static sites serve brotli before zstd'
+run: 'pw:static'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +35,10 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/static-generator`
+
+## Brotli before zstd
+
+The generated `.Caddyfile` and `.htaccess` now prefer the brotli sidecar over the zstd
+one. Run `pw:static` to regenerate both files, then reload the web server.

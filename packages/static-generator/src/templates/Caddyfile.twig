@@ -1,8 +1,12 @@
+{# Brotli first: `pw:static` writes the brotli sidecar at quality 11 and the zstd one at
+   its default level, so brotli is consistently the smaller file, and the bytes it saves
+   outweigh zstd's faster decoding. Caddy negotiates on the order of `encode`, not on
+   the order of `precompressed`, so reordering the latter alone changes nothing. #}
 (performance_{{ domain_snake }}) {
-	encode zstd br gzip
+	encode br zstd gzip
 
 	file_server {
-		precompressed zstd br gzip
+		precompressed br zstd gzip
 	}
 }
 

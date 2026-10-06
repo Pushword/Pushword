@@ -96,20 +96,20 @@ ErrorDocument 500 /404
 RewriteRule ^\.Caddyfile$ - [F]
 
 #---
-# Precompressed Files (Zstandard, Brotli & Gzip)
+# Precompressed Files (Brotli, Zstandard & Gzip)
+# Brotli first: `pw:static` writes the brotli sidecar at quality 11 and the zstd one
+# at its default level, so brotli is consistently the smaller file. Apache stops at
+# the first rule that matches, so this order is what picks the encoding served.
 #---
 <IfModule mod_rewrite.c>
-    # Check for Zstandard support (priority: zstd > brotli > gzip)
-    RewriteCond %{HTTP:Accept-Encoding} zstd
-    RewriteCond %{REQUEST_FILENAME}.zst -f
-    RewriteRule ^(.*)$ $1.zst [L]
-
-    # Check for Brotli support
     RewriteCond %{HTTP:Accept-Encoding} br
     RewriteCond %{REQUEST_FILENAME}.br -f
     RewriteRule ^(.*)$ $1.br [L]
 
-    # Check for Gzip support
+    RewriteCond %{HTTP:Accept-Encoding} zstd
+    RewriteCond %{REQUEST_FILENAME}.zst -f
+    RewriteRule ^(.*)$ $1.zst [L]
+
     RewriteCond %{HTTP:Accept-Encoding} gzip
     RewriteCond %{REQUEST_FILENAME}.gz -f
     RewriteRule ^(.*)$ $1.gz [L]
