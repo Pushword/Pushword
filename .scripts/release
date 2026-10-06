@@ -72,7 +72,7 @@ if ! git diff --quiet -- "$NOTE_DRAFT" || ! git diff --cached --quiet -- "$NOTE_
     exit 1
 fi
 
-# Promote the drafted upgrade note to rc<N> and index it, before the tag is cut
+# Promote the drafted upgrade note to upgrade/<version>.md and index it, before the tag is cut
 set +e
 php ./.scripts/release-upgrade-note "$NEW_TAG"
 NOTE_STATUS=$?

@@ -110,8 +110,8 @@ UI/templates/CSS: consult `packages/core/DesignGuidelines.md` (Tailwind, public 
   Does your change ask something of a site that upgrades — a command to run, a config
   key, a template to copy, a behaviour that changed under an unchanged call? Then write
   it into `upgrade/next-release.md` in the same commit; the format is in that file.
-  `.scripts/release` renames it to `rc<N>.md` and adds its index row at the tag, so
-  never create `rc<N>.md` or edit the table by hand.
+  `.scripts/release` renames it to `upgrade/<version>.md` and adds its index row at the
+  tag, so never create a versioned note or edit the table by hand.
 
 ## For AI agents on a downstream Pushword site
 
