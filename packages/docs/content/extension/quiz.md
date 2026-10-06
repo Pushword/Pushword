@@ -9,10 +9,9 @@ filter_twig: 0
 revision: af539a6039be5151f3c1bfebe3f21dc685a22880 # read only
 ---
 
-Add interactive, client-side quizzes (QCM) to any page. A quiz works almost
-without a server: it is declared inline in the page content and runs in the
-browser. A conversion form (via [Conversation](/extension/conversation)) can be branched at
-the end.
+Interactive quizzes (QCM) and personality tests, declared inline in a page and
+run in the browser. A [Conversation](/extension/conversation) form can close
+the quiz to capture leads.
 
 ## Install
 
@@ -26,8 +25,7 @@ personality test) and `bin/console assets:install`.
 
 ## Declare a quiz
 
-Declare a quiz inline in a page's content. The payload is a JSON object; there
-are two equivalent ways to write it.
+The payload is a JSON object, written in one of two equivalent forms.
 
 **Recommended — the `{% quiz %}` block.** The JSON is the raw tag body, so
 apostrophes and quotes need **no escaping** and the JSON stays readable/diffable:
@@ -56,8 +54,8 @@ author a flat file by hand, prefer the `{% quiz %}` block and lint it with
 > lines** (compact or pretty-printed without empty lines): the Markdown pipeline
 > splits content on blank lines, which would cut the block in two.
 
-A missing or unknown media file no longer 500s the page: the illustration is
-skipped (admins see an inline warning) and the rest of the quiz still renders.
+A missing or unknown media file is skipped (admins see an inline warning); the
+rest of the quiz still renders.
 
 Visitors select an answer, can change their selection, then choose **Confirm answer**
 to validate it and advance. Validation locks that question and reveals its feedback
@@ -126,7 +124,6 @@ selector. Add a `levels` array: each entry is a **complete quiz of its own**
 - Each level keeps its **own** percentile and lead attribution (the score store
   key and the Conversation `referring` are discriminated per level), so an Easy
   score never dilutes a Hard one.
-- A quiz **without** `levels` renders exactly as before — zero change.
 
 In the EditorJS block, pick *"Knowledge quiz with difficulty levels"* in the
 **Type** selector to edit one full sub-quiz per level.
@@ -207,8 +204,6 @@ twig:
 | `pwQuizCtaClass` / `pwQuizCtaTitleClass` | CTA block and its title |
 | `pwQuizTabsClass` / `pwQuizTabClass` | difficulty tablist and its tabs |
 
-Two constraints worth knowing:
-
 - **It must be a global, not a render variable.** Most of the markup is built in
   `{% macro %}`, and a macro sees no render context — only globals reach inside.
 - **The value is HTML-escaped.** An arbitrary variant containing `&` or `>`
@@ -258,11 +253,22 @@ accepted answer, so that markup would be misleading.
 
 ## Percentile & leads
 
-On completion the browser posts the score (in %) to `POST /quiz/result`, which
-returns the percentile ("better than X% of participants"). This store is
-anonymous (no PII). If a `cta` is set, the Conversation form is shown at the end,
-pre-filled from a previously stored identity (localStorage); the lead is tagged
-with the quiz via the `referring` field.
+On completion the browser posts the attempt to `POST /quiz/result` and gets back
+the percentile ("better than X% of participants"), or `{ share }` for a
+personality test. The body is `{ quiz, score }` (a percentage) or
+`{ quiz, result }` (a profile key), plus the required `signature` the renderer
+prints into the quiz config — an HMAC of the host and quiz slug on the kernel
+secret, so only quizzes the site rendered are recorded (`403` otherwise) — and
+optional `answers` (`[{q, a}]`). The endpoint is rate-limited per IP (`429`) and stores no PII:
+answers are never persisted.
+
+Listen to `Pushword\Quiz\Event\QuizCompletedEvent` to act on an attempt — host,
+quiz, mode, profile or score, and the chosen answers — for instance to enrich a
+logged-in visitor's account under your own consent rules.
+
+If a `cta` is set, the Conversation form is shown at the end, pre-filled from a
+previously stored identity (localStorage); the lead is tagged with the quiz via
+the `referring` field.
 
 ## Read the results from the API
 
