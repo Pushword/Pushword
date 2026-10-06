@@ -9,6 +9,7 @@ use Pushword\Core\Router\PushwordRouteGenerator;
 
 trait GenerateLivePathForTrait
 {
+    /** @api Router supplied by the generator using this trait. */
     protected PushwordRouteGenerator $router;
 
     /**

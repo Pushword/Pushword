@@ -118,6 +118,11 @@ Configure the bundle directly in app configuration
     conversation_notification_interval: "PT1S" #each 1s, default 1 time per day
 ```
 
+Per-message notifications are sent automatically for valid author email addresses.
+For summaries of messages without an author email, schedule calls to the
+`Pushword\Conversation\Service\NewMessageMailNotifier::send()` service method;
+`conversation_notification_interval` limits how often these summaries are sent.
+
 ## Customization
 
 ## Small rendering customization

@@ -7,6 +7,7 @@ namespace Pushword\Core\Component\EntityFilter;
 use Pushword\Core\Event\PushwordEvents;
 use Symfony\Contracts\EventDispatcher\Event;
 
+/** @api */
 final class FilterEvent extends Event
 {
     public const string NAME_BEFORE = PushwordEvents::FILTER_BEFORE;

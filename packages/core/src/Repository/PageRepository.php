@@ -111,8 +111,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     }
 
     /**
-     * Preload all pages for a host into the slug cache.
-     * Call this before batch operations (static generation, page scanning) to avoid N+1 queries.
+     * @api Explicit host-wide preloading for batch operations in site extensions.
      */
     public function warmupSlugCache(string $host): void
     {
@@ -396,8 +395,6 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
         return $page;
     }
-
-    protected bool $hostCanBeNull = false;
 
     /**
      * Can be used via a twig function.
@@ -799,21 +796,6 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         }
 
         return $queryBuilder;
-    }
-
-    /**
-     * Used in admin PageCrudController.
-     *
-     * @return Page[]
-     */
-    public function getPagesWithoutParent(): array
-    {
-        $query = $this->createQueryBuilder('p')
-            ->andWhere('p.parentPage is NULL')
-            ->orderBy('p.slug', 'DESC')
-            ->getQuery();
-
-        return $query->getResult();
     }
 
     /**

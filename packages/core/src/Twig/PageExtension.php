@@ -22,7 +22,6 @@ use Pushword\Core\Query\Group;
 use Pushword\Core\Query\Search\PageSearchVocabulary;
 use Pushword\Core\Query\Search\SearchParser;
 use Pushword\Core\Repository\PageRepository;
-use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkCollectorService;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -34,7 +33,6 @@ final class PageExtension
 {
     public function __construct(
         private readonly PageRepository $pageRepo,
-        public PushwordRouteGenerator $router,
         private readonly SiteRegistry $apps,
         public Twig $twig,
         private readonly RouteGeneratorFactoryInterface $routeGeneratorFactory,

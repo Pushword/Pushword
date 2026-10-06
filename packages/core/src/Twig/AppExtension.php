@@ -15,14 +15,12 @@ use Pushword\Core\Utils\HtmlBeautifer;
 use Symfony\Bundle\SecurityBundle\Security;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Attribute\AsTwigFunction;
-use Twig\Environment as Twig;
 
 final class AppExtension
 {
     public function __construct(
         public PushwordRouteGenerator $router,
         private SiteRegistry $apps,
-        public Twig $twig,
         private Security $security,
         private LinkCollectorService $linkCollector,
         private Date $dateFilter,

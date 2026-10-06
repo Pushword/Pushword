@@ -269,14 +269,6 @@ final class ImageCacheManager
     }
 
     /**
-     * @param array<string, array<string, mixed>> $filters
-     */
-    public function setFilters(array $filters): void
-    {
-        $this->filterSets = $filters;
-    }
-
-    /**
      * @return array<string, array<string, mixed>>
      */
     public function getFilterSets(): array

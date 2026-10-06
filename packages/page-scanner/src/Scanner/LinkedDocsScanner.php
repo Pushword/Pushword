@@ -46,8 +46,6 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     private array $crawlableLinks = [];
 
-    private int $linksCheckedCounter = 0;
-
     private ?DomCrawler $domPage = null;
 
     /** @var array<string, true>|null */
@@ -111,11 +109,6 @@ final class LinkedDocsScanner extends AbstractScanner
         $this->collectedExternalUrls = [];
     }
 
-    public function disableCollectMode(): void
-    {
-        $this->collectMode = false;
-    }
-
     /**
      * Enable deferred external mode: returns internal errors immediately
      * while collecting external URLs for later parallel validation.
@@ -141,11 +134,6 @@ final class LinkedDocsScanner extends AbstractScanner
     public function enableCheckUnpublished(): void
     {
         $this->checkUnpublished = true;
-    }
-
-    public function disableCheckUnpublished(): void
-    {
-        $this->checkUnpublished = false;
     }
 
     /**
@@ -244,7 +232,6 @@ final class LinkedDocsScanner extends AbstractScanner
     {
         $this->toIgnore = [...$this->linksToIgnore, ...$this->getPageScanLinksToIgnore()];
 
-        $this->linksCheckedCounter = 0;
         $this->crawlableLinks = [];
 
         if ($this->page->hasRedirection()) {
@@ -484,18 +471,12 @@ final class LinkedDocsScanner extends AbstractScanner
             && $target->hasNoindex();
     }
 
-    public function getLinksCheckedCounter(): int
-    {
-        return $this->linksCheckedCounter;
-    }
-
     /**
      * @param array<mixed> $linkedDocs
      */
     private function checkLinkedDocs(array $linkedDocs): void
     {
         foreach ($linkedDocs as $linkedDoc) {
-            ++$this->linksCheckedCounter;
             if (! \is_string($linkedDoc)) {
                 continue; // TODO Log ?!
             }

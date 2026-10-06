@@ -26,6 +26,8 @@ final readonly class ManagerPool
     }
 
     /**
+     * @api Legacy property access for custom filters.
+     *
      * @return mixed|Manager
      */
     public function getProperty(Page $page, string $property = ''): mixed

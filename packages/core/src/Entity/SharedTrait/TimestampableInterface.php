@@ -6,6 +6,7 @@ namespace Pushword\Core\Entity\SharedTrait;
 
 use DateTimeInterface;
 
+/** @api */
 interface TimestampableInterface
 {
     public DateTimeInterface $createdAt { get; set; }

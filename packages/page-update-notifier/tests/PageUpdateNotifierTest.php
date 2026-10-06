@@ -7,10 +7,8 @@ namespace Pushword\PageUpdateNotifier\Tests;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Error;
 use Nette\Utils\FileSystem;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\Email\NotificationEmailSender;
@@ -20,8 +18,6 @@ use Pushword\PageUpdateNotifier\PageUpdateNotifier;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
-use Symfony\Component\Validator\Context\ExecutionContextInterface;
-use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
 
 #[Group('integration')]
 final class PageUpdateNotifierTest extends KernelTestCase
@@ -173,24 +169,5 @@ final class PageUpdateNotifierTest extends KernelTestCase
         $stub->method('send')->willReturn(null);
 
         return $stub;
-    }
-
-    /** @return ExecutionContextInterface&MockObject */
-    protected function getExceptionContextInterface(): MockObject
-    {
-        $mockConstraintViolationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
-        $mockConstraintViolationBuilder->method('atPath')->willReturnSelf();
-        $mockConstraintViolationBuilder->method('addViolation')->willReturnSelf();
-
-        $mock = $this->createMock(ExecutionContextInterface::class);
-        $mock->method('buildViolation')->willReturnCallback(static function (string $arg) use ($mockConstraintViolationBuilder): MockObject {
-            if (\in_array($arg, ['pageCustomPropertiesMalformed', 'pageCustomPropertiesNotStandAlone'], true)) {
-                throw new Error();
-            }
-
-            return $mockConstraintViolationBuilder;
-        });
-
-        return $mock;
     }
 }

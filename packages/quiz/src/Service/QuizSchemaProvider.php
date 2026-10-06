@@ -20,13 +20,4 @@ final class QuizSchemaProvider
     {
         return trim(file_get_contents(self::SCHEMA_PATH));
     }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(): array
-    {
-        /** @var array<string, mixed> */
-        return json_decode($this->json(), true, flags: \JSON_THROW_ON_ERROR);
-    }
 }

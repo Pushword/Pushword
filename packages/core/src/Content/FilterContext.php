@@ -9,6 +9,8 @@ use Pushword\Core\Site\SiteConfig;
 
 /**
  * Immutable context passed to filters during content processing.
+ *
+ * @api
  */
 final readonly class FilterContext
 {

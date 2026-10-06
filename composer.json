@@ -180,6 +180,7 @@
   },
   "autoload-dev": {
     "psr-4": {
+      "Pushword\\PHPStan\\": ".scripts/phpstan",
       "App\\": "packages/dev-app/src",
       "Pushword\\Admin\\Tests\\": "packages/admin/tests",
       "Pushword\\Api\\Tests\\": "packages/api/tests",

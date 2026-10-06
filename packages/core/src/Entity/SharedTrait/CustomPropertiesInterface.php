@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Entity\SharedTrait;
 
+/** @api */
 interface CustomPropertiesInterface
 {
     /** @var array<mixed> */

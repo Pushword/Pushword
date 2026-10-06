@@ -20,6 +20,7 @@ use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
 
 $paths = [
     __DIR__.'/packages',
+    __DIR__.'/.scripts/phpstan',
     __DIR__.'/monorepo-builder.php',
     __DIR__.'/.php-cs-fixer.dist.php',
     __DIR__.'/rector.php',

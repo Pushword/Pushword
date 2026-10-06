@@ -44,11 +44,6 @@ class CampaignRecipient implements IdInterface
     ) {
     }
 
-    public function isPending(): bool
-    {
-        return RecipientState::Pending === $this->state;
-    }
-
     /** Follow the row a merge kept — see {@see \Pushword\Newsletter\Service\ContactMerger}. */
     public function moveTo(Contact $contact): void
     {

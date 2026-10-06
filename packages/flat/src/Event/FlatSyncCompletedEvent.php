@@ -6,6 +6,7 @@ namespace Pushword\Flat\Event;
 
 use Symfony\Contracts\EventDispatcher\Event;
 
+/** @api */
 final class FlatSyncCompletedEvent extends Event
 {
     public function __construct(

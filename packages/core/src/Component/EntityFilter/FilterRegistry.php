@@ -64,9 +64,4 @@ final class FilterRegistry
 
         return lcfirst($shortName);
     }
-
-    public function hasFilter(string $nameOrClass): bool
-    {
-        return null !== $this->getFilter($nameOrClass);
-    }
 }

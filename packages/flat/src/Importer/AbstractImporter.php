@@ -21,6 +21,8 @@ abstract class AbstractImporter
     }
 
     /**
+     * @api Importer contract implemented by each entity importer.
+     *
      * @return bool true if the file was actually imported, false if skipped
      */
     abstract public function import(string $filePath, DateTimeInterface $lastEditDateTime): bool;

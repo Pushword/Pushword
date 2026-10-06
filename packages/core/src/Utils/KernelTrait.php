@@ -14,8 +14,6 @@ trait KernelTrait
 
     protected static ?KernelInterface $debugKernel = null;
 
-    protected KernelInterface $kernel;
-
     public static function loadKernel(KernelInterface $kernel): void
     {
         if (null === static::$appKernel) {

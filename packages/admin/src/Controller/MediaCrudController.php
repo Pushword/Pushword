@@ -28,9 +28,7 @@ use Pushword\Admin\Filter\MediaPageTagFilter;
 use Pushword\Admin\Filter\MediaSearchFilter;
 use Pushword\Admin\Filter\MediaTagFilter;
 use Pushword\Admin\Filter\MediaUsageFilter;
-use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageRotator;
 use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Repository\MediaRepository;
@@ -44,8 +42,6 @@ use Symfony\Component\HttpFoundation\Response;
 /** @extends AbstractAdminCrudController<Media> */
 class MediaCrudController extends AbstractAdminCrudController
 {
-    public const string MESSAGE_PREFIX = 'admin.media';
-
     private const string VIEW_TABLE = 'table';
 
     private const string VIEW_MOSAIC = 'mosaic';
@@ -53,7 +49,6 @@ class MediaCrudController extends AbstractAdminCrudController
     private const string VIEW_SESSION_KEY = 'pw_media_view';
 
     public function __construct(
-        private readonly ImageCacheManager $imageCacheManager,
         private readonly MediaRepository $mediaRepo,
         private readonly MediaUsageRepository $mediaUsageRepo,
         private readonly PageRepository $pageRepository,
@@ -78,7 +73,6 @@ class MediaCrudController extends AbstractAdminCrudController
 
         $instance = $this->getContext()?->getEntity()?->getInstance();
         $this->setSubject($instance instanceof Media ? $instance : new Media());
-        $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
 
         $fields = array_replace(
             [[], [], []],
@@ -300,19 +294,6 @@ class MediaCrudController extends AbstractAdminCrudController
         $filters->add(MediaUsageFilter::new($this->mediaRepo, 'adminMediaUsageLabel'));
 
         return $filters;
-    }
-
-    public function getThumbnailUrl(?Media $media): string
-    {
-        if (null === $media) {
-            return Thumb::$thumb;
-        }
-
-        if (! $media->isImage()) {
-            return Thumb::$thumb;
-        }
-
-        return $this->imageCacheManager->getBrowserPath($media, 'md');
     }
 
     /**

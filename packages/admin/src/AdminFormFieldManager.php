@@ -55,25 +55,6 @@ class AdminFormFieldManager
         return $user instanceof User ? $user : null;
     }
 
-    public function getEntityManager(): EntityManagerInterface
-    {
-        return $this->em;
-    }
-
-    private string $messagePrefix = '';
-
-    public function getMessagePrefix(): string
-    {
-        return $this->messagePrefix;
-    }
-
-    public function setMessagePrefix(string $messagePrefix): self
-    {
-        $this->messagePrefix = $messagePrefix;
-
-        return $this;
-    }
-
     /**
      * @template T of object
      *

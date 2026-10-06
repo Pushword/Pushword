@@ -10,6 +10,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @template T of object
+ *
+ * @api
  */
 interface AdminInterface
 {

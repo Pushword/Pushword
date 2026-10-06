@@ -12,6 +12,7 @@ use Symfony\Component\Process\Process;
 
 class Mozjpeg extends BaseOptimizer
 {
+    /** @api Executable read by BaseOptimizer. */
     public string $binaryName = 'cjpeg';
 
     public function canHandle(Image $image): bool

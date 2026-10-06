@@ -10,6 +10,8 @@ namespace Pushword\Core\Query\Field;
  * One registry per entity filtered — pages in core, contacts in the newsletter —
  * behind one interface, so {@see \Pushword\Core\Query\QueryCompiler} walks a
  * tree without knowing which entity it is about.
+ *
+ * @api
  */
 interface FieldRegistry
 {

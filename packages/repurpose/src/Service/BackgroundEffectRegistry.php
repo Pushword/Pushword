@@ -85,12 +85,4 @@ final class BackgroundEffectRegistry
     {
         return self::PATTERNS[$key] ?? null;
     }
-
-    /**
-     * @return array<string, array{label: string, category: string, type: string}>
-     */
-    public function all(): array
-    {
-        return self::EFFECTS;
-    }
 }

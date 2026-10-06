@@ -11,13 +11,6 @@ use Pushword\Admin\FormField\AbstractField;
  */
 class FormFieldReplacer
 {
-    private int $replaced = 0;
-
-    public function count(): int
-    {
-        return $this->replaced;
-    }
-
     /**
      * @param class-string<AbstractField<T>>[]|array<class-string<AbstractField<T>>[]>|array{0: class-string<AbstractField<T>>[], 1: (class-string<AbstractField<T>>[] | array<string, (class-string<AbstractField<T>>[] | array{fields: class-string<AbstractField<T>>[], expand: bool})>), 2: class-string<AbstractField<T>>[]} $fields
      */
@@ -31,7 +24,6 @@ class FormFieldReplacer
             }
 
             if ($formFieldClass === $fields[$k]) {
-                ++$this->replaced;
                 $fields[$k] = $newFormFieldClass;  // @phpstan-ignore-line
 
                 break;

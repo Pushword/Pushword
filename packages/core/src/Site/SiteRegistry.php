@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Site;
 
-use Deprecated;
 use Exception;
 use LogicException;
 use Pushword\Core\Entity\Page;
@@ -185,11 +184,6 @@ final class SiteRegistry implements ResetInterface
         return $this->get('' === $host ? null : $host);
     }
 
-    public function getAppValue(string $key, string $host = ''): mixed
-    {
-        return $this->getApp($host)->get($key);
-    }
-
     public function switchSite(Page|string $host): self
     {
         $this->context()->switchSite($host);
@@ -213,14 +207,6 @@ final class SiteRegistry implements ResetInterface
     public function requirePage(): Page
     {
         return $this->context()->requirePage();
-    }
-
-    #[Deprecated(message: 'Use RequestContext::setRequestContext() directly')]
-    public function setRequestContextData(string $host, string $route = '', string $slug = '', int $pager = 1): self
-    {
-        $this->context()->setRequestContext($host, $route, $slug, $pager);
-
-        return $this;
     }
 
     public function getCurrentHost(): ?string

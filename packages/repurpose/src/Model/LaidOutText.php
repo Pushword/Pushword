@@ -31,14 +31,4 @@ final readonly class LaidOutText
     {
         return \count($this->lines) * $this->lineHeight;
     }
-
-    public function maxWidth(): float
-    {
-        $max = 0.0;
-        foreach ($this->lines as $line) {
-            $max = max($max, $line->width);
-        }
-
-        return $max;
-    }
 }

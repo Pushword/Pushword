@@ -48,10 +48,10 @@ composer stan
 ```
 
 PHPStan includes [ShipMonk's dead code detector](https://github.com/shipmonk-rnd/dead-code-detector).
-Existing findings are recorded in `phpstan-dead-code-baseline.neon`; new findings fail
-`composer stan`. Review each finding before changing the baseline: public extension
-points and framework callbacks can be used outside the scanned PHP code. Remove an
-entry when its finding is resolved rather than regenerating the baseline for new code.
+Unused internal members fail `composer stan`. The configuration recognizes EasyAdmin
+routes, service listener tags and the starter project's Composer hooks. Public extension
+contracts use `@api` PHPDoc to account for downstream callers. Use that tag only for
+supported APIs; remove obsolete internal code rather than adding ignores or a baseline.
 
 ### Tests
 

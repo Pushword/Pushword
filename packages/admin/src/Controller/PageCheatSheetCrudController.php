@@ -16,8 +16,6 @@ class PageCheatSheetCrudController extends PageCrudController
 
     protected const string FORM_FIELD_KEY = 'admin_redirection_form_fields';
 
-    protected const string MESSAGE_PREFIX = 'admin.page';
-
     #[Override]
     public function configureCrud(Crud $crud): Crud
     {
@@ -35,8 +33,6 @@ class PageCheatSheetCrudController extends PageCrudController
     {
         $instance = $this->getContext()?->getEntity()?->getInstance();
         $this->setSubject($instance instanceof Page ? $instance : new Page());
-
-        $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
 
         $formFieldKey = static::FORM_FIELD_KEY;
         $fields = array_replace(

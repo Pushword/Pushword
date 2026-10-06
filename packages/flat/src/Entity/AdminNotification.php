@@ -67,19 +67,4 @@ class AdminNotification
 
         return $this;
     }
-
-    public function isConflict(): bool
-    {
-        return self::TYPE_CONFLICT === $this->type;
-    }
-
-    public function isSyncError(): bool
-    {
-        return self::TYPE_SYNC_ERROR === $this->type;
-    }
-
-    public function isLockInfo(): bool
-    {
-        return self::TYPE_LOCK_INFO === $this->type;
-    }
 }

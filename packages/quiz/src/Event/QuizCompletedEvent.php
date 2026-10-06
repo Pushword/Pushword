@@ -19,6 +19,8 @@ use Symfony\Contracts\EventDispatcher\Event;
  * job, in the host application, under its own consent rules.
  *
  * @phpstan-type QuizAnswer array{q: string, a: string}
+ *
+ * @api
  */
 final class QuizCompletedEvent extends Event
 {

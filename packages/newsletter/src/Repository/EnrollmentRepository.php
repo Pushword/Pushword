@@ -64,11 +64,6 @@ class EnrollmentRepository extends ServiceEntityRepository
         return $counts;
     }
 
-    public function findOneFor(Contact $contact, Automation $automation): ?Enrollment
-    {
-        return $this->findOneBy(['contact' => $contact, 'automation' => $automation]);
-    }
-
     /** @return list<Enrollment> */
     public function findActiveFor(Contact $contact): array
     {

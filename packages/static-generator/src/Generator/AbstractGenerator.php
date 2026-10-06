@@ -60,7 +60,6 @@ abstract class AbstractGenerator implements GeneratorInterface
         $this->publicDir = $params->get('pw.public_dir');
 
         static::loadKernel($kernel);
-        $this->kernel = $kernel;
 
         // The sub-kernel renders pages directly, and other routes or HTTP error
         // responses through handle().
@@ -142,13 +141,6 @@ abstract class AbstractGenerator implements GeneratorInterface
         $appGenerators = $this->app->getArray('static_generators');
 
         return in_array($generatorClass, $appGenerators, true);
-    }
-
-    protected function copy(string $file): void
-    {
-        if ($this->filesystem->exists($file)) {
-            $this->filesystem->copy($this->publicDir.'/'.$file, $this->getStaticDir().'/'.$file);
-        }
     }
 
     public function setStaticDirOverride(string $dir): void

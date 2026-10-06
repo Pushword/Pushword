@@ -21,10 +21,12 @@ final class Manager
     {
     }
 
+    /** @api Page exposed to custom filters. */
     public Page $page {
         get => $this->pipeline->page;
     }
 
+    /** @api */
     public function getPage(): Page
     {
         return $this->page;

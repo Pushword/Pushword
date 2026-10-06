@@ -38,17 +38,6 @@ class LoginTokenRepository extends ServiceEntityRepository
         return $result instanceof LoginToken ? $result : null;
     }
 
-    public function deleteExpiredTokens(): int
-    {
-        return $this->createQueryBuilder('t')
-            ->delete()
-            ->where('t.expiresAt < :now')
-            ->orWhere('t.used = true')
-            ->setParameter('now', new DateTimeImmutable())
-            ->getQuery()
-            ->execute();
-    }
-
     public function invalidateUserTokens(User $user, string $type): void
     {
         $this->createQueryBuilder('t')

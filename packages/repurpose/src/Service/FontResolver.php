@@ -56,11 +56,6 @@ final readonly class FontResolver
         return $this->cssFamily($this->familyOf($pairingKey, 'heading'));
     }
 
-    public function bodyFamily(?string $pairingKey): string
-    {
-        return $this->cssFamily($this->familyOf($pairingKey, 'body'));
-    }
-
     /**
      * True when the pairing's own font files are installed (not falling back).
      */

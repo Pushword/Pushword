@@ -57,8 +57,6 @@ class PageCrudController extends AbstractAdminCrudController
 {
     protected const string FORM_FIELD_KEY = 'admin_page_form_fields';
 
-    protected const string MESSAGE_PREFIX = 'admin.page';
-
     /**
      * @param iterable<PageCrudExtensionInterface> $extensions
      */
@@ -552,8 +550,6 @@ class PageCrudController extends AbstractAdminCrudController
         $page = $instance instanceof Page ? $instance
             : $this->pageRepo->create($this->apps->getMainHost());
         $this->setSubject($page);
-
-        $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
 
         $formFieldKey = static::FORM_FIELD_KEY;
         $fields = array_replace(

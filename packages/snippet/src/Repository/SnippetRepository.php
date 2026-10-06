@@ -27,11 +27,6 @@ class SnippetRepository extends ServiceEntityRepository
         parent::__construct($registry, Snippet::class);
     }
 
-    public function findOneBySlugAndHost(string $slug, string $host): ?Snippet
-    {
-        return $this->findOneBy(['slug' => Snippet::normalizeSlug($slug), 'host' => $host]);
-    }
-
     /**
      * Resolve a snippet for a host, preferring an exact host match over a
      * global (host-less, `host = ''`) snippet that applies to every host.

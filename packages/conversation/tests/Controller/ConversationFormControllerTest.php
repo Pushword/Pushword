@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pushword\Conversation\Tests\Controller;
 
 use PHPUnit\Framework\Attributes\Group;
-use Pushword\Conversation\Controller\ConversationFormController;
 use Pushword\Conversation\Entity\Message;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -223,10 +222,5 @@ final class ConversationFormControllerTest extends WebTestCase
         );
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
         self::assertSame('https://pushword.piedweb.com', $client->getResponse()->headers->get('Access-Control-Allow-Origin'));
-    }
-
-    public function getController(): ConversationFormController
-    {
-        return self::getContainer()->get(ConversationFormController::class);
     }
 }

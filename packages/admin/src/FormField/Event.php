@@ -11,6 +11,8 @@ use Symfony\Contracts\EventDispatcher\Event as SfEvent;
 
 /**
  * @template T of object
+ *
+ * @api
  */
 class Event extends SfEvent
 {

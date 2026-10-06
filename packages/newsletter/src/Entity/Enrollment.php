@@ -82,11 +82,6 @@ class Enrollment implements IdInterface
         return null !== $this->sendContextData ? SendContext::fromArray($this->sendContextData) : null;
     }
 
-    public function getStatusLabel(): string
-    {
-        return $this->status->value;
-    }
-
     public function isActive(): bool
     {
         return EnrollmentStatus::Active === $this->status;

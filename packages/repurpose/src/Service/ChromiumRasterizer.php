@@ -31,11 +31,6 @@ final class ChromiumRasterizer
     ) {
     }
 
-    public function available(): bool
-    {
-        return null !== $this->binary();
-    }
-
     /**
      * The PNG bytes, or null when no Chromium binary is available or the
      * screenshot failed.

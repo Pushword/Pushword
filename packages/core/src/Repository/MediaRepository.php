@@ -544,18 +544,6 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         return array_map(intval(...), $ids);
     }
 
-    /** @return array<string> */
-    public function getAllMedia(): array
-    {
-        /** @var string[] $medias */
-        $medias = $this->createQueryBuilder('m')
-            ->select('m.fileName AS fileName')
-            ->getQuery()
-            ->getSingleColumnResult();
-
-        return $medias;
-    }
-
     /**
      * @return string[]
      */

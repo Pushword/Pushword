@@ -598,16 +598,6 @@ final class MediaSync
         return (microtime(true) - $start) * 1000;
     }
 
-    /**
-     * Get list of missing files detected during import validation.
-     *
-     * @return string[]
-     */
-    public function getMissingFiles(): array
-    {
-        return $this->mediaImporter->getMissingFiles();
-    }
-
     public function getImportedCount(): int
     {
         return $this->mediaImporter->getImportedCount();

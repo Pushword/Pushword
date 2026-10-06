@@ -24,8 +24,6 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_SUPER_ADMIN')]
 class UserCrudController extends AbstractAdminCrudController
 {
-    public const string MESSAGE_PREFIX = 'admin.user';
-
     private ?AdminUrlGenerator $adminUrlGenerator = null;
 
     public function __construct(
@@ -78,7 +76,6 @@ class UserCrudController extends AbstractAdminCrudController
     {
         $instance = $this->getContext()?->getEntity()?->getInstance();
         $this->setSubject($instance instanceof User ? $instance : new (EntityClassRegistry::getUserClass())());
-        $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
 
         $fields = array_replace(
             [[], [], []],

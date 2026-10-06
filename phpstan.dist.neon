@@ -1,5 +1,4 @@
 includes:
-    - phpstan-dead-code-baseline.neon
     - vendor/composer/pcre/extension.neon
     - vendor/phpstan/phpstan-doctrine/extension.neon
     - vendor/phpstan/phpstan-doctrine/rules.neon
@@ -14,14 +13,17 @@ includes:
 parameters:
     level: max
     shipmonkDeadCode:
-        # Keep baseline entries per member so they cannot hide newly dead callees.
         reportTransitivelyDeadMethodAsSeparateError: true
+        usageProviders:
+            composer:
+                composerJsonPath: packages/new/composer.json
     type_coverage:
         return_type: 100
         param_type: 100
         property_type: 100
         constant_type: 100
     paths:
+        - .scripts/phpstan
         - rector.php
         - packages/admin/src
         - packages/admin/tests
@@ -87,3 +89,11 @@ parameters:
         # Symfony 7.4+ TreeBuilder generics are not well supported by PHPStan
         # Expected with resolve_target_entities remapping core User to App\Entity\User
         - '#type mapping mismatch.*Pushword\\Core\\Entity\\User.*App\\Entity\\User#'
+
+services:
+    -
+        class: Pushword\PHPStan\FrameworkUsageProvider
+        arguments:
+            containerXmlPath: %symfony.containerXmlPath%
+        tags:
+            - shipmonk.deadCode.memberUsageProvider

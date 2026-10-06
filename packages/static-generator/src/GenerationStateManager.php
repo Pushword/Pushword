@@ -119,17 +119,6 @@ final class GenerationStateManager implements ResetInterface
         $this->state[$host]['lastGeneration'] = $time->format(DateTimeInterface::ATOM);
     }
 
-    public function getPageState(string $host, string $slug): ?DateTimeImmutable
-    {
-        $this->load();
-
-        if (! isset($this->state[$host]['pages'][$slug]['generatedAt'])) {
-            return null;
-        }
-
-        return new DateTimeImmutable($this->state[$host]['pages'][$slug]['generatedAt']);
-    }
-
     public function setPageState(string $host, string $slug, DateTimeImmutable $pageUpdatedAt, string $epoch): void
     {
         $this->load();
@@ -211,15 +200,6 @@ final class GenerationStateManager implements ResetInterface
         }
 
         return $removedSlugs;
-    }
-
-    /**
-     * Clear all state for a host (used when forcing full regeneration).
-     */
-    public function clearHost(string $host): void
-    {
-        $this->load();
-        unset($this->state[$host]);
     }
 
     /**

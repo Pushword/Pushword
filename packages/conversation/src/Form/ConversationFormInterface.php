@@ -8,6 +8,7 @@ use Pushword\Conversation\Entity\Message;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
 
+/** @api */
 interface ConversationFormInterface
 {
     /**

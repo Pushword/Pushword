@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pushword\StaticGenerator\DependencyInjection;
 
-use Deprecated;
 use Pushword\StaticGenerator\Generator\CaddyfileGenerator;
 use Pushword\StaticGenerator\Generator\CNAMEGenerator;
 use Pushword\StaticGenerator\Generator\CopierGenerator;
@@ -105,9 +104,6 @@ class Configuration implements ConfigurationInterface
      * @var string[]
      */
     final public const array DEFAULT_ASSETS = ['assets', 'bundles'];
-
-    #[Deprecated(message: 'Use DEFAULT_ASSETS instead')]
-    final public const array DEFAULT_COPY = self::DEFAULT_ASSETS;
 
     public function getConfigTreeBuilder(): TreeBuilder
     {

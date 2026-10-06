@@ -8,6 +8,7 @@ use Symfony\Component\Finder\Finder;
 $finder = Finder::create()
     ->in([
         __DIR__.'/packages',
+        __DIR__.'/.scripts/phpstan',
     ])
     ->name('*.php')
     ->exclude('rust/target')

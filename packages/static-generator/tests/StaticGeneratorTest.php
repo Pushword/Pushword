@@ -6,7 +6,6 @@ namespace Pushword\StaticGenerator;
 
 use DateTime;
 use DateTimeImmutable;
-use Exception;
 use FilesystemIterator;
 use Iterator;
 use League\Flysystem\Filesystem as Flysystem;
@@ -14,7 +13,6 @@ use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Cache\RenderEpoch;
 use Pushword\Core\Entity\Page;
@@ -44,15 +42,11 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionMethod;
 use ReflectionProperty;
-
-use function Safe\realpath;
-
 use SplFileInfo;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
@@ -2371,37 +2365,6 @@ final class StaticGeneratorTest extends KernelTestCase
         return self::getContainer()->get(GeneratorBag::class);
     }
 
-    public function getParameterBag(): MockObject
-    {
-        $params = $this->createMock(ParameterBagInterface::class);
-
-        $params->method('get')
-             ->willReturnCallback(self::getParams(...));
-
-        return $params;
-    }
-
-    public static function getParams(string $name): string
-    {
-        if ('kernel.project_dir' === $name) {
-            return __DIR__.'/../../dev-app';
-        }
-
-        if ('pw.public_media_dir' === $name) {
-            return 'media';
-        }
-
-        if ('pw.media_dir' === $name) {
-            return realpath(__DIR__.'/../../dev-app/media');
-        }
-
-        if ('pw.public_dir' === $name) {
-            return realpath(__DIR__.'/../../dev-app/public');
-        }
-
-        throw new Exception();
-    }
-
     /**
      * HtmlMinifier's skip counter is process-wide, so hosts sharing a process
      * would each report their predecessors' pages if the notice did not take a
@@ -2436,23 +2399,5 @@ final class StaticGeneratorTest extends KernelTestCase
             HtmlMinifier::$skippedOnBrokenLibxml = $skipped;
             $reported->setValue($generator, 0);
         }
-    }
-
-    public function getPageRepo(): MockObject
-    {
-        $page = new Page();
-        $page->h1 = 'Welcome to Pushword !';
-        $page->slug = 'homepage';
-        $page->locale = 'en';
-        $page->createdAt = new DateTime('2 days ago');
-        $page->mainContent = '...';
-
-        $pageRepo = $this->createMock(PageRepository::class);
-        $pageRepo->method('getPublishedPages')
-                  ->willReturn([
-                      $page,
-                  ]);
-
-        return $pageRepo;
     }
 }

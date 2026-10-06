@@ -52,7 +52,7 @@ class MediaImporter extends AbstractImporter
 
     public function __construct(
         protected EntityManagerInterface $em,
-        protected SiteRegistry $apps,
+        SiteRegistry $apps,
         public string $mediaDir,
         public string $projectDir,
         private readonly MediaStorageAdapter $mediaStorage,

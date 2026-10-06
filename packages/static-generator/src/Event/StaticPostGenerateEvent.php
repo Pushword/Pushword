@@ -7,6 +7,7 @@ namespace Pushword\StaticGenerator\Event;
 use Pushword\Core\Site\SiteConfig;
 use Symfony\Contracts\EventDispatcher\Event;
 
+/** @api */
 final class StaticPostGenerateEvent extends Event
 {
     /**

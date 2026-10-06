@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Entity\SharedTrait;
 
+/** @api */
 interface Taggable extends IdInterface
 {
     public function getTags(): string;

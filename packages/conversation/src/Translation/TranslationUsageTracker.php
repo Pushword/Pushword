@@ -42,15 +42,6 @@ final class TranslationUsageTracker implements ResetInterface
         return $this->getCurrentMonthUsage($service) < $limit;
     }
 
-    public function getRemainingCharacters(string $service, int $limit): int
-    {
-        if (0 === $limit) {
-            return \PHP_INT_MAX;
-        }
-
-        return max(0, $limit - $this->getCurrentMonthUsage($service));
-    }
-
     public function reset(): void
     {
         $this->cache = [];

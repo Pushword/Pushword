@@ -95,6 +95,8 @@ final readonly class MediaStorageAdapter
     /**
      * Copy a file.
      *
+     * @api Storage operation available to site integrations.
+     *
      * @throws FilesystemException
      */
     public function copy(string $source, string $destination): void
@@ -114,6 +116,8 @@ final readonly class MediaStorageAdapter
 
     /**
      * Get file size in bytes.
+     *
+     * @api Storage operation available to site integrations.
      *
      * @throws FilesystemException
      */
@@ -156,6 +160,8 @@ final readonly class MediaStorageAdapter
 
     /**
      * Get the underlying Flysystem filesystem operator.
+     *
+     * @api Access for custom storage integrations.
      */
     public function getStorage(): FilesystemOperator
     {

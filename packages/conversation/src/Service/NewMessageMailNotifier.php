@@ -137,6 +137,7 @@ class NewMessageMailNotifier
         });
     }
 
+    /** @api Batch notification entry point for site-specific scheduling. */
     public function send(): void
     {
         if (! $this->emailSender->canSend($this->envelope)) {

@@ -7,6 +7,7 @@ namespace Pushword\Core\Event;
 use Pushword\Core\Entity\Page;
 use Symfony\Contracts\EventDispatcher\Event;
 
+/** @api */
 final class PagesListSearchEvent extends Event
 {
     public const string NAME = PushwordEvents::PAGES_LIST_SEARCH;

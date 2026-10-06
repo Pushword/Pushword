@@ -633,11 +633,6 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         return $this->scheduledPages;
     }
 
-    public function isIncremental(): bool
-    {
-        return $this->incremental;
-    }
-
     public function getStateManager(): GenerationStateManager
     {
         return $this->stateManager;

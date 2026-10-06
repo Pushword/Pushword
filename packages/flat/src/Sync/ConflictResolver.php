@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pushword\Flat\Sync;
 
 use DateTimeInterface;
-use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Service\AdminNotificationService;
@@ -20,19 +19,12 @@ final class ConflictResolver
 {
     private ?OutputInterface $output = null;
 
-    private ?string $currentHost = null;
-
     public function __construct(
         private readonly FlatFileContentDirFinder $contentDirFinder,
         private readonly SyncStateManager $stateManager,
         private readonly ?AdminNotificationService $notificationService = null,
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
-    }
-
-    public function setCurrentHost(?string $host): void
-    {
-        $this->currentHost = $host;
     }
 
     public function setOutput(?OutputInterface $output): void
@@ -98,55 +90,6 @@ final class ConflictResolver
     }
 
     /**
-     * Resolve a conflict for a Media entity.
-     *
-     * @return array{hasConflict: bool, winner: string|null, conflictData: array<string, mixed>|null}
-     */
-    public function resolveMediaConflict(
-        Media $media,
-        string $filePath,
-        DateTimeInterface $fileModifiedAt,
-        DateTimeInterface $lastSyncAt,
-        ?string $field = null,
-        ?string $flatValue = null,
-        ?string $dbValue = null,
-    ): array {
-        // No conflict if file or DB was not modified since last sync
-        if ($fileModifiedAt <= $lastSyncAt && $media->updatedAt <= $lastSyncAt) {
-            return ['hasConflict' => false, 'winner' => null, 'conflictData' => null];
-        }
-
-        // Both modified since last sync = conflict
-        if ($fileModifiedAt > $lastSyncAt && $media->updatedAt > $lastSyncAt) {
-            $winner = $fileModifiedAt >= $media->updatedAt ? 'flat' : 'db';
-
-            $conflictData = [
-                'entityType' => 'media',
-                'entityId' => $media->id,
-                'winner' => $winner,
-            ];
-            if (null !== $field) {
-                $conflictData['field'] = $field;
-            }
-
-            if (null !== $flatValue) {
-                $conflictData['flatValue'] = $flatValue;
-            }
-
-            if (null !== $dbValue) {
-                $conflictData['dbValue'] = $dbValue;
-            }
-
-            $this->logConflict('Media', (string) $media->id, $winner, null, $field);
-            $this->stateManager->recordConflict($conflictData);
-
-            return ['hasConflict' => true, 'winner' => $winner, 'conflictData' => $conflictData];
-        }
-
-        return ['hasConflict' => false, 'winner' => null, 'conflictData' => null];
-    }
-
-    /**
      * Create a backup file for a markdown document.
      */
     private function createMarkdownBackup(string $filePath, string $losingSource): ?string
@@ -172,54 +115,6 @@ final class ConflictResolver
         $this->filesystem->dumpFile($backupFile, $header.$content);
 
         return $backupFile;
-    }
-
-    /**
-     * Record a CSV conflict to a conflicts file.
-     *
-     * @param array{entityType: string, entityId: int|string|null, field: string, flatValue: string, dbValue: string, winner: string} $conflictData
-     */
-    public function recordCsvConflict(string $csvFilePath, array $conflictData): void
-    {
-        $pathInfo = pathinfo($csvFilePath);
-        $dirname = $pathInfo['dirname'] ?? '.';
-        $conflictsFile = $dirname.'/'.$pathInfo['filename'].'.conflicts.csv';
-
-        $isNew = ! $this->filesystem->exists($conflictsFile);
-
-        $fp = fopen($conflictsFile, 'a');
-        if (false === $fp) {
-            return;
-        }
-
-        // Write header if new file
-        if ($isNew) {
-            fputcsv($fp, ['conflict_id', 'conflict_date', 'winner', 'entity_id', 'field', 'flat_value', 'db_value'], escape: '\\');
-        }
-
-        fputcsv(
-            $fp,
-            [
-                uniqid('conflict_', true),
-                date('Y-m-d H:i:s'),
-                $conflictData['winner'],
-                $conflictData['entityId'],
-                $conflictData['field'],
-                $conflictData['flatValue'],
-                $conflictData['dbValue'],
-            ],
-            escape: '\\'
-        );
-
-        fclose($fp);
-
-        $this->logConflict(
-            $conflictData['entityType'],
-            (string) $conflictData['entityId'],
-            $conflictData['winner'],
-            $conflictsFile,
-            $conflictData['field'],
-        );
     }
 
     /**
@@ -299,6 +194,6 @@ final class ConflictResolver
             'winner' => $winner,
             'backupFile' => $backupFile,
             'field' => $field,
-        ], $this->currentHost);
+        ]);
     }
 }
