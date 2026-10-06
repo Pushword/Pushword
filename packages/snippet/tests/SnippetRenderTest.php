@@ -162,7 +162,7 @@ final class SnippetRenderTest extends KernelTestCase
         $container = self::getContainer();
         $em = $container->get(EntityManagerInterface::class);
 
-        $page = $em->getRepository(Page::class)->findOneBy([]);
+        $page = $em->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev', 'slug' => 'homepage']);
         self::assertInstanceOf(Page::class, $page);
         $container->get(SiteRegistry::class)->setCurrentPage($page);
 
