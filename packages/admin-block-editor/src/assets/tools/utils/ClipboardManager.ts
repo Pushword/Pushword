@@ -1,5 +1,5 @@
 import EditorJS, { API } from '@editorjs/editorjs'
-import he from 'he'
+import * as he from 'he'
 import DOMPurify from 'dompurify'
 import { MarkdownUtils } from './MarkdownUtils'
 import { BlockToolAdapterWithConstructable, chunkTool } from '../../EditorJsParseMarkdown'

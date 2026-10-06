@@ -12,7 +12,7 @@ import {
   STATUS,
   UploadResponse,
 } from '../Abstract/AbstractMediaTool'
-import he from 'he'
+import * as he from 'he'
 
 export interface AttachesData extends BlockToolData {
   title: string

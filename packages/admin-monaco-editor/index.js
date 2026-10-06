@@ -2,7 +2,7 @@
  * Different package from admin because generating monaco-editor is very slow
  */
 import * as monaco from 'monaco-editor'
-import MonacoHelper from './MonacoHelper'
+import MonacoHelper from './MonacoHelper.js'
 
 window.monaco = monaco
 window.monacoHelper = MonacoHelper

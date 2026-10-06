@@ -12,7 +12,7 @@ import {
   toggleLinePrefix,
   toggleTask,
   toggleWrap,
-} from './markdownActions'
+} from './markdownActions.js'
 
 const { CtrlCmd, Shift, Alt } = monaco.KeyMod
 const K = monaco.KeyCode

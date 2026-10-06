@@ -1,4 +1,7 @@
 {
+  "type": "module",
+  "license": "UNLICENSED",
+  "private": true,
   "scripts": {
     "clean": "rm -rf dist && mkdir dist",
     "clean-public": "rm -rf ./../admin/src/Resources/public/monaco && mkdir ./../admin/src/Resources/public/monaco",
@@ -9,12 +12,12 @@
   "devDependencies": {
     "css-loader": "^7",
     "file-loader": "^6.2.0",
-    "monaco-editor": "~0.55.1",
+    "monaco-editor": "~0.57.0",
     "monaco-editor-webpack-plugin": "^7.1",
     "monaco-yaml": "^5.4",
     "style-loader": "^4",
-    "vite": "^8.3.0",
-    "vitest": "^5.0.1",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3",
     "webpack": "^5.65",
     "webpack-cli": "^7.2.3"
   }

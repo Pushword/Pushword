@@ -1,6 +1,6 @@
 import * as monaco from 'monaco-editor'
 
-import { installMarkdownChrome } from './markdown/MarkdownToolbar'
+import { installMarkdownChrome } from './markdown/MarkdownToolbar.js'
 
 export default class MonacoHelper {
   static defaultSettings = {

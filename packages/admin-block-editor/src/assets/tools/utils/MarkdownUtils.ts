@@ -1,6 +1,6 @@
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { HyperlinkTuneData } from '../HyperlinkTune/HyperlinkTune'
-import he from 'he'
+import * as he from 'he'
 import { jsonrepair } from 'jsonrepair'
 
 export interface BlockTuneDataPushword extends BlockTuneData {

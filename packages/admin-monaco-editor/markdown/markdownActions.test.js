@@ -15,7 +15,7 @@ import {
   toggleTask,
   toggleWrap,
   wordRangeAt,
-} from './markdownActions'
+} from './markdownActions.js'
 
 /** Runs an action and returns the resulting text with the selection marked as `|` / `[…]`. */
 function render(text, result) {

@@ -10,6 +10,13 @@ export default {
     path: path.resolve(__dirname, 'dist'),
     filename: 'app.js',
   },
+  resolve: {
+    alias: {
+      // monaco-worker-manager still imports the path used before Monaco 0.56.
+      'monaco-editor/esm/vs/editor/editor.worker.js$':
+        'monaco-editor/editor/editor.worker.js',
+    },
+  },
   module: {
     rules: [
       {

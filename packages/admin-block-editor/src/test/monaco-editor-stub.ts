@@ -1,4 +1,4 @@
-// Test stub for 'monaco-editor' (aliased in vitest.config.ts): the real
+// Test stub for 'monaco-editor' (aliased in vitest.config.mts): the real
 // package cannot load under happy-dom. Tests provide their own editor fakes.
 export const editor = {}
 
