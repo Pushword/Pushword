@@ -50,6 +50,7 @@ class PageMainImageField extends AbstractMediaPickerField
     {
         return [
             'mimeType' => [
+                'comparison' => ComparisonType::EQ,
                 'value' => $this->imageMimeTypes(),
             ],
             'dimensionIntFilter' => [

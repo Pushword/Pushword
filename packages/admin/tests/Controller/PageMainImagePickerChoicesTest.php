@@ -32,6 +32,33 @@ use Symfony\Component\HttpFoundation\Response;
 #[Group('integration')]
 final class PageMainImagePickerChoicesTest extends AbstractAdminTestClass
 {
+    public function testMainImageModalLoadsFilteredMedia(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        // Together with the PNG fixture, JPEG and GIF make every requested MIME type a valid filter choice.
+        $largeImageId = $this->createMedia($client, 'main-image-modal-large', 1200, 800);
+        $smallImageId = $this->createMedia($client, 'main-image-modal-small', 1199, 800, 'gif');
+
+        /** @var PageRepository $pageRepo */
+        $pageRepo = self::getContainer()->get(PageRepository::class);
+        $page = $pageRepo->findOneBy(['slug' => 'homepage']);
+        self::assertInstanceOf(Page::class, $page);
+        self::assertNotNull($page->id);
+
+        $crawler = $client->request(Request::METHOD_GET, $this->buildEditPath($page->id));
+        self::assertResponseIsSuccessful();
+
+        $modalUrl = $crawler->filter('#Page_mainImage')->attr('data-pw-media-picker-modal-url');
+        self::assertNotNull($modalUrl);
+
+        $crawler = $client->request(Request::METHOD_GET, $modalUrl);
+        self::assertResponseStatusCodeSame(Response::HTTP_OK);
+        self::assertCount(1, $crawler->filter('.media-mosaic__card[data-id="'.$largeImageId.'"]'));
+        self::assertCount(0, $crawler->filter('.media-mosaic__card[data-id="'.$smallImageId.'"]'));
+    }
+
     public function testMainImageSelectRendersOnlySelectedAndAcceptsNewlyPickedId(): void
     {
         $client = $this->loginUser();
@@ -107,21 +134,27 @@ final class PageMainImagePickerChoicesTest extends AbstractAdminTestClass
     /**
      * @param positive-int $width
      * @param positive-int $height
+     * @param 'jpg'|'gif'  $extension
      */
-    private function createMedia(KernelBrowser $client, string $name, int $width, int $height): int
+    private function createMedia(KernelBrowser $client, string $name, int $width, int $height, string $extension = 'jpg'): int
     {
         $crawler = $client->request(Request::METHOD_GET, '/admin/multi-upload');
         $csrf = (string) $crawler->filter('#pw-multi-upload')->attr('data-csrf-token');
 
-        $tempFile = sys_get_temp_dir().'/'.$name.'.jpg';
+        $fileName = $name.'.'.$extension;
+        $tempFile = sys_get_temp_dir().'/'.$fileName;
         $img = imagecreatetruecolor($width, $height);
         \assert(false !== $img);
-        imagejpeg($img, $tempFile);
+        if ('gif' === $extension) {
+            imagegif($img, $tempFile);
+        } else {
+            imagejpeg($img, $tempFile);
+        }
 
         $client->request(Request::METHOD_POST, '/admin/multi-upload/upload', [
             '_token' => $csrf,
             'originalHash' => sha1_file($tempFile),
-        ], ['file' => new UploadedFile($tempFile, $name.'.jpg', 'image/jpeg', null, true)]);
+        ], ['file' => new UploadedFile($tempFile, $fileName, 'gif' === $extension ? 'image/gif' : 'image/jpeg', null, true)]);
 
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
         /** @var array<string, mixed> $data */
