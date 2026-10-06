@@ -15,7 +15,7 @@ Turn Pushword into a **flat-file CMS** — pages and media stored as Markdown + 
 - Two-way **`pw:flat:sync`** between Markdown/CSV files and the database.
 - **Auto-export** after admin edits, optional **auto git commit**.
 - **Conflict resolution**, editorial locks and webhook locking.
-- Optional **user sync** (`users.yaml`) and conversation sync.
+- Optional **user sync** (`users.yaml`), conversation and snippet sync.
 
 ## Installation
 
@@ -29,109 +29,27 @@ Visit [pushword.piedweb.com/extension/flat](https://pushword.piedweb.com/extensi
 
 ## Sync flow (`pw:flat:sync`)
 
+Each entity decides its own direction: import when files are newer, export when the
+database is. Details: [sync behavior reference](https://pushword.piedweb.com/extension/flat#sync-behavior-reference).
+
 ```mermaid
 flowchart TD
-    Start([pw:flat:sync]) --> LockCheck{Webhook Lock?}
-    LockCheck -->|Oui| Blocked[Sync bloquée]
-    LockCheck -->|Non| MediaCheck{MediaSync}
+    Start([pw:flat:sync]) --> LockCheck{Webhook lock?}
+    LockCheck -->|Yes| Blocked([Blocked])
+    LockCheck -->|No| Media{Media: file hash changed?}
 
-    MediaCheck -->|Fichiers plus récents| MediaImport[IMPORT Médias]
-    MediaCheck -->|DB plus récente| MediaExport[EXPORT Médias]
+    Media -->|Yes| MediaImport[Import media.csv + files<br/>delete media missing from CSV<br/>regenerate media.csv]
+    Media -->|No| MediaExport[Export media.csv]
+    MediaImport --> Page
+    MediaExport --> Page
 
-    MediaImport --> MI1[1. Parser index.csv]
-    MI1 --> MI2[2. Valider fichiers + préparer renommages]
-    MI2 --> MI3[3. Supprimer médias absents du CSV]
-    MI3 --> MI4[4. Importer fichiers mediaDir + contentDir/media]
-    MI4 --> MI5[5. Régénérer index.csv]
-    MI5 --> PageCheck
+    Page{Pages: .md newer than DB?} -->|Yes| PageImport[Import redirection.csv + .md<br/>resolve relations, delete orphan pages<br/>regenerate index.csv]
+    Page -->|No| PageExport[Export .md, index.csv, redirection.csv]
+    PageImport --> Others
+    PageExport --> Others
 
-    MediaExport --> ME1[Écrire index.csv + copier fichiers]
-    ME1 --> PageCheck
-
-    PageCheck{PageSync} -->|Fichiers plus récents| PageImport[IMPORT Pages]
-    PageCheck -->|DB plus récente| PageExport[EXPORT Pages]
-
-    PageImport --> PI1[1. Importer redirection.csv]
-    PI1 --> PI2[2. Importer fichiers .md]
-    PI2 --> PI3[3. finishImport - relations]
-    PI3 --> PI4[4. Supprimer pages orphelines]
-    PI4 --> PI5[5. Régénérer index.csv]
-    PI5 --> ConvCheck
-
-    PageExport --> PE1[Écrire .md + index.csv + redirection.csv]
-    PE1 --> ConvCheck
-
-    ConvCheck{ConversationSync?} -->|Activé| ConvSync[Sync Conversations]
-    ConvCheck -->|Non| UserCheck
-    ConvSync --> UserCheck
-
-    UserCheck{UserSync?} -->|Activé| UserSync[Sync users.yaml ↔ DB]
-    UserCheck -->|Non| End
-    UserSync --> End([Fin])
-
-    Blocked --> EndBlocked([Échec])
-
-    style Start fill:#e1f5ff
-    style MediaImport fill:#fff4e1
-    style PageImport fill:#fff4e1
-    style MediaExport fill:#e1ffe1
-    style PageExport fill:#e1ffe1
-    style End fill:#e1f5ff
-    style Blocked fill:#ffcccc
-    style EndBlocked fill:#ffcccc
+    Others[Conversations, users.yaml, snippets,<br/>extension syncs] --> End([Done])
 ```
-
-## Détails du processus
-
-### Webhook Lock
-
-Avant toute synchronisation, le système vérifie si un **webhook lock** est actif.
-Ce verrou est utilisé pendant les workflows d'édition externe (ex: CI/CD) pour éviter les conflits.
-
-### Décision Import/Export
-
-`PageSync` et `MediaSync` déterminent indépendamment la direction :
-
-- **MediaSync** : Compare le hash SHA1 des fichiers avec `Media->getHash()` en DB
-- **PageSync** : Compare `filemtime()` avec `Page->getUpdatedAt()`, avec gestion des conflits via `ConflictResolver`
-
-### Import Médias (Fichiers → DB)
-
-1. **Parser `index.csv`** - Charge les métadonnées (id, fileName, name, alt, projectDir)
-2. **Valider fichiers** - Vérifie l'existence des fichiers référencés
-3. **Préparer renommages** - Détecte les fichiers renommés via leur ID
-4. **Supprimer médias orphelins** - Supprime les médias en DB absents du CSV
-5. **Importer fichiers** - Depuis `mediaDir` et `contentDir/media`
-6. **Régénérer `index.csv`** - Reflète l'état final de la DB
-
-### Import Pages (Fichiers → DB)
-
-1. **Importer `redirection.csv`** - Charge les redirections
-2. **Importer fichiers `.md`** - Parse le front matter YAML + contenu markdown
-3. **finishImport** - Résout les relations (parentPage, mainImage, translations)
-4. **Supprimer pages orphelines** - Pages en DB sans fichier `.md` ni entrée redirection
-5. **Régénérer `index.csv`** - Avec les IDs auto-générés
-
-### Export (DB → Fichiers)
-
-**Pages** :
-- Écrit `{slug}.md` avec front matter YAML
-- Génère `index.csv` (métadonnées) et `redirection.csv`
-
-**Médias** :
-- Écrit `index.csv` avec les métadonnées
-- Copie les fichiers si `copyMedia` est configuré
-
-### UserSync (optionnel)
-
-Synchronisation bidirectionnelle entre `config/users.yaml` et la DB :
-- Exporte les utilisateurs DB manquants vers le YAML
-- Importe/met à jour les utilisateurs depuis le YAML
-- Les mots de passe restent uniquement en DB
-
-### ConversationSync (optionnel)
-
-Interface pour synchroniser les conversations (implémenté par le package conversation)
 
 ## The Pushword ecosystem
 

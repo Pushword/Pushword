@@ -5,7 +5,8 @@ publishedAt: '2025-12-21 21:55'
 toc: true
 ---
 
-Transform Pushword in a FlatFile CMS.
+Turn Pushword into a flat-file CMS: pages, media, snippets and conversations round-trip
+between Markdown/CSV files and the database.
 
 ## Install
 
@@ -15,34 +16,39 @@ composer require pushword/flat
 
 ## Configure (if needed)
 
-Globally under `pushword_flat:` (in `config/packages/flat.yaml`).
-
-Or for _multi-sites_ in `config/packages/pushword.yaml` under the app configuration.
+In `config/packages/flat.yaml`. Only `flat_content_dir` can also be set per site, in the
+app configuration of `config/packages/pushword.yaml`.
 
 ```yaml
 pushword_flat:
-  flat_content_dir: content # default value
+  flat_content_dir: '%kernel.project_dir%/content/_host_' # default; _host_ = the site's main host
 
   # Optional shared secret for read-only snapshot downloads
   content_snapshot_key: '%env(CONTENT_SNAPSHOT_KEY)%'
 
-  # Change detection cache TTL in seconds (default: 300 = 5 minutes)
+  # Change detection cache TTL in seconds (default: 300)
   change_detection_cache_ttl: 300
 
   # Auto-export to flat files after admin modifications (default: true)
   auto_export_enabled: true
 
-  # Automatically git commit content changes after export (default: false)
+  # Git commit and push content changes after export (default: false)
   auto_git_commit: false
 
   # Debounce delay in seconds before processing deferred export (default: 120)
   export_debounce_delay: 120
 
-  # Editorial lock TTL in seconds (default: 1800 = 30 minutes)
+  # Editorial lock TTL in seconds (default: 1800)
   lock_ttl: 1800
+
+  # Webhook lock TTL in seconds (default: 3600)
+  webhook_lock_default_ttl: 3600
 
   # Auto-lock when flat files are modified (default: true)
   auto_lock_on_flat_changes: true
+
+  # File basenames never imported as pages (default below)
+  exclude_files: ['AGENTS.md', 'CLAUDE.md', 'README.md']
 
   # Custom property names to exclude from flat file export and import (default: [])
   ignored_properties: ['someTransientProp']
@@ -50,6 +56,10 @@ pushword_flat:
   # Who a page created by an import belongs to when its file names no editor
   # (default: null, meaning the site's first super admin)
   default_editor: editor@example.tld
+
+  # Conflict and sync error emails (default: none)
+  notification_email_recipients: ['admin@example.tld']
+  notification_email_from: noreply@example.tld
 ```
 
 ### Who an imported page belongs to
@@ -63,20 +73,20 @@ createdBy: editor@example.tld
 ```
 
 On import those resolve back to the matching user. An email no user answers to is
-ignored, never stored — the page keeps whichever editor it already had.
+ignored — the page keeps whichever editor it already had.
 
 A file naming nobody is attributed, **at creation only**, to `default_editor` or failing
-that the site's first super admin. Later syncs of that file leave the editor alone: who
-made an edit outside the admin is unknown, and `editMessage` already records that it came
-from `pw:flat:sync`. With no user to resolve, the page simply stays unattributed.
+that the site's first super admin. Later syncs of that file leave the editor alone
+(`editMessage` already records that the edit came from `pw:flat:sync`). With no user to
+resolve, the page stays unattributed.
 
 ## Usage
 
 ### Read-only content snapshot
 
 Set `content_snapshot_key` to let an automated client download the current Markdown
-mirror without creating a Pushword user. Keep the secret in an environment variable,
-then send it in the dedicated header:
+mirror without a Pushword user. Keep the secret in an environment variable and send it
+in the dedicated header:
 
 ```bash
 curl -H "X-Pushword-Snapshot-Key: $CONTENT_SNAPSHOT_KEY" \
@@ -84,13 +94,12 @@ curl -H "X-Pushword-Snapshot-Key: $CONTENT_SNAPSHOT_KEY" \
   --output snapshot.tar.gz
 ```
 
-Omit `host` to download every configured site. This key is accepted only by
-`GET /api/content/snapshot.tar.gz`; it cannot authenticate any other API route or write
-content. Existing editor Bearer tokens remain accepted by the snapshot endpoint.
+Omit `host` to download every configured site. The key is accepted only by
+`GET /api/content/snapshot.tar.gz`; it cannot authenticate any other route or write
+content. Editor Bearer tokens are accepted too.
 
-To check a key without downloading anything, send a `HEAD` request (`curl -I`). It
-returns the same status as `GET` but does not re-export the mirror, so it costs no
-database query.
+A `HEAD` request (`curl -I`) checks a key: same status as `GET`, without re-exporting
+the mirror.
 
 ### Sync with DB (import / export)
 
@@ -98,101 +107,89 @@ database query.
 php bin/console pw:flat:sync [host] [options]
 ```
 
-**Options:**
-
 | Option              | Description                                                                     |
 | ------------------- | ------------------------------------------------------------------------------- |
-| `host`              | Optional host to sync (uses default app if not provided)                        |
+| `host`              | Host to sync; omit to sync every configured host                                |
 | `--mode`, `-m`      | Sync direction: `auto` (default), `import`, `export`                            |
-| `--entity`          | Entity type: `page`, `media`, `conversation`, `all` (default)                   |
+| `--entity`          | `page`, `media`, `conversation`, `snippet`, `user`, `all` (default)             |
 | `--page`            | Slug(s) to sync — repeatable, implies `--entity=page` (see targeted sync below) |
 | `--force`, `-f`     | Force overwrite even if files are newer than DB                                 |
-| `--backup`          | Back up SQLite before import (server databases require their native tools)       |
+| `--backup`          | Back up SQLite before import (server databases require their native tools)      |
 | `--consume-pending` | Consume pending export flag and run batched export                              |
-
-**Examples:**
+| `--format`          | `auto` (default), `agent` (JSON) or `text` — see [agent output](/agent-output)  |
 
 ```bash
 # Auto-detect: imports if flat files are newer, exports if DB is newer
 php bin/console pw:flat:sync
 
-# Force import (flat files → database)
+# Force a direction
 php bin/console pw:flat:sync --mode=import
-
-# Force export (database → flat files)
 php bin/console pw:flat:sync --mode=export
 
-# Sync only pages on a specific host
+# Only pages on a specific host
 php bin/console pw:flat:sync example.tld --mode=import --entity=page
-
-# Sync a single page (targeted sync — much faster on large multi-site setups)
-php bin/console pw:flat:sync example.tld --page=about
-
-# Sync multiple specific pages
-php bin/console pw:flat:sync example.tld --page=about --page=contact
 
 # Import after creating an SQLite backup
 php bin/console pw:flat:sync --mode=import --backup
-
-# Re-stamp the `revision:` front matter on every page (see note below)
-php bin/console pw:flat:sync example.tld --mode=export --force
 ```
+
+`pw:flat:watch` polls the content directory and syncs on change (`--interval`, default
+0.5 s; `--mode=import` to never export). With `--live-reload`, pages served in debug
+mode reload in the browser after each sync.
 
 #### Revision stamp & re-stamping
 
-Each exported `.md` ends with a `revision: <hash> # read only` line in its front matter — the content hash that mirrors the API's ETag / `If-Match` value, so an agent can read it from the file and `PUT` back without a preliminary `GET`. It is written on export and **ignored on import**.
+Each exported `.md` carries a `revision: <hash> # read only` front matter line — the
+API's ETag / `If-Match` value, so an agent can `PUT` the file back without a preliminary
+`GET`. It is written on export and **ignored on import**.
 
-A normal export skips files whose content is unchanged (and whose mtime is newer than the DB row), so pages exported _before_ the stamp existed — or any file missing the line — are **not** re-stamped by a plain sync. Run a full-host force export to rewrite them:
+A normal export skips unchanged files, so a file missing the line is not re-stamped by a
+plain sync. Force a full-host export to rewrite them (files already correct stay
+byte-identical):
 
 ```bash
 php bin/console pw:flat:sync example.tld --mode=export --force
 ```
 
-`--force` bypasses the mtime fast-path and regenerates content (now including the stamp); files already carrying the correct revision are left byte-identical. Note: `--force` combined with `--page` does **not** re-stamp — the targeted-export path skips the force flag (see below).
+`--force` combined with `--page` does **not** re-stamp.
 
 #### Targeted page sync (`--page`)
 
-When you modify a single `.md` file in a large multi-site setup, scanning the full content directory of every host is wasteful. Pass `--page` to restrict the sync to specific slugs:
+Restrict the sync to specific slugs — much faster on a large multi-site setup:
 
 ```bash
 php bin/console pw:flat:sync example.tld --page=about --page=contact --mode=import
 ```
 
-**Behavior differences vs. a full sync:**
+Differences from a full sync:
 
 - Only the listed slugs are imported or exported — all other pages are untouched
 - `deleteMissingPages` is **skipped**: pages absent from the filter are never deleted, even if their `.md` file is missing
-- Redirections (`redirection.csv`) are **not re-imported** during a targeted sync
-- `--force` does **not** reset all host pages when `--page` is set; it only re-imports the targeted pages regardless of timestamps
+- Redirections (`redirection.csv`) are **not re-imported**
+- `--force` re-imports only the targeted pages regardless of timestamps; it does not reset the host
 
 ### Deferred Export & Git Auto-Commit
 
-When content is saved in admin, a Messenger message is dispatched with a configurable delay (default: 120 seconds). Each new save resets the timer, so rapid edits are batched into a single export + commit.
-
-A Symfony Messenger worker must be running to process exports:
+An admin save dispatches a Messenger message delayed by `export_debounce_delay`. Each new
+save resets the timer, so rapid edits are batched into a single export (and commit). A
+worker must be running:
 
 ```bash
 php bin/console messenger:consume async -v
 ```
 
-You can also consume pending exports manually via CLI:
+Or consume pending exports manually:
 
 ```bash
 php bin/console pw:flat:sync --consume-pending
 ```
 
-To enable automatic git commits (and push) after export:
-
-```yaml
-flat:
-  auto_git_commit: true
-```
-
-The content directory (or its parent) must be a git repository for auto-commit to work.
+With `auto_git_commit: true`, each batched export is committed, pulled and pushed. The
+content directory (or its parent) must be a git repository.
 
 ### Editorial Lock System
 
-The lock system prevents concurrent modifications between flat files and admin interface, inspired by LibreOffice's locking mechanism.
+The lock prevents concurrent modifications between flat files and the admin.
 
 ```bash
 # Acquire a lock (shows warning in admin)
@@ -202,18 +199,15 @@ php bin/console pw:flat:lock [host] [--ttl=1800] [--reason="Editing flat files"]
 php bin/console pw:flat:unlock [host]
 ```
 
-**How it works:**
-
-- **Auto-lock**: When flat files are modified, an automatic lock is acquired (configurable)
-- **Manual lock**: Use `pw:flat:lock` for explicit control during extended editing sessions
-- **TTL**: Locks expire after 30 minutes by default (configurable)
-- **Admin warning**: When locked, admin users see a warning message but can still edit (risk of conflict)
+- **Auto-lock**: acquired when flat files are modified (`auto_lock_on_flat_changes`)
+- **Manual lock**: `pw:flat:lock`, for extended editing sessions
+- **TTL**: `lock_ttl`, 30 minutes by default
+- **Admin warning**: admin users see a warning but can still edit (risk of conflict)
 
 ### Webhook Lock API
 
-For CI/CD workflows and external systems, a REST API allows managing locks programmatically. Webhook locks are stricter than manual locks: they **block admin saves entirely** (not just a warning).
-
-Authentication uses a **Bearer token** stored in the user's `apiToken` field.
+For CI/CD and external systems. Webhook locks are stricter than manual locks: they **block
+admin saves entirely**. Authentication uses the user's `apiToken` as a Bearer token.
 
 | Endpoint           | Method | Description            |
 | ------------------ | ------ | ---------------------- |
@@ -221,138 +215,93 @@ Authentication uses a **Bearer token** stored in the user's `apiToken` field.
 | `/api/flat/unlock` | POST   | Release a webhook lock |
 | `/api/flat/status` | GET    | Check lock status      |
 
-**Examples:**
-
-```bash
-# Acquire a lock (default TTL: 1 hour)
-curl -X POST https://example.com/api/flat/lock \
-  -H "Authorization: Bearer {api_token}" \
-  -H "Content-Type: application/json" \
-  -d '{"host": "example.com", "reason": "Bulk update", "ttl": 7200}'
-
-# Release a lock
-curl -X POST https://example.com/api/flat/unlock \
-  -H "Authorization: Bearer {api_token}" \
-  -H "Content-Type: application/json" \
-  -d '{"host": "example.com"}'
-
-# Check status
-curl "https://example.com/api/flat/status?host=example.com" \
-  -H "Authorization: Bearer {api_token}"
-```
-
-**Key behaviors:**
-
-- Webhook locks default to **1 hour TTL** (vs 30 minutes for manual/auto locks)
+- Default TTL is `webhook_lock_default_ttl` (1 hour)
 - Admin saves on locked pages throw an `AccessDeniedHttpException`
-- `pw:flat:sync` is blocked entirely when a webhook lock is active
-- Cannot override an existing non-expired webhook lock
+- `pw:flat:sync` is blocked entirely while a webhook lock is active
+- An existing non-expired webhook lock cannot be overridden
 - Only webhook locks can be released via the API (not manual/CLI locks)
+
+Request examples, CI pipelines and the status response: [Git workflow](/extension/flat-git-workflow).
 
 ### Conflict Resolution
 
-When both flat files and database are modified since the last sync, a conflict occurs. The system uses a **"most recent wins"** strategy:
+When a page's file and its database row were both modified since the last sync, **the
+most recent wins**:
 
-- The newer version (by timestamp) is kept
-- The losing version is backed up as `filename~conflict-{id}.md`
-- Conflicts are logged and displayed in admin
+- The losing version is backed up next to the file as `page~conflict-{id}.md`, with a comment header
+- An admin notification is created and emailed to `notification_email_recipients`
 
 ```bash
 # List and clear conflict backup files
 php bin/console pw:flat:conflicts:clear [host] [--dry]
 ```
 
-**Conflict backup files:**
-
-- Markdown: `page~conflict-abc123.md` (contains the losing version with a comment header)
-- CSV: `index.conflicts.csv` (appends conflict details for media/conversation)
-
 ### YAML Front Matter Validation
 
-Invalid YAML in a `.md` file (e.g. an unescaped quote: `title: 'La Baltique : d'Usedom'`) is a common authoring mistake.
-
-**Proactive check before syncing:**
+Invalid YAML in a `.md` file (e.g. an unescaped quote: `title: 'La Baltique : d'Usedom'`)
+is a common authoring mistake. Check before syncing:
 
 ```bash
 php bin/console pw:flat:lint [host]
 ```
 
-Returns exit code `0` if all files are valid, `1` if any errors are found. Each error shows the file path and line number.
+Exit code `0` if all files are valid, `1` otherwise; each error shows the file path and line.
 
-**During `pw:flat:sync`:**
+During `pw:flat:sync`, a file with invalid YAML is **skipped** with its error printed,
+its DB page is **not deleted**, and a final warning counts the skipped files.
 
-- Files with invalid YAML are **skipped** (not crash the entire sync)
-- The error is printed to the console with file path and line number
-- The corresponding DB page is **not deleted** (the page is preserved until the YAML is fixed)
-- After sync completes, a warning lists the number of skipped files and suggests running `pw:flat:lint`
-
-**Common YAML pitfalls:**
-
-| Mistake                          | Fix                                                                |
-| -------------------------------- | ------------------------------------------------------------------ |
-| `title: 'It's broken'`           | Use double quotes: `title: "It's fine"`                            |
-| `title: 'A: B'` unquoted colon   | Already quoted — but inner single quote breaks it: `title: "A: B"` |
-| Smart quotes `'` from copy-paste | Replace with straight quotes `'` or `"`                            |
+| Mistake                          | Fix                                       |
+| -------------------------------- | ----------------------------------------- |
+| `title: 'It's broken'`           | Use double quotes: `title: "It's fine"`   |
+| `title: A: B` (unquoted colon)   | Quote the value: `title: 'A: B'`          |
+| Smart quotes `'` from copy-paste | Replace with straight quotes `'` or `"`   |
 
 ## Sync Behavior Reference
 
 ### Execution Pipeline
 
-When `pw:flat:sync` runs, it follows this pipeline:
-
-1. **Webhook lock check** — if a webhook lock is active for the host, sync is blocked entirely
-2. **PID concurrency check** — only one sync process can run at a time (PID file in `var/`)
-3. **Optional database backup** — with `--backup`, SQLite's `var/app.db` is copied to `var/app.db~YYYYMMDDHHMMSS`; PostgreSQL/MariaDB stop here and ask for a native backup
-4. **Host resolution** — if no `host` argument, syncs ALL configured hosts sequentially
+1. **Webhook lock check** — an active webhook lock for the host blocks the sync
+2. **PID check** — only one sync runs at a time (PID file in `var/`; a stale one is cleaned up)
+3. **Optional database backup** — see [Database Backup](#database-backup)
+4. **Host resolution** — without a `host` argument, every configured host is synced sequentially, each with its own content directory, lock and sync state
 5. **Mode dispatch** — `auto` runs freshness detection then delegates to import or export
 
 ### Auto Mode Detection
 
-In `auto` mode (the default), the system decides whether to import or export:
+**Pages:** if any `.md` file's `mtime` is newer than its page's `updatedAt`, or a `.md`
+file has no page, the sync **imports**; otherwise it **exports**. Other files (`.txt`,
+`.csv`…) are ignored.
 
-**For pages:** scans all `.md` files recursively. If any file's `mtime` is newer than its matching page's `updatedAt` in the database, or if a `.md` file has no corresponding page, it triggers **import**. Otherwise it triggers **export**.
-
-**For media:** compares SHA-1 file hashes against stored hashes in the database. If any file's hash differs from the DB, or if a file has no matching media entity, it triggers **import**. Otherwise it triggers **export**.
-
-Non-`.md` files (`.txt`, `.csv`, etc.) do NOT influence page auto-detection. Only `.md` files are considered.
-
-### Concurrency Prevention
-
-- A **PID file** is created in `var/` when sync starts
-- If another `pw:flat:sync` is already running (PID file exists and process is alive), the command exits immediately
-- **Stale PID files** (process no longer running) are automatically cleaned up
-- The PID file is removed in a `finally` block after sync completes
+**Media:** if any file's SHA-1 hash differs from the stored hash, or a file has no media
+entity, the sync **imports**; otherwise it **exports**.
 
 ### Page Sync
 
 #### Import (flat to database)
 
-1. **Redirections first**: `redirection.csv` is loaded and imported before pages
+1. **Redirections first**: `redirection.csv` is imported before pages
 2. **Markdown import**: all `.md` files are parsed (YAML frontmatter + body)
 3. **Deferred properties**: `parentPage`, `translations`, `extendedPage` are resolved after all pages exist
-4. **Deletion**: pages in DB with no matching `.md` file AND no matching `redirection.csv` row are **deleted**
-5. **Index regeneration**: `index.csv` / `index.draft.csv` are regenerated to reflect DB state
+4. **Deletion**: pages with no matching `.md` file AND no matching `redirection.csv` row are **deleted**
+5. **Index regeneration**: `index.csv` / `index.draft.csv` are regenerated from the database
 
-**Important behaviors:**
-
-- `index.csv` is **read-only during import** — editing it has no effect; `.md` files are the source of truth
-- Backup files (`*.md~`) are **ignored** during import
-- With `--force` (without `--page`), ALL host pages are **deleted before importing** (fresh start); combined with `--page`, only the targeted pages are re-imported without resetting others
-- A page file is a complete document: removing a canonical frontmatter property resets it to its default value, and removing a custom property deletes it. `publishedAt` and `translations` keep their explicit reset syntax described here.
-- `publishedAt: draft` in frontmatter maps to `null` (unpublished)
+- `index.csv` is **read-only** — `.md` files are the source of truth
+- Backup files (`*.md~`) are ignored
+- With `--force` (without `--page`), ALL host pages are **deleted before importing**
+- A page file is a complete document: removing a canonical frontmatter property resets it to its default, and removing a custom property deletes it. `publishedAt` and [`translations`](#translations-hreflang-sync) keep their explicit reset syntax.
+- `publishedAt: draft` maps to `null` (unpublished)
 
 #### Export (database to flat)
 
 1. Each page is exported as a `.md` file with YAML frontmatter
 2. Pages with redirections go to `redirection.csv` (their `.md` files are deleted)
 3. Published pages are listed in `index.csv`, drafts in `index.draft.csv`
-4. **Smart skip**: if exported content matches existing file content, the file is not rewritten
-5. File `mtime` is synced to `page.updatedAt` to prevent false freshness detection on next auto run
+4. A file whose content is unchanged is not rewritten
+5. File `mtime` is set to `page.updatedAt` so the next auto run does not see it as newer
 
 ### Internal redirects (`redirectFrom`)
 
-Inspired by Jekyll's `redirect_from`, a page can declare the old paths that should redirect
-**to** it, right next to its content — instead of standalone records in `redirection.csv`:
+Like Jekyll's `redirect_from`, a page declares the old paths that redirect **to** it:
 
 ```yaml
 ---
@@ -363,21 +312,19 @@ redirectFrom:
 ---
 ```
 
-- The value is a `{ oldPath: httpCode }` map. A Jekyll-style bare list (`- cms-comparison`)
-  is accepted on import and treated as `301`. Paths are host-scoped (same host as the page).
-- Served at runtime and by the static generator (`.htaccess`, `Caddyfile`, and the HTML
-  meta-refresh stub for GitHub Pages), exactly like `redirection.csv` entries. Each one
-  matches its exact path, trailing slash optional: `old` never redirects `old/child`.
-- A slug rename now appends the old slug to the destination page's `redirectFrom` (no phantom
-  redirect page is created).
+- A `{ oldPath: httpCode }` map. A bare list (`- cms-comparison`) is accepted on import
+  as `301`. Paths are scoped to the page's host.
+- Served at runtime and by the static generator (`.htaccess`, `Caddyfile`, meta-refresh
+  stubs for GitHub Pages), like `redirection.csv` entries. Each matches its exact path,
+  trailing slash optional: `old` never redirects `old/child`.
+- A slug rename appends the old slug to the page's `redirectFrom`.
 - Internal links to an old path are rewritten at render to the current slug
-  (`[x](/old-name)` → `<a href="/new-name">`), so they target the page directly instead of
-  relying on a 301 hop — mirroring how a renamed media is resolved by its `fileNameHistory`.
-- `redirection.csv` still holds redirects that have **no destination page**: external targets,
+  (`[x](/old-name)` → `<a href="/new-name">`), with no 301 hop.
+- `redirection.csv` keeps the redirects with **no destination page**: external targets,
   non-resolving paths, and chains.
 
-To convert a site's existing internal phantom redirects into `redirectFrom` (database-level,
-works with or without flat sync):
+Convert a site's existing internal redirect pages into `redirectFrom` (database-level,
+with or without flat sync):
 
 ```bash
 php bin/console pw:redirect:migrate [host] [--dry-run]
@@ -387,38 +334,25 @@ php bin/console pw:redirect:migrate [host] [--dry-run]
 
 #### Import (flat to database)
 
-1. **CSV index loaded**: `media.csv`, read from the content base dir (shared by all hosts)
-2. **File validation**: checks that files referenced in CSV actually exist
-3. **Hash-based rename detection**: if a file on disk has the same SHA-1 hash as a missing media entity, the existing entity's filename is updated (no duplicate created)
-4. **Duplicate detection**: if a new file has the same SHA-1 hash as an existing media, the duplicate file is deleted and the existing entity's `fileNameHistory` is updated
-5. **Deletion**: media entities in DB whose `fileName` is NOT in the CSV are **deleted** (only if the CSV was loaded and holds at least one row)
-6. **Storage import**: files from the Flysystem storage are imported (hash-based skip for unchanged content)
-7. **Local dir import**: files from `{content_dir}/media/` are copied to storage then imported
-8. **Metadata import**: for a file whose content did not change, the CSV row is still compared with the database, and `alt`, `tags`, `alt_*` and custom properties are updated when they differ
-9. **Oversized image resize**: images exceeding 1980x1280 are automatically resized down (preserving aspect ratio), then background cache generation is triggered
-10. **Index regeneration**: `media.csv` is regenerated to reflect DB state
+1. **CSV index**: `media.csv`, read from the content base dir (shared by all hosts)
+2. **File validation**: rows whose file does not exist are dropped from the index
+3. **Deletion**: media whose `fileName` is NOT in the CSV are **deleted**, with their file (only when the CSV holds at least one row)
+4. **Storage import**: files from the Flysystem storage (hash-based skip for unchanged content)
+5. **Local dir import**: files from `{content_dir}/media/` are copied to storage then imported
+6. **Index regeneration**: `media.csv` is regenerated from the database
 
-Steps 6 to 8 are what makes `media.csv` writable: the file hash decides whether the
-**file** is re-imported, the CSV row decides whether the **metadata** is.
+While importing a file:
 
-#### Media Edge Cases
-
-- **New file in media dir, not in CSV** — imported as new media entity. CSV regenerated to include it.
-- **File deleted from disk, CSV row remains** — the missing file is removed from the index, so its name is no longer tracked. The media entity is **deleted from DB**. Row removed from regenerated CSV.
-- **CSV row removed, file still exists** — media entity **deleted from DB**. Physical file also **deleted** via Doctrine's `preRemove` listener.
-- **File renamed on disk, CSV not updated** — hash-based detection: SHA-1 hash is compared against media with missing files. If a match is found, the existing entity's filename is updated (no duplicate created).
-- **Filename changed in CSV, file not renamed on disk** — **not supported, and destructive**: the row points at a file that does not exist, so it is dropped from the index, and the media still carrying the old name is then deleted from the database along with its file. Rename the file on disk instead and let hash detection follow it.
-- **File content modified** — SHA-1 hash differs from DB — media re-imported with updated hash.
-- **CSV metadata edited, file untouched** — the row is compared with the database and applied when it differs. An empty cell is not an instruction to erase: it leaves the stored value alone.
-- **Lock/temp files** (`.~lock.*`, `~$*`) — **always skipped**, never imported.
-- **New file with same hash as existing media** — duplicate detected by SHA-1 hash. The new file is **deleted**, and the existing entity's `fileNameHistory` is updated. No new entity created.
-- **Oversized image imported** — images exceeding 1980x1280 are automatically resized down (preserving aspect ratio). Background cache generation is triggered for responsive variants + WebP.
-- **Duplicate filenames in CSV** — handled gracefully, first entry wins.
+- **Same hash as a media whose file is missing** — a rename: the entity's filename is updated
+- **Same hash as an existing media** — a duplicate: the new file is deleted, the existing entity's `fileNameHistory` is updated
+- **Unchanged file** — its CSV row is still compared with the database: `alt`, `tags`, `alt_*` and custom properties are updated when they differ
+- **New or oversized image** — see [Media Optimization on Import](#media-optimization-on-import)
+- **Lock/temp files** (`.~lock.*`, `~$*`) — always skipped
 
 #### media.csv Format
 
-`media.csv` lives in the content base dir (next to the per-host directories, not inside
-them): media are global, they are not owned by a host.
+`media.csv` lives in the content base dir (next to the per-host directories): media are
+global, not owned by a host.
 
 ```csv
 fileName,alt,tags,width,height,ratio,fileNameHistory,updatedAt,alt_en,alt_fr
@@ -426,16 +360,15 @@ image.jpg,Base alt,photo,800,600,1.33,old-image.jpg,2025-01-31 14:02:11,English 
 doc.pdf,A document,document,,,,,2025-01-30 09:11:40,,
 ```
 
-- `fileName` identifies the row — there is no `id` column
-- `alt`, `tags`, `alt_*` and any extra column are **editable**: they are imported back
-- `alt_*` columns: localized alt texts, auto-detected by locale suffix
-- Extra columns are stored as custom properties
-- `width`, `height`, `ratio`, `fileNameHistory` and `updatedAt` are **read-only**: exported
-  for reference, never imported (they are derived from the file itself)
+- `fileName` identifies the row — there is no `id` column; a duplicate row is skipped (first wins)
+- `alt`, `tags`, `alt_*` (localized alts, detected by locale suffix) and any extra column (stored as a custom property) are **imported back**
+- An empty cell leaves the stored value alone; it does not erase it
+- `width`, `height`, `ratio`, `fileNameHistory` and `updatedAt` are **read-only**: derived from the file, never imported
 
 ### User Sync
 
-User sync is **opt-in**: it only activates when `config/users.yaml` exists. If the file is missing, user sync is skipped entirely.
+User sync is **opt-in**: it runs only when `config/users.yaml` exists (with
+`pw:flat:sync`, or alone with `pw:flat:user-sync`).
 
 ```yaml
 users:
@@ -445,49 +378,33 @@ users:
     username: Admin
 ```
 
-- **YAML is the source of truth** — users not in YAML are deleted from the database
-- **Passwords are never synced** — they remain DB-only
-- New YAML users are created without passwords (use magic link auth)
-- Existing users are updated (roles, locale, username) but password is preserved
-- If `config/users.yaml` does not exist, no users are created, updated, or deleted
+- **YAML is the source of truth** — users not in YAML are **deleted** from the database
+- **Passwords are never synced** — new users are created without one (use magic link auth); existing users keep theirs
+- Roles, locale and username of existing users are updated
+- Delete `config/users.yaml` to disable user sync: no user is created, updated or deleted
 
 ### Idempotency
 
-Running sync twice in a row with no changes produces **zero operations**:
-
-- **Page import**: files whose `mtime` is older than page's `updatedAt` are skipped
-- **Page export**: files whose content matches DB content are skipped (smart diff)
-- **Media import**: files whose SHA-1 hash matches DB hash are skipped
-- **Media export**: CSV is regenerated but reflects identical data
+Running sync twice in a row with no changes produces **zero operations**: page import
+skips files older than `updatedAt`, page export skips unchanged content, media import
+skips matching hashes, and the regenerated `media.csv` is identical.
 
 ### Database Backup
 
 Pass `--backup` to back up the SQLite database before an import:
 
-- Backup file: `var/app.db~YYYYMMDDHHMMSS`
-- The ten most recent backups are kept automatically; older ones are removed after a successful backup
+- Backup file: `var/app.db~YYYYMMDDHHMMSS`; the ten most recent are kept
 - To restore: copy the backup file back to `var/app.db`
+- `php bin/console pw:backup --clean` keeps only the newest backup immediately
 
-`php bin/console pw:backup --clean` remains available when you want to keep only the newest backup immediately.
-
-The option fails before importing when Doctrine uses PostgreSQL or MariaDB. Create a
-backup with the database server's own tools, then run the sync without `--backup`.
-
-### Multi-Host Sync
-
-When running without `--host`:
-
-- ALL configured hosts are synced sequentially
-- Each host has its own content directory, lock file, and sync state
-- Pages from host A are never written to host B's content directory
-- Sync state (timestamps, conflicts) is tracked **per host**
+The option fails before importing on PostgreSQL or MariaDB: back up with the database
+server's own tools, then sync without `--backup`.
 
 ## Deploying a site: `vendor/bin/pushword-deploy`
 
-The bundle ships a site-agnostic deploy script (installed by composer, updated
-with it). Per-site specifics — remote, SSH options, excludes, local and remote
-command chains — live in a `deploy.conf` at the site root, found upward from
-wherever you run it:
+The bundle ships a site-agnostic deploy script. Per-site specifics — remote, SSH options,
+excludes, local and remote command chains — live in a `deploy.conf` at the site root,
+found upward from wherever you run it:
 
 ```bash
 vendor/bin/pushword-deploy pull       # prod -> local
@@ -497,23 +414,20 @@ vendor/bin/pushword-deploy pull-db    # SQLite only: fetch prod var/app.db (back
 # -n / --dry-run everywhere; SQLite only: --ship-db for the one-time rc802 migration
 ```
 
-The push **always** excludes `var/app.db*` and `var/flat-sync/`, whatever the
-configured excludes say: production owns its database (messages, quiz results,
-newsletter contacts, admin edits between two pulls) and each machine owns its
-sync state. `--ship-db` (confirmation required) sends the database file
-explicitly on top of the tree — only for the documented one-time uuid
+The push **always** excludes `var/app.db*` and `var/flat-sync/`, whatever the configured
+excludes say: production owns its database (messages, quiz results, newsletter contacts,
+admin edits between two pulls) and each machine owns its sync state. `--ship-db`
+(confirmation required) sends the database file explicitly — only for the one-time uuid
 migration.
 
-`pull-db` and `--ship-db` are intentionally SQLite-only. On PostgreSQL or MariaDB,
-`pull`, `push` and `publish` leave the server database untouched; use the database
-server's native dump/restore tools when a database transfer is actually required.
+`pull-db` and `--ship-db` are SQLite-only. On PostgreSQL or MariaDB, `pull`, `push` and
+`publish` leave the server database untouched; use its native dump/restore tools.
 
-With `DELETE=1`, the push first probes (same excludes, `--dry-run`) what
-`--delete` would remove on production. Files that exist only there are usually
-prod-side work the local copy has not pulled; the push lists them and asks for
-an explicit confirmation before removing anything. rsync itself has no conflict
-detection in either direction — the last machine to sync wins — so this probe
-is what makes `--delete` safe to keep on.
+With `DELETE=1`, the push first probes (`--dry-run`, same excludes) what `--delete` would
+remove on production. Files that exist only there are usually prod-side work not yet
+pulled, so the push lists them and asks for confirmation before removing anything. rsync
+has no conflict detection — the last machine to sync wins — so this probe is what makes
+`--delete` safe to keep on.
 
 Minimal `deploy.conf`:
 
@@ -527,80 +441,42 @@ REMOTE_DEPLOY='composer update && php bin/console doctrine:schema:update --force
 # PUBLISH_PATHS=('content' 'media')  # REMOTE_PUBLISH, POST_DEPLOY_LOCAL
 ```
 
-`publish` runs `pw:flat:sync && pw:static --incremental` remotely by default:
-the import moves the render epoch for anything listing-relevant, and the
-incremental build regenerates just that — including pruning the pages the sync
-deleted. Keep a plain `pw:static` at the end of `REMOTE_DEPLOY`: after
-`cache:clear` the epoch is fresh so incremental would rebuild everything anyway,
-and the full build's lint-before-swap protects the freshly deployed code path.
+`publish` runs `pw:flat:sync && pw:static --incremental` remotely by default: the import
+moves the render epoch for anything listing-relevant, and the incremental build
+regenerates just that — including pruning the pages the sync deleted. Keep a plain
+`pw:static` at the end of `REMOTE_DEPLOY`: after `cache:clear` incremental would rebuild
+everything anyway, and the full build's lint-before-swap protects the new code.
 
-`POST_DEPLOY_LOCAL` (typically an opcache-reset loop over the PHP hosts) runs
-even when the push dies mid-remote-chain: a deploy failing after
-`composer update` has already rebuilt the container, and the reset is precisely
-what brings the hosts back. Only a push aborted at a confirmation prompt —
-before anything touched production — skips it. `publish` never runs it: its
-remote chain rebuilds nothing that stales opcache.
+`POST_DEPLOY_LOCAL` (typically an opcache-reset loop over the PHP hosts) runs even when
+the push dies mid-remote-chain, since a deploy failing after `composer update` has
+already rebuilt the container. Only a push aborted at a confirmation prompt — before
+anything touched production — skips it. `publish` never runs it.
 
-The default excludes keep every **generated output** out, on the model of
-`static/`: `public/assets/` (yarn build), `public/bundles/` (Symfony assets
-install) and `public/media/` (`pw:image:cache`) are all rebuilt by the remote
-chain. A site that does *not* rebuild one of them server-side opts back in by
-overriding `PUSH_EXCLUDES` without it — the exception lives in the conf, not
-the rule.
+The default excludes keep every **generated output** out: `public/assets/` (yarn build),
+`public/bundles/` (assets install) and `public/media/` (`pw:image:cache`) are rebuilt by
+the remote chain, like `static/`. A site that does *not* rebuild one of them server-side
+overrides `PUSH_EXCLUDES` without it.
 
 ## Generate AI index
 
-```bash
-php bin/console pw:ai-index [host] [exportDir]
-```
+`pw:ai-index` writes `pages.csv` and `medias.csv` for AI tools, into `flat_content_dir`
+by default. See [AI content index](/ai-index).
 
-Generate two CSV files (`pages.csv` and `medias.csv`) with metadata useful for AI tools.
+## Write content
 
-Where:
-
-- `host` is optional (uses default app if not provided)
-- `exportDir` is optional (uses `flat_content_dir` by default)
-
-### `pages.csv`
-
-Contains page metadata with the following columns:
-
-- `slug` - Page slug
-- `h1` - Page H1 title
-- `createdAt` - Creation date (Y-m-d H:i:s)
-- `tags` - Page tags
-- `summary` - Page summary/excerpt
-- `mediaUsed` - Comma-separated list of media files used in the page
-- `parentPage` - Parent page slug (if any)
-- `pageLinked` - Comma-separated list of page slugs linked in the content
-- `length` - Content length in characters
-
-### `medias.csv`
-
-Contains media metadata with the following columns:
-
-- `media` - Media filename
-- `mimeType` - MIME type
-- `name` - Media name
-- `usedInPages` - Comma-separated list of page slugs using this media
-
-### Write
-
-By default, the content is organized in `content/{main_host}/` and images can be placed in either `content/{main_host}/media/` or in the storage directory `media/` (at project root). Both locations are scanned during import.
-
-Example structure:
+With the default `flat_content_dir`, a site's pages live in `content/{main_host}/`.
+Images go in `content/{main_host}/media/` or in the storage directory `media/` at the
+project root; both are scanned during import.
 
 ```
-content/
-content/homepage.md
-content/kitchen-sink.md
-content/other-page.md
-content/en/homepage.md
-content/en/kitchen-sink.md
-content/media/illustration.jpg
+content/example.tld/homepage.md
+content/example.tld/kitchen-sink.md
+content/example.tld/en/homepage.md
+content/example.tld/en/kitchen-sink.md
+content/example.tld/media/illustration.jpg
 ```
 
-#### `kitchen-sink.md` example:
+`kitchen-sink.md`:
 
 ```yaml
 ---
@@ -615,18 +491,13 @@ name: 'Kitchen Sink'
 title: 'Kitchen Sink - best google result'
 tags: 'demo example'
 publishedAt: '2025-01-15 10:00'
-
 ---
 My Page content Yeah !
 ```
 
-**Key points:**
-
-- Both **camelCase** and **underscore_case** work for property names (`parentPage` and `parent_page` are equivalent)
-- `parent` is automatically normalized to `parentPage`
-- Links to pages must use **slug** references
-- **slug** is derived from the file path (removing `.md`) and can be overridden with a `slug` property in the frontmatter
-- `homepage` can be named `index.md` or `homepage.md`
+- Property names work in **camelCase** or **underscore_case** (`parentPage` = `parent_page`); `parent` is normalized to `parentPage`
+- The **slug** is the file path without `.md`, unless a `slug` property overrides it; links to pages use slugs
+- The homepage can be named `index.md` or `homepage.md`
 - `publishedAt: draft` sets the page as unpublished (`null` in DB)
 - Unknown properties are stored in `customProperties`
 - `mainImage` references a media filename (not a path)
@@ -659,85 +530,65 @@ without one shifts on its next import.
 
 ### Translations (hreflang) Sync
 
-The `translations` property handles the bidirectional many-to-many relationship between pages for internationalization (hreflang).
+`translations` links pages across locales, in both directions:
 
-**Key behaviors:**
-
-- **Addition takes precedence**: If page A declares page B as a translation, the link is created even if B.md doesn't list A. You only need to add the translation in one file.
-- **No translations key = no changes**: If a page's markdown file doesn't have a `translations` property, existing translations in the database are preserved unchanged.
-- **Explicit empty array removes all**: Use `translations: []` to explicitly remove all translations from a page.
-
-**Examples:**
+- **Addition wins**: if A lists B, the link is created even if B.md doesn't list A — declare it in one file.
+- **No `translations` key = no change**: existing links are preserved.
+- **`translations: []` removes all** links of that page.
 
 ```yaml
-# In fr/about.md - adds en/about as translation
+# fr/about.md — links en/about
 ---
 translations:
   - en/about
 ---
-# In en/about.md - no translations key, existing links preserved
+# en/about.md — no translations key, so the link above stands
 ---
 h1: About Us
 ---
 ```
 
-With this setup, both pages will be linked as translations of each other after sync.
-
-To remove a translation, you must explicitly set an empty array in **both** files, or remove the translation from **one** file while the other file doesn't have a translations key (letting the removal propagate).
+To remove a translation, set `translations: []` in **both** files, or drop it from one
+file while the other has no `translations` key.
 
 ### Common Tasks
 
-Here is what happens for typical editing workflows after running `pw:flat:sync --mode=import`:
+What happens on `pw:flat:sync --mode=import`:
 
 #### Pages
 
-- **Create a new `.md` file** — a new page is created in the database. It appears in `index.csv` (or `index.draft.csv` if `publishedAt: draft`).
-- **Edit a `.md` file** — the page is updated in the database (the file's `mtime` must be newer than the page's `updatedAt`).
-- **Delete a `.md` file** — the page is **deleted from the database**. Its row is removed from `index.csv`.
-- **Rename a `.md` file** — the old page is deleted and a new one is created with the slug derived from the new filename. To keep the same page, use the `slug` property in frontmatter instead.
-- **Edit `index.csv`** — **nothing**. `index.csv` is read-only during import. It is regenerated after every import to reflect the database state. Edit `.md` files instead.
-- **Edit `redirection.csv`** — redirections are imported. Pages matching a redirection slug are converted to redirects.
+- **Create a `.md` file** — a page is created and listed in `index.csv` (or `index.draft.csv` if `publishedAt: draft`).
+- **Edit a `.md` file** — the page is updated (the file's `mtime` must be newer than the page's `updatedAt`).
+- **Delete a `.md` file** — the page is **deleted from the database**.
+- **Rename a `.md` file** — the old page is deleted and a new one created with the new slug. To keep the page, set the `slug` property instead.
+- **Edit `index.csv`** — **nothing**: it is regenerated from the database. Edit `.md` files instead.
+- **Edit `redirection.csv`** — redirections are imported; pages matching a redirection slug become redirects.
 
 #### Media
 
-- **Drop a new image into `media/`** (either `content/{host}/media/` or the storage directory `media/` at project root) — the image is imported as a new media entity. If it exceeds 1980x1280 pixels, it is automatically resized down. A new row appears in `media.csv` after sync.
-- **Drop a duplicate image** (same content as an existing media) — the duplicate file is **deleted**. The existing media's `fileNameHistory` is updated. No new entity is created.
-- **Replace an image** (same filename, different content) — the media entity is updated with the new file's hash, dimensions, and size.
-- **Delete an image from disk** — the media entity is **deleted from the database**. The row is removed from `media.csv` on next sync.
-- **Rename an image on disk** (without editing CSV) — hash-based detection matches the renamed file to the missing media entity and updates its filename. No duplicate is created.
-- **Edit `media.csv` — change `alt`, `tags`, an `alt_*` or a custom column** — the media entity is updated with the new values, even though the file itself never changed. This is the flat-file way to fix an alt text.
-- **Edit `media.csv` — change `fileName`** — **do not**: the renamed row no longer matches a file, and the media still carrying the old name is deleted from the database together with its file. Rename the file on disk instead.
-- **Edit `media.csv` — remove a row** — the media entity is **deleted from the database** and the physical file is also deleted.
-- **Edit `media.csv` — add a row for an existing file** — the file is imported as a new media entity with the provided metadata. If the file does not exist on disk, the row is silently ignored and removed from the regenerated CSV.
-
-#### Users
-
-- **Create `config/users.yaml`** — enables user sync (opt-in). Without this file, no users are touched.
-- **Add a user to `config/users.yaml`** — a new user is created (without password — use magic link auth to set one).
-- **Change roles/locale/username in YAML** — the existing user is updated. Password is preserved.
-- **Remove a user from YAML** — the user is **deleted from the database**.
-- **Delete `config/users.yaml`** — disables user sync entirely. No users are created, updated, or deleted.
+- **Drop a new image into `media/`** (`content/{host}/media/` or the storage `media/`) — imported as a new media and added to `media.csv`.
+- **Drop a duplicate image** (same content as an existing media) — the duplicate file is **deleted**; the existing media's `fileNameHistory` is updated.
+- **Replace an image** (same filename, different content) — the media is updated with the new hash, dimensions and size.
+- **Delete an image from disk** — the media is **deleted from the database** and its row from `media.csv`.
+- **Rename an image on disk** (without editing CSV) — hash detection updates the existing media's filename. No duplicate.
+- **Edit `alt`, `tags`, an `alt_*` or a custom column in `media.csv`** — the media is updated, though the file never changed. This is the flat-file way to fix an alt text.
+- **Edit `fileName` in `media.csv`** — **do not**: the row no longer matches a file, and the media still carrying the old name is deleted together with its file. Rename the file on disk instead.
+- **Remove a row from `media.csv`** — the media **and its file** are deleted.
+- **Add a row for an existing file** — the file is imported with the row's metadata. A row whose file does not exist is ignored and dropped from the regenerated CSV.
 
 ## Media Optimization on Import
 
-When importing **new images**, flat import applies the same optimization pipeline as admin upload:
+New images get the same pipeline as an admin upload:
 
-- Scales down oversized images to max 1980x1280 pixels (server-side)
-- Generates responsive variants (xs, sm, md, lg, xl) + WebP conversion (background)
-- Extracts dominant color for placeholders (background)
-- Runs lossless compression with optipng, jpegoptim, etc. (background)
+- Scaled down to max 1980x1280 pixels (server-side)
+- Responsive variants (xs, sm, md, lg, xl) + WebP (background)
+- Dominant color for placeholders (background)
+- Lossless compression with optipng, jpegoptim, etc. (background)
 
-**Not automatic:** PDF optimization (Ghostscript compression + qpdf linearization) is not triggered during flat import. Use the commands below.
-
-### Manual optimization commands
+PDF optimization (Ghostscript + qpdf) is **not** triggered by flat import. Run it manually:
 
 ```bash
-# Regenerate image cache (responsive variants + WebP) for all or updated media
-php bin/console pw:image:cache
-
-# Optimize images (lossless compression)
-php bin/console pw:image:optimize
-
-# Optimize PDFs (requires ghostscript and/or qpdf)
-php bin/console pw:pdf:optimize
+php bin/console pw:image:cache     # responsive variants + WebP, all or updated media
+php bin/console pw:image:optimize  # lossless image compression
+php bin/console pw:pdf:optimize    # requires ghostscript and/or qpdf
 ```

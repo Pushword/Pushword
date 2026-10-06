@@ -5,13 +5,12 @@ publishedAt: '2026-01-23 08:07'
 toc: true
 ---
 
-## Overview
-
-Pushword supports a Git-integrated content workflow for power users who manage content through Git repositories. This allows marketing teams to edit content via flat files while keeping the codebase separate.
+Edit content as flat files in a Git repository, kept separate from the codebase, while
+production stays editable in the admin. Built on the [flat extension](/extension/flat).
 
 ## Architecture
 
-The recommended setup uses Git submodules to separate content from code:
+Keep content in a Git submodule:
 
 ```
 project/
@@ -25,11 +24,13 @@ project/
     └── flat-sync/          # Lock and state files
 ```
 
-Marketing teams only access the content repository, never seeing the source code.
+Content editors only access the content repository, never the source code.
 
 ## Webhook API
 
-Power users can control the production lock state via curl requests.
+Lock production while you edit, so admin saves cannot conflict with your changes.
+Requests authenticate with a user's API token: **Admin > Users**, edit the user, then
+**Generate Token** in the **API Access** section and save (or `pw:user:token {email}`).
 
 ### Lock Production
 
@@ -43,22 +44,13 @@ curl -X POST https://prod.example.com/api/flat/lock \
   }'
 ```
 
-**Parameters:**
-
 - `host` (optional): Target specific host, omit to lock all hosts (global lock)
 - `reason` (optional): Message shown to admin users
-- `ttl` (optional): Lock duration in seconds (default: 1 hour)
+- `ttl` (optional): Lock duration in seconds (default: `webhook_lock_default_ttl`, 1 hour)
+
+`409` if a webhook lock is already held.
 
 ### Unlock Production
-
-```bash
-curl -X POST https://prod.example.com/api/flat/unlock \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-To unlock a specific host only:
 
 ```bash
 curl -X POST https://prod.example.com/api/flat/unlock \
@@ -67,19 +59,16 @@ curl -X POST https://prod.example.com/api/flat/unlock \
   -d '{"host": "example.com"}'
 ```
 
+Send `{}` to release the global lock. A manual or auto lock cannot be released here (`403`).
+
 ### Check Status
 
 ```bash
-# Check global lock status
-curl https://prod.example.com/api/flat/status \
-  -H "Authorization: Bearer YOUR_API_TOKEN"
-
-# Check specific host lock status
-curl https://prod.example.com/api/flat/status?host=example.com \
+curl "https://prod.example.com/api/flat/status?host=example.com" \
   -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
-**Response:**
+Omit `host` for the global lock.
 
 ```json
 {
@@ -97,57 +86,16 @@ curl https://prod.example.com/api/flat/status?host=example.com \
 }
 ```
 
-## API Token Setup
+## Workflow
 
-API tokens are managed per-user through the admin interface.
+1. **Lock production** (`POST /api/flat/lock`)
+2. **Edit flat files** in your local content repository
+3. **Commit and push** to origin
+4. **CI/CD** pulls the changes and runs `pw:flat:sync`
+5. **Unlock production** (`POST /api/flat/unlock`)
 
-### Generate via Admin UI
-
-1. Go to **Admin > Users** and edit the user who needs API access
-2. In the **API Access** section, click **Generate Token**
-3. Copy the generated token (it will be shown in the field)
-4. Save the user
-
-The token can be regenerated or revoked at any time from the same interface.
-
-## Workflow for Power Users
-
-### Recommended Process
-
-1. **Lock production**: Prevents admin edits during your session
-
-   ```bash
-   curl -X POST https://prod.example.com/api/flat/lock \
-     -H "Authorization: Bearer $TOKEN" \
-     -H "Content-Type: application/json" \
-     -d '{"reason": "Marketing update Q1"}'
-   ```
-
-2. **Edit flat files**: Make changes in your local content repository
-
-3. **Commit and push**: Push changes to origin
-
-   ```bash
-   git add -A && git commit -m "Update Q1 content" && git push
-   ```
-
-4. **CI/CD syncs**: Your pipeline pulls changes and runs sync
-
-5. **Unlock production**: Release the lock
-   ```bash
-   curl -X POST https://prod.example.com/api/flat/unlock \
-     -H "Authorization: Bearer $TOKEN" \
-     -H "Content-Type: application/json" \
-     -d '{}'
-   ```
-
-### Admin Behavior When Locked
-
-When locked via webhook:
-
-- **Viewing allowed**: All content remains visible
-- **Editing blocked**: Save operations return 403 error
-- **Banner displayed**: Red notification shows lock reason and who locked
+While a webhook lock is held, content stays visible in the admin, saves are refused
+(`403`), and a red banner shows the reason and who locked.
 
 ## CI/CD Integration
 
@@ -208,101 +156,30 @@ deploy-content:
       - content/**
 ```
 
-## Conflict Resolution
+## Conflicts and Notifications
 
-When both admin and flat files are modified, conflicts are resolved automatically using a "most recent wins" strategy.
-
-### Conflict Handling
-
-1. **Backup created**: Losing version saved as `filename~conflict-{id}.md`
-2. **Email sent**: Configured recipients notified
-3. **Notification created**: Visible in admin notification center
-
-### Reviewing Conflicts
-
-```bash
-# List conflict files
-find content/ -name "*~conflict-*"
-
-# Clear all conflict files after review
-php bin/console pw:flat:conflicts:clear --dry
-php bin/console pw:flat:conflicts:clear
-```
-
-## Notifications
-
-### Email Alerts
-
-Configure email notifications for conflicts and errors:
+When a page is modified both in the admin and in its file, the most recent wins and the
+losing version is saved as `page~conflict-{id}.md` (see
+[conflict resolution](/extension/flat#conflict-resolution)). Each conflict also creates an
+admin notification, emailed to the configured recipients:
 
 ```yaml
 # config/packages/flat.yaml
-flat:
+pushword_flat:
   notification_email_recipients:
     - admin@example.com
     - devops@example.com
   notification_email_from: noreply@example.com
 ```
 
-### Admin Notification Center
-
-Access via Admin > Notifications to:
-
-- View all notifications (conflicts, sync errors, lock info)
-- Filter by type
-- Mark as read/unread
-- Delete old notifications
-
-## Configuration Reference
-
-```yaml
-flat:
-  # Existing options
-  flat_content_dir: '%kernel.project_dir%/content/_host_'
-  change_detection_cache_ttl: 300
-  auto_export_enabled: true
-  lock_ttl: 1800
-  auto_lock_on_flat_changes: true
-
-  # Webhook lock options
-  webhook_lock_default_ttl: 3600 # Default 1 hour
-
-  # Notification options
-  notification_email_recipients: []
-  notification_email_from: null
-
-  # Auto-commit content changes to git after export (default: false)
-  auto_git_commit: false
-
-  # Debounce delay in seconds before processing deferred export (default: 120)
-  export_debounce_delay: 120
-```
-
-## Automatic Git Commits from Admin Saves
-
-When `auto_git_commit` is enabled, admin saves are automatically committed and pushed to git:
-
-1. Admin saves a page or media — a pending export flag is written
-2. A Messenger message is dispatched with a configurable delay (each new save resets the timer)
-3. The worker exports all pending changes in a single batch
-4. Changes are committed and pushed to git automatically
-
-A Symfony Messenger worker must be running:
+**Admin > Notifications** lists conflicts, sync errors and lock info, filterable by type
+and read state.
 
 ```bash
-php bin/console messenger:consume async -v
+# Review, then clear conflict files
+php bin/console pw:flat:conflicts:clear --dry
+php bin/console pw:flat:conflicts:clear
 ```
 
-## Commands Reference
-
-```bash
-# Lock/unlock via CLI
-php bin/console pw:flat:lock [host] --reason="Manual lock" --ttl=3600
-php bin/console pw:flat:unlock [host]
-
-# Manually consume pending exports
-php bin/console pw:flat:sync --consume-pending
-
-# Clear conflicts
-php bin/console pw:flat:conflicts:clear [host] --dry
-```
+Committing admin saves back to Git: see
+[deferred export & git auto-commit](/extension/flat#deferred-export-git-auto-commit).
