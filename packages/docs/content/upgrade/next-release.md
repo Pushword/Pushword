@@ -61,8 +61,7 @@ and `PageRepository::getPagesWithoutParent()` are gone; use Doctrine queries for
 
 ## Core context and authentication helpers
 
-Use `SiteRegistry::get($host)->get($key)` instead of `getAppValue()`, and
-`RequestContext::setRequestContext()` instead of `SiteRegistry::setRequestContextData()`.
+Use `RequestContext::setRequestContext()` instead of `SiteRegistry::setRequestContextData()`.
 Use Symfony's `UserAuthenticatorInterface::authenticateUser()` for programmatic login;
 `MagicLinkAuthenticator::createPassport()` and `HtmlBeautifer::removeHtmlComments()` are gone.
 

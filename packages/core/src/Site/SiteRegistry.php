@@ -184,6 +184,12 @@ final class SiteRegistry implements ResetInterface
         return $this->get('' === $host ? null : $host);
     }
 
+    /** @api Site property access used by downstream PHP services and Twig templates. */
+    public function getAppValue(string $key, string $host = ''): mixed
+    {
+        return $this->getApp($host)->get($key);
+    }
+
     public function switchSite(Page|string $host): self
     {
         $this->context()->switchSite($host);

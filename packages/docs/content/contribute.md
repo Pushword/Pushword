@@ -52,6 +52,8 @@ Unused internal members fail `composer stan`. The configuration recognizes EasyA
 routes, service listener tags and the starter project's Composer hooks. Public extension
 contracts use `@api` PHPDoc to account for downstream callers. Use that tag only for
 supported APIs; remove obsolete internal code rather than adding ignores or a baseline.
+Before removing a public member, check downstream PHP services, Twig templates and
+service configuration. The monorepo analysis alone cannot prove that an API is unused.
 
 ### Tests
 
