@@ -5,19 +5,13 @@ publishedAt: '2025-12-21 21:55'
 name: Theme
 ---
 
-To customize your website theme, you may be insterested in :
+To customize a site's theme:
 
 - [configure and customize the assets](/manage-assets) (CSS and JavaScript)
-- [customize template file](/override-theme) wich are rendering Pushword pages
+- [override the templates](/override-theme) rendering pages
 - [animate navigations](/view-transitions) with the native View Transition API (on by default)
-- edit template file for [admin](/extension/admin) with the extension [template-editor](/extension/template-editor)
+- edit templates from the [admin](/extension/admin) with [template-editor](/extension/template-editor)
 
-## Where to find a ready-to-go Theme for my Pushword CMS ?
+## Ready-made themes
 
-0 theme available for now...Thanks to Tailwind CSS and the twig template engine, it's so easy to customize the default one and has a uniq website.
-
-If you create and package a theme, feel free to #[edit this file on github](https://github.com/Pushword/Pushword/edit/main/packages/docs/content/{{ page.slug }}.md) to list it on this page.
-
-## Developper › Tips to package a theme
-
-It's exactly like building an [extension](/extensions).
+None yet — customize the default Tailwind theme instead. A theme is packaged exactly like an [extension](/extensions); #[edit this page on GitHub](https://github.com/Pushword/Pushword/edit/main/packages/docs/content/{{ page.slug }}.md) to list yours.

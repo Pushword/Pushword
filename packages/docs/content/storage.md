@@ -5,11 +5,11 @@ publishedAt: '2025-12-21 21:55'
 toc: true
 ---
 
-Pushword uses [League Flysystem](https://flysystem.thephpleague.com/) via the [flysystem-bundle](https://github.com/thephpleague/flysystem-bundle) for media storage. This allows you to store your media files locally (default) or on remote services like Amazon S3, FTP, SFTP, and more.
+Media go through [Flysystem](https://flysystem.thephpleague.com/) ([flysystem-bundle](https://github.com/thephpleague/flysystem-bundle)): local disk by default, or S3, FTP, SFTP and other remote backends.
 
 ## Default Configuration (Local Storage)
 
-By default, Pushword stores media files locally in your `media_dir` (configured in `pushword.yaml`):
+Media are stored in `media_dir`:
 
 ```yaml
 pushword:
@@ -17,14 +17,9 @@ pushword:
   public_media_dir: media
 ```
 
-This works out of the box with no additional configuration.
-
 ## Using Remote Storage (S3, FTP, etc.)
 
-To use a remote storage backend, you need to:
-
-1. Install the appropriate Flysystem adapter
-2. Override the Flysystem configuration in your application
+Install the Flysystem adapter, then redefine the `pushword.mediaStorage` storage in your app.
 
 ### Example: Amazon S3 Storage
 
@@ -46,7 +41,7 @@ flysystem:
         prefix: 'media'
 ```
 
-3. Configure the AWS client service (see [Flysystem Bundle documentation](https://github.com/thephpleague/flysystem-bundle#amazon-s3)).
+3. Configure the AWS client service (see the [flysystem-bundle docs](https://github.com/thephpleague/flysystem-bundle#amazon-s3)) and [declare the storage remote](#custom-mediastorageadapter).
 
 ### Example: FTP Storage
 
@@ -68,6 +63,8 @@ flysystem:
         password: '%env(FTP_PASSWORD)%'
         root: '/path/to/media'
 ```
+
+Then [declare the storage remote](#custom-mediastorageadapter).
 
 ## Cloudflare R2 originals and image cache
 
@@ -138,30 +135,14 @@ $services->set(MediaStorageAdapter::class)
 
 Image processing still happens on local temporary files. Pushword uploads a derivative only after its local atomic write completes, then republishes the optimized result. `media_cache_dir` therefore remains a local working directory even when R2 is the authoritative cache.
 
-## Advanced: Custom MediaStorageAdapter
+## Custom MediaStorageAdapter {id=custom-mediastorageadapter}
 
-If you need to customize how Pushword interacts with storage, you can override the `MediaStorageAdapter` service:
+A remote `pushword.mediaStorage` needs the `MediaStorageAdapter` service redefined with `$isLocal: false`, as in the [R2 example](#cloudflare-r2-originals-and-image-cache):
 
-```php
-// config/services.php
-use Pushword\Core\Service\MediaStorageAdapter;
-
-$services->set(MediaStorageAdapter::class)
-    ->args([
-        '$storage' => service('pushword.mediaStorage'),
-        '$mediaDir' => '%pw.media_dir%',
-        '$isLocal' => false, // Set to false for remote storage
-    ]);
-```
-
-The `isLocal` parameter is important for performance:
-
-- **true** (default): Uses direct filesystem paths for image processing
-- **false**: Downloads files to temp directory before processing (required for remote storage)
+- **true** (default): image processing reads files directly from disk
+- **false**: files are downloaded to a temporary directory before processing (required for remote storage)
 
 ## Available Adapters
-
-Flysystem supports many storage backends:
 
 | Adapter      | Package                                 |
 | ------------ | --------------------------------------- |
@@ -173,11 +154,10 @@ Flysystem supports many storage backends:
 | Azure Blob   | `league/flysystem-azure-blob-storage`   |
 | Memory       | `league/flysystem-memory`               |
 
-See the [Flysystem documentation](https://flysystem.thephpleague.com/docs/) for complete configuration options.
+Configuration options: [Flysystem documentation](https://flysystem.thephpleague.com/docs/).
 
 ## Notes
 
 - Image cache (thumbnails, optimized versions, `og/` previews) uses `pushword.mediaCacheStorage`. It is local by default, in `media_cache_dir` — `public/{public_media_dir}/` by default — and may be moved to remote Flysystem storage
 - Both image writers write to a `.tmp` file beside their target and rename it into place, so a reader never meets a half-written image. A process killed mid-write (OOM, a deploy restart) leaves that file behind; `pw:image:cache` deletes the ones older than an hour on each run, under `media_dir` and `media_cache_dir`, and reports how many it took and how many were empty
-- When using remote storage, original media files are downloaded temporarily for image processing
-- VichUploaderBundle is configured to use Flysystem for uploads
+- Uploads (VichUploaderBundle) go through the same Flysystem storage

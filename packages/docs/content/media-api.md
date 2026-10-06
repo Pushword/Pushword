@@ -5,15 +5,12 @@ publishedAt: '2025-02-26 12:00'
 toc: true
 ---
 
-An HTTP API to upload, read, update, and delete media files and their metadata (alt text, localized alts, tags, custom properties) without the admin UI or SFTP sync. Useful for scripted workflows and external tooling.
+HTTP endpoints to list, upload, read, update and delete media and their metadata (alt, localized alts, tags, custom properties). Shipped by [`pushword/api`](/extension/api).
 
 {id=authentication}
 ## Authentication
 
-All requests require a Bearer token in the `Authorization` header. The token is matched against the `apiToken` field of the `User` entity.
- 
-
-### Usage
+Every request needs a Bearer token, matched against `User::apiToken`:
 
 ```bash
 curl -H "Authorization: Bearer your-secret-token" https://example.com/api/media/photo.jpg
@@ -21,7 +18,7 @@ curl -H "Authorization: Bearer your-secret-token" https://example.com/api/media/
 
 ### From a server you already trust (SSH)
 
-If you already have SSH access to the host, you can fetch the token on demand instead of storing it on your laptop. This avoids leaking the token via shell history, backups, or a compromised workstation — exfiltration would require compromising SSH itself.
+Fetch the token on demand over SSH instead of storing it locally:
 
 ```bash
 TOKEN=$(ssh server "bin/console pw:user:token robin@example.tld")
@@ -30,14 +27,25 @@ curl -H "Authorization: Bearer $TOKEN" \
      https://example.com/api/media/photo.jpg
 ```
 
-The `pw:user:token` command writes the token raw on stdout (no newline, no decoration) so it captures cleanly through `$(…)`. Errors go to stderr and do not pollute the captured value.
+`pw:user:token` writes the bare token to stdout (no newline) and errors to stderr, so `$(…)` captures it cleanly.
 
 {id=endpoints}
-## Endpoints 
+## Endpoints
+
+### GET /api/media
+
+Lists media, newest first, as `{ items, total, page, per_page }` (each item in the single-media format below).
+
+| Query param        | Effect                                        |
+| ------------------ | --------------------------------------------- |
+| `q` (or `search`)  | filename or alt contains the value            |
+| `mimeType`         | exact MIME type                               |
+| `tag`              | tags contain the value                        |
+| `page`, `per_page` | pagination (default 25 per page, max 100)     |
 
 ### GET /api/media/{filename}
 
-Returns metadata for the given media file. Supports current filename and historical filenames (after renames).
+Returns one media's metadata. Accepts the current filename or a previous one.
 
 **Response:**
 
@@ -71,14 +79,12 @@ Returns metadata for the given media file. Supports current filename and histori
 
 ### POST /api/media/{filename}
 
-Two request shapes are supported, selected by `Content-Type`:
-
-- `application/json` — update metadata on an existing media (404 if not found)
-- `multipart/form-data` — upload a new file (creates the media)
+- JSON body (`POST` or `PATCH`) — update an existing media (404 if not found)
+- `multipart/form-data` with a `file` part — upload a new media
 
 #### JSON — metadata update
 
-Partial update — only the fields you send are modified.
+Only the fields you send are modified.
 
 **Updatable fields (all optional):**
 
@@ -89,6 +95,8 @@ Partial update — only the fields you send are modified.
 | `tags`             | string[] | Tag list                                               |
 | `customProperties` | object   | Custom key/value map; keys are merged in, `null` removes a key |
 | `filename`         | string   | Rename the file (old name is kept in history)          |
+| `fileNameHistory`  | string[] | Replace the list of previous filenames                 |
+| `rotate`           | int      | Rotate an image clockwise by a multiple of 90 degrees  |
 
 **Example:**
 
@@ -104,7 +112,7 @@ Returns the full updated metadata (same format as GET).
 
 #### Multipart — file upload
 
-Send the binary together with metadata. The `{filename}` in the URL is the target name; if it is already taken, Pushword auto-renames (`photo.jpg` → `photo-2.jpg`) and the response reflects the final name.
+The `{filename}` in the URL is the target name; if taken, Pushword renames (`photo.jpg` → `photo-2.jpg`) and the response carries the final name.
 
 **Form fields:**
 
@@ -115,6 +123,7 @@ Send the binary together with metadata. The `{filename}` in the URL is the targe
 | `alts`             | string | Localized alts, JSON-encoded object (`{"fr": "…"}`)            |
 | `tags`             | string | Tag list, JSON-encoded array (`["landscape","nature"]`)        |
 | `customProperties` | string | Custom key/value map, JSON-encoded object (`{"credit":"…"}`)   |
+| `fileNameHistory`  | string | Previous filenames, JSON-encoded array                         |
 
 **Example:**
 
@@ -132,11 +141,11 @@ curl -X POST \
 
 - `201 Created` + full metadata — media successfully created
 - `200 OK` + metadata with `"duplicate": true` — a media with the same SHA-1 already exists; the uploaded file was discarded and the existing media is returned unchanged
-- `400 Bad Request` — missing or invalid file part
+- `400 Bad Request` — missing, invalid or rejected file
 
 ### DELETE /api/media/{filename}
 
-Deletes the media record and its file from disk. Mirrors the admin delete action: pages referencing the media as `mainImage` are updated to `null`, and the image cache is cleared.
+Deletes the media and its file. As in the admin, pages using it as `mainImage` get `null` and its image cache is cleared.
 
 **Example:**
 
@@ -154,4 +163,4 @@ curl -X DELETE \
 | ------ | --------------------------------------------------- |
 | 401    | Missing or invalid Bearer token                     |
 | 404    | No media found for this filename (GET / JSON POST / DELETE)  |
-| 400    | Invalid JSON body, or missing/invalid upload file   |
+| 400    | Empty or invalid JSON body, invalid `rotate`, or missing/invalid upload file |

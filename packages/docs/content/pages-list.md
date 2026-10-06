@@ -5,7 +5,7 @@ publishedAt: '2025-12-21 21:55'
 toc: true
 ---
 
-You can do advanced filtering toward the twig `pages_list` like in the [admin-block-editor](/extension/admin-block-editor).
+`pages_list()` (and the [block editor](/extension/admin-block-editor)'s Pages List block) accept a search expression:
 
 | Value                            | Expected behavior                                                                                               |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -19,7 +19,7 @@ You can do advanced filtering toward the twig `pages_list` like in the [admin-bl
 | `related:comment:`_exampleValue_ | same as `related` but instead of _sister pages_, it's pages containing the comment                              |
 | `title:`_exampleValue_           | filter pages containing in title (**seo title** or **h1**) the _exampleValue_                                   |
 | `content:`_exampleValue_         | same than `title` + searching in _mainContent_ too                                                              |
-| `slug:`_exampleValue_            | filter pages with the exact slug (useful only with **OR**)                                                      |
+| `slug:`_exampleValue_            | filter pages with the exact slug (useful only with **OR**); `page:` is an alias                                 |
 | `slug:`_%exampleValue%_          | same than `slug:` with **%** ➜ filter page with the slug containing _exampleValue_.                             |
 | `template:`_exampleValue_        | filter pages rendered by this template                                                                          |
 | `parent:`_exampleSlug_           | filter pages whose **parent page** has this slug                                                                 |
@@ -30,16 +30,14 @@ You can do advanced filtering toward the twig `pages_list` like in the [admin-bl
 | `customProperty:`_key_`:`_value_ | the older spelling of `prop:`                                                                                    |
 | _exampleValue_                   | filter _tag_ (exact match only !)                                                                               |
 
-Anything the list above does not recognise is a tag search, and always will be:
-`type:product` is a perfectly good tag name, and no parser can tell it from a
-mistyped prefix. A search matching nothing is therefore silent — run
-`pw:pages-list:lint` to find the ones on your site that do.
+Anything else is a tag search — `type:product` is a valid tag name, so a mistyped
+prefix silently matches nothing. `pw:pages-list:lint` reports the searches on your
+site that match no page.
 
 ## Using Operators `OR` or `AND`
 
-Both, in the same query — but never side by side without parentheses. There is no
-precedence rule to remember: mixing the two says which comes first, or the search
-is refused.
+Both may appear in one query, but mixing them requires parentheses — there is no
+precedence rule, so an ungrouped mix is refused.
 
 Examples :
 
@@ -50,11 +48,9 @@ Examples :
 - ✔ `tag:blog AND (tag:featured OR tag:pinned)`
 - ✗ `parent_children AND related OR page:custom-slug` ➜ ambiguous, group one side
 
-`AND` and `OR` are recognised as whole uppercase words only, so a tag named
-`ORANGE` — or a lowercase `or` — is still ordinary text. A `(` opens a group only
-where a term may start: at the beginning, after an operator, or after another
-`(`. Everywhere else it is an ordinary character, so a tag written `foo (bar)`
-still means what it did before parentheses existed.
+`AND` and `OR` are operators only as whole uppercase words (`ORANGE` or `or` stay
+text). A `(` opens a group only where a term may start — at the beginning, after an
+operator or after another `(` — so a tag written `foo (bar)` is still a tag.
 
 ## Ordering
 
@@ -62,9 +58,8 @@ The third argument sorts the list: any page column, with an optional direction
 (`'weight DESC, publishedAt DESC'`; `↑` and `↓` are accepted), or `prop.<key>` for a
 custom property. It defaults to `publishedAt,weight`.
 
-`order: 'search'` is the exception — it keeps the pages in the order their `slug:` terms
-are written. A curated row of cards, three pages chosen by hand in that sequence, is what
-it is for, and no column can express it:
+`order: 'search'` keeps the pages in the order their `slug:` terms are written — for a
+hand-picked row of cards:
 
 ```twig
 {{ pages_list('slug:tour-du-mont-blanc OR slug:gr54 OR slug:vercors', order: 'search', view: 'card') }}
@@ -87,8 +82,7 @@ it is for, and no column can express it:
 {% set items = pages(where: 'slug:tour-du-mont-blanc OR slug:gr54', order: 'search') %}
 ```
 
-The block editor's PagesList block offers both forms in its order select, and keeps an
-order written by hand selected rather than rewriting it.
+The block editor's order select offers both forms and keeps a hand-written order as is.
 
 ## Choosing How the List Renders
 
@@ -111,11 +105,10 @@ All three are available from the block editor's **format** select.
 
 ### Site display variants
 
-Drop a template at `templates/<host>/component/pages_list_smallCard.html.twig` (any
-of the usual template override locations works) and `smallCard` becomes a valid
-view name — from Twig calls and from the block editor alike. It receives the same
-variables as the built-in views: `pages`, `pager`, `pager_route`,
-`pager_route_params`, `id`, `wrapperClass`.
+A template at `templates/<host>/component/pages_list_smallCard.html.twig` (or any
+other [override location](/override-theme)) makes `smallCard` a valid view name, in
+Twig and in the block editor. It receives the built-in views' variables: `pages`,
+`pager`, `pager_route`, `pager_route_params`, `id`, `wrapperClass`.
 
 To offer the variant in the block editor's **format** select, declare it on the app:
 
@@ -126,52 +119,36 @@ pushword:
           pages_list_displays: [smallCard]
 ```
 
-A block saved with an undeclared variant keeps working — the select simply shows
-the stored name without proposing it elsewhere.
+A block saved with an undeclared variant keeps working; the select shows the stored name.
 
 ### Changing the card grid's columns
 
 The `card` view's columns live on the wrapper alone
-(`grid gap-2 sm:grid-cols-2 md:grid-cols-3`); the items carry no width class. So
-`wrapperClass` — or the class tune on the block — replaces the whole layout in one
-string, no template override needed:
+(`grid gap-2 sm:grid-cols-2 md:grid-cols-3`), so `wrapperClass` — or the block's class
+tune — replaces the layout without a template override:
 
 ```twig
 {{ pages_list('type:blog', 8, 'publishedAt ↓', 'card', wrapperClass: 'not-prose grid gap-4 sm:grid-cols-2 lg:grid-cols-4 my-5') }}
 ```
 
-One caveat: classes typed in content only work if they exist in your compiled CSS.
-Tailwind generates what it sees in scanned files, so either keep a safelist of the
-grid classes you allow, or stick to classes your templates already use.
+Classes typed in content only work if they exist in your compiled CSS: safelist the
+grid classes you allow, or reuse classes your templates already contain.
 
 ### The Horizontal Scroller
 
-`horizontalScroll` renders the `card` view's cards inside `.horizontal-scroll`, a
-component that carries **no JavaScript at all**. The prev/next arrows are
-`::scroll-button()` pseudo-elements, the edge fade is a `mask-image`, and the
-"disabled at both ends" behaviour comes from `:disabled` — none of it is computed
-in script.
+`horizontalScroll` renders the `card` view's cards inside `.horizontal-scroll`, with
+**no JavaScript**: the prev/next arrows are `::scroll-button()` pseudo-elements, the
+edge fade is a `mask-image`, and disabled arrows come from `:disabled`.
 
-Each edge fades only when something is scrolled past it: at rest the first card is
-sharp and only the right edge is faded, and the reverse once you reach the end. That
-half is a scroll-driven animation over the mask, guarded by `@supports`; where it is
-unsupported both edges stay faded, which is what the plain mask does on its own.
+An edge fades only when content is scrolled past it (a scroll-driven animation guarded
+by `@supports`; unsupported browsers fade both edges). Add `horizontal-scroll-dots` to
+`wrapperClass` for position dots — visible cards filled, half-visible half-filled. A row
+whose cards all fit draws no dots, fade or arrows.
 
-Add `horizontal-scroll-dots` to `wrapperClass` for position dots under the row: every
-visible card's dot is filled, half-visible ones half-filled, so clicking the last dot
-and seeing nothing move reads as "you are already there". A row **whose cards all fit**
-draws none of it — no dots, no fade, and no arrows, since there is no position to
-indicate and nothing hidden behind either edge.
-
-The arrows are an enhancement, not the mechanism. They are Chromium-only today, so
-elsewhere they are simply absent and the row is scrolled by trackpad, swipe,
-shift+wheel or the scrollbar. That is why the scroller is `overflow-x: auto` and
-never `overflow-x: hidden`: with `hidden` the arrows become the only way to move,
-and every browser without them shows content nobody can reach.
-
-The scrollbar follows the same logic in reverse — it is the fallback affordance and
-the only position indicator when there are no arrows, so it is hidden **only** where
-`::scroll-button()` is supported:
+The arrows are Chromium-only; elsewhere the row scrolls by trackpad, swipe, shift+wheel
+or scrollbar. Keep the scroller `overflow-x: auto`, never `hidden`, or browsers without
+arrows cannot reach the content. For the same reason the scrollbar is hidden **only**
+where `::scroll-button()` is supported:
 
 ```css
 @supports selector(::scroll-button(inline-end)) {
@@ -179,39 +156,33 @@ the only position indicator when there are no arrows, so it is hidden **only** w
 }
 ```
 
-Two limits worth knowing before you reach for it:
+Limits:
 
 - **The arrow step is not configurable.** The browser scrolls about 85% of the visible
-  width — roughly three cards at desktop widths — and its smooth-scroll duration follows
-  that distance (~550ms). If the jump feels too big, widen the cards; there is no CSS
-  lever for the step itself.
+  width (~550ms). If the jump feels too big, widen the cards.
 - **The arrows' accessible name comes from CSS**, since a pseudo-element takes no
   `aria-label`. The template sets `--horizontal-scroll-previous` and
   `--horizontal-scroll-next` from the `horizontalScrollPrevious` /
   `horizontalScrollNext` translation keys; override them in your own CSS or
   translations, not in the markup.
 
-`wrapperClass` lands on the **wrapper**, not on the scrolling row — the arrows are
-positioned against that wrapper, so a layout class on the row would widen the cards and
-leave the arrows pinned to the narrow box. Inside a `prose` column the scroller inherits
-its 65ch width; pass `bleed` to break out of it, which also gives the row a gutter so the
-first card does not touch the edge of the window:
+`wrapperClass` lands on the **wrapper** (the arrows' positioning box), not on the
+scrolling row. Inside a `prose` column the scroller inherits its 65ch width; pass `bleed`
+to break out of it, with a gutter before the first card:
 
 ```twig
 {{ pages_list('type:blog', 9, 'publishedAt ↓', 'horizontalScroll', wrapperClass: 'bleed') }}
 ```
 
-On a site using the block editor, write that call **positionally and fully quoted**
-instead — `wrapperClass` is the sixth argument, and the class tune the editor round-trips
-to. The block editor's markdown reader only accepts quoted positional arguments, so a
-named argument (or a bare `9`) leaves the call as a raw block: it still renders, but it
-is no longer editable as a Pages List block.
+With the block editor, write the call **positionally and fully quoted** (`wrapperClass`
+is the sixth argument). A named argument or a bare `9` still renders, but the editor
+keeps the call as a raw block instead of a Pages List block.
 
 ```twig
 {{ pages_list('type:blog', '9', 'publishedAt ↓', 'horizontalScroll', '0', 'bleed') }}
 ```
 
-Three custom properties theme it:
+Custom properties:
 
 | Property                        | Default   | Effect                              |
 | ------------------------------- | --------- | ----------------------------------- |
@@ -220,28 +191,25 @@ Three custom properties theme it:
 | `--horizontal-scroll-thumb`     | `#d1d5db` | scrollbar thumb, where it is shown  |
 | `--horizontal-scroll-previous` / `--horizontal-scroll-next` | from translations | the arrows' accessible names |
 
-`--horizontal-scroll-thumb` is worth setting on a dark background. The scrollbar is
-given an explicit colour on purpose: left to the platform default, Firefox draws an
-overlay scrollbar that only appears while scrolling — invisible exactly where it is
-the only affordance.
+Set `--horizontal-scroll-thumb` on a dark background. The explicit colour stops
+Firefox from drawing an overlay scrollbar that only appears while scrolling.
 
 ## Exclude Already Linked Pages
 
-When your page content contains links to other pages, you can exclude those pages from your listings to avoid duplicates. Add the `excludeAlreadyLinked: true` parameter:
+`excludeAlreadyLinked: true` drops pages the content already links to:
 
 ```twig
 {{ pages_list('taxonomy:travel', 6, excludeAlreadyLinked: true) }}
 ```
 
-Lists using the parameter also skip what an earlier list on the same page already rendered, so a hub carrying several listings shows each page only once. See [Link Collector](/link-collector).
-
-Or use the `exclude_linked()` function with `pages()`:
+It also skips pages an earlier list on the same page rendered, so a hub with several
+lists shows each page once. With `pages()`, use `exclude_linked()`:
 
 ```twig
 {% set uniquePages = exclude_linked(pages(host, 'taxonomy:travel')) %}
 ```
 
-See the [Link Collector documentation](/link-collector) for detailed usage, examples, and the full API reference.
+Details: [Link Collector](/link-collector).
 
 ## Paginating a List
 
@@ -253,24 +221,17 @@ of pager pages the list may ever have.
 {{ pages_list('type:blog', 12, maxPages: 5) }}
 ```
 
-That renders 12 cards per page across at most 5 pages — 60 posts in total, the
-newest first. The pager itself is rendered by
-`component/pager.html.twig`, which extends Pagerfanta's Tailwind view; override it
-like any other component to restyle it.
+12 cards per page across at most 5 pages — 60 posts, newest first. The pager is
+`component/pager.html.twig` (extends Pagerfanta's Tailwind view); override it to restyle.
 
-Both numbers matter, and only together:
+- `max` is required as soon as `maxPages > 1` (`"max" (items per page) must be >= 1
+  when paginating with maxPages`).
+- `maxPages` is a ceiling: one query fetches `max × maxPages` rows and Pagerfanta slices
+  them. Rows beyond that product are unreachable.
+- `maxPages: 1` (or 0) disables pagination: no pager is rendered.
 
-- `max` is required as soon as `maxPages > 1`. Paginating without a per-page count
-  is refused rather than guessed (`"max" (items per page) must be >= 1 when
-  paginating with maxPages`).
-- `maxPages` is a hard ceiling, not a page count. The query fetches `max × maxPages`
-  rows once and Pagerfanta slices them, so raising `maxPages` costs one bigger
-  query, not one query per page. Rows beyond that product are never reachable.
-- `maxPages: 1` (or 0) means no pagination at all — the list behaves as if only
-  `max` were given, and no pager is rendered.
-
-The array form `pages_list('type:blog', [12, 5])` is the older spelling of the same
-thing. It still works; passing both an array `max` and `maxPages` is an error.
+The legacy array form `pages_list('type:blog', [12, 5])` still works; combining it
+with `maxPages` is an error.
 
 ### Pager URLs
 
@@ -281,10 +242,8 @@ The pager appends the page number as a path segment on the current page:
 /blog/2    ← page 2
 ```
 
-Page 1 is always the bare URL; the route is built from the page currently being
-rendered, so a paginated list works on any page, on any host, without configuration.
-
-Two consequences worth knowing before you paginate:
+Page 1 is the bare URL. The route is built from the current page, so pagination works
+on any page and host without configuration. Caveats:
 
 - **`excludeAlreadyLinked` only sees the current pager page.** The other pages are
   never rendered, so they cannot register their cards with the
@@ -295,23 +254,19 @@ Two consequences worth knowing before you paginate:
 
 ## Listing What Is Not Online Yet
 
-`pages_list()` only ever returns pages that are online right now. `draft_list()` takes the
-same arguments and renders the same views over the complementary set: pages never scheduled
-(no `publishedAt`) and pages scheduled for later. It is the only Twig function that reaches
-them as full entities, so an editorial debug page can render real cards — title, main image,
-link — instead of the bare slugs `page_uri_list()` returns.
+`pages_list()` only returns pages online now. `draft_list()` takes the same arguments
+and views over the complement: pages with no `publishedAt` or scheduled for later — as
+full entities (cards with title and image), unlike the bare slugs of `page_uri_list()`.
 
 ```twig
 {{ draft_list('type:blog', 999, 'publishedAt DESC', wrapperClass: 'bg-pink-50 p-4') }}
 ```
 
-**It renders nothing unless a `ROLE_EDITOR` is logged in** — anonymous visitors get an empty
-string, so the block can live on a public page. This is safe against the render cache: the
-Markdown cache keys fragments on their post-Twig text, so an editor render and a visitor
-render never share a cache entry. Note that `pw:static` generates as an anonymous visitor,
-so the block is empty in statically generated HTML.
+**It renders nothing unless a `ROLE_EDITOR` is logged in**, so it can live on a public
+page; the Markdown cache keys on post-Twig text, so editor and visitor renders never share
+an entry. `pw:static` renders as a visitor, so static HTML gets nothing.
 
-Two deliberate differences from `pages_list()`:
+Differences from `pages_list()`:
 
 - noindex pages are **kept** (`pages_list()` drops them) — a draft list that hid them would
   hide exactly the pages you are looking for;
@@ -321,7 +276,7 @@ Redirections are excluded, as in `pages_list()`.
 
 ## Extending Search with an Event Listener
 
-Before the search string is parsed into DQL criteria, Pushword dispatches a `PagesListSearchEvent`. A listener can inspect or rewrite the string — useful for expanding application-specific prefixes into standard Pushword ones.
+Before parsing the search string, Pushword dispatches a `PagesListSearchEvent`. A listener can rewrite it — e.g. to expand an app-specific prefix into standard ones.
 
 **Event:** `Pushword\Core\Event\PagesListSearchEvent`  
 **Constant:** `PushwordEvents::PAGES_LIST_SEARCH` (`pushword.pages_list.before_search`)  
@@ -348,4 +303,4 @@ final readonly class ProductSearchListener
 }
 ```
 
-The listener receives the raw search string before any prefix parsing. Call `setSearch()` to replace it; leave it unchanged to pass through as-is. `getCurrentPage()` provides the current page context if needed.
+`setSearch()` replaces the string; `getCurrentPage()` gives the current page.

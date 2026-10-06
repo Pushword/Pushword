@@ -6,23 +6,18 @@ parentPage: installation
 toc: true
 ---
 
-Pushword gives editors unusually broad control over rendering. Production security
-therefore starts with a clear trust boundary: an account carrying `ROLE_EDITOR` is a
-trusted code author, not an untrusted content contributor.
+Pushword gives editors broad control over rendering, so the trust boundary is: an
+account carrying `ROLE_EDITOR` is a trusted code author, not an untrusted contributor.
 
 ## Trusted editorial content
 
-Editorial Markdown deliberately accepts raw HTML, and the editorial Twig filter is
-deliberately not sandboxed. Real Pushword sites use that Twig surface extensively for
-galleries, includes, page lists, attachments, prices, forms, reviews, encrypted email
-addresses and telephone links. Removing functions or includes would break normal site
-content.
-
-This flexibility also means an editor can create persistent XSS and can invoke exposed
-Twig functions with the authority of the PHP process. Grant `ROLE_EDITOR` only to
-people who could otherwise edit the site's templates or deploy code. Do not use the
-editorial fields for untrusted user-generated content. Public uploads of SVG files are
-served with a sandboxed Content Security Policy and MIME sniffing disabled.
+Editorial Markdown accepts raw HTML, and the editorial Twig filter is not sandboxed —
+sites rely on it for galleries, includes, page lists, forms, encrypted email addresses
+and more. An editor can therefore create persistent XSS and call exposed Twig functions
+with the PHP process's authority. Grant `ROLE_EDITOR` only to people who could otherwise
+edit templates or deploy code, and never put untrusted user-generated content in
+editorial fields. Uploaded SVG files are served with a sandboxed Content Security Policy
+and MIME sniffing disabled.
 
 ## Accounts and sessions
 
@@ -30,41 +25,36 @@ served with a sandboxed Content Security Policy and MIME sniffing disabled.
   password, prints it once, and requires its replacement before any administration
   role becomes usable. The documented `admin@example.tld` / `p@ssword` credential is
   retained only for development installs.
-- Remember-me is opt-in. When selected, its maximum lifetime remains one year; this is
-  an accepted convenience trade-off. Revoking the account or changing the application
-  secret invalidates it.
+- Remember-me is opt-in, lasts up to one year (an accepted trade-off), and is
+  invalidated by revoking the account or changing the application secret.
 - Session-authenticated responses use `Cache-Control: private, no-store`, and logout asks
   the browser to clear its HTTP cache. Routes declared `stateless` are skipped — reading the
   user there would touch the session — so they keep the headers their controller set.
-- Logout remains callable with GET. This permits logout CSRF, whose only effect is to
-  end the current session; Pushword accepts that availability trade-off.
+- Logout accepts GET. The resulting logout CSRF can only end the current session —
+  an accepted trade-off.
 - [Impersonation](/authentication#impersonation) is also switched with GET, so a link
   followed from a third-party page can switch a super administrator to another account.
   It grants nothing the super administrator did not already hold, but changes made
   before noticing the banner are recorded under the other account's name.
-- There is no last-super-administrator deletion or demotion guard. This avoids special
-  persistence rules around administrators. Recover locally with
-  `php bin/console pw:user:create` if every administrator has been removed.
+- Nothing prevents deleting or demoting the last super administrator. Recover with
+  `php bin/console pw:user:create`.
 
 ## API tokens
 
-API bearer tokens are stored in clear text, have no scope or expiry, and do not record
-their last use. This is an accepted compatibility constraint of the current API.
-Treat the database and every backup as credential material, transmit tokens only over
-TLS, restrict backup access, and rotate a token after suspected exposure. Flat lock,
-unlock and status calls additionally require the token owner to reach `ROLE_EDITOR`.
+API bearer tokens are stored in clear text, with no scope, expiry or last-use record.
+Treat the database and every backup as credential material, send tokens only over TLS,
+and rotate a token after suspected exposure. Flat lock, unlock and status calls also
+require the token owner to hold `ROLE_EDITOR`.
 
 ## Production runtime
 
 Run production with `APP_ENV=prod` and `APP_DEBUG=0`. The Symfony profiler and the
-development `phpinfo` surface are intentionally available in development and must
-never be exposed on a production network. Their presence in a development instance is
-an identified and accepted risk.
+development `phpinfo` page exist in development only; never expose a development
+instance on a production network.
 
-The Docker configuration sets `expose_php=Off`, which removes PHP's `X-Powered-By`
-header. On a non-Docker deployment, add the same directive to the PHP configuration
-used by the web SAPI and restart PHP. A reverse proxy may also remove the header, but
-disabling it in PHP covers direct access to the application server.
+The Docker configuration sets `expose_php=Off` (no `X-Powered-By` header). Elsewhere,
+set it in the web SAPI's PHP configuration — a reverse proxy alone does not cover direct
+access to the application server.
 
 External link checks reject loopback, private, link-local and reserved networks,
 including after DNS resolution, and retain normal TLS certificate and hostname
@@ -77,10 +67,9 @@ Composer and JavaScript dependency audits, a repository secret scan, and an SPDX
 build. The Docker workflow also scans the production image for high and critical
 vulnerabilities on relevant changes and every week.
 
-The JavaScript audit blocks high and critical findings. Its only exception is
+The JavaScript audit blocks high and critical findings, with one exception:
 [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) through
-`vite-plugin-static-copy` and `vite-plugin-symfony`: these build tools receive
-repository-controlled file patterns, not input from CMS users. No patched `braces`
-release is available. The finding remains visible in the audit output; other
-dependency paths, other advisories, and critical findings still fail the check.
-Remove this exception from `.github/scripts/js-audit.jq` when upstream publishes a fix.
+`vite-plugin-static-copy` and `vite-plugin-symfony`, build tools that only receive
+repository-controlled file patterns (no patched `braces` release exists). It stays
+visible in the output; other paths, advisories and critical findings still fail. Remove
+the exception from `.github/scripts/js-audit.jq` once upstream ships a fix.

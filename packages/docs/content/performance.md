@@ -5,15 +5,13 @@ publishedAt: '2026-06-09 12:00'
 name: Performance
 ---
 
-Pushword runs fine under classic per-request PHP-FPM. It is also **safe to run in
-worker mode** (a long-running process that reuses one kernel across many requests),
-which removes the per-request kernel boot.
+Pushword runs under classic PHP-FPM and is **safe in worker mode** (one long-running
+kernel serving many requests), which removes the per-request kernel boot.
 
 ## Worker mode
 
-Worker mode is provided by [FrankenPHP](https://frankenphp.dev/)'s `worker`
-directive (or any Symfony Runtime worker). The `Caddyfile` reads it from the
-environment, so turning it on means setting one variable rather than editing the file:
+Use [FrankenPHP](https://frankenphp.dev/)'s `worker` directive (or any Symfony Runtime
+worker). The `Caddyfile` reads it from the environment, so enabling it is one variable:
 
 ```dotenv
 FRANKENPHP_WORKER_CONFIG=worker ./public/index.php 1
@@ -26,16 +24,13 @@ php_server {
 }
 ```
 
-It needs `composer require runtime/frankenphp-symfony` first. The same variable works
-in the [Docker](/docker) setup.
-
-Between requests the runtime resets every service tagged `kernel.reset`
-(`services_resetter`), exactly as a fresh FPM process would start clean.
+It needs `composer require runtime/frankenphp-symfony`. The same variable works in the
+[Docker](/docker) setup. Between requests the runtime resets every service tagged
+`kernel.reset`.
 
 ### Why it is safe
 
-Pushword is multi-site (host-driven) and multi-locale, so the concern with a reused
-kernel is one request's state bleeding into the next. It does not, because:
+One request's host, locale or cached data never leaks into the next:
 
 - **Per-request state is re-derived every request.** `RequestContextListener`
   resolves the current site/host and locale from the incoming request on
@@ -48,40 +43,30 @@ kernel is one request's state bleeding into the next. It does not, because:
   hit — in worker mode or across FPM requests.
 - **`LinkCollectorService`** is reset at the start of every request.
 
-These invariants are guarded by tests in the `worker` group
-(`packages/core/tests/Worker/`), which replay two requests around the real worker
-reset and assert the second request never sees stale slug/redirect/media data or a
-leaked host/locale. CI runs them as a dedicated **"Worker-mode safety guard"** step.
+The `worker` test group (`packages/core/tests/Worker/`) replays two requests around the
+real reset and asserts the second sees no stale slug/redirect/media data or host/locale;
+CI runs it as the **"Worker-mode safety guard"** step.
 
 ### Memory
 
-In production (`APP_ENV=prod`, debug off) the heap is **flat** across a long mixed
-request stream — verified over hundreds of requests spanning multiple hosts and
-locales. Note that in `dev`/`test` (debug on) memory grows ~50 KB/request: that is
-the profiler-style collectors and the test harness's deprecation accumulator, none
-of which exist in prod. Always benchmark worker memory with debug off.
+With `APP_ENV=prod` and debug off, the heap stays **flat** over hundreds of mixed
+requests across hosts and locales. With debug on (`dev`/`test`) memory grows
+~50 KB/request from debug collectors — benchmark worker memory with debug off.
 
 ### Throughput
 
-Worker mode's win is amortizing the kernel boot. For a light page that boot is the
-dominant cost, so worker mode can be several times faster; for pages doing heavy
-work (large renders, many queries) the relative gain shrinks. Measure your own
-workload — see `WorkerVsFpmBenchmarkTest` (`benchmark` group) for the in-process
-boot-amortization figure.
+The gain is the amortized kernel boot: several times faster for light pages, less for
+heavy renders. `WorkerVsFpmBenchmarkTest` (`benchmark` group) measures it in-process.
 
 ### One thing to watch
 
-`PageListener` keeps a few `static` properties (the pending-redirect queue used
-during slug changes, plus skip/reentrancy flags). They are process-global, so it
-implements `ResetInterface` and clears them at the worker boundary — a slug-change
-redirect orphaned by a flush that threw before `postUpdate` can't replay in a later
-request, and a leftover skip flag can't disable redirects globally. If you add your
-own process-global `static` state on the save path, follow the same pattern.
+`PageListener` keeps process-global `static` state (the slug-change redirect queue and
+skip/reentrancy flags), so it implements `ResetInterface` and clears it at the worker
+boundary. Do the same for any `static` state you add on the save path.
 
 ### Admin
 
-The public front is the proven-safe path. The EasyAdmin back office reuses the
-same kernel under a worker, and its services were audited for cross-request state:
+The admin's services were audited for cross-request state too:
 
 - `AdminFormFieldManager` resolves the current user lazily from `Security` on each
   call (it does not capture it at construction), so the authenticated identity —
@@ -90,25 +75,21 @@ same kernel under a worker, and its services were audited for cross-request stat
 - `AdminExtension` implements `ResetInterface`; its per-host tag cache is cleared
   at the worker boundary so a newly created tag is never hidden by a stale cache.
 
-These are guarded by `packages/admin/tests/Worker/AdminWorkerStateResetTest`. As
-with the front, audit any custom admin service that captures the request, the user,
-or the host at construction, or caches per-request data in a property — make it
-lazy or `ResetInterface`.
+`packages/admin/tests/Worker/AdminWorkerStateResetTest` guards them. A custom service
+that captures the request, user or host at construction, or caches per-request data,
+must be made lazy or `ResetInterface`.
 
 ## Running benchmarks
 
-The benchmark suite is opt-in (excluded from CI via the `benchmark` group):
+The `benchmark` group is opt-in (excluded from `composer test` and CI). It covers static
+generation, repository cache warmup, search reindex and worker versus FPM:
 
 ```bash
-vendor/bin/phpunit --group benchmark
+./.scripts/test --benchmark                    # whole group
+./.scripts/test --benchmark RepositoryBenchmarkTest
 ```
 
-For the database comparison runner, exact methodology and the latest published
-SQLite, MariaDB and PostgreSQL measurements, see [Database and pipeline
-benchmarks](/database-benchmarks).
-
-It covers static generation, repository cache warmup, search reindex, and the
-worker-vs-FPM comparison. The structural query-count guards
-(`packages/core/tests/Perf/`, `packages/admin/tests/Perf/`) run in normal CI and
-fail if a hot path (page render, admin list) starts issuing queries that scale with
-the corpus — i.e. an N+1 regression.
+The query-count guards in `packages/core/tests/Perf/` and `packages/admin/tests/Perf/`
+run in normal CI and fail when a hot path (page render, sitemap, admin list) issues
+queries that scale with the corpus — an N+1 regression. Database comparisons:
+[Database and pipeline benchmarks](/database-benchmarks).

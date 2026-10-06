@@ -5,13 +5,13 @@ publishedAt: '2026-08-01 12:00'
 toc: true
 ---
 
-Pushword animates page-to-page navigation with the native [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API) — no JavaScript router, no client-side navigation, no build step. The browser keeps a snapshot of the outgoing page, paints the incoming one, and animates between them. Browsers without support navigate the old way.
+Pushword animates page-to-page navigation with the native [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API) — no JavaScript router. Browsers without support navigate normally.
 
 ## What ships
 
 Three pieces, all in the default theme:
 
-- **`base.html.twig`** inlines the opt-in: `@view-transition{navigation:auto}` inside the existing `<style>` block. It is inlined rather than put in the stylesheet because the rule has to be parsed on **both** the outgoing and the incoming document before the navigation commits. Every template extends `base.html.twig`, so error pages and the login screen are covered too — a page that misses the rule breaks the transition in both directions.
+- **`base.html.twig`** inlines `@view-transition{navigation:auto}` in its `<style>` block — inline because both the outgoing and incoming documents must parse it before the navigation commits. Every template, error and login pages included, extends `base.html.twig`; a page missing the rule breaks the transition in both directions.
 - **`utility.css`** (`pushword/js-helper`) names two elements and animates the content zone.
 - **`variantLinks.js`** runs its same-document swap inside `document.startViewTransition()`, so [variant pages](/variant-pages) animate with the same CSS.
 
@@ -24,26 +24,23 @@ The feature ships through **two channels**, and `composer update` only moves one
 | `pushword/core` (Composer) | the `@view-transition` opt-in in `base.html.twig` | `composer update` |
 | `@pushword/js-helper` (npm / `github:`) | `view-transition-name` + the keyframes in `utility.css` | `yarn upgrade @pushword/js-helper` |
 
-With only the Composer half you get the browser's plain cross-fade — no pinned navbar, no
-content slide. That reads as "nothing happened". `yarn install` does **not** close the gap:
-a `github:`-resolved dependency is pinned to a commit in `yarn.lock`, and `--check-files`
-re-installs that same commit. Move the pin explicitly, then rebuild:
+With only the Composer half you get the plain cross-fade — no pinned navbar, no content
+slide. `yarn install` does **not** fix it: a `github:` dependency is pinned to a commit in
+`yarn.lock`. Move the pin, then rebuild:
 
 ```shell
 yarn upgrade @pushword/js-helper && yarn build
 ```
 
-On a statically exported host, regenerate afterwards — `pw:static` renders through its own
-`prod`/`debug=false` kernel, so a template change is only picked up once its compiled Twig
-cache is gone:
+On a static host, regenerate afterwards; `pw:static` renders through a `prod` kernel, so
+clear its Twig cache first:
 
 ```shell
 rm -rf var/cache/prod && php bin/console pw:static {host}
 ```
 
-To check a deployed host, compare it against the same app served dynamically: if the
-dynamic URL has `@view-transition` in its inline `<style>` and the static one does not,
-the export is stale, not the code.
+If the dynamic URL has `@view-transition` in its inline `<style>` and the static one does
+not, the export is stale.
 
 ## Naming
 
@@ -76,9 +73,7 @@ To name more elements, do it in CSS, not in markup — see the rule below.
 
 ### Naming rules
 
-**A `view-transition-name` used twice on the same page aborts the entire transition.** Not the element's animation — the whole page's. This is the single easiest way to break the feature, and it fails silently: navigation still works, it just stops animating.
-
-That makes Twig loops the danger zone. `_content.html.twig` renders `content_part` in a `{% for %}`, and `cardList` / `pages_list` are loops too. Never write:
+**A `view-transition-name` used twice on one page silently aborts the whole page's transition.** Twig loops are the danger zone (`content_part` in `_content.html.twig`, `cardList`, `pages_list`). Never write:
 
 ```twig
 {# WRONG — every card gets the same name, transitions stop working site-wide #}
@@ -94,11 +89,11 @@ Rules of thumb:
 - If you must name items in a loop, generate a unique name per item (`view-transition-name: card-{{ page.id }}`) and accept that you own the uniqueness.
 - Names are prefixed `pw-` in core so a host theme's own names never collide.
 
-Tailwind utilities cannot help here: `::view-transition-old()` / `::view-transition-new()` live outside the document tree, so no utility class reaches them. This is hand-written CSS by necessity.
+Tailwind utilities cannot reach `::view-transition-old()` / `::view-transition-new()` (outside the document tree): write plain CSS.
 
 ## Reduced motion
 
-The names and the transforms sit inside `@media (prefers-reduced-motion: no-preference)`. Visitors who ask for reduced motion still get the browser's cross-fade — a fade is not motion — but no sliding and no independent groups. Keep any animation you add inside the same media query.
+The names and transforms sit inside `@media (prefers-reduced-motion: no-preference)`; reduced-motion visitors get only the cross-fade. Keep your own animations inside the same query.
 
 ## Same-document swaps
 
@@ -111,12 +106,10 @@ Both paths animate through `::view-transition-old(pw-content)` / `::view-transit
 
 ## Cost, and why static hosting suits it
 
-A cross-document transition holds the outgoing snapshot on screen **until the incoming document is ready to paint**. Server time is therefore visible as a pause before anything moves — the feature rewards fast responses and punishes slow ones.
-
-That makes it a natural fit for [static export](/extension/static-generator) and [page-cache](/extension/page-cache), where the response is a file read. On an uncached dynamic site, measure first: if time-to-first-byte is high, the transition will feel like lag rather than polish. Pair it with [speculation rules](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/script/type/speculationrules) to prefetch or prerender on hover if you need a dynamic site to feel instant.
+The outgoing snapshot stays on screen **until the incoming document can paint**, so server time shows as a pause. [Static export](/extension/static-generator) and [page-cache](/extension/page-cache) suit it; on an uncached dynamic site with a high time-to-first-byte, add [speculation rules](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/script/type/speculationrules) to prefetch or prerender.
 
 ## Browser support
 
 Cross-document transitions ship in Chrome/Edge 126+ and Safari 18.2+. Firefox has not enabled them by default yet. Same-document transitions (`document.startViewTransition`, used by variant links and htmx) have wider support.
 
-Unsupported browsers ignore the `@view-transition` rule and navigate normally — there is nothing to feature-detect and no fallback to write.
+Unsupported browsers ignore the rule; there is no fallback to write.
