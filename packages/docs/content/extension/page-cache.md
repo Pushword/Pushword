@@ -35,9 +35,8 @@ templates, reviews, and other pages (listings, navs, breadcrumbs, feeds). Each
 host carries a **render epoch** — an opaque token, stored in a small filesystem
 pool under `var/cache/{env}/pw_render_epoch/` — that any such change bumps.
 Every generated page is stamped with the epoch it was rendered under; a
-mismatch means "stale", whatever the cause. The storage is deliberately not
-`cache.app`: web and CLI must see the same token, and `cache.app` is often APCu
-(per-process, absent on CLI).
+mismatch means "stale", whatever the cause. (Not `cache.app`: web and CLI must
+share the token, and APCu does not.)
 
 What bumps the epoch:
 
@@ -81,7 +80,7 @@ Run `--no-warmup` after a bulk flat import if you want to delete the cache witho
 
 ## Dynamic fragments for logged-in users
 
-The cached HTML is the **same for everyone** — anonymous visitors, logged-in admins, and bots. Anything that must differ per-user (admin buttons, flash messages, user menu) is loaded client-side via `liveBlock` (see `@pushword/js-helper`). The fetch is gated by the `pw_auth=1` cookie, which core sets on login success and clears on logout:
+The cached HTML is the **same for everyone**. Per-user parts (admin buttons, flash messages, user menu) are loaded client-side by `liveBlock` (`@pushword/js-helper`), gated by the `pw_auth=1` cookie core sets on an editor's login and clears on logout:
 
 ```twig
 <div
@@ -89,10 +88,9 @@ The cached HTML is the **same for everyone** — anonymous visitors, logged-in a
   data-live-if="cookie:pw_auth=1"></div>
 ```
 
-- No cookie → `liveBlock` skips → zero PHP, zero network request.
-- Cookie present → fetch → fragment injected → `DOMChanged` fires so icons/tooltips re-init.
-
-The fragment endpoint stays behind the Symfony firewall; the cookie is only a client-side hint. Pattern is reusable for any dynamic block.
+No cookie: no request. Cookie: fetch, inject, then `DOMChanged` fires so icons and
+tooltips re-initialise. The cookie is only a hint; the endpoint stays behind the
+firewall (`ROLE_EDITOR`; anonymous requests get a redirect or 403).
 
 ### Gates and deferred triggers
 
@@ -108,13 +106,10 @@ refetch on every occurrence into the surviving container.
 
 ### With htmx 4 on the page
 
-If your theme loads htmx (>= 4), `liveBlock` stops fetching and **aliases**
-every `data-live` block to native htmx attributes automatically — templates
-need no change, htmx becomes the single request engine, and js-helper installs
-a two-way bridge (`htmx:after:swap` → `DOMChanged`, and `DOMChanged` →
-`htmx.process()` so content added by Alpine or other scripts is discovered).
-Gates keep their eval-free semantics, and a 4xx/5xx response never replaces an
-aliased block.
+If your theme loads htmx (>= 4), `liveBlock` **aliases** every `data-live` block to
+native htmx attributes instead of fetching itself — templates need no change. js-helper
+bridges `htmx:after:swap` → `DOMChanged` and `DOMChanged` → `htmx.process()`. Gates
+stay eval-free, and a 4xx/5xx response never replaces an aliased block.
 
 You can also author htmx syntax directly:
 
@@ -137,16 +132,12 @@ You can also author htmx syntax directly:
 - htmx 4 is in beta (the admin bundle runs a pinned version); for public
   downstream sites prefer `data-live` until the stable release.
 
-The fragment endpoint (`pushword_admin_fragment_page_buttons`) is protected by `ROLE_EDITOR`; anonymous requests receive a redirect or 403, not fragment HTML.
-
 ## Messenger
 
-Both messages use whatever transport you route them to. With no routing, Symfony
-runs them synchronously — fine for `PageCacheRefreshMessage` (one page, ~10ms),
-and survivable for `HostCacheRefreshMessage` because it is dispatched after the
-response is sent; but the PHP worker then spends the whole sweep duration on it,
-and the 60s coalescing delay is ignored. Route both to an async transport in
-production:
+Unrouted, both messages run synchronously: fine for `PageCacheRefreshMessage` (one
+page, ~10ms); `HostCacheRefreshMessage` then runs after the response but holds the PHP
+worker for the whole sweep and ignores the 60s coalescing delay. In production, route
+both to an async transport:
 
 ```yaml
 # config/packages/messenger.yaml
@@ -176,12 +167,12 @@ Rule of thumb per install:
 
 ## Caddy config
 
-Example Caddyfile snippet. The `@cached` matcher excludes admin/profiler routes so Caddy doesn't even stat cache files for them:
+The `@cached` matcher skips admin and profiler routes, so Caddy does not even stat cache files for them. Encodings follow the generated Caddyfile: brotli first, as `pw:static` writes the smallest sidecar with it.
 
 ```caddy
 {$SERVER_NAME:localhost} {
     root * /srv/app/public
-    encode gzip
+    encode br zstd gzip
 
     @cached {
         method GET
@@ -193,7 +184,7 @@ Example Caddyfile snippet. The `@cached` matcher excludes admin/profiler routes 
     }
     handle @cached {
         file_server {
-            precompressed br gzip
+            precompressed br zstd gzip
         }
     }
 
@@ -207,8 +198,8 @@ PHP never boots for anonymous GETs on cacheable paths. Pages that don't have a c
 
 ```shell
 php bin/console pw:cache:clear example.com
-ls public/cache/example.com/     # expect index.html, foo.html, index.html.gz, …
+ls public/cache/example.com/     # index.html, foo.html, plus .br/.zst/.gz sidecars for the installed compressors
 curl -sI https://example.com/    # Caddy serves from disk; no PHP boot
 ```
 
-Edit a page in the admin → a new Messenger message is dispatched → the cached file is updated. Delete a page → the cached file is removed.
+Saving a page in the admin rewrites its cached file; deleting it removes the file.

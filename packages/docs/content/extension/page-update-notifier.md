@@ -5,25 +5,27 @@ publishedAt: '2025-12-21 21:55'
 toc: true
 ---
 
-Get mail notification when your pushword content (page) is edited.
+Emails a digest when pages are edited.
 
 ## Install
 
-```
+```shell
 composer require pushword/page-update-notifier
 ```
 
 ## Configure
 
-Add in your current `config/packages/pushword.yaml` for an App or globally under `page_update_notifier:` in `config/packages/page_update_notifier.yaml`.
+Per site in `config/packages/pushword.yaml`, or globally:
 
 ```yaml
 page_update_notifier:
-  page_update_notification_from: fromMe@example.tld
-  page_update_notification_to: NotificationForMe@example.tld
-  page_update_notification_interval: 'PT6H' # Default: 6 hours. See PHP DateInterval format https://www.php.net/manual/fr/class.dateinterval.php
+  page_update_notification_from: from@example.tld
+  page_update_notification_to: me@example.tld
+  page_update_notification_interval: 'PT6H' # default; a PHP DateInterval
 ```
 
-## Usage
+## Behaviour
 
-Nothing to do, just get notified. On postPersist/postUpdate, the extension checks if you haven't been notified within the `interval`, then sends a notification listing pages edited in the last 30 minutes.
+On every page save, unless a notification already went out within the interval, it
+emails the pages edited since the previous notification (the last 30 minutes for the
+first one).

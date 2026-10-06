@@ -5,7 +5,7 @@ publishedAt: '2025-12-21 21:55'
 toc: true
 ---
 
-Edit view file online in the [admin](https://pushword.piedweb.com/extension/admin).
+Edit Twig templates online from the [admin](/extension/admin).
 
 ## Install
 
@@ -13,20 +13,19 @@ Edit view file online in the [admin](https://pushword.piedweb.com/extension/admi
 composer require pushword/template-editor
 ```
 
-That's it ! If you have a custom installation (not used the [default installer](/installation)),
-you may have a look inside `vendor/pushword/admin/install.php`.
-
+Custom installations (not the [default installer](/installation)): see `vendor/pushword/admin/install.php`.
 
 ## Configuration
 
-In your config folder, you can add two configuration parameters :
-
-```shell
+```yaml
 pushword_template_editor:
   disable_creation: false
   can_be_edited_list:
-    - "/pushword.piedweb.com/page/_footer.html.twig"
+    - '/pushword.piedweb.com/page/_footer.html.twig'
 ```
 
-* `disable_creation` permit to disable creation for ROLE_ADMIN
-* `can_be_edited_list` permit to limit list to the defined template files with their relative path in the template dir.
+- `disable_creation` — forbid creating templates.
+- `can_be_edited_list` — restrict editing to these paths, relative to the templates
+  directory (empty: every template).
+
+Both restrictions apply to every admin except `ROLE_SUPER_ADMIN`.

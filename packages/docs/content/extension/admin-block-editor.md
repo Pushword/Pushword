@@ -5,7 +5,7 @@ publishedAt: '2025-12-21 21:55'
 toc: true
 ---
 
-Supercharge default admin with a rich text editor wich managed blocks.
+Replaces the Markdown editor of the [admin](/extension/admin) with an [Editor.js](https://editorjs.io) block editor. Content is still stored as **Markdown**: blocks are converted on save and parsed back when the editor loads.
 
 ## Install
 
@@ -13,36 +13,26 @@ Supercharge default admin with a rich text editor wich managed blocks.
 composer require pushword/admin-block-editor
 ```
 
-That's it ! If you have a custom installation (not used the [default installer](/installation)),
-you may have a look inside `vendor/pushword/admin/install.php`.
-
-Block editor is now ready.
+Custom installations (not the [default installer](/installation)): see `vendor/pushword/admin/install.php`.
 
 ## Configuration
 
-If you want to go forward than a default install, you can override default parameters in your config :
-
 ```yaml
 admin_block_editor:
-  new_page: true # Set false to disable block editor for new page (because new page does not have an associated `app` yet)
+  new_page: true # false: new pages open in the Markdown editor (their site is not known yet)
+  admin_block_editor: true # false: Markdown editor everywhere
 ```
 
-Or you individually app by app :
+`admin_block_editor` can also be set per site in the app configuration.
 
-```yaml
-# set false to disable block editor (and get the default Mardown Editor) for this app
-admin_block_editor: true
-```
+### Add a block
 
-### Customize editor
+1. Write an [Editor.js plugin](https://editorjs.io/the-first-plugin) — examples in [src/assets/tools](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/assets/tools).
+2. [Override](https://symfony.com/doc/current/bundles/override.html) [`@PushwordAdminBlockEditor/editorjs_widget.html.twig`](https://github.com/Pushword/Pushword/blob/main/packages/admin-block-editor/src/templates/editorjs_widget.html.twig): extend `@!PushwordAdminBlockEditor/editorjs_widget.html.twig` and fill only the `editorjs_block_to_add_new_plugin` block.
 
-You want to add a custom block ? This is the path to follow :
-
-1. Create a new [editor.js plugin](https://editorjs.io/the-first-plugin). There are a few examples in #[admin-block-editor/src/assets/tools](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/assets/tools)
-
-2. [Override](https://symfony.com/doc/current/bundles/override.html) [@PushwordAdminBlockEditor/editorjs_widget.html.twig](https://github.com/Pushword/Pushword/blob/main/packages/admin-block-editor/src/templates/editorjs_widget.html.twig) to add your custom plugin
-
-I recommend you to import `@PushwordAdminBlockEditor/editorjs_widget.html`.twig and to create only the block **editorjs_block_to_add_new_plugin**
+Bundles can instead contribute tool configuration per host by implementing
+`Pushword\AdminBlockEditor\Editor\EditorJsToolProviderInterface` (the snippet and quiz
+bundles do); the `className` must name a tool already shipped in the editor bundle.
 
 ### Link tool
 
@@ -55,10 +45,6 @@ The link tool's config (`link` in `editorjsConfig.tools`) takes three keys:
 - `options` — `false` shows the address field alone, without the *New tab* switch,
   *Rel* or *Style* (default: `true`). An existing link keeps the target, rel and
   class it already carries when only its address is edited.
-
-## Storage Format
-
-Content is stored as **markdown** in the database. The editor converts EditorJS blocks to markdown on save, and converts markdown back to EditorJS blocks when loading the editor.
 
 ## Usage
 
@@ -78,15 +64,7 @@ markers nest their content, and each row offers:
 The rail overlays the admin navigation; collapse it (state is remembered) to
 get the menu back — the opener stays pinned top-left.
 
-### Pages List Block
+### Pages List block
 
-The search input permit to perfom action like :
-
-- `CHILDREN` will search for children page
-- `parent_children` will search for children page from the parent page
-- `slug:hellow-world` will search for page with slug being exactly `tagada`
-- `slug:hellow-world OR slug:hello-me` ... or operator
-- `slug:hellow-world OR pizza OR comment:HELLO-YOU` ...
-- `slug:%page%` containing `page` in slug
-- `exampleTag` will search in pages's tags for `exampleTag` (case sensitive)
-- `comment:HELLO-YOU` will search in pages's main content for `<!--HELLO-YOU-->` (case sensitive)
+Its search field takes the same syntax as the `pages_list` Twig function: see
+[Page lists](/pages-list).

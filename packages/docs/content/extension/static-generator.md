@@ -14,12 +14,12 @@ from the [admin](/extension/admin).
 composer require pushword/static-generator
 ```
 
-Custom installations can use `vendor/pushword/static-generator/install.php` as a
-reference. The [default installer](/installation) wires the bundle automatically.
+Custom installations (not the [default installer](/installation)): see
+`vendor/pushword/static-generator/install.php`.
 
 ## Configure
 
-Add in your current `config/packages/pushword.yaml` for an App or globally under `static_generator:` in `config/packages/static_generator.yaml`.
+Per app in `config/packages/pushword.yaml`, or globally under `static_generator:`.
 
 ```yaml
 # In pushword.yaml under your app config:
@@ -38,11 +38,12 @@ static_generator:
   static_dir: '%kernel.project_dir%/static/{main_host}'
 ```
 
-_The default generators are compatible with Apache/Litespeed and FrankenPHP/Caddy (generating .htaccess and Caddyfile)._
+The default generators write both an `.htaccess` (Apache/LiteSpeed) and a `.Caddyfile`
+(Caddy/FrankenPHP).
 
 ### `static_symlink`
 
-Controls whether media and assets are symlinked or copied to the static output directory.
+Whether media and assets are symlinked or copied into the output.
 
 | Value | Media | Assets |
 |---|---|---|
@@ -52,24 +53,14 @@ Controls whether media and assets are symlinked or copied to the static output d
 | `['assets']` | copy | symlink |
 | `['media', 'assets']` | symlink | symlink |
 
-The most common use case for the array form is `['media']`: symlink media files (fast, saves disk space) while copying assets (so they can be deployed independently).
+`['media']` is the usual array form: media symlinked (fast, no extra disk), assets
+copied so they deploy independently. GitHub Pages (CNAME generator) always copies.
 
-```yaml
-# Symlink media only, copy assets
-static_symlink: ['media']
-```
+### `static_assets`
 
-When using GitHub Pages (CNAME generator), copy is forced regardless of this setting.
-
-### `static_assets` (formerly `static_copy`)
-
-List of files or folders in your `public/` directory to include in the static output. Default: `['assets', 'bundles']`.
-
-```yaml
-static_assets: ['assets', 'bundles']
-```
-
-The old name `static_copy` still works as a deprecated alias.
+Files or folders of `public/` copied into the output. Default: `['assets', 'bundles']`.
+`static_assets_clean: true` empties the copied folders first, dropping stale hashed
+(Vite) files. `static_copy` is the deprecated name of `static_assets`.
 
 ### `static_html_max_age`
 
@@ -81,13 +72,14 @@ static_html_max_age: 86400 # 24 hours
 
 ### `static_html_stale_while_revalidate`
 
-Adds `stale-while-revalidate` to the `Cache-Control` header, allowing CDNs and browsers to serve stale content while revalidating in the background. Set to `0` to disable. Default: `3600` (1 hour).
+`stale-while-revalidate` added to the HTML `Cache-Control`; `0` disables it. Default:
+`3600` (1 hour).
 
 ```yaml
 static_html_stale_while_revalidate: 0 # disabled
 ```
 
-Both settings apply to HTML pages only. Static assets (images, JS, CSS, fonts) always use a 1-year TTL.
+Assets (images, JS, CSS, fonts) always get a 1-year TTL.
 
 ## Command
 
@@ -120,9 +112,8 @@ on `publish` regenerates them once the date passes.
 change rendered HTML without touching the page row: snippet, media and template
 edits, review publications, and edits of *other* pages that listings render —
 see [the render epoch](/extension/page-cache#staleness-beyond-page-saves-the-render-epoch).
-So an incremental cron converges on a fully fresh site even for changes no
-`updatedAt` reflects. Re-rendered pages whose HTML is byte-identical skip the
-write, keeping deploy diffs and rsyncs quiet.
+An incremental cron therefore converges even on changes no `updatedAt` reflects.
+Byte-identical re-renders skip the write, keeping deploy diffs and rsyncs quiet.
 
 Pages deleted or unpublished since the last run are pruned: the in-place build
 removes their generated files and compression sidecars along with their state
@@ -149,33 +140,20 @@ starts a background pass and returns a URL to poll. See
 
 ### Performance
 
-Hosts with 10+ pages are rendered by parallel worker processes. Nothing to
-configure.
+Hosts with 10+ pages are rendered by parallel workers, as many as CPUs and free memory
+(~100 MB each) allow; `--workers=N` forces a count, `--workers=1` a sequential build.
 
-Each worker must find every published slug assigned to it. A missing page fails
-the build instead of publishing a partial export. A full build also keeps the
-current site if it has an `index.html` and the new export does not. If removing
-the homepage is intentional, remove the old `index.html` before regenerating.
-A homepage that becomes a redirect (`/` → `/en/`) generates no `index.html`
-either, so every full build fails until the old one is deleted from `static_dir`
-by hand.
+Each worker must find every published slug assigned to it: a missing page fails the
+build rather than publishing a partial export. A full build also refuses to replace a
+site that has an `index.html` with an export that has none — delete the old
+`index.html` from `static_dir` first if removing the homepage is intentional (including
+a homepage turned into a redirect, `/` → `/en/`). A host with no published page left
+but an `index.html` on disk is skipped, named in the error, and `pw:static` exits
+non-zero; other hosts are still built.
 
-A host with no published page left but an `index.html` in its `static_dir` is
-skipped on full and `--incremental` builds alike: its published site stays as it
-is, the error names the host, the other hosts are still built, and `pw:static`
-exits non-zero.
-
-The workers used to be spawned with an opcache file cache
-(`opcache.enable=1 opcache.enable_cli=1 opcache.file_cache=…`) so compiled
-scripts survived their short lives — worth about 18% on a fresh pass. They no
-longer are: that combination segfaults the worker on some PHP builds, and a
-worker killed by a signal takes the build with it
-(`Worker N failed (exit 139: Segmentation violation)`, no output). A build that
-finishes beats a build that is faster when it survives.
-
-The parent `pw:static` process (and any sequential build) can still opt into a
-file cache by hand, if your PHP is not one of the affected builds — keep the
-validation flag, since the cache outlives `composer update`:
+Workers run without an opcache file cache (it segfaults some PHP builds). The parent
+process can opt in if your PHP is not affected — keep the validation flag, since the
+cache outlives `composer update`:
 
 ```shell
 php -d opcache.enable_cli=1 -d opcache.file_cache=var/cache/opcache -d opcache.validate_timestamps=1 bin/console pw:static
@@ -183,15 +161,15 @@ php -d opcache.enable_cli=1 -d opcache.file_cache=var/cache/opcache -d opcache.v
 
 ## Page cache mode (serve pre-rendered pages without exporting)
 
-Set `cache: static` on an app to pre-render pages into `public/cache/{host}/` so the web server can serve them directly without booting PHP. Unlike the full static export, the application keeps running and invalidates the cache automatically on page save.
-
-See [Page Cache](/extension/page-cache) for setup, Caddy config, and the `pw:cache:clear` command.
+`cache: static` on an app pre-renders pages into `public/cache/{host}/`, served by the
+web server without PHP while the application keeps running and refreshes the cache on
+save. See [Page Cache](/extension/page-cache).
 
 ## Using FrankenPHP (Caddy) to serve your static website
 
-You must import the generated `static/example.tld/.Caddyfile` in your main Caddyfile.
-
-If you still use the default Caddyfile (from [pushword/dev-app](https://github.com/pushword/pushword/blob/main/packages/dev-app/Caddyfile)), see the last commented part :
+Import the generated `static/example.tld/.Caddyfile` in your main Caddyfile (the
+[dev-app Caddyfile](https://github.com/pushword/pushword/blob/main/packages/dev-app/Caddyfile)
+has it commented out at the end):
 
 ```Caddyfile
 import static/example.tld/.Caddyfile

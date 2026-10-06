@@ -48,32 +48,26 @@ last two buttons open the editor fullscreen and the [markdown cheatsheet](/edito
 The same editor, toolbar included, backs the markdown mode of
 [admin-block-editor](/extension/admin-block-editor).
 
-Saving is always something you ask for: `Ctrl+S` saves without leaving the form, and the
-*Save and continue editing* button shows the result. There is no timed autosave, on
-purpose — a page save is a publication (it rewrites the flat markdown, regenerates the
-Open Graph image, purges the static cache, and turns a half-typed slug into a redirect
-page), so nothing writes to the server until you say so.
+`Ctrl+S` saves without leaving the form. There is no timed autosave: a save publishes
+(it rewrites the flat markdown, regenerates the Open Graph image, purges the static
+cache, and turns a half-typed slug into a redirect page).
 
-What is automatic is the safety net. While you type, the form state is kept in your
-browser's `localStorage`, and reopening the page offers it back:
+Instead, while you type, the form state is kept in your browser's `localStorage`, and
+reopening the page offers it back:
 
 > You left unsaved changes here 7 minutes ago, kept in this browser.
 > **Restore them** · **Discard**
 
-It covers the crash, the closed tab and the expired session. *Restore them* puts back the
-fields you had changed (the markdown body included) and nothing else, without saving
-anything, so you still review before publishing; a field you never touched keeps whatever
-the page holds now, even if a colleague saved it meanwhile. Should that colleague have
-saved one of *your* fields, the offer says so before you take it:
+*Restore them* puts back only the fields you had changed (body included), without
+saving; untouched fields keep the page's current values. If someone saved one of *your*
+fields since, the offer says so:
 
 > You left unsaved changes here 7 minutes ago, kept in this browser. The page has been
 > saved since, on fields you changed: restoring puts your version back over it.
 
-The copy is only dropped once a save succeeds, or when you press *Discard*. It never
-leaves your browser, so it does not follow you to another machine, and it belongs to the
-account that typed it: it is not offered to anyone else signing in on that browser, and
-signing out takes it along. It is unrelated to the **Draft** toggle, which is a
-publication state stored in the database.
+The copy is dropped on a successful save or on *Discard*. It stays in that browser, is
+offered only to the account that typed it, and is cleared on sign-out. It is unrelated
+to the **Draft** toggle (a publication state stored in the database).
 
 A site overriding `@pwAdmin/page/edit.html.twig` has to carry over the
 `unsaved_changes_banner.html.twig` include and the form's `data-pw-unsaved-key`
@@ -106,11 +100,11 @@ A field is a class extending `Pushword\Admin\FormField\AbstractField`, whose
 fields — parent page, variant of, translations — are autocompletes: their candidates
 come from EasyAdmin's autocomplete endpoint as you type.
 
-If your own field filters its candidates on the page being edited ("not myself", "same
-host"), read that page with `Pushword\Admin\FormField\PageFormSubjectTrait`, not with
-`$this->admin->getSubject()`. EasyAdmin answers an autocomplete request by rebuilding
-the fields against an *empty* subject, so a query builder reading the subject directly
-filters on nothing — the list would offer the page itself, and every host's pages.
+If your field filters its candidates on the page being edited ("not myself", "same
+host"), read that page with `Pushword\Admin\FormField\PageFormSubjectTrait`, not
+`$this->admin->getSubject()`: EasyAdmin rebuilds the fields against an *empty* subject
+to answer an autocomplete request, so the list would offer the page itself and every
+host's pages.
 
 ```php
 use Pushword\Admin\FormField\PageFormSubjectTrait;

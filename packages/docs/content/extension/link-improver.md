@@ -15,11 +15,8 @@ Markdown — disable the option and every auto link is gone.
 composer require pushword/link-improver
 ```
 
-The bundle registers itself in `config/bundles.php`, after the core bundle.
-
-Then opt in per app — the filter is wired into every app's `main_content` chain
-(right after `Markdown`) but stays inert until you enable it, because it
-rewrites content:
+The filter joins every app's `main_content` chain (right after `Markdown`) but stays
+inert until you opt in per app:
 
 ```yaml
 pushword:
@@ -61,11 +58,8 @@ as the report prints them — `/` for the homepage, `/slug` otherwise:
 link_improver_ignored_urls: ['/', '/contact']
 ```
 
-The homepage is the usual candidate: its name is often the brand, written on
-nearly every page. On a real site, that alone took 44% of the inserted links.
-Whether that is what you want is an editorial call — a branded anchor next to
-the header link is fine for many sites; ignoring it spends the budget on
-topical targets instead.
+The homepage is the usual candidate: its name is often the brand, written on nearly
+every page (44% of the inserted links on one real site).
 
 ## What it will not do
 
@@ -83,55 +77,29 @@ The insertion engine refuses to place a link:
 
 ## Choosing the cap
 
-Because the cap counts the links already in the content, it reads as a target
-density rather than as a number of links to add: a page already linking above
-it gets nothing, a neglected page is filled up to it.
-
-The default `0.02` — one link every 50 words — comes from measuring what the
-number means in practice. In Wikipedia's running prose (the `<p>` of 30 fr/en
-articles, 185 000 words, links to other articles only) the median article sits
-at **one link per 20 words**. Wikipedia is the densest reasonable reference, so
-half that density is a comfortable ceiling for a content site.
-
-For scale, the same measure on real Pushword sites: a hand-linked site reaches
-one link per 48 words, while larger corpora sit between one per 180 and one per
-720, with 8 to 49% of pages holding no internal link at all. Those are the pages
-the improver is for; `0.01` would have throttled it on exactly the short pages
-where a single link matters.
+Since the cap counts existing links, it is a target density: a page already above it
+gets nothing, a neglected page is filled up to it. The default `0.02` is half the median
+density of Wikipedia prose (one link per 20 words, measured on 30 fr/en articles);
+real Pushword corpora sit between one per 48 and one per 720 words, with 8–49% of pages
+holding no internal link.
 
 ## Auditing what was linked
 
-Automatic linking earns its bad reputation when it is invisible. Four surfaces,
-from the page you are reading to the whole site:
-
-- **On the page, logged in as an editor**: every auto link gets an indigo tint
-  behind it and a title saying it was inserted, not written. Only a `ROLE_EDITOR`
-  with a session sees this — the public HTML and the shared render cache are
-  untouched, and an annotated response is sent `private, no-store`. The marking
-  is a background, not a change to how your theme underlines links: a theme
-  styles its links as it likes (the stock one uses a `border-bottom` and sets
-  `text-decoration: none`), so a decoration-based marking would be invisible on
-  some sites and doubled on others. Nothing is inserted into the text and no
-  word moves, so the page still reads exactly as a visitor sees it.
-- **Per page, in the admin**: the *Auto links* button on the page edit screen
-  opens a panel listing what this page gained (anchor → target), the cap it was
-  measured against, and the keywords its own name offers to other pages. It
-  renders that one page on request — this is the surface to open when a page
-  gained nothing and you want to know why.
-- **In the HTML**: every inserted link carries a bare `data-auto-link`
-  attribute — auto links stay distinguishable from editorial links to your
-  crawler and to your own eyes (`grep data-auto-link` on a static export).
-- **Site-wide**: `php bin/console pw:link-improver` renders every published page
-  and reports each inserted link (`page`, anchor, target). `--host example.tld`
-  narrows to one app, `--simulate` renders **as if `link_improver: true` were
-  set** to preview a site before opting in, and `--format` follows the
+- **On the page**, for a logged-in `ROLE_EDITOR` only: each auto link gets an indigo
+  background tint and a title saying it was inserted. The response is then sent
+  `private, no-store`; public HTML and the shared render cache are untouched.
+- **In the admin**: the *Auto links* button on the page edit screen lists what the page
+  gained (anchor → target), the cap applied, and the keywords its own name offers. Open
+  it when a page gained nothing.
+- **In the HTML**: inserted links carry a bare `data-auto-link` attribute
+  (`grep data-auto-link` on a static export).
+- **Site-wide**: `php bin/console pw:link-improver` renders every published page and
+  reports each inserted link. `--host example.tld` narrows to one app, `--simulate`
+  renders as if `link_improver: true` were set, and `--format` follows the
   [agent-output](/agent-output) convention.
 
-The panel deliberately does not list which pages link *to* the one you are
-looking at: that answer needs the rest of the host rendered, and
-[page-scanner](/extension/page-scanner)'s link graph (`pw:link:graph`) already
-reports inbound counts, depth and orphans — auto links included, since the scan
-renders each page.
+Inbound links (auto ones included) are reported by
+[page-scanner](/extension/page-scanner)'s `pw:link:graph`.
 
 ## Rendering and cache
 
@@ -141,10 +109,9 @@ degrades exactly like an editorial one. Rendering is byte-deterministic: the
 map is derived from the pages ordered by slug, longest keyword first, so two
 renders of the same page produce the same bytes.
 
-A page's rendered output now depends on the other pages' names: renaming,
-publishing or deleting a page already bumps the host's render epoch (`name`,
-`slug` and `publishedAt` are listing-relevant fields), so static and page-cache
-sites regenerate what a name change can affect.
+A page's output depends on the other pages' names; renaming, publishing or deleting a
+page bumps the host's render epoch, so static and page-cache sites regenerate what it
+affects.
 
 ## Interplay with pages_list
 

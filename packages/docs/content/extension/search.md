@@ -5,16 +5,12 @@ publishedAt: '2026-05-25 10:00'
 toc: true
 ---
 
-Real full-text search — typo tolerance, stemming, ranking — without
-Elasticsearch or any external service. It stays true to Pushword's "SQLite by
-default, zero infra" stance by using [Loupe](https://github.com/loupe-php/loupe),
-a pure-PHP, SQLite-backed search engine. The index is a portable SQLite file, so
-it can be built at deploy time and shipped — exactly what the
-[static](/extension/static-generator) and [page-cache](/extension/page-cache)
-workflows need.
-
-It upgrades the lightweight [`search.json`](/search.json) approach (page
-title/url/truncated content) to ranked, typo-tolerant full-text search.
+Full-text search — typo tolerance, stemming, ranking — with
+[Loupe](https://github.com/loupe-php/loupe), a pure-PHP, SQLite-backed engine: no
+external service. The index is a portable SQLite file, so it can be built at deploy time
+and shipped with [static](/extension/static-generator) and
+[page-cache](/extension/page-cache) sites. It supersedes the [`search.json`](/search.json)
+approach.
 
 ## Install
 
@@ -25,56 +21,26 @@ php bin/console pw:search:index
 
 ## How it works
 
-One **index per host** (`{index_dir}/{host}/loupe.db`), built from **published
-pages only** (snippets and media are out of scope for v1).
+One **index per host** (`{index_dir}/{host}/loupe.db`), built from **published pages
+only** (no snippets or media). Each body is rendered like the page itself
+(`pw(page).mainContent`: Markdown, Twig, shortcodes, `pages_list`…), then stripped to
+plain text. `title`, `h1` and `tags` weigh more than the body.
 
-For each page, the body (`content`) is rendered exactly as `raw.twig` does —
-through the [EntityFilter](/) pipeline (`pw(page).mainContent`) — so Markdown,
-Twig and shortcodes (`pages_list`, `pages()`, …) execute and the indexed text
-matches what visitors read. The rendered HTML is then stripped to normalized
-plain text (Loupe is fed text, never HTML or Markdown, which would bloat the
-index and tokenize tags/URLs into noise).
-
-`title`, `h1` and `tags` are weighted above the body, so heading structure — not
-markup — drives ranking.
-
-> **Known tradeoff.** Because the rendered body is indexed, a `pages_list` block
-> injects other pages' titles/excerpts into this page's entry. Listing-block
-> dedup is a later refinement.
+> **Known tradeoff.** Since the rendered body is indexed, a `pages_list` block adds the
+> listed pages' titles and excerpts to this page's entry.
 
 ## Building the index
 
-Both triggers ship out of the box:
+- `pw:search:index [host]` rebuilds one or every host (on demand, cron, deploy).
+- Each page save or delete reindexes that page through Messenger (`incremental`).
+  Unrouted, the message runs synchronously: the save absorbs one content render, and the
+  page is searchable at once.
+- Bulk imports (`pw:flat:sync --mode=import`, any code inside
+  `PageCacheSuppressor::suppress()`) skip incremental reindexing. **Rebuild after them**:
+  append `pw:search:index`, or rely on `pw:static` (`index_on_static`).
 
-- **On demand / cron** — `pw:search:index [host]` rebuilds one or every host.
-- **Incremental** — on page save/delete, a Messenger message reindexes the
-  single page (mirrors the page-cache invalidation). Toggle with `incremental`.
-
-### Keeping the index fresh
-
-- **Interactive saves** reindex incrementally: a single page edit/delete (admin,
-  API, a one-off script) dispatches a per-page reindex. The message is
-  unrouted, so it runs synchronously in-process — the save absorbs the cost of
-  one content render. Fine for one page; route `ReindexPageMessage` to an async
-  transport if you script many individual saves.
-- **Bulk imports are suppressed.** `pw:flat:sync --mode=import` (and any code
-  wrapped in `PageCacheSuppressor::suppress()`) deliberately skips incremental
-  reindexing — importing thousands of pages must not fire thousands of
-  synchronous renders. The index is therefore **not** refreshed by the sync
-  itself.
-- **So run a rebuild after a bulk import:** append `pw:search:index` to your
-  import/deploy flow, or let `pw:static` handle it (it reindexes during the
-  build via `index_on_static`). Until then, freshly imported content won't
-  appear in search results.
-
-### Moving reindexing off the request (async)
-
-By default the reindex message is unrouted, so it runs synchronously: each save
-absorbs one content render. That is the right default — it keeps the "SQLite,
-zero infra" promise (no worker to run) and makes a saved page searchable
-immediately. If you script many individual saves and the per-save render hurts,
-route the messages to an async transport with standard Messenger routing — no
-bundle config needed:
+If you script many individual saves, route the messages to an async transport and run a
+worker; a saved page then appears once the worker processes it:
 
 ```yaml
 # config/packages/messenger.yaml
@@ -85,20 +51,13 @@ framework:
       'Pushword\Search\Message\RemovePageMessage': async
 ```
 
-Two consequences: you must run a worker (`php bin/console messenger:consume`),
-and indexing becomes eventually consistent — a saved page appears in search only
-once the worker processes it. Bulk imports are unaffected: the suppressor skips
-dispatching during `flat:sync`/`PageCacheSuppressor::suppress()`, so nothing is
-queued there in the first place.
-
 ## Querying
 
 ### Dynamic & page-cache sites
 
-A `/search` controller queries the index server-side and renders
-`@PushwordSearch/search.html.twig`. It is cheap enough to run even alongside the
-no-PHP page cache (a dynamic exception, like the `liveBlock` fragments). Add
-`?format=json` for a JSON response.
+`/search?q=…` queries the index server-side and renders
+`@PushwordSearch/search.html.twig` (`?format=json` for JSON). It stays dynamic alongside
+the page cache, like the `liveBlock` fragments.
 
 ### Static sites
 
@@ -113,23 +72,16 @@ no-PHP page cache (a dynamic exception, like the `liveBlock` fragments). Add
   like Loupe — minus typo tolerance and stemming;
 - **`both`** (default) — both.
 
-The exported `loupe.db` is checkpointed before it is copied, so the file carries
-the documents on its own — Loupe writes through a log that lives beside it, and a
-copy taken mid-write would be a valid but empty index.
+The exported `loupe.db` is checkpointed before it is copied, so it carries its documents
+without Loupe's write log.
 
 ### Recovering a damaged index
 
-Loupe runs SQLite with `synchronous = OFF`: a search index is rebuildable, so it
-trades durability for write speed. A writer killed mid-write — power loss, an OOM
-kill, an interrupted deploy — therefore leaves `loupe.db` damaged, and SQLite
-refuses it from then on (`26 file is not a database`, or `11 database disk image
-is malformed` when only part of the file was torn).
-
-Such an index is dropped and recreated, with a warning in the log. Damage to the
-head of the file is caught when the index is opened; damage confined to its
-interior only surfaces once a reindex walks the affected pages, so a full rebuild
-(`pw:search:index`, or a `pw:static` build) recovers from either. An index reset
-at open time comes back **empty** — run `pw:search:index` to repopulate it.
+Loupe runs SQLite with `synchronous = OFF`, so a writer killed mid-write (power loss,
+OOM, interrupted deploy) can leave `loupe.db` damaged (`26 file is not a database`,
+`11 database disk image is malformed`). A damaged index is dropped and recreated with a
+log warning — at open time when the file head is torn, during a reindex otherwise. An
+index reset at open time comes back **empty**: run `pw:search:index`.
 
 ## Configuration
 
@@ -147,8 +99,7 @@ search:
 
 ## Indexing custom metadata
 
-To search, filter or facet on your own fields (e.g. a product catalog with
-`productCode`, `difficulty`, `price`), do two things:
+To search, filter or facet on your own fields (`productCode`, `difficulty`, `price`…):
 
 1. **Declare the attributes** in `searchable_attributes` (to rank on them) and/or
    `filterable_attributes` (to filter and facet on them).
@@ -176,8 +127,7 @@ final readonly class ProductSearchDocumentListener
 }
 ```
 
-Then query with extra filters and facets — custom attributes are returned on each
-hit automatically (all stored attributes are retrieved):
+Then filter and facet on them; every stored attribute comes back on each hit:
 
 ```php
 $searcher->search(
@@ -190,6 +140,5 @@ $searcher->search(
 
 ## Non-goals
 
-No Elasticsearch/OpenSearch adapter (defeats the zero-infra point), no built-in
-faceted search UI (the building blocks — filters, facets, custom attributes — are
-exposed; the UI is yours), no search analytics.
+No Elasticsearch/OpenSearch adapter, no built-in faceted search UI (filters, facets and
+custom attributes are exposed; the UI is yours), no search analytics.

@@ -1,5 +1,5 @@
 ---
-title: 'Conversation: Add Comment, Newsletter Form or Contact For'
+title: 'Conversation: Add Comment, Newsletter Form or Contact Form'
 h1: Conversation
 editMessage: 'Imported via pw:flat:sync from extension/conversation.md'
 publishedAt: '2026-03-02 19:16'
@@ -9,147 +9,116 @@ filter_twig: 0
 revision: a9a96ebb860049f2cdfd0ebda7ce072950ce5e15 # read only
 ---
 
-Extend your Pushword website with **comments**, a **contact** form or just an **user input**.
+Comments, contact and newsletter forms, and customer reviews.
 
 ## Install
 
-Via #[Packagist](https://packagist.org/packages/pushword/conversation) :
-
-```
-# Get the Bundle
+```shell
 composer require pushword/conversation
 ```
 
-That's it ! If you have a custom installation (not used the [default installer](/installation)),
-you may have a look inside `vendor/pushword/admin/install.php`.
+Custom installations (not the [default installer](/installation)): see `vendor/pushword/admin/install.php`.
 
-## Usage
+## Embed a form
 
-### You can use it as is and include it in your Page with two manners :
-
-```bash
-# Load form via fetch (javascript)
-<div data-live="{{ conversation('newsletter') }}"></div>
-
-# Only fetch when a cookie is present (useful for cached/static pages)
-<div data-live="{{ conversation('newsletter') }}" data-live-if="cookie:pw_auth=1"></div>
-# =
-<div data-live="{{ path('pushword_conversation', {'type': 'newsletter', 'referring': 'newsletter-'~page.slug, 'host': page.host}) }}"></div>
-
-# Render form in Controller
-{{ render(controller('Pushword\\Conversation\\Controller\\ConversationFormController::show')) }}
-
-# Or add a button to click before loading block
-<button data-src-live="{{ path('pushword_conversation', {'type': 'newsletter', 'referring': 'nslttr-'~page.slug, 'host': page.host}) }}" class="btn btn-primary">Register</button>
-
-# Shorthand (obfuscates the URL automatically)
-{{ conversationFormBtn('Register', 'newsletter', 'btn btn-primary') }}
-
-# Advanced usage
-<p>This is an invitation to <button data-src-live="..." data-target="parent">register</button></p>
-```
-
-Activate the `data-live` element with [@pushword/js-helper](https://github.com/Pushword/js-helper) :
-
-```
-import { liveForm } from "@pushword/js-helper/src/helpers";
-
-// on dom changed and on page loaded :
-liveBlock();
-```
-
-### Locale
-
-The form is loaded by its own HTTP request, so it cannot guess the language of the page
-embedding it. `conversation()` and `conversationFormBtn()` add `?locale=` for you; when
-you build the URL by hand with `path('pushword_conversation', …)`, add it to render the
-form in another language than the site's:
+Forms are fetched by their own request, so they work on cached and static pages:
 
 ```twig
-<div data-live="{{ path('pushword_conversation', {'type': 'newsletter', 'referring': 'newsletter-'~page.slug, 'host': page.host, 'locale': page.locale}) }}"></div>
+{# Fetched on load #}
+<div data-live="{{ conversation('newsletter') }}"></div>
+
+{# Fetched only when a cookie is present #}
+<div data-live="{{ conversation('newsletter') }}" data-live-if="cookie:pw_auth=1"></div>
+
+{# Fetched on click; the shorthand obfuscates the URL #}
+{{ conversationFormBtn('Register', 'newsletter', 'btn btn-primary') }}
+<button data-src-live="{{ conversation('newsletter') }}" class="btn btn-primary">Register</button>
+<p>An invitation to <button data-src-live="..." data-target="parent">register</button></p>
+
+{# Rendered server-side #}
+{{ render(controller('Pushword\\Conversation\\Controller\\ConversationFormController::show', {type: 'newsletter'})) }}
 ```
 
-Without `locale`, the form falls back to the locale of the site matching `host` (or the
-requested host). The locale is applied early enough to reach the translator and the
-validator, and is carried over to the next step of a multi-step form.
+`data-live` and `data-src-live` are handled by `liveBlock()` from
+[@pushword/js-helper](https://github.com/Pushword/js-helper) (already called by its `app.js`).
 
-### Cross-origin or same-origin
+`conversation(type, referring = type)` builds
+`path('pushword_conversation', {type, referring: referring~'_'~host~'/'~slug})` plus
+`?host=` and `?locale=`. When you build that URL by hand, pass `locale` yourself, or the
+form renders in the site's default locale.
 
-`conversation()` and `conversationFormBtn()` return an **absolute** URL, built on the
-site's `base_live_url`. That is what makes the form work on a statically generated host:
-those pages have no PHP, so a relative URL would resolve against their own origin and 404.
-The price is a cross-origin request — hence `possible_origins`, and cookies of the visited
-host never reaching the handler.
+### Absolute or relative URL
 
-When the static host proxies `/conversation/*` to PHP itself (a `reverse_proxy` matcher in
-its Caddyfile, say), that price buys nothing: make the URL relative instead.
+`conversation()` and `conversationFormBtn()` return an **absolute** URL on the site's
+`base_live_url`, so a statically generated page (no PHP) fetches the form from the live
+host. That request is cross-origin: allow the static origins in the site's
+`conversation_possible_origins` (space-separated), and expect the visited host's cookies
+not to reach the handler.
+
+If the static host proxies `/conversation/*` to PHP itself, make the URL relative (per
+site, or globally):
 
 ```yaml
 conversation:
-    conversation_absolute_url: false # default: true
+  conversation_absolute_url: false # default: true
 ```
 
-It is an app fallback property, so a single site can opt out in its own
-`pushword.apps[…]` entry while the others stay absolute. Already generated pages keep the
-absolute URL they were built with — regenerate them before relying on the new one.
+Regenerate static pages afterwards; they keep the URL they were built with.
 
-⚠ **Check your static host's canonicalisation first.** The generated Caddyfile redirects any
-path ending in `/` to the slash-less one (`@has_slash`, a 301 that also drops the query
-string). `conversation()` builds `referring` as `{type}_{host}/{slug}`, and a **homepage** has
-an empty slug — so its URL ends in `/` and gets rewritten in flight. Whatever reads the
-referring back then sees `{type}_{host}` instead of `{type}_{host}/`. Absolute URLs are served
-by the dynamic host, which has no such rule, which is why the default is `true`. Set it to
-`false` only if the sites concerned have no homepage form, or their canonicalisation exempts
-the proxied paths.
+⚠ The generated Caddyfile 301s any path ending in `/` to the slash-less one, dropping the
+query string. A **homepage** form's `referring` ends in `/` (empty slug), so a relative URL
+gets rewritten in flight. Set `false` only where no homepage carries a form, or where the
+proxied paths are exempt from that redirect.
 
-### Render published comment
+## Published comments
 
 ```twig
-{{ showConversation(referring[, orderBy, limit, template]) }}
-````
-
-### Get mail notification for new message
-
-Configure the bundle directly in app configuration
-
-```yaml
-    conversation_notification_email_to: "example@example.tld",
-    conversation_notification_email_from: "example@example.tld",
-    conversation_notification_interval: "PT1S" #each 1s, default 1 time per day
+{{ showConversation(referring[, orderBy = 'createdAt ASC', limit = 0, view]) }}
 ```
 
-Per-message notifications are sent automatically for valid author email addresses.
-For summaries of messages without an author email, schedule calls to the
-`Pushword\Conversation\Service\NewMessageMailNotifier::send()` service method;
-`conversation_notification_interval` limits how often these summaries are sent.
+## Mail notifications
 
-## Customization
+Per site, or globally under `conversation:`:
 
-## Small rendering customization
+```yaml
+conversation_notification_email_to: 'example@example.tld'
+conversation_notification_email_from: 'example@example.tld'
+conversation_notification_interval: 'P1D' # default; a PHP DateInterval
+```
 
-By overriding `@PushwordConversation/conversation/conversation.html.twig`
-(or `'@PushwordConversation/conversation/'.$type.'Step'.$step.'.html.twig`
-or `'@PushwordConversation/conversation/'.$type.$referring.'Step'.$step.'.html.twig`).
+Messages with a valid author email are notified one by one. For the others, schedule
+`Pushword\Conversation\Service\NewMessageMailNotifier::send()`, which mails a summary at
+most once per interval.
 
-## Create a new form
+## Customize
 
-Per default, there are 4 form types: `newsletter`, `message`, `ms_message` and `multistep_message`.
+Override `@PushwordConversation/conversation/conversation.html.twig`, or per step
+`{type}Step{step}.html.twig` / `{type}{referring}Step{step}.html.twig` in the same folder.
 
-Add a new class in bundle config `pushword_conversation.conversation_form.myNewType: myNewFormClass` or at the app level config `pushword.apps[...].conversation_form: [...]`
+### Add a form type
 
-### Driving the steps yourself
+Built-in types: `newsletter`, `message`, `ms_message`, `multistep_message`. Register yours
+under `conversation.conversation_form` (globally or per site):
 
-A form only has to declare `getStepOne()`, `getStepTwo()`, … and let
-`defaultStepValidator()` move between them. When a step needs its own transition —
-calling an external API before advancing, for instance — override its
-`validStepN()` and use the two seams the base class exposes:
+```yaml
+conversation:
+  conversation_form:
+    my_type: App\Form\MyForm # implements ConversationFormInterface
+```
 
-- `advanceStep()` moves to the next step **and** stores the workflow. The next POST
-  arrives on `?step=N+1` carrying only the token, and is refused unless the stored
-  state matches that step, so advancing without storing answers it with
-  "Conversation workflow not found". Never call `incrementStep()` on its own.
-- `deleteWorkflow()` burns the token; call it before `showSuccess()` so the last
-  step cannot be replayed.
+An unregistered type falls back to `App\Form\{type}`.
+
+### Drive the steps yourself
+
+A form declares `getStepOne()`, `getStepTwo()`, … and lets `defaultStepValidator()` move
+between them. To run your own transition (an API call before advancing), override
+`validStepN()` and use:
+
+- `advanceStep()` — moves to the next step **and** stores the workflow. The next POST is
+  refused ("Conversation workflow not found") unless the stored state matches its step,
+  so never call `incrementStep()` alone.
+- `deleteWorkflow()` — burns the token; call it before `showSuccess()` so the last step
+  cannot be replayed.
 
 ```php
 protected function validStepTwo(FormInterface $form): string
@@ -165,173 +134,93 @@ protected function validStepTwo(FormInterface $form): string
 }
 ```
 
-## Flat sync integration
+## Flat sync
 
-When the [Flat extension](/extension/flat) is enabled, every `pw:flat:sync` run also synchronizes
-conversation messages with a CSV file.
+With the [Flat extension](/extension/flat), every `pw:flat:sync` also syncs messages with a
+CSV: core fields plus one column per custom property (arrays as JSON). Dates are exported
+as ISO 8601 with their offset; on import (and through the API) an offset is kept to the
+instant, and a date without one is read in the
+[editorial timezone](/extension/flat#dates-and-time-zones).
 
-- **Export** : each message is written with its core fields (content, author, tags, dates, …) and one column per custom property.
-- **Import** : editing the CSV lets you re-import messages, including any custom properties (arrays are encoded as JSON in their dedicated column).
-- **Dates** : exported as ISO 8601 with their offset. On import, and through the API, an offset is kept to the instant and a date without one is read in the [editorial timezone](/extension/flat#dates-and-time-zones).
+- **Merge identity** — rows match by `uuid`, so databases that no longer travel together
+  (laptop and production SQLite) merge without ids colliding. Unknown uuid: new message;
+  known: updated; messages absent from the CSV are kept and re-exported. A sync never
+  deletes.
+- **Deletion** — deleting (admin or API) sets a `deletedAt` tombstone, hidden everywhere
+  but kept in the database and CSV so the deletion reaches every copy. An empty
+  `deletedAt` in a stale CSV never resurrects a message; to un-delete, clear the value on
+  each side.
+- **Stale rows** — a row whose `updatedAt` is older than the database's is not applied;
+  if its content differs, an admin notification (with email) reports the divergence.
+  Hand-edited rows keep their exported `updatedAt` and apply.
 
-This allows you to backup or edit conversations alongside pages and medias without needing a database access.
-
-### Merge identity
-
-Each message carries a `uuid` column: it is the merge identity between databases
-that no longer travel together (a laptop and a production server each writing
-their own SQLite). Import matches rows by uuid — an unknown uuid becomes a new
-message, a known one is updated, and messages the CSV has never seen are kept
-and re-exported into the file. Nothing is ever deleted by a sync, and ids may
-differ between machines without messages overwriting each other.
-
-Rows predating the column are backfilled on their first export (run
-`bin/console doctrine:schema:update --force` after upgrading).
-
-### Deletion
-
-Deleting a message (admin or API) sets a `deletedAt` tombstone instead of
-removing the row: a hard-deleted row would simply be recreated by the next
-merge. Tombstoned messages disappear from the admin, the front and the API, but
-stay in the database and the CSV so the deletion reaches every synced copy. An
-empty `deletedAt` cell in a stale CSV never resurrects a deleted message —
-deletion is sticky; to un-delete, clear the value in the database (or CSV) on
-each side.
-
-### Stale rows never overwrite fresher database edits
-
-A row whose `updatedAt` is strictly older than the database row is stale — a
-CSV rsynced from a machine that has not seen an edit made here (typically
-through the production admin, when no pull happened before the deploy). Import
-keeps the database version and, when the row's content differs, creates an
-admin notification (with email alert) so the divergence is visible. Hand-edited
-rows keep their exported `updatedAt` (equal, not older) and still apply.
-
-### Storage mode
-
-By default, all conversations are stored in a single global file at `content/conversation.csv`, regardless of host. This simplifies management, especially for single-site installations or when conversations don't need to be separated by host.
-
-You can switch to per-host storage if needed:
+Storage defaults to one `content/conversation.csv` for every host; the `host` column is
+kept in both modes:
 
 ```yaml
-# config/packages/pushword.yaml
 conversation:
-  flat_conversation_global: true   # (default) Single file: content/conversation.csv
-  # flat_conversation_global: false  # Per-host files: content/<host>/conversation.csv
+  flat_conversation_global: false # per host: content/<host>/conversation.csv
 ```
 
-The `host` column in the CSV preserves the host information in both modes, allowing filtering or migration between modes.
-
-### CLI helpers
-
 ```bash
-# Auto-detect import vs export (or force with -f import|export|sync)
-php bin/console pw:message:flat [host] [-f sync]
-
-# Import an external CSV without touching local files
+php bin/console pw:message:flat [host] [-f import|export|sync] # default: auto-detect
 php bin/console pw:message:import path/to/conversation.csv [--host=example.com]
 ```
 
-## Review replies
+## Reviews
 
-Each review can carry a public **reply** and the **name of who replied**, both stored as
-custom properties on the review. Edit them from `/admin/review`: the reply text is editable
-inline directly in the list, and the full edit form exposes both the *Reply* and *Reply author*
-fields. On the front, the reply renders below the review followed by a footer:
-`— Reply from {author}`.
-
-When a review has no specific reply author, the footer falls back to a site-wide default name.
-Configure it per host (it is an app-fallback property, so a global default under `conversation:`
-applies to every host unless overridden):
-
-```yaml
-pushword:
-  apps:
-    - hosts: ["example.com"]
-      conversation_review_default_reply_author: "Lorène (Grand Angle)"
+```twig
+{{ reviews(pageOrTag = current page, limit = 10) }} {# alias: reviewList() #}
+{{ reviewsCount(pageOrTag) }}
 ```
 
-The `%siteName%` placeholder is replaced at render time with the current site name (the host's
-`name`), so a single global default works across hosts:
+A page matches reviews tagged with its slug. Disable the review admin with
+`conversation.review_enabled: false`.
+
+### Replies
+
+Each review carries a public **reply** and its **author** (custom properties), edited at
+`/admin/review` — the reply inline in the list, both in the form. The front renders the
+reply followed by `— Reply from {author}`.
+
+An empty author falls back to `conversation_review_default_reply_author` (per site, or
+globally), where `%siteName%` is replaced by the site name; saving from the admin writes
+that default onto the review. With neither, the footer reads "Reply from the team".
 
 ```yaml
 conversation:
-  conversation_review_default_reply_author: "The %siteName% team"
+  conversation_review_default_reply_author: 'The %siteName% team'
 ```
 
-It also works in a review's own *Reply author* field. When a review is saved from the admin
-(form or inline reply) with an empty author, the configured default is written onto the review.
-The footer also falls back to it at render time, so existing reviews and imports display it too.
-With no author and no default configured, the footer shows a generic "Reply from the team".
+### Translation
 
-## Review Translation
-
-Automatically translate reviews to multiple languages using DeepL or Google Cloud Translation APIs.
-
-### Configuration
-
-Add your API keys in the pushword configuration:
+Reviews are translated with DeepL, falling back to Google Cloud Translation when DeepL's
+monthly limit is reached or it fails:
 
 ```yaml
-# config/packages/pushword.yaml
 conversation:
   translation_deepl_api_key: '%env(DEEPL_API_KEY)%'
   translation_google_api_key: '%env(GOOGLE_API_KEY)%'
-  translation_deepl_use_free_api: true  # Use DeepL free API endpoint
-  translation_deepl_monthly_limit: 450000  # Monthly char limit (0 = unlimited)
+  translation_deepl_use_free_api: true
+  translation_deepl_monthly_limit: 450000 # characters, 0 = unlimited
   translation_google_monthly_limit: 450000
 ```
 
-DeepL is used as the primary service (higher priority). If DeepL's monthly limit is exceeded or unavailable, Google Cloud Translation is used as fallback.
-
-### Translate reviews
-
 ```bash
-# Translate all reviews to French
-php bin/console pw:conversation:translate-reviews --locale=fr
-
-# Translate to multiple locales
-php bin/console pw:conversation:translate-reviews --locale=fr,de,es
-
-# Filter by host
-php bin/console pw:conversation:translate-reviews --locale=fr --host=example.com
-
-# Force re-translation of existing translations
-php bin/console pw:conversation:translate-reviews --locale=fr --force
-
-# Preview without making changes
-php bin/console pw:conversation:translate-reviews --locale=fr --dry-run
+php bin/console pw:conversation:translate-reviews --locale=fr,de [--host=example.com] [--force] [--dry-run] [--delay=1]
 ```
 
-The command automatically detects the source language of each review. If a review has no locale set, the translation API will detect it and save it for future use.
+A review without a locale gets the one the API detects. Usage is counted per service and
+month in the `translation_usage` table.
 
-### Edit translations through the API
+`review.html.twig` shows the translation for `page.locale` (else the request locale), or
+the original when there is none.
 
-`/api/review` returns the translation map and writes it back, so a bad machine translation
-can be fixed without re-running the command:
+Fix a translation through the API — only the locales in the payload change, and
+`"fr": null` removes one:
 
 ```bash
 curl -X PATCH -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
      -d '{"translations":{"fr":{"title":"Titre","content":"Contenu"}}}' \
      https://example.com/api/review/42
-```
-
-Only the locales carried by the payload are written: an entry replaces that locale's
-title/content pair, `"fr": null` removes the locale, and the locales left out keep what
-they had.
-
-### Display translated reviews
-
-Translations are automatically displayed based on the current page locale. The `review.html.twig` template uses `page.locale` (or `app.request.locale` as fallback) to show the appropriate translation.
-
-If no translation exists for the requested locale, the original content is displayed.
-
-### Monthly usage tracking
-
-Character usage is tracked per service per month in the `translation_usage` database table. When a service exceeds its configured limit, the system automatically falls back to the next available service.
-
-To check current usage:
-
-```bash
-php bin/console dbal:run-sql "SELECT * FROM translation_usage"
 ```

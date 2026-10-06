@@ -5,7 +5,8 @@ publishedAt: '2025-12-21 21:55'
 toc: true
 ---
 
-Supercharge the Pushword Admin with a new admin form field to customize the main image format from not visible to HERO + default template files.
+Adds a *main image format* field to the page form of the [admin](/extension/admin) —
+from hidden to full-screen hero — and the templates that render it.
 
 ## Install
 
@@ -15,19 +16,23 @@ composer require pushword/advanced-main-image
 
 ## Configuration
 
-If you want to go forward than a default install (activating advanced image field for every ), you can override default parameters in your config :
+Globally, or per site in the app configuration:
 
 ```yaml
-advanced_main_image: true # Set false to disable block editor for new page (because new page does not have an associated `app` yet)
+pushword_advanced_main_image:
+  advanced_main_image: true # false disables the field
+  main_image_formats: # translation key => stored value (defaults shown)
+    adminPageMainImageFormatNormal: 0
+    adminPageMainImageFormatNone: 1
+    adminPageMainImageFormat13fullscreen: 2
+    adminPageMainImageFormat34fullscreen: 3
 ```
 
-If you override the default `page/page.html.twig`, the extension may not work properly.
+The value is stored in the page's `mainImageFormat` custom property.
 
-## Customization
+## Templates
 
-When mainImageFormat is set to **default** (0) or **none** (1), it's ever managed by the default `page/_content.html.twig`.
+The bundle overrides `page/page.html.twig`; a site overriding it too must keep the switch.
 
-When mainImageFormat is greater than 1, it's managed by new template files added by this extension :
-
--   `page/page_hero.html.twig`
--   `page/_content_hero.html.twig`
+- `0` (normal) and `1` (none) render through the default `page/_content.html.twig`.
+- Above `1`, `page/page_hero.html.twig` and `page/_content_hero.html.twig` take over.

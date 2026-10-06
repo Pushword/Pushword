@@ -6,15 +6,12 @@ parentPage: extensions
 toc: true
 ---
 
-Turn any Pushword page into ready-to-post social posts and carousels (LinkedIn,
-Instagram, Facebook, Pinterest, Threads). A post is a small JSON **spec**; the package
-renders it to **self-contained SVG slides** server-side — font and image embedded
-as `data:` URIs — so a slide is one portable file that rasterises to a pixel-exact
-PNG in any browser.
-
-Because the text is laid out in PHP, **overflow and bad crops become validation
-errors before anything is rendered** — the property that makes carousels safe to
-author by an AI agent.
+Turns a page into social posts and carousels (LinkedIn, Instagram, Facebook, Pinterest,
+Threads). A post is a JSON **spec** rendered server-side to **self-contained SVG
+slides** (font and images embedded as `data:` URIs), which rasterise to pixel-exact
+PNGs in any browser. Text is laid out in PHP, so **overflow and bad crops are
+validation errors before anything renders** — which makes specs safe for an AI agent
+to write.
 
 ## Install
 
@@ -22,16 +19,11 @@ author by an AI agent.
 composer require pushword/repurpose
 ```
 
-It requires `ext-gd` (text measurement) and `ext-zip` (export). Imagick is **not**
-required — the export PDF is written in pure PHP.
+Requires `ext-gd` (text measurement) and `ext-zip` (export); no Imagick.
 
-Install it before seeding a fresh site and the demo fixtures add one carousel of
-the `examples` page, each of its ten slides rendering one feature and naming it:
-the text stack, anchors and alignment, per-slide palettes and highlights, free
-text boxes, focal-point crops, split frames, deck-wide effects. The spec is
-`src/DataFixtures/Carousel.json` — the shape this page documents, so it is also
-what you copy from. Open it under **Social posts**, and delete it there once you
-have seen it.
+Installed before seeding a fresh site, the demo fixtures add a ten-slide carousel of
+the `examples` page, one feature per slide. Its spec, `src/DataFixtures/Carousel.json`,
+is the reference to copy from; the post sits under **Social posts**.
 
 ## How it fits together
 
@@ -54,16 +46,10 @@ Page ──► CarouselDrafter ──► SocialPost ◄──► social-post/{pa
   week", filter by status, enforce per-network uniqueness) that also round-trips as
   a flat JSON file through `pw:flat:sync`. Works on a DB-first site and a flat-file
   site alike.
-- **Studio** — an admin page (`/admin/repurpose`) that previews the deck and
-  exports it. The deck previews at the network's real mobile feed width; a zoom
-  slider under it — or Ctrl+scroll over the deck — scales the slides for detail
-  inspection (not persisted — the studio always reopens at 100% so text size is
-  judged at the size a scrolling viewer actually sees). Clicking a text on a
-  slide opens a floating editor in place, any text can be dragged straight on
-  the slide — a free text box moves; a stack field (title, tagline, paragraph)
-  converts into a free text box pinned where it lands — and hovering a slide
-  reveals its panel row (one row open at a time). Every slider responds to the
-  mouse wheel and previews live mid-drag.
+- **Studio** — an admin page (`/admin/repurpose/studio/{id}`) previewing the deck at
+  the network's mobile feed width (zoom slider or Ctrl+scroll; always reopens at
+  100%) and exporting it. Click a text to edit it in place; drag any text on the
+  slide (a stack field becomes a free text box where it lands).
 
 ## Author with an agent (recommended)
 
@@ -106,11 +92,9 @@ All emit compact JSON when run by an AI agent (`--format=agent`).
 
 ## Cropping
 
-The crop is three numbers on a slide's `image`: `focusX`/`focusY` (0..1 focal
-point in the source) and `zoom` (≥ 1). It is applied at **render time** as an SVG
-clip — never baked into a cached file — so the same numbers stay correct when the
-slide is re-rendered at another format's ratio. A landscape photo in a portrait
-slide is simply a wide image the frame clips.
+A slide's `image` carries `focusX`/`focusY` (0..1 focal point) and `zoom` (≥ 1),
+applied at **render time** as an SVG clip, so the same numbers hold when the slide is
+re-rendered at another ratio.
 
 ## Text
 
@@ -119,21 +103,15 @@ and auto-fits its size. An explicit `\n` in any field makes a hard line break.
 For text outside the stack — annotations, callouts — a slide takes free text
 boxes in `texts[]`: `content`, a fractional box (`x`, `y`, `width`, with
 `x + width ≤ 1`), `size` (fraction of the frame width), `align`, `font`
-(`body`/`heading`) and an optional `color`. Fractions rather than pixels, so a
-box survives a network/format retarget like the crop does; the stated size is
-honoured unless the box would overflow the slide bottom, in which case it shrinks
-to fit — free placement stays inside the no-overflow guarantee.
+(`body`/`heading`) and an optional `color`. Fractions survive a format retarget; a box
+that would overflow the slide bottom shrinks to fit.
 
-A `highlight` colour — on a slide (behind each title line) or on a free text box —
-paints a rounded marker sized from the measured line widths, so it hugs the text
-exactly at any size.
+A `highlight` colour (on a slide, behind each title line, or on a free text box) paints
+a rounded marker sized from the measured line widths.
 
-In the studio a stack field converts into a free text box keeping its rendered
-look — drag the text on the slide (the box lands where it is dropped) or click
-the "→ free text" button next to the field. The box takes the laid-out font
-size, wrap width, position and colours as rendered; a tagline's uppercase is
-baked into the content, and a title carries its highlight along. The field
-itself empties — from there on the text moves and styles per box, and no longer
+In the studio, dragging a stack field or clicking "→ free text" converts it into a free
+text box with its rendered size, wrap width, position and colours (a tagline's
+uppercase and a title's highlight included). The field empties; the box no longer
 follows the slide's layout, align or text-scale controls.
 
 ## Fonts
@@ -141,21 +119,16 @@ follows the slide's layout, align or text-scale controls.
 Six pairings ship with the package (DM Serif Display+DM Sans, Playfair+Chivo,
 Montserrat+Work Sans, Poppins+Inter, Anton+Roboto, Lora+Ubuntu); the other ~45 —
 all Google Fonts — are installed on demand with `pw:repurpose:fonts <pairing>`
-into `repurpose.font_dir` (defaults to `var/repurpose/fonts`, app-side so a
-composer update never wipes them). A pairing that is not installed falls back to
-Roboto — check the `installed` flag in `GET /api/repurpose/networks` (or
-`pw:repurpose:fonts`) before picking one. Fonts must be local files:
-`imagettfbbox` measures a file on disk, and an SVG rasterised for canvas export
-cannot fetch remote resources.
+into `repurpose.font_dir` (default `var/repurpose/fonts`, outside `vendor/`). A pairing
+not installed falls back to Roboto — check the `installed` flag in
+`GET /api/repurpose/networks` or `pw:repurpose:fonts`. Fonts must be local: text is
+measured with `imagettfbbox`, and a rasterised SVG cannot fetch remote resources.
 
 ## Legibility
 
-A spec can be valid yet unreadable — dark `palette.text` over a photo is the
-classic trap. Two guards: a slide with an image and no stated `overlay` defaults
-to `0.35` (an explicit `0` is honoured), and `validate` / `PUT` / the studio
-preview return non-blocking contrast `warnings` (WCAG AA large-text, 3:1) naming
-the slide and the fix. Warnings never block a save — a deliberate low-contrast
-design stays possible.
+A slide with an image and no `overlay` gets `0.35` (an explicit `0` is honoured), and
+`validate`, `PUT` and the studio preview return non-blocking contrast `warnings` (WCAG
+AA large text, 3:1) naming the slide and the fix.
 
 ## Creator byline
 
@@ -175,27 +148,25 @@ pushword:
           avatar: 'jane.jpg' # a media file name; optional
 ```
 
-…or an inline `{name, role?, avatar?, type?}` object for a one-off byline.
-Omitted, the brand (site name) signs. An **unknown key** falls back to the brand
-too, but `PUT` and the studio preview flag it with a non-blocking warning
-listing the known keys — the same channel as contrast warnings. Without an
-avatar (or when the media is missing) the byline renders an initials disc, never
-a broken image. The studio offers the configured creators in a dropdown; a
-downstream app with richer author data can bind its own
-`CreatorResolverInterface` (implement `resolve()` plus `available()`, which
-feeds that dropdown and the warning).
+…or an inline `{name, role?, avatar?, type?}` object. Omitted or unknown, the brand
+(site name) signs; an unknown key also raises a warning listing the known ones. A
+missing avatar renders an initials disc. To source creators elsewhere, bind your own
+`Pushword\Repurpose\Service\CreatorResolverInterface` (`resolve()`, plus
+`available()` feeding the studio dropdown and the warning).
 
 ## Export
 
-The studio rasterises each self-contained SVG to a PNG in the browser and posts
-them back; the server assembles a `.zip` (PNGs + `caption.txt`) plus, for LinkedIn,
-a multipage `carousel.pdf` — written in pure PHP, no Imagick, so it works on shared
-hosting and the FrankenPHP static binary.
+The studio rasterises each SVG to PNG in the browser and posts them back; the server
+assembles a `.zip` (PNGs + `caption.txt`) plus, for LinkedIn, a multipage
+`carousel.pdf` written in pure PHP. With `ffmpeg` on the host, the same frames also
+export as an `.mp4` slideshow.
+
+Binaries are auto-detected from `PATH`; override with `repurpose.chromium_binary`
+(preview contact sheet) and `repurpose.ffmpeg_binary` (video).
 
 ## Networks and formats
 
-Platform specs drift, so formats are editable data with a provenance note, and the
-validator enforces only **hard limits** (LinkedIn ≤300 pages / ≤100 MB / all pages
+Formats are data with a provenance note; the validator enforces only **hard limits** (LinkedIn ≤300 pages / ≤100 MB / all pages
 one size; Instagram ≤20 slides; Pinterest = one organic image Pin with a caption),
 never engagement opinions. Caption limits include the hashtags appended at export.
 Fetch the live table from `GET /api/repurpose/networks`.

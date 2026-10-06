@@ -5,19 +5,15 @@ publishedAt: '2026-05-24 10:00'
 toc: true
 ---
 
-Editor-owned reusable content fragments and dev-registered components, included in
-many pages, edited from the admin _and_ as flat files, translated per host —
-without the developer touching a Twig template for each one.
+Reusable fragments included in many pages:
 
-It unifies two things that used to be separate:
+- **Content snippets** — owned by the editor (a CTA text, an author box, a footer
+  note): Markdown, one row per host, edited in the admin or as flat files.
+- **Component snippets** — owned by the developer (a styled call-to-action, a
+  value-props grid): a PHP class with a parameter schema and a Twig template; the
+  block editor builds the form from the schema.
 
-- **Content snippets** — reusable _content_ owned by the editor (a CTA text, an
-  author box, a footer note). Stored as Markdown, one row per host/locale.
-- **Component snippets** — reusable _components_ owned by the developer (a styled
-  call-to-action, a value-props grid). Declared once in PHP with a parameter
-  schema and a Twig template; the block editor builds the form for free.
-
-Both are invoked the same way, from page content:
+Both are called the same way from page content:
 
 ```twig
 {{ snippet('footer-note') }}
@@ -30,7 +26,7 @@ Both are invoked the same way, from page content:
 composer require pushword/snippet
 ```
 
-The bundle registers itself in `config/bundles.php`. Create the table:
+Create the table:
 
 ```shell
 php bin/console doctrine:schema:update --force
@@ -55,31 +51,20 @@ exposed to the snippet's own Twig as `params` and as top-level variables.
 
 ## Content snippets
 
-A content snippet is a `Snippet` entity: a `slug` (the reference key, unique per
-host), a `name` (admin label), Markdown `content`, optional `tags`, and a custom
-property bag. It is rendered through the **same filter pipeline as a page**
-(Twig → Markdown → multisite links → ShowMore…), so everything you can write in a
-page works in a snippet. In the admin the `content` field uses the **same block
-editor as a page** (EditorJS with a Markdown/Monaco toggle) when
-`pushword/admin-block-editor` is installed.
+A `Snippet` entity: a `slug` (the reference key, unique per host), a `name` (admin
+label), Markdown `content`, optional `tags` and custom properties. It renders through
+the **same filter pipeline as a page** (Twig → Markdown → multisite links →
+ShowMore…), and its admin form uses the page editor (block editor when
+`pushword/admin-block-editor` is installed).
 
 ### Host and "All hosts"
 
-The host picker is a dropdown of your configured hosts plus an **All hosts**
-option. Pick a host to scope the snippet to one site; pick **All hosts** (stored
-as an empty host) to make it a **global fallback** used on every host. A
-host-specific snippet of the same slug always overrides its global twin. Leaving
-a host unset on the old free-text field meant the snippet rendered nowhere — the
-dropdown removes that footgun. The slug is auto-filled from the name on creation
-while left empty.
+The host picker lists your hosts plus **All hosts** (stored as an empty host): a
+**global fallback** used on every host, overridden by a host-specific snippet of the
+same slug. An empty slug is filled from the name on creation.
 
-> Global ("All hosts") snippets sync too: they live outside any host folder, in
-> the base `{content}/pw-snippets/` directory (host-scoped ones stay under
-> `{content}/{host}/pw-snippets/`). The global directory is synced once per run,
-> during the default app's primary host pass.
-
-Manage them from the admin (**Snippets** in the menu) or as flat files via
-`pushword/flat` (see [Flat-file sync](#flat-file-sync)).
+Manage snippets from the admin (**Snippets** in the menu) or as flat files (see
+[Flat-file sync](#flat-file-sync)):
 
 ```markdown
 <!-- {flat_content_dir}/pw-snippets/footer-note.md -->
@@ -91,16 +76,8 @@ tags:
 Need a hand? [Contact us](/contact) — we usually reply within a day.
 ```
 
-The **filename is the slug** and the host comes from the content directory, so
-neither is repeated in the frontmatter; any extra key becomes a custom property.
-
-Use it:
-
-```twig
-{{ snippet('footer-note') }}
-```
-
-Content snippets accept params too:
+The **filename is the slug** and the host comes from the content directory; any
+extra frontmatter key becomes a custom property. Content snippets accept params too:
 
 ```markdown
 # {{ params.heading|default('Welcome') }}
@@ -112,9 +89,7 @@ Content snippets accept params too:
 
 ## Component snippets
 
-A component snippet replaces the bespoke custom Twig functions sites used to
-write by hand. Declare a class with `#[AsSnippet]`, a parameter schema, and a
-Twig template:
+Declare a class with `#[AsSnippet]`, a parameter schema, and a Twig template:
 
 ```php
 namespace App\Snippet;
@@ -157,7 +132,7 @@ variable, and the current `page`.
 
 ### Schema field types
 
-The schema drives both rendering and the block-editor form. Supported `type`s:
+Supported `type`s:
 
 | Type         | Editor control            | Stored value          |
 | ------------ | ------------------------- | --------------------- |
@@ -180,43 +155,24 @@ The schema drives both rendering and the block-editor form. Supported `type`s:
 
 ## Block editor
 
-When `pushword/admin-block-editor` is installed, a **Snippet** block is added to
-the editor toolbar automatically. It lists every snippet available for the page's
-host (components _and_ content snippets), and builds a form from the selected
-component's schema. Content snippets (no schema) expose a free-form JSON params
-field.
-
-The block round-trips to a `snippet('name', {params})` call in Markdown, the
-params serialised as a JSON object argument:
+With `pushword/admin-block-editor`, a **Snippet** block lists every snippet available
+for the page's host and builds a form from the selected component's schema (content
+snippets get a free-form JSON params field). It round-trips to a call with JSON params:
 
 ```twig
 {{ snippet('cta', {"title":"Ready to start?","buttonText":"Contact us","buttonUrl":"/contact"}) }}
 ```
 
-Only a **standalone** snippet call becomes a block; inline `{{ snippet(...) }}`
-mentions inside a paragraph stay in the prose. The integration is contributed
-through `EditorJsToolProviderInterface`, so the block editor stays unaware of
-snippets and the block disappears cleanly when `pushword/snippet` is absent.
-
-## Writing snippet calls by hand
-
-You can always insert snippet calls directly in Markdown — exactly like the
-custom Twig functions they replace:
-
-```twig
-{{ snippet('cta', { title: 'Ready to start?', buttonText: 'Contact us', buttonUrl: '/contact' }) }}
-```
-
-The params map accepts inline Twig (`{ title: '…' }`) or JSON
-(`{"title":"…"}`) — both round-trip cleanly through flat files and the editor
-(single-quoted/JSON5-ish objects are repaired on import).
+Only a **standalone** call becomes a block; an inline `{{ snippet(...) }}` inside a
+paragraph stays in the prose. Hand-written params may use Twig (`{ title: '…' }`) or
+JSON (`{"title":"…"}`) syntax; both round-trip through flat files and the editor.
 
 ## Flat-file sync
 
 With `pushword/flat` installed, content snippets sync to and from
 `{flat_content_dir}/pw-snippets/{slug}.md` (one Markdown file per snippet, YAML
-frontmatter for `name`, `tags` and custom properties). The `pw-` prefix keeps
-the directory from clashing with a real page tree — the page importer skips it:
+frontmatter for `name`, `tags` and custom properties). The page importer skips
+`pw-` directories:
 
 ```bash
 php bin/console pw:flat:sync --entity=snippet            # auto-detect direction
@@ -224,35 +180,22 @@ php bin/console pw:flat:sync --entity=snippet -m export  # DB → files
 php bin/console pw:flat:sync --entity=snippet -m import  # files → DB
 ```
 
-Global ("All hosts") snippets have no host folder, so they sync to and from the
-base `{content}/pw-snippets/` directory instead. That directory is processed once
-per run, during the default app's primary host pass — so a full sync (no host
-argument) always covers it, but targeting a single _non-primary_ host
-(`pw:flat:sync some-other-host`) leaves globals untouched.
-
-`--entity=all` (the default) includes snippets alongside pages and media.
-Direction is detected from file modification times against the last sync, the
-same way pages work. Component snippets are code, so they are versioned by git,
-not synced.
+Host-scoped snippets live in `{content}/{host}/pw-snippets/`; global ones in the base
+`{content}/pw-snippets/`, synced during the default app's primary host pass — so
+`pw:flat:sync some-other-host` leaves them untouched. `--entity=all` (the default)
+includes snippets; direction is detected as for pages. Component snippets are code:
+versioned by git, not synced.
 
 ## Versioning
 
-When `pushword/version` is installed, content snippets get the same
-version/restore history as pages. Every persist or update writes a JSON
-snapshot, and the admin exposes a **Versions** action on the Snippet CRUD that
-opens the familiar list / compare / restore views. Snippet versions are stored
-under `var/log/version/snippet/{id}/` so they never collide with page versions.
-Component snippets are code, so they are versioned by git instead.
+With [`pushword/version`](/extension/version), content snippets get the page history:
+a **Versions** action in the Snippet admin, snapshots under
+`var/log/version/snippet/{id}/`.
 
 ## Migration guide — from custom Twig functions to component snippets
 
-Sites commonly ship bespoke Twig functions (`ctaBlock()`, `valueProps()`,
-`reservation_box()`, `gpx()`…): a PHP `AsTwigFunction` plus a template, with the
-editor hand-typing the call into Markdown. Component snippets give the same
-output **plus** an editor form, validation, and discoverability — usually
-**reusing the template you already have**.
-
-Take an existing function:
+A bespoke Twig function (`ctaBlock()`, `valueProps()`…) rendering a template becomes a
+component snippet reusing that template, and gains an editor form. Take:
 
 ```php
 // Before — src/Twig/AppExtension.php
@@ -302,8 +245,8 @@ The template now receives a `params` map instead of separate variables:
 +<h2>{{ params.title }}</h2>
 ```
 
-(Top-level variables still work — each param is also exposed by name — so a
-template using `{{ title }}` keeps rendering. Prefer `params.title` going forward.)
+Top-level variables still work (each param is also exposed by name), so this step is
+optional.
 
 ### 3. Update content calls
 
@@ -312,8 +255,7 @@ template using `{{ title }}` keeps rendering. Prefer `params.title` going forwar
 +{{ snippet('cta', { title: 'Ready?', description: 'Join us today', buttonText: 'Sign up', action: '/register' }) }}
 ```
 
-For a gradual migration, keep the old function as a one-line alias while you
-update content:
+To migrate gradually, keep the old function as an alias meanwhile:
 
 ```php
 #[AsTwigFunction('ctaBlock', isSafe: ['html'])]
@@ -323,6 +265,5 @@ public function ctaBlock(string $title, string $description = '', string $button
 }
 ```
 
-The collection-style functions (`valueProps([{icon,title,text}, …])`) map directly
-onto a `collection` schema field, so the array-of-objects you already pass in
-content keeps working.
+Array-of-objects arguments (`valueProps([{icon,title,text}, …])`) map onto a
+`collection` field.
