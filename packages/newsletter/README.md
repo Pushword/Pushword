@@ -21,7 +21,8 @@ Read the [documentation](https://pushword.piedweb.com/extension/newsletter).
 composer require pushword/newsletter
 ```
 
-Register the bundle and its routes:
+A project created from `pushword/new` registers the bundle and its routes on
+`composer require`. Otherwise, add them yourself:
 
 ```php
 // config/bundles.php
