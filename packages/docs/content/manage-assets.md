@@ -47,7 +47,9 @@ is fine; anything with a `*` in it needs to reach files.
 
 ## Automatic Tailwind Update on page update
 
-If you use Tailwind classes inside page content, by default the command `npm run build` is run when you update a page.
+If you use Tailwind classes inside page content, Pushword caches each saved page's content and runs `npm run build` once at the end of the production request or console command. A bulk import such as `pw:flat:sync` therefore builds once after all pages have been saved.
+
+Builds are locked per project: concurrent saves share a pending build, and content saved during a running build is included in a subsequent build. Console commands wait for the build to finish; HTTP builds run after the response has been sent.
 
 May be sure this option is working by checking `var/log/lastTailwindGeneration`.
 
@@ -65,4 +67,4 @@ pushword:
   tailwind_generator: false
 ```
 
-Note : the assets built by tailwind can be built after page loaded.
+The assets built by Tailwind can become available after the page has loaded.

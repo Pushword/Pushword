@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'automatic Tailwind builds run once per request or command and wait for completion'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,9 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`.
+
+## Automatic Tailwind builds are batched and serialized
+
+Production page saves now trigger one Tailwind build at the end of each request or command; concurrent builds are serialized. Console commands such as `pw:flat:sync` wait for compilation to finish, while HTTP builds run after the response is sent. No configuration change is required. See [asset management](/manage-assets).
