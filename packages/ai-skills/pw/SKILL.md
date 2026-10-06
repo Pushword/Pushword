@@ -4,11 +4,12 @@ description: >-
   Authoring toolkit for Pushword CMS content. Use this whenever you need to
   build, edit, or validate content features that Pushword exposes through Twig
   functions and its API, even if the user doesn't name Pushword explicitly.
-  Right now it covers ONE thing: creating a quiz (an interactive multiple-choice
-  QCM declared inline with a `{% quiz %}` block, rendered server-side for SEO).
-  Trigger it for requests like "add a quiz about X to this page", "make a QCM",
-  "create an interactive quiz", "build a knowledge test", "turn this lesson into
-  a quiz", or "validate this quiz" on a site built with Pushword. Authoring the
+  It covers two things: creating a quiz (an interactive multiple-choice QCM
+  declared inline with a `{% quiz %}` block, rendered server-side for SEO) and
+  repurposing a page into a social-media carousel. Trigger it for requests like
+  "add a quiz about X to this page", "make a QCM", "build a knowledge test",
+  "validate this quiz", "turn this article into a LinkedIn carousel" or
+  "repurpose this page for Instagram" on a site built with Pushword. Authoring the
   JSON by hand drifts from a strict validator; this skill encodes the rules and a
   one-command lint so the result renders the first time.
 ---

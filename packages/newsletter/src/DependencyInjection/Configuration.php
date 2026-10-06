@@ -29,7 +29,7 @@ class Configuration implements ConfigurationInterface
                     ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
                     ->scalarNode('newsletter_possible_origins')
                         ->defaultNull()
-                        ->info('Regex matching the origins allowed to POST the subscribe endpoint cross-domain (a statically generated site posting to its live host). Falls back to the conversation setting when null.')
+                        ->info('Space-separated origins (exact match) allowed to POST the subscribe endpoint cross-domain (a statically generated site posting to its live host). Falls back to the conversation setting when null.')
                     ->end()
                     ->booleanNode('newsletter_csrf_protection')
                         ->defaultTrue()

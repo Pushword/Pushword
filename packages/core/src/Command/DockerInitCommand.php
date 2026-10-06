@@ -58,9 +58,9 @@ final readonly class DockerInitCommand
             $written[] = $relativePath;
         }
 
-        // The entrypoint seeds an unseeded volume with the starter content and an admin
-        // account. This project has both already — it was installed on the host — so
-        // mark it, or a bind-mounted development container would seed it a second time.
+        // The entrypoint seeds an unseeded volume with an admin account. This project
+        // has one already — it was installed on the host — so mark it, or a bind-mounted
+        // development container would seed it a second time.
         $filesystem->dumpFile(
             $this->projectDir.'/var/.pushword-seeded',
             "Written by pw:docker:init: this project was installed and seeded on the host.\n"

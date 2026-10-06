@@ -34,8 +34,8 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 	# arrives with the database you restore or the files pw:flat:sync reads.
 	if [ ! -f var/.pushword-seeded ]; then
 		# Ask the application whether the configured database already has an account,
-		# rather than naming its physical table here (`user` is reserved by PostgreSQL).
-		# insert decide. `pw:user:create` fails on exactly one thing — the unique
+		# rather than naming its physical table here (`user` is reserved by PostgreSQL),
+		# and never let the insert decide. `pw:user:create` fails on exactly one thing — the unique
 		# constraint over `email` — so a database whose admin is any other address used
 		# to take the insert happily and end up with a *second* super admin, holding the
 		# published default credentials. The marker cannot stand in for this check: the
