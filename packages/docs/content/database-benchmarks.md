@@ -40,8 +40,17 @@ PUSHWORD_BENCH_PIPELINE_VOLUMES=10000 \
 ```
 
 The runner prints Markdown tables and removes its temporary databases, generated
-files and result files after the run. DSN and volume overrides are documented in
-[Contribute > Database volume benchmark](/contribute#database-volume-benchmark).
+files and result files after the run. Overrides:
+
+| Variable | Default |
+|---|---|
+| `PUSHWORD_BENCH_VOLUMES` | `100,1000,10000` |
+| `PUSHWORD_BENCH_PIPELINE_VOLUMES` | `100,1000` |
+| `PUSHWORD_BENCH_MYSQL_URL` | `pushword_test_bench` database on `127.0.0.1:3306` |
+| `PUSHWORD_BENCH_POSTGRESQL_URL` | `pushword_test_bench` database on `127.0.0.1:5432` |
+
+Both server defaults use the `pushword` test user described in
+[Contribute > Tests](/contribute#tests).
 
 ## What is measured
 

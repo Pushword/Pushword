@@ -5,26 +5,18 @@ publishedAt: '2025-01-22 12:00'
 toc: true
 ---
 
-Pushword provides a flexible authentication system with multiple login methods: password, magic link (passwordless), and OAuth (supports 60+ providers via [KnpUOAuth2ClientBundle](https://github.com/knpuniversity/oauth2-client-bundle)).
+Three login methods: password, magic link (passwordless) and OAuth (60+ providers via [KnpUOAuth2ClientBundle](https://github.com/knpuniversity/oauth2-client-bundle)).
 
 ## Login Flow
 
-The login page offers a two-step flow:
+1. The user enters their email.
+2. The password form is shown. If the account exists, a [magic link](#magic-link) is emailed at the same time, whether or not it has a password.
 
-1. **Step 1**: User enters their email
-2. **Step 2**: Depending on user configuration:
-   - If user has a password → password form
-   - If user has no password → magic link sent by email
-
-Additionally, if OAuth is configured, provider buttons appear on the login page.
+The response is identical for unknown addresses, so the form does not reveal which accounts exist. If OAuth is configured, provider buttons also appear on the login page.
 
 ## User Management with Flat Files {id=users-yaml}
 
-Users can be defined in `config/users.yaml` and synced to the database (via [flat extension](/extension/flat)). This is useful for version-controlled user management or clone instance.
-
-### Configuration
-
-Create `config/users.yaml`:
+Users can be defined in `config/users.yaml` and synced to the database by the [flat extension](/extension/flat#user-sync), to version-control who has access.
 
 ```yaml
 users:
@@ -39,38 +31,24 @@ users:
     username: Editor
 ```
 
-### Sync Users
-
 ```bash
-# Sync users from config/users.yaml to database
-php bin/console pw:flat:user-sync
-
-# Or use the global flat sync (includes users if configured)
-php bin/console pw:flat:sync
+php bin/console pw:flat:user-sync   # users only
+php bin/console pw:flat:sync        # pages, media and users
 ```
 
-**Important behaviors:**
-
-- Users are created **without password** (they use magic link or OAuth to login)
-- Existing users are updated (roles, locale, username)
-- **Passwords are never synced** - they stay in the database only
-- If `users.yaml` doesn't exist, a template file is created automatically
+- **The file is the source of truth**: database users missing from it are deleted.
+- New users are created **without password** (they log in by magic link or OAuth).
+- Existing users get their roles, locale and username updated; **passwords are never synced**.
+- Without `config/users.yaml`, user sync is skipped and no user is touched.
 
 ## Magic Link (Passwordless) {id=magic-link}
 
-Users without a password receive a magic link email when they try to login. The email contains:
+Step 1 of the login form emails every existing account two links:
 
-- **Login link**: One-click login (expires in 1 hour)
-- **Set password link**: Allows setting a password for future logins
+- **Login link**: one-click login
+- **Set password link**: sets a password for future logins
 
-### How it works
-
-1. User enters email on login page
-2. System detects user has no password
-3. Email is sent with two secure, single-use tokens
-4. User clicks either link to authenticate
-
-Tokens are:
+Their tokens are:
 
 - **Hashed** (SHA-256) in database
 - **Single-use** (marked as used after consumption)
@@ -79,43 +57,23 @@ Tokens are:
 
 ## OAuth (Any Provider) {id=oauth}
 
-Enable social login with any OAuth provider supported by [KnpUOAuth2ClientBundle](https://github.com/knpuniversity/oauth2-client-bundle) (60+ providers including Google, Microsoft, GitHub, Facebook, etc.).
-
 ### Installation
 
-1. Install the OAuth bundle and your desired provider(s):
+1. Install the bundle and the providers you need:
 
 ```bash
-# Core bundle (required)
 composer require knpuniversity/oauth2-client-bundle
 
-# Add providers you need
 composer require league/oauth2-google        # Google
 composer require thenetworg/oauth2-azure     # Microsoft/Azure
 composer require league/oauth2-github        # GitHub
 composer require league/oauth2-facebook      # Facebook
-# See full list: https://github.com/thephpleague/oauth2-client/blob/master/docs/providers/thirdparty.md
+# Full list: https://github.com/thephpleague/oauth2-client/blob/master/docs/providers/thirdparty.md
 ```
 
-2. Create `config/packages/knpu_oauth2_client.yaml` to configure your providers:
+2. Declare each provider in `config/packages/knpu_oauth2_client.yaml` with `redirect_route: pushword_oauth_check` and `redirect_params: { provider: <name> }` — see the [provider examples](#provider-examples) below. A login button appears for each configured provider.
 
-```yaml
-knpu_oauth2_client:
-    clients:
-        google:
-            type: google
-            client_id: '%env(OAUTH_GOOGLE_CLIENT_ID)%'
-            client_secret: '%env(OAUTH_GOOGLE_CLIENT_SECRET)%'
-            redirect_route: pushword_oauth_check
-            redirect_params: { provider: google }
-            access_type: online
-```
-
-OAuth buttons automatically appear on the login page for each configured provider.
-
-### Requirements
-
-Only users **already defined** in `users.yaml` (or created in admin) can login via OAuth. If the OAuth email doesn't match an existing user, login is refused. OAuth won't create new users automatically.
+OAuth never creates users: only accounts that already exist (from `users.yaml` or the admin) can log in, and an unknown email is refused.
 
 ### Provider Examples
 
@@ -241,9 +199,7 @@ This is Symfony's [`switch_user`](https://symfony.com/doc/current/security/imper
    - Google: Use `OAUTH_GOOGLE_HOSTED_DOMAIN` to limit to your organization
    - Microsoft: Use a specific `OAUTH_MICROSOFT_TENANT` instead of "common"
 
-3. **Define users in `users.yaml`** to control who can access the admin. OAuth won't create new users automatically.
-
-4. **Use HTTPS** in production. OAuth providers require HTTPS for redirect URIs (except localhost for testing).
+3. **Use HTTPS** in production. OAuth providers require HTTPS for redirect URIs (except localhost for testing).
 
 ## Troubleshooting
 

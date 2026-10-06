@@ -5,24 +5,20 @@ publishedAt: '2025-12-21 21:55'
 toc: true
 ---
 
-Which Markdown specification is used in Pushword — _CommonMark_, _GFM_, or _something else_?
+Pushword renders CommonMark-style Markdown with Tempest, plus rules that keep it
+interchangeable with a WYSIWYG block editor. Syntax Tempest cannot render faithfully
+falls back to CommonMark. Usual Markdown works unchanged.
 
-**Pushword** renders CommonMark-style Markdown with Tempest and custom rules designed to make it easy to switch between Markdown and a WYSIWYG block editor. Syntax Tempest cannot render faithfully falls back to CommonMark.
+## Blocks and attributes
 
-## For users
-
-The difference is almost invisible — your usual Markdown syntax will continue to work as expected.
-
-## For developers
-
-Markdown content is **parsed block by block**, rather than as a single document.
-Blocks are **separated by two blank lines**.
+Content is **parsed block by block**, not as a single document. Blocks are
+**separated by a blank line**.
 
 **Attributes** can be defined using the syntax `{#attribute-name}`, placed on a separate line just **before** the Markdown block it applies to. For a paragraph, `{.ico-tip} Text with **emphasis**` also works on one line, with an id or several attributes too (`{#tip .note} Text`), and inside a blockquote (`> {.ico-tip} Text`). Escape the brace to keep it as text: `\{.ico-tip} Text`. _The separate-line form is conflicting with Prettier Markdown._
 
 Advanced content types such as **galleries**, **attachments**, or **page lists** are supported through **Twig functions**.
 
-_You can use twig syntax inside markdown inline code or markdown code block, it will not be parsed by twig. If you want to use twig inside inline code or code block, use html directly (`<pre></pre>`)._
+_Twig syntax inside inline code or a code block is not executed. To run Twig there, write the HTML (`<pre></pre>`) yourself._
 
 ### Twig filters
 
@@ -128,20 +124,18 @@ the body as the `text` of an `acceptedAnswer`.
 The answer stays in the HTML while folded, so find-in-page reaches it — browsers open a
 `<details>` on a match — and so does a crawler.
 
-The `Question` is a top-level microdata item rather than the `mainEntity` of a `FAQPage`:
-a notice is rendered into a cache keyed by its Markdown alone and shared by every page, so
-it cannot know whether the page around it is a FAQ. Declaring the page one — on a site
-where a page carrying questions is a FAQ and nothing else — means adding
-`itemprop="mainEntity"` to your own `component/notice/question.html.twig` and the
+The `Question` is a top-level microdata item, not the `mainEntity` of a `FAQPage`: its
+render cache is shared by every page, so it cannot know whether the page is a FAQ. To
+declare FAQ pages, add `itemprop="mainEntity"` to your own
+`component/notice/question.html.twig` and the
 `itemscope itemtype="https://schema.org/FAQPage"` scope to the content container.
 
 ### A component per label
 
-A label can own a template of its own: `> [!faq]` renders through
+A label can own a template: `> [!faq]` renders through
 `/component/notice/faq.html.twig` when the site defines one, and through the generic
-notice otherwise. That turns the marker into the Markdown syntax for any block-level
-component whose content is editorial — a FAQ entry, a definition, a step — without a
-Twig `include` and its quoted parameters in the middle of the page:
+notice otherwise — a Markdown syntax for editorial block components (a FAQ entry, a
+definition, a step) instead of a Twig `include`:
 
 ```markdown
 > [!faq] Can luggage be carried between night stops? {#carry-luggage}
@@ -154,8 +148,7 @@ Twig `include` and its quoted parameters in the middle of the page:
 The template receives the same variables as the generic notice — `title` (the text
 after the label), `content` (the body, already rendered), `id`, `class` — plus
 `params`, the other attributes of the `{…}` line, so `{#carry-luggage tag="h2"}`
-reaches it as `params.tag`. The body being ordinary Markdown is the point: links stay
-`[text](/url)`, paragraphs stay paragraphs, and the text is reviewable in a diff.
+reaches it as `params.tag`.
 
 Multi-field components (a call-to-action with a title, a button label and a URL) do
 not fit a title-plus-body shape: use a [snippet](/extension/snippet) and its parameter
@@ -210,6 +203,7 @@ This is a paragraph.
 {#mainGallery}
 {{ gallery(['piedweb-logo.png', '1.jpg', '2.jpg', '3.jpg']) }}
 ```
+
 ## Typography
 
 Rendered text gets locale-aware typography — smart quotes (`"…"` becomes

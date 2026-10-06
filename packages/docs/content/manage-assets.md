@@ -8,26 +8,36 @@ toc: true
 revision: 608434c860c8c6e116cb3df1af02070eb1f95a3c # read only
 ---
 
-The default installer copy/paste a skeleton for a website stylized with Tailwind CSS.
-
-To update it, edit `app.js`, `app.css` (including Tailwind v4's CSS-based configuration), or `vite.config.js`.
-
-Then run the build:
+The installer copies a `package.json` and a `vite.config.js` that build the Tailwind
+theme of `@pushword/js-helper` (`src/app.js` and `src/app.css`, with Tailwind v4's
+CSS-based configuration). To customize it, point the `input` entries of
+`vite.config.js` at your own files, then build:
 
 ```bash
 npm install && npm run build
-# OR for development with hot reload:
-npm run dev
+# or rebuild on every change:
+npm run watch
 ```
 
-If you want to change the default location for assets, just edit `./config/packages/pushword.yaml` and configure `apps.0.assets` (#[eg](https://github.com/Pushword/Pushword/blob/main/packages/dev-app/config/packages/pushword.yaml#L31))
+The files each page loads are set per app under `assets` in
+`config/packages/pushword.yaml`:
+
+```yaml
+pushword:
+  apps:
+    - hosts: [example.com]
+      assets:
+        stylesheets: ['assets/tw.css']
+        javascripts: ['assets/app.js']
+        # also: vite_stylesheets, vite_javascripts (Vite entries), favicon
+```
 
 ## Tailwind content sources
 
-Bundle templates ship inside `vendor/pushword/`, and Tailwind's automatic
-detection never walks in there: it skips whatever your `.gitignore` covers. They
-have to be declared, which is what the `app.css` shipped by `@pushword/js-helper`
-does — an explicit `@source` **does** reach a gitignored path:
+Tailwind's automatic detection skips whatever `.gitignore` covers, so it never
+scans the bundle templates in `vendor/pushword/`. The `app.css` of
+`@pushword/js-helper` declares them with an explicit `@source`, which does reach a
+gitignored path:
 
 ```css
 @source "./../../../../vendor/pushword/*/src/templates/**/*.twig";
@@ -39,32 +49,27 @@ carry the line over, relative to your own CSS file — otherwise every class a
 bundle template uses (the newsletter form, the conversation form, the video
 component) is purged and that markup renders unstyled.
 
-One trap if you edit these lines: **an `@source` pattern has to end on a
-filename.** `vendor/pushword/**/templates/` reads correctly and matches nothing
-whatsoever, silently — you only notice because the stylesheet came out smaller.
-A plain directory with no glob in it (`@source "templates";`) is walked whole and
-is fine; anything with a `*` in it needs to reach files.
+**An `@source` glob has to end on a filename**: `vendor/pushword/**/templates/`
+silently matches nothing. A plain directory without a glob (`@source "templates";`)
+is walked whole.
 
 ## Automatic Tailwind Update on page update
 
-If you use Tailwind classes inside page content, Pushword caches each saved page's content and runs `npm run build` once at the end of the production request or console command. A bulk import such as `pw:flat:sync` therefore builds once after all pages have been saved.
+So that Tailwind classes used inside page content get built, Pushword (in the `prod` environment) caches each saved page's content and runs `npm run build` once at the end of the request or console command. A bulk import such as `pw:flat:sync` therefore builds once after all pages have been saved.
 
 Builds are locked per project: concurrent saves share a pending build, and content saved during a running build is included in a subsequent build. Console commands wait for the build to finish; HTTP builds run after the response has been sent.
 
-May be sure this option is working by checking `var/log/lastTailwindGeneration`.
-
-If not working, you may add path to bin in config :
+The last build's output is in `var/log/lastTailwindGeneration`. If `npm` is not found,
+set its path:
 
 ```yaml
 pushword:
   path_to_bin: /home/username/bin:/opt/alt/alt-nodejs16/root/usr/bin/
 ```
 
-To disable it, add in config :
+To disable it:
 
 ```yaml
 pushword:
   tailwind_generator: false
 ```
-
-The assets built by Tailwind can become available after the page has loaded.

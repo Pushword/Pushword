@@ -5,7 +5,7 @@ publishedAt: '2026-01-30 15:07'
 
 # Background Tasks
 
-Pushword runs several operations as background tasks to avoid blocking HTTP requests:
+These operations run as background tasks so they never block an HTTP request:
 
 - **Image cache generation** (`pw:image:cache`)
 - **Image optimization** (`pw:image:optimize`)
@@ -30,7 +30,7 @@ pushword:
 
 ### Messenger Mode
 
-Dispatches tasks onto the Symfony Messenger bus. Better suited for high-load sites or environments where direct process spawning is restricted.
+Dispatches tasks onto the Symfony Messenger bus. Suits high-load sites and hosts that restrict process spawning.
 
 ```yaml
 # config/packages/pushword.yaml
@@ -66,7 +66,7 @@ framework:
 php bin/console messenger:consume async
 ```
 
-The HTMX-based admin polling UI works identically in both modes since existing commands handle their own PID registration and output writing.
+The admin progress screens work the same in both modes.
 
 #### One transport per command
 
@@ -115,13 +115,7 @@ Each upload spawns a separate background process. Different files can run concur
 
 ### Messenger Mode (recommended for production)
 
-With Messenger, tasks are queued and processed sequentially by the worker. Even if many uploads happen simultaneously, all cache generation tasks are dispatched to the message bus. The worker processes them one at a time, ensuring controlled resource usage.
-
-```yaml
-# config/packages/pushword.yaml
-pushword:
-    background_task_handler: messenger
-```
+Tasks queue on the bus and each worker processes them one at a time, so a burst of uploads cannot exhaust the server.
 
 ## Scheduled Commands
 
@@ -170,8 +164,6 @@ For `on: publish` triggers, set up a system cron to run `pw:cron` periodically:
 For `on: cron:` triggers in process mode, you need to set up the corresponding system crons manually.
 
 ## Media Maintenance Commands
-
-These commands are run manually to maintain media consistency:
 
 ### Normalize filenames (`pw:media:normalize-filenames`)
 

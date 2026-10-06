@@ -5,10 +5,9 @@ publishedAt: '2026-07-26 12:00'
 toc: true
 ---
 
-Google shows a "Licensable" badge next to an image in Google Images when the page
-carrying it declares who owns it and where a licence can be bought. Pushword emits that
-declaration as schema.org `ImageObject` structured data, straight from properties stored
-on each media.
+Google Images shows a "Licensable" badge when the page declares who owns an image and
+where a licence can be bought. Pushword emits that declaration as schema.org
+`ImageObject` structured data, from properties stored on each media.
 
 Reference: <https://developers.google.com/search/docs/appearance/structured-data/image-license-metadata>
 
@@ -16,8 +15,8 @@ Reference: <https://developers.google.com/search/docs/appearance/structured-data
 ## What Google needs
 
 An `ImageObject` needs `contentUrl` **plus at least one** of `creator`, `creditText`,
-`copyrightNotice` or `license`. Note what is missing from that list: an
-`acquireLicensePage` on its own does **not** make an image eligible.
+`copyrightNotice` or `license`. An `acquireLicensePage` alone does **not** make an image
+eligible.
 
 Structured data and IPTC metadata embedded in the file are two independent methods and
 either one suffices; structured data wins when they disagree. Pushword implements
@@ -43,11 +42,9 @@ pushword:
         copyrightNotice: '© Example'
 ```
 
-It is a **seed written at upload**, not a fallback consulted when a page renders. Each
-media ends up owning concrete values, and rendering reads the media and nothing else.
-
-The trade-off is deliberate: changing the config does not propagate to media already in
-the library. `pw:media:license` is what propagates it.
+It is a **seed written at upload**, not a render-time fallback: each media owns concrete
+values and rendering reads only the media. Changing the config does not touch existing
+media — run [`pw:media:license`](#backfill) to propagate it.
 
 {id=upload}
 ## What happens on upload
@@ -65,14 +62,10 @@ else:
     write the configured seed            → licenseState = seeded
 ```
 
-**A file that claims somebody's rights never receives the site's licensing.** Nothing in
-the bytes distinguishes "commissioned, we hold the rights" from "someone else's photo",
-so seeding an `acquireLicensePage` into the empty fields of a photo credited to a
-photographer would advertise that the site licenses their work. A human asserts it
-instead, with one button.
-
-The image still emits a valid `ImageObject` from its imported attribution — it is not
-excluded from Google, only from the site's licence.
+**A file that claims somebody's rights never receives the site's licensing**: the bytes
+cannot tell "commissioned, we hold the rights" from "someone else's photo", so a human
+asserts it with one button. The image still emits a valid `ImageObject` from its
+imported attribution.
 
 ### Where the metadata is read from
 
@@ -86,27 +79,23 @@ any pixels:
 | EXIF | JPEG `APP1` | `Artist`, `Copyright` |
 | C2PA | JPEG `APP11`, PNG `caBX`, WebP `C2PA` chunk | `digitalSourceType` only |
 
-PNG is the awkward one: two keywords carry XMP — the specified `XML:com.adobe.xmp` and
-ImageMagick's own hex-wrapped `Raw profile type xmp` — and either can appear in any of
-the three text chunk types, deflated or not. The chunk type decides the encoding, the
-keyword decides the meaning, and every combination is read.
+In PNG, both `XML:com.adobe.xmp` and ImageMagick's hex-wrapped `Raw profile type xmp`
+keywords are read, in any of the three text chunk types, deflated or not.
 
 ### AI-generated images
 
 ChatGPT and Gemini stamp their output with `Iptc4xmpExt:DigitalSourceType` and a credit
-line of exactly `AI Generated` or `Made with Google AI`. That is a provenance note, not
-somebody claiming the image, so it is moved to `digitalSourceType`, removed from the
-credit line, and the image is seeded like any other image the site owns.
-
-The credit marker is matched exactly, so a real agency named "AI Generated Studio Ltd"
-keeps its credit and still gates as third-party.
+line of exactly `AI Generated` or `Made with Google AI`. That provenance note moves to
+`digitalSourceType`, leaves the credit line, and the image is seeded like any other the
+site owns. The match is exact: an agency named "AI Generated Studio Ltd" keeps its credit
+and stays third-party.
 
 {id=c2pa}
 ### C2PA (Content Credentials)
 
-A `gpt-image` PNG carries **no XMP, no IPTC and no EXIF at all** — its only metadata is a
-C2PA manifest, which is what OpenAI, Google, Adobe and the camera makers now write. The
-`c2pa.actions` assertion inside it holds the same IPTC NewsCode vocabulary:
+A `gpt-image` PNG carries **no XMP, IPTC or EXIF** — only a C2PA manifest, as written by
+OpenAI, Google, Adobe and camera makers. Its `c2pa.actions` assertion uses the IPTC
+NewsCode vocabulary:
 
 ```
 claim_generator_info.name = "OpenAI Media Service API"
@@ -114,25 +103,16 @@ softwareAgent             = gpt-image 2.0
 digitalSourceType         = …/digitalsourcetype/trainedAlgorithmicMedia
 ```
 
-Only that `digitalSourceType` is read. The manifest also names the signer, and treating a
-signing certificate as the `creator` would publish an ownership claim nobody made.
-
-**The signature is not verified.** This answers "what does the file say about itself" —
-the same question asked of XMP, which anybody can equally write. It is not evidence of
-authenticity, and the resulting value stays editable in the admin. A camera writes the
-same assertion to say the opposite (`digitalCapture`), so the value is read rather than
-the mere presence of a manifest.
+Only `digitalSourceType` is read — never the signer, which is not a `creator`. The value
+is read rather than the manifest's presence, since a camera writes `digitalCapture`
+there. **The signature is not verified**: like XMP, it is what the file says about
+itself, not proof, and it stays editable in the admin.
 
 ### Replacing the file on an existing media
 
 A replacement **discards the previous values and re-runs the decision** — never a merge.
-Filling only the empty fields would be wrong in both directions: a stale photographer
-surviving onto a photo the site now owns, or the site's `acquireLicensePage` staying
-attached to somebody else's photo.
-
-If the licence had been asserted by hand, the admin says so with a flash message.
-Rotating an image does not reset anything, and re-uploading byte-identical content is a
-no-op.
+If the licence had been asserted by hand, a flash message says so. Rotating an image
+resets nothing, and re-uploading byte-identical content is a no-op.
 
 {id=properties}
 ## The properties
@@ -147,7 +127,7 @@ no-op.
 | `digitalSourceType` | `Iptc4xmpExt:DigitalSourceType` / `…FileType` |
 
 They live in the media's `customProperties`, so they round-trip through the API and
-through `media.csv` for free.
+`media.csv`.
 
 `creator` is a list of `{name, type}`:
 
@@ -159,20 +139,14 @@ creator:
     type: Organization
 ```
 
-The type belongs to the name rather than to the media, because schema.org emits one node
-per creator and a photographer credited next to the agency that commissioned the shot are
-not the same kind of entity. Several creators emit an array of nodes, a single one a bare
-object — the shape Google's own example uses.
+Each creator emits its own schema.org node: several give an array, a single one a bare
+object, as in Google's example. No file format carries a type, so imported creators
+default to `Person`, editable per name. Where only one input exists — a config value, a
+media-list row — the compact form `Enrico Romanzi (Person), Altimood (Organization)` is
+accepted, and a bare list of names is read as people.
 
-No file format carries a type: `dc:creator` is an `rdf:Seq` of bare strings, IPTC By-line
-and EXIF `Artist` are plain text. Imported creators therefore fall back to `Person`, which
-is editable per name. Anywhere only one input is available — a config value, a media-list
-row — the compact form `Enrico Romanzi (Person), Altimood (Organization)` is accepted, and
-a bare list of names is read as people.
-
-`digitalSourceType` is stored but **never emitted** — no schema.org property on
-`ImageObject` carries it, and Google reads provenance from the file itself. It is kept
-for editorial and compliance use.
+`digitalSourceType` is stored for editorial and compliance use but **never emitted**: no
+`ImageObject` property carries it.
 
 `licenseState` is a derived, read-only column: `` (none), `seeded`, `overridden` (a human
 asserted it) or `thirdParty`. The media list filters and sorts on it.
@@ -187,14 +161,9 @@ script a crawler reads, and a credit a visitor can read, in the `<img title>`.
 <img src="…" alt="Refuge du Gioberney" title="© Zde / Wikimedia (CC BY-SA 4.0)">
 ```
 
-The credit line takes `copyrightNotice` verbatim when there is one — the rights holder's
-own wording may already carry a symbol, a year or an *all rights reserved* that is not
-ours to re-punctuate — otherwise `creditText`, otherwise the `creator` names joined by a
-comma. A `©` is prefixed unless the value already opens with one.
-
-The licence is named beside the author only when it is a Creative Commons deed, because
-those require it to be: *© Zde / Wikimedia* alone does not satisfy BY-SA, *© Zde /
-Wikimedia (CC BY-SA 4.0)* does.
+The credit line is `copyrightNotice` verbatim, else `creditText`, else the `creator`
+names joined by a comma, prefixed with `©` unless it already opens with one. The licence
+is appended only for a Creative Commons deed, which requires it:
 
 | `license` | appended to the line |
 | --- | --- |
@@ -203,20 +172,15 @@ Wikimedia (CC BY-SA 4.0)* does.
 | `creativecommons.org/publicdomain/mark/1.0/` | `(Public Domain Mark 1.0)` |
 | anything else — a stock platform's terms page | nothing |
 
-A stock platform's licence page is a URL and nothing more: labelling it *Adobe Stock*
-would assert terms nobody here has read. A deed with nobody to attribute still renders on
-its own (`CC0 1.0`), since it tells a visitor what they may do with the file.
+A deed with nobody to attribute still renders alone (`CC0 1.0`).
 
-The credit never goes in the `alt`: an alt describes what the photo shows to someone who
-cannot see it, and the photographer's name is not part of what the photo shows. As a
-`title` it is a tooltip on hover and the image's accessible description, read out beside
-the alt instead of welded into the middle of it — but screen readers announce a
-description only when asked to, so a licence whose attribution has to be *visible* wants
-a caption rather than this.
+The credit never goes in the `alt`, which describes what the photo shows. Screen readers
+announce a `title` only on request, so an attribution that must be *visible* needs a
+caption.
 
-Three consequences worth knowing:
+Also:
 
-- a media declaring none of these properties renders exactly the markup it did before;
+- a media declaring none of these properties gets neither a title nor an `ImageObject`;
 - a caller passing its own title keeps it — `image(media, attr: {title: 'Le refuge au
   petit matin'})` — and the `ImageObject` still carries the credit, because the caller
   overrode the tooltip, not the media's claim;
@@ -231,31 +195,17 @@ row-per-creator collection with its own add and remove buttons. Two buttons sit 
 block: *Apply the site license* fills it from the seed — pressing it **is** the ownership
 assertion — and *Clear* empties it so the media stops emitting.
 
-Creating a media redirects to the media list, so the decision is announced twice on the
-way there. A flash says what happened — the site's license was added, or the file carries
-rights of its own and names whom it credits — and the row itself carries a **License
-state** badge (*Site license*, *Third-party rights*, *Asserted by hand*; an undecided
-media shows none). Nothing about the licensing of an image is applied without saying so.
+After creating a media, a flash on the media list says what happened — the site's
+license was added, or the file carries its own rights and whom it credits — and the row
+shows a **License state** badge (*Site license*, *Third-party rights*, *Asserted by hand*;
+none while undecided). Multi-upload shows the same disclosure per row instead of a flash.
 
-Multi-upload stays silent instead: it discloses per row, as each file lands, so a flash
-per file would only pile up. A row whose file claims third-party rights shows what was
-imported and from where, so a photographer's name is never stored in a field nobody can
-see.
-
-Scaling an image down in the browser re-encodes it through a canvas, and a canvas keeps
-no metadata. Rather than give up the scaling for the files that carry some, the browser
-lifts the segments out beforehand and posts them beside the compressed bytes, in an
-`embeddedMetadata` field.
-
-It forwards them rather than interprets them: the XMP packet, the APP13 block and the
-C2PA manifest travel as they were found, base64 encoded, and the server parses them with
-the same readers it runs on a file it received intact. Only EXIF is read in the browser,
-because `exif_read_data()` wants a file and by then there is none. Nothing about what the
-bytes *mean* is decided twice, so the two paths cannot drift.
-
-What the stored file itself says still wins, property by property — the sidecar only
-fills what the bytes leave empty. It can add to the decision, never overrule it, which is
-what makes it safe to accept from a client.
+Browser-side downscaling goes through a canvas, which drops metadata, so the browser
+first lifts the XMP packet, APP13 block and C2PA manifest out unparsed and posts them
+base64-encoded in an `embeddedMetadata` field (EXIF alone is read client-side, since
+`exif_read_data()` needs a file). The server parses them with the same readers as an
+intact upload. The stored file still wins property by property: the sidecar only fills
+what the bytes leave empty, so a client cannot overrule it.
 
 {id=backfill}
 ## Backfilling an existing library
@@ -269,24 +219,18 @@ bin/console pw:media:license --force     # also license what the files credit to
 bin/console pw:media:license --all       # re-decide media that already have a state
 ```
 
-The command prints every file it left to its own rights, so each one can be decided by
-hand. `--force` is the bulk form of the *Apply the site license* button; media whose
-licence was asserted by hand are never rewritten.
+The command lists every file left to its own rights, to decide by hand. `--force` is the
+bulk *Apply the site license* button; media whose licence was asserted by hand are never
+rewritten.
 
 {id=not-embedding}
 ## Why the files are not rewritten
 
-Pushword does not write XMP back into images. Imagick cannot splice a profile into a
-compressed file without decoding and re-encoding it, which throws away exactly the bytes
-`cjpeg`/`cwebp` earned and adds a second generation of lossy artefacts. Google needs only
-one of the two methods and prefers structured data on conflict, so embedding would buy
-nothing for search while adding an invalidation path and a dozen writes per media.
+Pushword does not write XMP back into images: Imagick would have to re-encode the file,
+adding a lossy generation, and Google prefers structured data anyway.
 
-The cache variants carry no rights metadata either, and never will: the webp encoder
-drops every profile, and `cjpeg` re-encodes a JPEG from scratch, so whatever the source
-file said about its rights does not reach the served derivative. The `ImageObject` is the
-only licensing signal a crawler gets from the page — which is why its `contentUrl` is built exactly like
-the `<img src>` in `component/image.html.twig`: the `default` filter in the *source*
-format, not the webp variant, so Google associates the node with the image it crawled.
-For the same reason it sits on the site's `base_url`, the host the page is served from,
-and never on `base_live_url`, which on a statically generated site is the PHP origin.
+Cache variants carry no rights metadata either (the webp encoder and `cjpeg` drop it), so
+the `ImageObject` is the only licensing signal a crawler gets. Its `contentUrl` is
+therefore built like the `<img src>` in `component/image.html.twig` — the `default`
+filter in the *source* format, not the webp variant — on the site's `base_url`, never on
+`base_live_url` (the PHP origin of a static site).

@@ -24,11 +24,8 @@ composer create-project pushword/new pushword "^1.0"
 cd pushword
 ```
 
-The `"^1.0"` constraint keeps the project on Pushword's stable 1.x line instead of
-silently crossing a future major version.
-
-Existing applications should likewise constrain every `pushword/*` dependency,
-including `pushword/installer`, to `^1`.
+`"^1.0"` keeps the project on the stable 1.x line. In an existing application,
+constrain every `pushword/*` dependency, including `pushword/installer`, to `^1` too.
 
 The installer creates the database and the demo content, then asks for the account
 you will log in with — email, password, role (`ROLE_SUPER_ADMIN` by default).
@@ -45,11 +42,10 @@ For an existing project, set `DATABASE_URL` in `.env.local`, then run
 `php bin/console doctrine:schema:update --force`. This creates or updates the schema;
 it does not transfer data from an existing SQLite database.
 
-Run unattended (CI, a provisioning script, `composer --no-interaction`), it cannot
-ask. In production it creates `admin@example.tld` with a random temporary password,
-prints that password once, and requires it to be changed before the account can access
-administration. A development install keeps the convenient
-`admin@example.tld` / `p@ssword` login; never expose those credentials in production.
+Unattended (CI, a provisioning script, `composer --no-interaction`), it creates
+`admin@example.tld` instead: in production with a random temporary password, printed
+once and to be changed before administration can be accessed; in development with
+`p@ssword` — never expose those credentials in production.
 
 Add another site or start a development server:
 
@@ -75,13 +71,9 @@ to run this way — see [Performance](/performance) for how to enable it and why
 
 ### Run Pushword with Docker
 
-The installer checks which of the extensions above your PHP actually has, and — if a
-Docker daemon is answering — asks once whether to use Docker, recommending the answer
-that fits your machine. Answer no and no Docker file is written.
-
-The image is FrankenPHP with every extension already in place, so it is the shortest
-path when installing them yourself is the hard part. See [Docker](/docker) for the
-development and production stacks, and for what has to live in a volume.
+If a Docker daemon is answering, the installer asks once whether to use Docker,
+recommending an answer from the extensions your PHP actually has. Answer no and no
+Docker file is written. See [Docker](/docker) for the development and production stacks.
 
 ```shell
 php bin/console pw:docker:init   # if you said no, or want them added later

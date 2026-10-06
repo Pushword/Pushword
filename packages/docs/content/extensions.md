@@ -46,6 +46,6 @@ To list a maintained third-party extension, [edit this page on GitHub](https://g
 
 ## Extension points
 
-- **Events:** See constants in `Pushword\Core\Event\PushwordEvents`. Usage examples: [Admin Menu](/extension/admin-menu), [Pages List Search](/pages-list).
-- **Entity filters:** Implement `Pushword\Core\Component\EntityFilter\Filter\FilterInterface`, auto-tagged as `pushword.entity_filter`.
+- **Events:** core and admin event names are constants in `Pushword\Core\Event\PushwordEvents` (examples: [Admin Menu](/extension/admin-menu), [Pages List Search](/pages-list)). Extension events are dispatched by class — listen to the class itself, e.g. `Pushword\StaticGenerator\Event\StaticPreGenerateEvent`.
+- **Entity filters:** Implement `Pushword\Core\Component\EntityFilter\Filter\FilterInterface` and add the `#[Pushword\Core\Component\EntityFilter\Attribute\AsFilter]` attribute, which tags the service `pushword.entity_filter`.
 - **Newsletter trigger sources:** Implement `Pushword\Newsletter\Trigger\TriggerSource` and tag it `pushword.newsletter.trigger_source` to start a mail sequence from anything your app watches — see [Newsletter](/extension/newsletter#custom-trigger-sources).

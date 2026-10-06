@@ -15,12 +15,8 @@ Use the [issue tracker](https://github.com/Pushword/Pushword/issues).
 
 ## Contribute
 
-Send contributions as [pull requests](https://github.com/Pushword/Pushword/pulls). See
-[Code architecture](/architecture) for the monorepo setup.
-
-## Setting up a PHP development environment to contribute
-
-See [Code Architecture > Development environment](/architecture#development-environment)
+Send contributions as [pull requests](https://github.com/Pushword/Pushword/pulls). Set up
+the monorepo with [Code Architecture > Development environment](/architecture#development-environment).
 
 ## Contribute to the documentation
 
@@ -86,14 +82,9 @@ CREATE ROLE pushword LOGIN PASSWORD 'pushword' CREATEDB;
 
 ### Database volume benchmark
 
-With MariaDB and PostgreSQL listening on the test URLs above, run:
-
-```shell
-composer bench-databases
-```
-
-See [Database and pipeline benchmarks](/database-benchmarks) for the workloads,
-environment variables, methodology and dated reference results.
+With MariaDB and PostgreSQL reachable by the `pushword` user above, run
+`composer bench-databases`. [Database and pipeline benchmarks](/database-benchmarks)
+covers its workloads, environment variables and reference results.
 
 ### Coverage
 

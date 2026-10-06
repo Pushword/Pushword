@@ -11,10 +11,9 @@ Pushword ships a Docker setup built on [FrankenPHP](https://frankenphp.dev/): PH
 with every extension Pushword needs, Caddy in front, and the image tooling the media
 pipeline shells out to.
 
-It is **optional**. A machine that already runs PHP 8.5 with the
-[required extensions](/installation) runs Pushword faster and more directly without it —
-`bin/console`, the profiler and Xdebug are all one command away. Docker earns its place
-when installing those extensions is the hard part.
+It is **optional**: use it when installing the [required extensions](/installation) is
+the hard part. A native PHP 8.5 setup runs faster and keeps `bin/console`, the profiler
+and Xdebug one command away.
 
 ## Getting the files
 
@@ -30,7 +29,7 @@ php bin/console pw:docker:init
 
 It writes `Dockerfile`, `compose.yaml`, `compose.prod.yaml`,
 `compose.postgresql.yaml`, `.dockerignore` and
-`docker/`, and never overwrites a file you have edited (`--force` if you want it to).
+`docker/`, and never overwrites an existing file unless you pass `--force`.
 
 ## Development
 
@@ -126,25 +125,18 @@ PUSHWORD_ADMIN_EMAIL=you@example.com
 PUSHWORD_ADMIN_PASSWORD=…
 ```
 
-Leave them unset and the entrypoint generates a random temporary password, prints it
-once in the first-boot logs, and requires it to be changed before administration can
-be accessed. Set `PUSHWORD_ADMIN_PASSWORD` when a provisioning system already owns
-secret generation and delivery.
+The email defaults to `admin@example.tld`. Without a password, the entrypoint generates
+a temporary one, prints it once in the first-boot logs, and requires a change before
+administration can be accessed.
 
-It creates **no content**. Production content is yours, and it arrives the way you
-deploy it — a database backup you restore, or Markdown files
-[pw:flat:sync](/extension/flat) reads. The demo pages `composer create-project` installs
-are development content and stay on your machine.
+It creates **no content**: restore a database backup or let [pw:flat:sync](/extension/flat)
+read your Markdown files. The demo pages `composer create-project` installs stay on your
+machine.
 
-The account is created once: the entrypoint then drops a `var/.pushword-seeded` marker.
-A development project is marked by `pw:docker:init` itself, since it was already
-installed on the host.
-
-A restored backup never gains an account, whatever address its own admin uses. The
-marker alone could not promise that — a database restore into a fresh volume arrives
-without it — so before creating anything the
-entrypoint asks the database whether it holds any user at all, and says so in the logs
-when it does.
+The account is created once: the entrypoint then drops a `var/.pushword-seeded` marker
+(`pw:docker:init` writes it for a project already installed on the host). A restored
+backup never gains an account either — the entrypoint first checks whether the database
+holds any user, since a restore into a fresh volume arrives without the marker.
 
 ## Worker mode
 

@@ -5,13 +5,11 @@ publishedAt: '2026-01-23 00:00'
 toc: true
 ---
 
-When building listing-heavy sites (travel agencies, blogs with related posts, e-commerce), the same page link often appears multiple times: once in your markdown content and again in automated listings like `pages_list()`. This creates a poor UX with redundant links.
-
-The **LinkCollector** feature tracks which pages are already linked in your content, allowing you to exclude them from automated listings.
+A page often links the same target twice: once in its content, again in a `pages_list()`. The **LinkCollector** records the internal links of the content so listings can exclude them.
 
 ## How It Works
 
-The LinkCollector scans your page content **before** Twig/Markdown processing and collects all internal link slugs. These slugs are then available to filter out from your page listings.
+The LinkCollector scans the page content **before** Twig/Markdown processing and collects every internal link slug.
 
 ```
 Raw Content:
@@ -48,13 +46,10 @@ The collector detects internal links in these formats:
 
 ## Usage with pages_list
 
-The simplest way to use this feature is with the `excludeAlreadyLinked` parameter:
-
 ```twig
+{# Content contains [See our hiking tours](/hiking): the hiking page is left out #}
 {{ pages_list('children', 6, excludeAlreadyLinked: true) }}
 ```
-
-This automatically excludes any pages that are already linked in your content.
 
 A list using the parameter also **registers the cards it renders**, so several lists on the same page never show the same page twice:
 
@@ -70,19 +65,9 @@ An excluding list still renders its full `max`: the exclusion is done by the que
 
 A paginated list only registers the cards of the pager page it renders; the other pager pages are not linked, so they stay listable.
 
-### Full Example
-
-```twig
-{# Your page content contains links like [See our hiking tours](/hiking) #}
-
-<h2>Related Products</h2>
-{{ pages_list('taxonomy:outdoor', 4, excludeAlreadyLinked: true) }}
-{# hiking page won't appear here since it's already linked above #}
-```
-
 ## Usage with pages() Function
 
-For more control, use the `exclude_linked()` function with `pages()`:
+For more control, filter `pages()` with `exclude_linked()`:
 
 ```twig
 {% set allPages = pages(host, 'taxonomy:travel') %}
@@ -123,7 +108,7 @@ For more control, use the `exclude_linked()` function with `pages()`:
 
 ## Usage in Custom Twig Functions (PHP)
 
-If you create custom Twig functions that return page lists, inject the `LinkCollectorService`:
+A custom Twig function returning pages can inject `LinkCollectorService`:
 
 ```php
 use Pushword\Core\Service\LinkCollectorService;
@@ -167,60 +152,8 @@ $uniquePages = $linkCollector->excludeRegistered($pages);
 $slugs = $linkCollector->getRegisteredSlugs(); // ['slug' => true, ...]
 ```
 
-## Real-World Examples
+## Runtime
 
-### Travel Agency Site
-
-```twig
-{# Page content mentions specific destinations #}
-Discover our [Paris tours](/destinations/paris) and
-[Rome adventures](/destinations/rome).
-
-{# Sidebar shows other destinations, excluding mentioned ones #}
-<aside>
-  <h3>Other Destinations</h3>
-  {{ pages_list('taxonomy:destination', 5, excludeAlreadyLinked: true) }}
-</aside>
-```
-
-### Blog with Related Posts
-
-```twig
-{# Article references other posts inline #}
-As mentioned in [Getting Started](/blog/getting-started)...
-
-{# Related posts section excludes referenced articles #}
-<section class="related">
-  <h2>You might also like</h2>
-  {{ pages_list('sisters', 3, excludeAlreadyLinked: true) }}
-</section>
-```
-
-### E-commerce Product Page
-
-```twig
-{# Product description links to related products #}
-This pairs well with our [Premium Case](/accessories/premium-case).
-
-{# Recommended products excludes already-mentioned items #}
-<div class="recommendations">
-  {% set recommendations = exclude_linked(pages(host, 'taxonomy:accessory')) %}
-  {% for product in recommendations|slice(0, 4) %}
-    {% include '/component/product_card.html.twig' with {page: product} %}
-  {% endfor %}
-</div>
-```
-
-## Performance Notes
-
-- The LinkCollector filter runs **once** per page render, before Twig processing; excluding lists then add their own rendered cards as Twig executes
-- Link detection uses optimized regex patterns with minimal overhead
-- The collector is automatically reset on each HTTP request, and between two pages of a static export
-- No database queries are made for link collection
-
-## Backward Compatibility
-
-This feature is enabled by default but has **zero impact** on existing sites:
-- The filter always runs but only collects links passively
-- No content is modified
-- Filtering only happens when you explicitly use `excludeAlreadyLinked: true` or `exclude_linked()`
+- The filter runs **once** per page render, before Twig, without database queries; excluding lists then add their own rendered cards as Twig executes.
+- The collector resets on each HTTP request and between two pages of a static export.
+- It only collects: content is never modified, and nothing is filtered unless you use `excludeAlreadyLinked: true` or `exclude_linked()`.

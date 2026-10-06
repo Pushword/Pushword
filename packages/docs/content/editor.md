@@ -8,7 +8,7 @@ main_content_filters: twig
 ---
 
 <div class="flex flex-wrap max-w-5xl">
-    <div class="order-2 w-fulloverflow-hidden lg:order-1 lg:w-4/5">
+    <div class="order-2 w-full overflow-hidden lg:order-1 lg:w-4/5">
         <div class="p-3 prose dark:prose-light max-w-none">
             <h1>{{ pw(page).h1|raw }}</h1>
 

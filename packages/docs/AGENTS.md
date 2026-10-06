@@ -55,7 +55,7 @@ JSON unconditionally.
 ### Quality gates
 
 - PHPStan (`composer stan`), php-cs-fixer (`composer format`), Rector (`composer rector`)
-- PHPUnit (`composer test` or `composer test-filter ExampleTest`)
+- PHPUnit (`vendor/bin/phpunit`, or `vendor/bin/phpunit --filter ExampleTest`)
 - Clear cache after modifications: `php bin/console cache:clear`
 - Use Tailwind CSS 4 for frontend
 
