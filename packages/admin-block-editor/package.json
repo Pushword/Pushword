@@ -15,6 +15,7 @@
     "@pushword/js-helper": "file:../js-helper",
     "@sotaproject/strikethrough": "^1.0.1",
     "@types/he": "^1.2.3",
+    "@types/node": "^24.19.1",
     "autoprefixer": "^10.4",
     "editorjs-drag-drop": "^1.1",
     "happy-dom": "^20.9.0",
