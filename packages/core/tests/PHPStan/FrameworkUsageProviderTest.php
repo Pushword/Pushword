@@ -23,6 +23,7 @@ final class FrameworkUsageProviderTest extends TestCase
 
         $usageCheck = new ReflectionMethod($provider, 'shouldMarkMethodAsUsed');
 
+        // getMethods() is what tells the dead-code detector every fixture method is used.
         foreach (new ReflectionClass(FrameworkUsageProviderFixture::class)->getMethods() as $reflection) {
             if ($method === $reflection->getName()) {
                 self::assertSame($used, null !== $usageCheck->invoke($provider, $reflection));

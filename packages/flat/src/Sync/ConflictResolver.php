@@ -59,7 +59,6 @@ final class ConflictResolver
 
             // Most recent wins
             $winner = $fileModifiedAt >= $page->updatedAt ? 'flat' : 'db';
-            $backupFile = null;
 
             if ('flat' === $winner) {
                 // DB version loses, create backup of file (which will be overwritten by import)
@@ -167,18 +166,12 @@ final class ConflictResolver
         return $deleted;
     }
 
-    private function logConflict(
-        string $entityType,
-        string $entityId,
-        string $winner,
-        ?string $backupFile,
-        ?string $field = null,
-    ): void {
+    private function logConflict(string $entityType, string $entityId, string $winner, ?string $backupFile): void
+    {
         $message = \sprintf(
-            'Conflict detected on %s #%s%s - Winner: %s%s',
+            'Conflict detected on %s #%s - Winner: %s%s',
             $entityType,
             $entityId,
-            null !== $field ? ' ('.$field.')' : '',
             $winner,
             null !== $backupFile ? ' - Backup: '.basename($backupFile) : '',
         );
@@ -193,7 +186,6 @@ final class ConflictResolver
             'entityId' => $entityId,
             'winner' => $winner,
             'backupFile' => $backupFile,
-            'field' => $field,
         ]);
     }
 }
