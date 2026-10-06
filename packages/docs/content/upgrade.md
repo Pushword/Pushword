@@ -20,6 +20,7 @@ Package names drop their `pushword/` prefix; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.40](/upgrade/1.0.40) | `static-generator` | static sites serve brotli before zstd — run `pw:static` |
 | [1.0.39](/upgrade/1.0.39) | `core` | automatic Tailwind builds run once per request or command and wait for completion |
 | [1.0.38](/upgrade/1.0.38) | `newsletter` | newsletter markdown renders readable emails and plain responsive images |
 | [1.0.37](/upgrade/1.0.37) | `newsletter` | newsletter occurrences can select their public system-link origin |
