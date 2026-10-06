@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\Tests\Controller;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Entity\Message;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -38,6 +39,40 @@ final class ConversationFormControllerTest extends WebTestCase
         $client->submit($form, [], $server);
 
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function invalidEmailProvider(): iterable
+    {
+        yield 'English' => ['en', 'Invalid email address'];
+        yield 'French' => ['fr', 'Adresse email invalide'];
+    }
+
+    #[DataProvider('invalidEmailProvider')]
+    public function testInvalidEmailErrorIsTranslated(string $locale, string $expectedError): void
+    {
+        $client = self::createClient();
+        $client->request(
+            Request::METHOD_POST,
+            '/conversation/message/test?locale='.$locale.'&host=localhost.dev',
+            ['form' => ['authorEmail' => 'invalid-email', 'authorName' => 'Test', 'content' => 'Test message']],
+        );
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString($expectedError, $content);
+        self::assertStringNotContainsString('conversationEmailInvalid', $content);
+    }
+
+    public function testContentPlaceholderIsRestoredOnBlur(): void
+    {
+        $client = self::createClient();
+        self::getContainer()->get('translator')->getCatalogue('fr')->set('conversationContentPlaceholder', "L'avis");
+        $crawler = $client->request(Request::METHOD_GET, '/conversation/message/test?locale=fr&host=localhost.dev');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame("L'avis", $crawler->filter('#form_content')->attr('placeholder'));
+        self::assertSame("this.placeholder = 'L\\u0027avis'", $crawler->filter('#form_content')->attr('onblur'));
     }
 
     public function testMessageFormDeduplication(): void

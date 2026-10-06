@@ -41,7 +41,6 @@ adminReviewTitleLabel: Titre
 adminReviewTranslationsHelp: "Traductions générées par IA"
 adminReviewTranslationsLabel: Traductions
 conversationContentPlaceholder: Message
-conversationEmailInvalid: "Adresse email invalide"
 conversationEmailOrPhonePlaceholder: "Email ou Téléphone"
 conversationEmailPlaceholder: Email
 conversationInputNotset: inconnu

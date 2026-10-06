@@ -22,7 +22,7 @@
                     attr: {
                         placeholder: 'conversationContentPlaceholder'|trans,
                         onfocus: "this.placeholder = ''",
-                        onblur: "this.placeholder = '{{ 'conversationContentPlaceholder'|trans|e('js') }}'",
+                        onblur: "this.placeholder = '" ~ 'conversationContentPlaceholder'|trans|e('js') ~ "'",
                         rows: 8,
                         class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary',
                     },
