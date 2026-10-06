@@ -28,6 +28,8 @@ curl -H "Authorization: Bearer $TOKEN" https://example.com/api/page/search
 - `401` — token missing or unknown.
 - `403` — token valid but the user lacks `ROLE_EDITOR`.
 
+`GET /api/whoami` returns the token's user (`id`, `email`, `username`, `roles`).
+
 {id=conventions}
 ## Conventions
 
@@ -157,8 +159,8 @@ position of the failing edit in your `edits` list.
 {id=raw-markdown}
 ### Raw `.md` file intake (`text/markdown`)
 
-A client editing flat snapshot files (see the [flat extension](flat.md)) does not need
-to speak YAML at all: `PUT` the raw file bytes and write the response bytes back. The
+A client editing flat snapshot files (see the [flat extension](/extension/flat)) does not
+need to speak YAML at all: `PUT` the raw file bytes and write the response bytes back. The
 server parses and re-serializes with the same code the flat export uses, so the response
 body is always the canonical file text a fresh export would write — carrying the new
 `revision:`.
@@ -244,7 +246,7 @@ Returns `204`. Where the redirection lands depends on the target:
   a row still owns.
 
 With `delete_strategy: soft` the page is also unpublished (kept out of listings and
-sitemaps). Soft delete no longer preserves the body — use the
+sitemaps). Soft delete does not preserve the body — use the
 [Version](/extension/version) extension if you need the old content back.
 
 ### Search
@@ -255,7 +257,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 ```
 
 Filters: `host`, `q` (matches h1/slug/title/content), `locale`, `parentPage`, `tag[]`,
-plus `page` / `per_page`. Returns light items `{ host, slug, h1, locale, updatedAt }` with
+`held` (`1`: publication held only, `0`: released only), plus `page` / `per_page`. Returns
+light items `{ host, slug, h1, locale, holdPublication, updatedAt }` with
 `{ items, total, page, per_page }`.
 
 {id=write-responses}
@@ -321,7 +324,7 @@ Writes require `If-Match: <revision>`:
 
 A `PUT`/`PATCH` saves to the database immediately. In static (cache) mode the public keeps
 seeing the previously generated static file until you release the hold and regenerate. Set
-`holdPublication: true` in the write payload to keep the live static page in place while you
+`holdPublication: true` in the `frontmatter` to keep the live static page in place while you
 stage edits; clear it (and regenerate) to publish. Use the [Version](/extension/version)
 extension to see diffs between revisions.
 
@@ -365,18 +368,19 @@ curl -H "Authorization: Bearer $TOKEN" \
   "lastScannedAt": "2026-06-02T09:14:00+00:00",
   "errorCount": 2,
   "errors": [
-    { "host": "example.com", "slug": "about", "message": "404 /team" }
+    { "host": "example.com", "slug": "about", "code": "link-not-found", "message": "`/team` not found" }
   ]
 }
 ```
 
-- `status` — `idle` (never scanned), `running`, `completed`, or `error`. While `running`
-  (or on `error`) the body also carries the live console `output`.
+- `status` — `idle` (never scanned), `queued`, `running`, `completed`, or `error`. While
+  `running` (or on `error`) the body also carries the live console `output`.
 - `POST` returns `202 Accepted` when a scan is running (just started, or already in
   progress), or `200` with the cached result when it is still within the configured
   `min_interval_between_scan` window — pass `?force=1` to bypass that and rescan.
-- `errors[].message` is plain text (admin HTML stripped), grouped per page in the admin but
-  flattened to a list here.
+- `errors[].code` is the [finding code](/extension/page-scanner#ignoring-a-finding);
+  `message` is plain text (admin HTML stripped). Flattened to a list, where the admin
+  groups them per page.
 
 {id=link-graph}
 ## Link graph (inbound links, depth, orphans)
@@ -403,6 +407,7 @@ curl -H "Authorization: Bearer $TOKEN" \
   "host": "example.com",
   "status": "completed",
   "generatedAt": "2026-06-02T09:14:00+00:00",
+  "stale": false,
   "pageCount": 251,
   "edgeCount": 1203,
   "orphanCount": 3,
@@ -420,9 +425,9 @@ curl -H "Authorization: Bearer $TOKEN" \
 }
 ```
 
-- `generatedAt` — when the scan behind this graph ran. A page's `inboundCount` changes when
-  **other** pages are edited, so a stale graph misleads without anything on the page itself
-  having moved. `POST /api/page-scan` refreshes it.
+- `stale` — true when a page was added, edited or deleted since the scan behind the graph
+  (`generatedAt`); a `triggerUrl` then points at `POST /api/page-scan`. This endpoint never
+  rescans by itself.
 - `depth` — clicks from the homepage; `null` when unreachable without a pager.
 - `homepageScanned` — false when the host has no scanned homepage: `depth` is then unknown
   rather than infinite.
@@ -513,8 +518,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 - `?incremental=1` regenerates only the pages changed since the last pass — the right default
   for a site of any size.
-- `status` is `idle` until the site has ever been generated, then `running`, `completed` or
-  `error`. `output` (the live console log) is included while running and on error.
+- `status` is `idle` until the site has ever been generated, then `queued`, `running`,
+  `completed` or `error`. `output` (the live console log) is included while running and on error.
 - `lastGeneratedAt` tracks **full** passes only; a single-page rebuild does not move it. On
   the all-hosts scope it reports the oldest of the per-host timestamps.
 - Triggering while a pass is already running returns `202` with `"started": false` — it never

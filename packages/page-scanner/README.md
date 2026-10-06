@@ -15,7 +15,7 @@ Find **dead links, 404s, 301s**, broken anchors/media and **TODO reminders** acr
 - Checks **internal links, external HTTP status, anchors, media and parent pages**.
 - **`pw:page-scan` CLI** + admin UI with cached results.
 - **`pw:link:graph` CLI** — inbound/outbound links, depth from the homepage, orphans; exits non-zero to gate CI.
-- **TODO comments** (`linkWhenPublished`, action-when-published).
+- **TODO comments** (`linkWhenPublished`, `doWhenPublished`).
 - **Parallel** external checks with caching.
 
 ## Installation

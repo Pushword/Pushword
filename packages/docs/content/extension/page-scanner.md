@@ -23,15 +23,15 @@ php bin/console pw:page-scan localhost.dev # scan a specific host
 php bin/console pw:page-scan --skip-external  # skip external URL checks
 php bin/console pw:page-scan --recheck        # re-check every external URL
 php bin/console pw:page-scan --limit=100      # stop after 100 errors
+php bin/console pw:page-scan --check-unpublished  # also report links to unpublished pages
 ```
 
 A scan runs to the end unless `--limit` says otherwise — the admin and the API never
 pass it. An [ignored](#ignoring-a-finding) error does not count toward the limit.
 
-An external URL is checked once and its verdict cached, so a scan run minutes after
-the previous one reports the same dead links without paying for the requests again.
-`--recheck` drops those cached verdicts and asks the network again — reach for it
-after fixing a batch of links, or after a scan that ran without a working connection.
+An external URL's verdict is cached (`external_url_cache_ttl`, 24 h; failures 1 h).
+`--recheck` drops the cached verdicts — after fixing a batch of links, or after a scan
+that ran without a working connection.
 
 ### AI agents
 
@@ -52,7 +52,8 @@ Detection is automatic; force it either way with `--format=agent` (JSON) or
 
 ### Admin
 
-The scanner is accessible via the admin menu. Results are cached and refreshed automatically.
+The scanner is in the admin menu. It shows the cached results, and rescans when they are
+older than `min_interval_between_scan`.
 
 ### API
 
@@ -62,8 +63,8 @@ With the [API extension](/extension/api) installed, the same scan is available o
 {id=link-graph}
 ## Link graph
 
-While it renders every page, the scan also records which pages link to which. That
-costs nothing extra — the HTML is already in memory — and `pw:link:graph` reports it:
+While it renders every page, the scan also records which pages link to which, at no extra
+cost. `pw:link:graph` reports it:
 
 ```shell
 php bin/console pw:link:graph                    # every page: inbound, outbound, depth
@@ -72,11 +73,9 @@ php bin/console pw:link:graph --page=about       # one page, with its inbound so
 php bin/console pw:link:graph --orphans          # only orphans, exit code 1 if any
 ```
 
-A link graph is always scoped to **one host**: a page earns its links from its own
-site, and mixing sites in one report answers a question nobody asks. Omitting the
-argument therefore means the first configured site, not all of them. The flip side:
-an inbound link coming from *another* host is not counted, so a page linked only
-from another locale reads as an orphan.
+A link graph is always scoped to **one host**: omitting the argument means the first
+configured site, not all of them. An inbound link from *another* host is not counted, so
+a page linked only from another locale reads as an orphan.
 
 The command never renders anything itself: it reads the snapshot the last scan left
 in `var/page-scan-graph--<host>`, and runs `pw:page-scan` synchronously when there is
@@ -85,15 +84,11 @@ everything then reporting one site never re-renders.
 
 ### Staleness
 
-A stale graph is not a graph, so the command rebuilds one rather than report it. Each
-snapshot records the corpus it was taken from — how many pages were published, and
-when the last one was edited — and reading it compares that against the database. Add,
-edit or delete a page and the next `pw:link:graph` re-runs the scan; leave the content
-alone and it reports instantly, however old the snapshot is.
-
-It has to work that way round: a page's inbound count changes when **other** pages are
-edited, so nothing you can read on a page tells you its own numbers still hold, and
-`generatedAt` alone only ever told you the age — never whether it mattered.
+The command rebuilds a stale graph rather than report it. Each snapshot records how many
+pages were published and when the last one was edited; add, edit or delete a page and the
+next `pw:link:graph` re-runs the scan. Leave the content alone and it reports instantly,
+however old the snapshot is. (A page's inbound count changes when **other** pages are
+edited, so the snapshot's age alone says nothing.)
 
 Two changes move no timestamp and no count, so they slip through: editing an
 unpublished draft (correctly — it is not in the graph), and swapping one page for
@@ -109,8 +104,7 @@ Like the scan, it emits compact JSON to AI agents and honours `--format`
 
 ### What counts as a link
 
-Only crawlable `<a href>` links, because only those are links a crawler can follow.
-Nothing is filtered out on purpose — it falls out of how pages render:
+Only crawlable `<a href>` links — what a crawler can follow:
 
 | Rendered as | In the graph |
 |---|---|
@@ -121,10 +115,8 @@ Nothing is filtered out on purpose — it falls out of how pages render:
 | links to media, static files or dead slugs | no — the target is not a page |
 | a link from or to a `noindex` page | no — see below |
 
-Navigation and footer links **are** counted. They inflate the inbound count of the
-few pages every template links to (home, contact, legal), never the ones you are
-trying to strengthen, and removing them spreads the distribution without reordering
-it.
+Navigation and footer links **are** counted: they inflate only the few pages every
+template links to (home, contact, legal), without reordering the others.
 
 ### What counts as a page
 
@@ -132,22 +124,18 @@ The graph is the **indexable** graph — the corpus `pages_list()` builds by def
 A `noindex` page is scanned like any other (its links still get checked), but it is
 kept out of the graph on both sides:
 
-- **As a target**, because it is an orphan by design. A search page, a checkout, a
-  guest-post form is not meant to be linked, and a `--orphans` gate that lists them
-  is red forever, which makes it useless in CI.
-- **As a source**, because its links are not editorial. A single `noindex` search
-  page listing 243 of your 263 pages adds +1 to nearly every inbound count — and the
-  pages nothing really links to then hide at `in:1` instead of standing out at `in:0`.
+- **As a target**, because it is an orphan by design (a search page, a checkout): an
+  `--orphans` gate listing them would be red forever.
+- **As a source**, because its links are not editorial: a `noindex` search page listing
+  most pages would add +1 to nearly every inbound count, hiding the real orphans.
 
 Redirections are not nodes either: a 301 is not a page. So `pageCount` is the number
 of pages **in the graph**, which is smaller than the number of pages scanned.
 
 ### Depth
 
-`depth` is how many clicks a page is from the homepage, breadth-first. It is the one
-dimension of internal linking that is not just another way of counting inbound links,
-which is why it is computed rather than tallied. `depth: 0` is the homepage,
-`null` means unreachable.
+`depth` is how many clicks a page is from the homepage, breadth-first. `depth: 0` is the
+homepage, `null` means unreachable.
 
 Only a page whose slug is exactly `homepage` roots the walk. A locale home
 (`fr/homepage`) is a page like any other: it is reached *from* the home. When the host
@@ -156,13 +144,11 @@ by structure — `homepageScanned` says so, to keep the two from being confused.
 
 ### Orphans
 
-An orphan is a page with at most one inbound link. A homepage is never an orphan:
-it is where visitors land, however few links point back to it. Neither is a `noindex`
-page, which is not in the graph at all — the gate only ever asks about pages that are
-supposed to be linked.
+An orphan is a page with at most one inbound link. A homepage is never an orphan, nor is
+a `noindex` page (it is not in the graph).
 
 `--orphans` exits non-zero when any remain, so it gates a CI pipeline: every page
-should be reachable **without a pager**, as a spare wheel.
+should be reachable **without a pager**.
 
 ### Known limit: pagination
 
@@ -299,7 +285,7 @@ typo like `date(d)` is not reported — it is not a shortcode either.
 
 ## TODO comments
 
-When writing a page, you can leave TODO comments to remind yourself of actions to take when another page gets published.
+Leave a TODO comment to be reminded of an action once another page is published.
 
 ### Link when published
 
