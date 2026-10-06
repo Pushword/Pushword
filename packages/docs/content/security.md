@@ -76,3 +76,11 @@ The repository security workflow runs CodeQL SAST for JavaScript, Semgrep SAST f
 Composer and JavaScript dependency audits, a repository secret scan, and an SPDX SBOM
 build. The Docker workflow also scans the production image for high and critical
 vulnerabilities on relevant changes and every week.
+
+The JavaScript audit blocks high and critical findings. Its only exception is
+[GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) through
+`vite-plugin-static-copy` and `vite-plugin-symfony`: these build tools receive
+repository-controlled file patterns, not input from CMS users. No patched `braces`
+release is available. The finding remains visible in the audit output; other
+dependency paths, other advisories, and critical findings still fail the check.
+Remove this exception from `.github/scripts/js-audit.jq` when upstream publishes a fix.

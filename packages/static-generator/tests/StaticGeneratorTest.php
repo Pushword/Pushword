@@ -6,6 +6,7 @@ namespace Pushword\StaticGenerator;
 
 use DateTime;
 use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
 use FilesystemIterator;
 use Iterator;
 use League\Flysystem\Filesystem as Flysystem;
@@ -72,7 +73,7 @@ final class StaticGeneratorTest extends KernelTestCase
         // jobs red.
         $cacheFile = getenv('PUSHWORD_TEST_DB_CACHE_FILE');
         $dbUrl = getenv('PUSHWORD_TEST_DATABASE_URL');
-        if (false !== $cacheFile && '' !== $cacheFile && false !== $dbUrl && file_exists($cacheFile)) {
+        if (false !== $cacheFile && '' !== $cacheFile && false !== $dbUrl && str_starts_with($dbUrl, 'sqlite:') && file_exists($cacheFile)) {
             $dbPath = preg_replace('#^sqlite:///+#', '/', $dbUrl);
             if (null !== $dbPath && file_exists($dbPath)) {
                 copy($cacheFile, $dbPath);
@@ -1213,8 +1214,8 @@ final class StaticGeneratorTest extends KernelTestCase
     /**
      * Without a host argument every host is built in turn: one left with no
      * published page must be reported by name and skipped, not stop the hosts
-     * after it. pushword.piedweb.com has no fixture page and comes before
-     * admin-block-editor.test.
+     * after it. Empty pushword.piedweb.com explicitly: earlier flat imports can
+     * populate it on server databases, which cannot use the SQLite fixture reset.
      */
     public function testAHostWithNoPublishedPagesDoesNotStopTheOtherHosts(): void
     {
@@ -1226,8 +1227,6 @@ final class StaticGeneratorTest extends KernelTestCase
             $siteRegistry->getHosts(),
             'every host must get an isolated static_dir below',
         );
-        self::assertSame([], self::getContainer()->get(PageRepository::class)->findPublishedSlugs('pushword.piedweb.com'));
-
         $staticDir = $this->getStaticDir();
         $emptyHostDir = $staticDir.'-pushword.piedweb.com';
         $nextHostDir = $staticDir.'-admin-block-editor.test';
@@ -1235,7 +1234,19 @@ final class StaticGeneratorTest extends KernelTestCase
         $siteRegistry->switchSite('admin-block-editor.test')->get()->setCustomProperty('static_dir', $nextHostDir);
         new Filesystem()->dumpFile($emptyHostDir.'/index.html', 'last published homepage');
 
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $connection = $entityManager->getConnection();
+        $publishedPages = $connection->fetchAllAssociative(
+            'SELECT id, published_at FROM page WHERE host = ? AND published_at IS NOT NULL',
+            ['pushword.piedweb.com'],
+        );
+
         try {
+            // SQL avoids queuing flat exports or changing version history for fixture setup.
+            $connection->executeStatement('UPDATE page SET published_at = NULL WHERE host = ?', ['pushword.piedweb.com']);
+            $entityManager->clear();
+            self::assertSame([], self::getContainer()->get(PageRepository::class)->findPublishedSlugs('pushword.piedweb.com'));
+
             $tester = new CommandTester(new Application(self::$kernel)->find('pw:static')); // @phpstan-ignore-line
             $tester->execute(['--workers' => 1, '--format' => 'text']);
 
@@ -1247,6 +1258,11 @@ final class StaticGeneratorTest extends KernelTestCase
             self::assertFileExists($staticDir.'/index.html');
             self::assertFileExists($nextHostDir.'/index.html', 'the host after the skipped one must still be built');
         } finally {
+            foreach ($publishedPages as $page) {
+                $connection->update('page', ['published_at' => $page['published_at']], ['id' => $page['id']]);
+            }
+
+            $entityManager->clear();
             new Filesystem()->remove([$emptyHostDir, $nextHostDir]);
         }
     }

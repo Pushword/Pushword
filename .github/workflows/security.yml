@@ -88,6 +88,9 @@ jobs:
       - name: Enable Yarn
         run: corepack enable
 
+      - name: Test JavaScript audit policy
+        run: node --test .github/scripts/js-audit.test.mjs
+
       - name: Audit JavaScript packages
         shell: bash
         run: |
@@ -99,12 +102,9 @@ jobs:
               yarn install --ignore-scripts --non-interactive
               yarn audit --json > "$report" || true
             )
-            if ! jq -e 'select(.type == "auditSummary")' "$report" >/dev/null; then
+            jq -c 'select(.type == "auditAdvisory") | {module: .data.advisory.module_name, severity: .data.advisory.severity, title: .data.advisory.title, url: .data.advisory.url, path: .data.resolution.path}' "$report"
+            if ! jq -se -f .github/scripts/js-audit.jq "$report" >/dev/null; then
               cat "$report"
-              exit 1
-            fi
-            if jq -e 'select(.type == "auditAdvisory") | .data.advisory.severity | select(. == "high" or . == "critical")' "$report" >/dev/null; then
-              jq -c 'select(.type == "auditAdvisory") | {module: .data.advisory.module_name, severity: .data.advisory.severity, title: .data.advisory.title}' "$report"
               exit 1
             fi
           done
