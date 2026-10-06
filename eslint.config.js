@@ -15,8 +15,12 @@ const ignorePatterns = [
   '**/media~/',
   '**/*.min.js',
   '**/build/',
+  '**/rust/target/',
+  'docs/',
+  'docs~/',
   'packages/dev-app/var/',
   'packages/dev-app/public/',
+  'packages/dev-app/static/',
   'packages/admin-block-editor/src/Command/convert-json-to-markdown-built/', // Generated build files
 ]
 
@@ -85,5 +89,16 @@ export default defineConfig(
   {
     files: ['**/webpack.config.js', '**/vite.config.js', '**/*.config.js'],
     rules: { 'no-console': 'off' },
+  },
+
+  // These scripts are consumed as CommonJS, including the downloaded editor hook.
+  {
+    files: [
+      'packages/flat/src/Resources/editor/sync.js',
+      'packages/js-helper/src/ScrollEnhancer.js',
+      'packages/js-helper/src/encore.js',
+    ],
+    languageOptions: { sourceType: 'commonjs' },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
 )

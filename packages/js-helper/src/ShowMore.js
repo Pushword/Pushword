@@ -36,7 +36,7 @@ const ShowMore = {
       if (stored) {
         JSON.parse(stored).forEach((id) => this._openedIds.add(id))
       }
-    } catch (e) {
+    } catch {
       // localStorage not available or corrupted
     }
   },
@@ -56,7 +56,7 @@ const ShowMore = {
   _persistOpenedIds() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...this._openedIds]))
-    } catch (e) {
+    } catch {
       // localStorage not available
     }
   },
@@ -233,7 +233,7 @@ const ShowMore = {
           target.scrollIntoView({ behavior: 'smooth' })
         }, 100)
       }
-    } catch (e) {
+    } catch {
       // Invalid selector, ignore
     }
   },
@@ -275,7 +275,7 @@ const ShowMore = {
   _decode(text) {
     try {
       return decodeURIComponent(text)
-    } catch (e) {
+    } catch {
       return text
     }
   },

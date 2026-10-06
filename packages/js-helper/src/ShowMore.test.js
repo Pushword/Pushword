@@ -120,7 +120,7 @@ describe('open()', () => {
 
   it('fallback timer releases maxHeight after 500ms', () => {
     vi.useFakeTimers()
-    const { btn, wrapper, content } = makeBlock()
+    const { btn, content } = makeBlock()
     ShowMore.open(btn)
     expect(content.style.maxHeight).toBe('400px')
     vi.advanceTimersByTime(500)
@@ -263,7 +263,7 @@ describe('openContaining()', () => {
   })
 
   it('skips blocks that are already open', () => {
-    const { wrapper, content, btn } = makeBlock()
+    const { wrapper, content } = makeBlock()
     wrapper.dataset.showMoreOpen = 'true'
     const openSpy = vi.spyOn(ShowMore, 'open')
     ShowMore.openContaining(content, false)

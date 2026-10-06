@@ -30,7 +30,7 @@ class ScrollYEnhancer {
       this.mouseSliderY(element)
       this.wheelScrollY(element)
       element.onscroll = function () {
-        manageScrollYControllerVisibility(this)
+        window.manageScrollYControllerVisibility(this)
       }
     })
   }
@@ -47,10 +47,13 @@ class ScrollYEnhancer {
         element.scrollTop += evt.deltaY
 
         if (before === element.scrollTop) {
+          const scrollParent = element.closest('.enhance-scroll-x')
           if (
-            (parent = element.closest('.enhance-scroll-x')) &&
+            scrollParent &&
             new Date().getTime() - window.lastScrollTime > 200 &&
-            scrollX(parent.parentNode.querySelector(evt.deltaY > 0 ? '.scroll-right' : '.scroll-left'))
+            window.scrollX(
+              scrollParent.parentNode.querySelector(evt.deltaY > 0 ? '.scroll-right' : '.scroll-left'),
+            )
           ) {
             window.lastScrollTime = new Date().getTime()
             window.isScrolling = false
@@ -160,9 +163,9 @@ class ScrollXEnhancer {
       this.enhanceScrollX(element)
       this.mouseSliderX(element)
       this.wheelScrollX(element)
-      manageScrollXControllerVisibility(element)
+      window.manageScrollXControllerVisibility(element)
       element.onscroll = function () {
-        manageScrollXControllerVisibility(this)
+        window.manageScrollXControllerVisibility(this)
       }
     })
   }

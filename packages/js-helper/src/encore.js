@@ -1,10 +1,6 @@
 // @deprecated use vite instead
 
 const WatchExternalFilesPlugin = require('webpack-watch-files-plugin').default
-const tailwindcss = require('tailwindcss')
-const postcssImport = require('postcss-import')
-const autoprefixer = require('autoprefixer')
-const Encore = require('@symfony/webpack-encore')
 const getFilesToWatch = require('./FilesToWatch')
 
 function getTailwindConfig(watchFiles = null) {
@@ -23,7 +19,7 @@ function getTailwindConfig(watchFiles = null) {
 function getEncore(
   Encore,
   watchFiles = null, // default: getFilesToWatch()
-  tailwindConfig = null, // default : getTailwindConfig()
+  tailwindConfig, // retained for positional compatibility
   outputPath = null, // default : './../public/assets/'
   publicPath = null, // default: '/assets'
   manifestKeyPrefix = null, // default: null
@@ -34,10 +30,6 @@ function getEncore(
 ) {
   if (watchFiles === null) {
     watchFiles = getFilesToWatch()
-  }
-
-  if (tailwindConfig === null) {
-    tailwindConfig = getTailwindConfig(watchFiles)
   }
 
   const jsAppName = 'app' + (isLegacy ? '-legacy' : '')
