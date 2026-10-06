@@ -118,6 +118,14 @@ describe('MarkdownUtils.convertInlineMarkdownToHtml', () => {
     )
   })
 
+  it('leaves stars and backslashes inside Twig tags and literal images unescaped', () => {
+    expect(
+      MarkdownUtils.convertInlineHtmlToMarkdown(
+        String.raw`2* {{ price * 2 }} {% set path = 'a\b' %} ![2*](hotel*.png)`,
+      ),
+    ).toBe(String.raw`2\* {{ price * 2 }} {% set path = 'a\b' %} ![2*](hotel*.png)`)
+  })
+
   it('does not pair an underscore in a word or a URL with one in a link text', () => {
     expect(convert('le mot_clé, [a](https://x.fr/a_b) puis [_Alpinstore_](https://x.fr)')).toBe(
       'le mot_clé, <a href="https://x.fr/a_b">a</a> puis <a href="https://x.fr"><i>Alpinstore</i></a>',

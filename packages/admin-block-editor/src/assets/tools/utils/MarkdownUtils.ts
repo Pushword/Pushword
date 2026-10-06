@@ -633,22 +633,14 @@ export class MarkdownUtils {
   }
 
   private static escapeLiteralMarkdownText(html: string): string {
-    const escapeTextNodes = (text: string): string =>
+    return MarkdownUtils.mapUnprotected(html, (text) =>
       MarkdownUtils.mapHtmlText(text, (prose) =>
         prose.replace(
           /(!\[[^\]]*\]\([^)]*\))|([\\*])/g,
           (match, image: string | undefined) => image ?? '\\' + match,
         ),
-      )
-
-    let result = ''
-    let cursor = 0
-    for (const [start, end] of MarkdownUtils.protectedRanges(html)) {
-      result += escapeTextNodes(html.slice(cursor, start)) + html.slice(start, end)
-      cursor = end
-    }
-
-    return result + escapeTextNodes(html.slice(cursor))
+      ),
+    )
   }
 
   /**
@@ -665,17 +657,18 @@ export class MarkdownUtils {
    * straightened apostrophe inside a single-quoted Twig string closes it.
    */
   static normalizeTypography(markdown: string): string {
-    const ranges = MarkdownUtils.protectedRanges(markdown)
-    if (ranges.length === 0) return MarkdownUtils.straightenTypography(markdown)
+    return MarkdownUtils.mapUnprotected(markdown, (text) => MarkdownUtils.straightenTypography(text))
+  }
 
+  /** Applies `transform` to the text between protectedRanges(), which keep their bytes. */
+  private static mapUnprotected(markdown: string, transform: (text: string) => string): string {
     let result = ''
     let cursor = 0
-    for (const [from, to] of ranges) {
-      result += MarkdownUtils.straightenTypography(markdown.slice(cursor, from))
-      result += markdown.slice(from, to)
+    for (const [from, to] of MarkdownUtils.protectedRanges(markdown)) {
+      result += transform(markdown.slice(cursor, from)) + markdown.slice(from, to)
       cursor = to
     }
-    return result + MarkdownUtils.straightenTypography(markdown.slice(cursor))
+    return result + transform(markdown.slice(cursor))
   }
 
   private static straightenTypography(text: string): string {

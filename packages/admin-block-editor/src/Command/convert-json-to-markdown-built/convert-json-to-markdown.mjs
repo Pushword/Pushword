@@ -5192,14 +5192,7 @@ var MarkdownUtils = class MarkdownUtils {
 		return MarkdownUtils.normalizeTypography(markdown);
 	}
 	static escapeLiteralMarkdownText(html) {
-		const escapeTextNodes = (text) => MarkdownUtils.mapHtmlText(text, (prose) => prose.replace(/(!\[[^\]]*\]\([^)]*\))|([\\*])/g, (match, image) => image ?? "\\" + match));
-		let result = "";
-		let cursor = 0;
-		for (const [start, end] of MarkdownUtils.protectedRanges(html)) {
-			result += escapeTextNodes(html.slice(cursor, start)) + html.slice(start, end);
-			cursor = end;
-		}
-		return result + escapeTextNodes(html.slice(cursor));
+		return MarkdownUtils.mapUnprotected(html, (text) => MarkdownUtils.mapHtmlText(text, (prose) => prose.replace(/(!\[[^\]]*\]\([^)]*\))|([\\*])/g, (match, image) => image ?? "\\" + match)));
 	}
 	/**
 	* Normalize Unicode composition and straighten typographic quotes,
@@ -5215,16 +5208,17 @@ var MarkdownUtils = class MarkdownUtils {
 	* straightened apostrophe inside a single-quoted Twig string closes it.
 	*/
 	static normalizeTypography(markdown) {
-		const ranges = MarkdownUtils.protectedRanges(markdown);
-		if (ranges.length === 0) return MarkdownUtils.straightenTypography(markdown);
+		return MarkdownUtils.mapUnprotected(markdown, (text) => MarkdownUtils.straightenTypography(text));
+	}
+	/** Applies `transform` to the text between protectedRanges(), which keep their bytes. */
+	static mapUnprotected(markdown, transform) {
 		let result = "";
 		let cursor = 0;
-		for (const [from, to] of ranges) {
-			result += MarkdownUtils.straightenTypography(markdown.slice(cursor, from));
-			result += markdown.slice(from, to);
+		for (const [from, to] of MarkdownUtils.protectedRanges(markdown)) {
+			result += transform(markdown.slice(cursor, from)) + markdown.slice(from, to);
 			cursor = to;
 		}
-		return result + MarkdownUtils.straightenTypography(markdown.slice(cursor));
+		return result + transform(markdown.slice(cursor));
 	}
 	static straightenTypography(text) {
 		return text.normalize("NFC").replace(/[\u2018\u2019\u201A\u2039\u203A]/g, "'").replace(/[\u00AB\u00BB\u201C\u201D\u201E]/g, "\"").replace(/\u2026/g, "...").replace(/[\u00A0\u202F\u2009]/g, " ").replace(/[\u00AD\u200B\u2060\uFEFF]/g, "");
