@@ -135,6 +135,7 @@
     "phpstan/phpstan-symfony": "*",
     "phpunit/phpunit": "*",
     "rector/rector": "*",
+    "shipmonk/dead-code-detector": "^1.4",
     "squizlabs/php_codesniffer": "*",
     "symfony/browser-kit": "^7.3 || ^8.0",
     "symfony/debug-bundle": "*",

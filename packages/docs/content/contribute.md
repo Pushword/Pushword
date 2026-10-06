@@ -47,6 +47,12 @@ composer rector
 composer stan
 ```
 
+PHPStan includes [ShipMonk's dead code detector](https://github.com/shipmonk-rnd/dead-code-detector).
+Existing findings are recorded in `phpstan-dead-code-baseline.neon`; new findings fail
+`composer stan`. Review each finding before changing the baseline: public extension
+points and framework callbacks can be used outside the scanned PHP code. Remove an
+entry when its finding is resolved rather than regenerating the baseline for new code.
+
 ### Tests
 
 ```

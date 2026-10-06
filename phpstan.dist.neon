@@ -1,4 +1,5 @@
 includes:
+    - phpstan-dead-code-baseline.neon
     - vendor/composer/pcre/extension.neon
     - vendor/phpstan/phpstan-doctrine/extension.neon
     - vendor/phpstan/phpstan-doctrine/rules.neon
@@ -7,10 +8,14 @@ includes:
     - vendor/phpstan/phpstan-strict-rules/rules.neon
     - vendor/phpstan/phpstan-symfony/extension.neon
     - vendor/phpstan/phpstan-symfony/rules.neon
+    - vendor/shipmonk/dead-code-detector/rules.neon
     - vendor/tomasvotruba/type-coverage/config/extension.neon
 
 parameters:
     level: max
+    shipmonkDeadCode:
+        # Keep baseline entries per member so they cannot hide newly dead callees.
+        reportTransitivelyDeadMethodAsSeparateError: true
     type_coverage:
         return_type: 100
         param_type: 100
