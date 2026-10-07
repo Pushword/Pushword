@@ -157,7 +157,7 @@ final class ConversationFormController extends AbstractController
 
         if (null !== $origin) {
             if (! \in_array($origin, $this->getPossibleOrigins($request), true)) {
-                throw new AccessDeniedHttpException(\sprintf('Origin `%s` is not allowed to load conversation forms: add it to `conversation_possible_origins` (allowed: %s).', $origin, implode(' ', $this->getPossibleOrigins($request))));
+                throw new AccessDeniedHttpException(\sprintf('Origin `%s` is not allowed to load conversation forms.', $origin));
             }
 
             $response->headers->set('Access-Control-Allow-Credentials', 'true');

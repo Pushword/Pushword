@@ -245,10 +245,8 @@ final class ConversationFormControllerTest extends WebTestCase
 
         $content = (string) $client->getResponse()->getContent();
         self::assertSame(Response::HTTP_FORBIDDEN, $client->getResponse()->getStatusCode(), $content);
-        self::assertStringContainsString('Origin `'.$origin.'` is not allowed', $content);
-        self::assertStringContainsString('conversation_possible_origins', $content);
-        // Bundle config and site hosts, space-separated as the config key expects them.
-        self::assertStringContainsString('(allowed: https://static.localhost.dev https://localhost.dev', $content);
+        // The exact message: the refusal must not reveal which origins are trusted.
+        self::assertSelectorTextSame('title', 'Origin `'.$origin.'` is not allowed to load conversation forms. (403 Forbidden)');
         self::assertNull($client->getResponse()->headers->get('Access-Control-Allow-Origin'));
     }
 
