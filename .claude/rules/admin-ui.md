@@ -23,6 +23,14 @@ paths:
 - **Do not use form themes for editor wiring.** EasyAdmin's per-CRUD `addFormTheme` makes
   form-theme overrides lose the precedence fight; the Twig-function merge above is the
   supported seam.
+- **A `StateBlock` tool's `updatePreview()` runs before its inputs exist.**
+  `StateBlock.render()` calls it ahead of `createInputs()`, so it must render from
+  `this.data` only — syncing data from the not-yet-built fields there wipes the block's
+  saved data on load (`Snippet.ts` is the pattern).
+- **`admin-block-editor` must not get `"type": "module"`.** `roundTrip.test.ts`
+  `require()`s the UMD prettier builds in `src/Resources/public/prettier/`; as ESM they
+  export nothing and the list round-trip tests fail on a trailing-newline diff. Its Vite
+  configs are `.mjs` instead.
 - **Testing an inline tool by hand: click the toolbar button, not `Ctrl+K`.**
   `@codexteam/shortcuts` never calls `preventDefault()` — editor.js does, but only inside
   `currentBlock && currentBlock.tool.enabledInlineTools`. With no focused block the event
@@ -49,7 +57,13 @@ paths:
   the block editor injects the same URL for its markdown/JSON modes and shares the
   in-flight promise through `window.pwMonacoLoading`. The `<script>` in
   `@pwAdmin/layout.html.twig` covers only the custom tool pages: EasyAdmin CRUD pages do
-  not use that layout, so nothing there loads Monaco on its own. Build order matters —
+  not use that layout, so nothing there loads Monaco on its own. Keep `data-editor` off
+  a textarea inside a hidden (`x-show`) panel, or mount its editor lazily once visible:
+  Twig, YAML and JSON editors are sized from the textarea's `offsetWidth`/`offsetHeight`,
+  so a hidden one mounts into a 0×0 box (only a Bootstrap `.collapse` parent is unhidden
+  for the measure). The repurpose studio froze on this (027c9914e) when its own second
+  init on open added a second editor; `transformTextareaToMonaco()` now returns the
+  existing one. Build order matters —
   `packages/admin`'s vite build empties `src/Resources/public/`, so
   `admin-monaco-editor` must be built *after* it or `monaco/` disappears.
 - **Monaco's clipboard events must be caught on `document`, in the capture phase.**

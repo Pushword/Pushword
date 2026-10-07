@@ -46,6 +46,9 @@ one race-free split run.
   and the draft then reads clean. `next-release.md` is the one file where a scoped commit
   is not enough isolation — before releasing, read the draft and check every section is
   yours, or that its code is in `HEAD`.
+- **A release ships every unpushed commit, not just yours.** Check
+  `git log --oneline origin/main..HEAD` first and ask Robin before tagging a peer's work:
+  their commit may hold another agent's in-flight edit, swept in with a whole file.
 
 ## Legacy tag conflicts
 

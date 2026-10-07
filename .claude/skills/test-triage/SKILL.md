@@ -59,6 +59,16 @@ chromedriver and headless Chromes survive the kill and squat the ports. Cure:
 `pgrep -af chromedriver` / `pgrep -af 'user-data-dir=/tmp/panther-chrome'`, kill what
 predates the current run.
 
+**`Core\Tests\Service\MediaUsageTrackerTest`** — undiagnosed. Every test building a
+disposable media (`newDisposableMedia()`) fails at once with `Failed to copy
+".../tests/<run>-w<n>/media/piedweb-logo.png" because file does not exist` — most likely
+a sibling class deleting the fixture from the worker's media dir (step 3). Seen when
+workers run slowed — a CPU quota, or back-to-back full runs on a hot machine — since that
+regroups which classes share a worker; it passes in isolation and on the next run.
+Suspects, all touching that file: `CleanUnusedMediaCommandTest`,
+`CleanMissingMediaCommandTest`, `CleanDuplicateMediaCommandTest`,
+`NormalizeFileNameCommandTest`; pair each with it.
+
 ## Fixed flakes — a fresh failure is real
 
 One line each; the post-mortems and already-walked dead ends are in
@@ -141,14 +151,14 @@ including in isolation. It masks the real exception too: `ImageRenderer` catches
 `Throwable`, so instrumenting the catch shows nothing while the cache answers first.
 
 ```bash
-rm -rf /tmp/com.github.pushword.pushword/container-cache/pushword-pools
+rm -rf "$(php -r 'echo sys_get_temp_dir();')/com.github.pushword.pushword/container-cache/pushword-pools"
 ```
 
 When the real error turns out to be `no such column`, the DB cache is stale as well
 (a peer's entity change, an interrupted rebuild): delete
-`/tmp/com.github.pushword.pushword/test-db-cache` and re-run. That one failure
-cascades to ~50 across media, gallery, static-generation and admin-frontend classes,
-which reads as a broken tree and is one wrong `.sqlite`.
+`"$(php -r 'echo sys_get_temp_dir();')/com.github.pushword.pushword/test-db-cache"` and
+re-run. That one failure cascades to ~50 across media, gallery, static-generation and
+admin-frontend classes, which reads as a broken tree and is one wrong `.sqlite`.
 
 ## Reproducing contention
 

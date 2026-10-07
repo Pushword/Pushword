@@ -156,6 +156,8 @@ Design buttons in three tiers of importance:
 
 Destructive actions should not automatically be `bg-red-600`. Prefer secondary styling + a confirmation step where the destructive action becomes the primary button.
 
+A label carries the action, nothing else: keep the primary to a bare verb phrase and move any context (a consent purpose, a caveat) to a muted line beside it. When two buttons differ, only the deviating one names its difference, in parentheses: "I confirm" next to "I confirm (anonymized links)".
+
 ---
 
 ## 4. LAYOUT & SPACING
@@ -452,6 +454,8 @@ Use Alpine.js for UI state (toggles, dropdowns, modals, tabs, accordions). Don't
 | **Transitions respect motion**          | `motion-reduce:transition-none` on animated elements                             |
 | **Modal accessibility**                 | `role="dialog"` + `aria-modal="true"` + `aria-labelledby` are mandatory          |
 | **Tab pattern**                         | Arrow keys move between tabs, only active tab has `tabindex="0"`, rest get `-1`  |
+| **Object syntax for `x-bind:style`**    | `x-bind:style="{ top: y + 'px' }"`, never a string, on an `x-show` element: a string rewrites the whole `style` attribute, wiping the `display: none` that `x-show` manages, and `x-show` skips re-applying an unchanged value — a closed popover stays visible. |
+| **`x-for` options load after `x-model`** | Before Alpine 3.16, a `<select>` whose options come from `x-for` shows its first option; add `x-init="$nextTick(() => $el.value = model)"`. 3.16 re-applies the model when options are added. |
 
 ---
 

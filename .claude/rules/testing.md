@@ -15,6 +15,10 @@ real bugs.
 Test caches live under `sys_get_temp_dir()`, which is **not `/tmp` in agent shells**
 (`TMPDIR=~/.cache/scratch`). Below, `$PW_TMP` means
 `"$(php -r 'echo sys_get_temp_dir();')/com.github.pushword.pushword"`.
+`.scripts/test-installer` is the exception: it hardcodes `/tmp` for its cache (as
+`.scripts/test` does for Panther's Chrome profiles and the JUnit XML). There, `No space
+left on device` usually means inode exhaustion by other projects' directories: check
+`df -i /tmp`, not `df -h`, and report those directories rather than deleting them.
 
 - **A failing test is not automatically your fault.** Several known flakes hop between
   shards. Before investigating, invoke the `test-triage` skill — it holds the current

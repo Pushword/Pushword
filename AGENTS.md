@@ -8,6 +8,7 @@ Keep search output bounded. For PHP, use `--glob '*.php'`. For frontend code, se
 
 - Nothing speculative: no unrequested features, abstractions, flexibility, or error handling for impossible cases.
 - Remove orphans your change creates; flag (don't delete) pre-existing dead code.
+- A zero or an "all good" must come from a measurement. Count per-item outcomes rather than deducing them (`total - errors`), don't trust an exit code a wrapper swallowed, and prove a guard test fails without its fix (on a copy, never in the shared tree).
 
 ## Stack
 
@@ -40,7 +41,7 @@ composer reset-dev-app                # reset demo
 
 - Lint and test, fixing all warnings/notices: `composer stan`, `composer rector`, `composer test` (or `composer test-filter ExampleTest`). Never use `vendor/bin/phpunit` directly. Never leave a broken build.
 - Never skip tests (`markTestSkipped`, `@group skip`) — fix them.
-- Clear cache after each change: `composer console cache:clear`.
+- Clear cache after each change: `composer console cache:clear`. It does not reach the Markdown fragment pool (`var/cache/pushword-pools`, kept across deploys on purpose): a change to rendered output must bump `MarkdownParser::CACHE_VERSION` (TOC: `SplitContent::TOC_CACHE_VERSION`). That cache, and the static build's skip-unchanged, rely on renders being byte-deterministic: no `random()` in a render path, and a content-hash cache that never hits means entropy leaked into the output.
 - Comments and docs in English only.
 
 ### Mandatory post-change review
@@ -100,11 +101,21 @@ UI/templates/CSS: consult `packages/core/DesignGuidelines.md` (Tailwind, public 
 - Never bare `git commit`, `commit -a`, or tree-wide `git add` (`-A`/`-u`/`.`): they sweep whatever a peer has staged.
 - Staging is not a save point — never leave files staged; stage only right before your own `--only` commit.
 - Never stash, hard-reset, `checkout`/`restore .`, or delete/unstage files you didn't create.
+  To compare with and without a change, use a `git worktree` or a copy.
+- A peer's scoped commit takes whole files, so whatever sits in yours can be committed, even
+  released, at any instant: never leave a knowingly broken edit in the tree, even briefly.
+  A file you edited showing as unmodified was committed by someone else; check `git log`.
+- `.claude/hooks/guard-git.sh` string-matches the whole Bash command: a commit message or
+  test command containing a blocked pattern must run from a script file.
 - Whole-tree commits are a human-terminal operation — stop and ask Robin.
 
 ## Docs
 
-- `packages/docs/content/` — one `.md` per topic; `extension/` — per-bundle feature docs.
+- `packages/docs/content/` — one `.md` per topic; `extension/` — per-bundle feature docs;
+  `blog/` — articles and comparisons. A page's slug is its path under `content/`, so
+  moving one needs a 301 row in `content/redirection.csv` and its inbound links updated.
+- `packages/docs/AGENTS.md` names the few docs an agent should read: keep it an
+  allowlist, never a list of files to skip.
 - `packages/core/DesignGuidelines.md` — UI/design principles.
 - `packages/docs/content/upgrade/` — one note per release, indexed by `upgrade.md`.
   Does your change ask something of a site that upgrades — a command to run, a config
