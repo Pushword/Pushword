@@ -66,7 +66,7 @@ function setUpDom(): void {
 }
 
 /** Run the editor bootstrap for a page whose stored content is `content`. */
-function boot(content: string, extraConfig: Record<string, unknown> = {}): editorJs {
+function boot(content: string, extraConfig: Record<string, unknown> = {}): InstanceType<typeof editorJs> {
   setUpDom()
   captured = null
   ;(window as any).editorjsConfig = { holder: 'ed', tools: {}, ...extraConfig }
@@ -160,42 +160,50 @@ describe('editorJs – the baseline the form recovers against', () => {
  * that field back would have left the rendered blocks on the old content.
  */
 describe('editorJs – the field it feeds', () => {
-  it('flushes the latest blocks before submitting, without waiting for onChange', async () => {
-    const instance = boot('```mermaid\nflowchart LR\n A --> B\n```', {
-      tools: { codeBlock: { className: 'CodeBlock' } },
-    })
-    const save = instance.getEditors().ed.saver.save
-    vi.mocked(save).mockResolvedValue({
-      blocks: [
-        {
-          type: 'codeBlock',
-          data: { language: 'mermaid', html: 'flowchart LR\n A --> C' },
-        },
-      ],
-    })
-    const input = document.getElementById('inp')! as HTMLTextAreaElement
-    input.value = 'old source'
-    const form = input.form!
-    const button = document.createElement('button')
-    button.type = 'submit'
-    form.append(button)
-    const submitted = vi.fn((event: Event) => event.preventDefault())
-    form.addEventListener('submit', submitted)
-    const requestSubmit = vi
-      .spyOn(form, 'requestSubmit')
-      .mockImplementation((submitter) => {
+  it.each([true, false])(
+    'flushes the latest blocks before submitting, with submitter: %s',
+    async (withSubmitter) => {
+      const instance = boot('```mermaid\nflowchart LR\n A --> B\n```', {
+        tools: { codeBlock: { className: 'CodeBlock' } },
+      })
+      const save = instance.getEditors().ed.saver.save
+      vi.mocked(save).mockResolvedValue({
+        blocks: [
+          {
+            type: 'codeBlock',
+            data: { language: 'mermaid', html: 'flowchart LR\n A --> C' },
+          },
+        ],
+      })
+      const input = document.getElementById('inp')! as HTMLTextAreaElement
+      input.value = 'old source'
+      const form = input.form!
+      const button = withSubmitter ? document.createElement('button') : undefined
+      if (button) {
+        button.type = 'submit'
+        form.append(button)
+      }
+      const submitted = vi.fn((event: Event) => event.preventDefault())
+      form.addEventListener('submit', submitted)
+      const requestSubmit = vi.spyOn(form, 'requestSubmit').mockImplementation((submitter) => {
         expect(save).toHaveBeenCalledOnce()
         expect(input.value).toBe('```mermaid\nflowchart LR\n A --> C\n```')
         form.dispatchEvent(new SubmitEvent('submit', { submitter, cancelable: true }))
       })
 
-    form.dispatchEvent(new SubmitEvent('submit', { submitter: button, cancelable: true }))
+      form.dispatchEvent(new SubmitEvent('submit', { submitter: button, cancelable: true }))
 
-    expect(submitted).not.toHaveBeenCalled()
-    await vi.waitFor(() => expect(requestSubmit).toHaveBeenCalledWith(button))
-    expect(submitted).toHaveBeenCalledOnce()
-    expect(save).toHaveBeenCalledOnce()
-  })
+      expect(submitted).not.toHaveBeenCalled()
+      await vi.waitFor(() => expect(requestSubmit).toHaveBeenCalledOnce())
+      if (button) {
+        expect(requestSubmit).toHaveBeenCalledWith(button)
+      } else {
+        expect(requestSubmit).toHaveBeenCalledWith()
+      }
+      expect(submitted).toHaveBeenCalledOnce()
+      expect(save).toHaveBeenCalledOnce()
+    },
+  )
 
   it.each(['markdown', 'json'])(
     'keeps the active %s editor as the source on submit',

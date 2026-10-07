@@ -288,7 +288,11 @@ export class editorJs {
         event.stopImmediatePropagation()
         await Promise.all(holders.map((holderId) => this.editorjsSave(holderId)))
         submitting = true
-        form.requestSubmit(event.submitter)
+        if (event.submitter) {
+          form.requestSubmit(event.submitter)
+        } else {
+          form.requestSubmit()
+        }
         submitting = false
       },
       { capture: true },
