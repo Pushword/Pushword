@@ -89,6 +89,21 @@ See **bold** _italic_ `inline code` #[link](/kitchen-sink){target="_blank"} <mar
 
 <p data-attribute="this attribute permits to avoid paragraph normalization">Example Raw Html</p>
 
+{#mermaid}
+## Mermaid
+
+This Code block uses the `mermaid` language. Edit its source in the block editor to update the live preview.
+
+```mermaid
+flowchart LR
+    accTitle: Publishing a page
+    accDescr: Write Markdown, preview the page, then publish it or return to editing.
+    A[Write Markdown] --> B[Preview in Editor.js]
+    B --> C{Ready to publish?}
+    C -->|Yes| D[Publish the page]
+    C -->|No| A
+```
+
 ## Render Page List
 
 ### Page found via Kw
