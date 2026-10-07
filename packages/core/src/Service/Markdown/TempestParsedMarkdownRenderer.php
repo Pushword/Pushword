@@ -152,6 +152,9 @@ final readonly class TempestParsedMarkdownRenderer
             }
         }
 
+        // Tempest ignores the flanking rules for emphasis delimiters. This pre-pass and the
+        // literal-star rules further down are removable once tempestphp/markdown#51 is released,
+        // except the rules for a star before `/` or an apostrophe: #51 skips punctuation clauses.
         $tripleEmphasis = [];
         // Inline content: a leading `- ` inside the delimiters is text, not a list.
         $source = preg_replace_callback('/\*{3}(?!\s)((?:[^*\[\]`\n]|\[[^\[\]\n]*\]\([^()\s]*\))+)(?<!\s)\*{3}/', function (array $match) use (&$tripleEmphasis): string {
@@ -376,6 +379,9 @@ final readonly class TempestParsedMarkdownRenderer
             }
         }
 
+        // Tempest keeps the backslash of an escaped punctuation mark and still reads the mark
+        // as syntax. tempestphp/markdown#52 fixes that, but an escaped `*`, `_`, `[` or `]` still
+        // ends emphasis or a link label there: only the other backslash entries become removable.
         $source = str_replace(['\\*', '\\[', '\\]', '\\+', '\\-', '\\_', '\\.', '\\>', '\\(', '\\)', '\\`', '_,_', '{', '}'], ["\u{E018}", "\u{E027}", "\u{E028}", "\u{E029}", "\u{E030}", "\u{E009}", "\u{E036}", "\u{E014}", "\u{E015}", "\u{E016}", "\u{E017}", "\u{E032}", "\u{E047}", "\u{E048}"], $source);
         if (str_ends_with($source, '\\')) {
             $source = substr($source, 0, -1)."\u{E046}";

@@ -437,6 +437,8 @@ final readonly class TempestBlockRenderer
             return \count($items) === $position ? $html : null;
         }
 
+        // Tempest drops a bullet list nested in an ordered item; removable once
+        // tempestphp/markdown#50 is released.
         if (1 === preg_match('/^[0-9]+\. /', $source) && 1 === preg_match('/\n {3,4}[-*+] /', $source)) {
             $texts = [];
             $childLists = [];
