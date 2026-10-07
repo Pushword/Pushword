@@ -81,6 +81,7 @@ describe('liveBlock — getLiveBlock', () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
       status: 403,
+      headers: new Headers(),
       text: () => Promise.resolve('<html>login page</html>'),
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -95,6 +96,7 @@ describe('liveBlock — getLiveBlock', () => {
     await vi.waitFor(() => expect(forbiddenDetail).not.toBeNull())
     expect(forbiddenDetail.status).toBe(403)
     expect(forbiddenDetail.url).toBe('/block')
+    expect(forbiddenDetail.retryAfter).toBeNull()
     // original block must still be present, but without its fetch trigger:
     // liveBlock() re-runs on every DOMChanged and must not retry a failed block
     expect(document.body.contains(el)).toBe(true)
@@ -103,6 +105,30 @@ describe('liveBlock — getLiveBlock', () => {
 
     liveBlock()
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('passes Retry-After in live-block-forbidden on 429', async () => {
+    makeLiveBlockEl('/rate-limited-block')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'Retry-After': '120' }),
+        text: () => Promise.resolve('Too many submissions'),
+      }),
+    )
+
+    let forbiddenDetail = null
+    document.body.addEventListener('live-block-forbidden', (e) => {
+      forbiddenDetail = e.detail
+    })
+
+    liveBlock()
+
+    await vi.waitFor(() => expect(forbiddenDetail).not.toBeNull())
+    expect(forbiddenDetail.status).toBe(429)
+    expect(forbiddenDetail.retryAfter).toBe('120')
   })
 
   it('skips a data-live-if cookie-gated block when the cookie is absent', () => {
@@ -280,9 +306,12 @@ describe('liveBlock — data-live-trigger', () => {
   it('disarms a once trigger even when the fetch fails', async () => {
     const el = makeLiveBlockEl('/once-fail')
     el.setAttribute('data-live-trigger', 'open-once-fail')
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue({ ok: false, status: 403, text: () => Promise.resolve('nope') })
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      headers: new Headers(),
+      text: () => Promise.resolve('nope'),
+    })
     vi.stubGlobal('fetch', fetchMock)
     let forbidden = null
     document.body.addEventListener('live-block-forbidden', (e) => (forbidden = e.detail))
@@ -302,7 +331,12 @@ describe('liveBlock — data-live-trigger', () => {
     el.setAttribute('data-live-repeat', '')
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({ ok: false, status: 403, text: () => Promise.resolve('nope') }),
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        headers: new Headers(),
+        text: () => Promise.resolve('nope'),
+      }),
     )
     let forbidden = null
     document.body.addEventListener('live-block-forbidden', (e) => (forbidden = e.detail))
@@ -349,6 +383,7 @@ describe('liveBlock — sendForm', () => {
       vi.fn().mockResolvedValue({
         ok: false,
         status: 403,
+        headers: new Headers(),
         text: () => Promise.resolve('<html>login</html>'),
       }),
     )
@@ -366,6 +401,32 @@ describe('liveBlock — sendForm', () => {
     expect(document.body.querySelector('.live-form')).not.toBeNull()
     expect(document.body.innerHTML).not.toContain('login')
     // data-submitting must be cleared so the form is retryable
+    expect(block.dataset.submitting).toBeUndefined()
+  })
+
+  it('passes Retry-After in live-block-forbidden on 429, so the page can tell how long to wait', async () => {
+    const { block, form } = makeLiveFormBlock('/submit')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'Retry-After': '120' }),
+        text: () => Promise.resolve('Too many submissions'),
+      }),
+    )
+
+    let forbiddenDetail = null
+    document.body.addEventListener('live-block-forbidden', (e) => {
+      forbiddenDetail = e.detail
+    })
+
+    liveBlock()
+    form.dispatchEvent(new Event('submit', { bubbles: true }))
+
+    await vi.waitFor(() => expect(forbiddenDetail).not.toBeNull())
+    expect(forbiddenDetail.status).toBe(429)
+    expect(forbiddenDetail.retryAfter).toBe('120')
     expect(block.dataset.submitting).toBeUndefined()
   })
 })
@@ -498,10 +559,15 @@ describe('liveBlock — htmx 4 alias & bridge', () => {
     document.body.addEventListener('live-block-forbidden', (e) => (forbidden = e.detail))
     document.dispatchEvent(
       new CustomEvent('htmx:response:error', {
-        detail: { ctx: { sourceElement: el, response: { status: 403 } } },
+        detail: {
+          ctx: {
+            sourceElement: el,
+            response: { status: 429, headers: new Headers({ 'Retry-After': '120' }) },
+          },
+        },
       }),
     )
-    expect(forbidden).toEqual({ status: 403, url: '/gone' })
+    expect(forbidden).toEqual({ status: 429, url: '/gone', retryAfter: '120' })
   })
 })
 

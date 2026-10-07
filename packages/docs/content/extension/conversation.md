@@ -55,6 +55,12 @@ host. That request is cross-origin: allow the static origins in
 `conversation_possible_origins` (space-separated, per site or globally under
 `conversation:`), and expect the visited host's cookies not to reach the handler.
 
+Any other origin gets a 403 before its posts count against the visitor's submission limit
+(20 per hour per IP and site). An allowed origin gets the CORS headers on every answer,
+refusals included, so the page sees a 404 or a 429 instead of a network error: the form
+fires `live-block-forbidden` with `{status, url, retryAfter}`, where `retryAfter` is the
+429's `Retry-After` header (`null` otherwise).
+
 If the static host proxies `/conversation/*` to PHP itself, make the URL relative (per
 site, or globally):
 

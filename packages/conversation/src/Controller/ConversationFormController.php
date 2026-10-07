@@ -17,7 +17,7 @@ use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,11 +31,6 @@ final class ConversationFormController extends AbstractController
 {
     private ?ConversationFormInterface $form = null;
 
-    /**
-     * @var string[]
-     */
-    private array $possibleOrigins = [];
-
     public function __construct(
         private readonly TranslatorInterface $translator,
         private readonly SiteRegistry $apps,
@@ -44,8 +39,6 @@ final class ConversationFormController extends AbstractController
         private readonly TokenStorageInterface $tokenStorage,
         private readonly RouterInterface $router,
         private readonly ManagerRegistry $doctrine,
-        #[Autowire(param: 'kernel.environment')]
-        private readonly string $env,
         private readonly MessageRepository $messageRepo,
         private readonly CacheInterface $cache,
         #[Autowire(service: 'limiter.anonymous_content')]
@@ -79,7 +72,7 @@ final class ConversationFormController extends AbstractController
 
         if (! class_exists($class)
             || ! new ReflectionClass($class)->implementsInterface(ConversationFormInterface::class)) {
-            throw new Exception('`'.$type."` does'nt exist.");
+            throw new NotFoundHttpException('Conversation form `'.$type.'` does not exist.');
         }
 
         /** @var class-string<ConversationFormInterface> $class */
@@ -112,66 +105,6 @@ final class ConversationFormController extends AbstractController
         );
     }
 
-    /**
-     * @return string[]
-     */
-    private function getPossibleOrigins(Request $request): array
-    {
-        // $host = $request->host;
-        $app = $this->apps->get();
-
-        if ([] !== $this->possibleOrigins) {
-            return $this->possibleOrigins;
-        }
-
-        /** @var string[]|string */
-        $convertsationPossibleOrigins = $app->get('conversation_possible_origins');
-
-        if (\is_string($convertsationPossibleOrigins)) {
-            $this->possibleOrigins = explode(' ', $convertsationPossibleOrigins);
-        }
-
-        if ('dev' === $this->env) {
-            // Trust the dev server's own origin whatever port it picked (the
-            // hardcoded 8000-8002 miss any other one, e.g. when 8000 is taken).
-            $this->possibleOrigins[] = $request->getSchemeAndHttpHost();
-            $this->possibleOrigins[] = 'http://'.$request->getHost();
-            $this->possibleOrigins[] = 'https://'.$request->getHost();
-            $this->possibleOrigins[] = 'http://'.$request->getHost().':8000';
-            $this->possibleOrigins[] = 'http://'.$request->getHost().':8001';
-            $this->possibleOrigins[] = 'http://'.$request->getHost().':8002';
-        }
-
-        foreach ($app->hosts as $host) {
-            $this->possibleOrigins[] = 'https://'.$host;
-        }
-
-        return $this->possibleOrigins;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function getCorsHeaders(Request $request): array
-    {
-        $origin = $request->headers->get('origin');
-
-        if (null === $origin) {
-            return [];
-        }
-
-        if (! \in_array($origin, $this->getPossibleOrigins($request), true)) {
-            throw new AccessDeniedHttpException(\sprintf('Origin `%s` is not allowed to load conversation forms.', $origin));
-        }
-
-        return [
-            'Access-Control-Allow-Credentials' => 'true',
-            'Access-Control-Allow-Methods' => 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers' => 'Origin, Content-Type, X-Auth-Token',
-            'Access-Control-Allow-Origin' => $origin,
-        ];
-    }
-
     #[Route(path: '/conversation/{type}/{referring}', name: 'pushword_conversation', requirements: [
         'type' => '[a-zA-Z0-9-]*',
         'referring' => '[-A-Za-z0-9_\/\.]*',
@@ -179,20 +112,17 @@ final class ConversationFormController extends AbstractController
     public function show(Request $request, string $type): Response
     {
         // Reset per-request state. This controller is a shared service, so under a
-        // long-running worker (FrankenPHP, RoadRunner…) $form and $possibleOrigins
-        // would survive between requests and pin every later request to the first
-        // request's host/locale/origin. show() is the only entrypoint, so clearing
-        // here is enough to guarantee a fresh resolution per request.
+        // long-running worker (FrankenPHP, RoadRunner…) $form would survive between
+        // requests and pin every later request to the first request's host/locale.
+        // show() is the only entrypoint, so clearing here is enough to guarantee a
+        // fresh resolution per request.
         $this->form = null;
-        $this->possibleOrigins = [];
 
         $host = $request->query->getString('host') ?: $request->getHost();
         $this->apps->switchSite($host);
 
-        // Refuse a foreign origin before the limiter: a hostile page must not spend
-        // its visitors' submission quota with posts that would be refused anyway.
-        $corsHeaders = $this->getCorsHeaders($request);
-
+        // A foreign origin was already refused by ConversationCorsListener, before this
+        // limiter: a hostile page cannot spend its visitors' submission quota.
         if ($request->isMethod(Request::METHOD_POST)) {
             $limit = $this->anonymousContentLimiter
                 ->create(($request->getClientIp() ?? 'unknown').':'.$this->apps->get()->getMainHost())
@@ -200,15 +130,14 @@ final class ConversationFormController extends AbstractController
             if (! $limit->isAccepted()) {
                 $retryAfter = max(1, $limit->getRetryAfter()->getTimestamp() - time());
 
-                // With the CORS headers, a trusted cross-origin page reads this 429 instead of a bare network error.
-                throw new TooManyRequestsHttpException($retryAfter, 'Too many submissions. Please try again later.', headers: $corsHeaders);
+                throw new TooManyRequestsHttpException($retryAfter, 'Too many submissions. Please try again later.');
             }
         }
 
         // The locale is resolved by ConversationLocaleListener, early enough for the
         // translator and the validator to pick it up.
 
-        $response = new Response(headers: $corsHeaders);
+        $response = new Response();
 
         $form = $this->getFormManager($type, $request)->getCurrentStep()->getForm();
         $form->handleRequest($request);

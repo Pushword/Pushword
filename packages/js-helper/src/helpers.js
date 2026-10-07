@@ -52,6 +52,7 @@ function installHtmxBridge() {
           detail: {
             status: event.detail.ctx.response.status,
             url: el.getAttribute('data-live-alias'),
+            retryAfter: event.detail.ctx.response.headers.get('Retry-After'),
           },
         }),
       )
@@ -103,7 +104,11 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
           item.dispatchEvent(
             new CustomEvent('live-block-forbidden', {
               bubbles: true,
-              detail: { status: response.status, url: url },
+              detail: {
+                status: response.status,
+                url: url,
+                retryAfter: response.headers.get('Retry-After'),
+              },
             }),
           )
           return null
@@ -152,7 +157,11 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
           liveFormBlock.dispatchEvent(
             new CustomEvent('live-block-forbidden', {
               bubbles: true,
-              detail: { status: response.status, url: form.srcElement.action },
+              detail: {
+                status: response.status,
+                url: form.srcElement.action,
+                retryAfter: response.headers.get('Retry-After'),
+              },
             }),
           )
           delete liveFormBlock.dataset.submitting

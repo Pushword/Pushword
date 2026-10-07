@@ -115,10 +115,12 @@ abstract class AbstractConversationForm implements ConversationFormInterface
      */
     public function getCurrentStep(): FormBuilderInterface
     {
-        $currentStepMethod = 'getStep'.self::$step[$this->getStep()];
+        // `?step=` comes from the URL: a step this form does not have is not found.
+        $stepName = self::$step[$this->getStep()] ?? null;
+        $currentStepMethod = 'getStep'.$stepName;
 
-        if (! method_exists($this, $currentStepMethod)) {
-            throw new Exception();
+        if (null === $stepName || ! method_exists($this, $currentStepMethod)) {
+            throw new NotFoundHttpException('Conversation step not found.');
         }
 
         $currentStep = $this->$currentStepMethod(); // @phpstan-ignore-line

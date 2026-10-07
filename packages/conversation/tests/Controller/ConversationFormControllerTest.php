@@ -225,6 +225,32 @@ final class ConversationFormControllerTest extends WebTestCase
         self::assertSame('https://static.localhost.dev', $client->getResponse()->headers->get('Access-Control-Allow-Origin'));
     }
 
+    /** Without `?host=`, the origin is checked against the site the request was sent to. */
+    public function testOriginIsCheckedAgainstTheRequestHost(): void
+    {
+        $client = self::createClient();
+
+        $client->request(
+            Request::METHOD_GET,
+            '/conversation/newsletter/test',
+            server: ['HTTP_HOST' => 'pushword.piedweb.com', 'HTTP_ORIGIN' => 'https://pushword.piedweb.com'],
+        );
+
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertResponseHeaderSame('Access-Control-Allow-Origin', 'https://pushword.piedweb.com');
+    }
+
+    /** The origin check and the CORS headers belong to the conversation route only. */
+    public function testOtherRoutesIgnoreTheOrigin(): void
+    {
+        $client = self::createClient();
+
+        $client->request(Request::METHOD_GET, '/login', server: ['HTTP_ORIGIN' => 'https://evil.example']);
+
+        self::assertResponseIsSuccessful();
+        self::assertResponseNotHasHeader('Access-Control-Allow-Origin');
+    }
+
     /** @return iterable<string, array{string}> */
     public static function unauthorizedOriginProvider(): iterable
     {
@@ -233,6 +259,10 @@ final class ConversationFormControllerTest extends WebTestCase
         yield 'trusted origin as a prefix' => ['https://static.localhost.dev.evil.tld'];
         // What a browser sends from a sandboxed iframe or a file:// page.
         yield 'opaque origin' => ['null'];
+        // Each site trusts its own hosts, not the other sites of the install.
+        yield 'another site of the install' => ['https://pushword.piedweb.com'];
+        // Outside the dev environment, a site host is trusted over https only.
+        yield 'site host over plain http' => ['http://localhost.dev'];
     }
 
     #[DataProvider('unauthorizedOriginProvider')]
@@ -327,13 +357,45 @@ final class ConversationFormControllerTest extends WebTestCase
         $client->request(Request::METHOD_POST, $url, server: $server);
         self::assertResponseStatusCodeSame(Response::HTTP_TOO_MANY_REQUESTS);
         self::assertResponseHasHeader('Retry-After');
-        // A trusted page posting cross-origin must be able to read the refusal.
-        self::assertSame($origin, $client->getResponse()->headers->get('Access-Control-Allow-Origin'));
-        self::assertSame(null === $origin ? null : 'true', $client->getResponse()->headers->get('Access-Control-Allow-Credentials'));
+        // A trusted page posting cross-origin must be able to read the refusal and its delay.
+        $corsHeaders = [
+            'Access-Control-Allow-Origin' => $origin,
+            'Access-Control-Allow-Credentials' => 'true',
+            'Access-Control-Expose-Headers' => 'Retry-After',
+        ];
+        foreach ($corsHeaders as $name => $value) {
+            self::assertSame(null === $origin ? null : $value, $client->getResponse()->headers->get($name), $name);
+        }
 
         // Only submissions are limited: the form can still be displayed.
         $client->request(Request::METHOD_GET, $url, server: $server);
         self::assertResponseIsSuccessful();
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function notFoundProvider(): iterable
+    {
+        yield 'unknown form type' => ['/conversation/unknown-type/test?host=localhost.dev'];
+        yield 'step out of range' => ['/conversation/newsletter/test?host=localhost.dev&step=99'];
+        // Steps are numbered from 1.
+        yield 'step zero' => ['/conversation/newsletter/test?host=localhost.dev&step=0'];
+        yield 'step the form does not have' => ['/conversation/message/test?host=localhost.dev&step=2'];
+        yield 'expired workflow' => ['/conversation/newsletter/test?host=localhost.dev&step=2&token='.str_repeat('a', 64)];
+    }
+
+    /**
+     * A URL the form cannot answer is not found, not a server error, and a trusted
+     * cross-origin page can read that refusal instead of a bare network error.
+     */
+    #[DataProvider('notFoundProvider')]
+    public function testUnknownConversationIsNotFoundAndReadableCrossOrigin(string $url): void
+    {
+        $client = self::createClient();
+
+        $client->request(Request::METHOD_GET, $url, server: ['HTTP_ORIGIN' => 'https://static.localhost.dev']);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        self::assertResponseHeaderSame('Access-Control-Allow-Origin', 'https://static.localhost.dev');
     }
 
     public function testConversationWithSlashInReferring(): void
