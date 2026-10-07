@@ -18,6 +18,7 @@ use Pushword\Core\Event\PagesListSearchEvent;
 use Pushword\Core\Query\ArrayCriteriaReader;
 use Pushword\Core\Query\Condition;
 use Pushword\Core\Query\Conjunction;
+use Pushword\Core\Query\Field\Strategy\JsonPropertyStrategy;
 use Pushword\Core\Query\Group;
 use Pushword\Core\Query\Search\PageSearchVocabulary;
 use Pushword\Core\Query\Search\SearchParser;
@@ -120,10 +121,10 @@ final class PageExtension
         $excludeCurrent = new Condition('id', '<>', $currentPage->id ?? 0);
         $criteria = null === $criteria ? $excludeCurrent : new Group(Conjunction::All, [$criteria, $excludeCurrent]);
 
-        // As in pages_list(): 'search' keeps the order the slugs are written in. The cut
+        // As in pages_list(): 'search' keeps the order the pages are named in. The cut
         // waits for that order, so the limit cannot be left to the query either.
         [$order, $orderBySearch] = $this->splitSearchOrder($order);
-        $orderedSlugs = $orderBySearch ? $this->slugsInOrder($criteria) : [];
+        $orderedTerms = $orderBySearch ? $this->termsInOrder($criteria) : [];
 
         $order = str_replace('priority', 'weight', $order); // bc
         $order = '' === $order ? 'publishedAt,weight' : $order;
@@ -131,13 +132,13 @@ final class PageExtension
             : ['key' => $order[0], 'direction' => $order[1]];
 
         $limit = $this->getLimit($max);
-        $pages = $this->pageRepo->getPublishedPages($host ?? $this->apps->getMainHost(), $criteria, $order, [] === $orderedSlugs ? $limit : 0, $withRedirection);
+        $pages = $this->pageRepo->getPublishedPages($host ?? $this->apps->getMainHost(), $criteria, $order, [] === $orderedTerms ? $limit : 0, $withRedirection);
 
-        if ([] === $orderedSlugs) {
+        if ([] === $orderedTerms) {
             return $pages;
         }
 
-        $pages = $this->sortBySlugs($pages, $orderedSlugs);
+        $pages = $this->sortBySearch($pages, $orderedTerms);
 
         return $limit > 0 ? \array_slice($pages, 0, $limit) : $pages;
     }
@@ -312,12 +313,12 @@ final class PageExtension
 
         $search = $this->criteria($search, $currentPage) ?? [];
 
-        // `order: 'search'` keeps the pages in the order their slugs are written —
-        // a curated row of cards, which no column can express. Whatever follows it
-        // (`search, weight ↓`) orders the rest, so pages the search does not name
+        // `order: 'search'` keeps the pages in the order their slugs or properties are
+        // written — a curated row of cards, which no column can express. Whatever follows
+        // it (`search, weight ↓`) orders the rest, so pages the search does not name
         // follow in a stable order rather than in whatever the database returns.
         [$order, $orderBySearch] = $this->splitSearchOrder($order);
-        $orderedSlugs = $orderBySearch ? $this->slugsInOrder($search) : [];
+        $orderedTerms = $orderBySearch ? $this->termsInOrder($search) : [];
 
         $order = str_replace('priority', 'weight', $order); // bc
         $order = '' === $order ? 'publishedAt,weight' : $order;
@@ -332,7 +333,7 @@ final class PageExtension
 
         // Ordering by the search happens on the result, so the cut has to wait for it:
         // limiting in SQL would drop pages the curated order puts first.
-        $queryLimit = [] === $orderedSlugs ? $limit : 0;
+        $queryLimit = [] === $orderedTerms ? $limit : 0;
 
         $queryBuilder = $published
             ? $this->pageRepo->getPublishedPageQueryBuilder($host, $search, $order, $queryLimit)
@@ -368,8 +369,8 @@ final class PageExtension
         /** @var Page[] */
         $pages = $queryBuilder->getQuery()->getResult();
 
-        if ([] !== $orderedSlugs) {
-            $pages = $this->sortBySlugs($pages, $orderedSlugs);
+        if ([] !== $orderedTerms) {
+            $pages = $this->sortBySearch($pages, $orderedTerms);
             if ($limit > 0) {
                 $pages = \array_slice($pages, 0, $limit);
             }
@@ -407,7 +408,7 @@ final class PageExtension
 
     /**
      * Splits a leading `search` off an order expression: `search, weight ↓` means the
-     * slugs first, in the order written, then that column for everything else. Alone,
+     * named pages first, in the order written, then that column for everything else. Alone,
      * it leaves an empty expression, which falls back to the default order below.
      *
      * @param array<(string|int), string>|string $order
@@ -425,49 +426,67 @@ final class PageExtension
     }
 
     /**
-     * The slugs a search names, in the order it names them.
+     * The exact `slug:` and `prop:key:value` terms of a search, in the order it
+     * names them, as field and value.
      *
      * `slug:` compiles to a LIKE (`slug:%partial%` is documented), so a pattern
      * matching more than one page is skipped: it has no single position to hold.
+     * A property value may be shared, and its pages then share its position.
      *
      * @param array<mixed>|Condition|Group $criteria
      *
-     * @return list<string>
+     * @return list<array{string, string}>
      */
-    private function slugsInOrder(array|Condition|Group $criteria): array
+    private function termsInOrder(array|Condition|Group $criteria): array
     {
         if ($criteria instanceof Group) {
-            $slugs = [];
+            $terms = [];
             foreach ($criteria->children as $child) {
-                $slugs = [...$slugs, ...$this->slugsInOrder($child)];
+                $terms = [...$terms, ...$this->termsInOrder($child)];
             }
 
-            return $slugs;
+            return $terms;
         }
 
-        if (! $criteria instanceof Condition || 'slug' !== $criteria->field) {
+        if (! $criteria instanceof Condition || ! \is_string($criteria->value)) {
             return [];
         }
 
-        return \is_string($criteria->value) && ! str_contains($criteria->value, '%')
-            ? [$criteria->value]
-            : [];
+        $named = match (true) {
+            'slug' === $criteria->field => ! str_contains($criteria->value, '%'),
+            str_starts_with($criteria->field, JsonPropertyStrategy::PREFIX) => '=' === $criteria->operator,
+            default => false,
+        };
+
+        return $named ? [[$criteria->field, $criteria->value]] : [];
     }
 
     /**
-     * @param Page[]       $pages
-     * @param list<string> $slugs
+     * @param Page[]                      $pages
+     * @param list<array{string, string}> $terms
      *
      * @return Page[]
      */
-    private function sortBySlugs(array $pages, array $slugs): array
+    private function sortBySearch(array $pages, array $terms): array
     {
-        $rank = array_flip($slugs);
+        $rank = static function (Page $page) use ($terms): int {
+            foreach ($terms as $position => [$field, $value]) {
+                $actual = 'slug' === $field
+                    ? $page->slug
+                    : $page->getCustomProperty(substr($field, \strlen(JsonPropertyStrategy::PREFIX)));
 
-        // A page the search does not name — matched by another term of the same
-        // expression — ranks last and, sorting being stable since PHP 8, keeps the
-        // order the query returned it in.
-        usort($pages, static fn (Page $a, Page $b): int => ($rank[$a->slug] ?? \PHP_INT_MAX) <=> ($rank[$b->slug] ?? \PHP_INT_MAX));
+                if (\is_scalar($actual) && (string) $actual === $value) {
+                    return $position;
+                }
+            }
+
+            // A page the search does not name — matched by another term of the same
+            // expression — ranks last and, sorting being stable since PHP 8, keeps the
+            // order the query returned it in.
+            return \PHP_INT_MAX;
+        };
+
+        usort($pages, static fn (Page $a, Page $b): int => $rank($a) <=> $rank($b));
 
         return $pages;
     }

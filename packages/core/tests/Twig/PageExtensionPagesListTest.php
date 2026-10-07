@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\Twig;
 
+use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
@@ -266,6 +268,150 @@ final class PageExtensionPagesListTest extends KernelTestCase
             ['demo-scroller/rocher-rond', 'demo-scroller/tour-du-mont-blanc'],
             array_map(static fn (Page $page): string => $page->slug, $pages),
         );
+    }
+
+    /**
+     * A `prop:` term names pages as well as a slug does — a product code outlives a
+     * renamed slug — so `search` follows those terms too. The pages are published a
+     * day apart and written in neither date order, so no column produces the result.
+     */
+    public function testOrderSearchKeepsThePropertyTermsInTheOrderWritten(): void
+    {
+        $this->withTripPages(['a' => 'TRIP-a', 'b' => 'TRIP-b', 'c' => 'TRIP-c'], function (): void {
+            self::assertSame(
+                ['search-order-prop-b', 'search-order-prop-c', 'search-order-prop-a'],
+                $this->slugs('prop:tripCode:TRIP-b OR prop:tripCode:TRIP-c OR prop:tripCode:TRIP-a', 'search'),
+            );
+        });
+    }
+
+    /**
+     * `customProperty:` is the older spelling of `prop:`, and the one a
+     * PagesListSearchEvent listener may still write: it must order the same way.
+     */
+    public function testOrderSearchFollowsTheOlderCustomPropertySpelling(): void
+    {
+        $this->withTripPages(['a' => 'TRIP-a', 'b' => 'TRIP-b', 'c' => 'TRIP-c'], function (): void {
+            self::assertSame(
+                ['search-order-prop-b', 'search-order-prop-c', 'search-order-prop-a'],
+                $this->slugs('customProperty:tripCode:TRIP-b OR customProperty:tripCode:TRIP-c OR customProperty:tripCode:TRIP-a', 'search'),
+            );
+        });
+    }
+
+    /**
+     * Slug and property terms share one sequence: a page takes the position of the
+     * term naming it, whichever kind it is. c, a, b is neither date order.
+     */
+    public function testOrderSearchInterleavesSlugAndPropertyTermsAsWritten(): void
+    {
+        $this->withTripPages(['a' => 'TRIP-a', 'b' => 'TRIP-b', 'c' => 'TRIP-c'], function (): void {
+            self::assertSame(
+                ['search-order-prop-c', 'search-order-prop-a', 'search-order-prop-b'],
+                $this->slugs('prop:tripCode:TRIP-c OR slug:search-order-prop-a OR prop:tripCode:TRIP-b', 'search'),
+            );
+        });
+    }
+
+    /**
+     * A property value may name several pages: they share its position, and the
+     * column after `search` orders them among themselves — asserted both ways.
+     */
+    public function testOrderSearchGivesPagesSharingAPropertyValueOnePosition(): void
+    {
+        $this->withTripPages(['a' => 'TRIP-shared', 'b' => 'TRIP-shared', 'c' => 'TRIP-c'], function (): void {
+            $search = 'prop:tripCode:TRIP-c OR prop:tripCode:TRIP-shared';
+
+            self::assertSame(
+                ['search-order-prop-c', 'search-order-prop-a', 'search-order-prop-b'],
+                $this->slugs($search, 'search, publishedAt ↑'),
+            );
+            self::assertSame(
+                ['search-order-prop-c', 'search-order-prop-b', 'search-order-prop-a'],
+                $this->slugs($search, 'search, publishedAt ↓'),
+            );
+        });
+    }
+
+    /**
+     * A page is named by the value of its property, not by carrying it: pages with
+     * another `tripCode`, matched by another term, follow the named one.
+     */
+    public function testOrderSearchRanksByThePropertyValueNotItsPresence(): void
+    {
+        $this->withTripPages(['a' => 'TRIP-a', 'b' => 'TRIP-b', 'c' => 'TRIP-c'], function (): void {
+            self::assertSame(
+                ['search-order-prop-b', 'search-order-prop-a', 'search-order-prop-c'],
+                $this->slugs('prop:tripCode:TRIP-b OR slug:%search-order-prop%', 'search, publishedAt ↑'),
+            );
+        });
+    }
+
+    /**
+     * pages_list() reaches the ordering on its own path: property terms must order
+     * the rendered cards too, and `max` cut after that order, not the dates.
+     */
+    public function testOrderSearchOrdersThePropertyTermsPagesListRenders(): void
+    {
+        $this->withTripPages(['a' => 'TRIP-a', 'b' => 'TRIP-b', 'c' => 'TRIP-c'], function (): void {
+            $rendered = $this->ext()->renderPagesList(
+                'prop:tripCode:TRIP-b OR prop:tripCode:TRIP-c OR prop:tripCode:TRIP-a',
+                2,
+                order: 'search',
+                view: 'card',
+                currentPage: $this->currentPage(),
+            );
+
+            self::assertStringContainsString('Search order b', $rendered);
+            self::assertLessThan(mb_strpos($rendered, 'Search order c'), mb_strpos($rendered, 'Search order b'));
+            self::assertStringNotContainsString('Search order a', $rendered);
+        });
+    }
+
+    /**
+     * Persists one published page per entry, runs $test, and removes the pages
+     * whatever it found. They are published a day apart in the order given — the
+     * first the oldest — so any date order is total.
+     *
+     * @param array<string, scalar> $tripCodes slug suffix => `tripCode` property
+     */
+    private function withTripPages(array $tripCodes, callable $test): void
+    {
+        $this->ext();
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+
+        $pages = [];
+        $daysAgo = \count($tripCodes);
+        foreach ($tripCodes as $suffix => $tripCode) {
+            $page = new Page();
+            $page->host = 'localhost.dev';
+            $page->locale = 'en';
+            $page->slug = 'search-order-prop-'.$suffix;
+            $page->h1 = 'Search order '.$suffix;
+            $page->mainContent = 'Content';
+            $page->publishedAt = new DateTime($daysAgo.' days ago');
+            $page->setCustomProperty('tripCode', $tripCode);
+            $entityManager->persist($page);
+            $pages[] = $page;
+            --$daysAgo;
+        }
+
+        $entityManager->flush();
+
+        try {
+            $test();
+        } finally {
+            // $test boots a fresh kernel, whose entity manager has never seen these pages.
+            $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+            foreach ($pages as $page) {
+                $managed = $entityManager->find(Page::class, $page->id);
+                if (null !== $managed) {
+                    $entityManager->remove($managed);
+                }
+            }
+
+            $entityManager->flush();
+        }
     }
 
     /** An empty scroller must not render a wrapper with arrows around nothing. */

@@ -58,13 +58,16 @@ The third argument sorts the list: any page column, with an optional direction
 (`'weight DESC, publishedAt DESC'`; `↑` and `↓` are accepted), or `prop.<key>` for a
 custom property. It defaults to `publishedAt,weight`.
 
-`order: 'search'` keeps the pages in the order their `slug:` terms are written — for a
-hand-picked row of cards:
+`order: 'search'` keeps the pages in the order their `slug:` or `prop:` terms are
+written — for a hand-picked row of cards:
 
 ```twig
 {{ pages_list('slug:tour-du-mont-blanc OR slug:gr54 OR slug:vercors', order: 'search', view: 'card') }}
+{{ pages_list('prop:tripCode:TMB11 OR prop:tripCode:GR54', order: 'search', view: 'card') }}
 ```
 
+- A `prop:` term survives a renamed slug. Pages sharing its value share its position,
+  and what follows `search` orders them among themselves.
 - Pages the search matches **without naming** — through another term of the same
   expression — follow the named ones. `slug:tour-du-mont-blanc OR tag:trek` therefore
   pins one card at the head of a tag list.
@@ -72,7 +75,7 @@ hand-picked row of cards:
   Alone, `search` leaves the default order underneath. `search` must open the
   expression — it sorts the head, so it cannot come second.
 - `slug:%partial%` matches more than one page, so it holds no single position. A search
-  naming no exact slug simply gets the default order.
+  naming no exact slug or property simply gets the default order.
 - `max` cuts **after** the reordering, so it keeps the ones written first, not the most
   recent ones.
 
