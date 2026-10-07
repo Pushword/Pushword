@@ -110,7 +110,7 @@ div[data-item-name='convert-to'] {
   opacity: 0;
 }
 
-.codex-editor path {
+.codex-editor path:not(.pw-mermaid path) {
   stroke: revert-layer !important;
 }
 /** // **/

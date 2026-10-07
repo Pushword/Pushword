@@ -10,7 +10,16 @@ export async function renderMermaid(source) {
         startOnLoad: false,
         securityLevel: 'strict',
         suppressErrorRendering: true,
-        theme: 'neutral',
+        theme: 'base',
+        themeVariables: {
+          primaryColor: '#eff6ff',
+          primaryTextColor: '#1e293b',
+          primaryBorderColor: '#64748b',
+          lineColor: '#475569',
+          secondaryColor: '#f1f5f9',
+          tertiaryColor: '#f8fafc',
+          edgeLabelBackground: '#f8fafc',
+        },
       })
       return mermaid
     })

@@ -88,7 +88,7 @@ describe('Mermaid code block', () => {
     await vi.advanceTimersByTimeAsync(300)
     await vi.dynamicImportSettled()
     expect(element.querySelector('select')?.value).toBe('mermaid')
-    expect(setModelLanguage).toHaveBeenCalledWith(model, 'plaintext')
+    expect(setModelLanguage).toHaveBeenCalledWith(model, 'mermaid')
     expect(element.querySelector('.pw-mermaid-preview')?.textContent).toBe('Diagram')
     expect(tool.save()).toEqual({ html: value, language: 'mermaid' })
   })
@@ -125,6 +125,38 @@ describe('Mermaid code block', () => {
     await vi.advanceTimersByTimeAsync(0)
     expect(renderMermaid).toHaveBeenCalledTimes(2)
     expect(element.querySelector('.pw-mermaid')?.textContent).toBe('Latest')
+  })
+
+  it('keeps the current diagram visible until the edited preview is ready', async () => {
+    const { element } = create()
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    const preview = element.querySelector('.pw-mermaid-preview')!
+    const diagram = preview.querySelector('svg')
+    let finish: (svg: string) => void = () => {}
+    renderMermaid.mockImplementationOnce(
+      () =>
+        new Promise<string>((resolve) => {
+          finish = resolve
+        }),
+    )
+
+    monacoEditor.setValue('flowchart LR\n A --> C')
+    expect(preview.querySelector('svg')).toBe(diagram)
+    expect(preview.getAttribute('aria-busy')).toBe('true')
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    expect(preview.querySelector('svg')).toBe(diagram)
+
+    finish('<svg><text>Updated</text></svg>')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(preview.textContent).toBe('Updated')
+    expect(preview.getAttribute('aria-busy')).toBe('false')
+
+    monacoEditor.setValue('')
+    expect(preview.querySelector('svg')).toBeNull()
+    expect(preview.textContent).toContain('Enter Mermaid code')
+    expect(preview.getAttribute('aria-busy')).toBe('false')
   })
 
   it('shows syntax errors as text and recovers after a correction', async () => {

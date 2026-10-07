@@ -96,6 +96,7 @@ export default class CodeBlock extends Raw {
   }
 
   private updateLanguage(instance = this.editorInstance): void {
+    if (this.wrapper) this.wrapper.dataset.language = this._codeBlockData.language
     if (this.languageSelect) {
       if (
         !Array.from(this.languageSelect.options).some(
@@ -108,12 +109,7 @@ export default class CodeBlock extends Raw {
     }
     const model = instance?.getModel()
     if (model) {
-      window.monaco?.editor.setModelLanguage(
-        model,
-        this._codeBlockData.language === 'mermaid'
-          ? 'plaintext'
-          : this._codeBlockData.language,
-      )
+      window.monaco?.editor.setModelLanguage(model, this._codeBlockData.language)
     }
   }
 
@@ -122,8 +118,11 @@ export default class CodeBlock extends Raw {
     const revision = ++this.previewRevision
     if (!this.preview) return
     this.preview.hidden = this._codeBlockData.language !== 'mermaid'
-    this.preview.replaceChildren()
-    if (this.preview.hidden) return
+    this.preview.setAttribute('aria-busy', 'false')
+    if (this.preview.hidden) {
+      this.preview.replaceChildren()
+      return
+    }
     const source = this.editorInstance?.getValue() ?? this._codeBlockData.html
     if (!source.trim()) {
       this.preview.textContent = this.api.i18n.t(
@@ -131,7 +130,10 @@ export default class CodeBlock extends Raw {
       )
       return
     }
-    this.preview.textContent = this.api.i18n.t('Loading preview…')
+    this.preview.setAttribute('aria-busy', 'true')
+    if (!this.preview.querySelector('svg')) {
+      this.preview.textContent = this.api.i18n.t('Loading preview…')
+    }
     this.previewTimer = setTimeout(() => void this.renderPreview(source, revision), 300)
   }
 
@@ -143,6 +145,7 @@ export default class CodeBlock extends Raw {
       const diagram = make.element('div', ['pw-mermaid', 'not-prose'])
       diagram.innerHTML = svg
       this.preview.replaceChildren(diagram)
+      this.preview.setAttribute('aria-busy', 'false')
     } catch (error) {
       if (revision !== this.previewRevision || !this.preview) return
       const message = make.element('p')
@@ -150,6 +153,7 @@ export default class CodeBlock extends Raw {
       const details = make.element('pre')
       details.textContent = error instanceof Error ? error.message : String(error)
       this.preview.replaceChildren(message, details)
+      this.preview.setAttribute('aria-busy', 'false')
     }
   }
 

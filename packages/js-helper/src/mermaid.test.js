@@ -44,12 +44,14 @@ describe('Mermaid enhancement', () => {
     expect(render.mock.calls[0][1]).toBe('flowchart LR\n A --> B')
     expect(document.querySelectorAll('.pw-mermaid svg')).toHaveLength(2)
     expect(document.querySelector('#flow svg')).not.toBeNull()
-    expect(initialize).toHaveBeenCalledExactlyOnceWith({
-      startOnLoad: false,
-      securityLevel: 'strict',
-      suppressErrorRendering: true,
-      theme: 'neutral',
-    })
+    expect(initialize).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        suppressErrorRendering: true,
+        theme: 'base',
+      }),
+    )
   })
 
   it('leaves a failed diagram readable without preventing another from rendering', async () => {

@@ -20,6 +20,16 @@
   margin: 0;
 }
 
+.monaco-codeblock-wrapper[data-language='mermaid'] {
+  background: oklch(0.98 0.003 250) !important;
+  border: 1px solid oklch(0.88 0.01 250);
+}
+
+.monaco-codeblock-wrapper[data-language='mermaid'] .monaco-editor {
+  --vscode-editor-background: oklch(0.98 0.003 250) !important;
+  --vscode-focusBorder: oklch(0.98 0.003 250) !important;
+}
+
 .pw-mermaid-preview {
   margin-top: 0.75rem;
   color: oklch(0.4 0.01 250);
@@ -33,4 +43,6 @@
 
 .pw-mermaid-preview .pw-mermaid {
   margin: 0;
+  border: 1px solid oklch(0.88 0.01 250);
+  border-radius: 5px;
 }

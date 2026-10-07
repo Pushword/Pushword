@@ -4,7 +4,7 @@ import { installMarkdownChrome } from './markdown/MarkdownToolbar.js'
 
 export default class MonacoHelper {
   static defaultSettings = {
-    theme: 'light+', // You can change the theme if needed
+    theme: 'pushword-light',
     lineNumbers: 'off',
     minimap: { enabled: false },
     scrollBeyondLastLine: false, // Désactiver le défilement au-delà de la dernière ligne

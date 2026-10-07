@@ -3,6 +3,9 @@
  */
 import * as monaco from 'monaco-editor'
 import MonacoHelper from './MonacoHelper.js'
+import { registerMermaid } from './mermaid.js'
+
+registerMermaid(monaco)
 
 window.monaco = monaco
 window.monacoHelper = MonacoHelper

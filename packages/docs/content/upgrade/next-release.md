@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/conversation`, `pushword/core`, `pushword/flat`
+**Concerns:** `pushword/admin`, `pushword/admin-block-editor`, `pushword/conversation`, `pushword/core`, `pushword/flat`, `@pushword/js-helper`
 
 ## Conversation origins key
 
@@ -52,7 +52,8 @@ a single-site export.
 
 ## Mermaid diagrams
 
-Fenced `mermaid` blocks now render as diagrams in the default theme.
+Fenced `mermaid` blocks render as diagrams; both editors highlight their syntax.
+Diagrams use a higher-contrast light palette without any additional configuration.
 Custom themes must retain the Mermaid assets; static exports must include
 `bundles/pushwordcore/mermaid` in `static_assets` if they do not copy `bundles`.
 Exclude `code.language-mermaid` from syntax highlighting. See [Mermaid diagrams](/markdown-block#mermaid-diagrams).

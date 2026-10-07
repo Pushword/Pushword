@@ -14,6 +14,7 @@
     "file-loader": "^6.2.0",
     "monaco-editor": "~0.57.0",
     "monaco-editor-webpack-plugin": "^7.1",
+    "monaco-mermaid": "1.1.0",
     "monaco-yaml": "^5.4",
     "style-loader": "^4",
     "vite": "^8.3.3",
