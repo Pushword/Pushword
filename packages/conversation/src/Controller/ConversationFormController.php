@@ -5,22 +5,19 @@ declare(strict_types=1);
 namespace Pushword\Conversation\Controller;
 
 use Doctrine\Persistence\ManagerRegistry;
-use ErrorException;
 use Exception;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Form\ConversationFormInterface;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Site\SiteRegistry;
 use ReflectionClass;
-
-use function Safe\json_encode;
-
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
@@ -116,7 +113,7 @@ final class ConversationFormController extends AbstractController
     }
 
     /**
-     * @return mixed[]
+     * @return string[]
      */
     private function getPossibleOrigins(Request $request): array
     {
@@ -160,7 +157,7 @@ final class ConversationFormController extends AbstractController
 
         if (null !== $origin) {
             if (! \in_array($origin, $this->getPossibleOrigins($request), true)) {
-                throw new ErrorException('origin sent is not authorized ('.$origin.') '.json_encode($this->getPossibleOrigins($request)).'.');
+                throw new AccessDeniedHttpException(\sprintf('Origin `%s` is not allowed to load conversation forms: add it to `conversation_possible_origins` (allowed: %s).', $origin, implode(' ', $this->getPossibleOrigins($request))));
             }
 
             $response->headers->set('Access-Control-Allow-Credentials', 'true');

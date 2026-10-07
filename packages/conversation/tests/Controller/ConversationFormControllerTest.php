@@ -222,6 +222,63 @@ final class ConversationFormControllerTest extends WebTestCase
         self::assertSame('https://static.localhost.dev', $client->getResponse()->headers->get('Access-Control-Allow-Origin'));
     }
 
+    /** @return iterable<string, array{string}> */
+    public static function unauthorizedOriginProvider(): iterable
+    {
+        yield 'unrelated origin' => ['https://evil.example'];
+        // Origins match exactly: starting like a trusted one is not enough.
+        yield 'trusted origin as a prefix' => ['https://static.localhost.dev.evil.tld'];
+        // What a browser sends from a sandboxed iframe or a file:// page.
+        yield 'opaque origin' => ['null'];
+    }
+
+    #[DataProvider('unauthorizedOriginProvider')]
+    public function testUnauthorizedOriginIsForbidden(string $origin): void
+    {
+        $client = self::createClient();
+
+        $client->request(
+            Request::METHOD_GET,
+            '/conversation/newsletter/test?host=localhost.dev',
+            server: ['HTTP_ORIGIN' => $origin],
+        );
+
+        $content = (string) $client->getResponse()->getContent();
+        self::assertSame(Response::HTTP_FORBIDDEN, $client->getResponse()->getStatusCode(), $content);
+        self::assertStringContainsString('Origin `'.$origin.'` is not allowed', $content);
+        self::assertStringContainsString('conversation_possible_origins', $content);
+        // Bundle config and site hosts, space-separated as the config key expects them.
+        self::assertStringContainsString('(allowed: https://static.localhost.dev https://localhost.dev', $content);
+        self::assertNull($client->getResponse()->headers->get('Access-Control-Allow-Origin'));
+    }
+
+    /**
+     * CORS only hides the response from the browser: a cross-origin form POST still
+     * reaches the server, so the origin check is what keeps it from being saved.
+     */
+    public function testUnauthorizedOriginCannotPostAMessage(): void
+    {
+        $client = self::createClient();
+        $content = 'Cross-origin message '.uniqid();
+        $postFrom = static fn (string $origin): mixed => $client->request(
+            Request::METHOD_POST,
+            '/conversation/message/test?host=localhost.dev',
+            ['form' => ['authorEmail' => 'cross-origin@example.tld', 'authorName' => 'Test', 'content' => $content]],
+            server: ['HTTP_ORIGIN' => $origin, 'REMOTE_ADDR' => '192.0.2.52'],
+        );
+        $savedMessages = static fn (): array => self::getContainer()->get('doctrine')->getRepository(Message::class)
+            ->findBy(['content' => $content]);
+
+        $postFrom('https://evil.example');
+        self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+        self::assertCount(0, $savedMessages());
+
+        // The same submission from the site's own origin is saved: the origin alone was refused.
+        $postFrom('https://localhost.dev');
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $savedMessages());
+    }
+
     public function testConversationWithSlashInReferring(): void
     {
         $client = self::createClient();
