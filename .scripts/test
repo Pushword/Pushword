@@ -6,7 +6,10 @@ START_TIME=$(date +%s)
 
 export TEST_RUN_ID="${TEST_RUN_ID:-$$}"
 export PANTHER_CHROME_ARGUMENTS="--headless --disable-gpu --disable-dev-shm-usage --no-sandbox --user-data-dir=/tmp/panther-chrome-${TEST_RUN_ID}"
-export LOCK_DSN="flock:///tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}/locks"
+# Where tests/bootstrap.php puts each run's and worker's dirs: sys_get_temp_dir(), which
+# follows $TMPDIR. Cleaning /tmp instead left every run behind in agent shells.
+TEST_BASE_DIR="$(php -r 'echo sys_get_temp_dir();')/com.github.pushword.pushword/tests"
+export LOCK_DSN="flock://${TEST_BASE_DIR}/${TEST_RUN_ID}/locks"
 
 JUNIT_XML="/tmp/pushword-test-${TEST_RUN_ID}.xml"
 
@@ -102,9 +105,9 @@ function cleanup {
     if [ -n "${PUSHWORD_TEST_DATABASE_BASE_URL:-${PUSHWORD_TEST_MYSQL_URL:-}}" ]; then
         php .scripts/cleanup-test-databases.php || true
     fi
-    rm -rf "/tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}"
+    rm -rf "${TEST_BASE_DIR}/${TEST_RUN_ID}"
     # Clean up paratest worker dirs (e.g. ${TEST_RUN_ID}-w1, ${TEST_RUN_ID}-w2, ...)
-    rm -rf /tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}-w*
+    rm -rf "${TEST_BASE_DIR}/${TEST_RUN_ID}"-w*
     # Panther appends its own per-worker, per-instance suffix (…-w4-<hash>), so the bare
     # path matched nothing and every run leaked its Chrome profiles — 3GB of them in /tmp
     # before this glob.
