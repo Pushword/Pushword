@@ -104,7 +104,7 @@ if (document.readyState === 'loading') {
 document.addEventListener('DOMChanged', onDomChanged)
 
 function initHighlight() {
-  document.querySelectorAll('pre code').forEach((block) => {
+  document.querySelectorAll('pre code:not(.language-mermaid)').forEach((block) => {
     hljs.highlightElement(block)
   })
 }

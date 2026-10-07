@@ -17,6 +17,7 @@
     "codemirror": "^6.0",
     "fuzzysearch": "^1.0.3",
     "glightbox": "^3.3",
+    "mermaid": "12.1.0",
     "tailwindcss-animated": "^2",
     "vite": "^8.3.3",
     "vite-plugin-compression2": "^2.3.1",

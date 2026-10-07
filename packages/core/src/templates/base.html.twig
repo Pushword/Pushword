@@ -11,6 +11,7 @@
     {% block css %}
       <script>document.head.insertAdjacentHTML('beforeend', '<style>.nojs{display:none !important}</style>');</script>
       {% block css_stylesheets %}
+        <link rel="stylesheet" href="{{ asset('bundles/pushwordcore/mermaid/front.css') }}">
         {% for stylesheet in apps.get().getViteStylesheets() %}
           {{ vite_style(stylesheet) }}
         {% endfor %}
@@ -62,6 +63,7 @@
     {% block body %}{% endblock %}
 
     {% block script %}
+      <script type="module" src="{{ asset('bundles/pushwordcore/mermaid/front.js') }}"></script>
       {% for javascript in apps.get().getViteJavascripts() %}
         {{ vite_script(javascript) }}
       {% endfor %}

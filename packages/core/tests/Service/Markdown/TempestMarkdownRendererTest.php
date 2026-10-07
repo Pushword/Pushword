@@ -18,6 +18,10 @@ final class TempestMarkdownRendererTest extends TestCase
     /** @return iterable<string, array{string, ?string}> */
     public static function cases(): iterable
     {
+        yield 'Mermaid remains escaped code for browser rendering' => [
+            "```mermaid\nflowchart LR\n A[<start>] --> B\n```",
+            "<pre><code class=\"language-mermaid\">flowchart LR\n A[&lt;start&gt;] --&gt; B\n</code></pre>\n",
+        ];
         yield 'plain text' => ['Une marche en montagne.', "<p>Une marche en montagne.</p>\n"];
         yield 'escaped quote' => ['Une « marche » dite "facile".', "<p>Une « marche » dite &quot;facile&quot;.</p>\n"];
         yield 'heading without Tempest id' => ['## Une marche facile', "<h2>Une marche facile</h2>\n"];

@@ -19,7 +19,13 @@ let undoOptions: any = null
 vi.mock('@editorjs/editorjs', () => ({
   default: class {
     saver = { save: vi.fn(async () => ({ blocks: [] })) }
-    tools = { getBlockTools: () => [] }
+    tools = {
+      getBlockTools: () =>
+        Object.entries<{ class: unknown }>(captured.tools).map(([name, tool]) => ({
+          name,
+          constructable: tool.class,
+        })),
+    }
 
     constructor(config: any) {
       captured = config
@@ -52,13 +58,15 @@ function setUpDom(): void {
   const holder = document.createElement('div')
   holder.id = 'ed'
   holder.setAttribute('data-input-id', 'inp')
-  const input = document.createElement('input')
+  const input = document.createElement('textarea')
   input.id = 'inp'
-  document.body.append(holder, input)
+  const form = document.createElement('form')
+  form.append(holder, input)
+  document.body.append(form)
 }
 
 /** Run the editor bootstrap for a page whose stored content is `content`. */
-function boot(content: string, extraConfig: Record<string, unknown> = {}): void {
+function boot(content: string, extraConfig: Record<string, unknown> = {}): editorJs {
   setUpDom()
   captured = null
   ;(window as any).editorjsConfig = { holder: 'ed', tools: {}, ...extraConfig }
@@ -67,7 +75,7 @@ function boot(content: string, extraConfig: Record<string, unknown> = {}): void 
     parseMarkdown = parseMarkdown
   }
 
-  new editorJs()
+  return new editorJs()
 }
 
 beforeEach(() => {
@@ -152,6 +160,60 @@ describe('editorJs – the baseline the form recovers against', () => {
  * that field back would have left the rendered blocks on the old content.
  */
 describe('editorJs – the field it feeds', () => {
+  it('flushes the latest blocks before submitting, without waiting for onChange', async () => {
+    const instance = boot('```mermaid\nflowchart LR\n A --> B\n```', {
+      tools: { codeBlock: { className: 'CodeBlock' } },
+    })
+    const save = instance.getEditors().ed.saver.save
+    vi.mocked(save).mockResolvedValue({
+      blocks: [
+        {
+          type: 'codeBlock',
+          data: { language: 'mermaid', html: 'flowchart LR\n A --> C' },
+        },
+      ],
+    })
+    const input = document.getElementById('inp')! as HTMLTextAreaElement
+    input.value = 'old source'
+    const form = input.form!
+    const button = document.createElement('button')
+    button.type = 'submit'
+    form.append(button)
+    const submitted = vi.fn((event: Event) => event.preventDefault())
+    form.addEventListener('submit', submitted)
+    const requestSubmit = vi
+      .spyOn(form, 'requestSubmit')
+      .mockImplementation((submitter) => {
+        expect(save).toHaveBeenCalledOnce()
+        expect(input.value).toBe('```mermaid\nflowchart LR\n A --> C\n```')
+        form.dispatchEvent(new SubmitEvent('submit', { submitter, cancelable: true }))
+      })
+
+    form.dispatchEvent(new SubmitEvent('submit', { submitter: button, cancelable: true }))
+
+    expect(submitted).not.toHaveBeenCalled()
+    await vi.waitFor(() => expect(requestSubmit).toHaveBeenCalledWith(button))
+    expect(submitted).toHaveBeenCalledOnce()
+    expect(save).toHaveBeenCalledOnce()
+  })
+
+  it.each(['markdown', 'json'])(
+    'keeps the active %s editor as the source on submit',
+    (mode) => {
+      const instance = boot('# Initial source')
+      const input = document.getElementById('inp')! as HTMLTextAreaElement
+      input.setAttribute('data-editor', mode)
+      input.value = 'current Monaco content'
+      const event = new SubmitEvent('submit', { cancelable: true })
+
+      input.form!.dispatchEvent(event)
+
+      expect(event.defaultPrevented).toBe(false)
+      expect(instance.getEditors().ed.saver.save).not.toHaveBeenCalled()
+      expect(input.value).toBe('current Monaco content')
+    },
+  )
+
   it('announces every change with an input event that bubbles', async () => {
     boot('# A page stored as markdown')
     const seen = vi.fn()

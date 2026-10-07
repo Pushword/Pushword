@@ -8,6 +8,7 @@ import List from './tools/List/List'
 import Paragraph from './tools/Paragraph/Paragraph'
 import Image from './tools/Image/Image'
 import Raw from './tools/Raw/Raw'
+import CodeBlock from './tools/CodeBlock/CodeBlock'
 import Quiz from './tools/Quiz/Quiz'
 import Table from './tools/Table/plugin'
 
@@ -57,7 +58,7 @@ function fakeEditor(): { editor: API; blocks: FakeBlock[] } {
   let current = -1
   let nextId = 0
   const block = (type: string): FakeBlock => ({ id: `b${nextId++}`, type, data: {}, tunes: {} })
-  const tools = { list: List, table: Table, paragraph: Paragraph, image: Image, quiz: Quiz, raw: Raw }
+  const tools = { list: List, table: Table, paragraph: Paragraph, image: Image, quiz: Quiz, codeBlock: CodeBlock, raw: Raw }
   const editor = {
     tools: {
       getBlockTools: () =>
@@ -110,6 +111,8 @@ async function roundTrip(markdown: string): Promise<string> {
 
 describe('import → export', () => {
   it.each([
+    ['a Mermaid flowchart', '```mermaid\nflowchart LR\n    A[Markdown] --> B[Diagram]\n```'],
+    ['Mermaid with blank lines and special characters', '```mermaid\nsequenceDiagram\n    Alice->>Bob: <hello> & {{ name }}\n\n    Bob-->>Alice: Thanks\n```'],
     ['a soft line break, which the site renders as a space', 'un\ndeux'],
     ['a hard line break', 'un  \ndeux'],
     ['a soft line break inside bold', '**un\ndeux**'],

@@ -23,8 +23,14 @@ function copyPrettierPlugin() {
 export default defineConfig({
   build: {
     sourcemap: false,
+    // Keep native URL imports intact instead of injecting Vite's ESM preload helper into an IIFE.
+    lib: {
+      entry: './src/assets/admin-block-editor.ts',
+      name: 'PushwordAdminBlockEditor',
+      formats: ['iife'],
+      cssFileName: 'style',
+    },
     rolldownOptions: {
-      input: './src/assets/admin-block-editor.ts',
       external: ['prettier/standalone', 'prettier/plugins/markdown'],
       output: {
         entryFileNames: 'admin-block-editor.js',

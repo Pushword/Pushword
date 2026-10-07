@@ -109,6 +109,12 @@ final readonly class EditorJsMessages
             ]),
             'tools' => [
                 'attaches' => $this->translate(self::MEDIA),
+                'codeBlock' => $this->translate([
+                    'Enter Mermaid code to preview the diagram.' => 'editorMermaidEmpty',
+                    'Language' => 'editorLanguage',
+                    'Loading preview…' => 'editorMermaidLoading',
+                    'Unable to render the Mermaid diagram.' => 'editorMermaidError',
+                ]),
                 'embed' => $this->translate([...self::MEDIA, 'Style' => 'editorStyle']),
                 'gallery' => $this->translate([
                     ...self::MEDIA,

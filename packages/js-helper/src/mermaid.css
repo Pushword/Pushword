@@ -1,0 +1,14 @@
+.pw-mermaid {
+  overflow-x: auto;
+  margin-block: 1.5rem;
+  padding: 1rem;
+  background: oklch(0.99 0.003 250);
+  color: oklch(0.25 0.01 250);
+}
+
+.pw-mermaid svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}

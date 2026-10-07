@@ -1,4 +1,7 @@
 @import 'tailwindcss';
+/* Mermaid's generated modules contain diagram labels, not Tailwind templates. */
+@source not "./../../core/src/Resources/public/mermaid";
+@source not "./../../../../vendor/pushword/core/src/Resources/public/mermaid";
 @import 'tailwindcss-animated';
 @plugin '@tailwindcss/typography';
 @import './tailwind.prose.scss';

@@ -310,28 +310,38 @@ describe('openContaining()', () => {
 
 describe('scrollToHash()', () => {
   it('opens collapsed block containing hash target', () => {
+    vi.useFakeTimers()
     const { wrapper, content } = makeBlock()
     const target = document.createElement('span')
+    target.scrollIntoView = vi.fn()
     target.id = 'review-1'
     content.appendChild(target)
     ShowMore.scrollToHash('#review-1')
     expect(wrapper.dataset.showMoreOpen).toBe('true')
+    vi.advanceTimersByTime(100)
+    expect(target.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' })
   })
 
   it('force-opens even when block is in _userClosed', () => {
+    vi.useFakeTimers()
     const { wrapper, content } = makeBlock()
     ShowMore._userClosed.add(wrapper)
     const target = document.createElement('span')
+    target.scrollIntoView = vi.fn()
     target.id = 'review-2'
     content.appendChild(target)
     ShowMore.scrollToHash('#review-2')
     expect(ShowMore._userClosed.has(wrapper)).toBe(false)
     expect(wrapper.dataset.showMoreOpen).toBe('true')
+    vi.advanceTimersByTime(100)
+    expect(target.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' })
   })
 
   it('opens the whole chain down to a target nested two levels deep', () => {
+    vi.useFakeTimers()
     const { outer, inner } = makeNestedBlocks()
     const target = document.createElement('span')
+    target.scrollIntoView = vi.fn()
     target.id = 'deep'
     inner.content.appendChild(target)
 
@@ -339,6 +349,8 @@ describe('scrollToHash()', () => {
 
     expect(inner.wrapper.dataset.showMoreOpen).toBe('true')
     expect(outer.wrapper.dataset.showMoreOpen).toBe('true')
+    vi.advanceTimersByTime(100)
+    expect(target.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' })
   })
 
   it('does nothing for an invalid selector', () => {
@@ -368,12 +380,16 @@ describe('scrollToHash() with a text fragment directive', () => {
   })
 
   it('still scrolls to the element part of a combined #id:~:text= hash', () => {
+    vi.useFakeTimers()
     const { wrapper, content } = makeBlock()
     const target = document.createElement('span')
+    target.scrollIntoView = vi.fn()
     target.id = 'review-3'
     content.appendChild(target)
     ShowMore.scrollToHash('#review-3:~:text=absent%20phrase')
     expect(wrapper.dataset.showMoreOpen).toBe('true')
+    vi.advanceTimersByTime(100)
+    expect(target.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' })
   })
 
   it('descends to the innermost block holding the text, and opens both', () => {

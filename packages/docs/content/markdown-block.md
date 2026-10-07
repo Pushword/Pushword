@@ -159,6 +159,36 @@ Multi-field components (a call-to-action with a title, a button label and a URL)
 not fit a title-plus-body shape: use a [snippet](/extension/snippet) and its parameter
 schema for those.
 
+## Mermaid diagrams
+
+Use a fenced code block with the `mermaid` language. In the block editor, insert a
+**Code** block and select **mermaid**: the diagram preview follows your edits, and
+syntax errors appear below the source. The saved content remains Markdown.
+
+````markdown
+```mermaid
+flowchart LR
+    A[Write Markdown] --> B[Preview in the editor]
+    B --> C[Publish the diagram]
+```
+````
+
+The default frontend renders diagrams as SVG with the official Mermaid library,
+loaded from the site's assets only when a diagram is present. Without JavaScript,
+or if rendering fails, the code stays readable. Mermaid's strict security mode
+disables diagram click actions and encodes HTML labels.
+
+Custom themes overriding the base template's `css_stylesheets` or `script` blocks
+must retain `parent()` or include these assets through Twig's `asset()` function:
+
+- Stylesheet: `bundles/pushwordcore/mermaid/front.css`
+- Script with `type="module"`: `bundles/pushwordcore/mermaid/front.js`
+
+Include `bundles/pushwordcore/mermaid` in `static_assets` when exporting a static
+site that does not already copy `bundles`. Syntax highlighters must exclude
+`code.language-mermaid`. Use `accTitle` and `accDescr` in diagram definitions to
+provide accessible titles and descriptions.
+
 ## Tables
 
 Standard GFM table syntax is supported. You can merge cells horizontally using `->` as the cell content — it merges into the preceding cell via `colspan`.

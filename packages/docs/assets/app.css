@@ -1,4 +1,5 @@
 @import 'tailwindcss' source('../..');
+@source not "../../core/src/Resources/public/mermaid";
 @source "../content/*.md";
 @source "../content/**/*.md";
 @source "../templates/*.twig";

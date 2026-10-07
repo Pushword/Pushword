@@ -68,6 +68,7 @@ pushword:
       color_bg: '#fff'
       static_assets:
         - assets
+        - bundles/pushwordcore/mermaid
     - hosts:
         - admin-block-editor.test
         # The only alias host a link can actually spell: page-scan skips hosts

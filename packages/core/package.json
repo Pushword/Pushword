@@ -6,7 +6,9 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "build": "vite build",
-    "watch": "vite build --watch"
+    "build": "vite build && vite build --config vite.config.mermaid.js",
+    "build:mermaid": "vite build --config vite.config.mermaid.js",
+    "watch": "npm run build:mermaid && vite build --watch --emptyOutDir false",
+    "watch:mermaid": "vite build --config vite.config.mermaid.js --watch"
   }
 }

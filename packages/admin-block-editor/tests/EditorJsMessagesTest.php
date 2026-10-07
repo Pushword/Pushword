@@ -32,6 +32,7 @@ final class EditorJsMessagesTest extends TestCase
             'editorAlignLeft' => 'Aligner à gauche',
             'editorCaption' => 'Légende',
             'editorConvertTo' => 'Convertir en',
+            'editorMermaidError' => 'Impossible d’afficher le diagramme Mermaid.',
             'editorObfuscate' => 'Obfusquer',
             'editorWithHeadings' => 'Avec en-têtes',
         ], 'fr');
@@ -46,6 +47,7 @@ final class EditorJsMessagesTest extends TestCase
         self::assertSame('Aligner à gauche', $messages['blockTunes']['textAlign']['Align left']);
         self::assertSame('Avec en-têtes', $messages['tools']['table']['With headings']);
         self::assertSame('Convertir en', $messages['ui']['popover']['Convert to']);
+        self::assertSame('Impossible d’afficher le diagramme Mermaid.', $messages['tools']['codeBlock']['Unable to render the Mermaid diagram.']);
     }
 
     public function testALabelSharedBySeveralToolsIsRepeatedUnderEachOfThem(): void

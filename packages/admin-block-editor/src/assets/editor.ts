@@ -67,6 +67,7 @@ export class editorJs {
   private editors: Record<string, EditorJS> = {}
   private editorjsTools: Record<string, any> = {}
   private modeManagers: Record<string, EditorModeManager> = {}
+  private forms = new WeakSet<HTMLFormElement>()
 
   constructor() {
     if (!window.editorjsConfig) return
@@ -229,6 +230,7 @@ export class editorJs {
     // its value would leave the rendered blocks showing the old content.
     const boundInput = this.boundInputOf(config.holder!)
     if (boundInput) {
+      this.saveBeforeSubmit(boundInput.form)
       boundInput.pwEditor = {
         setValue: (markdown: string) => {
           // @ts-ignore same window global the initial parse above goes through
@@ -264,6 +266,33 @@ export class editorJs {
         toolMeta: (type) => this.toolMetaOf(config, type),
       })
     }
+  }
+
+  private saveBeforeSubmit(form: HTMLFormElement | null): void {
+    if (!form || this.forms.has(form)) return
+    this.forms.add(form)
+    let submitting = false
+
+    form.addEventListener(
+      'submit',
+      async (event) => {
+        if (submitting) return
+        const holders = Object.keys(this.editors).filter((holderId) => {
+          const input = this.boundInputOf(holderId)
+          return input?.form === form && !input.getAttribute('data-editor')
+        })
+        if (!holders.length) return
+
+        // Editor.js debounces onChange; a quick Save must include the latest edit.
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        await Promise.all(holders.map((holderId) => this.editorjsSave(holderId)))
+        submitting = true
+        form.requestSubmit(event.submitter)
+        submitting = false
+      },
+      { capture: true },
+    )
   }
 
   /** Toolbox title and icon of a tool, the title translated through the editor's own dictionary. */

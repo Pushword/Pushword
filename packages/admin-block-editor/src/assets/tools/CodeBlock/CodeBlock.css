@@ -1,0 +1,36 @@
+.pw-code-block {
+  margin-block: 1.5rem;
+}
+
+.pw-code-language {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.pw-code-language select {
+  width: auto;
+  padding: 0.25rem 0.5rem;
+}
+
+.pw-code-block .editorjs-monaco-wrapper {
+  margin: 0;
+}
+
+.pw-mermaid-preview {
+  margin-top: 0.75rem;
+  color: oklch(0.4 0.01 250);
+  font-size: 0.875rem;
+}
+
+.pw-mermaid-preview pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pw-mermaid-preview .pw-mermaid {
+  margin: 0;
+}
