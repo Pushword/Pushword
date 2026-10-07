@@ -149,24 +149,27 @@ final class ConversationFormController extends AbstractController
         return $this->possibleOrigins;
     }
 
-    private function initResponse(Request $request): Response
+    /**
+     * @return array<string, string>
+     */
+    private function getCorsHeaders(Request $request): array
     {
-        $response = new Response();
-
         $origin = $request->headers->get('origin');
 
-        if (null !== $origin) {
-            if (! \in_array($origin, $this->getPossibleOrigins($request), true)) {
-                throw new AccessDeniedHttpException(\sprintf('Origin `%s` is not allowed to load conversation forms.', $origin));
-            }
-
-            $response->headers->set('Access-Control-Allow-Credentials', 'true');
-            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
-            $response->headers->set('Access-Control-Allow-Headers', 'Origin, Content-Type, X-Auth-Token');
-            $response->headers->set('Access-Control-Allow-Origin', $origin);
+        if (null === $origin) {
+            return [];
         }
 
-        return $response;
+        if (! \in_array($origin, $this->getPossibleOrigins($request), true)) {
+            throw new AccessDeniedHttpException(\sprintf('Origin `%s` is not allowed to load conversation forms.', $origin));
+        }
+
+        return [
+            'Access-Control-Allow-Credentials' => 'true',
+            'Access-Control-Allow-Methods' => 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers' => 'Origin, Content-Type, X-Auth-Token',
+            'Access-Control-Allow-Origin' => $origin,
+        ];
     }
 
     #[Route(path: '/conversation/{type}/{referring}', name: 'pushword_conversation', requirements: [
@@ -188,7 +191,7 @@ final class ConversationFormController extends AbstractController
 
         // Refuse a foreign origin before the limiter: a hostile page must not spend
         // its visitors' submission quota with posts that would be refused anyway.
-        $response = $this->initResponse($request);
+        $corsHeaders = $this->getCorsHeaders($request);
 
         if ($request->isMethod(Request::METHOD_POST)) {
             $limit = $this->anonymousContentLimiter
@@ -197,12 +200,15 @@ final class ConversationFormController extends AbstractController
             if (! $limit->isAccepted()) {
                 $retryAfter = max(1, $limit->getRetryAfter()->getTimestamp() - time());
 
-                throw new TooManyRequestsHttpException($retryAfter, 'Too many submissions. Please try again later.');
+                // With the CORS headers, a trusted cross-origin page reads this 429 instead of a bare network error.
+                throw new TooManyRequestsHttpException($retryAfter, 'Too many submissions. Please try again later.', headers: $corsHeaders);
             }
         }
 
         // The locale is resolved by ConversationLocaleListener, early enough for the
         // translator and the validator to pick it up.
+
+        $response = new Response(headers: $corsHeaders);
 
         $form = $this->getFormManager($type, $request)->getCurrentStep()->getForm();
         $form->handleRequest($request);

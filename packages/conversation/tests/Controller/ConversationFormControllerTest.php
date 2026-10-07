@@ -302,7 +302,8 @@ final class ConversationFormControllerTest extends WebTestCase
     /** @return iterable<string, array{?string, string}> */
     public static function rateLimitedOriginProvider(): iterable
     {
-        yield 'trusted origin' => ['https://localhost.dev', '192.0.2.54'];
+        // A statically generated page posting to its live host.
+        yield 'trusted cross-origin page' => ['https://static.localhost.dev', '192.0.2.54'];
         // A script posting directly sends no Origin: it is the case the limiter exists for.
         yield 'no origin' => [null, '192.0.2.55'];
     }
@@ -326,6 +327,9 @@ final class ConversationFormControllerTest extends WebTestCase
         $client->request(Request::METHOD_POST, $url, server: $server);
         self::assertResponseStatusCodeSame(Response::HTTP_TOO_MANY_REQUESTS);
         self::assertResponseHasHeader('Retry-After');
+        // A trusted page posting cross-origin must be able to read the refusal.
+        self::assertSame($origin, $client->getResponse()->headers->get('Access-Control-Allow-Origin'));
+        self::assertSame(null === $origin ? null : 'true', $client->getResponse()->headers->get('Access-Control-Allow-Credentials'));
 
         // Only submissions are limited: the form can still be displayed.
         $client->request(Request::METHOD_GET, $url, server: $server);
