@@ -288,12 +288,16 @@ export class editorJs {
         event.stopImmediatePropagation()
         await Promise.all(holders.map((holderId) => this.editorjsSave(holderId)))
         submitting = true
-        if (event.submitter) {
-          form.requestSubmit(event.submitter)
-        } else {
-          form.requestSubmit()
-        }
-        submitting = false
+        // A submission restarted in the same task can be ignored by the browser
+        // while the original (prevented) submission is still in progress.
+        window.setTimeout(() => {
+          if (event.submitter) {
+            form.requestSubmit(event.submitter)
+          } else {
+            form.requestSubmit()
+          }
+          submitting = false
+        }, 0)
       },
       { capture: true },
     )

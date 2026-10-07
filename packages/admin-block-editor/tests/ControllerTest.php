@@ -59,6 +59,33 @@ final class ControllerTest extends AbstractAdminTestClass
         self::assertStringContainsString('mimeType', $imageModalUrl, 'the inline_image picker must filter to images');
         self::assertStringNotContainsString('mimeType', (string) $crawler->filter('select[id*="inline_attaches"]')->attr('data-pw-media-picker-modal-url'), 'the inline_attaches picker must not carry the image filter');
 
+        // All requested MIME types must exist for EasyAdmin to apply the filter.
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+        $image = imagecreatetruecolor(2, 2);
+        \assert(false !== $image);
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        foreach (['jpg' => 'image/jpeg', 'png' => 'image/png', 'gif' => 'image/gif', 'webp' => 'image/webp'] as $extension => $mimeType) {
+            $fileName = 'test-inline-picker.'.$extension;
+            match ($extension) {
+                'jpg' => imagejpeg($image, $mediaDir.'/'.$fileName),
+                'png' => imagepng($image, $mediaDir.'/'.$fileName),
+                'gif' => imagegif($image, $mediaDir.'/'.$fileName),
+                'webp' => imagewebp($image, $mediaDir.'/'.$fileName),
+            };
+            $media = new Media();
+            $media->setProjectDir(self::getContainer()->getParameter('kernel.project_dir'));
+            $media->setStoreIn($mediaDir);
+            $media->setFileName($fileName);
+            $media->setMimeType($mimeType);
+            $media->size = 1;
+            $em->persist($media);
+        }
+
+        $em->flush();
+
+        $client->request(Request::METHOD_GET, $imageModalUrl);
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), 'the inline image picker must open successfully');
+
         $client->request(Request::METHOD_GET, '/admin-block-editor.test/test');
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
         // does'nt throw error = markdown rendering is working

@@ -21,7 +21,7 @@
        inside the widget so the block editor is self-contained on any form.
        admin.mediaPicker.js enhances each [data-pw-media-picker] into a full picker. #}
     <div class="d-none" aria-hidden="true">
-      <select id="{{ editor_id }}_inline_image"{% for name, attrValue in editorjs_media_picker_attributes('inline_image', {mimeType: {value: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']}}) %} {{ name }}="{{ attrValue }}"{% endfor %}>
+      <select id="{{ editor_id }}_inline_image"{% for name, attrValue in editorjs_media_picker_attributes('inline_image', {mimeType: {comparison: '=', value: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']}}) %} {{ name }}="{{ attrValue }}"{% endfor %}>
         <option value=""> </option>
       </select>
       <select id="{{ editor_id }}_inline_attaches"{% for name, attrValue in editorjs_media_picker_attributes('inline_attaches') %} {{ name }}="{{ attrValue }}"{% endfor %}>

@@ -185,6 +185,7 @@ describe('editorJs – the field it feeds', () => {
       }
       const submitted = vi.fn((event: Event) => event.preventDefault())
       form.addEventListener('submit', submitted)
+      const timer = vi.spyOn(window, 'setTimeout')
       const requestSubmit = vi.spyOn(form, 'requestSubmit').mockImplementation((submitter) => {
         expect(save).toHaveBeenCalledOnce()
         expect(input.value).toBe('```mermaid\nflowchart LR\n A --> C\n```')
@@ -202,6 +203,8 @@ describe('editorJs – the field it feeds', () => {
       }
       expect(submitted).toHaveBeenCalledOnce()
       expect(save).toHaveBeenCalledOnce()
+      expect(timer).toHaveBeenCalledWith(expect.any(Function), 0)
+      timer.mockRestore()
     },
   )
 
