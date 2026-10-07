@@ -1280,7 +1280,7 @@ command nothing to read. `bounce_imap_dsn` reads the same mailbox over IMAP (see
 
 `newsletter_possible_origins` is the space-separated CORS allow-list for the
 subscribe endpoint — a statically generated site posts to the origin where PHP
-runs. It falls back to the conversation setting.
+runs. It falls back to `conversation_possible_origins`.
 
 Templates are overridable per site under `/newsletter/`: `form.html.twig`,
 `email.html.twig`, `confirm.email.html.twig`, `layout.html.twig`,

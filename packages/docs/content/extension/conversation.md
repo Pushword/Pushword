@@ -51,9 +51,9 @@ form renders in the site's default locale.
 
 `conversation()` and `conversationFormBtn()` return an **absolute** URL on the site's
 `base_live_url`, so a statically generated page (no PHP) fetches the form from the live
-host. That request is cross-origin: allow the static origins in the site's
-`conversation_possible_origins` (space-separated), and expect the visited host's cookies
-not to reach the handler.
+host. That request is cross-origin: allow the static origins in
+`conversation_possible_origins` (space-separated, per site or globally under
+`conversation:`), and expect the visited host's cookies not to reach the handler.
 
 If the static host proxies `/conversation/*` to PHP itself, make the URL relative (per
 site, or globally):

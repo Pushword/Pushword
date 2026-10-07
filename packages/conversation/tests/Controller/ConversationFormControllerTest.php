@@ -206,6 +206,22 @@ final class ConversationFormControllerTest extends WebTestCase
         self::assertNull($client->getResponse()->headers->get('Access-Control-Allow-Origin'));
     }
 
+    public function testOriginFromTheBundleConfigIsAllowed(): void
+    {
+        $client = self::createClient();
+
+        $client->request(
+            Request::METHOD_GET,
+            '/conversation/newsletter/test?host=localhost.dev',
+            [],
+            [],
+            ['HTTP_ORIGIN' => 'https://static.localhost.dev'],
+        );
+
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertSame('https://static.localhost.dev', $client->getResponse()->headers->get('Access-Control-Allow-Origin'));
+    }
+
     public function testConversationWithSlashInReferring(): void
     {
         $client = self::createClient();

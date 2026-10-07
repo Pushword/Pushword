@@ -348,6 +348,30 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
     }
 
+    /**
+     * The test config declares this origin for conversation forms only: a site
+     * that already said where its forms are posted from does not say it twice.
+     */
+    public function testAnOriginTrustedForConversationsMayPostTheSubscription(): void
+    {
+        $this->client->request(Request::METHOD_OPTIONS, '/newsletter/subscribe', server: ['HTTP_ORIGIN' => 'https://static.localhost.dev']);
+
+        $response = $this->client->getResponse();
+        self::assertSame(Response::HTTP_NO_CONTENT, $response->getStatusCode());
+        self::assertSame('https://static.localhost.dev', $response->headers->get('Access-Control-Allow-Origin'));
+        self::assertSame('true', $response->headers->get('Access-Control-Allow-Credentials'));
+    }
+
+    /** Origins match exactly: one merely starting like a trusted origin gets no CORS header. */
+    public function testAnUnknownOriginGetsNoCorsHeader(): void
+    {
+        $this->client->request(Request::METHOD_OPTIONS, '/newsletter/subscribe', server: ['HTTP_ORIGIN' => 'https://static.localhost.dev.evil.tld']);
+
+        $response = $this->client->getResponse();
+        self::assertSame(Response::HTTP_NO_CONTENT, $response->getStatusCode());
+        self::assertNull($response->headers->get('Access-Control-Allow-Origin'));
+    }
+
     public function testTheRateLimitStopsBulkSubmissions(): void
     {
         $audience = $this->createAudience();

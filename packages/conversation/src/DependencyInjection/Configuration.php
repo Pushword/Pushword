@@ -30,7 +30,7 @@ class Configuration implements ConfigurationInterface
         'conversation_form_multistep_message',
         'conversation_form_ms_message',
         'conversation_form_newsletter',
-        'possible_origins',
+        'conversation_possible_origins',
         'conversation_absolute_url',
         'conversation_review_default_reply_author',
         'translation_deepl_api_key',
@@ -77,7 +77,10 @@ class Configuration implements ConfigurationInterface
                         ->defaultValue(NewsletterForm::class)
                     ->end()
 
-                    ->scalarNode('possible_origins')->defaultNull()->end()
+                    ->scalarNode('conversation_possible_origins')
+                        ->defaultNull()
+                        ->info("Space-separated origins (exact match) allowed to fetch and post conversation forms cross-domain, on top of the site's own hosts (a statically generated site posting to its live host).")
+                    ->end()
                     ->booleanNode('conversation_absolute_url')
                         ->defaultTrue()
                         ->info('Prefix the URL `conversation()` builds with the site base_live_url. Keep it true when statically generated pages are served with nothing able to reach PHP; set it false when the static host proxies /conversation/* to PHP itself, so the form is fetched and posted same-origin (no CORS, no third-party cookie).')

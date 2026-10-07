@@ -33,6 +33,11 @@ return static function (ContainerConfigurator $container): void {
         'render_epoch_dir' => '%env(PUSHWORD_TEST_VAR_DIR)%/render_epoch',
     ]);
 
+    // A statically generated copy of a site posting its forms to the live host.
+    $container->extension('conversation', [
+        'conversation_possible_origins' => 'https://static.localhost.dev',
+    ]);
+
     $container->extension('pushword_flat', [
         'flat_content_dir' => '%env(PUSHWORD_TEST_FLAT_CONTENT_DIR)%',
         'content_snapshot_key' => 'test-content-snapshot-key',
