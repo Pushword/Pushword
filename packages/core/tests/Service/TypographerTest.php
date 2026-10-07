@@ -102,6 +102,37 @@ final class TypographerTest extends TestCase
         self::assertSame('Titre'.self::NBSP.': l’ete «'.self::NBSP.'guide'.self::NBSP.'»'.self::NNBSP.'!', $this->typographer->fix('Titre : l\'ete "guide" !', 'fr'));
     }
 
+    /** The flat export straightens `« desert »` into `" desert "`: its spaces must not double the locale's own. */
+    public function testSpacesInsideAStraightenedPairAreDropped(): void
+    {
+        self::assertSame(
+            '<p>Le «'.self::NBSP.'desert'.self::NBSP.'» et le «'.self::NBSP.'canyon'.self::NBSP.'»</p>',
+            $this->typographer->fix('<p>Le &quot; desert &quot; et le &quot;'.self::NBSP.'canyon'.self::NBSP.'&quot;</p>', 'fr')
+        );
+        self::assertSame('Le «'.self::NBSP.'desert'.self::NBSP.'»', $this->typographer->fix('Le " desert "', 'fr'));
+        self::assertSame('<p>The “desert” and the “canyon”</p>', $this->typographer->fix('<p>The &quot; desert &quot; and the &quot; canyon &quot;</p>', 'en'));
+    }
+
+    public function testSpacesInsideAPairAreDroppedOnEitherSideAndOfAnyWidth(): void
+    {
+        self::assertSame('<p>“desert” and “canyon”</p>', $this->typographer->fix('<p>&quot; desert&quot; and &quot;canyon &quot;</p>', 'en'));
+        self::assertSame('<p>“desert”</p>', $this->typographer->fix("<p>&quot;\t desert".self::NNBSP.'&quot;</p>', 'en'));
+    }
+
+    public function testSpacesInsideAPairAreDroppedAroundMarkupNestedQuotesAndMeasurements(): void
+    {
+        self::assertSame('<p>“<em>desert</em>”</p>', $this->typographer->fix('<p>&quot; <em>desert</em> &quot;</p>', 'en'));
+        self::assertSame('<p><em>“desert”</em> (“canyon”)</p>', $this->typographer->fix('<p><em>&quot; desert &quot;</em> (&quot; canyon &quot;)</p>', 'en'));
+        self::assertSame('<p>«'.self::NBSP.'Il dit “oui”'.self::NBSP.'»</p>', $this->typographer->fix("<p>&quot; Il dit 'oui' &quot;</p>", 'fr'));
+        self::assertSame('<p>Un écran 15" et «'.self::NBSP.'desert'.self::NBSP.'»</p>', $this->typographer->fix('<p>Un écran 15" et " desert "</p>', 'fr'));
+
+        // The inch mark sends the pair to the non-numeric closing pass
+        self::assertSame(
+            '<p>“The man was 5\'6&quot; and 120 lbs.”</p>',
+            $this->typographer->fix("<p>&quot; The man was 5'6&quot; and 120 lbs.&quot;</p>", 'en')
+        );
+    }
+
     public function testDimensionAndTrademark(): void
     {
         self::assertSame(
@@ -121,6 +152,10 @@ final class TypographerTest extends TestCase
 
         self::assertSame("<p>3\t×\t4</p>", $this->typographer->fix("<p>3\tx\t4</p>", 'fr'));
         self::assertSame('<p>10'.self::NBSP.'€</p>', $this->typographer->fix("<p>10\t€</p>", 'fr'));
+
+        // Only horizontal spaces just inside a quotation pair are dropped
+        self::assertSame("<p>“\ndesert\n”</p>", $this->typographer->fix("<p>&quot;\ndesert\n&quot;</p>", 'en'));
+        self::assertSame("<p>“\ndesert\n”</p>", $this->typographer->fix("<p>\"\ndesert\n\"</p>", 'en'));
     }
 
     public function testNoDashRule(): void

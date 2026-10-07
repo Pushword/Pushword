@@ -302,6 +302,8 @@ final class Typographer
     /**
      * Replace paired double quotes while leaving inch and second marks after a digit alone.
      * The three passes mirror JoliTypo: unambiguous pair, non-numeric closing, then fallback.
+     * Horizontal spaces just inside a pair are dropped: the flat export straightens `« desert »`
+     * into `" desert "`, and the quote style re-creates the spacing its locale wants.
      */
     private function replaceQuotePairs(string $text, string $quote, string $opening, string $closing, string $markupMarker): string
     {
@@ -314,11 +316,12 @@ final class Typographer
         $q = preg_quote($sentinel, '#');
         $marker = preg_quote($markupMarker, '#');
         $notQuote = '(?:(?!'.$q.')[\s\S])';
+        $pairOpening = '(^|[\s(]|'.$marker.')'.$q.'\h*';
         $replacement = '$1'.$opening.'$2'.$closing;
 
-        $text = $this->replace('#(^|[\s(]|'.$marker.')'.$q.'('.$notQuote.'+)'.$q.'(?='.$notQuote.'*(?:$|[\s(]'.$q.'))#imu', $replacement, $text);
-        $text = $this->replace('#(^|[\s(]|'.$marker.')'.$q.'((?:'.$notQuote.'|(?<=\d)'.$q.')+?)(?<!\d)'.$q.'#imu', $replacement, $text);
-        $text = $this->replace('#(^|[\s(]|'.$marker.')'.$q.'('.$notQuote.'+)'.$q.'#imu', $replacement, $text);
+        $text = $this->replace('#'.$pairOpening.'('.$notQuote.'+?)\h*'.$q.'(?='.$notQuote.'*(?:$|[\s(]'.$q.'))#imu', $replacement, $text);
+        $text = $this->replace('#'.$pairOpening.'((?:'.$notQuote.'|(?<=\d)'.$q.')+?)\h*(?<!\d)'.$q.'#imu', $replacement, $text);
+        $text = $this->replace('#'.$pairOpening.'('.$notQuote.'+?)\h*'.$q.'#imu', $replacement, $text);
 
         return str_replace($sentinel, $quote, $text);
     }
