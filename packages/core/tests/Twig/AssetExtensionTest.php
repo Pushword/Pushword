@@ -58,6 +58,22 @@ final class AssetExtensionTest extends TestCase
         self::assertNotSame($before, $extension->versionedAsset('/bundles/acme/app.js'));
     }
 
+    public function testAContentStampChangesEvenWhenTheFileMtimeDoesNot(): void
+    {
+        $file = $this->projectDir.'/public/bundles/acme/app.js';
+        file_put_contents($file, 'import "./old-hash.js"');
+        touch($file, 1234567890);
+
+        $extension = new AssetExtension($this->projectDir);
+        $before = $extension->versionedAsset('/bundles/acme/app.js', true);
+
+        file_put_contents($file, 'import "./new-hash.js"');
+        touch($file, 1234567890);
+
+        self::assertNotSame($before, $extension->versionedAsset('/bundles/acme/app.js', true));
+        self::assertSame('/bundles/acme/app.js?v=1234567890', $extension->versionedAsset('/bundles/acme/app.js'));
+    }
+
     public function testAMissingAssetIsNeverStampedWithAStaleVersion(): void
     {
         $extension = new AssetExtension($this->projectDir);

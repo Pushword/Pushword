@@ -14,8 +14,8 @@ use Twig\Attribute\AsTwigFunction;
  * unauthenticated whatever the page embedding them requires, so a CDN caches them
  * happily. Without a version query the URL never changes across releases and the
  * CDN keeps handing out the previous release's file for days after a deploy — new
- * markup driven by old JS. Vite-built assets carry a content hash and need none of
- * this; hand-published bundle assets do.
+ * markup driven by old JS. Most Vite-built assets carry a content hash in their
+ * filename; Mermaid's stable entry modules need a content stamp in the URL.
  */
 final readonly class AssetExtension
 {
@@ -25,15 +25,18 @@ final readonly class AssetExtension
     }
 
     /**
-     * The asset's path with its published file's mtime appended. Falls back to
-     * time() when the file is absent, so an asset `assets:install` has not
-     * published yet never sticks in a cache under a stale stamp.
+     * Stamp assets with their mtime, or their content when a build can preserve
+     * timestamps while replacing the file. Missing assets use the current time
+     * so a later `assets:install` never inherits a stale cache entry.
      */
     #[AsTwigFunction('versionedAsset')]
-    public function versionedAsset(string $assetPath): string
+    public function versionedAsset(string $assetPath, bool $contentHash = false): string
     {
         $absolutePath = $this->projectDir.'/public/'.ltrim($assetPath, '/');
-        $version = \is_file($absolutePath) ? (string) \filemtime($absolutePath) : (string) \time();
+        $version = (string) \time();
+        if (\is_file($absolutePath)) {
+            $version = $contentHash ? hash_file('sha256', $absolutePath) : (string) \filemtime($absolutePath);
+        }
 
         return sprintf('%s?v=%s', $assetPath, $version);
     }
