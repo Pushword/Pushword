@@ -1,5 +1,5 @@
 ---
-title: 'the conversation origins key is `conversation_possible_origins`; `pw:ai-index` without a host exports every site; Mermaid code blocks render as diagrams'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,26 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin`, `pushword/admin-block-editor`, `pushword/conversation`, `pushword/core`, `pushword/flat`, `@pushword/js-helper`
-
-## Conversation origins key
-
-The global `conversation: possible_origins:` key was never read. It is now
-`conversation_possible_origins`, the key sites already set per app.
-**Affects sites that set `possible_origins` under `conversation:`.** Rename it, or
-`cache:clear` fails on the unknown key.
-
-## AI index scope
-
-`pw:ai-index` without a host (or with `""`) exports the pages of every site, not only
-the default one, and `pages.csv` gains a trailing `host` column. Pass the host to keep
-a single-site export.
-
-## Mermaid diagrams
-
-Fenced `mermaid` blocks render as diagrams; both editors highlight their syntax.
-Diagrams use a higher-contrast light palette without any additional configuration.
-Custom themes must retain the Mermaid assets; static exports must include
-`bundles/pushwordcore/mermaid` in `static_assets` if they do not copy `bundles`.
-Exclude `code.language-mermaid` from syntax highlighting. See [Mermaid diagrams](/markdown-block#mermaid-diagrams).

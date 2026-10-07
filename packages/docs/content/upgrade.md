@@ -5,21 +5,18 @@ publishedAt: '2026-01-30 13:24'
 parentPage: installation
 ---
 
-Smooth way is to use [composer](https://getcomposer.org), a dependency manager for PHP.
+Before updating, record your version with `composer show pushword/core`. Run
+`composer update`, then apply each newer note below, oldest first, for the packages
+you use. Releases absent from the table need no extra steps.
 
-Run `composer update` and the job is done (almost).
-
-`composer show pushword/core` tells you which version you run. Read every note below
-that is newer than it, oldest first, and skip the ones whose packages you do not
-install. Releases absent from the table ask for nothing beyond `composer update`.
-
-Package names drop their `pushword/` prefix; `js-helper` is the npm package
+Package names omit `pushword/`; `js-helper` is the npm package
 `@pushword/js-helper`.
 
 ## Release notes
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.45](/upgrade/1.0.45) | `admin` `admin-block-editor` `conversation` `core` `flat` `js-helper` | the conversation origins key is `conversation_possible_origins`; `pw:ai-index` without a host exports every site; Mermaid code blocks render as diagrams |
 | [1.0.42](/upgrade/1.0.42) | `admin` `conversation` `core` `flat` `newsletter` `page-scanner` `quiz` `repurpose` `snippet` `static-generator` | unused PHP helper APIs removed — run `cache:clear` |
 | [1.0.40](/upgrade/1.0.40) | `static-generator` | static sites serve brotli before zstd — run `pw:static` |
 | [1.0.39](/upgrade/1.0.39) | `core` | automatic Tailwind builds run once per request or command and wait for completion |
