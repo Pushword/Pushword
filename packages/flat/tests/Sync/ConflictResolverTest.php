@@ -12,6 +12,7 @@ use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\ConflictResolver;
 use Pushword\Flat\Sync\SyncStateManager;
 use ReflectionClass;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Filesystem\Filesystem;
 
 final class ConflictResolverTest extends TestCase
@@ -202,6 +203,34 @@ final class ConflictResolverTest extends TestCase
 
         self::assertTrue($result['hasConflict']);
         self::assertSame('flat', $result['winner']);
+    }
+
+    public function testANewerDbBacksUpTheFlatFileAndNamesThePageBySiteAndSlug(): void
+    {
+        $page = $this->createPage();
+        $page->updatedAt = new DateTime('-5 minutes');
+
+        $filePath = $this->contentDir.'/test-page.md';
+        file_put_contents($filePath, 'file content');
+
+        $resolver = $this->createResolver();
+        $output = new BufferedOutput();
+        $resolver->setOutput($output);
+
+        $result = $resolver->resolvePageConflict(
+            $page,
+            $filePath,
+            fileModifiedAt: new DateTime('-10 minutes'),
+            lastSyncAt: new DateTime('-30 minutes'),
+            fileContent: 'file content',
+            dbContent: 'db content',
+        );
+
+        self::assertSame('db', $result['winner']);
+        self::assertNotNull($result['backupFile']);
+        self::assertStringContainsString('the flat version that lost to the db version', (string) file_get_contents($result['backupFile']));
+        self::assertStringContainsString('Conflict detected on page test.host/test-page - Winner: db - Backup: '.basename($result['backupFile']), $output->fetch());
+        self::assertSame('db', $this->stateManager->getConflicts('test.host')[0]['winner'] ?? null);
     }
 
     private function createResolver(): ConflictResolver

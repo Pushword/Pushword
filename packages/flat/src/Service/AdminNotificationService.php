@@ -74,13 +74,15 @@ final readonly class AdminNotificationService
         $entityType = \is_string($conflictData['entityType'] ?? null) ? $conflictData['entityType'] : 'unknown';
         $entityIdRaw = $conflictData['entityId'] ?? null;
         $entityId = \is_string($entityIdRaw) || \is_int($entityIdRaw) ? (string) $entityIdRaw : 'unknown';
+        $slug = \is_string($conflictData['slug'] ?? null) ? $conflictData['slug'] : null;
         $winner = \is_string($conflictData['winner'] ?? null) ? $conflictData['winner'] : 'unknown';
         $backupFile = \is_string($conflictData['backupFile'] ?? null) ? $conflictData['backupFile'] : null;
 
         $message = \sprintf(
-            'Conflict detected on %s #%s. Winner: %s.%s',
+            'Conflict detected on %s #%s%s. Winner: %s.%s',
             $entityType,
             $entityId,
+            null !== $slug ? ' ('.$slug.')' : '',
             $winner,
             null !== $backupFile ? ' Backup: '.basename($backupFile) : '',
         );

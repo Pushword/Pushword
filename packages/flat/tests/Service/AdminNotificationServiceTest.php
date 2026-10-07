@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Tests\Service;
 
+use DateTime;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Entity\Page;
 use Pushword\Flat\Entity\AdminNotification;
 use Pushword\Flat\Repository\AdminNotificationRepository;
 use Pushword\Flat\Service\AdminNotificationService;
+use Pushword\Flat\Sync\ConflictResolver;
+use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
 final class AdminNotificationServiceTest extends KernelTestCase
@@ -105,6 +110,7 @@ final class AdminNotificationServiceTest extends KernelTestCase
         $conflictData = [
             'entityType' => 'page',
             'entityId' => 42,
+            'slug' => 'about-us',
             'winner' => 'flat',
             'backupFile' => '/var/content/backup.md',
         ];
@@ -113,9 +119,7 @@ final class AdminNotificationServiceTest extends KernelTestCase
         $this->testNotifications[] = $notification;
 
         self::assertSame(AdminNotification::TYPE_CONFLICT, $notification->type);
-        self::assertStringContainsString('Conflict detected on page #42', $notification->message);
-        self::assertStringContainsString('Winner: flat', $notification->message);
-        self::assertStringContainsString('Backup: backup.md', $notification->message);
+        self::assertSame('Conflict detected on page #42 (about-us). Winner: flat. Backup: backup.md', $notification->message);
         self::assertSame('example.com', $notification->host);
     }
 
@@ -125,7 +129,43 @@ final class AdminNotificationServiceTest extends KernelTestCase
         $this->testNotifications[] = $notification;
 
         self::assertSame(AdminNotification::TYPE_CONFLICT, $notification->type);
-        self::assertStringContainsString('unknown', $notification->message);
+        self::assertSame('Conflict detected on unknown #unknown. Winner: unknown.', $notification->message);
+    }
+
+    public function testPageConflictNotificationNamesItsSiteAndSlug(): void
+    {
+        $page = new Page();
+        $page->host = 'localhost.dev';
+        $page->slug = 'conflicting-page';
+        $page->updatedAt = new DateTime('-10 minutes');
+        new ReflectionProperty(Page::class, 'id')->setValue($page, 4242);
+
+        $dir = sys_get_temp_dir().'/conflict-notification-'.uniqid();
+        $filePath = $dir.'/conflicting-page.md';
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($filePath, 'file content');
+
+        try {
+            /** @var ConflictResolver $resolver */
+            $resolver = self::getContainer()->get(ConflictResolver::class);
+            $resolver->resolvePageConflict(
+                $page,
+                $filePath,
+                fileModifiedAt: new DateTime('-5 minutes'),
+                lastSyncAt: new DateTime('-30 minutes'),
+                fileContent: 'file content',
+                dbContent: 'db content',
+            );
+        } finally {
+            $filesystem->remove($dir);
+        }
+
+        $notification = $this->repository->findOneBy(['type' => AdminNotification::TYPE_CONFLICT], ['id' => 'DESC']);
+        self::assertNotNull($notification);
+        $this->testNotifications[] = $notification;
+
+        self::assertSame('localhost.dev', $notification->host);
+        self::assertStringContainsString('Conflict detected on Page #4242 (conflicting-page).', $notification->message);
     }
 
     public function testNotifySyncErrorCreatesCorrectMessageFormat(): void
