@@ -6,10 +6,12 @@ namespace Pushword\Flat\Tests;
 
 use DateTime;
 use Doctrine\ORM\EntityManager;
+use League\Csv\Reader;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Flat\FlatFileContentDirFinder;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -143,6 +145,18 @@ final class AiIndexCommandTest extends KernelTestCase
         return null;
     }
 
+    /** @return list<string> */
+    private function exportedHosts(): array
+    {
+        $hosts = [];
+        foreach (Reader::from($this->exportDir.'/pages.csv')->setHeaderOffset(0)->fetchColumn('host') as $host) {
+            self::assertIsString($host);
+            $hosts[$host] = $host;
+        }
+
+        return array_values($hosts);
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -211,17 +225,47 @@ final class AiIndexCommandTest extends KernelTestCase
         self::assertSame(0, $commandTester->getStatusCode());
     }
 
+    public function testExecuteWithoutHostExportsEverySite(): void
+    {
+        $this->executeCommand();
+
+        $hosts = $this->exportedHosts();
+        self::assertContains('localhost.dev', $hosts);
+        self::assertContains('admin-block-editor.test', $hosts);
+    }
+
+    public function testExecuteWithHostExportsOnlyThatSite(): void
+    {
+        $this->executeCommand('admin-block-editor.test');
+
+        self::assertSame(['admin-block-editor.test'], $this->exportedHosts());
+    }
+
+    public function testExecuteWithAliasHostExportsItsMainSite(): void
+    {
+        $this->executeCommand('www.admin-block-editor.test');
+
+        self::assertSame(['admin-block-editor.test'], $this->exportedHosts());
+    }
+
     public function testCommandWithEmptyExportDir(): void
     {
         $kernel = self::createKernel();
         $application = new Application($kernel);
         $command = $application->find('pw:ai-index');
         $commandTester = new CommandTester($command);
+        $startedAt = time();
         $commandTester->execute([]);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('Generating pages.csv...', $output);
         self::assertSame(0, $commandTester->getStatusCode());
+
+        // No host exports every site, but into the default site's content dir.
+        $pagesCsv = self::getContainer()->get(FlatFileContentDirFinder::class)->get('localhost.dev').'/pages.csv';
+        clearstatcache();
+        self::assertFileExists($pagesCsv);
+        self::assertGreaterThanOrEqual($startedAt, filemtime($pagesCsv));
     }
 
     public function testpagesContainsCreatedPageWithMedia(): void

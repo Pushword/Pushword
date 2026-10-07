@@ -56,17 +56,18 @@ final class AiIndexCommand
         $this->pageSlugList = array_map(static fn (Page $page): string => $page->slug, $this->pages);
         $host ??= '';
 
-        $app = $this->apps->switchSite($host)->get();
-        $host = $app->getMainHost();
+        // No host exports every site's pages; the files still land in the default site's dir.
+        $mainHost = $this->apps->switchSite($host)->get()->getMainHost();
 
-        $this->exportDir = '' !== $exportDir ? $exportDir
-            : ($this->contentDirFinder->has($host)
-                ? $this->contentDirFinder->get($host)
-                : $this->projectDir.'/var/export/'.uniqid());
+        $this->exportDir = match (true) {
+            '' !== $exportDir => $exportDir,
+            $this->contentDirFinder->has($mainHost) => $this->contentDirFinder->get($mainHost),
+            default => $this->projectDir.'/var/export/'.uniqid(),
+        };
 
         $exportedPages = '' === $host
             ? $this->pages
-            : $this->pageRepository->findByHost($host);
+            : $this->pageRepository->findByHost($mainHost);
 
         $this->loadMediaUsage($exportedPages);
 
@@ -148,6 +149,7 @@ final class AiIndexCommand
             'parentPage',
             'pageLinked',
             'length',
+            'host',
         ]);
 
         $rows = [];
@@ -166,6 +168,7 @@ final class AiIndexCommand
                 $page->parentPage->slug ?? '',
                 implode(', ', $pageLinked),
                 $length,
+                $page->host,
             ];
         }
 
