@@ -14,6 +14,9 @@ use Symfony\Component\HttpFoundation\Response;
 #[Group('integration')]
 final class ConversationFormControllerTest extends WebTestCase
 {
+    /** The `anonymous_content` rate limiter's `limit`, set in core's framework.php. */
+    private const int SUBMISSION_LIMIT = 20;
+
     public function testNewsletterForm(): void
     {
         $client = self::createClient();
@@ -275,6 +278,58 @@ final class ConversationFormControllerTest extends WebTestCase
         $postFrom('https://localhost.dev');
         self::assertResponseIsSuccessful();
         self::assertCount(1, $savedMessages());
+    }
+
+    public function testUnauthorizedOriginDoesNotSpendTheVisitorRateLimit(): void
+    {
+        $client = self::createClient();
+        $postFrom = static fn (string $origin): mixed => $client->request(
+            Request::METHOD_POST,
+            '/conversation/message/test?host=localhost.dev',
+            server: ['HTTP_ORIGIN' => $origin, 'REMOTE_ADDR' => '192.0.2.53'],
+        );
+
+        // A hostile page makes its visitor's browser post as often as the limit allows.
+        for ($attempt = 1; $attempt <= self::SUBMISSION_LIMIT; ++$attempt) {
+            $postFrom('https://evil.example');
+            self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+        }
+
+        $postFrom('https://localhost.dev');
+        self::assertResponseIsSuccessful();
+    }
+
+    /** @return iterable<string, array{?string, string}> */
+    public static function rateLimitedOriginProvider(): iterable
+    {
+        yield 'trusted origin' => ['https://localhost.dev', '192.0.2.54'];
+        // A script posting directly sends no Origin: it is the case the limiter exists for.
+        yield 'no origin' => [null, '192.0.2.55'];
+    }
+
+    #[DataProvider('rateLimitedOriginProvider')]
+    public function testSubmissionsBeyondTheLimitAreRefused(?string $origin, string $clientIp): void
+    {
+        $client = self::createClient();
+        $server = ['REMOTE_ADDR' => $clientIp];
+        if (null !== $origin) {
+            $server['HTTP_ORIGIN'] = $origin;
+        }
+
+        $url = '/conversation/message/test?host=localhost.dev';
+
+        for ($attempt = 1; $attempt <= self::SUBMISSION_LIMIT; ++$attempt) {
+            $client->request(Request::METHOD_POST, $url, server: $server);
+            self::assertResponseIsSuccessful();
+        }
+
+        $client->request(Request::METHOD_POST, $url, server: $server);
+        self::assertResponseStatusCodeSame(Response::HTTP_TOO_MANY_REQUESTS);
+        self::assertResponseHasHeader('Retry-After');
+
+        // Only submissions are limited: the form can still be displayed.
+        $client->request(Request::METHOD_GET, $url, server: $server);
+        self::assertResponseIsSuccessful();
     }
 
     public function testConversationWithSlashInReferring(): void

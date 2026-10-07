@@ -186,6 +186,10 @@ final class ConversationFormController extends AbstractController
         $host = $request->query->getString('host') ?: $request->getHost();
         $this->apps->switchSite($host);
 
+        // Refuse a foreign origin before the limiter: a hostile page must not spend
+        // its visitors' submission quota with posts that would be refused anyway.
+        $response = $this->initResponse($request);
+
         if ($request->isMethod(Request::METHOD_POST)) {
             $limit = $this->anonymousContentLimiter
                 ->create(($request->getClientIp() ?? 'unknown').':'.$this->apps->get()->getMainHost())
@@ -199,8 +203,6 @@ final class ConversationFormController extends AbstractController
 
         // The locale is resolved by ConversationLocaleListener, early enough for the
         // translator and the validator to pick it up.
-
-        $response = $this->initResponse($request);
 
         $form = $this->getFormManager($type, $request)->getCurrentStep()->getForm();
         $form->handleRequest($request);
