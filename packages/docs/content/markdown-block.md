@@ -12,13 +12,18 @@ falls back to CommonMark. Usual Markdown works unchanged.
 ## Blocks and attributes
 
 Content is **parsed block by block**, not as a single document. Blocks are
-**separated by a blank line**.
+**separated by a blank line**. A block starting with `<` passes through as raw HTML, its
+Markdown left unrendered even when it opens with inline markup such as `<strong>`. HTML
+may therefore contain blank lines, and a block of text between two of them is rendered
+as Markdown (see [Groups](#groups)).
 
 **Attributes** can be defined using the syntax `{#attribute-name}`, placed on a separate line just **before** the Markdown block it applies to. For a paragraph, `{.ico-tip} Text with **emphasis**` also works on one line, with an id or several attributes too (`{#tip .note} Text`), and inside a blockquote (`> {.ico-tip} Text`). Escape the brace to keep it as text: `\{.ico-tip} Text`. _The separate-line form is conflicting with Prettier Markdown._
 
-Advanced content types such as **galleries**, **attachments**, or **page lists** are supported through **Twig functions**.
+Advanced content types such as **galleries**, **attachments**, or **page lists** are supported through **Twig functions**. They work in any page body: Twig is not a separate step of the default chain but runs inside the `Markdown` filter, on each block before it is rendered, so a failing call degrades its own block only.
 
-_Twig syntax inside inline code or a code block is not executed. To run Twig there, write the HTML (`<pre></pre>`) yourself._
+_Twig syntax inside inline code, a code block or a `<pre>` element is not executed. To run Twig in code, write the `<code></code>` HTML yourself._
+
+A page's `main_content_filters` front matter **replaces** the filter chain rather than extending it: `main_content_filters: twig` runs Twig alone, with no Markdown and no link filters. A site can forbid the override with `entity_can_override_filters: false`.
 
 ### Twig filters
 

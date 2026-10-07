@@ -53,18 +53,28 @@ component) is purged and that markup renders unstyled.
 silently matches nothing. A plain directory without a glob (`@source "templates";`)
 is walked whole.
 
+## Links inside `.prose`
+
+The `utility.css` of `@pushword/js-helper` styles `.prose a` (primary color, bottom
+border, no underline) outside any cascade layer, so it beats every Tailwind utility,
+the `prose-a:*` variants included. To restyle those links, repeat the selector
+(`.prose a:not(.not-prose a)`) after the import, or mark the utility important:
+`prose-a:text-gray-900!`.
+
 ## Automatic Tailwind Update on page update
 
 So that Tailwind classes used inside page content get built, Pushword (in the `prod` environment) caches each saved page's content and runs `npm run build` once at the end of the request or console command. A bulk import such as `pw:flat:sync` therefore builds once after all pages have been saved.
 
-Builds are locked per project: concurrent saves share a pending build, and content saved during a running build is included in a subsequent build. Console commands wait for the build to finish; HTTP builds run after the response has been sent.
+Builds are locked per project: concurrent saves share a pending build, and content saved during a running build is included in a subsequent build. Console commands wait for the build to finish, so a build that hangs makes the command hang; HTTP builds run after the response has been sent.
 
 The last build's output is in `var/log/lastTailwindGeneration`. If `npm` is not found,
-set its path:
+set its path, pointing at a Node recent enough for the build: Vite 8 needs 20.19 or
+22.12 and later, and the default `vite.config.js` compresses with zstd, which needs
+22.15 or later. On a CloudLinux (cPanel) host, for instance:
 
 ```yaml
 pushword:
-  path_to_bin: /home/username/bin:/opt/alt/alt-nodejs16/root/usr/bin/
+  path_to_bin: /home/username/bin:/opt/alt/alt-nodejs22/root/usr/bin/
 ```
 
 To disable it:

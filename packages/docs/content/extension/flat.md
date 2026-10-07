@@ -400,6 +400,26 @@ Pass `--backup` to back up the SQLite database before an import:
 The option fails before importing on PostgreSQL or MariaDB: back up with the database
 server's own tools, then sync without `--backup`.
 
+### Renaming a host
+
+An import matches pages on host and slug, so files imported under a host the database
+does not know yet become new pages, with new ids, while the old host's rows stay behind.
+Rename in the database first:
+
+1. Update the `host` column from the old host to the new one in `page` and in every other
+   table carrying one (snippets, conversation messages, quiz results, social posts, the
+   version log…), plus the newsletter's `main_host`, `optin_host` and JSON `hosts` columns.
+2. Change the host in `config/packages/pushword.yaml` and rename its content directory
+   (`content/<old host>/` by default) and its template overrides (`templates/<old host>/`),
+   if any. On a multi-host site, also rewrite the `<old host>/<slug>` entries in the other
+   hosts' `translations` front matter: an import that cannot resolve one drops the link.
+3. Delete both hosts' sync state, `var/flat-sync/<host>*.json` (dots become underscores):
+   a stale state decides the direction of the next sync.
+4. Run `pw:flat:sync <new host>`.
+
+A static build then writes to a new directory, since the default `static_dir` is
+`static/{main_host}`: the old one stays behind.
+
 ## Deploying a site: `vendor/bin/pushword-deploy`
 
 The bundle ships a site-agnostic deploy script. Per-site specifics — remote, SSH options,
@@ -428,6 +448,12 @@ remove on production. Files that exist only there are usually prod-side work not
 pulled, so the push lists them and asks for confirmation before removing anything. rsync
 has no conflict detection — the last machine to sync wins — so this probe is what makes
 `--delete` safe to keep on.
+
+`DELETE=1` applies to `pull` too, with no probe: the pull removes every local file
+production lacks, outside `PULL_EXCLUDES`. A site keeping local-only files in the synced
+tree (notes, scratch databases) must list them in `PULL_EXCLUDES` or stay at `DELETE=0`.
+At `DELETE=0`, a page deleted locally keeps its `.md` on production, so production never
+deletes it: remove the file there by hand.
 
 Minimal `deploy.conf`:
 

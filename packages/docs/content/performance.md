@@ -64,6 +64,14 @@ heavy renders. `WorkerVsFpmBenchmarkTest` (`benchmark` group) measures it in-pro
 skip/reentrancy flags), so it implements `ResetInterface` and clears it at the worker
 boundary. Do the same for any `static` state you add on the save path.
 
+Two less visible shapes leak the same way. A memo keyed by page id holds the `Page` it
+was built from, so a worker keeps serving a page's old body after an edit; the render
+memos are layered (`ContentExtension` over `ContentPipelineFactory`) and each needs its
+own reset. And a flag that an in-process static generation flips on a shared service
+(`SiteConfig::setStatic()`, the router's host prefix) must be restored by `reset()`, or
+every later request on that worker renders as if exporting. `WorkerModeCrossRequestTest`
+replays an edit between two requests.
+
 ### Admin
 
 The admin's services were audited for cross-request state too:
@@ -93,3 +101,11 @@ The query-count guards in `packages/core/tests/Perf/` and `packages/admin/tests/
 run in normal CI and fail when a hot path (page render, sitemap, admin list) issues
 queries that scale with the corpus — an N+1 regression. Database comparisons:
 [Database and pipeline benchmarks](/database-benchmarks).
+
+To find where a render spends its time, use a sampling profiler such as
+[Excimer](https://pecl.php.net/package/excimer) rather than Xdebug, whose shares inflate
+PHP-call-heavy code and hide time spent in C functions. Confirm each gain with a
+profiler-free A/B, interleaving the runs when the difference is under about 1.5 ms per
+page. Keep a fresh process's single pass (what each `pw:static` worker pays, PHP and Twig
+compilation included) apart from the steady state of later loops, so a one-off cost does
+not pass for a per-page one.
