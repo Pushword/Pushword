@@ -22,14 +22,13 @@ php bin/console pw:flat:lint --format=agent   # force JSON
 php bin/console pw:flat:lint --format=text    # force human output
 ```
 
-Every JSON payload starts with `tool` and `result`:
+Agent JSON usually includes `tool` and `result`:
 
 ```json
 {"tool":"pw:flat:lint","result":"failed","files_checked":12,"errors":1,"issues":[{"file":"about.md","error":"line 3: malformed YAML"}]}
 ```
 
-`result` is `passed`/`failed` for checks, `done` for actions, `running`/`blocked`
-when the command short-circuits.
+`result` values vary by command. `pw:media:license` uses `command` and counts instead.
 
 ### Supported commands
 

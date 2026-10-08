@@ -14,7 +14,7 @@ php bin/console pw:ai-index [host] [exportDir]
 ```
 
 - `host` — optional, the site whose pages are exported. Omit it, or pass `""`, to export every site.
-- `exportDir` — optional, output directory. Defaults to the flat-file content directory of the host (the default site when no host is given), or `var/export/` if flat is not configured.
+- `exportDir` — optional. Defaults to the selected site's flat-file directory (the default site if `host` is omitted), or a new `var/export/<unique-id>/` directory.
 
 ## Output
 
@@ -29,8 +29,8 @@ php bin/console pw:ai-index [host] [exportDir]
 | summary | Search excerpt |
 | mediaUsed | Media filenames the page references (body, main image, custom property) |
 | parentPage | Parent page slug |
-| pageLinked | Other page slugs linked from content |
-| length | Character count of mainContent |
+| pageLinked | Other page slugs found as substrings in mainContent |
+| length | Byte length of mainContent |
 | host | Site the page belongs to |
 
 ### medias.csv
