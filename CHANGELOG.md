@@ -1,5 +1,3 @@
 # CHANGELOG
 
-<!-- changelog-linker -->
-
-See [Uprade Guide](https://pushword.piedweb.com/upgrade)
+See [Upgrade Guide](https://pushword.piedweb.com/upgrade)

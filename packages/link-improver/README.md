@@ -39,9 +39,9 @@ If you're interested in contributing to Pushword, please read our [contributing 
 
 ## Credits
 
-- [PiedWeb](https://en.piedweb.com)
+- [PiedWeb](https://piedweb.com)
 - [All Contributors](https://github.com/Pushword/Pushword/graphs/contributors)
 
 ## License
 
-The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/license#license) for more information.
+The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/license) for more information.

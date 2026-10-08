@@ -6,7 +6,6 @@ A **Symfony CMS** to rapidly create, manage and maintain your websites — from 
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/Pushword/Pushword/run-tests.yml?branch=main)](https://github.com/Pushword/Pushword/actions)
 [![Code Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FPushword%2FPushword%2Fbadges%2Fcoverage.json)](https://github.com/Pushword/Pushword/actions/workflows/run-tests.yml)
-[![Type Coverage](https://shepherd.dev/github/pushword/pushword/coverage.svg)](https://shepherd.dev/github/pushword/pushword)
 [![Total Downloads](https://img.shields.io/packagist/dt/pushword/core.svg?style=flat)](https://packagist.org/packages/pushword/core)
 
 ## Why Pushword
@@ -76,7 +75,7 @@ You can also support its maintenance on [Liberapay](https://liberapay.com/RobinP
 
 ## License
 
-The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/license#license) for more information.
+The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/license) for more information.
 
 <p align="center"><a href="https://dev.piedweb.com">
 <img src="https://raw.githubusercontent.com/Pushword/Pushword/f5021f4c5d5d3ab3f2858ec2e4bdd70818806c6a/packages/admin/src/Resources/assets/logo.svg" width="200" height="200" alt="PHP Packages Open Source" />

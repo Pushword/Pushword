@@ -7,8 +7,7 @@ Demo and test application for Pushword — used for testing, demoing and by the 
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/Pushword/Pushword/run-tests.yml?branch=main)](https://github.com/Pushword/Pushword/actions)
 
 [![Code Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FPushword%2FPushword%2Fbadges%2Fcoverage.json)](https://github.com/Pushword/Pushword/actions/workflows/run-tests.yml)
-[![Type Coverage](https://shepherd.dev/github/pushword/pushword/coverage.svg)](https://shepherd.dev/github/pushword/pushword)
-[![Total Downloads](https://img.shields.io/packagist/dt/pushword/core.svg?style=flat)](https://packagist.org/packages/pushword/core)
+[![Total Downloads](https://img.shields.io/packagist/dt/pushword/dev-app.svg?style=flat)](https://packagist.org/packages/pushword/dev-app)
 
 ## Features
 
@@ -32,39 +31,7 @@ Visit [pushword.piedweb.com/installation](https://pushword.piedweb.com/installat
 
 ## The Pushword ecosystem
 
-Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the core and one bundle per feature. Pick only what you need:
-
-**Core**
-- [pushword/core](https://github.com/Pushword/core) — Symfony-based CMS core: Page, Media & User entities, Markdown + Twig rendering.
-
-**Editing & admin**
-- [pushword/admin](https://github.com/Pushword/admin) — EasyAdmin interface to manage pages, media and users.
-- [pushword/admin-block-editor](https://github.com/Pushword/admin-block-editor) — Gutenberg-like block editor (stores Markdown).
-- [pushword/advanced-main-image](https://github.com/Pushword/advanced-main-image) — Hero images & main-image format control.
-- [pushword/template-editor](https://github.com/Pushword/template-editor) — Edit Twig templates online.
-- [pushword/snippet](https://github.com/Pushword/snippet) — Reusable content fragments & components.
-
-**Content & workflow**
-- [pushword/flat](https://github.com/Pushword/flat) — Flat-file (Markdown + Git) CMS mode.
-- [pushword/version](https://github.com/Pushword/version) — Page & snippet versioning.
-- [pushword/page-update-notifier](https://github.com/Pushword/page-update-notifier) — Email alerts on content changes.
-- [pushword/conversation](https://github.com/Pushword/conversation) — Comments, contact & newsletter forms.
-- [pushword/newsletter](https://github.com/Pushword/newsletter) — Audiences, segmented campaigns & automations.
-- [pushword/quiz](https://github.com/Pushword/quiz) — Interactive quizzes & personality tests.
-
-**Publishing & performance**
-- [pushword/static-generator](https://github.com/Pushword/static-generator) — Export a static website (GitHub Pages, Apache, FrankenPHP).
-- [pushword/search](https://github.com/Pushword/search) — SQLite full-text search (Loupe), zero infra.
-- [pushword/page-scanner](https://github.com/Pushword/page-scanner) — Find dead links, 404s, redirects & TODOs.
-- [pushword/api](https://github.com/Pushword/api) — Token-authenticated REST API.
-- [pushword/link-improver](https://github.com/Pushword/link-improver) — Automatic internal linking.
-- [pushword/repurpose](https://github.com/Pushword/repurpose) — Turn pages into social carousels.
-
-**Tooling**
-- [pushword/installer](https://github.com/Pushword/installer) — Project & package installer.
-- [pushword/js-helper](https://github.com/Pushword/js-helper) — Front-end JavaScript helpers.
-
-Full list and guides on [pushword.piedweb.com/extensions](https://pushword.piedweb.com/extensions).
+Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the core and one bundle per feature. See the full list and guides at [pushword.piedweb.com/extensions](https://pushword.piedweb.com/extensions).
 
 ## Contributing
 
@@ -77,7 +44,7 @@ If you're interested in contributing to Pushword, please read our [contributing 
 
 ## License
 
-The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/license#license) for more information.
+The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/license) for more information.
 
 <p align="center"><a href="https://dev.piedweb.com">
 <img src="https://raw.githubusercontent.com/Pushword/Pushword/f5021f4c5d5d3ab3f2858ec2e4bdd70818806c6a/packages/admin/src/Resources/assets/logo.svg" width="200" height="200" alt="PHP Packages Open Source" />

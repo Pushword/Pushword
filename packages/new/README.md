@@ -88,4 +88,4 @@ composer update
 
 ## License
 
-Pushword is MIT licensed. See the [license](https://pushword.piedweb.com/license#license).
+Pushword is MIT licensed. See the [license](https://pushword.piedweb.com/license).

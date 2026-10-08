@@ -69,4 +69,4 @@ Fields, levels, personality tests, styling and APIs:
 
 ## License
 
-MIT — see the [license](https://pushword.piedweb.com/license#license).
+MIT — see the [license](https://pushword.piedweb.com/license).
