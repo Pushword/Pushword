@@ -109,6 +109,11 @@ UI/templates/CSS: consult `packages/core/DesignGuidelines.md` (Tailwind, public 
   test command containing a blocked pattern must run from a script file.
 - Whole-tree commits are a human-terminal operation — stop and ask Robin.
 
+## Git branch cleanup
+
+- Keep `origin/archive` as an intentional historical archive; do not ask to delete it during routine cleanup.
+- Keep `origin/docs` and `origin/badges`; CI publishes to these branches.
+
 ## Docs
 
 - `packages/docs/content/` — one `.md` per topic; `extension/` — per-bundle feature docs;
