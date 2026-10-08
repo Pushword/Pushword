@@ -1,17 +1,10 @@
-# Update with
-# git rm -r --cached .
-
 # composer
 /vendor
 /packages/*/vendor
-composer.lock
 
-# node
-/node_modules
+# node (yarn is the package manager: yarn.lock files are versioned)
 node_modules/
-/packages/core/node_modules
 **/package-lock.json
-**/yarn.lock
 packages/admin-monaco-editor/dist
 
 # editor backup files (`foo.php~`) — narrow enough to keep the dev-app `media~` directory
@@ -19,10 +12,10 @@ packages/admin-monaco-editor/dist
 
 # dev tool
 /PoC/
+.phpactor.json
 /var/symfony-lsp/
 .twigstan
 .phpunit.result.cache
-.php_cs.cache
 .php-cs-fixer.cache
 .twig-cs-fixer.cache
 /.phpunit.cache*
@@ -31,7 +24,6 @@ coverage*.xml
 /debug
 /debug-container
 /drivers
-/.phpunit.cache
 /docs~preserve/
 test.php
 test.ts
@@ -55,7 +47,6 @@ Draft.md
 **/dev-app/static/
 **/dev-app/admin-block-editor.test
 **/dev-app/localhost.dev
-**/dev-app/admin-block-editor.test
 **/dev-app/pushword.piedweb.com
 **/dev-app/src/Migrations
 packages/dev-app/templates/newTemplateFile2.html.twig
