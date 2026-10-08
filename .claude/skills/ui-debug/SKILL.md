@@ -26,7 +26,7 @@ objects. Screenshots go through the `saveScreenshot(buf, name)` helper, which wr
 `~/.dev-browser/tmp/`.
 
 ```bash
-dev-browser --headless --timeout 90 <<'EOF'
+dev-browser --browser agent-dedicated --timeout 90 <<'EOF'
 const page = await browser.getPage("pushword-admin");
 
 await page.goto("http://127.0.0.1:8000/login", { waitUntil: "domcontentloaded" });

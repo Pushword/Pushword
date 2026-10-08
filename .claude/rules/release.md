@@ -14,8 +14,8 @@ one race-free split run.
 
 - **Every release must use a new version.** The split action hard-fails on
   `git tag X` when `X` already exists, with no `--force`. `.scripts/release` (what
-  `composer release` and `/tag-and-push` delegate to) bumps the patch of the latest
-  `1.0.N` tag.
+  `composer release` and the global `/tag-and-push` skill delegate to) bumps the patch
+  of the latest `1.0.N` tag.
 - **A matrix entry needs both a `packages/<pkg>` directory and an existing mirror repo.**
   `admin-monaco-editor` and `ai-skills` have source dirs but no mirror and are
   deliberately absent; adding them would 404 at clone.

@@ -24,7 +24,7 @@ the **two-step** login form. Then run a dev-browser script to authenticate as ad
 create a reusable page named `admin-session`:
 
 ```bash
-dev-browser --headless --timeout 90 <<'EOF'
+dev-browser --browser agent-dedicated --timeout 90 <<'EOF'
 const page = await browser.getPage("admin-session");
 await page.setViewportSize({ width: 1280, height: 800 });
 
@@ -45,7 +45,7 @@ Replace `BASE_URL` with the actual base URL. Verify the login succeeded by readi
 
 ## Step 3: Run sub-agents sequentially
 
-Launch 4 sub-agents **one at a time** (sequential, NOT parallel) using the Agent tool with `subagent_type: general-purpose`. Each sub-agent reuses the `admin-session` page from dev-browser.
+Launch 4 sub-agents **one at a time** (sequential, NOT parallel) using the Agent tool with `subagent_type: general-purpose`. Each sub-agent reuses the `admin-session` page, so it must run every script with `dev-browser --browser agent-dedicated` too: named pages belong to one browser.
 
 **IMPORTANT for all sub-agents:**
 - All test data created must use the prefix `__audit_test_` so it's identifiable

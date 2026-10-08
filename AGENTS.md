@@ -1,8 +1,8 @@
 ## Task routing
 
-Start in the package named by the task; search its `src/` and `tests/` before widening scope. Read only when relevant: `packages/docs/content/architecture.md` for repository-wide architecture, `extensions.md` for extension discovery, `Page.php` or `Media.php` for those entities, and `PushwordEvents.php` for legacy event constants.
+Start in the package named by the task; search its `src/` and `tests/` before widening scope. Read only when relevant: `packages/docs/content/architecture.md` for repository-wide architecture, `extensions.md` for extension discovery, `Page.php` or `Media.php` for those entities, and `packages/core/src/Event/PushwordEvents.php` for core and admin event names.
 
-Keep search output bounded. For PHP, use `--glob '*.php'`. For frontend code, search `Resources/assets` first and inspect `Resources/public` only to verify built output. When generated files may appear, use `rg --max-columns 240 --max-columns-preview` so a minified line cannot consume the context.
+Keep search output bounded. For PHP, use `--glob '*.php'`. For frontend code, search `Resources/assets` (`src/assets` in admin-block-editor) first and inspect `Resources/public` only to verify built output. When generated files may appear, use `rg --max-columns 240 --max-columns-preview` so a minified line cannot consume the context.
 
 ## Working principles
 
@@ -83,10 +83,7 @@ php bin/console debug:container --deprecations                          # contai
 
 ## Debugging UI
 
-For admin UI or frontend changes, validate in the browser. Use the `dev-browser` skill (`/dev-browser`) for automated checks and screenshots — `page.snapshotForAI()` to discover elements, then act on them by node id (or with plain Playwright selectors when they are known).
-
-Credentials: `admin@example.tld` / `p@ssword` (ROLE_SUPER_ADMIN); reset via `composer reset-dev-app`.
-Admin login script: `.claude/skills/ui-debug/SKILL.md`.
+For admin UI or frontend changes, validate in the isolated test browser (`dev-browser --browser agent-dedicated`): discover elements with `page.snapshotForAI()`, then act on them by node id (or with plain Playwright selectors when they are known). The `ui-debug` skill (`.claude/skills/ui-debug/SKILL.md`) has the credentials, reset command and login script.
 
 ## Design
 
