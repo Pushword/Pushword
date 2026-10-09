@@ -1,82 +1,74 @@
-/**
- * Watches the editor's DOM and reports a change once the mutations settle.
- *
- * Ported from editorjs-undo (MIT), which stopped being maintained in 2025.
- */
-export class Observer {
-  private readonly holder: HTMLElement
-  private observer: MutationObserver | null = null
-  private readonly mutationDebouncer: () => void
+/** Observe content edits, including form controls whose value is not a DOM mutation. */
+export default class Observer {
+  private readonly observer: MutationObserver
+  private timer: ReturnType<typeof setTimeout> | undefined
+  private active = false
+  private readonly target: Element
 
-  constructor(registerChange: () => void, holder: HTMLElement, debounceTimer: number) {
-    this.holder = holder
-    this.mutationDebouncer = this.debounce(registerChange, debounceTimer)
+  constructor(
+    private readonly changed: () => void,
+    private readonly holder: HTMLElement,
+  ) {
+    this.target = holder.querySelector('.codex-editor__redactor')!
+    this.observer = new MutationObserver((mutations) => {
+      if (mutations.some((mutation) => this.isContentChange(mutation))) this.schedule()
+    })
+    for (const name of ['input', 'change', 'click', 'pw:history-change']) {
+      holder.addEventListener(name, this.schedule)
+    }
+  }
+
+  private isContentChange(mutation: MutationRecord): boolean {
+    const element =
+      mutation.target instanceof Element ? mutation.target : mutation.target.parentElement
+    if (element?.closest('.monaco-editor, .tc-toolbox, .ce-toolbar, .ce-inline-toolbar'))
+      return false
+    if (mutation.type !== 'attributes') return true
+    return (
+      !element?.classList.contains('ce-block') && mutation.attributeName !== 'data-empty'
+    )
   }
 
   setMutationObserver(): void {
-    const target = this.holder.querySelector('.codex-editor__redactor')
-    if (target === null) {
-      return
-    }
-
-    this.observer = new MutationObserver((mutationList) =>
-      this.mutationHandler(mutationList),
-    )
-    this.observer.observe(target, {
-      childList: true,
-      attributes: true,
+    this.active = true
+    this.observer.observe(this.target, {
       subtree: true,
+      childList: true,
       characterData: true,
-      characterDataOldValue: true,
+      attributes: true,
     })
   }
 
-  private mutationHandler(mutationList: MutationRecord[]): void {
-    let contentMutated = false
-
-    for (const mutation of mutationList) {
-      switch (mutation.type) {
-        case 'childList':
-          if (mutation.target === this.holder) {
-            this.onDestroy()
-          } else {
-            contentMutated = true
-          }
-          break
-        case 'characterData':
-          contentMutated = true
-          break
-        case 'attributes':
-          // A block gaining .ce-block--selected, or the table toolbox moving,
-          // is not a content change.
-          if (
-            !(mutation.target as HTMLElement).classList?.contains('ce-block') &&
-            !(mutation.target as HTMLElement).classList?.contains('tc-toolbox')
-          ) {
-            contentMutated = true
-          }
-          break
-      }
-    }
-
-    if (contentMutated) {
-      this.mutationDebouncer()
-    }
+  private readonly schedule = (): void => {
+    if (!this.active) return
+    clearTimeout(this.timer)
+    this.timer = setTimeout(() => {
+      this.timer = undefined
+      this.changed()
+    }, 0)
   }
 
-  private debounce(callback: () => void, wait: number): () => void {
-    let timeout: number | undefined
-
-    return () => {
-      window.clearTimeout(timeout)
-      timeout = window.setTimeout(callback, wait)
-    }
+  flush(): void {
+    const mutations = this.observer.takeRecords()
+    const pending =
+      this.timer !== undefined ||
+      mutations.some((mutation) => this.isContentChange(mutation))
+    clearTimeout(this.timer)
+    this.timer = undefined
+    if (this.active && pending) this.changed()
   }
 
-  private onDestroy(): void {
-    document.dispatchEvent(new CustomEvent('destroy'))
-    this.observer?.disconnect()
+  pause(): void {
+    this.active = false
+    clearTimeout(this.timer)
+    this.timer = undefined
+    this.observer.disconnect()
+  }
+
+  destroy(): void {
+    this.pause()
+    for (const name of ['input', 'change', 'click', 'pw:history-change']) {
+      this.holder.removeEventListener(name, this.schedule)
+    }
   }
 }
-
-export default Observer

@@ -1,363 +1,324 @@
-import EditorJS, { OutputBlockData, OutputData } from '@editorjs/editorjs'
-import Caret from './caret'
+import type EditorJS from '@editorjs/editorjs'
+import type { OutputBlockData, OutputData } from '@editorjs/editorjs'
 import Observer from './Observer'
-
-/**
- * Undo/redo for Editor.js.
- *
- * Ported from editorjs-undo (MIT). Its maintainers put the project into passive
- * maintenance in November 2025 ("no longer receive active development or major
- * bug fixes") and Editor.js core has no undo of its own, so we own it here.
- *
- * The port keeps upstream's history stack — a snapshot of `save()` per settled
- * change — and drops the part that made redo corrupt the page: upstream applied
- * a snapshot by diffing it against the previous one and patching single blocks,
- * addressing them by position. DOM positions and positions in a saved state
- * disagree as soon as the document holds a block `save()` omits (one empty
- * paragraph is enough — Editor.js drops those), so the patches landed on the
- * wrong blocks. Here a snapshot is applied by rendering it: the states are
- * complete, so a diff has nothing to add.
- */
-
-interface HistoryItem {
-  /** Id of the block holding the caret, to put it back after the render */
-  blockId: string | null
-  /** Caret offset inside that block, for the tools that support it */
-  caretIndex: number | null
-  state: OutputBlockData[]
-}
-
-interface UndoShortcuts {
-  undo?: string | string[]
-  redo?: string | string[]
-}
-
-interface UndoConfig {
-  debounceTimer?: number
-  shortcuts?: UndoShortcuts
-}
+import { GroupRegistry } from '../../Group/GroupRegistry'
+import { applyState, captureState, equal, type BlockState } from './State'
+import { captureSelection, restoreSelection, type EditorSelection } from './Selection'
 
 interface UndoOptions {
   editor: EditorJS
-  config?: UndoConfig
-  /** Called once an undo or a redo has put its snapshot on screen. */
-  onApply?: () => void
+  config?: {
+    debounceTimer?: number
+    shortcuts?: { undo?: string | string[]; redo?: string | string[] }
+  }
+  onApply?: () => void | Promise<unknown>
   maxLength?: number
 }
 
-/** `configuration` exists on the instance but is absent from Editor.js' typings. */
-interface EditorConfiguration {
-  holder: string | HTMLElement
-  defaultBlock: string
-  readOnly: boolean
+interface Action {
+  selection: EditorSelection | null
+  kind: string
+  time: number
 }
 
-const DEFAULT_DEBOUNCE_TIMER = 200
-const DEFAULT_MAX_LENGTH = 30
-const DEFAULT_SHORTCUTS = { undo: ['CMD+Z'], redo: ['CMD+Y', 'CMD+SHIFT+Z'] }
+interface HistoryItem {
+  before: BlockState[]
+  after: BlockState[]
+  beforeSelection: EditorSelection | null
+  afterSelection: EditorSelection | null
+  kind: string
+  time: number
+}
 
+/**
+ * An editor-wide history. Capture edits independently of typing groups, retain
+ * empty blocks, and apply changes by identity without remounting untouched tools.
+ */
 export class Undo {
-  private readonly holder: HTMLElement
   private readonly editor: EditorJS
-  private readonly blocks: EditorJS['blocks']
-  private readonly caret: EditorJS['caret']
-  private readonly defaultBlock: string
+  private readonly holder: HTMLElement
+  private readonly observer: Observer
+  private readonly onApply: () => void | Promise<unknown>
   private readonly maxLength: number
-  private readonly onApply: () => void
-  private readonly config: {
-    debounceTimer: number
-    shortcuts: { undo: string[]; redo: string[] }
-  }
-
-  private readOnly: boolean
-  /** Set while a snapshot is being applied, so the render is not recorded */
-  private applying = false
+  private readonly groupDelay: number
+  private readonly shortcuts: { undo: string[]; redo: string[] }
+  private readonly listeners = new AbortController()
+  private current: BlockState[] = []
   private stack: HistoryItem[] = []
   private position = 0
-  private initialItem: HistoryItem | null = null
+  private tail: Promise<void> = Promise.resolve()
+  private revision = 0
+  private applying = false
+  private destroyed = false
+  private composing = false
+  private commands = 0
+  private groupClosed = true
+  private lastSelection: EditorSelection | null = null
+  private action: Action | null = null
 
-  constructor({ editor, config = {}, onApply, maxLength }: UndoOptions) {
-    const { configuration } = editor as unknown as { configuration: EditorConfiguration }
-    const { holder, defaultBlock } = configuration
-    const shortcuts = { ...DEFAULT_SHORTCUTS, ...config.shortcuts }
-
-    this.holder =
-      typeof holder === 'string'
-        ? (document.getElementById(holder) as HTMLElement)
-        : holder
+  constructor({ editor, config = {}, onApply, maxLength = 100 }: UndoOptions) {
     this.editor = editor
-    this.blocks = editor.blocks
-    this.caret = editor.caret
-    this.defaultBlock = defaultBlock
-    this.readOnly = configuration.readOnly
-    this.maxLength = maxLength ?? DEFAULT_MAX_LENGTH
-    this.onApply = onApply ?? ((): void => {})
-    this.config = {
-      debounceTimer: config.debounceTimer ?? DEFAULT_DEBOUNCE_TIMER,
-      shortcuts: {
-        undo: Array.isArray(shortcuts.undo) ? shortcuts.undo : [shortcuts.undo],
-        redo: Array.isArray(shortcuts.redo) ? shortcuts.redo : [shortcuts.redo],
-      },
+    const { holder } = (
+      editor as unknown as { configuration: { holder: string | HTMLElement } }
+    ).configuration
+    this.holder = typeof holder === 'string' ? document.getElementById(holder)! : holder
+    this.maxLength = maxLength
+    this.groupDelay = config.debounceTimer ?? 500
+    this.onApply = onApply ?? (() => {})
+    const defaults = { undo: ['CMD+Z'], redo: ['CMD+Y', 'CMD+SHIFT+Z'] }
+    this.shortcuts = {
+      undo: [config.shortcuts?.undo ?? defaults.undo].flat(),
+      redo: [config.shortcuts?.redo ?? defaults.redo].flat(),
     }
-
-    const observer = new Observer(
-      () => this.registerChange(),
-      this.holder,
-      this.config.debounceTimer,
-    )
-    observer.setMutationObserver()
-
+    this.observer = new Observer(() => this.record(), this.holder)
     this.setEventListeners()
-    this.clear()
+    void this.initialize()
   }
 
   static get isReadOnlySupported(): boolean {
     return true
   }
 
-  /** Takes the baseline from the data the editor was loaded with. */
-  initialize(initialItem: OutputData | OutputBlockData[]): void {
-    const state = Array.isArray(initialItem) ? initialItem : initialItem.blocks
-    const firstElement: HistoryItem = { blockId: null, caretIndex: null, state }
-
-    this.stack[0] = firstElement
-    this.initialItem = firstElement
-  }
-
-  clear(): void {
-    this.stack = this.initialItem
-      ? [this.initialItem]
-      : [
-          {
-            blockId: null,
-            caretIndex: null,
-            state: [{ type: this.defaultBlock, data: {} }],
-          },
-        ]
-    this.position = 0
-  }
-
-  canUndo(): boolean {
-    return !this.readOnly && this.position > 0
-  }
-
-  canRedo(): boolean {
-    return !this.readOnly && this.position < this.count()
-  }
-
-  count(): number {
-    return this.stack.length - 1 // -1 because of the initial item
-  }
-
-  async undo(): Promise<void> {
-    if (!this.canUndo()) {
-      return
-    }
-
-    this.position -= 1
-    await this.applyState(this.stack[this.position]!)
-  }
-
-  async redo(): Promise<void> {
-    if (!this.canRedo()) {
-      return
-    }
-
-    this.position += 1
-    await this.applyState(this.stack[this.position]!)
-  }
-
-  private setReadOnly(): void {
-    this.readOnly = this.holder.querySelector('.ce-toolbox') === null
-  }
-
-  private registerChange(): void {
-    this.setReadOnly()
-    if (this.readOnly || this.applying) {
-      return
-    }
-
-    void this.editor.saver.save().then((savedData) => {
-      if (!this.applying && this.editorDidUpdate(savedData.blocks)) {
-        this.save(savedData.blocks)
-      }
+  /** Baseline the actual rendered blocks; a publication export can omit empty ones. */
+  initialize(_initial?: OutputData | OutputBlockData[]): Promise<void> {
+    const revision = ++this.revision
+    this.observer.pause()
+    GroupRegistry.flushPending()
+    const state = captureState(this.editor)
+    return this.enqueue(async () => {
+      const blocks = await state
+      if (this.destroyed || revision !== this.revision) return
+      this.current = blocks
+      this.stack = []
+      this.position = 0
+      this.action = null
+      this.groupClosed = true
+      this.lastSelection = captureSelection(this.holder)
+      this.observer.setMutationObserver()
     })
   }
 
-  private editorDidUpdate(newData: OutputBlockData[]): boolean {
-    const { state } = this.stack[this.position]!
-
-    if (newData.length === 0) {
-      return false
-    }
-    if (newData.length !== state.length) {
-      return true
-    }
-
-    return JSON.stringify(state) !== JSON.stringify(newData)
+  clear(): Promise<void> {
+    return this.initialize()
+  }
+  count(): number {
+    return this.stack.length
+  }
+  canUndo(): boolean {
+    return !this.editor.readOnly.isEnabled && this.position > 0
+  }
+  canRedo(): boolean {
+    return !this.editor.readOnly.isEnabled && this.position < this.stack.length
   }
 
-  private save(state: OutputBlockData[]): void {
-    // Anything ahead of the current position is a redo branch the new change
-    // replaces.
-    this.stack = this.stack.slice(0, this.position + 1)
-
-    const domIndex = this.blocks.getCurrentBlockIndex()
-    const current = this.blocks.getBlockByIndex(domIndex)
-    const caretIndex =
-      current?.name === 'paragraph' || current?.name === 'header'
-        ? this.getCaretIndex(domIndex)
-        : null
-
-    this.stack.push({ blockId: current?.id ?? null, caretIndex, state })
-
-    while (this.stack.length > this.maxLength) {
-      this.stack.shift()
-    }
-    this.position = this.stack.length - 1
+  /** Also used at boundaries such as saving or replacing the editor content. */
+  flush(): Promise<void> {
+    if (!this.applying && !this.commands) this.observer.flush()
+    return this.tail
   }
 
-  /**
-   * Renders a snapshot. Editor.js keeps the block ids carried by the state, so
-   * the caret can go back to the very block it was in.
-   */
-  private async applyState(item: HistoryItem): Promise<void> {
-    this.applying = true
-
-    // A render is one block per state entry, so the caret's block keeps its
-    // position even when Editor.js hands it a new id. Without a recorded block
-    // — the baseline has none — we stay where the caret already is.
-    const recorded =
-      item.blockId === null
-        ? -1
-        : item.state.findIndex((block) => block.id === item.blockId)
-    const caretBlockIndex = recorded >= 0 ? recorded : this.blocks.getCurrentBlockIndex()
-
-    try {
-      await this.blocks.render({ blocks: item.state })
-      // The rendered blocks come back with fresh ids, so the snapshot no longer
-      // matches what save() reports. Re-sync it, or the observer would read the
-      // render as an edit and truncate everything past this point.
-      item.state = (await this.editor.saver.save()).blocks
-      this.restoreCaret(item, caretBlockIndex)
-    } finally {
-      this.applying = false
-    }
-
-    // Editor.js runs blocks.render() with its own modification observer
-    // disabled, so applying a snapshot fires no onChange. Whatever reads the
-    // editor from outside — the form field Save submits — is caught up here, or
-    // it keeps the content the undo has just taken off the screen.
-    this.onApply()
+  undo(): Promise<void> {
+    return this.request('undo')
+  }
+  redo(): Promise<void> {
+    return this.request('redo')
   }
 
-  /**
-   * Puts the caret back in the document. It has to land somewhere inside the
-   * holder: the undo and redo shortcuts are bound there, so an undo that left
-   * the focus outside made the following redo unreachable.
-   */
-  private restoreCaret(item: HistoryItem, blockIndex: number): void {
-    const lastIndex = this.blocks.getBlocksCount() - 1
-    if (lastIndex < 0) {
-      return
-    }
-
-    const domIndex = Math.max(0, Math.min(blockIndex, lastIndex))
-    const caretIndex = item.caretIndex
-
-    if (caretIndex !== null && caretIndex !== -1) {
-      const target = this.blockContent(domIndex)
-      if (target !== null) {
-        const caret = new Caret(target)
-        setTimeout(() => caret.setPos(caretIndex), 50)
-
-        return
-      }
-    }
-
-    this.caret.setToBlock(domIndex, 'end')
+  destroy(): void {
+    this.destroyed = true
+    this.revision++
+    this.observer.destroy()
+    this.listeners.abort()
   }
 
-  private blockContent(domIndex: number): HTMLElement | null {
-    const content =
-      this.holder.getElementsByClassName('ce-block__content')[domIndex]?.firstChild
-
-    return content instanceof HTMLElement ? content : null
+  private enqueue(work: () => Promise<void>): Promise<void> {
+    const result = this.tail.then(work)
+    this.tail = result.catch((error: unknown) => {
+      console.error('Editor history failed', error)
+    })
+    return result
   }
 
-  private getCaretIndex(domIndex: number): number | null {
-    const target = this.blockContent(domIndex)
-
-    return target === null ? null : new Caret(target).getPos()
-  }
-
-  private parseKeys(keys: string[]): string[] {
-    const specialKeys: Record<string, string> = {
-      CMD: /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey',
-      ALT: 'altKey',
-      SHIFT: 'shiftKey',
-    }
-    const parsedKeys = keys.slice(0, -1).map((key) => specialKeys[key] ?? key)
-    const last = keys[keys.length - 1] ?? ''
-
-    parsedKeys.push(
-      parsedKeys.includes('shiftKey') && keys.length === 2
-        ? last.toUpperCase()
-        : last.toLowerCase(),
+  private record(): void {
+    if (
+      this.applying ||
+      this.composing ||
+      this.destroyed ||
+      this.editor.readOnly.isEnabled
     )
+      return
+    GroupRegistry.flushPending()
+    const revision = this.revision
+    const automatic = this.action === null
+    const action = this.action ?? {
+      selection: this.lastSelection,
+      kind: 'structure',
+      time: performance.now(),
+    }
+    this.action = null
+    const afterSelection = captureSelection(this.holder) ?? action.selection
+    const captured = captureState(this.editor)
+    void this.enqueue(async () => {
+      const after = await captured
+      if (revision !== this.revision || this.destroyed || equal(after, this.current))
+        return
+      const previous = this.stack[this.position - 1]
+      const typing = [
+        'insertText',
+        'insertCompositionText',
+        'deleteContentBackward',
+        'deleteContentForward',
+      ].includes(action.kind)
+      const continuation =
+        !this.groupClosed &&
+        this.position === this.stack.length &&
+        previous &&
+        action.kind === previous.kind &&
+        action.time - previous.time < this.groupDelay &&
+        ((typing && equal(action.selection, previous.afterSelection)) ||
+          (automatic && action.kind === 'structure'))
+      if (continuation) {
+        previous.after = after
+        previous.afterSelection = afterSelection
+        previous.time = action.time
+      } else {
+        this.stack = this.stack.slice(0, this.position)
+        this.stack.push({
+          before: this.current,
+          after,
+          beforeSelection: action.selection,
+          afterSelection,
+          kind: action.kind,
+          time: action.time,
+        })
+        if (this.stack.length > this.maxLength) this.stack.shift()
+        this.position = this.stack.length
+      }
+      this.current = after
+      this.lastSelection = afterSelection
+      this.groupClosed = false
+    })
+  }
 
-    return parsedKeys
+  private request(direction: 'undo' | 'redo'): Promise<void> {
+    if (this.destroyed || this.editor.readOnly.isEnabled) return Promise.resolve()
+    if (!this.commands) this.observer.flush()
+    this.commands++
+    return this.enqueue(async () => {
+      try {
+        if (this.destroyed) return
+        this.groupClosed = true
+        if (direction === 'undo' ? !this.canUndo() : !this.canRedo()) return
+        const index = direction === 'undo' ? this.position - 1 : this.position
+        const item = this.stack[index]!
+        const state = direction === 'undo' ? item.before : item.after
+        const selection =
+          direction === 'undo' ? item.beforeSelection : item.afterSelection
+        this.applying = true
+        this.observer.pause()
+        const scroll = { x: window.scrollX, y: window.scrollY }
+        await applyState(this.editor, this.current, state)
+        window.scrollTo({ left: scroll.x, top: scroll.y, behavior: 'instant' })
+        await restoreSelection(this.editor, this.holder, selection)
+        this.current = state
+        this.position += direction === 'undo' ? -1 : 1
+        this.lastSelection = selection
+        this.action = null
+      } finally {
+        this.applying = false
+        this.commands--
+        if (!this.destroyed) this.observer.setMutationObserver()
+      }
+      await this.onApply()
+    })
+  }
+
+  private begin(kind: string): void {
+    if (this.applying || this.commands) return
+    this.observer.flush()
+    this.action = {
+      kind,
+      time: performance.now(),
+      selection: captureSelection(this.holder) ?? this.lastSelection,
+    }
+  }
+
+  private matches(event: KeyboardEvent, shortcut: string): boolean {
+    const parts = shortcut.toUpperCase().split('+')
+    const modifier = /Mac|iPhone|iPad/.test(navigator.platform)
+      ? event.metaKey
+      : event.ctrlKey
+    return (
+      event.key.toUpperCase() === parts[parts.length - 1] &&
+      modifier === parts.includes('CMD') &&
+      event.shiftKey === parts.includes('SHIFT') &&
+      event.altKey === parts.includes('ALT')
+    )
   }
 
   private setEventListeners(): void {
-    const { undo, redo } = this.config.shortcuts
-    const parse = (shortcuts: string[]): string[][] =>
-      shortcuts.map((shortcut) => this.parseKeys(shortcut.replace(/ /g, '').split('+')))
-
-    const keysUndo = parse(undo)
-    const keysRedo = parse(redo)
-
-    const twoKeysPressed = (event: KeyboardEvent, keys: string[]): boolean =>
-      keys.length === 2 &&
-      Boolean(event[keys[0] as keyof KeyboardEvent]) &&
-      event.key.toLowerCase() === keys[1]
-    const threeKeysPressed = (event: KeyboardEvent, keys: string[]): boolean =>
-      keys.length === 3 &&
-      Boolean(event[keys[0] as keyof KeyboardEvent]) &&
-      Boolean(event[keys[1] as keyof KeyboardEvent]) &&
-      event.key.toLowerCase() === keys[2]
-
-    const pressedKeys = (
-      event: KeyboardEvent,
-      keys: string[][],
-      compKeys: string[][],
-    ): boolean => {
-      const three = keys.some((k) => threeKeysPressed(event, k))
-      const two = keys.some((k) => twoKeysPressed(event, k))
-
-      return three || (two && !compKeys.some((k) => threeKeysPressed(event, k)))
-    }
-
-    const handleUndo = (event: KeyboardEvent): void => {
-      if (pressedKeys(event, keysUndo, keysRedo)) {
-        event.preventDefault()
-        void this.undo()
-      }
-    }
-
-    const handleRedo = (event: KeyboardEvent): void => {
-      if (pressedKeys(event, keysRedo, keysUndo)) {
-        event.preventDefault()
-        void this.redo()
-      }
-    }
-
-    this.holder.addEventListener('keydown', handleUndo)
-    this.holder.addEventListener('keydown', handleRedo)
-    this.holder.addEventListener('destroy', () => {
-      this.holder.removeEventListener('keydown', handleUndo)
-      this.holder.removeEventListener('keydown', handleRedo)
-    })
+    const options = { capture: true, signal: this.listeners.signal }
+    document.addEventListener(
+      'keydown',
+      (event) => {
+        if (event.isComposing) return
+        const inside = event.target instanceof Node && this.holder.contains(event.target)
+        if ((!inside && !this.commands) || this.editor.readOnly.isEnabled) return
+        let direction: 'undo' | 'redo' | null = null
+        if (this.shortcuts.undo.some((key) => this.matches(event, key)))
+          direction = 'undo'
+        else if (this.shortcuts.redo.some((key) => this.matches(event, key)))
+          direction = 'redo'
+        if (direction) {
+          event.preventDefault()
+          event.stopImmediatePropagation()
+          void this.request(direction)
+        } else if (inside) {
+          this.begin('structure')
+        }
+      },
+      options,
+    )
+    this.holder.addEventListener(
+      'beforeinput',
+      (event) => {
+        if (this.editor.readOnly.isEnabled) return
+        const input = event as InputEvent
+        if (input.inputType === 'historyUndo' || input.inputType === 'historyRedo') {
+          event.preventDefault()
+          event.stopImmediatePropagation()
+          void this.request(input.inputType === 'historyUndo' ? 'undo' : 'redo')
+        } else if (!this.composing) this.begin(input.inputType)
+      },
+      options,
+    )
+    this.holder.addEventListener(
+      'compositionstart',
+      () => {
+        this.begin('insertCompositionText')
+        this.composing = true
+      },
+      options,
+    )
+    this.holder.addEventListener(
+      'compositionend',
+      () => {
+        this.composing = false
+        this.record()
+      },
+      options,
+    )
+    this.holder.addEventListener('pointerdown', () => this.begin('structure'), options)
+    this.holder.addEventListener('paste', () => this.begin('insertFromPaste'), options)
+    this.holder.addEventListener('cut', () => this.begin('deleteByCut'), options)
+    document.addEventListener(
+      'selectionchange',
+      () => {
+        if (!this.applying && !this.commands)
+          this.lastSelection = captureSelection(this.holder) ?? this.lastSelection
+      },
+      { signal: this.listeners.signal },
+    )
   }
 }
 

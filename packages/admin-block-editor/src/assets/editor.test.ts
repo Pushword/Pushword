@@ -8,6 +8,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
  */
 
 const initialize = vi.fn()
+const destroyEditor = vi.fn()
+const destroyUndo = vi.fn()
 const parseMarkdown = vi.fn()
 const scheduleRefresh = vi.fn()
 
@@ -18,6 +20,7 @@ let undoOptions: any = null
 
 vi.mock('@editorjs/editorjs', () => ({
   default: class {
+    destroy = destroyEditor
     saver = { save: vi.fn(async () => ({ blocks: [] })) }
     tools = {
       getBlockTools: () =>
@@ -36,6 +39,7 @@ vi.mock('editorjs-drag-drop', () => ({ default: class {} }))
 vi.mock('./tools/utils/Undo/Undo', () => ({
   default: class {
     initialize = initialize
+    destroy = destroyUndo
 
     constructor(options: any) {
       undoOptions = options
@@ -166,7 +170,7 @@ describe('editorJs – the field it feeds', () => {
       const instance = boot('```mermaid\nflowchart LR\n A --> B\n```', {
         tools: { codeBlock: { className: 'CodeBlock' } },
       })
-      const save = instance.getEditors().ed.saver.save
+      const save = instance.getEditors().ed!.saver.save
       vi.mocked(save).mockResolvedValue({
         blocks: [
           {
@@ -189,10 +193,10 @@ describe('editorJs – the field it feeds', () => {
       const requestSubmit = vi.spyOn(form, 'requestSubmit').mockImplementation((submitter) => {
         expect(save).toHaveBeenCalledOnce()
         expect(input.value).toBe('```mermaid\nflowchart LR\n A --> C\n```')
-        form.dispatchEvent(new SubmitEvent('submit', { submitter, cancelable: true }))
+        form.dispatchEvent(new SubmitEvent('submit', { submitter: submitter ?? null, cancelable: true }))
       })
 
-      form.dispatchEvent(new SubmitEvent('submit', { submitter: button, cancelable: true }))
+      form.dispatchEvent(new SubmitEvent('submit', { submitter: button ?? null, cancelable: true }))
 
       expect(submitted).not.toHaveBeenCalled()
       await vi.waitFor(() => expect(requestSubmit).toHaveBeenCalledOnce())
@@ -220,7 +224,7 @@ describe('editorJs – the field it feeds', () => {
       input.form!.dispatchEvent(event)
 
       expect(event.defaultPrevented).toBe(false)
-      expect(instance.getEditors().ed.saver.save).not.toHaveBeenCalled()
+      expect(instance.getEditors().ed!.saver.save).not.toHaveBeenCalled()
       expect(input.value).toBe('current Monaco content')
     },
   )
@@ -273,4 +277,42 @@ describe('editorJs – the field it feeds', () => {
 
     expect(parseMarkdown).toHaveBeenCalledOnce()
   })
+})
+
+
+it('destroys history listeners with the editor', () => {
+  const app = boot('{"blocks":[]}')
+  captured.onReady()
+  app.getEditors().ed!.destroy()
+  expect(destroyUndo).toHaveBeenCalledOnce()
+  expect(destroyEditor).toHaveBeenCalledOnce()
+})
+
+
+it('does not overwrite a newer undo export with an older asynchronous save', async () => {
+  const instance = boot('{"blocks":[]}', { tools: { codeBlock: { className: 'CodeBlock' } } })
+  const save = vi.mocked(instance.getEditors().ed!.saver.save)
+  let complete!: (value: any) => void
+  save.mockImplementationOnce(() => new Promise(resolve => { complete = resolve }))
+  save.mockResolvedValueOnce({ blocks: [{ type: 'codeBlock', data: { html: 'current', language: 'javascript' } }] })
+  const old = instance.editorjsSave('ed')
+  await instance.editorjsSave('ed')
+  complete({ blocks: [{ type: 'codeBlock', data: { html: 'stale', language: 'javascript' } }] })
+  expect((await old)?.blocks[0]?.data.html).toBe('current')
+  expect((document.getElementById('inp') as HTMLTextAreaElement).value).toContain('current')
+})
+
+it('coalesces markdown exports after a burst of history commands', async () => {
+  vi.useFakeTimers()
+  try {
+    const instance = boot('{"blocks":[]}')
+    captured.onReady()
+    const save = instance.getEditors().ed!.saver.save
+    undoOptions.onApply(); undoOptions.onApply(); undoOptions.onApply()
+    expect(save).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(150)
+    expect(save).toHaveBeenCalledOnce()
+  } finally {
+    vi.useRealTimers()
+  }
 })

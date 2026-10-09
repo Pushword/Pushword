@@ -161,8 +161,7 @@ export default class CodeBlock extends Raw {
     ++this.previewRevision
     clearTimeout(this.previewTimer)
     this.contentListener?.dispose()
-    this.editorInstance?.dispose()
-    this.wrapper = undefined
+    super.destroy()
   }
 
   save(): { html: string; language: string } {

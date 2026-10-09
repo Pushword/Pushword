@@ -8,7 +8,7 @@ vi.mock('../../../../../js-helper/src/mermaid.js', () => ({ renderMermaid }))
 const tools: CodeBlock[] = []
 let value: string
 let listeners: (() => void)[]
-const model = {}
+const model = { dispose: vi.fn() }
 const monacoEditor = {
   getValue: () => value,
   setValue: (next: string) => {

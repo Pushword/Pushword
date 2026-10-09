@@ -188,9 +188,9 @@ export default class GroupStart implements BlockTool {
 
   /** A toolbox-inserted group opens ready to type into: end marker + empty paragraph. */
   private closeFreshGroup(): void {
-    setTimeout(() => {
+    GroupRegistry.defer(() => {
       const index = this.api.blocks.getBlockIndex(this.block.id)
-      if (index < 0) return
+      if (index === undefined || index < 0) return
       this.api.blocks.insert(
         GroupRegistry.END,
         { collapsible: false, legacy: false, args: '' },

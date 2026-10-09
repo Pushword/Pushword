@@ -6,7 +6,10 @@ type Listener = () => void
 
 function makeFakeEditor(getContentHeight: () => number) {
   const listeners: { contentSize?: Listener; modelContent?: Listener } = {}
+  const model = { dispose: vi.fn() }
   const editor = {
+    getModel: () => model,
+    dispose: vi.fn(),
     getValue: () => '',
     setValue: vi.fn(),
     getContentHeight,
@@ -18,7 +21,7 @@ function makeFakeEditor(getContentHeight: () => number) {
       listeners.modelContent = cb
     },
   }
-  return { editor, listeners }
+  return { editor, model, listeners }
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -102,4 +105,19 @@ describe('Raw Monaco integration', () => {
 
     expect(raw.save()).toEqual({ html: '{{ destinations() }}' })
   })
+})
+
+
+it('disposes its owned Monaco model when the block is removed', async () => {
+  const { editor, model } = makeFakeEditor(() => 20)
+  ;(window as any).monaco = { editor: { create: () => editor } }
+  ;(window as any).monacoHelper = MonacoHelper
+  const raw = new Raw({ data: { html: 'Code' }, api: {} as any, readOnly: false })
+  raw.render()
+  await flush()
+  raw.destroy()
+  expect(editor.dispose).toHaveBeenCalledOnce()
+  expect(model.dispose).toHaveBeenCalledOnce()
+  delete (window as any).monaco
+  delete (window as any).monacoHelper
 })

@@ -4,6 +4,7 @@ import './Raw-monaco.css'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { BaseTool } from '../Abstract/BaseTool'
 import type { editor } from 'monaco-editor'
+import { embeddedEditors } from '../utils/Undo/Selection'
 
 export interface RawData extends BlockToolData {
   html: string
@@ -90,13 +91,20 @@ export default class Raw extends BaseTool {
     // editorElem.setAttribute('data-editor', 'twig')
     this.wrapper.appendChild(editorElem)
 
-    this.initializeMonaco(editorElem)
+    const embedded = {
+      ready: Promise.resolve(),
+      instance: undefined as editor.IStandaloneCodeEditor | undefined,
+    }
+    embeddedEditors.set(this.wrapper, embedded)
+    embedded.ready = this.initializeMonaco(editorElem).then(() => {
+      embedded.instance = this.editorInstance
+    })
 
     return this.wrapper
   }
 
-  private initializeMonaco(editorElem: HTMLElement): void {
-    this.ensureMonacoLoaded()
+  private initializeMonaco(editorElem: HTMLElement): Promise<void> {
+    return this.ensureMonacoLoaded()
       .then((ready) => {
         if (!ready || !this.wrapper) {
           return
@@ -112,6 +120,7 @@ export default class Raw extends BaseTool {
           })
           this.editorInstance.onDidChangeModelContent(() => {
             monacoHelperInstance.autocloseTag()
+            this.wrapper?.dispatchEvent(new CustomEvent('pw:history-change', { bubbles: true }))
           })
         } catch (error) {
           console.error('Unable to initialize Monaco editor', error)
@@ -167,6 +176,15 @@ export default class Raw extends BaseTool {
     return (
       typeof window.monaco !== 'undefined' && typeof window.monacoHelper !== 'undefined'
     )
+  }
+
+  destroy(): void {
+    if (this.wrapper) embeddedEditors.delete(this.wrapper)
+    const model = this.editorInstance?.getModel()
+    this.editorInstance?.dispose()
+    model?.dispose()
+    delete this.editorInstance
+    delete this.wrapper
   }
 
   save(): RawData {

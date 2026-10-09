@@ -18,6 +18,24 @@ interface Marker {
  * counterpart pairs with nothing: it is kept as-is and exports back unchanged.
  */
 export class GroupRegistry {
+  static restoringHistory = false
+  private static pending = new Set<() => void>()
+
+  /** Finish both markers before history captures an insertion or deletion. */
+  static defer(change: () => void): void {
+    this.pending.add(change)
+    setTimeout(() => {
+      if (this.pending.delete(change)) change()
+    })
+  }
+
+  static flushPending(): void {
+    for (const change of this.pending) {
+      this.pending.delete(change)
+      change()
+    }
+  }
+
   static readonly START = 'groupStart'
   static readonly END = 'groupEnd'
 
@@ -43,10 +61,12 @@ export class GroupRegistry {
    * is already gone by then and nothing happens.
    */
   static removePartnerOf(api: API, blockId: string): void {
+    if (GroupRegistry.restoringHistory) return
     const partnerId = GroupRegistry.pairs.get(blockId)
     if (partnerId === undefined) return
 
-    setTimeout(() => {
+    this.defer(() => {
+      if (api.blocks.getById(blockId) !== null) return
       if (api.blocks.getById(partnerId) === null) return
       api.blocks.delete(api.blocks.getBlockIndex(partnerId))
     })

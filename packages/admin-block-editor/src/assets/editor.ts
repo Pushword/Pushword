@@ -68,6 +68,7 @@ export class editorJs {
   private editorjsTools: Record<string, any> = {}
   private modeManagers: Record<string, EditorModeManager> = {}
   private forms = new WeakSet<HTMLFormElement>()
+  private pendingSaves = new Map<string, Promise<OutputData | null>>()
 
   constructor() {
     if (!window.editorjsConfig) return
@@ -154,6 +155,7 @@ export class editorJs {
     // the first onChange it triggers: that is Editor.js' own "changes settled".
     let undo: Undo | null = null
     let undoAwaitsParsedBaseline = false
+    let historyExport: ReturnType<typeof setTimeout> | undefined
 
     // save
     // eslint-disable-next-line @typescript-eslint/no-this-alias -- onChange's own `this` (the Editor.js instance, for `this.holder`) shadows the class instance, so we keep a reference to it.
@@ -164,11 +166,12 @@ export class editorJs {
       GroupRegistry.decorateSoon()
       outline?.scheduleRefresh()
 
+      clearTimeout(historyExport)
       const outputData = await self.editorjsSave(this.holder)
 
       if (undoAwaitsParsedBaseline && undo !== null && outputData !== null) {
         undoAwaitsParsedBaseline = false
-        undo.initialize(outputData)
+        await undo.initialize(outputData)
         self.announceParsedBaseline(this.holder)
       }
     }
@@ -204,9 +207,19 @@ export class editorJs {
             // bound field (and refresh the outline) through this hook instead.
             onApply: () => {
               outline?.scheduleRefresh()
-              void self.editorjsSave(config.holder!)
+              // Markdown conversion is expensive on long pages; keep it outside keyboard transactions.
+              clearTimeout(historyExport)
+              historyExport = setTimeout(() => {
+                void self.editorjsSave(config.holder!)
+              }, 150)
             },
           })
+          const destroy = editor.destroy.bind(editor)
+          editor.destroy = () => {
+            clearTimeout(historyExport)
+            undo?.destroy()
+            destroy()
+          }
           new PasteLink({ editor })
           new ClipboardManager({ editor })
 
@@ -342,22 +355,20 @@ export class editorJs {
 
     if (!editorInput || !editor) return null
 
-    const outputData = await editor.saver.save()
-    //editorInput.value = JSON.stringify(outputData)
-
-    // @ts-ignore fonctionne même si ne respecte pas le typage
-    const editorApi: API = editor as API
-
-    const markdown = await new EditorJsExportMarkdown(
-      editorApi,
-      outputData,
-    ).exportToMarkdown()
-    editorInput.value = markdown
-
-    // Assigning .value fires nothing, so anything watching the form (unsaved
-    // changes recovery in pushword/admin) would never see the body change.
-    editorInput.dispatchEvent(new Event('input', { bubbles: true }))
-
-    return outputData
+    const save = Promise.resolve().then(async (): Promise<OutputData | null> => {
+      const outputData = await editor.saver.save()
+      const markdown = await new EditorJsExportMarkdown(
+        editor as unknown as API,
+        outputData,
+      ).exportToMarkdown()
+      const latest = this.pendingSaves.get(holderId)!
+      // A submission awaiting an older conversion must await the newest field value too.
+      if (latest !== save) return latest
+      editorInput.value = markdown
+      editorInput.dispatchEvent(new Event('input', { bubbles: true }))
+      return outputData
+    })
+    this.pendingSaves.set(holderId, save)
+    return save
   }
 }
