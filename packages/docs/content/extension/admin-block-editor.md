@@ -34,6 +34,34 @@ Bundles can instead contribute tool configuration per host by implementing
 `Pushword\AdminBlockEditor\Editor\EditorJsToolProviderInterface` (the snippet and quiz
 bundles do); the `className` must name a tool already shipped in the editor bundle.
 
+### Normalize undo snapshots
+
+Custom tools can exclude transient UI data from undo history with an optional
+callback. Set it after `window.editorjsConfig` is defined and before the editor
+initializes:
+
+```javascript
+window.editorjsConfig.undo = {
+  normalizeBlockData(data, { id, type }) {
+    if (type === 'customBlock') delete data.uiState
+    return data
+  },
+}
+```
+
+The callback is synchronous and must return block data. It receives a deep copy of
+each block's data and its `{ id, type }`, for both the initial state and subsequent
+snapshots. The returned data is copied before storage and comparison, then used
+when undo or redo restores that block. Capturing a snapshot does not modify the
+rendered tool or its live data; `id`, `type` and `tunes` remain unchanged.
+Keep the callback deterministic and idempotent: restored data will be captured
+again during subsequent edits.
+
+History captures each block with `block.save()`, retaining empty and temporarily
+invalid blocks. A cleanup attached only to `editor.saver.save()` therefore does
+not affect history: reuse that cleanup in this callback if needed. Without a
+callback, history keeps the saved block data as is.
+
 ### Link tool
 
 The link tool's config (`link` in `editorjsConfig.tools`) takes three keys:

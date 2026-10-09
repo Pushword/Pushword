@@ -4,12 +4,19 @@ import { GroupRegistry } from '../../Group/GroupRegistry'
 import { embeddedEditors } from './Selection'
 
 export type BlockState = OutputBlockData & { id: string }
+export type NormalizeBlockData = (
+  data: OutputBlockData['data'],
+  block: Readonly<Pick<BlockState, 'id' | 'type'>>,
+) => OutputBlockData['data']
 export const equal = (left: unknown, right: unknown): boolean =>
   JSON.stringify(left) === JSON.stringify(right)
 export const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
 
 /** Block.save(), unlike Saver.save(), retains empty and temporarily invalid blocks. */
-export async function captureState(editor: EditorJS): Promise<BlockState[]> {
+export async function captureState(
+  editor: EditorJS,
+  normalizeBlockData?: NormalizeBlockData,
+): Promise<BlockState[]> {
   const saved = Array.from({ length: editor.blocks.getBlocksCount() }, (_, index) => {
     const block = editor.blocks.getBlockByIndex(index)!
     return block.save().then((value) => {
@@ -18,7 +25,9 @@ export async function captureState(editor: EditorJS): Promise<BlockState[]> {
       return copy({
         id: block.id,
         type: block.name,
-        data: value.data,
+        data: normalizeBlockData
+          ? normalizeBlockData(copy(value.data), { id: block.id, type: block.name })
+          : value.data,
         tunes: (value as typeof value & { tunes?: OutputBlockData['tunes'] }).tunes ?? {},
       })
     })

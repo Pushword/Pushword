@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import Undo from './Undo'
+import Undo, { type UndoOptions } from './Undo'
 
 const caretText = () => {
   const selection = getSelection()!
@@ -22,7 +22,7 @@ const paragraph = (id: string, text: string) => ({
 
 function fixture(
   initial = [paragraph('a', 'original')],
-  options: { maxLength?: number; onApply?: () => Promise<void> } = {},
+  options: Pick<UndoOptions, 'maxLength' | 'onApply' | 'normalizeBlockData'> = {},
 ) {
   document.body.innerHTML =
     '<div id="history"><div class="codex-editor__redactor"></div><div class="ce-toolbox"></div></div>'
@@ -163,6 +163,29 @@ afterEach(() => {
 })
 
 describe('Undo history regressions', () => {
+  it('compares and restores normalized snapshots while keeping empty blocks', async () => {
+    const f = fixture([paragraph('a', 'original '), paragraph('b', '')], {
+      normalizeBlockData: (data) => ({ ...data, text: data.text.trimEnd() }),
+    })
+    await f.undo.initialize()
+    f.type(' ')
+    await f.undo.flush()
+    expect(f.undo.count()).toBe(0)
+
+    f.type('changed ')
+    await f.undo.flush()
+    expect(f.undo.count()).toBe(1)
+    await f.undo.undo()
+    expect(f.all()).toEqual([paragraph('a', 'original'), paragraph('b', '')])
+    await f.undo.redo()
+    expect(f.all()).toEqual([paragraph('a', 'original  changed'), paragraph('b', '')])
+
+    await f.undo.clear()
+    f.type(' ')
+    await f.undo.flush()
+    expect(f.undo.count()).toBe(0)
+  })
+
   it('captures pending typing before undo and makes it available to redo', async () => {
     const f = fixture()
     await f.undo.initialize({ blocks: f.all() })

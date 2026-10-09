@@ -2,16 +2,27 @@ import type EditorJS from '@editorjs/editorjs'
 import type { OutputBlockData, OutputData } from '@editorjs/editorjs'
 import Observer from './Observer'
 import { GroupRegistry } from '../../Group/GroupRegistry'
-import { applyState, captureState, equal, type BlockState } from './State'
+import {
+  applyState,
+  captureState,
+  equal,
+  type BlockState,
+  type NormalizeBlockData,
+} from './State'
 import { captureSelection, restoreSelection, type EditorSelection } from './Selection'
 
-interface UndoOptions {
+export interface UndoOptions {
   editor: EditorJS
   config?: {
     debounceTimer?: number
     shortcuts?: { undo?: string | string[]; redo?: string | string[] }
   }
   onApply?: () => void | Promise<unknown>
+  /**
+   * Return canonical data for every snapshot, including the initial state.
+   * Receives a detached copy; the result is copied before storage and comparison.
+   */
+  normalizeBlockData?: NormalizeBlockData
   maxLength?: number
 }
 
@@ -39,6 +50,7 @@ export class Undo {
   private readonly holder: HTMLElement
   private readonly observer: Observer
   private readonly onApply: () => void | Promise<unknown>
+  private readonly normalizeBlockData: NormalizeBlockData | undefined
   private readonly maxLength: number
   private readonly groupDelay: number
   private readonly shortcuts: { undo: string[]; redo: string[] }
@@ -56,7 +68,13 @@ export class Undo {
   private lastSelection: EditorSelection | null = null
   private action: Action | null = null
 
-  constructor({ editor, config = {}, onApply, maxLength = 100 }: UndoOptions) {
+  constructor({
+    editor,
+    config = {},
+    onApply,
+    normalizeBlockData,
+    maxLength = 100,
+  }: UndoOptions) {
     this.editor = editor
     const { holder } = (
       editor as unknown as { configuration: { holder: string | HTMLElement } }
@@ -65,6 +83,7 @@ export class Undo {
     this.maxLength = maxLength
     this.groupDelay = config.debounceTimer ?? 500
     this.onApply = onApply ?? (() => {})
+    this.normalizeBlockData = normalizeBlockData
     const defaults = { undo: ['CMD+Z'], redo: ['CMD+Y', 'CMD+SHIFT+Z'] }
     this.shortcuts = {
       undo: [config.shortcuts?.undo ?? defaults.undo].flat(),
@@ -84,7 +103,7 @@ export class Undo {
     const revision = ++this.revision
     this.observer.pause()
     GroupRegistry.flushPending()
-    const state = captureState(this.editor)
+    const state = captureState(this.editor, this.normalizeBlockData)
     return this.enqueue(async () => {
       const blocks = await state
       if (this.destroyed || revision !== this.revision) return
@@ -157,7 +176,7 @@ export class Undo {
     }
     this.action = null
     const afterSelection = captureSelection(this.holder) ?? action.selection
-    const captured = captureState(this.editor)
+    const captured = captureState(this.editor, this.normalizeBlockData)
     void this.enqueue(async () => {
       const after = await captured
       if (revision !== this.revision || this.destroyed || equal(after, this.current))

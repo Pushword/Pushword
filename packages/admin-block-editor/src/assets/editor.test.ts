@@ -87,6 +87,14 @@ beforeEach(() => {
   parseMarkdown.mockClear()
 })
 
+it('passes the optional history normalizer to Undo without forwarding it to Editor.js', () => {
+  const normalizeBlockData = (data: unknown) => data
+  boot('{"blocks":[]}', { undo: { normalizeBlockData } })
+  captured.onReady()
+  expect(undoOptions.normalizeBlockData).toBe(normalizeBlockData)
+  expect(captured.undo).toBeUndefined()
+})
+
 describe('editorJs – the undo baseline', () => {
   it('is taken once the parse settles, not while the editor is still empty', async () => {
     boot('# A page stored as markdown')

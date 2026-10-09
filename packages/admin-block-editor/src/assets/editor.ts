@@ -13,7 +13,7 @@ import Paragraph from './tools/Paragraph/Paragraph'
 import Table from './tools/Table'
 // @ts-ignore
 import DragDrop from 'editorjs-drag-drop'
-import Undo from './tools/utils/Undo/Undo'
+import Undo, { type UndoOptions } from './tools/utils/Undo/Undo'
 // @ts-ignore
 import Strikethrough from '@sotaproject/strikethrough'
 import Attaches from './tools/Attaches/Attaches'
@@ -53,6 +53,7 @@ interface EditorJSConfig {
   tools?: Record<string, any>
   onChange?: () => void
   onReady?: () => void
+  undo?: Pick<UndoOptions, 'normalizeBlockData'>
   [key: string]: any
 }
 
@@ -143,9 +144,11 @@ export class editorJs {
       })
     }
 
-    // The outline panel's config is ours, not EditorJS's: strip it before construction.
+    // Strip Pushword's outline and undo options before constructing Editor.js.
     const outlineConfig = config.outline as { labels: OutlineLabels } | undefined
     delete config.outline
+    const undoConfig = config.undo
+    delete config.undo
     let outline: OutlinePanel | null = null
 
     // Undo takes its baseline when it is built, at which point an editor whose
@@ -203,6 +206,7 @@ export class editorJs {
           new DragDrop(editor)
           undo = new Undo({
             editor,
+            ...undoConfig,
             // An applied snapshot bypasses onChange, so undo and redo write the
             // bound field (and refresh the outline) through this hook instead.
             onApply: () => {
