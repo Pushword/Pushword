@@ -61,6 +61,16 @@ a[rel='encrypt']:not(.link-btn) {
   font-size: var(--pw-text-sm, 14px);
 }
 
+/* Inline code is another voice, not an error: monospace on a neutral chip.
+   Editor.js' red-on-pink default made every snippet of a docs page look wrong.
+   A translucent chip in the surrounding text colour reads on any background,
+   tinted notices included. */
+.codex-editor .inline-code {
+  background: rgb(15 23 42 / 0.07);
+  color: inherit;
+  font-family: var(--bs-font-monospace, monospace);
+}
+
 /* @editorjs/list sets pre-wrap: a soft line break kept from the markdown
    would show as a break the site renders as a space, and Shift+Enter would
    type a newline instead of the <br> a paragraph gets. */
