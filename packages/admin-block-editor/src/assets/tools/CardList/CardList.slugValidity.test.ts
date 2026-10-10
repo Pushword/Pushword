@@ -26,7 +26,7 @@ function renderCard(page: string): { tool: CardList; input: HTMLInputElement; er
 describe('CardList slug feedback', () => {
   it('clears the accessible error as soon as the user starts correcting a slug', () => {
     const { tool, input, error } = renderCard('missing')
-    expect(tool.validate()).toBe(false)
+    tool.validate()
     expect(error.hidden).toBe(false)
 
     input.value = 'known'

@@ -666,17 +666,15 @@ export default class CardList extends BaseTool {
 
   public validate(): boolean {
     this.updateDataFromNodes()
-    if (this.data.items.length === 0) return false
 
-    // Check all slugs are valid (visual feedback already handled by blur event)
-    let allValid = true
+    // An unknown slug is flagged, not refused: Editor.js drops a block that
+    // fails validation from the saved content, cards and all.
     this.itemNodes.forEach((nodes) => {
       const isValid = this.isValidSlug(nodes.pageInput.value)
       CardList.showSlugValidity(nodes.pageInput, nodes.slugError, isValid)
-      if (!isValid) allValid = false
     })
 
-    return allValid
+    return this.data.items.length > 0
   }
 
   private static showSlugValidity(

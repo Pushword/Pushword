@@ -53,7 +53,8 @@ describe('CardList unknown slug', () => {
     })
     tool.render()
 
-    expect(tool.validate()).toBe(false)
+    // Flagged but kept: a block failing validate() is dropped from the saved content.
+    expect(tool.validate()).toBe(true)
     const [missing, known] = (tool as any).itemNodes
     expect(missing.pageInput.getAttribute('aria-invalid')).toBe('true')
     expect(missing.slugError.hidden).toBe(false)
