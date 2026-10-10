@@ -70,9 +70,6 @@ export default class Attaches extends AbstractMediaTool {
     }
 
     this.data = Attaches.normalizeData(data)
-
-    this.onSelectFile = config.onSelectFile
-    this.onUploadFile = config.onUploadFile
   }
 
   static normalizeData(data: AttachesDataToNormalize): AttachesData {
