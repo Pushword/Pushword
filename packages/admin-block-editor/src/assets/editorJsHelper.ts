@@ -39,11 +39,8 @@ function pickedFile(media: PickedMedia): PickedFile {
 
 export class editorJsHelper {
   private static modeManagers: Record<string, EditorModeManager> = {}
-  public modeManagers: Record<string, EditorModeManager> = {}
-
-  constructor() {
-    this.modeManagers = editorJsHelper.modeManagers
-  }
+  /** Same map, read by the widget's mode buttons through window.editorJsHelper. */
+  public readonly modeManagers = editorJsHelper.modeManagers
 
   /**
    * Récupère le gestionnaire de modes pour un éditeur
@@ -57,10 +54,6 @@ export class editorJsHelper {
    */
   static setModeManager(editorId: string, modeManager: EditorModeManager): void {
     this.modeManagers[editorId] = modeManager
-    // Synchroniser avec l'instance globale
-    if (window.editorJsHelper) {
-      window.editorJsHelper.modeManagers[editorId] = modeManager
-    }
   }
 
   /**

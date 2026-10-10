@@ -10,7 +10,7 @@ declare global {
   interface Window {
     EditorJsParseMarkdown: typeof EditorJsParseMarkdown
     EditorJsExportMarkdown: typeof EditorJsExportMarkdown
-    editorJsHelper: editorJsHelper & { modeManagers: Record<string, any> }
+    editorJsHelper: editorJsHelper
     editors: Record<string, any>
   }
 }

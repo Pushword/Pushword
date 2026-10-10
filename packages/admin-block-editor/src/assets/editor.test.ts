@@ -56,6 +56,8 @@ vi.mock('./tools/utils/ClipboardManager', () => ({ default: class {} }))
 vi.mock('./EditorModeManager', () => ({ EditorModeManager: class {} }))
 
 const { editorJs } = await import('./editor')
+const { editorJsHelper } = await import('./editorJsHelper')
+const { EditorModeManager } = await import('./EditorModeManager')
 
 function setUpDom(): void {
   document.body.innerHTML = ''
@@ -93,6 +95,15 @@ it('passes the optional history normalizer to Undo without forwarding it to Edit
   captured.onReady()
   expect(undoOptions.normalizeBlockData).toBe(normalizeBlockData)
   expect(captured.undo).toBeUndefined()
+})
+
+it('registers its mode manager where the widget mode buttons look it up', () => {
+  // window.editorJsHelper is built when the bundle loads, before any editor exists.
+  const helper = new editorJsHelper()
+  const previous = helper.modeManagers.ed
+  boot('{"blocks":[]}')
+  expect(helper.modeManagers.ed).toBeInstanceOf(EditorModeManager)
+  expect(helper.modeManagers.ed).not.toBe(previous)
 })
 
 describe('editorJs – the undo baseline', () => {

@@ -68,7 +68,6 @@ interface EditorJSTool {
 export class editorJs {
   private editors: Record<string, EditorJS> = {}
   private editorjsTools: Record<string, any> = {}
-  private modeManagers: Record<string, EditorModeManager> = {}
   private forms = new WeakSet<HTMLFormElement>()
   private pendingSaves = new Map<string, Promise<OutputData | null>>()
 
@@ -120,10 +119,6 @@ export class editorJs {
 
   getTools(): Record<string, any> {
     return this.editorjsTools
-  }
-
-  getModeManager(holderId: string): EditorModeManager | undefined {
-    return this.modeManagers[holderId]
   }
 
   initEditor(config: EditorJSConfig): void {
@@ -257,18 +252,14 @@ export class editorJs {
       }
     }
 
-    // Créer le gestionnaire de modes pour cet éditeur
-    const modeManager = new EditorModeManager(config.holder!)
-    this.modeManagers[config.holder!] = modeManager
-
-    // Enregistrer dans editorJsHelper pour l'accès global
-    editorJsHelper.setModeManager(config.holder!, modeManager)
+    editorJsHelper.setModeManager(config.holder!, new EditorModeManager(config.holder!))
 
     if (outlineConfig !== undefined) {
       const holderId = config.holder!
       const editorApi = editor as unknown as API
       const monacoContext: MonacoContext = {
-        monaco: () => this.modeManagers[holderId]?.getMonacoInstance() ?? null,
+        monaco: () =>
+          editorJsHelper.getModeManager(holderId)?.getMonacoInstance() ?? null,
         input: () => boundInputOf(holderId),
       }
       outline = new OutlinePanel({
