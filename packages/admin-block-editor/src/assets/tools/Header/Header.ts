@@ -1,6 +1,6 @@
 import './Header.css'
 
-import { IconH2, IconH3, IconH4, IconH5, IconH6, IconHeading } from '@codexteam/icons'
+import { IconHeading } from '@codexteam/icons'
 import { API, PasteEvent } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { MarkdownUtils } from '../utils/MarkdownUtils'
@@ -21,11 +21,8 @@ export interface HeaderConfig {
   defaultLevel?: number
 }
 
-interface Level {
-  number: number
-  tag: string
-  svg: string
-}
+/** The levels markdown holds, `##` to `######`: H1 is the page title. */
+const HEADING_LEVELS = [2, 3, 4, 5, 6]
 
 interface ConstructorArgs {
   data: HeaderDataToNormalize
@@ -40,18 +37,22 @@ export default class Header {
   private _data: HeaderData
   private readonly placeholder: string
   private readonly levelSelectLabel: string
+  private readonly levels: number[]
+  private readonly defaultLevel: number
 
   constructor({ data, config, api }: ConstructorArgs) {
     this.placeholder = config?.placeholder ?? ''
     this.levelSelectLabel = api.i18n.t('Heading level')
-    this._data = Header.normalizeData(data)
+    this.levels = config?.levels ?? HEADING_LEVELS
+    this.defaultLevel = config?.defaultLevel ?? 2
+    this._data = this.normalizeData(data)
     this._element = this.getTag()
   }
 
-  static normalizeData(data: HeaderDataToNormalize): HeaderData {
+  private normalizeData(data: HeaderDataToNormalize): HeaderData {
     return {
       text: data.text || '',
-      level: parseInt((data.level || 2).toString()),
+      level: parseInt((data.level || this.defaultLevel).toString()),
     }
   }
 
@@ -86,7 +87,7 @@ export default class Header {
 
     return {
       text: headerElement ? headerElement.innerHTML : toolsContent.innerHTML,
-      level: this.currentLevel.number,
+      level: this.currentLevel,
     }
   }
 
@@ -121,13 +122,13 @@ export default class Header {
     }
 
     this._data.text = headerElement.innerHTML
-    this._data.level = this.currentLevel.number
+    this._data.level = this.currentLevel
 
     return this._data
   }
 
   set data(data: HeaderData) {
-    this._data = Header.normalizeData(data)
+    this._data = this.normalizeData(data)
 
     if (data.level !== undefined && this._element.parentNode) {
       const newHeader = this.getTag()
@@ -183,7 +184,7 @@ export default class Header {
     // Create label element to display current level (uses data attribute to avoid copy issues)
     const levelLabel = document.createElement('span')
     levelLabel.classList.add('ce-header-level-label')
-    levelLabel.dataset.level = `H${this._data.level}`
+    levelLabel.dataset.level = `H${this.currentLevel}`
 
     // Create select dropdown for level selection (hidden, no text content)
     const levelSelect = document.createElement('select')
@@ -192,13 +193,17 @@ export default class Header {
     levelSelect.title = this.levelSelectLabel
     levelSelect.setAttribute('aria-label', this.levelSelectLabel)
 
-    this.levels.forEach((level) => {
+    // The block's own level stays offered, so one the config no longer lists is kept.
+    const levels = this.levels.includes(this.currentLevel)
+      ? this.levels
+      : [...this.levels, this.currentLevel].sort((a, b) => a - b)
+    levels.forEach((level) => {
       const option = document.createElement('option')
-      option.value = level.number.toString()
-      option.textContent = `H${level.number}`
-      option.selected = level.number === this._data.level
+      option.value = level.toString()
+      option.textContent = `H${level}`
       levelSelect.appendChild(option)
     })
+    levelSelect.value = this.currentLevel.toString()
 
     levelSelect.addEventListener('mousedown', (e) => {
       e.stopPropagation()
@@ -217,7 +222,7 @@ export default class Header {
     levelWrapper.appendChild(levelLabel)
     levelWrapper.appendChild(levelSelect)
 
-    const tag = document.createElement(this.currentLevel.tag) as HTMLHeadingElement
+    const tag = document.createElement(`H${this.currentLevel}`) as HTMLHeadingElement
     tag.innerHTML = this._data.text || ''
     tag.classList.add('ce-header')
     tag.contentEditable = 'true'
@@ -229,29 +234,11 @@ export default class Header {
     return container
   }
 
-  get currentLevel(): Level {
-    return (
-      this.levels.find((levelItem) => levelItem.number === this._data.level) ||
-      this.defaultLevel
-    )
-  }
-
-  get defaultLevel(): Level {
-    const defaultLevel = this.levels[0]
-    if (!defaultLevel) {
-      throw new Error('Default level not found')
-    }
-    return defaultLevel
-  }
-
-  get levels(): Level[] {
-    return [
-      { number: 2, tag: 'H2', svg: IconH2 },
-      { number: 3, tag: 'H3', svg: IconH3 },
-      { number: 4, tag: 'H4', svg: IconH4 },
-      { number: 5, tag: 'H5', svg: IconH5 },
-      { number: 6, tag: 'H6', svg: IconH6 },
-    ]
+  /** The block's level, or the default one when its data holds a level no heading can have. */
+  private get currentLevel(): number {
+    return HEADING_LEVELS.includes(this._data.level)
+      ? this._data.level
+      : this.defaultLevel
   }
 
   onPaste(event: PasteEvent): void {

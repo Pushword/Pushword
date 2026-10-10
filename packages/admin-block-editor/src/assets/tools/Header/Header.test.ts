@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { API } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
-import Header, { HeaderData } from './Header'
+import Header, { HeaderConfig, HeaderData } from './Header'
 
 function importHeader(markdown: string): { data: HeaderData; tunes: BlockTuneData } {
   let captured: { data: HeaderData; tunes: BlockTuneData } | null = null
@@ -159,5 +159,60 @@ describe('Header level select', () => {
     const select = rebuilt.querySelector('select')
     expect(select?.getAttribute('aria-label')).toBe('Niveau de titre')
     expect(select?.title).toBe('Niveau de titre')
+  })
+})
+
+describe('Header levels', () => {
+  const api = { i18n: { t: (text: string) => text } } as unknown as API
+
+  function render(data: { text?: string; level?: number }, config: HeaderConfig = {}) {
+    const header = new Header({ data, api, config, readOnly: false })
+    const container = header.render()
+    const options = [...container.querySelectorAll('option')].map(
+      (option) => option.value,
+    )
+
+    return { header, container, options }
+  }
+
+  it('offers H2 to H6 when the config lists no levels', () => {
+    expect(render({ text: 'Title', level: 2 }).options).toEqual(['2', '3', '4', '5', '6'])
+  })
+
+  it('offers the levels the config lists', () => {
+    expect(render({ text: 'Title', level: 2 }, { levels: [2, 3, 4] }).options).toEqual([
+      '2',
+      '3',
+      '4',
+    ])
+  })
+
+  it('keeps offering a level the config does not list, so the heading keeps it', () => {
+    const { header, container, options } = render(
+      { text: 'Title', level: 5 },
+      { levels: [2, 3, 4] },
+    )
+
+    expect(options).toEqual(['2', '3', '4', '5'])
+    expect(container.querySelector('select')?.value).toBe('5')
+    expect(container.querySelector('h5')).not.toBeNull()
+    expect(header.save(container)).toEqual({ text: 'Title', level: 5 })
+  })
+
+  it('gives a heading without a level the configured default level', () => {
+    const { header, container } = render({ text: 'Title' }, { defaultLevel: 3 })
+
+    expect(container.querySelector('h3')).not.toBeNull()
+    expect(header.save(container)).toEqual({ text: 'Title', level: 3 })
+  })
+
+  it('renders a level no heading can have at the default level, badge included', () => {
+    const { header, container } = render({ text: 'Title', level: 1 })
+
+    expect(container.querySelector('h2')).not.toBeNull()
+    expect(
+      container.querySelector<HTMLElement>('.ce-header-level-label')?.dataset.level,
+    ).toBe('H2')
+    expect(header.save(container)).toEqual({ text: 'Title', level: 2 })
   })
 })

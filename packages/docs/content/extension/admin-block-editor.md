@@ -34,6 +34,17 @@ Bundles can instead contribute tool configuration per host by implementing
 `Pushword\AdminBlockEditor\Editor\EditorJsToolProviderInterface` (the snippet and quiz
 bundles do); the `className` must name a tool already shipped in the editor bundle.
 
+### Heading levels
+
+The heading tool offers H2 to H6. To offer fewer, set the list after
+`window.editorjsConfig` is defined and before the editor initializes:
+
+```javascript
+window.editorjsConfig.tools.header.config.levels = [2, 3, 4]
+```
+
+A heading already at a level the list leaves out keeps it.
+
 ### Normalize undo snapshots
 
 Custom tools can exclude transient UI data from undo history with an optional
