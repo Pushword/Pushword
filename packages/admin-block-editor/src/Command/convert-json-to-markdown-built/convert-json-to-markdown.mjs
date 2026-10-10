@@ -1,15 +1,11 @@
 #!/usr/bin/env node
 //#region node_modules/@codexteam/icons/dist/index.mjs
-var t = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M6 7L6 12M6 17L6 12M6 12L12 12M12 7V12M12 17L12 12\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M16 11C16 10 19 9.5 19 12C19 13.9771 16.0684 13.9997 16.0012 16.8981C15.9999 16.9533 16.0448 17 16.1 17L19.3 17\"/></svg>";
-var r$1 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M6 7L6 12M6 17L6 12M6 12L12 12M12 7V12M12 17L12 12\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M16 11C16 10.5 16.8323 10 17.6 10C18.3677 10 19.5 10.311 19.5 11.5C19.5 12.5315 18.7474 12.9022 18.548 12.9823C18.5378 12.9864 18.5395 13.0047 18.5503 13.0063C18.8115 13.0456 20 13.3065 20 14.8C20 16 19.5 17 17.8 17C17.8 17 16 17 16 16.3\"/></svg>";
-var e$1 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M6 7L6 12M6 17L6 12M6 12L12 12M12 7V12M12 17L12 12\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M18 10L15.2834 14.8511C15.246 14.9178 15.294 15 15.3704 15C16.8489 15 18.7561 15 20.2 15M19 17C19 15.7187 19 14.8813 19 13.6\"/></svg>";
-var n$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M6 7L6 12M6 17L6 12M6 12L12 12M12 7V12M12 17L12 12\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M16 15.9C16 15.9 16.3768 17 17.8 17C19.5 17 20 15.6199 20 14.7C20 12.7323 17.6745 12.0486 16.1635 12.9894C16.094 13.0327 16 12.9846 16 12.9027V10.1C16 10.0448 16.0448 10 16.1 10H19.8\"/></svg>";
-var s = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M6 7L6 12M6 17L6 12M6 12L12 12M12 7V12M12 17L12 12\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M19.5 10C16.5 10.5 16 13.3285 16 15M16 15V15C16 16.1046 16.8954 17 18 17H18.3246C19.3251 17 20.3191 16.3492 20.2522 15.3509C20.0612 12.4958 16 12.6611 16 15Z\"/></svg>";
 var l$1 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M18 7L6 7\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M18 17H6\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M16 12L8 12\"/></svg>";
 var d = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M17 7L5 7\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M17 17H5\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M13 12L5 12\"/></svg>";
 var k$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M19 7L7 7\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M19 17H7\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M19 12L11 12\"/></svg>";
 var H$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M7 9L10 12M10 12L7 15M10 12H4\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M17 9L14 12M14 12L17 15M14 12H20\"/></svg>";
 var B$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M8 8L12 12M12 12L16 16M12 12L16 8M12 12L8 16\"/></svg>";
+var I$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 17C7 17 7 15.2536 7 13.5L5.5 12L7 10.5C7 8.74644 7 7 9 7\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 17C17 17 17 15.2536 17 13.5L18.5 12L17 10.5C17 8.74644 17 7 15 7\"/></svg>";
 var j$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M14.8833 9.16666L18.2167 12.5M18.2167 12.5L14.8833 15.8333M18.2167 12.5H10.05C9.16594 12.5 8.31809 12.1488 7.69297 11.5237C7.06785 10.8986 6.71666 10.0507 6.71666 9.16666\"/></svg>";
 var y$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M14.9167 14.9167L11.5833 18.25M11.5833 18.25L8.25 14.9167M11.5833 18.25L11.5833 10.0833C11.5833 9.19928 11.9345 8.35143 12.5596 7.72631C13.1848 7.10119 14.0326 6.75 14.9167 6.75\"/></svg>";
 var Z$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9.13333 14.9167L12.4667 18.25M12.4667 18.25L15.8 14.9167M12.4667 18.25L12.4667 10.0833C12.4667 9.19928 12.1155 8.35143 11.4904 7.72631C10.8652 7.10119 10.0174 6.75 9.13333 6.75\"/></svg>";
@@ -18,6 +14,7 @@ var U$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" 
 var G$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M9 7L9 12M9 17V12M9 12L15 12M15 7V12M15 17L15 12\"/></svg>";
 var O$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2.6\" d=\"M9.41 9.66H9.4\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2.6\" d=\"M14.6 9.66H14.59\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2.6\" d=\"M9.31 14.36H9.3\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2.6\" d=\"M14.6 14.36H14.59\"/></svg>";
 var _$1 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><rect width=\"14\" height=\"14\" x=\"5\" y=\"5\" stroke=\"currentColor\" stroke-width=\"2\" rx=\"4\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5.13968 15.32L8.69058 11.5661C9.02934 11.2036 9.48873 11 9.96774 11C10.4467 11 10.9061 11.2036 11.2449 11.5661L15.3871 16M13.5806 14.0664L15.0132 12.533C15.3519 12.1705 15.8113 11.9668 16.2903 11.9668C16.7693 11.9668 17.2287 12.1705 17.5675 12.533L18.841 13.9634\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13.7778 9.33331H13.7867\"/></svg>";
+var $$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-width=\"2\" d=\"M10 10.5606V13.4394C10 14.4777 11.1572 15.0971 12.0211 14.5211L14.1803 13.0817C14.9536 12.5661 14.9503 11.4317 14.18 10.9181L12.0214 9.47907C11.1591 8.9042 10 9.5203 10 10.5606Z\"/><rect width=\"14\" height=\"14\" x=\"5\" y=\"5\" stroke=\"currentColor\" stroke-width=\"2\" rx=\"4\"/></svg>";
 var o1 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M12 7V12M12 17V12M17 12H12M12 12H7\"/></svg>";
 var l1 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-width=\"2\" d=\"M11.8197 6.04369C11.8924 5.8925 12.1076 5.8925 12.1803 6.04369L13.9776 9.78496C14.0068 9.84564 14.0645 9.88759 14.1312 9.89657L18.2448 10.4498C18.411 10.4722 18.4776 10.6769 18.3562 10.7927L15.3535 13.6582C15.3048 13.7047 15.2827 13.7726 15.2948 13.8388L16.0398 17.922C16.0699 18.087 15.8957 18.2136 15.7481 18.1339L12 16.1124L8.25192 18.1339C8.10429 18.2136 7.93012 18.087 7.96022 17.922L8.7052 13.8388C8.71728 13.7726 8.69523 13.7047 8.64652 13.6582L5.64378 10.7927C5.52244 10.6769 5.58896 10.4722 5.7552 10.4498L9.86876 9.89657C9.93549 9.88759 9.99322 9.84564 10.0224 9.78496L11.8197 6.04369Z\"/></svg>";
 var w1 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M17 9L20 12L17 15\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M14 12H20\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M7 9L4 12L7 15\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 12H10\"/></svg>";
@@ -4787,6 +4784,45 @@ function atEndOfBlockComment(text, i) {
 	return text[i] === "*" && text[i + 1] === "/";
 }
 //#endregion
+//#region src/assets/tools/utils/loadScript.ts
+var MONACO_FALLBACK_URL = "/bundles/pushwordadmin/monaco/app.js";
+var loading = /* @__PURE__ */ new Map();
+/**
+* Injects the script at `src` once, however many callers ask for it, and
+* resolves when it has run. A failed load is forgotten so a later call retries.
+*/
+function loadScriptOnce(src) {
+	const pending = loading.get(src);
+	if (pending) return pending;
+	const loaded = new Promise((resolve, reject) => {
+		const script = globalThis.document.createElement("script");
+		script.src = src;
+		script.async = true;
+		script.addEventListener("load", () => resolve());
+		script.addEventListener("error", () => {
+			loading.delete(src);
+			reject(/* @__PURE__ */ new Error(`Failed to load ${src}`));
+		});
+		globalThis.document.head.appendChild(script);
+	});
+	loading.set(src, loaded);
+	return loaded;
+}
+/**
+* Resolves to whether Monaco is ready, and never rejects. Its bundle weighs a few
+* megabytes: pushword/admin fetches it on any page holding a Monaco field and
+* parks the in-flight promise on window.pwMonacoLoading. Adopting that promise,
+* and parking ours there, keeps a page from fetching the bundle twice.
+*/
+function loadMonaco() {
+	if (globalThis.window.monaco && globalThis.window.monacoHelper) return Promise.resolve(true);
+	globalThis.window.pwMonacoLoading ??= loadScriptOnce(globalThis.window.pwMonacoUrl || MONACO_FALLBACK_URL).then(() => true, () => {
+		globalThis.window.pwMonacoLoading = null;
+		return false;
+	});
+	return globalThis.window.pwMonacoLoading;
+}
+//#endregion
 //#region src/assets/tools/utils/MarkdownUtils.ts
 /**
 * Utilitaires pour l'export Markdown
@@ -4911,18 +4947,22 @@ var MarkdownUtils = class MarkdownUtils {
 		if (linkTune.hideForBot) link = "#" + link;
 		return link;
 	}
+	/**
+	* The tunes as CommonMark attributes, one space-separated token each: an id
+	* runs to the next space, so `#top.wide` would render as `id="top.wide"`.
+	*/
 	static getAttributes(tunes) {
-		let result = "";
+		const attributes = [];
 		const anchor = tunes?.anchor;
-		if (anchor && anchor !== "") result += `#${anchor}`;
+		if (anchor && anchor !== "") attributes.push(`#${anchor}`);
 		const alignment = tunes?.textAlign;
 		if (alignment && alignment !== "left") {
 			const alignmentClass = alignment === "center" ? "text-center" : alignment === "right" ? "text-right" : "";
-			if (alignmentClass) result += `.${alignmentClass}`;
+			if (alignmentClass) attributes.push(`.${alignmentClass}`);
 		}
 		const className = tunes?.class;
-		if (className && className !== "") result += `.${className}`;
-		return result;
+		if (className && className !== "") className.split(/\s+/).filter((name) => name !== "").forEach((name) => attributes.push(`.${name.replace(/^\./, "")}`));
+		return attributes.join(" ");
 	}
 	static formatAttributes(tunes) {
 		return MarkdownUtils.getAttributes(tunes).replace(/\s+/g, " ").trim();
@@ -4941,10 +4981,45 @@ var MarkdownUtils = class MarkdownUtils {
 		}
 		return markdown;
 	}
+	/**
+	* The class and anchor tunes as the last arguments of a Twig call, the
+	* `$wrapperClass, $id` of card_list() and pages_list(): `, 'class', 'anchor'`,
+	* cut after the last one set, '' when neither is.
+	*/
+	static tuneArguments(tunes) {
+		if (tunes?.anchor) return `, ${MarkdownUtils.wrapInQuotes(tunes.class || "")}, ${MarkdownUtils.wrapInQuotes(tunes.anchor)}`;
+		return tunes?.class ? `, ${MarkdownUtils.wrapInQuotes(tunes.class)}` : "";
+	}
+	/**
+	* `tunes` with the class and anchor tuneArguments() wrote read back from
+	* `args`; an empty one keeps what an attribute line set.
+	*/
+	static parseTuneArguments([className, anchor], tunes) {
+		const parsed = { ...tunes };
+		if (className) parsed.class = className;
+		if (anchor) parsed.anchor = anchor;
+		return parsed;
+	}
+	/** The lines of contenteditable HTML, cut at each `<br>` however it is spelled. */
+	static htmlLines(html) {
+		return html.split(/<br\s*\/?>/i);
+	}
+	/** `lines` as a blockquote, an empty one as a bare `>`. */
+	static toBlockquote(lines) {
+		return lines.map((line) => line === "" ? ">" : `> ${line}`).join("\n");
+	}
+	/** The lines of a blockquote without their `>` marker. */
+	static fromBlockquote(lines) {
+		return lines.map((line) => line.replace(/^>[ \t]?/, ""));
+	}
 	static startWithAttribute(firstLine) {
 		const line = firstLine.trim();
 		if (line.startsWith("{#") && (line.endsWith("#}") || !line.endsWith("}"))) return false;
 		return line.startsWith("{") && line.endsWith("}") && !line.startsWith("{{") && !line.startsWith("{%");
+	}
+	/** An anchor kept to the characters parseAttributes() reads back after a `#`. */
+	static sanitizeAnchor(anchor) {
+		return anchor.replace(/[^a-z0-9_-]/gi, "");
 	}
 	static parseAttributes(attributeLine) {
 		const tunes = {};
@@ -4955,8 +5030,8 @@ var MarkdownUtils = class MarkdownUtils {
 			tunes.textAlign = alignmentMatch[1];
 			attributeLine = attributeLine.replace(alignmentMatch[0], "");
 		}
-		const classMatch = attributeLine.match(/\.([a-zA-Z0-9_-]+)/g);
-		if (classMatch) tunes.class = classMatch.join(" ");
+		const classNames = [...attributeLine.matchAll(/\.(-?[_a-zA-Z][^\s.}#]*)/g)].map((match) => match[1]);
+		if (classNames.length > 0) tunes.class = classNames.join(" ");
 		return tunes;
 	}
 	static retrieveMarkdownWithoutTunes(markdown) {
@@ -5069,46 +5144,67 @@ var MarkdownUtils = class MarkdownUtils {
 		};
 	}
 	/**
+	* Parse a block that is exactly one `{{ func(<json>, …) }}` call whose first
+	* argument, optionally named (`images: {…}`), is a JSON object or array.
+	* Bracket- and quote-aware, so a caption holding `}) }}` does not end the
+	* call. `args` is the argument text after the JSON, its comma dropped:
+	* `'class', 'anchor'`, `clickable: true`, or '' when there is none.
+	*/
+	static extractJsonCall(func, markdown) {
+		const call = markdown.trim();
+		const open = new RegExp(`^{{\\s*${func}\\(`).exec(call);
+		if (open === null) return null;
+		const argsEnd = MarkdownUtils.balancedEnd(call, open[0].length - 1);
+		if (argsEnd === null || !/^\s*}}$/.test(call.slice(argsEnd))) return null;
+		const argList = call.slice(open[0].length, argsEnd - 1);
+		const jsonStart = /^\s*(?:[A-Za-z_]\w*:\s*)?(?=[{[])/.exec(argList)?.[0].length;
+		if (jsonStart === void 0) return null;
+		const jsonEnd = MarkdownUtils.balancedEnd(argList, jsonStart);
+		const args = /^\s*(?:,\s*([\s\S]*?))?\s*$/.exec(argList.slice(jsonEnd));
+		if (args === null) return null;
+		const json = MarkdownUtils.parseJson(argList.slice(jsonStart, jsonEnd));
+		if (json === void 0) return null;
+		return {
+			json,
+			args: args[1] ?? ""
+		};
+	}
+	/**
 	* Read a brace-balanced object literal starting at `start` and JSON-parse it.
 	* Tolerates single quotes / trailing commas via jsonrepair.
 	*/
 	static parseBalancedObject(input, start) {
+		const end = MarkdownUtils.balancedEnd(input, start);
+		if (end === null) return {};
+		return MarkdownUtils.parseJson(input.substring(start, end)) ?? {};
+	}
+	/**
+	* The index just past the bracket closing the one at `start`, skipping
+	* quoted strings; null when it never closes.
+	*/
+	static balancedEnd(input, start) {
 		let depth = 0;
-		let inStr = false;
-		let strCh = "";
-		let end = start;
 		for (let i = start; i < input.length; i++) {
-			const c = input[i];
-			if (inStr) {
-				if (c === "\\") {
-					i++;
-					continue;
-				}
-				if (c === strCh) inStr = false;
-				continue;
-			}
-			if (c === "\"" || c === "'") {
-				inStr = true;
-				strCh = c;
-				continue;
-			}
-			if (c === "{") depth++;
-			else if (c === "}") {
+			const char = input[i];
+			if (char === "\"" || char === "'") {
+				for (i++; i < input.length && input[i] !== char; i++) if (input[i] === "\\") i++;
+			} else if ("([{".includes(char)) depth++;
+			else if (")]}".includes(char)) {
 				depth--;
-				if (depth === 0) {
-					end = i + 1;
-					break;
-				}
+				if (depth === 0) return i + 1;
 			}
 		}
-		const raw = input.substring(start, end);
+		return null;
+	}
+	/** JSON.parse, through jsonrepair when strict JSON fails; undefined when both do. */
+	static parseJson(raw) {
 		try {
 			return JSON.parse(raw);
 		} catch {
 			try {
 				return JSON.parse(jsonrepair(raw));
 			} catch {
-				return {};
+				return;
 			}
 		}
 	}
@@ -5344,30 +5440,16 @@ var MarkdownUtils = class MarkdownUtils {
 		const restore = (text) => text.replace(/\u0000(\d+)\u0000/g, (_match, index) => restore(held[Number(index)] ?? ""));
 		return restore(markdown.replace(/!\[[^\]]*\]\([^)]*\)/g, (image) => hold(image)).replace(/`(.+?)`/g, (_match, code) => hold(`<code class="inline-code">${code}</code>`)).replace(/\\([\\*])/g, (_match, literal) => hold(literal)).replace(/(#?)\[([^\]]+)\]\(([^){]+?)(?:\s+"([^"]*)")?\)(?:\{([^}]+)\})?/g, (_match, hash, text, href, title, attrs) => hold(MarkdownUtils.anchorOpeningTag(href, title, attrs, hash === "#")) + text + hold("</a>")).replace(/\*\*([\s\S]+?)\*\*/g, "<b>$1</b>").replace(/(?<![\p{L}\p{N}_])_(?!\s)([\s\S]+?)(?<!\s)_(?![\p{L}\p{N}_])/gu, "<i>$1</i>").replace(/~~([\s\S]+?)~~/g, "<s class=\"cdx-strikethrough\">$1</s>").replace(/(?: {2,}|\\)\n/g, "<br>"));
 	}
-	static {
-		this.prettierPromise = null;
-	}
-	static loadScript(src) {
-		return new Promise((resolve, reject) => {
-			if (globalThis.document.querySelector(`script[src="${src}"]`)) {
-				resolve();
-				return;
-			}
-			const script = globalThis.document.createElement("script");
-			script.src = src;
-			script.async = true;
-			script.onload = () => resolve();
-			script.onerror = () => reject(/* @__PURE__ */ new Error(`Failed to load ${src}`));
-			globalThis.document.head.appendChild(script);
-		});
-	}
-	static loadPrettier() {
-		if (!MarkdownUtils.prettierPromise) MarkdownUtils.prettierPromise = Promise.all([MarkdownUtils.loadScript("/bundles/pushwordadminblockeditor/prettier/standalone.js"), MarkdownUtils.loadScript("/bundles/pushwordadminblockeditor/prettier/markdown.js")]).then(() => ({
+	static async loadPrettier() {
+		await Promise.all([loadScriptOnce("/bundles/pushwordadminblockeditor/prettier/standalone.js"), loadScriptOnce("/bundles/pushwordadminblockeditor/prettier/markdown.js")]);
+		return {
 			prettier: globalThis.window.prettier,
 			plugin: globalThis.window.prettierPlugins?.markdown
-		}));
-		return MarkdownUtils.prettierPromise;
+		};
 	}
+	/**
+	* Formate le contenu Markdown avec Prettier
+	*/
 	static async formatMarkdownWithPrettier(markdownContent) {
 		try {
 			const { prettier, plugin } = await MarkdownUtils.loadPrettier();
@@ -5394,17 +5476,27 @@ function e(text) {
 }
 //#endregion
 //#region src/assets/tools/Header/Header.ts
-var Header = class Header {
-	constructor({ data, api }) {
-		this._levelSelect = null;
-		this.api = api;
-		this._data = Header.normalizeData(data);
+/** The levels markdown holds, `##` to `######`: H1 is the page title. */
+var HEADING_LEVELS = [
+	2,
+	3,
+	4,
+	5,
+	6
+];
+var Header = class {
+	constructor({ data, config, api }) {
+		this.placeholder = config?.placeholder ?? "";
+		this.levelSelectLabel = api.i18n.t("Heading level");
+		this.levels = config?.levels ?? HEADING_LEVELS;
+		this.defaultLevel = config?.defaultLevel ?? 2;
+		this._data = this.normalizeData(data);
 		this._element = this.getTag();
 	}
-	static normalizeData(data) {
+	normalizeData(data) {
 		return {
 			text: data.text || "",
-			level: parseInt((data.level || 2).toString())
+			level: parseInt((data.level || this.defaultLevel).toString())
 		};
 	}
 	render() {
@@ -5415,7 +5507,6 @@ var Header = class Header {
 			level,
 			text: this.data.text
 		};
-		if (this._levelSelect) this._levelSelect.value = level.toString();
 	}
 	merge(data) {
 		const headerElement = this.getHeaderElement();
@@ -5428,7 +5519,7 @@ var Header = class Header {
 		const headerElement = this.getHeaderElement();
 		return {
 			text: headerElement ? headerElement.innerHTML : toolsContent.innerHTML,
-			level: this.currentLevel.number
+			level: this.currentLevel
 		};
 	}
 	static get conversionConfig() {
@@ -5457,34 +5548,18 @@ var Header = class Header {
 		const headerElement = this.getHeaderElement();
 		if (!headerElement) return this._data;
 		this._data.text = headerElement.innerHTML;
-		this._data.level = this.currentLevel.number;
+		this._data.level = this.currentLevel;
 		return this._data;
 	}
+	/** The level is the heading's tag name, so new data rebuilds the block from it. */
 	set data(data) {
-		this._data = Header.normalizeData(data);
-		if (data.level !== void 0 && this._element.parentNode) {
-			const newHeader = this.getTag();
-			const newHeaderElement = this.getHeaderElement(newHeader);
-			const oldHeaderElement = this.getHeaderElement();
-			if (newHeaderElement && oldHeaderElement) newHeaderElement.innerHTML = oldHeaderElement.innerHTML;
-			this._element.parentNode.replaceChild(newHeader, this._element);
-			this._element = newHeader;
-			this._levelSelect = this._element.querySelector(".ce-header-level-select");
-			const levelLabel = this._element.querySelector(".ce-header-level-label");
-			if (levelLabel) levelLabel.dataset.level = `H${this._data.level}`;
-		}
-		if (data.text !== void 0) {
-			const headerElement = this.getHeaderElement();
-			if (headerElement) headerElement.innerHTML = data.text || "";
-		}
+		this._data = this.normalizeData(data);
+		const rebuilt = this.getTag();
+		this._element.replaceWith(rebuilt);
+		this._element = rebuilt;
 	}
-	getHeaderElement(element) {
-		const target = element || this._element;
-		if (!target) return null;
-		const header = target.querySelector("h1, h2, h3, h4, h5, h6");
-		if (header) return header;
-		if (target.tagName.match(/^H[1-6]$/)) return target;
-		return null;
+	getHeaderElement() {
+		return this._element.querySelector("h1, h2, h3, h4, h5, h6");
 	}
 	getTag() {
 		const container = globalThis.document.createElement("div");
@@ -5494,91 +5569,48 @@ var Header = class Header {
 		levelWrapper.contentEditable = "false";
 		const levelLabel = globalThis.document.createElement("span");
 		levelLabel.classList.add("ce-header-level-label");
-		levelLabel.dataset.level = `H${this._data.level}`;
+		levelLabel.dataset.level = `H${this.currentLevel}`;
 		const levelSelect = globalThis.document.createElement("select");
 		levelSelect.classList.add("ce-header-level-select");
 		levelSelect.contentEditable = "false";
-		levelSelect.title = "Select heading level";
-		levelSelect.setAttribute("aria-label", "Heading level");
-		this.levels.forEach((level) => {
+		levelSelect.title = this.levelSelectLabel;
+		levelSelect.setAttribute("aria-label", this.levelSelectLabel);
+		(this.levels.includes(this.currentLevel) ? this.levels : [...this.levels, this.currentLevel].sort((a, b) => a - b)).forEach((level) => {
 			const option = globalThis.document.createElement("option");
-			option.value = level.number.toString();
-			option.textContent = `H${level.number}`;
-			option.selected = level.number === this._data.level;
+			option.value = level.toString();
+			option.textContent = `H${level}`;
 			levelSelect.appendChild(option);
 		});
+		levelSelect.value = this.currentLevel.toString();
 		levelSelect.addEventListener("mousedown", (e) => {
 			e.stopPropagation();
 		});
 		levelSelect.addEventListener("change", (e) => {
 			e.preventDefault();
 			e.stopPropagation();
-			const newLevel = parseInt(e.target.value);
-			levelLabel.dataset.level = `H${newLevel}`;
-			this.setLevel(newLevel);
+			this.setLevel(parseInt(e.target.value));
 		});
-		this._levelSelect = levelSelect;
 		levelWrapper.appendChild(levelLabel);
 		levelWrapper.appendChild(levelSelect);
-		const tag = globalThis.document.createElement(this.currentLevel.tag);
+		const tag = globalThis.document.createElement(`H${this.currentLevel}`);
 		tag.innerHTML = this._data.text || "";
 		tag.classList.add("ce-header");
 		tag.contentEditable = "true";
-		tag.dataset.placeholder = this.api.i18n.t("");
+		tag.dataset.placeholder = this.placeholder;
 		container.appendChild(levelWrapper);
 		container.appendChild(tag);
 		return container;
 	}
+	/** The block's level, or the default one when its data holds a level no heading can have. */
 	get currentLevel() {
-		return this.levels.find((levelItem) => levelItem.number === this._data.level) || this.defaultLevel;
-	}
-	get defaultLevel() {
-		const defaultLevel = this.levels[0];
-		if (!defaultLevel) throw new Error("Default level not found");
-		return defaultLevel;
-	}
-	get levels() {
-		return [
-			{
-				number: 2,
-				tag: "H2",
-				svg: t
-			},
-			{
-				number: 3,
-				tag: "H3",
-				svg: r$1
-			},
-			{
-				number: 4,
-				tag: "H4",
-				svg: e$1
-			},
-			{
-				number: 5,
-				tag: "H5",
-				svg: n$2
-			},
-			{
-				number: 6,
-				tag: "H6",
-				svg: s
-			}
-		];
+		return HEADING_LEVELS.includes(this._data.level) ? this._data.level : this.defaultLevel;
 	}
 	onPaste(event) {
 		const detail = event.detail;
 		if ("data" in detail) {
 			const content = detail.data;
-			const level = {
-				H2: 2,
-				H3: 3,
-				H4: 4,
-				H5: 5,
-				H6: 6
-			}[content.tagName] || 2;
 			this.data = {
-				level,
+				level: Number(content.tagName.slice(1)),
 				text: content.innerHTML
 			};
 		}
@@ -5811,7 +5843,7 @@ var n$1 = class n$1 {
 var Paragraph = class extends n$1 {
 	static async exportToMarkdown(data, tunes) {
 		if (!data || !data.text) return "";
-		let markdown = data.text.replace(/(&nbsp;| |\u00A0)+ */g, " ").split("<br>").join("  \n");
+		let markdown = MarkdownUtils.htmlLines(data.text.replace(/(&nbsp;| |\u00A0)+ */g, " ")).join("  \n");
 		markdown = MarkdownUtils.convertInlineHtmlToMarkdown(markdown);
 		const formattedMarkdown = await MarkdownUtils.formatMarkdownWithPrettier(markdown);
 		return MarkdownUtils.addAttributes(formattedMarkdown, tunes);
@@ -8062,7 +8094,7 @@ var G$1 = class G$1 {
 };
 //#endregion
 //#region src/assets/tools/Raw/icon.svg?raw
-var icon_default$1 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-code-square\" viewBox=\"0 0 16 16\">\n    <path d=\"M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z\"/>\n    <path d=\"M6.854 4.646a.5.5 0 0 1 0 .708L4.207 8l2.647 2.646a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 0 1 .708 0m2.292 0a.5.5 0 0 0 0 .708L11.793 8l-2.647 2.646a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708 0\"/>\n</svg>";
+var icon_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 8l-4 4 4 4M15 8l4 4-4 4M13 6.5l-2 11\"/></svg>\n";
 //#endregion
 //#region src/assets/tools/utils/logger.ts
 var Logger = class {
@@ -8125,20 +8157,18 @@ var BaseTool = class {
 	}
 };
 //#endregion
+//#region src/assets/tools/utils/Undo/Selection.ts
+/** Raw and CodeBlock register their embedded editor without exposing Editor.js internals. */
+var embeddedEditors = /* @__PURE__ */ new WeakMap();
+//#endregion
 //#region src/assets/tools/Raw/Raw.ts
-var Raw = class Raw extends BaseTool {
-	static {
-		this.monacoLoaderPromise = null;
-	}
-	static {
-		this.MONACO_SCRIPT_URL = "/bundles/pushwordadmin/monaco/app.js";
-	}
+var Raw = class extends BaseTool {
 	static {
 		this.enableLineBreaks = true;
 	}
 	static get toolbox() {
 		return {
-			icon: icon_default$1,
+			icon: icon_default,
 			title: "Raw"
 		};
 	}
@@ -8148,30 +8178,15 @@ var Raw = class Raw extends BaseTool {
 			api,
 			readOnly
 		});
-		this._rawData = { html: "" };
-		this.initialHtmlValue = "";
 		this.api = api;
-		const html = data?.html || "";
-		this._rawData = { html };
-		this.initialHtmlValue = html;
-		Object.defineProperty(this, "data", {
-			get: () => this._rawData,
-			set: (newData) => {
-				const htmlValue = newData?.html || "";
-				this._rawData = { html: htmlValue };
-				if (this.editorInstance && this.editorInstance.getValue() !== htmlValue) this.editorInstance.setValue(htmlValue);
-			},
-			configurable: true,
-			enumerable: true
-		});
+		this.data = { html: data?.html || "" };
 	}
 	instantiateEditor(editorElem) {
 		const monaco = globalThis.window.monaco;
 		const monacoHelper = globalThis.window.monacoHelper;
 		if (!monaco || !monacoHelper) throw new Error("monaco is not defined");
-		const htmlValue = this.initialHtmlValue || this.data.html || "";
 		return monaco.editor.create(editorElem, {
-			value: htmlValue,
+			value: this.data.html,
 			language: "twig",
 			...monacoHelper.defaultSettings
 		});
@@ -8179,16 +8194,22 @@ var Raw = class Raw extends BaseTool {
 	render() {
 		this.wrapper = globalThis.document.createElement("div");
 		this.wrapper.classList.add("editorjs-monaco-wrapper");
-		this.initialHtmlValue = this.data.html || "";
 		const editorElem = globalThis.document.createElement("div");
 		editorElem.classList.add("editorjs-monaco-editor");
 		editorElem.style.height = "100%";
 		this.wrapper.appendChild(editorElem);
-		this.initializeMonaco(editorElem);
+		const embedded = {
+			ready: Promise.resolve(),
+			instance: void 0
+		};
+		embeddedEditors.set(this.wrapper, embedded);
+		embedded.ready = this.initializeMonaco(editorElem).then(() => {
+			embedded.instance = this.editorInstance;
+		});
 		return this.wrapper;
 	}
 	initializeMonaco(editorElem) {
-		this.ensureMonacoLoaded().then((ready) => {
+		return loadMonaco().then((ready) => {
 			if (!ready || !this.wrapper) return;
 			try {
 				this.editorInstance = this.instantiateEditor(editorElem);
@@ -8199,45 +8220,20 @@ var Raw = class Raw extends BaseTool {
 				});
 				this.editorInstance.onDidChangeModelContent(() => {
 					monacoHelperInstance.autocloseTag();
+					this.wrapper?.dispatchEvent(new CustomEvent("pw:history-change", { bubbles: true }));
 				});
 			} catch (error) {
 				console.error("Unable to initialize Monaco editor", error);
 			}
-		}).catch((error) => {
-			console.error("Failed to load Monaco resources", error);
 		});
 	}
-	async ensureMonacoLoaded() {
-		if (globalThis.window.monaco && globalThis.window.monacoHelper) return true;
-		if (!Raw.monacoLoaderPromise) Raw.monacoLoaderPromise = new Promise((resolve, reject) => {
-			const script = globalThis.document.createElement("script");
-			script.src = `${Raw.MONACO_SCRIPT_URL}?v=${Date.now()}`;
-			script.async = true;
-			script.defer = true;
-			const cleanup = () => {
-				script.removeEventListener("load", onLoad);
-				script.removeEventListener("error", onError);
-			};
-			const onLoad = () => {
-				cleanup();
-				resolve();
-			};
-			const onError = (event) => {
-				cleanup();
-				reject(event);
-			};
-			script.addEventListener("load", onLoad);
-			script.addEventListener("error", onError);
-			globalThis.document.head.appendChild(script);
-		});
-		try {
-			await Raw.monacoLoaderPromise;
-		} catch (error) {
-			Raw.monacoLoaderPromise = null;
-			console.error("Error loading Monaco script", error);
-			return false;
-		}
-		return typeof globalThis.window.monaco !== "undefined" && typeof globalThis.window.monacoHelper !== "undefined";
+	destroy() {
+		if (this.wrapper) embeddedEditors.delete(this.wrapper);
+		const model = this.editorInstance?.getModel();
+		this.editorInstance?.dispose();
+		model?.dispose();
+		delete this.editorInstance;
+		delete this.wrapper;
 	}
 	save() {
 		if (this.editorInstance) this.data.html = this.editorInstance.getValue();
@@ -8293,7 +8289,7 @@ var List = class List extends G$1 {
 		items.forEach((item, index) => {
 			const marker = List._marker(style, item, index);
 			const content = typeof item === "string" ? item : item.content ?? "";
-			const text = MarkdownUtils.convertInlineHtmlToMarkdown(content.replace(/<br\s*\/?>/gi, "  \n"));
+			const text = MarkdownUtils.convertInlineHtmlToMarkdown(MarkdownUtils.htmlLines(content).join("  \n"));
 			const textIndent = indent + " ".repeat(marker.length + 1);
 			markdown += `${indent}${marker} ${text.replace(/\n/g, "\n" + textIndent)}\n`;
 			if (item.items && item.items.length > 0) markdown += List._itemsToMarkdown(item.items, style, depth + 1);
@@ -9537,19 +9533,16 @@ var m = class m {
 var Quote = class extends m {
 	static exportToMarkdown(data, tunes) {
 		if (!data || !data.text) return "";
-		let markdown = "";
-		const lines = data.text.split(/<br\s*\/?>/gi);
-		for (const line of lines) markdown += `> ${line.trim()}
-`;
-		if (data.caption) markdown += `> — <cite>${data.caption}</cite>`;
-		return MarkdownUtils.addAttributes(markdown, tunes);
+		const lines = MarkdownUtils.htmlLines(data.text).map((line) => line.trim());
+		if (data.caption) lines.push(`— <cite>${data.caption}</cite>`);
+		return MarkdownUtils.addAttributes(MarkdownUtils.toBlockquote(lines), tunes);
 	}
 	static importFromMarkdown(editor, markdown) {
 		const result = MarkdownUtils.parseTunesFromMarkdown(markdown);
 		const tunes = result.tunes;
 		const lines = result.markdown.split("\n");
 		let caption = "";
-		let quoteText = "";
+		const quoteLines = [];
 		let inQuote = true;
 		for (const line of lines) {
 			if (line.trim().match(/^>\s*(—|-)/) || !inQuote) {
@@ -9557,10 +9550,10 @@ var Quote = class extends m {
 				caption += line.trim().replace(/^>\s*(—|-)\s*(<cite>)?/, "").replace(/<\/cite>\s*$/, "");
 				continue;
 			}
-			if (line.trim().startsWith(">")) quoteText += line.trim().replace(/^>\s?/, "") + "<br>";
+			if (line.trim().startsWith(">")) quoteLines.push(line.trim());
 		}
 		caption = caption.trim();
-		quoteText = quoteText.replace(/<br>$/, "").trim();
+		const quoteText = MarkdownUtils.fromBlockquote(quoteLines).join("<br>").trim();
 		const block = editor.blocks.insert("quote");
 		editor.blocks.update(block.id, {
 			text: quoteText,
@@ -9572,13 +9565,10 @@ var Quote = class extends m {
 	}
 };
 //#endregion
-//#region src/assets/tools/CodeBlock/icon.svg?raw
-var icon_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-braces\" viewBox=\"0 0 16 16\">\n    <path d=\"M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6\"/>\n</svg>\n\n";
-//#endregion
 //#region src/assets/tools/utils/make.ts
 var make$1 = class make$1 {
 	static {
-		this.switchCount = 0;
+		this.idCount = 0;
 	}
 	static element(tagName, classNames = null, attributes = {}, innerHTML = "", onclick = null) {
 		const el = globalThis.document.createElement(tagName);
@@ -9606,8 +9596,12 @@ var make$1 = class make$1 {
 	static options(select, options, selectedValue = null) {
 		options.forEach((option) => make$1.option(select, option, null, {}, selectedValue));
 	}
+	/** A counter, not the clock: elements built in the same tick get distinct ids. */
+	static uniqueId(prefix) {
+		return `${prefix}-${++make$1.idCount}`;
+	}
 	static switchInput(name, labelText, checked = false) {
-		const id = `${name}-${++make$1.switchCount}`;
+		const id = make$1.uniqueId(name);
 		const wrapper = make$1.element("div", "editor-switch");
 		const checkbox = make$1.element("input", null, {
 			type: "checkbox",
@@ -9621,99 +9615,117 @@ var make$1 = class make$1 {
 		if (checked) checkbox.checked = checked;
 		return wrapper;
 	}
-	static selectionCollapseToEnd() {
-		const sel = globalThis.window.getSelection();
-		if (!sel || !sel.focusNode) return;
-		const range = globalThis.document.createRange();
-		range.selectNodeContents(sel.focusNode);
-		range.collapse(false);
-		sel.removeAllRanges();
-		sel.addRange(range);
-	}
-	static moveCaretToTheEnd(element) {
-		if (!element.focus) return;
-		element.focus();
-		const range = globalThis.document.createRange();
-		range.selectNodeContents(element);
-		range.collapse(false);
-		const selection = globalThis.window.getSelection();
-		if (!selection) return;
-		selection.removeAllRanges();
-		selection.addRange(range);
-	}
 };
 //#endregion
 //#region src/assets/tools/CodeBlock/CodeBlock.ts
-/**
-* The code is contains in html, but it could be whatever you want
-*/
 var CodeBlock = class extends Raw {
-	constructor({ data, api, readOnly }) {
+	constructor({ data, api, readOnly, config }) {
 		super({
 			data,
 			api,
 			readOnly
 		});
-		this._codeBlockData = {
-			html: "",
-			language: "html"
-		};
-		this._codeBlockData = {
-			html: data?.html || "",
-			language: data?.language || "html"
-		};
-		Object.defineProperty(this, "data", {
-			get: () => this._codeBlockData,
-			set: (newData) => {
-				const html = newData?.html || "";
-				const language = newData?.language || this._codeBlockData.language || "html";
-				this._codeBlockData = {
-					html,
-					language
-				};
-				if (this.editorInstance && this.editorInstance.getValue() !== html) this.editorInstance.setValue(html);
-			},
-			configurable: true,
-			enumerable: true
-		});
+		this.previewRevision = 0;
+		this.mermaidUrl = config.mermaidUrl;
+		this.data.language = data?.language || "html";
 	}
 	render() {
-		const wrapper = super.render();
-		const select = make$1.element("select", this.api.styles.input, { style: "max-width: 100px;padding: 5px 6px;margin: auto; position: absolute; right: 5px; z-index: 5; background: white" });
+		const code = super.render();
+		code.classList.add("monaco-codeblock-wrapper");
+		const wrapper = make$1.element("div", "pw-code-block");
+		const label = make$1.element("label", "pw-code-language");
+		label.append(this.api.i18n.t("Language"));
+		const select = make$1.element("select", this.api.styles.input);
 		make$1.options(select, [
 			"html",
 			"twig",
 			"javascript",
 			"php",
 			"json",
-			"yaml"
+			"yaml",
+			"mermaid"
 		]);
-		select.value = this._codeBlockData.language;
-		select.addEventListener("change", (event) => {
-			const target = event.target;
-			this._codeBlockData.language = target.value;
-			this.editorInstance.getModel().setLanguage(this._codeBlockData.language);
+		this.languageSelect = select;
+		this.updateLanguage();
+		select.disabled = this.readOnly;
+		select.addEventListener("change", () => {
+			this.data.language = select.value;
+			this.updateLanguage();
+			this.schedulePreview();
 		});
-		const editorWrapper = wrapper.firstChild;
-		wrapper.insertBefore(select, editorWrapper);
-		wrapper.style.marginBottom = "35px";
-		wrapper.style.position = "relative";
-		wrapper.classList.add("monaco-codeblock-wrapper");
+		label.append(select);
+		this.preview = make$1.element("div", "pw-mermaid-preview");
+		this.preview.setAttribute("aria-live", "polite");
+		wrapper.append(label, code, this.preview);
+		this.schedulePreview();
 		return wrapper;
 	}
-	/**
-	* Extract Tool's data from the view
-	*
-	* @returns {RawData} - raw HTML code
-	* @public
-	*/
-	save() {
-		if (this.editorInstance) this._codeBlockData.html = this.editorInstance.getValue();
-		return this._codeBlockData;
+	instantiateEditor(element) {
+		const instance = super.instantiateEditor(element);
+		instance.updateOptions({ readOnly: this.readOnly });
+		this.updateLanguage(instance);
+		this.contentListener = instance.onDidChangeModelContent(() => this.schedulePreview());
+		return instance;
+	}
+	updateLanguage(instance = this.editorInstance) {
+		if (this.wrapper) this.wrapper.dataset.language = this.data.language;
+		if (this.languageSelect) {
+			if (!Array.from(this.languageSelect.options).some((option) => option.value === this.data.language)) make$1.option(this.languageSelect, this.data.language);
+			this.languageSelect.value = this.data.language;
+		}
+		const model = instance?.getModel();
+		if (model) globalThis.window.monaco?.editor.setModelLanguage(model, this.data.language);
+	}
+	schedulePreview() {
+		clearTimeout(this.previewTimer);
+		const revision = ++this.previewRevision;
+		if (!this.preview) return;
+		this.preview.hidden = this.data.language !== "mermaid";
+		this.preview.setAttribute("aria-busy", "false");
+		if (this.preview.hidden) {
+			this.preview.replaceChildren();
+			return;
+		}
+		const source = this.editorInstance?.getValue() ?? this.data.html;
+		if (!source.trim()) {
+			this.preview.textContent = this.api.i18n.t("Enter Mermaid code to preview the diagram.");
+			return;
+		}
+		this.preview.setAttribute("aria-busy", "true");
+		if (!this.preview.querySelector("svg")) this.preview.textContent = this.api.i18n.t("Loading preview…");
+		this.previewTimer = setTimeout(() => void this.renderPreview(source, revision), 300);
+	}
+	async renderPreview(source, revision) {
+		try {
+			const { renderMermaid } = await import(
+				/* @vite-ignore */
+				this.mermaidUrl
+);
+			const svg = await renderMermaid(source);
+			if (revision !== this.previewRevision || !this.preview) return;
+			const diagram = make$1.element("div", ["pw-mermaid", "not-prose"]);
+			diagram.innerHTML = svg;
+			this.preview.replaceChildren(diagram);
+			this.preview.setAttribute("aria-busy", "false");
+		} catch (error) {
+			if (revision !== this.previewRevision || !this.preview) return;
+			const message = make$1.element("p");
+			message.textContent = this.api.i18n.t("Unable to render the Mermaid diagram.");
+			const details = make$1.element("pre");
+			details.textContent = error instanceof Error ? error.message : String(error);
+			this.preview.replaceChildren(message, details);
+			this.preview.setAttribute("aria-busy", "false");
+		}
+	}
+	destroy() {
+		++this.previewRevision;
+		clearTimeout(this.previewTimer);
+		this.contentListener?.dispose();
+		super.destroy();
 	}
 	static get toolbox() {
 		return {
-			icon: icon_default,
+			icon: I$2,
 			title: "Code"
 		};
 	}
@@ -9767,6 +9779,17 @@ var folder_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" hei
 var upload_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\">  <path d=\"M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z\"/>  <path d=\"M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z\"/></svg>\n";
 //#endregion
 //#region src/assets/tools/utils/media.ts
+/** Posts a file to the media endpoint; rejects with the server's reason when it refuses it. */
+async function uploadMedia(file) {
+	const formData = new FormData();
+	formData.append("image", file);
+	const response = await fetch("/admin/media/block", {
+		method: "POST",
+		body: formData
+	});
+	if (!response.ok) throw new Error(await MediaUtils.uploadErrorMessage(response));
+	return response.json();
+}
 /**
 * Utilitaires pour la gestion des médias
 */
@@ -9806,15 +9829,14 @@ var MediaUtils = class {
 		return `${basePath}${mediaNameOrUrl}`;
 	}
 	/**
-	* Extrait le nom du média depuis un objet de données
-	* @param dataItem - Objet de données qui peut contenir media, url, ou être une string
-	* @returns Le nom du média
+	* The media name a block's reference holds, whichever shape saved it: a bare
+	* name or a `media`/`fileName` field (kept as they are, even a URL), else the name
+	* a `url` ends with, else the `file` or `image` object older blocks nested it in.
 	*/
 	static getMediaNameFromData(dataItem) {
-		if (typeof dataItem === "string") return this.isFullUrl(dataItem) ? this.extractMediaName(dataItem) : dataItem;
-		else if (dataItem && typeof dataItem === "object" && dataItem.media) return dataItem.media;
-		else if (dataItem && typeof dataItem === "object" && dataItem.fileName) return dataItem.fileName;
-		return "";
+		if (!dataItem) return "";
+		if (typeof dataItem === "string") return dataItem;
+		return dataItem.media || dataItem.fileName || this.extractMediaName(dataItem.url) || this.getMediaNameFromData(dataItem.file) || this.getMediaNameFromData(dataItem.image);
 	}
 	/**
 	* Resolves a media name via the server-side fileNameHistory fallback.
@@ -9828,6 +9850,25 @@ var MediaUtils = class {
 		} catch {
 			return null;
 		}
+	}
+	/**
+	* An <img> for a media that, when the file is missing, asks the server for the
+	* name the media was renamed to and loads that instead. `onRenamed` lets the
+	* block keep the current name; `src` defaults to the media's preview URL.
+	*/
+	static createImage(mediaName, onRenamed, src = this.buildFullUrl(mediaName)) {
+		const img = globalThis.document.createElement("img");
+		let current = mediaName;
+		img.addEventListener("error", async () => {
+			const resolved = await this.resolveMediaName(current);
+			if (!resolved || resolved === current) return;
+			current = resolved;
+			const url = this.buildFullUrl(resolved);
+			img.src = url;
+			onRenamed?.(resolved, url);
+		});
+		img.src = src;
+		return img;
 	}
 	/**
 	* Builds a human-readable message from a failed media upload response.
@@ -9885,11 +9926,13 @@ var AbstractMediaTool = class extends BaseTool {
 			preloader: make$1.element("div", "image-tool__image-preloader")
 		};
 	}
-	responsIsValid(response) {
-		return response.success && !!response.file && !!response.file.media;
-	}
 	onFileLoading() {
 		this.toggleStatus(STATUS.UPLOADING);
+	}
+	/** Fills the block from an upload or a pick, once the answer names a media. */
+	onUpload(response) {
+		if (!response.success || !response.file?.media) return this.handleUploadError("incorrect response: " + JSON.stringify(response));
+		this.fillWith(response.file);
 	}
 	handleUploadError(error) {
 		const toolName = this.constructor.name;
@@ -9967,15 +10010,8 @@ var AbstractMediaTool = class extends BaseTool {
 	/** Upload a file straight through the media endpoint, then fill the block. */
 	async uploadFile(file) {
 		this.onFileLoading();
-		const formData = new FormData();
-		formData.append("image", file);
 		try {
-			const response = await fetch("/admin/media/block", {
-				method: "POST",
-				body: formData
-			});
-			if (!response.ok) throw new Error(await MediaUtils.uploadErrorMessage(response));
-			this.onUpload(await response.json());
+			this.onUpload(await uploadMedia(file));
 		} catch (error) {
 			this.handleUploadError(error);
 		}
@@ -9991,7 +10027,7 @@ var Image = class Image extends AbstractMediaTool {
 		};
 	}
 	get media() {
-		return this.data.media || this.data.file?.url || "";
+		return this.data.media;
 	}
 	constructor({ data, config, api, readOnly = false }) {
 		super({
@@ -10018,29 +10054,23 @@ var Image = class Image extends AbstractMediaTool {
 	}
 	static normalizeData(data) {
 		return {
-			media: data.media || MediaUtils.extractMediaName(data.file?.url || ""),
+			media: MediaUtils.getMediaNameFromData(data),
 			caption: data.caption || data.file?.name || ""
 		};
 	}
-	onUpload(response) {
-		if (!this.responsIsValid(response)) return this.handleUploadError("incorrect response: " + JSON.stringify(response));
-		this.data.media = response.file.media;
-		if (response.file.name) this.data.caption = response.file.name;
+	fillWith(file) {
+		this.data.media = file.media;
+		if (file.name) this.data.caption = file.name;
 		this.fillImage();
 	}
 	fillImage() {
 		if (this.nodes.imageEl) this.nodes.imageEl.remove();
-		const img = make$1.element("img", "image-tool__image-picture");
-		img.src = MediaUtils.buildFullUrl(this.media);
+		const img = MediaUtils.createImage(this.media, (renamed) => {
+			this.data.media = renamed;
+		});
+		img.classList.add("image-tool__image-picture");
 		img.addEventListener("load", () => {
 			this.hidePreloader(STATUS.FILLED);
-		});
-		img.addEventListener("error", async () => {
-			const resolved = await MediaUtils.resolveMediaName(this.media);
-			if (resolved && resolved !== this.media) {
-				this.data.media = resolved;
-				img.src = MediaUtils.buildFullUrl(resolved);
-			}
 		});
 		this.nodes.imageEl = img;
 		this.nodes.imageContainer.appendChild(img);
@@ -10165,7 +10195,7 @@ var Image = class Image extends AbstractMediaTool {
 };
 //#endregion
 //#region src/assets/tools/Gallery/toolbox-icon.svg?raw
-var toolbox_icon_default$1 = "<svg width=\"38\" height=\"18\" viewBox=\"0 0 38 18\" xmlns=\"http://www.w3.org/2000/svg\">\n    <mask id=\"mask0\" mask-type=\"alpha\" maskUnits=\"userSpaceOnUse\" x=\"10\" y=\"0\" width=\"18\" height=\"18\">\n        <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M28 16V2C28 0.9 27.1 0 26 0H12C10.9 0 10 0.9 10 2V16C10 17.1 10.9 18 12 18H26C27.1 18 28 17.1 28 16V16ZM15.5 10.5L18 13.51L21.5 9L26 15H12L15.5 10.5V10.5Z\" />\n    </mask>\n    <g mask=\"url(#mask0)\">\n        <rect x=\"10\" width=\"18\" height=\"18\" />\n    </g>\n    <mask id=\"mask1\" mask-type=\"alpha\" maskUnits=\"userSpaceOnUse\" x=\"0\" y=\"3\" width=\"7\" height=\"12\">\n        <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M7 13.59L2.67341 9L7 4.41L5.66802 3L0 9L5.66802 15L7 13.59Z\" fill=\"white\" />\n    </mask>\n    <g mask=\"url(#mask1)\">\n        <rect y=\"3\" width=\"7.55735\" height=\"12\" />\n    </g>\n    <mask id=\"mask2\" mask-type=\"alpha\" maskUnits=\"userSpaceOnUse\" x=\"31\" y=\"3\" width=\"7\" height=\"12\">\n        <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M31 13.59L35.3266 9L31 4.41L32.332 3L38 9L32.332 15L31 13.59Z\" fill=\"white\" />\n    </mask>\n    <g mask=\"url(#mask2)\">\n        <rect x=\"30.4426\" y=\"2.25\" width=\"7.55735\" height=\"13\" />\n    </g>\n</svg>";
+var toolbox_icon_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><rect width=\"10\" height=\"10\" x=\"9\" y=\"5\" stroke=\"currentColor\" stroke-width=\"2\" rx=\"3\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 10v6a3 3 0 0 0 3 3h6M9.5 13.5l2.5-2.5 3.5 3.5M15.5 8.5h.01\"/></svg>\n";
 //#endregion
 //#region src/assets/tools/Gallery/Close.svg?raw
 var Close_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\"\n    class=\"bi bi-x-lg\" viewBox=\"0 0 16 16\">\n    <path\n        d=\"M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z\" />\n</svg>";
@@ -10181,7 +10211,7 @@ var Gallery = class Gallery extends AbstractMediaTool {
 	static get toolbox() {
 		return {
 			title: "Gallery",
-			icon: toolbox_icon_default$1
+			icon: toolbox_icon_default
 		};
 	}
 	constructor({ data, config, api, readOnly }) {
@@ -10194,32 +10224,16 @@ var Gallery = class Gallery extends AbstractMediaTool {
 		this.data = Gallery.normalizeData(data);
 	}
 	static normalizeData(data) {
+		let items = [];
+		if (Array.isArray(data)) items = data;
+		else if (Array.isArray(data?.items)) items = data.items;
 		const normalizedItems = [];
-		if (data && typeof data === "object" && "items" in data && Array.isArray(data.items)) {
-			for (const item of data.items) {
-				if (typeof item !== "object") continue;
-				const media = item.media || (item.url ? MediaUtils.extractMediaName(item.url) : null) || item.file?.media;
-				if (!media) continue;
-				normalizedItems.push({
-					media,
-					caption: item.caption || ""
-				});
-			}
-			return { items: normalizedItems };
-		}
-		if (!data || !Array.isArray(data)) return { items: [] };
-		for (const item of data) if (typeof item === "string") normalizedItems.push({
-			media: item,
-			caption: ""
-		});
-		else if (typeof item === "object" && item !== null) {
-			let media = null;
-			if ("media" in item && item.media) media = item.media;
-			else if ("url" in item && item.url) media = MediaUtils.extractMediaName(item.url);
-			else if ("file" in item && item.file && "media" in item.file) media = item.file.media;
-			if (media) normalizedItems.push({
+		for (const item of items) {
+			const media = MediaUtils.getMediaNameFromData(item);
+			if (!media) continue;
+			normalizedItems.push({
 				media,
-				caption: item.caption || ""
+				caption: typeof item === "object" && item.caption || ""
 			});
 		}
 		return { items: normalizedItems };
@@ -10238,18 +10252,16 @@ var Gallery = class Gallery extends AbstractMediaTool {
 			});
 		}
 	}
-	onUpload(response) {
-		if (!this.responsIsValid(response)) return this.handleUploadError("incorrect response: " + JSON.stringify(response));
-		const mediaName = response.file.media || MediaUtils.extractMediaName(response.file.url);
-		if (this.isMediaAlreadyInGallery(mediaName)) {
+	fillWith(file) {
+		if (this.isMediaAlreadyInGallery(file.media)) {
 			this.handleDuplicateMediaError();
 			return;
 		}
 		const itemElement = this.getLastGalleryItem();
-		this._createImage(response.file.url || "", itemElement, response.file.name || "");
+		this._createImage(file.url || "", itemElement, file.name || "");
 		this.data.items.push({
-			media: mediaName,
-			caption: response.file.name || ""
+			media: file.media,
+			caption: file.name || ""
 		});
 		itemElement.classList.add("cdxcarousel-item--empty");
 	}
@@ -10334,17 +10346,7 @@ var Gallery = class Gallery extends AbstractMediaTool {
 	* Create Image View
 	*/
 	_createImage(url, item, captionText = "") {
-		const image = globalThis.document.createElement("img");
-		image.src = url;
-		image.addEventListener("error", async () => {
-			const mediaName = MediaUtils.extractMediaName(image.src);
-			const resolved = await MediaUtils.resolveMediaName(mediaName);
-			if (resolved && resolved !== mediaName) {
-				const newUrl = MediaUtils.buildFullUrl(resolved);
-				image.src = newUrl;
-				item.style.setProperty("--bg-image-url", `url('${newUrl}')`);
-			}
-		});
+		const image = MediaUtils.createImage(MediaUtils.extractMediaName(url), (_renamed, newUrl) => item.style.setProperty("--bg-image-url", `url('${newUrl}')`), url);
 		const caption = make$1.element("div", ["image-tool__caption", this.api.styles.input], { contentEditable: true });
 		if (captionText) caption.textContent = captionText;
 		const placeholderText = this.api.i18n.t("Alternative text");
@@ -10393,41 +10395,32 @@ var Gallery = class Gallery extends AbstractMediaTool {
 	}
 	static importFromMarkdown(editor, markdown) {
 		const result = MarkdownUtils.parseTunesFromMarkdown(markdown);
+		const call = Gallery.parseCall(result.markdown);
+		if (call === null || call.items.length === 0) return Raw.importFromMarkdown(editor, markdown);
 		const tunes = result.tunes;
-		const galleryMatch = result.markdown.match(/{{ gallery\(\s*(images:\s*)?(?<medias>\{.*?\})\s*(,\s*clickable:\s*(?<clickable>true|false))?\) }}/s);
-		tunes.clickableTune = { value: [
-			true,
-			"true",
-			"1"
-		].includes(galleryMatch?.groups?.clickable || false) ? true : false };
-		if (!galleryMatch || !Gallery.importGalleryFromJsonString(galleryMatch.groups?.medias || "{}", editor, tunes)) return Raw.importFromMarkdown(editor, markdown);
+		tunes.clickableTune = { value: call.clickable };
+		const block = editor.blocks.insert("gallery");
+		const dataToUpdate = { items: call.items };
+		editor.blocks.update(block.id, dataToUpdate, tunes);
+		block.validate(dataToUpdate);
+		block.dispatchChange();
 	}
-	static parseGalleryData(jsonString) {
-		try {
-			return JSON.parse(jsonrepair(jsonString));
-		} catch {
-			return false;
-		}
-	}
-	static importGalleryFromJsonString(jsonString, editor, tunes) {
-		const galleryData = Gallery.parseGalleryData(jsonString);
-		if (galleryData === false) return false;
-		const galleryItems = Object.entries(galleryData).map(([media, caption]) => ({
-			caption: String(caption),
-			media: String(media)
-		}));
-		if (galleryItems.length > 0) {
-			const block = editor.blocks.insert("gallery");
-			const dataToUpdate = { items: galleryItems };
-			editor.blocks.update(block.id, dataToUpdate, tunes);
-			block.validate(dataToUpdate);
-			block.dispatchChange();
-			return true;
-		}
-		return false;
+	/** The images and the clickable flag of a block that is one gallery() call. */
+	static parseCall(markdown) {
+		const call = MarkdownUtils.extractJsonCall("gallery", markdown);
+		if (call === null || Array.isArray(call.json)) return null;
+		const clickableArg = /^(?:clickable:\s*(true|false|0|1))?$/.exec(call.args);
+		if (clickableArg === null) return null;
+		return {
+			items: Object.entries(call.json).map(([media, caption]) => ({
+				caption: String(caption),
+				media: String(media)
+			})),
+			clickable: ["true", "1"].includes(clickableArg[1] ?? "")
+		};
 	}
 	static isItMarkdownExported(markdown) {
-		return markdown.trim().match(/{{ gallery\(\s*(images:\s*)?\{.*?\}\s*(,\s*clickable:\s*(true|false|0|1))?\) }}/s) !== null;
+		return Gallery.parseCall(markdown) !== null;
 	}
 };
 //#endregion
@@ -12043,7 +12036,7 @@ var Table_default = class TableBlock {
 		if (rows.length === 0) return "";
 		const alignments = data.columnAlignments ?? [];
 		const pipeRow = (cells) => "| " + cells.join(" | ") + " |\n";
-		const toMarkdown = (row) => row.map((cell) => MarkdownUtils.convertInlineHtmlToMarkdown(cell, false).replace(/\n/g, "<br>").trim());
+		const toMarkdown = (row) => row.map((cell) => MarkdownUtils.convertInlineHtmlToMarkdown(cell, false).replace(/\n/g, "<br>").replace(/\|/g, "\\|").trim());
 		const header = data.withHeadings ? toMarkdown(rows[0]) : rows[0].map(() => "");
 		const body = data.withHeadings ? rows.slice(1) : rows;
 		const markdown = [
@@ -12129,7 +12122,7 @@ var Table_default = class TableBlock {
 	* @returns {string[]} trimmed cell values
 	*/
 	static splitPipeRow(line) {
-		const cells = line.split("|").map((cell) => cell.trim());
+		const cells = line.split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/\\\|/g, "|"));
 		if (cells.length > 0 && cells[0] === "") cells.shift();
 		if (cells.length > 0 && cells[cells.length - 1] === "") cells.pop();
 		return cells;
@@ -12299,8 +12292,8 @@ var Delimiter = class extends n {
 	}
 };
 //#endregion
-//#region src/assets/tools/Embed/toolbox-icon.svg?raw
-var toolbox_icon_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-play-fill\" viewBox=\"0 0 16 16\">\n    <path d=\"m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393\"/>\n</svg>";
+//#region src/assets/tools/Embed/play.svg?raw
+var play_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-play-fill\" viewBox=\"0 0 16 16\">\n    <path d=\"m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393\"/>\n</svg>";
 //#endregion
 //#region src/assets/tools/utils/StateBlock.ts
 var BLOCK_STATE = {
@@ -12313,7 +12306,7 @@ var StateBlock = class StateBlock {
 		BlockTool.nodes.editInput.checked = state === BLOCK_STATE.VIEW ? true : false;
 	}
 	static createEditBtn(BlockTool) {
-		const toggleId = StateBlock.generateRandomId("toggle");
+		const toggleId = make$1.uniqueId("toggle");
 		BlockTool.nodes.editBtn = make$1.element("div", "toggle-wrapper");
 		BlockTool.nodes.editInput = make$1.element("input", ["toggle-input"], {
 			type: "checkbox",
@@ -12323,9 +12316,6 @@ var StateBlock = class StateBlock {
 		BlockTool.nodes.editBtn.appendChild(BlockTool.nodes.editInput);
 		BlockTool.nodes.editBtn.appendChild(label);
 		return BlockTool.nodes.editBtn;
-	}
-	static generateRandomId(prefix = "id") {
-		return `${prefix}_${Math.random().toString(36).substring(2, 9)}`;
 	}
 	static show(BlockTool, state) {
 		if (!BlockTool.nodes.preview) {
@@ -12361,8 +12351,13 @@ var StateBlock = class StateBlock {
 	static onEditInputChange(BlockTool) {
 		if (BlockTool.nodes.editInput.checked) {
 			BlockTool.save();
-			StateBlock.show(BlockTool, BLOCK_STATE.VIEW);
-		} else StateBlock.show(BlockTool, BLOCK_STATE.EDIT);
+			if (BlockTool.validate()) return StateBlock.show(BlockTool, BLOCK_STATE.VIEW);
+			BlockTool.api.notifier.show({
+				message: BlockTool.api.i18n.t(BlockTool.incompleteMessage),
+				style: "error"
+			});
+		}
+		StateBlock.show(BlockTool, BLOCK_STATE.EDIT);
 	}
 	static createPreview(BlockTool) {
 		const previewWrapper = make$1.element("div", ["hidden", "preview-wrapper"]);
@@ -12379,7 +12374,7 @@ var Embed = class Embed extends AbstractMediaTool {
 	static get toolbox() {
 		return {
 			title: "Embed",
-			icon: toolbox_icon_default
+			icon: $$2
 		};
 	}
 	constructor({ data, config, api, readOnly }) {
@@ -12389,6 +12384,7 @@ var Embed = class Embed extends AbstractMediaTool {
 			api,
 			readOnly
 		});
+		this.incompleteMessage = "Add the video URL, its thumbnail and its alternative text first.";
 		this.data = Embed.normalizeData(data);
 		this.nodes.inputAlternativeText = globalThis.document.createElement("div");
 		this.nodes.inputServiceUrl = globalThis.document.createElement("div");
@@ -12397,18 +12393,17 @@ var Embed = class Embed extends AbstractMediaTool {
 		return {
 			serviceUrl: data.serviceUrl || "",
 			alternativeText: data.alternativeText || "",
-			media: data.media || data.image?.media || ""
+			media: MediaUtils.getMediaNameFromData(data)
 		};
 	}
 	render() {
 		return StateBlock.render(this);
 	}
-	onUpload(response) {
-		if (!this.responsIsValid(response)) return this.handleUploadError("incorrect response: " + JSON.stringify(response));
-		this.data.media = response.file.media;
-		if (!response.file.name) return;
-		this.data.alternativeText = response.file.name;
-		this.nodes.inputAlternativeText.textContent = response.file.name;
+	fillWith(file) {
+		this.data.media = file.media;
+		if (!file.name) return;
+		this.data.alternativeText = file.name;
+		this.nodes.inputAlternativeText.textContent = file.name;
 		this.fillImage();
 	}
 	createInputs() {
@@ -12430,18 +12425,7 @@ var Embed = class Embed extends AbstractMediaTool {
 	}
 	updatePreview() {
 		if (!this.nodes.preview) throw new Error("must createPreview before");
-		this.nodes.preview.innerHTML = "<div style=\"display:block;--aspect-ratio:16/9;background: center / cover no-repeat url('/media/md/" + this.data.media + "');\"><div style=\"display: flex;justify-content: center;align-items: center; width:100%;height:100%;color:#c4302b\">" + toolbox_icon_default.replace("width=\"16\"", "width=\"100\"").replace("height=\"16\"", "height=\"100\"") + "</div></div>";
-	}
-	show(state) {
-		this.updatePreview();
-		if (state !== BLOCK_STATE.VIEW) return StateBlock.show(this, state);
-		if (!this.validate()) {
-			this.api.notifier.show({
-				message: this.api.i18n.t("Something is missing to properly render the embeded video."),
-				style: "error"
-			});
-			return StateBlock.show(this, state);
-		}
+		this.nodes.preview.innerHTML = "<div style=\"display:block;--aspect-ratio:16/9;background: center / cover no-repeat url('" + MediaUtils.buildFullUrl(this.data.media) + "');\"><div style=\"display: flex;justify-content: center;align-items: center; width:100%;height:100%;color:#c4302b\">" + play_default.replace("width=\"16\"", "width=\"100\"").replace("height=\"16\"", "height=\"100\"") + "</div></div>";
 	}
 	save() {
 		this.updateData();
@@ -12464,7 +12448,7 @@ var Embed = class Embed extends AbstractMediaTool {
 			this.hidePreloader(STATUS.EMPTY);
 		});
 		this.nodes.fileButton.appendChild(this.nodes.imageEl);
-		if (this.validate() && this.nodes.inputs) this.show(BLOCK_STATE.VIEW);
+		if (this.validate() && this.nodes.inputs) this.updatePreview();
 	}
 	static exportToMarkdown(dataToNormalize, tunes) {
 		const data = Embed.normalizeData(dataToNormalize);
@@ -12512,14 +12496,12 @@ var Attaches = class Attaches extends AbstractMediaTool {
 			deleteButton: this.createDeleteButton(() => this.removeMedia())
 		};
 		this.data = Attaches.normalizeData(data);
-		this.onSelectFile = config.onSelectFile;
-		this.onUploadFile = config.onUploadFile;
 	}
 	static normalizeData(data) {
 		return {
 			title: data.title || "",
 			file: {
-				media: data.file?.media || MediaUtils.extractMediaName(data.file?.url || ""),
+				media: MediaUtils.getMediaNameFromData(data.file),
 				size: data.file?.size || 0
 			}
 		};
@@ -12547,11 +12529,10 @@ var Attaches = class Attaches extends AbstractMediaTool {
 	pluginHasData() {
 		return this.data.title !== "" || this.data.file.media !== "";
 	}
-	onUpload(response) {
-		if (!this.responsIsValid(response)) return this.handleUploadError("incorrect response: " + JSON.stringify(response));
-		this.data.file.media = response.file.media;
-		this.data.title = response.file.name || response.file.title || "";
-		this.data.file.size = response.file.size ?? 0;
+	fillWith(file) {
+		this.data.file.media = file.media;
+		this.data.title = file.name || file.title || "";
+		this.data.file.size = file.size ?? 0;
 		this.showFileData();
 		this.block.dispatchChange();
 	}
@@ -12637,10 +12618,10 @@ var Attaches = class Attaches extends AbstractMediaTool {
 			title: properties[0] || "",
 			file: {
 				media: properties[1] || "",
-				size: parseInt(properties[3] || "0", 10)
+				size: parseInt(properties[2] || "0", 10)
 			}
 		};
-		if (properties[4] && properties[4] !== "") tunes.anchor = properties[4];
+		if (properties[3]) tunes.anchor = properties[3];
 		const block = editor.blocks.insert("attaches");
 		editor.blocks.update(block.id, data, tunes);
 	}
@@ -12660,10 +12641,10 @@ function exportPagesListToMarkdown(data, tunes) {
 	const maxPages = (data.maxPages || "0").trim();
 	const order = data.order || "publishedAt,weight";
 	const display = data.display || "list";
+	const tuneArguments = MarkdownUtils.tuneArguments(tunes);
 	let markdown = `{{ pages_list(${e(data.kw)}, ${e(max)}, ${e(order)}, ${e(display)}`;
-	markdown += maxPages !== "0" || tunes?.class || tunes?.anchor ? `, ${e(maxPages)}` : "";
-	markdown += tunes?.class || tunes?.anchor ? `, ${e(tunes?.class || "")}` : "";
-	markdown += tunes?.anchor ? `, ${e(tunes?.anchor)}` : "";
+	markdown += maxPages !== "0" || tuneArguments !== "" ? `, ${e(maxPages)}` : "";
+	markdown += tuneArguments;
 	markdown += `) }}`;
 	return markdown;
 }
@@ -12689,11 +12670,7 @@ function exportCardListToMarkdown(data, tunes) {
 		if (item.buttonLinkLabel) obj.buttonLinkLabel = item.buttonLinkLabel;
 		return obj;
 	});
-	let markdown = `{{ card_list(${JSON.stringify(items, null, 2)}`;
-	markdown += tunes?.class || tunes?.anchor ? `, ${e(tunes?.class || "")}` : "";
-	markdown += tunes?.anchor ? `, ${e(tunes?.anchor)}` : "";
-	markdown += `) }}`;
-	return markdown;
+	return `{{ card_list(${JSON.stringify(items, null, 2)}${MarkdownUtils.tuneArguments(tunes)}) }}`;
 }
 //#endregion
 //#region src/Command/convert-json-to-markdown.ts
