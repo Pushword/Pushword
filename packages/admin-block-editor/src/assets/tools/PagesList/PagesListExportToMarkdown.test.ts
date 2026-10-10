@@ -26,6 +26,23 @@ describe('exportPagesListToMarkdown', () => {
   it('renders nothing without a keyword', () => {
     expect(exportPagesListToMarkdown(data({ kw: '' }))).toBe('')
   })
+
+  it.each([
+    [undefined, "{{ pages_list('type:blog', '9', 'publishedAt ↓', 'list') }}"],
+    [
+      { class: 'bleed' },
+      "{{ pages_list('type:blog', '9', 'publishedAt ↓', 'list', '0', 'bleed') }}",
+    ],
+    [
+      { anchor: 'listing' },
+      "{{ pages_list('type:blog', '9', 'publishedAt ↓', 'list', '0', '', 'listing') }}",
+    ],
+  ])(
+    'writes the default maxPages only to place the tunes %o after it',
+    (tunes, markdown) => {
+      expect(exportPagesListToMarkdown(data(), tunes)).toBe(markdown)
+    },
+  )
 })
 
 /**

@@ -269,6 +269,21 @@ describe('MarkdownUtils.extractSnippetCall', () => {
     ).toEqual({ name: 'box', params: { color: 'red', size: 3 } })
   })
 
+  it('reads nested params whose strings hold brackets', () => {
+    expect(
+      MarkdownUtils.extractSnippetCall(
+        "{{ snippet('box', { items: [{ label: 'a }] b' }], size: 3 }) }}",
+      ),
+    ).toEqual({ name: 'box', params: { items: [{ label: 'a }] b' }], size: 3 } })
+  })
+
+  it('gives empty params when the params object never closes', () => {
+    expect(MarkdownUtils.extractSnippetCall("{{ snippet('box', { size: 3")).toEqual({
+      name: 'box',
+      params: {},
+    })
+  })
+
   it('returns null when there is no snippet call', () => {
     expect(MarkdownUtils.extractSnippetCall('just some text')).toBeNull()
   })
@@ -376,6 +391,16 @@ describe('MarkdownUtils.extractJsonCall', () => {
       MarkdownUtils.extractJsonCall('gallery', '{{ gallery({"a.jpg": "" }}'),
     ).toBeNull()
     expect(MarkdownUtils.extractJsonCall('card_list', '{{ gallery([]) }}')).toBeNull()
+  })
+
+  it('returns null when jsonrepair cannot read the JSON either', () => {
+    expect(MarkdownUtils.extractJsonCall('gallery', '{{ gallery({:}) }}')).toBeNull()
+  })
+
+  it('returns null when text follows the JSON without a comma', () => {
+    expect(
+      MarkdownUtils.extractJsonCall('gallery', '{{ gallery({"a.jpg": ""} \'x\') }}'),
+    ).toBeNull()
   })
 })
 

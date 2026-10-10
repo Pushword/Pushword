@@ -299,9 +299,14 @@ describe('CardList markdown round trip', () => {
     expect(roundTrip(markdown)).toEqual({ type: 'card_list', markdown })
   })
 
-  it('leaves a card_list() call with more arguments than it writes to Raw', () => {
-    expect(
-      roundTrip("{{ card_list([{\"title\": \"A\"}], 'grid', 'cards', 'x') }}").type,
-    ).toBe('raw')
+  it.each([
+    [
+      'more arguments than it writes',
+      "{{ card_list([{\"title\": \"A\"}], 'grid', 'cards', 'x') }}",
+    ],
+    ['an object instead of a list of cards', '{{ card_list({"title": "A"}) }}'],
+    ['an unquoted argument', '{{ card_list([{"title": "A"}], grid) }}'],
+  ])('leaves a card_list() call with %s to Raw', (_case, markdown) => {
+    expect(roundTrip(markdown).type).toBe('raw')
   })
 })

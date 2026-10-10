@@ -136,10 +136,10 @@ describe('PagesList.importFromMarkdown', () => {
     const markdown =
       "{#news .bleed}\n{{ pages_list('type:blog', '9', 'publishedAt ↓', 'list') }}"
 
-    expect(importTunes(markdown)).toEqual(
-      MarkdownUtils.parseTunesFromMarkdown(markdown).tunes,
-    )
-    expect(importTunes(markdown)).toHaveProperty('anchor', 'news')
+    const tunes = importTunes(markdown)
+
+    expect(tunes).toEqual(MarkdownUtils.parseTunesFromMarkdown(markdown).tunes)
+    expect(tunes).toHaveProperty('anchor', 'news')
   })
 
   it('reads the class and anchor written after maxPages', () => {
