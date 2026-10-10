@@ -44,6 +44,13 @@
   flex-wrap: wrap;
 }
 
+/* The next picture's slot: the footprint of a gallery picture, beside the others. */
+.ce-block__content .cdxcarousel-list > .cdx-input-labeled-preview.cdx-input-gallery {
+  width: calc(50% - 10px);
+  min-height: 180px;
+  margin: 15px 5px 0 !important;
+}
+
 .cdxcarousel-block {
   margin-top: 10px !important;
   width: 50%;
