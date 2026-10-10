@@ -242,14 +242,14 @@ export class MarkdownUtils {
    * `args`; an empty one keeps what an attribute line set.
    */
   static parseTuneArguments(
-    [className, anchor]: (string | undefined)[],
+    [className, anchor]: string[],
     tunes: BlockTuneDataPushword,
   ): BlockTuneDataPushword {
-    return {
-      ...tunes,
-      ...(className ? { class: className } : {}),
-      ...(anchor ? { anchor } : {}),
-    }
+    const parsed = { ...tunes }
+    if (className) parsed.class = className
+    if (anchor) parsed.anchor = anchor
+
+    return parsed
   }
 
   /** The lines of contenteditable HTML, cut at each `<br>` however it is spelled. */
@@ -483,8 +483,10 @@ export class MarkdownUtils {
 
     const jsonEnd = MarkdownUtils.balancedEnd(argList, jsonStart)! // the argument list is balanced
     const args = /^\s*(?:,\s*([\s\S]*?))?\s*$/.exec(argList.slice(jsonEnd))
+    if (args === null) return null
+
     const json = MarkdownUtils.parseJson(argList.slice(jsonStart, jsonEnd))
-    if (args === null || json === undefined) return null
+    if (json === undefined) return null
 
     return { json, args: args[1] ?? '' }
   }
@@ -494,7 +496,8 @@ export class MarkdownUtils {
    * Tolerates single quotes / trailing commas via jsonrepair.
    */
   private static parseBalancedObject(input: string, start: number): Record<string, any> {
-    const end = MarkdownUtils.balancedEnd(input, start) ?? start
+    const end = MarkdownUtils.balancedEnd(input, start)
+    if (end === null) return {}
 
     const object = MarkdownUtils.parseJson(input.substring(start, end)) ?? {}
 
@@ -515,8 +518,9 @@ export class MarkdownUtils {
         }
       } else if ('([{'.includes(char)) {
         depth++
-      } else if (')]}'.includes(char) && --depth === 0) {
-        return i + 1
+      } else if (')]}'.includes(char)) {
+        depth--
+        if (depth === 0) return i + 1
       }
     }
     return null

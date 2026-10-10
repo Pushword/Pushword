@@ -370,8 +370,8 @@ export default class Gallery extends AbstractMediaTool {
     const call = MarkdownUtils.extractJsonCall('gallery', markdown)
     if (call === null || Array.isArray(call.json)) return null
 
-    const clickable = /^(?:clickable:\s*(true|false|0|1))?$/.exec(call.args)
-    if (clickable === null) return null
+    const clickableArg = /^(?:clickable:\s*(true|false|0|1))?$/.exec(call.args)
+    if (clickableArg === null) return null
 
     return {
       items: Object.entries(call.json as Record<string, unknown>).map(
@@ -380,7 +380,7 @@ export default class Gallery extends AbstractMediaTool {
           media: String(media),
         }),
       ),
-      clickable: ['true', '1'].includes(clickable[1] ?? ''),
+      clickable: ['true', '1'].includes(clickableArg[1] ?? ''),
     }
   }
 
