@@ -12,7 +12,7 @@ import make from '../utils/make'
 import { e, MarkdownUtils } from '../utils/MarkdownUtils'
 import { API, BlockToolData } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
-import { BLOCK_STATE, StateBlock, StateBlockToolInterface } from '../utils/StateBlock'
+import { StateBlock, StateBlockToolInterface } from '../utils/StateBlock'
 import { MediaUtils } from '../utils/media'
 
 export interface EmbedDataToNormalize extends BlockToolData {
@@ -115,6 +115,9 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
     return wrapper
   }
 
+  public readonly incompleteMessage =
+    'Something is missing to properly render the embeded video.'
+
   public validate(): boolean {
     return !!(this.data.serviceUrl && this.data.alternativeText && this.data.media)
   }
@@ -135,20 +138,6 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
       ) +
       '</div>' +
       '</div>'
-  }
-
-  public show(state: number): void {
-    this.updatePreview()
-    if (state !== BLOCK_STATE.VIEW) return StateBlock.show(this, state)
-    if (!this.validate()) {
-      this.api.notifier.show({
-        message: this.api.i18n.t(
-          'Something is missing to properly render the embeded video.',
-        ),
-        style: 'error',
-      })
-      return StateBlock.show(this, state)
-    }
   }
 
   public save(): EmbedData {
@@ -185,7 +174,7 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
     this.nodes.fileButton.appendChild(this.nodes.imageEl)
 
     if (this.validate() && this.nodes.inputs) {
-      this.show(BLOCK_STATE.VIEW)
+      this.updatePreview()
     }
   }
 
