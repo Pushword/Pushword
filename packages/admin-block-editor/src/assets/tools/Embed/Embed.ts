@@ -116,7 +116,7 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
   }
 
   public readonly incompleteMessage =
-    'Something is missing to properly render the embeded video.'
+    'Add the video URL, its thumbnail and its alternative text first.'
 
   public validate(): boolean {
     return !!(this.data.serviceUrl && this.data.alternativeText && this.data.media)

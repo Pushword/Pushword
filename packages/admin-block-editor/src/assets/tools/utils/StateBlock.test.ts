@@ -116,7 +116,7 @@ const tools: {
   },
   {
     name: 'PagesList',
-    message: 'Something is missing to properly render the the pages list.',
+    message: 'Say which pages to list first.',
     create: (api) =>
       new PagesList({
         data: {} as PagesListData,
@@ -130,7 +130,7 @@ const tools: {
   },
   {
     name: 'Embed',
-    message: 'Something is missing to properly render the embeded video.',
+    message: 'Add the video URL, its thumbnail and its alternative text first.',
     create: (api) =>
       new Embed({
         data: {},
