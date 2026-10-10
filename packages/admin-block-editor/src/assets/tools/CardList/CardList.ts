@@ -377,19 +377,23 @@ export default class CardList extends BaseTool {
     }
   }
 
-  private createField(label: string, name: string, value: string): HTMLElement {
+  private labelledField(label: string, control: HTMLElement): HTMLElement {
     const field = make.element('div', 'cardlist-item-field')
     const labelEl = make.element('label')
     labelEl.textContent = label
+    field.appendChild(labelEl)
+    field.appendChild(control)
+    return field
+  }
+
+  private createField(label: string, name: string, value: string): HTMLElement {
     const input = make.element('input', null, {
       type: 'text',
       name,
       value,
       placeholder: label,
-    }) as HTMLInputElement
-    field.appendChild(labelEl)
-    field.appendChild(input)
-    return field
+    })
+    return this.labelledField(label, input)
   }
 
   private createContentEditableField(
@@ -397,9 +401,6 @@ export default class CardList extends BaseTool {
     name: string,
     value: string,
   ): HTMLElement {
-    const field = make.element('div', 'cardlist-item-field')
-    const labelEl = make.element('label')
-    labelEl.textContent = label
     const editable = make.element(
       'div',
       ['cardlist-description', 'ce-paragraph', 'cdx-block'],
@@ -425,9 +426,7 @@ export default class CardList extends BaseTool {
       }
     })
 
-    field.appendChild(labelEl)
-    field.appendChild(editable)
-    return field
+    return this.labelledField(label, editable)
   }
 
   private createHtmlEditableField(
@@ -435,9 +434,6 @@ export default class CardList extends BaseTool {
     name: string,
     value: string,
   ): HTMLElement {
-    const field = make.element('div', 'cardlist-item-field')
-    const labelEl = make.element('label')
-    labelEl.textContent = label
     const editable = make.element('div', ['cardlist-title'], {
       contentEditable: !this.readOnly ? 'true' : 'false',
       'data-name': name,
@@ -450,9 +446,7 @@ export default class CardList extends BaseTool {
         ALLOWED_ATTR: ['class', 'href', 'rel', 'target'],
       })
     }
-    field.appendChild(labelEl)
-    field.appendChild(editable)
-    return field
+    return this.labelledField(label, editable)
   }
 
   private createIconCheckboxField(
@@ -485,10 +479,6 @@ export default class CardList extends BaseTool {
     value: string,
     itemIndex: number,
   ): { field: HTMLElement; container: HTMLElement; value: string } {
-    const field = make.element('div', 'cardlist-item-field')
-    const labelEl = make.element('label')
-    labelEl.textContent = label
-
     const container = make.element('div', 'cardlist-media-picker')
     container.dataset.value = value
 
@@ -528,10 +518,7 @@ export default class CardList extends BaseTool {
     container.appendChild(preview)
     container.appendChild(actions)
 
-    field.appendChild(labelEl)
-    field.appendChild(container)
-
-    return { field, container, value }
+    return { field: this.labelledField(label, container), container, value }
   }
 
   private openMediaPicker(itemIndex: number): void {
