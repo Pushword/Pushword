@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { editorJsHelper } from './editorJsHelper'
+import type { EditorModeManager } from './EditorModeManager'
 
 /**
  * The inline uploader replaces the media picker's upload button, which opened
@@ -235,5 +236,18 @@ describe('editorJsHelper.abstractOnMulti', () => {
     editorJsHelper.abstractOnMulti({ onMultiUpload: vi.fn() }, new Event('click'))
 
     expect(select.dataset.pwMediaPickerModalUrl).toBe(MODAL_URL)
+  })
+})
+
+describe('editorJsHelper mode managers', () => {
+  it('finds the manager registered for an editor, and none for another', () => {
+    const helper = new editorJsHelper()
+    const manager = {} as EditorModeManager
+
+    editorJsHelper.setModeManager('editorjs_registry', manager)
+
+    expect(editorJsHelper.getModeManager('editorjs_registry')).toBe(manager)
+    expect(helper.modeManagers.editorjs_registry).toBe(manager)
+    expect(editorJsHelper.getModeManager('editorjs_unknown')).toBeUndefined()
   })
 })

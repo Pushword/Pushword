@@ -514,3 +514,32 @@ describe('OutlinePanel collapse', () => {
     expect(document.body.classList.contains('pw-outline-open')).toBe(false)
   })
 })
+
+describe('OutlinePanel following the mode switches', () => {
+  it('asks for the source of the mode the bound field is in once the holder hides', async () => {
+    document.body.innerHTML =
+      '<div id="ed" data-input-id="inp"></div><input id="inp" type="hidden">'
+    const asked: string[] = []
+    new OutlinePanel({
+      holderId: 'ed',
+      source: new StubSource([]),
+      labels,
+      toolMeta: (type) => ({ title: type, icon: '' }),
+      monacoSource: (mode) => {
+        asked.push(mode)
+        return null
+      },
+    })
+    // A mode switch puts a new element in place of the field, under the same id.
+    const textarea = document.createElement('textarea')
+    textarea.id = 'inp'
+    textarea.setAttribute('data-editor', 'markdown')
+    document.getElementById('inp')!.replaceWith(textarea)
+
+    document.getElementById('ed')!.style.display = 'none'
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(asked).toEqual(['markdown'])
+    expect(document.querySelector('.pw-outline--off')).not.toBeNull()
+  })
+})
