@@ -33,7 +33,6 @@ interface ConstructorArgs {
 
 export default class Header {
   private _element: HTMLElement
-  private _levelSelect: HTMLSelectElement | null = null
   private _data: HeaderData
   private readonly placeholder: string
   private readonly levelSelectLabel: string
@@ -64,10 +63,6 @@ export default class Header {
     this.data = {
       level: level,
       text: this.data.text,
-    }
-
-    if (this._levelSelect) {
-      this._levelSelect.value = level.toString()
     }
   }
 
@@ -127,49 +122,17 @@ export default class Header {
     return this._data
   }
 
+  /** The level is the heading's tag name, so new data rebuilds the block from it. */
   set data(data: HeaderData) {
     this._data = this.normalizeData(data)
 
-    if (data.level !== undefined && this._element.parentNode) {
-      const newHeader = this.getTag()
-      const newHeaderElement = this.getHeaderElement(newHeader)
-      const oldHeaderElement = this.getHeaderElement()
-
-      if (newHeaderElement && oldHeaderElement) {
-        newHeaderElement.innerHTML = oldHeaderElement.innerHTML
-      }
-
-      this._element.parentNode.replaceChild(newHeader, this._element)
-      this._element = newHeader
-      this._levelSelect = this._element.querySelector('.ce-header-level-select')
-
-      // Update the level label
-      const levelLabel = this._element.querySelector('.ce-header-level-label') as HTMLElement
-      if (levelLabel) {
-        levelLabel.dataset.level = `H${this._data.level}`
-      }
-    }
-
-    if (data.text !== undefined) {
-      const headerElement = this.getHeaderElement()
-      if (headerElement) {
-        headerElement.innerHTML = data.text || ''
-      }
-    }
+    const rebuilt = this.getTag()
+    this._element.replaceWith(rebuilt)
+    this._element = rebuilt
   }
 
-  private getHeaderElement(element?: HTMLElement): HTMLHeadingElement | null {
-    const target = element || this._element
-    if (!target) return null
-
-    const header = target.querySelector('h1, h2, h3, h4, h5, h6') as HTMLHeadingElement
-    if (header) return header
-
-    if (target.tagName.match(/^H[1-6]$/)) {
-      return target as HTMLHeadingElement
-    }
-
-    return null
+  private getHeaderElement(): HTMLHeadingElement | null {
+    return this._element.querySelector('h1, h2, h3, h4, h5, h6')
   }
 
   private getTag(): HTMLElement {
@@ -212,12 +175,8 @@ export default class Header {
     levelSelect.addEventListener('change', (e) => {
       e.preventDefault()
       e.stopPropagation()
-      const newLevel = parseInt((e.target as HTMLSelectElement).value)
-      levelLabel.dataset.level = `H${newLevel}`
-      this.setLevel(newLevel)
+      this.setLevel(parseInt((e.target as HTMLSelectElement).value))
     })
-
-    this._levelSelect = levelSelect
 
     levelWrapper.appendChild(levelLabel)
     levelWrapper.appendChild(levelSelect)

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { API } from '@editorjs/editorjs'
+import { API, PasteEvent } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import Header, { HeaderConfig, HeaderData } from './Header'
 
@@ -214,5 +214,26 @@ describe('Header levels', () => {
       container.querySelector<HTMLElement>('.ce-header-level-label')?.dataset.level,
     ).toBe('H2')
     expect(header.save(container)).toEqual({ text: 'Title', level: 2 })
+  })
+})
+
+describe('Header.onPaste', () => {
+  it('rebuilds the heading at the pasted level, with the pasted text', () => {
+    const api = { i18n: { t: (text: string) => text } } as unknown as API
+    const header = new Header({ data: {}, api, config: {}, readOnly: false })
+    const holder = document.createElement('div')
+    holder.appendChild(header.render())
+
+    const pasted = document.createElement('h3')
+    pasted.innerHTML = 'Pasted <b>title</b>'
+    header.onPaste({ detail: { data: pasted } } as unknown as PasteEvent)
+
+    const rebuilt = holder.firstElementChild as HTMLElement
+    expect(rebuilt).toBe(header.render())
+    expect(rebuilt.querySelector('h3')?.innerHTML).toBe('Pasted <b>title</b>')
+    expect(
+      rebuilt.querySelector<HTMLElement>('.ce-header-level-label')?.dataset.level,
+    ).toBe('H3')
+    expect(header.save(rebuilt)).toEqual({ text: 'Pasted <b>title</b>', level: 3 })
   })
 })
