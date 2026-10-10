@@ -128,17 +128,21 @@ describe('CardList icon checkboxes', () => {
       api: stubApi(),
       readOnly: false,
     })
-    document.body.appendChild(tool.render())
+    const rendered = tool.render()
+    document.body.appendChild(rendered)
 
-    const [first, second] = (tool as any).itemNodes
-    expect(first.obfuscateLinkInput.id).not.toBe(second.obfuscateLinkInput.id)
-    for (const input of [first.obfuscateLinkInput, second.obfuscateLinkInput]) {
-      expect(input.nextElementSibling.htmlFor).toBe(input.id)
+    const inputs = [...rendered.querySelectorAll<HTMLInputElement>('input[name="obfuscateLink"]')]
+    expect(inputs).toHaveLength(2)
+    const [first, second] = inputs
+    expect(first!.id).not.toBe(second!.id)
+    for (const input of inputs) {
+      expect((input.nextElementSibling as HTMLLabelElement).htmlFor).toBe(input.id)
     }
 
-    second.obfuscateLinkInput.nextElementSibling.click()
-    expect(second.obfuscateLinkInput.checked).toBe(true)
-    expect(first.obfuscateLinkInput.checked).toBe(false)
+    const secondLabel = second!.nextElementSibling as HTMLLabelElement
+    secondLabel.click()
+    expect(second!.checked).toBe(true)
+    expect(first!.checked).toBe(false)
   })
 })
 
