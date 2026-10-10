@@ -107,16 +107,16 @@ final class EditorJsMessagesTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, string}>
+     * @return iterable<string, array{string, string, string}>
      */
     public static function shippedLocales(): iterable
     {
-        yield 'en' => ['en', 'No page has this slug'];
-        yield 'fr' => ['fr', 'Aucune page ne porte ce slug'];
+        yield 'en' => ['en', 'No page has this slug', 'Heading level'];
+        yield 'fr' => ['fr', 'Aucune page ne porte ce slug', 'Niveau de titre'];
     }
 
     #[DataProvider('shippedLocales')]
-    public function testTheShippedCataloguesTranslateEveryLabel(string $locale, string $unknownSlug): void
+    public function testTheShippedCataloguesTranslateEveryLabel(string $locale, string $unknownSlug, string $headingLevel): void
     {
         $translator = new Translator($locale);
         $translator->addLoader('yaml', new YamlFileLoader());
@@ -126,6 +126,8 @@ final class EditorJsMessagesTest extends TestCase
 
         // The namespace is the tool name the widget registers CardList under.
         self::assertSame($unknownSlug, $messages['tools']['card_list']['No page has this slug']);
+        // Keyed on the exact string Header.ts passes to api.i18n.t().
+        self::assertSame($headingLevel, $messages['tools']['header']['Heading level']);
 
         // A key missing from the catalogue comes back as itself, e.g. "editorCardListUnknownSlug".
         array_walk_recursive($messages, static function (string $translation, string $label) use ($locale): void {

@@ -108,4 +108,56 @@ describe('Header level select', () => {
     expect(select?.getAttribute('aria-label')).toBe('Niveau de titre')
     expect(select?.title).toBe('Niveau de titre')
   })
+
+  function chooseLevel(level: number) {
+    const translations: Record<string, string> = { 'Heading level': 'Niveau de titre' }
+    const api = {
+      i18n: { t: (text: string) => translations[text] ?? text },
+    } as unknown as API
+    const header = new Header({
+      data: { text: 'A <b>bold</b> title', level: 2 },
+      api,
+      config: {},
+      readOnly: false,
+    })
+    // The heading is rebuilt in place, which needs a parent like Editor.js gives it.
+    const holder = document.createElement('div')
+    holder.appendChild(header.render())
+
+    const select = holder.querySelector('select')
+    if (!select) throw new Error('level select not rendered')
+    select.value = level.toString()
+    select.dispatchEvent(new Event('change'))
+
+    const rebuilt = holder.firstElementChild
+    if (!(rebuilt instanceof HTMLElement)) throw new Error('heading not rebuilt')
+
+    return { header, holder, rebuilt }
+  }
+
+  it('rebuilds the heading at the chosen level, keeping its text', () => {
+    const { header, holder, rebuilt } = chooseLevel(4)
+
+    expect(holder.children).toHaveLength(1)
+    expect(rebuilt).toBe(header.render())
+    expect(rebuilt.querySelector('h4')?.innerHTML).toBe('A <b>bold</b> title')
+    expect(rebuilt.querySelector('h2')).toBeNull()
+    expect(rebuilt.querySelector('select')?.value).toBe('4')
+    expect(
+      rebuilt.querySelector<HTMLElement>('.ce-header-level-label')?.dataset.level,
+    ).toBe('H4')
+    expect(header.save(rebuilt)).toEqual({ text: 'A <b>bold</b> title', level: 4 })
+  })
+
+  it('keeps the badge first and the translated label on the rebuilt heading', () => {
+    const { rebuilt } = chooseLevel(5)
+
+    expect([...rebuilt.children].map((child) => child.tagName)).toEqual(['DIV', 'H5'])
+    expect(rebuilt.firstElementChild?.classList.contains('ce-header-level-wrapper')).toBe(
+      true,
+    )
+    const select = rebuilt.querySelector('select')
+    expect(select?.getAttribute('aria-label')).toBe('Niveau de titre')
+    expect(select?.title).toBe('Niveau de titre')
+  })
 })

@@ -67,7 +67,8 @@
 }
 
 /* Level selector wrapper: kept out of the copied text by ClipboardManager.
-   Its padding hangs in the gutter, so the level lines up with the body copy. */
+   The label's padding hangs in the gutter, so the level lines up with the
+   body copy. */
 .ce-header-level-wrapper {
   position: relative;
   flex: none;
@@ -78,8 +79,8 @@
 }
 
 /* Label shows the current heading level - use ::before to avoid text in DOM.
-   A chevron says it opens a choice, and 24px of height makes it a target
-   (WCAG 2.5.8), still quiet beside the heading. */
+   24px of height makes it a target (WCAG 2.5.8), still quiet beside the
+   heading. */
 .ce-header-level-label {
   display: flex;
   align-items: center;
@@ -104,6 +105,7 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The chevron says the label opens a choice */
 .ce-header-level-label::after {
   content: '';
   width: 12px;
@@ -123,7 +125,8 @@
   cursor: pointer;
 }
 
-/* A finger needs 44px: the select reaches past the label without moving it. */
+/* A finger needs 44px: the select reaches 10px above and below the 24px label
+   without moving it. */
 @media (pointer: coarse) {
   .ce-header-level-wrapper select {
     inset: -10px -4px;
