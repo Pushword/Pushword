@@ -320,12 +320,23 @@ body.pw-outline-open .content-wrapper {
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
 }
 
-/* On block-editor pages, the title column hugs the editor's content column
-   (650px — its container already opens at the same x) instead of the full
-   form width, so a widened rail never sits over anything. */
-.mainFields:has(.editorjs-holder) .h1Field {
+/* On block-editor pages, the tags and the title sit on the editor's content
+   column (650px, centred, pushed 60px right from 1200px — see admin.css) rather
+   than the full form width: title, tags and body copy share one left edge, and
+   a widened rail never sits over anything. Both boxes are 10px wider on each
+   side, the title's own padding. */
+.mainFields:has(.editorjs-holder) .h1Field,
+.mainFields:has(.editorjs-holder) .tagsFieldWrapper {
   display: block;
-  max-width: 650px;
+  max-width: 670px;
+  margin-inline: auto !important;
+}
+
+@media screen and (min-width: 1200px) {
+  .mainFields:has(.editorjs-holder) .h1Field,
+  .mainFields:has(.editorjs-holder) .tagsFieldWrapper {
+    margin-left: 60px !important;
+  }
 }
 
 .pw-outline-row,
