@@ -6,7 +6,8 @@ import {
   STATUS,
   UploadResponse,
 } from '../Abstract/AbstractMediaTool'
-import ToolboxIcon from './toolbox-icon.svg?raw'
+import { IconPlay } from '@codexteam/icons'
+import PlayIcon from './play.svg?raw'
 import make from '../utils/make'
 import { e, MarkdownUtils } from '../utils/MarkdownUtils'
 import { API, BlockToolData } from '@editorjs/editorjs'
@@ -47,7 +48,7 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
   data: EmbedData
 
   static get toolbox() {
-    return { title: 'Embed', icon: ToolboxIcon }
+    return { title: 'Embed', icon: IconPlay }
   }
 
   constructor({
@@ -132,7 +133,7 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
       this.data.media +
       '\');">' +
       '<div style="display: flex;justify-content: center;align-items: center; width:100%;height:100%;color:#c4302b">' +
-      ToolboxIcon.replace('width="16"', 'width="100"').replace(
+      PlayIcon.replace('width="16"', 'width="100"').replace(
         'height="16"',
         'height="100"',
       ) +

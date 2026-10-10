@@ -1,4 +1,4 @@
-import Icon from './icon.svg?raw'
+import { IconCurlyBrackets } from '@codexteam/icons'
 import make from '../utils/make'
 import Raw, { RawData } from './../Raw/Raw'
 import { API } from '@editorjs/editorjs'
@@ -174,7 +174,7 @@ export default class CodeBlock extends Raw {
 
   static get toolbox() {
     return {
-      icon: Icon,
+      icon: IconCurlyBrackets,
       title: 'Code',
     }
   }
