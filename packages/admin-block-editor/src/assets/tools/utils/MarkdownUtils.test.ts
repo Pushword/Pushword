@@ -285,6 +285,29 @@ describe('MarkdownUtils.extractSnippetCall', () => {
   })
 })
 
+describe('MarkdownUtils tune arguments', () => {
+  it.each([
+    [{}, ''],
+    [{ class: 'grid' }, ", 'grid'"],
+    [{ anchor: 'cards' }, ", '', 'cards'"],
+    [{ class: 'grid', anchor: 'cards' }, ", 'grid', 'cards'"],
+  ])('writes %o as %s', (tunes, args) => {
+    expect(MarkdownUtils.tuneArguments(tunes)).toBe(args)
+  })
+
+  it('reads them back over the tunes of an attribute line, which an empty one leaves', () => {
+    expect(
+      MarkdownUtils.parseTuneArguments(['grid', ''], { anchor: 'top', class: 'old' }),
+    ).toEqual({
+      anchor: 'top',
+      class: 'grid',
+    })
+    expect(MarkdownUtils.parseTuneArguments([], { anchor: 'top' })).toEqual({
+      anchor: 'top',
+    })
+  })
+})
+
 describe('MarkdownUtils line helpers', () => {
   it('cuts contenteditable HTML at every spelling of <br>', () => {
     expect(MarkdownUtils.htmlLines('a<br>b<br/>c<br />d<BR>e')).toEqual([

@@ -224,6 +224,34 @@ export class MarkdownUtils {
     return markdown
   }
 
+  /**
+   * The class and anchor tunes as the last arguments of a Twig call, the
+   * `$wrapperClass, $id` of card_list() and pages_list(): `, 'class', 'anchor'`,
+   * cut after the last one set, '' when neither is.
+   */
+  static tuneArguments(tunes?: BlockTuneDataPushword): string {
+    if (tunes?.anchor) {
+      return `, ${MarkdownUtils.wrapInQuotes(tunes.class || '')}, ${MarkdownUtils.wrapInQuotes(tunes.anchor)}`
+    }
+
+    return tunes?.class ? `, ${MarkdownUtils.wrapInQuotes(tunes.class)}` : ''
+  }
+
+  /**
+   * `tunes` with the class and anchor tuneArguments() wrote read back from
+   * `args`; an empty one keeps what an attribute line set.
+   */
+  static parseTuneArguments(
+    [className, anchor]: (string | undefined)[],
+    tunes: BlockTuneDataPushword,
+  ): BlockTuneDataPushword {
+    return {
+      ...tunes,
+      ...(className ? { class: className } : {}),
+      ...(anchor ? { anchor } : {}),
+    }
+  }
+
   /** The lines of contenteditable HTML, cut at each `<br>` however it is spelled. */
   static htmlLines(html: string): string[] {
     return html.split(/<br\s*\/?>/i)

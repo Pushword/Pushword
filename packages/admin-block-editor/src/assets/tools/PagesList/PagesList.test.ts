@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { API } from '@editorjs/editorjs'
 import PagesList, { PagesListConfig, PagesListData } from './PagesList'
+import { MarkdownUtils } from '../utils/MarkdownUtils'
 
 function stubApi(): API {
   return {
@@ -111,5 +112,41 @@ describe('PagesList – the order select', () => {
       'search',
       'search, weight ↓, publishedAt ↓',
     ])
+  })
+})
+
+describe('PagesList.importFromMarkdown', () => {
+  function importTunes(markdown: string): unknown {
+    let tunes: unknown = null
+    const editor = {
+      blocks: {
+        insert: () => ({ id: 'pages-list-id' }),
+        update: (_id: string, _data: unknown, blockTunes: unknown) => {
+          tunes = blockTunes
+        },
+      },
+    } as unknown as API
+
+    PagesList.importFromMarkdown(editor, markdown)
+
+    return tunes
+  }
+
+  it('keeps the tunes of an attribute line when the call passes none', () => {
+    const markdown =
+      "{#news .bleed}\n{{ pages_list('type:blog', '9', 'publishedAt ↓', 'list') }}"
+
+    expect(importTunes(markdown)).toEqual(
+      MarkdownUtils.parseTunesFromMarkdown(markdown).tunes,
+    )
+    expect(importTunes(markdown)).toHaveProperty('anchor', 'news')
+  })
+
+  it('reads the class and anchor written after maxPages', () => {
+    expect(
+      importTunes(
+        "{{ pages_list('type:blog', '9', 'publishedAt ↓', 'list', '0', 'bleed', 'news') }}",
+      ),
+    ).toEqual({ class: 'bleed', anchor: 'news' })
   })
 })

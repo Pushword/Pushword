@@ -280,10 +280,10 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    const tunes: BlockTuneData = result.tunes
-    markdown = result.markdown
-
-    const properties = MarkdownUtils.extractTwigFunctionProperties('pages_list', markdown)
+    const properties = MarkdownUtils.extractTwigFunctionProperties(
+      'pages_list',
+      result.markdown,
+    )
     if (!properties) return
 
     const data: PagesListData = {
@@ -294,8 +294,7 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
       maxPages: properties[4] || PagesList.defaultData.maxPages,
     }
 
-    tunes.class = properties[5] || ''
-    tunes.anchor = properties[6] || ''
+    const tunes = MarkdownUtils.parseTuneArguments(properties.slice(5), result.tunes)
 
     const block = editor.blocks.insert('pages_list', data)
     editor.blocks.update(block.id, data, tunes)

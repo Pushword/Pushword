@@ -1,6 +1,6 @@
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { PagesListData } from './PagesList'
-import { e } from '../utils/MarkdownUtils'
+import { MarkdownUtils, e } from '../utils/MarkdownUtils'
 
 /**
  * Export PagesList block data to Markdown
@@ -19,10 +19,11 @@ export function exportPagesListToMarkdown(
   const order = data.order || 'publishedAt,weight'
   const display = data.display || 'list'
 
+  const tuneArguments = MarkdownUtils.tuneArguments(tunes)
+
   let markdown = `{{ pages_list(${e(data.kw)}, ${e(max)}, ${e(order)}, ${e(display)}`
-  markdown += maxPages !== '0' || tunes?.class || tunes?.anchor ? `, ${e(maxPages)}` : ''
-  markdown += tunes?.class || tunes?.anchor ? `, ${e(tunes?.class || '')}` : ''
-  markdown += tunes?.anchor ? `, ${e(tunes?.anchor)}` : ''
+  markdown += maxPages !== '0' || tuneArguments !== '' ? `, ${e(maxPages)}` : ''
+  markdown += tuneArguments
   markdown += `) }}`
 
   return markdown

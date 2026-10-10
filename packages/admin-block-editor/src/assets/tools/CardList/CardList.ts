@@ -699,13 +699,8 @@ export default class CardList extends BaseTool {
     const call = CardList.parseCall(result.markdown)
     if (call === null) return Raw.importFromMarkdown(editor, markdown)
 
-    const tunes: BlockTuneData = result.tunes
     const data: CardListData = { items: call.items }
-
-    // Extract class and anchor from additional arguments
-    const [className, anchor] = call.args
-    if (className) tunes.class = className
-    if (anchor) tunes.anchor = anchor
+    const tunes = MarkdownUtils.parseTuneArguments(call.args, result.tunes)
 
     const block = editor.blocks.insert('card_list', data)
     editor.blocks.update(block.id, data, tunes)
