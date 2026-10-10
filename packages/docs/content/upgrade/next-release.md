@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** pushword/core
+**Concerns:** `pushword/core`
 
 ## Docker security update
 
