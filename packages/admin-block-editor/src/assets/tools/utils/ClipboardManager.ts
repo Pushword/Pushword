@@ -149,12 +149,11 @@ export default class ClipboardManager {
         }
 
         // A selection spanning several blocks copies them whole, and so does one
-        // within a single block. A selection confined to one table cell is an
-        // inline-text copy, not a whole-table copy: fall through to the inline
-        // handling below.
+        // running across the fields of a block (list items, table cells). A
+        // selection within one field is inline text — a word out of a sentence,
+        // a value out of a cell: fall through to the inline handling below.
         const blocksInSelection = this.getBlocksInSelection(selection, editorHolder)
-        const isInlineCellCopy = blocksInSelection.length === 1 && this.isSelectionWithinTableCell(selection)
-        if (blocksInSelection.length > 0 && !isInlineCellCopy) {
+        if (blocksInSelection.length > 0 && !this.isSelectionWithinOneField(selection)) {
             this.copyBlocks(event, blocksInSelection)
             return
         }
@@ -221,16 +220,17 @@ export default class ClipboardManager {
     }
 
     /**
-     * Whether the selection is confined to a single table cell. Such a selection
-     * is plain inline text (copying a value out of a cell), not a whole-table copy.
+     * Whether the selection is confined to one editable field of a block: a
+     * paragraph, a heading, a list item, a table cell. Such a selection is
+     * plain inline text, not a copy of the block it sits in.
      */
-    private isSelectionWithinTableCell(selection: Selection): boolean {
+    private isSelectionWithinOneField(selection: Selection): boolean {
         if (selection.rangeCount === 0) return false
         const commonAncestor = selection.getRangeAt(0).commonAncestorContainer
         const element = commonAncestor.nodeType === Node.TEXT_NODE
             ? commonAncestor.parentElement
             : (commonAncestor as Element)
-        return !!element?.closest('.tc-cell')
+        return !!element?.closest('[contenteditable="true"]')
     }
 
     /**

@@ -7,6 +7,7 @@ import { BlockSources } from '../../BlockSources'
 import GroupStart from '../Group/GroupStart'
 import GroupEnd from '../Group/GroupEnd'
 import Paragraph from '../Paragraph/Paragraph'
+import List from '../List/List'
 import Raw from '../Raw/Raw'
 import Table from '../Table/plugin'
 import Image from '../Image/Image'
@@ -45,6 +46,7 @@ function buildTableBlock(opts: { rows: string[][]; heading?: boolean }): HTMLEle
     cells.forEach((text) => {
       const cell = document.createElement('div')
       cell.className = 'tc-cell'
+      cell.setAttribute('contenteditable', 'true')
       cell.innerHTML = text
       row.appendChild(cell)
     })
@@ -127,7 +129,7 @@ describe('ClipboardManager – pure helpers', () => {
   })
 })
 
-describe('ClipboardManager – isSelectionWithinTableCell', () => {
+describe('ClipboardManager – isSelectionWithinOneField', () => {
   let cm: AnyCm
   beforeEach(() => {
     document.body.innerHTML = ''
@@ -144,7 +146,7 @@ describe('ClipboardManager – isSelectionWithinTableCell', () => {
     const sel = window.getSelection()!
     sel.removeAllRanges()
     sel.addRange(range)
-    expect(cm.isSelectionWithinTableCell(sel)).toBe(true)
+    expect(cm.isSelectionWithinOneField(sel)).toBe(true)
   })
 
   it('is false when the selection spans multiple cells', () => {
@@ -157,7 +159,26 @@ describe('ClipboardManager – isSelectionWithinTableCell', () => {
     const sel = window.getSelection()!
     sel.removeAllRanges()
     sel.addRange(range)
-    expect(cm.isSelectionWithinTableCell(sel)).toBe(false)
+    expect(cm.isSelectionWithinOneField(sel)).toBe(false)
+  })
+
+  it('is true when the selection crosses inline formatting within one field', () => {
+    document.body.innerHTML = '<div contenteditable="true">One <b>two</b> three</div>'
+    const field = document.body.firstElementChild!
+    const range = document.createRange()
+    // From one text node to another: the common ancestor is the field itself.
+    range.setStart(field.firstChild!, 2)
+    range.setEnd(field.lastChild!, 3)
+    const sel = window.getSelection()!
+    sel.removeAllRanges()
+    sel.addRange(range)
+    expect(cm.isSelectionWithinOneField(sel)).toBe(true)
+  })
+
+  it('is false when nothing is selected', () => {
+    const sel = window.getSelection()!
+    sel.removeAllRanges()
+    expect(cm.isSelectionWithinOneField(sel)).toBe(false)
   })
 })
 
@@ -223,6 +244,7 @@ describe('ClipboardManager – copying whole blocks', () => {
       tools: {
         getBlockTools: () => [
           { name: 'paragraph', constructable: Paragraph },
+          { name: 'list', constructable: List },
           { name: 'table', constructable: Table },
           { name: 'image', constructable: Image },
           { name: 'gallery', constructable: Gallery },
@@ -399,6 +421,69 @@ describe('ClipboardManager – copying whole blocks', () => {
     expect(await copied()).toBe('One\n\nThree')
     const [items] = write.mock.lastCall as [{ items: object }[]]
     expect(Object.keys(items[0]!.items)).toEqual(['text/plain'])
+  })
+
+  it('copies a word picked out of a paragraph, not the paragraph', () => {
+    const { cm, editor, holder } = copyingManager([paragraph('p', 'One two three')])
+    const save = vi.spyOn(editor.saver, 'save')
+    const field = holder.querySelector('.ce-paragraph')!
+    const range = document.createRange()
+    range.setStart(field.firstChild!, 4)
+    range.setEnd(field.firstChild!, 7)
+    window.getSelection()!.addRange(range)
+    const event = { ...ctrlC(field), clipboardData: { setData: vi.fn() } }
+
+    cm.handleCopy(event)
+
+    expect(save).not.toHaveBeenCalled()
+    expect(event.clipboardData.setData).toHaveBeenCalledWith('text/plain', 'two')
+  })
+
+  it('copies a table whole when the selection runs across its cells', async () => {
+    const content = [
+      ['Name', 'Status'],
+      ['Alice', 'OK'],
+    ]
+    const dom = buildTableBlock({ rows: content, heading: true }).innerHTML
+    const table = { id: 't', type: 'table', data: { content, withHeadings: true }, dom }
+    const { cm, holder } = copyingManager([table])
+    const cells = holder.querySelectorAll('.tc-cell')
+    const range = document.createRange()
+    range.setStart(cells[2]!.firstChild!, 1)
+    range.setEnd(cells[3]!.firstChild!, 1)
+    window.getSelection()!.addRange(range)
+
+    cm.handleCopy({ ...ctrlC(cells[2]!), clipboardData: { setData: vi.fn() } })
+
+    expect(await copied()).toBe(
+      '| Name  | Status |\n| ----- | ------ |\n| Alice | OK     |',
+    )
+  })
+
+  it('copies a list whole when the selection runs across its items', async () => {
+    const items = ['One', 'Two'].map((content) => ({ content, meta: {}, items: [] }))
+    // As @editorjs/list renders it: each item's text is its own editable field.
+    const dom =
+      '<ul class="cdx-list cdx-list-unordered">' +
+      items
+        .map(
+          ({ content }) =>
+            '<li class="cdx-list__item"><div class="cdx-list__item-content" ' +
+            `contenteditable="true">${content}</div></li>`,
+        )
+        .join('') +
+      '</ul>'
+    const list = { id: 'l', type: 'list', data: { style: 'unordered', items }, dom }
+    const { cm, holder } = copyingManager([list])
+    const [first, second] = holder.querySelectorAll('.cdx-list__item-content')
+    const range = document.createRange()
+    range.setStart(first!.firstChild!, 1)
+    range.setEnd(second!.firstChild!, 1)
+    window.getSelection()!.addRange(range)
+
+    cm.handleCopy({ ...ctrlC(first!), clipboardData: { setData: vi.fn() } })
+
+    expect(await copied()).toBe('- One\n- Two')
   })
 
   it('copies a selection inside one table cell as its text, not the whole table', () => {
