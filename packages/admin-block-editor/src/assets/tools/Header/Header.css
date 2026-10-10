@@ -46,16 +46,6 @@
   font-size: var(--pw-text-lg, 20px);
 }
 
-/* More room above a heading than below it, so it opens the section that follows
-   instead of trailing the one before. */
-.ce-header-container:has(h2) {
-  margin-top: 16px;
-}
-
-.ce-header-container:has(h3) {
-  margin-top: 8px;
-}
-
 .ce-header-container h3 {
   font-size: 18px;
 }
@@ -64,6 +54,16 @@
 .ce-header-container h5,
 .ce-header-container h6 {
   font-size: var(--pw-text-md, 16px);
+}
+
+/* More room above a heading than below it, so it opens the section that follows
+   instead of trailing the one before. */
+.ce-header-container:has(h2) {
+  margin-top: 16px;
+}
+
+.ce-header-container:has(h3) {
+  margin-top: 8px;
 }
 
 /* Level selector wrapper: kept out of the copied text by ClipboardManager */

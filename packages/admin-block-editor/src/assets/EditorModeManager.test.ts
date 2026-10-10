@@ -92,3 +92,25 @@ describe('EditorModeManager – mode buttons', () => {
     expect(button('json').style.visibility).toBe('')
   })
 })
+
+describe('EditorModeManager – mode buttons in JSON mode', () => {
+  it('hides the markdown button while JSON is open, and restores it on leaving', () => {
+    document.body.innerHTML =
+      '<div id="ed" data-input-id="inp"></div><input id="inp" type="hidden">' +
+      '<button data-pw-editor-mode="json"></button>' +
+      '<button data-pw-editor-mode="markdown"></button>'
+    const manager = new EditorModeManager('ed')
+    vi.spyOn(manager as any, 'switchTo').mockImplementation(() => {})
+    const button = (mode: string): HTMLElement =>
+      document.querySelector(`[data-pw-editor-mode="${mode}"]`)!
+
+    manager.toggleEditor()
+    expect(button('markdown').style.visibility).toBe('hidden')
+    expect(button('json').style.visibility).toBe('')
+
+    document.getElementById('inp')!.setAttribute('data-editor', 'json')
+    vi.spyOn(manager as any, 'switchFrom').mockResolvedValue(undefined)
+    manager.toggleEditor()
+    expect(button('markdown').style.visibility).toBe('')
+  })
+})

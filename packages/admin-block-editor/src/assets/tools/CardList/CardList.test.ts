@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { API } from '@editorjs/editorjs'
 import CardList from './CardList'
 
@@ -60,5 +60,49 @@ describe('CardList unknown slug', () => {
     expect(missing.pageInput.getAttribute('aria-describedby')).toBe(missing.slugError.id)
     expect(known.pageInput.hasAttribute('aria-invalid')).toBe(false)
     expect(known.slugError.hidden).toBe(true)
+  })
+})
+
+describe('CardList unknown slug message', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function renderCards(pages: string[]): any[] {
+    window.pagesUriList = ['/known']
+    const api = {
+      i18n: { t: (text: string) => `t(${text})` },
+      styles: { block: 'cdx-block' },
+    } as unknown as API
+    const tool = new CardList({
+      data: { items: pages.map((page) => ({ page })) },
+      api,
+      readOnly: false,
+    })
+    tool.render()
+
+    return (tool as any).itemNodes
+  }
+
+  it('stays silent on blur when the slug names a page', () => {
+    vi.useFakeTimers()
+    const [nodes] = renderCards(['known'])
+
+    nodes.pageInput.dispatchEvent(new Event('blur'))
+    vi.advanceTimersByTime(500)
+
+    expect(nodes.slugError.hidden).toBe(true)
+    expect(nodes.pageInput.hasAttribute('aria-invalid')).toBe(false)
+  })
+
+  it('puts a translated message under the header row, with its own id per card', () => {
+    const [first, second] = renderCards(['missing', 'known'])
+
+    expect(first.slugError.textContent).toBe('t(No page has this slug)')
+    const [header, message] = first.wrapper.children
+    expect(header.classList.contains('cardlist-item-header')).toBe(true)
+    expect(message).toBe(first.slugError)
+    expect(first.slugError.id).not.toBe(second.slugError.id)
+    expect(second.pageInput.getAttribute('aria-describedby')).toBe(second.slugError.id)
   })
 })

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Pushword\AdminBlockEditor\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\AdminBlockEditor\Editor\EditorJsMessages;
 use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Loader\YamlFileLoader;
 use Symfony\Component\Translation\Translator;
 
 final class EditorJsMessagesTest extends TestCase
@@ -102,5 +104,32 @@ final class EditorJsMessagesTest extends TestCase
         // switches the tune renders cannot read the link tool's entries.
         self::assertSame('Obfusquer', $messages['blockTunes']['linkTune']['Obfuscate']);
         self::assertArrayHasKey('New tab', $messages['blockTunes']['linkTune']);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function shippedLocales(): iterable
+    {
+        yield 'en' => ['en', 'No page has this slug'];
+        yield 'fr' => ['fr', 'Aucune page ne porte ce slug'];
+    }
+
+    #[DataProvider('shippedLocales')]
+    public function testTheShippedCataloguesTranslateEveryLabel(string $locale, string $unknownSlug): void
+    {
+        $translator = new Translator($locale);
+        $translator->addLoader('yaml', new YamlFileLoader());
+        $translator->addResource('yaml', __DIR__.'/../src/translations/messages.'.$locale.'.yaml', $locale);
+
+        $messages = new EditorJsMessages($translator)->getMessages();
+
+        // The namespace is the tool name the widget registers CardList under.
+        self::assertSame($unknownSlug, $messages['tools']['card_list']['No page has this slug']);
+
+        // A key missing from the catalogue comes back as itself, e.g. "editorCardListUnknownSlug".
+        array_walk_recursive($messages, static function (string $translation, string $label) use ($locale): void {
+            self::assertDoesNotMatchRegularExpression('/^editor[A-Z]/', $translation, $locale.' misses the key for "'.$label.'"');
+        });
     }
 }

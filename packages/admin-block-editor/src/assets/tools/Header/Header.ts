@@ -38,7 +38,7 @@ export default class Header {
   private _element: HTMLElement
   private _levelSelect: HTMLSelectElement | null = null
   private _data: HeaderData
-  private placeholder: string
+  private readonly placeholder: string
 
   constructor({ data, config }: ConstructorArgs) {
     this.placeholder = config?.placeholder ?? ''
