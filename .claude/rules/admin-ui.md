@@ -143,7 +143,7 @@ paths:
   delimiter (hence a header) is present, so the Table tool exports `withHeadings=false`
   under an empty header row and its import reads an all-empty header back as
   `withHeadings=false`; the front's `EmptyTableHeadProcessor` drops the all-empty
-  `<thead>` at render. The clipboard's `extractTableMarkdown()` mirrors the export and
-  owes the same header. Simple `<table>` HTML converts to a Table block; complex tables
+  `<thead>` at render. Copying whole blocks goes through each tool's own export, so the
+  clipboard gets the same header. Simple `<table>` HTML converts to a Table block; complex tables
   (colspan/rowspan, nested, block-level cells, non-rectangular) stay Raw.
 - Changing render output means bumping `MarkdownParser::CACHE_VERSION`.
