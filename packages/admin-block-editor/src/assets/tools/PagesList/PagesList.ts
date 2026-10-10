@@ -7,7 +7,7 @@ import { API, BlockToolData } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { Suggest } from '../../../../../admin/src/Resources/assets/suggest.js'
 import { BaseTool } from '../Abstract/BaseTool'
-import { BLOCK_STATE, StateBlock, StateBlockToolInterface } from '../utils/StateBlock'
+import { StateBlock, StateBlockToolInterface } from '../utils/StateBlock'
 import { exportPagesListToMarkdown } from './PagesListExportToMarkdown'
 import { logger } from '../utils/logger'
 
@@ -217,22 +217,6 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
     return this.nodes.orderSelect
   }
 
-  public show(state: number): void {
-    if (state === BLOCK_STATE.VIEW) {
-      if (!this.validate()) {
-        this.api.notifier.show({
-          message: this.api.i18n.t(
-            'Something is missing to properly render the the pages list.',
-          ),
-          style: 'error',
-        })
-        StateBlock.show(this, BLOCK_STATE.EDIT)
-        return
-      }
-      StateBlock.show(this, state)
-    }
-  }
-
   protected updateData(): void {
     this.data.kw = this.nodes?.kwInput?.textContent || this.data.kw
     this.data.display = this.nodes?.displaySelect?.value || this.data.display
@@ -249,6 +233,9 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
     this.updateData()
     return this.data
   }
+
+  public readonly incompleteMessage =
+    'Something is missing to properly render the the pages list.'
 
   public validate(): boolean {
     this.updateData()

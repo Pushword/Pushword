@@ -5,7 +5,7 @@ import { MarkdownUtils } from '../utils/MarkdownUtils'
 import { API, BlockToolData } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { BaseTool } from '../Abstract/BaseTool'
-import { BLOCK_STATE, StateBlock, StateBlockToolInterface } from '../utils/StateBlock'
+import { StateBlock, StateBlockToolInterface } from '../utils/StateBlock'
 
 interface SnippetSchemaField {
   type?: string
@@ -260,6 +260,8 @@ export default class Snippet extends BaseTool implements StateBlockToolInterface
     this.data.params = params
   }
 
+  public readonly incompleteMessage = 'Choose a snippet first.'
+
   public validate(): boolean {
     return !!this.data.name
   }
@@ -267,18 +269,6 @@ export default class Snippet extends BaseTool implements StateBlockToolInterface
   public save(): SnippetData {
     this.updateData()
     return this.data
-  }
-
-  public show(state: number): void {
-    if (state === BLOCK_STATE.VIEW && !this.validate()) {
-      this.api.notifier.show({
-        message: this.api.i18n.t('Choose a snippet first.'),
-        style: 'error',
-      })
-      StateBlock.show(this, BLOCK_STATE.EDIT)
-      return
-    }
-    StateBlock.show(this, state)
   }
 
   public updatePreview(): void {
