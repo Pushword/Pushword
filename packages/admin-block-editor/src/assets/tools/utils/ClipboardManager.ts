@@ -1,12 +1,9 @@
 import EditorJS, { API } from '@editorjs/editorjs'
-import * as he from 'he'
 import DOMPurify from 'dompurify'
 import { MarkdownUtils } from './MarkdownUtils'
 import { BlockToolAdapterWithConstructable, chunkTool } from '../../EditorJsParseMarkdown'
+import EditorJsExportMarkdown from '../../EditorJsExportMarkdown'
 import { GroupNesting } from '../Group/GroupNesting'
-
-/** GFM delimiter-cell markers per column alignment. */
-const ALIGNMENT_SEPARATORS: Record<string, string> = { left: ':---', center: ':--:', right: '---:' }
 
 /**
  * ClipboardManager handles copy/paste operations for EditorJS
@@ -84,14 +81,9 @@ export default class ClipboardManager {
         const selectedBlocks = editorHolder.querySelectorAll('.ce-block--selected')
         if (selectedBlocks.length === 0) return
 
-        const { markdown, html } = this.extractBlocksMarkdown(selectedBlocks)
-        if (!markdown) return
-
-        // Own the shortcut: preventDefault stops the browser firing the (now
-        // useless) copy event, so we don't double-handle a cleared selection.
-        event.preventDefault()
-        event.stopImmediatePropagation()
-        this.writeToClipboard(markdown, html)
+        // Owning the shortcut (preventDefault) stops the browser firing the
+        // (now useless) copy event, so we don't double-handle a cleared selection.
+        this.copyBlocks(event, selectedBlocks)
     }
 
     private initializePasteListener(): void {
@@ -146,7 +138,7 @@ export default class ClipboardManager {
         // Check for EditorJS block selection first (multi-block selection)
         const selectedBlocks = editorHolder.querySelectorAll('.ce-block--selected')
         if (selectedBlocks.length > 0) {
-            this.handleBlockSelection(event, selectedBlocks)
+            this.copyBlocks(event, selectedBlocks)
             return
         }
 
@@ -156,54 +148,15 @@ export default class ClipboardManager {
             return
         }
 
-        // Check if selection spans multiple blocks
+        // A selection spanning several blocks copies them whole, and so does one
+        // within a single block. A selection confined to one table cell is an
+        // inline-text copy, not a whole-table copy: fall through to the inline
+        // handling below.
         const blocksInSelection = this.getBlocksInSelection(selection, editorHolder)
-        if (blocksInSelection.length > 1) {
-            // Multi-block text selection - extract each block synchronously
-            const markdownParts: string[] = []
-            const htmlParts: string[] = []
-
-            blocksInSelection.forEach(block => {
-                const result = this.extractBlockContent(block)
-                if (result) {
-                    markdownParts.push(result.markdown)
-                    htmlParts.push(result.html)
-                }
-            })
-
-            if (markdownParts.length > 0) {
-                const markdown = markdownParts.join('\n\n')
-                const html = htmlParts.join('<br><br>')
-
-                event.preventDefault()
-                event.stopImmediatePropagation()
-                if (event.clipboardData) {
-                    event.clipboardData.setData('text/plain', markdown)
-                    event.clipboardData.setData('text/html', html)
-                }
-                this.writeToClipboard(markdown, html)
-            }
+        const isInlineCellCopy = blocksInSelection.length === 1 && this.isSelectionWithinTableCell(selection)
+        if (blocksInSelection.length > 0 && !isInlineCellCopy) {
+            this.copyBlocks(event, blocksInSelection)
             return
-        }
-
-        // Single block selection - still need to extract full block formatting.
-        // A selection confined to one table cell is an inline-text copy, not a
-        // whole-table copy: fall through to the inline handling below.
-        if (blocksInSelection.length === 1 && !this.isSelectionWithinTableCell(selection)) {
-            const block = blocksInSelection[0]
-            if (block) {
-                const result = this.extractBlockContent(block)
-                if (result && result.markdown) {
-                    event.preventDefault()
-                    event.stopImmediatePropagation()
-                    if (event.clipboardData) {
-                        event.clipboardData.setData('text/plain', result.markdown)
-                        event.clipboardData.setData('text/html', result.html)
-                    }
-                    this.writeToClipboard(result.markdown, result.html)
-                    return
-                }
-            }
         }
 
         // Fallback: inline selection - use simple markdown conversion
@@ -237,267 +190,34 @@ export default class ClipboardManager {
     }
 
     /**
-     * Handle EditorJS block selection (when multiple blocks are selected)
-     * Synchronously extracts and converts content to markdown
+     * Copy whole blocks as the page export writes them: each block through its
+     * tool's export, tunes included, and one the author left untouched as the
+     * markdown it was parsed from. Saving first reads the blocks as they stand,
+     * so an edit Editor.js has not reported yet is copied too.
+     *
+     * Those exports are async (Prettier) while a copy event must be filled
+     * before it returns, so the clipboard is written through the Clipboard API
+     * instead: the item is handed over within the user gesture and its content
+     * is a promise, resolved once the export lands.
      */
-    private handleBlockSelection(event: ClipboardEvent, selectedBlocks: NodeListOf<Element>): void {
-        const { markdown, html } = this.extractBlocksMarkdown(selectedBlocks)
-
-        if (!markdown) {
-            return
-        }
-
-        // Prevent default and stop immediate propagation to prevent any other handlers
+    private copyBlocks(event: Event, blocks: ArrayLike<Element>): void {
         event.preventDefault()
         event.stopImmediatePropagation()
 
-        if (event.clipboardData) {
-            event.clipboardData.setData('text/plain', markdown)
-            event.clipboardData.setData('text/html', html)
-        }
+        const ids = new Set(Array.from(blocks, (block) => block.getAttribute('data-id')))
+        const api = this.editor as unknown as API
+        const markdown = api.saver.save().then((output) =>
+            new EditorJsExportMarkdown(api, {
+                ...output,
+                blocks: output.blocks.filter((block) => ids.has(block.id ?? null)),
+            }).exportToMarkdown(),
+        )
 
-        // Also use async clipboard API as backup
-        this.writeToClipboard(markdown, html)
-    }
-
-    /**
-     * Extract and join the markdown (and html) of a set of selected blocks.
-     */
-    private extractBlocksMarkdown(blocks: ArrayLike<Element>): { markdown: string; html: string } {
-        const markdownParts: string[] = []
-        const htmlParts: string[] = []
-
-        Array.from(blocks).forEach((block) => {
-            const result = this.extractBlockContent(block)
-            if (result) {
-                markdownParts.push(result.markdown)
-                htmlParts.push(result.html)
-            }
-        })
-
-        return { markdown: markdownParts.join('\n\n'), html: htmlParts.join('<br><br>') }
-    }
-
-    /**
-     * Extract content from a block element and convert to markdown
-     */
-    private extractBlockContent(block: Element): { markdown: string; html: string } | null {
-        // Table
-        const tableEl = block.querySelector('.tc-table')
-        if (tableEl) {
-            const markdown = this.extractTableMarkdown(block, tableEl)
-            return markdown ? { markdown, html: tableEl.outerHTML } : null
-        }
-
-        // Paragraph
-        const paragraph = block.querySelector('.ce-paragraph')
-        if (paragraph) {
-            const html = paragraph.innerHTML
-            const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(html, false).trim()
-            return markdown ? { markdown, html } : null
-        }
-
-        // Header
-        const header = block.querySelector('.ce-header')
-        if (header) {
-            const level = parseInt(header.tagName.substring(1)) || 2
-            const text = MarkdownUtils.convertInlineHtmlToMarkdown(header.innerHTML, false).trim()
-            if (text) {
-                return {
-                    markdown: '#'.repeat(level) + ' ' + text,
-                    html: `<${header.tagName.toLowerCase()}>${header.innerHTML}</${header.tagName.toLowerCase()}>`,
-                }
-            }
-            return null
-        }
-
-        // Delimiter
-        const delimiter = block.querySelector('.ce-delimiter')
-        if (delimiter) {
-            return { markdown: '<!--break-->', html: '<hr>' }
-        }
-
-        // List
-        const list = block.querySelector('.cdx-list')
-        if (list) {
-            const { markdown, html } = this.extractList(list, 0)
-
-            return markdown ? { markdown, html } : null
-        }
-
-        // Quote
-        const quote = block.querySelector('.cdx-quote')
-        if (quote) {
-            const textEl = quote.querySelector('.cdx-quote__text')
-            if (textEl) {
-                const text = MarkdownUtils.convertInlineHtmlToMarkdown(textEl.innerHTML, false).trim()
-                if (text) {
-                    return {
-                        markdown: '> ' + text,
-                        html: '<blockquote>' + textEl.innerHTML + '</blockquote>',
-                    }
-                }
-            }
-            return null
-        }
-
-        // CodeBlock (Monaco editor with language selector)
-        const monacoWrapper = block.querySelector('.monaco-codeblock-wrapper')
-        if (monacoWrapper) {
-            const languageSelect = monacoWrapper.querySelector('select') as HTMLSelectElement
-            const language = languageSelect?.value || ''
-            // Monaco editor stores content in hidden elements or we need to get from view-lines
-            const monacoLines = monacoWrapper.querySelectorAll('.view-line')
-            let code = ''
-            if (monacoLines.length > 0) {
-                code = Array.from(monacoLines).map(line => line.textContent || '').join('\n')
-            }
-            // Replace non-breaking spaces with regular spaces
-            code = code.replace(/\u00A0/g, ' ')
-            if (code.trim()) {
-                return {
-                    markdown: '```' + language + '\n' + code + '\n```',
-                    html: '<pre><code class="language-' + language + '">' + code + '</code></pre>',
-                }
-            }
-            return null
-        }
-
-        // Code block (simple textarea-based)
-        const code = block.querySelector('.ce-code__textarea, .cdx-code')
-        if (code) {
-            let text = code.textContent || ''
-            text = text.replace(/\u00A0/g, ' ')
-            if (text.trim()) {
-                return {
-                    markdown: '```\n' + text + '\n```',
-                    html: '<pre><code>' + text + '</code></pre>',
-                }
-            }
-            return null
-        }
-
-        // Raw HTML block (Monaco editor)
-        const rawMonaco = block.querySelector('.editorjs-monaco-wrapper')
-        if (rawMonaco) {
-            const monacoLines = rawMonaco.querySelectorAll('.view-line')
-            let text = ''
-            if (monacoLines.length > 0) {
-                text = Array.from(monacoLines).map(line => line.textContent || '').join('\n')
-            }
-            // Replace non-breaking spaces with regular spaces
-            text = text.replace(/\u00A0/g, ' ')
-            if (text.trim()) {
-                return { markdown: text.trim(), html: text.trim() }
-            }
-            return null
-        }
-
-        // Raw HTML block (textarea-based fallback)
-        const raw = block.querySelector('[data-editor], textarea')
-        if (raw) {
-            let text = (raw as HTMLTextAreaElement).value || raw.textContent || ''
-            text = text.replace(/\u00A0/g, ' ')
-            if (text.trim()) {
-                return { markdown: text.trim(), html: text.trim() }
-            }
-            return null
-        }
-
-        // Image block
-        const imageContainer = block.querySelector('.image-tool__image')
-        if (imageContainer) {
-            const img = imageContainer.querySelector('img') as HTMLImageElement
-            const captionEl = block.querySelector('.image-tool__caption')
-            if (img && img.src) {
-                const caption = captionEl?.textContent?.trim() || ''
-                const src = img.src
-                return {
-                    markdown: `![${caption}](${src})`,
-                    html: `<img src="${src}" alt="${caption}">`,
-                }
-            }
-            return null
-        }
-
-        // Gallery block
-        const galleryWrapper = block.querySelector('.cdxcarousel-wrapper')
-        if (galleryWrapper) {
-            const items: { media: string; caption: string }[] = []
-            const galleryList = galleryWrapper.querySelector('.cdxcarousel-list')
-            if (galleryList) {
-                galleryList.querySelectorAll('.cdxcarousel-item').forEach(item => {
-                    const img = item.querySelector('img') as HTMLImageElement
-                    const captionEl = item.querySelector('.image-tool__caption')
-                    if (img && img.src && !item.classList.contains('cdxcarousel-item--empty')) {
-                        // Extract media name from URL (last part of path)
-                        const src = img.src
-                        const mediaMatch = src.match(/\/media\/[^/]+\/([^/]+)$/) || src.match(/\/([^/]+)$/)
-                        const media = mediaMatch?.[1] ?? src
-                        const caption = captionEl?.textContent?.trim() || ''
-                        items.push({ media, caption })
-                    }
-                })
-            }
-            if (items.length > 0) {
-                const imagesObject: Record<string, string> = {}
-                items.forEach(item => {
-                    imagesObject[item.media] = item.caption
-                })
-                const markdown = `{{ gallery(${JSON.stringify(imagesObject)}) }}`
-                return { markdown, html: markdown }
-            }
-            return null
-        }
-
-        // Attaches block
-        const attachesContainer = block.querySelector('.cdx-attaches')
-        if (attachesContainer) {
-            const link = attachesContainer.querySelector('a') as HTMLAnchorElement
-            const titleEl = attachesContainer.querySelector('.cdx-attaches__title')
-            const sizeEl = attachesContainer.querySelector('.cdx-attaches__size')
-            if (link && link.href) {
-                const title = titleEl?.textContent?.trim() || ''
-                const size = sizeEl?.textContent?.trim() || '0'
-                const markdown = `{{ attaches('${title}', '${link.href}', '${size}') }}`
-                return { markdown, html: markdown }
-            }
-            return null
-        }
-
-        // Embed/Video block
-        const embedContainer = block.querySelector('.cdx-embed')
-        if (embedContainer) {
-            const urlInput = block.querySelector('.cdx-input-labeled-embed-service-url') as HTMLElement
-            const captionEl = block.querySelector('.image-tool__caption') as HTMLElement
-            const img = block.querySelector('img') as HTMLImageElement
-            const serviceUrl = urlInput?.textContent?.trim() || ''
-            const caption = captionEl?.textContent?.trim() || ''
-            // Extract media name from image src
-            let media = ''
-            if (img && img.src) {
-                const mediaMatch = img.src.match(/\/media\/[^/]+\/([^/]+)$/) || img.src.match(/\/([^/]+)$/)
-                media = mediaMatch?.[1] ?? ''
-            }
-            if (serviceUrl) {
-                const markdown = `{{ video('${serviceUrl}', '${media}', '${caption}') }}`
-                return { markdown, html: markdown }
-            }
-            return null
-        }
-
-        // Fallback: get text content
-        const content = block.querySelector('.ce-block__content')
-        if (content) {
-            const clone = content.cloneNode(true) as Element
-            clone.querySelectorAll('[contenteditable="false"], .ce-header-level-wrapper').forEach(el => el.remove())
-            const text = clone.textContent?.trim()
-            if (text) {
-                return { markdown: text, html: clone.innerHTML }
-            }
-        }
-
-        return null
+        void navigator.clipboard.write([
+            new ClipboardItem({
+                'text/plain': markdown.then((text) => new Blob([text], { type: 'text/plain' })),
+            }),
+        ])
     }
 
     /**
@@ -591,13 +311,13 @@ export default class ClipboardManager {
             return // PasteLink will handle this
         }
 
-        // When the plain text already carries markdown, it is authoritative
-        // (this editor's own copies always export to markdown — single block or
-        // multi-block). Converting the accompanying HTML instead — e.g. our
-        // `tc-table` div grid, which isn't a real <table> — would shred tables
-        // into paragraphs and drop alignment/sticky. HTML conversion is only a
-        // fallback for genuine external rich text (Google Docs, Word, Sheets),
-        // whose plain text has no markdown syntax.
+        // When the plain text already carries markdown, it is authoritative:
+        // this editor's own copies always write markdown there (a whole-block
+        // copy writes nothing else), and converting the HTML that may come
+        // along would lose what only the markdown holds — a table's alignment
+        // and sticky header, for one. HTML conversion is only a fallback for
+        // genuine external rich text (Google Docs, Word, Sheets), whose plain
+        // text has no markdown syntax.
         const plainHasMarkdown = this.detectMarkdownPatterns(MarkdownUtils.retrieveMarkdownWithoutTunes(plainText))
 
         // Try to convert HTML to markdown if it looks like rich text (Google Docs, Word, etc.)
@@ -813,117 +533,6 @@ export default class ClipboardManager {
         return parts.join('')
             .replace(/\n{3,}/g, '\n\n') // Normalize multiple newlines
             .replace(/\u00A0/g, ' ')     // Replace any remaining non-breaking spaces
-    }
-
-    /**
-     * Convert a list block's DOM into markdown, mirroring the List tool's own
-     * export. Recursion is what a flat `querySelectorAll('.cdx-list__item')`
-     * cannot do: nested items would come out unindented, and each item's text
-     * lives in its own `__item-content` element, so reading an item's innerHTML
-     * would carry that markup into the clipboard.
-     */
-    private listMarker(list: Element, item: Element, index: number): string {
-        if (list.classList.contains('cdx-list-ordered')) {
-            return `${index + 1}.`
-        }
-
-        if (list.classList.contains('cdx-list-checklist')) {
-            // `:scope >` keeps a checked child from marking its parent: the nested
-            // list lives inside the parent `li`, next to the parent's own checkbox.
-            const checked = item.querySelector(':scope > .cdx-list__checkbox--checked') !== null
-
-            return `- [${checked ? 'x' : ' '}]`
-        }
-
-        return '-'
-    }
-
-    private extractList(
-        list: Element,
-        depth: number,
-    ): { markdown: string; html: string } {
-        const ordered = list.classList.contains('cdx-list-ordered')
-        const indent = '  '.repeat(depth)
-        const lines: string[] = []
-        const htmlItems: string[] = []
-
-        Array.from(list.children).forEach((item, index) => {
-            if (!item.classList.contains('cdx-list__item')) {
-                return
-            }
-
-            const content = item.querySelector('.cdx-list__item-content')
-            const inner = content?.innerHTML ?? ''
-            const text = MarkdownUtils.convertInlineHtmlToMarkdown(inner, false).trim()
-
-            if (text) {
-                lines.push(`${indent}${this.listMarker(list, item, index)} ${text}`)
-            }
-
-            const children = item.querySelector('.cdx-list__item-children')
-            const nested = children === null ? null : this.extractList(children, depth + 1)
-            if (nested?.markdown) {
-                lines.push(nested.markdown)
-            }
-
-            if (text || nested?.markdown) {
-                htmlItems.push('<li>' + inner + (nested?.html ?? '') + '</li>')
-            }
-        })
-
-        const tag = ordered ? 'ol' : 'ul'
-
-        return {
-            markdown: lines.join('\n'),
-            html: htmlItems.length > 0 ? `<${tag}>${htmlItems.join('')}</${tag}>` : '',
-        }
-    }
-
-    /**
-     * Convert an Editor.js table block's DOM into GFM markdown.
-     * Mirrors the Table tool's own export: inline HTML in cells is preserved
-     * (decoded), the delimiter row carries per-column alignment, and a sticky
-     * heading round-trips as the `{.table-sticky-header}` block attribute.
-     */
-    private extractTableMarkdown(block: Element, tableEl: Element): string | null {
-        const rows = Array.from(tableEl.querySelectorAll('.tc-row'))
-        if (rows.length === 0) {
-            return null
-        }
-
-        const matrix = rows.map(row =>
-            Array.from(row.querySelectorAll('.tc-cell')).map(cell =>
-                he.decode((cell as HTMLElement).innerHTML).trim().replace(/\\/g, '\\\\').replace(/\|/g, '\\|'),
-            ),
-        )
-        const colCount = Math.max(...matrix.map(row => row.length))
-
-        const withHeadings = tableEl.classList.contains('tc-table--heading')
-        const alignments: string[] = []
-        for (let col = 0; col < colCount; col++) {
-            const firstRowCell = rows[0]?.querySelectorAll('.tc-cell')[col] as HTMLElement | undefined
-            alignments.push(firstRowCell?.style.textAlign || '')
-        }
-
-        matrix.forEach(row => {
-            while (row.length < colCount) {
-                row.push('')
-            }
-        })
-
-        // A table without headings goes out under an empty header, as the tool's export does.
-        const header = withHeadings ? matrix[0]! : new Array(colCount).fill('')
-        const body = withHeadings ? matrix.slice(1) : matrix
-        const separators = alignments.map(a => ALIGNMENT_SEPARATORS[a] ?? '---')
-        const lines = [header, separators, ...body].map(row => '| ' + row.join(' | ') + ' |')
-
-        let markdown = lines.join('\n')
-        // The sticky class lives on the tool's block container (the parent of .tc-wrap).
-        if (block.querySelector('.table-sticky-header')) {
-            markdown = '{.table-sticky-header}\n' + markdown
-        }
-
-        return markdown
     }
 
     /**
