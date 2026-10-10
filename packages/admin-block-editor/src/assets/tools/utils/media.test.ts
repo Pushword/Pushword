@@ -59,6 +59,7 @@ describe('MediaUtils.getMediaNameFromData', () => {
     ['a current attachment file', { media: '1.jpg', size: 2054 }, '1.jpg'],
     ['a gallery item', { media: '2.jpg', caption: '' }, '2.jpg'],
     ['a gallery name left by pw:block:upgrade', '1.jpg', '1.jpg'],
+    ['a fileName reference', { fileName: '1.jpg' }, '1.jpg'],
     [
       'an attachment saved with a path',
       { media: '/media/2.jpg', size: 0 },
@@ -90,14 +91,22 @@ describe('MediaUtils.getMediaNameFromData', () => {
     expect(MediaUtils.getMediaNameFromData(data)).toBe(media)
   })
 
-  it('prefers the media field, then the url, then the nested file', () => {
-    const data = { media: 'a.jpg', url: '/media/md/b.jpg', file: { media: 'c.jpg' } }
+  it('prefers media, then fileName, then the url, then the nested file', () => {
+    const data = {
+      media: 'a.jpg',
+      fileName: 'b.jpg',
+      url: '/media/md/c.jpg',
+      file: { media: 'd.jpg' },
+    }
 
     expect(MediaUtils.getMediaNameFromData(data)).toBe('a.jpg')
     expect(MediaUtils.getMediaNameFromData({ ...data, media: '' })).toBe('b.jpg')
     expect(
-      MediaUtils.getMediaNameFromData({ file: data.file, image: { media: 'd.jpg' } }),
+      MediaUtils.getMediaNameFromData({ ...data, media: '', fileName: '' }),
     ).toBe('c.jpg')
+    expect(
+      MediaUtils.getMediaNameFromData({ file: data.file, image: { media: 'e.jpg' } }),
+    ).toBe('d.jpg')
   })
 
   it('finds nothing in an empty reference', () => {

@@ -87,7 +87,7 @@ export class MediaUtils {
 
   /**
    * The media name a block's reference holds, whichever shape saved it: a bare
-   * name or a `media` field (both kept as they are, even a URL), else the name
+   * name or a `media`/`fileName` field (kept as they are, even a URL), else the name
    * a `url` ends with, else the `file` or `image` object older blocks nested it in.
    */
   static getMediaNameFromData(dataItem: MediaData | null | undefined): string {
@@ -96,6 +96,7 @@ export class MediaUtils {
 
     return (
       dataItem.media ||
+      dataItem.fileName ||
       this.extractMediaName(dataItem.url) ||
       this.getMediaNameFromData(dataItem.file) ||
       this.getMediaNameFromData(dataItem.image)
