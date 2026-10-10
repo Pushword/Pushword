@@ -60,9 +60,13 @@
   padding-top: 2rem;
 }
 
+/* An obfuscated link is told apart by its dashed underline as well as its
+   colour, which alone a colour-blind editor would miss; emerald-700 keeps the
+   4.5:1 contrast text needs. */
 a[rel='obfuscate']:not(.link-btn),
 a[rel='encrypt']:not(.link-btn) {
-  color: #059669;
+  color: #047857;
+  text-decoration-style: dashed;
 }
 
 @media screen and (min-width: 1200px) {
