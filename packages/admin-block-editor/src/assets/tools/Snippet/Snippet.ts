@@ -37,8 +37,6 @@ interface SnippetNodes {
   editInput?: HTMLInputElement
 }
 
-let nextSnippetId = 0
-
 /**
  * Block for the `snippet('name', {params})` Twig function. Lists the snippets
  * declared by the server (content snippets + dev components) and renders a
@@ -53,7 +51,7 @@ export default class Snippet extends BaseTool implements StateBlockToolInterface
   /** key → reader returning the current param value */
   private fieldReaders: Record<string, () => any> = {}
   /** stable suffix so this block's field ids never collide with another block's */
-  private readonly uid = `snippet-${++nextSnippetId}`
+  private readonly uid = make.uniqueId('snippet')
 
   public static toolbox = {
     title: 'Snippet',

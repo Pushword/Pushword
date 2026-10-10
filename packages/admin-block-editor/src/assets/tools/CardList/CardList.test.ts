@@ -106,3 +106,31 @@ describe('CardList unknown slug message', () => {
     expect(second.pageInput.getAttribute('aria-describedby')).toBe(second.slugError.id)
   })
 })
+
+describe('CardList icon checkboxes', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    document.body.innerHTML = ''
+  })
+
+  it('binds each card label to its own checkbox, even for cards built in the same millisecond', () => {
+    // renderItems builds every card in one go: pin the clock to make that explicit.
+    vi.useFakeTimers()
+    const api = {
+      i18n: { t: (text: string) => text },
+      styles: { block: 'cdx-block' },
+    } as unknown as API
+    const tool = new CardList({ data: { items: [{}, {}] }, api, readOnly: false })
+    document.body.appendChild(tool.render())
+
+    const [first, second] = (tool as any).itemNodes
+    expect(first.obfuscateLinkInput.id).not.toBe(second.obfuscateLinkInput.id)
+    for (const input of [first.obfuscateLinkInput, second.obfuscateLinkInput]) {
+      expect(input.nextElementSibling.htmlFor).toBe(input.id)
+    }
+
+    second.obfuscateLinkInput.nextElementSibling.click()
+    expect(second.obfuscateLinkInput.checked).toBe(true)
+    expect(first.obfuscateLinkInput.checked).toBe(false)
+  })
+})

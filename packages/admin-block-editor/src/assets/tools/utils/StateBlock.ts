@@ -35,7 +35,7 @@ export class StateBlock {
   }
 
   private static createEditBtn(BlockTool: StateBlockToolInterface): HTMLElement {
-    const toggleId = StateBlock.generateRandomId('toggle')
+    const toggleId = make.uniqueId('toggle')
     BlockTool.nodes.editBtn = make.element('div', 'toggle-wrapper')
     BlockTool.nodes.editInput = make.element('input', ['toggle-input'], {
       type: 'checkbox',
@@ -49,11 +49,6 @@ export class StateBlock {
     BlockTool.nodes.editBtn!.appendChild(label)
 
     return BlockTool.nodes.editBtn!
-  }
-
-  private static generateRandomId(prefix: string = 'id'): string {
-    const randomString = Math.random().toString(36).substring(2, 9)
-    return `${prefix}_${randomString}`
   }
 
   public static show(BlockTool: StateBlockToolInterface, state: number): void {

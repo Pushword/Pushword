@@ -87,6 +87,7 @@ const LABELS: { key: string; placeholder: string; only?: QuizMode[] }[] = [
 export default class Quiz extends BaseTool {
   declare public data: QuizData
   private conversationTypes: string[] = []
+  /** Each block needs its own datalist to point at. */
   private ctaListId = ''
   private wrapper!: HTMLElement
   private singleSection!: HTMLElement
@@ -105,9 +106,6 @@ export default class Quiz extends BaseTool {
    * their own `×N` chip and survive an edit untouched.
    */
   private static readonly W_MAX = 3
-
-  /** Each block needs its own datalist to point at. */
-  private static listSeq = 0
 
   private get profileMode(): boolean {
     return 'profile' === this.mode
@@ -133,7 +131,7 @@ export default class Quiz extends BaseTool {
     // Contributed by the quiz bundle's editor tool provider (the form types this
     // site actually declares). Absent when the conversation bundle is not installed.
     this.conversationTypes = Array.isArray(config?.conversationTypes) ? config.conversationTypes : []
-    this.ctaListId = 'cdx-quiz-cta-' + String(++Quiz.listSeq)
+    this.ctaListId = make.uniqueId('cdx-quiz-cta')
 
     const questions =
       Array.isArray(data.questions) && data.questions.length > 0

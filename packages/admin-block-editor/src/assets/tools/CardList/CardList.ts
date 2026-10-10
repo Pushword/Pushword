@@ -61,7 +61,6 @@ const DeleteIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="1
 const AddIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`
 
 export default class CardList extends BaseTool {
-  private static lastSlugErrorId = 0
   declare public data: CardListData
   private itemNodes: CardListItemNodes[] = []
   private itemsContainer?: HTMLElement
@@ -158,7 +157,7 @@ export default class CardList extends BaseTool {
     const pageSuggester = make.element('div', 'page-suggester')
     // An unknown slug is said in words, not only by the red border.
     const slugError = make.element('p', 'cardlist-slug-error', {
-      id: `cardlist-slug-error-${++CardList.lastSlugErrorId}`,
+      id: make.uniqueId('cardlist-slug-error'),
     })
     slugError.textContent = this.api.i18n.t('No page has this slug')
     slugError.hidden = true
@@ -466,7 +465,7 @@ export default class CardList extends BaseTool {
     const input = make.element('input', null, {
       type: 'checkbox',
       name,
-      id: `${name}-${Date.now()}`,
+      id: make.uniqueId(name),
     }) as HTMLInputElement
     if (checked) {
       input.checked = true
