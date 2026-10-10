@@ -114,14 +114,10 @@ export default class Attaches extends AbstractMediaTool {
     return this.data.title !== '' || this.data.file.media !== ''
   }
 
-  onUpload(response: UploadResponse): void {
-    if (!this.responsIsValid(response)) {
-      return this.handleUploadError('incorrect response: ' + JSON.stringify(response))
-    }
-
-    this.data.file.media = response.file.media
-    this.data.title = response.file.name || response.file.title || ''
-    this.data.file.size = response.file.size ?? 0
+  protected fillWith(file: UploadResponse['file']): void {
+    this.data.file.media = file.media
+    this.data.title = file.name || file.title || ''
+    this.data.file.size = file.size ?? 0
 
     this.showFileData()
 

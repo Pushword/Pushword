@@ -94,15 +94,19 @@ export abstract class AbstractMediaTool extends BaseTool {
     }
   }
 
-  protected responsIsValid(response: UploadResponse): boolean {
-    return response.success && !!response.file && !!response.file.media
-  }
-
   public onFileLoading(): void {
     this.toggleStatus(STATUS.UPLOADING)
   }
 
-  public abstract onUpload(response: UploadResponse): void
+  /** Fills the block from an upload or a pick, once the answer names a media. */
+  public onUpload(response: UploadResponse): void {
+    if (!response.success || !response.file?.media) {
+      return this.handleUploadError('incorrect response: ' + JSON.stringify(response))
+    }
+    this.fillWith(response.file)
+  }
+
+  protected abstract fillWith(file: UploadResponse['file']): void
 
   protected handleUploadError(error: unknown): void {
     const toolName = this.constructor.name

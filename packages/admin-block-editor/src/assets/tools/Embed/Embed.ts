@@ -83,14 +83,11 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
     return StateBlock.render(this)
   }
 
-  public onUpload(response: UploadResponse): void {
-    if (!this.responsIsValid(response)) {
-      return this.handleUploadError('incorrect response: ' + JSON.stringify(response))
-    }
-    this.data.media = response.file.media
-    if (!response.file.name) return
-    this.data.alternativeText = response.file.name
-    this.nodes.inputAlternativeText.textContent = response.file.name
+  protected fillWith(file: UploadResponse['file']): void {
+    this.data.media = file.media
+    if (!file.name) return
+    this.data.alternativeText = file.name
+    this.nodes.inputAlternativeText.textContent = file.name
     this.fillImage()
   }
 

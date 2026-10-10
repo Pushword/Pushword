@@ -93,12 +93,9 @@ export default class Image extends AbstractMediaTool {
     }
   }
 
-  public onUpload(response: UploadResponse): void {
-    if (!this.responsIsValid(response)) {
-      return this.handleUploadError('incorrect response: ' + JSON.stringify(response))
-    }
-    this.data.media = response.file.media
-    if (response.file.name) this.data.caption = response.file.name
+  protected fillWith(file: UploadResponse['file']): void {
+    this.data.media = file.media
+    if (file.name) this.data.caption = file.name
     this.fillImage()
     // this.block.dispatchChange()
   }

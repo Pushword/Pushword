@@ -18,10 +18,10 @@ function stubApi(): API {
 }
 
 class MediaTool extends AbstractMediaTool {
-  public uploaded: UploadResponse | null = null
+  public uploaded: UploadResponse['file'] | null = null
 
-  public onUpload(response: UploadResponse): void {
-    this.uploaded = response
+  protected fillWith(file: UploadResponse['file']): void {
+    this.uploaded = file
   }
 
   public render(): HTMLElement {
@@ -69,7 +69,7 @@ describe('AbstractMediaTool.uploadFile', () => {
     expect(call[0]).toBe('/admin/media/block')
     expect(call[1].method).toBe('POST')
     expect((call[1].body as FormData).get('image')).toBeInstanceOf(File)
-    expect(media.uploaded).toEqual(answer)
+    expect(media.uploaded).toEqual(answer.file)
   })
 
   it('shows the block as uploading while the request is in flight', async () => {
@@ -104,5 +104,29 @@ describe('AbstractMediaTool.uploadFile', () => {
     await media.uploadFile(new File(['x'], 'photo.jpg'))
 
     expect(media.nodes.wrapper.classList.contains('image-tool--loading')).toBe(false)
+  })
+})
+
+/** Every media tool fills itself through onUpload(), from an upload or a pick. */
+describe('AbstractMediaTool.onUpload', () => {
+  it('fills the block with the file the answer names', () => {
+    const media = tool()
+
+    media.onUpload({ success: true, file: { media: 'photo.jpg', name: 'A photo' } })
+
+    expect(media.uploaded).toEqual({ media: 'photo.jpg', name: 'A photo' })
+  })
+
+  it.each([
+    ['a failure', { success: false, file: { media: 'photo.jpg' } }],
+    ['no media name', { success: true, file: { media: '' } }],
+    ['no file', { success: true }],
+  ])('leaves the block alone and says so on an answer with %s', (_case, answer) => {
+    const media = tool()
+
+    media.onUpload(answer as unknown as UploadResponse)
+
+    expect(media.uploaded).toBeNull()
+    expect(notify).toHaveBeenCalledWith(expect.objectContaining({ style: 'error' }))
   })
 })

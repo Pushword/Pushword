@@ -108,25 +108,19 @@ export default class Gallery extends AbstractMediaTool {
     }
   }
 
-  onUpload(response: UploadResponse): void {
-    if (!this.responsIsValid(response)) {
-      return this.handleUploadError('incorrect response: ' + JSON.stringify(response))
-    }
-
-    const mediaName = response.file.media
-
+  protected fillWith(file: UploadResponse['file']): void {
     // Vérifier si le média existe déjà dans la galerie
-    if (this.isMediaAlreadyInGallery(mediaName)) {
+    if (this.isMediaAlreadyInGallery(file.media)) {
       this.handleDuplicateMediaError()
       return
     }
 
     const itemElement = this.getLastGalleryItem()
 
-    this._createImage(response.file.url || '', itemElement, response.file.name || '')
+    this._createImage(file.url || '', itemElement, file.name || '')
     this.data.items.push({
-      media: mediaName,
-      caption: response.file.name || '',
+      media: file.media,
+      caption: file.name || '',
     })
 
     itemElement.classList.add('cdxcarousel-item--empty')
