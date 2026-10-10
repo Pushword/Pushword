@@ -205,18 +205,10 @@ export default class Header {
 
     if ('data' in detail) {
       const content = detail.data as HTMLElement
-      const tagToLevel: Record<string, number> = {
-        H2: 2,
-        H3: 3,
-        H4: 4,
-        H5: 5,
-        H6: 6,
-      }
 
-      const level = tagToLevel[content.tagName] || 2
-
+      // An H1 falls back to the default level, like any level no heading can have.
       this.data = {
-        level,
+        level: Number(content.tagName.slice(1)),
         text: content.innerHTML,
       }
     }

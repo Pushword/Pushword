@@ -218,22 +218,36 @@ describe('Header levels', () => {
 })
 
 describe('Header.onPaste', () => {
-  it('rebuilds the heading at the pasted level, with the pasted text', () => {
+  function paste(tagName: string, config: HeaderConfig = {}) {
     const api = { i18n: { t: (text: string) => text } } as unknown as API
-    const header = new Header({ data: {}, api, config: {}, readOnly: false })
+    const header = new Header({ data: {}, api, config, readOnly: false })
     const holder = document.createElement('div')
     holder.appendChild(header.render())
 
-    const pasted = document.createElement('h3')
+    const pasted = document.createElement(tagName)
     pasted.innerHTML = 'Pasted <b>title</b>'
     header.onPaste({ detail: { data: pasted } } as unknown as PasteEvent)
 
-    const rebuilt = holder.firstElementChild as HTMLElement
+    return { header, rebuilt: holder.firstElementChild as HTMLElement }
+  }
+
+  it('rebuilds the heading at the pasted level, with the pasted text', () => {
+    const { header, rebuilt } = paste('h3')
+
     expect(rebuilt).toBe(header.render())
     expect(rebuilt.querySelector('h3')?.innerHTML).toBe('Pasted <b>title</b>')
     expect(
       rebuilt.querySelector<HTMLElement>('.ce-header-level-label')?.dataset.level,
     ).toBe('H3')
     expect(header.save(rebuilt)).toEqual({ text: 'Pasted <b>title</b>', level: 3 })
+  })
+
+  it('turns a pasted H1, which the page title owns, into a heading at the default level', () => {
+    const { header, rebuilt } = paste('h1')
+
+    expect(rebuilt.querySelector('h1')).toBeNull()
+    expect(rebuilt.querySelector('h2')?.innerHTML).toBe('Pasted <b>title</b>')
+    expect(header.save(rebuilt)).toEqual({ text: 'Pasted <b>title</b>', level: 2 })
+    expect(paste('h1', { defaultLevel: 3 }).rebuilt.querySelector('h3')).not.toBeNull()
   })
 })
