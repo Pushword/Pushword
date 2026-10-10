@@ -239,12 +239,12 @@ export default class Attaches extends AbstractMediaTool {
       title: properties[0] || '',
       file: {
         media: properties[1] || '',
-        size: parseInt(properties[3] || '0', 10),
+        size: parseInt(properties[2] || '0', 10),
       },
     }
 
-    if (properties[4] && properties[4] !== '') {
-      tunes.anchor = properties[4]
+    if (properties[3]) {
+      tunes.anchor = properties[3]
     }
 
     const block = editor.blocks.insert('attaches')

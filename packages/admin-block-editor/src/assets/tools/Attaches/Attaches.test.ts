@@ -114,3 +114,33 @@ describe('Attaches – an older block', () => {
     })
   })
 })
+
+describe('Attaches markdown round trip', () => {
+  function importAttaches(markdown: string): { data: any; tunes: any } {
+    let saved: { data: any; tunes: any } | null = null
+    const editor = {
+      blocks: {
+        insert: () => ({ id: 'attaches-id' }),
+        update: (_id: string, data: any, tunes: any) => {
+          saved = { data, tunes }
+        },
+      },
+    } as unknown as API
+
+    Attaches.importFromMarkdown(editor, markdown)
+
+    return saved!
+  }
+
+  it('reads the size and the anchor back from the arguments its export writes', () => {
+    const markdown = Attaches.exportToMarkdown(
+      { title: 'Report', file: { media: 'report.pdf', size: 2048 } },
+      { anchor: 'files' },
+    )
+    const { data, tunes } = importAttaches(markdown)
+
+    expect(data.file.size).toBe(2048)
+    expect(tunes.anchor).toBe('files')
+    expect(Attaches.exportToMarkdown(data, tunes)).toBe(markdown)
+  })
+})
