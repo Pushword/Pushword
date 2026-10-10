@@ -1,6 +1,7 @@
 /**
  * A media reference: either a bare name/URL string, or an object holding one
- * under a `media`, `fileName` or `url` key (legacy and current block shapes).
+ * under a `media`, `fileName` or `url` key, or nesting it under the `file` or
+ * `image` key older blocks used (legacy and current block shapes).
  */
 export type MediaData =
   | string
@@ -8,7 +9,8 @@ export type MediaData =
       media?: string
       fileName?: string
       url?: string
-      [key: string]: unknown
+      file?: MediaData
+      image?: MediaData
     }
 
 /** The pick currently waiting for the picker's message, if any. */
@@ -84,19 +86,20 @@ export class MediaUtils {
   }
 
   /**
-   * Extrait le nom du média depuis un objet de données
-   * @param dataItem - Objet de données qui peut contenir media, url, ou être une string
-   * @returns Le nom du média
+   * The media name a block's reference holds, whichever shape saved it: a bare
+   * name or a `media` field (both kept as they are, even a URL), else the name
+   * a `url` ends with, else the `file` or `image` object older blocks nested it in.
    */
-  static getMediaNameFromData(dataItem: MediaData): string {
-    if (typeof dataItem === 'string') {
-      return this.isFullUrl(dataItem) ? this.extractMediaName(dataItem) : dataItem
-    } else if (dataItem && typeof dataItem === 'object' && dataItem.media) {
-      return dataItem.media
-    } else if (dataItem && typeof dataItem === 'object' && dataItem.fileName) {
-      return dataItem.fileName
-    }
-    return ''
+  static getMediaNameFromData(dataItem: MediaData | null | undefined): string {
+    if (!dataItem) return ''
+    if (typeof dataItem === 'string') return dataItem
+
+    return (
+      dataItem.media ||
+      this.extractMediaName(dataItem.url) ||
+      this.getMediaNameFromData(dataItem.file) ||
+      this.getMediaNameFromData(dataItem.image)
+    )
   }
 
   /**
@@ -114,6 +117,33 @@ export class MediaUtils {
     } catch {
       return null
     }
+  }
+
+  /**
+   * An <img> for a media that, when the file is missing, asks the server for the
+   * name the media was renamed to and loads that instead. `onRenamed` lets the
+   * block keep the current name; `src` defaults to the media's preview URL.
+   */
+  static createImage(
+    mediaName: string,
+    onRenamed?: (renamed: string, url: string) => void,
+    src: string = this.buildFullUrl(mediaName),
+  ): HTMLImageElement {
+    const img = document.createElement('img')
+    let current = mediaName
+
+    img.addEventListener('error', async () => {
+      const resolved = await this.resolveMediaName(current)
+      if (!resolved || resolved === current) return
+
+      current = resolved
+      const url = this.buildFullUrl(resolved)
+      img.src = url
+      onRenamed?.(resolved, url)
+    })
+    img.src = src
+
+    return img
   }
 
   /**

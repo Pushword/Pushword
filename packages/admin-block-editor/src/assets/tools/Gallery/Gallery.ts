@@ -68,49 +68,21 @@ export default class Gallery extends AbstractMediaTool {
   }
 
   static normalizeData(data: GalleryDataToNormalize | GalleryData): GalleryData {
+    // The current shape wraps the items; pw:block:upgrade left a bare array of names.
+    const items = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.items)
+        ? data.items
+        : []
     const normalizedItems: GalleryItem[] = []
 
-    if (
-      data &&
-      typeof data === 'object' &&
-      'items' in data &&
-      Array.isArray(data.items)
-    ) {
-      for (const item of data.items) {
-        if (typeof item !== 'object') continue
-        const media =
-          item.media ||
-          (item.url ? MediaUtils.extractMediaName(item.url) : null) ||
-          item.file?.media
-        if (!media) continue
-        normalizedItems.push({ media: media, caption: item.caption || '' })
-      }
-
-      return { items: normalizedItems }
-    }
-
-    if (!data || !Array.isArray(data)) {
-      return { items: [] }
-    }
-
-    for (const item of data) {
-      if (typeof item === 'string') {
-        normalizedItems.push({ media: item, caption: '' })
-      } else if (typeof item === 'object' && item !== null) {
-        // Priorité: item.media > item.url > item.file?.media
-        let media = null
-        if ('media' in item && item.media) {
-          media = item.media
-        } else if ('url' in item && item.url) {
-          media = MediaUtils.extractMediaName(item.url)
-        } else if ('file' in item && item.file && 'media' in item.file) {
-          media = item.file.media
-        }
-
-        if (media) {
-          normalizedItems.push({ media: media, caption: item.caption || '' })
-        }
-      }
+    for (const item of items) {
+      const media = MediaUtils.getMediaNameFromData(item)
+      if (!media) continue
+      normalizedItems.push({
+        media,
+        caption: (typeof item === 'object' && item.caption) || '',
+      })
     }
 
     return { items: normalizedItems }
@@ -141,8 +113,7 @@ export default class Gallery extends AbstractMediaTool {
       return this.handleUploadError('incorrect response: ' + JSON.stringify(response))
     }
 
-    const mediaName =
-      response.file.media || MediaUtils.extractMediaName(response.file.url)
+    const mediaName = response.file.media
 
     // Vérifier si le média existe déjà dans la galerie
     if (this.isMediaAlreadyInGallery(mediaName)) {
@@ -291,18 +262,11 @@ export default class Gallery extends AbstractMediaTool {
    * Create Image View
    */
   _createImage(url: string, item: HTMLElement, captionText: string = ''): void {
-    const image = document.createElement('img')
-    image.src = url
-
-    image.addEventListener('error', async () => {
-      const mediaName = MediaUtils.extractMediaName(image.src)
-      const resolved = await MediaUtils.resolveMediaName(mediaName)
-      if (resolved && resolved !== mediaName) {
-        const newUrl = MediaUtils.buildFullUrl(resolved)
-        image.src = newUrl
-        item.style.setProperty('--bg-image-url', `url('${newUrl}')`)
-      }
-    })
+    const image = MediaUtils.createImage(
+      MediaUtils.extractMediaName(url),
+      (_renamed, newUrl) => item.style.setProperty('--bg-image-url', `url('${newUrl}')`),
+      url,
+    )
 
     const caption = make.element('div', ['image-tool__caption', this.api.styles.input], {
       contentEditable: true,

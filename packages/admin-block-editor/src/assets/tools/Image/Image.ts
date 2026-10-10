@@ -49,7 +49,7 @@ export default class Image extends AbstractMediaTool {
   }
 
   private get media(): string {
-    return this.data.media || this.data.file?.url || ''
+    return this.data.media
   }
 
   constructor({
@@ -88,7 +88,7 @@ export default class Image extends AbstractMediaTool {
 
   static normalizeData(data: ImageData | ImageDataToNormalize): ImageData {
     return {
-      media: data.media || MediaUtils.extractMediaName(data.file?.url || ''),
+      media: MediaUtils.getMediaNameFromData(data),
       caption: data.caption || data.file?.name || '',
     }
   }
@@ -109,19 +109,13 @@ export default class Image extends AbstractMediaTool {
       this.nodes.imageEl.remove()
     }
 
-    const img = make.element('img', 'image-tool__image-picture') as HTMLImageElement
-    img.src = MediaUtils.buildFullUrl(this.media)
+    const img = MediaUtils.createImage(this.media, (renamed) => {
+      this.data.media = renamed
+    })
+    img.classList.add('image-tool__image-picture')
 
     img.addEventListener('load', () => {
       this.hidePreloader(STATUS.FILLED)
-    })
-
-    img.addEventListener('error', async () => {
-      const resolved = await MediaUtils.resolveMediaName(this.media)
-      if (resolved && resolved !== this.media) {
-        this.data.media = resolved
-        img.src = MediaUtils.buildFullUrl(resolved)
-      }
     })
 
     this.nodes.imageEl = img

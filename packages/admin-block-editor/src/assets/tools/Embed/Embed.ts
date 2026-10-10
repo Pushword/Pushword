@@ -75,7 +75,7 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
     return {
       serviceUrl: data.serviceUrl || '',
       alternativeText: data.alternativeText || '',
-      media: data.media || (data as EmbedDataToNormalize).image?.media || '',
+      media: MediaUtils.getMediaNameFromData(data),
     }
   }
 
@@ -129,8 +129,7 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
 
     this.nodes.preview.innerHTML =
       '<div style="display:block;--aspect-ratio:16/9;background: center / cover no-repeat url(\'' +
-      '/media/md/' +
-      this.data.media +
+      MediaUtils.buildFullUrl(this.data.media) +
       '\');">' +
       '<div style="display: flex;justify-content: center;align-items: center; width:100%;height:100%;color:#c4302b">' +
       PlayIcon.replace('width="16"', 'width="100"').replace(

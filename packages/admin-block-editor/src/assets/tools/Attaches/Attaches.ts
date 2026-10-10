@@ -76,7 +76,7 @@ export default class Attaches extends AbstractMediaTool {
     return {
       title: data.title || '',
       file: {
-        media: data.file?.media || MediaUtils.extractMediaName(data.file?.url || ''),
+        media: MediaUtils.getMediaNameFromData(data.file),
         size: data.file?.size || 0,
       },
     }

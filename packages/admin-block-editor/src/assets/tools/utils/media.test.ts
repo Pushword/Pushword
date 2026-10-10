@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect, vi } from 'vitest'
 import { beginMediaPick, MediaUtils } from './media'
 
 /**
@@ -41,5 +41,139 @@ describe('MediaUtils.uploadErrorMessage', () => {
       status: 502,
     })
     expect(await MediaUtils.uploadErrorMessage(response)).toBe('HTTP 502')
+  })
+})
+
+/**
+ * Image, Attaches, Embed and Gallery each read the media name out of the shapes
+ * their blocks were saved in over time; the fixtures below are those shapes.
+ */
+describe('MediaUtils.getMediaNameFromData', () => {
+  it.each([
+    ['a current image block', { media: '1.jpg', caption: 'titre de mon image' }, '1.jpg'],
+    [
+      'a current embed block',
+      { serviceUrl: 'test', alternativeText: 'test', media: '1.jpg' },
+      '1.jpg',
+    ],
+    ['a current attachment file', { media: '1.jpg', size: 2054 }, '1.jpg'],
+    ['a gallery item', { media: '2.jpg', caption: '' }, '2.jpg'],
+    ['a gallery name left by pw:block:upgrade', '1.jpg', '1.jpg'],
+    [
+      'an attachment saved with a path',
+      { media: '/media/2.jpg', size: 0 },
+      '/media/2.jpg',
+    ],
+  ])('reads %s', (_shape, data, media) => {
+    expect(MediaUtils.getMediaNameFromData(data)).toBe(media)
+  })
+
+  it.each([
+    [
+      'an old image block',
+      { file: { url: '/media/default/My%20Photo.jpg', name: 'Demo' } },
+      'My Photo.jpg',
+    ],
+    [
+      'an old attachment file',
+      { url: 'https://example.com/file.pdf', name: 'document.pdf', size: '1024' },
+      'file.pdf',
+    ],
+    ['an old embed block', { serviceUrl: 'test', image: { media: '1.jpg' } }, '1.jpg'],
+    [
+      'an old gallery item',
+      { file: { media: '1.jpg' }, url: '/media/default/1.jpg', caption: 'Demo 1' },
+      '1.jpg',
+    ],
+    ['an old gallery item without url', { file: { media: '2.jpg' } }, '2.jpg'],
+  ])('reads %s', (_shape, data, media) => {
+    expect(MediaUtils.getMediaNameFromData(data)).toBe(media)
+  })
+
+  it('prefers the media field, then the url, then the nested file', () => {
+    const data = { media: 'a.jpg', url: '/media/md/b.jpg', file: { media: 'c.jpg' } }
+
+    expect(MediaUtils.getMediaNameFromData(data)).toBe('a.jpg')
+    expect(MediaUtils.getMediaNameFromData({ ...data, media: '' })).toBe('b.jpg')
+    expect(
+      MediaUtils.getMediaNameFromData({ file: data.file, image: { media: 'd.jpg' } }),
+    ).toBe('c.jpg')
+  })
+
+  it('finds nothing in an empty reference', () => {
+    expect(MediaUtils.getMediaNameFromData(undefined)).toBe('')
+    expect(MediaUtils.getMediaNameFromData(null)).toBe('')
+    expect(MediaUtils.getMediaNameFromData({ caption: 'orphan caption' } as any)).toBe('')
+  })
+})
+
+/** The server answers /admin/media/resolve/<name> with the media's current name. */
+function resolvesTo(fileName: string | null): ReturnType<typeof vi.fn> {
+  const fetch = vi.fn(async () =>
+    fileName === null
+      ? { ok: false, json: async () => ({}) }
+      : { ok: true, json: async () => ({ fileName }) },
+  )
+  vi.stubGlobal('fetch', fetch)
+
+  return fetch
+}
+
+describe('MediaUtils.createImage', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('previews the media at its preview size, or at the URL it was given', () => {
+    expect(MediaUtils.createImage('photo.jpg').getAttribute('src')).toBe(
+      '/media/md/photo.jpg',
+    )
+    expect(
+      MediaUtils.createImage(
+        'photo.jpg',
+        undefined,
+        '/media/thumb/photo.jpg',
+      ).getAttribute('src'),
+    ).toBe('/media/thumb/photo.jpg')
+  })
+
+  it('loads the name a renamed media goes by now, and tells the block', async () => {
+    const fetch = resolvesTo('new-name.jpg')
+    const onRenamed = vi.fn()
+    const img = MediaUtils.createImage('Old Name.jpg', onRenamed)
+
+    img.dispatchEvent(new Event('error'))
+
+    await vi.waitFor(() =>
+      expect(onRenamed).toHaveBeenCalledWith('new-name.jpg', '/media/md/new-name.jpg'),
+    )
+    expect(fetch).toHaveBeenCalledWith('/admin/media/resolve/Old%20Name.jpg')
+    expect(img.getAttribute('src')).toBe('/media/md/new-name.jpg')
+  })
+
+  it('leaves the image alone when the server knows no other name', async () => {
+    const fetch = resolvesTo(null)
+    const onRenamed = vi.fn()
+    const img = MediaUtils.createImage('gone.jpg', onRenamed)
+
+    img.dispatchEvent(new Event('error'))
+
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalled())
+    expect(onRenamed).not.toHaveBeenCalled()
+    expect(img.getAttribute('src')).toBe('/media/md/gone.jpg')
+  })
+
+  it('stops once the current name fails too, rather than reloading it forever', async () => {
+    const fetch = resolvesTo('new-name.jpg')
+    const onRenamed = vi.fn()
+    const img = MediaUtils.createImage('old.jpg', onRenamed)
+
+    img.dispatchEvent(new Event('error'))
+    await vi.waitFor(() => expect(onRenamed).toHaveBeenCalledOnce())
+    img.dispatchEvent(new Event('error'))
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
+
+    expect(fetch).toHaveBeenLastCalledWith('/admin/media/resolve/new-name.jpg')
+    expect(onRenamed).toHaveBeenCalledOnce()
   })
 })

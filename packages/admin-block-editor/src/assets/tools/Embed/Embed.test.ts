@@ -41,3 +41,29 @@ describe('Embed preview', () => {
     expect(preview.innerHTML).toContain('/media/md/thumb.jpg')
   })
 })
+
+describe('Embed – thumbnail reference', () => {
+  it('reads the thumbnail older blocks kept under image', () => {
+    expect(
+      Embed.normalizeData({
+        serviceUrl: 'https://youtu.be/x',
+        image: { media: '1.jpg' },
+      }),
+    ).toEqual({
+      serviceUrl: 'https://youtu.be/x',
+      alternativeText: '',
+      media: '1.jpg',
+    })
+  })
+
+  it('previews a thumbnail given as a path where it lives, as the edit view does', () => {
+    const tool = embedWith('/media/default/thumb.jpg')
+    ;(tool as any).nodes.preview = document.createElement('div')
+
+    tool.updatePreview()
+
+    const preview: HTMLElement = (tool as any).nodes.preview
+    expect(preview.innerHTML).toContain("url('/media/default/thumb.jpg')")
+    expect(preview.innerHTML).not.toContain('/media/md//media/')
+  })
+})

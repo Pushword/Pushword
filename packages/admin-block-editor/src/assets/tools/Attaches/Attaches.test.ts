@@ -77,3 +77,17 @@ describe('Attaches – the inline uploader', () => {
     expect(attachesWith('').tool.uploadAccept).toBe('')
   })
 })
+
+describe('Attaches – an older block', () => {
+  it('takes the media name from the file url pw:block:upgrade kept', () => {
+    const legacy = {
+      title: 'Doc',
+      file: { url: 'https://example.com/file.pdf', name: 'document.pdf', size: 1024 },
+    }
+
+    expect(Attaches.normalizeData(legacy)).toEqual({
+      title: 'Doc',
+      file: { media: 'file.pdf', size: 1024 },
+    })
+  })
+})
