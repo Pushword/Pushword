@@ -75,3 +75,17 @@ describe('Header.render', () => {
     ).toBe(true)
   })
 })
+
+describe('Header placeholder', () => {
+  it('shows the configured placeholder on an empty heading', () => {
+    const api = { i18n: { t: (text: string) => text } } as unknown as API
+    const container = new Header({
+      data: { text: '', level: 2 },
+      api,
+      config: { placeholder: 'Heading' },
+      readOnly: false,
+    }).render()
+
+    expect(container.querySelector('h2')?.dataset.placeholder).toBe('Heading')
+  })
+})

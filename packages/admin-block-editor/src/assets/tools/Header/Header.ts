@@ -38,10 +38,10 @@ export default class Header {
   private _element: HTMLElement
   private _levelSelect: HTMLSelectElement | null = null
   private _data: HeaderData
-  private api: API
+  private placeholder: string
 
-  constructor({ data, api }: ConstructorArgs) {
-    this.api = api
+  constructor({ data, config }: ConstructorArgs) {
+    this.placeholder = config?.placeholder ?? ''
     this._data = Header.normalizeData(data)
     this._element = this.getTag()
   }
@@ -219,7 +219,7 @@ export default class Header {
     tag.innerHTML = this._data.text || ''
     tag.classList.add('ce-header')
     tag.contentEditable = 'true'
-    tag.dataset.placeholder = this.api.i18n.t('')
+    tag.dataset.placeholder = this.placeholder
 
     container.appendChild(tag)
     container.appendChild(levelWrapper)

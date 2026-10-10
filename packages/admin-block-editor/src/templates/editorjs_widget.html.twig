@@ -96,7 +96,7 @@ window.pagesUriList = {{ page_uri_list(attr.page_host|default(''))|json_encode|r
 var editorjsConfig = {
     name: "default",
     initialBlock: "paragraph",
-    placeholder: "...",
+    placeholder: "{{ 'editorParagraphPlaceholder'|trans|e('js') }}",
     i18n: { messages: {{ editorjs_i18n_messages()|json_encode|raw }} },
     outline: {
         labels: {
@@ -119,7 +119,7 @@ var editorjsConfig = {
             inlineToolbar: ['bold', 'italic', 'inline-code', 'marker', 'link', 'Strikethrough', 'small'],
             tunes: ['anchor', 'class', 'textAlign'],
             config: {
-                placeholder: "...",
+                placeholder: "{{ 'editorHeading'|trans|e('js') }}",
                 levels: [2, 3, 4],
                 defaultLevel: 2,
             },
@@ -191,8 +191,8 @@ var editorjsConfig = {
             tunes: ['anchor'],
             inlineToolbar: true,
             config: {
-                quotePlaceholder: "...",
-                captionPlaceholder: "...",
+                quotePlaceholder: "{{ 'editorQuote'|trans|e('js') }}",
+                captionPlaceholder: "{{ 'editorQuoteAuthor'|trans|e('js') }}",
             },
         },
         table: {
