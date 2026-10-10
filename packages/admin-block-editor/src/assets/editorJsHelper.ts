@@ -250,43 +250,4 @@ export class editorJsHelper {
   onMultiSelectImage(Tool: ToolWithMultiCallbacks, _event: Event): void {
     editorJsHelper.abstractOnMulti(Tool, _event)
   }
-
-  toggleEditorJs(editorId: string): void {
-    const editorJsInput = document.querySelector(
-      'input[data-editorjs]',
-    ) as HTMLInputElement | null
-    const textareaInput = document.querySelector(
-      'textarea[data-editorjs]',
-    ) as HTMLTextAreaElement | null
-    const elementToReplace = editorJsInput ? editorJsInput : textareaInput
-
-    if (!elementToReplace) return
-
-    const editorElement = document.getElementById(editorId)
-    if (editorElement) {
-      editorElement.style.display = editorJsInput ? 'none' : 'block'
-    }
-
-    const replaceElement = document.createElement(
-      editorJsInput ? 'textarea' : 'input',
-    ) as HTMLInputElement | HTMLTextAreaElement
-
-    for (let i = 0, l = elementToReplace.attributes.length; i < l; ++i) {
-      const nodeName = elementToReplace.attributes.item(i)?.nodeName
-      const nodeValue = elementToReplace.attributes.item(i)?.nodeValue
-
-      if (nodeName && nodeValue) {
-        replaceElement.setAttribute(nodeName, nodeValue)
-      }
-    }
-
-    if (editorJsInput && replaceElement instanceof HTMLTextAreaElement) {
-      replaceElement.value = editorJsInput.value
-      replaceElement.classList.add('form-control')
-      replaceElement.style.border = '0'
-    }
-    //else replaceElement.setAttribute("value", replaceElement.innerHTML); // useless because editor.js doesn't listen value content
-
-    elementToReplace.parentNode?.replaceChild(replaceElement, elementToReplace)
-  }
 }
