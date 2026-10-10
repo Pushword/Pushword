@@ -197,9 +197,13 @@ export default class ClipboardManager {
      * Those exports are async (Prettier) while a copy event must be filled
      * before it returns, so the clipboard is written through the Clipboard API
      * instead: the item is handed over within the user gesture and its content
-     * is a promise, resolved once the export lands.
+     * is a promise, resolved once the export lands. Where that API is missing
+     * (an insecure context, an older browser), Editor.js's own copy of the
+     * selected blocks stands in.
      */
     private copyBlocks(event: Event, blocks: ArrayLike<Element>): void {
+        if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') return
+
         event.preventDefault()
         event.stopImmediatePropagation()
 
@@ -212,11 +216,13 @@ export default class ClipboardManager {
             }).exportToMarkdown(),
         )
 
-        void navigator.clipboard.write([
-            new ClipboardItem({
-                'text/plain': markdown.then((text) => new Blob([text], { type: 'text/plain' })),
-            }),
-        ])
+        navigator.clipboard
+            .write([
+                new ClipboardItem({
+                    'text/plain': markdown.then((text) => new Blob([text], { type: 'text/plain' })),
+                }),
+            ])
+            .catch((error: unknown) => console.error('Unable to copy the selected blocks', error))
     }
 
     /**

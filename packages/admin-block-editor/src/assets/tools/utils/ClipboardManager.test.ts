@@ -288,6 +288,30 @@ describe('ClipboardManager – copying whole blocks', () => {
     return copied()
   }
 
+  it("leaves the copy to Editor.js where the Clipboard API can't take it", () => {
+    vi.stubGlobal('ClipboardItem', undefined)
+    const { cm, holder } = copyingManager([paragraph('p', 'Hello')])
+    holder.querySelector('.ce-block')!.classList.add('ce-block--selected')
+    const event = ctrlC(holder.querySelector('.ce-block')!)
+
+    cm.handleCopyShortcut(event)
+
+    expect(event.preventDefault).not.toHaveBeenCalled()
+    expect(write).not.toHaveBeenCalled()
+  })
+
+  it('reports a refused clipboard write instead of leaving it unhandled', async () => {
+    const error = new Error('Document is not focused')
+    write.mockRejectedValue(error)
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await copy(paragraph('p', 'Hello')).catch(() => {})
+    await vi.waitFor(() =>
+      expect(logged).toHaveBeenCalledWith('Unable to copy the selected blocks', error),
+    )
+    logged.mockRestore()
+  })
+
   it('writes a bold table cell as the export does, not as the cell HTML', async () => {
     const content = [
       ['<b>Name</b>', 'Status'],
