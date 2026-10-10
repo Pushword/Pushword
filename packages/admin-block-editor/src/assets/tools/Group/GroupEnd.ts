@@ -1,7 +1,8 @@
-import { API, BlockAPI, BlockTool, BlockToolConstructorOptions } from '@editorjs/editorjs'
+import { API, BlockTool, BlockToolConstructorOptions } from '@editorjs/editorjs'
 import { IconBrackets } from '@codexteam/icons'
 import './Group.css'
 import make from '../utils/make'
+import GroupMarker from './GroupMarker'
 import { GroupRegistry } from './GroupRegistry'
 import { buildEndCall, endCallArguments, endSyntax, GroupKind, kindOf } from './GroupSyntax'
 
@@ -18,18 +19,11 @@ export interface GroupEndData {
  * with its GroupStart and follows its fate — deleting either marker removes
  * the other, the wrapped blocks stay.
  */
-export default class GroupEnd implements BlockTool {
-  private api: API
-  private block: BlockAPI
+export default class GroupEnd extends GroupMarker implements BlockTool {
   private data: Required<GroupEndData>
 
-  static get isReadOnlySupported(): boolean {
-    return true
-  }
-
   constructor({ data, api, block }: BlockToolConstructorOptions<GroupEndData>) {
-    this.api = api
-    this.block = block
+    super({ api, block })
     this.data = {
       collapsible: data?.collapsible ?? false,
       legacy: data?.legacy ?? false,
@@ -52,19 +46,6 @@ export default class GroupEnd implements BlockTool {
 
   save(): GroupEndData {
     return { collapsible: this.data.collapsible, legacy: this.data.legacy, args: this.data.args }
-  }
-
-  rendered(): void {
-    GroupRegistry.schedule(this.api)
-  }
-
-  moved(): void {
-    GroupRegistry.schedule(this.api)
-  }
-
-  removed(): void {
-    GroupRegistry.removePartnerOf(this.api, this.block.id)
-    GroupRegistry.schedule(this.api)
   }
 
   static exportToMarkdown(data?: GroupEndData): string {

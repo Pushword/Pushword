@@ -1,8 +1,9 @@
-import { API, BlockAPI, BlockTool, BlockToolConstructorOptions } from '@editorjs/editorjs'
+import { API, BlockTool, BlockToolConstructorOptions } from '@editorjs/editorjs'
 import { IconBrackets } from '@codexteam/icons'
 import './Group.css'
 import make from '../utils/make'
 import { MarkdownUtils } from '../utils/MarkdownUtils'
+import GroupMarker from './GroupMarker'
 import { GroupRegistry } from './GroupRegistry'
 import {
   buildStartCall,
@@ -35,9 +36,7 @@ const stripAttributeBreakers = (value: string): string => value.replace(/["'<>]/
  * holds the toggle and the button, so layout classes belong on a plain group
  * nested inside, not here.
  */
-export default class GroupStart implements BlockTool {
-  private api: API
-  private block: BlockAPI
+export default class GroupStart extends GroupMarker implements BlockTool {
   private data: Required<GroupStartData>
   private readOnly: boolean
 
@@ -54,13 +53,8 @@ export default class GroupStart implements BlockTool {
     return { icon: IconBrackets, title: 'Group' }
   }
 
-  static get isReadOnlySupported(): boolean {
-    return true
-  }
-
   constructor({ data, api, block, readOnly }: BlockToolConstructorOptions<GroupStartData>) {
-    this.api = api
-    this.block = block
+    super({ api, block })
     this.readOnly = readOnly
     this.isFresh = Object.keys(data ?? {}).length === 0
     this.data = {
@@ -170,21 +164,12 @@ export default class GroupStart implements BlockTool {
     }
   }
 
-  rendered(): void {
+  override rendered(): void {
     if (this.isFresh) {
       this.isFresh = false
       this.closeFreshGroup()
     }
-    GroupRegistry.schedule(this.api)
-  }
-
-  moved(): void {
-    GroupRegistry.schedule(this.api)
-  }
-
-  removed(): void {
-    GroupRegistry.removePartnerOf(this.api, this.block.id)
-    GroupRegistry.schedule(this.api)
+    super.rendered()
   }
 
   /** A toolbox-inserted group opens ready to type into: end marker + empty paragraph. */
