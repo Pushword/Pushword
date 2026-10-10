@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.50](/upgrade/1.0.50) | `admin-block-editor` `core` | the Docker image uses patched Go networking libraries; the heading tool offers the levels the editor widget lists; a block with both an anchor and a class is saved so its class renders |
 | [1.0.45](/upgrade/1.0.45) | `admin` `admin-block-editor` `conversation` `core` `flat` `js-helper` | the conversation origins key is `conversation_possible_origins`; `pw:ai-index` without a host exports every site; Mermaid code blocks render as diagrams |
 | [1.0.42](/upgrade/1.0.42) | `admin` `conversation` `core` `flat` `newsletter` `page-scanner` `quiz` `repurpose` `snippet` `static-generator` | unused PHP helper APIs removed — run `cache:clear` |
 | [1.0.40](/upgrade/1.0.40) | `static-generator` | static sites serve brotli before zstd — run `pw:static` |

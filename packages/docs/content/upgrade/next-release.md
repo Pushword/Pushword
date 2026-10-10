@@ -1,5 +1,5 @@
 ---
-title: 'the Docker image uses patched Go networking libraries; the heading tool offers the levels the editor widget lists; a block with both an anchor and a class is saved so its class renders'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,21 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin-block-editor`, `pushword/core`
-
-## Docker security update
-
-The generated Dockerfile rebuilds FrankenPHP with Go 1.26.9, `golang.org/x/net` 0.60.0 and `golang.org/x/crypto` 0.57.0.
-**For sites using the Docker skeleton:** regenerate it with `pw:docker:init --force`, then rebuild the image.
-If you customized the Dockerfile, apply those builder settings manually instead of overwriting it.
-
-## Heading levels follow the editor widget
-
-The heading tool now offers the levels listed under `tools.header.config.levels` in the editor widget, H2 to H6 by default; a heading keeps its own level even when the list leaves it out.
-**For sites overriding the `editorjs_config` block of `editorjs_widget.html.twig`:** set `levels: [2, 3, 4, 5, 6]` there to keep offering H5 and H6.
-
-## Anchor and class saved apart
-
-The block editor saved a block with both an anchor and a class (or an alignment) as `{#anchor.class}`, which renders as `id="anchor.class"` and no class; it now writes `{#anchor .class}`. Editing such a block rewrites it.
-**For sites whose pages hold such lines:** open and save those pages in the block editor, or replace `{#anchor.class}` by `{#anchor .class}` in their content.
