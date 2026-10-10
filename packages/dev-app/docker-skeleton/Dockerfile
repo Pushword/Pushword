@@ -10,11 +10,13 @@
 FROM dunglas/frankenphp:1.12.7-builder-php8.5@sha256:684962b7a0741398e6107f97fe8534224fcfeeb71c91372b90ff24911c07d9fe AS frankenphp_builder
 
 ARG FRANKENPHP_VERSION=1.12.7
+ENV GOTOOLCHAIN=go1.26.9
 
 WORKDIR /go/src/app/caddy
 RUN go get \
 		github.com/getkin/kin-openapi@v0.144.0 \
-		golang.org/x/crypto@v0.55.0 \
+		golang.org/x/crypto@v0.57.0 \
+		golang.org/x/net@v0.60.0 \
 		google.golang.org/grpc@v1.83.2
 
 WORKDIR /go/src/app/caddy/frankenphp

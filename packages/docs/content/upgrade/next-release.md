@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'the Docker image uses patched Go networking libraries'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** pushword/core
+
+## Docker security update
+
+The generated Dockerfile rebuilds FrankenPHP with Go 1.26.9, `golang.org/x/net` 0.60.0 and `golang.org/x/crypto` 0.57.0.
+**For sites using the Docker skeleton:** regenerate it with `pw:docker:init --force`, then rebuild the image.
+If you customized the Dockerfile, apply those builder settings manually instead of overwriting it.

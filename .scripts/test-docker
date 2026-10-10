@@ -74,7 +74,7 @@ rm -rf "$CONTEXT_DIR/var"
 #    them, so the builder's `composer install` runs for real against the working tree
 #    rather than against released packages.
 cp -r "$MONOREPO_DIR/packages" "$CONTEXT_DIR/_packages"
-find "$CONTEXT_DIR/_packages" -type d \( -name node_modules -o -name vendor -o -name var \) -prune -exec rm -rf {} + 2>/dev/null || true
+find "$CONTEXT_DIR/_packages" -type d \( -name node_modules -o -name vendor -o -name var -o -path '*/rust/target' \) -prune -exec rm -rf {} + 2>/dev/null || true
 sed -i "s#$MONOREPO_DIR/packages#/app/_packages#g" "$CONTEXT_DIR/composer.json" "$CONTEXT_DIR/composer.lock"
 
 #    The builder installs dependencies before it copies the sources in — that ordering
