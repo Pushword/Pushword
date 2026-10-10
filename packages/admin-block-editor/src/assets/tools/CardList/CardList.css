@@ -1,8 +1,10 @@
+/* Fewer borders: a tinted ground groups the cards, and each card stands on it
+   with the admin's card shadow — instead of a dashed frame around bordered
+   cards. The dashed outline is left to the "Add Card" slot, the empty one. */
 .cardlist-wrapper {
-  border: 1px dashed #ccc;
-  border-radius: 8px;
+  border-radius: var(--pw-radius-md, 8px);
   padding: 15px;
-  background: #fafafa;
+  background: #f8fafc; /* slate-50 */
   margin-top: 10px;
   margin-bottom: 10px;
 }
@@ -14,8 +16,8 @@
 }
 
 .cardlist-item {
-  border: 1px solid #e0e0e0;
   border-radius: 6px;
+  box-shadow: var(--pw-elevation-2, 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1));
   padding: 12px;
   background: white;
   position: relative;
@@ -360,11 +362,10 @@
   flex-direction: column;
   gap: 10px;
   padding: 10px;
-  margin-inline: -13px;
-  margin-bottom: -13px;
+  margin-inline: -12px;
+  margin-bottom: -12px;
   margin-top: 10px;
-  border: 1px solid #e8e8e8;
-  border-radius: 0 0 4px 4px;
+  border-top: 1px solid #f1f5f9; /* slate-100 */
 }
 
 .cardlist-custom-fields--hidden {
@@ -475,7 +476,7 @@
   padding: 10px;
   margin-top: 10px;
   background: #fff;
-  border: 2px dashed #ccc;
+  border: 1px dashed #cbd5e1; /* slate-300, as the empty media blocks */
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
