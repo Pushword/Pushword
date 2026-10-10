@@ -1,6 +1,7 @@
 import { API, OutputData } from '@editorjs/editorjs'
 import { logger } from './tools/utils/logger'
 import { loadMonaco } from './tools/utils/loadScript'
+import { boundInputOf } from './boundInput'
 
 /**
  * Gestionnaire des modes d'édition (EditorJS, JSON, Markdown)
@@ -31,21 +32,9 @@ export class EditorModeManager {
    * Récupère l'élément input de l'éditeur
    */
   private getEditorInput(): HTMLInputElement | HTMLTextAreaElement | null {
-    const editorHolder = document.getElementById(this.editorId)
-    if (!editorHolder) {
-      logger.warn("Élément holder de l'éditeur non trouvé", { editorId: this.editorId })
-      return null
-    }
-
-    const inputId = editorHolder.getAttribute('data-input-id')
-
-    const input = document.getElementById(inputId || '') as
-      | HTMLInputElement
-      | HTMLTextAreaElement
-      | null
-
+    const input = boundInputOf(this.editorId)
     if (!input) {
-      logger.warn('Élément input non trouvé', { inputId })
+      logger.warn('Élément input non trouvé', { editorId: this.editorId })
     }
 
     return input

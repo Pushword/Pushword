@@ -48,8 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Copie le contenu (Markdown) précédé du H1 (# {h1}) dans le presse-papier
     window.copyPageMarkdown = async function(el) {
-        const holder = document.getElementById(editorId);
-        const input = document.getElementById(holder ? holder.getAttribute('data-input-id') : '');
+        const input = document.getElementById('{{ id }}');
         const markdown = input ? input.value : '';
         const h1Field = document.querySelector('.h1Field');
         const h1 = h1Field ? h1Field.value.trim() : '';

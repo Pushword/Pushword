@@ -7,6 +7,7 @@ import {
   IconTrash,
 } from '@codexteam/icons'
 import './outline.css'
+import { boundInputOf } from '../boundInput'
 import { GroupRegistry } from '../tools/Group/GroupRegistry'
 import { buildOutlineTree, OutlineNode, OutlineSource } from './OutlineModel'
 import { DragSpan, dropIndexFor, isActualMove, keyboardDropIndex } from './outlineDnd'
@@ -223,9 +224,7 @@ export class OutlinePanel {
 
   /** data-editor of the bound field: 'markdown' | 'json', or null for EditorJS. */
   private currentMode(): string | null {
-    const holder = document.getElementById(this.holderId)
-    const input = document.getElementById(holder?.getAttribute('data-input-id') ?? '')
-    return input?.getAttribute('data-editor') ?? null
+    return boundInputOf(this.holderId)?.getAttribute('data-editor') ?? null
   }
 
   private swapSource(mode: string | null): void {

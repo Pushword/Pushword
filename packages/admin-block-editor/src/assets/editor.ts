@@ -33,6 +33,7 @@ import Raw from './tools/Raw/Raw'
 import CodeBlock from './tools/CodeBlock/CodeBlock'
 import { EditorModeManager } from './EditorModeManager'
 import { editorJsHelper } from './editorJsHelper'
+import { boundInputOf } from './boundInput'
 import ClickableTune from './tools/Gallery/ClickableTune'
 import AnchorTune from './tools/AnchorTune/AnchorTune'
 import ClassTune from './tools/ClassTune/ClassTune'
@@ -197,7 +198,7 @@ export class editorJs {
     // event that clears it. Content that came as JSON never fires onChange, so
     // nothing rewrites the field and there is nothing to wait for.
     if (markdownContent !== null) {
-      this.boundInputOf(config.holder!)?.setAttribute('data-pw-baseline-pending', '1')
+      boundInputOf(config.holder!)?.setAttribute('data-pw-baseline-pending', '1')
     }
 
     const editor = new EditorJS(
@@ -245,7 +246,7 @@ export class editorJs {
     // Uniform seam for writing the body back from outside (unsaved changes
     // recovery): the field this editor feeds is a plain textarea, so setting
     // its value would leave the rendered blocks showing the old content.
-    const boundInput = this.boundInputOf(config.holder!)
+    const boundInput = boundInputOf(config.holder!)
     if (boundInput) {
       this.saveBeforeSubmit(boundInput.form)
       boundInput.pwEditor = {
@@ -268,7 +269,7 @@ export class editorJs {
       const editorApi = editor as unknown as API
       const monacoContext: MonacoContext = {
         monaco: () => this.modeManagers[holderId]?.getMonacoInstance() ?? null,
-        input: () => this.boundInputOf(holderId),
+        input: () => boundInputOf(holderId),
       }
       outline = new OutlinePanel({
         holderId,
@@ -295,7 +296,7 @@ export class editorJs {
       async (event) => {
         if (submitting) return
         const holders = Object.keys(this.editors).filter((holderId) => {
-          const input = this.boundInputOf(holderId)
+          const input = boundInputOf(holderId)
           return input?.form === form && !input.getAttribute('data-editor')
         })
         if (!holders.length) return
@@ -337,24 +338,15 @@ export class editorJs {
    * the value the server rendered — the point from which a change is the user's.
    */
   private announceParsedBaseline(holderId: string): void {
-    const input = this.boundInputOf(holderId)
+    const input = boundInputOf(holderId)
     if (!input) return
 
     input.removeAttribute('data-pw-baseline-pending')
     input.dispatchEvent(new CustomEvent('pw:baseline-ready', { bubbles: true }))
   }
 
-  /** The form field a holder feeds, named by its data-input-id. */
-  private boundInputOf(holderId: string): HTMLInputElement | null {
-    const holder = document.getElementById(holderId)
-
-    return document.getElementById(
-      holder?.getAttribute('data-input-id') || '',
-    ) as HTMLInputElement | null
-  }
-
   async editorjsSave(holderId: string): Promise<OutputData | null> {
-    const editorInput = this.boundInputOf(holderId)
+    const editorInput = boundInputOf(holderId)
     const editor = this.editors[holderId]
 
     if (!editorInput || !editor) return null
