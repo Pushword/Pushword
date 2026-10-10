@@ -77,10 +77,14 @@
   -moz-user-select: none;
 }
 
-/* Label shows the current heading level - use ::before to avoid text in DOM */
+/* Label shows the current heading level - use ::before to avoid text in DOM.
+   A chevron says it opens a choice, and 24px of height makes it a target
+   (WCAG 2.5.8), still quiet beside the heading. */
 .ce-header-level-label {
-  display: block;
-  padding: 2px 6px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
   border-radius: var(--pw-radius-sm, 4px);
   color: #64748b; /* slate-500 */
   pointer-events: none;
@@ -94,19 +98,36 @@
 .ce-header-level-label::before {
   content: attr(data-level);
   font-size: var(--pw-text-xs, 12px);
+  line-height: 16px;
   font-weight: 500;
   letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Select overlays the label, opacity 0 but still interactive */
+.ce-header-level-label::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+/* Select overlays the label, opacity 0 but still interactive. At 16px, iOS
+   does not zoom the page in when it gets focus. */
 .ce-header-level-wrapper select {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   opacity: 0;
+  font-size: 16px;
   cursor: pointer;
+}
+
+/* A finger needs 44px: the select reaches past the label without moving it. */
+@media (pointer: coarse) {
+  .ce-header-level-wrapper select {
+    inset: -10px -4px;
+  }
 }
 
 .ce-header-level-wrapper:hover .ce-header-level-label,
