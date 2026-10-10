@@ -2,7 +2,7 @@ import './CardList.css'
 import make from '../utils/make'
 import ToolboxIcon from './toolbox-icon.svg?raw'
 import { MarkdownUtils } from '../utils/MarkdownUtils'
-import { beginMediaPick, MediaUtils } from '../utils/media'
+import { MediaUtils, openMediaPicker, pickedMediaName } from '../utils/media'
 import { API, BlockToolData } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { Suggest } from '../../../../../admin/src/Resources/assets/suggest.js'
@@ -497,7 +497,7 @@ export default class CardList extends BaseTool {
       { type: 'button' },
       ImageIcon + ' Select',
     )
-    selectBtn.addEventListener('click', () => this.openMediaPicker(itemIndex))
+    selectBtn.addEventListener('click', () => this.chooseItemImage(itemIndex))
 
     const removeBtn = make.element(
       'button',
@@ -521,44 +521,19 @@ export default class CardList extends BaseTool {
     return { field: this.labelledField(label, container), container, value }
   }
 
-  private openMediaPicker(itemIndex: number): void {
-    const selectElement = document.querySelector(
-      'select[id*="inline_image"]',
-    ) as HTMLSelectElement | null
-    if (!selectElement) {
-      this.api.notifier.show({ message: 'Media picker not available', style: 'error' })
+  private chooseItemImage(itemIndex: number): void {
+    const pick = openMediaPicker({
+      onPick: (media) => this.setItemImage(itemIndex, pickedMediaName(media)),
+    })
+    if (!pick) {
+      this.api.notifier.show({
+        message: this.api.i18n.t('Media picker not available'),
+        style: 'error',
+      })
       return
     }
 
-    const pickerWrapper = selectElement.closest('.pw-media-picker') as HTMLElement | null
-    if (!pickerWrapper) return
-
-    const actionButton = pickerWrapper.querySelector(
-      '[data-pw-media-picker-action="choose"]',
-    ) as HTMLButtonElement | null
-    if (!actionButton) return
-
-    // The registry is shared, so this also drops a pick another block abandoned
-    const pick = beginMediaPick()
     this.mediaPick = pick
-
-    const messageHandler = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return
-      const payload = event.data
-      if (!payload || payload.type !== 'pw-media-picker-select') return
-      if (payload.fieldId !== selectElement.id) return
-
-      pick.abort()
-
-      const media = payload.media
-      if (!media) return
-
-      const mediaName = media.fileName || String(media.id)
-      this.setItemImage(itemIndex, mediaName)
-    }
-
-    window.addEventListener('message', messageHandler, { signal: pick.signal })
-    actionButton.click()
   }
 
   public destroy(): void {

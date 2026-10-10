@@ -166,3 +166,98 @@ describe('CardList custom fields', () => {
     expect(fields.every((field) => 2 === field.children.length)).toBe(true)
   })
 })
+
+describe('CardList image picker', () => {
+  const FIELD_ID = 'editorjs_1_inline_image'
+
+  function pickerOnPage(): void {
+    document.body.innerHTML = `
+      <div class="pw-media-picker">
+        <select id="${FIELD_ID}"></select>
+        <button data-pw-media-picker-action="choose"></button>
+      </div>
+    `
+  }
+
+  function pickerSends(fileName: string): void {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        origin: window.location.origin,
+        data: {
+          type: 'pw-media-picker-select',
+          fieldId: FIELD_ID,
+          media: { id: 7, fileName },
+        },
+      }),
+    )
+  }
+
+  function selectButtonsOf(rendered: HTMLElement): HTMLElement[] {
+    return [
+      ...rendered.querySelectorAll<HTMLElement>(
+        '.cardlist-media-btn:not(.cardlist-media-btn--remove)',
+      ),
+    ]
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    document.body.innerHTML = ''
+  })
+
+  it('fills the card that asked with the media picked', () => {
+    pickerOnPage()
+    const tool = new CardList({
+      data: { items: [{ title: 'One' }, { title: 'Two' }] },
+      api: stubApi(),
+      readOnly: false,
+    })
+    const rendered = tool.render()
+
+    selectButtonsOf(rendered)[1]!.click()
+    pickerSends('photo.jpg')
+
+    const [first, second] = tool.save().items
+    expect(first!.image).toBeUndefined()
+    expect(second!.image).toBe('photo.jpg')
+    expect(
+      rendered
+        .querySelectorAll('.cardlist-media-preview')[1]!
+        .querySelector('img')
+        ?.getAttribute('src'),
+    ).toBe('/media/md/photo.jpg')
+  })
+
+  it('stops listening once the block is destroyed mid-pick', () => {
+    pickerOnPage()
+    const tool = new CardList({
+      data: { items: [{ title: 'One' }] },
+      api: stubApi(),
+      readOnly: false,
+    })
+
+    selectButtonsOf(tool.render())[0]!.click()
+    tool.destroy()
+    pickerSends('photo.jpg')
+
+    expect(tool.save().items[0]!.image).toBeUndefined()
+  })
+
+  it('says so, in the editor language, when the page has no picker', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const show = vi.fn()
+    const api = {
+      i18n: { t: (text: string) => `t(${text})` },
+      styles: { block: 'cdx-block' },
+      notifier: { show },
+    } as unknown as API
+    const tool = new CardList({ data: { items: [{}] }, api, readOnly: false })
+
+    selectButtonsOf(tool.render())[0]!.click()
+
+    expect(show).toHaveBeenCalledWith({
+      message: 't(Media picker not available)',
+      style: 'error',
+    })
+  })
+})

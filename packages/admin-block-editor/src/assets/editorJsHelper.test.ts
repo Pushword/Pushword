@@ -85,6 +85,7 @@ function pickerSelect(): void {
     <div class="pw-media-picker">
       <select id="${FIELD_ID}" data-pw-media-picker-modal-url="${MODAL_URL}"></select>
       <button data-pw-media-picker-action="choose"></button>
+      <button data-pw-media-picker-action="upload"></button>
     </div>
   `
 }
@@ -136,6 +137,39 @@ describe('editorJsHelper.abstractOn', () => {
 
     expect(abandoned.onUpload).not.toHaveBeenCalled()
     expect(picking.onUpload).toHaveBeenCalledOnce()
+  })
+
+  it('opens the upload form for an upload, and answers as the upload endpoint does', () => {
+    const upload = document.querySelector<HTMLButtonElement>(
+      '[data-pw-media-picker-action="upload"]',
+    )!
+    const opened = vi.spyOn(upload, 'click')
+    const tool = { onFileLoading: vi.fn(), onUpload: vi.fn(), handleUploadError: vi.fn() }
+
+    editorJsHelper.abstractOn(tool, new Event('click'), 'upload')
+    pickerPosts({
+      type: 'pw-media-picker-select',
+      fieldId: FIELD_ID,
+      media: {
+        id: 7,
+        fileName: 'photo.jpg',
+        alt: 'A photo',
+        thumb: '/media/thumb/photo.jpg',
+      },
+    })
+
+    expect(opened).toHaveBeenCalledOnce()
+    expect(tool.onFileLoading).toHaveBeenCalled()
+    expect(tool.onUpload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: 1,
+        file: expect.objectContaining({
+          media: 'photo.jpg',
+          name: 'A photo',
+          url: '/media/thumb/photo.jpg',
+        }),
+      }),
+    )
   })
 
   it('stops listening once its pick lands', () => {

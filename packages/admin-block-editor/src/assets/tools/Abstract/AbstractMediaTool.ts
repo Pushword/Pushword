@@ -4,7 +4,7 @@ import SelectIcon from './icon/folder.svg?raw'
 import UploadIcon from './icon/upload.svg?raw'
 import { IconCross } from '@codexteam/icons'
 import make from '../utils/make'
-import { MediaUtils } from '../utils/media'
+import { uploadMedia } from '../utils/media'
 import { BaseTool } from './BaseTool'
 
 export const STATUS = {
@@ -218,13 +218,8 @@ export abstract class AbstractMediaTool extends BaseTool {
   public async uploadFile(file: File): Promise<void> {
     this.onFileLoading()
 
-    const formData = new FormData()
-    formData.append('image', file)
-
     try {
-      const response = await fetch('/admin/media/block', { method: 'POST', body: formData })
-      if (!response.ok) throw new Error(await MediaUtils.uploadErrorMessage(response))
-      this.onUpload(await response.json())
+      this.onUpload(await uploadMedia(file))
     } catch (error) {
       this.handleUploadError(error)
     }

@@ -63,6 +63,19 @@ final class EditorJsMessagesTest extends TestCase
         }
     }
 
+    public function testThePickerMessagesAreDeclaredUnderEachToolThatShowsThem(): void
+    {
+        $messages = $this->messages();
+
+        // The card list and the quiz reach the media picker without the media
+        // tools' base class, so each namespace carries its own copy.
+        foreach (['card_list', 'quiz'] as $tool) {
+            self::assertArrayHasKey('Media picker not available', $messages['tools'][$tool], $tool);
+        }
+
+        self::assertArrayHasKey('Upload failed', $messages['tools']['quiz']);
+    }
+
     public function testConvertToIsDeclaredInBothNamespacesEditorJsReadsItFrom(): void
     {
         $messages = $this->messages();

@@ -109,7 +109,10 @@ final readonly class EditorJsMessages
             ]),
             'tools' => [
                 'attaches' => $this->translate(self::MEDIA),
-                'card_list' => $this->translate(['No page has this slug' => 'editorCardListUnknownSlug']),
+                'card_list' => $this->translate([
+                    'Media picker not available' => 'editorMediaPickerUnavailable',
+                    'No page has this slug' => 'editorCardListUnknownSlug',
+                ]),
                 'codeBlock' => $this->translate([
                     'Enter Mermaid code to preview the diagram.' => 'editorMermaidEmpty',
                     'Language' => 'editorLanguage',
@@ -154,6 +157,10 @@ final readonly class EditorJsMessages
                     'Text link' => 'editorLinkText',
                 ]),
                 'pages_list' => $this->translate(['No parameters' => 'editorNoParameters']),
+                'quiz' => $this->translate([
+                    'Media picker not available' => 'editorMediaPickerUnavailable',
+                    'Upload failed' => 'editorUploadFailed',
+                ]),
                 'snippet' => $this->translate([
                     'Choose a snippet first.' => 'editorChooseSnippetFirst',
                     'Choose a snippet…' => 'editorChooseSnippet',

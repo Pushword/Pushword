@@ -1,3 +1,5 @@
+import type { UploadResponse } from '../Abstract/AbstractMediaTool'
+
 /**
  * A media reference: either a bare name/URL string, or an object holding one
  * under a `media`, `fileName` or `url` key, or nesting it under the `file` or
@@ -27,11 +29,151 @@ let pendingMediaPick: AbortController | null = null
  * without choosing) sends nothing, so without this its listener would stay bound
  * and the next selection would fill the abandoned block too.
  */
-export function beginMediaPick(): AbortController {
+function beginMediaPick(): AbortController {
   pendingMediaPick?.abort()
   pendingMediaPick = new AbortController()
 
   return pendingMediaPick
+}
+
+/** A media as the picker posts it (see admin.mediaPicker.js). */
+export interface PickedMedia {
+  id?: string | number
+  fileName?: string
+  alt?: string
+  name?: string
+  thumb?: string
+  width?: string
+  height?: string
+}
+
+/** The name a block stores for a picked media. */
+export function pickedMediaName(media: PickedMedia): string {
+  return media.fileName || String(media.id)
+}
+
+interface MediaPickerOptions {
+  /** Selects the hidden <select> the picker answers for. */
+  field?: string
+}
+
+/**
+ * Opens the admin media picker through the hidden <select> matching `field`,
+ * and hands the media the editor picks to `onPick`. `action` presses the
+ * picker's upload button instead of its choose one; `multi` opens it in
+ * multi-select mode. Returns the pick, for a block that goes away to abort, or
+ * null when the page has no such picker.
+ */
+export function openMediaPicker(
+  options: MediaPickerOptions & {
+    action?: 'choose' | 'upload'
+    multi?: false
+    onPick: (media: PickedMedia) => void
+  },
+): AbortController | null
+export function openMediaPicker(
+  options: MediaPickerOptions & { multi: true; onPick: (items: PickedMedia[]) => void },
+): AbortController | null
+export function openMediaPicker({
+  field = '[id*="inline_image"]',
+  action = 'choose',
+  multi = false,
+  onPick,
+}: MediaPickerOptions & {
+  action?: 'choose' | 'upload'
+  multi?: boolean
+  onPick: (picked: any) => void
+}): AbortController | null {
+  const select = document.querySelector<HTMLSelectElement>('select' + field)
+  const button = select
+    ?.closest('.pw-media-picker')
+    ?.querySelector<HTMLButtonElement>(`[data-pw-media-picker-action="${action}"]`)
+
+  if (!select || !button) {
+    console.error('media picker not found for selector:', 'select' + field)
+    return null
+  }
+
+  const pick = beginMediaPick()
+  const type = multi ? 'pw-media-picker-multi-select' : 'pw-media-picker-select'
+
+  // Registered before the modal opens, so no answer can slip past
+  const messageHandler = (event: MessageEvent): void => {
+    if (event.origin !== window.location.origin) return
+    const payload = event.data
+    if (payload?.type !== type || payload.fieldId !== select.id) return
+
+    // The picker never posts an empty pick: such a message is not this pick's answer
+    const picked = multi ? payload.items : payload.media
+    if (!picked) return
+
+    pick.abort()
+    onPick(picked)
+  }
+  window.addEventListener('message', messageHandler, { signal: pick.signal })
+
+  if (multi) {
+    clickInMultiMode(select, button)
+  } else {
+    button.click()
+  }
+
+  return pick
+}
+
+/**
+ * Clicks the picker's choose button with pwMediaPickerMulti=1 temporarily
+ * injected into the select's base URL, so the modal opens in multi-select mode.
+ */
+function clickInMultiMode(select: HTMLSelectElement, button: HTMLButtonElement): void {
+  const urlKey = select.dataset.pwMediaPickerModalUrl
+    ? 'pwMediaPickerModalUrl'
+    : 'pwAdminPopupModalUrl'
+  const originalUrl = select.dataset[urlKey] || ''
+
+  try {
+    const url = new URL(originalUrl, window.location.origin)
+    url.searchParams.set('pwMediaPickerMulti', '1')
+    select.dataset[urlKey] = url.toString()
+  } catch {
+    // fallback: append as query string
+    select.dataset[urlKey] =
+      originalUrl + (originalUrl.includes('?') ? '&' : '?') + 'pwMediaPickerMulti=1'
+  }
+
+  button.click()
+
+  select.dataset[urlKey] = originalUrl
+}
+
+/**
+ * Opens the device's file dialog and hands the chosen file to `onFile`.
+ *
+ * The input is left out of the document on purpose: a dialog the editor cancels
+ * fires no event, so an attached input would pile up one dead node per cancel.
+ */
+export function pickFile(accept: string, onFile: (file: File) => void): void {
+  const input = document.createElement('input')
+  input.type = 'file'
+  if (accept) input.accept = accept
+
+  input.addEventListener('change', () => {
+    const file = input.files?.[0]
+    if (file) onFile(file)
+  })
+
+  input.click()
+}
+
+/** Posts a file to the media endpoint; rejects with the server's reason when it refuses it. */
+export async function uploadMedia(file: File): Promise<UploadResponse> {
+  const formData = new FormData()
+  formData.append('image', file)
+
+  const response = await fetch('/admin/media/block', { method: 'POST', body: formData })
+  if (!response.ok) throw new Error(await MediaUtils.uploadErrorMessage(response))
+
+  return response.json()
 }
 
 /**
