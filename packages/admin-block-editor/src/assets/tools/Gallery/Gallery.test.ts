@@ -178,6 +178,13 @@ describe('Gallery markdown round trip', () => {
     expect(roundTrip(markdown)).toEqual({ type: 'gallery', markdown })
   })
 
+  it('imports numeric clickable: 1 as a gallery and exports its boolean value', () => {
+    expect(roundTrip('{{ gallery({"1.jpg":"One"}, clickable: 1) }}')).toEqual({
+      type: 'gallery',
+      markdown: '{{ gallery({"1.jpg":"One"}, clickable: true) }}',
+    })
+  })
+
   it('leaves a gallery() call it cannot read to Raw', () => {
     expect(roundTrip("{{ gallery(['1.jpg']) }}").type).toBe('raw')
     expect(Gallery.isItMarkdownExported("{{ gallery({'1.jpg': ''}, 'cols') }}")).toBe(
