@@ -48,6 +48,19 @@
   fill: currentColor;
 }
 
+/* On a phone, the form card's 24px padding, on top of the page's and the
+   widget's, left a text column about 34 characters wide. */
+@media (max-width: 575.98px) {
+  .form-fieldset-body:has(.editorjs-holder) {
+    padding-inline: 12px;
+  }
+
+  /* The edit toggle of Embed and Pages List hangs in that gutter: keep it in. */
+  .ce-block__content .toggle-label {
+    right: -20px;
+  }
+}
+
 /* Body copy: at the admin's 14px, the 650px column ran ~95 characters a line;
    16px brings it back near 80 (1.6 line height comes with the paragraph tool). */
 .codex-editor__redactor {
