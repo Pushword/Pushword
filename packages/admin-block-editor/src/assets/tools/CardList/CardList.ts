@@ -8,7 +8,6 @@ import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-d
 import { Suggest } from '../../../../../admin/src/Resources/assets/suggest.js'
 import { BaseTool } from '../Abstract/BaseTool'
 import { exportCardListToMarkdown } from './CardListExportToMarkdown'
-import { jsonrepair } from 'jsonrepair'
 import DOMPurify from 'dompurify'
 import * as he from 'he'
 import Raw from '../Raw/Raw'
@@ -697,39 +696,35 @@ export default class CardList extends BaseTool {
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
+    const call = CardList.parseCall(result.markdown)
+    if (call === null) return Raw.importFromMarkdown(editor, markdown)
+
     const tunes: BlockTuneData = result.tunes
-    markdown = result.markdown
+    const data: CardListData = { items: call.items }
 
-    // Match: {{ card_list([...]) }} or {{ card_list([...], 'class', 'anchor') }}
-    // Supports both single and double quotes
-    const match = markdown.match(
-      /\{\{\s*card_list\(\s*(\[.*\])(?:\s*,\s*['"]([^'"]*)['"]\s*)?(?:\s*,\s*['"]([^'"]*)['"]\s*)?\s*\)\s*\}\}/s,
-    )
-    if (!match || !match[1]) return
+    // Extract class and anchor from additional arguments
+    const [className, anchor] = call.args
+    if (className) tunes.class = className
+    if (anchor) tunes.anchor = anchor
 
-    try {
-      const items = JSON.parse(jsonrepair(match[1])) as CardListItem[]
-      const data: CardListData = { items }
+    const block = editor.blocks.insert('card_list', data)
+    editor.blocks.update(block.id, data, tunes)
+  }
 
-      // Extract class and anchor from additional arguments
-      if (match[2]) tunes.class = match[2]
-      if (match[3]) tunes.anchor = match[3]
+  /** The cards and the quoted class and anchor arguments of a block that is one card_list() call. */
+  private static parseCall(
+    markdown: string,
+  ): { items: CardListItem[]; args: string[] } | null {
+    const call = MarkdownUtils.extractJsonCall('card_list', markdown)
+    if (call === null || !Array.isArray(call.json)) return null
 
-      const block = editor.blocks.insert('card_list', data)
-      editor.blocks.update(block.id, data, tunes)
-    } catch (e) {
-      console.error('Failed to parse card_list data:', e)
-      Raw.importFromMarkdown(editor, markdown)
-    }
+    const args = MarkdownUtils.extractTwigProperties(call.args)
+    if (args === null || args.length > 2) return null
+
+    return { items: call.json, args }
   }
 
   static isItMarkdownExported(markdown: string): boolean {
-    return (
-      markdown
-        .trim()
-        .match(
-          /\{\{\s*card_list\(\s*\[.*\](?:\s*,\s*['"][^'"]*['"])?(?:\s*,\s*['"][^'"]*['"])?\s*\)\s*\}\}/s,
-        ) !== null
-    )
+    return CardList.parseCall(markdown) !== null
   }
 }

@@ -285,6 +285,58 @@ describe('MarkdownUtils.extractSnippetCall', () => {
   })
 })
 
+describe('MarkdownUtils.extractJsonCall', () => {
+  it('parses an object or an array and hands back the arguments after it', () => {
+    expect(
+      MarkdownUtils.extractJsonCall('gallery', '{{ gallery({"a.jpg": "A"}) }}'),
+    ).toEqual({
+      json: { 'a.jpg': 'A' },
+      args: '',
+    })
+    expect(
+      MarkdownUtils.extractJsonCall(
+        'card_list',
+        "{{ card_list([{'title': 'T'}], 'grid', 'cards') }}",
+      ),
+    ).toEqual({ json: [{ title: 'T' }], args: "'grid', 'cards'" })
+  })
+
+  it('reads a named first argument', () => {
+    expect(
+      MarkdownUtils.extractJsonCall(
+        'gallery',
+        '{{ gallery(images: {"a.jpg": ""}, clickable: true) }}',
+      ),
+    ).toEqual({ json: { 'a.jpg': '' }, args: 'clickable: true' })
+  })
+
+  it('does not end the JSON on a bracket or a closing call inside a string', () => {
+    expect(
+      MarkdownUtils.extractJsonCall(
+        'gallery',
+        '{{ gallery({"a.jpg": "x }) }} [y", "b.jpg": "\\"}"}) }}',
+      ),
+    ).toEqual({ json: { 'a.jpg': 'x }) }} [y', 'b.jpg': '"}' }, args: '' })
+  })
+
+  it('returns null unless the block is that one call with a JSON first argument', () => {
+    expect(
+      MarkdownUtils.extractJsonCall('gallery', '{{ gallery({"a.jpg": ""}) }} and text'),
+    ).toBeNull()
+    expect(
+      MarkdownUtils.extractJsonCall('gallery', 'See {{ gallery({"a.jpg": ""}) }}'),
+    ).toBeNull()
+    expect(MarkdownUtils.extractJsonCall('gallery', "{{ gallery('a.jpg') }}")).toBeNull()
+    expect(
+      MarkdownUtils.extractJsonCall('gallery', '{{ gallery({"a.jpg": ""}) x }}'),
+    ).toBeNull()
+    expect(
+      MarkdownUtils.extractJsonCall('gallery', '{{ gallery({"a.jpg": "" }}'),
+    ).toBeNull()
+    expect(MarkdownUtils.extractJsonCall('card_list', '{{ gallery([]) }}')).toBeNull()
+  })
+})
+
 describe('MarkdownUtils.chunkMarkdown', () => {
   /**
    * The rule chunkMarkdown must reproduce byte-for-byte outside fenced code:

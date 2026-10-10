@@ -138,3 +138,50 @@ describe('Gallery – a renamed media', () => {
     expect(tool.save().items).toEqual([{ media: 'new-name.jpg', caption: 'Alt' }])
   })
 })
+
+/** The markdown the block imported from, written back by its export. */
+function roundTrip(markdown: string): { type: string; markdown: string } {
+  let type = ''
+  let markdownBack = ''
+  const editor = {
+    blocks: {
+      insert: (inserted: string) => {
+        type = inserted
+        return { id: 'gallery-id', validate: () => true, dispatchChange: () => {} }
+      },
+      update: (_id: string, data: any, tunes: any) => {
+        markdownBack = Gallery.exportToMarkdown(data, tunes)
+      },
+    },
+  } as unknown as API
+
+  Gallery.importFromMarkdown(editor, markdown)
+
+  return { type, markdown: markdownBack }
+}
+
+describe('Gallery markdown round trip', () => {
+  it('keeps a caption holding a brace or a whole Twig call', () => {
+    const markdown = Gallery.exportToMarkdown({
+      items: [
+        { media: '1.jpg', caption: 'Write {{ gallery({}) }} to embed one' },
+        { media: '2.jpg', caption: 'a } b' },
+      ],
+    })
+
+    expect(roundTrip(markdown)).toEqual({ type: 'gallery', markdown })
+  })
+
+  it('keeps the clickable argument', () => {
+    const markdown = '{{ gallery({"1.jpg":"One"}, clickable: true) }}'
+
+    expect(roundTrip(markdown)).toEqual({ type: 'gallery', markdown })
+  })
+
+  it('leaves a gallery() call it cannot read to Raw', () => {
+    expect(roundTrip("{{ gallery(['1.jpg']) }}").type).toBe('raw')
+    expect(Gallery.isItMarkdownExported("{{ gallery({'1.jpg': ''}, 'cols') }}")).toBe(
+      false,
+    )
+  })
+})

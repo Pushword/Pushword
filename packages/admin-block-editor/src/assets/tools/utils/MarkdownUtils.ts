@@ -417,48 +417,77 @@ export class MarkdownUtils {
   }
 
   /**
+   * Parse a block that is exactly one `{{ func(<json>, …) }}` call whose first
+   * argument, optionally named (`images: {…}`), is a JSON object or array.
+   * Bracket- and quote-aware, so a caption holding `}) }}` does not end the
+   * call. `args` is the argument text after the JSON, its comma dropped:
+   * `'class', 'anchor'`, `clickable: true`, or '' when there is none.
+   */
+  static extractJsonCall(
+    func: string,
+    markdown: string,
+  ): { json: unknown; args: string } | null {
+    const call = markdown.trim()
+    const open = new RegExp(`^{{\\s*${func}\\(`).exec(call)
+    if (open === null) return null
+
+    const argsEnd = MarkdownUtils.balancedEnd(call, open[0].length - 1)
+    if (argsEnd === null || !/^\s*}}$/.test(call.slice(argsEnd))) return null
+
+    const argList = call.slice(open[0].length, argsEnd - 1)
+    const jsonStart = /^\s*(?:[A-Za-z_]\w*:\s*)?(?=[{[])/.exec(argList)?.[0].length
+    if (jsonStart === undefined) return null
+
+    const jsonEnd = MarkdownUtils.balancedEnd(argList, jsonStart)! // the argument list is balanced
+    const args = /^\s*(?:,\s*([\s\S]*?))?\s*$/.exec(argList.slice(jsonEnd))
+    const json = MarkdownUtils.parseJson(argList.slice(jsonStart, jsonEnd))
+    if (args === null || json === undefined) return null
+
+    return { json, args: args[1] ?? '' }
+  }
+
+  /**
    * Read a brace-balanced object literal starting at `start` and JSON-parse it.
    * Tolerates single quotes / trailing commas via jsonrepair.
    */
   private static parseBalancedObject(input: string, start: number): Record<string, any> {
-    let depth = 0
-    let inStr = false
-    let strCh = ''
-    let end = start
+    const end = MarkdownUtils.balancedEnd(input, start) ?? start
 
+    const object = MarkdownUtils.parseJson(input.substring(start, end)) ?? {}
+
+    return object as Record<string, any>
+  }
+
+  /**
+   * The index just past the bracket closing the one at `start`, skipping
+   * quoted strings; null when it never closes.
+   */
+  private static balancedEnd(input: string, start: number): number | null {
+    let depth = 0
     for (let i = start; i < input.length; i++) {
-      const c = input[i]
-      if (inStr) {
-        if (c === '\\') {
-          i++
-          continue
+      const char = input[i]!
+      if (char === '"' || char === "'") {
+        for (i++; i < input.length && input[i] !== char; i++) {
+          if (input[i] === '\\') i++
         }
-        if (c === strCh) inStr = false
-        continue
-      }
-      if (c === '"' || c === "'") {
-        inStr = true
-        strCh = c
-        continue
-      }
-      if (c === '{') depth++
-      else if (c === '}') {
-        depth--
-        if (depth === 0) {
-          end = i + 1
-          break
-        }
+      } else if ('([{'.includes(char)) {
+        depth++
+      } else if (')]}'.includes(char) && --depth === 0) {
+        return i + 1
       }
     }
+    return null
+  }
 
-    const raw = input.substring(start, end)
+  /** JSON.parse, through jsonrepair when strict JSON fails; undefined when both do. */
+  private static parseJson(raw: string): unknown {
     try {
       return JSON.parse(raw)
     } catch {
       try {
         return JSON.parse(jsonrepair(raw))
       } catch {
-        return {}
+        return undefined
       }
     }
   }

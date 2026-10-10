@@ -15,7 +15,6 @@ import {
 } from '../Abstract/AbstractMediaTool'
 import Raw from '../Raw/Raw'
 import make from '../utils/make'
-import { jsonrepair } from 'jsonrepair'
 
 interface GalleryItem {
   caption?: string
@@ -346,78 +345,46 @@ export default class Gallery extends AbstractMediaTool {
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    const tunes: BlockTuneData = result.tunes
-    const markdownWithoutTunes = result.markdown
-
-    const galleryMatch = markdownWithoutTunes.match(
-      /{{ gallery\(\s*(images:\s*)?(?<medias>\{.*?\})\s*(,\s*clickable:\s*(?<clickable>true|false))?\) }}/s,
-    )
-
-    tunes.clickableTune = {
-      value: [true, 'true', '1'].includes(galleryMatch?.groups?.clickable || false)
-        ? true
-        : false,
-    }
-
-    if (
-      !galleryMatch ||
-      !Gallery.importGalleryFromJsonString(
-        galleryMatch.groups?.medias || '{}',
-        editor,
-        tunes,
-      )
-    ) {
+    const call = Gallery.parseCall(result.markdown)
+    if (call === null || call.items.length === 0) {
       return Raw.importFromMarkdown(editor, markdown)
     }
+
+    const tunes: BlockTuneData = result.tunes
+    tunes.clickableTune = { value: call.clickable }
+
+    const block = editor.blocks.insert('gallery')
+
+    // Pass an object with 'items' property, not an array
+    const dataToUpdate = { items: call.items }
+    editor.blocks.update(block.id, dataToUpdate, tunes)
+
+    block.validate(dataToUpdate)
+    block.dispatchChange()
   }
 
-  private static parseGalleryData(jsonString: string): Record<string, string> | false {
-    try {
-      return JSON.parse(jsonrepair(jsonString))
-    } catch {
-      return false
+  /** The images and the clickable flag of a block that is one gallery() call. */
+  private static parseCall(
+    markdown: string,
+  ): { items: GalleryItem[]; clickable: boolean } | null {
+    const call = MarkdownUtils.extractJsonCall('gallery', markdown)
+    if (call === null || Array.isArray(call.json)) return null
+
+    const clickable = /^(?:clickable:\s*(true|false|0|1))?$/.exec(call.args)
+    if (clickable === null) return null
+
+    return {
+      items: Object.entries(call.json as Record<string, unknown>).map(
+        ([media, caption]) => ({
+          caption: String(caption),
+          media: String(media),
+        }),
+      ),
+      clickable: ['true', '1'].includes(clickable[1] ?? ''),
     }
-  }
-
-  private static importGalleryFromJsonString(
-    jsonString: string,
-    editor: API,
-    tunes: BlockTuneData,
-  ): boolean {
-    const galleryData = Gallery.parseGalleryData(jsonString)
-    if (galleryData === false) {
-      return false
-    }
-
-    const galleryItems: GalleryItem[] = Object.entries(galleryData).map(
-      ([media, caption]) => ({
-        caption: String(caption),
-        media: String(media),
-      }),
-    )
-
-    if (galleryItems.length > 0) {
-      const block = editor.blocks.insert('gallery')
-
-      // Pass an object with 'items' property, not an array
-      const dataToUpdate = { items: galleryItems }
-      editor.blocks.update(block.id, dataToUpdate, tunes)
-
-      block.validate(dataToUpdate)
-      block.dispatchChange()
-      return true
-    }
-
-    return false
   }
 
   static isItMarkdownExported(markdown: string): boolean {
-    return (
-      markdown
-        .trim()
-        .match(
-          /{{ gallery\(\s*(images:\s*)?\{.*?\}\s*(,\s*clickable:\s*(true|false|0|1))?\) }}/s,
-        ) !== null
-    )
+    return Gallery.parseCall(markdown) !== null
   }
 }

@@ -268,3 +268,40 @@ describe('CardList image picker', () => {
     })
   })
 })
+
+describe('CardList markdown round trip', () => {
+  function roundTrip(markdown: string): { type: string; markdown: string } {
+    let type = ''
+    let markdownBack = ''
+    const editor = {
+      blocks: {
+        insert: (inserted: string) => {
+          type = inserted
+          return { id: 'card-list-id' }
+        },
+        update: (_id: string, data: any, tunes: any) => {
+          markdownBack = CardList.exportToMarkdown(data, tunes)
+        },
+      },
+    } as unknown as API
+
+    CardList.importFromMarkdown(editor, markdown)
+
+    return { type, markdown: markdownBack }
+  }
+
+  it('keeps the class and anchor arguments, and a description holding brackets', () => {
+    const markdown = CardList.exportToMarkdown(
+      { items: [{ title: 'A', description: 'See [x]) }} there' }] },
+      { class: 'grid', anchor: 'cards' },
+    )
+
+    expect(roundTrip(markdown)).toEqual({ type: 'card_list', markdown })
+  })
+
+  it('leaves a card_list() call with more arguments than it writes to Raw', () => {
+    expect(
+      roundTrip("{{ card_list([{\"title\": \"A\"}], 'grid', 'cards', 'x') }}").type,
+    ).toBe('raw')
+  })
+})
