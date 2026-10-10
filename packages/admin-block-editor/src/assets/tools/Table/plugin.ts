@@ -390,10 +390,14 @@ export default class TableBlock {
     // decodes entities, which is what keeps a `-&gt;` colspan marker readable.
     // Typography fixes stay off — they would rewrite dashes and quotes in every
     // cell on every save — and the newlines the converter emits go back to
-    // `<br>`, the only line break a pipe row can hold.
+    // `<br>`, the only line break a pipe row can hold. A pipe in the text is
+    // escaped, or it would end the cell.
     const toMarkdown = (row: string[]): string[] =>
       row.map((cell) =>
-        MarkdownUtils.convertInlineHtmlToMarkdown(cell, false).replace(/\n/g, '<br>').trim(),
+        MarkdownUtils.convertInlineHtmlToMarkdown(cell, false)
+          .replace(/\n/g, '<br>')
+          .replace(/\|/g, '\\|')
+          .trim(),
       );
 
     // CommonMark reads pipes as a table only under a header and its delimiter
@@ -527,7 +531,8 @@ export default class TableBlock {
    * @returns {string[]} trimmed cell values
    */
   static splitPipeRow(line: string): string[] {
-    const cells = line.split('|').map((cell) => cell.trim());
+    // An escaped pipe is the cell's text, not its end.
+    const cells = line.split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/\\\|/g, '|'));
     if (cells.length > 0 && cells[0] === '') cells.shift();
     if (cells.length > 0 && cells[cells.length - 1] === '') cells.pop();
 

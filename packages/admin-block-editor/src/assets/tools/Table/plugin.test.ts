@@ -107,6 +107,53 @@ describe('TableBlock inline Markdown in cells', () => {
     expect(markdown.split('\n')[0]).toBe('| spanned | -> |')
   })
 
+  it('escapes a pipe in a cell, which would end the cell otherwise', async () => {
+    const markdown = await TableBlock.exportToMarkdown({
+      content: [['a | b', 'c']],
+      withHeadings: true,
+    })
+
+    expect(markdown.split('\n')[0]).toBe('| a \\| b | c |')
+  })
+
+  it('reads an escaped pipe back as the text of its cell', () => {
+    const { editor, updates } = fakeEditor()
+
+    TableBlock.importFromMarkdown(editor, '| a \\| b | c |\n| --- | --- |')
+
+    expect(updates[0].data.content[0]).toEqual(['a | b', 'c'])
+  })
+
+  it('gives back a cell holding a backslash before a pipe', async () => {
+    const { editor, updates } = fakeEditor()
+    const content = [['a\\|b', 'c']]
+
+    TableBlock.importFromMarkdown(
+      editor,
+      await TableBlock.exportToMarkdown({ content, withHeadings: true }),
+    )
+
+    expect(updates[0].data.content).toEqual(content)
+  })
+
+  it('escapes the pipes of a code span, whose backslashes stay literal', async () => {
+    const { editor, updates } = fakeEditor()
+    const content = [
+      [
+        '<code class="inline-code">a || b</code>',
+        '<code class="inline-code">c\\|d</code>',
+      ],
+    ]
+
+    const markdown = await TableBlock.exportToMarkdown({ content, withHeadings: true })
+    TableBlock.importFromMarkdown(editor, markdown)
+
+    // league/commonmark splits a row before reading backslash escapes, so even
+    // the `\|` of `c\\|d` stays in its cell: the front renders `a || b`, `c\|d`.
+    expect(markdown.split('\n')[0]).toBe('| `a \\|\\| b` | `c\\\\|d` |')
+    expect(updates[0].data.content).toEqual(content)
+  })
+
   it('gives back every marker it was imported with', async () => {
     const { editor, updates } = fakeEditor()
     const source = '| **b** | _i_ | `c` | ~~s~~ | [t](/u) |\n| --- | --- | --- | --- | --- |'
