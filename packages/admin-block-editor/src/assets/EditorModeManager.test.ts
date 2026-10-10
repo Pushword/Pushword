@@ -70,3 +70,25 @@ describe('EditorModeManager – leaving the markdown mode', () => {
     expect(manager.getMonacoInstance()).not.toBeNull()
   })
 })
+
+describe('EditorModeManager – mode buttons', () => {
+  it('hides the other mode button while one mode is open, keeping its place', () => {
+    document.body.innerHTML =
+      '<div id="ed" data-input-id="inp"></div><input id="inp" type="hidden">' +
+      '<button data-pw-editor-mode="json"></button>' +
+      '<button data-pw-editor-mode="markdown"></button>'
+    const manager = new EditorModeManager('ed')
+    vi.spyOn(manager as any, 'switchTo').mockImplementation(() => {})
+    const button = (mode: string): HTMLElement =>
+      document.querySelector(`[data-pw-editor-mode="${mode}"]`)!
+
+    manager.toggleMarkdownEditor()
+    expect(button('json').style.visibility).toBe('hidden')
+    expect(button('markdown').style.visibility).toBe('')
+
+    document.getElementById('inp')!.setAttribute('data-editor', 'markdown')
+    vi.spyOn(manager as any, 'switchFrom').mockResolvedValue(undefined)
+    manager.toggleMarkdownEditor()
+    expect(button('json').style.visibility).toBe('')
+  })
+})

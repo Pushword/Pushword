@@ -1,15 +1,15 @@
 {% block editorjs_widget %}
 
-<div style="padding-top:8px; text-align:right; padding-right:4px;">
-    <a href="#" onclick="toggleEditor(); return false;" style="color:#6b7280">
-        {{ svg('code', {style: 'width:12px; fill:currentColor'}) }}
-    </a>
-    <a href="#" onclick="toggleEditor('markdown'); return false;" style="color:#6b7280; margin-left:10px;" title="Ctrl + U">
-        {{ svg('markdown', {style: 'width:12px; fill:currentColor'}) }}
-    </a>
-    <a href="#" onclick="copyPageMarkdown(this); return false;" style="color:#6b7280; margin-left:10px;" title="Copy content (Markdown) with H1">
-        {{ svg('copy', {style: 'width:12px; fill:currentColor'}) }}
-    </a>
+<div class="pw-editor-modes">
+    <button type="button" class="pw-editor-mode" data-pw-editor-mode="json" onclick="toggleEditor()" title="{{ 'editorSourceJson'|trans }}" aria-label="{{ 'editorSourceJson'|trans }}">
+        {{ svg('code') }}
+    </button>
+    <button type="button" class="pw-editor-mode" data-pw-editor-mode="markdown" onclick="toggleEditor('markdown')" title="{{ 'editorSourceMarkdown'|trans }} (Ctrl + U)" aria-label="{{ 'editorSourceMarkdown'|trans }}" aria-keyshortcuts="Control+U">
+        {{ svg('markdown') }}
+    </button>
+    <button type="button" class="pw-editor-mode" onclick="copyPageMarkdown(this)" title="{{ 'editorCopyMarkdown'|trans }}" aria-label="{{ 'editorCopyMarkdown'|trans }}">
+        {{ svg('copy') }}
+    </button>
 </div>
 <div style="padding:10px 10px 0;">
     {% set editor_id = 'editorjs_' ~ id %}

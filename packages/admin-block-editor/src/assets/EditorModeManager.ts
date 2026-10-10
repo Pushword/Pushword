@@ -387,19 +387,11 @@ export class EditorModeManager {
   }
 
   private showOrHideBtn(show: boolean = true, btn: string = 'all'): void {
-    const btnToggleMarkdown = document.querySelector(
-      `[onclick="toggleEditor('markdown')"]`,
-    ) as HTMLElement
-    const btnToggleEditor = document.querySelector(
-      `[onclick="toggleEditor()"]`,
-    ) as HTMLElement
-    if (btnToggleMarkdown && ['markdown', 'all'].includes(btn)) {
-      btnToggleMarkdown.style.opacity = show ? '1' : '0'
-      btnToggleMarkdown.style.pointerEvents = show ? 'auto' : 'none'
-    }
-    if (btnToggleEditor && ['json', 'all'].includes(btn)) {
-      btnToggleEditor.style.opacity = show ? '1' : '0'
-      btnToggleEditor.style.pointerEvents = show ? 'auto' : 'none'
+    for (const mode of ['markdown', 'json']) {
+      if (btn !== 'all' && btn !== mode) continue
+      const button = document.querySelector<HTMLElement>(`[data-pw-editor-mode="${mode}"]`)
+      // Hidden but still holding its place, so the other buttons don't shift.
+      if (button) button.style.visibility = show ? '' : 'hidden'
     }
   }
 

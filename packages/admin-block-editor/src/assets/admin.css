@@ -9,6 +9,45 @@
   contain: inline-size;
 }
 
+/* JSON, Markdown and copy: tertiary actions, so quiet grey icons — but each a
+   real, labelled button with a 32px target, not a 12px link. */
+.pw-editor-modes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 4px 0;
+}
+
+.pw-editor-mode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--pw-radius-sm, 4px);
+  background: transparent;
+  color: #6b7280; /* gray-500 */
+  cursor: pointer;
+}
+
+.pw-editor-mode:hover {
+  background: #f1f5f9; /* slate-100 */
+  color: #334155; /* slate-700 */
+}
+
+.pw-editor-mode:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: 2px;
+}
+
+.pw-editor-mode svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
 /* Body copy: at the admin's 14px, the 650px column ran ~95 characters a line;
    16px brings it back near 80 (1.6 line height comes with the paragraph tool). */
 .codex-editor__redactor {
