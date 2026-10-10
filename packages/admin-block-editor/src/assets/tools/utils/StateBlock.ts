@@ -18,7 +18,7 @@ export interface StateBlockToolInterface {
   api: API
   validate(): boolean
   /** Shown, through `api.i18n.t()`, when validate() refuses the switch to preview. */
-  incompleteMessage: string
+  readonly incompleteMessage: string
   save(): BlockToolData
   updatePreview(): void
 }
