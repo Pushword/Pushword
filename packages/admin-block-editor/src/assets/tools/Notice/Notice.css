@@ -1,4 +1,8 @@
+/* Text takes the notice's own hue, as on the front (component/notice.html.twig):
+   slate over a tinted background reads washed out. The label, secondary to the
+   title, is one shade lighter. */
 .cdx-notice {
+  --notice-label: #475569; /* slate-600 */
   border-left: 4px solid #94a3b8;
   border-radius: 0 8px 8px 0;
   background: #f8fafc;
@@ -17,7 +21,14 @@
   outline: none;
   background: transparent;
   padding: 2px 4px;
-  color: #475569;
+  color: inherit;
+}
+
+/* An empty field must not pass for a filled one. */
+.cdx-notice__input::placeholder {
+  color: inherit;
+  font-weight: 400;
+  opacity: 0.55;
 }
 
 /* Caps labels across the editor: 12px, the admin's smallest step, semibold and
@@ -28,6 +39,7 @@
   letter-spacing: 0.05em;
   font-size: var(--pw-text-xs, 12px);
   font-weight: 600;
+  color: var(--notice-label);
 }
 
 .cdx-notice__title {
@@ -38,7 +50,7 @@
 
 .cdx-notice__body:empty::before {
   content: attr(data-placeholder);
-  color: #94a3b8;
+  opacity: 0.55;
 }
 
 .cdx-notice__body {
@@ -47,26 +59,36 @@
 
 /* Editor preview of the front palettes — same hues as component/notice.html.twig. */
 .cdx-notice--note {
+  --notice-label: #1d4ed8; /* blue-700 */
   border-color: #3b82f6;
   background: #eff6ff;
+  color: #1e3a8a; /* blue-900 */
 }
 
 .cdx-notice--tip {
+  --notice-label: #15803d; /* green-700 */
   border-color: #16a34a;
   background: #f0fdf4;
+  color: #14532d; /* green-900 */
 }
 
 .cdx-notice--important {
+  --notice-label: #7e22ce; /* purple-700 */
   border-color: #a855f7;
   background: #faf5ff;
+  color: #581c87; /* purple-900 */
 }
 
 .cdx-notice--warning {
+  --notice-label: #b45309; /* amber-700 */
   border-color: #f59e0b;
   background: #fffbeb;
+  color: #78350f; /* amber-900 */
 }
 
 .cdx-notice--caution {
+  --notice-label: #b91c1c; /* red-700 */
   border-color: #ef4444;
   background: #fef2f2;
+  color: #7f1d1d; /* red-900 */
 }
