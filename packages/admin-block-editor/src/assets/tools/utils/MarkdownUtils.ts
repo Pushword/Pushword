@@ -176,13 +176,16 @@ export class MarkdownUtils {
     return link
   }
 
+  /**
+   * The tunes as CommonMark attributes, one space-separated token each: an id
+   * runs to the next space, so `#top.wide` would render as `id="top.wide"`.
+   */
   static getAttributes(tunes: BlockTuneDataPushword): string {
-    let result = ''
+    const attributes: string[] = []
 
-    // anchor
     const anchor = tunes?.anchor
     if (anchor && anchor !== '') {
-      result += `#${anchor}`
+      attributes.push(`#${anchor}`)
     }
 
     const alignment = tunes?.textAlign
@@ -190,16 +193,19 @@ export class MarkdownUtils {
       const alignmentClass =
         alignment === 'center' ? 'text-center' : alignment === 'right' ? 'text-right' : ''
       if (alignmentClass) {
-        result += `.${alignmentClass}`
+        attributes.push(`.${alignmentClass}`)
       }
     }
 
     const className = tunes?.class
     if (className && className !== '') {
-      result += `.${className}`
+      className
+        .split(/\s+/)
+        .filter((name) => name !== '')
+        .forEach((name) => attributes.push(`.${name.replace(/^\./, '')}`))
     }
 
-    return result
+    return attributes.join(' ')
   }
 
   private static formatAttributes(tunes: BlockTuneDataPushword): string {
@@ -294,9 +300,14 @@ export class MarkdownUtils {
       attributeLine = attributeLine.replace(alignmentMatch[0], '')
     }
 
-    const classMatch = attributeLine.match(/\.([a-zA-Z0-9_-]+)/g)
-    if (classMatch) {
-      tunes.class = classMatch.join(' ')
+    // The class grammar of CommonMark's attributes: a dot, then up to the next
+    // space, dot or brace, so `.md:grid-cols-2` stays whole. The tune holds the
+    // names without their dot.
+    const classNames = [...attributeLine.matchAll(/\.(-?[_a-zA-Z][^\s.}#]*)/g)].map(
+      (match) => match[1]!,
+    )
+    if (classNames.length > 0) {
+      tunes.class = classNames.join(' ')
     }
 
     return tunes

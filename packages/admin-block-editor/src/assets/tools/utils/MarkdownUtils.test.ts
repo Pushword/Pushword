@@ -300,6 +300,56 @@ describe('MarkdownUtils.extractSnippetCall', () => {
   })
 })
 
+describe('MarkdownUtils block attributes', () => {
+  it('writes each tune as its own CommonMark token, so an anchor never swallows a class', () => {
+    // `{#top.wide}` renders as id="top.wide" and no class at all.
+    expect(MarkdownUtils.addAttributes('Hello', { anchor: 'top', class: 'wide' })).toBe(
+      '{#top .wide}\nHello',
+    )
+    expect(
+      MarkdownUtils.addInlineAttributes('## Title', {
+        anchor: 'top',
+        textAlign: 'center',
+      }),
+    ).toBe('## Title {#top .text-center}')
+  })
+
+  it('writes every class a class tune lists', () => {
+    expect(MarkdownUtils.addAttributes('Hello', { class: 'grid md:grid-cols-2' })).toBe(
+      '{.grid .md:grid-cols-2}\nHello',
+    )
+  })
+
+  it('reads classes without their dot, Tailwind variants included', () => {
+    expect(MarkdownUtils.parseAttributes('{#top .wide}')).toEqual({
+      anchor: 'top',
+      class: 'wide',
+    })
+    expect(MarkdownUtils.parseAttributes('{.grid .md:grid-cols-2}')).toEqual({
+      class: 'grid md:grid-cols-2',
+    })
+    expect(MarkdownUtils.parseAttributes('{#top .text-center .wide}')).toEqual({
+      anchor: 'top',
+      textAlign: 'center',
+      class: 'wide',
+    })
+  })
+
+  it('reads what earlier exports glued together as an anchor and a class', () => {
+    expect(MarkdownUtils.parseAttributes('{#top.wide}')).toEqual({
+      anchor: 'top',
+      class: 'wide',
+    })
+  })
+
+  it('round-trips an attribute line unchanged', () => {
+    const line = '{#top .text-right .grid .md:grid-cols-2}'
+    expect(
+      MarkdownUtils.addAttributes('Hello', MarkdownUtils.parseAttributes(line)),
+    ).toBe(`${line}\nHello`)
+  })
+})
+
 describe('MarkdownUtils tune arguments', () => {
   it.each([
     [{}, ''],
