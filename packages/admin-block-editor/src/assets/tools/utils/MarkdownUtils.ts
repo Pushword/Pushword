@@ -2,6 +2,7 @@ import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-d
 import { HyperlinkTuneData } from '../HyperlinkTune/HyperlinkTune'
 import * as he from 'he'
 import { jsonrepair } from 'jsonrepair'
+import { loadScriptOnce } from './loadScript'
 
 export interface BlockTuneDataPushword extends BlockTuneData {
   anchor?: string
@@ -847,40 +848,20 @@ export class MarkdownUtils {
     return restore(html)
   }
 
+  private static async loadPrettier(): Promise<{ prettier: any; plugin: any }> {
+    await Promise.all([
+      loadScriptOnce('/bundles/pushwordadminblockeditor/prettier/standalone.js'),
+      loadScriptOnce('/bundles/pushwordadminblockeditor/prettier/markdown.js'),
+    ])
+    return {
+      prettier: (window as any).prettier,
+      plugin: (window as any).prettierPlugins?.markdown,
+    }
+  }
+
   /**
    * Formate le contenu Markdown avec Prettier
    */
-  private static prettierPromise: Promise<{ prettier: any; plugin: any }> | null = null
-
-  private static loadScript(src: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const existing = document.querySelector(`script[src="${src}"]`)
-      if (existing) {
-        resolve()
-        return
-      }
-      const script = document.createElement('script')
-      script.src = src
-      script.async = true
-      script.onload = () => resolve()
-      script.onerror = () => reject(new Error(`Failed to load ${src}`))
-      document.head.appendChild(script)
-    })
-  }
-
-  private static loadPrettier(): Promise<{ prettier: any; plugin: any }> {
-    if (!MarkdownUtils.prettierPromise) {
-      MarkdownUtils.prettierPromise = Promise.all([
-        MarkdownUtils.loadScript('/bundles/pushwordadminblockeditor/prettier/standalone.js'),
-        MarkdownUtils.loadScript('/bundles/pushwordadminblockeditor/prettier/markdown.js'),
-      ]).then(() => ({
-        prettier: (window as any).prettier,
-        plugin: (window as any).prettierPlugins?.markdown,
-      }))
-    }
-    return MarkdownUtils.prettierPromise
-  }
-
   public static async formatMarkdownWithPrettier(
     markdownContent: string,
   ): Promise<string> {

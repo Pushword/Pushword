@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { EditorModeManager } from './EditorModeManager'
 
 /**
@@ -112,5 +112,69 @@ describe('EditorModeManager – mode buttons in JSON mode', () => {
     vi.spyOn(manager as any, 'switchFrom').mockResolvedValue(undefined)
     manager.toggleEditor()
     expect(button('markdown').style.visibility).toBe('')
+  })
+})
+
+describe('EditorModeManager – opening Monaco on the mode textarea', () => {
+  const mountTextarea = (): HTMLTextAreaElement => {
+    document.body.innerHTML = '<textarea id="inp" data-editor="markdown"></textarea>'
+    return document.querySelector('textarea')!
+  }
+
+  beforeEach(() => {
+    delete (window as any).monaco
+    delete (window as any).monacoHelper
+    delete window.pwMonacoUrl
+    delete window.pwMonacoLoading
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  // pushword/admin may already be fetching the bundle for another field on the
+  // form: the markdown mode must wait for that fetch, not start a second one.
+  it('waits for the Monaco fetch already in flight, then mounts Monaco on the textarea', async () => {
+    const appendChild = vi
+      .spyOn(document.head, 'appendChild')
+      .mockImplementation((node) => node)
+    let settle!: (ready: boolean) => void
+    window.pwMonacoLoading = new Promise((resolve) => (settle = resolve))
+    const instance = {}
+    const transformTextareaToMonaco = vi.fn(() => instance)
+    const textarea = mountTextarea()
+    const manager = new EditorModeManager('ed')
+
+    ;(manager as any).initMonacoEditor(textarea)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    ;(window as any).monaco = {}
+    ;(window as any).monacoHelper = { transformTextareaToMonaco }
+    settle(true)
+
+    await vi.waitFor(() => expect(manager.getMonacoInstance()).toBe(instance))
+    expect(transformTextareaToMonaco).toHaveBeenCalledWith(textarea)
+    expect(appendChild).not.toHaveBeenCalled()
+  })
+
+  it('leaves the textarea as is when the Monaco bundle fails to load', async () => {
+    const appendChild = vi
+      .spyOn(document.head, 'appendChild')
+      .mockImplementation((node) => node)
+    const manager = new EditorModeManager('ed')
+
+    ;(manager as any).initMonacoEditor(mountTextarea())
+    await vi.waitFor(() => expect(appendChild).toHaveBeenCalledOnce())
+    ;(appendChild.mock.calls[0]![0] as HTMLScriptElement).dispatchEvent(
+      new Event('error'),
+    )
+
+    await vi.waitFor(() =>
+      expect(console.error).toHaveBeenCalledWith(
+        '[ERROR] Monaco helper non disponible',
+        expect.anything(),
+      ),
+    )
+    expect(manager.getMonacoInstance()).toBeNull()
+    expect(window.pwMonacoLoading).toBeNull()
   })
 })

@@ -1,12 +1,11 @@
 import { API, OutputData } from '@editorjs/editorjs'
 import { logger } from './tools/utils/logger'
+import { loadMonaco } from './tools/utils/loadScript'
 
 /**
  * Gestionnaire des modes d'édition (EditorJS, JSON, Markdown)
  */
 export class EditorModeManager {
-  private static monacoLoaderPromise: Promise<unknown> | null = null
-  private static readonly MONACO_SCRIPT_URL = '/bundles/pushwordadmin/monaco/app.js'
   private readonly editorId: string
   private monacoInstance: any = null
 
@@ -162,7 +161,7 @@ export class EditorModeManager {
   private initMonacoEditor(textarea: HTMLTextAreaElement): void {
     setTimeout(async () => {
       try {
-        const helperReady = await this.ensureMonacoHelperLoaded()
+        const helperReady = await loadMonaco()
         if (!helperReady || !window.monacoHelper) {
           logger.error('Monaco helper non disponible', {
             editorId: this.editorId,
@@ -197,70 +196,6 @@ export class EditorModeManager {
         })
       }
     }, 0)
-  }
-
-  private async ensureMonacoHelperLoaded(): Promise<boolean> {
-    if (window.monacoHelper) {
-      return true
-    }
-
-    // pushword/admin fetches the same bundle on any page holding a Monaco field,
-    // and parks its promise here: without sharing it, a form carrying both would
-    // pull those megabytes twice.
-    if (window.pwMonacoLoading) {
-      EditorModeManager.monacoLoaderPromise = window.pwMonacoLoading
-    }
-
-    if (!EditorModeManager.monacoLoaderPromise) {
-      EditorModeManager.monacoLoaderPromise = new Promise<void>((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = window.pwMonacoUrl ?? EditorModeManager.MONACO_SCRIPT_URL
-        script.dataset.pwMonaco = '1'
-        script.async = true
-        script.defer = true
-
-        const cleanup = (): void => {
-          script.removeEventListener('load', onLoad)
-          script.removeEventListener('error', onError)
-        }
-
-        const onLoad = (): void => {
-          cleanup()
-          resolve()
-        }
-
-        const onError = (event: Event): void => {
-          cleanup()
-          reject(event)
-        }
-
-        script.addEventListener('load', onLoad)
-        script.addEventListener('error', onError)
-        document.head.appendChild(script)
-      })
-    }
-
-    try {
-      await EditorModeManager.monacoLoaderPromise
-    } catch (error) {
-      logger.error('Erreur lors du chargement de Monaco', {
-        editorId: this.editorId,
-        error,
-      })
-      EditorModeManager.monacoLoaderPromise = null
-
-      return false
-    }
-
-    if (!window.monacoHelper) {
-      logger.error('Monaco helper toujours indisponible après chargement', {
-        editorId: this.editorId,
-      })
-
-      return false
-    }
-
-    return true
   }
 
   private switchTo(format: string = 'json'): void {

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MarkdownUtils } from './MarkdownUtils'
 
 describe('MarkdownUtils.wrapInQuotes', () => {
@@ -639,5 +639,63 @@ describe('MarkdownUtils.normalizeTypography Twig protection', () => {
     expect(MarkdownUtils.normalizeTypography(`{{ l’un puis ${print} et l’autre`)).toBe(
       `{{ l'un puis ${print} et l'autre`,
     )
+  })
+})
+
+describe('MarkdownUtils.formatMarkdownWithPrettier', () => {
+  let Utils: typeof MarkdownUtils
+  let injected: HTMLScriptElement[]
+  const format = vi.fn(async (markdown: string) => `${markdown}\n\n`)
+  const plugin = {}
+
+  beforeEach(async () => {
+    // A fresh module graph, so no Prettier bundle counts as fetched yet.
+    vi.resetModules()
+    ;({ MarkdownUtils: Utils } = await import('./MarkdownUtils'))
+    injected = []
+    vi.spyOn(document.head, 'appendChild').mockImplementation((node) => {
+      injected.push(node as HTMLScriptElement)
+      return node
+    })
+    format.mockClear()
+    ;(window as any).prettier = { format }
+    ;(window as any).prettierPlugins = { markdown: plugin }
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    delete (window as any).prettier
+    delete (window as any).prettierPlugins
+  })
+
+  it('fetches both Prettier bundles once, then formats with the markdown plugin', async () => {
+    const first = Utils.formatMarkdownWithPrettier('# Title')
+    const second = Utils.formatMarkdownWithPrettier('Text')
+
+    expect(injected.map((script) => script.getAttribute('src'))).toEqual([
+      '/bundles/pushwordadminblockeditor/prettier/standalone.js',
+      '/bundles/pushwordadminblockeditor/prettier/markdown.js',
+    ])
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(format).not.toHaveBeenCalled()
+
+    for (const script of injected) script.dispatchEvent(new Event('load'))
+
+    await expect(first).resolves.toBe('# Title')
+    await expect(second).resolves.toBe('Text')
+    expect(format).toHaveBeenCalledWith(
+      '# Title',
+      expect.objectContaining({ parser: 'markdown', plugins: [plugin] }),
+    )
+  })
+
+  it('returns the markdown untouched when a Prettier bundle fails to load', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const formatted = Utils.formatMarkdownWithPrettier('# Title')
+    injected[1]!.dispatchEvent(new Event('error'))
+
+    await expect(formatted).resolves.toBe('# Title')
+    expect(format).not.toHaveBeenCalled()
   })
 })

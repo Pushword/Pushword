@@ -57,6 +57,8 @@ describe('Raw Monaco integration', () => {
     vi.restoreAllMocks()
     delete (window as any).monaco
     delete (window as any).monacoHelper
+    delete window.pwMonacoUrl
+    delete window.pwMonacoLoading
   })
 
   it('follows content size changes reported by Monaco (grow and shrink)', async () => {
@@ -104,6 +106,42 @@ describe('Raw Monaco integration', () => {
     raw.render()
 
     expect(raw.save()).toEqual({ html: '{{ destinations() }}' })
+  })
+
+  // pushword/admin or the markdown mode may already be fetching the bundle: a
+  // block mounting meanwhile must wait for that fetch, not download it again.
+  it('mounts once the Monaco fetch already in flight lands, without starting another', async () => {
+    const appendChild = vi
+      .spyOn(document.head, 'appendChild')
+      .mockImplementation((node) => node)
+    let settle!: (ready: boolean) => void
+    window.pwMonacoLoading = new Promise((resolve) => (settle = resolve))
+    const { editor } = makeFakeEditor(() => 20)
+    const create = vi.fn(() => editor)
+
+    new Raw({ data: { html: 'x' }, api: {} as any, readOnly: false }).render()
+    ;(window as any).monaco = { editor: { create } }
+    ;(window as any).monacoHelper = MonacoHelper
+    settle(true)
+    await flush()
+
+    expect(appendChild).not.toHaveBeenCalled()
+    expect(create).toHaveBeenCalledOnce()
+  })
+
+  it('fetches the URL the dashboard published, and shares the fetch with the page', () => {
+    const appendChild = vi
+      .spyOn(document.head, 'appendChild')
+      .mockImplementation((node) => node)
+    window.pwMonacoUrl = '/bundles/pushwordadmin/monaco/app.js?v=1234'
+
+    new Raw({ data: { html: 'x' }, api: {} as any, readOnly: false }).render()
+    new Raw({ data: { html: 'y' }, api: {} as any, readOnly: false }).render()
+
+    expect(appendChild).toHaveBeenCalledOnce()
+    const script = appendChild.mock.calls[0]![0] as HTMLScriptElement
+    expect(script.getAttribute('src')).toBe('/bundles/pushwordadmin/monaco/app.js?v=1234')
+    expect(window.pwMonacoLoading).toBeInstanceOf(Promise)
   })
 })
 

@@ -19,7 +19,7 @@ declare global {
     pageHost?: string // set in ./packages/admin/Resources/assets/admin.js on page init
     monacoHelper?: typeof MonacoHelper
     pwMonacoUrl?: string // set in Pushword\Admin\Controller\DashboardController
-    pwMonacoLoading?: Promise<unknown> // shared with admin.monacoLoader.js
+    pwMonacoLoading?: Promise<boolean> | null // shared with admin.monacoLoader.js
     editorjsTools?: BlockToolAdapter[]
     editorjsConfig?: Record<string, any>
   }
