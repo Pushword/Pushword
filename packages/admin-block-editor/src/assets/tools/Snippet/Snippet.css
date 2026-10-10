@@ -23,9 +23,9 @@
 }
 
 .cdx-snippet__header span {
-  font-size: 11px;
+  font-size: var(--pw-text-xs, 12px);
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #707684;
 }

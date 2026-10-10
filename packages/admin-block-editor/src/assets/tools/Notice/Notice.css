@@ -20,11 +20,14 @@
   color: #475569;
 }
 
+/* Caps labels across the editor: 12px, the admin's smallest step, semibold and
+   tracked out — capitals all share one height, so they need the extra spacing. */
 .cdx-notice__level {
   width: 110px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: 10px;
+  letter-spacing: 0.05em;
+  font-size: var(--pw-text-xs, 12px);
+  font-weight: 600;
 }
 
 .cdx-notice__title {

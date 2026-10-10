@@ -24,8 +24,9 @@
   gap: 2px;
   white-space: nowrap;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: 10px;
+  letter-spacing: 0.05em;
+  font-size: var(--pw-text-xs, 12px);
+  font-weight: 600;
 }
 
 .pw-group-label svg {
@@ -57,8 +58,9 @@
   cursor: pointer;
   white-space: nowrap;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: 10px;
+  letter-spacing: 0.05em;
+  font-size: var(--pw-text-xs, 12px);
+  font-weight: 600;
 }
 
 .pw-group-checkbox {

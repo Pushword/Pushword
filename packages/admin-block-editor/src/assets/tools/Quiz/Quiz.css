@@ -20,9 +20,9 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.72rem;
+  font-size: var(--pw-text-xs, 0.75rem);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--q-accent);
   margin-bottom: 0.85rem;
@@ -90,9 +90,9 @@
 }
 .cdx-quiz__cta-summary {
   cursor: pointer;
-  font-size: 0.72rem;
+  font-size: var(--pw-text-xs, 0.75rem);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--q-muted);
   padding: 0.2rem 0;
@@ -123,9 +123,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.68rem;
+  font-size: var(--pw-text-xs, 0.75rem);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--q-muted);
   margin-bottom: 0.5rem;
@@ -242,9 +242,9 @@
 }
 
 .cdx-quiz__subtitle {
-  font-size: 0.72rem;
+  font-size: var(--pw-text-xs, 0.75rem);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--q-muted);
   margin: 0.9rem 0 0.45rem;
@@ -302,9 +302,9 @@
 }
 .cdx-quiz__mode-label {
   flex: 0 0 auto;
-  font-size: 0.72rem;
+  font-size: var(--pw-text-xs, 0.75rem);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--q-muted);
 }
@@ -326,9 +326,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.7rem;
+  font-size: var(--pw-text-xs, 0.75rem);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--q-accent);
   margin-bottom: 0.5rem;
