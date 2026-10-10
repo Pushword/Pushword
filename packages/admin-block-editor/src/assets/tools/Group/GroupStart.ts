@@ -2,6 +2,7 @@ import { API, BlockAPI, BlockTool, BlockToolConstructorOptions } from '@editorjs
 import { IconBrackets } from '@codexteam/icons'
 import './Group.css'
 import make from '../utils/make'
+import { MarkdownUtils } from '../utils/MarkdownUtils'
 import { GroupRegistry } from './GroupRegistry'
 import {
   buildStartCall,
@@ -80,7 +81,7 @@ export default class GroupStart implements BlockTool {
 
     wrapper.appendChild(
       this.input('pw-group-anchor', '#' + this.api.i18n.t('Anchor'), this.data.anchor, (value) => {
-        this.data.anchor = value.replace(/[^a-z0-9_-]/gi, '')
+        this.data.anchor = MarkdownUtils.sanitizeAnchor(value)
       }),
     )
     this.classInput = this.input('pw-group-class', '', this.data.class, (value) => {

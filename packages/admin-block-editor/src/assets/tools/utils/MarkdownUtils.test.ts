@@ -350,6 +350,30 @@ describe('MarkdownUtils block attributes', () => {
   })
 })
 
+describe('MarkdownUtils.sanitizeAnchor', () => {
+  it('keeps letters of either case, digits, underscores and dashes', () => {
+    expect(MarkdownUtils.sanitizeAnchor('Top_Section-2')).toBe('Top_Section-2')
+  })
+
+  it('drops spaces, punctuation, dots and accented letters', () => {
+    expect(MarkdownUtils.sanitizeAnchor('My Anchor #2!')).toBe('MyAnchor2')
+    expect(MarkdownUtils.sanitizeAnchor('top.wide')).toBe('topwide')
+    expect(MarkdownUtils.sanitizeAnchor('été')).toBe('t')
+  })
+
+  it('returns an empty string when nothing is kept', () => {
+    expect(MarkdownUtils.sanitizeAnchor('')).toBe('')
+    expect(MarkdownUtils.sanitizeAnchor('#!. ')).toBe('')
+  })
+
+  it('leaves an anchor the attribute line reads back whole', () => {
+    const anchor = MarkdownUtils.sanitizeAnchor('Q&A: -top_1 {.wide}')
+    const line = MarkdownUtils.addAttributes('Hello', { anchor }).split('\n')[0]!
+
+    expect(MarkdownUtils.parseAttributes(line)).toEqual({ anchor })
+  })
+})
+
 describe('MarkdownUtils tune arguments', () => {
   it.each([
     [{}, ''],

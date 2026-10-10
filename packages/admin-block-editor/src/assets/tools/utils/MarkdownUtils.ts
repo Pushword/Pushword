@@ -286,6 +286,11 @@ export class MarkdownUtils {
     )
   }
 
+  /** An anchor kept to the characters parseAttributes() reads back after a `#`. */
+  static sanitizeAnchor(anchor: string): string {
+    return anchor.replace(/[^a-z0-9_-]/gi, '')
+  }
+
   static parseAttributes(attributeLine: string): BlockTuneDataPushword {
     const tunes: BlockTuneData = {}
 
