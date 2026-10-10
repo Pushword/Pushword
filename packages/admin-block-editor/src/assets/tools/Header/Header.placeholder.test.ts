@@ -5,7 +5,7 @@ import Header from './Header'
 it('renders an empty heading without requiring a placeholder configuration', () => {
   const root = new Header({
     data: { text: '', level: 2 },
-    api: {} as API,
+    api: { i18n: { t: (text: string) => text } } as unknown as API,
     config: {},
     readOnly: false,
   }).render()

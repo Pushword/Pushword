@@ -89,3 +89,23 @@ describe('Header placeholder', () => {
     expect(container.querySelector('h2')?.dataset.placeholder).toBe('Heading')
   })
 })
+
+describe('Header level select', () => {
+  it('takes its label from the editor translations', () => {
+    const translations: Record<string, string> = { 'Heading level': 'Niveau de titre' }
+    const api = {
+      i18n: { t: (text: string) => translations[text] ?? text },
+    } as unknown as API
+    const select = new Header({
+      data: { text: 'Title', level: 2 },
+      api,
+      config: {},
+      readOnly: false,
+    })
+      .render()
+      .querySelector('select')
+
+    expect(select?.getAttribute('aria-label')).toBe('Niveau de titre')
+    expect(select?.title).toBe('Niveau de titre')
+  })
+})

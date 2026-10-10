@@ -132,7 +132,10 @@ final readonly class EditorJsMessages
                     'Collapsible' => 'editorCollapsible',
                     'Group' => 'editorGroup',
                 ]),
-                'header' => $this->translate(['Heading' => 'editorHeading']),
+                'header' => $this->translate([
+                    'Heading' => 'editorHeading',
+                    'Heading level' => 'editorHeadingLevel',
+                ]),
                 'notice' => $this->translate([
                     'Level' => 'editorNoticeLevel',
                     'Notice' => 'editorNotice',

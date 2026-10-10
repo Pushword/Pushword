@@ -39,9 +39,11 @@ export default class Header {
   private _levelSelect: HTMLSelectElement | null = null
   private _data: HeaderData
   private readonly placeholder: string
+  private readonly levelSelectLabel: string
 
-  constructor({ data, config }: ConstructorArgs) {
+  constructor({ data, config, api }: ConstructorArgs) {
     this.placeholder = config?.placeholder ?? ''
+    this.levelSelectLabel = api.i18n.t('Heading level')
     this._data = Header.normalizeData(data)
     this._element = this.getTag()
   }
@@ -187,8 +189,8 @@ export default class Header {
     const levelSelect = document.createElement('select')
     levelSelect.classList.add('ce-header-level-select')
     levelSelect.contentEditable = 'false'
-    levelSelect.title = 'Select heading level'
-    levelSelect.setAttribute('aria-label', 'Heading level')
+    levelSelect.title = this.levelSelectLabel
+    levelSelect.setAttribute('aria-label', this.levelSelectLabel)
 
     this.levels.forEach((level) => {
       const option = document.createElement('option')
