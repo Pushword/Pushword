@@ -1,5 +1,14 @@
 /* purgecss start ignore */
 
+/* The admin form lays its fields out in an auto-sized grid track, which grows
+   to the widest min-content inside. Monaco sizes itself in px from the width it
+   is given, so once a code block measured a wide track it kept it open: on a
+   phone the whole editor overflowed and was clipped on the right. Containment
+   keeps the editor's content out of that measure. */
+.editorjs-holder {
+  contain: inline-size;
+}
+
 /* heading anchor size */
 .ce-header::after {
   font-size: 1rem;
