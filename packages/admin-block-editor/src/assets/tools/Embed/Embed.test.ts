@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { API } from '@editorjs/editorjs'
-import Embed from './Embed'
+import Embed, { EmbedDataToNormalize } from './Embed'
 import { MediaToolConfig } from '../Abstract/AbstractMediaTool'
 
 /**
@@ -8,7 +8,7 @@ import { MediaToolConfig } from '../Abstract/AbstractMediaTool'
  * filled play button, scaled up from the 16px source by attribute replacement.
  */
 
-function embedWith(media: string): Embed {
+function embedWith(media: string, data: EmbedDataToNormalize = {}): Embed {
   const api = {
     styles: {
       block: 'ce-block',
@@ -23,7 +23,7 @@ function embedWith(media: string): Embed {
     onUploadFile: vi.fn(),
   } as unknown as MediaToolConfig
 
-  return new Embed({ data: { media }, config, api, readOnly: false })
+  return new Embed({ data: { ...data, media }, config, api, readOnly: false })
 }
 
 describe('Embed preview', () => {
@@ -57,6 +57,28 @@ describe('Embed – an upload', () => {
     expect(tool.nodes.fileButton.querySelector('img')?.getAttribute('src')).toBe(
       '/media/md/thumb.jpg',
     )
+  })
+})
+
+describe('Embed – a thumbnail picked while editing a complete block', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('redraws the preview with it and leaves the block in edit mode', () => {
+    const tool = embedWith('thumb.jpg', {
+      serviceUrl: 'https://youtu.be/x',
+      alternativeText: 'A video',
+    })
+    document.body.append(tool.render())
+    // A complete block opens in preview; its toggle brings the fields back.
+    ;(tool.nodes.editInput!.nextElementSibling as HTMLElement).click()
+
+    tool.onUpload({ success: true, file: { media: 'other.jpg', name: 'Another video' } })
+
+    expect(tool.nodes.preview!.innerHTML).toContain('/media/md/other.jpg')
+    expect(tool.nodes.preview!.classList.contains('hidden')).toBe(true)
+    expect(tool.nodes.editInput!.checked).toBe(false)
   })
 })
 

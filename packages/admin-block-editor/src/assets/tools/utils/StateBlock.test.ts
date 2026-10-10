@@ -25,6 +25,11 @@ function stateBlockTool(): StateBlockToolInterface {
   }
 }
 
+/** Clicks the edit/preview toggle, as the editor does. */
+function clickToggle(tool: StateBlockToolInterface): void {
+  ;(tool.nodes.editInput!.nextElementSibling as HTMLElement).click()
+}
+
 describe('StateBlock edit toggle', () => {
   afterEach(() => {
     document.body.innerHTML = ''
@@ -45,6 +50,39 @@ describe('StateBlock edit toggle', () => {
     ;(secondInput.nextElementSibling as HTMLElement).click()
     expect(secondInput.checked).toBe(false)
     expect(firstInput.checked).toBe(true)
+  })
+
+  it('switches a previewed block back to its fields without judging it', () => {
+    const notify = vi.fn()
+    let valid = true
+    const tool: StateBlockToolInterface = {
+      ...stateBlockTool(),
+      api: {
+        styles: { block: 'cdx-block' },
+        notifier: { show: notify },
+      } as unknown as API,
+      validate: () => valid,
+    }
+    document.body.append(StateBlock.render(tool))
+
+    // Leaving the preview is always allowed, even for a block that is no longer complete.
+    valid = false
+    clickToggle(tool)
+
+    expect(tool.nodes.preview!.classList.contains('hidden')).toBe(true)
+    expect(tool.nodes.inputs!.classList.contains('hidden')).toBe(false)
+    expect(notify).not.toHaveBeenCalled()
+  })
+
+  it('opens the fields when the preview itself is clicked', () => {
+    const tool = stateBlockTool()
+    document.body.append(StateBlock.render(tool))
+
+    tool.nodes.preview!.click()
+
+    expect(tool.nodes.editInput!.checked).toBe(false)
+    expect(tool.nodes.preview!.classList.contains('hidden')).toBe(true)
+    expect(tool.nodes.inputs!.classList.contains('hidden')).toBe(false)
   })
 })
 
@@ -134,11 +172,6 @@ describe.each(tools)(
       document.body.append(tool.render())
 
       return { tool, notify }
-    }
-
-    /** Clicks the edit/preview toggle, as the editor does. */
-    function clickToggle(tool: Tool): void {
-      ;(tool.nodes.editInput!.nextElementSibling as HTMLElement).click()
     }
 
     function inPreview(tool: Tool): boolean {
