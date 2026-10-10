@@ -81,6 +81,15 @@ describe('Image – an upload', () => {
     expect(wrapper.querySelector('img')?.getAttribute('src')).toBe('/media/md/photo.jpg')
     expect(tool.save(wrapper)).toEqual({ media: 'photo.jpg', caption: 'A caption' })
   })
+
+  it('takes its caption from the name the answer gives', () => {
+    const tool = imageWith('')
+    const wrapper = tool.render()
+
+    tool.onUpload({ success: true, file: { media: 'photo.jpg', name: 'A photo' } })
+
+    expect(tool.save(wrapper)).toEqual({ media: 'photo.jpg', caption: 'A photo' })
+  })
 })
 
 describe('Image – an older block', () => {

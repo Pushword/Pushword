@@ -3,6 +3,8 @@ import type { API } from '@editorjs/editorjs'
 import Gallery from './Gallery'
 import { MediaToolConfig } from '../Abstract/AbstractMediaTool'
 
+const notify = vi.fn()
+
 function galleryWith(data: any): Gallery {
   const api = {
     styles: {
@@ -12,6 +14,7 @@ function galleryWith(data: any): Gallery {
       loader: 'loader',
     },
     i18n: { t: (key: string) => key },
+    notifier: { show: notify },
   } as unknown as API
   const config = {
     onSelectFile: vi.fn(),
@@ -72,6 +75,41 @@ describe('Gallery.normalizeData', () => {
       items: [],
     })
     expect(Gallery.normalizeData({} as any)).toEqual({ items: [] })
+  })
+})
+
+/** An upload or a pick lands in the empty item onFileLoading() opened for it. */
+describe('Gallery – adding a media', () => {
+  afterEach(() => {
+    notify.mockClear()
+  })
+
+  it('fills the item opened for it and saves it after the others', () => {
+    const tool = galleryWith({ items: [{ media: '1.jpg', caption: 'One' }] })
+    tool.render()
+
+    tool.onFileLoading()
+    tool.onUpload({
+      success: true,
+      file: { media: '2.jpg', url: '/media/md/2.jpg', name: 'Two' },
+    })
+
+    expect(tool.save().items).toEqual([
+      { media: '1.jpg', caption: 'One' },
+      { media: '2.jpg', caption: 'Two' },
+    ])
+  })
+
+  it('refuses a media already in the gallery and drops the item opened for it', () => {
+    const tool = galleryWith({ items: [{ media: '1.jpg', caption: 'One' }] })
+    const wrapper = tool.render()
+
+    tool.onFileLoading()
+    tool.onUpload({ success: true, file: { media: '1.jpg', url: '/media/md/1.jpg' } })
+
+    expect(notify).toHaveBeenCalledWith(expect.objectContaining({ style: 'error' }))
+    expect(wrapper.querySelectorAll('.cdxcarousel-block')).toHaveLength(1)
+    expect(tool.save().items).toEqual([{ media: '1.jpg', caption: 'One' }])
   })
 })
 

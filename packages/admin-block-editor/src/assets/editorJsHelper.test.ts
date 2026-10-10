@@ -198,6 +198,25 @@ describe('editorJsHelper.abstractOnMulti', () => {
     ])
   })
 
+  it('names each media and points at its thumbnail, as the gallery adds them', () => {
+    const tool = { onMultiUpload: vi.fn() }
+
+    editorJsHelper.abstractOnMulti(tool, new Event('click'))
+    pickerPosts({
+      type: 'pw-media-picker-multi-select',
+      fieldId: FIELD_ID,
+      items: [
+        { id: 1, fileName: 'one.jpg', alt: 'One', thumb: '/media/thumb/one.jpg' },
+        { id: 2, fileName: 'two.jpg' },
+      ],
+    })
+
+    expect(tool.onMultiUpload).toHaveBeenCalledWith([
+      { media: 'one.jpg', name: 'One', url: '/media/thumb/one.jpg' },
+      { media: 'two.jpg', name: 'two.jpg', url: '' },
+    ])
+  })
+
   it('leaves an abandoned pick out of the next selection', () => {
     const abandoned = { onMultiUpload: vi.fn() }
     const picking = { onMultiUpload: vi.fn() }

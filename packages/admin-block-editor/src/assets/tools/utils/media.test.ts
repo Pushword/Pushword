@@ -246,6 +246,11 @@ describe('MediaUtils.getMediaNameFromData', () => {
       '1.jpg',
     ],
     ['an old gallery item without url', { file: { media: '2.jpg' } }, '2.jpg'],
+    [
+      'an old attachment whose url name does not decode',
+      { url: '/media/default/100%.pdf' },
+      '100%.pdf',
+    ],
   ])('reads %s', (_shape, data, media) => {
     expect(MediaUtils.getMediaNameFromData(data)).toBe(media)
   })
@@ -321,6 +326,21 @@ describe('MediaUtils.createImage', () => {
     await vi.waitFor(() => expect(fetch).toHaveBeenCalled())
     expect(onRenamed).not.toHaveBeenCalled()
     expect(img.getAttribute('src')).toBe('/media/md/gone.jpg')
+  })
+
+  it('leaves the image alone when the server cannot be reached', async () => {
+    const fetch = vi.fn(async () => {
+      throw new TypeError('Failed to fetch')
+    })
+    vi.stubGlobal('fetch', fetch)
+    const onRenamed = vi.fn()
+    const img = MediaUtils.createImage('photo.jpg', onRenamed)
+
+    img.dispatchEvent(new Event('error'))
+
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalled())
+    expect(onRenamed).not.toHaveBeenCalled()
+    expect(img.getAttribute('src')).toBe('/media/md/photo.jpg')
   })
 
   it('stops once the current name fails too, rather than reloading it forever', async () => {
