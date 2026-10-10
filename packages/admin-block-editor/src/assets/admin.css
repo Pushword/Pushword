@@ -104,6 +104,22 @@ div[data-item-name='convert-to'] {
   .ce-popover-item__title {
     display: none;
   }
+
+  /* The two moves side by side, removal set apart at the end of the row: a
+     reorder click never lands on delete, and delete only turns red once aimed. */
+  [data-item-name='move-up'],
+  [data-item-name='move-down'] {
+    order: 1;
+  }
+
+  [data-item-name='delete'] {
+    order: 2;
+    margin-left: auto;
+  }
+
+  [data-item-name='delete']:not(.ce-popover-item--confirmation):hover .ce-popover-item__icon {
+    color: #dc2626; /* red-600 */
+  }
 }
 
 /* The two-column toolbox needs more room than editor.js's 200px default;
