@@ -4,6 +4,7 @@ import type {
   SanitizerConfig,
   InlineToolConstructorOptions,
 } from '@editorjs/editorjs'
+import { unwrapTag, wrapInTag } from '../utils/inlineTag'
 
 export default class Small implements InlineTool {
   private button: HTMLButtonElement | undefined
@@ -31,38 +32,10 @@ export default class Small implements InlineTool {
     const termWrapper = this.api.selection.findParentTag(this.tag)
 
     if (termWrapper) {
-      this.unwrap(termWrapper)
+      unwrapTag(this.api, termWrapper)
     } else {
-      this.wrap(range)
+      wrapInTag(this.api, range, this.tag)
     }
-  }
-
-  public wrap(range: Range) {
-    const u = document.createElement(this.tag)
-    u.appendChild(range.extractContents())
-    range.insertNode(u)
-    this.api.selection.expandToTag(u)
-  }
-
-  public unwrap(termWrapper: HTMLElement): void {
-    this.api.selection.expandToTag(termWrapper)
-
-    const sel = window.getSelection()
-    if (!sel) return
-
-    const range = sel.getRangeAt(0)
-    if (!range) return
-
-    const unwrappedContent = range.extractContents()
-    if (!unwrappedContent) return
-
-    // Remove empty term-tag
-    termWrapper.parentNode?.removeChild(termWrapper)
-
-    range.insertNode(unwrappedContent)
-
-    sel.removeAllRanges()
-    sel.addRange(range)
   }
 
   /**

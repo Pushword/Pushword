@@ -1,5 +1,6 @@
 import SelectionUtils from './Selection'
 import make from '../utils/make'
+import { unwrapTag, wrapInTag } from '../utils/inlineTag'
 import { IconLink, IconUnlink } from '@codexteam/icons'
 import { API } from '@editorjs/editorjs'
 import './Hyperlink.css'
@@ -229,10 +230,7 @@ export default class Hyperlink {
       return
     }
 
-    this.anchorTag = document.createElement('A')
-    this.anchorTag.appendChild(range.extractContents())
-    range.insertNode(this.anchorTag)
-    this.api.selection.expandToTag(this.anchorTag)
+    this.anchorTag = wrapInTag(this.api, range, 'A')
     this.selection.setFakeBackground()
     this.selection.save()
     this.openActions(true)
@@ -385,23 +383,10 @@ export default class Hyperlink {
     return this.anchorTag
   }
 
+  /** Drop the link, keeping its text, with the caret after it. */
   unlink(termWrapper: HTMLElement | null): void {
     if (!termWrapper) return
-    this.api.selection.expandToTag(termWrapper)
 
-    const sel = window.getSelection()
-    if (!sel) return
-
-    const range = sel.getRangeAt(0)
-    if (!range) return
-
-    const unwrappedContent = range.extractContents()
-    if (!unwrappedContent) return
-
-    termWrapper.parentNode?.removeChild(termWrapper)
-    range.insertNode(unwrappedContent)
-    sel.removeAllRanges()
-    range.collapse()
-    sel.addRange(range)
+    unwrapTag(this.api, termWrapper)?.collapseToEnd()
   }
 }
