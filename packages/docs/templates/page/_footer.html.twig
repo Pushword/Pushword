@@ -6,7 +6,7 @@
       <span aria-hidden="true">·</span>
       <span>MIT licensed</span>
       <span aria-hidden="true">·</span>
-      <a href="https://en.piedweb.com" class="hover:text-stone-900 dark:hover:text-stone-100">PiedWeb</a>
+      {{ link('Designed by Pied Web', 'https://piedweb.com', 'hover:text-stone-900 dark:hover:text-stone-100', page.slug != 'homepage') }}
     </div>
 
     <nav aria-label="Footer" class="flex flex-wrap items-center gap-x-5 gap-y-2 text-stone-600 dark:text-stone-400">
@@ -14,6 +14,7 @@
       <a href="{{ page('extensions') }}" class="hover:text-stone-900 dark:hover:text-stone-100">Extensions</a>
       <a href="{{ page('blog') }}" class="hover:text-stone-900 dark:hover:text-stone-100">Blog</a>
       <a href="{{ page('contribute') }}" class="hover:text-stone-900 dark:hover:text-stone-100">Contribute</a>
+      <a href="{{ page('legal-notice') }}" class="hover:text-stone-900 dark:hover:text-stone-100">Legal notice</a>
       <a href="https://github.com/Pushword/Pushword" class="hover:text-stone-900 dark:hover:text-stone-100">GitHub</a>
       <a href="https://github.com/Pushword/Pushword/issues" class="hover:text-stone-900 dark:hover:text-stone-100">Issues</a>
     </nav>

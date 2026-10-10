@@ -243,7 +243,7 @@ Read the API reference
         </div>
         <span class="block mt-2 text-sm text-stone-600 dark:text-stone-400 group-hover:text-stone-900 dark:group-hover:text-stone-100">kelifos.travel</span>
       </a>
-      <a href="https://en.piedweb.com" class="block group">
+      <a href="https://piedweb.com" class="block group">
         <div class="rounded-md border border-stone-200 dark:border-stone-800 overflow-hidden group-hover:border-stone-400 dark:group-hover:border-stone-600">
           <img src="/media/piedweb.png" alt="piedweb.com" class="w-full">
         </div>
