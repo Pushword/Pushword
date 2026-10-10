@@ -84,13 +84,14 @@ export function openMediaPicker({
   multi?: boolean
   onPick: (picked: any) => void
 }): AbortController | null {
-  const select = document.querySelector<HTMLSelectElement>('select' + field)
+  const selector = 'select' + field
+  const select = document.querySelector<HTMLSelectElement>(selector)
   const button = select
     ?.closest('.pw-media-picker')
     ?.querySelector<HTMLButtonElement>(`[data-pw-media-picker-action="${action}"]`)
 
   if (!select || !button) {
-    console.error('media picker not found for selector:', 'select' + field)
+    console.error('media picker not found for selector:', selector)
     return null
   }
 

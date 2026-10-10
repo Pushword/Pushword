@@ -69,11 +69,12 @@ export default class Gallery extends AbstractMediaTool {
 
   static normalizeData(data: GalleryDataToNormalize | GalleryData): GalleryData {
     // The current shape wraps the items; pw:block:upgrade left a bare array of names.
-    const items = Array.isArray(data)
-      ? data
-      : Array.isArray(data?.items)
-        ? data.items
-        : []
+    let items: GalleryDataToNormalize | GalleryItem[] = []
+    if (Array.isArray(data)) {
+      items = data
+    } else if (Array.isArray(data?.items)) {
+      items = data.items
+    }
     const normalizedItems: GalleryItem[] = []
 
     for (const item of items) {
