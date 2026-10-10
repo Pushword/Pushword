@@ -57,6 +57,29 @@ describe('Attaches – removing the file', () => {
   })
 })
 
+describe('Attaches – an upload', () => {
+  it('saves the file the answer names, titled by its name, else its title', () => {
+    const { tool } = attachesWith('report.pdf')
+    const holder = tool.render()
+
+    tool.onUpload({
+      success: true,
+      file: { media: 'other.pdf', name: 'Other', size: 10 },
+    })
+    expect(tool.save(holder)).toEqual({
+      title: 'Other',
+      file: { media: 'other.pdf', size: 10 },
+    })
+
+    // No size in the answer: the replaced file's size does not stay behind
+    tool.onUpload({ success: true, file: { media: 'last.pdf', title: 'Last' } })
+    expect(tool.save(holder)).toEqual({
+      title: 'Last',
+      file: { media: 'last.pdf', size: 0 },
+    })
+  })
+})
+
 describe('Attaches – picking a file', () => {
   it('hands the Select and Upload clicks to the admin callbacks, with the block', () => {
     const { tool, config } = attachesWith('')

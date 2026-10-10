@@ -463,29 +463,48 @@ describe('Quiz media fields', () => {
     vi.restoreAllMocks()
   })
 
-  it('writes the picked media into the field it was opened from', () => {
+  function pickerOnPage(): void {
     document.body.innerHTML = `
       <div class="pw-media-picker">
         <select id="${FIELD_ID}"></select>
         <button data-pw-media-picker-action="choose"></button>
       </div>
     `
-    const { tool, input, choose } = questionMedia()
+  }
 
-    choose.click()
+  function pickerSends(fileName: string): void {
     window.dispatchEvent(
       new MessageEvent('message', {
         origin: window.location.origin,
         data: {
           type: 'pw-media-picker-select',
           fieldId: FIELD_ID,
-          media: { id: 7, fileName: 'photo.jpg' },
+          media: { id: 7, fileName },
         },
       }),
     )
+  }
+
+  it('writes the picked media into the field it was opened from', () => {
+    pickerOnPage()
+    const { tool, input, choose } = questionMedia()
+
+    choose.click()
+    pickerSends('photo.jpg')
 
     expect(input.value).toBe('photo.jpg')
     expect(tool.save().questions![0]!.media).toBe('photo.jpg')
+  })
+
+  it('stops listening once the block is destroyed mid-pick', () => {
+    pickerOnPage()
+    const { tool, input, choose } = questionMedia()
+
+    choose.click()
+    tool.destroy()
+    pickerSends('photo.jpg')
+
+    expect(input.value).toBe('')
   })
 
   it('says so, in the editor language, when the page has no picker', () => {

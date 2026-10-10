@@ -243,7 +243,14 @@ describe('CardList image picker', () => {
     expect(tool.save().items[0]!.image).toBeUndefined()
   })
 
-  it('says so, in the editor language, when the page has no picker', () => {
+  it.each([
+    ['has no picker', ''],
+    [
+      'has a picker without its choose button',
+      `<div class="pw-media-picker"><select id="${FIELD_ID}"></select></div>`,
+    ],
+  ])('says so, in the editor language, when the page %s', (_case, page) => {
+    document.body.innerHTML = page
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const show = vi.fn()
     const api = {

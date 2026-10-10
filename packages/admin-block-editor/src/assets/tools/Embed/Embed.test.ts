@@ -42,6 +42,24 @@ describe('Embed preview', () => {
   })
 })
 
+describe('Embed – an upload', () => {
+  it('takes the thumbnail and its alternative text from the answer', () => {
+    const tool = embedWith('')
+    tool.render()
+
+    tool.onUpload({ success: true, file: { media: 'thumb.jpg', name: 'A video' } })
+
+    expect(tool.save()).toEqual({
+      serviceUrl: '',
+      alternativeText: 'A video',
+      media: 'thumb.jpg',
+    })
+    expect(tool.nodes.fileButton.querySelector('img')?.getAttribute('src')).toBe(
+      '/media/md/thumb.jpg',
+    )
+  })
+})
+
 describe('Embed – thumbnail reference', () => {
   it('reads the thumbnail older blocks kept under image', () => {
     expect(

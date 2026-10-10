@@ -1,6 +1,11 @@
 // import ajax from '@codexteam/ajax'
 import { EditorModeManager } from './EditorModeManager'
-import { openMediaPicker, pickedMediaName, pickFile } from './tools/utils/media'
+import {
+  openMediaPicker,
+  type PickedMedia,
+  pickedMediaName,
+  pickFile,
+} from './tools/utils/media'
 
 interface ToolWithCallbacks {
   onFileLoading?: () => void
@@ -8,13 +13,28 @@ interface ToolWithCallbacks {
   handleUploadError: (error: any) => void
 }
 
+interface PickedFile {
+  media: string
+  name: string
+  url: string
+}
+
 interface ToolWithMultiCallbacks {
-  onMultiUpload: (items: Array<{ media: string; name: string; url: string }>) => void
+  onMultiUpload: (items: PickedFile[]) => void
 }
 
 interface ToolWithInlineUpload {
   uploadFile: (file: File) => Promise<void>
   uploadAccept: string
+}
+
+/** What a block takes from a picked media, whether picked alone or among several. */
+function pickedFile(media: PickedMedia): PickedFile {
+  return {
+    media: pickedMediaName(media),
+    name: media.alt || media.name || media.fileName || '',
+    url: media.thumb || '',
+  }
 }
 
 export class editorJsHelper {
@@ -64,9 +84,7 @@ export class editorJsHelper {
         const response = {
           success: 1,
           file: {
-            media: pickedMediaName(media),
-            name: media.alt || media.name || media.fileName || '',
-            url: media.thumb || '',
+            ...pickedFile(media),
             fileName: pickedMediaName(media),
             alt: media.alt || '',
             width: media.width || '',
@@ -88,14 +106,7 @@ export class editorJsHelper {
     openMediaPicker({
       field: inlineImageFieldSelector,
       multi: true,
-      onPick: (items) =>
-        Tool.onMultiUpload(
-          items.map((media) => ({
-            media: pickedMediaName(media),
-            name: media.alt || media.name || media.fileName || '',
-            url: media.thumb || '',
-          })),
-        ),
+      onPick: (items) => Tool.onMultiUpload(items.map(pickedFile)),
     })
   }
 
