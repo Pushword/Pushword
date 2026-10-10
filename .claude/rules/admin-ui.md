@@ -54,7 +54,8 @@ paths:
 - **Monaco is fetched on demand, and only where a field needs it.** `admin.js`
   (`admin.monacoLoader.js`) injects `window.pwMonacoUrl` — published by
   `DashboardController::configureAssets()` — when the page holds a `textarea[data-editor]`;
-  the block editor injects the same URL for its markdown/JSON modes and shares the
+  the block editor injects the same URL, through `loadMonaco()` (`tools/utils/loadScript.ts`),
+  for its markdown/JSON modes and its Raw/Code blocks, and shares the
   in-flight promise through `window.pwMonacoLoading`. The `<script>` in
   `@pwAdmin/layout.html.twig` covers only the custom tool pages: EasyAdmin CRUD pages do
   not use that layout, so nothing there loads Monaco on its own. Keep `data-editor` off
