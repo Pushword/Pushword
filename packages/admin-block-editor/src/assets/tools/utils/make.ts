@@ -114,27 +114,4 @@ export default class make {
 
     return wrapper
   }
-
-  public static selectionCollapseToEnd(): void {
-    const sel = window.getSelection()
-    if (!sel || !sel.focusNode) return
-
-    const range = document.createRange()
-    range.selectNodeContents(sel.focusNode)
-    range.collapse(false)
-    sel.removeAllRanges()
-    sel.addRange(range)
-  }
-
-  public static moveCaretToTheEnd(element: HTMLElement) {
-    if (!element.focus) return
-    element.focus()
-    const range = document.createRange()
-    range.selectNodeContents(element)
-    range.collapse(false)
-    const selection = window.getSelection()
-    if (!selection) return
-    selection.removeAllRanges()
-    selection.addRange(range)
-  }
 }
