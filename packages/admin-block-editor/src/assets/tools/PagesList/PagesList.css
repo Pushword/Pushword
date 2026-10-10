@@ -25,50 +25,6 @@
 .cdx-input-labeled-pageslist-max[contentEditable='true'][data-placeholder]::before {
   right: 16px;
 }
-.flex {
-  display: flex;
-}
-.flex-center {
-  justify-content: center;
-}
-[style*='--aspect-ratio'] > :first-child {
-  width: 100%;
-}
-[style*='--aspect-ratio'] > img {
-  height: auto;
-}
-@supports (--custom: property) {
-  [style*='--aspect-ratio'] {
-    position: relative;
-  }
-  [style*='--aspect-ratio']::before {
-    content: '';
-    display: block;
-    padding-bottom: calc(100% / (var(--aspect-ratio)));
-  }
-  [style*='--aspect-ratio'] > :first-child {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-  }
-}
-
-.hidden {
-  display: none !important;
-}
-
-.preview-wrapper {
-  background: #f9fafb;
-  border-radius: 3px;
-  opacity: 0.95;
-  position: relative;
-}
-.preview-wrapper:hover {
-  background: repeating-linear-gradient(45deg, #f3f4f6, #fff 15%, #f3f4f6 20%);
-  border-radius: 3px;
-  opacity: 0.75;
-}
 .preview-wrapper-overlay {
   position: absolute;
   width: 100%;

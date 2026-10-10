@@ -64,6 +64,12 @@
 .cdx-input-editable[contentEditable='true'][data-placeholder]:empty:focus::before {
   display: none;
 }
+.flex {
+  display: flex;
+}
+.flex-center {
+  justify-content: center;
+}
 .flex .cdx-input {
   margin: 0 5px;
   position: relative;
@@ -105,6 +111,45 @@
 .media-tool__delete:focus-visible {
   outline: 2px solid var(--focus-ring-color, #0284c7);
   outline-offset: 2px;
+}
+
+/** StateBlock: the preview a block switches to (Embed draws a 16:9 box) **/
+[style*='--aspect-ratio'] > :first-child {
+  width: 100%;
+}
+[style*='--aspect-ratio'] > img {
+  height: auto;
+}
+@supports (--custom: property) {
+  [style*='--aspect-ratio'] {
+    position: relative;
+  }
+  [style*='--aspect-ratio']::before {
+    content: '';
+    display: block;
+    padding-bottom: calc(100% / (var(--aspect-ratio)));
+  }
+  [style*='--aspect-ratio'] > :first-child {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+  }
+}
+.hidden {
+  display: none !important;
+}
+
+.preview-wrapper {
+  background: #f9fafb;
+  border-radius: 3px;
+  opacity: 0.95;
+  position: relative;
+}
+.preview-wrapper:hover {
+  background: repeating-linear-gradient(45deg, #f3f4f6, #fff 15%, #f3f4f6 20%);
+  border-radius: 3px;
+  opacity: 0.75;
 }
 
 /** Toggler **/
