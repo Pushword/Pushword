@@ -29,24 +29,39 @@
   padding: 3px 0 3px 45px !important; /* Left padding for absolutely positioned select */
 }
 
+/* The page title above the editor is 22px bold: every heading stays under it,
+   and weight, not size alone, sets them apart from the 16px body copy. */
+.ce-header-container h2,
+.ce-header-container h3,
+.ce-header-container h4,
+.ce-header-container h5,
+.ce-header-container h6 {
+  font-weight: 600;
+}
+
 .ce-header-container h2 {
-  font-size: 30px; /* Tailwind 3xl (1.875rem) */
+  font-size: var(--pw-text-lg, 20px);
+}
+
+/* More room above a heading than below it, so it opens the section that follows
+   instead of trailing the one before. Margin, not padding: the level badge is
+   positioned against the container's box. */
+.ce-header-container:has(h2) {
+  margin-top: 16px;
+}
+
+.ce-header-container:has(h3) {
+  margin-top: 8px;
 }
 
 .ce-header-container h3 {
-  font-size: 24px; /* Tailwind 2xl (1.5rem) */
+  font-size: 18px;
 }
 
-.ce-header-container h4 {
-  font-size: 20px; /* Tailwind xl (1.25rem) */
-}
-
-.ce-header-container h5 {
-  font-size: 18px; /* Tailwind lg (1.125rem) */
-}
-
+.ce-header-container h4,
+.ce-header-container h5,
 .ce-header-container h6 {
-  font-size: 16px; /* Tailwind base (1rem) */
+  font-size: var(--pw-text-md, 16px);
 }
 
 /* Level selector wrapper - positioned absolutely to avoid copy issues */
