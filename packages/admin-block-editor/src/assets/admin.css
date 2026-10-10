@@ -71,6 +71,13 @@ a[rel='encrypt']:not(.link-btn) {
   font-family: var(--bs-font-monospace, monospace);
 }
 
+/* A section break is a pause, not content: the 30px black asterisks outweighed
+   the headings around them. */
+.ce-delimiter::before {
+  color: #94a3b8; /* slate-400 */
+  font-size: var(--pw-text-lg, 20px);
+}
+
 /* @editorjs/list sets pre-wrap: a soft line break kept from the markdown
    would show as a break the site renders as a space, and Shift+Enter would
    type a newline instead of the <br> a paragraph gets. */
