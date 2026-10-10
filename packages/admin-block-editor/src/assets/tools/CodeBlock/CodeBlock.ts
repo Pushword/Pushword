@@ -13,11 +13,6 @@ export interface CodeBlockData extends RawData {
 }
 
 export default class CodeBlock extends Raw {
-  private _codeBlockData: {
-    html: string
-    language: string
-  } = { html: '', language: 'html' }
-
   private readonly mermaidUrl: string
   private languageSelect?: HTMLSelectElement
   private preview?: HTMLElement
@@ -38,29 +33,7 @@ export default class CodeBlock extends Raw {
   }) {
     super({ data, api, readOnly })
     this.mermaidUrl = config.mermaidUrl
-    this._codeBlockData = {
-      html: data?.html || '',
-      language: data?.language || 'html',
-    }
-
-    // Override data property with getter/setter to update Monaco when data changes
-    Object.defineProperty(this, 'data', {
-      get: () => this._codeBlockData,
-      set: (newData: CodeBlockData) => {
-        const html = newData?.html || ''
-        const language = newData?.language || this._codeBlockData.language || 'html'
-        this._codeBlockData = { html, language }
-
-        // Update Monaco editor if it exists
-        if (this.editorInstance && this.editorInstance.getValue() !== html) {
-          this.editorInstance.setValue(html)
-        }
-        this.updateLanguage()
-        this.schedulePreview()
-      },
-      configurable: true,
-      enumerable: true,
-    })
+    this.data.language = data?.language || 'html'
   }
 
   render(): HTMLElement {
@@ -75,7 +48,7 @@ export default class CodeBlock extends Raw {
     this.updateLanguage()
     select.disabled = this.readOnly
     select.addEventListener('change', () => {
-      this._codeBlockData.language = select.value
+      this.data.language = select.value
       this.updateLanguage()
       this.schedulePreview()
     })
@@ -96,20 +69,20 @@ export default class CodeBlock extends Raw {
   }
 
   private updateLanguage(instance = this.editorInstance): void {
-    if (this.wrapper) this.wrapper.dataset.language = this._codeBlockData.language
+    if (this.wrapper) this.wrapper.dataset.language = this.data.language
     if (this.languageSelect) {
       if (
         !Array.from(this.languageSelect.options).some(
-          (option) => option.value === this._codeBlockData.language,
+          (option) => option.value === this.data.language,
         )
       ) {
-        make.option(this.languageSelect, this._codeBlockData.language)
+        make.option(this.languageSelect, this.data.language)
       }
-      this.languageSelect.value = this._codeBlockData.language
+      this.languageSelect.value = this.data.language
     }
     const model = instance?.getModel()
     if (model) {
-      window.monaco?.editor.setModelLanguage(model, this._codeBlockData.language)
+      window.monaco?.editor.setModelLanguage(model, this.data.language)
     }
   }
 
@@ -117,13 +90,13 @@ export default class CodeBlock extends Raw {
     clearTimeout(this.previewTimer)
     const revision = ++this.previewRevision
     if (!this.preview) return
-    this.preview.hidden = this._codeBlockData.language !== 'mermaid'
+    this.preview.hidden = this.data.language !== 'mermaid'
     this.preview.setAttribute('aria-busy', 'false')
     if (this.preview.hidden) {
       this.preview.replaceChildren()
       return
     }
-    const source = this.editorInstance?.getValue() ?? this._codeBlockData.html
+    const source = this.editorInstance?.getValue() ?? this.data.html
     if (!source.trim()) {
       this.preview.textContent = this.api.i18n.t(
         'Enter Mermaid code to preview the diagram.',
@@ -162,14 +135,6 @@ export default class CodeBlock extends Raw {
     clearTimeout(this.previewTimer)
     this.contentListener?.dispose()
     super.destroy()
-  }
-
-  save(): { html: string; language: string } {
-    if (this.editorInstance) {
-      this._codeBlockData.html = this.editorInstance.getValue()
-    }
-
-    return this._codeBlockData
   }
 
   static get toolbox() {

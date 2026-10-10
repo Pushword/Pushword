@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { API } from '@editorjs/editorjs'
-import CodeBlock from './CodeBlock'
+import CodeBlock, { type CodeBlockData } from './CodeBlock'
 
 const { renderMermaid } = vi.hoisted(() => ({ renderMermaid: vi.fn() }))
 vi.mock('../../../../../js-helper/src/mermaid.js', () => ({ renderMermaid }))
@@ -25,6 +25,10 @@ const monacoEditor = {
   },
 }
 const setModelLanguage = vi.fn()
+const api = {
+  styles: { input: 'input' },
+  i18n: { t: (text: string) => text },
+} as unknown as API
 
 function create(
   language = 'mermaid',
@@ -39,10 +43,7 @@ function create(
       mermaidUrl: new URL('../../../../../js-helper/src/mermaid.js', import.meta.url)
         .pathname,
     },
-    api: {
-      styles: { input: 'input' },
-      i18n: { t: (text: string) => text },
-    } as unknown as API,
+    api,
   })
   tools.push(tool)
   const element = tool.render()
@@ -186,5 +187,79 @@ describe('Mermaid code block', () => {
     await vi.advanceTimersByTimeAsync(0)
     expect(readOnly.element.querySelector('select')?.disabled).toBe(true)
     expect(monacoEditor.updateOptions).toHaveBeenCalledWith({ readOnly: true })
+  })
+})
+
+describe('Code block data', () => {
+  it('saves the edited code with the language picked in the select', async () => {
+    const { element, tool } = create('php', 'echo 1;')
+    await vi.advanceTimersByTimeAsync(0)
+    const select = element.querySelector('select')!
+
+    select.value = 'yaml'
+    select.dispatchEvent(new Event('change'))
+    monacoEditor.setValue('a: 1')
+
+    expect(setModelLanguage).toHaveBeenLastCalledWith(model, 'yaml')
+    expect(tool.save()).toEqual({ html: 'a: 1', language: 'yaml' })
+  })
+
+  it('defaults to html, and saves its code before Monaco is ready', () => {
+    const tool = new CodeBlock({
+      data: { html: '<p>x</p>' },
+      readOnly: false,
+      config: { mermaidUrl: '' },
+      api,
+    })
+    tools.push(tool)
+    const element = tool.render()
+
+    expect(element.querySelector('select')?.value).toBe('html')
+    expect(tool.save()).toEqual({ html: '<p>x</p>', language: 'html' })
+  })
+
+  // Undo compares block states as JSON strings, so the key order is part of the shape.
+  it('saves html then language, without keys it does not own', () => {
+    const savedJson = (data: Partial<CodeBlockData>) =>
+      JSON.stringify(
+        new CodeBlock({
+          data: data as CodeBlockData,
+          readOnly: false,
+          config: { mermaidUrl: '' },
+          api,
+        }).save(),
+      )
+
+    expect(savedJson({ language: 'php', html: 'echo 1;', stray: true })).toBe(
+      '{"html":"echo 1;","language":"php"}',
+    )
+    expect(savedJson({})).toBe('{"html":"","language":"html"}')
+  })
+
+  it('keeps a language missing from the list, and saves it', async () => {
+    const { element, tool } = create('rust', 'fn main() {}')
+    await vi.advanceTimersByTimeAsync(0)
+    const select = element.querySelector('select')!
+
+    expect(Array.from(select.options, (option) => option.value)).toContain('rust')
+    expect(select.value).toBe('rust')
+    expect(
+      element.querySelector<HTMLElement>('.editorjs-monaco-wrapper')?.dataset.language,
+    ).toBe('rust')
+    expect(setModelLanguage).toHaveBeenCalledWith(model, 'rust')
+    expect(tool.save()).toEqual({ html: 'fn main() {}', language: 'rust' })
+  })
+
+  it('opens Monaco in a language picked before it was ready', async () => {
+    const { element, tool } = create('php', 'a: 1')
+    const select = element.querySelector('select')!
+    select.value = 'yaml'
+    select.dispatchEvent(new Event('change'))
+
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(setModelLanguage).toHaveBeenCalledWith(model, 'yaml')
+    expect(setModelLanguage).not.toHaveBeenCalledWith(model, 'php')
+    expect(tool.save()).toEqual({ html: 'a: 1', language: 'yaml' })
   })
 })

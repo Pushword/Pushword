@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import Raw from './Raw'
+import Raw, { type RawData } from './Raw'
 import MonacoHelper from '../../../../../admin-monaco-editor/MonacoHelper.js'
 
 type Listener = () => void
@@ -81,6 +81,33 @@ describe('Raw Monaco integration', () => {
     contentHeight = 40
     listeners.contentSize!()
     expect(wrapper.style.height).toBe('60px')
+  })
+
+  it('opens Monaco on the block html, and saves html only', async () => {
+    const { editor } = makeFakeEditor(() => 20)
+    const create = vi.fn(() => editor)
+    ;(window as any).monaco = { editor: { create } }
+    ;(window as any).monacoHelper = MonacoHelper
+    const raw = new Raw({
+      data: { html: '<p>x</p>', stray: true },
+      api: {} as any,
+      readOnly: false,
+    })
+
+    expect(raw.save()).toEqual({ html: '<p>x</p>' })
+    raw.render()
+    await flush()
+
+    expect(create).toHaveBeenCalledWith(
+      expect.any(HTMLElement),
+      expect.objectContaining({ value: '<p>x</p>', language: 'twig' }),
+    )
+  })
+
+  it('saves empty html for a block inserted from the toolbox', () => {
+    const raw = new Raw({ data: {} as RawData, api: {} as any, readOnly: false })
+
+    expect(raw.save()).toEqual({ html: '' })
   })
 
   it('saves an intentionally emptied Monaco value once ready', async () => {
