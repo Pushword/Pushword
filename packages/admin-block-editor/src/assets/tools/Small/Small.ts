@@ -49,8 +49,15 @@ export default class Small implements InlineTool {
     return !!termTag
   }
 
+  /**
+   * Editor.js cleans a paragraph, a list or a quote with its inline tools' rules
+   * on save, so a tag none of them declares is stripped. `<u>` stays declared
+   * here: no underline tool is registered, yet pasted text and hand-written
+   * markdown bring it, and this rule is what has always kept it.
+   */
   public static get sanitize(): SanitizerConfig {
     return {
+      small: {},
       u: {},
     }
   }
