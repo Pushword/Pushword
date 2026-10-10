@@ -107,6 +107,13 @@ describe('CardList unknown slug message', () => {
   })
 })
 
+function stubApi(): API {
+  return {
+    i18n: { t: (text: string) => text },
+    styles: { block: 'cdx-block' },
+  } as unknown as API
+}
+
 describe('CardList icon checkboxes', () => {
   afterEach(() => {
     vi.useRealTimers()
@@ -116,11 +123,11 @@ describe('CardList icon checkboxes', () => {
   it('binds each card label to its own checkbox, even for cards built in the same millisecond', () => {
     // renderItems builds every card in one go: pin the clock to make that explicit.
     vi.useFakeTimers()
-    const api = {
-      i18n: { t: (text: string) => text },
-      styles: { block: 'cdx-block' },
-    } as unknown as API
-    const tool = new CardList({ data: { items: [{}, {}] }, api, readOnly: false })
+    const tool = new CardList({
+      data: { items: [{}, {}] },
+      api: stubApi(),
+      readOnly: false,
+    })
     document.body.appendChild(tool.render())
 
     const [first, second] = (tool as any).itemNodes
@@ -132,5 +139,26 @@ describe('CardList icon checkboxes', () => {
     second.obfuscateLinkInput.nextElementSibling.click()
     expect(second.obfuscateLinkInput.checked).toBe(true)
     expect(first.obfuscateLinkInput.checked).toBe(false)
+  })
+})
+
+describe('CardList custom fields', () => {
+  it('heads every field with its label, above its control', () => {
+    const tool = new CardList({ data: { items: [{}] }, api: stubApi(), readOnly: false })
+    const fields = [...tool.render().querySelectorAll('.cardlist-item-field')]
+
+    expect(
+      fields.map((field) => [field.children[0]!.tagName, field.children[0]!.textContent]),
+    ).toEqual([
+      ['LABEL', 'Title'],
+      ['LABEL', 'Image'],
+      ['LABEL', 'Link'],
+      ['LABEL', 'Description'],
+      ['LABEL', 'Info Label'],
+      ['LABEL', 'Button Label'],
+      ['LABEL', 'Button Link'],
+      ['LABEL', 'ID (anchor)'],
+    ])
+    expect(fields.every((field) => 2 === field.children.length)).toBe(true)
   })
 })

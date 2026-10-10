@@ -333,6 +333,26 @@ describe('Quiz personality chips', () => {
     expect(tool.save().cta).toBe('custom_form')
   })
 
+  it('points each quiz on the page at its own list of suggestions', () => {
+    document.body.textContent = ''
+    const config = { conversationTypes: ['newsletter'] }
+    for (let i = 0; i < 2; i++) {
+      document.body.appendChild(
+        new Quiz({ data: personality, api, readOnly: false, config }).render(),
+      )
+    }
+
+    const inputs = [...document.body.querySelectorAll<HTMLInputElement>('.cdx-quiz__cta')]
+    expect(inputs[0]!.getAttribute('list')).not.toBe(inputs[1]!.getAttribute('list'))
+    for (const input of inputs) {
+      expect(
+        input
+          .closest('.cdx-quiz')!
+          .contains(document.getElementById(input.getAttribute('list')!)),
+      ).toBe(true)
+    }
+  })
+
   it('offers no datalist when the conversation bundle contributes nothing', () => {
     mountedInDom(personality)
     expect(document.body.querySelector('.cdx-quiz__cta')!.getAttribute('list')).toBeNull()

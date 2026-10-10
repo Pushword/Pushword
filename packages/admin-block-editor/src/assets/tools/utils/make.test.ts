@@ -1,6 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import make from './make'
 
+describe('make.uniqueId', () => {
+  it('returns a new id on every call, even for the same prefix', () => {
+    const first = make.uniqueId('toggle')
+    const second = make.uniqueId('toggle')
+
+    expect(first).toMatch(/^toggle-\d+$/)
+    expect(second).toMatch(/^toggle-\d+$/)
+    expect(second).not.toBe(first)
+  })
+})
+
 /**
  * The link tool and the link tune each render a `targetBlank` switch, and both
  * can sit in the document at once — the inline panel is built with the editor,

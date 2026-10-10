@@ -10,7 +10,11 @@ function stubApi(): API {
   } as unknown as API
 }
 
-function attachesWith(media: string): { tool: Attaches; dispatchChange: () => void } {
+function attachesWith(media: string): {
+  tool: Attaches
+  dispatchChange: () => void
+  config: MediaToolConfig
+} {
   const dispatchChange = vi.fn()
   const config = {
     onSelectFile: vi.fn(),
@@ -25,7 +29,7 @@ function attachesWith(media: string): { tool: Attaches; dispatchChange: () => vo
     block: { dispatchChange } as unknown as BlockAPI,
   })
 
-  return { tool, dispatchChange }
+  return { tool, dispatchChange, config }
 }
 
 describe('Attaches – removing the file', () => {
@@ -50,6 +54,21 @@ describe('Attaches – removing the file', () => {
 
     expect(holder.querySelectorAll('.cdx-attaches__file-info')).toHaveLength(1)
     expect(holder.querySelectorAll('.media-tool__delete')).toHaveLength(1)
+  })
+})
+
+describe('Attaches – picking a file', () => {
+  it('hands the Select and Upload clicks to the admin callbacks, with the block', () => {
+    const { tool, config } = attachesWith('')
+    const [select, upload] =
+      tool.nodes.fileButton.querySelectorAll<HTMLElement>('.cdx-button')
+
+    select!.click()
+    expect(config.onSelectFile).toHaveBeenCalledWith(tool, expect.any(Event))
+    expect(config.onUploadFile).not.toHaveBeenCalled()
+
+    upload!.click()
+    expect(config.onUploadFile).toHaveBeenCalledWith(tool, expect.any(Event))
   })
 })
 

@@ -250,4 +250,10 @@ describe('Header.onPaste', () => {
     expect(header.save(rebuilt)).toEqual({ text: 'Pasted <b>title</b>', level: 2 })
     expect(paste('h1', { defaultLevel: 3 }).rebuilt.querySelector('h3')).not.toBeNull()
   })
+
+  it('keeps a pasted H6, the deepest level markdown holds', () => {
+    const { header, rebuilt } = paste('h6')
+
+    expect(header.save(rebuilt)).toEqual({ text: 'Pasted <b>title</b>', level: 6 })
+  })
 })
