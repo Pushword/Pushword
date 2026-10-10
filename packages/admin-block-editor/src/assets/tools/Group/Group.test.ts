@@ -3,6 +3,7 @@ import GroupStart, { GroupStartData } from './GroupStart'
 import GroupEnd from './GroupEnd'
 import { GroupNesting } from './GroupNesting'
 import { GroupRegistry } from './GroupRegistry'
+import { startAttributes } from './GroupSyntax'
 import { chunkTool } from '../../EditorJsParseMarkdown'
 import { MarkdownUtils } from '../utils/MarkdownUtils'
 import CodeBlock from '../CodeBlock/CodeBlock'
@@ -607,6 +608,8 @@ describe('GroupStart claims the show-more spellings', () => {
   })
 
   it.each([
+    // Holds nothing either, yet must not come back as the legacy comment.
+    '{{ startShowMore() }}',
     "{{ startShowMore('faq') }}",
     "{{ startShowMore('faq', 'mt-8') }}",
     "{{ startShowMore(showMoreExtraClass: 'mt-8') }}",
@@ -625,6 +628,27 @@ describe('GroupStart claims the show-more spellings', () => {
 
     expect(data).toEqual({ anchor: 'faq', class: 'lg:mt-8', collapsible: true, legacy: false })
   })
+})
+
+describe('startAttributes', () => {
+  it.each([
+    ['<div class="grid" id="faq">', { anchor: 'faq', class: 'grid' }],
+    ['  <div id="faq">  ', { anchor: 'faq', class: '' }],
+    ['{{ startShowMore() }}', { anchor: '', class: '' }],
+    ["{{startShowMore('faq')}}", { anchor: 'faq', class: '' }],
+    ["{{ startShowMore('faq', null) }}", { anchor: 'faq', class: '' }],
+    ['{{ startShowMore(null, "mt-8") }}', { anchor: '', class: 'mt-8' }],
+    ['<!--start-show-more-->', { anchor: '', class: '' }],
+  ])('reads %s', (markdown, attributes) => {
+    expect(startAttributes(markdown)).toEqual(attributes)
+  })
+
+  it.each(['<div style="color:red" id="faq">', "{{ startShowMore(page.slug, 'mt-8') }}"])(
+    'reads nothing from %s, which no tool claims',
+    (markdown) => {
+      expect(startAttributes(markdown)).toEqual({ anchor: '', class: '' })
+    },
+  )
 })
 
 describe('a group and a collapsible never close each other', () => {

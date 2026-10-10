@@ -1,12 +1,13 @@
 import { API } from '@editorjs/editorjs'
 import { GroupNesting } from '../tools/Group/GroupNesting'
 import { GroupRegistry } from '../tools/Group/GroupRegistry'
+import { startAttributes } from '../tools/Group/GroupSyntax'
 import { MarkdownUtils } from '../tools/utils/MarkdownUtils'
 import {
   BlockToolAdapterWithConstructable,
   chunkTool,
 } from '../EditorJsParseMarkdown'
-import { OutlineEntry, OutlineSource } from './OutlineModel'
+import { groupLabel, OutlineEntry, OutlineSource } from './OutlineModel'
 
 /**
  * How the Monaco-bound sources reach the field: the editor instance once the
@@ -163,12 +164,8 @@ export class MarkdownMonacoSource extends MonacoSourceBase {
       }
     }
     if (type === GroupRegistry.START) {
-      const anchor = /\sid="([^"]*)"/.exec(stripped)?.[1] ?? ''
-      const cssClass = /\sclass="([^"]*)"/.exec(stripped)?.[1] ?? ''
-      return {
-        level: null,
-        label: [anchor === '' ? '' : `#${anchor}`, cssClass].filter(Boolean).join(' '),
-      }
+      const attributes = startAttributes(stripped)
+      return { level: null, label: groupLabel(attributes.anchor, attributes.class) }
     }
     if (type === GroupRegistry.END) return { level: null, label: '' }
 
@@ -222,9 +219,10 @@ export class JsonMonacoSource extends MonacoSourceBase {
 
   private labelOf(block: any): string {
     if (block.type === GroupRegistry.START) {
-      const anchor = typeof block.data?.anchor === 'string' ? block.data.anchor : ''
-      const cssClass = typeof block.data?.class === 'string' ? block.data.class : ''
-      return [anchor === '' ? '' : `#${anchor}`, cssClass].filter(Boolean).join(' ')
+      return groupLabel(
+        typeof block.data?.anchor === 'string' ? block.data.anchor : '',
+        typeof block.data?.class === 'string' ? block.data.class : '',
+      )
     }
 
     const text = typeof block.data?.text === 'string' ? block.data.text : ''

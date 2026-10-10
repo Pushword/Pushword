@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { API } from '@editorjs/editorjs'
 import { JsonMonacoSource, MarkdownMonacoSource } from './MonacoOutlineSource'
+import { EditorJsOutlineSource } from './EditorJsOutlineSource'
 import Header from '../tools/Header/Header'
-import GroupStart from '../tools/Group/GroupStart'
+import GroupStart, { GroupStartData } from '../tools/Group/GroupStart'
 import GroupEnd from '../tools/Group/GroupEnd'
 import Paragraph from '../tools/Paragraph/Paragraph'
 import Raw from '../tools/Raw/Raw'
@@ -65,6 +66,47 @@ describe('MarkdownMonacoSource.entries', () => {
       { index: 1, type: 'paragraph', level: null, label: 'inside' },
       { index: 2, type: 'raw', level: null, label: '</div>' },
     ])
+  })
+})
+
+describe('MarkdownMonacoSource group labels', () => {
+  /** The label the block-mode rail gives the group `markdown` imports as. */
+  function blockModeLabel(markdown: string): string {
+    let data: GroupStartData = {}
+    const editor = {
+      blocks: {
+        insert: (_type: string, inserted: GroupStartData) => {
+          data = inserted
+        },
+      },
+    }
+    GroupStart.importFromMarkdown(editor as unknown as API, markdown)
+
+    const holder = document.createElement('div')
+    const api = { i18n: { t: (key: string) => key } }
+    holder.appendChild(
+      new GroupStart({ data, api, block: {}, readOnly: false } as never).render(),
+    )
+    const blocks = {
+      getBlocksCount: () => 1,
+      getBlockByIndex: () => ({ name: 'groupStart', holder }),
+    }
+
+    return new EditorJsOutlineSource({ blocks } as never).entries()[0]!.label
+  }
+
+  it.each([
+    ['<div id="faq" class="grid">', '#faq grid'],
+    ["{{ startShowMore('itinerary', 'mt-8') }}", '#itinerary mt-8'],
+    ["{{ startShowMore(showMoreExtraClass: 'mt-8') }}", 'mt-8'],
+    ['<!--start-show-more-->', ''],
+  ])('labels %s as the block editor does', (start, label) => {
+    const { source } = markdownSource(start)
+
+    expect(source.entries()).toEqual([
+      { index: 0, type: 'groupStart', level: null, label },
+    ])
+    expect(blockModeLabel(start)).toBe(label)
   })
 })
 
@@ -206,5 +248,19 @@ describe('JsonMonacoSource', () => {
     const { source } = jsonSource('{ broken')
 
     expect(source.entries()).toEqual([])
+  })
+
+  it('labels a group only from the attributes that are strings', () => {
+    const { source } = jsonSource(
+      JSON.stringify({
+        blocks: [
+          { type: 'groupStart', data: { class: 'grid' } },
+          { type: 'groupStart', data: { anchor: 7, class: null } },
+          { type: 'groupStart' },
+        ],
+      }),
+    )
+
+    expect(source.entries().map((entry) => entry.label)).toEqual(['grid', '', ''])
   })
 })

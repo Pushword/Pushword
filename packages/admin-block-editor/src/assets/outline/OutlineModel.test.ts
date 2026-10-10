@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildOutlineTree, OutlineEntry, OutlineNode } from './OutlineModel'
+import { buildOutlineTree, groupLabel, OutlineEntry, OutlineNode } from './OutlineModel'
 
 /** 'h2'..'h6' → header, 'gs'/'ge' → group markers, anything else → leaf type. */
 function entries(types: string[]): OutlineEntry[] {
@@ -96,5 +96,16 @@ describe('buildOutlineTree — headers and groups interleaved', () => {
 
   it('closes a section holding a group when the next header arrives', () => {
     expect(treeOf(['h2', 'gs', 'p', 'ge', 'h2'])).toBe('h2:0-3[gs:1-3[p:2-2]] h2:4-4')
+  })
+})
+
+describe('groupLabel', () => {
+  it.each([
+    ['faq', 'grid gap-4', '#faq grid gap-4'],
+    ['faq', '', '#faq'],
+    ['', 'grid', 'grid'],
+    ['', '', ''],
+  ])('labels anchor %j and class %j as %j', (anchor, className, label) => {
+    expect(groupLabel(anchor, className)).toBe(label)
   })
 })

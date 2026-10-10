@@ -1,6 +1,6 @@
 import { API, BlockAPI } from '@editorjs/editorjs'
 import { GroupRegistry } from '../tools/Group/GroupRegistry'
-import { OutlineEntry, OutlineSource } from './OutlineModel'
+import { groupLabel, OutlineEntry, OutlineSource } from './OutlineModel'
 
 /**
  * Outline source over a live EditorJS instance. Reads through the block API,
@@ -75,11 +75,10 @@ export class EditorJsOutlineSource implements OutlineSource {
 
   private labelOf(block: BlockAPI): string {
     if (block.name === GroupRegistry.START) {
-      const anchor =
-        block.holder.querySelector<HTMLInputElement>('.pw-group-anchor')?.value ?? ''
-      const cssClass =
-        block.holder.querySelector<HTMLInputElement>('.pw-group-class')?.value ?? ''
-      return [anchor === '' ? '' : `#${anchor}`, cssClass].filter(Boolean).join(' ')
+      return groupLabel(
+        block.holder.querySelector<HTMLInputElement>('.pw-group-anchor')?.value ?? '',
+        block.holder.querySelector<HTMLInputElement>('.pw-group-class')?.value ?? '',
+      )
     }
     if (block.name === GroupRegistry.END) return ''
 

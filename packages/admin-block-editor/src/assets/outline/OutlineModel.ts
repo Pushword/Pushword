@@ -46,6 +46,11 @@ export interface OutlineSource {
   dispose?(): void
 }
 
+/** A group's row label, the same in every mode: `#anchor class`. */
+export function groupLabel(anchor: string, className: string): string {
+  return [anchor === '' ? '' : `#${anchor}`, className].filter(Boolean).join(' ')
+}
+
 export function buildOutlineTree(entries: OutlineEntry[]): OutlineNode[] {
   return buildRange(entries, 0, entries.length, groupEndByStart(entries))
 }

@@ -8,7 +8,7 @@ import {
   buildStartCall,
   GroupKind,
   kindOf,
-  startCallArguments,
+  startAttributes,
   startSyntax,
 } from './GroupSyntax'
 
@@ -229,25 +229,11 @@ export default class GroupStart implements BlockTool {
   }
 
   static importFromMarkdown(editor: API, markdown: string): void {
-    const trimmed = markdown.trim()
-    const syntax = startSyntax(trimmed)
+    const syntax = startSyntax(markdown)
 
-    if ('div' === syntax) {
-      editor.blocks.insert(GroupRegistry.START, {
-        anchor: /\sid="([^"]*)"/.exec(trimmed)?.[1] ?? '',
-        class: /\sclass="([^"]*)"/.exec(trimmed)?.[1] ?? '',
-        collapsible: false,
-        legacy: false,
-      })
-
-      return
-    }
-
-    const [id, className] = 'twig' === syntax ? startCallArguments(trimmed) : []
     editor.blocks.insert(GroupRegistry.START, {
-      anchor: id ?? '',
-      class: className ?? '',
-      collapsible: true,
+      ...startAttributes(markdown),
+      collapsible: 'div' !== syntax,
       legacy: 'comment' === syntax,
     })
   }

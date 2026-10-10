@@ -101,9 +101,28 @@ function callArguments(markdown: string, parameters: string[]): (string | null)[
   return values
 }
 
-/** The anchor and the wrapper class an opening call carries. */
-export function startCallArguments(markdown: string): (string | null)[] {
-  return callArguments(markdown, START_PARAMETERS)
+/**
+ * The anchor and the class an opening line carries, whatever its spelling: the
+ * `<div>`'s id and class, the call's id and wrapper class. The comment holds neither.
+ */
+export function startAttributes(markdown: string): { anchor: string; class: string } {
+  const trimmed = markdown.trim()
+  const syntax = startSyntax(trimmed)
+
+  if ('div' === syntax) {
+    return {
+      anchor: /\sid="([^"]*)"/.exec(trimmed)?.[1] ?? '',
+      class: /\sclass="([^"]*)"/.exec(trimmed)?.[1] ?? '',
+    }
+  }
+
+  if ('twig' === syntax) {
+    const [anchor, className] = callArguments(trimmed, START_PARAMETERS)
+
+    return { anchor: anchor ?? '', class: className ?? '' }
+  }
+
+  return { anchor: '', class: '' }
 }
 
 /**
