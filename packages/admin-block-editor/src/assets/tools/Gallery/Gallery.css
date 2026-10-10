@@ -87,56 +87,11 @@
   clip-path: inset(15px 15px 20px 15px);
 }
 
-.cdxcarousel-removeBtn {
-  position: absolute;
-  padding: 3px;
-  right: 10px;
-  top: 10px;
-  display: inline-flex;
-  width: 34px;
-  height: 34px;
-  line-height: 34px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 3px;
-  cursor: pointer;
-  border: 0;
-  outline: none;
-  background-color: white;
-  color: #000;
-  transition: background 200ms;
-  z-index: 2;
-}
-
-.cdxcarousel-removeBtn:hover {
-  background: #eff2f5;
-}
-
-.cdxcarousel-leftBtn {
-  position: absolute;
-  padding: 3px;
-  right: 88px;
-  top: 10px;
-  display: inline-flex;
-  width: 34px;
-  height: 34px;
-  line-height: 34px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 3px;
-  cursor: pointer;
-  border: 0;
-  outline: none;
-  background-color: white;
-  color: #000;
-  transition: background 200ms;
-  z-index: 2;
-}
-
+.cdxcarousel-removeBtn,
+.cdxcarousel-leftBtn,
 .cdxcarousel-rightBtn {
   position: absolute;
   padding: 3px;
-  right: 49px;
   top: 10px;
   display: inline-flex;
   width: 34px;
@@ -150,6 +105,47 @@
   outline: none;
   background-color: white;
   color: #000;
+  /* Lifted off the picture, like the single image's remove button. */
+  box-shadow: 0 1px 3px rgba(29, 32, 43, 0.25);
   transition: background 200ms;
   z-index: 2;
+}
+
+/* Removing sits apart from the two moves, so a reorder never lands on it. */
+.cdxcarousel-removeBtn {
+  right: 10px;
+}
+
+.cdxcarousel-rightBtn {
+  right: 57px;
+}
+
+.cdxcarousel-leftBtn {
+  right: 96px;
+}
+
+.cdxcarousel-removeBtn:hover,
+.cdxcarousel-leftBtn:hover,
+.cdxcarousel-rightBtn:hover {
+  background: #eff2f5;
+}
+
+/* Three buttons on every picture all the time drown the pictures: where a
+   pointer can hover, they show up on the item being pointed at. Touch screens
+   keep them visible. */
+@media (hover: hover) {
+  .cdxcarousel-item > .cdxcarousel-removeBtn,
+  .cdxcarousel-item > .cdxcarousel-leftBtn,
+  .cdxcarousel-item > .cdxcarousel-rightBtn {
+    opacity: 0;
+  }
+
+  .cdxcarousel-item:hover > .cdxcarousel-removeBtn,
+  .cdxcarousel-item:hover > .cdxcarousel-leftBtn,
+  .cdxcarousel-item:hover > .cdxcarousel-rightBtn,
+  .cdxcarousel-item:focus-within > .cdxcarousel-removeBtn,
+  .cdxcarousel-item:focus-within > .cdxcarousel-leftBtn,
+  .cdxcarousel-item:focus-within > .cdxcarousel-rightBtn {
+    opacity: 1;
+  }
 }
