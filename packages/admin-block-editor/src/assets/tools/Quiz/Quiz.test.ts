@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest'
 import Quiz, { QuizData } from './Quiz'
 import { API } from '@editorjs/editorjs'
 
@@ -392,5 +392,161 @@ describe('Quiz personality chips', () => {
 
     expect(saved.profiles![0]!.alt).toBe('A snowy peak')
     expect(saved.questions![0]!.answers![0]!.alt).toBe('Climbing')
+  })
+})
+
+describe('Quiz media fields', () => {
+  const FIELD_ID = 'editorjs_1_inline_image'
+  const show = vi.fn()
+  const translatingApi = {
+    notifier: { show },
+    i18n: { t: (k: string) => `t(${k})` },
+  } as unknown as API
+
+  function questionMedia(): {
+    tool: Quiz
+    input: HTMLInputElement
+    choose: HTMLElement
+    upload: HTMLElement
+  } {
+    const tool = new Quiz({
+      data: { questions: [{ q: 'Q', answers: [{ a: 'A' }] }] },
+      api: translatingApi,
+      readOnly: false,
+    })
+    document.body.appendChild(tool.render())
+    const field = document
+      .querySelector('.cdx-quiz__q-media')!
+      .closest('.cdx-quiz__media')!
+    const [choose, upload] = field.querySelectorAll<HTMLElement>('.cdx-quiz__media-btn')
+
+    return {
+      tool,
+      input: field.querySelector('input')!,
+      choose: choose!,
+      upload: upload!,
+    }
+  }
+
+  /** The file dialog cannot open under a test runner: catch the input it is built on. */
+  function fileInputOpenedBy(run: () => void): HTMLInputElement {
+    const created: HTMLInputElement[] = []
+    const createElement = document.createElement.bind(document)
+    const spy = vi
+      .spyOn(document, 'createElement')
+      .mockImplementation((tag: string, options?: ElementCreationOptions) => {
+        const element = createElement(tag, options)
+        if (tag === 'input') created.push(element as HTMLInputElement)
+        return element
+      })
+    run()
+    spy.mockRestore()
+
+    const input = created.find((element) => element.type === 'file')
+    if (!input) throw new Error('no file input was opened')
+
+    return input
+  }
+
+  function chooses(input: HTMLInputElement, file: File): void {
+    Object.defineProperty(input, 'files', { value: [file] })
+    input.dispatchEvent(new Event('change'))
+  }
+
+  beforeEach(() => {
+    document.body.textContent = ''
+    show.mockClear()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('writes the picked media into the field it was opened from', () => {
+    document.body.innerHTML = `
+      <div class="pw-media-picker">
+        <select id="${FIELD_ID}"></select>
+        <button data-pw-media-picker-action="choose"></button>
+      </div>
+    `
+    const { tool, input, choose } = questionMedia()
+
+    choose.click()
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        origin: window.location.origin,
+        data: {
+          type: 'pw-media-picker-select',
+          fieldId: FIELD_ID,
+          media: { id: 7, fileName: 'photo.jpg' },
+        },
+      }),
+    )
+
+    expect(input.value).toBe('photo.jpg')
+    expect(tool.save().questions![0]!.media).toBe('photo.jpg')
+  })
+
+  it('says so, in the editor language, when the page has no picker', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { choose } = questionMedia()
+
+    choose.click()
+
+    expect(show).toHaveBeenCalledWith({
+      message: 't(Media picker not available)',
+      style: 'error',
+    })
+  })
+
+  it('uploads the chosen file and writes its name into the field', async () => {
+    const fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ success: true, file: { media: 'up.jpg' } }),
+    }))
+    vi.stubGlobal('fetch', fetch)
+    const { input, upload } = questionMedia()
+
+    const dialog = fileInputOpenedBy(() => upload.click())
+    expect(dialog.accept).toBe('image/*')
+    chooses(dialog, new File(['x'], 'up.jpg', { type: 'image/jpeg' }))
+
+    await vi.waitFor(() => expect(input.value).toBe('up.jpg'))
+    expect((fetch.mock.calls[0] as unknown[])[0]).toBe('/admin/media/block')
+  })
+
+  it('leaves no file input behind in the page when the dialog is cancelled', () => {
+    const { upload } = questionMedia()
+
+    // A cancelled dialog fires nothing, so the input never hears back.
+    upload.click()
+
+    expect(document.querySelectorAll('input[type="file"]')).toHaveLength(0)
+  })
+
+  it('says why an upload failed, in the editor language', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: false,
+        status: 422,
+        json: async () => ({ success: 0, error: 'Unsupported mime type.' }),
+      })),
+    )
+    const { upload } = questionMedia()
+
+    chooses(
+      fileInputOpenedBy(() => upload.click()),
+      new File(['x'], 'virus.exe'),
+    )
+
+    await vi.waitFor(() =>
+      expect(show).toHaveBeenCalledWith({
+        message: 't(Upload failed) (Unsupported mime type.)',
+        style: 'error',
+      }),
+    )
   })
 })

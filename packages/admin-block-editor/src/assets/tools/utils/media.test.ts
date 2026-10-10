@@ -1,20 +1,200 @@
-import { afterEach, describe, it, expect, vi } from 'vitest'
-import { beginMediaPick, MediaUtils } from './media'
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest'
+import { MediaUtils, openMediaPicker, pickedMediaName } from './media'
+
+const FIELD_ID = 'editorjs_1_inline_image'
+const MODAL_URL = '/admin/media?pwMediaPicker=1'
+
+function pickerOnPage(): { choose: HTMLButtonElement; upload: HTMLButtonElement } {
+  document.body.innerHTML = `
+    <div class="pw-media-picker">
+      <select id="${FIELD_ID}" data-pw-media-picker-modal-url="${MODAL_URL}"></select>
+      <button data-pw-media-picker-action="choose"></button>
+      <button data-pw-media-picker-action="upload"></button>
+    </div>
+  `
+  const button = (action: string) =>
+    document.querySelector<HTMLButtonElement>(
+      `[data-pw-media-picker-action="${action}"]`,
+    )!
+
+  return { choose: button('choose'), upload: button('upload') }
+}
+
+function pickerPosts(data: unknown, origin = window.location.origin): void {
+  window.dispatchEvent(new MessageEvent('message', { origin, data }))
+}
+
+function pickerSends(fileName: string, fieldId = FIELD_ID): void {
+  pickerPosts({ type: 'pw-media-picker-select', fieldId, media: { id: 7, fileName } })
+}
 
 /**
  * Image blocks, card lists and quizzes all open the one picker modal through the
- * one hidden <select>, so the pick registry is shared: whoever opens next owns
- * the answer, and the opener it displaced must already have stopped listening.
+ * one hidden <select>, so the message a pick answers with names that select, not
+ * the block: whoever opened last owns the answer.
  */
-describe('beginMediaPick', () => {
+describe('openMediaPicker', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    document.body.innerHTML = ''
+  })
+
+  it('opens the modal through the choose button, or the upload one when asked', () => {
+    const { choose, upload } = pickerOnPage()
+    const chosen = vi.spyOn(choose, 'click')
+    const uploaded = vi.spyOn(upload, 'click')
+
+    openMediaPicker({ onPick: vi.fn() })
+    expect(chosen).toHaveBeenCalledOnce()
+
+    openMediaPicker({ action: 'upload', onPick: vi.fn() })
+    expect(uploaded).toHaveBeenCalledOnce()
+  })
+
+  it('opens nothing and says so to its caller when the page has no picker', () => {
+    expect(openMediaPicker({ onPick: vi.fn() })).toBeNull()
+
+    pickerOnPage()
+    expect(
+      openMediaPicker({ field: '[id*="inline_attaches"]', onPick: vi.fn() }),
+    ).toBeNull()
+  })
+
+  it('hands over the media the picker posts for its field', () => {
+    pickerOnPage()
+    const onPick = vi.fn()
+
+    openMediaPicker({ onPick })
+    pickerSends('photo.jpg')
+
+    expect(onPick).toHaveBeenCalledWith({ id: 7, fileName: 'photo.jpg' })
+  })
+
+  it('ignores another origin, another message type, another field and an empty pick', () => {
+    pickerOnPage()
+    const onPick = vi.fn()
+    openMediaPicker({ onPick })
+
+    pickerPosts(
+      { type: 'pw-media-picker-select', fieldId: FIELD_ID, media: { id: 1 } },
+      'https://evil.test',
+    )
+    pickerPosts({
+      type: 'pw-media-picker-multi-select',
+      fieldId: FIELD_ID,
+      items: [{ id: 1 }],
+    })
+    pickerSends('other.jpg', 'editorjs_2_inline_image')
+    pickerPosts({ type: 'pw-media-picker-select', fieldId: FIELD_ID })
+    pickerPosts(null)
+    expect(onPick).not.toHaveBeenCalled()
+
+    // None of those was the pick's answer, so the real one still lands
+    pickerSends('photo.jpg')
+    expect(onPick).toHaveBeenCalledOnce()
+  })
+
+  it('stops listening once its pick lands', () => {
+    pickerOnPage()
+    const onPick = vi.fn()
+
+    openMediaPicker({ onPick })
+    pickerSends('photo.jpg')
+    pickerSends('other.jpg')
+
+    expect(onPick).toHaveBeenCalledOnce()
+  })
+
+  it('stops listening when its caller aborts, e.g. a block destroyed mid-pick', () => {
+    pickerOnPage()
+    const onPick = vi.fn()
+
+    openMediaPicker({ onPick })!.abort()
+    pickerSends('photo.jpg')
+
+    expect(onPick).not.toHaveBeenCalled()
+  })
+
   it('drops what the previous pick left listening, whichever tool opened it', () => {
-    const abandoned = beginMediaPick()
-    expect(abandoned.signal.aborted).toBe(false)
+    pickerOnPage()
+    const abandoned = vi.fn()
+    const picking = vi.fn()
 
-    const picking = beginMediaPick()
+    // The editor opens the picker, closes it without choosing, then picks for another block
+    const first = openMediaPicker({ onPick: abandoned })!
+    openMediaPicker({ onPick: picking })
+    pickerSends('photo.jpg')
 
-    expect(abandoned.signal.aborted).toBe(true)
-    expect(picking.signal.aborted).toBe(false)
+    expect(first.signal.aborted).toBe(true)
+    expect(abandoned).not.toHaveBeenCalled()
+    expect(picking).toHaveBeenCalledOnce()
+  })
+
+  it('in multi mode, hands over the whole selection and nothing else', () => {
+    pickerOnPage()
+    const onPick = vi.fn()
+    openMediaPicker({ multi: true, onPick })
+
+    pickerSends('single.jpg')
+    expect(onPick).not.toHaveBeenCalled()
+
+    pickerPosts({
+      type: 'pw-media-picker-multi-select',
+      fieldId: FIELD_ID,
+      items: [
+        { id: 1, fileName: 'one.jpg' },
+        { id: 2, fileName: 'two.jpg' },
+      ],
+    })
+    expect(onPick).toHaveBeenCalledWith([
+      { id: 1, fileName: 'one.jpg' },
+      { id: 2, fileName: 'two.jpg' },
+    ])
+  })
+
+  it('in multi mode, opens the modal on a multi-select URL and restores the one it borrowed', () => {
+    const { choose } = pickerOnPage()
+    const select = document.querySelector('select')!
+    let urlAtClick = ''
+    choose.addEventListener('click', () => {
+      urlAtClick = select.dataset.pwMediaPickerModalUrl || ''
+    })
+
+    openMediaPicker({ multi: true, onPick: vi.fn() })
+
+    expect(new URL(urlAtClick).searchParams.get('pwMediaPickerMulti')).toBe('1')
+    expect(select.dataset.pwMediaPickerModalUrl).toBe(MODAL_URL)
+  })
+
+  it('uses and restores the legacy popup URL when opening in multi mode', () => {
+    const { choose } = pickerOnPage()
+    const select = document.querySelector('select')!
+    const legacyUrl = '/admin/media?existing=1'
+    delete select.dataset.pwMediaPickerModalUrl
+    select.dataset.pwAdminPopupModalUrl = legacyUrl
+    let urlAtClick = ''
+    choose.addEventListener('click', () => {
+      urlAtClick = select.dataset.pwAdminPopupModalUrl || ''
+    })
+
+    openMediaPicker({ multi: true, onPick: vi.fn() })
+
+    const openedUrl = new URL(urlAtClick)
+    expect(openedUrl.searchParams.get('existing')).toBe('1')
+    expect(openedUrl.searchParams.get('pwMediaPickerMulti')).toBe('1')
+    expect(select.dataset.pwAdminPopupModalUrl).toBe(legacyUrl)
+    expect(select.dataset.pwMediaPickerModalUrl).toBeUndefined()
+  })
+})
+
+describe('pickedMediaName', () => {
+  it('is the file name, else the id', () => {
+    expect(pickedMediaName({ id: 7, fileName: 'photo.jpg' })).toBe('photo.jpg')
+    expect(pickedMediaName({ id: 7, fileName: '' })).toBe('7')
   })
 })
 
