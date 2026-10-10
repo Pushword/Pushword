@@ -173,7 +173,7 @@ export default class Header {
     const container = document.createElement('div')
     container.classList.add('ce-header-container')
 
-    // Create a wrapper for the level selector (outside text flow)
+    // Create a wrapper for the level selector, set after the heading text
     const levelWrapper = document.createElement('div')
     levelWrapper.classList.add('ce-header-level-wrapper')
     levelWrapper.contentEditable = 'false'
@@ -221,8 +221,8 @@ export default class Header {
     tag.contentEditable = 'true'
     tag.dataset.placeholder = this.api.i18n.t('')
 
-    container.appendChild(levelWrapper)
     container.appendChild(tag)
+    container.appendChild(levelWrapper)
 
     return container
   }
