@@ -1,5 +1,5 @@
-/* The level badge trails the heading, on its first baseline: the heading text
-   starts on the same edge as the body copy, and the badge reads as a note. */
+/* The level badge leads the heading, on its first baseline: the level is read
+   before the text, and every heading starts on the same edge past the badge. */
 .ce-header-container {
   display: flex;
   align-items: baseline;
@@ -66,10 +66,12 @@
   margin-top: 8px;
 }
 
-/* Level selector wrapper: kept out of the copied text by ClipboardManager */
+/* Level selector wrapper: kept out of the copied text by ClipboardManager.
+   Its padding hangs in the gutter, so the level lines up with the body copy. */
 .ce-header-level-wrapper {
   position: relative;
   flex: none;
+  margin-left: -6px;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;

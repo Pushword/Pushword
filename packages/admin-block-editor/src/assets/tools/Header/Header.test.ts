@@ -60,7 +60,7 @@ describe('Header.isItMarkdownExported', () => {
 })
 
 describe('Header.render', () => {
-  it('puts the level badge after the heading, so the text starts on the column edge', () => {
+  it('puts the level badge before the heading, so the level is read first', () => {
     const api = { i18n: { t: (text: string) => text } } as unknown as API
     const container = new Header({
       data: { text: 'Title', level: 3 },
@@ -69,9 +69,9 @@ describe('Header.render', () => {
       readOnly: false,
     }).render()
 
-    expect([...container.children].map((child) => child.tagName)).toEqual(['H3', 'DIV'])
+    expect([...container.children].map((child) => child.tagName)).toEqual(['DIV', 'H3'])
     expect(
-      container.lastElementChild?.classList.contains('ce-header-level-wrapper'),
+      container.firstElementChild?.classList.contains('ce-header-level-wrapper'),
     ).toBe(true)
   })
 })
