@@ -9,6 +9,12 @@
   contain: inline-size;
 }
 
+/* Body copy: at the admin's 14px, the 650px column ran ~95 characters a line;
+   16px brings it back near 80 (1.6 line height comes with the paragraph tool). */
+.codex-editor__redactor {
+  font-size: 16px;
+}
+
 /* heading anchor size */
 .ce-header::after {
   font-size: 1rem;
