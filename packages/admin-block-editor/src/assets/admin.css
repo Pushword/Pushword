@@ -35,8 +35,10 @@ a[rel='encrypt']:not(.link-btn) {
 
 /** editorjs quote ui inspired by https://github.com/editor-js/quote/pull/23 */
 
+/* One accent bar holds the text and its caption together. The caption is
+   supporting content: muted and smaller, not link-blue behind a rule of its own. */
 .cdx-quote {
-  border-left: 0;
+  border-left: 3px solid #cbd5e1; /* slate-300 */
 }
 
 .cdx-quote .cdx-input[data-placeholder]::before {
@@ -45,21 +47,18 @@ a[rel='encrypt']:not(.link-btn) {
 
 .cdx-quote__text {
   min-height: unset !important;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   border: none;
-  border-left: 1px solid #517b9f;
   box-shadow: none;
   border-radius: 0;
-  margin-bottom: 0;
 }
 
 .cdx-quote__caption {
   border: none;
-  border-left: 1px solid #517b9f;
   box-shadow: none;
   border-radius: 0;
-  color: #3e58fb;
-  border-top: 1px solid #00000017;
+  color: #64748b; /* slate-500 */
+  font-size: var(--pw-text-sm, 14px);
 }
 
 /* @editorjs/list sets pre-wrap: a soft line break kept from the markdown
