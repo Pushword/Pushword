@@ -133,6 +133,12 @@ describe('Notice markdown round-trip', () => {
     expect(Notice.exportToMarkdown(importNotice(markdown))).toBe(markdown)
   })
 
+  it('round-trips bold, italic, a link and code in the body', () => {
+    const markdown = '> [!note] Title\n> **bold**, _italic_, [a link](/page) and `code`'
+
+    expect(Notice.exportToMarkdown(importNotice(markdown))).toBe(markdown)
+  })
+
   it('defaults a level-less block to note', () => {
     expect(Notice.exportToMarkdown({ text: 'body' })).toBe('> [!note]\n> body')
   })

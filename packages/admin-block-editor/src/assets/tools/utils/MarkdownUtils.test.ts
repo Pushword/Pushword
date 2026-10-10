@@ -285,6 +285,25 @@ describe('MarkdownUtils.extractSnippetCall', () => {
   })
 })
 
+describe('MarkdownUtils line helpers', () => {
+  it('cuts contenteditable HTML at every spelling of <br>', () => {
+    expect(MarkdownUtils.htmlLines('a<br>b<br/>c<br />d<BR>e')).toEqual([
+      'a',
+      'b',
+      'c',
+      'd',
+      'e',
+    ])
+  })
+
+  it('quotes each line, an empty one as a bare marker, and reads them back', () => {
+    const quoted = MarkdownUtils.toBlockquote(['One.', '', 'Two.'])
+
+    expect(quoted).toBe('> One.\n>\n> Two.')
+    expect(MarkdownUtils.fromBlockquote(quoted.split('\n'))).toEqual(['One.', '', 'Two.'])
+  })
+})
+
 describe('MarkdownUtils.extractJsonCall', () => {
   it('parses an object or an array and hands back the arguments after it', () => {
     expect(

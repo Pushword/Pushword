@@ -16,10 +16,10 @@ export default class Paragraph extends ParagraphTool {
       return ''
     }
 
-    let markdown = data.text
-      .replace(/(&nbsp;| |\u00A0)+ */g, ' ')
-      .split('<br>')
-      .join('  \n') // 2 spaces = <br> in markdown; a bare newline stays soft
+    // 2 spaces = <br> in markdown; a bare newline stays soft
+    let markdown = MarkdownUtils.htmlLines(
+      data.text.replace(/(&nbsp;| |\u00A0)+ */g, ' '),
+    ).join('  \n')
     markdown = MarkdownUtils.convertInlineHtmlToMarkdown(markdown)
     const formattedMarkdown = await MarkdownUtils.formatMarkdownWithPrettier(markdown)
     return MarkdownUtils.addAttributes(formattedMarkdown, tunes)

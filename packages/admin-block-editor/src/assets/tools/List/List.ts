@@ -59,7 +59,7 @@ export default class List extends ListTool {
       // A <br> is a hard break; a newline kept from the source stays soft.
       // Either way the next line sits under the item's text.
       const text = MarkdownUtils.convertInlineHtmlToMarkdown(
-        content.replace(/<br\s*\/?>/gi, '  \n'),
+        MarkdownUtils.htmlLines(content).join('  \n'),
       )
       const textIndent = indent + ' '.repeat(marker.length + 1)
       markdown += `${indent}${marker} ${text.replace(/\n/g, '\n' + textIndent)}\n`

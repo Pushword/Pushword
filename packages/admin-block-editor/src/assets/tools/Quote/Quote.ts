@@ -14,19 +14,14 @@ export default class Quote extends QuoteTool {
       return ''
     }
 
-    let markdown = ''
-
-    const lines = data.text.split(/<br\s*\/?>/gi)
-    for (const line of lines) {
-      markdown += `> ${line.trim()}` + '\n'
-    }
+    const lines = MarkdownUtils.htmlLines(data.text).map((line) => line.trim())
 
     // Handle caption if present
     if (data.caption) {
-      markdown += `> — <cite>${data.caption}</cite>`
+      lines.push(`— <cite>${data.caption}</cite>`)
     }
 
-    return MarkdownUtils.addAttributes(markdown, tunes)
+    return MarkdownUtils.addAttributes(MarkdownUtils.toBlockquote(lines), tunes)
   }
 
   static importFromMarkdown(editor: API, markdown: string): void {
@@ -36,7 +31,7 @@ export default class Quote extends QuoteTool {
 
     const lines = markdownWithoutTunes.split('\n')
     let caption = ''
-    let quoteText = ''
+    const quoteLines: string[] = []
     let inQuote = true
 
     for (const line of lines) {
@@ -49,12 +44,12 @@ export default class Quote extends QuoteTool {
         continue
       }
       if (line.trim().startsWith('>')) {
-        quoteText += line.trim().replace(/^>\s?/, '') + '<br>'
+        quoteLines.push(line.trim())
       }
     }
 
     caption = caption.trim()
-    quoteText = quoteText.replace(/<br>$/, '').trim()
+    const quoteText = MarkdownUtils.fromBlockquote(quoteLines).join('<br>').trim()
 
     const block = editor.blocks.insert('quote')
     editor.blocks.update(

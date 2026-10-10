@@ -150,13 +150,15 @@ export default class Notice implements BlockTool {
     const level = (data?.level || 'note').toLowerCase()
     const title = (data?.title ?? '').trim()
 
-    let markdown = `> [!${level}]${'' !== title ? ' ' + title : ''}`
-    for (const line of (data?.text ?? '').split(/<br\s*\/?>/gi)) {
-      const text = MarkdownUtils.convertInlineHtmlToMarkdown(line).trim()
-      markdown += '\n' + (text === '' ? '>' : `> ${text}`)
-    }
+    const marker = `[!${level}]${'' !== title ? ' ' + title : ''}`
+    const body = MarkdownUtils.htmlLines(data?.text ?? '').map((line) =>
+      MarkdownUtils.convertInlineHtmlToMarkdown(line).trim(),
+    )
 
-    return MarkdownUtils.addAttributes(markdown, tunes ?? {})
+    return MarkdownUtils.addAttributes(
+      MarkdownUtils.toBlockquote([marker, ...body]),
+      tunes ?? {},
+    )
   }
 
   static importFromMarkdown(editor: API, markdown: string): void {
@@ -168,10 +170,8 @@ export default class Notice implements BlockTool {
     const data: NoticeData = {
       level: (marker[1] ?? 'note').toLowerCase(),
       title: (marker[2] ?? '').trim(),
-      text: lines
-        .map((line) =>
-          MarkdownUtils.convertInlineMarkdownToHtml(line.replace(/^>[ \t]?/, '')),
-        )
+      text: MarkdownUtils.fromBlockquote(lines)
+        .map((line) => MarkdownUtils.convertInlineMarkdownToHtml(line))
         .join('<br>'),
     }
 

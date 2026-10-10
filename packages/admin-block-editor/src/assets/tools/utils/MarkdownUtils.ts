@@ -224,6 +224,21 @@ export class MarkdownUtils {
     return markdown
   }
 
+  /** The lines of contenteditable HTML, cut at each `<br>` however it is spelled. */
+  static htmlLines(html: string): string[] {
+    return html.split(/<br\s*\/?>/i)
+  }
+
+  /** `lines` as a blockquote, an empty one as a bare `>`. */
+  static toBlockquote(lines: string[]): string {
+    return lines.map((line) => (line === '' ? '>' : `> ${line}`)).join('\n')
+  }
+
+  /** The lines of a blockquote without their `>` marker. */
+  static fromBlockquote(lines: string[]): string[] {
+    return lines.map((line) => line.replace(/^>[ \t]?/, ''))
+  }
+
   static startWithAttribute(firstLine: string): boolean {
     const line = firstLine.trim()
     if (line.startsWith('{#') && (line.endsWith('#}') || !line.endsWith('}')))
