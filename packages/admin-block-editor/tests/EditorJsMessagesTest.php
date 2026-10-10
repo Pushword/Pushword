@@ -147,4 +147,20 @@ final class EditorJsMessagesTest extends TestCase
             self::assertDoesNotMatchRegularExpression('/^editor[A-Z]/', $translation, $locale.' misses the key for "'.$label.'"');
         });
     }
+
+    public function testTheIncompleteStateBlockMessagesAreKeyedOnTheStringsTheToolsShow(): void
+    {
+        $translator = new Translator('fr');
+        $translator->addLoader('yaml', new YamlFileLoader());
+        $translator->addResource('yaml', __DIR__.'/../src/translations/messages.fr.yaml', 'fr');
+
+        $messages = new EditorJsMessages($translator)->getMessages();
+
+        // StateBlock passes each tool's incompleteMessage to api.i18n.t() verbatim.
+        self::assertSame(
+            'Ajoutez d\'abord l\'URL de la vidéo, sa miniature et son texte alternatif.',
+            $messages['tools']['embed']['Add the video URL, its thumbnail and its alternative text first.'],
+        );
+        self::assertSame('Indiquez d\'abord quelles pages lister.', $messages['tools']['pages_list']['Say which pages to list first.']);
+    }
 }

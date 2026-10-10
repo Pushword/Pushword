@@ -234,8 +234,7 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
     return this.data
   }
 
-  public readonly incompleteMessage =
-    'Something is missing to properly render the the pages list.'
+  public readonly incompleteMessage = 'Say which pages to list first.'
 
   public validate(): boolean {
     this.updateData()

@@ -119,7 +119,11 @@ final readonly class EditorJsMessages
                     'Loading preview…' => 'editorMermaidLoading',
                     'Unable to render the Mermaid diagram.' => 'editorMermaidError',
                 ]),
-                'embed' => $this->translate([...self::MEDIA, 'Style' => 'editorStyle']),
+                'embed' => $this->translate([
+                    ...self::MEDIA,
+                    'Add the video URL, its thumbnail and its alternative text first.' => 'editorEmbedIncomplete',
+                    'Style' => 'editorStyle',
+                ]),
                 'gallery' => $this->translate([
                     ...self::MEDIA,
                     'Ce média est déjà présent dans la galerie.' => 'editorMediaAlreadyInGallery',
@@ -156,7 +160,10 @@ final readonly class EditorJsMessages
                     'Style' => 'editorStyle',
                     'Text link' => 'editorLinkText',
                 ]),
-                'pages_list' => $this->translate(['No parameters' => 'editorNoParameters']),
+                'pages_list' => $this->translate([
+                    'No parameters' => 'editorNoParameters',
+                    'Say which pages to list first.' => 'editorPagesListIncomplete',
+                ]),
                 'quiz' => $this->translate([
                     'Media picker not available' => 'editorMediaPickerUnavailable',
                     'Upload failed' => 'editorUploadFailed',

@@ -30,6 +30,7 @@ editorDeleteColumn: 'Supprimer la colonne'
 editorDeleteRow: 'Supprimer la ligne'
 editorDelimiter: 'Séparateur'
 editorEmbed: 'Intégration'
+editorEmbedIncomplete: "Ajoutez d'abord l'URL de la vidéo, sa miniature et son texte alternatif."
 editorErrorOccurred: "Une erreur s'est produite"
 editorFilter: 'Rechercher'
 editorGallery: 'Galerie'
@@ -73,6 +74,7 @@ editorOutlineMoveGroup: 'Déplacer le groupe'
 editorOutlineMoveHeading: 'Déplacer le titre'
 editorOutlineMoveSection: 'Déplacer la section'
 editorPagesList: 'Liste de pages'
+editorPagesListIncomplete: "Indiquez d'abord quelles pages lister."
 editorParagraphPlaceholder: 'Écrivez, ou tapez / pour ajouter un bloc'
 editorQuiz: 'Quiz'
 editorQuote: 'Citation'
