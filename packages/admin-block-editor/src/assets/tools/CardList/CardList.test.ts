@@ -38,3 +38,27 @@ describe('CardList description', () => {
     expect(field.querySelector('[contenteditable]')!.innerHTML).toBe('<b>un</b><br>deux')
   })
 })
+
+describe('CardList unknown slug', () => {
+  it('says in words that no page has the slug, not only with a red border', () => {
+    window.pagesUriList = ['/known']
+    const api = {
+      i18n: { t: (text: string) => text },
+      styles: { block: 'cdx-block' },
+    } as unknown as API
+    const tool = new CardList({
+      data: { items: [{ page: 'missing' }, { page: 'known' }] },
+      api,
+      readOnly: false,
+    })
+    tool.render()
+
+    expect(tool.validate()).toBe(false)
+    const [missing, known] = (tool as any).itemNodes
+    expect(missing.pageInput.getAttribute('aria-invalid')).toBe('true')
+    expect(missing.slugError.hidden).toBe(false)
+    expect(missing.pageInput.getAttribute('aria-describedby')).toBe(missing.slugError.id)
+    expect(known.pageInput.hasAttribute('aria-invalid')).toBe(false)
+    expect(known.slugError.hidden).toBe(true)
+  })
+})

@@ -109,6 +109,7 @@ final readonly class EditorJsMessages
             ]),
             'tools' => [
                 'attaches' => $this->translate(self::MEDIA),
+                'card_list' => $this->translate(['No page has this slug' => 'editorCardListUnknownSlug']),
                 'codeBlock' => $this->translate([
                     'Enter Mermaid code to preview the diagram.' => 'editorMermaidEmpty',
                     'Language' => 'editorLanguage',

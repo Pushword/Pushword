@@ -13,6 +13,7 @@ editorAttachment: 'Pièce jointe'
 editorBold: 'Gras'
 editorCaption: 'Légende'
 editorCardList: 'Liste de cartes'
+editorCardListUnknownSlug: 'Aucune page ne porte ce slug'
 editorChooseSnippet: 'Choisir un snippet…'
 editorChooseSnippetFirst: "Choisissez d'abord un snippet."
 editorClass: 'Classe'

@@ -42,6 +42,7 @@ interface CardListItemNodes {
   wrapper: HTMLElement
   idInput: HTMLInputElement
   pageInput: HTMLInputElement
+  slugError: HTMLElement
   titleInput: HTMLElement
   imageContainer: HTMLElement
   imageValue: string
@@ -60,6 +61,7 @@ const DeleteIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="1
 const AddIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`
 
 export default class CardList extends BaseTool {
+  private static slugErrorCount = 0
   declare public data: CardListData
   private itemNodes: CardListItemNodes[] = []
   private itemsContainer?: HTMLElement
@@ -154,6 +156,13 @@ export default class CardList extends BaseTool {
       placeholder,
     }) as HTMLInputElement
     const pageSuggester = make.element('div', 'page-suggester')
+    // An unknown slug is said in words, not only by the red border.
+    const slugError = make.element('p', 'cardlist-slug-error', {
+      id: `cardlist-slug-error-${++CardList.slugErrorCount}`,
+    })
+    slugError.textContent = this.api.i18n.t('No page has this slug')
+    slugError.hidden = true
+    pageInput.setAttribute('aria-describedby', slugError.id)
     pageInputWrapper.appendChild(pageInput)
     pageInputWrapper.appendChild(pageSuggester)
 
@@ -171,15 +180,13 @@ export default class CardList extends BaseTool {
     pageInput.addEventListener('blur', () => {
       if (slugValidationTimeout) clearTimeout(slugValidationTimeout)
       slugValidationTimeout = setTimeout(() => {
-        const slug = pageInput.value
-        const isValid = this.isValidSlug(slug)
-        pageInput.classList.toggle('cardlist-slug-invalid', !isValid)
+        CardList.showSlugValidity(pageInput, slugError, this.isValidSlug(pageInput.value))
       }, 500)
     })
 
     // Clear invalid state when user starts typing and update placeholder if cleared
     pageInput.addEventListener('input', () => {
-      pageInput.classList.remove('cardlist-slug-invalid')
+      CardList.showSlugValidity(pageInput, slugError, true)
       // Reset placeholder to default when slug has value
       if (pageInput.value) {
         pageInput.placeholder = 'Page slug...'
@@ -349,12 +356,15 @@ export default class CardList extends BaseTool {
     })
 
     wrapper.appendChild(header)
+    // Under the header row, so the row's buttons stay centred on the input.
+    wrapper.appendChild(slugError)
     wrapper.appendChild(customFields)
 
     return {
       wrapper,
       idInput,
       pageInput,
+      slugError,
       titleInput,
       imageContainer,
       imageValue,
@@ -701,13 +711,23 @@ export default class CardList extends BaseTool {
     // Check all slugs are valid (visual feedback already handled by blur event)
     let allValid = true
     this.itemNodes.forEach((nodes) => {
-      const slug = nodes.pageInput.value
-      const isValid = this.isValidSlug(slug)
-      nodes.pageInput.classList.toggle('cardlist-slug-invalid', !isValid)
+      const isValid = this.isValidSlug(nodes.pageInput.value)
+      CardList.showSlugValidity(nodes.pageInput, nodes.slugError, isValid)
       if (!isValid) allValid = false
     })
 
     return allValid
+  }
+
+  private static showSlugValidity(
+    input: HTMLInputElement,
+    message: HTMLElement,
+    isValid: boolean,
+  ): void {
+    input.classList.toggle('cardlist-slug-invalid', !isValid)
+    if (isValid) input.removeAttribute('aria-invalid')
+    else input.setAttribute('aria-invalid', 'true')
+    message.hidden = isValid
   }
 
   public static exportToMarkdown(data: CardListData, tunes?: BlockTuneData): string {

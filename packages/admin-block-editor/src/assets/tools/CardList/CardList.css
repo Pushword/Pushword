@@ -66,6 +66,12 @@
   border-color: #d00;
 }
 
+.cardlist-slug-error {
+  margin: 4px 0 0;
+  font-size: var(--pw-text-xs, 12px);
+  color: #b91c1c; /* red-700 */
+}
+
 .cardlist-item-actions {
   display: flex;
   gap: 5px;
