@@ -75,6 +75,7 @@ export class OutlinePanel {
   private unitCount = 0
   /** Tree behind the rows on screen; what a keyboard move reads to find its neighbour. */
   private tree: OutlineNode[] = []
+  private topology = ''
 
   constructor(options: OutlinePanelOptions) {
     this.holderId = options.holderId
@@ -112,12 +113,12 @@ export class OutlinePanel {
     this.attachListKeyboard()
   }
 
-  /** Debounced full re-render; every data change funnels through here. */
+  /** Refresh labels in place when block identities and hierarchy are unchanged. */
   scheduleRefresh(): void {
     this.cancelPendingRefresh()
     this.refreshTimer = window.setTimeout(() => {
       this.refreshTimer = null
-      this.refresh()
+      this.refresh(true)
     }, 300)
   }
 
@@ -128,10 +129,44 @@ export class OutlinePanel {
     this.refreshTimer = null
   }
 
-  refresh(): void {
+  refresh(preserveRows = false): void {
     // A pending debounce has nothing left to do, and leaving it armed would make
     // the rows this render replaces look stale to the guard below.
     this.cancelPendingRefresh()
+    const entries = this.source.entries()
+    const topology = entries.every((entry) => entry.id !== undefined)
+      ? JSON.stringify(
+          entries.map(({ id, index, type, level }) => [id, index, type, level]),
+        )
+      : ''
+    if (preserveRows && topology !== '' && topology === this.topology) {
+      const byIndex = new Map(entries.map((entry) => [entry.index, entry]))
+      const texts = new Map(
+        Array.from(
+          this.list.querySelectorAll<HTMLElement>('.pw-outline-text'),
+          (text) => [
+            Number(text.closest<HTMLElement>('.pw-outline-row')!.dataset.index),
+            text,
+          ],
+        ),
+      )
+      const update = (nodes: OutlineNode[]): void => {
+        for (const node of nodes) {
+          const entry = byIndex.get(node.entry.index)!
+          const text = texts.get(entry.index)
+          if (text) {
+            const label = entry.label || this.toolMeta(entry.type).title
+            if (text.textContent !== label) text.textContent = label
+            text.classList.toggle('pw-outline-text--type', entry.label === '')
+          }
+          node.entry = entry
+          update(node.children)
+        }
+      }
+      update(this.tree)
+      return
+    }
+    this.topology = topology
     this.generation++
 
     const focused =
@@ -140,7 +175,6 @@ export class OutlinePanel {
         ? document.activeElement.closest('.pw-outline-row')?.getAttribute('data-index')
         : null
 
-    const entries = this.source.entries()
     this.unitCount = entries.length
     this.tree = buildOutlineTree(entries)
     this.list.replaceChildren(...this.tree.map((node) => this.renderNode(node, 0)))

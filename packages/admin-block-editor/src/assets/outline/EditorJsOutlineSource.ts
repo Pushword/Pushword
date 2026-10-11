@@ -17,6 +17,7 @@ export class EditorJsOutlineSource implements OutlineSource {
       const block = this.api.blocks.getBlockByIndex(index)
       if (block === undefined) continue
       result.push({
+        id: block.id,
         index,
         type: block.name,
         label: this.labelOf(block),

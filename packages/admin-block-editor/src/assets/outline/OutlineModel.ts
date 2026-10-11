@@ -15,6 +15,8 @@ import { GroupRegistry } from '../tools/Group/GroupRegistry'
  */
 
 export interface OutlineEntry {
+  /** Stable identity when the source provides one (Editor.js blocks). */
+  id?: string
   /** Position of the unit in its source: block index, or markdown chunk index. */
   index: number
   /** Tool name (EditorJS block) or the tool a markdown chunk belongs to. */

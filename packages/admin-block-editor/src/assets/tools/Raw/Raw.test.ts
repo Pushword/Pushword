@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import Raw, { type RawData } from './Raw'
 import MonacoHelper from '../../../../../admin-monaco-editor/MonacoHelper.js'
 
@@ -6,12 +6,16 @@ type Listener = () => void
 
 function makeFakeEditor(getContentHeight: () => number) {
   const listeners: { contentSize?: Listener; modelContent?: Listener } = {}
-  const model = { dispose: vi.fn() }
+  const model = {
+    dispose: vi.fn(),
+    getPositionAt: (offset: number) => ({ lineNumber: 1, column: offset + 1 }),
+  }
   const editor = {
     getModel: () => model,
     dispose: vi.fn(),
     getValue: () => '',
     setValue: vi.fn(),
+    setSelection: vi.fn(),
     getContentHeight,
     layout: vi.fn(),
     onDidContentSizeChange: (cb: Listener) => {
@@ -23,6 +27,17 @@ function makeFakeEditor(getContentHeight: () => number) {
   }
   return { editor, model, listeners }
 }
+
+beforeEach(() => vi.stubGlobal('IntersectionObserver', undefined))
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+  delete (window as any).monaco
+  delete (window as any).monacoHelper
+  delete window.pwMonacoUrl
+  delete window.pwMonacoLoading
+  document.body.replaceChildren()
+})
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -53,13 +68,7 @@ describe('MonacoHelper.updateHeight', () => {
 })
 
 describe('Raw Monaco integration', () => {
-  afterEach(() => {
-    vi.restoreAllMocks()
-    delete (window as any).monaco
-    delete (window as any).monacoHelper
-    delete window.pwMonacoUrl
-    delete window.pwMonacoLoading
-  })
+
 
   it('follows content size changes reported by Monaco (grow and shrink)', async () => {
     let contentHeight = 228
@@ -185,4 +194,111 @@ it('disposes its owned Monaco model when the block is removed', async () => {
   expect(model.dispose).toHaveBeenCalledOnce()
   delete (window as any).monaco
   delete (window as any).monacoHelper
+})
+
+it('defers offscreen Monaco instances while preserving data and activates once near the viewport', async () => {
+  let enter!: () => void
+  const disconnect = vi.fn()
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        enter = () => callback([{ isIntersecting: true }])
+      }
+      observe() {}
+      disconnect = disconnect
+    },
+  )
+  const { editor } = makeFakeEditor(() => 20)
+  const create = vi.fn(() => editor)
+  ;(window as any).monaco = { editor: { create } }
+  ;(window as any).monacoHelper = MonacoHelper
+  const raw = new Raw({
+    data: { html: 'Offscreen source' },
+    api: {} as any,
+    readOnly: false,
+  })
+  const wrapper = raw.render()
+  await flush()
+  expect(create).not.toHaveBeenCalled()
+  expect(raw.save()).toEqual({ html: 'Offscreen source' })
+  expect(wrapper.querySelector('textarea')!.value).toBe('Offscreen source')
+  enter()
+  enter()
+  await flush()
+  expect(create).toHaveBeenCalledOnce()
+  expect(wrapper.querySelector('textarea')).toBeNull()
+  expect(disconnect).toHaveBeenCalled()
+  raw.destroy()
+})
+
+it('activates a deferred editor for keyboard focus and never mounts after destruction', async () => {
+  let enter!: () => void
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        enter = () => callback([{ isIntersecting: true }])
+      }
+      observe() {}
+      disconnect() {}
+    },
+  )
+  const { editor } = makeFakeEditor(() => 20)
+  const focus = vi.fn()
+  const create = vi.fn(() => ({ ...editor, focus }))
+  ;(window as any).monaco = { editor: { create } }
+  ;(window as any).monacoHelper = MonacoHelper
+  const raw = new Raw({ data: { html: 'Code' }, api: {} as any, readOnly: false })
+  const wrapper = raw.render()
+  document.body.append(wrapper)
+  wrapper.querySelector('textarea')!.focus()
+  await flush()
+  expect(create).toHaveBeenCalledOnce()
+  expect(focus).toHaveBeenCalledOnce()
+  raw.destroy()
+  wrapper.remove()
+  const removed = new Raw({ data: { html: 'Removed' }, api: {} as any, readOnly: false })
+  removed.render()
+  removed.destroy()
+  enter()
+  await flush()
+  expect(create).toHaveBeenCalledOnce()
+})
+
+it('keeps typing and the selected range while a deferred Monaco bundle is loading', async () => {
+  let ready!: (value: boolean) => void
+  window.pwMonacoLoading = new Promise((resolve) => {
+    ready = resolve
+  })
+  const { editor } = makeFakeEditor(() => 20)
+  const focus = vi.fn()
+  const create = vi.fn(() => ({ ...editor, focus }))
+  const raw = new Raw({ data: { html: 'Before' }, api: {} as any, readOnly: false })
+  const wrapper = raw.render()
+  document.body.append(wrapper)
+  const preview = wrapper.querySelector('textarea')!
+  preview.focus()
+  preview.value = 'Before typing'
+  preview.setSelectionRange(2, 7, 'backward')
+  preview.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(raw.save()).toEqual({ html: 'Before typing' })
+  ;(window as any).monaco = { editor: { create } }
+  ;(window as any).monacoHelper = MonacoHelper
+  ready(true)
+  await flush()
+  expect(create).toHaveBeenCalledWith(
+    expect.any(HTMLElement),
+    expect.objectContaining({ value: 'Before typing' }),
+  )
+  expect(editor.setSelection).toHaveBeenCalledWith({
+    selectionStartLineNumber: 1,
+    selectionStartColumn: 8,
+    positionLineNumber: 1,
+    positionColumn: 3,
+  })
+  expect(focus).toHaveBeenCalledOnce()
+  raw.destroy()
+  wrapper.remove()
+  delete window.pwMonacoLoading
 })

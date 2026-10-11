@@ -61,9 +61,10 @@ window.editorjsConfig.undo = {
 ```
 
 The callback is synchronous and must return block data. It receives a deep copy of
-each block's data and its `{ id, type }`, for both the initial state and subsequent
-snapshots. The returned data is copied before storage and comparison, then used
-when undo or redo restores that block. Capturing a snapshot does not modify the
+each captured block's data and its `{ id, type }`, for the initial state and
+subsequent edits. During ordinary typing, unchanged blocks reuse their normalized
+snapshots without calling the callback again. The returned data is copied before
+storage and comparison, then used when undo or redo restores that block. Capturing a snapshot does not modify the
 rendered tool or its live data; `id`, `type` and `tunes` remain unchanged.
 Keep the callback deterministic and idempotent: restored data will be captured
 again during subsequent edits.

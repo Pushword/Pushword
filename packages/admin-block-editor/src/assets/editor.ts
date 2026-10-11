@@ -1,4 +1,5 @@
 import EditorJS, { API, OutputData } from '@editorjs/editorjs'
+import type { BlockMutationEvent } from '@editorjs/editorjs/types/events/block'
 import Header from './tools/Header/Header'
 import Small from './tools/Small/Small'
 import List from './tools/List/List'
@@ -52,7 +53,7 @@ import {
 interface EditorJSConfig {
   holder?: string
   tools?: Record<string, any>
-  onChange?: () => void
+  onChange?: (api: API, events: BlockMutationEvent | BlockMutationEvent[]) => void
   onReady?: () => void
   undo?: Pick<UndoOptions, 'normalizeBlockData'>
   [key: string]: any
@@ -159,10 +160,11 @@ export class editorJs {
     // save
     // eslint-disable-next-line @typescript-eslint/no-this-alias -- onChange's own `this` (the Editor.js instance, for `this.holder`) shadows the class instance, so we keep a reference to it.
     const self = this
-    config.onChange = async function (this: any) {
+    config.onChange = async function (this: any, _api, events) {
       // Blocks dragged into or out of a group change membership without any
-      // group marker firing a lifecycle hook, so retag on every change.
-      GroupRegistry.decorateSoon()
+      // group marker firing a lifecycle hook, so retag on structural changes.
+      if (!events || [events].flat().some((event) => event.type !== 'block-changed'))
+        GroupRegistry.decorateSoon()
       outline?.scheduleRefresh()
 
       clearTimeout(historyExport)
@@ -206,6 +208,7 @@ export class editorJs {
             // An applied snapshot bypasses onChange, so undo and redo write the
             // bound field (and refresh the outline) through this hook instead.
             onApply: () => {
+              GroupRegistry.decorateSoon()
               outline?.scheduleRefresh()
               // Markdown conversion is expensive on long pages; keep it outside keyboard transactions.
               clearTimeout(historyExport)

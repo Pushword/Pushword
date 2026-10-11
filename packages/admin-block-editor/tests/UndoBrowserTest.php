@@ -140,6 +140,23 @@ final class UndoBrowserTest extends AbstractPantherAdminTest
         }
     }
 
+    public function testIncrementalWorkAndDeferredCodeEditors(): void
+    {
+        $client = $this->openEditor('block-editor-performance-test');
+        $script = file_get_contents(__DIR__.'/browser/performance.js');
+        self::assertIsString($script);
+        $client->executeScript($script);
+        self::assertTrue($this->pollUntilTrue($client, 'return window.editorPerformanceChecks.done', [], 60));
+        $results = $client->executeScript('return window.editorPerformanceChecks.results');
+        self::assertIsArray($results);
+        foreach ($results as $result) {
+            self::assertIsArray($result);
+            self::assertTrue($result['passed'], json_encode($result, \JSON_THROW_ON_ERROR));
+        }
+
+        self::assertCount(10, $results);
+    }
+
     private function shortcut(Client $client, string $key): void
     {
         $driver = $client->getWebDriver();

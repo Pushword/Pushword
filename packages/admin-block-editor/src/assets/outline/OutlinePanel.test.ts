@@ -543,3 +543,40 @@ describe('OutlinePanel following the mode switches', () => {
     expect(document.querySelector('.pw-outline--off')).not.toBeNull()
   })
 })
+
+it('refreshes labels without replacing rows when stable block identities keep their hierarchy', () => {
+  const entries = [
+    { ...entry(0, 'header', 'Title', 2), id: 'heading' },
+    { ...entry(1, 'paragraph', 'Text'), id: 'body' },
+  ]
+  const source = buildPanel(entries)
+  const before = rows()
+  entries[1]!.label = 'Edited text'
+  panel.refresh(true)
+  expect(rows()[0]).toBe(before[0])
+  expect(rows()[1]).toBe(before[1])
+  expect(rowText(rows()[1])).toBe('Edited text')
+  rows()[1]!.querySelector<HTMLButtonElement>('.pw-outline-label')!.click()
+  expect(source.navigated).toEqual([entries[1]])
+
+  entries[0]!.level = 3
+  panel.refresh(true)
+  expect(rows()[0]).not.toBe(before[0])
+  expect(rows()[0]!.classList.contains('pw-outline-row--h3')).toBe(true)
+})
+
+it('rebuilds rows for a reorder even when block types and heading levels match', () => {
+  const entries = [
+    { ...entry(0, 'paragraph', 'First'), id: 'a' },
+    { ...entry(1, 'paragraph', 'Second'), id: 'b' },
+  ]
+  buildPanel(entries)
+  const before = rows()[0]
+  entries.reverse()
+  entries.forEach((entry, index) => {
+    entry.index = index
+  })
+  panel.refresh(true)
+  expect(rows()[0]).not.toBe(before)
+  expect(rowText(rows()[0])).toBe('Second')
+})

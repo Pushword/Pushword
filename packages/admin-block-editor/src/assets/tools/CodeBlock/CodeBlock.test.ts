@@ -52,6 +52,7 @@ function create(
 }
 
 beforeEach(() => {
+  vi.stubGlobal('IntersectionObserver', undefined)
   vi.useFakeTimers()
   vi.clearAllMocks()
   listeners = []

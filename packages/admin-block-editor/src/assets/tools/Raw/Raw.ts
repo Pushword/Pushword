@@ -17,6 +17,7 @@ export default class Raw extends BaseTool {
   api: API
   wrapper?: HTMLElement
   editorInstance?: editor.IStandaloneCodeEditor
+  private visibility?: IntersectionObserver
 
   static get toolbox() {
     return {
@@ -58,19 +59,43 @@ export default class Raw extends BaseTool {
     const editorElem = document.createElement('div')
     editorElem.classList.add('editorjs-monaco-editor')
     editorElem.style.height = '100%'
-    // const editorElem = document.createElement('textarea')
-    // editorElem.value = this.data.html
-    // editorElem.setAttribute('data-editor', 'twig')
+    const preview = document.createElement('textarea')
+    preview.className = 'editorjs-monaco-preview'
+    preview.value = this.data.html
+    preview.readOnly = this.readOnly
+    preview.rows = Math.min(20, Math.max(2, this.data.html.split('\n').length))
+    preview.addEventListener('input', () => {
+      this.data.html = preview.value
+    })
+    editorElem.appendChild(preview)
     this.wrapper.appendChild(editorElem)
 
+    let initialization: Promise<void> | undefined
+    const activate = (): Promise<void> => {
+      this.visibility?.disconnect()
+      return (initialization ??= this.initializeMonaco(editorElem).then(() => {
+        embedded.instance = this.editorInstance
+      }))
+    }
     const embedded = {
-      ready: Promise.resolve(),
       instance: undefined as editor.IStandaloneCodeEditor | undefined,
+      activate,
     }
     embeddedEditors.set(this.wrapper, embedded)
-    embedded.ready = this.initializeMonaco(editorElem).then(() => {
-      embedded.instance = this.editorInstance
+    preview.addEventListener('focus', () => {
+      void activate()
     })
+    if (typeof IntersectionObserver === 'undefined') {
+      void activate()
+    } else {
+      this.visibility = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) void activate()
+        },
+        { rootMargin: '400px' },
+      )
+      this.visibility.observe(this.wrapper)
+    }
 
     return this.wrapper
   }
@@ -82,6 +107,9 @@ export default class Raw extends BaseTool {
       }
 
       try {
+        const focused = editorElem.contains(document.activeElement)
+        const preview = editorElem.querySelector('textarea')
+        editorElem.replaceChildren()
         this.editorInstance = this.instantiateEditor(editorElem)
         const monacoHelperInstance = new window.monacoHelper!(this.editorInstance)
 
@@ -95,6 +123,25 @@ export default class Raw extends BaseTool {
             new CustomEvent('pw:history-change', { bubbles: true }),
           )
         })
+        if (focused) {
+          const model = this.editorInstance.getModel()!
+          if (preview) {
+            const backward = preview.selectionDirection === 'backward'
+            const start = model.getPositionAt(
+              backward ? preview.selectionEnd : preview.selectionStart,
+            )
+            const end = model.getPositionAt(
+              backward ? preview.selectionStart : preview.selectionEnd,
+            )
+            this.editorInstance.setSelection({
+              selectionStartLineNumber: start.lineNumber,
+              selectionStartColumn: start.column,
+              positionLineNumber: end.lineNumber,
+              positionColumn: end.column,
+            })
+          }
+          this.editorInstance.focus()
+        }
       } catch (error) {
         console.error('Unable to initialize Monaco editor', error)
       }
@@ -102,6 +149,7 @@ export default class Raw extends BaseTool {
   }
 
   destroy(): void {
+    this.visibility?.disconnect()
     if (this.wrapper) embeddedEditors.delete(this.wrapper)
     const model = this.editorInstance?.getModel()
     this.editorInstance?.dispose()

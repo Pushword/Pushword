@@ -120,3 +120,48 @@ describe('Table.addColumn', () => {
     expect(table.getColumnAlignments()).toEqual(['left', 'right', ''])
   })
 })
+
+it('builds a large table in one pass while preserving content, alignment and spans', () => {
+  const align = vi.spyOn(Table.prototype, 'applyColumnAlignments')
+  const span = vi.spyOn(Table.prototype, 'updateColspanMarkers')
+  const content = Array.from({ length: 100 }, (_, r) =>
+    Array.from({ length: 10 }, (_, c) => `${r}:${c}`),
+  )
+  content[0]![1] = '-&gt;'
+  const table = new Table(
+    true,
+    { i18n: { t: (text: string) => text } },
+    { content, columnAlignments: ['right'] },
+    {},
+  )
+  expect(table.getData()).toEqual(content)
+  expect(table.getCell(100, 10).textContent).toBe('99:9')
+  expect(table.getCell(100, 1).style.textAlign).toBe('right')
+  expect(table.getCell(1, 1).style.gridColumnEnd).toBe('span 2')
+  expect(align).toHaveBeenCalledOnce()
+  expect(span).toHaveBeenCalledOnce()
+  align.mockRestore()
+  span.mockRestore()
+})
+
+it('respects initial row and column limits when supplied content is larger', () => {
+  const table = new Table(
+    false,
+    { i18n: { t: (text: string) => text } },
+    {
+      content: [
+        ['a', 'b', 'c'],
+        ['d', 'e', 'f'],
+        ['g', 'h', 'i'],
+      ],
+    },
+    { maxRows: 2, maxCols: 2 },
+  )
+  expect(table.getData()).toEqual([
+    ['a', 'b'],
+    ['d', 'e'],
+  ])
+  expect(table.wrapper!.querySelector('.tc-add-row--disabled')).not.toBeNull()
+  expect(table.wrapper!.querySelector('.tc-add-column--disabled')).not.toBeNull()
+  table.destroy()
+})

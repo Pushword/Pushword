@@ -373,7 +373,7 @@ export default class Table {
    * @returns {HTMLElement}
    */
   getCell(row: number, column: number): HTMLElement {
-    return this.table!.querySelectorAll(`.${CSS.row}:nth-child(${row}) .${CSS.cell}`)[column - 1] as HTMLElement;
+    return this.getRow(row)?.children[column - 1] as HTMLElement;
   }
 
   /**
@@ -383,7 +383,7 @@ export default class Table {
    * @returns {HTMLElement}
    */
   getRow(row: number): HTMLElement {
-    return this.table!.querySelector(`.${CSS.row}:nth-child(${row})`) as HTMLElement;
+    return this.table!.children[row - 1] as HTMLElement;
   }
 
   /**
@@ -642,14 +642,24 @@ export default class Table {
    */
   resize(): void {
     const { rows, cols } = this.computeInitialSize();
-
-    for (let i = 0; i < rows; i++) {
-      this.addRow();
+    const rowCount = this.config.maxRows ? Math.min(rows, this.config.maxRows) : rows;
+    const columnCount = this.config.maxCols ? Math.min(cols, this.config.maxCols) : cols;
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < rowCount; i++) {
+      const row = $.make('div', CSS.row);
+      this.fillRow(row, columnCount);
+      fragment.appendChild(row);
     }
-
-    for (let i = 0; i < cols; i++) {
-      this.addColumn();
-    }
+    this.table!.appendChild(fragment);
+    this.columnAlignments = Array(columnCount).fill('');
+    this.wrapper!.querySelector(`.${CSS.addRow}`)?.classList.toggle(
+      CSS.addRowDisabled,
+      rowCount >= (this.config.maxRows || Infinity)
+    );
+    this.wrapper!.querySelector(`.${CSS.addColumn}`)?.classList.toggle(
+      CSS.addColumnDisabled,
+      columnCount >= (this.config.maxCols || Infinity)
+    );
   }
 
   /**
@@ -661,9 +671,9 @@ export default class Table {
     const data = this.data;
 
     if (data && data.content) {
-      for (let i = 0; i < data.content.length; i++) {
+      for (let i = 0; i < Math.min(data.content.length, this.numberOfRows); i++) {
         const rowContent = data.content[i]!;
-        for (let j = 0; j < rowContent.length; j++) {
+        for (let j = 0; j < Math.min(rowContent.length, this.numberOfColumns); j++) {
           this.setCellContent(i + 1, j + 1, rowContent[j] ?? '');
         }
       }
@@ -817,11 +827,7 @@ export default class Table {
    * Get number of columns in the table
    */
   get numberOfColumns(): number {
-    if (this.numberOfRows) {
-      return this.table!.querySelectorAll(`.${CSS.row}:first-child .${CSS.cell}`).length;
-    }
-
-    return 0;
+    return this.table!.firstElementChild?.childElementCount ?? 0;
   }
 
   /**
@@ -1190,9 +1196,8 @@ export default class Table {
   getData(): string[][] {
     const data = [];
 
-    for (let i = 1; i <= this.numberOfRows; i++) {
-      const row = this.table!.querySelector(`.${CSS.row}:nth-child(${i})`) as HTMLElement;
-      const cells = Array.from(row.querySelectorAll(`.${CSS.cell}`));
+    for (const row of this.table!.children) {
+      const cells = Array.from(row.children);
       const isEmptyRow = cells.every(cell => !cell.textContent!.trim());
 
       if (isEmptyRow) {

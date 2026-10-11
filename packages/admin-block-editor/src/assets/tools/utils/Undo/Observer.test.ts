@@ -58,3 +58,35 @@ describe('History observation', () => {
     expect(f.changed).toHaveBeenCalledTimes(1)
   })
 })
+
+it('collects every affected block from DOM edits, controls and embedded editors', () => {
+  const f = fixture()
+  f.holder.firstElementChild!.innerHTML =
+    '<div class="ce-block" data-id="a"><div contenteditable>Text</div></div><div class="ce-block" data-id="b"><input></div>'
+  f.observer.flush()
+  f.changed.mockClear()
+  f.holder.querySelector('[contenteditable]')!.textContent = 'Changed'
+  f.holder.querySelector('input')!.dispatchEvent(new Event('input', { bubbles: true }))
+  f.observer.flush()
+  expect(f.changed).toHaveBeenCalledExactlyOnceWith(new Set(['a', 'b']))
+  f.changed.mockClear()
+  f.holder
+    .querySelector('[data-id="a"]')!
+    .dispatchEvent(new CustomEvent('pw:history-change', { bubbles: true }))
+  f.observer.flush()
+  expect(f.changed).toHaveBeenCalledExactlyOnceWith(new Set(['a']))
+  f.observer.destroy()
+})
+
+it('captures tune changes outside block DOM instead of reusing stale private data', () => {
+  const f = fixture()
+  const settings = document.createElement('div')
+  settings.className = 'ce-settings'
+  const input = document.createElement('input')
+  settings.append(input)
+  f.holder.append(settings)
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  f.observer.flush()
+  expect(f.changed).toHaveBeenCalledExactlyOnceWith(undefined)
+  f.observer.destroy()
+})

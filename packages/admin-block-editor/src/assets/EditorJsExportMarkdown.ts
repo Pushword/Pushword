@@ -8,7 +8,15 @@ interface BlockToolAdapterWithConstructable extends BlockToolAdapter {
   constructable?: ToolInterface
 }
 
+interface CachedExport {
+  key: string
+  tool: ToolInterface
+  markdown: Promise<string>
+}
+
 export class EditorJsExportMarkdown {
+  private static readonly caches = new WeakMap<object, Map<string, CachedExport>>()
+  private readonly cache: Map<string, CachedExport>
   private editorjsTools: ToolInterface[]
   private editorData: OutputData
   private sources: BlockSources | undefined
@@ -18,6 +26,8 @@ export class EditorJsExportMarkdown {
     this.editorjsTools = editorJsInstance.tools.getBlockTools()
     this.editorData = editorData
     this.sources = BlockSources.of(editorJsInstance)
+    this.cache = EditorJsExportMarkdown.caches.get(editorJsInstance) ?? new Map()
+    EditorJsExportMarkdown.caches.set(editorJsInstance, this.cache)
   }
 
   /**
@@ -33,11 +43,31 @@ export class EditorJsExportMarkdown {
       return ''
     }
 
+    const retained = new Set(this.editorData.blocks.map((block) => block.id))
+    for (const id of this.cache.keys()) {
+      if (!retained.has(id)) this.cache.delete(id)
+    }
+
     const markdownBlocks = await Promise.all(
       this.editorData.blocks.map(async (block) => {
         const toolClass = this.getToolClass(block.type)
-        // @ts-ignore
-        const markdown: string = await toolClass.exportToMarkdown(block.data, block.tunes)
+        const key = JSON.stringify([block.type, block.data, block.tunes])
+        let cached = block.id === undefined ? undefined : this.cache.get(block.id)
+        if (cached?.key !== key || cached.tool !== toolClass) {
+          const markdown = Promise.resolve(
+            // @ts-ignore
+            toolClass.exportToMarkdown(block.data, block.tunes),
+          )
+          cached = { key, tool: toolClass, markdown }
+          if (block.id !== undefined) this.cache.set(block.id, cached)
+          const entry = cached
+          void markdown.catch(() => {
+            if (block.id !== undefined && this.cache.get(block.id) === entry)
+              this.cache.delete(block.id)
+          })
+        }
+        const markdown = await cached.markdown
+        // Resolve on every export: a new parse can replace the preserved source.
         return this.sources?.resolve(block.id, markdown) ?? markdown
       }),
     ).then((blocks) => blocks.filter((content) => content !== ''))
@@ -47,8 +77,7 @@ export class EditorJsExportMarkdown {
 
   private getToolClass(blockName: string): ToolInterface {
     const tool = this.editorjsTools.find((t) => t.name === blockName) as
-      | BlockToolAdapterWithConstructable
-      | undefined
+      BlockToolAdapterWithConstructable | undefined
 
     if (!tool || !tool.constructable) {
       throw new Error(`Tool class for block ${blockName} not found`)

@@ -9,30 +9,64 @@ export type NormalizeBlockData = (
   block: Readonly<Pick<BlockState, 'id' | 'type'>>,
 ) => OutputBlockData['data']
 export const equal = (left: unknown, right: unknown): boolean =>
-  JSON.stringify(left) === JSON.stringify(right)
+  left === right || JSON.stringify(left) === JSON.stringify(right)
 export const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
 
-/** Block.save(), unlike Saver.save(), retains empty and temporarily invalid blocks. */
-export async function captureState(
-  editor: EditorJS,
-  normalizeBlockData?: NormalizeBlockData,
-): Promise<BlockState[]> {
-  const saved = Array.from({ length: editor.blocks.getBlocksCount() }, (_, index) => {
-    const block = editor.blocks.getBlockByIndex(index)!
-    return block.save().then((value) => {
-      if (!value)
-        throw new Error(`Unable to capture history for ${block.name} (${block.id})`)
-      return copy({
-        id: block.id,
-        type: block.name,
-        data: normalizeBlockData
-          ? normalizeBlockData(copy(value.data), { id: block.id, type: block.name })
-          : value.data,
-        tunes: (value as typeof value & { tunes?: OutputBlockData['tunes'] }).tunes ?? {},
-      })
+/** Reuse immutable snapshots of untouched tools, including pending asynchronous saves. */
+export class StateCapture {
+  private blocks = new Map<string, { holder: HTMLElement; state: Promise<BlockState> }>()
+
+  constructor(
+    private readonly editor: EditorJS,
+    private readonly normalizeBlockData?: NormalizeBlockData,
+  ) {}
+
+  reset(): void {
+    this.blocks.clear()
+  }
+
+  /** Block.save(), unlike Saver.save(), retains empty and temporarily invalid blocks. */
+  capture(changed?: ReadonlySet<string>): Promise<BlockState[]> {
+    const next = new Map<string, { holder: HTMLElement; state: Promise<BlockState> }>()
+    const saved = Array.from(
+      { length: this.editor.blocks.getBlocksCount() },
+      (_, index) => {
+        const block = this.editor.blocks.getBlockByIndex(index)!
+        const previous = this.blocks.get(block.id)
+        const state =
+          changed !== undefined &&
+          !changed.has(block.id) &&
+          previous?.holder === block.holder
+            ? previous.state
+            : block.save().then((value) => {
+                if (!value)
+                  throw new Error(
+                    `Unable to capture history for ${block.name} (${block.id})`,
+                  )
+                return copy({
+                  id: block.id,
+                  type: block.name,
+                  data: this.normalizeBlockData
+                    ? this.normalizeBlockData(copy(value.data), {
+                        id: block.id,
+                        type: block.name,
+                      })
+                    : value.data,
+                  tunes:
+                    (value as typeof value & { tunes?: OutputBlockData['tunes'] })
+                      .tunes ?? {},
+                })
+              })
+        next.set(block.id, { holder: block.holder, state })
+        return state
+      },
+    )
+    this.blocks = next
+    return Promise.all(saved).catch((error: unknown) => {
+      if (this.blocks === next) this.reset()
+      throw error
     })
-  })
-  return Promise.all(saved)
+  }
 }
 
 /** Reconcile by identity against the live editor, never against filtered export indices. */

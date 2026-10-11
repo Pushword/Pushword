@@ -5,7 +5,7 @@ import type { editor, ISelection } from 'monaco-editor'
 export const embeddedEditors = new WeakMap<
   HTMLElement,
   {
-    ready: Promise<void>
+    activate: () => Promise<void>
     instance: editor.IStandaloneCodeEditor | undefined
   }
 >()
@@ -179,7 +179,7 @@ export async function restoreSelection(
   if (saved.monaco) {
     const wrapper = block.holder.querySelector<HTMLElement>('.editorjs-monaco-wrapper')
     const embedded = wrapper && embeddedEditors.get(wrapper)
-    await embedded?.ready
+    await embedded?.activate()
     const monaco = embedded?.instance
     if (monaco) {
       monaco.focus()

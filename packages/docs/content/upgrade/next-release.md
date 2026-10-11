@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'block editor reuses unchanged exports and undo snapshots'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,10 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin-block-editor`.
+
+## Incremental block editing
+
+**Sites with custom block tools or an undo normalizer:** exports are cached by block data and tunes; unchanged history snapshots are reused.
+Keep `exportToMarkdown()` and `normalizeBlockData()` deterministic, with no side effects or dependency on invocation counts. No configuration change is required.

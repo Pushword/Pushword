@@ -530,3 +530,32 @@ it('supports Command+Z and Command+Shift+Z on macOS', async () => {
   await f.undo.flush()
   expect(f.all()[0]!.data.text).toBe('original!')
 })
+
+it('captures only the edited block in a long document and retains history across undo branches', async () => {
+  const normalize = vi.fn<NonNullable<UndoOptions['normalizeBlockData']>>((data) => data)
+  const f = fixture(
+    Array.from({ length: 200 }, (_, i) => paragraph(String(i), i === 199 ? '' : 'Text')),
+    {
+      normalizeBlockData: normalize,
+    },
+  )
+  await f.undo.initialize()
+  normalize.mockClear()
+  f.type(' first', 3)
+  await f.undo.flush()
+  expect(normalize).toHaveBeenCalledOnce()
+  expect(normalize.mock.calls[0]![1]).toEqual({ id: '3', type: 'paragraph' })
+  f.type(' second', 4)
+  await f.undo.flush()
+  expect(normalize).toHaveBeenCalledTimes(2)
+  await f.undo.undo()
+  expect(f.all()[4]!.data.text).toBe('Text')
+  expect(f.all()[3]!.data.text).toBe('Text first')
+  f.type(' branch', 5)
+  await f.undo.flush()
+  await f.undo.undo()
+  expect(f.all()[5]!.data.text).toBe('Text')
+  await f.undo.redo()
+  expect(f.all()[5]!.data.text).toBe('Text branch')
+  expect(f.all()[199]!.data.text).toBe('')
+})

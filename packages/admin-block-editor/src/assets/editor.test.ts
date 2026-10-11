@@ -335,3 +335,17 @@ it('coalesces markdown exports after a burst of history commands', async () => {
     vi.useRealTimers()
   }
 })
+
+it('decorates groups for structural changes but not ordinary typing', async () => {
+  const { GroupRegistry } = await import('./tools/Group/GroupRegistry')
+  const decorate = vi.spyOn(GroupRegistry, 'decorateSoon').mockImplementation(() => {})
+  boot('{"blocks":[]}')
+  await captured.onChange.call({ holder: 'ed' }, {}, new CustomEvent('block-changed'))
+  expect(decorate).not.toHaveBeenCalled()
+  await captured.onChange.call({ holder: 'ed' }, {}, [
+    new CustomEvent('block-changed'),
+    new CustomEvent('block-moved'),
+  ])
+  expect(decorate).toHaveBeenCalledOnce()
+  decorate.mockRestore()
+})

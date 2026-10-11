@@ -4,7 +4,7 @@ import Observer from './Observer'
 import { GroupRegistry } from '../../Group/GroupRegistry'
 import {
   applyState,
-  captureState,
+  StateCapture,
   equal,
   type BlockState,
   type NormalizeBlockData,
@@ -50,7 +50,7 @@ export class Undo {
   private readonly holder: HTMLElement
   private readonly observer: Observer
   private readonly onApply: () => void | Promise<unknown>
-  private readonly normalizeBlockData: NormalizeBlockData | undefined
+  private readonly capture: StateCapture
   private readonly maxLength: number
   private readonly groupDelay: number
   private readonly shortcuts: { undo: string[]; redo: string[] }
@@ -83,13 +83,13 @@ export class Undo {
     this.maxLength = maxLength
     this.groupDelay = config.debounceTimer ?? 500
     this.onApply = onApply ?? (() => {})
-    this.normalizeBlockData = normalizeBlockData
+    this.capture = new StateCapture(editor, normalizeBlockData)
     const defaults = { undo: ['CMD+Z'], redo: ['CMD+Y', 'CMD+SHIFT+Z'] }
     this.shortcuts = {
       undo: [config.shortcuts?.undo ?? defaults.undo].flat(),
       redo: [config.shortcuts?.redo ?? defaults.redo].flat(),
     }
-    this.observer = new Observer(() => this.record(), this.holder)
+    this.observer = new Observer((changed) => this.record(changed), this.holder)
     this.setEventListeners()
     void this.initialize()
   }
@@ -103,7 +103,7 @@ export class Undo {
     const revision = ++this.revision
     this.observer.pause()
     GroupRegistry.flushPending()
-    const state = captureState(this.editor, this.normalizeBlockData)
+    const state = this.capture.capture()
     return this.enqueue(async () => {
       const blocks = await state
       if (this.destroyed || revision !== this.revision) return
@@ -147,6 +147,7 @@ export class Undo {
     this.destroyed = true
     this.revision++
     this.observer.destroy()
+    this.capture.reset()
     this.listeners.abort()
   }
 
@@ -158,7 +159,7 @@ export class Undo {
     return result
   }
 
-  private record(): void {
+  private record(changed?: ReadonlySet<string>): void {
     if (
       this.applying ||
       this.composing ||
@@ -176,10 +177,15 @@ export class Undo {
     }
     this.action = null
     const afterSelection = captureSelection(this.holder) ?? action.selection
-    const captured = captureState(this.editor, this.normalizeBlockData)
+    const captured = this.capture.capture(changed)
     void this.enqueue(async () => {
       const after = await captured
-      if (revision !== this.revision || this.destroyed || equal(after, this.current))
+      if (
+        revision !== this.revision ||
+        this.destroyed ||
+        (after.length === this.current.length &&
+          after.every((block, index) => equal(block, this.current[index])))
+      )
         return
       const previous = this.stack[this.position - 1]
       const typing = [
@@ -241,6 +247,7 @@ export class Undo {
         await applyState(this.editor, this.current, state)
         window.scrollTo({ left: scroll.x, top: scroll.y, behavior: 'instant' })
         await restoreSelection(this.editor, this.holder, selection)
+        this.capture.reset()
         this.current = state
         this.position += direction === 'undo' ? -1 : 1
         this.lastSelection = selection
