@@ -1,5 +1,5 @@
 ---
-title: 'block editor reuses unchanged exports and undo snapshots'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,19 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin`, `pushword/admin-block-editor`.
-
-## Incremental block editing
-
-**Sites with custom block tools or an undo normalizer:** exports are cached by block data and tunes; unchanged history snapshots are reused.
-Keep `exportToMarkdown()` and `normalizeBlockData()` deterministic, with no side effects or dependency on invocation counts. No configuration change is required.
-See [custom tools and undo normalization](/extension/admin-block-editor).
-
-## Group imports and narrow screens
-
-Quoted show-more classes retain parentheses when importing Markdown. On narrow screens, an open outline overlays the editor instead of reducing its width. No configuration change is required.
-
-## Media picker
-
-Selecting media while the picker is opening now closes the dialog reliably. No configuration change is required.
