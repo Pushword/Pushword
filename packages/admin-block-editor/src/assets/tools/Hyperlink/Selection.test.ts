@@ -1,33 +1,27 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { afterEach, expect, it } from 'vitest'
 import SelectionUtils from './Selection'
 
-describe("SelectionUtils – the link tool's fake background", () => {
-  beforeEach(() => {
-    document.execCommand = vi.fn(() => true)
-  })
+afterEach(() => document.body.replaceChildren())
 
-  it("undoes the highlight without stripping the selection's formatting", () => {
-    const selection = new SelectionUtils()
+it('remembers a range without inserting formatting and restores its exact end', () => {
+  document.body.innerHTML = '<p>Before <b>linked</b> after</p>'
+  const text = document.querySelector('b')!.firstChild!
+  getSelection()!.setBaseAndExtent(text, 1, text, 4)
+  const selection = new SelectionUtils()
+  selection.save()
+  getSelection()!.collapse(text, 6)
+  selection.restore()
+  expect(getSelection()!.toString()).toBe('ink')
+  selection.collapseToEnd()
+  expect(getSelection()!.anchorNode).toBe(text)
+  expect(getSelection()!.anchorOffset).toBe(4)
+  expect(document.body.innerHTML).toBe('<p>Before <b>linked</b> after</p>')
+})
 
-    selection.setFakeBackground()
-    selection.removeFakeBackground()
-
-    // `removeFormat` would clear the highlight, but it also drops every inline
-    // tag of the selection — linking bold text used to lose the bold.
-    expect(document.execCommand).not.toHaveBeenCalledWith('removeFormat')
-    expect(document.execCommand).toHaveBeenLastCalledWith(
-      'backColor',
-      false,
-      'transparent',
-    )
-    expect(selection.isFakeBackgroundEnabled).toBe(false)
-  })
-
-  it('does nothing when no highlight is applied', () => {
-    const selection = new SelectionUtils()
-
-    selection.removeFakeBackground()
-
-    expect(document.execCommand).not.toHaveBeenCalled()
-  })
+it('does nothing when there is no saved range', () => {
+  getSelection()!.removeAllRanges()
+  const selection = new SelectionUtils()
+  selection.save()
+  expect(() => selection.restore()).not.toThrow()
+  expect(() => selection.collapseToEnd()).not.toThrow()
 })

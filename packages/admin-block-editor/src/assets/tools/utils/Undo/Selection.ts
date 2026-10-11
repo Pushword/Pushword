@@ -138,8 +138,15 @@ function resolvePoint(root: HTMLElement, saved: Point): { node: Node; offset: nu
   for (const index of saved.path) node = node?.childNodes[index]
   const length =
     node?.nodeType === Node.TEXT_NODE ? node.textContent!.length : node?.childNodes.length
-  if (node && length !== undefined && saved.offset <= length)
-    return { node, offset: saved.offset }
+  if (node && length !== undefined && saved.offset <= length) {
+    const range = document.createRange()
+    range.selectNodeContents(root)
+    range.setEnd(node, saved.offset)
+    // Serialization drops empty text nodes: a valid DOM path can now point
+    // at different text, particularly after an inline tool wraps a selection.
+    if (range.toString().length === saved.textOffset)
+      return { node, offset: saved.offset }
+  }
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
   let remaining = saved.textOffset
   let last: Node = root

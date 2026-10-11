@@ -1,6 +1,6 @@
 import SelectionUtils from './Selection'
 import make from '../utils/make'
-import { unwrapTag, wrapInTag } from '../utils/inlineTag'
+import { unwrapTag } from '../utils/inlineTag'
 import { IconLink, IconUnlink } from '@codexteam/icons'
 import { API } from '@editorjs/editorjs'
 import './Hyperlink.css'
@@ -95,9 +95,13 @@ export default class Hyperlink {
   }
 
   renderActions(): HTMLElement {
-    this.nodes.input = make.element('input', [this.api.styles.input, 'link-options__url'], {
-      placeholder: 'https://...',
-    }) as HTMLInputElement
+    this.nodes.input = make.element(
+      'input',
+      [this.api.styles.input, 'link-options__url'],
+      {
+        placeholder: 'https://...',
+      },
+    ) as HTMLInputElement
 
     this.nodes.suggester = make.element('div', 'textSuggester', { style: 'display:none' })
     const options = { highlight: true, dispMax: 20, dispAllKey: true }
@@ -217,10 +221,7 @@ export default class Hyperlink {
       return
     }
 
-    if (this.inputOpened) {
-      this.selection.restore()
-      this.selection.removeFakeBackground()
-    }
+    if (this.inputOpened) this.selection.restore()
 
     const termWrapper = this.api.selection.findParentTag('A') || this.anchorTag
 
@@ -230,8 +231,8 @@ export default class Hyperlink {
       return
     }
 
-    this.anchorTag = wrapInTag(this.api, range, 'A')
-    this.selection.setFakeBackground()
+    // Keep the range without changing block data until an address is committed.
+    // A draft anchor or backColor highlight would become a phantom undo step.
     this.selection.save()
     this.openActions(true)
   }
@@ -277,7 +278,7 @@ export default class Hyperlink {
     select.value = value
   }
 
-  get shortcut(): string {
+  static get shortcut(): string {
     return 'CMD+K'
   }
 
@@ -299,18 +300,16 @@ export default class Hyperlink {
 
   /**
    * Editor.js calls this each time the inline toolbar closes: a click elsewhere,
-   * Escape, or closeActions(). surround() wraps the selection in an anchor before
-   * any address is typed, so an anchor still without an href by now was given up
-   * on: unwrap it, or it saves as a bare `<a>` styled as a link to nowhere.
-   * Unwrapped in the DOM alone: unlink() would pull the caret back.
+   * Escape, or closeActions(). Removing an existing address leaves an empty
+   * anchor to unwrap without pulling the caret back into the closed panel.
    */
   clear(): void {
-    if (this.anchorTag) this.anchorTag.style = ''
-    this.selection.removeFakeBackground()
-
     if (this.anchorTag && !this.anchorTag.hasAttribute('href')) {
       this.anchorTag.replaceWith(...this.anchorTag.childNodes)
     }
+    this.anchorTag = null
+    this.selection.savedSelectionRange = null
+    this.inputOpened = false
   }
 
   toggleActions(): void {
@@ -325,8 +324,7 @@ export default class Hyperlink {
     this.nodes.wrapper!.style.display = 'block'
     if (this.anchorTag) {
       this.api.selection.expandToTag(this.anchorTag)
-      this.api.selection.setFakeBackground()
-      this.api.selection.save()
+      this.selection.save()
     }
     if (needFocus) {
       this.nodes.input!.focus()
@@ -335,13 +333,8 @@ export default class Hyperlink {
   }
 
   closeActions(): void {
-    if (this.selection.isFakeBackgroundEnabled) {
-      const currentSelection = new SelectionUtils()
-      currentSelection.save()
-      this.selection.restore()
-      this.selection.removeFakeBackground()
-      this.selection.collapseToEnd()
-    }
+    this.selection.restore()
+    this.selection.collapseToEnd()
 
     const value = this.nodes.input!.value || ''
     if (!value.trim()) this.unlink(this.anchorTag)
@@ -350,9 +343,18 @@ export default class Hyperlink {
   }
 
   updateLink(): HTMLElement | null {
-    if (!this.anchorTag) return null
-
     const href = this.nodes.input!.value.trim() || ''
+    if (!this.anchorTag) {
+      const range = this.selection.savedSelectionRange
+      if (!range || !href || !isSafeLinkUrl(href)) return null
+      // Expanding the selection blurs the URL input and emits change. Assign
+      // first so that reentrant updateLink() edits this anchor instead of nesting one.
+      this.anchorTag = document.createElement('a')
+      this.anchorTag.appendChild(range.extractContents())
+      range.insertNode(this.anchorTag)
+      this.api.selection.expandToTag(this.anchorTag)
+      this.selection.save()
+    }
     if (href && isSafeLinkUrl(href)) {
       this.anchorTag.setAttribute('href', href)
     } else {

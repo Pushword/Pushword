@@ -1,17 +1,13 @@
 // @vitest-environment jsdom
 // jsdom moves a live range out of a node removed from the document, as browsers
 // do, and unwrapping a tag relies on it; happy-dom leaves the range behind.
-import { describe, it, expect, beforeEach, afterEach, onTestFinished, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { API } from '@editorjs/editorjs'
 import { unwrapTag, wrapInTag } from './inlineTag'
 import Hyperlink from '../Hyperlink/Hyperlink'
 import Small from '../Small/Small'
 
-/**
- * The editor API the inline tools call. Its selection calls act as Editor.js's
- * do, except setFakeBackground and save, the link panel's fake selection, which
- * do nothing.
- */
+/** The editor API the inline tools call, with real DOM selection handling. */
 function stubApi(): API {
   return {
     styles: {
@@ -21,8 +17,6 @@ function stubApi(): API {
     },
     i18n: { t: (key: string) => key },
     selection: {
-      setFakeBackground: () => {},
-      save: () => {},
       findParentTag: (tagName: string) => {
         const node = window.getSelection()?.anchorNode ?? null
         const element = node instanceof Element ? node : (node?.parentElement ?? null)
@@ -132,20 +126,47 @@ describe('the inline tools wrapping a tag', () => {
   })
 
   it('Hyperlink wraps a new link around the selection and edits that link', () => {
-    // jsdom has no execCommand, which only paints the fake selection background.
-    document.execCommand = () => true
-    onTestFinished(() => {
-      delete (document as { execCommand?: unknown }).execCommand
-    })
     const tool = new Hyperlink({ api: stubApi() })
     tool.render()
     const address = tool.renderActions().querySelector('input')! // the panel's first field
     paragraph.innerHTML = 'a link here'
 
     tool.surround(select('link'))
+    expect(paragraph.innerHTML).toBe('a link here')
     address.value = '/x'
     tool.updateLink()
 
+    expect(paragraph.innerHTML).toBe('a <a href="/x">link</a> here')
+  })
+
+  it('Hyperlink can abandon an invalid address without changing content or inline formatting', () => {
+    const tool = new Hyperlink({ api: stubApi() })
+    tool.render()
+    const address = tool.renderActions().querySelector('input')!
+    paragraph.innerHTML = 'a <b>link</b> here'
+    tool.surround(select('link'))
+    address.value = 'javascript:alert(1)'
+    expect(tool.updateLink()).toBeNull()
+    tool.clear()
+    expect(paragraph.innerHTML).toBe('a <b>link</b> here')
+    address.value = '/unused'
+    expect(tool.updateLink()).toBeNull()
+  })
+
+  it('Hyperlink creates only one anchor when focusing the selection commits the URL again', () => {
+    const api = stubApi()
+    const expand = api.selection.expandToTag
+    const tool = new Hyperlink({ api })
+    api.selection.expandToTag = (element) => {
+      expand(element)
+      tool.updateLink()
+    }
+    tool.render()
+    const address = tool.renderActions().querySelector('input')!
+    paragraph.innerHTML = 'a link here'
+    tool.surround(select('link'))
+    address.value = '/x'
+    tool.updateLink()
     expect(paragraph.innerHTML).toBe('a <a href="/x">link</a> here')
   })
 

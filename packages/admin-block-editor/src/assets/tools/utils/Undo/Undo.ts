@@ -236,6 +236,8 @@ export class Undo {
         this.applying = true
         this.observer.pause()
         const scroll = { x: window.scrollX, y: window.scrollY }
+        // Inline tools retain DOM ranges and anchors belonging to the old block.
+        this.editor.inlineToolbar.close()
         await applyState(this.editor, this.current, state)
         window.scrollTo({ left: scroll.x, top: scroll.y, behavior: 'instant' })
         await restoreSelection(this.editor, this.holder, selection)
@@ -289,6 +291,7 @@ export class Undo {
         else if (this.shortcuts.redo.some((key) => this.matches(event, key)))
           direction = 'redo'
         if (direction) {
+          if (this.isToolbarInput(event.target)) return
           event.preventDefault()
           event.stopImmediatePropagation()
           void this.request(direction)
@@ -304,6 +307,7 @@ export class Undo {
         if (this.editor.readOnly.isEnabled) return
         const input = event as InputEvent
         if (input.inputType === 'historyUndo' || input.inputType === 'historyRedo') {
+          if (this.isToolbarInput(event.target)) return
           event.preventDefault()
           event.stopImmediatePropagation()
           void this.request(input.inputType === 'historyUndo' ? 'undo' : 'redo')
@@ -337,6 +341,17 @@ export class Undo {
           this.lastSelection = captureSelection(this.holder) ?? this.lastSelection
       },
       { signal: this.listeners.signal },
+    )
+  }
+
+  /** Toolbar drafts have their own native history until committed to a block. */
+  private isToolbarInput(target: EventTarget | null): boolean {
+    return (
+      (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) &&
+      !(
+        target instanceof HTMLInputElement && ['checkbox', 'radio'].includes(target.type)
+      ) &&
+      target.closest('.ce-inline-toolbar') !== null
     )
   }
 }

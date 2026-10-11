@@ -85,3 +85,19 @@ it('restores selected blocks and cancels smooth scrolling explicitly', async () 
   expect(document.activeElement).toBe(holder.firstElementChild)
   expect(scroll).toHaveBeenCalledWith({ left: 0, top: 0, behavior: 'instant' })
 })
+
+it.each([false, true])(
+  'restores inline ranges after empty nodes disappear (backward: %s)',
+  async (backward) => {
+    const field = holder.querySelector<HTMLElement>('[contenteditable]')!
+    field.innerHTML = '<code>Format</code> me'
+    field.prepend(document.createTextNode(''))
+    getSelection()!.setBaseAndExtent(field, backward ? 2 : 1, field, backward ? 1 : 2)
+    const saved = captureSelection(holder)
+    field.innerHTML = field.innerHTML
+    await restoreSelection(editor, holder, saved)
+    expect(getSelection()!.toString()).toBe('Format')
+    expect(getSelection()!.anchorOffset).toBe(backward ? 6 : 0)
+    expect(getSelection()!.focusOffset).toBe(backward ? 0 : 6)
+  },
+)

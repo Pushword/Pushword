@@ -71,6 +71,75 @@ final class UndoBrowserTest extends AbstractPantherAdminTest
         self::assertTrue($this->pollUntilTrue($client, 'return document.querySelector("[data-id=keyboard] .ce-paragraph").textContent === "Original first second"'));
     }
 
+    public function testInlineToolbarHistory(): void
+    {
+        $client = $this->openEditor('block-editor-inline-history-test');
+        $script = file_get_contents(__DIR__.'/browser/undo-inline.js');
+        self::assertIsString($script);
+        $client->executeScript($script);
+        self::assertTrue($this->pollUntilTrue($client, 'return window.undoInlineChecks.done', [], 90));
+        $results = $client->executeScript('return window.undoInlineChecks.results');
+        self::assertIsArray($results);
+        self::assertCount(17, $results);
+        foreach ($results as $result) {
+            self::assertIsArray($result);
+            self::assertTrue($result['passed'], json_encode($result, \JSON_THROW_ON_ERROR));
+        }
+    }
+
+    public function testNativeInlineToolbarHistory(): void
+    {
+        $client = $this->openEditor('block-editor-native-inline-history-test');
+        foreach (['bold' => 'b,strong', 'italic' => 'i,em', 'inline-code' => 'code', 'marker' => 'mark', 'Strikethrough' => 's,strike', 'small' => 'small', 'link' => 'a[href]'] as $name => $selector) {
+            $client->executeScript(<<<'JS'
+                void window.editors[document.querySelector('.editorjs-holder').id].blocks.render({
+                    blocks: [{ id: 'native-inline', type: 'paragraph', data: { text: 'Format me' } }],
+                });
+                JS);
+            $client->waitFor('[data-id="native-inline"] .ce-paragraph');
+            $this->sleepMs(650);
+            $field = $client->findElement(WebDriverBy::cssSelector('[data-id="native-inline"] .ce-paragraph'));
+            $field->click();
+            $field->sendKeys([WebDriverKeys::HOME, WebDriverKeys::SHIFT, ...array_fill(0, 6, WebDriverKeys::ARROW_RIGHT), WebDriverKeys::NULL]);
+            $buttonSelector = '.ce-inline-toolbar [data-item-name="'.$name.'"]';
+            $client->waitForVisibility($buttonSelector);
+            if ('link' === $name) {
+                $this->shortcut($client, 'k');
+                $client->waitForVisibility('.link-options__url');
+                $input = $client->findElement(WebDriverBy::cssSelector('.link-options__url'));
+                $input->sendKeys('https://example.org/native');
+                $this->shortcut($client, 'z');
+                self::assertTrue($this->pollUntilTrue($client, 'return document.querySelector(".link-options__url").value === ""'), 'URL input uses native undo');
+                self::assertSame('Format me', $client->executeScript('return document.querySelector("[data-id=native-inline] .ce-paragraph").innerHTML'));
+                $this->shortcut($client, 'y');
+                self::assertTrue($this->pollUntilTrue($client, 'return document.querySelector(".link-options__url").value === "https://example.org/native"'), 'URL input uses native redo');
+                $input->sendKeys(WebDriverKeys::ENTER);
+            } else {
+                $button = $client->findElement(WebDriverBy::cssSelector($buttonSelector));
+                if ('button' !== $button->getTagName()) {
+                    $button = $button->findElement(WebDriverBy::tagName('button'));
+                }
+
+                $button->click();
+            }
+
+            $formatted = 'return document.querySelector("[data-id=native-inline] .ce-paragraph").querySelector(arguments[0])?.textContent === "Format"';
+            self::assertTrue($this->pollUntilTrue($client, $formatted, [$selector]), $name.' applied');
+            $this->shortcut($client, 'z');
+            self::assertTrue($this->pollUntilTrue($client, 'return document.querySelector("[data-id=native-inline] .ce-paragraph").innerHTML === "Format me"'), $name.' undo');
+            self::assertSame('Format', $client->executeScript('return getSelection().toString()'), $name.' selection');
+            $this->shortcut($client, 'y');
+            self::assertTrue($this->pollUntilTrue($client, $formatted, [$selector]), $name.' redo');
+
+            if (\in_array($name, ['bold', 'italic'], true)) {
+                $this->shortcut($client, 'bold' === $name ? 'b' : 'i');
+                self::assertTrue($this->pollUntilTrue($client, 'return !document.querySelector("[data-id=native-inline] .ce-paragraph").querySelector(arguments[0])', [$selector]), $name.' keyboard toggle');
+                $this->shortcut($client, 'z');
+                self::assertTrue($this->pollUntilTrue($client, $formatted, [$selector]), $name.' keyboard undo');
+            }
+        }
+    }
+
     private function shortcut(Client $client, string $key): void
     {
         $driver = $client->getWebDriver();

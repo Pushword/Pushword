@@ -62,6 +62,7 @@ function fixture(
   const editor: any = {
     configuration: { holder, defaultBlock: 'paragraph', readOnly: false },
     readOnly: { isEnabled: false },
+    inlineToolbar: { close: vi.fn() },
     blocks: {
       getBlocksCount: () => redactor.children.length,
       getBlockByIndex: block,
@@ -385,6 +386,66 @@ it('reinitializes history without carrying edits from a replaced document', asyn
   await f.undo.undo()
   expect(f.undo.count()).toBe(0)
   expect(f.all()[0]!.data.text).toBe('original!')
+})
+
+it('leaves inline toolbar input history native without consuming document undo or redo', async () => {
+  const f = fixture()
+  await f.undo.initialize()
+  f.type('!')
+  await f.undo.flush()
+  const toolbar = document.createElement('div')
+  toolbar.className = 'ce-inline-toolbar'
+  toolbar.innerHTML = '<input value="/draft">'
+  f.holder.append(toolbar)
+  const input = toolbar.querySelector('input')!
+  input.focus()
+  for (const key of ['z', 'y']) {
+    const event = new KeyboardEvent('keydown', {
+      key,
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    })
+    input.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
+  }
+  for (const inputType of ['historyUndo', 'historyRedo']) {
+    const event = new InputEvent('beforeinput', {
+      inputType,
+      bubbles: true,
+      cancelable: true,
+    })
+    input.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
+  }
+  await f.undo.flush()
+  expect(f.all()[0]!.data.text).toBe('original!')
+  expect(f.undo.canUndo()).toBe(true)
+  await f.undo.undo()
+  expect(f.all()[0]!.data.text).toBe('original')
+})
+
+it('keeps document undo active when an inline toolbar checkbox has focus', async () => {
+  const f = fixture()
+  await f.undo.initialize()
+  f.type('!')
+  await f.undo.flush()
+  const toolbar = document.createElement('div')
+  toolbar.className = 'ce-inline-toolbar'
+  toolbar.innerHTML = '<input type="checkbox">'
+  f.holder.append(toolbar)
+  const input = toolbar.querySelector('input')!
+  input.focus()
+  const event = new KeyboardEvent('keydown', {
+    key: 'z',
+    ctrlKey: true,
+    bubbles: true,
+    cancelable: true,
+  })
+  input.dispatchEvent(event)
+  await f.undo.flush()
+  expect(event.defaultPrevented).toBe(true)
+  expect(f.all()[0]!.data.text).toBe('original')
 })
 
 it('records typing while the bound form is still being exported', async () => {
