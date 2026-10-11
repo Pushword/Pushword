@@ -1,5 +1,5 @@
 ---
-title: 'Admin block editor to supercharge the default markdown admin with a rich text editor'
+title: 'Admin block editor: configuration and custom tools'
 h1: 'Admin Block Editor'
 publishedAt: '2025-12-21 21:55'
 toc: true
@@ -34,6 +34,10 @@ Bundles can instead contribute tool configuration per host by implementing
 `Pushword\AdminBlockEditor\Editor\EditorJsToolProviderInterface` (the snippet and quiz
 bundles do); the `className` must name a tool already shipped in the editor bundle.
 
+Custom tools must keep `exportToMarkdown(data, tunes)` deterministic and free of
+side effects: the editor reuses exports while a block's type, data and tunes are
+unchanged.
+
 ### Heading levels
 
 The heading tool offers H2 to H6. To offer fewer, set the list after
@@ -60,14 +64,14 @@ window.editorjsConfig.undo = {
 }
 ```
 
-The callback is synchronous and must return block data. It receives a deep copy of
-each captured block's data and its `{ id, type }`, for the initial state and
-subsequent edits. During ordinary typing, unchanged blocks reuse their normalized
-snapshots without calling the callback again. The returned data is copied before
-storage and comparison, then used when undo or redo restores that block. Capturing a snapshot does not modify the
-rendered tool or its live data; `id`, `type` and `tunes` remain unchanged.
-Keep the callback deterministic and idempotent: restored data will be captured
-again during subsequent edits.
+The synchronous callback receives a deep copy of a captured block's data and its
+`{ id, type }`, and must return block data. Its result is copied into history and
+used to restore the block on undo or redo. Capturing leaves the live tool, `id`,
+`type` and `tunes` unchanged.
+
+Keep the callback deterministic, idempotent and free of side effects. Unchanged
+blocks reuse their normalized snapshots during typing; restored data may be
+captured again on later edits.
 
 History captures each block with `block.save()`, retaining empty and temporarily
 invalid blocks. A cleanup attached only to `editor.saver.save()` therefore does

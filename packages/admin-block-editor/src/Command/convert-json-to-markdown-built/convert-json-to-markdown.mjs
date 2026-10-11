@@ -8197,21 +8197,47 @@ var Raw = class extends BaseTool {
 		const editorElem = globalThis.document.createElement("div");
 		editorElem.classList.add("editorjs-monaco-editor");
 		editorElem.style.height = "100%";
+		const preview = globalThis.document.createElement("textarea");
+		preview.className = "editorjs-monaco-preview";
+		preview.value = this.data.html;
+		preview.readOnly = this.readOnly;
+		preview.rows = Math.min(20, Math.max(2, this.data.html.split("\n").length));
+		preview.addEventListener("input", () => {
+			this.data.html = preview.value;
+		});
+		editorElem.appendChild(preview);
 		this.wrapper.appendChild(editorElem);
+		let initialization;
+		const activate = () => {
+			this.visibility?.disconnect();
+			return initialization ??= this.initializeMonaco(editorElem).then(() => {
+				embedded.instance = this.editorInstance;
+			});
+		};
 		const embedded = {
-			ready: Promise.resolve(),
-			instance: void 0
+			instance: void 0,
+			activate
 		};
 		embeddedEditors.set(this.wrapper, embedded);
-		embedded.ready = this.initializeMonaco(editorElem).then(() => {
-			embedded.instance = this.editorInstance;
+		preview.addEventListener("focus", () => {
+			activate();
 		});
+		if (typeof IntersectionObserver === "undefined") activate();
+		else {
+			this.visibility = new IntersectionObserver((entries) => {
+				if (entries.some((entry) => entry.isIntersecting)) activate();
+			}, { rootMargin: "400px" });
+			this.visibility.observe(this.wrapper);
+		}
 		return this.wrapper;
 	}
 	initializeMonaco(editorElem) {
 		return loadMonaco().then((ready) => {
 			if (!ready || !this.wrapper) return;
 			try {
+				const focused = editorElem.contains(globalThis.document.activeElement);
+				const preview = editorElem.querySelector("textarea");
+				editorElem.replaceChildren();
 				this.editorInstance = this.instantiateEditor(editorElem);
 				const monacoHelperInstance = new globalThis.window.monacoHelper(this.editorInstance);
 				monacoHelperInstance.updateHeight(this.wrapper);
@@ -8222,12 +8248,28 @@ var Raw = class extends BaseTool {
 					monacoHelperInstance.autocloseTag();
 					this.wrapper?.dispatchEvent(new CustomEvent("pw:history-change", { bubbles: true }));
 				});
+				if (focused) {
+					const model = this.editorInstance.getModel();
+					if (preview) {
+						const backward = preview.selectionDirection === "backward";
+						const start = model.getPositionAt(backward ? preview.selectionEnd : preview.selectionStart);
+						const end = model.getPositionAt(backward ? preview.selectionStart : preview.selectionEnd);
+						this.editorInstance.setSelection({
+							selectionStartLineNumber: start.lineNumber,
+							selectionStartColumn: start.column,
+							positionLineNumber: end.lineNumber,
+							positionColumn: end.column
+						});
+					}
+					this.editorInstance.focus();
+				}
 			} catch (error) {
 				console.error("Unable to initialize Monaco editor", error);
 			}
 		});
 	}
 	destroy() {
+		this.visibility?.disconnect();
 		if (this.wrapper) embeddedEditors.delete(this.wrapper);
 		const model = this.editorInstance?.getModel();
 		this.editorInstance?.dispose();
@@ -11091,7 +11133,7 @@ var Table = class {
 	* @returns {HTMLElement}
 	*/
 	getCell(row, column) {
-		return this.table.querySelectorAll(`.${CSS.row}:nth-child(${row}) .${CSS.cell}`)[column - 1];
+		return this.getRow(row)?.children[column - 1];
 	}
 	/**
 	* Get table row by index
@@ -11100,7 +11142,7 @@ var Table = class {
 	* @returns {HTMLElement}
 	*/
 	getRow(row) {
-		return this.table.querySelector(`.${CSS.row}:nth-child(${row})`);
+		return this.table.children[row - 1];
 	}
 	/**
 	* The parent of the cell which is the row
@@ -11274,8 +11316,18 @@ var Table = class {
 	*/
 	resize() {
 		const { rows, cols } = this.computeInitialSize();
-		for (let i = 0; i < rows; i++) this.addRow();
-		for (let i = 0; i < cols; i++) this.addColumn();
+		const rowCount = this.config.maxRows ? Math.min(rows, this.config.maxRows) : rows;
+		const columnCount = this.config.maxCols ? Math.min(cols, this.config.maxCols) : cols;
+		const fragment = globalThis.document.createDocumentFragment();
+		for (let i = 0; i < rowCount; i++) {
+			const row = make("div", CSS.row);
+			this.fillRow(row, columnCount);
+			fragment.appendChild(row);
+		}
+		this.table.appendChild(fragment);
+		this.columnAlignments = Array(columnCount).fill("");
+		this.wrapper.querySelector(`.${CSS.addRow}`)?.classList.toggle(CSS.addRowDisabled, rowCount >= (this.config.maxRows || Infinity));
+		this.wrapper.querySelector(`.${CSS.addColumn}`)?.classList.toggle(CSS.addColumnDisabled, columnCount >= (this.config.maxCols || Infinity));
 	}
 	/**
 	* Fills the table with data passed to the constructor
@@ -11284,9 +11336,9 @@ var Table = class {
 	*/
 	fill() {
 		const data = this.data;
-		if (data && data.content) for (let i = 0; i < data.content.length; i++) {
+		if (data && data.content) for (let i = 0; i < Math.min(data.content.length, this.numberOfRows); i++) {
 			const rowContent = data.content[i];
-			for (let j = 0; j < rowContent.length; j++) this.setCellContent(i + 1, j + 1, rowContent[j] ?? "");
+			for (let j = 0; j < Math.min(rowContent.length, this.numberOfColumns); j++) this.setCellContent(i + 1, j + 1, rowContent[j] ?? "");
 		}
 		if (Array.isArray(data && data.columnAlignments)) {
 			this.columnAlignments = [];
@@ -11390,8 +11442,7 @@ var Table = class {
 	* Get number of columns in the table
 	*/
 	get numberOfColumns() {
-		if (this.numberOfRows) return this.table.querySelectorAll(`.${CSS.row}:first-child .${CSS.cell}`).length;
-		return 0;
+		return this.table.firstElementChild?.childElementCount ?? 0;
 	}
 	/**
 	* Is the column toolbox menu displayed or not
@@ -11660,9 +11711,8 @@ var Table = class {
 	*/
 	getData() {
 		const data = [];
-		for (let i = 1; i <= this.numberOfRows; i++) {
-			const row = this.table.querySelector(`.${CSS.row}:nth-child(${i})`);
-			const cells = Array.from(row.querySelectorAll(`.${CSS.cell}`));
+		for (const row of this.table.children) {
+			const cells = Array.from(row.children);
 			if (cells.every((cell) => !cell.textContent.trim())) continue;
 			data.push(cells.map((cell) => cell.innerHTML));
 		}

@@ -74,12 +74,12 @@ void (async () => {
       offset: range.toString().length,
     }
   }
-  const wait = async (condition) => {
+  const wait = async (condition, operation = 'history restoration') => {
     for (let i = 0; i < 80; i++) {
       if (await condition()) return
       await pause(25)
     }
-    throw new Error('Timed out waiting for history restoration')
+    throw new Error(`Timed out waiting for ${operation}`)
   }
   const text = (id) =>
     editor.blocks.getById(id)?.holder.querySelector('.ce-paragraph')?.textContent
@@ -447,6 +447,36 @@ void (async () => {
     )
   })
   await test('paragraph split and merge preserve text and caret', async () => {
+    const paragraphs = () => Array.from(holder.querySelectorAll('.ce-paragraph'))
+    const waitFor = (condition, operation) =>
+      wait(condition, operation).catch((error) => {
+        const fields = paragraphs()
+        const caret = selection()
+        const state = {
+          fields: fields.map((field) => ({
+            id: field.closest('.ce-block').dataset.id,
+            text: field.textContent,
+          })),
+          selection: caret && {
+            block: caret.block,
+            fieldIndex: fields.indexOf(caret.field),
+            offset: caret.offset,
+          },
+          activeBlock: document.activeElement?.closest('.ce-block')?.dataset.id,
+        }
+        throw new Error(`${error.message}; ${JSON.stringify(state)}`)
+      })
+    const restored = (expected, selectedIndex, offset) => {
+      const fields = paragraphs()
+      const caret = selection()
+      return (
+        fields.length === expected.length &&
+        fields.every((field, index) => field.textContent === expected[index]) &&
+        fields[0]?.closest('.ce-block').dataset.id === 'p' &&
+        caret?.field === fields[selectedIndex] &&
+        caret?.offset === offset
+      )
+    }
     await render([paragraph('p', 'Hello world')])
     focus(holder.querySelector('.ce-paragraph'), 5)
     document.activeElement.dispatchEvent(
@@ -457,20 +487,32 @@ void (async () => {
         cancelable: true,
       }),
     )
-    await wait(() => editor.blocks.getBlocksCount() === 2)
-    const split = Array.from(holder.querySelectorAll('.ce-paragraph')).map(
-      (field) => field.textContent,
+    await waitFor(
+      () =>
+        editor.blocks.getBlocksCount() === 2 &&
+        selection()?.field === paragraphs()[1] &&
+        selection()?.offset === 0,
+      'paragraph split and caret',
     )
+    const split = paragraphs().map((field) => field.textContent)
     check(split.join('') === 'Hello world', `Split changed text: ${split}`)
-    key('z')
-    await wait(() => editor.blocks.getBlocksCount() === 1)
-    check(
-      text('p') === 'Hello world' && selection()?.offset === 5,
-      'Split undo lost text or caret',
+    const splitSnapshot = await Promise.all(
+      Array.from({ length: editor.blocks.getBlocksCount() }, async (_, index) => {
+        const block = await editor.blocks.getBlockByIndex(index).save()
+        return block.data.text
+      }),
     )
+    // The native paragraph merger trims the incoming fragment before appending it.
+    const merged = [splitSnapshot[0] + splitSnapshot[1].trim()]
+    key('z')
+    await waitFor(() => restored(['Hello world'], 0, 5), 'split undo text and caret')
     key('y')
-    await wait(() => editor.blocks.getBlocksCount() === 2)
-    focus(holder.querySelectorAll('.ce-paragraph')[1], 0)
+    // Reconciliation inserts blocks before it finishes updating them and restoring
+    // selection. Block count alone can release the next key into an active redo.
+    await waitFor(() => restored(splitSnapshot, 1, 0), 'split redo text and caret')
+    // Editor.js attaches the reconstructed blocks' keyboard listeners on idle.
+    await new Promise((resolve) => window.requestIdleCallback(resolve, { timeout: 2000 }))
+    focus(paragraphs()[1], 0)
     document.activeElement.dispatchEvent(
       new KeyboardEvent('keydown', {
         key: 'Backspace',
@@ -479,17 +521,11 @@ void (async () => {
         cancelable: true,
       }),
     )
-    await wait(() => editor.blocks.getBlocksCount() === 1)
+    await waitFor(() => restored(merged, 0, 5), 'paragraph merge text and caret')
     key('z')
-    await wait(() => editor.blocks.getBlocksCount() === 2)
-    check(
-      Array.from(holder.querySelectorAll('.ce-paragraph'))
-        .map((field) => field.textContent)
-        .join('') === 'Hello world',
-      'Merge undo lost text',
-    )
+    await waitFor(() => restored(splitSnapshot, 1, 0), 'merge undo text and caret')
     key('y')
-    await wait(() => editor.blocks.getBlocksCount() === 1)
+    await waitFor(() => restored(merged, 0, 5), 'merge redo text and caret')
   })
   await test('multi-block HTML paste is a single undo step', async () => {
     await render([paragraph('p', 'Before')])

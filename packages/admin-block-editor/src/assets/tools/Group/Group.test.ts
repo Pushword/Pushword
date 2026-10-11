@@ -569,6 +569,7 @@ describe('a collapsible group exports the show-more call', () => {
   it.each([
     "{{ endShowMore('via-gray-100 to-gray-100') }}",
     "{{ endShowMore(showMoreBackground: 'via-gray-100 to-gray-100') }}",
+    "{{ endShowMore(showMoreBackground: 'via-[rgb(255,255,255)]') }}",
   ])('round-trips %s', (source) => {
     const { data } = captureInsert(GroupEnd.importFromMarkdown, source)
 
@@ -653,6 +654,23 @@ describe('GroupStart claims the show-more spellings', () => {
     )
 
     expect(data).toEqual({ anchor: 'faq', class: 'mt-8', collapsible: true, legacy: false })
+  })
+
+  it('keeps parentheses inside a quoted wrapper class', () => {
+    const source = "{{ startShowMore('faq', 'h-[calc(100vh-4rem)]') }}"
+    const { data } = captureInsert(GroupStart.importFromMarkdown, source)
+
+    expect(data).toEqual({
+      anchor: 'faq',
+      class: 'h-[calc(100vh-4rem)]',
+      collapsible: true,
+      legacy: false,
+    })
+    expect(startAttributes(source)).toEqual({
+      anchor: 'faq',
+      class: 'h-[calc(100vh-4rem)]',
+    })
+    expect(GroupStart.exportToMarkdown(data)).toBe(source)
   })
 
   it('reads a null id as no anchor', () => {

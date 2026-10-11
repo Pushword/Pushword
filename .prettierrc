@@ -4,6 +4,5 @@
   "semi": false,
   "singleQuote": true,
   "trailingComma": "all",
-  "pluginSearchDirs": false,
   "printWidth": 90
 }

@@ -29,11 +29,12 @@
   display: none !important;
 }
 
-/* While the rail is open it takes real layout space: the EasyAdmin sidebar it
-   covers is dropped (the pw-inline-window precedent) and the whole admin shifts
-   right, so the form recenters instead of leaving a dead gutter on the right. */
-body.pw-outline-open {
-  padding-left: var(--pw-outline-width);
+/* On wide screens, the open rail reserves space so the form recenters beside
+   it. On narrow screens it overlays the form without squeezing the editor. */
+@media screen and (min-width: 1200px) {
+  body.pw-outline-open {
+    padding-left: var(--pw-outline-width);
+  }
 }
 
 /* The EasyAdmin wrapper is a two-column grid (sidebar | content): with the

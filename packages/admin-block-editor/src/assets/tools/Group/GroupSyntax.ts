@@ -79,7 +79,7 @@ export function kindOf(syntax: GroupSyntax): GroupKind {
 
 /** What a `{{ name(…) }}` call has between its parentheses, verbatim. */
 function callBody(markdown: string): string {
-  return (/\(([^)]*)\)/.exec(markdown.trim())?.[1] ?? '').trim()
+  return markdown.slice(markdown.indexOf('(') + 1, markdown.lastIndexOf(')')).trim()
 }
 
 /**

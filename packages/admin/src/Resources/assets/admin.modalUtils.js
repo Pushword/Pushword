@@ -12,6 +12,8 @@ let previouslyFocusedElement = null
 /** @type {Function|null} Cleanup function for focus trap */
 let focusTrapCleanup = null
 
+const openingModals = new WeakSet()
+
 /**
  * Creates a focus trap within a modal element (WCAG 2.4.3).
  * Traps Tab key within the modal to prevent focus from escaping.
@@ -183,12 +185,13 @@ export function openModal(config, url, options = {}) {
     : null
 
   if (modalInstance) {
-    modalInstance.show()
+    modal.addEventListener('show.bs.modal', () => openingModals.add(modal), { once: true })
 
     // WCAG 2.1 AA: Set up focus trap when modal is shown
     modal.addEventListener(
       'shown.bs.modal',
       () => {
+        openingModals.delete(modal)
         focusTrapCleanup = createFocusTrap(modal)
         setInitialFocus(modal)
       },
@@ -219,6 +222,7 @@ export function openModal(config, url, options = {}) {
       { once: true },
     )
 
+    modalInstance.show()
     return true
   }
 
@@ -235,7 +239,13 @@ export function openModal(config, url, options = {}) {
 export function closeModal(modalId, shouldRefresh = false) {
   const modal = document.getElementById(modalId)
   if (modal && window.bootstrap) {
-    window.bootstrap.Modal.getInstance(modal)?.hide()
+    const instance = window.bootstrap.Modal.getInstance(modal)
+    // Bootstrap ignores hide() while the opening animation is running.
+    if (openingModals.has(modal)) {
+      modal.addEventListener('shown.bs.modal', () => instance?.hide(), { once: true })
+    } else {
+      instance?.hide()
+    }
   }
 
   if (shouldRefresh) {

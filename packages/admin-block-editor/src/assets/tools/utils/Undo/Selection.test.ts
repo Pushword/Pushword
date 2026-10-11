@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { captureSelection, restoreSelection } from './Selection'
+import type { editor as MonacoEditor } from 'monaco-editor'
+import { captureSelection, embeddedEditors, restoreSelection } from './Selection'
 
 let holder: HTMLElement
 let editor: any
@@ -86,6 +87,54 @@ it('restores selected blocks and cancels smooth scrolling explicitly', async () 
   expect(scroll).toHaveBeenCalledWith({ left: 0, top: 0, behavior: 'instant' })
 })
 
+it('activates a deferred Monaco editor before restoring its selection and scroll', async () => {
+  const wrapper = document.createElement('div')
+  wrapper.className = 'editorjs-monaco-wrapper'
+  holder.firstElementChild!.append(wrapper)
+  const monaco = {
+    focus: vi.fn(),
+    setSelection: vi.fn(),
+    setScrollPosition: vi.fn(),
+    getDomNode: () => null,
+    getPosition: () => null,
+  }
+  let finish!: () => void
+  const activation = new Promise<void>((resolve) => {
+    finish = resolve
+  })
+  const embedded = {
+    instance: undefined as MonacoEditor.IStandaloneCodeEditor | undefined,
+    activate: vi.fn(async () => {
+      await activation
+      embedded.instance = monaco as unknown as MonacoEditor.IStandaloneCodeEditor
+    }),
+  }
+  embeddedEditors.set(wrapper, embedded)
+  const selection = {
+    startLineNumber: 2,
+    startColumn: 3,
+    endLineNumber: 4,
+    endColumn: 5,
+    selectionStartLineNumber: 4,
+    selectionStartColumn: 5,
+    positionLineNumber: 2,
+    positionColumn: 3,
+  }
+  const restored = restoreSelection(editor, holder, {
+    monaco: { block: 'a', selection, scrollTop: 30, scrollLeft: 10 },
+  })
+  expect(embedded.activate).toHaveBeenCalledOnce()
+  expect(monaco.focus).not.toHaveBeenCalled()
+  finish()
+  await restored
+  expect(monaco.focus).toHaveBeenCalledOnce()
+  expect(monaco.setSelection).toHaveBeenCalledExactlyOnceWith(selection)
+  expect(monaco.setScrollPosition).toHaveBeenCalledExactlyOnceWith({
+    scrollTop: 30,
+    scrollLeft: 10,
+  })
+})
+
 it.each([false, true])(
   'restores inline ranges after empty nodes disappear (backward: %s)',
   async (backward) => {
@@ -94,7 +143,8 @@ it.each([false, true])(
     field.prepend(document.createTextNode(''))
     getSelection()!.setBaseAndExtent(field, backward ? 2 : 1, field, backward ? 1 : 2)
     const saved = captureSelection(holder)
-    field.innerHTML = field.innerHTML
+    const serialized = field.innerHTML
+    field.innerHTML = serialized
     await restoreSelection(editor, holder, saved)
     expect(getSelection()!.toString()).toBe('Format')
     expect(getSelection()!.anchorOffset).toBe(backward ? 6 : 0)

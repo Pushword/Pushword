@@ -7,6 +7,7 @@ namespace Pushword\AdminBlockEditor\Tests;
 use Facebook\WebDriver\Chrome\ChromeDevToolsDriver;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverDimension;
 use Facebook\WebDriver\WebDriverKeys;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\Frontend\AbstractPantherAdminTest;
@@ -155,6 +156,33 @@ final class UndoBrowserTest extends AbstractPantherAdminTest
         }
 
         self::assertCount(10, $results);
+    }
+
+    public function testOutlineResizingKeepsTheEditorWithinTheViewport(): void
+    {
+        $client = $this->openEditor('block-editor-outline-resize-test');
+        $window = $client->getWebDriver()->manage()->window();
+        $originalSize = $window->getSize();
+        $preference = $client->executeScript('return localStorage.getItem("pw-outline-collapsed")');
+
+        try {
+            $window->setSize(new WebDriverDimension(1280, 900));
+            $client->executeScript('document.querySelector(".pw-outline-opener").click()');
+            self::assertTrue($this->pollUntilTrue($client, 'return parseFloat(getComputedStyle(document.body).paddingLeft) === document.querySelector(".pw-outline").getBoundingClientRect().width'));
+            self::assertSame('0', $client->executeScript('return localStorage.getItem("pw-outline-collapsed")'));
+
+            $window->setSize(new WebDriverDimension(390, 844));
+            self::assertTrue($this->pollUntilTrue($client, 'return getComputedStyle(document.body).paddingLeft === "0px"'));
+            self::assertTrue($this->pollUntilTrue($client, 'return document.documentElement.scrollWidth <= innerWidth'));
+            self::assertTrue($client->executeScript('return document.querySelector(".pw-outline").getBoundingClientRect().width > 0'));
+            self::assertSame('0', $client->executeScript('return localStorage.getItem("pw-outline-collapsed")'));
+
+            $window->setSize(new WebDriverDimension(1280, 900));
+            self::assertTrue($this->pollUntilTrue($client, 'return parseFloat(getComputedStyle(document.body).paddingLeft) === document.querySelector(".pw-outline").getBoundingClientRect().width'));
+        } finally {
+            $window->setSize($originalSize);
+            $client->executeScript('if (arguments[0] === null) localStorage.removeItem("pw-outline-collapsed"); else localStorage.setItem("pw-outline-collapsed", arguments[0])', [$preference]);
+        }
     }
 
     private function shortcut(Client $client, string $key): void

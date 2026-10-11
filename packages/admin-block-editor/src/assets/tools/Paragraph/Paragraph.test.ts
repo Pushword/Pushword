@@ -1,7 +1,14 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import Paragraph from './Paragraph'
+import { MarkdownUtils } from '../utils/MarkdownUtils'
 
 describe('Paragraph.exportToMarkdown', () => {
+  beforeEach(() => {
+    vi.spyOn(MarkdownUtils, 'formatMarkdownWithPrettier').mockImplementation(
+      async (markdown) => markdown,
+    )
+  })
+
   it('writes a <br> as a markdown hard break', async () => {
     const markdown = await Paragraph.exportToMarkdown(
       { text: 'Transfert au bateau. <br>Vers 18h : cocktail' },

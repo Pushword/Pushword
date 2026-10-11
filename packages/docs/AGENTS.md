@@ -43,11 +43,10 @@ Project purpose/stack, hosts/locales table, common commands, deployment workflow
 
 #### Agent-optimized output
 
-Many `pw:*` commands auto-detect when an AI agent runs them (via the same env vars
-as laravel/agent-detector) and emit a single compact JSON line instead of progress
-bars, colors, PID/timing/memory chatter — far cheaper to parse. Each starts with
-`{"tool": "...", "result": "passed|failed|done|running", ...}`. Force it with
-`--format=agent` (JSON) or `--format=text` (human); default is `--format=auto`.
+Many `pw:*` commands detect AI agents through environment variables and emit one
+compact JSON line instead of progress bars and timing output. Most include `tool`
+and `result`; result values vary by command. Force JSON with `--format=agent` or
+human output with `--format=text`; the default is `--format=auto`.
 
 `content/agent-output.md` lists which commands support it, and which already emit
 JSON unconditionally.
@@ -55,8 +54,8 @@ JSON unconditionally.
 ### Quality gates
 
 - PHPStan (`composer stan`), php-cs-fixer (`composer format`), Rector (`composer rector`)
-- PHPUnit (`vendor/bin/phpunit`, or `vendor/bin/phpunit --filter ExampleTest`)
-- Clear cache after modifications: `php bin/console cache:clear`
+- Use the project's Composer test scripts (`composer test` or `composer test-filter ExampleTest` in the Pushword monorepo).
+- Clear cache after modifications: `php bin/console cache:clear` from the app root (`composer console cache:clear` in the monorepo).
 - Use Tailwind CSS 4 for frontend
 
 ### PHP conventions

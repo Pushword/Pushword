@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import List from './List'
+import { MarkdownUtils } from '../utils/MarkdownUtils'
 
 type CapturedList = { style: string; items: any[] }
 
@@ -121,6 +122,12 @@ describe('List.importFromMarkdown', () => {
 })
 
 describe('List.exportToMarkdown', () => {
+  beforeEach(() => {
+    vi.spyOn(MarkdownUtils, 'formatMarkdownWithPrettier').mockImplementation(
+      async (markdown) => markdown,
+    )
+  })
+
   it('writes a checklist back as task list markers', async () => {
     const markdown = await List.exportToMarkdown({
       style: 'checklist',
