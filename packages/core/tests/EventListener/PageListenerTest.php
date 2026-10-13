@@ -235,11 +235,29 @@ final class PageListenerTest extends KernelTestCase
 
     public function testALongH1IsCutToLeaveRoomForASuffix(): void
     {
-        $page = $this->createPage('', h1: str_repeat('Carpathes ', 28));
+        // 200 chars: past the 140-char cut, within the 255-char h1 column that
+        // PostgreSQL and MariaDB enforce (SQLite does not).
+        $page = $this->createPage('', h1: str_repeat('Carpathes ', 20));
         $this->testSlugs[] = $page->slug;
 
         // The 140-char cut lands right after a hyphen, which must not be kept.
         self::assertSame(str_repeat('carpathes-', 13).'carpathes', $page->slug);
+    }
+
+    public function testASuffixedLongSlugStillFitsTheSlugColumn(): void
+    {
+        $h1 = str_repeat('Carpathes ', 20);
+        $base = str_repeat('carpathes-', 13).'carpathes';
+        $this->testSlugs[] = $base;
+        $this->testSlugs[] = $base.'-2';
+
+        $this->createPage('', h1: $h1);
+        $second = $this->createPage('', h1: $h1);
+
+        // The slug column holds 150 chars: SQLite would swallow an overflow,
+        // PostgreSQL and MariaDB refuse the write.
+        self::assertSame($base.'-2', $second->slug);
+        self::assertLessThanOrEqual(150, \strlen($second->slug));
     }
 
     public function testAPageWithNothingToNameItKeepsARandomSlug(): void
