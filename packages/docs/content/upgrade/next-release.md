@@ -1,6 +1,5 @@
 ---
-title: 'page content is stored with LF line endings; a page saved without a slug takes it from its H1'
-run: pw:page:clean
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,15 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/core`
-
-## Page content is stored with LF line endings
-
-A page saved from the admin kept the CRLF line endings the browser posts; writing `mainContent` now stores LF.
-**Sites whose pages were saved from the admin, or read by tools that split on `\n`:** run `pw:page:clean` once to normalize the stored pages.
-
-## A page saved without a slug takes it from its H1
-
-A page persisted with an empty slug now gets its H1 (or, failing that, its title) slugified, suffixed `-2`, `-3`… when its host already uses it, instead of a random 8-character hash; a page with neither keeps the hash.
-**Sites calling `PageListener::setIdAsSlugIfNotDefined()`, now removed:** drop the call; the listener fills an empty slug when the page is persisted.
