@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Core\Tests\EventListener;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Event\PrePersistEventArgs;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Entity\Page;
@@ -35,7 +36,7 @@ final class PageListenerLocaleTest extends TestCase
         $page = $this->buildPage('us.example.com');
         self::assertSame('', $page->locale, 'A new Page starts with no locale');
 
-        $this->buildListener()->prePersist($page);
+        $this->buildListener()->prePersist($page, $this->prePersistEvent($page));
 
         self::assertSame('en-US', $page->locale);
     }
@@ -44,7 +45,7 @@ final class PageListenerLocaleTest extends TestCase
     {
         $page = $this->buildPage('www.example.com');
 
-        $this->buildListener()->prePersist($page);
+        $this->buildListener()->prePersist($page, $this->prePersistEvent($page));
 
         self::assertSame('fr', $page->locale, 'Each host declares its own locale');
     }
@@ -54,7 +55,7 @@ final class PageListenerLocaleTest extends TestCase
         $page = $this->buildPage('www.example.com');
         $page->locale = 'it';
 
-        $this->buildListener()->prePersist($page);
+        $this->buildListener()->prePersist($page, $this->prePersistEvent($page));
 
         self::assertSame('it', $page->locale);
     }
@@ -109,5 +110,11 @@ final class PageListenerLocaleTest extends TestCase
             new TemplateResolver(new Twig(new FilesystemLoader()), new ArrayAdapter()),
             new ParameterBag(['kernel.project_dir' => sys_get_temp_dir()]),
         );
+    }
+
+    /** The page has a slug, so prePersist never queries the stubbed entity manager. */
+    private function prePersistEvent(Page $page): PrePersistEventArgs
+    {
+        return new PrePersistEventArgs($page, self::createStub(EntityManagerInterface::class));
     }
 }

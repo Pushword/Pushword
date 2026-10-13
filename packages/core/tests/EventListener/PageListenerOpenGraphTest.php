@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Core\Tests\EventListener;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -39,7 +40,8 @@ final class PageListenerOpenGraphTest extends TestCase
         $suppressor = new PageCacheSuppressor();
         $listener = $this->buildListener($generator, $suppressor);
 
-        $suppressor->suppress(fn () => $listener->prePersist($this->buildPage()));
+        $page = $this->buildPage();
+        $suppressor->suppress(fn () => $listener->prePersist($page, $this->prePersistEvent($page)));
     }
 
     public function testOpenGraphImageIsGeneratedOnNormalSave(): void
@@ -50,7 +52,8 @@ final class PageListenerOpenGraphTest extends TestCase
 
         $listener = $this->buildListener($generator, new PageCacheSuppressor());
 
-        $listener->prePersist($this->buildPage());
+        $page = $this->buildPage();
+        $listener->prePersist($page, $this->prePersistEvent($page));
     }
 
     public function testOpenGraphImageIsNotGeneratedWhenSuppressedOnUpdate(): void
@@ -108,5 +111,11 @@ final class PageListenerOpenGraphTest extends TestCase
         $page->host = 'localhost.dev';
 
         return $page;
+    }
+
+    /** The page has a slug, so prePersist never queries the stubbed entity manager. */
+    private function prePersistEvent(Page $page): PrePersistEventArgs
+    {
+        return new PrePersistEventArgs($page, self::createStub(EntityManagerInterface::class));
     }
 }

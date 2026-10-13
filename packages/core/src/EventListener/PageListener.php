@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pushword\Core\EventListener;
 
+use Cocur\Slugify\Slugify;
 use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
+use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Pushword\Core\Cache\PageCacheSuppressor;
@@ -72,10 +75,10 @@ final class PageListener implements ResetInterface
         $this->variantManager->promoteOnMasterRemoval($page);
     }
 
-    public function prePersist(Page $page): void
+    public function prePersist(Page $page, PrePersistEventArgs $event): void
     {
         $page->initTimestampableProperties();
-        $this->setIdAsSlugIfNotDefined($page);
+        $this->setSlugIfNotDefined($page, $event);
         $this->setLocaleIfNotDefined($page);
         $this->updatePageEditor($page, creating: true);
         $this->generateOpenGraphImage($page);
@@ -142,11 +145,66 @@ final class PageListener implements ResetInterface
         }
     }
 
-    public function setIdAsSlugIfNotDefined(Page $page): void
+    /**
+     * The admin leaves the slug optional. A page saved without one used to get a
+     * random hash, which went live as an unreadable URL (`/3415c783`): it now takes
+     * its H1, or failing that its title, cut to leave room for a suffix in the 150-char
+     * column, then suffixed `-2`, `-3`… until no page of its host uses it. The hash
+     * remains for a page where neither yields a slug.
+     */
+    private function setSlugIfNotDefined(Page $page, PrePersistEventArgs $event): void
     {
-        if ('' === $page->slug) {
-            $page->slug = substr(sha1(uniqid().random_int(0, mt_getrandmax())), 0, 8);
+        if ('' !== $page->slug) {
+            return;
         }
+
+        $slugify = new Slugify();
+        $base = $slugify->slugify($page->h1) ?: $slugify->slugify($page->title);
+        $base = rtrim(substr($base, 0, 140), '-');
+        if ('' === $base) {
+            $page->slug = substr(sha1(uniqid().random_int(0, mt_getrandmax())), 0, 8);
+
+            return;
+        }
+
+        $taken = $this->slugsTakenOnHost($event->getObjectManager(), $page->host, $base);
+        $slug = $base;
+        for ($suffix = 2; isset($taken[$slug]); ++$suffix) {
+            $slug = $base.'-'.$suffix;
+        }
+
+        $page->slug = $slug;
+    }
+
+    /**
+     * The stored slugs of `$host` that are `$base` or `$base-…`, plus those of its pages
+     * waiting in the same flush, which the query cannot see: two slug-less pages flushed
+     * together would otherwise get the same slug.
+     *
+     * @return array<string, true>
+     */
+    private function slugsTakenOnHost(EntityManagerInterface $em, string $host, string $base): array
+    {
+        // Slugify only emits [a-z0-9-], so the base holds no LIKE wildcard.
+        /** @var list<string> $storedSlugs */
+        $storedSlugs = $em->getRepository(Page::class)->createQueryBuilder('p')
+            ->select('p.slug')
+            ->where('p.host = :host')
+            ->andWhere('p.slug = :base OR p.slug LIKE :suffixed')
+            ->setParameter('host', $host)
+            ->setParameter('base', $base)
+            ->setParameter('suffixed', $base.'-%')
+            ->getQuery()
+            ->getSingleColumnResult();
+        $taken = array_fill_keys($storedSlugs, true);
+
+        foreach ($em->getUnitOfWork()->getScheduledEntityInsertions() as $scheduled) {
+            if ($scheduled instanceof Page && $scheduled->host === $host) {
+                $taken[$scheduled->slug] = true;
+            }
+        }
+
+        return $taken;
     }
 
     /**
