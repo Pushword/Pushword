@@ -55,7 +55,7 @@ final class CleanPageCommandTest extends KernelTestCase
 
         // Write past the hook, the way a row predating the normalization looks.
         new ReflectionProperty(Page::class, 'mainContent')
-            ->setRawValue($page, '  Before <a href="#x" class="anchor"></a>after.  ');
+            ->setRawValue($page, "  Before <a href=\"#x\" class=\"anchor\"></a>after.\r\n\r\nNext.  ");
 
         $this->entityManager->persist($page);
         $this->entityManager->flush();
@@ -71,6 +71,6 @@ final class CleanPageCommandTest extends KernelTestCase
             ->findOneBy(['slug' => self::SLUG, 'host' => self::HOST]);
 
         self::assertNotNull($cleaned);
-        self::assertSame('Before after.', $cleaned->mainContent);
+        self::assertSame("Before after.\n\nNext.", $cleaned->mainContent);
     }
 }

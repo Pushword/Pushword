@@ -1,5 +1,6 @@
 ---
-title: ''
+title: 'page content is stored with LF line endings'
+run: pw:page:clean
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +35,10 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`
+
+## Page content is stored with LF line endings
+
+A page saved from the admin kept the CRLF line endings the browser posts; writing `mainContent` now stores LF.
+**Sites whose pages were saved from the admin, or read by tools that split on `\n`:** run `pw:page:clean` once to normalize the stored pages.

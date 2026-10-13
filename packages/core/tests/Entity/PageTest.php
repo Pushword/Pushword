@@ -114,6 +114,35 @@ final class PageTest extends TestCase
         self::assertSame('Before after.', $page->mainContent);
     }
 
+    public function testWritingTheContentStoresLfLineEndings(): void
+    {
+        // A browser posts a form's text with CRLF: the admin would store it so,
+        // and a parser that splits paragraphs on "\n\n" would see a single one.
+        $page = new Page();
+        $page->mainContent = "Since 1983.\r\n\r\nNine trips.\rEnd.";
+
+        self::assertSame("Since 1983.\n\nNine trips.\nEnd.", $page->mainContent);
+    }
+
+    public function testContentAlreadyInLfKeepsItsLineBreaks(): void
+    {
+        // pw:page:clean re-runs the normalization over every stored row: a row
+        // already in LF must come back unchanged, its paragraphs neither merged
+        // nor doubled.
+        $content = "Since 1983.\n\nNine trips.\nEnd.";
+
+        self::assertSame($content, Page::normalizeMainContent($content));
+    }
+
+    public function testContentMadeOnlyOfLineBreaksIsStoredEmpty(): void
+    {
+        // A textarea left with a few Enter presses posts nothing but line breaks.
+        $page = new Page();
+        $page->mainContent = "\r\n\r\n\r";
+
+        self::assertSame('', $page->mainContent);
+    }
+
     public function testTheContentNormalizationIsReusableOnStoredContent(): void
     {
         // What pw:page:clean re-runs over pages written before a normalization

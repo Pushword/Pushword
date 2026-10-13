@@ -161,9 +161,10 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     /**
      * RawContent would have been a more appropriate name.
      *
-     * Writing it drops the empty anchors the editor leaves behind and invalidates
-     * the redirection parsed from the previous content. Doctrine writes the backing
-     * store directly, so loading a row does neither.
+     * Writing it stores LF line endings (a browser posts the admin form with CRLF),
+     * drops the empty anchors the editor leaves behind and invalidates the
+     * redirection parsed from the previous content. Doctrine writes the backing
+     * store directly, so loading a row does none of this.
      */
     #[ORM\Column(type: Types::TEXT)]
     public string $mainContent = '' {
@@ -182,7 +183,10 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
      */
     public static function normalizeMainContent(?string $content): string
     {
-        return preg_replace('@<a[^>]+"></a>@U', '', trim((string) $content)) ?? throw new Exception();
+        $content = trim((string) $content);
+        $content = str_replace(["\r\n", "\r"], "\n", $content);
+
+        return preg_replace('@<a[^>]+"></a>@U', '', $content) ?? throw new Exception();
     }
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['default' => 'CURRENT_TIMESTAMP'])]
