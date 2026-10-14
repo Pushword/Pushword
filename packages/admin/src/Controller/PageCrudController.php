@@ -410,13 +410,7 @@ class PageCrudController extends AbstractAdminCrudController
             return null;
         }
 
-        $redirectUrl = $this->getPageUrl($page);
-
-        if ('' === $redirectUrl) {
-            return null;
-        }
-
-        return new RedirectResponse($redirectUrl);
+        return new RedirectResponse($this->getPageUrl($page));
     }
 
     #[Override]

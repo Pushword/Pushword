@@ -34,11 +34,13 @@ final class PagePromoteVariantTest extends AbstractAdminTestClass
 
         $path = self::getContainer()->get('router')->generate('admin_page_promote_variant', ['entityId' => $variantId]);
 
-        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list', ['filters' => ['slug' => ['comparison' => 'like', 'value' => 'promote-']]]));
+        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list', ['filter' => ['slug' => ['comparison' => 'like', 'value' => 'promote-']]]));
         self::assertResponseIsSuccessful();
+        self::assertCount(2, $crawler->filter('.datagrid tbody tr[data-id]'), 'The slug filter narrows the list to both pages');
 
         // Only the variant offers the action, and it posts with a CSRF token.
-        $form = $crawler->filter('.pw-page-actions .dropdown-menu form[action$="'.$path.'"]');
+        // Its URL carries the list's filters in the query string.
+        $form = $crawler->filter('.pw-page-actions .dropdown-menu form[action*="'.$path.'?"]');
         self::assertCount(1, $form);
         self::assertCount(1, $form->filter('button.dropdown-item.action-promoteVariant'));
         $token = $form->filter('input[name="_token"]')->attr('value');

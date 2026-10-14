@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Admin\Tests\Controller;
 
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Page;
@@ -89,6 +90,42 @@ final class PageUrlTest extends AbstractAdminTestClass
         $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_show', ['id' => $page->id]));
 
         self::assertResponseRedirects('https://admin-block-editor.test/kitchen-sink');
+    }
+
+    public function testSaveAndReturnOpensThePageWhileSaveAndContinueStaysInTheEditor(): void
+    {
+        $client = $this->loginUser();
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $page = new Page();
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
+        $page->slug = 'save-and-return-fixture';
+        $page->h1 = 'Save and return fixture';
+        $page->mainContent = 'Content';
+
+        $entityManager->persist($page);
+        $entityManager->flush();
+
+        $pageId = (int) $page->id;
+
+        try {
+            $editUrl = $this->generateAdminUrl('admin_page_edit', ['id' => $pageId]);
+
+            $crawler = $client->request(Request::METHOD_GET, $editUrl);
+            $client->submit($crawler->filter('button[value="saveAndContinue"]')->form());
+            self::assertResponseRedirects($editUrl);
+
+            $crawler = $client->request(Request::METHOD_GET, $editUrl);
+            $client->submit($crawler->filter('button[value="saveAndReturn"]')->form());
+            self::assertResponseRedirects('/save-and-return-fixture');
+        } finally {
+            $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+            $saved = $entityManager->find(Page::class, $pageId);
+            if (null !== $saved) {
+                $entityManager->remove($saved);
+                $entityManager->flush();
+            }
+        }
     }
 
     private function adminOn(string $host): KernelBrowser
