@@ -32,7 +32,23 @@ final class PageUrlTest extends AbstractAdminTestClass
 
         self::assertStringStartsWith('/', $hrefs['localhost.dev']);
         self::assertStringNotContainsString('localhost.dev', $hrefs['localhost.dev']);
-        self::assertStringStartsWith('/admin-block-editor.test/', $hrefs['admin-block-editor.test']);
+        // The list's tie-break order may pick the homepage, whose prefixed path has no trailing slash.
+        self::assertMatchesRegularExpression('#^/admin-block-editor\.test(/|$)#', $hrefs['admin-block-editor.test']);
+    }
+
+    public function testTheGatewayAdminOpensAnotherAppsHomepageOnItsBareHostPrefix(): void
+    {
+        // A homepage's real slug is empty, so its prefixed path has no trailing slash.
+        $client = $this->loginUser();
+        $page = $this->pageRepository()->findOneBy(['slug' => 'homepage', 'host' => 'admin-block-editor.test']);
+        self::assertNotNull($page, 'Fixture page "homepage" must exist on admin-block-editor.test');
+
+        $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_show', ['id' => $page->id]));
+        self::assertResponseRedirects('/admin-block-editor.test');
+
+        $client->followRedirect();
+        self::assertResponseIsSuccessful();
+        self::assertSame($page->id, self::getContainer()->get(RequestContext::class)->currentPage?->id);
     }
 
     public function testAnotherAppsAdminOpensForeignPagesOnTheirLiveUrl(): void
