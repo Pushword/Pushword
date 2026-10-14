@@ -177,6 +177,18 @@ final class SiteRegistry implements ResetInterface
         return \in_array($this->defaultHost, $host, true);
     }
 
+    /**
+     * Whether a request on $host serves every app under a /{host}/ path prefix:
+     * the default app's hosts, or one no app claims (127.0.0.1 in development).
+     * Any other host ignores that prefix, so a URL carrying it must not target one.
+     */
+    public function isGatewayHost(string $host): bool
+    {
+        $knownHost = $this->findHost($host);
+
+        return '' === $knownHost || $this->isDefaultHost($knownHost);
+    }
+
     // --- Delegate to RequestContext for request-scoped state ---
 
     public function getApp(string $host = ''): SiteConfig

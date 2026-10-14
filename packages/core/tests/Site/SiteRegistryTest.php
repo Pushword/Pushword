@@ -79,4 +79,16 @@ final class SiteRegistryTest extends TestCase
 
         self::assertSame('1', $template->render());
     }
+
+    public function testOnlyTheDefaultAppAndUnknownHostsAreGateways(): void
+    {
+        self::assertTrue($this->registry->isGatewayHost('example.com'));
+        self::assertTrue($this->registry->isGatewayHost('example.com:8000'));
+        self::assertTrue($this->registry->isGatewayHost('127.0.0.1'));
+        self::assertTrue($this->registry->isGatewayHost(''));
+
+        self::assertFalse($this->registry->isGatewayHost('fr.example.com'));
+        self::assertFalse($this->registry->isGatewayHost('alias.example.com'));
+        self::assertFalse($this->registry->isGatewayHost('alias.example.com:8000'));
+    }
 }

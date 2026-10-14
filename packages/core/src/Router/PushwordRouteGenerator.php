@@ -129,7 +129,10 @@ final class PushwordRouteGenerator implements ResetInterface
             return false;
         }
 
-        return ! $this->apps->isDefaultHost($host ?? $currentHost);
+        // Another app's page: only a gateway host routes the prefix back to it
+        // (RequestContextListener); anywhere else generate() goes absolute.
+        return $this->apps->isGatewayHost($currentHost)
+            && ! $this->apps->isDefaultHost($host ?? $currentHost);
     }
 
     /**

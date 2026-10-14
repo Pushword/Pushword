@@ -52,7 +52,7 @@ final class PageListActionsTest extends AbstractAdminTestClass
         self::assertStringContainsString('text-center', (string) $holdCells->first()->attr('class'));
     }
 
-    public function testViewActionOpensEachPageOnItsOwnHost(): void
+    public function testEveryRowOffersTheViewActionInANewTab(): void
     {
         $client = $this->loginUser();
         $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
@@ -60,19 +60,12 @@ final class PageListActionsTest extends AbstractAdminTestClass
         $rows = $crawler->filter('.datagrid tbody tr[data-id]');
         self::assertGreaterThan(0, $rows->count(), 'Fixtures must provide at least one page');
 
+        // Where each link leads is PageUrlTest's.
         $rows->each(static function (Crawler $row): void {
-            // The title cell prints "<host> › <slug>"; the action must target that host.
-            $host = trim(explode('›', $row->filter('.pw-page-inline a[target="_blank"]')->text())[0]);
-            self::assertNotSame('', $host);
-
             $view = $row->filter('.dropdown-menu .action-viewPage');
             self::assertCount(1, $view, 'Every row offers the view action');
             self::assertSame('_blank', $view->attr('target'));
             self::assertSame('noopener', $view->attr('rel'));
-            // Absolute and on the page's own host — a relative URL would open the
-            // admin host instead of the site the page belongs to.
-            self::assertStringStartsWith('http', (string) $view->attr('href'));
-            self::assertStringContainsString($host, (string) $view->attr('href'));
         });
     }
 

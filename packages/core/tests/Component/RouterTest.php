@@ -6,10 +6,14 @@ namespace Pushword\Core\Tests\Component;
 
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\EventListener\RequestContextListener;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 #[Group('integration')]
 final class RouterTest extends KernelTestCase
@@ -72,6 +76,50 @@ final class RouterTest extends KernelTestCase
         );
     }
 
+    /**
+     * The generator and RequestContextListener are two halves of one contract: a
+     * link to another app's page, requested on the host that rendered it, must
+     * land on that app. A /{host}/ path does so only on a gateway host.
+     */
+    public function testEveryGeneratedLinkLandsOnItsTargetApp(): void
+    {
+        self::bootKernel();
+        $router = $this->makeRouter();
+        $registry = $this->registry();
+
+        foreach (['localhost.dev', 'localhost', '127.0.0.1', 'pushword.piedweb.com', 'admin-block-editor.test'] as $httpHost) {
+            foreach ($registry->getHosts() as $target) {
+                $this->land('https://'.$httpHost.'/');
+                $url = $router->generate('some-page', host: $target);
+
+                $landedOn = str_starts_with($url, '/')
+                    ? $this->land('https://'.$httpHost.$url)
+                    : $registry->findHost((string) parse_url($url, \PHP_URL_HOST));
+
+                self::assertSame($target, $landedOn, $httpHost.' links '.$target.' with '.$url);
+            }
+        }
+    }
+
+    /** Route $url as the kernel would and return the main host of the app serving it. */
+    private function land(string $url): string
+    {
+        $request = Request::create($url);
+        $match = self::getContainer()->get('router')->matchRequest($request);
+        foreach (['_route', 'host', 'slug'] as $attribute) { // what the listener reads
+            if (isset($match[$attribute])) {
+                $request->attributes->set($attribute, $match[$attribute]);
+            }
+        }
+
+        $kernel = self::$kernel;
+        self::assertNotNull($kernel);
+        $listener = new RequestContextListener($this->registry(), $this->requestContext());
+        $listener(new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST));
+
+        return $this->registry()->getMainHost();
+    }
+
     public function testMayUseCustomPathReturnsFalseForDefaultHost(): void
     {
         self::bootKernel();
@@ -113,6 +161,18 @@ final class RouterTest extends KernelTestCase
         $registry->setCurrentPage($page);
 
         self::assertTrue($this->makeRouter()->mayUseCustomPath('pushword.piedweb.com'));
+    }
+
+    public function testMayUseCustomPathReturnsFalseForAnotherAppFromANonGatewayHost(): void
+    {
+        self::bootKernel();
+        // Direct access on a non-default app: its host ignores a /{host}/ prefix.
+        $this->requestContext()->setRequestContext('pushword.piedweb.com', 'pushword_page', 'some-page');
+        $this->registry()->switchSite('pushword.piedweb.com');
+        $router = $this->makeRouter();
+
+        self::assertFalse($router->mayUseCustomPath('admin-block-editor.test'));
+        self::assertSame('https://admin-block-editor.test/other-page', $router->generate('other-page', host: 'admin-block-editor.test'));
     }
 
     public function testMayUseCustomPathReturnsFalseWhenNoHostContext(): void

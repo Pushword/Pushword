@@ -47,17 +47,14 @@ final readonly class RequestContextListener
         $routeHostAttr = $request->attributes->get('host');
         $routeHost = \is_string($routeHostAttr) ? $routeHostAttr : '';
 
-        $knownHttpHost = $this->siteRegistry->findHost($httpHost);
-
-        $httpHostIsDefaultOrUnknown = '' === $knownHttpHost
-            || $this->siteRegistry->isDefaultHost($knownHttpHost);
-
-        if ($httpHostIsDefaultOrUnknown && '' !== $routeHost) {
+        if ('' !== $routeHost && $this->siteRegistry->isGatewayHost($httpHost)) {
             $knownRouteHost = $this->siteRegistry->findHost($routeHost);
             if ('' !== $knownRouteHost) {
                 return $knownRouteHost;
             }
         }
+
+        $knownHttpHost = $this->siteRegistry->findHost($httpHost);
 
         return '' !== $knownHttpHost ? $knownHttpHost : $request->getHost();
     }

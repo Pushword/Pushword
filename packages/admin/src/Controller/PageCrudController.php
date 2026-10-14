@@ -93,7 +93,7 @@ class PageCrudController extends AbstractAdminCrudController
     public function configureActions(Actions $actions): Actions
     {
         $viewAction = Action::new('viewPage', 'adminPageViewLabel', 'fa fa-eye')
-            ->linkToUrl(fn (Page $page): string => $this->routeGenerator->generate($page, true))
+            ->linkToUrl($this->getPageUrl(...))
             ->setHtmlAttributes(['target' => '_blank', 'rel' => 'noopener']);
 
         $actions->add(Crud::PAGE_INDEX, $viewAction);
@@ -398,15 +398,31 @@ class PageCrudController extends AbstractAdminCrudController
         return $this->redirectToPage($context) ?? parent::getRedirectResponseAfterSave($context, $action);
     }
 
+    /**
+     * Where the admin opens a page. A path stays on the admin's host and session,
+     * so drafts show, but reaches the page's app only from one of that app's hosts
+     * or from a gateway host (under /{host}/). From any other host the page opens
+     * on its app's base_live_url — not base_url, which may be a static export
+     * without drafts.
+     */
     public function getPageUrl(Page $page): string
     {
-        return $this->routeGenerator->generate(
-            $page->slug,
-            false,
-            null,
-            $page->host,
-            ! $this->apps->isDefaultHost($page->host)
-        );
+        $pageHost = '' !== $page->host ? $page->host : $this->apps->getDefault()->getMainHost();
+        // The request's host, not the current site: the edit form switches that to the page's app.
+        $adminHost = $this->apps->getCurrentHost() ?? '';
+        $path = $this->generateUrl(PushwordRouteGenerator::PATH, ['slug' => $page->getRealSlug()]);
+
+        if ($this->apps->findHost($adminHost) === $pageHost) {
+            return $path;
+        }
+
+        if (! $this->apps->isGatewayHost($adminHost)) {
+            return rtrim($this->apps->get($pageHost)->getStr('base_live_url'), '/').$path;
+        }
+
+        return $this->apps->isDefaultHost($pageHost)
+            ? $path
+            : $this->routeGenerator->generate($page, host: $pageHost, forceUseCustomPath: true);
     }
 
     private function redirectToPage(AdminContext $context): ?RedirectResponse // @phpstan-ignore missingType.generics
