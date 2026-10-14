@@ -50,7 +50,8 @@ final class MediaListActionsTest extends AbstractAdminTestClass
         self::assertStringContainsString('dropdown-item', (string) $delete->attr('class'));
         // admin.mediaInlineEdit.js reads both attributes off this button.
         self::assertNotEmpty($delete->attr('data-id'));
-        self::assertNotEmpty($delete->attr('data-confirm'));
+        // window.confirm() shows this text as is: an untranslated key would reach the user.
+        self::assertSame('Do you really want to delete this item?', $delete->attr('data-confirm'));
     }
 
     public function testHeaderKeepsASinglePrimaryButton(): void
