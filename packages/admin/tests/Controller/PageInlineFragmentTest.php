@@ -129,6 +129,37 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
         self::assertSame('42', $input->attr('value'));
     }
 
+    /**
+     * The fragment swapped in after an edit carries the title cell's page link,
+     * rendered by a POST instead of the list's GET. On an admin host that is not
+     * the default app's, a host-less page (the default app's) must still open on
+     * the default app, where the list's View action sends it.
+     */
+    public function testInlineUpdateRendersBackThePageLinkWhereViewOpensIt(): void
+    {
+        $client = $this->loginUser(self::createClient(server: ['HTTP_HOST' => 'admin-block-editor.test']));
+        $client->catchExceptions(false);
+
+        $pageId = $this->createPage(host: '');
+        $expected = 'https://localhost.dev/'.$this->reloadPage($pageId)->slug;
+        $crawler = $client->request(Request::METHOD_GET, '/admin/page');
+        $row = $this->inlineRow($crawler, $pageId);
+        self::assertSame($expected, $crawler->filter('tr[data-id="'.$pageId.'"] .action-viewPage')->attr('href'));
+        self::assertSame($expected, $row->filter('a.pw-page-url')->attr('href'));
+        $token = $this->extractToken((string) $row->filter('input[hx-vals*="tags"]')->attr('hx-vals'));
+
+        $client->request(Request::METHOD_POST, '/admin/page/'.$pageId.'/inline-update', [
+            'field' => 'tags',
+            'value' => 'alpha',
+            '_token' => $token,
+        ]);
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+
+        $link = new Crawler((string) $client->getResponse()->getContent())->filter('a.pw-page-url');
+        self::assertCount(1, $link, 'The re-rendered title cell should still link the page.');
+        self::assertSame($expected, $link->attr('href'));
+    }
+
     public function testInlineUpdateRejectsInvalidCsrf(): void
     {
         $client = $this->loginUser();
@@ -272,10 +303,10 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
      * The list sorts on updatedAt DESC, so a future timestamp keeps this page on
      * the first paginated screen even when a previous test left newer rows behind.
      */
-    private function createPage(): int
+    private function createPage(string $host = 'localhost.dev'): int
     {
         $page = new Page();
-        $page->host = 'localhost.dev';
+        $page->host = $host;
         $page->locale = 'en';
         $page->slug = 'inline-fragment-'.uniqid();
         $page->h1 = 'Inline fragment fixture';

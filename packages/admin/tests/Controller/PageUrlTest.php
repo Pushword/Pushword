@@ -4,28 +4,22 @@ declare(strict_types=1);
 
 namespace Pushword\Admin\Tests\Controller;
 
-use Doctrine\ORM\EntityManagerInterface;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use Pushword\Admin\AdminFormFieldManager;
-use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\RequestContext;
-use Pushword\Core\Site\SiteRegistry;
-use Pushword\Core\Template\TemplateResolver;
+use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Contracts\Translation\TranslatorInterface;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 /**
- * Where the admin opens a page (PageCrudController::getPageUrl). Only the default
- * app's hosts serve another app under /{host}/; any other admin host must send
- * another app's page to that app's own live URL.
+ * Where the admin opens a page (PageViewUrlGenerator), through every link to it.
+ * Only the default app's hosts serve another app under /{host}/; any other admin
+ * host must send another app's page to that app's own live URL.
  */
 #[Group('integration')]
 final class PageUrlTest extends AbstractAdminTestClass
@@ -47,6 +41,27 @@ final class PageUrlTest extends AbstractAdminTestClass
         self::assertStringStartsWith('https://localhost.dev/', $hrefs['localhost.dev']);
         self::assertStringStartsWith('/', $hrefs['admin-block-editor.test']);
         self::assertStringNotContainsString('admin-block-editor.test', $hrefs['admin-block-editor.test']);
+    }
+
+    public function testTheTitleCellLinksThePageWhereViewDoes(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        // An admin request on a non-default app, as RequestContextListener leaves it.
+        $container->get(RequestContext::class)->setRequestContext('admin-block-editor.test')->switchSite('admin-block-editor.test');
+        // The cell signs its htmx posts with a CSRF token, which lives in the session.
+        $request = Request::create('https://admin-block-editor.test/admin');
+        $request->setSession(new Session(new MockArraySessionStorage()));
+        $container->get('request_stack')->push($request);
+
+        // A host-less page belongs to the default app, not to the admin's current site.
+        $page = new Page();
+        new ReflectionProperty(Page::class, 'id')->setValue($page, 42);
+        $page->slug = 'some-page';
+
+        $html = $container->get('twig')->render('@pwAdmin/page/pageListTitleField.html.twig', ['entity' => ['instance' => $page]]);
+
+        self::assertSame('https://localhost.dev/some-page', new Crawler($html)->filter('a.pw-page-url')->attr('href'));
     }
 
     public function testTheEditFormLinksAnotherAppsPageToItsLiveUrl(): void
@@ -76,65 +91,6 @@ final class PageUrlTest extends AbstractAdminTestClass
         self::assertResponseRedirects('https://admin-block-editor.test/kitchen-sink');
     }
 
-    /**
-     * The dev-app's apps answer PHP on their base_url; here each app splits like a
-     * production instance: public static pages on base_url, PHP (and drafts) on
-     * base_live_url.
-     */
-    #[DataProvider('pageUrlByAdminHost')]
-    public function testThePageUrlFollowsTheAdminHost(string $adminHost, string $pageHost, string $expected, string $slug = 'some-page'): void
-    {
-        self::bootKernel();
-        $container = self::getContainer();
-
-        $apps = new SiteRegistry([
-            'lab.test' => ['hosts' => ['lab.test'], 'locale' => 'en', 'base_url' => 'https://lab.test', 'base_live_url' => 'https://lab.test'],
-            'site.fr' => ['hosts' => ['site.fr', 'live.site.fr'], 'locale' => 'fr', 'base_url' => 'https://site.fr', 'base_live_url' => 'https://live.site.fr'],
-            // The trailing slash must not double the path's.
-            'site.com' => ['hosts' => ['site.com', 'live.site.com'], 'locale' => 'en', 'base_url' => 'https://site.com', 'base_live_url' => 'https://live.site.com/'],
-        ], $container->get(TemplateResolver::class), new ParameterBag());
-        $context = new RequestContext($apps);
-        $apps->setRequestContext($context);
-        // As RequestContextListener leaves it for an admin route.
-        $knownAdminHost = $apps->findHost($adminHost);
-        $context->setRequestContext('' !== $knownAdminHost ? $knownAdminHost : $adminHost);
-
-        $controller = $container->get(PageCrudController::class);
-        $controller->injectBaseServices(
-            $apps,
-            $container->get(EntityManagerInterface::class),
-            $container->get(RequestStack::class),
-            $container->get(TranslatorInterface::class),
-            $container->get(AdminFormFieldManager::class),
-        );
-
-        $page = new Page();
-        $page->host = $pageHost;
-        $page->slug = $slug;
-
-        self::assertSame($expected, $controller->getPageUrl($page));
-    }
-
-    /** @return iterable<string, array{0: string, 1: string, 2: string, 3?: string}> */
-    public static function pageUrlByAdminHost(): iterable
-    {
-        yield 'its own app' => ['live.site.fr', 'site.fr', '/some-page'];
-        yield 'its own homepage' => ['live.site.fr', 'site.fr', '/', 'homepage'];
-        yield 'another app, on its live URL rather than its static one' => ['live.site.com', 'site.fr', 'https://live.site.fr/some-page'];
-        yield 'another app whose live URL ends with a slash' => ['live.site.fr', 'site.com', 'https://live.site.com/some-page'];
-        yield "another app's homepage" => ['live.site.com', 'site.fr', 'https://live.site.fr/', 'homepage'];
-        yield 'the default app, from another app' => ['live.site.com', 'lab.test', 'https://lab.test/some-page'];
-        yield 'a host-less page, which the default app serves' => ['live.site.com', '', 'https://lab.test/some-page'];
-
-        yield 'the gateway, its own app' => ['lab.test', 'lab.test', '/some-page'];
-        yield 'the gateway, another app' => ['lab.test', 'site.fr', '/site.fr/some-page'];
-        yield "another app's homepage, from the gateway" => ['lab.test', 'site.fr', '/site.fr', 'homepage'];
-        yield 'a host-less page, on the gateway' => ['lab.test', '', '/some-page'];
-
-        yield 'an unknown host, the default app' => ['127.0.0.1', 'lab.test', '/some-page'];
-        yield 'an unknown host, another app' => ['127.0.0.1', 'site.fr', '/site.fr/some-page'];
-    }
-
     private function adminOn(string $host): KernelBrowser
     {
         return self::createClient(server: ['HTTP_HOST' => $host]);
@@ -147,6 +103,7 @@ final class PageUrlTest extends AbstractAdminTestClass
 
     /**
      * Follow the list's View link of one page per host and check it renders that page.
+     * Every row's title-cell link must match its View link.
      *
      * @return array<string, string> href by page host
      */
@@ -158,7 +115,9 @@ final class PageUrlTest extends AbstractAdminTestClass
         /** @var array<int, string> $hrefById */
         $hrefById = [];
         $crawler->filter('.datagrid tbody tr[data-id]')->each(static function (Crawler $row) use (&$hrefById): void {
-            $hrefById[(int) $row->attr('data-id')] = (string) $row->filter('.dropdown-menu .action-viewPage')->attr('href');
+            $href = (string) $row->filter('.dropdown-menu .action-viewPage')->attr('href');
+            self::assertSame($href, $row->filter('a.pw-page-url')->attr('href'), 'The title cell links where View does');
+            $hrefById[(int) $row->attr('data-id')] = $href;
         });
 
         $hrefs = [];

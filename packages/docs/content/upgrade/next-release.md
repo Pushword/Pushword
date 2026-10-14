@@ -43,5 +43,6 @@ On the host of any app but the first, `page('slug', 'other.host')` now returns t
 
 ## The admin opens each page where its app runs
 
-From an admin on the host of any app but the first, the page list's **View** action and the edit form's page link open another app's page on its `base_live_url`, no longer under a `/{host}/` path that answered 404, nor (for **View**) on its `base_url`, where a static export has no drafts.
+From an admin on the host of any app but the first, the page list's **View** action and the URL under each title, and the edit form's page link, open another app's page on its `base_live_url`, no longer under a `/{host}/` path that answered 404, nor on its `base_url`, where a static export has no drafts.
 **Sites with several apps:** a draft shows there only to an editor logged in on that host; the admin on the default app's host previews every app's drafts with one session.
+**Sites overriding `PageCrudController::__construct()`:** pass `Pushword\Admin\Service\PageViewUrlGenerator` where `PushwordRouteGenerator` was.

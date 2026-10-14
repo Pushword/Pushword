@@ -24,7 +24,7 @@
         {{ page.h1 is empty ? page.title : page.h1|striptags }}
       </a>
       <a
-        href="{{ page(page) }}"
+        href="{{ pw_page_view_url(page) }}"
         target="_blank"
         rel="noopener"
         class="pw-page-url"
