@@ -86,7 +86,8 @@ final class PageListActionsTest extends AbstractAdminTestClass
         self::assertStringContainsString('dropdown-item', (string) $delete->attr('class'));
         // Translated attributes must survive the dropdown rendering: passing the raw
         // TranslatableMessage through breaks the whole list with a 500.
-        self::assertNotEmpty($delete->attr('data-action-confirmation-message'));
+        self::assertNotEmpty($delete->attr('data-action-confirmation-title'));
+        self::assertNotEmpty($delete->attr('data-action-confirmation-content'));
         self::assertSame('#modal-action-confirmation', $delete->attr('data-bs-target'));
     }
 
