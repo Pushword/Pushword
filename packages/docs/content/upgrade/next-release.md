@@ -1,5 +1,5 @@
 ---
-title: 'links to another app''s page are absolute outside the default app''s hosts; the admin opens each page where its app runs'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,15 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin`, `pushword/core`
-
-## Links to another app's page are absolute outside the default app's hosts
-
-On the host of any app but the first, `page('slug', 'other.host')` now returns the other app's absolute URL, not a `/other.host/slug` path that host answered with a 404. The default app's hosts, and hosts no app declares (`127.0.0.1`), still serve every app under `/{host}/`. Nothing to do.
-
-## The admin opens each page where its app runs
-
-From an admin on the host of any app but the first, the page list's **View** action and the URL under each title, and the edit form's page link, open another app's page on its `base_live_url`, no longer under a `/{host}/` path that answered 404, nor on its `base_url`, where a static export has no drafts.
-**Sites with several apps:** a draft shows there only to an editor logged in on that host; the admin on the default app's host previews every app's drafts with one session.
-**Sites overriding `PageCrudController::__construct()`:** pass `Pushword\Admin\Service\PageViewUrlGenerator` where `PushwordRouteGenerator` was.

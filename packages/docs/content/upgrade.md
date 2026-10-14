@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.53](/upgrade/1.0.53) | `admin` `core` | links to another app's page are absolute outside the default app's hosts; the admin opens each page where its app runs |
 | [1.0.52](/upgrade/1.0.52) | `core` | page content is stored with LF line endings; a page saved without a slug takes it from its H1 — run `pw:page:clean` |
 | [1.0.51](/upgrade/1.0.51) | `admin` `admin-block-editor` | block editor reuses unchanged exports and undo snapshots |
 | [1.0.50](/upgrade/1.0.50) | `admin-block-editor` `core` | the Docker image uses patched Go networking libraries; the heading tool offers the levels the editor widget lists; a block with both an anchor and a class is saved so its class renders |
