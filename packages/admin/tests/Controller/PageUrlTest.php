@@ -162,34 +162,41 @@ final class PageUrlTest extends AbstractAdminTestClass
      */
     private function openOneViewLinkPerHost(KernelBrowser $client): array
     {
-        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
-        self::assertResponseIsSuccessful();
-
-        /** @var array<int, string> $hrefById */
-        $hrefById = [];
-        $crawler->filter('.datagrid tbody tr[data-id]')->each(static function (Crawler $row) use (&$hrefById): void {
-            $href = (string) $row->filter('.dropdown-menu .action-viewPage')->attr('href');
-            self::assertSame($href, $row->filter('a.pw-page-url')->attr('href'), 'The title cell links where View does');
-            $hrefById[(int) $row->attr('data-id')] = $href;
-        });
-
         $hrefs = [];
-        foreach ($hrefById as $id => $href) {
-            $page = $this->pageRepository()->find($id);
-            self::assertNotNull($page);
-            if (isset($hrefs[$page->host]) || $page->hasRedirection()) {
-                continue;
+        foreach (['localhost.dev', 'admin-block-editor.test'] as $host) {
+            // One list per host: fixtures share an updatedAt, so which hosts reach the
+            // unfiltered list's first page is down to the database's tie-break.
+            $listUrl = $this->generateAdminUrl('admin_page_list', ['filter' => ['host' => ['comparison' => '=', 'value' => $host]]]);
+            $crawler = $client->request(Request::METHOD_GET, $listUrl);
+            self::assertResponseIsSuccessful();
+
+            /** @var array<int, string> $hrefById */
+            $hrefById = [];
+            $crawler->filter('.datagrid tbody tr[data-id]')->each(static function (Crawler $row) use (&$hrefById): void {
+                $href = (string) $row->filter('.dropdown-menu .action-viewPage')->attr('href');
+                self::assertSame($href, $row->filter('a.pw-page-url')->attr('href'), 'The title cell links where View does');
+                $hrefById[(int) $row->attr('data-id')] = $href;
+            });
+
+            foreach ($hrefById as $id => $href) {
+                $page = $this->pageRepository()->find($id);
+                self::assertNotNull($page);
+                self::assertSame($host, $page->host, 'The list must be filtered on '.$host);
+                if ($page->hasRedirection()) {
+                    continue;
+                }
+
+                $client->request(Request::METHOD_GET, $href);
+                self::assertResponseIsSuccessful($href);
+                self::assertSame($id, self::getContainer()->get(RequestContext::class)->currentPage?->id, $href.' renders another page');
+
+                $hrefs[$host] = $href;
+
+                break;
             }
 
-            $client->request(Request::METHOD_GET, $href);
-            self::assertResponseIsSuccessful($href);
-            self::assertSame($id, self::getContainer()->get(RequestContext::class)->currentPage?->id, $href.' renders another page');
-
-            $hrefs[$page->host] = $href;
+            self::assertArrayHasKey($host, $hrefs, 'The list must show a '.$host.' page');
         }
-
-        self::assertArrayHasKey('localhost.dev', $hrefs, 'The list must show a localhost.dev page');
-        self::assertArrayHasKey('admin-block-editor.test', $hrefs, 'The list must show an admin-block-editor.test page');
 
         return $hrefs;
     }
