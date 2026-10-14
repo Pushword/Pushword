@@ -20,41 +20,79 @@ final class StaticPageRendererTest extends KernelTestCase
 {
     private const string PROBE_SLUG = 'static-link-collector-probe';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // KernelTestCase only shuts down the main kernel, not the render kernel.
+        AbstractGenerator::$appKernel?->shutdown();
+        AbstractGenerator::$appKernel = null;
+    }
+
+    protected function tearDown(): void
+    {
+        AbstractGenerator::$appKernel?->shutdown();
+        AbstractGenerator::$appKernel = null;
+
+        parent::tearDown();
+    }
+
     public function testPagePagerAndFeedMatchHttpRendering(): void
     {
         self::bootKernel();
         self::getContainer()->get(PagesGenerator::class);
         $renderKernel = AbstractGenerator::getKernel();
         $renderer = $renderKernel->getContainer()->get(StaticPageRenderer::class);
-        $pages = self::getContainer()->get(PageRepository::class)->getPublishedPages('localhost.dev');
-        $parent = null;
-        foreach ($pages as $page) {
-            if ($page->hasChildrenPages()) {
-                $parent = $page;
+        $connection = self::getContainer()->get('doctrine.dbal.default_connection');
+        $properties = $connection->fetchOne('SELECT custom_properties FROM media WHERE media = ?', ['1.jpg']);
+        self::assertIsString($properties);
 
-                break;
-            }
-        }
+        // A licensed image exposes a leaked soft alt through its JSON-LD name.
+        $connection->update('media', ['custom_properties' => '{"creditText":"Renderer test credit"}'], ['media' => '1.jpg']);
 
-        self::assertInstanceOf(Page::class, $parent);
-
-        foreach (['page', 'pager', 'feed'] as $kind) {
-            $feed = 'feed' === $kind;
-            $path = '/localhost.dev/'.$parent->getRealSlug().match ($kind) {
-                'pager' => '/2',
-                'feed' => '.xml',
-                default => '',
-            };
-            $httpRequest = Request::create($path);
-            $httpRequest->attributes->set('_pushword_page', $parent);
-            $expected = $renderKernel->handle($httpRequest);
-
+        try {
             $renderKernel->getContainer()->get('services_resetter')->reset();
-            $actual = $renderer->render(Request::create($path), $parent, $feed);
+            $previous = $this->syntheticPage('static-previous-image-caption', '{{ image("1.jpg", alt: "Previous page caption") }}');
+            $previousResponse = $renderer->render(Request::create('/localhost.dev/'.$previous->slug), $previous);
+            self::assertSame(200, $previousResponse->getStatusCode());
+            self::assertStringContainsString('"name":"Previous page caption"', (string) $previousResponse->getContent());
 
-            self::assertSame($expected->getStatusCode(), $actual->getStatusCode());
-            self::assertSame($expected->headers->get('content-type'), $actual->headers->get('content-type'));
-            self::assertSame($expected->getContent(), $actual->getContent());
+            $pages = self::getContainer()->get(PageRepository::class)->getPublishedPages('localhost.dev');
+            $parent = null;
+            foreach ($pages as $page) {
+                if ($page->hasChildrenPages()) {
+                    $parent = $page;
+
+                    break;
+                }
+            }
+
+            self::assertInstanceOf(Page::class, $parent);
+
+            foreach (['page', 'pager', 'feed'] as $kind) {
+                $feed = 'feed' === $kind;
+                $path = '/localhost.dev/'.$parent->getRealSlug().match ($kind) {
+                    'pager' => '/2',
+                    'feed' => '.xml',
+                    default => '',
+                };
+                $httpRequest = Request::create($path);
+                $httpRequest->attributes->set('_pushword_page', $parent);
+                // Direct renders do not schedule Kernel::handle()'s automatic reset.
+                // Both paths must start with clean services.
+                $renderKernel->getContainer()->get('services_resetter')->reset();
+                $expected = $renderKernel->handle($httpRequest);
+
+                $renderKernel->getContainer()->get('services_resetter')->reset();
+                $actual = $renderer->render(Request::create($path), $parent, $feed);
+
+                self::assertSame($expected->getStatusCode(), $actual->getStatusCode());
+                self::assertSame($expected->headers->get('content-type'), $actual->headers->get('content-type'));
+                self::assertSame($expected->getContent(), $actual->getContent());
+            }
+        } finally {
+            $connection->update('media', ['custom_properties' => $properties], ['media' => '1.jpg']);
+            $renderKernel->getContainer()->get('services_resetter')->reset();
         }
     }
 
