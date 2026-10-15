@@ -67,6 +67,7 @@ final class PushwordRouteGenerator implements ResetInterface
         if ($slug instanceof Page) {
             $page = $slug;
             $slug = $slug->getRealSlug();
+            $host = $page->host;
         } elseif ('homepage' === $slug) {
             $slug = '';
         }

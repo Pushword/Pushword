@@ -74,6 +74,12 @@ final class RouterTest extends KernelTestCase
             $router->generate($page, canonical: true, host: 'pushword.piedweb.com'),
             'the page host wins over the host argument',
         );
+
+        self::assertSame(
+            '/admin-block-editor.test/some-slug',
+            $router->generate($page, host: 'pushword.piedweb.com'),
+            'the page host also wins when generating a prefixed path',
+        );
     }
 
     /**
@@ -87,16 +93,33 @@ final class RouterTest extends KernelTestCase
         $router = $this->makeRouter();
         $registry = $this->registry();
 
-        foreach (['localhost.dev', 'localhost', '127.0.0.1', 'pushword.piedweb.com', 'admin-block-editor.test'] as $httpHost) {
+        foreach ([
+            'https://localhost.dev/',
+            'https://localhost/',
+            'https://127.0.0.1/',
+            'https://localhost.dev/pushword.piedweb.com/',
+            'https://localhost/pushword.piedweb.com/',
+            'https://127.0.0.1/pushword.piedweb.com/',
+            'https://pushword.piedweb.com/',
+            'https://admin-block-editor.test/',
+        ] as $sourceUrl) {
             foreach ($registry->getHosts() as $target) {
-                $this->land('https://'.$httpHost.'/');
-                $url = $router->generate('some-page', host: $target);
+                $page = new Page();
+                $page->host = $target;
+                $page->slug = 'some-page';
 
-                $landedOn = str_starts_with($url, '/')
-                    ? $this->land('https://'.$httpHost.$url)
-                    : $registry->findHost((string) parse_url($url, \PHP_URL_HOST));
+                foreach (['slug', 'page'] as $input) {
+                    $this->land($sourceUrl);
+                    $url = 'page' === $input
+                        ? $router->generate($page)
+                        : $router->generate('some-page', host: $target);
 
-                self::assertSame($target, $landedOn, $httpHost.' links '.$target.' with '.$url);
+                    $landedOn = str_starts_with($url, '/')
+                        ? $this->land('https://'.parse_url($sourceUrl, \PHP_URL_HOST).$url)
+                        : $registry->findHost((string) parse_url($url, \PHP_URL_HOST));
+
+                    self::assertSame($target, $landedOn, $sourceUrl.' links '.$target.' with '.$url.' from '.$input);
+                }
             }
         }
     }
