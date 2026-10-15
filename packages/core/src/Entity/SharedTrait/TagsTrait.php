@@ -26,9 +26,11 @@ trait TagsTrait
 
     public function getTags(): string
     {
-        // Keep classification visible first, including on entities saved before this display rule.
-        $typeTags = array_filter($this->tags, static fn (string $tag): bool => str_starts_with($tag, 'type:'));
-        $otherTags = array_diff($this->tags, $typeTags);
+        // Apply the same display order to existing rows without rewriting their stored tags.
+        $tags = $this->tags;
+        sort($tags);
+        $typeTags = array_filter($tags, static fn (string $tag): bool => str_starts_with($tag, 'type:'));
+        $otherTags = array_diff($tags, $typeTags);
         $tags = implode(' ', [...$typeTags, ...$otherTags]);
 
         return $tags.('' !== $tags ? ' ' : '');

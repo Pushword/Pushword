@@ -52,7 +52,7 @@ final class TagsTraitTest extends TestCase
         foreach ([new Page(), new Media()] as $entity) {
             new ReflectionProperty($entity, 'tags')->setValue($entity, $storedTags);
 
-            self::assertSame('type:listing type:blog vercors france blog ', $entity->getTags());
+            self::assertSame('type:blog type:listing blog france vercors ', $entity->getTags());
             self::assertSame($storedTags, $entity->getTagList());
         }
     }
