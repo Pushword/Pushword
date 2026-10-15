@@ -9,6 +9,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use InvalidArgumentException;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Event\MediaPreRemoveEvent;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Repository\MediaRepository;
@@ -19,6 +20,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Service\Attribute\Required;
 use Throwable;
 
@@ -34,6 +37,7 @@ final class MediaMultiUploadController extends AbstractController
         private readonly ImageCacheManager $imageCacheManager,
         private readonly MediaRepository $mediaRepo,
         private readonly MediaUploadValidator $mediaUploadValidator,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -96,6 +100,11 @@ final class MediaMultiUploadController extends AbstractController
         $media->setMediaFile($file);
         if (null !== $originalHash) {
             $media->setOriginalHash($originalHash);
+        }
+
+        $violations = $this->mediaUploadValidator->validateMedia($media);
+        if (\count($violations) > 0) {
+            return $this->violationResponse($violations);
         }
 
         $this->em->persist($media);
@@ -180,6 +189,12 @@ final class MediaMultiUploadController extends AbstractController
             return new JsonResponse(['error' => 'Field not editable.'], Response::HTTP_BAD_REQUEST);
         }
 
+        // Unflushed, a refused edit dies with the request.
+        $violations = $this->mediaUploadValidator->validateMedia($media);
+        if (\count($violations) > 0) {
+            return $this->violationResponse($violations);
+        }
+
         $this->em->flush();
 
         $response = ['success' => true];
@@ -227,9 +242,26 @@ final class MediaMultiUploadController extends AbstractController
             return new JsonResponse(['error' => 'Invalid CSRF token.'], Response::HTTP_FORBIDDEN);
         }
 
+        $event = $this->eventDispatcher->dispatch(new MediaPreRemoveEvent($media), MediaPreRemoveEvent::NAME);
+        if ($event->isRefused()) {
+            return new JsonResponse([
+                'error' => implode(' ', $event->getReasons()),
+                'reasons' => $event->getReasons(),
+            ], Response::HTTP_CONFLICT);
+        }
+
         $this->em->remove($media);
         $this->em->flush();
 
         return new JsonResponse(['success' => true]);
+    }
+
+    /** The row shows one reason at a time, already translated by the validator. */
+    private function violationResponse(ConstraintViolationListInterface $violations): JsonResponse
+    {
+        return new JsonResponse(
+            ['error' => (string) $violations->get(0)->getMessage()],
+            Response::HTTP_UNPROCESSABLE_ENTITY,
+        );
     }
 }

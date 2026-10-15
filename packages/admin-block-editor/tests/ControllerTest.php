@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Tests\Media\Policy\MediaPolicyFixture;
 
 use function Safe\file_get_contents;
 use function Safe\json_decode;
@@ -263,6 +264,34 @@ final class ControllerTest extends AbstractAdminTestClass
         );
 
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $client->getResponse()->getStatusCode());
+    }
+
+    /**
+     * An app's rule (MediaPolicyFixture) refuses the upload. The image tool shows the
+     * server's `error`, so the editor reads the rule, not a bare "upload failed".
+     * A URL upload is fetched into the same kind of file and takes the same branch.
+     */
+    public function testMediaControllerSaysWhyAnAppRuleRefusedTheUpload(): void
+    {
+        $client = $this->loginUser();
+        $path = sys_get_temp_dir().'/'.MediaPolicyFixture::REJECTED.'-'.uniqid().'.png';
+        $img = imagecreatetruecolor(2, 2);
+        \assert(false !== $img);
+        // Random, so the duplicate check never answers in the rule's place.
+        imagesetpixel($img, 0, 0, random_int(1, 0xFFFFFF));
+        imagepng($img, $path);
+
+        $client->request(
+            Request::METHOD_POST,
+            '/admin/media/block',
+            files: ['image' => new UploadedFile($path, basename($path), 'image/png', null, true)],
+        );
+
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $client->getResponse()->getStatusCode());
+        /** @var array{success: int, error: string} $response */
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertSame(0, $response['success']);
+        self::assertSame(MediaPolicyFixture::MESSAGE, $response['error']);
     }
 
     public function testMediaControllerRejectsLocalAndPrivateUrls(): void

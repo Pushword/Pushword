@@ -7,8 +7,8 @@ namespace Pushword\Core\EventListener;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\License\EmbeddedRights;
-use Pushword\Core\Image\License\EmbeddedRightsReader;
 use Pushword\Core\Image\License\MediaLicense;
+use Pushword\Core\Image\License\UploadRightsReader;
 use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\sha1_file;
@@ -30,6 +30,9 @@ use Vich\UploaderBundle\Event\Event;
  * Runs on vich_uploader.pre_upload, which fires on insert and on update, so an admin
  * swapping the file on an existing media re-runs the whole decision. Rotation writes
  * through MediaStorageAdapter and bypasses Vich, so it never reaches here.
+ *
+ * A value submitted with the upload — typed in the admin form, posted with an API
+ * upload — is a decision, not a guess: it outranks the file and the seed, key by key.
  */
 #[AutoconfigureTag('kernel.event_listener', ['event' => 'vich_uploader.pre_upload'])]
 final readonly class MediaLicenseSeedListener
@@ -37,7 +40,7 @@ final readonly class MediaLicenseSeedListener
     use MediaAlertTrait;
 
     public function __construct(
-        private EmbeddedRightsReader $rightsReader,
+        private UploadRightsReader $uploadRightsReader,
         private EntityManagerInterface $em,
         private SiteRegistry $apps,
         private RequestStack $requestStack,
@@ -68,49 +71,76 @@ final readonly class MediaLicenseSeedListener
 
         $previousState = $media->licenseState;
 
-        $imported = EmbeddedRights::merge(
-            $this->rightsReader->read($file->getPathname()),
-            // Behind the file, never in front of it: the admin scales an image down
-            // through a canvas before uploading, which keeps no metadata, so it posts
-            // the segments separately. Whatever the stored bytes say still wins.
-            $this->rightsReader->readSupplied($this->suppliedMetadata()),
-        )->stripGeneratorMarkers();
+        $imported = $this->uploadRightsReader->read($file);
+        $submitted = $this->submittedValues($media);
 
         // A replacement never merges: the previous values described the previous
         // bytes. Keeping the empty ones would either leave a stale photographer on a
         // photo the site now owns, or leave the site's acquireLicensePage on somebody
         // else's photo — the exact false claim, through the back door.
-        foreach (MediaLicense::KEYS as $key) {
+        foreach (array_diff(MediaLicense::KEYS, array_keys($submitted)) as $key) {
             $media->removeCustomProperty($key);
         }
 
-        foreach ($imported->toCustomProperties() as $key => $value) {
+        foreach (array_diff_key($imported->toCustomProperties(), $submitted) as $key => $value) {
             $media->setCustomProperty($key, $value);
         }
 
-        if ($imported->hasRightsValue()) {
+        if (MediaLicense::hasRightsValue($submitted)) {
+            // Somebody asserted these with the file in hand, so it is theirs to answer
+            // for, as with the admin button — and out of the backfill command's reach.
+            $media->licenseState = MediaLicense::STATE_OVERRIDDEN;
+        } elseif ($imported->hasRightsValue()) {
             // Nothing in the bytes tells "commissioned, we hold the rights" apart from
             // "someone else's photo", so the site does not license over a rights claim
             // on its own. A human asserts it, with the admin button or --force.
             $media->licenseState = MediaLicense::STATE_THIRD_PARTY;
             $this->disclose('warning', 'mediaLicenseThirdParty', ['%rights%' => $this->rightsSummary($imported)]);
-        } elseif ($this->seed($media)) {
+        } elseif ($this->seed($media, $submitted)) {
             $media->licenseState = MediaLicense::STATE_SEEDED;
             $this->disclose('info', 'mediaLicenseSeeded');
         } else {
             $media->licenseState = MediaLicense::STATE_NONE;
         }
 
-        if (MediaLicense::STATE_OVERRIDDEN === $previousState) {
+        if (MediaLicense::STATE_OVERRIDDEN === $previousState && MediaLicense::STATE_OVERRIDDEN !== $media->licenseState) {
             $this->alert('warning', 'mediaLicenseWasReset');
         }
     }
 
-    private function suppliedMetadata(): string
+    /**
+     * The license values this write sets on purpose. A new media holds nothing else.
+     * A replaced file comes with the stored values posted back by the edit form, which
+     * describe the previous bytes: only the keys changed alongside it count.
+     *
+     * The changeset, not getOriginalEntityData(): on an update this runs in preUpdate,
+     * where Doctrine has already replaced the original data with the edited values.
+     *
+     * @return array<string, mixed>
+     */
+    private function submittedValues(Media $media): array
     {
-        $supplied = $this->requestStack->getCurrentRequest()?->request->get('embeddedMetadata');
+        $values = MediaLicense::extract($media);
 
-        return \is_string($supplied) ? $supplied : '';
+        if (null === $media->id) {
+            return $values;
+        }
+
+        $changeSet = $this->em->getUnitOfWork()->getEntityChangeSet($media);
+        if (! isset($changeSet['customProperties'])) {
+            return [];
+        }
+
+        $old = $changeSet['customProperties'][0];
+        // Normalized on both sides: a creator stored in the legacy list form comes
+        // back from the form as rows, which is the same value, not a new one.
+        $previous = MediaLicense::extractFrom(\is_array($old) ? $old : []);
+
+        return array_filter(
+            $values,
+            static fn (mixed $value, string $key): bool => ($previous[$key] ?? null) !== $value,
+            \ARRAY_FILTER_USE_BOTH,
+        );
     }
 
     /**
@@ -153,11 +183,12 @@ final readonly class MediaLicenseSeedListener
         return htmlspecialchars($summary, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
     }
 
-    private function seed(Media $media): bool
+    /** @param array<string, mixed> $submitted */
+    private function seed(Media $media, array $submitted): bool
     {
         $seed = MediaLicense::normalizeSeed($this->apps->get()->getArray('media_default_license_seed'));
 
-        foreach ($seed as $key => $value) {
+        foreach (array_diff_key($seed, $submitted) as $key => $value) {
             $media->setCustomProperty($key, $value);
         }
 

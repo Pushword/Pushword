@@ -67,6 +67,16 @@ cannot tell "commissioned, we hold the rights" from "someone else's photo", so a
 asserts it with one button. The image still emits a valid `ImageObject` from its
 imported attribution.
 
+**A value submitted with the upload outranks the file, key by key** — typed in the
+admin form's license block, or sent in `customProperties` with an
+[API upload](/media-api). The file's metadata only fills the keys left empty. A
+submitted rights value is a claim like an embedded one, so it keeps the seed off, and
+it sets `licenseState = overridden`, as the button does. An empty or `null` key is not
+a value: the file's own value is imported there.
+
+A [media rule](/media-rules) runs before any of this; it reads what the upload will
+import through `UploadRightsReader`.
+
 ### Where the metadata is read from
 
 Four sources, in that order of precedence, walked out of the container without decoding
@@ -111,6 +121,7 @@ itself, not proof, and it stays editable in the admin.
 ### Replacing the file on an existing media
 
 A replacement **discards the previous values and re-runs the decision** — never a merge.
+Only the values changed alongside the new file count as submitted with it.
 If the licence had been asserted by hand, a flash message says so. Rotating an image
 resets nothing, and re-uploading byte-identical content is a no-op.
 

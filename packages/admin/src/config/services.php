@@ -6,6 +6,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInter
 use EasyCorp\Bundle\EasyAdminBundle\DependencyInjection\EasyAdminExtension;
 use EasyCorp\Bundle\EasyAdminBundle\Provider\AdminContextProvider;
 use Pushword\Admin\Controller\AdminMenu;
+use Pushword\Admin\EventSubscriber\MediaLicenseFormSubscriber;
 use Pushword\Admin\FormField\AutocompleteSubjectConfigurator;
 use Pushword\Admin\Service\PageEditLockManager;
 use Pushword\Core\PushwordCoreBundle;
@@ -41,6 +42,12 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->autowire()
         ->autoconfigure(false)
         ->tag(EasyAdminExtension::TAG_FIELD_CONFIGURATOR, ['priority' => -100]);
+
+    // A form subscriber (MediaFormExtension adds it to the media form), not one for
+    // the kernel dispatcher, which autoconfiguration would register it with.
+    $services->set(MediaLicenseFormSubscriber::class)
+        ->autowire()
+        ->autoconfigure(false);
 
     $services->alias(AdminContextProviderInterface::class, AdminContextProvider::class);
 };

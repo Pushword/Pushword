@@ -10,6 +10,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\MediaUsageRepository;
+use Pushword\Core\Tests\Media\Policy\MediaPolicyFixture;
 use Pushword\Core\Tests\PathTrait;
 
 use function Safe\json_decode;
@@ -31,6 +32,9 @@ final class CleanUnusedMediaCommandTest extends KernelTestCase
     private const string GUARD_SLUG = 'clean-unused-guard-fixture';
 
     private const string ORPHAN_FILE_NAME = 'clean-unused-orphan.png';
+
+    /** Unreferenced too, but MediaPolicyFixture refuses its removal. */
+    private const string LOCKED_FILE_NAME = MediaPolicyFixture::LOCKED.'-clean-unused.png';
 
     private EntityManagerInterface $entityManager;
 
@@ -113,6 +117,66 @@ final class CleanUnusedMediaCommandTest extends KernelTestCase
         self::assertGreaterThan(0, $decoded['found']);
     }
 
+    /**
+     * An app may render media no page references — by tag, say — and veto their
+     * removal. They are kept and counted, not reported as errors.
+     */
+    public function testForceKeepsAndCountsTheMediaAListenerVetoes(): void
+    {
+        $orphanId = $this->createOrphanMedia();
+        $lockedId = $this->createOrphanMedia(self::LOCKED_FILE_NAME);
+        $this->guardEveryOtherUnreferencedMedia();
+        $this->rebuildUsage();
+
+        $commandTester = $this->executeCleanUnused(['--force' => true, '--format' => 'agent']);
+
+        /** @var array{removed: int, refused: int, refused_media: list<array{id: int, reasons: list<string>}>, errors: list<string>} $decoded */
+        $decoded = json_decode(trim($commandTester->getDisplay()), true);
+        self::assertSame(1, $decoded['removed']);
+        self::assertSame(1, $decoded['refused']);
+        self::assertSame($lockedId, $decoded['refused_media'][0]['id']);
+        self::assertSame([MediaPolicyFixture::LOCK_REASON], $decoded['refused_media'][0]['reasons']);
+        self::assertSame([], $decoded['errors']);
+
+        $this->entityManager->clear();
+        self::assertNull($this->entityManager->find(Media::class, $orphanId));
+        self::assertNotNull($this->entityManager->find(Media::class, $lockedId));
+    }
+
+    /** The dry run asks too, so the list read before --force is the list it removes. */
+    public function testTheDryRunListsAVetoedMediaApartWithItsReason(): void
+    {
+        $this->createOrphanMedia();
+        $this->createOrphanMedia(self::LOCKED_FILE_NAME);
+        $this->guardEveryOtherUnreferencedMedia();
+        $this->rebuildUsage();
+
+        /** @var array{found: int, refused: int, media: list<array{file_name: string}>} $decoded */
+        $decoded = json_decode(trim($this->executeCleanUnused(['--format' => 'agent'])->getDisplay()), true);
+        self::assertSame(2, $decoded['found']);
+        self::assertSame(1, $decoded['refused']);
+        self::assertSame([self::ORPHAN_FILE_NAME], array_column($decoded['media'], 'file_name'));
+
+        $display = $this->executeCleanUnused(['--format' => 'text'])->getDisplay();
+        self::assertStringContainsString('1 of them kept', $display);
+        self::assertStringContainsString(MediaPolicyFixture::LOCK_REASON, $display);
+    }
+
+    /** After --force, a kept media is named with its reason, not left to look like a miss. */
+    public function testForceInTextNamesTheMediaAListenerKept(): void
+    {
+        $this->createOrphanMedia();
+        $lockedId = $this->createOrphanMedia(self::LOCKED_FILE_NAME);
+        $this->guardEveryOtherUnreferencedMedia();
+        $this->rebuildUsage();
+
+        $display = $this->executeCleanUnused(['--force' => true, '--format' => 'text'])->getDisplay();
+
+        self::assertStringContainsString('1 of them kept', $display);
+        self::assertStringContainsString('#'.$lockedId.' '.self::LOCKED_FILE_NAME.': '.MediaPolicyFixture::LOCK_REASON, $display);
+        self::assertStringContainsString('Removed 1 media', $display);
+    }
+
     /** @param array<string, mixed> $options */
     private function executeCleanUnused(array $options): CommandTester
     {
@@ -129,20 +193,20 @@ final class CleanUnusedMediaCommandTest extends KernelTestCase
         new CommandTester($application->find('pw:media:usage:rebuild'))->execute(['--format' => 'agent']);
     }
 
-    private function createOrphanMedia(): int
+    private function createOrphanMedia(string $fileName = self::ORPHAN_FILE_NAME): int
     {
         /** @var string $projectDir */
         $projectDir = self::getContainer()->getParameter('kernel.project_dir');
         $mediaDir = $this->getMediaDir();
 
-        new Filesystem()->copy($mediaDir.'/piedweb-logo.png', $mediaDir.'/'.self::ORPHAN_FILE_NAME, true);
+        new Filesystem()->copy($mediaDir.'/piedweb-logo.png', $mediaDir.'/'.$fileName, true);
 
         $media = new Media();
         $media->setProjectDir($projectDir);
         $media->setStoreIn($mediaDir);
         $media->setMimeType('image/png');
         $media->setDimensions([1000, 1000]);
-        $media->setFileName(self::ORPHAN_FILE_NAME);
+        $media->setFileName($fileName);
         $media->setAlt('Clean unused orphan');
         $media->setHash();
 
@@ -167,7 +231,7 @@ final class CleanUnusedMediaCommandTest extends KernelTestCase
         $guarded = [];
         $content = '';
         foreach ($mediaRepository->findNotReferencedByAPage() as $media) {
-            if (self::ORPHAN_FILE_NAME === $media->getFileName()) {
+            if (\in_array($media->getFileName(), [self::ORPHAN_FILE_NAME, self::LOCKED_FILE_NAME], true)) {
                 continue;
             }
 
@@ -198,17 +262,21 @@ final class CleanUnusedMediaCommandTest extends KernelTestCase
                 $this->entityManager->remove($page);
             }
 
-            $media = $this->entityManager->getRepository(Media::class)
-                ->findOneBy(['fileName' => self::ORPHAN_FILE_NAME]);
-            if (null !== $media) {
-                $this->entityManager->remove($media);
+            foreach ([self::ORPHAN_FILE_NAME, self::LOCKED_FILE_NAME] as $fileName) {
+                $media = $this->entityManager->getRepository(Media::class)->findOneBy(['fileName' => $fileName]);
+                if (null !== $media) {
+                    $this->entityManager->remove($media);
+                }
             }
 
             $this->entityManager->flush();
         } catch (Throwable) {
         }
 
-        new Filesystem()->remove($this->getMediaDir().'/'.self::ORPHAN_FILE_NAME);
+        new Filesystem()->remove([
+            $this->getMediaDir().'/'.self::ORPHAN_FILE_NAME,
+            $this->getMediaDir().'/'.self::LOCKED_FILE_NAME,
+        ]);
         $this->rebuildUsage();
     }
 }

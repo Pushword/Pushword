@@ -1,0 +1,9 @@
+# What an app does to add its own rule to Pushword's media, without touching Pushword:
+# refuse any target file name, alt or credit carrying the marker. A class constraint
+# without a path, the shape an app rule takes most often. MediaPolicyFixture mirrors
+# the marker and the message for the tests.
+Pushword\Core\Entity\Media:
+    constraints:
+        - Expression:
+            expression: "not ((this.getFileName() ~ ' ' ~ this.getAlt(true) ~ ' ' ~ this.getCustomPropertyScalar('creditText')) contains 'policy-rejected')"
+            message: 'Refused by the test media policy.'

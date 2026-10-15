@@ -86,6 +86,7 @@ adminMediaPreviewLabel: Preview
 adminMediaPreviewMarkdown: Markdown
 adminMediaPreviewPath: Path
 adminMediaRelatedLabel: "Related pages"
+adminMediaRemovalRefused: "\"%fileName%\" was kept: %reasons%"
 adminMediaRotateLeftLabel: "Rotate left"
 adminMediaRotateRightLabel: "Rotate right"
 adminMediaRotateSuccess: "Image rotated. The cache is being regenerated."

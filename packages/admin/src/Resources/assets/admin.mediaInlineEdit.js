@@ -45,6 +45,30 @@ function setRowStatus(row, html) {
   if (statusEl) statusEl.innerHTML = html
 }
 
+/** The reason the server gave (`{ error }`), or the fallback when it gave none. */
+async function errorMessage(response, fallback) {
+  try {
+    const data = await response.json()
+    if (data && typeof data.error === 'string' && data.error) return data.error
+  } catch {
+    // not the expected JSON
+  }
+  return fallback
+}
+
+/** A refused edit is not saved: say why under the field, which keeps the typed value. */
+function setFieldError(input, message) {
+  const cell = input.closest('td') ?? input.parentElement
+  cell.querySelector('.pw-field-error')?.remove()
+  input.classList.toggle('is-invalid', message !== '')
+  if (message === '') return
+
+  const feedback = document.createElement('div')
+  feedback.className = 'invalid-feedback d-block pw-field-error'
+  feedback.textContent = message
+  cell.append(feedback)
+}
+
 export async function saveField(input, row, ctx) {
   setRowStatus(row, STATUS_SPIN)
 
@@ -58,8 +82,10 @@ export async function saveField(input, row, ctx) {
     const response = await fetch(url, { method: 'POST', body: formData })
     if (!response.ok) {
       setRowStatus(row, STATUS_ERR)
+      setFieldError(input, await errorMessage(response, 'Save failed'))
       return
     }
+    setFieldError(input, '')
     const data = await response.json()
     if (data.slug && data.slug !== input.value) {
       showFlash(`Renamed to "${data.fileName}" (name was already taken)`, 'warning')
@@ -86,7 +112,7 @@ export async function deleteMedia(id, row, ctx) {
       setTimeout(() => row.remove(), 300)
     } else {
       setRowStatus(row, STATUS_ERR)
-      showFlash('Delete failed', 'error')
+      showFlash(await errorMessage(response, 'Delete failed'), 'error')
     }
   } catch {
     setRowStatus(row, STATUS_ERR)

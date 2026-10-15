@@ -21,6 +21,7 @@ Entity class docblocks list traits, fields, and relations.
 - `architecture.md` — bundle map and packages table
 - `extensions.md` — what each extension does + extension points
 - `media-api.md` — REST API for media upload/read/delete
+- `media-rules.md` — your own media constraints and removal vetoes
 - `ai-index.md` — generate CSV indexes for AI content discovery
 
 ### Multi-locale content

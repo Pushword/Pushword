@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Pushword\Core\Controller\RoutePatterns;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Event\MediaPreRemoveEvent;
 use Pushword\Core\Image\ImageRotator;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\MediaUploadValidator;
@@ -18,6 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Yaml\Yaml;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[IsGranted('ROLE_EDITOR')]
 final class MediaApiController extends AbstractApiController
@@ -27,6 +29,7 @@ final class MediaApiController extends AbstractApiController
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageRotator $imageRotator,
         private readonly MediaUploadValidator $mediaUploadValidator,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -79,6 +82,14 @@ final class MediaApiController extends AbstractApiController
         }
 
         if ('DELETE' === $request->getMethod()) {
+            $event = $this->eventDispatcher->dispatch(new MediaPreRemoveEvent($media), MediaPreRemoveEvent::NAME);
+            if ($event->isRefused()) {
+                return $this->respond([
+                    'error' => implode(' ', $event->getReasons()),
+                    'reasons' => $event->getReasons(),
+                ], Response::HTTP_CONFLICT);
+            }
+
             $this->entityManager->remove($media);
             $this->entityManager->flush();
 
@@ -96,15 +107,30 @@ final class MediaApiController extends AbstractApiController
                 return $this->badRequest('Invalid JSON');
             }
 
+            $this->applyMetadata($media, $data);
+
+            // Unflushed, a refused edit dies with the request.
+            $violations = $this->mediaUploadValidator->validateMedia($media);
+            if (\count($violations) > 0) {
+                return $this->validationErrors($violations);
+            }
+
+            $rotation = null;
             if (\array_key_exists('rotate', $data)) {
-                $rotateError = $this->applyRotation($media, $data['rotate']);
-                if (null !== $rotateError) {
-                    return $rotateError;
+                $rotation = $this->rotation($media, $data['rotate']);
+                if ($rotation instanceof JsonResponse) {
+                    return $rotation;
                 }
             }
 
-            $this->applyMetadata($media, $data);
             $this->entityManager->flush();
+
+            // After the flush: the rotation rewrites the file at once, so it waits for the
+            // edit to be accepted, and for a rename in the same request to move the file.
+            if (\is_int($rotation)) {
+                $this->imageRotator->rotate($media, $rotation);
+                $this->entityManager->flush();
+            }
         }
 
         return $this->respond($this->mediaToArray($media));
@@ -145,6 +171,11 @@ final class MediaApiController extends AbstractApiController
         $media->setFileName($media->getMediaFromFilename($safeBaseName));
 
         $this->applyMetadata($media, $this->extractMultipartMetadata($request));
+
+        $violations = $this->mediaUploadValidator->validateMedia($media);
+        if (\count($violations) > 0) {
+            return $this->validationErrors($violations);
+        }
 
         $this->entityManager->persist($media);
         $this->entityManager->flush();
@@ -204,11 +235,10 @@ final class MediaApiController extends AbstractApiController
     }
 
     /**
-     * Rotate the master image clockwise by a multiple of 90 degrees. A no-op
-     * rotation (0 / 360) is silently ignored. Returns a 400 response on invalid
-     * input, or null on success.
+     * The clockwise rotation to apply, by a multiple of 90 degrees, or null for a full
+     * turn (0 / ±360), which is a no-op. Returns a 400 response on invalid input.
      */
-    private function applyRotation(Media $media, mixed $degrees): ?JsonResponse
+    private function rotation(Media $media, mixed $degrees): JsonResponse|int|null
     {
         if (! $media->isImage()) {
             return $this->badRequest('Only images can be rotated');
@@ -218,12 +248,7 @@ final class MediaApiController extends AbstractApiController
             return $this->badRequest('rotate must be an integer multiple of 90 degrees');
         }
 
-        // A full turn (0 / ±360) is a no-op; only touch the file for a real rotation.
-        if (0 !== $degrees % 360) {
-            $this->imageRotator->rotate($media, $degrees);
-        }
-
-        return null;
+        return 0 !== $degrees % 360 ? $degrees : null;
     }
 
     /**
@@ -419,6 +444,7 @@ final class MediaApiController extends AbstractApiController
                             '200' => ['description' => 'Updated or duplicate'],
                             '201' => ['description' => 'Created'],
                             '400' => ['description' => 'Bad request'],
+                            '422' => ['description' => 'Refused by a media constraint (Pushword\'s or the app\'s): {error: "validation", violations: [{path, message}]}'],
                         ],
                     ],
                     'patch' => [
@@ -434,11 +460,18 @@ final class MediaApiController extends AbstractApiController
                                 'rotate' => ['type' => 'integer', 'description' => 'Rotate the master image clockwise by a multiple of 90 (90, 180, 270; negative rotates counter-clockwise). Regenerates the cache.'],
                             ],
                         ]]]],
-                        'responses' => ['200' => ['description' => 'Updated']],
+                        'responses' => [
+                            '200' => ['description' => 'Updated'],
+                            '422' => ['description' => 'Refused by a media constraint (Pushword\'s or the app\'s): {error: "validation", violations: [{path, message}]}'],
+                        ],
                     ],
                     'delete' => [
                         'summary' => 'Delete media',
-                        'responses' => ['204' => ['description' => 'Deleted'], '404' => ['description' => 'Not found']],
+                        'responses' => [
+                            '204' => ['description' => 'Deleted'],
+                            '404' => ['description' => 'Not found'],
+                            '409' => ['description' => 'Kept: a listener refused the removal. {error, reasons: [string]}'],
+                        ],
                     ],
                 ],
             ],

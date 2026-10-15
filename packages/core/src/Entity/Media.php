@@ -483,6 +483,26 @@ class Media implements IdInterface, Taggable, Stringable
         return $this;
     }
 
+    /**
+     * Gives a new upload the name it will be stored under, unless one was chosen: its
+     * slug, so the alt or else the client file name, with the extension the content
+     * calls for. MediaNamingListener does this at prePersist; validation does it first,
+     * so a constraint judges the real name. MediaConflictResolver may still suffix it.
+     */
+    public function nameUpload(): void
+    {
+        if ('' !== $this->fileName || null === $this->mediaFile) {
+            return;
+        }
+
+        // A rejected upload has no readable path; Assert\File reports it.
+        if ($this->mediaFile instanceof UploadedFile && ! $this->mediaFile->isValid()) {
+            return;
+        }
+
+        $this->setFileName($this->getMediaFromFilename($this->getSlug()));
+    }
+
     public function getMediaFromFilename(string $filename = ''): string
     {
         $mediaFile = $this->getMediaFile();

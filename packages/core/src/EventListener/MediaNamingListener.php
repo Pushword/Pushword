@@ -45,9 +45,7 @@ final readonly class MediaNamingListener
             $this->alert('success', 'mediaNameWasChanged');
         }
 
-        if ('' === $media->getFileName()) {
-            $media->setFileName($media->getMediaFromFilename($media->getSlug()));
-        }
+        $media->nameUpload();
     }
 
     private function getMediaFromEvent(Event $event): Media

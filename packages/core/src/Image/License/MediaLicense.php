@@ -139,10 +139,22 @@ final class MediaLicense
      */
     public static function extract(Media $media): array
     {
+        return self::extractFrom($media->customProperties);
+    }
+
+    /**
+     * Same, from a raw customProperties array — a Doctrine changeset's old side.
+     *
+     * @param array<array-key, mixed> $customProperties
+     *
+     * @return array<string, mixed>
+     */
+    public static function extractFrom(array $customProperties): array
+    {
         $values = [];
 
         foreach (self::KEYS as $key) {
-            $value = $media->getCustomProperty($key);
+            $value = $customProperties[$key] ?? null;
 
             if (self::CREATOR === $key) {
                 $creators = self::normalizeCreators($value);

@@ -58,6 +58,10 @@ Read the dry-run list before forcing: a template's logo appears there like a for
 upload. The command refuses to run on an empty usage table — run
 `pw:media:usage:rebuild` first.
 
+A media your app shows some other way — by tag, say — can be kept by a listener that
+[vetoes its removal](/media-rules#vetoing-a-removal); the command skips it, in the dry
+run too, and lists it apart with the reason.
+
 ## Tags inherited from pages
 
 A media carries two independent sets of tags:

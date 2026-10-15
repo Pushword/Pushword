@@ -98,6 +98,7 @@ adminMediaPreviewLabel: Aperçu
 adminMediaPreviewMarkdown: Markdown
 adminMediaPreviewPath: Chemin
 adminMediaRelatedLabel: 'Pages connectées'
+adminMediaRemovalRefused: "« %fileName% » a été conservé : %reasons%"
 adminMediaRotateLeftLabel: 'Pivoter à gauche'
 adminMediaRotateRightLabel: 'Pivoter à droite'
 adminMediaRotateSuccess: "Image pivotée. Le cache est en cours de régénération."

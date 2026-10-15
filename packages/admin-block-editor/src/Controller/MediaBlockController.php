@@ -85,11 +85,21 @@ final class MediaBlockController extends AbstractController
             $media->setMediaFile($mediaFile);
 
             $duplicate = $this->em->getRepository(Media::class)->findOneBy(['hash' => $media->getHash()]);
-            if (! $duplicate instanceof Media) {
+            if ($duplicate instanceof Media) {
+                $media = $duplicate;
+            } else {
+                // A refusal is the editor's to read, not a failure to log: the image
+                // tool shows `error` in its notice.
+                $violations = $this->mediaUploadValidator->validateMedia($media);
+                if (\count($violations) > 0) {
+                    return new JsonResponse([
+                        'success' => 0,
+                        'error' => (string) $violations->get(0)->getMessage(),
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
+
                 $this->em->persist($media);
                 $this->em->flush();
-            } else {
-                $media = $duplicate;
             }
         }
 

@@ -142,6 +142,10 @@ curl -X POST \
 - `201 Created` + full metadata — media successfully created
 - `200 OK` + metadata with `"duplicate": true` — a media with the same SHA-1 already exists; the uploaded file was discarded and the existing media is returned unchanged
 - `400 Bad Request` — missing, invalid or rejected file
+- `422 Unprocessable Entity` — refused by a [media rule](/media-rules); nothing is created
+
+License keys sent in `customProperties` with the file outrank the rights embedded in
+it, key by key — see [image license](/image-license#what-happens-on-upload).
 
 ### DELETE /api/media/{filename}
 
@@ -155,7 +159,7 @@ curl -X DELETE \
   https://example.com/api/media/photo.jpg
 ```
 
-**Response:** `204 No Content` on success. `404 Not Found` if the filename is unknown.
+**Response:** `204 No Content` on success. `404 Not Found` if the filename is unknown. `409 Conflict` with `{"error", "reasons"}` when a listener [vetoes the removal](/media-rules#vetoing-a-removal); the media is kept.
 
 ## Error Responses {id=errors}
 
@@ -164,3 +168,5 @@ curl -X DELETE \
 | 401    | Missing or invalid Bearer token                     |
 | 404    | No media found for this filename (GET / JSON POST / DELETE)  |
 | 400    | Empty or invalid JSON body, invalid `rotate`, or missing/invalid upload file |
+| 409    | DELETE vetoed by a listener: `{"error": "…", "reasons": ["…"]}`  |
+| 422    | Write refused by a [media rule](/media-rules), Pushword's or the app's: `{"error": "validation", "violations": [{"path": "…", "message": "…"}]}`. Nothing is saved, and a `rotate` in the same request is not applied |

@@ -213,6 +213,39 @@ final class MediaLicenseTest extends TestCase
         );
     }
 
+    /** A Doctrine changeset's old side holds every custom property, set or blanked. */
+    public function testExtractingFromRawPropertiesKeepsOnlyFilledLicenseKeys(): void
+    {
+        self::assertSame([
+            MediaLicense::LICENSE => 'https://example.tld/terms',
+            MediaLicense::CREDIT_TEXT => 'Photo maison',
+        ], MediaLicense::extractFrom([
+            MediaLicense::LICENSE => 'https://example.tld/terms',
+            MediaLicense::CREDIT_TEXT => '  Photo maison ',
+            MediaLicense::COPYRIGHT_NOTICE => '   ',
+            MediaLicense::CREATOR => [],
+            'altFr' => 'Pas une licence',
+        ]));
+    }
+
+    public function testExtractingFromNoPropertiesGivesNothing(): void
+    {
+        self::assertSame([], MediaLicense::extractFrom([]));
+    }
+
+    /**
+     * A creator stored in the legacy list form and the same creator posted back as rows
+     * are one value: the seed listener compares the two to tell a decision from a
+     * round trip.
+     */
+    public function testALegacyCreatorListReadsLikeItsRows(): void
+    {
+        self::assertSame(
+            MediaLicense::extractFrom([MediaLicense::CREATOR => [['name' => 'Enrico Romanzi', 'type' => 'Person']]]),
+            MediaLicense::extractFrom([MediaLicense::CREATOR => ['Enrico Romanzi']]),
+        );
+    }
+
     /**
      * @param array<string, mixed> $properties
      */

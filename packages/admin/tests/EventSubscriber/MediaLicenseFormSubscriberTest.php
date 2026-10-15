@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Pushword\Admin\Tests\EventSubscriber;
 
-use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityUpdatedEvent;
 use PHPUnit\Framework\TestCase;
 use Pushword\Admin\EventSubscriber\MediaLicenseFormSubscriber;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Image\License\MediaLicense;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -26,7 +27,7 @@ final class MediaLicenseFormSubscriberTest extends TestCase
         $requestStack = new RequestStack([$request]);
 
         new MediaLicenseFormSubscriber($requestStack)
-            ->applyLicense(new BeforeEntityUpdatedEvent($media));
+            ->applyLicense(new FormEvent(self::createStub(FormInterface::class), $media));
     }
 
     public function testASubmittedValueIsStored(): void
@@ -115,7 +116,7 @@ final class MediaLicenseFormSubscriberTest extends TestCase
         self::assertSame('ExampleCreditText', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
     }
 
-    /** Every EasyAdmin save goes through this subscriber, including the page form. */
+    /** A media form without the license block — an app may configure it away. */
     public function testARequestWithoutAnyLicenseFieldIsANoOp(): void
     {
         $media = new Media();
@@ -133,7 +134,7 @@ final class MediaLicenseFormSubscriberTest extends TestCase
         $requestStack = new RequestStack([$request]);
 
         new MediaLicenseFormSubscriber($requestStack)
-            ->applyLicense(new BeforeEntityUpdatedEvent($page));
+            ->applyLicense(new FormEvent(self::createStub(FormInterface::class), $page));
 
         self::assertFalse($page->hasCustomProperty(MediaLicense::CREDIT_TEXT));
     }

@@ -7,6 +7,7 @@ namespace Pushword\Core\Command;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Event\MediaPreRemoveEvent;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\MediaUsageRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -16,6 +17,7 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
 /**
@@ -24,6 +26,11 @@ use Throwable;
  * "No page references it" is the whole promise — nothing scans Twig templates, so a
  * navbar logo or an OG fallback looks exactly like a forgotten upload here. Hence a
  * dry run by default and `--force` to mean it, rather than the other way round.
+ *
+ * An app that renders media some other way — by tag, say — vetoes their removal
+ * through MediaPreRemoveEvent; the dry run asks too, so its list is what --force removes.
+ *
+ * @phpstan-type RefusedMedia array{id: ?int, file_name: string, reasons: list<string>}
  */
 #[AsCommand(
     name: 'pw:media:clean-unused',
@@ -37,6 +44,7 @@ final readonly class CleanUnusedMediaCommand
         private MediaRepository $mediaRepository,
         private MediaUsageRepository $mediaUsageRepository,
         private ManagerRegistry $managerRegistry,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -89,49 +97,85 @@ final readonly class CleanUnusedMediaCommand
             return Command::SUCCESS;
         }
 
-        if (! $force) {
-            return $this->report($output, $io, $unused, $agentMode);
+        $refused = [];
+        $removable = [];
+
+        foreach ($unused as $media) {
+            $event = $this->eventDispatcher->dispatch(new MediaPreRemoveEvent($media), MediaPreRemoveEvent::NAME);
+            if ($event->isRefused()) {
+                $refused[] = ['id' => $media->id, 'file_name' => $media->getFileName(), 'reasons' => $event->getReasons()];
+            } else {
+                $removable[] = $media;
+            }
         }
 
-        return $this->remove($output, $io, $unused, $agentMode);
+        if (! $force) {
+            return $this->report($output, $io, \count($unused), $removable, $refused, $agentMode);
+        }
+
+        return $this->remove($output, $io, \count($unused), $removable, $refused, $agentMode);
     }
 
-    /** @param Media[] $unused */
-    private function report(OutputInterface $output, SymfonyStyle $io, array $unused, bool $agentMode): int
+    /**
+     * @param Media[]            $removable
+     * @param list<RefusedMedia> $refused
+     */
+    private function report(OutputInterface $output, SymfonyStyle $io, int $unusedCount, array $removable, array $refused, bool $agentMode): int
     {
         if ($agentMode) {
             $this->writeAgentJson($output, [
                 'tool' => 'pw:media:clean-unused',
                 'result' => 'done',
                 'dry_run' => true,
-                'found' => \count($unused),
+                'found' => $unusedCount,
                 'removed' => 0,
+                'refused' => \count($refused),
                 'media' => array_map(static fn (Media $media): array => [
                     'id' => $media->id,
                     'file_name' => $media->getFileName(),
-                ], array_values($unused)),
+                ], $removable),
+                'refused_media' => $refused,
             ]);
 
             return Command::SUCCESS;
         }
 
-        $io->info(\sprintf('%d media referenced by no page.', \count($unused)));
+        $io->info(\sprintf('%d media referenced by no page.', $unusedCount));
 
-        foreach ($unused as $media) {
+        foreach ($removable as $media) {
             $io->writeln(\sprintf('  #%d %s', $media->id, $media->getFileName()));
         }
+
+        $this->listRefused($io, $refused);
 
         $io->warning('A media used only from a Twig template — a navbar logo, an OG fallback — is listed here too: nothing scans templates. Read the list before running with --force.');
 
         return Command::SUCCESS;
     }
 
-    /** @param Media[] $unused */
-    private function remove(OutputInterface $output, SymfonyStyle $io, array $unused, bool $agentMode): int
+    /** @param list<RefusedMedia> $refused */
+    private function listRefused(SymfonyStyle $io, array $refused): void
+    {
+        if ([] === $refused) {
+            return;
+        }
+
+        $io->note(\sprintf('%d of them kept: a listener refused their removal.', \count($refused)));
+        $io->listing(array_map(
+            static fn (array $media): string => \sprintf('#%d %s: %s', $media['id'], $media['file_name'], implode(' ', $media['reasons'])),
+            $refused,
+        ));
+    }
+
+    /**
+     * @param Media[]            $removable
+     * @param list<RefusedMedia> $refused
+     */
+    private function remove(OutputInterface $output, SymfonyStyle $io, int $unusedCount, array $removable, array $refused, bool $agentMode): int
     {
         $progressBar = null;
         if (! $agentMode) {
-            $progressBar = new ProgressBar($output, \count($unused));
+            $progressBar = new ProgressBar($output, \count($removable));
             $progressBar->setMessage('');
             $progressBar->setFormat("%current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% \r\n %message%");
             $progressBar->start();
@@ -140,7 +184,7 @@ final readonly class CleanUnusedMediaCommand
         $errors = [];
         $removed = 0;
 
-        foreach ($unused as $media) {
+        foreach ($removable as $media) {
             $mediaId = (int) $media->id;
             $fileName = $media->getFileName();
             $progressBar?->setMessage(\sprintf('Removing #%d %s', $mediaId, $fileName));
@@ -181,8 +225,10 @@ final readonly class CleanUnusedMediaCommand
                 'tool' => 'pw:media:clean-unused',
                 'result' => [] === $errors ? 'done' : 'partial',
                 'dry_run' => false,
-                'found' => \count($unused),
+                'found' => $unusedCount,
                 'removed' => $removed,
+                'refused' => \count($refused),
+                'refused_media' => $refused,
                 'errors' => $errors,
             ]);
 
@@ -190,6 +236,8 @@ final readonly class CleanUnusedMediaCommand
         }
 
         $output->writeln('');
+
+        $this->listRefused($io, $refused);
 
         if ([] !== $errors) {
             $io->warning('Some media failed to be removed:');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Admin\Controller;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
@@ -29,6 +30,7 @@ use Pushword\Admin\Filter\MediaSearchFilter;
 use Pushword\Admin\Filter\MediaTagFilter;
 use Pushword\Admin\Filter\MediaUsageFilter;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Event\MediaPreRemoveEvent;
 use Pushword\Core\Image\ImageRotator;
 use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Repository\MediaRepository;
@@ -394,6 +396,28 @@ class MediaCrudController extends AbstractAdminCrudController
     private function normalizeMediaView(mixed $value): string
     {
         return self::VIEW_TABLE === $value ? self::VIEW_TABLE : self::VIEW_MOSAIC;
+    }
+
+    /**
+     * Delete and batch delete both come through here: a media an app refuses to lose
+     * is kept and said so, and the rest of the batch still goes.
+     */
+    #[Override]
+    public function deleteEntity(EntityManagerInterface $entityManager, object $entityInstance): void
+    {
+        $event = $this->container->get('event_dispatcher')
+            ->dispatch(new MediaPreRemoveEvent($entityInstance), MediaPreRemoveEvent::NAME);
+        if ($event->isRefused()) {
+            // Flashes are rendered raw, and a reason comes from whatever listener wrote it.
+            FlashBag::get($this->getRequest())?->add('danger', $this->getTranslator()->trans('adminMediaRemovalRefused', [
+                '%fileName%' => htmlspecialchars($entityInstance->getFileName()),
+                '%reasons%' => htmlspecialchars(implode(' ', $event->getReasons())),
+            ]));
+
+            return;
+        }
+
+        parent::deleteEntity($entityManager, $entityInstance);
     }
 
     #[Override]

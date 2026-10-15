@@ -1,3 +1,5 @@
+mediaAltsInvalidYaml: "Format YAML invalide. Utilisez : locale: texte (ex: fr: ma description). Échappez les apostrophes en les doublant (ex: Ko''Ono)."
+mediaTypeMismatch: 'Le fichier de remplacement doit être du même type que le fichier actuel.'
 pageCustomPropertiesMalformed: 'Les propriétés supplémentaires doivent respecter le format YAML.'
 pageCustomPropertiesNotStandAlone: 'Une propriété gérée par un champ dédié ne peut pas être définie dans les propriétés libres.'
 pagePageRendering: "Une erreur s'est glissée dans votre contenu... impossible de générer la page."

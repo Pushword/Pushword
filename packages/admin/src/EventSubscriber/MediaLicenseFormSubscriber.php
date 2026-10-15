@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Pushword\Admin\EventSubscriber;
 
-use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityPersistedEvent;
-use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityUpdatedEvent;
+use Pushword\Admin\Form\Extension\MediaFormExtension;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\License\MediaLicense;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -18,6 +19,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
  *
  * A submitted-but-empty field removes its key — that is how the "clear" button and a
  * manual blanking both make a media stop emitting its ImageObject.
+ *
+ * A form subscriber, added by {@see MediaFormExtension}, so the values land before the
+ * form is validated: a rule an app maps onto Media reads the credit typed right here.
  */
 final readonly class MediaLicenseFormSubscriber implements EventSubscriberInterface
 {
@@ -34,23 +38,17 @@ final readonly class MediaLicenseFormSubscriber implements EventSubscriberInterf
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, array{string, int}>
      */
     public static function getSubscribedEvents(): array
     {
-        return [
-            BeforeEntityPersistedEvent::class => 'applyLicense',
-            BeforeEntityUpdatedEvent::class => 'applyLicense',
-        ];
+        // Ahead of Symfony's ValidationListener (POST_SUBMIT, priority 0).
+        return [FormEvents::POST_SUBMIT => ['applyLicense', 10]];
     }
 
-    public function applyLicense(object $event): void
+    public function applyLicense(FormEvent $event): void
     {
-        if (! $event instanceof BeforeEntityPersistedEvent && ! $event instanceof BeforeEntityUpdatedEvent) {
-            return;
-        }
-
-        $media = $event->getEntityInstance();
+        $media = $event->getData();
         if (! $media instanceof Media) {
             return;
         }

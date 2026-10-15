@@ -25,4 +25,7 @@ final class PushwordEvents
 
     /** Dispatched before the search string is parsed in pages list. */
     public const string PAGES_LIST_SEARCH = 'pushword.pages_list.before_search';
+
+    /** Dispatched before an interactive path removes a media; a listener may refuse. */
+    public const string MEDIA_PRE_REMOVE = 'pushword.media.pre_remove';
 }

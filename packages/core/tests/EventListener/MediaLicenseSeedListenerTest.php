@@ -90,13 +90,18 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
     /**
      * @param array<string, string> $iptcIim
      * @param array<string, string> $exif
+     * @param array<string, mixed>  $license values submitted with the upload
      */
-    private function upload(string $name, string $xmp = '', array $iptcIim = [], array $exif = [], string $c2pa = ''): Media
+    private function upload(string $name, string $xmp = '', array $iptcIim = [], array $exif = [], string $c2pa = '', array $license = []): Media
     {
         $path = ImageMetadataFixture::write($this->dir.'/'.$name.'.jpg', $xmp, $iptcIim, $exif, $c2pa);
 
         $media = new Media();
         $media->setMediaFile(new UploadedFile($path, $name.'.jpg', 'image/jpeg', null, true));
+
+        foreach ($license as $key => $value) {
+            $media->setCustomProperty($key, $value);
+        }
 
         $this->em->persist($media);
         $this->em->flush();
@@ -292,6 +297,98 @@ final class MediaLicenseSeedListenerTest extends KernelTestCase
 
         self::assertSame('Photo maison', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
         self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
+    }
+
+    // --- Values submitted with the upload ---
+
+    /**
+     * A credit typed in the admin form or posted with an API upload is a decision;
+     * the file's metadata only fills the keys left empty.
+     */
+    public function testACreditSubmittedWithTheUploadOutranksTheFile(): void
+    {
+        $media = $this->upload('typed-credit', $this->creatorXmp('Enrico Romanzi'), license: [
+            MediaLicense::CREDIT_TEXT => 'Typed credit',
+        ]);
+
+        self::assertSame('Typed credit', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertSame([['name' => 'Enrico Romanzi', 'type' => 'Person']], MediaLicense::creators($media));
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
+    }
+
+    /**
+     * A typed credit is a rights claim like an embedded one: the site does not license
+     * over it on its own. The form's "apply the site license" button is how a human
+     * submits both together.
+     */
+    public function testASubmittedCreditKeepsTheSeedOff(): void
+    {
+        $media = $this->upload('typed-over-seed', license: [MediaLicense::CREDIT_TEXT => 'Typed credit']);
+
+        self::assertSame('Typed credit', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertNull($media->getCustomProperty(MediaLicense::LICENSE));
+        // The seed is what the backfill command rewrites; a typed credit must not be in its reach.
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
+    }
+
+    /**
+     * The edit form posts the stored values back with a new file. They described the
+     * previous bytes, so only what changed alongside the file counts as a decision.
+     */
+    public function testReplacingTheFileKeepsOnlyTheValuesChangedWithIt(): void
+    {
+        $media = $this->upload('replaced-with-credit');
+        self::assertSame(MediaLicense::STATE_SEEDED, $media->licenseState);
+
+        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'New credit');
+        $this->replaceFile($media, 'replacement-with-credit', $this->creatorXmp('Enrico Romanzi'));
+
+        self::assertSame('New credit', $media->getCustomPropertyScalar(MediaLicense::CREDIT_TEXT));
+        self::assertSame([['name' => 'Enrico Romanzi', 'type' => 'Person']], MediaLicense::creators($media));
+        self::assertNull($media->getCustomProperty(MediaLicense::LICENSE));
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
+    }
+
+    /**
+     * A creator stored in the legacy list form comes back from the edit form as rows.
+     * That is the stored value posted back, not a new decision: the new file's own
+     * creator must win.
+     */
+    public function testALegacyCreatorPostedBackAsRowsIsNotADecision(): void
+    {
+        $media = $this->upload('legacy-creator');
+        $media->setCustomProperty(MediaLicense::CREATOR, ['Old Photographer']);
+
+        $this->em->flush();
+
+        $media->setCustomProperty(MediaLicense::CREATOR, [['name' => 'Old Photographer', 'type' => 'Person']]);
+        $this->replaceFile($media, 'legacy-creator-replacement', $this->creatorXmp('Enrico Romanzi'));
+
+        self::assertSame([['name' => 'Enrico Romanzi', 'type' => 'Person']], MediaLicense::creators($media));
+        self::assertSame(MediaLicense::STATE_THIRD_PARTY, $media->licenseState);
+    }
+
+    /**
+     * The reset warning is for a hand-written license the replacement discarded. A
+     * credit typed alongside the new file keeps the license asserted: nothing to warn.
+     */
+    public function testReplacingTheFileWithANewCreditDoesNotSayTheLicenseWasReset(): void
+    {
+        $flashBag = $this->pushRequest();
+        $media = $this->upload('asserted-replaced');
+        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Photo maison');
+
+        $this->em->flush();
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
+
+        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'New credit');
+        $this->replaceFile($media, 'asserted-replacement', $this->creatorXmp('Enrico Romanzi'));
+
+        self::assertSame(MediaLicense::STATE_OVERRIDDEN, $media->licenseState);
+        $text = $this->flashText($flashBag);
+        // The bag is live: the first upload's disclosure reached it.
+        self::assertStringContainsString($this->trans('mediaLicenseSeeded'), $text);
+        self::assertStringNotContainsString($this->trans('mediaLicenseWasReset'), $text);
     }
 
     /**

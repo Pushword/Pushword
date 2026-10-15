@@ -1,5 +1,9 @@
 framework:
     test: true
+    validation:
+        mapping:
+            # Stands in for an app's own media rules (MediaPolicyFixture).
+            paths: ['%kernel.project_dir%/../core/tests/Media/Policy']
     lock: "%env(LOCK_DSN)%"
     messenger:
         transports:
