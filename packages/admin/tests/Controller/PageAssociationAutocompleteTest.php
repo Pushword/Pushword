@@ -139,6 +139,30 @@ final class PageAssociationAutocompleteTest extends AbstractAdminTestClass
         yield 'case and whitespace' => [' PARENT-SEARCH-BLOG '];
     }
 
+    #[DataProvider('parentPageOptionLabels')]
+    public function testParentPageOptionKeepsATitleAndReadablePath(string $title, string $slug, string $expectedTitle, string $expectedPath): void
+    {
+        self::bootKernel();
+        $page = new Page();
+        $page->host = self::SECOND_HOST;
+        $page->slug = $slug;
+        $page->h1 = $title;
+
+        $html = self::getContainer()->get('twig')->render('@PushwordAdmin/page/parentPageOption.html.twig', ['entity' => $page]);
+        $option = new Crawler($html);
+
+        self::assertSame($expectedTitle, $option->filter('.pw-page-choice__title')->text());
+        self::assertSame(self::SECOND_HOST.$expectedPath, $option->filter('.pw-page-choice__path')->text());
+    }
+
+    /** @return iterable<string, array{string, string, string, string}> */
+    public static function parentPageOptionLabels(): iterable
+    {
+        yield 'empty title' => ['', 'untitled-page', 'untitled-page', '/untitled-page'];
+        yield 'title containing only markup and whitespace' => [' <b> </b> ', 'untitled-page', 'untitled-page', '/untitled-page'];
+        yield 'homepage path' => ['Home', 'homepage', 'Home', '/'];
+    }
+
     public function testVariantOfCandidatesOfferOnlyMasters(): void
     {
         $client = $this->loginUser();
