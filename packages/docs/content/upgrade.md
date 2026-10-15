@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.57](/upgrade/1.0.57) | `admin` `admin-block-editor` `api` `core` | invalid media are refused on every write path; media removal can be vetoed; license values typed with an upload are kept |
 | [1.0.56](/upgrade/1.0.56) | `admin` `admin-block-editor` `core` | page and link choices are clearer; page links preserve their host |
 | [1.0.53](/upgrade/1.0.53) | `admin` `core` | links to another app's page are absolute outside the default app's hosts; the admin opens each page where its app runs |
 | [1.0.52](/upgrade/1.0.52) | `core` | page content is stored with LF line endings; a page saved without a slug takes it from its H1 — run `pw:page:clean` |
