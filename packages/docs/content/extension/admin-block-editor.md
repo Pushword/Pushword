@@ -86,11 +86,27 @@ The link tool's config (`link` in `editorjsConfig.tools`) takes three keys:
   outline, discreet);
 - `availableRels` — label => rel value, the *Rel* list (defaults: obfuscate,
   nofollow, nofollow sponsored, nofollow ugc);
-- `options` — `false` shows the address field alone, without the *New tab* switch,
-  *Rel* or *Style* (default: `true`). An existing link keeps the target, rel and
-  class it already carries when only its address is edited.
+- `options` — `false` hides the *New tab* switch, *Rel* and *Style* (default:
+  `true`). Editing only the address preserves an existing link's target, rel and class.
+
+Custom widgets can provide page titles with this Twig snippet:
+
+```twig
+window.pageLinkList = {{ editorjs_page_links(attr.page_host|default(''))|json_encode|raw }};
+```
+
+The older `window.pagesUriList` array of paths still works, without titles.
 
 ## Usage
+
+### Insert a link
+
+Select text and open the link tool. In **Page or URL**, search the current site's
+pages by title or path, or paste a URL. Results show titles and complete paths,
+with exact paths first; refine the search if more than 20 pages match.
+
+Click a result, or use `↑`/`↓` and `Enter` to choose it. Press `Enter` to confirm a
+typed address. `Escape` closes the suggestions without choosing a page.
 
 ### Outline panel
 

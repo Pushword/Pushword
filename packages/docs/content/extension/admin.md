@@ -48,6 +48,15 @@ last two buttons open the editor fullscreen and the [markdown cheatsheet](/edito
 The same editor, toolbar included, backs the markdown mode of
 [admin-block-editor](/extension/admin-block-editor).
 
+### Parent page
+
+In the settings panel, search by page title, slug, path or a URL on a configured
+host. Choices show the title and host/path separately; an exact slug comes before
+its children and other matches. Only pages on the edited page's host are offered,
+and the page cannot be its own parent.
+
+### Saving and recovering changes
+
 `Ctrl+S` saves without leaving the form. There is no timed autosave: a save publishes
 (it rewrites the flat markdown, regenerates the Open Graph image, purges the static
 cache, and turns a half-typed slug into a redirect page).
