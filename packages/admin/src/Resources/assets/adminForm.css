@@ -158,7 +158,16 @@ body.ea-new .content-header {
 }
 
 .pw-settings-accordion .form-fieldset-body > .row {
+  /* Grid items otherwise keep the intrinsic width of long select labels. */
+  min-inline-size: 0;
   overflow: visible !important;
+}
+
+.pw-settings-accordion .ts-wrapper.single .ts-control .item {
+  display: block;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .form-column .form-fieldset-header {

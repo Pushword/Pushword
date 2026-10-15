@@ -128,6 +128,54 @@ final class AdminJSTest extends AbstractPantherAdminTest
         self::assertNotEmpty($pageHost, 'pageHost should be set');
     }
 
+    public function testLongParentPageFitsSettingsPanel(): void
+    {
+        $client = $this->createPantherClientWithLogin();
+        $this->navigateToPageEdit($client);
+
+        $selector = '#Page_parentPage_autocomplete';
+        self::assertTrue($this->pollUntilTrue(
+            $client,
+            'return !!document.querySelector(arguments[0])?.tomselect',
+            [$selector],
+        ));
+
+        $client->executeScript(
+            'const select = document.querySelector(arguments[0]);
+             const panel = select.closest(".pw-settings-accordion");
+             const toggle = panel.querySelector(".pw-settings-toggle");
+             if (toggle.getAttribute("aria-expanded") !== "true") toggle.click();
+             select.tomselect.addOption({entityId: "long-parent", entityAsString: "www.grandangle.fr/france/alpes-nord/mont-blanc"});
+             select.tomselect.setValue("long-parent", true);',
+            [$selector],
+        );
+
+        $webDriver = $client->getWebDriver();
+        $originalWindowSize = $webDriver->manage()->window()->getSize();
+
+        try {
+            foreach ([1440, 390] as $width) {
+                $webDriver->manage()->window()->setSize(new WebDriverDimension($width, 1000));
+
+                self::assertTrue($this->pollUntilTrue(
+                    $client,
+                    'const select = document.querySelector(arguments[0]);
+                     const panel = select.closest(".pw-settings-accordion").getBoundingClientRect();
+                     const control = select.tomselect.wrapper.getBoundingClientRect();
+                     const item = select.tomselect.control.querySelector(".item");
+                     const clear = select.tomselect.control.querySelector(".clear-button").getBoundingClientRect();
+                     return control.width > 0 && control.left >= panel.left && control.right <= panel.right
+                         && item.getBoundingClientRect().right <= clear.left
+                         && item.clientWidth < item.scrollWidth
+                         && getComputedStyle(item).textOverflow === "ellipsis";',
+                    [$selector],
+                ), sprintf('The long parent URL should fit inside its panel at %dpx', $width));
+            }
+        } finally {
+            $webDriver->manage()->window()->setSize($originalWindowSize);
+        }
+    }
+
     /**
      * Test textarea auto-resize.
      */
