@@ -24,8 +24,9 @@ onto the entity:
 | Block editor upload, from a file or a URL, after the duplicate check | `422 {"success": 0, "error": message}`, in the image tool's notice |
 | `POST`/`PATCH /api/media/{filename}`, upload and metadata | `422 {"error": "validation", "violations": [{path, message}]}`, see [Media API](/media-api#errors) |
 
-Each channel shows the first violation, translated through the `validators` domain.
-An exact duplicate (same SHA-1) is never validated, because it writes nothing.
+The form and API return all violations; the other channels show the first one.
+Messages are translated through the `validators` domain. An upload that matches an
+existing media's SHA-1 skips entity validation because it writes nothing.
 
 Maintenance paths do not validate. These are the flat import, console commands,
 fixtures and `ExternalImageImporter`.

@@ -145,7 +145,7 @@ curl -X POST \
 - `422 Unprocessable Entity` — refused by a [media rule](/media-rules); nothing is created
 
 License keys sent in `customProperties` with the file outrank the rights embedded in
-it, key by key — see [image license](/image-license#what-happens-on-upload).
+it, key by key — see [image license](/image-license#upload).
 
 ### DELETE /api/media/{filename}
 

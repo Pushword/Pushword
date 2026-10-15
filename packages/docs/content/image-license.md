@@ -56,7 +56,9 @@ if imported has a generator marker:
     record it as digitalSourceType, drop it from creditText
     it does NOT count as a rights value below
 
-if imported still has any rights value:
+if the upload submits any rights value:
+    keep submitted values, fill missing keys from imported → licenseState = overridden
+else if imported still has any rights value:
     import it as-is, seed nothing        → licenseState = thirdParty
 else:
     write the configured seed            → licenseState = seeded
@@ -69,10 +71,8 @@ imported attribution.
 
 **A value submitted with the upload outranks the file, key by key** — typed in the
 admin form's license block, or sent in `customProperties` with an
-[API upload](/media-api). The file's metadata only fills the keys left empty. A
-submitted rights value is a claim like an embedded one, so it keeps the seed off, and
-it sets `licenseState = overridden`, as the button does. An empty or `null` key is not
-a value: the file's own value is imported there.
+[API upload](/media-api). A submitted rights value keeps the seed off and sets
+`licenseState = overridden`. Empty or `null` keys are filled from the file.
 
 A [media rule](/media-rules) runs before any of this; it reads what the upload will
 import through `UploadRightsReader`.
