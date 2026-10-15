@@ -20,6 +20,7 @@ use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -173,6 +174,45 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
             $connection->delete('media', ['id' => $media->id]);
             @unlink($this->getMediaDir().'/claimant-'.$suffix);
             @unlink($this->getMediaDir().'/'.$orphan);
+        }
+    }
+
+    /**
+     * Once stored, an upload is an ordinary media, and a rename later in the same request
+     * moves the stored file. The media used to keep holding a file whose path led
+     * nowhere, and the rename read its extension from it.
+     */
+    public function testAMediaUploadedEarlierInTheRequestCanBeRenamed(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $suffix = uniqid();
+        $image = imagecreatetruecolor(2, 2);
+        self::assertNotFalse($image);
+        imagesetpixel($image, 0, 0, random_int(1, 0xFFFFFF));
+        $path = sys_get_temp_dir().'/uploaded-'.$suffix.'.png';
+        imagepng($image, $path);
+
+        $media = new Media();
+        $media->setMediaFile(new UploadedFile($path, basename($path), 'image/png', null, true));
+
+        $em->persist($media);
+        $em->flush();
+
+        $uploaded = $media->getFileName();
+
+        try {
+            $media->setSlugForce('renamed-'.$suffix);
+            $em->flush();
+
+            self::assertSame('renamed-'.$suffix.'.png', $media->getFileName());
+            self::assertFileExists($this->getMediaDir().'/renamed-'.$suffix.'.png');
+            self::assertFileDoesNotExist($this->getMediaDir().'/'.$uploaded);
+        } finally {
+            $em->remove($media);
+            $em->flush();
         }
     }
 

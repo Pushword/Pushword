@@ -80,7 +80,8 @@ A new upload has `id === null` and a non-null `getMediaFile()`.
 - `licenseState` is not decided yet.
 
 A file replaced on an existing media has a non-null `id` and a non-null
-`getMediaFile()`. Without a new file, `getMediaFile()` is `null`.
+`getMediaFile()`. Without a new file, `getMediaFile()` is `null` — including later in
+the request that uploaded it: once the bytes are stored, the media lets go of the file.
 
 ### Judge the change, not the state
 

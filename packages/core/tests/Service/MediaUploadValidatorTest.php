@@ -109,4 +109,36 @@ final class MediaUploadValidatorTest extends KernelTestCase
 
         self::assertSame('', $media->getFileName());
     }
+
+    /**
+     * A caller may write the same media twice in one request — an upload, then a
+     * metadata edit. Once stored, the media holds no readable file any more, and the
+     * second validation must not try to read one.
+     */
+    public function testAMediaUploadedEarlierInTheRequestRevalidates(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $image = imagecreatetruecolor(2, 2);
+        self::assertNotFalse($image);
+        imagesetpixel($image, 0, 0, random_int(1, 0xFFFFFF));
+        $path = sys_get_temp_dir().'/revalidated-'.uniqid().'.png';
+        imagepng($image, $path);
+
+        $media = new Media();
+        $media->setMediaFile(new UploadedFile($path, basename($path), 'image/png', null, true));
+
+        $em->persist($media);
+        $em->flush();
+
+        try {
+            $media->setAlt('Edited in the same request');
+            $violations = self::getContainer()->get(MediaUploadValidator::class)->validateMedia($media);
+
+            self::assertCount(0, $violations, (string) $violations);
+        } finally {
+            $em->remove($media);
+            $em->flush();
+        }
+    }
 }

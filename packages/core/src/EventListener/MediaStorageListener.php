@@ -133,6 +133,11 @@ final class MediaStorageListener implements ResetInterface
     {
         $media = $this->getMediaFromEvent($event);
 
+        // Stored: Vich has swapped the upload for a File named by its storage path, which
+        // is not a local one. Release it, or anything reading it later in the request — a
+        // second validation, a rename — fails on it.
+        $media->setMediaFile();
+
         if ($media->isImage()) {
             $this->imageCacheManager->remove($media);
             $this->imageCacheGenerator->generateQuickPreview($media);
