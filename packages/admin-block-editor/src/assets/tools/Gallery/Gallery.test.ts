@@ -5,8 +5,9 @@ import { MediaToolConfig } from '../Abstract/AbstractMediaTool'
 
 const notify = vi.fn()
 
-function galleryWith(data: any): Gallery {
+function galleryWith(data: any, blocks?: API['blocks'], readOnly = false): Gallery {
   const api = {
+    blocks,
     styles: {
       block: 'ce-block',
       input: 'cdx-input',
@@ -21,7 +22,7 @@ function galleryWith(data: any): Gallery {
     onUploadFile: vi.fn(),
   } as unknown as MediaToolConfig
 
-  return new Gallery({ data, config, api, readOnly: false })
+  return new Gallery({ data, config, api, readOnly })
 }
 
 describe('Gallery.normalizeData', () => {
@@ -75,6 +76,80 @@ describe('Gallery.normalizeData', () => {
       items: [],
     })
     expect(Gallery.normalizeData({} as any)).toEqual({ items: [] })
+  })
+})
+
+describe('Gallery – converting to an image', () => {
+  function conversionBlocks(): API['blocks'] {
+    return {
+      getBlockByElement: vi.fn(() => ({ id: 'gallery-id' })),
+      getBlockIndex: vi.fn(() => 1),
+      insert: vi.fn(),
+    } as unknown as API['blocks']
+  }
+
+  it('replaces a single-image gallery in place with its media and edited caption', () => {
+    const blocks = conversionBlocks()
+    const tool = galleryWith({ items: [{ media: 'photo.jpg', caption: 'Alt' }] }, blocks)
+    const wrapper = tool.render()
+    wrapper.querySelector('.image-tool__caption')!.textContent =
+      'Edited alternative text'
+    const action = tool.renderSettings()[0]!
+
+    expect(action.title).toBe('Convert to image')
+    expect(action.closeOnActivate).toBe(true)
+    action.onActivate()
+
+    expect(blocks.getBlockByElement).toHaveBeenCalledWith(wrapper)
+    expect(blocks.getBlockIndex).toHaveBeenCalledWith('gallery-id')
+    expect(blocks.insert).toHaveBeenCalledExactlyOnceWith(
+      'image',
+      { media: 'photo.jpg', caption: 'Edited alternative text' },
+      {},
+      1,
+      true,
+      true,
+      'gallery-id',
+    )
+  })
+
+  it.each([
+    { items: [] },
+    { items: [{ media: 'one.jpg' }, { media: 'two.jpg' }] },
+  ])(
+    'does not offer conversion unless there is exactly one image: $items',
+    ({ items }) => {
+      expect(galleryWith({ items }).renderSettings()).toEqual([])
+    },
+  )
+
+  it('offers conversion after removing the other image', () => {
+    const tool = galleryWith({ items: [{ media: 'one.jpg' }, { media: 'two.jpg' }] })
+    const wrapper = tool.render()
+    expect(tool.renderSettings()).toEqual([])
+
+    wrapper.querySelector<HTMLElement>('.cdxcarousel-removeBtn')!.click()
+
+    expect(tool.renderSettings()).toHaveLength(1)
+  })
+
+  it('does not drop images added after opening the menu', () => {
+    const blocks = conversionBlocks()
+    const tool = galleryWith({ items: [{ media: 'one.jpg' }] }, blocks)
+    tool.render()
+    const action = tool.renderSettings()[0]!
+    tool.onMultiUpload([{ media: 'two.jpg', name: '', url: '/media/md/two.jpg' }])
+
+    action.onActivate()
+
+    expect(blocks.insert).not.toHaveBeenCalled()
+    expect(tool.save().items).toHaveLength(2)
+  })
+
+  it('does not offer conversion in read-only mode', () => {
+    const tool = galleryWith({ items: [{ media: 'photo.jpg' }] }, undefined, true)
+
+    expect(tool.renderSettings()).toEqual([])
   })
 })
 

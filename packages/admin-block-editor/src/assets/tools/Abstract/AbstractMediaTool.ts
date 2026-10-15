@@ -108,6 +108,19 @@ export abstract class AbstractMediaTool extends BaseTool {
 
   protected abstract fillWith(file: UploadResponse['file']): void
 
+  protected replaceBlock(type: string, data: BlockToolData): void {
+    const block = this.api.blocks.getBlockByElement(this.nodes.wrapper)!
+    this.api.blocks.insert(
+      type,
+      data,
+      {},
+      this.api.blocks.getBlockIndex(block.id),
+      true,
+      true,
+      block.id,
+    )
+  }
+
   protected handleUploadError(error: unknown): void {
     const toolName = this.constructor.name
     logger.error(`${toolName}: uploading failed`, error)

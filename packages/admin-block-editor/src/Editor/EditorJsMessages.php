@@ -127,6 +127,7 @@ final readonly class EditorJsMessages
                 'gallery' => $this->translate([
                     ...self::MEDIA,
                     'Ce média est déjà présent dans la galerie.' => 'editorMediaAlreadyInGallery',
+                    'Convert to image' => 'editorConvertToImage',
                 ]),
                 'groupEnd' => $this->translate([
                     'End of collapsible' => 'editorCollapsibleEnd',
@@ -148,7 +149,10 @@ final readonly class EditorJsMessages
                     'Notice' => 'editorNotice',
                     'Title' => 'editorNoticeTitle',
                 ]),
-                'image' => $this->translate(self::MEDIA),
+                'image' => $this->translate([
+                    ...self::MEDIA,
+                    'Convert to gallery' => 'editorConvertToGallery',
+                ]),
                 'link' => $this->translate([
                     'Button' => 'editorLinkButton',
                     'Button outline' => 'editorLinkButtonOutline',

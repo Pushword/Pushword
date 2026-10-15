@@ -16,13 +16,13 @@ function stubApi(): API {
   } as unknown as API
 }
 
-function imageWith(media: string): Image {
+function imageWith(media: string, api: API = stubApi(), readOnly = false): Image {
   const config = {
     onSelectFile: vi.fn(),
     onUploadFile: vi.fn(),
   } as unknown as MediaToolConfig
 
-  return new Image({ data: { media, caption: 'A caption' }, config, api: stubApi() })
+  return new Image({ data: { media, caption: 'A caption' }, config, api, readOnly })
 }
 
 function deleteButtonOf(wrapper: HTMLElement): HTMLElement {
@@ -68,6 +68,61 @@ describe('Image – removing the media', () => {
 describe('Image – the inline uploader', () => {
   it('offers pictures only', () => {
     expect(imageWith('').uploadAccept).toBe('image/*')
+  })
+})
+
+describe('Image – converting to a gallery', () => {
+  function conversionApi(): API {
+    return {
+      ...stubApi(),
+      blocks: {
+        getBlockByElement: vi.fn(() => ({ id: 'image-id' })),
+        getBlockIndex: vi.fn(() => 2),
+        insert: vi.fn(),
+      },
+    } as unknown as API
+  }
+
+  it('replaces this image in place with a gallery containing its media and edited caption', () => {
+    const api = conversionApi()
+    const tool = imageWith('photo.jpg', api)
+    const wrapper = tool.render()
+    wrapper.querySelector('.image-tool__caption')!.textContent =
+      'Edited alternative text'
+    const action = tool.renderSettings()[0]!
+
+    expect(action.title).toBe('Convert to gallery')
+    expect(action.closeOnActivate).toBe(true)
+    action.onActivate()
+
+    expect(api.blocks.getBlockByElement).toHaveBeenCalledWith(wrapper)
+    expect(api.blocks.getBlockIndex).toHaveBeenCalledWith('image-id')
+    expect(api.blocks.insert).toHaveBeenCalledExactlyOnceWith(
+      'gallery',
+      { items: [{ media: 'photo.jpg', caption: 'Edited alternative text' }] },
+      {},
+      2,
+      true,
+      true,
+      'image-id',
+    )
+  })
+
+  it('does not convert an image whose media was removed', () => {
+    const api = conversionApi()
+    const tool = imageWith('photo.jpg', api)
+    const wrapper = tool.render()
+    const action = tool.renderSettings()[0]!
+    deleteButtonOf(wrapper).click()
+
+    expect(tool.renderSettings()).toEqual([])
+    action.onActivate()
+
+    expect(api.blocks.insert).not.toHaveBeenCalled()
+  })
+
+  it('does not offer conversion in read-only mode', () => {
+    expect(imageWith('photo.jpg', stubApi(), true).renderSettings()).toEqual([])
   })
 })
 

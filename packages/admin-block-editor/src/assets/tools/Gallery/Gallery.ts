@@ -3,6 +3,7 @@ import './Gallery.css'
 import { MediaUtils } from '../utils/media'
 import { API, BlockToolData } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
+import { IconPicture } from '@codexteam/icons'
 import { MarkdownUtils } from '../utils/MarkdownUtils'
 import CloseIcon from './Close.svg?raw'
 import MoveLeftIcon from './MoveLeft.svg?raw'
@@ -305,6 +306,23 @@ export default class Gallery extends AbstractMediaTool {
     // Synchroniser this.data avec les données sauvegardées
     this.data = { items: newItems }
     return this.data
+  }
+
+  public renderSettings() {
+    if (this.readOnly || this.save().items.length !== 1) return []
+
+    return [
+      {
+        icon: IconPicture,
+        title: this.api.i18n.t('Convert to image'),
+        closeOnActivate: true,
+        onActivate: () => {
+          const { items } = this.save()
+          if (items.length !== 1) return
+          this.replaceBlock('image', items[0])
+        },
+      },
+    ]
   }
 
   onFileLoading(): void {

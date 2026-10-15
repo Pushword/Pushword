@@ -12,6 +12,7 @@ import { MediaUtils } from '../utils/media'
 import { BlockTuneDataPushword, MarkdownUtils } from '../utils/MarkdownUtils'
 import { API, BlockToolData } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
+import GalleryIcon from '../Gallery/toolbox-icon.svg?raw'
 
 export interface ImageData extends BlockToolData {
   media: string
@@ -144,6 +145,22 @@ export default class Image extends AbstractMediaTool {
     this.nodes.wrapper.appendChild(this.nodes.fileButton)
 
     return this.nodes.wrapper
+  }
+
+  public renderSettings() {
+    if (this.readOnly || !this.media) return []
+
+    return [
+      {
+        icon: GalleryIcon,
+        title: this.api.i18n.t('Convert to gallery'),
+        closeOnActivate: true,
+        onActivate: () => {
+          if (!this.media) return
+          this.replaceBlock('gallery', { items: [this.save(this.nodes.wrapper)] })
+        },
+      },
+    ]
   }
 
   public render(): HTMLElement {
