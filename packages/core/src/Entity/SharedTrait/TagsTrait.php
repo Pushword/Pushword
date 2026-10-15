@@ -26,7 +26,10 @@ trait TagsTrait
 
     public function getTags(): string
     {
-        $tags = implode(' ', $this->tags);
+        // Keep classification visible first, including on entities saved before this display rule.
+        $typeTags = array_filter($this->tags, static fn (string $tag): bool => str_starts_with($tag, 'type:'));
+        $otherTags = array_diff($this->tags, $typeTags);
+        $tags = implode(' ', [...$typeTags, ...$otherTags]);
 
         return $tags.('' !== $tags ? ' ' : '');
     }
