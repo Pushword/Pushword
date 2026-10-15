@@ -81,6 +81,7 @@ body.ea-new .content-header {
    bound a closed panel, which frees raised-and-white to mean "this is the one you
    have open" — the only hierarchy the column had was none. */
 .columnFields .form-fieldset.pw-settings-accordion {
+  flex-grow: 0; /* EasyAdmin stretches the last fieldset to match the article height. */
   background-color: #f1f5f9; /* slate-100, recessed below the white page */
   border: 0;
   border-radius: var(--pw-radius-md);

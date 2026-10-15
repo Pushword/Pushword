@@ -113,6 +113,53 @@ final class AdminJSTest extends AbstractPantherAdminTest
         self::assertTrue($stored, 'Panel state should be stored in localStorage');
     }
 
+    public function testLastSettingsPanelDoesNotStretchToArticleHeight(): void
+    {
+        $client = $this->createPantherClientWithLogin();
+        $this->navigateToPageEdit($client);
+
+        $selector = '.columnFields > .pw-settings-accordion:last-child';
+        $this->waitForElement($client, $selector, 'No last settings panel found');
+        $originalPanelStates = $client->executeScript('return JSON.stringify(localStorage.getItem("panels"))');
+        self::assertIsString($originalPanelStates);
+        $webDriver = $client->getWebDriver();
+        $originalWindowSize = $webDriver->manage()->window()->getSize();
+
+        try {
+            $webDriver->manage()->window()->setSize(new WebDriverDimension(1440, 1000));
+            $client->executeScript(
+                'document.querySelector(".mainFields").style.minHeight = "2400px";
+                 document.querySelectorAll(".columnFields .pw-settings-toggle[aria-expanded=true]")
+                     .forEach(button => button.click());',
+            );
+
+            foreach ([false, true, false] as $open) {
+                $client->executeScript(
+                    'const toggle = document.querySelector(arguments[0]).querySelector(".pw-settings-toggle");
+                     if (toggle.getAttribute("aria-expanded") !== arguments[1]) toggle.click();',
+                    [$selector, $open ? 'true' : 'false'],
+                );
+
+                self::assertTrue($this->pollUntilTrue(
+                    $client,
+                    'const panel = document.querySelector(arguments[0]);
+                     const content = panel.querySelector("fieldset");
+                     return panel.getBoundingClientRect().height > 0
+                         && Math.abs(panel.getBoundingClientRect().height - content.getBoundingClientRect().height) < 1;',
+                    [$selector],
+                ), 'The last settings panel should only be as tall as its visible content');
+            }
+        } finally {
+            $client->executeScript(
+                'const panels = JSON.parse(arguments[0]);
+                 if (panels === null) localStorage.removeItem("panels");
+                 else localStorage.setItem("panels", panels);',
+                [$originalPanelStates],
+            );
+            $webDriver->manage()->window()->setSize($originalWindowSize);
+        }
+    }
+
     /**
      * Test parent page filter by host.
      */
