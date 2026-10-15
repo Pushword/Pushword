@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { API } from '@editorjs/editorjs'
+import type { API, OutputBlockData } from '@editorjs/editorjs'
 import Gallery from './Gallery'
 import { MediaToolConfig } from '../Abstract/AbstractMediaTool'
 
@@ -8,6 +8,7 @@ const notify = vi.fn()
 function galleryWith(data: any, blocks?: API['blocks'], readOnly = false): Gallery {
   const api = {
     blocks,
+    caret: { setToBlock: vi.fn() },
     styles: {
       block: 'ce-block',
       input: 'cdx-input',
@@ -80,15 +81,19 @@ describe('Gallery.normalizeData', () => {
 })
 
 describe('Gallery – converting to an image', () => {
-  function conversionBlocks(): API['blocks'] {
+  function conversionBlocks(tunes?: OutputBlockData['tunes']): API['blocks'] {
     return {
-      getBlockByElement: vi.fn(() => ({ id: 'gallery-id' })),
+      getBlockByElement: vi.fn(() => ({
+        id: 'gallery-id',
+        save: async () => (tunes ? { tunes } : {}),
+      })),
       getBlockIndex: vi.fn(() => 1),
       insert: vi.fn(),
+      update: vi.fn(async () => ({ id: 'gallery-id' })),
     } as unknown as API['blocks']
   }
 
-  it('replaces a single-image gallery in place with its media and edited caption', () => {
+  it('replaces a single-image gallery in place with its media and edited caption', async () => {
     const blocks = conversionBlocks()
     const tool = galleryWith({ items: [{ media: 'photo.jpg', caption: 'Alt' }] }, blocks)
     const wrapper = tool.render()
@@ -98,7 +103,7 @@ describe('Gallery – converting to an image', () => {
 
     expect(action.title).toBe('Convert to image')
     expect(action.closeOnActivate).toBe(true)
-    action.onActivate()
+    await action.onActivate()
 
     expect(blocks.getBlockByElement).toHaveBeenCalledWith(wrapper)
     expect(blocks.getBlockIndex).toHaveBeenCalledWith('gallery-id')
@@ -111,6 +116,24 @@ describe('Gallery – converting to an image', () => {
       true,
       'gallery-id',
     )
+    expect(blocks.update).not.toHaveBeenCalled()
+  })
+
+  it('keeps common and inactive tunes when converting a gallery to an image', async () => {
+    const tunes = {
+      anchor: 'gallery-anchor',
+      class: 'wide-gallery',
+      textAlign: 'right',
+      clickableTune: { value: true },
+      linkTune: { url: 'https://example.com', targetBlank: true },
+    }
+    const blocks = conversionBlocks(tunes)
+    const tool = galleryWith({ items: [{ media: 'photo.jpg', caption: 'Alt' }] }, blocks)
+    tool.render()
+
+    await tool.renderSettings()[0]!.onActivate()
+
+    expect(blocks.update).toHaveBeenCalledExactlyOnceWith('gallery-id', undefined, tunes)
   })
 
   it.each([

@@ -157,7 +157,7 @@ export default class Image extends AbstractMediaTool {
         closeOnActivate: true,
         onActivate: () => {
           if (!this.media) return
-          this.replaceBlock('gallery', { items: [this.save(this.nodes.wrapper)] })
+          return this.replaceBlock('gallery', { items: [this.save(this.nodes.wrapper)] })
         },
       },
     ]

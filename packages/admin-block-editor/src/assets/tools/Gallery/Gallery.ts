@@ -319,7 +319,7 @@ export default class Gallery extends AbstractMediaTool {
         onActivate: () => {
           const { items } = this.save()
           if (items.length !== 1) return
-          this.replaceBlock('image', items[0])
+          return this.replaceBlock('image', items[0])
         },
       },
     ]

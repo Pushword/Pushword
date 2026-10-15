@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect, vi } from 'vitest'
-import { API } from '@editorjs/editorjs'
+import { API, OutputBlockData } from '@editorjs/editorjs'
 import Image from './Image'
 import { MediaToolConfig } from '../Abstract/AbstractMediaTool'
 
@@ -72,18 +72,23 @@ describe('Image – the inline uploader', () => {
 })
 
 describe('Image – converting to a gallery', () => {
-  function conversionApi(): API {
+  function conversionApi(tunes?: OutputBlockData['tunes']): API {
     return {
       ...stubApi(),
       blocks: {
-        getBlockByElement: vi.fn(() => ({ id: 'image-id' })),
+        getBlockByElement: vi.fn(() => ({
+          id: 'image-id',
+          save: async () => (tunes ? { tunes } : {}),
+        })),
         getBlockIndex: vi.fn(() => 2),
         insert: vi.fn(),
+        update: vi.fn(async () => ({ id: 'image-id' })),
       },
+      caret: { setToBlock: vi.fn() },
     } as unknown as API
   }
 
-  it('replaces this image in place with a gallery containing its media and edited caption', () => {
+  it('replaces this image in place with a gallery containing its media and edited caption', async () => {
     const api = conversionApi()
     const tool = imageWith('photo.jpg', api)
     const wrapper = tool.render()
@@ -93,7 +98,7 @@ describe('Image – converting to a gallery', () => {
 
     expect(action.title).toBe('Convert to gallery')
     expect(action.closeOnActivate).toBe(true)
-    action.onActivate()
+    await action.onActivate()
 
     expect(api.blocks.getBlockByElement).toHaveBeenCalledWith(wrapper)
     expect(api.blocks.getBlockIndex).toHaveBeenCalledWith('image-id')
@@ -106,6 +111,24 @@ describe('Image – converting to a gallery', () => {
       true,
       'image-id',
     )
+    expect(api.blocks.update).not.toHaveBeenCalled()
+  })
+
+  it('keeps common and inactive tunes when converting an image to a gallery', async () => {
+    const tunes = {
+      anchor: 'image-anchor',
+      class: 'wide-image',
+      textAlign: 'center',
+      linkTune: { url: 'https://example.com', targetBlank: true },
+    }
+    const api = conversionApi(tunes)
+    const tool = imageWith('photo.jpg', api)
+    tool.render()
+
+    await tool.renderSettings()[0]!.onActivate()
+
+    expect(api.blocks.update).toHaveBeenCalledExactlyOnceWith('image-id', undefined, tunes)
+    expect(api.caret.setToBlock).toHaveBeenCalledExactlyOnceWith('image-id')
   })
 
   it('does not convert an image whose media was removed', () => {

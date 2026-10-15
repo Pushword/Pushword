@@ -30,6 +30,16 @@ function setup(
 afterEach(() => document.body.replaceChildren())
 
 describe('page link suggestions', () => {
+  it('cancels a pending search when Escape arrives before suggestions render', async () => {
+    const { input, key } = setup()
+    input.value = 'blog'
+    input.dispatchEvent(new Event('input'))
+    key('Escape')
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(input.getAttribute('aria-expanded')).toBe('false')
+    expect(input.value).toBe('blog')
+  })
+
   it('does not reopen suggestions when a pending search loses focus', async () => {
     const { input } = setup()
     input.value = 'blog'
@@ -98,6 +108,23 @@ describe('page link suggestions', () => {
     )
     key('Escape')
     expect(input.value).toBe('blog')
+    expect(input.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('cycles through results in both directions before confirming a descendant', async () => {
+    const { search, container, input, key } = setup()
+    await search('blog')
+    const selected = () => container.querySelector('[aria-selected="true"]')!.textContent
+    key('ArrowDown')
+    expect(selected()).toBe('Our blog/blog')
+    key('ArrowDown')
+    expect(selected()).toContain('A mountain walk')
+    key('ArrowDown')
+    expect(selected()).toBe('Our blog/blog')
+    key('ArrowUp')
+    expect(selected()).toContain('A mountain walk')
+    key('Enter')
+    expect(input.value).toBe('/blog/article-with-a-long-path')
     expect(input.getAttribute('aria-expanded')).toBe('false')
   })
 

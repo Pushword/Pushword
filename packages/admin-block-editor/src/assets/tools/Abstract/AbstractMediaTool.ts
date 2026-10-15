@@ -1,4 +1,4 @@
-import { API, BlockToolData } from '@editorjs/editorjs'
+import { API, BlockToolData, OutputBlockData } from '@editorjs/editorjs'
 import { logger } from '../utils/logger'
 import SelectIcon from './icon/folder.svg?raw'
 import UploadIcon from './icon/upload.svg?raw'
@@ -108,8 +108,9 @@ export abstract class AbstractMediaTool extends BaseTool {
 
   protected abstract fillWith(file: UploadResponse['file']): void
 
-  protected replaceBlock(type: string, data: BlockToolData): void {
+  protected async replaceBlock(type: string, data: BlockToolData): Promise<void> {
     const block = this.api.blocks.getBlockByElement(this.nodes.wrapper)!
+    const saved = (await block.save()) as { tunes?: OutputBlockData['tunes'] } | undefined
     this.api.blocks.insert(
       type,
       data,
@@ -119,6 +120,11 @@ export abstract class AbstractMediaTool extends BaseTool {
       true,
       block.id,
     )
+    // insert() ignores tunes; update() restores them, including inactive ones.
+    if (saved?.tunes) {
+      await this.api.blocks.update(block.id, undefined, saved.tunes)
+      this.api.caret.setToBlock(block.id)
+    }
   }
 
   protected handleUploadError(error: unknown): void {

@@ -131,7 +131,10 @@ export default class PageLinkSuggestions {
       event.preventDefault()
       event.stopImmediatePropagation()
       this.select(this.activeIndex)
-    } else if (event.key === 'Escape' && !this.list.hidden) {
+    } else if (
+      event.key === 'Escape' &&
+      (!this.list.hidden || this.searchTimer !== undefined)
+    ) {
       event.preventDefault()
       event.stopImmediatePropagation()
       this.close()

@@ -99,6 +99,12 @@ The older `window.pagesUriList` array of paths still works, without titles.
 
 ## Usage
 
+### Convert an image or gallery
+
+Open an Image block's settings and choose **Convert to gallery** to start a gallery
+with that image. A gallery containing exactly one image offers **Convert to image**.
+Both conversions keep the image, edited caption, block position and settings.
+
 ### Insert a link
 
 Select text and open the link tool. In **Page or URL**, search the current site's
