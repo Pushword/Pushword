@@ -158,7 +158,7 @@ describe('Hyperlink field labels', () => {
       wrapper.querySelectorAll<HTMLElement>('.link-options__label'),
     ).map((label) => label.textContent)
 
-    expect(labels).toEqual(['Rel', 'Style'])
+    expect(labels).toEqual(['Page or URL', 'Rel', 'Style'])
     // The blank option names the empty value now, not the field.
     expect(selects(wrapper).rel.options[0]?.text).toBe('None')
     expect(selects(wrapper).design.options[0]?.text).toBe('Text link')
@@ -371,5 +371,78 @@ describe('Hyperlink options: false', () => {
     tool.updateLink()
 
     expect(link.outerHTML).toBe('<a href="/page">new</a>')
+  })
+})
+
+describe('Hyperlink page suggestions', () => {
+  it('selects the page found by title and applies its complete URL to the link', async () => {
+    window.pageLinkList = [
+      { uri: '/blog/a-long-mountain-route', title: 'Mountain route' },
+    ]
+    const tool = new Hyperlink({ api: stubApi() })
+    const wrapper = tool.renderActions()
+    document.body.append(wrapper)
+    const link = anchor('<a href="/old">Walk</a>')
+    ;(tool as unknown as { anchorTag: HTMLElement }).anchorTag = link
+    const input = urlInputOf(wrapper)
+
+    try {
+      input.value = 'mountain'
+      input.dispatchEvent(new Event('input'))
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      const option = wrapper.querySelector<HTMLElement>('[role="option"]')!
+      expect(option).not.toBeNull()
+      expect(option.textContent).toContain('Mountain route')
+      option.click()
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+      expect(link.getAttribute('href')).toBe('/blog/a-long-mountain-route')
+      expect(wrapper.querySelector('.link-suggestions__preview')!.textContent).toContain(
+        'Mountain route',
+      )
+    } finally {
+      wrapper.remove()
+      delete window.pageLinkList
+    }
+  })
+
+  it('keeps the title search open when Editor.js refreshes an existing link state', async () => {
+    window.pageLinkList = [{ uri: '/walk', title: 'Mountain route' }]
+    const tool = new Hyperlink({ api: stubApi() })
+    const wrapper = tool.renderActions()
+    document.body.append(wrapper)
+    const input = urlInputOf(wrapper)
+
+    try {
+      input.focus()
+      input.value = 'mountain'
+      input.dispatchEvent(new Event('input'))
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      tool.updateActionValues(anchor('<a href="/old">Walk</a>'))
+      expect(input.value).toBe('mountain')
+      expect(input.getAttribute('aria-expanded')).toBe('true')
+      expect(wrapper.querySelector('[role="option"]')!.textContent).toContain(
+        'Mountain route',
+      )
+    } finally {
+      wrapper.remove()
+      delete window.pageLinkList
+    }
+  })
+
+  it('still suggests paths supplied by older widget templates', async () => {
+    window.pagesUriList = ['/older-widget/path']
+    const wrapper = new Hyperlink({ api: stubApi() }).renderActions()
+    const input = urlInputOf(wrapper)
+
+    try {
+      input.value = 'older-widget'
+      input.dispatchEvent(new Event('input'))
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      expect(wrapper.querySelector('[role="option"]')!.textContent).toBe(
+        '/older-widget/path',
+      )
+    } finally {
+      delete window.pagesUriList
+    }
   })
 })

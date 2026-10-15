@@ -41,7 +41,7 @@ class PageParentPageField extends AbstractField
             // Fetched on demand: every candidate used to be hydrated whole — with its
             // mainContent — to render an <option> nobody reads.
             ->setCrudController(PageCrudController::class)
-            ->autocomplete()
+            ->autocomplete(template: '@PushwordAdmin/page/parentPageOption.html.twig', renderAsHtml: true)
             ->setFormTypeOption('required', false)
             ->setQueryBuilder(fn (QueryBuilder $qb): QueryBuilder => $this->configureQueryBuilder($qb, $page));
     }

@@ -6,6 +6,7 @@
 @import './admin.textareaHelper.css';
 @import './admin.tagsField.css';
 @import './admin.criteriaBuilder.css';
+@import './admin.pageChoice.css';
 
 :root {
   --color-primary: var(--sky-700);

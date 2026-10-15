@@ -5,7 +5,7 @@ import { IconLink, IconUnlink } from '@codexteam/icons'
 import { API } from '@editorjs/editorjs'
 import './Hyperlink.css'
 
-import { Suggest } from '../../../../../admin/src/Resources/assets/suggest.js'
+import PageLinkSuggestions, { PageLink } from './PageLinkSuggestions'
 import { isSafeLinkUrl } from './safeLinkUrl'
 
 interface HyperlinkNodes {
@@ -17,12 +17,12 @@ interface HyperlinkNodes {
   button: HTMLButtonElement | null
   linkButton: HTMLButtonElement | null
   unlinkButton: HTMLButtonElement | null
-  suggester?: HTMLElement
 }
 
 declare global {
   interface Window {
     pagesUriList?: string[]
+    pageLinkList?: PageLink[]
   }
 }
 
@@ -66,6 +66,7 @@ export default class Hyperlink {
   private inputOpened = false
   private anchorTag: HTMLElement | null = null
   private selection: SelectionUtils
+  private suggestions?: PageLinkSuggestions
 
   constructor({
     api,
@@ -103,14 +104,20 @@ export default class Hyperlink {
       },
     ) as HTMLInputElement
 
-    this.nodes.suggester = make.element('div', 'textSuggester', { style: 'display:none' })
-    const options = { highlight: true, dispMax: 20, dispAllKey: true }
-    new Suggest.Local(
+    const urlLabel = make.element('label', 'link-options__address') as HTMLLabelElement
+    const labelText = make.element('span', 'link-options__label')
+    labelText.textContent = this.api.i18n.t('Page or URL')
+    urlLabel.append(labelText, this.nodes.input)
+    const suggester = make.element('div', 'link-suggestions')
+    this.suggestions = new PageLinkSuggestions(
       this.nodes.input,
-      this.nodes.suggester,
-      window.pagesUriList ?? [],
-      options,
+      suggester,
+      window.pageLinkList ??
+        (window.pagesUriList ?? []).map((uri) => ({ uri, title: '' })),
+      (label) => this.api.i18n.t(label),
     )
+
+    urlLabel.htmlFor = this.nodes.input.id
 
     this.nodes.targetBlank = make.switchInput('targetBlank', this.api.i18n.t('New tab'))
 
@@ -125,7 +132,7 @@ export default class Hyperlink {
     )
 
     this.nodes.wrapper = make.element('div', 'link-options-wrapper')
-    this.nodes.wrapper.append(this.nodes.input, this.nodes.suggester!)
+    this.nodes.wrapper.append(urlLabel, suggester)
     // Built even when hidden: the fields mirror the edited link's target, rel and
     // class, so a link keeps them when only its address changes.
     if (this.showOptions) {
@@ -253,6 +260,7 @@ export default class Hyperlink {
     const hrefAttr = anchorTag.getAttribute('href')
     //this.nodes.input.value = hrefAttr ? hrefAttr : ''
     this.nodes.input.setAttribute('value', hrefAttr ? hrefAttr : '')
+    if (document.activeElement !== this.nodes.input) this.suggestions?.close()
 
     this.selectValue(this.nodes.selectRel!, anchorTag.getAttribute('rel') ?? '')
     this.selectValue(this.nodes.selectDesign!, anchorTag.getAttribute('class') ?? '')
@@ -310,6 +318,7 @@ export default class Hyperlink {
     this.anchorTag = null
     this.selection.savedSelectionRange = null
     this.inputOpened = false
+    this.suggestions?.close()
   }
 
   toggleActions(): void {

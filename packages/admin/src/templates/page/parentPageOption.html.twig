@@ -1,0 +1,4 @@
+<span class="pw-page-choice">
+  <span class="pw-page-choice__title">{{ entity.h1|striptags|trim ?: entity.slug }}</span>
+  <span class="pw-page-choice__path">{{ entity.host }}/{{ entity.slug == 'homepage' ? '' : entity.slug }}</span>
+</span>

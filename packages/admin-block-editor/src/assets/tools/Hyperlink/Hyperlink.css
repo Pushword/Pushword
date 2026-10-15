@@ -10,6 +10,93 @@
   border-top: 1px solid rgba(201, 201, 204, 0.48);
 }
 
+/* Give page titles and paths room, while keeping the panel inside small screens. */
+.ce-popover--inline
+  .ce-popover--nested
+  > .ce-popover__container:has(.link-options-wrapper) {
+  width: min(28rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  max-height: min(36rem, calc(100dvh - 2rem));
+  overflow-y: auto;
+}
+
+.ce-popover__container:has(.link-options-wrapper) > .ce-popover__items {
+  max-height: none;
+  overflow: visible;
+}
+
+@media (max-width: 650px) {
+  .ce-popover--inline
+    .ce-popover--nested
+    > .ce-popover__container:has(.link-options-wrapper) {
+    position: fixed;
+    inset: auto 1rem 1rem;
+    width: auto;
+  }
+}
+
+.link-options__address {
+  display: block;
+}
+
+.link-suggestions__list {
+  max-height: min(18rem, 35vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin-top: 8px;
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--pw-radius-sm, 4px);
+}
+
+.link-suggestions__page,
+.link-suggestions__title,
+.link-suggestions__path {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.link-suggestions__page[role='option'] {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.link-suggestions__page[role='option'] + [role='option'] {
+  border-top: 1px solid var(--border-color, #cbd5e1);
+}
+
+.link-suggestions__page[role='option']:hover {
+  background: var(--gray-100, #f1f5f9);
+}
+
+.link-suggestions__page[aria-selected='true'] {
+  background: var(--sky-100, #e0f2fe);
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: -2px;
+}
+
+.link-suggestions__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color, #1d202b);
+}
+
+.link-suggestions__path,
+.link-suggestions__status {
+  font-size: 12px;
+  color: var(--text-muted, #475569);
+}
+
+.link-suggestions__status,
+.link-suggestions__preview {
+  margin-top: 8px;
+}
+
+.link-suggestions [hidden] {
+  display: none;
+}
+
 /* The URL is the field being filled; the three below only qualify it. */
 .link-options__url {
   font-size: 14px;

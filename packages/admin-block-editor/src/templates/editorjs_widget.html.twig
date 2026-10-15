@@ -85,8 +85,9 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-// used in PagesList.ts
-window.pagesUriList = {{ page_uri_list(attr.page_host|default(''))|json_encode|raw }};
+window.pageLinkList = {{ editorjs_page_links(attr.page_host|default(''))|json_encode|raw }};
+// Keep the URI list available to page-list tools and custom integrations.
+window.pagesUriList = window.pageLinkList.map(page => page.uri);
 
 {% block editorjs_config %}
 var editorjsConfig = {

@@ -11,6 +11,7 @@ use Pushword\Admin\FormField\AutocompleteSubjectConfigurator;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Page;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -29,16 +30,19 @@ final class PageAssociationAutocompleteTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $page = $this->pageOnSecondHost();
 
-        $results = $this->autocomplete($client, $page, 'parentPage');
+        $results = $this->autocomplete($client, $page, 'parentPage', pageSize: 50);
 
         // The empty subject falls back to the *first* configured host, so a page on
         // any other one is what tells a re-derived filter from a lucky default.
         self::assertNotEmpty($results);
-        foreach ($results as $result) {
-            self::assertStringStartsWith(self::SECOND_HOST.'/', $result['entityAsString']);
+        foreach ($this->parentPagePaths($results) as $path) {
+            self::assertStringStartsWith(self::SECOND_HOST.'/', $path);
         }
 
-        $labels = array_column($results, 'entityAsString');
+        $labels = $this->parentPagePaths($results);
+        // The homepage is displayed as '/', but candidates are ordered by stored slug.
+        $labels = array_map(static fn (string $path): string => str_ends_with($path, '/') ? $path.'homepage' : $path, $labels);
+
         $sortedLabels = $labels;
         sort($sortedLabels);
         self::assertSame($sortedLabels, $labels, 'without a search, parent pages should be ordered by path');
@@ -81,6 +85,10 @@ final class PageAssociationAutocompleteTest extends AbstractAdminTestClass
             $candidate->host = self::SECOND_HOST;
             $candidate->slug = $slug;
             $candidate->h1 = 'parent-search-title-only' === $slug ? 'Parent-search-blog overview' : 'Parent page candidate';
+            if ('parent-search-blog' === $slug) {
+                $candidate->h1 = '<b>Blog</b> & travel';
+            }
+
             $candidate->mainContent = 'parent-search-blog';
             $em->persist($candidate);
             $candidates[] = $candidate;
@@ -91,14 +99,18 @@ final class PageAssociationAutocompleteTest extends AbstractAdminTestClass
 
         try {
             $results = $this->autocomplete($client, $page, 'parentPage', $query);
-            $labels = array_column($results, 'entityAsString');
+            $labels = $this->parentPagePaths($results);
+
+            self::assertSame('Blog & travel', new Crawler($results[0]['entityAsString'])->filter('.pw-page-choice__title')->text());
+            self::assertStringNotContainsString('<b>', $results[0]['entityAsString']);
+            self::assertStringContainsString('&amp;', $results[0]['entityAsString']);
 
             self::assertCount(10, $results, 'the exact page must be ranked before pagination, even with many matching articles');
             self::assertSame(self::SECOND_HOST.'/parent-search-blog', $labels[0]);
             self::assertSame(self::SECOND_HOST.'/parent-search-blog/article-00', $labels[1]);
 
             $allResults = $this->autocomplete($client, $page, 'parentPage', $query, 50);
-            $allLabels = array_column($allResults, 'entityAsString');
+            $allLabels = $this->parentPagePaths($allResults);
             self::assertCount(18, $allResults);
             self::assertSame(self::SECOND_HOST.'/parent-search-blog/article-14', $allLabels[15]);
             self::assertContains(self::SECOND_HOST.'/parent-search-title-only', $allLabels);
@@ -218,9 +230,19 @@ final class PageAssociationAutocompleteTest extends AbstractAdminTestClass
         $results = $this->fetchResults($client, $endpoint);
 
         self::assertNotEmpty($results);
-        foreach ($results as $result) {
-            self::assertStringStartsWith($host.'/', $result['entityAsString']);
+        foreach ($this->parentPagePaths($results) as $path) {
+            self::assertStringStartsWith($host.'/', $path);
         }
+    }
+
+    /**
+     * @param list<array{entityId: string, entityAsString: string}> $results
+     *
+     * @return list<string>
+     */
+    private function parentPagePaths(array $results): array
+    {
+        return array_map(static fn (array $result): string => new Crawler($result['entityAsString'])->filter('.pw-page-choice__path')->text(), $results);
     }
 
     private function pageOnSecondHost(): Page
