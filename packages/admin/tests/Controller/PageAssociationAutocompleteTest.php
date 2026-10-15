@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Admin\Tests\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\FormField\AutocompleteSubjectConfigurator;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
@@ -36,6 +37,11 @@ final class PageAssociationAutocompleteTest extends AbstractAdminTestClass
         foreach ($results as $result) {
             self::assertStringStartsWith(self::SECOND_HOST.'/', $result['entityAsString']);
         }
+
+        $labels = array_column($results, 'entityAsString');
+        $sortedLabels = $labels;
+        sort($sortedLabels);
+        self::assertSame($sortedLabels, $labels, 'without a search, parent pages should be ordered by path');
     }
 
     public function testParentPageCandidatesExcludeTheEditedPage(): void
@@ -46,6 +52,79 @@ final class PageAssociationAutocompleteTest extends AbstractAdminTestClass
         $ids = array_column($this->autocomplete($client, $page, 'parentPage'), 'entityId');
 
         self::assertNotContains((string) $page->id, $ids, 'a page cannot be its own parent');
+    }
+
+    public function testParentPageSearchWithNoMatchReturnsNoCandidates(): void
+    {
+        $client = $this->loginUser();
+        $page = $this->pageOnSecondHost();
+
+        self::assertSame([], $this->autocomplete($client, $page, 'parentPage', 'unmatched-parent-search-4897'));
+    }
+
+    #[DataProvider('parentPageSearchQueries')]
+    public function testParentPageSearchRanksExactSlugBeforePaginatedChildren(string $query): void
+    {
+        $client = $this->loginUser();
+        $page = $this->pageOnSecondHost();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $slugs = [];
+        for ($i = 0; $i < 15; ++$i) {
+            $slugs[] = sprintf('parent-search-blog/article-%02d', $i);
+        }
+
+        $slugs = [...$slugs, 'article-parent-search-blog', 'parent-search-blog', 'parent-search-title-only', 'parent-search-body-only'];
+        $candidates = [];
+
+        foreach ($slugs as $slug) {
+            $candidate = new Page();
+            $candidate->host = self::SECOND_HOST;
+            $candidate->slug = $slug;
+            $candidate->h1 = 'parent-search-title-only' === $slug ? 'Parent-search-blog overview' : 'Parent page candidate';
+            $candidate->mainContent = 'parent-search-blog';
+            $em->persist($candidate);
+            $candidates[] = $candidate;
+        }
+
+        $em->flush();
+        $ids = array_map(static fn (Page $candidate): int => (int) $candidate->id, $candidates);
+
+        try {
+            $results = $this->autocomplete($client, $page, 'parentPage', $query);
+            $labels = array_column($results, 'entityAsString');
+
+            self::assertCount(10, $results, 'the exact page must be ranked before pagination, even with many matching articles');
+            self::assertSame(self::SECOND_HOST.'/parent-search-blog', $labels[0]);
+            self::assertSame(self::SECOND_HOST.'/parent-search-blog/article-00', $labels[1]);
+
+            $allResults = $this->autocomplete($client, $page, 'parentPage', $query, 50);
+            $allLabels = array_column($allResults, 'entityAsString');
+            self::assertCount(18, $allResults);
+            self::assertSame(self::SECOND_HOST.'/parent-search-blog/article-14', $allLabels[15]);
+            self::assertContains(self::SECOND_HOST.'/parent-search-title-only', $allLabels);
+            self::assertNotContains(self::SECOND_HOST.'/parent-search-body-only', $allLabels);
+        } finally {
+            $em = self::getContainer()->get(EntityManagerInterface::class);
+            foreach ($ids as $id) {
+                $candidate = $em->find(Page::class, $id);
+                if (null !== $candidate) {
+                    $em->remove($candidate);
+                }
+            }
+
+            $em->flush();
+        }
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function parentPageSearchQueries(): iterable
+    {
+        yield 'slug' => ['parent-search-blog'];
+        yield 'path' => ['/parent-search-blog/'];
+        yield 'host and path' => [self::SECOND_HOST.'/parent-search-blog'];
+        yield 'full URL' => ['https://'.self::SECOND_HOST.'/parent-search-blog'];
+        yield 'HTTP URL' => ['http://'.self::SECOND_HOST.'/parent-search-blog'];
+        yield 'case and whitespace' => [' PARENT-SEARCH-BLOG '];
     }
 
     public function testVariantOfCandidatesOfferOnlyMasters(): void
@@ -158,7 +237,7 @@ final class PageAssociationAutocompleteTest extends AbstractAdminTestClass
     /**
      * @return list<array{entityId: string, entityAsString: string}>
      */
-    private function autocomplete(KernelBrowser $client, Page $page, string $property): array
+    private function autocomplete(KernelBrowser $client, Page $page, string $property, string $query = '', int $pageSize = 10): array
     {
         $crawler = $client->request(Request::METHOD_GET, '/admin/page/'.$page->id.'/edit');
         self::assertResponseIsSuccessful();
@@ -167,6 +246,8 @@ final class PageAssociationAutocompleteTest extends AbstractAdminTestClass
             ->attr('data-ea-autocomplete-endpoint-url');
         self::assertIsString($endpoint, $property.' must be fetched on demand');
         self::assertStringContainsString('pwSubjectId='.$page->id, $endpoint, 'the endpoint must name the edited page');
+
+        $endpoint .= '&'.http_build_query(['query' => $query, 'pageSize' => $pageSize]);
 
         return $this->fetchResults($client, $endpoint);
     }

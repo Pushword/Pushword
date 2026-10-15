@@ -20,6 +20,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
@@ -196,7 +197,44 @@ class PageCrudController extends AbstractAdminCrudController
         FieldCollection $fields,
         FilterCollection $filters,
     ): QueryBuilder {
+        $autocompleteContext = $searchDto->getRequest()->query->all(AssociationField::PARAM_AUTOCOMPLETE_CONTEXT);
+        $isParentPageSearch = 'parentPage' === ($autocompleteContext['propertyName'] ?? null);
+
+        if ($isParentPageSearch) {
+            $query = trim($searchDto->getQuery());
+            foreach ($this->apps->getHosts() as $host) {
+                foreach ([$host.'/', 'https://'.$host.'/', 'http://'.$host.'/'] as $prefix) {
+                    if (str_starts_with($query, $prefix)) {
+                        $query = substr($query, \strlen($prefix));
+
+                        break 2;
+                    }
+                }
+            }
+
+            $searchDto = new SearchDto(
+                $searchDto->getRequest(),
+                ['slug', 'h1'],
+                trim($query, '/'),
+                [],
+                [],
+                $searchDto->getAppliedFilters(),
+                $searchDto->getSearchMode(),
+            );
+        }
+
         $queryBuilder = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
+
+        if ($isParentPageSearch) {
+            if ('' !== $searchDto->getQuery()) {
+                $queryBuilder
+                    ->addSelect('CASE WHEN LOWER(entity.slug) = :parentPageQuery THEN 0 WHEN LOCATE(:parentPageQuery, LOWER(entity.slug)) = 1 THEN 1 ELSE 2 END AS HIDDEN parentPageRelevance')
+                    ->setParameter('parentPageQuery', mb_strtolower($searchDto->getQuery()))
+                    ->orderBy('parentPageRelevance', 'ASC');
+            }
+
+            $queryBuilder->addOrderBy('entity.slug', 'ASC')->addOrderBy('entity.id', 'ASC');
+        }
 
         if ($this->hideRedirectionsFromIndex()) {
             $alias = $queryBuilder->getRootAliases()[0] ?? 'entity';
