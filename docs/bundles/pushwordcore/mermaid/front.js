@@ -1,0 +1,1 @@
+import{t as e}from"./mermaid-ClUtSPIy.js";var t=()=>void e();document.readyState===`loading`?document.addEventListener(`DOMContentLoaded`,t,{once:!0}):t(),document.addEventListener(`DOMChanged`,t);
