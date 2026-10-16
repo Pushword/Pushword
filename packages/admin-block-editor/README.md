@@ -26,6 +26,24 @@ composer require pushword/admin-block-editor
 
 Visit [pushword.piedweb.com/extension/admin-block-editor](https://pushword.piedweb.com/extension/admin-block-editor).
 
+### Site-provided tools
+
+Load a site's tool script before the block editor initializes, then add its constructor
+directly to the widget's `editorjsConfig.tools`. Native Editor.js constructors and
+Pushword's built-in `className` entries can be used together:
+
+```javascript
+editorjsConfig.tools.promotion = {
+  class: PromotionTool,
+  config: { preview: '/admin/promotion/preview' },
+}
+```
+
+To preserve Markdown storage, a custom tool also implements the static
+`isItMarkdownExported(markdown)`, `importFromMarkdown(editor, markdown)` and
+`exportToMarkdown(data, tunes)` methods. Claim only syntax the tool can read and
+write without losing information; leave unsupported expressions to the Raw tool.
+
 ## The Pushword ecosystem
 
 Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the core and one bundle per feature. See the full list and guides at [pushword.piedweb.com/extensions](https://pushword.piedweb.com/extensions).

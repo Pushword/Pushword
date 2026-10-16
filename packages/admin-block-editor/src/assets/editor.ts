@@ -130,6 +130,8 @@ export class editorJs {
       // set tool classes
       Object.keys(config.tools).forEach((toolName) => {
         const tool = config.tools![toolName] as EditorJSTool
+        // Sites may supply their own constructors through Editor.js' native config.
+        if (typeof tool.class === 'function') return
         if (typeof this.editorjsTools[tool.className || ''] !== 'undefined') {
           tool.class = this.editorjsTools[tool.className || '']
           // if (toolName === 'Hyperlink') {

@@ -94,6 +94,19 @@ beforeEach(() => {
   destroyUndo.mockClear()
 })
 
+it('accepts a site-provided tool constructor alongside the built-in tools', () => {
+  class SiteTool {}
+  boot('{"blocks":[]}', {
+    tools: {
+      siteTool: { class: SiteTool, config: { example: true } },
+      paragraph: { className: 'Paragraph' },
+    },
+  })
+  expect(captured.tools.siteTool.class).toBe(SiteTool)
+  expect(captured.tools.siteTool.config).toEqual({ example: true })
+  expect(captured.tools.paragraph.class).toBeTypeOf('function')
+})
+
 it('passes the optional history normalizer to Undo without forwarding it to Editor.js', () => {
   const normalizeBlockData = (data: unknown) => data
   boot('{"blocks":[]}', { undo: { normalizeBlockData } })
