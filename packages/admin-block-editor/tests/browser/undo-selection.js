@@ -530,24 +530,24 @@ void (async () => {
   await test('multi-block HTML paste is a single undo step', async () => {
     await render([paragraph('p', 'Before')])
     focus(holder.querySelector('.ce-paragraph'))
-    const data = new DataTransfer()
-    data.setData('text/plain', 'First\nSecond\nThird')
-    data.setData('text/html', '<p>First</p><h2>Second</h2><p>Third</p>')
-    document.activeElement.dispatchEvent(
-      new ClipboardEvent('paste', {
-        clipboardData: data,
-        bubbles: true,
-        cancelable: true,
-      }),
-    )
-    await wait(() => editor.blocks.getBlocksCount() >= 3)
+    const paste = new ClipboardEvent('paste', {
+      clipboardData: new DataTransfer(),
+      bubbles: true,
+      cancelable: true,
+    })
+    // Firefox creates its own clipboardData instead of retaining the initializer.
+    paste.clipboardData.setData('text/plain', 'First\nSecond\nThird')
+    paste.clipboardData.setData('text/html', '<p>First</p><h2>Second</h2><p>Third</p>')
+    document.activeElement.dispatchEvent(paste)
+    await wait(() => editor.blocks.getBlocksCount() >= 3, 'HTML paste insertion')
     await pause(50)
     const pasted = holder.querySelector('.codex-editor__redactor').textContent
     key('z')
-    await wait(() => editor.blocks.getBlocksCount() === 1 && text('p') === 'Before')
+    await wait(() => editor.blocks.getBlocksCount() === 1 && text('p') === 'Before', 'HTML paste undo')
     key('y')
     await wait(
       () => holder.querySelector('.codex-editor__redactor').textContent === pasted,
+      'HTML paste redo',
     )
   })
   await test('conversion of a block with the same id is reversible', async () => {

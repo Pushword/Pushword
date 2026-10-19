@@ -526,6 +526,44 @@ describe('ClipboardManager – copying whole blocks', () => {
     expect(event.clipboardData.setData).toHaveBeenCalledWith('text/plain', 'e **two** th')
   })
 
+  it('keeps native HTML copy when asynchronous clipboard writing is unavailable', async () => {
+    write.mockRejectedValue(new Error('Clipboard permission denied'))
+    const writeText = vi.fn(async () => {})
+    Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: writeText })
+    const { cm, holder } = copyingManager([paragraph('p', 'One <b>two</b> three')])
+    const field = holder.querySelector('.ce-paragraph')!
+    const range = document.createRange()
+    range.selectNodeContents(field)
+    window.getSelection()!.addRange(range)
+    const event = { ...ctrlC(field), clipboardData: { setData: vi.fn() } }
+
+    cm.handleCopy(event)
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(event.clipboardData.setData).toHaveBeenCalledWith('text/html', 'One <b>two</b> three')
+    expect(writeText).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['<b>One two three</b>', '<b>two</b>', '**two**'],
+    ['<b><i>One two three</i></b>', '<b><i>two</i></b>', '**_two_**'],
+    ['<a href="https://example.org">One two three</a>', '<a href="https://example.org">two</a>', '[two](https://example.org)'],
+  ])('copies formatting enclosing the entire selection: %s', (html, expectedHtml, markdown) => {
+    const { cm, holder } = copyingManager([paragraph('p', html)])
+    const field = holder.querySelector('.ce-paragraph')!
+    const text = document.createTreeWalker(field, NodeFilter.SHOW_TEXT).nextNode()!
+    const range = document.createRange()
+    range.setStart(text, 4)
+    range.setEnd(text, 7)
+    window.getSelection()!.addRange(range)
+    const event = { ...ctrlC(field), clipboardData: { setData: vi.fn() } }
+
+    cm.handleCopy(event)
+
+    expect(event.clipboardData.setData).toHaveBeenCalledWith('text/html', expectedHtml)
+    expect(event.clipboardData.setData).toHaveBeenCalledWith('text/plain', markdown)
+  })
+
   it('copies a word picked out of one list item, not the list', () => {
     const items = ['One two', 'Three'].map((content) => ({
       content,
@@ -755,6 +793,32 @@ describe('ClipboardManager – handlePaste routing', () => {
 
     expect(convert).toHaveBeenCalledOnce()
     expect(insert).toHaveBeenCalledWith('| Name | Status |\n| --- | --- |')
+  })
+
+  it.each([
+    ['**bold**', '<b>bold</b>'],
+    ['_italic_', '<i>italic</i>'],
+    ['[link](https://example.org)', '<a href="https://example.org">link</a>'],
+  ])('leaves inline HTML to the native editor paste: %s', (plain, html) => {
+    caretInBlock()
+    const insert = vi.spyOn(cm, 'insertMarkdownAsBlocks')
+    const event = pasteEvent(plain, html)
+
+    cm.handlePaste(event)
+
+    expect(event.preventDefault).not.toHaveBeenCalled()
+    expect(insert).not.toHaveBeenCalled()
+  })
+
+  it.each(['', '<p><b>bold</b></p>'])('still imports a copied Markdown block with HTML %s', (html) => {
+    caretInBlock()
+    const insert = vi.spyOn(cm, 'insertMarkdownAsBlocks').mockImplementation(() => {})
+    const event = pasteEvent('**bold**', html)
+
+    cm.handlePaste(event)
+
+    expect(event.preventDefault).toHaveBeenCalled()
+    expect(insert).toHaveBeenCalledWith('**bold**')
   })
 
   it('does not create blocks when pasting inside a table cell', () => {

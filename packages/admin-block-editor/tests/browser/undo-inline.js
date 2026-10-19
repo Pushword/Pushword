@@ -56,8 +56,10 @@ void (async () => {
     const item = holder.querySelector(`.ce-inline-toolbar [data-item-name="${name}"]`)
     check(item, `Missing configured tool: ${name}`)
     const button = item.matches('button') ? item : item.querySelector('button')
-    button.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
-    button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+    const rect = button.getBoundingClientRect()
+    const position = { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 }
+    button.dispatchEvent(new PointerEvent('pointerdown', { ...position, bubbles: true }))
+    button.dispatchEvent(new MouseEvent('mousedown', { ...position, bubbles: true, cancelable: true }))
     button.click()
     await pause()
   }

@@ -41,9 +41,11 @@ export default class Paragraph extends ParagraphTool {
     )
   }
 
-  // TODO : à revoir pour voir qui est le défault, raw ou paragraph
   static isItMarkdownExported(markdown: string): boolean {
     const trimmed = markdown.trim()
+
+    // These inline tools export HTML because Markdown has no equivalent.
+    if (/^<(?:mark|small)>/i.test(trimmed)) return true
 
     // starts with '<' = probably html
     // starts with '{' = probably twig function

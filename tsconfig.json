@@ -21,6 +21,7 @@
         "packages/*/src/**/*.svg",
         "packages/*/src/**/*.ts",
         "packages/*/src/**/*.tsx",
+        "packages/admin-block-editor/tests/browser/**/*.ts",
         "packages/*/*.ts",
         "packages/*/*.js"
     ],

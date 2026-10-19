@@ -52,6 +52,43 @@ Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the 
 
 If you're interested in contributing to Pushword, please read our [contributing docs](https://pushword.piedweb.com/contribute) before submitting a pull request.
 
+### Browser integration tests
+
+The same Playwright suite runs in CI on Google Chrome (`chrome`), Microsoft Edge
+(`msedge`) and Playwright's Firefox build. Chrome and Edge use their actual branded
+binaries, not a changed user-agent string. Each browser has its own CI job; a failure
+does not cancel the other browsers, and no retry hides the first failure.
+
+From the repository root on Linux, with Composer dependencies installed:
+
+```shell
+yarn --cwd packages/admin-block-editor install --frozen-lockfile
+yarn --cwd packages/admin-block-editor playwright install --with-deps chrome msedge firefox
+yarn --cwd packages/admin-block-editor build
+yarn --cwd packages/admin-monaco-editor install --frozen-lockfile
+yarn --cwd packages/admin-monaco-editor build
+yarn --cwd packages/admin-block-editor test:browser
+# Run one browser or one journey while investigating:
+yarn --cwd packages/admin-block-editor test:browser --project=msedge --grep 'checklist:'
+```
+
+The suite starts its own test app on port 9079, with a temporary database, media,
+sessions and content. It refuses to reuse an existing server. It does not reset the
+development app. Each browser signs in through the real login form and uses a separate
+page fixture. The server removes its temporary runtime when it stops.
+
+The native keyboard journeys cover list indentation at several levels, all inline
+formatting tools, undo/redo, immediate saving, hard breaks, rich-text copy/paste,
+table navigation and editing, and Markdown/JSON mode round trips. They verify the
+saved content by reloading the admin. The existing in-page checks also exercise every
+configured block and tune, selection preservation and incremental rendering; they
+are shared with Panther rather than copied. Uncaught browser errors fail the tests.
+
+CI uploads the HTML/JSON reports, browser versions, individual in-page outcomes,
+server log, failure screenshots and Playwright traces. Local reports are in `playwright-report/`
+and `test-results/` inside this package. Add new user regressions to
+`tests/browser/*.spec.ts`: every scenario then runs on all three browsers.
+
 ## Credits
 
 - [PiedWeb](https://piedweb.com)

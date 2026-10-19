@@ -110,6 +110,25 @@ async function roundTrip(markdown: string): Promise<string> {
 }
 
 describe('import → export', () => {
+  it.each(['mark', 'small'])('keeps a leading <%s> editable after saving', async (tag) => {
+    const text = `<${tag}>Format</${tag}> me`
+    const markdown = await Paragraph.exportToMarkdown({ text }, {})
+    const { editor, blocks } = await parse(markdown)
+
+    expect(blocks).toHaveLength(1)
+    expect(blocks[0]).toMatchObject({ type: 'paragraph', data: { text } })
+    expect(await save(editor, blocks)).toBe(markdown.trim())
+  })
+
+  it.each(['<div>HTML</div>', '<small class="custom">HTML</small>', '{{ custom() }}'])(
+    'leaves unsupported source untouched: %s', async (markdown) => {
+      const { editor, blocks } = await parse(markdown)
+
+      expect(blocks[0]?.type).toBe('raw')
+      expect(await save(editor, blocks)).toBe(markdown)
+    },
+  )
+
   it.each([
     ['a Mermaid flowchart', '```mermaid\nflowchart LR\n    A[Markdown] --> B[Diagram]\n```'],
     ['Mermaid with blank lines and special characters', '```mermaid\nsequenceDiagram\n    Alice->>Bob: <hello> & {{ name }}\n\n    Bob-->>Alice: Thanks\n```'],

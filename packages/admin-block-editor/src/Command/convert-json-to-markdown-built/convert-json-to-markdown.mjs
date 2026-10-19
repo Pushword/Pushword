@@ -5856,6 +5856,7 @@ var Paragraph = class extends n$1 {
 	}
 	static isItMarkdownExported(markdown) {
 		const trimmed = markdown.trim();
+		if (/^<(?:mark|small)>/i.test(trimmed)) return true;
 		return ![
 			"<",
 			"{",

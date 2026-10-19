@@ -1,5 +1,5 @@
 ---
-title: 'nested numbered lists keep their indentation when saved'
+title: 'nested lists and inline formatting survive editing; JavaScript code blocks load correctly'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,8 +35,20 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/admin-block-editor`
+**Concerns:** `pushword/admin`, `pushword/admin-block-editor`
 
 ## Nested numbered lists
 
 The block editor now preserves nested numbered lists when saving to Markdown; no configuration change is required. Lists flattened by an earlier save must be indented again in the editor.
+
+## Leading inline formatting
+
+Paragraphs beginning with highlighted or small text now reopen as editable text instead of Raw blocks after saving. No configuration or content migration is required.
+
+## Copying formatted text
+
+Copying a selection contained entirely inside bold, italic or linked text now preserves that formatting and pastes it at the caret, including in Firefox. No configuration change is required.
+
+## JavaScript code blocks
+
+JavaScript code blocks now load their language worker correctly. No configuration change is required.

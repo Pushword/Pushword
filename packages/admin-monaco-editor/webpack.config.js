@@ -36,6 +36,7 @@ export default {
         'shell',
         'html',
         'javascript',
+        'typescript', // JavaScript uses TypeScript's shared worker.
         'twig',
         'yaml',
         'php',

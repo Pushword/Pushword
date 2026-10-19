@@ -169,23 +169,33 @@ export default class ClipboardManager {
         const container = document.createElement('div')
         container.appendChild(range.cloneContents())
 
+        // cloneContents omits formatting ancestors when the range stays inside
+        // them (for example, a word selected entirely inside <b>).
+        let ancestor = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+            ? range.commonAncestorContainer as Element
+            : range.commonAncestorContainer.parentElement
+        const field = ancestor?.closest('[contenteditable="true"]')
+        while (field && ancestor && ancestor !== field) {
+            const wrapper = ancestor.cloneNode(false)
+            while (container.firstChild) wrapper.appendChild(container.firstChild)
+            container.appendChild(wrapper)
+            ancestor = ancestor.parentElement
+        }
+
         // Remove non-editable elements
         container.querySelectorAll('[contenteditable="false"], .ce-header-level-wrapper, select').forEach(el => el.remove())
 
         const html = container.innerHTML
         const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(html, false).replace(/  +/g, ' ').trim()
 
-        if (!markdown) {
+        if (!markdown || !event.clipboardData) {
             return
         }
 
         event.preventDefault()
         event.stopImmediatePropagation()
-        if (event.clipboardData) {
-            event.clipboardData.setData('text/plain', markdown)
-            event.clipboardData.setData('text/html', html)
-        }
-        this.writeToClipboard(markdown, html)
+        event.clipboardData.setData('text/plain', markdown)
+        event.clipboardData.setData('text/html', html)
     }
 
     /**
@@ -264,27 +274,6 @@ export default class ClipboardManager {
     }
 
     /**
-     * Write content to clipboard with both markdown and HTML formats
-     */
-    private async writeToClipboard(markdown: string, html: string): Promise<void> {
-        try {
-            await navigator.clipboard.write([
-                new ClipboardItem({
-                    'text/html': new Blob([html], { type: 'text/html' }),
-                    'text/plain': new Blob([markdown], { type: 'text/plain' }),
-                }),
-            ])
-        } catch {
-            // Fallback: try writeText
-            try {
-                await navigator.clipboard.writeText(markdown)
-            } catch {
-                // Silent fail - sync clipboardData.setData should have worked
-            }
-        }
-    }
-
-    /**
      * Handle paste events - detect markdown/HTML and convert to blocks
      */
     private handlePaste(event: ClipboardEvent): void {
@@ -315,6 +304,15 @@ export default class ClipboardManager {
         const selectedText = selection?.toString() || ''
         if (selectedText && (this.isValidURL(plainText) || this.isValidRelativeURI(plainText))) {
             return // PasteLink will handle this
+        }
+
+        // A copied inline selection belongs at the caret, even though its plain
+        // text contains Markdown. Let Editor.js paste its formatted HTML inline.
+        if (htmlText) {
+            const fragment = document.createElement('div')
+            fragment.innerHTML = DOMPurify.sanitize(htmlText)
+            if (fragment.querySelector('b, strong, i, em, u, s, a, code, mark, small') &&
+                !fragment.querySelector('p, div, h1, h2, h3, h4, h5, h6, ul, ol, li, table, pre, blockquote')) return
         }
 
         // When the plain text already carries markdown, it is authoritative:

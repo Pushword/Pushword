@@ -15,6 +15,8 @@ const ignorePatterns = [
   '**/media~/',
   '**/*.min.js',
   '**/build/',
+  '**/playwright-report/',
+  '**/test-results/',
   '**/rust/target/',
   'docs/',
   'docs~/',

@@ -66,7 +66,7 @@ jobs:
         run: yarn type-check
 
       - name: Lint admin-block-editor (errors fail the build; any/@ts-ignore are warnings)
-        run: yarn eslint packages/admin-block-editor/src --quiet
+        run: yarn eslint packages/admin-block-editor --quiet
 
       - name: Editor unit tests
         run: cd packages/admin-block-editor && yarn test
@@ -88,6 +88,60 @@ jobs:
 
       - name: Markdown editor unit tests
         run: cd packages/admin-monaco-editor && yarn test
+
+  editor-browsers:
+    name: Editor journeys - ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, msedge, firefox]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.5
+          coverage: none
+          extensions: dom, curl, libxml, mbstring, zip, pdo_sqlite, bcmath, intl, gd, exif, iconv, imagick, fileinfo, pcntl
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction
+
+      - name: Install editor dependencies
+        run: yarn --cwd packages/admin-block-editor install --frozen-lockfile
+
+      - name: Install browser
+        run: yarn --cwd packages/admin-block-editor playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Build the editor under test
+        run: yarn --cwd packages/admin-block-editor build
+
+      - name: Build Monaco and its language workers
+        run: |
+          yarn --cwd packages/admin-monaco-editor install --frozen-lockfile
+          yarn --cwd packages/admin-monaco-editor build
+
+      - name: Run the shared editor journeys
+        run: yarn --cwd packages/admin-block-editor test:browser --project=${{ matrix.browser }}
+
+      - name: Upload results, failure screenshots and traces
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: editor-${{ matrix.browser }}
+          path: |
+            packages/admin-block-editor/playwright-report/
+            packages/admin-block-editor/test-results/
+          retention-days: 14
 
   test:
     runs-on: ${{ matrix.os }}
