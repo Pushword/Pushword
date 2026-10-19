@@ -147,6 +147,7 @@ function start_background_tasks {
 }
 
 function wait_for_background_tasks {
+    local background_exit=0
     step "Waiting for monorepo validation"
     MONOREPO_EXIT=0
     wait $MONOREPO_PID || MONOREPO_EXIT=$?
@@ -156,7 +157,7 @@ function wait_for_background_tasks {
 
     if [ $MONOREPO_EXIT -ne 0 ]; then
         echo "validate-monorepo FAILED (exit $MONOREPO_EXIT)"
-        PHPUNIT_EXIT=$MONOREPO_EXIT
+        background_exit=$MONOREPO_EXIT
     fi
 
     step "Waiting for test-installer"
@@ -168,8 +169,9 @@ function wait_for_background_tasks {
 
     if [ $INSTALLER_EXIT -ne 0 ]; then
         echo "test-installer FAILED (exit $INSTALLER_EXIT)"
-        return 1
+        background_exit=$INSTALLER_EXIT
     fi
+    return $background_exit
 }
 
 trap cleanup EXIT
@@ -251,10 +253,7 @@ if [ "$1" = "full" ]; then
     XDEBUG_MODE=off php -dxdebug.mode=off -dmemory_limit=${PW_MEMORY_LIMIT} vendor/bin/phpunit --no-progress --colors=always --stop-on-failure --debug --no-cache-result --log-junit="$JUNIT_XML" $DATABASE_GROUP_ARG $FILTER_ARG || PHPUNIT_EXIT=$?
     record_step "PHPUnit (prefer-lowest)" $(( $(date +%s) - PHPUNIT_START ))
 
-    if ! wait_for_background_tasks; then
-        print_summary
-        exit 1
-    fi
+    wait_for_background_tasks || PHPUNIT_EXIT=$?
 
     print_summary
     exit $PHPUNIT_EXIT
@@ -300,7 +299,7 @@ else
     fi
 
     if [ -z "$FILTER_ARG" ]; then
-        wait_for_background_tasks || true
+        wait_for_background_tasks || PHPUNIT_EXIT=$?
     fi
 
     print_summary

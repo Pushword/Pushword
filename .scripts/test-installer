@@ -10,8 +10,8 @@ if [ "$1" = "--quiet" ]; then
 fi
 
 MONOREPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-CACHE_BASE="/tmp/com.github.pushword.pushword/installer-cache"
-TEMP_DIR="/tmp/pushword-installer-test-$$"
+CACHE_BASE="${TMPDIR:-/tmp}/com.github.pushword.pushword/installer-cache"
+TEMP_DIR="${TMPDIR:-/tmp}/pushword-installer-test-$$"
 
 # Compute content hash of all files that affect the installer outcome.
 #

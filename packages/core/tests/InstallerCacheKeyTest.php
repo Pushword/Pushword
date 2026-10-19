@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Pushword\Core\Tests;
 
 use PhpToken;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function Safe\file_get_contents;
+
+use Symfony\Component\Process\Process;
 
 /**
  * .scripts/test-installer reuses a cached install while its cache key is unchanged, and
@@ -17,6 +20,30 @@ use function Safe\file_get_contents;
  */
 final class InstallerCacheKeyTest extends TestCase
 {
+    /** @return iterable<string, array{string|false, string}> */
+    public static function temporaryDirectories(): iterable
+    {
+        yield 'configured' => ['/custom/pushword-temp', '/custom/pushword-temp'];
+        yield 'empty' => ['', '/tmp'];
+        yield 'unset' => [false, '/tmp'];
+    }
+
+    #[DataProvider('temporaryDirectories')]
+    public function testInstallerUsesTheConfiguredTemporaryDirectory(string|false $temporaryDirectory, string $expectedBase): void
+    {
+        $script = file_get_contents(\dirname(__DIR__, 3).'/.scripts/test-installer');
+        preg_match_all('/^(?:CACHE_BASE|TEMP_DIR)=.+$/m', $script, $assignments);
+        self::assertCount(2, $assignments[0]);
+        $process = new Process([
+            'bash', '-c', implode("\n", $assignments[0])."\nprintf '%s\\n%s\\n' \"\$CACHE_BASE\" \"\$TEMP_DIR\"",
+        ], env: ['TMPDIR' => $temporaryDirectory]);
+        $process->mustRun();
+
+        [$cacheDirectory, $installDirectory] = explode("\n", trim($process->getOutput()));
+        self::assertSame($expectedBase.'/com.github.pushword.pushword/installer-cache', $cacheDirectory);
+        self::assertMatchesRegularExpression('#^'.preg_quote($expectedBase, '#').'/pushword-installer-test-\d+$#', $installDirectory);
+    }
+
     public function testCacheKeyHashesEveryFileInstallPhpCopiesFromDevApp(): void
     {
         $packages = \dirname(__DIR__, 2);

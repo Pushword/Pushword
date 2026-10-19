@@ -18,20 +18,22 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 MONOREPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-CACHE_BASE="/tmp/com.github.pushword.pushword/installer-cache"
-CONTEXT_DIR="/tmp/pushword-docker-test-$$"
+CACHE_BASE="${TMPDIR:-/tmp}/com.github.pushword.pushword/installer-cache"
+CONTEXT_DIR="${TMPDIR:-/tmp}/pushword-docker-test-$$"
 IMAGE=pushword-docker-test
 CONTAINER=pushword-docker-test
 PORT="${PUSHWORD_DOCKER_TEST_PORT:-18080}"
 
 cleanup() {
     docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
-    (cd "$CONTEXT_DIR" 2>/dev/null && docker compose down -v --remove-orphans >/dev/null 2>&1) || true
-    # The containers write into the mounted var/ as another user, so the host cannot
-    # delete what they left. Borrow root from the image we just built.
-    docker run --rm --user root -v "$CONTEXT_DIR:/ctx" --entrypoint rm "$IMAGE" \
-        -rf /ctx/var /ctx/var-state >/dev/null 2>&1 || true
-    rm -rf "$CONTEXT_DIR"
+    if [ -d "$CONTEXT_DIR" ]; then
+        (cd "$CONTEXT_DIR" && docker compose down -v --remove-orphans >/dev/null 2>&1) || true
+        # The containers write into the mounted var/ as another user, so the host cannot
+        # delete what they left. Borrow root from the image we just built.
+        docker run --rm --user root -v "$CONTEXT_DIR:/ctx" --entrypoint rm "$IMAGE" \
+            -rf /ctx/var /ctx/var-state >/dev/null 2>&1 || true
+        rm -rf "$CONTEXT_DIR"
+    fi
 }
 trap cleanup EXIT
 

@@ -57,6 +57,10 @@ service configuration. The monorepo analysis alone cannot prove that an API is u
 composer test
 ```
 
+`TMPDIR` controls PHP test data, installer caches and temporary projects, and the
+Docker test build context. If `/tmp` runs out of space or inodes, set it to an
+existing writable directory with enough free space and inodes before running the tests.
+
 The suite runs against SQLite by default. The two server-backed variants are:
 
 ```

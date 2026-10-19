@@ -4,27 +4,8 @@
 # The layout follows dunglas/symfony-docker; what differs is documented inline, and in
 # https://pushword.piedweb.com/docker
 
-# FrankenPHP 1.12.7 still embeds vulnerable Go dependencies. Rebuild the same immutable
-# stable revision with patched dependencies until the next release includes them. Both
-# digests are multi-platform image indexes for that release.
-FROM dunglas/frankenphp:1.12.7-builder-php8.5@sha256:684962b7a0741398e6107f97fe8534224fcfeeb71c91372b90ff24911c07d9fe AS frankenphp_builder
-
-ARG FRANKENPHP_VERSION=1.12.7
-ENV GOTOOLCHAIN=go1.26.9
-
-WORKDIR /go/src/app/caddy
-RUN go get \
-		github.com/getkin/kin-openapi@v0.144.0 \
-		golang.org/x/crypto@v0.57.0 \
-		golang.org/x/net@v0.60.0 \
-		google.golang.org/grpc@v1.83.2
-
-WORKDIR /go/src/app/caddy/frankenphp
-RUN GOBIN=/patched ../../go.sh install -buildvcs=false -ldflags "-w -s -X 'github.com/caddyserver/caddy/v2.CustomVersion=FrankenPHP $FRANKENPHP_VERSION PHP $PHP_VERSION Caddy' -X 'github.com/caddyserver/caddy/v2.CustomBinaryName=frankenphp' -X 'github.com/caddyserver/caddy/v2/modules/caddyhttp.ServerHeader=FrankenPHP Caddy'"
-
-FROM dunglas/frankenphp:1.12.7-php8.5@sha256:f92d81eb3fe4fd18b35d3d58192b7cc3acc8943817bbf39f2fcf0be02a3916dc AS pushword_base
-
-COPY --from=frankenphp_builder /patched/frankenphp /usr/local/bin/frankenphp
+# Pin the multi-platform release index, including its patched Go dependencies.
+FROM dunglas/frankenphp:1.13.1-php8.5@sha256:4a8eebee6b3bed92d01ffa6ec5b1bc2cb9c2ab7eeb546027a3f7e6a52937ebbb AS pushword_base
 
 WORKDIR /app
 
@@ -41,9 +22,9 @@ RUN apt-get update && apt-get upgrade -y && apt-get install --no-install-recomme
 	&& rm -rf /var/lib/apt/lists/* \
 	&& setcap cap_net_bind_service=+ep /usr/local/bin/frankenphp
 
-# curl, dom, fileinfo, iconv, libxml, mbstring, pdo, pdo_sqlite and sqlite3 already ship
-# with the base image; this is the rest of what /installation asks for. imagick makes
-# ImageReader pick a driver faster than gd without needing FFI.
+# curl, dom, fileinfo, iconv, libxml, mbstring, opcache, pdo, pdo_sqlite and sqlite3
+# already ship with the base image; this is the rest of what /installation asks for.
+# imagick makes ImageReader pick a driver faster than gd without needing FFI.
 RUN install-php-extensions \
 		@composer \
 		apcu \
@@ -52,7 +33,6 @@ RUN install-php-extensions \
 		gd \
 		imagick \
 		intl \
-		opcache \
 		pdo_pgsql \
 		soap \
 		zip
