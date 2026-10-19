@@ -74,6 +74,7 @@ final class PageScannerCommand
 
         /** @var Page[] $pages */
         $pages = $this->pageRepo->getPublishedPages($host);
+        $this->pageRepo->preloadTranslations($pages);
         $pagesCount = \count($pages);
 
         // Fingerprint each corpus BEFORE rendering it, so that a page edited while
@@ -82,6 +83,7 @@ final class PageScannerCommand
         // host, and every node it can produce belongs to a page in this list.
         $this->corpusAtScanStart = [];
         foreach ($pages as $page) {
+            $this->pageRepo->warmupSlugCache($page->host);
             $this->corpusAtScanStart[$page->host ?? ''] ??= $this->pageRepo->getPublishedCorpusState($page->host ?? '');
         }
 

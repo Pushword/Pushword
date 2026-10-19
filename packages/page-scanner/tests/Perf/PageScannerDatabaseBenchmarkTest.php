@@ -87,6 +87,7 @@ final class PageScannerDatabaseBenchmarkTest extends KernelTestCase
         $memoryPeak = memory_get_peak_usage(true);
 
         self::assertSame(Command::SUCCESS, $status, $commandTester->getDisplay());
+        self::assertLessThanOrEqual(50, $queryCount, 'Internal page scans must batch page and translation lookups.');
         $summary = json_decode(trim($commandTester->getDisplay()), true, 512, \JSON_THROW_ON_ERROR);
         self::assertIsArray($summary);
         self::assertSame('pw:page-scan', $summary['tool'] ?? null);

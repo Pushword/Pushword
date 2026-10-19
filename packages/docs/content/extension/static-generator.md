@@ -143,6 +143,17 @@ starts a background pass and returns a URL to poll. See
 Hosts with 10+ pages are rendered by parallel workers, as many as CPUs and free memory
 (~100 MB each) allow; `--workers=N` forces a count, `--workers=1` a sequential build.
 
+On a shared server, cap both automatic and explicit worker counts globally:
+
+```yaml
+static_generator:
+  static_max_workers: 4
+```
+
+The same `static_max_workers` property can be set per app under `pushword.apps`.
+The default `0` keeps the existing CPU and memory based limit; `1` forces sequential
+generation. This caps each build, so concurrent builds still need a shared CPU budget.
+
 Each worker must find every published slug assigned to it: a missing page fails the
 build rather than publishing a partial export. A full build also refuses to replace a
 site that has an `index.html` with an export that has none — delete the old

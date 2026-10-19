@@ -409,7 +409,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     private function runGenerators(SiteConfig $app): array
     {
         $slugs = $this->pageRepository->findPublishedSlugs($app->getMainHost());
-        $workerCount = WorkerCountResolver::resolve($this->workers, \count($slugs));
+        $workerCount = WorkerCountResolver::resolve($this->workers, \count($slugs), (int) $app->getStr('static_max_workers', '0'));
 
         $generators = self::isCacheMode($app)
             ? Configuration::DEFAULT_GENERATOR_CACHE

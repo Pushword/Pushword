@@ -39,6 +39,8 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     private const int INDEX_CACHE_TTL = 86400;
 
+    private const int SEARCH_CACHE_TTL = 3600;
+
     #[Required]
     public PageRepository $pageRepository;
 
@@ -616,29 +618,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     public function findOneBySearch(string $search): ?Media
     {
-        $normalizedSearch = SearchNormalizer::normalize($search);
-        if ('' === $normalizedSearch) {
-            $normalizedSearch = $search;
-        }
-
-        /** @var Media|null */
-        return $this->createQueryBuilder('m')
-            ->where($this->getExprToFilterMedia('m', $search))
-            ->setParameter('search', '%'.$search.'%')
-            ->setParameter('normalizedSearch', '%'.$normalizedSearch.'%')
-            ->addOrderBy(
-                'CASE'
-                .' WHEN m.fileName LIKE :search THEN 1'
-                .' WHEN JSON_TEXT(m.fileNameHistory) LIKE :search THEN 2'
-                .' WHEN m.alt LIKE :search THEN 3'
-                .' WHEN m.altSearch LIKE :normalizedSearch THEN 4'
-                .' WHEN m.alts LIKE :search THEN 5'
-                .' WHEN JSON_TEXT(m.tags) LIKE :search THEN 6'
-                .' ELSE 7 END',
-            )
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
+        return $this->findSearchMatches($search, first: true)[0] ?? null;
     }
 
     /**
@@ -650,14 +630,95 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             return $this->searchResults[$search];
         }
 
-        $exp = $this->getExprToFilterMedia('m', $search);
+        return $this->searchResults[$search] = $this->findSearchMatches($search);
+    }
 
-        $results = $this->createQueryBuilder('m')
-            ->where($exp)
+    /**
+     * Cache only IDs: entities must be hydrated by the current EntityManager.
+     * SQL keeps ownership of LIKE semantics and the single-result ranking.
+     *
+     * @return list<Media>
+     */
+    private function findSearchMatches(string $search, bool $first = false, bool $refresh = false): array
+    {
+        $cache = $this->debug ? null : $this->cache;
+        $item = $cache?->getItem('pw.media.search.v'.$this->readVersion().'.'.($first ? 'one.' : 'all.').hash('sha256', $search));
+        if (! $refresh && null !== $item && $item->isHit()) {
+            /** @var list<int> $ids */
+            $ids = $item->get();
+            $results = $this->hydrateSearchIds($ids);
+
+            // A restore or bulk import may bypass the ORM's version invalidation.
+            if (\count($results) !== \count($ids)) {
+                return $this->findSearchMatches($search, $first, refresh: true);
+            }
+
+            return $results;
+        }
+
+        $query = $this->createQueryBuilder('m')
+            ->where($this->getExprToFilterMedia('m', $search));
+
+        if ($first) {
+            $normalizedSearch = SearchNormalizer::normalize($search);
+            $query
+                ->setParameter('search', '%'.$search.'%')
+                ->setParameter('normalizedSearch', '%'.('' === $normalizedSearch ? $search : $normalizedSearch).'%')
+                ->addOrderBy(
+                    'CASE'
+                    .' WHEN m.fileName LIKE :search THEN 1'
+                    .' WHEN JSON_TEXT(m.fileNameHistory) LIKE :search THEN 2'
+                    .' WHEN m.alt LIKE :search THEN 3'
+                    .' WHEN m.altSearch LIKE :normalizedSearch THEN 4'
+                    .' WHEN m.alts LIKE :search THEN 5'
+                    .' WHEN JSON_TEXT(m.tags) LIKE :search THEN 6'
+                    .' ELSE 7 END',
+                )
+                ->setMaxResults(1);
+        }
+
+        /** @var list<Media> $results */
+        $results = $query->getQuery()->getResult();
+        if (null !== $item) {
+            $item->set(array_map(static fn (Media $media): int => (int) $media->id, $results))->expiresAfter(self::SEARCH_CACHE_TTL);
+            $cache->save($item);
+        }
+
+        return $results;
+    }
+
+    /**
+     * @param list<int> $ids
+     *
+     * @return list<Media>
+     */
+    private function hydrateSearchIds(array $ids): array
+    {
+        if ([] === $ids) {
+            return [];
+        }
+
+        if (1 === \count($ids)) {
+            $media = $this->find($ids[0]);
+
+            return null === $media ? [] : [$media];
+        }
+
+        /** @var array<int, Media> $byId */
+        $byId = $this->createQueryBuilder('m', 'm.id')
+            ->where('m.id IN (:ids)')
+            ->setParameter('ids', $ids)
             ->getQuery()
             ->getResult();
 
-        return $this->searchResults[$search] = $results;
+        $results = [];
+        foreach ($ids as $id) {
+            if (isset($byId[$id])) {
+                $results[] = $byId[$id];
+            }
+        }
+
+        return $results;
     }
 
     /**

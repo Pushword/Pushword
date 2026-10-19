@@ -20,6 +20,21 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 #[Group('integration')]
 final class ConfigurationTest extends KernelTestCase
 {
+    public function testWorkerLimitConfiguration(): void
+    {
+        $tree = new Configuration()->getConfigTreeBuilder()->buildTree();
+        $defaults = $tree->finalize($tree->normalize([]));
+        self::assertIsArray($defaults);
+        self::assertSame(0, $defaults['static_max_workers']);
+        $configured = $tree->finalize($tree->normalize(['static_max_workers' => 4]));
+        self::assertIsArray($configured);
+        self::assertSame(4, $configured['static_max_workers']);
+        self::assertContains('static_max_workers', Configuration::DEFAULT_APP_FALLBACK);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $tree->finalize($tree->normalize(['static_max_workers' => -1]));
+    }
+
     public function testNativeMinificationIsSharedAndDisabledByDefault(): void
     {
         self::bootKernel();
@@ -55,6 +70,7 @@ final class ConfigurationTest extends KernelTestCase
         $apps = self::getContainer()->get(SiteRegistry::class);
 
         self::assertSame(Configuration::DEFAULT_ASSETS, $apps->get()->get('static_assets'));
+        self::assertSame(0, $apps->get()->get('static_max_workers'));
         // BC: static_copy still works
         self::assertSame(Configuration::DEFAULT_ASSETS, $apps->get()->get('static_copy'));
     }

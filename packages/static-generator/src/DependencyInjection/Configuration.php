@@ -22,6 +22,7 @@ class Configuration implements ConfigurationInterface
 {
     final public const array DEFAULT_APP_FALLBACK = [
         'static_generators',
+        'static_max_workers',
         'static_symlink',
         'static_dir',
         'static_assets',
@@ -109,6 +110,11 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('static_generator');
         $treeBuilder->getRootNode()->children()
+            ->integerNode('static_max_workers')
+                ->info('Maximum parallel page workers, including --workers. Zero keeps CPU and memory based auto-detection.')
+                ->min(0)
+                ->defaultValue(0)
+            ->end()
             ->stringNode('native_html_minifier')
                 ->info('Optional trusted executable path. Null keeps PHP HTML minification; never resolved from site content.')
                 ->defaultNull()

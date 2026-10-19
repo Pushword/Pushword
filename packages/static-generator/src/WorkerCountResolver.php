@@ -12,10 +12,11 @@ final class WorkerCountResolver
 
     private const int MIN_PAGES_FOR_PARALLEL = 10;
 
-    public static function resolve(int $requested, int $pageCount): int
+    public static function resolve(int $requested, int $pageCount, int $maximum = 0): int
     {
+        $limit = $maximum > 0 ? min($maximum, $pageCount) : $pageCount;
         if ($requested > 0) {
-            return min($requested, $pageCount);
+            return min($requested, $limit);
         }
 
         if ($pageCount < self::MIN_PAGES_FOR_PARALLEL) {
@@ -25,7 +26,7 @@ final class WorkerCountResolver
         $cpuLimit = self::detectCpuCount();
         $memoryLimit = max(1, (int) floor(self::detectAvailableMemoryMb() / self::MEMORY_PER_WORKER_MB));
 
-        return min($cpuLimit, $memoryLimit, $pageCount);
+        return min($cpuLimit, $memoryLimit, $limit);
     }
 
     private static function detectCpuCount(): int

@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'media searches cache their matches; static builds can cap their parallel workers'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,16 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`, `pushword/static-generator`
+
+## Media search cache
+
+Production media searches reuse matching IDs for one hour; ORM media writes invalidate them automatically.
+**Sites writing media outside Doctrine:** call `MediaRepository::bumpVersion()` after the batch so new or changed matches are visible immediately.
+If a cached ID was deleted, the search rebuilds its matches automatically.
+
+## Limit static build concurrency
+
+Set `static_generator.static_max_workers: 4` on a shared server to cap automatic and explicit `--workers` counts, or set `static_max_workers` per app under `pushword.apps`.
+The default `0` preserves the existing CPU and memory based limit; `1` forces sequential generation.
