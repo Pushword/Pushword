@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.62](/upgrade/1.0.62) | `admin` `admin-block-editor` | editor diagnostics are available in the admin |
 | [1.0.61](/upgrade/1.0.61) | `admin` `admin-block-editor` | nested lists and inline formatting survive editing; JavaScript code blocks load correctly |
 | [1.0.57](/upgrade/1.0.57) | `admin` `admin-block-editor` `api` `core` | invalid media are refused on every write path; media removal can be vetoed; license values typed with an upload are kept |
 | [1.0.56](/upgrade/1.0.56) | `admin` `admin-block-editor` `core` | page and link choices are clearer; page links preserve their host |
