@@ -61,5 +61,6 @@ pcntl_async_signals(true);
 pcntl_signal(\SIGTERM, static function (): never { exit; });
 pcntl_signal(\SIGINT, static function (): never { exit; });
 exit($server->run(static function (string $type, string $output) use ($filesystem): void {
-    $filesystem->appendToFile(__DIR__.'/../../test-results/server.log', $output);
+    $resultsDirectory = '1' === getenv('PW_EDITOR_WINDOWS') ? 'test-results-windows' : 'test-results';
+    $filesystem->appendToFile(__DIR__.'/../../'.$resultsDirectory.'/server.log', $output);
 }));

@@ -1,3 +1,5 @@
+import { reportEditorError } from '../../EditorDiagnostics'
+
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
@@ -51,6 +53,10 @@ class Logger {
   }
 
   error(message: string, ...args: unknown[]): void {
+    if (typeof document !== 'undefined') {
+      const errors = args.map((arg) => arg && typeof arg === 'object' && 'error' in arg ? arg.error : arg)
+      reportEditorError(document.querySelector('.editorjs-holder'), 'tool', errors.find((arg) => arg instanceof Error))
+    }
     if (this.level <= LogLevel.ERROR) {
       console.error(`[ERROR] ${message}`, ...args)
     }

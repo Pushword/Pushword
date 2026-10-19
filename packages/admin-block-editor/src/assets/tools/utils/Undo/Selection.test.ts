@@ -87,6 +87,40 @@ it('restores selected blocks and cancels smooth scrolling explicitly', async () 
   expect(scroll).toHaveBeenCalledWith({ left: 0, top: 0, behavior: 'instant' })
 })
 
+it.each([false, true])('cancels a deferred native focus scroll, including during export: %s', async (exporting) => {
+  let scrollY = 120
+  vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scrollY)
+  vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+    scrollY = (options as ScrollToOptions).top ?? 0
+  })
+  vi.spyOn(holder.firstElementChild as HTMLElement, 'focus').mockImplementation(() => {
+    window.requestAnimationFrame(() => { scrollY = 46 })
+  })
+  await restoreSelection(editor, holder, { blocks: ['a'] })
+  if (exporting) {
+    const boundField = document.createElement('textarea')
+    document.body.append(boundField)
+    boundField.dispatchEvent(new Event('input', { bubbles: true }))
+  }
+  await new Promise<void>((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve())))
+  expect(scrollY).toBe(120)
+})
+
+it.each(['scroll', 'remove', 'typing after export'])('cancels the deferred viewport correction on %s', async (action) => {
+  const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+  await restoreSelection(editor, holder, { blocks: ['a'] })
+  if (action === 'scroll') window.dispatchEvent(new Event('wheel'))
+  else if (action === 'remove') holder.replaceChildren()
+  else {
+    const boundField = document.createElement('textarea')
+    document.body.append(boundField)
+    boundField.dispatchEvent(new Event('input', { bubbles: true }))
+    holder.querySelector('[contenteditable]')!.dispatchEvent(new Event('input', { bubbles: true }))
+  }
+  await new Promise<void>((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve())))
+  expect(scroll).toHaveBeenCalledOnce()
+})
+
 it('activates a deferred Monaco editor before restoring its selection and scroll', async () => {
   const wrapper = document.createElement('div')
   wrapper.className = 'editorjs-monaco-wrapper'

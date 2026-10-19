@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'editor diagnostics are available in the admin'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,20 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin`, `pushword/admin-block-editor`
+
+## Editor diagnostics
+
+The editor includes a downloadable diagnostic and a session-only writing-suggestions toggle.
+**If you override `@PushwordAdminBlockEditor/editorjs_widget.html.twig`:** merge the diagnostic markup and `diagnostics` configuration from the default template.
+Other sites: no action required.
+
+## Block editor keyboard handling
+
+Typing over selected blocks now replaces them with a single character; Ctrl+U switches between Markdown and blocks before the browser handles the shortcut.
+**If you override the widget's shortcut listener:** use the default widget's capturing `keydown` listener.
+
+## Edit lock requests
+
+Leaving an edit form cancels pending lock pings without logging a network failure; restoring the page from browser history restarts the pings. No action required.

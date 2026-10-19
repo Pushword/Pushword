@@ -82,12 +82,64 @@ formatting tools, undo/redo, immediate saving, hard breaks, rich-text copy/paste
 table navigation and editing, and Markdown/JSON mode round trips. They verify the
 saved content by reloading the admin. The existing in-page checks also exercise every
 configured block and tune, selection preservation and incremental rendering; they
-are shared with Panther rather than copied. Uncaught browser errors fail the tests.
+are shared with Panther rather than copied. Uncaught browser errors and console errors fail the tests.
 
 CI uploads the HTML/JSON reports, browser versions, individual in-page outcomes,
 server log, failure screenshots and Playwright traces. Local reports are in `playwright-report/`
 and `test-results/` inside this package. Add new user regressions to
 `tests/browser/*.spec.ts`: every scenario then runs on all three browsers.
+
+### Microsoft Edge on the local Windows VM
+
+Start the existing Windows 11 VM with its usual VM launcher. It needs Edge, Node.js,
+OpenSSH and an active desktop session. Run from the Linux host after building the
+editor and Monaco as above:
+
+```shell
+yarn --cwd packages/admin-block-editor test:windows
+# Narrow a diagnostic run:
+yarn --cwd packages/admin-block-editor test:windows --grep 'physical keys|Office'
+```
+
+The default SSH target is `Administrator@127.0.0.1:2223`, with the key at
+`~/.local/share/ga-windows11-vm/cle`. Override `PW_WINDOWS_SSH_HOST`,
+`PW_WINDOWS_SSH_PORT` or `PW_WINDOWS_SSH_KEY` for another existing VM. The launcher
+uses the host's exact Playwright version and opens an isolated Edge in the Windows
+desktop through a temporary interactive scheduled task. The test app stays on Linux;
+SSH forwards its port 9079 and Edge's ports 19880/19881 over loopback. The launcher
+closes its browser, task and tunnels on completion; it leaves the VM running.
+
+This runs the shared journeys, including system-clipboard Office HTML fixtures,
+nested lists, accented text and selection replacement. Windows-only journeys use
+physical AZERTY scan codes through Windows `SendInput`, including circumflex and
+diaeresis dead keys, with browser-default suggestions and with suggestions disabled,
+then save and reload the result. Reports, Windows/Edge versions,
+screenshots and traces are separate in `playwright-report-windows/` and
+`test-results-windows/`. This local run complements Linux CI. Office fixtures exercise
+representative clipboard payloads; they do not launch Word or Outlook. Browser writing
+assistants still need comparison on the affected user's profile.
+
+### Reporting an editor problem
+
+Open **Report a problem** above the editor and download the diagnostic file to attach
+to a support message. It includes the installed version, loaded asset version, browser
+and OS metadata, the last 60 editing actions and at most 20 errors. Caught copy,
+history, save and tool failures show a visible message and enter the same report as
+uncaught failures. A failed conversion leaves the form open and its last valid source
+intact so the author can retry.
+
+Typing over selected blocks replaces the selection with one paragraph and one
+character, with undo/redo preserving the replaced blocks. Ctrl+U switches to and from
+Markdown before the browser handles its own source-view shortcut.
+Windows HTML clipboard context outside `StartFragment`/`EndFragment` is discarded
+before inline insertion, so its CRLF wrapper cannot become extra paragraphs on save.
+
+The report omits page text, clipboard payloads, field values, URLs and exception
+messages. It stays in memory until downloaded; nothing is sent automatically. The
+**Disable browser writing suggestions for this session** checkbox allows comparison
+with and without inline predictions and rewriting (`writingsuggestions="false"`). It
+applies only to the current editor session and leaves spellcheck available. Record
+whether the symptom changes and include a diagnostic for each setting.
 
 ## Credits
 

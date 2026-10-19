@@ -26,8 +26,8 @@ void (async () => {
         { id: 'empty', type: 'paragraph', data: { text: '' } },
       ],
     })
-    field().scrollIntoView({ block: 'center', behavior: 'instant' })
     await pause(650)
+    field().scrollIntoView({ block: 'center', behavior: 'instant' })
   }
   const wait = async (condition) => {
     for (let i = 0; i < 80; i++) {
@@ -74,6 +74,7 @@ void (async () => {
       }),
     )
     await pause(80)
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
   }
   const type = async (text) => {
     field().dispatchEvent(
@@ -116,6 +117,7 @@ void (async () => {
         await select(backward ? 6 : 0, backward ? 0 : 6)
         const scroll = scrollY
         await tool(name)
+        check(Math.abs(scrollY - scroll) < 2, `Formatting scrolled ${scrollY - scroll}px before history`)
         check(
           field().querySelector(selector)?.textContent === 'Format',
           'Formatting was not applied',

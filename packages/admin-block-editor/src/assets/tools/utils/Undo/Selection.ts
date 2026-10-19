@@ -162,7 +162,7 @@ function resolvePoint(root: HTMLElement, saved: Point): { node: Node; offset: nu
   }
 }
 
-/** Restore the selection in one turn, then reveal it only when it is outside the viewport. */
+/** Restore the selection and reveal it only when it is outside the viewport. */
 export async function restoreSelection(
   editor: EditorJS,
   holder: HTMLElement,
@@ -268,4 +268,20 @@ export async function restoreSelection(
         behavior: 'instant',
       })
   }
+  // Edge can apply the native focus scroll after our synchronous correction.
+  // Correct it after paint without blocking history recording or later user input.
+  const viewport = { left: window.scrollX, top: window.scrollY, behavior: 'instant' as const }
+  const correction = new AbortController()
+  const cancel = (event: Event) => {
+    if (event.type !== 'input' || (event.target instanceof Node && holder.contains(event.target)))
+      correction.abort()
+  }
+  for (const event of ['keydown', 'pointerdown', 'wheel', 'touchstart', 'input']) {
+    window.addEventListener(event, cancel, { capture: true, signal: correction.signal })
+  }
+  window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+    const cancelled = correction.signal.aborted
+    correction.abort()
+    if (!cancelled && holder.isConnected && holder.contains(block.holder)) window.scrollTo(viewport)
+  }))
 }

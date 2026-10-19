@@ -1,5 +1,6 @@
 import type EditorJS from '@editorjs/editorjs'
 import type { OutputBlockData, OutputData } from '@editorjs/editorjs'
+import { reportEditorError } from '../../../EditorDiagnostics'
 import Observer from './Observer'
 import { GroupRegistry } from '../../Group/GroupRegistry'
 import {
@@ -155,6 +156,7 @@ export class Undo {
     const result = this.tail.then(work)
     this.tail = result.catch((error: unknown) => {
       console.error('Editor history failed', error)
+      reportEditorError(this.holder, 'history', error)
     })
     return result
   }

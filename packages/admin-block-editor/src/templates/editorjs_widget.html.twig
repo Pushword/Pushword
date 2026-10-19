@@ -1,4 +1,5 @@
 {% block editorjs_widget %}
+{% set editor_id = 'editorjs_' ~ id %}
 
 <div class="pw-editor-modes">
     <button type="button" class="pw-editor-mode" data-pw-editor-mode="json" onclick="toggleEditor()" title="{{ 'editorSourceJson'|trans }}" aria-label="{{ 'editorSourceJson'|trans }}">
@@ -11,8 +12,19 @@
         {{ svg('copy') }}
     </button>
 </div>
+<div class="pw-editor-diagnostics" data-pw-diagnostics-for="{{ editor_id }}">
+    <p class="text-danger mb-1" role="alert" data-pw-editor-error hidden></p>
+    <details>
+        <summary>{{ 'editorReportProblem'|trans }}</summary>
+        <p class="text-muted my-2">{{ 'editorDiagnosticHelp'|trans }}</p>
+        <label class="d-block mb-2" for="{{ editor_id }}_writingSuggestions">
+            <input type="checkbox" id="{{ editor_id }}_writingSuggestions" data-pw-writing-suggestions>
+            {{ 'editorDisableWritingSuggestions'|trans }}
+        </label>
+        <button type="button" class="btn btn-secondary btn-sm" data-pw-download-diagnostic>{{ 'editorDownloadDiagnostic'|trans }}</button>
+    </details>
+</div>
 <div style="padding:10px 10px 0;">
-    {% set editor_id = 'editorjs_' ~ id %}
     <textarea style="display:none" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }}>{{ value }}</textarea>
     <div id="{{ editor_id }}" data-input-id="{{ id }}" class="editorjs-holder"></div>
 
@@ -71,16 +83,20 @@ document.addEventListener('DOMContentLoaded', function() {
             el.style.color = '#16a34a';
             setTimeout(function() { el.style.color = original; }, 1200);
         } catch (error) {
+            document.getElementById(editorId).dispatchEvent(new CustomEvent('pw:editor-error', {
+                bubbles: true, detail: { operation: 'copy', error: error }
+            }));
             console.error('copyPageMarkdown failed', error);
         }
     };
 
-    window.onkeyup = function(event) {
-        if (event.ctrlKey && event.which === 85) { // 85 = touche U
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'u') {
             event.preventDefault();
+            event.stopPropagation();
             window.toggleEditor('markdown');
         }
-    };
+    }, { capture: true });
 });
 </script>
 
@@ -95,6 +111,10 @@ var editorjsConfig = {
     initialBlock: "paragraph",
     placeholder: "{{ 'editorParagraphPlaceholder'|trans|e('js') }}",
     i18n: { messages: {{ editorjs_i18n_messages()|json_encode|raw }} },
+    diagnostics: {
+        version: {{ editorjs_version|default('unknown')|json_encode|raw }},
+        labels: { failure: "{{ 'editorDiagnosticFailure'|trans|e('js') }}" },
+    },
     outline: {
         labels: {
             deleteBlock: "{{ 'editorOutlineDeleteBlock'|trans|e('js') }}",

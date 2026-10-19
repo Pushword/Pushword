@@ -105,6 +105,11 @@ describe('ClipboardManager – pure helpers', () => {
   })
 
   describe('convertHtmlToMarkdown – tables kept as HTML', () => {
+    it('preserves mixed nested lists from external rich text', () => {
+      const html = '<ul><li>Parent<ol><li><b>Child</b><ul><li>Grandchild</li></ul></li></ol></li><li>Sibling</li></ul>'
+      expect(cm.convertHtmlToMarkdown(html).trim()).toBe('- Parent\n  1. **Child**\n    - Grandchild\n- Sibling')
+    })
+
     it('preserves a pasted table verbatim instead of flattening it to pipes', () => {
       const result = cm.convertHtmlToMarkdown('<table><tr><th>Name</th><th>Status</th></tr></table>')
       expect(result).toContain('<table')
@@ -544,6 +549,21 @@ describe('ClipboardManager – copying whole blocks', () => {
     expect(writeText).not.toHaveBeenCalled()
   })
 
+  it('reports a rejected block copy to the editor instead of only logging it', async () => {
+    const { cm, holder } = copyingManager([paragraph('p', 'Copy me')])
+    holder.classList.add('editorjs-holder')
+    holder.querySelector('.ce-block')!.classList.add('ce-block--selected')
+    const error = new DOMException('Clipboard denied', 'NotAllowedError')
+    write.mockRejectedValueOnce(error)
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const reported = vi.fn()
+    holder.addEventListener('pw:editor-error', reported)
+    cm.handleCopyShortcut(ctrlC(holder))
+    await vi.waitFor(() => expect(reported).toHaveBeenCalledOnce())
+    expect(reported.mock.calls[0]![0].detail).toEqual({ operation: 'copy', error })
+    logged.mockRestore()
+  })
+
   it.each([
     ['<b>One two three</b>', '<b>two</b>', '**two**'],
     ['<b><i>One two three</i></b>', '<b><i>two</i></b>', '**_two_**'],
@@ -735,6 +755,9 @@ describe('ClipboardManager – handlePaste routing', () => {
   beforeEach(() => {
     document.body.innerHTML = ''
     cm = newManager()
+    cm.editor.blocks = { getById: () => ({ name: 'paragraph' }) }
+    cm.editor.sanitizer = { clean: (html: string) => html }
+    cm._editorjsTools = [{ name: 'paragraph', baseSanitizeConfig: { b: true, i: true, a: { href: true } } }]
     window.getSelection()?.removeAllRanges()
   })
 
@@ -799,14 +822,19 @@ describe('ClipboardManager – handlePaste routing', () => {
     ['**bold**', '<b>bold</b>'],
     ['_italic_', '<i>italic</i>'],
     ['[link](https://example.org)', '<a href="https://example.org">link</a>'],
-  ])('leaves inline HTML to the native editor paste: %s', (plain, html) => {
+    ['**Copy me**', '<html>\r\n<body>\r\n<!--StartFragment--><b>Copy me</b><!--EndFragment-->\r\n</body>\r\n</html>'],
+  ])('inserts only the inline fragment at the caret: %s', (plain, html) => {
     caretInBlock()
     const insert = vi.spyOn(cm, 'insertMarkdownAsBlocks')
+    const command = vi.fn(() => true)
+    document.execCommand = command
     const event = pasteEvent(plain, html)
 
     cm.handlePaste(event)
 
-    expect(event.preventDefault).not.toHaveBeenCalled()
+    expect(event.preventDefault).toHaveBeenCalledOnce()
+    expect(event.stopPropagation).toHaveBeenCalledOnce()
+    expect(command).toHaveBeenCalledWith('insertHTML', false, plain === '**Copy me**' ? '<b>Copy me</b>' : html)
     expect(insert).not.toHaveBeenCalled()
   })
 

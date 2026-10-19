@@ -38,6 +38,7 @@
     "watch": "vite build --watch",
     "test": "vitest run",
     "test:browser": "playwright test",
+    "test:windows": "node tests/browser/windows.mjs",
     "test:watch": "vitest"
   },
   "dependencies": {

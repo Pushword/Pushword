@@ -29,7 +29,9 @@ export function initEditLock(pageId) {
     isOwner: false,
     lastKnownSavedAt: null,
     pingIntervalId: null,
+    stopped: false,
   }
+  const pending = new Set()
 
   const banner = document.getElementById('pw-edit-lock-banner')
   const bannerMessage = document.getElementById('pw-edit-lock-message')
@@ -76,6 +78,9 @@ export function initEditLock(pageId) {
    * Ping the server to maintain lock or check status
    */
   const ping = async () => {
+    if (state.stopped) return
+    const controller = new AbortController()
+    pending.add(controller)
     try {
       const response = await fetch(`/admin/page/${pageId}/lock/ping`, {
         method: 'POST',
@@ -84,6 +89,7 @@ export function initEditLock(pageId) {
           'X-Requested-With': 'XMLHttpRequest',
         },
         body: JSON.stringify({ tabId }),
+        signal: controller.signal,
       })
 
       if (!response.ok) {
@@ -104,7 +110,9 @@ export function initEditLock(pageId) {
         state.lastKnownSavedAt = data.lockInfo.lastSavedAt
       }
     } catch (error) {
-      console.error('[EditLock] Ping error:', error)
+      if (!controller.signal.aborted) console.error('[EditLock] Ping error:', error)
+    } finally {
+      pending.delete(controller)
     }
   }
 
@@ -112,17 +120,32 @@ export function initEditLock(pageId) {
    * Start the lock system
    */
   const start = () => {
+    if (state.pingIntervalId !== null) return
+    state.stopped = false
     ping() // Initial ping
     state.pingIntervalId = window.setInterval(ping, PING_INTERVAL_MS)
+  }
 
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) ping()
-    })
+  const abortPending = () => {
+    for (const controller of pending) controller.abort()
   }
 
   const stop = () => {
     if (state.pingIntervalId) window.clearInterval(state.pingIntervalId)
+    state.pingIntervalId = null
+    state.stopped = true
+    abortPending()
   }
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) ping()
+  })
+  // Firefox can cancel fetch before pagehide. Keep the timer if navigation is cancelled.
+  window.addEventListener('beforeunload', abortPending)
+  window.addEventListener('pagehide', stop)
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) start()
+  })
 
   // Auto-start
   start()

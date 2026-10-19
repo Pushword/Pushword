@@ -21,6 +21,9 @@ let undoOptions: any = null
 vi.mock('@editorjs/editorjs', () => ({
   default: class {
     destroy = destroyEditor
+    readOnly = { isEnabled: false }
+    blocks = { getBlockIndex: () => 0, insert: vi.fn(() => ({ id: 'replacement' })), delete: vi.fn() }
+    caret = { setToBlock: vi.fn() }
     saver = { save: vi.fn(async () => ({ blocks: [] })) }
     tools = {
       getBlockTools: () =>
@@ -105,6 +108,39 @@ it('accepts a site-provided tool constructor alongside the built-in tools', () =
   expect(captured.tools.siteTool.class).toBe(SiteTool)
   expect(captured.tools.siteTool.config).toEqual({ example: true })
   expect(captured.tools.paragraph.class).toBeTypeOf('function')
+})
+
+it.each([['x', 'x'], ['<', '&lt;'], ['&', '&amp;'], ['é', 'é']])('replaces selected blocks with one escaped character: %s', (key, escaped) => {
+  const instance = boot('{"blocks":[]}')
+  const holder = document.getElementById('ed')!
+  holder.innerHTML = '<div class="ce-block ce-block--selected"><p contenteditable="true">Old content</p></div>'
+  const field = holder.querySelector('p')!
+  const selection = window.getSelection()!
+  selection.collapse(field.firstChild, 0)
+  const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+  field.dispatchEvent(event)
+  expect(event.defaultPrevented).toBe(true)
+  expect(selection.rangeCount).toBe(0)
+  const editor = instance.getEditors().ed!
+  expect(editor.blocks.insert).toHaveBeenCalledWith('paragraph', { text: escaped }, undefined, 0, false)
+  expect(editor.blocks.delete).toHaveBeenCalledWith(1)
+  expect(editor.caret.setToBlock).toHaveBeenCalledWith('replacement', 'end')
+})
+
+it.each([
+  { key: 'x', isComposing: true }, { key: 'x', ctrlKey: true },
+  { key: 'x', metaKey: true }, { key: 'x', altKey: true }, { key: 'Dead' },
+])('leaves native compositions and modified keys alone: %j', (options) => {
+  boot('{"blocks":[]}')
+  const holder = document.getElementById('ed')!
+  holder.innerHTML = '<div class="ce-block ce-block--selected"><p contenteditable="true">Text</p></div>'
+  const field = holder.querySelector('p')!
+  const selection = window.getSelection()!
+  selection.collapse(field.firstChild, 0)
+  const event = new KeyboardEvent('keydown', { ...options, bubbles: true, cancelable: true })
+  field.dispatchEvent(event)
+  expect(event.defaultPrevented).toBe(false)
+  expect(selection.rangeCount).toBe(1)
 })
 
 it('passes the optional history normalizer to Undo without forwarding it to Editor.js', () => {
@@ -201,6 +237,24 @@ describe('editorJs – the baseline the form recovers against', () => {
  * that field back would have left the rendered blocks on the old content.
  */
 describe('editorJs – the field it feeds', () => {
+  it('reports a failed save and allows retrying without submitting stale content', async () => {
+    const instance = boot('{"blocks":[]}')
+    const input = document.getElementById('inp') as HTMLTextAreaElement
+    input.value = 'last good source'
+    const save = vi.mocked(instance.getEditors().ed!.saver.save)
+    save.mockRejectedValueOnce(new Error('export failed'))
+    const failure = vi.fn()
+    document.getElementById('ed')!.addEventListener('pw:editor-error', failure)
+    const submit = vi.spyOn(input.form!, 'requestSubmit').mockImplementation(() => {})
+    input.form!.dispatchEvent(new SubmitEvent('submit', { cancelable: true }))
+    await vi.waitFor(() => expect(failure).toHaveBeenCalledOnce())
+    expect(input.value).toBe('last good source')
+    expect(submit).not.toHaveBeenCalled()
+    input.form!.dispatchEvent(new SubmitEvent('submit', { cancelable: true }))
+    await vi.waitFor(() => expect(submit).toHaveBeenCalledOnce())
+    submit.mockRestore()
+  })
+
   it.each([true, false])(
     'flushes the latest blocks before submitting, with submitter: %s',
     async (withSubmitter) => {

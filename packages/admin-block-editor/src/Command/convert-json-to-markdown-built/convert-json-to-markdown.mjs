@@ -8097,6 +8097,18 @@ var G$1 = class G$1 {
 //#region src/assets/tools/Raw/icon.svg?raw
 var icon_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 8l-4 4 4 4M15 8l4 4-4 4M13 6.5l-2 11\"/></svg>\n";
 //#endregion
+//#region src/assets/EditorDiagnostics.ts
+/** A caught failure must reach the same diagnostic and user feedback as an uncaught one. */
+function reportEditorError(holder, operation, error) {
+	holder?.dispatchEvent(new CustomEvent("pw:editor-error", {
+		bubbles: true,
+		detail: {
+			operation,
+			error
+		}
+	}));
+}
+//#endregion
 //#region src/assets/tools/utils/logger.ts
 var Logger = class {
 	constructor() {
@@ -8123,6 +8135,10 @@ var Logger = class {
 		if (this.level <= 2) console.warn(`[WARN] ${message}`, ...args);
 	}
 	error(message, ...args) {
+		if (typeof globalThis.document !== "undefined") {
+			const errors = args.map((arg) => arg && typeof arg === "object" && "error" in arg ? arg.error : arg);
+			reportEditorError(globalThis.document.querySelector(".editorjs-holder"), "tool", errors.find((arg) => arg instanceof Error));
+		}
 		if (this.level <= 3) console.error(`[ERROR] ${message}`, ...args);
 	}
 	logError(error, context, additionalInfo) {
@@ -9980,6 +9996,15 @@ var AbstractMediaTool = class extends BaseTool {
 		if (!response.success || !response.file?.media) return this.handleUploadError("incorrect response: " + JSON.stringify(response));
 		this.fillWith(response.file);
 	}
+	async replaceBlock(type, data) {
+		const block = this.api.blocks.getBlockByElement(this.nodes.wrapper);
+		const saved = await block.save();
+		this.api.blocks.insert(type, data, {}, this.api.blocks.getBlockIndex(block.id), true, true, block.id);
+		if (saved?.tunes) {
+			await this.api.blocks.update(block.id, void 0, saved.tunes);
+			this.api.caret.setToBlock(block.id);
+		}
+	}
 	handleUploadError(error) {
 		const toolName = this.constructor.name;
 		logger.error(`${toolName}: uploading failed`, error);
@@ -10064,6 +10089,9 @@ var AbstractMediaTool = class extends BaseTool {
 	}
 };
 //#endregion
+//#region src/assets/tools/Gallery/toolbox-icon.svg?raw
+var toolbox_icon_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><rect width=\"10\" height=\"10\" x=\"9\" y=\"5\" stroke=\"currentColor\" stroke-width=\"2\" rx=\"3\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 10v6a3 3 0 0 0 3 3h6M9.5 13.5l2.5-2.5 3.5 3.5M15.5 8.5h.01\"/></svg>\n";
+//#endregion
 //#region src/assets/tools/Image/Image.ts
 var Image = class Image extends AbstractMediaTool {
 	static get toolbox() {
@@ -10143,6 +10171,18 @@ var Image = class Image extends AbstractMediaTool {
 		this.nodes.wrapper.appendChild(this.nodes.caption);
 		this.nodes.wrapper.appendChild(this.nodes.fileButton);
 		return this.nodes.wrapper;
+	}
+	renderSettings() {
+		if (this.readOnly || !this.media) return [];
+		return [{
+			icon: toolbox_icon_default,
+			title: this.api.i18n.t("Convert to gallery"),
+			closeOnActivate: true,
+			onActivate: () => {
+				if (!this.media) return;
+				return this.replaceBlock("gallery", { items: [this.save(this.nodes.wrapper)] });
+			}
+		}];
 	}
 	render() {
 		const wrapper = this.createImageInput();
@@ -10239,9 +10279,6 @@ var Image = class Image extends AbstractMediaTool {
 		}
 	}
 };
-//#endregion
-//#region src/assets/tools/Gallery/toolbox-icon.svg?raw
-var toolbox_icon_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><rect width=\"10\" height=\"10\" x=\"9\" y=\"5\" stroke=\"currentColor\" stroke-width=\"2\" rx=\"3\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 10v6a3 3 0 0 0 3 3h6M9.5 13.5l2.5-2.5 3.5 3.5M15.5 8.5h.01\"/></svg>\n";
 //#endregion
 //#region src/assets/tools/Gallery/Close.svg?raw
 var Close_default = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\"\n    class=\"bi bi-x-lg\" viewBox=\"0 0 16 16\">\n    <path\n        d=\"M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z\" />\n</svg>";
@@ -10420,6 +10457,19 @@ var Gallery = class Gallery extends AbstractMediaTool {
 		});
 		this.data = { items: newItems };
 		return this.data;
+	}
+	renderSettings() {
+		if (this.readOnly || this.save().items.length !== 1) return [];
+		return [{
+			icon: _$1,
+			title: this.api.i18n.t("Convert to image"),
+			closeOnActivate: true,
+			onActivate: () => {
+				const { items } = this.save();
+				if (items.length !== 1) return;
+				return this.replaceBlock("image", items[0]);
+			}
+		}];
 	}
 	onFileLoading() {
 		super.onFileLoading();

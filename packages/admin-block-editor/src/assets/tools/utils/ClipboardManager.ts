@@ -4,6 +4,7 @@ import { MarkdownUtils } from './MarkdownUtils'
 import { BlockToolAdapterWithConstructable, chunkTool } from '../../EditorJsParseMarkdown'
 import EditorJsExportMarkdown from '../../EditorJsExportMarkdown'
 import { GroupNesting } from '../Group/GroupNesting'
+import { reportEditorError } from '../../EditorDiagnostics'
 
 /**
  * ClipboardManager handles copy/paste operations for EditorJS
@@ -232,7 +233,10 @@ export default class ClipboardManager {
                     'text/plain': markdown.then((text) => new Blob([text], { type: 'text/plain' })),
                 }),
             ])
-            .catch((error: unknown) => console.error('Unable to copy the selected blocks', error))
+            .catch((error: unknown) => {
+                reportEditorError(blocks[0]?.closest('.editorjs-holder') ?? null, 'copy', error)
+                console.error('Unable to copy the selected blocks', error)
+            })
     }
 
     /**
@@ -307,12 +311,24 @@ export default class ClipboardManager {
         }
 
         // A copied inline selection belongs at the caret, even though its plain
-        // text contains Markdown. Let Editor.js paste its formatted HTML inline.
+        // text contains Markdown. Keep it inline rather than importing new blocks.
         if (htmlText) {
             const fragment = document.createElement('div')
-            fragment.innerHTML = DOMPurify.sanitize(htmlText)
+            // Windows wraps HTML clipboard fragments in a CRLF-delimited document.
+            // Context whitespace is not part of the selection and must not become Markdown paragraphs.
+            const selectedHtml = /<!--StartFragment-->([\s\S]*?)<!--EndFragment-->/i.exec(htmlText)?.[1] ?? htmlText
+            fragment.innerHTML = DOMPurify.sanitize(selectedHtml)
             if (fragment.querySelector('b, strong, i, em, u, s, a, code, mark, small') &&
-                !fragment.querySelector('p, div, h1, h2, h3, h4, h5, h6, ul, ol, li, table, pre, blockquote')) return
+                !fragment.querySelector('p, div, h1, h2, h3, h4, h5, h6, ul, ol, li, table, pre, blockquote')) {
+                const api = this.editor as unknown as API
+                const block = api.blocks.getById(blockContent.closest<HTMLElement>('.ce-block')!.dataset.id!)!
+                const tool = this.editorjsTools.find(tool => tool.name === block.name)!
+                const html = api.sanitizer.clean(fragment.innerHTML, tool.baseSanitizeConfig)
+                event.preventDefault()
+                event.stopPropagation()
+                document.execCommand('insertHTML', false, html)
+                return
+            }
         }
 
         // When the plain text already carries markdown, it is authoritative:
@@ -480,18 +496,9 @@ export default class ClipboardManager {
                         }
                         break
                     }
-                    case 'ul': {
-                        const ulItems = Array.from(el.querySelectorAll(':scope > li')).map(li => {
-                            return '- ' + this.processNodeToMarkdown(li).trim()
-                        }).join('\n')
-                        parts.push('\n\n' + ulItems + '\n\n')
-                        break
-                    }
+                    case 'ul':
                     case 'ol': {
-                        const olItems = Array.from(el.querySelectorAll(':scope > li')).map((li, idx) => {
-                            return (idx + 1) + '. ' + this.processNodeToMarkdown(li).trim()
-                        }).join('\n')
-                        parts.push('\n\n' + olItems + '\n\n')
+                        parts.push('\n\n' + this.convertListToMarkdown(el) + '\n\n')
                         break
                     }
                     case 'li':
@@ -537,6 +544,19 @@ export default class ClipboardManager {
         return parts.join('')
             .replace(/\n{3,}/g, '\n\n') // Normalize multiple newlines
             .replace(/\u00A0/g, ' ')     // Replace any remaining non-breaking spaces
+    }
+
+    private convertListToMarkdown(list: Element, depth = 0): string {
+        return Array.from(list.querySelectorAll(':scope > li')).map((item, index) => {
+            const content = item.cloneNode(true) as Element
+            const children = Array.from(content.querySelectorAll(':scope > ul, :scope > ol'))
+            children.forEach(child => child.remove())
+            const prefix = '  '.repeat(depth)
+            const marker = list.tagName === 'OL' ? `${index + 1}. ` : '- '
+            const text = this.processNodeToMarkdown(content).trim().replace(/\n+/g, `\n${prefix}  `)
+            const nested = children.map(child => '\n' + this.convertListToMarkdown(child, depth + 1)).join('')
+            return prefix + marker + text + nested
+        }).join('\n')
     }
 
     /**

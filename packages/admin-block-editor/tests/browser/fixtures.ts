@@ -38,14 +38,18 @@ export const test = base.extend<{ editorPage: Page }, { authState: StorageState 
   editorPage: async ({ page, browser }, use, testInfo) => {
     const errors: string[] = []
     page.on('pageerror', error => errors.push(error.message))
+    page.on('console', message => {
+      if (message.type() === 'error') errors.push(message.text())
+    })
     const pages: Record<string, string> = JSON.parse(readFileSync(join(directory, 'browser-pages.json'), 'utf8'))
     await page.goto(pages[testInfo.project.name]!)
     // TagsField moves focus to the title after initialization; wait before typing elsewhere.
     await expect(page.locator('[id$="_h1"]')).toBeFocused()
     await waitForEditor(page)
     testInfo.annotations.push({ type: 'browser version', description: `${testInfo.project.name} ${browser.version()}` })
+    testInfo.annotations.push({ type: 'platform', description: await page.evaluate(() => navigator.userAgent) })
     await use(page)
-    expect(errors, 'Uncaught browser errors').toEqual([])
+    expect(errors, 'Browser exceptions and console errors').toEqual([])
   },
 })
 

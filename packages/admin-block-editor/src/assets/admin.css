@@ -48,6 +48,22 @@
   fill: currentColor;
 }
 
+.pw-editor-diagnostics {
+  padding: 0 10px;
+  font-size: 0.875rem;
+}
+
+.pw-editor-diagnostics summary {
+  width: fit-content;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+}
+
+.pw-editor-diagnostics summary:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: 2px;
+}
+
 /* On a phone, the form card's 24px padding, on top of the page's and the
    widget's, left a text column about 34 characters wide. */
 @media (max-width: 575.98px) {

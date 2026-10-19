@@ -35,6 +35,7 @@ import CodeBlock from './tools/CodeBlock/CodeBlock'
 import { EditorModeManager } from './EditorModeManager'
 import { editorJsHelper } from './editorJsHelper'
 import { boundInputOf } from './boundInput'
+import { EditorDiagnostics, reportEditorError } from './EditorDiagnostics'
 import ClickableTune from './tools/Gallery/ClickableTune'
 import AnchorTune from './tools/AnchorTune/AnchorTune'
 import ClassTune from './tools/ClassTune/ClassTune'
@@ -148,6 +149,10 @@ export class editorJs {
     delete config.outline
     const undoConfig = config.undo
     delete config.undo
+    const diagnosticConfig = config.diagnostics
+    delete config.diagnostics
+    let diagnostics: EditorDiagnostics | null = null
+    const editorListeners = new AbortController()
     let outline: OutlinePanel | null = null
 
     // Undo takes its baseline when it is built, at which point an editor whose
@@ -170,7 +175,12 @@ export class editorJs {
       outline?.scheduleRefresh()
 
       clearTimeout(historyExport)
-      const outputData = await self.editorjsSave(config.holder!)
+      let outputData: OutputData | null
+      try {
+        outputData = await self.editorjsSave(config.holder!)
+      } catch {
+        return // editorjsSave already reported the failure; keep the current field value.
+      }
 
       if (undoAwaitsParsedBaseline && undo !== null && outputData !== null) {
         undoAwaitsParsedBaseline = false
@@ -223,6 +233,8 @@ export class editorJs {
           editor.destroy = () => {
             clearTimeout(historyExport)
             undo?.destroy()
+            diagnostics?.destroy()
+            editorListeners.abort()
             destroy()
           }
           new PasteLink({ editor })
@@ -242,6 +254,29 @@ export class editorJs {
     )
 
     this.editors[config.holder!] = editor
+    const holder = document.getElementById(config.holder!)
+    holder?.addEventListener('keydown', (event) => {
+      const selection = window.getSelection()
+      if (editor.readOnly.isEnabled || event.isComposing || event.ctrlKey || event.metaKey || event.altKey ||
+        event.key.length !== 1 || !selection?.isCollapsed || !holder.querySelector('.ce-block--selected')) return
+      // Own the replacement: Editor.js can restore an old native caret while
+      // closing its toolbar, then append the character instead of replacing blocks.
+      const indices = Array.from(holder.querySelectorAll<HTMLElement>('.ce-block--selected'),
+        (block) => editor.blocks.getBlockIndex(block.dataset.id!))
+      selection.removeAllRanges()
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      const text = document.createElement('span')
+      text.textContent = event.key
+      // Insert first so deleting the final old block cannot create an extra empty block.
+      const block = editor.blocks.insert('paragraph', { text: text.innerHTML }, undefined, indices[0], false)
+      for (const index of indices.reverse()) editor.blocks.delete(index + 1)
+      editor.caret.setToBlock(block.id, 'end')
+    }, { capture: true, signal: editorListeners.signal })
+    if (holder && diagnosticConfig) diagnostics = new EditorDiagnostics(holder, editor, {
+      ...diagnosticConfig,
+      editorjsVersion: EditorJS.version,
+    })
 
     // Uniform seam for writing the body back from outside (unsaved changes
     // recovery): the field this editor feeds is a plain textarea, so setting
@@ -300,7 +335,11 @@ export class editorJs {
         // Editor.js debounces onChange; a quick Save must include the latest edit.
         event.preventDefault()
         event.stopImmediatePropagation()
-        await Promise.all(holders.map((holderId) => this.editorjsSave(holderId)))
+        try {
+          await Promise.all(holders.map((holderId) => this.editorjsSave(holderId)))
+        } catch {
+          return // Leave the form open and let the author retry after the visible error.
+        }
         submitting = true
         // A submission restarted in the same task can be ignored by the browser
         // while the original (prevented) submission is still in progress.
@@ -359,6 +398,9 @@ export class editorJs {
       editorInput.value = markdown
       editorInput.dispatchEvent(new Event('input', { bubbles: true }))
       return outputData
+    }).catch((error: unknown) => {
+      reportEditorError(document.getElementById(holderId), 'save', error)
+      throw error
     })
     this.pendingSaves.set(holderId, save)
     return save
