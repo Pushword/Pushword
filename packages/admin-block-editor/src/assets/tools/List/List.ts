@@ -45,12 +45,12 @@ export default class List extends ListTool {
     }
   }
 
-  private static _itemsToMarkdown(items: any[], style: ListStyle, depth: number): string {
+  private static _itemsToMarkdown(items: any[], style: ListStyle, indentation: number): string {
     if (!items || items.length === 0) {
       return ''
     }
 
-    const indent = '  '.repeat(depth)
+    const indent = ' '.repeat(indentation)
     let markdown = ''
 
     items.forEach((item, index) => {
@@ -65,7 +65,9 @@ export default class List extends ListTool {
       markdown += `${indent}${marker} ${text.replace(/\n/g, '\n' + textIndent)}\n`
 
       if (item.items && item.items.length > 0) {
-        markdown += List._itemsToMarkdown(item.items, style, depth + 1)
+        // Children align with the parent's text; checkbox markers are part of that text.
+        const markerWidth = style === 'ordered' ? marker.length + 1 : 2
+        markdown += List._itemsToMarkdown(item.items, style, indentation + markerWidth)
       }
     })
 

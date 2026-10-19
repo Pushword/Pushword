@@ -133,6 +133,8 @@ describe('import → export', () => {
     ['an obfuscated linked image opening in a new tab', '#[![alt](photo.jpg)](/page){target="_blank"}'],
     ['a linked image inside text', 'Voir [![a_b](x_y.png)](/page) ici'],
     ['nested list items', '- Parent\n  - Child\n    - Grandchild\n- Sibling'],
+    ['nested ordered list items', '1. Parent\n   1. Child\n      1. Grandchild\n2. Sibling'],
+    ['nested checklist items', '- [ ] Parent\n  - [x] Child\n    - [ ] Grandchild\n- [x] Sibling'],
     ['a list item wrapped on a soft line break', '- Déjeuner :\n  80 €\n- Suite'],
     ['a list item with a hard line break', '- Déjeuner :  \n  80 €\n- Suite'],
     ['an ordered list item with a hard line break', '1. Déjeuner :  \n   80 €\n2. Suite'],
@@ -140,6 +142,19 @@ describe('import → export', () => {
     ['a second paragraph in a list item', '- Déjeuner :\n\n  80 €'],
   ])('keeps %s', async (_case, markdown) => {
     expect(await roundTrip(markdown)).toBe(markdown)
+  })
+
+  it('keeps children of ordered items whose numbers have multiple digits', async () => {
+    const markdown = [
+      ...Array.from({ length: 10 }, (_, index) => `${index + 1}. Parent ${index + 1}`),
+      '    1. Child',
+      '       1. Grandchild',
+    ].join('\n')
+
+    const exported = await roundTrip(markdown)
+    expect(exported).toBe(markdown)
+    const { blocks } = await parse(exported)
+    expect(blocks[0]!.data.items[9].items[0].items[0].content).toBe('Grandchild')
   })
 
   it('keeps a table without headings under the empty header CommonMark needs', async () => {

@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'nested numbered lists keep their indentation when saved'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,9 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin-block-editor`
+
+## Nested numbered lists
+
+The block editor now preserves nested numbered lists when saving to Markdown; no configuration change is required. Lists flattened by an earlier save must be indented again in the editor.

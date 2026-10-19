@@ -8324,9 +8324,9 @@ var List = class List extends G$1 {
 			default: return "-";
 		}
 	}
-	static _itemsToMarkdown(items, style, depth) {
+	static _itemsToMarkdown(items, style, indentation) {
 		if (!items || items.length === 0) return "";
-		const indent = "  ".repeat(depth);
+		const indent = " ".repeat(indentation);
 		let markdown = "";
 		items.forEach((item, index) => {
 			const marker = List._marker(style, item, index);
@@ -8334,7 +8334,10 @@ var List = class List extends G$1 {
 			const text = MarkdownUtils.convertInlineHtmlToMarkdown(MarkdownUtils.htmlLines(content).join("  \n"));
 			const textIndent = indent + " ".repeat(marker.length + 1);
 			markdown += `${indent}${marker} ${text.replace(/\n/g, "\n" + textIndent)}\n`;
-			if (item.items && item.items.length > 0) markdown += List._itemsToMarkdown(item.items, style, depth + 1);
+			if (item.items && item.items.length > 0) {
+				const markerWidth = style === "ordered" ? marker.length + 1 : 2;
+				markdown += List._itemsToMarkdown(item.items, style, indentation + markerWidth);
+			}
 		});
 		return markdown;
 	}
