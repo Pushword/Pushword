@@ -166,6 +166,10 @@ test('diagnostic download excludes page text and includes the suggestions experi
   editorPage: page,
 }, testInfo) => {
   await render(page, [{ type: 'paragraph', data: { text: 'Private author content' } }])
+  await page.evaluate(() => window.dispatchEvent(new ErrorEvent('error', {
+    message: 'ResizeObserver loop completed with undelivered notifications.',
+  })))
+  await expect(page.locator('[data-pw-editor-error]')).toBeHidden()
   await page.locator('[data-pw-diagnostics-for] summary').click()
   await page.locator('[data-pw-writing-suggestions]').check()
   await expect(page.locator('.editorjs-holder')).toHaveAttribute(
@@ -196,6 +200,9 @@ test('diagnostic download excludes page text and includes the suggestions experi
   const report = JSON.parse(reportText)
   expect(report.editorjs).toMatch(/^\d+\.\d+/)
   expect(report.environment.writingSuggestions).toBe('false')
+  expect(report.errors).toContainEqual(
+    expect.objectContaining({ operation: 'uncaught', warning: 'resize-observer-loop' }),
+  )
   expect(report.errors).toContainEqual(
     expect.objectContaining({ operation: 'copy', name: 'NotAllowedError' }),
   )

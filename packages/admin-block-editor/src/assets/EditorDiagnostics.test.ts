@@ -95,6 +95,36 @@ it('captures uncaught failures and unhandled promises without suppressing browse
   expect(rejection.defaultPrevented).toBe(false)
 })
 
+it.each([
+  'ResizeObserver loop completed with undelivered notifications.',
+  'ResizeObserver loop limit exceeded',
+])(
+  'records the native layout warning %s without announcing an editor failure',
+  (message) => {
+    const event = new ErrorEvent('error', { message, cancelable: true })
+    window.dispatchEvent(event)
+    expect(diagnostics.report().errors).toMatchObject([
+      { operation: 'uncaught', warning: 'resize-observer-loop', frames: [] },
+    ])
+    expect(document.querySelector<HTMLElement>('[role=alert]')?.hidden).toBe(true)
+    expect(event.defaultPrevented).toBe(false)
+    expect(JSON.stringify(diagnostics.report())).not.toContain(message)
+  },
+)
+
+it('still announces an exception with the same message as a native layout warning', () => {
+  window.dispatchEvent(
+    new ErrorEvent('error', {
+      message: 'ResizeObserver loop completed with undelivered notifications.',
+      error: new TypeError('Private exception'),
+    }),
+  )
+  expect(diagnostics.report().errors).toMatchObject([
+    { operation: 'uncaught', name: 'TypeError' },
+  ])
+  expect(document.querySelector<HTMLElement>('[role=alert]')?.hidden).toBe(false)
+})
+
 it('changes only writing suggestions for the current editor and records both settings', () => {
   const checkbox = document.querySelector<HTMLInputElement>(
     '[data-pw-writing-suggestions]',

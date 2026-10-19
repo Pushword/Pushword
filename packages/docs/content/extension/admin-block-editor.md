@@ -105,6 +105,8 @@ Open **Report a problem** above the editor, reproduce the issue, then download t
 diagnostic file and attach it to your support message. It includes the installed and
 loaded asset versions, browser metadata, the last 60 editing actions and up to 20
 errors. Copy, history, save and tool failures also display a message in the editor.
+Native ResizeObserver layout warnings remain in the report as
+`warning: resize-observer-loop` and do not display an editor failure message.
 
 The report excludes page text, field values, clipboard contents, URLs and exception
 messages. It stays in memory until downloaded; nothing is sent automatically.

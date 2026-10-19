@@ -136,7 +136,19 @@ export class EditorDiagnostics {
     window.addEventListener(
       'error',
       (event) => {
-        if (event instanceof ErrorEvent) this.failure('uncaught', event.error)
+        if (!(event instanceof ErrorEvent)) return
+        // The browser defers layout notifications to another frame; no editor action failed.
+        const layoutWarning =
+          !event.error &&
+          [
+            'ResizeObserver loop completed with undelivered notifications.',
+            'ResizeObserver loop limit exceeded',
+          ].includes(event.message)
+        this.failure(
+          'uncaught',
+          event.error,
+          layoutWarning ? 'resize-observer-loop' : null,
+        )
       },
       options,
     )
@@ -183,7 +195,11 @@ export class EditorDiagnostics {
     if (this.actions.length > 60) this.actions.shift()
   }
 
-  private failure(operation: EditorOperation, error: unknown): void {
+  private failure(
+    operation: EditorOperation,
+    error: unknown,
+    warning: 'resize-observer-loop' | null = null,
+  ): void {
     const exception =
       error instanceof Error || error instanceof DOMException ? error : null
     const frames = Array.from(
@@ -197,8 +213,10 @@ export class EditorDiagnostics {
       operation,
       name: exception && errorNames.has(exception.name) ? exception.name : 'Error',
       frames,
+      ...(warning ? { warning } : {}),
     })
     if (this.errors.length > 20) this.errors.shift()
+    if (warning) return
     const status = this.panel?.querySelector<HTMLElement>('[data-pw-editor-error]')
     if (status) {
       status.hidden = false
