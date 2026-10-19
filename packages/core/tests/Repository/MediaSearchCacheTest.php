@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\Repository;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -180,7 +181,7 @@ final class MediaSearchCacheTest extends KernelTestCase
         $row['file_name_history'] = json_encode($history, \JSON_THROW_ON_ERROR);
         $row['name'] = $alt;
         $row['name_search'] = SearchNormalizer::normalize($alt);
-        $connection->insert('media', $row);
+        $connection->insert('media', $row, ['hidden_from_admin' => Types::BOOLEAN]);
 
         $id = $connection->fetchOne('SELECT id FROM media WHERE media = ?', [$filename]);
         self::assertIsNumeric($id);
