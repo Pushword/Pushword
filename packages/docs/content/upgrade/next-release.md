@@ -1,5 +1,5 @@
 ---
-title: 'pasted numbered lists keep their nesting; the Docker image uses patched Go dependencies'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,16 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin-block-editor`, `pushword/core`, `pushword/dev-app`
-
-## Pasting nested lists
-
-Pasting HTML now preserves sublists and continuation lines under numbered items, including item 10 and beyond.
-**Sites serving copied bundle assets:** refresh them with `assets:install`; installations using symbolic links need no refresh.
-
-## Refresh the Docker image
-
-New Docker builds use FrankenPHP 1.13.1 with patched Go dependencies.
-**Sites using the Docker skeleton:** merge the updated `Dockerfile`, then rebuild the image.
-If your Docker files are uncustomized, regenerate them with `pw:docker:init --force` before rebuilding.
