@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\Controller;
 
+use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Filesystem as Flysystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Controller\MediaCacheController;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Repository\MediaRepository;
@@ -79,6 +82,54 @@ final class MediaCacheControllerTest extends WebTestCase
 
         // Drop the sentinel so the real variant is rebuilt on the next access.
         @unlink($webpPath);
+    }
+
+    /** @return iterable<string, array{string, bool}> */
+    public static function underscoreVariants(): iterable
+    {
+        yield 'missing original format' => ['png', false];
+        yield 'missing webp' => ['webp', false];
+        yield 'existing original format' => ['png', true];
+        yield 'existing webp' => ['webp', true];
+    }
+
+    #[DataProvider('underscoreVariants')]
+    public function testVariantsWithUnderscores(string $extension, bool $cached): void
+    {
+        $this->client->disableReboot();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $cacheManager = self::getContainer()->get(ImageCacheManager::class);
+        $filesystem = new Filesystem();
+        $fileName = 'piedweb-logo_credit.png';
+        $sourcePath = $this->getMediaDir().'/'.$fileName;
+        $filesystem->copy($this->getMediaDir().'/piedweb-logo.png', $sourcePath, true);
+
+        $media = new Media();
+        $media->setFileName($fileName)->setMimeType('image/png');
+        $em->persist($media);
+        $em->flush();
+
+        try {
+            $variantPath = $cacheManager->getFilterPath($media, 'md', 'webp' === $extension ? 'webp' : null);
+            $filesystem->remove($variantPath);
+            if ($cached) {
+                $filesystem->dumpFile($variantPath, 'SENTINEL');
+            }
+
+            $this->client->request(Request::METHOD_GET, '/media/md/piedweb-logo_credit.'.$extension);
+
+            self::assertResponseIsSuccessful();
+            self::assertSame('pushword_media_cache', $this->client->getRequest()->attributes->get('_route'));
+            self::assertFileExists($variantPath);
+            self::assertGreaterThan(0, (int) filesize($variantPath));
+            if ($cached) {
+                self::assertSame('SENTINEL', file_get_contents($variantPath));
+            }
+        } finally {
+            $em->remove($media);
+            $em->flush();
+            $filesystem->remove($sourcePath);
+        }
     }
 
     public function testRegeneratesEmptyVariantInsteadOfServingIt(): void

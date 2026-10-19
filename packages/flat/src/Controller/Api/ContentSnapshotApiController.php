@@ -164,7 +164,8 @@ final class ContentSnapshotApiController extends AbstractApiController
      * multi-MB directories. `--exclude-vcs` drops `.git`; `--exclude=./.*`
      * drops root-level dotfiles.
      *
-     * `--use-compress-program=gzip` instead of `-z` pins the compressor to a
+     * `--use-compress-program=gzip -3` instead of `-z` uses a faster compression
+     * level for these on-demand downloads and pins the compressor to a
      * single-member gzip stream, even on distros where `gzip` resolves to a
      * parallel implementation that would otherwise emit multi-member output
      * — valid per RFC 1952 but tripping up naive consumers.
@@ -174,7 +175,7 @@ final class ContentSnapshotApiController extends AbstractApiController
         // stderr → /dev/null (descriptor spec, not a pipe) so warnings from tar
         // can never fill the OS pipe buffer and deadlock the response.
         $process = proc_open(
-            ['tar', '-cf', '-', '--use-compress-program=gzip', '--exclude-vcs', '--exclude=./.*', '-C', $dir, '.'],
+            ['tar', '-cf', '-', '--use-compress-program=gzip -3', '--exclude-vcs', '--exclude=./.*', '-C', $dir, '.'],
             [1 => ['pipe', 'w'], 2 => ['file', '/dev/null', 'w']],
             $pipes,
         );

@@ -42,7 +42,7 @@ final class MediaCacheController extends AbstractController
     #[Route(
         '/%pw.public_media_dir%/{filter}/{fileName}',
         name: 'pushword_media_cache',
-        requirements: ['filter' => '[a-zA-Z0-9_-]+', 'fileName' => '[a-zA-Z0-9\-\.]+'],
+        requirements: ['filter' => '[a-zA-Z0-9_-]+', 'fileName' => '[a-zA-Z0-9_\-\.]+'],
         methods: ['GET', 'HEAD'],
         priority: 10,
     )]
