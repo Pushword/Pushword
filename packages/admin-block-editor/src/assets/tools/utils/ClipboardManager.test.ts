@@ -107,7 +107,21 @@ describe('ClipboardManager – pure helpers', () => {
   describe('convertHtmlToMarkdown – tables kept as HTML', () => {
     it('preserves mixed nested lists from external rich text', () => {
       const html = '<ul><li>Parent<ol><li><b>Child</b><ul><li>Grandchild</li></ul></li></ol></li><li>Sibling</li></ul>'
-      expect(cm.convertHtmlToMarkdown(html).trim()).toBe('- Parent\n  1. **Child**\n    - Grandchild\n- Sibling')
+      expect(cm.convertHtmlToMarkdown(html).trim()).toBe('- Parent\n  1. **Child**\n     - Grandchild\n- Sibling')
+    })
+
+    it('aligns nested ordered lists and continuation lines with a multi-digit parent item', () => {
+      const items = Array.from({ length: 9 }, (_, index) => `<li>Parent ${index + 1}</li>`).join('')
+      const html = `<ol>${items}<li>Parent 10<br>continued<ol><li>Child<br>continued<ul><li>Grandchild</li></ul></li></ol></li></ol>`
+      const expected = [
+        ...Array.from({ length: 10 }, (_, index) => `${index + 1}. Parent ${index + 1}`),
+        '    continued',
+        '    1. Child',
+        '       continued',
+        '       - Grandchild',
+      ].join('\n')
+
+      expect(cm.convertHtmlToMarkdown(html).trim()).toBe(expected)
     })
 
     it('preserves a pasted table verbatim instead of flattening it to pipes', () => {

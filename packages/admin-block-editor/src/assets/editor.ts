@@ -164,10 +164,7 @@ export class editorJs {
     let undoAwaitsParsedBaseline = false
     let historyExport: ReturnType<typeof setTimeout> | undefined
 
-    // save
-    // eslint-disable-next-line @typescript-eslint/no-this-alias -- onChange's own `this` (the Editor.js instance, for `this.holder`) shadows the class instance, so we keep a reference to it.
-    const self = this
-    config.onChange = async function (this: any, _api, events) {
+    config.onChange = async (_api, events) => {
       // Blocks dragged into or out of a group change membership without any
       // group marker firing a lifecycle hook, so retag on structural changes.
       if (!events || [events].flat().some((event) => event.type !== 'block-changed'))
@@ -177,7 +174,7 @@ export class editorJs {
       clearTimeout(historyExport)
       let outputData: OutputData | null
       try {
-        outputData = await self.editorjsSave(config.holder!)
+        outputData = await this.editorjsSave(config.holder!)
       } catch {
         return // editorjsSave already reported the failure; keep the current field value.
       }
@@ -185,7 +182,7 @@ export class editorJs {
       if (undoAwaitsParsedBaseline && undo !== null && outputData !== null) {
         undoAwaitsParsedBaseline = false
         await undo.initialize(outputData)
-        self.announceParsedBaseline(config.holder!)
+        this.announceParsedBaseline(config.holder!)
       }
     }
 
@@ -225,7 +222,7 @@ export class editorJs {
               // Markdown conversion is expensive on long pages; keep it outside keyboard transactions.
               clearTimeout(historyExport)
               historyExport = setTimeout(() => {
-                void self.editorjsSave(config.holder!)
+                void this.editorjsSave(config.holder!)
               }, 150)
             },
           })

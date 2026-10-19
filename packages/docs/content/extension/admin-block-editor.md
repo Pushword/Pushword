@@ -99,6 +99,21 @@ The older `window.pagesUriList` array of paths still works, without titles.
 
 ## Usage
 
+### Reporting an editor problem
+
+Open **Report a problem** above the editor, reproduce the issue, then download the
+diagnostic file and attach it to your support message. It includes the installed and
+loaded asset versions, browser metadata, the last 60 editing actions and up to 20
+errors. Copy, history, save and tool failures also display a message in the editor.
+
+The report excludes page text, field values, clipboard contents, URLs and exception
+messages. It stays in memory until downloaded; nothing is sent automatically.
+
+To investigate inline predictions or rewriting, select **Disable browser writing
+suggestions for this session**, reproduce the issue again and download another
+report. The setting affects only the current editor session and keeps spellcheck
+available. Include both reports and say whether the symptom changed.
+
 ### Convert an image or gallery
 
 Open an Image block's settings and choose **Convert to gallery** to start a gallery

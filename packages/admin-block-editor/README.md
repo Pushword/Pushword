@@ -1,6 +1,6 @@
 # Pushword Admin Block Editor
 
-Supercharge the Pushword admin with a Gutenberg-like block editor (Editor.js) while storing content as clean **Markdown**.
+An Editor.js block editor for the Pushword admin, with content stored as **Markdown**.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -54,10 +54,8 @@ If you're interested in contributing to Pushword, please read our [contributing 
 
 ### Browser integration tests
 
-The same Playwright suite runs in CI on Google Chrome (`chrome`), Microsoft Edge
-(`msedge`) and Playwright's Firefox build. Chrome and Edge use their actual branded
-binaries, not a changed user-agent string. Each browser has its own CI job; a failure
-does not cancel the other browsers, and no retry hides the first failure.
+The Playwright suite runs in separate CI jobs on Google Chrome (`chrome`), Microsoft
+Edge (`msedge`) and Playwright's Firefox build, with no retries.
 
 From the repository root on Linux, with Composer dependencies installed:
 
@@ -72,17 +70,16 @@ yarn --cwd packages/admin-block-editor test:browser
 yarn --cwd packages/admin-block-editor test:browser --project=msedge --grep 'checklist:'
 ```
 
-The suite starts its own test app on port 9079, with a temporary database, media,
-sessions and content. It refuses to reuse an existing server. It does not reset the
-development app. Each browser signs in through the real login form and uses a separate
-page fixture. The server removes its temporary runtime when it stops.
+The suite starts a test app on port 9079 with a temporary database, media, sessions
+and content, removed when the server stops. It refuses to reuse an existing server
+and leaves the development app's content intact. Each browser signs in through the
+login form and uses a separate page fixture.
 
-The native keyboard journeys cover list indentation at several levels, all inline
-formatting tools, undo/redo, immediate saving, hard breaks, rich-text copy/paste,
-table navigation and editing, and Markdown/JSON mode round trips. They verify the
-saved content by reloading the admin. The existing in-page checks also exercise every
-configured block and tune, selection preservation and incremental rendering; they
-are shared with Panther rather than copied. Uncaught browser errors and console errors fail the tests.
+Keyboard journeys cover nested lists, inline formatting, undo/redo, immediate saving,
+hard breaks, rich-text copy/paste, tables and Markdown/JSON round trips. Saved content
+is checked after reloading the admin. In-page checks shared with Panther cover the
+configured blocks and tunes, selection preservation and incremental rendering.
+Uncaught browser errors and console errors fail the tests.
 
 CI uploads the HTML/JSON reports, browser versions, individual in-page outcomes,
 server log, failure screenshots and Playwright traces. Local reports are in `playwright-report/`
@@ -104,42 +101,23 @@ yarn --cwd packages/admin-block-editor test:windows --grep 'physical keys|Office
 The default SSH target is `Administrator@127.0.0.1:2223`, with the key at
 `~/.local/share/ga-windows11-vm/cle`. Override `PW_WINDOWS_SSH_HOST`,
 `PW_WINDOWS_SSH_PORT` or `PW_WINDOWS_SSH_KEY` for another existing VM. The launcher
-uses the host's exact Playwright version and opens an isolated Edge in the Windows
-desktop through a temporary interactive scheduled task. The test app stays on Linux;
-SSH forwards its port 9079 and Edge's ports 19880/19881 over loopback. The launcher
-closes its browser, task and tunnels on completion; it leaves the VM running.
+uses the host's Playwright version and opens an isolated Edge through a temporary
+interactive scheduled task. SSH forwards the Linux test app's port 9079 and Edge's
+ports 19880/19881 over loopback. The launcher closes its browser, task and tunnels
+on completion and leaves the VM running.
 
-This runs the shared journeys, including system-clipboard Office HTML fixtures,
-nested lists, accented text and selection replacement. Windows-only journeys use
-physical AZERTY scan codes through Windows `SendInput`, including circumflex and
-diaeresis dead keys, with browser-default suggestions and with suggestions disabled,
-then save and reload the result. Reports, Windows/Edge versions,
-screenshots and traces are separate in `playwright-report-windows/` and
-`test-results-windows/`. This local run complements Linux CI. Office fixtures exercise
-representative clipboard payloads; they do not launch Word or Outlook. Browser writing
-assistants still need comparison on the affected user's profile.
+This runs the shared journeys and Windows-only AZERTY keyboard tests, including
+circumflex and diaeresis dead keys with default writing suggestions and with them
+disabled. Reports, Windows/Edge versions, screenshots and traces are in
+`playwright-report-windows/` and `test-results-windows/`. Office clipboard fixtures
+use representative HTML payloads without launching Word or Outlook.
+Writing-assistant problems still need comparison on the affected user's profile.
 
 ### Reporting an editor problem
 
-Open **Report a problem** above the editor and download the diagnostic file to attach
-to a support message. It includes the installed version, loaded asset version, browser
-and OS metadata, the last 60 editing actions and at most 20 errors. Caught copy,
-history, save and tool failures show a visible message and enter the same report as
-uncaught failures. A failed conversion leaves the form open and its last valid source
-intact so the author can retry.
-
-Typing over selected blocks replaces the selection with one paragraph and one
-character, with undo/redo preserving the replaced blocks. Ctrl+U switches to and from
-Markdown before the browser handles its own source-view shortcut.
-Windows HTML clipboard context outside `StartFragment`/`EndFragment` is discarded
-before inline insertion, so its CRLF wrapper cannot become extra paragraphs on save.
-
-The report omits page text, clipboard payloads, field values, URLs and exception
-messages. It stays in memory until downloaded; nothing is sent automatically. The
-**Disable browser writing suggestions for this session** checkbox allows comparison
-with and without inline predictions and rewriting (`writingsuggestions="false"`). It
-applies only to the current editor session and leaves spellcheck available. Record
-whether the symptom changes and include a diagnostic for each setting.
+Use **Report a problem** above the editor to download a diagnostic and compare browser
+writing suggestions. See [Reporting an editor problem](https://pushword.piedweb.com/extension/admin-block-editor#reporting-an-editor-problem)
+for the steps and the report's contents.
 
 ## Credits
 

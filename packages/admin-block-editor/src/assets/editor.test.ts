@@ -127,6 +127,43 @@ it.each([['x', 'x'], ['<', '&lt;'], ['&', '&amp;'], ['é', 'é']])('replaces sel
   expect(editor.caret.setToBlock).toHaveBeenCalledWith('replacement', 'end')
 })
 
+it('replaces several selected blocks without shifting the remaining deletion indices', () => {
+  const instance = boot('{"blocks":[]}')
+  const holder = document.getElementById('ed')!
+  holder.innerHTML = ['Before', 'Selected one', 'Selected two', 'After'].map((text, index) =>
+    `<div class="ce-block${index === 1 || index === 2 ? ' ce-block--selected' : ''}" data-id="${index}"><p contenteditable="true">${text}</p></div>`,
+  ).join('')
+  const field = holder.querySelectorAll('p')[1]!
+  window.getSelection()!.collapse(field.firstChild, 0)
+  const editor = instance.getEditors().ed!
+  vi.spyOn(editor.blocks, 'getBlockIndex').mockImplementation((id) => Number(id))
+
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'x', bubbles: true, cancelable: true }))
+
+  expect(editor.blocks.insert).toHaveBeenCalledWith('paragraph', { text: 'x' }, undefined, 1, false)
+  expect(vi.mocked(editor.blocks.delete).mock.calls).toEqual([[3], [2]])
+})
+
+it.each(['read-only', 'text selection', 'unselected blocks'])('keeps native typing with %s', (state) => {
+  const instance = boot('{"blocks":[]}')
+  const holder = document.getElementById('ed')!
+  holder.innerHTML = '<div class="ce-block ce-block--selected"><p contenteditable="true">Text</p></div>'
+  const field = holder.querySelector('p')!
+  const selection = window.getSelection()!
+  selection.collapse(field.firstChild, 0)
+  const editor = instance.getEditors().ed!
+  if (state === 'read-only') editor.readOnly.isEnabled = true
+  else if (state === 'text selection') selection.selectAllChildren(field)
+  else field.parentElement!.classList.remove('ce-block--selected')
+  const event = new KeyboardEvent('keydown', { key: 'x', bubbles: true, cancelable: true })
+
+  field.dispatchEvent(event)
+
+  expect(event.defaultPrevented).toBe(false)
+  expect(editor.blocks.insert).not.toHaveBeenCalled()
+  expect(editor.blocks.delete).not.toHaveBeenCalled()
+})
+
 it.each([
   { key: 'x', isComposing: true }, { key: 'x', ctrlKey: true },
   { key: 'x', metaKey: true }, { key: 'x', altKey: true }, { key: 'Dead' },

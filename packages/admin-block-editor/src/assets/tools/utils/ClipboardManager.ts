@@ -546,15 +546,16 @@ export default class ClipboardManager {
             .replace(/\u00A0/g, ' ')     // Replace any remaining non-breaking spaces
     }
 
-    private convertListToMarkdown(list: Element, depth = 0): string {
+    private convertListToMarkdown(list: Element, indentation = 0): string {
         return Array.from(list.querySelectorAll(':scope > li')).map((item, index) => {
             const content = item.cloneNode(true) as Element
             const children = Array.from(content.querySelectorAll(':scope > ul, :scope > ol'))
             children.forEach(child => child.remove())
-            const prefix = '  '.repeat(depth)
+            const prefix = ' '.repeat(indentation)
             const marker = list.tagName === 'OL' ? `${index + 1}. ` : '- '
-            const text = this.processNodeToMarkdown(content).trim().replace(/\n+/g, `\n${prefix}  `)
-            const nested = children.map(child => '\n' + this.convertListToMarkdown(child, depth + 1)).join('')
+            const textIndentation = indentation + marker.length
+            const text = this.processNodeToMarkdown(content).trim().replace(/\n+/g, '\n' + ' '.repeat(textIndentation))
+            const nested = children.map(child => '\n' + this.convertListToMarkdown(child, textIndentation)).join('')
             return prefix + marker + text + nested
         }).join('\n')
     }
