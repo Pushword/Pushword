@@ -134,7 +134,7 @@ describe('editorJs – the undo baseline', () => {
     // would hold a half-built document.
     expect(initialize).not.toHaveBeenCalled()
 
-    await captured.onChange.call({ holder: 'ed' })
+    await captured.onChange.call(undefined)
 
     expect(initialize).toHaveBeenCalledTimes(1)
     expect(initialize).toHaveBeenCalledWith({ blocks: [] })
@@ -144,9 +144,9 @@ describe('editorJs – the undo baseline', () => {
     boot('# A page stored as markdown')
     captured.onReady()
 
-    await captured.onChange.call({ holder: 'ed' })
-    await captured.onChange.call({ holder: 'ed' })
-    await captured.onChange.call({ holder: 'ed' })
+    await captured.onChange.call(undefined)
+    await captured.onChange.call(undefined)
+    await captured.onChange.call(undefined)
 
     // Later edits are the user's; re-baselining on them would discard history.
     expect(initialize).toHaveBeenCalledTimes(1)
@@ -156,7 +156,7 @@ describe('editorJs – the undo baseline', () => {
     boot('{"blocks":[{"type":"paragraph","data":{"text":"Hi"}}]}')
 
     captured.onReady()
-    await captured.onChange.call({ holder: 'ed' })
+    await captured.onChange.call(undefined)
 
     // The data went to the constructor, so Editor.js baselines it itself.
     expect(parseMarkdown).not.toHaveBeenCalled()
@@ -180,7 +180,7 @@ describe('editorJs – the baseline the form recovers against', () => {
     expect(input.getAttribute('data-pw-baseline-pending')).toBe('1')
 
     captured.onReady()
-    await captured.onChange.call({ holder: 'ed' })
+    await captured.onChange.call(undefined)
 
     expect(input.hasAttribute('data-pw-baseline-pending')).toBe(false)
     expect(announced).toHaveBeenCalledOnce()
@@ -277,7 +277,7 @@ describe('editorJs – the field it feeds', () => {
     const seen = vi.fn()
     document.addEventListener('input', seen)
 
-    await captured.onChange.call({ holder: 'ed' })
+    await captured.onChange.call(undefined)
 
     expect(seen).toHaveBeenCalledOnce()
     document.removeEventListener('input', seen)

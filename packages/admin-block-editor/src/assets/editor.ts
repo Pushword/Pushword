@@ -170,12 +170,12 @@ export class editorJs {
       outline?.scheduleRefresh()
 
       clearTimeout(historyExport)
-      const outputData = await self.editorjsSave(this.holder)
+      const outputData = await self.editorjsSave(config.holder!)
 
       if (undoAwaitsParsedBaseline && undo !== null && outputData !== null) {
         undoAwaitsParsedBaseline = false
         await undo.initialize(outputData)
-        self.announceParsedBaseline(this.holder)
+        self.announceParsedBaseline(config.holder!)
       }
     }
 
