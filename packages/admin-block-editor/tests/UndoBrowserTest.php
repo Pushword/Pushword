@@ -174,7 +174,7 @@ final class UndoBrowserTest extends AbstractPantherAdminTest
             $window->setSize(new WebDriverDimension(390, 844));
             self::assertTrue($this->pollUntilTrue($client, 'return getComputedStyle(document.body).paddingLeft === "0px"'));
             self::assertTrue($this->pollUntilTrue($client, 'return document.documentElement.scrollWidth <= innerWidth'));
-            self::assertTrue($client->executeScript('return document.querySelector(".pw-outline").getBoundingClientRect().width > 0'));
+            self::assertTrue($this->pollUntilTrue($client, 'return document.querySelector(".pw-outline").getBoundingClientRect().width === 0 && !document.querySelector(".pw-outline-opener").hidden'));
             self::assertSame('0', $client->executeScript('return localStorage.getItem("pw-outline-collapsed")'));
 
             $window->setSize(new WebDriverDimension(1280, 900));

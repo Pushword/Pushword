@@ -5,6 +5,7 @@ import {
   MediaNodes,
   MediaToolConfig,
   STATUS,
+  UiStatus,
   UploadResponse,
 } from '../Abstract/AbstractMediaTool'
 import { IconPicture } from '@codexteam/icons'
@@ -81,10 +82,21 @@ export default class Image extends AbstractMediaTool {
 
   /** Drop the picture, keeping the caption: the Select/Upload buttons come back. */
   private removeMedia(): void {
+    this.data.caption = this.nodes.caption.textContent || ''
     this.data.media = ''
     this.nodes.imageEl?.remove()
     delete this.nodes.imageEl
     this.toggleStatus(STATUS.EMPTY)
+  }
+
+  protected override toggleStatus(status: UiStatus): void {
+    super.toggleStatus(status)
+    // Hidden editables give Editor.js a zero rectangle for the toolbar anchor.
+    if (status === STATUS.FILLED) {
+      this.nodes.fileButton.before(this.nodes.caption)
+    } else {
+      this.nodes.caption.remove()
+    }
   }
 
   static normalizeData(data: ImageData | ImageDataToNormalize): ImageData {
@@ -141,7 +153,6 @@ export default class Image extends AbstractMediaTool {
     this.nodes.imageContainer.appendChild(this.nodes.preloader)
     this.nodes.imageContainer.appendChild(this.nodes.deleteButton)
     this.nodes.wrapper.appendChild(this.nodes.imageContainer)
-    this.nodes.wrapper.appendChild(this.nodes.caption)
     this.nodes.wrapper.appendChild(this.nodes.fileButton)
 
     return this.nodes.wrapper

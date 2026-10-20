@@ -33,6 +33,41 @@ function deleteButtonOf(wrapper: HTMLElement): HTMLElement {
 }
 
 describe('Image – removing the media', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('only attaches the same caption when filled, retaining edits and listeners across replacements', () => {
+    const tool = imageWith('')
+    const wrapper = tool.render()
+    document.body.appendChild(wrapper)
+    const caption = tool.nodes.caption
+    const input = vi.fn()
+    caption.addEventListener('input', input)
+    expect(caption.isConnected).toBe(false)
+
+    tool.onFileLoading()
+    expect(caption.isConnected).toBe(false)
+    tool.onUpload({ success: true, file: { media: 'first.jpg' } })
+    tool.nodes.imageEl!.dispatchEvent(new Event('load'))
+    expect(wrapper.querySelector('.image-tool__caption')).toBe(caption)
+    caption.textContent = 'Edited caption'
+    caption.dispatchEvent(new Event('input'))
+
+    deleteButtonOf(wrapper).click()
+    expect(caption.isConnected).toBe(false)
+    expect(tool.validate()).toBe(false)
+    tool.onFileLoading()
+    tool.onUpload({ success: true, file: { media: 'second.jpg' } })
+    tool.nodes.imageEl!.dispatchEvent(new Event('load'))
+
+    expect(wrapper.querySelector('.image-tool__caption')).toBe(caption)
+    expect(tool.save(wrapper)).toEqual({ media: 'second.jpg', caption: 'Edited caption' })
+    expect(tool.validate()).toBe(true)
+    caption.dispatchEvent(new Event('input'))
+    expect(input).toHaveBeenCalledTimes(2)
+  })
+
   it('empties the block and puts it back in the state that shows the buttons', () => {
     const tool = imageWith('photo.jpg')
     const wrapper = tool.render()
@@ -55,6 +90,17 @@ describe('Image – removing the media', () => {
     tool.onUpload({ success: true, file: { media: 'other.jpg' } })
 
     expect(tool.save(wrapper)).toEqual({ media: 'other.jpg', caption: 'A caption' })
+  })
+
+  it('keeps a deliberately cleared caption when another media is picked', () => {
+    const tool = imageWith('photo.jpg')
+    const wrapper = tool.render()
+    tool.nodes.caption.textContent = ''
+
+    deleteButtonOf(wrapper).click()
+    tool.onUpload({ success: true, file: { media: 'other.jpg' } })
+
+    expect(tool.save(wrapper)).toEqual({ media: 'other.jpg', caption: '' })
   })
 
   it('does not submit the admin form it is rendered inside', () => {
@@ -92,6 +138,7 @@ describe('Image – converting to a gallery', () => {
     const api = conversionApi()
     const tool = imageWith('photo.jpg', api)
     const wrapper = tool.render()
+    tool.nodes.imageEl!.dispatchEvent(new Event('load'))
     wrapper.querySelector('.image-tool__caption')!.textContent =
       'Edited alternative text'
     const action = tool.renderSettings()[0]!

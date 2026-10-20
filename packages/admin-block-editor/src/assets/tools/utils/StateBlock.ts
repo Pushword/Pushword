@@ -61,13 +61,14 @@ export class StateBlock {
 
     if (state === BLOCK_STATE.VIEW) {
       BlockTool.updatePreview()
-      BlockTool.nodes.preview!.classList.remove('hidden')
-      BlockTool.nodes.inputs!.classList.add('hidden')
+      // Editor.js anchors its toolbar to the first input, even inside a hidden panel.
+      BlockTool.nodes.inputs!.remove()
+      BlockTool.nodes.wrapper!.prepend(BlockTool.nodes.preview!)
       return this.showEditBtn(BlockTool)
     }
 
-    BlockTool.nodes.preview!.classList.add('hidden')
-    BlockTool.nodes.inputs!.classList.remove('hidden')
+    BlockTool.nodes.preview!.remove()
+    BlockTool.nodes.wrapper!.appendChild(BlockTool.nodes.inputs!)
     this.showEditBtn(BlockTool, BLOCK_STATE.EDIT)
   }
 
@@ -76,15 +77,9 @@ export class StateBlock {
     BlockTool.nodes.wrapper = make.element('div', BlockTool.api.styles.block)
     BlockTool.nodes.preview = StateBlock.createPreview(BlockTool)
     BlockTool.updatePreview()
-    BlockTool.nodes.wrapper.appendChild(BlockTool.nodes.preview!)
-
     BlockTool.nodes.wrapper.appendChild(BlockTool.nodes.editBtn!)
 
     BlockTool.nodes.inputs = BlockTool.createInputs()
-    // Vérifier si createInputs() retourne le wrapper lui-même pour éviter la boucle DOM
-    if (BlockTool.nodes.inputs !== BlockTool.nodes.wrapper) {
-      BlockTool.nodes.wrapper.appendChild(BlockTool.nodes.inputs!)
-    }
 
     if (BlockTool.validate()) {
       BlockTool.save()
@@ -114,7 +109,7 @@ export class StateBlock {
   }
 
   private static createPreview(BlockTool: StateBlockToolInterface): HTMLElement {
-    const previewWrapper = make.element('div', ['hidden', 'preview-wrapper'])
+    const previewWrapper = make.element('div', 'preview-wrapper')
 
     previewWrapper.onclick = () => {
       BlockTool.nodes.editInput!.checked = false

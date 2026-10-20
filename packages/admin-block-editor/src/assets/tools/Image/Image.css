@@ -69,13 +69,6 @@
     }
   }
 
-  &--empty,
-  &--loading {
-    ^&__caption {
-      display: none;
-    }
-  }
-
   .cdx-button {
     display: flex;
     align-items: center;

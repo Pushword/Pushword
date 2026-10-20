@@ -69,8 +69,8 @@ describe('StateBlock edit toggle', () => {
     valid = false
     clickToggle(tool)
 
-    expect(tool.nodes.preview!.classList.contains('hidden')).toBe(true)
-    expect(tool.nodes.inputs!.classList.contains('hidden')).toBe(false)
+    expect(tool.nodes.preview!.isConnected).toBe(false)
+    expect(tool.nodes.inputs!.isConnected).toBe(true)
     expect(notify).not.toHaveBeenCalled()
   })
 
@@ -81,8 +81,37 @@ describe('StateBlock edit toggle', () => {
     tool.nodes.preview!.click()
 
     expect(tool.nodes.editInput!.checked).toBe(false)
-    expect(tool.nodes.preview!.classList.contains('hidden')).toBe(true)
-    expect(tool.nodes.inputs!.classList.contains('hidden')).toBe(false)
+    expect(tool.nodes.preview!.isConnected).toBe(false)
+    expect(tool.nodes.inputs!.isConnected).toBe(true)
+  })
+
+  it('reattaches the same fields with their values and listeners after repeated previews', () => {
+    const change = vi.fn()
+    const input = document.createElement('input')
+    input.addEventListener('input', change)
+    const createInputs = vi.fn(() => {
+      const panel = document.createElement('div')
+      panel.appendChild(input)
+      return panel
+    })
+    const tool = { ...stateBlockTool(), createInputs }
+    document.body.append(StateBlock.render(tool))
+
+    for (const value of ['First edit', 'Second edit']) {
+      expect(input.isConnected).toBe(false)
+      tool.nodes.preview!.click()
+      expect(tool.nodes.inputs!.querySelector('input')).toBe(input)
+      input.value = value
+      input.dispatchEvent(new Event('input'))
+      clickToggle(tool)
+      expect(input.isConnected).toBe(false)
+      tool.nodes.preview!.click()
+      expect(input.value).toBe(value)
+      clickToggle(tool)
+    }
+
+    expect(createInputs).toHaveBeenCalledOnce()
+    expect(change).toHaveBeenCalledTimes(2)
   })
 })
 
@@ -175,7 +204,7 @@ describe.each(tools)(
     }
 
     function inPreview(tool: Tool): boolean {
-      return !tool.nodes.preview!.classList.contains('hidden')
+      return tool.nodes.preview!.isConnected
     }
 
     it('keeps an incomplete block in edit mode and says what is missing', () => {
@@ -185,7 +214,7 @@ describe.each(tools)(
       clickToggle(tool)
 
       expect(inPreview(tool)).toBe(false)
-      expect(tool.nodes.inputs!.classList.contains('hidden')).toBe(false)
+      expect(tool.nodes.inputs!.isConnected).toBe(true)
       expect(tool.nodes.editInput!.checked).toBe(false)
       expect(notify).toHaveBeenCalledWith({ message: `[${message}]`, style: 'error' })
     })
@@ -197,7 +226,7 @@ describe.each(tools)(
       clickToggle(tool)
 
       expect(inPreview(tool)).toBe(true)
-      expect(tool.nodes.inputs!.classList.contains('hidden')).toBe(true)
+      expect(tool.nodes.inputs!.isConnected).toBe(false)
       expect(tool.nodes.editInput!.checked).toBe(true)
       expect(notify).not.toHaveBeenCalled()
     })

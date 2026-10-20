@@ -77,7 +77,7 @@ describe('Embed – a thumbnail picked while editing a complete block', () => {
     tool.onUpload({ success: true, file: { media: 'other.jpg', name: 'Another video' } })
 
     expect(tool.nodes.preview!.innerHTML).toContain('/media/md/other.jpg')
-    expect(tool.nodes.preview!.classList.contains('hidden')).toBe(true)
+    expect(tool.nodes.preview!.isConnected).toBe(false)
     expect(tool.nodes.editInput!.checked).toBe(false)
   })
 })
