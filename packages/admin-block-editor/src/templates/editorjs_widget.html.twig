@@ -12,18 +12,6 @@
         {{ svg('copy') }}
     </button>
 </div>
-<div class="pw-editor-diagnostics" data-pw-diagnostics-for="{{ editor_id }}">
-    <p class="text-danger mb-1" role="alert" data-pw-editor-error hidden></p>
-    <details>
-        <summary>{{ 'editorReportProblem'|trans }}</summary>
-        <p class="text-muted my-2">{{ 'editorDiagnosticHelp'|trans }}</p>
-        <label class="d-block mb-2" for="{{ editor_id }}_writingSuggestions">
-            <input type="checkbox" id="{{ editor_id }}_writingSuggestions" data-pw-writing-suggestions>
-            {{ 'editorDisableWritingSuggestions'|trans }}
-        </label>
-        <button type="button" class="btn btn-secondary btn-sm" data-pw-download-diagnostic>{{ 'editorDownloadDiagnostic'|trans }}</button>
-    </details>
-</div>
 <div style="padding:10px 10px 0;">
     <textarea style="display:none" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }}>{{ value }}</textarea>
     <div id="{{ editor_id }}" data-input-id="{{ id }}" class="editorjs-holder"></div>
@@ -40,6 +28,18 @@
         <option value=""> </option>
       </select>
     </div>
+</div>
+<div class="pw-editor-diagnostics" data-pw-diagnostics-for="{{ editor_id }}" hidden>
+    <p class="text-danger mb-1" role="alert" data-pw-editor-error hidden></p>
+    <details>
+        <summary>{{ 'editorReportProblem'|trans }}</summary>
+        <p class="text-muted my-2">{{ 'editorDiagnosticHelp'|trans }}</p>
+        <label class="d-block mb-2" for="{{ editor_id }}_writingSuggestions">
+            <input type="checkbox" id="{{ editor_id }}_writingSuggestions" data-pw-writing-suggestions>
+            {{ 'editorDisableWritingSuggestions'|trans }}
+        </label>
+        <button type="button" class="btn btn-secondary btn-sm" data-pw-download-diagnostic>{{ 'editorDownloadDiagnostic'|trans }}</button>
+    </details>
 </div>
 <script>
 // Attendre que l'éditeur soit initialisé pour créer les fonctions de toggle

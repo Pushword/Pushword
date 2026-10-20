@@ -120,7 +120,7 @@ export class EditorDiagnostics {
       },
       options,
     )
-    this.panel?.previousElementSibling
+    holder.parentElement?.previousElementSibling
       ?.querySelectorAll<HTMLElement>('[data-pw-editor-mode]')
       .forEach((button) => {
         button.addEventListener(
@@ -217,6 +217,7 @@ export class EditorDiagnostics {
     })
     if (this.errors.length > 20) this.errors.shift()
     if (warning) return
+    if (this.panel) this.panel.hidden = false
     const status = this.panel?.querySelector<HTMLElement>('[data-pw-editor-error]')
     if (status) {
       status.hidden = false

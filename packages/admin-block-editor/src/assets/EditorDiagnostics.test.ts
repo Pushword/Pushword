@@ -7,12 +7,13 @@ let holder: HTMLElement
 
 beforeEach(() => {
   document.body.innerHTML = `<form>
-    <div data-pw-diagnostics-for="editor">
+    <div><button type="button" data-pw-editor-mode="json">JSON</button></div>
+    <div><div id="editor"><div class="ce-block" data-id="block"><p contenteditable="true">Confidential page text</p></div></div></div>
+    <div data-pw-diagnostics-for="editor" hidden>
       <p data-pw-editor-error hidden role="alert"></p>
       <input type="checkbox" data-pw-writing-suggestions>
       <button type="button" data-pw-download-diagnostic>Download</button>
     </div>
-    <div id="editor"><div class="ce-block" data-id="block"><p contenteditable="true">Confidential page text</p></div></div>
   </form>`
   holder = document.getElementById('editor')!
   const editor = {
@@ -28,6 +29,18 @@ beforeEach(() => {
 afterEach(() => {
   diagnostics.destroy()
   vi.restoreAllMocks()
+})
+
+it('keeps diagnostics hidden during normal editing and records source mode changes', () => {
+  holder.querySelector('p')!.dispatchEvent(
+    new InputEvent('beforeinput', { bubbles: true, inputType: 'insertText' }),
+  )
+  document.querySelector<HTMLButtonElement>('[data-pw-editor-mode="json"]')!.click()
+  expect(diagnostics.report().actions).toMatchObject([
+    { action: 'input:insertText' },
+    { action: 'mode:json' },
+  ])
+  expect(document.querySelector<HTMLElement>('[data-pw-diagnostics-for]')?.hidden).toBe(true)
 })
 
 it('records useful action metadata while omitting input, clipboard and exception text', () => {
@@ -66,6 +79,7 @@ it('records useful action metadata while omitting input, clipboard and exception
     'Retry or download a diagnostic.',
   )
   expect(document.querySelector<HTMLElement>('[role=alert]')?.hidden).toBe(false)
+  expect(document.querySelector<HTMLElement>('[data-pw-diagnostics-for]')?.hidden).toBe(false)
 })
 
 it('bounds the journal and does not record unknown input types or rejection payloads', () => {
@@ -107,6 +121,7 @@ it.each([
       { operation: 'uncaught', warning: 'resize-observer-loop', frames: [] },
     ])
     expect(document.querySelector<HTMLElement>('[role=alert]')?.hidden).toBe(true)
+    expect(document.querySelector<HTMLElement>('[data-pw-diagnostics-for]')?.hidden).toBe(true)
     expect(event.defaultPrevented).toBe(false)
     expect(JSON.stringify(diagnostics.report())).not.toContain(message)
   },

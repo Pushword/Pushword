@@ -10,6 +10,9 @@ if (process.env.PW_EDITOR_WINDOWS) {
     }) => {
       await render(page, [{ type: 'paragraph', data: { text: '' } }])
       if (suggestions === 'disabled') {
+        await page.locator('.editorjs-holder').dispatchEvent('pw:editor-error', {
+          detail: { operation: 'copy' },
+        })
         await page.locator('[data-pw-diagnostics-for] summary').click()
         await page.locator('[data-pw-writing-suggestions]').check()
       }
@@ -166,16 +169,13 @@ test('diagnostic download excludes page text and includes the suggestions experi
   editorPage: page,
 }, testInfo) => {
   await render(page, [{ type: 'paragraph', data: { text: 'Private author content' } }])
+  const panel = page.locator('[data-pw-diagnostics-for]')
+  await expect(panel).toBeHidden()
   await page.evaluate(() => window.dispatchEvent(new ErrorEvent('error', {
     message: 'ResizeObserver loop completed with undelivered notifications.',
   })))
   await expect(page.locator('[data-pw-editor-error]')).toBeHidden()
-  await page.locator('[data-pw-diagnostics-for] summary').click()
-  await page.locator('[data-pw-writing-suggestions]').check()
-  await expect(page.locator('.editorjs-holder')).toHaveAttribute(
-    'writingsuggestions',
-    'false',
-  )
+  await expect(panel).toBeHidden()
   await page.locator('.ce-paragraph').click()
   await page.keyboard.press('End')
   await page.keyboard.type(' secret')
@@ -189,7 +189,18 @@ test('diagnostic download excludes page text and includes the suggestions experi
       }),
     )
   })
+  await expect(panel).toBeVisible()
   await expect(page.locator('[data-pw-editor-error]')).toBeVisible()
+  expect(await panel.evaluate(panel => Boolean(
+    document.querySelector('.editorjs-holder')!.compareDocumentPosition(panel) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ))).toBe(true)
+  await panel.locator('summary').click()
+  await page.locator('[data-pw-writing-suggestions]').check()
+  await expect(page.locator('.editorjs-holder')).toHaveAttribute(
+    'writingsuggestions',
+    'false',
+  )
   const downloaded = page.waitForEvent('download')
   await page.locator('[data-pw-download-diagnostic]').click()
   const download = await downloaded
