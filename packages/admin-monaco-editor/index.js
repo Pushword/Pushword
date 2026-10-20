@@ -10,6 +10,20 @@ registerMermaid(monaco)
 window.monaco = monaco
 window.monacoHelper = MonacoHelper
 
+let currentTheme
+const updateTheme = () => {
+  const theme = document.body.classList.contains('ea-dark-scheme') ? 'vs-dark' : 'pushword-light'
+  if (theme === currentTheme) return
+  currentTheme = theme
+  MonacoHelper.defaultSettings.theme = theme
+  monaco.editor.setTheme(theme)
+}
+updateTheme()
+new MutationObserver(updateTheme).observe(document.body, {
+  attributes: true,
+  attributeFilter: ['class'],
+})
+
 function initEditors() {
   const textareaList = document.querySelectorAll(
     'textarea[data-editor="twig"],textarea[data-editor="yaml"],textarea[data-editor="json"],textarea[data-editor="markdown"]',

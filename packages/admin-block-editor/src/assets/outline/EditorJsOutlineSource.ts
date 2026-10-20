@@ -37,7 +37,10 @@ export class EditorJsOutlineSource implements OutlineSource {
     } catch {
       // group markers have no caret target
     }
-    block.holder.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    block.holder.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'center',
+    })
     block.holder.classList.add('pw-outline-flash')
     window.setTimeout(() => block.holder.classList.remove('pw-outline-flash'), 1200)
   }

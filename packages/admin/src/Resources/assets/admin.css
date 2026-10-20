@@ -53,6 +53,13 @@
   --focus-ring-offset: 2px;
 }
 
+.ea-dark-scheme {
+  --bs-secondary-color: oklch(0.72 0.01 250);
+  --bs-danger-bg-subtle: oklch(0.25 0.04 20);
+  --bs-danger-border-subtle: oklch(0.45 0.06 20);
+  --bs-danger-text-emphasis: oklch(0.82 0.08 20);
+}
+
 /* EasyAdmin grows the desktop search from 300px according to its value, which leaves
    most list headers outside the click target. Fill the available space instead, let
    the field absorb the header's vertical padding, and include the magnifier in it. */
@@ -117,10 +124,10 @@ small,
 
 .btn-outline-secondary,
 .btn-outline-primary {
-  --bs-btn-color: var(--bs-gray-900);
+  --bs-btn-color: var(--bs-body-color);
   --bs-btn-border-color: var(--bs-border-color);
-  --bs-btn-hover-color: var(--bs-gray-900);
-  --bs-btn-hover-bg: var(--bs-gray-100);
+  --bs-btn-hover-color: var(--bs-body-color);
+  --bs-btn-hover-bg: var(--bs-tertiary-bg);
   --bs-btn-hover-border-color: var(--bs-border-color);
   --bs-btn-active-color: var(--button-hover-color, var(--sky-100));
   --bs-btn-active-bg: var(--button-hover-bg, var(--sky-600));

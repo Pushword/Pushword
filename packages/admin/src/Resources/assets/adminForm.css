@@ -82,7 +82,7 @@ body.ea-new .content-header {
    have open" — the only hierarchy the column had was none. */
 .columnFields .form-fieldset.pw-settings-accordion {
   flex-grow: 0; /* EasyAdmin stretches the last fieldset to match the article height. */
-  background-color: #f1f5f9; /* slate-100, recessed below the white page */
+  background-color: var(--bs-tertiary-bg);
   border: 0;
   border-radius: var(--pw-radius-md);
   margin-bottom: 1rem;
@@ -90,7 +90,7 @@ body.ea-new .content-header {
 }
 
 .columnFields .form-fieldset.pw-settings-accordion.pw-settings-open {
-  background-color: #fff;
+  background-color: var(--bs-body-bg);
   box-shadow: var(--pw-elevation-2);
 }
 
@@ -101,10 +101,11 @@ body.ea-new .content-header {
   justify-content: space-between;
   background: transparent;
   border: 0;
-  color: #0f172a;
+  color: var(--bs-body-color);
   font-size: var(--pw-text-md);
   font-weight: 600;
-  padding: 0.4rem 0;
+  min-height: 44px;
+  padding: 0.5rem 0;
   cursor: pointer;
 }
 
@@ -131,7 +132,7 @@ body.ea-new .content-header {
   border-radius: 999px;
   align-items: center;
   justify-content: center;
-  background: rgba(15, 23, 42, 0.05);
+  background: var(--bs-secondary-bg);
   transition:
     transform 0.2s ease,
     background 0.2s ease;
@@ -279,3 +280,76 @@ body.ea-new .content-header {
 }
 
 /*************************************************/
+
+/* Keep the writing canvas quiet and the title separate from its metadata. */
+.mainFields:has(.editorjs-holder) > .form-fieldset {
+  border: 0;
+  box-shadow: none;
+}
+
+.h1Field {
+  --form-input-hover-shadow: 0;
+  font-weight: 700;
+  color: var(--bs-body-color);
+  font-size: var(--pw-text-xl) !important;
+  line-height: 1.3;
+  border: 0;
+  padding: 8px 10px;
+  margin-block: 0;
+}
+
+.mainFields:has(.editorjs-holder) .tagsFieldWrapper {
+  margin-top: 0;
+  font-style: normal;
+}
+
+/* Utility actions should not compete with saving the page. */
+.ea-edit-Page .page-actions .btn:not(.action-saveAndContinue):not(.action-saveAndReturn) {
+  color: var(--bs-secondary-color);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.ea-edit-Page .page-actions .btn:not(.action-saveAndReturn):hover {
+  color: var(--bs-body-color);
+}
+
+.ea-edit-Page .page-actions .action-saveAndContinue {
+  color: var(--bs-body-color);
+}
+
+@media (max-width: 575.98px) {
+  .ea-edit-Page .page-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .ea-edit-Page .page-actions .btn {
+    min-height: 44px;
+    margin: 0;
+    white-space: normal;
+    justify-content: center;
+  }
+
+  .ea-edit-Page .page-actions .action-saveAndReturn {
+    order: -2;
+  }
+
+  .ea-edit-Page .page-actions .action-saveAndContinue {
+    order: -1;
+  }
+}
+
+.mainFields:has(.editorjs-holder) .form-group:has(.h1Field),
+.mainFields:has(.editorjs-holder) .tagsFieldWrapper {
+  padding-bottom: 8px;
+}
+
+.mainFields:has(.editorjs-holder) .form-fieldset-body {
+  padding-top: 12px;
+}

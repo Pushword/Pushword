@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { OutlineLabels, OutlinePanel } from './OutlinePanel'
 import { OutlineEntry, OutlineSource } from './OutlineModel'
 
 const labels: OutlineLabels = {
+  closeOutline: 'Close the outline',
   deleteBlock: 'Delete the block',
   deleteGroup: 'Delete the group',
   deleteHeading: 'Delete the heading',
@@ -85,6 +86,7 @@ function focusedText(): string {
 }
 
 beforeEach(() => {
+  vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: true, addEventListener: vi.fn() } as unknown as MediaQueryList)
   document.body.innerHTML = ''
   document.body.className = ''
   localStorage.setItem('pw-outline-collapsed', '0')
@@ -486,7 +488,60 @@ describe('OutlinePanel keyboard', () => {
   })
 })
 
+afterEach(() => vi.restoreAllMocks())
+
 describe('OutlinePanel collapse', () => {
+  it('starts closed on a narrow screen without overwriting the desktop preference', () => {
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: false, addEventListener: vi.fn() } as unknown as MediaQueryList)
+    buildPanel([entry(0, 'paragraph', 'intro')])
+    expect(document.querySelector('.pw-outline--collapsed')).not.toBeNull()
+    expect(localStorage.getItem('pw-outline-collapsed')).toBe('0')
+  })
+
+  it('closes on a narrow viewport and restores the desktop preference when widened', () => {
+    let changed!: () => void
+    const media = { matches: true, addEventListener: (_event: string, listener: () => void) => { changed = listener } }
+    vi.mocked(window.matchMedia).mockReturnValue(media as unknown as MediaQueryList)
+    buildPanel([entry(0, 'paragraph', 'intro')])
+    media.matches = false
+    changed()
+    expect(document.querySelector('.pw-outline--collapsed')).not.toBeNull()
+    expect(localStorage.getItem('pw-outline-collapsed')).toBe('0')
+    media.matches = true
+    changed()
+    expect(document.querySelector('.pw-outline--collapsed')).toBeNull()
+  })
+
+  it('opens with focus on the close control and returns it to the opener on Escape', () => {
+    localStorage.setItem('pw-outline-collapsed', '1')
+    buildPanel([entry(0, 'paragraph', 'intro')])
+    const opener = document.querySelector<HTMLButtonElement>('.pw-outline-opener')!
+    opener.click()
+    expect(opener.getAttribute('aria-expanded')).toBe('true')
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Close the outline')
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    expect(opener.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(opener)
+  })
+
+  it('dismisses the mobile overlay after navigating to a block', () => {
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: false, addEventListener: vi.fn() } as unknown as MediaQueryList)
+    const source = buildPanel([entry(0, 'paragraph', 'intro')])
+    document.querySelector<HTMLButtonElement>('.pw-outline-opener')!.click()
+    document.querySelector<HTMLButtonElement>('.pw-outline-label')!.click()
+    expect(source.navigated).toHaveLength(1)
+    expect(document.querySelector('.pw-outline--collapsed')).not.toBeNull()
+  })
+
+  it('exposes the full block text when the visible outline label is truncated', () => {
+    const entries = [{ ...entry(0, 'paragraph', 'A long paragraph label'), id: 'stable' }]
+    buildPanel(entries)
+    expect(document.querySelector<HTMLButtonElement>('.pw-outline-label')!.title).toBe('A long paragraph label')
+    entries[0]!.label = 'Updated paragraph label'
+    panel.refresh(true)
+    expect(document.querySelector<HTMLButtonElement>('.pw-outline-label')!.title).toBe('Updated paragraph label')
+  })
+
   it('collapses to the opener and persists the choice', () => {
     buildPanel([entry(0, 'paragraph', 'intro')])
 

@@ -9,32 +9,39 @@
   contain: inline-size;
 }
 
-/* JSON, Markdown and copy: tertiary actions, so quiet grey icons — but each a
-   real, labelled button with a 32px target, not a 12px link. */
+/* Source controls remain secondary to writing, with visible names and stable targets. */
 .pw-editor-modes {
   display: flex;
   justify-content: flex-end;
   gap: 4px;
-  padding: 8px 4px 0;
+  flex-wrap: wrap;
+  padding: 8px 10px;
 }
 
 .pw-editor-mode {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
+  min-height: 36px;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: var(--pw-text-sm, 14px);
   border: 0;
   border-radius: var(--pw-radius-sm, 4px);
   background: transparent;
-  color: #6b7280; /* gray-500 */
+  color: var(--bs-secondary-color);
   cursor: pointer;
 }
 
 .pw-editor-mode:hover {
-  background: #f1f5f9; /* slate-100 */
-  color: #334155; /* slate-700 */
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+}
+
+.pw-editor-mode[aria-pressed='true'] {
+  background: var(--bs-secondary-bg);
+  color: var(--bs-body-color);
+  box-shadow: inset 0 -2px var(--color-primary);
 }
 
 .pw-editor-mode:focus-visible {
@@ -49,19 +56,48 @@
 }
 
 .pw-editor-diagnostics {
-  padding: 0 10px;
-  font-size: 0.875rem;
+  --bs-secondary-color: var(--bs-body-color);
+  max-width: calc(var(--pw-editor-width) + 20px);
+  margin: 0 10px 16px;
+  padding: 12px 16px;
+  border-radius: var(--pw-radius-md, 8px);
+  background: var(--bs-danger-bg-subtle);
+  color: var(--bs-body-color);
+  font-size: var(--pw-text-sm, 14px);
+  line-height: 1.6;
 }
 
 .pw-editor-diagnostics summary {
   width: fit-content;
-  color: var(--text-secondary, #6b7280);
+  color: var(--bs-body-color);
+  padding-block: 8px;
   cursor: pointer;
+}
+
+.pw-editor-diagnostics [data-pw-editor-error] {
+  color: var(--bs-danger-text-emphasis);
 }
 
 .pw-editor-diagnostics summary:focus-visible {
   outline: 2px solid var(--focus-ring-color, #0284c7);
   outline-offset: 2px;
+}
+
+.pw-editor-suggestions {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.pw-editor-suggestions input {
+  flex: none;
+}
+
+@media (pointer: coarse) {
+  .pw-editor-mode {
+    min-height: 44px;
+  }
 }
 
 /* On a phone, the form card's 24px padding, on top of the page's and the
@@ -77,10 +113,20 @@
   }
 }
 
-/* Body copy: at the admin's 14px, the 650px column ran ~95 characters a line;
-   16px brings it back near 80 (1.6 line height comes with the paragraph tool). */
+/* Comfortable body text and a short blank area for adding the next block. */
 .codex-editor__redactor {
   font-size: 16px;
+  line-height: 1.65;
+  padding-bottom: 6rem !important;
+}
+
+.ce-block__content,
+.ce-toolbar__content {
+  max-width: var(--pw-editor-width);
+}
+
+.ce-block {
+  scroll-margin-block-start: 10rem;
 }
 
 /* heading anchor size */
@@ -89,12 +135,10 @@
   padding-top: 2rem;
 }
 
-/* An obfuscated link is told apart by its dashed underline as well as its
-   colour, which alone a colour-blind editor would miss; emerald-700 keeps the
-   4.5:1 contrast text needs. */
+/* The dashed underline distinguishes obfuscated links independently of color. */
 a[rel='obfuscate']:not(.link-btn),
 a[rel='encrypt']:not(.link-btn) {
-  color: #047857;
+  color: var(--bs-success-text-emphasis);
   text-decoration-style: dashed;
 }
 
@@ -107,10 +151,12 @@ a[rel='encrypt']:not(.link-btn) {
 
 /** editorjs quote ui inspired by https://github.com/editor-js/quote/pull/23 */
 
-/* One accent bar holds the text and its caption together. The caption is
-   supporting content: muted and smaller, not link-blue behind a rule of its own. */
+/* A recessed surface groups the quotation with its quieter caption. */
 .cdx-quote {
-  border-left: 3px solid #cbd5e1; /* slate-300 */
+  border: 0;
+  padding: 12px 16px;
+  border-radius: var(--pw-radius-md, 8px);
+  background: var(--bs-tertiary-bg);
 }
 
 .cdx-quote .cdx-input[data-placeholder]::before {
@@ -129,16 +175,13 @@ a[rel='encrypt']:not(.link-btn) {
   border: none;
   box-shadow: none;
   border-radius: 0;
-  color: #64748b; /* slate-500 */
+  color: var(--bs-secondary-color);
   font-size: var(--pw-text-sm, 14px);
 }
 
-/* Inline code is another voice, not an error: monospace on a neutral chip.
-   Editor.js' red-on-pink default made every snippet of a docs page look wrong.
-   A translucent chip in the surrounding text colour reads on any background,
-   tinted notices included. */
+/* Inline code uses a neutral surface and keeps the surrounding text color. */
 .codex-editor .inline-code {
-  background: rgb(15 23 42 / 0.07);
+  background: var(--bs-secondary-bg);
   color: inherit;
   font-family: var(--bs-font-monospace, monospace);
 }

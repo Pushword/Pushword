@@ -1,16 +1,20 @@
 {% block editorjs_widget %}
 {% set editor_id = 'editorjs_' ~ id %}
 
-<div class="pw-editor-modes">
-    <button type="button" class="pw-editor-mode" data-pw-editor-mode="json" onclick="toggleEditor()" title="{{ 'editorSourceJson'|trans }}" aria-label="{{ 'editorSourceJson'|trans }}">
+<div class="pw-editor-modes" role="group" aria-label="{{ 'editorEditingTools'|trans }}">
+    <button type="button" class="pw-editor-mode" data-pw-editor-mode="json" aria-pressed="false" onclick="toggleEditor()" title="{{ 'editorSourceJson'|trans }}" aria-label="{{ 'editorSourceJson'|trans }}">
         {{ svg('code') }}
+        <span>JSON</span>
     </button>
-    <button type="button" class="pw-editor-mode" data-pw-editor-mode="markdown" onclick="toggleEditor('markdown')" title="{{ 'editorSourceMarkdown'|trans }} (Ctrl + U)" aria-label="{{ 'editorSourceMarkdown'|trans }}" aria-keyshortcuts="Control+U">
+    <button type="button" class="pw-editor-mode" data-pw-editor-mode="markdown" aria-pressed="false" onclick="toggleEditor('markdown')" title="{{ 'editorSourceMarkdown'|trans }} (Ctrl + U)" aria-label="{{ 'editorSourceMarkdown'|trans }}" aria-keyshortcuts="Control+U">
         {{ svg('markdown') }}
+        <span>Markdown</span>
     </button>
     <button type="button" class="pw-editor-mode" onclick="copyPageMarkdown(this)" title="{{ 'editorCopyMarkdown'|trans }}" aria-label="{{ 'editorCopyMarkdown'|trans }}">
         {{ svg('copy') }}
+        <span data-pw-copy-label>{{ 'editorCopy'|trans }}</span>
     </button>
+    <span class="visually-hidden" role="status" data-pw-copy-status></span>
 </div>
 <div style="padding:10px 10px 0;">
     <textarea style="display:none" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }}>{{ value }}</textarea>
@@ -30,11 +34,11 @@
     </div>
 </div>
 <div class="pw-editor-diagnostics" data-pw-diagnostics-for="{{ editor_id }}" hidden>
-    <p class="text-danger mb-1" role="alert" data-pw-editor-error hidden></p>
+    <p class="mb-1" role="alert" data-pw-editor-error hidden></p>
     <details>
         <summary>{{ 'editorReportProblem'|trans }}</summary>
         <p class="text-muted my-2">{{ 'editorDiagnosticHelp'|trans }}</p>
-        <label class="d-block mb-2" for="{{ editor_id }}_writingSuggestions">
+        <label class="pw-editor-suggestions mb-2" for="{{ editor_id }}_writingSuggestions">
             <input type="checkbox" id="{{ editor_id }}_writingSuggestions" data-pw-writing-suggestions>
             {{ 'editorDisableWritingSuggestions'|trans }}
         </label>
@@ -79,9 +83,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.execCommand('copy');
                 document.body.removeChild(helper);
             }
-            const original = el.style.color;
-            el.style.color = '#16a34a';
-            setTimeout(function() { el.style.color = original; }, 1200);
+            const label = el.querySelector('[data-pw-copy-label]');
+            const status = el.parentElement.querySelector('[data-pw-copy-status]');
+            label.textContent = "{{ 'editorCopied'|trans|e('js') }}";
+            status.textContent = "{{ 'editorMarkdownCopied'|trans|e('js') }}";
+            setTimeout(function() {
+                label.textContent = "{{ 'editorCopy'|trans|e('js') }}";
+                status.textContent = '';
+            }, 2000);
         } catch (error) {
             document.getElementById(editorId).dispatchEvent(new CustomEvent('pw:editor-error', {
                 bubbles: true, detail: { operation: 'copy', error: error }
@@ -117,6 +126,7 @@ var editorjsConfig = {
     },
     outline: {
         labels: {
+            closeOutline: "{{ 'editorOutlineClose'|trans|e('js') }}",
             deleteBlock: "{{ 'editorOutlineDeleteBlock'|trans|e('js') }}",
             deleteGroup: "{{ 'editorOutlineDeleteGroup'|trans|e('js') }}",
             deleteHeading: "{{ 'editorOutlineDeleteHeading'|trans|e('js') }}",

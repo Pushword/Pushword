@@ -23,15 +23,6 @@ class PageH1Field extends AbstractField
                 'class' => 'autosize textarea-no-newline h1Field',
                 'placeholder' => 'adminPageTitleLabel',
                 'rows' => 1,
-                'style' => '
-                  --form-input-hover-shadow: 0;
-                  font-weight: 700;
-                  border: 0px;
-                  color: rgb(17, 24, 39);
-                  padding: 10px 10px 0px;
-                  margin-top: -23px;
-                  margin-bottom: -13px;
-                  font-size: 22px !important; ',
             ]);
     }
 }

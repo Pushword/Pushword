@@ -10,9 +10,9 @@ if (process.env.PW_EDITOR_WINDOWS) {
     }) => {
       await render(page, [{ type: 'paragraph', data: { text: '' } }])
       if (suggestions === 'disabled') {
-        await page.locator('.editorjs-holder').dispatchEvent('pw:editor-error', {
-          detail: { operation: 'copy' },
-        })
+        await page.locator('.editorjs-holder').evaluate(holder => holder.dispatchEvent(
+          new CustomEvent('pw:editor-error', { detail: { operation: 'copy' } }),
+        ))
         await page.locator('[data-pw-diagnostics-for] summary').click()
         await page.locator('[data-pw-writing-suggestions]').check()
       }

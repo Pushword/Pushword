@@ -18,6 +18,7 @@ export interface OutlineToolMeta {
 }
 
 export interface OutlineLabels {
+  closeOutline: string
   deleteBlock: string
   deleteGroup: string
   deleteHeading: string
@@ -61,6 +62,7 @@ export class OutlinePanel {
   private readonly root: HTMLElement
   private readonly list: HTMLOListElement
   private readonly opener: HTMLButtonElement
+  private readonly wideScreen = window.matchMedia('(min-width: 1200px)')
 
   /** Entry indices of sections folded in the panel; reset by structural moves is fine. */
   private readonly foldedSections = new Set<number>()
@@ -90,10 +92,12 @@ export class OutlinePanel {
 
     this.root = document.createElement('aside')
     this.root.className = 'pw-outline'
+    this.root.id = `pw-outline-${this.holderId}`
     this.root.setAttribute('aria-label', this.labels.outline)
     this.root.append(this.buildHead(), this.list)
 
     this.opener = this.iconButton(IconListBulleted, this.labels.outline, 'pw-outline-opener')
+    this.opener.setAttribute('aria-controls', this.root.id)
     this.opener.addEventListener('click', () => this.setCollapsed(false, true))
 
     document.body.appendChild(this.root)
@@ -108,6 +112,14 @@ export class OutlinePanel {
       sidebar.appendChild(this.opener)
     }
     this.setCollapsed(this.initialCollapsed(), false)
+    this.wideScreen.addEventListener('change', () => {
+      this.setCollapsed(this.initialCollapsed(), false)
+    })
+    this.root.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      this.setCollapsed(true, true)
+    })
     this.followEditorVisibility()
     this.attachListDropTarget()
     this.attachListKeyboard()
@@ -157,6 +169,7 @@ export class OutlinePanel {
           if (text) {
             const label = entry.label || this.toolMeta(entry.type).title
             if (text.textContent !== label) text.textContent = label
+            text.closest('button')!.title = label
             text.classList.toggle('pw-outline-text--type', entry.label === '')
           }
           node.entry = entry
@@ -209,7 +222,7 @@ export class OutlinePanel {
     title.className = 'pw-outline-title'
     title.textContent = this.labels.outline
 
-    const collapse = this.iconButton(IconChevronLeft, this.labels.outline, 'pw-outline-toggle')
+    const collapse = this.iconButton(IconChevronLeft, this.labels.closeOutline, 'pw-outline-toggle')
     collapse.addEventListener('click', () => this.setCollapsed(true, true))
 
     head.append(title, collapse)
@@ -217,17 +230,19 @@ export class OutlinePanel {
   }
 
   private initialCollapsed(): boolean {
+    if (!this.wideScreen.matches) return true
     const stored = localStorage.getItem(COLLAPSE_STORAGE_KEY)
-    if (stored !== null) return stored === '1'
-
-    return !window.matchMedia('(min-width: 1200px)').matches
+    return stored === '1'
   }
 
   private setCollapsed(collapsed: boolean, persist: boolean): void {
     this.root.classList.toggle('pw-outline--collapsed', collapsed)
     this.opener.hidden = !collapsed
+    this.opener.setAttribute('aria-expanded', String(!collapsed))
     if (persist) localStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? '1' : '0')
     this.syncLayout()
+    if (collapsed && this.root.contains(document.activeElement)) this.opener.focus()
+    if (!collapsed && persist) this.root.querySelector<HTMLButtonElement>('.pw-outline-toggle')?.focus()
   }
 
   /** An open rail takes layout space (body shift) so the form recenters beside it. */
@@ -344,10 +359,13 @@ export class OutlinePanel {
     const button = document.createElement('button')
     button.type = 'button'
     button.className = 'pw-outline-label'
-    button.title = meta.title
+    button.title = text.textContent
     button.append(icon, text)
     const renderedAt = this.generation
-    button.addEventListener('click', () => this.source.navigateTo(node.entry))
+    button.addEventListener('click', () => {
+      this.source.navigateTo(node.entry)
+      if (!this.wideScreen.matches) this.setCollapsed(true, false)
+    })
     button.addEventListener('keydown', (event) =>
       this.moveByKeyboard(event, node, renderedAt),
     )

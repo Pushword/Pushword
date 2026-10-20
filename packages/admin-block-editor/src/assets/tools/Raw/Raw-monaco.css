@@ -7,24 +7,15 @@
 
 .monaco-editor {
   z-index: 1;
-  --vscode-editor-background: #f3f4f6 !important;
-  --vscode-focusBorder: #f3f4f6 !important;
-}
-
-.monaco-codeblock-wrapper .monaco-editor {
-  z-index: 1;
-  --vscode-editor-background: #fffbeb !important;
-  --vscode-focusBorder: #fffbeb !important;
-}
-.monaco-codeblock-wrapper {
-  background-color: #fffbeb !important;
+  --vscode-editor-background: var(--bs-tertiary-bg) !important;
+  --vscode-focusBorder: var(--bs-tertiary-bg) !important;
 }
 
 .editorjs-monaco-wrapper {
   margin: 0.6em 0;
   margin-top: 1.5em;
   padding: 0.4em 0;
-  background-color: #f3f4f6;
+  background-color: var(--bs-tertiary-bg);
   border-radius: 5px;
 }
 
@@ -36,6 +27,7 @@
   padding: 0 12px;
   resize: none;
   background: transparent;
+  color: var(--bs-body-color);
   font-family: monospace;
 }
 

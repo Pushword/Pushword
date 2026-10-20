@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { EditorJsOutlineSource } from './EditorJsOutlineSource'
 
 function fakeApi(): {
@@ -61,4 +61,17 @@ describe('EditorJsOutlineSource.deleteSpan', () => {
 
     expect(deletes).toEqual([3, 2, 1])
   })
+})
+
+it.each([false, true])('respects reduced motion (%s) when navigating to a block', (reduced) => {
+  const holder = document.createElement('div')
+  holder.scrollIntoView = vi.fn()
+  const media = vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: reduced } as MediaQueryList)
+  const source = new EditorJsOutlineSource({
+    blocks: { getBlockByIndex: () => ({ holder }) },
+    caret: { setToBlock: vi.fn() },
+  } as never)
+  source.navigateTo({ index: 0, type: 'paragraph', label: 'Text', level: null })
+  expect(holder.scrollIntoView).toHaveBeenCalledWith({ behavior: reduced ? 'auto' : 'smooth', block: 'center' })
+  media.mockRestore()
 })

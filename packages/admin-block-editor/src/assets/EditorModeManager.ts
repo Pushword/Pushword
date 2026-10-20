@@ -137,6 +137,15 @@ export class EditorModeManager {
     const holder = document.getElementById(this.editorId)
     if (holder) {
       holder.style.display = visible ? 'block' : 'none'
+      const mode = visible ? null : this.getCurrentMode()
+      holder.parentElement?.previousElementSibling
+        ?.querySelectorAll<HTMLButtonElement>('[data-pw-editor-mode]')
+        .forEach((button) => {
+          button.setAttribute(
+            'aria-pressed',
+            String(button.dataset.pwEditorMode === mode),
+          )
+        })
     } else {
       logger.warn('Holder EditorJS non trouvé pour changer la visibilité', {
         editorId: this.editorId,
