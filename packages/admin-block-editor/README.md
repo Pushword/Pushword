@@ -73,12 +73,15 @@ yarn --cwd packages/admin-block-editor test:browser --project=msedge --grep 'che
 The suite starts a test app on port 9079 with a temporary database, media, sessions
 and content, removed when the server stops. It refuses to reuse an existing server
 and leaves the development app's content intact. Each browser signs in through the
-login form and uses a separate page fixture.
+login form and uses a separate page fixture. Sequential journeys retain the same
+edit-lock identity and wait for ownership before interacting with the form.
 
 Keyboard journeys cover nested lists, inline formatting, undo/redo, immediate saving,
 hard breaks, rich-text copy/paste, tables and Markdown/JSON round trips. Saved content
 is checked after reloading the admin. In-page checks shared with Panther cover the
 configured blocks and tunes, selection preservation and incremental rendering.
+Preview and image journeys check toolbar placement, block movement and repeated
+editing without losing content, including empty images.
 Uncaught browser errors and console errors fail the tests.
 
 CI uploads the HTML/JSON reports, browser versions, individual in-page outcomes,

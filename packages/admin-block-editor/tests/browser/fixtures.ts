@@ -42,7 +42,14 @@ export const test = base.extend<{ editorPage: Page }, { authState: StorageState 
       if (message.type() === 'error') errors.push(message.text())
     })
     const pages: Record<string, string> = JSON.parse(readFileSync(join(directory, 'browser-pages.json'), 'utf8'))
+    // Sequential journeys reuse the same page and must retain its lock ownership.
+    await page.addInitScript(tabId => sessionStorage.setItem('pw-edit-lock-tab-id', tabId),
+      `${process.env.TEST_RUN_ID}:${testInfo.project.name}`)
+    const lockResponse = page.waitForResponse(response => response.url().endsWith('/lock/ping'))
     await page.goto(pages[testInfo.project.name]!)
+    const lockInfo = await (await lockResponse).json()
+    expect(lockInfo.isOwner, 'The journey must own the page edit lock').toBe(true)
+    await expect(page.locator('#pw-edit-lock-banner')).toBeHidden()
     // TagsField moves focus to the title after initialization; wait before typing elsewhere.
     await expect(page.locator('[id$="_h1"]')).toBeFocused()
     await waitForEditor(page)

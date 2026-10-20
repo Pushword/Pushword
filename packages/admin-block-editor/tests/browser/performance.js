@@ -8,12 +8,12 @@ void (async () => {
   const check = (name, value, detail) => {
     report.results.push({ name, passed: Boolean(value), detail })
   }
-  const wait = async (condition) => {
+  const wait = async (condition, operation) => {
     for (let i = 0; i < 100; i++) {
       if (condition()) return
       await pause(25)
     }
-    throw new Error('Condition did not settle')
+    throw new Error(`Timed out waiting for ${operation}`)
   }
   const paragraph = (id, text) => ({ id, type: 'paragraph', data: { text } })
   const exportMarkdown = async () =>
@@ -90,9 +90,13 @@ void (async () => {
     key('z')
     await wait(
       () => !editor.blocks.getById('perf-0').holder.textContent.includes('12345'),
+      '300-block undo',
     )
     key('y')
-    await wait(() => editor.blocks.getById('perf-0').holder.textContent.includes('12345'))
+    await wait(
+      () => editor.blocks.getById('perf-0').holder.textContent.includes('12345'),
+      '300-block redo',
+    )
     check(
       'long-document undo and redo retain formatting and all blocks',
       editor.blocks.getBlocksCount() === 300 &&
@@ -138,11 +142,17 @@ void (async () => {
       .getById('deferred-raw')
       .holder.querySelector('textarea')
       .focus({ preventScroll: true })
-    await wait(() => Boolean(instance('deferred-raw')))
+    await wait(
+      () => Boolean(instance('deferred-raw')),
+      'Raw editor activation after focus',
+    )
     editor.blocks
       .getById('deferred-code')
       .holder.scrollIntoView({ block: 'center', behavior: 'instant' })
-    await wait(() => Boolean(instance('deferred-code')))
+    await wait(
+      () => Boolean(instance('deferred-code')),
+      'Code editor activation after scroll',
+    )
     check(
       'deferred editors activate on keyboard focus and viewport entry',
       instance('deferred-raw').getValue() === '<p>Deferred raw</p>' &&
@@ -197,10 +207,20 @@ void (async () => {
         return JSON.stringify({ data: saved.data, tunes: saved.tunes })
       }
       const before = await state()
-      editor.caret.setToBlock(0)
+      if (tune.type === 'image') {
+        await wait(
+          () => editor.blocks.getById('tune-subject')
+            .holder.querySelector('.image-tool--filled'),
+          'image preview before link settings',
+        )
+      }
+      editor.caret.setToBlock(0, 'start')
       editor.toolbar.open()
       editor.toolbar.toggleBlockSettings(true)
-      await wait(() => holder.querySelector(`.ce-settings ${tune.selector}`))
+      await wait(
+        () => holder.querySelector(`.ce-settings ${tune.selector}`),
+        `${tune.name} settings control`,
+      )
       const control = holder.querySelector(`.ce-settings ${tune.selector}`)
       if (!control) throw new Error(`Missing ${tune.name} control`)
       control.focus()
