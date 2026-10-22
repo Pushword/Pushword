@@ -29,7 +29,7 @@ import AlignementTune from './tools/AlignementTune/AlignementTune'
 import HyperlinkTune from './tools/HyperlinkTune/HyperlinkTune'
 import PasteLink from './tools/Hyperlink/PasteLink'
 import ClipboardManager from './tools/utils/ClipboardManager'
-import { setupPopoverTitles } from './tools/utils/popoverTitles'
+import { setupEditorPopovers } from './tools/utils/editorPopovers'
 import Raw from './tools/Raw/Raw'
 import CodeBlock from './tools/CodeBlock/CodeBlock'
 import { EditorModeManager } from './EditorModeManager'
@@ -110,7 +110,10 @@ export class editorJs {
       Small: Small,
     }
 
-    setupPopoverTitles()
+    setupEditorPopovers({
+      ...(window as any).editorjsConfig?.i18n?.messages?.toolNames,
+      ...(window as any).editorjsConfig?.i18n?.messages?.ui?.popover,
+    })
 
     this.initEditor((window as any).editorjsConfig)
   }
@@ -253,6 +256,7 @@ export class editorJs {
     this.editors[config.holder!] = editor
     const holder = document.getElementById(config.holder!)
     holder?.addEventListener('keydown', (event) => {
+      if (!(event.target instanceof Element) || !event.target.closest('.ce-block')) return
       const selection = window.getSelection()
       // Editor.js erases selected blocks only when no caret exists, but Chromium
       // puts one back into the field still focused before dispatching the key.

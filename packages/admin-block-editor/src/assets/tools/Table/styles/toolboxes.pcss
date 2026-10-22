@@ -12,6 +12,7 @@
      all of them so its row/column menu is never clipped by neighbouring blocks. */
   z-index: 15;
   opacity: 0;
+  visibility: hidden;
   transition: opacity 0.1s;
 
   will-change: left, opacity;
@@ -31,6 +32,7 @@
 
   &--showed {
     opacity: 1;
+    visibility: visible;
   }
 
   .tc-popover {
@@ -39,6 +41,10 @@
 
   &__toggler {
     display: flex;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
     align-items: center;
     justify-content: center;
     width: var(--toggler-click-zone-size);
@@ -52,12 +58,29 @@
       color: var(--toggler-dots-color-hovered);
     }
 
+    &:focus-visible {
+      outline: 2px solid var(--focus-ring-color, #0284c7);
+      outline-offset: -2px;
+    }
+
     svg {
       fill: currentColor;
     }
   }
 }
 
-.tc-wrap:hover .tc-toolbox__toggler {
+.tc-wrap:hover .tc-toolbox__toggler,
+.tc-toolbox:focus-within .tc-toolbox__toggler {
   opacity: 1;
+}
+
+@media (max-width: 650px) {
+  .tc-toolbox {
+    --toggler-click-zone-size: 44px;
+  }
+
+  /* A transformed ancestor would make the fixed mobile sheet table-relative. */
+  .tc-toolbox:has(.tc-popover--opened) {
+    transform: none;
+  }
 }

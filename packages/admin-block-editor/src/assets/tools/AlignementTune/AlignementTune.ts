@@ -24,6 +24,7 @@ export default class AlignmentTune {
   private data: string
   private alignmentSettings: AlignmentTuneSetting[]
   private blockContent?: HTMLElement
+  private buttons: HTMLButtonElement[] = []
 
   /**
    * Default alignment
@@ -104,31 +105,29 @@ export default class AlignmentTune {
 
   render(): HTMLElement {
     const wrapper = document.createElement('div')
+    wrapper.className = 'cdx-alignment-tune'
+    this.buttons = this.alignmentSettings.map((tune: AlignmentTuneSetting) => {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.classList.add('cdx-settings-button')
+      button.innerHTML = tune.icon
+      button.title = tune.title
+      button.setAttribute('aria-label', tune.title)
+      button.addEventListener('click', () => this.updateAlign(tune.name))
 
-    this.alignmentSettings
-      .map((tune: AlignmentTuneSetting) => {
-        const button = document.createElement('div')
-        button.classList.add('cdx-settings-button')
-        button.innerHTML = tune.icon
-        button.title = tune.title
+      wrapper.appendChild(button)
 
-        button.classList.toggle('cdx-settings-button--active', tune.name === this.data)
+      return button
+    })
 
-        wrapper.appendChild(button)
-
-        return button
-      })
-      .forEach((element: HTMLElement, index: number) => {
-        element.addEventListener('click', () => {
-          this.updateAlign(this.alignmentSettings[index]?.name ?? '')
-        })
-      })
+    this.updateButtonStates()
 
     return wrapper
   }
 
   updateAlign(currentAlign: string): void {
     this.data = currentAlign === 'left' ? '' : currentAlign
+    this.updateButtonStates()
     this.block?.dispatchChange()
 
     if (this.blockContent) {
@@ -143,5 +142,13 @@ export default class AlignmentTune {
 
   save(): string {
     return this.data
+  }
+
+  private updateButtonStates(): void {
+    this.buttons.forEach((button, index) => {
+      const active = this.alignmentSettings[index]?.name === (this.data || 'left')
+      button.classList.toggle('cdx-settings-button--active', active)
+      button.setAttribute('aria-pressed', String(active))
+    })
   }
 }

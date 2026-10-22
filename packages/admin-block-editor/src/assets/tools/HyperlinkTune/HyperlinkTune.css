@@ -7,3 +7,11 @@
 .cdx-anchor-tune-wrapper .editor-switch {
     margin-top: 8px;
 }
+
+.cdx-anchor-tune-help {
+    display: block;
+    margin-top: 4px;
+    color: #475569;
+    font-size: 12px;
+    line-height: 1.5;
+}

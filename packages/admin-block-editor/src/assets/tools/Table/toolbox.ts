@@ -113,13 +113,30 @@ export default class Toolbox {
    * @returns {Element}
    */
   createToggler(): HTMLElement {
-    const toggler = $.make("div", Toolbox.CSS.toggler, {
+    const toggler = $.make("button", Toolbox.CSS.toggler, {
+      type: 'button',
       innerHTML: IconMenuSmall,
     });
+    toggler.setAttribute('aria-label', this.api.i18n.t(this.cssModifier === 'column' ? 'Column options' : 'Row options'));
+    toggler.setAttribute('aria-haspopup', 'menu');
+    toggler.setAttribute('aria-expanded', 'false');
 
     toggler.addEventListener("click", () => {
       this.togglerClicked();
     });
+    const closeOnKeydown = (event: KeyboardEvent) => {
+      if (!this.popover?.opened || !['Escape', 'Tab'].includes(event.key)) return;
+      this.popover.close();
+      toggler.setAttribute('aria-expanded', 'false');
+      this.onClose();
+      toggler.focus();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    toggler.addEventListener('keydown', closeOnKeydown);
+    this.popover!.wrapper!.addEventListener('keydown', closeOnKeydown);
 
     return toggler;
   }
@@ -132,6 +149,7 @@ export default class Toolbox {
   createPopover(): HTMLElement {
     this.popover = new Popover({
       items: this.items,
+      confirmationLabel: this.api.i18n.t('Confirm deletion'),
     });
 
     return this.popover.render();
@@ -171,6 +189,7 @@ export default class Toolbox {
     Object.entries(styles).forEach(([prop, value]) => {
       (this.popover!.wrapper!.style as any)[prop] = value;
     });
+    this.popover!.wrapper!.style.translate = '';
 
     if (this.popover!.opened) {
       this.popover!.close();
@@ -178,7 +197,12 @@ export default class Toolbox {
     } else {
       this.popover!.open();
       this.onOpen();
+      const rect = this.popover!.wrapper!.getBoundingClientRect();
+      const x = Math.max(8 - rect.left, Math.min(0, window.innerWidth - 8 - rect.right));
+      const y = Math.max(8 - rect.top, Math.min(0, window.innerHeight - 8 - rect.bottom));
+      this.popover!.wrapper!.style.translate = `${x}px ${y}px`;
     }
+    this.wrapper.querySelector(`.${Toolbox.CSS.toggler}`)!.setAttribute('aria-expanded', String(this.popover!.opened));
   }
 
   /**
@@ -215,6 +239,7 @@ export default class Toolbox {
    */
   hide(): void {
     this.popover!.close();
+    this.wrapper.querySelector(`.${Toolbox.CSS.toggler}`)!.setAttribute('aria-expanded', 'false');
     this.wrapper.classList.remove(Toolbox.CSS.toolboxShowed);
   }
 }

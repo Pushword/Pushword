@@ -63,6 +63,7 @@ describe('AnchorTune', () => {
     expect(field.tagName).toBe('INPUT')
     expect(field.placeholder).toBe('t(Anchor)')
     expect(field.value).toBe('faq')
+    expect(field.closest('label')?.querySelector('.cdx-anchor-tune-label')?.textContent?.trim()).toBe('t(Anchor)')
   })
 
   it('saves an anchor never set as an empty string', () => {
@@ -118,6 +119,7 @@ describe('ClassTune', () => {
     expect(field.tagName).toBe('TEXTAREA')
     expect(field.placeholder).toBe('t(Class)')
     expect(field.value).toBe('grid gap-4')
+    expect(field.closest('label')?.querySelector('.cdx-anchor-tune-label')?.textContent?.trim()).toBe('t(Class)')
   })
 
   it('saves nothing for a class never set', () => {

@@ -37,8 +37,13 @@ export default abstract class TextTune {
   }
 
   render(): HTMLElement {
-    const wrapper = make.element('div', 'cdx-anchor-tune-wrapper')
-    wrapper.appendChild(make.element('div', 'cdx-anchor-tune-icon', {}, this.field.icon))
+    const wrapper = make.element('label', 'cdx-anchor-tune-wrapper')
+    const label = make.element('span', 'cdx-anchor-tune-label')
+    label.appendChild(make.element('span', 'cdx-anchor-tune-icon', { 'aria-hidden': 'true' }, this.field.icon))
+    const title = make.element('span')
+    title.textContent = this.api.i18n.t(this.field.placeholder)
+    label.appendChild(title)
+    wrapper.appendChild(label)
 
     const input = make.element(this.field.tag, 'cdx-anchor-tune-input', {
       placeholder: this.api.i18n.t(this.field.placeholder),

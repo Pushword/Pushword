@@ -211,70 +211,151 @@ div[data-item-name='convert-to'] {
   display: none !important;
 }
 
-.ce-popover-item-separator {
-  display: none !important;
+/* Width also drives menus opening to the left. Only the insertion toolbox is
+   a grid: settings and nested menus keep their labels in reading order. */
+.ce-popover {
+  --width: 280px;
+  --max-height: min(440px, 70dvh);
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #475569;
+  --color-border: #e2e8f0;
+  --color-background-item-hover: #f1f5f9;
+  --color-background-item-confirm: #b91c1c;
+  --color-background-item-confirm-hover: #991b1b;
 }
 
-/** Agressive customization **/
-
-.ce-popover__items:has([data-item-name='move-up']) {
-  display: flex;
-  flex-wrap: wrap;
-
-  .ce-popover-item__title {
-    display: none;
-  }
-
-  /* The two moves side by side, removal set apart at the end of the row: a
-     reorder click never lands on delete, and delete only turns red once aimed. */
-  [data-item-name='move-up'],
-  [data-item-name='move-down'] {
-    order: 1;
-  }
-
-  [data-item-name='delete'] {
-    order: 2;
-    margin-left: auto;
-  }
-
-  [data-item-name='delete']:not(.ce-popover-item--confirmation):hover .ce-popover-item__icon {
-    color: #dc2626; /* red-600 */
-  }
+.ce-popover__container {
+  box-shadow: var(--pw-elevation-3, 0 8px 24px #0f172a24);
 }
 
-/* The two-column toolbox needs more room than editor.js's 200px default;
-   --width also drives the --open-left positioning, so override it, not width. */
-.ce-popover:not(.ce-popover--inline):not(.ce-popover--nested):not(
-    :has([data-item-name='move-up'])
-  ) {
-  --width: 320px;
+.codex-editor {
+  z-index: auto;
 }
 
-.ce-popover__items:not(:has([data-item-name='move-up'])) {
+/* Raise the floating controls, keeping article content below the sticky header. */
+.ce-toolbar:has(.ce-popover--opened),
+.ce-inline-toolbar,
+.tc-wrap:has(.tc-popover--opened) {
+  z-index: 1040;
+}
+
+.ce-popover--opened > .ce-popover__container {
+  animation: pw-popover-show 100ms ease;
+}
+
+@keyframes pw-popover-show {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ce-popover__items {
   overflow-x: hidden;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
 }
 
-.ce-popover--inline .ce-popover__items {
-  display: flex;
-  flex-wrap: unset !important;
+.ce-popover:not(.ce-popover--inline) .ce-popover-item {
+  min-height: 36px;
+  text-align: left;
 }
 
-.ce-popover__items:not(:has([data-item-name='move-up'])) .ce-popover-item-html {
-  grid-column: span 2;
-}
-
-.ce-popover-item-html {
-  width: 100%;
-}
-.ce-popover__search {
+.ce-settings .ce-popover__search {
   display: none;
 }
-.ce-popover--inline .ce-popover__search {
-  display: unset !important;
-  height: 0;
-  opacity: 0;
+
+.ce-settings [data-item-name='convert-to'] + .ce-popover-item-separator {
+  display: none;
+}
+
+.ce-settings [data-item-name='delete'] {
+  margin-top: 6px;
+  border-top: 1px solid var(--color-border);
+}
+
+.ce-settings [data-item-name='delete']:not(.ce-popover-item--confirmation) {
+  color: #b91c1c;
+}
+
+.ce-toolbox > .ce-popover {
+  --width: 352px;
+}
+
+.ce-toolbox > .ce-popover > .ce-popover__container > .ce-popover__items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ce-popover__search:focus-within {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: -2px;
+}
+
+.ce-popover__search {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.ce-popover__search:not(:has(.cdx-search-field__icon)) {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 4px 8px;
+}
+
+.ce-popover__search .cdx-search-field__input {
+  width: 100%;
+  min-width: 0;
+}
+
+.ce-popover__search .cdx-search-field__input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.ce-popover--inline > .ce-popover__container > .ce-popover__items {
+  overflow: visible;
+}
+
+@media (max-width: 650px) {
+  .ce-popover:not(.ce-popover--inline) > .ce-popover__container {
+    width: auto;
+    min-width: 0;
+    max-height: min(70dvh, 440px);
+  }
+
+  .ce-popover:not(.ce-popover--inline) .ce-popover-item,
+  .ce-popover .cdx-settings-button {
+    min-height: 44px;
+  }
+
+  .ce-toolbox > .ce-popover > .ce-popover__container > .ce-popover__items {
+    grid-template-columns: 1fr;
+  }
+
+  .ce-popover__search .cdx-search-field__input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .ce-popover--inline > .ce-popover__container {
+    position: fixed;
+    inset: auto 1rem 1rem;
+    min-width: 0;
+    width: auto;
+    height: auto;
+  }
+
+  .ce-popover--inline .ce-popover--nested > .ce-popover__container {
+    position: fixed;
+    inset: auto 1rem 1rem;
+    min-width: 0;
+    width: auto;
+  }
+
+  .ce-popover--inline > .ce-popover__container > .ce-popover__items {
+    flex-wrap: wrap;
+  }
+
+  .ce-popover--inline > .ce-popover__container > .ce-popover__items > .ce-popover-item,
+  .ce-popover--inline .ce-inline-tool {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 .codex-editor path:not(.pw-mermaid path) {
@@ -313,6 +394,7 @@ div[data-item-name='convert-to'] {
   .ce-block,
   .ce-toolbar,
   .ce-popover,
+  .ce-popover__container,
   .ce-inline-toolbar {
     animation: none !important;
     transition: none !important;

@@ -250,6 +250,8 @@ export default class Table {
         {
           label: this.api.i18n.t('Align left'),
           icon: IconAlignLeft,
+          separatorBefore: true,
+          isActive: () => !this.columnAlignments[this.hoveredColumn - 1] || this.columnAlignments[this.hoveredColumn - 1] === 'left',
           onClick: () => {
             this.setColumnAlignment(this.selectedColumn, 'left');
             this.hideToolboxes();
@@ -258,6 +260,7 @@ export default class Table {
         {
           label: this.api.i18n.t('Align center'),
           icon: IconAlignCenter,
+          isActive: () => this.columnAlignments[this.hoveredColumn - 1] === 'center',
           onClick: () => {
             this.setColumnAlignment(this.selectedColumn, 'center');
             this.hideToolboxes();
@@ -266,6 +269,7 @@ export default class Table {
         {
           label: this.api.i18n.t('Align right'),
           icon: IconAlignRight,
+          isActive: () => this.columnAlignments[this.hoveredColumn - 1] === 'right',
           onClick: () => {
             this.setColumnAlignment(this.selectedColumn, 'right');
             this.hideToolboxes();

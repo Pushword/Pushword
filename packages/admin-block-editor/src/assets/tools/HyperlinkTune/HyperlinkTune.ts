@@ -49,30 +49,24 @@ export default class HyperlinkTune extends BaseTool {
   public render(_value: unknown = null): HTMLElement {
     const wrapper = document.createElement('div')
     wrapper.classList.add('cdx-anchor-tune-wrapper')
-    wrapper.style.display = 'block'
-    wrapper.style.position = 'relative'
 
-    const wrapperIcon = document.createElement('div')
-    wrapperIcon.classList.add('cdx-anchor-tune-icon')
-    wrapperIcon.style.position = 'absolute'
-    wrapperIcon.style.left = '-2px'
-    wrapperIcon.style.width = '25px'
-    wrapperIcon.style.opacity = '0.9'
-    wrapperIcon.style.height = '25px'
-    wrapperIcon.innerHTML = IconLink
-    wrapper.appendChild(wrapperIcon)
+    const label = make.element('div', 'cdx-anchor-tune-label', {
+      id: make.uniqueId('image-link-label'),
+    })
+    label.appendChild(make.element('span', 'cdx-anchor-tune-icon', { 'aria-hidden': 'true' }, IconLink))
+    const title = make.element('span')
+    title.textContent = this.api.i18n.t('Link')
+    label.appendChild(title)
+    wrapper.appendChild(label)
 
     this.nodes.url = make.input(
       this as any,
-      ['cdx-input-labeled', 'cdx-input-full'],
-      ':self OR /url',
+      ['cdx-anchor-tune-input', 'cdx-input-full'],
+      'https://…',
       this.data.url,
     )
-    this.nodes.url.style.backgroundColor = 'white'
-    this.nodes.url.style.borderRadius = '6px'
-    this.nodes.url.style.padding = '4px'
-    this.nodes.url.style.paddingLeft = '22px'
-    this.nodes.url.style.fontSize = '14px'
+    this.nodes.url.setAttribute('role', 'textbox')
+    this.nodes.url.setAttribute('aria-labelledby', label.id)
 
     this.nodes.hideForBot = make.switchInput(
       'hideForBot',
@@ -87,6 +81,12 @@ export default class HyperlinkTune extends BaseTool {
 
     wrapper.appendChild(this.nodes.url)
     wrapper.appendChild(this.nodes.hideForBot)
+    const help = make.element('small', 'cdx-anchor-tune-help', {
+      id: make.uniqueId('image-link-help'),
+    })
+    help.textContent = this.api.i18n.t('Mask the link in the page source.')
+    this.nodes.hideForBot.querySelector('input')!.setAttribute('aria-describedby', help.id)
+    wrapper.appendChild(help)
     wrapper.appendChild(this.nodes.targetBlank)
 
     // on change, save

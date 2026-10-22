@@ -3,7 +3,7 @@
   border: 0;
   border-radius: 0 0 4px 4px;
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   padding: 12px;
   width: 100%;
   box-sizing: border-box;
@@ -105,7 +105,7 @@
 /* The field carries no label of its own, so the hint has to stay readable: this
    is the label grey, 4.5:1 on the panel. */
 .link-options__url::placeholder {
-  color: #707684;
+  color: #475569;
 }
 
 /**
@@ -136,7 +136,7 @@
   min-height: 26px;
   font-size: 12px;
   font-weight: 500;
-  color: #707684;
+  color: #475569;
 }
 
 /**
@@ -146,7 +146,7 @@
 .link-options-wrapper .link-options__select {
   appearance: none;
   padding: 5px 26px 5px 8px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.4;
   color: #1d202b;
   cursor: pointer;
@@ -214,4 +214,16 @@
 
 .ce-popover__container {
   min-width: 235px !important;
+}
+
+@media (max-width: 650px) {
+  .link-options__url,
+  .link-options-wrapper .link-options__select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .link-options-wrapper .editor-switch > label:not(.label-default) {
+    min-height: 44px;
+  }
 }

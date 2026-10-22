@@ -121,6 +121,23 @@ final class EditorJsMessagesTest extends TestCase
         // switches the tune renders cannot read the link tool's entries.
         self::assertSame('Obfusquer', $messages['blockTunes']['linkTune']['Obfuscate']);
         self::assertArrayHasKey('New tab', $messages['blockTunes']['linkTune']);
+        self::assertArrayHasKey('Link', $messages['blockTunes']['linkTune']);
+        self::assertArrayHasKey('Mask the link in the page source.', $messages['blockTunes']['linkTune']);
+    }
+
+    public function testPopupCommandsHaveTranslatedConfirmationAndTableMenuLabels(): void
+    {
+        $translator = new Translator('fr');
+        $translator->addLoader('yaml', new YamlFileLoader());
+        $translator->addResource('yaml', __DIR__.'/../src/translations/messages.fr.yaml', 'fr');
+
+        $messages = new EditorJsMessages($translator)->getMessages();
+
+        self::assertSame('Confirmer la suppression', $messages['blockTunes']['delete']['Click to delete']);
+        self::assertSame('Confirmer la suppression', $messages['tools']['table']['Confirm deletion']);
+        self::assertSame('Options de colonne', $messages['tools']['table']['Column options']);
+        self::assertSame('Options de ligne', $messages['tools']['table']['Row options']);
+        self::assertSame('Barré', $messages['toolNames']['Strikethrough']);
     }
 
     /**

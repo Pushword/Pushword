@@ -14,6 +14,8 @@ export interface PopoverItem {
   confirmationRequired?: boolean;
   hideIf?: () => boolean;
   onClick: () => void;
+  isActive?: () => boolean;
+  separatorBefore?: boolean;
 }
 
 /**
@@ -23,15 +25,17 @@ export default class Popover {
   items: PopoverItem[];
   wrapper: HTMLElement | undefined;
   itemEls: HTMLElement[];
+  confirmationLabel: string;
 
   /**
    * @param {object} options - constructor options
    * @param {PopoverItem[]} options.items - constructor options
    */
-  constructor({items}: { items: PopoverItem[] }) {
+  constructor({items, confirmationLabel}: { items: PopoverItem[]; confirmationLabel: string }) {
     this.items = items;
     this.wrapper = undefined;
     this.itemEls = [];
+    this.confirmationLabel = confirmationLabel;
   }
 
   /**
@@ -58,9 +62,14 @@ export default class Popover {
    */
   render(): HTMLElement {
     this.wrapper = $.make('div', Popover.CSS.popover);
+    this.wrapper.setAttribute('role', 'menu');
 
     this.items.forEach((item, index) => {
-      const itemEl = $.make('div', Popover.CSS.item);
+      const itemEl = $.make('button', Popover.CSS.item, { type: 'button', tabIndex: -1 });
+      itemEl.setAttribute('role', 'menuitem');
+      itemEl.classList.toggle('tc-popover__item--destructive', !!item.confirmationRequired);
+      itemEl.classList.toggle('tc-popover__item--separated', !!item.separatorBefore);
+      if (item.isActive) itemEl.setAttribute('role', 'menuitemradio');
       const icon = $.make('div', Popover.CSS.itemIcon, {
         innerHTML: item.icon
       });
@@ -82,6 +91,21 @@ export default class Popover {
      */
     this.wrapper.addEventListener('click', (event) => {
       this.popoverClicked(event);
+    });
+    this.wrapper.addEventListener('keydown', (event) => {
+      const visible = this.itemEls.filter(el => !el.classList.contains(Popover.CSS.itemHidden));
+      const index = visible.indexOf(document.activeElement as HTMLElement);
+      let next: number;
+      switch (event.key) {
+        case 'ArrowDown': next = (index + 1) % visible.length; break;
+        case 'ArrowUp': next = (index - 1 + visible.length) % visible.length; break;
+        case 'Home': next = 0; break;
+        case 'End': next = visible.length - 1; break;
+        default: return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      visible[next]?.focus();
     });
 
     return this.wrapper;
@@ -126,6 +150,7 @@ export default class Popover {
    */
   setConfirmationState(itemEl: HTMLElement): void {
     itemEl.classList.add(Popover.CSS.itemConfirmState);
+    itemEl.querySelector(`.${Popover.CSS.itemLabel}`)!.textContent = this.confirmationLabel;
   }
 
   /**
@@ -135,6 +160,7 @@ export default class Popover {
    */
   clearConfirmationState(itemEl: HTMLElement): void {
     itemEl.classList.remove(Popover.CSS.itemConfirmState);
+    itemEl.querySelector(`.${Popover.CSS.itemLabel}`)!.textContent = this.items[Number(itemEl.dataset.index)]!.label;
   }
 
   /**
@@ -165,12 +191,18 @@ export default class Popover {
      * If item provides 'hideIf()' method that returns true, hide item
      */
     this.items.forEach((item, index) => {
+      if (item.isActive) {
+        const active = item.isActive();
+        this.itemEls[index]!.setAttribute('aria-checked', String(active));
+        this.itemEls[index]!.classList.toggle('tc-popover__item--active', active);
+      }
       if (typeof item.hideIf === 'function') {
         this.itemEls[index]?.classList.toggle(Popover.CSS.itemHidden, item.hideIf());
       }
     });
 
     this.wrapper!.classList.add(Popover.CSS.popoverOpened);
+    this.itemEls.find(el => !el.classList.contains(Popover.CSS.itemHidden))?.focus();
   }
 
   /**

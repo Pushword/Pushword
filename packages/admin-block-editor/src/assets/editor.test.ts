@@ -197,6 +197,22 @@ it('leaves an erasing key typed outside the blocks alone', () => {
   expect(event.defaultPrevented).toBe(false)
 })
 
+it.each(['input', 'button'])('keeps characters typed in a popup %s from replacing selected blocks', (tag) => {
+  const instance = boot('{"blocks":[]}')
+  const holder = document.getElementById('ed')!
+  holder.innerHTML = `<div class="ce-block ce-block--selected"><p contenteditable="true">Text</p></div><div class="ce-settings"><${tag}></${tag}></div>`
+  const control = holder.querySelector(tag)!
+  const editor = instance.getEditors().ed!
+  for (const key of ['x', ' ']) {
+    window.getSelection()!.collapse(holder.querySelector('p')!.firstChild, 0)
+    const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+    control.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
+  }
+  expect(editor.blocks.insert).not.toHaveBeenCalled()
+  expect(editor.blocks.delete).not.toHaveBeenCalled()
+})
+
 it.each(['read-only', 'text selection', 'unselected blocks'])('keeps native typing with %s', (state) => {
   const instance = boot('{"blocks":[]}')
   const holder = document.getElementById('ed')!
