@@ -439,12 +439,33 @@ asks which language to send.
 
 ### Email design and live preview
 
+In **Newsletter → Templates**, choose **Create template**. Give it a name, edit
+the Markdown header and footer, and switch the frame on or off. The mobile
+preview updates while typing. New templates start with `%siteName%` and a
+`© %year% %siteName%` footer. Save the template to make it available in campaign
+and audience design choices. **Duplicate** opens a prefilled copy; the original
+is preserved, and the copy is only created when saved.
+
+Saved templates are reusable across audiences; their tokens resolve against
+the audience's site when sending. Editing a saved template updates every
+audience or campaign that selects it. Choose **Duplicate** for a separate design.
+Templates supplied as Twig files remain selectable alongside saved templates.
+
 The campaign form starts with **Choose the audience and design**. Select the
 audience, then choose **Design for this campaign**: inherit the audience's design,
 use a standard layout, or select one of the site's Twig presets. The effective
 design is shown below the choice and updates when the audience changes. A
 campaign override is saved with that campaign and is used by both real sends and
 test emails; it does not modify the audience or its automations.
+
+Campaign creation and editing show a live email preview beside the form. It
+uses the unsaved audience, design, subject, preview text, body and transactional
+setting, with Alex as the sample recipient. Selecting an audience starts the
+preview; no draft, subscriber or delivery is created. **Mobile 375** is selected
+by default, with **Desktop 600** available. Narrow screens have a
+**Write newsletter / Live preview** switch that preserves the form's edits.
+The **Create or manage templates** link opens another tab. Returning to the
+campaign refreshes its template choices without discarding the draft.
 
 Standard layouts keep the audience's editable header and footer. The shared-design
 link opens those settings in another tab, preserving the campaign form. Changing
@@ -475,7 +496,9 @@ same HTML differently.
 
 The unsubscribe link and postal address remain automatic. An occurrence's
 `SendContext.footerMarkdown` overrides the audience footer, including an empty
-override. Existing audiences keep their saved layout, header and footer.
+override. A null footer inherits the selected design; `SendContext::fromAudience`
+uses that value for saved templates. Existing audiences keep their saved layout,
+header and footer.
 Sites overriding `/newsletter/email.html.twig` receive `wrapped` and `header`
 alongside the existing `body` and `footer` variables and control their own layout.
 Templates also receive `siteName` and `year` for site-owned branding.

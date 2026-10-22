@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from '../../src/Resources/assets/admin.newsletter.js'
 
 function renderDelay(value) {
@@ -61,12 +61,13 @@ describe('newsletter email delays', () => {
 })
 
 describe('campaign email design selection', () => {
-  afterEach(() => { document.body.innerHTML = '' })
+  afterEach(() => { document.body.innerHTML = ''; vi.unstubAllGlobals() })
 
   function setup() {
     document.body.innerHTML = `<form>
       <select name="Campaign[audience]"><option value="">Choose</option><option value="1">First</option><option value="2">Second</option></select>
-      <select data-pw-campaign-design><option value="">Audience default</option><option value="simple">Simple</option><option value="framed">Framed</option><option value="twig:brand">Brand</option></select>
+      <select data-pw-campaign-design><option value="">Audience default</option><option value="simple">Simple</option><option value="framed">Framed</option><optgroup label="Site templates"><option value="twig:brand">Brand</option></optgroup></select>
+      <a data-campaign-templates data-choices-url="/templates/choices">Templates</a>
       <div data-campaign-design-summary data-current="In use: %theme%" data-empty="Choose an audience" data-custom="Site preset" data-shared="Identity from %audience%">
         <p data-campaign-design-current></p><p data-campaign-design-description hidden></p><a data-campaign-design-edit hidden target="_blank"></a><p data-campaign-design-warning hidden></p>
       </div></form>`
@@ -108,5 +109,31 @@ describe('campaign email design selection', () => {
     choose('[name="Campaign[audience]"]', '')
     expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('Choose an audience')
     expect(document.querySelector('[data-campaign-design-edit]').hidden).toBe(true)
+  })
+
+  it('refreshes templates on returning to the campaign while preserving the selection', async () => {
+    setup()
+    choose('[name="Campaign[audience]"]', '1')
+    choose('[data-pw-campaign-design]', 'twig:brand')
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ groups: { 'Saved templates': { 'New saved design': 'saved:3' }, 'Site templates': { Brand: 'twig:brand' } } }) }))
+    window.dispatchEvent(new Event('focus'))
+    await vi.waitFor(() => expect(document.querySelector('option[value="saved:3"]')).not.toBeNull())
+    expect(document.querySelector('[data-pw-campaign-design]').value).toBe('twig:brand')
+    expect(document.querySelectorAll('option[value="twig:brand"]')).toHaveLength(1)
+    choose('[data-pw-campaign-design]', 'saved:3')
+    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: New saved design')
+    expect(document.querySelector('[data-campaign-design-edit]').hidden).toBe(true)
+  })
+
+  it('keeps the current choices and selection when a background refresh fails', async () => {
+    setup()
+    choose('[name="Campaign[audience]"]', '1')
+    choose('[data-pw-campaign-design]', 'twig:brand')
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Offline')))
+    window.dispatchEvent(new Event('focus'))
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1))
+    expect(document.querySelector('[data-pw-campaign-design]').value).toBe('twig:brand')
+    expect(document.querySelectorAll('option[value="twig:brand"]')).toHaveLength(1)
+    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: Brand')
   })
 })

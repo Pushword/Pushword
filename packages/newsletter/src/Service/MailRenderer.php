@@ -72,11 +72,12 @@ final readonly class MailRenderer
         }
 
         $layout = $emailLayout ?? $audience->emailLayout;
+        $saved = $this->emailTemplates->saved($layout);
         $template = str_starts_with($layout, 'twig:')
             ? $this->emailTemplates->template(substr($layout, 5))
             : $this->view($audience, 'email.html.twig', $sendContext);
-        $header = $this->designText($audience->headerMarkdown, $host);
-        $footer = $this->designText($sendContext->footerMarkdown ?? $audience->footerMarkdown, $host);
+        $header = $this->designText($saved->headerMarkdown ?? $audience->headerMarkdown, $host);
+        $footer = $this->designText($sendContext->footerMarkdown ?? $saved->footerMarkdown ?? $audience->footerMarkdown, $host);
 
         return $this->twig->render($template, [
             'audience' => $audience,
@@ -87,7 +88,7 @@ final readonly class MailRenderer
             'siteName' => $this->siteRegistry->get($host)->name,
             'year' => new DateTimeImmutable()->format('Y'),
             'postalAddress' => null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress,
-            'wrapped' => 'framed' === $layout,
+            'wrapped' => $saved->wrapped ?? 'framed' === $layout,
             'header' => $this->absolutize($this->markdownParser->transform($header), $host),
             'footer' => $this->absolutize($this->markdownParser->transform($footer), $host),
             'subject' => $this->personalize($subject, $contact),
@@ -123,9 +124,11 @@ final readonly class MailRenderer
     public function text(Audience $audience, Contact $contact, string $bodyMarkdown, ?string $unsubscribeUrl, ?SendContext $sendContext = null, ?string $emailLayout = null): string
     {
         $postalAddress = null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress;
-        $custom = str_starts_with($emailLayout ?? $audience->emailLayout, 'twig:');
-        $header = $custom ? '' : $audience->headerMarkdown;
-        $footer = $custom ? '' : $audience->footerMarkdown;
+        $layout = $emailLayout ?? $audience->emailLayout;
+        $saved = $this->emailTemplates->saved($layout);
+        $custom = str_starts_with($layout, 'twig:');
+        $header = $custom ? '' : ($saved->headerMarkdown ?? $audience->headerMarkdown);
+        $footer = $custom ? '' : ($saved->footerMarkdown ?? $audience->footerMarkdown);
         $foot = array_filter(
             [$unsubscribeUrl, $postalAddress, $sendContext->footerMarkdown ?? $footer],
             static fn (?string $value): bool => null !== $value && '' !== $value,

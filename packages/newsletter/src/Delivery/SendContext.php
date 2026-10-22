@@ -15,7 +15,7 @@ final readonly class SendContext
         public string $fromName,
         public ?string $replyTo = null,
         public ?string $postalAddress = null,
-        public string $footerMarkdown = '',
+        public ?string $footerMarkdown = '',
         public ?string $audienceName = null,
         public ?string $systemLinkBaseUrl = null,
     ) {
@@ -29,12 +29,16 @@ final readonly class SendContext
             $audience->fromName,
             $audience->replyTo,
             $audience->postalAddress,
-            footerMarkdown: null === $audience->emailTemplate ? $audience->footerMarkdown : '',
+            footerMarkdown: match (true) {
+                str_starts_with($audience->emailLayout, 'saved:') => null,
+                null === $audience->emailTemplate => $audience->footerMarkdown,
+                default => '',
+            },
             audienceName: $audience->name
         );
     }
 
-    /** @return array{mainHost: string, fromEmail: string, fromName: string, replyTo: ?string, postalAddress: ?string, footerMarkdown: string, audienceName: ?string, systemLinkBaseUrl: ?string} */
+    /** @return array{mainHost: string, fromEmail: string, fromName: string, replyTo: ?string, postalAddress: ?string, footerMarkdown: ?string, audienceName: ?string, systemLinkBaseUrl: ?string} */
     public function toArray(): array
     {
         return [
@@ -49,7 +53,7 @@ final readonly class SendContext
         ];
     }
 
-    /** @param array{mainHost: string, fromEmail: string, fromName: string, replyTo: ?string, postalAddress: ?string, footerMarkdown: string, audienceName: ?string, systemLinkBaseUrl?: ?string} $data */
+    /** @param array{mainHost: string, fromEmail: string, fromName: string, replyTo: ?string, postalAddress: ?string, footerMarkdown: ?string, audienceName: ?string, systemLinkBaseUrl?: ?string} $data */
     public static function fromArray(array $data): self
     {
         return new self(...$data);

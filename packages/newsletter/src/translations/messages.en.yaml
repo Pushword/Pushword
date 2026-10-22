@@ -89,14 +89,15 @@ newsletter:
       sendTest: Send test
     design:
       current: 'Design in use: %theme%'
-      custom: This preset defines the header, footer and frame for this campaign.
+      custom: This template defines the header, footer and frame for this campaign.
       edit: Edit the shared audience design (new tab)
       empty: Choose an audience to see the email design in use.
-      help: This choice applies to this campaign only. Standard layouts keep the audience’s text; a site preset provides its own header and footer.
+      help: This choice applies to this campaign only. Standard layouts keep the audience’s text; saved and site templates provide their own header and footer.
       inherit: Use the audience design
       label: Design for this campaign
       shared: 'Header and footer configured for “%audience%”.'
       warning: Changing the audience design also affects campaigns and automations that use it.
+    editor: Write newsletter
     fieldset:
       advanced: Advanced options
       audience: 3. Refine recipients
@@ -310,7 +311,7 @@ newsletter:
     identity: Sender identity
     layout: Layout
     mobile: Mobile
-    presetHelp: A ready-made design supplied by your site.
+    presetHelp: A reusable design with its own header, footer and frame.
     preview: Live preview
     previewHelp: This is a preview, no email is sent. Email clients may render it differently.
     ready: Preview up to date
@@ -444,6 +445,24 @@ newsletter:
     sendFailed: We could not send the confirmation email. Check your address and try again.
     tooMany: Too many attempts. Please try again later.
     unknownAudience: This newsletter does not exist.
+  template:
+    copyName: '%name% (copy)'
+    create: Create template
+    duplicate: Duplicate
+    footerHelp: 'Markdown signature. Use © %year% %siteName% for copyright. Unsubscribe and postal address are added automatically.'
+    headerHelp: 'Markdown header. Use %siteName% for the site name. Images need an absolute public URL.'
+    help: Reuse this header, footer and frame across newsletters. Changes apply to every audience and campaign using this template.
+    identity: Template settings
+    label:
+      plural: Templates
+      singular: Template
+    manage: Create or manage templates (new tab)
+    name: Template name
+    sampleAudience: Your newsletter
+    save: Save template
+    savedGroup: Saved templates
+    siteGroup: Site templates
+    wrapped: Add a frame around the content
   unknown:
     body: This link is no longer valid.
     title: Unknown link
@@ -478,6 +497,9 @@ newsletter:
     contactDescription: Find your subscribers, their contact details and their audience subscriptions.
     contactEmptyHint: Subscribe a contact to an audience to start building your mailing list.
     contactEmptyTitle: Get to know your subscribers
+    emailtemplateDescription: Create reusable email designs with a header, footer and optional frame.
+    emailtemplateEmptyHint: Name your design, add a header and footer, then choose it in a newsletter.
+    emailtemplateEmptyTitle: Create your first template
     filterAll: All
     filterStatus: Filter by status
     rowActions: 'Actions for row %id%'

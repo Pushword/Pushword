@@ -1,0 +1,6 @@
+{% extends '@EasyAdmin/crud/new.html.twig' %}
+
+{% block main %}
+  {% set editor_form %}{{ parent() }}{% endset %}
+  {{ include('@PushwordNewsletter/admin/_form_workspace.html.twig') }}
+{% endblock %}

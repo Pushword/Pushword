@@ -22,7 +22,7 @@ export function initCampaignDesigns(root = document) {
       const layout = select.value || design.layout
       const label = Array.from(select.options).find((option) => option.value === layout)?.textContent || layout
       current.textContent = summary.dataset.current.replace('%theme%', label)
-      const custom = layout.startsWith('twig:')
+      const custom = layout.startsWith('twig:') || layout.startsWith('saved:')
       description.textContent = custom ? summary.dataset.custom : summary.dataset.shared.replace('%audience%', design.name)
       if (!select.value || !custom) {
         edit.href = design.url
@@ -33,6 +33,28 @@ export function initCampaignDesigns(root = document) {
     select.addEventListener('change', update)
     audience.addEventListener('change', update)
     update()
+
+    const templates = select.form.querySelector('[data-campaign-templates]')
+    if (templates) window.addEventListener('focus', async () => {
+      if (!select.isConnected) return
+      try {
+        const response = await fetch(templates.dataset.choicesUrl)
+        if (!response.ok) return
+        const { groups } = await response.json()
+        const selected = select.value
+        select.querySelectorAll('optgroup').forEach((group) => group.remove())
+        for (const [label, choices] of Object.entries(groups)) {
+          const group = document.createElement('optgroup')
+          group.label = label
+          for (const [name, value] of Object.entries(choices)) group.append(new Option(name, value))
+          select.append(group)
+        }
+        select.value = selected
+        select.dispatchEvent(new Event('change', { bubbles: true }))
+      } catch {
+        // Keep the current choices if a background refresh cannot complete.
+      }
+    })
   })
 }
 

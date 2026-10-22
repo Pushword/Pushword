@@ -1,0 +1,11 @@
+{% set kind = ea.crud.entityFqcn ends with '\\EmailTemplate' ? 'template' : 'campaign' %}
+<div class="pw-newsletter-design pw-newsletter-composer" data-pw-email-preview data-preview-kind="{{ kind }}" data-preview-url="{{ path('admin_newsletter_' ~ kind ~ '_preview') }}" data-preview-token="{{ csrf_token('newsletter_email_preview') }}" data-viewport="mobile" data-mobile-panel="settings">
+  <div class="pw-newsletter-design-switch" role="group" aria-label="{{ 'newsletter.design.view'|trans }}">
+    <button type="button" class="btn btn-secondary" data-design-panel="settings" aria-controls="newsletter-design-settings" aria-pressed="true">{{ (kind == 'campaign' ? 'newsletter.campaign.editor' : 'newsletter.design.settings')|trans }}</button>
+    <button type="button" class="btn btn-secondary" data-design-panel="preview" aria-controls="newsletter-design-preview" aria-pressed="false">{{ 'newsletter.design.preview'|trans }}</button>
+  </div>
+  <div id="newsletter-design-settings" class="pw-newsletter-design-editor">
+    {{ editor_form|raw }}
+  </div>
+  {{ include('@PushwordNewsletter/admin/_email_preview.html.twig') }}
+</div>

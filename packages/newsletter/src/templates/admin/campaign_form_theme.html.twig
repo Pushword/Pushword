@@ -8,4 +8,5 @@
     <a data-campaign-design-edit hidden target="_blank" rel="noopener">{{ 'newsletter.campaign.design.edit'|trans }}</a>
     <p data-campaign-design-warning hidden>{{ 'newsletter.campaign.design.warning'|trans }}</p>
   </div>
+  <a class="pw-campaign-templates-link" href="{{ path('admin_newsletter_template_index') }}" target="_blank" rel="noopener" data-campaign-templates data-choices-url="{{ path('admin_newsletter_template_choices') }}">{{ 'newsletter.template.manage'|trans }}</a>
 {% endblock %}

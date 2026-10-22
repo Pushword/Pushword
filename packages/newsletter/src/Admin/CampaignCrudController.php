@@ -72,6 +72,8 @@ class CampaignCrudController extends AbstractCrudController
         $crud = $crud
             ->overrideTemplate('layout', '@PushwordNewsletter/admin/layout.html.twig')
             ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
+            ->overrideTemplate('crud/new', '@PushwordNewsletter/admin/compose_new.html.twig')
+            ->overrideTemplate('crud/edit', '@PushwordNewsletter/admin/compose_edit.html.twig')
             ->addFormTheme('@PushwordNewsletter/admin/campaign_form_theme.html.twig')
             ->setEntityLabelInSingular('newsletter.campaign.label.singular')
             ->setEntityLabelInPlural('newsletter.campaign.label.plural')

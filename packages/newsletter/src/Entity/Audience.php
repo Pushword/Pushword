@@ -109,14 +109,18 @@ class Audience implements IdInterface, Stringable
     public string $emailLayout {
         get {
             if (null !== $this->emailTemplate) {
-                return 'twig:'.$this->emailTemplate;
+                return str_starts_with($this->emailTemplate, 'saved:') ? $this->emailTemplate : 'twig:'.$this->emailTemplate;
             }
 
             return $this->emailWrapped ? 'framed' : 'simple';
         }
         set(string $value) {
             $this->emailWrapped = 'framed' === $value;
-            $this->emailTemplate = str_starts_with($value, 'twig:') ? substr($value, 5) : null;
+            $this->emailTemplate = match (true) {
+                str_starts_with($value, 'twig:') => substr($value, 5),
+                str_starts_with($value, 'saved:') => $value,
+                default => null,
+            };
         }
     }
 

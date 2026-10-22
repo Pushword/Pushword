@@ -1,5 +1,5 @@
 ---
-title: 'new newsletter audiences start with a site identity; campaigns can choose their own design'
+title: 'new newsletter audiences start with a site identity; campaigns can choose their own design; reusable email templates in the admin'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 run: 'doctrine:schema:update --force'
@@ -45,3 +45,7 @@ New audiences start with a site-name header and a copyright footer. Existing sav
 ## Campaign email design
 
 Run `php bin/console doctrine:schema:update --force` to add the nullable campaign layout override. Existing campaigns continue to inherit the audience's design. Campaign forms now offer an explicit design choice before the content; saved choices apply to real and test sends. See [email design](../extension/newsletter#email-design-and-live-preview).
+
+## Reusable email templates
+
+Run `php bin/console doctrine:schema:update --force` to create the newsletter email template table. Editors can create and duplicate named designs in **Newsletter → Templates** and select them for campaigns or audience defaults. Campaign forms now preview unsaved content directly, using a mobile viewport by default. See [email design](../extension/newsletter#email-design-and-live-preview).

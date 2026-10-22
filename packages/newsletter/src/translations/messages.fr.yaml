@@ -92,11 +92,12 @@ newsletter:
       custom: Ce modèle définit l'en-tête, le pied de page et le cadre de cette campagne.
       edit: Modifier l'habillage commun de l'audience (nouvel onglet)
       empty: Choisissez une audience pour voir l'habillage utilisé.
-      help: Ce choix s'applique uniquement à cette campagne. Les mises en page standard gardent les textes de l'audience ; un modèle du site fournit son propre en-tête et pied de page.
+      help: Ce choix s'applique uniquement à cette campagne. Les mises en page standard gardent les textes de l'audience ; les modèles enregistrés et ceux du site fournissent leur propre en-tête et pied de page.
       inherit: Utiliser l'habillage de l'audience
       label: Habillage de cette campagne
       shared: 'En-tête et pied de page configurés pour « %audience% ».'
       warning: Modifier l'habillage de l'audience affecte aussi les campagnes et automatisations qui l'utilisent.
+    editor: Rédiger la newsletter
     fieldset:
       advanced: Options avancées
       audience: 3. Affiner les destinataires
@@ -310,7 +311,7 @@ newsletter:
     identity: Identité de l'expéditeur
     layout: Mise en page
     mobile: Mobile
-    presetHelp: Un habillage prêt à l'emploi, fourni par votre site.
+    presetHelp: Un habillage réutilisable avec son en-tête, son pied de page et son cadre.
     preview: Aperçu en direct
     previewHelp: Aucun email n'est envoyé depuis cet aperçu. Le rendu peut varier selon la messagerie.
     ready: Aperçu à jour
@@ -444,6 +445,24 @@ newsletter:
     sendFailed: L'envoi de l'e-mail de confirmation a échoué. Vérifiez votre adresse et réessayez.
     tooMany: Trop de tentatives. Réessayez plus tard.
     unknownAudience: Cette newsletter n'existe pas.
+  template:
+    copyName: '%name% (copie)'
+    create: Créer un modèle
+    duplicate: Dupliquer
+    footerHelp: Signature en Markdown. Utilisez © %year% %siteName% pour le copyright. Le désabonnement et l'adresse postale sont ajoutés automatiquement.
+    headerHelp: En-tête en Markdown. Utilisez %siteName% pour le nom du site. Les images nécessitent une URL publique absolue.
+    help: Réutilisez cet en-tête, ce pied de page et ce cadre dans vos newsletters. Les modifications s'appliquent à toutes les audiences et campagnes utilisant ce modèle.
+    identity: Réglages du modèle
+    label:
+      plural: Modèles
+      singular: Modèle
+    manage: Créer ou gérer les modèles (nouvel onglet)
+    name: Nom du modèle
+    sampleAudience: Votre newsletter
+    save: Enregistrer le modèle
+    savedGroup: Modèles enregistrés
+    siteGroup: Modèles du site
+    wrapped: Ajouter un cadre autour du contenu
   unknown:
     body: Ce lien n'est plus valide.
     title: Lien inconnu
@@ -478,6 +497,9 @@ newsletter:
     contactDescription: Retrouvez vos abonnés, leurs coordonnées et leurs inscriptions aux différentes audiences.
     contactEmptyHint: Inscrivez un contact dans une audience pour commencer à construire votre liste d'abonnés.
     contactEmptyTitle: Faites connaissance avec vos abonnés
+    emailtemplateDescription: Créez des habillages réutilisables avec un en-tête, un pied de page et un cadre facultatif.
+    emailtemplateEmptyHint: Nommez votre modèle, ajoutez un en-tête et un pied de page, puis sélectionnez-le dans une newsletter.
+    emailtemplateEmptyTitle: Créez votre premier modèle
     filterAll: Toutes
     filterStatus: Filtrer par statut
     rowActions: 'Actions de la ligne %id%'

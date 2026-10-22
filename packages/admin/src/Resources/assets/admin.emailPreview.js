@@ -3,11 +3,13 @@ export function initEmailPreview(root = document) {
     if (panel.dataset.initialized) return
     panel.dataset.initialized = 'true'
 
+    const kind = panel.dataset.previewKind || 'audience'
     const form = panel.querySelector('form')
     const frame = panel.querySelector('iframe')
     const status = panel.querySelector('[data-preview-status]')
     const retry = panel.querySelector('[data-preview-retry]')
     const saveState = panel.querySelector('[data-save-state]')
+    const canvas = panel.querySelector('.pw-newsletter-design-canvas')
     const savedValues = panel.dataset.savedValues ? JSON.stringify(JSON.parse(panel.dataset.savedValues)) : designValues()
     let timer
     let request
@@ -17,16 +19,23 @@ export function initEmailPreview(root = document) {
 
     function designValues() {
       const data = new FormData(form)
-      return JSON.stringify(['emailLayout', 'headerMarkdown', 'footerMarkdown'].map((name) => data.get(`email_design[${name}]`)))
+      const prefix = kind === 'template' ? 'EmailTemplate' : 'email_design'
+      const fields = kind === 'template' ? ['name', 'wrapped', 'headerMarkdown', 'footerMarkdown'] : ['emailLayout', 'headerMarkdown', 'footerMarkdown']
+      return JSON.stringify(fields.map((name) => data.get(`${prefix}[${name}]`)))
     }
 
     function updateLayout() {
-      const custom = form.querySelector('[name="email_design[emailLayout]"]:checked')?.value.startsWith('twig:') ?? false
-      panel.querySelector('[data-email-editable]').hidden = custom
-      panel.querySelector('[data-email-template-help]').hidden = !custom
-      dirty = designValues() !== savedValues
-      saveState.dataset.dirty = String(dirty)
-      saveState.textContent = dirty ? saveState.dataset.unsaved : saveState.dataset.saved
+      if (kind === 'audience') {
+        const layout = form.querySelector('[name="email_design[emailLayout]"]:checked')?.value || ''
+        const custom = layout.startsWith('twig:') || layout.startsWith('saved:')
+        panel.querySelector('[data-email-editable]').hidden = custom
+        panel.querySelector('[data-email-template-help]').hidden = !custom
+      }
+      dirty = kind !== 'campaign' && designValues() !== savedValues
+      if (saveState) {
+        saveState.dataset.dirty = String(dirty)
+        saveState.textContent = dirty ? saveState.dataset.unsaved : saveState.dataset.saved
+      }
     }
 
     updateLayout()
@@ -35,13 +44,14 @@ export function initEmailPreview(root = document) {
       request = new AbortController()
       const data = new FormData(form)
       data.set('preview', '1')
+      if (kind !== 'audience') data.set('_preview_token', panel.dataset.previewToken)
       status.textContent = status.dataset.updating
       status.dataset.state = 'updating'
       retry.hidden = true
       frame.setAttribute('aria-busy', 'true')
 
       try {
-        const response = await fetch(form.action, { method: 'POST', body: data, signal: request.signal })
+        const response = await fetch(panel.dataset.previewUrl || form.action, { method: 'POST', body: data, signal: request.signal })
         if (!response.ok) throw new Error('Preview failed')
         const result = await response.json()
         if (version !== revision) return
@@ -58,13 +68,23 @@ export function initEmailPreview(root = document) {
       }
     }
 
-    function schedule() {
+    function schedule(event) {
+      if (event && kind === 'campaign' && !['audience', 'emailLayout', 'subject', 'preheader', 'bodyMarkdown', 'transactional'].some((name) => event.target.name === `Campaign[${name}]`)) return
       updateLayout()
       clearTimeout(timer)
       request?.abort()
+      const version = ++revision
+      const empty = kind === 'campaign' && !form.elements.namedItem('Campaign[audience]').value
+      if (canvas) canvas.hidden = empty
+      if (empty) {
+        status.textContent = status.dataset.empty
+        status.dataset.state = 'empty'
+        retry.hidden = true
+        frame.setAttribute('aria-busy', 'false')
+        return
+      }
       status.textContent = status.dataset.updating
       status.dataset.state = 'updating'
-      const version = ++revision
       timer = setTimeout(() => update(version), 250)
     }
 
@@ -82,7 +102,7 @@ export function initEmailPreview(root = document) {
       request?.abort()
       update(++revision)
     })
-    panel.querySelector('[data-design-defaults]').addEventListener('click', (event) => {
+    panel.querySelector('[data-design-defaults]')?.addEventListener('click', (event) => {
       const button = event.currentTarget
       form.elements.namedItem('email_design[headerMarkdown]').value = button.dataset.header
       form.elements.namedItem('email_design[footerMarkdown]').value = button.dataset.footer
@@ -104,5 +124,6 @@ export function initEmailPreview(root = document) {
         })
       })
     })
+    if (kind !== 'audience') schedule()
   })
 }

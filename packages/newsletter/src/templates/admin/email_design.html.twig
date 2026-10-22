@@ -28,7 +28,7 @@
         <fieldset class="pw-newsletter-design-layout">
           <legend>{{ design_form.emailLayout.vars.label|trans }}</legend>
           {% for choice in design_form.emailLayout %}
-            {% set kind = choice.vars.value starts with 'twig:' ? 'preset' : choice.vars.value %}
+            {% set kind = choice.vars.value starts with 'twig:' or choice.vars.value starts with 'saved:' ? 'preset' : choice.vars.value %}
             <label class="pw-newsletter-layout-option" for="{{ choice.vars.id }}">
               {{ form_widget(choice, {attr: {class: 'form-check-input'}}) }}
               <span><strong>{{ choice.vars.label|trans }}</strong><span class="pw-newsletter-layout-description">{{ ('newsletter.design.' ~ kind ~ 'Help')|trans }}</span></span>
@@ -55,22 +55,6 @@
         </div>
       {{ form_end(design_form) }}
     </div>
-    <section id="newsletter-design-preview" class="pw-newsletter-design-preview" aria-labelledby="newsletter-preview-title">
-      <div class="pw-newsletter-design-toolbar">
-        <h2 id="newsletter-preview-title">{{ 'newsletter.design.preview'|trans }}</h2>
-        <div class="btn-group" role="group" aria-label="{{ 'newsletter.design.viewport'|trans }}">
-          <button type="button" class="btn btn-secondary" data-preview-width="mobile" aria-pressed="true">{{ 'newsletter.design.mobile'|trans }} <span>375</span></button>
-          <button type="button" class="btn btn-secondary" data-preview-width="desktop" aria-pressed="false">{{ 'newsletter.design.desktop'|trans }} <span>600</span></button>
-        </div>
-      </div>
-      <div class="pw-newsletter-design-feedback">
-        <p class="pw-newsletter-design-status" role="status" aria-live="polite" data-preview-status data-state="ready" data-updating="{{ 'newsletter.design.updating'|trans }}" data-ready="{{ 'newsletter.design.ready'|trans }}" data-failed="{{ 'newsletter.design.failed'|trans }}">{{ 'newsletter.design.ready'|trans }}</p>
-        <button type="button" class="btn btn-link" data-preview-retry hidden>{{ 'newsletter.design.retry'|trans }}</button>
-      </div>
-      <div class="pw-newsletter-design-canvas" tabindex="0" role="region" aria-label="{{ 'newsletter.design.canvas'|trans }}">
-        <iframe title="{{ 'newsletter.design.preview'|trans }}" sandbox="" srcdoc="{{ preview_html }}"></iframe>
-      </div>
-      <p class="form-text">{{ 'newsletter.design.previewHelp'|trans }}</p>
-    </section>
+    {{ include('@PushwordNewsletter/admin/_email_preview.html.twig') }}
   </div>
 {% endblock %}

@@ -194,3 +194,101 @@ describe('live email design preview', () => {
     expect(document.querySelector('[data-preview-status]').textContent).toBe('Ready')
   })
 })
+
+describe('template and campaign form previews', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response('Live campaign')))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+    document.body.innerHTML = ''
+  })
+
+  function render(kind, audience = '') {
+    document.body.innerHTML = `<div data-pw-email-preview data-preview-kind="${kind}" data-preview-url="/admin/newsletter/${kind}-preview" data-preview-token="preview-token" data-viewport="mobile" data-mobile-panel="settings">
+      <form action="/save">
+        <select name="Campaign[audience]"><option value="">Choose</option><option value="1"${audience ? ' selected' : ''}>Audience</option></select>
+        <select name="Campaign[emailLayout]"><option value="">Default</option><option value="saved:2">Saved design</option></select>
+        <input name="Campaign[subject]" value="Initial subject">
+        <input name="Campaign[preheader]">
+        <textarea name="Campaign[bodyMarkdown]"></textarea>
+        <input name="Campaign[segmentAsJson]">
+        <input name="EmailTemplate[name]" value="Named template">
+        <textarea name="EmailTemplate[headerMarkdown]">Header</textarea>
+        <textarea name="EmailTemplate[footerMarkdown]">Footer</textarea>
+        <input type="checkbox" name="EmailTemplate[wrapped]" value="1" checked>
+      </form>
+      <button type="button" data-design-panel="settings">Settings</button><button type="button" data-design-panel="preview">Preview</button>
+      <button type="button" data-preview-width="mobile">Mobile</button><button type="button" data-preview-width="desktop">Desktop</button>
+      <p data-preview-status data-empty="Choose an audience" data-updating="Updating" data-ready="Ready" data-failed="Failed"></p>
+      <button type="button" data-preview-retry hidden>Retry</button>
+      <div class="pw-newsletter-design-canvas"><iframe sandbox="" srcdoc="Initial preview"></iframe></div>
+    </div>`
+    initEmailPreview()
+  }
+
+  function edit(name, value, type = 'input') {
+    const input = document.querySelector(`[name="${name}"]`)
+    input.value = value
+    input.dispatchEvent(new Event(type, { bubbles: true }))
+  }
+
+  it('waits for an audience, then previews the unsaved campaign without submitting it', async () => {
+    render('campaign')
+    await vi.advanceTimersByTimeAsync(250)
+    expect(fetch).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-preview-status]').textContent).toBe('Choose an audience')
+    expect(document.querySelector('.pw-newsletter-design-canvas').hidden).toBe(true)
+    edit('Campaign[audience]', '1', 'change')
+    edit('Campaign[subject]', 'Unsaved subject')
+    edit('Campaign[bodyMarkdown]', 'Unsaved **body**')
+    edit('Campaign[emailLayout]', 'saved:2', 'change')
+    await vi.advanceTimersByTimeAsync(250)
+    expect(fetch).toHaveBeenCalledTimes(1)
+    const [url, options] = fetch.mock.calls[0]
+    expect(url).toBe('/admin/newsletter/campaign-preview')
+    expect(options.body.get('_preview_token')).toBe('preview-token')
+    expect(options.body.get('Campaign[subject]')).toBe('Unsaved subject')
+    expect(options.body.get('Campaign[bodyMarkdown]')).toBe('Unsaved **body**')
+    expect(options.body.get('Campaign[emailLayout]')).toBe('saved:2')
+    expect(document.querySelector('iframe').srcdoc).toBe('Live campaign')
+    expect(document.querySelector('.pw-newsletter-design-canvas').hidden).toBe(false)
+    edit('Campaign[segmentAsJson]', 'Recipient changes')
+    await vi.advanceTimersByTimeAsync(250)
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('updates an existing campaign on load and cancels a preview if its audience is cleared', async () => {
+    render('campaign', '1')
+    const pending = pendingResponse()
+    fetch.mockReturnValueOnce(pending.promise)
+    await vi.advanceTimersByTimeAsync(250)
+    edit('Campaign[audience]', '', 'change')
+    expect(fetch.mock.calls[0][1].signal.aborted).toBe(true)
+    pending.resolve(response('Obsolete preview'))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(document.querySelector('iframe').srcdoc).toBe('Initial preview')
+    expect(document.querySelector('[data-preview-status]').textContent).toBe('Choose an audience')
+  })
+
+  it('previews template fields immediately and retains edits through mobile switches and failure', async () => {
+    render('template')
+    await vi.advanceTimersByTimeAsync(250)
+    expect(fetch.mock.calls[0][0]).toBe('/admin/newsletter/template-preview')
+    expect(fetch.mock.calls[0][1].body.get('EmailTemplate[wrapped]')).toBe('1')
+    fetch.mockResolvedValueOnce({ ok: false })
+    edit('EmailTemplate[headerMarkdown]', 'New header')
+    document.querySelector('[data-design-panel="preview"]').click()
+    await vi.advanceTimersByTimeAsync(250)
+    expect(document.querySelector('[data-pw-email-preview]').dataset.mobilePanel).toBe('preview')
+    expect(document.querySelector('iframe').srcdoc).toBe('Live campaign')
+    expect(document.querySelector('[data-preview-retry]').hidden).toBe(false)
+    document.querySelector('[data-preview-retry]').click()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(fetch.mock.calls[2][1].body.get('EmailTemplate[headerMarkdown]')).toBe('New header')
+    expect(document.querySelector('[data-preview-status]').textContent).toBe('Ready')
+  })
+})

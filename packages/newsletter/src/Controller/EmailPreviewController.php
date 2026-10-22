@@ -1,0 +1,130 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pushword\Newsletter\Controller;
+
+use Pushword\Core\Site\SiteRegistry;
+use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Repository\AudienceRepository;
+use Pushword\Newsletter\Service\EmailTemplateRegistry;
+use Pushword\Newsletter\Service\MailRenderer;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\InputBag;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+#[IsGranted('ROLE_EDITOR')]
+final class EmailPreviewController extends AbstractController
+{
+    public function __construct(
+        private readonly SiteRegistry $sites,
+        private readonly MailRenderer $renderer,
+        private readonly EmailTemplateRegistry $templates,
+        private readonly TranslatorInterface $translator,
+    ) {
+    }
+
+    #[Route('/admin/newsletter/campaign-preview', name: 'admin_newsletter_campaign_preview', methods: ['POST'])]
+    public function campaign(Request $request, AudienceRepository $audiences): JsonResponse
+    {
+        $this->assertToken($request);
+        $data = new InputBag(array_filter($request->request->all('Campaign'), \is_string(...), \ARRAY_FILTER_USE_KEY));
+        if ('' === $data->getString('audience')) {
+            return $this->error('newsletter.campaign.design.empty');
+        }
+
+        $audience = $audiences->find($data->getInt('audience'));
+        if (! $audience instanceof Audience) {
+            return $this->error('newsletter.campaign.design.empty');
+        }
+
+        $layout = $data->getString('emailLayout');
+        $allowed = ['simple', 'framed', ''];
+        foreach ($this->templates->choices() as $choices) {
+            array_push($allowed, ...array_values($choices));
+        }
+
+        if (! \in_array($layout, $allowed, true)) {
+            return $this->error('newsletter.design.failed');
+        }
+
+        $design = clone $audience;
+        if ('' !== $layout) {
+            $design->emailLayout = $layout;
+        }
+
+        $design->transactional = $design->transactional || $data->getBoolean('transactional');
+
+        return $this->preview($design, $data->getString('subject'), $data->getString('bodyMarkdown'), $data->getString('preheader'));
+    }
+
+    #[Route('/admin/newsletter/template-preview', name: 'admin_newsletter_template_preview', methods: ['POST'])]
+    public function template(Request $request): JsonResponse
+    {
+        $this->assertToken($request);
+        $data = new InputBag(array_filter($request->request->all('EmailTemplate'), \is_string(...), \ARRAY_FILTER_USE_KEY));
+        $audience = new Audience();
+        $audience->mainHost = $this->sites->getDefault()->getMainHost();
+        $audience->name = $this->translator->trans('newsletter.template.sampleAudience');
+        $audience->headerMarkdown = $data->getString('headerMarkdown');
+        $audience->footerMarkdown = $data->getString('footerMarkdown');
+        $audience->emailWrapped = $data->getBoolean('wrapped');
+
+        return $this->preview($audience, $data->getString('name'), $this->translator->trans('newsletter.design.sampleBody'), null);
+    }
+
+    #[Route('/admin/newsletter/template-choices', name: 'admin_newsletter_template_choices', methods: ['GET'])]
+    public function choices(): JsonResponse
+    {
+        $groups = [];
+        foreach ($this->templates->choices() as $label => $choices) {
+            $groups[$this->translator->trans($label)] = $choices;
+        }
+
+        return $this->jsonPrivate(['groups' => $groups]);
+    }
+
+    private function assertToken(Request $request): void
+    {
+        if (! $this->isCsrfTokenValid('newsletter_email_preview', $request->request->getString('_preview_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+    }
+
+    private function preview(Audience $audience, string $subject, string $body, ?string $preheader): JsonResponse
+    {
+        $contact = new Contact($audience, 'preview@example.tld');
+        $contact->name = 'Alex';
+
+        $site = $this->sites->get($audience->mainHost);
+        $html = $this->renderer->html(
+            $audience,
+            $contact,
+            $subject,
+            $body,
+            $preheader,
+            $audience->transactional ? null : $site->baseUrl.'/#unsubscribe',
+            null,
+            locale: $site->locale,
+        );
+
+        return $this->jsonPrivate(['html' => $html]);
+    }
+
+    private function error(string $key): JsonResponse
+    {
+        return $this->jsonPrivate(['error' => $this->translator->trans($key)], Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    /** @param array<string, mixed> $data */
+    private function jsonPrivate(array $data, int $status = Response::HTTP_OK): JsonResponse
+    {
+        return new JsonResponse($data, $status, ['Cache-Control' => 'private, no-store']);
+    }
+}

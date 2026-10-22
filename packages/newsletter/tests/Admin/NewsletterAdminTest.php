@@ -81,10 +81,10 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $this->seed();
 
-        foreach (['audience', 'contact', 'campaign', 'campaign-recipient', 'automation', 'automation-delivery'] as $section) {
+        foreach (['audience', 'contact', 'campaign', 'template', 'campaign-recipient', 'automation', 'automation-delivery'] as $section) {
             $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section);
             self::assertSame(200, $client->getResponse()->getStatusCode(), $section.' index');
-            self::assertCount(6, $crawler->filter('.pw-newsletter-nav a'));
+            self::assertCount(7, $crawler->filter('.pw-newsletter-nav a'));
             $activeSection = 'campaign-recipient' === $section ? 'campaign' : $section;
             self::assertStringEndsWith(
                 '/admin/newsletter/'.$activeSection,
@@ -120,12 +120,12 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
     {
         $client = $this->loginUser();
         $this->seed();
-        foreach (['audience', 'campaign', 'automation'] as $section) {
+        foreach (['audience', 'campaign', 'template', 'automation'] as $section) {
             $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section.'/new');
             self::assertResponseIsSuccessful();
             self::assertDoesNotMatchRegularExpression('/\bnewsletter\.[a-z][a-zA-Z.]+/', $crawler->filter('article')->text());
             self::assertCount(0, $crawler->filter('button[value="saveAndAddAnother"]'));
-            if ('audience' !== $section) {
+            if (\in_array($section, ['campaign', 'automation'], true)) {
                 $id = 'newsletter-'.$section.'-audience-label';
                 self::assertSame($id, $crawler->filter('select[name="'.ucfirst($section).'[audience]"]')->attr('aria-labelledby'));
                 self::assertCount(1, $crawler->filter('label#'.$id));
