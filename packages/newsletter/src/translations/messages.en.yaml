@@ -91,6 +91,7 @@ newsletter:
       scheduledAt.help: Set a date, then use "Schedule". The tick sends it once the date has passed.
       segment: Segment
       segment.help: 'Who this newsletter goes to. No condition targets the whole subscribed audience; "Edit as text" gives the stored JSON back.'
+      sendDate: Send date
       sent: Sent
       sentAt: Sent at
       slug: Analytics name

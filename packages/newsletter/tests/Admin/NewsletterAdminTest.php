@@ -99,6 +99,33 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertSame('Admin test', $audienceLink->text());
     }
 
+    public function testTheCampaignIndexShowsTheActualOrScheduledSendDate(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $draft = $this->campaign($audience, 'No send date');
+        $scheduled = $this->campaign($audience, 'Scheduled send date')
+            ->schedule(new DateTimeImmutable('2030-02-03 10:30:00'));
+        $sent = $this->campaign($audience, 'Actual send date')
+            ->schedule(new DateTimeImmutable('2020-01-02 09:00:00'))
+            ->markSent();
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign');
+
+        self::assertSame(200, $client->getResponse()->getStatusCode());
+        foreach ([
+            [$draft, '—'],
+            [$scheduled, '03/02/2030 10:30'],
+            [$sent, $sent->sentAt?->format('d/m/Y H:i')],
+        ] as [$campaign, $expectedDate]) {
+            self::assertSame(
+                $expectedDate,
+                $crawler->filter('tr[data-id="'.$campaign->id.'"] td[data-column="sendDate"]')->text(),
+            );
+        }
+    }
+
     /**
      * The switch that sends without a way off the list exists at three levels,
      * and it is worth nothing on a form nobody can reach it from.

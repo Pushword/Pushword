@@ -151,6 +151,9 @@ class CampaignCrudController extends AbstractCrudController
                 CampaignStatus::Sent->value => 'success',
             ])
             ->hideOnForm();
+        yield DateTimeField::new('sendDate', 'newsletter.campaign.field.sendDate')->onlyOnIndex()->setSortable(false)->formatValue(
+            static fn (mixed $value): string => $value instanceof DateTimeInterface ? $value->format('d/m/Y H:i') : '—',
+        );
         yield TextField::new('preheader', 'newsletter.campaign.field.preheader')->hideOnIndex()
             ->setHelp('newsletter.campaign.field.preheader.help');
         yield TextField::new('slug', 'newsletter.campaign.field.slug')->hideOnIndex()

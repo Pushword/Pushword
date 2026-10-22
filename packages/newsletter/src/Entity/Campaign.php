@@ -462,6 +462,11 @@ class Campaign implements IdInterface, Stringable
         return $this->status->value;
     }
 
+    public function getSendDate(): ?DateTimeImmutable
+    {
+        return $this->sentAt ?? $this->scheduledAt;
+    }
+
     public function isDraft(): bool
     {
         return CampaignStatus::Draft === $this->status;

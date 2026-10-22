@@ -91,6 +91,7 @@ newsletter:
       scheduledAt.help: Renseignez une date, puis utilisez « Programmer ». Le tick l'envoie une fois la date passée.
       segment: Segment
       segment.help: 'À qui part cette newsletter. Sans condition, toute l''audience inscrite ; « Éditer en texte » redonne le JSON stocké.'
+      sendDate: Date d'envoi
       sent: Envoyés
       sentAt: Envoyée le
       slug: Nom analytics
