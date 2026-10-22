@@ -1,0 +1,10 @@
+{% extends '@PushwordNewsletter/admin/layout.html.twig' %}
+
+{% block configured_stylesheets %}
+  {{ parent() }}
+  <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordnewsletter/statistics.css') }}">
+{% endblock %}
+
+{% block content_title %}{{ 'newsletter.statistics.title'|trans }}{% endblock %}
+
+{% block main %}{% endblock %}

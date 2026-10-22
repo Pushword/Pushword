@@ -1,0 +1,9 @@
+<dl class="pw-statistics-metrics">
+  {% for metric in ['sent', 'clicks', 'clickers', 'clickRate', 'bounced', 'unsubscribed'] %}
+    <div>
+      <dt>{{ ('newsletter.statistics.' ~ metric)|trans }}</dt>
+      <dd data-statistic="{{ metric }}">{% if totals[metric] is null or (metric in ['clicks', 'clickers'] and totals.clickRate is null and totals.clicks == 0) %}<span class="pw-statistics-unmeasured">{{ 'newsletter.statistics.notAvailable'|trans }}</span>{% elseif metric == 'clickRate' %}{{ totals[metric]|number_format(2) }} %{% else %}{{ totals[metric]|number_format }}{% endif %}</dd>
+    </div>
+  {% endfor %}
+</dl>
+<p class="pw-statistics-note">{{ 'newsletter.statistics.methodology'|trans }}</p>

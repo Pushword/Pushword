@@ -1,0 +1,377 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pushword\Newsletter\Tests\Admin;
+
+use App\Entity\User;
+use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Service\EditorialTimezone;
+use Pushword\Newsletter\Admin\StatisticsController;
+use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Entity\Campaign;
+use Pushword\Newsletter\Entity\CampaignRecipient;
+use Pushword\Newsletter\Entity\ClickEvent;
+use Pushword\Newsletter\Entity\ContactEvent;
+use Pushword\Newsletter\Repository\AudienceRepository;
+use Pushword\Newsletter\Repository\ClickEventRepository;
+use Pushword\Newsletter\Repository\StatisticsRepository;
+use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Serializer\Encoder\CsvEncoder;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+#[Group('integration')]
+final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
+{
+    private ?User $user = null;
+
+    protected function tearDown(): void
+    {
+        if (null !== $this->user) {
+            $this->entityManager->getConnection()->delete('user', ['id' => $this->user->id]);
+        }
+
+        parent::tearDown();
+    }
+
+    public function testCampaignsDeduplicateClicksAndWeightRatesBySends(): void
+    {
+        $audience = $this->createAudience();
+        $audience->clickTracking = true;
+
+        $small = $this->sentCampaign($audience, 'Small', 2);
+        $large = $this->sentCampaign($audience, 'Large', 8);
+        $reader = $this->createContact($audience, 'reader@example.tld');
+        $other = $this->createContact($audience, 'other@example.tld');
+        foreach ([$small, $small, $large] as $campaign) {
+            $this->entityManager->persist(ClickEvent::onCampaign($reader, $campaign, 'https://example.tld/article'));
+            $campaign->incrementClick();
+        }
+
+        $this->entityManager->persist(ClickEvent::onCampaign($other, $large, 'https://example.tld/second'));
+        $large->incrementClick();
+        $small->incrementBounce();
+        $large->incrementUnsub();
+        $this->entityManager->flush();
+
+        $repository = $this->repository();
+        $campaigns = $repository->campaigns(new DateTimeImmutable('yesterday'), new DateTimeImmutable('tomorrow'), $audience->id);
+        self::assertCount(2, $campaigns);
+        $byId = array_column($campaigns, null, 'id');
+        self::assertNotNull($small->id);
+        self::assertNotNull($large->id);
+        self::assertArrayHasKey($small->id, $byId);
+        self::assertArrayHasKey($large->id, $byId);
+        self::assertSame(1, $byId[$small->id]['clickers']);
+        self::assertSame(2, $byId[$small->id]['clicks']);
+        self::assertSame(50.0, $byId[$small->id]['clickRate']);
+        self::assertSame(25.0, $byId[$large->id]['clickRate']);
+        $totals = $repository->totals($campaigns);
+        self::assertSame(3, $totals['clickers'], 'The same reader counts once in each campaign.');
+        self::assertSame(4, $totals['clicks']);
+        self::assertSame(30.0, $totals['clickRate'], 'A mean of the two rates would incorrectly give 37.5%.');
+        self::assertSame(10.0, $totals['bounceRate']);
+        self::assertSame(10.0, $totals['unsubscribeRate']);
+    }
+
+    public function testPeriodUsesFirstHandoffAndExcludesDraftsOtherAudiencesAndBoundaries(): void
+    {
+        $audience = $this->createAudience();
+        $first = $this->sentCampaign($audience, 'First');
+        $last = $this->sentCampaign($audience, 'Last');
+        $before = $this->sentCampaign($audience, 'Before');
+        $after = $this->sentCampaign($audience, 'After');
+        $outside = $this->sentCampaign($this->createAudience(), 'Other audience');
+        $draft = $this->createCampaign($audience);
+        $scheduled = $this->createCampaign($audience)->schedule(new DateTimeImmutable('2026-10-25'));
+        $sending = $this->createCampaign($audience)->markSending(1);
+        $reader = $this->createContact($audience, 'reader@example.tld');
+        $recipient = new CampaignRecipient($sending, $reader)->markSent();
+        $this->entityManager->persist($recipient);
+        $this->entityManager->flush();
+        foreach ([[$first, '2026-10-25 00:00:00'], [$last, '2026-10-25 23:59:59'], [$before, '2026-10-24 23:59:59'], [$after, '2026-10-26 00:00:00'], [$outside, '2026-10-25 12:00:00']] as [$campaign, $date]) {
+            $this->entityManager->getConnection()->update('newsletter_campaign', ['sent_at' => $date], ['id' => $campaign->id]);
+        }
+
+        $this->entityManager->getConnection()->update('newsletter_campaign_recipient', ['sent_at' => '2026-10-25 08:00:00'], ['id' => $recipient->id]);
+        $campaigns = $this->repository()->campaigns(new DateTimeImmutable('2026-10-25'), new DateTimeImmutable('2026-10-26'), $audience->id);
+        self::assertSame([$last->id, $sending->id, $first->id], array_column($campaigns, 'id'));
+        self::assertNotContains($draft->id, array_column($campaigns, 'id'));
+        self::assertNotContains($scheduled->id, array_column($campaigns, 'id'));
+        self::assertCount(4, $this->repository()->campaigns(new DateTimeImmutable('2026-10-25'), new DateTimeImmutable('2026-10-26'), null));
+    }
+
+    public function testRecipientStatesAreCountedWithoutInferringSuccess(): void
+    {
+        $audience = $this->createAudience();
+        $campaign = $this->sentCampaign($audience, 'States', 2);
+        $campaign->markSending(5)->incrementFailed()->incrementBounce();
+        foreach (['pending', 'skipped', 'failed', 'sent', 'bounced'] as $state) {
+            $contact = $this->createContact($audience, $state.'@example.tld');
+            $recipient = new CampaignRecipient($campaign, $contact);
+            match ($state) {
+                'skipped' => $recipient->markSkipped(),
+                'failed' => $recipient->markFailed('Transport refused'),
+                'sent' => $recipient->markSent(),
+                'bounced' => $recipient->markSent()->markBounced(),
+                default => null,
+            };
+            $this->entityManager->persist($recipient);
+        }
+
+        $this->entityManager->flush();
+        self::assertNotNull($campaign->id);
+        $data = $this->repository()->campaign($campaign->id);
+        self::assertNotNull($data);
+        self::assertSame(2, $data['sent']);
+        self::assertSame(1, $data['pending']);
+        self::assertSame(1, $data['skipped']);
+        self::assertSame(1, $data['failed']);
+        self::assertSame(1, $data['bounced']);
+        self::assertNull($data['clickRate'], 'An untracked campaign has no measured click rate.');
+    }
+
+    public function testContactsAndActivityKeepCurrentStateSeparateFromPeriodEvents(): void
+    {
+        $audience = $this->createAudience();
+        $subscribed = $this->createContact($audience, 'subscribed@example.tld');
+        $this->createPhoneContact($audience, '+33612345678');
+        $this->createContact($audience, 'pending@example.tld', subscribed: false);
+        $this->createContact($audience, 'left@example.tld')->unsubscribe();
+        $this->createContact($this->createAudience(), 'elsewhere@example.tld');
+        $this->entityManager->persist(ContactEvent::optIn($subscribed, 'test', null, null));
+        $this->entityManager->persist(ContactEvent::confirmed($subscribed, 'test', null, null));
+        $this->entityManager->flush();
+
+        self::assertSame(['pending' => 1, 'subscribed' => 2, 'unsubscribed' => 1, 'bounced' => 0, 'mailable' => 1], $this->repository()->contacts($audience->id));
+        $activity = $this->repository()->subscriptionActivity(new DateTimeImmutable('yesterday'), new DateTimeImmutable('tomorrow'), $audience->id);
+        self::assertSame(1, $activity['optin']);
+        self::assertSame(1, $activity['confirm']);
+        self::assertSame(0, $activity['unsubscribe']);
+        $past = $this->repository()->subscriptionActivity(new DateTimeImmutable('-2 days'), new DateTimeImmutable('yesterday'), $audience->id);
+        self::assertSame(0, $past['optin']);
+    }
+
+    public function testStatisticsPagesNavigationLinksAndCsvUseTheSelectedAudience(): void
+    {
+        $this->login();
+        $audience = $this->createAudience();
+        $audience->clickTracking = true;
+
+        $campaign = $this->sentCampaign($audience, '=1+1', 2);
+        $this->sentCampaign($this->createAudience(), 'Excluded');
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        foreach (['https://example.tld/a?x=<script>', 'https://example.tld/a?x=<script>', 'https://example.tld/b'] as $url) {
+            $this->entityManager->persist(ClickEvent::onCampaign($contact, $campaign, $url));
+            $campaign->incrementClick();
+        }
+
+        $this->entityManager->flush();
+        $query = '?from='.date('Y-m-d').'&to='.date('Y-m-d').'&audience='.$audience->id;
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics'.$query);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Statistics', $crawler->filter('.pw-newsletter-nav [aria-current="page"]')->text());
+        self::assertCount(1, $crawler->filter('[data-campaign]'));
+        self::assertSame('50.00 %', $crawler->filter('[data-statistic="clickRate"]')->text());
+        self::assertStringNotContainsString('newsletter.statistics.', $crawler->filter('article')->text());
+        $crawler = $this->client->click($crawler->selectLink('=1+1')->link());
+        self::assertResponseIsSuccessful();
+        self::assertCount(2, $crawler->filter('.pw-statistics-table tbody tr'));
+        self::assertStringContainsString('audience='.$audience->id, $crawler->selectLink('All statistics')->link()->getUri());
+        self::assertStringContainsString('from='.date('Y-m-d'), $crawler->selectLink('All statistics')->link()->getUri());
+        self::assertStringContainsString('https://example.tld/a?x=<script>', $crawler->filter('.pw-statistics-url')->first()->text());
+        self::assertCount(0, $crawler->filter('.pw-statistics-url script'));
+        $this->client->click($crawler->selectLink('Target recipients')->link());
+        self::assertResponseIsSuccessful();
+
+        $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/export'.$query);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('attachment', (string) $this->client->getResponse()->headers->get('Content-Disposition'));
+        $rows = new CsvEncoder()->decode((string) $this->client->getResponse()->getContent(), 'csv');
+        self::assertIsArray($rows);
+        self::assertCount(1, $rows);
+        $row = $rows[0];
+        self::assertIsArray($row);
+        self::assertSame("'=1+1", $row['Campaign']);
+        self::assertSame('50', $row['Observed click rate (%)']);
+    }
+
+    public function testEmptyPeriodAndZeroSendsHaveNoInventedRates(): void
+    {
+        $this->login();
+        $audience = $this->createAudience();
+        $campaign = $this->sentCampaign($audience, 'No sends');
+        $this->entityManager->flush();
+        $totals = $this->repository()->totals([]);
+        self::assertSame(0, $totals['sent']);
+        self::assertNull($totals['clickRate']);
+        self::assertNull($totals['bounceRate']);
+        self::assertNull($totals['unsubscribeRate']);
+        self::assertNotNull($campaign->id);
+        $data = $this->repository()->campaign($campaign->id);
+        self::assertNotNull($data);
+        self::assertNull($data['clickRate']);
+        $query = '?from=2000-01-01&to=2000-01-01&audience='.$audience->id;
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics'.$query);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('No campaigns sent', $crawler->filter('.pw-statistics-empty')->text());
+        self::assertSame('Not measured', $crawler->filter('[data-statistic="clickRate"]')->text());
+        $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/export'.$query);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Campaign', (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testConsentWithdrawalRemovesUniqueClicksAndLinksButKeepsTheCumulativeCounter(): void
+    {
+        $this->login();
+        $audience = $this->createAudience();
+        $audience->clickTracking = true;
+
+        $campaign = $this->sentCampaign($audience, 'Consent', 1);
+        $contact = $this->createContact($audience, 'consenting@example.tld');
+        $this->entityManager->persist(ClickEvent::onCampaign($contact, $campaign, 'https://example.tld/article'));
+        $campaign->incrementClick();
+        $this->entityManager->flush();
+        self::assertNotNull($campaign->id);
+        $before = $this->repository()->campaign($campaign->id);
+        self::assertNotNull($before);
+        self::assertSame(1, $before['clickers']);
+        self::getContainer()->get(ClickEventRepository::class)->purgeFor($contact);
+        $after = $this->repository()->campaign($campaign->id);
+        self::assertNotNull($after);
+        self::assertSame(1, $after['clicks']);
+        self::assertSame(0, $after['clickers']);
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/campaign/'.$campaign->id);
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('.pw-statistics-url'));
+        self::assertSame('1', $crawler->filter('[data-statistic="clicks"]')->text());
+    }
+
+    public function testReportLinksToTheFailedRecipientsAndUntrackedExportHasNoClickMeasurement(): void
+    {
+        $this->login();
+        $audience = $this->createAudience();
+        $campaign = $this->sentCampaign($audience, 'Failures', 1)->incrementFailed();
+        $failed = new CampaignRecipient($campaign, $this->createContact($audience, 'failed@example.tld'))->markFailed('Mailbox refused');
+        $sent = new CampaignRecipient($campaign, $this->createContact($audience, 'sent@example.tld'))->markSent();
+        $this->entityManager->persist($failed);
+        $this->entityManager->persist($sent);
+        $this->entityManager->flush();
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/campaign/'.$campaign->id);
+        self::assertResponseIsSuccessful();
+        $crawler = $this->client->click($crawler->selectLink('Sending failures')->link());
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('failed@example.tld', $crawler->filter('tbody')->text());
+        self::assertStringNotContainsString('sent@example.tld', $crawler->filter('tbody')->text());
+        $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/export?audience='.$audience->id);
+        $rows = new CsvEncoder()->decode((string) $this->client->getResponse()->getContent(), 'csv');
+        self::assertIsArray($rows);
+        self::assertCount(1, $rows);
+        $row = $rows[0];
+        self::assertIsArray($row);
+        self::assertSame('', $row['Unique clicks']);
+        self::assertSame('', $row['Observed click rate (%)']);
+    }
+
+    #[DataProvider('invalidFilters')]
+    public function testInvalidFiltersAreRejected(string $query): void
+    {
+        $this->login();
+        $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics'.$query);
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/export'.$query);
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function invalidFilters(): iterable
+    {
+        yield 'impossible date' => ['?from=2026-02-30'];
+        yield 'trailing data' => ['?from=2026-01-01oops'];
+        yield 'reversed dates' => ['?from=2026-02-02&to=2026-02-01'];
+        yield 'unknown audience' => ['?audience=2147483647'];
+        yield 'malformed audience' => ['?audience=all'];
+    }
+
+    public function testEditorialDayIncludesBothHoursOfTheAutumnClockChange(): void
+    {
+        $this->login();
+        $timezone = new EditorialTimezone('Europe/Paris');
+        $controller = new StatisticsController(
+            $this->repository(),
+            self::getContainer()->get(AudienceRepository::class),
+            self::getContainer()->get(ClickEventRepository::class),
+            $timezone,
+            self::getContainer()->get(TranslatorInterface::class),
+        );
+        $controller->setContainer(self::getContainer());
+        self::getContainer()->set(StatisticsController::class, $controller);
+        $audience = $this->createAudience();
+        foreach (['2026-10-24 23:59:59', '2026-10-25 00:00:00', '2026-10-25 23:59:59', '2026-10-26 00:00:00'] as $date) {
+            $campaign = $this->sentCampaign($audience, $date);
+            $this->entityManager->getConnection()->update('newsletter_campaign', ['sent_at' => $timezone->parse($date)->format('Y-m-d H:i:s')], ['id' => $campaign->id]);
+        }
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics?from=2026-10-25&to=2026-10-25&audience='.$audience->id);
+        self::assertResponseIsSuccessful();
+        self::assertCount(2, $crawler->filter('[data-campaign]'));
+        self::assertSame('2026-10-25', $crawler->filter('input[name="to"]')->attr('value'));
+    }
+
+    public function testReportsRequireAnEditor(): void
+    {
+        $audience = $this->createAudience();
+        $campaign = $this->sentCampaign($audience);
+        foreach (['', '/export', '/campaign/'.$campaign->id] as $suffix) {
+            $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics'.$suffix);
+            self::assertResponseRedirects();
+        }
+
+        $this->login('ROLE_USER');
+        foreach (['', '/export', '/campaign/'.$campaign->id] as $suffix) {
+            $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics'.$suffix);
+            self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+        }
+    }
+
+    public function testUnknownCampaignReturns404(): void
+    {
+        $this->login();
+        $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/campaign/2147483647');
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+    }
+
+    private function login(string $role = 'ROLE_SUPER_ADMIN'): void
+    {
+        $this->user = new User();
+        $this->user->email = 'statistics-'.bin2hex(random_bytes(6)).'@example.tld';
+        $this->user->setRoles([$role]);
+
+        $this->entityManager->persist($this->user);
+        $this->entityManager->flush();
+
+        $this->client->loginUser($this->user);
+    }
+
+    private function sentCampaign(Audience $audience, string $subject = 'Statistics', int $sent = 0): Campaign
+    {
+        $campaign = $this->createCampaign($audience, subject: $subject)->markSending($sent)->markSent();
+        for ($index = 0; $index < $sent; ++$index) {
+            $campaign->incrementSent();
+        }
+
+        $this->entityManager->flush();
+
+        return $campaign;
+    }
+
+    private function repository(): StatisticsRepository
+    {
+        return new StatisticsRepository($this->entityManager->getConnection());
+    }
+}

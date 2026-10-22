@@ -1,0 +1,101 @@
+{% extends '@PushwordNewsletter/admin/statistics_layout.html.twig' %}
+
+{% block main %}
+  <div class="pw-statistics">
+    <form method="get" class="pw-statistics-filters" aria-label="{{ 'newsletter.statistics.filters'|trans }}">
+      <div>
+        <label for="statistics-from">{{ 'newsletter.statistics.from'|trans }}</label>
+        <input id="statistics-from" class="form-control" type="date" name="from" value="{{ from }}" required>
+      </div>
+      <div>
+        <label for="statistics-to">{{ 'newsletter.statistics.to'|trans }}</label>
+        <input id="statistics-to" class="form-control" type="date" name="to" value="{{ to }}" min="{{ from }}" required>
+      </div>
+      <div>
+        <label for="statistics-audience">{{ 'newsletter.statistics.audience'|trans }}</label>
+        <select id="statistics-audience" class="form-select" name="audience">
+          <option value="">{{ 'newsletter.statistics.allAudiences'|trans }}</option>
+          {% for audience in audiences %}
+            <option value="{{ audience.id }}"{% if audience.id == audienceId %} selected{% endif %}>{{ audience.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">{{ 'newsletter.statistics.apply'|trans }}</button>
+      <a class="btn btn-outline-secondary" href="{{ path('admin_newsletter_statistics_export', {from: from, to: to, audience: audienceId}) }}">{{ 'newsletter.statistics.export'|trans }}</a>
+    </form>
+
+    <section aria-labelledby="statistics-overview">
+      <div class="pw-statistics-heading">
+        <h2 id="statistics-overview">{{ 'newsletter.statistics.overview'|trans }}</h2>
+        <span>{{ 'newsletter.statistics.campaignCount'|trans({'%count%': totals.campaigns}) }}</span>
+      </div>
+      {{ include('@PushwordNewsletter/admin/_statistics_metrics.html.twig') }}
+      <p class="pw-statistics-note">{{ 'newsletter.statistics.periodHelp'|trans({'%timezone%': timezone}) }}</p>
+    </section>
+
+    <section aria-labelledby="statistics-campaigns">
+      <h2 id="statistics-campaigns">{{ 'newsletter.statistics.campaigns'|trans }}</h2>
+      {% if campaigns is empty %}
+        <div class="pw-statistics-empty">
+          <h3>{{ 'newsletter.statistics.emptyTitle'|trans }}</h3>
+          <p>{{ 'newsletter.statistics.emptyHelp'|trans }}</p>
+          <a href="{{ path('admin_newsletter_campaign_index') }}">{{ 'newsletter.statistics.manageCampaigns'|trans }}</a>
+        </div>
+      {% else %}
+        <div class="table-responsive">
+          <table class="table pw-statistics-table">
+            <caption class="visually-hidden">{{ 'newsletter.statistics.campaigns'|trans }}</caption>
+            <thead><tr>
+              <th scope="col">{{ 'newsletter.statistics.subject'|trans }}</th>
+              {% for metric in ['sent', 'clickers', 'clickRate', 'failed', 'bounced', 'unsubscribed'] %}
+                <th scope="col" class="pw-statistics-number">{{ ('newsletter.statistics.' ~ metric)|trans }}</th>
+              {% endfor %}
+            </tr></thead>
+            <tbody>
+              {% for campaign in campaigns %}
+                <tr data-campaign="{{ campaign.id }}">
+                  <th scope="row">
+                    <a href="{{ path('admin_newsletter_statistics_campaign', {id: campaign.id, from: from, to: to, audience: audienceId}) }}">{{ campaign.subject }}</a>
+                    <small>{{ campaign.audience }} · {{ campaign.date|date('d/m/Y H:i', timezone) }} · {{ ('newsletter.campaign.status.' ~ campaign.status)|trans }}</small>
+                  </th>
+                  <td class="pw-statistics-number">{{ campaign.sent|number_format }}</td>
+                  <td class="pw-statistics-number">{{ campaign.tracking or campaign.clicks > 0 ? campaign.clickers|number_format : 'newsletter.statistics.notAvailable'|trans }}</td>
+                  <td class="pw-statistics-number">
+                    {% if campaign.clickRate is not null %}
+                      <div class="pw-statistics-rate"><meter min="0" max="100" value="{{ campaign.clickRate }}" aria-label="{{ 'newsletter.statistics.clickRate'|trans }}">{{ campaign.clickRate }} %</meter><span>{{ campaign.clickRate|number_format(2) }} %</span></div>
+                    {% else %}{{ 'newsletter.statistics.notAvailable'|trans }}{% endif %}
+                  </td>
+                  {% for metric in ['failed', 'bounced', 'unsubscribed'] %}
+                    <td class="pw-statistics-number">{{ campaign[metric]|number_format }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </section>
+
+    <section aria-labelledby="statistics-contacts" class="pw-statistics-base">
+      <div>
+        <h2 id="statistics-contacts">{{ 'newsletter.statistics.contacts'|trans }}</h2>
+        <p class="pw-statistics-note">{{ 'newsletter.statistics.contactsHelp'|trans }}</p>
+        <dl class="pw-statistics-list">
+          {% for status in ['mailable', 'subscribed', 'pending', 'unsubscribed', 'bounced'] %}
+            <div><dt>{{ ('newsletter.statistics.contact' ~ status|capitalize)|trans }}</dt><dd data-contact-statistic="{{ status }}">{{ contacts[status]|number_format }}</dd></div>
+          {% endfor %}
+        </dl>
+      </div>
+      <div>
+        <h2>{{ 'newsletter.statistics.activity'|trans }}</h2>
+        <p class="pw-statistics-note">{{ 'newsletter.statistics.activityHelp'|trans }}</p>
+        <dl class="pw-statistics-list">
+          {% for transition in ['optin', 'confirm', 'resubscribe', 'unsubscribe'] %}
+            <div><dt>{{ ('newsletter.statistics.activity' ~ transition|capitalize)|trans }}</dt><dd data-activity="{{ transition }}">{{ activity[transition]|number_format }}</dd></div>
+          {% endfor %}
+        </dl>
+      </div>
+    </section>
+    <p class="pw-statistics-note">{{ 'newsletter.statistics.unmeasured'|trans }}</p>
+  </div>
+{% endblock %}

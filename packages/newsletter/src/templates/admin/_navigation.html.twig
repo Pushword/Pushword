@@ -1,5 +1,6 @@
-{% set section = ea.crud.entityFqcn|split('\\')|last|lower %}
+{% set section = newsletterSection ?? (ea.crud.entityFqcn|default('')|split('\\')|last|lower) %}
 {% set items = [
+  {section: 'statistics', route: 'admin_newsletter_statistics', icon: 'fa-chart-simple', label: 'newsletter.statistics.title'},
   {section: 'campaign', route: 'admin_newsletter_campaign_index', icon: 'fa-paper-plane', label: 'newsletter.campaign.label.plural'},
   {section: 'automation', route: 'admin_newsletter_automation_index', icon: 'fa-bolt', label: 'newsletter.automation.label.plural'},
   {section: 'contact', route: 'admin_newsletter_contact_index', icon: 'fa-address-book', label: 'newsletter.contact.label.plural'},

@@ -1037,6 +1037,36 @@ canonical base URL before sending.
 Attribution is aggregate and records nothing per person; per-reader clicks are
 the next section.
 
+## Statistics
+
+Open **Newsletter → Statistics** for campaign results, filtered by audience and
+date range (the last 30 days by default). The comparison links to each campaign's
+report, its recipient ledger and its recorded links. **Export CSV** exports the
+same campaign selection, including counts and rates.
+
+The date filter selects campaigns by their first transport handoff, or completion
+date when no recipient record remains. A campaign still sending appears after its
+first handoff. Results are cumulative to date, including clicks and bounces that
+arrived after the selected period, rather than events restricted to that period.
+Dates use `pushword.editorial_timezone`.
+
+- **Sent** counts messages handed to the mail transport. It does not confirm
+  reception in an inbox. Bounces and transport failures are separate counts.
+- **Unique clicks** count a contact once per campaign, including in the overall
+  total. Rates use sent messages as their denominator; the overall rate uses the
+  combined counts, rather than averaging campaign percentages. Sends without
+  tracking remain in that denominator, so click rates describe observed engagement.
+- Click tracking still requires the audience switch and the contact's consent.
+  Untracked campaigns have no measured click rate. The cumulative click counter
+  survives consent withdrawal; unique clicks and link details use the retained
+  events and may decrease after withdrawal or contact deletion. Bots are not filtered.
+- **Audience health today** is a current subscription snapshot, independent of
+  the selected dates. **Subscription activity** counts consent-ledger events in
+  the selected period. A signup request and its confirmation are separate events,
+  not two new subscribers. A person subscribed to two audiences counts twice.
+
+Inbox delivery, opens, spam complaints, conversions and revenue are not measured.
+
 ## Click tracking
 
 Off by default. Attribution answers "which campaign brought the traffic" with no

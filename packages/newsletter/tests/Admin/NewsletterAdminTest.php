@@ -84,7 +84,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         foreach (['audience', 'contact', 'campaign', 'campaign-recipient', 'automation', 'automation-delivery'] as $section) {
             $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section);
             self::assertSame(200, $client->getResponse()->getStatusCode(), $section.' index');
-            self::assertCount(5, $crawler->filter('.pw-newsletter-nav a'));
+            self::assertCount(6, $crawler->filter('.pw-newsletter-nav a'));
             $activeSection = 'campaign-recipient' === $section ? 'campaign' : $section;
             self::assertStringEndsWith(
                 '/admin/newsletter/'.$activeSection,
