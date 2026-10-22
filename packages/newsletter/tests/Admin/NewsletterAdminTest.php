@@ -22,6 +22,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mime\Email;
 
 #[Group('integration')]
 final class NewsletterAdminTest extends AbstractAdminTestClass
@@ -121,7 +122,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         foreach (['audience', 'campaign', 'automation'] as $section) {
             $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section.'/new');
             self::assertResponseIsSuccessful();
-            self::assertStringNotContainsString('newsletter.', $crawler->filter('article')->text());
+            self::assertDoesNotMatchRegularExpression('/\bnewsletter\.[a-z][a-zA-Z.]+/', $crawler->filter('article')->text());
             self::assertCount(0, $crawler->filter('button[value="saveAndAddAnother"]'));
             if ('audience' !== $section) {
                 $id = 'newsletter-'.$section.'-audience-label';
@@ -495,6 +496,75 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertMatchesRegularExpression('/name="[^"]*\[segmentAsJson\]"/', $html);
         self::assertMatchesRegularExpression('/name="[^"]*\[audience\]"/', $html);
         self::assertMatchesRegularExpression('/name="[^"]*\[translationsAsJson\]"/', $html);
+    }
+
+    public function testACampaignChoosesItsOwnDesignAndCanReturnToTheAudienceDefault(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
+        self::assertStringContainsString('Choose the audience and design', $crawler->filter('.form-fieldset')->first()->text());
+        self::assertCount(1, $crawler->filter('select[name="Campaign[emailLayout]"] option[value="twig:pushword"]'));
+        $form = $crawler->filter('form[name="Campaign"]')->form();
+        $form['Campaign[subject]'] = 'Own email design';
+        $form['Campaign[audience]'] = (string) $audience->id;
+        $form['Campaign[emailLayout]'] = 'twig:pushword';
+        $client->submit($form);
+        self::assertResponseRedirects();
+        $campaign = $this->entityManager()->getRepository(Campaign::class)->findOneBy(['subject' => 'Own email design']);
+        self::assertInstanceOf(Campaign::class, $campaign);
+        $id = $campaign->id;
+        self::assertSame('twig:pushword', $campaign->emailLayout);
+        $storedAudience = $this->entityManager()->find(Audience::class, $audience->id);
+        self::assertInstanceOf(Audience::class, $storedAudience);
+        self::assertSame('simple', $storedAudience->emailLayout);
+
+        $url = '/admin/newsletter/campaign/'.$id.'/edit';
+        $crawler = $client->request(Request::METHOD_GET, $url);
+        self::assertCount(1, $crawler->filter('select[name="Campaign[emailLayout]"] option[value="twig:pushword"][selected]'));
+        $form = $crawler->filter('form[name="Campaign"]')->form();
+        $values = $form->getPhpValues();
+        self::assertIsArray($values['Campaign']);
+        $values['Campaign']['emailLayout'] = 'twig:unregistered';
+        $client->request(Request::METHOD_POST, $url, $values);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Campaign::class, $id);
+        self::assertInstanceOf(Campaign::class, $stored);
+        self::assertSame('twig:pushword', $stored->emailLayout);
+
+        $crawler = $client->request(Request::METHOD_GET, $url);
+        $form = $crawler->filter('form[name="Campaign"]')->form();
+        $form['Campaign[emailLayout]'] = '';
+        $client->submit($form);
+        self::assertResponseRedirects();
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Campaign::class, $id);
+        self::assertInstanceOf(Campaign::class, $stored);
+        self::assertNull($stored->emailLayout);
+    }
+
+    public function testTheCampaignTestActionUsesTheSavedCampaignDesign(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $audience->headerMarkdown = 'Audience-only heading';
+
+        $campaign = $this->campaign($audience, 'Preset test email');
+        $campaign->emailLayout = 'twig:pushword';
+        $this->entityManager()->flush();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$campaign->id.'/send-test');
+        $form = $crawler->filter('form[method="post"]')->form();
+        $form['emails'] = 'test@example.tld';
+        $client->submit($form);
+        self::assertResponseRedirects();
+        self::assertEmailCount(1);
+        $message = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $message);
+        $html = $message->getHtmlBody();
+        self::assertIsString($html);
+        self::assertStringContainsString('Pushword', $html);
+        self::assertStringNotContainsString('Audience-only heading', $html);
     }
 
     /** The per-locale bodies edit the way the segment does: JSON, validated before it is stored. */

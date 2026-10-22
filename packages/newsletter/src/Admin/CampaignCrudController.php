@@ -23,6 +23,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Form\Type\ComparisonType;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use LogicException;
 use Override;
 use Pushword\AdminBlockEditor\Form\EditorjsType;
 use Pushword\Newsletter\Controller\CriteriaController;
@@ -33,6 +34,7 @@ use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Service\CampaignSender;
+use Pushword\Newsletter\Service\EmailTemplateRegistry;
 use Pushword\Newsletter\Service\NewsletterMailer;
 use Pushword\Newsletter\Utm\UtmTag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -55,6 +57,7 @@ class CampaignCrudController extends AbstractCrudController
         private readonly EntityManagerInterface $entityManager,
         private readonly AdminUrlGenerator $adminUrlGenerator,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly EmailTemplateRegistry $emailTemplates,
     ) {
     }
 
@@ -69,6 +72,7 @@ class CampaignCrudController extends AbstractCrudController
         $crud = $crud
             ->overrideTemplate('layout', '@PushwordNewsletter/admin/layout.html.twig')
             ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
+            ->addFormTheme('@PushwordNewsletter/admin/campaign_form_theme.html.twig')
             ->setEntityLabelInSingular('newsletter.campaign.label.singular')
             ->setEntityLabelInPlural('newsletter.campaign.label.plural')
             ->setDefaultSort(['id' => 'DESC'])
@@ -151,6 +155,30 @@ class CampaignCrudController extends AbstractCrudController
     #[Override]
     public function configureFields(string $pageName): iterable
     {
+        $isForm = \in_array($pageName, [Crud::PAGE_NEW, Crud::PAGE_EDIT], true);
+        $audienceField = AssociationField::new('audience', 'newsletter.campaign.field.audience')
+            ->setFormTypeOption('label_attr', ['id' => 'newsletter-campaign-audience-label'])
+            ->setFormTypeOption('attr', ['aria-labelledby' => 'newsletter-campaign-audience-label']);
+
+        if ($isForm) {
+            yield FormField::addFieldset('newsletter.campaign.fieldset.design')->setIcon('fa fa-palette')
+                ->setHelp('newsletter.campaign.fieldset.designHelp');
+            yield $audienceField;
+            yield ChoiceField::new('emailLayout', 'newsletter.campaign.design.label')
+                ->setChoices([
+                    'newsletter.campaign.design.inherit' => '',
+                    'newsletter.design.simple' => 'simple',
+                    'newsletter.design.wrapped' => 'framed',
+                    ...$this->emailTemplates->choices(),
+                ])
+                ->renderAsNativeWidget()
+                ->setRequired(false)
+                ->setColumns('col-12')
+                ->setFormTypeOption('placeholder', false)
+                ->setFormTypeOption('attr', ['data-pw-campaign-design' => json_encode($this->audienceDesigns(), \JSON_THROW_ON_ERROR)])
+                ->setHelp('newsletter.campaign.design.help');
+        }
+
         yield FormField::addFieldset('newsletter.campaign.fieldset.content')->setIcon('fa fa-pen-nib')
             ->setHelp('newsletter.campaign.fieldset.contentHelp');
         yield TextField::new('subject', 'newsletter.campaign.field.subject')->setColumns('col-12');
@@ -171,9 +199,10 @@ class CampaignCrudController extends AbstractCrudController
 
         yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users')
             ->setHelp('newsletter.campaign.fieldset.audienceHelp');
-        yield AssociationField::new('audience', 'newsletter.campaign.field.audience')
-            ->setFormTypeOption('label_attr', ['id' => 'newsletter-campaign-audience-label'])
-            ->setFormTypeOption('attr', ['aria-labelledby' => 'newsletter-campaign-audience-label']);
+        if (! $isForm) {
+            yield $audienceField;
+        }
+
         yield CriteriaField::new('segmentAsJson', 'newsletter.campaign.field.segment', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(6)
             ->setHelp('newsletter.campaign.field.segment.help');
@@ -214,6 +243,21 @@ class CampaignCrudController extends AbstractCrudController
         yield TextField::new('sentAt', 'newsletter.campaign.field.sentAt')->onlyOnDetail()->formatValue(
             static fn (mixed $value): string => $value instanceof DateTimeInterface ? $value->format('d M Y H:i') : '—',
         );
+    }
+
+    /** @return array<int, array{name: string, layout: string, url: string}> */
+    private function audienceDesigns(): array
+    {
+        $designs = [];
+        foreach ($this->entityManager->getRepository(Audience::class)->findAll() as $audience) {
+            $designs[$audience->id ?? throw new LogicException()] = [
+                'name' => $audience->name,
+                'layout' => $audience->emailLayout,
+                'url' => $this->urlGenerator->generate('admin_newsletter_audience_email_design', ['entityId' => $audience->id]),
+            ];
+        }
+
+        return $designs;
     }
 
     /**
@@ -420,7 +464,7 @@ class CampaignCrudController extends AbstractCrudController
             }
 
             try {
-                $this->mailer->sendTest($audience, $content['subject'], $content['bodyMarkdown'], $content['preheader'], $address, UtmTag::forCampaign($campaign), $locale, $campaign->isTransactional());
+                $this->mailer->sendTest($audience, $content['subject'], $content['bodyMarkdown'], $content['preheader'], $address, UtmTag::forCampaign($campaign), $locale, $campaign->isTransactional(), $campaign->emailLayout);
                 $sent[] = $address;
             } catch (Throwable $throwable) {
                 $failed[] = $address.' ('.$throwable->getMessage().')';

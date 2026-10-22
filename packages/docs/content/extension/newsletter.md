@@ -439,6 +439,18 @@ asks which language to send.
 
 ### Email design and live preview
 
+The campaign form starts with **Choose the audience and design**. Select the
+audience, then choose **Design for this campaign**: inherit the audience's design,
+use a standard layout, or select one of the site's Twig presets. The effective
+design is shown below the choice and updates when the audience changes. A
+campaign override is saved with that campaign and is used by both real sends and
+test emails; it does not modify the audience or its automations.
+
+Standard layouts keep the audience's editable header and footer. The shared-design
+link opens those settings in another tab, preserving the campaign form. Changing
+these shared settings affects all campaigns and automations that use them. A Twig
+preset defines its own header and footer.
+
 In **Newsletter → Audiences**, open **Email design** for the audience. Choose
 **Without a frame** for a simple email or **With a frame** for centered content
 on a light gray background. The audience's Markdown header and footer are shared

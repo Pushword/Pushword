@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Tests\Service;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Campaign;
@@ -28,6 +29,51 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class NewsletterMailerTest extends AbstractNewsletterTestCase
 {
     use MailerAssertionsTrait;
+
+    /** @return iterable<string, array{string, ?string, bool, bool}> */
+    public static function campaignDesigns(): iterable
+    {
+        yield 'inherit the audience frame' => ['framed', null, true, true];
+        yield 'frame this campaign only' => ['simple', 'framed', true, true];
+        yield 'replace the audience preset with editable identity' => ['twig:pushword', 'simple', true, false];
+        yield 'use a fixed campaign preset' => ['simple', 'twig:pushword', false, true];
+    }
+
+    #[DataProvider('campaignDesigns')]
+    public function testCampaignAndTestEmailsUseTheChosenDesignWithoutChangingTheAudience(string $audienceLayout, ?string $campaignLayout, bool $manualIdentity, bool $framed): void
+    {
+        $audience = $this->createAudience();
+        $audience->emailLayout = $audienceLayout;
+        $audience->headerMarkdown = 'Shared brand heading';
+        $audience->footerMarkdown = 'Shared brand signature';
+        $audience->postalAddress = '12 Baker Street';
+
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $campaign = $this->createCampaign($audience);
+        $campaign->emailLayout = $campaignLayout;
+
+        $mailer = self::getContainer()->get(NewsletterMailer::class);
+        $mailer->sendCampaign($campaign, $contact);
+        $mailer->sendTest($audience, 'Test', 'Preview content', null, 'test@example.tld', null, emailLayout: $campaign->emailLayout);
+        self::assertEmailCount(2);
+        foreach ([0, 1] as $index) {
+            $message = self::getMailerMessage($index);
+            self::assertInstanceOf(Email::class, $message);
+            $html = $message->getHtmlBody() ?? '';
+            $text = $message->getTextBody() ?? '';
+            self::assertIsString($html);
+            self::assertIsString($text);
+            self::assertSame($manualIdentity, str_contains($html, 'Shared brand heading'));
+            self::assertSame($manualIdentity, str_contains($text, 'Shared brand signature'));
+            self::assertSame($framed, str_contains($html, 'background-color:#f3f4f6'));
+            self::assertStringContainsString('12 Baker Street', $html.$text);
+            self::assertStringContainsString('Unsubscribe', $html);
+        }
+
+        self::assertSame($audienceLayout, $audience->emailLayout);
+        self::assertSame('Shared brand heading', $audience->headerMarkdown);
+        self::assertSame('Shared brand signature', $audience->footerMarkdown);
+    }
 
     public function testCampaignsAndAutomationStepsUseTheAudienceDesign(): void
     {

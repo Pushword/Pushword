@@ -60,7 +60,7 @@ import { suggestTags } from './admin.tagsField'
 // Criteria modules
 import { initCriteriaBuilder } from './admin.criteriaBuilder'
 import { initEmailPreview } from './admin.emailPreview'
-import { initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from './admin.newsletter'
+import { initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from './admin.newsletter'
 
 document.addEventListener('ea.collection.item-added', (event) => {
   numberNewNewsletterStep(event.detail.newElement)
@@ -133,6 +133,7 @@ window.addEventListener('load', function () {
   initEmailPreview()
   initNewsletterDelays()
   initNewsletterIndexes()
+  initCampaignDesigns()
 
   // Page state
   retrieveCurrentPageHost()

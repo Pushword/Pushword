@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
-import { initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from '../../src/Resources/assets/admin.newsletter.js'
+import { initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from '../../src/Resources/assets/admin.newsletter.js'
 
 function renderDelay(value) {
   document.body.innerHTML = `<input id="delay" type="number" value="${value}" data-pw-delay-preview>
@@ -57,5 +57,56 @@ describe('newsletter email delays', () => {
     document.querySelector('label[for="row"]').click()
     expect(input.checked).toBe(true)
     expect(document.querySelectorAll('label')).toHaveLength(2)
+  })
+})
+
+describe('campaign email design selection', () => {
+  afterEach(() => { document.body.innerHTML = '' })
+
+  function setup() {
+    document.body.innerHTML = `<form>
+      <select name="Campaign[audience]"><option value="">Choose</option><option value="1">First</option><option value="2">Second</option></select>
+      <select data-pw-campaign-design><option value="">Audience default</option><option value="simple">Simple</option><option value="framed">Framed</option><option value="twig:brand">Brand</option></select>
+      <div data-campaign-design-summary data-current="In use: %theme%" data-empty="Choose an audience" data-custom="Site preset" data-shared="Identity from %audience%">
+        <p data-campaign-design-current></p><p data-campaign-design-description hidden></p><a data-campaign-design-edit hidden target="_blank"></a><p data-campaign-design-warning hidden></p>
+      </div></form>`
+    document.querySelector('[data-pw-campaign-design]').dataset.pwCampaignDesign = JSON.stringify({
+      1: { name: 'First', layout: 'framed', url: '/audience/1/design' },
+      2: { name: 'Second', layout: 'twig:brand', url: '/audience/2/design' },
+    })
+    initCampaignDesigns()
+  }
+
+  function choose(selector, value) {
+    const select = document.querySelector(selector)
+    select.value = value
+    select.dispatchEvent(new Event('change'))
+  }
+
+  it('explains the audience dependency and follows the selected audience', () => {
+    setup()
+    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('Choose an audience')
+    choose('[name="Campaign[audience]"]', '1')
+    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: Framed')
+    expect(document.querySelector('[data-campaign-design-description]').textContent).toBe('Identity from First')
+    expect(document.querySelector('[data-campaign-design-edit]').getAttribute('href')).toBe('/audience/1/design')
+    expect(document.querySelector('[data-campaign-design-warning]').hidden).toBe(false)
+    choose('[name="Campaign[audience]"]', '2')
+    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: Brand')
+    expect(document.querySelector('[data-campaign-design-edit]').getAttribute('href')).toBe('/audience/2/design')
+  })
+
+  it('distinguishes a campaign preset from shared audience editing', () => {
+    setup()
+    choose('[name="Campaign[audience]"]', '1')
+    choose('[data-pw-campaign-design]', 'twig:brand')
+    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: Brand')
+    expect(document.querySelector('[data-campaign-design-edit]').hidden).toBe(true)
+    expect(document.querySelector('[data-campaign-design-warning]').hidden).toBe(true)
+    choose('[data-pw-campaign-design]', 'simple')
+    expect(document.querySelector('[data-campaign-design-edit]').hidden).toBe(false)
+    choose('[name="Campaign[audience]"]', '')
+    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('Choose an audience')
+    expect(document.querySelector('[data-campaign-design-edit]').hidden).toBe(true)
   })
 })

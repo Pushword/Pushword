@@ -1,0 +1,11 @@
+{% extends '@PushwordNewsletter/admin/form_theme.html.twig' %}
+
+{% block _Campaign_emailLayout_widget %}
+  {{ block('choice_widget') }}
+  <div class="pw-campaign-design-summary" data-campaign-design-summary data-current="{{ 'newsletter.campaign.design.current'|trans }}" data-empty="{{ 'newsletter.campaign.design.empty'|trans }}" data-custom="{{ 'newsletter.campaign.design.custom'|trans }}" data-shared="{{ 'newsletter.campaign.design.shared'|trans }}">
+    <p data-campaign-design-current aria-live="polite">{{ 'newsletter.campaign.design.empty'|trans }}</p>
+    <p data-campaign-design-description hidden></p>
+    <a data-campaign-design-edit hidden target="_blank" rel="noopener">{{ 'newsletter.campaign.design.edit'|trans }}</a>
+    <p data-campaign-design-warning hidden>{{ 'newsletter.campaign.design.warning'|trans }}</p>
+  </div>
+{% endblock %}

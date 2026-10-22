@@ -1,3 +1,41 @@
+export function initCampaignDesigns(root = document) {
+  root.querySelectorAll('[data-pw-campaign-design]').forEach((select) => {
+    if (select.dataset.designInitialized) return
+    select.dataset.designInitialized = 'true'
+    const designs = JSON.parse(select.dataset.pwCampaignDesign)
+    const audience = select.form.elements.namedItem('Campaign[audience]')
+    const summary = select.form.querySelector('[data-campaign-design-summary]')
+    const current = summary.querySelector('[data-campaign-design-current]')
+    const description = summary.querySelector('[data-campaign-design-description]')
+    const edit = summary.querySelector('[data-campaign-design-edit]')
+    const warning = summary.querySelector('[data-campaign-design-warning]')
+
+    function update() {
+      const design = designs[audience.value]
+      description.hidden = !design
+      edit.hidden = true
+      warning.hidden = true
+      if (!design) {
+        current.textContent = summary.dataset.empty
+        return
+      }
+      const layout = select.value || design.layout
+      const label = Array.from(select.options).find((option) => option.value === layout)?.textContent || layout
+      current.textContent = summary.dataset.current.replace('%theme%', label)
+      const custom = layout.startsWith('twig:')
+      description.textContent = custom ? summary.dataset.custom : summary.dataset.shared.replace('%audience%', design.name)
+      if (!select.value || !custom) {
+        edit.href = design.url
+        edit.hidden = false
+        warning.hidden = false
+      }
+    }
+    select.addEventListener('change', update)
+    audience.addEventListener('change', update)
+    update()
+  })
+}
+
 export function initNewsletterIndexes(root = document) {
   root.querySelectorAll('[data-pw-newsletter-index]').forEach((panel) => {
     if (panel.dataset.initialized) return

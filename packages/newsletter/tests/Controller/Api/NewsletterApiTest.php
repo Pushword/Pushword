@@ -918,7 +918,12 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
     public function testTestSendTouchesNoCounter(): void
     {
         $audience = $this->createAudience();
+        $audience->headerMarkdown = 'Shared API heading';
+
         $campaign = $this->createCampaign($audience);
+        $campaign->emailLayout = 'twig:pushword';
+
+        $this->entityManager->flush();
 
         $body = $this->request(Request::METHOD_POST, '/api/newsletter/campaign/'.$campaign->id.'/test', [
             'emails' => ['me@example.tld', 'broken'],
@@ -927,6 +932,12 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertSame(['me@example.tld'], $body['sent']);
         self::assertSame(['broken'], $body['failed']);
         self::assertEmailCount(1);
+        $message = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $message);
+        $html = $message->getHtmlBody();
+        self::assertIsString($html);
+        self::assertStringContainsString('Pushword', $html);
+        self::assertStringNotContainsString('Shared API heading', $html);
         self::assertSame(0, $this->entityManager->getRepository(Campaign::class)->find($campaign->id)?->sentCount);
     }
 

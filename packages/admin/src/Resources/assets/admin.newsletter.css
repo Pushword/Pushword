@@ -621,3 +621,37 @@ body[data-newsletter] .datagrid .dropdown-toggle[role='button'] {
     flex-wrap: wrap;
   }
 }
+
+.pw-campaign-design-summary {
+  padding: 1rem;
+  margin-block-start: 0.75rem;
+  border-radius: var(--pw-radius-md);
+  background: var(--bs-tertiary-bg);
+}
+
+.pw-campaign-design-summary p {
+  margin-block: 0 0.5rem;
+}
+
+.pw-campaign-design-summary [data-campaign-design-current] {
+  font-weight: 600;
+}
+
+.pw-campaign-design-summary :is([data-campaign-design-description], [data-campaign-design-warning]) {
+  color: var(--bs-secondary-color);
+  font-size: var(--pw-text-sm);
+}
+
+.pw-campaign-design-summary [data-campaign-design-warning] {
+  margin-block: 0.5rem 0;
+}
+
+select[data-pw-campaign-design] {
+  min-block-size: 2.75rem;
+}
+
+.pw-campaign-design-summary a:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+}

@@ -55,6 +55,7 @@ final readonly class MailRenderer
         ?SendContext $sendContext = null,
         ?string $locale = null,
         array $untrackedUrls = [],
+        ?string $emailLayout = null,
     ): string {
         $host = $sendContext->mainHost ?? $audience->mainHost;
         $body = $this->markdownParser->transform($this->personalize($bodyMarkdown, $contact));
@@ -70,9 +71,10 @@ final readonly class MailRenderer
             $body = $this->clickTracker->rewrite($body, $audience, $contact, $trackedMail, $untrackedUrls, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl);
         }
 
-        $template = null === $audience->emailTemplate
-            ? $this->view($audience, 'email.html.twig', $sendContext)
-            : $this->emailTemplates->template($audience->emailTemplate);
+        $layout = $emailLayout ?? $audience->emailLayout;
+        $template = str_starts_with($layout, 'twig:')
+            ? $this->emailTemplates->template(substr($layout, 5))
+            : $this->view($audience, 'email.html.twig', $sendContext);
         $header = $this->designText($audience->headerMarkdown, $host);
         $footer = $this->designText($sendContext->footerMarkdown ?? $audience->footerMarkdown, $host);
 
@@ -85,7 +87,7 @@ final readonly class MailRenderer
             'siteName' => $this->siteRegistry->get($host)->name,
             'year' => new DateTimeImmutable()->format('Y'),
             'postalAddress' => null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress,
-            'wrapped' => $audience->emailWrapped,
+            'wrapped' => 'framed' === $layout,
             'header' => $this->absolutize($this->markdownParser->transform($header), $host),
             'footer' => $this->absolutize($this->markdownParser->transform($footer), $host),
             'subject' => $this->personalize($subject, $contact),
@@ -118,11 +120,12 @@ final readonly class MailRenderer
      * a list it did not put anybody on; the postal address is unaffected, since
      * it says who wrote rather than how to leave.
      */
-    public function text(Audience $audience, Contact $contact, string $bodyMarkdown, ?string $unsubscribeUrl, ?SendContext $sendContext = null): string
+    public function text(Audience $audience, Contact $contact, string $bodyMarkdown, ?string $unsubscribeUrl, ?SendContext $sendContext = null, ?string $emailLayout = null): string
     {
         $postalAddress = null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress;
-        $header = null === $audience->emailTemplate ? $audience->headerMarkdown : '';
-        $footer = null === $audience->emailTemplate ? $audience->footerMarkdown : '';
+        $custom = str_starts_with($emailLayout ?? $audience->emailLayout, 'twig:');
+        $header = $custom ? '' : $audience->headerMarkdown;
+        $footer = $custom ? '' : $audience->footerMarkdown;
         $foot = array_filter(
             [$unsubscribeUrl, $postalAddress, $sendContext->footerMarkdown ?? $footer],
             static fn (?string $value): bool => null !== $value && '' !== $value,

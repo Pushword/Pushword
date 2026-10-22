@@ -1,7 +1,8 @@
 ---
-title: 'new newsletter audiences start with a site identity'
+title: 'new newsletter audiences start with a site identity; campaigns can choose their own design'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
+run: 'doctrine:schema:update --force'
 ---
 
 <!--
@@ -40,3 +41,7 @@ Several changes land here between two tags: append to the file, do not replace i
 ## Newsletter email identity
 
 New audiences start with a site-name header and a copyright footer. Existing saved designs are preserved. Use **Audiences → Email design → Restore site name and copyright** to apply the new defaults to an existing audience, then save. `%siteName%` and `%year%` resolve in headers and footers; custom Twig templates also receive `siteName` and `year`. See [email design](../extension/newsletter#email-design-and-live-preview).
+
+## Campaign email design
+
+Run `php bin/console doctrine:schema:update --force` to add the nullable campaign layout override. Existing campaigns continue to inherit the audience's design. Campaign forms now offer an explicit design choice before the content; saved choices apply to real and test sends. See [email design](../extension/newsletter#email-design-and-live-preview).

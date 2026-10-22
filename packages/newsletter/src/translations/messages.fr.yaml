@@ -87,15 +87,27 @@ newsletter:
       schedule: Programmer
       send: Envoyer
       sendTest: Envoyer un test
+    design:
+      current: 'Habillage utilisé : %theme%'
+      custom: Ce modèle définit l'en-tête, le pied de page et le cadre de cette campagne.
+      edit: Modifier l'habillage commun de l'audience (nouvel onglet)
+      empty: Choisissez une audience pour voir l'habillage utilisé.
+      help: Ce choix s'applique uniquement à cette campagne. Les mises en page standard gardent les textes de l'audience ; un modèle du site fournit son propre en-tête et pied de page.
+      inherit: Utiliser l'habillage de l'audience
+      label: Habillage de cette campagne
+      shared: 'En-tête et pied de page configurés pour « %audience% ».'
+      warning: Modifier l'habillage de l'audience affecte aussi les campagnes et automatisations qui l'utilisent.
     fieldset:
       advanced: Options avancées
-      audience: 2. Choisir les destinataires
-      audienceHelp: Choisissez une audience. Ajoutez des conditions pour envoyer à une partie de ses abonnés.
-      content: 1. Rédiger la newsletter
+      audience: 3. Affiner les destinataires
+      audienceHelp: Sans condition, tous les abonnés de l'audience choisie reçoivent cette newsletter.
+      content: 2. Rédiger la newsletter
       contentHelp: L'objet et le texte d'aperçu donnent envie d'ouvrir votre email.
+      design: 1. Choisir l'audience et l'habillage
+      designHelp: Sélectionnez les abonnés concernés, puis la présentation de cet email.
       languages: Traductions
       performance: Résultats de l'envoi
-      schedule: 3. Préparer l'envoi
+      schedule: 4. Préparer l'envoi
       scheduleHelp: Enregistrez votre brouillon, envoyez un test, puis envoyez ou programmez depuis la fiche de la newsletter.
     field:
       audience: Audience

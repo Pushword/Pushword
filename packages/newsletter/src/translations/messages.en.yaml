@@ -87,15 +87,27 @@ newsletter:
       schedule: Schedule
       send: Send
       sendTest: Send test
+    design:
+      current: 'Design in use: %theme%'
+      custom: This preset defines the header, footer and frame for this campaign.
+      edit: Edit the shared audience design (new tab)
+      empty: Choose an audience to see the email design in use.
+      help: This choice applies to this campaign only. Standard layouts keep the audience’s text; a site preset provides its own header and footer.
+      inherit: Use the audience design
+      label: Design for this campaign
+      shared: 'Header and footer configured for “%audience%”.'
+      warning: Changing the audience design also affects campaigns and automations that use it.
     fieldset:
       advanced: Advanced options
-      audience: 2. Choose recipients
-      audienceHelp: Choose an audience. Add conditions to reach a selection of its subscribers.
-      content: 1. Write the newsletter
+      audience: 3. Refine recipients
+      audienceHelp: Without conditions, every subscriber in the selected audience receives this newsletter.
+      content: 2. Write the newsletter
       contentHelp: The subject and preview text help readers decide to open your email.
+      design: 1. Choose the audience and design
+      designHelp: Choose the subscribers, then the presentation of this email.
       languages: Translations
       performance: Delivery results
-      schedule: 3. Prepare to send
+      schedule: 4. Prepare to send
       scheduleHelp: Save your draft, send a test, then send or schedule from the newsletter details.
     field:
       audience: Audience

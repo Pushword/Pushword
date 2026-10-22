@@ -134,7 +134,7 @@ final readonly class NewsletterMailer
      * the way its readers will receive it — the chassis around the body is
      * translated in it too. Empty means the audience host's own language.
      */
-    public function sendTest(Audience $audience, string $subject, string $bodyMarkdown, ?string $preheader, string $address, ?UtmTag $utmTag, string $locale = '', bool $transactional = false): void
+    public function sendTest(Audience $audience, string $subject, string $bodyMarkdown, ?string $preheader, string $address, ?UtmTag $utmTag, string $locale = '', bool $transactional = false, ?string $emailLayout = null): void
     {
         $contact = new Contact($audience, $address);
         $contact->name = 'Test';
@@ -147,8 +147,8 @@ final readonly class NewsletterMailer
 
         $email = $this->baseEmail($audience, $contact)
             ->subject('[TEST] '.$this->renderer->subject($subject, $contact))
-            ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl))
-            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag));
+            ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl, emailLayout: $emailLayout))
+            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, emailLayout: $emailLayout));
 
         $this->mailer->send($email);
     }
@@ -159,11 +159,12 @@ final readonly class NewsletterMailer
         $unsubscribeUrl = $this->isTransactional($audience, $trackedMail)
             ? null
             : $this->linkGenerator->unsubscribeUrl($contact, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl);
+        $emailLayout = $trackedMail instanceof Campaign ? $trackedMail->emailLayout : null;
 
         $email = $this->baseEmail($audience, $contact, $sendContext)
             ->subject($this->renderer->subject($subject, $contact))
-            ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl, $sendContext))
-            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, $trackedMail, $sendContext, $locale, $untrackedUrls));
+            ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl, $sendContext, $emailLayout))
+            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, $trackedMail, $sendContext, $locale, $untrackedUrls, $emailLayout));
 
         if (null !== $unsubscribeUrl) {
             $headers = $email->getHeaders();

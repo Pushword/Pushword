@@ -49,6 +49,12 @@ class Campaign implements IdInterface, Stringable
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
     public ?Audience $audience = null;
 
+    /** Null follows the audience design; an override belongs to this campaign only. */
+    #[ORM\Column(type: Types::STRING, length: 105, nullable: true)]
+    public ?string $emailLayout = null {
+        set(?string $value) => '' === $value ? null : $value;
+    }
+
     #[Assert\NotBlank]
     #[ORM\Column(type: Types::STRING, length: 255)]
     public string $subject = '';
