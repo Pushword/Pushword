@@ -37,6 +37,8 @@ final class NewsletterMailerTest extends AbstractNewsletterTestCase
         yield 'frame this campaign only' => ['simple', 'framed', true, true];
         yield 'replace the audience preset with editable identity' => ['twig:pushword', 'simple', true, false];
         yield 'use a fixed campaign preset' => ['simple', 'twig:pushword', false, true];
+        yield 'use an unframed letter preset' => ['framed', 'twig:pushword_letter', false, false];
+        yield 'use a bulletin preset' => ['simple', 'twig:pushword_bulletin', false, true];
     }
 
     #[DataProvider('campaignDesigns')]

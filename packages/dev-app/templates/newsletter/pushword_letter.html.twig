@@ -1,0 +1,11 @@
+{% extends '@PushwordNewsletter/newsletter/email.html.twig' %}
+{% set wrapped = false %}
+
+{% block email_header %}
+  <p style="margin:0;font-family:Georgia,serif;font-size:32px;line-height:1.25;color:#243328;">{{ siteName }}</p>
+  <p style="margin:8px 0 0;font-size:14px;color:#5c685f;">{{ audienceName }}</p>
+{% endblock %}
+
+{% block email_footer %}
+  <p style="margin:16px 0 0;font-family:Georgia,serif;">© {{ year }} {{ siteName }}</p>
+{% endblock %}

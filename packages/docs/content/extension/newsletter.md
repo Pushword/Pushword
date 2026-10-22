@@ -482,7 +482,8 @@ Templates also receive `siteName` and `year` for site-owned branding.
 
 #### Preconfigured Twig designs
 
-Register a fixed design in `config/packages/newsletter.yaml`:
+Register one entry per fixed design in `config/packages/newsletter.yaml`. Several
+presets can coexist for the same site:
 
 ```yaml
 newsletter:
@@ -490,10 +491,17 @@ newsletter:
     brand:
       label: 'Brand newsletter'
       template: 'newsletter/brand.html.twig'
+    letter:
+      label: 'Brand letter'
+      template: 'newsletter/letter.html.twig'
 ```
 
-It appears alongside the two built-in layouts in **Email design**. The choice is
-saved per audience and uses the same Twig template for preview and sending.
+Both entries appear alongside the two built-in layouts in **Email design** and
+**Design for this campaign**. Each entry needs its own ID and label. Templates
+are explicitly registered; adding a file to `templates/newsletter/` alone does
+not add a choice. Clear the Symfony cache after changing configuration.
+The choice is saved per audience or campaign and uses the same Twig template for
+preview and sending.
 The editable header and footer are hidden while a preset is selected; their
 values are retained when switching back to a built-in layout.
 
@@ -521,9 +529,12 @@ sender information without the hidden editable header and footer. An explicit
 `SendContext.footerMarkdown` remains available in `footer` and in the text part;
 a preset decides whether to include `footer` in its HTML block.
 
-The development app includes a **Pushword (Twig)** example in
-`packages/dev-app/config/packages/newsletter.php` and
-`packages/dev-app/templates/newsletter/pushword.html.twig`.
+The development app registers three examples in
+`packages/dev-app/config/packages/newsletter.php`: **Pushword Classic** (framed),
+**Pushword Letter** (unframed, with a serif heading) and **Pushword Bulletin**
+(framed, with a dark masthead). Their files live in
+`packages/dev-app/templates/newsletter/`. Each defines its own site-name header
+and copyright footer while inheriting the automatic sender information.
 
 ### Email Markdown
 

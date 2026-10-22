@@ -6,6 +6,7 @@ namespace Pushword\Newsletter\Tests\Admin;
 
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Page;
@@ -214,7 +215,16 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertResponseRedirects('/login');
     }
 
-    public function testATwigPresetCanBePreviewedAndSavedAndRejectsAnUnregisteredTemplate(): void
+    /** @return iterable<string, array{string}> */
+    public static function twigPresets(): iterable
+    {
+        yield 'classic' => ['pushword'];
+        yield 'letter' => ['pushword_letter'];
+        yield 'bulletin' => ['pushword_bulletin'];
+    }
+
+    #[DataProvider('twigPresets')]
+    public function testATwigPresetCanBePreviewedAndSavedAndRejectsAnUnregisteredTemplate(string $preset): void
     {
         $client = $this->loginUser();
         $audience = $this->seed();
@@ -222,7 +232,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $url = '/admin/newsletter/audience/'.$id.'/email-design';
         $crawler = $client->request(Request::METHOD_GET, $url);
         $form = $crawler->filter('form[name="email_design"]')->form();
-        $form['email_design[emailLayout]'] = 'twig:pushword';
+        $form['email_design[emailLayout]'] = 'twig:'.$preset;
         $form['email_design[headerMarkdown]'] = 'Retained header';
         $form['email_design[sampleBody]'] = 'Live content';
         $values = $form->getPhpValues();
@@ -245,10 +255,10 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $this->entityManager()->clear();
         $stored = $this->entityManager()->find(Audience::class, $id);
         self::assertInstanceOf(Audience::class, $stored);
-        self::assertSame('pushword', $stored->emailTemplate);
+        self::assertSame($preset, $stored->emailTemplate);
         self::assertSame('Retained header', $stored->headerMarkdown);
         $crawler = $client->request(Request::METHOD_GET, $url);
-        self::assertCount(1, $crawler->filter('input[value="twig:pushword"]:checked'));
+        self::assertCount(1, $crawler->filter('input[value="twig:'.$preset.'"]:checked'));
         self::assertCount(1, $crawler->filter('[data-email-editable][hidden]'));
 
         $form = $crawler->filter('form[name="email_design"]')->form();
@@ -262,7 +272,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $this->entityManager()->clear();
         $stored = $this->entityManager()->find(Audience::class, $id);
         self::assertInstanceOf(Audience::class, $stored);
-        self::assertSame('pushword', $stored->emailTemplate);
+        self::assertSame($preset, $stored->emailTemplate);
 
         $crawler = $client->request(Request::METHOD_GET, $url);
         $form = $crawler->filter('form[name="email_design"]')->form();
@@ -504,24 +514,27 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $audience = $this->seed();
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
         self::assertStringContainsString('Choose the audience and design', $crawler->filter('.form-fieldset')->first()->text());
-        self::assertCount(1, $crawler->filter('select[name="Campaign[emailLayout]"] option[value="twig:pushword"]'));
+        foreach (['pushword', 'pushword_letter', 'pushword_bulletin'] as $preset) {
+            self::assertCount(1, $crawler->filter('select[name="Campaign[emailLayout]"] option[value="twig:'.$preset.'"]'));
+        }
+
         $form = $crawler->filter('form[name="Campaign"]')->form();
         $form['Campaign[subject]'] = 'Own email design';
         $form['Campaign[audience]'] = (string) $audience->id;
-        $form['Campaign[emailLayout]'] = 'twig:pushword';
+        $form['Campaign[emailLayout]'] = 'twig:pushword_letter';
         $client->submit($form);
         self::assertResponseRedirects();
         $campaign = $this->entityManager()->getRepository(Campaign::class)->findOneBy(['subject' => 'Own email design']);
         self::assertInstanceOf(Campaign::class, $campaign);
         $id = $campaign->id;
-        self::assertSame('twig:pushword', $campaign->emailLayout);
+        self::assertSame('twig:pushword_letter', $campaign->emailLayout);
         $storedAudience = $this->entityManager()->find(Audience::class, $audience->id);
         self::assertInstanceOf(Audience::class, $storedAudience);
         self::assertSame('simple', $storedAudience->emailLayout);
 
         $url = '/admin/newsletter/campaign/'.$id.'/edit';
         $crawler = $client->request(Request::METHOD_GET, $url);
-        self::assertCount(1, $crawler->filter('select[name="Campaign[emailLayout]"] option[value="twig:pushword"][selected]'));
+        self::assertCount(1, $crawler->filter('select[name="Campaign[emailLayout]"] option[value="twig:pushword_letter"][selected]'));
         $form = $crawler->filter('form[name="Campaign"]')->form();
         $values = $form->getPhpValues();
         self::assertIsArray($values['Campaign']);
@@ -531,7 +544,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $this->entityManager()->clear();
         $stored = $this->entityManager()->find(Campaign::class, $id);
         self::assertInstanceOf(Campaign::class, $stored);
-        self::assertSame('twig:pushword', $stored->emailLayout);
+        self::assertSame('twig:pushword_letter', $stored->emailLayout);
 
         $crawler = $client->request(Request::METHOD_GET, $url);
         $form = $crawler->filter('form[name="Campaign"]')->form();

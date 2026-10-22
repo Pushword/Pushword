@@ -91,13 +91,22 @@ final class MailRendererTest extends AbstractNewsletterTestCase
         self::assertStringNotContainsString('Audience signature', $renderer->text($audience, $contact, 'Body', null, $context));
     }
 
-    public function testATwigPresetControlsTheDesignWithoutLosingTheEditableLayout(): void
+    /** @return iterable<string, array{string, int}> */
+    public static function twigPresets(): iterable
+    {
+        yield 'classic' => ['pushword', 2];
+        yield 'letter' => ['pushword_letter', 1];
+        yield 'bulletin' => ['pushword_bulletin', 3];
+    }
+
+    #[DataProvider('twigPresets')]
+    public function testATwigPresetControlsTheDesignWithoutLosingTheEditableLayout(string $preset, int $tables): void
     {
         $audience = $this->createAudience();
         $audience->headerMarkdown = 'Editable brand';
         $audience->footerMarkdown = 'Editable signature';
         $audience->postalAddress = '12 Baker Street';
-        $audience->emailLayout = 'twig:pushword';
+        $audience->emailLayout = 'twig:'.$preset;
 
         $contact = $this->createContact($audience, 'reader@example.tld');
         $renderer = self::getContainer()->get(MailRenderer::class);
@@ -105,10 +114,11 @@ final class MailRendererTest extends AbstractNewsletterTestCase
         $html = $renderer->html($audience, $contact, 'Subject', 'Hello **%name%**.', null, self::UNSUBSCRIBE, null, sendContext: $context);
         $crawler = new Crawler($html);
 
-        self::assertCount(2, $crawler->filter('table[role="presentation"]'));
+        self::assertCount($tables, $crawler->filter('table[role="presentation"]'));
         self::assertStringContainsString('Pushword', $crawler->filter('td')->first()->text());
         self::assertStringContainsString('Hello Test.', $crawler->filter('body')->text());
         self::assertStringContainsString($audience->name, $crawler->filter('td')->last()->text());
+        self::assertStringContainsString('© '.new DateTimeImmutable()->format('Y').' Pushword', $crawler->filter('td')->last()->text());
         self::assertStringContainsString('12 Baker Street', $html);
         self::assertCount(1, $crawler->filter('a[href="'.self::UNSUBSCRIBE.'"]'));
         self::assertStringNotContainsString('Editable', $html);

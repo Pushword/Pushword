@@ -1,0 +1,17 @@
+{% extends '@PushwordNewsletter/newsletter/email.html.twig' %}
+{% set wrapped = true %}
+
+{% block email_header %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;background-color:#243328;">
+    <tr>
+      <td style="padding:24px;text-align:center;">
+        <p style="margin:0;font-size:28px;font-weight:bold;line-height:1.25;color:#f4f6ef;">{{ siteName }}</p>
+        <p style="margin:8px 0 0;font-size:14px;line-height:1.5;color:#d6dfd3;">{{ audienceName }}</p>
+      </td>
+    </tr>
+  </table>
+{% endblock %}
+
+{% block email_footer %}
+  <p style="margin:16px 0 0;text-align:center;">© {{ year }} {{ siteName }}</p>
+{% endblock %}
