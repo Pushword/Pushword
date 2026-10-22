@@ -418,6 +418,52 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
     }
 
     /**
+     * Two rows naming one file, as an upload written over another media's file left them
+     * (production, 2026-10-15). Generating the name for both wrote the newer photo's
+     * dimensions onto the older media; it is reported and neither row is touched, whether
+     * the name is asked for or met during a full run.
+     */
+    public function testANameSeveralMediaHoldIsReportedNotProcessed(): void
+    {
+        $commandTester = $this->createCommandTester();
+        $this->createMedia('cache-shared-name.png', 'image/png');
+        $this->createMedia('cache-shared-name.png', 'image/png');
+        $em = $this->getEntityManager();
+        foreach ($this->createdMediaIds as $id) {
+            $em->find(Media::class, $id)?->setDimensions([7, 7]);
+        }
+
+        $em->flush();
+
+        $this->waitForLockRelease();
+        $exitCode = $commandTester->execute(['media' => 'cache-shared-name.png', '--force' => true, '--format' => 'agent']);
+
+        self::assertSame(1, $exitCode);
+        $decoded = $this->decodeAgentOutput($commandTester);
+        self::assertSame(1, $decoded['errors']);
+        self::assertSame(0, $decoded['generated']);
+
+        $sharedNameError = \sprintf('cache-shared-name.png: file of several media (#%d, #%d), not processed', ...$this->createdMediaIds);
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['--parallel' => '1', '--force' => true, '--format' => 'text']);
+
+        self::assertStringContainsString($sharedNameError, $commandTester->getDisplay());
+
+        // Everything else is fresh now: the parallel run stops before starting a worker.
+        $this->waitForLockRelease();
+        $exitCode = $commandTester->execute(['--parallel' => '2', '--format' => 'text']);
+
+        self::assertSame(1, $exitCode);
+        self::assertStringContainsString($sharedNameError, $commandTester->getDisplay());
+
+        $em->clear();
+        foreach ($this->createdMediaIds as $id) {
+            self::assertSame(7, $em->find(Media::class, $id)?->getWidth(), 'dimensions left alone');
+        }
+    }
+
+    /**
      * The parallel count had the same shape the sequential one just lost: processed
      * was $staleCount - count($errors), deduced from the batch size and never
      * measured, so a worker that exited having done nothing was credited with its

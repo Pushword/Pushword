@@ -8,6 +8,7 @@ use DateTime;
 use Exception;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Media;
+use ReflectionProperty;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Validation;
@@ -68,7 +69,7 @@ final class MediaTest extends TestCase
 
     public function testSetFileNameTracksHistory(): void
     {
-        $media = new Media();
+        $media = $this->storedMedia();
         $media->setFileName('first-name.jpg');
         $media->setFileName('Second Name.jpg');
         self::assertSame('second-name.jpg', $media->getFileName());
@@ -203,7 +204,7 @@ final class MediaTest extends TestCase
 
     public function testChangingTheSlugRenamesTheFile(): void
     {
-        $media = new Media();
+        $media = $this->storedMedia();
         $media->setFileName('old-name.jpg');
         $media->setSlug('old-name');
 
@@ -224,14 +225,27 @@ final class MediaTest extends TestCase
         self::assertSame(0, $media->size);
     }
 
-    public function testFileNameBeforeUpdateKeepsTheFirstValue(): void
+    public function testHistoryKeepsEveryStoredName(): void
     {
-        $media = new Media();
+        $media = $this->storedMedia();
         $media->setFileName('first.jpg');
         $media->setFileName('second.jpg');
         $media->setFileName('third.jpg');
-        self::assertSame('first.jpg', $media->fileNameBeforeUpdate);
         self::assertSame(['first.jpg', 'second.jpg'], $media->fileNameHistory);
+    }
+
+    /**
+     * Before its first flush a name is only proposed: MediaConflictResolver renames an
+     * upload whose name another media holds, and that name used to stay in the history of
+     * the new media, which then answered to the other one's name.
+     */
+    public function testANewMediaHasNoHistoryOfNamesItWasNeverStoredUnder(): void
+    {
+        $media = new Media();
+        $media->setFileName('held-by-another.jpg');
+        $media->setFileName('held-by-another-2.jpg');
+
+        self::assertSame([], $media->fileNameHistory);
     }
 
     public function testLicenseStateDefaultsToEmpty(): void
@@ -260,5 +274,13 @@ final class MediaTest extends TestCase
         self::assertCount(1, $violations);
         self::assertSame('mediaFile', $violations->get(0)->getPropertyPath());
         self::assertStringContainsString('too large', (string) $violations->get(0)->getMessage());
+    }
+
+    private function storedMedia(): Media
+    {
+        $media = new Media();
+        new ReflectionProperty(Media::class, 'id')->setValue($media, 1);
+
+        return $media;
     }
 }

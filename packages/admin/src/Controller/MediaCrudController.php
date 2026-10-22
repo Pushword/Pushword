@@ -50,6 +50,9 @@ class MediaCrudController extends AbstractAdminCrudController
 
     private const string VIEW_SESSION_KEY = 'pw_media_view';
 
+    /** The media an upload duplicated, reused instead of stored twice. */
+    private ?Media $reusedMedia = null;
+
     public function __construct(
         private readonly MediaRepository $mediaRepo,
         private readonly MediaUsageRepository $mediaUsageRepo,
@@ -158,10 +161,14 @@ class MediaCrudController extends AbstractAdminCrudController
             FlashBag::get($this->getRequest())?->add('success', $this->getTranslator()->trans('adminMediaRotateSuccess'));
         }
 
-        $editUrl = clone $this->adminUrlGenerator;
-        $editUrl->setController(self::class)->setAction(Action::EDIT)->setEntityId($media->id);
+        return $this->redirect($this->editUrl($media));
+    }
 
-        return $this->redirect($editUrl->generateUrl());
+    private function editUrl(Media $media): string
+    {
+        $editUrl = clone $this->adminUrlGenerator;
+
+        return $editUrl->setController(self::class)->setAction(Action::EDIT)->setEntityId($media->id)->generateUrl();
     }
 
     #[Override]
@@ -420,12 +427,37 @@ class MediaCrudController extends AbstractAdminCrudController
         parent::deleteEntity($entityManager, $entityInstance);
     }
 
+    /**
+     * An upload whose bytes the library already holds is not stored twice, as the block
+     * editor and the API already refused: the existing media is kept and opened instead.
+     */
+    #[Override]
+    public function persistEntity(EntityManagerInterface $entityManager, object $entityInstance): void
+    {
+        $duplicate = null === $entityInstance->getMediaFile() ? null : $this->mediaRepo->findDuplicate($entityInstance);
+        if (null === $duplicate) {
+            parent::persistEntity($entityManager, $entityInstance);
+
+            return;
+        }
+
+        $this->reusedMedia = $duplicate;
+        // Flashes are rendered raw, and an alt is whatever an editor typed.
+        FlashBag::get($this->getRequest())?->add('warning', $this->getTranslator()->trans('adminMediaReusedDuplicate', [
+            '%name%' => htmlspecialchars($duplicate->getAlt()),
+        ]));
+    }
+
     #[Override]
     protected function getRedirectResponseAfterSave(AdminContext $context, string $action): RedirectResponse
     {
         $request = $context->getRequest();
         $isPickerContext = $request->query->getBoolean('pwMediaPicker');
-        $entity = $context->getEntity()->getInstance();
+        $entity = $this->reusedMedia ?? $context->getEntity()->getInstance();
+
+        if (null !== $this->reusedMedia && ! $isPickerContext) {
+            return $this->redirect($this->editUrl($this->reusedMedia));
+        }
 
         if (! $isPickerContext || ! $entity instanceof Media || Action::NEW !== $action) {
             return parent::getRedirectResponseAfterSave($context, $action);

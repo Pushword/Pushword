@@ -99,6 +99,7 @@ adminMediaPreviewMarkdown: Markdown
 adminMediaPreviewPath: Chemin
 adminMediaRelatedLabel: 'Pages connectées'
 adminMediaRemovalRefused: "« %fileName% » a été conservé : %reasons%"
+adminMediaReusedDuplicate: "Ce fichier est déjà dans la médiathèque : « %name% » a été repris, aucune copie n'a été créée."
 adminMediaRotateLeftLabel: 'Pivoter à gauche'
 adminMediaRotateRightLabel: 'Pivoter à droite'
 adminMediaRotateSuccess: "Image pivotée. Le cache est en cours de régénération."

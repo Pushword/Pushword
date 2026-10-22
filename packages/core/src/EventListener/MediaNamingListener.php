@@ -41,11 +41,13 @@ final readonly class MediaNamingListener
 
         $this->setNameIfEmpty($media);
 
+        // Named first, so the resolver judges the name the file is written under. Unnamed,
+        // it judged the raw alt — `Photo A.jpg` — and let an upload overwrite `photo-a.jpg`.
+        $media->nameUpload();
+
         if ($this->conflictResolver->resolveConflicts($media)) {
             $this->alert('success', 'mediaNameWasChanged');
         }
-
-        $media->nameUpload();
     }
 
     private function getMediaFromEvent(Event $event): Media

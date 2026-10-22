@@ -355,8 +355,9 @@ final class ConversationFlatTest extends KernelTestCase
 
     public function testImportWithMediaNameWithoutExtension(): void
     {
-        // Crée un média avec extension
-        $media = $this->createTestMedia('piedweb-logo.png');
+        // A name of its own: under a fixture's name, the fake file overwrote the fixture's.
+        $fileName = 'conversation-no-extension-'.uniqid().'.png';
+        $media = $this->createTestMedia($fileName);
 
         // Crée un message avec ce média
         $message = $this->createTestMessage('Message with media', 'test@example.com', 'Test User');
@@ -386,7 +387,7 @@ final class ConversationFlatTest extends KernelTestCase
                     $columns = str_getcsv($line, escape: '\\');
                     if (isset($columns[$mediaListIndex])) {
                         // Remplace le nom avec extension par le nom sans extension
-                        $columns[$mediaListIndex] = 'piedweb-logo';
+                        $columns[$mediaListIndex] = basename($fileName, '.png');
                         $lines[$i] = $this->arrayToCsvLine($columns);
                     }
 
@@ -419,7 +420,7 @@ final class ConversationFlatTest extends KernelTestCase
         self::assertArrayHasKey(0, $mediaArray);
         /** @var Media $firstMedia */
         $firstMedia = $mediaArray[0];
-        self::assertSame('piedweb-logo.png', $firstMedia->getFileName());
+        self::assertSame($fileName, $firstMedia->getFileName());
 
         if (null !== $importedMessage->id) {
             $this->createdMessageIds[] = $importedMessage->id;

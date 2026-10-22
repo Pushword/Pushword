@@ -156,6 +156,32 @@ A remote `pushword.mediaStorage` needs the `MediaStorageAdapter` service redefin
 
 Configuration options: [Flysystem documentation](https://flysystem.thephpleague.com/docs/).
 
+## File names {id=file-names}
+
+A media's file is stored in `media_dir` under the media's name, and no two media share one:
+
+- A new upload is named after the name field, else the alt, else the client file name, slugified. When another media holds that name, now or in its `fileNameHistory`, or a file already sits there, a suffix is added: `photo.jpg` becomes `photo-2.jpg`. An upload never writes over an existing file.
+- A renamed media keeps its previous names in `fileNameHistory`, so pages that still reference them resolve. A name a new upload was refused is not one of them.
+- An upload whose SHA-1 is already in the library is not stored twice. The admin form, the multi-upload, the block editor and the API return the existing media.
+- Older versions could leave two media naming one file, which belongs to at most one of them. Renaming either is refused, `pw:image:cache` reports the name and processes neither, and removing one keeps the file for the other. To repair, remove the row whose `hash` is not the file's SHA-1.
+
+## Audit log {id=audit-log}
+
+Media creations, renames and removals are logged at `info` on the `pushword_media` Monolog channel. Each record holds the media id, the file name (or `from` and `to` for a rename), the SHA-1 and the user. The user is `null` for console commands. A default production `fingers_crossed` handler writes `info` records only when an error follows, so route the channel to its own file:
+
+```yaml
+# config/packages/monolog.yaml
+when@prod:
+    monolog:
+        handlers:
+            pushword_media:
+                type: rotating_file
+                path: '%kernel.logs_dir%/media.log'
+                level: info
+                max_files: 90
+                channels: [pushword_media]
+```
+
 ## Notes
 
 - Image cache (thumbnails, optimized versions, `og/` previews) uses `pushword.mediaCacheStorage`. It is local by default, in `media_cache_dir` — `public/{public_media_dir}/` by default — and may be moved to remote Flysystem storage

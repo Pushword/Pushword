@@ -164,6 +164,62 @@ final class MediaRepositoryTest extends KernelTestCase
         self::assertInstanceOf(Media::class, $duplicate);
     }
 
+    /** A former name owns no file, so only the current name counts, and never the media itself. */
+    public function testFindOtherMediaNamedMatchesCurrentNamesOnly(): void
+    {
+        $repo = $this->getMediaRepository();
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $suffix = uniqid();
+        $media = $this->namedMedia('other-named-'.$suffix.'.png');
+        $media->fileNameHistory = ['former-'.$suffix.'.png'];
+
+        $em->persist($media);
+        $em->flush();
+
+        try {
+            $found = $repo->findOtherMediaNamed('other-named-'.$suffix.'.png', null);
+            self::assertSame($media->id, $found?->id);
+            self::assertNull($repo->findOtherMediaNamed('other-named-'.$suffix.'.png', $media->id));
+            self::assertNull($repo->findOtherMediaNamed('former-'.$suffix.'.png', null));
+            self::assertNull($repo->findOtherMediaNamed('unknown-'.$suffix.'.png', null));
+        } finally {
+            $em->remove($media);
+            $em->flush();
+        }
+    }
+
+    public function testFindSharedFileNamesListsOnlyNamesSeveralMediaHold(): void
+    {
+        $repo = $this->getMediaRepository();
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $suffix = uniqid();
+        $shared = 'shared-'.$suffix.'.png';
+        $medias = [
+            $this->namedMedia($shared),
+            $this->namedMedia($shared),
+            $this->namedMedia('alone-'.$suffix.'.png'),
+        ];
+        foreach ($medias as $media) {
+            $em->persist($media);
+        }
+
+        $em->flush();
+
+        try {
+            $names = $repo->findSharedFileNames();
+            self::assertContains($shared, $names);
+            self::assertNotContains('alone-'.$suffix.'.png', $names);
+        } finally {
+            foreach ($medias as $media) {
+                $em->remove($media);
+            }
+
+            $em->flush();
+        }
+    }
+
     public function testFindOneBySearchMatchesFileName(): void
     {
         $repo = $this->getMediaRepository();
@@ -521,6 +577,17 @@ final class MediaRepositoryTest extends KernelTestCase
         $repoB = new MediaRepository($registry, $cache, debug: false);
         self::assertNotNull($repoB->findOneByFileName('1.jpg'));
         self::assertTrue($cache->hasItem(MediaRepository::INDEX_CACHE_KEY_PREFIX.$versionAfter));
+    }
+
+    private function namedMedia(string $fileName): Media
+    {
+        $media = new Media();
+        $media->setFileName($fileName);
+        $media->setAlt(uniqid('alt-'));
+        $media->setMimeType('image/png');
+        $media->setHash(sha1(uniqid($fileName), true));
+
+        return $media;
     }
 
     private function getMediaRepository(): MediaRepository

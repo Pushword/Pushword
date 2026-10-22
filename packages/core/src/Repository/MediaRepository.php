@@ -401,6 +401,42 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     }
 
     /**
+     * Another media whose current name is $fileName — the one the file at that path
+     * belongs to. Unlike isFileNameUsed(), a former name does not count: it owns no file.
+     */
+    public function findOtherMediaNamed(string $fileName, ?int $excludeId): ?Media
+    {
+        $qb = $this->createQueryBuilder('m')
+            ->where('m.fileName = :fileName')
+            ->setParameter('fileName', $fileName);
+
+        if (null !== $excludeId) {
+            $qb->andWhere('m.id != :excludeId')
+                ->setParameter('excludeId', $excludeId);
+        }
+
+        /** @var Media|null */
+        return $qb->setMaxResults(1)->getQuery()->getOneOrNullResult();
+    }
+
+    /**
+     * Names several media hold at once. Nothing creates them anymore, but rows left by an
+     * older version share one file, which belongs to at most one of them.
+     *
+     * @return list<string>
+     */
+    public function findSharedFileNames(): array
+    {
+        /** @var list<string> */
+        return $this->createQueryBuilder('m')
+            ->select('m.fileName')
+            ->groupBy('m.fileName')
+            ->having('COUNT(m.id) > 1')
+            ->getQuery()
+            ->getSingleColumnResult();
+    }
+
+    /**
      * @return array{mimeType: string[], ratioLabel: string[], dimensions: string[]}
      */
     public function getMimeTypesAndRatio(): array

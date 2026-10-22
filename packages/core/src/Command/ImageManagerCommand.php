@@ -64,6 +64,9 @@ final class ImageManagerCommand
     /** @var array{swept: int, empty: int} */
     private array $scratch = ['swept' => 0, 'empty' => 0];
 
+    /** @var string[] One error per name several media hold, left unprocessed. */
+    private array $sharedFileNameErrors = [];
+
     public function __construct(
         private readonly MediaRepository $mediaRepository,
         private readonly EntityManagerInterface $entityManager,
@@ -128,9 +131,9 @@ final class ImageManagerCommand
         }
 
         try {
-            $medias = null !== $mediaName
+            $medias = $this->withoutSharedFileNames(null !== $mediaName
                 ? $this->resolveMediaNames($mediaName)
-                : $this->mediaRepository->findAll();
+                : $this->mediaRepository->findAll());
 
             // Auto (0): use a quarter of the cores (min 1). Each worker already decodes the
             // full master through vips (memory-heavy) AND spawns a background pw:image:optimize
@@ -177,13 +180,49 @@ final class ImageManagerCommand
     }
 
     /**
+     * A name several media hold is one file, which is at most one of theirs. Generating it
+     * for each wrote one photo's dimensions and main color onto the other (production,
+     * 2026-10-15), so none of them is processed and the run reports the name.
+     *
+     * @param Media[] $medias
+     *
+     * @return Media[]
+     */
+    private function withoutSharedFileNames(array $medias): array
+    {
+        $this->sharedFileNameErrors = [];
+        $shared = array_flip($this->mediaRepository->findSharedFileNames());
+        if ([] === $shared) {
+            return $medias;
+        }
+
+        $kept = [];
+        $holders = [];
+        foreach ($medias as $media) {
+            if (isset($shared[$media->getFileName()])) {
+                $holders[$media->getFileName()][] = '#'.$media->id;
+
+                continue;
+            }
+
+            $kept[] = $media;
+        }
+
+        foreach ($holders as $fileName => $ids) {
+            $this->sharedFileNameErrors[] = \sprintf('%s: file of several media (%s), not processed', $fileName, implode(', ', $ids));
+        }
+
+        return $kept;
+    }
+
+    /**
      * @param Media[] $medias
      */
     private function executeSequential(array $medias, bool $force, bool $isWorker, SymfonyStyle $io, OutputInterface $output, float $startTime): int
     {
         $progressBar = ($isWorker || $this->agentMode) ? null : $this->createProgressBar($output, \count($medias));
 
-        $errors = [];
+        $errors = $this->sharedFileNameErrors;
         $skipped = 0;
         $generated = 0;
         $seen = 0;
@@ -284,15 +323,18 @@ final class ImageManagerCommand
             }
         }
 
+        $errors = $this->sharedFileNameErrors;
+
         $total = \count($imageMedias);
         if (0 === $total) {
             if ($this->agentMode) {
-                $this->reportAgentSummary($output, 0, 0, [], $startTime);
+                $this->reportAgentSummary($output, 0, 0, $errors, $startTime);
             } else {
                 $io->info('No images to process.');
+                $this->reportErrors($errors, $io);
             }
 
-            return 0;
+            return [] === $errors ? Command::SUCCESS : Command::FAILURE;
         }
 
         // Pre-filter: skip images whose cache is already fresh
@@ -316,12 +358,13 @@ final class ImageManagerCommand
         $staleCount = \count($staleMedias);
         if (0 === $staleCount) {
             if ($this->agentMode) {
-                $this->reportAgentSummary($output, 0, $preSkipped, [], $startTime);
+                $this->reportAgentSummary($output, 0, $preSkipped, $errors, $startTime);
             } else {
-                $this->reportSummary($io, 0, $preSkipped, 0, $startTime);
+                $this->reportSummary($io, 0, $preSkipped, \count($errors), $startTime);
+                $this->reportErrors($errors, $io);
             }
 
-            return 0;
+            return [] === $errors ? Command::SUCCESS : Command::FAILURE;
         }
 
         // Batch images per worker to amortize kernel boot cost. More batches than
@@ -335,7 +378,6 @@ final class ImageManagerCommand
 
         /** @var array<int, array{process: Process, count: int, done: int, failed: int, buffer: string}> $running */
         $running = [];
-        $errors = [];
         $processed = 0;
         $chunkIndex = 0;
 

@@ -216,6 +216,222 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
         }
     }
 
+    /**
+     * The incident of 2026-10-15 at its root: MediaConflictResolver judged an unnamed
+     * upload by its raw alt — `Held 1a2b.png` — while the file went to the slug of it,
+     * `held-1a2b.png`, another media's file, which Vich wrote over. Every form names the
+     * upload before persisting now; this persists one unnamed, as any code still may.
+     */
+    public function testAnUploadNamedAfterAnotherMediaIsNotWrittenOverIt(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $suffix = uniqid();
+        $held = $this->probeMedia('held-'.$suffix.'.png', onDisk: true);
+        $em->persist($held);
+        $em->flush();
+
+        $heldBytes = sha1_file($this->getMediaDir().'/held-'.$suffix.'.png');
+
+        $upload = new Media();
+        $upload->setMediaFile($this->upload());
+        $upload->setAlt('Held '.$suffix);
+
+        $em->persist($upload);
+        $em->flush();
+
+        try {
+            self::assertNotSame('held-'.$suffix.'.png', $upload->getFileName());
+            self::assertSame($heldBytes, sha1_file($this->getMediaDir().'/held-'.$suffix.'.png'));
+        } finally {
+            $em->remove($held);
+            $em->remove($upload);
+            $em->flush();
+        }
+    }
+
+    /** No row claims the file, so only the disk can tell the name is taken. */
+    public function testAnUploadIsNotWrittenOverAFileNoRowClaims(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $orphan = 'unclaimed-'.uniqid().'.png';
+        imagepng(imagecreatetruecolor(4, 4), $this->getMediaDir().'/'.$orphan);
+        $orphanBytes = sha1_file($this->getMediaDir().'/'.$orphan);
+
+        $upload = new Media();
+        $upload->setMediaFile($this->upload());
+        $upload->setSlugForce(basename($orphan, '.png'));
+
+        $em->persist($upload);
+        $em->flush();
+
+        try {
+            self::assertNotSame($orphan, $upload->getFileName());
+            self::assertSame($orphanBytes, sha1_file($this->getMediaDir().'/'.$orphan));
+        } finally {
+            $em->remove($upload);
+            $em->flush();
+            @unlink($this->getMediaDir().'/'.$orphan);
+        }
+    }
+
+    /**
+     * An upload refused the name of another media used to keep that name as the one it
+     * was "renamed from", so its next rename in the request moved the other media's file.
+     */
+    public function testRenamingAnUploadMovesItsOwnFileNotTheOneItWasRefused(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $suffix = uniqid();
+        $held = $this->probeMedia('refused-'.$suffix.'.png', onDisk: true);
+        $em->persist($held);
+        $em->flush();
+
+        $heldBytes = sha1_file($this->getMediaDir().'/refused-'.$suffix.'.png');
+
+        $file = $this->upload();
+        $uploadBytes = sha1_file($file->getPathname());
+        $upload = new Media();
+        $upload->setMediaFile($file);
+        $upload->setSlugForce('refused-'.$suffix);
+
+        $em->persist($upload);
+        $em->flush();
+
+        try {
+            $upload->setSlugForce('moved-'.$suffix);
+            $em->flush();
+
+            self::assertSame($heldBytes, sha1_file($this->getMediaDir().'/refused-'.$suffix.'.png'));
+            self::assertSame($uploadBytes, sha1_file($this->getMediaDir().'/moved-'.$suffix.'.png'));
+            self::assertSame([], array_intersect(['refused-'.$suffix.'.png'], $upload->fileNameHistory));
+        } finally {
+            $em->remove($held);
+            $em->remove($upload);
+            $em->flush();
+        }
+    }
+
+    /**
+     * Two rows naming one file is what the overwrite left behind. Renaming the newer one
+     * moved the file away from the older and purged its derivatives: refused instead.
+     */
+    public function testARenameDoesNotTakeTheFileOfAnotherMediaWithTheSameName(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $shared = 'shared-'.uniqid().'.png';
+        $older = $this->probeMedia($shared, onDisk: true);
+        $newer = $this->probeMedia($shared, onDisk: false);
+        $newer->setAlt('newer '.$shared);
+
+        $em->persist($older);
+        $em->persist($newer);
+        $em->flush();
+
+        $newer->setFileName('unshared-'.$shared);
+
+        try {
+            $em->flush();
+            self::fail('a rename must not take the file another media is named after');
+        } catch (Exception $exception) {
+            self::assertStringContainsString('is also the file of media #'.$older->id, $exception->getMessage());
+        }
+
+        $connection = $em->getConnection();
+
+        try {
+            self::assertFileExists($this->getMediaDir().'/'.$shared);
+            self::assertFileDoesNotExist($this->getMediaDir().'/unshared-'.$shared);
+            self::assertSame($shared, $connection->fetchOne('SELECT media FROM media WHERE id = ?', [$newer->id]));
+        } finally {
+            $connection->delete('media', ['id' => $older->id]);
+            $connection->delete('media', ['id' => $newer->id]);
+            @unlink($this->getMediaDir().'/'.$shared);
+        }
+    }
+
+    /** Removing the wrong row of such a pair is the repair: the file stays with the other. */
+    public function testRemovingAMediaKeepsTheFileAnotherMediaIsNamedAfter(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $shared = 'shared-removed-'.uniqid().'.png';
+        $older = $this->probeMedia($shared, onDisk: true);
+        $newer = $this->probeMedia($shared, onDisk: false);
+        $newer->setAlt('newer '.$shared);
+
+        $em->persist($older);
+        $em->persist($newer);
+        $em->flush();
+
+        $em->remove($newer);
+        $em->flush();
+
+        try {
+            self::assertFileExists($this->getMediaDir().'/'.$shared);
+        } finally {
+            $em->remove($older);
+            $em->flush();
+        }
+
+        self::assertFileDoesNotExist($this->getMediaDir().'/'.$shared, 'the last holder takes the file with it');
+    }
+
+    /**
+     * The edit form's "replace file" flow: a stored media uploads new bytes at its own
+     * name. The disk check that protects new uploads must not make it take a suffix.
+     */
+    public function testReplacingAStoredMediaFileKeepsItsNameAndOverwritesItsFile(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $name = 'replaced-'.uniqid().'.png';
+        $media = $this->probeMedia($name, onDisk: true);
+        $em->persist($media);
+        $em->flush();
+
+        $replacement = $this->upload();
+        $replacementHash = sha1_file($replacement->getPathname());
+
+        try {
+            $media->setMediaFile($replacement);
+            $em->flush();
+
+            self::assertSame($name, $media->getFileName());
+            self::assertSame($replacementHash, sha1_file($this->getMediaDir().'/'.$name));
+        } finally {
+            $em->remove($media);
+            $em->flush();
+        }
+    }
+
+    /** A PNG with bytes of its own, as an editor would upload it. */
+    private function upload(): UploadedFile
+    {
+        $image = imagecreatetruecolor(3, 3);
+        self::assertNotFalse($image);
+        imagesetpixel($image, 0, 0, random_int(1, 0xFFFFFF));
+        $path = sys_get_temp_dir().'/upload-'.uniqid().'.png';
+        imagepng($image, $path);
+
+        return new UploadedFile($path, basename($path), 'image/png', null, true);
+    }
+
     private function probeMedia(string $fileName, bool $onDisk): Media
     {
         if ($onDisk) {
@@ -265,7 +481,7 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
         $fileInput = $crawler->filter('[type="file"]');
         $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
         $form = $crawler->filter('form[method="post"]')->form([
-            $formId.'[mediaFile]' => $file,
+            $formId.'[mediaFile]' => $this->distinctCopy($file),
         ]);
         $client->submit($form);
         self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
@@ -275,7 +491,7 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
         $fileInput = $crawler->filter('[type="file"]');
         $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
         $form = $crawler->filter('form[method="post"]')->form([
-            $formId.'[mediaFile]' => $file,
+            $formId.'[mediaFile]' => $this->distinctCopy($file),
             $formId.'[alt]' => '1',
         ]);
 
@@ -287,7 +503,7 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
         $fileInput = $crawler->filter('[type="file"]');
         $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
         $form = $crawler->filter('form[method="post"]')->form([
-            $formId.'[mediaFile]' => $file,
+            $formId.'[mediaFile]' => $this->distinctCopy($file),
             $formId.'[slugForce]' => '1',
         ]);
 
@@ -337,6 +553,16 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
             $this->projectDir,
             self::getContainer()->get(SafeRemoteFileFetcher::class),
         );
+    }
+
+    /** The same picture under the same client name, with bytes of its own: identical bytes are reused, not renamed. */
+    private function distinctCopy(string $file): string
+    {
+        $copy = sys_get_temp_dir().'/'.uniqid('copy-').'/'.basename($file);
+        mkdir(\dirname($copy));
+        file_put_contents($copy, file_get_contents($file).uniqid());
+
+        return $copy;
     }
 
     private function requestMediaCreateForm(KernelBrowser $client): Crawler

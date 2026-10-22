@@ -81,8 +81,6 @@ class Media implements IdInterface, Taggable, Stringable
     #[ORM\Column(name: 'media', type: Types::STRING, length: 255)]
     protected string $fileName = '';
 
-    public private(set) string $fileNameBeforeUpdate = '';
-
     /** @var string[] */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
     public array $fileNameHistory = [];
@@ -230,6 +228,11 @@ class Media implements IdInterface, Taggable, Stringable
         return strtolower(ltrim(MediaFileName::extractExtension($this->fileName), '.'));
     }
 
+    /**
+     * Only a stored media has a past name. Before its first flush a name is a proposal —
+     * MediaConflictResolver may reject it because another media holds it — and keeping it
+     * in the history made this media answer to the other one's name (production, 2026-10-15).
+     */
     public function setFileName(?string $fileName): self
     {
         if (null === $fileName) {
@@ -238,8 +241,7 @@ class Media implements IdInterface, Taggable, Stringable
 
         $fileName = MediaFileName::normalizeFromString($fileName);
 
-        if ('' !== $this->fileName && $this->fileName !== $fileName) {
-            $this->setFileNameBeforeUpdate($this->fileName);
+        if (null !== $this->id && '' !== $this->fileName && $this->fileName !== $fileName) {
             $this->addFileNameToHistory($this->fileName);
         }
 
@@ -316,15 +318,6 @@ class Media implements IdInterface, Taggable, Stringable
         foreach ($this->mainImagePages as $page) {
             $page->setMainImage(null);
         }
-    }
-
-    public function setFileNameBeforeUpdate(string $fileNameBeforeUpdate): self
-    {
-        if ('' === $this->fileNameBeforeUpdate || '' === $fileNameBeforeUpdate) {
-            $this->fileNameBeforeUpdate = $fileNameBeforeUpdate;
-        }
-
-        return $this;
     }
 
     public function addFileNameToHistory(string $fileName): self

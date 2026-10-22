@@ -87,6 +87,7 @@ adminMediaPreviewMarkdown: Markdown
 adminMediaPreviewPath: Path
 adminMediaRelatedLabel: "Related pages"
 adminMediaRemovalRefused: "\"%fileName%\" was kept: %reasons%"
+adminMediaReusedDuplicate: "This file is already in the library: \"%name%\" was reused, no copy was made."
 adminMediaRotateLeftLabel: "Rotate left"
 adminMediaRotateRightLabel: "Rotate right"
 adminMediaRotateSuccess: "Image rotated. The cache is being regenerated."

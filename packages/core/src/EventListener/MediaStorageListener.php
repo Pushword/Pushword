@@ -14,6 +14,8 @@ use LogicException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\MediaAuditLog;
 use Pushword\Core\Service\MediaConflictResolver;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Service\PdfOptimizer;
@@ -27,6 +29,7 @@ use Throwable;
 use Vich\UploaderBundle\Event\Event;
 
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'postLoad'])]
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'postPersist'])]
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'preUpdate'])]
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'preRemove'])]
 #[AutoconfigureTag('kernel.event_listener', ['event' => 'vich_uploader.post_upload'])]
@@ -47,12 +50,19 @@ final class MediaStorageListener implements ResetInterface
         private readonly ImageCacheManager $imageCacheManager,
         private readonly PdfOptimizer $pdfOptimizer,
         private readonly MediaConflictResolver $conflictResolver,
+        private readonly MediaRepository $mediaRepository,
+        private readonly MediaAuditLog $auditLog,
     ) {
     }
 
     public function postLoad(Media $media): void
     {
         $media->setProjectDir($this->projectDir);
+    }
+
+    public function postPersist(Media $media): void
+    {
+        $this->auditLog->created($media);
     }
 
     /**
@@ -64,7 +74,12 @@ final class MediaStorageListener implements ResetInterface
     public function preUpdate(Media $media, PreUpdateEventArgs $preUpdateEventArgs): void
     {
         if ($preUpdateEventArgs->hasChangedField('fileName')) {
-            $this->planRename($media);
+            $oldFileName = $preUpdateEventArgs->getOldValue('fileName');
+            if (! \is_string($oldFileName) || '' === $oldFileName) {
+                throw new LogicException();
+            }
+
+            $this->planRename($media, $oldFileName);
         }
 
         if ($preUpdateEventArgs->hasChangedField('hash')) {
@@ -74,24 +89,43 @@ final class MediaStorageListener implements ResetInterface
         }
     }
 
-    private function planRename(Media $media): void
+    /**
+     * The old name is the one the row holds, read from the changeset. It used to be a name
+     * the entity remembered itself, and a new media remembered the one MediaConflictResolver
+     * had just refused it because another media held it.
+     */
+    private function planRename(Media $media, string $oldFileName): void
     {
         $this->conflictResolver->resolveConflicts($media);
 
-        if ('' === $media->fileNameBeforeUpdate) {
-            throw new LogicException();
+        $moveFrom = $this->resolveMoveSource($oldFileName, $media->getFileName());
+        $this->refuseToTakeAnotherMediaFile($media, $oldFileName);
+        if (null !== $moveFrom && $moveFrom !== $oldFileName) {
+            $this->refuseToTakeAnotherMediaFile($media, $moveFrom);
         }
-
-        $oldFileName = $media->fileNameBeforeUpdate;
 
         $this->pendingRenames[] = [
             'media' => $media,
             'oldFileName' => $oldFileName,
             'newFileName' => $media->getFileName(),
-            'moveFrom' => $this->resolveMoveSource($oldFileName, $media->getFileName()),
+            'moveFrom' => $moveFrom,
         ];
+    }
 
-        $media->setFileNameBeforeUpdate('');
+    /**
+     * A rename moves the file at the old name and purges its derivatives. When that name is
+     * also another media's current one, both belong to that media: two rows sharing a name
+     * is how a media lost its file to a newer one renamed away from it (production,
+     * 2026-10-15). Refused here, the row rolls back and neither file moves.
+     */
+    private function refuseToTakeAnotherMediaFile(Media $media, string $fileName): void
+    {
+        $holder = $this->mediaRepository->findOtherMediaNamed($fileName, $media->id);
+        if (null === $holder) {
+            return;
+        }
+
+        throw new Exception(\sprintf('Cannot rename media #%d: `%s` is also the file of media #%d', $media->id, $fileName, $holder->id));
     }
 
     /**
@@ -122,6 +156,14 @@ final class MediaStorageListener implements ResetInterface
 
     public function preRemove(Media $media): void
     {
+        $this->auditLog->removed($media);
+
+        // Rows an older version left naming one file: the file and its derivatives stay
+        // with the other media, so removing the wrong row is how such a pair is repaired.
+        if (null !== $this->mediaRepository->findOtherMediaNamed($media->getFileName(), $media->id)) {
+            return;
+        }
+
         if ($this->mediaStorage->fileExists($media->getFileName())) {
             $this->mediaStorage->delete($media->getFileName());
         }
@@ -222,6 +264,7 @@ final class MediaStorageListener implements ResetInterface
             }
         }
 
+        $this->auditLog->renamed($media, $rename['oldFileName'], $rename['newFileName']);
         $this->imageCacheManager->remove($rename['oldFileName']);
         $this->imageCacheGenerator->generateQuickPreview($media);
         $this->imageCacheGenerator->runBackgroundCacheGeneration($rename['newFileName']);

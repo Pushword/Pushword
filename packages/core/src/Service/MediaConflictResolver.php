@@ -9,7 +9,6 @@ use Exception;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Utils\MediaRenamer;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final readonly class MediaConflictResolver
 {
@@ -22,6 +21,7 @@ final readonly class MediaConflictResolver
     public function __construct(
         private EntityManagerInterface $em,
         private MediaRepository $mediaRepo,
+        private MediaStorageAdapter $mediaStorage,
     ) {
     }
 
@@ -49,21 +49,13 @@ final readonly class MediaConflictResolver
             return true;
         }
 
-        $mediaString = $this->getMediaString($media);
-
-        return null !== $this->mediaRepo->isFileNameUsed($mediaString, $media->id);
-    }
-
-    private function getMediaString(Media $media): string
-    {
-        if ('' !== $media->getFileName()) {
-            return $media->getFileName();
+        // An upload is written over whatever sits at its name, so a new media must not get
+        // a name the disk already has, whoever claims the file. (A stored media renamed
+        // onto a file is refused by MediaStorageListener instead.)
+        if (null === $media->id && $this->mediaStorage->fileExists($media->getFileName())) {
+            return true;
         }
 
-        $mediaFile = $media->getMediaFile();
-        $extension = $mediaFile instanceof UploadedFile
-            ? (string) $mediaFile->guessExtension() : '';
-
-        return $media->getAlt().('' !== $extension ? '.'.$extension : '');
+        return null !== $this->mediaRepo->isFileNameUsed($media->getFileName(), $media->id);
     }
 }
