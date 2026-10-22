@@ -1,0 +1,18 @@
+{% set section = ea.crud.entityFqcn|split('\\')|last|lower %}
+{% set items = [
+  {section: 'campaign', route: 'admin_newsletter_campaign_index', icon: 'fa-paper-plane', label: 'newsletter.campaign.label.plural'},
+  {section: 'automation', route: 'admin_newsletter_automation_index', icon: 'fa-bolt', label: 'newsletter.automation.label.plural'},
+  {section: 'contact', route: 'admin_newsletter_contact_index', icon: 'fa-address-book', label: 'newsletter.contact.label.plural'},
+  {section: 'audience', route: 'admin_newsletter_audience_index', icon: 'fa-users', label: 'newsletter.audience.label.plural'},
+  {section: 'automationdelivery', route: 'admin_newsletter_automation_delivery_index', icon: 'fa-list-check', label: 'newsletter.delivery.label.plural'},
+] %}
+
+<nav class="pw-newsletter-nav" aria-label="{{ 'newsletter.menu.label'|trans }}">
+  {% for item in items %}
+    {% set current = section == item.section or (section == 'campaignrecipient' and item.section == 'campaign') %}
+    <a href="{{ path(item.route) }}"{% if current %} aria-current="page"{% endif %}>
+      <i class="fa {{ item.icon }}" aria-hidden="true"></i>
+      {{ item.label|trans }}
+    </a>
+  {% endfor %}
+</nav>

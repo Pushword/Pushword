@@ -58,6 +58,9 @@ class AutomationCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
+            ->overrideTemplate('layout', '@PushwordNewsletter/admin/layout.html.twig')
+            ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
+            ->addFormTheme('@PushwordNewsletter/admin/form_theme.html.twig')
             ->setEntityLabelInSingular('newsletter.automation.label.singular')
             ->setEntityLabelInPlural('newsletter.automation.label.plural')
             ->setDefaultSort(['id' => 'DESC'])
@@ -78,6 +81,7 @@ class AutomationCrudController extends AbstractCrudController
             ->setCssClass('btn btn-outline-secondary');
 
         return $actions
+            ->update(Crud::PAGE_INDEX, Action::NEW, static fn (Action $action): Action => $action->setLabel('newsletter.automation.action.create'))
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->add(Crud::PAGE_INDEX, $preview)
             ->add(Crud::PAGE_DETAIL, $preview)
@@ -88,44 +92,51 @@ class AutomationCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         $hosts = $this->siteRegistry->getHosts();
-        $sources = $this->sources->names();
+        $sources = [];
+        foreach ($this->sources->names() as $source) {
+            $label = match ($source) {
+                'contact', 'page' => 'newsletter.automation.source.'.$source,
+                default => $source,
+            };
+            $sources[$label] = $source;
+        }
+
         $automation = $this->getContext()?->getEntity()->getInstance();
         $automationId = $automation instanceof Automation ? $automation->id : null;
 
-        yield FormField::addFieldset('newsletter.automation.fieldset.trigger')->setIcon('fa fa-bolt');
-        yield TextField::new('name', 'newsletter.automation.field.name');
-        yield AssociationField::new('audience', 'newsletter.automation.field.audience');
+        yield FormField::addFieldset('newsletter.automation.fieldset.setup')->setIcon('fa fa-sliders');
+        yield TextField::new('name', 'newsletter.automation.field.name')->setColumns('col-12 col-lg-7');
+        yield AssociationField::new('audience', 'newsletter.automation.field.audience')->setColumns('col-12 col-lg-5');
+        yield ChoiceField::new('enabled', 'newsletter.automation.field.enabled')
+            ->onlyOnIndex()
+            ->setChoices(['newsletter.automation.status.active' => 1, 'newsletter.automation.status.paused' => 0])
+            ->renderAsBadges(['1' => 'success', '0' => 'secondary']);
         yield BooleanField::new('enabled', 'newsletter.automation.field.enabled')
-            ->setHelp('newsletter.automation.field.enabled.help');
-        yield BooleanField::new('transactional', 'newsletter.automation.field.transactional')
             ->hideOnIndex()
-            ->setHelp('newsletter.automation.field.transactional.help');
+            ->setHelp('newsletter.automation.field.enabled.help');
+
+        yield FormField::addFieldset('newsletter.automation.fieldset.trigger')->setIcon('fa fa-bolt')
+            ->setHelp('newsletter.automation.fieldset.triggerHelp');
         yield ChoiceField::new('source', 'newsletter.automation.field.source')
-            ->setChoices(array_combine($sources, $sources))
+            ->setChoices($sources)
+            ->renderAsNativeWidget()
             ->setHelp('newsletter.automation.field.source.help');
         yield CriteriaField::new('triggerWhenAsJson', 'newsletter.automation.field.triggerWhen', CriteriaController::SIDE_TRIGGER, $this->urlGenerator, $automationId)
             ->setNumOfRows(6)
             ->setHelp('newsletter.automation.field.triggerWhen.help');
-        yield ChoiceField::new('hosts', 'newsletter.automation.field.hosts')->hideOnIndex()
-            ->setChoices(array_combine($hosts, $hosts))
-            ->allowMultipleChoices()
-            ->renderExpanded()
-            ->setRequired(false)
-            ->setHelp('newsletter.automation.field.hosts.help');
         yield DateTimeField::new('activeFrom', 'newsletter.automation.field.activeFrom')->hideOnIndex()
             ->setHelp('newsletter.automation.field.activeFrom.help');
 
-        yield FormField::addFieldset('newsletter.automation.fieldset.recipients')->setIcon('fa fa-filter');
+        yield FormField::addFieldset('newsletter.automation.fieldset.recipients')->setIcon('fa fa-users')
+            ->setHelp('newsletter.automation.fieldset.recipientsHelp');
         yield CriteriaField::new('recipientWhenAsJson', 'newsletter.automation.field.recipientWhen', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(4)
             ->setHelp('newsletter.automation.field.recipientWhen.help');
-        yield CriteriaField::new('stopWhenAsJson', 'newsletter.automation.field.stopWhen', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
-            ->setNumOfRows(4)
-            ->setHelp('newsletter.automation.field.stopWhen.help');
-
-        yield FormField::addFieldset('newsletter.automation.fieldset.steps')->setIcon('fa fa-list-ol');
-        yield IntegerField::new('stepCount', 'newsletter.automation.field.stepCount')
+        yield FormField::addFieldset('newsletter.automation.fieldset.steps')->setIcon('fa fa-envelope')
+            ->setHelp('newsletter.automation.fieldset.stepsHelp');
+        yield IntegerField::new('steps', 'newsletter.automation.field.stepCount')
             ->onlyOnIndex()
+            ->setSortable(false)
             ->formatValue(static fn (mixed $value, ?Automation $automation): string => (string) ($automation?->countSteps() ?? 0));
         // No label: the fieldset above already says "Steps". Full width, because a
         // step embeds a whole mail.
@@ -134,7 +145,25 @@ class AutomationCrudController extends AbstractCrudController
             ->setColumns('col-12')
             ->allowAdd()
             ->allowDelete()
+            ->renderExpanded()
             ->useEntryCrudForm(AutomationStepCrudController::class);
+
+        yield FormField::addFieldset('newsletter.automation.fieldset.advanced')->setIcon('fa fa-gear')
+            ->collapsible()
+            ->renderCollapsed();
+        yield ChoiceField::new('hosts', 'newsletter.automation.field.hosts')->hideOnIndex()
+            ->setChoices(array_combine($hosts, $hosts))
+            ->allowMultipleChoices()
+            ->renderExpanded()
+            ->setRequired(false)
+            ->setHelp('newsletter.automation.field.hosts.help');
+        yield CriteriaField::new('stopWhenAsJson', 'newsletter.automation.field.stopWhen', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
+            ->setNumOfRows(4)
+            ->setHelp('newsletter.automation.field.stopWhen.help');
+
+        yield BooleanField::new('transactional', 'newsletter.automation.field.transactional')
+            ->hideOnIndex()
+            ->setHelp('newsletter.automation.field.transactional.help');
     }
 
     /** What this would catch if a tick ran right now, on both sides of the rule. */

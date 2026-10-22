@@ -42,6 +42,8 @@ class AutomationDeliveryCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
+            ->overrideTemplate('layout', '@PushwordNewsletter/admin/layout.html.twig')
+            ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
             ->setEntityLabelInSingular('newsletter.delivery.label.singular')
             ->setEntityLabelInPlural('newsletter.delivery.label.plural')
             ->setDefaultSort(['attemptedAt' => 'DESC'])

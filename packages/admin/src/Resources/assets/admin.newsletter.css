@@ -1,0 +1,223 @@
+/* Newsletter screens share a workspace, while keeping EasyAdmin's forms and actions. */
+body[data-newsletter] .content {
+  inline-size: 100%;
+  max-inline-size: 88rem;
+  margin-inline: auto;
+}
+
+.pw-newsletter-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 0.5rem 2rem;
+  padding-block-end: 1rem;
+  border-block-end: 1px solid var(--bs-border-color);
+}
+
+.pw-newsletter-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  min-block-size: 2.75rem;
+  border-radius: var(--pw-radius-md);
+  color: var(--bs-secondary-color);
+  font-size: var(--pw-text-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pw-newsletter-nav a:hover {
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+}
+
+.pw-newsletter-nav a[aria-current='page'] {
+  color: var(--bs-body-color);
+  background: color-mix(in oklch, var(--color-primary) 10%, var(--bs-body-bg));
+}
+
+.pw-newsletter-nav a:focus-visible,
+.pw-newsletter-status a:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.pw-newsletter-description {
+  max-inline-size: 65ch;
+  margin-block: 0 2rem;
+  color: var(--bs-secondary-color);
+  font-size: var(--pw-text-md);
+}
+
+.pw-newsletter-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-block-end: 1.5rem;
+}
+
+.pw-newsletter-status a {
+  padding-block: 0.625rem;
+  min-block-size: 2.75rem;
+  border-block-end: 2px solid transparent;
+  color: var(--bs-secondary-color);
+  font-size: var(--pw-text-sm);
+  text-decoration: none;
+}
+
+.pw-newsletter-status a[aria-current='page'] {
+  border-color: var(--color-primary);
+  color: var(--bs-body-color);
+  font-weight: 600;
+}
+
+.pw-newsletter-status a:hover {
+  color: var(--bs-body-color);
+}
+
+body[data-newsletter] .datagrid td {
+  padding-block: 1rem;
+}
+
+body[data-newsletter] .datagrid :is(td[data-column='name'], td[data-column='subject']) {
+  font-weight: 600;
+}
+
+.pw-newsletter-empty {
+  padding-block: 4rem;
+}
+
+.pw-newsletter-empty .pw-empty-state__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 4rem;
+  block-size: 4rem;
+  margin-block-end: 1.5rem;
+  border-radius: var(--pw-radius-lg);
+  background: var(--bs-tertiary-bg);
+  color: var(--color-primary);
+  font-size: var(--pw-text-xl);
+}
+
+.pw-newsletter-empty h2 {
+  font-size: var(--pw-text-lg);
+  font-weight: 600;
+}
+
+.pw-newsletter-empty p {
+  max-inline-size: 48ch;
+  margin: 0.75rem auto 1.5rem;
+  color: var(--bs-secondary-color);
+  white-space: normal;
+}
+
+/* Restore the form title hidden by the general page-editor layout. */
+body[data-newsletter] .content-header-title {
+  position: static;
+  inline-size: auto;
+  block-size: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+}
+
+body[data-newsletter] .page-actions {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+body[data-newsletter] :is(.ea-new-form, .ea-edit-form) {
+  max-inline-size: 64rem;
+}
+
+body[data-newsletter] :is(.ea-new-form, .ea-edit-form) > .form-fieldset {
+  margin-block: 1.5rem;
+  border-radius: var(--pw-radius-lg);
+  background: var(--bs-body-bg);
+  box-shadow: 0 0 0 1px var(--bs-border-color);
+}
+
+body[data-newsletter] .form-fieldset-header {
+  padding: 1.25rem 1.5rem;
+}
+
+body[data-newsletter] .form-fieldset-body {
+  padding: 0 1.5rem 1rem;
+}
+
+body[data-newsletter] .form-fieldset-title-content {
+  font-size: var(--pw-text-md);
+  font-weight: 600;
+}
+
+body[data-newsletter] .form-fieldset-help {
+  max-inline-size: 65ch;
+  margin-block-start: 0.5rem;
+  color: var(--bs-secondary-color);
+}
+
+body[data-newsletter] .form-group .form-help {
+  max-inline-size: 65ch;
+  line-height: 1.5;
+}
+
+body[data-newsletter] .pw-criteria {
+  padding: 1rem;
+  border-radius: var(--pw-radius-md);
+  background: var(--bs-tertiary-bg);
+}
+
+body[data-newsletter] .field-collection-add-button {
+  margin-block: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--pw-radius-md);
+  text-decoration: none;
+}
+
+.pw-newsletter-sequence-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 1rem;
+  color: var(--bs-secondary-color);
+}
+
+.pw-newsletter-sequence-empty p {
+  margin: 0;
+}
+
+body[data-newsletter] .pw-newsletter-sequence .accordion-item {
+  margin-block-end: 1rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--pw-radius-md);
+  overflow: hidden;
+}
+
+@media (max-width: 767.98px) {
+  .pw-newsletter-nav {
+    gap: 0.25rem;
+    margin-block-end: 1.25rem;
+  }
+
+  .pw-newsletter-nav a {
+    padding: 0.625rem;
+  }
+
+  body[data-newsletter] .content-header .page-actions {
+    margin: 0;
+    padding: 0.75rem 0 0;
+    inline-size: 100%;
+  }
+
+  body[data-newsletter] .form-fieldset-header {
+    padding: 1rem;
+  }
+
+  body[data-newsletter] .form-fieldset-body {
+    padding: 0 1rem 0.75rem;
+  }
+}

@@ -67,6 +67,8 @@ class CampaignCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         $crud = $crud
+            ->overrideTemplate('layout', '@PushwordNewsletter/admin/layout.html.twig')
+            ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
             ->setEntityLabelInSingular('newsletter.campaign.label.singular')
             ->setEntityLabelInPlural('newsletter.campaign.label.plural')
             ->setDefaultSort(['id' => 'DESC'])
@@ -125,7 +127,7 @@ class CampaignCrudController extends AbstractCrudController
             ->linkToCrudAction('sendTest')
             ->setCssClass('btn btn-outline-secondary');
 
-        foreach ([Crud::PAGE_INDEX, Crud::PAGE_DETAIL, Crud::PAGE_EDIT] as $page) {
+        foreach ([Crud::PAGE_DETAIL, Crud::PAGE_EDIT] as $page) {
             $actions = $actions
                 ->add($page, $send)
                 ->add($page, $schedule)
@@ -135,14 +137,21 @@ class CampaignCrudController extends AbstractCrudController
                 ->add($page, $sendTest);
         }
 
-        return $actions->add(Crud::PAGE_INDEX, Action::DETAIL);
+        return $actions
+            ->update(Crud::PAGE_INDEX, Action::NEW, static fn (Action $action): Action => $action->setLabel('newsletter.campaign.action.create'))
+            ->add(Crud::PAGE_INDEX, Action::DETAIL)
+            ->update(Crud::PAGE_INDEX, Action::DETAIL, static fn (Action $action): Action => $action
+                ->setLabel('newsletter.campaign.action.review')
+                ->setCssClass('action-detail btn btn-outline-primary'))
+            ->add(Crud::PAGE_INDEX, $recipients);
     }
 
     #[Override]
     public function configureFields(string $pageName): iterable
     {
-        yield FormField::addFieldset('newsletter.campaign.fieldset.content')->setIcon('fa fa-pen-nib');
-        yield TextField::new('subject', 'newsletter.campaign.field.subject');
+        yield FormField::addFieldset('newsletter.campaign.fieldset.content')->setIcon('fa fa-pen-nib')
+            ->setHelp('newsletter.campaign.fieldset.contentHelp');
+        yield TextField::new('subject', 'newsletter.campaign.field.subject')->setColumns('col-12');
         yield ChoiceField::new('status', 'newsletter.campaign.field.status')
             ->renderAsBadges([
                 CampaignStatus::Draft->value => 'secondary',
@@ -154,30 +163,37 @@ class CampaignCrudController extends AbstractCrudController
         yield DateTimeField::new('sendDate', 'newsletter.campaign.field.sendDate')->onlyOnIndex()->setSortable(false)->formatValue(
             static fn (mixed $value): string => $value instanceof DateTimeInterface ? $value->format('d/m/Y H:i') : '—',
         );
-        yield TextField::new('preheader', 'newsletter.campaign.field.preheader')->hideOnIndex()
+        yield TextField::new('preheader', 'newsletter.campaign.field.preheader')->hideOnIndex()->setColumns('col-12')
             ->setHelp('newsletter.campaign.field.preheader.help');
-        yield TextField::new('slug', 'newsletter.campaign.field.slug')->hideOnIndex()
-            ->setRequired(false)
-            ->setHelp('newsletter.campaign.field.slug.help');
         yield $this->bodyField();
 
+        yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users')
+            ->setHelp('newsletter.campaign.fieldset.audienceHelp');
+        yield AssociationField::new('audience', 'newsletter.campaign.field.audience');
+        yield CriteriaField::new('segmentAsJson', 'newsletter.campaign.field.segment', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
+            ->setNumOfRows(6)
+            ->setHelp('newsletter.campaign.field.segment.help');
+        yield FormField::addFieldset('newsletter.campaign.fieldset.schedule')->setIcon('fa fa-clock')
+            ->setHelp('newsletter.campaign.fieldset.scheduleHelp');
+        yield DateTimeField::new('scheduledAt', 'newsletter.campaign.field.scheduledAt')->hideOnIndex()
+            ->setHelp('newsletter.campaign.field.scheduledAt.help');
         yield FormField::addFieldset('newsletter.campaign.fieldset.languages')->setIcon('fa fa-language')
             ->setHelp($this->coverage())
             ->hideOnIndex()
-            ->collapsible();
+            ->collapsible()
+            ->renderCollapsed();
         yield TextareaField::new('translationsAsJson', 'newsletter.campaign.field.translations')
             ->hideOnIndex()
             ->setRequired(false)
             ->setNumOfRows(10)
             ->setHelp('newsletter.campaign.field.translations.help');
 
-        yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users');
-        yield AssociationField::new('audience', 'newsletter.campaign.field.audience');
-        yield CriteriaField::new('segmentAsJson', 'newsletter.campaign.field.segment', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
-            ->setNumOfRows(6)
-            ->setHelp('newsletter.campaign.field.segment.help');
-        yield DateTimeField::new('scheduledAt', 'newsletter.campaign.field.scheduledAt')->hideOnIndex()
-            ->setHelp('newsletter.campaign.field.scheduledAt.help');
+        yield FormField::addFieldset('newsletter.campaign.fieldset.advanced')->setIcon('fa fa-gear')
+            ->collapsible()
+            ->renderCollapsed();
+        yield TextField::new('slug', 'newsletter.campaign.field.slug')->hideOnIndex()
+            ->setRequired(false)
+            ->setHelp('newsletter.campaign.field.slug.help');
         yield IntegerField::new('rateSeconds', 'newsletter.campaign.field.rateSeconds')->hideOnIndex()
             ->setRequired(false)
             ->setHelp('newsletter.campaign.field.rateSeconds.help');
@@ -421,7 +437,7 @@ class CampaignCrudController extends AbstractCrudController
         if (! class_exists(EditorjsType::class)) {
             return TextareaField::new('bodyMarkdown', 'newsletter.campaign.field.body')
                 ->hideOnIndex()
-                ->setNumOfRows(18);
+                ->setNumOfRows(18)->setColumns('col-12');
         }
 
         $campaign = $this->getContext()?->getEntity()->getInstance();
@@ -430,6 +446,7 @@ class CampaignCrudController extends AbstractCrudController
         // page_id is page-only context (the PagesList block preview URL); a
         // campaign has no page, so it stays empty but the key must exist.
         return Field::new('bodyMarkdown', 'newsletter.campaign.field.body')
+            ->setColumns('col-12')
             ->setFormType(EditorjsType::class)
             ->setFormTypeOptions(['required' => false, 'attr' => ['page_host' => $host, 'page_id' => '']])
             ->hideOnIndex();

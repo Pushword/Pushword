@@ -1,0 +1,32 @@
+{% extends '@pwAdmin/crud/index.html.twig' %}
+
+{% block main %}
+  {% set section = ea.crud.entityFqcn|split('\\')|last|lower %}
+  <p class="pw-newsletter-description">{{ ('newsletter.workspace.' ~ section ~ 'Description')|trans }}</p>
+  {% if section in ['automation', 'campaign'] %}
+    {{ include('@PushwordNewsletter/admin/_status_filters.html.twig') }}
+  {% endif %}
+  {{ parent() }}
+{% endblock %}
+
+{% block table_body_empty %}
+  {% set isFiltered = ea.search.query|default('')|trim is not empty or app.request.query.all('filters') is not empty %}
+  {% if isFiltered %}
+    {{ parent() }}
+  {% else %}
+    {% set section = ea.crud.entityFqcn|split('\\')|last|lower %}
+    {% set newAction = global_actions|filter(action => action.name in ['new', 'optIn'])|first %}
+    <tr class="no-results">
+      <td colspan="100">
+        <div class="pw-empty-state pw-newsletter-empty">
+          <i class="fa {{ section == 'automation' ? 'fa-bolt' : 'fa-envelope-open-text' }} pw-empty-state__icon" aria-hidden="true"></i>
+          <h2>{{ ('newsletter.workspace.' ~ section ~ 'EmptyTitle')|trans }}</h2>
+          <p>{{ ('newsletter.workspace.' ~ section ~ 'EmptyHint')|trans }}</p>
+          {% if newAction %}
+            <a class="btn btn-primary" href="{{ newAction.linkUrl }}">{{ newAction.label|trans }}</a>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+  {% endif %}
+{% endblock %}

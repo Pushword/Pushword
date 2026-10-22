@@ -34,24 +34,30 @@ newsletter:
       plural: Automations
       singular: Automation
     action:
+      create: Create automation
       preview: Preview trigger
     fieldset:
-      recipients: Recipients
-      steps: Steps
-      trigger: Trigger
+      advanced: Advanced options
+      recipients: 2. Choose recipients
+      recipientsHelp: For a publication, target the relevant subscribers. For a contact event, the sequence goes to the contact who triggers it.
+      setup: Your automation
+      steps: 3. Write the sequence
+      stepsHelp: Add emails in sending order and set the delay between each step.
+      trigger: 1. Set the trigger
+      triggerHelp: Choose the event that starts the sequence, then narrow it down with conditions if needed.
     field:
       activeFrom: Active from
-      activeFrom.help: Nothing that happened before this date ever triggers anything. It stops a new automation from mailing an entire existing base, or announcing an entire back catalogue, at once.
+      activeFrom.help: Only events occurring on or after this date can start the sequence.
       audience: Audience
       enabled: Enabled
-      enabled.help: Disabling pauses the sequence; enrollments keep their place and resume, and nothing new is picked up.
+      enabled.help: While paused, no new emails are sent. Sequences resume at their current step when reactivated.
       hosts: Hosts
       hosts.help: The sites to watch, for the sources scoped to one; empty watches every one. An audience often spans several locale hosts, so pick the ones worth a mail.
       name: Name
       recipientWhen: Recipients
-      recipientWhen.help: Who receives the mails an occurrence broadcasts, in the usual contact criteria. No condition targets the whole subscribed audience. Ignored when the occurrence names its own contact — a drip is addressed to whoever triggered it.
+      recipientWhen.help: With no conditions, every subscriber in this audience receives publication announcements.
       source: Trigger on
-      source.help: What this watches. "contact" starts a sequence at whoever comes to match; "page" announces a publication to the audience. Other sources come from the bundles you install.
+      source.help: A contact event starts an individual sequence. A publication emails the selected subscribers.
       stepCount: Steps
       steps: Steps
       stopWhen: Stop when
@@ -59,36 +65,49 @@ newsletter:
       transactional: Transactional mail
       transactional.help: Sends this sequence with no unsubscribe link and no List-Unsubscribe header. Only for service messages — an order confirmation, a booking reminder. The audience setting covers everything it sends and this cannot take it back.
       triggerWhen: Trigger when
-      triggerWhen.help: 'Which subjects deserve the sequence — which, not when. No condition matches every one of them, and the fields offered are the source''s own. "Edit as text" gives the stored JSON back, where a page rule may also be written as a pages_list search (ancestor:blog AND tag:featured).'
+      triggerWhen.help: Add conditions to limit the events that start this sequence. With no conditions, every event from this source matches.
+    source:
+      contact: Contact event
+      page: Page publication
+    status:
+      active: Active
+      paused: Paused
   campaign:
     label:
       plural: Newsletters
       singular: Newsletter
     action:
       cancelSchedule: Cancel schedule
+      create: Create newsletter
       previewSegment: Count audience
       recipients: Recipients
+      review: Review and send
       schedule: Schedule
       send: Send
       sendTest: Send test
     fieldset:
-      audience: Audience & scheduling
-      content: Content
-      languages: Languages
-      performance: Performance
+      advanced: Advanced options
+      audience: 2. Choose recipients
+      audienceHelp: Choose an audience. Add conditions to reach a selection of its subscribers.
+      content: 1. Write the newsletter
+      contentHelp: The subject and preview text help readers decide to open your email.
+      languages: Translations
+      performance: Delivery results
+      schedule: 3. Prepare to send
+      scheduleHelp: Save your draft, send a test, then send or schedule from the newsletter details.
     field:
       audience: Audience
       body: Body
       bounced: Bounced
       clicks: Clicks
       failed: Failed
-      preheader: Preheader
+      preheader: Preview text
       preheader.help: Short preview line shown after the subject in most inboxes.
       rateSeconds: Cadence (s/mail)
       rateSeconds.help: Seconds between two mails. Leave empty to use the audience cadence.
       recipients: Recipients
       scheduledAt: Scheduled for
-      scheduledAt.help: Set a date, then use "Schedule". The tick sends it once the date has passed.
+      scheduledAt.help: Optional. After saving, use "Schedule" to confirm sending at this date.
       segment: Segment
       segment.help: 'Who this newsletter goes to. No condition targets the whole subscribed audience; "Edit as text" gives the stored JSON back.'
       sendDate: Send date
@@ -109,6 +128,11 @@ newsletter:
       noDate: Set a "Scheduled for" date first, then Schedule.
       notDraft: This newsletter is not a draft any more.
       notFound: Newsletter not found.
+    status:
+      draft: Drafts
+      scheduled: Scheduled
+      sending: Sending
+      sent: Sent
     test:
       cancel: Cancel
       help: Delivers the newsletter to the addresses below, with the subject prefixed by [TEST]. Contacts, recipients and stats are untouched.
@@ -275,6 +299,8 @@ newsletter:
     body: You will receive mail from %audience% again.
     title: Resubscribed
   step:
+    add: Add an email
+    empty: Your sequence is empty. Add the first email.
     field:
       body: Body
       delay: Delay (minutes)
@@ -306,3 +332,24 @@ newsletter:
     othersTitle: Our other newsletters
     title: Unsubscribed
     undo: Undo, put me back
+  workspace:
+    audienceDescription: Organize your subscriber lists and choose who their emails come from.
+    audienceEmptyHint: Create your first audience to group subscribers and configure your sender address.
+    audienceEmptyTitle: Start with your audience
+    automationDescription: Send an email sequence at the right moment, triggered by a contact event or a publication.
+    automationEmptyHint: A welcome email, a follow-up after signup or a new publication. Choose a trigger and write your emails.
+    automationEmptyTitle: Your first sequence starts here
+    automationdeliveryDescription: Review every email sent by an automation and investigate any failures.
+    automationdeliveryEmptyHint: Deliveries will appear here when your automations send their first emails.
+    automationdeliveryEmptyTitle: No deliveries yet
+    campaignDescription: Write your emails, choose your recipients and follow your deliveries.
+    campaignEmptyHint: Share your news with your subscribers. Start with a draft, then send a test before sending.
+    campaignEmptyTitle: Create your first newsletter
+    campaignrecipientDescription: Review the delivery result for each recipient of this newsletter.
+    campaignrecipientEmptyHint: Recipients will appear here once sending has started.
+    campaignrecipientEmptyTitle: Sending has not started yet
+    contactDescription: Find your subscribers, their contact details and their audience subscriptions.
+    contactEmptyHint: Subscribe a contact to an audience to start building your mailing list.
+    contactEmptyTitle: Get to know your subscribers
+    filterAll: All
+    filterStatus: Filter by status

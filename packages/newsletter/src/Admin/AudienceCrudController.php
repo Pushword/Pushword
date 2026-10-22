@@ -38,6 +38,8 @@ class AudienceCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
+            ->overrideTemplate('layout', '@PushwordNewsletter/admin/layout.html.twig')
+            ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
             ->setEntityLabelInSingular('newsletter.audience.label.singular')
             ->setEntityLabelInPlural('newsletter.audience.label.plural')
             ->setDefaultSort(['slug' => 'ASC'])

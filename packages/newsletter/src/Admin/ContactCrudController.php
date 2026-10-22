@@ -89,6 +89,8 @@ class ContactCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
+            ->overrideTemplate('layout', '@PushwordNewsletter/admin/layout.html.twig')
+            ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
             ->setEntityLabelInSingular('newsletter.contact.label.singular')
             ->setEntityLabelInPlural('newsletter.contact.label.plural')
             ->setDefaultSort(['id' => 'DESC'])

@@ -12,6 +12,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
+use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\ClickEvent;
@@ -79,9 +80,136 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $this->seed();
 
         foreach (['audience', 'contact', 'campaign', 'campaign-recipient', 'automation', 'automation-delivery'] as $section) {
-            $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section);
+            $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section);
             self::assertSame(200, $client->getResponse()->getStatusCode(), $section.' index');
+            self::assertCount(5, $crawler->filter('.pw-newsletter-nav a'));
+            $activeSection = 'campaign-recipient' === $section ? 'campaign' : $section;
+            self::assertStringEndsWith(
+                '/admin/newsletter/'.$activeSection,
+                $crawler->filter('.pw-newsletter-nav a[aria-current="page"]')->attr('href') ?? '',
+            );
         }
+    }
+
+    public function testAutomationRowsShowTheirStatusAndActualStepCount(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+
+        foreach ([0, 2] as $stepCount) {
+            $automation = new Automation();
+            $automation->audience = $audience;
+            $automation->name = 'Sequence '.$stepCount;
+            $automation->enabled = 0 !== $stepCount;
+
+            for ($position = 0; $position < $stepCount; ++$position) {
+                $step = new AutomationStep();
+                $step->position = $position;
+                $step->subject = 'Email '.$position;
+                $automation->addStep($step);
+            }
+
+            $this->entityManager()->persist($automation);
+        }
+
+        $this->entityManager()->flush();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/automation', [
+            'query' => 'Sequence',
+            'filters' => ['audience' => ['comparison' => '=', 'value' => $audience->id]],
+        ]);
+
+        foreach ([0 => 'Paused', 2 => 'Active'] as $stepCount => $status) {
+            $row = $crawler->filter('tr')->reduce(static fn (Crawler $row): bool => str_contains($row->text(), 'Sequence '.$stepCount));
+            self::assertCount(1, $row);
+            self::assertSame((string) $stepCount, $row->filter('td.field-integer')->text());
+            self::assertSame($status, $row->filter('td[data-column="enabled"]')->text());
+            self::assertSame('Contact event', $row->filter('td[data-column="source"]')->text());
+        }
+
+        $crawler = $client->click($crawler->filter('.pw-newsletter-status')->selectLink('Paused')->link());
+        self::assertResponseIsSuccessful();
+        self::assertSame('Paused', $crawler->filter('.pw-newsletter-status [aria-current="page"]')->text());
+        self::assertSelectorTextContains('.datagrid tbody', 'Sequence 0');
+        self::assertSelectorTextNotContains('.datagrid tbody', 'Sequence 2');
+        self::assertStringContainsString('query=Sequence', $client->getRequest()->getUri());
+        self::assertSame(['comparison' => '=', 'value' => (string) $audience->id], $client->getRequest()->query->all('filters')['audience']);
+
+        $client->click($crawler->filter('.pw-newsletter-status')->selectLink('All')->link());
+        self::assertSelectorTextContains('.datagrid tbody', 'Sequence 0');
+        self::assertSelectorTextContains('.datagrid tbody', 'Sequence 2');
+    }
+
+    public function testAnEmptySearchCanBeClearedWithoutLeavingTheNewsletterList(): void
+    {
+        $client = $this->loginUser();
+        $this->seed();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/automation?query=unmatched-automation');
+
+        self::assertCount(0, $crawler->filter('.pw-newsletter-empty'));
+        $clearLink = $crawler->filter('.pw-empty-state a')->link();
+        self::assertStringNotContainsString('query=', $clearLink->getUri());
+        $client->click($clearLink);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('.pw-newsletter-nav a[aria-current="page"][href$="/automation"]');
+        self::assertSelectorExists('.pw-newsletter-empty');
+    }
+
+    public function testTheCampaignListLeadsToReviewBeforeSending(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $campaign = $this->campaign($audience, 'Review this draft');
+        $scheduled = $this->campaign($audience, 'Already scheduled')->schedule(new DateTimeImmutable('+1 day'));
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign');
+        $crawler = $client->click($crawler->filter('.pw-newsletter-status')->selectLink('Drafts')->link());
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('tr[data-id="'.$scheduled->id.'"]'));
+        $row = $crawler->filter('tr[data-id="'.$campaign->id.'"]');
+        self::assertSame('Review and send', $row->filter('a.action-detail')->text());
+        self::assertCount(0, $row->filter('form[method="post"]'));
+
+        $client->click($row->filter('a.action-detail')->link());
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('form[action*="/send"]');
+        self::assertSelectorExists('form[action*="/schedule"]');
+    }
+
+    public function testAnAutomationSequenceCanBeCreatedAndReopened(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/automation/new');
+        self::assertSame('Add an email', $crawler->filter('.field-collection-add-button')->text());
+        $triggerBody = $crawler->filter('input[name="Automation[activeFrom]"]')->closest('.form-fieldset-body');
+        self::assertNotNull($triggerBody);
+        self::assertStringNotContainsString('collapse', $triggerBody->attr('class') ?? '');
+        $advancedBody = $crawler->filter('input[name="Automation[transactional]"]')->closest('.form-fieldset-body');
+        self::assertNotNull($advancedBody);
+        $advancedClasses = $advancedBody->attr('class') ?? '';
+        self::assertStringContainsString('collapse', $advancedClasses);
+        self::assertStringNotContainsString('show', $advancedClasses);
+
+        $values = $crawler->filter('form[name="Automation"]')->form()->getPhpValues();
+        self::assertIsArray($values['Automation']);
+        $values['Automation']['name'] = 'Editable sequence';
+        $values['Automation']['audience'] = (string) $audience->id;
+        $values['Automation']['steps'] = [
+            ['position' => 0, 'delayMinutes' => 0, 'subject' => 'Welcome', 'bodyMarkdown' => 'Hello!'],
+            ['position' => 1, 'delayMinutes' => 1440, 'subject' => 'One day later', 'bodyMarkdown' => 'Some news.'],
+        ];
+        $client->request(Request::METHOD_POST, '/admin/newsletter/automation/new', $values);
+        self::assertResponseRedirects();
+
+        $automation = $this->entityManager()->getRepository(Automation::class)->findOneBy(['name' => 'Editable sequence']);
+        self::assertInstanceOf(Automation::class, $automation);
+        self::assertSame(2, $automation->countSteps());
+        self::assertSame(1440, $automation->getStep(1)?->delayMinutes);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/automation/'.$automation->id.'/edit');
+        self::assertCount(2, $crawler->filter('.pw-newsletter-sequence .accordion-collapse.show'));
+        self::assertSame('Welcome', $crawler->filter('input[name="Automation[steps][0][subject]"]')->attr('value'));
     }
 
     public function testTheCampaignIndexShowsItsAudience(): void

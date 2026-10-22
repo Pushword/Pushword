@@ -1,0 +1,10 @@
+{% extends '@pwAdmin/easyadmin_layout.html.twig' %}
+
+{% block body_attr %}{{ parent() }} data-newsletter{% endblock %}
+
+{% block content_header_wrapper %}
+  {{ include('@PushwordNewsletter/admin/_navigation.html.twig') }}
+  {{ parent() }}
+{% endblock %}
+
+{% block content_help %}{% endblock %}

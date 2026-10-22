@@ -34,24 +34,30 @@ newsletter:
       plural: Automatisations
       singular: Automatisation
     action:
+      create: Créer une automatisation
       preview: Prévisualiser le déclencheur
     fieldset:
-      recipients: Destinataires
-      steps: Étapes
-      trigger: Déclencheur
+      advanced: Options avancées
+      recipients: 2. Choisir les destinataires
+      recipientsHelp: Pour une publication, ciblez les abonnés concernés. Pour un événement de contact, la séquence est envoyée au contact qui le déclenche.
+      setup: Votre automatisation
+      steps: 3. Composer la séquence
+      stepsHelp: Ajoutez les emails dans l'ordre d'envoi et définissez le délai entre chaque étape.
+      trigger: 1. Définir le déclencheur
+      triggerHelp: Choisissez l'événement qui démarre la séquence, puis affinez les conditions si nécessaire.
     field:
       activeFrom: Actif à partir du
-      activeFrom.help: Rien de ce qui s'est produit avant cette date ne déclenche quoi que ce soit. Cela évite qu'une nouvelle automatisation écrive à toute une base existante, ou annonce tout un historique, d'un coup.
+      activeFrom.help: Seuls les événements survenus à partir de cette date déclenchent la séquence.
       audience: Audience
       enabled: Activé
-      enabled.help: 'La désactivation met en pause : les inscriptions gardent leur place et reprennent, et plus rien de nouveau n''est capté.'
+      enabled.help: En pause, aucun nouvel email ne part. Les séquences reprennent à leur étape en cours lors de la réactivation.
       hosts: Sites
       hosts.help: Les sites à surveiller, pour les sources qui s'y limitent ; vide surveille tout. Une audience couvre souvent plusieurs sites de langue, choisissez ceux qui méritent un envoi.
       name: Nom
       recipientWhen: Destinataires
-      recipientWhen.help: Qui reçoit les envois diffusés, dans les critères de contact habituels. Sans condition, toute l'audience abonnée est visée. Ignoré quand l'occurrence désigne son propre contact — un scénario s'adresse à qui l'a déclenché.
+      recipientWhen.help: Sans condition, tous les abonnés de cette audience reçoivent les annonces de publication.
       source: Déclencher sur
-      source.help: Ce qui est surveillé. « contact » démarre une séquence chez qui vient à correspondre ; « page » annonce une publication à l'audience. Les autres sources viennent des bundles installés.
+      source.help: Un événement de contact lance une séquence individuelle. Une publication envoie un email aux abonnés sélectionnés.
       stepCount: Étapes
       steps: Étapes
       stopWhen: Arrêter si
@@ -59,36 +65,49 @@ newsletter:
       transactional: Mail transactionnel
       transactional.help: Envoie cette séquence sans lien de désinscription ni en-tête List-Unsubscribe. Réservé aux messages de service — confirmation de commande, rappel de rendez-vous. Le réglage de l'audience couvre tous ses envois et celui-ci ne peut pas l'annuler.
       triggerWhen: Déclencher quand
-      triggerWhen.help: 'Quels sujets méritent la séquence — lesquels, pas quand. Sans condition, tous correspondent, et les champs proposés sont ceux de la source. « Éditer en texte » redonne le JSON stocké, où une règle de page peut aussi s''écrire comme une recherche pages_list (ancestor:blog AND tag:featured).'
+      triggerWhen.help: Ajoutez des conditions pour limiter les événements qui démarrent la séquence. Sans condition, tous les événements de cette source correspondent.
+    source:
+      contact: Événement de contact
+      page: Publication d’une page
+    status:
+      active: Active
+      paused: En pause
   campaign:
     label:
       plural: Newsletters
       singular: Newsletter
     action:
       cancelSchedule: Annuler la programmation
+      create: Créer une newsletter
       previewSegment: Compter l'audience
       recipients: Destinataires
+      review: Vérifier et envoyer
       schedule: Programmer
       send: Envoyer
       sendTest: Envoyer un test
     fieldset:
-      audience: Audience et programmation
-      content: Contenu
-      languages: Langues
-      performance: Performance
+      advanced: Options avancées
+      audience: 2. Choisir les destinataires
+      audienceHelp: Choisissez une audience. Ajoutez des conditions pour envoyer à une partie de ses abonnés.
+      content: 1. Rédiger la newsletter
+      contentHelp: L'objet et le texte d'aperçu donnent envie d'ouvrir votre email.
+      languages: Traductions
+      performance: Résultats de l'envoi
+      schedule: 3. Préparer l'envoi
+      scheduleHelp: Enregistrez votre brouillon, envoyez un test, puis envoyez ou programmez depuis la fiche de la newsletter.
     field:
       audience: Audience
       body: Contenu
       bounced: Rejetés
       clicks: Clics
       failed: Échecs
-      preheader: Pré-en-tête
+      preheader: Texte d’aperçu
       preheader.help: Courte ligne d'aperçu affichée après l'objet dans la plupart des messageries.
       rateSeconds: Cadence (s/mail)
       rateSeconds.help: Secondes entre deux envois. Laisser vide pour utiliser la cadence de l'audience.
       recipients: Destinataires
       scheduledAt: Programmée pour
-      scheduledAt.help: Renseignez une date, puis utilisez « Programmer ». Le tick l'envoie une fois la date passée.
+      scheduledAt.help: Facultatif. Après enregistrement, utilisez « Programmer » pour confirmer l'envoi à cette date.
       segment: Segment
       segment.help: 'À qui part cette newsletter. Sans condition, toute l''audience inscrite ; « Éditer en texte » redonne le JSON stocké.'
       sendDate: Date d'envoi
@@ -109,6 +128,11 @@ newsletter:
       noDate: Renseignez d'abord une date « Programmée pour », puis Programmer.
       notDraft: Cette newsletter n'est plus un brouillon.
       notFound: Newsletter introuvable.
+    status:
+      draft: Brouillons
+      scheduled: Programmées
+      sending: En cours d'envoi
+      sent: Envoyées
     test:
       cancel: Annuler
       help: Envoie la newsletter aux adresses ci-dessous, objet préfixé par [TEST]. Les contacts, destinataires et statistiques ne sont pas touchés.
@@ -275,6 +299,8 @@ newsletter:
     body: Vous recevrez de nouveau les messages de %audience%.
     title: Réinscription effectuée
   step:
+    add: Ajouter un email
+    empty: Votre séquence est vide. Ajoutez le premier email.
     field:
       body: Contenu
       delay: Délai (minutes)
@@ -306,3 +332,24 @@ newsletter:
     othersTitle: Nos autres newsletters
     title: Désinscription effectuée
     undo: Annuler, me réinscrire
+  workspace:
+    audienceDescription: Organisez vos listes d'abonnés et définissez l'expéditeur de leurs emails.
+    audienceEmptyHint: Créez une première audience pour regrouper vos abonnés et configurer votre adresse d'expédition.
+    audienceEmptyTitle: Commencez par votre audience
+    automationDescription: Déclenchez une séquence d'emails au bon moment, à partir d'un événement de contact ou d'une publication.
+    automationEmptyHint: Un message de bienvenue, un suivi après inscription ou une nouvelle publication. Choisissez un déclencheur et composez vos emails.
+    automationEmptyTitle: Votre première séquence commence ici
+    automationdeliveryDescription: Retrouvez chaque email envoyé par une automatisation et identifiez les éventuels échecs.
+    automationdeliveryEmptyHint: Les envois apparaîtront ici lorsque vos automatisations auront envoyé leurs premiers emails.
+    automationdeliveryEmptyTitle: Aucun envoi pour le moment
+    campaignDescription: Rédigez vos emails, choisissez vos destinataires et suivez vos envois.
+    campaignEmptyHint: Partagez vos actualités avec vos abonnés. Commencez par un brouillon, puis envoyez un test avant l'envoi.
+    campaignEmptyTitle: Créons votre première newsletter
+    campaignrecipientDescription: Consultez le résultat de l'envoi pour chaque destinataire de cette newsletter.
+    campaignrecipientEmptyHint: Les destinataires apparaîtront ici lorsque l'envoi aura commencé.
+    campaignrecipientEmptyTitle: L'envoi n'a pas encore commencé
+    contactDescription: Retrouvez vos abonnés, leurs coordonnées et leurs inscriptions aux différentes audiences.
+    contactEmptyHint: Inscrivez un contact dans une audience pour commencer à construire votre liste d'abonnés.
+    contactEmptyTitle: Faites connaissance avec vos abonnés
+    filterAll: Toutes
+    filterStatus: Filtrer par statut

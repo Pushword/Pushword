@@ -1,0 +1,27 @@
+{% extends '@pwAdmin/form/admin_form_theme.html.twig' %}
+
+{% block _Automation_steps_widget %}
+  {% set isEmptyCollection = value is null or (value is iterable and value is empty) %}
+  <div class="ea-form-collection-items pw-newsletter-sequence">
+    {% if isEmptyCollection %}
+      {{ block('newsletter_steps_empty') }}
+    {% else %}
+      <div class="accordion">{{ block('form_widget') }}</div>
+    {% endif %}
+  </div>
+  {% if isEmptyCollection or form.vars.prototype is defined %}
+    {% set attr = attr|merge({'data-empty-collection': block('newsletter_steps_empty')}) %}
+  {% endif %}
+  {% if allow_add|default(false) and not disabled %}
+    <button type="button" class="btn btn-secondary field-collection-add-button">
+      <i class="fa fa-plus" aria-hidden="true"></i> {{ 'newsletter.step.add'|trans }}
+    </button>
+  {% endif %}
+{% endblock %}
+
+{% block newsletter_steps_empty %}
+  <div class="empty collection-empty pw-newsletter-sequence-empty">
+    <i class="fa fa-envelope" aria-hidden="true"></i>
+    <p>{{ 'newsletter.step.empty'|trans }}</p>
+  </div>
+{% endblock %}

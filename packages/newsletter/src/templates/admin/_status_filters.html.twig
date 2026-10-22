@@ -1,0 +1,21 @@
+{% set filterName = section == 'automation' ? 'enabled' : 'status' %}
+{% set statuses = section == 'automation' ? {
+  1: 'newsletter.automation.status.active',
+  0: 'newsletter.automation.status.paused',
+} : {
+  draft: 'newsletter.campaign.status.draft',
+  scheduled: 'newsletter.campaign.status.scheduled',
+  sending: 'newsletter.campaign.status.sending',
+  sent: 'newsletter.campaign.status.sent',
+} %}
+{% set filters = app.request.query.all('filters') %}
+{% set selected = section == 'automation' ? filters[filterName]|default('') : filters[filterName].value|default('') %}
+{% set otherFilters = filters|filter((value, key) => key != filterName) %}
+
+<nav class="pw-newsletter-status" aria-label="{{ 'newsletter.workspace.filterStatus'|trans }}">
+  <a href="{{ ea_url().set('filters', otherFilters).set('page', 1) }}"{% if selected is same as('') %} aria-current="page"{% endif %}>{{ 'newsletter.workspace.filterAll'|trans }}</a>
+  {% for value, label in statuses %}
+    {% set filterValue = section == 'automation' ? value : {comparison: '=', value: value} %}
+    <a href="{{ ea_url().set('filters', otherFilters|merge({(filterName): filterValue})).set('page', 1) }}"{% if selected ~ '' == value ~ '' %} aria-current="page"{% endif %}>{{ label|trans }}</a>
+  {% endfor %}
+</nav>
