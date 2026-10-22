@@ -103,8 +103,11 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $crawler = $client->request(Request::METHOD_GET, $url);
         self::assertResponseIsSuccessful();
         self::assertSame('', $crawler->filter('iframe')->attr('sandbox'));
+        self::assertSame('mobile', $crawler->filter('[data-pw-email-preview]')->attr('data-viewport'));
+        self::assertSame('true', $crawler->filter('[data-preview-width="mobile"]')->attr('aria-pressed'));
+        self::assertSame('false', $crawler->filter('[data-preview-width="desktop"]')->attr('aria-pressed'));
         $form = $crawler->filter('form[name="email_design"]')->form();
-        $form['email_design[emailWrapped]'] = '1';
+        $form['email_design[emailLayout]'] = 'framed';
         $form['email_design[headerMarkdown]'] = '## Our brand';
         $form['email_design[footerMarkdown]'] = 'Our signature';
         $form['email_design[sampleBody]'] = 'Hello **%name%**.';
@@ -141,7 +144,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
 
         $crawler = $client->request(Request::METHOD_GET, $url);
         $form = $crawler->filter('form[name="email_design"]')->form();
-        $form['email_design[emailWrapped]'] = '0';
+        $form['email_design[emailLayout]'] = 'simple';
         $client->submit($form);
         self::assertResponseRedirects($url);
         $this->entityManager()->clear();
@@ -168,6 +171,69 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = self::createClient();
         $client->request(Request::METHOD_POST, '/admin/newsletter/audience/1/email-design', ['preview' => '1']);
         self::assertResponseRedirects('/login');
+    }
+
+    public function testATwigPresetCanBePreviewedAndSavedAndRejectsAnUnregisteredTemplate(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $id = $audience->id;
+        $url = '/admin/newsletter/audience/'.$id.'/email-design';
+        $crawler = $client->request(Request::METHOD_GET, $url);
+        $form = $crawler->filter('form[name="email_design"]')->form();
+        $form['email_design[emailLayout]'] = 'twig:pushword';
+        $form['email_design[headerMarkdown]'] = 'Retained header';
+        $form['email_design[sampleBody]'] = 'Live content';
+        $values = $form->getPhpValues();
+        $client->request(Request::METHOD_POST, $url, [...$values, 'preview' => '1']);
+        self::assertResponseIsSuccessful();
+        $data = json_decode((string) $client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($data);
+        self::assertIsString($data['html']);
+        self::assertStringContainsString('Pushword', $data['html']);
+        self::assertStringContainsString('Live content', $data['html']);
+        self::assertStringNotContainsString('Retained header', $data['html']);
+        self::assertEmailCount(0);
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Audience::class, $id);
+        self::assertInstanceOf(Audience::class, $stored);
+        self::assertNull($stored->emailTemplate);
+
+        $client->request(Request::METHOD_POST, $url, $values);
+        self::assertResponseRedirects($url);
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Audience::class, $id);
+        self::assertInstanceOf(Audience::class, $stored);
+        self::assertSame('pushword', $stored->emailTemplate);
+        self::assertSame('Retained header', $stored->headerMarkdown);
+        $crawler = $client->request(Request::METHOD_GET, $url);
+        self::assertCount(1, $crawler->filter('input[value="twig:pushword"]:checked'));
+        self::assertCount(1, $crawler->filter('[data-email-editable][hidden]'));
+
+        $form = $crawler->filter('form[name="email_design"]')->form();
+        $values = $form->getPhpValues();
+        self::assertIsArray($values['email_design']);
+        $values['email_design']['emailLayout'] = 'twig:unregistered';
+        $client->request(Request::METHOD_POST, $url, [...$values, 'preview' => '1']);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $client->request(Request::METHOD_POST, $url, $values);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Audience::class, $id);
+        self::assertInstanceOf(Audience::class, $stored);
+        self::assertSame('pushword', $stored->emailTemplate);
+
+        $crawler = $client->request(Request::METHOD_GET, $url);
+        $form = $crawler->filter('form[name="email_design"]')->form();
+        $form['email_design[emailLayout]'] = 'framed';
+        $client->submit($form);
+        self::assertResponseRedirects($url);
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Audience::class, $id);
+        self::assertInstanceOf(Audience::class, $stored);
+        self::assertNull($stored->emailTemplate);
+        self::assertTrue($stored->emailWrapped);
+        self::assertSame('Retained header', $stored->headerMarkdown);
     }
 
     public function testEmailDesignRejectsAnInvalidTokenForPreviewAndSave(): void

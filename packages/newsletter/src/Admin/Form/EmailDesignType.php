@@ -6,6 +6,7 @@ namespace Pushword\Newsletter\Admin\Form;
 
 use Override;
 use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Service\EmailTemplateRegistry;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -16,17 +17,19 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /** @extends AbstractType<Audience> */
 final class EmailDesignType extends AbstractType
 {
-    public function __construct(private readonly TranslatorInterface $translator)
-    {
+    public function __construct(
+        private readonly TranslatorInterface $translator,
+        private readonly EmailTemplateRegistry $templates,
+    ) {
     }
 
     #[Override]
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('emailWrapped', ChoiceType::class, [
+            ->add('emailLayout', ChoiceType::class, [
                 'label' => 'newsletter.design.layout',
-                'choices' => ['newsletter.design.simple' => false, 'newsletter.design.wrapped' => true],
+                'choices' => ['newsletter.design.simple' => 'simple', 'newsletter.design.wrapped' => 'framed'] + $this->templates->choices(),
                 'expanded' => true,
                 'help' => 'newsletter.design.layoutHelp',
             ])

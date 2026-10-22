@@ -29,7 +29,7 @@ final readonly class SendContext
             $audience->fromName,
             $audience->replyTo,
             $audience->postalAddress,
-            footerMarkdown: $audience->footerMarkdown,
+            footerMarkdown: null === $audience->emailTemplate ? $audience->footerMarkdown : '',
             audienceName: $audience->name
         );
     }

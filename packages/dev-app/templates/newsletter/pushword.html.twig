@@ -1,0 +1,10 @@
+{% extends '@PushwordNewsletter/newsletter/email.html.twig' %}
+{% set wrapped = true %}
+
+{% block email_header %}
+  <p style="margin:0;font-size:24px;font-weight:bold;">Pushword</p>
+{% endblock %}
+
+{% block email_footer %}
+  <p>{{ audienceName }}</p>
+{% endblock %}

@@ -67,6 +67,44 @@ final class MailRendererTest extends AbstractNewsletterTestCase
         self::assertStringNotContainsString('Audience signature', $renderer->text($audience, $contact, 'Body', null, $context));
     }
 
+    public function testATwigPresetControlsTheDesignWithoutLosingTheEditableLayout(): void
+    {
+        $audience = $this->createAudience();
+        $audience->headerMarkdown = 'Editable brand';
+        $audience->footerMarkdown = 'Editable signature';
+        $audience->postalAddress = '12 Baker Street';
+        $audience->emailLayout = 'twig:pushword';
+
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $renderer = self::getContainer()->get(MailRenderer::class);
+        $context = SendContext::fromAudience($audience);
+        $html = $renderer->html($audience, $contact, 'Subject', 'Hello **%name%**.', null, self::UNSUBSCRIBE, null, sendContext: $context);
+        $crawler = new Crawler($html);
+
+        self::assertCount(2, $crawler->filter('table[role="presentation"]'));
+        self::assertStringContainsString('Pushword', $crawler->filter('td')->first()->text());
+        self::assertStringContainsString('Hello Test.', $crawler->filter('body')->text());
+        self::assertStringContainsString($audience->name, $crawler->filter('td')->last()->text());
+        self::assertStringContainsString('12 Baker Street', $html);
+        self::assertCount(1, $crawler->filter('a[href="'.self::UNSUBSCRIBE.'"]'));
+        self::assertStringNotContainsString('Editable', $html);
+        $text = $renderer->text($audience, $contact, 'Hello %name%.', self::UNSUBSCRIBE, $context);
+        self::assertStringNotContainsString('Editable', $text);
+        self::assertStringContainsString('Hello Test.', $text);
+        self::assertStringContainsString('12 Baker Street', $text);
+        self::assertStringContainsString(self::UNSUBSCRIBE, $text);
+        self::assertStringNotContainsString('Editable', $renderer->text($audience, $contact, 'Body', null));
+        $override = new SendContext('localhost.dev', 'mail@example.tld', 'Brand', footerMarkdown: 'Occurrence signature');
+        self::assertStringContainsString('Occurrence signature', $renderer->text($audience, $contact, 'Body', null, $override));
+
+        $audience->emailLayout = 'simple';
+        self::assertNull($audience->emailTemplate);
+        self::assertFalse($audience->emailWrapped);
+        $html = $renderer->html($audience, $contact, 'Subject', 'Body', null, null, null);
+        self::assertStringContainsString('Editable brand', $html);
+        self::assertStringContainsString('Editable signature', $html);
+    }
+
     public function testEmailAddressesInBodyAndFooterNeedNoJavaScriptAndSensitiveLinksStayDirect(): void
     {
         $audience = $this->createAudience();

@@ -229,6 +229,10 @@ body[data-newsletter] .pw-newsletter-sequence .accordion-item {
   gap: 2rem;
 }
 
+.pw-newsletter-design [hidden] {
+  display: none;
+}
+
 .pw-newsletter-design-layout {
   margin-block-end: 2rem;
 }

@@ -444,8 +444,9 @@ In **Newsletter → Audiences**, open **Email design** for the audience. Choose
 on a light gray background. The audience's Markdown header and footer are shared
 by its campaigns and automation emails; both layouts keep them.
 
-The live preview uses the same renderer as sending, with Desktop and Mobile
-widths. Edit the sample content to check your design without creating a campaign.
+The live preview uses the same renderer as sending, with Mobile selected by
+default and a Desktop option. Edit the sample content to check your design
+without creating a campaign.
 Previewing does not save, subscribe a contact or send mail. **Save email design**
 applies the settings. Email clients may render the same HTML differently.
 
@@ -454,6 +455,51 @@ The unsubscribe link and postal address remain automatic. An occurrence's
 override. Existing audiences keep the simple layout and empty header/footer.
 Sites overriding `/newsletter/email.html.twig` receive `wrapped` and `header`
 alongside the existing `body` and `footer` variables and control their own layout.
+
+#### Preconfigured Twig designs
+
+Register a fixed design in `config/packages/newsletter.yaml`:
+
+```yaml
+newsletter:
+  email_templates:
+    brand:
+      label: 'Brand newsletter'
+      template: 'newsletter/brand.html.twig'
+```
+
+It appears alongside the two built-in layouts in **Email design**. The choice is
+saved per audience and uses the same Twig template for preview and sending.
+The editable header and footer are hidden while a preset is selected; their
+values are retained when switching back to a built-in layout.
+
+For example, create `templates/newsletter/brand.html.twig`:
+
+```twig
+{% extends '@PushwordNewsletter/newsletter/email.html.twig' %}
+{% set wrapped = true %}
+
+{% block email_header %}
+  <p style="margin:0;font-size:24px;font-weight:bold;">Brand</p>
+{% endblock %}
+
+{% block email_footer %}
+  <p>{{ audienceName }}</p>
+{% endblock %}
+```
+
+The parent template keeps the message content, unsubscribe link and postal
+address. Both blocks accept email-compatible HTML with inline styles. A custom
+template can also define its entire layout using `body`, `subject`, `preheader`,
+`audienceName`, `postalAddress`, `unsubscribeUrl`, `audience` and `contact`.
+Twig controls the HTML part; the plain-text part keeps the message and automatic
+sender information without the hidden editable header and footer. An explicit
+`SendContext.footerMarkdown` remains available in `footer` and in the text part;
+a preset decides whether to include `footer` in its HTML block.
+
+The development app includes a **Pushword (Twig)** example in
+`packages/dev-app/config/packages/newsletter.php` and
+`packages/dev-app/templates/newsletter/pushword.html.twig`.
 
 ### Email Markdown
 

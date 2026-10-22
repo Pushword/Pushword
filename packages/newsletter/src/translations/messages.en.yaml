@@ -305,6 +305,7 @@ newsletter:
     save: Save email design
     saved: Email design saved.
     simple: Without a frame
+    templateHelp: The header, footer and frame of this preset are defined in Twig. Your custom text is kept for the other layouts.
     title: Email design
     updating: Updating preview…
     viewport: Preview width

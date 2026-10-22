@@ -32,6 +32,7 @@ final readonly class MailRenderer
         private SiteRegistry $siteRegistry,
         private UtmDecorator $utmDecorator,
         private ClickTracker $clickTracker,
+        private EmailTemplateRegistry $emailTemplates,
     ) {
     }
 
@@ -68,7 +69,11 @@ final readonly class MailRenderer
             $body = $this->clickTracker->rewrite($body, $audience, $contact, $trackedMail, $untrackedUrls, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl);
         }
 
-        return $this->twig->render($this->view($audience, 'email.html.twig', $sendContext), [
+        $template = null === $audience->emailTemplate
+            ? $this->view($audience, 'email.html.twig', $sendContext)
+            : $this->emailTemplates->template($audience->emailTemplate);
+
+        return $this->twig->render($template, [
             'audience' => $audience,
             'contact' => $contact,
             'sendContext' => $sendContext,
@@ -111,12 +116,14 @@ final readonly class MailRenderer
     public function text(Audience $audience, Contact $contact, string $bodyMarkdown, ?string $unsubscribeUrl, ?SendContext $sendContext = null): string
     {
         $postalAddress = null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress;
+        $header = null === $audience->emailTemplate ? $audience->headerMarkdown : '';
+        $footer = null === $audience->emailTemplate ? $audience->footerMarkdown : '';
         $foot = array_filter(
-            [$unsubscribeUrl, $postalAddress, $sendContext->footerMarkdown ?? $audience->footerMarkdown],
+            [$unsubscribeUrl, $postalAddress, $sendContext->footerMarkdown ?? $footer],
             static fn (?string $value): bool => null !== $value && '' !== $value,
         );
 
-        return ('' === $audience->headerMarkdown ? '' : $audience->headerMarkdown."\n\n")
+        return ('' === $header ? '' : $header."\n\n")
             .$this->personalize($bodyMarkdown, $contact)
             .([] === $foot ? '' : "\n\n---\n".implode("\n\n", $foot)."\n");
     }

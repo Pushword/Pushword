@@ -10,6 +10,14 @@ export function initEmailPreview(root = document) {
     let request
     let revision = 0
 
+    function updateLayout() {
+      const custom = form.querySelector('[name="email_design[emailLayout]"]:checked')?.value.startsWith('twig:') ?? false
+      panel.querySelector('[data-email-editable]').hidden = custom
+      panel.querySelector('[data-email-template-help]').hidden = !custom
+    }
+
+    updateLayout()
+
     async function update(version) {
       request = new AbortController()
       const data = new FormData(form)
@@ -33,6 +41,7 @@ export function initEmailPreview(root = document) {
     }
 
     function schedule() {
+      updateLayout()
       clearTimeout(timer)
       request?.abort()
       const version = ++revision

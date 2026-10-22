@@ -9,18 +9,21 @@
 
 {% block main %}
   <p class="pw-newsletter-description">{{ 'newsletter.design.description'|trans({'%audience%': audience.name}) }}</p>
-  <div class="pw-newsletter-design" data-pw-email-preview>
+  <div class="pw-newsletter-design" data-pw-email-preview data-viewport="mobile">
     <div>
       {{ form_start(design_form, {attr: {id: 'newsletter-design-form'}}) }}
         {{ form_errors(design_form) }}
         <fieldset class="pw-newsletter-design-layout">
-          <legend>{{ design_form.emailWrapped.vars.label|trans }}</legend>
-          {{ form_widget(design_form.emailWrapped) }}
-          {{ form_help(design_form.emailWrapped) }}
-          {{ form_errors(design_form.emailWrapped) }}
+          <legend>{{ design_form.emailLayout.vars.label|trans }}</legend>
+          {{ form_widget(design_form.emailLayout) }}
+          {{ form_help(design_form.emailLayout) }}
+          {{ form_errors(design_form.emailLayout) }}
         </fieldset>
-        {{ form_row(design_form.headerMarkdown) }}
-        {{ form_row(design_form.footerMarkdown) }}
+        <p class="form-text" data-email-template-help{% if audience.emailTemplate is null %} hidden{% endif %}>{{ 'newsletter.design.templateHelp'|trans }}</p>
+        <div data-email-editable{% if audience.emailTemplate is not null %} hidden{% endif %}>
+          {{ form_row(design_form.headerMarkdown) }}
+          {{ form_row(design_form.footerMarkdown) }}
+        </div>
         <details class="pw-newsletter-design-sample">
           <summary>{{ 'newsletter.design.sample'|trans }}</summary>
           {{ form_row(design_form.sampleBody, {label_attr: {class: 'visually-hidden'}}) }}
@@ -31,8 +34,8 @@
       <div class="pw-newsletter-design-toolbar">
         <h2 id="newsletter-preview-title">{{ 'newsletter.design.preview'|trans }}</h2>
         <div class="btn-group" role="group" aria-label="{{ 'newsletter.design.viewport'|trans }}">
-          <button type="button" class="btn btn-secondary" data-preview-width="desktop" aria-pressed="true">{{ 'newsletter.design.desktop'|trans }}</button>
-          <button type="button" class="btn btn-secondary" data-preview-width="mobile" aria-pressed="false">{{ 'newsletter.design.mobile'|trans }}</button>
+          <button type="button" class="btn btn-secondary" data-preview-width="desktop" aria-pressed="false">{{ 'newsletter.design.desktop'|trans }}</button>
+          <button type="button" class="btn btn-secondary" data-preview-width="mobile" aria-pressed="true">{{ 'newsletter.design.mobile'|trans }}</button>
         </div>
       </div>
       <p class="pw-newsletter-design-status" role="status" aria-live="polite" data-updating="{{ 'newsletter.design.updating'|trans }}" data-ready="{{ 'newsletter.design.ready'|trans }}" data-failed="{{ 'newsletter.design.failed'|trans }}">{{ 'newsletter.design.ready'|trans }}</p>

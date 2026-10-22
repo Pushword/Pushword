@@ -98,6 +98,24 @@ class Audience implements IdInterface, Stringable
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     public bool $emailWrapped = false;
 
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    public ?string $emailTemplate = null;
+
+    /** The admin choice combines the built-in layouts and registered Twig templates. */
+    public string $emailLayout {
+        get {
+            if (null !== $this->emailTemplate) {
+                return 'twig:'.$this->emailTemplate;
+            }
+
+            return $this->emailWrapped ? 'framed' : 'simple';
+        }
+        set(string $value) {
+            $this->emailWrapped = 'framed' === $value;
+            $this->emailTemplate = str_starts_with($value, 'twig:') ? substr($value, 5) : null;
+        }
+    }
+
     #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
     public string $headerMarkdown = '' {
         set(?string $value) => (string) $value;

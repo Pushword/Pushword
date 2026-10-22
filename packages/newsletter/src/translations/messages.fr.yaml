@@ -305,6 +305,7 @@ newsletter:
     save: Enregistrer l'habillage
     saved: Habillage enregistré.
     simple: Sans cadre
+    templateHelp: L'en-tête, le pied de page et le cadre de ce modèle sont définis en Twig. Vos textes personnalisés sont conservés pour les autres mises en page.
     title: Habillage des emails
     updating: Actualisation de l'aperçu…
     viewport: Largeur de l'aperçu

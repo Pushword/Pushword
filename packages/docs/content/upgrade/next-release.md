@@ -1,5 +1,5 @@
 ---
-title: 'audiences gain shared email design settings'
+title: 'audiences gain shared email design settings and Twig presets'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 run: 'doctrine:schema:update --force'
@@ -40,4 +40,4 @@ Several changes land here between two tags: append to the file, do not replace i
 
 ## Shared email design
 
-Run `php bin/console doctrine:schema:update --force` to add the audience's email design fields. Existing audiences retain the simple layout. Custom `/newsletter/email.html.twig` templates can use `wrapped` and `header`; see [email design](../extension/newsletter#email-design-and-live-preview).
+Run `php bin/console doctrine:schema:update --force` to add the audience's email design fields, including the nullable Twig preset identifier. Existing audiences retain the simple layout. Custom `/newsletter/email.html.twig` templates can use `wrapped` and `header`; registered presets can extend the default template's `email_header` and `email_footer` blocks. The live preview now opens at mobile width. See [email design](../extension/newsletter#email-design-and-live-preview).

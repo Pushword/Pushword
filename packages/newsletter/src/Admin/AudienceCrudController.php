@@ -89,7 +89,7 @@ class AudienceCrudController extends AbstractCrudController
         $preview = $request->request->getBoolean('preview');
 
         if ($form->isSubmitted() && $form->isValid() && ! $preview) {
-            $audience->emailWrapped = $design->emailWrapped;
+            $audience->emailLayout = $design->emailLayout;
             $audience->headerMarkdown = $design->headerMarkdown;
             $audience->footerMarkdown = $design->footerMarkdown;
             $entityManager->flush();
