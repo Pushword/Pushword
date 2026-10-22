@@ -1,4 +1,5 @@
-adminPageCacheLabel: Mettre cette page en cache
 adminPageCacheHelp: Pré-rend cette page dans public/cache/ pour que Caddy la serve sans démarrer PHP. Désactivez pour les pages au contenu dynamique côté serveur.
-adminPageHoldPublicationLabel: Suspendre la publication
+adminPageCacheLabel: Mettre cette page en cache
 adminPageHoldPublicationHelp: Continue de servir la version statique actuelle aux visiteurs. Vos modifications sont enregistrées mais ne seront publiées qu'une fois cette option désactivée.
+adminPageHoldPublicationLabel: Suspendre la publication
+adminStaticTitle: Générateur statique

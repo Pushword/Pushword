@@ -10,8 +10,15 @@
 
 {% block body %}
 <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordcore/style.css') }}">
+<style>
+  .pw-cheatsheet { --primary: oklch(50% 0.134 242.749); }
+  .pw-cheatsheet :not(pre) > code { overflow-wrap: anywhere; white-space: normal; }
+  .pw-cheatsheet a { color: var(--primary); }
+  .pw-cheatsheet a:hover { --primary: oklch(44.3% 0.11 240.79); text-decoration: underline; }
+</style>
 
-<main class="max-w-3xl p-3 mx-auto">
+<main class="pw-cheatsheet max-w-3xl p-3 mx-auto">
+<a href="{{ path('admin') }}">{{ 'adminBackToAdmin'|trans }}</a>
 
 <header class="prose">
   <h1 class="mb-5"><small>{{ 'md_csPageH1'|trans }}</small> <br>{{ 'md_csPageSubtitle'|trans }}</h1>

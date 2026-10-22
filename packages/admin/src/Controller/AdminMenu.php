@@ -365,7 +365,7 @@ final readonly class AdminMenu
             return false;
         }
 
-        if ('cheatsheetEditRoute' === $request->attributes->get('_route')) {
+        if (\in_array($request->attributes->get('_route'), ['cheatsheetEditRoute', 'admin_cheatsheet_create'], true)) {
             return true;
         }
 

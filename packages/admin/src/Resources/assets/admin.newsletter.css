@@ -598,14 +598,13 @@ body[data-newsletter] .datagrid .dropdown-toggle[role='button'] {
 
 @media (max-width: 767.98px) {
   .pw-newsletter-nav {
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: wrap;
     gap: 0.25rem;
     margin-block: 0 1rem;
     padding-block-end: 0.5rem;
   }
   .pw-newsletter-nav a {
-    flex-shrink: 0;
+    flex: 0 1 auto;
   }
   body[data-newsletter] :is(.page-actions .btn, .pw-newsletter-design .btn, .pw-criteria button) {
     min-block-size: 2.75rem;

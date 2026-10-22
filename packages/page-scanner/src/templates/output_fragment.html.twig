@@ -10,18 +10,18 @@
 
   {# Status indicator #}
   {% if status == 'queued' %}
-    <div class="d-flex align-items-center mb-3" id="status-indicator">
-      <i class="fa fa-hourglass-half me-2"></i>
+    <div class="d-flex align-items-center mb-3" id="status-indicator" role="status" aria-live="polite">
+      <i class="fa fa-hourglass-half me-2" aria-hidden="true"></i>
       <strong>{{ 'page_scannerQueued'|trans }}</strong>
     </div>
   {% elseif status == 'running' %}
-    <div class="d-flex align-items-center mb-3" id="status-indicator">
-      <i class="fa fa-circle-notch fa-spin me-2"></i>
+    <div class="d-flex align-items-center mb-3" id="status-indicator" role="status" aria-live="polite">
+      <i class="fa fa-circle-notch fa-spin me-2" aria-hidden="true"></i>
       <strong>{{ 'page_scannerScanning'|trans }}</strong>
     </div>
   {% else %}
-    <div class="alert alert-success mb-3" id="status-indicator">
-      <i class="fa fa-check-circle me-2"></i>
+    <div class="alert alert-success mb-3" id="status-indicator" role="status" aria-live="polite">
+      <i class="fa fa-check-circle me-2" aria-hidden="true"></i>
       {{ 'page_scannerScanComplete'|trans }}<br>
       <a href="{{ path('admin_page_scanner') }}{{ host ? '?host=' ~ host : '' }}" class="ms-2">{{ 'page_scannerViewResults'|trans }} ➜</a>
       <meta http-equiv="refresh" content="2; {{ path('admin_page_scanner') }}{{ host ? '?host=' ~ host : '' }}">

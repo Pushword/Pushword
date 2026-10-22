@@ -112,7 +112,17 @@ class UserCrudController extends AbstractAdminCrudController
         yield EmailField::new('email', 'adminUserEmailLabel')
             ->setSortable(false);
         yield TextField::new('rolesForListing', 'adminUserRoleLabel')
-            ->setSortable(false);
+            ->setSortable(false)
+            ->formatValue(fn (?string $value, User $user): string => implode(', ', array_map(
+                fn (string $role): string => $this->translator->trans(match ($role) {
+                    'ROLE_SUPER_ADMIN' => 'adminUserRoleSuperAdmin',
+                    'ROLE_ADMIN' => 'adminUserRoleAdmin',
+                    'ROLE_EDITOR' => 'adminUserRoleEditor',
+                    'ROLE_USER' => 'adminUserRoleUser',
+                    default => $role,
+                }),
+                $user->getRoles(),
+            )));
         yield DateTimeField::new('createdAt', 'adminUserCreatedAtLabel')
             ->setSortable(true);
     }
@@ -133,9 +143,9 @@ class UserCrudController extends AbstractAdminCrudController
         $editUrl = $this->buildEditUrl($user);
 
         return sprintf(
-            '<a href="%s" class="text-muted d-flex justify-content-between align-items-center w-100 ms-2" style="gap: 8px;">'
+            '<a href="%s" class="pw-list-title d-flex align-items-center gap-2">'
             .'<span class="text-truncate">%s</span>'
-            .'<i class="fa fa-edit me-1 opacity-50"></i>'
+            .'<i class="fa fa-edit opacity-50" aria-hidden="true"></i>'
             .'</a>',
             htmlspecialchars($editUrl, \ENT_QUOTES),
             htmlspecialchars($username, \ENT_QUOTES),

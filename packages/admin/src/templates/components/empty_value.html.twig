@@ -1,0 +1,3 @@
+{% if not (ea().crud.areNullValuesHidden ?? false) %}
+  <span class="text-muted" aria-label="{{ 'adminEmptyValue'|trans }}">—</span>
+{% endif %}

@@ -22,7 +22,7 @@
 
 {% block main %}
 <div class="card shadow-sm">
-    <div class="card-body p-0">
+    <div class="card-body p-0 table-responsive">
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
@@ -38,7 +38,7 @@
             {% for version, v in versions|reverse(true) %}
                 <tr>
                     <td>
-                        <a class="link-primary" href="{{ path('admin_version_compare', {type: type, id: entity.id, versionLeft: version, versionRight: 'current'}) }}">
+                        <a class="pw-list-title" href="{{ path('admin_version_compare', {type: type, id: entity.id, versionLeft: version, versionRight: 'current'}) }}">
                             {{ attribute(v, 'h1')|default('') ?: (attribute(v, 'title')|default('') ?: v.name|default(v.slug)) }}
                         </a>
                     </td>
@@ -49,17 +49,17 @@
                         {% if editors[version]|default(null) %}
                             {{ editors[version] }}
                         {% else %}
-                            <span class="opacity-50" aria-hidden="true">·</span>
+                            <span>—</span>
                         {% endif %}
                     </td>
                     <td class="text-muted">
-                        {{ attribute(v, 'editMessage')|default('') }}
+                        {{ attribute(v, 'editMessage')|default('') ?: '—' }}
                     </td>
                     <td>
                         {% if attribute(v, 'holdPublicationAt')|default(null) %}
                             <span class="badge bg-warning text-dark">{{ 'versionHold'|trans }}</span>
                         {% else %}
-                            <span class="opacity-50" aria-hidden="true">·</span>
+                            <span class="text-muted">—</span>
                         {% endif %}
                     </td>
                     <td class="text-end">

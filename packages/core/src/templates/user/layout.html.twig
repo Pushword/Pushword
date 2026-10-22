@@ -2,9 +2,20 @@
 
 {% block title %}User{% endblock %}
 
+{% block css %}
+  {{ parent() }}
+  <style>
+    .pw-auth-action { min-height: 2.75rem; background-color: oklch(50% 0.134 242.749); }
+    .pw-auth-action:hover { background-color: oklch(44.3% 0.11 240.79); }
+    .pw-auth-action:focus { --tw-ring-color: oklch(50% 0.134 242.749); }
+    .pw-user-auth a.text-primary { color: oklch(50% 0.134 242.749); }
+    .pw-user-auth a.text-primary:hover { color: oklch(44.3% 0.11 240.79); }
+  </style>
+{% endblock %}
+
 {% block body %}
 
-<div class="flex items-center justify-center min-h-screen px-4 py-12 bg-gray-50 sm:px-6 lg:px-8" hx-boost="false">
+<div class="pw-user-auth flex items-center justify-center min-h-screen px-4 py-12 bg-gray-50 sm:px-6 lg:px-8" hx-boost="false">
     <div class="w-full max-w-md space-y-8">
         <div>
             <h1 class="mt-6 text-3xl font-bold text-center text-gray-900">

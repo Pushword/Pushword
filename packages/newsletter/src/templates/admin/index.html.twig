@@ -1,9 +1,16 @@
 {% extends '@pwAdmin/crud/index.html.twig' %}
 
+{% set isFiltered = ea.search.query|default('')|trim is not empty or app.request.query.all('filters') is not empty %}
+{% set isInitialEmpty = entities is empty and not isFiltered %}
+
+{% block global_actions %}
+  {% if not isInitialEmpty %}{{ parent() }}{% endif %}
+{% endblock %}
+
 {% block main %}
   {% set section = ea.crud.entityFqcn|split('\\')|last|lower %}
   <p class="pw-newsletter-description">{{ ('newsletter.workspace.' ~ section ~ 'Description')|trans }}</p>
-  {% if section in ['automation', 'campaign'] %}
+  {% if section in ['automation', 'campaign'] and not isInitialEmpty %}
     {{ include('@PushwordNewsletter/admin/_status_filters.html.twig') }}
   {% endif %}
   {% set hasSiteTemplates = section == 'emailtemplate' and site_templates|default([]) is not empty %}
@@ -41,6 +48,8 @@
           <p>{{ ('newsletter.workspace.' ~ section ~ 'EmptyHint')|trans }}</p>
           {% if newAction %}
             <a class="btn btn-primary" href="{{ newAction.linkUrl }}">{{ newAction.label|trans }}</a>
+          {% elseif section == 'automationdelivery' %}
+            <a class="btn btn-secondary" href="{{ path('admin_newsletter_automation_index') }}">{{ 'newsletter.automation.label.plural'|trans }}</a>
           {% endif %}
         </div>
       </td>

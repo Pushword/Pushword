@@ -7,9 +7,9 @@
     <div class="card-header fw-semibold">{{ 'flatGitStatusConfig'|trans }}</div>
     <div class="card-body">
       {% if enabled %}
-        <span class="badge bg-success"><i class="fa fa-check me-1"></i>{{ 'flatGitStatusEnabled'|trans }}</span>
+        <span class="badge text-bg-success"><i class="fa fa-check me-1" aria-hidden="true"></i>{{ 'flatGitStatusEnabled'|trans }}</span>
       {% else %}
-        <span class="badge bg-secondary"><i class="fa fa-times me-1"></i>{{ 'flatGitStatusDisabled'|trans }}</span>
+        <span class="badge text-bg-secondary"><i class="fa fa-times me-1" aria-hidden="true"></i>{{ 'flatGitStatusDisabled'|trans }}</span>
       {% endif %}
     </div>
   </div>
@@ -37,9 +37,9 @@
                   <td class="text-nowrap">{{ entry.timestamp|format_datetime('short', 'medium') }}</td>
                   <td>
                     {% if entry.success %}
-                      <span class="badge bg-success">{{ 'flatGitStatusSuccess'|trans }}</span>
+                      <span class="badge text-bg-success">{{ 'flatGitStatusSuccess'|trans }}</span>
                     {% else %}
-                      <span class="badge bg-danger">{{ 'flatGitStatusFailure'|trans }}</span>
+                      <span class="badge text-bg-danger">{{ 'flatGitStatusFailure'|trans }}</span>
                     {% endif %}
                   </td>
                   <td>

@@ -34,7 +34,7 @@
 
 .media-mosaic {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
   gap: 1rem;
 }
 
@@ -54,6 +54,9 @@
   left: 0.75rem;
   z-index: 3;
   padding-left: 0 !important;
+  padding: 4px;
+  border-radius: var(--pw-radius-sm);
+  background: var(--bs-body-bg);
 }
 
 .mosaic-box-label {
@@ -94,7 +97,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--mosaic-bg-color, #000);
+  background-color: var(--bs-tertiary-bg);
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -112,6 +115,30 @@
   z-index: 1;
   width: 100%;
   height: 100%;
+}
+
+.mosaic-inner-box--file img {
+  padding: 1.5rem;
+}
+
+.pw-preview-unavailable::before,
+.mosaic-inner-box--file::before {
+  display: none;
+}
+
+.media-mosaic__unavailable:not([hidden]) {
+  display: flex;
+  block-size: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--bs-secondary-color);
+  font-size: var(--pw-text-sm);
+}
+
+.media-mosaic__unavailable .fa {
+  font-size: var(--pw-text-xl);
 }
 
 .mosaic-inner-box::before {
@@ -139,7 +166,8 @@
   margin: 0;
   font-size: var(--pw-text-md);
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .media-mosaic__title a {
@@ -154,7 +182,12 @@
 .media-mosaic__filename {
   margin: 0;
   font-size: var(--pw-text-sm);
-  color: #94a3b8;
+  color: var(--bs-secondary-color);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .media-mosaic__meta {
@@ -166,14 +199,16 @@
 }
 
 .media-mosaic__meta dt {
-  color: #94a3b8;
+  color: var(--bs-secondary-color);
 }
 
 .media-mosaic__meta dd {
   margin: 0;
   color: #475569;
-  font-weight: 600;
+  font-weight: 400;
   text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 .media-mosaic__tags {
@@ -186,7 +221,7 @@
   display: flex;
   justify-content: space-between;
   font-size: var(--pw-text-xs);
-  color: #94a3b8;
+  color: var(--bs-secondary-color);
   margin-top: auto;
 }
 
@@ -201,9 +236,4 @@
 .media-mosaic__empty {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 2rem;
-  border: 1px dashed #cbd5f5;
-  border-radius: var(--pw-radius-lg);
-  color: #94a3b8;
-  background-color: #f8fafc;
 }

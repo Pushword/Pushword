@@ -1,15 +1,15 @@
-{% extends view('/base.html.twig') %}
+{% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block title %}{{ 'adminLabelCheatsheet'|trans }}{% endblock %}
+{% block content_title %}{{ 'adminLabelCheatsheet'|trans }}{% endblock %}
 
-{% block body %}
-    <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordcore/style.css') }}">
-    <main class="max-w-xl p-8 mx-auto prose">
-        <h1>{{ block('title') }}</h1>
-        <p>This site does not have an editorial cheatsheet yet.</p>
-        <form method="post">
+{% block main %}
+    <div class="pw-empty-state">
+        <i class="fa fa-book pw-empty-state__icon" aria-hidden="true"></i>
+        <p class="pw-empty-state__title">{{ 'adminCheatsheetEmptyTitle'|trans }}</p>
+        <p class="pw-empty-state__hint">{{ 'adminCheatsheetEmptyHint'|trans }}</p>
+        <form method="post" action="{{ path('cheatsheetEditRoute') }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('create_cheatsheet') }}">
-            <button type="submit">Create cheatsheet</button>
+            <button type="submit" class="btn btn-primary">{{ 'adminCheatsheetCreate'|trans }}</button>
         </form>
-    </main>
+    </div>
 {% endblock %}

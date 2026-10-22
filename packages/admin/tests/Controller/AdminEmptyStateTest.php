@@ -53,4 +53,22 @@ final class AdminEmptyStateTest extends AbstractAdminTestClass
         self::assertCount(1, $cta);
         self::assertStringContainsString('/new', (string) $cta->attr('href'));
     }
+
+    public function testReadOnlyListDoesNotAskForAnUnavailableCreateAction(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/quiz-result');
+        self::assertResponseIsSuccessful();
+        self::assertSame('Entries will appear here when activity is recorded.', $crawler->filter('.pw-empty-state__hint')->text());
+        self::assertCount(0, $crawler->filter('.pw-empty-state a'));
+    }
+
+    public function testEmptyMediaMosaicOffersToClearTheSearch(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/media?view=mosaic&query=zzzznothingmatchesthis');
+        self::assertResponseIsSuccessful();
+        self::assertSame('Clear search and filters', $crawler->filter('.media-mosaic__empty a')->text());
+        self::assertStringNotContainsString('query=', (string) $crawler->filter('.media-mosaic__empty a')->attr('href'));
+    }
 }

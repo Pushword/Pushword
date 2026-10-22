@@ -28,6 +28,29 @@ use Symfony\Component\Mime\Email;
 #[Group('integration')]
 final class NewsletterAdminTest extends AbstractAdminTestClass
 {
+    public function testInitialEmptyCampaignOffersOneCreateAction(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign');
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('.pw-newsletter-empty a.btn-primary'));
+        self::assertCount(0, $crawler->filter('.content-header .action-new, .pw-newsletter-status'));
+    }
+
+    public function testAudienceActionsRemainAvailableInOneMenu(): void
+    {
+        $client = $this->loginUser();
+        $this->seed();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/audience');
+        self::assertResponseIsSuccessful();
+
+        $rows = $crawler->filter('.datagrid tbody tr[data-id]');
+        self::assertGreaterThan(0, $rows->count());
+        self::assertCount($rows->count(), $rows->filter('.actions-as-dropdown .dropdown-toggle'));
+        self::assertCount($rows->count(), $rows->filter('.actions-as-dropdown [data-action-name="emailDesign"]'));
+        self::assertCount($rows->count(), $rows->filter('.actions-as-dropdown [data-action-name="delete"]'));
+    }
+
     private ?int $audienceId = null;
 
     /** @var list<int> */

@@ -19,7 +19,7 @@ class UserRolesField extends AbstractField
             ->onlyOnForms()
             ->setChoices($this->getRoleChoices())
             ->allowMultipleChoices()
-            ->renderAsNativeWidget()
+            ->renderExpanded()
             ->setFormTypeOption('required', false);
     }
 

@@ -27,7 +27,7 @@
       <input type="file" id="pw-file-input" multiple style="display:none;">
     </div>
 
-    <div id="pw-tag-all-bar" class="d-flex align-items-center gap-2 mt-4" style="display:none;">
+    <div id="pw-tag-all-bar" class="align-items-center gap-2 mt-4" style="display:none;">
       {# One row, one control size: the label used to be bold where no other admin label
          is, and the button was the only blue-outline button in the admin — three pixels
          shorter than the field it sits next to. #}
@@ -57,6 +57,7 @@
   </div>
 
   <style>
+    #pw-tag-all-bar { display: flex; flex-wrap: wrap; }
     #pw-drop-zone {
       border: 2px dashed #ced4da;
       border-radius: var(--pw-radius-md);

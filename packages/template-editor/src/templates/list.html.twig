@@ -23,7 +23,7 @@
 {% block main %}
 <div class="card">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0 pw-template-list">
             <thead class="table-light">
                 <tr>
                     <th scope="col">{{ 'template_editorPath'|trans }}</th>
@@ -33,18 +33,18 @@
             <tbody>
             {% for element in elements %}
                 <tr>
-                    <td>
-                        <a href="{{ path('admin_template_editor_edit', {encodedPath: element.encodedPath}) }}" class="link-primary text-decoration-none">
+                    <td class="pw-template-list__path">
+                        <a href="{{ path('admin_template_editor_edit', {encodedPath: element.encodedPath}) }}" class="pw-list-title">
                             {{ element.path }}
                         </a>
                     </td>
-                    <td class="text-end">
-                        <div class="btn-group btn-group-sm" role="group">
-                            <a href="{{ path('admin_template_editor_edit', {encodedPath: element.encodedPath}) }}" class="btn btn-outline-primary">
+                    <td class="text-end pw-template-list__actions">
+                        <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+                            <a href="{{ path('admin_template_editor_edit', {encodedPath: element.encodedPath}) }}" class="btn btn-secondary btn-sm">
                                 <i class="fa fa-edit me-1" aria-hidden="true"></i> {{ 'template_editorEdit'|trans }}
                             </a>
                             {% if canCreate %}
-                                <a href="{{ path('admin_template_editor_delete', {encodedPath: element.encodedPath}) }}" class="btn btn-outline-danger">
+                                <a href="{{ path('admin_template_editor_delete', {encodedPath: element.encodedPath}) }}" class="btn btn-link btn-sm pw-action-delete">
                                     <i class="fa fa-times me-1" aria-hidden="true"></i> {{ 'template_editorDeleteLabel'|trans }}
                                 </a>
                             {% endif %}

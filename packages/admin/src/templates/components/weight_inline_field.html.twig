@@ -30,7 +30,8 @@
             hx-target="#{{ target }}"
             hx-swap="outerHTML"
             hx-vals='js:{field: "weight", value: event.target.value, _token: "{{ token|e('js') }}"}'
-            title="{{ ('admin.' ~ entityType ~ '.weight.help')|trans({}, 'messages', 'en') }}"
+            aria-label="{{ (entityType == 'conversation' ? 'adminConversationWeightLabel' : 'adminPageWeightLabel')|trans }}"
+            title="{{ (entityType == 'conversation' ? 'adminConversationWeightHelp' : 'adminPageWeightHelp')|trans }}"
         >
     </div>
 {% endif %}

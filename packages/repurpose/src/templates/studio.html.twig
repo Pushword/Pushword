@@ -18,11 +18,14 @@
     [x-cloak] { display: none !important; }
 
     header { display: flex; align-items: center; gap: 1rem; padding: .8rem 1.5rem; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(10px); z-index: 20; }
+    .studio-context { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+    .studio-actions, .studio-exports { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; min-width: 0; }
+    .studio-actions { margin-left: auto; flex-shrink: 0; }
     header .back { font-size: .85rem; color: var(--muted-2); }
     header .back:hover { color: var(--accent); }
     header h1 { font-size: .95rem; font-weight: 600; margin: 0; letter-spacing: -.01em; white-space: nowrap; color: var(--text); }
-    header .crumbs { color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    header .spacer { margin-left: auto; }
+    header .crumbs { min-width: 0; color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    header .back, header .badge { flex-shrink: 0; }
 
     .badge { font-size: .66rem; padding: .18rem .55rem; border-radius: 999px; border: 1px solid var(--line-2); text-transform: uppercase; letter-spacing: .06em; color: var(--muted-2); white-space: nowrap; }
     .badge.draft { color: var(--warn); border-color: #fde68a; background: #fef3c7; }
@@ -34,13 +37,15 @@
     .btn:disabled { opacity: .55; cursor: default; }
     .btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
     .btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
+    button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
     .toggle { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; }
     .toggle button { background: var(--panel); color: var(--muted-2); border: 0; padding: .45rem .8rem; font-size: .8rem; font-weight: 600; cursor: pointer; }
     .toggle button.on { background: var(--accent); color: #fff; }
+    .toggle button:focus-visible { outline-color: currentColor; outline-offset: -4px; }
 
-    .layout { display: grid; grid-template-columns: 1fr 28rem; gap: 1.5rem; padding: 1.5rem; align-items: start; }
-    @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } .deck-wrap { position: static; } }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 28rem; gap: 1.5rem; padding: 1.5rem; align-items: start; }
+    .layout > * { min-width: 0; }
 
     .deck-wrap { min-width: 0; position: sticky; top: 4.75rem; }
     .deck { display: flex; gap: 1.1rem; overflow-x: auto; padding: .25rem .25rem 1.25rem; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
@@ -78,7 +83,7 @@
     section.group { display: flex; flex-direction: column; gap: .7rem; margin: 0 -1.1rem; padding: 1.1rem 1.1rem 0; border-top: 1px solid var(--line); }
     section.group:first-of-type { padding-top: 0; border-top: 0; }
     section.group h2 { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+    .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
     .field { display: flex; flex-direction: column; gap: .28rem; min-width: 0; }
     .field > label { font-size: .72rem; color: var(--muted-2); display: flex; justify-content: space-between; gap: .5rem; }
     .field > label .val { color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -225,6 +230,29 @@
     .effect-tile .thumb { width: 100%; aspect-ratio: 4 / 5; background: var(--panel-2); }
     .effect-tile .name { padding: .5rem .6rem; font-size: .76rem; font-weight: 600; color: var(--muted-2); text-align: center; }
     .effect-tile.on .name { color: var(--accent); }
+
+    @media (max-width: 1024px) {
+      header { flex-wrap: wrap; }
+      .studio-context { flex: 1 1 100%; }
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .deck-wrap { position: static; }
+    }
+    @media (max-width: 720px) {
+      header { gap: .6rem; padding: .75rem 1rem; }
+      .studio-context { gap: .6rem; }
+      header .back { white-space: nowrap; }
+      .studio-actions { width: 100%; }
+      .studio-save { margin-left: auto; }
+      .studio-exports { order: 1; width: 100%; }
+      .studio-exports .btn { flex: 1; padding: .5rem .55rem; }
+      .layout { gap: 1rem; padding: 1rem; }
+      .deck-note { flex-wrap: wrap; }
+      .deck-note span { flex-basis: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .slide figure:hover svg, .tw-sw:hover, .effect-tile:hover { transform: none; }
+    }
   </style>
 </head>
 <body x-data="repurposeStudio()">
@@ -252,20 +280,25 @@
   </script>
 
   <header>
-    <a class="back" href="{{ backUrl }}">← Back</a>
-    <h1>Repurpose Studio</h1>
-    <span class="crumbs"><span x-text="pageLabel"></span> · {{ carousel.network }} · <span x-text="spec.format"></span></span>
-    <span class="badge" :class="spec.status" x-text="spec.status"></span>
-    <span class="spacer"></span>
-    <div class="toggle" role="tablist">
-      <button type="button" :class="view === 'visual' && 'on'" @click="setView('visual')">Visual</button>
-      <button type="button" :class="view === 'source' && 'on'" @click="setView('source')">Source</button>
+    <div class="studio-context">
+      <a class="back" href="{{ backUrl }}">← Back</a>
+      <h1>Repurpose Studio</h1>
+      <span class="crumbs"><span x-text="pageLabel"></span> · {{ carousel.network }} · <span x-text="spec.format"></span></span>
+      <span class="badge" :class="spec.status" x-text="spec.status"></span>
     </div>
-    <button class="btn" type="button" @click="exportZip()" :disabled="exporting" x-text="exportLabel">Export .zip</button>
-    <button class="btn" type="button" @click="exportSvg()" :disabled="exportingSvg" x-text="exportSvgLabel">Export .svg</button>
-    <button class="btn" type="button" @click="exportVideo()" :disabled="exportingVideo" x-text="exportVideoLabel">Export .mp4</button>
-    <button class="btn" type="button" x-show="network === 'pinterest'" x-cloak @click="pinToPinterest()" :disabled="pinning" x-text="pinLabel">📌 Pin to Pinterest</button>
-    <button class="btn primary" type="button" @click="save()" :disabled="saving" x-text="saveLabel">Save</button>
+    <div class="studio-actions">
+      <div class="toggle" role="group" aria-label="Editor view">
+        <button type="button" :class="view === 'visual' && 'on'" aria-pressed="true" :aria-pressed="view === 'visual'" aria-controls="rp-visual-editor" @click="setView('visual')">Visual</button>
+        <button type="button" :class="view === 'source' && 'on'" aria-pressed="false" :aria-pressed="view === 'source'" aria-controls="rp-source-editor" @click="setView('source')">Source</button>
+      </div>
+      <div class="studio-exports">
+        <button class="btn" type="button" @click="exportZip()" :disabled="exporting" x-text="exportLabel">Export .zip</button>
+        <button class="btn" type="button" @click="exportSvg()" :disabled="exportingSvg" x-text="exportSvgLabel">Export .svg</button>
+        <button class="btn" type="button" @click="exportVideo()" :disabled="exportingVideo" x-text="exportVideoLabel">Export .mp4</button>
+        <button class="btn" type="button" x-show="network === 'pinterest'" x-cloak @click="pinToPinterest()" :disabled="pinning" x-text="pinLabel">📌 Pin to Pinterest</button>
+      </div>
+      <button class="btn primary studio-save" type="button" @click="save()" :disabled="saving" x-text="saveLabel">Save</button>
+    </div>
   </header>
 
   <div class="layout" @wheel="sliderWheel($event)">
@@ -305,7 +338,7 @@
       </ul>
 
       {# ---------- VISUAL EDITOR ---------- #}
-      <div x-show="view === 'visual'" style="display:flex;flex-direction:column;gap:1rem;">
+      <div id="rp-visual-editor" role="region" aria-label="Visual editor" x-show="view === 'visual'" style="display:flex;flex-direction:column;gap:1rem;">
         <section class="group" :class="{ 'open': deckOpen }">
           <div class="group-head" @click="toggleDeck()">
             <span class="chev" x-text="deckOpen ? '▾' : '▸'"></span>
@@ -633,7 +666,7 @@
       </div>
 
       {# ---------- SOURCE EDITOR ---------- #}
-      <div x-show="view === 'source'" x-cloak style="display:flex;flex-direction:column;gap:.6rem;">
+      <div id="rp-source-editor" role="region" aria-label="Source editor" x-show="view === 'source'" x-cloak style="display:flex;flex-direction:column;gap:.6rem;">
         <p class="hint">JSON spec — validated live as you type. The visual editor and this view stay in sync when you switch.</p>
         <div class="source-wrap">
           <textarea id="rp-spec" x-ref="source" spellcheck="false" aria-label="Carousel spec JSON"></textarea>

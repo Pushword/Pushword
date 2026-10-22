@@ -3,6 +3,10 @@
 "Page List": "Page List"
 admin.planified: Scheduled
 adminAction: Action
+adminBackToAdmin: "Back to admin"
+adminCheatsheetCreate: "Create cheatsheet"
+adminCheatsheetEmptyHint: "Keep your editorial conventions and writing tips here for everyone who edits the site."
+adminCheatsheetEmptyTitle: "Create your editorial cheatsheet"
 adminDetails: Details
 adminDraft: Draft
 adminEdit: Edit
@@ -12,12 +16,17 @@ adminEmptyStateClearSearch: "Clear search and filters"
 adminEmptyStateFilteredHint: "No entry matches your search or filters. Try a broader search, or clear them to see everything."
 adminEmptyStateFilteredTitle: "No result"
 adminEmptyStateHint: "This list is empty. Add the first entry to get started."
+adminEmptyStateReadOnlyHint: "Entries will appear here when activity is recorded."
 adminEmptyStateTitle: "Nothing here yet"
+adminEmptyValue: "Not provided"
 adminLabelCheatsheet: Cheatsheet
 adminLabelCheckContent: "Content scan"
 adminLabelContent: Pages
 adminLabelConversation: Conversation
 adminLabelGitStatus: "Git Status"
+adminMediaPreviewUnavailable: "Preview unavailable"
+adminMediaReplaceFileHelp: "Choose a file only to replace the current one. Leave this empty to keep it."
+adminPageRedirectionTargetHelp: "Enter a URL or path, for example /new-page. Append a status code such as 302 for a temporary redirect."
 flatGitStatusConfig: Configuration
 flatGitStatusDate: Date
 flatGitStatusDisabled: "Auto-commit disabled"

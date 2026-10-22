@@ -9,12 +9,15 @@ use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
+use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use LogicException;
 use Override;
+use Pushword\Admin\FormField\AbstractField;
 use Pushword\Core\Entity\Page;
 
 class PageRedirectionCrudController extends PageCrudController
@@ -74,15 +77,39 @@ class PageRedirectionCrudController extends PageCrudController
         return false;
     }
 
+    /** @return iterable<FieldInterface|string> */
+    #[Override]
+    protected function getFormFieldsDefinition(): iterable
+    {
+        foreach (parent::getFormFieldsDefinition() as $field) {
+            if ($field instanceof FieldInterface && 'h1' === $field->getAsDto()->getProperty()) {
+                continue;
+            }
+
+            yield $field;
+        }
+    }
+
+    /** @param array<int|string, mixed>|class-string<AbstractField<Page>> $block */
+    #[Override]
+    protected function buildSettingsFieldset(string $groupName, array|string $block): FormField
+    {
+        if ('adminPagePermanlienLabel' === $groupName) {
+            return FormField::addFieldset('adminPageRedirectionFrom');
+        }
+
+        return parent::buildSettingsFieldset($groupName, $block);
+    }
+
     private function formatFromColumn(Page $page): string
     {
         $path = trim(sprintf('%s/%s', $page->host, $page->slug), '/');
         $editUrl = $this->buildEditUrl($page);
 
         return sprintf(
-            '<a href="%s" class="text-muted d-flex justify-content-between align-items-center w-100 ms-2" style="gap: 8px;">'
+            '<a href="%s" class="pw-list-title d-flex align-items-center gap-2">'
             .'<span class="text-truncate">%s</span>'
-            .'<i class="fa fa-edit me-1 opacity-50"></i>'
+            .'<i class="fa fa-edit opacity-50" aria-hidden="true"></i>'
             .'</a>',
             htmlspecialchars($editUrl, \ENT_QUOTES),
             htmlspecialchars($path, \ENT_QUOTES),

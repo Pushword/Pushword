@@ -1,0 +1,20 @@
+{% set isFiltered = ea.search.query|default('')|trim is not empty or app.request.query.all('filters') is not empty %}
+{% set newAction = global_actions|filter(action => 'new' == action.name)|first %}
+{% set emptyHint = newAction ? 'adminEmptyStateHint' : 'adminEmptyStateReadOnlyHint' %}
+<div class="pw-empty-state">
+  <i class="fa {{ isFiltered ? 'fa-search' : 'fa-inbox' }} pw-empty-state__icon" aria-hidden="true"></i>
+  <p class="pw-empty-state__title">
+    {{ (isFiltered ? 'adminEmptyStateFilteredTitle' : 'adminEmptyStateTitle')|trans }}
+  </p>
+  <p class="pw-empty-state__hint">
+    {{ (isFiltered ? 'adminEmptyStateFilteredHint' : emptyHint)|trans }}
+  </p>
+
+  {% if isFiltered %}
+    <a class="btn btn-secondary" href="{{ ea_url().set('query', null).set('filters', null).set('page', 1) }}">
+      {{ 'adminEmptyStateClearSearch'|trans }}
+    </a>
+  {% elseif newAction %}
+    <a class="btn btn-primary" href="{{ newAction.linkUrl }}">{{ newAction.label|trans }}</a>
+  {% endif %}
+</div>

@@ -53,7 +53,6 @@ class AudienceCrudController extends AbstractCrudController
             ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
             ->setEntityLabelInSingular('newsletter.audience.label.singular')
             ->setEntityLabelInPlural('newsletter.audience.label.plural')
-            ->showEntityActionsInlined()
             ->setDefaultSort(['slug' => 'ASC'])
             ->setSearchFields(['slug', 'name', 'fromEmail']);
     }

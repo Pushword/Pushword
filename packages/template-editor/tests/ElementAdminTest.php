@@ -26,6 +26,8 @@ final class ElementAdminTest extends AbstractAdminTestClass
 
         $client->request(Request::METHOD_GET, '/admin/template/edit/'.$element->getEncodedPath()); // /pushword.piedweb.com/page/_content.html.twig
         self::assertResponseIsSuccessful();
+        self::assertSelectorExists('.content-header button[type="submit"][form="pw-template-form"]');
+        self::assertSelectorExists('form#pw-template-form[method="post"]');
 
         // These bundles sit at a stable URL under a long public max-age, and the
         // path is unauthenticated whatever the page requires — so an unstamped one

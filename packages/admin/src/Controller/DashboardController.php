@@ -54,6 +54,7 @@ class DashboardController extends AbstractDashboardController
             ->overrideTemplates([
                 'layout' => '@pwAdmin/easyadmin_layout.html.twig',
                 'crud/index' => '@pwAdmin/crud/index.html.twig',
+                'label/null' => '@pwAdmin/components/empty_value.html.twig',
             ]);
     }
 

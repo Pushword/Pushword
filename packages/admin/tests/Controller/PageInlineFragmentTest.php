@@ -77,6 +77,8 @@ final class PageInlineFragmentTest extends AbstractAdminTestClass
         self::assertCount(1, $weight, 'The list should expose an inline weight field for the page.');
         self::assertSame('change, blur', $weight->attr('hx-trigger'));
         self::assertSame('#pw-weight-page-'.$pageId, $weight->attr('hx-target'));
+        self::assertSame('Weight', $weight->attr('aria-label'));
+        self::assertSame('Allows sorting pages. Higher values appear first.', $weight->attr('title'));
     }
 
     public function testInlineTagsUpdatePersistsAndRendersBackAnInteractiveFragment(): void

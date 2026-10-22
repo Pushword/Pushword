@@ -17,19 +17,21 @@
   {{ parent() }}
   {# Secondary: "Add Media" is the primary action of this screen, and two filled
      buttons side by side leave the eye no way to tell which one is the default. #}
-  <a href="{{ path('admin_media_multi_upload') }}" class="btn btn-secondary ms-2">
+  <a href="{{ path('admin_media_multi_upload') }}" class="btn btn-secondary ms-2" aria-label="{{ 'adminMediaMultiUpload'|trans }}">
     <i class="fas fa-upload" aria-hidden="true"></i>
     <span class="d-none d-sm-inline ms-1">{{ 'adminMediaMultiUpload'|trans }}</span>
   </a>
   <div class="btn-group ms-2 media-view-switch" role="group" aria-label="{{ 'adminMediaViewLabel'|trans }}">
     <a href="{{ ea_url().set('view', 'table') }}"
        class="btn btn-secondary {{ isTableView ? 'active' }}"
+       aria-label="{{ 'adminMediaViewTable'|trans }}"
        aria-pressed="{{ isTableView ? 'true' : 'false' }}">
       <i class="fa fa-list" aria-hidden="true"></i>
       <span class="d-none d-sm-inline ms-1">{{ 'adminMediaViewTable'|trans }}</span>
     </a>
     <a href="{{ ea_url().set('view', 'mosaic') }}"
        class="btn btn-secondary {{ mosaicActive ? 'active' }}"
+       aria-label="{{ 'adminMediaViewMosaic'|trans }}"
        aria-pressed="{{ mosaicActive ? 'true' : 'false' }}">
       <i class="fa fa-th-large" aria-hidden="true"></i>
       <span class="d-none d-sm-inline ms-1">{{ 'adminMediaViewMosaic'|trans }}</span>
@@ -83,7 +85,7 @@
             {% endif %}
 
             <a
-              class="mosaic-inner-box"
+              class="mosaic-inner-box{{ not isImage ? ' mosaic-inner-box--file' }}"
               style="--bg-image-url: url('{{ thumbnail }}');"
               href="{{ editUrl }}"
               data-media-width="{{ media.width ?? '' }}"
@@ -92,6 +94,7 @@
               data-media-alt="{{ media.alt }}"
               data-media-file-name="{{ media.fileName }}"
               data-main-color="{{ media.mainColor ?? '' }}"
+              aria-label="{{ 'action.edit'|trans({}, 'EasyAdminBundle') }} {{ media.fileName }}"
             >
               {% if media.ratioLabel %}
                 <span class="mosaic-box-label badge bg-black text-white">{{ media.ratioLabel }}</span>
@@ -100,7 +103,8 @@
                  licence takes the one free corner. #}
               {{ pw.licenseBadge(media, licenseStateLabels, 'mosaic-license-label') }}
               <span class="media-mosaic__preview">
-                <img src="{{ thumbnail }}" alt="{{ media.alt ?: media.fileName }}" loading="lazy">
+                <img src="{{ thumbnail }}" alt="{{ media.alt ?: media.fileName }}" loading="lazy"{% if isImage %} data-pw-media-preview{% endif %}>
+                {% if isImage %}<span class="media-mosaic__unavailable" hidden><i class="fa fa-image" aria-hidden="true"></i>{{ 'adminMediaPreviewUnavailable'|trans }}</span>{% endif %}
               </span>
             </a>
 
@@ -109,9 +113,10 @@
                 {{ media.fileName }}
               </h3>
 
+              {% if media.alt and media.alt != media.fileName %}
+                <p class="media-mosaic__filename" title="{{ media.alt }}">{{ media.alt }}</p>
+              {% endif %}
               <dl class="media-mosaic__meta">
-                <dt>{{ 'adminMediaAltLabel'|trans }}</dt>
-                <dd>{{ media.alt }}</dd>
                 <dt>{{ 'adminMediaFiletypeLabel'|trans }}</dt>
                 <dd>{{ media.mimeType ?? '—' }}</dd>
                 <dt>{{ 'adminMediaSizeLabel'|trans }}</dt>
@@ -120,8 +125,6 @@
                   <dt>{{ 'adminMediaDimensionsLabel'|trans }}</dt>
                   <dd>{{ media.width }}×{{ media.height }}</dd>
                 {% endif %}
-                <dt>{{ 'adminPageUpdatedAtLabel'|trans }}</dt>
-                <dd>{{ media.updatedAt ? media.updatedAt|format_datetime : '—' }}</dd>
               </dl>
 
               {% if media.tagList is not empty %}
@@ -133,6 +136,9 @@
               {% endif %}
             </div>
 
+            {% if media.updatedAt %}
+              <p class="media-mosaic__footer px-3 mb-2"><time datetime="{{ media.updatedAt|date('c') }}" title="{{ 'adminPageUpdatedAtLabel'|trans }}: {{ media.updatedAt|format_datetime }}">{{ media.updatedAt|format_date('medium') }}</time></p>
+            {% endif %}
             <div class="media-mosaic__actions actions {{ eaContext.crud.showEntityActionsAsDropdown ? 'actions-as-dropdown' }}">
               {% if entity.actions.count > 0 %}
                 {% if eaContext.crud.showEntityActionsAsDropdown %}
@@ -180,7 +186,7 @@
           </article>
         {% else %}
           <div class="media-mosaic__empty">
-            {{ 'adminMediaMosaicEmpty'|trans }}
+            {{ include('@pwAdmin/components/empty_state.html.twig') }}
           </div>
         {% endfor %}
       </div>

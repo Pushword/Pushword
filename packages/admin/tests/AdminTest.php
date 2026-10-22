@@ -61,6 +61,10 @@ final class AdminTest extends AbstractAdminTestClass
         self::assertResponseIsSuccessful();
 
         $client->request(Request::METHOD_GET, '/admin/cheatsheet');
+        if ($client->getResponse()->isRedirect('/admin/cheatsheet/create')) {
+            $client->followRedirect();
+        }
+
         if ($client->getResponse()->isSuccessful()) {
             $client->submitForm('Create cheatsheet');
         }
@@ -87,8 +91,12 @@ final class AdminTest extends AbstractAdminTestClass
             }
 
             $client->request(Request::METHOD_GET, '/admin/cheatsheet');
+            self::assertResponseRedirects('/admin/cheatsheet/create');
+            $client->followRedirect();
 
             self::assertResponseIsSuccessful();
+            self::assertSelectorExists('.sidebar-wrapper');
+            self::assertSelectorExists('.pw-empty-state .btn-primary');
             self::assertNull($repository->findOneBy(['slug' => PageCheatSheetCrudController::CHEATSHEET_SLUG]));
 
             $client->submitForm('Create cheatsheet');

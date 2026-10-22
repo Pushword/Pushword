@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Admin\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use Pushword\Admin\Service\AdminUrlGeneratorAlias;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
@@ -35,7 +36,7 @@ class PageCheatSheetController extends AbstractController
         }
 
         if (! $request->isMethod('POST')) {
-            return $this->render('@pwAdmin/cheatsheet_create.html.twig');
+            return $this->redirectToRoute('admin_cheatsheet_create');
         }
 
         if (! $this->isCsrfTokenValid('create_cheatsheet', $request->request->getString('_csrf_token'))) {
@@ -51,6 +52,12 @@ class PageCheatSheetController extends AbstractController
         $this->entityManager->flush();
 
         return $this->redirectToEdit($page);
+    }
+
+    #[AdminRoute(path: '/cheatsheet/create', name: 'cheatsheet_create')]
+    public function create(): Response
+    {
+        return $this->render('@pwAdmin/cheatsheet_create.html.twig');
     }
 
     private function redirectToEdit(Page $page): Response

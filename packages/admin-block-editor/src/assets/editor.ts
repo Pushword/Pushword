@@ -295,7 +295,7 @@ export class editorJs {
 
     editorJsHelper.setModeManager(config.holder!, new EditorModeManager(config.holder!))
 
-    if (outlineConfig !== undefined) {
+    if (outlineConfig !== undefined && document.querySelector('.h1Field') !== null) {
       const holderId = config.holder!
       const editorApi = editor as unknown as API
       const monacoContext: MonacoContext = {

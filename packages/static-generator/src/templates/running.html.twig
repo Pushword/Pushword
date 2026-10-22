@@ -1,6 +1,6 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block content_title %}{{ 'adminStaticGenerating'|trans }}{% endblock %}
+{% block content_title %}{{ 'adminStaticTitle'|trans }}{% endblock %}
 
 {% block page_actions %}
     <a class="btn btn-outline-secondary" href="{{ path('admin_static_generator') }}">
@@ -22,8 +22,8 @@
          hx-get="{{ path('admin_static_generator_output', {host: host|default(''), pending: pending ? '1' : '0', pt: outputProcessType|default('')}) }}"
          hx-trigger="load"
          hx-swap="innerHTML">
-        <div class="d-flex align-items-center">
-            <i class="fa fa-circle-notch fa-spin me-2"></i>
+        <div class="d-flex align-items-center" role="status" aria-live="polite">
+            <i class="fa fa-circle-notch fa-spin me-2" aria-hidden="true"></i>
             <span>{{ 'adminStaticStarting'|trans }}</span>
         </div>
     </div>

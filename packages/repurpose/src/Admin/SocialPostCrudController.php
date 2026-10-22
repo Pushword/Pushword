@@ -96,7 +96,7 @@ class SocialPostCrudController extends AbstractCrudController
         yield TextField::new('format', 'repurpose.field.format')->hideOnIndex();
         yield TextField::new('host', 'repurpose.field.host');
         yield ChoiceField::new('status', 'repurpose.field.status')
-            ->setChoices(['draft' => 'draft', 'planned' => 'planned', 'posted' => 'posted'])
+            ->setChoices(['repurposeStatusDraft' => 'draft', 'repurposeStatusPlanned' => 'planned', 'repurposeStatusPosted' => 'posted'])
             ->renderAsBadges(['draft' => 'warning', 'planned' => 'info', 'posted' => 'success']);
         yield DateTimeField::new('plannedAt', 'repurpose.field.plannedAt')->setRequired(false);
         yield DateTimeField::new('updatedAt', 'repurpose.field.updatedAt')->onlyOnIndex();

@@ -3,6 +3,10 @@
 'Page List': 'Liste des pages'
 admin.planified: Planifié
 adminAction: Action
+adminBackToAdmin: "Retour à l’administration"
+adminCheatsheetCreate: "Créer le mémo"
+adminCheatsheetEmptyHint: "Regroupez ici vos conventions éditoriales et conseils de rédaction pour les personnes qui modifient le site."
+adminCheatsheetEmptyTitle: "Créez votre mémo éditorial"
 adminDetails: Details
 adminDraft: Brouillon
 adminEdit: Editer
@@ -12,12 +16,17 @@ adminEmptyStateClearSearch: 'Effacer la recherche et les filtres'
 adminEmptyStateFilteredHint: "Aucune entrée ne correspond à votre recherche ou à vos filtres. Élargissez la recherche, ou effacez-les pour tout revoir."
 adminEmptyStateFilteredTitle: 'Aucun résultat'
 adminEmptyStateHint: 'Cette liste est vide. Ajoutez la première entrée pour démarrer.'
+adminEmptyStateReadOnlyHint: "Les entrées apparaîtront ici au fil de l’activité enregistrée."
 adminEmptyStateTitle: "Rien ici pour l'instant"
+adminEmptyValue: "Non renseigné"
 adminLabelCheatsheet: Aide-mémoire
 adminLabelCheckContent: 'Scan du contenu'
 adminLabelContent: Pages
 adminLabelConversation: Conversation
 adminLabelGitStatus: "Statut Git"
+adminMediaPreviewUnavailable: "Aperçu indisponible"
+adminMediaReplaceFileHelp: "Choisissez un fichier uniquement pour remplacer le fichier actuel. Laissez ce champ vide pour le conserver."
+adminPageRedirectionTargetHelp: "Saisissez une URL ou un chemin, par exemple /nouvelle-page. Ajoutez un code comme 302 pour une redirection temporaire."
 flatGitStatusConfig: Configuration
 flatGitStatusDate: Date
 flatGitStatusDisabled: "Auto-commit désactivé"

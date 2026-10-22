@@ -27,6 +27,7 @@ import { initMediaTableEdit } from './admin.mediaInlineEdit'
 
 // Media license fieldset module
 import { initMediaLicense } from './admin.mediaLicense'
+import { initMediaPreviews } from './admin.mediaPreview'
 
 // Selection modules
 import { mediaPicker } from './admin.mediaPicker'
@@ -123,6 +124,7 @@ window.addEventListener('load', function () {
 
   // Media license fieldset buttons
   initMediaLicense()
+  initMediaPreviews()
 
   // Selectors
   mediaPicker()

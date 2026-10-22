@@ -10,24 +10,24 @@
 
   {# Status indicator #}
   {% if status == 'queued' %}
-    <div class="d-flex align-items-center mb-3" id="status-indicator">
-      <i class="fa fa-hourglass-half me-2"></i>
+    <div class="d-flex align-items-center mb-3" id="status-indicator" role="status" aria-live="polite">
+      <i class="fa fa-hourglass-half me-2" aria-hidden="true"></i>
       <strong>{{ 'adminStaticQueued'|trans }}</strong>
     </div>
   {% elseif status == 'running' %}
-    <div class="d-flex align-items-center mb-3" id="status-indicator">
-      <i class="fa fa-circle-notch fa-spin me-2"></i>
+    <div class="d-flex align-items-center mb-3" id="status-indicator" role="status" aria-live="polite">
+      <i class="fa fa-circle-notch fa-spin me-2" aria-hidden="true"></i>
       <strong>{{ 'adminStaticGenerating'|trans }}</strong>
     </div>
   {% elseif status == 'completed' %}
-    <div class="alert alert-success mb-3" id="status-indicator">
-      <i class="fa fa-check-circle me-2"></i>
+    <div class="alert alert-success mb-3" id="status-indicator" role="status" aria-live="polite">
+      <i class="fa fa-check-circle me-2" aria-hidden="true"></i>
       {{ 'adminStaticUpdated'|trans }}
     </div>
   {% else %}
-    <div class="alert alert-warning mb-3" id="status-indicator">
+    <div class="alert alert-warning mb-3" id="status-indicator" role="status" aria-live="polite">
       <h5 class="alert-heading">
-        <i class="fa fa-exclamation-triangle me-2"></i>
+        <i class="fa fa-exclamation-triangle me-2" aria-hidden="true"></i>
         {{ 'adminStaticErrors'|trans }}
       </h5>
       <div class="mb-0">

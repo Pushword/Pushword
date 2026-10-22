@@ -8,21 +8,22 @@
 @import './admin.criteriaBuilder.css';
 @import './admin.pageChoice.css';
 @import './admin.newsletter.css';
+@import './admin.interface.css';
 
 :root {
   --color-primary: var(--sky-700);
   --link-color: var(--sky-700);
-  --link-hover-color: var(--sky-500);
-  --button-bg: var(--sky-500);
+  --link-hover-color: var(--sky-800);
+  --button-bg: var(--sky-700);
   --button-border-color: var(--sky-600);
   --button-color: var(--sky-50);
-  --button-hover-bg: var(--sky-600);
+  --button-hover-bg: var(--sky-800);
   --button-hover-border-color: var(--sky-700);
   --button-hover-color: var(--sky-100);
-  --button-focus-outline-color: var(--sky-600);
-  --button-primary-bg: linear-gradient(180deg, var(--sky-600), var(--sky-600));
-  --button-primary-hover-bg: linear-gradient(180deg, var(--sky-600), var(--sky-700));
-  --button-primary-active-bg: linear-gradient(180deg, var(--sky-500), var(--sky-400));
+  --button-focus-outline-color: var(--sky-700);
+  --button-primary-bg: var(--sky-700);
+  --button-primary-hover-bg: var(--sky-800);
+  --button-primary-active-bg: var(--sky-900);
   --resize-handler-hover-bg: var(--sky-600);
   /* Type scale. Five steps, no fractional values and no em/% units: a relative size
      compounds against whatever context a component lands in, which is how the admin

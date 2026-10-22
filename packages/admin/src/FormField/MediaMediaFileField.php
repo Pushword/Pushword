@@ -18,6 +18,7 @@ final class MediaMediaFileField extends AbstractField
         return $this->buildEasyAdminField('mediaFile', FileType::class, [
             'label' => 'adminMediaMediaFileLabel',
             'required' => null === $this->admin->getSubject()->id,
+            'help' => null !== $this->admin->getSubject()->id ? 'adminMediaReplaceFileHelp' : null,
         ]);
     }
 }

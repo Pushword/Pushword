@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pushword\AdminBlockEditor\EventSubscriber;
 
+use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityPersistedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityUpdatedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityPersistedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityUpdatedEvent;
 use Pushword\Admin\Controller\PageCrudController;
+use Pushword\Admin\Controller\PageRedirectionCrudController;
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageMainContentField;
 use Pushword\Admin\Utils\FormFieldReplacer;
@@ -87,6 +89,11 @@ class AdminFormEventSubscriber extends AbstractEventSubscriber
             return;
         }
 
+        // The destination form has already transformed its value into Location: content.
+        if (PageRedirectionCrudController::class === $request->attributes->get(EA::CRUD_CONTROLLER_FQCN)) {
+            return;
+        }
+
         /** @var array<string, array<mixed>|bool|float|int|string> $payload */
         $payload = $request->request->all();
 
@@ -111,6 +118,10 @@ class AdminFormEventSubscriber extends AbstractEventSubscriber
         }
 
         if (! $formEvent->getAdmin() instanceof PageCrudController) {
+            return;
+        }
+
+        if ($formEvent->getAdmin() instanceof PageRedirectionCrudController) {
             return;
         }
 

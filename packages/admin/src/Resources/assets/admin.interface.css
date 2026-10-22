@@ -1,0 +1,126 @@
+/* Primary information keeps the emphasis; links and destructive tools reveal on intent. */
+.pw-list-title {
+  color: var(--bs-body-color);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.pw-list-title:hover,
+.pw-list-title:focus-visible {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.pw-action-delete {
+  color: var(--bs-secondary-color);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.pw-action-delete:hover,
+.pw-action-delete:focus-visible {
+  color: var(--bs-danger);
+  background: var(--bs-danger-bg-subtle);
+  border-color: transparent;
+}
+
+.pw-template-list__path {
+  overflow-wrap: anywhere;
+}
+
+.pw-template-list__actions {
+  inline-size: 12rem;
+}
+
+.content-header-title {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.pw-message-inline {
+  max-inline-size: 75ch;
+  line-height: 1.6;
+}
+
+.pw-inline-reply:empty::before {
+  content: attr(data-placeholder);
+  font-style: normal;
+}
+
+.pw-inline-reply:focus-visible {
+  background: var(--bs-tertiary-bg);
+}
+
+.datagrid td:has(.pw-message-inline) {
+  min-inline-size: 0;
+}
+
+.ea-index-Snippet .datagrid td[data-column='name'],
+.ea-index-SocialPost .datagrid td[data-column='page'] {
+  color: var(--bs-body-color);
+  font-weight: 600;
+}
+
+.ea-index-Page .datagrid td[data-column='updatedAt'],
+.ea-index-User .datagrid td[data-column='createdAt'],
+.ea-index-VersionLog .datagrid td[data-column='createdAt'] {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+  table.datagrid:not(.datagrid-empty) {
+    table-layout: fixed;
+  }
+
+  .datagrid td[data-column='mainContent'] a {
+    overflow-wrap: anywhere;
+  }
+
+  .pw-list-title .text-truncate {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .pw-page-inline > .d-flex > div {
+    min-inline-size: 0;
+  }
+
+  .pw-page-url {
+    flex-wrap: wrap;
+    max-inline-size: 100%;
+  }
+
+  .pw-page-url__host {
+    flex-shrink: 1;
+    overflow-wrap: anywhere;
+  }
+
+  .pw-page-url__slug {
+    max-inline-size: 100%;
+  }
+
+  table.datagrid:not(.datagrid-empty) tr:not(.empty-row) td:has(.pw-page-inline),
+  table.datagrid:not(.datagrid-empty) tr:not(.empty-row) td:has(.pw-message-inline) {
+    padding-inline-start: var(--ea-sp-4);
+  }
+
+  .datagrid td:has(.pw-page-inline)::before,
+  .datagrid td:has(.pw-message-inline)::before {
+    display: none;
+  }
+
+  .pw-message-title {
+    white-space: normal;
+  }
+
+  .pw-template-list__actions {
+    inline-size: 7rem;
+  }
+
+  .pw-template-list__actions .btn {
+    min-block-size: 44px;
+  }
+}

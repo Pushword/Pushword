@@ -17,3 +17,7 @@ repurpose:
     status: Statut
     plannedAt: Planifié le
     updatedAt: Mis à jour
+
+repurposeStatusDraft: Brouillon
+repurposeStatusPlanned: Planifié
+repurposeStatusPosted: Publié

@@ -16,22 +16,22 @@
   background-color: transparent;
 }
 
-/* The title is hidden, so nothing holds the buttons at the end of the row any more.
-   The backdrop is painted by .content-header::before, not here: a background on this
-   element only covers the buttons, leaving the rest of the sticky band see-through. */
+/* Keep actions grouped at the end of the sticky form header. */
 .ea-edit .page-actions,
 .ea-new .page-actions {
   padding: 5px;
-  margin-top: -10px;
+  margin-top: 0;
   margin-right: -5px;
   margin-inline-start: auto;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 /* Hide the "Edit Page" h1 on edit, keeping it for screen readers. It used to be
    pushed off with a -10144px margin, which took the whole form with it as soon as
    the header stopped being a flex row (under 768px) and left the page blank. */
-.ea-new .content-header-title,
-.ea-edit .content-header-title {
+.ea-new-Page:has(.h1Field) .content-header-title,
+.ea-edit-Page:has(.h1Field) .content-header-title {
   position: absolute;
   margin: -1px;
   padding: 0;
@@ -43,10 +43,7 @@
   white-space: nowrap;
 }
 
-/* Have sticky save button even on mobile.
-   The band needs its own opaque backdrop or the page scrolls visibly through it.
-   It is drawn by a pseudo-element rather than background-color because .page-actions
-   is pulled 10px above the header box and would otherwise stick out of the paint. */
+/* The opaque backdrop also covers the header's outer spacing while scrolling. */
 body.ea-edit .content-header::before,
 body.ea-new .content-header::before {
   content: '';
@@ -61,19 +58,6 @@ body.ea-new .content-header {
   inset-block-start: 0px !important;
   position: sticky;
   z-index: 999;
-  /*
-  top: 0;
-  animation: stuck-styles linear both;
-  animation-timeline: scroll();
-  animation-range: 0px 100px;
-  @keyframes stuck-styles {
-    to {
-      background: pink;
-      box-shadow: var(--pw-elevation-1);
-      padding-bottom: 2rem;
-    }
-  }
-  */
 }
 
 /* Ten of these stack in the edit form's right column, and a border plus a fill plus
@@ -200,9 +184,32 @@ body.ea-new .content-header {
   border: 2px dashed #adb5bd;
   background-color: #f8f9fa;
   position: relative;
-  height: 125px;
-  padding: 50px;
+  min-height: 88px;
+  padding: 24px;
   text-align: center;
+}
+
+.form-column > .form-fieldset:last-child {
+  flex-grow: 0;
+}
+
+@media (max-width: 575.98px) {
+  .ea-edit .content-header,
+  .ea-new .content-header {
+    gap: 0.75rem;
+  }
+
+  .ea-edit .page-actions,
+  .ea-new .page-actions {
+    margin: 0;
+    padding: 0;
+  }
+
+  .ea-edit .page-actions .btn,
+  .ea-new .page-actions .btn {
+    min-height: 44px;
+    white-space: normal;
+  }
 }
 
 #Media_mediaFile:hover {

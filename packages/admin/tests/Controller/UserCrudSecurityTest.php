@@ -15,6 +15,19 @@ use Symfony\Component\HttpFoundation\Response;
 #[Group('integration')]
 final class UserCrudSecurityTest extends AbstractAdminTestClass
 {
+    public function testUserRolesAreReadableAndIndividuallySelectable(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/user');
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Super Administrator', $crawler->filter('.datagrid')->text());
+        self::assertStringNotContainsString('ROLE_', $crawler->filter('.datagrid')->text());
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/user/new');
+        self::assertResponseIsSuccessful();
+        self::assertCount(4, $crawler->filter('input[type="checkbox"][name="User[roles][]"]'));
+    }
+
     public function testEditorCannotOpenUserAdministration(): void
     {
         $client = self::createClient();

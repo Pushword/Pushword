@@ -106,7 +106,7 @@ class VersionLogCrudController extends AbstractCrudController
         $slug = htmlspecialchars($log->slug ?? '', \ENT_QUOTES);
 
         $editUrl = $this->editUrlIfExists($log);
-        $firstLine = null !== $editUrl ? '<a href="'.$editUrl.'">'.$title.'</a>' : $title;
+        $firstLine = null !== $editUrl ? '<a class="pw-list-title" href="'.$editUrl.'">'.$title.'</a>' : $title;
         $secondLine = '' !== $slug ? '<small class="text-muted d-block">'.$slug.'</small>' : '';
 
         return $firstLine.$secondLine;

@@ -11,8 +11,8 @@
 {% endblock %}
 
 {% block page_actions %}
-  <a class="btn btn-outline-secondary" href="{{ path('admin_version_list', {type: type, id: entity.id}) }}">
-    <i class="fa fa-arrow-left me-1" aria-hidden="true" aria-label="{{ 'versionBackToList'|trans }}"></i>
+  <a class="btn btn-outline-secondary" href="{{ path('admin_version_list', {type: type, id: entity.id}) }}" aria-label="{{ 'versionBackToList'|trans }}">
+    <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>
   </a>
   <form method="post" id="restore-version-form" action="{{ path('admin_version_load', {type: type, id: entity.id, version: versionLeft}) }}" class="d-inline">
     <input type="hidden" name="_token" value="{{ csrf_token('version_load_' ~ type ~ '_' ~ entity.id) }}">
@@ -35,14 +35,14 @@
 {% block main %}
 <div class="card shadow-sm mb-3">
   <div class="card-header">
-    <div class="d-flex align-items-center gap-3">
+    <div class="d-flex flex-wrap align-items-center gap-3">
       <span class="text-muted text-nowrap"><i class="fa fa-clock-rotate-left me-1" aria-hidden="true"></i> {{ 'versionHistorical'|trans }}</span>
       <input type="range" class="form-range flex-grow-1" id="version-slider"
              min="0" max="{{ allVersions|length - 1 }}" step="1"
              aria-label="{{ 'versionHistorical'|trans }}">
       <span class="text-nowrap fw-semibold" id="version-left-label" style="font-variant-numeric: tabular-nums;"></span>
       <span class="text-muted">vs</span>
-      <select id="version-right-select" class="form-select form-select-sm" style="width: auto;">
+      <select id="version-right-select" class="form-select form-select-sm" style="width: auto; max-width: 100%;" aria-label="{{ 'versionCompare'|trans }}">
         <option value="current" {{ versionRight == 'current' ? 'selected' : '' }}>{{ 'versionCurrent'|trans }}</option>
         {% for version in allVersions %}
           <option value="{{ version }}" {{ version == versionRight ? 'selected' : '' }}>{{ version|slice(0, 13) }}</option>
