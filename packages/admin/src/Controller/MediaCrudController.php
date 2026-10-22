@@ -50,8 +50,7 @@ class MediaCrudController extends AbstractAdminCrudController
 
     private const string VIEW_SESSION_KEY = 'pw_media_view';
 
-    /** The media an upload duplicated, reused instead of stored twice. */
-    private ?Media $reusedMedia = null;
+    private const string REUSED_MEDIA_REQUEST_KEY = '_pw_reused_media';
 
     public function __construct(
         private readonly MediaRepository $mediaRepo,
@@ -441,7 +440,7 @@ class MediaCrudController extends AbstractAdminCrudController
             return;
         }
 
-        $this->reusedMedia = $duplicate;
+        $this->getRequest()?->attributes->set(self::REUSED_MEDIA_REQUEST_KEY, $duplicate);
         // Flashes are rendered raw, and an alt is whatever an editor typed.
         FlashBag::get($this->getRequest())?->add('warning', $this->getTranslator()->trans('adminMediaReusedDuplicate', [
             '%name%' => htmlspecialchars($duplicate->getAlt()),
@@ -453,10 +452,11 @@ class MediaCrudController extends AbstractAdminCrudController
     {
         $request = $context->getRequest();
         $isPickerContext = $request->query->getBoolean('pwMediaPicker');
-        $entity = $this->reusedMedia ?? $context->getEntity()->getInstance();
+        $reusedMedia = $request->attributes->get(self::REUSED_MEDIA_REQUEST_KEY);
+        $entity = $reusedMedia instanceof Media ? $reusedMedia : $context->getEntity()->getInstance();
 
-        if (null !== $this->reusedMedia && ! $isPickerContext) {
-            return $this->redirect($this->editUrl($this->reusedMedia));
+        if ($reusedMedia instanceof Media && ! $isPickerContext) {
+            return $this->redirect($this->editUrl($reusedMedia));
         }
 
         if (! $isPickerContext || ! $entity instanceof Media || Action::NEW !== $action) {

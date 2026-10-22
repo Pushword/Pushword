@@ -7,6 +7,7 @@ namespace Pushword\Admin\Tests\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Admin\Controller\MediaCrudController;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
@@ -117,6 +118,31 @@ final class MediaUploadCollisionTest extends AbstractAdminTestClass
         self::assertSame($count, $this->entityManager()->getRepository(Media::class)->count());
         self::assertResponseRedirects();
         self::assertStringContainsString('/'.$first->id.'/edit', (string) $client->getResponse()->headers->get('Location'));
+    }
+
+    public function testDuplicateSelectionDoesNotLeakIntoTheNextWorkerRequest(): void
+    {
+        $client = $this->loginUser();
+        $client->disableReboot();
+
+        $controller = self::getContainer()->get(MediaCrudController::class);
+        $upload = $this->png('worker.png', 5, 5);
+        $copy = \dirname($upload).'/copy.png';
+        copy($upload, $copy);
+
+        $first = $this->createThroughPicker($client, $upload, 'Worker source '.uniqid(), '');
+        $this->submitNewForm($client, $copy, 'Worker duplicate', '', picker: true);
+        self::assertStringContainsString('pwMediaPickerSelect='.$first->id, (string) $client->getResponse()->headers->get('Location'));
+
+        $alt = 'Worker next '.uniqid();
+        $this->submitNewForm($client, $this->png('next.png', 6, 6), $alt, '', picker: true);
+        $next = $this->entityManager()->getRepository(Media::class)->findOneBy(['alt' => $alt]);
+        self::assertInstanceOf(Media::class, $next);
+        self::assertNotNull($next->id);
+        $this->createdMediaIds[] = $next->id;
+
+        self::assertSame($controller, self::getContainer()->get(MediaCrudController::class), 'the worker reuses its controller');
+        self::assertStringContainsString('pwMediaPickerSelect='.$next->id, (string) $client->getResponse()->headers->get('Location'), 'the next upload selects its own media');
     }
 
     private function createThroughPicker(KernelBrowser $client, string $file, string $alt, string $slug): Media
