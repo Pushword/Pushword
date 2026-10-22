@@ -33,7 +33,8 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
     protected function tearDown(): void
     {
         if (null !== $this->user) {
-            $this->entityManager->getConnection()->delete('user', ['id' => $this->user->id]);
+            $connection = $this->entityManager->getConnection();
+            $connection->delete($connection->quoteIdentifier('user'), ['id' => $this->user->id]);
         }
 
         parent::tearDown();
