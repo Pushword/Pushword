@@ -115,7 +115,7 @@ describe('campaign email design selection', () => {
     setup()
     choose('[name="Campaign[audience]"]', '1')
     choose('[data-pw-campaign-design]', 'twig:brand')
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ groups: { 'Saved templates': { 'New saved design': 'saved:3' }, 'Site templates': { Brand: 'twig:brand' } } }) }))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ groups: { 'Saved templates': { 'New saved design': 'saved:3' }, 'Site templates': { Brand: 'twig:brand' } }, audienceLayouts: {} }) }))
     window.dispatchEvent(new Event('focus'))
     await vi.waitFor(() => expect(document.querySelector('option[value="saved:3"]')).not.toBeNull())
     expect(document.querySelector('[data-pw-campaign-design]').value).toBe('twig:brand')
@@ -126,6 +126,20 @@ describe('campaign email design selection', () => {
     expect(document.querySelector('[data-campaign-design-edit]').getAttribute('href')).toBe('/template/3/edit')
     expect(document.querySelector('[data-campaign-design-edit]').textContent).toBe('Edit template')
     expect(document.querySelector('[data-campaign-design-warning]').textContent).toBe('Shared template')
+  })
+
+  it('refreshes an inherited audience design after editing it in another tab', async () => {
+    setup()
+    choose('[name="Campaign[audience]"]', '1')
+    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: Framed')
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+      groups: { 'Site templates': { Brand: 'twig:brand' } },
+      audienceLayouts: { 1: 'twig:brand' },
+    }) }))
+    window.dispatchEvent(new Event('focus'))
+    await vi.waitFor(() => expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: Brand'))
+    expect(document.querySelector('[data-pw-campaign-design]').value).toBe('')
+    expect(document.querySelector('[data-campaign-design-edit]').getAttribute('href')).toBe('/audience/1/design')
   })
 
   it('keeps the current choices and selection when a background refresh fails', async () => {

@@ -118,6 +118,32 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
         self::assertResponseRedirects();
     }
 
+    public function testTemplateChoicesRefreshTheAudienceLayoutAfterItChanges(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->audience();
+        $id = $audience->id;
+        self::assertIsInt($id);
+        $client->request(Request::METHOD_GET, '/admin/newsletter/template-choices');
+        self::assertResponseIsSuccessful();
+        $data = json_decode((string) $client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($data);
+        self::assertIsArray($data['audienceLayouts']);
+        self::assertSame('simple', $data['audienceLayouts'][$id]);
+
+        $stored = $this->entityManager()->find(Audience::class, $id);
+        self::assertInstanceOf(Audience::class, $stored);
+        $stored->emailLayout = 'twig:pushword_letter';
+        $this->entityManager()->flush();
+        $client->request(Request::METHOD_GET, '/admin/newsletter/template-choices');
+        self::assertResponseIsSuccessful();
+        $data = json_decode((string) $client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($data);
+        self::assertIsArray($data['audienceLayouts']);
+        self::assertSame('twig:pushword_letter', $data['audienceLayouts'][$id]);
+        self::assertStringContainsString('no-store', $client->getResponse()->headers->get('Cache-Control') ?? '');
+    }
+
     public function testDuplicateNamesFitTheLimitAndPreserveUnicode(): void
     {
         $client = $this->loginUser();

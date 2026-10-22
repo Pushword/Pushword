@@ -51,7 +51,10 @@ export function initCampaignDesigns(root = document) {
       try {
         const response = await fetch(templates.dataset.choicesUrl)
         if (!response.ok) return
-        const { groups } = await response.json()
+        const { groups, audienceLayouts } = await response.json()
+        for (const [id, layout] of Object.entries(audienceLayouts)) {
+          if (designs[id]) designs[id].layout = layout
+        }
         const selected = select.value
         select.querySelectorAll('optgroup').forEach((group) => group.remove())
         for (const [label, choices] of Object.entries(groups)) {

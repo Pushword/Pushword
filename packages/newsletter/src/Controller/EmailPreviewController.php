@@ -127,14 +127,17 @@ final class EmailPreviewController extends AbstractController
     }
 
     #[Route('/admin/newsletter/template-choices', name: 'admin_newsletter_template_choices', methods: ['GET'])]
-    public function choices(): JsonResponse
+    public function choices(AudienceRepository $audiences): JsonResponse
     {
         $groups = [];
         foreach ($this->templates->choices() as $label => $choices) {
             $groups[$this->translator->trans($label)] = $choices;
         }
 
-        return $this->jsonPrivate(['groups' => $groups]);
+        return $this->jsonPrivate([
+            'groups' => $groups,
+            'audienceLayouts' => array_column($audiences->findAll(), 'emailLayout', 'id'),
+        ]);
     }
 
     private function assertToken(Request $request): void
