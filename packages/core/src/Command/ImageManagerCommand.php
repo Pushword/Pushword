@@ -209,6 +209,7 @@ final class ImageManagerCommand
         }
 
         foreach ($holders as $fileName => $ids) {
+            sort($ids, \SORT_NATURAL);
             $this->sharedFileNameErrors[] = \sprintf('%s: file of several media (%s), not processed', $fileName, implode(', ', $ids));
         }
 

@@ -435,6 +435,14 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
 
         $em->flush();
 
+        $sharedNameError = \sprintf('cache-shared-name.png: file of several media (#%d, #%d), not processed', ...$this->createdMediaIds);
+
+        // Database results need not arrive in ID order.
+        $command = self::getContainer()->get(ImageManagerCommand::class);
+        $holders = $em->getRepository(Media::class)->findBy(['id' => $this->createdMediaIds], ['id' => 'DESC']);
+        new ReflectionMethod(ImageManagerCommand::class, 'withoutSharedFileNames')->invoke($command, $holders);
+        self::assertSame([$sharedNameError], new ReflectionProperty(ImageManagerCommand::class, 'sharedFileNameErrors')->getValue($command));
+
         $this->waitForLockRelease();
         $exitCode = $commandTester->execute(['media' => 'cache-shared-name.png', '--force' => true, '--format' => 'agent']);
 
@@ -442,8 +450,6 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         $decoded = $this->decodeAgentOutput($commandTester);
         self::assertSame(1, $decoded['errors']);
         self::assertSame(0, $decoded['generated']);
-
-        $sharedNameError = \sprintf('cache-shared-name.png: file of several media (#%d, #%d), not processed', ...$this->createdMediaIds);
 
         $this->waitForLockRelease();
         $commandTester->execute(['--parallel' => '1', '--force' => true, '--format' => 'text']);
