@@ -11,7 +11,7 @@ export PANTHER_CHROME_ARGUMENTS="--headless --disable-gpu --disable-dev-shm-usag
 TEST_BASE_DIR="$(php -r 'echo sys_get_temp_dir();')/com.github.pushword.pushword/tests"
 export LOCK_DSN="flock://${TEST_BASE_DIR}/${TEST_RUN_ID}/locks"
 
-JUNIT_XML="/tmp/pushword-test-${TEST_RUN_ID}.xml"
+JUNIT_XML="$(php -r 'echo sys_get_temp_dir();')/pushword-test-${TEST_RUN_ID}.xml"
 
 # paratest distributes by class, so the worker count decides which classes share a
 # process — and that is what most of the known flakes actually depend on. CI runners

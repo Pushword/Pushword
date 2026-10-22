@@ -40,6 +40,9 @@ final class TestScriptTest extends TestCase
                     printf '%s' "$TMPDIR"
                     exit 0
                 fi
+                if [ -n "${STUB_PHP_ARGUMENTS:-}" ]; then
+                    printf '%s\n' "$@" >> "$STUB_PHP_ARGUMENTS"
+                fi
                 for argument in "$@"; do
                     case "$argument" in
                         vendor/bin/phpunit|vendor/bin/paratest) exit "$STUB_PHPUNIT_EXIT" ;;
@@ -87,6 +90,25 @@ final class TestScriptTest extends TestCase
         self::assertSame($expected, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
         self::assertStringContainsString('Waiting for test-installer', $process->getOutput());
         self::assertStringContainsString('Waiting for monorepo validation', $process->getOutput());
+    }
+
+    public function testJUnitUsesTheConfiguredTemporaryDirectory(): void
+    {
+        $argumentsFile = $this->testRoot.'/arguments';
+        $process = new Process(['bash', '-e', $this->testRoot.'/.scripts/test', '--filter', 'ExampleTest'], $this->testRoot, [
+            'PATH' => $this->testRoot.'/bin:'.getenv('PATH'),
+            'TMPDIR' => $this->testRoot.'/tmp',
+            'TEST_RUN_ID' => basename($this->testRoot),
+            'STUB_PHPUNIT_EXIT' => '0',
+            'STUB_PHP_ARGUMENTS' => $argumentsFile,
+        ]);
+        $process->run();
+
+        self::assertSame(0, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
+        self::assertStringContainsString(
+            '--log-junit='.$this->testRoot.'/tmp/pushword-test-'.basename($this->testRoot).'.xml',
+            (string) file_get_contents($argumentsFile),
+        );
     }
 
     /** @return iterable<string, array{list<string>, int, int, int, int}> */
