@@ -166,6 +166,8 @@
   height: 26px;
   border-radius: 7px;
   position: absolute;
+  /* The narrow Editor.js toolbar can move over the toggle during a click. */
+  z-index: 5;
   right: -30px;
   top: 30px;
   display: inline-block;

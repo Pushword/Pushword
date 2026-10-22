@@ -94,6 +94,30 @@ for (const { name, type, data, field, value, edited } of [
   })
 }
 
+test('the preview toggle stays clickable when the narrow toolbar moves over it', async ({ editorPage: page }) => {
+  await render(page, [
+    { id: 'handle-target', type: 'pages_list', data: { kw: 'children' } },
+  ])
+  await expect(page.locator('.codex-editor')).toHaveClass(/codex-editor--narrow/)
+  const block = page.locator('.ce-block[data-id="handle-target"]')
+  await block.locator('.preview-wrapper').click()
+  const toggle = block.locator('.toggle-label')
+  await toggle.hover()
+  await page.mouse.down()
+  // Reproduce the toolbar moving between pointer down and pointer up.
+  await block.evaluate(block => {
+    const toolbar = block.closest('.codex-editor')!.querySelector<HTMLElement>('.ce-toolbar')!
+    const actions = toolbar.querySelector<HTMLElement>('.ce-toolbar__actions')!
+    toolbar.classList.add('ce-toolbar--opened')
+    actions.classList.add('ce-toolbar__actions--opened')
+    const target = block.querySelector('.toggle-label')!.getBoundingClientRect()
+    const controls = actions.getBoundingClientRect()
+    toolbar.style.top = `${toolbar.offsetTop + target.y + target.height / 2 - controls.y - controls.height / 2}px`
+  })
+  await page.mouse.up()
+  await expect(block.locator('.preview-wrapper')).toBeVisible()
+})
+
 test('empty image: handle and Move up work before and after filling and removing the media', async ({ editorPage: page }) => {
   await page.route('**/media/md/handle-test.svg', route => route.fulfill({
     contentType: 'image/svg+xml',
