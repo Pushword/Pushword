@@ -30,6 +30,7 @@ use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Trigger\TriggerSourceRegistry;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @extends AbstractCrudController<Automation>
@@ -46,6 +47,7 @@ class AutomationCrudController extends AbstractCrudController
         private readonly SiteRegistry $siteRegistry,
         private readonly AdminUrlGenerator $adminUrlGenerator,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -133,6 +135,7 @@ class AutomationCrudController extends AbstractCrudController
             ->setHelp('newsletter.automation.field.activeFrom.help');
 
         yield FormField::addFieldset('newsletter.automation.fieldset.recipients')->setIcon('fa fa-users')
+            ->setFormTypeOption('attr', ['data-pw-automation-recipients' => $this->translator->trans('newsletter.automation.contactRecipients')])
             ->setHelp('newsletter.automation.fieldset.recipientsHelp');
         yield CriteriaField::new('recipientWhenAsJson', 'newsletter.automation.field.recipientWhen', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(4)

@@ -55,6 +55,7 @@
 .pw-statistics .btn-outline-secondary { color: var(--bs-body-color); background: transparent; }
 .pw-statistics .btn-outline-secondary:hover { background: var(--bs-tertiary-bg); }
 .pw-statistics-back { color: oklch(0.47 0.13 245); }
+.ea-dark-scheme .pw-statistics-back { color: oklch(0.78 0.11 245); }
 
 .pw-statistics-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin-block-end: 1rem; }
 .pw-statistics-presets a { display: inline-flex; align-items: center; min-block-size: 2.75rem; padding-inline: 0.75rem; border-radius: 0.375rem; color: var(--statistics-muted); text-decoration: none; }

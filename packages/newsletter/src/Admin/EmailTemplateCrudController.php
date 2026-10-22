@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Admin;
 
+use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Override;
 use Pushword\Newsletter\Entity\EmailTemplate;
 use Pushword\Newsletter\Repository\EmailTemplateRepository;
+use Pushword\Newsletter\Service\EmailTemplateRegistry;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -29,6 +33,8 @@ class EmailTemplateCrudController extends AbstractCrudController
         private readonly RequestStack $requests,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
+        private readonly EmailTemplateRegistry $registry,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -77,9 +83,33 @@ class EmailTemplateCrudController extends AbstractCrudController
 
         $original = $this->templates->find($id) ?? throw $this->createNotFoundException();
         $copy = clone $original;
-        $copy->name = $this->translator->trans('newsletter.template.copyName', ['%name%' => $original->name]);
+        $copySuffix = $this->translator->trans('newsletter.template.copyName', ['%name%' => '']);
+        $number = 1;
+        do {
+            $suffix = $copySuffix.($number > 1 ? ' '.$number : '');
+            $copy->name = mb_substr($original->name, 0, 255 - mb_strlen($suffix)).$suffix;
+            ++$number;
+        } while (null !== $this->templates->findOneBy(['name' => $copy->name]));
 
         return $copy;
+    }
+
+    #[Override]
+    public function configureResponseParameters(KeyValueStore $responseParameters): KeyValueStore
+    {
+        $responseParameters->set('site_templates', $this->registry->siteChoices());
+        $template = $this->getContext()?->getEntity()->getInstance();
+        if ($template instanceof EmailTemplate && null !== $template->id) {
+            $saved = $this->entityManager->getUnitOfWork()->getOriginalEntityData($template);
+            $responseParameters->set('template_saved_values', [
+                $saved['name'],
+                true === $saved['wrapped'] ? '1' : null,
+                $saved['headerMarkdown'],
+                $saved['footerMarkdown'],
+            ]);
+        }
+
+        return $responseParameters;
     }
 
     #[Override]
@@ -90,7 +120,10 @@ class EmailTemplateCrudController extends AbstractCrudController
         yield TextField::new('name', 'newsletter.template.name')->setColumns('col-12');
         yield BooleanField::new('wrapped', 'newsletter.template.wrapped')
             ->renderAsSwitch(false)
+            ->hideOnIndex()
             ->setHelp('newsletter.design.framedHelp');
+        yield ChoiceField::new('wrapped', 'newsletter.template.layout')->onlyOnIndex()
+            ->setChoices(['newsletter.design.wrapped' => 1, 'newsletter.design.simple' => 0]);
         yield TextareaField::new('headerMarkdown', 'newsletter.design.header')->hideOnIndex()
             ->setNumOfRows(5)->setColumns('col-12')->setRequired(false)
             ->setHelp('newsletter.template.headerHelp');

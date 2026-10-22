@@ -35,3 +35,13 @@
     <p>{{ 'newsletter.step.empty'|trans }}</p>
   </div>
 {% endblock %}
+
+{% block _Automation_steps_entry_bodyMarkdown_row %}
+  {{ block('form_row') }}
+  <details class="pw-newsletter-step-preview">
+    <summary>{{ 'newsletter.step.preview'|trans }}</summary>
+    <div class="pw-newsletter-design" data-pw-email-preview data-preview-kind="automation" data-preview-step="{{ form.parent.vars.name }}" data-preview-url="{{ path('admin_newsletter_automation_preview') }}" data-preview-token="{{ csrf_token('newsletter_email_preview') }}" data-viewport="mobile">
+      {{ include('@PushwordNewsletter/admin/_email_preview.html.twig', {preview_id: form.vars.id ~ '-preview'}) }}
+    </div>
+  </details>
+{% endblock %}

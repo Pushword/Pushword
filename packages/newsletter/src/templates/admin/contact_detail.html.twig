@@ -1,5 +1,7 @@
 {% extends '@EasyAdmin/crud/detail.html.twig' %}
 
+{% block page_actions %}{{ include('@PushwordNewsletter/admin/_contact_actions.html.twig') }}{% endblock %}
+
 {% block main %}
     {{ parent() }}
     {{ include('@PushwordNewsletter/admin/_contact_subscriptions.html.twig') }}

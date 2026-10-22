@@ -9,12 +9,14 @@ export function initCampaignDesigns(root = document) {
     const description = summary.querySelector('[data-campaign-design-description]')
     const edit = summary.querySelector('[data-campaign-design-edit]')
     const warning = summary.querySelector('[data-campaign-design-warning]')
+    const customization = summary.querySelector('[data-campaign-design-edit-details]')
 
     function update() {
       const design = designs[audience.value]
       description.hidden = !design
       edit.hidden = true
       warning.hidden = true
+      if (customization) customization.hidden = true
       if (!design) {
         current.textContent = summary.dataset.empty
         return
@@ -24,11 +26,20 @@ export function initCampaignDesigns(root = document) {
       current.textContent = summary.dataset.current.replace('%theme%', label)
       const custom = layout.startsWith('twig:') || layout.startsWith('saved:')
       description.textContent = custom ? summary.dataset.custom : summary.dataset.shared.replace('%audience%', design.name)
-      if (!select.value || !custom) {
+      if (layout.startsWith('saved:')) {
+        edit.href = summary.dataset.templateEditUrl.replace('__template__', layout.slice(6))
+        edit.textContent = summary.dataset.editTemplate
+        edit.hidden = false
+        warning.textContent = summary.dataset.templateWarning
+        warning.hidden = false
+      } else if (!select.value || !custom) {
         edit.href = design.url
+        edit.textContent = summary.dataset.editAudience
+        warning.textContent = summary.dataset.audienceWarning
         edit.hidden = false
         warning.hidden = false
       }
+      if (customization) customization.hidden = edit.hidden
     }
     select.addEventListener('change', update)
     audience.addEventListener('change', update)
@@ -113,6 +124,28 @@ export function initNewsletterDelays(root = document) {
       ].filter(([value]) => value > 0).map(([value, unit]) => `${value} ${unit}`).join(' ')
     }
     input.addEventListener('input', update)
+    update()
+  })
+}
+
+export function initAutomationRecipients(root = document) {
+  root.querySelectorAll('[data-pw-automation-recipients]').forEach((panel) => {
+    if (panel.dataset.initialized) return
+    panel.dataset.initialized = 'true'
+    const form = panel.closest('form')
+    const source = form.elements.namedItem('Automation[source]')
+    const stop = form.elements.namedItem('Automation[stopWhenAsJson]')?.closest('.form-group')
+    const fields = panel.querySelector('.form-fieldset-body')
+    const note = document.createElement('p')
+    note.className = 'pw-newsletter-recipient-note'
+    note.textContent = panel.dataset.pwAutomationRecipients
+    fields.before(note)
+    function update() {
+      fields.hidden = source.value === 'contact'
+      note.hidden = !fields.hidden
+      if (stop) stop.hidden = source.value === 'page'
+    }
+    source.addEventListener('change', update)
     update()
   })
 }

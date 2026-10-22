@@ -18,11 +18,6 @@ final readonly class EmailTemplateRegistry
     /** @return array<string, array<string, string>> */
     public function choices(): array
     {
-        $choices = [];
-        foreach ($this->templates as $name => $template) {
-            $choices[$template['label']] = 'twig:'.$name;
-        }
-
         $saved = [];
         foreach ($this->savedTemplates->findBy([], ['name' => 'ASC']) as $template) {
             $saved[$template->name] = 'saved:'.$template->id;
@@ -30,8 +25,19 @@ final readonly class EmailTemplateRegistry
 
         return array_filter([
             'newsletter.template.savedGroup' => $saved,
-            'newsletter.template.siteGroup' => $choices,
+            'newsletter.template.siteGroup' => $this->siteChoices(),
         ]);
+    }
+
+    /** @return array<string, string> */
+    public function siteChoices(): array
+    {
+        $choices = [];
+        foreach ($this->templates as $name => $template) {
+            $choices[$template['label']] = 'twig:'.$name;
+        }
+
+        return $choices;
     }
 
     public function template(string $name): string

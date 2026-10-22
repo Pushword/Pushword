@@ -4,12 +4,13 @@ newsletter:
       plural: Audiences
       singular: Audience
     fieldset:
+      advanced: Delivery and analytics
       identity: Identity
       rules: Rules
       sender: Sender
     field:
       clickTracking: Click tracking
-      clickTracking.help: Rewrite mail links through a redirect that records who clicked what — but only for contacts carrying their own dated consent. Off, mails keep their links exactly as written (UTM tags included).
+      clickTracking.help: Record clicks only for contacts with explicit tracking consent. Other links remain unchanged.
       doubleOptIn: Double opt-in
       doubleOptIn.help: Ask for a confirmation click before a subscriber becomes mailable. Leave on unless you are importing a base that already consented.
       fromEmail: From address
@@ -17,20 +18,21 @@ newsletter:
       interests: Interests
       interests.help: The only interest values the public form may attach. Anything else it submits is dropped.
       mainHost: Host
-      mainHost.help: Confirm and unsubscribe links are built from this host's live URL, so they work on a statically generated site.
+      mainHost.help: Site used for confirmation and unsubscribe links.
       name: Name
       postalAddress: Postal address
-      postalAddress.help: The sender's real-world address, printed at the foot of every mail this audience sends. US law (CAN-SPAM) requires one on commercial mail; leave empty on an audience that only carries transactional messages.
+      postalAddress.help: Sender address displayed in the footer of every email.
       rateSeconds: Cadence (s/mail)
       rateSeconds.help: Seconds between emails. For example, 30 limits delivery to two emails per minute.
       replyTo: Reply-to
       slug: Reference (slug)
       slug.help: The key the subscribe form and the API use.
       transactional: Transactional mail
-      transactional.help: Sends every mail of this audience with no unsubscribe link and no List-Unsubscribe header. Only for service messages — an order confirmation, a booking reminder. On a newsletter it is unlawful in the EU and the US, and inboxes treat bulk mail without the header as unattributed.
+      transactional.help: Service messages only. Removes unsubscribe links from every email sent by this audience.
       utmSource: Analytics source
-      utmSource.help: Set it (e.g. newsletter) to tag the links of this audience's mails with utm_source, utm_medium and utm_campaign. Leave empty to send them untouched. Only links to your own sites are tagged.
+      utmSource.help: Add analytics tags to links pointing to your sites. Leave empty to keep links unchanged.
   automation:
+    contactRecipients: This sequence is sent to the contact who triggers it. Use trigger conditions to choose which contacts enter.
     label:
       plural: Automations
       singular: Automation
@@ -89,13 +91,13 @@ newsletter:
       sendTest: Send test
     design:
       current: 'Design in use: %theme%'
-      custom: This template defines the header, footer and frame for this campaign.
-      edit: Edit the shared audience design (new tab)
+      custom: This template defines the header, footer and frame.
+      customize: Customize header and footer
+      edit: Edit audience defaults (new tab)
       empty: Choose an audience to see the email design in use.
-      help: This choice applies to this campaign only. Standard layouts keep the audience’s text; saved and site templates provide their own header and footer.
       inherit: Use the audience design
       label: Design for this campaign
-      shared: 'Header and footer configured for “%audience%”.'
+      shared: 'Header and footer from “%audience%”.'
       warning: Changing the audience design also affects campaigns and automations that use it.
     editor: Write newsletter
     fieldset:
@@ -103,9 +105,7 @@ newsletter:
       audience: 3. Refine recipients
       audienceHelp: Without conditions, every subscriber in the selected audience receives this newsletter.
       content: 2. Write the newsletter
-      contentHelp: The subject and preview text help readers decide to open your email.
       design: 1. Choose the audience and design
-      designHelp: Choose the subscribers, then the presentation of this email.
       languages: Translations
       performance: Delivery results
       schedule: 4. Prepare to send
@@ -178,6 +178,7 @@ newsletter:
     action:
       confirm: Confirm by hand
       merge: Merge the two
+      more: More actions
       optIn: Opt in a contact
       optInAnother: Add to another list
       resubscribe: Put back on the list
@@ -253,7 +254,7 @@ newsletter:
       subscribed: Subscribed
       unsubscribed: Unsubscribed
     subscriptions:
-      help: The same address on every list of this install. The one being edited is highlighted.
+      help: All subscriptions for this address. The current subscription is highlighted.
       title: Subscriptions
   criteria:
     addCondition: Add a condition
@@ -466,6 +467,7 @@ newsletter:
     hours: h
     immediate: Send immediately
     minutes: min
+    preview: Preview this email
   subscribe:
     done: You are subscribed. Thank you!
     invalidEmail: This email address does not look valid.
@@ -476,9 +478,11 @@ newsletter:
     tooMany: Too many attempts. Please try again later.
     unknownAudience: This newsletter does not exist.
   template:
+    back: Back to templates
     copyName: '%name% (copy)'
     create: Create template
     duplicate: Duplicate
+    edit: Edit this template (new tab)
     footerHelp: 'Markdown signature. Use © %year% %siteName% for copyright. Unsubscribe and postal address are added automatically.'
     headerHelp: 'Markdown header. Use %siteName% for the site name. Images need an absolute public URL.'
     help: Reuse this header, footer and frame across newsletters. Changes apply to every audience and campaign using this template.
@@ -486,12 +490,16 @@ newsletter:
     label:
       plural: Templates
       singular: Template
+    layout: Layout
     manage: Create or manage templates (new tab)
     name: Template name
+    notSaved: New template, not saved yet
+    preview: Preview
     sampleAudience: Your newsletter
     save: Save template
     savedGroup: Saved templates
     siteGroup: Site templates
+    siteHelp: Designs provided by your site, available in the campaign design selector. Their appearance is maintained in the site code.
     wrapped: Add a frame around the content
   unknown:
     body: This link is no longer valid.
@@ -529,7 +537,7 @@ newsletter:
     contactEmptyTitle: Get to know your subscribers
     emailtemplateDescription: Create reusable email designs with a header, footer and optional frame.
     emailtemplateEmptyHint: Name your design, add a header and footer, then choose it in a newsletter.
-    emailtemplateEmptyTitle: Create your first template
+    emailtemplateEmptyTitle: Create your first custom template
     filterAll: All
     filterStatus: Filter by status
     rowActions: 'Actions for row %id%'

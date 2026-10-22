@@ -520,7 +520,9 @@ newsletter:
 ```
 
 Both entries appear alongside the two built-in layouts in **Email design** and
-**Design for this campaign**. Each entry needs its own ID and label. Templates
+**Design for this campaign**. **Newsletter → Templates** also lists these site
+designs with a read-only preview, separate from templates editors can create or
+duplicate. Each entry needs its own ID and label. Templates
 are explicitly registered; adding a file to `templates/newsletter/` alone does
 not add a choice. Clear the Symfony cache after changing configuration.
 The choice is saved per audience or campaign and uses the same Twig template for
@@ -637,6 +639,11 @@ day after it goes out". An automation has:
 - **`triggerWhen`** — which of that source's subjects start the sequence,
   written in the source's own vocabulary;
 - **steps** — the mails, in order, each after its own delay.
+
+Open **Preview this email** under any step to see its unsaved subject and Markdown
+with the selected audience's email design. The preview starts at mobile width;
+it does not save the automation or send an email. Trigger-specific placeholders
+remain in the sample until a real event supplies their values.
 
 Two sources ship with the bundle (contacts and pages); a bundle of yours can add
 more (see [Custom trigger sources](#custom-trigger-sources)).

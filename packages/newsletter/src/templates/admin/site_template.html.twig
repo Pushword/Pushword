@@ -1,0 +1,10 @@
+{% extends '@PushwordNewsletter/admin/layout.html.twig' %}
+
+{% block content_title %}{{ template_label }}{% endblock %}
+{% block page_actions %}<a class="btn btn-secondary" href="{{ path('admin_newsletter_template_index') }}">{{ 'newsletter.template.back'|trans }}</a>{% endblock %}
+{% block main %}
+  <p class="pw-newsletter-description">{{ 'newsletter.template.siteHelp'|trans }}</p>
+  <div class="pw-newsletter-design pw-newsletter-site-preview" data-pw-email-preview data-viewport="mobile">
+    {{ include('@PushwordNewsletter/admin/_email_preview.html.twig') }}
+  </div>
+{% endblock %}

@@ -100,12 +100,94 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
         self::assertInstanceOf(EmailTemplate::class, $stored);
         self::assertSame('## My brand', $stored->headerMarkdown);
 
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/template');
+        self::assertSame('Without a frame', $crawler->filter('tr[data-id="'.$id.'"] td[data-column="wrapped"]')->text());
+
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
         self::assertCount(1, $crawler->filter('select[name="Campaign[emailLayout]"] option[value="saved:'.$id.'"]'));
         self::assertCount(1, $crawler->filter('select[name="Campaign[emailLayout]"] option[value="saved:'.$copy->id.'"]'));
         $client->request(Request::METHOD_GET, '/admin/newsletter/template-choices');
         self::assertResponseIsSuccessful();
         self::assertStringContainsString($copyName, $client->getResponse()->getContent() ?: '');
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/template/new?duplicate='.$id);
+        $nextName = $copyName.' 2';
+        $this->names[] = $nextName;
+        self::assertSame($nextName, $crawler->filter('#EmailTemplate_name')->attr('value'));
+        $client->submit($crawler->filter('form[name="EmailTemplate"]')->form());
+        self::assertResponseRedirects();
+    }
+
+    public function testDuplicateNamesFitTheLimitAndPreserveUnicode(): void
+    {
+        $client = $this->loginUser();
+        $template = $this->template();
+        $template->name = str_repeat('é', 255);
+        $this->names[] = $template->name;
+        $this->entityManager()->flush();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/template/new?duplicate='.$template->id);
+        $name = $crawler->filter('#EmailTemplate_name')->attr('value');
+        self::assertIsString($name);
+        self::assertSame(255, mb_strlen($name));
+        self::assertStringEndsWith(' (copy)', $name);
+        self::assertTrue(mb_check_encoding($name));
+        $this->names[] = $name;
+        $client->submit($crawler->filter('form[name="EmailTemplate"]')->form());
+        self::assertResponseRedirects();
+    }
+
+    public function testTheLibraryShowsAndPreviewsSiteTemplatesWithoutAllowingArbitraryPaths(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/template');
+        self::assertResponseIsSuccessful();
+        self::assertCount(3, $crawler->filter('.pw-newsletter-site-templates li'));
+        $client->click($crawler->filter('.pw-newsletter-site-templates a')->first()->link());
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-viewport="mobile"] iframe[sandbox=""]');
+        self::assertSelectorExists('.pw-newsletter-nav a[aria-current="page"][href$="/template"]');
+        self::assertStringContainsString('background-color:#f3f4f6', $client->getCrawler()->filter('iframe')->attr('srcdoc') ?? '');
+        $client->request(Request::METHOD_GET, '/admin/newsletter/template/site/unregistered');
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        self::assertEmailCount(0);
+    }
+
+    public function testAutomationPreviewsUnsavedStepsUsingTheAudienceDesignWithoutWrites(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->audience();
+        $template = $this->template();
+        $audience->emailLayout = 'saved:'.$template->id;
+        $this->entityManager()->flush();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/automation/new');
+        $prototype = $crawler->filter('[data-prototype]')->attr('data-prototype');
+        self::assertIsString($prototype);
+        self::assertStringContainsString('data-preview-kind="automation"', $prototype);
+        self::assertStringContainsString('data-preview-step="__stepsname__"', $prototype);
+        preg_match('/data-preview-token="([^"]+)"/', $prototype, $matches);
+        self::assertArrayHasKey(1, $matches);
+        $data = [
+            '_preview_token' => html_entity_decode($matches[1]), '_preview_step' => '2',
+            'Automation' => ['audience' => (string) $audience->id, 'steps' => [2 => ['subject' => 'Unsaved step', 'bodyMarkdown' => '**Unsaved sequence** for %name%.']]],
+        ];
+        $client->request(Request::METHOD_POST, '/admin/newsletter/automation-preview', $data);
+        self::assertResponseIsSuccessful();
+        $html = $this->previewHtml($client);
+        self::assertStringContainsString('<title>Unsaved step</title>', $html);
+        self::assertStringContainsString('<strong>Unsaved sequence</strong> for Alex.', $html);
+        self::assertStringContainsString('Saved Pushword', $html);
+        self::assertStringContainsString('#unsubscribe', $html);
+        $data['Automation']['transactional'] = '1';
+        $client->request(Request::METHOD_POST, '/admin/newsletter/automation-preview', $data);
+        self::assertStringNotContainsString('#unsubscribe', $this->previewHtml($client));
+        $data['_preview_step'] = '0';
+        $client->request(Request::METHOD_POST, '/admin/newsletter/automation-preview', $data);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $data['Automation']['audience'] = '';
+        $client->request(Request::METHOD_POST, '/admin/newsletter/automation-preview', $data);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertEmailCount(0);
+        self::assertSame(0, $this->entityManager()->getConnection()->fetchOne('SELECT COUNT(*) FROM newsletter_automation WHERE audience_id = ?', [$audience->id]));
     }
 
     public function testATemplateNeedsANameAndRejectsAnExistingName(): void
@@ -124,6 +206,16 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
         $client->submit($form);
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         self::assertSame(1, $this->entityManager()->getRepository(EmailTemplate::class)->count(['name' => $template->name]));
+
+        $savedName = $template->name;
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/template/'.$template->id.'/edit');
+        $form = $crawler->filter('form[name="EmailTemplate"]')->form();
+        $form['EmailTemplate[name]'] = '';
+        $client->submit($form);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $savedValues = json_decode($client->getCrawler()->filter('[data-saved-values]')->attr('data-saved-values') ?? '', true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($savedValues);
+        self::assertSame($savedName, $savedValues[0]);
     }
 
     public function testCampaignPreviewUsesUnsavedContentAndSavedOrTwigTemplatesWithoutWrites(): void
@@ -203,13 +295,15 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
     public function testPreviewEndpointsRequireAnEditorAndAValidToken(): void
     {
         $client = self::createClient();
-        foreach (['campaign-preview', 'template-preview'] as $endpoint) {
+        $client->request(Request::METHOD_GET, '/admin/newsletter/template/site/pushword');
+        self::assertResponseRedirects('/login');
+        foreach (['campaign-preview', 'template-preview', 'automation-preview'] as $endpoint) {
             $client->request(Request::METHOD_POST, '/admin/newsletter/'.$endpoint);
             self::assertResponseRedirects('/login');
         }
 
         $client = $this->loginUser($client);
-        foreach (['campaign-preview', 'template-preview'] as $endpoint) {
+        foreach (['campaign-preview', 'template-preview', 'automation-preview'] as $endpoint) {
             $client->request(Request::METHOD_POST, '/admin/newsletter/'.$endpoint, ['_preview_token' => 'invalid']);
             self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
         }

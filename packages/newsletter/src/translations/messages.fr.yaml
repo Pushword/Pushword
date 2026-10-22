@@ -4,12 +4,13 @@ newsletter:
       plural: Audiences
       singular: Audience
     fieldset:
+      advanced: Envoi et statistiques
       identity: Identité
       rules: Règles
       sender: Expéditeur
     field:
       clickTracking: Suivi des clics
-      clickTracking.help: Réécrit les liens des mails via une redirection qui enregistre qui a cliqué quoi — mais seulement pour les contacts portant leur propre consentement daté. Désactivé, les mails gardent leurs liens tels quels (balises UTM comprises).
+      clickTracking.help: Enregistre les clics des contacts ayant accepté ce suivi. Les autres liens restent inchangés.
       doubleOptIn: Double opt-in
       doubleOptIn.help: Demander une confirmation avant qu'un contact devienne joignable. À laisser activé sauf import d'une base ayant déjà consenti.
       fromEmail: Adresse d'expédition
@@ -17,20 +18,21 @@ newsletter:
       interests: Centres d'intérêt
       interests.help: Les seules valeurs que le formulaire public peut attacher. Toute autre valeur soumise est ignorée.
       mainHost: Hôte
-      mainHost.help: Les liens de confirmation et de désinscription sont construits depuis l'URL live de cet hôte, pour fonctionner sur un site généré en statique.
+      mainHost.help: Site utilisé pour les liens de confirmation et de désinscription.
       name: Nom
       postalAddress: Adresse postale
-      postalAddress.help: L'adresse physique de l'expéditeur, imprimée au pied de chaque mail de cette audience. La loi américaine (CAN-SPAM) l'exige sur les mails commerciaux ; laissez vide pour une audience purement transactionnelle.
+      postalAddress.help: Adresse de l'expéditeur affichée au pied de chaque email.
       rateSeconds: Cadence (s/mail)
       rateSeconds.help: Secondes entre deux emails. Par exemple, 30 limite l'envoi à deux emails par minute.
       replyTo: Répondre à
       slug: Référence (slug)
       slug.help: La clé utilisée par le formulaire d'inscription et l'API.
       transactional: Mail transactionnel
-      transactional.help: Envoie tous les mails de cette audience sans lien de désinscription ni en-tête List-Unsubscribe. Réservé aux messages de service — confirmation de commande, rappel de rendez-vous. Sur une newsletter c'est illégal (RGPD, CAN-SPAM), et les messageries considèrent comme non attribué un envoi de masse sans cet en-tête.
+      transactional.help: Messages de service uniquement. Retire les liens de désinscription de tous les emails de cette audience.
       utmSource: Source analytics
-      utmSource.help: Renseignez-la (par exemple newsletter) pour ajouter utm_source, utm_medium et utm_campaign aux liens des mails de cette audience. Vide, les liens partent tels quels. Seuls les liens vers vos propres sites sont marqués.
+      utmSource.help: Ajoute les paramètres de suivi aux liens vers vos sites. Laissez vide pour conserver les liens inchangés.
   automation:
+    contactRecipients: Cette séquence est envoyée au contact qui la déclenche. Les conditions du déclencheur déterminent quels contacts y entrent.
     label:
       plural: Automatisations
       singular: Automatisation
@@ -89,13 +91,13 @@ newsletter:
       sendTest: Envoyer un test
     design:
       current: 'Habillage utilisé : %theme%'
-      custom: Ce modèle définit l'en-tête, le pied de page et le cadre de cette campagne.
-      edit: Modifier l'habillage commun de l'audience (nouvel onglet)
+      custom: Ce modèle définit l'en-tête, le pied de page et le cadre.
+      customize: Personnaliser l’en-tête et le pied de page
+      edit: Modifier l’habillage de l’audience (nouvel onglet)
       empty: Choisissez une audience pour voir l'habillage utilisé.
-      help: Ce choix s'applique uniquement à cette campagne. Les mises en page standard gardent les textes de l'audience ; les modèles enregistrés et ceux du site fournissent leur propre en-tête et pied de page.
       inherit: Utiliser l'habillage de l'audience
       label: Habillage de cette campagne
-      shared: 'En-tête et pied de page configurés pour « %audience% ».'
+      shared: 'En-tête et pied de page de « %audience% ».'
       warning: Modifier l'habillage de l'audience affecte aussi les campagnes et automatisations qui l'utilisent.
     editor: Rédiger la newsletter
     fieldset:
@@ -103,9 +105,7 @@ newsletter:
       audience: 3. Affiner les destinataires
       audienceHelp: Sans condition, tous les abonnés de l'audience choisie reçoivent cette newsletter.
       content: 2. Rédiger la newsletter
-      contentHelp: L'objet et le texte d'aperçu donnent envie d'ouvrir votre email.
       design: 1. Choisir l'audience et l'habillage
-      designHelp: Sélectionnez les abonnés concernés, puis la présentation de cet email.
       languages: Traductions
       performance: Résultats de l'envoi
       schedule: 4. Préparer l'envoi
@@ -178,6 +178,7 @@ newsletter:
     action:
       confirm: Confirmer à la main
       merge: Fusionner les deux
+      more: Autres actions
       optIn: Inscrire un contact
       optInAnother: Ajouter à une autre liste
       resubscribe: Réinscrire
@@ -253,7 +254,7 @@ newsletter:
       subscribed: Inscrit
       unsubscribed: Désinscrit
     subscriptions:
-      help: La même adresse sur toutes les listes de cette installation. Celle en cours d'édition est surlignée.
+      help: Tous les abonnements de cette adresse. L'abonnement actuel est mis en évidence.
       title: Inscriptions
   criteria:
     addCondition: Ajouter une condition
@@ -466,6 +467,7 @@ newsletter:
     hours: h
     immediate: Envoi immédiat
     minutes: min
+    preview: Prévisualiser cet email
   subscribe:
     done: Vous êtes inscrit. Merci !
     invalidEmail: Cette adresse email ne semble pas valide.
@@ -476,9 +478,11 @@ newsletter:
     tooMany: Trop de tentatives. Réessayez plus tard.
     unknownAudience: Cette newsletter n'existe pas.
   template:
+    back: Retour aux modèles
     copyName: '%name% (copie)'
     create: Créer un modèle
     duplicate: Dupliquer
+    edit: Modifier ce modèle (nouvel onglet)
     footerHelp: Signature en Markdown. Utilisez © %year% %siteName% pour le copyright. Le désabonnement et l'adresse postale sont ajoutés automatiquement.
     headerHelp: En-tête en Markdown. Utilisez %siteName% pour le nom du site. Les images nécessitent une URL publique absolue.
     help: Réutilisez cet en-tête, ce pied de page et ce cadre dans vos newsletters. Les modifications s'appliquent à toutes les audiences et campagnes utilisant ce modèle.
@@ -486,12 +490,16 @@ newsletter:
     label:
       plural: Modèles
       singular: Modèle
+    layout: Mise en page
     manage: Créer ou gérer les modèles (nouvel onglet)
     name: Nom du modèle
+    notSaved: Nouveau modèle, pas encore enregistré
+    preview: Prévisualiser
     sampleAudience: Votre newsletter
     save: Enregistrer le modèle
     savedGroup: Modèles enregistrés
     siteGroup: Modèles du site
+    siteHelp: Modèles fournis par votre site, disponibles dans le choix d’habillage des campagnes. Leur apparence est définie dans le code du site.
     wrapped: Ajouter un cadre autour du contenu
   unknown:
     body: Ce lien n'est plus valide.
@@ -529,7 +537,7 @@ newsletter:
     contactEmptyTitle: Faites connaissance avec vos abonnés
     emailtemplateDescription: Créez des habillages réutilisables avec un en-tête, un pied de page et un cadre facultatif.
     emailtemplateEmptyHint: Nommez votre modèle, ajoutez un en-tête et un pied de page, puis sélectionnez-le dans une newsletter.
-    emailtemplateEmptyTitle: Créez votre premier modèle
+    emailtemplateEmptyTitle: Créez votre premier modèle personnalisé
     filterAll: Toutes
     filterStatus: Filtrer par statut
     rowActions: 'Actions de la ligne %id%'

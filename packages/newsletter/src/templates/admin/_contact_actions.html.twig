@@ -1,0 +1,15 @@
+{% set secondary = ['delete', 'optInAnother', 'confirm', 'unsubscribe', 'resubscribe'] %}
+{% for action in entity.actions|reverse|filter(action => action.name not in secondary) %}
+  {{ include(action.templatePath, {action: action, entity: entity}, with_context: false) }}
+{% endfor %}
+{% set more = entity.actions|filter(action => action.name in secondary) %}
+{% if more is not empty %}
+  <div class="dropdown pw-newsletter-contact-actions">
+    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">{{ 'newsletter.contact.action.more'|trans }}</button>
+    <div class="dropdown-menu dropdown-menu-end">
+      {% for action in more %}
+        {{ include(action.templatePath, {action: action, entity: entity, isIncludedInDropdown: true}, with_context: false) }}
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}

@@ -161,14 +161,17 @@ class AudienceCrudController extends AbstractCrudController
         yield FormField::addFieldset('newsletter.audience.fieldset.rules')->setIcon('fa fa-sliders');
         yield BooleanField::new('requireDoubleOptIn', 'newsletter.audience.field.doubleOptIn')
             ->setHelp('newsletter.audience.field.doubleOptIn.help');
+        yield ArrayField::new('interests', 'newsletter.audience.field.interests')->hideOnIndex()
+            ->setHelp('newsletter.audience.field.interests.help');
+
+        yield FormField::addFieldset('newsletter.audience.fieldset.advanced')->setIcon('fa fa-gear')
+            ->collapsible()->renderCollapsed();
         yield BooleanField::new('clickTracking', 'newsletter.audience.field.clickTracking')
             ->hideOnIndex()
             ->setHelp('newsletter.audience.field.clickTracking.help');
         yield BooleanField::new('transactional', 'newsletter.audience.field.transactional')
             ->hideOnIndex()
             ->setHelp('newsletter.audience.field.transactional.help');
-        yield ArrayField::new('interests', 'newsletter.audience.field.interests')->hideOnIndex()
-            ->setHelp('newsletter.audience.field.interests.help');
         yield IntegerField::new('rateSeconds', 'newsletter.audience.field.rateSeconds')->hideOnIndex()
             ->setHelp('newsletter.audience.field.rateSeconds.help');
         yield TextField::new('utmSource', 'newsletter.audience.field.utmSource')->hideOnIndex()

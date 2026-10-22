@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from '../../src/Resources/assets/admin.newsletter.js'
+import { initAutomationRecipients, initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from '../../src/Resources/assets/admin.newsletter.js'
 
 function renderDelay(value) {
   document.body.innerHTML = `<input id="delay" type="number" value="${value}" data-pw-delay-preview>
@@ -68,7 +68,7 @@ describe('campaign email design selection', () => {
       <select name="Campaign[audience]"><option value="">Choose</option><option value="1">First</option><option value="2">Second</option></select>
       <select data-pw-campaign-design><option value="">Audience default</option><option value="simple">Simple</option><option value="framed">Framed</option><optgroup label="Site templates"><option value="twig:brand">Brand</option></optgroup></select>
       <a data-campaign-templates data-choices-url="/templates/choices">Templates</a>
-      <div data-campaign-design-summary data-current="In use: %theme%" data-empty="Choose an audience" data-custom="Site preset" data-shared="Identity from %audience%">
+      <div data-campaign-design-summary data-current="In use: %theme%" data-empty="Choose an audience" data-custom="Site preset" data-shared="Identity from %audience%" data-template-edit-url="/template/__template__/edit" data-edit-template="Edit template" data-edit-audience="Edit audience" data-template-warning="Shared template" data-audience-warning="Shared audience">
         <p data-campaign-design-current></p><p data-campaign-design-description hidden></p><a data-campaign-design-edit hidden target="_blank"></a><p data-campaign-design-warning hidden></p>
       </div></form>`
     document.querySelector('[data-pw-campaign-design]').dataset.pwCampaignDesign = JSON.stringify({
@@ -122,7 +122,10 @@ describe('campaign email design selection', () => {
     expect(document.querySelectorAll('option[value="twig:brand"]')).toHaveLength(1)
     choose('[data-pw-campaign-design]', 'saved:3')
     expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: New saved design')
-    expect(document.querySelector('[data-campaign-design-edit]').hidden).toBe(true)
+    expect(document.querySelector('[data-campaign-design-edit]').hidden).toBe(false)
+    expect(document.querySelector('[data-campaign-design-edit]').getAttribute('href')).toBe('/template/3/edit')
+    expect(document.querySelector('[data-campaign-design-edit]').textContent).toBe('Edit template')
+    expect(document.querySelector('[data-campaign-design-warning]').textContent).toBe('Shared template')
   })
 
   it('keeps the current choices and selection when a background refresh fails', async () => {
@@ -136,4 +139,23 @@ describe('campaign email design selection', () => {
     expect(document.querySelectorAll('option[value="twig:brand"]')).toHaveLength(1)
     expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: Brand')
   })
+})
+
+it('shows recipients according to the trigger and retains publication conditions', () => {
+  document.body.innerHTML = `<form><select name="Automation[source]"><option value="contact">Contact</option><option value="page">Page</option></select><div data-pw-automation-recipients="The triggering contact"><div class="form-fieldset-body"><textarea>Saved rule</textarea></div></div><div class="form-group"><textarea name="Automation[stopWhenAsJson]">Stop rule</textarea></div></form>`
+  initAutomationRecipients()
+  initAutomationRecipients()
+  const fields = document.querySelector('.form-fieldset-body')
+  expect(fields.hidden).toBe(true)
+  expect(document.querySelector('.form-group').hidden).toBe(false)
+  expect(document.querySelectorAll('.pw-newsletter-recipient-note')).toHaveLength(1)
+  const source = document.querySelector('select')
+  source.value = 'page'
+  source.dispatchEvent(new Event('change'))
+  expect(fields.hidden).toBe(false)
+  expect(document.querySelector('.pw-newsletter-recipient-note').hidden).toBe(true)
+  expect(document.querySelector('.form-group').hidden).toBe(true)
+  expect(document.querySelector('[name="Automation[stopWhenAsJson]"]').value).toBe('Stop rule')
+  expect(document.querySelector('textarea').value).toBe('Saved rule')
+  document.body.innerHTML = ''
 })

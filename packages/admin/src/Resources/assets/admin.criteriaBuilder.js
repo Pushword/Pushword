@@ -131,6 +131,7 @@ class CriteriaBuilder {
     this.sinceAll = false
     this.vocabulary = null
     this.previewTimer = null
+    this.previewRevision = 0
   }
 
   async mount() {
@@ -143,6 +144,10 @@ class CriteriaBuilder {
     // Only now: until the vocabulary answers, the textarea is the editor, and a
     // server that cannot describe the language leaves it that way.
     this.sourceField()?.addEventListener('change', () => this.sourceChanged())
+    this.form?.querySelector(`[name="${this.prefix()}[audience]"]`)?.addEventListener('change', () => this.schedulePreview())
+    this.form?.querySelectorAll(`[name="${this.prefix()}[hosts][]"]`).forEach((input) => {
+      input.addEventListener('change', () => this.sourceChanged())
+    })
     this.render()
   }
 
@@ -439,6 +444,7 @@ class CriteriaBuilder {
     }
 
     this.previewNode = element('span', 'pw-criteria-count')
+    this.previewNode.setAttribute('role', 'status')
     foot.append(this.previewNode)
 
     return foot
@@ -457,12 +463,14 @@ class CriteriaBuilder {
   }
 
   schedulePreview() {
+    ++this.previewRevision
     window.clearTimeout(this.previewTimer)
     this.previewTimer = window.setTimeout(() => this.preview(), 500)
   }
 
   async preview() {
     if (!this.previewNode) return
+    const revision = ++this.previewRevision
 
     const audience = this.form?.querySelector(`[name="${this.prefix()}[audience]"]`)
     const automation = this.textarea.dataset.pwCriteriaAutomation
@@ -487,7 +495,7 @@ class CriteriaBuilder {
       result = { error: this.label('previewFailed') }
     }
 
-    this.renderPreview(result)
+    if (revision === this.previewRevision) this.renderPreview(result)
   }
 
   renderPreview(result) {

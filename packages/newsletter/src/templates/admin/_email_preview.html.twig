@@ -1,6 +1,7 @@
-<section id="newsletter-design-preview" class="pw-newsletter-design-preview" aria-labelledby="newsletter-preview-title">
+{% set preview_id = preview_id|default('newsletter-design-preview') %}
+<section id="{{ preview_id }}" class="pw-newsletter-design-preview" aria-labelledby="{{ preview_id }}-title">
   <div class="pw-newsletter-design-toolbar">
-    <h2 id="newsletter-preview-title">{{ 'newsletter.design.preview'|trans }}</h2>
+    <h2 id="{{ preview_id }}-title">{{ 'newsletter.design.preview'|trans }}</h2>
     <div class="btn-group" role="group" aria-label="{{ 'newsletter.design.viewport'|trans }}">
       <button type="button" class="btn btn-secondary" data-preview-width="mobile" aria-pressed="true">{{ 'newsletter.design.mobile'|trans }} <span>375</span></button>
       <button type="button" class="btn btn-secondary" data-preview-width="desktop" aria-pressed="false">{{ 'newsletter.design.desktop'|trans }} <span>600</span></button>

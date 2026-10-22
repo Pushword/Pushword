@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Controller;
 
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
@@ -79,6 +80,52 @@ final class EmailPreviewController extends AbstractController
         return $this->preview($audience, $data->getString('name'), $this->translator->trans('newsletter.design.sampleBody'), null);
     }
 
+    #[Route('/admin/newsletter/automation-preview', name: 'admin_newsletter_automation_preview', methods: ['POST'])]
+    public function automation(Request $request, AudienceRepository $audiences): JsonResponse
+    {
+        $this->assertToken($request);
+        $data = new InputBag(array_filter($request->request->all('Automation'), \is_string(...), \ARRAY_FILTER_USE_KEY));
+        if ('' === $data->getString('audience')) {
+            return $this->error('newsletter.campaign.design.empty');
+        }
+
+        $audience = $audiences->find($data->getInt('audience'));
+        if (! $audience instanceof Audience) {
+            return $this->error('newsletter.campaign.design.empty');
+        }
+
+        $steps = $data->all('steps');
+        $index = $request->request->getInt('_preview_step', -1);
+        if (! isset($steps[$index]) || ! \is_array($steps[$index])) {
+            return $this->error('newsletter.design.failed');
+        }
+
+        $step = new InputBag(array_filter($steps[$index], \is_string(...), \ARRAY_FILTER_USE_KEY));
+        $design = clone $audience;
+        $design->transactional = $design->transactional || $data->getBoolean('transactional');
+
+        return $this->preview($design, $step->getString('subject'), $step->getString('bodyMarkdown'), null);
+    }
+
+    #[AdminRoute(path: '/newsletter/template/site/{name}', name: 'newsletter_site_template_preview', options: ['methods' => ['GET']])]
+    public function siteTemplate(string $name): Response
+    {
+        $label = array_search('twig:'.$name, $this->templates->siteChoices(), true);
+        if (false === $label) {
+            throw $this->createNotFoundException();
+        }
+
+        $audience = new Audience();
+        $audience->mainHost = $this->sites->getDefault()->getMainHost();
+        $audience->emailLayout = 'twig:'.$name;
+
+        return $this->render('@PushwordNewsletter/admin/site_template.html.twig', [
+            'newsletterSection' => 'emailtemplate',
+            'template_label' => $label,
+            'preview_html' => $this->renderPreview($audience, $label, $this->translator->trans('newsletter.design.sampleBody'), null),
+        ]);
+    }
+
     #[Route('/admin/newsletter/template-choices', name: 'admin_newsletter_template_choices', methods: ['GET'])]
     public function choices(): JsonResponse
     {
@@ -99,11 +146,17 @@ final class EmailPreviewController extends AbstractController
 
     private function preview(Audience $audience, string $subject, string $body, ?string $preheader): JsonResponse
     {
+        return $this->jsonPrivate(['html' => $this->renderPreview($audience, $subject, $body, $preheader)]);
+    }
+
+    private function renderPreview(Audience $audience, string $subject, string $body, ?string $preheader): string
+    {
         $contact = new Contact($audience, 'preview@example.tld');
         $contact->name = 'Alex';
 
         $site = $this->sites->get($audience->mainHost);
-        $html = $this->renderer->html(
+
+        return $this->renderer->html(
             $audience,
             $contact,
             $subject,
@@ -113,8 +166,6 @@ final class EmailPreviewController extends AbstractController
             null,
             locale: $site->locale,
         );
-
-        return $this->jsonPrivate(['html' => $html]);
     }
 
     private function error(string $key): JsonResponse

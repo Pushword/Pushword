@@ -163,9 +163,8 @@ class CampaignCrudController extends AbstractCrudController
             ->setFormTypeOption('attr', ['aria-labelledby' => 'newsletter-campaign-audience-label']);
 
         if ($isForm) {
-            yield FormField::addFieldset('newsletter.campaign.fieldset.design')->setIcon('fa fa-palette')
-                ->setHelp('newsletter.campaign.fieldset.designHelp');
-            yield $audienceField;
+            yield FormField::addFieldset('newsletter.campaign.fieldset.design')->setIcon('fa fa-palette');
+            yield $audienceField->setColumns('col-12');
             yield ChoiceField::new('emailLayout', 'newsletter.campaign.design.label')
                 ->setChoices([
                     'newsletter.campaign.design.inherit' => '',
@@ -177,12 +176,10 @@ class CampaignCrudController extends AbstractCrudController
                 ->setRequired(false)
                 ->setColumns('col-12')
                 ->setFormTypeOption('placeholder', false)
-                ->setFormTypeOption('attr', ['data-pw-campaign-design' => json_encode($this->audienceDesigns(), \JSON_THROW_ON_ERROR)])
-                ->setHelp('newsletter.campaign.design.help');
+                ->setFormTypeOption('attr', ['data-pw-campaign-design' => json_encode($this->audienceDesigns(), \JSON_THROW_ON_ERROR)]);
         }
 
-        yield FormField::addFieldset('newsletter.campaign.fieldset.content')->setIcon('fa fa-pen-nib')
-            ->setHelp('newsletter.campaign.fieldset.contentHelp');
+        yield FormField::addFieldset('newsletter.campaign.fieldset.content')->setIcon('fa fa-pen-nib');
         yield TextField::new('subject', 'newsletter.campaign.field.subject')->setColumns('col-12');
         yield ChoiceField::new('status', 'newsletter.campaign.field.status')
             ->renderAsBadges([

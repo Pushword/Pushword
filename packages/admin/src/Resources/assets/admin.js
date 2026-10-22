@@ -60,11 +60,12 @@ import { suggestTags } from './admin.tagsField'
 // Criteria modules
 import { initCriteriaBuilder } from './admin.criteriaBuilder'
 import { initEmailPreview } from './admin.emailPreview'
-import { initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from './admin.newsletter'
+import { initAutomationRecipients, initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from './admin.newsletter'
 
 document.addEventListener('ea.collection.item-added', (event) => {
   numberNewNewsletterStep(event.detail.newElement)
   initNewsletterDelays(event.detail.newElement)
+  initEmailPreview(event.detail.newElement)
 })
 
 // Sidebar modules
@@ -134,6 +135,7 @@ window.addEventListener('load', function () {
   initNewsletterDelays()
   initNewsletterIndexes()
   initCampaignDesigns()
+  initAutomationRecipients()
 
   // Page state
   retrieveCurrentPageHost()

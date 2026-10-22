@@ -85,11 +85,26 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
             $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section);
             self::assertSame(200, $client->getResponse()->getStatusCode(), $section.' index');
             self::assertCount(7, $crawler->filter('.pw-newsletter-nav a'));
+            $viewport = $crawler->filter('meta[name="viewport"]')->attr('content') ?? '';
+            self::assertStringNotContainsString('user-scalable=no', $viewport);
+            self::assertStringNotContainsString('maximum-scale=1', $viewport);
             $activeSection = 'campaign-recipient' === $section ? 'campaign' : $section;
             self::assertStringEndsWith(
                 '/admin/newsletter/'.$activeSection,
                 $crawler->filter('.pw-newsletter-nav a[aria-current="page"]')->attr('href') ?? '',
             );
+        }
+    }
+
+    public function testStatisticsFiltersHaveMatchingLabels(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/statistics');
+        self::assertResponseIsSuccessful();
+        foreach (['from', 'to', 'audience'] as $field) {
+            $id = 'statistics-'.$field;
+            self::assertCount(1, $crawler->filter('#'.$id));
+            self::assertCount(1, $crawler->filter('label[for="'.$id.'"]'));
         }
     }
 
@@ -114,6 +129,9 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertInstanceOf(Contact::class, $addressed);
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$addressed->id);
         self::assertSame('Subscribed', $crawler->filter('table tbody .badge')->first()->text());
+        self::assertCount(1, $crawler->filter('.pw-newsletter-contact-actions form[action$="/unsubscribe"] input[name="_token"]'));
+        self::assertCount(1, $crawler->filter('.page-actions > a.action-edit'));
+        self::assertCount(0, $crawler->filter('.page-actions > form[action$="/unsubscribe"]'));
     }
 
     public function testWritingFormsHaveTranslatedGuidanceAndOneCreationPath(): void
@@ -429,6 +447,10 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/automation/'.$automation->id.'/edit');
         self::assertCount(2, $crawler->filter('.pw-newsletter-sequence .accordion-collapse.show'));
         self::assertSame('Welcome', $crawler->filter('input[name="Automation[steps][0][subject]"]')->attr('value'));
+        self::assertCount(1, $crawler->filter('[data-preview-step="0"]'));
+        self::assertCount(1, $crawler->filter('[data-preview-step="1"]'));
+        self::assertCount(1, $crawler->filter('#Automation_steps_0_bodyMarkdown-preview'));
+        self::assertCount(1, $crawler->filter('#Automation_steps_1_bodyMarkdown-preview'));
     }
 
     public function testTheCampaignIndexShowsItsAudience(): void
@@ -822,6 +844,19 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
             $client->request($method, $url);
             self::assertSame(403, $client->getResponse()->getStatusCode(), $method.' '.$url);
         }
+    }
+
+    public function testARecipientDetailShowsTheWholeDeliveryError(): void
+    {
+        $client = $this->loginUser();
+        $campaign = $this->campaign($this->seed(), 'Failed delivery');
+        $error = str_repeat('Transport diagnostic. ', 10).'Complete error ends here.';
+        $recipient = $this->recipient($campaign, 'failed-detail@example.tld')->markFailed($error);
+        $this->entityManager()->flush();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign-recipient');
+        $client->click($crawler->filter('tr[data-id="'.$recipient->id.'"] a.action-detail')->link());
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString($error, $client->getCrawler()->filter('article')->text());
     }
 
     /** Same guarantee for the page grammar, which the source picks: a bad rule is a form error, never a 500. */

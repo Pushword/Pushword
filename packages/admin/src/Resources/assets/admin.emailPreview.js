@@ -3,8 +3,32 @@ export function initEmailPreview(root = document) {
     if (panel.dataset.initialized) return
     panel.dataset.initialized = 'true'
 
+    panel.querySelectorAll('[data-preview-width]').forEach((button) => {
+      button.addEventListener('click', () => {
+        panel.dataset.viewport = button.dataset.previewWidth
+        panel.querySelectorAll('[data-preview-width]').forEach((option) => {
+          option.setAttribute('aria-pressed', String(option === button))
+        })
+      })
+    })
+    panel.querySelectorAll('[data-design-panel]').forEach((button) => {
+      button.addEventListener('click', () => {
+        panel.dataset.mobilePanel = button.dataset.designPanel
+        panel.querySelectorAll('[data-design-panel]').forEach((option) => {
+          option.setAttribute('aria-pressed', String(option === button))
+        })
+      })
+    })
     const kind = panel.dataset.previewKind || 'audience'
-    const form = panel.querySelector('form')
+    const form = panel.querySelector('form') || panel.closest('form')
+    if (!form) return
+    const disclosure = kind === 'automation' ? panel.closest('details') : null
+    let previewFields
+    if (kind === 'campaign') previewFields = ['audience', 'emailLayout', 'subject', 'preheader', 'bodyMarkdown', 'transactional'].map((name) => `Campaign[${name}]`)
+    if (kind === 'automation') {
+      const step = `Automation[steps][${panel.dataset.previewStep}]`
+      previewFields = ['Automation[audience]', 'Automation[transactional]', `${step}[subject]`, `${step}[bodyMarkdown]`]
+    }
     const frame = panel.querySelector('iframe')
     const status = panel.querySelector('[data-preview-status]')
     const retry = panel.querySelector('[data-preview-retry]')
@@ -31,7 +55,7 @@ export function initEmailPreview(root = document) {
         panel.querySelector('[data-email-editable]').hidden = custom
         panel.querySelector('[data-email-template-help]').hidden = !custom
       }
-      dirty = kind !== 'campaign' && designValues() !== savedValues
+      dirty = !['campaign', 'automation'].includes(kind) && designValues() !== savedValues
       if (saveState) {
         saveState.dataset.dirty = String(dirty)
         saveState.textContent = dirty ? saveState.dataset.unsaved : saveState.dataset.saved
@@ -45,6 +69,7 @@ export function initEmailPreview(root = document) {
       const data = new FormData(form)
       data.set('preview', '1')
       if (kind !== 'audience') data.set('_preview_token', panel.dataset.previewToken)
+      if (kind === 'automation') data.set('_preview_step', panel.dataset.previewStep)
       status.textContent = status.dataset.updating
       status.dataset.state = 'updating'
       retry.hidden = true
@@ -69,12 +94,14 @@ export function initEmailPreview(root = document) {
     }
 
     function schedule(event) {
-      if (event && kind === 'campaign' && !['audience', 'emailLayout', 'subject', 'preheader', 'bodyMarkdown', 'transactional'].some((name) => event.target.name === `Campaign[${name}]`)) return
+      if (!panel.isConnected) return
+      if (event && previewFields && !previewFields.includes(event.target.name)) return
       updateLayout()
       clearTimeout(timer)
       request?.abort()
       const version = ++revision
-      const empty = kind === 'campaign' && !form.elements.namedItem('Campaign[audience]').value
+      const audienceField = kind === 'automation' ? 'Automation[audience]' : 'Campaign[audience]'
+      const empty = ['campaign', 'automation'].includes(kind) && !form.elements.namedItem(audienceField).value
       if (canvas) canvas.hidden = empty
       if (empty) {
         status.textContent = status.dataset.empty
@@ -85,6 +112,7 @@ export function initEmailPreview(root = document) {
       }
       status.textContent = status.dataset.updating
       status.dataset.state = 'updating'
+      if (disclosure && !disclosure.open) return
       timer = setTimeout(() => update(version), 250)
     }
 
@@ -108,22 +136,7 @@ export function initEmailPreview(root = document) {
       form.elements.namedItem('email_design[footerMarkdown]').value = button.dataset.footer
       schedule()
     })
-    panel.querySelectorAll('[data-preview-width]').forEach((button) => {
-      button.addEventListener('click', () => {
-        panel.dataset.viewport = button.dataset.previewWidth
-        panel.querySelectorAll('[data-preview-width]').forEach((option) => {
-          option.setAttribute('aria-pressed', String(option === button))
-        })
-      })
-    })
-    panel.querySelectorAll('[data-design-panel]').forEach((button) => {
-      button.addEventListener('click', () => {
-        panel.dataset.mobilePanel = button.dataset.designPanel
-        panel.querySelectorAll('[data-design-panel]').forEach((option) => {
-          option.setAttribute('aria-pressed', String(option === button))
-        })
-      })
-    })
+    disclosure?.addEventListener('toggle', () => schedule())
     if (kind !== 'audience') schedule()
   })
 }
