@@ -1,8 +1,7 @@
 ---
-title: 'audiences gain shared email design settings and Twig presets; media writes are logged on the `pushword_media` channel; file names several media share are reported'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
-run: 'doctrine:schema:update --force'
 ---
 
 <!--
@@ -35,21 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin`, `pushword/core`, `pushword/newsletter`
-
-## Shared email design
-
-Run `php bin/console doctrine:schema:update --force` to add the audience's email design fields, including the nullable Twig preset identifier. Existing audiences retain the simple layout. Custom `/newsletter/email.html.twig` templates can use `wrapped` and `header`; registered presets can extend the default template's `email_header` and `email_footer` blocks. The live preview now opens at mobile width. See [email design](../extension/newsletter#email-design-and-live-preview).
-
-## Media audit log
-
-Media creations, renames and removals are logged at `info` on the `pushword_media` Monolog channel. To keep them, route the channel to its own handler: see [audit log](../storage#audit-log).
-
-## File names several media share
-
-`pw:image:cache` reports a file name several media hold and leaves those media alone; renaming one is refused, and removing one keeps the file. **Concerns sites that uploaded media before this release.** List them with `SELECT media, COUNT(*) FROM media GROUP BY media HAVING COUNT(*) > 1`, then remove the row whose `hash` is not the file's SHA-1. See [file names](../storage#file-names).
-
-## Duplicate uploads in the media form
-
-The admin media form no longer stores a file the library already holds: it opens the existing media, or selects it in the media picker. `Media::$fileNameBeforeUpdate` and `Media::setFileNameBeforeUpdate()` are removed; nothing to do unless your code read them.

@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.72](/upgrade/1.0.72) | `admin` `core` `newsletter` | audiences gain shared email design settings and Twig presets; media writes are logged on the `pushword_media` channel; file names several media share are reported — run `doctrine:schema:update --force` |
 | [1.0.64](/upgrade/1.0.64) | `core` `static-generator` | media searches cache their matches; static builds can cap their parallel workers |
 | [1.0.63](/upgrade/1.0.63) | `admin-block-editor` `core` `dev-app` | pasted numbered lists keep their nesting; the Docker image uses patched Go dependencies |
 | [1.0.62](/upgrade/1.0.62) | `admin` `admin-block-editor` | editor diagnostics are available in the admin |
