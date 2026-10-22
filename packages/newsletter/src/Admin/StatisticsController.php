@@ -8,17 +8,24 @@ use DateTimeImmutable;
 use DateTimeZone;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use Pushword\Core\Service\EditorialTimezone;
+use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Repository\AudienceRepository;
 use Pushword\Newsletter\Repository\ClickEventRepository;
 use Pushword\Newsletter\Repository\StatisticsRepository;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Encoder\CsvEncoder;
+use Symfony\Component\Validator\Constraints\Date;
+use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[IsGranted('ROLE_EDITOR')]
@@ -36,21 +43,7 @@ final class StatisticsController extends AbstractController
     #[AdminRoute(path: '/newsletter/statistics', name: 'newsletter_statistics', options: ['methods' => ['GET']])]
     public function index(Request $request): Response
     {
-        [$from, $until, $audienceId] = $this->filters($request);
-        $campaigns = $this->statistics->campaigns($from, $until, $audienceId);
-
-        return $this->render('@PushwordNewsletter/admin/statistics.html.twig', [
-            'newsletterSection' => 'statistics',
-            'from' => $this->timezone->format($from, 'Y-m-d'),
-            'to' => $until->setTimezone($this->timezone->timezone)->modify('-1 day')->format('Y-m-d'),
-            'audienceId' => $audienceId,
-            'audiences' => $this->audiences->findBy([], ['name' => 'ASC']),
-            'campaigns' => $campaigns,
-            'totals' => $this->statistics->totals($campaigns),
-            'contacts' => $this->statistics->contacts($audienceId),
-            'activity' => $this->statistics->subscriptionActivity($from, $until, $audienceId),
-            'timezone' => $this->timezone->timezone->getName(),
-        ]);
+        return $this->dashboard($this->filterForm($request));
     }
 
     #[AdminRoute(path: '/newsletter/statistics/campaign/{id}', name: 'newsletter_statistics_campaign', options: ['methods' => ['GET']])]
@@ -61,10 +54,19 @@ final class StatisticsController extends AbstractController
             throw $this->createNotFoundException();
         }
 
+        $links = $this->clicks->byUrl($campaign);
+        usort($links, static fn (array $first, array $second): int => $second['contacts'] <=> $first['contacts'] ?: $second['clicks'] <=> $first['clicks'] ?: strcmp($first['url'], $second['url']));
+        foreach ($links as $index => $link) {
+            $links[$index]['host'] = parse_url($link['url'], \PHP_URL_HOST) ?: '';
+            $links[$index]['path'] = parse_url($link['url'], \PHP_URL_PATH) ?: '/';
+        }
+
         return $this->render('@PushwordNewsletter/admin/campaign_statistics.html.twig', [
             'newsletterSection' => 'statistics',
             'campaign' => $data,
-            'links' => $this->clicks->byUrl($campaign),
+            'links' => $links,
+            'maxLinkContacts' => [] === $links ? 1 : max(array_column($links, 'contacts')),
+            'trackingAvailable' => $data['tracking'] || $data['clicks'] > 0,
             'backFilters' => array_intersect_key($request->query->all(), array_flip(['from', 'to', 'audience'])),
             'timezone' => $this->timezone->timezone->getName(),
         ]);
@@ -73,7 +75,12 @@ final class StatisticsController extends AbstractController
     #[AdminRoute(path: '/newsletter/statistics/export', name: 'newsletter_statistics_export', options: ['methods' => ['GET']])]
     public function export(Request $request): Response
     {
-        [$from, $until, $audienceId] = $this->filters($request);
+        $form = $this->filterForm($request);
+        if (! $form->isValid()) {
+            return $this->dashboard($form);
+        }
+
+        [$from, $until, $audienceId] = $this->selection($form);
         $columns = ['date', 'subject', 'audience', 'status', 'recipients', 'sent', 'pending', 'skipped', 'failed', 'bounced', 'unsubscribed', 'clicks', 'clickers', 'clickRate', 'bounceRate', 'unsubscribeRate'];
         $headers = array_map(fn (string $column): string => $this->translator->trans('newsletter.statistics.'.$column).(str_ends_with($column, 'Rate') ? ' (%)' : ''), $columns);
         $rows = [];
@@ -107,37 +114,105 @@ final class StatisticsController extends AbstractController
         ]);
     }
 
-    /** @return array{DateTimeImmutable, DateTimeImmutable, int|null} */
-    private function filters(Request $request): array
+    /** @return FormInterface<array{from: string|null, to: string|null, audience: Audience|null}> */
+    private function filterForm(Request $request): FormInterface
     {
         $today = new DateTimeImmutable('today', $this->timezone->timezone);
-        $from = $this->date($request->query->getString('from', $today->modify('-29 days')->format('Y-m-d')));
-        $to = $this->date($request->query->getString('to', $today->format('Y-m-d')));
-        if ($from > $to) {
-            throw new BadRequestHttpException('The start date must not be after the end date.');
-        }
-
-        $audience = $request->query->getString('audience');
-        $audienceId = null;
-        if ('' !== $audience) {
-            $audienceId = filter_var($audience, \FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-            if (false === $audienceId || null === $this->audiences->find($audienceId)) {
-                throw new BadRequestHttpException('Unknown audience.');
+        $defaults = ['from' => $today->modify('-29 days')->format('Y-m-d'), 'to' => $today->format('Y-m-d'), 'audience' => ''];
+        $dateOptions = [
+            'trim' => false,
+            'invalid_message' => $this->translator->trans('newsletter.statistics.invalidDate'),
+            'constraints' => [
+                new NotBlank(message: $this->translator->trans('newsletter.statistics.requiredDate')),
+                new Date(message: $this->translator->trans('newsletter.statistics.invalidDate')),
+            ],
+        ];
+        /** @var FormInterface<array{from: string|null, to: string|null, audience: Audience|null}> $form */
+        $form = $this->container->get('form.factory')->createNamedBuilder('', FormType::class, null, [
+            'method' => 'GET',
+            'action' => $this->generateUrl('admin_newsletter_statistics'),
+            'csrf_protection' => false,
+        ])
+            ->add('from', TextType::class, ['label' => 'newsletter.statistics.from', ...$dateOptions])
+            ->add('to', TextType::class, ['label' => 'newsletter.statistics.to', ...$dateOptions])
+            ->add('audience', EntityType::class, [
+                'class' => Audience::class,
+                'choices' => $this->audiences->findBy([], ['name' => 'ASC']),
+                'choice_label' => 'name',
+                'placeholder' => 'newsletter.statistics.allAudiences',
+                'label' => 'newsletter.statistics.audience',
+                'invalid_message' => $this->translator->trans('newsletter.statistics.invalidAudience'),
+                'required' => false,
+            ])
+            ->getForm();
+        $form->submit(array_replace($defaults, array_intersect_key($request->query->all(), $defaults)));
+        if ($form->isValid()) {
+            /** @var array{from: string, to: string, audience: Audience|null} $data */
+            $data = $form->getData();
+            if ($data['from'] > $data['to']) {
+                $form->get('to')->addError(new FormError($this->translator->trans('newsletter.statistics.invalidRange')));
             }
         }
 
-        $serverTimezone = new DateTimeZone(date_default_timezone_get());
-
-        return [$from->setTimezone($serverTimezone), $to->modify('+1 day')->setTimezone($serverTimezone), $audienceId];
+        return $form;
     }
 
-    private function date(string $value): DateTimeImmutable
+    /**
+     * @param FormInterface<array{from: string|null, to: string|null, audience: Audience|null}> $form
+     *
+     * @return array{DateTimeImmutable, DateTimeImmutable, int|null}
+     */
+    private function selection(FormInterface $form): array
     {
-        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value, $this->timezone->timezone);
-        if (false === $date || $date->format('Y-m-d') !== $value) {
-            throw new BadRequestHttpException('Expected a valid date in YYYY-MM-DD format.');
+        /** @var array{from: string, to: string, audience: Audience|null} $data */
+        $data = $form->getData();
+        $from = new DateTimeImmutable($data['from'], $this->timezone->timezone);
+        $to = new DateTimeImmutable($data['to'], $this->timezone->timezone);
+        $serverTimezone = new DateTimeZone(date_default_timezone_get());
+
+        return [$from->setTimezone($serverTimezone), $to->modify('+1 day')->setTimezone($serverTimezone), $data['audience']?->id];
+    }
+
+    /** @param FormInterface<array{from: string|null, to: string|null, audience: Audience|null}> $form */
+    private function dashboard(FormInterface $form): Response
+    {
+        $today = new DateTimeImmutable('today', $this->timezone->timezone);
+        $presets = [];
+        foreach ([7, 30, 90] as $days) {
+            $presets[$days] = ['from' => $today->modify('-'.($days - 1).' days')->format('Y-m-d'), 'to' => $today->format('Y-m-d')];
         }
 
-        return $date;
+        $audience = $form->get('audience')->getData();
+        $context = [
+            'newsletterSection' => 'statistics',
+            'filters' => $form->createView(),
+            'validFilters' => $form->isValid(),
+            'presets' => $presets,
+            'audienceId' => $audience instanceof Audience ? $audience->id : null,
+            'activePreset' => null,
+            'timezone' => $this->timezone->timezone->getName(),
+        ];
+        if (! $form->isValid()) {
+            return $this->render('@PushwordNewsletter/admin/statistics.html.twig', $context, new Response(status: Response::HTTP_BAD_REQUEST));
+        }
+
+        [$from, $until, $audienceId] = $this->selection($form);
+        $campaigns = $this->statistics->campaigns($from, $until, $audienceId);
+        /** @var array{from: string, to: string, audience: Audience|null} $data */
+        $data = $form->getData();
+
+        return $this->render('@PushwordNewsletter/admin/statistics.html.twig', [
+            ...$context,
+            'audience' => $data['audience'],
+            'activePreset' => array_search(['from' => $data['from'], 'to' => $data['to']], $presets, true),
+            'fromDate' => $from,
+            'toDate' => $until->setTimezone($this->timezone->timezone)->modify('-1 day'),
+            'filterContext' => ['from' => $data['from'], 'to' => $data['to'], 'audience' => $audienceId],
+            'campaigns' => $campaigns,
+            'totals' => $this->statistics->totals($campaigns),
+            'trackingAvailable' => array_any($campaigns, static fn (array $campaign): bool => $campaign['tracking'] || $campaign['clicks'] > 0),
+            'contacts' => $this->statistics->contacts($audienceId),
+            'activity' => $this->statistics->subscriptionActivity($from, $until, $audienceId),
+        ]);
     }
 }

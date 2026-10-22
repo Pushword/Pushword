@@ -1,9 +1,17 @@
+{% import '@PushwordNewsletter/admin/_statistics_macros.html.twig' as statistics %}
 <dl class="pw-statistics-metrics">
-  {% for metric in ['sent', 'clicks', 'clickers', 'clickRate', 'bounced', 'unsubscribed'] %}
-    <div>
+  {% for metric in ['sent', 'clickers', 'clickRate'] %}
+    <div{% if metric == 'clickRate' %} class="pw-statistics-metric-rate"{% endif %}>
       <dt>{{ ('newsletter.statistics.' ~ metric)|trans }}</dt>
-      <dd data-statistic="{{ metric }}">{% if totals[metric] is null or (metric in ['clicks', 'clickers'] and totals.clickRate is null and totals.clicks == 0) %}<span class="pw-statistics-unmeasured">{{ 'newsletter.statistics.notAvailable'|trans }}</span>{% elseif metric == 'clickRate' %}{{ totals[metric]|number_format(2) }} %{% else %}{{ totals[metric]|number_format }}{% endif %}</dd>
+      <dd data-statistic="{{ metric }}">{{ statistics.value(metric, totals[metric], totals.sent, trackingAvailable) }}</dd>
     </div>
   {% endfor %}
 </dl>
-<p class="pw-statistics-note">{{ 'newsletter.statistics.methodology'|trans }}</p>
+<dl class="pw-statistics-secondary">
+  {% for metric in ((showFeedback ?? true) ? ['clicks', 'bounced', 'unsubscribed'] : ['clicks']) %}
+    <div{% if metric != 'clicks' and totals[metric] > 0 %} class="pw-statistics-attention"{% endif %}>
+      <dt>{{ ('newsletter.statistics.' ~ metric)|trans }}</dt>
+      <dd data-statistic="{{ metric }}">{{ statistics.value(metric, totals[metric], totals.sent, trackingAvailable) }}</dd>
+    </div>
+  {% endfor %}
+</dl>

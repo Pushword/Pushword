@@ -1,0 +1,28 @@
+{% macro value(metric, value, sent, trackingAvailable) %}
+  {%- if metric ends with 'Rate' and sent == 0 -%}
+    <span class="pw-statistics-unmeasured">{{ 'newsletter.statistics.noSends'|trans }}</span>
+  {%- elseif value is null or (metric in ['clicks', 'clickers'] and not trackingAvailable) -%}
+    <span class="pw-statistics-unmeasured">{{ 'newsletter.statistics.notAvailable'|trans }}</span>
+  {%- elseif metric ends with 'Rate' -%}
+    {{ value|format_number({min_fraction_digit: 2, max_fraction_digit: 2}, locale: app.request.locale) }} %
+  {%- else -%}
+    {{ value|format_number(locale: app.request.locale) }}
+  {%- endif -%}
+{% endmacro %}
+
+{% macro feedback(campaign) %}
+  {% if campaign.failed > 0 or campaign.bounced > 0 or campaign.unsubscribed > 0 %}
+    <dl class="pw-statistics-signals">
+      {% for metric in ['failed', 'bounced', 'unsubscribed'] %}
+        {% if campaign[metric] > 0 %}
+          <div{% if metric == 'failed' %} class="pw-statistics-failure"{% endif %}>
+            <dt>{% if metric != 'unsubscribed' %}<a href="{{ path('admin_newsletter_campaign_recipient_index', {filters: {campaign: {comparison: '=', value: campaign.id}, state: {comparison: '=', value: metric}}}) }}">{{ ('newsletter.statistics.' ~ metric)|trans }}</a>{% else %}{{ ('newsletter.statistics.' ~ metric)|trans }}{% endif %}</dt>
+            <dd>{{ campaign[metric]|format_number(locale: app.request.locale) }}</dd>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </dl>
+  {% else %}
+    <span class="pw-statistics-quiet">{{ 'newsletter.statistics.noSignals'|trans }}</span>
+  {% endif %}
+{% endmacro %}

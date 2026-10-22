@@ -1065,7 +1065,15 @@ the next section.
 Open **Newsletter → Statistics** for campaign results, filtered by audience and
 date range (the last 30 days by default). The comparison links to each campaign's
 report, its recipient ledger and its recorded links. **Export CSV** exports the
-same campaign selection, including counts and rates.
+same applied campaign selection, including counts and rates. Use the 7/30/90-day
+shortcuts or edit the date range; validation errors stay with their fields. Reset
+returns to all audiences and the last 30 days. The comparison adapts to stacked
+rows on small screens, keeping engagement and reported issues visible.
+
+The overview prioritizes sends, unique clickers and observed click rate. The
+campaign report separates sending states from recipient feedback and ranks links
+by unique clickers. Detailed measurement notes are under **How to read these
+figures**. Browser zoom remains available.
 
 The date filter selects campaigns by their first transport handoff, or completion
 date when no recipient record remains. A campaign still sending appears after its
@@ -1075,7 +1083,7 @@ Dates use `pushword.editorial_timezone`.
 
 - **Sent** counts messages handed to the mail transport. It does not confirm
   reception in an inbox. Bounces and transport failures are separate counts.
-- **Unique clicks** count a contact once per campaign, including in the overall
+- **Unique clickers** count a contact once per campaign, including in the overall
   total. Rates use sent messages as their denominator; the overall rate uses the
   combined counts, rather than averaging campaign percentages. Sends without
   tracking remain in that denominator, so click rates describe observed engagement.

@@ -5,6 +5,11 @@
   <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordnewsletter/statistics.css') }}">
 {% endblock %}
 
+{% block configured_javascripts %}
+  {{ parent() }}
+  <script type="module" src="{{ versionedAsset('/bundles/pushwordnewsletter/statistics.js') }}"></script>
+{% endblock %}
+
 {% block content_title %}{{ 'newsletter.statistics.title'|trans }}{% endblock %}
 
 {% block main %}{% endblock %}

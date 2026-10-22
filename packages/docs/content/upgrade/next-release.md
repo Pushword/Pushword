@@ -1,5 +1,5 @@
 ---
-title: 'new newsletter audiences start with a site identity; campaigns can choose their own design; reusable email templates in the admin'
+title: 'new newsletter audiences start with a site identity; campaigns can choose their own design; reusable email templates in the admin; statistics CSV labels unique clickers'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 run: 'doctrine:schema:update --force'
@@ -49,3 +49,7 @@ Run `php bin/console doctrine:schema:update --force` to add the nullable campaig
 ## Reusable email templates
 
 Run `php bin/console doctrine:schema:update --force` to create the newsletter email template table. Editors can create and duplicate named designs in **Newsletter → Templates** and select them for campaigns or audience defaults. Campaign forms now preview unsaved content directly, using a mobile viewport by default. See [email design](../extension/newsletter#email-design-and-live-preview).
+
+## Newsletter statistics CSV
+
+Statistics exports now label the per-campaign unique-contact column **Unique clickers** (**Cliqueurs uniques** in French). Update column-name mappings in CSV consumers. See [statistics](../extension/newsletter#statistics).
