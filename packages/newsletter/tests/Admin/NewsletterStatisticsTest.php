@@ -298,7 +298,7 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience();
         $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics?from=2026-02-02&to=2026-02-01&audience='.$audience->id);
         self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
-        self::assertStringContainsString('end date must be on or after', $crawler->filter('[role="alert"]')->text());
+        self::assertStringContainsString('end date must be on or after', $crawler->filter('.pw-statistics-errors[role="alert"]')->text());
         self::assertSame('2026-02-02', $crawler->filter('[name="from"]')->attr('value'));
         self::assertSame('2026-02-01', $crawler->filter('[name="to"]')->attr('value'));
         $to = $crawler->filter('[name="to"]');
