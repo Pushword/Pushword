@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import List from './List'
 import { MarkdownUtils } from '../utils/MarkdownUtils'
 
@@ -216,7 +216,7 @@ describe('List.exportToMarkdown', () => {
 async function mountList(style: 'ordered' | 'unordered' | 'checklist', items: any[]) {
   const holder = document.createElement('div')
   document.body.replaceChildren(holder)
-  const list = new List({ data: { style, meta: {}, items }, config: {}, api: {} as any, readOnly: false, block: { holder } as any })
+  const list = new List({ data: { style, meta: {}, items }, config: {}, api: {} as any, readOnly: false, block: { holder, name: 'list' } as any })
   holder.append(list.render())
   await Promise.resolve()
   const field = (text: string) =>
@@ -278,6 +278,19 @@ describe('List.pasteItems', () => {
     expect(outline()).toEqual(['Root', '  p0', '    p1', '  p2', '    p3'])
   })
 
+  it.each([
+    ['a level skipped', [1, 3, 2], ['p0', '  p1', '  p2']],
+    ['a first item deeper than the next ones', [3, 1, 2], ['p0', 'p1', '  p2']],
+    ['a first item deeper than every other', [2, 0, 0], ['p0', 'p1', 'p2']],
+  ])('flattens %s into levels one deeper than their parent at most', async (_label, depths, expected) => {
+    const { list, field, outline } = await mountList('unordered', [item('')])
+    caret(field(''), 0)
+
+    list.pasteItems({ items: depths.map((depth, index) => ({ content: `p${index}`, depth })) })
+
+    expect(outline()).toEqual(expected)
+  })
+
   it('pastes unchecked items into a checklist and keeps the state of the caret item', async () => {
     const { list, field } = await mountList('checklist', [{ content: 'Done', meta: { checked: true }, items: [] }])
     caret(field('Done').firstChild!, 4)
@@ -330,7 +343,7 @@ describe('List Delete at the end of an item', () => {
     expect(listen).not.toHaveBeenCalled()
   })
 
-  it('registers one capture keydown listener on the block holder, after render() returns', async () => {
+  it('registers its capture keydown and mousedown listeners on the block holder once, after render() returns', async () => {
     const holder = document.createElement('div')
     const listen = vi.spyOn(holder, 'addEventListener')
     const list = new List({ data: { style: 'unordered', meta: {}, items: [item('One')] }, config: {}, api: {} as any, readOnly: false, block: { holder } as any })
@@ -338,8 +351,9 @@ describe('List Delete at the end of an item', () => {
     expect(listen).not.toHaveBeenCalled()
     await Promise.resolve()
 
-    expect(listen).toHaveBeenCalledTimes(1)
+    expect(listen).toHaveBeenCalledTimes(2)
     expect(listen).toHaveBeenCalledWith('keydown', expect.any(Function), true)
+    expect(listen).toHaveBeenCalledWith('mousedown', expect.any(Function), true)
   })
 
   it('brings the next item up, its children kept at their level', async () => {
@@ -410,5 +424,211 @@ describe('List Delete at the end of an item', () => {
 
     expect(event.defaultPrevented).toBe(false)
     expect(outline()).toEqual(['One', 'Two'])
+  })
+})
+
+describe('List item selection', () => {
+  let highlights: Map<string, Set<Range>>
+
+  beforeEach(() => {
+    highlights = new Map()
+    vi.stubGlobal('Highlight', class extends Set<Range> {
+      constructor(...ranges: Range[]) {
+        super(ranges)
+      }
+    })
+    vi.stubGlobal('CSS', { highlights })
+  })
+
+  afterEach(() => {
+    // A selection left by a test listens on the window until a click ends it.
+    document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+    vi.unstubAllGlobals()
+  })
+
+  function mouse(type: string, target: Element, init: MouseEventInit = {}): MouseEvent {
+    const event = new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, ...init })
+    target.dispatchEvent(event)
+    return event
+  }
+
+  function press(init: KeyboardEventInit): KeyboardEvent {
+    const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init })
+    document.body.dispatchEvent(event)
+    return event
+  }
+
+  function clipboard(type: 'copy' | 'cut' | 'paste'): { event: Event; data: Record<string, string> } {
+    const data: Record<string, string> = {}
+    const event = new Event(type, { bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'clipboardData', { value: { setData: (format: string, value: string) => { data[format] = value } } })
+    document.body.dispatchEvent(event)
+    return { event, data }
+  }
+
+  function drag(from: Element, to: Element): void {
+    mouse('mousedown', from)
+    mouse('mouseover', to)
+    mouse('mouseup', to)
+  }
+
+  const highlighted = () => Array.from(highlights.get('pw-list-items') ?? [], (range) => range.toString())
+  const caretAt = () => [window.getSelection()!.anchorNode?.textContent, window.getSelection()!.anchorOffset]
+  const listOf = () => [item('A'), item('B', [item('B1')]), item('C'), item('D')]
+
+  it('selects whole items from the one a drag started in to the one it reached, and drops the text selection', async () => {
+    const { field } = await mountList('unordered', listOf())
+    caret(field('A').firstChild!, 0)
+    drag(field('A'), field('C'))
+
+    expect(highlighted()).toEqual(['A', 'B', 'B1', 'C'])
+    expect(window.getSelection()!.rangeCount).toBe(0)
+  })
+
+  it('selects no item while a drag stays in its own, and leaves blocks to Editor.js', async () => {
+    const { field } = await mountList('unordered', listOf())
+    const outside = document.body.appendChild(document.createElement('p'))
+    mouse('mousedown', field('A'))
+    mouse('mouseover', field('A'))
+    expect(highlighted()).toEqual([])
+
+    mouse('mouseover', field('C'))
+    mouse('mouseover', field('A'))
+    expect(highlighted()).toEqual(['A'])
+
+    mouse('mouseover', outside)
+    expect(highlights.has('pw-list-items')).toBe(false)
+    mouse('mouseup', outside)
+    mouse('mouseover', field('C'))
+    expect(highlighted()).toEqual([])
+  })
+
+  it('selects from the caret\'s item with Shift+click, and extends from the same item', async () => {
+    const { field } = await mountList('unordered', listOf())
+    caret(field('B').firstChild!, 1)
+    expect(mouse('mousedown', field('B'), { shiftKey: true }).defaultPrevented).toBe(false)
+    expect(highlighted()).toEqual([])
+
+    expect(mouse('mousedown', field('D'), { shiftKey: true }).defaultPrevented).toBe(true)
+    expect(highlighted()).toEqual(['B', 'B1', 'C', 'D'])
+
+    mouse('mousedown', field('A'), { shiftKey: true })
+    expect(highlighted()).toEqual(['A', 'B'])
+  })
+
+  it('removes the selected items on Delete, children of a removed parent kept with their siblings', async () => {
+    const { field, outline } = await mountList('unordered', [item('Intro'), item('Parent', [item('Child 1'), item('Child 2')]), item('Last')])
+    drag(field('Intro'), field('Parent'))
+
+    expect(press({ key: 'Delete' }).defaultPrevented).toBe(true)
+    expect(outline()).toEqual(['Child 1', 'Child 2', 'Last'])
+    expect(caretAt()).toEqual(['Child 1', 0])
+    expect(highlights.has('pw-list-items')).toBe(false)
+  })
+
+  it('puts the caret at the end of the item above once Backspace removed the last ones', async () => {
+    const { field, outline } = await mountList('unordered', listOf())
+    drag(field('D'), field('C'))
+    press({ key: 'Backspace' })
+
+    expect(outline()).toEqual(['A', 'B', '  B1'])
+    expect(caretAt()).toEqual(['B1', 2])
+  })
+
+  it('leaves one empty item, unchecked, when every item is removed', async () => {
+    const { list, field, outline } = await mountList('checklist', [{ content: 'Done', meta: { checked: true }, items: [] }, item('Todo')])
+    drag(field('Done'), field('Todo'))
+    press({ key: 'Delete' })
+
+    expect(outline()).toEqual([''])
+    expect(list.save().items[0]?.meta).toEqual({ checked: false })
+  })
+
+  it('replaces the selected items with one holding a typed character, as text', async () => {
+    const { field, outline } = await mountList('unordered', listOf())
+    drag(field('B'), field('C'))
+
+    expect(press({ key: '<' }).defaultPrevented).toBe(true)
+    expect(outline()).toEqual(['A', '&lt;', 'D'])
+    expect(caretAt()).toEqual(['<', 1])
+  })
+
+  it('copies the items as lines, a list and Editor.js data, levels relative to the first, and keeps them selected', async () => {
+    const { field, outline } = await mountList('unordered', [item('A'), item('B', [item('<b>B1</b>', [item('B2')])]), item('C')])
+    drag(field('B1'), field('C'))
+    const { event, data } = clipboard('copy')
+
+    expect(event.defaultPrevented).toBe(true)
+    expect(data['text/plain']).toBe('B1\nB2\nC')
+    expect(data['text/html']).toBe('<ul><li><b>B1</b><ul><li>B2</li></ul></li><li>C</li></ul>')
+    expect(JSON.parse(data['application/x-editor-js']!)).toEqual([{
+      tool: 'list',
+      data: { style: 'unordered', meta: {}, items: [item('<b>B1</b>', [item('B2')]), item('C')] },
+    }])
+    expect(outline()).toEqual(['A', 'B', '  <b>B1</b>', '    B2', 'C'])
+    expect(highlighted()).toEqual(['B1', 'B2', 'C'])
+  })
+
+  it('copies a line break as a line of its own, a soft one as a space, and an ordered list as one', async () => {
+    const { field } = await mountList('ordered', [item('One<br>two'), item('Three\nfour')])
+    drag(field('Onetwo'), field('Three\nfour'))
+    const { data } = clipboard('copy')
+
+    expect(data['text/plain']).toBe('One\ntwo\nThree four')
+    expect(data['text/html']).toBe('<ol><li>One<br>two</li><li>Three\nfour</li></ol>')
+  })
+
+  it('cuts the items: copied, then removed', async () => {
+    const { field, outline } = await mountList('unordered', listOf())
+    drag(field('C'), field('D'))
+    const { event, data } = clipboard('cut')
+
+    expect(event.defaultPrevented).toBe(true)
+    expect(data['text/plain']).toBe('C\nD')
+    expect(outline()).toEqual(['A', 'B', '  B1'])
+  })
+
+  it('leaves an empty item holding the caret in place of the items for a paste to land in', async () => {
+    const { field, outline } = await mountList('unordered', listOf())
+    drag(field('B'), field('C'))
+    const { event } = clipboard('paste')
+
+    expect(event.defaultPrevented).toBe(false)
+    expect(outline()).toEqual(['A', '', 'D'])
+    expect(window.getSelection()!.anchorNode).toBe(field(''))
+  })
+
+  it('keeps the selection for the clipboard shortcuts, and puts a caret at the end of the item reached for other keys', async () => {
+    const { field, outline } = await mountList('unordered', listOf())
+    drag(field('A'), field('C'))
+    press({ key: 'Control', ctrlKey: true })
+    expect(press({ key: 'c', ctrlKey: true }).defaultPrevented).toBe(false)
+    expect(highlighted()).toEqual(['A', 'B', 'B1', 'C'])
+
+    expect(press({ key: 'ArrowDown' }).defaultPrevented).toBe(false)
+    expect(highlights.has('pw-list-items')).toBe(false)
+    expect(caretAt()).toEqual(['C', 1])
+    expect(press({ key: 'x' }).defaultPrevented).toBe(false)
+    expect(outline()).toEqual(['A', 'B', '  B1', 'C', 'D'])
+  })
+
+  it('ends the selection on a click elsewhere, the keys then left to the field', async () => {
+    const { field } = await mountList('unordered', listOf())
+    drag(field('A'), field('C'))
+    expect(highlighted()).toEqual(['A', 'B', 'B1', 'C'])
+    mouse('mousedown', document.body)
+
+    expect(highlights.has('pw-list-items')).toBe(false)
+    expect(press({ key: 'Delete' }).defaultPrevented).toBe(false)
+  })
+
+  it('selects nothing without the CSS Highlight API, leaving the browser\'s selection', async () => {
+    vi.stubGlobal('CSS', {})
+    const { field } = await mountList('unordered', listOf())
+    caret(field('A').firstChild!, 0)
+    drag(field('A'), field('C'))
+
+    expect(window.getSelection()!.rangeCount).toBe(1)
+    expect(press({ key: 'Delete' }).defaultPrevented).toBe(false)
   })
 })

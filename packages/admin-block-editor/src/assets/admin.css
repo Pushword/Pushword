@@ -200,6 +200,11 @@ a[rel='encrypt']:not(.link-btn) {
   white-space: normal;
 }
 
+/* Items selected across a list (List.ts), in the colour of selected blocks. */
+::highlight(pw-list-items) {
+  background-color: #e1f2ff;
+}
+
 /* Disable convertTo */
 
 div[data-item-name='convert-to'] {

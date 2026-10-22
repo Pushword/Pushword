@@ -37,6 +37,8 @@ interface Tabulator {
 const HARD_BREAK_END = /(?: {2,}|\\)$/
 const ITEM = '.cdx-list__item'
 const ITEM_CONTENT = '.cdx-list__item-content'
+/** The CSS highlight painting the items selected across a list. */
+const SELECTED_ITEMS = 'pw-list-items'
 
 function html(fragment: DocumentFragment): string {
   // A lone <br> is the browser's filler for an emptied field, not content.
@@ -50,6 +52,14 @@ function textLength(content: string): number {
   const template = document.createElement('template')
   template.innerHTML = content
   return template.content.textContent?.length ?? 0
+}
+
+/** An item's text on one line, a line break only where it holds a <br>. */
+function plainText(content: string): string {
+  const template = document.createElement('template')
+  template.innerHTML = content.replace(/\n/g, ' ')
+  template.content.querySelectorAll('br').forEach((br) => br.replaceWith('\n'))
+  return template.content.textContent ?? ''
 }
 
 function placeCaret(field: HTMLElement, offset: number): void {
@@ -87,6 +97,7 @@ function caretAtEnd(field: Element): boolean {
 export default class List extends ListTool {
   private readonly blockApi: BlockAPI
   private readonly isReadOnly: boolean
+  private itemSelection: { anchor: Element; focus: Element; listeners: AbortController } | null = null
 
   constructor(params: ListParams) {
     super(params)
@@ -108,8 +119,162 @@ export default class List extends ListTool {
 
     queueMicrotask(() => {
       this.blockApi.holder.addEventListener('keydown', (event) => this.deleteForward(event), true)
+      this.blockApi.holder.addEventListener('mousedown', (event) => this.selectItemsWithMouse(event), true)
     })
     return element
+  }
+
+  /** The item of this list holding the node, when the node sits in that part of it. */
+  private itemAt(node: EventTarget | null, part = ITEM): Element | null {
+    if (!(node instanceof Node)) return null
+    const element = node instanceof Element ? node : node.parentElement
+    const item = element?.closest(part)?.closest(ITEM)
+    return item && this.tabulator.listWrapper.contains(item) ? item : null
+  }
+
+  /**
+   * Each item is a field of its own, and a browser keeps a selection inside
+   * the field it started in. Dragging from an item onto others, or a
+   * Shift+click away from the caret's item, selects whole items instead, the
+   * way Editor.js selects whole blocks once a drag crosses into another one.
+   */
+  private selectItemsWithMouse(event: MouseEvent): void {
+    const item = this.itemAt(event.target, ITEM_CONTENT)
+    if (event.button !== 0 || !item || !('highlights' in CSS)) return
+    if (event.shiftKey) {
+      const anchor = this.itemSelection?.anchor ?? this.itemAt(window.getSelection()?.anchorNode ?? null, ITEM_CONTENT)
+      if (!anchor || anchor === item) return
+      event.preventDefault()
+      this.selectItems(anchor, item)
+      return
+    }
+
+    const drag = new AbortController()
+    const options = { signal: drag.signal }
+    document.addEventListener('mouseover', ({ target }) => {
+      const over = this.itemAt(target)
+      if (over && (over !== item || this.itemSelection)) this.selectItems(item, over)
+      // Over another block, Editor.js selects the blocks.
+      else if (!over && !this.blockApi.holder.contains(target as Node)) this.clearItemSelection()
+    }, options)
+    // Chromium goes on selecting the first item's text as the drag moves.
+    const dropTextSelection = (): void => {
+      const selection = window.getSelection()!
+      if (this.itemSelection && selection.rangeCount > 0) selection.removeAllRanges()
+    }
+    document.addEventListener('selectionchange', dropTextSelection, options)
+    document.addEventListener('mouseup', () => {
+      dropTextSelection()
+      drag.abort()
+    }, options)
+  }
+
+  /**
+   * Painted through the CSS Highlight API: a class on the items would be a
+   * change to the block for Editor.js, and a selection a change to the page.
+   */
+  private selectItems(anchor: Element, focus: Element): void {
+    window.getSelection()?.removeAllRanges()
+    this.itemSelection = { anchor, focus, listeners: this.itemSelection?.listeners ?? this.listenToSelectedItems() }
+    const [start, end] = this.selectedItems()
+    const items = Array.from(this.tabulator.listWrapper.querySelectorAll(ITEM)).slice(start, end + 1)
+    CSS.highlights.set(SELECTED_ITEMS, new Highlight(...items.map((selected) => {
+      const range = document.createRange()
+      range.selectNodeContents(selected.querySelector(ITEM_CONTENT)!)
+      return range
+    })))
+  }
+
+  /** On the window, in the capture phase: selected items own the keys and the clipboard before anything else. */
+  private listenToSelectedItems(): AbortController {
+    const listeners = new AbortController()
+    const options = { capture: true, signal: listeners.signal }
+    window.addEventListener('keydown', (event) => this.selectedItemsKey(event), options)
+    window.addEventListener('copy', (event) => this.copySelectedItems(event), options)
+    window.addEventListener('cut', (event) => this.copySelectedItems(event), options)
+    // The paste then lands in the item left in their place, as into any other.
+    window.addEventListener('paste', () => this.replaceSelectedItems(''), options)
+    window.addEventListener('mousedown', (event) => {
+      if (!event.shiftKey || !this.itemAt(event.target, ITEM_CONTENT)) this.clearItemSelection()
+    }, options)
+    return listeners
+  }
+
+  private clearItemSelection(): void {
+    if (!this.itemSelection) return
+    this.itemSelection.listeners.abort()
+    this.itemSelection = null
+    CSS.highlights.delete(SELECTED_ITEMS)
+  }
+
+  /** Flat indices of the first and last selected items. */
+  private selectedItems(): [number, number] {
+    const items = Array.from(this.tabulator.listWrapper.querySelectorAll(ITEM))
+    const ends = [items.indexOf(this.itemSelection!.anchor), items.indexOf(this.itemSelection!.focus)]
+    return [Math.min(...ends), Math.max(...ends)]
+  }
+
+  /**
+   * Delete, Backspace and typing act on the selected items, as on selected
+   * blocks; any other key acts on a caret, put back at the end of the item
+   * the selection reached.
+   */
+  private selectedItemsKey(event: KeyboardEvent): void {
+    if (event.isComposing || ['Shift', 'Control', 'Alt', 'AltGraph', 'Meta'].includes(event.key)) return
+    if (event.ctrlKey || event.metaKey) {
+      // The clipboard event that follows takes the selection.
+      if (['c', 'x', 'v'].includes(event.key.toLowerCase())) return
+    } else if (event.key === 'Delete' || event.key === 'Backspace' || (event.key.length === 1 && !event.altKey)) {
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      this.replaceSelectedItems(event.key.length === 1 ? event.key : null)
+      return
+    }
+    const field = this.itemSelection!.focus.querySelector<HTMLElement>(ITEM_CONTENT)!
+    this.clearItemSelection()
+    placeCaret(field, field.textContent?.length ?? 0)
+  }
+
+  /**
+   * Copy the selected items, their levels relative to the first: a line
+   * each as plain text, a list as HTML, and Editor.js' own block data, which
+   * a paste into another list item reads levels included.
+   */
+  private copySelectedItems(event: ClipboardEvent): void {
+    if (!event.clipboardData) return
+    const [start, end] = this.selectedItems()
+    const data = this.tabulator.save()
+    const flat = List.nestable(List.flatten(data.items, 0).slice(start, end + 1))
+    const items = List.nest(flat)
+    event.clipboardData.setData('text/plain', flat.map(({ content }) => plainText(content)).join('\n'))
+    event.clipboardData.setData('text/html', List.itemsHtml(items, data.style === 'ordered' ? 'ol' : 'ul'))
+    event.clipboardData.setData('application/x-editor-js', JSON.stringify([{ tool: this.blockApi.name, data: { ...data, items } }]))
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    if (event.type === 'cut') this.replaceSelectedItems(null)
+  }
+
+  /**
+   * Remove the selected items, or put one item holding the text in their
+   * place, the caret after it. Children whose parent went keep their
+   * siblings, under the nearest item above.
+   */
+  private replaceSelectedItems(text: string | null): void {
+    const [start, end] = this.selectedItems()
+    this.clearItemSelection()
+    const data = this.tabulator.save()
+    const flat = List.flatten(data.items, 0)
+    const [first] = flat.splice(start, end - start + 1)
+    if (text !== null || flat.length === 0) {
+      const span = document.createElement('span')
+      span.textContent = text ?? ''
+      flat.splice(start, 0, { content: span.innerHTML, meta: List.newItemMeta(data.style), depth: first!.depth })
+    }
+    const items = this.renderItems(List.nestable(flat)).querySelectorAll(ITEM)
+    // After a removal, the caret goes to the start of the item that followed, or the end of the last.
+    const index = Math.min(start, items.length - 1)
+    const field = items[index]!.querySelector<HTMLElement>(ITEM_CONTENT)!
+    placeCaret(field, index === start ? (text?.length ?? 0) : (field.textContent?.length ?? 0))
   }
 
   /**
@@ -159,27 +324,51 @@ export default class List extends ListTool {
     const flat = List.flatten(data.items, 0)
     const index = Array.from(wrapper.querySelectorAll(ITEM)).indexOf(field.closest(ITEM)!)
     const current = flat[index]!
-    const meta = (): Record<string, unknown> => (data.style === 'checklist' ? { checked: false } : {})
-    // Each depth relative to the shallowest item seen so far, one level deeper at most.
-    let shallowest = items[0]!.depth
-    let depth = 0
-    const pasted: FlatItem[] = items.map((item, position) => {
-      shallowest = Math.min(shallowest, item.depth)
-      depth = position === 0 ? 0 : Math.min(item.depth - shallowest, depth + 1)
-      return { content: item.content, meta: meta(), depth: current.depth + depth }
-    })
+    const pasted: FlatItem[] = List.nestable(items).map((item) => (
+      { content: item.content, meta: List.newItemMeta(data.style), depth: current.depth + item.depth }
+    ))
     pasted[0] = { ...current, content: html(before.cloneContents()) + pasted[0]!.content }
     const last = pasted[pasted.length - 1]!
     const caretOffset = textLength(last.content)
     last.content += html(after.cloneContents())
     flat.splice(index, 1, ...pasted)
 
+    const target = this.renderItems(flat).querySelectorAll(ITEM)[index + pasted.length - 1]!
+    placeCaret(target.querySelector<HTMLElement>(ITEM_CONTENT)!, caretOffset)
+  }
+
+  /** Render the list anew with these items in place of its own. */
+  private renderItems(flat: FlatItem[]): HTMLElement {
+    const wrapper = this.tabulator.listWrapper
     this.tabulator.data.items = List.nest(flat)
     const list = this.tabulator.render()
     wrapper.replaceWith(list)
     ;(this as unknown as { listElement: HTMLElement }).listElement = list
-    const target = list.querySelectorAll(ITEM)[index + pasted.length - 1]!
-    placeCaret(target.querySelector<HTMLElement>(ITEM_CONTENT)!, caretOffset)
+    return list
+  }
+
+  private static newItemMeta(style: ListStyle): Record<string, unknown> {
+    return style === 'checklist' ? { checked: false } : {}
+  }
+
+  /**
+   * Depths a list can hold: each item one level under the nearest item
+   * above it that was shallower, at the top when there is none. Items
+   * without their parent keep their siblings and their own children.
+   */
+  private static nestable<T extends { depth: number }>(items: T[]): T[] {
+    const parents: { from: number; to: number }[] = []
+    return items.map((item) => {
+      while (parents.length > 0 && parents[parents.length - 1]!.from >= item.depth) parents.pop()
+      const depth = parents.length > 0 ? parents[parents.length - 1]!.to + 1 : 0
+      parents.push({ from: item.depth, to: depth })
+      return { ...item, depth }
+    })
+  }
+
+  private static itemsHtml(items: any[], tag: 'ol' | 'ul'): string {
+    const children = (item: any): string => (item.items.length > 0 ? List.itemsHtml(item.items, tag) : '')
+    return `<${tag}>${items.map((item) => `<li>${item.content}${children(item)}</li>`).join('')}</${tag}>`
   }
 
   private static flatten(items: any[], depth: number): FlatItem[] {
