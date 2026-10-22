@@ -18,6 +18,7 @@ repurpose:
     plannedAt: Planifié le
     updatedAt: Mis à jour
 
+repurposeConfirmationCancel: Annuler
 repurposeStatusDraft: Brouillon
 repurposeStatusPlanned: Planifié
 repurposeStatusPosted: Publié

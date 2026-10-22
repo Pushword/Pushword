@@ -249,6 +249,15 @@
       .deck-note { flex-wrap: wrap; }
       .deck-note span { flex-basis: 100%; }
     }
+    @media (pointer: coarse) {
+      .btn, .btn-xs, .icon-btn, .toggle button, header .back {
+        min-height: 44px;
+        min-width: 44px;
+      }
+      header .back { display: inline-flex; align-items: center; }
+      input[type=text], input[type=datetime-local], textarea, select { min-height: 44px; font-size: 1rem; }
+      input[type=range], input[type=color], .switch, .slide-item__head { min-height: 44px; }
+    }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
       .slide figure:hover svg, .tw-sw:hover, .effect-tile:hover { transform: none; }

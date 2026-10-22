@@ -31,16 +31,16 @@
             {% for subscription in subscriptions %}
               {% set contact = subscription.contact %}
               <tr class="{{ subscription.current ? 'table-active' }}">
-                <td>
+                <td data-label="{{ 'newsletter.contact.field.audience'|trans }}">
                   {% if subscription.current %}
                     <strong>{{ contact.audience.name }}</strong>
                   {% else %}
                     <a href="{{ subscription.url }}">{{ contact.audience.name }}</a>
                   {% endif %}
                 </td>
-                <td class="text-muted">{{ contact.audience.mainHost }}</td>
-                <td><span class="badge badge-{{ badges[contact.statusLabel] }}">{{ ('newsletter.contact.status.' ~ contact.statusLabel)|trans }}</span></td>
-                <td class="text-muted">{{ contact.registeredAt|format_date('medium') }}</td>
+                <td class="text-muted" data-label="{{ 'newsletter.audience.field.mainHost'|trans }}">{{ contact.audience.mainHost }}</td>
+                <td data-label="{{ 'newsletter.contact.field.status'|trans }}"><span class="badge badge-{{ badges[contact.statusLabel] }}">{{ ('newsletter.contact.status.' ~ contact.statusLabel)|trans }}</span></td>
+                <td class="text-muted" data-label="{{ 'newsletter.contact.field.registeredAt'|trans }}">{{ contact.registeredAt|format_date('medium') }}</td>
               </tr>
             {% endfor %}
           </tbody>

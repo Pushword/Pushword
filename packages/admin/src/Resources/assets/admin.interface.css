@@ -39,6 +39,12 @@
   overflow-wrap: anywhere;
 }
 
+#static-output-content .alert {
+  max-block-size: 20rem;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+
 .pw-message-inline {
   max-inline-size: 75ch;
   line-height: 1.6;
@@ -70,20 +76,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 767.98px) {
-  table.datagrid:not(.datagrid-empty) {
-    table-layout: fixed;
-  }
-
-  .datagrid td[data-column='mainContent'] a {
-    overflow-wrap: anywhere;
-  }
-
-  .pw-list-title .text-truncate {
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-
+@media (max-width: 991.98px) {
   .pw-page-inline > .d-flex > div {
     min-inline-size: 0;
   }
@@ -100,6 +93,113 @@
 
   .pw-page-url__slug {
     max-inline-size: 100%;
+  }
+
+  /* Keep the native toggle reachable above the open drawer and its backdrop. */
+  body.ea-mobile-sidebar-visible .responsive-header {
+    position: relative;
+    z-index: calc(var(--zindex-modal-backdrop) + 2);
+  }
+
+  .ea-sidebar {
+    inset-block-start: 48px;
+    block-size: calc(100dvh - 48px);
+    min-block-size: 0;
+  }
+}
+
+@media (pointer: coarse) and (max-width: 991.98px) {
+  .responsive-header {
+    padding-block: 2px;
+  }
+
+  .btn,
+  .dropdown-item,
+  .dropdown-actions .dropdown-toggle,
+  .page-link {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+  }
+
+  .dropdown-actions .dropdown-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .form-control:not(textarea),
+  .form-select,
+  .ts-control {
+    min-block-size: 44px;
+  }
+
+  .form-control,
+  .form-select {
+    font-size: var(--pw-text-md);
+  }
+
+  .ea-sidebar-item-link {
+    min-block-size: 44px;
+  }
+
+  .ea-switch-input {
+    inset: 50% auto auto 50%;
+    inline-size: 44px;
+    block-size: 44px;
+    transform: translate(-50%, -50%);
+  }
+
+  .form-batch-checkbox,
+  .form-batch-checkbox-all {
+    position: relative;
+  }
+
+  .form-batch-checkbox::after,
+  .form-batch-checkbox-all::after,
+  .pw-message-media__remove::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    inline-size: 44px;
+    block-size: 44px;
+    transform: translate(-50%, -50%);
+  }
+
+  table.datagrid:not(.datagrid-empty) tr:not(.empty-row) td {
+    min-block-size: 44px;
+  }
+
+  table.datagrid:not(.datagrid-empty) td::before {
+    white-space: normal;
+    line-height: 1.25;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .datagrid thead a,
+  .datagrid thead span:not(.icon),
+  .ea-index-VersionLog .datagrid td[data-column='createdAt'] {
+    white-space: normal;
+  }
+
+  .ea-index-VersionLog .datagrid td[data-column='host'],
+  .ea-index-VersionLog .datagrid td[data-column='editor'] {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 767.98px) {
+  table.datagrid:not(.datagrid-empty) {
+    table-layout: fixed;
+  }
+
+  .datagrid td[data-column='mainContent'] a {
+    overflow-wrap: anywhere;
+  }
+
+  .pw-list-title .text-truncate {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   table.datagrid:not(.datagrid-empty) tr:not(.empty-row) td:has(.pw-page-inline),

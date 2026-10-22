@@ -36,15 +36,15 @@
               {% for event in consentEvents %}
                 {% set transition = event.transition.value %}
                 <tr>
-                  <td>{{ event.occurredAt|format_datetime('medium', 'short') }}</td>
-                  <td>
+                  <td data-label="{{ 'newsletter.contact.events.field.occurredAt'|trans }}">{{ event.occurredAt|format_datetime('medium', 'short') }}</td>
+                  <td data-label="{{ 'newsletter.contact.events.field.transition'|trans }}">
                     <span class="badge badge-{{ badges[transition] }}">
                       {{ ('newsletter.contact.events.transition.' ~ transition)|trans }}
                     </span>
                   </td>
-                  <td class="text-muted">{{ event.source ?? '—' }}</td>
-                  <td class="text-muted">{{ event.host ?? '—' }}</td>
-                  <td class="text-muted">{{ event.ip ?? '—' }}</td>
+                  <td class="text-muted" data-label="{{ 'newsletter.contact.field.source'|trans }}">{{ event.source ?? '—' }}</td>
+                  <td class="text-muted" data-label="{{ 'newsletter.contact.events.field.host'|trans }}">{{ event.host ?? '—' }}</td>
+                  <td class="text-muted" data-label="{{ 'newsletter.contact.events.field.ip'|trans }}">{{ event.ip ?? '—' }}</td>
                 </tr>
               {% endfor %}
             </tbody>

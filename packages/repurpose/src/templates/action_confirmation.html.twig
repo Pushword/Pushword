@@ -3,13 +3,26 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block body %}
-    <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordcore/style.css') }}">
-    <main class="max-w-xl p-8 mx-auto prose">
+    <style>
+        .pw-confirmation { box-sizing: border-box; max-width: 40rem; margin: 3rem auto; padding: 1.5rem; color: #0f172a; font: 1rem/1.6 system-ui, sans-serif; }
+        .pw-confirmation h1 { margin: 0 0 1rem; font-size: 1.75rem; line-height: 1.25; overflow-wrap: anywhere; }
+        .pw-confirmation p { margin: 0 0 2rem; color: #475569; }
+        .pw-confirmation form { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+        .pw-confirmation button, .pw-confirmation a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .5rem 1rem; border: 1px solid transparent; border-radius: 8px; font: inherit; cursor: pointer; text-decoration: none; }
+        .pw-confirmation button { color: #fff; background: #0369a1; }
+        .pw-confirmation button:hover { background: #075985; }
+        .pw-confirmation a { color: #334155; background: #f1f5f9; }
+        .pw-confirmation a:hover { background: #e2e8f0; }
+        .pw-confirmation :focus-visible { outline: 2px solid #0284c7; outline-offset: 3px; }
+        @media (max-width: 575.98px) { .pw-confirmation { margin-block: 1rem; } }
+    </style>
+    <main class="pw-confirmation">
         <h1>{{ title }}</h1>
         <p>{{ message }}</p>
         <form method="post">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrfId) }}">
             <button type="submit">{{ button }}</button>
+            <a href="{{ cancelUrl }}">{{ 'repurposeConfirmationCancel'|trans }}</a>
         </form>
     </main>
 {% endblock %}

@@ -7,6 +7,7 @@ namespace Pushword\Repurpose\Admin;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Repurpose\Entity\SocialPost;
 use Pushword\Repurpose\Repository\SocialPostRepository;
@@ -55,6 +56,7 @@ final class RepurposeFromPageController extends AbstractController
         if (! $request->isMethod('POST')) {
             return $this->render('@PushwordRepurpose/action_confirmation.html.twig', [
                 'button' => 'Create carousel',
+                'cancelUrl' => $this->adminUrlGenerator->setController(PageCrudController::class)->setAction('edit')->setEntityId($id)->generateUrl(),
                 'csrfId' => $csrfId,
                 'message' => 'Create a carousel draft from this page?',
                 'title' => 'Repurpose page',

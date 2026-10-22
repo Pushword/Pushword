@@ -30,3 +30,9 @@
   outline: 2px solid var(--focus-ring-color, #0284c7);
   outline-offset: 1px;
 }
+@media (pointer: coarse) {
+  .cdx-alignment-tune .cdx-settings-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

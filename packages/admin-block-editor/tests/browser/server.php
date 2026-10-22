@@ -21,7 +21,7 @@ $kernel = new Kernel('test', true);
 $kernel->boot();
 $entityManager = $kernel->getContainer()->get('doctrine.orm.default_entity_manager');
 $pages = [];
-foreach (['chrome', 'msedge', 'firefox'] as $browser) {
+foreach (['chrome', 'msedge', 'firefox', 'chrome-mobile'] as $browser) {
     $page = new Page();
     $page->host = 'admin-block-editor.test';
     $page->locale = 'en';

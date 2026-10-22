@@ -192,6 +192,8 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame($before, $this->em->getRepository(SocialPost::class)->count([]));
+        self::assertSelectorExists('main.pw-confirmation button[type="submit"]');
+        self::assertSelectorExists('main.pw-confirmation a[href="/admin"]');
 
         $this->client->submitForm('Create carousel');
 
@@ -226,6 +228,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
             self::assertResponseIsSuccessful();
             self::assertSame($before, $this->em->getRepository(SocialPost::class)->count([]));
+            self::assertSelectorExists('main.pw-confirmation a[href$="/page/'.$page->id.'/edit"]');
         } finally {
             $this->em->remove($page);
             $this->em->flush();
@@ -315,6 +318,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id.'/network/instagram');
 
         self::assertResponseIsSuccessful();
+        self::assertSelectorExists('main.pw-confirmation a[href="/admin/repurpose/studio/'.$post->id.'"]');
         self::assertNull($this->em->getRepository(SocialPost::class)
             ->findOneBy(['host' => self::HOST, 'page' => 'blog/studio-article', 'network' => 'instagram']));
 

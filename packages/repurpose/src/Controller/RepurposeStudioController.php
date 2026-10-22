@@ -166,6 +166,7 @@ final class RepurposeStudioController extends AbstractController
                 'No '.$network.' version exists yet. Create one from this carousel?',
                 'Create version',
                 $csrfId,
+                $this->generateUrl('repurpose_studio', ['id' => $id]),
             );
         }
 
@@ -290,10 +291,11 @@ final class RepurposeStudioController extends AbstractController
         ]);
     }
 
-    private function renderConfirmation(string $title, string $message, string $button, string $csrfId): Response
+    private function renderConfirmation(string $title, string $message, string $button, string $csrfId, string $cancelUrl = '/admin'): Response
     {
         return $this->render('@PushwordRepurpose/action_confirmation.html.twig', [
             'button' => $button,
+            'cancelUrl' => $cancelUrl,
             'csrfId' => $csrfId,
             'message' => $message,
             'title' => $title,

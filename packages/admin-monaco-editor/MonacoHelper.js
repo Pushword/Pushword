@@ -94,7 +94,11 @@ export default class MonacoHelper {
     }
 
     const monacoHelperInstance = new MonacoHelper(editor)
-    const resize = () => monacoHelperInstance.updateHeight(textarea)
+    const resize = () => {
+      monacoHelperInstance.updateHeight(textarea)
+      editDiv.style.width = `${textarea.offsetWidth}px`
+      editDiv.style.height = `${textarea.offsetHeight}px`
+    }
 
     window.addEventListener('resize', resize)
 

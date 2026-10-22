@@ -1234,6 +1234,10 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertSame(200, $client->getResponse()->getStatusCode());
         self::assertCount(1, $panel);
         self::assertCount(2, $panel->filter('tbody tr'));
+        self::assertSame(
+            ['When', 'What', 'Source', 'Host', 'IP'],
+            $panel->filter('tbody tr')->first()->filter('td')->each(static fn (Crawler $cell): ?string => $cell->attr('data-label')),
+        );
         self::assertStringContainsString('Opted in', $panel->text());
         self::assertStringContainsString('Unsubscribed', $panel->text());
         self::assertSame(2, substr_count($panel->text(), 'admin:'));
@@ -1587,9 +1591,14 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contact->id);
 
         self::assertSame(200, $client->getResponse()->getStatusCode());
-        self::assertCount(1, $crawler->filter('.form-fieldset')->reduce(
+        $panel = $crawler->filter('.form-fieldset')->reduce(
             static fn (Crawler $node): bool => str_contains($node->text(), 'Subscriptions'),
-        ));
+        );
+        self::assertCount(1, $panel);
+        self::assertSame(
+            ['Audience', 'Host', 'Status', 'Registered at'],
+            $panel->filter('tbody tr')->first()->filter('td')->each(static fn (Crawler $cell): ?string => $cell->attr('data-label')),
+        );
     }
 
     /** A pending opt-in an admin can vouch for becomes a subscription without the click. */

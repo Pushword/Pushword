@@ -18,6 +18,7 @@ repurpose:
     plannedAt: Planned at
     updatedAt: Updated
 
+repurposeConfirmationCancel: Cancel
 repurposeStatusDraft: Draft
 repurposeStatusPlanned: Planned
 repurposeStatusPosted: Posted

@@ -16,10 +16,18 @@ export default defineConfig({
   timeout: 120_000,
   expect: { timeout: 10_000 },
   outputDir: `./${resultsDirectory}`,
-  metadata: process.env.PW_EDITOR_WINDOWS_VERSION ? { windows: process.env.PW_EDITOR_WINDOWS_VERSION } : {},
+  metadata: process.env.PW_EDITOR_WINDOWS_VERSION
+    ? { windows: process.env.PW_EDITOR_WINDOWS_VERSION }
+    : {},
   reporter: [
     ['line'],
-    ['html', { open: 'never', outputFolder: windows ? 'playwright-report-windows' : 'playwright-report' }],
+    [
+      'html',
+      {
+        open: 'never',
+        outputFolder: windows ? 'playwright-report-windows' : 'playwright-report',
+      },
+    ],
     ['json', { outputFile: `${resultsDirectory}/results.json` }],
   ],
   use: {
@@ -30,15 +38,35 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chrome', use: { ...devices['Desktop Chrome'], channel: 'chrome' } },
-    { name: 'msedge', use: {
-      ...devices['Desktop Edge'], channel: 'msedge',
-      ...(process.env.PW_EDITOR_EDGE_WS_ENDPOINT ? {
-        connectOptions: { wsEndpoint: process.env.PW_EDITOR_EDGE_WS_ENDPOINT },
-        locale: 'fr-FR',
-      } : {}),
-    } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    {
+      name: 'chrome',
+      testIgnore: '**/mobile.spec.ts',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+    },
+    {
+      name: 'msedge',
+      testIgnore: '**/mobile.spec.ts',
+      use: {
+        ...devices['Desktop Edge'],
+        channel: 'msedge',
+        ...(process.env.PW_EDITOR_EDGE_WS_ENDPOINT
+          ? {
+              connectOptions: { wsEndpoint: process.env.PW_EDITOR_EDGE_WS_ENDPOINT },
+              locale: 'fr-FR',
+            }
+          : {}),
+      },
+    },
+    {
+      name: 'firefox',
+      testIgnore: '**/mobile.spec.ts',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'chrome-mobile',
+      testMatch: '**/mobile.spec.ts',
+      use: { ...devices['Pixel 7'], channel: 'chrome' },
+    },
   ],
   webServer: {
     command: 'php tests/browser/server.php',
