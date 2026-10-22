@@ -1,10 +1,80 @@
-import EditorJS, { API } from '@editorjs/editorjs'
+import EditorJS, { API, SanitizerConfig } from '@editorjs/editorjs'
 import DOMPurify from 'dompurify'
 import { MarkdownUtils } from './MarkdownUtils'
 import { BlockToolAdapterWithConstructable, chunkTool } from '../../EditorJsParseMarkdown'
 import EditorJsExportMarkdown from '../../EditorJsExportMarkdown'
 import { GroupNesting } from '../Group/GroupNesting'
 import { reportEditorError } from '../../EditorDiagnostics'
+import type { PastedItem } from '../List/List'
+
+/** A Word list paragraph: `mso-list:l0 level2 lfo1` in its style. */
+const WORD_LIST_LEVEL = /mso-list:\s*l\d+\s+level(\d+)/i
+
+/** List items, nested or legacy (a string, a checklist `{text}`), in document order. */
+function flattenListItems(items: any[], depth: number): PastedItem[] {
+    return items.flatMap(item => [
+        { content: typeof item === 'string' ? item : (item.content ?? item.text ?? ''), depth },
+        ...flattenListItems(Array.isArray(item.items) ? item.items : [], depth + 1),
+    ])
+}
+
+/**
+ * Word writes a list as paragraphs, each with its level in its style and its
+ * bullet or number in a `mso-list:Ignore` span. Rebuild each run of them as the
+ * nested lists they stand for, the glyphs dropped, before the conversion.
+ */
+function convertWordLists(container: HTMLElement): void {
+    const paragraphs = Array.from(container.querySelectorAll('p')).filter(p => WORD_LIST_LEVEL.test(p.getAttribute('style') ?? ''))
+    const handled = new Set<Element>()
+    for (const first of paragraphs) {
+        if (handled.has(first)) continue
+        const levels: { level: number; list: HTMLElement }[] = []
+        for (let p: Element | null = first, next: Element | null; p && paragraphs.includes(p as HTMLParagraphElement); p = next) {
+            next = nextElementInRun(p)
+            handled.add(p)
+            const level = Number(WORD_LIST_LEVEL.exec(p.getAttribute('style')!)![1])
+            const glyphs = Array.from(p.querySelectorAll('[style*="mso-list"]')).filter(span => /mso-list:\s*Ignore/i.test(span.getAttribute('style')!))
+            const ordered = glyphs.some(span => /^[\dA-Za-z]{1,4}[.)]$/.test(span.textContent!.trim()))
+            glyphs.forEach(span => span.remove())
+            while (levels.length > 1 && levels[levels.length - 1]!.level > level) levels.pop()
+            let parent = levels[levels.length - 1]
+            if (!parent || parent.level < level) {
+                const list = document.createElement(ordered ? 'ol' : 'ul')
+                if (parent) parent.list.lastElementChild!.append(list)
+                else first.before(list)
+                parent = { level, list }
+                levels.push(parent)
+            }
+            const item = document.createElement('li')
+            item.append(...Array.from(p.childNodes))
+            parent.list.append(item)
+            if (p !== first) p.remove()
+        }
+        first.remove()
+    }
+}
+
+/** The next element after `node`, past the whitespace and comments Word writes between paragraphs. */
+function nextElementInRun(node: Node): Element | null {
+    let next = node.nextSibling
+    while (next && (next.nodeType === Node.COMMENT_NODE || (next.nodeType === Node.TEXT_NODE && !next.textContent!.trim()))) {
+        next = next.nextSibling
+    }
+    return next?.nodeType === Node.ELEMENT_NODE ? next as Element : null
+}
+
+/** One line per field of a selected block; the level picker of a heading is not text. */
+function blockPlainText(block: Element): string {
+    const fields = Array.from(block.querySelectorAll('[contenteditable="true"]'))
+        .filter(field => !field.parentElement?.closest('[contenteditable="true"]'))
+    const sources = fields.length > 0 ? fields : [block.querySelector('.ce-block__content') ?? block]
+    return sources.map(source => {
+        const copy = source.cloneNode(true) as Element
+        copy.querySelectorAll('select, .ce-header-level-wrapper').forEach(element => element.remove())
+        copy.querySelectorAll('br').forEach(br => br.replaceWith('\n'))
+        return (copy.textContent ?? '').trim()
+    }).filter(Boolean).join('\n')
+}
 
 /**
  * ClipboardManager handles copy/paste operations for EditorJS
@@ -34,7 +104,33 @@ export default class ClipboardManager {
     private initialize(): void {
         this.initializeCopyShortcut()
         this.initializeCopyListener()
+        this.initializeBlockCopyText()
         this.initializePasteListener()
+    }
+
+    /**
+     * Where this manager leaves a copy of selected blocks to Editor.js (no
+     * Clipboard API, a holder not named `editorjs_…`), Editor.js writes each
+     * block's text content as plain text: list items run together and a
+     * heading starts with its level picker ("H2H3H4"). Its HTML and its own
+     * block data are fine for pasting back, so only the plain text is redone,
+     * one line per field. It is read before the event reaches Editor.js — a
+     * cut removes the blocks while the event is still being dispatched — and
+     * written after Editor.js wrote its own.
+     */
+    private initializeBlockCopyText(): void {
+        let text: string | null = null
+        for (const type of ['copy', 'cut']) {
+            window.addEventListener(type, () => {
+                const blocks = document.querySelectorAll('.ce-block--selected')
+                text = blocks.length > 0 ? Array.from(blocks, blockPlainText).filter(Boolean).join('\n\n') : null
+            }, true)
+            window.addEventListener(type, (event) => {
+                const clipboard = (event as ClipboardEvent).clipboardData
+                if (text !== null && event.defaultPrevented && clipboard) clipboard.setData('text/plain', text)
+                text = null
+            })
+        }
     }
 
     private initializeCopyShortcut(): void {
@@ -331,36 +427,136 @@ export default class ClipboardManager {
             }
         }
 
-        // When the plain text already carries markdown, it is authoritative:
-        // this editor's own copies always write markdown there (a whole-block
-        // copy writes nothing else), and converting the HTML that may come
-        // along would lose what only the markdown holds — a table's alignment
-        // and sticky header, for one. HTML conversion is only a fallback for
-        // genuine external rich text (Google Docs, Word, Sheets), whose plain
-        // text has no markdown syntax.
+        const markdown = this.clipboardMarkdown(plainText, htmlText)
+
+        const listField = element?.closest('.cdx-list__item-content')
+        if (listField && this.pasteIntoList(event, listField, markdown, plainText)) return
+
+        if (markdown === null) return // Let default paste handle plain text
+
+        // Prevent default and insert as blocks
+        event.preventDefault()
+        event.stopPropagation()
+
+        this.insertMarkdownAsBlocks(markdown)
+    }
+
+    /**
+     * The clipboard as markdown, or null for plain text without any.
+     *
+     * When the plain text already carries markdown, it is authoritative:
+     * this editor's own copies always write markdown there (a whole-block
+     * copy writes nothing else), and converting the HTML that may come
+     * along would lose what only the markdown holds — a table's alignment
+     * and sticky header, for one. HTML conversion is only a fallback for
+     * genuine external rich text (Google Docs, Word, Sheets), whose plain
+     * text has no markdown syntax — except Word's numbered list, written
+     * there as "1." lines that lose its levels.
+     */
+    private clipboardMarkdown(plainText: string, htmlText: string): string | null {
         const plainHasMarkdown = this.detectMarkdownPatterns(MarkdownUtils.retrieveMarkdownWithoutTunes(plainText))
 
         // Try to convert HTML to markdown if it looks like rich text (Google Docs, Word, etc.)
         let textToProcess = plainText
-        if (!plainHasMarkdown && htmlText && this.isRichTextHtml(htmlText)) {
+        if ((!plainHasMarkdown || WORD_LIST_LEVEL.test(htmlText)) && htmlText && this.isRichTextHtml(htmlText)) {
             const convertedMarkdown = this.convertHtmlToMarkdown(htmlText)
             if (convertedMarkdown) {
                 textToProcess = convertedMarkdown
             }
         }
 
-        if (!textToProcess) return
+        if (!textToProcess || !this.detectMarkdownPatterns(textToProcess)) return null
+        return textToProcess
+    }
 
-        // Check if text contains markdown patterns
-        if (!this.detectMarkdownPatterns(textToProcess)) {
-            return // Let default paste handle plain text
+    /**
+     * Paste several lines into a list item as items of that list, at the caret,
+     * rather than as blocks after the whole list. A single item is inline text.
+     * Returns false to leave the paste to the block import or the browser.
+     */
+    private pasteIntoList(event: ClipboardEvent, field: Element, markdown: string | null, plainText: string): boolean {
+        const api = this.editor as unknown as API
+        const block = api.blocks.getById(field.closest<HTMLElement>('.ce-block')?.dataset.id ?? '')
+        const tool = this.editorjsTools.find(tool => tool.name === block?.name)
+        if (!block || typeof (tool?.constructable as { prototype?: { pasteItems?: unknown } })?.prototype?.pasteItems !== 'function') {
+            return false
         }
 
-        // Prevent default and insert as blocks
+        const items = this.pastedListItems(event.clipboardData?.getData('application/x-editor-js') ?? '', markdown, plainText)
+        if (items === null) return false
+
+        const rules = (tool!.sanitizeConfig as Record<string, SanitizerConfig>).items ?? tool!.baseSanitizeConfig
+        const clean = items.map(item => ({ ...item, content: api.sanitizer.clean(item.content, rules) }))
         event.preventDefault()
         event.stopPropagation()
+        if (clean.length === 1) {
+            document.execCommand('insertHTML', false, clean[0]!.content)
+        } else {
+            block.call('pasteItems', { items: clean })
+        }
+        return true
+    }
 
-        this.insertMarkdownAsBlocks(textToProcess)
+    /**
+     * The clipboard as list items, or null when it holds a block no item can
+     * carry (a table, an image): only lists, paragraphs and headings convert.
+     * Editor.js' own copy of blocks comes first, then markdown (this editor's
+     * copies, converted rich text), each block read through its tool's import;
+     * plain text gives an item per line.
+     */
+    private pastedListItems(editorJsData: string, markdown: string | null, plainText: string): PastedItem[] | null {
+        let blocks: { type: string; data: any }[]
+        if (editorJsData) {
+            try {
+                blocks = (JSON.parse(editorJsData) as { tool: string; data: any }[]).map(({ tool, data }) => ({ type: tool, data }))
+            } catch {
+                return null
+            }
+        } else if (markdown !== null) {
+            blocks = this.markdownBlocks(markdown)
+        } else {
+            const lines = plainText.split(/\r?\n/).map(line => line.trim()).filter(Boolean)
+            if (lines.length < 2) return null // A single line pastes as the browser does.
+            const text = document.createElement('span')
+            return lines.map(line => {
+                text.textContent = line
+                return { content: text.innerHTML, depth: 0 }
+            })
+        }
+
+        const items: PastedItem[] = []
+        for (const { type, data } of blocks) {
+            if (type === 'list' && Array.isArray(data?.items)) {
+                items.push(...flattenListItems(data.items, 0))
+            } else if ((type === 'paragraph' || type === 'header') && typeof data?.text === 'string') {
+                // A soft line break starts an item; a hard one (<br>) stays inside it.
+                items.push(...data.text.split('\n').filter((line: string) => line.trim()).map((line: string) => ({ content: line, depth: 0 })))
+            } else {
+                return null
+            }
+        }
+        return items.length > 0 ? items : null
+    }
+
+    /** Markdown read into block data by each chunk's tool, without inserting anything. */
+    private markdownBlocks(markdown: string): { type: string; data: any }[] {
+        const blocks: { type: string; data: any }[] = []
+        const recorder = {
+            blocks: {
+                insert: (type = 'paragraph', data: any = {}) => {
+                    blocks.push({ type, data })
+                    return { id: String(blocks.length - 1) }
+                },
+                update: (id: string, data: any) => {
+                    blocks[Number(id)]!.data = data
+                },
+            },
+        } as unknown as API
+        const nesting = new GroupNesting()
+        for (const { text } of MarkdownUtils.chunkMarkdown(markdown)) {
+            chunkTool(this.editorjsTools, text, nesting)?.constructable?.importFromMarkdown(recorder, text)
+        }
+        return blocks
     }
 
     /**
@@ -395,6 +591,7 @@ export default class ClipboardManager {
 
         // Remove style tags and scripts
         container.querySelectorAll('style, script, meta, link').forEach(el => el.remove())
+        convertWordLists(container)
 
         // Process the HTML and convert to markdown
         return this.processNodeToMarkdown(container)

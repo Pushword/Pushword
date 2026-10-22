@@ -15,6 +15,7 @@ import Gallery from '../Gallery/Gallery'
 import Attaches from '../Attaches/Attaches'
 import Quote from '../Quote/Quote'
 import CodeBlock from '../CodeBlock/CodeBlock'
+import Header from '../Header/Header'
 
 /**
  * Unit tests for the copy/paste pipeline. The handlers are private, so we reach
@@ -948,5 +949,186 @@ describe('ClipboardManager – pasting markdown as blocks', () => {
       ['Operator', 'Meaning'],
       ['a | b', 'or'],
     ])
+  })
+})
+
+const wordBullet = (level: number, text: string, glyph = '·') =>
+  `<p class="MsoListParagraph" style="mso-list:l0 level${level} lfo1"><span style="font-family:Symbol;mso-list:Ignore">${glyph}<span>&nbsp;&nbsp;&nbsp;</span></span>${text}</p>\r\n`
+
+describe('ClipboardManager – Word lists', () => {
+  it('keeps two Word lists apart when a paragraph separates them', () => {
+    const html = wordBullet(1, 'One') + '<p class="MsoNormal">Between</p>' + wordBullet(1, 'Two')
+
+    expect(newManager().convertHtmlToMarkdown(html).trim()).toBe('- One\n\nBetween\n\n- Two')
+  })
+
+  it('rebuilds Word list paragraphs as a nested list without their glyphs', () => {
+    const html = `<!--StartFragment-->${wordBullet(1, 'Option <b>A</b>')}${wordBullet(2, 'Detail', 'o')}${wordBullet(1, 'Option B')}<!--EndFragment-->`
+
+    expect(newManager().convertHtmlToMarkdown(html).trim()).toBe('- Option **A**\n  - Detail\n- Option B')
+  })
+
+  it('numbers a Word list whose glyphs are numbers, even when its plain text looks like markdown', () => {
+    const html = wordBullet(1, 'One', '1.') + wordBullet(2, 'Sub', 'a)') + wordBullet(1, 'Two', '2.')
+
+    expect(newManager().clipboardMarkdown('1.\tOne\na)\tSub\n2.\tTwo', html).trim()).toBe('1. One\n   1. Sub\n2. Two')
+  })
+})
+
+describe('ClipboardManager – pasting into a list item', () => {
+  let cm: AnyCm
+  let call: ReturnType<typeof vi.fn>
+  beforeEach(() => {
+    call = vi.fn()
+    cm = new ClipboardManager({ editor: {
+      blocks: { getById: (id: string) => (id === 'list-block' ? { name: 'list', call } : null) },
+      sanitizer: { clean: (html: string) => html.replace(/<\/?u>/g, '') },
+      tools: { getBlockTools: () => [
+        { name: 'header', constructable: Header },
+        { name: 'list', constructable: List, sanitizeConfig: { items: { b: true, br: true } } },
+        { name: 'paragraph', constructable: Paragraph },
+        { name: 'image', constructable: Image },
+      ] },
+    } } as any) as unknown as AnyCm
+    document.body.innerHTML = '<div class="ce-block" data-id="list-block"><div class="ce-block__content"><div class="cdx-list">' +
+      '<div class="cdx-list__item"><div class="cdx-list__item-content" contenteditable="true"></div></div></div></div></div>'
+    const range = document.createRange()
+    range.setStart(document.querySelector('.cdx-list__item-content')!, 0)
+    window.getSelection()!.removeAllRanges()
+    window.getSelection()!.addRange(range)
+  })
+
+  function paste(data: Record<string, string>): any {
+    const event = {
+      clipboardData: { getData: (type: string) => data[type] ?? '' },
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    }
+    cm.handlePaste(event)
+    return event
+  }
+
+  it.each([
+    ['plain lines', { 'text/plain': 'Line one\r\n\r\nLine <two>\nLine three' }, [['Line one', 0], ['Line &lt;two&gt;', 0], ['Line three', 0]]],
+    ['HTML paragraphs', { 'text/plain': 'A\n\nB', 'text/html': '<p>A</p><p>B</p>' }, [['A', 0], ['B', 0]]],
+    ['an HTML list', { 'text/plain': 'A\nB', 'text/html': '<ul><li><u>A</u><ul><li><b>B</b></li></ul></li></ul>' }, [['A', 0], ['<b>B</b>', 1]]],
+    ['Word bullets', { 'text/plain': '·   Option A\n·   Option B', 'text/html': wordBullet(1, 'Option A') + wordBullet(2, 'Option B') }, [['Option A', 0], ['Option B', 1]]],
+    ['markdown copied from this editor', { 'text/plain': '- First\n  - Nested\n\n## Next day' }, [['First', 0], ['Nested', 1], ['Next day', 0]]],
+    ['Editor.js blocks', { 'text/plain': 'First', 'application/x-editor-js': JSON.stringify([
+      { tool: 'list', data: { style: 'unordered', items: [{ content: 'First', meta: {}, items: [{ content: 'Nested', meta: {}, items: [] }] }] } },
+      { tool: 'header', data: { text: 'Next day', level: 2 } },
+    ]) }, [['First', 0], ['Nested', 1], ['Next day', 0]]],
+  ])('hands %s to the list as items', (_source, data, expected) => {
+    const event = paste(data)
+
+    expect(event.preventDefault).toHaveBeenCalledOnce()
+    expect(call).toHaveBeenCalledWith('pasteItems', {
+      items: expected.map(([content, depth]) => ({ content, depth })),
+    })
+  })
+
+  it('leaves a single plain line to the browser', () => {
+    const event = paste({ 'text/plain': 'Line one' })
+
+    expect(event.preventDefault).not.toHaveBeenCalled()
+    expect(call).not.toHaveBeenCalled()
+  })
+
+  it('inserts a single markdown line at the caret rather than as a block after the list', () => {
+    const command = vi.fn(() => true)
+    document.execCommand = command
+    const insert = vi.spyOn(cm, 'insertMarkdownAsBlocks')
+
+    paste({ 'text/plain': '**Length** : 12km' })
+
+    expect(command).toHaveBeenCalledWith('insertHTML', false, '<b>Length</b> : 12km')
+    expect(call).not.toHaveBeenCalled()
+    expect(insert).not.toHaveBeenCalled()
+  })
+
+  it('leaves content no item can hold to the block import', () => {
+    const insert = vi.spyOn(cm, 'insertMarkdownAsBlocks').mockImplementation(() => {})
+
+    paste({ 'text/plain': '- First\n\n![Photo](photo.jpg)' })
+
+    expect(call).not.toHaveBeenCalled()
+    expect(insert).toHaveBeenCalledOnce()
+  })
+
+  it('reads legacy string and checklist items of copied Editor.js blocks', () => {
+    paste({ 'text/plain': 'x', 'application/x-editor-js': JSON.stringify([
+      { tool: 'list', data: { style: 'unordered', items: ['Legacy', { text: 'Check', items: ['Sub'] }] } },
+    ]) })
+
+    expect(call).toHaveBeenCalledWith('pasteItems', { items: [
+      { content: 'Legacy', depth: 0 }, { content: 'Check', depth: 0 }, { content: 'Sub', depth: 1 },
+    ] })
+  })
+
+  it('splits a pasted paragraph on its soft line breaks, hard breaks kept inside the item', () => {
+    paste({ 'text/plain': 'x', 'application/x-editor-js': JSON.stringify([
+      { tool: 'paragraph', data: { text: 'One<br>still one\nTwo' } },
+    ]) })
+
+    expect(call).toHaveBeenCalledWith('pasteItems', { items: [
+      { content: 'One<br>still one', depth: 0 }, { content: 'Two', depth: 0 },
+    ] })
+  })
+
+  it('leaves unreadable Editor.js data to the block import', () => {
+    vi.spyOn(cm, 'insertMarkdownAsBlocks').mockImplementation(() => {})
+
+    expect(() => paste({ 'text/plain': 'A\nB', 'application/x-editor-js': '{not json' })).not.toThrow()
+
+    expect(call).not.toHaveBeenCalled()
+  })
+
+  it('does not hand the paste to a field of a block whose tool cannot take items', () => {
+    document.querySelector('.ce-block')!.setAttribute('data-id', 'other')
+
+    const event = paste({ 'text/plain': 'Line one\nLine two' })
+
+    expect(call).not.toHaveBeenCalled()
+    expect(event.preventDefault).not.toHaveBeenCalled()
+  })
+})
+
+describe('ClipboardManager – plain text of a block copy left to Editor.js', () => {
+  beforeEach(() => {
+    newManager()
+    document.body.innerHTML =
+      '<div class="ce-block ce-block--selected"><div class="ce-block__content"><div class="cdx-list">' +
+      '<div class="cdx-list__item"><div class="cdx-list__item-content" contenteditable="true">First<br>line two</div>' +
+      '<div class="cdx-list__item-children"><div class="cdx-list__item"><div class="cdx-list__item-content" contenteditable="true">Nested</div></div></div></div>' +
+      '</div></div></div>' +
+      '<div class="ce-block ce-block--selected"><div class="ce-block__content"><div class="ce-header-level-wrapper"><select><option>H2</option><option>H3</option></select></div>' +
+      '<h2 class="ce-header" contenteditable="true">Next day</h2></div></div>' +
+      '<div class="ce-block"><div class="ce-block__content"><div contenteditable="true">After</div></div></div>'
+  })
+
+  function dispatch(type: string, editorJs: (event: Event) => void): ReturnType<typeof vi.fn> {
+    const setData = vi.fn()
+    const event = new Event(type, { bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'clipboardData', { value: { setData } })
+    document.addEventListener(type, editorJs, { once: true })
+    document.querySelector('h2')!.dispatchEvent(event)
+    return setData
+  }
+
+  it.each(['copy', 'cut'])('writes one line per field on %s, after Editor.js and without the heading level picker', (type) => {
+    const setData = dispatch(type, (event) => {
+      event.preventDefault()
+      ;(event as ClipboardEvent).clipboardData!.setData('text/plain', 'Firstline twoNested\n\nH2H3Next day')
+      // A cut removes the blocks before the event is done.
+      if (type === 'cut') document.querySelectorAll('.ce-block--selected').forEach((block) => block.remove())
+    })
+
+    expect(setData).toHaveBeenLastCalledWith('text/plain', 'First\nline two\nNested\n\nNext day')
+  })
+
+  it('leaves a copy nobody handled to the browser', () => {
+    const setData = dispatch('copy', () => {})
+
+    expect(setData).not.toHaveBeenCalled()
   })
 })

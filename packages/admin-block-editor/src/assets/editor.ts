@@ -254,8 +254,12 @@ export class editorJs {
     const holder = document.getElementById(config.holder!)
     holder?.addEventListener('keydown', (event) => {
       const selection = window.getSelection()
+      // Editor.js erases selected blocks only when no caret exists, but Chromium
+      // puts one back into the field still focused before dispatching the key.
+      const erases = (event.key === 'Backspace' || event.key === 'Delete') &&
+        (event.target as Element).closest?.('.ce-block') !== null
       if (editor.readOnly.isEnabled || event.isComposing || event.ctrlKey || event.metaKey || event.altKey ||
-        event.key.length !== 1 || !selection?.isCollapsed || !holder.querySelector('.ce-block--selected')) return
+        (event.key.length !== 1 && !erases) || !selection?.isCollapsed || !holder.querySelector('.ce-block--selected')) return
       // Own the replacement: Editor.js can restore an old native caret while
       // closing its toolbar, then append the character instead of replacing blocks.
       const indices = Array.from(holder.querySelectorAll<HTMLElement>('.ce-block--selected'),
@@ -264,7 +268,7 @@ export class editorJs {
       event.preventDefault()
       event.stopImmediatePropagation()
       const text = document.createElement('span')
-      text.textContent = event.key
+      text.textContent = erases ? '' : event.key
       // Insert first so deleting the final old block cannot create an extra empty block.
       const block = editor.blocks.insert('paragraph', { text: text.innerHTML }, undefined, indices[0], false)
       for (const index of indices.reverse()) editor.blocks.delete(index + 1)

@@ -144,6 +144,38 @@ it('replaces several selected blocks without shifting the remaining deletion ind
   expect(vi.mocked(editor.blocks.delete).mock.calls).toEqual([[3], [2]])
 })
 
+it.each(['Delete', 'Backspace'])('erases selected blocks on %s though the browser put the caret back in one', (key) => {
+  const instance = boot('{"blocks":[]}')
+  const holder = document.getElementById('ed')!
+  holder.innerHTML = ['Selected one', 'Selected two', 'After'].map((text, index) =>
+    `<div class="ce-block${index < 2 ? ' ce-block--selected' : ''}" data-id="${index}"><p contenteditable="true">${text}</p></div>`,
+  ).join('')
+  const field = holder.querySelector('p')!
+  window.getSelection()!.collapse(field.firstChild, 0)
+  const editor = instance.getEditors().ed!
+  vi.spyOn(editor.blocks, 'getBlockIndex').mockImplementation((id) => Number(id))
+  const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+
+  field.dispatchEvent(event)
+
+  expect(event.defaultPrevented).toBe(true)
+  expect(editor.blocks.insert).toHaveBeenCalledWith('paragraph', { text: '' }, undefined, 0, false)
+  expect(vi.mocked(editor.blocks.delete).mock.calls).toEqual([[2], [1]])
+  expect(editor.caret.setToBlock).toHaveBeenCalledWith('replacement', 'end')
+})
+
+it('leaves an erasing key typed outside the blocks alone', () => {
+  boot('{"blocks":[]}')
+  const holder = document.getElementById('ed')!
+  holder.innerHTML = '<div class="ce-block ce-block--selected"><p contenteditable="true">Text</p></div><input>'
+  window.getSelection()!.collapse(holder.querySelector('p')!.firstChild, 0)
+  const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true })
+
+  holder.querySelector('input')!.dispatchEvent(event)
+
+  expect(event.defaultPrevented).toBe(false)
+})
+
 it.each(['read-only', 'text selection', 'unselected blocks'])('keeps native typing with %s', (state) => {
   const instance = boot('{"blocks":[]}')
   const holder = document.getElementById('ed')!
