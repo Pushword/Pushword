@@ -1,5 +1,5 @@
 ---
-title: 'new newsletter audiences start with a site identity; campaigns can choose their own design; reusable email templates in the admin; statistics CSV labels unique clickers'
+title: 'docker runtime security update; newsletter email designs are reusable; statistics CSV labels unique clickers'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 run: 'doctrine:schema:update --force'
@@ -36,19 +36,17 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** pushword/newsletter
+**Concerns:** `pushword/core`, `pushword/newsletter`
 
-## Newsletter email identity
+## Docker runtime security
 
-New audiences start with a site-name header and a copyright footer. Existing saved designs are preserved. Use **Audiences → Email design → Restore site name and copyright** to apply the new defaults to an existing audience, then save. `%siteName%` and `%year%` resolve in headers and footers; custom Twig templates also receive `siteName` and `year`. See [email design](../extension/newsletter#email-design-and-live-preview).
+New Docker builds use [FrankenPHP 1.13.2](https://github.com/php/frankenphp/releases/tag/v1.13.2), with PHP and FrankenPHP security fixes.
+**Sites using the Docker skeleton:** merge the updated `Dockerfile`, or run `php bin/console pw:docker:init --force` only if all generated Docker files are uncustomized.
+Rebuild and redeploy with `docker compose -f compose.prod.yaml up -d --build`.
 
-## Campaign email design
+## Newsletter email designs
 
-Run `php bin/console doctrine:schema:update --force` to add the nullable campaign layout override. Existing campaigns continue to inherit the audience's design. Campaign forms now offer an explicit design choice before the content; saved choices apply to real and test sends. See [email design](../extension/newsletter#email-design-and-live-preview).
-
-## Reusable email templates
-
-Run `php bin/console doctrine:schema:update --force` to create the newsletter email template table. Editors can create and duplicate named designs in **Newsletter → Templates** and select them for campaigns or audience defaults. Campaign forms now preview unsaved content directly, using a mobile viewport by default. See [email design](../extension/newsletter#email-design-and-live-preview).
+Run `php bin/console doctrine:schema:update --force` once to add campaign design overrides and reusable email templates. Existing audience designs and inherited campaign layouts are preserved. To apply the new site-name header and copyright footer to an existing audience, use **Audiences → Email design → Restore site name and copyright**, then save. See [email design](../extension/newsletter#email-design-and-live-preview).
 
 ## Newsletter statistics CSV
 
