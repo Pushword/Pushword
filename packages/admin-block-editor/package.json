@@ -42,9 +42,12 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "dompurify": "^3.4.15",
+    "dompurify": "^3.4.17",
     "he": "^2.0.0",
     "jsonrepair": "^3.13.1",
     "prettier": "^3.9.9"
+  },
+  "resolutions": {
+    "monaco-editor/dompurify": "3.4.17"
   }
 }

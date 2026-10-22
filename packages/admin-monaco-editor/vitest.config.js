@@ -1,9 +1,8 @@
 import { defineConfig } from 'vitest/config'
 
-// Only the markdown primitives are unit-tested: they are pure string maths, so the
-// node environment is enough and monaco-editor never has to load.
+// Markdown primitives and the bundled sanitizer can be checked without loading Monaco.
 export default defineConfig({
   test: {
-    include: ['markdown/**/*.test.js'],
+    include: ['markdown/**/*.test.js', 'build.test.js'],
   },
 })

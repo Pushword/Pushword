@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "css-loader": "^7",
+    "dompurify": "^3.4.17",
     "file-loader": "^6.2.0",
     "monaco-editor": "~0.57.0",
     "monaco-editor-webpack-plugin": "^7.1",
@@ -21,5 +22,8 @@
     "vitest": "^5.0.3",
     "webpack": "^5.65",
     "webpack-cli": "^7.2.3"
+  },
+  "resolutions": {
+    "monaco-editor/dompurify": "3.4.17"
   }
 }

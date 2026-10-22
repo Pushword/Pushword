@@ -12,6 +12,9 @@ export default {
   },
   resolve: {
     alias: {
+      // Monaco vendors DOMPurify; use the patched dependency for its sanitizer.
+      './dompurify/dompurify.js$':
+        path.resolve(__dirname, 'node_modules/dompurify/dist/purify.es.mjs'),
       // monaco-worker-manager still imports the path used before Monaco 0.56.
       'monaco-editor/esm/vs/editor/editor.worker.js$':
         'monaco-editor/editor/editor.worker.js',
