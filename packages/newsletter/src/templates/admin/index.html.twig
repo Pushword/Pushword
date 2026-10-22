@@ -6,7 +6,9 @@
   {% if section in ['automation', 'campaign'] %}
     {{ include('@PushwordNewsletter/admin/_status_filters.html.twig') }}
   {% endif %}
-  {{ parent() }}
+  <div data-pw-newsletter-index data-select-all="{{ 'newsletter.workspace.selectAll'|trans }}" data-select-row="{{ 'newsletter.workspace.selectRow'|trans }}" data-row-actions="{{ 'newsletter.workspace.rowActions'|trans }}">
+    {{ parent() }}
+  </div>
 {% endblock %}
 
 {% block table_body_empty %}

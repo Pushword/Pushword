@@ -22,6 +22,7 @@ newsletter:
       postalAddress: Adresse postale
       postalAddress.help: L'adresse physique de l'expéditeur, imprimée au pied de chaque mail de cette audience. La loi américaine (CAN-SPAM) l'exige sur les mails commerciaux ; laissez vide pour une audience purement transactionnelle.
       rateSeconds: Cadence (s/mail)
+      rateSeconds.help: Secondes entre deux emails. Par exemple, 30 limite l'envoi à deux emails par minute.
       replyTo: Répondre à
       slug: Référence (slug)
       slug.help: La clé utilisée par le formulaire d'inscription et l'API.
@@ -82,6 +83,7 @@ newsletter:
       previewSegment: Compter l'audience
       recipients: Destinataires
       review: Vérifier et envoyer
+      saveDraft: Enregistrer le brouillon
       schedule: Programmer
       send: Envoyer
       sendTest: Envoyer un test
@@ -168,13 +170,13 @@ newsletter:
       resubscribe: Réinscrire
       unsubscribe: Désinscrire
     events:
-      empty: Rien d'enregistré. Cette inscription est antérieure au journal, ou a été écrite directement en base.
+      empty: Aucun événement enregistré pour cette inscription.
       field:
         host: Hôte
         ip: IP
         occurredAt: Quand
         transition: Quoi
-      help: Ce qui est réellement arrivé à cette inscription, du plus ancien au plus récent. Rien n'y est jamais modifié ni supprimé. Les dates de Consentement disent où en sont les choses ; ceci dit comment on y est arrivé, et c'est avec ça qu'une inscription se défend.
+      help: Les inscriptions, confirmations et désinscriptions de ce contact, du plus ancien au plus récent.
       title: Journal de consentement
       transition:
         bounce: Rejeté
@@ -232,6 +234,11 @@ newsletter:
       help: Une liste à la fois, comme le formulaire public. Une adresse déjà présente sur une autre liste reçoit une seconde inscription, avec son propre consentement.
       identifier.help: L'un ou l'autre suffit. Un contact avec un numéro et sans adresse ne reçoit aucun mail — rien à confirmer, il est inscrit directement.
       title: Inscrire un contact
+    status:
+      bounced: Rejeté
+      pending: À confirmer
+      subscribed: Inscrit
+      unsubscribed: Désinscrit
     subscriptions:
       help: La même adresse sur toutes les listes de cette installation. Celle en cours d'édition est surlignée.
       title: Inscriptions
@@ -277,20 +284,26 @@ newsletter:
       subjectId: Sujet déclencheur
   design:
     action: Habillage
-    description: 'Définissez la présentation commune aux newsletters et automatisations de « %audience% ».'
+    back: Retour à l'audience
+    canvas: Aperçu de l'email, défilement horizontal pour voir toute la largeur
+    defaults: Rétablir le nom du site et le copyright
+    description: Commun aux newsletters et automatisations envoyées à cette audience.
     desktop: Ordinateur
-    failed: Impossible d'actualiser l'aperçu. Réessayez ou rechargez la page.
+    failed: Impossible d'actualiser l'aperçu. Vos modifications et le dernier aperçu sont conservés.
     footer: Pied de page
-    footerHelp: Texte, signature ou liens en Markdown. La désinscription et l'adresse postale sont ajoutées automatiquement.
+    footerHelp: Signature ou liens en Markdown. La désinscription et l'adresse postale sont ajoutées automatiquement.
+    framedHelp: Contenu centré sur un fond clair, comme une newsletter classique.
     header: En-tête
-    headerHelp: Texte ou bannière en Markdown. Pour une image, utilisez une URL publique absolue.
+    headerHelp: Votre nom ou une bannière en Markdown. Les images nécessitent une URL publique absolue.
+    identity: Identité de l'expéditeur
     layout: Mise en page
-    layoutHelp: Le cadre centre le contenu sur un fond gris clair. Sans cadre, le message reste sobre. L'en-tête et le pied de page sont conservés dans les deux cas.
     mobile: Mobile
+    presetHelp: Un habillage prêt à l'emploi, fourni par votre site.
     preview: Aperçu en direct
-    previewHelp: Les modifications s'affichent avant enregistrement. Le rendu peut varier selon la messagerie.
+    previewHelp: Aucun email n'est envoyé depuis cet aperçu. Le rendu peut varier selon la messagerie.
     ready: Aperçu à jour
-    sample: Texte d'essai
+    retry: Réessayer
+    sample: Texte d'essai de l'aperçu
     sampleBody: |
       Bonjour **%name%**,
 
@@ -301,14 +314,20 @@ newsletter:
       Retrouvez nos nouveautés et nos conseils sur notre site.
 
       À bientôt !
-    sampleHelp: Sert uniquement à visualiser l'habillage. Ce texte n'est ni enregistré ni envoyé.
+    sampleHelp: Pour l'aperçu uniquement. Ce contenu n'est ni enregistré ni envoyé.
     save: Enregistrer l'habillage
     saved: Habillage enregistré.
+    savedState: Habillage enregistré
+    settings: Réglages de l'habillage
     simple: Sans cadre
-    templateHelp: L'en-tête, le pied de page et le cadre de ce modèle sont définis en Twig. Vos textes personnalisés sont conservés pour les autres mises en page.
+    simpleHelp: Un email sobre avec votre en-tête, votre contenu et votre pied de page.
+    templateHelp: Ce modèle gère l'en-tête, le pied de page et le cadre. Vos textes personnalisés sont conservés pour les autres mises en page.
     title: Habillage des emails
+    tokens: 'Valeurs automatiques :'
+    unsaved: Modifications non enregistrées
     updating: Actualisation de l'aperçu…
-    viewport: Largeur de l'aperçu
+    view: Espace de travail de l'habillage
+    viewport: Largeur de l'aperçu en pixels
     wrapped: Avec cadre
   email:
     unsubscribe: Se désinscrire
@@ -335,14 +354,19 @@ newsletter:
     title: Réinscription effectuée
   step:
     add: Ajouter un email
+    days: j
+    email: Email
     empty: Votre séquence est vide. Ajoutez le premier email.
     field:
       body: Contenu
       delay: Délai (minutes)
-      delay.help: Attendre ce délai après l'entrée dans la séquence pour la première étape, ou après l'étape précédente. Un contact y entre dès qu'il est inscrit — avec double opt-in, juste après sa confirmation. J+2 = 2880.
-      position: Position
-      position.help: Ordre dans la séquence, à partir de 0. À numéro égal, l'ordre d'ajout est conservé.
+      delay.help: Délai après l'inscription pour le premier email, ou après l'email précédent. 0 = envoi immédiat. Avec double opt-in, la séquence commence après confirmation.
+      position: Numéro de l'email
+      position.help: Ordre dans la séquence, à partir de 1. À numéro égal, l'ordre d'ajout est conservé.
       subject: Objet
+    hours: h
+    immediate: Envoi immédiat
+    minutes: min
   subscribe:
     done: Vous êtes inscrit. Merci !
     invalidEmail: Cette adresse email ne semble pas valide.
@@ -388,3 +412,6 @@ newsletter:
     contactEmptyTitle: Faites connaissance avec vos abonnés
     filterAll: Toutes
     filterStatus: Filtrer par statut
+    rowActions: 'Actions de la ligne %id%'
+    selectAll: Sélectionner toutes les lignes
+    selectRow: 'Sélectionner la ligne %id%'

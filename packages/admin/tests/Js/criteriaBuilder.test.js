@@ -1,8 +1,31 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest'
-import { parseRule, pruneGroup, serializeRule } from '../../src/Resources/assets/admin.criteriaBuilder.js'
+import { describe, expect, it, vi } from 'vitest'
+import { initCriteriaBuilder, parseRule, pruneGroup, serializeRule } from '../../src/Resources/assets/admin.criteriaBuilder.js'
 
 const roundTrip = (text) => serializeRule(parseRule(text))
+
+it('exposes the selected conjunction and history scope to assistive technology', async () => {
+  vi.useFakeTimers()
+  document.body.innerHTML = '<form><textarea name="Automation[triggerWhen]" data-pw-criteria="trigger" data-pw-criteria-vocabulary="/vocabulary" data-pw-criteria-preview="/preview"></textarea></form>'
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ fields: {}, labels: { all: 'All', any: 'Any', sinceAll: 'Include history' }, propertyPrefix: 'prop.' }) }))
+  try {
+    initCriteriaBuilder()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(document.querySelector('.pw-criteria-conjunction button').getAttribute('aria-pressed')).toBe('true')
+    document.querySelectorAll('.pw-criteria-conjunction button')[1].click()
+    expect(document.querySelectorAll('.pw-criteria-conjunction button')[1].getAttribute('aria-pressed')).toBe('true')
+    expect(document.querySelector('.pw-criteria-conjunction button').getAttribute('aria-pressed')).toBe('false')
+    const history = Array.from(document.querySelectorAll('.pw-criteria-foot button')).find((button) => button.textContent === 'Include history')
+    expect(history.getAttribute('aria-pressed')).toBe('false')
+    history.click()
+    expect(history.getAttribute('aria-pressed')).toBe('true')
+  } finally {
+    vi.clearAllTimers()
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+    document.body.innerHTML = ''
+  }
+})
 
 describe('parseRule', () => {
   it('reads a bare list as an "all"', () => {

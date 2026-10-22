@@ -2,9 +2,9 @@
 {% set wrapped = true %}
 
 {% block email_header %}
-  <p style="margin:0;font-size:24px;font-weight:bold;">Pushword</p>
+  <p style="margin:0;font-size:24px;font-weight:bold;">{{ siteName }}</p>
 {% endblock %}
 
 {% block email_footer %}
-  <p>{{ audienceName }}</p>
+  <p>© {{ year }} {{ siteName }}</p>
 {% endblock %}

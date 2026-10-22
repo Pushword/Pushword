@@ -91,6 +91,46 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         }
     }
 
+    public function testContactIdentityIsCompactAndKeepsPhoneOnlyContactsVisible(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $phone = $this->phoneContact($audience);
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact');
+        self::assertResponseIsSuccessful();
+        $identities = $crawler->filter('.pw-newsletter-contact-identity');
+        self::assertStringContainsString('admin-contact@example.tld', implode(' ', $identities->each(static fn (Crawler $identity): string => $identity->text())));
+        self::assertStringContainsString('0612345678', $crawler->filter('article')->text());
+        self::assertCount(0, $crawler->filter('td[data-column="phone"], td[data-column="tags"], td[data-column="locale"]'));
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$phone->id);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('0612345678', $crawler->filter('h1')->text());
+        self::assertStringNotContainsString('Null', $crawler->filter('article')->text());
+        self::assertStringContainsString('Subscribed', $crawler->filter('article')->text());
+        $addressed = $this->entityManager()->getRepository(Contact::class)->findOneBy(['email' => 'admin-contact@example.tld', 'audience' => $audience->id]);
+        self::assertInstanceOf(Contact::class, $addressed);
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$addressed->id);
+        self::assertSame('Subscribed', $crawler->filter('table tbody .badge')->first()->text());
+    }
+
+    public function testWritingFormsHaveTranslatedGuidanceAndOneCreationPath(): void
+    {
+        $client = $this->loginUser();
+        $this->seed();
+        foreach (['audience', 'campaign', 'automation'] as $section) {
+            $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section.'/new');
+            self::assertResponseIsSuccessful();
+            self::assertStringNotContainsString('newsletter.', $crawler->filter('article')->text());
+            self::assertCount(0, $crawler->filter('button[value="saveAndAddAnother"]'));
+            if ('audience' !== $section) {
+                $id = 'newsletter-'.$section.'-audience-label';
+                self::assertSame($id, $crawler->filter('select[name="'.ucfirst($section).'[audience]"]')->attr('aria-labelledby'));
+                self::assertCount(1, $crawler->filter('label#'.$id));
+            }
+        }
+    }
+
     public function testEmailDesignCanBePreviewedWithoutSavingAndThenSaved(): void
     {
         $client = $this->loginUser();
@@ -129,8 +169,8 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $stored = $this->entityManager()->find(Audience::class, $audienceId);
         self::assertInstanceOf(Audience::class, $stored);
         self::assertFalse($stored->emailWrapped);
-        self::assertSame('', $stored->headerMarkdown);
-        self::assertSame('', $stored->footerMarkdown);
+        self::assertSame(Audience::DEFAULT_EMAIL_HEADER, $stored->headerMarkdown);
+        self::assertSame(Audience::DEFAULT_EMAIL_FOOTER, $stored->footerMarkdown);
 
         unset($values['preview']);
         $client->request(Request::METHOD_POST, $url, $values);
@@ -256,7 +296,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $this->entityManager()->clear();
         $stored = $this->entityManager()->find(Audience::class, $audience->id);
         self::assertInstanceOf(Audience::class, $stored);
-        self::assertSame('', $stored->headerMarkdown);
+        self::assertSame(Audience::DEFAULT_EMAIL_HEADER, $stored->headerMarkdown);
     }
 
     public function testAutomationRowsShowTheirStatusAndActualStepCount(): void
@@ -364,8 +404,8 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $values['Automation']['name'] = 'Editable sequence';
         $values['Automation']['audience'] = (string) $audience->id;
         $values['Automation']['steps'] = [
-            ['position' => 0, 'delayMinutes' => 0, 'subject' => 'Welcome', 'bodyMarkdown' => 'Hello!'],
-            ['position' => 1, 'delayMinutes' => 1440, 'subject' => 'One day later', 'bodyMarkdown' => 'Some news.'],
+            ['sequenceNumber' => 1, 'delayMinutes' => 0, 'subject' => 'Welcome', 'bodyMarkdown' => 'Hello!'],
+            ['sequenceNumber' => 2, 'delayMinutes' => 1440, 'subject' => 'One day later', 'bodyMarkdown' => 'Some news.'],
         ];
         $client->request(Request::METHOD_POST, '/admin/newsletter/automation/new', $values);
         self::assertResponseRedirects();

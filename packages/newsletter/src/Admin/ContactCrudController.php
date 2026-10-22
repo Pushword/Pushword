@@ -17,6 +17,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TelephoneField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
@@ -93,6 +94,8 @@ class ContactCrudController extends AbstractCrudController
             ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
             ->setEntityLabelInSingular('newsletter.contact.label.singular')
             ->setEntityLabelInPlural('newsletter.contact.label.plural')
+            ->setPageTitle(Crud::PAGE_DETAIL, static fn (Contact $contact): string => (string) $contact)
+            ->overrideTemplate('label/null', '@PushwordNewsletter/admin/empty_value.html.twig')
             ->setDefaultSort(['id' => 'DESC'])
             ->setSearchFields(['email', 'phone', 'name', 'tags'])
             ->overrideTemplates([
@@ -168,14 +171,24 @@ class ContactCrudController extends AbstractCrudController
     #[Override]
     public function configureFields(string $pageName): iterable
     {
-        yield FormField::addColumn('col-12 col-lg-8 mainFields');
+        yield FormField::addColumn(Crud::PAGE_DETAIL === $pageName ? 'col-12 col-lg-6 mainFields' : 'col-12 col-lg-8 mainFields');
         yield FormField::addFieldset('newsletter.contact.fieldset.identity');
-        yield EmailField::new('email', 'newsletter.contact.field.email')->setRequired(false);
+        yield Field::new('id', 'newsletter.contact.label.singular')->onlyOnIndex()
+            ->setSortable(false)
+            ->setTemplatePath('@PushwordNewsletter/admin/contact_identity.html.twig');
+        yield EmailField::new('email', 'newsletter.contact.field.email')->setRequired(false)->hideOnIndex();
         yield TelephoneField::new('phone', 'newsletter.contact.field.phone')
+            ->hideOnIndex()
             ->setRequired(false)
             ->setHelp('newsletter.contact.field.phone.help');
-        yield TextField::new('name', 'newsletter.contact.field.name');
+        yield TextField::new('name', 'newsletter.contact.field.name')->hideOnIndex();
         yield ChoiceField::new('status', 'newsletter.contact.field.status')
+            ->setChoices([
+                'newsletter.contact.status.pending' => ContactStatus::Pending,
+                'newsletter.contact.status.subscribed' => ContactStatus::Subscribed,
+                'newsletter.contact.status.unsubscribed' => ContactStatus::Unsubscribed,
+                'newsletter.contact.status.bounced' => ContactStatus::Bounced,
+            ])
             ->renderAsBadges([
                 ContactStatus::Pending->value => 'warning',
                 ContactStatus::Subscribed->value => 'success',
@@ -183,16 +196,16 @@ class ContactCrudController extends AbstractCrudController
                 ContactStatus::Bounced->value => 'danger',
             ])
             ->hideOnForm();
-        yield TextField::new('tags', 'newsletter.contact.field.tags')->setRequired(false);
+        yield TextField::new('tags', 'newsletter.contact.field.tags')->setRequired(false)->hideOnIndex();
         yield TextareaField::new('unmanagedPropertiesAsYaml', 'newsletter.contact.field.customProperties')
             ->hideOnIndex()
             ->setHelp('newsletter.contact.field.customProperties.help');
 
-        yield FormField::addColumn('col-12 col-lg-4 columnFields');
+        yield FormField::addColumn(Crud::PAGE_DETAIL === $pageName ? 'col-12 col-lg-6 columnFields' : 'col-12 col-lg-4 columnFields');
         yield FormField::addFieldset('newsletter.contact.fieldset.consent');
         yield AssociationField::new('audience', 'newsletter.contact.field.audience')
             ->setHelp('newsletter.contact.field.audience.help');
-        yield TextField::new('locale', 'newsletter.contact.field.locale');
+        yield TextField::new('locale', 'newsletter.contact.field.locale')->hideOnIndex();
         yield TextField::new('source', 'newsletter.contact.field.source')->hideOnIndex()->setDisabled();
         yield TextField::new('optinHost', 'newsletter.contact.field.optinHost')->hideOnIndex()->setDisabled();
         yield TextField::new('optinIp', 'newsletter.contact.field.optinIp')->onlyOnDetail();

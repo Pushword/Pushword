@@ -81,6 +81,8 @@ class AutomationCrudController extends AbstractCrudController
             ->setCssClass('btn btn-outline-secondary');
 
         return $actions
+            ->disable(Action::SAVE_AND_ADD_ANOTHER)
+            ->update(Crud::PAGE_NEW, Action::SAVE_AND_RETURN, static fn (Action $action): Action => $action->setLabel('newsletter.automation.action.create'))
             ->update(Crud::PAGE_INDEX, Action::NEW, static fn (Action $action): Action => $action->setLabel('newsletter.automation.action.create'))
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->add(Crud::PAGE_INDEX, $preview)
@@ -106,7 +108,10 @@ class AutomationCrudController extends AbstractCrudController
 
         yield FormField::addFieldset('newsletter.automation.fieldset.setup')->setIcon('fa fa-sliders');
         yield TextField::new('name', 'newsletter.automation.field.name')->setColumns('col-12 col-lg-7');
-        yield AssociationField::new('audience', 'newsletter.automation.field.audience')->setColumns('col-12 col-lg-5');
+        yield AssociationField::new('audience', 'newsletter.automation.field.audience')
+            ->setColumns('col-12 col-lg-5')
+            ->setFormTypeOption('label_attr', ['id' => 'newsletter-automation-audience-label'])
+            ->setFormTypeOption('attr', ['aria-labelledby' => 'newsletter-automation-audience-label']);
         yield ChoiceField::new('enabled', 'newsletter.automation.field.enabled')
             ->onlyOnIndex()
             ->setChoices(['newsletter.automation.status.active' => 1, 'newsletter.automation.status.paused' => 0])

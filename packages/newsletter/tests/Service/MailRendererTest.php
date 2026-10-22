@@ -22,6 +22,30 @@ final class MailRendererTest extends AbstractNewsletterTestCase
 {
     private const string UNSUBSCRIBE = 'https://localhost.dev/newsletter/unsubscribe/abcdef';
 
+    public function testDefaultIdentityResolvesSiteNameAndYearInBothPartsAndCanBeCleared(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $renderer = self::getContainer()->get(MailRenderer::class);
+        $siteName = self::getContainer()->get(SiteRegistry::class)->get($audience->mainHost)->name;
+        $copyright = '© '.new DateTimeImmutable()->format('Y').' '.$siteName;
+        self::assertSame(Audience::DEFAULT_EMAIL_HEADER, $audience->headerMarkdown);
+        self::assertSame(Audience::DEFAULT_EMAIL_FOOTER, $audience->footerMarkdown);
+
+        $html = $renderer->html($audience, $contact, 'Subject', 'Body', null, self::UNSUBSCRIBE, null);
+        self::assertStringContainsString($siteName, new Crawler($html)->filter('td')->first()->text());
+        self::assertStringContainsString($copyright, new Crawler($html)->filter('td')->last()->text());
+        $text = $renderer->text($audience, $contact, 'Body', self::UNSUBSCRIBE, SendContext::fromAudience($audience));
+        self::assertStringContainsString($copyright, $text);
+        self::assertStringNotContainsString('%siteName%', $html.$text);
+        self::assertStringNotContainsString('%year%', $html.$text);
+
+        $audience->headerMarkdown = '';
+        $audience->footerMarkdown = '';
+        self::assertSame('Body', $renderer->text($audience, $contact, 'Body', null));
+        self::assertStringNotContainsString($copyright, $renderer->html($audience, $contact, 'Subject', 'Body', null, null, null));
+    }
+
     /** @return iterable<string, array{bool}> */
     public static function layouts(): iterable
     {
@@ -108,6 +132,7 @@ final class MailRendererTest extends AbstractNewsletterTestCase
     public function testEmailAddressesInBodyAndFooterNeedNoJavaScriptAndSensitiveLinksStayDirect(): void
     {
         $audience = $this->createAudience();
+        $audience->headerMarkdown = '';
         $audience->utmSource = 'newsletter';
         $audience->clickTracking = true;
 
@@ -171,6 +196,8 @@ final class MailRendererTest extends AbstractNewsletterTestCase
     public function testAnOptionalImagePlaceholderRendersBeforeTheGreetingWithoutWebMediaMarkup(string $image): void
     {
         $audience = $this->createAudience();
+        $audience->headerMarkdown = '';
+
         $contact = $this->createContact($audience, 'reader@example.tld');
         $context = new SendContext('admin-block-editor.test', 'newsletter@example.test', 'Brand', footerMarkdown: $image);
         $body = self::getContainer()->get(PlaceholderRenderer::class)
@@ -261,6 +288,9 @@ final class MailRendererTest extends AbstractNewsletterTestCase
     public function testAMailWithNoFootAtAllDrawsNoSeparator(): void
     {
         $audience = $this->createAudience();
+        $audience->headerMarkdown = '';
+        $audience->footerMarkdown = '';
+
         $contact = $this->createContact($audience, 'reader@example.tld');
         $renderer = self::getContainer()->get(MailRenderer::class);
 

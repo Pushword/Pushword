@@ -216,6 +216,7 @@ class CriteriaBuilder {
       const button = element('button', `btn btn-sm ${group.any === any ? 'btn-secondary' : 'btn-outline-secondary'}`)
       button.type = 'button'
       button.textContent = this.label(any ? 'any' : 'all')
+      button.setAttribute('aria-pressed', String(group.any === any))
       button.addEventListener('click', () => {
         group.any = any
         this.commit()
@@ -429,9 +430,11 @@ class CriteriaBuilder {
       const since = this.button('sinceAll', () => {
         this.sinceAll = !this.sinceAll
         since.classList.toggle('active', this.sinceAll)
+        since.setAttribute('aria-pressed', String(this.sinceAll))
         this.preview()
       })
       since.classList.toggle('active', this.sinceAll)
+      since.setAttribute('aria-pressed', String(this.sinceAll))
       foot.append(since)
     }
 

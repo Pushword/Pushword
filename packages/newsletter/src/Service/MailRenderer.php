@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Service;
 
+use DateTimeImmutable;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlUnpublishedLink;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Click\ClickTracker;
@@ -19,7 +20,7 @@ use Twig\Environment as Twig;
 /**
  * Turns a campaign or step body into the two parts of a mail.
  *
- * Personalisation is deliberately two placeholders — `%name%` and `%email%` —
+ * Contact personalisation uses `%name%` and `%email%`,
  * substituted in the subject and the body before rendering. A newsletter body is
  * authored by the site owner, but it is not a template language: anything richer
  * would mean evaluating editor input at send time.
@@ -72,6 +73,8 @@ final readonly class MailRenderer
         $template = null === $audience->emailTemplate
             ? $this->view($audience, 'email.html.twig', $sendContext)
             : $this->emailTemplates->template($audience->emailTemplate);
+        $header = $this->designText($audience->headerMarkdown, $host);
+        $footer = $this->designText($sendContext->footerMarkdown ?? $audience->footerMarkdown, $host);
 
         return $this->twig->render($template, [
             'audience' => $audience,
@@ -79,10 +82,12 @@ final readonly class MailRenderer
             'sendContext' => $sendContext,
             'locale' => $locale ?? $contact->locale,
             'audienceName' => $sendContext->audienceName ?? $audience->name,
+            'siteName' => $this->siteRegistry->get($host)->name,
+            'year' => new DateTimeImmutable()->format('Y'),
             'postalAddress' => null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress,
             'wrapped' => $audience->emailWrapped,
-            'header' => $this->absolutize($this->markdownParser->transform($audience->headerMarkdown), $host),
-            'footer' => $this->absolutize($this->markdownParser->transform($sendContext->footerMarkdown ?? $audience->footerMarkdown), $host),
+            'header' => $this->absolutize($this->markdownParser->transform($header), $host),
+            'footer' => $this->absolutize($this->markdownParser->transform($footer), $host),
             'subject' => $this->personalize($subject, $contact),
             'preheader' => null !== $preheader ? $this->personalize($preheader, $contact) : null,
             'body' => $body,
@@ -123,9 +128,19 @@ final readonly class MailRenderer
             static fn (?string $value): bool => null !== $value && '' !== $value,
         );
 
-        return ('' === $header ? '' : $header."\n\n")
+        $host = $sendContext->mainHost ?? $audience->mainHost;
+
+        return ('' === $header ? '' : $this->designText($header, $host)."\n\n")
             .$this->personalize($bodyMarkdown, $contact)
-            .([] === $foot ? '' : "\n\n---\n".implode("\n\n", $foot)."\n");
+            .([] === $foot ? '' : "\n\n---\n".$this->designText(implode("\n\n", $foot), $host)."\n");
+    }
+
+    private function designText(string $text, string $host): string
+    {
+        return strtr($text, [
+            '%siteName%' => $this->siteRegistry->get($host)->name,
+            '%year%' => new DateTimeImmutable()->format('Y'),
+        ]);
     }
 
     /** Resolve a template, letting the site override the bundle's default. */

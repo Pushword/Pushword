@@ -39,7 +39,7 @@
                   {% endif %}
                 </td>
                 <td class="text-muted">{{ contact.audience.mainHost }}</td>
-                <td><span class="badge badge-{{ badges[contact.statusLabel] }}">{{ contact.statusLabel }}</span></td>
+                <td><span class="badge badge-{{ badges[contact.statusLabel] }}">{{ ('newsletter.contact.status.' ~ contact.statusLabel)|trans }}</span></td>
                 <td class="text-muted">{{ contact.registeredAt|format_date('medium') }}</td>
               </tr>
             {% endfor %}

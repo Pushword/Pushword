@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'new newsletter audiences start with a site identity'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,9 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** pushword/newsletter
+
+## Newsletter email identity
+
+New audiences start with a site-name header and a copyright footer. Existing saved designs are preserved. Use **Audiences → Email design → Restore site name and copyright** to apply the new defaults to an existing audience, then save. `%siteName%` and `%year%` resolve in headers and footers; custom Twig templates also receive `siteName` and `year`. See [email design](../extension/newsletter#email-design-and-live-preview).

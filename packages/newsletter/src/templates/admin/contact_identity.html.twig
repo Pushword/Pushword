@@ -1,0 +1,5 @@
+{% set contact = entity.instance %}
+<a class="pw-newsletter-contact-identity" href="{{ ea_url().setAction('detail').setEntityId(contact.id) }}">
+  <strong>{{ contact.name ?: contact.identifier }}</strong>
+  {% if contact.name %}<span>{{ contact.identifier }}</span>{% endif %}
+</a>

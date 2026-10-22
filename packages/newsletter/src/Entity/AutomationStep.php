@@ -29,6 +29,14 @@ class AutomationStep implements IdInterface, Stringable
         set(int $value) => max(0, $value);
     }
 
+    /** The editor numbers emails from one; delivery keeps zero-based positions. */
+    public int $sequenceNumber {
+        get => $this->position + 1;
+        set(int $value) {
+            $this->position = $value - 1;
+        }
+    }
+
     /** Minutes to wait after enrollment (first step) or after the previous step. */
     #[Assert\PositiveOrZero]
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
@@ -47,6 +55,6 @@ class AutomationStep implements IdInterface, Stringable
 
     public function __toString(): string
     {
-        return '' !== $this->subject ? $this->subject : 'Step '.$this->position;
+        return '' !== $this->subject ? $this->subject : 'Email '.$this->sequenceNumber;
     }
 }

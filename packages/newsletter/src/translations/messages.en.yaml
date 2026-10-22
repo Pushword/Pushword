@@ -22,6 +22,7 @@ newsletter:
       postalAddress: Postal address
       postalAddress.help: The sender's real-world address, printed at the foot of every mail this audience sends. US law (CAN-SPAM) requires one on commercial mail; leave empty on an audience that only carries transactional messages.
       rateSeconds: Cadence (s/mail)
+      rateSeconds.help: Seconds between emails. For example, 30 limits delivery to two emails per minute.
       replyTo: Reply-to
       slug: Reference (slug)
       slug.help: The key the subscribe form and the API use.
@@ -82,6 +83,7 @@ newsletter:
       previewSegment: Count audience
       recipients: Recipients
       review: Review and send
+      saveDraft: Save draft
       schedule: Schedule
       send: Send
       sendTest: Send test
@@ -168,13 +170,13 @@ newsletter:
       resubscribe: Put back on the list
       unsubscribe: Unsubscribe
     events:
-      empty: Nothing recorded. This subscription is older than the ledger, or was written straight into the database.
+      empty: No events recorded for this subscription.
       field:
         host: Host
         ip: IP
         occurredAt: When
         transition: What
-      help: What actually happened to this subscription, oldest first. Nothing here is ever edited or removed. The dates in Consent hold where things stand; this holds how they got there, which is what an opt-in is defended with.
+      help: This contact’s sign-ups, confirmations and unsubscribes, oldest first.
       title: Consent history
       transition:
         bounce: Bounced
@@ -232,6 +234,11 @@ newsletter:
       help: One list at a time, as the public form does. An address already on another list gets a second subscription, with its own consent record.
       identifier.help: Either one is enough. A contact with a number and no address is never mailed — no confirmation is asked, and they are subscribed right away.
       title: Opt in a contact
+    status:
+      bounced: Bounced
+      pending: Pending confirmation
+      subscribed: Subscribed
+      unsubscribed: Unsubscribed
     subscriptions:
       help: The same address on every list of this install. The one being edited is highlighted.
       title: Subscriptions
@@ -277,20 +284,26 @@ newsletter:
       subjectId: Trigger subject
   design:
     action: Email design
-    description: 'Set the shared design for newsletters and automations in “%audience%”.'
+    back: Back to audience
+    canvas: Email preview, scroll horizontally to view the full width
+    defaults: Restore site name and copyright
+    description: Shared by newsletters and automations sent to this audience.
     desktop: Desktop
-    failed: The preview could not be updated. Try again or reload the page.
+    failed: Preview could not be updated. Your changes and the last preview are kept.
     footer: Footer
-    footerHelp: Text, a signature or links in Markdown. The unsubscribe link and postal address are added automatically.
+    footerHelp: Signature or links in Markdown. Unsubscribe and postal address are added automatically.
+    framedHelp: Centered content on a light background, like a standard newsletter.
     header: Header
-    headerHelp: Text or a banner in Markdown. Images need an absolute public URL.
+    headerHelp: Your name or a banner in Markdown. Images need an absolute public URL.
+    identity: Sender identity
     layout: Layout
-    layoutHelp: A frame centers the content on a light gray background. Without a frame, the message stays simple. Both layouts keep the header and footer.
     mobile: Mobile
+    presetHelp: A ready-made design supplied by your site.
     preview: Live preview
-    previewHelp: Changes appear before saving. Rendering may vary between email clients.
+    previewHelp: This is a preview, no email is sent. Email clients may render it differently.
     ready: Preview up to date
-    sample: Sample content
+    retry: Try again
+    sample: Preview sample text
     sampleBody: |
       Hello **%name%**,
 
@@ -301,14 +314,20 @@ newsletter:
       Find our latest updates and advice on our website.
 
       See you soon!
-    sampleHelp: Only used to preview the design. This text is neither saved nor sent.
+    sampleHelp: Preview only. This content is neither saved nor sent.
     save: Save email design
     saved: Email design saved.
+    savedState: All design changes saved
+    settings: Design settings
     simple: Without a frame
-    templateHelp: The header, footer and frame of this preset are defined in Twig. Your custom text is kept for the other layouts.
+    simpleHelp: A simple email with your header, content and footer.
+    templateHelp: This design manages the header, footer and frame. Your custom text is kept for the other layouts.
     title: Email design
+    tokens: 'Automatic values:'
+    unsaved: Unsaved design changes
     updating: Updating preview…
-    viewport: Preview width
+    view: Design workspace
+    viewport: Preview width in pixels
     wrapped: With a frame
   email:
     unsubscribe: Unsubscribe
@@ -335,14 +354,19 @@ newsletter:
     title: Resubscribed
   step:
     add: Add an email
+    days: d
+    email: Email
     empty: Your sequence is empty. Add the first email.
     field:
       body: Body
       delay: Delay (minutes)
-      delay.help: Wait this long after enrollment for the first step, or after the previous step. A contact is enrolled as soon as they are subscribed — with double opt-in, right after they confirm. Two days later is 2880.
-      position: Position
-      position.help: Order within the sequence, counting from 0. Equal numbers keep the order they were added in.
+      delay.help: Wait after sign-up for the first email, or after the previous email. 0 = send immediately. With double opt-in, the sequence starts after confirmation.
+      position: Email number
+      position.help: Order within the sequence, counting from 1. Equal numbers keep the order they were added in.
       subject: Subject
+    hours: h
+    immediate: Send immediately
+    minutes: min
   subscribe:
     done: You are subscribed. Thank you!
     invalidEmail: This email address does not look valid.
@@ -388,3 +412,6 @@ newsletter:
     contactEmptyTitle: Get to know your subscribers
     filterAll: All
     filterStatus: Filter by status
+    rowActions: 'Actions for row %id%'
+    selectAll: Select all rows
+    selectRow: 'Select row %id%'

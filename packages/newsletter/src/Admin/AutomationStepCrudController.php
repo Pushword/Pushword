@@ -31,11 +31,13 @@ class AutomationStepCrudController extends AbstractCrudController
     {
         // Explicit columns, or EasyAdmin gives every field a row of its own: the two
         // numbers pair up, the mail itself takes the full width.
-        yield IntegerField::new('position', 'newsletter.step.field.position')
+        yield IntegerField::new('sequenceNumber', 'newsletter.step.field.position')
             ->setColumns('col-6 col-lg-3')
+            ->setFormTypeOption('attr', ['min' => 1, 'data-pw-sequence-number' => ''])
             ->setHelp('newsletter.step.field.position.help');
         yield IntegerField::new('delayMinutes', 'newsletter.step.field.delay')
             ->setColumns('col-6 col-lg-5')
+            ->setFormTypeOption('attr', ['data-pw-delay-preview' => ''])
             ->setHelp('newsletter.step.field.delay.help');
         yield TextField::new('subject', 'newsletter.step.field.subject')
             ->setColumns('col-12');

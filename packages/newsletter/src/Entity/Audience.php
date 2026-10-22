@@ -32,6 +32,10 @@ class Audience implements IdInterface, Stringable
     use IdTrait;
     use TimestampableTrait;
 
+    public const string DEFAULT_EMAIL_HEADER = '**%siteName%**';
+
+    public const string DEFAULT_EMAIL_FOOTER = '© %year% %siteName%';
+
     #[Assert\NotBlank]
     #[Assert\Regex(pattern: '/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/', message: 'newsletter.audience.slug.invalid')]
     #[ORM\Column(type: Types::STRING, length: 100)]
@@ -117,12 +121,12 @@ class Audience implements IdInterface, Stringable
     }
 
     #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
-    public string $headerMarkdown = '' {
+    public string $headerMarkdown = self::DEFAULT_EMAIL_HEADER {
         set(?string $value) => (string) $value;
     }
 
     #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
-    public string $footerMarkdown = '' {
+    public string $footerMarkdown = self::DEFAULT_EMAIL_FOOTER {
         set(?string $value) => (string) $value;
     }
 

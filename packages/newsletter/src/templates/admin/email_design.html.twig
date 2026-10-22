@@ -1,45 +1,73 @@
 {% extends ea().templatePath('layout') %}
-{% form_theme design_form '@pwAdmin/form/admin_form_theme.html.twig' %}
+{% form_theme design_form '@pwAdmin/form/admin_form_theme.html.twig' _self %}
+
+{% block radio_widget %}
+  <input type="radio" {{ block('widget_attributes') }} value="{{ value }}"{% if checked %} checked="checked"{% endif %}>
+{% endblock %}
 
 {% block content_title %}{{ 'newsletter.design.title'|trans }}{% endblock %}
 
 {% block page_actions %}
+  <a class="btn btn-secondary" href="{{ path('admin_newsletter_audience_edit', {entityId: audience.id}) }}">{{ 'newsletter.design.back'|trans }}</a>
   <button type="submit" form="newsletter-design-form" class="btn btn-primary">{{ 'newsletter.design.save'|trans }}</button>
 {% endblock %}
 
 {% block main %}
-  <p class="pw-newsletter-description">{{ 'newsletter.design.description'|trans({'%audience%': audience.name}) }}</p>
-  <div class="pw-newsletter-design" data-pw-email-preview data-viewport="mobile">
-    <div>
+  <div class="pw-newsletter-design-context">
+    <strong>{{ audience.name }}</strong><span>{{ site_name }}</span>
+    <p>{{ 'newsletter.design.description'|trans }}</p>
+  </div>
+  <div class="pw-newsletter-design" data-pw-email-preview data-viewport="mobile" data-mobile-panel="settings" data-saved-values="{{ [audience.emailLayout, audience.headerMarkdown, audience.footerMarkdown]|json_encode }}">
+    <div class="pw-newsletter-design-switch" role="group" aria-label="{{ 'newsletter.design.view'|trans }}">
+      <button type="button" class="btn btn-secondary" data-design-panel="settings" aria-controls="newsletter-design-settings" aria-pressed="true">{{ 'newsletter.design.settings'|trans }}</button>
+      <button type="button" class="btn btn-secondary" data-design-panel="preview" aria-controls="newsletter-design-preview" aria-pressed="false">{{ 'newsletter.design.preview'|trans }}</button>
+    </div>
+    <div id="newsletter-design-settings" class="pw-newsletter-design-editor">
       {{ form_start(design_form, {attr: {id: 'newsletter-design-form'}}) }}
         {{ form_errors(design_form) }}
         <fieldset class="pw-newsletter-design-layout">
           <legend>{{ design_form.emailLayout.vars.label|trans }}</legend>
-          {{ form_widget(design_form.emailLayout) }}
-          {{ form_help(design_form.emailLayout) }}
+          {% for choice in design_form.emailLayout %}
+            {% set kind = choice.vars.value starts with 'twig:' ? 'preset' : choice.vars.value %}
+            <label class="pw-newsletter-layout-option" for="{{ choice.vars.id }}">
+              {{ form_widget(choice, {attr: {class: 'form-check-input'}}) }}
+              <span><strong>{{ choice.vars.label|trans }}</strong><span class="pw-newsletter-layout-description">{{ ('newsletter.design.' ~ kind ~ 'Help')|trans }}</span></span>
+              <span class="pw-newsletter-layout-thumbnail" data-layout="{{ kind }}" aria-hidden="true"><span><b></b><i></i><i></i><small></small></span></span>
+            </label>
+          {% endfor %}
           {{ form_errors(design_form.emailLayout) }}
         </fieldset>
-        <p class="form-text" data-email-template-help{% if audience.emailTemplate is null %} hidden{% endif %}>{{ 'newsletter.design.templateHelp'|trans }}</p>
-        <div data-email-editable{% if audience.emailTemplate is not null %} hidden{% endif %}>
+        <p class="pw-newsletter-design-preset" data-email-template-help{% if audience.emailTemplate is null %} hidden{% endif %}><i class="fa fa-lock" aria-hidden="true"></i> {{ 'newsletter.design.templateHelp'|trans }}</p>
+        <fieldset class="pw-newsletter-design-identity" data-email-editable{% if audience.emailTemplate is not null %} hidden{% endif %}>
+          <legend>{{ 'newsletter.design.identity'|trans }}</legend>
+          <p class="form-text pw-newsletter-design-tokens">{{ 'newsletter.design.tokens'|trans }} <code>%siteName%</code> = {{ site_name }} · <code>%year%</code> = {{ 'now'|date('Y') }}</p>
           {{ form_row(design_form.headerMarkdown) }}
           {{ form_row(design_form.footerMarkdown) }}
-        </div>
+          <button type="button" class="btn btn-link" data-design-defaults data-header="{{ default_header }}" data-footer="{{ default_footer }}">{{ 'newsletter.design.defaults'|trans }}</button>
+        </fieldset>
         <details class="pw-newsletter-design-sample">
           <summary>{{ 'newsletter.design.sample'|trans }}</summary>
           {{ form_row(design_form.sampleBody, {label_attr: {class: 'visually-hidden'}}) }}
         </details>
+        <div class="pw-newsletter-design-save">
+          <span role="status" aria-live="polite" data-save-state data-saved="{{ 'newsletter.design.savedState'|trans }}" data-unsaved="{{ 'newsletter.design.unsaved'|trans }}">{{ 'newsletter.design.savedState'|trans }}</span>
+          <button type="submit" class="btn btn-primary">{{ 'newsletter.design.save'|trans }}</button>
+        </div>
       {{ form_end(design_form) }}
     </div>
-    <section class="pw-newsletter-design-preview" aria-labelledby="newsletter-preview-title">
+    <section id="newsletter-design-preview" class="pw-newsletter-design-preview" aria-labelledby="newsletter-preview-title">
       <div class="pw-newsletter-design-toolbar">
         <h2 id="newsletter-preview-title">{{ 'newsletter.design.preview'|trans }}</h2>
         <div class="btn-group" role="group" aria-label="{{ 'newsletter.design.viewport'|trans }}">
-          <button type="button" class="btn btn-secondary" data-preview-width="desktop" aria-pressed="false">{{ 'newsletter.design.desktop'|trans }}</button>
-          <button type="button" class="btn btn-secondary" data-preview-width="mobile" aria-pressed="true">{{ 'newsletter.design.mobile'|trans }}</button>
+          <button type="button" class="btn btn-secondary" data-preview-width="mobile" aria-pressed="true">{{ 'newsletter.design.mobile'|trans }} <span>375</span></button>
+          <button type="button" class="btn btn-secondary" data-preview-width="desktop" aria-pressed="false">{{ 'newsletter.design.desktop'|trans }} <span>600</span></button>
         </div>
       </div>
-      <p class="pw-newsletter-design-status" role="status" aria-live="polite" data-updating="{{ 'newsletter.design.updating'|trans }}" data-ready="{{ 'newsletter.design.ready'|trans }}" data-failed="{{ 'newsletter.design.failed'|trans }}">{{ 'newsletter.design.ready'|trans }}</p>
-      <div class="pw-newsletter-design-canvas">
+      <div class="pw-newsletter-design-feedback">
+        <p class="pw-newsletter-design-status" role="status" aria-live="polite" data-preview-status data-state="ready" data-updating="{{ 'newsletter.design.updating'|trans }}" data-ready="{{ 'newsletter.design.ready'|trans }}" data-failed="{{ 'newsletter.design.failed'|trans }}">{{ 'newsletter.design.ready'|trans }}</p>
+        <button type="button" class="btn btn-link" data-preview-retry hidden>{{ 'newsletter.design.retry'|trans }}</button>
+      </div>
+      <div class="pw-newsletter-design-canvas" tabindex="0" role="region" aria-label="{{ 'newsletter.design.canvas'|trans }}">
         <iframe title="{{ 'newsletter.design.preview'|trans }}" sandbox="" srcdoc="{{ preview_html }}"></iframe>
       </div>
       <p class="form-text">{{ 'newsletter.design.previewHelp'|trans }}</p>

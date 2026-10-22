@@ -444,17 +444,29 @@ In **Newsletter → Audiences**, open **Email design** for the audience. Choose
 on a light gray background. The audience's Markdown header and footer are shared
 by its campaigns and automation emails; both layouts keep them.
 
+New audiences start with `**%siteName%**` as the header and
+`© %year% %siteName%` as the footer. These values resolve against the sender's
+site and the current year in both HTML and plain text. Existing saved designs
+are preserved. **Restore site name and copyright** applies these defaults to
+the editable fields; clearing either field deliberately removes that part.
+
 The live preview uses the same renderer as sending, with Mobile selected by
-default and a Desktop option. Edit the sample content to check your design
-without creating a campaign.
+default (375 px) and a Desktop option (600 px). Narrow screens have a
+**Design settings / Live preview** switch and a horizontally scrollable preview
+at its real rendering width. Edit the sample content to check your design
+without creating a campaign. Sample edits do not mark the design as unsaved.
 Previewing does not save, subscribe a contact or send mail. **Save email design**
-applies the settings. Email clients may render the same HTML differently.
+applies the settings. Unsaved design edits are indicated separately from preview
+freshness, and leaving the page warns before discarding them. A failed preview
+keeps the last rendering and offers **Try again**. Email clients may render the
+same HTML differently.
 
 The unsubscribe link and postal address remain automatic. An occurrence's
 `SendContext.footerMarkdown` overrides the audience footer, including an empty
-override. Existing audiences keep the simple layout and empty header/footer.
+override. Existing audiences keep their saved layout, header and footer.
 Sites overriding `/newsletter/email.html.twig` receive `wrapped` and `header`
 alongside the existing `body` and `footer` variables and control their own layout.
+Templates also receive `siteName` and `year` for site-owned branding.
 
 #### Preconfigured Twig designs
 

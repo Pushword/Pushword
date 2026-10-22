@@ -138,6 +138,8 @@ class CampaignCrudController extends AbstractCrudController
         }
 
         return $actions
+            ->disable(Action::SAVE_AND_ADD_ANOTHER)
+            ->update(Crud::PAGE_NEW, Action::SAVE_AND_RETURN, static fn (Action $action): Action => $action->setLabel('newsletter.campaign.action.saveDraft'))
             ->update(Crud::PAGE_INDEX, Action::NEW, static fn (Action $action): Action => $action->setLabel('newsletter.campaign.action.create'))
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->update(Crud::PAGE_INDEX, Action::DETAIL, static fn (Action $action): Action => $action
@@ -169,7 +171,9 @@ class CampaignCrudController extends AbstractCrudController
 
         yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users')
             ->setHelp('newsletter.campaign.fieldset.audienceHelp');
-        yield AssociationField::new('audience', 'newsletter.campaign.field.audience');
+        yield AssociationField::new('audience', 'newsletter.campaign.field.audience')
+            ->setFormTypeOption('label_attr', ['id' => 'newsletter-campaign-audience-label'])
+            ->setFormTypeOption('attr', ['aria-labelledby' => 'newsletter-campaign-audience-label']);
         yield CriteriaField::new('segmentAsJson', 'newsletter.campaign.field.segment', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(6)
             ->setHelp('newsletter.campaign.field.segment.help');

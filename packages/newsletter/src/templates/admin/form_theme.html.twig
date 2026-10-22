@@ -1,5 +1,15 @@
 {% extends '@pwAdmin/form/admin_form_theme.html.twig' %}
 
+{% block integer_widget %}
+  {% if attr['data-pw-sequence-number'] is defined %}
+    {% set attr = attr|merge({'data-email-label': 'newsletter.step.email'|trans}) %}
+  {% endif %}
+  {{ parent() }}
+  {% if attr['data-pw-delay-preview'] is defined %}
+    <output class="form-text pw-newsletter-delay" for="{{ id }}" data-delay-output data-immediate="{{ 'newsletter.step.immediate'|trans }}" data-days="{{ 'newsletter.step.days'|trans }}" data-hours="{{ 'newsletter.step.hours'|trans }}" data-minutes="{{ 'newsletter.step.minutes'|trans }}" aria-live="polite"></output>
+  {% endif %}
+{% endblock %}
+
 {% block _Automation_steps_widget %}
   {% set isEmptyCollection = value is null or (value is iterable and value is empty) %}
   <div class="ea-form-collection-items pw-newsletter-sequence">

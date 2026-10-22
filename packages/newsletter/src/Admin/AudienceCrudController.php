@@ -69,7 +69,7 @@ class AudienceCrudController extends AbstractCrudController
             $actions->add($page, $design);
         }
 
-        return $actions;
+        return $actions->disable(Action::SAVE_AND_ADD_ANOTHER);
     }
 
     #[AdminRoute(path: '/{entityId}/email-design', name: 'email_design', options: ['methods' => ['GET', 'POST']])]
@@ -127,6 +127,9 @@ class AudienceCrudController extends AbstractCrudController
 
         return $this->render('@PushwordNewsletter/admin/email_design.html.twig', [
             'audience' => $audience,
+            'site_name' => $site->name,
+            'default_header' => Audience::DEFAULT_EMAIL_HEADER,
+            'default_footer' => Audience::DEFAULT_EMAIL_FOOTER,
             'design_form' => $form->createView(),
             'preview_html' => $html,
         ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));

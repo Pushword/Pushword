@@ -31,7 +31,6 @@ final class EmailDesignType extends AbstractType
                 'label' => 'newsletter.design.layout',
                 'choices' => ['newsletter.design.simple' => 'simple', 'newsletter.design.wrapped' => 'framed'] + $this->templates->choices(),
                 'expanded' => true,
-                'help' => 'newsletter.design.layoutHelp',
             ])
             ->add('headerMarkdown', TextareaType::class, [
                 'label' => 'newsletter.design.header',
