@@ -158,12 +158,12 @@ Configuration options: [Flysystem documentation](https://flysystem.thephpleague.
 
 ## File names {id=file-names}
 
-A media's file is stored in `media_dir` under the media's name, and no two media share one:
+A media's file is stored in `media_dir` under its file name. Names are reserved across current files and rename history:
 
-- A new upload is named after the name field, else the alt, else the client file name, slugified. When another media holds that name, now or in its `fileNameHistory`, or a file already sits there, a suffix is added: `photo.jpg` becomes `photo-2.jpg`. An upload never writes over an existing file.
-- A renamed media keeps its previous names in `fileNameHistory`, so pages that still reference them resolve. A name a new upload was refused is not one of them.
+- A new upload uses the slugified name field, alt or client file name, in that order. If another media reserves the name or a file already exists there, a suffix is added: `photo.jpg` becomes `photo-2.jpg`. An upload never overwrites an existing file.
+- Renaming keeps previous names in `fileNameHistory`, so old references still resolve. A collision avoided during upload does not create a history entry.
 - An upload whose SHA-1 is already in the library is not stored twice. The admin form, the multi-upload, the block editor and the API return the existing media.
-- Older versions could leave two media naming one file, which belongs to at most one of them. Renaming either is refused, `pw:image:cache` reports the name and processes neither, and removing one keeps the file for the other. To repair, remove the row whose `hash` is not the file's SHA-1.
+- Older versions could leave two media naming one file. Renaming either is refused; `pw:image:cache` reports the conflict and processes neither. Removing one preserves the file for the other. To repair, compare both stored hashes with the file's SHA-1 and remove the mismatching row.
 
 ## Audit log {id=audit-log}
 
