@@ -98,10 +98,18 @@ export default class List extends ListTool {
     return (this as unknown as { list: Tabulator }).list
   }
 
-  rendered(): void {
-    if (this.isReadOnly) return
-    // On the block: switching the list style renders a new list element.
-    this.blockApi.holder.addEventListener('keydown', (event) => this.deleteForward(event), true)
+  render(): HTMLElement {
+    const element = super.render()
+    // On the block, as switching the list style renders a new list element.
+    // Not from rendered(): blocks.update(), the markdown import's path, never
+    // calls it. The holder exists once Editor.js has composed the block,
+    // right after this returns.
+    if (this.isReadOnly) return element
+
+    queueMicrotask(() => {
+      this.blockApi.holder.addEventListener('keydown', (event) => this.deleteForward(event), true)
+    })
+    return element
   }
 
   /**

@@ -99,6 +99,11 @@ test('Delete at the end of an item brings the next one up with its children', as
   await saveAndReload(page)
   expect(await outline(page)).toEqual(['Single room!210 per night', '  Child', 'Luggage'])
   await expect(page.locator('.cdx-list__item-content b')).toHaveText('210')
+  // Reopened, the list comes from the markdown import, which updates the blocks it inserts.
+  await page.locator('.cdx-list__item-content').first().click()
+  await page.keyboard.press('End')
+  await page.keyboard.press('Delete')
+  await expect.poll(() => outline(page)).toEqual(['Single room!210 per nightChild', 'Luggage'])
 })
 
 const highlighted = [

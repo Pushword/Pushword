@@ -209,13 +209,16 @@ describe('List.exportToMarkdown', () => {
   })
 })
 
-/** A rendered list in the document, as Editor.js mounts it, and its saved items. */
-function mountList(style: 'ordered' | 'unordered' | 'checklist', items: any[]) {
+/**
+ * A rendered list in the document, and its saved items. Mounted as
+ * blocks.update() does it: render() only, rendered() never called.
+ */
+async function mountList(style: 'ordered' | 'unordered' | 'checklist', items: any[]) {
   const holder = document.createElement('div')
   document.body.replaceChildren(holder)
   const list = new List({ data: { style, meta: {}, items }, config: {}, api: {} as any, readOnly: false, block: { holder } as any })
   holder.append(list.render())
-  list.rendered()
+  await Promise.resolve()
   const field = (text: string) =>
     Array.from(holder.querySelectorAll<HTMLElement>('.cdx-list__item-content')).find((element) => element.textContent === text)!
   const outline = (entries: any[] = list.save().items, depth = 0): string[] =>
@@ -234,8 +237,8 @@ function caret(node: Node, offset: number): void {
 const item = (content: string, items: any[] = []) => ({ content, meta: {}, items })
 
 describe('List.pasteItems', () => {
-  it('replaces an empty item with the pasted ones, levels kept, the caret after the last', () => {
-    const { list, holder, outline } = mountList('unordered', [item('Extras', [item('Price')]), item('Luggage'), item('')])
+  it('replaces an empty item with the pasted ones, levels kept, the caret after the last', async () => {
+    const { list, holder, outline } = await mountList('unordered', [item('Extras', [item('Price')]), item('Luggage'), item('')])
     caret(holder.querySelectorAll('.cdx-list__item-content')[3]!, 0)
 
     list.pasteItems({ items: [{ content: 'Option A', depth: 0 }, { content: 'Detail', depth: 1 }, { content: 'Option B', depth: 0 }] })
@@ -246,8 +249,8 @@ describe('List.pasteItems', () => {
     expect(selection.anchorOffset).toBe('Option B'.length)
   })
 
-  it('splits the item at the caret like pasted paragraphs, the caret before the moved text', () => {
-    const { list, field, outline } = mountList('unordered', [item('Hello<b>world</b>')])
+  it('splits the item at the caret like pasted paragraphs, the caret before the moved text', async () => {
+    const { list, field, outline } = await mountList('unordered', [item('Hello<b>world</b>')])
     caret(field('Helloworld').firstChild!, 5)
 
     list.pasteItems({ items: [{ content: ' one', depth: 0 }, { content: 'two ', depth: 0 }] })
@@ -257,8 +260,8 @@ describe('List.pasteItems', () => {
     expect(window.getSelection()!.anchorOffset).toBe(4)
   })
 
-  it('keeps the children of the caret item after the pasted text', () => {
-    const { list, field, outline } = mountList('unordered', [item('Parent', [item('Child')])])
+  it('keeps the children of the caret item after the pasted text', async () => {
+    const { list, field, outline } = await mountList('unordered', [item('Parent', [item('Child')])])
     caret(field('Parent').firstChild!, 6)
 
     list.pasteItems({ items: [{ content: ' end', depth: 0 }, { content: 'Next', depth: 0 }] })
@@ -266,8 +269,8 @@ describe('List.pasteItems', () => {
     expect(outline()).toEqual(['Parent end', 'Next', '  Child'])
   })
 
-  it('reads depths relative to the first item, one level deeper at most, under the caret item', () => {
-    const { list, field, outline } = mountList('unordered', [item('Root', [item('')])])
+  it('reads depths relative to the first item, one level deeper at most, under the caret item', async () => {
+    const { list, field, outline } = await mountList('unordered', [item('Root', [item('')])])
     caret(field(''), 0)
 
     list.pasteItems({ items: [2, 4, 1, 2].map((depth, index) => ({ content: `p${index}`, depth })) })
@@ -275,8 +278,8 @@ describe('List.pasteItems', () => {
     expect(outline()).toEqual(['Root', '  p0', '    p1', '  p2', '    p3'])
   })
 
-  it('pastes unchecked items into a checklist and keeps the state of the caret item', () => {
-    const { list, field } = mountList('checklist', [{ content: 'Done', meta: { checked: true }, items: [] }])
+  it('pastes unchecked items into a checklist and keeps the state of the caret item', async () => {
+    const { list, field } = await mountList('checklist', [{ content: 'Done', meta: { checked: true }, items: [] }])
     caret(field('Done').firstChild!, 4)
 
     list.pasteItems({ items: [{ content: '!', depth: 0 }, { content: 'Todo', depth: 0 }] })
@@ -286,8 +289,8 @@ describe('List.pasteItems', () => {
 })
 
 describe('List.pasteItems guards', () => {
-  it('does nothing without a caret in the list or without items', () => {
-    const { list, field, outline } = mountList('unordered', [item('One')])
+  it('does nothing without a caret in the list or without items', async () => {
+    const { list, field, outline } = await mountList('unordered', [item('One')])
     window.getSelection()!.removeAllRanges()
     list.pasteItems({ items: [{ content: 'X', depth: 0 }] })
     caret(field('One').firstChild!, 3)
@@ -296,8 +299,8 @@ describe('List.pasteItems guards', () => {
     expect(outline()).toEqual(['One'])
   })
 
-  it('replaces the selected text of the item', () => {
-    const { list, field, outline } = mountList('unordered', [item('Hello big world')])
+  it('replaces the selected text of the item', async () => {
+    const { list, field, outline } = await mountList('unordered', [item('Hello big world')])
     const text = field('Hello big world').firstChild!
     const range = document.createRange()
     range.setStart(text, 5)
@@ -318,16 +321,29 @@ describe('List Delete at the end of an item', () => {
     return event
   }
 
-  it('listens to nothing in read-only mode', () => {
+  it('listens to nothing in read-only mode', async () => {
     const holder = document.createElement('div')
     const listen = vi.spyOn(holder, 'addEventListener')
-    new List({ data: { style: 'unordered', meta: {}, items: [item('One')] }, config: {}, api: {} as any, readOnly: true, block: { holder } as any }).rendered()
+    new List({ data: { style: 'unordered', meta: {}, items: [item('One')] }, config: {}, api: {} as any, readOnly: true, block: { holder } as any }).render()
+    await Promise.resolve()
 
     expect(listen).not.toHaveBeenCalled()
   })
 
-  it('brings the next item up, its children kept at their level', () => {
-    const { field, outline } = mountList('unordered', [item('Single room'), item('<b>210</b> per night', [item('Child')]), item('Luggage')])
+  it('registers one capture keydown listener on the block holder, after render() returns', async () => {
+    const holder = document.createElement('div')
+    const listen = vi.spyOn(holder, 'addEventListener')
+    const list = new List({ data: { style: 'unordered', meta: {}, items: [item('One')] }, config: {}, api: {} as any, readOnly: false, block: { holder } as any })
+    list.render()
+    expect(listen).not.toHaveBeenCalled()
+    await Promise.resolve()
+
+    expect(listen).toHaveBeenCalledTimes(1)
+    expect(listen).toHaveBeenCalledWith('keydown', expect.any(Function), true)
+  })
+
+  it('brings the next item up, its children kept at their level', async () => {
+    const { field, outline } = await mountList('unordered', [item('Single room'), item('<b>210</b> per night', [item('Child')]), item('Luggage')])
     const target = field('Single room')
     caret(target.firstChild!, 'Single room'.length)
 
@@ -336,8 +352,17 @@ describe('List Delete at the end of an item', () => {
     expect(window.getSelection()!.anchorNode?.textContent).toBe('Single room')
   })
 
-  it('brings a first child up into its parent', () => {
-    const { field, outline } = mountList('unordered', [item('Parent', [item('Child', [item('Grandchild')])])])
+  it('still brings the next item up once the list style renders a new list element', async () => {
+    const { list, field, outline } = await mountList('unordered', [item('One'), item('Two')])
+    ;(list as unknown as { listStyle: string }).listStyle = 'ordered'
+    caret(field('One').firstChild!, 3)
+
+    expect(pressDelete(field('One')).defaultPrevented).toBe(true)
+    expect(outline()).toEqual(['OneTwo'])
+  })
+
+  it('brings a first child up into its parent', async () => {
+    const { field, outline } = await mountList('unordered', [item('Parent', [item('Child', [item('Grandchild')])])])
     caret(field('Parent').firstChild!, 6)
 
     pressDelete(field('Parent'))
@@ -345,8 +370,8 @@ describe('List Delete at the end of an item', () => {
     expect(outline()).toEqual(['ParentChild', '  Grandchild'])
   })
 
-  it('leaves Delete inside the text, and at the end of the last item, to the editor', () => {
-    const { field, outline } = mountList('unordered', [item('One'), item('Two')])
+  it('leaves Delete inside the text, and at the end of the last item, to the editor', async () => {
+    const { field, outline } = await mountList('unordered', [item('One'), item('Two')])
     caret(field('One').firstChild!, 1)
     expect(pressDelete(field('One')).defaultPrevented).toBe(false)
     caret(field('Two').firstChild!, 3)
@@ -357,8 +382,8 @@ describe('List Delete at the end of an item', () => {
   it.each([
     ['with Shift', { shiftKey: true }],
     ['with Ctrl', { ctrlKey: true }],
-  ])('leaves Delete %s to the editor', (_name, init) => {
-    const { field, outline } = mountList('unordered', [item('One'), item('Two')])
+  ])('leaves Delete %s to the editor', async (_name, init) => {
+    const { field, outline } = await mountList('unordered', [item('One'), item('Two')])
     caret(field('One').firstChild!, 3)
     const event = new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true, ...init })
     field('One').dispatchEvent(event)
@@ -366,8 +391,8 @@ describe('List Delete at the end of an item', () => {
     expect(outline()).toEqual(['One', 'Two'])
   })
 
-  it('leaves a Delete already handled by another listener alone', () => {
-    const { field, outline } = mountList('unordered', [item('One'), item('Two')])
+  it('leaves a Delete already handled by another listener alone', async () => {
+    const { field, outline } = await mountList('unordered', [item('One'), item('Two')])
     caret(field('One').firstChild!, 3)
     const earlier = (e: Event) => e.preventDefault()
     document.addEventListener('keydown', earlier, true)
@@ -377,8 +402,8 @@ describe('List Delete at the end of an item', () => {
     expect(outline()).toEqual(['One', 'Two'])
   })
 
-  it('leaves other keys alone', () => {
-    const { field, outline } = mountList('unordered', [item('One'), item('Two')])
+  it('leaves other keys alone', async () => {
+    const { field, outline } = await mountList('unordered', [item('One'), item('Two')])
     caret(field('One').firstChild!, 3)
     const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true })
     field('One').dispatchEvent(event)
