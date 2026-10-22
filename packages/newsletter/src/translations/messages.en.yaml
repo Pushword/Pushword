@@ -275,6 +275,40 @@ newsletter:
       state: State
       subject: Subject
       subjectId: Trigger subject
+  design:
+    action: Email design
+    description: 'Set the shared design for newsletters and automations in “%audience%”.'
+    desktop: Desktop
+    failed: The preview could not be updated. Try again or reload the page.
+    footer: Footer
+    footerHelp: Text, a signature or links in Markdown. The unsubscribe link and postal address are added automatically.
+    header: Header
+    headerHelp: Text or a banner in Markdown. Images need an absolute public URL.
+    layout: Layout
+    layoutHelp: A frame centers the content on a light gray background. Without a frame, the message stays simple. Both layouts keep the header and footer.
+    mobile: Mobile
+    preview: Live preview
+    previewHelp: Changes appear before saving. Rendering may vary between email clients.
+    ready: Preview up to date
+    sample: Sample content
+    sampleBody: |
+      Hello **%name%**,
+
+      Here is the latest news from our team.
+
+      ## Something to look forward to
+
+      Find our latest updates and advice on our website.
+
+      See you soon!
+    sampleHelp: Only used to preview the design. This text is neither saved nor sent.
+    save: Save email design
+    saved: Email design saved.
+    simple: Without a frame
+    title: Email design
+    updating: Updating preview…
+    viewport: Preview width
+    wrapped: With a frame
   email:
     unsubscribe: Unsubscribe
   form:

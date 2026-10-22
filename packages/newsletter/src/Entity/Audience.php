@@ -95,6 +95,19 @@ class Audience implements IdInterface, Stringable
         }
     }
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    public bool $emailWrapped = false;
+
+    #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
+    public string $headerMarkdown = '' {
+        set(?string $value) => (string) $value;
+    }
+
+    #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
+    public string $footerMarkdown = '' {
+        set(?string $value) => (string) $value;
+    }
+
     /**
      * Sends this audience's mail with no way off the list: no unsubscribe link
      * in either part of the body, and no `List-Unsubscribe` headers.

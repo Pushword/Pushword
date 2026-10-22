@@ -437,6 +437,24 @@ failure.
 touching no contact and no counter. Once the campaign carries translations, it
 asks which language to send.
 
+### Email design and live preview
+
+In **Newsletter → Audiences**, open **Email design** for the audience. Choose
+**Without a frame** for a simple email or **With a frame** for centered content
+on a light gray background. The audience's Markdown header and footer are shared
+by its campaigns and automation emails; both layouts keep them.
+
+The live preview uses the same renderer as sending, with Desktop and Mobile
+widths. Edit the sample content to check your design without creating a campaign.
+Previewing does not save, subscribe a contact or send mail. **Save email design**
+applies the settings. Email clients may render the same HTML differently.
+
+The unsubscribe link and postal address remain automatic. An occurrence's
+`SendContext.footerMarkdown` overrides the audience footer, including an empty
+override. Existing audiences keep the simple layout and empty header/footer.
+Sites overriding `/newsletter/email.html.twig` receive `wrapped` and `header`
+alongside the existing `body` and `footer` variables and control their own layout.
+
 ### Email Markdown
 
 Mail bodies and `SendContext.footerMarkdown` use an email-specific CommonMark

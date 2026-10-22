@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Admin;
 
+use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
@@ -17,7 +20,15 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Override;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Newsletter\Admin\Form\EmailDesignType;
 use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Service\MailRenderer;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @extends AbstractCrudController<Audience>
@@ -42,8 +53,83 @@ class AudienceCrudController extends AbstractCrudController
             ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
             ->setEntityLabelInSingular('newsletter.audience.label.singular')
             ->setEntityLabelInPlural('newsletter.audience.label.plural')
+            ->showEntityActionsInlined()
             ->setDefaultSort(['slug' => 'ASC'])
             ->setSearchFields(['slug', 'name', 'fromEmail']);
+    }
+
+    #[Override]
+    public function configureActions(Actions $actions): Actions
+    {
+        $design = Action::new('emailDesign', 'newsletter.design.action', 'fa fa-palette')
+            ->linkToCrudAction('emailDesign')
+            ->setCssClass('btn btn-outline-primary');
+
+        foreach ([Crud::PAGE_INDEX, Crud::PAGE_EDIT, Crud::PAGE_DETAIL] as $page) {
+            $actions->add($page, $design);
+        }
+
+        return $actions;
+    }
+
+    #[AdminRoute(path: '/{entityId}/email-design', name: 'email_design', options: ['methods' => ['GET', 'POST']])]
+    #[IsGranted('ROLE_EDITOR')]
+    public function emailDesign(Request $request, EntityManagerInterface $entityManager, MailRenderer $renderer, TranslatorInterface $translator): Response
+    {
+        $audience = $this->getContext()?->getEntity()->getInstance();
+        if (! $audience instanceof Audience) {
+            throw $this->createNotFoundException();
+        }
+
+        // Preview binds to a copy: it must never change the managed audience.
+        $design = clone $audience;
+        $form = $this->createForm(EmailDesignType::class, $design);
+        $form->handleRequest($request);
+
+        $preview = $request->request->getBoolean('preview');
+
+        if ($form->isSubmitted() && $form->isValid() && ! $preview) {
+            $audience->emailWrapped = $design->emailWrapped;
+            $audience->headerMarkdown = $design->headerMarkdown;
+            $audience->footerMarkdown = $design->footerMarkdown;
+            $entityManager->flush();
+            $this->addFlash('success', 'newsletter.design.saved');
+
+            return $this->redirect($request->getPathInfo());
+        }
+
+        if ($preview && (! $form->isSubmitted() || ! $form->isValid())) {
+            return new JsonResponse(['error' => $translator->trans('newsletter.design.failed')], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $body = $form->get('sampleBody')->getData();
+        $contact = new Contact($design, 'preview@example.tld');
+        $contact->name = 'Alex';
+
+        $site = $this->siteRegistry->get($design->mainHost);
+        $html = $renderer->html(
+            $design,
+            $contact,
+            $design->name,
+            \is_string($body) ? $body : '',
+            null,
+            $design->transactional ? null : $site->baseUrl.'/#unsubscribe',
+            null,
+            locale: $site->locale,
+        );
+
+        if ($preview) {
+            $response = new JsonResponse(['html' => $html]);
+            $response->headers->set('Cache-Control', 'private, no-store');
+
+            return $response;
+        }
+
+        return $this->render('@PushwordNewsletter/admin/email_design.html.twig', [
+            'audience' => $audience,
+            'design_form' => $form->createView(),
+            'preview_html' => $html,
+        ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 
     #[Override]

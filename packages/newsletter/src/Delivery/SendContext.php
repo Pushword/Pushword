@@ -29,6 +29,7 @@ final readonly class SendContext
             $audience->fromName,
             $audience->replyTo,
             $audience->postalAddress,
+            footerMarkdown: $audience->footerMarkdown,
             audienceName: $audience->name
         );
     }

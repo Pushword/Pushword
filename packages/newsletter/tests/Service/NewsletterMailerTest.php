@@ -21,12 +21,39 @@ use Symfony\Component\Mailer\Messenger\SendEmailMessage;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Group('integration')]
 final class NewsletterMailerTest extends AbstractNewsletterTestCase
 {
     use MailerAssertionsTrait;
+
+    public function testCampaignsAndAutomationStepsUseTheAudienceDesign(): void
+    {
+        $audience = $this->createAudience();
+        $audience->emailWrapped = true;
+        $audience->headerMarkdown = 'Brand heading';
+        $audience->footerMarkdown = 'Brand signature';
+
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $campaign = $this->createCampaign($audience);
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
+        $mailer = self::getContainer()->get(NewsletterMailer::class);
+        $mailer->sendCampaign($campaign, $contact);
+        $mailer->sendStep($automation->getOrderedSteps()[0], $contact, 'Welcome', 'Hello');
+        self::assertEmailCount(2);
+
+        foreach ([0, 1] as $index) {
+            $email = self::getMailerMessage($index);
+            self::assertInstanceOf(Email::class, $email);
+            self::assertEmailHtmlBodyContains($email, 'Brand heading');
+            self::assertEmailHtmlBodyContains($email, 'Brand signature');
+            self::assertEmailHtmlBodyContains($email, 'background-color:#f3f4f6');
+            self::assertEmailTextBodyContains($email, 'Brand heading');
+            self::assertEmailTextBodyContains($email, 'Brand signature');
+        }
+    }
 
     public function testDripsBypassTheAsyncBusAndKeepTransportListeners(): void
     {

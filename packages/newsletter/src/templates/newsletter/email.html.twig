@@ -9,11 +9,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ subject }}</title>
 </head>
-<body style="margin:0;padding:0;">
+<body style="margin:0;padding:0;{{ wrapped ? 'background-color:#f3f4f6;' }}">
 {% if preheader %}
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;">{{ preheader }}</div>
 {% endif %}
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;">
+{% if wrapped %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;background-color:#f3f4f6;">
+    <tr><td align="center" style="padding:32px 12px;">
+{% endif %}
+<table role="presentation" width="600" cellpadding="0" cellspacing="0"{% if wrapped %} align="center"{% endif %} style="width:100%;max-width:600px;{{ wrapped ? 'background-color:#fafbfc;border-radius:12px;' }}">
+    {% if header %}
+        <tr>
+            <td style="padding:24px 16px 0;font-family:Helvetica,Arial,sans-serif;font-size:18px;line-height:1.5;color:#1c1c1c;">
+                {{ header|raw }}
+            </td>
+        </tr>
+    {% endif %}
     <tr>
         <td style="padding:24px 16px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1c1c1c;">
             {{ body|raw }}
@@ -39,5 +50,9 @@
         </tr>
     {% endif %}
 </table>
+{% if wrapped %}
+    </td></tr>
+</table>
+{% endif %}
 </body>
 </html>

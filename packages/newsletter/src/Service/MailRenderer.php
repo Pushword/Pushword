@@ -54,8 +54,9 @@ final readonly class MailRenderer
         ?string $locale = null,
         array $untrackedUrls = [],
     ): string {
+        $host = $sendContext->mainHost ?? $audience->mainHost;
         $body = $this->markdownParser->transform($this->personalize($bodyMarkdown, $contact));
-        $body = $this->absolutize($body, $sendContext->mainHost ?? $audience->mainHost);
+        $body = $this->absolutize($body, $host);
         // Tagging the body and not the rendered mail leaves the template's
         // unsubscribe link alone: leaving is an exit, not a visit.
         $body = $this->utmDecorator->decorate($body, $audience, $utmTag, $untrackedUrls);
@@ -74,7 +75,9 @@ final readonly class MailRenderer
             'locale' => $locale ?? $contact->locale,
             'audienceName' => $sendContext->audienceName ?? $audience->name,
             'postalAddress' => null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress,
-            'footer' => $this->markdownParser->transform($sendContext->footerMarkdown ?? ''),
+            'wrapped' => $audience->emailWrapped,
+            'header' => $this->absolutize($this->markdownParser->transform($audience->headerMarkdown), $host),
+            'footer' => $this->absolutize($this->markdownParser->transform($sendContext->footerMarkdown ?? $audience->footerMarkdown), $host),
             'subject' => $this->personalize($subject, $contact),
             'preheader' => null !== $preheader ? $this->personalize($preheader, $contact) : null,
             'body' => $body,
@@ -108,9 +111,13 @@ final readonly class MailRenderer
     public function text(Audience $audience, Contact $contact, string $bodyMarkdown, ?string $unsubscribeUrl, ?SendContext $sendContext = null): string
     {
         $postalAddress = null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress;
-        $foot = array_filter([$unsubscribeUrl, $postalAddress, $sendContext?->footerMarkdown], static fn (?string $value): bool => null !== $value && '' !== $value);
+        $foot = array_filter(
+            [$unsubscribeUrl, $postalAddress, $sendContext->footerMarkdown ?? $audience->footerMarkdown],
+            static fn (?string $value): bool => null !== $value && '' !== $value,
+        );
 
-        return $this->personalize($bodyMarkdown, $contact)
+        return ('' === $audience->headerMarkdown ? '' : $audience->headerMarkdown."\n\n")
+            .$this->personalize($bodyMarkdown, $contact)
             .([] === $foot ? '' : "\n\n---\n".implode("\n\n", $foot)."\n");
     }
 

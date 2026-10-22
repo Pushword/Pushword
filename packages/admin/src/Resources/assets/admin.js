@@ -59,6 +59,7 @@ import { suggestTags } from './admin.tagsField'
 
 // Criteria modules
 import { initCriteriaBuilder } from './admin.criteriaBuilder'
+import { initEmailPreview } from './admin.emailPreview'
 
 // Sidebar modules
 import { submenuFilter } from './admin.submenuFilter'
@@ -123,6 +124,7 @@ window.addEventListener('load', function () {
 
   // Criteria textareas (newsletter segments, automation triggers)
   initCriteriaBuilder()
+  initEmailPreview()
 
   // Page state
   retrieveCurrentPageHost()

@@ -275,6 +275,40 @@ newsletter:
       state: État
       subject: Sujet
       subjectId: Sujet déclencheur
+  design:
+    action: Habillage
+    description: 'Définissez la présentation commune aux newsletters et automatisations de « %audience% ».'
+    desktop: Ordinateur
+    failed: Impossible d'actualiser l'aperçu. Réessayez ou rechargez la page.
+    footer: Pied de page
+    footerHelp: Texte, signature ou liens en Markdown. La désinscription et l'adresse postale sont ajoutées automatiquement.
+    header: En-tête
+    headerHelp: Texte ou bannière en Markdown. Pour une image, utilisez une URL publique absolue.
+    layout: Mise en page
+    layoutHelp: Le cadre centre le contenu sur un fond gris clair. Sans cadre, le message reste sobre. L'en-tête et le pied de page sont conservés dans les deux cas.
+    mobile: Mobile
+    preview: Aperçu en direct
+    previewHelp: Les modifications s'affichent avant enregistrement. Le rendu peut varier selon la messagerie.
+    ready: Aperçu à jour
+    sample: Texte d'essai
+    sampleBody: |
+      Bonjour **%name%**,
+
+      Voici les dernières nouvelles de notre équipe.
+
+      ## Un rendez-vous à ne pas manquer
+
+      Retrouvez nos nouveautés et nos conseils sur notre site.
+
+      À bientôt !
+    sampleHelp: Sert uniquement à visualiser l'habillage. Ce texte n'est ni enregistré ni envoyé.
+    save: Enregistrer l'habillage
+    saved: Habillage enregistré.
+    simple: Sans cadre
+    title: Habillage des emails
+    updating: Actualisation de l'aperçu…
+    viewport: Largeur de l'aperçu
+    wrapped: Avec cadre
   email:
     unsubscribe: Se désinscrire
   form:

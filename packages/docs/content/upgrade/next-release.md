@@ -1,7 +1,8 @@
 ---
-title: ''
+title: 'audiences gain shared email design settings'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
+run: 'doctrine:schema:update --force'
 ---
 
 <!--
@@ -34,3 +35,9 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/newsletter`
+
+## Shared email design
+
+Run `php bin/console doctrine:schema:update --force` to add the audience's email design fields. Existing audiences retain the simple layout. Custom `/newsletter/email.html.twig` templates can use `wrapped` and `header`; see [email design](../extension/newsletter#email-design-and-live-preview).
