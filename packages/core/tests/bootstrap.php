@@ -57,6 +57,8 @@ function computeDbCacheHash(string $monoRepoBase): string
     // Fixture and config files
     $extraFiles = [
         $monoRepoBase.'/packages/dev-app/src/DataFixtures/AppFixtures.php',
+        $monoRepoBase.'/packages/dev-app/src/DataFixtures/Motion/spec.json',
+        $monoRepoBase.'/packages/dev-app/media~/repurpose-nord.mp4',
         $monoRepoBase.'/packages/dev-app/src/DataFixtures/WelcomePage.md',
         $monoRepoBase.'/packages/dev-app/src/DataFixtures/KitchenSink.md',
         $monoRepoBase.'/packages/dev-app/src/DataFixtures/reviews.yaml',

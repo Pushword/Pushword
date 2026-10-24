@@ -1,0 +1,20 @@
+{
+  "page": "standalone/motion-nord",
+  "network": "instagram",
+  "format": "story-9-16",
+  "status": "draft",
+  "video": "repurpose-nord.mp4",
+  "fontPairing": "montserrat-work-sans",
+  "palette": {"bg": "#f2ecd9", "text": "#163b35", "accent": "#e96839"},
+  "creatorOnSlides": "none",
+  "counter": {"style": "none"},
+  "caption": "NORD. Une parenthèse au grand air. A motion-design study made with Pushword Repurpose: kinetic type, a drawn route, photo reveals and custom React scenes.",
+  "hashtags": ["pushword", "motiondesign", "repurpose"],
+  "slides": [
+    {"tagline": "Une parenthèse au grand air", "title": "NORD.", "image": {"media": "1.jpg"}, "overlay": 0.25, "palette": {"text": "#f2ecd9"}},
+    {"tagline": "01 / Prendre le temps", "title": "Sortir\ndu cadre.", "paragraph": "Marcher. Respirer. Ralentir.", "layout": "top"},
+    {"tagline": "02 / Habiter la nuit", "title": "La nuit nous\nappartient.", "image": {"media": "3.jpg"}, "overlay": 0.35, "palette": {"text": "#f2ecd9"}},
+    {"tagline": "03 / Faire de la place", "title": "Explorer.\nRessentir.\nRecommencer.", "layout": "center", "palette": {"bg": "#e96839", "text": "#163b35"}},
+    {"tagline": "NORD / Motion study 01", "title": "Le monde\nest dehors.", "paragraph": "À vous d’écrire la suite.", "layout": "center"}
+  ]
+}

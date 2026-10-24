@@ -53,6 +53,18 @@ final class CarouselValidationTest extends KernelTestCase
         self::assertArrayHasKey('network', $violations);
     }
 
+    public function testVideoAcceptsLocalMp4AndWebmFilenamesOnly(): void
+    {
+        $spec = ['page' => 'x', 'network' => 'instagram', 'format' => 'story-9-16', 'slides' => [['title' => 'Hi']]];
+        foreach ([null, '', 'reel.mp4', 'ete-2026.WEBM'] as $video) {
+            self::assertArrayNotHasKey('video', $this->violations([...$spec, 'video' => $video]));
+        }
+
+        foreach (['../reel.mp4', 'https://example.com/reel.mp4', 'reel.svg', 'reel.mp4?x=1', "reel.mp4\n", 'été.mp4'] as $video) {
+            self::assertArrayHasKey('video', $this->violations([...$spec, 'video' => $video]), $video);
+        }
+    }
+
     public function testFormatMustBeAllowedForNetwork(): void
     {
         $violations = $this->violations([

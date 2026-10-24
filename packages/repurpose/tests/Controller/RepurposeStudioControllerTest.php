@@ -7,14 +7,17 @@ namespace Pushword\Repurpose\Tests\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Repurpose\Entity\SocialPost;
+use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\VideoBuilder;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use ZipArchive;
 
 /**
@@ -141,6 +144,75 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $firstSlide = $slides[0] ?? null;
         self::assertIsArray($firstSlide);
         self::assertSame('A brand new headline', $firstSlide['title']);
+    }
+
+    public function testMotionFixtureOpensWithAPlayableVideoAndStaticSlides(): void
+    {
+        $post = $this->em->getRepository(SocialPost::class)->findOneBy(['host' => 'localhost.dev', 'page' => 'standalone/motion-nord']);
+        self::assertInstanceOf(SocialPost::class, $post);
+        $carousel = new CarouselFactory()->fromArray($post->spec);
+        self::assertCount(0, self::getContainer()->get(ValidatorInterface::class)->validate($carousel));
+
+        $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('#rp-slide-preview');
+        self::assertSelectorExists('#rp-video-preview video[controls][playsinline]');
+        self::assertStringContainsString('repurpose-nord.mp4', (string) $this->client->getResponse()->getContent());
+
+        $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/preview', $post->spec);
+        self::assertResponseIsSuccessful();
+        self::assertIsArray($body['slides']);
+        self::assertCount(5, $body['slides']);
+        self::assertIsArray($body['video']);
+        self::assertSame('repurpose-nord.mp4', $body['video']['name']);
+        self::assertIsString($body['video']['url']);
+
+        $this->client->request(Request::METHOD_GET, $body['video']['url'], server: ['HTTP_RANGE' => 'bytes=0-31']);
+        self::assertResponseStatusCodeSame(Response::HTTP_PARTIAL_CONTENT);
+        self::assertSame('video/mp4', $this->client->getResponse()->headers->get('Content-Type'));
+        self::assertStringStartsWith('bytes 0-31/', (string) $this->client->getResponse()->headers->get('Content-Range'));
+    }
+
+    public function testSaveCanAttachAndDetachARenderedVideo(): void
+    {
+        $post = $this->persistPost();
+        $spec = [...$this->validSpec(), 'video' => 'repurpose-nord.mp4'];
+        $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', $spec);
+        self::assertResponseIsSuccessful();
+        $saved = $this->em->find(SocialPost::class, $post->id);
+        self::assertInstanceOf(SocialPost::class, $saved);
+        self::assertSame('repurpose-nord.mp4', $saved->spec['video']);
+
+        $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', $this->validSpec());
+        self::assertResponseIsSuccessful();
+        $saved = $this->em->find(SocialPost::class, $post->id);
+        self::assertInstanceOf(SocialPost::class, $saved);
+        self::assertArrayNotHasKey('video', $saved->spec);
+    }
+
+    public function testPreviewDoesNotExposeMissingOrNonVideoMedia(): void
+    {
+        $post = $this->persistPost();
+        $impostor = new Media()->setFileName('studio-image.mp4')->setMimeType('image/jpeg')->setHash('studio-image');
+        $this->em->persist($impostor);
+        $this->em->flush();
+
+        try {
+            foreach ([null, 'absent-video.mp4', 'studio-image.mp4'] as $video) {
+                $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/preview', [...$this->validSpec(), 'video' => $video]);
+                self::assertResponseIsSuccessful();
+                self::assertNull($body['video']);
+                self::assertIsArray($body['slides']);
+                self::assertCount(1, $body['slides']);
+            }
+        } finally {
+            $stored = $this->em->find(Media::class, $impostor->id);
+            if (null !== $stored) {
+                $this->em->remove($stored);
+            }
+
+            $this->em->flush();
+        }
     }
 
     public function testSavePinsNetworkButAllowsRelinkingThePage(): void

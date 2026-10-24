@@ -6,6 +6,7 @@ namespace Pushword\Repurpose\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Repurpose\Entity\SocialPost;
 use Pushword\Repurpose\Model\Carousel;
@@ -60,6 +61,7 @@ final class RepurposeStudioController extends AbstractController
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $entityManager,
         private readonly SiteRegistry $siteRegistry,
+        private readonly MediaRepository $mediaRepository,
     ) {
     }
 
@@ -87,6 +89,7 @@ final class RepurposeStudioController extends AbstractController
             'feedWidth' => $this->networks->mobileWidth($carousel->network),
             'backUrl' => $this->backUrl($request),
             'specJs' => json_encode($post->spec, $scriptFlags),
+            'videoJs' => json_encode($this->renderedVideo($carousel->video), $scriptFlags),
             'slidesJs' => json_encode($this->renderer->renderDeck($carousel, $creator), $scriptFlags),
             'vocabJs' => json_encode($this->vocabulary($carousel->network, $post->host), $scriptFlags),
             'backgroundEffectsJs' => json_encode($this->backgroundEffects(), $scriptFlags),
@@ -98,6 +101,24 @@ final class RepurposeStudioController extends AbstractController
             'networkUrlsJs' => json_encode($networkUrls, $scriptFlags),
             'pageSlugs' => $this->pageSlugsForHost($post->host),
         ]);
+    }
+
+    /** @return array{url: string, name: string}|null */
+    private function renderedVideo(?string $filename): ?array
+    {
+        if (null === $filename) {
+            return null;
+        }
+
+        $media = $this->mediaRepository->findOneByFileNameOrHistory($filename);
+        if (null === $media || ! \in_array($media->getMimeType(), ['video/mp4', 'video/webm'], true)) {
+            return null;
+        }
+
+        return [
+            'url' => $this->generateUrl('pushword_media_download', ['media' => $media->getFileName()]),
+            'name' => $media->getFileName(),
+        ];
     }
 
     /**
@@ -205,6 +226,7 @@ final class RepurposeStudioController extends AbstractController
 
         return new JsonResponse([
             'slides' => $this->renderer->renderDeck($carousel, $creator),
+            'video' => $this->renderedVideo($carousel->video),
             'warnings' => [
                 ...$this->contrastAdvisor->warnings($carousel),
                 ...$this->creatorAdvisor->warnings($carousel, $post->host),

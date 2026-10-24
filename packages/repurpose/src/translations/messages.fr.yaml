@@ -19,6 +19,18 @@ repurpose:
     updatedAt: Mis à jour
 
 repurposeConfirmationCancel: Annuler
+repurposePreviewMode: 'Visualisation'
+repurposePreviewSlides: 'Slides'
 repurposeStatusDraft: Brouillon
 repurposeStatusPlanned: Planifié
 repurposeStatusPosted: Publié
+repurposeVideoChoose: 'Choisir'
+repurposeVideoDownload: 'Télécharger la vidéo rendue'
+repurposeVideoEmpty: 'Choisissez ou importez un MP4 ou un WebM dans le panneau Deck pour voir l’animation finale.'
+repurposeVideoError: 'Cette vidéo ne peut pas être lue. Vérifiez le fichier et son encodage.'
+repurposeVideoInvalid: 'Choisissez une vidéo MP4 ou WebM.'
+repurposeVideoMissing: 'La vidéo sélectionnée est absente de la médiathèque ou son format n’est pas pris en charge.'
+repurposeVideoRemove: 'Retirer'
+repurposeVideoRenderNote: 'Dernier rendu importé. Modifier les slides ne régénère pas cette vidéo.'
+repurposeVideoTitle: 'Vidéo rendue'
+repurposeVideoUpload: 'Importer'

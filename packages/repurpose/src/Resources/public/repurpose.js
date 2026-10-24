@@ -145,7 +145,7 @@
     if (Array.isArray(s.hashtags) && 0 === s.hashtags.length) {
       delete s.hashtags
     }
-    dropEmptyStrings(s, ['caption', 'creator', 'fontPairing', 'creatorOnSlides', 'creatorOrientation'])
+    dropEmptyStrings(s, ['video', 'caption', 'creator', 'fontPairing', 'creatorOnSlides', 'creatorOrientation'])
     // Deck-wide effect: 'none' is the factory default.
     dropDefaults(s, { background: 'none' })
     if ('' === s.plannedAt) {
@@ -201,6 +201,11 @@
       spec: cfg.spec || { slides: [] },
       vocab: cfg.vocab || {},
       slides: cfg.slides || [],
+      video: cfg.video || null,
+      videoError: false,
+      selectedVideo: (cfg.spec && cfg.spec.video) || '',
+      previewMode: cfg.spec && cfg.spec.video ? 'video' : 'slides',
+      messages: cfg.messages || {},
       backgroundEffects: cfg.backgroundEffects || [],
       tailwind: TW_SWATCHES,
       defaults: cfg.defaults || {},
@@ -233,7 +238,7 @@
       exportingSvg: false,
       exportSvgLabel: 'Export .svg',
       exportingVideo: false,
-      exportVideoLabel: 'Export .mp4',
+      exportVideoLabel: 'Slideshow .mp4',
       pinning: false,
       pinLabel: '📌 Pin to Pinterest',
       notice: '',
@@ -270,6 +275,7 @@
           }
         }
         var s = this.spec
+        def(s, 'video', '')
         s.palette = s.palette || {}
         s.counter = s.counter || {}
         s.hashtags = Array.isArray(s.hashtags) ? s.hashtags : []
@@ -401,6 +407,12 @@
             return
           }
           if (response.ok && Array.isArray(body.slides)) {
+            var nextVideo = body.video || null
+            if ((this.video && this.video.url) !== (nextVideo && nextVideo.url)) {
+              this.videoError = false
+            }
+            this.video = nextVideo
+            this.selectedVideo = spec.video || ''
             this.slides = body.slides
             this.violations = []
             this.live = { state: 'ok', text: 'preview live' }
@@ -575,6 +587,15 @@
         this._pickCell = cell
         this.mediaModal = { open: true, src: 'upload' === mode ? this.urls.mediaUpload : this.urls.mediaIndex }
       },
+      pickVideo: function (mode) {
+        this.pickMedia('video', null, mode)
+      },
+      clearVideo: function () {
+        this.spec.video = ''
+        this.selectedVideo = ''
+        this.video = null
+        this.videoError = false
+      },
       clearMedia: function (index, cell) {
         var slide = this.spec.slides[index]
         if (slide && slide.images && slide.images[cell]) {
@@ -593,7 +614,21 @@
           return
         }
         var data = event.data
-        if (!data || 'pw-media-picker-select' !== data.type || !data.media) {
+        if (!this.mediaModal.open || !data || 'pw-media-picker-select' !== data.type || !data.media) {
+          return
+        }
+        if ('video' === this._pickSlide) {
+          var filename = data.media.fileName || ''
+          if (!/\.(mp4|webm)$/i.test(filename)) {
+            this.notice = this.messages.videoInvalid
+            return
+          }
+          this.spec.video = filename
+          this.selectedVideo = filename
+          this.video = null
+          this.videoError = false
+          this.previewMode = 'video'
+          this.closeMediaModal()
           return
         }
         var slide = this.spec.slides[this._pickSlide]
@@ -1265,7 +1300,7 @@
           this.exportVideoLabel = 'Export failed'
         } finally {
           var self = this
-          setTimeout(function () { self.exportVideoLabel = 'Export .mp4' }, 2500)
+          setTimeout(function () { self.exportVideoLabel = 'Slideshow .mp4' }, 2500)
           this.exportingVideo = false
         }
       },

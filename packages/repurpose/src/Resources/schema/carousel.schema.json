@@ -14,6 +14,7 @@
         "status": { "enum": ["draft", "planned", "posted"], "default": "draft" },
         "plannedAt": { "type": ["string", "null"], "description": "Parseable date-time when the post is scheduled, or null." },
         "caption": { "type": ["string", "null"], "description": "The post caption. Its published length, including hashtags, is capped per network; Pinterest requires a non-empty caption." },
+        "video": { "type": ["string", "null"], "pattern": "^[a-zA-Z0-9_.-]+\\.(?:[mM][pP]4|[wW][eE][bB][mM])(?![\\s\\S])", "description": "Normalized filename of a rendered MP4 or WebM in the media library. The admin plays this render; editing slides does not regenerate it." },
         "hashtags": { "type": "array", "items": { "type": "string" } },
         "palette": { "$ref": "#/$defs/palette", "description": "Deck-level colour override; any slide may override again." },
         "fontPairing": { "type": ["string", "null"], "description": "A key from the font-pairing registry (see /api/repurpose/networks, fontPairings). Only pick a pairing whose `installed` is true — an uninstalled one silently falls back to Roboto; `pw:repurpose:fonts <pairing>` installs the missing TTFs. Null inherits site typography." },

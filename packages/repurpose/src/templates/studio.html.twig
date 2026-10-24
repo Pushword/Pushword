@@ -48,6 +48,13 @@
     .layout > * { min-width: 0; }
 
     .deck-wrap { min-width: 0; position: sticky; top: 4.75rem; }
+    .preview-toolbar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    .video-preview { display: grid; justify-items: center; gap: .75rem; padding: 1rem; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+    .video-preview video { display: block; max-width: 100%; max-height: 68vh; border-radius: 4px; background: var(--text); }
+    .video-preview p { max-width: 38rem; margin: 0; color: var(--muted-2); font-size: .85rem; text-align: center; }
+    .video-preview .video-error { color: var(--bad); }
+    .field-label { font-size: .75rem; font-weight: 600; }
+    .video-filename { overflow-wrap: anywhere; font-size: .75rem; color: var(--muted-2); }
     .deck { display: flex; gap: 1.1rem; overflow-x: auto; padding: .25rem .25rem 1.25rem; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
     .deck::-webkit-scrollbar { height: 9px; }
     .deck::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
@@ -269,6 +276,8 @@
     window.RP_STUDIO = {
       spec: {{ specJs|raw }},
       slides: {{ slidesJs|raw }},
+      video: {{ videoJs|raw }},
+      messages: {videoInvalid: {{ 'repurposeVideoInvalid'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}},
       vocab: {{ vocabJs|raw }},
       backgroundEffects: {{ backgroundEffectsJs|raw }},
       network: {{ carousel.network|json_encode|raw }},
@@ -303,7 +312,7 @@
       <div class="studio-exports">
         <button class="btn" type="button" @click="exportZip()" :disabled="exporting" x-text="exportLabel">Export .zip</button>
         <button class="btn" type="button" @click="exportSvg()" :disabled="exportingSvg" x-text="exportSvgLabel">Export .svg</button>
-        <button class="btn" type="button" @click="exportVideo()" :disabled="exportingVideo" x-text="exportVideoLabel">Export .mp4</button>
+        <button class="btn" type="button" @click="exportVideo()" :disabled="exportingVideo" x-text="exportVideoLabel">Slideshow .mp4</button>
         <button class="btn" type="button" x-show="network === 'pinterest'" x-cloak @click="pinToPinterest()" :disabled="pinning" x-text="pinLabel">📌 Pin to Pinterest</button>
       </div>
       <button class="btn primary studio-save" type="button" @click="save()" :disabled="saving" x-text="saveLabel">Save</button>
@@ -312,21 +321,39 @@
 
   <div class="layout" @wheel="sliderWheel($event)">
     <div class="deck-wrap" @wheel="deckZoomWheel($event)">
-      <div class="deck" :style="'--rp-slide-w:' + slideWidth + 'px'">
-        <template x-for="(svg, i) in slides" :key="i">
-          <div class="slide" @pointerenter="hoverSlide(i)" @pointerleave="hoverSlideLeave()">
-            <figure>
-              <div x-html="svg" @click="deckTextClick(i, $event)" @pointerdown="deckTextDown(i, $event)"></div>
-              <figcaption>Slide <span x-text="i + 1"></span> / <span x-text="slides.length"></span></figcaption>
-            </figure>
-          </div>
-        </template>
+      <div class="preview-toolbar">
+        <div class="toggle" role="group" aria-label="{{ 'repurposePreviewMode'|trans }}">
+          <button type="button" :class="previewMode === 'slides' && 'on'" :aria-pressed="previewMode === 'slides'" aria-controls="rp-slide-preview" @click="previewMode = 'slides'">{{ 'repurposePreviewSlides'|trans }}</button>
+          <button type="button" :class="previewMode === 'video' && 'on'" :aria-pressed="previewMode === 'video'" aria-controls="rp-video-preview" @click="previewMode = 'video'">{{ 'repurposeVideoTitle'|trans }}</button>
+        </div>
       </div>
-      <p class="deck-note">
-        <span x-text="deckNote">Slides at {{ feedWidth }}px — the typical {{ carousel.network }} mobile feed width.</span>
-        <input type="range" min="0.5" max="3" step="0.05" x-model.number="zoom" aria-label="Preview zoom" title="Preview zoom (or Ctrl+scroll over the deck) — inspection only, 100% is the real feed size">
-        <button type="button" class="btn-xs" x-show="1 !== zoom" x-cloak @click="zoom = 1">100&nbsp;%</button>
-      </p>
+      <section id="rp-video-preview" x-show="previewMode === 'video'" x-cloak class="video-preview" aria-label="{{ 'repurposeVideoTitle'|trans }}">
+        <template x-if="previewMode === 'video' && video">
+          <video controls playsinline preload="metadata" :src="video.url" @error="videoError = true" aria-label="{{ 'repurposeVideoTitle'|trans }}"></video>
+        </template>
+        <p x-show="videoError" x-cloak class="video-error" role="status">{{ 'repurposeVideoError'|trans }}</p>
+        <p x-show="!video && !selectedVideo">{{ 'repurposeVideoEmpty'|trans }}</p>
+        <p x-show="!video && selectedVideo" class="video-error" role="status">{{ 'repurposeVideoMissing'|trans }}</p>
+        <p x-show="video">{{ 'repurposeVideoRenderNote'|trans }}</p>
+        <a x-show="video" :href="video ? video.url : null" download>{{ 'repurposeVideoDownload'|trans }}</a>
+      </section>
+      <div id="rp-slide-preview" x-show="previewMode === 'slides'">
+        <div class="deck" :style="'--rp-slide-w:' + slideWidth + 'px'">
+          <template x-for="(svg, i) in slides" :key="i">
+            <div class="slide" @pointerenter="hoverSlide(i)" @pointerleave="hoverSlideLeave()">
+              <figure>
+                <div x-html="svg" @click="deckTextClick(i, $event)" @pointerdown="deckTextDown(i, $event)"></div>
+                <figcaption>Slide <span x-text="i + 1"></span> / <span x-text="slides.length"></span></figcaption>
+              </figure>
+            </div>
+          </template>
+        </div>
+        <p class="deck-note">
+          <span x-text="deckNote">Slides at {{ feedWidth }}px — the typical {{ carousel.network }} mobile feed width.</span>
+          <input type="range" min="0.5" max="3" step="0.05" x-model.number="zoom" aria-label="Preview zoom" title="Preview zoom (or Ctrl+scroll over the deck) — inspection only, 100% is the real feed size">
+          <button type="button" class="btn-xs" x-show="1 !== zoom" x-cloak @click="zoom = 1">100&nbsp;%</button>
+        </p>
+      </div>
     </div>
 
     <aside>
@@ -354,6 +381,15 @@
             <h2>Deck</h2>
           </div>
           <div class="grid2" x-show="deckOpen" x-cloak>
+            <div class="field full">
+              <span class="field-label">{{ 'repurposeVideoTitle'|trans }} · MP4 / WebM</span>
+              <span class="video-filename" x-text="spec.video || '—'"></span>
+              <div class="media-picker__actions">
+                <button type="button" class="btn-xs" @click="pickVideo('choose')">{{ 'repurposeVideoChoose'|trans }}</button>
+                <button type="button" class="btn-xs" @click="pickVideo('upload')">{{ 'repurposeVideoUpload'|trans }}</button>
+                <button type="button" class="btn-xs" x-show="spec.video" @click="clearVideo()">{{ 'repurposeVideoRemove'|trans }}</button>
+              </div>
+            </div>
             <div class="field full">
               <label>Page <span class="val" x-show="isStandalone" x-cloak>standalone — not linked</span></label>
               <div class="page-link">

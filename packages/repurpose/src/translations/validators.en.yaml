@@ -72,3 +72,5 @@ repurpose:
       range: 'A focal point must be between 0 and 1.'
     zoom:
       range: 'Zoom must be between 1 and 5.'
+  video:
+    invalid: 'The rendered video must be a local MP4 or WebM media filename.'

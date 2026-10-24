@@ -77,8 +77,8 @@ jobs:
       - name: Quiz runtime tests
         run: cd packages/quiz && yarn test
 
-      - name: Repurpose motion timing tests
-        run: node --test packages/repurpose/tests/Motion/timeline.test.mjs
+      - name: Repurpose motion and studio tests
+        run: node --test packages/repurpose/tests/Motion/*.test.mjs
 
       - name: Install admin dependencies
         run: cd packages/admin && yarn install

@@ -55,6 +55,7 @@ class AppFixtures extends Fixture
             'Demo 2' => ['file' => '2.jpg', 'mime' => 'image/jpeg'],
             'Demo 3' => ['file' => '3.jpg', 'mime' => 'image/jpeg'],
             'SVG Logo' => ['file' => 'logo.svg', 'mime' => 'image/svg+xml'],
+            'NORD. — Motion study' => ['file' => 'repurpose-nord.mp4', 'mime' => 'video/mp4', 'dimensions' => [1080, 1920]],
         ];
         $media = [];
         foreach ($medias as $name => $data) {
@@ -62,7 +63,7 @@ class AppFixtures extends Fixture
             ->setProjectDir($this->params->get('kernel.project_dir'))
             ->setStoreIn($this->params->get('pw.media_dir'))
             ->setMimeType($data['mime'])
-            ->setDimensions([1000, 1000])
+            ->setDimensions($data['dimensions'] ?? [1000, 1000])
             ->setFileName($data['file'])
             ->setAlt($name)
             ->setHash();
@@ -450,7 +451,8 @@ class AppFixtures extends Fixture
      * Instagram sibling touring every rendering feature — one cluster per slide
      * (layouts, per-slide overrides, highlight, free text boxes, focal crops,
      * split frames, deck-wide effects). Same page, so the studio's network
-     * switcher hops between them.
+     * switcher hops between them. A standalone NORD. reel demonstrates motion
+     * design, with its rendered video and editable sources shipped in the fixtures.
      */
     private function loadRepurposeDemo(ObjectManager $manager): void
     {
@@ -513,7 +515,10 @@ class AppFixtures extends Fixture
             ],
         ];
 
-        foreach ([$demo, $featureTour] as $spec) {
+        /** @var array<string, mixed> $motion */
+        $motion = json_decode((string) file_get_contents(__DIR__.'/Motion/spec.json'), true, flags: \JSON_THROW_ON_ERROR);
+
+        foreach ([$demo, $featureTour, $motion] as $spec) {
             $post = new SocialPost();
             $post->host = 'localhost.dev';
             $post->spec = $spec;

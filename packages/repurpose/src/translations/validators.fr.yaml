@@ -72,3 +72,5 @@ repurpose:
       range: 'Un point focal doit être entre 0 et 1.'
     zoom:
       range: 'Le zoom doit être entre 1 et 5.'
+  video:
+    invalid: 'La vidéo rendue doit être le nom d’un média local MP4 ou WebM.'

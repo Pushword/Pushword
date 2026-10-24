@@ -41,6 +41,7 @@ final class CarouselFactory
             creatorOrientation: $this->strOr($data['creatorOrientation'] ?? null, 'horizontal'),
             creatorOnSlides: $this->strOr($data['creatorOnSlides'] ?? null, 'intro-outro'),
             slides: $this->slides($data['slides'] ?? null),
+            video: $this->strOrNull($data['video'] ?? null),
         );
     }
 

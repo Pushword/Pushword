@@ -205,8 +205,28 @@ custom scene example and the edit → check → still → render workflow.
 stills to compile and inspect custom JSX, then render the MP4. The original
 carousel remains in `spec.json`; editing the video timeline does not update that
 spec or the stored social post. Exporting into an existing directory is refused
-to protect agent-authored scenes. The admin's existing MP4 button still exports
+to protect agent-authored scenes. The admin's **Slideshow .mp4** button exports
 the fixed-image slideshow; motion rendering runs from the exported project.
+
+### Watch the rendered video in the admin
+
+Import the MP4 or WebM into the media library, then select it under **Deck →
+Rendered video** in the studio. The **Slides / Rendered video** toggle switches
+between the live static deck and a native video player with playback, seeking,
+fullscreen and download. A post with an attached video opens on the video view.
+The player shows the last imported render: changing slides does not regenerate
+the animation. Use Remotion Studio for an interactive preview while editing scenes.
+
+Agents can attach the same media through the optional top-level `video` field in
+the carousel JSON, for example `"video": "campaign-reel.mp4"`. It is a media
+filename, not a URL or path. Omit it to detach the video; this does not delete the
+media. The studio reports unavailable or unplayable videos without hiding the
+static deck.
+
+The development fixtures include **NORD.**, a complete five-scene vertical reel
+with a committed MP4 and editable sources in
+`packages/dev-app/src/DataFixtures/Motion/`. Its README explains regeneration;
+ordinary fixture loading needs no Node.js or rendering tools.
 
 ## Networks and formats
 

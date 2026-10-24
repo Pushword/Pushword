@@ -12,6 +12,14 @@ use Pushword\Repurpose\Service\CarouselFactory;
 #[Group('integration')]
 final class CarouselFactoryTest extends TestCase
 {
+    public function testRenderedVideoIsOptional(): void
+    {
+        $factory = new CarouselFactory();
+        self::assertNull($factory->fromArray([])->video);
+        self::assertNull($factory->fromArray(['video' => ''])->video);
+        self::assertSame('reel.mp4', $factory->fromArray(['video' => 'reel.mp4'])->video);
+    }
+
     /**
      * @param array<string, mixed> $slide
      */
