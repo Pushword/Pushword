@@ -16,6 +16,9 @@ final class CollectCampaignIndex extends Event
     /** @var array<string, string> Source identifier mapped to a cache/availability notice. */
     public array $notices = [];
 
+    /** @var array<string, 'info'|'warning'|'danger'> Optional notice severity; info is a neutral routine update. */
+    public array $noticeLevels = [];
+
     /** @var array<string, string> Creation labels mapped to navigation URLs, even for empty sources. */
     public array $creationActions = [];
 

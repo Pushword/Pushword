@@ -1,11 +1,14 @@
 newsletter:
   catalogue:
     actions: Acties
-    allSources: Alle bronnen
     createNative: Maken in Pushword
-    empty: Geen campagne om weer te geven.
+    emptyHelp: 'Kies een tool om een campagne te maken. Beschikbare campagnes verschijnen hier.'
+    emptyTitle: 'Geen campagnes beschikbaar'
     filters: Campagnes filteren
     manageNative: Beheren in Pushword
+    noResultsHelp: 'Probeer een andere zoekopdracht of stel de filters opnieuw in.'
+    noResultsTitle: 'Geen overeenkomende campagnes'
+    results: 'Getoond: %shown% / %total% beschikbaar'
     search: Zoeken
     sentAt: Verzonden op
     source: Bron

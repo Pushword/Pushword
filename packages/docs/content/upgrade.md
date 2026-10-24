@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.77](/upgrade/1.0.77) | `newsletter` | campaign catalogue notices distinguish routine updates from source failures |
 | [1.0.76](/upgrade/1.0.76) | `admin` `core` | sessions close before controllers; page list sorting needs a database index — run `doctrine:schema:update --force` |
 | [1.0.74](/upgrade/1.0.74) | `newsletter` | campaigns open a shared multi-source catalogue |
 | [1.0.73](/upgrade/1.0.73) | `core` `newsletter` | docker runtime security update; newsletter email designs are reusable; statistics CSV labels unique clickers — run `doctrine:schema:update --force` |
