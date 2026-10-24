@@ -700,6 +700,11 @@ body[data-newsletter] .pw-newsletter-composer .form-fieldset-body {
   padding: 0;
 }
 
+/* Editor menus must be able to extend over the adjacent email preview. */
+body[data-newsletter] .pw-newsletter-composer .form-fieldset-body.show:not(.collapsing) {
+  overflow: visible;
+}
+
 body[data-newsletter] .pw-newsletter-composer .form-group {
   padding-block-end: 0;
   margin-block-end: 1rem;
