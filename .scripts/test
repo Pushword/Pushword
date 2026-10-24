@@ -221,6 +221,7 @@ if [ -z "$1" ] || [ "$1" = "full" ] || [ "$1" = "--no-parallel" ]; then
     for js_package in $JS_TEST_PACKAGES; do
         (cd "packages/$js_package" && yarn test) || JS_TEST_EXIT=$?
     done
+    node --test packages/repurpose/tests/Motion/timeline.test.mjs || JS_TEST_EXIT=$?
     record_step "JS tests" $(( $(date +%s) - JS_TEST_START ))
     if [ $JS_TEST_EXIT -ne 0 ]; then
         print_summary

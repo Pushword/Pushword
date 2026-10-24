@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pushword motion timeline",
+  "description": "Timing is in integer frames. Incoming crossfades overlap the previous slide. Transition durations must leave a hold between incoming and outgoing transitions; npm run check validates these cross-field rules.",
+  "type": "object",
+  "required": ["width", "height", "fps", "slides"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {"type": "string"},
+    "width": {"type": "integer", "minimum": 2, "multipleOf": 2},
+    "height": {"type": "integer", "minimum": 2, "multipleOf": 2},
+    "fps": {"type": "integer", "minimum": 1, "maximum": 60},
+    "slides": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "durationInFrames", "transitionInFrames", "layers"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1, "description": "Unique id; also the key in src/scenes.jsx for a custom scene."},
+          "durationInFrames": {"type": "integer", "minimum": 1},
+          "transitionInFrames": {"type": "integer", "minimum": 0, "description": "Incoming crossfade length; 0 on the first slide. Overlaps the previous slide, reducing total duration."},
+          "layers": {
+            "type": "array", "description": "Back-to-front compositing order. May be empty for a custom scene.",
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["id", "src", "animation"],
+              "properties": {
+                "id": {"type": "string", "minLength": 1},
+                "src": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[a-zA-Z0-9_./-]+$", "description": "Local path relative to public/."},
+                "animation": {"enum": ["none", "fade", "rise", "zoom-in"], "description": "fade/rise enter over half a second; zoom-in scales 1 to 1.04 over the scene. Custom motion belongs in src/Scene.jsx or src/scenes.jsx."}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

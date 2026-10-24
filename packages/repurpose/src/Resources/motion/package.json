@@ -1,0 +1,17 @@
+{
+  "name": "pushword-motion-project",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node src/check.mjs",
+    "studio": "remotion studio src/index.jsx",
+    "render": "remotion render src/index.jsx Repurpose out/video.mp4 --codec=h264 --pixel-format=yuv420p",
+    "still": "remotion still src/index.jsx Repurpose out/preview.png"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.538",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.538"
+  }
+}

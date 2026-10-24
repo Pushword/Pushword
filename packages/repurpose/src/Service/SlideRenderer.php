@@ -56,9 +56,33 @@ final readonly class SlideRenderer
 
     public function renderSlide(Carousel $carousel, int $index, ?Creator $creator = null): string
     {
+        $parts = $this->slideParts($carousel, $index, $creator);
+
+        return null === $parts ? '' : $parts['open'].implode('', $parts['layers']).'</svg>';
+    }
+
+    /**
+     * Ordered, transparent, full-frame SVG layers for animation. Each keeps its
+     * embedded assets and clipping definitions, exactly as in the static slide.
+     *
+     * @return array<string, string> semantic layer id => self-contained SVG
+     */
+    public function renderSlideLayers(Carousel $carousel, int $index, ?Creator $creator = null): array
+    {
+        $parts = $this->slideParts($carousel, $index, $creator);
+        if (null === $parts) {
+            return [];
+        }
+
+        return array_map(static fn (string $body): string => $parts['open'].$body.'</svg>', $parts['layers']);
+    }
+
+    /** @return array{open: string, layers: array<string, string>}|null */
+    private function slideParts(Carousel $carousel, int $index, ?Creator $creator): ?array
+    {
         $slide = $carousel->slides[$index] ?? null;
         if (! $slide instanceof Slide) {
-            return '';
+            return null;
         }
 
         $width = $this->formats->width($carousel->format);
@@ -77,46 +101,49 @@ final readonly class SlideRenderer
 
         $effect = $slide->background ?? $carousel->background;
 
-        $body = '<rect width="'.$width.'" height="'.$height.'" fill="'.$bg.'"/>';
-        $body .= $this->renderImages($slide, $width, $height, $index);
-        $body .= $this->renderEffect($effect, $index, $width, $height, $total);
-        $body .= $this->renderText($slide, $width, $height, $headingFile, $bodyFile, $text, $accent);
-        $body .= $this->renderFreeTexts($slide, $width, $height, $headingFile, $bodyFile, $text);
-        $body .= $this->renderCreator($carousel, $creator, $index, $total, $width, $height, $text, $accent);
-        $body .= $this->renderCounter($carousel, $index, $total, $width, $height, $bodyFile, $text, $accent);
-        $body .= $this->renderSwipe($slide, $width, $height, $text, $accent);
+        $layers = [
+            'background' => '<rect width="'.$width.'" height="'.$height.'" fill="'.$bg.'"/>',
+            ...$this->renderImageLayers($slide, $width, $height, $index),
+            'effect' => $this->renderEffect($effect, $index, $width, $height, $total),
+            ...$this->renderTextLayers($slide, $width, $height, $headingFile, $bodyFile, $text, $accent),
+            ...$this->renderFreeTextLayers($slide, $width, $height, $headingFile, $bodyFile, $text),
+            'creator' => $this->renderCreator($carousel, $creator, $index, $total, $width, $height, $text, $accent),
+            'counter' => $this->renderCounter($carousel, $index, $total, $width, $height, $bodyFile, $text, $accent),
+            'swipe' => $this->renderSwipe($slide, $width, $height, $text, $accent),
+        ];
 
-        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '.$width.' '.$height.'" '
+        $open = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '.$width.' '.$height.'" '
             .'width="'.$width.'" height="'.$height.'" font-family="rp-body">'
             .'<defs><style>'.$defs.'</style>'
-            .'<clipPath id="frame-'.$index.'"><rect width="'.$width.'" height="'.$height.'"/></clipPath></defs>'
-            .$body
-            .'</svg>';
+            .'<clipPath id="frame-'.$index.'"><rect width="'.$width.'" height="'.$height.'"/></clipPath></defs>';
+
+        return ['open' => $open, 'layers' => array_filter($layers, static fn (string $body): bool => '' !== $body)];
     }
 
-    private function renderImages(Slide $slide, int $width, int $height, int $index): string
+    /** @return array<string, string> */
+    private function renderImageLayers(Slide $slide, int $width, int $height, int $index): array
     {
         if (! $slide->hasImage()) {
-            return '';
+            return [];
         }
 
-        $svg = '';
+        $layers = [];
         foreach ($this->imageFrames($slide->imageLayout, $width, $height) as $sub => $cell) {
             $image = $slide->images[$sub] ?? null;
             if (null === $image) {
                 continue;
             }
 
-            $svg .= $this->renderOneImage($image, $cell, $index, $sub);
+            $layers['images.'.$sub] = $this->renderOneImage($image, $cell, $index, $sub);
         }
 
         // One overlay across the whole frame — it darkens every cell together, so
         // text bound to the deck's margins stays readable over any split.
         if ($slide->overlay > 0.0) {
-            $svg .= '<rect width="'.$width.'" height="'.$height.'" fill="#000" fill-opacity="'.$this->n($slide->overlay).'"/>';
+            $layers['overlay'] = '<rect width="'.$width.'" height="'.$height.'" fill="#000" fill-opacity="'.$this->n($slide->overlay).'"/>';
         }
 
-        return $svg;
+        return $layers;
     }
 
     /**
@@ -176,7 +203,8 @@ final readonly class SlideRenderer
             .'preserveAspectRatio="none"/></g>';
     }
 
-    private function renderText(
+    /** @return array<string, string> */
+    private function renderTextLayers(
         Slide $slide,
         int $width,
         int $height,
@@ -184,7 +212,7 @@ final readonly class SlideRenderer
         string $bodyFile,
         string $text,
         string $accent,
-    ): string {
+    ): array {
         $marginX = $width * 0.08;
         $areaW = $width - 2 * $marginX;
         $scale = $slide->textScale;
@@ -204,7 +232,7 @@ final readonly class SlideRenderer
         }
 
         if ([] === $blocks) {
-            return '';
+            return [];
         }
 
         $gap = $width * 0.03;
@@ -226,14 +254,14 @@ final readonly class SlideRenderer
             default => ['start', $marginX],
         };
 
-        $svg = '';
+        $layers = [];
         $y = $startY;
         foreach ($blocks as $block) {
-            $svg .= $this->renderBlock($block['laid'], $anchor, $anchorX, $y, $block['font'], $block['color'], $block['upper'], $block['highlight'] ?? null, $block['field']);
+            $layers[$block['field']] = $this->renderBlock($block['laid'], $anchor, $anchorX, $y, $block['font'], $block['color'], $block['upper'], $block['highlight'] ?? null, $block['field']);
             $y += $block['laid']->height() + $gap;
         }
 
-        return $svg;
+        return $layers;
     }
 
     /**
@@ -241,10 +269,12 @@ final readonly class SlideRenderer
      * fractional-coordinate box. The stated size is honoured unless the block
      * would overflow the frame bottom, in which case it shrinks to fit — free
      * placement stays inside the no-overflow guarantee.
+     *
+     * @return array<string, string>
      */
-    private function renderFreeTexts(Slide $slide, int $width, int $height, string $headingFile, string $bodyFile, string $text): string
+    private function renderFreeTextLayers(Slide $slide, int $width, int $height, string $headingFile, string $bodyFile, string $text): array
     {
-        $svg = '';
+        $layers = [];
         foreach ($slide->texts as $i => $free) {
             $isHeading = 'heading' === $free->font;
             $sizePx = $free->size * $width;
@@ -265,10 +295,10 @@ final readonly class SlideRenderer
                 default => ['start', $free->x * $width],
             };
 
-            $svg .= $this->renderBlock($laid, $anchor, $anchorX, $free->y * $height, $isHeading ? 'rp-heading' : 'rp-body', $free->color ?? $text, false, $free->highlight, 'texts.'.$i);
+            $layers['texts.'.$i] = $this->renderBlock($laid, $anchor, $anchorX, $free->y * $height, $isHeading ? 'rp-heading' : 'rp-body', $free->color ?? $text, false, $free->highlight, 'texts.'.$i);
         }
 
-        return $svg;
+        return $layers;
     }
 
     /**

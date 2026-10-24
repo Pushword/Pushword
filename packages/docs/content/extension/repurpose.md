@@ -84,6 +84,7 @@ ships a `carousel` playbook for exactly this loop.
 bin/console pw:repurpose:schema                 # print the JSON Schema
 bin/console pw:repurpose:validate spec.json     # lint a spec (precise violations, non-zero exit)
 bin/console pw:repurpose:render spec.json out/  # render to out/slide-1.svg …
+bin/console pw:repurpose:motion spec.json video/ # export an editable Remotion project
 bin/console pw:repurpose:fonts                  # list font pairings + installed status
 bin/console pw:repurpose:fonts bebas-neue-lato  # install a pairing's TTFs (or --all)
 ```
@@ -163,6 +164,49 @@ export as an `.mp4` slideshow.
 
 Binaries are auto-detected from `PATH`; override with `repurpose.chromium_binary`
 (preview contact sheet) and `repurpose.ffmpeg_binary` (video).
+
+## Motion design and agent-authored videos
+
+`pw:repurpose:motion spec.json video/ --host=example.com` exports a standalone
+[Remotion](https://www.remotion.dev/docs) project into a **new** directory. Use
+`instagram` / `story-9-16` for a vertical video, or another valid network/format
+pair for square or landscape output. The command validates the carousel before
+writing and resolves the creator using the selected site.
+
+```bash
+cd video
+npm install
+npm run check
+npm run studio
+npm run still -- --frame=45
+npm run render
+```
+
+Requires Node.js 22+ and npm on the rendering machine. Remotion installs its own
+rendering dependencies, including a headless browser, and has separate
+[license terms](https://www.remotion.dev/docs/license/pricing). No Node dependency
+is added to the CMS. The resulting H.264 video is `out/video.mp4`.
+
+The exported `timeline.json` (with `timeline.schema.json`) defines dimensions,
+fps, scene order, durations and incoming crossfades **in frames**. Crossfades
+overlap scenes and reduce total duration. Each slide exports transparent SVG
+layers with fonts and images embedded: background, images, overlay, decoration,
+each text, creator, counter and swipe indicator. Layers preserve their drawing
+order and static layout. Each can use `none`, `fade`, `rise` or `zoom-in`.
+
+For unrestricted animation, the agent edits `src/Scene.jsx` or registers a React
+component by slide id in `src/scenes.jsx`. Custom scenes may reuse `SlideLayers`,
+replace the artwork, add charts, illustrations, audio or video using local assets
+and Remotion components. Motion must derive from `useCurrentFrame()` so seeking,
+preview and frame-by-frame export agree. The exported README includes a complete
+custom scene example and the edit → check → still → render workflow.
+
+`npm run check` reports timeline errors and missing layer assets as JSON. Render
+stills to compile and inspect custom JSX, then render the MP4. The original
+carousel remains in `spec.json`; editing the video timeline does not update that
+spec or the stored social post. Exporting into an existing directory is refused
+to protect agent-authored scenes. The admin's existing MP4 button still exports
+the fixed-image slideshow; motion rendering runs from the exported project.
 
 ## Networks and formats
 

@@ -14,6 +14,10 @@ modelled as an organic image Pin: one 2:3 visual with a required caption.
 - **Pixel-exact export** — the browser rasterises the SVG to PNG; PHP assembles a
   `.zip` (PNGs + caption) and, for LinkedIn, a multipage PDF. No headless browser,
   no npm dependency.
+- **Motion design** — `pw:repurpose:motion` exports a local Remotion project:
+  editable timeline, SVG layers, crossfades and per-layer animation presets. An
+  agent can add custom React scenes, preview frames and render an H.264 video.
+  Node/Remotion dependencies are installed only in the exported project.
 - **Flat or DB** — carousels round-trip through `pw:flat:sync` as JSON files, so
   they live in git on a flat-file site and in the database on a dynamic one.
 
