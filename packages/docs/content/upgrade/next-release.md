@@ -1,5 +1,5 @@
 ---
-title: 'session locks released before controller execution; page lists use an index for modification-date sorting'
+title: 'sessions close before controllers; page list sorting needs a database index'
 run: 'doctrine:schema:update --force'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
@@ -40,7 +40,7 @@ Several changes land here between two tags: append to the file, do not replace i
 
 ## Earlier session save
 
-Started sessions are saved after access checks and before the main controller runs, allowing concurrent requests while the controller does not access the session. Subsequent session access reopens it normally; use the Symfony session API for writes. No configuration change is required.
+Started sessions close after access checks, before the main controller runs, allowing concurrent requests until the session is accessed again. Use the Symfony session API to reopen it and persist writes. No configuration change is required.
 
 ## Page list sorting
 

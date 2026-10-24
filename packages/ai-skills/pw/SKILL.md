@@ -16,11 +16,8 @@ description: >-
 
 # pw — Pushword content authoring
 
-A router for authoring Pushword content. Pushword is a modular Symfony CMS; some
-of its features are declared inline in a page through Twig blocks/functions (e.g.
-the `{% quiz %}` block) and validated by a strict server-side schema. Writing that
-by hand drifts from the rules. Each command below encodes the real schema, the
-gotchas, and a verification step so the result renders the first time.
+Route content requests to the playbook below. Each covers the feature's schema,
+authoring constraints and verification steps.
 
 ## Commands
 

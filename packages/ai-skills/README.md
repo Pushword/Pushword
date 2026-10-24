@@ -1,9 +1,8 @@
 # @pushword/ai-skills
 
-AI authoring skills for [Pushword](https://pushword.piedweb.com). Lets an agent
-build Pushword content features reliably instead of rediscovering each schema
-from source. Inspired by [pbakaus/impeccable](https://github.com/pbakaus/impeccable):
-one router skill, dispatching sub-commands to focused reference playbooks.
+Author quizzes, social carousels and animated posts in
+[Pushword](https://pushword.piedweb.com). The `pw` skill routes each request to a
+playbook covering schema validation, visual checks and saving the result.
 
 ## The `pw` skill
 
@@ -18,8 +17,7 @@ quiz to this page").
 
 ## Install
 
-The skill lives at [`pw/`](pw/). Until the `npx` installer lands, copy it into a
-harness skills directory:
+Copy [`pw/`](pw/) into your agent's skills directory. From the monorepo root:
 
 ```bash
 # Claude Code (project-local)
@@ -28,14 +26,7 @@ cp -r packages/ai-skills/pw .claude/skills/pw
 cp -r packages/ai-skills/pw ~/.claude/skills/pw
 ```
 
-It works both inside the Pushword monorepo and on a downstream site that
-installed Pushword via Composer (the skill detects `packages/core/` vs
-`vendor/pushword/core/`). The `motion` playbook includes a complete example
-shipped in `pushword/repurpose/examples/nord/` and an upload → save → admin workflow.
-
-## Roadmap
-
-- `npx @pushword/ai-skills install` — auto-detect the harness (Claude Code,
-  Cursor, …) and write the skill to the right location, like
-  `npx impeccable skills install`.
-- More commands (pages, redirections, snippets, …).
+The installed skill works in the monorepo and on Composer sites. It detects
+`packages/core/` or `vendor/pushword/core/` and uses the corresponding tools and
+docs. The `motion` playbook covers the bundled NORD. example, rendering,
+uploading and attaching a video to an admin draft.
