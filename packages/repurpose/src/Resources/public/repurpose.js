@@ -535,7 +535,7 @@
           return
         }
         var url = this.networkUrls[target]
-        if (url && (!this.dirty || window.confirm('Discard unsaved changes and switch to ' + target + '?'))) {
+        if (url && (!this.dirty || window.confirm('Discard unsaved changes and switch to ' + (this.vocab.networkLabels[target] || target) + '?'))) {
           window.location.href = url
           return
         }

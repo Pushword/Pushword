@@ -116,6 +116,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         // The free-text editor's font choices and the zoom slider's base width.
         self::assertStringContainsString('"textFonts":["body","heading"]', $html);
         self::assertStringContainsString('feedWidth: 390', $html);
+        self::assertStringContainsString('"linkedin-4-5":"4:5 · 1080 × 1350 px"', $html);
         self::assertStringContainsString('— brand —', $html);
         // Deck interactions: drag-to-move free texts, wheel-adjustable sliders,
         // hover-to-reveal a slide's panel row.
@@ -497,6 +498,8 @@ final class RepurposeStudioControllerTest extends WebTestCase
         foreach (['youtube', 'tiktok'] as $network) {
             $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id.'/network/'.$network);
             self::assertResponseIsSuccessful();
+            self::assertSelectorTextContains('main.pw-confirmation h1', 'youtube' === $network ? 'YouTube Shorts' : 'TikTok');
+            self::assertSelectorTextContains('main.pw-confirmation p', 'Any attached video is kept as is.');
             $this->client->submitForm('Create version');
             self::assertResponseRedirects();
 
@@ -520,6 +523,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id.'/network/x');
         self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('main.pw-confirmation p', 'Only the first four images are copied.');
         $this->client->submitForm('Create version');
         self::assertResponseRedirects();
 

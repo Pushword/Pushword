@@ -19,14 +19,18 @@ repurpose:
     updatedAt: Updated
 
 repurposeConfirmationCancel: Cancel
+repurposeExport: 'Export'
+repurposeFormat: 'Format'
+repurposeNetwork: 'Network'
 repurposePreviewMode: 'Preview'
 repurposePreviewSlides: 'Slides'
+repurposePublishingTarget: 'Publishing target'
 repurposeStatusDraft: Draft
 repurposeStatusPlanned: Planned
 repurposeStatusPosted: Posted
 repurposeVideoChoose: 'Choose'
 repurposeVideoDownload: 'Download rendered video'
-repurposeVideoEmpty: 'Choose or upload an MP4 or WebM in the Deck panel to review the finished animation.'
+repurposeVideoEmpty: 'Choose or upload an MP4 or WebM to review the finished animation.'
 repurposeVideoError: 'This video could not be played. Check the file and its encoding.'
 repurposeVideoInvalid: 'Choose an MP4 or WebM video.'
 repurposeVideoMissing: 'The selected video is missing from the media library or has an unsupported format.'

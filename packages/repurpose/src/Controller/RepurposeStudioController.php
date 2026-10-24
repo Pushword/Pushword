@@ -182,9 +182,16 @@ final class RepurposeStudioController extends AbstractController
 
         $csrfId = 'repurpose_network_'.$id.'_'.$network;
         if (! $request->isMethod('POST')) {
+            $label = NetworkRegistry::NETWORKS[$network]['label'];
+            $note = match ($network) {
+                'x' => ' Only the first four images are copied. Review the caption in X before publishing.',
+                'youtube', 'tiktok' => ' The slides use the vertical format. Any attached video is kept as is.',
+                default => '',
+            };
+
             return $this->renderConfirmation(
-                'Create a '.$network.' carousel',
-                'No '.$network.' version exists yet. Create one from this carousel?',
+                'Create a '.$label.' version',
+                'Create a separate '.$label.' version from this post?'.$note,
                 'Create version',
                 $csrfId,
                 $this->generateUrl('repurpose_studio', ['id' => $id]),
@@ -589,6 +596,7 @@ final class RepurposeStudioController extends AbstractController
         return [
             'networks' => NetworkRegistry::keys(),
             'networkLabels' => array_map(static fn (array $config): string => $config['label'], NetworkRegistry::NETWORKS),
+            'formatLabels' => array_map(static fn (array $format): string => \sprintf('%s · %d × %d px', $format['ratio'], $format['width'], $format['height']), $this->formats->all()),
             'formats' => [] === $formats ? FormatRegistry::ids() : $formats,
             'fontPairings' => FontPairingRegistry::keys(),
             'layouts' => Slide::LAYOUTS,

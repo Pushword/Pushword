@@ -5,9 +5,9 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../../src/Resources/public/repurpose.js', import.meta.url), 'utf8');
 const origin = 'https://example.test';
-function studio(config = {}, fetch) {
+function studio(config = {}, fetch, confirm) {
   let factory;
-  const window = {location: {origin}, RP_STUDIO: {
+  const window = {location: {origin}, confirm, RP_STUDIO: {
     spec: {slides: [{title: 'Test', images: [{}]}]},
     urls: {mediaIndex: '/admin/media', mediaUpload: '/admin/media/new'},
     messages: {videoInvalid: 'Choose a video'},
@@ -19,6 +19,19 @@ function studio(config = {}, fetch) {
 function selection(fileName, eventOrigin = origin) {
   return {origin: eventOrigin, data: {type: 'pw-media-picker-select', media: {fileName}}};
 }
+
+test('network switching names the destination and preserves edits when cancelled', () => {
+  let message;
+  const state = studio({network: 'instagram', networkUrls: {youtube: '/youtube'}, vocab: {networkLabels: {youtube: 'YouTube Shorts'}}}, undefined,
+    value => { message = value; return false; });
+  state.dirty = true;
+  const event = {target: {value: 'youtube'}};
+  state.switchNetwork(event);
+  assert.equal(message, 'Discard unsaved changes and switch to YouTube Shorts?');
+  assert.equal(event.target.value, 'instagram');
+  assert.equal(state.dirty, true);
+  assert.equal(state.spec.slides[0].title, 'Test');
+});
 
 test('choosing a rendered video switches preview without changing slide images', () => {
   const state = studio();

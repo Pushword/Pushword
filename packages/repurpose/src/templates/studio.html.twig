@@ -8,7 +8,7 @@
     :root {
       color-scheme: light;
       --bg: #f4f5f7; --panel: #ffffff; --panel-2: #f8f9fa; --field: #ffffff;
-      --line: #dee2e6; --line-2: #ced4da; --text: #212529; --muted: #6c757d; --muted-2: #495057;
+      --line: #dee2e6; --line-2: #ced4da; --text: #212529; --muted: #626b73; --muted-2: #495057;
       --accent: #0d6efd; --accent-hover: #0b5ed7; --ok: #198754; --warn: #b45309; --bad: #dc3545;
     }
     * { box-sizing: border-box; }
@@ -19,7 +19,13 @@
 
     header { display: flex; align-items: center; gap: 1rem; padding: .8rem 1.5rem; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(10px); z-index: 20; }
     .studio-context { display: flex; align-items: center; gap: 1rem; min-width: 0; }
-    .studio-actions, .studio-exports { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; min-width: 0; }
+    .studio-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; min-width: 0; }
+    .studio-exports { position: relative; }
+    .studio-exports summary { list-style: none; }
+    .studio-exports summary::-webkit-details-marker { display: none; }
+    .studio-exports[open] summary { background: var(--panel-2); }
+    .export-menu { position: absolute; top: calc(100% + .5rem); right: 0; display: grid; gap: .5rem; width: 17rem; padding: .75rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: 0 8px 24px #0000001f; }
+    .export-menu .btn { text-align: left; }
     .studio-actions { margin-left: auto; flex-shrink: 0; }
     header .back { font-size: .85rem; color: var(--muted-2); }
     header .back:hover { color: var(--accent); }
@@ -29,23 +35,26 @@
 
     .badge { font-size: .66rem; padding: .18rem .55rem; border-radius: 999px; border: 1px solid var(--line-2); text-transform: uppercase; letter-spacing: .06em; color: var(--muted-2); white-space: nowrap; }
     .badge.draft { color: var(--warn); border-color: #fde68a; background: #fef3c7; }
-    .badge.planned { color: var(--accent); border-color: #bfdbfe; background: #dbeafe; }
-    .badge.posted { color: var(--ok); border-color: #a7f3d0; background: #d1fae5; }
+    .badge.planned { color: #084298; border-color: #bfdbfe; background: #dbeafe; }
+    .badge.posted { color: #0f5132; border-color: #a7f3d0; background: #d1fae5; }
 
     .btn { border: 1px solid var(--line-2); border-radius: 8px; padding: .5rem .95rem; font-weight: 600; font-size: .82rem; cursor: pointer; background: var(--panel); color: var(--text); transition: border-color .15s, background .15s, opacity .15s; white-space: nowrap; }
     .btn:hover:not(:disabled) { border-color: var(--muted); background: var(--panel-2); }
     .btn:disabled { opacity: .55; cursor: default; }
     .btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
     .btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
-    button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
     .toggle { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; }
     .toggle button { background: var(--panel); color: var(--muted-2); border: 0; padding: .45rem .8rem; font-size: .8rem; font-weight: 600; cursor: pointer; }
-    .toggle button.on { background: var(--accent); color: #fff; }
+    .toggle button.on { background: #e7f1ff; color: #084298; }
     .toggle button:focus-visible { outline-color: currentColor; outline-offset: -4px; }
 
     .layout { display: grid; grid-template-columns: minmax(0, 1fr) 28rem; gap: 1.5rem; padding: 1.5rem; align-items: start; }
     .layout > * { min-width: 0; }
+    .studio-target { grid-column: 1 / -1; display: flex; align-items: end; gap: 1rem; }
+    .studio-target .field { width: 16rem; max-width: 100%; }
+    .studio-target label { font-size: .875rem; font-weight: 600; }
 
     .deck-wrap { min-width: 0; position: sticky; top: 4.75rem; }
     .preview-toolbar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
@@ -53,6 +62,7 @@
     .video-preview video { display: block; max-width: 100%; max-height: 68vh; border-radius: 4px; background: var(--text); }
     .video-preview p { max-width: 38rem; margin: 0; color: var(--muted-2); font-size: .85rem; text-align: center; }
     .video-preview .video-error { color: var(--bad); }
+    .video-preview .media-picker__actions { flex-wrap: wrap; justify-content: center; }
     .field-label { font-size: .75rem; font-weight: 600; }
     .video-filename { overflow-wrap: anywhere; font-size: .75rem; color: var(--muted-2); }
     .deck { display: flex; gap: 1.1rem; overflow-x: auto; padding: .25rem .25rem 1.25rem; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
@@ -90,6 +100,7 @@
     section.group { display: flex; flex-direction: column; gap: .7rem; margin: 0 -1.1rem; padding: 1.1rem 1.1rem 0; border-top: 1px solid var(--line); }
     section.group:first-of-type { padding-top: 0; border-top: 0; }
     section.group h2 { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; }
+    .deck-fields { display: flex; flex-direction: column; gap: 1rem; }
     .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
     .field { display: flex; flex-direction: column; gap: .28rem; min-width: 0; }
     .field > label { font-size: .72rem; color: var(--muted-2); display: flex; justify-content: space-between; gap: .5rem; }
@@ -117,7 +128,8 @@
     .slide-item__head { display: flex; align-items: center; gap: .5rem; padding: .6rem 0; cursor: pointer; user-select: none; }
     .slide-item__head:hover .slide-item__title { color: var(--text); }
     .slide-item .chev { width: .85rem; color: var(--muted); font-size: .7rem; text-align: center; transition: transform .15s; }
-    .slide-item__title { flex: 1; min-width: 0; font-size: .78rem; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .slide-item__toggle { display: flex; align-items: center; gap: .5rem; flex: 1; min-width: 0; border: 0; background: none; padding: .25rem 0; text-align: left; cursor: pointer; font: inherit; }
+    .slide-item__title { flex: 1; min-width: 0; font-size: .875rem; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .slide-item__head .sp { display: flex; gap: .3rem; }
     .slide-item__body { display: flex; flex-direction: column; gap: .65rem; padding: .1rem 0 1rem; }
     .icon-btn { background: var(--panel); border: 1px solid var(--line-2); color: var(--muted-2); border-radius: 7px; width: 1.7rem; height: 1.7rem; cursor: pointer; font-size: .8rem; line-height: 1; }
@@ -138,7 +150,8 @@
     .btn-xs:hover { border-color: var(--muted); color: var(--text); }
     .btn-xs.danger:hover { color: var(--bad); border-color: var(--bad); }
 
-    .rp-modal { position: fixed; inset: 0; z-index: 50; background: #0b1120b3; display: flex; padding: 3vh 3vw; }
+    .rp-modal { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; border: 0; color: var(--text); background: #0b1120b3; padding: 3vh 3vw; }
+    .rp-modal[open] { display: flex; }
     .rp-modal__panel { display: flex; flex-direction: column; width: 100%; background: var(--panel); border-radius: 14px; overflow: hidden; box-shadow: 0 20px 60px #00000052; }
     .rp-modal__bar { display: flex; align-items: center; justify-content: space-between; padding: .55rem 1rem; border-bottom: 1px solid var(--line); font-size: .82rem; font-weight: 600; }
     .rp-modal__frame { flex: 1; width: 100%; border: 0; }
@@ -172,9 +185,9 @@
     .free-text { padding-top: .55rem; border-top: 1px dashed var(--line-2); display: flex; flex-direction: column; gap: .55rem; }
 
     /* Collapsible group header (Deck). */
-    .group-head { display: flex; align-items: center; gap: .45rem; padding: .6rem 0; cursor: pointer; user-select: none; }
+    .group-head { display: flex; align-items: center; gap: .45rem; width: 100%; border: 0; background: none; padding: .6rem 0; text-align: left; font: inherit; cursor: pointer; user-select: none; }
     .group-head .chev { width: .8rem; color: var(--muted); font-size: .7rem; text-align: center; }
-    .group-head:hover > h2 { color: var(--muted-2); }
+    .group-head .group-title { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted-2); }
     /* Open, it tints and bleeds like an open slide. The band carries the head and the
        several sub-grids the group holds, so it sits on the section itself. */
     section.group.open { padding-bottom: 1.1rem; background: var(--panel-2); }
@@ -182,7 +195,7 @@
     section.group.open > .group-head { padding-bottom: .1rem; }
 
     /* Drag-to-reorder handle + drag states. */
-    .grip { cursor: grab; color: var(--line-2); font-size: .95rem; line-height: 1; letter-spacing: -2px; padding-right: .15rem; }
+    .grip { cursor: grab; background: none; border: 0; color: var(--muted); font-size: .95rem; line-height: 1; letter-spacing: -2px; padding: .25rem .15rem .25rem 0; }
     .grip:hover { color: var(--muted); }
     .grip:active { cursor: grabbing; }
     .slide-item.dragging { opacity: .4; }
@@ -209,9 +222,9 @@
     .tw-sw { width: 100%; aspect-ratio: 1; border-radius: 4px; border: 1px solid #0000001a; cursor: pointer; padding: 0; transition: transform .1s, box-shadow .1s; }
     .tw-sw:hover { transform: scale(1.18); box-shadow: 0 0 0 2px var(--accent); }
     .color-contrast { margin: 0; display: flex; justify-content: space-between; gap: .5rem; font-size: .7rem; font-variant-numeric: tabular-nums; padding: .28rem .45rem; border-radius: 7px; }
-    .color-contrast.ok { color: var(--ok); background: #d1fae5; }
+    .color-contrast.ok { color: #0f5132; background: #d1fae5; }
     .color-contrast.warn { color: var(--warn); background: #fef3c7; }
-    .color-contrast.bad { color: var(--bad); background: #f8d7da; }
+    .color-contrast.bad { color: #842029; background: #f8d7da; }
     .color-suggest { display: flex; align-items: center; gap: 3px; }
     .color-suggest .tw-sw { width: 1.15rem; height: 1.15rem; aspect-ratio: auto; flex: 0 0 auto; }
     .color-suggest__label { font-size: .64rem; color: var(--muted); margin-left: .2rem; }
@@ -250,14 +263,20 @@
       header .back { white-space: nowrap; }
       .studio-actions { width: 100%; }
       .studio-save { margin-left: auto; }
-      .studio-exports { order: 1; width: 100%; }
-      .studio-exports .btn { flex: 1; padding: .5rem .55rem; }
+      .studio-exports { position: static; }
+      .export-menu { right: 1rem; left: 1rem; width: auto; }
       .layout { gap: 1rem; padding: 1rem; }
+      .studio-target { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+      .studio-target .field { width: auto; }
+      .studio-target select { min-height: 44px; font-size: 1rem; }
       .deck-note { flex-wrap: wrap; }
       .deck-note span { flex-basis: 100%; }
     }
+    @media (max-width: 480px) {
+      .studio-target { grid-template-columns: minmax(0, 1fr); }
+    }
     @media (pointer: coarse) {
-      .btn, .btn-xs, .icon-btn, .toggle button, header .back {
+      .btn, .btn-xs, .icon-btn, .toggle button, .slide-item__toggle, .grip, .group-head, header .back {
         min-height: 44px;
         min-width: 44px;
       }
@@ -277,7 +296,7 @@
       spec: {{ specJs|raw }},
       slides: {{ slidesJs|raw }},
       video: {{ videoJs|raw }},
-      messages: {videoInvalid: {{ 'repurposeVideoInvalid'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}},
+      messages: {videoTitle: {{ 'repurposeVideoTitle'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}, videoInvalid: {{ 'repurposeVideoInvalid'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}},
       vocab: {{ vocabJs|raw }},
       backgroundEffects: {{ backgroundEffectsJs|raw }},
       network: {{ carousel.network|json_encode|raw }},
@@ -301,7 +320,7 @@
     <div class="studio-context">
       <a class="back" href="{{ backUrl }}">← Back</a>
       <h1>Repurpose Studio</h1>
-      <span class="crumbs"><span x-text="pageLabel"></span> · {{ carousel.network }} · <span x-text="spec.format"></span></span>
+      <span class="crumbs"><span x-text="pageLabel"></span> · <span x-text="vocab.networkLabels[network]"></span></span>
       <span class="badge" :class="spec.status" x-text="spec.status"></span>
     </div>
     <div class="studio-actions">
@@ -309,17 +328,35 @@
         <button type="button" :class="view === 'visual' && 'on'" aria-pressed="true" :aria-pressed="view === 'visual'" aria-controls="rp-visual-editor" @click="setView('visual')">Visual</button>
         <button type="button" :class="view === 'source' && 'on'" aria-pressed="false" :aria-pressed="view === 'source'" aria-controls="rp-source-editor" @click="setView('source')">Source</button>
       </div>
-      <div class="studio-exports">
-        <button class="btn" type="button" @click="exportZip()" :disabled="exporting" x-text="exportLabel">Export .zip</button>
-        <button class="btn" type="button" @click="exportSvg()" :disabled="exportingSvg" x-text="exportSvgLabel">Export .svg</button>
-        <button class="btn" type="button" @click="exportVideo()" :disabled="exportingVideo" x-text="exportVideoLabel">Slideshow .mp4</button>
-        <button class="btn" type="button" x-show="network === 'pinterest'" x-cloak @click="pinToPinterest()" :disabled="pinning" x-text="pinLabel">📌 Pin to Pinterest</button>
-      </div>
+      <details class="studio-exports" @click.outside="$el.open = false" @keydown.escape="if ($el.open) { $el.open = false; $el.querySelector('summary').focus() }">
+        <summary class="btn">{{ 'repurposeExport'|trans }} ▾</summary>
+        <div class="export-menu">
+          <a class="btn" x-show="video" x-cloak :href="video ? video.url : null" download>{{ 'repurposeVideoDownload'|trans }}</a>
+          <button class="btn" type="button" @click="exportZip()" :disabled="exporting" x-text="exportLabel">Export .zip</button>
+          <button class="btn" type="button" @click="exportSvg()" :disabled="exportingSvg" x-text="exportSvgLabel">Export .svg</button>
+          <button class="btn" type="button" @click="exportVideo()" :disabled="exportingVideo" x-text="exportVideoLabel">Slideshow .mp4</button>
+          <button class="btn" type="button" x-show="network === 'pinterest'" x-cloak @click="pinToPinterest()" :disabled="pinning" x-text="pinLabel">📌 Pin to Pinterest</button>
+        </div>
+      </details>
       <button class="btn primary studio-save" type="button" @click="save()" :disabled="saving" x-text="saveLabel">Save</button>
     </div>
   </header>
 
   <div class="layout" @wheel="sliderWheel($event)">
+    <section class="studio-target" aria-label="{{ 'repurposePublishingTarget'|trans }}">
+      <div class="field">
+        <label for="rp-network">{{ 'repurposeNetwork'|trans }}</label>
+        <select id="rp-network" @change="switchNetwork($event)" x-init="$nextTick(() => $el.value = network)">
+          <template x-for="n in vocab.networks" :key="n"><option :value="n" x-text="vocab.networkLabels[n]"></option></template>
+        </select>
+      </div>
+      <div class="field">
+        <label for="rp-format">{{ 'repurposeFormat'|trans }}</label>
+        <select id="rp-format" x-model="spec.format" x-init="$nextTick(() => $el.value = spec.format)">
+          <template x-for="f in vocab.formats" :key="f"><option :value="f" x-text="vocab.formatLabels[f]"></option></template>
+        </select>
+      </div>
+    </section>
     <div class="deck-wrap" @wheel="deckZoomWheel($event)">
       <div class="preview-toolbar">
         <div class="toggle" role="group" aria-label="{{ 'repurposePreviewMode'|trans }}">
@@ -334,6 +371,10 @@
         <p x-show="videoError" x-cloak class="video-error" role="status">{{ 'repurposeVideoError'|trans }}</p>
         <p x-show="!video && !selectedVideo">{{ 'repurposeVideoEmpty'|trans }}</p>
         <p x-show="!video && selectedVideo" class="video-error" role="status">{{ 'repurposeVideoMissing'|trans }}</p>
+        <div class="media-picker__actions" x-show="!video" x-cloak>
+          <button type="button" class="btn" @click="pickVideo('choose')">{{ 'repurposeVideoChoose'|trans }}</button>
+          <button type="button" class="btn" @click="pickVideo('upload')">{{ 'repurposeVideoUpload'|trans }}</button>
+        </div>
         <p x-show="video">{{ 'repurposeVideoRenderNote'|trans }}</p>
         <a x-show="video" :href="video ? video.url : null" download>{{ 'repurposeVideoDownload'|trans }}</a>
       </section>
@@ -376,140 +417,130 @@
       {# ---------- VISUAL EDITOR ---------- #}
       <div id="rp-visual-editor" role="region" aria-label="Visual editor" x-show="view === 'visual'" style="display:flex;flex-direction:column;gap:1rem;">
         <section class="group" :class="{ 'open': deckOpen }">
-          <div class="group-head" @click="toggleDeck()">
-            <span class="chev" x-text="deckOpen ? '▾' : '▸'"></span>
-            <h2>Deck</h2>
-          </div>
-          <div class="grid2" x-show="deckOpen" x-cloak>
-            <div class="field full">
-              <span class="field-label">{{ 'repurposeVideoTitle'|trans }} · MP4 / WebM</span>
-              <span class="video-filename" x-text="spec.video || '—'"></span>
-              <div class="media-picker__actions">
-                <button type="button" class="btn-xs" @click="pickVideo('choose')">{{ 'repurposeVideoChoose'|trans }}</button>
-                <button type="button" class="btn-xs" @click="pickVideo('upload')">{{ 'repurposeVideoUpload'|trans }}</button>
-                <button type="button" class="btn-xs" x-show="spec.video" @click="clearVideo()">{{ 'repurposeVideoRemove'|trans }}</button>
+          <button type="button" class="group-head" @click="toggleDeck()" :aria-expanded="deckOpen" aria-controls="rp-deck-fields">
+            <span class="chev" aria-hidden="true" x-text="deckOpen ? '▾' : '▸'"></span>
+            <span class="group-title">Deck</span>
+          </button>
+          <div id="rp-deck-fields" x-show="deckOpen" x-cloak class="deck-fields">
+            <div class="grid2">
+              <div class="field full">
+                <span class="field-label">{{ 'repurposeVideoTitle'|trans }} · MP4 / WebM</span>
+                <span class="video-filename" x-text="spec.video || '—'"></span>
+                <div class="media-picker__actions">
+                  <button type="button" class="btn-xs" @click="pickVideo('choose')">{{ 'repurposeVideoChoose'|trans }}</button>
+                  <button type="button" class="btn-xs" @click="pickVideo('upload')">{{ 'repurposeVideoUpload'|trans }}</button>
+                  <button type="button" class="btn-xs" x-show="spec.video" @click="clearVideo()">{{ 'repurposeVideoRemove'|trans }}</button>
+                </div>
               </div>
-            </div>
-            <div class="field full">
-              <label>Page <span class="val" x-show="isStandalone" x-cloak>standalone — not linked</span></label>
-              <div class="page-link">
-                <input type="text" x-model="pageField" list="rp-pages" placeholder="Standalone — type or pick a slug to link a page">
-                <button type="button" class="btn-xs" @click="detachPage()" x-show="!isStandalone">Detach</button>
+              <div class="field full" x-id="['field']">
+                <label :for="$id('field')">Page <span class="val" x-show="isStandalone" x-cloak>standalone — not linked</span></label>
+                <div class="page-link">
+                  <input type="text" x-model="pageField" list="rp-pages" placeholder="Standalone — type or pick a slug to link a page" :id="$id('field')">
+                  <button type="button" class="btn-xs" @click="detachPage()" x-show="!isStandalone">Detach</button>
+                </div>
+                <datalist id="rp-pages">
+                  {% for slug in pageSlugs %}<option value="{{ slug }}"></option>{% endfor %}
+                </datalist>
               </div>
-              <datalist id="rp-pages">
-                {% for slug in pageSlugs %}<option value="{{ slug }}"></option>{% endfor %}
-              </datalist>
-            </div>
-            <div class="field">
-              <label>Network</label>
-              <select @change="switchNetwork($event)" x-init="$nextTick(() => $el.value = network)">
-                <template x-for="n in vocab.networks" :key="n"><option :value="n" x-text="vocab.networkLabels[n]"></option></template>
-              </select>
-            </div>
-            <div class="field">
-              <label>Format</label>
-              <select x-model="spec.format" x-init="$nextTick(() => $el.value = spec.format)">
-                <template x-for="f in vocab.formats" :key="f"><option :value="f" x-text="f"></option></template>
-              </select>
-            </div>
-            <div class="field">
-              <label>Status</label>
-              <select x-model="spec.status" x-init="$nextTick(() => $el.value = spec.status)">
-                <template x-for="s in vocab.statuses" :key="s"><option :value="s" x-text="s"></option></template>
-              </select>
-            </div>
-            <div class="field">
-              <label>Font pairing</label>
-              <select x-model="spec.fontPairing" x-init="$nextTick(() => $el.value = spec.fontPairing)">
-                <option value="">— inherit —</option>
-                <template x-for="f in vocab.fontPairings" :key="f"><option :value="f" x-text="f"></option></template>
-              </select>
-            </div>
-            <div class="field">
-              <label>Planned at</label>
-              <input type="datetime-local" x-model="spec.plannedAt">
-            </div>
-            <div class="field full">
-              <label>Caption</label>
-              <textarea class="autogrow" x-model="spec.caption" placeholder="The post caption…"></textarea>
-            </div>
-            <div class="field full">
-              <label>Hashtags <span class="val">comma-separated</span></label>
-              <input type="text" x-model="hashtagsText" placeholder="pushword, carousel">
-            </div>
-          </div>
-
-          <div class="grid2" x-show="deckOpen" x-cloak>
-            <div class="field">
-              <label>Palette · background</label>
-              <button type="button" class="color-field" @click.stop="openColor(spec.palette, 'bg', $event)">
-                <span class="sw" :style="spec.palette.bg ? ('background:' + spec.palette.bg) : ''"></span>
-                <span class="hex" :class="!spec.palette.bg && 'empty'" x-text="spec.palette.bg || 'inherit'"></span>
-                <span class="caret">▾</span>
-              </button>
-            </div>
-            <div class="field">
-              <label>Palette · text</label>
-              <button type="button" class="color-field" @click.stop="openColor(spec.palette, 'text', $event)">
-                <span class="sw" :style="spec.palette.text ? ('background:' + spec.palette.text) : ''"></span>
-                <span class="hex" :class="!spec.palette.text && 'empty'" x-text="spec.palette.text || 'inherit'"></span>
-                <span class="caret">▾</span>
-              </button>
-            </div>
-            <div class="field">
-              <label>Palette · accent</label>
-              <button type="button" class="color-field" @click.stop="openColor(spec.palette, 'accent', $event)">
-                <span class="sw" :style="spec.palette.accent ? ('background:' + spec.palette.accent) : ''"></span>
-                <span class="hex" :class="!spec.palette.accent && 'empty'" x-text="spec.palette.accent || 'inherit'"></span>
-                <span class="caret">▾</span>
-              </button>
-            </div>
-            <div class="field">
-              <label>Creator</label>
-              <template x-if="'object' === typeof spec.creator && null !== spec.creator">
-                <input type="text" :value="'Inline: ' + spec.creator.name" disabled title="Inline creator set via API/JSON — edit it in the Source view">
-              </template>
-              <template x-if="'object' !== typeof spec.creator || null === spec.creator">
-                <select x-model="spec.creator" x-init="$nextTick(() => $el.value = spec.creator || '')">
-                  <option value="">— brand —</option>
-                  <template x-for="(name, key) in vocab.creators" :key="key"><option :value="key" x-text="name"></option></template>
-                  <template x-if="spec.creator && !((spec.creator || '') in vocab.creators)">
-                    <option :value="spec.creator" x-text="spec.creator + ' — unknown key'"></option>
-                  </template>
+              <div class="field" x-id="['field']">
+                <label :for="$id('field')">Status</label>
+                <select x-model="spec.status" x-init="$nextTick(() => $el.value = spec.status)" :id="$id('field')">
+                  <template x-for="s in vocab.statuses" :key="s"><option :value="s" x-text="s"></option></template>
                 </select>
-              </template>
+              </div>
+              <div class="field" x-id="['field']">
+                <label :for="$id('field')">Font pairing</label>
+                <select x-model="spec.fontPairing" x-init="$nextTick(() => $el.value = spec.fontPairing)" :id="$id('field')">
+                  <option value="">— inherit —</option>
+                  <template x-for="f in vocab.fontPairings" :key="f"><option :value="f" x-text="f"></option></template>
+                </select>
+              </div>
+              <div class="field" x-id="['field']">
+                <label :for="$id('field')">Planned at</label>
+                <input type="datetime-local" x-model="spec.plannedAt" :id="$id('field')">
+              </div>
+              <div class="field full" x-id="['field']">
+                <label :for="$id('field')">Caption</label>
+                <textarea class="autogrow" x-model="spec.caption" placeholder="The post caption…" :id="$id('field')"></textarea>
+              </div>
+              <div class="field full" x-id="['field']">
+                <label :for="$id('field')">Hashtags <span class="val">comma-separated</span></label>
+                <input type="text" x-model="hashtagsText" placeholder="pushword, carousel" :id="$id('field')">
+              </div>
             </div>
-            <div class="field">
-              <label>Counter style</label>
-              <select x-model="spec.counter.style" x-init="$nextTick(() => $el.value = spec.counter.style)">
-                <option value="">— default —</option><template x-for="s in vocab.counterStyles" :key="s"><option :value="s" x-text="s"></option></template>
-              </select>
-            </div>
-            <div class="field">
-              <label>Counter align</label>
-              <select x-model="spec.counter.align" x-init="$nextTick(() => $el.value = spec.counter.align)">
-                <option value="">— default —</option><template x-for="a in vocab.counterAligns" :key="a"><option :value="a" x-text="a"></option></template>
-              </select>
-            </div>
-            <div class="field">
-              <label>Creator on slides</label>
-              <select x-model="spec.creatorOnSlides" x-init="$nextTick(() => $el.value = spec.creatorOnSlides)">
-                <option value="">— default —</option><template x-for="o in vocab.creatorOnSlides" :key="o"><option :value="o" x-text="o"></option></template>
-              </select>
-            </div>
-            <div class="field">
-              <label>Creator orientation</label>
-              <select x-model="spec.creatorOrientation" x-init="$nextTick(() => $el.value = spec.creatorOrientation)">
-                <option value="">— default —</option><template x-for="o in vocab.creatorOrientations" :key="o"><option :value="o" x-text="o"></option></template>
-              </select>
-            </div>
-            <div class="field full">
-              <label>Background effect <span class="val">whole deck — a slide can override</span></label>
-              <button type="button" class="fake-select" @click="openEffect('deck')">
-                <span class="thumb" x-html="effectPreviewSvg(spec.background || 'none')"></span>
-                <span class="lbl" x-text="effectLabel(spec.background || 'none')"></span>
-                <span class="caret">▾</span>
-              </button>
+
+            <div class="grid2">
+              <div class="field" x-id="['field']">
+                <label :for="$id('field')">Palette · background</label>
+                <button type="button" class="color-field" @click.stop="openColor(spec.palette, 'bg', $event)" :id="$id('field')">
+                  <span class="sw" :style="spec.palette.bg ? ('background:' + spec.palette.bg) : ''"></span>
+                  <span class="hex" :class="!spec.palette.bg && 'empty'" x-text="spec.palette.bg || 'inherit'"></span>
+                  <span class="caret">▾</span>
+                </button>
+              </div>
+              <div class="field" x-id="['field']">
+                <label :for="$id('field')">Palette · text</label>
+                <button type="button" class="color-field" @click.stop="openColor(spec.palette, 'text', $event)" :id="$id('field')">
+                  <span class="sw" :style="spec.palette.text ? ('background:' + spec.palette.text) : ''"></span>
+                  <span class="hex" :class="!spec.palette.text && 'empty'" x-text="spec.palette.text || 'inherit'"></span>
+                  <span class="caret">▾</span>
+                </button>
+              </div>
+              <div class="field" x-id="['field']">
+                <label :for="$id('field')">Palette · accent</label>
+                <button type="button" class="color-field" @click.stop="openColor(spec.palette, 'accent', $event)" :id="$id('field')">
+                  <span class="sw" :style="spec.palette.accent ? ('background:' + spec.palette.accent) : ''"></span>
+                  <span class="hex" :class="!spec.palette.accent && 'empty'" x-text="spec.palette.accent || 'inherit'"></span>
+                  <span class="caret">▾</span>
+                </button>
+              </div>
+              <div class="field" x-id="['field']">
+                <label :for="$id('field')">Creator</label>
+                <template x-if="'object' === typeof spec.creator && null !== spec.creator">
+                  <input type="text" :value="'Inline: ' + spec.creator.name" disabled title="Inline creator set via API/JSON — edit it in the Source view" :id="$id('field')">
+                </template>
+                <template x-if="'object' !== typeof spec.creator || null === spec.creator">
+                  <select x-model="spec.creator" x-init="$nextTick(() => $el.value = spec.creator || '')" :id="$id('field')">
+                    <option value="">— brand —</option>
+                    <template x-for="(name, key) in vocab.creators" :key="key"><option :value="key" x-text="name"></option></template>
+                    <template x-if="spec.creator && !((spec.creator || '') in vocab.creators)">
+                      <option :value="spec.creator" x-text="spec.creator + ' — unknown key'"></option>
+                    </template>
+                  </select>
+                </template>
+              </div>
+              <div class="field" x-id="['field']">
+                <label :for="$id('field')">Counter style</label>
+                <select x-model="spec.counter.style" x-init="$nextTick(() => $el.value = spec.counter.style)" :id="$id('field')">
+                  <option value="">— default —</option><template x-for="s in vocab.counterStyles" :key="s"><option :value="s" x-text="s"></option></template>
+                </select>
+              </div>
+              <div class="field" x-id="['field']">
+                <label :for="$id('field')">Counter align</label>
+                <select x-model="spec.counter.align" x-init="$nextTick(() => $el.value = spec.counter.align)" :id="$id('field')">
+                  <option value="">— default —</option><template x-for="a in vocab.counterAligns" :key="a"><option :value="a" x-text="a"></option></template>
+                </select>
+              </div>
+              <div class="field" x-id="['field']">
+                <label :for="$id('field')">Creator on slides</label>
+                <select x-model="spec.creatorOnSlides" x-init="$nextTick(() => $el.value = spec.creatorOnSlides)" :id="$id('field')">
+                  <option value="">— default —</option><template x-for="o in vocab.creatorOnSlides" :key="o"><option :value="o" x-text="o"></option></template>
+                </select>
+              </div>
+              <div class="field" x-id="['field']">
+                <label :for="$id('field')">Creator orientation</label>
+                <select x-model="spec.creatorOrientation" x-init="$nextTick(() => $el.value = spec.creatorOrientation)" :id="$id('field')">
+                  <option value="">— default —</option><template x-for="o in vocab.creatorOrientations" :key="o"><option :value="o" x-text="o"></option></template>
+                </select>
+              </div>
+              <div class="field full" x-id="['field']">
+                <label :for="$id('field')">Background effect <span class="val">whole deck — a slide can override</span></label>
+                <button type="button" class="fake-select" @click="openEffect('deck')" :id="$id('field')">
+                  <span class="thumb" x-html="effectPreviewSvg(spec.background || 'none')"></span>
+                  <span class="lbl" x-text="effectLabel(spec.background || 'none')"></span>
+                  <span class="caret">▾</span>
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -521,87 +552,90 @@
               <div class="slide-item" :id="'rp-slide-item-' + i"
                    :class="{ 'open': slidesOpen[i], 'dragging': dragIndex === i, 'drag-over': dropIndex === i && dragIndex !== null && dragIndex !== i }"
                    @dragover.prevent="onDragOver(i)" @drop.prevent="onDrop(i)">
-                <div class="slide-item__head" @click="toggleSlide(i)">
-                  <span class="grip" title="Drag to reorder" draggable="true"
-                        @click.stop @dragstart="onDragStart(i, $event)" @dragend="onDragEnd()">⠿</span>
-                  <span class="chev" x-text="slidesOpen[i] ? '▾' : '▸'"></span>
-                  <span class="slide-item__title" x-text="slide.title || slide.tagline || (slide.texts && slide.texts[0] && slide.texts[0].content) || 'Untitled'"></span>
+                <div class="slide-item__head">
+                  <button type="button" class="grip" title="Drag to reorder, or use the arrow keys" draggable="true" :aria-label="'Reorder slide ' + (i + 1)"
+                          @keydown.arrow-up.prevent="i > 0 && moveSlideTo(i, i - 1)" @keydown.arrow-down.prevent="i < spec.slides.length - 1 && moveSlideTo(i, i + 1)"
+                          @dragstart="onDragStart(i, $event)" @dragend="onDragEnd()">⠿</button>
+                  <button type="button" class="slide-item__toggle" @click="toggleSlide(i)" :aria-expanded="!!slidesOpen[i]" :aria-controls="'rp-slide-fields-' + i">
+                    <span class="chev" aria-hidden="true" x-text="slidesOpen[i] ? '▾' : '▸'"></span>
+                    <span class="slide-item__title" x-text="slide.title || slide.tagline || (slide.texts && slide.texts[0] && slide.texts[0].content) || 'Untitled'"></span>
+                  </button>
                   <span class="sp" @click.stop>
-                    <button class="icon-btn danger" type="button" title="Remove" @click="removeSlide(i)">✕</button>
+                    <button class="icon-btn danger" type="button" title="Remove" :aria-label="'Remove slide ' + (i + 1)" @click="removeSlide(i)">✕</button>
                   </span>
                 </div>
-                <div class="slide-item__body" x-show="slidesOpen[i]" x-cloak>
-                  <div class="field">
-                    <label>Title
+                <div class="slide-item__body" :id="'rp-slide-fields-' + i" x-show="slidesOpen[i]" x-cloak>
+                  <div class="field" x-id="['field']">
+                    <label :for="$id('field')">Title
                       <button type="button" class="btn-xs" x-show="slide.title" x-cloak title="Convert to a free text box — same look, draggable anywhere on the slide" @click="freeTextFromField(i, 'title')">→ free text</button>
                     </label>
-                    <textarea class="autogrow one" x-model="slide.title"></textarea>
+                    <textarea class="autogrow one" x-model="slide.title" :id="$id('field')"></textarea>
                   </div>
                   <div class="grid2">
-                    <div class="field"><label>Tagline
+                    <div class="field" x-id="['field']"><label :for="$id('field')">Tagline
                       <button type="button" class="btn-xs" x-show="slide.tagline" x-cloak title="Convert to a free text box — same look, draggable anywhere on the slide" @click="freeTextFromField(i, 'tagline')">→ free text</button>
-                    </label><textarea class="autogrow one" x-model="slide.tagline"></textarea></div>
-                    <div class="field"><label>Background effect</label>
-                      <button type="button" class="fake-select" @click="openEffect(i)">
+                    </label><textarea class="autogrow one" x-model="slide.tagline" :id="$id('field')"></textarea></div>
+                    <div class="field" x-id="['field']"><label :for="$id('field')">Background effect</label>
+                      <button type="button" class="fake-select" @click="openEffect(i)" :id="$id('field')">
                         <span class="thumb" x-html="slideEffectPreview(slide)"></span>
                         <span class="lbl" x-text="slideEffectLabel(slide)"></span>
                         <span class="caret">▾</span>
                       </button>
                     </div>
                   </div>
-                  <div class="field"><label>Paragraph
+                  <div class="field" x-id="['field']"><label :for="$id('field')">Paragraph
                     <button type="button" class="btn-xs" x-show="slide.paragraph" x-cloak title="Convert to a free text box — same look, draggable anywhere on the slide" @click="freeTextFromField(i, 'paragraph')">→ free text</button>
-                  </label><textarea class="autogrow" x-model="slide.paragraph"></textarea></div>
+                  </label><textarea class="autogrow" x-model="slide.paragraph" :id="$id('field')"></textarea></div>
                   <div class="grid2">
-                    <div class="field"><label>Layout</label>
-                      <select x-model="slide.layout" x-init="$nextTick(() => $el.value = slide.layout)">
+                    <div class="field" x-id="['field']"><label :for="$id('field')">Layout</label>
+                      <select x-model="slide.layout" x-init="$nextTick(() => $el.value = slide.layout)" :id="$id('field')">
                         <template x-for="l in vocab.layouts" :key="l"><option :value="l" x-text="l"></option></template>
                       </select>
                     </div>
-                    <div class="field"><label>Align</label>
-                      <select x-model="slide.align" x-init="$nextTick(() => $el.value = slide.align)">
+                    <div class="field" x-id="['field']"><label :for="$id('field')">Align</label>
+                      <select x-model="slide.align" x-init="$nextTick(() => $el.value = slide.align)" :id="$id('field')">
                         <template x-for="a in vocab.aligns" :key="a"><option :value="a" x-text="a"></option></template>
                       </select>
                     </div>
-                    <div class="field">
-                      <label>Overlay <span class="val" x-text="Number(slide.overlay || 0).toFixed(2)"></span></label>
-                      <input type="range" min="0" max="1" step="0.05" x-model.number="slide.overlay">
+                    <div class="field" x-id="['field']">
+                      <label :for="$id('field')">Overlay <span class="val" x-text="Number(slide.overlay || 0).toFixed(2)"></span></label>
+                      <input type="range" min="0" max="1" step="0.05" x-model.number="slide.overlay" :id="$id('field')">
                     </div>
-                    <div class="field">
-                      <label>Text scale <span class="val" x-text="Number(slide.textScale || 1).toFixed(2)"></span></label>
-                      <input type="range" min="0.5" max="2" step="0.05" x-model.number="slide.textScale">
+                    <div class="field" x-id="['field']">
+                      <label :for="$id('field')">Text scale <span class="val" x-text="Number(slide.textScale || 1).toFixed(2)"></span></label>
+                      <input type="range" min="0.5" max="2" step="0.05" x-model.number="slide.textScale" :id="$id('field')">
                     </div>
                   </div>
                   <label class="switch"><input type="checkbox" x-model="slide.swipe"> Swipe hint (“→”)</label>
 
                   <div class="grid2">
-                    <div class="field">
-                      <label>Palette · bg <span class="val">override</span></label>
-                      <button type="button" class="color-field" @click.stop="openColor(slide.palette, 'bg', $event)">
+                    <div class="field" x-id="['field']">
+                      <label :for="$id('field')">Palette · bg <span class="val">override</span></label>
+                      <button type="button" class="color-field" @click.stop="openColor(slide.palette, 'bg', $event)" :id="$id('field')">
                         <span class="sw" :style="slide.palette.bg ? ('background:' + slide.palette.bg) : ''"></span>
                         <span class="hex" :class="!slide.palette.bg && 'empty'" x-text="slide.palette.bg || 'inherit'"></span>
                         <span class="caret">▾</span>
                       </button>
                     </div>
-                    <div class="field">
-                      <label>Palette · text</label>
-                      <button type="button" class="color-field" @click.stop="openColor(slide.palette, 'text', $event)">
+                    <div class="field" x-id="['field']">
+                      <label :for="$id('field')">Palette · text</label>
+                      <button type="button" class="color-field" @click.stop="openColor(slide.palette, 'text', $event)" :id="$id('field')">
                         <span class="sw" :style="slide.palette.text ? ('background:' + slide.palette.text) : ''"></span>
                         <span class="hex" :class="!slide.palette.text && 'empty'" x-text="slide.palette.text || 'inherit'"></span>
                         <span class="caret">▾</span>
                       </button>
                     </div>
-                    <div class="field">
-                      <label>Palette · accent</label>
-                      <button type="button" class="color-field" @click.stop="openColor(slide.palette, 'accent', $event)">
+                    <div class="field" x-id="['field']">
+                      <label :for="$id('field')">Palette · accent</label>
+                      <button type="button" class="color-field" @click.stop="openColor(slide.palette, 'accent', $event)" :id="$id('field')">
                         <span class="sw" :style="slide.palette.accent ? ('background:' + slide.palette.accent) : ''"></span>
                         <span class="hex" :class="!slide.palette.accent && 'empty'" x-text="slide.palette.accent || 'inherit'"></span>
                         <span class="caret">▾</span>
                       </button>
                     </div>
-                    <div class="field">
-                      <label>Title highlight</label>
-                      <button type="button" class="color-field" @click.stop="openColor(slide, 'highlight', $event)">
+                    <div class="field" x-id="['field']">
+                      <label :for="$id('field')">Title highlight</label>
+                      <button type="button" class="color-field" @click.stop="openColor(slide, 'highlight', $event)" :id="$id('field')">
                         <span class="sw" :style="slide.highlight ? ('background:' + slide.highlight) : ''"></span>
                         <span class="hex" :class="!slide.highlight && 'empty'" x-text="slide.highlight || 'none'"></span>
                         <span class="caret">▾</span>
@@ -609,23 +643,23 @@
                     </div>
                   </div>
 
-                  <div class="field">
-                    <label>Image layout</label>
-                    <select x-model="slide.imageLayout" @change="ensureCells(slide)" x-init="$nextTick(() => $el.value = slide.imageLayout)">
+                  <div class="field" x-id="['field']">
+                    <label :for="$id('field')">Image layout</label>
+                    <select x-model="slide.imageLayout" @change="ensureCells(slide)" x-init="$nextTick(() => $el.value = slide.imageLayout)" :id="$id('field')">
                       <template x-for="l in vocab.imageLayouts" :key="l"><option :value="l" x-text="l"></option></template>
                     </select>
                   </div>
 
                   <template x-for="k in imageSlots(slide)" :key="k">
                     <div class="image-cell">
-                      <div class="field">
-                        <label>Image <span class="val" x-show="cellCount(slide) > 1" x-text="k === 0 ? 'A' : 'B'"></span></label>
+                      <div class="field" x-id="['field']">
+                        <label :for="$id('field')">Image <span class="val" x-show="cellCount(slide) > 1" x-text="k === 0 ? 'A' : 'B'"></span></label>
                         <div class="media-picker" :class="!cellImage(slide, k).media && 'is-empty'">
                           <div class="media-picker__thumb" :style="cellImage(slide, k).media ? ('background-image:url(\'' + thumbUrl(cellImage(slide, k).media) + '\')') : ''"></div>
                           <div class="media-picker__meta">
                             <span class="media-picker__name" x-text="cellImage(slide, k).media || 'No image'"></span>
                             <div class="media-picker__actions">
-                              <button type="button" class="btn-xs" @click="pickMedia(i, k, 'choose')">Choose</button>
+                              <button type="button" class="btn-xs" @click="pickMedia(i, k, 'choose')" :id="$id('field')">Choose</button>
                               <button type="button" class="btn-xs" @click="pickMedia(i, k, 'upload')">Upload</button>
                               <button type="button" class="btn-xs danger" x-show="cellImage(slide, k).media" @click="clearMedia(i, k)">Remove</button>
                             </div>
@@ -633,17 +667,17 @@
                         </div>
                       </div>
                       <div class="grid2" x-show="cellImage(slide, k).media">
-                        <div class="field">
-                          <label>Focus X <span class="val" x-text="Number(cellImage(slide, k).focusX ?? 0.5).toFixed(2)"></span></label>
-                          <input type="range" min="0" max="1" step="0.01" x-model.number="cellImage(slide, k).focusX">
+                        <div class="field" x-id="['field']">
+                          <label :for="$id('field')">Focus X <span class="val" x-text="Number(cellImage(slide, k).focusX ?? 0.5).toFixed(2)"></span></label>
+                          <input type="range" min="0" max="1" step="0.01" x-model.number="cellImage(slide, k).focusX" :id="$id('field')">
                         </div>
-                        <div class="field">
-                          <label>Focus Y <span class="val" x-text="Number(cellImage(slide, k).focusY ?? 0.5).toFixed(2)"></span></label>
-                          <input type="range" min="0" max="1" step="0.01" x-model.number="cellImage(slide, k).focusY">
+                        <div class="field" x-id="['field']">
+                          <label :for="$id('field')">Focus Y <span class="val" x-text="Number(cellImage(slide, k).focusY ?? 0.5).toFixed(2)"></span></label>
+                          <input type="range" min="0" max="1" step="0.01" x-model.number="cellImage(slide, k).focusY" :id="$id('field')">
                         </div>
-                        <div class="field full">
-                          <label>Zoom <span class="val" x-text="Number(cellImage(slide, k).zoom ?? 1).toFixed(2)"></span></label>
-                          <input type="range" min="1" max="5" step="0.1" x-model.number="cellImage(slide, k).zoom">
+                        <div class="field full" x-id="['field']">
+                          <label :for="$id('field')">Zoom <span class="val" x-text="Number(cellImage(slide, k).zoom ?? 1).toFixed(2)"></span></label>
+                          <input type="range" min="1" max="5" step="0.1" x-model.number="cellImage(slide, k).zoom" :id="$id('field')">
                         </div>
                       </div>
                     </div>
@@ -651,48 +685,48 @@
 
                   <template x-for="(t, k) in slide.texts" :key="k">
                     <div class="free-text">
-                      <div class="field">
-                        <label>Free text <span class="sp" @click.stop><button class="icon-btn danger" type="button" title="Remove" @click="removeText(slide, k)">✕</button></span></label>
-                        <textarea class="autogrow one" x-model="t.content"></textarea>
+                      <div class="field" x-id="['field']">
+                        <label :for="$id('field')">Free text <span class="sp" @click.stop><button class="icon-btn danger" type="button" title="Remove" @click="removeText(slide, k)">✕</button></span></label>
+                        <textarea class="autogrow one" x-model="t.content" :id="$id('field')"></textarea>
                       </div>
                       <div class="grid2">
-                        <div class="field">
-                          <label>X <span class="val" x-text="Number(t.x ?? 0.08).toFixed(2)"></span></label>
-                          <input type="range" min="0" :max="(1 - (t.width ?? 0.84)).toFixed(2)" step="0.01" x-model.number="t.x">
+                        <div class="field" x-id="['field']">
+                          <label :for="$id('field')">X <span class="val" x-text="Number(t.x ?? 0.08).toFixed(2)"></span></label>
+                          <input type="range" min="0" :max="(1 - (t.width ?? 0.84)).toFixed(2)" step="0.01" x-model.number="t.x" :id="$id('field')">
                         </div>
-                        <div class="field">
-                          <label>Y <span class="val" x-text="Number(t.y ?? 0.08).toFixed(2)"></span></label>
-                          <input type="range" min="0" max="0.95" step="0.01" x-model.number="t.y">
+                        <div class="field" x-id="['field']">
+                          <label :for="$id('field')">Y <span class="val" x-text="Number(t.y ?? 0.08).toFixed(2)"></span></label>
+                          <input type="range" min="0" max="0.95" step="0.01" x-model.number="t.y" :id="$id('field')">
                         </div>
-                        <div class="field">
-                          <label>Width <span class="val" x-text="Number(t.width ?? 0.84).toFixed(2)"></span></label>
-                          <input type="range" min="0.05" :max="(1 - (t.x ?? 0.08)).toFixed(2)" step="0.01" x-model.number="t.width">
+                        <div class="field" x-id="['field']">
+                          <label :for="$id('field')">Width <span class="val" x-text="Number(t.width ?? 0.84).toFixed(2)"></span></label>
+                          <input type="range" min="0.05" :max="(1 - (t.x ?? 0.08)).toFixed(2)" step="0.01" x-model.number="t.width" :id="$id('field')">
                         </div>
-                        <div class="field">
-                          <label>Size <span class="val" x-text="(Number(t.size ?? 0.05) * 100).toFixed(1) + '% of slide width'"></span></label>
-                          <input type="range" min="0.01" max="0.3" step="0.005" x-model.number="t.size">
+                        <div class="field" x-id="['field']">
+                          <label :for="$id('field')">Size <span class="val" x-text="(Number(t.size ?? 0.05) * 100).toFixed(1) + '% of slide width'"></span></label>
+                          <input type="range" min="0.01" max="0.3" step="0.005" x-model.number="t.size" :id="$id('field')">
                         </div>
-                        <div class="field"><label>Align</label>
-                          <select x-model="t.align" x-init="$nextTick(() => $el.value = t.align)">
+                        <div class="field" x-id="['field']"><label :for="$id('field')">Align</label>
+                          <select x-model="t.align" x-init="$nextTick(() => $el.value = t.align)" :id="$id('field')">
                             <template x-for="a in vocab.aligns" :key="a"><option :value="a" x-text="a"></option></template>
                           </select>
                         </div>
-                        <div class="field"><label>Font</label>
-                          <select x-model="t.font" x-init="$nextTick(() => $el.value = t.font)">
+                        <div class="field" x-id="['field']"><label :for="$id('field')">Font</label>
+                          <select x-model="t.font" x-init="$nextTick(() => $el.value = t.font)" :id="$id('field')">
                             <template x-for="f in vocab.textFonts" :key="f"><option :value="f" x-text="f"></option></template>
                           </select>
                         </div>
-                        <div class="field">
-                          <label>Colour</label>
-                          <button type="button" class="color-field" @click.stop="openColor(t, 'color', $event)">
+                        <div class="field" x-id="['field']">
+                          <label :for="$id('field')">Colour</label>
+                          <button type="button" class="color-field" @click.stop="openColor(t, 'color', $event)" :id="$id('field')">
                             <span class="sw" :style="t.color ? ('background:' + t.color) : ''"></span>
                             <span class="hex" :class="!t.color && 'empty'" x-text="t.color || 'inherit'"></span>
                             <span class="caret">▾</span>
                           </button>
                         </div>
-                        <div class="field">
-                          <label>Highlight</label>
-                          <button type="button" class="color-field" @click.stop="openColor(t, 'highlight', $event)">
+                        <div class="field" x-id="['field']">
+                          <label :for="$id('field')">Highlight</label>
+                          <button type="button" class="color-field" @click.stop="openColor(t, 'highlight', $event)" :id="$id('field')">
                             <span class="sw" :style="t.highlight ? ('background:' + t.highlight) : ''"></span>
                             <span class="hex" :class="!t.highlight && 'empty'" x-text="t.highlight || 'none'"></span>
                             <span class="caret">▾</span>
@@ -720,15 +754,15 @@
     </aside>
   </div>
 
-  <div class="rp-modal" x-show="mediaModal.open" x-cloak @keydown.escape.window="closeMediaModal()">
+  <dialog class="rp-modal" x-effect="mediaModal.open ? $el.showModal() : $el.close()" @cancel="closeMediaModal()" @close="closeMediaModal()" aria-labelledby="rp-media-title">
     <div class="rp-modal__panel">
       <div class="rp-modal__bar">
-        <span>Choose an image</span>
+        <span id="rp-media-title" x-text="_pickSlide === 'video' ? messages.videoTitle : 'Choose an image'"></span>
         <button class="icon-btn" type="button" @click="closeMediaModal()" aria-label="Close">✕</button>
       </div>
       <iframe class="rp-modal__frame" :src="mediaModal.src" title="Media picker"></iframe>
     </div>
-  </div>
+  </dialog>
 
   {# ---------- INLINE TEXT EDITOR (opens on click on a slide's text block) ---------- #}
   {# Object-syntax :style on purpose: a string binding rewrites the whole style
@@ -736,8 +770,8 @@
      when its value did not change, so the wipe would stick (ghost popover). #}
   <div class="text-pop" x-show="textPop.open" x-cloak :style="{ top: textPop.top + 'px', left: textPop.left + 'px' }"
        @click.outside="closeTextPop()" @keydown.escape.window="closeTextPop()">
-    <label x-text="textPopLabel"></label>
-    <textarea class="autogrow" x-ref="textPopField" x-model="editValue"></textarea>
+    <label for="rp-inline-text" x-text="textPopLabel"></label>
+    <textarea id="rp-inline-text" class="autogrow" x-ref="textPopField" x-model="editValue"></textarea>
   </div>
 
   {# ---------- COLOUR POPOVER (shared, anchored under the clicked field) ---------- #}
@@ -746,8 +780,8 @@
        @click.outside="closeColor()" @keydown.escape.window="closeColor()">
     <div class="color-pop__top">
       <span class="sw" :style="colorValue ? ('background:' + colorValue) : ''"></span>
-      <input type="text" x-model="colorValue" spellcheck="false" placeholder="#rrggbb / inherit">
-      <input class="color-pop__native" type="color" title="Custom colour"
+      <input type="text" aria-label="Colour value" x-model="colorValue" spellcheck="false" placeholder="#rrggbb / inherit">
+      <input class="color-pop__native" type="color" title="Custom colour" aria-label="Custom colour"
              :value="/^#[0-9a-fA-F]{6}$/.test(colorValue) ? colorValue : '#000000'"
              @input="colorValue = $event.target.value">
     </div>
@@ -758,23 +792,23 @@
     </p>
     <div class="color-suggest" x-show="suggestedColors.length" x-cloak>
       <template x-for="c in suggestedColors" :key="c.name">
-        <button type="button" class="tw-sw" :style="'background:' + c.hex" :title="c.name + ' ' + c.hex" @click="pickSwatch(c.hex)"></button>
+        <button type="button" class="tw-sw" :style="'background:' + c.hex" :title="c.name + ' ' + c.hex" :aria-label="c.name + ' ' + c.hex" @click="pickSwatch(c.hex)"></button>
       </template>
       <span class="color-suggest__label">deck / site</span>
     </div>
     <div class="tw-grid">
       <template x-for="c in tailwind" :key="c.name">
-        <button type="button" class="tw-sw" :style="'background:' + c.hex" :title="c.name + ' ' + c.hex" @click="pickSwatch(c.hex)"></button>
+        <button type="button" class="tw-sw" :style="'background:' + c.hex" :title="c.name + ' ' + c.hex" :aria-label="c.name + ' ' + c.hex" @click="pickSwatch(c.hex)"></button>
       </template>
     </div>
     <button type="button" class="color-pop__clear" @click="clearColor()">Clear — inherit site colour</button>
   </div>
 
   {# ---------- BACKGROUND-EFFECT PICKER MODAL ---------- #}
-  <div class="rp-modal effect-modal" x-show="effectModal.open" x-cloak @keydown.escape.window="closeEffect()">
+  <dialog class="rp-modal effect-modal" x-effect="effectModal.open ? $el.showModal() : $el.close()" @cancel="closeEffect()" @close="closeEffect()" aria-labelledby="rp-effect-title">
     <div class="rp-modal__panel">
       <div class="rp-modal__bar">
-        <span>Select a background effect</span>
+        <span id="rp-effect-title">Select a background effect</span>
         <button class="icon-btn" type="button" @click="closeEffect()" aria-label="Close">✕</button>
       </div>
       <div class="effect-tabs">
@@ -784,14 +818,14 @@
       </div>
       <div class="effect-grid">
         <template x-for="e in effectsInTab" :key="e.key">
-          <button type="button" class="effect-tile" :class="currentEffectKey === e.key && 'on'" @click="chooseEffect(e.key)">
+          <button type="button" class="effect-tile" :class="currentEffectKey === e.key && 'on'" :aria-pressed="currentEffectKey === e.key" @click="chooseEffect(e.key)">
             <span class="thumb" x-html="e.preview"></span>
             <span class="name" x-text="e.label"></span>
           </button>
         </template>
       </div>
     </div>
-  </div>
+  </dialog>
 
   <script defer src="{{ versionedAsset('/bundles/pushwordrepurpose/repurpose.js') }}"></script>
   <script defer src="{{ versionedAsset('/bundles/pushwordcore/alpine.js') }}"></script>
