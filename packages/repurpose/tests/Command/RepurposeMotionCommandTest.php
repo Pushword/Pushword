@@ -75,6 +75,20 @@ final class RepurposeMotionCommandTest extends KernelTestCase
         self::assertFileDoesNotExist($out.'/timeline.json');
     }
 
+    public function testDanglingOutputSymlinkIsRefused(): void
+    {
+        $out = $this->directory.'/video';
+        $target = $this->directory.'/authored-project';
+        symlink($target, $out);
+        $tester = $this->tester();
+        $tester->execute(['spec' => $this->spec(), 'out-dir' => $out, '--format' => 'agent']);
+
+        self::assertSame(1, $tester->getStatusCode());
+        self::assertStringContainsString('The output directory already exists.', $tester->getDisplay());
+        self::assertSame($target, readlink($out));
+        self::assertDirectoryDoesNotExist($target);
+    }
+
     public function testInvalidSpecsFailBeforeWriting(): void
     {
         foreach (['{broken', '[]', '{"page":"x","network":"instagram","format":"bad","slides":[{"title":"Hi"}]}'] as $json) {

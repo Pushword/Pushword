@@ -19,9 +19,8 @@ composer require pushword/repurpose
 
 Requires `ext-gd` (text measurement) and `ext-zip` (export); no Imagick.
 
-Installed before seeding a fresh site, the demo fixtures add a ten-slide carousel of
-the `examples` page, one feature per slide. Its spec, `src/DataFixtures/Carousel.json`,
-is the reference to copy from; the post sits under **Social posts**.
+Demo fixtures add sample posts under **Social posts**. For a portable starting
+spec, use the package's `examples/nord/spec.json`, described below.
 
 ## How it fits together
 
@@ -49,7 +48,7 @@ Page ──► CarouselDrafter ──► SocialPost ◄──► social-post/{pa
   100%) and exporting it. Click a text to edit it in place; drag any text on the
   slide (a stack field becomes a free text box where it lands).
 
-## Author with an agent (recommended)
+## Author with an agent
 
 There is no LLM inside the package. An agent writes the spec against a published
 schema and validates it — free, with whatever model you already use.
@@ -275,7 +274,9 @@ Node.js or rendering tools.
 
 ## Networks and formats
 
-Formats are data with a provenance note; the validator enforces only **hard limits** (LinkedIn ≤300 pages / ≤100 MB / all pages
-one size; Instagram ≤20 slides; Pinterest = one organic image Pin with a caption),
-never engagement opinions. Caption limits include the hashtags appended at export.
-Fetch the live table from `GET /api/repurpose/networks`.
+Validation checks allowed formats, slide counts and captions. Caps include
+LinkedIn's 300 pages, Instagram's 20 slides, Pinterest's single captioned image,
+and X's four images. Caption limits include hashtags appended at export.
+Publishing guidance does not block validation; file-size limits in the registry
+are reference data, so check the export before uploading. Fetch limits, formats
+and guidance from `GET /api/repurpose/networks`.
