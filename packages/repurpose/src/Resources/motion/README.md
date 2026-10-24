@@ -17,6 +17,9 @@ npm run still -- --frame=45
 npm run render
 ```
 
+`studio` runs an interactive preview server; use a separate terminal for render
+commands, or stop it when finished previewing.
+
 The MP4 is written to `out/video.mp4` (H.264, yuv420p). `still` writes
 `out/preview.png`. Remotion downloads a headless browser when needed; its browser
 must have the system libraries required by Chromium. Run `npm install` once and
@@ -88,6 +91,23 @@ Agent loop: edit timeline or scene → `npm run check` → render stills at the
 entrance, middle, transitions and last frame → inspect → `npm run render`.
 `check` validates the timeline and its assets; rendering stills also compiles and
 exercises custom JSX. Inspect custom scene assets separately.
+
+## Return the video to Pushword
+
+Upload `out/video.mp4` through the media library, or send a multipart `file` to
+`POST /api/media/{filename}` with the site's API bearer token. Use the response's
+`filename`: uploads can be renamed or deduplicated. Set that value in the
+top-level `video` field of `spec.json`, keep the companion deck's media references
+valid for the site, then validate and save the spec through
+`POST /api/repurpose/validate` and `PUT /api/repurpose/{host}/{network}/{page}`.
+PUT replaces the spec at that key; preserve existing post fields when updating.
+If the upload is rejected for size, reduce the encoded file size or adjust the
+site's PHP `upload_max_filesize` and `post_max_size` before uploading again.
+
+The save response includes `studioUrl`. Open it and verify **Rendered video**
+playback and seeking. Its `previewUrl` is the static deck. Editing slides in the
+admin does not regenerate the video. Keep this project for later animation
+revisions, and return both the MP4 and project location with the admin link.
 
 Re-exporting to an existing directory is refused to preserve authored scenes.
 Export revised carousel artwork to a new directory and copy the desired layers

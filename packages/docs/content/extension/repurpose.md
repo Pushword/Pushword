@@ -1,5 +1,5 @@
 ---
-title: 'Repurpose: turn a page into a social carousel'
+title: 'Repurpose: social carousels and animated videos'
 h1: Repurpose
 publishedAt: '2026-07-21 12:00'
 parentPage: extensions
@@ -167,6 +167,12 @@ Binaries are auto-detected from `PATH`; override with `repurpose.chromium_binary
 
 ## Motion design and agent-authored videos
 
+For the complete brief → scenes → visual review → render → upload → admin
+workflow, use **`pw motion [brief or page]`** from the
+[`pw` AI skill](https://github.com/Pushword/Pushword/tree/main/packages/ai-skills).
+It supports both the simple timeline and custom React scenes, and distinguishes
+technical validation from visual review.
+
 `pw:repurpose:motion spec.json video/ --host=example.com` exports a standalone
 [Remotion](https://www.remotion.dev/docs) project into a **new** directory. Use
 `instagram` / `story-9-16` for a vertical video, or another valid network/format
@@ -201,8 +207,11 @@ and Remotion components. Motion must derive from `useCurrentFrame()` so seeking,
 preview and frame-by-frame export agree. The exported README includes a complete
 custom scene example and the edit → check → still → render workflow.
 
-`npm run check` reports timeline errors and missing layer assets as JSON. Render
-stills to compile and inspect custom JSX, then render the MP4. The original
+`npm run check` reports timeline errors and missing layer assets as JSON. It does
+not detect visual overlaps or validate every asset referenced by custom JSX.
+Render stills at entrances, settled text, moving elements crossing text,
+transitions and the final frame; inspect them at mobile size, then render and
+review the MP4. The original
 carousel remains in `spec.json`; editing the video timeline does not update that
 spec or the stored social post. Exporting into an existing directory is refused
 to protect agent-authored scenes. The admin's **Slideshow .mp4** button exports
@@ -223,10 +232,36 @@ filename, not a URL or path. Omit it to detach the video; this does not delete t
 media. The studio reports unavailable or unplayable videos without hiding the
 static deck.
 
-The development fixtures include **NORD.**, a complete five-scene vertical reel
-with a committed MP4 and editable sources in
-`packages/dev-app/src/DataFixtures/Motion/`. Its README explains regeneration;
-ordinary fixture loading needs no Node.js or rendering tools.
+### Packaged example: NORD.
+
+Every installation of `pushword/repurpose` includes a complete five-scene vertical
+reel in `examples/nord/`: custom React scenes, a companion static spec, local demo
+photos and a preparation script. From a Composer site's root:
+
+```sh
+node vendor/pushword/repurpose/examples/nord/prepare.mjs /tmp/nord-motion
+cd /tmp/nord-motion
+npm install
+npm run check
+npm run still -- --frame=205
+npm run render
+```
+
+Use a new output directory; in the monorepo replace `vendor/pushword/repurpose`
+with `packages/repurpose`. Preparation requires Node.js 22+, but no PHP, fixture
+database or running CMS. Read the example's README (copied to `EXAMPLE.md` in
+the generated project) for adapting the scenes, importing the companion deck's
+images and attaching the MP4. Keep editable projects outside `vendor/`.
+
+For API delivery, upload `out/video.mp4` using
+[`POST /api/media/{filename}`](/media-api#multipart-file-upload). Set `video` to
+the response's `filename`, which may differ after renaming or deduplication.
+Validate and PUT the updated spec through the Repurpose API, then open its
+returned `studioUrl`. Saving a draft does not publish to a social network.
+
+The development fixtures reuse this example's spec and include its rendered MP4
+at `packages/dev-app/media~/repurpose-nord.mp4`; normal fixture loading needs no
+Node.js or rendering tools.
 
 ## Networks and formats
 

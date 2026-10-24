@@ -30,3 +30,23 @@ composer require pushword/repurpose
 ## Documentation
 
 Visit [pushword.piedweb.com/extension/repurpose](https://pushword.piedweb.com/extension/repurpose).
+
+For agent-authored animation, use the `pw motion` playbook from Pushword's
+[AI skills](https://github.com/Pushword/Pushword/tree/main/packages/ai-skills).
+It covers the brief, scene authoring, visual checks, video render, upload and
+attachment to an admin draft.
+
+Try the complete [NORD. motion example](examples/nord/README.md), shipped with
+this package. From a Composer site's root (Node.js 22+):
+
+```sh
+node vendor/pushword/repurpose/examples/nord/prepare.mjs /tmp/nord-motion
+cd /tmp/nord-motion
+npm install
+npm run check
+npm run still -- --frame=205
+npm run render
+```
+
+The output directory must be new. Preparation needs no PHP or fixture database.
+In the monorepo, use `packages/repurpose` instead of `vendor/pushword/repurpose`.

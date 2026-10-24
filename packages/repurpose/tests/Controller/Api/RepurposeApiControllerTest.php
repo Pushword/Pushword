@@ -10,6 +10,7 @@ use Pushword\Core\Entity\User;
 use Pushword\Repurpose\Entity\SocialPost;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -183,6 +184,66 @@ final class RepurposeApiControllerTest extends WebTestCase
         $errors = $this->requestJson('POST', '/api/repurpose/validate', $bad);
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
         self::assertNotEmpty($errors['violations']);
+    }
+
+    public function testUploadedVideoFilenameSurvivesValidationAndSave(): void
+    {
+        $filename = 'motion-test-'.bin2hex(random_bytes(6)).'.mp4';
+        $createdFilename = null;
+
+        try {
+            $uploaded = $this->uploadVideo($filename, Response::HTTP_CREATED);
+            self::assertSame($filename, $uploaded['filename']);
+            $createdFilename = $filename;
+            self::assertSame('video/mp4', $uploaded['mimeType']);
+            $duplicate = $this->uploadVideo('copy-'.$filename, Response::HTTP_OK);
+            self::assertTrue($duplicate['duplicate']);
+            self::assertSame($filename, $duplicate['filename']);
+
+            $spec = [
+                'page' => 'standalone/motion', 'network' => 'instagram', 'format' => 'story-9-16',
+                'status' => 'draft', 'video' => $duplicate['filename'], 'slides' => [['title' => 'Motion draft']],
+            ];
+            $validated = $this->requestJson('POST', '/api/repurpose/validate', $spec);
+            self::assertTrue($validated['valid']);
+            $url = '/api/repurpose/'.self::HOST.'/instagram/standalone/motion';
+            $saved = $this->requestJson('PUT', $url, $spec);
+            self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+            self::assertSame('draft', $saved['status']);
+            self::assertSame(1, $saved['slides']);
+            self::assertIsString($saved['studioUrl']);
+            $reloaded = $this->requestJson('GET', $url);
+            self::assertSame($spec, $reloaded['spec']);
+        } finally {
+            if (null !== $createdFilename) {
+                $this->client->request(Request::METHOD_DELETE, '/api/media/'.$createdFilename, [], [], $this->authServer());
+                self::assertResponseIsSuccessful();
+            }
+        }
+    }
+
+    /** @return array<string, mixed> */
+    private function uploadVideo(string $filename, int $expectedStatus): array
+    {
+        $path = tempnam(sys_get_temp_dir(), 'pw-motion-upload-');
+        self::assertIsString($path);
+        copy(__DIR__.'/../../fixtures/motion.mp4', $path);
+
+        try {
+            $this->client->request(Request::METHOD_POST, '/api/media/'.$filename, [], [
+                'file' => new UploadedFile($path, $filename, 'video/mp4', test: true),
+            ], ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken]);
+            self::assertResponseStatusCodeSame($expectedStatus);
+            $media = json_decode((string) $this->client->getResponse()->getContent(), true);
+            self::assertIsArray($media);
+
+            /** @var array<string, mixed> $media */
+            return $media;
+        } finally {
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
     }
 
     public function testUpsertReadReframeRenderDelete(): void

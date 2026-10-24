@@ -452,7 +452,7 @@ class AppFixtures extends Fixture
      * (layouts, per-slide overrides, highlight, free text boxes, focal crops,
      * split frames, deck-wide effects). Same page, so the studio's network
      * switcher hops between them. A standalone NORD. reel demonstrates motion
-     * design, with its rendered video and editable sources shipped in the fixtures.
+     * design, with its rendered video and the editable example from Repurpose.
      */
     private function loadRepurposeDemo(ObjectManager $manager): void
     {
@@ -516,7 +516,7 @@ class AppFixtures extends Fixture
         ];
 
         /** @var array<string, mixed> $motion */
-        $motion = json_decode((string) file_get_contents(__DIR__.'/Motion/spec.json'), true, flags: \JSON_THROW_ON_ERROR);
+        $motion = json_decode((string) file_get_contents(\dirname(__DIR__, 3).'/repurpose/examples/nord/spec.json'), true, flags: \JSON_THROW_ON_ERROR);
 
         foreach ([$demo, $featureTour, $motion] as $spec) {
             $post = new SocialPost();

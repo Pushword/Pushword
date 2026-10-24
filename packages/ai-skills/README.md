@@ -14,6 +14,7 @@ quiz to this page").
 | --- | --- |
 | `quiz [topic]` | Author, embed and validate an interactive QCM quiz (`{% quiz %}` block). |
 | `carousel [page]` | Repurpose a page into a social carousel ([repurpose](https://pushword.piedweb.com/extension/repurpose)). |
+| `motion [brief or page]` | Create an animated post or Reel, inspect the frames, render and attach the video to an admin draft. |
 
 ## Install
 
@@ -28,8 +29,9 @@ cp -r packages/ai-skills/pw ~/.claude/skills/pw
 ```
 
 It works both inside the Pushword monorepo and on a downstream site that
-installed Pushword via Composer (the skill detects `packages/quiz/` vs
-`vendor/pushword/quiz/`).
+installed Pushword via Composer (the skill detects `packages/core/` vs
+`vendor/pushword/core/`). The `motion` playbook includes a complete example
+shipped in `pushword/repurpose/examples/nord/` and an upload → save → admin workflow.
 
 ## Roadmap
 
