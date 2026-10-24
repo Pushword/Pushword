@@ -70,7 +70,7 @@ const Route = () => {
       {[[132,805,18],[190,1120,48],[350,1490,78]].map(([cx,cy,start],i) =>
         <g key={i} opacity={reveal(frame,start,10)}><circle cx={cx} cy={cy} r="20" fill={cream} stroke={orange} strokeWidth="6"/></g>)}
     </svg>
-    {[[190,775,'Marcher.',22],[76,1190,'Respirer.',52],[80,1580,'Ralentir.',82]].map(([left,top,text,start]) =>
+    {[[190,745,'Marcher.',22],[270,1090,'Respirer.',52],[80,1580,'Ralentir.',82]].map(([left,top,text,start]) =>
       <div key={text} style={{position: 'absolute', left, top, fontSize: 37, opacity: reveal(frame,start,16)}}>{text}</div>)}
     <Label style={{top: 'auto', bottom: 86, fontSize: 20, letterSpacing: 2}}>Un chemin. Pas une course.</Label>
   </Shell>;
