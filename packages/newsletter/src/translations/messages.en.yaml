@@ -143,6 +143,18 @@ newsletter:
       noDate: Set a "Scheduled for" date first, then Schedule.
       notDraft: This newsletter is not a draft any more.
       notFound: Newsletter not found.
+    review:
+      allContacts: All subscribed contacts
+      filteredContacts: Filtered contacts
+      moreActions: More actions
+      settings: Advanced options
+      source: Markdown source
+      status:
+        draft: Draft
+        scheduled: Scheduled
+        sending: Sending
+        sent: Sent
+      summary: Recipients and delivery
     status:
       draft: Drafts
       scheduled: Scheduled

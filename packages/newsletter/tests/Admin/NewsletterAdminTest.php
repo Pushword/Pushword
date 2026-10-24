@@ -439,6 +439,98 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertSelectorExists('form[action*="/schedule"]');
     }
 
+    public function testCampaignReviewRendersTheEmailAndKeepsSourceCollapsed(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $audience->headerMarkdown = 'Audience header';
+
+        $campaign = $this->campaign($audience, 'Review <this> draft');
+        $campaign->bodyMarkdown = "Hello **%name%**.\\\n<https://example.com/hiking>\n\n<script>alert('source')</script>";
+        $campaign->emailLayout = 'framed';
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$campaign->id);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Review <this> draft', $crawler->filter('h1')->text());
+        self::assertSame('Draft', $crawler->filter('.pw-campaign-status')->text());
+        self::assertCount(0, $crawler->filter('.pw-campaign-preheader, [data-campaign-results], .field-group'));
+        self::assertCount(1, $crawler->filter('[data-campaign-source]:not([open])'));
+        self::assertCount(1, $crawler->filter('.pw-campaign-preview iframe[sandbox="allow-same-origin"]'));
+        self::assertCount(1, $crawler->filter('[data-preview-width="desktop"][aria-pressed="true"]'));
+        self::assertSame($campaign->bodyMarkdown, $crawler->filter('[data-campaign-source] pre')->text(null, false));
+        self::assertCount(0, $crawler->filter('[data-campaign-source] script'));
+
+        $preview = new Crawler($crawler->filter('.pw-campaign-preview iframe')->attr('srcdoc') ?? '');
+        self::assertSame('Alex', $preview->filter('strong')->text());
+        self::assertCount(1, $preview->filter('a[href="https://example.com/hiking"]'));
+        self::assertStringContainsString('Audience header', $preview->filter('body')->text());
+        self::assertCount(2, $preview->filter('table[role="presentation"]'));
+        self::assertCount(1, $preview->filter('a[href$="/#unsubscribe"]'));
+        self::assertStringContainsString('Admin test', $crawler->filter('.pw-campaign-summary')->text());
+        self::assertEmailCount(0);
+    }
+
+    public function testCampaignReviewShowsDeliveryResultsAndTransactionalDesign(): void
+    {
+        $client = $this->loginUser();
+        $campaign = $this->campaign($this->seed(), 'Sent campaign');
+        $campaign->preheader = 'A short preview line';
+        $campaign->transactional = true;
+        $campaign->markSending(2)->markSent();
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$campaign->id);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Sent', $crawler->filter('.pw-campaign-status')->text());
+        self::assertSame('A short preview line', $crawler->filter('.pw-campaign-preheader')->text());
+        self::assertCount(6, $crawler->filter('[data-campaign-results] dl > div'));
+        self::assertSame('2', $crawler->filter('[data-campaign-results] dd')->first()->text());
+        $preview = new Crawler($crawler->filter('iframe')->attr('srcdoc') ?? '');
+        self::assertCount(0, $preview->filter('a[href$="/#unsubscribe"]'));
+        self::assertCount(0, $crawler->filter('form[action$="/send"], form[action$="/schedule"]'));
+        self::assertEmailCount(0);
+    }
+
+    public function testCampaignReviewWithoutAnAudienceCanStillBeEdited(): void
+    {
+        $client = $this->loginUser();
+        $campaign = $this->campaign($this->seed(), 'Choose an audience');
+        $campaign->audience = null;
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$campaign->id);
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('iframe'));
+        self::assertCount(1, $crawler->filter('a.action-edit'));
+        self::assertStringContainsString('Choose an audience', $crawler->filter('.pw-campaign-message')->text());
+
+        $this->entityManager()->getConnection()->executeStatement('DELETE FROM newsletter_campaign WHERE id = :id', ['id' => $campaign->id]);
+    }
+
+    public function testCampaignReviewKeepsScheduledRecipientsAndAudienceDesignVisible(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $audience->transactional = true;
+
+        $campaign = $this->campaign($audience, 'Scheduled for hikers');
+        $campaign->segment = [['field' => 'tag', 'op' => 'has', 'value' => 'Hiking']];
+        $campaign->schedule(new DateTimeImmutable('+1 day'));
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$campaign->id);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Scheduled', $crawler->filter('.pw-campaign-status')->text());
+        self::assertStringContainsString('Scheduled for', $crawler->filter('.pw-campaign-summary')->text());
+        self::assertStringContainsString('Filtered contacts', $crawler->filter('.pw-campaign-audience-help')->text());
+        self::assertStringContainsString('Hiking', $crawler->filter('[data-campaign-settings]')->text());
+        self::assertCount(0, $crawler->filter('[data-campaign-results]'));
+        self::assertCount(1, $crawler->filter('form[action$="/cancel-schedule"]'));
+        $preview = new Crawler($crawler->filter('iframe')->attr('srcdoc') ?? '');
+        self::assertCount(0, $preview->filter('a[href$="/#unsubscribe"]'));
+    }
+
     public function testAnAutomationSequenceCanBeCreatedAndReopened(): void
     {
         $client = $this->loginUser();

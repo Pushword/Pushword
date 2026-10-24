@@ -143,6 +143,18 @@ newsletter:
       noDate: Renseignez d'abord une date « Programmée pour », puis Programmer.
       notDraft: Cette newsletter n'est plus un brouillon.
       notFound: Newsletter introuvable.
+    review:
+      allContacts: Tous les contacts abonnés
+      filteredContacts: Contacts filtrés
+      moreActions: Autres actions
+      settings: Options avancées
+      source: Source Markdown
+      status:
+        draft: Brouillon
+        scheduled: Programmée
+        sending: En cours d’envoi
+        sent: Envoyée
+      summary: Destinataires et envoi
     status:
       draft: Brouillons
       scheduled: Programmées

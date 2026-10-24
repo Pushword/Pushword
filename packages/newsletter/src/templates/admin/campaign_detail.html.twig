@@ -1,0 +1,92 @@
+{% extends '@EasyAdmin/crud/detail.html.twig' %}
+
+{% set campaign = entity.instance %}
+
+{% block configured_stylesheets %}
+  {{ parent() }}
+  <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordnewsletter/campaign-review.css') }}">
+{% endblock %}
+
+{% block configured_javascripts %}
+  {{ parent() }}
+  <script type="module" src="{{ versionedAsset('/bundles/pushwordnewsletter/campaign-review.js') }}"></script>
+{% endblock %}
+
+{% block content_title %}
+  {{ campaign.subject }}
+  <span class="badge badge-{{ {draft: 'secondary', scheduled: 'info', sending: 'warning', sent: 'success'}[campaign.status.value] }} pw-campaign-status">{{ ('newsletter.campaign.review.status.' ~ campaign.status.value)|trans }}</span>
+{% endblock %}
+
+{% block page_actions %}
+  {% set secondary = ['delete', 'previewSegment', 'index'] %}
+  {% for action in entity.actions|reverse|filter(action => action.name not in secondary) %}
+    {{ include(action.templatePath, {action: action, entity: entity}, with_context: false) }}
+  {% endfor %}
+  <div class="dropdown">
+    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">{{ 'newsletter.campaign.review.moreActions'|trans }}</button>
+    <div class="dropdown-menu dropdown-menu-end">
+      {% for action in entity.actions|filter(action => action.name in secondary) %}
+        {{ include(action.templatePath, {action: action, entity: entity, isIncludedInDropdown: true}, with_context: false) }}
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block main %}
+  <div class="pw-campaign-review">
+    <div class="pw-campaign-message">
+      {% if campaign.preheader %}
+        <p class="pw-campaign-preheader">{{ campaign.preheader }}</p>
+      {% endif %}
+      {% if preview_html is defined %}
+        <div class="pw-newsletter-design pw-campaign-preview" data-pw-email-preview data-viewport="desktop">
+          {{ include('@PushwordNewsletter/admin/_email_preview.html.twig', {preview_viewport: 'desktop', preview_sandbox: 'allow-same-origin'}) }}
+        </div>
+      {% else %}
+        <p>{{ 'newsletter.campaign.design.empty'|trans }}</p>
+      {% endif %}
+      <details class="pw-campaign-disclosure" data-campaign-source>
+        <summary>{{ 'newsletter.campaign.review.source'|trans }}</summary>
+        <pre>{{ campaign.bodyMarkdown }}</pre>
+      </details>
+    </div>
+    <aside class="pw-campaign-summary" aria-labelledby="campaign-summary-title">
+      <h2 id="campaign-summary-title">{{ 'newsletter.campaign.review.summary'|trans }}</h2>
+      <dl>
+        {% for property in ['audience', 'scheduledAt', 'sentAt'] %}
+          {% set field = entity.fields.getByProperty(property) %}
+          {% if field.value is not null %}
+            <div><dt>{{ field.label|trans }}</dt><dd>{{ include(field.templatePath, {field: field, entity: entity}, with_context: false) }}</dd></div>
+          {% endif %}
+        {% endfor %}
+      </dl>
+      {% if campaign.isDraft or campaign.isScheduled %}
+        <p class="pw-campaign-audience-help">{{ (campaign.segment is empty ? 'newsletter.campaign.review.allContacts' : 'newsletter.campaign.review.filteredContacts')|trans }}</p>
+      {% endif %}
+      {% if not campaign.isDraft and not campaign.isScheduled %}
+        <section aria-labelledby="campaign-results-title" data-campaign-results>
+          <h2 id="campaign-results-title">{{ 'newsletter.campaign.fieldset.performance'|trans }}</h2>
+          <dl>
+            {% for property in ['recipientCount', 'sentCount', 'failedCount', 'unsubCount', 'bounceCount', 'clickCount'] %}
+              {% set field = entity.fields.getByProperty(property) %}
+              <div><dt>{{ field.label|trans }}</dt><dd>{{ field.formattedValue }}</dd></div>
+            {% endfor %}
+          </dl>
+        </section>
+      {% endif %}
+      <details class="pw-campaign-disclosure" data-campaign-settings>
+        <summary>{{ 'newsletter.campaign.review.settings'|trans }}</summary>
+        <dl>
+          {% for property in ['segmentAsJson', 'translationsAsJson', 'slug', 'rateSeconds', 'transactional'] %}
+            {% set field = entity.fields.getByProperty(property) %}
+            {% set empty_collection = (property == 'segmentAsJson' and campaign.segment is empty) or (property == 'translationsAsJson' and campaign.translations is empty) %}
+            {% if field.value is not null and not empty_collection %}
+              <div><dt>{{ field.label|trans }}</dt><dd>{{ include(field.templatePath, {field: field, entity: entity}, with_context: false) }}</dd></div>
+            {% endif %}
+          {% endfor %}
+        </dl>
+      </details>
+    </aside>
+  </div>
+  {{ block('delete_form') }}
+{% endblock %}

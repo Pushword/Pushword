@@ -1,4 +1,17 @@
 newsletter:
+  campaign:
+    review:
+      allContacts: Alle abonnierten Kontakte
+      filteredContacts: Gefilterte Kontakte
+      moreActions: Weitere Aktionen
+      settings: Erweiterte Optionen
+      source: Markdown-Quelltext
+      status:
+        draft: Entwurf
+        scheduled: Geplant
+        sending: Wird gesendet
+        sent: Gesendet
+      summary: Empfänger und Versand
   catalogue:
     actions: Aktionen
     createNative: In Pushword erstellen

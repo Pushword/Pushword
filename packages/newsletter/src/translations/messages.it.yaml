@@ -1,4 +1,17 @@
 newsletter:
+  campaign:
+    review:
+      allContacts: Tutti i contatti iscritti
+      filteredContacts: Contatti filtrati
+      moreActions: Altre azioni
+      settings: Opzioni avanzate
+      source: Sorgente Markdown
+      status:
+        draft: Bozza
+        scheduled: Programmata
+        sending: Invio in corso
+        sent: Inviata
+      summary: Destinatari e invio
   catalogue:
     actions: Azioni
     createNative: Crea in Pushword

@@ -11,6 +11,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
@@ -26,15 +27,18 @@ use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use LogicException;
 use Override;
 use Pushword\AdminBlockEditor\Form\EditorjsType;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Controller\CriteriaController;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Campaign;
+use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Service\CampaignSender;
 use Pushword\Newsletter\Service\EmailTemplateRegistry;
+use Pushword\Newsletter\Service\MailRenderer;
 use Pushword\Newsletter\Service\NewsletterMailer;
 use Pushword\Newsletter\Utm\UtmTag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -58,6 +62,8 @@ class CampaignCrudController extends AbstractCrudController
         private readonly AdminUrlGenerator $adminUrlGenerator,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly EmailTemplateRegistry $emailTemplates,
+        private readonly MailRenderer $renderer,
+        private readonly SiteRegistry $sites,
     ) {
     }
 
@@ -72,6 +78,7 @@ class CampaignCrudController extends AbstractCrudController
         $crud = $crud
             ->overrideTemplate('layout', '@PushwordNewsletter/admin/layout.html.twig')
             ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
+            ->overrideTemplate('crud/detail', '@PushwordNewsletter/admin/campaign_detail.html.twig')
             ->overrideTemplate('crud/new', '@PushwordNewsletter/admin/compose_new.html.twig')
             ->overrideTemplate('crud/edit', '@PushwordNewsletter/admin/compose_edit.html.twig')
             ->addFormTheme('@PushwordNewsletter/admin/campaign_form_theme.html.twig')
@@ -92,6 +99,39 @@ class CampaignCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return $filters->add('audience')->add('status');
+    }
+
+    #[Override]
+    public function configureResponseParameters(KeyValueStore $responseParameters): KeyValueStore
+    {
+        if (Crud::PAGE_DETAIL !== $responseParameters->get('pageName')) {
+            return $responseParameters;
+        }
+
+        $campaign = $this->getContext()?->getEntity()->getInstance();
+        if (! $campaign instanceof Campaign || null === $campaign->audience) {
+            return $responseParameters;
+        }
+
+        $audience = $campaign->audience;
+        $site = $this->sites->get($audience->mainHost);
+        $contact = new Contact($audience, 'preview@example.tld');
+        $contact->name = 'Alex';
+        $contact->locale = $site->locale;
+
+        $responseParameters->set('preview_html', $this->renderer->html(
+            $audience,
+            $contact,
+            $campaign->subject,
+            $campaign->bodyMarkdown,
+            $campaign->preheader,
+            $campaign->isTransactional() ? null : $site->baseUrl.'/#unsubscribe',
+            null,
+            locale: $site->locale,
+            emailLayout: $campaign->emailLayout,
+        ));
+
+        return $responseParameters;
     }
 
     #[Override]
@@ -239,7 +279,7 @@ class CampaignCrudController extends AbstractCrudController
         yield IntegerField::new('unsubCount', 'newsletter.campaign.field.unsubscribed')->hideOnForm()->hideOnIndex();
         yield IntegerField::new('bounceCount', 'newsletter.campaign.field.bounced')->hideOnForm()->hideOnIndex();
         yield IntegerField::new('clickCount', 'newsletter.campaign.field.clicks')->hideOnForm()->hideOnIndex();
-        yield TextField::new('sentAt', 'newsletter.campaign.field.sentAt')->onlyOnDetail()->formatValue(
+        yield DateTimeField::new('sentAt', 'newsletter.campaign.field.sentAt')->onlyOnDetail()->formatValue(
             static fn (mixed $value): string => $value instanceof DateTimeInterface ? $value->format('d M Y H:i') : '—',
         );
     }

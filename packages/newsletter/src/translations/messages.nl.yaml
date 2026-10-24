@@ -1,4 +1,17 @@
 newsletter:
+  campaign:
+    review:
+      allContacts: Alle geabonneerde contacten
+      filteredContacts: Gefilterde contacten
+      moreActions: Meer acties
+      settings: Geavanceerde opties
+      source: Markdown-bron
+      status:
+        draft: Concept
+        scheduled: Gepland
+        sending: Wordt verzonden
+        sent: Verzonden
+      summary: Ontvangers en verzending
   catalogue:
     actions: Acties
     createNative: Maken in Pushword
