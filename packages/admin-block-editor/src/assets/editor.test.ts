@@ -59,7 +59,7 @@ vi.mock('./outline/OutlinePanel', () => ({
   },
 }))
 vi.mock('./tools/Hyperlink/PasteLink', () => ({ default: class {} }))
-vi.mock('./tools/utils/ClipboardManager', () => ({ default: class {} }))
+vi.mock('./tools/utils/ClipboardManager', () => ({ default: class {}, setupBlockCut: vi.fn() }))
 vi.mock('./EditorModeManager', () => ({ EditorModeManager: class {} }))
 
 const { editorJs } = await import('./editor')
@@ -163,6 +163,18 @@ it('replaces several selected blocks without shifting the remaining deletion ind
 
   expect(editor.blocks.insert).toHaveBeenCalledWith('paragraph', { text: 'x' }, undefined, 1, false)
   expect(vi.mocked(editor.blocks.delete).mock.calls).toEqual([[3], [2]])
+})
+
+it.each(['insertText', 'insertReplacementText'])('replaces selected blocks on native input %s before a keydown', (inputType) => {
+  const instance = boot('{"blocks":[]}')
+  const holder = document.getElementById('ed')!
+  holder.innerHTML = '<div class="ce-block ce-block--selected" data-id="0"><p contenteditable="true">Old content</p></div>'
+  const field = holder.querySelector('p')!
+  window.getSelection()!.collapse(field.firstChild, 0)
+  const event = new InputEvent('beforeinput', { inputType, data: 'ê', bubbles: true, cancelable: true })
+  field.dispatchEvent(event)
+  expect(event.defaultPrevented).toBe(true)
+  expect(instance.getEditors().ed!.blocks.insert).toHaveBeenCalledWith('paragraph', { text: 'ê' }, undefined, 0, false)
 })
 
 it.each(['Delete', 'Backspace'])('erases selected blocks on %s though the browser put the caret back in one', (key) => {

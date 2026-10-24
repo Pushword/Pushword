@@ -98,6 +98,7 @@ export default class List extends ListTool {
   private readonly blockApi: BlockAPI
   private readonly isReadOnly: boolean
   private itemSelection: { anchor: Element; focus: Element; listeners: AbortController } | null = null
+  private dragListeners = new AbortController()
 
   constructor(params: ListParams) {
     super(params)
@@ -122,6 +123,11 @@ export default class List extends ListTool {
       this.blockApi.holder.addEventListener('mousedown', (event) => this.selectItemsWithMouse(event), true)
     })
     return element
+  }
+
+  destroy(): void {
+    this.clearItemSelection()
+    this.dragListeners.abort()
   }
 
   /** The item of this list holding the node, when the node sits in that part of it. */
@@ -149,7 +155,8 @@ export default class List extends ListTool {
       return
     }
 
-    const drag = new AbortController()
+    this.dragListeners.abort()
+    const drag = this.dragListeners = new AbortController()
     const options = { signal: drag.signal }
     document.addEventListener('mouseover', ({ target }) => {
       const over = this.itemAt(target)

@@ -81,6 +81,11 @@ describe('ClipboardManager – pure helpers', () => {
       // delimiter), so the two tables stay separate.
       expect(cm.rejoinTableFragments(input)).toBe(input)
     })
+
+    it.each(['{% endquiz %}', '{{ value }}', '{# comment #}'])('keeps the block following Twig %s separate', (twig) => {
+      const input = `${twig}\n\nFollowing paragraph`
+      expect(cm.rejoinTableFragments(input)).toBe(input)
+    })
   })
 
   describe('detectMarkdownPatterns', () => {
@@ -804,6 +809,18 @@ describe('ClipboardManager – handlePaste routing', () => {
     sel.addRange(range)
     return editable
   }
+
+  it.each(['input', 'textarea'])('leaves paste in a native %s alone when Firefox retains the editor range', (tag) => {
+    caretInBlock()
+    const target = document.body.appendChild(document.createElement(tag))
+    const event = { ...pasteEvent('**Pasted text**', '<p>Pasted text</p>'), target }
+    const insert = vi.spyOn(cm, 'insertMarkdownAsBlocks').mockImplementation(() => {})
+
+    cm.handlePaste(event)
+
+    expect(event.preventDefault).not.toHaveBeenCalled()
+    expect(insert).not.toHaveBeenCalled()
+  })
 
   it('uses the markdown plain text and never converts html (multi-block table copy)', () => {
     caretInBlock()

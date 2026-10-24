@@ -28,7 +28,8 @@ import Gallery from './tools/Gallery/Gallery'
 import AlignementTune from './tools/AlignementTune/AlignementTune'
 import HyperlinkTune from './tools/HyperlinkTune/HyperlinkTune'
 import PasteLink from './tools/Hyperlink/PasteLink'
-import ClipboardManager from './tools/utils/ClipboardManager'
+import ClipboardManager, { setupBlockCut } from './tools/utils/ClipboardManager'
+import { setupBlockSelection } from './tools/utils/BlockSelection'
 import { setupEditorPopovers } from './tools/utils/editorPopovers'
 import Raw from './tools/Raw/Raw'
 import CodeBlock from './tools/CodeBlock/CodeBlock'
@@ -239,6 +240,7 @@ export class editorJs {
           }
           new PasteLink({ editor })
           new ClipboardManager({ editor })
+          setupBlockCut(editor, document.getElementById(config.holder!)!, editorListeners.signal)
 
           // Markdown content must be parsed after editor is ready (needs tool instances)
           if (markdownContent) {
@@ -255,29 +257,7 @@ export class editorJs {
 
     this.editors[config.holder!] = editor
     const holder = document.getElementById(config.holder!)
-    holder?.addEventListener('keydown', (event) => {
-      if (!(event.target instanceof Element) || !event.target.closest('.ce-block')) return
-      const selection = window.getSelection()
-      // Editor.js erases selected blocks only when no caret exists, but Chromium
-      // puts one back into the field still focused before dispatching the key.
-      const erases = (event.key === 'Backspace' || event.key === 'Delete') &&
-        (event.target as Element).closest?.('.ce-block') !== null
-      if (editor.readOnly.isEnabled || event.isComposing || event.ctrlKey || event.metaKey || event.altKey ||
-        (event.key.length !== 1 && !erases) || !selection?.isCollapsed || !holder.querySelector('.ce-block--selected')) return
-      // Own the replacement: Editor.js can restore an old native caret while
-      // closing its toolbar, then append the character instead of replacing blocks.
-      const indices = Array.from(holder.querySelectorAll<HTMLElement>('.ce-block--selected'),
-        (block) => editor.blocks.getBlockIndex(block.dataset.id!))
-      selection.removeAllRanges()
-      event.preventDefault()
-      event.stopImmediatePropagation()
-      const text = document.createElement('span')
-      text.textContent = erases ? '' : event.key
-      // Insert first so deleting the final old block cannot create an extra empty block.
-      const block = editor.blocks.insert('paragraph', { text: text.innerHTML }, undefined, indices[0], false)
-      for (const index of indices.reverse()) editor.blocks.delete(index + 1)
-      editor.caret.setToBlock(block.id, 'end')
-    }, { capture: true, signal: editorListeners.signal })
+    if (holder) setupBlockSelection(editor, holder, editorListeners.signal)
     if (holder && diagnosticConfig) diagnostics = new EditorDiagnostics(holder, editor, {
       ...diagnosticConfig,
       editorjsVersion: EditorJS.version,

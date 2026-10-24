@@ -79,6 +79,10 @@ function point(
 }
 
 export function captureSelection(holder: HTMLElement): EditorSelection | null {
+  const selected = Array.from(
+    holder.querySelectorAll<HTMLElement>('.ce-block--selected'),
+  ).map((node) => node.dataset.id!)
+  if (selected.length) return { blocks: selected }
   const active = document.activeElement as HTMLElement | null
   const block = active?.closest<HTMLElement>('.ce-block')
   if (block && holder.contains(block)) {
@@ -122,10 +126,6 @@ export function captureSelection(holder: HTMLElement): EditorSelection | null {
       if (field >= 0) return { control: { block: block.dataset.id!, field } }
     }
   }
-  const selected = Array.from(
-    holder.querySelectorAll<HTMLElement>('.ce-block--selected'),
-  ).map((node) => node.dataset.id!)
-  if (selected.length) return { blocks: selected }
   const selection = window.getSelection()
   if (!selection) return null
   const anchor = point(selection.anchorNode, selection.anchorOffset, holder)
@@ -204,8 +204,11 @@ export async function restoreSelection(
     for (const node of holder.querySelectorAll<HTMLElement>('.ce-block')) {
       node.classList.toggle('ce-block--selected', saved.blocks.includes(node.dataset.id!))
     }
-    block.holder.tabIndex = -1
-    block.holder.focus({ preventScroll: true })
+    // Keep an editable focused so native text input and IME can start there.
+    if (!block.holder.contains(document.activeElement)) {
+      block.holder.tabIndex = -1
+      block.holder.focus({ preventScroll: true })
+    }
     rectangle = block.holder.getBoundingClientRect()
   } else {
     editor.caret.setToBlock(index)

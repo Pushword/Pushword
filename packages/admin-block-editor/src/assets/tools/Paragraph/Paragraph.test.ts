@@ -2,6 +2,19 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import Paragraph from './Paragraph'
 import { MarkdownUtils } from '../utils/MarkdownUtils'
 
+describe('Paragraph.save', () => {
+  it.each([
+    ['<br>', ''],
+    ['', ''],
+    ['Text<br>', 'Text<br>'],
+    ['<br><br>', '<br><br>'],
+  ])('saves %s without creating history for a browser caret placeholder', (html, expected) => {
+    const content = document.createElement('div')
+    content.innerHTML = html
+    expect(Paragraph.prototype.save(content)).toEqual({ text: expected })
+  })
+})
+
 describe('Paragraph.exportToMarkdown', () => {
   beforeEach(() => {
     vi.spyOn(MarkdownUtils, 'formatMarkdownWithPrettier').mockImplementation(

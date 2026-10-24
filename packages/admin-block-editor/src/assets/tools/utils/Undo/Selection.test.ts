@@ -54,6 +54,22 @@ it('restores a native input range and its direction', async () => {
   ])
 })
 
+it('captures selected blocks before the focused native input range', () => {
+  const input = holder.querySelector('input')!
+  input.focus()
+  input.setSelectionRange(0, 8)
+  for (const block of holder.querySelectorAll('.ce-block')) block.classList.add('ce-block--selected')
+  expect(captureSelection(holder)).toEqual({ blocks: ['a', 'b'] })
+})
+
+it('keeps the restored block editable focused for native text input', async () => {
+  const field = holder.querySelector<HTMLElement>('[contenteditable]')!
+  editor.caret.setToBlock.mockImplementation(() => field.focus())
+  await restoreSelection(editor, holder, { blocks: ['a', 'b'] })
+  expect(document.activeElement).toBe(field)
+  expect(captureSelection(holder)).toEqual({ blocks: ['a', 'b'] })
+})
+
 it('ignores a stale block reference returned as undefined by the real Editor.js API', async () => {
   const input = holder.querySelector('input')!
   input.focus()

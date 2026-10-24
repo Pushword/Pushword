@@ -476,6 +476,24 @@ describe('List item selection', () => {
   const caretAt = () => [window.getSelection()!.anchorNode?.textContent, window.getSelection()!.anchorOffset]
   const listOf = () => [item('A'), item('B', [item('B1')]), item('C'), item('D')]
 
+  it('clears the selection and global key handlers when history destroys the old list', async () => {
+    const { list, field, outline } = await mountList('unordered', listOf())
+    drag(field('A'), field('C'))
+    expect(highlighted()).toEqual(['A', 'B', 'B1', 'C'])
+    list.destroy()
+    expect(highlighted()).toEqual([])
+    expect(press({ key: 'x' }).defaultPrevented).toBe(false)
+    expect(outline()).toEqual(['A', 'B', '  B1', 'C', 'D'])
+  })
+
+  it('ends an in-progress drag when the list is destroyed', async () => {
+    const { list, field } = await mountList('unordered', listOf())
+    mouse('mousedown', field('A'))
+    list.destroy()
+    mouse('mouseover', field('C'))
+    expect(highlighted()).toEqual([])
+  })
+
   it('selects whole items from the one a drag started in to the one it reached, and drops the text selection', async () => {
     const { field } = await mountList('unordered', listOf())
     caret(field('A').firstChild!, 0)

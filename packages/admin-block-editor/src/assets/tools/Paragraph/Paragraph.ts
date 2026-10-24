@@ -8,6 +8,13 @@ export interface ParagraphData extends BlockToolData {
 }
 
 export default class Paragraph extends ParagraphTool {
+  save(content: HTMLDivElement): { text: string } {
+    const data = super.save(content)
+    // Firefox leaves a caret placeholder after cutting all text. It is empty.
+    if (data.text === '<br>') data.text = ''
+    return data
+  }
+
   static async exportToMarkdown(
     data: ParagraphData,
     tunes: BlockTuneData,

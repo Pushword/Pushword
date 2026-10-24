@@ -328,10 +328,10 @@ export class Undo {
       },
       options,
     )
-    this.holder.addEventListener(
+    document.addEventListener(
       'beforeinput',
       (event) => {
-        if (this.editor.readOnly.isEnabled) return
+        if (this.editor.readOnly.isEnabled || !(event.target instanceof Node) || !this.holder.contains(event.target)) return
         const input = event as InputEvent
         if (input.inputType === 'historyUndo' || input.inputType === 'historyRedo') {
           if (this.isToolbarInput(event.target)) return

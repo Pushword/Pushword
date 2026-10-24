@@ -6,6 +6,7 @@ import EditorJsExportMarkdown from '../../EditorJsExportMarkdown'
 import { GroupNesting } from '../Group/GroupNesting'
 import { reportEditorError } from '../../EditorDiagnostics'
 import type { PastedItem } from '../List/List'
+import { replaceSelectedBlocks } from './BlockSelection'
 
 /** A Word list paragraph: `mso-list:l0 level2 lfo1` in its style. */
 const WORD_LIST_LEVEL = /mso-list:\s*l\d+\s+level(\d+)/i
@@ -74,6 +75,64 @@ function blockPlainText(block: Element): string {
         copy.querySelectorAll('br').forEach(br => br.replaceWith('\n'))
         return (copy.textContent ?? '').trim()
     }).filter(Boolean).join('\n')
+}
+
+/** Start writing during the user gesture; tool exports and Prettier resolve the item later. */
+function copyBlocks(editor: EditorJS, event: Event, blocks: ArrayLike<Element>): Promise<boolean> | null {
+    if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') return null
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    const ids = new Set(Array.from(blocks, block => block.getAttribute('data-id')))
+    const api = editor as unknown as API
+    const markdown = api.saver.save().then(output =>
+        new EditorJsExportMarkdown(api, {
+            ...output,
+            blocks: output.blocks.filter(block => ids.has(block.id ?? null)),
+        }).exportToMarkdown(),
+    )
+    return navigator.clipboard.write([
+        new ClipboardItem({ 'text/plain': markdown.then(text => new Blob([text], { type: 'text/plain' })) }),
+    ]).then(() => true).catch((error: unknown) => {
+        reportEditorError(blocks[0]?.closest('.editorjs-holder') ?? null, 'copy', error)
+        console.error('Unable to copy the selected blocks', error)
+        return false
+    })
+}
+
+/** Own block cuts even when Editor.js' cached selection differs from the highlight. */
+export function setupBlockCut(editor: EditorJS, holder: HTMLElement, signal: AbortSignal): void {
+    const options = { capture: true, signal }
+    window.addEventListener('keydown', (event) => {
+        if (editor.readOnly.isEnabled || !(event.target instanceof Node) || !holder.contains(event.target) ||
+            !holder.querySelector('.ce-block--selected') || event.altKey || event.isComposing) return
+        const cut = ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'x') ||
+            (event.shiftKey && !event.ctrlKey && !event.metaKey && event.key === 'Delete')
+        // Keep the browser's cut action, before Editor.js consumes the key as deletion.
+        if (cut) event.stopImmediatePropagation()
+    }, options)
+    holder.addEventListener('cut', (event) => {
+        const blocks = Array.from(holder.querySelectorAll<HTMLElement>('.ce-block--selected'))
+        if (editor.readOnly.isEnabled || blocks.length === 0) return
+        const copied = copyBlocks(editor, event, blocks)
+        if (copied) {
+            void copied.then(written => {
+                const selected = Array.from(holder.querySelectorAll('.ce-block--selected'))
+                // A later click or edit cancels deletion, never cutting a new selection.
+                if (written && selected.length === blocks.length && selected.every((block, index) => block === blocks[index])) {
+                    replaceSelectedBlocks(editor, holder, '')
+                }
+            })
+            return
+        }
+        const clipboard = event.clipboardData
+        if (!clipboard) return
+        // Preserve the native HTML/plain-text fallback used without Clipboard API access.
+        clipboard.setData('text/plain', blocks.map(blockPlainText).filter(Boolean).join('\n\n'))
+        clipboard.setData('text/html', DOMPurify.sanitize(blocks.map(block => block.innerHTML).join('')))
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        replaceSelectedBlocks(editor, holder, '')
+    }, options)
 }
 
 /**
@@ -180,7 +239,7 @@ export default class ClipboardManager {
 
         // Owning the shortcut (preventDefault) stops the browser firing the
         // (now useless) copy event, so we don't double-handle a cleared selection.
-        this.copyBlocks(event, selectedBlocks)
+        void copyBlocks(this.editor, event, selectedBlocks)
     }
 
     private initializePasteListener(): void {
@@ -235,7 +294,7 @@ export default class ClipboardManager {
         // Check for EditorJS block selection first (multi-block selection)
         const selectedBlocks = editorHolder.querySelectorAll('.ce-block--selected')
         if (selectedBlocks.length > 0) {
-            this.copyBlocks(event, selectedBlocks)
+            void copyBlocks(this.editor, event, selectedBlocks)
             return
         }
 
@@ -251,7 +310,7 @@ export default class ClipboardManager {
         // a value out of a cell: fall through to the inline handling below.
         const blocksInSelection = this.getBlocksInSelection(selection, editorHolder)
         if (blocksInSelection.length > 0 && !this.isSelectionWithinOneField(selection)) {
-            this.copyBlocks(event, blocksInSelection)
+            void copyBlocks(this.editor, event, blocksInSelection)
             return
         }
 
@@ -296,46 +355,6 @@ export default class ClipboardManager {
     }
 
     /**
-     * Copy whole blocks as the page export writes them: each block through its
-     * tool's export, tunes included, and one the author left untouched as the
-     * markdown it was parsed from. Saving first reads the blocks as they stand,
-     * so an edit Editor.js has not reported yet is copied too.
-     *
-     * Those exports are async (Prettier) while a copy event must be filled
-     * before it returns, so the clipboard is written through the Clipboard API
-     * instead: the item is handed over within the user gesture and its content
-     * is a promise, resolved once the export lands. Where that API is missing
-     * (an insecure context, an older browser), Editor.js's own copy of the
-     * selected blocks stands in.
-     */
-    private copyBlocks(event: Event, blocks: ArrayLike<Element>): void {
-        if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') return
-
-        event.preventDefault()
-        event.stopImmediatePropagation()
-
-        const ids = new Set(Array.from(blocks, (block) => block.getAttribute('data-id')))
-        const api = this.editor as unknown as API
-        const markdown = api.saver.save().then((output) =>
-            new EditorJsExportMarkdown(api, {
-                ...output,
-                blocks: output.blocks.filter((block) => ids.has(block.id ?? null)),
-            }).exportToMarkdown(),
-        )
-
-        navigator.clipboard
-            .write([
-                new ClipboardItem({
-                    'text/plain': markdown.then((text) => new Blob([text], { type: 'text/plain' })),
-                }),
-            ])
-            .catch((error: unknown) => {
-                reportEditorError(blocks[0]?.closest('.editorjs-holder') ?? null, 'copy', error)
-                console.error('Unable to copy the selected blocks', error)
-            })
-    }
-
-    /**
      * Whether the selection is confined to one editable field of a block: a
      * paragraph, a heading, a list item, a table cell. Such a selection is
      * plain inline text, not a copy of the block it sits in.
@@ -377,6 +396,8 @@ export default class ClipboardManager {
      * Handle paste events - detect markdown/HTML and convert to blocks
      */
     private handlePaste(event: ClipboardEvent): void {
+        // Firefox retains the last editable range when a native field receives focus.
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
         // Check if we're in an EditorJS block
         const selection = window.getSelection()
         const anchorNode = selection?.anchorNode
@@ -824,7 +845,6 @@ export default class ClipboardManager {
      */
     private rejoinTableFragments(markdown: string): string {
         const isDelimiter = (line: string): boolean => /^\|[\s:|-]*-[\s:|-]*\|$/.test(line.trim())
-        const isAttribute = (line: string): boolean => /^{[^}]+}$/.test(line.trim())
 
         const lines = markdown.split('\n')
         const result: string[] = []
@@ -838,7 +858,7 @@ export default class ClipboardManager {
                 }
                 const following = next < lines.length ? lines[next]! : ''
 
-                if (isDelimiter(previous) || isDelimiter(following) || isAttribute(previous)) {
+                if (isDelimiter(previous) || isDelimiter(following) || MarkdownUtils.startWithAttribute(previous)) {
                     continue
                 }
             }
