@@ -7,12 +7,53 @@ namespace Pushword\Admin\Tests\Controller;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Tests\Image\License\ImageMetadataFixture;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\HttpKernel\KernelEvents;
 
 final class MediaMultiUploadTest extends AbstractAdminTestClass
 {
+    public function testSessionIsReleasedAfterAuthenticationAndCsrfValidation(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/multi-upload');
+        $csrfToken = $crawler->filter('#pw-multi-upload')->attr('data-csrf-token');
+        $client->disableReboot();
+        $dispatcher = self::getContainer()->get('event_dispatcher');
+        $observations = [];
+        $dispatcher->addListener(KernelEvents::CONTROLLER_ARGUMENTS, static function (ControllerArgumentsEvent $event) use (&$observations): void {
+            if (! $event->isMainRequest()) {
+                return;
+            }
+
+            $observations['authenticated'] = null !== self::getContainer()->get(Security::class)->getUser();
+            $observations['beforeController'] = $event->getRequest()->getSession()->isStarted();
+        }, -30000);
+        $dispatcher->addListener(KernelEvents::RESPONSE, static function (ResponseEvent $event) use (&$observations): void {
+            if ($event->isMainRequest()) {
+                $observations['afterCsrf'] = $event->getRequest()->getSession()->isStarted();
+            }
+        }, 1024);
+
+        // A valid CSRF token, but no file: stop before any media processing can
+        // touch the session again, while observing both release points.
+        $client->request(Request::METHOD_POST, '/admin/multi-upload/upload', ['_token' => $csrfToken]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $client->getResponse()->getStatusCode());
+        self::assertSame([
+            'authenticated' => true,
+            'beforeController' => false,
+            'afterCsrf' => false,
+        ], $observations);
+
+        $client->request(Request::METHOD_GET, '/admin/multi-upload');
+        self::assertResponseIsSuccessful();
+    }
+
     public function testTheTagBarUsesTheAdminsOwnControlStyles(): void
     {
         $client = $this->loginUser();

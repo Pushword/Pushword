@@ -64,6 +64,12 @@ final class MediaMultiUploadController extends AbstractController
             return new JsonResponse(['error' => 'Invalid CSRF token.'], Response::HTTP_FORBIDDEN);
         }
 
+        // CSRF validation can reopen the session closed before the controller.
+        // Release its lock again before hashing and processing the uploaded image.
+        if ($request->hasSession(true) && $request->getSession()->isStarted()) {
+            $request->getSession()->save();
+        }
+
         $file = $request->files->get('file');
         if (! $file instanceof UploadedFile) {
             return new JsonResponse(['error' => 'No file received.'], Response::HTTP_BAD_REQUEST);

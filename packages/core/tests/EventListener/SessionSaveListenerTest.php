@@ -1,0 +1,141 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pushword\Core\Tests\EventListener;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
+use PHPUnit\Framework\TestCase;
+use Pushword\Core\EventListener\SessionSaveListener;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\Storage\Handler\NativeFileSessionHandler;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
+use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\Process\Process;
+
+final class SessionSaveListenerTest extends TestCase
+{
+    public function testRequestWithoutSessionIsLeftAlone(): void
+    {
+        $request = Request::create('/');
+
+        new SessionSaveListener()($this->event($request));
+
+        self::assertFalse($request->hasSession());
+    }
+
+    public function testSessionFactoryRemainsLazy(): void
+    {
+        $request = Request::create('/');
+        $request->setSessionFactory(static fn () => self::fail('An unused session must not be initialized.'));
+
+        new SessionSaveListener()($this->event($request));
+
+        self::assertFalse($request->hasSession(true));
+    }
+
+    public function testUnstartedSessionIsLeftAlone(): void
+    {
+        $request = Request::create('/');
+        $session = new Session(new MockArraySessionStorage());
+        $request->setSession($session);
+
+        new SessionSaveListener()($this->event($request));
+
+        self::assertFalse($session->isStarted());
+        self::assertSame('', $session->getId());
+    }
+
+    #[DataProvider('excludedRequests')]
+    public function testExcludedRequestKeepsItsSessionOpen(int $requestType, bool $stateless): void
+    {
+        $request = Request::create('/');
+        $request->attributes->set('_stateless', $stateless);
+
+        $session = new Session(new MockArraySessionStorage());
+        $request->setSession($session);
+        $session->set('value', 'preserved');
+
+        new SessionSaveListener()($this->event($request, $requestType));
+
+        self::assertTrue($session->isStarted());
+        self::assertSame('preserved', $session->get('value'));
+    }
+
+    /** @return iterable<string, array{int, bool}> */
+    public static function excludedRequests(): iterable
+    {
+        yield 'subrequest' => [HttpKernelInterface::SUB_REQUEST, false];
+        yield 'stateless' => [HttpKernelInterface::MAIN_REQUEST, true];
+    }
+
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testAnotherProcessCanUseTheNativeSessionBeforeTheControllerFinishes(): void
+    {
+        $directory = sys_get_temp_dir().'/pushword-session-'.bin2hex(random_bytes(8));
+        $session = new Session(new NativeSessionStorage(
+            ['use_cookies' => false, 'gc_probability' => 0],
+            new NativeFileSessionHandler($directory),
+        ));
+
+        try {
+            $request = Request::create('/admin/media/block', Request::METHOD_POST);
+            $request->setSession($session);
+            $session->set('before', 'preserved');
+            $path = $directory.'/sess_'.$session->getId();
+            self::assertSame('locked', $this->probeLock($path));
+
+            new SessionSaveListener()($this->event($request));
+
+            self::assertSame('available', $this->probeLock($path));
+            $writer = new Process([\PHP_BINARY, '-r', <<<'PHP'
+                session_save_path($argv[1]);
+                session_id($argv[2]);
+                session_start(['use_cookies' => false, 'cache_limiter' => '']);
+                $_SESSION['_sf2_attributes']['concurrent'] = 'saved';
+                session_write_close();
+                PHP, $directory, $session->getId()], timeout: 5);
+            $writer->mustRun();
+            self::assertSame('', $writer->getErrorOutput());
+
+            // A controller can still read or write after the early save, and it
+            // reloads concurrent changes instead of overwriting a stale snapshot.
+            self::assertSame('saved', $session->get('concurrent'));
+            self::assertSame('preserved', $session->get('before'));
+            $session->getFlashBag()->add('success', 'Uploaded');
+            $session->save();
+            self::assertSame(['Uploaded'], $session->getFlashBag()->get('success'));
+        } finally {
+            if ($session->isStarted()) {
+                $session->save();
+            }
+
+            new Filesystem()->remove($directory);
+        }
+    }
+
+    private function probeLock(string $path): string
+    {
+        $process = new Process([\PHP_BINARY, '-r', <<<'PHP'
+            $file = fopen($argv[1], 'r+');
+            echo flock($file, LOCK_EX | LOCK_NB) ? 'available' : 'locked';
+            fclose($file);
+            PHP, $path], timeout: 5);
+        $process->mustRun();
+        self::assertSame('', $process->getErrorOutput());
+
+        return $process->getOutput();
+    }
+
+    private function event(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST): ControllerArgumentsEvent
+    {
+        return new ControllerArgumentsEvent(self::createStub(HttpKernelInterface::class), static fn (): null => null, [], $request, $type);
+    }
+}
