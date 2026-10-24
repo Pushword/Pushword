@@ -1,0 +1,80 @@
+{% extends '@PushwordNewsletter/admin/layout.html.twig' %}
+
+{% set statusLabels = {
+  archived: 'newsletter.catalogue.statusArchived',
+  draft: 'newsletter.campaign.status.draft',
+  paused: 'newsletter.catalogue.statusPaused',
+  scheduled: 'newsletter.campaign.status.scheduled',
+  sending: 'newsletter.campaign.status.sending',
+  sent: 'newsletter.campaign.status.sent',
+} %}
+
+{% block content_title %}{{ 'newsletter.campaign.label.plural'|trans }}{% endblock %}
+
+{% block page_actions %}
+  <a class="btn btn-primary" href="{{ path('admin_newsletter_campaign_new') }}">{{ 'newsletter.catalogue.createNative'|trans }}</a>
+  {% for label, url in creationActions %}<a class="btn btn-primary" href="{{ url }}">{{ label|trans }}</a>{% endfor %}
+  <a class="btn btn-secondary" href="{{ path('admin_newsletter_campaign_index') }}">{{ 'newsletter.catalogue.manageNative'|trans }}</a>
+{% endblock %}
+
+{% block main %}
+  {% for source, notice in notices %}
+    <p class="alert alert-info" role="status"><strong>{{ source|capitalize }}</strong>: {{ notice }}</p>
+  {% endfor %}
+  <form method="get" class="row g-3 mb-4" aria-label="{{ 'newsletter.catalogue.filters'|trans }}">
+    <div class="col-sm-3">
+      <label class="form-label" for="campaign-source">{{ 'newsletter.catalogue.source'|trans }}</label>
+      <select class="form-select" id="campaign-source" name="source">
+        <option value="">{{ 'newsletter.catalogue.allSources'|trans }}</option>
+        {% for value in sources %}<option value="{{ value }}"{% if source == value %} selected{% endif %}>{{ value|capitalize }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-3">
+      <label class="form-label" for="campaign-status">{{ 'newsletter.campaign.field.status'|trans }}</label>
+      <select class="form-select" id="campaign-status" name="status">
+        <option value="">{{ 'newsletter.workspace.filterAll'|trans }}</option>
+        {% for value in statuses %}
+          {% set label = statusLabels[value]|default(value) %}
+          <option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label|trans }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-4">
+      <label class="form-label" for="campaign-query">{{ 'newsletter.catalogue.search'|trans }}</label>
+      <input class="form-control" type="search" id="campaign-query" name="q" value="{{ query }}">
+    </div>
+    <div class="col-sm-2 d-flex align-items-end gap-2">
+      <button class="btn btn-secondary" type="submit">{{ 'newsletter.statistics.apply'|trans }}</button>
+      {% if source or status or query %}<a href="{{ path('admin_newsletter_campaign_catalogue') }}">{{ 'newsletter.statistics.reset'|trans }}</a>{% endif %}
+    </div>
+  </form>
+  <p class="form-text" data-campaign-timezone>{{ 'newsletter.catalogue.timezone'|trans({'%timezone%': timezone}) }}</p>
+  <div class="table-responsive">
+    <table class="table datagrid">
+      <caption class="visually-hidden">{{ 'newsletter.campaign.label.plural'|trans }}</caption>
+      <thead><tr>
+        <th scope="col">{{ 'newsletter.campaign.field.subject'|trans }}</th>
+        <th scope="col">{{ 'newsletter.catalogue.source'|trans }}</th>
+        <th scope="col">{{ 'newsletter.campaign.field.status'|trans }}</th>
+        <th scope="col">{{ 'newsletter.campaign.field.scheduledAt'|trans }}</th>
+        <th scope="col">{{ 'newsletter.catalogue.sentAt'|trans }}</th>
+        <th scope="col">{{ 'newsletter.catalogue.actions'|trans }}</th>
+      </tr></thead>
+      <tbody>
+        {% for item in items %}
+          <tr data-campaign-key="{{ item.key }}">
+            <th scope="row">{{ item.subject }}{% if item.audience %}<small class="d-block text-muted">{{ item.audience }}</small>{% endif %}</th>
+            <td data-label="{{ 'newsletter.catalogue.source'|trans }}">{{ item.source|capitalize }}</td>
+            {% set statusLabel = statusLabels[item.status]|default(item.status) %}
+            <td data-label="{{ 'newsletter.campaign.field.status'|trans }}">{{ statusLabel is not null ? statusLabel|trans : 'newsletter.catalogue.unknown'|trans }}</td>
+            <td data-label="{{ 'newsletter.campaign.field.scheduledAt'|trans }}">{{ item.scheduledAt ? item.scheduledAt|format_datetime('medium', 'short', timezone: timezone) : 'newsletter.catalogue.unknown'|trans }}</td>
+            <td data-label="{{ 'newsletter.catalogue.sentAt'|trans }}">{{ item.sentAt ? item.sentAt|format_datetime('medium', 'short', timezone: timezone) : 'newsletter.catalogue.unknown'|trans }}</td>
+            <td data-label="{{ 'newsletter.catalogue.actions'|trans }}">{% for label, url in item.actions %}<a class="btn btn-sm btn-outline-secondary" href="{{ url }}">{{ label|trans }}</a> {% endfor %}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">{{ 'newsletter.catalogue.empty'|trans }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

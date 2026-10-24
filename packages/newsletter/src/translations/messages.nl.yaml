@@ -1,4 +1,18 @@
 newsletter:
+  catalogue:
+    actions: Acties
+    allSources: Alle bronnen
+    createNative: Maken in Pushword
+    empty: Geen campagne om weer te geven.
+    filters: Campagnes filteren
+    manageNative: Beheren in Pushword
+    search: Zoeken
+    sentAt: Verzonden op
+    source: Bron
+    statusArchived: Gearchiveerd
+    statusPaused: Gepauzeerd
+    timezone: Tijden in %timezone%.
+    unknown: Niet opgegeven
   email:
     unsubscribe: Uitschrijven
   statistics:

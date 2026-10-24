@@ -24,6 +24,20 @@ class CampaignRepository extends ServiceEntityRepository
         parent::__construct($registry, Campaign::class);
     }
 
+    /** @return list<array{id: int, subject: string, status: CampaignStatus, scheduledAt: DateTimeImmutable|null, sentAt: DateTimeImmutable|null, audience: string|null}> */
+    public function indexRows(): array
+    {
+        /** @var list<array{id: int, subject: string, status: CampaignStatus, scheduledAt: DateTimeImmutable|null, sentAt: DateTimeImmutable|null, audience: string|null}> $rows */
+        $rows = $this->createQueryBuilder('c')
+            ->select('c.id, c.subject, c.status, c.scheduledAt, c.sentAt, a.name AS audience')
+            ->leftJoin('c.audience', 'a')
+            ->orderBy('c.id', 'DESC')
+            ->getQuery()
+            ->getArrayResult();
+
+        return $rows;
+    }
+
     /**
      * Scheduled campaigns whose date has passed — the tick materialises them.
      *

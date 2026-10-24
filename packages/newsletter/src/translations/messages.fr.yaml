@@ -160,6 +160,20 @@ newsletter:
     translations:
       invalidJson: Les traductions doivent être un objet JSON indexé par langue.
       invalidLocale: 'La traduction « %locale% » doit être un objet contenant subject, preheader et bodyMarkdown.'
+  catalogue:
+    actions: Actions
+    allSources: Toutes les sources
+    createNative: Créer dans Pushword
+    empty: Aucune campagne à afficher.
+    filters: Filtrer les campagnes
+    manageNative: Gérer dans Pushword
+    search: Rechercher
+    sentAt: Envoyée le
+    source: Source
+    statusArchived: Archivée
+    statusPaused: En pause
+    timezone: Heures affichées dans le fuseau %timezone%.
+    unknown: Non renseigné
   confirm:
     body: Merci pour votre inscription ! Pour commencer à recevoir nos mails, confirmez votre adresse e-mail ci-dessous.
     button: Je confirme mon inscription
