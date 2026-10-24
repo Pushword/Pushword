@@ -214,12 +214,12 @@ done
 
 # Run JS tests (skip when a --filter targets PHPUnit only)
 if [ -z "$1" ] || [ "$1" = "full" ] || [ "$1" = "--no-parallel" ]; then
-    step "Running JS tests (yarn test)"
+    step "Running JS tests (npm test)"
     JS_TEST_START=$(date +%s)
     JS_TEST_EXIT=0
     # Run them all before bailing, so one red suite does not hide the others.
     for js_package in $JS_TEST_PACKAGES; do
-        (cd "packages/$js_package" && yarn test) || JS_TEST_EXIT=$?
+        (cd "packages/$js_package" && npm test) || JS_TEST_EXIT=$?
     done
     node --test packages/repurpose/tests/Motion/*.test.mjs || JS_TEST_EXIT=$?
     record_step "JS tests" $(( $(date +%s) - JS_TEST_START ))
