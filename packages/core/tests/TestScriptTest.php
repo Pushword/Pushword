@@ -59,6 +59,20 @@ final class TestScriptTest extends TestCase
                 SH,
             '.scripts/test-installer' => "#!/bin/sh\nexit \"\$STUB_INSTALLER_EXIT\"\n",
             'bin/yarn' => "#!/bin/sh\nexit 0\n",
+            'bin/npm' => <<<'SH'
+                #!/bin/sh
+                if [ -n "${STUB_JS_CALLS:-}" ]; then
+                    basename "$PWD" >> "$STUB_JS_CALLS"
+                fi
+                exit "${STUB_NPM_EXIT:-0}"
+                SH,
+            'bin/node' => <<<'SH'
+                #!/bin/sh
+                if [ -n "${STUB_JS_CALLS:-}" ]; then
+                    echo repurpose >> "$STUB_JS_CALLS"
+                fi
+                exit "${STUB_NODE_EXIT:-0}"
+                SH,
             'bin/google-chrome' => "#!/bin/sh\necho 'Google Chrome 1.0.0'\n",
             'drivers/chromedriver' => "#!/bin/sh\necho 'ChromeDriver 1.0.0'\n",
         ];
@@ -109,6 +123,38 @@ final class TestScriptTest extends TestCase
             '--log-junit='.$this->testRoot.'/tmp/pushword-test-'.basename($this->testRoot).'.xml',
             (string) file_get_contents($argumentsFile),
         );
+    }
+
+    #[DataProvider('javascriptExitCodes')]
+    public function testJavaScriptFailuresPropagateAfterEveryPackageRuns(int $npm, int $node, int $expected): void
+    {
+        $calls = $this->testRoot.'/javascript-calls';
+        $process = new Process(['bash', '-e', $this->testRoot.'/.scripts/test'], $this->testRoot, [
+            'PATH' => $this->testRoot.'/bin:'.getenv('PATH'),
+            'TMPDIR' => $this->testRoot.'/tmp',
+            'TEST_RUN_ID' => basename($this->testRoot),
+            'STUB_NPM_EXIT' => (string) $npm,
+            'STUB_NODE_EXIT' => (string) $node,
+            'STUB_JS_CALLS' => $calls,
+            'STUB_PHPUNIT_EXIT' => '0',
+            'STUB_MONOREPO_EXIT' => '0',
+            'STUB_INSTALLER_EXIT' => '0',
+        ]);
+        $process->run();
+
+        self::assertSame($expected, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
+        self::assertSame(
+            ['js-helper', 'admin', 'admin-block-editor', 'admin-monaco-editor', 'quiz', 'repurpose'],
+            file($calls, \FILE_IGNORE_NEW_LINES),
+        );
+        self::assertStringNotContainsString('Running PHPUnit', $process->getOutput());
+    }
+
+    /** @return iterable<string, array{int, int, int}> */
+    public static function javascriptExitCodes(): iterable
+    {
+        yield 'npm suite fails' => [7, 0, 7];
+        yield 'repurpose Node suite fails' => [0, 5, 5];
     }
 
     /** @return iterable<string, array{list<string>, int, int, int, int}> */
