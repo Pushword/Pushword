@@ -111,6 +111,8 @@ test('automation preview width controls fit and remain clickable on a narrow scr
   await page.setViewportSize({ width: 375, height: 812 })
   await page.goto('/admin/newsletter/automation/new')
   await page.locator('#Automation_audience').selectOption({ label: 'Localhost news' })
+  // Criteria editors mount asynchronously and can move the sequence button during a click.
+  await expect(page.locator('textarea[data-pw-criteria]:not(.pw-criteria-hidden)')).toHaveCount(0)
   await page.locator('.field-collection-add-button').first().click()
   const preview = page.locator('.pw-newsletter-step-preview').first()
   await preview.locator('summary').click()
