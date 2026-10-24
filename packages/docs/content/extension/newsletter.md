@@ -465,6 +465,13 @@ failure.
 touching no contact and no counter. Once the campaign carries translations, it
 asks which language to send.
 
+### Reviewing a campaign
+
+Open **Review** from the campaign catalogue to see the rendered email, audience,
+schedule and delivery results. The preview starts at desktop width. **Markdown
+source** and advanced settings stay collapsed; use **Edit** to change a draft,
+or the send and schedule actions to prepare delivery. Previewing sends no mail.
+
 ### Email design and live preview
 
 In **Newsletter → Templates**, choose **Create template**. Give it a name, edit
@@ -502,15 +509,12 @@ and Twig presets supply their own. From a campaign, the shared-design link opens
 the selected saved template or the audience settings in another tab. Changes
 affect every campaign and automation that uses those settings.
 
-**Personal email** is for transactional service messages. It sends only the
-content and the audience's dedicated **Signature**, in HTML and plain text.
-The signature accepts Markdown and `%siteName%` / `%year%`; leave it empty to send
-only the content. This mode omits the newsletter header, footer, postal address,
-copyright, preview text, frame and presentation tables. It automatically removes
-the unsubscribe link and both `List-Unsubscribe` and `List-Unsubscribe-Post`
-headers, without requiring the transactional checkbox. Choose it per audience
-(including automations) or override the design for one campaign. Recipient
-eligibility, sender, Reply-To and existing link tracking settings still apply.
+**Personal email** sends transactional service messages as content and an optional
+audience **Signature**, in HTML and plain text. The signature accepts Markdown,
+`%siteName%` and `%year%`. This layout omits newsletter branding, preview text,
+postal address and unsubscribe links and headers, without requiring the
+transactional checkbox. Choose it for an audience (including automations) or one
+campaign. Recipient eligibility, sender, Reply-To and link tracking still apply.
 Switching back restores the audience's newsletter header and footer.
 
 The audience design keeps the three built-in layouts visible; expand **Other
@@ -525,16 +529,15 @@ site and the current year in both HTML and plain text. Existing saved designs
 are preserved. **Restore site name and copyright** applies these defaults to
 the editable fields; clearing either field deliberately removes that part.
 
-All design and campaign previews use the sending renderer and update while
-typing. **Mobile 375** is selected by default; **Desktop 600** is also available.
-Previewing never saves, creates contacts or sends mail. In the audience design
-editor, narrow screens have a **Design settings / Live preview** switch and a
-horizontally scrollable preview
-at its rendering width. Sample content changes only the preview; **Save email
-design** applies the design settings. Unsaved design edits are indicated
-separately from preview freshness, and leaving the page warns before discarding
-them. A failed preview keeps the last rendering and offers **Try again**. Email
-clients may render the same HTML differently.
+Design and campaign composition previews use the sending renderer and update
+while typing. **Mobile 375** is selected by default; **Desktop 600** is also
+available. Previewing never saves, creates contacts or sends mail. In the
+audience design editor, narrow screens have a **Design settings / Live preview**
+switch and a horizontally scrollable preview at its rendering width. Sample content changes
+only the preview; **Save email design** applies the design settings. Unsaved
+design edits are indicated separately from preview freshness, and leaving the
+page warns before discarding them. A failed preview keeps the last rendering and
+offers **Try again**. Email clients may render the same HTML differently.
 
 For the other layouts, the unsubscribe link and postal address remain automatic.
 An occurrence's `SendContext.footerMarkdown` overrides the audience footer, including an empty
