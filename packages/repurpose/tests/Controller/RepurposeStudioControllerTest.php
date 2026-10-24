@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Tests\PathTrait;
 use Pushword\Repurpose\Entity\SocialPost;
 use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\VideoBuilder;
@@ -29,6 +30,8 @@ use ZipArchive;
 #[Group('integration')]
 final class RepurposeStudioControllerTest extends WebTestCase
 {
+    use PathTrait;
+
     private KernelBrowser $client;
 
     private EntityManagerInterface $em;
@@ -148,6 +151,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
     public function testMotionFixtureOpensWithAPlayableVideoAndStaticSlides(): void
     {
+        $this->ensureMediaFileExists('repurpose-nord.mp4');
         $post = $this->em->getRepository(SocialPost::class)->findOneBy(['host' => 'localhost.dev', 'page' => 'standalone/motion-nord']);
         self::assertInstanceOf(SocialPost::class, $post);
         $carousel = new CarouselFactory()->fromArray($post->spec);
