@@ -53,6 +53,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'page')]
 #[ORM\UniqueConstraint(name: 'unique_slug_host', columns: ['slug', 'host'])]
 #[ORM\Index(name: 'idx_page_host', columns: ['host'])]
+#[ORM\Index(name: 'idx_page_updated_at_id', columns: ['updated_at', 'id'])]
 class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPropertiesInterface
 {
     use IdTrait;

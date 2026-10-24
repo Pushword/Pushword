@@ -11,6 +11,7 @@ use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Tests\Perf\QueryCountingTrait;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -90,9 +91,59 @@ final class AdminListQueryCountTest extends AbstractAdminTestClass
         );
     }
 
-    private function seedPages(EntityManager $em, string $host, int $count): void
+    public function testPageListPaginationIsStableWhenModificationDatesAreEqual(): void
     {
-        self::getContainer()->get(PageCacheSuppressor::class)->suppress(function () use ($em, $host, $count): void {
+        $client = $this->loginUser();
+        $client->disableReboot();
+
+        $em = self::getContainer()->get('doctrine.orm.entity_manager');
+        $this->seedPages($em, 'localhost.dev', 30, new DateTime('2100-01-01'));
+        $expectedIds = array_reverse($this->seededIds);
+        $listUrl = $this->generateAdminUrl('admin_page_list');
+
+        for ($page = 1; $page <= 3; ++$page) {
+            $crawler = $client->request(Request::METHOD_GET, $listUrl, ['page' => $page]);
+            self::assertResponseIsSuccessful();
+            $ids = $crawler->filter('.datagrid tbody tr[data-id]')->each(
+                static fn (Crawler $row): int => (int) $row->attr('data-id'),
+            );
+
+            self::assertSame(array_slice($expectedIds, ($page - 1) * 10, 10), $ids);
+        }
+    }
+
+    #[Group('sqlite')]
+    public function testPageListDoesNotSortTheEntireCorpus(): void
+    {
+        $client = $this->loginUser();
+        $client->disableReboot();
+
+        $em = self::getContainer()->get('doctrine.orm.entity_manager');
+        $this->seedPages($em, 'localhost.dev', 30);
+        $connection = $em->getConnection();
+        $this->startCountingQueries($connection);
+
+        $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
+        self::assertResponseIsSuccessful();
+
+        $listQueries = array_filter($this->queryCounter->queries, static fn (string $sql): bool => str_contains($sql, 'FROM page ') && str_contains($sql, 'ORDER BY') && str_contains($sql, 'LIMIT'));
+        self::assertNotEmpty($listQueries);
+
+        foreach ($listQueries as $sql) {
+            // EXPLAIN needs no bound values on SQLite: inspect the real list SQL,
+            // without a wall-clock threshold that varies with machine load.
+            $plan = $connection->fetchAllAssociative('EXPLAIN QUERY PLAN '.$sql);
+            self::assertNotEmpty($plan);
+            foreach ($plan as $step) {
+                self::assertIsString($step['detail']);
+                self::assertStringNotContainsString('USE TEMP B-TREE', $step['detail'], $sql);
+            }
+        }
+    }
+
+    private function seedPages(EntityManager $em, string $host, int $count, ?DateTime $updatedAt = null): void
+    {
+        self::getContainer()->get(PageCacheSuppressor::class)->suppress(function () use ($em, $host, $count, $updatedAt): void {
             $offset = \count($this->seededIds);
             $pages = [];
             for ($i = 0; $i < $count; ++$i) {
@@ -102,7 +153,7 @@ final class AdminListQueryCountTest extends AbstractAdminTestClass
                 $page->host = $host;
                 $page->locale = 'en';
                 $page->createdAt = new DateTime();
-                $page->updatedAt = new DateTime();
+                $page->updatedAt = $updatedAt ?? new DateTime();
                 $page->mainContent = 'admin list bench content '.($offset + $i);
                 $em->persist($page);
                 $pages[] = $page;

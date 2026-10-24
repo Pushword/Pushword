@@ -80,7 +80,7 @@ class PageCrudController extends AbstractAdminCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setDefaultSort(['updatedAt' => 'DESC'])
+            ->setDefaultSort(['updatedAt' => 'DESC', 'id' => 'DESC'])
             ->setPaginatorPageSize($this->getRequestedPageSize())
             ->addFormTheme('@pwAdmin/form/admin_form_theme.html.twig')
             ->addFormTheme('@PushwordAdminBlockEditor/editorjs_widget.html.twig')

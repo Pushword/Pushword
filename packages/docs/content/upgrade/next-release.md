@@ -1,5 +1,6 @@
 ---
-title: ''
+title: 'page lists use an index for modification-date sorting'
+run: 'doctrine:schema:update --force'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +35,10 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** pushword/core
+
+## Page list sorting
+
+Page lists now use a modification-date and ID index for stable pagination.
+Run `php bin/console doctrine:schema:update --force` to create the index.
