@@ -1,5 +1,5 @@
 ---
-title: 'campaign catalogue notices distinguish routine updates from source failures'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,11 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/newsletter`
-
-## Campaign source notices
-
-Routine source notices now use a neutral presentation. Existing `notices` strings remain supported.
-Listeners can set `noticeLevels[$source]` to `warning` for delayed/failed refreshes or `danger` when the source is unavailable without cached data. The default is `info`.
-See the [campaign index contract](../extension/newsletter#multi-source-campaign-index). No database update is needed.
