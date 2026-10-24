@@ -1,5 +1,15 @@
 {% extends '@EasyAdmin/layout.html.twig' %}
 
+{% block configured_stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordcore/contextHelp.css') }}">
+{% endblock %}
+
+{% block configured_javascripts %}
+    {{ parent() }}
+    <script type="module" src="{{ versionedAsset('/bundles/pushwordcore/contextHelp.js') }}"></script>
+{% endblock %}
+
 {% block wrapper_wrapper %}
     {% if is_granted('IS_IMPERSONATOR') %}
         <div class="pw-impersonation-banner" role="status">

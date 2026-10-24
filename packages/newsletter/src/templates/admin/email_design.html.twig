@@ -1,4 +1,5 @@
 {% extends ea().templatePath('layout') %}
+{% import '@Pushword/component/context_help.html.twig' as contextHelp %}
 {% form_theme design_form '@pwAdmin/form/admin_form_theme.html.twig' _self %}
 
 {% block radio_widget %}
@@ -9,7 +10,7 @@
   {% set kind = choice.vars.value starts with 'twig:' or choice.vars.value starts with 'saved:' ? 'preset' : choice.vars.value %}
   <label class="pw-newsletter-layout-option" for="{{ choice.vars.id }}">
     {{ form_widget(choice, {attr: {class: 'form-check-input'}}) }}
-    <span><strong>{{ choice.vars.label|trans }}</strong>{% if kind != 'preset' %}<span class="pw-newsletter-layout-description">{{ ('newsletter.design.' ~ kind ~ 'Help')|trans }}</span>{% endif %}</span>
+    <span><strong>{{ choice.vars.label|trans }}</strong>{% if kind == 'personal' %}<span class="pw-newsletter-layout-description">{{ ('newsletter.design.' ~ kind ~ 'Help')|trans }}</span>{% endif %}</span>
     <span class="pw-newsletter-layout-thumbnail" data-layout="{{ kind }}" aria-hidden="true"><span><b></b><i></i><i></i><small></small></span></span>
   </label>
 {% endmacro %}
@@ -23,8 +24,7 @@
 
 {% block main %}
   <div class="pw-newsletter-design-context">
-    <strong>{{ audience.name }}</strong><span>{{ site_name }}</span>
-    <p>{{ 'newsletter.design.description'|trans }}</p>
+    <strong>{{ audience.name }} {{ contextHelp.help('newsletter.design.title'|trans, 'newsletter.design.description'|trans) }}</strong><span>{{ site_name }}</span>
   </div>
   <div class="pw-newsletter-design" data-pw-email-preview data-viewport="mobile" data-mobile-panel="settings" data-saved-values="{{ [audience.emailLayout, audience.headerMarkdown, audience.footerMarkdown, audience.signatureMarkdown]|json_encode }}">
     <div class="pw-newsletter-design-switch" role="group" aria-label="{{ 'newsletter.design.view'|trans }}">
@@ -35,7 +35,8 @@
       {{ form_start(design_form, {attr: {id: 'newsletter-design-form'}}) }}
         {{ form_errors(design_form) }}
         <fieldset class="pw-newsletter-design-layout">
-          <legend>{{ design_form.emailLayout.vars.label|trans }}</legend>
+          {% set layoutHelp %}<p>{{ 'newsletter.design.simpleHelp'|trans }}</p><p>{{ 'newsletter.design.framedHelp'|trans }}</p>{% endset %}
+          <legend>{{ design_form.emailLayout.vars.label|trans }} {{ contextHelp.help(design_form.emailLayout.vars.label|trans, layoutHelp) }}</legend>
           {% for choice in design_form.emailLayout %}
             {% if not (choice.vars.value starts with 'twig:' or choice.vars.value starts with 'saved:') %}
               {{ _self.layoutOption(choice) }}
@@ -54,8 +55,8 @@
         </fieldset>
         <p class="pw-newsletter-design-preset" data-email-template-help{% if audience.emailTemplate is null %} hidden{% endif %}><i class="fa fa-lock" aria-hidden="true"></i> {{ 'newsletter.design.templateHelp'|trans }}</p>
         <fieldset class="pw-newsletter-design-identity" data-email-editable{% if audience.emailTemplate is not null or audience.emailPersonal %} hidden{% endif %}>
-          <legend>{{ 'newsletter.design.identity'|trans }}</legend>
-          <p class="form-text pw-newsletter-design-tokens">{{ 'newsletter.design.tokens'|trans }} <code>%siteName%</code> = {{ site_name }} · <code>%year%</code> = {{ 'now'|date('Y') }}</p>
+          {% set tokenHelp %}{{ 'newsletter.design.tokens'|trans }} <code>%siteName%</code> = {{ site_name }} · <code>%year%</code> = {{ 'now'|date('Y') }}{% endset %}
+          <legend>{{ 'newsletter.design.identity'|trans }} {{ contextHelp.help('newsletter.design.identity'|trans, tokenHelp) }}</legend>
           {{ form_row(design_form.headerMarkdown) }}
           {{ form_row(design_form.footerMarkdown) }}
           <button type="button" class="btn btn-link" data-design-defaults data-header="{{ default_header }}" data-footer="{{ default_footer }}">{{ 'newsletter.design.defaults'|trans }}</button>

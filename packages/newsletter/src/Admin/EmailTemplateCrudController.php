@@ -120,8 +120,7 @@ class EmailTemplateCrudController extends AbstractCrudController
         yield TextField::new('name', 'newsletter.template.name')->setColumns('col-12');
         yield BooleanField::new('wrapped', 'newsletter.template.wrapped')
             ->renderAsSwitch(false)
-            ->hideOnIndex()
-            ->setHelp('newsletter.design.framedHelp');
+            ->hideOnIndex();
         yield ChoiceField::new('wrapped', 'newsletter.template.layout')->onlyOnIndex()
             ->setChoices(['newsletter.design.wrapped' => 1, 'newsletter.design.simple' => 0]);
         yield TextareaField::new('headerMarkdown', 'newsletter.design.header')->hideOnIndex()

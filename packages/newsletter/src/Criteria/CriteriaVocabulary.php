@@ -117,7 +117,7 @@ final readonly class CriteriaVocabulary
     private function labels(): array
     {
         $labels = [
-            'addCondition', 'addGroup', 'all', 'any', 'duration', 'empty', 'field', 'operator',
+            'addCondition', 'addGroup', 'all', 'any', 'duration', 'empty', 'field', 'help', 'operator',
             'previewContacts', 'previewFailed', 'previewNeedsAudience', 'previewSaveFirst', 'previewTrigger',
             'property', 'raw', 'rawHint', 'rawInvalid', 'remove', 'searchHint', 'sinceAll', 'toBuilder',
             'unitDays', 'unitHours', 'unitMinutes', 'unitWeeks', 'value',

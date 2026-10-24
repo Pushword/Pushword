@@ -21,22 +21,18 @@ adminConversationReferringLabel: Référant
 adminConversationTagsLabel: Tags
 adminConversationTagsPlaceholder: "Tags (séparés par des espaces)"
 adminConversationWeightHelp: "Les valeurs les plus basses apparaissent en premier"
-adminConversationWeightLabel: Poids
+adminConversationWeightLabel: "Poids (croissant)"
 adminLabelSeeAll: 'Voir tout'
 adminReviewEdit: "Éditer l'avis"
-adminReviewLocaleHelp: "Langue originale de cet avis"
-adminReviewLocaleLabel: Langue
+adminReviewLocaleLabel: "Langue originale"
 adminReviewMediaUnlink: "Retirer ce média"
-adminReviewMediasHelp: "Ajoutez une ou plusieurs images illustrant l'avis"
 adminReviewMediasLabel: Médias
 adminReviewRatingHelp: "Choisissez une note de 1 (décevant) à 5 (excellent)"
 adminReviewRatingLabel: Note
 adminReviewReplyAuthorHelp: "Nom affiché dans le pied de la réponse (par défaut : l'équipe)"
 adminReviewReplyAuthorLabel: "Auteur de la réponse"
-adminReviewReplyHelp: "Réponse publique affichée sous l'avis"
-adminReviewReplyLabel: Réponse
+adminReviewReplyLabel: "Réponse publique"
 adminReviewReplyPlaceholder: "Répondre à cet avis…"
-adminReviewTitleHelp: "Courte accroche décrivant l'avis"
 adminReviewTitleLabel: Titre
 adminReviewTranslationsHelp: "Traductions générées par IA"
 adminReviewTranslationsLabel: Traductions

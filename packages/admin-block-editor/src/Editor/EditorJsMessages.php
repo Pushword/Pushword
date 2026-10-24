@@ -200,6 +200,7 @@ final readonly class EditorJsMessages
                 ]),
                 'linkTune' => $this->translate([
                     'Link' => 'editorLink',
+                    'Link help' => 'editorLinkHelp',
                     'Mask the link in the page source.' => 'editorLinkObfuscateHelp',
                     'New tab' => 'editorNewTab',
                     'Obfuscate' => 'editorObfuscate',

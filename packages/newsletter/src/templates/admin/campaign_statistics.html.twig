@@ -1,5 +1,6 @@
 {% extends '@PushwordNewsletter/admin/statistics_layout.html.twig' %}
 {% import '@PushwordNewsletter/admin/_statistics_macros.html.twig' as statistics %}
+{% import '@Pushword/component/context_help.html.twig' as contextHelp %}
 
 {% block content_title %}{{ campaign.subject }}{% endblock %}
 {% block page_title %}{{ 'newsletter.statistics.title'|trans }} · {{ campaign.subject }}{% endblock %}
@@ -30,8 +31,8 @@
         </dl>
       </div>
       <div>
-        <h2>{{ 'newsletter.statistics.feedback'|trans }}</h2>
-        <p class="pw-statistics-note">{{ 'newsletter.statistics.feedbackHelp'|trans }}</p>
+        <h2>{{ 'newsletter.statistics.feedback'|trans }} {{ contextHelp.help('newsletter.statistics.feedback'|trans, 'newsletter.statistics.feedbackHelp'|trans) }}</h2>
+        <p class="pw-statistics-note">{{ 'newsletterHelpRates'|trans }}</p>
         <dl class="pw-statistics-list pw-statistics-quality">
           {% for metric, rate in {bounced: 'bounceRate', unsubscribed: 'unsubscribeRate'} %}
             <div>
@@ -44,7 +45,7 @@
     </section>
 
     <section aria-labelledby="statistics-links">
-      <h2 id="statistics-links">{{ 'newsletter.statistics.links'|trans }}</h2>
+      <h2 id="statistics-links">{{ 'newsletter.statistics.links'|trans }} {{ contextHelp.help('newsletter.statistics.links'|trans, 'newsletter.statistics.linksSummary'|trans) }}</h2>
       {% if links is empty %}
         {% if campaign.sent == 0 %}
           {% set emptyTitle = 'newsletter.statistics.noSends' %}
@@ -59,7 +60,6 @@
           {% if not trackingAvailable and campaign.audienceId %}<a class="pw-statistics-action" href="{{ path('admin_newsletter_audience_edit', {entityId: campaign.audienceId}) }}">{{ 'newsletter.statistics.audienceSettings'|trans }}</a>{% endif %}
         </div>
       {% else %}
-        <p class="pw-statistics-note">{{ 'newsletter.statistics.linksSummary'|trans }}</p>
         <table class="table pw-statistics-table pw-statistics-links" role="table">
           <caption class="visually-hidden">{{ 'newsletter.statistics.links'|trans }}</caption>
           <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">{{ 'newsletter.statistics.url'|trans }}</th><th scope="col" role="columnheader" class="pw-statistics-number">{{ 'newsletter.statistics.clickers'|trans }}</th><th scope="col" role="columnheader" class="pw-statistics-number">{{ 'newsletter.campaign.field.clicks'|trans }}</th></tr></thead>

@@ -32,7 +32,7 @@ newsletter:
       utmSource: Analytics source
       utmSource.help: Add analytics tags to links pointing to your sites. Leave empty to keep links unchanged.
   automation:
-    contactRecipients: This sequence is sent to the contact who triggers it. Use trigger conditions to choose which contacts enter.
+    contactRecipients: "Sent to the triggering contact."
     label:
       plural: Automations
       singular: Automation
@@ -45,12 +45,9 @@ newsletter:
       recipientsHelp: For a publication, target the relevant subscribers. For a contact event, the sequence goes to the contact who triggers it.
       setup: Your automation
       steps: 3. Write the sequence
-      stepsHelp: Add emails in sending order and set the delay between each step.
       trigger: 1. Set the trigger
-      triggerHelp: Choose the event that starts the sequence, then narrow it down with conditions if needed.
     field:
-      activeFrom: Active from
-      activeFrom.help: Only events occurring on or after this date can start the sequence.
+      activeFrom: "Events from"
       audience: Audience
       enabled: Enabled
       enabled.help: While paused, no new emails are sent. Sequences resume at their current step when reactivated.
@@ -107,7 +104,6 @@ newsletter:
     fieldset:
       advanced: Advanced options
       audience: 3. Refine recipients
-      audienceHelp: Without conditions, every subscriber in the selected audience receives this newsletter.
       content: 2. Write the newsletter
       design: 1. Choose the audience and design
       languages: Translations
@@ -227,7 +223,6 @@ newsletter:
         ip: IP
         occurredAt: When
         transition: What
-      help: This contact’s sign-ups, confirmations and unsubscribes, oldest first.
       title: Consent history
       transition:
         bounce: Bounced
@@ -247,7 +242,7 @@ newsletter:
       clickTrackingConsentAt.help: When this person consented to per-click logging — the dated proof. Only set it for consent you can produce; clearing it withdraws the consent and purges their recorded clicks.
       confirmedAt: Confirmed at
       customProperties: Custom properties
-      customProperties.help: YAML key-value pairs. Segments read them as prop.<key>.
+      customProperties.help: "YAML key-value pairs. Segments read them as <code>prop.myKey</code>."
       email: Email
       email.taken: Another contact of this list already uses this address. Merge the two, or change it.
       locale: Locale
@@ -292,7 +287,6 @@ newsletter:
       subscribed: Subscribed
       unsubscribed: Unsubscribed
     subscriptions:
-      help: All subscriptions for this address. The current subscription is highlighted.
       title: Subscriptions
   criteria:
     addCondition: Add a condition
@@ -302,6 +296,7 @@ newsletter:
     duration: Duration
     empty: No condition — everything matches.
     field: Field
+    help: "Syntax help"
     operator: Operator
     previewContacts: subscribed contact(s)
     previewFailed: This rule could not be counted.
@@ -417,7 +412,6 @@ newsletter:
     activityHelp: "Events during the selected period. A confirmation can follow a signup request; these figures must not be added together."
     activityOptin: "Signup requests"
     activityResubscribe: "Resubscriptions"
-    activitySummary: "Events recorded during the selected period."
     activityUnsubscribe: "Unsubscribes"
     allAudiences: "All audiences"
     apply: "Apply filters"
@@ -444,7 +438,6 @@ newsletter:
     contactUnsubscribed: "Unsubscribed contacts"
     contacts: "Audience health today"
     contactsHelp: "Current subscriptions in the selected audience, independently of the date range. A contact on two lists counts twice."
-    contactsSummary: "Current subscriptions in the selected audience."
     correctFilters: "Check the highlighted filters to display your results."
     date: "First send"
     delivery: "Sending results"
@@ -560,25 +553,18 @@ newsletter:
     title: Unsubscribed
     undo: Undo, put me back
   workspace:
-    audienceDescription: Organize your subscriber lists and choose who their emails come from.
     audienceEmptyHint: Create your first audience to group subscribers and configure your sender address.
     audienceEmptyTitle: Start with your audience
-    automationDescription: Send an email sequence at the right moment, triggered by a contact event or a publication.
     automationEmptyHint: A welcome email, a follow-up after signup or a new publication. Choose a trigger and write your emails.
     automationEmptyTitle: Your first sequence starts here
-    automationdeliveryDescription: Review every email sent by an automation and investigate any failures.
     automationdeliveryEmptyHint: Deliveries will appear here when your automations send their first emails.
     automationdeliveryEmptyTitle: No deliveries yet
-    campaignDescription: Write your emails, choose your recipients and follow your deliveries.
     campaignEmptyHint: Share your news with your subscribers. Start with a draft, then send a test before sending.
     campaignEmptyTitle: Create your first newsletter
-    campaignrecipientDescription: Review the delivery result for each recipient of this newsletter.
     campaignrecipientEmptyHint: Recipients will appear here once sending has started.
     campaignrecipientEmptyTitle: Sending has not started yet
-    contactDescription: Find your subscribers, their contact details and their audience subscriptions.
     contactEmptyHint: Subscribe a contact to an audience to start building your mailing list.
     contactEmptyTitle: Get to know your subscribers
-    emailtemplateDescription: Create reusable email designs with a header, footer and optional frame.
     emailtemplateEmptyHint: Name your design, add a header and footer, then choose it in a newsletter.
     emailtemplateEmptyTitle: Create your first custom template
     filterAll: All
@@ -586,3 +572,14 @@ newsletter:
     rowActions: 'Actions for row %id%'
     selectAll: Select all rows
     selectRow: 'Select row %id%'
+
+newsletterHelpClickTracking: "Consenting contacts only."
+newsletterHelpConsent: "Enter only with consent evidence. Clearing it deletes recorded clicks."
+newsletterHelpDoubleOptIn: "Email confirmation is required."
+newsletterHelpIdentifier: "Email or phone required. Without an email address, no email is sent."
+newsletterHelpMoveSubscription: "Changing this moves the subscription."
+newsletterHelpPhone: "Without an email address, this contact receives no email."
+newsletterHelpRates: "Rates use emails sent as their base."
+newsletterHelpSchedule: "Save the draft, then confirm with “Schedule”."
+newsletterHelpSharedTemplate: "Changes apply to every audience and campaign using this template."
+newsletterHelpTransactional: "No unsubscribe links or headers. Service messages only."

@@ -32,7 +32,7 @@ newsletter:
       utmSource: Source analytics
       utmSource.help: Ajoute les paramètres de suivi aux liens vers vos sites. Laissez vide pour conserver les liens inchangés.
   automation:
-    contactRecipients: Cette séquence est envoyée au contact qui la déclenche. Les conditions du déclencheur déterminent quels contacts y entrent.
+    contactRecipients: "Envoyée au contact déclencheur."
     label:
       plural: Automatisations
       singular: Automatisation
@@ -45,12 +45,9 @@ newsletter:
       recipientsHelp: Pour une publication, ciblez les abonnés concernés. Pour un événement de contact, la séquence est envoyée au contact qui le déclenche.
       setup: Votre automatisation
       steps: 3. Composer la séquence
-      stepsHelp: Ajoutez les emails dans l'ordre d'envoi et définissez le délai entre chaque étape.
       trigger: 1. Définir le déclencheur
-      triggerHelp: Choisissez l'événement qui démarre la séquence, puis affinez les conditions si nécessaire.
     field:
-      activeFrom: Actif à partir du
-      activeFrom.help: Seuls les événements survenus à partir de cette date déclenchent la séquence.
+      activeFrom: "Événements à partir du"
       audience: Audience
       enabled: Activé
       enabled.help: En pause, aucun nouvel email ne part. Les séquences reprennent à leur étape en cours lors de la réactivation.
@@ -107,7 +104,6 @@ newsletter:
     fieldset:
       advanced: Options avancées
       audience: 3. Affiner les destinataires
-      audienceHelp: Sans condition, tous les abonnés de l'audience choisie reçoivent cette newsletter.
       content: 2. Rédiger la newsletter
       design: 1. Choisir l'audience et l'habillage
       languages: Traductions
@@ -227,7 +223,6 @@ newsletter:
         ip: IP
         occurredAt: Quand
         transition: Quoi
-      help: Les inscriptions, confirmations et désinscriptions de ce contact, du plus ancien au plus récent.
       title: Journal de consentement
       transition:
         bounce: Rejeté
@@ -247,7 +242,7 @@ newsletter:
       clickTrackingConsentAt.help: Quand cette personne a consenti à l'enregistrement de ses clics — la preuve datée. Ne le renseignez que pour un consentement que vous pouvez produire ; l'effacer retire le consentement et purge les clics enregistrés.
       confirmedAt: Confirmé le
       customProperties: Propriétés personnalisées
-      customProperties.help: Paires clé-valeur en YAML. Les segments les lisent via prop.<clé>.
+      customProperties.help: "Paires clé-valeur en YAML. Les segments les lisent via <code>prop.maCle</code>."
       email: Email
       email.taken: Un autre contact de cette liste utilise déjà cette adresse. Fusionnez les deux, ou changez-la.
       locale: Langue
@@ -292,7 +287,6 @@ newsletter:
       subscribed: Inscrit
       unsubscribed: Désinscrit
     subscriptions:
-      help: Tous les abonnements de cette adresse. L'abonnement actuel est mis en évidence.
       title: Inscriptions
   criteria:
     addCondition: Ajouter une condition
@@ -302,6 +296,7 @@ newsletter:
     duration: Durée
     empty: Aucune condition — tout correspond.
     field: Champ
+    help: "Aide sur la syntaxe"
     operator: Opérateur
     previewContacts: contact(s) inscrit(s)
     previewFailed: Cette règle n'a pas pu être comptée.
@@ -417,7 +412,6 @@ newsletter:
     activityHelp: "Événements sur la période. Une confirmation peut suivre une demande : ces chiffres ne s’additionnent pas."
     activityOptin: "Demandes d’inscription"
     activityResubscribe: "Réabonnements"
-    activitySummary: "Événements enregistrés pendant la période."
     activityUnsubscribe: "Désinscriptions"
     allAudiences: "Toutes les audiences"
     apply: "Appliquer"
@@ -444,7 +438,6 @@ newsletter:
     contactUnsubscribed: "Contacts désinscrits"
     contacts: "État de la base aujourd’hui"
     contactsHelp: "Abonnements actuels de l’audience sélectionnée, indépendamment de la période. Un contact dans deux listes compte deux fois."
-    contactsSummary: "Abonnements actuels de l’audience sélectionnée."
     correctFilters: "Corrigez les filtres indiqués pour afficher les résultats."
     date: "Premier envoi"
     delivery: "Résultats de l’envoi"
@@ -560,25 +553,18 @@ newsletter:
     title: Désinscription effectuée
     undo: Annuler, me réinscrire
   workspace:
-    audienceDescription: Organisez vos listes d'abonnés et définissez l'expéditeur de leurs emails.
     audienceEmptyHint: Créez une première audience pour regrouper vos abonnés et configurer votre adresse d'expédition.
     audienceEmptyTitle: Commencez par votre audience
-    automationDescription: Déclenchez une séquence d'emails au bon moment, à partir d'un événement de contact ou d'une publication.
     automationEmptyHint: Un message de bienvenue, un suivi après inscription ou une nouvelle publication. Choisissez un déclencheur et composez vos emails.
     automationEmptyTitle: Votre première séquence commence ici
-    automationdeliveryDescription: Retrouvez chaque email envoyé par une automatisation et identifiez les éventuels échecs.
     automationdeliveryEmptyHint: Les envois apparaîtront ici lorsque vos automatisations auront envoyé leurs premiers emails.
     automationdeliveryEmptyTitle: Aucun envoi pour le moment
-    campaignDescription: Rédigez vos emails, choisissez vos destinataires et suivez vos envois.
     campaignEmptyHint: Partagez vos actualités avec vos abonnés. Commencez par un brouillon, puis envoyez un test avant l'envoi.
     campaignEmptyTitle: Créons votre première newsletter
-    campaignrecipientDescription: Consultez le résultat de l'envoi pour chaque destinataire de cette newsletter.
     campaignrecipientEmptyHint: Les destinataires apparaîtront ici lorsque l'envoi aura commencé.
     campaignrecipientEmptyTitle: L'envoi n'a pas encore commencé
-    contactDescription: Retrouvez vos abonnés, leurs coordonnées et leurs inscriptions aux différentes audiences.
     contactEmptyHint: Inscrivez un contact dans une audience pour commencer à construire votre liste d'abonnés.
     contactEmptyTitle: Faites connaissance avec vos abonnés
-    emailtemplateDescription: Créez des habillages réutilisables avec un en-tête, un pied de page et un cadre facultatif.
     emailtemplateEmptyHint: Nommez votre modèle, ajoutez un en-tête et un pied de page, puis sélectionnez-le dans une newsletter.
     emailtemplateEmptyTitle: Créez votre premier modèle personnalisé
     filterAll: Toutes
@@ -586,3 +572,14 @@ newsletter:
     rowActions: 'Actions de la ligne %id%'
     selectAll: Sélectionner toutes les lignes
     selectRow: 'Sélectionner la ligne %id%'
+
+newsletterHelpClickTracking: "Contacts consentants uniquement."
+newsletterHelpConsent: "À renseigner avec une preuve de consentement. Effacer supprime les clics enregistrés."
+newsletterHelpDoubleOptIn: "Confirmation par email requise."
+newsletterHelpIdentifier: "Email ou téléphone requis. Sans adresse email, aucun mail n’est envoyé."
+newsletterHelpMoveSubscription: "Modifier ce champ déplace l’inscription."
+newsletterHelpPhone: "Sans adresse email, ce contact ne reçoit aucun mail."
+newsletterHelpRates: "Taux calculés sur les envois effectués."
+newsletterHelpSchedule: "Enregistrez le brouillon, puis confirmez avec « Programmer »."
+newsletterHelpSharedTemplate: "Les modifications s’appliquent à toutes les audiences et campagnes utilisant ce modèle."
+newsletterHelpTransactional: "Sans lien ni en-tête de désinscription. Messages de service uniquement."

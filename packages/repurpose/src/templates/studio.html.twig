@@ -1,9 +1,12 @@
+{% import '@Pushword/component/context_help.html.twig' as contextHelp %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Repurpose Studio · {{ post.page }}</title>
+  <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordcore/contextHelp.css') }}">
+  <script type="module" src="{{ versionedAsset('/bundles/pushwordcore/contextHelp.js') }}"></script>
   <style>
     :root {
       color-scheme: light;
@@ -174,7 +177,6 @@
 
     .actions { display: flex; gap: .6rem; }
     .actions .btn { flex: 1; }
-    .hint { font-size: .72rem; color: var(--muted); margin: 0; line-height: 1.45; }
 
     /* Auto-growing textareas (caption, paragraph): grow with content, capped. */
     textarea.autogrow { field-sizing: content; min-height: 3.2rem; max-height: 15rem; resize: none; overflow-y: auto; }
@@ -391,6 +393,7 @@
         </div>
         <p class="deck-note">
           <span x-text="deckNote">Slides at {{ feedWidth }}px — the typical {{ carousel.network }} mobile feed width.</span>
+          {{ contextHelp.help('Preview zoom', 'repurposeHelpPreview'|trans) }}
           <input type="range" min="0.5" max="3" step="0.05" x-model.number="zoom" aria-label="Preview zoom" title="Preview zoom (or Ctrl+scroll over the deck) — inspection only, 100% is the real feed size">
           <button type="button" class="btn-xs" x-show="1 !== zoom" x-cloak @click="zoom = 1">100&nbsp;%</button>
         </p>
@@ -464,7 +467,7 @@
                 <textarea class="autogrow" x-model="spec.caption" placeholder="The post caption…" :id="$id('field')"></textarea>
               </div>
               <div class="field full" x-id="['field']">
-                <label :for="$id('field')">Hashtags <span class="val">comma-separated</span></label>
+                <label :for="$id('field')">Hashtags</label>
                 <input type="text" x-model="hashtagsText" placeholder="pushword, carousel" :id="$id('field')">
               </div>
             </div>
@@ -534,7 +537,7 @@
                 </select>
               </div>
               <div class="field full" x-id="['field']">
-                <label :for="$id('field')">Background effect <span class="val">whole deck — a slide can override</span></label>
+                <div class="pw-help-label"><label :for="$id('field')">Background effect</label> {{ contextHelp.help('Background effect', 'repurposeHelpEffect'|trans) }}</div>
                 <button type="button" class="fake-select" @click="openEffect('deck')" :id="$id('field')">
                   <span class="thumb" x-html="effectPreviewSvg(spec.background || 'none')"></span>
                   <span class="lbl" x-text="effectLabel(spec.background || 'none')"></span>
@@ -610,7 +613,7 @@
 
                   <div class="grid2">
                     <div class="field" x-id="['field']">
-                      <label :for="$id('field')">Palette · bg <span class="val">override</span></label>
+                      <div class="pw-help-label"><label :for="$id('field')">Palette · bg</label> {{ contextHelp.help('Palette', 'repurposeHelpPalette'|trans, true) }}</div>
                       <button type="button" class="color-field" @click.stop="openColor(slide.palette, 'bg', $event)" :id="$id('field')">
                         <span class="sw" :style="slide.palette.bg ? ('background:' + slide.palette.bg) : ''"></span>
                         <span class="hex" :class="!slide.palette.bg && 'empty'" x-text="slide.palette.bg || 'inherit'"></span>
@@ -746,7 +749,7 @@
 
       {# ---------- SOURCE EDITOR ---------- #}
       <div id="rp-source-editor" role="region" aria-label="Source editor" x-show="view === 'source'" x-cloak style="display:flex;flex-direction:column;gap:.6rem;">
-        <p class="hint">JSON spec — validated live as you type. The visual editor and this view stay in sync when you switch.</p>
+        <div>JSON {{ contextHelp.help('JSON', 'repurposeHelpSource'|trans) }}</div>
         <div class="source-wrap">
           <textarea id="rp-spec" x-ref="source" spellcheck="false" aria-label="Carousel spec JSON"></textarea>
         </div>

@@ -138,6 +138,8 @@ final class RepurposeStudioControllerTest extends WebTestCase
         // studio for days after a deploy.
         self::assertMatchesRegularExpression('#/bundles/pushwordrepurpose/repurpose\.js\?v=\d+#', $html);
         self::assertMatchesRegularExpression('#/bundles/pushwordcore/alpine\.js\?v=\d+#', $html);
+        self::assertMatchesRegularExpression('#/bundles/pushwordcore/contextHelp\.js\?v=\d+#', $html);
+        self::assertSelectorExists('[data-pw-help] [data-pw-help-content]');
     }
 
     public function testSaveEditedSpecPersistsNewCopy(): void

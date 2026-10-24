@@ -21,22 +21,18 @@ adminConversationReferringLabel: Referring
 adminConversationTagsLabel: Tags
 adminConversationTagsPlaceholder: 'Tags (separated by spaces)'
 adminConversationWeightHelp: 'Lower values appear first'
-adminConversationWeightLabel: Weight
+adminConversationWeightLabel: "Weight (ascending)"
 adminLabelSeeAll: 'See all'
 adminReviewEdit: 'Edit review'
-adminReviewLocaleHelp: 'Original language of this review'
-adminReviewLocaleLabel: Locale
+adminReviewLocaleLabel: "Original language"
 adminReviewMediaUnlink: 'Remove this media'
-adminReviewMediasHelp: 'Attach one or several images illustrating the review'
 adminReviewMediasLabel: Media
 adminReviewRatingHelp: 'Select a score between 1 (poor) and 5 (excellent)'
 adminReviewRatingLabel: Rating
 adminReviewReplyAuthorHelp: 'Name shown in the reply footer (defaults to the team)'
 adminReviewReplyAuthorLabel: 'Reply author'
-adminReviewReplyHelp: 'Public reply published below the review'
-adminReviewReplyLabel: Reply
+adminReviewReplyLabel: "Public reply"
 adminReviewReplyPlaceholder: 'Reply to this review…'
-adminReviewTitleHelp: 'Short headline describing the review'
 adminReviewTitleLabel: Title
 adminReviewTranslationsHelp: 'AI-generated translations'
 adminReviewTranslationsLabel: Translations

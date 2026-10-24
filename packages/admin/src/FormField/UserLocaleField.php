@@ -19,8 +19,7 @@ class UserLocaleField extends AbstractField
             ->onlyOnForms()
             ->setChoices($this->getLocaleChoices())
             ->renderAsNativeWidget()
-            ->setFormTypeOption('required', true)
-            ->setHelp('adminUserLocaleHelp');
+            ->setFormTypeOption('required', true);
     }
 
     /**

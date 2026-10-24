@@ -19,13 +19,19 @@ adminEmptyStateHint: "This list is empty. Add the first entry to get started."
 adminEmptyStateReadOnlyHint: "Entries will appear here when activity is recorded."
 adminEmptyStateTitle: "Nothing here yet"
 adminEmptyValue: "Not provided"
+adminHelpCharacters: "Characters:"
+adminHelpHoldPublication: "Changes are saved; the published static version stays online until released."
+adminHelpMediaTranslations: "One translation per line, e.g. en: image description."
+adminHelpSnippetReference: "Lowercase; unique per host."
+adminHelpYaml: "YAML"
 adminLabelCheatsheet: Cheatsheet
 adminLabelCheckContent: "Content scan"
 adminLabelContent: Pages
 adminLabelConversation: Conversation
 adminLabelGitStatus: "Git Status"
 adminMediaPreviewUnavailable: "Preview unavailable"
-adminMediaReplaceFileHelp: "Choose a file only to replace the current one. Leave this empty to keep it."
+adminMediaReplaceFileHelp: "Leave empty to keep the current file."
+adminPageCustomPropertiesFieldLabel: "Other properties (YAML)"
 adminPageRedirectionTargetHelp: "Enter a URL or path, for example /new-page. Append a status code such as 302 for a temporary redirect."
 flatGitStatusConfig: Configuration
 flatGitStatusDate: Date
@@ -54,7 +60,7 @@ adminLabelUsers: Users
 adminMediaAcquireLicensePageHelp: "Page where the image can be licensed. On its own it does not qualify the image — Google also needs a creator, a credit, a copyright notice or a license URL."
 adminMediaAcquireLicensePageLabel: "Acquire license page"
 adminMediaAltHelp: "Alternative text, used for web page accessibility (visually impaired).<br><small>Choose one or more words describing your file. Feel free to use keywords to easily find your image (e.g. Massif des Ecrins - Glacier de la Meije).</small>"
-adminMediaAltLabel: Name
+adminMediaAltLabel: "Alternative text"
 adminMediaAltsHelp: "Format <code>Language: translated name</code> (e.g. <code>en: my image description</code>).<br>One translation per line."
 adminMediaAltsLabel: Translation
 adminMediaCopyrightNoticeLabel: "Copyright notice"
@@ -76,8 +82,7 @@ adminMediaHiddenFromAdminLabel: "Hidden from admin"
 adminMediaLicenseApplySeed: "Apply the site license"
 adminMediaLicenseBlockLabel: License
 adminMediaLicenseClear: "Clear the license"
-adminMediaLicenseHelp: "URL of the page describing the terms of use."
-adminMediaLicenseLabel: License
+adminMediaLicenseLabel: "License URL"
 adminMediaLicenseStateLabel: "License state"
 adminMediaLicenseStateNone: "Not licensed"
 adminMediaLicenseStateOverridden: "Asserted by hand"
@@ -136,7 +141,6 @@ adminPageContentDegraded: 'Some content was hidden because it could not be gener
 adminPageCreatedAtLabel: "Created At"
 adminPageCustomCanonicalHelp: "<small>Force the canonical URL of this page (SEO consolidation). Leave empty for the default self-canonical.</small>"
 adminPageCustomCanonicalLabel: "Canonical URL (override)"
-adminPageCustomPropertiesHelp: "In <em>YAML</em> format."
 adminPageCustomPropertiesLabel: "Other parameters"
 adminPageEditMessageHelp: "Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em>"
 adminPageEditMessageHelpVersionned: 'Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">See history</a>'
@@ -195,7 +199,7 @@ adminPageRedirectionTo: To
 adminPageRelatedPageLabel: "Associated Pages"
 adminPageRevisions: Revisions
 adminSchedule: Schedule
-adminPageSearchExcreptHelp: '<small>Visible from search engine results pages (meta description) - <span id="descWidth"></span></small>'
+adminPageSearchExcreptHelp: '<small>Visible from search engine results pages (meta description) <span id="descWidth"></span></small>'
 adminPageSearchExcreptLabel: "Short Description"
 adminPageSearchLabel: Search
 adminPageSlugHelp: " "
@@ -206,7 +210,7 @@ adminPageTagsLabel: "TagOne, TagTwo, ..."
 adminPageTagsPlaceholder: "Add tags..."
 adminPageTagsSearchLabel: Tags
 adminPageTemplateLabel: "Theme engine (optional)"
-adminPageTitleHelp: '<small>Title visible in search engines - <span id="titleWidth"></span></small>'
+adminPageTitleHelp: '<small>Title visible in search engines <span id="titleWidth"></span></small>'
 adminPageTitleLabel: Title
 adminPageTitleSearchLabel: Title
 adminPageTranslationsHelp: "Use the URL to find the page (e.g. en/my-other)."
@@ -256,8 +260,7 @@ adminUserLabelId: Identifiers
 adminUserLabelProfile: Profile
 adminUserLabelSecurity: Security
 adminUserLastnameLabel: Name
-adminUserLocaleHelp: "<small>Language preference for the admin interface (ex: <code>fr</code>, <code>en</code>, <code>en-US</code>...)</small>"
-adminUserLocaleLabel: Language
+adminUserLocaleLabel: "Interface language"
 adminUserPasswordLabel: Password
 adminUserPhoneLabel: Phone
 adminUserRoleAdmin: Administrator

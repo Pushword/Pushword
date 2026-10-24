@@ -1,29 +1,26 @@
 {% extends ea().templatePath('layout') %}
+{% import '@Pushword/component/context_help.html.twig' as contextHelp %}
 
-{% block content_title %}{{ 'newsletter.campaign.test.title'|trans }} — {{ campaign.subject }}{% endblock %}
+{% block content_title %}{{ 'newsletter.campaign.test.title'|trans }} — {{ campaign.subject }} {{ contextHelp.help('newsletter.campaign.test.title'|trans, 'newsletter.campaign.test.help'|trans) }}{% endblock %}
 
 {% block main %}
-    <p class="text-muted">{{ 'newsletter.campaign.test.help'|trans }}</p>
-
     <form method="post" style="max-width:640px">
         <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
 
         <div class="form-group mb-3">
-            <label class="form-label" for="newsletter-test-emails">{{ 'newsletter.campaign.test.recipients'|trans }}</label>
+            <label class="form-label" for="newsletter-test-emails">{{ 'newsletter.campaign.test.recipients'|trans }}</label> {{ contextHelp.help('newsletter.campaign.test.recipients'|trans, 'newsletter.campaign.test.recipients.help'|trans) }}
             <textarea id="newsletter-test-emails" name="emails" rows="3" class="form-control">{{ default_emails }}</textarea>
-            <small class="form-text text-muted">{{ 'newsletter.campaign.test.recipients.help'|trans }}</small>
         </div>
 
         {% if locales is not empty %}
             <div class="form-group mb-3">
-                <label class="form-label" for="newsletter-test-locale">{{ 'newsletter.campaign.test.locale'|trans }}</label>
+                <label class="form-label" for="newsletter-test-locale">{{ 'newsletter.campaign.test.locale'|trans }}</label> {{ contextHelp.help('newsletter.campaign.test.locale'|trans, 'newsletter.campaign.test.locale.help'|trans) }}
                 <select id="newsletter-test-locale" name="locale" class="form-select">
                     <option value="">{{ 'newsletter.campaign.test.locale.default'|trans }}</option>
                     {% for locale in locales %}
                         <option value="{{ locale }}">{{ locale }}</option>
                     {% endfor %}
                 </select>
-                <small class="form-text text-muted">{{ 'newsletter.campaign.test.locale.help'|trans }}</small>
             </div>
         {% endif %}
 

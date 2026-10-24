@@ -19,5 +19,14 @@
     "name": "app",
     "src": "../js-helper/src/app.js",
     "isEntry": true
+  },
+  "src/Resources/assets/contextHelp.js": {
+    "file": "contextHelp.js",
+    "name": "contextHelp",
+    "src": "src/Resources/assets/contextHelp.js",
+    "isEntry": true,
+    "css": [
+      "contextHelp.css"
+    ]
   }
 }

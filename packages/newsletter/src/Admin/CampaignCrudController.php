@@ -237,8 +237,7 @@ class CampaignCrudController extends AbstractCrudController
             ->setHelp('newsletter.campaign.field.preheader.help');
         yield $this->bodyField();
 
-        yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users')
-            ->setHelp('newsletter.campaign.fieldset.audienceHelp');
+        yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users');
         if (! $isForm) {
             yield $audienceField;
         }

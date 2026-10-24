@@ -13,6 +13,7 @@ declare global {
   }
 
   interface Window {
+    initContextHelp?: (root?: ParentNode) => void
     pagesUriList?: string[]
     monaco?: typeof monaco
     pageMainContent?: string // set in editorjs_widget.html.twig

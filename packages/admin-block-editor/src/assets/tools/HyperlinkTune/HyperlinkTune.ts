@@ -10,7 +10,10 @@ export interface HyperlinkTuneData extends BlockToolData {
   targetBlank?: boolean
 }
 
-export interface HyperlinkTuneNodes extends Record<string, HTMLElement | null | undefined> {
+export interface HyperlinkTuneNodes extends Record<
+  string,
+  HTMLElement | null | undefined
+> {
   url?: HTMLElement
   hideForBot?: HTMLElement
   targetBlank?: HTMLElement
@@ -53,7 +56,9 @@ export default class HyperlinkTune extends BaseTool {
     const label = make.element('div', 'cdx-anchor-tune-label', {
       id: make.uniqueId('image-link-label'),
     })
-    label.appendChild(make.element('span', 'cdx-anchor-tune-icon', { 'aria-hidden': 'true' }, IconLink))
+    label.appendChild(
+      make.element('span', 'cdx-anchor-tune-icon', { 'aria-hidden': 'true' }, IconLink),
+    )
     const title = make.element('span')
     title.textContent = this.api.i18n.t('Link')
     label.appendChild(title)
@@ -81,12 +86,14 @@ export default class HyperlinkTune extends BaseTool {
 
     wrapper.appendChild(this.nodes.url)
     wrapper.appendChild(this.nodes.hideForBot)
-    const help = make.element('small', 'cdx-anchor-tune-help', {
-      id: make.uniqueId('image-link-help'),
-    })
+    const help = make.element('small', 'cdx-anchor-tune-help')
     help.textContent = this.api.i18n.t('Mask the link in the page source.')
-    this.nodes.hideForBot.querySelector('input')!.setAttribute('aria-describedby', help.id)
-    wrapper.appendChild(help)
+    help.setAttribute('data-pw-help-content', '')
+    const contextHelp = document.createElement('span')
+    contextHelp.dataset.pwHelp = this.api.i18n.t('Link help')
+    contextHelp.appendChild(help)
+    wrapper.appendChild(contextHelp)
+    window.initContextHelp?.(contextHelp)
     wrapper.appendChild(this.nodes.targetBlank)
 
     // on change, save

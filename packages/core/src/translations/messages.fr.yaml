@@ -1,3 +1,4 @@
+contextHelpFor: "Aide : %label%"
 edit: Modifier
 editorNoticeBrokenImage: 'Image introuvable :'
 editorNoticeTwigError: 'Erreur Twig :'

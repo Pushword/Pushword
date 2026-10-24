@@ -21,6 +21,10 @@ repurpose:
 repurposeConfirmationCancel: Annuler
 repurposeExport: 'Exporter'
 repurposeFormat: 'Format'
+repurposeHelpEffect: "S’applique à tout le carrousel. Chaque slide peut remplacer cet effet."
+repurposeHelpPalette: "Remplace le fond du carrousel pour cette slide. Laissez vide pour hériter."
+repurposeHelpPreview: "100 % correspond à la largeur habituelle du fil mobile du réseau choisi. Le zoom ne change que l’aperçu."
+repurposeHelpSource: "Le JSON est validé pendant la saisie. L’éditeur visuel et la source restent synchronisés lors du changement de vue."
 repurposeNetwork: 'Réseau'
 repurposePreviewMode: 'Visualisation'
 repurposePreviewSlides: 'Slides'

@@ -122,8 +122,7 @@ class AutomationCrudController extends AbstractCrudController
             ->hideOnIndex()
             ->setHelp('newsletter.automation.field.enabled.help');
 
-        yield FormField::addFieldset('newsletter.automation.fieldset.trigger')->setIcon('fa fa-bolt')
-            ->setHelp('newsletter.automation.fieldset.triggerHelp');
+        yield FormField::addFieldset('newsletter.automation.fieldset.trigger')->setIcon('fa fa-bolt');
         yield ChoiceField::new('source', 'newsletter.automation.field.source')
             ->setChoices($sources)
             ->renderAsNativeWidget()
@@ -131,8 +130,7 @@ class AutomationCrudController extends AbstractCrudController
         yield CriteriaField::new('triggerWhenAsJson', 'newsletter.automation.field.triggerWhen', CriteriaController::SIDE_TRIGGER, $this->urlGenerator, $automationId)
             ->setNumOfRows(6)
             ->setHelp('newsletter.automation.field.triggerWhen.help');
-        yield DateTimeField::new('activeFrom', 'newsletter.automation.field.activeFrom')->hideOnIndex()
-            ->setHelp('newsletter.automation.field.activeFrom.help');
+        yield DateTimeField::new('activeFrom', 'newsletter.automation.field.activeFrom')->hideOnIndex();
 
         yield FormField::addFieldset('newsletter.automation.fieldset.recipients')->setIcon('fa fa-users')
             ->setFormTypeOption('attr', ['data-pw-automation-recipients' => $this->translator->trans('newsletter.automation.contactRecipients')])
@@ -140,8 +138,7 @@ class AutomationCrudController extends AbstractCrudController
         yield CriteriaField::new('recipientWhenAsJson', 'newsletter.automation.field.recipientWhen', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(4)
             ->setHelp('newsletter.automation.field.recipientWhen.help');
-        yield FormField::addFieldset('newsletter.automation.fieldset.steps')->setIcon('fa fa-envelope')
-            ->setHelp('newsletter.automation.fieldset.stepsHelp');
+        yield FormField::addFieldset('newsletter.automation.fieldset.steps')->setIcon('fa fa-envelope');
         yield IntegerField::new('steps', 'newsletter.automation.field.stepCount')
             ->onlyOnIndex()
             ->setSortable(false)

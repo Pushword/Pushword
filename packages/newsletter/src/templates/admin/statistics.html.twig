@@ -93,7 +93,6 @@
       <section aria-labelledby="statistics-contacts" class="pw-statistics-base">
         <div>
           <h2 id="statistics-contacts">{{ 'newsletter.statistics.contacts'|trans }}</h2>
-          <p class="pw-statistics-note">{{ 'newsletter.statistics.contactsSummary'|trans }}</p>
           <dl class="pw-statistics-list">
             {% for status in ['mailable', 'subscribed', 'pending', 'unsubscribed', 'bounced'] %}
               <div><dt>{{ ('newsletter.statistics.contact' ~ status|capitalize)|trans }}</dt><dd data-contact-statistic="{{ status }}"{% if contacts[status] == 0 %} class="pw-statistics-quiet"{% endif %}>{{ contacts[status]|format_number(locale: app.request.locale) }}</dd></div>
@@ -103,7 +102,6 @@
         </div>
         <div>
           <h2>{{ 'newsletter.statistics.activity'|trans }}</h2>
-          <p class="pw-statistics-note">{{ 'newsletter.statistics.activitySummary'|trans }}</p>
           <dl class="pw-statistics-list">
             {% for transition in ['optin', 'confirm', 'resubscribe', 'unsubscribe'] %}
               <div><dt>{{ ('newsletter.statistics.activity' ~ transition|capitalize)|trans }}</dt><dd data-activity="{{ transition }}"{% if activity[transition] == 0 %} class="pw-statistics-quiet"{% endif %}>{{ activity[transition]|format_number(locale: app.request.locale) }}</dd></div>

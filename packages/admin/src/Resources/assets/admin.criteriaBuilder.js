@@ -201,7 +201,16 @@ class CriteriaBuilder {
     const hint = element('p', 'pw-criteria-hint form-help')
     hint.textContent = this.model === null ? this.label('rawInvalid') : this.label('rawHint')
     if (this.vocabulary.acceptsSearch) hint.append(element('br'), text(this.label('searchHint')))
-    this.container.append(hint)
+    if (this.model === null) {
+      this.container.append(hint)
+    } else {
+      const help = element('span')
+      help.dataset.pwHelp = this.label('help')
+      hint.dataset.pwHelpContent = ''
+      help.append(hint)
+      this.container.append(help)
+      window.initContextHelp?.(help)
+    }
   }
 
   renderGroup(group, depth) {

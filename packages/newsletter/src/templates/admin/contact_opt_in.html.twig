@@ -1,10 +1,9 @@
 {% extends ea().templatePath('layout') %}
+{% import '@Pushword/component/context_help.html.twig' as contextHelp %}
 
-{% block content_title %}{{ 'newsletter.contact.optIn.title'|trans }}{% endblock %}
+{% block content_title %}{{ 'newsletter.contact.optIn.title'|trans }} {{ contextHelp.help('newsletter.contact.optIn.title'|trans, 'newsletter.contact.optIn.help'|trans) }}{% endblock %}
 
 {% block main %}
-    <p class="text-muted">{{ 'newsletter.contact.optIn.help'|trans }}</p>
-
     <form method="post" style="max-width:640px">
         <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
 
@@ -23,9 +22,9 @@
         </div>
 
         <div class="form-group mb-3">
-            <label class="form-label" for="newsletter-opt-in-phone">{{ 'newsletter.contact.field.phone'|trans }}</label>
+            <label class="form-label" for="newsletter-opt-in-phone">{{ 'newsletter.contact.field.phone'|trans }}</label> {{ contextHelp.help('newsletter.contact.field.phone'|trans, 'newsletter.contact.optIn.identifier.help'|trans) }}
             <input type="tel" id="newsletter-opt-in-phone" name="phone" value="{{ phone }}" class="form-control">
-            <small class="form-text text-muted">{{ 'newsletter.contact.optIn.identifier.help'|trans }}</small>
+            <small class="form-text text-muted">{{ 'newsletterHelpIdentifier'|trans }}</small>
         </div>
 
         <div class="form-group mb-3">

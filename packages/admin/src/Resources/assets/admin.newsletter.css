@@ -43,13 +43,6 @@ body[data-newsletter] .content {
   outline-offset: var(--focus-ring-offset);
 }
 
-.pw-newsletter-description {
-  max-inline-size: 65ch;
-  margin-block: 0 2rem;
-  color: var(--bs-secondary-color);
-  font-size: var(--pw-text-md);
-}
-
 .pw-newsletter-status {
   display: flex;
   flex-wrap: wrap;
@@ -367,10 +360,6 @@ body[data-newsletter] .pw-newsletter-sequence .accordion-item {
   background: var(--color-primary);
 }
 
-.pw-newsletter-design-tokens {
-  line-height: 1.65;
-}
-
 .pw-newsletter-design-preset {
   display: flex;
   align-items: baseline;
@@ -532,13 +521,6 @@ body[data-newsletter] :is(.form-text, .form-help) {
   display: block;
   margin-block-start: 0.5rem;
   font-weight: 600;
-}
-
-.pw-newsletter-design-tokens code {
-  color: var(--bs-body-color);
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
-  background: var(--bs-tertiary-bg);
 }
 
 .pw-newsletter-layout-option:has(:checked) .pw-newsletter-layout-description {

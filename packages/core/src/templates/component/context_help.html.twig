@@ -1,0 +1,5 @@
+{% macro help(label, content, reactive = false) %}
+  <span data-pw-help="{{ 'contextHelpFor'|trans({'%label%': label}) }}"{% if reactive %} x-init="$nextTick(() => window.initContextHelp($el))"{% endif %}>
+    <span data-pw-help-content>{{ content|raw }}</span>
+  </span>
+{% endmacro %}

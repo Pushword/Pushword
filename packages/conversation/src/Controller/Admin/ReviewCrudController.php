@@ -99,7 +99,6 @@ final class ReviewCrudController extends ConversationCrudController
     private function getReplyField(): TextareaField
     {
         return TextareaField::new('reply', 'adminReviewReplyLabel')
-            ->setHelp('adminReviewReplyHelp')
             ->setFormTypeOption('required', false)
             ->setFormTypeOption('attr', ['rows' => 4]);
     }
@@ -116,8 +115,7 @@ final class ReviewCrudController extends ConversationCrudController
         return ChoiceField::new('locale', 'adminReviewLocaleLabel')
             ->setChoices($this->getLocaleChoices())
             ->renderAsNativeWidget()
-            ->setFormTypeOption('required', false)
-            ->setHelp('adminReviewLocaleHelp');
+            ->setFormTypeOption('required', false);
     }
 
     /**
@@ -153,14 +151,12 @@ final class ReviewCrudController extends ConversationCrudController
             ->setFormTypeOption('allow_add', true)
             ->setFormTypeOption('allow_delete', true)
             ->setFormTypeOption('by_reference', false)
-            ->setFormTypeOption('prototype', true)
-            ->setHelp('adminReviewMediasHelp');
+            ->setFormTypeOption('prototype', true);
     }
 
     private function getTitleField(): TextField
     {
         return TextField::new('title', 'adminReviewTitleLabel')
-            ->setHelp('adminReviewTitleHelp')
             ->setColumns(12);
     }
 

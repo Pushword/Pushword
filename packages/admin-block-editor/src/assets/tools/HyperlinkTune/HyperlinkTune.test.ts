@@ -20,10 +20,12 @@ it('keeps a named image link field and switch help when editing a saved URL', ()
   expect(field.textContent).toBe('/original')
   const switchInput = panel.querySelector<HTMLInputElement>('input[role="switch"]')!
   expect(switchInput.checked).toBe(true)
-  expect(
-    panel.querySelector(`[id="${switchInput.getAttribute('aria-describedby')}"]`)
-      ?.textContent,
-  ).toBe('t(Mask the link in the page source.)')
+  expect(panel.querySelector('[data-pw-help-content]')?.textContent).toBe(
+    't(Mask the link in the page source.)',
+  )
+  expect(panel.querySelector('[data-pw-help]')?.getAttribute('data-pw-help')).toBe(
+    't(Link help)',
+  )
   field.textContent = '/new'
   field.dispatchEvent(new Event('input'))
   expect(tool.save()).toEqual({ url: '/new', hideForBot: true, targetBlank: false })

@@ -19,13 +19,19 @@ adminEmptyStateHint: 'Cette liste est vide. Ajoutez la première entrée pour d�
 adminEmptyStateReadOnlyHint: "Les entrées apparaîtront ici au fil de l’activité enregistrée."
 adminEmptyStateTitle: "Rien ici pour l'instant"
 adminEmptyValue: "Non renseigné"
+adminHelpCharacters: "Caractères :"
+adminHelpHoldPublication: "Modifications enregistrées ; la version statique publiée reste en ligne jusqu’à leur publication."
+adminHelpMediaTranslations: "Une traduction par ligne, ex. en: description de l’image."
+adminHelpSnippetReference: "Minuscules ; unique par hôte."
+adminHelpYaml: "YAML"
 adminLabelCheatsheet: Aide-mémoire
 adminLabelCheckContent: 'Scan du contenu'
 adminLabelContent: Pages
 adminLabelConversation: Conversation
 adminLabelGitStatus: "Statut Git"
 adminMediaPreviewUnavailable: "Aperçu indisponible"
-adminMediaReplaceFileHelp: "Choisissez un fichier uniquement pour remplacer le fichier actuel. Laissez ce champ vide pour le conserver."
+adminMediaReplaceFileHelp: "Laissez vide pour conserver le fichier actuel."
+adminPageCustomPropertiesFieldLabel: "Autres propriétés (YAML)"
 adminPageRedirectionTargetHelp: "Saisissez une URL ou un chemin, par exemple /nouvelle-page. Ajoutez un code comme 302 pour une redirection temporaire."
 flatGitStatusConfig: Configuration
 flatGitStatusDate: Date
@@ -54,7 +60,7 @@ adminLabelUsers: Utilisateurs
 adminMediaAcquireLicensePageHelp: "Page permettant d'acquérir une licence. Seule, elle ne qualifie pas l'image : Google demande aussi un auteur, un crédit, une mention de copyright ou une URL de licence."
 adminMediaAcquireLicensePageLabel: "Page d'acquisition de licence"
 adminMediaAltHelp: "Texte alternatif, utilisé pour l'accessibilité des pages web (non-voyant).<br><small>Choisissez un à plusieurs mots décrivant votre fichier. N'hésitez pas à utiliser des mots clefs pour retrouver facilement votre image (ex: Massif des Ecrins - Glacier de la Meije).</small>"
-adminMediaAltLabel: Nom
+adminMediaAltLabel: "Texte alternatif"
 adminMediaAltsHelp: 'Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne.'
 adminMediaAltsLabel: Traduction
 adminMediaCopyrightNoticeLabel: 'Mention de copyright'
@@ -76,8 +82,7 @@ adminMediaHiddenFromAdminLabel: "Masqué de l'admin"
 adminMediaLicenseApplySeed: 'Appliquer la licence du site'
 adminMediaLicenseBlockLabel: Licence
 adminMediaLicenseClear: 'Vider la licence'
-adminMediaLicenseHelp: "URL de la page décrivant les conditions d'utilisation."
-adminMediaLicenseLabel: Licence
+adminMediaLicenseLabel: "URL de licence"
 adminMediaLicenseStateLabel: 'État de la licence'
 adminMediaLicenseStateNone: 'Sans licence'
 adminMediaLicenseStateOverridden: 'Affirmée à la main'
@@ -135,7 +140,6 @@ adminPageContentDegraded: 'Certains contenus ont été masqués car ils n''ont p
 adminPageCreatedAtLabel: 'Créé le'
 adminPageCustomCanonicalHelp: "<small>Force l'URL canonique de cette page (consolidation SEO). Laisser vide pour la canonique par défaut.</small>"
 adminPageCustomCanonicalLabel: "URL canonique (forcée)"
-adminPageCustomPropertiesHelp: 'Au format <em>YAML</em>.'
 adminPageCustomPropertiesLabel: 'Autres paramètres'
 adminPageEditMessageHelp: 'Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em>'
 adminPageEditMessageHelpVersionned: 'Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">Voir l''historique</a>'
@@ -194,7 +198,7 @@ adminPageRedirectionTo: Vers
 adminPageRelatedPageLabel: 'Pages Associées'
 adminPageRevisions: Révisions
 adminSchedule: Planifier
-adminPageSearchExcreptHelp: '<small>Visible depuis les pages de résultats des moteurs de recherches (meta description) - <span id="descWidth"></span></small>'
+adminPageSearchExcreptHelp: '<small>Visible depuis les pages de résultats des moteurs de recherches (meta description) <span id="descWidth"></span></small>'
 adminPageSearchExcreptLabel: 'Courte Description'
 adminPageSearchLabel: Search
 adminPageSlugHelp: ' '
@@ -205,7 +209,7 @@ adminPageTagsLabel: 'TagOne, TagTwo, ...'
 adminPageTagsPlaceholder: 'Ajouter des tags...'
 adminPageTagsSearchLabel: Tags
 adminPageTemplateLabel: 'Moteur de thème (facultatif)'
-adminPageTitleHelp: '<small>Titre visible dans les moteurs de recherches - <span id="titleWidth"></span></small>'
+adminPageTitleHelp: '<small>Titre visible dans les moteurs de recherches <span id="titleWidth"></span></small>'
 adminPageTitleLabel: Titre
 adminPageTitleSearchLabel: 'Titre (search)'
 adminPageTranslationsHelp: "Utiliser l'url pour trouver la page (ex : en/my-other)."
@@ -257,8 +261,7 @@ adminUserLabelId: Identifiants
 adminUserLabelProfile: Profil
 adminUserLabelSecurity: Securité
 adminUserLastnameLabel: Nom
-adminUserLocaleHelp: "<small>Préférence de langue pour l'interface d'administration (ex: <code>fr</code>, <code>en</code>, <code>en-US</code>...)</small>"
-adminUserLocaleLabel: Langue
+adminUserLocaleLabel: "Langue de l’interface"
 adminUserPasswordLabel: 'Mot de passe'
 adminUserPhoneLabel: Téléphone
 adminUserRoleAdmin: Administrateur

@@ -1053,10 +1053,10 @@
       },
       get deckNote() {
         if (1 === this.zoom) {
-          return 'Slides at ' + this.feedWidth + 'px — the typical ' + this.network + ' mobile feed width.'
+          return this.feedWidth + 'px · 100%'
         }
 
-        return 'Slides at ' + this.slideWidth + 'px — zoom ' + Math.round(100 * this.zoom) + '% of the real ' + this.feedWidth + 'px feed width.'
+        return this.slideWidth + 'px · ' + Math.round(100 * this.zoom) + '%'
       },
 
       // Collapse of the Deck panel, remembered across reloads (UI-only, not in the spec).

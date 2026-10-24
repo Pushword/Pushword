@@ -1,9 +1,9 @@
 {% extends '@PushwordNewsletter/admin/layout.html.twig' %}
+{% import '@Pushword/component/context_help.html.twig' as contextHelp %}
 
-{% block content_title %}{{ template_label }}{% endblock %}
+{% block content_title %}{{ template_label }} {{ contextHelp.help(template_label, 'newsletter.template.siteHelp'|trans) }}{% endblock %}
 {% block page_actions %}<a class="btn btn-secondary" href="{{ path('admin_newsletter_template_index') }}">{{ 'newsletter.template.back'|trans }}</a>{% endblock %}
 {% block main %}
-  <p class="pw-newsletter-description">{{ 'newsletter.template.siteHelp'|trans }}</p>
   <div class="pw-newsletter-design pw-newsletter-site-preview" data-pw-email-preview data-viewport="mobile">
     {{ include('@PushwordNewsletter/admin/_email_preview.html.twig') }}
   </div>

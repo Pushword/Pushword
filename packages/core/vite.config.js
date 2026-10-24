@@ -14,6 +14,7 @@ const filesToCopy = [
 ]
 
 const input = {
+  contextHelp: resolve(import.meta.dirname, 'src/Resources/assets/contextHelp.js'),
   app: resolve(import.meta.dirname, '../js-helper/src/app.js'),
   alpine: resolve(import.meta.dirname, '../js-helper/src/alpine.js'),
   style: resolve(import.meta.dirname, '../js-helper/src/app.css'),

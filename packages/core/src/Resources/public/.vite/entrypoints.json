@@ -1,6 +1,17 @@
 {
   "base": "/build/",
   "entryPoints": {
+    "contextHelp": {
+      "css": [
+        "/build/contextHelp.css"
+      ],
+      "dynamic": [],
+      "js": [
+        "/build/contextHelp.js"
+      ],
+      "legacy": false,
+      "preload": []
+    },
     "app": {
       "css": [],
       "dynamic": [],

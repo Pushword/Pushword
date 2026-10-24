@@ -316,8 +316,7 @@ class ConversationCrudController extends AbstractAdminCrudController
             ->setFormTypeOption('view_timezone', $this->adminFormFieldManager->editorialTimezone->timezone->getName())
             ->setFormTypeOption('required', false);
         yield IntegerField::new('weight', 'adminConversationWeightLabel')
-            ->setFormTypeOption('required', false)
-            ->setHelp('adminConversationWeightHelp');
+            ->setFormTypeOption('required', false);
 
         yield DateTimeField::new('createdAt', 'adminConversationCreatedAtLabel')->setDisabled();
 

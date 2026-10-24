@@ -1,8 +1,9 @@
+{% import '@Pushword/component/context_help.html.twig' as contextHelp %}
 {% set preview_id = preview_id|default('newsletter-design-preview') %}
 {% set preview_viewport = preview_viewport|default('mobile') %}
 <section id="{{ preview_id }}" class="pw-newsletter-design-preview" aria-labelledby="{{ preview_id }}-title">
   <div class="pw-newsletter-design-toolbar">
-    <h2 id="{{ preview_id }}-title">{{ 'newsletter.design.preview'|trans }}</h2>
+    <h2 id="{{ preview_id }}-title">{{ 'newsletter.design.preview'|trans }} {{ contextHelp.help('newsletter.design.preview'|trans, 'newsletter.design.previewHelp'|trans) }}</h2>
     <div class="btn-group" role="group" aria-label="{{ 'newsletter.design.viewport'|trans }}">
       <button type="button" class="btn btn-secondary" data-preview-width="mobile" aria-pressed="{{ preview_viewport == 'mobile' ? 'true' : 'false' }}">{{ 'newsletter.design.mobile'|trans }} <span>375</span></button>
       <button type="button" class="btn btn-secondary" data-preview-width="desktop" aria-pressed="{{ preview_viewport == 'desktop' ? 'true' : 'false' }}">{{ 'newsletter.design.desktop'|trans }} <span>600</span></button>
@@ -15,5 +16,4 @@
   <div class="pw-newsletter-design-canvas" tabindex="0" role="region" aria-label="{{ 'newsletter.design.canvas'|trans }}">
     <iframe title="{{ 'newsletter.design.preview'|trans }}" sandbox="{{ preview_sandbox|default('') }}" srcdoc="{{ preview_html|default('') }}"></iframe>
   </div>
-  <p class="form-text">{{ 'newsletter.design.previewHelp'|trans }}</p>
 </section>

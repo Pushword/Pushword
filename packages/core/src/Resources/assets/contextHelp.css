@@ -1,0 +1,95 @@
+.pw-help-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+.pw-help-label > label {
+  margin-bottom: 0;
+}
+.pw-help-heading {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 0;
+}
+.form-fieldset-title .pw-help-heading > .form-fieldset-title-content {
+  width: auto;
+  flex: 0 1 auto;
+}
+.pw-help-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  padding: 0.25rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary-color, #64748b);
+  vertical-align: middle;
+  cursor: pointer;
+}
+.pw-help-button svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.pw-help-button:hover,
+.pw-help-button[aria-expanded='true'] {
+  color: var(--color-primary, #0369a1);
+  background: var(--table-thead-marker-color, #eef4f8);
+}
+.pw-help-button:focus-visible {
+  outline: 2px solid var(--color-primary, #0369a1);
+  outline-offset: 2px;
+}
+.pw-help-panel {
+  position: fixed;
+  inset: auto;
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 1rem;
+  overflow: auto;
+  border: 1px solid var(--border-color, #dbe3ed);
+  border-radius: var(--pw-radius-md, 0.5rem);
+  background: var(--content-bg, Canvas);
+  color: var(--text-color, #334155);
+  box-shadow: var(--pw-elevation-3, 0 8px 20px rgb(15 23 42 / 0.18));
+  font:
+    400 0.875rem/1.5 system-ui,
+    sans-serif;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.pw-help-panel :is(small, .form-help, .form-text, [data-pw-help-content]) {
+  display: block;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+}
+.pw-help-panel p:last-child {
+  margin-bottom: 0;
+}
+.pw-help-panel a {
+  text-decoration: underline;
+}
+.pw-help-panel pre {
+  white-space: pre-wrap;
+}
+.pw-help-summary {
+  display: block;
+  margin-top: 0.25rem;
+}
+@media (pointer: coarse) {
+  .pw-help-button {
+    width: 2rem;
+    height: 2rem;
+  }
+}
