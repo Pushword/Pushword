@@ -98,8 +98,16 @@ test('the preview toggle stays clickable when the narrow toolbar moves over it',
   await render(page, [
     { id: 'handle-target', type: 'pages_list', data: { kw: 'children' } },
   ])
-  await expect(page.locator('.codex-editor')).toHaveClass(/codex-editor--narrow/)
   const block = page.locator('.ce-block[data-id="handle-target"]')
+  await block.evaluate(block => {
+    // Hold any entering fade halfway while the toolbar moves across the toggle.
+    block.style.animationDuration = '100s'
+    for (const animation of block.getAnimations()) {
+      animation.pause()
+      animation.currentTime = 50_000
+    }
+  })
+  await expect(page.locator('.codex-editor')).toHaveClass(/codex-editor--narrow/)
   await block.locator('.preview-wrapper').click()
   const toggle = block.locator('.toggle-label')
   await toggle.hover()
