@@ -1,5 +1,10 @@
 newsletter:
   campaign:
+    design:
+      personal: "Solo messaggi di servizio: contenuto e firma di « %audience% », senza link o intestazioni di disiscrizione."
+      personalCustomize: "Personalizza la firma"
+      personalEdit: "Modifica la firma del pubblico (nuova scheda)"
+      personalWarning: "Le modifiche alla firma si applicano a tutte le email personali inviate a questo pubblico."
     review:
       allContacts: Tutti i contatti iscritti
       emptyAudienceHelp: Scegli un pubblico per preparare l’anteprima e i destinatari.
@@ -33,13 +38,15 @@ newsletter:
     statusPaused: In pausa
     timezone: Orari nel fuso %timezone%.
     unknown: Non disponibile
-  email:
-    unsubscribe: Annulla iscrizione
   design:
+    otherTemplates: "Altri modelli"
     personal: Email personale
-    personalHelp: Solo messaggi di servizio. Contenuto e firma senza grafica newsletter, link o intestazioni di disiscrizione.
+    personalHelp: "Contenuto e firma senza disiscrizione. Solo messaggi di servizio."
+    personalSignature: "Firma delle email personali"
     signature: Firma
     signatureHelp: Firma Markdown usata solo nelle email personali. Lascia vuoto per inviare solo il contenuto.
+  email:
+    unsubscribe: Annulla iscrizione
   statistics:
     aboutActivity: "Informazioni sugli eventi"
     aboutContacts: "Informazioni sul conteggio"

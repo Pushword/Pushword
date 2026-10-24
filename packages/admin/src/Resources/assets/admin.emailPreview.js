@@ -57,12 +57,15 @@ export function initEmailPreview(root = document) {
       return JSON.stringify(fields.map((name) => data.get(`${prefix}[${name}]`)))
     }
 
-    function updateLayout() {
+    function updateLayout(layoutChanged = false) {
       if (kind === 'audience') {
         const layout = form.querySelector('[name="email_design[emailLayout]"]:checked')?.value || ''
         const custom = layout.startsWith('twig:') || layout.startsWith('saved:')
         panel.querySelector('[data-email-editable]').hidden = custom || layout === 'personal'
-        panel.querySelector('[data-email-personal]').hidden = layout !== 'personal'
+        if (layoutChanged) {
+          const signature = panel.querySelector('[data-email-personal]')
+          signature.open = layout === 'personal' || location.hash === '#email_design_signatureMarkdown'
+        }
         panel.querySelector('[data-email-template-help]').hidden = !custom
       }
       dirty = !['campaign', 'automation'].includes(kind) && designValues() !== savedValues
@@ -72,7 +75,7 @@ export function initEmailPreview(root = document) {
       }
     }
 
-    updateLayout()
+    updateLayout(true)
 
     async function update(version) {
       request = new AbortController()
@@ -106,7 +109,7 @@ export function initEmailPreview(root = document) {
     function schedule(event) {
       if (!panel.isConnected) return
       if (event && previewFields && !previewFields.includes(event.target.name)) return
-      updateLayout()
+      updateLayout(event?.target.name === 'email_design[emailLayout]')
       clearTimeout(timer)
       request?.abort()
       const version = ++revision

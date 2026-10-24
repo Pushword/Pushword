@@ -316,6 +316,8 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
         $stored = $this->entityManager()->find(Audience::class, $id);
         self::assertInstanceOf(Audience::class, $stored);
         self::assertSame('saved:'.$template->id, $stored->emailLayout);
+        $client->request(Request::METHOD_GET, $url);
+        self::assertSelectorExists('[data-email-presets][open] input:checked');
     }
 
     public function testPersonalDesignPreviewsAndSavesTheSignatureAndCanBeOverriddenPerCampaign(): void
@@ -357,7 +359,8 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
         self::assertFalse($stored->transactional);
         $crawler = $client->request(Request::METHOD_GET, $url);
         self::assertSelectorExists('[data-email-editable][hidden]');
-        self::assertSelectorExists('[data-email-personal]:not([hidden])');
+        self::assertSelectorExists('[data-email-personal][open]');
+        self::assertSelectorNotExists('[data-email-presets][open]');
         $saved = json_decode($crawler->filter('[data-saved-values]')->attr('data-saved-values') ?? '', true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($saved);
         self::assertCount(4, $saved);
@@ -389,6 +392,25 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
         self::assertSame('**Robin** [Contact](/contact)', $stored->signatureMarkdown);
         self::assertSame($originalHeader, $stored->headerMarkdown);
         self::assertSame($originalFooter, $stored->footerMarkdown);
+        self::assertEmailCount(0);
+    }
+
+    public function testAPersonalSignatureCanBeSavedWithoutChangingTheNewsletterDesign(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->audience();
+        $id = $audience->id;
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/audience/'.$id.'/email-design');
+        self::assertSelectorExists('[data-email-personal]:not([open]) textarea[name="email_design[signatureMarkdown]"]');
+        $form = $crawler->filter('form[name="email_design"]')->form();
+        $form['email_design[signatureMarkdown]'] = '**Robin**';
+        $client->submit($form);
+        self::assertResponseRedirects();
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Audience::class, $id);
+        self::assertInstanceOf(Audience::class, $stored);
+        self::assertSame('simple', $stored->emailLayout);
+        self::assertSame('**Robin**', $stored->signatureMarkdown);
         self::assertEmailCount(0);
     }
 

@@ -97,6 +97,10 @@ newsletter:
       empty: Choose an audience to see the email design in use.
       inherit: Use the audience design
       label: Design for this campaign
+      personal: "Service messages only: content and the signature from “%audience%”, with no unsubscribe link or headers."
+      personalCustomize: "Customize the signature"
+      personalEdit: "Edit audience signature (new tab)"
+      personalWarning: "Signature changes affect every personal email sent to this audience."
       shared: 'Header and footer from “%audience%”.'
       warning: Changing the audience design also affects campaigns and automations that use it.
     editor: Write newsletter
@@ -346,9 +350,10 @@ newsletter:
     identity: Sender identity
     layout: Layout
     mobile: Mobile
+    otherTemplates: "Other templates"
     personal: Personal email
-    personalHelp: Service messages only. Content and signature, without newsletter branding or unsubscribe links and headers.
-    presetHelp: A reusable design with its own header, footer and frame.
+    personalHelp: "Content and signature, without unsubscribe. Service messages only."
+    personalSignature: "Personal email signature"
     preview: Live preview
     previewHelp: This is a preview, no email is sent. Email clients may render it differently.
     ready: Preview up to date

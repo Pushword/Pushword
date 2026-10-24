@@ -2,7 +2,21 @@
 
 {% block _Campaign_emailLayout_widget %}
   {{ block('choice_widget') }}
-  <div class="pw-campaign-design-summary" data-campaign-design-summary data-current="{{ 'newsletter.campaign.design.current'|trans }}" data-empty="{{ 'newsletter.campaign.design.empty'|trans }}" data-custom="{{ 'newsletter.campaign.design.custom'|trans }}" data-shared="{{ 'newsletter.campaign.design.shared'|trans }}" data-template-edit-url="{{ path('admin_newsletter_template_edit', {entityId: '__template__'}) }}" data-edit-template="{{ 'newsletter.template.edit'|trans }}" data-edit-audience="{{ 'newsletter.campaign.design.edit'|trans }}" data-audience-warning="{{ 'newsletter.campaign.design.warning'|trans }}" data-template-warning="{{ 'newsletter.template.help'|trans }}">
+  <div class="pw-campaign-design-summary" data-campaign-design-summary
+    data-current="{{ 'newsletter.campaign.design.current'|trans }}"
+    data-empty="{{ 'newsletter.campaign.design.empty'|trans }}"
+    data-custom="{{ 'newsletter.campaign.design.custom'|trans }}"
+    data-customize="{{ 'newsletter.campaign.design.customize'|trans }}"
+    data-shared="{{ 'newsletter.campaign.design.shared'|trans }}"
+    data-template-edit-url="{{ path('admin_newsletter_template_edit', {entityId: '__template__'}) }}"
+    data-edit-template="{{ 'newsletter.template.edit'|trans }}"
+    data-edit-audience="{{ 'newsletter.campaign.design.edit'|trans }}"
+    data-audience-warning="{{ 'newsletter.campaign.design.warning'|trans }}"
+    data-template-warning="{{ 'newsletter.template.help'|trans }}"
+    data-personal="{{ 'newsletter.campaign.design.personal'|trans }}"
+    data-personal-customize="{{ 'newsletter.campaign.design.personalCustomize'|trans }}"
+    data-personal-edit="{{ 'newsletter.campaign.design.personalEdit'|trans }}"
+    data-personal-warning="{{ 'newsletter.campaign.design.personalWarning'|trans }}">
     <p data-campaign-design-current aria-live="polite">{{ 'newsletter.campaign.design.empty'|trans }}</p>
     <p data-campaign-design-description hidden></p>
     <details data-campaign-design-edit-details hidden>

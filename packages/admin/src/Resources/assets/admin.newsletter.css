@@ -545,6 +545,17 @@ body[data-newsletter] :is(.form-text, .form-help) {
   color: var(--bs-body-color);
 }
 
+.pw-newsletter-design .pw-newsletter-design-presets {
+  margin-block: 1rem 0;
+}
+
+.pw-newsletter-design-presets summary,
+.pw-newsletter-design-signature summary {
+  padding-block: 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
 .pw-newsletter-selection {
   display: inline-flex;
   align-items: center;

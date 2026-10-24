@@ -5,6 +5,15 @@
   <input type="radio" {{ block('widget_attributes') }} value="{{ value }}"{% if checked %} checked="checked"{% endif %}>
 {% endblock %}
 
+{% macro layoutOption(choice) %}
+  {% set kind = choice.vars.value starts with 'twig:' or choice.vars.value starts with 'saved:' ? 'preset' : choice.vars.value %}
+  <label class="pw-newsletter-layout-option" for="{{ choice.vars.id }}">
+    {{ form_widget(choice, {attr: {class: 'form-check-input'}}) }}
+    <span><strong>{{ choice.vars.label|trans }}</strong>{% if kind != 'preset' %}<span class="pw-newsletter-layout-description">{{ ('newsletter.design.' ~ kind ~ 'Help')|trans }}</span>{% endif %}</span>
+    <span class="pw-newsletter-layout-thumbnail" data-layout="{{ kind }}" aria-hidden="true"><span><b></b><i></i><i></i><small></small></span></span>
+  </label>
+{% endmacro %}
+
 {% block content_title %}{{ 'newsletter.design.title'|trans }}{% endblock %}
 
 {% block page_actions %}
@@ -28,13 +37,19 @@
         <fieldset class="pw-newsletter-design-layout">
           <legend>{{ design_form.emailLayout.vars.label|trans }}</legend>
           {% for choice in design_form.emailLayout %}
-            {% set kind = choice.vars.value starts with 'twig:' or choice.vars.value starts with 'saved:' ? 'preset' : choice.vars.value %}
-            <label class="pw-newsletter-layout-option" for="{{ choice.vars.id }}">
-              {{ form_widget(choice, {attr: {class: 'form-check-input'}}) }}
-              <span><strong>{{ choice.vars.label|trans }}</strong><span class="pw-newsletter-layout-description">{{ ('newsletter.design.' ~ kind ~ 'Help')|trans }}</span></span>
-              <span class="pw-newsletter-layout-thumbnail" data-layout="{{ kind }}" aria-hidden="true"><span><b></b><i></i><i></i><small></small></span></span>
-            </label>
+            {% if not (choice.vars.value starts with 'twig:' or choice.vars.value starts with 'saved:') %}
+              {{ _self.layoutOption(choice) }}
+            {% endif %}
           {% endfor %}
+          {% set presets = design_form.emailLayout|filter(choice => choice.vars.value starts with 'twig:' or choice.vars.value starts with 'saved:') %}
+          {% if presets|length %}
+            <details class="pw-newsletter-design-presets" data-email-presets{% if design_form.emailLayout.vars.value starts with 'twig:' or design_form.emailLayout.vars.value starts with 'saved:' %} open{% endif %}>
+              <summary>{{ 'newsletter.design.otherTemplates'|trans }}</summary>
+              {% for choice in presets %}
+                {{ _self.layoutOption(choice) }}
+              {% endfor %}
+            </details>
+          {% endif %}
           {{ form_errors(design_form.emailLayout) }}
         </fieldset>
         <p class="pw-newsletter-design-preset" data-email-template-help{% if audience.emailTemplate is null %} hidden{% endif %}><i class="fa fa-lock" aria-hidden="true"></i> {{ 'newsletter.design.templateHelp'|trans }}</p>
@@ -45,10 +60,10 @@
           {{ form_row(design_form.footerMarkdown) }}
           <button type="button" class="btn btn-link" data-design-defaults data-header="{{ default_header }}" data-footer="{{ default_footer }}">{{ 'newsletter.design.defaults'|trans }}</button>
         </fieldset>
-        <fieldset class="pw-newsletter-design-identity" data-email-personal{% if not audience.emailPersonal %} hidden{% endif %}>
-          <legend>{{ 'newsletter.design.personal'|trans }}</legend>
-          {{ form_row(design_form.signatureMarkdown) }}
-        </fieldset>
+        <details class="pw-newsletter-design-signature" data-email-personal{% if audience.emailPersonal %} open{% endif %}>
+          <summary>{{ 'newsletter.design.personalSignature'|trans }}</summary>
+          {{ form_row(design_form.signatureMarkdown, {label_attr: {class: 'visually-hidden'}}) }}
+        </details>
         <details class="pw-newsletter-design-sample">
           <summary>{{ 'newsletter.design.sample'|trans }}</summary>
           {{ form_row(design_form.sampleBody, {label_attr: {class: 'visually-hidden'}}) }}

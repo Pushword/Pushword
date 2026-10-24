@@ -65,15 +65,19 @@ describe('campaign email design selection', () => {
 
   function setup() {
     document.body.innerHTML = `<form>
-      <select name="Campaign[audience]"><option value="">Choose</option><option value="1">First</option><option value="2">Second</option></select>
-      <select data-pw-campaign-design><option value="">Audience default</option><option value="simple">Simple</option><option value="framed">Framed</option><optgroup label="Site templates"><option value="twig:brand">Brand</option></optgroup></select>
+      <select name="Campaign[audience]"><option value="">Choose</option><option value="1">First</option><option value="2">Second</option><option value="3">Third</option></select>
+      <select data-pw-campaign-design><option value="">Audience default</option><option value="simple">Simple</option><option value="framed">Framed</option><option value="personal">Personal</option><optgroup label="Site templates"><option value="twig:brand">Brand</option></optgroup></select>
       <a data-campaign-templates data-choices-url="/templates/choices">Templates</a>
-      <div data-campaign-design-summary data-current="In use: %theme%" data-empty="Choose an audience" data-custom="Site preset" data-shared="Identity from %audience%" data-template-edit-url="/template/__template__/edit" data-edit-template="Edit template" data-edit-audience="Edit audience" data-template-warning="Shared template" data-audience-warning="Shared audience">
-        <p data-campaign-design-current></p><p data-campaign-design-description hidden></p><a data-campaign-design-edit hidden target="_blank"></a><p data-campaign-design-warning hidden></p>
-      </div></form>`
+      <div data-campaign-design-summary data-current="In use: %theme%" data-empty="Choose an audience" data-custom="Site preset" data-shared="Identity from %audience%" data-template-edit-url="/template/__template__/edit" data-edit-template="Edit template" data-edit-audience="Edit audience" data-template-warning="Shared template" data-audience-warning="Shared audience" data-customize="Customize identity" data-personal="Service message with signature from %audience%, without unsubscribe" data-personal-customize="Customize signature" data-personal-edit="Edit signature" data-personal-warning="Shared signature">
+        <p data-campaign-design-current></p><p data-campaign-design-description hidden></p><details data-campaign-design-edit-details hidden><summary>Customize identity</summary><a data-campaign-design-edit hidden target="_blank"></a><p data-campaign-design-warning hidden></p></details>
+      </div>
+      <div class="form-group"><input name="Campaign[preheader]" value="Saved preview text"></div>
+      <div class="form-group"><input type="checkbox" name="Campaign[transactional]" checked></div>
+      </form>`
     document.querySelector('[data-pw-campaign-design]').dataset.pwCampaignDesign = JSON.stringify({
       1: { name: 'First', layout: 'framed', url: '/audience/1/design' },
       2: { name: 'Second', layout: 'twig:brand', url: '/audience/2/design' },
+      3: { name: 'Third', layout: 'personal', url: '/audience/3/design' },
     })
     initCampaignDesigns()
   }
@@ -109,6 +113,42 @@ describe('campaign email design selection', () => {
     choose('[name="Campaign[audience]"]', '')
     expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('Choose an audience')
     expect(document.querySelector('[data-campaign-design-edit]').hidden).toBe(true)
+  })
+
+  it('explains a personal override and restores hidden settings without losing their values', () => {
+    setup()
+    choose('[name="Campaign[audience]"]', '1')
+    choose('[data-pw-campaign-design]', 'personal')
+    const preheader = document.querySelector('[name="Campaign[preheader]"]')
+    const transactional = document.querySelector('[name="Campaign[transactional]"]')
+    expect(document.querySelector('[data-campaign-design-description]').textContent).toBe('Service message with signature from First, without unsubscribe')
+    expect(document.querySelector('[data-campaign-design-edit-details] summary').textContent).toBe('Customize signature')
+    expect(document.querySelector('[data-campaign-design-edit]').getAttribute('href')).toBe('/audience/1/design#email_design_signatureMarkdown')
+    expect(document.querySelector('[data-campaign-design-edit]').textContent).toBe('Edit signature')
+    expect(document.querySelector('[data-campaign-design-warning]').textContent).toBe('Shared signature')
+    expect(preheader.closest('.form-group').hidden).toBe(true)
+    expect(transactional.closest('.form-group').hidden).toBe(true)
+    choose('[data-pw-campaign-design]', 'simple')
+    expect(preheader.closest('.form-group').hidden).toBe(false)
+    expect(transactional.closest('.form-group').hidden).toBe(false)
+    expect(preheader.value).toBe('Saved preview text')
+    expect(transactional.checked).toBe(true)
+    expect(document.querySelector('[data-campaign-design-edit-details] summary').textContent).toBe('Customize identity')
+    expect(document.querySelector('[data-campaign-design-description]').textContent).toBe('Identity from First')
+  })
+
+  it('follows an inherited personal design and returns to ordinary settings with another audience', () => {
+    setup()
+    choose('[name="Campaign[audience]"]', '3')
+    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: Personal')
+    expect(document.querySelector('[data-campaign-design-edit]').getAttribute('href')).toBe('/audience/3/design#email_design_signatureMarkdown')
+    expect(document.querySelector('[name="Campaign[preheader]"]').closest('.form-group').hidden).toBe(true)
+    choose('[name="Campaign[audience]"]', '2')
+    expect(document.querySelector('[name="Campaign[preheader]"]').closest('.form-group').hidden).toBe(false)
+    expect(document.querySelector('[data-campaign-design-description]').textContent).toBe('Site preset')
+    choose('[name="Campaign[audience]"]', '')
+    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('Choose an audience')
+    expect(document.querySelector('[data-campaign-design-edit-details]').hidden).toBe(true)
   })
 
   it('refreshes templates on returning to the campaign while preserving the selection', async () => {

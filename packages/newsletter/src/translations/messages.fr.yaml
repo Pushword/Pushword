@@ -97,6 +97,10 @@ newsletter:
       empty: Choisissez une audience pour voir l'habillage utilisé.
       inherit: Utiliser l'habillage de l'audience
       label: Habillage de cette campagne
+      personal: "Messages transactionnels uniquement : contenu et signature de « %audience% », sans lien ni en-têtes de désinscription."
+      personalCustomize: "Personnaliser la signature"
+      personalEdit: "Modifier la signature de l’audience (nouvel onglet)"
+      personalWarning: "La modification de cette signature affecte tous les mails personnels envoyés à cette audience."
       shared: 'En-tête et pied de page de « %audience% ».'
       warning: Modifier l'habillage de l'audience affecte aussi les campagnes et automatisations qui l'utilisent.
     editor: Rédiger la newsletter
@@ -346,9 +350,10 @@ newsletter:
     identity: Identité de l'expéditeur
     layout: Mise en page
     mobile: Mobile
+    otherTemplates: "Autres modèles"
     personal: Mail personnel
-    personalHelp: Messages transactionnels uniquement. Contenu et signature, sans habillage newsletter ni liens et en-têtes de désinscription.
-    presetHelp: Un habillage réutilisable avec son en-tête, son pied de page et son cadre.
+    personalHelp: "Contenu et signature, sans désinscription. Messages transactionnels uniquement."
+    personalSignature: "Signature du mail personnel"
     preview: Aperçu en direct
     previewHelp: Aucun email n'est envoyé depuis cet aperçu. Le rendu peut varier selon la messagerie.
     ready: Aperçu à jour

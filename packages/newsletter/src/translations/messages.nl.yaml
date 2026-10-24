@@ -1,5 +1,10 @@
 newsletter:
   campaign:
+    design:
+      personal: "Alleen serviceberichten: inhoud en handtekening van “%audience%”, zonder afmeldlink of afmeldheaders."
+      personalCustomize: "Handtekening aanpassen"
+      personalEdit: "Handtekening van de doelgroep bewerken (nieuw tabblad)"
+      personalWarning: "Wijzigingen aan de handtekening gelden voor alle persoonlijke e-mails aan deze doelgroep."
     review:
       allContacts: Alle geabonneerde contacten
       emptyAudienceHelp: Kies een doelgroep om het voorbeeld en de ontvangers voor te bereiden.
@@ -33,13 +38,15 @@ newsletter:
     statusPaused: Gepauzeerd
     timezone: Tijden in %timezone%.
     unknown: Niet opgegeven
-  email:
-    unsubscribe: Uitschrijven
   design:
+    otherTemplates: "Andere sjablonen"
     personal: Persoonlijke e-mail
-    personalHelp: Alleen serviceberichten. Inhoud en handtekening zonder nieuwsbriefopmaak, afmeldlinks of afmeldheaders.
+    personalHelp: "Inhoud en handtekening zonder afmelding. Alleen serviceberichten."
+    personalSignature: "Handtekening voor persoonlijke e-mails"
     signature: Handtekening
     signatureHelp: Markdown-handtekening alleen voor persoonlijke e-mails. Laat leeg om alleen de inhoud te verzenden.
+  email:
+    unsubscribe: Uitschrijven
   statistics:
     aboutActivity: "Over deze gebeurtenissen"
     aboutContacts: "Over deze aantallen"

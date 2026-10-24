@@ -1,5 +1,10 @@
 newsletter:
   campaign:
+    design:
+      personal: "Nur Servicenachrichten: Inhalt und Signatur von „%audience%“, ohne Abmeldelink oder Abmelde-Header."
+      personalCustomize: "Signatur anpassen"
+      personalEdit: "Signatur der Zielgruppe bearbeiten (neuer Tab)"
+      personalWarning: "Signaturänderungen gelten für alle persönlichen E-Mails an diese Zielgruppe."
     review:
       allContacts: Alle abonnierten Kontakte
       emptyAudienceHelp: Wählen Sie eine Zielgruppe, um die Vorschau und die Empfänger vorzubereiten.
@@ -33,13 +38,15 @@ newsletter:
     statusPaused: Pausiert
     timezone: Zeiten in %timezone%.
     unknown: Nicht angegeben
-  email:
-    unsubscribe: Abmelden
   design:
+    otherTemplates: "Weitere Vorlagen"
     personal: Persönliche E-Mail
-    personalHelp: Nur für Servicenachrichten. Inhalt und Signatur ohne Newsletter-Design, Abmeldelinks oder Abmelde-Header.
+    personalHelp: "Inhalt und Signatur ohne Abmeldung. Nur für Servicenachrichten."
+    personalSignature: "Signatur für persönliche E-Mails"
     signature: Signatur
     signatureHelp: Markdown-Signatur nur für persönliche E-Mails. Leer lassen, um nur den Inhalt zu senden.
+  email:
+    unsubscribe: Abmelden
   statistics:
     aboutActivity: "Über diese Ereignisse"
     aboutContacts: "Über diese Kontaktzahlen"

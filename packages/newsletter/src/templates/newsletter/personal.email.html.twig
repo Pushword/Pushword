@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ subject }}</title>
 </head>
-<body style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;">
+<body style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;overflow-wrap:break-word;">
     {{ body|raw }}
     {% if signature|trim is not empty %}
         <div style="margin-top:16px;">{{ signature|raw }}</div>

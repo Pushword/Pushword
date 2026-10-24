@@ -10,9 +10,17 @@ export function initCampaignDesigns(root = document) {
     const edit = summary.querySelector('[data-campaign-design-edit]')
     const warning = summary.querySelector('[data-campaign-design-warning]')
     const customization = summary.querySelector('[data-campaign-design-edit-details]')
+    const customizationLabel = customization?.querySelector('summary')
+    const preheader = select.form.elements.namedItem('Campaign[preheader]')?.closest('.form-group')
+    const transactional = select.form.elements.namedItem('Campaign[transactional]')?.closest('.form-group')
 
     function update() {
       const design = designs[audience.value]
+      const layout = select.value || design?.layout
+      const personal = layout === 'personal'
+      if (preheader) preheader.hidden = personal
+      if (transactional) transactional.hidden = personal
+      if (customizationLabel) customizationLabel.textContent = personal ? summary.dataset.personalCustomize : summary.dataset.customize
       description.hidden = !design
       edit.hidden = true
       warning.hidden = true
@@ -21,11 +29,12 @@ export function initCampaignDesigns(root = document) {
         current.textContent = summary.dataset.empty
         return
       }
-      const layout = select.value || design.layout
       const label = Array.from(select.options).find((option) => option.value === layout)?.textContent || layout
       current.textContent = summary.dataset.current.replace('%theme%', label)
       const custom = layout.startsWith('twig:') || layout.startsWith('saved:')
-      description.textContent = custom ? summary.dataset.custom : summary.dataset.shared.replace('%audience%', design.name)
+      if (personal) description.textContent = summary.dataset.personal.replace('%audience%', design.name)
+      else if (custom) description.textContent = summary.dataset.custom
+      else description.textContent = summary.dataset.shared.replace('%audience%', design.name)
       if (layout.startsWith('saved:')) {
         edit.href = summary.dataset.templateEditUrl.replace('__template__', layout.slice(6))
         edit.textContent = summary.dataset.editTemplate
@@ -33,9 +42,9 @@ export function initCampaignDesigns(root = document) {
         warning.textContent = summary.dataset.templateWarning
         warning.hidden = false
       } else if (!select.value || !custom) {
-        edit.href = design.url
-        edit.textContent = summary.dataset.editAudience
-        warning.textContent = summary.dataset.audienceWarning
+        edit.href = design.url + (personal ? '#email_design_signatureMarkdown' : '')
+        edit.textContent = personal ? summary.dataset.personalEdit : summary.dataset.editAudience
+        warning.textContent = personal ? summary.dataset.personalWarning : summary.dataset.audienceWarning
         edit.hidden = false
         warning.hidden = false
       }

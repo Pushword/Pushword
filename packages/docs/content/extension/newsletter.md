@@ -513,6 +513,12 @@ headers, without requiring the transactional checkbox. Choose it per audience
 eligibility, sender, Reply-To and existing link tracking settings still apply.
 Switching back restores the audience's newsletter header and footer.
 
+The audience design keeps the three built-in layouts visible; expand **Other
+templates** for saved and site templates. **Personal email signature** opens
+automatically in personal mode and can also be edited independently of the
+audience's default layout. A campaign's **Customize the signature** link opens
+that section without changing the shared layout.
+
 New audiences start with `**%siteName%**` as the header and
 `© %year% %siteName%` as the footer. These values resolve against the sender's
 site and the current year in both HTML and plain text. Existing saved designs
