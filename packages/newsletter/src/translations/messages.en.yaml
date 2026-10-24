@@ -145,6 +145,10 @@ newsletter:
       notFound: Newsletter not found.
     review:
       allContacts: All subscribed contacts
+      emptyAudienceHelp: Choose an audience to prepare the preview and recipients.
+      emptyAudienceTitle: Choose who will receive this email
+      emptyBodyHelp: Write your message to see its preview.
+      emptyBodyTitle: This email has no content yet
       filteredContacts: Filtered contacts
       moreActions: More actions
       settings: Advanced options

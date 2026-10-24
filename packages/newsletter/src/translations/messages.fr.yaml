@@ -145,6 +145,10 @@ newsletter:
       notFound: Newsletter introuvable.
     review:
       allContacts: Tous les contacts abonnés
+      emptyAudienceHelp: Choisissez une audience pour préparer l’aperçu et les destinataires.
+      emptyAudienceTitle: Choisissez les destinataires de cet email
+      emptyBodyHelp: Rédigez votre message pour voir son aperçu.
+      emptyBodyTitle: Votre email est encore vide
       filteredContacts: Contacts filtrés
       moreActions: Autres actions
       settings: Options avancées

@@ -2,6 +2,10 @@ newsletter:
   campaign:
     review:
       allContacts: Alle geabonneerde contacten
+      emptyAudienceHelp: Kies een doelgroep om het voorbeeld en de ontvangers voor te bereiden.
+      emptyAudienceTitle: Kies de ontvangers van deze e-mail
+      emptyBodyHelp: Schrijf je bericht om het voorbeeld te zien.
+      emptyBodyTitle: Deze e-mail heeft nog geen inhoud
       filteredContacts: Gefilterde contacten
       moreActions: Meer acties
       settings: Geavanceerde opties

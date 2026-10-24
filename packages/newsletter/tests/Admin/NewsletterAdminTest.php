@@ -458,6 +458,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertCount(1, $crawler->filter('[data-campaign-source]:not([open])'));
         self::assertCount(1, $crawler->filter('.pw-campaign-preview iframe[sandbox="allow-same-origin"]'));
         self::assertCount(1, $crawler->filter('[data-preview-width="desktop"][aria-pressed="true"]'));
+        self::assertCount(1, $crawler->filter('.page-actions button[data-bs-toggle="dropdown"][aria-label="More actions"]'));
         self::assertSame($campaign->bodyMarkdown, $crawler->filter('[data-campaign-source] pre')->text(null, false));
         self::assertCount(0, $crawler->filter('[data-campaign-source] script'));
 
@@ -502,10 +503,36 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$campaign->id);
         self::assertResponseIsSuccessful();
         self::assertCount(0, $crawler->filter('iframe'));
-        self::assertCount(1, $crawler->filter('a.action-edit'));
+        self::assertCount(1, $crawler->filter('.page-actions a.action-edit'));
+        self::assertCount(1, $crawler->filter('.pw-campaign-empty a.action-edit'));
+        self::assertCount(0, $crawler->filter('.pw-campaign-audience-help, .pw-campaign-summary'));
         self::assertStringContainsString('Choose an audience', $crawler->filter('.pw-campaign-message')->text());
 
         $this->entityManager()->getConnection()->executeStatement('DELETE FROM newsletter_campaign WHERE id = :id', ['id' => $campaign->id]);
+    }
+
+    #[DataProvider('emptyCampaignBodies')]
+    public function testEmptyCampaignReviewExplainsHowToAddContent(string $body): void
+    {
+        $client = $this->loginUser();
+        $campaign = $this->campaign($this->seed(), 'Write your message');
+        $campaign->bodyMarkdown = $body;
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$campaign->id);
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('iframe, [data-preview-width], [data-campaign-source]'));
+        self::assertSame('This email has no content yet', $crawler->filter('#campaign-empty-title')->text());
+        self::assertCount(1, $crawler->filter('.pw-campaign-empty a.action-edit[href$="/'.$campaign->id.'/edit"]'));
+        self::assertStringContainsString('Admin test', $crawler->filter('.pw-campaign-summary')->text());
+        self::assertEmailCount(0);
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function emptyCampaignBodies(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'whitespace' => [" \n\t "];
     }
 
     public function testCampaignReviewKeepsScheduledRecipientsAndAudienceDesignVisible(): void

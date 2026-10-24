@@ -2,6 +2,10 @@ newsletter:
   campaign:
     review:
       allContacts: Tutti i contatti iscritti
+      emptyAudienceHelp: Scegli un pubblico per preparare l’anteprima e i destinatari.
+      emptyAudienceTitle: Scegli i destinatari di questa email
+      emptyBodyHelp: Scrivi il messaggio per visualizzare l’anteprima.
+      emptyBodyTitle: Questa email è ancora vuota
       filteredContacts: Contatti filtrati
       moreActions: Altre azioni
       settings: Opzioni avanzate

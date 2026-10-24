@@ -1,5 +1,41 @@
+.pw-campaign-detail .main-content,
+.pw-campaign-detail .content {
+  min-inline-size: 0;
+}
+
+.pw-campaign-detail .content-header {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.pw-campaign-detail .content-header-title {
+  flex: none;
+  inline-size: 100%;
+}
+
+.pw-campaign-detail .page-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.pw-campaign-detail .pw-newsletter-nav {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-block-start: 0.25rem;
+}
+
+.pw-campaign-detail .pw-newsletter-nav a {
+  flex: none;
+  white-space: nowrap;
+}
+
+.pw-campaign-more-icon {
+  display: none;
+}
+
 .pw-campaign-status {
-  vertical-align: middle;
+  vertical-align: baseline;
   font-size: var(--pw-text-sm);
   font-weight: 500;
 }
@@ -31,6 +67,10 @@
 }
 
 .pw-campaign-preview .pw-newsletter-design-feedback {
+  display: none;
+}
+
+.pw-campaign-preview [data-preview-width] span {
   display: none;
 }
 
@@ -88,6 +128,45 @@
   margin-block-start: 2rem;
 }
 
+.pw-campaign-summary [data-campaign-results] dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pw-campaign-summary [data-campaign-results] dl > div + div {
+  margin-block-start: 0.5rem;
+}
+
+.pw-campaign-summary [data-campaign-results] dt {
+  margin: 0;
+}
+
+.pw-campaign-summary [data-campaign-results] dd {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.pw-campaign-empty {
+  padding: 2rem;
+  border-radius: var(--pw-radius-lg);
+  background: var(--bs-tertiary-bg);
+}
+
+.pw-campaign-empty h2 {
+  margin-block: 0 0.5rem;
+  font-size: var(--pw-text-md);
+  font-weight: 600;
+}
+
+.pw-campaign-empty p {
+  max-inline-size: 65ch;
+  margin-block-end: 1.5rem;
+  color: var(--bs-secondary-color);
+}
+
 .pw-campaign-disclosure {
   margin-block-start: 1.5rem;
   padding-block-start: 1rem;
@@ -108,7 +187,7 @@
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 991px) {
+@media (max-width: 1279px) {
   .pw-campaign-review {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -118,5 +197,24 @@
     padding-block-start: 1.5rem;
     border-inline-start: 0;
     border-block-start: 1px solid var(--bs-border-color);
+  }
+}
+
+@media (max-width: 575px) {
+  .pw-campaign-detail .content-header-title h1 {
+    font-size: var(--pw-text-lg);
+  }
+
+  .pw-campaign-preview .pw-newsletter-design-toolbar .btn-group,
+  .pw-campaign-more-label {
+    display: none;
+  }
+
+  .pw-campaign-more-icon {
+    display: inline-block;
+  }
+
+  .pw-campaign-empty {
+    padding: 1.5rem;
   }
 }
