@@ -1,6 +1,5 @@
 ---
-title: 'sessions close before controllers; page list sorting needs a database index'
-run: 'doctrine:schema:update --force'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,14 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin`, `pushword/core`
-
-## Earlier session save
-
-Started sessions close after access checks, before the main controller runs, allowing concurrent requests until the session is accessed again. Use the Symfony session API to reopen it and persist writes. No configuration change is required.
-
-## Page list sorting
-
-Page lists now use a modification-date and ID index for stable pagination.
-Run `php bin/console doctrine:schema:update --force` to create the index.
