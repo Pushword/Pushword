@@ -1,6 +1,5 @@
 ---
-title: 'new newsletter contacts start as prospects; personal email design needs a schema update'
-run: 'doctrine:schema:update --force'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,16 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/newsletter`
-
-## New contacts start as prospects
-
-A directly constructed `Contact` starts as `prospect` instead of `pending`.
-**For integrations that create contacts directly:** call `ContactManager::subscribe()` to request opt-in and record its evidence.
-See [importing prospects](../extension/newsletter#importing-prospects) for importing contacts without subscribing them.
-
-## Personal email design
-
-Run `php bin/console doctrine:schema:update --force` to add the audience's personal email setting and signature.
-Select **Personal email** in the audience or campaign design for transactional content with no newsletter branding or unsubscribe headers. See [email design](../extension/newsletter#email-design-and-live-preview).
