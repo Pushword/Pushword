@@ -1399,16 +1399,16 @@
         },
         {
             "name": "easycorp/easyadmin-bundle",
-            "version": "v5.7.0",
+            "version": "v5.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/EasyCorp/EasyAdminBundle.git",
-                "reference": "ce1d6a5b8b2cbabc87ca63545b83b5430d9167ad"
+                "reference": "e8c726f0273c1d2dee691f6bb19ac4a48b4e4823"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/EasyCorp/EasyAdminBundle/zipball/ce1d6a5b8b2cbabc87ca63545b83b5430d9167ad",
-                "reference": "ce1d6a5b8b2cbabc87ca63545b83b5430d9167ad",
+                "url": "https://api.github.com/repos/EasyCorp/EasyAdminBundle/zipball/e8c726f0273c1d2dee691f6bb19ac4a48b4e4823",
+                "reference": "e8c726f0273c1d2dee691f6bb19ac4a48b4e4823",
                 "shasum": ""
             },
             "require": {
@@ -1443,8 +1443,8 @@
                 "twig/twig": "^3.23"
             },
             "require-dev": {
+                "brianium/paratest": "^7.6.1",
                 "dama/doctrine-test-bundle": "^8.2",
-                "doctrine/doctrine-fixtures-bundle": "^3.4|3.5.x-dev|^4.0",
                 "league/flysystem": "^3.10",
                 "moneyphp/money": "^4.8",
                 "phpstan/extension-installer": "^1.4",
@@ -1452,17 +1452,17 @@
                 "phpstan/phpstan-phpunit": "^2.0",
                 "phpstan/phpstan-strict-rules": "^2.0",
                 "phpstan/phpstan-symfony": "^2.0",
+                "phpunit/phpunit": "^11.5.24",
                 "psr/log": "^1.0|^2.0|^3.0",
                 "symfony/browser-kit": "^6.4.32|^7.0|^8.0",
                 "symfony/css-selector": "^6.4.24|^7.0|^8.0",
                 "symfony/debug-bundle": "^6.4.27|^7.0|^8.0",
                 "symfony/dom-crawler": "^6.4.32|^7.0|^8.0",
                 "symfony/expression-language": "^6.4.32|^7.0|^8.0",
-                "symfony/phpunit-bridge": "^6.4.26|^7.0|^8.0",
                 "symfony/process": "^6.4.33|^7.0|^8.0",
                 "symfony/web-link": "^6.4.32|^7.0|^8.0",
                 "vincentlanglet/twig-cs-fixer": "^4.1",
-                "zenstruck/foundry": "^2.3"
+                "zenstruck/foundry": "^2.11"
             },
             "type": "symfony-bundle",
             "extra": {
@@ -1497,7 +1497,7 @@
             ],
             "support": {
                 "issues": "https://github.com/EasyCorp/EasyAdminBundle/issues",
-                "source": "https://github.com/EasyCorp/EasyAdminBundle/tree/v5.7.0"
+                "source": "https://github.com/EasyCorp/EasyAdminBundle/tree/v5.8.0"
             },
             "funding": [
                 {
@@ -1505,7 +1505,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-10-14T06:20:50+00:00"
+            "time": "2026-10-22T20:25:46+00:00"
         },
         {
             "name": "egulias/email-validator",
@@ -5050,16 +5050,16 @@
         },
         {
             "name": "pushword/dev-app",
-            "version": "1.0.68",
+            "version": "1.0.73",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Pushword/dev-app.git",
-                "reference": "09cd6f666cf3a07bbefd57642d68f22b0be87810"
+                "reference": "21548e68eb64f70cbd2b934b8c6f2aab5ffe8b48"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Pushword/dev-app/zipball/09cd6f666cf3a07bbefd57642d68f22b0be87810",
-                "reference": "09cd6f666cf3a07bbefd57642d68f22b0be87810",
+                "url": "https://api.github.com/repos/Pushword/dev-app/zipball/21548e68eb64f70cbd2b934b8c6f2aab5ffe8b48",
+                "reference": "21548e68eb64f70cbd2b934b8c6f2aab5ffe8b48",
                 "shasum": ""
             },
             "require": {
@@ -5100,7 +5100,7 @@
                     "type": "liberapay"
                 }
             ],
-            "time": "2026-10-19T16:04:11+00:00"
+            "time": "2026-10-22T22:24:00+00:00"
         },
         {
             "name": "sensiolabs/ansi-to-html",
@@ -13309,16 +13309,16 @@
         },
         {
             "name": "composer/semver",
-            "version": "3.5.1",
+            "version": "3.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/semver.git",
-                "reference": "528948210cc46f967a4b98e83b19e76f2b504993"
+                "reference": "9dfce66f1e97360ea5e6d3e38ab14277e4cc591e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/semver/zipball/528948210cc46f967a4b98e83b19e76f2b504993",
-                "reference": "528948210cc46f967a4b98e83b19e76f2b504993",
+                "url": "https://api.github.com/repos/composer/semver/zipball/9dfce66f1e97360ea5e6d3e38ab14277e4cc591e",
+                "reference": "9dfce66f1e97360ea5e6d3e38ab14277e4cc591e",
                 "shasum": ""
             },
             "require": {
@@ -13370,7 +13370,7 @@
             "support": {
                 "irc": "ircs://irc.libera.chat:6697/composer",
                 "issues": "https://github.com/composer/semver/issues",
-                "source": "https://github.com/composer/semver/tree/3.5.1"
+                "source": "https://github.com/composer/semver/tree/3.5.2"
             },
             "funding": [
                 {
@@ -13382,7 +13382,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-10-05T13:12:12+00:00"
+            "time": "2026-10-22T15:37:26+00:00"
         },
         {
             "name": "composer/spdx-licenses",
