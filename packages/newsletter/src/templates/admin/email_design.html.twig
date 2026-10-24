@@ -17,7 +17,7 @@
     <strong>{{ audience.name }}</strong><span>{{ site_name }}</span>
     <p>{{ 'newsletter.design.description'|trans }}</p>
   </div>
-  <div class="pw-newsletter-design" data-pw-email-preview data-viewport="mobile" data-mobile-panel="settings" data-saved-values="{{ [audience.emailLayout, audience.headerMarkdown, audience.footerMarkdown]|json_encode }}">
+  <div class="pw-newsletter-design" data-pw-email-preview data-viewport="mobile" data-mobile-panel="settings" data-saved-values="{{ [audience.emailLayout, audience.headerMarkdown, audience.footerMarkdown, audience.signatureMarkdown]|json_encode }}">
     <div class="pw-newsletter-design-switch" role="group" aria-label="{{ 'newsletter.design.view'|trans }}">
       <button type="button" class="btn btn-secondary" data-design-panel="settings" aria-controls="newsletter-design-settings" aria-pressed="true">{{ 'newsletter.design.settings'|trans }}</button>
       <button type="button" class="btn btn-secondary" data-design-panel="preview" aria-controls="newsletter-design-preview" aria-pressed="false">{{ 'newsletter.design.preview'|trans }}</button>
@@ -38,12 +38,16 @@
           {{ form_errors(design_form.emailLayout) }}
         </fieldset>
         <p class="pw-newsletter-design-preset" data-email-template-help{% if audience.emailTemplate is null %} hidden{% endif %}><i class="fa fa-lock" aria-hidden="true"></i> {{ 'newsletter.design.templateHelp'|trans }}</p>
-        <fieldset class="pw-newsletter-design-identity" data-email-editable{% if audience.emailTemplate is not null %} hidden{% endif %}>
+        <fieldset class="pw-newsletter-design-identity" data-email-editable{% if audience.emailTemplate is not null or audience.emailPersonal %} hidden{% endif %}>
           <legend>{{ 'newsletter.design.identity'|trans }}</legend>
           <p class="form-text pw-newsletter-design-tokens">{{ 'newsletter.design.tokens'|trans }} <code>%siteName%</code> = {{ site_name }} · <code>%year%</code> = {{ 'now'|date('Y') }}</p>
           {{ form_row(design_form.headerMarkdown) }}
           {{ form_row(design_form.footerMarkdown) }}
           <button type="button" class="btn btn-link" data-design-defaults data-header="{{ default_header }}" data-footer="{{ default_footer }}">{{ 'newsletter.design.defaults'|trans }}</button>
+        </fieldset>
+        <fieldset class="pw-newsletter-design-identity" data-email-personal{% if not audience.emailPersonal %} hidden{% endif %}>
+          <legend>{{ 'newsletter.design.personal'|trans }}</legend>
+          {{ form_row(design_form.signatureMarkdown) }}
         </fieldset>
         <details class="pw-newsletter-design-sample">
           <summary>{{ 'newsletter.design.sample'|trans }}</summary>

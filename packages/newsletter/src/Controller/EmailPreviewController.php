@@ -46,7 +46,7 @@ final class EmailPreviewController extends AbstractController
         }
 
         $layout = $data->getString('emailLayout');
-        $allowed = ['simple', 'framed', ''];
+        $allowed = ['simple', 'framed', 'personal', ''];
         foreach ($this->templates->choices() as $choices) {
             array_push($allowed, ...array_values($choices));
         }

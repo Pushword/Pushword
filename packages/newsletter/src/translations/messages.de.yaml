@@ -31,6 +31,11 @@ newsletter:
     unknown: Nicht angegeben
   email:
     unsubscribe: Abmelden
+  design:
+    personal: Persönliche E-Mail
+    personalHelp: Nur für Servicenachrichten. Inhalt und Signatur ohne Newsletter-Design, Abmeldelinks oder Abmelde-Header.
+    signature: Signatur
+    signatureHelp: Markdown-Signatur nur für persönliche E-Mails. Leer lassen, um nur den Inhalt zu senden.
   statistics:
     aboutActivity: "Über diese Ereignisse"
     aboutContacts: "Über diese Kontaktzahlen"

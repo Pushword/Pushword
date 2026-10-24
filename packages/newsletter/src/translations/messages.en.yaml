@@ -342,6 +342,8 @@ newsletter:
     identity: Sender identity
     layout: Layout
     mobile: Mobile
+    personal: Personal email
+    personalHelp: Service messages only. Content and signature, without newsletter branding or unsubscribe links and headers.
     presetHelp: A reusable design with its own header, footer and frame.
     preview: Live preview
     previewHelp: This is a preview, no email is sent. Email clients may render it differently.
@@ -363,6 +365,8 @@ newsletter:
     saved: Email design saved.
     savedState: All design changes saved
     settings: Design settings
+    signature: Signature
+    signatureHelp: Markdown signature used only in personal emails. Leave empty to send only the content.
     simple: Without a frame
     simpleHelp: A simple email with your header, content and footer.
     templateHelp: This design manages the header, footer and frame. Your custom text is kept for the other layouts.

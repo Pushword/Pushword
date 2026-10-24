@@ -31,6 +31,11 @@ newsletter:
     unknown: Niet opgegeven
   email:
     unsubscribe: Uitschrijven
+  design:
+    personal: Persoonlijke e-mail
+    personalHelp: Alleen serviceberichten. Inhoud en handtekening zonder nieuwsbriefopmaak, afmeldlinks of afmeldheaders.
+    signature: Handtekening
+    signatureHelp: Markdown-handtekening alleen voor persoonlijke e-mails. Laat leeg om alleen de inhoud te verzenden.
   statistics:
     aboutActivity: "Over deze gebeurtenissen"
     aboutContacts: "Over deze aantallen"

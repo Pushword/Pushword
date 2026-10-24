@@ -91,6 +91,7 @@ class AudienceCrudController extends AbstractCrudController
             $audience->emailLayout = $design->emailLayout;
             $audience->headerMarkdown = $design->headerMarkdown;
             $audience->footerMarkdown = $design->footerMarkdown;
+            $audience->signatureMarkdown = $design->signatureMarkdown;
             $entityManager->flush();
             $this->addFlash('success', 'newsletter.design.saved');
 

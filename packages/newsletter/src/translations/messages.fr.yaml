@@ -342,6 +342,8 @@ newsletter:
     identity: Identité de l'expéditeur
     layout: Mise en page
     mobile: Mobile
+    personal: Mail personnel
+    personalHelp: Messages transactionnels uniquement. Contenu et signature, sans habillage newsletter ni liens et en-têtes de désinscription.
     presetHelp: Un habillage réutilisable avec son en-tête, son pied de page et son cadre.
     preview: Aperçu en direct
     previewHelp: Aucun email n'est envoyé depuis cet aperçu. Le rendu peut varier selon la messagerie.
@@ -363,6 +365,8 @@ newsletter:
     saved: Habillage enregistré.
     savedState: Habillage enregistré
     settings: Réglages de l'habillage
+    signature: Signature
+    signatureHelp: Signature Markdown utilisée uniquement dans les mails personnels. Laissez vide pour envoyer seulement le contenu.
     simple: Sans cadre
     simpleHelp: Un email sobre avec votre en-tête, votre contenu et votre pied de page.
     templateHelp: Ce modèle gère l'en-tête, le pied de page et le cadre. Vos textes personnalisés sont conservés pour les autres mises en page.

@@ -29,7 +29,11 @@ final class EmailDesignType extends AbstractType
         $builder
             ->add('emailLayout', ChoiceType::class, [
                 'label' => 'newsletter.design.layout',
-                'choices' => ['newsletter.design.simple' => 'simple', 'newsletter.design.wrapped' => 'framed'] + $this->templates->choices(),
+                'choices' => [
+                    'newsletter.design.simple' => 'simple',
+                    'newsletter.design.wrapped' => 'framed',
+                    'newsletter.design.personal' => 'personal',
+                ] + $this->templates->choices(),
                 'expanded' => true,
             ])
             ->add('headerMarkdown', TextareaType::class, [
@@ -43,6 +47,12 @@ final class EmailDesignType extends AbstractType
                 'required' => false,
                 'attr' => ['rows' => 4],
                 'help' => 'newsletter.design.footerHelp',
+            ])
+            ->add('signatureMarkdown', TextareaType::class, [
+                'label' => 'newsletter.design.signature',
+                'required' => false,
+                'attr' => ['rows' => 4],
+                'help' => 'newsletter.design.signatureHelp',
             ])
             ->add('sampleBody', TextareaType::class, [
                 'label' => 'newsletter.design.sample',

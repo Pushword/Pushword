@@ -210,6 +210,7 @@ class CampaignCrudController extends AbstractCrudController
                     'newsletter.campaign.design.inherit' => '',
                     'newsletter.design.simple' => 'simple',
                     'newsletter.design.wrapped' => 'framed',
+                    'newsletter.design.personal' => 'personal',
                     ...$this->emailTemplates->choices(),
                 ])
                 ->renderAsNativeWidget()

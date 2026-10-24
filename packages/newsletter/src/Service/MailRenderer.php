@@ -72,6 +72,17 @@ final readonly class MailRenderer
         }
 
         $layout = $emailLayout ?? $audience->emailLayout;
+        if ('personal' === $layout) {
+            $signature = $this->designText($audience->signatureMarkdown, $host);
+
+            return $this->twig->render($this->view($audience, 'personal.email.html.twig', $sendContext), [
+                'locale' => $locale ?? $contact->locale,
+                'subject' => $this->personalize($subject, $contact),
+                'body' => $body,
+                'signature' => $this->absolutize($this->markdownParser->transform($signature), $host),
+            ]);
+        }
+
         $saved = $this->emailTemplates->saved($layout);
         $template = str_starts_with($layout, 'twig:')
             ? $this->emailTemplates->template(substr($layout, 5))
@@ -123,8 +134,14 @@ final readonly class MailRenderer
      */
     public function text(Audience $audience, Contact $contact, string $bodyMarkdown, ?string $unsubscribeUrl, ?SendContext $sendContext = null, ?string $emailLayout = null): string
     {
-        $postalAddress = null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress;
         $layout = $emailLayout ?? $audience->emailLayout;
+        if ('personal' === $layout) {
+            $signature = $this->designText($audience->signatureMarkdown, $sendContext->mainHost ?? $audience->mainHost);
+
+            return $this->personalize($bodyMarkdown, $contact).('' === $signature ? '' : "\n\n".$signature);
+        }
+
+        $postalAddress = null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress;
         $saved = $this->emailTemplates->saved($layout);
         $custom = str_starts_with($layout, 'twig:');
         $header = $custom ? '' : ($saved->headerMarkdown ?? $audience->headerMarkdown);

@@ -25,7 +25,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * RFC 8058 one-click, so unsubscribing never depends on the recipient finding
  * the link in the body — and inboxes stop treating the mail as unattributed bulk.
  *
- * Unless it is declared transactional, which drops the link and the headers
+ * Unless it uses the personal layout or is declared transactional, which drops the link and the headers
  * together: the three places the way out is offered are governed by one value,
  * the unsubscribe URL, and a null one silences all three. A mail keeping the
  * header and losing the link, or the reverse, is worse than either.
@@ -143,7 +143,9 @@ final readonly class NewsletterMailer
         // A test recipient has no persisted token, so the unsubscribe link would
         // 404. Point it at the site instead — the point is to read the body. A
         // transactional mail has no foot to proofread in the first place.
-        $unsubscribeUrl = $transactional ? null : $this->linkGenerator->base($audience).'/';
+        $unsubscribeUrl = $transactional || $audience->transactional || 'personal' === ($emailLayout ?? $audience->emailLayout)
+            ? null
+            : $this->linkGenerator->base($audience).'/';
 
         $email = $this->baseEmail($audience, $contact)
             ->subject('[TEST] '.$this->renderer->subject($subject, $contact))
@@ -156,10 +158,10 @@ final readonly class NewsletterMailer
     /** @param list<string> $untrackedUrls */
     private function send(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader, ?UtmTag $utmTag, Campaign|AutomationStep $trackedMail, ?SendContext $sendContext = null, ?string $locale = null, array $untrackedUrls = []): void
     {
-        $unsubscribeUrl = $this->isTransactional($audience, $trackedMail)
+        $emailLayout = $trackedMail instanceof Campaign ? $trackedMail->emailLayout : null;
+        $unsubscribeUrl = $this->isTransactional($audience, $trackedMail) || 'personal' === ($emailLayout ?? $audience->emailLayout)
             ? null
             : $this->linkGenerator->unsubscribeUrl($contact, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl);
-        $emailLayout = $trackedMail instanceof Campaign ? $trackedMail->emailLayout : null;
 
         $email = $this->baseEmail($audience, $contact, $sendContext)
             ->subject($this->renderer->subject($subject, $contact))

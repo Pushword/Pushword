@@ -172,7 +172,9 @@ class Automation implements IdInterface, Stringable
      */
     public function isTransactional(): bool
     {
-        return $this->transactional || true === $this->audience?->transactional;
+        return $this->transactional
+            || true === $this->audience?->transactional
+            || 'personal' === $this->audience?->emailLayout;
     }
 
     /**

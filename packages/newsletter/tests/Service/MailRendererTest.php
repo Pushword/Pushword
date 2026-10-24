@@ -47,6 +47,30 @@ final class MailRendererTest extends AbstractNewsletterTestCase
         self::assertStringNotContainsString($copyright, $renderer->html($audience, $contact, 'Subject', 'Body', null, null, null));
     }
 
+    public function testPersonalMailIgnoresNewsletterIdentityAndOccurrenceFooterWithOptionalSignature(): void
+    {
+        $audience = $this->createAudience();
+        $audience->emailLayout = 'personal';
+        $audience->postalAddress = '12 Baker Street';
+
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $renderer = self::getContainer()->get(MailRenderer::class);
+        $context = new SendContext('localhost.dev', 'mail@example.tld', 'Brand', footerMarkdown: 'Newsletter footer');
+        foreach (['', '**Robin** [Contact](/contact)'] as $signature) {
+            $audience->signatureMarkdown = $signature;
+            $html = $renderer->html($audience, $contact, 'Subject', 'Hello %name%.', 'Hidden teaser', self::UNSUBSCRIBE, null, sendContext: $context);
+            $crawler = new Crawler($html);
+            self::assertCount(0, $crawler->filter('table, hr'));
+            self::assertSame('en', $crawler->filter('html')->attr('lang'));
+            foreach (['12 Baker Street', 'Newsletter footer', 'Hidden teaser', self::UNSUBSCRIBE, '©'] as $decoration) {
+                self::assertStringNotContainsString($decoration, $html);
+            }
+
+            self::assertSame('Hello Test.'.('' === $signature ? '' : "\n\n".$signature), $renderer->text($audience, $contact, 'Hello %name%.', self::UNSUBSCRIBE, $context));
+            self::assertCount('' === $signature ? 0 : 1, $crawler->filter('a[href="https://localhost.dev/contact"]'));
+        }
+    }
+
     /** @return iterable<string, array{bool}> */
     public static function layouts(): iterable
     {

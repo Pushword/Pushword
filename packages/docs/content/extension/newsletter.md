@@ -502,6 +502,17 @@ and Twig presets supply their own. From a campaign, the shared-design link opens
 the selected saved template or the audience settings in another tab. Changes
 affect every campaign and automation that uses those settings.
 
+**Personal email** is for transactional service messages. It sends only the
+content and the audience's dedicated **Signature**, in HTML and plain text.
+The signature accepts Markdown and `%siteName%` / `%year%`; leave it empty to send
+only the content. This mode omits the newsletter header, footer, postal address,
+copyright, preview text, frame and presentation tables. It automatically removes
+the unsubscribe link and both `List-Unsubscribe` and `List-Unsubscribe-Post`
+headers, without requiring the transactional checkbox. Choose it per audience
+(including automations) or override the design for one campaign. Recipient
+eligibility, sender, Reply-To and existing link tracking settings still apply.
+Switching back restores the audience's newsletter header and footer.
+
 New audiences start with `**%siteName%**` as the header and
 `© %year% %siteName%` as the footer. These values resolve against the sender's
 site and the current year in both HTML and plain text. Existing saved designs
@@ -519,8 +530,8 @@ separately from preview freshness, and leaving the page warns before discarding
 them. A failed preview keeps the last rendering and offers **Try again**. Email
 clients may render the same HTML differently.
 
-The unsubscribe link and postal address remain automatic. An occurrence's
-`SendContext.footerMarkdown` overrides the audience footer, including an empty
+For the other layouts, the unsubscribe link and postal address remain automatic.
+An occurrence's `SendContext.footerMarkdown` overrides the audience footer, including an empty
 override. A null footer inherits the selected design; `SendContext::fromAudience`
 uses that value for saved templates.
 Sites overriding `/newsletter/email.html.twig` receive `wrapped` and `header`
@@ -543,7 +554,7 @@ newsletter:
       template: 'newsletter/letter.html.twig'
 ```
 
-Both entries appear alongside the two built-in layouts in **Email design** and
+Both entries appear alongside the three built-in layouts in **Email design** and
 **Design for this campaign**. **Newsletter → Templates** also lists these site
 designs with a read-only preview. Each entry needs its own ID and label; adding a
 file to `templates/newsletter/` alone does not add a choice. Clear the Symfony

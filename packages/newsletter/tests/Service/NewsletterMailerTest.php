@@ -79,6 +79,95 @@ final class NewsletterMailerTest extends AbstractNewsletterTestCase
         self::assertSame('Shared brand signature', $audience->footerMarkdown);
     }
 
+    /** @return iterable<string, array{string, ?string, bool}> */
+    public static function personalDesigns(): iterable
+    {
+        yield 'audience' => ['personal', null, true];
+        yield 'campaign override' => ['framed', 'personal', true];
+        yield 'campaign restores newsletter' => ['personal', 'simple', false];
+    }
+
+    #[DataProvider('personalDesigns')]
+    public function testPersonalCampaignsAndTestsHaveOnlyContentAndSignature(string $audienceLayout, ?string $campaignLayout, bool $personal): void
+    {
+        $audience = $this->createAudience();
+        $audience->emailLayout = $audienceLayout;
+        $audience->headerMarkdown = 'Newsletter header';
+        $audience->footerMarkdown = 'Newsletter copyright';
+        $audience->postalAddress = '12 Baker Street';
+        $audience->signatureMarkdown = '**Robin** at %siteName%';
+        $audience->replyTo = 'robin@example.tld';
+
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $campaign = $this->createCampaign($audience);
+        $campaign->emailLayout = $campaignLayout;
+        $campaign->bodyMarkdown = 'Hello **%name%**.';
+        $campaign->preheader = 'Newsletter preview text';
+        self::assertSame($personal, $campaign->isTransactional());
+
+        $mailer = self::getContainer()->get(NewsletterMailer::class);
+        $mailer->sendCampaign($campaign, $contact);
+        $mailer->sendTest($audience, 'Test', $campaign->bodyMarkdown, $campaign->preheader, 'test@example.tld', null, emailLayout: $campaignLayout);
+        self::assertEmailCount(2);
+        foreach ([0, 1] as $index) {
+            $email = self::getMailerMessage($index);
+            self::assertInstanceOf(Email::class, $email);
+            $html = $email->getHtmlBody() ?? '';
+            $text = $email->getTextBody() ?? '';
+            self::assertIsString($html);
+            self::assertIsString($text);
+            self::assertSame(! $personal, str_contains($html, '<table'));
+            foreach (['Newsletter header', 'Newsletter copyright', '12 Baker Street', 'Newsletter preview text', 'Unsubscribe'] as $decoration) {
+                self::assertSame(! $personal, str_contains($html, $decoration), $decoration);
+            }
+
+            self::assertSame(! $personal, str_contains($text, '12 Baker Street'));
+            self::assertSame($personal, str_contains($html, '<strong>Robin</strong> at Pushword'));
+            self::assertSame($personal, str_contains($text, '**Robin** at Pushword'));
+            self::assertSame('robin@example.tld', $email->getReplyTo()[0]->getAddress());
+            self::assertCount(1, $email->getTo());
+            self::assertEmailHtmlBodyContains($email, 'Hello <strong>Test</strong>.');
+            if ($personal) {
+                self::assertSame("Hello **Test**.\n\n**Robin** at Pushword", $text);
+                self::assertFalse($email->getHeaders()->has('List-Unsubscribe'));
+                self::assertFalse($email->getHeaders()->has('List-Unsubscribe-Post'));
+                self::assertStringNotContainsString('/newsletter/unsubscribe/', $html.$text);
+            } elseif (0 === $index) {
+                self::assertSame('<'.self::getContainer()->get(LinkGenerator::class)->unsubscribeUrl($contact).'>', $email->getHeaders()->get('List-Unsubscribe')?->getBodyAsString());
+                self::assertSame('List-Unsubscribe=One-Click', $email->getHeaders()->get('List-Unsubscribe-Post')?->getBodyAsString());
+            }
+        }
+
+        self::assertSame($audienceLayout, $audience->emailLayout);
+    }
+
+    public function testPersonalAutomationAndCampaignWithoutAudienceOmitUnsubscribeHeaders(): void
+    {
+        $audience = $this->createAudience();
+        $audience->emailLayout = 'personal';
+        $audience->signatureMarkdown = 'Robin';
+
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
+        self::assertTrue($automation->isTransactional());
+        $campaign = new Campaign();
+        $campaign->subject = 'Hello';
+        $campaign->bodyMarkdown = 'Body';
+
+        $mailer = self::getContainer()->get(NewsletterMailer::class);
+        $mailer->sendCampaign($campaign, $contact);
+        $mailer->sendStep($automation->getOrderedSteps()[0], $contact, 'Welcome', 'Body', SendContext::fromAudience($audience));
+        self::assertEmailCount(2);
+        foreach ([0, 1] as $index) {
+            $email = self::getMailerMessage($index);
+            self::assertInstanceOf(Email::class, $email);
+            self::assertFalse($email->getHeaders()->has('List-Unsubscribe'));
+            self::assertFalse($email->getHeaders()->has('List-Unsubscribe-Post'));
+            self::assertEmailTextBodyContains($email, "Body\n\nRobin");
+            self::assertEmailHtmlBodyNotContains($email, '©');
+        }
+    }
+
     public function testCampaignsAndAutomationStepsUseTheAudienceDesign(): void
     {
         $audience = $this->createAudience();

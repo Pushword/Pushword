@@ -318,6 +318,80 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
         self::assertSame('saved:'.$template->id, $stored->emailLayout);
     }
 
+    public function testPersonalDesignPreviewsAndSavesTheSignatureAndCanBeOverriddenPerCampaign(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->audience();
+        $originalHeader = $audience->headerMarkdown;
+        $originalFooter = $audience->footerMarkdown;
+        $id = $audience->id;
+        $url = '/admin/newsletter/audience/'.$id.'/email-design';
+        $crawler = $client->request(Request::METHOD_GET, $url);
+        $form = $crawler->filter('form[name="email_design"]')->form();
+        $form['email_design[emailLayout]'] = 'personal';
+        $form['email_design[signatureMarkdown]'] = '**Robin** [Contact](/contact)';
+        $form['email_design[sampleBody]'] = 'Hello %name%.';
+        $values = $form->getPhpValues();
+        $client->request(Request::METHOD_POST, $url, $values + ['preview' => '1']);
+        self::assertResponseIsSuccessful();
+        $html = $this->previewHtml($client);
+        self::assertStringContainsString('Hello Alex.', $html);
+        self::assertStringContainsString('<strong>Robin</strong>', $html);
+        self::assertStringNotContainsString('<table', $html);
+        self::assertStringNotContainsString('#unsubscribe', $html);
+        self::assertStringNotContainsString('©', $html);
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Audience::class, $id);
+        self::assertInstanceOf(Audience::class, $stored);
+        self::assertSame('simple', $stored->emailLayout);
+        self::assertSame('', $stored->signatureMarkdown);
+
+        $client->request(Request::METHOD_POST, $url, $values);
+        self::assertResponseRedirects($url);
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Audience::class, $id);
+        self::assertInstanceOf(Audience::class, $stored);
+        self::assertSame('personal', $stored->emailLayout);
+        self::assertSame('**Robin** [Contact](/contact)', $stored->signatureMarkdown);
+        self::assertSame($originalFooter, $stored->footerMarkdown);
+        self::assertFalse($stored->transactional);
+        $crawler = $client->request(Request::METHOD_GET, $url);
+        self::assertSelectorExists('[data-email-editable][hidden]');
+        self::assertSelectorExists('[data-email-personal]:not([hidden])');
+        $saved = json_decode($crawler->filter('[data-saved-values]')->attr('data-saved-values') ?? '', true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($saved);
+        self::assertCount(4, $saved);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
+        self::assertSelectorExists('select[name="Campaign[emailLayout]"] option[value="personal"]');
+        $token = $crawler->filter('[data-preview-token]')->attr('data-preview-token');
+        foreach (['', 'simple', 'personal'] as $layout) {
+            $client->request(Request::METHOD_POST, '/admin/newsletter/campaign-preview', [
+                '_preview_token' => $token,
+                'Campaign' => ['audience' => (string) $id, 'emailLayout' => $layout, 'subject' => 'Subject', 'bodyMarkdown' => 'Campaign body'],
+            ]);
+            self::assertResponseIsSuccessful();
+            $html = $this->previewHtml($client);
+            self::assertSame('simple' !== $layout, str_contains($html, '<strong>Robin</strong>'));
+            self::assertSame('simple' === $layout, str_contains($html, '#unsubscribe'));
+        }
+
+        $crawler = $client->request(Request::METHOD_GET, $url);
+        $form = $crawler->filter('form[name="email_design"]')->form();
+        $form['email_design[emailLayout]'] = 'simple';
+        $client->submit($form);
+        self::assertResponseRedirects($url);
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Audience::class, $id);
+        self::assertInstanceOf(Audience::class, $stored);
+        self::assertSame('simple', $stored->emailLayout);
+        self::assertFalse($stored->emailPersonal);
+        self::assertSame('**Robin** [Contact](/contact)', $stored->signatureMarkdown);
+        self::assertSame($originalHeader, $stored->headerMarkdown);
+        self::assertSame($originalFooter, $stored->footerMarkdown);
+        self::assertEmailCount(0);
+    }
+
     public function testPreviewEndpointsRequireAnEditorAndAValidToken(): void
     {
         $client = self::createClient();

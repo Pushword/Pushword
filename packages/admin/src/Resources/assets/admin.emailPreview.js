@@ -53,7 +53,7 @@ export function initEmailPreview(root = document) {
     function designValues() {
       const data = new FormData(form)
       const prefix = kind === 'template' ? 'EmailTemplate' : 'email_design'
-      const fields = kind === 'template' ? ['name', 'wrapped', 'headerMarkdown', 'footerMarkdown'] : ['emailLayout', 'headerMarkdown', 'footerMarkdown']
+      const fields = kind === 'template' ? ['name', 'wrapped', 'headerMarkdown', 'footerMarkdown'] : ['emailLayout', 'headerMarkdown', 'footerMarkdown', 'signatureMarkdown']
       return JSON.stringify(fields.map((name) => data.get(`${prefix}[${name}]`)))
     }
 
@@ -61,7 +61,8 @@ export function initEmailPreview(root = document) {
       if (kind === 'audience') {
         const layout = form.querySelector('[name="email_design[emailLayout]"]:checked')?.value || ''
         const custom = layout.startsWith('twig:') || layout.startsWith('saved:')
-        panel.querySelector('[data-email-editable]').hidden = custom
+        panel.querySelector('[data-email-editable]').hidden = custom || layout === 'personal'
+        panel.querySelector('[data-email-personal]').hidden = layout !== 'personal'
         panel.querySelector('[data-email-template-help]').hidden = !custom
       }
       dirty = !['campaign', 'automation'].includes(kind) && designValues() !== savedValues

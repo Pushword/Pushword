@@ -105,9 +105,16 @@ class Audience implements IdInterface, Stringable
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
     public ?string $emailTemplate = null;
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    public bool $emailPersonal = false;
+
     /** The admin choice combines the built-in layouts and registered Twig templates. */
     public string $emailLayout {
         get {
+            if ($this->emailPersonal) {
+                return 'personal';
+            }
+
             if (null !== $this->emailTemplate) {
                 return str_starts_with($this->emailTemplate, 'saved:') ? $this->emailTemplate : 'twig:'.$this->emailTemplate;
             }
@@ -115,6 +122,7 @@ class Audience implements IdInterface, Stringable
             return $this->emailWrapped ? 'framed' : 'simple';
         }
         set(string $value) {
+            $this->emailPersonal = 'personal' === $value;
             $this->emailWrapped = 'framed' === $value;
             $this->emailTemplate = match (true) {
                 str_starts_with($value, 'twig:') => substr($value, 5),
@@ -131,6 +139,11 @@ class Audience implements IdInterface, Stringable
 
     #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
     public string $footerMarkdown = self::DEFAULT_EMAIL_FOOTER {
+        set(?string $value) => (string) $value;
+    }
+
+    #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
+    public string $signatureMarkdown = '' {
         set(?string $value) => (string) $value;
     }
 

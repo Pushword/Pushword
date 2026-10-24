@@ -353,8 +353,14 @@ body[data-newsletter] .pw-newsletter-sequence .accordion-item {
   margin-block-start: 0.25rem;
 }
 
-.pw-newsletter-layout-thumbnail[data-layout='simple'] {
+.pw-newsletter-layout-thumbnail[data-layout='simple'],
+.pw-newsletter-layout-thumbnail[data-layout='personal'] {
   background: var(--bs-body-bg);
+}
+
+.pw-newsletter-layout-thumbnail[data-layout='personal'] b,
+.pw-newsletter-layout-thumbnail[data-layout='personal'] small {
+  display: none;
 }
 
 .pw-newsletter-layout-thumbnail[data-layout='preset'] b {

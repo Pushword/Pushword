@@ -548,7 +548,9 @@ class Campaign implements IdInterface, Stringable
      */
     public function isTransactional(): bool
     {
-        return $this->transactional || true === $this->audience?->transactional;
+        return $this->transactional
+            || true === $this->audience?->transactional
+            || 'personal' === ($this->emailLayout ?? $this->audience?->emailLayout);
     }
 
     public function incrementSent(): self
