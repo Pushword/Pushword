@@ -16,6 +16,7 @@ use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\VideoBuilder;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -37,6 +38,8 @@ final class RepurposeStudioControllerTest extends WebTestCase
     private EntityManagerInterface $em;
 
     private string $testUserEmail = '';
+
+    private ?int $motionMediaId = null;
 
     private const string HOST = 'repurpose-studio-test.example';
 
@@ -69,6 +72,13 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $em = $container->get('doctrine.orm.default_entity_manager');
         foreach ($em->getRepository(SocialPost::class)->findBy(['host' => self::HOST]) as $post) {
             $em->remove($post);
+        }
+
+        if (null !== $this->motionMediaId) {
+            $media = $em->find(Media::class, $this->motionMediaId);
+            if (null !== $media) {
+                $em->remove($media);
+            }
         }
 
         /** @var class-string<User> $userClass */
@@ -149,11 +159,22 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertSame('A brand new headline', $firstSlide['title']);
     }
 
-    public function testMotionFixtureOpensWithAPlayableVideoAndStaticSlides(): void
+    public function testMotionExampleOpensWithAPlayableVideoAndStaticSlides(): void
     {
-        $this->ensureMediaFileExists('repurpose-nord.mp4');
-        $post = $this->em->getRepository(SocialPost::class)->findOneBy(['host' => 'localhost.dev', 'page' => 'standalone/motion-nord']);
-        self::assertInstanceOf(SocialPost::class, $post);
+        $filename = 'studio-motion-nord.mp4';
+        new Filesystem()->copy(\dirname(__DIR__, 3).'/dev-app/media~/repurpose-nord.mp4', $this->getMediaDir().'/'.$filename);
+        $media = new Media()
+            ->setFileName($filename)
+            ->setMimeType('video/mp4')
+            ->setDimensions([1080, 1920])
+            ->setProjectDir(self::getContainer()->getParameter('kernel.project_dir'))
+            ->setStoreIn($this->getMediaDir())
+            ->setHash();
+        $this->em->persist($media);
+        /** @var array<string, mixed> $spec */
+        $spec = json_decode((string) file_get_contents(__DIR__.'/../../examples/nord/spec.json'), true, flags: \JSON_THROW_ON_ERROR);
+        $post = $this->persistPost([...$spec, 'video' => $filename]);
+        $this->motionMediaId = $media->id;
         $carousel = new CarouselFactory()->fromArray($post->spec);
         self::assertCount(0, self::getContainer()->get(ValidatorInterface::class)->validate($carousel));
 
@@ -161,14 +182,14 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('#rp-slide-preview');
         self::assertSelectorExists('#rp-video-preview video[controls][playsinline]');
-        self::assertStringContainsString('repurpose-nord.mp4', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString($filename, (string) $this->client->getResponse()->getContent());
 
         $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/preview', $post->spec);
         self::assertResponseIsSuccessful();
         self::assertIsArray($body['slides']);
         self::assertCount(5, $body['slides']);
         self::assertIsArray($body['video']);
-        self::assertSame('repurpose-nord.mp4', $body['video']['name']);
+        self::assertSame($filename, $body['video']['name']);
         self::assertIsString($body['video']['url']);
 
         $this->client->request(Request::METHOD_GET, $body['video']['url'], server: ['HTTP_RANGE' => 'bytes=0-31']);
@@ -665,11 +686,12 @@ final class RepurposeStudioControllerTest extends WebTestCase
         return 'data:image/png;base64,'.base64_encode($bytes);
     }
 
-    private function persistPost(): SocialPost
+    /** @param array<string, mixed>|null $spec */
+    private function persistPost(?array $spec = null): SocialPost
     {
         $post = new SocialPost();
         $post->host = self::HOST;
-        $post->spec = $this->validSpec();
+        $post->spec = $spec ?? $this->validSpec();
 
         $this->em->persist($post);
         $this->em->flush();
