@@ -61,10 +61,14 @@ final class TestScriptTest extends TestCase
             'bin/yarn' => "#!/bin/sh\nexit 0\n",
             'bin/npm' => <<<'SH'
                 #!/bin/sh
+                js_package=$(basename "$PWD")
                 if [ -n "${STUB_JS_CALLS:-}" ]; then
-                    basename "$PWD" >> "$STUB_JS_CALLS"
+                    echo "$js_package" >> "$STUB_JS_CALLS"
                 fi
-                exit "${STUB_NPM_EXIT:-0}"
+                if [ "$js_package" = 'js-helper' ]; then
+                    exit "${STUB_NPM_EXIT:-0}"
+                fi
+                exit 0
                 SH,
             'bin/node' => <<<'SH'
                 #!/bin/sh
@@ -153,7 +157,7 @@ final class TestScriptTest extends TestCase
     /** @return iterable<string, array{int, int, int}> */
     public static function javascriptExitCodes(): iterable
     {
-        yield 'npm suite fails' => [7, 0, 7];
+        yield 'first npm suite fails, later suites pass' => [7, 0, 7];
         yield 'repurpose Node suite fails' => [0, 5, 5];
     }
 
