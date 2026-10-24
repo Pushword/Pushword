@@ -273,6 +273,65 @@ it('keeps edits in different blocks separate and restores the edited selection',
   expect(caretText()).toBe('twoB')
 })
 
+async function restoredBlockSelection() {
+  const f = fixture([paragraph('a', 'one'), paragraph('b', 'two')])
+  await f.undo.initialize()
+  f.type('!')
+  await f.undo.flush()
+  f.focus(1)
+  f.editor.blocks.getById('b').holder.classList.add('ce-block--selected')
+  f.holder.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+  f.editor.blocks.move(0, 1)
+  await f.undo.flush()
+  await f.undo.undo()
+  await f.undo.redo()
+  expect(f.holder.querySelectorAll('.ce-block--selected')).toHaveLength(1)
+  return f
+}
+
+it.each([
+  { target: 'same block', index: 0 },
+  { target: 'another block', index: 1 },
+  { target: 'outside editor', index: null },
+])(
+  'ends restored block selection on a pointer action in $target', async ({ index }) => {
+    const f = await restoredBlockSelection()
+    const element = index === null ? document.body : f.focus(index)
+    element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    expect(f.holder.querySelectorAll('.ce-block--selected')).toHaveLength(0)
+  },
+)
+
+it.each(['Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', 'Tab', 'Enter'])(
+  'ends restored block selection on %s', async (key) => {
+    const f = await restoredBlockSelection()
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+    expect(f.holder.querySelectorAll('.ce-block--selected')).toHaveLength(0)
+  },
+)
+
+it.each(['Backspace', 'Delete', 'x', 'Shift', 'Control'])(
+  'retains restored block selection for %s', async (key) => {
+    const f = await restoredBlockSelection()
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+    expect(f.holder.querySelectorAll('.ce-block--selected')).toHaveLength(1)
+  },
+)
+
+it('clears restored block highlights before restoring a text selection', async () => {
+  const f = await restoredBlockSelection()
+  await f.undo.undo()
+  await f.undo.undo()
+  expect(f.holder.querySelectorAll('.ce-block--selected')).toHaveLength(0)
+  expect(caretText()).toBe('one')
+})
+
+it.each(['clear', 'destroy'] as const)('clears restored block selection on history %s', async (method) => {
+  const f = await restoredBlockSelection()
+  await f.undo[method]()
+  expect(f.holder.querySelectorAll('.ce-block--selected')).toHaveLength(0)
+})
+
 it('serializes rapid keyboard undo and redo even while focus is temporarily on the body', async () => {
   const f = fixture([
     paragraph('a', 'one'),

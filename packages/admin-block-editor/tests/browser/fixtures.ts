@@ -10,7 +10,7 @@ const directory = join(tmpdir(), 'com.github.pushword.pushword/tests', process.e
 async function waitForEditor(page: Page): Promise<void> {
   await page.waitForFunction(() => {
     const holder = document.querySelector<HTMLElement>('.editorjs-holder')
-    return holder && window.editors?.[holder.id] && !document.querySelector('[data-pw-baseline-pending]')
+    return holder && window.editors?.[holder.id]?.blocks && !document.querySelector('[data-pw-baseline-pending]')
   })
 }
 

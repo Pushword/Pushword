@@ -66,6 +66,7 @@ export class Undo {
   private composing = false
   private commands = 0
   private groupClosed = true
+  private restoredBlockSelection = false
   private lastSelection: EditorSelection | null = null
   private action: Action | null = null
 
@@ -101,6 +102,7 @@ export class Undo {
 
   /** Baseline the actual rendered blocks; a publication export can omit empty ones. */
   initialize(_initial?: OutputData | OutputBlockData[]): Promise<void> {
+    this.clearRestoredBlockSelection()
     const revision = ++this.revision
     this.observer.pause()
     GroupRegistry.flushPending()
@@ -145,6 +147,7 @@ export class Undo {
   }
 
   destroy(): void {
+    this.clearRestoredBlockSelection()
     this.destroyed = true
     this.revision++
     this.observer.destroy()
@@ -243,12 +246,14 @@ export class Undo {
           direction === 'undo' ? item.beforeSelection : item.afterSelection
         this.applying = true
         this.observer.pause()
+        this.clearRestoredBlockSelection()
         const scroll = { x: window.scrollX, y: window.scrollY }
         // Inline tools retain DOM ranges and anchors belonging to the old block.
         this.editor.inlineToolbar.close()
         await applyState(this.editor, this.current, state)
         window.scrollTo({ left: scroll.x, top: scroll.y, behavior: 'instant' })
         await restoreSelection(this.editor, this.holder, selection)
+        this.restoredBlockSelection = Boolean(selection?.blocks?.length)
         this.capture.reset()
         this.current = state
         this.position += direction === 'undo' ? -1 : 1
@@ -270,6 +275,15 @@ export class Undo {
       kind,
       time: performance.now(),
       selection: captureSelection(this.holder) ?? this.lastSelection,
+    }
+  }
+
+  /** Restored highlights bypass Editor.js' cached block selection and its cleanup. */
+  private clearRestoredBlockSelection(): void {
+    if (!this.restoredBlockSelection) return
+    this.restoredBlockSelection = false
+    for (const block of this.holder.querySelectorAll('.ce-block--selected')) {
+      block.classList.remove('ce-block--selected')
     }
   }
 
@@ -305,6 +319,10 @@ export class Undo {
           event.stopImmediatePropagation()
           void this.request(direction)
         } else if (inside) {
+          if ([
+            'Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+            'Home', 'End', 'PageUp', 'PageDown', 'Tab', 'Enter',
+          ].includes(event.key)) this.clearRestoredBlockSelection()
           this.begin('structure')
         }
       },
@@ -340,6 +358,7 @@ export class Undo {
       },
       options,
     )
+    document.addEventListener('pointerdown', () => this.clearRestoredBlockSelection(), options)
     this.holder.addEventListener('pointerdown', () => this.begin('structure'), options)
     this.holder.addEventListener('paste', () => this.begin('insertFromPaste'), options)
     this.holder.addEventListener('cut', () => this.begin('deleteByCut'), options)
