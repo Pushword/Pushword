@@ -81,14 +81,17 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $this->seed();
 
-        foreach (['audience', 'contact', 'campaign', 'template', 'campaign-recipient', 'automation', 'automation-delivery'] as $section) {
+        foreach (['audience', 'contact', 'campaign', 'campaigns', 'template', 'campaign-recipient', 'automation', 'automation-delivery'] as $section) {
             $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section);
             self::assertSame(200, $client->getResponse()->getStatusCode(), $section.' index');
             self::assertCount(7, $crawler->filter('.pw-newsletter-nav a'));
             $viewport = $crawler->filter('meta[name="viewport"]')->attr('content') ?? '';
             self::assertStringNotContainsString('user-scalable=no', $viewport);
             self::assertStringNotContainsString('maximum-scale=1', $viewport);
-            $activeSection = 'campaign-recipient' === $section ? 'campaign' : $section;
+            $activeSection = match ($section) {
+                'campaign', 'campaign-recipient' => 'campaigns',
+                default => $section,
+            };
             self::assertStringEndsWith(
                 '/admin/newsletter/'.$activeSection,
                 $crawler->filter('.pw-newsletter-nav a[aria-current="page"]')->attr('href') ?? '',

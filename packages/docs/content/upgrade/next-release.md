@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'campaigns open a shared multi-source catalogue'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/newsletter`
+
+## Campaign navigation
+
+**Newsletter → Campaigns** now opens the multi-source catalogue; **Manage in Pushword** opens the native CRUD list.
+**Sites overriding newsletter navigation:** link the campaign entry to `admin_newsletter_campaign_catalogue`. Existing CRUD and statistics routes remain available.
+Use `CollectCampaignIndex` to add cached external metadata, navigation actions and source availability notices. See the [extension contract](../extension/newsletter#multi-source-campaign-index).

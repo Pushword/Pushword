@@ -1,4 +1,18 @@
 newsletter:
+  catalogue:
+    actions: Azioni
+    allSources: Tutte le fonti
+    createNative: Crea in Pushword
+    empty: Nessuna campagna da visualizzare.
+    filters: Filtra le campagne
+    manageNative: Gestisci in Pushword
+    search: Cerca
+    sentAt: Inviata il
+    source: Fonte
+    statusArchived: Archiviata
+    statusPaused: In pausa
+    timezone: Orari nel fuso %timezone%.
+    unknown: Non disponibile
   email:
     unsubscribe: Annulla iscrizione
   statistics:

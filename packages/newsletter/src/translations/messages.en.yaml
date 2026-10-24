@@ -160,6 +160,20 @@ newsletter:
     translations:
       invalidJson: Translations must be a JSON object keyed by locale.
       invalidLocale: 'Translation "%locale%" must be an object of subject, preheader and bodyMarkdown.'
+  catalogue:
+    actions: Actions
+    allSources: All sources
+    createNative: Create in Pushword
+    empty: No campaign to display.
+    filters: Filter campaigns
+    manageNative: Manage in Pushword
+    search: Search
+    sentAt: Sent at
+    source: Source
+    statusArchived: Archived
+    statusPaused: Paused
+    timezone: Times shown in %timezone%.
+    unknown: Not provided
   confirm:
     body: Thank you for signing up! To start receiving our emails, confirm your email address below.
     button: Confirm my subscription

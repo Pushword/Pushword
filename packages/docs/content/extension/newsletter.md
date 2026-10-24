@@ -1060,6 +1060,59 @@ canonical base URL before sending.
 Attribution is aggregate and records nothing per person; per-reader clicks are
 the next section.
 
+## Multi-source campaign index
+
+**Newsletter → Campaigns** opens a read-only catalogue at
+`/admin/newsletter/campaigns`. Filter by source, status or subject/audience text.
+Scheduled and sent dates use the editorial timezone; missing values stay unknown.
+Use **Create in Pushword** or **Manage in Pushword** for the native campaign editor,
+bulk actions and delivery controls. Existing CRUD routes remain available.
+
+An application can add another tool's cached campaign metadata through
+`Pushword\Newsletter\Event\CollectCampaignIndex`. Pushword collects all native
+campaigns first, without loading their bodies. Each item has an opaque string ID
+and a lowercase source identifier (`[a-z][a-z0-9_-]*`); its unique key is `source:id`.
+Duplicate keys are rejected, so two tools can both have campaign `42`.
+
+```php
+namespace App\EventListener;
+
+use Pushword\Newsletter\Event\CampaignIndexItem;
+use Pushword\Newsletter\Event\CollectCampaignIndex;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+
+#[AsEventListener]
+final class ExternalCampaignIndexListener
+{
+    public function __invoke(CollectCampaignIndex $index): void
+    {
+        $index->add(new CampaignIndexItem(
+            source: 'external',
+            id: '42',
+            subject: 'Autumn news',
+            status: 'draft',
+            actions: ['Open in source' => 'https://example.org/campaign/42'],
+        ));
+        $index->creationActions['Create in source'] = 'https://example.org/campaign/new';
+        $index->notices['external'] = 'Campaign cache last synchronized yesterday.';
+    }
+}
+```
+
+Read your application's cache in the listener, not the provider's API. Always add
+an availability notice when that cache is missing, stale or retained after a failed
+refresh, including when it contains no campaigns. A missing cache is not evidence
+of zero campaigns. Creation links remain visible for empty sources.
+
+`CampaignIndexItem` also accepts nullable `scheduledAt`/`sentAt` (`DateTimeImmutable`)
+and `audience`. Unknown status or dates are `null`; external statuses such as
+`paused` and `archived` do not change Pushword's delivery state machine. Listeners
+may enrich native navigation through `$index->items['pushword:42']->actions`.
+Action labels map to HTTP(S) URLs or root-relative paths, validated after listeners.
+Use links to the owning tool and existing reports: this catalogue imports no
+content, computes no cross-provider statistics and delegates no sending.
+The native statistics controller is unchanged.
+
 ## Statistics
 
 Open **Newsletter → Statistics** for campaign results, filtered by audience and
