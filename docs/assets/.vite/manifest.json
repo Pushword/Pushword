@@ -1,0 +1,17 @@
+{
+  "app.css": {
+    "file": "tw.css",
+    "name": "tw",
+    "names": [
+      "tw.css"
+    ],
+    "src": "app.css",
+    "isEntry": true
+  },
+  "app.js": {
+    "file": "app.js",
+    "name": "app",
+    "src": "app.js",
+    "isEntry": true
+  }
+}
