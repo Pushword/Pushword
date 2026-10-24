@@ -9,6 +9,11 @@
   contain: inline-size;
 }
 
+/* Floating editor controls must escape open fieldsets in every editing form. */
+.form-fieldset-body.show:not(.collapsing):has(.editorjs-holder) {
+  overflow: visible;
+}
+
 /* Source controls remain secondary to writing, with visible names and stable targets. */
 .pw-editor-modes {
   display: flex;

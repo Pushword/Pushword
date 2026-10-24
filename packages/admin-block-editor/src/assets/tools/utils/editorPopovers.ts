@@ -13,6 +13,15 @@ const inlineToolNames: Record<string, string> = {
 
 let started = false
 
+function fitPopover(panel: HTMLElement): void {
+  if (!panel.offsetHeight) return
+  panel.style.translate = 'none'
+  const rect = panel.getBoundingClientRect()
+  const x = Math.max(8 - rect.left, Math.min(0, innerWidth - 8 - rect.right))
+  const y = Math.max(8 - rect.top, Math.min(0, innerHeight - 8 - rect.bottom))
+  panel.style.translate = `${x}px ${y}px`
+}
+
 export function setupEditorPopovers(labels: Record<string, string> = {}): void {
   if (started) return
   started = true
@@ -103,14 +112,17 @@ export function setupEditorPopovers(labels: Record<string, string> = {}): void {
     popovers.forEach((popover) => {
       if (!popover.matches('.ce-popover--opened')) return
       const panel = popover.querySelector<HTMLElement>(':scope > .ce-popover__container')
-      if (!panel?.offsetHeight) return
-      panel.style.translate = 'none'
-      const rect = panel.getBoundingClientRect()
-      const x = Math.max(8 - rect.left, Math.min(0, innerWidth - 8 - rect.right))
-      const y = Math.max(8 - rect.top, Math.min(0, innerHeight - 8 - rect.bottom))
-      panel.style.translate = `${x}px ${y}px`
+      if (panel) fitPopover(panel)
     })
   }
+
+  window.addEventListener('resize', () => {
+    document
+      .querySelectorAll<HTMLElement>(
+        '.ce-popover--opened > .ce-popover__container, .tc-popover--opened',
+      )
+      .forEach(fitPopover)
+  })
 
   refreshPopovers(document.body)
   const observer = new MutationObserver((mutations) => {

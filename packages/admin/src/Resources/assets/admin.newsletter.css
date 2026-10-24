@@ -203,6 +203,10 @@ body[data-newsletter] .pw-newsletter-sequence .accordion-item {
   overflow: hidden;
 }
 
+.pw-newsletter-sequence .form-fieldset-body > .row {
+  min-inline-size: 0;
+}
+
 @media (max-width: 767.98px) {
   .pw-newsletter-nav {
     gap: 0.25rem;
@@ -581,7 +585,7 @@ body[data-newsletter] .datagrid .dropdown-toggle[role='button'] {
   .pw-newsletter-design-switch {
     display: flex;
     position: sticky;
-    inset-block-start: 0;
+    inset-block-start: var(--pw-newsletter-header-offset, 0px);
     z-index: 5;
     padding-block: 0.5rem;
     background: var(--bs-body-bg);
@@ -698,11 +702,6 @@ body[data-newsletter] .pw-newsletter-composer .form-fieldset-header {
 
 body[data-newsletter] .pw-newsletter-composer .form-fieldset-body {
   padding: 0;
-}
-
-/* Editor menus must be able to extend over the adjacent email preview. */
-body[data-newsletter] .pw-newsletter-composer .form-fieldset-body.show:not(.collapsing) {
-  overflow: visible;
 }
 
 body[data-newsletter] .pw-newsletter-composer .form-group {
@@ -845,7 +844,7 @@ body[data-newsletter] :is(.form-fieldset-body, .form-group)[hidden] {
   .pw-newsletter-composer .pw-newsletter-design-switch {
     display: flex;
     position: sticky;
-    inset-block-start: 0;
+    inset-block-start: var(--pw-newsletter-header-offset, 0px);
     z-index: 5;
     padding-block: 0.5rem;
     background: var(--bs-body-bg);

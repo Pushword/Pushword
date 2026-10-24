@@ -42,6 +42,107 @@ async function selectText(page: Page): Promise<void> {
   ).toBeVisible()
 }
 
+for (const form of ['page', 'snippet']) {
+  test(`${form} link options escape the fieldset and remain clickable over settings`, async ({
+    editorPage: page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    if (form === 'snippet') {
+      await page.goto('/admin/snippet/new')
+      await page.waitForFunction(() => {
+        const holder = document.querySelector<HTMLElement>('.editorjs-holder')
+        return holder && window.editors?.[holder.id]?.blocks
+      })
+    }
+    await render(page, [
+      {
+        type: 'paragraph',
+        data: { text: 'Link' },
+        tunes: { textAlign: 'right' },
+      },
+    ])
+    await selectText(page)
+    await page
+      .locator('.ce-popover--inline.ce-popover--opened')
+      .getByRole('button', { name: 'Link', exact: true })
+      .click()
+    const options = page.locator('.link-options-wrapper')
+    await expect(options).toBeVisible()
+    await expect
+      .poll(() =>
+        options.evaluate((el) => {
+          const rect = el.getBoundingClientRect()
+          const fieldset = el.closest('.form-fieldset-body')!.getBoundingClientRect()
+          const x = fieldset.right + 8
+          return (
+            x < rect.right &&
+            el.contains(document.elementFromPoint(x, rect.top + rect.height / 2))
+          )
+        }),
+      )
+      .toBe(true)
+  })
+}
+
+test('open link and table menus stay within the viewport after resizing', async ({
+  editorPage: page,
+}) => {
+  for (const tool of ['link', 'table']) {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await render(page, [
+      {
+        type: 'paragraph',
+        data: { text: Array(20).fill('Content before the menu.').join('<br>') },
+      },
+      { type: 'paragraph', data: { text: 'Resize while editing this link.' } },
+      { type: 'table', data: { content: [['First column', 'Last column']] } },
+    ])
+    let menu: Locator
+    if (tool === 'link') {
+      const paragraph = page.locator('.ce-paragraph').last()
+      await paragraph.scrollIntoViewIfNeeded()
+      await paragraph.focus()
+      await paragraph.evaluate((el) => {
+        const range = document.createRange()
+        range.selectNodeContents(el)
+        const selection = window.getSelection()!
+        selection.removeAllRanges()
+        selection.addRange(range)
+      })
+      await paragraph.dispatchEvent('mouseup')
+      await page.getByRole('button', { name: 'Link', exact: true }).click()
+      menu = page.locator(
+        '.ce-popover__container:has(> .ce-popover__items .link-options-wrapper)',
+      )
+    } else {
+      const cell = page.locator('.tc-cell').first()
+      await cell.scrollIntoViewIfNeeded()
+      await cell.click()
+      await cell.hover()
+      await page.getByRole('button', { name: 'Column options', exact: true }).click()
+      menu = page.locator('.tc-toolbox--column .tc-popover--opened')
+    }
+    await expect(menu).toBeVisible()
+    for (const size of [
+      { width: 800, height: 600 },
+      { width: 1024, height: 300 },
+      { width: 375, height: 568 },
+    ]) {
+      await page.setViewportSize(size)
+      await insideViewport(menu)
+      await expect
+        .poll(() =>
+          menu.evaluate((el) => {
+            const rect = el.getBoundingClientRect()
+            return el.contains(document.elementFromPoint(rect.right - 8, rect.bottom - 8))
+          }),
+        )
+        .toBe(true)
+    }
+    await page.keyboard.press('Escape')
+  }
+})
+
 test('block settings keep labels, alignment state and a translated deletion confirmation', async ({
   editorPage: page,
 }) => {

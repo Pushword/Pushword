@@ -3,6 +3,15 @@ export function initEmailPreview(root = document) {
     if (panel.dataset.initialized) return
     panel.dataset.initialized = 'true'
 
+    const header = document.querySelector('body:is(.ea-edit, .ea-new) .content-header')
+    if (header && panel.querySelector('[data-design-panel]')) {
+      const updateHeaderOffset = () => {
+        panel.style.setProperty('--pw-newsletter-header-offset', `calc(${header.offsetHeight}px + var(--ea-sp-8))`)
+      }
+      new ResizeObserver(updateHeaderOffset).observe(header)
+      updateHeaderOffset()
+    }
+
     panel.querySelectorAll('[data-preview-width]').forEach((button) => {
       button.addEventListener('click', () => {
         panel.dataset.viewport = button.dataset.previewWidth
