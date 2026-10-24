@@ -142,6 +142,8 @@ test('empty image: handle and Move up work before and after filling and removing
     await expect(block.locator('.image-tool--filled')).toBeVisible()
     await expect(block.locator('.image-tool__caption')).toHaveText(caption)
     await expectHandleBeside(page, block)
+    // Enter the caption as a user would, closing the move menu and its block selection.
+    await block.locator('.image-tool__caption').click()
     await block.locator('.image-tool__caption').fill('Edited caption')
     expect((await savedBlocks(page))[0]!.data).toEqual({ media: 'handle-test.svg', caption: 'Edited caption' })
     await block.locator('.media-tool__delete').click()
