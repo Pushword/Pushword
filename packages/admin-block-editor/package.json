@@ -19,7 +19,7 @@
     "@types/node": "^24.19.1",
     "autoprefixer": "^10.4",
     "editorjs-drag-drop": "^1.1",
-    "happy-dom": "^20.9.0",
+    "happy-dom": "^21.0.4",
     "jsdom": "^29.1.1",
     "monaco-editor": "~0.57.0",
     "postcss": "^8.5.29",
