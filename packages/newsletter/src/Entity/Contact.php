@@ -71,20 +71,20 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
         set(?string $value) => trim((string) $value);
     }
 
-    /** Empty only until the first opt-in: the audience's host decides it, as a page's host decides a page's. */
+    /** Empty only until registration: the audience's host decides it, as a page's host decides a page's. */
     #[ORM\Column(type: Types::STRING, length: 8)]
     public string $locale = '' {
         set(?string $value) => trim((string) $value);
     }
 
     #[ORM\Column(type: Types::STRING, length: 20, enumType: ContactStatus::class)]
-    public private(set) ContactStatus $status = ContactStatus::Pending;
+    public private(set) ContactStatus $status = ContactStatus::Prospect;
 
     /** Secret used by the confirm and unsubscribe links. Regenerated never — the links stay valid. */
     #[ORM\Column(type: Types::STRING, length: 64)]
     public private(set) string $token;
 
-    /** Where the subscription came from: a page slug, `api`, `import`, … */
+    /** Where the contact came from: a page slug, `api`, `import`, … */
     #[ORM\Column(type: Types::STRING, length: 120, nullable: true)]
     public ?string $source = null {
         set(?string $value) => null !== $value ? mb_substr($value, 0, 120) : null;

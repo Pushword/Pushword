@@ -167,6 +167,34 @@ keeps one brand's link from revealing what another brand knows. An RFC 8058
 All public links (confirm, unsubscribe) are built from the audience host's
 `base_live_url`, so they work when the site is statically generated.
 
+### Importing prospects
+
+Create contacts without opting them in by posting `status: "prospect"` to
+`POST /api/newsletter/contact`:
+
+```json
+{
+  "audience": "news",
+  "email": "prospect@example.tld",
+  "name": "Robin",
+  "status": "prospect",
+  "source": "import:prospects",
+  "tags": ["Trade show"]
+}
+```
+
+No confirmation or other mail is sent, even when the audience requires double
+opt-in. The contact has no confirmation date or opt-in event and is excluded
+from campaigns, segments and automations. Phone-only prospects work the same way.
+Filter them with `GET /api/newsletter/contact?audience=news&status=prospect`.
+
+Repeating the import updates identity, tags and custom properties without
+changing an existing subscription, opt-out, bounce, pending confirmation or its
+consent evidence. A separate audience is unnecessary. To opt a prospect in later,
+use the public subscription form, the admin opt-in action, or post the contact
+again without `status` to follow the audience's double opt-in rule. Use
+`status: "subscribed"` only when consent has already been collected.
+
 ### The consent ledger
 
 A contact's dates describe the current state: `confirmedAt` keeps the first

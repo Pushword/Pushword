@@ -62,6 +62,58 @@ final readonly class ContactManager
         ?bool $requireDoubleOptIn = null,
         ?string $phone = null,
     ): Contact {
+        $contact = $this->prepareContact($audience, $email, $phone, $name, $locale);
+        $requireDoubleOptIn ??= $audience->requireDoubleOptIn;
+
+        foreach ($interests as $interest) {
+            $contact->addTag($interest);
+        }
+
+        // Provenance is written on the first opt-in and on any re-opt-in, never
+        // on a repeat submission by someone already subscribed: the evidence
+        // must point at the moment consent was actually given. Which is also why
+        // a repeat submission appends no row — nothing about the consent moved.
+        $reopening = ! $contact->isSubscribed();
+        if ($reopening) {
+            $contact->source = $source;
+            $contact->optinHost = $optinHost;
+            $contact->optinIp = $optinIp;
+            $contact->optIn($requireDoubleOptIn);
+            $this->entityManager->persist(ContactEvent::optIn($contact, $source, $optinHost, $optinIp));
+        }
+
+        // Send before flushing: a transport refusing the address (a typo most
+        // often) must not leave a pending contact no confirmation ever reached.
+        if ($reopening && $contact->isPending()) {
+            $this->mailer->sendConfirmation($contact);
+        }
+
+        $this->entityManager->flush();
+
+        return $contact;
+    }
+
+    /** Import identity data without changing an existing contact's consent or sending mail. */
+    public function importProspect(
+        Audience $audience,
+        ?string $email = null,
+        ?string $name = null,
+        ?string $locale = null,
+        ?string $source = null,
+        ?string $phone = null,
+    ): Contact {
+        $contact = $this->prepareContact($audience, $email, $phone, $name, $locale);
+        if (null === $contact->id) {
+            $contact->source = $source;
+        }
+
+        $this->entityManager->flush();
+
+        return $contact;
+    }
+
+    private function prepareContact(Audience $audience, ?string $email, ?string $phone, ?string $name, ?string $locale): Contact
+    {
         $email = null !== $email && '' !== trim($email) ? $email : null;
         $phone = Contact::normalizePhone($phone);
 
@@ -69,14 +121,11 @@ final readonly class ContactManager
             throw new InvalidArgumentException('A contact needs an email address or a phone number.');
         }
 
-        $requireDoubleOptIn ??= $audience->requireDoubleOptIn;
-
         // The address identifies the person when there is one: somebody already
         // on the list who now gives their number gains it, rather than a row.
         $contact = null !== $email
             ? $this->contactRepository->findOneByEmail($audience, $email)
             : $this->contactRepository->findOneByPhone($audience, $phone);
-        $isNew = ! $contact instanceof Contact;
 
         // Wherever the number is about to land — on a row being created as much
         // as on one already there — it has to be free. A new row skipping the
@@ -86,7 +135,7 @@ final readonly class ContactManager
             $this->assertPhoneIsFree($audience, $phone, $contact);
         }
 
-        if ($isNew) {
+        if (! $contact instanceof Contact) {
             $contact = new Contact($audience, $email, $phone);
             $this->entityManager->persist($contact);
         } elseif (null !== $phone && $phone !== $contact->phone) {
@@ -107,31 +156,6 @@ final readonly class ContactManager
         if ('' === $contact->locale) {
             $contact->locale = $this->siteRegistry->get($audience->mainHost)->locale;
         }
-
-        foreach ($interests as $interest) {
-            $contact->addTag($interest);
-        }
-
-        // Provenance is written on the first opt-in and on any re-opt-in, never
-        // on a repeat submission by someone already subscribed: the evidence
-        // must point at the moment consent was actually given. Which is also why
-        // a repeat submission appends no row — nothing about the consent moved.
-        $reopening = $isNew || ! $contact->isSubscribed();
-        if ($reopening) {
-            $contact->source = $source;
-            $contact->optinHost = $optinHost;
-            $contact->optinIp = $optinIp;
-            $contact->optIn($requireDoubleOptIn);
-            $this->entityManager->persist(ContactEvent::optIn($contact, $source, $optinHost, $optinIp));
-        }
-
-        // Send before flushing: a transport refusing the address (a typo most
-        // often) must not leave a pending contact no confirmation ever reached.
-        if ($reopening && $contact->isPending()) {
-            $this->mailer->sendConfirmation($contact);
-        }
-
-        $this->entityManager->flush();
 
         return $contact;
     }

@@ -58,6 +58,18 @@ final class ContactIdentifierTest extends AbstractNewsletterTestCase
         self::assertNull($contact->phone);
     }
 
+    public function testANewContactHasNoOptInToConfirm(): void
+    {
+        $contact = new Contact($this->createAudience(), 'prospect@example.tld');
+        $contact->confirm();
+
+        self::assertSame(ContactStatus::Prospect, $contact->status);
+        self::assertFalse($contact->isSubscribed());
+        self::assertFalse($contact->isPending());
+        self::assertFalse($contact->isMailable());
+        self::assertNull($contact->confirmedAt);
+    }
+
     public function testMailableIsSubscribedAndHoldingAnAddress(): void
     {
         $audience = $this->createAudience();

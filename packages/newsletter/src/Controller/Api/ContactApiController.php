@@ -158,18 +158,22 @@ final class ContactApiController extends AbstractApiController
                 $existing = $this->joinOnUpsert($audience, $existing, $email, $phone);
             }
 
-            $contact = $this->contactManager->subscribe(
-                $audience,
-                '' !== $email ? $email : null,
-                \is_string($data['name'] ?? null) ? $data['name'] : null,
-                \is_string($data['locale'] ?? null) ? $data['locale'] : null,
-                [],
-                \is_string($data['source'] ?? null) ? $data['source'] : self::SOURCE,
-                null,
-                null,
-                $requireDoubleOptIn,
-                $phone,
-            );
+            $email = '' !== $email ? $email : null;
+            $name = \is_string($data['name'] ?? null) ? $data['name'] : null;
+            $locale = \is_string($data['locale'] ?? null) ? $data['locale'] : null;
+            $source = \is_string($data['source'] ?? null) ? $data['source'] : self::SOURCE;
+
+            $contact = 'prospect' === ($data['status'] ?? null)
+                ? $this->contactManager->importProspect($audience, $email, $name, $locale, $source, $phone)
+                : $this->contactManager->subscribe(
+                    $audience,
+                    $email,
+                    $name,
+                    $locale,
+                    source: $source,
+                    requireDoubleOptIn: $requireDoubleOptIn,
+                    phone: $phone,
+                );
         } catch (InvalidArgumentException $invalidArgumentException) {
             // The number is somebody else's. Joining two rows is a deliberate
             // operation, not something an upsert gets to do on the way past —
@@ -521,7 +525,7 @@ final class ContactApiController extends AbstractApiController
                         'summary' => 'List contacts, optionally filtered by audience, status, tag or a segment expression',
                         'parameters' => [
                             ['name' => 'audience', 'in' => 'query', 'schema' => ['type' => 'string']],
-                            ['name' => 'status', 'in' => 'query', 'schema' => ['type' => 'string', 'enum' => ['pending', 'subscribed', 'unsubscribed', 'bounced']]],
+                            ['name' => 'status', 'in' => 'query', 'schema' => ['type' => 'string', 'enum' => ['prospect', 'pending', 'subscribed', 'unsubscribed', 'bounced']]],
                             ['name' => 'tag', 'in' => 'query', 'schema' => ['type' => 'string']],
                             ['name' => 'segment', 'in' => 'query', 'description' => 'JSON criteria list; needs `audience`', 'schema' => ['type' => 'string']],
                             ['name' => 'q', 'in' => 'query', 'schema' => ['type' => 'string']],
@@ -531,6 +535,7 @@ final class ContactApiController extends AbstractApiController
                     'post' => [
                         'summary' => 'Create or update a contact, keyed on (audience, email) or on (audience, phone) when no email is given',
                         'parameters' => [self::MERGE_PARAMETER],
+                        'description' => 'Use status: prospect to import without opting in or sending mail; existing consent is preserved. Use status: subscribed only for an already-consenting base. Omit status to follow the audience double opt-in rule.',
                         'responses' => [
                             '200' => ['description' => 'Updated'],
                             '201' => ['description' => 'Created'],

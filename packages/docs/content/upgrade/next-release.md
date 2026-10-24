@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'new newsletter contacts start as prospects'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/newsletter`
+
+## New contacts start as prospects
+
+A directly constructed `Contact` starts as `prospect` instead of `pending`.
+**For integrations that create contacts directly:** call `ContactManager::subscribe()` to request opt-in and record its evidence.
+See [importing prospects](../extension/newsletter#importing-prospects) for importing contacts without subscribing them.

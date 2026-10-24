@@ -1604,6 +1604,29 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         );
     }
 
+    public function testAProspectIsLabelledWithoutOfferingConfirmation(): void
+    {
+        $client = $this->loginUser();
+        $contact = new Contact($this->seed(), 'prospect@example.tld');
+        $contact->locale = 'en';
+        $this->entityManager()->persist($contact);
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact');
+        self::assertResponseIsSuccessful();
+        $row = $crawler->filter('tbody tr')->reduce(
+            static fn (Crawler $row): bool => str_contains($row->text(), 'prospect@example.tld'),
+        );
+        self::assertCount(1, $row);
+        self::assertSame('Prospect', $row->filter('td[data-column="status"]')->text());
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contact->id);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Prospect', $crawler->filter('article')->text());
+        self::assertCount(0, $crawler->filter('.action-confirm'));
+        self::assertStringNotContainsString('newsletter.contact.status.prospect', $crawler->filter('article')->text());
+    }
+
     /** A pending opt-in an admin can vouch for becomes a subscription without the click. */
     public function testAPendingContactIsConfirmedByHand(): void
     {

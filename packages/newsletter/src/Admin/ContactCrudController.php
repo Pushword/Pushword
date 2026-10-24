@@ -184,12 +184,14 @@ class ContactCrudController extends AbstractCrudController
         yield TextField::new('name', 'newsletter.contact.field.name')->hideOnIndex();
         yield ChoiceField::new('status', 'newsletter.contact.field.status')
             ->setChoices([
+                'newsletter.contact.status.prospect' => ContactStatus::Prospect,
                 'newsletter.contact.status.pending' => ContactStatus::Pending,
                 'newsletter.contact.status.subscribed' => ContactStatus::Subscribed,
                 'newsletter.contact.status.unsubscribed' => ContactStatus::Unsubscribed,
                 'newsletter.contact.status.bounced' => ContactStatus::Bounced,
             ])
             ->renderAsBadges([
+                ContactStatus::Prospect->value => 'secondary',
                 ContactStatus::Pending->value => 'warning',
                 ContactStatus::Subscribed->value => 'success',
                 ContactStatus::Unsubscribed->value => 'secondary',

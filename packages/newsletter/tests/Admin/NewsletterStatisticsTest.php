@@ -149,7 +149,7 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         $this->entityManager->persist(ContactEvent::confirmed($subscribed, 'test', null, null));
         $this->entityManager->flush();
 
-        self::assertSame(['pending' => 1, 'subscribed' => 2, 'unsubscribed' => 1, 'bounced' => 0, 'mailable' => 1], $this->repository()->contacts($audience->id));
+        self::assertSame(['prospect' => 0, 'pending' => 1, 'subscribed' => 2, 'unsubscribed' => 1, 'bounced' => 0, 'mailable' => 1], $this->repository()->contacts($audience->id));
         $activity = $this->repository()->subscriptionActivity(new DateTimeImmutable('yesterday'), new DateTimeImmutable('tomorrow'), $audience->id);
         self::assertSame(1, $activity['optin']);
         self::assertSame(1, $activity['confirm']);

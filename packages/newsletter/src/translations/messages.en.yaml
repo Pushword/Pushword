@@ -265,6 +265,7 @@ newsletter:
     status:
       bounced: Bounced
       pending: Pending confirmation
+      prospect: Prospect
       subscribed: Subscribed
       unsubscribed: Unsubscribed
     subscriptions:

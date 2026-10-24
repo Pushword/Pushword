@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Newsletter\Tests\Controller\Api;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\UserRepository;
@@ -13,9 +14,13 @@ use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\ClickEvent;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Entity\ContactEvent;
 use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Enum\ContactStatus;
+use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Service\AutomationRunner;
+use Pushword\Newsletter\Service\CampaignSender;
+use Pushword\Newsletter\Service\ContactManager;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -253,7 +258,7 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $body = $this->request(Request::METHOD_GET, '/api/newsletter/audience/'.$audience->slug);
 
         self::assertSame(
-            ['pending' => 1, 'subscribed' => 1, 'unsubscribed' => 0, 'bounced' => 0, 'mailable' => 1],
+            ['prospect' => 0, 'pending' => 1, 'subscribed' => 1, 'unsubscribed' => 0, 'bounced' => 0, 'mailable' => 1],
             $body['contacts'],
         );
     }
@@ -354,6 +359,172 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
 
         self::assertSame('subscribed', $body['status']);
         self::assertEmailCount(0);
+    }
+
+    #[DataProvider('prospectImportProvider')]
+    public function testImportingAProspectNeverOptsInOrSendsMail(bool $doubleOptIn, ?string $email, ?string $phone): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: $doubleOptIn);
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
+            'audience' => $audience->slug,
+            'email' => $email,
+            'phone' => $phone,
+            'name' => 'Robin',
+            'status' => 'prospect',
+            'source' => 'import:trade-show',
+            'tags' => ['Trade show'],
+            'customProperties' => ['company' => 'Example'],
+        ]);
+
+        self::assertSame(Response::HTTP_CREATED, $this->client->getResponse()->getStatusCode());
+        self::assertSame('prospect', $body['status']);
+        self::assertFalse($body['mailable']);
+        self::assertNull($body['confirmedAt']);
+        self::assertSame('import:trade-show', $body['source']);
+        self::assertSame('Robin', $body['name']);
+        self::assertSame(['Trade show'], $body['tags']);
+        self::assertSame(['company' => 'Example'], $body['customProperties']);
+        self::assertNotSame('', $body['locale']);
+        self::assertEmailCount(0);
+        self::assertCount(0, $this->entityManager->getRepository(ContactEvent::class)->findBy(['contact' => $this->id($body)]));
+
+        $listed = $this->request(Request::METHOD_GET, '/api/newsletter/contact?audience='.$audience->slug.'&status=prospect');
+        self::assertIsArray($listed['items']);
+        self::assertCount(1, $listed['items']);
+        $counts = $this->request(Request::METHOD_GET, '/api/newsletter/audience/'.$audience->slug)['contacts'];
+        self::assertIsArray($counts);
+        self::assertSame(1, $counts['prospect']);
+        self::assertSame(0, $counts['subscribed']);
+        self::assertSame(0, $counts['mailable']);
+    }
+
+    /** @return iterable<string, array{bool, ?string, ?string}> */
+    public static function prospectImportProvider(): iterable
+    {
+        foreach ([true, false] as $doubleOptIn) {
+            $prefix = $doubleOptIn ? 'double opt-in, ' : 'single opt-in, ';
+            yield $prefix.'email' => [$doubleOptIn, 'prospect@example.tld', null];
+            yield $prefix.'phone' => [$doubleOptIn, null, '+33612345678'];
+            yield $prefix.'both' => [$doubleOptIn, 'prospect@example.tld', '+33612345678'];
+        }
+    }
+
+    #[DataProvider('existingProspectImportProvider')]
+    public function testAProspectImportPreservesExistingConsent(ContactStatus $status): void
+    {
+        $audience = $this->createAudience();
+        $payload = [
+            'audience' => $audience->slug,
+            'email' => 'known@example.tld',
+            'source' => 'first-source',
+            'locale' => 'fr',
+            'status' => match ($status) {
+                ContactStatus::Prospect => 'prospect',
+                ContactStatus::Pending => null,
+                default => 'subscribed',
+            },
+        ];
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact', $payload);
+        $id = $this->id($body);
+        $contact = $this->entityManager->find(Contact::class, $id);
+        self::assertInstanceOf(Contact::class, $contact);
+        $manager = self::getContainer()->get(ContactManager::class);
+        if (ContactStatus::Unsubscribed === $status) {
+            $manager->unsubscribe($contact, 'opt-out');
+        } elseif (ContactStatus::Bounced === $status) {
+            $manager->markBounced($contact, 'delivery-failure');
+        }
+
+        $before = $this->request(Request::METHOD_GET, '/api/newsletter/contact/'.$id);
+        $events = $this->entityManager->getRepository(ContactEvent::class)->findBy(['contact' => $id]);
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
+            'audience' => $audience->slug,
+            'email' => 'KNOWN@example.tld',
+            'phone' => '+33612345678',
+            'name' => 'Updated',
+            'status' => 'prospect',
+            'source' => 'new-import',
+            'tags' => ['Prospects'],
+            'customProperties' => ['company' => 'New company'],
+        ]);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertSame($id, $body['id']);
+        self::assertSame($status->value, $body['status']);
+        foreach (['source', 'confirmedAt', 'unsubscribedAt', 'bouncedAt', 'clickTrackingConsentAt', 'locale'] as $field) {
+            self::assertSame($before[$field], $body[$field], $field);
+        }
+
+        self::assertSame('Updated', $body['name']);
+        self::assertSame('+33612345678', $body['phone']);
+        self::assertSame(['Prospects'], $body['tags']);
+        self::assertSame(['company' => 'New company'], $body['customProperties']);
+        self::assertCount(1, $this->entityManager->getRepository(Contact::class)->findBy(['audience' => $audience]));
+        self::assertCount(\count($events), $this->entityManager->getRepository(ContactEvent::class)->findBy(['contact' => $id]));
+        self::assertEmailCount(0);
+    }
+
+    /** @return iterable<string, array{ContactStatus}> */
+    public static function existingProspectImportProvider(): iterable
+    {
+        foreach (ContactStatus::cases() as $status) {
+            yield $status->value => [$status];
+        }
+    }
+
+    public function testAProspectImportCannotTakeAnotherContactsPhone(): void
+    {
+        $audience = $this->createAudience();
+        $holder = $this->createPhoneContact($audience, '+33612345678');
+        $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
+            'audience' => $audience->slug,
+            'email' => 'prospect@example.tld',
+            'phone' => $holder->phone,
+            'status' => 'prospect',
+        ]);
+
+        self::assertSame(Response::HTTP_CONFLICT, $this->client->getResponse()->getStatusCode());
+        self::assertCount(1, $this->entityManager->getRepository(Contact::class)->findBy(['audience' => $audience]));
+        self::assertEmailCount(0);
+    }
+
+    public function testProspectsAreExcludedFromCampaignsSegmentsAndAutomations(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
+            'audience' => $audience->slug,
+            'email' => 'prospect@example.tld',
+            'status' => 'prospect',
+        ]);
+        $subscriber = $this->createContact($audience, 'subscriber@example.tld');
+        $segment = self::getContainer()->get(SegmentResolver::class);
+        self::assertSame([$subscriber], $segment->contacts($audience, []));
+        self::assertSame(1, self::getContainer()->get(CampaignSender::class)->arm($this->createCampaign($audience)));
+        self::assertSame(1, $this->enroll($this->createAutomation($audience, [['delay' => 60, 'subject' => 'Welcome']])));
+        self::assertEmailCount(0);
+    }
+
+    #[DataProvider('prospectOptInProvider')]
+    public function testAProspectCanLaterOptIn(?string $status, string $expectedStatus, int $emails): void
+    {
+        $audience = $this->createAudience();
+        $payload = ['audience' => $audience->slug, 'email' => 'prospect@example.tld', 'status' => 'prospect'];
+        $id = $this->id($this->request(Request::METHOD_POST, '/api/newsletter/contact', $payload));
+        $payload['status'] = $status;
+        $body = $this->request(Request::METHOD_POST, '/api/newsletter/contact', $payload);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertSame($id, $body['id']);
+        self::assertSame($expectedStatus, $body['status']);
+        self::assertCount(1, $this->entityManager->getRepository(ContactEvent::class)->findBy(['contact' => $id]));
+        self::assertEmailCount($emails);
+    }
+
+    /** @return iterable<string, array{?string, string, int}> */
+    public static function prospectOptInProvider(): iterable
+    {
+        yield 'request confirmation' => [null, 'pending', 1];
+        yield 'consent already collected' => ['subscribed', 'subscribed', 0];
     }
 
     public function testCreatingTwiceUpdatesRatherThanDuplicates(): void
