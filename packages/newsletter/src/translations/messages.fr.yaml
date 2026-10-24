@@ -162,11 +162,14 @@ newsletter:
       invalidLocale: 'La traduction « %locale% » doit être un objet contenant subject, preheader et bodyMarkdown.'
   catalogue:
     actions: Actions
-    allSources: Toutes les sources
     createNative: Créer dans Pushword
-    empty: Aucune campagne à afficher.
+    emptyHelp: 'Choisissez un outil pour créer une campagne. Les campagnes disponibles apparaîtront ici.'
+    emptyTitle: 'Aucune campagne disponible'
     filters: Filtrer les campagnes
     manageNative: Gérer dans Pushword
+    noResultsHelp: 'Essayez une autre recherche ou réinitialisez les filtres pour voir les campagnes disponibles.'
+    noResultsTitle: 'Aucune campagne ne correspond'
+    results: 'Affichées : %shown% / %total% disponibles'
     search: Rechercher
     sentAt: Envoyée le
     source: Source

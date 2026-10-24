@@ -162,11 +162,14 @@ newsletter:
       invalidLocale: 'Translation "%locale%" must be an object of subject, preheader and bodyMarkdown.'
   catalogue:
     actions: Actions
-    allSources: All sources
     createNative: Create in Pushword
-    empty: No campaign to display.
+    emptyHelp: 'Choose a tool to create a campaign. Available campaigns will appear here.'
+    emptyTitle: 'No campaigns available'
     filters: Filter campaigns
     manageNative: Manage in Pushword
+    noResultsHelp: 'Try a different search or reset the filters to see available campaigns.'
+    noResultsTitle: 'No matching campaigns'
+    results: 'Displayed: %shown% / %total% available'
     search: Search
     sentAt: Sent at
     source: Source

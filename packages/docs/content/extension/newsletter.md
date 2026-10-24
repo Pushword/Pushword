@@ -1095,6 +1095,7 @@ final class ExternalCampaignIndexListener
         ));
         $index->creationActions['Create in source'] = 'https://example.org/campaign/new';
         $index->notices['external'] = 'Campaign cache last synchronized yesterday.';
+        $index->noticeLevels['external'] = 'warning';
     }
 }
 ```
@@ -1103,6 +1104,13 @@ Read your application's cache in the listener, not the provider's API. Always ad
 an availability notice when that cache is missing, stale or retained after a failed
 refresh, including when it contains no campaigns. A missing cache is not evidence
 of zero campaigns. Creation links remain visible for empty sources.
+
+Notice strings remain compatible with existing listeners. Optional `noticeLevels`
+use `info` (the default, a neutral routine update), `warning` (a missing cache or a
+delayed/failed refresh with retained data), or `danger` (an unavailable source without cached data).
+The catalogue counts displayed rows against all available rows, not an inferred
+remote campaign total. An empty search offers a filter reset; an empty catalogue
+offers the connected tools' creation links.
 
 `CampaignIndexItem` also accepts nullable `scheduledAt`/`sentAt` (`DateTimeImmutable`)
 and `audience`. Unknown status or dates are `null`; external statuses such as

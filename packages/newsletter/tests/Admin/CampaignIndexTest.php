@@ -123,6 +123,87 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+    public function testFilteredCatalogueShowsAvailableCountsAndAnEmptyRecovery(): void
+    {
+        $this->login();
+        self::getContainer()->get(EventDispatcherInterface::class)->addListener(CollectCampaignIndex::class, static function (CollectCampaignIndex $index): void {
+            $index->items = [];
+            $index->add(new CampaignIndexItem('pushword', 'local', 'Native draft', 'draft'));
+            $index->add(new CampaignIndexItem('external', 'sent', 'Remote sent', 'sent'));
+            $index->add(new CampaignIndexItem('external', 'draft', 'Remote draft', 'draft'));
+            $index->notices['missing'] = 'Source unavailable, no cached campaigns.';
+            $index->noticeLevels['missing'] = 'danger';
+        });
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/campaigns?source=external&status=sent');
+        self::assertResponseIsSuccessful();
+        self::assertSame('Displayed: 1 / 3 available', $crawler->filter('[data-campaign-results]')->text());
+        self::assertCount(1, $crawler->filter('[data-campaign-key]'));
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/campaigns?q=not-found');
+        self::assertResponseIsSuccessful();
+        self::assertSame('Displayed: 0 / 3 available', $crawler->filter('[data-campaign-results]')->text());
+        self::assertCount(0, $crawler->filter('.pw-catalogue table'));
+        self::assertSame('No matching campaigns', $crawler->filter('[data-catalogue-empty="filtered"] h2')->text());
+        self::assertSame('not-found', $crawler->filter('[name="q"]')->attr('value'));
+        self::assertSame('/admin/newsletter/campaigns', $crawler->selectLink('Reset')->attr('href'));
+        $crawler = $this->client->click($crawler->selectLink('Reset')->link());
+        self::assertResponseIsSuccessful();
+        self::assertCount(3, $crawler->filter('[data-campaign-key]'));
+        self::assertSame('Displayed: 3 / 3 available', $crawler->filter('[data-campaign-results]')->text());
+    }
+
+    public function testInitialEmptyCatalogueOffersBothCreationsOnceWithoutAnEmptyTable(): void
+    {
+        $this->login();
+        self::getContainer()->get(EventDispatcherInterface::class)->addListener(CollectCampaignIndex::class, static function (CollectCampaignIndex $index): void {
+            $index->items = [];
+            $index->creationActions['Create in partner'] = 'https://example.tld/new';
+            $index->notices['external'] = 'Not synchronized, campaigns are unavailable.';
+            $index->noticeLevels['external'] = 'warning';
+        });
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/campaigns');
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('.pw-catalogue table'));
+        $empty = $crawler->filter('[data-catalogue-empty="initial"]');
+        self::assertSame('No campaigns available', $empty->filter('h2')->text());
+        self::assertCount(1, $empty->selectLink('Create in Pushword'));
+        self::assertCount(1, $empty->selectLink('Create in partner'));
+        self::assertCount(1, $crawler->selectLink('Create in Pushword'));
+        self::assertCount(1, $crawler->selectLink('Create in partner'));
+        self::assertSame('https://example.tld/new', $empty->selectLink('Create in partner')->attr('href'));
+        self::assertStringContainsString('campaigns are unavailable', $crawler->filter('[role="status"]')->text());
+        self::assertCount(0, $crawler->filter('.pw-catalogue-filters, [data-campaign-results]'));
+    }
+
+    /** @return iterable<string, array{'info'|'warning'|'danger'|null, string}> */
+    public static function noticeLevels(): iterable
+    {
+        yield 'existing listener without level' => [null, 'info'];
+        yield 'routine' => ['info', 'info'];
+        yield 'delayed or failed refresh' => ['warning', 'warning'];
+        yield 'unavailable source' => ['danger', 'danger'];
+    }
+
+    /** @param 'info'|'warning'|'danger'|null $level */
+    #[DataProvider('noticeLevels')]
+    public function testNoticeSeverityIsOptionalAndKeepsEscaping(?string $level, string $expected): void
+    {
+        $this->login();
+        self::getContainer()->get(EventDispatcherInterface::class)->addListener(CollectCampaignIndex::class, static function (CollectCampaignIndex $index) use ($level): void {
+            $index->notices['external'] = 'Cache status <script>alert(1)</script>';
+            if (null !== $level) {
+                $index->noticeLevels['external'] = $level;
+            }
+        });
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/campaigns');
+        self::assertResponseIsSuccessful();
+        $notice = $crawler->filter('[role="status"][data-notice-level]');
+        self::assertSame($expected, $notice->attr('data-notice-level'));
+        self::assertStringContainsString('Cache status', $notice->text());
+        self::assertCount(0, $notice->filter('script'));
+    }
+
     public function testDatesUseEditorialTimezoneAndOpaqueKeysGiveAStableChronologicalOrder(): void
     {
         $this->login();

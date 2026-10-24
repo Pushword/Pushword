@@ -1,11 +1,14 @@
 newsletter:
   catalogue:
     actions: Azioni
-    allSources: Tutte le fonti
     createNative: Crea in Pushword
-    empty: Nessuna campagna da visualizzare.
+    emptyHelp: 'Scegli uno strumento per creare una campagna. Le campagne disponibili appariranno qui.'
+    emptyTitle: 'Nessuna campagna disponibile'
     filters: Filtra le campagne
     manageNative: Gestisci in Pushword
+    noResultsHelp: 'Prova una ricerca diversa o reimposta i filtri per vedere le campagne disponibili.'
+    noResultsTitle: 'Nessuna campagna corrispondente'
+    results: 'Visualizzate: %shown% / %total% disponibili'
     search: Cerca
     sentAt: Inviata il
     source: Fonte
