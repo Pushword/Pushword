@@ -27,10 +27,12 @@ final class FormatRegistry
         'instagram-4-5' => ['surface' => 'Instagram feed', 'ratio' => '4:5', 'width' => 1080, 'height' => 1350, 'star' => true, 'source' => 'Instagram carousel uploader default'],
         'instagram-3-4' => ['surface' => 'Instagram feed (grid-flush)', 'ratio' => '3:4', 'width' => 1080, 'height' => 1440, 'source' => 'matches the 2025 profile grid'],
         'instagram-1-1' => ['surface' => 'Instagram feed', 'ratio' => '1:1', 'width' => 1080, 'height' => 1080, 'source' => 'legacy square'],
-        'story-9-16' => ['surface' => 'Instagram Stories / TikTok', 'ratio' => '9:16', 'width' => 1080, 'height' => 1920, 'source' => 'full-screen vertical'],
+        'story-9-16' => ['surface' => 'Instagram Stories / YouTube Shorts / TikTok', 'ratio' => '9:16', 'width' => 1080, 'height' => 1920, 'source' => 'full-screen vertical'],
         'threads-4-5' => ['surface' => 'Threads', 'ratio' => '4:5', 'width' => 1080, 'height' => 1350, 'source' => 'Threads accepts ~any ratio; 4:5 mirrors Instagram'],
         'facebook-1-1' => ['surface' => 'Facebook', 'ratio' => '1:1', 'width' => 1080, 'height' => 1080, 'source' => 'square feed post'],
         'pinterest-2-3' => ['surface' => 'Pinterest', 'ratio' => '2:3', 'width' => 1000, 'height' => 1500, 'source' => 'Pinterest recommended pin ratio (primary-sourced)'],
+        'x-16-9' => ['surface' => 'X', 'ratio' => '16:9', 'width' => 1600, 'height' => 900, 'source' => 'landscape feed image convention; not a platform-enforced size'],
+        'x-1-1' => ['surface' => 'X', 'ratio' => '1:1', 'width' => 1080, 'height' => 1080, 'source' => 'square feed image convention; not a platform-enforced size'],
         'deck-16-9' => ['surface' => 'PowerPoint / deck', 'ratio' => '16:9', 'width' => 1920, 'height' => 1080, 'source' => 'landscape slide'],
     ];
 

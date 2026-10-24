@@ -7,9 +7,9 @@ toc: true
 ---
 
 Turn a page into social posts, carousels and animated videos for LinkedIn,
-Instagram, Facebook, Pinterest and Threads. A JSON **spec** renders to
-self-contained SVG slides with embedded fonts and images. PHP validates text
-overflow and crop bounds before rendering; the browser exports PNGs.
+Instagram, Facebook, Pinterest, Threads, YouTube Shorts, TikTok and X. A JSON
+**spec** renders to self-contained SVG slides with embedded fonts and images. PHP
+validates text overflow and crop bounds before rendering; the browser exports PNGs.
 
 ## Install
 
@@ -75,6 +75,25 @@ schema and validates it — free, with whatever model you already use.
 
 The [`pw` ai-skill](https://github.com/Pushword/Pushword/tree/main/packages/ai-skills)
 ships a `carousel` playbook for exactly this loop.
+
+## YouTube Shorts, TikTok and X
+
+Choose **YouTube Shorts** (`youtube`) or **TikTok** (`tiktok`) in the studio's
+network selector to create a separate vertical version. Both use `story-9-16`
+(1080 × 1920) and advertise `video` as their export kind in the networks API.
+Use **Slideshow .mp4** to render the slides, or attach an existing MP4/WebM from
+the media library. Switching networks preserves the attached video; changing the
+slide format does not resize or regenerate that file. Upload the finished video
+through the platform's own publishing interface and check its duration and caption
+limits there ([YouTube Shorts upload rules](https://support.google.com/youtube/answer/12779649),
+[TikTok publishing reference](https://developers.tiktok.com/doc/content-posting-api-reference-direct-post)).
+
+**X** (`x`) offers `x-16-9` (1600 × 900) and `x-1-1` (1080 × 1080) image exports.
+A post accepts up to four images; drafts keep a cover, up to two body slides and
+a closing slide. Switching an existing carousel to X keeps its first four slides.
+Caption length needs review in X's composer because its
+[weighted character count](https://docs.x.com/fundamentals/counting-characters)
+handles URLs and emoji differently; Repurpose does not validate that count.
 
 ## Command line
 

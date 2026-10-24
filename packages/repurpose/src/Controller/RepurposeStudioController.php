@@ -497,6 +497,10 @@ final class RepurposeStudioController extends AbstractController
             $spec['format'] = $formats[0];
         }
 
+        if ('x' === $network && \is_array($spec['slides'] ?? null)) {
+            $spec['slides'] = \array_slice(array_values($spec['slides']), 0, NetworkRegistry::NETWORKS['x']['limits']['maxSlides']);
+        }
+
         if ('pinterest' === $network) {
             $slides = \is_array($spec['slides'] ?? null) ? array_values($spec['slides']) : [];
             $firstSlide = $this->stringKeyedArray($slides[0] ?? null) ?? [];
@@ -584,6 +588,7 @@ final class RepurposeStudioController extends AbstractController
 
         return [
             'networks' => NetworkRegistry::keys(),
+            'networkLabels' => array_map(static fn (array $config): string => $config['label'], NetworkRegistry::NETWORKS),
             'formats' => [] === $formats ? FormatRegistry::ids() : $formats,
             'fontPairings' => FontPairingRegistry::keys(),
             'layouts' => Slide::LAYOUTS,

@@ -403,7 +403,7 @@
             <div class="field">
               <label>Network</label>
               <select @change="switchNetwork($event)" x-init="$nextTick(() => $el.value = network)">
-                <template x-for="n in vocab.networks" :key="n"><option :value="n" x-text="n"></option></template>
+                <template x-for="n in vocab.networks" :key="n"><option :value="n" x-text="vocab.networkLabels[n]"></option></template>
               </select>
             </div>
             <div class="field">

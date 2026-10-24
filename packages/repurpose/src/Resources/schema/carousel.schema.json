@@ -8,8 +8,8 @@
     "additionalProperties": false,
     "properties": {
         "page": { "type": "string", "description": "The source page, addressed by its slug (host is the containing folder)." },
-        "network": { "enum": ["linkedin", "instagram", "facebook", "pinterest", "threads", "deck"], "description": "Target platform; selects the publishing rules (allowed formats, limits, export kind)." },
-        "format": { "enum": ["linkedin-4-5", "linkedin-1-1", "instagram-4-5", "instagram-3-4", "instagram-1-1", "story-9-16", "threads-4-5", "facebook-1-1", "pinterest-2-3", "deck-16-9"], "description": "Output size; must be allowed for the chosen network." },
+        "network": { "enum": ["linkedin", "instagram", "facebook", "pinterest", "threads", "youtube", "tiktok", "x", "deck"], "description": "Target platform; selects the publishing rules (allowed formats, limits, export kind)." },
+        "format": { "enum": ["linkedin-4-5", "linkedin-1-1", "instagram-4-5", "instagram-3-4", "instagram-1-1", "story-9-16", "threads-4-5", "facebook-1-1", "pinterest-2-3", "x-16-9", "x-1-1", "deck-16-9"], "description": "Output size; must be allowed for the chosen network." },
         "template": { "enum": ["editorial"], "default": "editorial", "description": "Slide template family." },
         "status": { "enum": ["draft", "planned", "posted"], "default": "draft" },
         "plannedAt": { "type": ["string", "null"], "description": "Parseable date-time when the post is scheduled, or null." },

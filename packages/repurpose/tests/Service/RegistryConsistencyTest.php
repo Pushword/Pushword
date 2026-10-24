@@ -6,6 +6,7 @@ namespace Pushword\Repurpose\Tests\Service;
 
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Pushword\Repurpose\Service\CarouselSchemaProvider;
 use Pushword\Repurpose\Service\FontPairingRegistry;
 use Pushword\Repurpose\Service\FontResolver;
 use Pushword\Repurpose\Service\FormatRegistry;
@@ -48,8 +49,22 @@ final class RegistryConsistencyTest extends TestCase
     public function testEveryNetworkExportModeIsKnown(): void
     {
         foreach (NetworkRegistry::NETWORKS as $network => $config) {
-            self::assertContains($config['export'], ['images', 'pdf'], \sprintf('network "%s" has an unknown export mode', $network));
+            self::assertContains($config['export'], ['images', 'pdf', 'video'], \sprintf('network "%s" has an unknown export mode', $network));
         }
+    }
+
+    public function testSchemaEnumsMatchTheRegistries(): void
+    {
+        $schema = json_decode(new CarouselSchemaProvider()->json(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($schema);
+        $properties = $schema['properties'];
+        self::assertIsArray($properties);
+        $network = $properties['network'];
+        $format = $properties['format'];
+        self::assertIsArray($network);
+        self::assertIsArray($format);
+        self::assertSame(NetworkRegistry::keys(), $network['enum']);
+        self::assertSame(FormatRegistry::ids(), $format['enum']);
     }
 
     public function testEveryNetworkHasAPlausibleMobileFeedWidth(): void

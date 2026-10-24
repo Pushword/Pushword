@@ -62,8 +62,10 @@ final readonly class CarouselDrafter
         }
 
         $slides = [$cover];
+        $maxSlides = NetworkRegistry::NETWORKS[$network]['limits']['maxSlides'] ?? self::MAX_BODY_SLIDES + 2;
+        $maxBodySlides = min(self::MAX_BODY_SLIDES, $maxSlides - 2);
         foreach ($this->sections($content) as $section) {
-            if (\count($slides) > self::MAX_BODY_SLIDES) {
+            if (\count($slides) > $maxBodySlides) {
                 break;
             }
 

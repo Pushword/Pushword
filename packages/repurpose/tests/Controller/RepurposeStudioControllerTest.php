@@ -487,11 +487,58 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertCount($before, $this->em->getRepository(SocialPost::class)->findBy(['host' => self::HOST]));
     }
 
+    public function testSwitchToVideoNetworksKeepsTheRenderedVideo(): void
+    {
+        $post = $this->persistPost();
+        $post->spec = [...$post->spec, 'video' => 'ready.mp4'];
+
+        $this->em->flush();
+
+        foreach (['youtube', 'tiktok'] as $network) {
+            $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id.'/network/'.$network);
+            self::assertResponseIsSuccessful();
+            $this->client->submitForm('Create version');
+            self::assertResponseRedirects();
+
+            $sibling = $this->em->getRepository(SocialPost::class)
+                ->findOneBy(['host' => self::HOST, 'page' => $post->page, 'network' => $network]);
+            self::assertInstanceOf(SocialPost::class, $sibling);
+            self::assertSame('story-9-16', $sibling->format);
+            self::assertSame('ready.mp4', $sibling->spec['video'] ?? null);
+
+            $this->client->followRedirect();
+            self::assertResponseIsSuccessful();
+        }
+    }
+
+    public function testSwitchToXKeepsOnlyFourImages(): void
+    {
+        $post = $this->persistPost();
+        $post->spec = [...$post->spec, 'slides' => array_fill(0, 5, ['title' => 'An idea'])];
+
+        $this->em->flush();
+
+        $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id.'/network/x');
+        self::assertResponseIsSuccessful();
+        $this->client->submitForm('Create version');
+        self::assertResponseRedirects();
+
+        $sibling = $this->em->getRepository(SocialPost::class)
+            ->findOneBy(['host' => self::HOST, 'page' => $post->page, 'network' => 'x']);
+        self::assertInstanceOf(SocialPost::class, $sibling);
+        self::assertSame('x-16-9', $sibling->format);
+        $slides = $sibling->spec['slides'];
+        self::assertIsArray($slides);
+        self::assertCount(4, $slides);
+        $validator = self::getContainer()->get(ValidatorInterface::class);
+        self::assertCount(0, $validator->validate(new CarouselFactory()->fromArray($sibling->spec)));
+    }
+
     public function testSwitchNetworkRejectsAnUnknownNetwork(): void
     {
         $post = $this->persistPost();
 
-        $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id.'/network/tiktok');
+        $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id.'/network/myspace');
 
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
     }

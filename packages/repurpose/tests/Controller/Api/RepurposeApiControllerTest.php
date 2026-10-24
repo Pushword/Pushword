@@ -94,6 +94,17 @@ final class RepurposeApiControllerTest extends WebTestCase
         $networks = $facts['networks'];
         self::assertIsArray($networks);
         self::assertArrayHasKey('linkedin', $networks);
+        foreach (['youtube', 'tiktok', 'x'] as $network) {
+            self::assertArrayHasKey($network, $networks);
+        }
+
+        foreach (['youtube' => 'YouTube Shorts', 'tiktok' => 'TikTok'] as $network => $label) {
+            $config = $networks[$network];
+            self::assertIsArray($config);
+            self::assertSame($label, $config['label']);
+            self::assertSame('video', $config['export']);
+            self::assertSame(['story-9-16'], $config['formats']);
+        }
 
         // Every pairing states whether its TTFs are really on disk, so an agent
         // never picks a font that would silently fall back to Roboto.
@@ -184,6 +195,23 @@ final class RepurposeApiControllerTest extends WebTestCase
         $errors = $this->requestJson('POST', '/api/repurpose/validate', $bad);
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
         self::assertNotEmpty($errors['violations']);
+    }
+
+    public function testNewNetworkSpecsRoundTripThroughTheApi(): void
+    {
+        foreach (['youtube' => 'story-9-16', 'tiktok' => 'story-9-16', 'x' => 'x-16-9'] as $network => $format) {
+            $spec = [...$this->validSpec(), 'network' => $network, 'format' => $format, 'video' => 'ready.mp4'];
+            $validated = $this->requestJson('POST', '/api/repurpose/validate', $spec);
+            self::assertResponseIsSuccessful();
+            self::assertTrue($validated['valid']);
+
+            $url = '/api/repurpose/'.self::HOST.'/'.$network.'/'.self::PAGE;
+            $this->requestJson('PUT', $url, $spec);
+            self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+            $reloaded = $this->requestJson('GET', $url);
+            self::assertResponseIsSuccessful();
+            self::assertSame($spec, $reloaded['spec']);
+        }
     }
 
     public function testUploadedVideoFilenameSurvivesValidationAndSave(): void

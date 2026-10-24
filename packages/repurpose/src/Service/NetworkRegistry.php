@@ -9,11 +9,11 @@ namespace Pushword\Repurpose\Service;
  *
  * - `limits` are **platform-enforced** — a spec that breaks one is invalid, so
  *   the validator raises an error.
- * - `guidance` is **engagement advice** — the agent may read it, but the
+ * - `guidance` is **publishing advice** — the agent may read it, but the
  *   validator never raises it, otherwise it would emit opinions as errors.
  *
  * `formats` lists the {@see FormatRegistry} ids allowed for the network; `export`
- * says whether slides ship as loose images or a single document (PDF);
+ * says whether the post ships as loose images, a document (PDF) or a video;
  * `feedMobile` is the typical CSS-pixel width a slide renders at in the network's
  * mobile feed — the realistic worst case for judging text size (approximate,
  * editable data: platforms drift). Pinterest is its two-column mobile grid.
@@ -22,6 +22,7 @@ final class NetworkRegistry
 {
     /**
      * @var array<string, array{
+     *     label: string,
      *     formats: list<string>,
      *     export: string,
      *     feedMobile: int,
@@ -31,6 +32,7 @@ final class NetworkRegistry
      */
     public const array NETWORKS = [
         'linkedin' => [
+            'label' => 'LinkedIn',
             'formats' => ['linkedin-4-5', 'linkedin-1-1'],
             'export' => 'pdf',
             'feedMobile' => 390,
@@ -38,6 +40,7 @@ final class NetworkRegistry
             'guidance' => ['Ideally under 10 pages — shorter, tightly paced carousels outperform.'],
         ],
         'instagram' => [
+            'label' => 'Instagram',
             'formats' => ['instagram-4-5', 'instagram-3-4', 'instagram-1-1', 'story-9-16'],
             'export' => 'images',
             'feedMobile' => 390,
@@ -45,6 +48,7 @@ final class NetworkRegistry
             'guidance' => ['The first slide locks the aspect ratio for the rest (unless you opt into the mixed-ratio carousel).'],
         ],
         'facebook' => [
+            'label' => 'Facebook',
             'formats' => ['facebook-1-1'],
             'export' => 'images',
             'feedMobile' => 390,
@@ -52,6 +56,7 @@ final class NetworkRegistry
             'guidance' => [],
         ],
         'pinterest' => [
+            'label' => 'Pinterest',
             'formats' => ['pinterest-2-3'],
             'export' => 'images',
             'feedMobile' => 186,
@@ -59,13 +64,39 @@ final class NetworkRegistry
             'guidance' => ['An organic image Pin contains one image; use a video Pin or paid carousel ad for multiple frames.', 'Pins are browsed in a ~186px two-column mobile grid — oversize the text.'],
         ],
         'threads' => [
+            'label' => 'Threads',
             'formats' => ['threads-4-5'],
             'export' => 'images',
             'feedMobile' => 390,
             'limits' => ['maxSlides' => 20, 'caption' => 500],
             'guidance' => [],
         ],
+        'youtube' => [
+            'label' => 'YouTube Shorts',
+            'formats' => ['story-9-16'],
+            'export' => 'video',
+            'feedMobile' => 390,
+            'limits' => [],
+            'guidance' => ['Use the vertical MP4 export or attach an existing rendered video. Check Shorts duration eligibility before uploading: https://support.google.com/youtube/answer/12779649'],
+        ],
+        'tiktok' => [
+            'label' => 'TikTok',
+            'formats' => ['story-9-16'],
+            'export' => 'video',
+            'feedMobile' => 390,
+            'limits' => [],
+            'guidance' => ['Use the vertical MP4 export or attach an existing rendered video. Review the caption and account-specific upload limits in TikTok before publishing.'],
+        ],
+        'x' => [
+            'label' => 'X',
+            'formats' => ['x-16-9', 'x-1-1'],
+            'export' => 'images',
+            'feedMobile' => 390,
+            'limits' => ['maxSlides' => 4],
+            'guidance' => ['Review the caption in the X composer: its weighted character count includes shortened URLs and is not validated here. https://docs.x.com/fundamentals/counting-characters'],
+        ],
         'deck' => [
+            'label' => 'Deck',
             'formats' => ['deck-16-9'],
             'export' => 'pdf',
             'feedMobile' => 390,
@@ -101,7 +132,7 @@ final class NetworkRegistry
     }
 
     /**
-     * @return array{formats: list<string>, export: string, feedMobile: int, limits: array<string, int|bool>, guidance: list<string>}|null
+     * @return array{label: string, formats: list<string>, export: string, feedMobile: int, limits: array<string, int|bool>, guidance: list<string>}|null
      */
     public function get(string $network): ?array
     {
@@ -109,7 +140,7 @@ final class NetworkRegistry
     }
 
     /**
-     * @return array<string, array{formats: list<string>, export: string, feedMobile: int, limits: array<string, int|bool>, guidance: list<string>}>
+     * @return array<string, array{label: string, formats: list<string>, export: string, feedMobile: int, limits: array<string, int|bool>, guidance: list<string>}>
      */
     public function all(): array
     {

@@ -176,6 +176,32 @@ final class CarouselValidationTest extends KernelTestCase
         self::assertArrayHasKey('slides', $violations);
     }
 
+    public function testXAcceptsFourImagesButRejectsFive(): void
+    {
+        foreach (['x-16-9', 'x-1-1'] as $format) {
+            $spec = [
+                'page' => 'x', 'network' => 'x', 'format' => $format,
+                'slides' => array_fill(0, 4, ['title' => 'Hi']),
+            ];
+            self::assertSame([], $this->violations($spec));
+            $spec['slides'][] = ['title' => 'One too many'];
+            self::assertArrayHasKey('slides', $this->violations($spec));
+        }
+    }
+
+    public function testVideoNetworksRequireTheVerticalFormat(): void
+    {
+        foreach (['youtube', 'tiktok'] as $network) {
+            $spec = [
+                'page' => 'x', 'network' => $network, 'format' => 'story-9-16',
+                'video' => 'ready.mp4', 'slides' => [['title' => 'Hi']],
+            ];
+            self::assertSame([], $this->violations($spec));
+            $spec['format'] = 'instagram-4-5';
+            self::assertArrayHasKey('format', $this->violations($spec));
+        }
+    }
+
     public function testPinterestRequiresANonEmptyCaption(): void
     {
         foreach ([null, '', '   '] as $caption) {

@@ -131,4 +131,27 @@ final class CarouselDrafterTest extends TestCase
         self::assertSame("Lire l'article complet", $cta->title);
         self::assertSame('En savoir plus', $cta->tagline);
     }
+
+    public function testXDraftKeepsCoverTwoSectionsAndCta(): void
+    {
+        $page = $this->page();
+        $page->mainContent .= "\n\n## Third takeaway\n\nAnother idea.";
+        $carousel = $this->draftCarousel($page, 'x');
+
+        self::assertSame('x-16-9', $carousel->format);
+        self::assertCount(4, $carousel->slides);
+        self::assertSame('First takeaway', $carousel->slides[1]->title);
+        self::assertSame('Second takeaway', $carousel->slides[2]->title);
+        self::assertSame('Read the full article', $carousel->slides[3]->title);
+    }
+
+    public function testVideoDraftsUseTheVerticalFormat(): void
+    {
+        foreach (['youtube', 'tiktok'] as $network) {
+            $carousel = $this->draftCarousel($this->page(), $network);
+
+            self::assertSame('story-9-16', $carousel->format);
+            self::assertCount(4, $carousel->slides);
+        }
+    }
 }
